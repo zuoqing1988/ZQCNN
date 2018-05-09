@@ -141,6 +141,133 @@ namespace ZQ
 			return true;
 		}
 
+		static bool DepthwiseConvolutionWithBias(ZQ_CNN_Tensor4D& input, const ZQ_CNN_Tensor4D& filters, const ZQ_CNN_Tensor4D& bias,
+			int strideH, int strideW, int padH, int padW, ZQ_CNN_Tensor4D& output)
+		{
+			double t1 = omp_get_wtime();
+			int in_N = input.GetN();
+			int in_H = input.GetH();
+			int in_W = input.GetW();
+			int in_C = input.GetC();
+			int filter_N = filters.GetN();
+			int filter_H = filters.GetH();
+			int filter_W = filters.GetW();
+			int filter_C = filters.GetC();
+			int out_N = output.GetN();
+			int out_H = output.GetH();
+			int out_W = output.GetW();
+			int out_C = output.GetC();
+			float bias_C = bias.GetC();
+			if (filter_C != in_C || filter_N != 1)
+				return false;
+
+			int need_N = in_N;
+			int need_H = (in_H - filter_H + (padH << 1)) / strideH + 1;
+			int need_W = (in_W - filter_W + (padW << 1)) / strideW + 1;
+			int need_C = in_C;
+			if (out_N != need_N || out_H != need_H || out_W != need_W || out_C != need_C)
+			{
+				output.ChangeSize(need_N, need_H, need_W, need_C, 0, 0);
+			}
+
+			if (padH != 0 || padW != 0)
+			{
+				if (!input.Padding(padW, padH, 0))
+					return false;
+			}
+
+			int in_sliceStep = input.GetSliceStep();
+			int in_widthStep = input.GetWidthStep();
+			int in_pixStep = input.GetPixelStep();
+			int filter_sliceStep = filters.GetSliceStep();
+			int filter_widthStep = filters.GetWidthStep();
+			int filter_pixStep = filters.GetPixelStep();
+			int out_sliceStep = output.GetSliceStep();
+			int out_widthStep = output.GetWidthStep();
+			int out_pixStep = output.GetPixelStep();
+			float* in_firstPixelData = input.GetFirstPixelPtr() - padH*in_widthStep - padW*in_pixStep;
+			const float* filter_firstPixelData = filters.GetFirstPixelPtr();
+			float* out_firstPixelData = output.GetFirstPixelPtr();
+			const float* bias_firstPixelData = bias.GetFirstPixelPtr();
+
+			int align_mode = __min((int)input.GetAlignType(), __min((int)filters.GetAlignType(), (int)output.GetAlignType()));
+			if (in_C == 1)
+				align_mode = __min(align_mode, ZQ_CNN_Tensor4D::ALIGN_0);
+			else if (in_C <= 4)
+				align_mode = __min(align_mode, ZQ_CNN_Tensor4D::ALIGN_128bit);
+			else if (in_C <= 8)
+				align_mode = __min(align_mode, ZQ_CNN_Tensor4D::ALIGN_256bit);
+			//output.Reset();
+			_depthwise_convolution_nopadding(align_mode, in_firstPixelData, in_N, in_H + (padH << 1), in_W + (padW << 1), in_C, in_pixStep, in_widthStep, in_sliceStep,
+				filter_firstPixelData, filter_N, filter_H, filter_W, filter_C, filter_pixStep, filter_widthStep, filter_sliceStep, strideH, strideW,
+				out_firstPixelData, need_N, need_H, need_W, need_C, out_pixStep, out_widthStep, out_sliceStep);
+			_addbias(__min(bias.GetAlignType(), output.GetAlignType()), out_firstPixelData, need_N, need_H, need_W, need_C, out_pixStep, out_widthStep, out_sliceStep, bias_firstPixelData);
+			double t2 = omp_get_wtime();
+			//printf("utils:conv: %.3f ms\n", (t2 - t1) * 1000);
+			return true;
+		}
+
+		static bool DepthwiseConvolution(ZQ_CNN_Tensor4D& input, const ZQ_CNN_Tensor4D& filters, int strideH, int strideW, int padH, int padW, ZQ_CNN_Tensor4D& output)
+		{
+			int in_N = input.GetN();
+			int in_H = input.GetH();
+			int in_W = input.GetW();
+			int in_C = input.GetC();
+			int filter_N = filters.GetN();
+			int filter_H = filters.GetH();
+			int filter_W = filters.GetW();
+			int filter_C = filters.GetC();
+			int out_N = output.GetN();
+			int out_H = output.GetH();
+			int out_W = output.GetW();
+			int out_C = output.GetC();
+			if (filter_C != in_C || filter_N != 1)
+				return false;
+
+			int need_N = in_N;
+			int need_H = (in_H - filter_H + (padH << 1)) / strideH + 1;
+			int need_W = (in_W - filter_W + (padW << 1)) / strideW + 1;
+			int need_C = in_C;
+			if (out_N != need_N || out_H != need_H || out_W != need_W || out_C != need_C)
+			{
+				output.ChangeSize(need_N, need_H, need_W, need_C, 0, 0);
+			}
+
+			if (padH != 0 || padW != 0)
+			{
+				if (!input.Padding(padW, padH, 0))
+					return false;
+			}
+
+			int in_sliceStep = input.GetSliceStep();
+			int in_widthStep = input.GetWidthStep();
+			int in_pixStep = input.GetPixelStep();
+			int filter_sliceStep = filters.GetSliceStep();
+			int filter_widthStep = filters.GetWidthStep();
+			int filter_pixStep = filters.GetPixelStep();
+			int out_sliceStep = output.GetSliceStep();
+			int out_widthStep = output.GetWidthStep();
+			int out_pixStep = output.GetPixelStep();
+			float* in_firstPixelData = input.GetFirstPixelPtr() - padH*in_widthStep - padW*in_pixStep;
+			const float* filter_firstPixelData = filters.GetFirstPixelPtr();
+			float* out_firstPixelData = output.GetFirstPixelPtr();
+
+			int align_mode = __min((int)input.GetAlignType(), __min((int)filters.GetAlignType(), (int)output.GetAlignType()));
+			if (in_C == 1)
+				align_mode = __min(align_mode, ZQ_CNN_Tensor4D::ALIGN_0);
+			else if (in_C <= 4)
+				align_mode = __min(align_mode, ZQ_CNN_Tensor4D::ALIGN_128bit);
+			else if (in_C <= 8)
+				align_mode = __min(align_mode, ZQ_CNN_Tensor4D::ALIGN_256bit);
+
+			//output.Reset();
+			_depthwise_convolution_nopadding(align_mode, in_firstPixelData, in_N, in_H + (padH << 1), in_W + (padW << 1), in_C, in_pixStep, in_widthStep, in_sliceStep,
+				filter_firstPixelData, filter_N, filter_H, filter_W, filter_C, filter_pixStep, filter_widthStep, filter_sliceStep, strideH, strideW,
+				out_firstPixelData, need_N, need_H, need_W, need_C, out_pixStep, out_widthStep, out_sliceStep);
+
+			return true;
+		}
+
 		static bool InnerProductWithBias(ZQ_CNN_Tensor4D& input, const ZQ_CNN_Tensor4D& filters, const ZQ_CNN_Tensor4D& bias, ZQ_CNN_Tensor4D& output)
 		{
 			double t1 = omp_get_wtime();
@@ -360,7 +487,7 @@ namespace ZQ
 				align_mode = __min(align_mode, ZQ_CNN_Tensor4D::ALIGN_128bit);
 			else if (C <= 32)
 				align_mode = __min(align_mode, ZQ_CNN_Tensor4D::ALIGN_256bit);
-*/
+			*/
 			_softmax(align_mode, data, N, H, W, C, pixStep, widthStep, sliceStep);
 			
 		}
@@ -430,7 +557,7 @@ namespace ZQ
 			const float* bias_data = bias.GetFirstPixelPtr();
 			for (int c = 0; c < C; c++)
 			{
-				b_data[c] = scale_data[c] / __max(sqrt(var_data[c]),1e-32);
+				b_data[c] = scale_data[c] / __max(sqrt(__max(var_data[c],0)),1e-32);
 				a_data[c] = bias_data[c] - mean_data[c] * b_data[c];
 			}
 			return true;
@@ -737,6 +864,11 @@ namespace ZQ
 		}
 	private:
 		static ZQ_CNN_EXPORT void _convolution_nopadding(int align_mode, const float* in_data, int in_N, int in_H, int in_W,
+			int in_C, int in_pixStep, int in_widthStep, int in_sliceStep,
+			const float* filter_data, int filter_N, int filter_H, int filter_W, int filter_C, int filter_pixStep, int filter_widthStep, int filter_sliceStep,
+			int strideH, int strideW, float* out_data, int out_N, int out_H, int out_W, int out_C, int out_pixStep, int out_widthStep, int out_sliceStep);
+
+		static ZQ_CNN_EXPORT void _depthwise_convolution_nopadding(int align_mode, const float* in_data, int in_N, int in_H, int in_W,
 			int in_C, int in_pixStep, int in_widthStep, int in_sliceStep,
 			const float* filter_data, int filter_N, int filter_H, int filter_W, int filter_C, int filter_pixStep, int filter_widthStep, int filter_sliceStep,
 			int strideH, int strideW, float* out_data, int out_N, int out_H, int out_W, int out_C, int out_pixStep, int out_widthStep, int out_sliceStep);

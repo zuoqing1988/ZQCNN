@@ -2,33 +2,16 @@
 #define _ZQ_CNN_MTCNN_H_
 #pragma once
 #include "ZQ_CNN_Net.h"
+#include "ZQ_CNN_BBox.h"
 #include <omp.h>
 namespace ZQ
 {
 	class ZQ_CNN_MTCNN
 	{
 	public:
-		class BBox
-		{
-		public:
-			float score;
-			int row1;
-			int col1;
-			int row2;
-			int col2;
-			float area;
-			bool exist;
-			float ppoint[10];
-			float regreCoord[4];
-		};
-
-		class OrderScore
-		{
-		public:
-			float score;
-			int oriOrder;
-
-		};
+		using BBox = ZQ::ZQ_CNN_BBox;
+		using OrderScore = ZQ::ZQ_CNN_OrderScore;
+		
 		static bool _cmp_score(const OrderScore& lsh, const OrderScore& rsh)
 		{
 			return lsh.score < rsh.score;

@@ -458,6 +458,281 @@ namespace ZQ
 		}
 	};
 
+
+	class ZQ_CNN_Layer_DepthwiseConvolution : public ZQ_CNN_Layer
+	{
+	public:
+		ZQ_CNN_Layer_DepthwiseConvolution() :filters(0), bias(0), num_output(0), kernel_H(0), kernel_W(0),
+			stride_H(1), stride_W(1), pad_H(0), pad_W(), with_bias(true), bottom_C(0) {}
+		~ZQ_CNN_Layer_DepthwiseConvolution() {
+			if (filters)delete filters;
+			if (bias)delete bias;
+		}
+		ZQ_CNN_Tensor4D* filters;
+		ZQ_CNN_Tensor4D* bias;
+		int num_output;
+		int kernel_H;
+		int kernel_W;
+		int stride_H;
+		int stride_W;
+		int pad_H;
+		int pad_W;
+		bool with_bias;
+
+		//
+		int bottom_C;
+		int bottom_H;
+		int bottom_W;
+
+	public:
+
+		virtual bool Forward(std::vector<ZQ_CNN_Tensor4D*>* bottoms, std::vector<ZQ_CNN_Tensor4D*>* tops)
+		{
+			if (bottoms == 0 || tops == 0 || bottoms->size() == 0 || tops->size() == 0 || (*bottoms)[0] == 0 || (*tops)[0] == 0)
+				return false;
+			if (with_bias)
+			{
+				if (filters == 0 || bias == 0)
+					return false;
+				double t1 = omp_get_wtime();
+				bool ret = ZQ_CNN_Forward_SSEUtils::DepthwiseConvolutionWithBias(*((*bottoms)[0]), *filters, *bias, stride_H, stride_W, pad_H, pad_W, *((*tops)[0]));
+				double t2 = omp_get_wtime();
+				if (show_debug_info)
+					printf("Conv layer:%s %.3f ms HW %dx%d filter: NHWC %d x %d x %d x %d\n",
+						name.c_str(), 1000 * (t2 - t1), (*tops)[0]->GetH(), (*tops)[0]->GetW(), filters->GetN(), filters->GetH(), filters->GetW(), filters->GetC());
+				return ret;
+			}
+			else
+			{
+				if (filters == 0 || bias == 0)
+					return false;
+				double t1 = omp_get_wtime();
+				bool ret = ZQ_CNN_Forward_SSEUtils::DepthwiseConvolution(*((*bottoms)[0]), *filters, stride_H, stride_W, pad_H, pad_W, *((*tops)[0]));
+				double t2 = omp_get_wtime();
+				if (show_debug_info)
+					printf("Conv layer:%s %.3f ms HW %dx%d filter: NHWC %d x %d x %d x %d\n",
+						name.c_str(), 1000 * (t2 - t1), (*tops)[0]->GetH(), (*tops)[0]->GetW(), filters->GetN(), filters->GetH(), filters->GetW(), filters->GetC());
+				return ret;
+			}
+		}
+
+		virtual bool ReadParam(const std::string& line)
+		{
+			bottom_names.clear();
+			top_names.clear();
+			std::vector<std::vector<std::string>> paras = split_line(line);
+			int num = paras.size();
+			bool has_num_output = false, has_kernelH = false, has_kernelW = false;
+			bool has_top = false, has_bottom = false, has_name = false;
+			for (int n = 0; n < num; n++)
+			{
+				if (paras[n].size() == 0)
+					continue;
+				if (_strcmpi("DepthwiseConvolution", paras[n][0].c_str()) == 0)
+				{
+
+				}
+				else if (_strcmpi("num_output", paras[n][0].c_str()) == 0)
+				{
+					if (paras[n].size() >= 2)
+					{
+						has_num_output = true;
+						num_output = atoi(paras[n][1].c_str());
+					}
+				}
+				else if (_strcmpi("kernel_size", paras[n][0].c_str()) == 0)
+				{
+					if (paras[n].size() >= 2)
+					{
+						has_kernelH = true;
+						kernel_H = atoi(paras[n][1].c_str());
+						has_kernelW = true;
+						kernel_W = atoi(paras[n][1].c_str());
+					}
+				}
+				else if (_strcmpi("kernel_H", paras[n][0].c_str()) == 0)
+				{
+					if (paras[n].size() >= 2)
+					{
+						has_kernelH = true;
+						kernel_H = atoi(paras[n][1].c_str());
+					}
+				}
+				else if (_strcmpi("kernel_W", paras[n][0].c_str()) == 0)
+				{
+					if (paras[n].size() >= 2)
+					{
+						has_kernelW = true;
+						kernel_W = atoi(paras[n][1].c_str());
+					}
+				}
+				else if (_strcmpi("pad", paras[n][0].c_str()) == 0)
+				{
+					if (paras[n].size() >= 2)
+					{
+						int pad_num = atoi(paras[n][1].c_str());
+						pad_H = pad_W = pad_num;
+					}
+				}
+				else if (_strcmpi("pad_H", paras[n][0].c_str()) == 0)
+				{
+					if (paras[n].size() >= 2)
+					{
+						pad_H = atoi(paras[n][1].c_str());
+					}
+				}
+				else if (_strcmpi("pad_W", paras[n][0].c_str()) == 0)
+				{
+					if (paras[n].size() >= 2)
+					{
+						pad_W = atoi(paras[n][1].c_str());
+					}
+				}
+				else if (_strcmpi("stride", paras[n][0].c_str()) == 0)
+				{
+					if (paras[n].size() >= 2)
+					{
+						stride_H = atoi(paras[n][1].c_str());
+						stride_W = atoi(paras[n][1].c_str());
+					}
+				}
+				else if (_strcmpi("stride_H", paras[n][0].c_str()) == 0)
+				{
+					if (paras[n].size() >= 2)
+					{
+						stride_H = atoi(paras[n][1].c_str());
+					}
+				}
+				else if (_strcmpi("stride_W", paras[n][0].c_str()) == 0)
+				{
+					if (paras[n].size() >= 2)
+					{
+						stride_W = atoi(paras[n][1].c_str());
+					}
+				}
+				else if (_strcmpi("bias", paras[n][0].c_str()) == 0)
+				{
+					if (paras[n].size() > 1)
+						with_bias = atoi(paras[n][1].c_str());
+					else
+						with_bias = true;
+				}
+				else if (_strcmpi("top", paras[n][0].c_str()) == 0)
+				{
+					if (paras[n].size() >= 2)
+					{
+						has_top = true;
+						top_names.push_back(paras[n][1]);
+					}
+				}
+				else if (_strcmpi("bottom", paras[n][0].c_str()) == 0)
+				{
+					if (paras[n].size() >= 2)
+					{
+						has_bottom = true;
+						bottom_names.push_back(paras[n][1]);
+					}
+				}
+				else if (_strcmpi("name", paras[n][0].c_str()) == 0)
+				{
+					if (paras[n].size() >= 2)
+					{
+						has_name = true;
+						name = paras[n][1];
+					}
+				}
+				else
+				{
+					std::cout << "warning: unknown para " << paras[n][0] << " in Layer " << name << "\n";
+				}
+			}
+			if (!has_num_output)std::cout << "Layer " << name << " missing " << "num_output\n";
+			if (!has_kernelH)std::cout << "Layer " << name << " missing " << "kernel_H (kernel_size)\n";
+			if (!has_kernelW)std::cout << "Layer " << name << " missing " << "kernel_W (kernel_size)\n";
+			if (!has_bottom)std::cout << "Layer " << name << " missing " << "bottom\n";
+			if (!has_top)std::cout << "Layer " << name << " missing " << "top\n";
+			if (!has_name) {
+				std::cout << "Layer " << name << " missing " << "name\n";
+				std::cout << line << "\n";
+			}
+			return has_num_output && has_kernelH && has_kernelW && has_bottom && has_top && has_name;
+		}
+
+		//should called after ReadParam, allocate memory in this func
+		virtual bool SetBottomDim(int bottom_C, int bottom_H, int bottom_W) {
+			if (bottom_C != num_output)
+			{
+				std::cout << "Layer " << name << "'s num_output should match bottom's C\n";
+				return false;
+			}
+
+			this->bottom_C = bottom_C;
+			this->bottom_H = bottom_H;
+			this->bottom_W = bottom_W;
+			if (filters)
+			{
+				if (!filters->ChangeSize(1, kernel_H, kernel_W, num_output, 0, 0))
+					return false;
+			}
+			else
+			{
+				filters = new ZQ_CNN_Tensor4D_NHW_C_Align256bit();
+				if (filters == 0)return false;
+				if (!filters->ChangeSize(1, kernel_H, kernel_W, num_output, 0, 0))
+					return false;
+			}
+			if (with_bias)
+			{
+				if (bias)
+				{
+					if (!bias->ChangeSize(1, 1, 1, num_output, 0, 0))
+						return false;
+				}
+				else
+				{
+					bias = new ZQ_CNN_Tensor4D_NHW_C_Align256bit();
+					if (bias == 0)return false;
+					if (!bias->ChangeSize(1, 1, 1, num_output, 0, 0))
+						return false;
+				}
+			}
+			return true;
+		}
+
+		//should called after SetBottomDim
+		virtual void GetTopDim(int& top_C, int& top_H, int& top_W) const
+		{
+			top_C = num_output;
+			top_H = __max(0, floor((float)(bottom_H + pad_H * 2 - kernel_H) / stride_H) + 1);
+			top_W = __max(0, floor((float)(bottom_W + pad_W * 2 - kernel_W) / stride_W) + 1);
+		}
+
+		//should be called after ZQ_CNN_Net have allocated necessery data
+		virtual bool LoadBinary_NCHW(FILE* in)
+		{
+			if (filters == 0)
+				return false;
+			int dst_len = filters->GetN() * filters->GetH() * filters->GetW() * filters->GetC();
+			if (dst_len <= 0)
+				return false;
+			std::vector<float> nchw_raw(dst_len);
+			if (dst_len != fread_s(&nchw_raw[0], dst_len * sizeof(float), sizeof(float), dst_len, in))
+				return false;
+			filters->ConvertFromCompactNCHW(&nchw_raw[0], filters->GetN(), filters->GetC(), filters->GetH(), filters->GetW());
+			if (with_bias)
+			{
+				int dst_len = bias->GetN() * bias->GetH() * bias->GetW() * bias->GetC();
+				if (dst_len <= 0)
+					return false;
+				nchw_raw.resize(dst_len);
+				if (dst_len != fread_s(&nchw_raw[0], dst_len * sizeof(float), sizeof(float), dst_len, in))
+					return false;
+				bias->ConvertFromCompactNCHW(&nchw_raw[0], bias->GetN(), bias->GetC(), bias->GetH(), bias->GetW());
+			}
+			return true;
+		}
+	};
+
 	class ZQ_CNN_Layer_BatchNormScale : public ZQ_CNN_Layer
 	{
 		/*

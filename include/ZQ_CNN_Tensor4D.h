@@ -118,7 +118,7 @@ namespace ZQ
 			if (borderH > 0)
 			{
 				memset(firstPixelData - pixelStep*borderW - widthStep*borderH, 0, sizeof(float)*widthStep*borderH);
-				memset(firstPixelData - pixelStep*borderW + widthStep*borderH, 0, sizeof(float)*widthStep*borderH);
+				memset(firstPixelData - pixelStep*borderW + widthStep*H, 0, sizeof(float)*widthStep*borderH);
 			}
 			if (borderW > 0)
 			{
@@ -154,7 +154,7 @@ namespace ZQ
 			if (borderH > 0)
 			{
 				memset(firstPixelData - pixelStep*borderW - widthStep*borderH, 0, sizeof(float)*widthStep*borderH);
-				memset(firstPixelData - pixelStep*borderW + widthStep*borderH, 0, sizeof(float)*widthStep*borderH);
+				memset(firstPixelData - pixelStep*borderW + widthStep*H, 0, sizeof(float)*widthStep*borderH);
 			}
 			if (borderW > 0)
 			{

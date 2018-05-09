@@ -31,6 +31,7 @@ namespace ZQ
 	public:
 		void TurnOnShowDebugInfo() { show_debug_info = true; }
 		void TurnOffShowDebugInfo() { show_debug_info = false; }
+		void GetInputDim(int& in_C, int& in_H, int& in_W)const { in_C = input_C; in_H = input_H; in_W = input_W; }
 		bool LoadFrom(const std::string& param_file, const std::string& model_file)
 		{
 			_clear();
@@ -149,6 +150,24 @@ namespace ZQ
 						return false;
 					}
 					if (!_add_layer_and_blobs(cur_layer, line,false))
+					{
+						delete cur_layer;
+						return false;
+					}
+				}
+				else if (_strcmpi(&buf[0], "DepthwiseConvolution") == 0)
+				{
+					if (layers.size() == 0)
+					{
+						std::cout << "Input layer must be the first!\n";
+						return false;
+					}
+					ZQ_CNN_Layer* cur_layer = new ZQ_CNN_Layer_DepthwiseConvolution();
+					if (cur_layer == 0) {
+						std::cout << "failed to create a DepthwiseConvolution layer!\n";
+						return false;
+					}
+					if (!_add_layer_and_blobs(cur_layer, line, false))
 					{
 						delete cur_layer;
 						return false;
@@ -551,6 +570,10 @@ namespace ZQ
 					visited[name_it->second] = true;
 					layers[i]->GetTopDim(blob_dim_C[name_it->second], blob_dim_H[name_it->second], blob_dim_W[name_it->second]);
 				}
+			}
+			for (int i = 1; i < blob_num; i++)
+			{
+				blobs[i]->ChangeSize(1, blob_dim_H[i], blob_dim_W[i], blob_dim_C[i], 0, 0);
 			}
 			return true;
 		}
