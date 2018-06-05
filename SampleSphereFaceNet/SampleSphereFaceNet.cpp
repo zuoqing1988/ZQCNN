@@ -8,7 +8,7 @@ using namespace std;
 using namespace cv;
 int main()
 {
-	for (int out_it = 0; out_it < 1; out_it++)
+	for (int out_it = 0; out_it < 10; out_it++)
 	{
 
 		openblas_set_num_threads(1);
@@ -31,15 +31,17 @@ int main()
 
 
 		ZQ_CNN_Net net;
-		if (!net.LoadFrom("model\\sphereface04bn256.zqparams", "model\\sphereface04bn256.nchwbin"))
+		if (!net.LoadFrom("model\\mobilenet_sphereface10bn512.zqparams", "model\\mobilenet_sphereface10bn512_iter_50000.nchwbin"))
+		//if (!net.LoadFrom("model\\sphereface04bn256.zqparams", "model\\sphereface04bn256_iter_26000.nchwbin"))
 		//if (!net.LoadFrom("model\\sphereface20.zqparams", "model\\sphereface20.nchwbin"))
 		//if (!net.LoadFrom("model\\sphereface04.zqparams", "model\\sphereface04.nchwbin"))
+		//if (!net.LoadFrom("model\\sphereface06bn.zqparams", "model\\sphereface06bn_iter_80000.nchwbin"))
 		{
 			cout << "failed to load net\n";
 			return EXIT_FAILURE;
 		}
 
-		int iters = 1;
+		int iters = 1000;
 		double t1 = omp_get_wtime();
 		for (int it = 0; it < iters; it++)
 		{
@@ -87,6 +89,11 @@ int main()
 		len0 = sqrt(len0);
 		len1 = sqrt(len1);
 		score /= (len0*len1 + 1e-64);
+		for (int i = 0; i < dim; i++)
+		{
+			feat0[i] /= len0;
+			feat1[i] /= len1;
+		}
 		std::cout << "feat0[0] = " << feat0[0] << "\n";
 		std::cout << "feat1[0] = " << feat1[0] << "\n";
 		std::cout << "Similarity score: " << score << "\n";

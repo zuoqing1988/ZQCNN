@@ -1,0 +1,201 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="源文件">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="头文件">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;hm;inl;inc;xsd</Extensions>
+    </Filter>
+    <Filter Include="资源文件">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="layers_c">
+      <UniqueIdentifier>{511e2113-b976-45d9-a4b3-a350b4ff2380}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="math">
+      <UniqueIdentifier>{6ee43eee-57de-4e9e-8b17-0eb3b3925d49}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="layers_c\zq_cnn_addbias_32f_align_c.c">
+      <Filter>layers_c</Filter>
+    </ClCompile>
+    <ClCompile Include="layers_c\zq_cnn_batchnormscale_32f_align_c.c">
+      <Filter>layers_c</Filter>
+    </ClCompile>
+    <ClCompile Include="layers_c\zq_cnn_convolution_32f_align_c.c">
+      <Filter>layers_c</Filter>
+    </ClCompile>
+    <ClCompile Include="layers_c\zq_cnn_convolution_gemm_32f_align_c.c">
+      <Filter>layers_c</Filter>
+    </ClCompile>
+    <ClCompile Include="layers_c\zq_cnn_dropout_32f_align_c.c">
+      <Filter>layers_c</Filter>
+    </ClCompile>
+    <ClCompile Include="layers_c\zq_cnn_eltwise_32f_align_c.c">
+      <Filter>layers_c</Filter>
+    </ClCompile>
+    <ClCompile Include="layers_c\zq_cnn_innerproduct_32f_align_c.c">
+      <Filter>layers_c</Filter>
+    </ClCompile>
+    <ClCompile Include="layers_c\zq_cnn_innerproduct_gemm_32f_align_c.c">
+      <Filter>layers_c</Filter>
+    </ClCompile>
+    <ClCompile Include="layers_c\zq_cnn_lrn_32f_align_c.c">
+      <Filter>layers_c</Filter>
+    </ClCompile>
+    <ClCompile Include="layers_c\zq_cnn_pooling_32f_align_c.c">
+      <Filter>layers_c</Filter>
+    </ClCompile>
+    <ClCompile Include="layers_c\zq_cnn_prelu_32f_align_c.c">
+      <Filter>layers_c</Filter>
+    </ClCompile>
+    <ClCompile Include="layers_c\zq_cnn_relu_32f_align_c.c">
+      <Filter>layers_c</Filter>
+    </ClCompile>
+    <ClCompile Include="layers_c\zq_cnn_resize_32f_align_c.c">
+      <Filter>layers_c</Filter>
+    </ClCompile>
+    <ClCompile Include="layers_c\zq_cnn_softmax_32f_align_c.c">
+      <Filter>layers_c</Filter>
+    </ClCompile>
+    <ClCompile Include="math\zq_avx_mathfun.c">
+      <Filter>math</Filter>
+    </ClCompile>
+    <ClCompile Include="math\zq_sse_mathfun.c">
+      <Filter>math</Filter>
+    </ClCompile>
+    <ClCompile Include="ZQ_CNN_Forward_SSEUtils.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="ZQ_CNN_Tensor4D.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="layers_c\zq_cnn_depthwise_convolution_32f_align_c.c">
+      <Filter>layers_c</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="layers_c\zq_cnn_addbias_32f_align_c.h">
+      <Filter>layers_c</Filter>
+    </ClInclude>
+    <ClInclude Include="layers_c\zq_cnn_addbias_32f_align_c_raw.h">
+      <Filter>layers_c</Filter>
+    </ClInclude>
+    <ClInclude Include="layers_c\zq_cnn_batchnormscale_32f_align_c.h">
+      <Filter>layers_c</Filter>
+    </ClInclude>
+    <ClInclude Include="layers_c\zq_cnn_batchnormscale_32f_align_c_raw.h">
+      <Filter>layers_c</Filter>
+    </ClInclude>
+    <ClInclude Include="layers_c\zq_cnn_convolution_32f_align_c.h">
+      <Filter>layers_c</Filter>
+    </ClInclude>
+    <ClInclude Include="layers_c\zq_cnn_convolution_32f_align_c_raw.h">
+      <Filter>layers_c</Filter>
+    </ClInclude>
+    <ClInclude Include="layers_c\zq_cnn_convolution_gemm_32f_align_c.h">
+      <Filter>layers_c</Filter>
+    </ClInclude>
+    <ClInclude Include="layers_c\zq_cnn_convolution_gemm_32f_align_c_raw.h">
+      <Filter>layers_c</Filter>
+    </ClInclude>
+    <ClInclude Include="layers_c\zq_cnn_dropout_32f_align_c.h">
+      <Filter>layers_c</Filter>
+    </ClInclude>
+    <ClInclude Include="layers_c\zq_cnn_dropout_32f_align_c_raw.h">
+      <Filter>layers_c</Filter>
+    </ClInclude>
+    <ClInclude Include="layers_c\zq_cnn_eltwise_32f_align_c.h">
+      <Filter>layers_c</Filter>
+    </ClInclude>
+    <ClInclude Include="layers_c\zq_cnn_eltwise_32f_align_c_raw.h">
+      <Filter>layers_c</Filter>
+    </ClInclude>
+    <ClInclude Include="layers_c\zq_cnn_innerproduct_32f_align_c.h">
+      <Filter>layers_c</Filter>
+    </ClInclude>
+    <ClInclude Include="layers_c\zq_cnn_innerproduct_32f_align_c_raw.h">
+      <Filter>layers_c</Filter>
+    </ClInclude>
+    <ClInclude Include="layers_c\zq_cnn_innerproduct_gemm_32f_align_c.h">
+      <Filter>layers_c</Filter>
+    </ClInclude>
+    <ClInclude Include="layers_c\zq_cnn_innerproduct_gemm_32f_align_c_raw.h">
+      <Filter>layers_c</Filter>
+    </ClInclude>
+    <ClInclude Include="layers_c\zq_cnn_lrn_32f_align_c.h">
+      <Filter>layers_c</Filter>
+    </ClInclude>
+    <ClInclude Include="layers_c\zq_cnn_lrn_32f_align_c_raw.h">
+      <Filter>layers_c</Filter>
+    </ClInclude>
+    <ClInclude Include="layers_c\zq_cnn_pooling_32f_align_c.h">
+      <Filter>layers_c</Filter>
+    </ClInclude>
+    <ClInclude Include="layers_c\zq_cnn_pooling_32f_align_c_raw.h">
+      <Filter>layers_c</Filter>
+    </ClInclude>
+    <ClInclude Include="layers_c\zq_cnn_prelu_32f_align_c.h">
+      <Filter>layers_c</Filter>
+    </ClInclude>
+    <ClInclude Include="layers_c\zq_cnn_prelu_32f_align_c_raw.h">
+      <Filter>layers_c</Filter>
+    </ClInclude>
+    <ClInclude Include="layers_c\zq_cnn_relu_32f_align_c.h">
+      <Filter>layers_c</Filter>
+    </ClInclude>
+    <ClInclude Include="layers_c\zq_cnn_relu_32f_align_c_raw.h">
+      <Filter>layers_c</Filter>
+    </ClInclude>
+    <ClInclude Include="layers_c\zq_cnn_resize_32f_align_c.h">
+      <Filter>layers_c</Filter>
+    </ClInclude>
+    <ClInclude Include="layers_c\zq_cnn_resize_32f_align_c_raw.h">
+      <Filter>layers_c</Filter>
+    </ClInclude>
+    <ClInclude Include="layers_c\zq_cnn_softmax_32f_align_c.h">
+      <Filter>layers_c</Filter>
+    </ClInclude>
+    <ClInclude Include="layers_c\zq_cnn_softmax_32f_align_c_raw.h">
+      <Filter>layers_c</Filter>
+    </ClInclude>
+    <ClInclude Include="math\zq_avx_mathfun.h">
+      <Filter>math</Filter>
+    </ClInclude>
+    <ClInclude Include="math\zq_sse_mathfun.h">
+      <Filter>math</Filter>
+    </ClInclude>
+    <ClInclude Include="ZQ_CNN_Forward_SSEUtils.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="ZQ_CNN_Layer.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="ZQ_CNN_Net.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="ZQ_CNN_Tensor4D.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="ZQ_CNN_MTCNN.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="ZQ_CNN_Defines.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="ZQ_CNN_BBox.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="layers_c\zq_cnn_depthwise_convolution_32f_align_c.h">
+      <Filter>layers_c</Filter>
+    </ClInclude>
+    <ClInclude Include="layers_c\zq_cnn_depthwise_convolution_32f_align_c_raw.h">
+      <Filter>layers_c</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>
