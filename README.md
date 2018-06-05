@@ -1,13 +1,13 @@
-ZQCNN-v0.0æ˜¯ZuoQingå‚ç…§mini-caffeå†™çš„forwardåº“ï¼Œéšä¾¿ç”¨ç”¨
+ZQCNN-v0.0ÊÇZuoQing²ÎÕÕmini-caffeĞ´µÄforward¿â£¬Ëæ±ãÓÃÓÃ
 
-2018-06-05æ—¥æ›´æ–°
-è·Ÿä¸Šæ—¶ä»£æ½®æµã€å‘å¸ƒæºç 
+2018-06-05ÈÕ¸üĞÂ
+¸úÉÏÊ±´ú³±Á÷¡¢·¢²¼Ô´Âë
 
-2018-05-09æ—¥æ›´æ–°
-Mobilenet-Sphereface-10BN512æ–‡ä»¶ä¸‹è½½
-é“¾æ¥ï¼šhttps://pan.baidu.com/s/16l9419FElfV3Tdcx9mjibw å¯†ç ï¼šdm3c
+2018-05-09ÈÕ¸üĞÂ
+Mobilenet-Sphereface-10BN512ÎÄ¼şÏÂÔØ
+Á´½Ó£ºhttps://pan.baidu.com/s/16l9419FElfV3Tdcx9mjibw ÃÜÂë£ºdm3c
 
 
-firstæäº¤
-æ¨¡å‹æ–‡ä»¶ä»æ­¤å¤„ä¸‹è½½é“¾æ¥ï¼šhttps://pan.baidu.com/s/1oVYJMOAqc8hi-1IuY1qhlA å¯†ç ï¼š4gi0
+firstÌá½»
+Ä£ĞÍÎÄ¼ş´Ó´Ë´¦ÏÂÔØÁ´½Ó£ºhttps://pan.baidu.com/s/1oVYJMOAqc8hi-1IuY1qhlA ÃÜÂë£º4gi0
 
