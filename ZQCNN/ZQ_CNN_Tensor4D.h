@@ -108,9 +108,9 @@ namespace ZQ
 				const unsigned char* bgr_pix = bgr_row;
 				for (int w = 0; w < W; w++, cur_pix += pixelStep, bgr_pix += 3)
 				{
-					cur_pix[0] = (bgr_pix[2] - mean_val)*scale;
+					cur_pix[0] = (bgr_pix[0] - mean_val)*scale;
 					cur_pix[1] = (bgr_pix[1] - mean_val)*scale;
-					cur_pix[2] = (bgr_pix[0] - mean_val)*scale;
+					cur_pix[2] = (bgr_pix[2] - mean_val)*scale;
 				}
 			}
 
