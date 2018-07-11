@@ -207,7 +207,19 @@ namespace ZQ
 			double t1 = omp_get_wtime();
 			if (width != _width || height != _height)
 				return false;
-			if (!input.ConvertFromBGR(bgr_img, _width, _height, _widthStep))
+			std::vector<unsigned char> buffer(width* height * 3);
+			for (int h = 0; h < height; h++)
+			{
+				const unsigned char* bgr_row = bgr_img + h*_widthStep;
+				unsigned char* cur_row = &buffer[0] + h*width * 3;
+				for (int w = 0; w < width; w++)
+				{
+					cur_row[w * 3 + 0] = bgr_row[w * 3 + 2];
+					cur_row[w * 3 + 1] = bgr_row[w * 3 + 1];
+					cur_row[w * 3 + 2] = bgr_row[w * 3 + 0];
+				}
+			}
+			if (!input.ConvertFromBGR(&buffer[0], width, height, width*3))
 				return false;
 			double t2 = omp_get_wtime();
 			if(show_debug_info)
