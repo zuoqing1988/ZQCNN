@@ -1,4 +1,4 @@
-%export mtcnn caffemodel to nchw binarys
+
 function export_spherefacenet20_caffemodel_to_nchw_binary()
 caffe.set_mode_cpu();
 
