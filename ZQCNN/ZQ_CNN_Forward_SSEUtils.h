@@ -3,6 +3,7 @@
 #pragma once
 #include "ZQ_CNN_Defines.h"
 #include "ZQ_CNN_Tensor4D.h"
+#include "ZQ_CNN_BBoxUtils.h"
 #include <vector>
 #include <algorithm>
 #include <fstream>
@@ -13,7 +14,6 @@ namespace ZQ
 	class ZQ_CNN_Forward_SSEUtils
 	{
 	public:
-
 		static bool ConvolutionWithBias(ZQ_CNN_Tensor4D& input, const ZQ_CNN_Tensor4D& filters, const ZQ_CNN_Tensor4D& bias,
 			int strideH, int strideW, int padH, int padW, ZQ_CNN_Tensor4D& output)
 		{
@@ -468,8 +468,10 @@ namespace ZQ
 			}
 		}
 
-		static void SoftmaxChannel(ZQ_CNN_Tensor4D &input)
+		static bool Softmax(ZQ_CNN_Tensor4D &input, int axis)
 		{
+			if (axis < 0 || axis >= 4)
+				return false;
 			int N = input.GetN();
 			int H = input.GetH();
 			int W = input.GetW();
@@ -488,8 +490,8 @@ namespace ZQ
 			else if (C <= 32)
 				align_mode = __min(align_mode, ZQ_CNN_Tensor4D::ALIGN_256bit);
 			*/
-			_softmax(align_mode, data, N, H, W, C, pixStep, widthStep, sliceStep);
-			
+			_softmax(align_mode, axis, data, N, H, W, C, pixStep, widthStep, sliceStep);
+			return true;
 		}
 
 		static bool BatchNormScaleBias(ZQ_CNN_Tensor4D &input, const ZQ_CNN_Tensor4D& mean, const ZQ_CNN_Tensor4D& var, const ZQ_CNN_Tensor4D& slope, const ZQ_CNN_Tensor4D& bias)
@@ -862,6 +864,51 @@ namespace ZQ
 			_lrn_across_channels(align_mode, local_size, alpha, beta, k, in_data, N, H, W, C, in_pixStep, in_widthStep, in_sliceStep, out_data, out_pixStep, out_widthStep, out_sliceStep);
 			return true;
 		}
+
+		static bool Permute(const ZQ_CNN_Tensor4D& input, const int order[4], ZQ_CNN_Tensor4D& output)
+		{
+			return input.Permute_NCHW(output, order);
+		}
+
+		static bool Flatten(const ZQ_CNN_Tensor4D& input, int axis, int end_axis, ZQ_CNN_Tensor4D& output)
+		{
+			return input.Flatten_NCHW(output, axis, end_axis);
+		}
+
+		static bool Reshape(const ZQ_CNN_Tensor4D& input, const std::vector<int>& shape, ZQ_CNN_Tensor4D& output)
+		{
+			return input.Reshape_NCHW(output, shape);
+		}
+
+		static bool PriorBox(const ZQ_CNN_Tensor4D& input, const ZQ_CNN_Tensor4D& data,
+			const std::vector<float>& min_sizes, const std::vector<float>& max_sizes,
+			const std::vector<float>& aspect_ratios, const std::vector<float>& variance,
+			bool flip, int num_priors, bool clip, int img_w, int img_h,	float step_w, float step_h, float offset,
+			ZQ_CNN_Tensor4D& output)
+		{
+			return _prior_box(input, data, min_sizes, max_sizes, aspect_ratios, variance, flip, num_priors, clip, img_w, img_h, step_w, step_h, offset, output);
+		}
+
+		static bool Concat_NCHW_get_size(const std::vector<ZQ_CNN_Tensor4D*>& inputs, int axis, int& out_N, int& out_C, int& out_H, int& out_W)
+		{
+			return _concat_NCHW_get_size(inputs, axis, out_N, out_C, out_H, out_W);
+		}
+
+		static bool Concat_NCHW(const std::vector<ZQ_CNN_Tensor4D*>& inputs, int axis, ZQ_CNN_Tensor4D& output)
+		{
+			return _concat_NCHW(inputs, axis, output);
+		}
+
+		static bool DetectionOuput(const ZQ_CNN_Tensor4D& loc, const ZQ_CNN_Tensor4D& conf,
+			const ZQ_CNN_Tensor4D& prior, int num_priors, int num_loc_classes, int num_classes, bool share_location,
+			int background_label_id, ZQ_CNN_BBoxUtils::PriorBoxCodeType code_type, bool variance_encoded_in_target,
+			float nms_thresh, float nms_eta, int nms_top_k, float confidence_thresh, int keep_top_k, ZQ_CNN_Tensor4D& output)
+		{
+			return _detection_output(loc, conf, prior, num_priors, num_loc_classes, num_classes, share_location,
+				background_label_id, code_type, variance_encoded_in_target, nms_thresh, nms_eta, nms_top_k, 
+				confidence_thresh, keep_top_k, output);
+		}
+
 	private:
 		static ZQ_CNN_EXPORT void _convolution_nopadding(int align_mode, const float* in_data, int in_N, int in_H, int in_W,
 			int in_C, int in_pixStep, int in_widthStep, int in_sliceStep,
@@ -879,7 +926,7 @@ namespace ZQ
 
 		static ZQ_CNN_EXPORT void _addbias(int align_mode, float* data, int N, int H, int W, int C, int pixelStep, int widthStep, int sliceStep, const float* bias_Data);
 
-		static ZQ_CNN_EXPORT void _softmax(int align_mode, float* in_data, int N, int H, int W, int C, int pixStep, int widthStep, int sliceStep);
+		static ZQ_CNN_EXPORT void _softmax(int align_mode, int axis, float* in_data, int N, int H, int W, int C, int pixStep, int widthStep, int sliceStep);
 
 		static ZQ_CNN_EXPORT void _dropout(int align_mode, float* in_data, int N, int H, int W, int C, int pixStep, int widthStep, int sliceStep, float ratio);
 
@@ -923,6 +970,21 @@ namespace ZQ
 
 		static ZQ_CNN_EXPORT void _lrn_across_channels(int align_mode, int local_size, float alpha, float beta, float k, const float* in_data, int N, int H, int W, int C,
 			int in_pixStep, int in_widthStep, int in_sliceStep, float* out_data, int out_pixStep, int out_widthStep, int out_sliceStep);
+
+		static bool _prior_box(const ZQ_CNN_Tensor4D& input, const ZQ_CNN_Tensor4D& data,
+			const std::vector<float>& min_sizes, const std::vector<float>& max_sizes,
+			const std::vector<float>& aspect_ratios, const std::vector<float>& variance,
+			bool flip, int num_priors, bool clip, int img_w, int img_h, float step_w, float step_h, float offset,
+			ZQ_CNN_Tensor4D& output);
+
+		static bool _concat_NCHW_get_size(const std::vector<ZQ_CNN_Tensor4D*>& inputs, int axis, int& out_N, int& out_C, int& out_H, int& out_W);
+
+		static bool _concat_NCHW(const std::vector<ZQ_CNN_Tensor4D*>& inputs, int axis, ZQ_CNN_Tensor4D& output);
+
+		static bool _detection_output(const ZQ_CNN_Tensor4D& loc, const ZQ_CNN_Tensor4D& conf,
+			const ZQ_CNN_Tensor4D& prior, int num_priors, int num_loc_classes, int num_classes, bool share_location,
+			int background_label_id, ZQ_CNN_BBoxUtils::PriorBoxCodeType code_type, bool variance_encoded_in_target,
+			float nms_thresh, float nms_eta, int nms_top_k, float confidence_thresh, int keep_top_k, ZQ_CNN_Tensor4D& output);
 	};
 
 }

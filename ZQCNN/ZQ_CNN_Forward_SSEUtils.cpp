@@ -13,6 +13,8 @@
 #include "layers_c/zq_cnn_eltwise_32f_align_c.h"
 #include "layers_c/zq_cnn_lrn_32f_align_c.h"
 #include "ZQ_CNN_Forward_SSEUtils.h"
+#include "ZQ_CNN_BBoxUtils.h"
+#include <algorithm>
 
 using namespace ZQ;
 
@@ -800,19 +802,30 @@ void  ZQ_CNN_Forward_SSEUtils::_addbias(int align_mode, float* data, int N, int 
 	}
 }
 
-void ZQ_CNN_Forward_SSEUtils::_softmax(int align_mode, float* data, int N, int H, int W, int C, int pixStep, int widthStep, int sliceStep)
+void ZQ_CNN_Forward_SSEUtils::_softmax(int align_mode, int axis, float* data, int N, int H, int W, int C, int pixStep, int widthStep, int sliceStep)
 {
-	if (align_mode == ZQ_CNN_Tensor4D::ALIGN_128bit && C >= 4)
+	if (axis == 1)
 	{
-		zq_cnn_softmax_32f_align128bit_C(data, N, H, W, C, pixStep, widthStep, sliceStep);
+		if (align_mode == ZQ_CNN_Tensor4D::ALIGN_128bit && C >= 4)
+		{
+			zq_cnn_softmax_32f_align128bit_C(data, N, H, W, C, pixStep, widthStep, sliceStep);
+		}
+		else if (align_mode == ZQ_CNN_Tensor4D::ALIGN_256bit && C >= 8)
+		{
+			zq_cnn_softmax_32f_align256bit_C(data, N, H, W, C, pixStep, widthStep, sliceStep);
+		}
+		else
+		{
+			zq_cnn_softmax_32f_align0_C(data, N, H, W, C, pixStep, widthStep, sliceStep);
+		}
 	}
-	else if (align_mode == ZQ_CNN_Tensor4D::ALIGN_256bit && C >= 8)
+	else if (axis == 2)
 	{
-		zq_cnn_softmax_32f_align256bit_C(data, N, H, W, C, pixStep, widthStep, sliceStep);
+		zq_cnn_softmax_32f_align0_H(data, N, H, W, C, pixStep, widthStep, sliceStep);
 	}
-	else
+	else if (axis == 3)
 	{
-		zq_cnn_softmax_32f_align0_C(data, N, H, W, C, pixStep, widthStep, sliceStep);
+		zq_cnn_softmax_32f_align0_W(data, N, H, W, C, pixStep, widthStep, sliceStep);
 	}
 }
 
@@ -1149,4 +1162,465 @@ void ZQ_CNN_Forward_SSEUtils::_lrn_across_channels(int align_mode, int local_siz
 		zq_cnn_lrn_across_channels_32f_align0(local_size, alpha, beta, k, in_data, N, H, W, C, in_pixStep, in_widthStep, in_sliceStep,
 			out_data, out_pixStep, out_widthStep, out_sliceStep);
 	}
+}
+
+bool ZQ_CNN_Forward_SSEUtils::_prior_box(const ZQ_CNN_Tensor4D& input, const ZQ_CNN_Tensor4D& data,
+	const std::vector<float>& min_sizes, const std::vector<float>& max_sizes,
+	const std::vector<float>& aspect_ratios, const std::vector<float>& variance,
+	bool flip, int num_priors, bool clip, int img_w, int img_h, float step_w, float step_h, float offset,
+	ZQ_CNN_Tensor4D& output)
+{
+	const int layer_width = input.GetW();
+	const int layer_height = input.GetH();
+	int img_width, img_height;
+	if (img_h == 0 || img_w == 0) 
+	{
+		img_width = data.GetW();
+		img_height = data.GetH();
+	}
+	else 
+	{
+		img_width = img_w;
+		img_height = img_h;
+	}
+	float step_width, step_height;
+	if (step_w == 0 || step_h == 0) 
+	{
+		step_width = (float)img_width / layer_width;
+		step_height = (float)img_height / layer_height;
+	}
+	else 
+	{
+		step_width = step_w;
+		step_height = step_h;
+	}
+
+	int dim = layer_height * layer_width * num_priors * 4;
+	int out_N = data.GetN();
+	int out_C = 2;
+	int out_H = dim;
+	int out_W = 1;
+	if (output.GetN() != out_N || output.GetC() != out_C || output.GetH() != out_H || output.GetW() != out_W)
+		output.ChangeSize(out_N, out_H, out_W, out_C, 0, 0);
+
+	int pixStep = output.GetPixelStep();
+	for (int n = 0; n < out_N; n++)
+	{
+		float* out_ptr = output.GetFirstPixelPtr() + n*output.GetSliceStep();
+		float* cur_ptr = out_ptr;
+		int idx = 0;
+		for (int h = 0; h < layer_height; h++)
+		{
+			for (int w = 0; w < layer_width; w++)
+			{
+				float center_x = (w + offset) * step_width;
+				float center_y = (h + offset) * step_height;
+				float box_width, box_height;
+				for (int s = 0; s < min_sizes.size(); s++)
+				{
+					int cur_min_size = min_sizes[s];
+					// first prior: aspect_ratio = 1, size = min_size
+					box_width = box_height = cur_min_size;
+					// xmin
+					*cur_ptr = (center_x - box_width / 2.) / img_width;
+					cur_ptr += pixStep;
+					// ymin
+					*cur_ptr = (center_y - box_height / 2.) / img_height;
+					cur_ptr += pixStep;
+					// xmax
+					*cur_ptr = (center_x + box_width / 2.) / img_width;
+					cur_ptr += pixStep;
+					// ymax
+					*cur_ptr = (center_y + box_height / 2.) / img_height;
+					cur_ptr += pixStep;
+
+					if (max_sizes.size() > 0)
+					{
+						if (min_sizes.size() != max_sizes.size())
+							return false;
+						int cur_max_size = max_sizes[s];
+						// second prior: aspect_ratio = 1, size = sqrt(min_size * max_size)
+						box_width = box_height = sqrt(cur_min_size * cur_max_size);
+						// xmin
+						*cur_ptr = (center_x - box_width / 2.) / img_width;
+						cur_ptr += pixStep;
+						// ymin
+						*cur_ptr = (center_y - box_height / 2.) / img_height;
+						cur_ptr += pixStep;
+						// xmax
+						*cur_ptr = (center_x + box_width / 2.) / img_width;
+						cur_ptr += pixStep;
+						// ymax
+						*cur_ptr = (center_y + box_height / 2.) / img_height;
+						cur_ptr += pixStep;
+					}
+
+					// rest of priors
+					for (int r = 0; r < aspect_ratios.size(); r++)
+					{
+						float ar = aspect_ratios[r];
+						if (fabs(ar - 1.0f) < 1e-6)
+							continue;
+						box_width = cur_min_size * sqrt(ar);
+						box_height = cur_min_size / sqrt(ar);
+						// xmin
+						*cur_ptr = (center_x - box_width / 2.) / img_width;
+						cur_ptr += pixStep;
+						// ymin
+						*cur_ptr = (center_y - box_height / 2.) / img_height;
+						cur_ptr += pixStep;
+						// xmax
+						*cur_ptr = (center_x + box_width / 2.) / img_width;
+						cur_ptr += pixStep;
+						// ymax
+						*cur_ptr = (center_y + box_height / 2.) / img_height;
+						cur_ptr += pixStep;
+					}
+				}
+			}
+		}
+		// clip the prior's coordidate such that it is within [0, 1]
+		if (clip)
+		{
+			for (int d = 0; d < dim; ++d)
+			{
+				out_ptr[d*pixStep] = __min(1.0f, __max(0.0f, out_ptr[d*pixStep]));
+			}
+		}
+		// set the variance.
+		cur_ptr = out_ptr + 1;
+		if (variance.size() == 1)
+		{
+			for (int i = 0; i < dim; i++)
+				cur_ptr[i*pixStep] = variance[0];
+		}
+		else if(variance.size() == 4)
+		{
+			for (int h = 0; h < layer_height; h++)
+			{
+				for (int w = 0; w < layer_width; w++)
+				{
+					for (int i = 0; i < num_priors; i++)
+					{
+						for (int j = 0; j < 4; ++j)
+						{
+							*cur_ptr = variance[j];
+							cur_ptr += pixStep;
+						}
+					}
+				}
+			}
+		}
+		else
+		{
+			return false;
+		}
+	}
+	
+	return true;
+}
+
+bool ZQ_CNN_Forward_SSEUtils::_concat_NCHW_get_size(const std::vector<ZQ_CNN_Tensor4D*>& inputs, int axis, int& out_N, int& out_C, int& out_H, int& out_W)
+{
+	if (axis < 0 || axis >= 4)
+		return false;
+	int in_num = inputs.size();
+	if (inputs.size() == 0)
+		return false;
+	else if (inputs.size() == 1)
+	{
+		if (inputs[0] == 0)
+			return false;
+		inputs[0]->GetShape(out_N, out_C, out_H, out_W);
+		return true;
+	}
+	else
+	{
+		int standard_dim[4];
+		inputs[0]->GetShape(standard_dim[0], standard_dim[1], standard_dim[2], standard_dim[3]);
+		int sum_out = standard_dim[axis];
+		for (int i = 1; i < inputs.size(); i++)
+		{
+			if (inputs[i] == 0)
+				return false;
+			int cur_dim[4];
+			inputs[i]->GetShape(cur_dim[0], cur_dim[1], cur_dim[2], cur_dim[3]);
+			for (int j = 0; j < 4; j++)
+			{
+				if (axis == j)
+				{
+					sum_out += cur_dim[j];
+				}
+				else if (cur_dim[j] != standard_dim[j])
+				{
+					return false;
+				}
+			}
+		}
+		standard_dim[axis] = sum_out;
+		out_N = standard_dim[0];
+		out_C = standard_dim[1];
+		out_H = standard_dim[2];
+		out_W = standard_dim[3];
+		return true;
+	}
+}
+
+bool ZQ_CNN_Forward_SSEUtils::_concat_NCHW(const std::vector<ZQ_CNN_Tensor4D*>& inputs, int axis, ZQ_CNN_Tensor4D& output)
+{
+	int out_N, out_C, out_H, out_W;
+	if (!_concat_NCHW_get_size(inputs, axis, out_N, out_C, out_H, out_W))
+		return false;
+	
+	if (axis < 0 || axis >= 4)
+		return false;
+	int in_num = inputs.size();
+	if (inputs.size() == 0)
+		return false;
+	else if (inputs.size() == 1)
+	{
+		if (inputs[0] == 0)
+			return false;
+		return output.CopyData(*inputs[0]);
+	}
+	else
+	{
+		if (output.GetN() != out_N || output.GetC() != out_C || output.GetH() != out_H || output.GetW())
+		{
+			if (!output.ChangeSize(out_N, out_H, out_W, out_C, 0, 0))
+				return false;
+		}
+		
+		int out_pixStep = output.GetPixelStep();
+		int out_widthStep = output.GetWidthStep();
+		int out_sliceStep = output.GetSliceStep();
+		
+		float* out_ptr = output.GetFirstPixelPtr();
+		for (int i = 0; i < inputs.size(); i++)
+		{
+			int in_N = inputs[i]->GetN();
+			int in_C = inputs[i]->GetC();
+			int in_H = inputs[i]->GetH();
+			int in_W = inputs[i]->GetW();
+			int in_pixStep = inputs[i]->GetPixelStep();
+			int in_widthStep = inputs[i]->GetWidthStep();
+			int in_sliceStep = inputs[i]->GetSliceStep();
+			const float* in_ptr = inputs[i]->GetFirstPixelPtr();
+			const float* in_slice_ptr = in_ptr;
+			float* out_slice_ptr = out_ptr;
+			for (int n = 0; n < in_N; n++)
+			{
+				const float* in_row_ptr = in_slice_ptr;
+				float* out_row_ptr = out_slice_ptr;
+				for (int h = 0; h < in_H; h++)
+				{
+					const float* in_pix_ptr = in_row_ptr;
+					float* out_pix_ptr = out_row_ptr;
+					for (int w = 0; w < in_W; w++)
+					{
+						memcpy(out_pix_ptr, in_pix_ptr, sizeof(float)*in_C);
+						in_pix_ptr += in_pixStep;
+						out_pix_ptr += out_pixStep;
+					}
+					in_row_ptr += in_widthStep;
+					out_row_ptr += out_widthStep;
+				}
+				in_slice_ptr += in_sliceStep;
+				out_slice_ptr += out_sliceStep;
+			}
+			if (axis == 0)
+				out_ptr += in_N*out_sliceStep;
+			else if (axis == 1)
+				out_ptr += in_C;
+			else if (axis == 2)
+				out_ptr += in_H*out_widthStep;
+			else if (axis == 3)
+				out_ptr += in_W*out_pixStep;
+		}
+		return true;
+	}
+}
+
+bool ZQ_CNN_Forward_SSEUtils::_detection_output(const ZQ_CNN_Tensor4D& loc, const ZQ_CNN_Tensor4D& conf,
+	const ZQ_CNN_Tensor4D& prior, int num_priors, int num_loc_classes, int num_classes, bool share_location,
+	int background_label_id, ZQ_CNN_BBoxUtils::PriorBoxCodeType code_type, bool variance_encoded_in_target,
+	float nms_thresh, float nms_eta, int nms_top_k, float confidence_thresh, int keep_top_k, ZQ_CNN_Tensor4D& output)
+{
+	const int num = loc.GetN();
+
+	int loc_len = loc.GetN() * loc.GetH() * loc.GetW() * loc.GetC();
+	int conf_len = conf.GetN() * conf.GetH() * conf.GetW() * conf.GetC();
+	int prior_len = prior.GetN() * prior.GetH() * prior.GetW() * prior.GetC();
+	if (loc_len <= 0 || conf_len <= 0 || prior_len <= 0)
+		return false;
+	std::vector<float> loc_data(loc_len);
+	std::vector<float> conf_data(conf_len);
+	std::vector<float> prior_data(prior_len);
+	loc.ConvertToCompactNCHW(&loc_data[0]);
+	conf.ConvertToCompactNCHW(&conf_data[0]);
+	prior.ConvertToCompactNCHW(&prior_data[0]);
+	// Retrieve all location predictions.
+	std::vector<ZQ_CNN_LabelBBox> all_loc_preds;
+	ZQ_CNN_BBoxUtils::GetLocPredictions(&loc_data[0], num, num_priors, num_loc_classes, share_location, &all_loc_preds);
+
+	// Retrieve all confidences.
+	std::vector<std::map<int, std::vector<float> > > all_conf_scores;
+	ZQ_CNN_BBoxUtils::GetConfidenceScores(&conf_data[0], num, num_priors, num_classes, &all_conf_scores);
+
+	// Retrieve all prior bboxes. It is same within a batch since we assume all
+	// images in a batch are of same dimension.
+	std::vector<ZQ_CNN_NormalizedBBox> prior_bboxes;
+	std::vector<std::vector<float> > prior_variances;
+	ZQ_CNN_BBoxUtils::GetPriorBBoxes(&prior_data[0], num_priors, &prior_bboxes, &prior_variances);
+
+	// Decode all loc predictions to bboxes.
+	std::vector<ZQ_CNN_LabelBBox> all_decode_bboxes;
+	const bool clip_bbox = false;
+	ZQ_CNN_BBoxUtils::DecodeBBoxesAll(all_loc_preds, prior_bboxes, prior_variances, num, share_location, num_loc_classes,
+		background_label_id, code_type, variance_encoded_in_target, clip_bbox, &all_decode_bboxes);
+
+	int num_kept = 0;
+	std::vector<std::map<int, std::vector<int> > > all_indices;
+	for (int i = 0; i < num; ++i)
+	{
+		const ZQ_CNN_LabelBBox& decode_bboxes = all_decode_bboxes[i];
+		const std::map<int, std::vector<float> >& conf_scores = all_conf_scores[i];
+		std::map<int, std::vector<int> > indices;
+		int num_det = 0;
+		for (int c = 0; c < num_classes; ++c)
+		{
+			if (c == background_label_id)
+			{
+				// Ignore background class.
+				continue;
+			}
+			if (conf_scores.find(c) == conf_scores.end())
+			{
+				// Something bad happened if there are no predictions for current label.
+				printf("Could not find confidence predictions for label %d\n", c);
+				//return false;
+			}
+			const std::vector<float>& scores = conf_scores.find(c)->second;
+			int label = share_location ? -1 : c;
+			if (decode_bboxes.find(label) == decode_bboxes.end())
+			{
+				// Something bad happened if there are no predictions for current label.
+				printf("Could not find location predictions for label %d\n", label);
+				continue;
+			}
+			const std::vector<ZQ_CNN_NormalizedBBox>& bboxes = decode_bboxes.find(label)->second;
+			ZQ_CNN_BBoxUtils::ApplyNMSFast(bboxes, scores, confidence_thresh, nms_thresh, nms_eta, nms_top_k, &(indices[c]));
+			num_det += indices[c].size();
+		}
+		if (keep_top_k > -1 && num_det > keep_top_k)
+		{
+			std::vector<std::pair<float, std::pair<int, int> > > score_index_pairs;
+			for (std::map<int, std::vector<int> >::iterator it = indices.begin();
+				it != indices.end(); ++it)
+			{
+				int label = it->first;
+				const std::vector<int>& label_indices = it->second;
+				if (conf_scores.find(label) == conf_scores.end())
+				{
+					// Something bad happened for current label.
+					printf("Could not find location predictions for %d\n", label);
+					continue;
+				}
+				const std::vector<float>& scores = conf_scores.find(label)->second;
+				for (int j = 0; j < label_indices.size(); ++j)
+				{
+					int idx = label_indices[j];
+					if (idx >= scores.size())
+						return false;
+					score_index_pairs.push_back(std::make_pair(
+						scores[idx], std::make_pair(label, idx)));
+				}
+			}
+			// Keep top k results per image.
+			std::sort(score_index_pairs.begin(), score_index_pairs.end(),
+				ZQ_CNN_BBoxUtils::SortScorePairDescend<std::pair<int, int> >);
+			score_index_pairs.resize(keep_top_k);
+			// Store the new indices.
+			std::map<int, std::vector<int> > new_indices;
+			for (int j = 0; j < score_index_pairs.size(); ++j)
+			{
+				int label = score_index_pairs[j].second.first;
+				int idx = score_index_pairs[j].second.second;
+				new_indices[label].push_back(idx);
+			}
+			all_indices.push_back(new_indices);
+			num_kept += keep_top_k;
+		}
+		else {
+			all_indices.push_back(indices);
+			num_kept += num_det;
+		}
+	}
+
+	std::vector<int> top_shape(2, 1);
+	top_shape.push_back(num_kept);
+	top_shape.push_back(7);
+	float* out_ptr;
+	if (num_kept == 0)
+	{
+		printf("Couldn't find any detections\n");
+		output.ChangeSize(num, 1, 1, 7, 0, 0);
+		out_ptr = output.GetFirstPixelPtr();
+		// Generate fake results per image.
+		for (int i = 0; i < num; ++i)
+		{
+			out_ptr[0] = i;
+			out_ptr += output.GetSliceStep();
+		}
+	}
+	else
+	{
+		output.ChangeSize(num_kept, 1, 1, 7, 0, 0);
+	}
+
+	out_ptr = output.GetFirstPixelPtr();
+	int sliceStep = output.GetSliceStep();
+	int count = 0;
+	for (int i = 0; i < num; ++i)
+	{
+		const std::map<int, std::vector<float> >& conf_scores = all_conf_scores[i];
+		const ZQ_CNN_LabelBBox& decode_bboxes = all_decode_bboxes[i];
+		for (std::map<int, std::vector<int> >::iterator it = all_indices[i].begin();
+			it != all_indices[i].end(); ++it)
+		{
+			int label = it->first;
+			if (conf_scores.find(label) == conf_scores.end())
+			{
+				// Something bad happened if there are no predictions for current label.
+				//LOG(FATAL) << "Could not find confidence predictions for " << label;
+				continue;
+			}
+			const std::vector<float>& scores = conf_scores.find(label)->second;
+			int loc_label = share_location ? -1 : label;
+			if (decode_bboxes.find(loc_label) == decode_bboxes.end())
+			{
+				// Something bad happened if there are no predictions for current label.
+				//LOG(FATAL) << "Could not find location predictions for " << loc_label;
+				continue;
+			}
+			const std::vector<ZQ_CNN_NormalizedBBox>& bboxes = decode_bboxes.find(loc_label)->second;
+			std::vector<int>& indices = it->second;
+
+			for (int j = 0; j < indices.size(); ++j)
+			{
+				int idx = indices[j];
+				out_ptr[count*sliceStep] = i;
+				out_ptr[count * sliceStep + 1] = label;
+				out_ptr[count * sliceStep + 2] = scores[idx];
+				const ZQ_CNN_NormalizedBBox& bbox = bboxes[idx];
+				out_ptr[count * sliceStep + 3] = bbox.col1;
+				out_ptr[count * sliceStep + 4] = bbox.row1;
+				out_ptr[count * sliceStep + 5] = bbox.col2;
+				out_ptr[count * sliceStep + 6] = bbox.row2;
+				++count;
+			}
+		}
+
+	}
+	return true;
 }

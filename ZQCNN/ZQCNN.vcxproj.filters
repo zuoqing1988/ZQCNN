@@ -197,5 +197,8 @@
     <ClInclude Include="layers_c\zq_cnn_depthwise_convolution_32f_align_c_raw.h">
       <Filter>layers_c</Filter>
     </ClInclude>
+    <ClInclude Include="ZQ_CNN_BBoxUtils.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

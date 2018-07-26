@@ -19,9 +19,9 @@
     </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{43AA2D6A-447E-4153-8A29-7AE8A8296DC7}</ProjectGuid>
+    <ProjectGuid>{404C7DFA-1DEB-4400-BA0D-D06C86F293AB}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
-    <RootNamespace>ZQCNN</RootNamespace>
+    <RootNamespace>SampleSSD</RootNamespace>
     <WindowsTargetPlatformVersion>8.1</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
@@ -39,13 +39,13 @@
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
-    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
     <PlatformToolset>v140</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
-    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
     <PlatformToolset>v140</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
@@ -103,15 +103,13 @@
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>F:\Code\mini-caffe\3rdparty\include\openblas;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
-      <EnableEnhancedInstructionSet>AdvancedVectorExtensions</EnableEnhancedInstructionSet>
+      <AdditionalIncludeDirectories>$(SolutionDir)ZQCNN;F:\Code\mini-caffe\3rdparty\include\openblas;F:\Code\OpenCV3.1.0\opencv\build\include</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>F:\Code\mini-caffe\3rdparty\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>libopenblas.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>F:\Code\OpenCV3.1.0\opencv\build\x64\vc14\lib;F:\Code\mini-caffe\3rdparty\lib;$(OutDir);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>ZQCNN.lib;opencv_world310d.lib;libopenblas.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -142,81 +140,20 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>F:\Code\mini-caffe\3rdparty\include\openblas;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
-      <EnableEnhancedInstructionSet>AdvancedVectorExtensions</EnableEnhancedInstructionSet>
+      <AdditionalIncludeDirectories>$(SolutionDir)ZQCNN;F:\Code\mini-caffe\3rdparty\include\openblas;F:\Code\OpenCV3.1.0\opencv\build\include</AdditionalIncludeDirectories>
+      <OpenMPSupport>true</OpenMPSupport>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>F:\Code\mini-caffe\3rdparty\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>libopenblas.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>ZQCNN.lib;libopenblas.lib;opencv_world310.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>F:\Code\OpenCV3.1.0\opencv\build\x64\vc14\lib;F:\Code\mini-caffe\3rdparty\lib;$(OutDir);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="layers_c\zq_cnn_addbias_32f_align_c.c" />
-    <ClCompile Include="layers_c\zq_cnn_batchnormscale_32f_align_c.c" />
-    <ClCompile Include="layers_c\zq_cnn_convolution_32f_align_c.c" />
-    <ClCompile Include="layers_c\zq_cnn_convolution_gemm_32f_align_c.c" />
-    <ClCompile Include="layers_c\zq_cnn_depthwise_convolution_32f_align_c.c" />
-    <ClCompile Include="layers_c\zq_cnn_dropout_32f_align_c.c" />
-    <ClCompile Include="layers_c\zq_cnn_eltwise_32f_align_c.c" />
-    <ClCompile Include="layers_c\zq_cnn_innerproduct_32f_align_c.c" />
-    <ClCompile Include="layers_c\zq_cnn_innerproduct_gemm_32f_align_c.c" />
-    <ClCompile Include="layers_c\zq_cnn_lrn_32f_align_c.c" />
-    <ClCompile Include="layers_c\zq_cnn_pooling_32f_align_c.c" />
-    <ClCompile Include="layers_c\zq_cnn_prelu_32f_align_c.c" />
-    <ClCompile Include="layers_c\zq_cnn_relu_32f_align_c.c" />
-    <ClCompile Include="layers_c\zq_cnn_resize_32f_align_c.c" />
-    <ClCompile Include="layers_c\zq_cnn_softmax_32f_align_c.c" />
-    <ClCompile Include="math\zq_avx_mathfun.c" />
-    <ClCompile Include="math\zq_sse_mathfun.c" />
-    <ClCompile Include="ZQ_CNN_Forward_SSEUtils.cpp" />
-    <ClCompile Include="ZQ_CNN_Tensor4D.cpp" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="layers_c\zq_cnn_addbias_32f_align_c.h" />
-    <ClInclude Include="layers_c\zq_cnn_addbias_32f_align_c_raw.h" />
-    <ClInclude Include="layers_c\zq_cnn_batchnormscale_32f_align_c.h" />
-    <ClInclude Include="layers_c\zq_cnn_batchnormscale_32f_align_c_raw.h" />
-    <ClInclude Include="layers_c\zq_cnn_convolution_32f_align_c.h" />
-    <ClInclude Include="layers_c\zq_cnn_convolution_32f_align_c_raw.h" />
-    <ClInclude Include="layers_c\zq_cnn_convolution_gemm_32f_align_c.h" />
-    <ClInclude Include="layers_c\zq_cnn_convolution_gemm_32f_align_c_raw.h" />
-    <ClInclude Include="layers_c\zq_cnn_depthwise_convolution_32f_align_c.h" />
-    <ClInclude Include="layers_c\zq_cnn_depthwise_convolution_32f_align_c_raw.h" />
-    <ClInclude Include="layers_c\zq_cnn_dropout_32f_align_c.h" />
-    <ClInclude Include="layers_c\zq_cnn_dropout_32f_align_c_raw.h" />
-    <ClInclude Include="layers_c\zq_cnn_eltwise_32f_align_c.h" />
-    <ClInclude Include="layers_c\zq_cnn_eltwise_32f_align_c_raw.h" />
-    <ClInclude Include="layers_c\zq_cnn_innerproduct_32f_align_c.h" />
-    <ClInclude Include="layers_c\zq_cnn_innerproduct_32f_align_c_raw.h" />
-    <ClInclude Include="layers_c\zq_cnn_innerproduct_gemm_32f_align_c.h" />
-    <ClInclude Include="layers_c\zq_cnn_innerproduct_gemm_32f_align_c_raw.h" />
-    <ClInclude Include="layers_c\zq_cnn_lrn_32f_align_c.h" />
-    <ClInclude Include="layers_c\zq_cnn_lrn_32f_align_c_raw.h" />
-    <ClInclude Include="layers_c\zq_cnn_pooling_32f_align_c.h" />
-    <ClInclude Include="layers_c\zq_cnn_pooling_32f_align_c_raw.h" />
-    <ClInclude Include="layers_c\zq_cnn_prelu_32f_align_c.h" />
-    <ClInclude Include="layers_c\zq_cnn_prelu_32f_align_c_raw.h" />
-    <ClInclude Include="layers_c\zq_cnn_relu_32f_align_c.h" />
-    <ClInclude Include="layers_c\zq_cnn_relu_32f_align_c_raw.h" />
-    <ClInclude Include="layers_c\zq_cnn_resize_32f_align_c.h" />
-    <ClInclude Include="layers_c\zq_cnn_resize_32f_align_c_raw.h" />
-    <ClInclude Include="layers_c\zq_cnn_softmax_32f_align_c.h" />
-    <ClInclude Include="layers_c\zq_cnn_softmax_32f_align_c_raw.h" />
-    <ClInclude Include="math\zq_avx_mathfun.h" />
-    <ClInclude Include="math\zq_sse_mathfun.h" />
-    <ClInclude Include="ZQ_CNN_BBox.h" />
-    <ClInclude Include="ZQ_CNN_BBoxUtils.h" />
-    <ClInclude Include="ZQ_CNN_Defines.h" />
-    <ClInclude Include="ZQ_CNN_Forward_SSEUtils.h" />
-    <ClInclude Include="ZQ_CNN_Layer.h" />
-    <ClInclude Include="ZQ_CNN_MTCNN.h" />
-    <ClInclude Include="ZQ_CNN_Net.h" />
-    <ClInclude Include="ZQ_CNN_Tensor4D.h" />
+    <ClCompile Include="SampleSSD.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

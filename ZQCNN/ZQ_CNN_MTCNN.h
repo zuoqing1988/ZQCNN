@@ -2,130 +2,12 @@
 #define _ZQ_CNN_MTCNN_H_
 #pragma once
 #include "ZQ_CNN_Net.h"
-#include "ZQ_CNN_BBox.h"
+#include "ZQ_CNN_BBoxUtils.h"
 #include <omp.h>
 namespace ZQ
 {
 	class ZQ_CNN_MTCNN
 	{
-	public:
-		using BBox = ZQ::ZQ_CNN_BBox;
-		using OrderScore = ZQ::ZQ_CNN_OrderScore;
-		
-		static bool _cmp_score(const OrderScore& lsh, const OrderScore& rsh)
-		{
-			return lsh.score < rsh.score;
-		}
-
-		static void _nms(std::vector<BBox> &boundingBox, std::vector<OrderScore> &bboxScore, const float overlap_threshold, const std::string& modelname = "Union")
-		{
-			if (boundingBox.empty())
-			{
-				return;
-			}
-			std::vector<int> heros;
-			//sort the score
-			sort(bboxScore.begin(), bboxScore.end(), _cmp_score);
-
-			int order = 0;
-			float IOU = 0;
-			float maxX = 0;
-			float maxY = 0;
-			float minX = 0;
-			float minY = 0;
-			while (bboxScore.size() > 0)
-			{
-				order = bboxScore.back().oriOrder;
-				bboxScore.pop_back();
-				if (order < 0)continue;
-				heros.push_back(order);
-				boundingBox.at(order).exist = false;//delete it
-
-				for (int num = 0; num < boundingBox.size(); num++)
-				{
-					if (boundingBox.at(num).exist)
-					{
-						//the iou
-						maxX = (boundingBox.at(num).row1 > boundingBox.at(order).row1) ? boundingBox.at(num).row1 : boundingBox.at(order).row1;
-						maxY = (boundingBox.at(num).col1 > boundingBox.at(order).col1) ? boundingBox.at(num).col1 : boundingBox.at(order).col1;
-						minX = (boundingBox.at(num).row2 < boundingBox.at(order).row2) ? boundingBox.at(num).row2 : boundingBox.at(order).row2;
-						minY = (boundingBox.at(num).col2 < boundingBox.at(order).col2) ? boundingBox.at(num).col2 : boundingBox.at(order).col2;
-						//maxX1 and maxY1 reuse 
-						maxX = ((minX - maxX + 1) > 0) ? (minX - maxX + 1) : 0;
-						maxY = ((minY - maxY + 1) > 0) ? (minY - maxY + 1) : 0;
-						//IOU reuse for the area of two bbox
-						IOU = maxX * maxY;
-						if (!modelname.compare("Union"))
-							IOU = IOU / (boundingBox.at(num).area + boundingBox.at(order).area - IOU);
-						else if (!modelname.compare("Min"))
-						{
-							IOU = IOU / ((boundingBox.at(num).area < boundingBox.at(order).area) ? boundingBox.at(num).area : boundingBox.at(order).area);
-						}
-						if (IOU > overlap_threshold)
-						{
-							boundingBox.at(num).exist = false;
-							for (std::vector<OrderScore>::iterator it = bboxScore.begin(); it != bboxScore.end(); it++)
-							{
-								if ((*it).oriOrder == num)
-								{
-									(*it).oriOrder = -1;
-									break;
-								}
-							}
-						}
-					}
-				}
-			}
-			for (int i = 0; i < heros.size(); i++)
-				boundingBox.at(heros.at(i)).exist = true;
-			//clear exist= false;
-			for (int i = boundingBox.size() - 1; i >= 0; i--)
-			{
-				if (!boundingBox[i].exist)
-				{
-					boundingBox.erase(boundingBox.begin() + i);
-				}
-			}
-		}
-
-		static void _refine_and_square_bbox(std::vector<BBox> &vecBbox, const int width, const int height)
-		{
-			float bbw = 0, bbh = 0, maxSide = 0;
-			float h = 0, w = 0;
-			float x1 = 0, y1 = 0, x2 = 0, y2 = 0;
-			for (std::vector<BBox>::iterator it = vecBbox.begin(); it != vecBbox.end(); it++)
-			{
-				if ((*it).exist)
-				{
-					bbh = (*it).row2 - (*it).row1 + 1;
-					bbw = (*it).col2 - (*it).col1 + 1;
-					x1 = (*it).row1 + (*it).regreCoord[1] * bbh;
-					y1 = (*it).col1 + (*it).regreCoord[0] * bbw;
-					x2 = (*it).row2 + (*it).regreCoord[3] * bbh;
-					y2 = (*it).col2 + (*it).regreCoord[2] * bbw;
-
-					h = x2 - x1 + 1;
-					w = y2 - y1 + 1;
-
-					maxSide = (h > w) ? h : w;
-					x1 = x1 + h*0.5 - maxSide*0.5;
-					y1 = y1 + w*0.5 - maxSide*0.5;
-					(*it).row2 = round(x1 + maxSide - 1);
-					(*it).col2 = round(y1 + maxSide - 1);
-					(*it).row1 = round(x1);
-					(*it).col1 = round(y1);
-
-					//boundary check
-					if ((*it).row1 < 0)(*it).row1 = 0;
-					if ((*it).col1 < 0)(*it).col1 = 0;
-					if ((*it).row2 > height)(*it).row2 = height - 1;
-					if ((*it).col2 > width)(*it).col2 = width - 1;
-
-					it->area = (it->row2 - it->row1)*(it->col2 - it->col1);
-				}
-			}
-		}
-
 	public:
 		using string = std::string;
 		ZQ_CNN_MTCNN()
@@ -202,7 +84,7 @@ namespace ZQ
 			}
 		}
 
-		bool Find(const unsigned char* bgr_img, int _width, int _height, int _widthStep, std::vector<BBox>& results)
+		bool Find(const unsigned char* bgr_img, int _width, int _height, int _widthStep, std::vector<ZQ_CNN_BBox>& results)
 		{
 			double t1 = omp_get_wtime();
 			if (width != _width || height != _height)
@@ -225,10 +107,10 @@ namespace ZQ
 			if(show_debug_info)
 				printf("convert cost: %.3f ms\n", 1000 * (t2 - t1));
 
-			OrderScore order;
+			ZQ_CNN_OrderScore order;
 			pnet.TurnOffShowDebugInfo();
-			std::vector<std::vector<BBox>> bounding_boxes(scales.size());
-			std::vector<std::vector<OrderScore>> bounding_scores(scales.size());
+			std::vector<std::vector<ZQ_CNN_BBox>> bounding_boxes(scales.size());
+			std::vector<std::vector<ZQ_CNN_OrderScore>> bounding_scores(scales.size());
 			for (int i = 0; i < scales.size(); i++)
 			{
 				int changedH = (int)ceil(height*scales[i]);
@@ -257,8 +139,8 @@ namespace ZQ
 				int locationPixStep = location->GetPixelStep();
 				const float *p = score->GetFirstPixelPtr() + 1;
 				const float *plocal = location->GetFirstPixelPtr();
-				BBox bbox;
-				OrderScore order;
+				ZQ_CNN_BBox bbox;
+				ZQ_CNN_OrderScore order;
 				for (int row = 0; row < scoreH; row++)
 				{
 					for (int col = 0; col < scoreW; col++)
@@ -284,19 +166,19 @@ namespace ZQ
 						plocal += locationPixStep;
 					}
 				}
-				_nms(bounding_boxes[i], bounding_scores[i], 0.5f/*nms_threshold[0]*/, "Union");
+				ZQ_CNN_BBoxUtils::_nms(bounding_boxes[i], bounding_scores[i], 0.5f/*nms_threshold[0]*/, "Union");
 				double t14 = omp_get_wtime();
 				if (show_debug_info)
 					printf("nms cost: %.3f ms\n", 1000 * (t14 - t13));
 				
 			}
 			
-			std::vector<BBox> firstBbox;
-			std::vector<OrderScore> firstOrderScore;
+			std::vector<ZQ_CNN_BBox> firstBbox;
+			std::vector<ZQ_CNN_OrderScore> firstOrderScore;
 			int count = 0;
 			for (int i = 0; i < scales.size(); i++)
 			{
-				std::vector<BBox>::iterator it = bounding_boxes[i].begin();
+				std::vector<ZQ_CNN_BBox>::iterator it = bounding_boxes[i].begin();
 				for (; it != bounding_boxes[i].end(); it++)
 				{
 					if ((*it).exist)
@@ -314,8 +196,8 @@ namespace ZQ
 			//the first stage's nms
 			if (count < 1) return false;
 			double t15 = omp_get_wtime();
-			_nms(firstBbox, firstOrderScore, nms_thresh[0], "Union");
-			_refine_and_square_bbox(firstBbox, width, height);
+			ZQ_CNN_BBoxUtils::_nms(firstBbox, firstOrderScore, nms_thresh[0], "Union");
+			ZQ_CNN_BBoxUtils::_refine_and_square_bbox(firstBbox, width, height);
 			double t16 = omp_get_wtime();
 			if (show_debug_info)
 				printf("nms cost: %.3f ms\n", 1000 * (t16 - t15));
@@ -330,9 +212,9 @@ namespace ZQ
 			//second stage
 			rnet.TurnOffShowDebugInfo();
 			count = 0;
-			std::vector<BBox>::iterator it = firstBbox.begin();
-			std::vector<BBox> secondBbox;
-			std::vector<OrderScore> secondScore;
+			std::vector<ZQ_CNN_BBox>::iterator it = firstBbox.begin();
+			std::vector<ZQ_CNN_BBox> secondBbox;
+			std::vector<ZQ_CNN_OrderScore> secondScore;
 			std::vector<int> src_off_x, src_off_y, src_rect_w, src_rect_h;
 			int r_count = 0;
 			for (; it != firstBbox.end(); it++)
@@ -401,8 +283,8 @@ namespace ZQ
 				if (!secondBbox[i].exist)
 					secondBbox.erase(secondBbox.begin() + i);
 			}
-			_nms(secondBbox, secondScore, nms_thresh[1], "Union");
-			_refine_and_square_bbox(secondBbox, width, height);
+			ZQ_CNN_BBoxUtils::_nms(secondBbox, secondScore, nms_thresh[1], "Union");
+			ZQ_CNN_BBoxUtils::_refine_and_square_bbox(secondBbox, width, height);
 
 			double t4 = omp_get_wtime();
 			if (show_debug_info)
@@ -416,8 +298,8 @@ namespace ZQ
 			onet.TurnOffShowDebugInfo();
 			count = 0;
 			it = secondBbox.begin();
-			std::vector<BBox> thirdBbox;
-			std::vector<OrderScore> thirdScore;
+			std::vector<ZQ_CNN_BBox> thirdBbox;
+			std::vector<ZQ_CNN_OrderScore> thirdScore;
 			double t9 = omp_get_wtime();
 			double part1 = 0, part2 = 0;
 			int o_count = 0;
@@ -497,8 +379,8 @@ namespace ZQ
 				if (!thirdBbox[i].exist)
 					thirdBbox.erase(thirdBbox.begin() + i);
 			}
-			_refine_and_square_bbox(thirdBbox, width, height);
-			_nms(thirdBbox, thirdScore, nms_thresh[2], "Min");
+			ZQ_CNN_BBoxUtils::_refine_and_square_bbox(thirdBbox, width, height);
+			ZQ_CNN_BBoxUtils::_nms(thirdBbox, thirdScore, nms_thresh[2], "Min");
 			double t5 = omp_get_wtime();
 			if (show_debug_info)
 				printf("run Onet [%d] times (%.3f ms), candidate after nms: %d \n", o_count,1000*(t32-t31), count);

@@ -1,5 +1,9 @@
 ZQCNN-v0.0是ZuoQing参照mini-caffe写的forward库，随便用用
 
+2018-07-26日更新
+
+支持MobileNet-SSD。caffemodel转我用的模型参考export_mobilenet_SSD_caffemodel_to_nchw_binary.m。需要编译出matcaffe才行。
+
 2018-06-05日更新
 
 跟上时代潮流、发布源码。
@@ -11,7 +15,7 @@ Mobilenet-Sphereface-10BN512文件下载
 链接：https://pan.baidu.com/s/16l9419FElfV3Tdcx9mjibw 密码：dm3c
 
 
-first提交
+第一次提交
 
 模型文件从此处下载链接：https://pan.baidu.com/s/1oVYJMOAqc8hi-1IuY1qhlA 密码：4gi0
 

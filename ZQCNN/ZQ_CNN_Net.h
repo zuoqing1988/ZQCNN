@@ -77,6 +77,7 @@ namespace ZQ
 					top_ptrs.push_back(blobs[tops[i][j]]);
 				
 				layers[i]->show_debug_info = show_debug_info;
+				
 				if (!layers[i]->Forward(&bottom_ptrs, &top_ptrs))
 				{
 					blobs[0] = 0;
@@ -374,6 +375,114 @@ namespace ZQ
 						return false;
 					}
 				}
+				else if (_strcmpi(&buf[0], "Permute") == 0)
+				{
+					if (layers.size() == 0)
+					{
+						std::cout << "Input layer must be the first!\n";
+						return false;
+					}
+					ZQ_CNN_Layer* cur_layer = new ZQ_CNN_Layer_Permute();
+					if (cur_layer == 0) {
+						std::cout << "failed to create a Permute layer!\n";
+						return false;
+					}
+					if (!_add_layer_and_blobs(cur_layer, line, false))
+					{
+						delete cur_layer;
+						return false;
+					}
+				}
+				else if (_strcmpi(&buf[0], "Flatten") == 0)
+				{
+					if (layers.size() == 0)
+					{
+						std::cout << "Input layer must be the first!\n";
+						return false;
+					}
+					ZQ_CNN_Layer* cur_layer = new ZQ_CNN_Layer_Flatten();
+					if (cur_layer == 0) {
+						std::cout << "failed to create a Flatten layer!\n";
+						return false;
+					}
+					if (!_add_layer_and_blobs(cur_layer, line, false))
+					{
+						delete cur_layer;
+						return false;
+					}
+				}
+				else if (_strcmpi(&buf[0], "Reshape") == 0)
+				{
+					if (layers.size() == 0)
+					{
+						std::cout << "Input layer must be the first!\n";
+						return false;
+					}
+					ZQ_CNN_Layer* cur_layer = new ZQ_CNN_Layer_Reshape();
+					if (cur_layer == 0) {
+						std::cout << "failed to create a Reshape layer!\n";
+						return false;
+					}
+					if (!_add_layer_and_blobs(cur_layer, line, false))
+					{
+						delete cur_layer;
+						return false;
+					}
+				}
+				else if (_strcmpi(&buf[0], "PriorBox") == 0)
+				{
+					if (layers.size() == 0)
+					{
+						std::cout << "Input layer must be the first!\n";
+						return false;
+					}
+					ZQ_CNN_Layer* cur_layer = new ZQ_CNN_Layer_PriorBox();
+					if (cur_layer == 0) {
+						std::cout << "failed to create a PriorBox layer!\n";
+						return false;
+					}
+					if (!_add_layer_and_blobs(cur_layer, line, false))
+					{
+						delete cur_layer;
+						return false;
+					}
+				}
+				else if (_strcmpi(&buf[0], "Concat") == 0)
+				{
+					if (layers.size() == 0)
+					{
+						std::cout << "Input layer must be the first!\n";
+						return false;
+					}
+					ZQ_CNN_Layer* cur_layer = new ZQ_CNN_Layer_Concat();
+					if (cur_layer == 0) {
+						std::cout << "failed to create a Concat layer!\n";
+						return false;
+					}
+					if (!_add_layer_and_blobs(cur_layer, line, false))
+					{
+						delete cur_layer;
+						return false;
+					}
+				}
+				else if (_strcmpi(&buf[0], "DetectionOutput") == 0)
+				{
+					if (layers.size() == 0)
+					{
+						std::cout << "Input layer must be the first!\n";
+						return false;
+					}
+					ZQ_CNN_Layer* cur_layer = new ZQ_CNN_Layer_DetectionOutput();
+					if (cur_layer == 0) {
+						std::cout << "failed to create a DetectionOutput layer!\n";
+						return false;
+					}
+					if (!_add_layer_and_blobs(cur_layer, line, false))
+					{
+						delete cur_layer;
+						return false;
+					}
+				}
 				else if (_strcmpi(&buf[0], "Input") == 0)
 				{
 					if (has_input_layer)
@@ -547,7 +656,7 @@ namespace ZQ
 						std::cout << "unknown blob " << bottom_names[j] << " in Layer " << layers[i]->name << "\n";
 						return false;
 					}
-					if (j == 0)
+					/*if (j == 0)
 					{
 						cur_bottom_c = blob_dim_C[name_it->second];
 						cur_bottom_h = blob_dim_H[name_it->second];
@@ -562,20 +671,57 @@ namespace ZQ
 							std::cout << "Dimension mismatch detected in layer " << layers[i]->name << "\n";
 							return false;
 						}
-					}
+					}*/
 				}
 				std::vector<std::string>& top_names = layers[i]->top_names;
 				for (int j = 0; j < top_names.size(); j++)
 				{
 					std::map<std::string, int>::iterator name_it = map_name_to_blob_idx.find(top_names[j]);
 					visited[name_it->second] = true;
-					layers[i]->GetTopDim(blob_dim_C[name_it->second], blob_dim_H[name_it->second], blob_dim_W[name_it->second]);
+					//layers[i]->GetTopDim(blob_dim_C[name_it->second], blob_dim_H[name_it->second], blob_dim_W[name_it->second]);
 				}
 			}
-			for (int i = 1; i < blob_num; i++)
+
+			/*for (int i = 1; i < blob_num; i++)
 			{
 				blobs[i]->ChangeSize(1, blob_dim_H[i], blob_dim_W[i], blob_dim_C[i], 0, 0);
+			}*/
+
+			if (!_setup())
+			{
+				return false;
 			}
+			return true;
+		}
+
+		bool _setup()
+		{
+			ZQ_CNN_Tensor4D_NHW_C_Align0 input;
+			input.SetShape(1, input_C, input_H, input_W);
+			if (map_name_to_blob_idx.size() == 0 || map_name_to_layer_idx.size() == 0 || tops.size() == 0)
+				return false;
+			
+			blobs[0] = &input;
+
+			for (int i = 0; i < layers.size(); i++)
+			{
+				std::vector<ZQ_CNN_Tensor4D*> bottom_ptrs, top_ptrs;
+				for (int j = 0; j < bottoms[i].size(); j++)
+					bottom_ptrs.push_back(blobs[bottoms[i][j]]);
+				for (int j = 0; j < tops[i].size(); j++)
+					top_ptrs.push_back(blobs[tops[i][j]]);
+
+				layers[i]->show_debug_info = show_debug_info;
+				if (!layers[i]->LayerSetup(&bottom_ptrs, &top_ptrs))
+				{
+					blobs[0] = 0;
+					tops[0][0] = 0;
+					printf("failed to setup layer: %s\n", layers[i]->name.c_str());
+					return false;
+				}
+			}
+			blobs[0] = 0;
+			tops[0][0] = 0;
 			return true;
 		}
 	};

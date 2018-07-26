@@ -95,7 +95,6 @@ void zq_cnn_softmax_32f_align0_C(
 	int in_SliceStep
 )
 {
-#if 1
 	/* value = exp( value - global max value )
 	 sum all value
 	 value = value / sum*/
@@ -131,38 +130,103 @@ void zq_cnn_softmax_32f_align0_C(
 			}
 		}
 	}
+}
 
-#else 
-	for (int n = 0; n < in_N; n++)
+void zq_cnn_softmax_32f_align0_H(
+	float* in_tensor4D_data,	// in & out
+	int in_N,
+	int in_H,
+	int in_W,
+	int in_C,
+	int in_alignPixelStep,
+	int in_widthStep,
+	int in_SliceStep
+)
+{
+	/* value = exp( value - global max value )
+	sum all value
+	value = value / sum*/
+	float max_val, tmp_val, sum_val;
+	int n, h, w, c;
+	float* slice_ptr, *row_ptr, *pix_ptr, *c_ptr;
+	for (n = 0, slice_ptr = in_tensor4D_data; n < in_N; n++, slice_ptr += in_SliceStep)
 	{
-		for (int h = 0; h < in_H; h++)
+		for (c = 0, c_ptr = slice_ptr; c < in_C; c++, c_ptr ++)
 		{
-			for (int w = 0; w < in_W; w++)
+			for (w = 0, pix_ptr = c_ptr; w < in_W; w++, pix_ptr += in_alignPixelStep)
 			{
-				float* cur_data = in_tensor4D_data + n*in_SliceStep + h*in_widthStep + w*in_alignPixelStep;
-				float sum = 0;
-				float max_val = -FLT_MAX;
-				for (int c = 0; c < in_C; c++)
+				//compute max_val
+				max_val = -FLT_MAX;
+				for (h = 0, row_ptr = pix_ptr; h < in_H; h++, row_ptr+=in_widthStep)
+					max_val = __max(max_val, *(row_ptr));
+
+				//compute sum
+
+				sum_val = 0;
+				for (h = 0, row_ptr = pix_ptr; h < in_H; h++, row_ptr+=in_widthStep)
 				{
-					max_val = __max(max_val, cur_data[c]);
+					tmp_val = exp((*row_ptr) - max_val);
+					sum_val += tmp_val;
+					*row_ptr = tmp_val;
 				}
-				for (int c = 0; c < in_C; c++)
-				{
-					float tmp_val = exp(cur_data[c] - max_val);
-					sum += tmp_val;
-					cur_data[c] = tmp_val;
-				}
-				if (sum != 0)
-				{
-					for (int c = 0; c < in_C; c++)
-					{
-						cur_data[c] /= sum;
-					}
-				}
+
+
+				//divide
+				sum_val = 1.0f / sum_val;
+				for (h = 0, row_ptr = pix_ptr; h < in_H; h++, row_ptr+=in_widthStep)
+					*row_ptr *= sum_val;
 			}
 		}
 	}
-#endif
+}
+
+
+void zq_cnn_softmax_32f_align0_W(
+	float* in_tensor4D_data,	// in & out
+	int in_N,
+	int in_H,
+	int in_W,
+	int in_C,
+	int in_alignPixelStep,
+	int in_widthStep,
+	int in_SliceStep
+)
+{
+	/* value = exp( value - global max value )
+	sum all value
+	value = value / sum*/
+	float max_val, tmp_val, sum_val;
+	int n, h, w, c;
+	float* slice_ptr, *row_ptr, *pix_ptr, *c_ptr;
+	for (n = 0, slice_ptr = in_tensor4D_data; n < in_N; n++, slice_ptr += in_SliceStep)
+	{
+		for (h = 0, row_ptr = slice_ptr; h < in_H; h++, row_ptr += in_widthStep)
+		{
+			for (c = 0, c_ptr = row_ptr; c < in_C; c++, c_ptr ++)
+			{
+				//compute max_val
+				max_val = -FLT_MAX;
+				for (w = 0, pix_ptr = c_ptr; w < in_W; w++, pix_ptr+=in_alignPixelStep)
+					max_val = __max(max_val, *(pix_ptr));
+
+				//compute sum
+
+				sum_val = 0;
+				for (w = 0, pix_ptr = c_ptr; w < in_W; w++, pix_ptr+=in_alignPixelStep)
+				{
+					tmp_val = exp((*pix_ptr) - max_val);
+					sum_val += tmp_val;
+					*pix_ptr = tmp_val;
+				}
+
+
+				//divide
+				sum_val = 1.0f / sum_val;
+				for (w = 0, pix_ptr = c_ptr; w < in_W; w++, pix_ptr+=in_alignPixelStep)
+					*pix_ptr *= sum_val;
+			}
+		}
+	}
 }
 
 #if defined(__cplusplus) || defined(c_plusplus) 

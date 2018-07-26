@@ -8,9 +8,9 @@ using namespace ZQ;
 using namespace std;
 using namespace cv;
 
-static void Draw(cv::Mat &image, const std::vector<ZQ_CNN_MTCNN::BBox>& thirdBbox)
+static void Draw(cv::Mat &image, const std::vector<ZQ_CNN_BBox>& thirdBbox)
 {
-	std::vector<ZQ_CNN_MTCNN::BBox>::const_iterator it = thirdBbox.begin();
+	std::vector<ZQ_CNN_BBox>::const_iterator it = thirdBbox.begin();
 	for (; it != thirdBbox.end(); it++)
 	{
 		if ((*it).exist)
@@ -45,7 +45,7 @@ int main()
 		return EXIT_FAILURE;
 	}
 
-	std::vector<ZQ_CNN_MTCNN::BBox> thirdBbox;
+	std::vector<ZQ_CNN_BBox> thirdBbox;
 	ZQ_CNN_MTCNN mtcnn;
 	std::string result_name;
 
@@ -60,7 +60,7 @@ int main()
 
 	mtcnn.SetPara(image0.cols, image0.rows, 60, 0.6, 0.7, 0.7, 0.5, 0.5, 0.5);
 
-	int iters = 1;
+	int iters = 100;
 	double t1 = omp_get_wtime();
 	for (int i = 0; i < iters; i++)
 	{

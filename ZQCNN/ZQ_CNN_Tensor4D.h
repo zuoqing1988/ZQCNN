@@ -16,11 +16,13 @@ namespace ZQ
 			ALIGN_128bit = ALIGN_0 + 1,
 			ALIGN_256bit = ALIGN_128bit + 1
 		};
-	
+
 	public:
 
 		float* const GetFirstPixelPtr() { return firstPixelData; }
 		const float* GetFirstPixelPtr() const { return firstPixelData; }
+		void SetShape(int in_N, int in_C, int in_H, int in_W) { shape_nchw[0] = in_N; shape_nchw[1] = in_C; shape_nchw[2] = in_H; shape_nchw[3] = in_W; }
+		void GetShape(int& out_N, int& out_C, int& out_H, int& out_W) const { out_N = shape_nchw[0]; out_C = shape_nchw[1]; out_H = shape_nchw[2]; out_W = shape_nchw[3]; }
 		const int GetN() const { return N; }
 		const int GetH() const { return H; }
 		const int GetW() const { return W; }
@@ -66,6 +68,25 @@ namespace ZQ
 				}
 			}
 			return true;
+		}
+
+		virtual void ConvertToCompactNCHW(float* data) const
+		{
+			int CHW = C*H*W;
+			int HW = H*W;
+			for (int n = 0; n < N; n++)
+			{
+				for (int c = 0; c < C; c++)
+				{
+					for (int h = 0; h < H; h++)
+					{
+						for (int w = 0; w < W; w++)
+						{
+							data[n*CHW + c*HW + h*W + w] = firstPixelData[n*sliceStep + h*widthStep + w*pixelStep + c];
+						}
+					}
+				}
+			}
 		}
 
 		virtual bool CopyData(const ZQ_CNN_Tensor4D& other)
@@ -197,7 +218,242 @@ namespace ZQ
 			return true;
 		}
 
+		static bool Permute_NCHW_get_size(const int order[4], int in_N, int in_C, int in_H, int in_W,
+			int& out_N, int& out_C, int& out_H, int& out_W)
+		{
+			bool check_valid = true;
+			bool has_order_flag[4] = { false };
+			for (int i = 0; i < 4; i++)
+			{
+				if (order[i] < 0 || order[i] >= 4)
+				{
+					check_valid = false;
+					break;
+				}
+				has_order_flag[order[i]] = true;
+			}
+			if (!check_valid)
+				return false;
+			for (int i = 0; i < 4; i++)
+			{
+				if (!has_order_flag[i])
+				{
+					check_valid = false;
+					break;
+				}
+			}
+			if (!check_valid)
+				return false;
+
+			int old_dim[4] = { in_N,in_C,in_H,in_W };
+			int new_dim[4];
+			for (int i = 0; i < 4; i++)
+				new_dim[i] = old_dim[order[i]];
+			out_N = new_dim[0];
+			out_C = new_dim[1];
+			out_H = new_dim[2];
+			out_W = new_dim[3];
+			return true;
+		}
+
+		bool Permute_NCHW(ZQ_CNN_Tensor4D& output, const int order[4]) const
+		{
+			int out_N, out_C, out_H, out_W;
+			if (!Permute_NCHW_get_size(order, N, C, H, W, out_N, out_C, out_H, out_W))
+				return false;
+			if (!output.ChangeSize(out_N, out_H, out_W, out_C, 0, 0))
+				return false;
+
+			int old_steps[4] = { C*H*W,H*W,W,1 };
+			int new_steps[4] = { out_C*out_H*out_W, out_H*out_W, out_W,1 };
+			int count = old_steps[0] * N;
+			if (count)
+			{
+				std::vector<float> in_buf(count);
+				std::vector<float> out_buf(count);
+				ConvertToCompactNCHW(&in_buf[0]);
+				for (int i = 0; i < count; i++) 
+				{
+					int old_idx = 0;
+					int idx = i;
+					for (int j = 0; j < 4; j++) 
+					{
+						int cur_order = order[j];
+						old_idx += (idx / new_steps[j]) * old_steps[cur_order];
+						idx %= new_steps[j];
+					}
+					out_buf[i] = in_buf[old_idx];
+				}
+				return output.ConvertFromCompactNCHW(&out_buf[0], out_N, out_C, out_H, out_W);
+			}
+			
+			return true;
+		}
+
+		static bool Flatten_NCHW_get_size(int start_axis, int end_axis, int in_N, int in_C, int in_H, int in_W,
+			int& out_N, int& out_C, int& out_H, int& out_W)
+		{
+			int old_shape[4] = { in_N,in_C,in_H,in_W };
+			std::vector<int> shape;
+			for (int i = 0; i < start_axis; ++i) {
+				shape.push_back(old_shape[i]);
+			}
+			int flattened_dim = 1;
+			for (int i = start_axis; i <= end_axis; i++)
+				flattened_dim *= old_shape[i];
+			shape.push_back(flattened_dim);
+			
+			for (int i = end_axis + 1; i < 4; ++i) 
+			{
+				shape.push_back(old_shape[i]);
+			}
+			while (shape.size() < 4)
+			{
+				shape.push_back(1);
+			}
+			out_N = shape[0];
+			out_C = shape[1];
+			out_H = shape[2];
+			out_W = shape[3];
+			return true;
+		}
+
+		bool Flatten_NCHW(ZQ_CNN_Tensor4D& output, int start_axis, int end_axis) const
+		{
+			int old_shape[4] = { N,C,H,W };
+			std::vector<int> shape;
+			for (int i = 0; i < start_axis; ++i) {
+				shape.push_back(old_shape[i]);
+			}
+			int flattened_dim = 1;
+			for (int i = start_axis; i <= end_axis; i++)
+				flattened_dim *= old_shape[i];
+			shape.push_back(flattened_dim);
+			for (int i = end_axis + 1; i < 4; ++i) {
+				shape.push_back(old_shape[i]);
+			}
+			return Reshape_NCHW(output, shape);
+		}
+
+		static bool Reshape_NCHW_get_size(const std::vector<int>& shape, int in_N, int in_C, int in_H, int in_W,
+			int& out_N, int& out_C, int& out_H, int& out_W) 
+		{
+			if (in_N <= 0 || in_C <= 0 || in_H <= 0 || in_W <= 0)
+				return false;
+			int shape_dim = shape.size();
+			if (shape_dim > 4)
+				return false;
+			int old_dim[4] = { in_N, in_C, in_H, in_W };
+			int new_dim[4];
+			int count = in_N*in_C*in_H*in_W;
+			for (int i = shape_dim; i < 4; i++)
+				new_dim[i] = 1;
+			int unknown_num = 0;
+			int id = -1;
+			for (int i = 0; i < shape_dim; i++)
+			{
+				if (shape[i] == 0)
+				{
+					new_dim[i] = old_dim[i];
+				}
+				else if (shape[i] > 0)
+				{
+					new_dim[i] = shape[i];	
+				}
+				else
+				{
+					id = i;
+					unknown_num++;
+				}
+			}
+			
+			if (unknown_num == 0)
+			{
+				out_N = new_dim[0];
+				out_C = new_dim[1];
+				out_H = new_dim[2];
+				out_W = new_dim[3];
+				return out_N*out_C*out_H*out_W == count;
+			}
+			else if(unknown_num == 1)
+			{
+				int total = count;
+				for (int i = 0; i < 4; i++)
+				{
+					if (shape[i] >= 0)
+					{
+						if (total % new_dim[i] != 0)
+							return false;
+						total /= new_dim[i];
+					}
+				}
+				new_dim[id] = total;
+				out_N = new_dim[0];
+				out_C = new_dim[1];
+				out_H = new_dim[2];
+				out_W = new_dim[3];
+				return out_N*out_C*out_H*out_W == count;
+			}
+			else
+			{
+				return false;
+			}
+		}
+
+		bool Reshape_NCHW(ZQ_CNN_Tensor4D& output, const std::vector<int>& shape) const
+		{
+			int out_N, out_C, out_H, out_W;
+			if (!Reshape_NCHW_get_size(shape, N, C, H, W, out_N, out_C, out_H, out_W))
+				return false;
+			output.ChangeSize(out_N, out_H, out_W, out_C, 0, 0);
+			int in_HW = H*W;
+			int in_CHW = C*in_HW;
+			int out_HW = out_H*out_W;
+			int out_CHW = out_C*out_HW;
+			int idx = 0, rest, i_n, i_c, i_h, i_w;
+			int out_SliceStep = output.GetSliceStep();
+			int out_WidthStep = output.GetWidthStep();
+			int out_PixelStep = output.GetPixelStep();
+			int in_SliceStep = GetSliceStep();
+			int in_WidthStep = GetWidthStep();
+			int in_PixelStep = GetPixelStep();
+			float* out_ptr = output.GetFirstPixelPtr();
+			const float* in_ptr = GetFirstPixelPtr();
+			float* out_slice_ptr = out_ptr;
+			for (int nn = 0; nn < out_N; nn++)
+			{
+				float* out_c_ptr = out_slice_ptr;
+				for (int cc = 0; cc < out_C; cc++)
+				{
+					float* out_row_ptr = out_c_ptr;
+					for (int hh = 0; hh < out_H; hh++)
+					{
+						float* out_pix_ptr = out_row_ptr;
+						for (int ww = 0; ww < out_W; ww++)
+						{
+							rest = idx;
+							i_n = rest / in_CHW;
+							rest %= in_CHW;
+							i_c = rest / in_HW;
+							rest %= in_HW;
+							i_h = rest / W;
+							i_w = rest % W;
+							*out_pix_ptr = in_ptr[i_n*in_SliceStep + i_c + i_h*in_WidthStep + i_w*in_PixelStep];
+
+							idx++;
+							out_pix_ptr += out_PixelStep;
+						}
+						out_row_ptr += out_WidthStep;
+					}
+					out_c_ptr++;
+				}
+				out_slice_ptr += out_SliceStep;
+			}
+			return true;
+		}
+
 	protected:
+		int shape_nchw[4];
 		int N;
 		int W;
 		int H;
