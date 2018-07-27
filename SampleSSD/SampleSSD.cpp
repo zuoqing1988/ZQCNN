@@ -36,7 +36,7 @@ int main()
 		return EXIT_FAILURE;
 	}
 
-	int iters = 100;
+	int iters = 1000;
 	double t1 = omp_get_wtime();
 	for (int it = 0; it < iters; it++)
 	{

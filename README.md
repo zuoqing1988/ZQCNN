@@ -19,3 +19,28 @@ Mobilenet-Sphereface-10BN512文件下载
 
 模型文件从此处下载链接：https://pan.baidu.com/s/1tsvPNTj_cr74Ld6FgD9OVQ 密码：8eeh
 
+相关教程：
+
+(1)人脸特征向量用整数存储精度损失多少？
+https://zhuanlan.zhihu.com/p/35904005
+
+(2)千万张脸的特征向量，计算相似度提速？
+https://zhuanlan.zhihu.com/p/35955061
+
+(3)打造一款比mini-caffe更快的Forward库
+https://zhuanlan.zhihu.com/p/36410185
+
+(4)向量点积的精度问题
+https://zhuanlan.zhihu.com/p/36488847
+
+(5)ZQCNN支持Depthwise Convolution并用mobilenet改了一把SphereFaceNet-10
+https://zhuanlan.zhihu.com/p/36630082
+
+(6)跟上时代潮流，发布一些源码
+https://zhuanlan.zhihu.com/p/37708639
+
+(7)ZQCNN支持SSD，比mini-caffe快大概30%
+https://zhuanlan.zhihu.com/p/40634934
+
+(8)ZQCNN的SSD支持同一个模型随意改分辨率
+https://zhuanlan.zhihu.com/p/40676503

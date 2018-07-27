@@ -31,6 +31,12 @@ namespace ZQ
 			int out_W = output.GetW();
 			int out_C = output.GetC();
 			float bias_C = bias.GetC();
+			if (in_N <= 0 || in_H <= 0 || in_W <= 0 || in_C == 0
+				|| (in_H - filter_H + (padH << 1)) < 0  || (in_W - filter_W + (padW << 1)) < 0)
+			{
+				output.ChangeSize(0, 0, 0, 0, 0, 0);
+				return true;
+			}
 			if (filter_C != in_C || filter_N != bias_C)
 				return false;
 
@@ -94,6 +100,12 @@ namespace ZQ
 			int out_H = output.GetH();
 			int out_W = output.GetW();
 			int out_C = output.GetC();
+			if (in_N <= 0 || in_H <= 0 || in_W <= 0 || in_C == 0
+				|| (in_H - filter_H + (padH << 1)) < 0 || (in_W - filter_W + (padW << 1)) < 0)
+			{
+				output.ChangeSize(0, 0, 0, 0, 0, 0);
+				return true;
+			}
 			if (filter_C != in_C)
 				return false;
 
@@ -158,6 +170,12 @@ namespace ZQ
 			int out_W = output.GetW();
 			int out_C = output.GetC();
 			float bias_C = bias.GetC();
+			if (in_N <= 0 || in_H <= 0 || in_W <= 0 || in_C == 0
+				|| (in_H - filter_H + (padH << 1)) < 0 || (in_W - filter_W + (padW << 1)) < 0)
+			{
+				output.ChangeSize(0, 0, 0, 0, 0, 0);
+				return true;
+			}
 			if (filter_C != in_C || filter_N != 1)
 				return false;
 
@@ -221,6 +239,12 @@ namespace ZQ
 			int out_H = output.GetH();
 			int out_W = output.GetW();
 			int out_C = output.GetC();
+			if (in_N <= 0 || in_H <= 0 || in_W <= 0 || in_C == 0
+				|| (in_H - filter_H + (padH << 1)) < 0 || (in_W - filter_W + (padW << 1)) < 0)
+			{
+				output.ChangeSize(0, 0, 0, 0, 0, 0);
+				return true;
+			}
 			if (filter_C != in_C || filter_N != 1)
 				return false;
 
@@ -284,6 +308,11 @@ namespace ZQ
 			int out_W = output.GetW();
 			int out_C = output.GetC();
 			float bias_C = bias.GetC();
+			if (in_N <= 0 || in_H <= 0 || in_W <= 0 || in_C == 0)
+			{
+				output.ChangeSize(0, 0, 0, 0, 0, 0);
+				return true;
+			}
 			if (filter_H != in_H || filter_W != in_W || filter_C != in_C || filter_N != bias_C)
 				return false;
 
@@ -340,6 +369,11 @@ namespace ZQ
 			int out_H = output.GetH();
 			int out_W = output.GetW();
 			int out_C = output.GetC();
+			if (in_N <= 0 || in_H <= 0 || in_W <= 0 || in_C == 0)
+			{
+				output.ChangeSize(0, 0, 0, 0, 0, 0);
+				return true;
+			}
 			if (filter_H != in_H || filter_W != in_W || filter_C != in_C)
 				return false;
 
@@ -379,9 +413,6 @@ namespace ZQ
 			return true;
 		}
 
-		
-
-
 		static void MaxPooling(const ZQ_CNN_Tensor4D &input, ZQ_CNN_Tensor4D &output, int kernel_H, int kernel_W, int stride_H, int stride_W)
 		{
 			int in_N = input.GetN();
@@ -392,6 +423,11 @@ namespace ZQ
 			int need_H = ceil((float)(in_H - kernel_H) / stride_H + 1);
 			int need_N = in_N;
 			int need_C = in_C;
+			if (need_W <= 0 || need_H <= 0)
+			{
+				output.ChangeSize(0, 0, 0, 0, 0, 0);
+				return ;
+			}
 			bool suredivided = (in_H - kernel_H) % stride_H == 0 && (in_W - kernel_W) % stride_W == 0;
 			if (output.GetN() != need_N || output.GetH() != need_H || output.GetW() != need_W || output.GetC() != need_C)
 				output.ChangeSize(need_N, need_H, need_W, need_C, 0, 0);
@@ -417,6 +453,8 @@ namespace ZQ
 			int H = input.GetH();
 			int W = input.GetW();
 			int C = input.GetC();
+			if (N <= 0 || H <= 0 || W <= 0 || C <= 0)
+				return true;
 			if (slope.GetC() != C)
 				return false;
 			float* data = input.GetFirstPixelPtr();
@@ -437,6 +475,8 @@ namespace ZQ
 			int H = input.GetH();
 			int W = input.GetW();
 			int C = input.GetC();
+			if (N <= 0 || H <= 0 || W <= 0 || C <= 0)
+				return ;
 			float* data = input.GetFirstPixelPtr();
 			int pixelStep = input.GetPixelStep();
 			int widthStep = input.GetWidthStep();
@@ -458,6 +498,8 @@ namespace ZQ
 				int H = input.GetH();
 				int W = input.GetW();
 				int C = input.GetC();
+				if (N <= 0 || H <= 0 || W <= 0 || C <= 0)
+					return ;
 				int sliceStep = input.GetSliceStep();
 				int widthStep = input.GetWidthStep();
 				int pixStep = input.GetPixelStep();
@@ -476,7 +518,8 @@ namespace ZQ
 			int H = input.GetH();
 			int W = input.GetW();
 			int C = input.GetC();
-			
+			if (N <= 0 || H <= 0 || W <= 0 || C <= 0)
+				return true;
 			float* data = input.GetFirstPixelPtr();
 			int sliceStep = input.GetSliceStep();
 			int widthStep = input.GetWidthStep();
@@ -500,6 +543,8 @@ namespace ZQ
 			int H = input.GetH();
 			int W = input.GetW();
 			int C = input.GetC();
+			if (N <= 0 || H <= 0 || W <= 0 || C <= 0)
+				return true;
 			if (mean.GetC() != C || var.GetC() != C || slope.GetC() != C || bias.GetC() != C)
 				return false;
 			float* data = input.GetFirstPixelPtr();
@@ -522,6 +567,8 @@ namespace ZQ
 			int H = input.GetH();
 			int W = input.GetW();
 			int C = input.GetC();
+			if (N <= 0 || H <= 0 || W <= 0 || C <= 0)
+				return true;
 			if (mean.GetC() != C || var.GetC() != C)
 				return false;
 			float* data = input.GetFirstPixelPtr();
@@ -633,6 +680,8 @@ namespace ZQ
 			int H = input.GetH();
 			int W = input.GetW();
 			int C = input.GetC();
+			if (N <= 0 || H <= 0 || W <= 0 || C <= 0)
+				return true;
 			if (b.GetC() != C || a.GetC() != C)
 				return false;
 			float* data = input.GetFirstPixelPtr();
@@ -653,6 +702,8 @@ namespace ZQ
 			int H = input.GetH();
 			int W = input.GetW();
 			int C = input.GetC();
+			if (N <= 0 || H <= 0 || W <= 0 || C <= 0)
+				return true;
 			if (scale.GetC() != C || scale.GetC() != C)
 				return false;
 			float* data = input.GetFirstPixelPtr();
@@ -673,6 +724,8 @@ namespace ZQ
 			int H = input.GetH();
 			int W = input.GetW();
 			int C = input.GetC();
+			if (N <= 0 || H <= 0 || W <= 0 || C <= 0)
+				return true;
 			if (scale.GetC() != C)
 				return false;
 			float* data = input.GetFirstPixelPtr();
@@ -706,6 +759,8 @@ namespace ZQ
 			}
 			if (output.GetN() != N || output.GetH() != H || output.GetW() != W || output.GetC() != C)
 				output.ChangeSize(N, H, W, C, 0, 0);
+			if (N <= 0 || H <= 0 || W <= 0 || C <= 0)
+				return true;
 			std::vector<const float*> in_tensor_data(in_num);
 			std::vector<int> in_pixStep(in_num), in_widthStep(in_num), in_sliceStep(in_num);
 			float* out_data = output.GetFirstPixelPtr();
@@ -744,6 +799,8 @@ namespace ZQ
 			}
 			if (output.GetN() != N || output.GetH() != H || output.GetW() != W || output.GetC() != C)
 				output.ChangeSize(N, H, W, C, 0, 0);
+			if (N <= 0 || H <= 0 || W <= 0 || C <= 0)
+				return true;
 			std::vector<const float*> in_tensor_data(in_num);
 			std::vector<int> in_pixStep(in_num), in_widthStep(in_num), in_sliceStep(in_num);
 			float* out_data = output.GetFirstPixelPtr();
@@ -782,6 +839,8 @@ namespace ZQ
 			}
 			if (output.GetN() != N || output.GetH() != H || output.GetW() != W || output.GetC() != C)
 				output.ChangeSize(N, H, W, C, 0, 0);
+			if (N <= 0 || H <= 0 || W <= 0 || C <= 0)
+				return true;
 			std::vector<const float*> in_tensor_data(in_num);
 			std::vector<int> in_pixStep(in_num), in_widthStep(in_num), in_sliceStep(in_num);
 			float* out_data = output.GetFirstPixelPtr();
@@ -798,7 +857,6 @@ namespace ZQ
 				align_mode = __min(align_mode, input[i]->GetAlignType());
 			_eltwise_prod(align_mode, in_num, &in_tensor_data[0], N, H, W, C, &in_pixStep[0], &in_widthStep[0], &in_sliceStep[0], out_data, out_pixStep, out_widthStep, out_sliceStep);
 			return true;
-
 		}
 
 		static bool Eltwise_Max(const std::vector<const ZQ_CNN_Tensor4D*>& input, ZQ_CNN_Tensor4D& output)
@@ -821,6 +879,8 @@ namespace ZQ
 			}
 			if (output.GetN() != N || output.GetH() != H || output.GetW() != W || output.GetC() != C)
 				output.ChangeSize(N, H, W, C, 0, 0);
+			if (N <= 0 || H <= 0 || W <= 0 || C <= 0)
+				return true;
 			std::vector<const float*> in_tensor_data(in_num);
 			std::vector<int> in_pixStep(in_num), in_widthStep(in_num), in_sliceStep(in_num);
 			float* out_data = output.GetFirstPixelPtr();
@@ -847,6 +907,8 @@ namespace ZQ
 			int H = input.GetH();
 			int W = input.GetW();
 			int C = input.GetC();
+			if (N <= 0 || H <= 0 || W <= 0 || C <= 0)
+				return true;
 			if (output.GetN() != N || output.GetH() != H || output.GetW() != W || output.GetC() != C)
 			{
 				output.ChangeSize(N, H, W, C, 0, 0);

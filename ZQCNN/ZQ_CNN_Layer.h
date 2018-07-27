@@ -3547,7 +3547,7 @@ namespace ZQ
 
 			num_loc_classes = share_location ? 1 : num_classes;
 			int num_priors = (*bottoms)[2]->GetH() / 4;
-			if (num_priors * num_loc_classes * 4 != (*bottoms)[0]->GetC()
+			if (num_priors * num_loc_classes* 4 != (*bottoms)[0]->GetC()
 				|| num_priors * num_classes != (*bottoms)[1]->GetC())
 			{
 				printf("Number of priors must match number of location predictions\n");

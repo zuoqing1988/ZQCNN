@@ -77,7 +77,7 @@ namespace ZQ
 					top_ptrs.push_back(blobs[tops[i][j]]);
 				
 				layers[i]->show_debug_info = show_debug_info;
-				
+				//printf("%d\n", i);
 				if (!layers[i]->Forward(&bottom_ptrs, &top_ptrs))
 				{
 					blobs[0] = 0;

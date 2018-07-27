@@ -1172,6 +1172,11 @@ bool ZQ_CNN_Forward_SSEUtils::_prior_box(const ZQ_CNN_Tensor4D& input, const ZQ_
 {
 	const int layer_width = input.GetW();
 	const int layer_height = input.GetH();
+	if (layer_width <= 0 || layer_height <= 0)
+	{
+		output.ChangeSize(0, 0, 0, 0, 0, 0);
+		return true;
+	}
 	int img_width, img_height;
 	if (img_h == 0 || img_w == 0) 
 	{
@@ -1325,26 +1330,37 @@ bool ZQ_CNN_Forward_SSEUtils::_concat_NCHW_get_size(const std::vector<ZQ_CNN_Ten
 	if (axis < 0 || axis >= 4)
 		return false;
 	int in_num = inputs.size();
-	if (inputs.size() == 0)
-		return false;
-	else if (inputs.size() == 1)
+	std::vector<ZQ_CNN_Tensor4D*> valid_inputs;
+	for (int i = 0; i < inputs.size(); i++)
 	{
-		if (inputs[0] == 0)
-			return false;
-		inputs[0]->GetShape(out_N, out_C, out_H, out_W);
+		if (inputs[i] == 0)
+			continue;
+		inputs[i]->GetShape(out_N, out_C, out_H, out_W);
+		if (out_N > 0 && out_C > 0 && out_H > 0 && out_W > 0)
+			valid_inputs.push_back(inputs[i]);
+	}
+
+	if (valid_inputs.size() == 0)
+	{
+		out_N = out_H = out_W = out_C = 0;
+		return true;
+	}
+	else if (valid_inputs.size() == 1)
+	{
+		valid_inputs[0]->GetShape(out_N, out_C, out_H, out_W);
 		return true;
 	}
 	else
 	{
 		int standard_dim[4];
-		inputs[0]->GetShape(standard_dim[0], standard_dim[1], standard_dim[2], standard_dim[3]);
+		valid_inputs[0]->GetShape(standard_dim[0], standard_dim[1], standard_dim[2], standard_dim[3]);
 		int sum_out = standard_dim[axis];
-		for (int i = 1; i < inputs.size(); i++)
+		for (int i = 1; i < valid_inputs.size(); i++)
 		{
-			if (inputs[i] == 0)
+			if (valid_inputs[i] == 0)
 				return false;
 			int cur_dim[4];
-			inputs[i]->GetShape(cur_dim[0], cur_dim[1], cur_dim[2], cur_dim[3]);
+			valid_inputs[i]->GetShape(cur_dim[0], cur_dim[1], cur_dim[2], cur_dim[3]);
 			for (int j = 0; j < 4; j++)
 			{
 				if (axis == j)
@@ -1372,20 +1388,30 @@ bool ZQ_CNN_Forward_SSEUtils::_concat_NCHW(const std::vector<ZQ_CNN_Tensor4D*>& 
 	if (!_concat_NCHW_get_size(inputs, axis, out_N, out_C, out_H, out_W))
 		return false;
 	
+	std::vector<ZQ_CNN_Tensor4D*> valid_inputs;
+	for (int i = 0; i < inputs.size(); i++)
+	{
+		if (inputs[i] == 0)
+			continue;
+		
+		if (inputs[i]->GetN() > 0 && inputs[i]->GetC() > 0 && inputs[i]->GetH() > 0 && inputs[i]->GetW() > 0)
+			valid_inputs.push_back(inputs[i]);
+	}
+
 	if (axis < 0 || axis >= 4)
 		return false;
-	int in_num = inputs.size();
-	if (inputs.size() == 0)
-		return false;
-	else if (inputs.size() == 1)
+	int in_num = valid_inputs.size();
+	if (valid_inputs.size() == 0)
 	{
-		if (inputs[0] == 0)
-			return false;
-		return output.CopyData(*inputs[0]);
+		return output.ChangeSize(0, 0, 0, 0, 0, 0);
+	}
+	else if (valid_inputs.size() == 1)
+	{
+		return output.CopyData(*valid_inputs[0]);
 	}
 	else
 	{
-		if (output.GetN() != out_N || output.GetC() != out_C || output.GetH() != out_H || output.GetW())
+		if (output.GetN() != out_N || output.GetC() != out_C || output.GetH() != out_H || output.GetW() != out_W)
 		{
 			if (!output.ChangeSize(out_N, out_H, out_W, out_C, 0, 0))
 				return false;
@@ -1396,16 +1422,16 @@ bool ZQ_CNN_Forward_SSEUtils::_concat_NCHW(const std::vector<ZQ_CNN_Tensor4D*>& 
 		int out_sliceStep = output.GetSliceStep();
 		
 		float* out_ptr = output.GetFirstPixelPtr();
-		for (int i = 0; i < inputs.size(); i++)
+		for (int i = 0; i < valid_inputs.size(); i++)
 		{
-			int in_N = inputs[i]->GetN();
-			int in_C = inputs[i]->GetC();
-			int in_H = inputs[i]->GetH();
-			int in_W = inputs[i]->GetW();
-			int in_pixStep = inputs[i]->GetPixelStep();
-			int in_widthStep = inputs[i]->GetWidthStep();
-			int in_sliceStep = inputs[i]->GetSliceStep();
-			const float* in_ptr = inputs[i]->GetFirstPixelPtr();
+			int in_N = valid_inputs[i]->GetN();
+			int in_C = valid_inputs[i]->GetC();
+			int in_H = valid_inputs[i]->GetH();
+			int in_W = valid_inputs[i]->GetW();
+			int in_pixStep = valid_inputs[i]->GetPixelStep();
+			int in_widthStep = valid_inputs[i]->GetWidthStep();
+			int in_sliceStep = valid_inputs[i]->GetSliceStep();
+			const float* in_ptr = valid_inputs[i]->GetFirstPixelPtr();
 			const float* in_slice_ptr = in_ptr;
 			float* out_slice_ptr = out_ptr;
 			for (int n = 0; n < in_N; n++)
