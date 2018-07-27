@@ -19,6 +19,9 @@ Mobilenet-Sphereface-10BN512文件下载
 
 模型文件从此处下载链接：https://pan.baidu.com/s/1tsvPNTj_cr74Ld6FgD9OVQ 密码：8eeh
 
+
+
+
 相关教程：
 
 (1)人脸特征向量用整数存储精度损失多少？
