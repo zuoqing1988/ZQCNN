@@ -21,7 +21,7 @@ ZQCNN-v0.0是ZuoQing参照mini-caffe写的forward库，随便用用
 
 **人脸检测**
 
-[MTCNN](https://pan.baidu.com/s/1f6_wQ2kXiTZFyH6PFIDc2Q)
+[MTCNN](https://pan.baidu.com/s/1f6_wQ2kXiTZFyH6PFIDc2Q) 从[MTCNN](https://github.com/kpzhang93/MTCNN_face_detection_alignment)转的格式
 
 **人脸识别**
 
