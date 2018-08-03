@@ -8,17 +8,18 @@ using namespace std;
 using namespace cv;
 int main()
 {
+	int num_threads = 1;
 	for (int out_it = 0; out_it < 10; out_it++)
 	{
 
-		openblas_set_num_threads(1);
-		Mat image0 = cv::imread("data\\00.jpg", 1);
+		openblas_set_num_threads(num_threads);
+		Mat image0 = cv::imread("data\\00_.jpg", 1);
 		if (image0.empty())
 		{
 			cout << "empty image\n";
 			return EXIT_FAILURE;
 		}
-		Mat image1 = cv::imread("data\\01.jpg", 1);
+		Mat image1 = cv::imread("data\\01_.jpg", 1);
 		if (image1.empty())
 		{
 			cout << "empty image\n";
@@ -31,7 +32,8 @@ int main()
 
 
 		ZQ_CNN_Net net;
-		if (!net.LoadFrom("model\\mobilenet_sphereface10bn512.zqparams", "model\\mobilenet_sphereface10bn512_iter_50000.nchwbin"))
+		if (!net.LoadFrom("model\\model-r50-am.zqparams", "model\\model-r50-am.nchwbin"))
+		//if (!net.LoadFrom("model\\mobilenet_sphereface10bn512.zqparams", "model\\mobilenet_sphereface10bn512_iter_50000.nchwbin"))
 		//if (!net.LoadFrom("model\\sphereface04bn256.zqparams", "model\\sphereface04bn256_iter_26000.nchwbin"))
 		//if (!net.LoadFrom("model\\sphereface20.zqparams", "model\\sphereface20.nchwbin"))
 		//if (!net.LoadFrom("model\\sphereface04.zqparams", "model\\sphereface04.nchwbin"))
@@ -41,12 +43,12 @@ int main()
 			return EXIT_FAILURE;
 		}
 
-		int iters = 10;
+		int iters = 100;
 		double t1 = omp_get_wtime();
 		for (int it = 0; it < iters; it++)
 		{
 			double t3 = omp_get_wtime();
-			if (!net.Forward(input0))
+			if (!net.Forward(input0, num_threads))
 			{
 				cout << "failed to run\n";
 				return EXIT_FAILURE;
@@ -66,7 +68,7 @@ int main()
 		double t3 = omp_get_wtime();
 		for (int it = 0; it < iters; it++)
 		{
-			if (!net.Forward(input1))
+			if (!net.Forward(input1, num_threads))
 			{
 				cout << "failed to run\n";
 				return EXIT_FAILURE;

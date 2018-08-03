@@ -81,6 +81,69 @@ void _convolution_handle_special_channel_case_N_equal_one(bool& has_handled, int
 	}
 }
 
+void _convolution_handle_special_channel_case_N_equal_one_omp(bool& has_handled, int align_mode, const float* in_data, int in_N, int in_H, int in_W, int in_C, int in_pixStep, int in_widthStep, int in_sliceStep,
+	const float* filter_data, int filter_N, int filter_H, int filter_W, int filter_C, int filter_pixStep, int filter_widthStep, int filter_sliceStep,
+	int strideH, int strideW, float* out_data, int out_N, int out_H, int out_W, int out_C, int out_pixStep, int out_widthStep, int out_sliceStep, int num_threads)
+{
+	has_handled = false;
+	if (out_N != 1)
+		return;
+	if (align_mode == ZQ_CNN_Tensor4D::ALIGN_128bit)
+	{
+		if (filter_H == 3 && filter_W == 3)
+		{
+			if (in_C == 3)
+			{
+				zq_cnn_conv_no_padding_32f_align128bit_kernel3x3_C3_omp(in_data, in_N, in_H, in_W, in_C, in_pixStep, in_widthStep, in_sliceStep,
+					filter_data, filter_N, filter_H, filter_W, filter_C, filter_pixStep, filter_widthStep, filter_sliceStep, strideH, strideW,
+					out_data, out_N, out_H, out_W, out_C, out_pixStep, out_widthStep, out_sliceStep, num_threads);
+				has_handled = true;
+			}
+		}
+	}
+	else if (align_mode == ZQ_CNN_Tensor4D::ALIGN_256bit)
+	{
+		if (filter_H == 3 && filter_W == 3)
+		{
+			if (in_C == 3)
+			{
+				zq_cnn_conv_no_padding_32f_align256bit_kernel3x3_C3_omp(in_data, in_N, in_H, in_W, in_C, in_pixStep, in_widthStep, in_sliceStep,
+					filter_data, filter_N, filter_H, filter_W, filter_C, filter_pixStep, filter_widthStep, filter_sliceStep, strideH, strideW,
+					out_data, out_N, out_H, out_W, out_C, out_pixStep, out_widthStep, out_sliceStep, num_threads);
+				has_handled = true;
+			}
+			else if (in_C <= 8)
+			{
+				zq_cnn_conv_no_padding_32f_align256bit_kernel3x3_C8_omp(in_data, in_N, in_H, in_W, in_C, in_pixStep, in_widthStep, in_sliceStep,
+					filter_data, filter_N, filter_H, filter_W, filter_C, filter_pixStep, filter_widthStep, filter_sliceStep, strideH, strideW,
+					out_data, out_N, out_H, out_W, out_C, out_pixStep, out_widthStep, out_sliceStep, num_threads);
+				has_handled = true;
+			}
+			else if (in_C <= 16)
+			{
+				zq_cnn_conv_no_padding_32f_align256bit_kernel3x3_C16_omp(in_data, in_N, in_H, in_W, in_C, in_pixStep, in_widthStep, in_sliceStep,
+					filter_data, filter_N, filter_H, filter_W, filter_C, filter_pixStep, filter_widthStep, filter_sliceStep, strideH, strideW,
+					out_data, out_N, out_H, out_W, out_C, out_pixStep, out_widthStep, out_sliceStep, num_threads);
+				has_handled = true;
+			}
+			else if (in_C <= 24)
+			{
+				zq_cnn_conv_no_padding_32f_align256bit_kernel3x3_C24_omp(in_data, in_N, in_H, in_W, in_C, in_pixStep, in_widthStep, in_sliceStep,
+					filter_data, filter_N, filter_H, filter_W, filter_C, filter_pixStep, filter_widthStep, filter_sliceStep, strideH, strideW,
+					out_data, out_N, out_H, out_W, out_C, out_pixStep, out_widthStep, out_sliceStep, num_threads);
+				has_handled = true;
+			}
+			else if (in_C <= 32)
+			{
+				zq_cnn_conv_no_padding_32f_align256bit_kernel3x3_C32_omp(in_data, in_N, in_H, in_W, in_C, in_pixStep, in_widthStep, in_sliceStep,
+					filter_data, filter_N, filter_H, filter_W, filter_C, filter_pixStep, filter_widthStep, filter_sliceStep, strideH, strideW,
+					out_data, out_N, out_H, out_W, out_C, out_pixStep, out_widthStep, out_sliceStep, num_threads);
+				has_handled = true;
+			}
+		}
+	}
+}
+
 void _convolution_handle_special_channel_case_N_largerthan_one(bool& has_handled, int align_mode, const float* in_data, int in_N, int in_H, int in_W, int in_C, int in_pixStep, int in_widthStep, int in_sliceStep,
 	const float* filter_data, int filter_N, int filter_H, int filter_W, int filter_C, int filter_pixStep, int filter_widthStep, int filter_sliceStep,
 	int strideH, int strideW, float* out_data, int out_N, int out_H, int out_W, int out_C, int out_pixStep, int out_widthStep, int out_sliceStep)
@@ -139,6 +202,69 @@ void _convolution_handle_special_channel_case_N_largerthan_one(bool& has_handled
 					filter_data, filter_N, filter_H, filter_W, filter_C, filter_pixStep, filter_widthStep, filter_sliceStep, strideH, strideW,
 					out_data, out_N, out_H, out_W, out_C, out_pixStep, out_widthStep, out_sliceStep);
 				has_handled = true;
+			}*/
+		}
+	}
+}
+
+void _convolution_handle_special_channel_case_N_largerthan_one_omp(bool& has_handled, int align_mode, const float* in_data, int in_N, int in_H, int in_W, int in_C, int in_pixStep, int in_widthStep, int in_sliceStep,
+	const float* filter_data, int filter_N, int filter_H, int filter_W, int filter_C, int filter_pixStep, int filter_widthStep, int filter_sliceStep,
+	int strideH, int strideW, float* out_data, int out_N, int out_H, int out_W, int out_C, int out_pixStep, int out_widthStep, int out_sliceStep, int num_threads)
+{
+	has_handled = false;
+	//if (out_N <= 1) //none is fast
+	return;
+	if (align_mode == ZQ_CNN_Tensor4D::ALIGN_128bit)
+	{
+		if (filter_H == 3 && filter_W == 3)
+		{
+			if (in_C == 3)
+			{
+				zq_cnn_conv_no_padding_32f_align128bit_kernel3x3_C3(in_data, in_N, in_H, in_W, in_C, in_pixStep, in_widthStep, in_sliceStep,
+					filter_data, filter_N, filter_H, filter_W, filter_C, filter_pixStep, filter_widthStep, filter_sliceStep, strideH, strideW,
+					out_data, out_N, out_H, out_W, out_C, out_pixStep, out_widthStep, out_sliceStep);
+				has_handled = true;
+			}
+		}
+	}
+	else if (align_mode == ZQ_CNN_Tensor4D::ALIGN_256bit)
+	{
+		if (filter_H == 3 && filter_W == 3)
+		{
+			if (in_C == 3)
+			{
+				zq_cnn_conv_no_padding_32f_align256bit_kernel3x3_C3(in_data, in_N, in_H, in_W, in_C, in_pixStep, in_widthStep, in_sliceStep,
+					filter_data, filter_N, filter_H, filter_W, filter_C, filter_pixStep, filter_widthStep, filter_sliceStep, strideH, strideW,
+					out_data, out_N, out_H, out_W, out_C, out_pixStep, out_widthStep, out_sliceStep);
+				has_handled = true;
+			}
+			/*else if (in_C <= 8)
+			{
+			zq_cnn_conv_no_padding_32f_align256bit_kernel3x3_C8(in_data, in_N, in_H, in_W, in_C, in_pixStep, in_widthStep, in_sliceStep,
+			filter_data, filter_N, filter_H, filter_W, filter_C, filter_pixStep, filter_widthStep, filter_sliceStep, strideH, strideW,
+			out_data, out_N, out_H, out_W, out_C, out_pixStep, out_widthStep, out_sliceStep);
+			has_handled = true;
+			}*/
+			/*else if (in_C <= 16)
+			{
+			zq_cnn_conv_no_padding_32f_align256bit_kernel3x3_C16(in_data, in_N, in_H, in_W, in_C, in_pixStep, in_widthStep, in_sliceStep,
+			filter_data, filter_N, filter_H, filter_W, filter_C, filter_pixStep, filter_widthStep, filter_sliceStep, strideH, strideW,
+			out_data, out_N, out_H, out_W, out_C, out_pixStep, out_widthStep, out_sliceStep);
+			has_handled = true;
+			}
+			else if (in_C <= 24)
+			{
+			zq_cnn_conv_no_padding_32f_align256bit_kernel3x3_C24(in_data, in_N, in_H, in_W, in_C, in_pixStep, in_widthStep, in_sliceStep,
+			filter_data, filter_N, filter_H, filter_W, filter_C, filter_pixStep, filter_widthStep, filter_sliceStep, strideH, strideW,
+			out_data, out_N, out_H, out_W, out_C, out_pixStep, out_widthStep, out_sliceStep);
+			has_handled = true;
+			}
+			else if (in_C <= 32)
+			{
+			zq_cnn_conv_no_padding_32f_align256bit_kernel3x3_C32(in_data, in_N, in_H, in_W, in_C, in_pixStep, in_widthStep, in_sliceStep,
+			filter_data, filter_N, filter_H, filter_W, filter_C, filter_pixStep, filter_widthStep, filter_sliceStep, strideH, strideW,
+			out_data, out_N, out_H, out_W, out_C, out_pixStep, out_widthStep, out_sliceStep);
+			has_handled = true;
 			}*/
 		}
 	}
@@ -336,6 +462,198 @@ void _convolution_nopadding_case_N_equal_one(int align_mode, const float* in_dat
 	}
 }
 
+
+void _convolution_nopadding_case_N_equal_one_omp(int align_mode, const float* in_data, int in_N, int in_H, int in_W, int in_C, int in_pixStep, int in_widthStep, int in_sliceStep,
+	const float* filter_data, int filter_N, int filter_H, int filter_W, int filter_C, int filter_pixStep, int filter_widthStep, int filter_sliceStep,
+	int strideH, int strideW, float* out_data, int out_N, int out_H, int out_W, int out_C, int out_pixStep, int out_widthStep, int out_sliceStep, int num_threads)
+{
+	bool has_handled = false;
+	int out_HW = out_H*out_W;
+	int out_NHW = out_HW*out_N;
+	int filter_HWC = filter_H*filter_W*filter_C;
+	int batch_need_size = out_NHW*filter_HWC + filter_N*filter_HWC;
+
+	_convolution_handle_special_channel_case_N_equal_one_omp(has_handled, align_mode, in_data, in_N, in_H, in_W, in_C, in_pixStep, in_widthStep, in_sliceStep,
+		filter_data, filter_N, filter_H, filter_W, filter_C, filter_pixStep, filter_widthStep, filter_sliceStep, strideH, strideW,
+		out_data, out_N, out_H, out_W, out_C, out_pixStep, out_widthStep, out_sliceStep, num_threads);
+
+	//gemm method
+	if (!has_handled)
+	{
+		if (in_pixStep == filter_pixStep)
+		{
+			if (out_HW >= 16 && filter_HWC >= 32 && filter_N >= 4)
+			{
+				if (align_mode == ZQ_CNN_Tensor4D::ALIGN_128bit)
+				{
+					zq_cnn_conv_no_padding_gemm_32f_align128bit_same_pixstep_omp(in_data, in_N, in_H, in_W, in_C, in_pixStep, in_widthStep, in_sliceStep,
+						filter_data, filter_N, filter_H, filter_W, filter_C, filter_pixStep, filter_widthStep, filter_sliceStep, strideH, strideW,
+						out_data, out_N, out_H, out_W, out_C, out_pixStep, out_widthStep, out_sliceStep, num_threads);
+					has_handled = true;
+				}
+				else if (align_mode == ZQ_CNN_Tensor4D::ALIGN_256bit)
+				{
+					zq_cnn_conv_no_padding_gemm_32f_align256bit_same_pixstep_omp(in_data, in_N, in_H, in_W, in_C, in_pixStep, in_widthStep, in_sliceStep,
+						filter_data, filter_N, filter_H, filter_W, filter_C, filter_pixStep, filter_widthStep, filter_sliceStep, strideH, strideW,
+						out_data, out_N, out_H, out_W, out_C, out_pixStep, out_widthStep, out_sliceStep, num_threads);
+					has_handled = true;
+				}
+			}
+		}
+		else
+		{
+			if (out_HW >= 16 && filter_HWC >= 32 && filter_N >= 4)
+			{
+				if (align_mode == ZQ_CNN_Tensor4D::ALIGN_128bit)
+				{
+					zq_cnn_conv_no_padding_gemm_32f_align128bit_same_or_notsame_pixstep_omp(in_data, in_N, in_H, in_W, in_C, in_pixStep, in_widthStep, in_sliceStep,
+						filter_data, filter_N, filter_H, filter_W, filter_C, filter_pixStep, filter_widthStep, filter_sliceStep, strideH, strideW,
+						out_data, out_N, out_H, out_W, out_C, out_pixStep, out_widthStep, out_sliceStep, num_threads);
+					has_handled = true;
+				}
+				else if (align_mode == ZQ_CNN_Tensor4D::ALIGN_256bit)
+				{
+					zq_cnn_conv_no_padding_gemm_32f_align256bit_same_or_notsame_pixstep_omp(in_data, in_N, in_H, in_W, in_C, in_pixStep, in_widthStep, in_sliceStep,
+						filter_data, filter_N, filter_H, filter_W, filter_C, filter_pixStep, filter_widthStep, filter_sliceStep, strideH, strideW,
+						out_data, out_N, out_H, out_W, out_C, out_pixStep, out_widthStep, out_sliceStep, num_threads);
+					has_handled = true;
+				}
+				else
+				{
+					zq_cnn_conv_no_padding_gemm_32f_align0_same_or_notsame_pixstep_omp(in_data, in_N, in_H, in_W, in_C, in_pixStep, in_widthStep, in_sliceStep,
+						filter_data, filter_N, filter_H, filter_W, filter_C, filter_pixStep, filter_widthStep, filter_sliceStep, strideH, strideW,
+						out_data, out_N, out_H, out_W, out_C, out_pixStep, out_widthStep, out_sliceStep, num_threads);
+					has_handled = true;
+				}
+			}
+		}
+	}
+
+
+	//backup method
+	if (!has_handled)
+	{
+		if (align_mode == ZQ_CNN_Tensor4D::ALIGN_128bit)
+		{
+			if (filter_H == 1 && filter_W == 1)
+			{
+				zq_cnn_conv_no_padding_32f_align128bit_kernel1x1_omp(in_data, in_N, in_H, in_W, in_C, in_pixStep, in_widthStep, in_sliceStep,
+					filter_data, filter_N, filter_H, filter_W, filter_C, filter_pixStep, filter_widthStep, filter_sliceStep, strideH, strideW,
+					out_data, out_N, out_H, out_W, out_C, out_pixStep, out_widthStep, out_sliceStep, num_threads);
+			}
+			else if (filter_H == 2 && filter_W == 2 /*&& 0*//*seems slow*/)
+			{
+				zq_cnn_conv_no_padding_32f_align128bit_kernel2x2_omp(in_data, in_N, in_H, in_W, in_C, in_pixStep, in_widthStep, in_sliceStep,
+					filter_data, filter_N, filter_H, filter_W, filter_C, filter_pixStep, filter_widthStep, filter_sliceStep, strideH, strideW,
+					out_data, out_N, out_H, out_W, out_C, out_pixStep, out_widthStep, out_sliceStep, num_threads);
+			}
+			else
+				if (filter_H == 3 && filter_W == 3)
+				{
+					if (filter_C == 3)
+					{
+						zq_cnn_conv_no_padding_32f_align128bit_kernel3x3_C3_omp(in_data, in_N, in_H, in_W, in_C, in_pixStep, in_widthStep, in_sliceStep,
+							filter_data, filter_N, filter_H, filter_W, filter_C, filter_pixStep, filter_widthStep, filter_sliceStep, strideH, strideW,
+							out_data, out_N, out_H, out_W, out_C, out_pixStep, out_widthStep, out_sliceStep, num_threads);
+					}
+					else
+					{
+						zq_cnn_conv_no_padding_32f_align128bit_kernel3x3_omp(in_data, in_N, in_H, in_W, in_C, in_pixStep, in_widthStep, in_sliceStep,
+							filter_data, filter_N, filter_H, filter_W, filter_C, filter_pixStep, filter_widthStep, filter_sliceStep, strideH, strideW,
+							out_data, out_N, out_H, out_W, out_C, out_pixStep, out_widthStep, out_sliceStep, num_threads);
+					}
+
+				}
+				else if (filter_H == 5 && filter_W == 5)
+				{
+					zq_cnn_conv_no_padding_32f_align128bit_kernel5x5_omp(in_data, in_N, in_H, in_W, in_C, in_pixStep, in_widthStep, in_sliceStep,
+						filter_data, filter_N, filter_H, filter_W, filter_C, filter_pixStep, filter_widthStep, filter_sliceStep, strideH, strideW,
+						out_data, out_N, out_H, out_W, out_C, out_pixStep, out_widthStep, out_sliceStep, num_threads);
+				}
+				else
+				{
+					zq_cnn_conv_no_padding_32f_align128bit_general_omp(in_data, in_N, in_H, in_W, in_C, in_pixStep, in_widthStep, in_sliceStep,
+						filter_data, filter_N, filter_H, filter_W, filter_C, filter_pixStep, filter_widthStep, filter_sliceStep, strideH, strideW,
+						out_data, out_N, out_H, out_W, out_C, out_pixStep, out_widthStep, out_sliceStep, num_threads);
+				}
+
+		}
+		else if (align_mode == ZQ_CNN_Tensor4D::ALIGN_256bit)
+		{
+			//if (filter_H == 1 && filter_W == 1)
+			//{
+			//	zq_cnn_conv_no_padding_32f_align256bit_kernel1x1_omp(in_data, in_N, in_H, in_W, in_C, in_pixStep, in_widthStep, in_sliceStep,
+			//		filter_data, filter_N, filter_H, filter_W, filter_C, filter_pixStep, filter_widthStep, filter_sliceStep, strideH, strideW,
+			//		out_data, out_N, out_H, out_W, out_C, out_pixStep, out_widthStep, out_sliceStep, bias, num_threads);
+			//}
+			//else if (filter_H == 2 && filter_W == 2 /*&& 0*//*seems slow*/)
+			//{
+			//	zq_cnn_conv_no_padding_32f_align256bit_kernel2x2_omp(in_data, in_N, in_H, in_W, in_C, in_pixStep, in_widthStep, in_sliceStep,
+			//		filter_data, filter_N, filter_H, filter_W, filter_C, filter_pixStep, filter_widthStep, filter_sliceStep, strideH, strideW,
+			//		out_data, out_N, out_H, out_W, out_C, out_pixStep, out_widthStep, out_sliceStep, bias, num_threads);
+			//}
+			//else 
+			if (filter_H == 3 && filter_W == 3)
+			{
+				if (filter_C == 3)
+				{
+					zq_cnn_conv_no_padding_32f_align256bit_kernel3x3_C3_omp(in_data, in_N, in_H, in_W, in_C, in_pixStep, in_widthStep, in_sliceStep,
+						filter_data, filter_N, filter_H, filter_W, filter_C, filter_pixStep, filter_widthStep, filter_sliceStep, strideH, strideW,
+						out_data, out_N, out_H, out_W, out_C, out_pixStep, out_widthStep, out_sliceStep, num_threads);
+				}
+				else if (filter_C <= 8)
+				{
+					zq_cnn_conv_no_padding_32f_align256bit_kernel3x3_C8_omp(in_data, in_N, in_H, in_W, in_C, in_pixStep, in_widthStep, in_sliceStep,
+						filter_data, filter_N, filter_H, filter_W, filter_C, filter_pixStep, filter_widthStep, filter_sliceStep, strideH, strideW,
+						out_data, out_N, out_H, out_W, out_C, out_pixStep, out_widthStep, out_sliceStep, num_threads);
+				}
+				else if (filter_C <= 16)
+				{
+					zq_cnn_conv_no_padding_32f_align256bit_kernel3x3_C16_omp(in_data, in_N, in_H, in_W, in_C, in_pixStep, in_widthStep, in_sliceStep,
+						filter_data, filter_N, filter_H, filter_W, filter_C, filter_pixStep, filter_widthStep, filter_sliceStep, strideH, strideW,
+						out_data, out_N, out_H, out_W, out_C, out_pixStep, out_widthStep, out_sliceStep, num_threads);
+				}
+				else if (filter_C <= 24)
+				{
+					zq_cnn_conv_no_padding_32f_align256bit_kernel3x3_C24_omp(in_data, in_N, in_H, in_W, in_C, in_pixStep, in_widthStep, in_sliceStep,
+						filter_data, filter_N, filter_H, filter_W, filter_C, filter_pixStep, filter_widthStep, filter_sliceStep, strideH, strideW,
+						out_data, out_N, out_H, out_W, out_C, out_pixStep, out_widthStep, out_sliceStep, num_threads);
+				}
+				else if (filter_C <= 32)
+				{
+					zq_cnn_conv_no_padding_32f_align256bit_kernel3x3_C32_omp(in_data, in_N, in_H, in_W, in_C, in_pixStep, in_widthStep, in_sliceStep,
+						filter_data, filter_N, filter_H, filter_W, filter_C, filter_pixStep, filter_widthStep, filter_sliceStep, strideH, strideW,
+						out_data, out_N, out_H, out_W, out_C, out_pixStep, out_widthStep, out_sliceStep, num_threads);
+				}
+				else
+				{
+					zq_cnn_conv_no_padding_32f_align256bit_kernel3x3_omp(in_data, in_N, in_H, in_W, in_C, in_pixStep, in_widthStep, in_sliceStep,
+						filter_data, filter_N, filter_H, filter_W, filter_C, filter_pixStep, filter_widthStep, filter_sliceStep, strideH, strideW,
+						out_data, out_N, out_H, out_W, out_C, out_pixStep, out_widthStep, out_sliceStep, num_threads);
+				}
+
+			}
+			/*else if (filter_H == 5 && filter_W == 5)
+			{
+			zq_cnn_conv_no_padding_32f_align256bit_kernel5x5_omp(in_data, in_N, in_H, in_W, in_C, in_pixStep, in_widthStep, in_sliceStep,
+			filter_data, filter_N, filter_H, filter_W, filter_C, filter_pixStep, filter_widthStep, filter_sliceStep, strideH, strideW,
+			out_data, out_N, out_H, out_W, out_C, out_pixStep, out_widthStep, out_sliceStep, bias, num_threads);
+			}*/
+			else
+			{
+				zq_cnn_conv_no_padding_32f_align256bit_general_omp(in_data, in_N, in_H, in_W, in_C, in_pixStep, in_widthStep, in_sliceStep,
+					filter_data, filter_N, filter_H, filter_W, filter_C, filter_pixStep, filter_widthStep, filter_sliceStep, strideH, strideW,
+					out_data, out_N, out_H, out_W, out_C, out_pixStep, out_widthStep, out_sliceStep, num_threads);
+			}
+		}
+		else
+		{
+			zq_cnn_conv_no_padding_32f_align0_general_omp(in_data, in_N, in_H, in_W, in_C, in_pixStep, in_widthStep, in_sliceStep,
+				filter_data, filter_N, filter_H, filter_W, filter_C, filter_pixStep, filter_widthStep, filter_sliceStep, strideH, strideW,
+				out_data, out_N, out_H, out_W, out_C, out_pixStep, out_widthStep, out_sliceStep, num_threads);
+		}
+	}
+}
 
 void _convolution_nopadding_case_N_largerthan_one(int align_mode, const float* in_data, int in_N, int in_H, int in_W, int in_C, int in_pixStep, int in_widthStep, int in_sliceStep,
 	const float* filter_data, int filter_N, int filter_H, int filter_W, int filter_C, int filter_pixStep, int filter_widthStep, int filter_sliceStep,
@@ -548,6 +866,213 @@ void _convolution_nopadding_case_N_largerthan_one(int align_mode, const float* i
 	}
 }
 
+void _convolution_nopadding_case_N_largerthan_one_omp(int align_mode, const float* in_data, int in_N, int in_H, int in_W, int in_C, int in_pixStep, int in_widthStep, int in_sliceStep,
+	const float* filter_data, int filter_N, int filter_H, int filter_W, int filter_C, int filter_pixStep, int filter_widthStep, int filter_sliceStep,
+	int strideH, int strideW, float* out_data, int out_N, int out_H, int out_W, int out_C, int out_pixStep, int out_widthStep, int out_sliceStep, int num_threads)
+{
+	const static int batch_limited_size = 100 * 1024 * 1024;
+
+	bool has_handled = false;
+	int out_HW = out_H*out_W;
+	int out_NHW = out_HW*out_N;
+	int filter_HWC = filter_H*filter_W*filter_C;
+	int batch_need_size = out_NHW*filter_HWC + filter_N*filter_HWC;
+
+	//gemm
+	if (!has_handled)
+	{
+		if (in_pixStep == filter_pixStep)
+		{
+			if (out_HW >= 8)
+			{
+				if (align_mode == ZQ_CNN_Tensor4D::ALIGN_128bit)
+				{
+					zq_cnn_conv_no_padding_gemm_32f_align128bit_same_pixstep_omp(in_data, in_N, in_H, in_W, in_C, in_pixStep, in_widthStep, in_sliceStep,
+						filter_data, filter_N, filter_H, filter_W, filter_C, filter_pixStep, filter_widthStep, filter_sliceStep, strideH, strideW,
+						out_data, out_N, out_H, out_W, out_C, out_pixStep, out_widthStep, out_sliceStep,num_threads);
+					has_handled = true;
+				}
+				else if (align_mode == ZQ_CNN_Tensor4D::ALIGN_256bit)
+				{
+					zq_cnn_conv_no_padding_gemm_32f_align256bit_same_pixstep_omp(in_data, in_N, in_H, in_W, in_C, in_pixStep, in_widthStep, in_sliceStep,
+						filter_data, filter_N, filter_H, filter_W, filter_C, filter_pixStep, filter_widthStep, filter_sliceStep, strideH, strideW,
+						out_data, out_N, out_H, out_W, out_C, out_pixStep, out_widthStep, out_sliceStep, num_threads);
+					has_handled = true;
+				}
+			}
+			else if (out_NHW >= 8)
+			{
+				if (align_mode == ZQ_CNN_Tensor4D::ALIGN_128bit)
+				{
+					zq_cnn_conv_no_padding_gemm_32f_align128bit_same_pixstep_batch_omp(in_data, in_N, in_H, in_W, in_C, in_pixStep, in_widthStep, in_sliceStep,
+						filter_data, filter_N, filter_H, filter_W, filter_C, filter_pixStep, filter_widthStep, filter_sliceStep, strideH, strideW,
+						out_data, out_N, out_H, out_W, out_C, out_pixStep, out_widthStep, out_sliceStep, num_threads);
+					has_handled = true;
+				}
+				else if (align_mode == ZQ_CNN_Tensor4D::ALIGN_256bit)
+				{
+					zq_cnn_conv_no_padding_gemm_32f_align256bit_same_pixstep_batch_omp(in_data, in_N, in_H, in_W, in_C, in_pixStep, in_widthStep, in_sliceStep,
+						filter_data, filter_N, filter_H, filter_W, filter_C, filter_pixStep, filter_widthStep, filter_sliceStep, strideH, strideW,
+						out_data, out_N, out_H, out_W, out_C, out_pixStep, out_widthStep, out_sliceStep, num_threads);
+					has_handled = true;
+				}
+			}
+		}
+		else
+		{
+			if (out_HW >= 8 && out_N >= 16)
+			{
+				if (align_mode == ZQ_CNN_Tensor4D::ALIGN_128bit)
+				{
+					if (in_C <= 4)
+					{
+						zq_cnn_conv_no_padding_gemm_32f_align128bit_same_or_notsame_pixstep_C3_omp(in_data, in_N, in_H, in_W, in_C, in_pixStep, in_widthStep, in_sliceStep,
+							filter_data, filter_N, filter_H, filter_W, filter_C, filter_pixStep, filter_widthStep, filter_sliceStep, strideH, strideW,
+							out_data, out_N, out_H, out_W, out_C, out_pixStep, out_widthStep, out_sliceStep, num_threads);
+						has_handled = true;
+					}
+					else
+					{
+						zq_cnn_conv_no_padding_gemm_32f_align128bit_same_or_notsame_pixstep_omp(in_data, in_N, in_H, in_W, in_C, in_pixStep, in_widthStep, in_sliceStep,
+							filter_data, filter_N, filter_H, filter_W, filter_C, filter_pixStep, filter_widthStep, filter_sliceStep, strideH, strideW,
+							out_data, out_N, out_H, out_W, out_C, out_pixStep, out_widthStep, out_sliceStep, num_threads);
+						has_handled = true;
+					}
+
+				}
+				else if (align_mode == ZQ_CNN_Tensor4D::ALIGN_256bit)
+				{
+					if (in_C <= 8)
+					{
+						zq_cnn_conv_no_padding_gemm_32f_align256bit_same_or_notsame_pixstep_C3_omp(in_data, in_N, in_H, in_W, in_C, in_pixStep, in_widthStep, in_sliceStep,
+							filter_data, filter_N, filter_H, filter_W, filter_C, filter_pixStep, filter_widthStep, filter_sliceStep, strideH, strideW,
+							out_data, out_N, out_H, out_W, out_C, out_pixStep, out_widthStep, out_sliceStep, num_threads);
+						has_handled = true;
+					}
+					else
+					{
+						zq_cnn_conv_no_padding_gemm_32f_align256bit_same_or_notsame_pixstep_omp(in_data, in_N, in_H, in_W, in_C, in_pixStep, in_widthStep, in_sliceStep,
+							filter_data, filter_N, filter_H, filter_W, filter_C, filter_pixStep, filter_widthStep, filter_sliceStep, strideH, strideW,
+							out_data, out_N, out_H, out_W, out_C, out_pixStep, out_widthStep, out_sliceStep, num_threads);
+						has_handled = true;
+					}
+				}
+				else
+				{
+					zq_cnn_conv_no_padding_gemm_32f_align0_same_or_notsame_pixstep_omp(in_data, in_N, in_H, in_W, in_C, in_pixStep, in_widthStep, in_sliceStep,
+						filter_data, filter_N, filter_H, filter_W, filter_C, filter_pixStep, filter_widthStep, filter_sliceStep, strideH, strideW,
+						out_data, out_N, out_H, out_W, out_C, out_pixStep, out_widthStep, out_sliceStep, num_threads);
+					has_handled = true;
+				}
+			}
+			else if (out_NHW >= 8 && out_N >= 16)
+			{
+				if (align_mode == ZQ_CNN_Tensor4D::ALIGN_128bit)
+				{
+					zq_cnn_conv_no_padding_gemm_32f_align128bit_same_or_notsame_pixstep_batch_omp(in_data, in_N, in_H, in_W, in_C, in_pixStep, in_widthStep, in_sliceStep,
+						filter_data, filter_N, filter_H, filter_W, filter_C, filter_pixStep, filter_widthStep, filter_sliceStep, strideH, strideW,
+						out_data, out_N, out_H, out_W, out_C, out_pixStep, out_widthStep, out_sliceStep, num_threads);
+					has_handled = true;
+				}
+				else if (align_mode == ZQ_CNN_Tensor4D::ALIGN_256bit)
+				{
+					zq_cnn_conv_no_padding_gemm_32f_align256bit_same_or_notsame_pixstep_batch_omp(in_data, in_N, in_H, in_W, in_C, in_pixStep, in_widthStep, in_sliceStep,
+						filter_data, filter_N, filter_H, filter_W, filter_C, filter_pixStep, filter_widthStep, filter_sliceStep, strideH, strideW,
+						out_data, out_N, out_H, out_W, out_C, out_pixStep, out_widthStep, out_sliceStep, num_threads);
+					has_handled = true;
+				}
+				else
+				{
+					zq_cnn_conv_no_padding_gemm_32f_align0_same_or_notsame_pixstep_batch_omp(in_data, in_N, in_H, in_W, in_C, in_pixStep, in_widthStep, in_sliceStep,
+						filter_data, filter_N, filter_H, filter_W, filter_C, filter_pixStep, filter_widthStep, filter_sliceStep, strideH, strideW,
+						out_data, out_N, out_H, out_W, out_C, out_pixStep, out_widthStep, out_sliceStep, num_threads);
+					has_handled = true;
+				}
+			}
+		}
+	}
+
+	//backup method
+	if (!has_handled)
+	{
+		if (align_mode == ZQ_CNN_Tensor4D::ALIGN_128bit)
+		{
+			if (filter_H == 1 && filter_W == 1)
+			{
+				zq_cnn_conv_no_padding_32f_align128bit_kernel1x1_omp(in_data, in_N, in_H, in_W, in_C, in_pixStep, in_widthStep, in_sliceStep,
+					filter_data, filter_N, filter_H, filter_W, filter_C, filter_pixStep, filter_widthStep, filter_sliceStep, strideH, strideW,
+					out_data, out_N, out_H, out_W, out_C, out_pixStep, out_widthStep, out_sliceStep, num_threads);
+			}
+			else if (filter_H == 2 && filter_W == 2 /*&& 0*//*seems slow*/)
+			{
+				zq_cnn_conv_no_padding_32f_align128bit_kernel2x2_omp(in_data, in_N, in_H, in_W, in_C, in_pixStep, in_widthStep, in_sliceStep,
+					filter_data, filter_N, filter_H, filter_W, filter_C, filter_pixStep, filter_widthStep, filter_sliceStep, strideH, strideW,
+					out_data, out_N, out_H, out_W, out_C, out_pixStep, out_widthStep, out_sliceStep, num_threads);
+			}
+			else
+				if (filter_H == 3 && filter_W == 3)
+				{
+					zq_cnn_conv_no_padding_32f_align128bit_kernel3x3_omp(in_data, in_N, in_H, in_W, in_C, in_pixStep, in_widthStep, in_sliceStep,
+						filter_data, filter_N, filter_H, filter_W, filter_C, filter_pixStep, filter_widthStep, filter_sliceStep, strideH, strideW,
+						out_data, out_N, out_H, out_W, out_C, out_pixStep, out_widthStep, out_sliceStep, num_threads);
+				}
+				else if (filter_H == 5 && filter_W == 5)
+				{
+					zq_cnn_conv_no_padding_32f_align128bit_kernel5x5_omp(in_data, in_N, in_H, in_W, in_C, in_pixStep, in_widthStep, in_sliceStep,
+						filter_data, filter_N, filter_H, filter_W, filter_C, filter_pixStep, filter_widthStep, filter_sliceStep, strideH, strideW,
+						out_data, out_N, out_H, out_W, out_C, out_pixStep, out_widthStep, out_sliceStep, num_threads);
+				}
+				else
+				{
+					zq_cnn_conv_no_padding_32f_align128bit_general_omp(in_data, in_N, in_H, in_W, in_C, in_pixStep, in_widthStep, in_sliceStep,
+						filter_data, filter_N, filter_H, filter_W, filter_C, filter_pixStep, filter_widthStep, filter_sliceStep, strideH, strideW,
+						out_data, out_N, out_H, out_W, out_C, out_pixStep, out_widthStep, out_sliceStep, num_threads);
+				}
+
+		}
+		else if (align_mode == ZQ_CNN_Tensor4D::ALIGN_256bit)
+		{
+			//if (filter_H == 1 && filter_W == 1)
+			//{
+			//	zq_cnn_conv_no_padding_32f_align256bit_kernel1x1_omp(in_data, in_N, in_H, in_W, in_C, in_pixStep, in_widthStep, in_sliceStep,
+			//		filter_data, filter_N, filter_H, filter_W, filter_C, filter_pixStep, filter_widthStep, filter_sliceStep, strideH, strideW,
+			//		out_data, out_N, out_H, out_W, out_C, out_pixStep, out_widthStep, out_sliceStep, bias, num_threads);
+			//}
+			//else if (filter_H == 2 && filter_W == 2 /*&& 0*//*seems slow*/)
+			//{
+			//	zq_cnn_conv_no_padding_32f_align256bit_kernel2x2_omp(in_data, in_N, in_H, in_W, in_C, in_pixStep, in_widthStep, in_sliceStep,
+			//		filter_data, filter_N, filter_H, filter_W, filter_C, filter_pixStep, filter_widthStep, filter_sliceStep, strideH, strideW,
+			//		out_data, out_N, out_H, out_W, out_C, out_pixStep, out_widthStep, out_sliceStep, bias, num_threads);
+			//}
+			//else 
+			if (filter_H == 3 && filter_W == 3)
+			{
+				zq_cnn_conv_no_padding_32f_align256bit_kernel3x3_omp(in_data, in_N, in_H, in_W, in_C, in_pixStep, in_widthStep, in_sliceStep,
+					filter_data, filter_N, filter_H, filter_W, filter_C, filter_pixStep, filter_widthStep, filter_sliceStep, strideH, strideW,
+					out_data, out_N, out_H, out_W, out_C, out_pixStep, out_widthStep, out_sliceStep, num_threads);
+			}
+			/*else if (filter_H == 5 && filter_W == 5)
+			{
+			zq_cnn_conv_no_padding_32f_align256bit_kernel5x5_omp(in_data, in_N, in_H, in_W, in_C, in_pixStep, in_widthStep, in_sliceStep,
+			filter_data, filter_N, filter_H, filter_W, filter_C, filter_pixStep, filter_widthStep, filter_sliceStep, strideH, strideW,
+			out_data, out_N, out_H, out_W, out_C, out_pixStep, out_widthStep, out_sliceStep, bias, num_threads);
+			}*/
+			else
+			{
+				zq_cnn_conv_no_padding_32f_align256bit_general_omp(in_data, in_N, in_H, in_W, in_C, in_pixStep, in_widthStep, in_sliceStep,
+					filter_data, filter_N, filter_H, filter_W, filter_C, filter_pixStep, filter_widthStep, filter_sliceStep, strideH, strideW,
+					out_data, out_N, out_H, out_W, out_C, out_pixStep, out_widthStep, out_sliceStep, num_threads);
+			}
+		}
+		else
+		{
+			zq_cnn_conv_no_padding_32f_align0_general_omp(in_data, in_N, in_H, in_W, in_C, in_pixStep, in_widthStep, in_sliceStep,
+				filter_data, filter_N, filter_H, filter_W, filter_C, filter_pixStep, filter_widthStep, filter_sliceStep, strideH, strideW,
+				out_data, out_N, out_H, out_W, out_C, out_pixStep, out_widthStep, out_sliceStep, num_threads);
+		}
+	}
+}
+
 void ZQ_CNN_Forward_SSEUtils::_convolution_nopadding(int align_mode, const float* in_data, int in_N, int in_H, int in_W, int in_C, int in_pixStep, int in_widthStep, int in_sliceStep,
 	const float* filter_data, int filter_N, int filter_H, int filter_W, int filter_C, int filter_pixStep, int filter_widthStep, int filter_sliceStep,
 	int strideH, int strideW, float* out_data, int out_N, int out_H, int out_W, int out_C, int out_pixStep, int out_widthStep, int out_sliceStep)
@@ -563,6 +1088,24 @@ void ZQ_CNN_Forward_SSEUtils::_convolution_nopadding(int align_mode, const float
 		_convolution_nopadding_case_N_equal_one(align_mode, in_data, in_N, in_H, in_W, in_C, in_pixStep, in_widthStep, in_sliceStep,
 			filter_data, filter_N, filter_H, filter_W, filter_C, filter_pixStep, filter_widthStep, filter_sliceStep, strideH, strideW,
 			out_data, out_N, out_H, out_W, out_C, out_pixStep, out_widthStep, out_sliceStep);
+	}
+}
+
+void ZQ_CNN_Forward_SSEUtils::_convolution_nopadding_omp(int align_mode, const float* in_data, int in_N, int in_H, int in_W, int in_C, int in_pixStep, int in_widthStep, int in_sliceStep,
+	const float* filter_data, int filter_N, int filter_H, int filter_W, int filter_C, int filter_pixStep, int filter_widthStep, int filter_sliceStep,
+	int strideH, int strideW, float* out_data, int out_N, int out_H, int out_W, int out_C, int out_pixStep, int out_widthStep, int out_sliceStep, int num_threads)
+{
+	if (out_N > 1)
+	{
+		_convolution_nopadding_case_N_largerthan_one_omp(align_mode, in_data, in_N, in_H, in_W, in_C, in_pixStep, in_widthStep, in_sliceStep,
+			filter_data, filter_N, filter_H, filter_W, filter_C, filter_pixStep, filter_widthStep, filter_sliceStep, strideH, strideW,
+			out_data, out_N, out_H, out_W, out_C, out_pixStep, out_widthStep, out_sliceStep, num_threads);
+	}
+	else
+	{
+		_convolution_nopadding_case_N_equal_one_omp(align_mode, in_data, in_N, in_H, in_W, in_C, in_pixStep, in_widthStep, in_sliceStep,
+			filter_data, filter_N, filter_H, filter_W, filter_C, filter_pixStep, filter_widthStep, filter_sliceStep, strideH, strideW,
+			out_data, out_N, out_H, out_W, out_C, out_pixStep, out_widthStep, out_sliceStep, num_threads);
 	}
 }
 
@@ -721,10 +1264,165 @@ void ZQ_CNN_Forward_SSEUtils::_depthwise_convolution_nopadding(int align_mode, c
 	}
 }
 
+void ZQ_CNN_Forward_SSEUtils::_depthwise_convolution_nopadding_omp(int align_mode, const float* in_data, int in_N, int in_H, int in_W, int in_C, int in_pixStep, int in_widthStep, int in_sliceStep,
+	const float* filter_data, int filter_N, int filter_H, int filter_W, int filter_C, int filter_pixStep, int filter_widthStep, int filter_sliceStep,
+	int strideH, int strideW, float* out_data, int out_N, int out_H, int out_W, int out_C, int out_pixStep, int out_widthStep, int out_sliceStep, int num_threads)
+{
+	bool has_handled = false;
+	if (align_mode == ZQ_CNN_Tensor4D::ALIGN_128bit)
+	{
+		if (filter_H == 3 && filter_W == 3)
+		{
+			int padded_C = (in_C + 3) >> 2 << 2;
+			if (padded_C == 4)
+			{
+				zq_cnn_depthwise_conv_no_padding_32f_align128bit_kernel3x3_C4_omp(in_data, in_N, in_H, in_W, in_C, in_pixStep, in_widthStep, in_sliceStep,
+					filter_data, filter_N, filter_H, filter_W, filter_C, filter_pixStep, filter_widthStep, filter_sliceStep, strideH, strideW,
+					out_data, out_N, out_H, out_W, out_C, out_pixStep, out_widthStep, out_sliceStep,num_threads);
+				has_handled = true;
+			}
+			else if (padded_C == 8)
+			{
+				zq_cnn_depthwise_conv_no_padding_32f_align128bit_kernel3x3_C8_omp(in_data, in_N, in_H, in_W, in_C, in_pixStep, in_widthStep, in_sliceStep,
+					filter_data, filter_N, filter_H, filter_W, filter_C, filter_pixStep, filter_widthStep, filter_sliceStep, strideH, strideW,
+					out_data, out_N, out_H, out_W, out_C, out_pixStep, out_widthStep, out_sliceStep,num_threads);
+				has_handled = true;
+			}
+			else if (padded_C == 16)
+			{
+				zq_cnn_depthwise_conv_no_padding_32f_align128bit_kernel3x3_C16_omp(in_data, in_N, in_H, in_W, in_C, in_pixStep, in_widthStep, in_sliceStep,
+					filter_data, filter_N, filter_H, filter_W, filter_C, filter_pixStep, filter_widthStep, filter_sliceStep, strideH, strideW,
+					out_data, out_N, out_H, out_W, out_C, out_pixStep, out_widthStep, out_sliceStep,num_threads);
+				has_handled = true;
+			}
+			else if (padded_C == 32)
+			{
+				zq_cnn_depthwise_conv_no_padding_32f_align128bit_kernel3x3_C32_omp(in_data, in_N, in_H, in_W, in_C, in_pixStep, in_widthStep, in_sliceStep,
+					filter_data, filter_N, filter_H, filter_W, filter_C, filter_pixStep, filter_widthStep, filter_sliceStep, strideH, strideW,
+					out_data, out_N, out_H, out_W, out_C, out_pixStep, out_widthStep, out_sliceStep,num_threads);
+				has_handled = true;
+			}
+			else if (padded_C == 64)
+			{
+				zq_cnn_depthwise_conv_no_padding_32f_align128bit_kernel3x3_C64_omp(in_data, in_N, in_H, in_W, in_C, in_pixStep, in_widthStep, in_sliceStep,
+					filter_data, filter_N, filter_H, filter_W, filter_C, filter_pixStep, filter_widthStep, filter_sliceStep, strideH, strideW,
+					out_data, out_N, out_H, out_W, out_C, out_pixStep, out_widthStep, out_sliceStep,num_threads);
+				has_handled = true;
+			}
+			else if (padded_C == 128)
+			{
+				zq_cnn_depthwise_conv_no_padding_32f_align128bit_kernel3x3_C128_omp(in_data, in_N, in_H, in_W, in_C, in_pixStep, in_widthStep, in_sliceStep,
+					filter_data, filter_N, filter_H, filter_W, filter_C, filter_pixStep, filter_widthStep, filter_sliceStep, strideH, strideW,
+					out_data, out_N, out_H, out_W, out_C, out_pixStep, out_widthStep, out_sliceStep,num_threads);
+				has_handled = true;
+			}
+			else if (padded_C == 256)
+			{
+				zq_cnn_depthwise_conv_no_padding_32f_align128bit_kernel3x3_C256_omp(in_data, in_N, in_H, in_W, in_C, in_pixStep, in_widthStep, in_sliceStep,
+					filter_data, filter_N, filter_H, filter_W, filter_C, filter_pixStep, filter_widthStep, filter_sliceStep, strideH, strideW,
+					out_data, out_N, out_H, out_W, out_C, out_pixStep, out_widthStep, out_sliceStep,num_threads);
+				has_handled = true;
+			}
+			else
+			{
+				zq_cnn_depthwise_conv_no_padding_32f_align128bit_kernel3x3_omp(in_data, in_N, in_H, in_W, in_C, in_pixStep, in_widthStep, in_sliceStep,
+					filter_data, filter_N, filter_H, filter_W, filter_C, filter_pixStep, filter_widthStep, filter_sliceStep, strideH, strideW,
+					out_data, out_N, out_H, out_W, out_C, out_pixStep, out_widthStep, out_sliceStep,num_threads);
+				has_handled = true;
+			}
+		}
+		else
+		{
+			zq_cnn_depthwise_conv_no_padding_32f_align128bit_general_omp(in_data, in_N, in_H, in_W, in_C, in_pixStep, in_widthStep, in_sliceStep,
+				filter_data, filter_N, filter_H, filter_W, filter_C, filter_pixStep, filter_widthStep, filter_sliceStep, strideH, strideW,
+				out_data, out_N, out_H, out_W, out_C, out_pixStep, out_widthStep, out_sliceStep,num_threads);
+			has_handled = true;
+		}
+	}
+	else if (align_mode == ZQ_CNN_Tensor4D::ALIGN_256bit)
+	{
+		if (filter_H == 3 && filter_W == 3)
+		{
+			int padded_C = (in_C + 7) >> 3 << 3;
+			if (padded_C == 8)
+			{
+				zq_cnn_depthwise_conv_no_padding_32f_align256bit_kernel3x3_C8_omp(in_data, in_N, in_H, in_W, in_C, in_pixStep, in_widthStep, in_sliceStep,
+					filter_data, filter_N, filter_H, filter_W, filter_C, filter_pixStep, filter_widthStep, filter_sliceStep, strideH, strideW,
+					out_data, out_N, out_H, out_W, out_C, out_pixStep, out_widthStep, out_sliceStep,num_threads);
+				has_handled = true;
+			}
+			else if (padded_C == 16)
+			{
+				zq_cnn_depthwise_conv_no_padding_32f_align256bit_kernel3x3_C16_omp(in_data, in_N, in_H, in_W, in_C, in_pixStep, in_widthStep, in_sliceStep,
+					filter_data, filter_N, filter_H, filter_W, filter_C, filter_pixStep, filter_widthStep, filter_sliceStep, strideH, strideW,
+					out_data, out_N, out_H, out_W, out_C, out_pixStep, out_widthStep, out_sliceStep, num_threads);
+				has_handled = true;
+			}
+			else if (padded_C == 32)
+			{
+				zq_cnn_depthwise_conv_no_padding_32f_align256bit_kernel3x3_C32_omp(in_data, in_N, in_H, in_W, in_C, in_pixStep, in_widthStep, in_sliceStep,
+					filter_data, filter_N, filter_H, filter_W, filter_C, filter_pixStep, filter_widthStep, filter_sliceStep, strideH, strideW,
+					out_data, out_N, out_H, out_W, out_C, out_pixStep, out_widthStep, out_sliceStep, num_threads);
+				has_handled = true;
+			}
+			else if (padded_C == 64)
+			{
+				zq_cnn_depthwise_conv_no_padding_32f_align256bit_kernel3x3_C64_omp(in_data, in_N, in_H, in_W, in_C, in_pixStep, in_widthStep, in_sliceStep,
+					filter_data, filter_N, filter_H, filter_W, filter_C, filter_pixStep, filter_widthStep, filter_sliceStep, strideH, strideW,
+					out_data, out_N, out_H, out_W, out_C, out_pixStep, out_widthStep, out_sliceStep, num_threads);
+				has_handled = true;
+			}
+			else if (padded_C == 128)
+			{
+				zq_cnn_depthwise_conv_no_padding_32f_align256bit_kernel3x3_C128_omp(in_data, in_N, in_H, in_W, in_C, in_pixStep, in_widthStep, in_sliceStep,
+					filter_data, filter_N, filter_H, filter_W, filter_C, filter_pixStep, filter_widthStep, filter_sliceStep, strideH, strideW,
+					out_data, out_N, out_H, out_W, out_C, out_pixStep, out_widthStep, out_sliceStep, num_threads);
+				has_handled = true;
+			}
+			else if (padded_C == 256)
+			{
+				zq_cnn_depthwise_conv_no_padding_32f_align256bit_kernel3x3_C256_omp(in_data, in_N, in_H, in_W, in_C, in_pixStep, in_widthStep, in_sliceStep,
+					filter_data, filter_N, filter_H, filter_W, filter_C, filter_pixStep, filter_widthStep, filter_sliceStep, strideH, strideW,
+					out_data, out_N, out_H, out_W, out_C, out_pixStep, out_widthStep, out_sliceStep, num_threads);
+				has_handled = true;
+			}
+			else if (padded_C == 512)
+			{
+				zq_cnn_depthwise_conv_no_padding_32f_align256bit_kernel3x3_C512_omp(in_data, in_N, in_H, in_W, in_C, in_pixStep, in_widthStep, in_sliceStep,
+					filter_data, filter_N, filter_H, filter_W, filter_C, filter_pixStep, filter_widthStep, filter_sliceStep, strideH, strideW,
+					out_data, out_N, out_H, out_W, out_C, out_pixStep, out_widthStep, out_sliceStep, num_threads);
+				has_handled = true;
+			}
+			else
+			{
+				zq_cnn_depthwise_conv_no_padding_32f_align256bit_kernel3x3_omp(in_data, in_N, in_H, in_W, in_C, in_pixStep, in_widthStep, in_sliceStep,
+					filter_data, filter_N, filter_H, filter_W, filter_C, filter_pixStep, filter_widthStep, filter_sliceStep, strideH, strideW,
+					out_data, out_N, out_H, out_W, out_C, out_pixStep, out_widthStep, out_sliceStep, num_threads);
+				has_handled = true;
+			}
+		}
+		else
+		{
+			zq_cnn_depthwise_conv_no_padding_32f_align256bit_general_omp(in_data, in_N, in_H, in_W, in_C, in_pixStep, in_widthStep, in_sliceStep,
+				filter_data, filter_N, filter_H, filter_W, filter_C, filter_pixStep, filter_widthStep, filter_sliceStep, strideH, strideW,
+				out_data, out_N, out_H, out_W, out_C, out_pixStep, out_widthStep, out_sliceStep,num_threads);
+			has_handled = true;
+		}
+	}
+
+	if (!has_handled)
+	{
+		zq_cnn_depthwise_conv_no_padding_32f_align0_general_omp(in_data, in_N, in_H, in_W, in_C, in_pixStep, in_widthStep, in_sliceStep,
+			filter_data, filter_N, filter_H, filter_W, filter_C, filter_pixStep, filter_widthStep, filter_sliceStep, strideH, strideW,
+			out_data, out_N, out_H, out_W, out_C, out_pixStep, out_widthStep, out_sliceStep, num_threads);
+		has_handled = true;
+	}
+}
+
 void ZQ_CNN_Forward_SSEUtils::_inner_product(int align_mode, const float* in_data, int in_N, int in_H, int in_W, 
 	int in_C, int in_pixStep, int in_widthStep, int in_sliceStep,
 	const float* filter_data, int filter_N, int filter_pixStep, int filter_widthStep, int filter_sliceStep,
-	float* out_data, int out_N, int out_sliceStep)
+	float* out_data, int out_N, int out_sliceStep, int num_threads)
 {
 	if (align_mode == ZQ_CNN_Tensor4D::ALIGN_128bit)
 	{
@@ -786,7 +1484,8 @@ void ZQ_CNN_Forward_SSEUtils::_inner_product(int align_mode, const float* in_dat
 	}
 }
 
-void  ZQ_CNN_Forward_SSEUtils::_addbias(int align_mode, float* data, int N, int H, int W, int C, int pixelStep, int widthStep, int sliceStep, const float* bias_Data)
+void  ZQ_CNN_Forward_SSEUtils::_addbias(int align_mode, float* data, int N, int H, int W, int C, 
+	int pixelStep, int widthStep, int sliceStep, const float* bias_Data)
 {
 	if (align_mode == ZQ_CNN_Tensor4D::ALIGN_128bit)
 	{
@@ -802,7 +1501,25 @@ void  ZQ_CNN_Forward_SSEUtils::_addbias(int align_mode, float* data, int N, int 
 	}
 }
 
-void ZQ_CNN_Forward_SSEUtils::_softmax(int align_mode, int axis, float* data, int N, int H, int W, int C, int pixStep, int widthStep, int sliceStep)
+void  ZQ_CNN_Forward_SSEUtils::_addbias_omp(int align_mode, float* data, int N, int H, int W, int C,
+	int pixelStep, int widthStep, int sliceStep, const float* bias_Data, int num_threads)
+{
+	if (align_mode == ZQ_CNN_Tensor4D::ALIGN_128bit)
+	{
+		zq_cnn_addbias_32f_align128bit_omp(data, N, H, W, C, pixelStep, widthStep, sliceStep, bias_Data, num_threads);
+	}
+	else if (align_mode == ZQ_CNN_Tensor4D::ALIGN_256bit)
+	{
+		zq_cnn_addbias_32f_align256bit_omp(data, N, H, W, C, pixelStep, widthStep, sliceStep, bias_Data, num_threads);
+	}
+	else
+	{
+		zq_cnn_addbias_32f_align0_omp(data, N, H, W, C, pixelStep, widthStep, sliceStep, bias_Data, num_threads);
+	}
+}
+
+void ZQ_CNN_Forward_SSEUtils::_softmax(int align_mode, int axis, float* data, int N, int H, int W, int C, 
+	int pixStep, int widthStep, int sliceStep, int num_threads)
 {
 	if (axis == 1)
 	{
@@ -830,7 +1547,8 @@ void ZQ_CNN_Forward_SSEUtils::_softmax(int align_mode, int axis, float* data, in
 }
 
 
-void ZQ_CNN_Forward_SSEUtils::_dropout(int align_mode, float* data, int N, int H, int W, int C, int pixStep, int widthStep, int sliceStep, float ratio)
+void ZQ_CNN_Forward_SSEUtils::_dropout(int align_mode, float* data, int N, int H, int W, int C, 
+	int pixStep, int widthStep, int sliceStep, float ratio, int num_threads)
 {
 	if (align_mode == ZQ_CNN_Tensor4D::ALIGN_128bit)
 	{
@@ -846,7 +1564,8 @@ void ZQ_CNN_Forward_SSEUtils::_dropout(int align_mode, float* data, int N, int H
 	}
 }
 
-void ZQ_CNN_Forward_SSEUtils::_prelu(int align_mode, float* data, int N, int H, int W, int C, int pixelStep, int widthStep, int sliceStep, const float* slope_Data)
+void ZQ_CNN_Forward_SSEUtils::_prelu(int align_mode, float* data, int N, int H, int W, int C, int pixelStep, int widthStep, int sliceStep, 
+	const float* slope_Data)
 {
 	bool sure_slope_lessthan1 = false;
 	if (N*H*W > 4)
@@ -897,7 +1616,60 @@ void ZQ_CNN_Forward_SSEUtils::_prelu(int align_mode, float* data, int N, int H, 
 	}
 }
 
-void ZQ_CNN_Forward_SSEUtils::_relu(int align_mode, float* data, int N, int H, int W, int C, int pixelStep, int widthStep, int sliceStep)
+void ZQ_CNN_Forward_SSEUtils::_prelu_omp(int align_mode, float* data, int N, int H, int W, int C, int pixelStep, int widthStep, int sliceStep,
+	const float* slope_Data, int num_threads)
+{
+	bool sure_slope_lessthan1 = false;
+	if (N*H*W > 4)
+	{
+		sure_slope_lessthan1 = true;
+		for (int i = 0; i < C; i++)
+		{
+			if (slope_Data[i] > 1)
+			{
+				sure_slope_lessthan1 = false;
+				break;
+			}
+		}
+	}
+
+	if (sure_slope_lessthan1)
+	{
+		if (C == 1)
+			align_mode = __min(align_mode, ZQ_CNN_Tensor4D::ALIGN_0);
+		else if (C <= 4)
+			align_mode = __min(align_mode, ZQ_CNN_Tensor4D::ALIGN_128bit);
+		else if (C <= 8)
+			align_mode = __min(align_mode, ZQ_CNN_Tensor4D::ALIGN_256bit);
+
+		if (align_mode == ZQ_CNN_Tensor4D::ALIGN_128bit)
+			zq_cnn_prelu_32f_align128bit_sure_slope_lessthan1_omp(data, N, H, W, C, pixelStep, widthStep, sliceStep, slope_Data,num_threads);
+		else if (align_mode == ZQ_CNN_Tensor4D::ALIGN_256bit)
+		{
+			zq_cnn_prelu_32f_align256bit_sure_slope_lessthan1_omp(data, N, H, W, C, pixelStep, widthStep, sliceStep, slope_Data, num_threads);
+		}
+		else
+		{
+			zq_cnn_prelu_32f_align0_omp(data, N, H, W, C, pixelStep, widthStep, sliceStep, slope_Data, num_threads);
+		}
+	}
+	else
+	{
+		if (align_mode == ZQ_CNN_Tensor4D::ALIGN_128bit)
+			zq_cnn_prelu_32f_align128bit_omp(data, N, H, W, C, pixelStep, widthStep, sliceStep, slope_Data, num_threads);
+		else if (align_mode == ZQ_CNN_Tensor4D::ALIGN_256bit)
+		{
+			zq_cnn_prelu_32f_align256bit_omp(data, N, H, W, C, pixelStep, widthStep, sliceStep, slope_Data, num_threads);
+		}
+		else
+		{
+			zq_cnn_prelu_32f_align0_omp(data, N, H, W, C, pixelStep, widthStep, sliceStep, slope_Data, num_threads);
+		}
+	}
+}
+
+void ZQ_CNN_Forward_SSEUtils::_relu(int align_mode, float* data, int N, int H, int W, int C, 
+	int pixelStep, int widthStep, int sliceStep)
 {
 	if (align_mode == ZQ_CNN_Tensor4D::ALIGN_128bit)
 		zq_cnn_relu_32f_align128bit(data, N, H, W, C, pixelStep, widthStep, sliceStep);
@@ -911,9 +1683,26 @@ void ZQ_CNN_Forward_SSEUtils::_relu(int align_mode, float* data, int N, int H, i
 	}
 }
 
+void ZQ_CNN_Forward_SSEUtils::_relu_omp(int align_mode, float* data, int N, int H, int W, int C,
+	int pixelStep, int widthStep, int sliceStep, int num_threads)
+{
+	if (align_mode == ZQ_CNN_Tensor4D::ALIGN_128bit)
+		zq_cnn_relu_32f_align128bit_omp(data, N, H, W, C, pixelStep, widthStep, sliceStep,num_threads);
+	else if (align_mode == ZQ_CNN_Tensor4D::ALIGN_256bit)
+	{
+		zq_cnn_relu_32f_align256bit_omp(data, N, H, W, C, pixelStep, widthStep, sliceStep,num_threads);
+	}
+	else
+	{
+		zq_cnn_relu_32f_align0_omp(data, N, H, W, C, pixelStep, widthStep, sliceStep,num_threads);
+	}
+}
 
-void ZQ_CNN_Forward_SSEUtils::_maxpooling(int align_mode, const float* in_data, int N, int in_H, int in_W, int C, int in_pixStep, int in_widthStep, int in_sliceStep,
-	int kernel_H, int kernel_W, int stride_H, int stride_W, float* out_data, int out_H, int out_W, int out_pixStep, int out_widthStep, int out_sliceStep)
+
+void ZQ_CNN_Forward_SSEUtils::_maxpooling(int align_mode, const float* in_data, int N, int in_H, int in_W, int C, 
+	int in_pixStep, int in_widthStep, int in_sliceStep,
+	int kernel_H, int kernel_W, int stride_H, int stride_W, float* out_data, int out_H, int out_W, int 
+	out_pixStep, int out_widthStep, int out_sliceStep)
 {
 	if (C == 1)
 		align_mode = __min(align_mode, ZQ_CNN_Tensor4D::ALIGN_0);
@@ -1004,10 +1793,104 @@ void ZQ_CNN_Forward_SSEUtils::_maxpooling(int align_mode, const float* in_data, 
 	}
 }
 
+void ZQ_CNN_Forward_SSEUtils::_maxpooling_omp(int align_mode, const float* in_data, int N, int in_H, int in_W, int C,
+	int in_pixStep, int in_widthStep, int in_sliceStep,
+	int kernel_H, int kernel_W, int stride_H, int stride_W, float* out_data, int out_H, int out_W, int
+	out_pixStep, int out_widthStep, int out_sliceStep, int num_threads)
+{
+	if (C == 1)
+		align_mode = __min(align_mode, ZQ_CNN_Tensor4D::ALIGN_0);
+	else if (C <= 4)
+		align_mode = __min(align_mode, ZQ_CNN_Tensor4D::ALIGN_128bit);
+	else if (C <= 8)
+		align_mode = __min(align_mode, ZQ_CNN_Tensor4D::ALIGN_256bit);
+
+	if (align_mode == ZQ_CNN_Tensor4D::ALIGN_128bit)
+	{
+		bool suredivided = (in_H - kernel_H) % stride_H == 0 && (in_W - kernel_W) % stride_W == 0;
+		if (suredivided)
+		{
+			if (kernel_H == 2 && kernel_W == 2 && 0)
+			{
+				zq_cnn_maxpooling_nopadding_suredivided_32f_align128bit_kernel2x2_omp(in_data, N, in_H, in_W, C, in_pixStep, in_widthStep, in_sliceStep,
+					kernel_H, kernel_W, stride_H, stride_W,
+					out_data, N, out_H, out_W, C, out_pixStep, out_widthStep, out_sliceStep, num_threads);
+			}
+			else if (kernel_H == 3 && kernel_W == 3)
+			{
+				zq_cnn_maxpooling_nopadding_suredivided_32f_align128bit_kernel3x3_omp(in_data, N, in_H, in_W, C, in_pixStep, in_widthStep, in_sliceStep,
+					kernel_H, kernel_W, stride_H, stride_W,
+					out_data, N, out_H, out_W, C, out_pixStep, out_widthStep, out_sliceStep,num_threads);
+			}
+			else if (kernel_H == 5 && kernel_W == 5)
+			{
+				zq_cnn_maxpooling_nopadding_suredivided_32f_align128bit_kernel5x5_omp(in_data, N, in_H, in_W, C, in_pixStep, in_widthStep, in_sliceStep,
+					kernel_H, kernel_W, stride_H, stride_W,
+					out_data, N, out_H, out_W, C, out_pixStep, out_widthStep, out_sliceStep,num_threads);
+			}
+			else
+			{
+				zq_cnn_maxpooling_nopadding_suredivided_32f_align128bit_general_omp(in_data, N, in_H, in_W, C, in_pixStep, in_widthStep, in_sliceStep,
+					kernel_H, kernel_W, stride_H, stride_W,
+					out_data, N, out_H, out_W, C, out_pixStep, out_widthStep, out_sliceStep,num_threads);
+			}
+		}
+		else
+		{
+			zq_cnn_maxpooling_nopadding_nodivided_32f_align128bit_general_omp(in_data, N, in_H, in_W, C, in_pixStep, in_widthStep, in_sliceStep,
+				kernel_H, kernel_W, stride_H, stride_W,
+				out_data, N, out_H, out_W, C, out_pixStep, out_widthStep, out_sliceStep,num_threads);
+		}
+	}
+	else if (align_mode == ZQ_CNN_Tensor4D::ALIGN_256bit)
+	{
+		bool suredivided = (in_H - kernel_H) % stride_H == 0 && (in_W - kernel_W) % stride_W == 0;
+		if (suredivided)
+		{
+			if (kernel_H == 2 && kernel_W == 2 && 0)
+			{
+				zq_cnn_maxpooling_nopadding_suredivided_32f_align256bit_kernel2x2_omp(in_data, N, in_H, in_W, C, in_pixStep, in_widthStep, in_sliceStep,
+					kernel_H, kernel_W, stride_H, stride_W,
+					out_data, N, out_H, out_W, C, out_pixStep, out_widthStep, out_sliceStep,num_threads);
+			}
+			else if (kernel_H == 3 && kernel_W == 3)
+			{
+				zq_cnn_maxpooling_nopadding_suredivided_32f_align256bit_kernel3x3_omp(in_data, N, in_H, in_W, C, in_pixStep, in_widthStep, in_sliceStep,
+					kernel_H, kernel_W, stride_H, stride_W,
+					out_data, N, out_H, out_W, C, out_pixStep, out_widthStep, out_sliceStep,num_threads);
+			}
+			else if (kernel_H == 5 && kernel_W == 5)
+			{
+				zq_cnn_maxpooling_nopadding_suredivided_32f_align256bit_kernel5x5_omp(in_data, N, in_H, in_W, C, in_pixStep, in_widthStep, in_sliceStep,
+					kernel_H, kernel_W, stride_H, stride_W,
+					out_data, N, out_H, out_W, C, out_pixStep, out_widthStep, out_sliceStep,num_threads);
+			}
+			else
+			{
+				zq_cnn_maxpooling_nopadding_suredivided_32f_align256bit_general_omp(in_data, N, in_H, in_W, C, in_pixStep, in_widthStep, in_sliceStep,
+					kernel_H, kernel_W, stride_H, stride_W,
+					out_data, N, out_H, out_W, C, out_pixStep, out_widthStep, out_sliceStep,num_threads);
+			}
+		}
+		else
+		{
+			zq_cnn_maxpooling_nopadding_nodivided_32f_align256bit_general_omp(in_data, N, in_H, in_W, C, in_pixStep, in_widthStep, in_sliceStep,
+				kernel_H, kernel_W, stride_H, stride_W,
+				out_data, N, out_H, out_W, C, out_pixStep, out_widthStep, out_sliceStep,num_threads);
+		}
+	}
+	else
+	{
+		zq_cnn_maxpooling_nopadding_32f_align0_general_omp(in_data, N, in_H, in_W, C, in_pixStep, in_widthStep, in_sliceStep,
+			kernel_H, kernel_W, stride_H, stride_W,
+			out_data, N, out_H, out_W, C, out_pixStep, out_widthStep, out_sliceStep,num_threads);
+	}
+}
 
 
-void ZQ_CNN_Forward_SSEUtils::_batchnorm(int align_mode, float* data, int N, int H, int W, int C, int pixStep, int widthStep, int sliceStep,
-	const float* mean, const float* var)
+
+void ZQ_CNN_Forward_SSEUtils::_batchnorm(int align_mode, float* data, int N, int H, int W, int C, 
+	int pixStep, int widthStep, int sliceStep, const float* mean, const float* var)
 {
 	if (align_mode == ZQ_CNN_Tensor4D::ALIGN_128bit)
 	{
@@ -1020,6 +1903,23 @@ void ZQ_CNN_Forward_SSEUtils::_batchnorm(int align_mode, float* data, int N, int
 	else
 	{
 		zq_cnn_batchnorm_32f_mean_var_align0(data, N, H, W, C, pixStep, widthStep, sliceStep, mean, var);
+	}
+}
+
+void ZQ_CNN_Forward_SSEUtils::_batchnorm_omp(int align_mode, float* data, int N, int H, int W, int C,
+	int pixStep, int widthStep, int sliceStep, const float* mean, const float* var, int num_threads)
+{
+	if (align_mode == ZQ_CNN_Tensor4D::ALIGN_128bit)
+	{
+		zq_cnn_batchnorm_32f_mean_var_align128bit_omp(data, N, H, W, C, pixStep, widthStep, sliceStep, mean, var, num_threads);
+	}
+	else if (align_mode == ZQ_CNN_Tensor4D::ALIGN_256bit)
+	{
+		zq_cnn_batchnorm_32f_mean_var_align256bit_omp(data, N, H, W, C, pixStep, widthStep, sliceStep, mean, var, num_threads);
+	}
+	else
+	{
+		zq_cnn_batchnorm_32f_mean_var_align0_omp(data, N, H, W, C, pixStep, widthStep, sliceStep, mean, var, num_threads);
 	}
 }
 
@@ -1040,9 +1940,26 @@ void ZQ_CNN_Forward_SSEUtils::_batchnorm_scalebias(int align_mode, float* data, 
 	}
 }
 
+void ZQ_CNN_Forward_SSEUtils::_batchnorm_scalebias_omp(int align_mode, float* data, int N, int H, int W, int C, int pixStep, int widthStep, int sliceStep,
+	const float* mean, const float* var, const float* scale, const float* bias, int num_threads)
+{
+	if (align_mode == ZQ_CNN_Tensor4D::ALIGN_128bit)
+	{
+		zq_cnn_batchnormscale_32f_mean_var_scale_bias_align128bit_omp(data, N, H, W, C, pixStep, widthStep, sliceStep, mean, var, scale, bias, num_threads);
+	}
+	else if (align_mode == ZQ_CNN_Tensor4D::ALIGN_256bit)
+	{
+		zq_cnn_batchnormscale_32f_mean_var_scale_bias_align256bit_omp(data, N, H, W, C, pixStep, widthStep, sliceStep, mean, var, scale, bias, num_threads);
+	}
+	else
+	{
+		zq_cnn_batchnormscale_32f_mean_var_scale_bias_align0_omp(data, N, H, W, C, pixStep, widthStep, sliceStep, mean, var, scale, bias, num_threads);
+	}
+}
 
-void ZQ_CNN_Forward_SSEUtils::_batchnorm_b_a(int align_mode, float* data, int N, int H, int W, int C, int pixStep, int widthStep, int sliceStep,
-	const float* b, const float* a)
+
+void ZQ_CNN_Forward_SSEUtils::_batchnorm_b_a(int align_mode, float* data, int N, int H, int W, int C, 
+	int pixStep, int widthStep, int sliceStep, const float* b, const float* a)
 {
 	if (align_mode == ZQ_CNN_Tensor4D::ALIGN_128bit)
 	{
@@ -1058,8 +1975,25 @@ void ZQ_CNN_Forward_SSEUtils::_batchnorm_b_a(int align_mode, float* data, int N,
 	}
 }
 
-void ZQ_CNN_Forward_SSEUtils::_scalebias(int align_mode, float* data, int N, int H, int W, int C, int pixStep, int widthStep, int sliceStep,
-	const float* scale, const float* bias)
+void ZQ_CNN_Forward_SSEUtils::_batchnorm_b_a_omp(int align_mode, float* data, int N, int H, int W, int C,
+	int pixStep, int widthStep, int sliceStep, const float* b, const float* a, int num_threads)
+{
+	if (align_mode == ZQ_CNN_Tensor4D::ALIGN_128bit)
+	{
+		zq_cnn_batchnorm_32f_b_a_align128bit_omp(data, N, H, W, C, pixStep, widthStep, sliceStep, b, a, num_threads);
+	}
+	else if (align_mode == ZQ_CNN_Tensor4D::ALIGN_256bit)
+	{
+		zq_cnn_batchnorm_32f_b_a_align256bit_omp(data, N, H, W, C, pixStep, widthStep, sliceStep, b, a, num_threads);
+	}
+	else
+	{
+		zq_cnn_batchnorm_32f_b_a_align0_omp(data, N, H, W, C, pixStep, widthStep, sliceStep, b, a, num_threads);
+	}
+}
+
+void ZQ_CNN_Forward_SSEUtils::_scalebias(int align_mode, float* data, int N, int H, int W, int C, 
+	int pixStep, int widthStep, int sliceStep, const float* scale, const float* bias)
 {
 	if (align_mode == ZQ_CNN_Tensor4D::ALIGN_128bit)
 	{
@@ -1072,6 +2006,23 @@ void ZQ_CNN_Forward_SSEUtils::_scalebias(int align_mode, float* data, int N, int
 	else
 	{
 		zq_cnn_scale_32f_align0(data, N, H, W, C, pixStep, widthStep, sliceStep, scale, bias);
+	}
+}
+
+void ZQ_CNN_Forward_SSEUtils::_scalebias_omp(int align_mode, float* data, int N, int H, int W, int C,
+	int pixStep, int widthStep, int sliceStep, const float* scale, const float* bias, int num_threads)
+{
+	if (align_mode == ZQ_CNN_Tensor4D::ALIGN_128bit)
+	{
+		zq_cnn_scale_32f_align128bit_omp(data, N, H, W, C, pixStep, widthStep, sliceStep, scale, bias, num_threads);
+	}
+	else if (align_mode == ZQ_CNN_Tensor4D::ALIGN_256bit)
+	{
+		zq_cnn_scale_32f_align256bit_omp(data, N, H, W, C, pixStep, widthStep, sliceStep, scale, bias, num_threads);
+	}
+	else
+	{
+		zq_cnn_scale_32f_align0_omp(data, N, H, W, C, pixStep, widthStep, sliceStep, scale, bias, num_threads);
 	}
 }
 
@@ -1089,6 +2040,23 @@ void ZQ_CNN_Forward_SSEUtils::_eltwise_sum(int align_mode, int in_tensor_num, co
 	else
 	{
 		zq_cnn_eltwise_sum_32f_align0(in_tensor_num, in_data, N, H, W, C, pixStep, widthStep, sliceStep, out_data, out_pixStep, out_widthStep, out_sliceStep);
+	}
+}
+
+void ZQ_CNN_Forward_SSEUtils::_eltwise_sum_omp(int align_mode, int in_tensor_num, const float** in_data, int N, int H, int W, int C, const int* pixStep, const int* widthStep, const int* sliceStep,
+	float* out_data, int out_pixStep, int out_widthStep, int out_sliceStep, int num_threads)
+{
+	if (align_mode == ZQ_CNN_Tensor4D::ALIGN_128bit)
+	{
+		zq_cnn_eltwise_sum_32f_align128bit_omp(in_tensor_num, in_data, N, H, W, C, pixStep, widthStep, sliceStep, out_data, out_pixStep, out_widthStep, out_sliceStep, num_threads);
+	}
+	else if (align_mode == ZQ_CNN_Tensor4D::ALIGN_256bit)
+	{
+		zq_cnn_eltwise_sum_32f_align256bit_omp(in_tensor_num, in_data, N, H, W, C, pixStep, widthStep, sliceStep, out_data, out_pixStep, out_widthStep, out_sliceStep, num_threads);
+	}
+	else
+	{
+		zq_cnn_eltwise_sum_32f_align0_omp(in_tensor_num, in_data, N, H, W, C, pixStep, widthStep, sliceStep, out_data, out_pixStep, out_widthStep, out_sliceStep, num_threads);
 	}
 }
 
@@ -1110,6 +2078,24 @@ void ZQ_CNN_Forward_SSEUtils::_eltwise_sum_with_weight(int align_mode, int in_te
 	}
 }
 
+void ZQ_CNN_Forward_SSEUtils::_eltwise_sum_with_weight_omp(int align_mode, int in_tensor_num, const float** in_data, const float* weight, int N, int H, int W, int C,
+	const int* pixStep, const int* widthStep, const int* sliceStep,
+	float* out_data, int out_pixStep, int out_widthStep, int out_sliceStep, int num_threads)
+{
+	if (align_mode == ZQ_CNN_Tensor4D::ALIGN_128bit)
+	{
+		zq_cnn_eltwise_sum_with_weight_32f_align128bit_omp(in_tensor_num, in_data, weight, N, H, W, C, pixStep, widthStep, sliceStep, out_data, out_pixStep, out_widthStep, out_sliceStep, num_threads);
+	}
+	else if (align_mode == ZQ_CNN_Tensor4D::ALIGN_256bit)
+	{
+		zq_cnn_eltwise_sum_with_weight_32f_align256bit_omp(in_tensor_num, in_data, weight, N, H, W, C, pixStep, widthStep, sliceStep, out_data, out_pixStep, out_widthStep, out_sliceStep, num_threads);
+	}
+	else
+	{
+		zq_cnn_eltwise_sum_with_weight_32f_align0_omp(in_tensor_num, in_data, weight, N, H, W, C, pixStep, widthStep, sliceStep, out_data, out_pixStep, out_widthStep, out_sliceStep, num_threads);
+	}
+}
+
 void ZQ_CNN_Forward_SSEUtils::_eltwise_prod(int align_mode, int in_tensor_num, const float** in_data, int N, int H, int W, int C, const int* pixStep, const int* widthStep, const int* sliceStep,
 	float* out_data, int out_pixStep, int out_widthStep, int out_sliceStep)
 {
@@ -1124,6 +2110,23 @@ void ZQ_CNN_Forward_SSEUtils::_eltwise_prod(int align_mode, int in_tensor_num, c
 	else
 	{
 		zq_cnn_eltwise_prod_32f_align0(in_tensor_num, in_data, N, H, W, C, pixStep, widthStep, sliceStep, out_data, out_pixStep, out_widthStep, out_sliceStep);
+	}
+}
+
+void ZQ_CNN_Forward_SSEUtils::_eltwise_prod_omp(int align_mode, int in_tensor_num, const float** in_data, int N, int H, int W, int C, const int* pixStep, const int* widthStep, const int* sliceStep,
+	float* out_data, int out_pixStep, int out_widthStep, int out_sliceStep, int num_threads)
+{
+	if (align_mode == ZQ_CNN_Tensor4D::ALIGN_128bit)
+	{
+		zq_cnn_eltwise_prod_32f_align128bit_omp(in_tensor_num, in_data, N, H, W, C, pixStep, widthStep, sliceStep, out_data, out_pixStep, out_widthStep, out_sliceStep, num_threads);
+	}
+	else if (align_mode == ZQ_CNN_Tensor4D::ALIGN_256bit)
+	{
+		zq_cnn_eltwise_prod_32f_align256bit_omp(in_tensor_num, in_data, N, H, W, C, pixStep, widthStep, sliceStep, out_data, out_pixStep, out_widthStep, out_sliceStep, num_threads);
+	}
+	else
+	{
+		zq_cnn_eltwise_prod_32f_align0_omp(in_tensor_num, in_data, N, H, W, C, pixStep, widthStep, sliceStep, out_data, out_pixStep, out_widthStep, out_sliceStep, num_threads);
 	}
 }
 
@@ -1144,8 +2147,26 @@ void ZQ_CNN_Forward_SSEUtils::_eltwise_max(int align_mode, int in_tensor_num, co
 	}
 }
 
-void ZQ_CNN_Forward_SSEUtils::_lrn_across_channels(int align_mode, int local_size, float alpha, float beta, float k, const float* in_data, int N, int H, int W, int C,
-	int in_pixStep, int in_widthStep, int in_sliceStep, float* out_data, int out_pixStep, int out_widthStep, int out_sliceStep)
+void ZQ_CNN_Forward_SSEUtils::_eltwise_max_omp(int align_mode, int in_tensor_num, const float** in_data, int N, int H, int W, int C, const int* pixStep, const int* widthStep, const int* sliceStep,
+	float* out_data, int out_pixStep, int out_widthStep, int out_sliceStep, int num_threads)
+{
+	if (align_mode == ZQ_CNN_Tensor4D::ALIGN_128bit)
+	{
+		zq_cnn_eltwise_max_32f_align128bit_omp(in_tensor_num, in_data, N, H, W, C, pixStep, widthStep, sliceStep, out_data, out_pixStep, out_widthStep, out_sliceStep, num_threads);
+	}
+	else if (align_mode == ZQ_CNN_Tensor4D::ALIGN_256bit)
+	{
+		zq_cnn_eltwise_max_32f_align256bit_omp(in_tensor_num, in_data, N, H, W, C, pixStep, widthStep, sliceStep, out_data, out_pixStep, out_widthStep, out_sliceStep, num_threads);
+	}
+	else
+	{
+		zq_cnn_eltwise_max_32f_align0_omp(in_tensor_num, in_data, N, H, W, C, pixStep, widthStep, sliceStep, out_data, out_pixStep, out_widthStep, out_sliceStep, num_threads);
+	}
+}
+
+void ZQ_CNN_Forward_SSEUtils::_lrn_across_channels(int align_mode, int local_size, float alpha, float beta, float k, 
+	const float* in_data, int N, int H, int W, int C,int in_pixStep, int in_widthStep, int in_sliceStep, 
+	float* out_data, int out_pixStep, int out_widthStep, int out_sliceStep, int num_threads)
 {
 	if (align_mode == ZQ_CNN_Tensor4D::ALIGN_128bit)
 	{
@@ -1168,7 +2189,7 @@ bool ZQ_CNN_Forward_SSEUtils::_prior_box(const ZQ_CNN_Tensor4D& input, const ZQ_
 	const std::vector<float>& min_sizes, const std::vector<float>& max_sizes,
 	const std::vector<float>& aspect_ratios, const std::vector<float>& variance,
 	bool flip, int num_priors, bool clip, int img_w, int img_h, float step_w, float step_h, float offset,
-	ZQ_CNN_Tensor4D& output)
+	ZQ_CNN_Tensor4D& output, int num_threads)
 {
 	const int layer_width = input.GetW();
 	const int layer_height = input.GetH();
@@ -1382,7 +2403,8 @@ bool ZQ_CNN_Forward_SSEUtils::_concat_NCHW_get_size(const std::vector<ZQ_CNN_Ten
 	}
 }
 
-bool ZQ_CNN_Forward_SSEUtils::_concat_NCHW(const std::vector<ZQ_CNN_Tensor4D*>& inputs, int axis, ZQ_CNN_Tensor4D& output)
+bool ZQ_CNN_Forward_SSEUtils::_concat_NCHW(const std::vector<ZQ_CNN_Tensor4D*>& inputs, int axis, 
+	ZQ_CNN_Tensor4D& output, int num_threads)
 {
 	int out_N, out_C, out_H, out_W;
 	if (!_concat_NCHW_get_size(inputs, axis, out_N, out_C, out_H, out_W))
@@ -1470,7 +2492,8 @@ bool ZQ_CNN_Forward_SSEUtils::_concat_NCHW(const std::vector<ZQ_CNN_Tensor4D*>& 
 bool ZQ_CNN_Forward_SSEUtils::_detection_output(const ZQ_CNN_Tensor4D& loc, const ZQ_CNN_Tensor4D& conf,
 	const ZQ_CNN_Tensor4D& prior, int num_priors, int num_loc_classes, int num_classes, bool share_location,
 	int background_label_id, ZQ_CNN_BBoxUtils::PriorBoxCodeType code_type, bool variance_encoded_in_target,
-	float nms_thresh, float nms_eta, int nms_top_k, float confidence_thresh, int keep_top_k, ZQ_CNN_Tensor4D& output)
+	float nms_thresh, float nms_eta, int nms_top_k, float confidence_thresh, int keep_top_k, 
+	ZQ_CNN_Tensor4D& output, int num_threads)
 {
 	const int num = loc.GetN();
 

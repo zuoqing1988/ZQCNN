@@ -54,7 +54,7 @@ namespace ZQ
 		}
 
 		/*it may change input in case of padding, but the data will not be lost*/
-		bool Forward(ZQ_CNN_Tensor4D& input)
+		bool Forward(ZQ_CNN_Tensor4D& input, int num_threads = 1)
 		{
 			if (map_name_to_blob_idx.size() == 0 || map_name_to_layer_idx.size() == 0 || tops.size() == 0)
 				return false;
@@ -78,7 +78,7 @@ namespace ZQ
 				
 				layers[i]->show_debug_info = show_debug_info;
 				//printf("%d\n", i);
-				if (!layers[i]->Forward(&bottom_ptrs, &top_ptrs))
+				if (!layers[i]->Forward(&bottom_ptrs, &top_ptrs, num_threads))
 				{
 					blobs[0] = 0;
 					tops[0][0] = 0;

@@ -19,7 +19,7 @@ namespace ZQ
 		bool show_debug_info;
 
 		ZQ_CNN_Layer() :show_debug_info(false) {}
-		virtual bool Forward(std::vector<ZQ_CNN_Tensor4D*>* bottoms, std::vector<ZQ_CNN_Tensor4D*>* tops) = 0;
+		virtual bool Forward(std::vector<ZQ_CNN_Tensor4D*>* bottoms, std::vector<ZQ_CNN_Tensor4D*>* tops, int num_threads = 1) = 0;
 
 		virtual bool ReadParam(const std::string& line) = 0;
 
@@ -115,7 +115,8 @@ namespace ZQ
 		int H, W, C;
 		bool has_H_val, has_W_val;
 
-		virtual bool Forward(std::vector<ZQ_CNN_Tensor4D*>* bottoms, std::vector<ZQ_CNN_Tensor4D*>* tops) { return true; }
+		virtual bool Forward(std::vector<ZQ_CNN_Tensor4D*>* bottoms, std::vector<ZQ_CNN_Tensor4D*>* tops, int num_threads = 1) 
+		{ return true; }
 
 		virtual bool ReadParam(const std::string& line)
 		{
@@ -222,7 +223,7 @@ namespace ZQ
 
 	public:
 
-		virtual bool Forward(std::vector<ZQ_CNN_Tensor4D*>* bottoms, std::vector<ZQ_CNN_Tensor4D*>* tops)
+		virtual bool Forward(std::vector<ZQ_CNN_Tensor4D*>* bottoms, std::vector<ZQ_CNN_Tensor4D*>* tops, int num_threads = 1)
 		{
 			if (bottoms == 0 || tops == 0 || bottoms->size() == 0 || tops->size() == 0 || (*bottoms)[0] == 0 || (*tops)[0] == 0)
 				return false;
@@ -231,7 +232,8 @@ namespace ZQ
 				if (filters == 0 || bias == 0)
 					return false;
 				double t1 = omp_get_wtime();
-				bool ret = ZQ_CNN_Forward_SSEUtils::ConvolutionWithBias(*((*bottoms)[0]), *filters, *bias, stride_H, stride_W, pad_H, pad_W, *((*tops)[0]));
+				bool ret = ZQ_CNN_Forward_SSEUtils::ConvolutionWithBias(*((*bottoms)[0]), *filters, *bias, stride_H, stride_W, pad_H, pad_W, *((*tops)[0]),
+					num_threads);
 				double t2 = omp_get_wtime();
 				if (show_debug_info)
 					printf("Conv layer:%s %.3f ms HW %dx%d filter: NHWC %d x %d x %d x %d\n", 
@@ -243,7 +245,8 @@ namespace ZQ
 				if (filters == 0 || bias == 0)
 					return false;
 				double t1 = omp_get_wtime();
-				bool ret = ZQ_CNN_Forward_SSEUtils::Convolution(*((*bottoms)[0]), *filters, stride_H, stride_W, pad_H, pad_W, *((*tops)[0]));
+				bool ret = ZQ_CNN_Forward_SSEUtils::Convolution(*((*bottoms)[0]), *filters, stride_H, stride_W, pad_H, pad_W, *((*tops)[0]),
+					num_threads);
 				double t2 = omp_get_wtime();
 				if (show_debug_info)
 					printf("Conv layer:%s %.3f ms HW %dx%d filter: NHWC %d x %d x %d x %d\n", 
@@ -508,7 +511,7 @@ namespace ZQ
 
 	public:
 
-		virtual bool Forward(std::vector<ZQ_CNN_Tensor4D*>* bottoms, std::vector<ZQ_CNN_Tensor4D*>* tops)
+		virtual bool Forward(std::vector<ZQ_CNN_Tensor4D*>* bottoms, std::vector<ZQ_CNN_Tensor4D*>* tops, int num_threads = 1)
 		{
 			if (bottoms == 0 || tops == 0 || bottoms->size() == 0 || tops->size() == 0 || (*bottoms)[0] == 0 || (*tops)[0] == 0)
 				return false;
@@ -517,7 +520,8 @@ namespace ZQ
 				if (filters == 0 || bias == 0)
 					return false;
 				double t1 = omp_get_wtime();
-				bool ret = ZQ_CNN_Forward_SSEUtils::DepthwiseConvolutionWithBias(*((*bottoms)[0]), *filters, *bias, stride_H, stride_W, pad_H, pad_W, *((*tops)[0]));
+				bool ret = ZQ_CNN_Forward_SSEUtils::DepthwiseConvolutionWithBias(*((*bottoms)[0]), *filters, *bias, stride_H, stride_W, pad_H, pad_W, *((*tops)[0]), 
+					num_threads);
 				double t2 = omp_get_wtime();
 				if (show_debug_info)
 					printf("Conv layer:%s %.3f ms HW %dx%d filter: NHWC %d x %d x %d x %d\n",
@@ -529,7 +533,8 @@ namespace ZQ
 				if (filters == 0 || bias == 0)
 					return false;
 				double t1 = omp_get_wtime();
-				bool ret = ZQ_CNN_Forward_SSEUtils::DepthwiseConvolution(*((*bottoms)[0]), *filters, stride_H, stride_W, pad_H, pad_W, *((*tops)[0]));
+				bool ret = ZQ_CNN_Forward_SSEUtils::DepthwiseConvolution(*((*bottoms)[0]), *filters, stride_H, stride_W, pad_H, pad_W, *((*tops)[0]),
+					num_threads);
 				double t2 = omp_get_wtime();
 				if (show_debug_info)
 					printf("Conv layer:%s %.3f ms HW %dx%d filter: NHWC %d x %d x %d x %d\n",
@@ -796,7 +801,7 @@ namespace ZQ
 		int bottom_W;
 
 	public:
-		virtual bool Forward(std::vector<ZQ_CNN_Tensor4D*>* bottoms, std::vector<ZQ_CNN_Tensor4D*>* tops)
+		virtual bool Forward(std::vector<ZQ_CNN_Tensor4D*>* bottoms, std::vector<ZQ_CNN_Tensor4D*>* tops, int num_threads = 1)
 		{
 			if (bottoms == 0 || tops == 0 || bottoms->size() == 0 || tops->size() == 0 || (*bottoms)[0] == 0 || (*tops)[0] == 0)
 				return false;
@@ -990,7 +995,7 @@ namespace ZQ
 		int bottom_W;
 
 	public:
-		virtual bool Forward(std::vector<ZQ_CNN_Tensor4D*>* bottoms, std::vector<ZQ_CNN_Tensor4D*>* tops)
+		virtual bool Forward(std::vector<ZQ_CNN_Tensor4D*>* bottoms, std::vector<ZQ_CNN_Tensor4D*>* tops, int num_threads = 1)
 		{
 			if (bottoms == 0 || tops == 0 || bottoms->size() == 0 || tops->size() == 0 || (*bottoms)[0] == 0 || (*tops)[0] == 0)
 				return false;
@@ -1154,7 +1159,7 @@ namespace ZQ
 		int bottom_W;
 
 	public:
-		virtual bool Forward(std::vector<ZQ_CNN_Tensor4D*>* bottoms, std::vector<ZQ_CNN_Tensor4D*>* tops)
+		virtual bool Forward(std::vector<ZQ_CNN_Tensor4D*>* bottoms, std::vector<ZQ_CNN_Tensor4D*>* tops, int num_threads = 1)
 		{
 			if (bottoms == 0 || tops == 0 || bottoms->size() == 0 || tops->size() == 0 || (*bottoms)[0] == 0 || (*tops)[0] == 0)
 				return false;
@@ -1340,7 +1345,7 @@ namespace ZQ
 		int bottom_W;
 
 		ZQ_CNN_Layer_PReLU() :slope(0), bottom_C(0) {}
-		virtual bool Forward(std::vector<ZQ_CNN_Tensor4D*>* bottoms, std::vector<ZQ_CNN_Tensor4D*>* tops)
+		virtual bool Forward(std::vector<ZQ_CNN_Tensor4D*>* bottoms, std::vector<ZQ_CNN_Tensor4D*>* tops, int num_threads = 1)
 		{
 			if (bottoms == 0 || tops == 0 || bottoms->size() == 0 || tops->size() == 0 || (*bottoms)[0] == 0 || (*tops)[0] == 0)
 				return false;
@@ -1479,7 +1484,7 @@ namespace ZQ
 		int bottom_W;
 
 		ZQ_CNN_Layer_ReLU() :bottom_C(0) {}
-		virtual bool Forward(std::vector<ZQ_CNN_Tensor4D*>* bottoms, std::vector<ZQ_CNN_Tensor4D*>* tops)
+		virtual bool Forward(std::vector<ZQ_CNN_Tensor4D*>* bottoms, std::vector<ZQ_CNN_Tensor4D*>* tops, int num_threads = 1)
 		{
 			if (bottoms == 0 || tops == 0 || bottoms->size() == 0 || tops->size() == 0 || (*bottoms)[0] == 0 || (*tops)[0] == 0)
 				return false;
@@ -1600,7 +1605,7 @@ namespace ZQ
 		int bottom_H;
 		int bottom_W;
 
-		virtual bool Forward(std::vector<ZQ_CNN_Tensor4D*>* bottoms, std::vector<ZQ_CNN_Tensor4D*>* tops)
+		virtual bool Forward(std::vector<ZQ_CNN_Tensor4D*>* bottoms, std::vector<ZQ_CNN_Tensor4D*>* tops, int num_threads = 1)
 		{
 			if (bottoms == 0 || tops == 0 || bottoms->size() == 0 || tops->size() == 0 || (*bottoms)[0] == 0 || (*tops)[0] == 0)
 				return false;
@@ -1768,7 +1773,7 @@ namespace ZQ
 
 		ZQ_CNN_Layer_InnerProduct() :filters(0), bias(0), with_bias(true) {}
 
-		virtual bool Forward(std::vector<ZQ_CNN_Tensor4D*>* bottoms, std::vector<ZQ_CNN_Tensor4D*>* tops)
+		virtual bool Forward(std::vector<ZQ_CNN_Tensor4D*>* bottoms, std::vector<ZQ_CNN_Tensor4D*>* tops, int num_threads = 1)
 		{
 			if (bottoms == 0 || tops == 0 || bottoms->size() == 0 || tops->size() == 0 || (*bottoms)[0] == 0 || (*tops)[0] == 0)
 				return false;
@@ -1995,7 +2000,7 @@ namespace ZQ
 		int bottom_W;
 
 		ZQ_CNN_Layer_Softmax() { axis = 1; }
-		virtual bool Forward(std::vector<ZQ_CNN_Tensor4D*>* bottoms, std::vector<ZQ_CNN_Tensor4D*>* tops)
+		virtual bool Forward(std::vector<ZQ_CNN_Tensor4D*>* bottoms, std::vector<ZQ_CNN_Tensor4D*>* tops, int num_threads = 1)
 		{
 			if (bottoms == 0 || tops == 0 || bottoms->size() == 0 || tops->size() == 0 || (*bottoms)[0] == 0 || (*tops)[0] == 0)
 				return false;
@@ -2117,7 +2122,7 @@ namespace ZQ
 		int bottom_W;
 
 		ZQ_CNN_Layer_Dropout() {}
-		virtual bool Forward(std::vector<ZQ_CNN_Tensor4D*>* bottoms, std::vector<ZQ_CNN_Tensor4D*>* tops)
+		virtual bool Forward(std::vector<ZQ_CNN_Tensor4D*>* bottoms, std::vector<ZQ_CNN_Tensor4D*>* tops, int num_threads = 1)
 		{
 			if (bottoms == 0 || tops == 0 || bottoms->size() == 0 || tops->size() == 0 || (*bottoms)[0] == 0 || (*tops)[0] == 0)
 				return false;
@@ -2247,7 +2252,7 @@ namespace ZQ
 		int bottom_H;
 		int bottom_W;
 
-		virtual bool Forward(std::vector<ZQ_CNN_Tensor4D*>* bottoms, std::vector<ZQ_CNN_Tensor4D*>* tops)
+		virtual bool Forward(std::vector<ZQ_CNN_Tensor4D*>* bottoms, std::vector<ZQ_CNN_Tensor4D*>* tops, int num_threads = 1)
 		{
 			if (bottoms == 0 || tops == 0 || bottoms->size() == 0 || tops->size() == 0 || (*bottoms)[0] == 0 || (*tops)[0] == 0)
 				return false;
@@ -2425,7 +2430,7 @@ namespace ZQ
 		int bottom_H;
 		int bottom_W;
 
-		virtual bool Forward(std::vector<ZQ_CNN_Tensor4D*>* bottoms, std::vector<ZQ_CNN_Tensor4D*>* tops)
+		virtual bool Forward(std::vector<ZQ_CNN_Tensor4D*>* bottoms, std::vector<ZQ_CNN_Tensor4D*>* tops, int num_threads = 1)
 		{
 			if (bottoms == 0 || tops == 0 || bottoms->size() == 0 || tops->size() == 0 || (*bottoms)[0] == 0 || (*tops)[0] == 0)
 				return false;
@@ -2593,7 +2598,7 @@ namespace ZQ
 		int bottom_H;
 		int bottom_W;
 
-		virtual bool Forward(std::vector<ZQ_CNN_Tensor4D*>* bottoms, std::vector<ZQ_CNN_Tensor4D*>* tops)
+		virtual bool Forward(std::vector<ZQ_CNN_Tensor4D*>* bottoms, std::vector<ZQ_CNN_Tensor4D*>* tops, int num_threads = 1)
 		{
 			if (bottoms == 0 || tops == 0 || bottoms->size() == 0 || tops->size() == 0 || (*bottoms)[0] == 0 || (*tops)[0] == 0)
 				return false;
@@ -2741,7 +2746,7 @@ namespace ZQ
 		int bottom_H;
 		int bottom_W;
 
-		virtual bool Forward(std::vector<ZQ_CNN_Tensor4D*>* bottoms, std::vector<ZQ_CNN_Tensor4D*>* tops)
+		virtual bool Forward(std::vector<ZQ_CNN_Tensor4D*>* bottoms, std::vector<ZQ_CNN_Tensor4D*>* tops, int num_threads = 1)
 		{
 			if (bottoms == 0 || tops == 0 || bottoms->size() == 0 || tops->size() == 0 || (*bottoms)[0] == 0 || (*tops)[0] == 0)
 				return false;
@@ -2890,7 +2895,7 @@ namespace ZQ
 		int bottom_H;
 		int bottom_W;
 
-		virtual bool Forward(std::vector<ZQ_CNN_Tensor4D*>* bottoms, std::vector<ZQ_CNN_Tensor4D*>* tops)
+		virtual bool Forward(std::vector<ZQ_CNN_Tensor4D*>* bottoms, std::vector<ZQ_CNN_Tensor4D*>* tops, int num_threads = 1)
 		{
 			if (bottoms == 0 || tops == 0 || bottoms->size() == 0 || tops->size() == 0 || (*bottoms)[0] == 0 || (*tops)[0] == 0)
 				return false;
@@ -3084,7 +3089,7 @@ namespace ZQ
 		int bottom_H;
 		int bottom_W;
 
-		virtual bool Forward(std::vector<ZQ_CNN_Tensor4D*>* bottoms, std::vector<ZQ_CNN_Tensor4D*>* tops)
+		virtual bool Forward(std::vector<ZQ_CNN_Tensor4D*>* bottoms, std::vector<ZQ_CNN_Tensor4D*>* tops, int num_threads = 1)
 		{
 			if (bottoms == 0 || tops == 0 || bottoms->size() == 0 || tops->size() == 0 || (*bottoms)[0] == 0 || (*tops)[0] == 0)
 				return false;
@@ -3404,7 +3409,7 @@ namespace ZQ
 
 		int axis;
 
-		virtual bool Forward(std::vector<ZQ_CNN_Tensor4D*>* bottoms, std::vector<ZQ_CNN_Tensor4D*>* tops)
+		virtual bool Forward(std::vector<ZQ_CNN_Tensor4D*>* bottoms, std::vector<ZQ_CNN_Tensor4D*>* tops, int num_threads = 1)
 		{
 			if (bottoms == 0 || tops == 0 || bottoms->size() == 0 || tops->size() == 0 || (*bottoms)[0] == 0 || (*tops)[0] == 0)
 				return false;
@@ -3539,7 +3544,7 @@ namespace ZQ
 		int num_loc_classes;
 
 
-		virtual bool Forward(std::vector<ZQ_CNN_Tensor4D*>* bottoms, std::vector<ZQ_CNN_Tensor4D*>* tops)
+		virtual bool Forward(std::vector<ZQ_CNN_Tensor4D*>* bottoms, std::vector<ZQ_CNN_Tensor4D*>* tops, int num_threads = 1)
 		{
 			if (bottoms == 0 || tops == 0 || bottoms->size() < 3 || tops->size() == 0 
 				|| (*bottoms)[0] == 0 || (*bottoms)[1] == 0 || (*bottoms)[2] == 0 || (*tops)[0] == 0)

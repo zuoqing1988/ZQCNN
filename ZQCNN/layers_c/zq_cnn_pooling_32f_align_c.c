@@ -17,10 +17,15 @@ extern "C" {
 #endif
 
 #define zq_cnn_maxpooling_nopadding_suredivided_kernel2x2 zq_cnn_maxpooling_nopadding_suredivided_32f_align128bit_kernel2x2
+#define zq_cnn_maxpooling_nopadding_suredivided_kernel2x2_omp zq_cnn_maxpooling_nopadding_suredivided_32f_align128bit_kernel2x2_omp
 #define zq_cnn_maxpooling_nopadding_suredivided_kernel3x3 zq_cnn_maxpooling_nopadding_suredivided_32f_align128bit_kernel3x3
+#define zq_cnn_maxpooling_nopadding_suredivided_kernel3x3_omp zq_cnn_maxpooling_nopadding_suredivided_32f_align128bit_kernel3x3_omp
 #define zq_cnn_maxpooling_nopadding_suredivided_kernel5x5 zq_cnn_maxpooling_nopadding_suredivided_32f_align128bit_kernel5x5
+#define zq_cnn_maxpooling_nopadding_suredivided_kernel5x5_omp zq_cnn_maxpooling_nopadding_suredivided_32f_align128bit_kernel5x5_omp
 #define zq_cnn_maxpooling_nopadding_suredivided_general zq_cnn_maxpooling_nopadding_suredivided_32f_align128bit_general
+#define zq_cnn_maxpooling_nopadding_suredivided_general_omp zq_cnn_maxpooling_nopadding_suredivided_32f_align128bit_general_omp
 #define zq_cnn_maxpooling_nopadding_nodivided_general zq_cnn_maxpooling_nopadding_nodivided_32f_align128bit_general
+#define zq_cnn_maxpooling_nopadding_nodivided_general_omp zq_cnn_maxpooling_nopadding_nodivided_32f_align128bit_general_omp
 #define zq_mm_load_ps _mm_load_ps
 #define zq_mm_store_ps _mm_store_ps
 #define zq_mm_max_ps _mm_max_ps
@@ -32,10 +37,15 @@ extern "C" {
 
 
 #undef zq_cnn_maxpooling_nopadding_suredivided_kernel2x2
+#undef zq_cnn_maxpooling_nopadding_suredivided_kernel2x2_omp
 #undef zq_cnn_maxpooling_nopadding_suredivided_kernel3x3
+#undef zq_cnn_maxpooling_nopadding_suredivided_kernel3x3_omp
 #undef zq_cnn_maxpooling_nopadding_suredivided_kernel5x5
+#undef zq_cnn_maxpooling_nopadding_suredivided_kernel5x5_omp
 #undef zq_cnn_maxpooling_nopadding_suredivided_general
+#undef zq_cnn_maxpooling_nopadding_suredivided_general_omp
 #undef zq_cnn_maxpooling_nopadding_nodivided_general
+#undef zq_cnn_maxpooling_nopadding_nodivided_general_omp
 #undef zq_mm_load_ps
 #undef zq_mm_store_ps
 #undef zq_mm_max_ps
@@ -44,10 +54,15 @@ extern "C" {
 #undef zq_mm_align_size
 
 #define zq_cnn_maxpooling_nopadding_suredivided_kernel2x2 zq_cnn_maxpooling_nopadding_suredivided_32f_align256bit_kernel2x2
+#define zq_cnn_maxpooling_nopadding_suredivided_kernel2x2_omp zq_cnn_maxpooling_nopadding_suredivided_32f_align256bit_kernel2x2_omp
 #define zq_cnn_maxpooling_nopadding_suredivided_kernel3x3 zq_cnn_maxpooling_nopadding_suredivided_32f_align256bit_kernel3x3
+#define zq_cnn_maxpooling_nopadding_suredivided_kernel3x3_omp zq_cnn_maxpooling_nopadding_suredivided_32f_align256bit_kernel3x3_omp
 #define zq_cnn_maxpooling_nopadding_suredivided_kernel5x5 zq_cnn_maxpooling_nopadding_suredivided_32f_align256bit_kernel5x5
+#define zq_cnn_maxpooling_nopadding_suredivided_kernel5x5_omp zq_cnn_maxpooling_nopadding_suredivided_32f_align256bit_kernel5x5_omp
 #define zq_cnn_maxpooling_nopadding_suredivided_general zq_cnn_maxpooling_nopadding_suredivided_32f_align256bit_general
+#define zq_cnn_maxpooling_nopadding_suredivided_general_omp zq_cnn_maxpooling_nopadding_suredivided_32f_align256bit_general_omp
 #define zq_cnn_maxpooling_nopadding_nodivided_general zq_cnn_maxpooling_nopadding_nodivided_32f_align256bit_general
+#define zq_cnn_maxpooling_nopadding_nodivided_general_omp zq_cnn_maxpooling_nopadding_nodivided_32f_align256bit_general_omp
 #define zq_mm_load_ps _mm256_load_ps
 #define zq_mm_store_ps _mm256_store_ps
 #define zq_mm_max_ps _mm256_max_ps
@@ -58,10 +73,15 @@ extern "C" {
 #include "zq_cnn_pooling_32f_align_c_raw.h"
 
 #undef zq_cnn_maxpooling_nopadding_suredivided_kernel2x2
+#undef zq_cnn_maxpooling_nopadding_suredivided_kernel2x2_omp
 #undef zq_cnn_maxpooling_nopadding_suredivided_kernel3x3
+#undef zq_cnn_maxpooling_nopadding_suredivided_kernel3x3_omp
 #undef zq_cnn_maxpooling_nopadding_suredivided_kernel5x5
+#undef zq_cnn_maxpooling_nopadding_suredivided_kernel5x5_omp
 #undef zq_cnn_maxpooling_nopadding_suredivided_general
-#undef zq_cnn_maxpooing_nopadding_nodivided_genereal
+#undef zq_cnn_maxpooling_nopadding_suredivided_general_omp
+#undef zq_cnn_maxpooling_nopadding_nodivided_general
+#undef zq_cnn_maxpooling_nopadding_nodivided_general_omp
 #undef zq_mm_load_ps
 #undef zq_mm_store_ps
 #undef zq_mm_max_ps
@@ -284,6 +304,153 @@ void zq_cnn_maxpooling_nopadding_32f_align0_general(
 	}
 
 #endif
+}
+
+void zq_cnn_maxpooling_nopadding_32f_align0_general_omp(
+	const float* in_tensor4D_data,
+	int in_N,
+	int in_H,
+	int in_W,
+	int in_C,
+	int in_alignPixelStep,
+	int in_widthStep,
+	int in_SliceStep,
+	int kernel_H,
+	int kernel_W,
+	int stride_H,
+	int stride_W,
+	float* out_tensor4D_data,
+	int out_N,	// must be in_N
+	int out_H,	// must be ceil((in_H - filter_H)/stride_H) + 1
+	int out_W,	// must be ceil((in_W - filter_W)/stride_W) + 1
+	int out_C,	// must be filter_N
+	int out_alignPixelStep,
+	int out_alignWidthStep,
+	int out_alignSliceStep,
+	int thread_count
+)
+{
+	int c;
+	int chunk_size = (in_C + thread_count - 1) / thread_count;
+	int in_widthStep_mul_strideH = stride_H*in_widthStep;
+	int in_pixelStep_mul_strideW = stride_W*in_alignPixelStep;
+	
+	if ((in_W - kernel_W) % stride_W == 0 && (in_H - kernel_H) % stride_H == 0)
+	{
+#pragma omp parallel for schedule(static, chunk_size) num_threads(thread_count)
+		for (c = 0; c < in_C; c++)
+		{
+			int out_n, out_h, out_w, kh, kw;
+			float max_val;
+			const float* in_slice_ptr, *in_row_ptr, *in_pix_ptr;
+			float* out_slice_ptr, *out_row_ptr, *out_pix_ptr;
+			const float* cur_in_row_ptr;
+			const float* cur_in_pix_ptr;
+			for (out_n = 0, in_slice_ptr = in_tensor4D_data + c, out_slice_ptr = out_tensor4D_data + c;
+				out_n < out_N;
+				out_n++, in_slice_ptr += in_SliceStep, out_slice_ptr += out_alignSliceStep)
+			{
+				for (out_h = 0, in_row_ptr = in_slice_ptr, out_row_ptr = out_slice_ptr;
+					out_h < out_H;
+					out_h++, in_row_ptr += in_widthStep_mul_strideH, out_row_ptr += out_alignWidthStep)
+				{
+					for (out_w = 0, in_pix_ptr = in_row_ptr, out_pix_ptr = out_row_ptr;
+						out_w < out_W;
+						out_w++, in_pix_ptr += in_pixelStep_mul_strideW, out_pix_ptr += out_alignPixelStep)
+					{
+						max_val = -FLT_MAX;
+						for (kh = 0, cur_in_row_ptr = in_pix_ptr;
+							kh < kernel_H;
+							kh++, cur_in_row_ptr += in_widthStep)
+						{
+							for (kw = 0, cur_in_pix_ptr = cur_in_row_ptr;
+								kw < kernel_W;
+								kw++, cur_in_pix_ptr += in_alignPixelStep)
+							{
+								max_val = __max(max_val, *cur_in_pix_ptr);
+							}
+						}
+						*out_pix_ptr = max_val;
+					}
+				}
+			}
+		}
+	}
+	else
+	{
+		int final_kH = __min(kernel_H, in_H - (out_H - 1)*stride_H);
+		int final_kW = __min(kernel_W, in_W - (out_W - 1)*stride_W);
+#pragma omp parallel for schedule(static, chunk_size) num_threads(thread_count)
+		for (c = 0; c < in_C; c++)
+		{
+			int out_n, out_h, out_w, kh, kw;
+			float max_val;
+			const float* in_slice_ptr, *in_row_ptr, *in_pix_ptr;
+			float* out_slice_ptr, *out_row_ptr, *out_pix_ptr;
+			const float* cur_in_row_ptr;
+			const float* cur_in_pix_ptr;
+			for (out_n = 0, in_slice_ptr = in_tensor4D_data + c, out_slice_ptr = out_tensor4D_data + c;
+				out_n < out_N;
+				out_n++, in_slice_ptr += in_SliceStep, out_slice_ptr += out_alignSliceStep)
+			{
+				for (out_h = 0, out_row_ptr = out_slice_ptr, in_row_ptr = in_slice_ptr;
+					out_h < out_H - 1;
+					out_h++, out_row_ptr += out_alignWidthStep, in_row_ptr += in_widthStep_mul_strideH)
+				{
+					for (out_w = 0, out_pix_ptr = out_row_ptr, in_pix_ptr = in_row_ptr;
+						out_w < out_W - 1;
+						out_w++, out_pix_ptr += out_alignPixelStep, in_pix_ptr += in_pixelStep_mul_strideW)
+					{
+						max_val = -FLT_MAX;
+						for (kh = 0, cur_in_row_ptr = in_pix_ptr; kh < kernel_H; kh++, cur_in_row_ptr += in_widthStep)
+						{
+							for (kw = 0, cur_in_pix_ptr = cur_in_row_ptr; kw < kernel_W; kw++, cur_in_pix_ptr += in_alignPixelStep)
+							{
+								max_val = __max(max_val, *cur_in_pix_ptr);
+							}
+						}
+						*out_pix_ptr = max_val;
+					}
+
+
+					max_val = -FLT_MAX;
+					for (kh = 0, cur_in_row_ptr = in_pix_ptr; kh < kernel_H; kh++, cur_in_row_ptr += in_widthStep)
+					{
+						for (kw = 0, cur_in_pix_ptr = cur_in_row_ptr; kw < final_kW; kw++, cur_in_pix_ptr += in_alignPixelStep)
+						{
+							max_val = __max(max_val, *cur_in_pix_ptr);
+						}
+					}
+					*out_pix_ptr = max_val;
+				}
+
+				for (out_w = 0, out_pix_ptr = out_row_ptr, in_pix_ptr = in_row_ptr;
+					out_w < out_W - 1;
+					out_w++, out_pix_ptr += out_alignPixelStep, in_pix_ptr += in_pixelStep_mul_strideW)
+				{
+					max_val = -FLT_MAX;
+					for (kh = 0, cur_in_row_ptr = in_pix_ptr; kh < final_kH; kh++, cur_in_row_ptr += in_widthStep)
+					{
+						for (kw = 0, cur_in_pix_ptr = cur_in_row_ptr; kw < kernel_W; kw++, cur_in_pix_ptr += in_alignPixelStep)
+						{
+							max_val = __max(max_val, *cur_in_pix_ptr);
+						}
+					}
+					*out_pix_ptr = max_val;
+				}
+
+				max_val = -FLT_MAX;
+				for (kh = 0, cur_in_row_ptr = in_pix_ptr; kh < final_kH; kh++, cur_in_row_ptr += in_widthStep)
+				{
+					for (kw = 0, cur_in_pix_ptr = cur_in_row_ptr; kw < final_kW; kw++, cur_in_pix_ptr += in_alignPixelStep)
+					{
+						max_val = __max(max_val, *cur_in_pix_ptr);
+					}
+				}
+				*out_pix_ptr = max_val;
+			}
+		}
+	}
 }
 
 #if defined(__cplusplus) || defined(c_plusplus) 

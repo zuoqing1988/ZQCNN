@@ -36,8 +36,8 @@ static void Draw(cv::Mat &image, const std::vector<ZQ_CNN_BBox>& thirdBbox)
 
 int main()
 {
-
-	openblas_set_num_threads(1);
+	int num_threads = 2;
+	openblas_set_num_threads(num_threads);
 	Mat image0 = cv::imread("data\\4.jpg", 1);
 	if (image0.empty())
 	{
@@ -64,7 +64,7 @@ int main()
 	double t1 = omp_get_wtime();
 	for (int i = 0; i < iters; i++)
 	{
-		if (!mtcnn.Find(image0.data, image0.cols, image0.rows, image0.step[0], thirdBbox))
+		if (!mtcnn.Find(image0.data, image0.cols, image0.rows, image0.step[0], thirdBbox,num_threads))
 		{
 			cout << "failed to find face!\n";
 			return EXIT_FAILURE;

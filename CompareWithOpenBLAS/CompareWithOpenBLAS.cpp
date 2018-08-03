@@ -440,7 +440,7 @@ float _test_im2col(int in_H, int in_W, int filter_N, int filter_C, int stride_H,
 
 int main()
 {
-	openblas_set_num_threads(1);
+	openblas_set_num_threads(8);
 	double total_sum = 0;
 	//_test_gemm_value();
 	/*total_sum += 1*_test_im2col(112, 96, 64, 3, 2, 2,1000);

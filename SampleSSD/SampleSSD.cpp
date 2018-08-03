@@ -14,8 +14,11 @@ struct BBox {
 
 int main()
 {
+	int thread_num = 1;
 	openblas_set_num_threads(1);
+	
 	Mat img0 = cv::imread("data\\004545.jpg", 1);
+	//Mat img0 = cv::imread("data\\face1.jpg", 1);
 	if (img0.empty())
 	{
 		cout << "empty image\n";
@@ -24,6 +27,7 @@ int main()
 	int width = img0.cols;
 	int height = img0.rows;
 	cv::Mat img1;
+	//cv::resize(img0, img1, cv::Size(300, 300));
 	cv::resize(img0, img1, cv::Size(300, 300));
 	ZQ_CNN_Tensor4D_NHW_C_Align128bit input0, input1;
 	input0.ConvertFromBGR(img1.data, img1.cols, img1.rows, img1.step[0]);
@@ -31,26 +35,36 @@ int main()
 
 	ZQ_CNN_Net net;
 	if (!net.LoadFrom("model\\MobileNetSSD_deploy.zqparams", "model\\MobileNetSSD_deploy.nchwbin"))
+	//if (!net.LoadFrom("model\\MobileNetSSD_deploy-face.zqparams", "model\\MobileNetSSD_deploy-face.nchwbin"))
 	{
 		cout << "failed to load net\n";
 		return EXIT_FAILURE;
 	}
 
-	int iters = 1000;
+	int iters = 100;
 	double t1 = omp_get_wtime();
 	for (int it = 0; it < iters; it++)
 	{
-		double t3 = omp_get_wtime();
-		if (!net.Forward(input0))
+		if (!net.Forward(input0, thread_num))
 		{
 			cout << "failed to run\n";
 			return EXIT_FAILURE;
 		}
-		double t4 = omp_get_wtime();
-		//printf("forward costs: %.3f ms\n", 1000 * (t4 - t3));
 	}
 	double t2 = omp_get_wtime();
 	printf("[%d] times cost %.3f s, 1 iter cost %.3f ms\n", iters, t2 - t1, 1000 * (t2 - t1) / iters);
+
+	double t3 = omp_get_wtime();
+	for (int it = 0; it < iters; it++)
+	{
+		if (!net.Forward(input0, thread_num))
+		{
+			cout << "failed to run\n";
+			return EXIT_FAILURE;
+		}	
+	}
+	double t4 = omp_get_wtime();
+	printf("[%d] times cost %.3f s, 1 iter cost %.3f ms\n", iters, t4 - t3, 1000 * (t4 - t3) / iters);
 
 	const ZQ_CNN_Tensor4D* ptr = net.GetBlobByName("detection_out");
 	// get output, shape is N x 7
@@ -66,6 +80,7 @@ int main()
 		"cow", "diningtable", "dog", "horse",
 		"motorbike", "person", "pottedplant",
 		"sheep", "sofa", "train", "tvmonitor" };
+	//const char* kClassNames[] = { "__background__", "eye", "nose", "mouth", "face" };
 	const float* result_data = ptr->GetFirstPixelPtr();
 	int sliceStep = ptr->GetSliceStep();
 	int N = ptr->GetN();

@@ -19,6 +19,19 @@ extern "C" {
 		const float* slope_data
 	);
 
+	void zq_cnn_prelu_32f_align0_omp(
+		float* in_tensor4D_data,	// in & out
+		int in_N,
+		int in_H,
+		int in_W,
+		int in_C,
+		int in_pixelStep,
+		int in_widthStep,
+		int in_sliceStep,
+		const float* slope_data,
+		int thread_count
+	);
+
 	/*
 	y = max(0,x)+a*min(0,x)
 	*/
@@ -37,6 +50,22 @@ extern "C" {
 	/*
 	y = max(0,x)+a*min(0,x)
 	*/
+	void zq_cnn_prelu_32f_align128bit_omp(
+		float* in_tensor4D_data,	// in & out
+		int in_N,
+		int in_H,
+		int in_W,
+		int in_C,
+		int in_pixelStep,
+		int in_widthStep,
+		int in_sliceStep,
+		const float* slope_data,
+		int thread_count
+	);
+
+	/*
+	y = max(0,x)+a*min(0,x)
+	*/
 	void zq_cnn_prelu_32f_align256bit(
 		float* in_tensor4D_data,	// in & out
 		int in_N,
@@ -47,6 +76,22 @@ extern "C" {
 		int in_widthStep,
 		int in_sliceStep,
 		const float* slope_data
+	);
+
+	/*
+	y = max(0,x)+a*min(0,x)
+	*/
+	void zq_cnn_prelu_32f_align256bit_omp(
+		float* in_tensor4D_data,	// in & out
+		int in_N,
+		int in_H,
+		int in_W,
+		int in_C,
+		int in_pixelStep,
+		int in_widthStep,
+		int in_sliceStep,
+		const float* slope_data,
+		int thread_count
 	);
 
 	
@@ -68,6 +113,22 @@ extern "C" {
 	/*
 	y = max(x,a*x)
 	*/
+	void zq_cnn_prelu_32f_align128bit_sure_slope_lessthan1_omp(
+		float* in_tensor4D_data,	// in & out
+		int in_N,
+		int in_H,
+		int in_W,
+		int in_C,
+		int in_pixelStep,
+		int in_widthStep,
+		int in_sliceStep,
+		const float* slope_data,
+		int thread_count
+	);
+
+	/*
+	y = max(x,a*x)
+	*/
 	void zq_cnn_prelu_32f_align256bit_sure_slope_lessthan1(
 		float* in_tensor4D_data,	// in & out
 		int in_N,
@@ -78,6 +139,22 @@ extern "C" {
 		int in_widthStep,
 		int in_sliceStep,
 		const float* slope_data
+	);
+
+	/*
+	y = max(x,a*x)
+	*/
+	void zq_cnn_prelu_32f_align256bit_sure_slope_lessthan1_omp(
+		float* in_tensor4D_data,	// in & out
+		int in_N,
+		int in_H,
+		int in_W,
+		int in_C,
+		int in_pixelStep,
+		int in_widthStep,
+		int in_sliceStep,
+		const float* slope_data,
+		int thread_count
 	);
 
 

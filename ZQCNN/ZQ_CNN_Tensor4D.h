@@ -256,7 +256,7 @@ namespace ZQ
 			return true;
 		}
 
-		bool Permute_NCHW(ZQ_CNN_Tensor4D& output, const int order[4]) const
+		bool Permute_NCHW(ZQ_CNN_Tensor4D& output, const int order[4], int num_threads = 1) const
 		{
 			int out_N, out_C, out_H, out_W;
 			if (!Permute_NCHW_get_size(order, N, C, H, W, out_N, out_C, out_H, out_W))
@@ -318,7 +318,7 @@ namespace ZQ
 			return true;
 		}
 
-		bool Flatten_NCHW(ZQ_CNN_Tensor4D& output, int start_axis, int end_axis) const
+		bool Flatten_NCHW(ZQ_CNN_Tensor4D& output, int start_axis, int end_axis, int num_threads = 1) const
 		{
 			int old_shape[4] = { N,C,H,W };
 			std::vector<int> shape;
@@ -400,7 +400,7 @@ namespace ZQ
 			}
 		}
 
-		bool Reshape_NCHW(ZQ_CNN_Tensor4D& output, const std::vector<int>& shape) const
+		bool Reshape_NCHW(ZQ_CNN_Tensor4D& output, const std::vector<int>& shape, int num_threads = 1) const
 		{
 			int out_N, out_C, out_H, out_W;
 			if (!Reshape_NCHW_get_size(shape, N, C, H, W, out_N, out_C, out_H, out_W))

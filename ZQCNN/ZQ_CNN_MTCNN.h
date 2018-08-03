@@ -84,7 +84,7 @@ namespace ZQ
 			}
 		}
 
-		bool Find(const unsigned char* bgr_img, int _width, int _height, int _widthStep, std::vector<ZQ_CNN_BBox>& results)
+		bool Find(const unsigned char* bgr_img, int _width, int _height, int _widthStep, std::vector<ZQ_CNN_BBox>& results, int num_threads = 1)
 		{
 			double t1 = omp_get_wtime();
 			if (width != _width || height != _height)
@@ -120,7 +120,7 @@ namespace ZQ
 				input.ResizeBilinear(pnet_images[i], changedW, changedH, 0, 0);
 				double t11 = omp_get_wtime();
 				//for(int j = 0;j < 1000;j++)
-				pnet.Forward(pnet_images[i]);
+				pnet.Forward(pnet_images[i],num_threads);
 				double t12 = omp_get_wtime();
 				if (show_debug_info)
 					printf("Pnet [%d]: resolution [%dx%d], cost:%.3f ms\n", i, changedW, changedH, 1000 * (t12 - t11));
@@ -248,7 +248,7 @@ namespace ZQ
 				return false;
 			}
 			double t21 = omp_get_wtime();
-			rnet.Forward(rnet_image);
+			rnet.Forward(rnet_image,num_threads);
 			double t22 = omp_get_wtime();
 			const ZQ_CNN_Tensor4D* score = rnet.GetBlobByName("prob1");
 			const ZQ_CNN_Tensor4D* location = rnet.GetBlobByName("conv5-2");
@@ -336,7 +336,7 @@ namespace ZQ
 			}
 
 			double t31 = omp_get_wtime();
-			onet.Forward(onet_image);
+			onet.Forward(onet_image,num_threads);
 			double t32 = omp_get_wtime();
 			score = onet.GetBlobByName("prob1");
 			location = onet.GetBlobByName("conv6-2");

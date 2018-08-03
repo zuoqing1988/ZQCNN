@@ -67,6 +67,80 @@ void zq_cnn_maxpooling_nopadding_suredivided_kernel2x2(
 	}
 }
 
+void zq_cnn_maxpooling_nopadding_suredivided_kernel2x2_omp(
+	const float* in_tensor4D_data,
+	int in_N,
+	int in_H,
+	int in_W,
+	int in_C,
+	int in_pixelStep,
+	int in_widthStep,
+	int in_sliceStep,
+	int kernel_H,
+	int kernel_W,
+	int stride_H,
+	int stride_W,
+	float* out_tensor4D_data,
+	int out_N,	// must be in_N
+	int out_H,	// must be ceil((in_H - filter_H)/stride_H) + 1
+	int out_W,	// must be ceil((in_W - filter_W)/stride_W) + 1
+	int out_C,	// must be filter_N
+	int out_pixelStep,
+	int out_widthStep,
+	int out_sliceStep,
+	int thread_count
+)
+{
+	int num_C = in_C / zq_mm_align_size;
+	int chunk_size = (num_C + thread_count - 1) / thread_count;
+	int idx;
+	int in_widthStep_mul_strideH = in_widthStep*stride_H;
+	int in_pixelStep_mul_strideW = in_pixelStep*stride_W;
+#pragma omp parallel for schedule(static,chunk_size) num_threads(thread_count)
+	for (idx = 0; idx < num_C; idx++)
+	{
+		zq_mm_type val;
+		int n, out_h, out_w;
+		const float* in_pix_ptr, *in_row_ptr, *in_slice_ptr;
+		float* out_pix_ptr, *out_row_ptr, *out_slice_ptr;
+		const float* cur_pix_ptr, *cur_row_ptr;
+		int c = idx*zq_mm_align_size;
+
+		for (n = 0, in_slice_ptr = in_tensor4D_data + c, out_slice_ptr = out_tensor4D_data + c;
+			n < out_N;
+			n++, in_slice_ptr += in_sliceStep, out_slice_ptr += out_sliceStep)
+		{
+			for (out_h = 0, out_row_ptr = out_slice_ptr, in_row_ptr = in_slice_ptr;
+				out_h < out_H;
+				out_h++, out_row_ptr += out_widthStep, in_row_ptr += in_widthStep_mul_strideH)
+			{
+				for (out_w = 0, out_pix_ptr = out_row_ptr, in_pix_ptr = in_row_ptr;
+					out_w < out_W;
+					out_w++, out_pix_ptr += out_pixelStep, in_pix_ptr += in_pixelStep_mul_strideW)
+				{
+					//val = zq_mm_set1_ps(-FLT_MAX);
+					cur_row_ptr = in_pix_ptr;
+
+					cur_pix_ptr = cur_row_ptr;
+					//val = zq_mm_max_ps(val, zq_mm_load_ps(cur_pix_ptr));
+					val = zq_mm_load_ps(cur_pix_ptr);
+					cur_pix_ptr += in_pixelStep;
+					val = zq_mm_max_ps(val, zq_mm_load_ps(cur_pix_ptr));
+
+					cur_row_ptr += in_widthStep;
+
+					cur_pix_ptr = cur_row_ptr;
+					val = zq_mm_max_ps(val, zq_mm_load_ps(cur_pix_ptr));
+					cur_pix_ptr += in_pixelStep;
+					val = zq_mm_max_ps(val, zq_mm_load_ps(cur_pix_ptr));
+
+					zq_mm_store_ps(out_pix_ptr, val);
+				}
+			}
+		}
+	}
+}
+
 void zq_cnn_maxpooling_nopadding_suredivided_kernel3x3(
 	const float* in_tensor4D_data,
 	int in_N,
@@ -106,6 +180,93 @@ void zq_cnn_maxpooling_nopadding_suredivided_kernel3x3(
 			c += zq_mm_align_size, in_c_ptr += zq_mm_align_size, out_c_ptr += zq_mm_align_size)
 		{
 			for (out_h = 0, out_row_ptr = out_c_ptr, in_row_ptr = in_c_ptr;
+				out_h < out_H;
+				out_h++, out_row_ptr += out_widthStep, in_row_ptr += in_widthStep_mul_strideH)
+			{
+				for (out_w = 0, out_pix_ptr = out_row_ptr, in_pix_ptr = in_row_ptr;
+					out_w < out_W;
+					out_w++, out_pix_ptr += out_pixelStep, in_pix_ptr += in_pixelStep_mul_strideW)
+				{
+					//val = zq_mm_set1_ps(-FLT_MAX);
+					cur_row_ptr = in_pix_ptr;
+
+					cur_pix_ptr = cur_row_ptr;
+					//val = zq_mm_max_ps(val, zq_mm_load_ps(cur_pix_ptr));
+					val = zq_mm_load_ps(cur_pix_ptr);
+					cur_pix_ptr += in_pixelStep;
+					val = zq_mm_max_ps(val, zq_mm_load_ps(cur_pix_ptr));
+					cur_pix_ptr += in_pixelStep;
+					val = zq_mm_max_ps(val, zq_mm_load_ps(cur_pix_ptr));
+
+					cur_row_ptr += in_widthStep;
+
+					cur_pix_ptr = cur_row_ptr;
+					val = zq_mm_max_ps(val, zq_mm_load_ps(cur_pix_ptr));
+					cur_pix_ptr += in_pixelStep;
+					val = zq_mm_max_ps(val, zq_mm_load_ps(cur_pix_ptr));
+					cur_pix_ptr += in_pixelStep;
+					val = zq_mm_max_ps(val, zq_mm_load_ps(cur_pix_ptr));
+
+					cur_row_ptr += in_widthStep;
+
+					cur_pix_ptr = cur_row_ptr;
+					val = zq_mm_max_ps(val, zq_mm_load_ps(cur_pix_ptr));
+					cur_pix_ptr += in_pixelStep;
+					val = zq_mm_max_ps(val, zq_mm_load_ps(cur_pix_ptr));
+					cur_pix_ptr += in_pixelStep;
+					val = zq_mm_max_ps(val, zq_mm_load_ps(cur_pix_ptr));
+
+					zq_mm_store_ps(out_pix_ptr, val);
+				}
+			}
+		}
+	}
+}
+
+void zq_cnn_maxpooling_nopadding_suredivided_kernel3x3_omp(
+	const float* in_tensor4D_data,
+	int in_N,
+	int in_H,
+	int in_W,
+	int in_C,
+	int in_pixelStep,
+	int in_widthStep,
+	int in_sliceStep,
+	int kernel_H,
+	int kernel_W,
+	int stride_H,
+	int stride_W,
+	float* out_tensor4D_data,
+	int out_N,	// must be in_N
+	int out_H,	// must be ceil((in_H - filter_H)/stride_H) + 1
+	int out_W,	// must be ceil((in_W - filter_W)/stride_W) + 1
+	int out_C,	// must be filter_N
+	int out_pixelStep,
+	int out_widthStep,
+	int out_sliceStep,
+	int thread_count
+)
+{
+	int num_C = in_C / zq_mm_align_size;
+	int chunk_size = (num_C + thread_count - 1) / thread_count;
+	int idx;
+	int in_widthStep_mul_strideH = in_widthStep*stride_H;
+	int in_pixelStep_mul_strideW = in_pixelStep*stride_W;
+#pragma omp parallel for schedule(static,chunk_size) num_threads(thread_count)
+	for (idx = 0; idx < num_C; idx++)
+	{
+		zq_mm_type val;
+		int n, out_h, out_w;
+		const float* in_pix_ptr, *in_row_ptr, *in_slice_ptr;
+		float* out_pix_ptr, *out_row_ptr, *out_slice_ptr;
+		const float* cur_pix_ptr, *cur_row_ptr;
+		int c = idx*zq_mm_align_size;
+
+		for (n = 0, in_slice_ptr = in_tensor4D_data + c, out_slice_ptr = out_tensor4D_data + c;
+			n < out_N;
+			n++, in_slice_ptr += in_sliceStep, out_slice_ptr += out_sliceStep)
+		{
+			for (out_h = 0, out_row_ptr = out_slice_ptr, in_row_ptr = in_slice_ptr;
 				out_h < out_H;
 				out_h++, out_row_ptr += out_widthStep, in_row_ptr += in_widthStep_mul_strideH)
 			{
@@ -269,6 +430,131 @@ void zq_cnn_maxpooling_nopadding_suredivided_kernel5x5(
 	}
 }
 
+	void zq_cnn_maxpooling_nopadding_suredivided_kernel5x5_omp(
+		const float* in_tensor4D_data,
+		int in_N,
+		int in_H,
+		int in_W,
+		int in_C,
+		int in_pixelStep,
+		int in_widthStep,
+		int in_sliceStep,
+		int kernel_H,
+		int kernel_W,
+		int stride_H,
+		int stride_W,
+		float* out_tensor4D_data,
+		int out_N,	// must be in_N
+		int out_H,	// must be ceil((in_H - filter_H)/stride_H) + 1
+		int out_W,	// must be ceil((in_W - filter_W)/stride_W) + 1
+		int out_C,	// must be filter_N
+		int out_pixelStep,
+		int out_widthStep,
+		int out_sliceStep,
+		int thread_count
+	)
+	{
+		int num_C = in_C / zq_mm_align_size;
+		int chunk_size = (num_C + thread_count - 1) / thread_count;
+		int idx;
+		int in_widthStep_mul_strideH = in_widthStep*stride_H;
+		int in_pixelStep_mul_strideW = in_pixelStep*stride_W;
+#pragma omp parallel for schedule(static,chunk_size) num_threads(thread_count)
+		for (idx = 0; idx < num_C; idx++)
+		{
+			zq_mm_type val;
+			int n, out_h, out_w;
+			const float* in_pix_ptr, *in_row_ptr, *in_slice_ptr;
+			float* out_pix_ptr, *out_row_ptr, *out_slice_ptr;
+			const float* cur_pix_ptr, *cur_row_ptr;
+			int c = idx*zq_mm_align_size;
+
+			for (n = 0, in_slice_ptr = in_tensor4D_data + c, out_slice_ptr = out_tensor4D_data + c;
+				n < out_N;
+				n++, in_slice_ptr += in_sliceStep, out_slice_ptr += out_sliceStep)
+			{
+				for (out_h = 0, out_row_ptr = out_slice_ptr, in_row_ptr = in_slice_ptr;
+					out_h < out_H;
+					out_h++, out_row_ptr += out_widthStep, in_row_ptr += in_widthStep_mul_strideH)
+				{
+					for (out_w = 0, out_pix_ptr = out_row_ptr, in_pix_ptr = in_row_ptr;
+						out_w < out_W;
+						out_w++, out_pix_ptr += out_pixelStep, in_pix_ptr += in_pixelStep_mul_strideW)
+					{
+						//val = zq_mm_set1_ps(-FLT_MAX);
+						cur_row_ptr = in_pix_ptr;
+
+						cur_pix_ptr = cur_row_ptr;
+						//val = zq_mm_max_ps(val, zq_mm_load_ps(cur_pix_ptr));
+						val = zq_mm_load_ps(cur_pix_ptr);
+						cur_pix_ptr += in_pixelStep;
+						val = zq_mm_max_ps(val, zq_mm_load_ps(cur_pix_ptr));
+						cur_pix_ptr += in_pixelStep;
+						val = zq_mm_max_ps(val, zq_mm_load_ps(cur_pix_ptr));
+						cur_pix_ptr += in_pixelStep;
+						val = zq_mm_max_ps(val, zq_mm_load_ps(cur_pix_ptr));
+						cur_pix_ptr += in_pixelStep;
+						val = zq_mm_max_ps(val, zq_mm_load_ps(cur_pix_ptr));
+
+						cur_row_ptr += in_widthStep;
+
+						cur_pix_ptr = cur_row_ptr;
+						val = zq_mm_max_ps(val, zq_mm_load_ps(cur_pix_ptr));
+						cur_pix_ptr += in_pixelStep;
+						val = zq_mm_max_ps(val, zq_mm_load_ps(cur_pix_ptr));
+						cur_pix_ptr += in_pixelStep;
+						val = zq_mm_max_ps(val, zq_mm_load_ps(cur_pix_ptr));
+						cur_pix_ptr += in_pixelStep;
+						val = zq_mm_max_ps(val, zq_mm_load_ps(cur_pix_ptr));
+						cur_pix_ptr += in_pixelStep;
+						val = zq_mm_max_ps(val, zq_mm_load_ps(cur_pix_ptr));
+
+						cur_row_ptr += in_widthStep;
+
+						cur_pix_ptr = cur_row_ptr;
+						val = zq_mm_max_ps(val, zq_mm_load_ps(cur_pix_ptr));
+						cur_pix_ptr += in_pixelStep;
+						val = zq_mm_max_ps(val, zq_mm_load_ps(cur_pix_ptr));
+						cur_pix_ptr += in_pixelStep;
+						val = zq_mm_max_ps(val, zq_mm_load_ps(cur_pix_ptr));
+						cur_pix_ptr += in_pixelStep;
+						val = zq_mm_max_ps(val, zq_mm_load_ps(cur_pix_ptr));
+						cur_pix_ptr += in_pixelStep;
+						val = zq_mm_max_ps(val, zq_mm_load_ps(cur_pix_ptr));
+
+						cur_row_ptr += in_widthStep;
+
+						cur_pix_ptr = cur_row_ptr;
+						val = zq_mm_max_ps(val, zq_mm_load_ps(cur_pix_ptr));
+						cur_pix_ptr += in_pixelStep;
+						val = zq_mm_max_ps(val, zq_mm_load_ps(cur_pix_ptr));
+						cur_pix_ptr += in_pixelStep;
+						val = zq_mm_max_ps(val, zq_mm_load_ps(cur_pix_ptr));
+						cur_pix_ptr += in_pixelStep;
+						val = zq_mm_max_ps(val, zq_mm_load_ps(cur_pix_ptr));
+						cur_pix_ptr += in_pixelStep;
+						val = zq_mm_max_ps(val, zq_mm_load_ps(cur_pix_ptr));
+
+						cur_row_ptr += in_widthStep;
+
+						cur_pix_ptr = cur_row_ptr;
+						val = zq_mm_max_ps(val, zq_mm_load_ps(cur_pix_ptr));
+						cur_pix_ptr += in_pixelStep;
+						val = zq_mm_max_ps(val, zq_mm_load_ps(cur_pix_ptr));
+						cur_pix_ptr += in_pixelStep;
+						val = zq_mm_max_ps(val, zq_mm_load_ps(cur_pix_ptr));
+						cur_pix_ptr += in_pixelStep;
+						val = zq_mm_max_ps(val, zq_mm_load_ps(cur_pix_ptr));
+						cur_pix_ptr += in_pixelStep;
+						val = zq_mm_max_ps(val, zq_mm_load_ps(cur_pix_ptr));
+
+						zq_mm_store_ps(out_pix_ptr, val);
+					}
+				}
+			}
+		}
+	}
+
 
 void zq_cnn_maxpooling_nopadding_suredivided_general(
 	const float* in_tensor4D_data,
@@ -309,6 +595,72 @@ void zq_cnn_maxpooling_nopadding_suredivided_general(
 			c+= zq_mm_align_size, in_c_ptr += zq_mm_align_size, out_c_ptr += zq_mm_align_size)
 		{
 			for (out_h = 0, out_row_ptr = out_c_ptr, in_row_ptr = in_c_ptr;
+				out_h < out_H;
+				out_h++, out_row_ptr += out_widthStep, in_row_ptr += in_widthStep_mul_strideH)
+			{
+				for (out_w = 0, out_pix_ptr = out_row_ptr, in_pix_ptr = in_row_ptr;
+					out_w < out_W;
+					out_w++, out_pix_ptr += out_pixelStep, in_pix_ptr += in_pixelStep_mul_strideW)
+				{
+					val = zq_mm_set1_ps(-FLT_MAX);
+					for (kh = 0, cur_row_ptr = in_pix_ptr; kh < kernel_H; kh++, cur_row_ptr += in_widthStep)
+					{
+						for (kw = 0, cur_pix_ptr = cur_row_ptr; kw < kernel_W; kw++, cur_pix_ptr += in_pixelStep)
+						{
+							val = zq_mm_max_ps(val, zq_mm_load_ps(cur_pix_ptr));
+						}
+					}
+					zq_mm_store_ps(out_pix_ptr, val);
+				}
+			}
+		}
+	}
+}
+
+void zq_cnn_maxpooling_nopadding_suredivided_general_omp(
+	const float* in_tensor4D_data,
+	int in_N,
+	int in_H,
+	int in_W,
+	int in_C,
+	int in_pixelStep,
+	int in_widthStep,
+	int in_sliceStep,
+	int kernel_H,
+	int kernel_W,
+	int stride_H,
+	int stride_W,
+	float* out_tensor4D_data,
+	int out_N,	// must be in_N
+	int out_H,	// must be ceil((in_H - filter_H)/stride_H) + 1
+	int out_W,	// must be ceil((in_W - filter_W)/stride_W) + 1
+	int out_C,	// must be filter_N
+	int out_pixelStep,
+	int out_widthStep,
+	int out_sliceStep,
+	int thread_count
+)
+{
+	int num_C = in_C / zq_mm_align_size;
+	int chunk_size = (num_C + thread_count - 1) / thread_count;
+	int idx;
+	int in_widthStep_mul_strideH = in_widthStep*stride_H;
+	int in_pixelStep_mul_strideW = in_pixelStep*stride_W;
+
+#pragma omp parallel for schedule(static,chunk_size) num_threads(thread_count)
+	for (idx = 0; idx < num_C; idx++)
+	{
+		zq_mm_type val;
+		int n, out_h, out_w, kh, kw;
+		const float* in_pix_ptr, *in_row_ptr, *in_slice_ptr;
+		float* out_pix_ptr, *out_row_ptr, *out_slice_ptr;
+		const float* cur_pix_ptr, *cur_row_ptr;
+		int c = idx*zq_mm_align_size;
+		for (n = 0, in_slice_ptr = in_tensor4D_data + c, out_slice_ptr = out_tensor4D_data + c;
+			n < out_N;
+			n++, in_slice_ptr += in_sliceStep, out_slice_ptr += out_sliceStep)
+		{
+			for (out_h = 0, out_row_ptr = out_slice_ptr, in_row_ptr = in_slice_ptr;
 				out_h < out_H;
 				out_h++, out_row_ptr += out_widthStep, in_row_ptr += in_widthStep_mul_strideH)
 			{
@@ -432,5 +784,109 @@ void zq_cnn_maxpooling_nopadding_nodivided_general(
 			zq_mm_store_ps(out_pix_ptr, val);
 		}
 	}
-
 }
+
+	void zq_cnn_maxpooling_nopadding_nodivided_general_omp(
+		const float* in_tensor4D_data,
+		int in_N,
+		int in_H,
+		int in_W,
+		int in_C,
+		int in_pixelStep,
+		int in_widthStep,
+		int in_sliceStep,
+		int kernel_H,
+		int kernel_W,
+		int stride_H,
+		int stride_W,
+		float* out_tensor4D_data,
+		int out_N,	// must be in_N
+		int out_H,	// must be ceil((in_H - filter_H)/stride_H) + 1
+		int out_W,	// must be ceil((in_W - filter_W)/stride_W) + 1
+		int out_C,	// must be filter_N
+		int out_pixelStep,
+		int out_widthStep,
+		int out_sliceStep,
+		int thread_count
+	)
+	{
+		int num_C = in_C / zq_mm_align_size;
+		int chunk_size = (num_C + thread_count - 1) / thread_count;
+		int idx;
+		int in_widthStep_mul_strideH = in_widthStep*stride_H;
+		int in_pixelStep_mul_strideW = in_pixelStep*stride_W;
+		int final_kH = __min(kernel_H, in_H - (out_H - 1)*stride_H);
+		int final_kW = __min(kernel_W, in_W - (out_W - 1)*stride_W);
+
+#pragma omp parallel for schedule(static,chunk_size) num_threads(thread_count)
+		for (idx = 0; idx < num_C; idx++)
+		{
+			zq_mm_type val;
+			int n, out_h, out_w, kh, kw;
+			const float* in_pix_ptr, *in_row_ptr, *in_slice_ptr;
+			float* out_pix_ptr, *out_row_ptr, *out_slice_ptr;
+			const float* cur_pix_ptr, *cur_row_ptr;
+			int c = idx*zq_mm_align_size;
+			for (n = 0, in_slice_ptr = in_tensor4D_data + c, out_slice_ptr = out_tensor4D_data + c;
+				n < out_N;
+				n++, in_slice_ptr += in_sliceStep, out_slice_ptr += out_sliceStep)
+			{
+				for (out_h = 0, out_row_ptr = out_slice_ptr, in_row_ptr = in_slice_ptr;
+					out_h < out_H - 1;
+					out_h++, out_row_ptr += out_widthStep, in_row_ptr += in_widthStep_mul_strideH)
+				{
+					for (out_w = 0, out_pix_ptr = out_row_ptr, in_pix_ptr = in_row_ptr;
+						out_w < out_W - 1;
+						out_w++, out_pix_ptr += out_pixelStep, in_pix_ptr += in_pixelStep_mul_strideW)
+					{
+						val = zq_mm_set1_ps(-FLT_MAX);
+						for (kh = 0, cur_row_ptr = in_pix_ptr; kh < kernel_H; kh++, cur_row_ptr += in_widthStep)
+						{
+							for (kw = 0, cur_pix_ptr = cur_row_ptr; kw < kernel_W; kw++, cur_pix_ptr += in_pixelStep)
+							{
+								val = zq_mm_max_ps(val, zq_mm_load_ps(cur_pix_ptr));
+							}
+						}
+						zq_mm_store_ps(out_pix_ptr, val);
+					}
+
+
+					val = zq_mm_set1_ps(-FLT_MAX);
+					for (kh = 0, cur_row_ptr = in_pix_ptr; kh < kernel_H; kh++, cur_row_ptr += in_widthStep)
+					{
+						for (kw = 0, cur_pix_ptr = cur_row_ptr; kw < final_kW; kw++, cur_pix_ptr += in_pixelStep)
+						{
+							val = zq_mm_max_ps(val, zq_mm_load_ps(cur_pix_ptr));
+						}
+					}
+					zq_mm_store_ps(out_pix_ptr, val);
+				}
+
+				for (out_w = 0, out_pix_ptr = out_row_ptr, in_pix_ptr = in_row_ptr;
+					out_w < out_W - 1;
+					out_w++, out_pix_ptr += out_pixelStep, in_pix_ptr += in_pixelStep_mul_strideW)
+				{
+					val = zq_mm_set1_ps(-FLT_MAX);
+					for (kh = 0, cur_row_ptr = in_pix_ptr; kh < final_kH; kh++, cur_row_ptr += in_widthStep)
+					{
+						for (kw = 0, cur_pix_ptr = cur_row_ptr; kw < kernel_W; kw++, cur_pix_ptr += in_pixelStep)
+						{
+							val = zq_mm_max_ps(val, zq_mm_load_ps(cur_pix_ptr));
+						}
+					}
+					zq_mm_store_ps(out_pix_ptr, val);
+				}
+
+
+				val = zq_mm_set1_ps(-FLT_MAX);
+				for (kh = 0, cur_row_ptr = in_pix_ptr; kh < final_kH; kh++, cur_row_ptr += in_widthStep)
+				{
+					for (kw = 0, cur_pix_ptr = cur_row_ptr; kw < final_kW; kw++, cur_pix_ptr += in_pixelStep)
+					{
+						val = zq_mm_max_ps(val, zq_mm_load_ps(cur_pix_ptr));
+					}
+				}
+				zq_mm_store_ps(out_pix_ptr, val);
+			}
+		}
+	}

@@ -18,6 +18,18 @@ extern "C" {
 		int in_sliceStep
 	);
 
+	void zq_cnn_relu_32f_align0_omp(
+		float* in_tensor4D_data,	// in & out
+		int in_N,
+		int in_H,
+		int in_W,
+		int in_C,
+		int in_pixelStep,
+		int in_widthStep,
+		int in_sliceStep,
+		int thread_count
+	);
+
 	/*
 	y = max(0,x)
 	*/
@@ -35,6 +47,21 @@ extern "C" {
 	/*
 	y = max(0,x)
 	*/
+	void zq_cnn_relu_32f_align128bit_omp(
+		float* in_tensor4D_data,	// in & out
+		int in_N,
+		int in_H,
+		int in_W,
+		int in_C,
+		int in_pixelStep,
+		int in_widthStep,
+		int in_sliceStep,
+		int thread_count
+	);
+
+	/*
+	y = max(0,x)
+	*/
 	void zq_cnn_relu_32f_align256bit(
 		float* in_tensor4D_data,	// in & out
 		int in_N,
@@ -44,6 +71,21 @@ extern "C" {
 		int in_pixelStep,
 		int in_widthStep,
 		int in_sliceStep
+	);
+
+	/*
+	y = max(0,x)
+	*/
+	void zq_cnn_relu_32f_align256bit_omp(
+		float* in_tensor4D_data,	// in & out
+		int in_N,
+		int in_H,
+		int in_W,
+		int in_C,
+		int in_pixelStep,
+		int in_widthStep,
+		int in_sliceStep,
+		int thread_count
 	);
 
 
