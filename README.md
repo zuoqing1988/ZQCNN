@@ -8,7 +8,8 @@ ZQCNN-v0.0是ZuoQing参照mini-caffe写的forward库，随便用用
 
 **2018-07-26日更新**
 
-支持MobileNet-SSD。caffemodel转我用的模型参考export_mobilenet_SSD_caffemodel_to_nchw_binary.m。需要编译出matcaffe才行。你可以试试这个https://github.com/zuoqing1988/caffe-ZQ
+支持MobileNet-SSD。caffemodel转我用的模型参考export_mobilenet_SSD_caffemodel_to_nchw_binary.m。需要编译出matcaffe才行。
+你可以试试这个版本[caffe-ZQ](https://github.com/zuoqing1988/caffe-ZQ)
 
 **2018-06-05日更新**
 
