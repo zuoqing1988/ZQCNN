@@ -411,7 +411,6 @@ extern "C" {
 		{
 			int n, h, w;
 			float* slice_ptr, *row_ptr, *pix_ptr;
-			const float *a_ptr, *b_ptr;
 			for (n = 0, slice_ptr = in_data + c; n < in_N; n++, slice_ptr += in_sliceStep)
 			{
 				for (h = 0, row_ptr = slice_ptr; h < in_H; h++, row_ptr += in_widthStep)

@@ -1,0 +1,13 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <LocalDebuggerWorkingDirectory>$(SolutionDir)</LocalDebuggerWorkingDirectory>
+    <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
+    <LocalDebuggerCommandArguments>F:\Code\Projects\ZQCNN\model\mobilenet_sphereface10bn512_deploy.prototxt F:\Code\Projects\ZQCNN\model\mobilenet_sphereface10bn512_model_iter_50000.caffemodel  fc5 F:\Code\sphereface\test\data\pairs.txt F:\Code\sphereface\preprocess\data\lfw-112X96 10 1</LocalDebuggerCommandArguments>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <LocalDebuggerWorkingDirectory>$(SolutionDir)</LocalDebuggerWorkingDirectory>
+    <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
+    <LocalDebuggerCommandArguments>F:\Code\Projects\ZQCNN\model\mobilenet_sphereface10bn512_deploy.prototxt F:\Code\Projects\ZQCNN\model\mobilenet_sphereface10bn512_model_iter_50000.caffemodel  fc5 F:\Code\sphereface\test\data\pairs.txt F:\Code\sphereface\preprocess\data\lfw_crop_sphereface 10 1</LocalDebuggerCommandArguments>
+  </PropertyGroup>
+</Project>

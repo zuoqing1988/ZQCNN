@@ -1,0 +1,218 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{D868FFAD-41A9-4E1C-B2BC-137324CFF4DE}</ProjectGuid>
+    <RootNamespace>ZQlib</RootNamespace>
+    <Keyword>Win32Proj</Keyword>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <PlatformToolset>v140</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <PlatformToolset>v140</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup>
+    <_ProjectFileVersion>12.0.25420.1</_ProjectFileVersion>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <OutDir>$(SolutionDir)$(Configuration)\</OutDir>
+    <IntDir>$(Configuration)\</IntDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <OutDir>$(SolutionDir)$(Configuration)\</OutDir>
+    <IntDir>$(Configuration)\</IntDir>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <Optimization>Disabled</Optimization>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <MinimalRebuild>true</MinimalRebuild>
+      <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+      <PrecompiledHeader />
+      <WarningLevel>Level3</WarningLevel>
+      <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <Optimization>MaxSpeed</Optimization>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <PrecompiledHeader />
+      <WarningLevel>Level3</WarningLevel>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClInclude Include="ZQ_Advection.h" />
+    <ClInclude Include="ZQ_Advection3D.h" />
+    <ClInclude Include="ZQ_BilateralFilter.h" />
+    <ClInclude Include="ZQ_BilateralFilterOptions.h" />
+    <ClInclude Include="ZQ_BilateralTextureFilter.h" />
+    <ClInclude Include="ZQ_BilateralTextureFilterOptions.h" />
+    <ClInclude Include="ZQ_BinaryImageContour.h" />
+    <ClInclude Include="ZQ_BinaryImageProcessing.h" />
+    <ClInclude Include="ZQ_BitonicSort.h" />
+    <ClInclude Include="ZQ_BitStream.h" />
+    <ClInclude Include="ZQ_BlendTwoImages.h" />
+    <ClInclude Include="ZQ_BlendTwoImages3D.h" />
+    <ClInclude Include="ZQ_Calibration.h" />
+    <ClInclude Include="ZQ_CameraCalibration.h" />
+    <ClInclude Include="ZQ_CameraCalibrationBino.h" />
+    <ClInclude Include="ZQ_CameraCalibrationMono.h" />
+    <ClInclude Include="ZQ_CameraCalibrationMulti.h" />
+    <ClInclude Include="ZQ_CameraPoseEstimation.h" />
+    <ClInclude Include="ZQ_CameraProjection.h" />
+    <ClInclude Include="ZQ_ClosedFormImageMatting.h" />
+    <ClInclude Include="ZQ_ClosedFormImageMattingOptions.h" />
+    <ClInclude Include="ZQ_CompressedImage.h" />
+    <ClInclude Include="ZQ_CompressedImageRaw.h" />
+    <ClInclude Include="ZQ_ConstrainedDelaunayTriangulation.h" />
+    <ClInclude Include="ZQ_CPURayCasting.h" />
+    <ClInclude Include="ZQ_CPURenderer2DWorkspace.h" />
+    <ClInclude Include="ZQ_CPURenderer3DWorkSpace.h" />
+    <ClInclude Include="ZQ_CubicInterpolation.h" />
+    <ClInclude Include="ZQ_CvCapture_FFMPEG.h" />
+    <ClInclude Include="ZQ_DoubleImage.h" />
+    <ClInclude Include="ZQ_DoubleImage3D.h" />
+    <ClInclude Include="ZQ_FindCorners.h" />
+    <ClInclude Include="ZQ_FindLargestRectInHistgram.h" />
+    <ClInclude Include="ZQ_FindLargestSubMatrix.h" />
+    <ClInclude Include="ZQ_GaussianPyramid.h" />
+    <ClInclude Include="ZQ_GaussianPyramid3D.h" />
+    <ClInclude Include="ZQ_GLSLShader.h" />
+    <ClInclude Include="ZQ_GraphCut.h" />
+    <ClInclude Include="ZQ_GraphCutForTexture.h" />
+    <ClInclude Include="ZQ_GridDeformation.h" />
+    <ClInclude Include="ZQ_GridDeformation3D.h" />
+    <ClInclude Include="ZQ_GridDeformation3DOptions.h" />
+    <ClInclude Include="ZQ_GridDeformationOptions.h" />
+    <ClInclude Include="ZQ_Huffman.h" />
+    <ClInclude Include="ZQ_ICP.h" />
+    <ClInclude Include="ZQ_ImageIO.h" />
+    <ClInclude Include="ZQ_ImageMattingGUI.h" />
+    <ClInclude Include="ZQ_ImageProcessing.h" />
+    <ClInclude Include="ZQ_ImageProcessing3D.h" />
+    <ClInclude Include="ZQ_Inpainting.h" />
+    <ClInclude Include="ZQ_InpaintingOptions.h" />
+    <ClInclude Include="ZQ_JpegCodecDefines.h" />
+    <ClInclude Include="ZQ_JpegDecoder.h" />
+    <ClInclude Include="ZQ_JpegEncoder.h" />
+    <ClInclude Include="ZQ_Kahansum.h" />
+    <ClInclude Include="ZQ_KDTree.h" />
+    <ClInclude Include="ZQ_Kmeans.h" />
+    <ClInclude Include="ZQ_LazySnapping.h" />
+    <ClInclude Include="ZQ_LazySnappingGUI.h" />
+    <ClInclude Include="ZQ_LazySnappingOptions.h" />
+    <ClInclude Include="ZQ_LevMar.h" />
+    <ClInclude Include="ZQ_Logger.h" />
+    <ClInclude Include="ZQ_LSQRSolver.h" />
+    <ClInclude Include="ZQ_LSQRUtils.h" />
+    <ClInclude Include="ZQ_MarchingCube.h" />
+    <ClInclude Include="ZQ_MathBase.h" />
+    <ClInclude Include="ZQ_Matrix.h" />
+    <ClInclude Include="ZQ_MergeImage.h" />
+    <ClInclude Include="ZQ_MergeImageOptions.h" />
+    <ClInclude Include="ZQ_MergeSort.h" />
+    <ClInclude Include="ZQ_MFC_Utils.h" />
+    <ClInclude Include="ZQ_MGMRESSolver.h" />
+    <ClInclude Include="ZQ_MinIndependentSets.h" />
+    <ClInclude Include="ZQ_MultiCamCalibration.h" />
+    <ClInclude Include="ZQ_NVMLoader.h" />
+    <ClInclude Include="ZQ_ObjLoader.h" />
+    <ClInclude Include="ZQ_Link_OpenCV_Lib.h" />
+    <ClInclude Include="ZQ_OpticalFlow.h" />
+    <ClInclude Include="ZQ_OpticalFlow3D.h" />
+    <ClInclude Include="ZQ_OpticalFlowOptions.h" />
+    <ClInclude Include="ZQ_PCGSolver.h" />
+    <ClInclude Include="ZQ_SplinePCHIP.h" />
+    <ClInclude Include="ZQ_PIVMovingObject.h" />
+    <ClInclude Include="ZQ_PIVMovingObject3D.h" />
+    <ClInclude Include="ZQ_PIVSimulator.h" />
+    <ClInclude Include="ZQ_PIVSimulator3D.h" />
+    <ClInclude Include="ZQ_PoissonEditing.h" />
+    <ClInclude Include="ZQ_PoissonEditing3D.h" />
+    <ClInclude Include="ZQ_PoissonEditing3DOptions.h" />
+    <ClInclude Include="ZQ_PoissonEditingOptions.h" />
+    <ClInclude Include="ZQ_PoissonSolver.h" />
+    <ClInclude Include="ZQ_PoissonSolver3D.h" />
+    <ClInclude Include="ZQ_PoseEstimation.h" />
+    <ClInclude Include="ZQ_ProtectedData.h" />
+    <ClInclude Include="ZQ_PutTextCN.h" />
+    <ClInclude Include="ZQ_Quaternion.h" />
+    <ClInclude Include="ZQ_QuaternionSpline.h" />
+    <ClInclude Include="ZQ_QuickSort.h" />
+    <ClInclude Include="ZQ_Ray3D.h" />
+    <ClInclude Include="ZQ_RBFKernel.h" />
+    <ClInclude Include="ZQ_Rodrigues.h" />
+    <ClInclude Include="ZQ_ScanLinePolygonFill.h" />
+    <ClInclude Include="ZQ_ScatteredInterpolationRBF.h" />
+    <ClInclude Include="ZQ_SemaphoreEx.h" />
+    <ClInclude Include="ZQ_ShapeDeformation.h" />
+    <ClInclude Include="ZQ_ShapeDeformationOptions.h" />
+    <ClInclude Include="ZQ_ShapeInterpolation.h" />
+    <ClInclude Include="ZQ_SparseLevMar.h" />
+    <ClInclude Include="ZQ_SparseMatrix.h" />
+    <ClInclude Include="ZQ_Spline.h" />
+    <ClInclude Include="ZQ_StereoCalibration.h" />
+    <ClInclude Include="ZQ_StereoDisparity_CV2.h" />
+    <ClInclude Include="ZQ_StereoMatching.h" />
+    <ClInclude Include="ZQ_StereoRectify.h" />
+    <ClInclude Include="ZQ_StructureFromTexture.h" />
+    <ClInclude Include="ZQ_StructureFromTextureOptions.h" />
+    <ClInclude Include="ZQ_SVD.h" />
+    <ClInclude Include="ZQ_taucs.h" />
+    <ClInclude Include="ZQ_TaucsBase.h" />
+    <ClInclude Include="ZQ_TextureOptimization.h" />
+    <ClInclude Include="ZQ_TextureSampler.h" />
+    <ClInclude Include="ZQ_TextureSampler3D.h" />
+    <ClInclude Include="ZQ_TextureSynthesisProbe.h" />
+    <ClInclude Include="ZQ_TriangleMeshMedialAxis.h" />
+    <ClInclude Include="ZQ_UmfpackSolver.h" />
+    <ClInclude Include="ZQ_Vec2D.h" />
+    <ClInclude Include="ZQ_Vec3D.h" />
+    <ClInclude Include="ZQ_Warping.h" />
+    <ClInclude Include="ZQ_Wavelet.h" />
+    <ClInclude Include="ZQ_WaveletRawHead.h" />
+    <ClInclude Include="ZQ_WeightedMedian.h" />
+    <ClInclude Include="ZQ_WinSock.h" />
+    <ClInclude Include="ZQ_WinSockBase.h" />
+    <ClInclude Include="ZQ_WinSockClientImpl.h" />
+    <ClInclude Include="ZQ_WinSockClientSimple.h" />
+    <ClInclude Include="ZQ_WinSockIOPoolSimple.h" />
+    <ClInclude Include="ZQ_WinSockServerImpl.h" />
+    <ClInclude Include="ZQ_WinSockServerSimple.h" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

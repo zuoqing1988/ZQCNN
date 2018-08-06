@@ -950,7 +950,6 @@ void zq_cnn_prelu_32f_align_sure_slope_lessthan1_omp(
 		for (idx = 0; idx < NHW; idx++)
 		{
 			zq_mm_type data_v;
-			zq_mm_type slope_v;
 			int c;
 			float* pix_ptr = in_tensor4D_data + in_offsets[idx];
 			float* c_ptr;
@@ -1062,7 +1061,6 @@ void zq_cnn_prelu_32f_align_sure_slope_lessthan1_omp(
 		for (idx = 0; idx < NHW; idx++)
 		{
 			zq_mm_type data_v;
-			zq_mm_type slope_v;
 			int c;
 			float* pix_ptr = in_tensor4D_data + in_offsets[idx];
 			float* c_ptr;
@@ -1126,7 +1124,6 @@ void zq_cnn_prelu_32f_align_sure_slope_lessthan1_omp(
 		for (idx = 0; idx < NHW; idx++)
 		{
 			zq_mm_type data_v;
-			zq_mm_type slope_v;
 			int c;
 			float* pix_ptr = in_tensor4D_data + in_offsets[idx];
 			float* c_ptr;
@@ -1166,7 +1163,6 @@ void zq_cnn_prelu_32f_align_sure_slope_lessthan1_omp(
 		for (idx = 0; idx < NHW; idx++)
 		{
 			zq_mm_type data_v;
-			zq_mm_type slope_v;
 			int c;
 			float* pix_ptr = in_tensor4D_data + in_offsets[idx];
 			float* c_ptr;

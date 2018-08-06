@@ -2,6 +2,12 @@ ZQCNN-v0.0是ZuoQing参照mini-caffe写的forward库，随便用用
 
 # 更新日志
 
+**2018-08-06日更新**
+
+增加人脸识别在LFW数据库的精度测试。打开ZQlibFaceID.sln可以看到相关Project。
+
+由于C++代码的计算精度与matlab略有差距，统计出的精度也有一些差别，但是相差在0.1%以内。
+
 **2018-08-03日更新**
 
 支持多线程（通过openmp加速）
@@ -25,6 +31,8 @@ ZQCNN-v0.0是ZuoQing参照mini-caffe写的forward库，随便用用
 [MTCNN](https://pan.baidu.com/s/1f6_wQ2kXiTZFyH6PFIDc2Q) 从[MTCNN](https://github.com/kpzhang93/MTCNN_face_detection_alignment)转的格式
 
 **人脸识别**
+
+[SeetaFace](https://pan.baidu.com/s/17GySgiI8EASfOCuRizMAOw) LFW约97.8-97.9%，每次提取时间约110ms，3.6GHz
 
 [SphereFace04bn256](https://pan.baidu.com/s/1YXt2PLbbUg9-VZITcMw5mQ) LFW约97.8%-97.9%，速度最快
 
@@ -67,3 +75,4 @@ ZQCNN-v0.0是ZuoQing参照mini-caffe写的forward库，随便用用
 (8)[ZQCNN的SSD支持同一个模型随意改分辨率](https://zhuanlan.zhihu.com/p/40676503)
 
 (9)[ZQCNN格式的99.78%精度的人脸识别模型](https://zhuanlan.zhihu.com/p/41197488)
+
