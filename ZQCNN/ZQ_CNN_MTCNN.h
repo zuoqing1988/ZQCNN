@@ -54,7 +54,7 @@ namespace ZQ
 			min_size = __max(12, min_face_size);
 			thresh[0] = __max(0.1, pthresh); thresh[1] = __max(0.1, rthresh); thresh[2] = __max(0.1, othresh);
 			nms_thresh[0] = __max(0.1, nms_pthresh); nms_thresh[1] = __max(0.1, nms_rthresh); nms_thresh[2] = __max(0.1, nms_othresh);
-			scale_factor = __max(0.5, __min(0.85, scale_factor));
+			scale_factor = __max(0.5, __min(0.9, scale_factor));
 			if (width != w || height != h || factor != scale_factor)
 			{
 				scales.clear();

@@ -161,11 +161,11 @@ bool ZQ_CNN_Tensor4D_NHW_C_Align0::ChangeSize(int dst_N, int dst_H, int dst_W, i
 			if(rawData)	
 				free(rawData);
 			rawData = tmp_data;
-			firstPixelData = (float*)rawData + dst_borderH*dst_widthStep + dst_borderW*dst_pixelStep;
-			rawDataLen = needed_dst_raw_len;
-
-
 		}
+
+		firstPixelData = (float*)rawData + dst_borderH*dst_widthStep + dst_borderW*dst_pixelStep;
+		rawDataLen = needed_dst_raw_len;
+
 
 		N = dst_N;
 		W = dst_W;
@@ -491,11 +491,10 @@ bool ZQ_CNN_Tensor4D_NHW_C_Align128bit::ChangeSize(int dst_N, int dst_H, int dst
 			//memset(tmp_data, 0, needed_dst_raw_len);
 			_aligned_free(rawData);
 			rawData = tmp_data;
-			firstPixelData = (float*)rawData + dst_borderH*dst_widthStep + dst_borderW*dst_pixelStep;
-			rawDataLen = needed_dst_raw_len;
-
-
 		}
+
+		firstPixelData = (float*)rawData + dst_borderH*dst_widthStep + dst_borderW*dst_pixelStep;
+		rawDataLen = needed_dst_raw_len;
 
 		N = dst_N;
 		W = dst_W;
@@ -820,11 +819,9 @@ bool ZQ_CNN_Tensor4D_NHW_C_Align256bit::ChangeSize(int dst_N, int dst_H, int dst
 			//memset(tmp_data, 0, needed_dst_raw_len);
 			_aligned_free(rawData);
 			rawData = tmp_data;
-			firstPixelData = (float*)rawData + dst_borderH*dst_widthStep + dst_borderW*dst_pixelStep;
-			rawDataLen = needed_dst_raw_len;
-
-
 		}
+		firstPixelData = (float*)rawData + dst_borderH*dst_widthStep + dst_borderW*dst_pixelStep;
+		rawDataLen = needed_dst_raw_len;
 
 		N = dst_N;
 		W = dst_W;
