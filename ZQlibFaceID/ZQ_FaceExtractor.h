@@ -46,7 +46,7 @@ namespace ZQ
 		{
 			std::vector<ZQ_CNN_BBox> bbox;
 			if (!detector.FindFaceROI(in_img, in_width, in_height, in_widthStep, pixFmt,
-				roi_min_x, roi_min_y, roi_max_x, roi_max_y, min_face_size, bbox))
+				roi_min_x, roi_min_y, roi_max_x, roi_max_y, min_face_size,1.2, bbox))
 				return false;
 
 			int num = bbox.size();
