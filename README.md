@@ -76,3 +76,4 @@ ZQCNN-v0.0是ZuoQing参照mini-caffe写的forward库，随便用用
 
 (9)[ZQCNN格式的99.78%精度的人脸识别模型](https://zhuanlan.zhihu.com/p/41197488)
 
+(10)[ZQCNN增加人脸识别在LFW数据集上的测试代码](https://zhuanlan.zhihu.com/p/41381883)
