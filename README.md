@@ -54,7 +54,9 @@ Convolution name=conv1 bottom=data top=conv1 num_output=10 kernel_size=3 stride=
 
 [Mobile-SphereFace10bn512](https://pan.baidu.com/s/1BEP1pg5s3yJCLA2elqTB0A) LFW约98.6%-98.7%，性价比高
 
-[ArcFace-r50](https://pan.baidu.com/s/1ORhYzZkggSBgSRQ3BbTbDA) LFW约99.75%-99.78%,精度最高，但是很慢
+[ArcFace-r50](https://pan.baidu.com/s/1qOIhCauwZNTOCIM9eojPrA) LFW约99.75%-99.78%,精度最高，但是很慢
+
+[ArcFace-r34](https://pan.baidu.com/s/1tRt6PxDg4UNv7yf9pMZ_LA) LFW约99.65%-99.70%,比r-50稍微快一点
 
 **表情识别**
 
