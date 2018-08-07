@@ -2,6 +2,14 @@ ZQCNN-v0.0是ZuoQing参照mini-caffe写的forward库，随便用用
 
 # 更新日志
 
+**2018-08-07日更新**
+
+BUG修复：之前Convolution, DepthwiseConvolution, InnerProduct, BatchNormScale/Scale默认with_bias=true， 现在改成默认with_bias=false。也就是之前的代码无法加载不带bias的这几个Layer。
+
+示例，如下这样一个Layer，以前会默认为有bias_term，现在默认没有bias_term
+
+Convolution name=conv1 bottom=data top=conv1 num_output=10 kernel_size=3 stride=1 
+
 **2018-08-06日更新**
 
 增加人脸识别在LFW数据库的精度测试。打开ZQlibFaceID.sln可以看到相关Project。

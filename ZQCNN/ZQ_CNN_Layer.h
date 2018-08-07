@@ -200,7 +200,7 @@ namespace ZQ
 	{
 	public:
 		ZQ_CNN_Layer_Convolution() :filters(0), bias(0), num_output(0), kernel_H(0), kernel_W(0),
-			stride_H(1), stride_W(1), pad_H(0), pad_W(), with_bias(true), bottom_C(0) {}
+			stride_H(1), stride_W(1), pad_H(0), pad_W(), with_bias(false), bottom_C(0) {}
 		~ZQ_CNN_Layer_Convolution() {
 			if (filters)delete filters;
 			if (bias)delete bias;
@@ -242,7 +242,7 @@ namespace ZQ
 			}
 			else
 			{
-				if (filters == 0 || bias == 0)
+				if (filters == 0)
 					return false;
 				double t1 = omp_get_wtime();
 				bool ret = ZQ_CNN_Forward_SSEUtils::Convolution(*((*bottoms)[0]), *filters, stride_H, stride_W, pad_H, pad_W, *((*tops)[0]),
@@ -488,7 +488,7 @@ namespace ZQ
 	{
 	public:
 		ZQ_CNN_Layer_DepthwiseConvolution() :filters(0), bias(0), num_output(0), kernel_H(0), kernel_W(0),
-			stride_H(1), stride_W(1), pad_H(0), pad_W(), with_bias(true), bottom_C(0) {}
+			stride_H(1), stride_W(1), pad_H(0), pad_W(), with_bias(false), bottom_C(0) {}
 		~ZQ_CNN_Layer_DepthwiseConvolution() {
 			if (filters)delete filters;
 			if (bias)delete bias;
@@ -530,7 +530,7 @@ namespace ZQ
 			}
 			else
 			{
-				if (filters == 0 || bias == 0)
+				if (filters == 0)
 					return false;
 				double t1 = omp_get_wtime();
 				bool ret = ZQ_CNN_Forward_SSEUtils::DepthwiseConvolution(*((*bottoms)[0]), *filters, stride_H, stride_W, pad_H, pad_W, *((*tops)[0]),
@@ -1771,7 +1771,7 @@ namespace ZQ
 		int bottom_H;
 		int bottom_W;
 
-		ZQ_CNN_Layer_InnerProduct() :filters(0), bias(0), with_bias(true) {}
+		ZQ_CNN_Layer_InnerProduct() :filters(0), bias(0), with_bias(false) {}
 
 		virtual bool Forward(std::vector<ZQ_CNN_Tensor4D*>* bottoms, std::vector<ZQ_CNN_Tensor4D*>* tops, int num_threads = 1)
 		{
