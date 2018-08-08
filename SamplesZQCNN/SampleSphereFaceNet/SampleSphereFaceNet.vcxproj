@@ -154,11 +154,6 @@
   <ItemGroup>
     <ClCompile Include="SampleSphereFaceNet.cpp" />
   </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\ZQCNN\ZQCNN.vcxproj">
-      <Project>{43aa2d6a-447e-4153-8a29-7ae8a8296dc7}</Project>
-    </ProjectReference>
-  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
