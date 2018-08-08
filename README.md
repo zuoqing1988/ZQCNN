@@ -18,7 +18,7 @@ Convolution name=conv1 bottom=data top=conv1 num_output=10 kernel_size=3 stride=
 
 **2018-08-03日更新**
 
-支持多线程（通过openmp加速）
+支持多线程（通过openmp加速）。**请注意，目前多线程反而比单线程慢**
 
 **2018-07-26日更新**
 
