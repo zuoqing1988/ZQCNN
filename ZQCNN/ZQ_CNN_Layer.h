@@ -524,7 +524,7 @@ namespace ZQ
 					num_threads);
 				double t2 = omp_get_wtime();
 				if (show_debug_info)
-					printf("Conv layer:%s %.3f ms HW %dx%d filter: NHWC %d x %d x %d x %d\n",
+					printf("DwConv layer:%s %.3f ms HW %dx%d filter: NHWC %d x %d x %d x %d\n",
 						name.c_str(), 1000 * (t2 - t1), (*tops)[0]->GetH(), (*tops)[0]->GetW(), filters->GetN(), filters->GetH(), filters->GetW(), filters->GetC());
 				return ret;
 			}
