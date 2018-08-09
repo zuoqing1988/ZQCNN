@@ -643,7 +643,6 @@ namespace ZQ
 			//first try
 			bool has_found = false;
 			ZQ_PixelFormat pixFmt = image.channels() == 1 ? ZQ_PIXEL_FMT_GRAY : ZQ_PIXEL_FMT_BGR;
-
 			if (!detector.FindFace(image.data, image.cols, image.rows, image.step[0], pixFmt, 60, 0.709, bbox) || bbox.size() == 0)
 			{
 				/*printf("failed to find face in image: %s\n", imgfile.c_str());
@@ -710,6 +709,7 @@ namespace ZQ
 			//fifth try
 			if (!has_found)
 			{
+				
 				printf("fifth try\n");
 				if (!detector.FindFace(image.data, image.cols, image.rows, image.step[0], pixFmt, 12, 0.9, bbox) || bbox.size() == 0)
 				{

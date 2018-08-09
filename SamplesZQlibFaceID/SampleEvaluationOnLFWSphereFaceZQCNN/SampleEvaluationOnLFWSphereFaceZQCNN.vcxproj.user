@@ -1,7 +1,7 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <LocalDebuggerCommandArguments>F:\Code\Projects\ZQCNN\model\mobilenet_sphereface10bn512.zqparams F:\Code\Projects\ZQCNN\model\mobilenet_sphereface10bn512_iter_50000.nchwbin  fc5 F:\Code\sphereface\test\data\pairs.txt F:\Code\sphereface\preprocess\data\lfw_sphereface_crop 10 1</LocalDebuggerCommandArguments>
+    <LocalDebuggerCommandArguments>F:\Code\Projects\ZQCNN\model\mobilenet_sphereface10bn512.zqparams F:\Code\Projects\ZQCNN\model\mobilenet_sphereface10bn512_iter_50000.nchwbin  fc5 F:\Code\sphereface\test\data\pairs.txt F:\Code\sphereface\preprocess\data\lfw-112X96 10 0</LocalDebuggerCommandArguments>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
   </PropertyGroup>
 </Project>

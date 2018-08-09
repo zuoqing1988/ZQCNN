@@ -84,5 +84,11 @@
     <ClInclude Include="ZQ_FaceRecognizerArcFaceZQCNN.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="ZQ_FaceRecognizerAgeGenderZQCNN.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="ZQ_FaceRecognizerAgeGenderMiniCaffe.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

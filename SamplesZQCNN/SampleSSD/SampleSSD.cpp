@@ -1,4 +1,4 @@
-#include "ZQ_CNN_Net.h"
+#include "ZQ_CNN_SSD.h"
 #include <cblas.h>
 #include <vector>
 #include <iostream>
@@ -7,15 +7,12 @@ using namespace ZQ;
 using namespace std;
 using namespace cv;
 
-struct BBox {
-	float x1, y1, x2, y2, score;
-	int label;
-};
+
 
 int main()
 {
-	int thread_num = 1;
-	openblas_set_num_threads(1);
+	int thread_num = 4;
+	openblas_set_num_threads(thread_num);
 	
 	Mat img0 = cv::imread("data\\004545.jpg", 1);
 	//Mat img0 = cv::imread("data\\face1.jpg", 1);
@@ -24,93 +21,47 @@ int main()
 		cout << "empty image\n";
 		return EXIT_FAILURE;
 	}
-	int width = img0.cols;
-	int height = img0.rows;
-	cv::Mat img1;
-	//cv::resize(img0, img1, cv::Size(300, 300));
-	cv::resize(img0, img1, cv::Size(300, 300));
-	ZQ_CNN_Tensor4D_NHW_C_Align128bit input0, input1;
-	input0.ConvertFromBGR(img1.data, img1.cols, img1.rows, img1.step[0]);
-
-
-	ZQ_CNN_Net net;
-	if (!net.LoadFrom("model\\MobileNetSSD_deploy.zqparams", "model\\MobileNetSSD_deploy.nchwbin"))
-	//if (!net.LoadFrom("model\\MobileNetSSD_deploy-face.zqparams", "model\\MobileNetSSD_deploy-face.nchwbin"))
+	
+	ZQ_CNN_SSD detector;
+	if (!detector.Init("model\\MobileNetSSD_deploy.zqparams", "model\\MobileNetSSD_deploy.nchwbin", "detection_out"))
 	{
-		cout << "failed to load net\n";
-		return EXIT_FAILURE;
+		printf("failed to init detector!\n");
+		return false;
 	}
-
-	int iters = 100;
-	double t1 = omp_get_wtime();
-	for (int it = 0; it < iters; it++)
-	{
-		if (!net.Forward(input0, thread_num))
-		{
-			cout << "failed to run\n";
-			return EXIT_FAILURE;
-		}
-	}
-	double t2 = omp_get_wtime();
-	printf("[%d] times cost %.3f s, 1 iter cost %.3f ms\n", iters, t2 - t1, 1000 * (t2 - t1) / iters);
-
-	double t3 = omp_get_wtime();
-	for (int it = 0; it < iters; it++)
-	{
-		if (!net.Forward(input0, thread_num))
-		{
-			cout << "failed to run\n";
-			return EXIT_FAILURE;
-		}	
-	}
-	double t4 = omp_get_wtime();
-	printf("[%d] times cost %.3f s, 1 iter cost %.3f ms\n", iters, t4 - t3, 1000 * (t4 - t3) / iters);
-
-	const ZQ_CNN_Tensor4D* ptr = net.GetBlobByName("detection_out");
-	// get output, shape is N x 7
-	if (ptr == 0)
-	{
-		printf("maybe the output blob is incorrect\n");
-		return EXIT_FAILURE;
-	}
-
+	
+	int out_iter = 10;
+	int iters = 1;
+	std::vector<ZQ_CNN_SSD::BBox> output;
 	const float kScoreThreshold = 0.5f;
+	for (int out_it = 0; out_it < out_iter; out_it++)
+	{
+		double t1 = omp_get_wtime();
+		for (int it = 0; it < iters; it++)
+		{
+			if(!detector.Detect(output, img0.data, img0.cols, img0.rows, img0.step[0], kScoreThreshold, false))
+			{
+				cout << "failed to run\n";
+				return EXIT_FAILURE;
+			}
+		}
+		double t2 = omp_get_wtime();
+		printf("[%d] times cost %.3f s, 1 iter cost %.3f ms\n", iters, t2 - t1, 1000 * (t2 - t1) / iters);
+	}
 	const char* kClassNames[] = { "__background__", "aeroplane", "bicycle", "bird", "boat",
 		"bottle", "bus", "car", "cat", "chair",
 		"cow", "diningtable", "dog", "horse",
 		"motorbike", "person", "pottedplant",
 		"sheep", "sofa", "train", "tvmonitor" };
 	//const char* kClassNames[] = { "__background__", "eye", "nose", "mouth", "face" };
-	const float* result_data = ptr->GetFirstPixelPtr();
-	int sliceStep = ptr->GetSliceStep();
-	int N = ptr->GetN();
-	printf("detected = %d\n", N);
-	vector<BBox> detections;
-	for (int k = 0; k < N; k++) 
-	{
-		if (result_data[0] != -1 && result_data[2] > kScoreThreshold) 
-		{
-			// [image_id, label, score, xmin, ymin, xmax, ymax]
-			BBox bbox;
-			bbox.x1 = result_data[3] * width;
-			bbox.y1 = result_data[4] * height;
-			bbox.x2 = result_data[5] * width;
-			bbox.y2 = result_data[6] * height;
-			bbox.score = result_data[2];
-			bbox.label = static_cast<int>(result_data[1]);
-			detections.push_back(bbox);
-		}
-		result_data += sliceStep;
-	}
-
+	
 	// draw
-	for (auto& bbox : detections) 
+	for (auto& bbox : output) 
 	{
-		cv::Rect rect(bbox.x1, bbox.y1, bbox.x2 - bbox.x1 + 1, bbox.y2 - bbox.y1 + 1);
+		cv::Rect rect(bbox.col1, bbox.row1, bbox.col2 - bbox.col1 + 1, bbox.row2 - bbox.row1 + 1);
 		cv::rectangle(img0, rect, cv::Scalar(0, 0, 255), 2);
 		char buff[300];
 		sprintf_s(buff, 300, "%s: %.2f", kClassNames[bbox.label], bbox.score);
-		cv::putText(img0, buff, cv::Point(bbox.x1, bbox.y1), FONT_HERSHEY_PLAIN, 1, Scalar(0, 255, 0));
+		cv::putText(img0, buff, cv::Point(bbox.col1, bbox.row1), FONT_HERSHEY_PLAIN, 1, Scalar(0, 255, 0));
 	}
 
 	cv::imwrite("./ssd-result.jpg", img0);

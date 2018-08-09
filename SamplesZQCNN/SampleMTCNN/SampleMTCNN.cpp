@@ -51,8 +51,8 @@ int main()
 
 
 	result_name = "resultdet.jpg";
-	if (!mtcnn.Init("model\\det1.param", "model\\det1.nchwbin", "model\\det2.param",
-		"model\\det2.nchwbin", "model\\det3.param", "model\\det3.nchwbin"))
+	if (!mtcnn.Init("model\\det1.zqparams", "model\\det1.nchwbin", "model\\det2.zqparams",
+		"model\\det2.nchwbin", "model\\det3.zqparams", "model\\det3.nchwbin"))
 	{
 		cout << "failed to init!\n";
 		return EXIT_FAILURE;

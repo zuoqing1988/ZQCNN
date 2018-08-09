@@ -8,7 +8,7 @@ using namespace std;
 using namespace cv;
 int main()
 {
-	int num_threads = 1;
+	int num_threads = 4;
 	for (int out_it = 0; out_it < 10; out_it++)
 	{
 
@@ -32,7 +32,8 @@ int main()
 
 
 		ZQ_CNN_Net net;
-		if (!net.LoadFrom("model\\model-r50-am.zqparams", "model\\model-r50-am.nchwbin"))
+		if (!net.LoadFrom("model\\mobilefacenet-v0.zqparams", "model\\mobilefacenet-v0.nchwbin"))
+		//if (!net.LoadFrom("model\\model-r50-am.zqparams", "model\\model-r50-am.nchwbin"))
 		//if (!net.LoadFrom("model\\mobilenet_sphereface10bn512.zqparams", "model\\mobilenet_sphereface10bn512_iter_50000.nchwbin"))
 		//if (!net.LoadFrom("model\\sphereface04bn256.zqparams", "model\\sphereface04bn256_iter_26000.nchwbin"))
 		//if (!net.LoadFrom("model\\sphereface20.zqparams", "model\\sphereface20.nchwbin"))
@@ -48,7 +49,7 @@ int main()
 		for (int it = 0; it < iters; it++)
 		{
 			double t3 = omp_get_wtime();
-			if (!net.Forward(input0, num_threads))
+			if (!net.Forward(input0, 1))
 			{
 				cout << "failed to run\n";
 				return EXIT_FAILURE;
@@ -68,7 +69,7 @@ int main()
 		double t3 = omp_get_wtime();
 		for (int it = 0; it < iters; it++)
 		{
-			if (!net.Forward(input1, num_threads))
+			if (!net.Forward(input1, 1))
 			{
 				cout << "failed to run\n";
 				return EXIT_FAILURE;

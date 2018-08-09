@@ -1,7 +1,7 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <LocalDebuggerCommandArguments>C:/Users/ZQ/Desktop/arcface50-caffe/arcface-r50-ori.prototxt C:/Users/ZQ/Desktop/arcface50-caffe/model-r50-am.caffemodel fc1 F:\Code\sphereface\test\data\pairs.txt F:\Code\sphereface\preprocess\data\lfw-112X112 8 0</LocalDebuggerCommandArguments>
+    <LocalDebuggerCommandArguments>C:/Users/ZQ/Desktop/arcface50-caffe/model_old.prototxt C:/Users/ZQ/Desktop/arcface50-caffe/model_old.caffemodel fc1 F:\Code\sphereface\test\data\pairs.txt F:\Code\sphereface\preprocess\data\lfw-112X112 10 0</LocalDebuggerCommandArguments>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
     <LocalDebuggerWorkingDirectory>$(SolutionDir)</LocalDebuggerWorkingDirectory>
   </PropertyGroup>

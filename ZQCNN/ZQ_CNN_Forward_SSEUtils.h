@@ -17,6 +17,7 @@ namespace ZQ
 		static bool ConvolutionWithBias(ZQ_CNN_Tensor4D& input, const ZQ_CNN_Tensor4D& filters, const ZQ_CNN_Tensor4D& bias,
 			int strideH, int strideW, int padH, int padW, ZQ_CNN_Tensor4D& output, int num_threads = 1)
 		{
+			//num_threads = 4;
 			double t1 = omp_get_wtime();
 			int in_N = input.GetN();
 			int in_H = input.GetH();
@@ -180,7 +181,7 @@ namespace ZQ
 		static bool DepthwiseConvolutionWithBias(ZQ_CNN_Tensor4D& input, const ZQ_CNN_Tensor4D& filters, const ZQ_CNN_Tensor4D& bias,
 			int strideH, int strideW, int padH, int padW, ZQ_CNN_Tensor4D& output, int num_threads = 1)
 		{
-			//num_threads = 1;
+			//num_threads = 4;
 			double t1 = omp_get_wtime();
 			int in_N = input.GetN();
 			int in_H = input.GetH();
@@ -540,6 +541,7 @@ namespace ZQ
 
 		static void ReLU(ZQ_CNN_Tensor4D &input, int num_threads = 1)
 		{
+			//num_threads = 2;
 			int N = input.GetN();
 			int H = input.GetH();
 			int W = input.GetW();

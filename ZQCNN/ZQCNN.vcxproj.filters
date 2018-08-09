@@ -200,5 +200,11 @@
     <ClInclude Include="ZQ_CNN_BBoxUtils.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="ZQ_CNN_SSD.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="ZQ_CNN_DetectorInterface.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

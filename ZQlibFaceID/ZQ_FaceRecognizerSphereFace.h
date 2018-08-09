@@ -58,7 +58,12 @@ namespace ZQ
 				break;
 			}
 			
-			if (GetCropHeight() == 112 && GetCropWidth() == 112)
+			if (GetCropHeight() == 160 && GetCropWidth() == 160)
+			{
+				if (!ZQ_FaceRecognizerUtils::CropImage_160x160<float>(input, face5point, crop))
+					return false;
+			}
+			else if (GetCropHeight() == 112 && GetCropWidth() == 112)
 			{
 				if (!ZQ_FaceRecognizerUtils::CropImage_112x112<float>(input, face5point, crop))
 					return false;
@@ -125,7 +130,12 @@ namespace ZQ
 				break;
 			}
 
-			if (GetCropHeight() == 112 && GetCropWidth() == 112)
+			if (GetCropHeight() == 160 && GetCropWidth() == 160)
+			{
+				if (!ZQ_FaceRecognizerUtils::CropImage_160x160<float>(input, face5point, crop))
+					return false;
+			}
+			else if (GetCropHeight() == 112 && GetCropWidth() == 112)
 			{
 				if (!ZQ_FaceRecognizerUtils::CropImage_112x112<float>(input, face5point, crop))
 					return false;
@@ -151,7 +161,12 @@ namespace ZQ
 		static float CalSimilarity(int dim, const float* feat1, const float* feat2)
 		{
 			bool handled = false;
-			if (dim == 256)
+			if (dim == 128)
+			{
+				if (((long long)feat1) % 32 == 0 && ((long long)feat2) % 32 == 0)
+					return _cal_similarity_avx_dim128(feat1, feat2);
+			}
+			else if (dim == 256)
 			{
 				if (((long long)feat1) % 32 == 0 && ((long long)feat2) % 32 == 0)
 					return _cal_similarity_avx_dim256(feat1, feat2);
@@ -175,6 +190,31 @@ namespace ZQ
 		}
 
 	public:
+
+		static float _cal_similarity_avx_dim128(const float* pt1, const float* pt2)
+		{
+			_declspec(align(32)) float q[8];
+			__m256 sum_vec = _mm256_mul_ps(_mm256_load_ps(pt1), _mm256_load_ps(pt2));
+			sum_vec = _mm256_fmadd_ps(_mm256_load_ps(pt1 + 8), _mm256_load_ps(pt2 + 8), sum_vec);
+			sum_vec = _mm256_fmadd_ps(_mm256_load_ps(pt1 + 16), _mm256_load_ps(pt2 + 16), sum_vec);
+			sum_vec = _mm256_fmadd_ps(_mm256_load_ps(pt1 + 24), _mm256_load_ps(pt2 + 24), sum_vec);
+			sum_vec = _mm256_fmadd_ps(_mm256_load_ps(pt1 + 32), _mm256_load_ps(pt2 + 32), sum_vec);
+			sum_vec = _mm256_fmadd_ps(_mm256_load_ps(pt1 + 40), _mm256_load_ps(pt2 + 40), sum_vec);
+			sum_vec = _mm256_fmadd_ps(_mm256_load_ps(pt1 + 48), _mm256_load_ps(pt2 + 48), sum_vec);
+			sum_vec = _mm256_fmadd_ps(_mm256_load_ps(pt1 + 56), _mm256_load_ps(pt2 + 56), sum_vec);
+			sum_vec = _mm256_fmadd_ps(_mm256_load_ps(pt1 + 64), _mm256_load_ps(pt2 + 64), sum_vec);
+			sum_vec = _mm256_fmadd_ps(_mm256_load_ps(pt1 + 72), _mm256_load_ps(pt2 + 72), sum_vec);
+			sum_vec = _mm256_fmadd_ps(_mm256_load_ps(pt1 + 80), _mm256_load_ps(pt2 + 80), sum_vec);
+			sum_vec = _mm256_fmadd_ps(_mm256_load_ps(pt1 + 88), _mm256_load_ps(pt2 + 88), sum_vec);
+			sum_vec = _mm256_fmadd_ps(_mm256_load_ps(pt1 + 96), _mm256_load_ps(pt2 + 96), sum_vec);
+			sum_vec = _mm256_fmadd_ps(_mm256_load_ps(pt1 + 104), _mm256_load_ps(pt2 + 104), sum_vec);
+			sum_vec = _mm256_fmadd_ps(_mm256_load_ps(pt1 + 112), _mm256_load_ps(pt2 + 112), sum_vec);
+			sum_vec = _mm256_fmadd_ps(_mm256_load_ps(pt1 + 120), _mm256_load_ps(pt2 + 120), sum_vec);
+			_mm256_store_ps(q, sum_vec);
+			float score = q[0] + q[1] + q[2] + q[3] + q[4] + q[5] + q[6] + q[7];
+			return score;
+		}
+
 		static float _cal_similarity_avx_dim256(const float* pt1, const float* pt2)
 		{
 			_declspec(align(32)) float q[8];

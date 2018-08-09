@@ -60,6 +60,29 @@ namespace ZQ
 			return true;
 		}
 
+		template<class BaseType>
+		static bool CropImage_160x160(const cv::Mat& img, const BaseType* facial5point, cv::Mat& crop)
+		{
+			cv::Size designed_size(160, 160);
+			BaseType coord5point[10] =
+			{
+				30.2946 + 32, 51.6963 + 24,
+				65.5318 + 32, 51.5014 + 24,
+				48.0252 + 32, 71.7366 + 24,
+				33.5493 + 32, 92.3655 + 24,
+				62.7299 + 32, 92.2041 + 24
+			};
+
+			cv::Mat transform;
+			clock_t t1 = clock();
+			_findSimilarity(5, facial5point, coord5point, transform);
+			clock_t t2 = clock();
+			cv::warpAffine(img, crop, transform, designed_size);
+			clock_t t3 = clock();
+			//printf("findtrans:%.3f, warp:%.3f\n", 0.001*(t2 - t1), 0.001*(t3 - t2));
+			return true;
+		}
+
 	private:
 		template<class BaseType>
 		static void _findNonreflectiveSimilarity(int nPts, const BaseType* uv, const BaseType* xy, cv::Mat& transform)
