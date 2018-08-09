@@ -3,7 +3,7 @@ ZQCNN-v0.0是ZuoQing参照mini-caffe写的forward库，随便用用
 # 更新日志
 **2018-08-09日更新**
 
-添加mxnet2zqcnn，成功将mxnet上的MobileFaceNet转成ZQCNN格式。
+添加mxnet2zqcnn，成功将mxnet上的MobileFaceNet转成ZQCNN格式（不能保证其他模型也能转成功，ZQCNN还不支持很多Layer）。
 
 第一步：编译出mxnet2zqcnn.exe
 
