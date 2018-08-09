@@ -64,7 +64,7 @@ Convolution name=conv1 bottom=data top=conv1 num_output=10 kernel_size=3 stride=
 
 **目标检测**
 
-[MobileNetSSD](https://pan.baidu.com/s/1ddkVzjQ0kFqUS7atTgrMrw) 从[MobileNet-SSD](https://github.com/chuanqi305/MobileNet-SSD)转的格式
+[MobileNetSSD](https://pan.baidu.com/s/1cyly_17cTOJBaCRiiQtWkQ) 从[MobileNet-SSD](https://github.com/chuanqi305/MobileNet-SSD)转的格式
 
 # 相关文章
 
