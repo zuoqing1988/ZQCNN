@@ -15,6 +15,8 @@ ZQCNN-v0.0是ZuoQing参照mini-caffe写的forward库，随便用用
 
 第五步：把test.zqparams和test.nchwbin复制到model文件夹下，然后在VS2015里运行SampleMobileNet.exe，注意工作目录是$(SolutionDir)
 
+自动转出来的速度慢了不少，可以手工修改test.zqparams，可以参考[ArcFace-MobileFaceNet-v0](https://pan.baidu.com/s/1f-Mfad-7zRvWcy3wYoPrUg)
+
 **2018-08-07日更新**
 
 BUG修复：之前Convolution, DepthwiseConvolution, InnerProduct, BatchNormScale/Scale默认with_bias=true， 现在改成默认with_bias=false。也就是之前的代码无法加载不带bias的这几个Layer。
