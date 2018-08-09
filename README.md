@@ -73,7 +73,7 @@ Convolution name=conv1 bottom=data top=conv1 num_output=10 kernel_size=3 stride=
 
 [ArcFace-r34](https://pan.baidu.com/s/1tRt6PxDg4UNv7yf9pMZ_LA) LFW约99.65%-99.70%,比r-50稍微快一点
 
-[ArcFace-MobileFaceNet-v0](https://pan.baidu.com/s/1f-Mfad-7zRvWcy3wYoPrUg) 从[model-y1.zip](https://pan.baidu.com/s/1If28BkHde4fiuweJrbicVA)转的格式，转完之后在LFW上只有99.13%-99.23%，单线程14-15ms
+[ArcFace-MobileFaceNet-v0](https://pan.baidu.com/s/1f-Mfad-7zRvWcy3wYoPrUg) 从[model-y1.zip](https://pan.baidu.com/s/1If28BkHde4fiuweJrbicVA)转的格式，转完之后在LFW上只有99.13%-99.23%，单线程33-35ms，4线程14-15ms
 
 **表情识别**
 
