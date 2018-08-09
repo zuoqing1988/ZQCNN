@@ -1,0 +1,119 @@
+﻿  SampleMobileFaceNet.cpp
+f:\code\projects\zqcnn\zqcnn\ZQ_CNN_Tensor4D.h(343): warning C4267: “初始化”: 从“size_t”转换到“int”，可能丢失数据
+f:\code\projects\zqcnn\zqcnn\ZQ_CNN_BBoxUtils.h(54): warning C4244: “=”: 从“int”转换到“float”，可能丢失数据
+f:\code\projects\zqcnn\zqcnn\ZQ_CNN_BBoxUtils.h(55): warning C4244: “=”: 从“int”转换到“float”，可能丢失数据
+f:\code\projects\zqcnn\zqcnn\ZQ_CNN_BBoxUtils.h(56): warning C4244: “=”: 从“int”转换到“float”，可能丢失数据
+f:\code\projects\zqcnn\zqcnn\ZQ_CNN_BBoxUtils.h(57): warning C4244: “=”: 从“int”转换到“float”，可能丢失数据
+f:\code\projects\zqcnn\zqcnn\ZQ_CNN_BBoxUtils.h(87): warning C4267: “初始化”: 从“size_t”转换到“int”，可能丢失数据
+f:\code\projects\zqcnn\zqcnn\ZQ_CNN_BBoxUtils.h(105): warning C4244: “=”: 从“int”转换到“float”，可能丢失数据
+f:\code\projects\zqcnn\zqcnn\ZQ_CNN_BBoxUtils.h(106): warning C4244: “=”: 从“int”转换到“float”，可能丢失数据
+f:\code\projects\zqcnn\zqcnn\ZQ_CNN_BBoxUtils.h(116): warning C4244: “=”: 从“double”转换到“float”，可能丢失数据
+f:\code\projects\zqcnn\zqcnn\ZQ_CNN_BBoxUtils.h(117): warning C4244: “=”: 从“double”转换到“float”，可能丢失数据
+f:\code\projects\zqcnn\zqcnn\ZQ_CNN_BBoxUtils.h(118): warning C4244: “=”: 从“float”转换到“int”，可能丢失数据
+f:\code\projects\zqcnn\zqcnn\ZQ_CNN_BBoxUtils.h(119): warning C4244: “=”: 从“float”转换到“int”，可能丢失数据
+f:\code\projects\zqcnn\zqcnn\ZQ_CNN_BBoxUtils.h(120): warning C4244: “=”: 从“float”转换到“int”，可能丢失数据
+f:\code\projects\zqcnn\zqcnn\ZQ_CNN_BBoxUtils.h(121): warning C4244: “=”: 从“float”转换到“int”，可能丢失数据
+f:\code\projects\zqcnn\zqcnn\ZQ_CNN_BBoxUtils.h(129): warning C4244: “=”: 从“int”转换到“float”，可能丢失数据
+f:\code\projects\zqcnn\zqcnn\ZQ_CNN_BBoxUtils.h(181): warning C4267: “初始化”: 从“size_t”转换到“int”，可能丢失数据
+f:\code\projects\zqcnn\zqcnn\ZQ_CNN_BBoxUtils.h(233): warning C4244: “初始化”: 从“double”转换到“float”，可能丢失数据
+f:\code\projects\zqcnn\zqcnn\ZQ_CNN_BBoxUtils.h(234): warning C4244: “初始化”: 从“double”转换到“float”，可能丢失数据
+f:\code\projects\zqcnn\zqcnn\ZQ_CNN_BBoxUtils.h(256): warning C4244: “=”: 从“double”转换到“float”，可能丢失数据
+f:\code\projects\zqcnn\zqcnn\ZQ_CNN_BBoxUtils.h(257): warning C4244: “=”: 从“double”转换到“float”，可能丢失数据
+f:\code\projects\zqcnn\zqcnn\ZQ_CNN_BBoxUtils.h(258): warning C4244: “=”: 从“double”转换到“float”，可能丢失数据
+f:\code\projects\zqcnn\zqcnn\ZQ_CNN_BBoxUtils.h(259): warning C4244: “=”: 从“double”转换到“float”，可能丢失数据
+f:\code\projects\zqcnn\zqcnn\ZQ_CNN_Forward_SSEUtils.h(34): warning C4244: “初始化”: 从“int”转换到“float”，可能丢失数据
+f:\code\projects\zqcnn\zqcnn\ZQ_CNN_Forward_SSEUtils.h(198): warning C4244: “初始化”: 从“int”转换到“float”，可能丢失数据
+f:\code\projects\zqcnn\zqcnn\ZQ_CNN_Forward_SSEUtils.h(361): warning C4244: “初始化”: 从“int”转换到“float”，可能丢失数据
+f:\code\projects\zqcnn\zqcnn\ZQ_CNN_Forward_SSEUtils.h(486): warning C4244: “初始化”: 从“float”转换到“int”，可能丢失数据
+f:\code\projects\zqcnn\zqcnn\ZQ_CNN_Forward_SSEUtils.h(487): warning C4244: “初始化”: 从“float”转换到“int”，可能丢失数据
+f:\code\projects\zqcnn\zqcnn\ZQ_CNN_Forward_SSEUtils.h(692): warning C4244: “=”: 从“double”转换到“float”，可能丢失数据
+f:\code\projects\zqcnn\zqcnn\ZQ_CNN_Forward_SSEUtils.h(836): warning C4267: “初始化”: 从“size_t”转换到“int”，可能丢失数据
+f:\code\projects\zqcnn\zqcnn\ZQ_CNN_Forward_SSEUtils.h(882): warning C4267: “初始化”: 从“size_t”转换到“int”，可能丢失数据
+f:\code\projects\zqcnn\zqcnn\ZQ_CNN_Forward_SSEUtils.h(927): warning C4267: “初始化”: 从“size_t”转换到“int”，可能丢失数据
+f:\code\projects\zqcnn\zqcnn\ZQ_CNN_Forward_SSEUtils.h(972): warning C4267: “初始化”: 从“size_t”转换到“int”，可能丢失数据
+f:\code\projects\zqcnn\zqcnn\ZQ_CNN_Layer.h(40): warning C4267: “初始化”: 从“size_t”转换到“int”，可能丢失数据
+f:\code\projects\zqcnn\zqcnn\ZQ_CNN_Layer.h(60): warning C4267: “初始化”: 从“size_t”转换到“int”，可能丢失数据
+f:\code\projects\zqcnn\zqcnn\ZQ_CNN_Layer.h(86): warning C4267: “初始化”: 从“size_t”转换到“int”，可能丢失数据
+f:\code\projects\zqcnn\zqcnn\ZQ_CNN_Layer.h(126): warning C4267: “初始化”: 从“size_t”转换到“int”，可能丢失数据
+f:\code\projects\zqcnn\zqcnn\ZQ_CNN_Layer.h(263): warning C4267: “初始化”: 从“size_t”转换到“int”，可能丢失数据
+f:\code\projects\zqcnn\zqcnn\ZQ_CNN_Layer.h(355): warning C4800: “int”: 将值强制为布尔值“true”或“false”(性能警告)
+f:\code\projects\zqcnn\zqcnn\ZQ_CNN_Layer.h(456): warning C4244: “=”: 从“float”转换到“int”，可能丢失数据
+f:\code\projects\zqcnn\zqcnn\ZQ_CNN_Layer.h(457): warning C4244: “=”: 从“float”转换到“int”，可能丢失数据
+f:\code\projects\zqcnn\zqcnn\ZQ_CNN_Layer.h(551): warning C4267: “初始化”: 从“size_t”转换到“int”，可能丢失数据
+f:\code\projects\zqcnn\zqcnn\ZQ_CNN_Layer.h(643): warning C4800: “int”: 将值强制为布尔值“true”或“false”(性能警告)
+f:\code\projects\zqcnn\zqcnn\ZQ_CNN_Layer.h(747): warning C4244: “=”: 从“float”转换到“int”，可能丢失数据
+f:\code\projects\zqcnn\zqcnn\ZQ_CNN_Layer.h(748): warning C4244: “=”: 从“float”转换到“int”，可能丢失数据
+f:\code\projects\zqcnn\zqcnn\ZQ_CNN_Layer.h(826): warning C4267: “初始化”: 从“size_t”转换到“int”，可能丢失数据
+f:\code\projects\zqcnn\zqcnn\ZQ_CNN_Layer.h(863): warning C4800: “int”: 将值强制为布尔值“true”或“false”(性能警告)
+f:\code\projects\zqcnn\zqcnn\ZQ_CNN_Layer.h(1020): warning C4267: “初始化”: 从“size_t”转换到“int”，可能丢失数据
+f:\code\projects\zqcnn\zqcnn\ZQ_CNN_Layer.h(1198): warning C4267: “初始化”: 从“size_t”转换到“int”，可能丢失数据
+f:\code\projects\zqcnn\zqcnn\ZQ_CNN_Layer.h(1211): warning C4800: “int”: 将值强制为布尔值“true”或“false”(性能警告)
+f:\code\projects\zqcnn\zqcnn\ZQ_CNN_Layer.h(1371): warning C4267: “初始化”: 从“size_t”转换到“int”，可能丢失数据
+f:\code\projects\zqcnn\zqcnn\ZQ_CNN_Layer.h(1508): warning C4267: “初始化”: 从“size_t”转换到“int”，可能丢失数据
+f:\code\projects\zqcnn\zqcnn\ZQ_CNN_Layer.h(1635): warning C4267: “初始化”: 从“size_t”转换到“int”，可能丢失数据
+f:\code\projects\zqcnn\zqcnn\ZQ_CNN_Layer.h(1751): warning C4244: “=”: 从“float”转换到“int”，可能丢失数据
+f:\code\projects\zqcnn\zqcnn\ZQ_CNN_Layer.h(1752): warning C4244: “=”: 从“float”转换到“int”，可能丢失数据
+f:\code\projects\zqcnn\zqcnn\ZQ_CNN_Layer.h(1812): warning C4267: “初始化”: 从“size_t”转换到“int”，可能丢失数据
+f:\code\projects\zqcnn\zqcnn\ZQ_CNN_Layer.h(1860): warning C4800: “int”: 将值强制为布尔值“true”或“false”(性能警告)
+f:\code\projects\zqcnn\zqcnn\ZQ_CNN_Layer.h(1973): warning C4267: “初始化”: 从“size_t”转换到“int”，可能丢失数据
+f:\code\projects\zqcnn\zqcnn\ZQ_CNN_Layer.h(1984): warning C4267: “=”: 从“size_t”转换到“int”，可能丢失数据
+f:\code\projects\zqcnn\zqcnn\ZQ_CNN_Layer.h(2024): warning C4267: “初始化”: 从“size_t”转换到“int”，可能丢失数据
+f:\code\projects\zqcnn\zqcnn\ZQ_CNN_Layer.h(2147): warning C4267: “初始化”: 从“size_t”转换到“int”，可能丢失数据
+f:\code\projects\zqcnn\zqcnn\ZQ_CNN_Layer.h(2163): warning C4244: “=”: 从“double”转换到“float”，可能丢失数据
+f:\code\projects\zqcnn\zqcnn\ZQ_CNN_Layer.h(2297): warning C4267: “初始化”: 从“size_t”转换到“int”，可能丢失数据
+f:\code\projects\zqcnn\zqcnn\ZQ_CNN_Layer.h(2363): warning C4244: “参数”: 从“double”转换到“float”，可能丢失数据
+f:\code\projects\zqcnn\zqcnn\ZQ_CNN_Layer.h(2457): warning C4244: “参数”: 从“double”转换到“float”，可能丢失数据
+f:\code\projects\zqcnn\zqcnn\ZQ_CNN_Layer.h(2459): warning C4244: “参数”: 从“double”转换到“float”，可能丢失数据
+f:\code\projects\zqcnn\zqcnn\ZQ_CNN_Layer.h(2526): warning C4267: “初始化”: 从“size_t”转换到“int”，可能丢失数据
+f:\code\projects\zqcnn\zqcnn\ZQ_CNN_Layer.h(2616): warning C4244: “=”: 从“double”转换到“float”，可能丢失数据
+f:\code\projects\zqcnn\zqcnn\ZQ_CNN_Layer.h(2713): warning C4267: “初始化”: 从“size_t”转换到“int”，可能丢失数据
+f:\code\projects\zqcnn\zqcnn\ZQ_CNN_Layer.h(2770): warning C4244: “=”: 从“double”转换到“float”，可能丢失数据
+f:\code\projects\zqcnn\zqcnn\ZQ_CNN_Layer.h(2778): warning C4244: “=”: 从“double”转换到“float”，可能丢失数据
+f:\code\projects\zqcnn\zqcnn\ZQ_CNN_Layer.h(2786): warning C4244: “=”: 从“double”转换到“float”，可能丢失数据
+f:\code\projects\zqcnn\zqcnn\ZQ_CNN_Layer.h(2870): warning C4267: “初始化”: 从“size_t”转换到“int”，可能丢失数据
+f:\code\projects\zqcnn\zqcnn\ZQ_CNN_Layer.h(3018): warning C4267: “初始化”: 从“size_t”转换到“int”，可能丢失数据
+f:\code\projects\zqcnn\zqcnn\ZQ_CNN_Layer.h(3167): warning C4267: “初始化”: 从“size_t”转换到“int”，可能丢失数据
+f:\code\projects\zqcnn\zqcnn\ZQ_CNN_Layer.h(3287): warning C4267: “初始化”: 从“size_t”转换到“int”，可能丢失数据
+f:\code\projects\zqcnn\zqcnn\ZQ_CNN_Layer.h(3362): warning C4267: “初始化”: 从“size_t”转换到“int”，可能丢失数据
+f:\code\projects\zqcnn\zqcnn\ZQ_CNN_Layer.h(3401): warning C4244: “参数”: 从“double”转换到“float”，可能丢失数据
+f:\code\projects\zqcnn\zqcnn\ZQ_CNN_Layer.h(3408): warning C4244: “参数”: 从“double”转换到“float”，可能丢失数据
+f:\code\projects\zqcnn\zqcnn\ZQ_CNN_Layer.h(3415): warning C4244: “参数”: 从“double”转换到“float”，可能丢失数据
+f:\code\projects\zqcnn\zqcnn\ZQ_CNN_Layer.h(3422): warning C4244: “参数”: 从“double”转换到“float”，可能丢失数据
+f:\code\projects\zqcnn\zqcnn\ZQ_CNN_Layer.h(3429): warning C4800: “int”: 将值强制为布尔值“true”或“false”(性能警告)
+f:\code\projects\zqcnn\zqcnn\ZQ_CNN_Layer.h(3436): warning C4800: “int”: 将值强制为布尔值“true”或“false”(性能警告)
+f:\code\projects\zqcnn\zqcnn\ZQ_CNN_Layer.h(3469): warning C4244: “=”: 从“int”转换到“float”，可能丢失数据
+f:\code\projects\zqcnn\zqcnn\ZQ_CNN_Layer.h(3479): warning C4244: “=”: 从“int”转换到“float”，可能丢失数据
+f:\code\projects\zqcnn\zqcnn\ZQ_CNN_Layer.h(3487): warning C4244: “=”: 从“int”转换到“float”，可能丢失数据
+f:\code\projects\zqcnn\zqcnn\ZQ_CNN_Layer.h(3495): warning C4244: “=”: 从“double”转换到“float”，可能丢失数据
+f:\code\projects\zqcnn\zqcnn\ZQ_CNN_Layer.h(3598): warning C4267: “=”: 从“size_t”转换到“int”，可能丢失数据
+f:\code\projects\zqcnn\zqcnn\ZQ_CNN_Layer.h(3645): warning C4305: “参数”: 从“double”到“float”截断
+f:\code\projects\zqcnn\zqcnn\ZQ_CNN_Layer.h(3681): warning C4267: “初始化”: 从“size_t”转换到“int”，可能丢失数据
+f:\code\projects\zqcnn\zqcnn\ZQ_CNN_Layer.h(3827): warning C4267: “初始化”: 从“size_t”转换到“int”，可能丢失数据
+f:\code\projects\zqcnn\zqcnn\ZQ_CNN_Layer.h(3872): warning C4800: “int”: 将值强制为布尔值“true”或“false”(性能警告)
+f:\code\projects\zqcnn\zqcnn\ZQ_CNN_Layer.h(3886): warning C4244: “=”: 从“double”转换到“float”，可能丢失数据
+f:\code\projects\zqcnn\zqcnn\ZQ_CNN_Layer.h(3900): warning C4244: “=”: 从“double”转换到“float”，可能丢失数据
+f:\code\projects\zqcnn\zqcnn\ZQ_CNN_Layer.h(3936): warning C4244: “=”: 从“double”转换到“float”，可能丢失数据
+f:\code\projects\zqcnn\zqcnn\ZQ_CNN_Layer.h(3943): warning C4800: “int”: 将值强制为布尔值“true”或“false”(性能警告)
+F:\Code\Projects\ZQCNN\ZQCNN\ZQ_CNN_Net.h(532): warning C4267: “初始化”: 从“size_t”转换到“int”，可能丢失数据
+F:\Code\Projects\ZQCNN\ZQCNN\ZQ_CNN_Net.h(571): warning C4267: “=”: 从“size_t”转换到“int”，可能丢失数据
+F:\Code\Projects\ZQCNN\ZQCNN\ZQ_CNN_Net.h(584): warning C4267: “初始化”: 从“size_t”转换到“int”，可能丢失数据
+F:\Code\Projects\ZQCNN\ZQCNN\ZQ_CNN_Net.h(592): warning C4267: “参数”: 从“size_t”转换到“int”，可能丢失数据
+F:\Code\Projects\ZQCNN\ZQCNN\ZQ_CNN_Net.h(606): warning C4267: “初始化”: 从“size_t”转换到“int”，可能丢失数据
+F:\Code\Projects\ZQCNN\ZQCNN\ZQ_CNN_Net.h(614): warning C4267: “参数”: 从“size_t”转换到“int”，可能丢失数据
+F:\Code\Projects\ZQCNN\ZQCNN\ZQ_CNN_Net.h(625): warning C4267: “=”: 从“size_t”转换到“int”，可能丢失数据
+F:\Code\Projects\ZQCNN\ZQCNN\ZQ_CNN_Net.h(638): warning C4267: “初始化”: 从“size_t”转换到“int”，可能丢失数据
+F:\Code\Projects\ZQCNN\ZQCNN\ZQ_CNN_Net.h(639): warning C4267: “初始化”: 从“size_t”转换到“int”，可能丢失数据
+F:\Code\Projects\ZQCNN\3rdparty\opencv\build\include\opencv2/core/mat.hpp(1965): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+F:\Code\Projects\ZQCNN\3rdparty\opencv\build\include\opencv2/core/persistence.hpp : warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+F:\Code\Projects\ZQCNN\3rdparty\opencv\build\include\opencv2/core/utility.hpp : warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+F:\Code\Projects\ZQCNN\3rdparty\opencv\build\include\opencv2/core/utility.hpp : warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+SampleMobileFaceNet.cpp(33): warning C4267: “参数”: 从“size_t”转换到“int”，可能丢失数据
+SampleMobileFaceNet.cpp(34): warning C4267: “参数”: 从“size_t”转换到“int”，可能丢失数据
+SampleMobileFaceNet.cpp(92): warning C4244: “/=”: 从“double”转换到“float”，可能丢失数据
+  正在生成代码
+  21 of 2786 functions ( 0.8%) were compiled, the rest were copied from previous compilation.
+    0 functions were new in current compilation
+    11 functions had inline decision re-evaluated but remain unchanged
+  已完成代码的生成
+  SampleMobileFaceNet.vcxproj -> F:\Code\Projects\ZQCNN\x64\Release\SampleMobileFaceNet.exe
+  SampleMobileFaceNet.vcxproj -> F:\Code\Projects\ZQCNN\x64\Release\SampleMobileFaceNet.pdb (Full PDB)

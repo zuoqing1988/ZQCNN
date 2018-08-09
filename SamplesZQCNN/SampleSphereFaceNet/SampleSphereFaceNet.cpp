@@ -8,7 +8,7 @@ using namespace std;
 using namespace cv;
 int main()
 {
-	int num_threads = 4;
+	int num_threads = 1;
 	for (int out_it = 0; out_it < 10; out_it++)
 	{
 
@@ -30,9 +30,10 @@ int main()
 		input0.ConvertFromBGR(image0.data, image0.cols, image0.rows, image0.step[0]);
 		input1.ConvertFromBGR(image1.data, image1.cols, image1.rows, image1.step[0]);
 
-
+		std::string out_blob_name = "fc5";
 		ZQ_CNN_Net net;
 		if (!net.LoadFrom("model\\mobilefacenet-v0.zqparams", "model\\mobilefacenet-v0.nchwbin"))
+		//if (!net.LoadFrom("model\\test.zqparams", "model\\test.nchwbin"))
 		//if (!net.LoadFrom("model\\model-r50-am.zqparams", "model\\model-r50-am.nchwbin"))
 		//if (!net.LoadFrom("model\\mobilenet_sphereface10bn512.zqparams", "model\\mobilenet_sphereface10bn512_iter_50000.nchwbin"))
 		//if (!net.LoadFrom("model\\sphereface04bn256.zqparams", "model\\sphereface04bn256_iter_26000.nchwbin"))
@@ -60,7 +61,7 @@ int main()
 		double t2 = omp_get_wtime();
 		printf("[%d] times cost %.3f s, 1 iter cost %.3f ms\n", iters, t2 - t1, 1000 * (t2 - t1) / iters);
 
-		const ZQ_CNN_Tensor4D* ptr = net.GetBlobByName("fc5");
+		const ZQ_CNN_Tensor4D* ptr = net.GetBlobByName(out_blob_name);
 		int dim = ptr->GetC();
 		std::vector<float> feat0(dim);
 		memcpy(&feat0[0], ptr->GetFirstPixelPtr(), sizeof(float)*dim);
@@ -78,7 +79,7 @@ int main()
 		double t4 = omp_get_wtime();
 		printf("[%d] times cost %.3f s, 1 iter cost %.3f ms\n", iters, t4 - t3, 1000 * (t4 - t3) / iters);
 
-		ptr = net.GetBlobByName("fc5");
+		ptr = net.GetBlobByName(out_blob_name);
 		std::vector<float> feat1(dim);
 		memcpy(&feat1[0], ptr->GetFirstPixelPtr(), sizeof(float)*dim);
 		float score = 0;

@@ -11,6 +11,7 @@
 #include "layers_c/zq_cnn_dropout_32f_align_c.h"
 #include "layers_c/zq_cnn_batchnormscale_32f_align_c.h"
 #include "layers_c/zq_cnn_eltwise_32f_align_c.h"
+#include "layers_c/zq_cnn_scalaroperation_32f_align_c.h"
 #include "layers_c/zq_cnn_lrn_32f_align_c.h"
 #include "ZQ_CNN_Forward_SSEUtils.h"
 #include "ZQ_CNN_BBoxUtils.h"
@@ -2096,37 +2097,37 @@ void ZQ_CNN_Forward_SSEUtils::_eltwise_sum_with_weight_omp(int align_mode, int i
 	}
 }
 
-void ZQ_CNN_Forward_SSEUtils::_eltwise_prod(int align_mode, int in_tensor_num, const float** in_data, int N, int H, int W, int C, const int* pixStep, const int* widthStep, const int* sliceStep,
+void ZQ_CNN_Forward_SSEUtils::_eltwise_mul(int align_mode, int in_tensor_num, const float** in_data, int N, int H, int W, int C, const int* pixStep, const int* widthStep, const int* sliceStep,
 	float* out_data, int out_pixStep, int out_widthStep, int out_sliceStep)
 {
 	if (align_mode == ZQ_CNN_Tensor4D::ALIGN_128bit)
 	{
-		zq_cnn_eltwise_prod_32f_align128bit(in_tensor_num, in_data, N, H, W, C, pixStep, widthStep, sliceStep, out_data, out_pixStep, out_widthStep, out_sliceStep);
+		zq_cnn_eltwise_mul_32f_align128bit(in_tensor_num, in_data, N, H, W, C, pixStep, widthStep, sliceStep, out_data, out_pixStep, out_widthStep, out_sliceStep);
 	}
 	else if (align_mode == ZQ_CNN_Tensor4D::ALIGN_256bit)
 	{
-		zq_cnn_eltwise_prod_32f_align256bit(in_tensor_num, in_data, N, H, W, C, pixStep, widthStep, sliceStep, out_data, out_pixStep, out_widthStep, out_sliceStep);
+		zq_cnn_eltwise_mul_32f_align256bit(in_tensor_num, in_data, N, H, W, C, pixStep, widthStep, sliceStep, out_data, out_pixStep, out_widthStep, out_sliceStep);
 	}
 	else
 	{
-		zq_cnn_eltwise_prod_32f_align0(in_tensor_num, in_data, N, H, W, C, pixStep, widthStep, sliceStep, out_data, out_pixStep, out_widthStep, out_sliceStep);
+		zq_cnn_eltwise_mul_32f_align0(in_tensor_num, in_data, N, H, W, C, pixStep, widthStep, sliceStep, out_data, out_pixStep, out_widthStep, out_sliceStep);
 	}
 }
 
-void ZQ_CNN_Forward_SSEUtils::_eltwise_prod_omp(int align_mode, int in_tensor_num, const float** in_data, int N, int H, int W, int C, const int* pixStep, const int* widthStep, const int* sliceStep,
+void ZQ_CNN_Forward_SSEUtils::_eltwise_mul_omp(int align_mode, int in_tensor_num, const float** in_data, int N, int H, int W, int C, const int* pixStep, const int* widthStep, const int* sliceStep,
 	float* out_data, int out_pixStep, int out_widthStep, int out_sliceStep, int num_threads)
 {
 	if (align_mode == ZQ_CNN_Tensor4D::ALIGN_128bit)
 	{
-		zq_cnn_eltwise_prod_32f_align128bit_omp(in_tensor_num, in_data, N, H, W, C, pixStep, widthStep, sliceStep, out_data, out_pixStep, out_widthStep, out_sliceStep, num_threads);
+		zq_cnn_eltwise_mul_32f_align128bit_omp(in_tensor_num, in_data, N, H, W, C, pixStep, widthStep, sliceStep, out_data, out_pixStep, out_widthStep, out_sliceStep, num_threads);
 	}
 	else if (align_mode == ZQ_CNN_Tensor4D::ALIGN_256bit)
 	{
-		zq_cnn_eltwise_prod_32f_align256bit_omp(in_tensor_num, in_data, N, H, W, C, pixStep, widthStep, sliceStep, out_data, out_pixStep, out_widthStep, out_sliceStep, num_threads);
+		zq_cnn_eltwise_mul_32f_align256bit_omp(in_tensor_num, in_data, N, H, W, C, pixStep, widthStep, sliceStep, out_data, out_pixStep, out_widthStep, out_sliceStep, num_threads);
 	}
 	else
 	{
-		zq_cnn_eltwise_prod_32f_align0_omp(in_tensor_num, in_data, N, H, W, C, pixStep, widthStep, sliceStep, out_data, out_pixStep, out_widthStep, out_sliceStep, num_threads);
+		zq_cnn_eltwise_mul_32f_align0_omp(in_tensor_num, in_data, N, H, W, C, pixStep, widthStep, sliceStep, out_data, out_pixStep, out_widthStep, out_sliceStep, num_threads);
 	}
 }
 
@@ -2162,6 +2163,217 @@ void ZQ_CNN_Forward_SSEUtils::_eltwise_max_omp(int align_mode, int in_tensor_num
 	{
 		zq_cnn_eltwise_max_32f_align0_omp(in_tensor_num, in_data, N, H, W, C, pixStep, widthStep, sliceStep, out_data, out_pixStep, out_widthStep, out_sliceStep, num_threads);
 	}
+}
+
+void ZQ_CNN_Forward_SSEUtils::_scalaroperation_add(int align_mode, float scalar, const float* in_data, int N, int H, int W, int C, int pixStep, int widthStep, int sliceStep,
+	float* out_data, int out_pixStep, int out_widthStep, int out_sliceStep)
+{
+	if (align_mode == ZQ_CNN_Tensor4D::ALIGN_128bit)
+	{
+		zq_cnn_scalaroperation_add_32f_align128bit(scalar, in_data, N, H, W, C, pixStep, widthStep, sliceStep, out_data, out_pixStep, out_widthStep, out_sliceStep);
+	}
+	else if (align_mode == ZQ_CNN_Tensor4D::ALIGN_256bit)
+	{
+		zq_cnn_scalaroperation_add_32f_align256bit(scalar, in_data, N, H, W, C, pixStep, widthStep, sliceStep, out_data, out_pixStep, out_widthStep, out_sliceStep);
+	}
+	else
+	{
+		zq_cnn_scalaroperation_add_32f_align0(scalar, in_data, N, H, W, C, pixStep, widthStep, sliceStep, out_data, out_pixStep, out_widthStep, out_sliceStep);
+	}
+}
+
+void ZQ_CNN_Forward_SSEUtils::_scalaroperation_add(int align_mode, float scalar, float* data, int N, int H, int W, int C, int pixStep, int widthStep, int sliceStep)
+{
+	if (align_mode == ZQ_CNN_Tensor4D::ALIGN_128bit)
+	{
+		zq_cnn_scalaroperation_add_inplace_32f_align128bit(scalar, data, N, H, W, C, pixStep, widthStep, sliceStep);
+	}
+	else if (align_mode == ZQ_CNN_Tensor4D::ALIGN_256bit)
+	{
+		zq_cnn_scalaroperation_add_inplace_32f_align256bit(scalar, data, N, H, W, C, pixStep, widthStep, sliceStep);
+	}
+	else
+	{
+		zq_cnn_scalaroperation_add_inplace_32f_align0(scalar, data, N, H, W, C, pixStep, widthStep, sliceStep);
+	}
+}
+
+void ZQ_CNN_Forward_SSEUtils::_scalaroperation_mul(int align_mode, float scalar, const float* in_data, int N, int H, int W, int C, int pixStep, int widthStep, int sliceStep,
+	float* out_data, int out_pixStep, int out_widthStep, int out_sliceStep)
+{
+	if (align_mode == ZQ_CNN_Tensor4D::ALIGN_128bit)
+	{
+		zq_cnn_scalaroperation_mul_32f_align128bit(scalar, in_data, N, H, W, C, pixStep, widthStep, sliceStep, out_data, out_pixStep, out_widthStep, out_sliceStep);
+	}
+	else if (align_mode == ZQ_CNN_Tensor4D::ALIGN_256bit)
+	{
+		zq_cnn_scalaroperation_mul_32f_align256bit(scalar, in_data, N, H, W, C, pixStep, widthStep, sliceStep, out_data, out_pixStep, out_widthStep, out_sliceStep);
+	}
+	else
+	{
+		zq_cnn_scalaroperation_mul_32f_align0(scalar, in_data, N, H, W, C, pixStep, widthStep, sliceStep, out_data, out_pixStep, out_widthStep, out_sliceStep);
+	}
+}
+
+void ZQ_CNN_Forward_SSEUtils::_scalaroperation_mul(int align_mode, float scalar, float* data, int N, int H, int W, int C, int pixStep, int widthStep, int sliceStep)
+{
+	if (align_mode == ZQ_CNN_Tensor4D::ALIGN_128bit)
+	{
+		zq_cnn_scalaroperation_mul_inplace_32f_align128bit(scalar, data, N, H, W, C, pixStep, widthStep, sliceStep);
+	}
+	else if (align_mode == ZQ_CNN_Tensor4D::ALIGN_256bit)
+	{
+		zq_cnn_scalaroperation_mul_inplace_32f_align256bit(scalar, data, N, H, W, C, pixStep, widthStep, sliceStep);
+	}
+	else
+	{
+		zq_cnn_scalaroperation_mul_inplace_32f_align0(scalar, data, N, H, W, C, pixStep, widthStep, sliceStep);
+	}
+}
+
+void ZQ_CNN_Forward_SSEUtils::_scalaroperation_max(int align_mode, float scalar, const float* in_data, int N, int H, int W, int C, int pixStep, int widthStep, int sliceStep,
+	float* out_data, int out_pixStep, int out_widthStep, int out_sliceStep)
+{
+	if (align_mode == ZQ_CNN_Tensor4D::ALIGN_128bit)
+	{
+		zq_cnn_scalaroperation_max_32f_align128bit(scalar, in_data, N, H, W, C, pixStep, widthStep, sliceStep, out_data, out_pixStep, out_widthStep, out_sliceStep);
+	}
+	else if (align_mode == ZQ_CNN_Tensor4D::ALIGN_256bit)
+	{
+		zq_cnn_scalaroperation_max_32f_align256bit(scalar, in_data, N, H, W, C, pixStep, widthStep, sliceStep, out_data, out_pixStep, out_widthStep, out_sliceStep);
+	}
+	else
+	{
+		zq_cnn_scalaroperation_max_32f_align0(scalar, in_data, N, H, W, C, pixStep, widthStep, sliceStep, out_data, out_pixStep, out_widthStep, out_sliceStep);
+	}
+}
+
+void ZQ_CNN_Forward_SSEUtils::_scalaroperation_max(int align_mode, float scalar, float* data, int N, int H, int W, int C, int pixStep, int widthStep, int sliceStep)
+{
+	if (align_mode == ZQ_CNN_Tensor4D::ALIGN_128bit)
+	{
+		zq_cnn_scalaroperation_max_inplace_32f_align128bit(scalar, data, N, H, W, C, pixStep, widthStep, sliceStep);
+	}
+	else if (align_mode == ZQ_CNN_Tensor4D::ALIGN_256bit)
+	{
+		zq_cnn_scalaroperation_max_inplace_32f_align256bit(scalar, data, N, H, W, C, pixStep, widthStep, sliceStep);
+	}
+	else
+	{
+		zq_cnn_scalaroperation_max_inplace_32f_align0(scalar, data, N, H, W, C, pixStep, widthStep, sliceStep);
+	}
+}
+
+
+void ZQ_CNN_Forward_SSEUtils::_scalaroperation_min(int align_mode, float scalar, const float* in_data, int N, int H, int W, int C, int pixStep, int widthStep, int sliceStep,
+	float* out_data, int out_pixStep, int out_widthStep, int out_sliceStep)
+{
+	if (align_mode == ZQ_CNN_Tensor4D::ALIGN_128bit)
+	{
+		zq_cnn_scalaroperation_min_32f_align128bit(scalar, in_data, N, H, W, C, pixStep, widthStep, sliceStep, out_data, out_pixStep, out_widthStep, out_sliceStep);
+	}
+	else if (align_mode == ZQ_CNN_Tensor4D::ALIGN_256bit)
+	{
+		zq_cnn_scalaroperation_min_32f_align256bit(scalar, in_data, N, H, W, C, pixStep, widthStep, sliceStep, out_data, out_pixStep, out_widthStep, out_sliceStep);
+	}
+	else
+	{
+		zq_cnn_scalaroperation_min_32f_align0(scalar, in_data, N, H, W, C, pixStep, widthStep, sliceStep, out_data, out_pixStep, out_widthStep, out_sliceStep);
+	}
+}
+
+void ZQ_CNN_Forward_SSEUtils::_scalaroperation_min(int align_mode, float scalar, float* data, int N, int H, int W, int C, int pixStep, int widthStep, int sliceStep)
+{
+	if (align_mode == ZQ_CNN_Tensor4D::ALIGN_128bit)
+	{
+		zq_cnn_scalaroperation_min_inplace_32f_align128bit(scalar, data, N, H, W, C, pixStep, widthStep, sliceStep);
+	}
+	else if (align_mode == ZQ_CNN_Tensor4D::ALIGN_256bit)
+	{
+		zq_cnn_scalaroperation_min_inplace_32f_align256bit(scalar, data, N, H, W, C, pixStep, widthStep, sliceStep);
+	}
+	else
+	{
+		zq_cnn_scalaroperation_min_inplace_32f_align0(scalar, data, N, H, W, C, pixStep, widthStep, sliceStep);
+	}
+}
+
+void ZQ_CNN_Forward_SSEUtils::_scalaroperation_rdiv(int align_mode, float scalar, const float* in_data, int N, int H, int W, int C, int pixStep, int widthStep, int sliceStep,
+	float* out_data, int out_pixStep, int out_widthStep, int out_sliceStep)
+{
+	if (align_mode == ZQ_CNN_Tensor4D::ALIGN_128bit)
+	{
+		zq_cnn_scalaroperation_rdiv_32f_align128bit(scalar, in_data, N, H, W, C, pixStep, widthStep, sliceStep, out_data, out_pixStep, out_widthStep, out_sliceStep);
+	}
+	else if (align_mode == ZQ_CNN_Tensor4D::ALIGN_256bit)
+	{
+		zq_cnn_scalaroperation_rdiv_32f_align256bit(scalar, in_data, N, H, W, C, pixStep, widthStep, sliceStep, out_data, out_pixStep, out_widthStep, out_sliceStep);
+	}
+	else
+	{
+		zq_cnn_scalaroperation_rdiv_32f_align0(scalar, in_data, N, H, W, C, pixStep, widthStep, sliceStep, out_data, out_pixStep, out_widthStep, out_sliceStep);
+	}
+}
+
+void ZQ_CNN_Forward_SSEUtils::_scalaroperation_rdiv(int align_mode, float scalar, float* data, int N, int H, int W, int C, int pixStep, int widthStep, int sliceStep)
+{
+	if (align_mode == ZQ_CNN_Tensor4D::ALIGN_128bit)
+	{
+		zq_cnn_scalaroperation_rdiv_inplace_32f_align128bit(scalar, data, N, H, W, C, pixStep, widthStep, sliceStep);
+	}
+	else if (align_mode == ZQ_CNN_Tensor4D::ALIGN_256bit)
+	{
+		zq_cnn_scalaroperation_rdiv_inplace_32f_align256bit(scalar, data, N, H, W, C, pixStep, widthStep, sliceStep);
+	}
+	else
+	{
+		zq_cnn_scalaroperation_rdiv_inplace_32f_align0(scalar, data, N, H, W, C, pixStep, widthStep, sliceStep);
+	}
+}
+
+void ZQ_CNN_Forward_SSEUtils::_scalaroperation_rminus(int align_mode, float scalar, const float* in_data, int N, int H, int W, int C, int pixStep, int widthStep, int sliceStep,
+	float* out_data, int out_pixStep, int out_widthStep, int out_sliceStep)
+{
+	if (align_mode == ZQ_CNN_Tensor4D::ALIGN_128bit)
+	{
+		zq_cnn_scalaroperation_rminus_32f_align128bit(scalar, in_data, N, H, W, C, pixStep, widthStep, sliceStep, out_data, out_pixStep, out_widthStep, out_sliceStep);
+	}
+	else if (align_mode == ZQ_CNN_Tensor4D::ALIGN_256bit)
+	{
+		zq_cnn_scalaroperation_rminus_32f_align256bit(scalar, in_data, N, H, W, C, pixStep, widthStep, sliceStep, out_data, out_pixStep, out_widthStep, out_sliceStep);
+	}
+	else
+	{
+		zq_cnn_scalaroperation_rminus_32f_align0(scalar, in_data, N, H, W, C, pixStep, widthStep, sliceStep, out_data, out_pixStep, out_widthStep, out_sliceStep);
+	}
+}
+
+void ZQ_CNN_Forward_SSEUtils::_scalaroperation_rminus(int align_mode, float scalar, float* data, int N, int H, int W, int C, int pixStep, int widthStep, int sliceStep)
+{
+	if (align_mode == ZQ_CNN_Tensor4D::ALIGN_128bit)
+	{
+		zq_cnn_scalaroperation_rminus_inplace_32f_align128bit(scalar, data, N, H, W, C, pixStep, widthStep, sliceStep);
+	}
+	else if (align_mode == ZQ_CNN_Tensor4D::ALIGN_256bit)
+	{
+		zq_cnn_scalaroperation_rminus_inplace_32f_align256bit(scalar, data, N, H, W, C, pixStep, widthStep, sliceStep);
+	}
+	else
+	{
+		zq_cnn_scalaroperation_rminus_inplace_32f_align0(scalar, data, N, H, W, C, pixStep, widthStep, sliceStep);
+	}
+}
+
+
+void ZQ_CNN_Forward_SSEUtils::_scalaroperation_pow(int align_mode, float scalar, const float* in_data, int N, int H, int W, int C, int pixStep, int widthStep, int sliceStep,
+	float* out_data, int out_pixStep, int out_widthStep, int out_sliceStep)
+{	
+	zq_cnn_scalaroperation_pow_32f_align0(scalar, in_data, N, H, W, C, pixStep, widthStep, sliceStep, out_data, out_pixStep, out_widthStep, out_sliceStep);
+}
+
+void ZQ_CNN_Forward_SSEUtils::_scalaroperation_pow(int align_mode, float scalar, float* data, int N, int H, int W, int C, int pixStep, int widthStep, int sliceStep)
+{
+	zq_cnn_scalaroperation_pow_inplace_32f_align0(scalar, data, N, H, W, C, pixStep, widthStep, sliceStep);
 }
 
 void ZQ_CNN_Forward_SSEUtils::_lrn_across_channels(int align_mode, int local_size, float alpha, float beta, float k, 

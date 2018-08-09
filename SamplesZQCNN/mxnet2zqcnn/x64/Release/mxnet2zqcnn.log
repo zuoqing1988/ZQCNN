@@ -1,0 +1,14 @@
+﻿  mxnet2zqcnn.cpp
+mxnet2zqcnn.cpp(635): warning C4267: “初始化”: 从“size_t”转换到“int”，可能丢失数据
+mxnet2zqcnn.cpp(1079): warning C4267: “初始化”: 从“size_t”转换到“int”，可能丢失数据
+mxnet2zqcnn.cpp(1281): warning C4305: “初始化”: 从“double”到“float”截断
+mxnet2zqcnn.cpp(1289): warning C4267: “初始化”: 从“size_t”转换到“int”，可能丢失数据
+mxnet2zqcnn.cpp(1486): warning C4267: “初始化”: 从“size_t”转换到“int”，可能丢失数据
+mxnet2zqcnn.cpp(1615): warning C4244: “初始化”: 从“double”转换到“float”，可能丢失数据
+  正在生成代码
+  1 of 1103 functions ( 0.1%) were compiled, the rest were copied from previous compilation.
+    0 functions were new in current compilation
+    0 functions had inline decision re-evaluated but remain unchanged
+  已完成代码的生成
+  mxnet2zqcnn.vcxproj -> F:\Code\Projects\ZQCNN\x64\Release\mxnet2zqcnn.exe
+  mxnet2zqcnn.vcxproj -> F:\Code\Projects\ZQCNN\x64\Release\mxnet2zqcnn.pdb (Full PDB)

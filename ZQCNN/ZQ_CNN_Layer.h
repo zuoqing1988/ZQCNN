@@ -2241,7 +2241,7 @@ namespace ZQ
 	{
 	public:
 		ZQ_CNN_Layer_Eltwise() :with_weight(false) {}
-		static const int ELTWISE_PROD = 0;
+		static const int ELTWISE_MUL = 0;
 		static const int ELTWISE_SUM = 1;
 		static const int ELTWISE_MAX = 2;
 		int operation;//
@@ -2258,9 +2258,9 @@ namespace ZQ
 				return false;
 
 			double t1 = omp_get_wtime();
-			if (operation == ELTWISE_PROD)
+			if (operation == ELTWISE_MUL)
 			{
-				return ZQ_CNN_Forward_SSEUtils::Eltwise_Prod(*(std::vector<const ZQ_CNN_Tensor4D*>*)bottoms, *((*tops)[0]));
+				return ZQ_CNN_Forward_SSEUtils::Eltwise_Mul(*(std::vector<const ZQ_CNN_Tensor4D*>*)bottoms, *((*tops)[0]));
 			}
 			else if (operation == ELTWISE_SUM)
 			{
@@ -2313,11 +2313,11 @@ namespace ZQ
 						has_operation = true;
 						const char* str = paras[n][1].c_str();
 
-						if (_strcmpi(str, "PROD") == 0)
+						if (_strcmpi(str, "PROD") == 0 || _strcmpi(str, "MUL") == 0)
 						{
-							operation = ELTWISE_PROD;
+							operation = ELTWISE_MUL;
 						}
-						else if (_strcmpi(str, "SUM") == 0)
+						else if (_strcmpi(str, "SUM") == 0 || _strcmpi(str, "ADD") == 0 || _strcmpi(str, "PLUS") == 0)
 						{
 							operation = ELTWISE_SUM;
 						}
@@ -2407,6 +2407,257 @@ namespace ZQ
 
 		//should called after SetBottomDim
 		virtual void GetTopDim(int& top_C, int& top_H, int& top_W) const 
+		{
+			top_C = bottom_C;
+			top_H = bottom_H;
+			top_W = bottom_W;
+		}
+
+		//should be called after ZQ_CNN_Net have allocated necessery data
+		virtual bool LoadBinary_NCHW(FILE* in) { return true; }
+	};
+
+	class ZQ_CNN_Layer_ScalarOperation : public ZQ_CNN_Layer
+	{
+	public:
+		ZQ_CNN_Layer_ScalarOperation():scalar(1),operation(0){}
+		static const int SCALAR_MUL = 0;
+		static const int SCALAR_DIV = 1;
+		static const int SCALAR_ADD = 2;
+		static const int SCALAR_MINUS = 3;
+		static const int SCALAR_MAX = 4;
+		static const int SCALAR_MIN = 5;
+		static const int SCALAR_POW = 6;
+		static const int SCALAR_RDIV = 7;
+		static const int SCALAR_RMINUS = 8;
+		
+		int operation;//
+		float scalar;
+		//
+		int bottom_C;
+		int bottom_H;
+		int bottom_W;
+
+		virtual bool Forward(std::vector<ZQ_CNN_Tensor4D*>* bottoms, std::vector<ZQ_CNN_Tensor4D*>* tops, int num_threads = 1)
+		{
+			if (bottoms == 0 || tops == 0 || bottoms->size() == 0 || tops->size() == 0 || (*bottoms)[0] == 0 || (*tops)[0] == 0)
+				return false;
+
+			double t1 = omp_get_wtime();
+			if (operation == SCALAR_MUL)
+			{
+				if((*bottoms)[0] == (*tops)[0])
+					return ZQ_CNN_Forward_SSEUtils::ScalarOperation_Mul(*(*bottoms)[0], scalar, num_threads);
+				else
+					return ZQ_CNN_Forward_SSEUtils::ScalarOperation_Mul(*(*bottoms)[0],scalar, *((*tops)[0]), num_threads);
+			}
+			else if (operation == SCALAR_DIV)
+			{
+				if ((*bottoms)[0] == (*tops)[0])
+					return ZQ_CNN_Forward_SSEUtils::ScalarOperation_Mul(*(*bottoms)[0], 1.0/scalar, num_threads);
+				else
+					return ZQ_CNN_Forward_SSEUtils::ScalarOperation_Mul(*(*bottoms)[0], 1.0/scalar, *((*tops)[0]), num_threads);
+			}
+			else if (operation == SCALAR_ADD)
+			{
+				if ((*bottoms)[0] == (*tops)[0])
+					return ZQ_CNN_Forward_SSEUtils::ScalarOperation_Add(*(*bottoms)[0], scalar, num_threads);
+				else
+					return ZQ_CNN_Forward_SSEUtils::ScalarOperation_Add(*(*bottoms)[0], scalar, *((*tops)[0]), num_threads);
+			}
+			else if (operation == SCALAR_MINUS)
+			{
+				if ((*bottoms)[0] == (*tops)[0])
+					return ZQ_CNN_Forward_SSEUtils::ScalarOperation_Add(*(*bottoms)[0], -scalar, num_threads);
+				else
+					return ZQ_CNN_Forward_SSEUtils::ScalarOperation_Add(*(*bottoms)[0], -scalar, *((*tops)[0]), num_threads);
+			}
+			else if (operation == SCALAR_MAX)
+			{
+				if ((*bottoms)[0] == (*tops)[0])
+					return ZQ_CNN_Forward_SSEUtils::ScalarOperation_Max(*(*bottoms)[0], scalar, num_threads);
+				else
+					return ZQ_CNN_Forward_SSEUtils::ScalarOperation_Max(*(*bottoms)[0], scalar, *((*tops)[0]), num_threads);
+			}
+			else if (operation == SCALAR_MIN)
+			{
+				if ((*bottoms)[0] == (*tops)[0])
+					return ZQ_CNN_Forward_SSEUtils::ScalarOperation_Min(*(*bottoms)[0], scalar, num_threads);
+				else
+					return ZQ_CNN_Forward_SSEUtils::ScalarOperation_Min(*(*bottoms)[0], scalar, *((*tops)[0]), num_threads);
+			}
+			else if (operation == SCALAR_POW)
+			{
+				if ((*bottoms)[0] == (*tops)[0])
+					return ZQ_CNN_Forward_SSEUtils::ScalarOperation_Pow(*(*bottoms)[0], scalar, num_threads);
+				else
+					return ZQ_CNN_Forward_SSEUtils::ScalarOperation_Pow(*(*bottoms)[0], scalar, *((*tops)[0]), num_threads);
+			}
+			else if (operation == SCALAR_RDIV)
+			{
+				if ((*bottoms)[0] == (*tops)[0])
+					return ZQ_CNN_Forward_SSEUtils::ScalarOperation_Rdiv(*(*bottoms)[0], scalar, num_threads);
+				else
+					return ZQ_CNN_Forward_SSEUtils::ScalarOperation_Rdiv(*(*bottoms)[0], scalar, *((*tops)[0]), num_threads);
+			}
+			else if (operation == SCALAR_RMINUS)
+			{
+				if ((*bottoms)[0] == (*tops)[0])
+					return ZQ_CNN_Forward_SSEUtils::ScalarOperation_Rminus(*(*bottoms)[0], scalar, num_threads);
+				else
+					return ZQ_CNN_Forward_SSEUtils::ScalarOperation_Rminus(*(*bottoms)[0], scalar, *((*tops)[0]), num_threads);
+			}
+			else
+			{
+				std::cout << "unknown ScalarOperation " << operation << " in Layer " << name << "\n";
+				return false;
+			}
+			double t2 = omp_get_wtime();
+			if (show_debug_info)
+				printf("ScalarOperation layer: %s cost : %.3f ms\n", name.c_str(), 1000 * (t2 - t1));
+			return true;
+		}
+
+		virtual bool ReadParam(const std::string& line)
+		{
+			bottom_names.clear();
+			top_names.clear();
+			std::vector<std::vector<std::string>> paras = split_line(line);
+			int num = paras.size();
+			bool has_operation = false;
+			bool has_top = false, has_bottom = false, has_name = false;
+			bool has_scalar = false;
+			for (int n = 0; n < num; n++)
+			{
+				if (paras[n].size() == 0)
+					continue;
+				if (_strcmpi("ScalarOperation", paras[n][0].c_str()) == 0)
+				{
+
+				}
+				else if (_strcmpi("operation", paras[n][0].c_str()) == 0)
+				{
+					if (paras[n].size() >= 2)
+					{
+						has_operation = true;
+						const char* str = paras[n][1].c_str();
+
+						if (_strcmpi(str, "MUL") == 0 || _strcmpi(str, "PROD") == 0)
+						{
+							operation = SCALAR_MUL;
+						}
+						else if (_strcmpi(str, "DIV") == 0)
+						{
+							operation = SCALAR_DIV;
+						}
+						else if (_strcmpi(str, "ADD") == 0 || _strcmpi(str, "SUM") == 0 || _strcmpi(str, "PLUS") == 0)
+						{
+							operation = SCALAR_ADD;
+						}
+						else if (_strcmpi(str, "MINUS") == 0 || _strcmpi(str, "SUB") == 0)
+						{
+							operation = SCALAR_MINUS;
+						}
+						else if (_strcmpi(str, "MAX") == 0)
+						{
+							operation = SCALAR_MAX;
+						}
+						else if (_strcmpi(str, "MIN") == 0)
+						{
+							operation = SCALAR_MIN;
+						}
+						else if (_strcmpi(str, "POW") == 0)
+						{
+							operation = SCALAR_POW;
+						}
+						else if (_strcmpi(str, "RDIV") == 0)
+						{
+							operation = SCALAR_RDIV;
+						}
+						else if (_strcmpi(str, "RMINUS") == 0)
+						{
+							operation = SCALAR_RMINUS;
+						}
+						else
+						{
+							operation = atoi(str);
+						}
+					}
+				}
+				else if (_strcmpi("top", paras[n][0].c_str()) == 0)
+				{
+					if (paras[n].size() >= 2)
+					{
+						has_top = true;
+						top_names.push_back(paras[n][1]);
+					}
+				}
+				else if (_strcmpi("bottom", paras[n][0].c_str()) == 0)
+				{
+					if (paras[n].size() >= 2)
+					{
+						has_bottom = true;
+						bottom_names.push_back(paras[n][1]);
+					}
+				}
+				else if (_strcmpi("name", paras[n][0].c_str()) == 0)
+				{
+					if (paras[n].size() >= 2)
+					{
+						has_name = true;
+						name = paras[n][1];
+					}
+				}
+				else if (_strcmpi("scalar", paras[n][0].c_str()) == 0)
+				{
+					if (paras[n].size() >= 2)
+					{
+						has_scalar = true;
+						scalar = atof(paras[n][1].c_str());
+					}
+				}
+				else
+				{
+					std::cout << "warning: unknown para " << paras[n][0] << " in Layer " << name << "\n";
+				}
+
+			}
+			if (!has_operation)std::cout << "Layer " << name << " missing " << "operation\n";
+			if (!has_bottom)std::cout << "Layer " << name << " missing " << "bottom\n";
+			if (!has_scalar) std::cout << "Layer " << name << " missing " << "scalar\n";
+			if (!has_top)std::cout << "Layer " << name << " missing " << "top\n";
+			if (!has_name) {
+				std::cout << "Layer " << name << " missing " << "name\n";
+				std::cout << line << "\n";
+			}
+			return has_operation && has_bottom && has_scalar && has_top && has_name;
+		}
+
+		virtual bool LayerSetup(std::vector<ZQ_CNN_Tensor4D*>* bottoms, std::vector<ZQ_CNN_Tensor4D*>* tops)
+		{
+			if (bottoms == 0 || tops == 0 || bottoms->size() == 0 || (*bottoms)[0] == 0 || tops->size() == 0 || (*tops)[0] == 0)
+				return false;
+			int bottom_N, bottom_C, bottom_H, bottom_W;
+			(*bottoms)[0]->GetShape(bottom_N, bottom_C, bottom_H, bottom_W);
+			if (!SetBottomDim(bottom_C, bottom_H, bottom_W))
+				return false;
+			int top_C, top_H, top_W;
+			GetTopDim(top_C, top_H, top_W);
+			(*tops)[0]->SetShape(bottom_N, top_C, top_H, top_W);
+			return true;
+		}
+
+		//should called after ReadParam, allocate memory in this func
+		virtual bool SetBottomDim(int bottom_C, int bottom_H, int bottom_W)
+		{
+			this->bottom_C = bottom_C;
+			this->bottom_H = bottom_H;
+			this->bottom_W = bottom_W;
+			return true;
+		}
+
+		//should called after SetBottomDim
+		virtual void GetTopDim(int& top_C, int& top_H, int& top_W) const
 		{
 			top_C = bottom_C;
 			top_H = bottom_H;

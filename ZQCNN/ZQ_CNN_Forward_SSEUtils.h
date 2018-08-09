@@ -922,7 +922,7 @@ namespace ZQ
 			return true;
 		}
 
-		static bool Eltwise_Prod(const std::vector<const ZQ_CNN_Tensor4D*>& input, ZQ_CNN_Tensor4D& output, int num_threads = 1)
+		static bool Eltwise_Mul(const std::vector<const ZQ_CNN_Tensor4D*>& input, ZQ_CNN_Tensor4D& output, int num_threads = 1)
 		{
 			int in_num = input.size();
 			if (in_num < 2)
@@ -959,10 +959,10 @@ namespace ZQ
 			for (int i = 0; i < in_num; i++)
 				align_mode = __min(align_mode, input[i]->GetAlignType());
 			if(num_threads <= 1)
-				_eltwise_prod(align_mode, in_num, &in_tensor_data[0], N, H, W, C, &in_pixStep[0], &in_widthStep[0], &in_sliceStep[0], out_data, out_pixStep, out_widthStep,
+				_eltwise_mul(align_mode, in_num, &in_tensor_data[0], N, H, W, C, &in_pixStep[0], &in_widthStep[0], &in_sliceStep[0], out_data, out_pixStep, out_widthStep,
 					out_sliceStep);
 			else
-				_eltwise_prod_omp(align_mode, in_num, &in_tensor_data[0], N, H, W, C, &in_pixStep[0], &in_widthStep[0], &in_sliceStep[0], out_data, out_pixStep, out_widthStep, 
+				_eltwise_mul_omp(align_mode, in_num, &in_tensor_data[0], N, H, W, C, &in_pixStep[0], &in_widthStep[0], &in_sliceStep[0], out_data, out_pixStep, out_widthStep, 
 					out_sliceStep, num_threads);
 			return true;
 		}
@@ -1009,6 +1009,252 @@ namespace ZQ
 			else
 				_eltwise_max_omp(align_mode, in_num, &in_tensor_data[0], N, H, W, C, &in_pixStep[0], &in_widthStep[0], &in_sliceStep[0], out_data, out_pixStep, out_widthStep,
 					out_sliceStep, num_threads);
+			return true;
+		}
+
+		
+		static bool ScalarOperation_Add(const ZQ_CNN_Tensor4D& input, float scalar, ZQ_CNN_Tensor4D& output, int num_threads = 1)
+		{
+			int N = input.GetN();
+			int H = input.GetH();
+			int W = input.GetW();
+			int C = input.GetC();
+			if (output.GetN() != N || output.GetH() != H || output.GetW() != W || output.GetC() != C)
+				output.ChangeSize(N, H, W, C, 0, 0);
+			if (N <= 0 || H <= 0 || W <= 0 || C <= 0)
+				return true;
+			int in_pixStep = input.GetPixelStep(), in_widthStep = input.GetWidthStep(), in_sliceStep = input.GetSliceStep();
+			int out_pixStep = output.GetPixelStep(), out_widthStep = output.GetWidthStep(), out_sliceStep = output.GetSliceStep();
+			int align_mode = __min(input.GetAlignType(), output.GetAlignType());
+			const float* in_data = input.GetFirstPixelPtr();
+			float* out_data = output.GetFirstPixelPtr();
+			_scalaroperation_add(align_mode, scalar, in_data, N, H, W, C, in_pixStep, in_widthStep, in_sliceStep, 
+				out_data, out_pixStep, out_widthStep, out_sliceStep);
+			return true;
+		}
+
+		static bool ScalarOperation_Add(ZQ_CNN_Tensor4D& input, float scalar, int num_threads = 1)
+		{
+			int N = input.GetN();
+			int H = input.GetH();
+			int W = input.GetW();
+			int C = input.GetC();
+			if (N <= 0 || H <= 0 || W <= 0 || C <= 0)
+				return true;
+			int in_pixStep = input.GetPixelStep(), in_widthStep = input.GetWidthStep(), in_sliceStep = input.GetSliceStep();
+			int align_mode = input.GetAlignType();
+			float* in_data = input.GetFirstPixelPtr();
+			_scalaroperation_add(align_mode, scalar, in_data, N, H, W, C, in_pixStep, in_widthStep, in_sliceStep);
+			return true;
+		}
+		
+		static bool ScalarOperation_Mul(const ZQ_CNN_Tensor4D& input, float scalar, ZQ_CNN_Tensor4D& output, int num_threads = 1)
+		{
+			int N = input.GetN();
+			int H = input.GetH();
+			int W = input.GetW();
+			int C = input.GetC();
+			if (output.GetN() != N || output.GetH() != H || output.GetW() != W || output.GetC() != C)
+				output.ChangeSize(N, H, W, C, 0, 0);
+			if (N <= 0 || H <= 0 || W <= 0 || C <= 0)
+				return true;
+			int in_pixStep = input.GetPixelStep(), in_widthStep = input.GetWidthStep(), in_sliceStep = input.GetSliceStep();
+			int out_pixStep = output.GetPixelStep(), out_widthStep = output.GetWidthStep(), out_sliceStep = output.GetSliceStep();
+			int align_mode = __min(input.GetAlignType(), output.GetAlignType());
+			const float* in_data = input.GetFirstPixelPtr();
+			float* out_data = output.GetFirstPixelPtr();
+			_scalaroperation_mul(align_mode, scalar, in_data, N, H, W, C, in_pixStep, in_widthStep, in_sliceStep,
+				out_data, out_pixStep, out_widthStep, out_sliceStep);
+			return true;
+		}
+
+		static bool ScalarOperation_Mul(ZQ_CNN_Tensor4D& input, float scalar, int num_threads = 1)
+		{
+			int N = input.GetN();
+			int H = input.GetH();
+			int W = input.GetW();
+			int C = input.GetC();
+			if (N <= 0 || H <= 0 || W <= 0 || C <= 0)
+				return true;
+			int in_pixStep = input.GetPixelStep(), in_widthStep = input.GetWidthStep(), in_sliceStep = input.GetSliceStep();
+			int align_mode = input.GetAlignType();
+			float* in_data = input.GetFirstPixelPtr();
+			_scalaroperation_mul(align_mode, scalar, in_data, N, H, W, C, in_pixStep, in_widthStep, in_sliceStep);
+			return true;
+		}
+
+		static bool ScalarOperation_Max(const ZQ_CNN_Tensor4D& input, float scalar, ZQ_CNN_Tensor4D& output, int num_threads = 1)
+		{
+			int N = input.GetN();
+			int H = input.GetH();
+			int W = input.GetW();
+			int C = input.GetC();
+			if (output.GetN() != N || output.GetH() != H || output.GetW() != W || output.GetC() != C)
+				output.ChangeSize(N, H, W, C, 0, 0);
+			if (N <= 0 || H <= 0 || W <= 0 || C <= 0)
+				return true;
+			int in_pixStep = input.GetPixelStep(), in_widthStep = input.GetWidthStep(), in_sliceStep = input.GetSliceStep();
+			int out_pixStep = output.GetPixelStep(), out_widthStep = output.GetWidthStep(), out_sliceStep = output.GetSliceStep();
+			int align_mode = __min(input.GetAlignType(), output.GetAlignType());
+			const float* in_data = input.GetFirstPixelPtr();
+			float* out_data = output.GetFirstPixelPtr();
+			_scalaroperation_max(align_mode, scalar, in_data, N, H, W, C, in_pixStep, in_widthStep, in_sliceStep,
+				out_data, out_pixStep, out_widthStep, out_sliceStep);
+			return true;
+		}
+
+		static bool ScalarOperation_Max(ZQ_CNN_Tensor4D& input, float scalar, int num_threads = 1)
+		{
+			int N = input.GetN();
+			int H = input.GetH();
+			int W = input.GetW();
+			int C = input.GetC();
+			if (N <= 0 || H <= 0 || W <= 0 || C <= 0)
+				return true;
+			int in_pixStep = input.GetPixelStep(), in_widthStep = input.GetWidthStep(), in_sliceStep = input.GetSliceStep();
+			int align_mode = input.GetAlignType();
+			float* in_data = input.GetFirstPixelPtr();
+			_scalaroperation_max(align_mode, scalar, in_data, N, H, W, C, in_pixStep, in_widthStep, in_sliceStep);
+			return true;
+		}
+
+		static bool ScalarOperation_Min(const ZQ_CNN_Tensor4D& input, float scalar, ZQ_CNN_Tensor4D& output, int num_threads = 1)
+		{
+			int N = input.GetN();
+			int H = input.GetH();
+			int W = input.GetW();
+			int C = input.GetC();
+			if (output.GetN() != N || output.GetH() != H || output.GetW() != W || output.GetC() != C)
+				output.ChangeSize(N, H, W, C, 0, 0);
+			if (N <= 0 || H <= 0 || W <= 0 || C <= 0)
+				return true;
+			int in_pixStep = input.GetPixelStep(), in_widthStep = input.GetWidthStep(), in_sliceStep = input.GetSliceStep();
+			int out_pixStep = output.GetPixelStep(), out_widthStep = output.GetWidthStep(), out_sliceStep = output.GetSliceStep();
+			int align_mode = __min(input.GetAlignType(), output.GetAlignType());
+			const float* in_data = input.GetFirstPixelPtr();
+			float* out_data = output.GetFirstPixelPtr();
+			_scalaroperation_min(align_mode, scalar, in_data, N, H, W, C, in_pixStep, in_widthStep, in_sliceStep,
+				out_data, out_pixStep, out_widthStep, out_sliceStep);
+			return true;
+		}
+
+		static bool ScalarOperation_Min(ZQ_CNN_Tensor4D& input, float scalar, int num_threads = 1)
+		{
+			int N = input.GetN();
+			int H = input.GetH();
+			int W = input.GetW();
+			int C = input.GetC();
+			if (N <= 0 || H <= 0 || W <= 0 || C <= 0)
+				return true;
+			int in_pixStep = input.GetPixelStep(), in_widthStep = input.GetWidthStep(), in_sliceStep = input.GetSliceStep();
+			int align_mode = input.GetAlignType();
+			float* in_data = input.GetFirstPixelPtr();
+			_scalaroperation_min(align_mode, scalar, in_data, N, H, W, C, in_pixStep, in_widthStep, in_sliceStep);
+			return true;
+		}
+
+		static bool ScalarOperation_Pow(const ZQ_CNN_Tensor4D& input, float scalar, ZQ_CNN_Tensor4D& output, int num_threads = 1)
+		{
+			int N = input.GetN();
+			int H = input.GetH();
+			int W = input.GetW();
+			int C = input.GetC();
+			if (output.GetN() != N || output.GetH() != H || output.GetW() != W || output.GetC() != C)
+				output.ChangeSize(N, H, W, C, 0, 0);
+			if (N <= 0 || H <= 0 || W <= 0 || C <= 0)
+				return true;
+			int in_pixStep = input.GetPixelStep(), in_widthStep = input.GetWidthStep(), in_sliceStep = input.GetSliceStep();
+			int out_pixStep = output.GetPixelStep(), out_widthStep = output.GetWidthStep(), out_sliceStep = output.GetSliceStep();
+			int align_mode = __min(input.GetAlignType(), output.GetAlignType());
+			const float* in_data = input.GetFirstPixelPtr();
+			float* out_data = output.GetFirstPixelPtr();
+			_scalaroperation_pow(align_mode, scalar, in_data, N, H, W, C, in_pixStep, in_widthStep, in_sliceStep,
+				out_data, out_pixStep, out_widthStep, out_sliceStep);
+			return true;
+		}
+
+		static bool ScalarOperation_Pow(ZQ_CNN_Tensor4D& input, float scalar, int num_threads = 1)
+		{
+			int N = input.GetN();
+			int H = input.GetH();
+			int W = input.GetW();
+			int C = input.GetC();
+			if (N <= 0 || H <= 0 || W <= 0 || C <= 0)
+				return true;
+			int in_pixStep = input.GetPixelStep(), in_widthStep = input.GetWidthStep(), in_sliceStep = input.GetSliceStep();
+			int align_mode = input.GetAlignType();
+			float* in_data = input.GetFirstPixelPtr();
+			_scalaroperation_pow(align_mode, scalar, in_data, N, H, W, C, in_pixStep, in_widthStep, in_sliceStep);
+			return true;
+		}
+
+		static bool ScalarOperation_Rdiv(const ZQ_CNN_Tensor4D& input, float scalar, ZQ_CNN_Tensor4D& output, int num_threads = 1)
+		{
+			int N = input.GetN();
+			int H = input.GetH();
+			int W = input.GetW();
+			int C = input.GetC();
+			if (output.GetN() != N || output.GetH() != H || output.GetW() != W || output.GetC() != C)
+				output.ChangeSize(N, H, W, C, 0, 0);
+			if (N <= 0 || H <= 0 || W <= 0 || C <= 0)
+				return true;
+			int in_pixStep = input.GetPixelStep(), in_widthStep = input.GetWidthStep(), in_sliceStep = input.GetSliceStep();
+			int out_pixStep = output.GetPixelStep(), out_widthStep = output.GetWidthStep(), out_sliceStep = output.GetSliceStep();
+			int align_mode = __min(input.GetAlignType(), output.GetAlignType());
+			const float* in_data = input.GetFirstPixelPtr();
+			float* out_data = output.GetFirstPixelPtr();
+			_scalaroperation_rdiv(align_mode, scalar, in_data, N, H, W, C, in_pixStep, in_widthStep, in_sliceStep,
+				out_data, out_pixStep, out_widthStep, out_sliceStep);
+			return true;
+		}
+
+		static bool ScalarOperation_Rdiv(ZQ_CNN_Tensor4D& input, float scalar, int num_threads = 1)
+		{
+			int N = input.GetN();
+			int H = input.GetH();
+			int W = input.GetW();
+			int C = input.GetC();
+			if (N <= 0 || H <= 0 || W <= 0 || C <= 0)
+				return true;
+			int in_pixStep = input.GetPixelStep(), in_widthStep = input.GetWidthStep(), in_sliceStep = input.GetSliceStep();
+			int align_mode = input.GetAlignType();
+			float* in_data = input.GetFirstPixelPtr();
+			_scalaroperation_rdiv(align_mode, scalar, in_data, N, H, W, C, in_pixStep, in_widthStep, in_sliceStep);
+			return true;
+		}
+
+		static bool ScalarOperation_Rminus(const ZQ_CNN_Tensor4D& input, float scalar, ZQ_CNN_Tensor4D& output, int num_threads = 1)
+		{
+			int N = input.GetN();
+			int H = input.GetH();
+			int W = input.GetW();
+			int C = input.GetC();
+			if (output.GetN() != N || output.GetH() != H || output.GetW() != W || output.GetC() != C)
+				output.ChangeSize(N, H, W, C, 0, 0);
+			if (N <= 0 || H <= 0 || W <= 0 || C <= 0)
+				return true;
+			int in_pixStep = input.GetPixelStep(), in_widthStep = input.GetWidthStep(), in_sliceStep = input.GetSliceStep();
+			int out_pixStep = output.GetPixelStep(), out_widthStep = output.GetWidthStep(), out_sliceStep = output.GetSliceStep();
+			int align_mode = __min(input.GetAlignType(), output.GetAlignType());
+			const float* in_data = input.GetFirstPixelPtr();
+			float* out_data = output.GetFirstPixelPtr();
+			_scalaroperation_rminus(align_mode, scalar, in_data, N, H, W, C, in_pixStep, in_widthStep, in_sliceStep,
+				out_data, out_pixStep, out_widthStep, out_sliceStep);
+			return true;
+		}
+
+		static bool ScalarOperation_Rminus(ZQ_CNN_Tensor4D& input, float scalar, int num_threads = 1)
+		{
+			int N = input.GetN();
+			int H = input.GetH();
+			int W = input.GetW();
+			int C = input.GetC();
+			if (N <= 0 || H <= 0 || W <= 0 || C <= 0)
+				return true;
+			int in_pixStep = input.GetPixelStep(), in_widthStep = input.GetWidthStep(), in_sliceStep = input.GetSliceStep();
+			int align_mode = input.GetAlignType();
+			float* in_data = input.GetFirstPixelPtr();
+			_scalaroperation_rminus(align_mode, scalar, in_data, N, H, W, C, in_pixStep, in_widthStep, in_sliceStep);
 			return true;
 		}
 
@@ -1089,68 +1335,68 @@ namespace ZQ
 		}
 
 	private:
-		static ZQ_CNN_EXPORT void _convolution_nopadding(int align_mode, const float* in_data, int in_N, int in_H, int in_W,
+		static void _convolution_nopadding(int align_mode, const float* in_data, int in_N, int in_H, int in_W,
 			int in_C, int in_pixStep, int in_widthStep, int in_sliceStep,
 			const float* filter_data, int filter_N, int filter_H, int filter_W, int filter_C, int filter_pixStep, int filter_widthStep, int filter_sliceStep,
 			int strideH, int strideW, float* out_data, int out_N, int out_H, int out_W, int out_C, int out_pixStep, int out_widthStep, int out_sliceStep);
 
-		static ZQ_CNN_EXPORT void _convolution_nopadding_omp(int align_mode, const float* in_data, int in_N, int in_H, int in_W,
+		static void _convolution_nopadding_omp(int align_mode, const float* in_data, int in_N, int in_H, int in_W,
 			int in_C, int in_pixStep, int in_widthStep, int in_sliceStep,
 			const float* filter_data, int filter_N, int filter_H, int filter_W, int filter_C, int filter_pixStep, int filter_widthStep, int filter_sliceStep,
 			int strideH, int strideW, float* out_data, int out_N, int out_H, int out_W, int out_C, int out_pixStep, int out_widthStep, int out_sliceStep, int num_threads);
 
-		static ZQ_CNN_EXPORT void _depthwise_convolution_nopadding(int align_mode, const float* in_data, int in_N, int in_H, int in_W,
+		static void _depthwise_convolution_nopadding(int align_mode, const float* in_data, int in_N, int in_H, int in_W,
 			int in_C, int in_pixStep, int in_widthStep, int in_sliceStep,
 			const float* filter_data, int filter_N, int filter_H, int filter_W, int filter_C, int filter_pixStep, int filter_widthStep, int filter_sliceStep,
 			int strideH, int strideW, float* out_data, int out_N, int out_H, int out_W, int out_C, int out_pixStep, int out_widthStep, int out_sliceStep);
 
-		static ZQ_CNN_EXPORT void _depthwise_convolution_nopadding_omp(int align_mode, const float* in_data, int in_N, int in_H, int in_W,
+		static void _depthwise_convolution_nopadding_omp(int align_mode, const float* in_data, int in_N, int in_H, int in_W,
 			int in_C, int in_pixStep, int in_widthStep, int in_sliceStep,
 			const float* filter_data, int filter_N, int filter_H, int filter_W, int filter_C, int filter_pixStep, int filter_widthStep, int filter_sliceStep,
 			int strideH, int strideW, float* out_data, int out_N, int out_H, int out_W, int out_C, int out_pixStep, int out_widthStep, int out_sliceStep, int num_threads);
 
-		static ZQ_CNN_EXPORT void _inner_product(int align_mode, const float* in_data, int in_N, int in_H, int in_W, int in_C, int in_pixStep, int in_widthStep, int in_sliceStep,
+		static void _inner_product(int align_mode, const float* in_data, int in_N, int in_H, int in_W, int in_C, int in_pixStep, int in_widthStep, int in_sliceStep,
 			const float* filter_data, int filter_N, int filter_pixStep, int filter_widthStep, int filter_sliceStep,
 			float* out_data, int out_N, int out_sliceStep, int num_threads);
 
-		static ZQ_CNN_EXPORT void _addbias(int align_mode, float* data, int N, int H, int W, int C, int pixelStep, int widthStep, int sliceStep, 
+		static void _addbias(int align_mode, float* data, int N, int H, int W, int C, int pixelStep, int widthStep, int sliceStep, 
 			const float* bias_Data);
 
-		static ZQ_CNN_EXPORT void _addbias_omp(int align_mode, float* data, int N, int H, int W, int C, int pixelStep, int widthStep, int sliceStep,
+		static void _addbias_omp(int align_mode, float* data, int N, int H, int W, int C, int pixelStep, int widthStep, int sliceStep,
 			const float* bias_Data, int num_threads);
 
-		static ZQ_CNN_EXPORT void _softmax(int align_mode, int axis, float* in_data, int N, int H, int W, int C, int pixStep, int widthStep, int sliceStep, 
+		static void _softmax(int align_mode, int axis, float* in_data, int N, int H, int W, int C, int pixStep, int widthStep, int sliceStep, 
 			int num_threads);
 
-		static ZQ_CNN_EXPORT void _dropout(int align_mode, float* in_data, int N, int H, int W, int C, int pixStep, int widthStep, int sliceStep, 
+		static void _dropout(int align_mode, float* in_data, int N, int H, int W, int C, int pixStep, int widthStep, int sliceStep, 
 			float ratio, int num_threads);
 
-		static ZQ_CNN_EXPORT void _prelu(int align_mode, float* data, int N, int H, int W, int C, int pixelStep, int widthStep, int sliceStep, 
+		static void _prelu(int align_mode, float* data, int N, int H, int W, int C, int pixelStep, int widthStep, int sliceStep, 
 			const float* slope_Data);
 
-		static ZQ_CNN_EXPORT void _prelu_omp(int align_mode, float* data, int N, int H, int W, int C, int pixelStep, int widthStep, int sliceStep,
+		static void _prelu_omp(int align_mode, float* data, int N, int H, int W, int C, int pixelStep, int widthStep, int sliceStep,
 			const float* slope_Data, int num_threads);
 
-		static ZQ_CNN_EXPORT void _relu(int align_mode, float* data, int N, int H, int W, int C, int pixelStep, int widthStep, int sliceStep);
+		static void _relu(int align_mode, float* data, int N, int H, int W, int C, int pixelStep, int widthStep, int sliceStep);
 
-		static ZQ_CNN_EXPORT void _relu_omp(int align_mode, float* data, int N, int H, int W, int C, int pixelStep, int widthStep, int sliceStep,
+		static void _relu_omp(int align_mode, float* data, int N, int H, int W, int C, int pixelStep, int widthStep, int sliceStep,
 			int num_threads);
 
-		static ZQ_CNN_EXPORT void _maxpooling(int align_mode, const float* in_data, int N, int in_H, int in_W, int C, int in_pixStep, int in_widthStep, int in_sliceStep,
+		static void _maxpooling(int align_mode, const float* in_data, int N, int in_H, int in_W, int C, int in_pixStep, int in_widthStep, int in_sliceStep,
 			int kernel_H, int kernel_W, int stride_H, int stride_W,	float* out_data, int out_H, int out_W, int out_pixStep, int out_widthStep, int out_sliceStep);
 
-		static ZQ_CNN_EXPORT void _maxpooling_omp(int align_mode, const float* in_data, int N, int in_H, int in_W, int C, int in_pixStep, int in_widthStep, int in_sliceStep,
+		static void _maxpooling_omp(int align_mode, const float* in_data, int N, int in_H, int in_W, int C, int in_pixStep, int in_widthStep, int in_sliceStep,
 			int kernel_H, int kernel_W, int stride_H, int stride_W, float* out_data, int out_H, int out_W, int out_pixStep, int out_widthStep, int out_sliceStep, int num_threads);
 
-		static ZQ_CNN_EXPORT void _batchnorm(int align_mode, float* data, int N, int H, int W, int C, int pixStep, int widthStep, int sliceStep, const float* mean, const float* var);
+		static void _batchnorm(int align_mode, float* data, int N, int H, int W, int C, int pixStep, int widthStep, int sliceStep, const float* mean, const float* var);
 
-		static ZQ_CNN_EXPORT void _batchnorm_omp(int align_mode, float* data, int N, int H, int W, int C, int pixStep, int widthStep, int sliceStep, const float* mean, const float* var,
+		static void _batchnorm_omp(int align_mode, float* data, int N, int H, int W, int C, int pixStep, int widthStep, int sliceStep, const float* mean, const float* var,
 			int num_threads);
 
-		static ZQ_CNN_EXPORT void _batchnorm_scalebias(int align_mode, float* data, int N, int H, int W, int C, int pixStep, int widthStep, int sliceStep,
+		static void _batchnorm_scalebias(int align_mode, float* data, int N, int H, int W, int C, int pixStep, int widthStep, int sliceStep,
 			const float* mean, const float* var, const float* slope, const float* bias);
 
-		static ZQ_CNN_EXPORT void _batchnorm_scalebias_omp(int align_mode, float* data, int N, int H, int W, int C, int pixStep, int widthStep, int sliceStep,
+		static void _batchnorm_scalebias_omp(int align_mode, float* data, int N, int H, int W, int C, int pixStep, int widthStep, int sliceStep,
 			const float* mean, const float* var, const float* slope, const float* bias, int num_threads);
 
 		/*
@@ -1162,7 +1408,7 @@ namespace ZQ
 		b = 1/sqrt(var)
 		value = b * value + a
 		*/
-		static ZQ_CNN_EXPORT void _batchnorm_b_a(int align_mode, float* data, int N, int H, int W, int C, int pixStep, int widthStep, int sliceStep, const float* b, const float* a);
+		static void _batchnorm_b_a(int align_mode, float* data, int N, int H, int W, int C, int pixStep, int widthStep, int sliceStep, const float* b, const float* a);
 
 		/*
 		a = bias - slope * mean / sqrt(var)
@@ -1173,41 +1419,76 @@ namespace ZQ
 		b = 1/sqrt(var)
 		value = b * value + a
 		*/
-		static ZQ_CNN_EXPORT void _batchnorm_b_a_omp(int align_mode, float* data, int N, int H, int W, int C, int pixStep, int widthStep, int sliceStep, const float* b, const float* a,
+		static void _batchnorm_b_a_omp(int align_mode, float* data, int N, int H, int W, int C, int pixStep, int widthStep, int sliceStep, const float* b, const float* a,
 			int num_threads);
 
-		static ZQ_CNN_EXPORT void _scalebias(int align_mode, float* data, int N, int H, int W, int C, int pixStep, int widthStep, int sliceStep, const float* scale, const float* bias);
+		static void _scalebias(int align_mode, float* data, int N, int H, int W, int C, int pixStep, int widthStep, int sliceStep, const float* scale, const float* bias);
 
-		static ZQ_CNN_EXPORT void _scalebias_omp(int align_mode, float* data, int N, int H, int W, int C, int pixStep, int widthStep, int sliceStep, const float* scale, const float* bias,
+		static void _scalebias_omp(int align_mode, float* data, int N, int H, int W, int C, int pixStep, int widthStep, int sliceStep, const float* scale, const float* bias,
 			int num_threads);
 
-		static ZQ_CNN_EXPORT void _eltwise_sum(int align_mode, int in_tensor_num, const float** in_data, int N, int H, int W, int C, const int* pixStep, const int* widthStep, const int* sliceStep,
+		static void _eltwise_sum(int align_mode, int in_tensor_num, const float** in_data, int N, int H, int W, int C, const int* pixStep, const int* widthStep, const int* sliceStep,
 			float* out_data, int out_pixStep, int out_widthStep, int out_sliceStep);
 
-		static ZQ_CNN_EXPORT void _eltwise_sum_omp(int align_mode, int in_tensor_num, const float** in_data, int N, int H, int W, int C, const int* pixStep, const int* widthStep, const int* sliceStep,
+		static void _eltwise_sum_omp(int align_mode, int in_tensor_num, const float** in_data, int N, int H, int W, int C, const int* pixStep, const int* widthStep, const int* sliceStep,
 			float* out_data, int out_pixStep, int out_widthStep, int out_sliceStep, int num_threads);
 
-		static ZQ_CNN_EXPORT void _eltwise_sum_with_weight(int align_mode, int in_tensor_num, const float** in_data, const float* weight, int N, int H, int W, int C,
+		static void _eltwise_sum_with_weight(int align_mode, int in_tensor_num, const float** in_data, const float* weight, int N, int H, int W, int C,
 			const int* pixStep, const int* widthStep, const int* sliceStep,
 			float* out_data, int out_pixStep, int out_widthStep, int out_sliceStep);
 
-		static ZQ_CNN_EXPORT void _eltwise_sum_with_weight_omp(int align_mode, int in_tensor_num, const float** in_data, const float* weight, int N, int H, int W, int C,
+		static void _eltwise_sum_with_weight_omp(int align_mode, int in_tensor_num, const float** in_data, const float* weight, int N, int H, int W, int C,
 			const int* pixStep, const int* widthStep, const int* sliceStep,
 			float* out_data, int out_pixStep, int out_widthStep, int out_sliceStep, int num_threads);
 
-		static ZQ_CNN_EXPORT void _eltwise_prod(int align_mode, int in_tensor_num, const float** in_data, int N, int H, int W, int C, const int* pixStep, const int* widthStep, const int* sliceStep,
+		static void _eltwise_mul(int align_mode, int in_tensor_num, const float** in_data, int N, int H, int W, int C, const int* pixStep, const int* widthStep, const int* sliceStep,
 			float* out_data, int out_pixStep, int out_widthStep, int out_sliceStep);
 
-		static ZQ_CNN_EXPORT void _eltwise_prod_omp(int align_mode, int in_tensor_num, const float** in_data, int N, int H, int W, int C, const int* pixStep, const int* widthStep, const int* sliceStep,
+		static void _eltwise_mul_omp(int align_mode, int in_tensor_num, const float** in_data, int N, int H, int W, int C, const int* pixStep, const int* widthStep, const int* sliceStep,
 			float* out_data, int out_pixStep, int out_widthStep, int out_sliceStep, int num_threads);
 
-		static ZQ_CNN_EXPORT void _eltwise_max(int align_mode, int in_tensor_num, const float** in_data, int N, int H, int W, int C, const int* pixStep, const int* widthStep, const int* sliceStep,
+		static void _eltwise_max(int align_mode, int in_tensor_num, const float** in_data, int N, int H, int W, int C, const int* pixStep, const int* widthStep, const int* sliceStep,
 			float* out_data, int out_pixStep, int out_widthStep, int out_sliceStep);
 
-		static ZQ_CNN_EXPORT void _eltwise_max_omp(int align_mode, int in_tensor_num, const float** in_data, int N, int H, int W, int C, const int* pixStep, const int* widthStep, const int* sliceStep,
+		static void _eltwise_max_omp(int align_mode, int in_tensor_num, const float** in_data, int N, int H, int W, int C, const int* pixStep, const int* widthStep, const int* sliceStep,
 			float* out_data, int out_pixStep, int out_widthStep, int out_sliceStep, int num_threads);
 
-		static ZQ_CNN_EXPORT void _lrn_across_channels(int align_mode, int local_size, float alpha, float beta, float k, const float* in_data, int N, int H, int W, int C,
+		static void _scalaroperation_add(int align_mode, float scalar, const float* in_data, int N, int H, int W, int C, int pixStep, int widthStep, int sliceStep,
+			float* out_data, int out_pixStep, int out_widthStep, int out_sliceStep);
+
+		static void _scalaroperation_add(int align_mode, float scalar, float* data, int N, int H, int W, int C, int pixStep, int widthStep, int sliceStep);
+
+		static void _scalaroperation_mul(int align_mode, float scalar, const float* in_data, int N, int H, int W, int C, int pixStep, int widthStep, int sliceStep,
+			float* out_data, int out_pixStep, int out_widthStep, int out_sliceStep);
+
+		static void _scalaroperation_mul(int align_mode, float scalar, float* data, int N, int H, int W, int C, int pixStep, int widthStep, int sliceStep);
+
+		static void _scalaroperation_max(int align_mode, float scalar, const float* in_data, int N, int H, int W, int C, int pixStep, int widthStep, int sliceStep,
+			float* out_data, int out_pixStep, int out_widthStep, int out_sliceStep);
+
+		static void _scalaroperation_max(int align_mode, float scalar, float* data, int N, int H, int W, int C, int pixStep, int widthStep, int sliceStep);
+
+		static void _scalaroperation_min(int align_mode, float scalar, const float* in_data, int N, int H, int W, int C, int pixStep, int widthStep, int sliceStep,
+			float* out_data, int out_pixStep, int out_widthStep, int out_sliceStep);
+
+		static void _scalaroperation_min(int align_mode, float scalar, float* data, int N, int H, int W, int C, int pixStep, int widthStep, int sliceStep);
+
+		static void _scalaroperation_pow(int align_mode, float scalar, const float* in_data, int N, int H, int W, int C, int pixStep, int widthStep, int sliceStep,
+			float* out_data, int out_pixStep, int out_widthStep, int out_sliceStep);
+
+		static void _scalaroperation_pow(int align_mode, float scalar, float* data, int N, int H, int W, int C, int pixStep, int widthStep, int sliceStep);
+
+		static void _scalaroperation_rdiv(int align_mode, float scalar, const float* in_data, int N, int H, int W, int C, int pixStep, int widthStep, int sliceStep,
+			float* out_data, int out_pixStep, int out_widthStep, int out_sliceStep);
+
+		static void _scalaroperation_rdiv(int align_mode, float scalar, float* data, int N, int H, int W, int C, int pixStep, int widthStep, int sliceStep);
+
+		static void _scalaroperation_rminus(int align_mode, float scalar, const float* in_data, int N, int H, int W, int C, int pixStep, int widthStep, int sliceStep,
+			float* out_data, int out_pixStep, int out_widthStep, int out_sliceStep);
+
+		static void _scalaroperation_rminus(int align_mode, float scalar, float* data, int N, int H, int W, int C, int pixStep, int widthStep, int sliceStep);
+
+		static void _lrn_across_channels(int align_mode, int local_size, float alpha, float beta, float k, const float* in_data, int N, int H, int W, int C,
 			int in_pixStep, int in_widthStep, int in_sliceStep, float* out_data, int out_pixStep, int out_widthStep, int out_sliceStep, int num_threads);
 
 		static bool _prior_box(const ZQ_CNN_Tensor4D& input, const ZQ_CNN_Tensor4D& data,

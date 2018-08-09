@@ -1,6 +1,19 @@
 ZQCNN-v0.0是ZuoQing参照mini-caffe写的forward库，随便用用
 
 # 更新日志
+**2018-08-09日更新**
+
+添加mxnet2zqcnn，成功将mxnet上的MobileFaceNet转成ZQCNN格式。
+
+第一步：编译出mxnet2zqcnn.exe
+
+第二步：下载[model-y1.zip](https://pan.baidu.com/s/1If28BkHde4fiuweJrbicVA)然后解压
+
+第三步：在刚才解压的目录下运行命令行 mxnet2zqcnn.exe model-symbol.json model-0000.params test.zqparams test.nchwbin
+
+第四步：用记事本打开test.zqparams, 在第一行（Input Layer）后面加上 C=3 H=112 W=112 然后保存
+
+第五步：把test.zqparams和test.nchwbin复制到model文件夹下，然后在VS2015里运行SampleMobileNet.exe，注意工作目录是$(SolutionDir)
 
 **2018-08-07日更新**
 

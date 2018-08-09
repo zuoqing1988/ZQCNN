@@ -18,8 +18,8 @@ extern "C" {
 #define zq_cnn_eltwise_sum_32f_align_omp zq_cnn_eltwise_sum_32f_align128bit_omp
 #define zq_cnn_eltwise_sum_with_weight_32f_align zq_cnn_eltwise_sum_with_weight_32f_align128bit
 #define zq_cnn_eltwise_sum_with_weight_32f_align_omp zq_cnn_eltwise_sum_with_weight_32f_align128bit_omp
-#define zq_cnn_eltwise_prod_32f_align zq_cnn_eltwise_prod_32f_align128bit
-#define zq_cnn_eltwise_prod_32f_align_omp zq_cnn_eltwise_prod_32f_align128bit_omp
+#define zq_cnn_eltwise_mul_32f_align zq_cnn_eltwise_mul_32f_align128bit
+#define zq_cnn_eltwise_mul_32f_align_omp zq_cnn_eltwise_mul_32f_align128bit_omp
 #define zq_cnn_eltwise_max_32f_align zq_cnn_eltwise_max_32f_align128bit
 #define zq_cnn_eltwise_max_32f_align_omp zq_cnn_eltwise_max_32f_align128bit_omp
 #define zq_mm_load_ps _mm_load_ps
@@ -47,8 +47,8 @@ extern "C" {
 #undef zq_cnn_eltwise_sum_32f_align_omp
 #undef zq_cnn_eltwise_sum_with_weight_32f_align
 #undef zq_cnn_eltwise_sum_with_weight_32f_align_omp
-#undef zq_cnn_eltwise_prod_32f_align
-#undef zq_cnn_eltwise_prod_32f_align_omp
+#undef zq_cnn_eltwise_mul_32f_align
+#undef zq_cnn_eltwise_mul_32f_align_omp
 #undef zq_cnn_eltwise_max_32f_align
 #undef zq_cnn_eltwise_max_32f_align_omp
 #undef zq_mm_load_ps
@@ -73,8 +73,8 @@ extern "C" {
 #define zq_cnn_eltwise_sum_32f_align_omp zq_cnn_eltwise_sum_32f_align256bit_omp
 #define zq_cnn_eltwise_sum_with_weight_32f_align zq_cnn_eltwise_sum_with_weight_32f_align256bit
 #define zq_cnn_eltwise_sum_with_weight_32f_align_omp zq_cnn_eltwise_sum_with_weight_32f_align256bit_omp
-#define zq_cnn_eltwise_prod_32f_align zq_cnn_eltwise_prod_32f_align256bit
-#define zq_cnn_eltwise_prod_32f_align_omp zq_cnn_eltwise_prod_32f_align256bit_omp
+#define zq_cnn_eltwise_mul_32f_align zq_cnn_eltwise_mul_32f_align256bit
+#define zq_cnn_eltwise_mul_32f_align_omp zq_cnn_eltwise_mul_32f_align256bit_omp
 #define zq_cnn_eltwise_max_32f_align zq_cnn_eltwise_max_32f_align256bit
 #define zq_cnn_eltwise_max_32f_align_omp zq_cnn_eltwise_max_32f_align256bit_omp
 #define zq_mm_load_ps _mm256_load_ps
@@ -102,8 +102,8 @@ extern "C" {
 #undef zq_cnn_eltwise_sum_32f_align_omp
 #undef zq_cnn_eltwise_sum_with_weight_32f_align
 #undef zq_cnn_eltwise_sum_with_weight_32f_align_omp
-#undef zq_cnn_eltwise_prod_32f_align
-#undef zq_cnn_eltwise_prod_32f_align_omp
+#undef zq_cnn_eltwise_mul_32f_align
+#undef zq_cnn_eltwise_mul_32f_align_omp
 #undef zq_cnn_eltwise_max_32f_align
 #undef zq_cnn_eltwise_max_32f_align_omp
 #undef zq_mm_load_ps
@@ -396,7 +396,7 @@ extern "C" {
 		}
 	}
 
-	void zq_cnn_eltwise_prod_32f_align0(
+	void zq_cnn_eltwise_mul_32f_align0(
 		int in_tensor_num,	//must be >=2
 		const float** in_tensor4D_data,
 		int N,
@@ -463,7 +463,7 @@ extern "C" {
 		}
 	}
 
-	void zq_cnn_eltwise_prod_32f_align0_omp(
+	void zq_cnn_eltwise_mul_32f_align0_omp(
 		int in_tensor_num,	//must be >=2
 		const float** in_tensor4D_data,
 		int N,

@@ -357,6 +357,24 @@ namespace ZQ
 						return false;
 					}
 				}
+				else if (_strcmpi(&buf[0], "ScalarOperation") == 0)
+				{
+					if (layers.size() == 0)
+					{
+						std::cout << "Input layer must be the first!\n";
+						return false;
+					}
+					ZQ_CNN_Layer* cur_layer = new ZQ_CNN_Layer_ScalarOperation();
+					if (cur_layer == 0) {
+						std::cout << "failed to create a ScalarOperation layer!\n";
+						return false;
+					}
+					if (!_add_layer_and_blobs(cur_layer, line, false))
+					{
+						delete cur_layer;
+						return false;
+					}
+				}
 				else if (_strcmpi(&buf[0], "LRN") == 0)
 				{
 					if (layers.size() == 0)

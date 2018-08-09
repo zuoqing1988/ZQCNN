@@ -2891,7 +2891,7 @@ void zq_cnn_eltwise_sum_with_weight_32f_align_omp(
 	free(out_offsets);
 }
 
-void zq_cnn_eltwise_prod_32f_align(
+void zq_cnn_eltwise_mul_32f_align(
 	int in_tensor_num,	//must be >=2
 	const float** in_tensor4D_data,
 	int N,
@@ -2958,7 +2958,7 @@ void zq_cnn_eltwise_prod_32f_align(
 	}
 }
 
-void zq_cnn_eltwise_prod_32f_align_omp(
+void zq_cnn_eltwise_mul_32f_align_omp(
 	int in_tensor_num,	//must be >=2
 	const float** in_tensor4D_data,
 	int N,
