@@ -2,7 +2,7 @@ ZQCNN-v0.0是ZuoQing参照mini-caffe写的forward库，随便用用
 
 # 更新日志
 
-**2018-09-10日更新**
+**2018-08-10日更新**
 
 成功转了[mxnet上的GenderAge-r50模型](https://pan.baidu.com/s/1f8RyNuQd7hl2ItlV-ibBNQ)。与转MobileFaceNet模型步骤一样。
 
