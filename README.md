@@ -1,6 +1,15 @@
 ZQCNN-v0.0是ZuoQing参照mini-caffe写的forward库，随便用用
 
 # 更新日志
+
+**2018-09-10日更新**
+
+成功转了[mxnet上的GenderAge-r50模型](https://pan.baidu.com/s/1f8RyNuQd7hl2ItlV-ibBNQ)。与转MobileFaceNet模型步骤一样。
+
+下面Model Zoo 有我转好的模型，比自动转出来的应该略快。
+
+打开ZQCNN.sln运行SampleGenderAge查看效果。我E5-1650V4的CPU，单线程时间波动很大，均值约1900-2000ms。四线程400多ms。
+
 **2018-08-09日更新**
 
 添加mxnet2zqcnn，成功将mxnet上的MobileFaceNet转成ZQCNN格式（不能保证其他模型也能转成功，ZQCNN还不支持很多Layer）。
@@ -78,6 +87,10 @@ Convolution name=conv1 bottom=data top=conv1 num_output=10 kernel_size=3 stride=
 **表情识别**
 
 [FacialEmotion](https://pan.baidu.com/s/1zJtRYv-kSGSCTgpvqc4Iug) 七类表情用Fer2013训练
+
+**性别年龄识别**
+
+[GenderAge-r50](https://pan.baidu.com/s/1FeuMLNG9jQ0CeD0ZANrY0g)从[insightface](https://github.com/deepinsight/insightface/wiki/Model-Zoo)的[gamodel-r50](https://pan.baidu.com/s/1f8RyNuQd7hl2ItlV-ibBNQ)转的格式。
 
 **目标检测**
 

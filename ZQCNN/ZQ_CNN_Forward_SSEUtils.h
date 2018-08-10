@@ -477,21 +477,36 @@ namespace ZQ
 		}
 
 		static void MaxPooling(const ZQ_CNN_Tensor4D &input, ZQ_CNN_Tensor4D &output, int kernel_H, int kernel_W, 
-			int stride_H, int stride_W, int num_threads = 1)
+			int stride_H, int stride_W, bool global_pool, int num_threads = 1)
 		{
 			int in_N = input.GetN();
 			int in_H = input.GetH();
 			int in_W = input.GetW();
 			int in_C = input.GetC();
-			int need_W = ceil((float)(in_W - kernel_W) / stride_W + 1);
-			int need_H = ceil((float)(in_H - kernel_H) / stride_H + 1);
+			int need_W, need_H;
 			int need_N = in_N;
 			int need_C = in_C;
+			if (global_pool)
+			{
+				need_H = 1;
+				need_W = 1;
+				kernel_H = in_H;
+				kernel_W = in_W;
+				stride_H = 1;
+				stride_W = 1;
+			}
+			else
+			{
+				need_W = ceil((float)(in_W - kernel_W) / stride_W + 1);
+				need_H = ceil((float)(in_H - kernel_H) / stride_H + 1);
+			}
+			
 			if (need_W <= 0 || need_H <= 0)
 			{
 				output.ChangeSize(0, 0, 0, 0, 0, 0);
 				return ;
 			}
+
 			bool suredivided = (in_H - kernel_H) % stride_H == 0 && (in_W - kernel_W) % stride_W == 0;
 			if (output.GetN() != need_N || output.GetH() != need_H || output.GetW() != need_W || output.GetC() != need_C)
 				output.ChangeSize(need_N, need_H, need_W, need_C, 0, 0);
@@ -513,6 +528,60 @@ namespace ZQ
 				_maxpooling_omp(align_mode, in_data, in_N, in_H, in_W, in_C, in_pixStep, in_widthStep, in_sliceStep, kernel_H, kernel_W, stride_H, stride_W,
 					out_data, need_H, need_W, out_pixStep, out_widthStep, out_sliceStep, num_threads);
 			
+		}
+
+		static void AVGPooling(const ZQ_CNN_Tensor4D &input, ZQ_CNN_Tensor4D &output, int kernel_H, int kernel_W,
+			int stride_H, int stride_W, bool global_pool, int num_threads = 1)
+		{
+			int in_N = input.GetN();
+			int in_H = input.GetH();
+			int in_W = input.GetW();
+			int in_C = input.GetC();
+			int need_W, need_H;
+			int need_N = in_N;
+			int need_C = in_C;
+			if (global_pool)
+			{
+				need_H = 1;
+				need_W = 1;
+				kernel_H = in_H;
+				kernel_W = in_W;
+				stride_H = 1;
+				stride_W = 1;
+			}
+			else
+			{
+				need_W = ceil((float)(in_W - kernel_W) / stride_W + 1);
+				need_H = ceil((float)(in_H - kernel_H) / stride_H + 1);
+			}
+
+			if (need_W <= 0 || need_H <= 0)
+			{
+				output.ChangeSize(0, 0, 0, 0, 0, 0);
+				return;
+			}
+
+			bool suredivided = (in_H - kernel_H) % stride_H == 0 && (in_W - kernel_W) % stride_W == 0;
+			if (output.GetN() != need_N || output.GetH() != need_H || output.GetW() != need_W || output.GetC() != need_C)
+				output.ChangeSize(need_N, need_H, need_W, need_C, 0, 0);
+
+			int in_sliceStep = input.GetSliceStep();
+			int in_widthStep = input.GetWidthStep();
+			int in_pixStep = input.GetPixelStep();
+			int out_sliceStep = output.GetSliceStep();
+			int out_widthStep = output.GetWidthStep();
+			int out_pixStep = output.GetPixelStep();
+			const float* in_data = input.GetFirstPixelPtr();
+			float* out_data = output.GetFirstPixelPtr();
+
+			int align_mode = __min(input.GetAlignType(), output.GetAlignType());
+			if (num_threads <= 1)
+				_avgpooling(align_mode, in_data, in_N, in_H, in_W, in_C, in_pixStep, in_widthStep, in_sliceStep, kernel_H, kernel_W, stride_H, stride_W,
+					out_data, need_H, need_W, out_pixStep, out_widthStep, out_sliceStep);
+			else
+				_avgpooling_omp(align_mode, in_data, in_N, in_H, in_W, in_C, in_pixStep, in_widthStep, in_sliceStep, kernel_H, kernel_W, stride_H, stride_W,
+					out_data, need_H, need_W, out_pixStep, out_widthStep, out_sliceStep, num_threads);
+
 		}
 
 		static bool PReLU(ZQ_CNN_Tensor4D &input, const ZQ_CNN_Tensor4D& slope, int num_threads = 1)
@@ -1386,6 +1455,12 @@ namespace ZQ
 			int kernel_H, int kernel_W, int stride_H, int stride_W,	float* out_data, int out_H, int out_W, int out_pixStep, int out_widthStep, int out_sliceStep);
 
 		static void _maxpooling_omp(int align_mode, const float* in_data, int N, int in_H, int in_W, int C, int in_pixStep, int in_widthStep, int in_sliceStep,
+			int kernel_H, int kernel_W, int stride_H, int stride_W, float* out_data, int out_H, int out_W, int out_pixStep, int out_widthStep, int out_sliceStep, int num_threads);
+
+		static void _avgpooling(int align_mode, const float* in_data, int N, int in_H, int in_W, int C, int in_pixStep, int in_widthStep, int in_sliceStep,
+			int kernel_H, int kernel_W, int stride_H, int stride_W, float* out_data, int out_H, int out_W, int out_pixStep, int out_widthStep, int out_sliceStep);
+
+		static void _avgpooling_omp(int align_mode, const float* in_data, int N, int in_H, int in_W, int C, int in_pixStep, int in_widthStep, int in_sliceStep,
 			int kernel_H, int kernel_W, int stride_H, int stride_W, float* out_data, int out_H, int out_W, int out_pixStep, int out_widthStep, int out_sliceStep, int num_threads);
 
 		static void _batchnorm(int align_mode, float* data, int N, int H, int W, int C, int pixStep, int widthStep, int sliceStep, const float* mean, const float* var);

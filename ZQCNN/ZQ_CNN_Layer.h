@@ -203,7 +203,7 @@ namespace ZQ
 	{
 	public:
 		ZQ_CNN_Layer_Convolution() :filters(0), bias(0), num_output(0), kernel_H(0), kernel_W(0),
-			stride_H(1), stride_W(1), pad_H(0), pad_W(), with_bias(false), bottom_C(0) {}
+			stride_H(1), stride_W(1), dilate_H(1), dilate_W(1), pad_H(0), pad_W(), with_bias(false), bottom_C(0) {}
 		~ZQ_CNN_Layer_Convolution() {
 			if (filters)delete filters;
 			if (bias)delete bias;
@@ -215,6 +215,8 @@ namespace ZQ
 		int kernel_W;
 		int stride_H;
 		int stride_W;
+		int dilate_H;
+		int dilate_W;
 		int pad_H;
 		int pad_W;
 		bool with_bias;
@@ -318,6 +320,28 @@ namespace ZQ
 					{
 						has_kernelW = true;
 						kernel_W = atoi(paras[n][1].c_str());
+					}
+				}
+				else if (_strcmpi("dilate", paras[n][0].c_str()) == 0)
+				{
+					if (paras[n].size() >= 2)
+					{
+						dilate_H = atoi(paras[n][1].c_str());
+						dilate_W = atoi(paras[n][1].c_str());
+					}
+				}
+				else if (_strcmpi("dilate_H", paras[n][0].c_str()) == 0)
+				{
+					if (paras[n].size() >= 2)
+					{
+						dilate_H = atoi(paras[n][1].c_str());
+					}
+				}
+				else if (_strcmpi("dilate_W", paras[n][0].c_str()) == 0)
+				{
+					if (paras[n].size() >= 2)
+					{
+						dilate_W = atoi(paras[n][1].c_str());
 					}
 				}
 				else if (_strcmpi("pad", paras[n][0].c_str()) == 0)
@@ -510,7 +534,7 @@ namespace ZQ
 	{
 	public:
 		ZQ_CNN_Layer_DepthwiseConvolution() :filters(0), bias(0), num_output(0), kernel_H(0), kernel_W(0),
-			stride_H(1), stride_W(1), pad_H(0), pad_W(), with_bias(false), bottom_C(0) {}
+			stride_H(1), stride_W(1),dilate_H(1),dilate_W(1), pad_H(0), pad_W(), with_bias(false), bottom_C(0) {}
 		~ZQ_CNN_Layer_DepthwiseConvolution() {
 			if (filters)delete filters;
 			if (bias)delete bias;
@@ -522,6 +546,8 @@ namespace ZQ
 		int kernel_W;
 		int stride_H;
 		int stride_W;
+		int dilate_H;
+		int dilate_W;
 		int pad_H;
 		int pad_W;
 		bool with_bias;
@@ -627,6 +653,28 @@ namespace ZQ
 					{
 						has_kernelW = true;
 						kernel_W = atoi(paras[n][1].c_str());
+					}
+				}
+				else if (_strcmpi("dilate", paras[n][0].c_str()) == 0)
+				{
+					if (paras[n].size() >= 2)
+					{
+						dilate_H = atoi(paras[n][1].c_str());
+						dilate_W = atoi(paras[n][1].c_str());
+					}
+				}
+				else if (_strcmpi("dilate_H", paras[n][0].c_str()) == 0)
+				{
+					if (paras[n].size() >= 2)
+					{
+						dilate_H = atoi(paras[n][1].c_str());
+					}
+				}
+				else if (_strcmpi("dilate_W", paras[n][0].c_str()) == 0)
+				{
+					if (paras[n].size() >= 2)
+					{
+						dilate_W = atoi(paras[n][1].c_str());
 					}
 				}
 				else if (_strcmpi("pad", paras[n][0].c_str()) == 0)
@@ -1656,15 +1704,19 @@ namespace ZQ
 	class ZQ_CNN_Layer_Pooling : public ZQ_CNN_Layer
 	{
 	public:
-		ZQ_CNN_Layer_Pooling() :kernel_H(3), kernel_W(3), stride_H(2), stride_W(2), type(0) {}
+		ZQ_CNN_Layer_Pooling() :kernel_H(3), kernel_W(3), stride_H(2), stride_W(2), 
+			pad_H(0), pad_W(0), global_pool(false), type(0) {}
 		virtual ~ZQ_CNN_Layer_Pooling() {}
 		int kernel_H;
 		int kernel_W;
 		int stride_H;
 		int stride_W;
+		int pad_H;
+		int pad_W;
+		bool global_pool;
 		static const int TYPE_MAXPOOLING = 0;
-		static const int TYPE_AVEPOOLING = 1;
-		int type;	//0-MAX,1-AVE
+		static const int TYPE_AVGPOOLING = 1;
+		int type;	//0-MAX,1-AVG
 		//
 		int bottom_C;
 		int bottom_H;
@@ -1678,7 +1730,16 @@ namespace ZQ
 			if (type == TYPE_MAXPOOLING)
 			{
 				double t1 = omp_get_wtime();
-				ZQ_CNN_Forward_SSEUtils::MaxPooling(*((*bottoms)[0]), *((*tops)[0]), kernel_H, kernel_W, stride_H, stride_W);
+				ZQ_CNN_Forward_SSEUtils::MaxPooling(*((*bottoms)[0]), *((*tops)[0]), kernel_H, kernel_W, stride_H, stride_W, global_pool);
+				double t2 = omp_get_wtime();
+				if (show_debug_info)
+					printf("Pooling layer: %s cost : %.3f ms\n", name.c_str(), 1000 * (t2 - t1));
+				return true;
+			}
+			else if (type == TYPE_AVGPOOLING)
+			{
+				double t1 = omp_get_wtime();
+				ZQ_CNN_Forward_SSEUtils::AVGPooling(*((*bottoms)[0]), *((*tops)[0]), kernel_H, kernel_W, stride_H, stride_W, global_pool);
 				double t2 = omp_get_wtime();
 				if (show_debug_info)
 					printf("Pooling layer: %s cost : %.3f ms\n", name.c_str(), 1000 * (t2 - t1));
@@ -1729,6 +1790,18 @@ namespace ZQ
 						stride_W = atoi(paras[n][1].c_str());
 					}
 				}
+				else if (_strcmpi("pad", paras[n][0].c_str()) == 0)
+				{
+					if (paras[n].size() >= 2)
+					{
+						pad_H = atoi(paras[n][1].c_str());
+						pad_W = atoi(paras[n][1].c_str());
+					}
+				}
+				else if (_strcmpi("global_pool", paras[n][0].c_str()) == 0)
+				{
+					global_pool = true;
+				}
 				else if (_strcmpi("top", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
@@ -1760,8 +1833,8 @@ namespace ZQ
 						const char* str = paras[n][1].c_str();
 						if (_strcmpi(str,"MAX") == 0)
 							type = TYPE_MAXPOOLING;
-						else if (_strcmpi(str,"AVE") == 0)
-							type = TYPE_AVEPOOLING;
+						else if (_strcmpi(str,"AVG") == 0)
+							type = TYPE_AVGPOOLING;
 						else
 						{
 							type = atoi(str);
@@ -1812,9 +1885,18 @@ namespace ZQ
 		//should called after SetBottomDim
 		virtual void GetTopDim(int& top_C, int& top_H, int& top_W) const 
 		{
-			top_C = bottom_C;
-			top_H = __max(0, ceil((float)(bottom_H - kernel_H) / stride_H) + 1);
-			top_W = __max(0, ceil((float)(bottom_W - kernel_W) / stride_W) + 1);
+			if (global_pool)
+			{
+				top_C = bottom_C;
+				top_H = 1;
+				top_W = 1;
+			}
+			else
+			{
+				top_C = bottom_C;
+				top_H = __max(0, ceil((float)(bottom_H - kernel_H) / stride_H) + 1);
+				top_W = __max(0, ceil((float)(bottom_W - kernel_W) / stride_W) + 1);
+			}
 		}
 
 		//should be called after ZQ_CNN_Net have allocated necessery data
