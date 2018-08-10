@@ -4,11 +4,11 @@ ZQCNN-v0.0是ZuoQing参照mini-caffe写的forward库，随便用用
 
 **2018-08-10日更新**
 
-成功转了[mxnet上的GenderAge-r50模型](https://pan.baidu.com/s/1f8RyNuQd7hl2ItlV-ibBNQ)。与转MobileFaceNet模型步骤一样。
+成功转了mxnet上的[GenderAge-r50模型](https://pan.baidu.com/s/1f8RyNuQd7hl2ItlV-ibBNQ) 以及[Arcface-LResNet100E-IR](https://pan.baidu.com/s/1wuRTf2YIsKt76TxFufsRNA)与转MobileFaceNet模型步骤一样。
 
 下面Model Zoo 有我转好的模型，比自动转出来的应该略快。
 
-打开ZQCNN.sln运行SampleGenderAge查看效果。我E5-1650V4的CPU，单线程时间波动很大，均值约1900-2000ms。四线程400多ms。
+打开ZQCNN.sln运行SampleGenderAge查看效果。我E5-1650V4的CPU，单线程时间波动很大，均值约1900-2000ms，四线程400多ms。
 
 **2018-08-09日更新**
 
@@ -66,21 +66,23 @@ Convolution name=conv1 bottom=data top=conv1 num_output=10 kernel_size=3 stride=
 
 [SeetaFace](https://pan.baidu.com/s/17GySgiI8EASfOCuRizMAOw) LFW约97.8-97.9%，每次提取时间约110ms，3.6GHz
 
-[SphereFace04bn256](https://pan.baidu.com/s/1YXt2PLbbUg9-VZITcMw5mQ) LFW约97.8%-97.9%，速度最快
+[SphereFace04bn256](https://pan.baidu.com/s/1YXt2PLbbUg9-VZITcMw5mQ) LFW约97.8%-97.9%，单线程6-7ms，速度最快
 
 [SphereFace04](https://pan.baidu.com/s/1-Bb6yuU3eAN6U2ZdVsC5Mg) LFW约98.2%
 
 [SphereFace04bn](https://pan.baidu.com/s/18uvL3p7PWRpJcHm00-7ABg) LFW约98.5%
 
-[SphereFace06bn](https://pan.baidu.com/s/1LXjAoJWkWp-CT0sTgIHqfg) LFW约98.7%-99.8%
+[SphereFace06bn](https://pan.baidu.com/s/1LXjAoJWkWp-CT0sTgIHqfg) LFW约98.7%-98.8%
 
 [SphereFace20](https://pan.baidu.com/s/1fGJU9PfPNBot6qGVeGlcug) LFW约99.2%-99.3%
 
-[Mobile-SphereFace10bn512](https://pan.baidu.com/s/1BEP1pg5s3yJCLA2elqTB0A) LFW约98.6%-98.7%，性价比高
+[Mobile-SphereFace10bn512](https://pan.baidu.com/s/1BEP1pg5s3yJCLA2elqTB0A) LFW约98.6%-98.7%，单线程15ms，性价比高
 
-[ArcFace-r50](https://pan.baidu.com/s/1qOIhCauwZNTOCIM9eojPrA) LFW约99.75%-99.78%,精度最高，但是很慢
+[ArcFace-r100](https://pan.baidu.com/s/1PeujQbIqFfgARIYAdRt3pw) LFW约99.80%-99.80%,单线程1900毫秒，四线程480毫秒（波动很大）
 
-[ArcFace-r34](https://pan.baidu.com/s/1tRt6PxDg4UNv7yf9pMZ_LA) LFW约99.65%-99.70%,比r-50稍微快一点
+[ArcFace-r50](https://pan.baidu.com/s/1qOIhCauwZNTOCIM9eojPrA) LFW约99.75%-99.78%,单线程700多毫秒
+
+[ArcFace-r34](https://pan.baidu.com/s/1tRt6PxDg4UNv7yf9pMZ_LA) LFW约99.65%-99.70%,单线程500毫秒左右
 
 [ArcFace-MobileFaceNet-v0](https://pan.baidu.com/s/1f-Mfad-7zRvWcy3wYoPrUg) 从[model-y1.zip](https://pan.baidu.com/s/1If28BkHde4fiuweJrbicVA)转的格式，转完之后在LFW上只有99.13%-99.23%，单线程33-35ms，4线程14-15ms
 

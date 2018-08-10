@@ -2288,7 +2288,7 @@ namespace ZQ
 		int bottom_H;
 		int bottom_W;
 
-		ZQ_CNN_Layer_Dropout() {}
+		ZQ_CNN_Layer_Dropout():dropout_ratio(1.0f) {}
 		virtual bool Forward(std::vector<ZQ_CNN_Tensor4D*>* bottoms, std::vector<ZQ_CNN_Tensor4D*>* tops, int num_threads = 1)
 		{
 			if (bottoms == 0 || tops == 0 || bottoms->size() == 0 || tops->size() == 0 || (*bottoms)[0] == 0 || (*tops)[0] == 0)
@@ -2312,7 +2312,6 @@ namespace ZQ
 			top_names.clear();
 			std::vector<std::vector<std::string>> paras = split_line(line);
 			int num = paras.size();
-			bool has_dropout_ratio = false;
 			bool has_top = false, has_bottom = false, has_name = false;
 			for (int n = 0; n < num; n++)
 			{
@@ -2326,7 +2325,6 @@ namespace ZQ
 				{
 					if (paras[n].size() >= 2)
 					{
-						has_dropout_ratio = true;
 						dropout_ratio = atof(paras[n][1].c_str());
 					}
 				}
@@ -2359,14 +2357,13 @@ namespace ZQ
 					std::cout << "warning: unknown para " << paras[n][0] << " in Layer " << name << "\n";
 				}
 			}
-			if (!has_dropout_ratio)std::cout << "Layer " << name << " missing " << "dropout_ratio\n";
 			if (!has_bottom)std::cout << "Layer " << name << " missing " << "bottom\n";
 			if (!has_top)std::cout << "Layer " << name << " missing " << "top\n";
 			if (!has_name) {
 				std::cout << "Layer " << name << " missing " << "name\n";
 				std::cout << line << "\n";
 			}
-			return has_dropout_ratio && has_bottom && has_top && has_name;
+			return has_bottom && has_top && has_name;
 		}
 
 		virtual bool LayerSetup(std::vector<ZQ_CNN_Tensor4D*>* bottoms, std::vector<ZQ_CNN_Tensor4D*>* tops)
@@ -2395,6 +2392,123 @@ namespace ZQ
 		//should called after SetBottomDim
 		virtual void GetTopDim(int& top_C, int& top_H, int& top_W) const 
 		{ 
+			top_C = bottom_C;
+			top_H = bottom_H;
+			top_W = bottom_W;
+		}
+
+		//should be called after ZQ_CNN_Net have allocated necessery data
+		virtual bool LoadBinary_NCHW(FILE* in) { return true; }
+
+		virtual __int64 GetNumOfMulAdd() const
+		{
+			return 0;
+		}
+	};
+
+	class ZQ_CNN_Layer_Copy : public ZQ_CNN_Layer
+	{
+	public:
+		float dropout_ratio;
+		//
+		int bottom_C;
+		int bottom_H;
+		int bottom_W;
+
+		ZQ_CNN_Layer_Copy() {}
+		virtual bool Forward(std::vector<ZQ_CNN_Tensor4D*>* bottoms, std::vector<ZQ_CNN_Tensor4D*>* tops, int num_threads = 1)
+		{
+			if (bottoms == 0 || tops == 0 || bottoms->size() == 0 || tops->size() == 0 || (*bottoms)[0] == 0 || (*tops)[0] == 0)
+				return false;
+
+			double t1 = omp_get_wtime();
+			if ((*tops)[0] != (*bottoms)[0])
+				(*tops)[0]->CopyData(*(*bottoms)[0]);
+			double t2 = omp_get_wtime();
+			if (show_debug_info)
+				printf("Copy layer: %s cost : %.3f ms\n", name.c_str(), 1000 * (t2 - t1));
+			return true;
+		}
+
+		virtual bool ReadParam(const std::string& line)
+		{
+			bottom_names.clear();
+			top_names.clear();
+			std::vector<std::vector<std::string>> paras = split_line(line);
+			int num = paras.size();
+			bool has_top = false, has_bottom = false, has_name = false;
+			for (int n = 0; n < num; n++)
+			{
+				if (paras[n].size() == 0)
+					continue;
+				if (_strcmpi("Copy", paras[n][0].c_str()) == 0)
+				{
+
+				}
+				else if (_strcmpi("top", paras[n][0].c_str()) == 0)
+				{
+					if (paras[n].size() >= 2)
+					{
+						has_top = true;
+						top_names.push_back(paras[n][1]);
+					}
+				}
+				else if (_strcmpi("bottom", paras[n][0].c_str()) == 0)
+				{
+					if (paras[n].size() >= 2)
+					{
+						has_bottom = true;
+						bottom_names.push_back(paras[n][1]);
+					}
+				}
+				else if (_strcmpi("name", paras[n][0].c_str()) == 0)
+				{
+					if (paras[n].size() >= 2)
+					{
+						has_name = true;
+						name = paras[n][1];
+					}
+				}
+				else
+				{
+					std::cout << "warning: unknown para " << paras[n][0] << " in Layer " << name << "\n";
+				}
+			}
+			if (!has_bottom)std::cout << "Layer " << name << " missing " << "bottom\n";
+			if (!has_top)std::cout << "Layer " << name << " missing " << "top\n";
+			if (!has_name) {
+				std::cout << "Layer " << name << " missing " << "name\n";
+				std::cout << line << "\n";
+			}
+			return has_bottom && has_top && has_name;
+		}
+
+		virtual bool LayerSetup(std::vector<ZQ_CNN_Tensor4D*>* bottoms, std::vector<ZQ_CNN_Tensor4D*>* tops)
+		{
+			if (bottoms == 0 || tops == 0 || bottoms->size() == 0 || (*bottoms)[0] == 0 || tops->size() == 0 || (*tops)[0] == 0)
+				return false;
+			int bottom_N, bottom_C, bottom_H, bottom_W;
+			(*bottoms)[0]->GetShape(bottom_N, bottom_C, bottom_H, bottom_W);
+			if (!SetBottomDim(bottom_C, bottom_H, bottom_W))
+				return false;
+			int top_C, top_H, top_W;
+			GetTopDim(top_C, top_H, top_W);
+			(*tops)[0]->SetShape(bottom_N, top_C, top_H, top_W);
+			return true;
+		}
+
+		//should called after ReadParam, allocate memory in this func
+		virtual bool SetBottomDim(int bottom_C, int bottom_H, int bottom_W)
+		{
+			this->bottom_C = bottom_C;
+			this->bottom_H = bottom_H;
+			this->bottom_W = bottom_W;
+			return true;
+		}
+
+		//should called after SetBottomDim
+		virtual void GetTopDim(int& top_C, int& top_H, int& top_W) const
+		{
 			top_C = bottom_C;
 			top_H = bottom_H;
 			top_W = bottom_W;

@@ -891,6 +891,10 @@ int main(int argc, char** argv)
 				fprintf(pp, "%-16s", "Convolution");
 			}
 		}
+		else if (n.op == "_copy")
+		{
+			fprintf(pp, "%-16s", "Copy");
+		}
 		else if (n.op == "cos")
 		{
 			fprintf(pp, "%-16s", "UnaryOp");
@@ -907,7 +911,7 @@ int main(int argc, char** argv)
 		}
 		else if (n.op == "Dropout")
 		{
-			fprintf(pp, "%-16s", "#Dropout");
+			fprintf(pp, "%-16s", "Dropout");
 		}
 		else if (n.op == "elemwise_add")
 		{
@@ -1345,7 +1349,8 @@ int main(int argc, char** argv)
 		else if (n.op == "Concat")
 		{
 			int dim = n.has_attr("dim") ? n.attr("dim") : 1;
-			fprintf(pp, " 0=%d", dim - 1);
+			//fprintf(pp, " 0=%d", dim - 1);
+			fprintf(pp, " axis=%d", dim);
 		}
 		else if (n.op == "Convolution")
 		{
@@ -1739,7 +1744,7 @@ int main(int argc, char** argv)
 			if (!kernel.empty())
 			{
 				//fprintf(pp, " 1=%d", kernel[0]);
-				fprintf(pp, " kenrel_size=%d", kernel[0]);
+				fprintf(pp, " kernel_size=%d", kernel[0]);
 			}
 			if (!stride.empty())
 			{
@@ -1751,7 +1756,10 @@ int main(int argc, char** argv)
 				//fprintf(pp, " 3=%d", pad[0]);
 				fprintf(pp, " pad=%d", pad[0]);
 			}
+			
 			//fprintf(pp, " 4=%d", global_pool);
+			if (global_pool)
+				fprintf(pp, " global_pool");
 			//fprintf(pp, " 5=%d", pad_mode);
 		}
 		else if (n.op == "prod")
@@ -1775,22 +1783,26 @@ int main(int argc, char** argv)
 				fprintf(pp, " 0=%d", shape[0]);// should never reach here
 			}
 			else if (shape.size() == 2) {
-				fprintf(pp, " 0=%d", shape[1]);
+				//fprintf(pp, " 0=%d", shape[1]);
+				fprintf(pp, " dim=%d", shape[1]);
 				
 			}
 			else if (shape.size() == 3) {
-				fprintf(pp, " 0=%d", shape[2]);
-				fprintf(pp, " 1=%d", shape[1]);
+				//fprintf(pp, " 0=%d", shape[2]);
+				//fprintf(pp, " 1=%d", shape[1]);
+				fprintf(pp, " dim=%d dim=%d", shape[2],shape[1]);
 			}
 			else if (shape.size() == 4) {
-				fprintf(pp, " 0=%d", shape[3]);
-				fprintf(pp, " 1=%d", shape[2]);
-				fprintf(pp, " 2=%d", shape[1]);
+				//fprintf(pp, " 0=%d", shape[3]);
+				//fprintf(pp, " 1=%d", shape[2]);
+				//fprintf(pp, " 2=%d", shape[1]);
+				fprintf(pp, " dim=%d dim=%d dim=%d", shape[3], shape[2], shape[1]);
 			}
 			else if (shape.size() == 5) {
-				fprintf(pp, " 0=%d", shape[4] * shape[3]);
-				fprintf(pp, " 1=%d", shape[2]);
-				fprintf(pp, " 2=%d", shape[1]);
+				//fprintf(pp, " 0=%d", shape[4] * shape[3]);
+				//fprintf(pp, " 1=%d", shape[2]);
+				//fprintf(pp, " 2=%d", shape[1]);
+				fprintf(pp, " dim=%d dim=%d dim=%d", shape[4] * shape[3], shape[2], shape[1]);
 			}
 		}
 		else if (n.op == "sigmoid")
