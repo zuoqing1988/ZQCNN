@@ -106,3 +106,5 @@ Convolution name=conv1 bottom=data top=conv1 num_output=10 kernel_size=3 stride=
 (9)[ZQCNN格式的99.78%精度的人脸识别模型](https://zhuanlan.zhihu.com/p/41197488)
 
 (10)[ZQCNN增加人脸识别在LFW数据集上的测试代码](https://zhuanlan.zhihu.com/p/41381883)
+
+(11)[抱紧mxnet的大腿，着手写mxnet2zqcnn](https://zhuanlan.zhihu.com/p/41667828)
