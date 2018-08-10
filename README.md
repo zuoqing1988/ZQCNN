@@ -4,7 +4,7 @@ ZQCNN-v0.0是ZuoQing参照mini-caffe写的forward库，随便用用
 
 **2018-08-10日更新**
 
-成功转了mxnet上的[GenderAge-r50模型](https://pan.baidu.com/s/1f8RyNuQd7hl2ItlV-ibBNQ) 以及[Arcface-LResNet100E-IR](https://pan.baidu.com/s/1wuRTf2YIsKt76TxFufsRNA)与转MobileFaceNet模型步骤一样。
+成功转了mxnet上的[GenderAge-r50模型](https://pan.baidu.com/s/1f8RyNuQd7hl2ItlV-ibBNQ) 以及[Arcface-LResNet100E-IR](https://pan.baidu.com/s/1wuRTf2YIsKt76TxFufsRNA)，与转MobileFaceNet模型步骤一样。
 
 下面Model Zoo 有我转好的模型，比自动转出来的应该略快。
 
