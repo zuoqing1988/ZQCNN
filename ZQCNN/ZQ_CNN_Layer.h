@@ -33,6 +33,8 @@ namespace ZQ
 
 		//should be called after ZQ_CNN_Net have allocated necessery data
 		virtual bool LoadBinary_NCHW(FILE* in) = 0;
+
+		virtual __int64 GetNumOfMulAdd() const = 0;
 	public:
 		static std::vector<std::vector<std::string>> split_line(const std::string& line)
 		{
@@ -193,7 +195,8 @@ namespace ZQ
 
 		//should be called after ZQ_CNN_Net have allocated necessery data
 		virtual bool LoadBinary_NCHW(FILE* in) { return true; }
-
+		
+		virtual __int64 GetNumOfMulAdd() const { return 0; }
 	};
 
 	class ZQ_CNN_Layer_Convolution : public ZQ_CNN_Layer
@@ -236,8 +239,14 @@ namespace ZQ
 					num_threads);
 				double t2 = omp_get_wtime();
 				if (show_debug_info)
-					printf("Conv layer:%s %.3f ms HW %dx%d filter: NHWC %d x %d x %d x %d\n", 
-						name.c_str(), 1000 * (t2 - t1), (*tops)[0]->GetH(), (*tops)[0]->GetW(), filters->GetN(), filters->GetH(), filters->GetW(), filters->GetC());
+				{
+					double time = __max(1000 * (t2 - t1), 1e-9);
+					double mop = (*tops)[0]->GetH()* (*tops)[0]->GetW()* filters->GetN()* filters->GetH()* filters->GetW()* filters->GetC();
+					mop /= 1024 * 1024;
+					printf("Conv layer:%s %.3f ms HW %dx%d filter: NHWC %d x %d x %d x %d, MUL = %.3f M, GFLOPS=%.3f\n",
+						name.c_str(), 1000 * (t2 - t1), (*tops)[0]->GetH(), (*tops)[0]->GetW(), filters->GetN(), filters->GetH(), filters->GetW(), filters->GetC(),
+						mop, mop / time);
+				}
 				return ret;
 			}
 			else
@@ -249,8 +258,14 @@ namespace ZQ
 					num_threads);
 				double t2 = omp_get_wtime();
 				if (show_debug_info)
-					printf("Conv layer:%s %.3f ms HW %dx%d filter: NHWC %d x %d x %d x %d\n", 
-						name.c_str(), 1000 * (t2 - t1), (*tops)[0]->GetH(), (*tops)[0]->GetW(), filters->GetN(), filters->GetH(), filters->GetW(), filters->GetC());
+				{
+					double time = __max(1000 * (t2 - t1), 1e-9);
+					double mop = (*tops)[0]->GetH()* (*tops)[0]->GetW()* filters->GetN()* filters->GetH()* filters->GetW()* filters->GetC();
+					mop /= 1024 * 1024;
+					printf("Conv layer:%s %.3f ms HW %dx%d filter: NHWC %d x %d x %d x %d, MUL = %.3f M, GFLOPS=%.3f\n",
+						name.c_str(), 1000 * (t2 - t1), (*tops)[0]->GetH(), (*tops)[0]->GetW(), filters->GetN(), filters->GetH(), filters->GetW(), filters->GetC(),
+						mop, mop / time);
+				}
 				return ret;
 			}
 		}
@@ -481,6 +496,13 @@ namespace ZQ
 			}
 			return true;
 		}
+
+		virtual __int64 GetNumOfMulAdd() const 
+		{ 
+			int top_C, top_H, top_W;
+			GetTopDim(top_C, top_H, top_W);
+			return (__int64)top_H*top_W*filters->GetN()*filters->GetH()*filters->GetW()*filters->GetC();
+		}
 	};
 
 
@@ -524,8 +546,16 @@ namespace ZQ
 					num_threads);
 				double t2 = omp_get_wtime();
 				if (show_debug_info)
-					printf("DwConv layer:%s %.3f ms HW %dx%d filter: NHWC %d x %d x %d x %d\n",
-						name.c_str(), 1000 * (t2 - t1), (*tops)[0]->GetH(), (*tops)[0]->GetW(), filters->GetN(), filters->GetH(), filters->GetW(), filters->GetC());
+				{
+					double time = __max(1000 * (t2 - t1),1e-9);
+					double mop = (*tops)[0]->GetH()* (*tops)[0]->GetW()* filters->GetN()* filters->GetH()* filters->GetW()* filters->GetC();
+					mop /= 1024 * 1024;
+					printf("DwConv layer:%s %.3f ms HW %dx%d filter: NHWC %d x %d x %d x %d, MUL = %.3f M, GFLOPS=%.3f\n",
+						name.c_str(), 1000 * (t2 - t1), (*tops)[0]->GetH(), (*tops)[0]->GetW(), filters->GetN(), filters->GetH(), filters->GetW(), filters->GetC(),
+						mop, mop / time);
+					
+				}
+					
 				return ret;
 			}
 			else
@@ -537,8 +567,14 @@ namespace ZQ
 					num_threads);
 				double t2 = omp_get_wtime();
 				if (show_debug_info)
-					printf("Conv layer:%s %.3f ms HW %dx%d filter: NHWC %d x %d x %d x %d\n",
-						name.c_str(), 1000 * (t2 - t1), (*tops)[0]->GetH(), (*tops)[0]->GetW(), filters->GetN(), filters->GetH(), filters->GetW(), filters->GetC());
+				{
+					double time = __max(1000 * (t2 - t1), 1e-9);
+					double mop = (*tops)[0]->GetH()* (*tops)[0]->GetW()* filters->GetN()* filters->GetH()* filters->GetW()* filters->GetC();
+					mop /= 1024 * 1024;
+					printf("DwConv layer:%s %.3f ms HW %dx%d filter: NHWC %d x %d x %d x %d, MUL = %.3f M, GFLOPS=%.3f\n",
+						name.c_str(), 1000 * (t2 - t1), (*tops)[0]->GetH(), (*tops)[0]->GetW(), filters->GetN(), filters->GetH(), filters->GetW(), filters->GetC(),
+						mop, mop / time);
+				}
 				return ret;
 			}
 		}
@@ -772,6 +808,13 @@ namespace ZQ
 			}
 			return true;
 		}
+
+		virtual __int64 GetNumOfMulAdd() const
+		{
+			int top_C, top_H, top_W;
+			GetTopDim(top_C, top_H, top_W);
+			return (__int64)top_H*top_W*filters->GetN()*filters->GetH()*filters->GetW()*filters->GetC();
+		}
 	};
 
 	class ZQ_CNN_Layer_BatchNormScale : public ZQ_CNN_Layer
@@ -969,6 +1012,10 @@ namespace ZQ
 			
 		}
 
+		virtual __int64 GetNumOfMulAdd() const
+		{
+			return bottom_W*bottom_H*bottom_C;
+		}
 	};
 
 	class ZQ_CNN_Layer_BatchNorm : public ZQ_CNN_Layer
@@ -1138,7 +1185,10 @@ namespace ZQ
 			var.ConvertFromCompactNCHW(&nchw_raw[0] + dst_len, N, C, H, W);
 			return ZQ_CNN_Forward_SSEUtils::BatchNorm_Compute_b_a(*b, *a, mean, var);
 		}
-
+		virtual __int64 GetNumOfMulAdd() const
+		{
+			return bottom_W*bottom_H*bottom_C;
+		}
 	};
 
 	class ZQ_CNN_Layer_Scale : public ZQ_CNN_Layer
@@ -1333,6 +1383,11 @@ namespace ZQ
 			}
 			return true;
 		}
+
+		virtual __int64 GetNumOfMulAdd() const
+		{
+			return bottom_W*bottom_H*bottom_C;
+		}
 	};
 
 	class ZQ_CNN_Layer_PReLU : public ZQ_CNN_Layer
@@ -1473,6 +1528,11 @@ namespace ZQ
 			slope->ConvertFromCompactNCHW(&nchw_raw[0], slope->GetN(), slope->GetC(), slope->GetH(), slope->GetW());
 			return true;
 		}
+
+		virtual __int64 GetNumOfMulAdd() const
+		{
+			return bottom_W*bottom_H*bottom_C;
+		}
 	};
 
 	class ZQ_CNN_Layer_ReLU : public ZQ_CNN_Layer
@@ -1586,6 +1646,11 @@ namespace ZQ
 
 		//should be called after ZQ_CNN_Net have allocated necessery data
 		virtual bool LoadBinary_NCHW(FILE* in){	return true;}
+
+		virtual __int64 GetNumOfMulAdd() const
+		{
+			return bottom_W*bottom_H*bottom_C;
+		}
 	};
 
 	class ZQ_CNN_Layer_Pooling : public ZQ_CNN_Layer
@@ -1754,6 +1819,13 @@ namespace ZQ
 
 		//should be called after ZQ_CNN_Net have allocated necessery data
 		virtual bool LoadBinary_NCHW(FILE* in) { return true; }
+
+		virtual __int64 GetNumOfMulAdd() const
+		{
+			int top_C, top_H, top_W;
+			GetTopDim(top_C, top_H, top_W);
+			return (__int64)top_H*top_W*top_C*kernel_H*kernel_W;
+		}
 	};
 
 	class ZQ_CNN_Layer_InnerProduct : public ZQ_CNN_Layer
@@ -1988,6 +2060,14 @@ namespace ZQ
 			}
 			return true;
 		}
+
+		virtual __int64 GetNumOfMulAdd() const
+		{
+			int top_C, top_H, top_W;
+			GetTopDim(top_C, top_H, top_W);
+			return (__int64)top_H*top_W*filters->GetN()*filters->GetH()*filters->GetW()*filters->GetC();
+		}
+
 	};
 
 	class ZQ_CNN_Layer_Softmax : public ZQ_CNN_Layer
@@ -2110,6 +2190,11 @@ namespace ZQ
 
 		//should be called after ZQ_CNN_Net have allocated necessery data
 		virtual bool LoadBinary_NCHW(FILE* in) { return true; }
+
+		virtual __int64 GetNumOfMulAdd() const
+		{
+			return 0;
+		}
 	};
 
 	class ZQ_CNN_Layer_Dropout : public ZQ_CNN_Layer
@@ -2235,6 +2320,11 @@ namespace ZQ
 
 		//should be called after ZQ_CNN_Net have allocated necessery data
 		virtual bool LoadBinary_NCHW(FILE* in) { return true; }
+
+		virtual __int64 GetNumOfMulAdd() const
+		{
+			return 0;
+		}
 	};
 
 	class ZQ_CNN_Layer_Eltwise : public ZQ_CNN_Layer
@@ -2415,6 +2505,11 @@ namespace ZQ
 
 		//should be called after ZQ_CNN_Net have allocated necessery data
 		virtual bool LoadBinary_NCHW(FILE* in) { return true; }
+
+		virtual __int64 GetNumOfMulAdd() const
+		{
+			return bottom_C*bottom_H*bottom_W;
+		}
 	};
 
 	class ZQ_CNN_Layer_ScalarOperation : public ZQ_CNN_Layer
@@ -2666,6 +2761,11 @@ namespace ZQ
 
 		//should be called after ZQ_CNN_Net have allocated necessery data
 		virtual bool LoadBinary_NCHW(FILE* in) { return true; }
+
+		virtual __int64 GetNumOfMulAdd() const
+		{
+			return bottom_C*bottom_H*bottom_W;
+		}
 	};
 
 	class ZQ_CNN_Layer_LRN : public ZQ_CNN_Layer
@@ -2835,6 +2935,11 @@ namespace ZQ
 
 		//should be called after ZQ_CNN_Net have allocated necessery data
 		virtual bool LoadBinary_NCHW(FILE* in) { return true; }
+
+		virtual __int64 GetNumOfMulAdd() const
+		{
+			return 0;
+		}
 	};
 
 	class ZQ_CNN_Layer_Permute : public ZQ_CNN_Layer
@@ -2982,6 +3087,11 @@ namespace ZQ
 
 		//should be called after ZQ_CNN_Net have allocated necessery data
 		virtual bool LoadBinary_NCHW(FILE* in) { return true; }
+
+		virtual __int64 GetNumOfMulAdd() const
+		{
+			return 0;
+		}
 	};
 
 	class ZQ_CNN_Layer_Flatten : public ZQ_CNN_Layer
@@ -3130,6 +3240,11 @@ namespace ZQ
 
 		//should be called after ZQ_CNN_Net have allocated necessery data
 		virtual bool LoadBinary_NCHW(FILE* in) { return true; }
+
+		virtual __int64 GetNumOfMulAdd() const
+		{
+			return 0;
+		}
 	};
 
 	class ZQ_CNN_Layer_Reshape : public ZQ_CNN_Layer
@@ -3307,6 +3422,11 @@ namespace ZQ
 
 		//should be called after ZQ_CNN_Net have allocated necessery data
 		virtual bool LoadBinary_NCHW(FILE* in) { return true; }
+
+		virtual __int64 GetNumOfMulAdd() const
+		{
+			return 0;
+		}
 	};
 
 
@@ -3551,6 +3671,11 @@ namespace ZQ
 		//should be called after ZQ_CNN_Net have allocated necessery data
 		virtual bool LoadBinary_NCHW(FILE* in) { return true; }
 
+		virtual __int64 GetNumOfMulAdd() const
+		{
+			return 0;
+		}
+
 	private:
 		bool _setup()
 		{
@@ -3760,6 +3885,11 @@ namespace ZQ
 
 		//should be called after ZQ_CNN_Net have allocated necessery data
 		virtual bool LoadBinary_NCHW(FILE* in) { return true; }
+
+		virtual __int64 GetNumOfMulAdd() const
+		{
+			return 0;
+		}
 	};
 
 	class ZQ_CNN_Layer_DetectionOutput : public ZQ_CNN_Layer
@@ -3982,6 +4112,11 @@ namespace ZQ
 
 		//should be called after ZQ_CNN_Net have allocated necessery data
 		virtual bool LoadBinary_NCHW(FILE* in) { return true; }
+
+		virtual __int64 GetNumOfMulAdd() const
+		{
+			return 0;
+		}
 	};
 }
 

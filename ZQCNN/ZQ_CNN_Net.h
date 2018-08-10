@@ -53,6 +53,14 @@ namespace ZQ
 			return true;
 		}
 
+		__int64 GetNumOfMulAdd() const
+		{
+			__int64 sum = 0;
+			for (int i = 0; i < layers.size(); i++)
+				sum += layers[i]->GetNumOfMulAdd();
+			return sum;
+		}
+
 		/*it may change input in case of padding, but the data will not be lost*/
 		bool Forward(ZQ_CNN_Tensor4D& input, int num_threads = 1)
 		{

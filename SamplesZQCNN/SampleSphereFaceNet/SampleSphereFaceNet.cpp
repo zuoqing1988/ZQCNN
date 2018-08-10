@@ -32,6 +32,7 @@ int main()
 
 		std::string out_blob_name = "fc5";
 		ZQ_CNN_Net net;
+		net.TurnOnShowDebugInfo();
 		if (!net.LoadFrom("model\\mobilefacenet-v0.zqparams", "model\\mobilefacenet-v0.nchwbin"))
 		//if (!net.LoadFrom("model\\test.zqparams", "model\\test.nchwbin"))
 		//if (!net.LoadFrom("model\\model-r50-am.zqparams", "model\\model-r50-am.nchwbin"))
@@ -45,6 +46,7 @@ int main()
 			return EXIT_FAILURE;
 		}
 
+		printf("num_MulAdd: %.3f M\n", net.GetNumOfMulAdd() / (1024.0*1024.0));
 		int iters = 100;
 		double t1 = omp_get_wtime();
 		for (int it = 0; it < iters; it++)
@@ -98,9 +100,9 @@ int main()
 			feat0[i] /= len0;
 			feat1[i] /= len1;
 		}
-		std::cout << "feat0[0] = " << feat0[0] << "\n";
-		std::cout << "feat1[0] = " << feat1[0] << "\n";
-		std::cout << "Similarity score: " << score << "\n";
+		//std::cout << "feat0[0] = " << feat0[0] << "\n";
+		//std::cout << "feat1[0] = " << feat1[0] << "\n";
+		//std::cout << "Similarity score: " << score << "\n";
 	}
 	return EXIT_SUCCESS;
 }
