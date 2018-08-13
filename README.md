@@ -78,7 +78,7 @@ Convolution name=conv1 bottom=data top=conv1 num_output=10 kernel_size=3 stride=
 
 [Mobile-SphereFace10bn512](https://pan.baidu.com/s/1BEP1pg5s3yJCLA2elqTB0A) LFW约98.6%-98.7%，单线程15ms，性价比高
 
-[ArcFace-r100](https://pan.baidu.com/s/1PeujQbIqFfgARIYAdRt3pw) LFW约99.80%-99.80%,单线程1900毫秒，四线程480毫秒（波动很大）
+[ArcFace-r100](https://pan.baidu.com/s/1PeujQbIqFfgARIYAdRt3pw) LFW约99.80%-99.82%,单线程1900毫秒，四线程480毫秒（波动很大）
 
 [ArcFace-r50](https://pan.baidu.com/s/1qOIhCauwZNTOCIM9eojPrA) LFW约99.75%-99.78%,单线程700多毫秒
 
