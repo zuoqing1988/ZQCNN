@@ -76,9 +76,9 @@ namespace ZQ
 				for (int w = 0; w < width; w++)
 				{
 					int offset = h*width + w;
-					buffer[offset] = (float)bgr_img[h*widthStep + w * 3 + 0] - 123.0f;
+					buffer[offset] = (float)bgr_img[h*widthStep + w * 3 + 0] - 102.9801f;
 					buffer[offset+HW] = (float)bgr_img[h*widthStep + w * 3 + 1] - 117.0f;
-					buffer[offset+HW2] = (float)bgr_img[h*widthStep + w * 3 + 2] - 104.0f;
+					buffer[offset+HW2] = (float)bgr_img[h*widthStep + w * 3 + 2] - 122.7717f;
 				}
 			}
 			if (!input0.ConvertFromCompactNCHW(&buffer[0], 1, 3, height, width,1,1))

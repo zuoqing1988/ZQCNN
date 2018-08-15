@@ -93,6 +93,7 @@ namespace ZQ
 		{
 			if (!ChangeSize(other.GetN(), other.GetH(), other.GetW(), other.GetC(), other.GetBorderW(), other.GetBorderH()))
 				return false;
+			Reset();
 			for (int n = 0; n < N; n++)
 			{
 				for (int h = -borderH; h < H + borderH; h++)

@@ -1833,7 +1833,7 @@ namespace ZQ
 						const char* str = paras[n][1].c_str();
 						if (_strcmpi(str,"MAX") == 0)
 							type = TYPE_MAXPOOLING;
-						else if (_strcmpi(str,"AVG") == 0)
+						else if (_strcmpi(str,"AVG") == 0 || _strcmpi(str, "AVE") == 0)
 							type = TYPE_AVGPOOLING;
 						else
 						{
