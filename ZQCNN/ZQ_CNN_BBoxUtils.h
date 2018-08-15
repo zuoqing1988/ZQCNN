@@ -159,9 +159,10 @@ namespace ZQ
 						//LOG(FATAL) << "Could not find location predictions for label " << label;
 					}
 					const std::vector<ZQ_CNN_NormalizedBBox>& label_loc_preds =	all_loc_preds[i].find(label)->second;
-					DecodeBBoxes(prior_bboxes, prior_variances,
+					if (!DecodeBBoxes(prior_bboxes, prior_variances,
 						code_type, variance_encoded_in_target, clip,
-						label_loc_preds, &(decode_bboxes[label]));
+						label_loc_preds, &(decode_bboxes[label])))
+						return false;
 				}
 			}
 			return true;
@@ -225,11 +226,17 @@ namespace ZQ
 			else if (code_type == PriorBoxCodeType_CENTER_SIZE) 
 			{
 				float prior_width = prior_bbox.col2 - prior_bbox.col1;
-				if (prior_width <= 0)
-					return false;
+				if (prior_width < 0)
+				{
+				//	return false;
+					printf("x = [%f , %f]\n", prior_bbox.col1, prior_bbox.col2);
+				}
 				float prior_height = prior_bbox.row2 - prior_bbox.row1;
-				if (prior_height <= 0)
-					return false;
+				if (prior_height < 0)
+				{
+					//return false;
+					printf("y = [%f , %f]\n", prior_bbox.row1, prior_bbox.row2);
+				}
 				float prior_center_x = (prior_bbox.col1 + prior_bbox.col2) / 2.;
 				float prior_center_y = (prior_bbox.row1 + prior_bbox.row2) / 2.;
 
@@ -261,11 +268,17 @@ namespace ZQ
 			else if (code_type == PriorBoxCodeType_CORNER_SIZE) 
 			{
 				float prior_width = prior_bbox.col2 - prior_bbox.col1;
-				if (prior_width <= 0)
-					return false;
+				if (prior_width < 0)
+				{
+				//return false;
+					printf("x = [%f , %f]\n", prior_bbox.col1, prior_bbox.col2);
+				}
 				float prior_height = prior_bbox.row2 - prior_bbox.row1;
-				if (prior_height <= 0)
-					return false;
+				if (prior_height < 0)
+				{
+				//	return false;
+					printf("y = [%f , %f]\n", prior_bbox.row1, prior_bbox.row2);
+				}
 				if (variance_encoded_in_target) 
 				{
 					// variance is encoded in target, we simply need to add the offset

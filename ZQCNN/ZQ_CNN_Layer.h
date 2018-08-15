@@ -237,13 +237,13 @@ namespace ZQ
 				if (filters == 0 || bias == 0)
 					return false;
 				double t1 = omp_get_wtime();
-				bool ret = ZQ_CNN_Forward_SSEUtils::ConvolutionWithBias(*((*bottoms)[0]), *filters, *bias, stride_H, stride_W, pad_H, pad_W, *((*tops)[0]),
+				bool ret = ZQ_CNN_Forward_SSEUtils::ConvolutionWithBias(*((*bottoms)[0]), *filters, *bias, stride_H, stride_W,dilate_H,dilate_W, pad_H, pad_W, *((*tops)[0]),
 					num_threads);
 				double t2 = omp_get_wtime();
 				if (show_debug_info)
 				{
 					double time = __max(1000 * (t2 - t1), 1e-9);
-					double mop = (*tops)[0]->GetH()* (*tops)[0]->GetW()* filters->GetN()* filters->GetH()* filters->GetW()* filters->GetC();
+					double mop = (double)(*tops)[0]->GetH()* (*tops)[0]->GetW()* filters->GetN()* filters->GetH()* filters->GetW()* filters->GetC();
 					mop /= 1024 * 1024;
 					printf("Conv layer:%s %.3f ms HW %dx%d filter: NHWC %d x %d x %d x %d, MUL = %.3f M, GFLOPS=%.3f\n",
 						name.c_str(), 1000 * (t2 - t1), (*tops)[0]->GetH(), (*tops)[0]->GetW(), filters->GetN(), filters->GetH(), filters->GetW(), filters->GetC(),
@@ -256,13 +256,13 @@ namespace ZQ
 				if (filters == 0)
 					return false;
 				double t1 = omp_get_wtime();
-				bool ret = ZQ_CNN_Forward_SSEUtils::Convolution(*((*bottoms)[0]), *filters, stride_H, stride_W, pad_H, pad_W, *((*tops)[0]),
+				bool ret = ZQ_CNN_Forward_SSEUtils::Convolution(*((*bottoms)[0]), *filters, stride_H, stride_W, dilate_H, dilate_W, pad_H, pad_W, *((*tops)[0]),
 					num_threads);
 				double t2 = omp_get_wtime();
 				if (show_debug_info)
 				{
 					double time = __max(1000 * (t2 - t1), 1e-9);
-					double mop = (*tops)[0]->GetH()* (*tops)[0]->GetW()* filters->GetN()* filters->GetH()* filters->GetW()* filters->GetC();
+					double mop = (double)(*tops)[0]->GetH()* (*tops)[0]->GetW()* filters->GetN()* filters->GetH()* filters->GetW()* filters->GetC();
 					mop /= 1024 * 1024;
 					printf("Conv layer:%s %.3f ms HW %dx%d filter: NHWC %d x %d x %d x %d, MUL = %.3f M, GFLOPS=%.3f\n",
 						name.c_str(), 1000 * (t2 - t1), (*tops)[0]->GetH(), (*tops)[0]->GetW(), filters->GetN(), filters->GetH(), filters->GetW(), filters->GetC(),
@@ -492,8 +492,8 @@ namespace ZQ
 		virtual void GetTopDim(int& top_C, int& top_H, int& top_W) const 
 		{ 
 			top_C = num_output;  
-			top_H = __max(0, floor((float)(bottom_H + pad_H * 2 - kernel_H) / stride_H) + 1);
-			top_W = __max(0, floor((float)(bottom_W + pad_W * 2 - kernel_W) / stride_W) + 1);
+			top_H = __max(0, floor((float)(bottom_H + pad_H * 2 - (kernel_H-1)*dilate_H-1) / stride_H) + 1);
+			top_W = __max(0, floor((float)(bottom_W + pad_W * 2 - (kernel_W-1)*dilate_W-1) / stride_W) + 1);
 		}
 
 		//should be called after ZQ_CNN_Net have allocated necessery data
@@ -574,7 +574,7 @@ namespace ZQ
 				if (show_debug_info)
 				{
 					double time = __max(1000 * (t2 - t1),1e-9);
-					double mop = (*tops)[0]->GetH()* (*tops)[0]->GetW()* filters->GetN()* filters->GetH()* filters->GetW()* filters->GetC();
+					double mop = (double)(*tops)[0]->GetH()* (*tops)[0]->GetW()* filters->GetN()* filters->GetH()* filters->GetW()* filters->GetC();
 					mop /= 1024 * 1024;
 					printf("DwConv layer:%s %.3f ms HW %dx%d filter: NHWC %d x %d x %d x %d, MUL = %.3f M, GFLOPS=%.3f\n",
 						name.c_str(), 1000 * (t2 - t1), (*tops)[0]->GetH(), (*tops)[0]->GetW(), filters->GetN(), filters->GetH(), filters->GetW(), filters->GetC(),
@@ -595,7 +595,7 @@ namespace ZQ
 				if (show_debug_info)
 				{
 					double time = __max(1000 * (t2 - t1), 1e-9);
-					double mop = (*tops)[0]->GetH()* (*tops)[0]->GetW()* filters->GetN()* filters->GetH()* filters->GetW()* filters->GetC();
+					double mop = (double)(*tops)[0]->GetH()* (*tops)[0]->GetW()* filters->GetN()* filters->GetH()* filters->GetW()* filters->GetC();
 					mop /= 1024 * 1024;
 					printf("DwConv layer:%s %.3f ms HW %dx%d filter: NHWC %d x %d x %d x %d, MUL = %.3f M, GFLOPS=%.3f\n",
 						name.c_str(), 1000 * (t2 - t1), (*tops)[0]->GetH(), (*tops)[0]->GetW(), filters->GetN(), filters->GetH(), filters->GetW(), filters->GetC(),
@@ -1846,17 +1846,26 @@ namespace ZQ
 					std::cout << "warning: unknown para " << paras[n][0] << " in Layer " << name << "\n";
 				}
 			}
-			if (!has_kernelH)std::cout << "Layer " << name << " missing " << "kernel_H (kernel_size)\n";
-			if (!has_kernelW)std::cout << "Layer " << name << " missing " << "kernel_W (kernel_size)\n";
-			if (!has_strideH)std::cout << "Layer " << name << " missing " << "stride_H (stride)\n";
-			if (!has_strideW)std::cout << "Layer " << name << " missing " << "stride_W (stride)\n";
+			if (!global_pool)
+			{
+				if (!has_kernelH)std::cout << "Layer " << name << " missing " << "kernel_H (kernel_size)\n";
+				if (!has_kernelW)std::cout << "Layer " << name << " missing " << "kernel_W (kernel_size)\n";
+				if (!has_strideH)std::cout << "Layer " << name << " missing " << "stride_H (stride)\n";
+				if (!has_strideW)std::cout << "Layer " << name << " missing " << "stride_W (stride)\n";
+			}
+			
 			if (!has_bottom)std::cout << "Layer " << name << " missing " << "bottom\n";
 			if (!has_top)std::cout << "Layer " << name << " missing " << "top\n";
 			if (!has_name) {
 				std::cout << "Layer " << name << " missing " << "name\n";
 				std::cout << line << "\n";
 			}
-			return has_kernelH && has_kernelW && has_strideH && has_strideW && has_bottom && has_top && has_name;
+			if(!global_pool)
+				return has_kernelH && has_kernelW && has_strideH && has_strideW && has_bottom && has_top && has_name;
+			else
+			{
+				return has_bottom && has_top && has_name;
+			}
 		}
 
 		virtual bool LayerSetup(std::vector<ZQ_CNN_Tensor4D*>* bottoms, std::vector<ZQ_CNN_Tensor4D*>* tops)
@@ -3138,6 +3147,165 @@ namespace ZQ
 		}
 	};
 
+	class ZQ_CNN_Layer_Normalize : public ZQ_CNN_Layer
+	{
+	public:
+		ZQ_CNN_Layer_Normalize():across_spatial(false),channel_shared(false), eps(1e-10){}
+		bool across_spatial;
+		bool channel_shared;
+		ZQ_CNN_Tensor4D* scale;
+		float eps;
+		//
+		int bottom_C;
+		int bottom_H;
+		int bottom_W;
+
+		virtual bool Forward(std::vector<ZQ_CNN_Tensor4D*>* bottoms, std::vector<ZQ_CNN_Tensor4D*>* tops, int num_threads = 1)
+		{
+			if (bottoms == 0 || tops == 0 || bottoms->size() == 0 || tops->size() == 0 || (*bottoms)[0] == 0 || (*tops)[0] == 0)
+				return false;
+
+			if ((*tops)[0] != (*bottoms)[0])
+				(*tops)[0]->CopyData(*(*bottoms)[0]);
+
+			double t1 = omp_get_wtime();
+			bool ret = ZQ_CNN_Forward_SSEUtils::Normalize(*((*tops)[0]), *scale, across_spatial, channel_shared);
+			double t2 = omp_get_wtime();
+			if (show_debug_info)
+				printf("Normalize layer: %s cost : %.3f ms\n", name.c_str(), 1000 * (t2 - t1));
+			return ret;
+		}
+
+		virtual bool ReadParam(const std::string& line)
+		{
+			bottom_names.clear();
+			top_names.clear();
+			std::vector<std::vector<std::string>> paras = split_line(line);
+			int num = paras.size();
+			bool has_top = false, has_bottom = false, has_name = false;
+			
+			for (int n = 0; n < num; n++)
+			{
+				if (paras[n].size() == 0)
+					continue;
+				if (_strcmpi("Normalize", paras[n][0].c_str()) == 0)
+				{
+
+				}
+				else if (_strcmpi("across_spatial", paras[n][0].c_str()) == 0)
+				{
+					across_spatial = true;
+				}
+				else if (_strcmpi("channel_shared", paras[n][0].c_str()) == 0)
+				{
+					across_spatial = true;
+				}
+				else if (_strcmpi("eps", paras[n][0].c_str()) == 0)
+				{
+					if (paras[n].size() >= 2)
+					{
+						eps = atof(paras[n][1].c_str());
+					}
+				}
+				else if (_strcmpi("top", paras[n][0].c_str()) == 0)
+				{
+					if (paras[n].size() >= 2)
+					{
+						has_top = true;
+						top_names.push_back(paras[n][1]);
+					}
+				}
+				else if (_strcmpi("bottom", paras[n][0].c_str()) == 0)
+				{
+					if (paras[n].size() >= 2)
+					{
+						has_bottom = true;
+						bottom_names.push_back(paras[n][1]);
+					}
+				}
+				else if (_strcmpi("name", paras[n][0].c_str()) == 0)
+				{
+					if (paras[n].size() >= 2)
+					{
+						has_name = true;
+						name = paras[n][1];
+					}
+				}
+			}
+			if (!has_bottom)std::cout << "Layer " << name << " missing " << "bottom\n";
+			if (!has_top)std::cout << "Layer " << name << " missing " << "top\n";
+			if (!has_name) {
+				std::cout << "Layer " << name << " missing " << "name\n";
+				std::cout << line << "\n";
+			}
+			return has_bottom && has_top && has_name;
+		}
+
+		virtual bool LayerSetup(std::vector<ZQ_CNN_Tensor4D*>* bottoms, std::vector<ZQ_CNN_Tensor4D*>* tops)
+		{
+			if (bottoms == 0 || tops == 0 || bottoms->size() == 0 || (*bottoms)[0] == 0 || tops->size() == 0 || (*tops)[0] == 0)
+				return false;
+			int bottom_N, bottom_C, bottom_H, bottom_W;
+			(*bottoms)[0]->GetShape(bottom_N, bottom_C, bottom_H, bottom_W);
+			if (!SetBottomDim(bottom_C, bottom_H, bottom_W))
+				return false;
+			int top_C, top_H, top_W;
+			GetTopDim(top_C, top_H, top_W);
+			(*tops)[0]->SetShape(bottom_N, top_C, top_H, top_W);
+			return true;
+		}
+
+		//should called after ReadParam, allocate memory in this func
+		virtual bool SetBottomDim(int bottom_C, int bottom_H, int bottom_W)
+		{
+			this->bottom_C = bottom_C;
+			this->bottom_H = bottom_H;
+			this->bottom_W = bottom_W;
+
+			int num_channel = channel_shared ? 1 : bottom_C;
+			if (scale)
+			{
+				if (!scale->ChangeSize(1, 1, 1, num_channel, 0, 0))
+					return false;
+			}
+			else
+			{
+				scale = new ZQ_CNN_Tensor4D_NHW_C_Align256bit();
+				if (scale == 0)return false;
+				if (!scale->ChangeSize(1, 1, 1, num_channel, 0, 0))
+					return false;
+			}
+			return true;
+		}
+
+		//should called after SetBottomDim
+		virtual void GetTopDim(int& top_C, int& top_H, int& top_W) const
+		{
+			top_C = this->bottom_C;
+			top_H = this->bottom_H;
+			top_W = this->bottom_W;
+		}
+
+		//should be called after ZQ_CNN_Net have allocated necessery data
+		virtual bool LoadBinary_NCHW(FILE* in) 
+		{
+			int dst_len = scale->GetN() * scale->GetH() * scale->GetW() * scale->GetC();
+			if (dst_len <= 0)
+				return false;
+			std::vector<float> nchw_raw(dst_len);
+			if (dst_len != fread_s(&nchw_raw[0], dst_len * sizeof(float), sizeof(float), dst_len, in))
+				return false;
+			scale->ConvertFromCompactNCHW(&nchw_raw[0], scale->GetN(), scale->GetC(), scale->GetH(), scale->GetW());
+			
+			return true; 
+		}
+
+		virtual __int64 GetNumOfMulAdd() const
+		{
+			return 0;
+		}
+	};
+
 	class ZQ_CNN_Layer_Permute : public ZQ_CNN_Layer
 	{
 	public:
@@ -3873,7 +4041,7 @@ namespace ZQ
 		}
 
 	private:
-		bool _setup()
+		virtual bool _setup()
 		{
 			if (min_sizes.size() == 0)
 			{
@@ -3966,6 +4134,130 @@ namespace ZQ
 				variance.push_back(0.1);
 			}
 
+			return true;
+		}
+	};
+
+
+	class ZQ_CNN_Layer_PriorBoxText : public ZQ_CNN_Layer_PriorBox
+	{
+	public:
+		ZQ_CNN_Layer_PriorBoxText()
+		{
+			ZQ_CNN_Layer_PriorBox();
+		}
+
+
+		virtual bool Forward(std::vector<ZQ_CNN_Tensor4D*>* bottoms, std::vector<ZQ_CNN_Tensor4D*>* tops, int num_threads = 1)
+		{
+			if (bottoms == 0 || tops == 0 || bottoms->size() == 0 || tops->size() == 0 || (*bottoms)[0] == 0 || (*tops)[0] == 0)
+				return false;
+
+			double t1 = omp_get_wtime();
+			bool ret = ZQ_CNN_Forward_SSEUtils::PriorBoxText(*(*(std::vector<const ZQ_CNN_Tensor4D*>*)bottoms)[0], *(*(std::vector<const ZQ_CNN_Tensor4D*>*)bottoms)[1],
+				min_sizes, max_sizes, aspect_ratios, variance, flip, num_priors, clip, img_w, img_h, step_w, step_h, offset, *((*tops)[0]));
+			double t2 = omp_get_wtime();
+			if (show_debug_info)
+				printf("PriorBox layer: %s cost : %.3f ms\n", name.c_str(), 1000 * (t2 - t1));
+			return ret;
+		}
+
+		
+	private:
+		virtual bool _setup()
+		{
+			if (min_sizes.size() == 0)
+			{
+				std::cout << "Layer " << name << " must provide min_size\n";
+				return false;
+			}
+			else
+			{
+				for (int i = 0; i < min_sizes.size(); i++)
+				{
+					if (min_sizes[i] <= 0)
+					{
+						std::cout << "Layer " << name << " min_size " << min_sizes[i] << " must be positive\n";
+						return false;
+					}
+				}
+			}
+
+			std::vector<float> old_aspect_ratios(aspect_ratios);
+			aspect_ratios.clear();
+			aspect_ratios.push_back(1.f);
+			for (int i = 0; i < old_aspect_ratios.size(); i++)
+			{
+				float ar = old_aspect_ratios[i];
+				bool already_exist = false;
+				for (int j = 0; j < aspect_ratios.size(); ++j)
+				{
+					if (fabs(ar - aspect_ratios[j]) < 1e-6)
+					{
+						already_exist = true;
+						break;
+					}
+				}
+				if (!already_exist)
+				{
+					aspect_ratios.push_back(ar);
+					if (flip)
+					{
+						aspect_ratios.push_back(1.f / ar);
+					}
+				}
+			}
+			num_priors = aspect_ratios.size() * min_sizes.size();
+			if (max_sizes.size() > 0)
+			{
+				if (max_sizes.size() != min_sizes.size())
+				{
+					std::cout << "Layer " << name << " num of min_size and max_size should be the same\n";
+					return false;
+				}
+
+				for (int i = 0; i < max_sizes.size(); i++)
+				{
+					if (max_sizes[i] <= min_sizes[i])
+					{
+						std::cout << "Layer " << name << " max_size must be greater than min_size\n";
+						return false;
+					}
+					num_priors++;
+				}
+			}
+
+			if (variance.size() > 1)
+			{
+				if (variance.size() != 4)
+				{
+					std::cout << "Layer " << name << " must provide 4 variance\n";
+					return false;
+				}
+				for (int i = 0; i < variance.size(); i++)
+				{
+					if (variance[i] <= 0)
+					{
+						std::cout << "Layer " << name << " must provide positive variance\n";
+						return false;
+					}
+				}
+			}
+			else if (variance.size() == 1)
+			{
+				if (variance[0] <= 0)
+				{
+					std::cout << "Layer " << name << " must provide positive variance\n";
+					return false;
+				}
+			}
+			else
+			{
+				// Set default to 0.1.
+				variance.push_back(0.1);
+			}
+
+			num_priors *= 2;
 			return true;
 		}
 	};

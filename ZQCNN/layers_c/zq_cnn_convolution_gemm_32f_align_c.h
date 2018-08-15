@@ -26,6 +26,8 @@ extern "C" {
 		int filter_sliceStep,
 		int stride_H,
 		int stride_W,
+		int dilation_H,
+		int dilation_W,
 		float* out_tensor4D_data,
 		int out_N,	// must be in_N
 		int out_H,	// must be (in_H - filter_H)/stride_H + 1
@@ -57,6 +59,8 @@ extern "C" {
 		int filter_sliceStep,
 		int stride_H,
 		int stride_W,
+		int dilation_H,
+		int dilation_W,
 		float* out_tensor4D_data,
 		int out_N,	// must be in_N
 		int out_H,	// must be (in_H - filter_H)/stride_H + 1
@@ -89,6 +93,8 @@ extern "C" {
 		int filter_sliceStep,
 		int stride_H,
 		int stride_W,
+		int dilation_H,
+		int dilation_W,
 		float* out_tensor4D_data,
 		int out_N,	// must be in_N
 		int out_H,	// must be (in_H - filter_H)/stride_H + 1
@@ -120,6 +126,8 @@ extern "C" {
 		int filter_sliceStep,
 		int stride_H,
 		int stride_W,
+		int dilation_H,
+		int dilation_W,
 		float* out_tensor4D_data,
 		int out_N,	// must be in_N
 		int out_H,	// must be (in_H - filter_H)/stride_H + 1
@@ -152,6 +160,8 @@ extern "C" {
 		int filter_sliceStep,
 		int stride_H,
 		int stride_W,
+		int dilation_H,
+		int dilation_W,
 		float* out_tensor4D_data,
 		int out_N,	// must be in_N
 		int out_H,	// must be (in_H - filter_H)/stride_H + 1
@@ -183,6 +193,8 @@ extern "C" {
 		int filter_sliceStep,
 		int stride_H,
 		int stride_W,
+		int dilation_H,
+		int dilation_W,
 		float* out_tensor4D_data,
 		int out_N,	// must be in_N
 		int out_H,	// must be (in_H - filter_H)/stride_H + 1
@@ -215,6 +227,8 @@ extern "C" {
 		int filter_sliceStep,
 		int stride_H,
 		int stride_W,
+		int dilation_H,
+		int dilation_W,
 		float* out_tensor4D_data,
 		int out_N,	// must be in_N
 		int out_H,	// must be (in_H - filter_H)/stride_H + 1
@@ -246,6 +260,8 @@ extern "C" {
 		int filter_sliceStep,
 		int stride_H,
 		int stride_W,
+		int dilation_H,
+		int dilation_W,
 		float* out_tensor4D_data,
 		int out_N,	// must be in_N
 		int out_H,	// must be (in_H - filter_H)/stride_H + 1
@@ -278,6 +294,8 @@ extern "C" {
 		int filter_sliceStep,
 		int stride_H,
 		int stride_W,
+		int dilation_H,
+		int dilation_W,
 		float* out_tensor4D_data,
 		int out_N,	// must be in_N
 		int out_H,	// must be (in_H - filter_H)/stride_H + 1
@@ -309,6 +327,8 @@ extern "C" {
 		int filter_sliceStep,
 		int stride_H,
 		int stride_W,
+		int dilation_H,
+		int dilation_W,
 		float* out_tensor4D_data,
 		int out_N,	// must be in_N
 		int out_H,	// must be (in_H - filter_H)/stride_H + 1
@@ -341,6 +361,8 @@ extern "C" {
 		int filter_sliceStep,
 		int stride_H,
 		int stride_W,
+		int dilation_H,
+		int dilation_W,
 		float* out_tensor4D_data,
 		int out_N,	// must be in_N
 		int out_H,	// must be (in_H - filter_H)/stride_H + 1
@@ -372,6 +394,8 @@ extern "C" {
 		int filter_sliceStep,
 		int stride_H,
 		int stride_W,
+		int dilation_H,
+		int dilation_W,
 		float* out_tensor4D_data,
 		int out_N,	// must be in_N
 		int out_H,	// must be (in_H - filter_H)/stride_H + 1
@@ -404,6 +428,8 @@ extern "C" {
 		int filter_sliceStep,
 		int stride_H,
 		int stride_W,
+		int dilation_H,
+		int dilation_W,
 		float* out_tensor4D_data,
 		int out_N,	// must be in_N
 		int out_H,	// must be (in_H - filter_H)/stride_H + 1
@@ -435,6 +461,8 @@ extern "C" {
 		int filter_sliceStep,
 		int stride_H,
 		int stride_W,
+		int dilation_H,
+		int dilation_W,
 		float* out_tensor4D_data,
 		int out_N,	// must be in_N
 		int out_H,	// must be (in_H - filter_H)/stride_H + 1
@@ -467,6 +495,8 @@ extern "C" {
 		int filter_sliceStep,
 		int stride_H,
 		int stride_W,
+		int dilation_H,
+		int dilation_W,
 		float* out_tensor4D_data,
 		int out_N,	// must be in_N
 		int out_H,	// must be (in_H - filter_H)/stride_H + 1
@@ -498,6 +528,8 @@ extern "C" {
 		int filter_sliceStep,
 		int stride_H,
 		int stride_W,
+		int dilation_H,
+		int dilation_W,
 		float* out_tensor4D_data,
 		int out_N,	// must be in_N
 		int out_H,	// must be (in_H - filter_H)/stride_H + 1
@@ -530,6 +562,8 @@ extern "C" {
 		int filter_sliceStep,
 		int stride_H,
 		int stride_W,
+		int dilation_H,
+		int dilation_W,
 		float* out_tensor4D_data,
 		int out_N,	// must be in_N
 		int out_H,	// must be (in_H - filter_H)/stride_H + 1
@@ -561,6 +595,8 @@ extern "C" {
 		int filter_sliceStep,
 		int stride_H,
 		int stride_W,
+		int dilation_H,
+		int dilation_W,
 		float* out_tensor4D_data,
 		int out_N,	// must be in_N
 		int out_H,	// must be (in_H - filter_H)/stride_H + 1
@@ -593,6 +629,8 @@ extern "C" {
 		int filter_sliceStep,
 		int stride_H,
 		int stride_W,
+		int dilation_H,
+		int dilation_W,
 		float* out_tensor4D_data,
 		int out_N,	// must be in_N
 		int out_H,	// must be (in_H - filter_H)/stride_H + 1
@@ -624,6 +662,8 @@ extern "C" {
 		int filter_sliceStep,
 		int stride_H,
 		int stride_W,
+		int dilation_H,
+		int dilation_W,
 		float* out_tensor4D_data,
 		int out_N,	// must be in_N
 		int out_H,	// must be (in_H - filter_H)/stride_H + 1
@@ -656,6 +696,8 @@ extern "C" {
 		int filter_sliceStep,
 		int stride_H,
 		int stride_W,
+		int dilation_H,
+		int dilation_W,
 		float* out_tensor4D_data,
 		int out_N,	// must be in_N
 		int out_H,	// must be (in_H - filter_H)/stride_H + 1
@@ -687,6 +729,8 @@ extern "C" {
 		int filter_sliceStep,
 		int stride_H,
 		int stride_W,
+		int dilation_H,
+		int dilation_W,
 		float* out_tensor4D_data,
 		int out_N,	// must be in_N
 		int out_H,	// must be (in_H - filter_H)/stride_H + 1
@@ -719,6 +763,8 @@ extern "C" {
 		int filter_sliceStep,
 		int stride_H,
 		int stride_W,
+		int dilation_H,
+		int dilation_W,
 		float* out_tensor4D_data,
 		int out_N,	// must be in_N
 		int out_H,	// must be (in_H - filter_H)/stride_H + 1
@@ -750,6 +796,8 @@ extern "C" {
 		int filter_sliceStep,
 		int stride_H,
 		int stride_W,
+		int dilation_H,
+		int dilation_W,
 		float* out_tensor4D_data,
 		int out_N,	// must be in_N
 		int out_H,	// must be (in_H - filter_H)/stride_H + 1

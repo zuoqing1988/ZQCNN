@@ -81,6 +81,9 @@
     <ClCompile Include="layers_c\zq_cnn_scalaroperation_32f_align_c.c">
       <Filter>layers_c</Filter>
     </ClCompile>
+    <ClCompile Include="layers_c\zq_cnn_normalize_32f_align_c.c">
+      <Filter>layers_c</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="layers_c\zq_cnn_addbias_32f_align_c.h">
@@ -214,6 +217,15 @@
     </ClInclude>
     <ClInclude Include="layers_c\zq_cnn_scalaroperation_32f_align_c_raw.h">
       <Filter>layers_c</Filter>
+    </ClInclude>
+    <ClInclude Include="layers_c\zq_cnn_normalize_32f_align_c.h">
+      <Filter>layers_c</Filter>
+    </ClInclude>
+    <ClInclude Include="layers_c\zq_cnn_normalize_32f_align_c_raw.h">
+      <Filter>layers_c</Filter>
+    </ClInclude>
+    <ClInclude Include="ZQ_CNN_TextBoxes.h">
+      <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

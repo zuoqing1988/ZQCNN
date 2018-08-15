@@ -19,6 +19,8 @@ void zq_cnn_conv_no_padding_gemm_32f_align_same_pixstep(
 	int filter_sliceStep,
 	int stride_H,
 	int stride_W,
+	int dilation_H,
+	int dilation_W,
 	float* out_tensor4D_data,
 	int out_N,	// must be in_N
 	int out_H,	// must be (in_H - filter_H)/stride_H + 1
@@ -32,14 +34,16 @@ void zq_cnn_conv_no_padding_gemm_32f_align_same_pixstep(
 	/************** image to col **************/
 	int in_widthStep_mul_stride_H = in_widthStep*stride_H;
 	int in_pixelStep_mul_stride_W = in_pixelStep*stride_W;
+	int dilate_H_mul_in_widthStep = dilation_H*in_widthStep;
+	int dilate_W_mul_in_pixStep = dilation_W*in_pixelStep;
 	int filter_pixStep_mul_filter_W = filter_pixelStep*filter_W;
 	int matrix_A_cols = filter_sliceStep;
 	int matrix_A_rows = out_H*out_W;
 	int matrix_B_cols = filter_N;
 	int matrix_B_rows = filter_sliceStep;
 	float* matrix_A = (float*)_aligned_malloc(matrix_A_rows*matrix_A_cols * sizeof(float), 32);
-	const float* in_row_ptr, *in_pix_ptr, *cur_in_row_ptr;
-	int out_n, out_h, out_w, kh, pp;
+	const float* in_row_ptr, *in_pix_ptr, *cur_in_row_ptr, *cur_in_pix_ptr;
+	int out_n, out_h, out_w, kh, kw, pp;
 	float* matrix_A_row_ptr, *matrix_A_col_ptr, *cp_dst_ptr;
 	const float* cp_src_ptr;
 	float* out_slice_ptr, *out_row_ptr, *out_pix_ptr;
@@ -68,24 +72,52 @@ void zq_cnn_conv_no_padding_gemm_32f_align_same_pixstep(
 	{
 		t3 = omp_get_wtime();
 		matrix_A_row_ptr = matrix_A;
-		for (out_h = 0, in_row_ptr = in_slice_ptr; out_h < out_H; out_h++, in_row_ptr += in_widthStep_mul_stride_H)
+		if (dilation_W == 1)
 		{
-			for (out_w = 0, in_pix_ptr = in_row_ptr; out_w < out_W; out_w++, in_pix_ptr += in_pixelStep_mul_stride_W)
+			for (out_h = 0, in_row_ptr = in_slice_ptr; out_h < out_H; out_h++, in_row_ptr += in_widthStep_mul_stride_H)
 			{
-				for (kh = 0, cur_in_row_ptr = in_pix_ptr, matrix_A_col_ptr = matrix_A_row_ptr;
-					kh < filter_H;
-					kh++, cur_in_row_ptr += in_widthStep, matrix_A_col_ptr += filter_pixStep_mul_filter_W)
+				for (out_w = 0, in_pix_ptr = in_row_ptr; out_w < out_W; out_w++, in_pix_ptr += in_pixelStep_mul_stride_W)
 				{
-					//memcpy(matrix_A_col_ptr, cur_in_row_ptr, sizeof(float)*filter_pixStep_mul_filter_W);
-					for (pp = 0, cp_src_ptr = cur_in_row_ptr, cp_dst_ptr = matrix_A_col_ptr;
-						pp < filter_pixStep_mul_filter_W;
-						pp += zq_mm_align_size, cp_src_ptr += zq_mm_align_size, cp_dst_ptr += zq_mm_align_size)
-						zq_mm_store_ps(cp_dst_ptr, zq_mm_load_ps(cp_src_ptr));
+					for (kh = 0, cur_in_row_ptr = in_pix_ptr, matrix_A_col_ptr = matrix_A_row_ptr;
+						kh < filter_H;
+						kh++, cur_in_row_ptr += dilate_H_mul_in_widthStep, matrix_A_col_ptr += filter_pixStep_mul_filter_W)
+					{
+						//memcpy(matrix_A_col_ptr, cur_in_row_ptr, sizeof(float)*filter_pixStep_mul_filter_W);
+						for (pp = 0, cp_src_ptr = cur_in_row_ptr, cp_dst_ptr = matrix_A_col_ptr;
+							pp < filter_pixStep_mul_filter_W;
+							pp += zq_mm_align_size, cp_src_ptr += zq_mm_align_size, cp_dst_ptr += zq_mm_align_size)
+							zq_mm_store_ps(cp_dst_ptr, zq_mm_load_ps(cp_src_ptr));
 
+					}
+					matrix_A_row_ptr += matrix_A_cols;
 				}
-				matrix_A_row_ptr += matrix_A_cols;
 			}
 		}
+		else
+		{
+			for (out_h = 0, in_row_ptr = in_slice_ptr; out_h < out_H; out_h++, in_row_ptr += in_widthStep_mul_stride_H)
+			{
+				for (out_w = 0, in_pix_ptr = in_row_ptr; out_w < out_W; out_w++, in_pix_ptr += in_pixelStep_mul_stride_W)
+				{
+					for (kh = 0, cur_in_row_ptr = in_pix_ptr, matrix_A_col_ptr = matrix_A_row_ptr;
+						kh < filter_H;
+						kh++, cur_in_row_ptr += dilate_H_mul_in_widthStep, matrix_A_col_ptr += filter_pixStep_mul_filter_W)
+					{
+						cp_dst_ptr = matrix_A_col_ptr;
+						for (kw = 0, cur_in_pix_ptr = cur_in_row_ptr; kw < filter_W; kw++, cur_in_pix_ptr += dilate_W_mul_in_pixStep)
+						{
+							for (pp = 0, cp_src_ptr = cur_in_pix_ptr;
+								pp < filter_C;
+								pp += zq_mm_align_size, cp_src_ptr += zq_mm_align_size, cp_dst_ptr += zq_mm_align_size)
+								zq_mm_store_ps(cp_dst_ptr, zq_mm_load_ps(cp_src_ptr));
+						}
+
+					}
+					matrix_A_row_ptr += matrix_A_cols;
+				}
+			}
+		}
+		
 		t4 = omp_get_wtime();
 		make_A_time += t4 - t3;
 		/*gemm*/
@@ -144,6 +176,8 @@ void zq_cnn_conv_no_padding_gemm_32f_align_same_pixstep_omp(
 	int filter_sliceStep,
 	int stride_H,
 	int stride_W,
+	int dilation_H,
+	int dilation_W,
 	float* out_tensor4D_data,
 	int out_N,	// must be in_N
 	int out_H,	// must be (in_H - filter_H)/stride_H + 1
@@ -158,13 +192,15 @@ void zq_cnn_conv_no_padding_gemm_32f_align_same_pixstep_omp(
 	/************** image to col **************/
 	int in_widthStep_mul_stride_H = in_widthStep*stride_H;
 	int in_pixelStep_mul_stride_W = in_pixelStep*stride_W;
+	int dilate_H_mul_in_widthStep = dilation_H*in_widthStep;
+	int dilate_W_mul_in_pixStep = dilation_W*in_pixelStep;
 	int filter_pixStep_mul_filter_W = filter_pixelStep*filter_W;
 	int matrix_A_cols = filter_sliceStep;
 	int matrix_A_rows = out_H*out_W;
 	int matrix_B_cols = filter_N;
 	int matrix_B_rows = filter_sliceStep;
 	float* matrix_A = (float*)_aligned_malloc(matrix_A_rows*matrix_A_cols * sizeof(float), 32);
-	int out_n, out_h, out_w, kh, pp;
+	int out_n, out_h, out_w, kh,kw, pp;
 	float* out_slice_ptr;
 	const float* in_slice_ptr;
 	const float* matrix_Bt = filters_data;
@@ -216,22 +252,45 @@ void zq_cnn_conv_no_padding_gemm_32f_align_same_pixstep_omp(
 #pragma omp parallel for schedule(static, chunk_size) num_threads(thread_count)
 		for (idx = 0; idx < out_HW; idx++)
 		{
-			const float* in_pix_ptr, *cur_in_row_ptr;
+			const float* in_pix_ptr, *cur_in_row_ptr, *cur_in_pix_ptr;
 			float* matrix_A_row_ptr, *matrix_A_col_ptr, *cp_dst_ptr;
 			const float* cp_src_ptr;
 			in_pix_ptr = in_slice_ptr + in_offsets[idx];
 			matrix_A_row_ptr = matrix_A + matA_offsets[idx];
-			for (kh = 0, cur_in_row_ptr = in_pix_ptr, matrix_A_col_ptr = matrix_A_row_ptr;
-				kh < filter_H;
-				kh++, cur_in_row_ptr += in_widthStep, matrix_A_col_ptr += filter_pixStep_mul_filter_W)
+			if (dilation_W == 1)
 			{
-				//memcpy(matrix_A_col_ptr, cur_in_row_ptr, sizeof(float)*filter_pixStep_mul_filter_W);
-				for (pp = 0, cp_src_ptr = cur_in_row_ptr, cp_dst_ptr = matrix_A_col_ptr;
-					pp < filter_pixStep_mul_filter_W;
-					pp += zq_mm_align_size, cp_src_ptr += zq_mm_align_size, cp_dst_ptr += zq_mm_align_size)
-					zq_mm_store_ps(cp_dst_ptr, zq_mm_load_ps(cp_src_ptr));
+				for (kh = 0, cur_in_row_ptr = in_pix_ptr, matrix_A_col_ptr = matrix_A_row_ptr;
+					kh < filter_H;
+					kh++, cur_in_row_ptr += dilate_H_mul_in_widthStep, matrix_A_col_ptr += filter_pixStep_mul_filter_W)
+				{
+					//memcpy(matrix_A_col_ptr, cur_in_row_ptr, sizeof(float)*filter_pixStep_mul_filter_W);
+					for (pp = 0, cp_src_ptr = cur_in_row_ptr, cp_dst_ptr = matrix_A_col_ptr;
+						pp < filter_pixStep_mul_filter_W;
+						pp += zq_mm_align_size, cp_src_ptr += zq_mm_align_size, cp_dst_ptr += zq_mm_align_size)
+						zq_mm_store_ps(cp_dst_ptr, zq_mm_load_ps(cp_src_ptr));
 
+				}
 			}
+			else
+			{
+				for (kh = 0, cur_in_row_ptr = in_pix_ptr, matrix_A_col_ptr = matrix_A_row_ptr;
+					kh < filter_H;
+					kh++, cur_in_row_ptr += dilate_H_mul_in_widthStep, matrix_A_col_ptr += filter_pixStep_mul_filter_W)
+				{
+					cp_dst_ptr = matrix_A_col_ptr;
+					for (kw = 0, cur_in_pix_ptr = cur_in_row_ptr;
+						kw < filter_W;
+						kw++, cur_in_pix_ptr += dilate_W_mul_in_pixStep)
+					{
+						for (pp = 0, cp_src_ptr = cur_in_row_ptr;
+							pp < filter_C;
+							pp += zq_mm_align_size, cp_src_ptr += zq_mm_align_size, cp_dst_ptr += zq_mm_align_size)
+							zq_mm_store_ps(cp_dst_ptr, zq_mm_load_ps(cp_src_ptr));
+					}
+
+				}
+			}
+			
 		}
 		
 		t4 = omp_get_wtime();
@@ -303,6 +362,8 @@ void zq_cnn_conv_no_padding_gemm_32f_align_same_pixstep_batch(
 	int filter_sliceStep,
 	int stride_H,
 	int stride_W,
+	int dilation_H,
+	int dilation_W,
 	float* out_tensor4D_data,
 	int out_N,	// must be in_N
 	int out_H,	// must be (in_H - filter_H)/stride_H + 1
@@ -316,15 +377,17 @@ void zq_cnn_conv_no_padding_gemm_32f_align_same_pixstep_batch(
 	/************** image to col **************/
 	int in_widthStep_mul_stride_H = in_widthStep*stride_H;
 	int in_pixelStep_mul_stride_W = in_pixelStep*stride_W;
+	int dilate_H_mul_in_widthStep = dilation_H*in_widthStep;
+	int dilate_W_mul_in_pixStep = dilation_W*in_pixelStep;
 	int filter_pixStep_mul_filter_W = filter_pixelStep*filter_W;
 	int matrix_A_cols = filter_sliceStep;
 	int matrix_A_rows = out_N*out_H*out_W;
 	int matrix_B_cols = filter_N;
 	int matrix_B_rows = filter_sliceStep;
 	float* matrix_A = (float*)_aligned_malloc(matrix_A_rows*matrix_A_cols * sizeof(float), 32);
-	const float* in_row_ptr, *in_pix_ptr, *cur_in_row_ptr, *cp_src_ptr;
+	const float* in_row_ptr, *in_pix_ptr, *cur_in_row_ptr, *cur_in_pix_ptr, *cp_src_ptr;
 	float *cp_dst_ptr;
-	int out_n, out_h, out_w, kh, pp;
+	int out_n, out_h, out_w, kh, kw, pp;
 	float* matrix_A_row_ptr, *matrix_A_col_ptr;
 	float* out_slice_ptr, *out_row_ptr, *out_pix_ptr;
 	const float* in_slice_ptr;
@@ -346,30 +409,64 @@ void zq_cnn_conv_no_padding_gemm_32f_align_same_pixstep_batch(
 
 	t2 = omp_get_wtime();
 	matrix_A_row_ptr = matrix_A;
-	for (out_n = 0, in_slice_ptr = in_tensor4D_data, out_slice_ptr = out_tensor4D_data;
-		out_n < out_N;
-		out_n++, in_slice_ptr += in_sliceStep, out_slice_ptr += out_sliceStep)
+	if (dilation_W == 1)
 	{
-		for (out_h = 0, in_row_ptr = in_slice_ptr; out_h < out_H; out_h++, in_row_ptr += in_widthStep_mul_stride_H)
+		for (out_n = 0, in_slice_ptr = in_tensor4D_data, out_slice_ptr = out_tensor4D_data;
+			out_n < out_N;
+			out_n++, in_slice_ptr += in_sliceStep, out_slice_ptr += out_sliceStep)
 		{
-			for (out_w = 0, in_pix_ptr = in_row_ptr; out_w < out_W; out_w++, in_pix_ptr += in_pixelStep_mul_stride_W)
+			for (out_h = 0, in_row_ptr = in_slice_ptr; out_h < out_H; out_h++, in_row_ptr += in_widthStep_mul_stride_H)
 			{
-				for (kh = 0, cur_in_row_ptr = in_pix_ptr, matrix_A_col_ptr = matrix_A_row_ptr;
-					kh < filter_H;
-					kh++, cur_in_row_ptr += in_widthStep, matrix_A_col_ptr += filter_pixStep_mul_filter_W)
+				for (out_w = 0, in_pix_ptr = in_row_ptr; out_w < out_W; out_w++, in_pix_ptr += in_pixelStep_mul_stride_W)
 				{
-					//memcpy(matrix_A_col_ptr, cur_in_row_ptr, sizeof(float)*filter_pixStep_mul_filter_W);
-					for (pp = 0, cp_src_ptr = cur_in_row_ptr, cp_dst_ptr = matrix_A_col_ptr;
-						pp < filter_pixStep_mul_filter_W;
-						pp += zq_mm_align_size, cp_src_ptr += zq_mm_align_size, cp_dst_ptr += zq_mm_align_size)
-						zq_mm_store_ps(cp_dst_ptr, zq_mm_load_ps(cp_src_ptr));
+					for (kh = 0, cur_in_row_ptr = in_pix_ptr, matrix_A_col_ptr = matrix_A_row_ptr;
+						kh < filter_H;
+						kh++, cur_in_row_ptr += dilate_H_mul_in_widthStep, matrix_A_col_ptr += filter_pixStep_mul_filter_W)
+					{
+						//memcpy(matrix_A_col_ptr, cur_in_row_ptr, sizeof(float)*filter_pixStep_mul_filter_W);
+						for (pp = 0, cp_src_ptr = cur_in_row_ptr, cp_dst_ptr = matrix_A_col_ptr;
+							pp < filter_pixStep_mul_filter_W;
+							pp += zq_mm_align_size, cp_src_ptr += zq_mm_align_size, cp_dst_ptr += zq_mm_align_size)
+							zq_mm_store_ps(cp_dst_ptr, zq_mm_load_ps(cp_src_ptr));
+					}
 
+					matrix_A_row_ptr += matrix_A_cols;
 				}
-					
-				matrix_A_row_ptr += matrix_A_cols;
 			}
 		}
 	}
+	else
+	{
+		for (out_n = 0, in_slice_ptr = in_tensor4D_data, out_slice_ptr = out_tensor4D_data;
+			out_n < out_N;
+			out_n++, in_slice_ptr += in_sliceStep, out_slice_ptr += out_sliceStep)
+		{
+			for (out_h = 0, in_row_ptr = in_slice_ptr; out_h < out_H; out_h++, in_row_ptr += in_widthStep_mul_stride_H)
+			{
+				for (out_w = 0, in_pix_ptr = in_row_ptr; out_w < out_W; out_w++, in_pix_ptr += in_pixelStep_mul_stride_W)
+				{
+					for (kh = 0, cur_in_row_ptr = in_pix_ptr, matrix_A_col_ptr = matrix_A_row_ptr;
+						kh < filter_H;
+						kh++, cur_in_row_ptr += dilate_H_mul_in_widthStep, matrix_A_col_ptr += filter_pixStep_mul_filter_W)
+					{
+						cp_dst_ptr = matrix_A_col_ptr;
+						for (kw = 0, cur_in_pix_ptr = cur_in_row_ptr;
+							kw < filter_W;
+							kw++, cur_in_pix_ptr += dilate_W_mul_in_pixStep)
+						{
+							for (pp = 0, cp_src_ptr = cur_in_pix_ptr;
+								pp < filter_C;
+								pp += zq_mm_align_size, cp_src_ptr += zq_mm_align_size, cp_dst_ptr += zq_mm_align_size)
+								zq_mm_store_ps(cp_dst_ptr, zq_mm_load_ps(cp_src_ptr));
+						}
+					}
+
+					matrix_A_row_ptr += matrix_A_cols;
+				}
+			}
+		}
+	}
+	
 
 	t3 = omp_get_wtime();
 	/*gemm*/
@@ -428,6 +525,8 @@ void zq_cnn_conv_no_padding_gemm_32f_align_same_pixstep_batch(
 		int filter_sliceStep,
 		int stride_H,
 		int stride_W,
+		int dilation_H,
+		int dilation_W,
 		float* out_tensor4D_data,
 		int out_N,	// must be in_N
 		int out_H,	// must be (in_H - filter_H)/stride_H + 1
@@ -442,13 +541,15 @@ void zq_cnn_conv_no_padding_gemm_32f_align_same_pixstep_batch(
 		/************** image to col **************/
 		int in_widthStep_mul_stride_H = in_widthStep*stride_H;
 		int in_pixelStep_mul_stride_W = in_pixelStep*stride_W;
+		int dilate_H_mul_in_widthStep = dilation_H*in_widthStep;
+		int dilate_W_mul_in_pixStep = dilation_W*in_pixelStep;
 		int filter_pixStep_mul_filter_W = filter_pixelStep*filter_W;
 		int matrix_A_cols = filter_sliceStep;
 		int matrix_A_rows = out_N*out_H*out_W;
 		int matrix_B_cols = filter_N;
 		int matrix_B_rows = filter_sliceStep;
 		float* matrix_A = (float*)_aligned_malloc(matrix_A_rows*matrix_A_cols * sizeof(float), 32);
-		int out_n, out_h, out_w, kh, pp;
+		int out_n, out_h, out_w, kh,kw, pp;
 		const float* matrix_Bt = filters_data;
 		float* matrix_C, *matrix_C_row_ptr;
 		int out_HW = out_H*out_W;
@@ -494,21 +595,40 @@ void zq_cnn_conv_no_padding_gemm_32f_align_same_pixstep_batch(
 #pragma omp parallel for schedule(static,chunk_size) num_threads(thread_count)
 		for (idx = 0; idx < out_NHW; idx++)
 		{
-			const float* in_pix_ptr, *cur_in_row_ptr;
+			const float* in_pix_ptr, *cur_in_row_ptr, *cur_in_pix_ptr;
 			float* matrix_A_row_ptr, *matrix_A_col_ptr, *cp_dst_ptr;
 			const float* cp_src_ptr;
 			matrix_A_row_ptr = matrix_A + matA_offsets[idx];
 			in_pix_ptr = in_tensor4D_data + in_offsets[idx];
-			for (kh = 0, cur_in_row_ptr = in_pix_ptr, matrix_A_col_ptr = matrix_A_row_ptr;
-				kh < filter_H;
-				kh++, cur_in_row_ptr += in_widthStep, matrix_A_col_ptr += filter_pixStep_mul_filter_W)
+			if (dilation_W == 1)
 			{
-				//memcpy(matrix_A_col_ptr, cur_in_row_ptr, sizeof(float)*filter_pixStep_mul_filter_W);
-				for (pp = 0, cp_src_ptr = cur_in_row_ptr, cp_dst_ptr = matrix_A_col_ptr;
-					pp < filter_pixStep_mul_filter_W;
-					pp += zq_mm_align_size, cp_src_ptr += zq_mm_align_size, cp_dst_ptr += zq_mm_align_size)
-					zq_mm_store_ps(cp_dst_ptr, zq_mm_load_ps(cp_src_ptr));
+				for (kh = 0, cur_in_row_ptr = in_pix_ptr, matrix_A_col_ptr = matrix_A_row_ptr;
+					kh < filter_H;
+					kh++, cur_in_row_ptr += dilate_H_mul_in_widthStep, matrix_A_col_ptr += filter_pixStep_mul_filter_W)
+				{
+					//memcpy(matrix_A_col_ptr, cur_in_row_ptr, sizeof(float)*filter_pixStep_mul_filter_W);
+					for (pp = 0, cp_src_ptr = cur_in_row_ptr, cp_dst_ptr = matrix_A_col_ptr;
+						pp < filter_pixStep_mul_filter_W;
+						pp += zq_mm_align_size, cp_src_ptr += zq_mm_align_size, cp_dst_ptr += zq_mm_align_size)
+						zq_mm_store_ps(cp_dst_ptr, zq_mm_load_ps(cp_src_ptr));
 
+				}
+			}
+			else
+			{
+				for (kh = 0, cur_in_row_ptr = in_pix_ptr, matrix_A_col_ptr = matrix_A_row_ptr;
+					kh < filter_H;
+					kh++, cur_in_row_ptr += dilate_H_mul_in_widthStep, matrix_A_col_ptr += filter_pixStep_mul_filter_W)
+				{
+					cp_dst_ptr = matrix_A_col_ptr;
+					for (kw = 0, cur_in_pix_ptr = cur_in_row_ptr; kw < filter_W; kw++, cur_in_pix_ptr += dilate_W_mul_in_pixStep)
+					{
+						for (pp = 0, cp_src_ptr = cur_in_row_ptr;
+							pp < filter_C;
+							pp += zq_mm_align_size, cp_src_ptr += zq_mm_align_size, cp_dst_ptr += zq_mm_align_size)
+							zq_mm_store_ps(cp_dst_ptr, zq_mm_load_ps(cp_src_ptr));
+					}
+				}
 			}
 		}
 
@@ -584,6 +704,8 @@ void zq_cnn_conv_no_padding_gemm_32f_align_same_or_notsame_pixstep(
 	int filter_sliceStep,
 	int stride_H,
 	int stride_W,
+	int dilation_H,
+	int dilation_W,
 	float* out_tensor4D_data,
 	int out_N,	// must be in_N
 	int out_H,	// must be (in_H - filter_H)/stride_H + 1
@@ -598,6 +720,8 @@ void zq_cnn_conv_no_padding_gemm_32f_align_same_or_notsame_pixstep(
 	int common_align_pixStep = __min(in_pixelStep, filter_pixelStep);
 	int in_widthStep_mul_stride_H = in_widthStep*stride_H;
 	int in_pixelStep_mul_stride_W = in_pixelStep*stride_W;
+	int dilate_H_mul_in_widthStep = dilation_H*in_widthStep;
+	int dilate_W_mul_in_pixStep = dilation_W*in_pixelStep;
 	int common_pixStep_mul_filter_W = common_align_pixStep*filter_W;
 	int matrix_A_cols = filter_H*filter_W*common_align_pixStep;
 	int matrix_A_rows = out_H*out_W;
@@ -665,9 +789,9 @@ void zq_cnn_conv_no_padding_gemm_32f_align_same_or_notsame_pixstep(
 			for (out_w = 0, in_pix_ptr = in_row_ptr; out_w < out_W; out_w++, in_pix_ptr += in_pixelStep_mul_stride_W)
 			{
 				matrix_A_col_ptr = matrix_A_row_ptr;
-				for (kh = 0, cur_in_row_ptr = in_pix_ptr;kh < filter_H;	kh++, cur_in_row_ptr += in_widthStep)
+				for (kh = 0, cur_in_row_ptr = in_pix_ptr;kh < filter_H;	kh++, cur_in_row_ptr += dilate_H_mul_in_widthStep)
 				{
-					for (kw = 0, cur_in_pix_ptr = cur_in_row_ptr; kw < filter_W; kw++, cur_in_pix_ptr += in_pixelStep)
+					for (kw = 0, cur_in_pix_ptr = cur_in_row_ptr; kw < filter_W; kw++, cur_in_pix_ptr += dilate_W_mul_in_pixStep)
 					{
 						for (pp = 0, cp_src_ptr = cur_in_pix_ptr; pp < common_align_pixStep;
 							pp += zq_mm_align_size, cp_src_ptr += zq_mm_align_size)
@@ -742,6 +866,8 @@ void zq_cnn_conv_no_padding_gemm_32f_align_same_or_notsame_pixstep_omp(
 	int filter_sliceStep,
 	int stride_H,
 	int stride_W,
+	int dilation_H,
+	int dilation_W,
 	float* out_tensor4D_data,
 	int out_N,	// must be in_N
 	int out_H,	// must be (in_H - filter_H)/stride_H + 1
@@ -757,6 +883,8 @@ void zq_cnn_conv_no_padding_gemm_32f_align_same_or_notsame_pixstep_omp(
 	int common_align_pixStep = __min(in_pixelStep, filter_pixelStep);
 	int in_widthStep_mul_stride_H = in_widthStep*stride_H;
 	int in_pixelStep_mul_stride_W = in_pixelStep*stride_W;
+	int dilate_H_mul_in_widthStep = dilation_H*in_widthStep;
+	int dilate_W_mul_in_pixStep = dilation_W*in_pixelStep;
 	int common_pixStep_mul_filter_W = common_align_pixStep*filter_W;
 	int matrix_A_cols = filter_H*filter_W*common_align_pixStep;
 	int matrix_A_rows = out_H*out_W;
@@ -847,9 +975,9 @@ void zq_cnn_conv_no_padding_gemm_32f_align_same_or_notsame_pixstep_omp(
 			matrix_A_row_ptr = matrix_A + matA_offsets[idx];
 			in_pix_ptr = in_slice_ptr + in_offsets[idx];
 			matrix_A_col_ptr = matrix_A_row_ptr;
-			for (kh = 0, cur_in_row_ptr = in_pix_ptr; kh < filter_H; kh++, cur_in_row_ptr += in_widthStep)
+			for (kh = 0, cur_in_row_ptr = in_pix_ptr; kh < filter_H; kh++, cur_in_row_ptr += dilate_H_mul_in_widthStep)
 			{
-				for (kw = 0, cur_in_pix_ptr = cur_in_row_ptr; kw < filter_W; kw++, cur_in_pix_ptr += in_pixelStep)
+				for (kw = 0, cur_in_pix_ptr = cur_in_row_ptr; kw < filter_W; kw++, cur_in_pix_ptr += dilate_W_mul_in_pixStep)
 				{
 					for (pp = 0, cp_src_ptr = cur_in_pix_ptr; pp < common_align_pixStep;
 						pp += zq_mm_align_size, cp_src_ptr += zq_mm_align_size)
@@ -939,6 +1067,8 @@ void zq_cnn_conv_no_padding_gemm_32f_align_same_or_notsame_pixstep_C3(
 	int filter_sliceStep,
 	int stride_H,
 	int stride_W,
+	int dilation_H,
+	int dilation_W,
 	float* out_tensor4D_data,
 	int out_N,	// must be in_N
 	int out_H,	// must be (in_H - filter_H)/stride_H + 1
@@ -953,6 +1083,8 @@ void zq_cnn_conv_no_padding_gemm_32f_align_same_or_notsame_pixstep_C3(
 	int common_align_pixStep = __min(in_pixelStep, filter_pixelStep);
 	int in_widthStep_mul_stride_H = in_widthStep*stride_H;
 	int in_pixelStep_mul_stride_W = in_pixelStep*stride_W;
+	int dilate_H_mul_in_widthStep = dilation_H*in_widthStep;
+	int dilate_W_mul_in_pixStep = dilation_W*in_pixelStep;
 	int common_pixStep_mul_filter_W = common_align_pixStep*filter_W;
 	int matrix_A_cols = filter_H*filter_W*common_align_pixStep;
 	int matrix_A_rows = out_H*out_W;
@@ -1017,9 +1149,9 @@ void zq_cnn_conv_no_padding_gemm_32f_align_same_or_notsame_pixstep_C3(
 			for (out_w = 0, in_pix_ptr = in_row_ptr; out_w < out_W; out_w++, in_pix_ptr += in_pixelStep_mul_stride_W)
 			{
 				matrix_A_col_ptr = matrix_A_row_ptr;
-				for (kh = 0, cur_in_row_ptr = in_pix_ptr; kh < filter_H; kh++, cur_in_row_ptr += in_widthStep)
+				for (kh = 0, cur_in_row_ptr = in_pix_ptr; kh < filter_H; kh++, cur_in_row_ptr += dilate_H_mul_in_widthStep)
 				{
-					for (kw = 0, cur_in_pix_ptr = cur_in_row_ptr; kw < filter_W; kw++, cur_in_pix_ptr += in_pixelStep)
+					for (kw = 0, cur_in_pix_ptr = cur_in_row_ptr; kw < filter_W; kw++, cur_in_pix_ptr += dilate_W_mul_in_pixStep)
 					{
 						zq_mm_store_ps(matrix_A_col_ptr, zq_mm_load_ps(cur_in_pix_ptr));
 						matrix_A_col_ptr += zq_mm_align_size;
@@ -1089,6 +1221,8 @@ void zq_cnn_conv_no_padding_gemm_32f_align_same_or_notsame_pixstep_C3_omp(
 	int filter_sliceStep,
 	int stride_H,
 	int stride_W,
+	int dilation_H,
+	int dilation_W,
 	float* out_tensor4D_data,
 	int out_N,	// must be in_N
 	int out_H,	// must be (in_H - filter_H)/stride_H + 1
@@ -1104,6 +1238,8 @@ void zq_cnn_conv_no_padding_gemm_32f_align_same_or_notsame_pixstep_C3_omp(
 	int common_align_pixStep = __min(in_pixelStep, filter_pixelStep);
 	int in_widthStep_mul_stride_H = in_widthStep*stride_H;
 	int in_pixelStep_mul_stride_W = in_pixelStep*stride_W;
+	int dilate_H_mul_in_widthStep = dilation_H*in_widthStep;
+	int dilate_W_mul_in_pixStep = dilation_W*in_pixelStep;
 	int common_pixStep_mul_filter_W = common_align_pixStep*filter_W;
 	int matrix_A_cols = filter_H*filter_W*common_align_pixStep;
 	int matrix_A_rows = out_H*out_W;
@@ -1190,9 +1326,9 @@ void zq_cnn_conv_no_padding_gemm_32f_align_same_or_notsame_pixstep_C3_omp(
 			matrix_A_row_ptr = matrix_A + matA_offsets[idx];
 			in_pix_ptr = in_slice_ptr + in_offsets[idx];
 			matrix_A_col_ptr = matrix_A_row_ptr;
-			for (kh = 0, cur_in_row_ptr = in_pix_ptr; kh < filter_H; kh++, cur_in_row_ptr += in_widthStep)
+			for (kh = 0, cur_in_row_ptr = in_pix_ptr; kh < filter_H; kh++, cur_in_row_ptr += dilate_H_mul_in_widthStep)
 			{
-				for (kw = 0, cur_in_pix_ptr = cur_in_row_ptr; kw < filter_W; kw++, cur_in_pix_ptr += in_pixelStep)
+				for (kw = 0, cur_in_pix_ptr = cur_in_row_ptr; kw < filter_W; kw++, cur_in_pix_ptr += dilate_W_mul_in_pixStep)
 				{
 					zq_mm_store_ps(matrix_A_col_ptr, zq_mm_load_ps(cur_in_pix_ptr));
 					matrix_A_col_ptr += zq_mm_align_size;
@@ -1281,6 +1417,8 @@ void zq_cnn_conv_no_padding_gemm_32f_align_same_or_notsame_pixstep_batch(
 	int filter_sliceStep,
 	int stride_H,
 	int stride_W,
+	int dilation_H,
+	int dilation_W,
 	float* out_tensor4D_data,
 	int out_N,	// must be in_N
 	int out_H,	// must be (in_H - filter_H)/stride_H + 1
@@ -1295,6 +1433,8 @@ void zq_cnn_conv_no_padding_gemm_32f_align_same_or_notsame_pixstep_batch(
 	int common_align_pixStep = __min(in_pixelStep, filter_pixelStep);
 	int in_widthStep_mul_stride_H = in_widthStep*stride_H;
 	int in_pixelStep_mul_stride_W = in_pixelStep*stride_W;
+	int dilate_H_mul_in_widthStep = dilation_H*in_widthStep;
+	int dilate_W_mul_in_pixStep = dilation_W*in_pixelStep;
 	int filter_pixStep_mul_filter_W = filter_pixelStep*filter_W;
 	int matrix_A_cols = filter_H*filter_W*common_align_pixStep;
 	int matrix_A_rows = out_N*out_H*out_W;
@@ -1361,9 +1501,9 @@ void zq_cnn_conv_no_padding_gemm_32f_align_same_or_notsame_pixstep_batch(
 				matrix_A_col_ptr = matrix_A_row_ptr;
 				for (kh = 0, cur_in_row_ptr = in_pix_ptr;
 					kh < filter_H;
-					kh++, cur_in_row_ptr += in_widthStep)
+					kh++, cur_in_row_ptr += dilate_H_mul_in_widthStep)
 				{
-					for (kw = 0, cur_in_pix_ptr = cur_in_row_ptr; kw < filter_W; kw++, cur_in_pix_ptr += in_pixelStep)
+					for (kw = 0, cur_in_pix_ptr = cur_in_row_ptr; kw < filter_W; kw++, cur_in_pix_ptr += dilate_W_mul_in_pixStep)
 					{
 						for (pp = 0, cp_src_ptr = cur_in_pix_ptr; pp < common_align_pixStep;
 							pp += zq_mm_align_size, cp_src_ptr += zq_mm_align_size)
@@ -1438,6 +1578,8 @@ void zq_cnn_conv_no_padding_gemm_32f_align_same_or_notsame_pixstep_batch_omp(
 	int filter_sliceStep,
 	int stride_H,
 	int stride_W,
+	int dilation_H,
+	int dilation_W,
 	float* out_tensor4D_data,
 	int out_N,	// must be in_N
 	int out_H,	// must be (in_H - filter_H)/stride_H + 1
@@ -1453,6 +1595,8 @@ void zq_cnn_conv_no_padding_gemm_32f_align_same_or_notsame_pixstep_batch_omp(
 	int common_align_pixStep = __min(in_pixelStep, filter_pixelStep);
 	int in_widthStep_mul_stride_H = in_widthStep*stride_H;
 	int in_pixelStep_mul_stride_W = in_pixelStep*stride_W;
+	int dilate_H_mul_in_widthStep = dilation_H*in_widthStep;
+	int dilate_W_mul_in_pixStep = dilation_W*in_pixelStep;
 	int filter_pixStep_mul_filter_W = filter_pixelStep*filter_W;
 	int matrix_A_cols = filter_H*filter_W*common_align_pixStep;
 	int matrix_A_rows = out_N*out_H*out_W;
@@ -1541,9 +1685,9 @@ void zq_cnn_conv_no_padding_gemm_32f_align_same_or_notsame_pixstep_batch_omp(
 		matrix_A_col_ptr = matrix_A_row_ptr;
 		for (kh = 0, cur_in_row_ptr = in_pix_ptr;
 			kh < filter_H;
-			kh++, cur_in_row_ptr += in_widthStep)
+			kh++, cur_in_row_ptr += dilate_H_mul_in_widthStep)
 		{
-			for (kw = 0, cur_in_pix_ptr = cur_in_row_ptr; kw < filter_W; kw++, cur_in_pix_ptr += in_pixelStep)
+			for (kw = 0, cur_in_pix_ptr = cur_in_row_ptr; kw < filter_W; kw++, cur_in_pix_ptr += dilate_W_mul_in_pixStep)
 			{
 				for (pp = 0, cp_src_ptr = cur_in_pix_ptr; pp < common_align_pixStep;
 					pp += zq_mm_align_size, cp_src_ptr += zq_mm_align_size)

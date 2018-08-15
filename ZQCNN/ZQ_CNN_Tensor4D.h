@@ -47,11 +47,11 @@ namespace ZQ
 		virtual bool ChangeSize(int N, int H, int W, int C, int borderW, int borderH) = 0;
 		virtual void ShrinkToFit() = 0;
 		virtual bool IsBorderEnabled() const = 0;
-		virtual bool ConvertFromCompactNCHW(const float* data, int N, int C, int H, int W)
+		virtual bool ConvertFromCompactNCHW(const float* data, int N, int C, int H, int W, int borderW = 0, int borderH = 0)
 		{
-			if (data == 0 || !ChangeSize(N, H, W, C, 0, 0))
+			if (data == 0 || !ChangeSize(N, H, W, C, borderW, borderH))
 				return false;
-			memset(firstPixelData, 0, sizeof(float)*N*sliceStep);
+			memset(rawData, 0, sizeof(float)*N*sliceStep);
 			int CHW = C*H*W;
 			int HW = H*W;
 			for (int n = 0; n < N; n++)

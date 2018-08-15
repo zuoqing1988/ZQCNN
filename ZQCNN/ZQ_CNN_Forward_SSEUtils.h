@@ -15,7 +15,7 @@ namespace ZQ
 	{
 	public:
 		static bool ConvolutionWithBias(ZQ_CNN_Tensor4D& input, const ZQ_CNN_Tensor4D& filters, const ZQ_CNN_Tensor4D& bias,
-			int strideH, int strideW, int padH, int padW, ZQ_CNN_Tensor4D& output, int num_threads = 1)
+			int strideH, int strideW, int dilation_H, int dilation_W, int padH, int padW, ZQ_CNN_Tensor4D& output, int num_threads = 1)
 		{
 			//num_threads = 4;
 			double t1 = omp_get_wtime();
@@ -32,8 +32,10 @@ namespace ZQ
 			int out_W = output.GetW();
 			int out_C = output.GetC();
 			float bias_C = bias.GetC();
+			int need_H = (in_H - (filter_H - 1)*dilation_H - 1 + (padH << 1)) / strideH + 1;
+			int need_W = (in_W - (filter_W - 1)*dilation_W - 1 + (padW << 1)) / strideW + 1;
 			if (in_N <= 0 || in_H <= 0 || in_W <= 0 || in_C == 0
-				|| (in_H - filter_H + (padH << 1)) < 0  || (in_W - filter_W + (padW << 1)) < 0)
+				|| need_H < 0  || need_W < 0)
 			{
 				output.ChangeSize(0, 0, 0, 0, 0, 0);
 				return true;
@@ -42,8 +44,7 @@ namespace ZQ
 				return false;
 
 			int need_N = in_N;
-			int need_H = (in_H - filter_H + (padH << 1)) / strideH + 1;
-			int need_W = (in_W - filter_W + (padW << 1)) / strideW + 1;
+			
 			int need_C = filter_N;
 			if (out_N != need_N || out_H != need_H || out_W != need_W || out_C != need_C)
 			{
@@ -81,7 +82,7 @@ namespace ZQ
 			if (num_threads <= 1)
 			{
 				_convolution_nopadding(align_mode, in_firstPixelData, in_N, in_H + (padH << 1), in_W + (padW << 1), in_C, in_pixStep, in_widthStep, in_sliceStep,
-					filter_firstPixelData, filter_N, filter_H, filter_W, filter_C, filter_pixStep, filter_widthStep, filter_sliceStep, strideH, strideW,
+					filter_firstPixelData, filter_N, filter_H, filter_W, filter_C, filter_pixStep, filter_widthStep, filter_sliceStep, strideH, strideW, dilation_H, dilation_W,
 					out_firstPixelData, need_N, need_H, need_W, need_C, out_pixStep, out_widthStep, out_sliceStep);
 				_addbias(__min(bias.GetAlignType(), output.GetAlignType()), out_firstPixelData, need_N, need_H, need_W, need_C, out_pixStep, out_widthStep, out_sliceStep,
 					bias_firstPixelData);
@@ -89,7 +90,7 @@ namespace ZQ
 			else
 			{
 				_convolution_nopadding_omp(align_mode, in_firstPixelData, in_N, in_H + (padH << 1), in_W + (padW << 1), in_C, in_pixStep, in_widthStep, in_sliceStep,
-					filter_firstPixelData, filter_N, filter_H, filter_W, filter_C, filter_pixStep, filter_widthStep, filter_sliceStep, strideH, strideW,
+					filter_firstPixelData, filter_N, filter_H, filter_W, filter_C, filter_pixStep, filter_widthStep, filter_sliceStep, strideH, strideW, dilation_H, dilation_W,
 					out_firstPixelData, need_N, need_H, need_W, need_C, out_pixStep, out_widthStep, out_sliceStep, num_threads);
 				_addbias_omp(__min(bias.GetAlignType(), output.GetAlignType()), out_firstPixelData, need_N, need_H, need_W, need_C, out_pixStep, out_widthStep, out_sliceStep,
 					bias_firstPixelData, num_threads);
@@ -101,7 +102,7 @@ namespace ZQ
 			return true;
 		}
 
-		static bool Convolution(ZQ_CNN_Tensor4D& input, const ZQ_CNN_Tensor4D& filters, int strideH, int strideW, int padH, int padW,
+		static bool Convolution(ZQ_CNN_Tensor4D& input, const ZQ_CNN_Tensor4D& filters, int strideH, int strideW, int dilation_H, int dilation_W, int padH, int padW,
 			ZQ_CNN_Tensor4D& output, int num_threads = 1)
 		{
 			int in_N = input.GetN();
@@ -116,8 +117,10 @@ namespace ZQ
 			int out_H = output.GetH();
 			int out_W = output.GetW();
 			int out_C = output.GetC();
+			int need_H = (in_H - (filter_H - 1)*dilation_H - 1 + (padH << 1)) / strideH + 1;
+			int need_W = (in_W - (filter_W - 1)*dilation_W - 1 + (padW << 1)) / strideW + 1;
 			if (in_N <= 0 || in_H <= 0 || in_W <= 0 || in_C == 0
-				|| (in_H - filter_H + (padH << 1)) < 0 || (in_W - filter_W + (padW << 1)) < 0)
+				|| need_H < 0 || need_W < 0)
 			{
 				output.ChangeSize(0, 0, 0, 0, 0, 0);
 				return true;
@@ -126,8 +129,6 @@ namespace ZQ
 				return false;
 
 			int need_N = in_N;
-			int need_H = (in_H - filter_H + (padH << 1)) / strideH + 1;
-			int need_W = (in_W - filter_W + (padW << 1)) / strideW + 1;
 			int need_C = filter_N;
 			if (out_N != need_N || out_H != need_H || out_W != need_W || out_C != need_C)
 			{
@@ -165,13 +166,13 @@ namespace ZQ
 			if (num_threads <= 1)
 			{
 				_convolution_nopadding(align_mode, in_firstPixelData, in_N, in_H + (padH << 1), in_W + (padW << 1), in_C, in_pixStep, in_widthStep, in_sliceStep,
-					filter_firstPixelData, filter_N, filter_H, filter_W, filter_C, filter_pixStep, filter_widthStep, filter_sliceStep, strideH, strideW,
+					filter_firstPixelData, filter_N, filter_H, filter_W, filter_C, filter_pixStep, filter_widthStep, filter_sliceStep, strideH, strideW, dilation_H, dilation_W,
 					out_firstPixelData, need_N, need_H, need_W, need_C, out_pixStep, out_widthStep, out_sliceStep);
 			}
 			else
 			{
 				_convolution_nopadding_omp(align_mode, in_firstPixelData, in_N, in_H + (padH << 1), in_W + (padW << 1), in_C, in_pixStep, in_widthStep, in_sliceStep,
-					filter_firstPixelData, filter_N, filter_H, filter_W, filter_C, filter_pixStep, filter_widthStep, filter_sliceStep, strideH, strideW,
+					filter_firstPixelData, filter_N, filter_H, filter_W, filter_C, filter_pixStep, filter_widthStep, filter_sliceStep, strideH, strideW, dilation_H, dilation_W,
 					out_firstPixelData, need_N, need_H, need_W, need_C, out_pixStep, out_widthStep, out_sliceStep, num_threads);
 			}
 			
@@ -1357,6 +1358,25 @@ namespace ZQ
 			return true;
 		}
 
+		static bool Normalize(ZQ_CNN_Tensor4D& input, ZQ_CNN_Tensor4D& scale, bool across_spatial, bool channel_shared, const float eps=1e-10, int num_threads = 1)
+		{
+			int N = input.GetN();
+			int H = input.GetH();
+			int W = input.GetW();
+			int C = input.GetC();
+			if (N <= 0 || H <= 0 || W <= 0 || C <= 0)
+				return true;
+			
+			int in_pixStep = input.GetPixelStep();
+			int in_widthStep = input.GetWidthStep();
+			int in_sliceStep = input.GetSliceStep();
+			float* in_data = input.GetFirstPixelPtr();
+			const float* scale_data = scale.GetFirstPixelPtr();
+			int align_mode = __min(input.GetAlignType(), scale.GetAlignType());
+			_normalize(align_mode, across_spatial, channel_shared, in_data, scale_data, N, H, W, C, in_pixStep, in_widthStep, in_sliceStep,eps, num_threads);
+			return true;
+		}
+
 		static bool Permute(const ZQ_CNN_Tensor4D& input, const int order[4], ZQ_CNN_Tensor4D& output, int num_threads = 1)
 		{
 			return input.Permute_NCHW(output, order, num_threads);
@@ -1379,6 +1399,16 @@ namespace ZQ
 			ZQ_CNN_Tensor4D& output, int num_threads = 1)
 		{
 			return _prior_box(input, data, min_sizes, max_sizes, aspect_ratios, variance, flip, num_priors, clip, img_w, img_h, step_w, step_h, offset, 
+				output, num_threads);
+		}
+
+		static bool PriorBoxText(const ZQ_CNN_Tensor4D& input, const ZQ_CNN_Tensor4D& data,
+			const std::vector<float>& min_sizes, const std::vector<float>& max_sizes,
+			const std::vector<float>& aspect_ratios, const std::vector<float>& variance,
+			bool flip, int num_priors, bool clip, int img_w, int img_h, float step_w, float step_h, float offset,
+			ZQ_CNN_Tensor4D& output, int num_threads = 1)
+		{
+			return _prior_box_text(input, data, min_sizes, max_sizes, aspect_ratios, variance, flip, num_priors, clip, img_w, img_h, step_w, step_h, offset,
 				output, num_threads);
 		}
 
@@ -1405,14 +1435,14 @@ namespace ZQ
 
 	private:
 		static void _convolution_nopadding(int align_mode, const float* in_data, int in_N, int in_H, int in_W,
-			int in_C, int in_pixStep, int in_widthStep, int in_sliceStep,
-			const float* filter_data, int filter_N, int filter_H, int filter_W, int filter_C, int filter_pixStep, int filter_widthStep, int filter_sliceStep,
-			int strideH, int strideW, float* out_data, int out_N, int out_H, int out_W, int out_C, int out_pixStep, int out_widthStep, int out_sliceStep);
+			int in_C, int in_pixStep, int in_widthStep, int in_sliceStep,const float* filter_data, int filter_N, int filter_H, int filter_W, int filter_C, 
+			int filter_pixStep, int filter_widthStep, int filter_sliceStep,	int strideH, int strideW, int dilation_H, int dilation_W,
+			float* out_data, int out_N, int out_H, int out_W, int out_C, int out_pixStep, int out_widthStep, int out_sliceStep);
 
 		static void _convolution_nopadding_omp(int align_mode, const float* in_data, int in_N, int in_H, int in_W,
-			int in_C, int in_pixStep, int in_widthStep, int in_sliceStep,
-			const float* filter_data, int filter_N, int filter_H, int filter_W, int filter_C, int filter_pixStep, int filter_widthStep, int filter_sliceStep,
-			int strideH, int strideW, float* out_data, int out_N, int out_H, int out_W, int out_C, int out_pixStep, int out_widthStep, int out_sliceStep, int num_threads);
+			int in_C, int in_pixStep, int in_widthStep, int in_sliceStep, const float* filter_data, int filter_N, int filter_H, int filter_W, int filter_C, 
+			int filter_pixStep, int filter_widthStep, int filter_sliceStep, int strideH, int strideW, int dilation_H, int dilation_W, 
+			float* out_data, int out_N, int out_H, int out_W, int out_C, int out_pixStep, int out_widthStep, int out_sliceStep, int num_threads);
 
 		static void _depthwise_convolution_nopadding(int align_mode, const float* in_data, int in_N, int in_H, int in_W,
 			int in_C, int in_pixStep, int in_widthStep, int in_sliceStep,
@@ -1566,7 +1596,16 @@ namespace ZQ
 		static void _lrn_across_channels(int align_mode, int local_size, float alpha, float beta, float k, const float* in_data, int N, int H, int W, int C,
 			int in_pixStep, int in_widthStep, int in_sliceStep, float* out_data, int out_pixStep, int out_widthStep, int out_sliceStep, int num_threads);
 
+		static void _normalize(int align_mode, bool across_spatial, bool channel_shared, float* in_data, const float* scale, int N, int H, int W, int C, 
+			int in_pixStep, int in_widthStep, int in_sliceStep, const float eps, int num_threads);
+
 		static bool _prior_box(const ZQ_CNN_Tensor4D& input, const ZQ_CNN_Tensor4D& data,
+			const std::vector<float>& min_sizes, const std::vector<float>& max_sizes,
+			const std::vector<float>& aspect_ratios, const std::vector<float>& variance,
+			bool flip, int num_priors, bool clip, int img_w, int img_h, float step_w, float step_h, float offset,
+			ZQ_CNN_Tensor4D& output, int num_threads);
+
+		static bool _prior_box_text(const ZQ_CNN_Tensor4D& input, const ZQ_CNN_Tensor4D& data,
 			const std::vector<float>& min_sizes, const std::vector<float>& max_sizes,
 			const std::vector<float>& aspect_ratios, const std::vector<float>& variance,
 			bool flip, int num_priors, bool clip, int img_w, int img_h, float step_w, float step_h, float offset,

@@ -419,6 +419,24 @@ namespace ZQ
 						return false;
 					}
 				}
+				else if (_strcmpi(&buf[0], "Normalize") == 0)
+				{
+					if (layers.size() == 0)
+					{
+						std::cout << "Input layer must be the first!\n";
+						return false;
+					}
+					ZQ_CNN_Layer* cur_layer = new ZQ_CNN_Layer_Normalize();
+					if (cur_layer == 0) {
+						std::cout << "failed to create a LRN layer!\n";
+						return false;
+					}
+					if (!_add_layer_and_blobs(cur_layer, line, false))
+					{
+						delete cur_layer;
+						return false;
+					}
+				}
 				else if (_strcmpi(&buf[0], "Permute") == 0)
 				{
 					if (layers.size() == 0)
@@ -483,6 +501,24 @@ namespace ZQ
 					ZQ_CNN_Layer* cur_layer = new ZQ_CNN_Layer_PriorBox();
 					if (cur_layer == 0) {
 						std::cout << "failed to create a PriorBox layer!\n";
+						return false;
+					}
+					if (!_add_layer_and_blobs(cur_layer, line, false))
+					{
+						delete cur_layer;
+						return false;
+					}
+				}
+				else if (_strcmpi(&buf[0], "PriorBoxText") == 0)
+				{
+					if (layers.size() == 0)
+					{
+						std::cout << "Input layer must be the first!\n";
+						return false;
+					}
+					ZQ_CNN_Layer* cur_layer = new ZQ_CNN_Layer_PriorBoxText();
+					if (cur_layer == 0) {
+						std::cout << "failed to create a PriorBoxText layer!\n";
 						return false;
 					}
 					if (!_add_layer_and_blobs(cur_layer, line, false))

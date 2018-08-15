@@ -19,6 +19,15 @@ namespace ZQ
 		bool difficult;
 		float score;
 		float size;
+
+		ZQ_CNN_NormalizedBBox()
+		{
+			col1 = col2 = row1 = row2 = 0;
+			label = -1;
+			difficult = false;
+			score = 0;
+			size = 1;
+		}
 	};
 
 	using ZQ_CNN_LabelBBox = std::map<int, std::vector<ZQ_CNN_NormalizedBBox>>;

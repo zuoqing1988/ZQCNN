@@ -172,6 +172,8 @@ extern "C" {
 		int filter_SliceStep,
 		int stride_H,
 		int stride_W,
+		int dilation_H,
+		int dilation_W,
 		float* out_tensor4D_data,
 		int out_N,	// must be in_N
 		int out_H,	// must be (in_H - filter_H)/stride_H + 1
@@ -182,8 +184,6 @@ extern "C" {
 		int out_alignSliceStep
 	)
 	{
-
-#if 1
 		float sum;
 		const float* in_slice_ptr;
 		const float* in_row_ptr;
@@ -203,6 +203,8 @@ extern "C" {
 
 		int stride_H_mul_in_WidthStep = stride_H*in_widthStep;
 		int stride_W_mul_in_pixStep = stride_W*in_alignPixelStep;
+		int dilate_H_mul_in_widthStep = dilation_H*in_widthStep;
+		int dilate_W_mul_in_pixStep = dilation_W*in_alignPixelStep;
 		int out_n, out_h, out_w, out_c, kh, kw, kc;
 
 
@@ -225,11 +227,11 @@ extern "C" {
 						sum = 0;
 						for (kh = 0, cur_filter_row_ptr = cur_filter_slice_ptr, cur_in_row_ptr = in_pix_ptr;
 							kh < filter_H;
-							kh++, cur_in_row_ptr += in_widthStep, cur_filter_row_ptr += filter_widthStep)
+							kh++, cur_in_row_ptr += dilate_H_mul_in_widthStep, cur_filter_row_ptr += filter_widthStep)
 						{
 							for (kw = 0, cur_in_pix_ptr = cur_in_row_ptr, cur_filter_pix_ptr = cur_filter_row_ptr;
 								kw < filter_W;
-								kw++, cur_in_pix_ptr += in_alignPixelStep, cur_filter_pix_ptr += filter_alignPixelStep)
+								kw++, cur_in_pix_ptr += dilate_W_mul_in_pixStep, cur_filter_pix_ptr += filter_alignPixelStep)
 							{
 								for (kc = 0, cur_in_c_ptr = cur_in_pix_ptr, cur_filter_c_ptr = cur_filter_pix_ptr;
 									kc < filter_C;
@@ -244,47 +246,6 @@ extern "C" {
 				}
 			}
 		}
-
-#else 
-		for (int n = 0; n < in_N; n++)
-		{
-			const float* cur_src = in_tensor4D_data + n*in_SliceStep;
-			float* cur_dst = out_tensor4D_data + n*out_alignSliceStep;
-			for (int out_c = 0; out_c < out_C; out_c++)
-			{
-				const float* wData = filters_data + out_c*filter_SliceStep;
-
-				for (int out_h = 0; out_h < out_H; out_h++)
-				{
-					for (int out_w = 0; out_w < out_W; out_w++)
-					{
-						const float* in_data = cur_src + (out_h*stride_H)*in_widthStep + out_w*stride_W*in_alignPixelStep;
-						float* out_data = cur_dst + out_h*out_alignWidthStep + out_w*out_alignPixelStep + out_c;
-						float out_sum = 0;
-
-						int w_idx = 0;
-
-						for (int in_c = 0; in_c < filter_C; in_c++)
-						{
-							for (int in_h = 0; in_h < filter_H; in_h++)
-							{
-								for (int in_w = 0; in_w < filter_W; in_w++)
-								{
-									//	printf("(%d %d %d)%f %f\n", in_c, in_h, in_w, wData[in_h*filter_widthStep + in_w*filter_alignPixelStep + in_c], in_data[in_h*in_widthStep + in_w*in_alignPixelStep + in_c]);
-									out_sum += wData[in_h*filter_widthStep + in_w*filter_alignPixelStep + in_c] * in_data[in_h*in_widthStep + in_w*in_alignPixelStep + in_c];
-								}
-							}
-						}
-						if (bias != NULL)
-							out_data[0] = out_sum + bias[out_c];
-						else
-							out_data[0] = out_sum;
-						//	printf("[%d,%d,%d]%f\n", out_h, out_w, out_c, out_sum);
-					}
-				}
-			}
-		}
-#endif
 	}
 
 
@@ -307,6 +268,8 @@ extern "C" {
 		int filter_SliceStep,
 		int stride_H,
 		int stride_W,
+		int dilation_H,
+		int dilation_W,
 		float* out_tensor4D_data,
 		int out_N,	// must be in_N
 		int out_H,	// must be (in_H - filter_H)/stride_H + 1
@@ -320,6 +283,8 @@ extern "C" {
 	{
 		int stride_H_mul_in_WidthStep = stride_H*in_widthStep;
 		int stride_W_mul_in_pixStep = stride_W*in_alignPixelStep;
+		int dilate_H_mul_in_widthStep = dilation_H*in_widthStep;
+		int dilate_W_mul_in_pixStep = dilation_W*in_alignPixelStep;
 		int out_n, out_h, out_w, out_c, kh, kw, kc;
 
 		int out_HW = out_H*out_W;
@@ -358,11 +323,11 @@ extern "C" {
 				sum = 0;
 				for (kh = 0, cur_filter_row_ptr = cur_filter_slice_ptr, cur_in_row_ptr = in_pix_ptr;
 					kh < filter_H;
-					kh++, cur_in_row_ptr += in_widthStep, cur_filter_row_ptr += filter_widthStep)
+					kh++, cur_in_row_ptr += dilate_H_mul_in_widthStep, cur_filter_row_ptr += filter_widthStep)
 				{
 					for (kw = 0, cur_in_pix_ptr = cur_in_row_ptr, cur_filter_pix_ptr = cur_filter_row_ptr;
 						kw < filter_W;
-						kw++, cur_in_pix_ptr += in_alignPixelStep, cur_filter_pix_ptr += filter_alignPixelStep)
+						kw++, cur_in_pix_ptr += dilate_W_mul_in_pixStep, cur_filter_pix_ptr += filter_alignPixelStep)
 					{
 						for (kc = 0, cur_in_c_ptr = cur_in_pix_ptr, cur_filter_c_ptr = cur_filter_pix_ptr;
 							kc < filter_C;
@@ -418,6 +383,8 @@ extern "C" {
 		int filter_sliceStep,
 		int stride_H,
 		int stride_W,
+		int dilation_H,
+		int dilation_W,
 		float* out_tensor4D_data,
 		int out_N,	// must be in_N
 		int out_H,	// must be (in_H - filter_H)/stride_H + 1
@@ -447,6 +414,8 @@ extern "C" {
 
 		int stride_H_mul_in_WidthStep = stride_H*in_widthStep;
 		int stride_W_mul_in_pixStep = stride_W*in_pixelStep;
+		int dilate_H_mul_in_widthStep = dilation_H*in_widthStep;
+		int dilate_W_mul_in_pixStep = dilation_W*in_pixelStep;
 		int out_n, out_h, out_w, out_c;
 		double t1, t2;
 		t1 = omp_get_wtime();
@@ -472,27 +441,27 @@ extern "C" {
 
 						cur_in_pix_ptr = cur_in_row_ptr;	cur_filter_pix_ptr = cur_filter_row_ptr;
 						sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr), zq_mm_load_ps(cur_filter_pix_ptr), sum);
-						cur_in_pix_ptr += in_pixelStep;	cur_filter_pix_ptr += filter_pixelStep;
+						cur_in_pix_ptr += dilate_W_mul_in_pixStep;	cur_filter_pix_ptr += filter_pixelStep;
 						sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr), zq_mm_load_ps(cur_filter_pix_ptr), sum);
-						cur_in_pix_ptr += in_pixelStep;	cur_filter_pix_ptr += filter_pixelStep;
-						sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr), zq_mm_load_ps(cur_filter_pix_ptr), sum);
-
-						cur_in_row_ptr += in_widthStep; cur_filter_row_ptr += filter_widthStep;
-
-						cur_in_pix_ptr = cur_in_row_ptr;	cur_filter_pix_ptr = cur_filter_row_ptr;
-						sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr), zq_mm_load_ps(cur_filter_pix_ptr), sum);
-						cur_in_pix_ptr += in_pixelStep;	cur_filter_pix_ptr += filter_pixelStep;
-						sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr), zq_mm_load_ps(cur_filter_pix_ptr), sum);
-						cur_in_pix_ptr += in_pixelStep;	cur_filter_pix_ptr += filter_pixelStep;
+						cur_in_pix_ptr += dilate_W_mul_in_pixStep;	cur_filter_pix_ptr += filter_pixelStep;
 						sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr), zq_mm_load_ps(cur_filter_pix_ptr), sum);
 
-						cur_in_row_ptr += in_widthStep; cur_filter_row_ptr += filter_widthStep;
+						cur_in_row_ptr += dilate_H_mul_in_widthStep; cur_filter_row_ptr += filter_widthStep;
 
 						cur_in_pix_ptr = cur_in_row_ptr;	cur_filter_pix_ptr = cur_filter_row_ptr;
 						sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr), zq_mm_load_ps(cur_filter_pix_ptr), sum);
-						cur_in_pix_ptr += in_pixelStep;	cur_filter_pix_ptr += filter_pixelStep;
+						cur_in_pix_ptr += dilate_W_mul_in_pixStep;	cur_filter_pix_ptr += filter_pixelStep;
 						sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr), zq_mm_load_ps(cur_filter_pix_ptr), sum);
-						cur_in_pix_ptr += in_pixelStep;	cur_filter_pix_ptr += filter_pixelStep;
+						cur_in_pix_ptr += dilate_W_mul_in_pixStep;	cur_filter_pix_ptr += filter_pixelStep;
+						sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr), zq_mm_load_ps(cur_filter_pix_ptr), sum);
+
+						cur_in_row_ptr += dilate_H_mul_in_widthStep; cur_filter_row_ptr += filter_widthStep;
+
+						cur_in_pix_ptr = cur_in_row_ptr;	cur_filter_pix_ptr = cur_filter_row_ptr;
+						sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr), zq_mm_load_ps(cur_filter_pix_ptr), sum);
+						cur_in_pix_ptr += dilate_W_mul_in_pixStep;	cur_filter_pix_ptr += filter_pixelStep;
+						sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr), zq_mm_load_ps(cur_filter_pix_ptr), sum);
+						cur_in_pix_ptr += dilate_W_mul_in_pixStep;	cur_filter_pix_ptr += filter_pixelStep;
 						sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr), zq_mm_load_ps(cur_filter_pix_ptr), sum);
 						zq_mm_store_ps(q, sum);
 						*out_c_ptr = zq_final_sum_q;
@@ -526,6 +495,8 @@ extern "C" {
 		int filter_sliceStep,
 		int stride_H,
 		int stride_W,
+		int dilation_H,
+		int dilation_W,
 		float* out_tensor4D_data,
 		int out_N,	// must be in_N
 		int out_H,	// must be (in_H - filter_H)/stride_H + 1
@@ -539,6 +510,8 @@ extern "C" {
 	{
 		int stride_H_mul_in_WidthStep = stride_H*in_widthStep;
 		int stride_W_mul_in_pixStep = stride_W*in_pixelStep;
+		int dilate_H_mul_in_widthStep = dilation_H*in_widthStep;
+		int dilate_W_mul_in_pixStep = dilation_W*in_pixelStep;
 		int out_n, out_h, out_w, out_c;
 		double t1, t2;
 
@@ -583,27 +556,27 @@ extern "C" {
 
 				cur_in_pix_ptr = cur_in_row_ptr;	cur_filter_pix_ptr = cur_filter_row_ptr;
 				sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr), zq_mm_load_ps(cur_filter_pix_ptr), sum);
-				cur_in_pix_ptr += in_pixelStep;	cur_filter_pix_ptr += filter_pixelStep;
+				cur_in_pix_ptr += dilate_W_mul_in_pixStep;	cur_filter_pix_ptr += filter_pixelStep;
 				sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr), zq_mm_load_ps(cur_filter_pix_ptr), sum);
-				cur_in_pix_ptr += in_pixelStep;	cur_filter_pix_ptr += filter_pixelStep;
-				sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr), zq_mm_load_ps(cur_filter_pix_ptr), sum);
-
-				cur_in_row_ptr += in_widthStep; cur_filter_row_ptr += filter_widthStep;
-
-				cur_in_pix_ptr = cur_in_row_ptr;	cur_filter_pix_ptr = cur_filter_row_ptr;
-				sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr), zq_mm_load_ps(cur_filter_pix_ptr), sum);
-				cur_in_pix_ptr += in_pixelStep;	cur_filter_pix_ptr += filter_pixelStep;
-				sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr), zq_mm_load_ps(cur_filter_pix_ptr), sum);
-				cur_in_pix_ptr += in_pixelStep;	cur_filter_pix_ptr += filter_pixelStep;
+				cur_in_pix_ptr += dilate_W_mul_in_pixStep;	cur_filter_pix_ptr += filter_pixelStep;
 				sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr), zq_mm_load_ps(cur_filter_pix_ptr), sum);
 
-				cur_in_row_ptr += in_widthStep; cur_filter_row_ptr += filter_widthStep;
+				cur_in_row_ptr += dilate_H_mul_in_widthStep; cur_filter_row_ptr += filter_widthStep;
 
 				cur_in_pix_ptr = cur_in_row_ptr;	cur_filter_pix_ptr = cur_filter_row_ptr;
 				sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr), zq_mm_load_ps(cur_filter_pix_ptr), sum);
-				cur_in_pix_ptr += in_pixelStep;	cur_filter_pix_ptr += filter_pixelStep;
+				cur_in_pix_ptr += dilate_W_mul_in_pixStep;	cur_filter_pix_ptr += filter_pixelStep;
 				sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr), zq_mm_load_ps(cur_filter_pix_ptr), sum);
-				cur_in_pix_ptr += in_pixelStep;	cur_filter_pix_ptr += filter_pixelStep;
+				cur_in_pix_ptr += dilate_W_mul_in_pixStep;	cur_filter_pix_ptr += filter_pixelStep;
+				sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr), zq_mm_load_ps(cur_filter_pix_ptr), sum);
+
+				cur_in_row_ptr += dilate_H_mul_in_widthStep; cur_filter_row_ptr += filter_widthStep;
+
+				cur_in_pix_ptr = cur_in_row_ptr;	cur_filter_pix_ptr = cur_filter_row_ptr;
+				sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr), zq_mm_load_ps(cur_filter_pix_ptr), sum);
+				cur_in_pix_ptr += dilate_W_mul_in_pixStep;	cur_filter_pix_ptr += filter_pixelStep;
+				sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr), zq_mm_load_ps(cur_filter_pix_ptr), sum);
+				cur_in_pix_ptr += dilate_W_mul_in_pixStep;	cur_filter_pix_ptr += filter_pixelStep;
 				sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr), zq_mm_load_ps(cur_filter_pix_ptr), sum);
 				zq_mm_store_ps(q, sum);
 				*out_c_ptr = zq_final_sum_q;
@@ -636,6 +609,8 @@ extern "C" {
 		int filter_sliceStep,
 		int stride_H,
 		int stride_W,
+		int dilation_H,
+		int dilation_W,
 		float* out_tensor4D_data,
 		int out_N,	// must be in_N
 		int out_H,	// must be (in_H - filter_H)/stride_H + 1
@@ -665,6 +640,8 @@ extern "C" {
 
 		int stride_H_mul_in_WidthStep = stride_H*in_widthStep;
 		int stride_W_mul_in_pixStep = stride_W*in_pixelStep;
+		int dilate_H_mul_in_widthStep = dilation_H*in_widthStep;
+		int dilate_W_mul_in_pixStep = dilation_W*in_pixelStep;
 		int out_n, out_h, out_w, out_c;
 		double t1, t2;
 		t1 = omp_get_wtime();
@@ -691,34 +668,34 @@ extern "C" {
 						cur_in_pix_ptr = cur_in_row_ptr;	cur_filter_pix_ptr = cur_filter_row_ptr;
 						sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr), zq_mm_load_ps(cur_filter_pix_ptr), sum);
 						sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size), sum);
-						cur_in_pix_ptr += in_pixelStep;	cur_filter_pix_ptr += filter_pixelStep;
+						cur_in_pix_ptr += dilate_W_mul_in_pixStep;	cur_filter_pix_ptr += filter_pixelStep;
 						sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr), zq_mm_load_ps(cur_filter_pix_ptr), sum);
 						sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size), sum);
-						cur_in_pix_ptr += in_pixelStep;	cur_filter_pix_ptr += filter_pixelStep;
-						sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr), zq_mm_load_ps(cur_filter_pix_ptr), sum);
-						sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size), sum);
-
-						cur_in_row_ptr += in_widthStep; cur_filter_row_ptr += filter_widthStep;
-
-						cur_in_pix_ptr = cur_in_row_ptr;	cur_filter_pix_ptr = cur_filter_row_ptr;
-						sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr), zq_mm_load_ps(cur_filter_pix_ptr), sum);
-						sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size), sum);
-						cur_in_pix_ptr += in_pixelStep;	cur_filter_pix_ptr += filter_pixelStep;
-						sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr), zq_mm_load_ps(cur_filter_pix_ptr), sum);
-						sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size), sum);
-						cur_in_pix_ptr += in_pixelStep;	cur_filter_pix_ptr += filter_pixelStep;
+						cur_in_pix_ptr += dilate_W_mul_in_pixStep;	cur_filter_pix_ptr += filter_pixelStep;
 						sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr), zq_mm_load_ps(cur_filter_pix_ptr), sum);
 						sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size), sum);
 
-						cur_in_row_ptr += in_widthStep; cur_filter_row_ptr += filter_widthStep;
+						cur_in_row_ptr += dilate_H_mul_in_widthStep; cur_filter_row_ptr += filter_widthStep;
 
 						cur_in_pix_ptr = cur_in_row_ptr;	cur_filter_pix_ptr = cur_filter_row_ptr;
 						sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr), zq_mm_load_ps(cur_filter_pix_ptr), sum);
 						sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size), sum);
-						cur_in_pix_ptr += in_pixelStep;	cur_filter_pix_ptr += filter_pixelStep;
+						cur_in_pix_ptr += dilate_W_mul_in_pixStep;	cur_filter_pix_ptr += filter_pixelStep;
 						sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr), zq_mm_load_ps(cur_filter_pix_ptr), sum);
 						sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size), sum);
-						cur_in_pix_ptr += in_pixelStep;	cur_filter_pix_ptr += filter_pixelStep;
+						cur_in_pix_ptr += dilate_W_mul_in_pixStep;	cur_filter_pix_ptr += filter_pixelStep;
+						sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr), zq_mm_load_ps(cur_filter_pix_ptr), sum);
+						sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size), sum);
+
+						cur_in_row_ptr += dilate_H_mul_in_widthStep; cur_filter_row_ptr += filter_widthStep;
+
+						cur_in_pix_ptr = cur_in_row_ptr;	cur_filter_pix_ptr = cur_filter_row_ptr;
+						sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr), zq_mm_load_ps(cur_filter_pix_ptr), sum);
+						sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size), sum);
+						cur_in_pix_ptr += dilate_W_mul_in_pixStep;	cur_filter_pix_ptr += filter_pixelStep;
+						sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr), zq_mm_load_ps(cur_filter_pix_ptr), sum);
+						sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size), sum);
+						cur_in_pix_ptr += dilate_W_mul_in_pixStep;	cur_filter_pix_ptr += filter_pixelStep;
 						sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr), zq_mm_load_ps(cur_filter_pix_ptr), sum);
 						sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size), sum);
 						zq_mm_store_ps(q, sum);
@@ -752,6 +729,8 @@ extern "C" {
 		int filter_sliceStep,
 		int stride_H,
 		int stride_W,
+		int dilation_H,
+		int dilation_W,
 		float* out_tensor4D_data,
 		int out_N,	// must be in_N
 		int out_H,	// must be (in_H - filter_H)/stride_H + 1
@@ -765,6 +744,8 @@ extern "C" {
 	{
 		int stride_H_mul_in_WidthStep = stride_H*in_widthStep;
 		int stride_W_mul_in_pixStep = stride_W*in_pixelStep;
+		int dilate_H_mul_in_widthStep = dilation_H*in_widthStep;
+		int dilate_W_mul_in_pixStep = dilation_W*in_pixelStep;
 		int out_n, out_h, out_w, out_c;
 		double t1, t2;
 		int out_HW = out_H*out_W;
@@ -808,34 +789,34 @@ extern "C" {
 				cur_in_pix_ptr = cur_in_row_ptr;	cur_filter_pix_ptr = cur_filter_row_ptr;
 				sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr), zq_mm_load_ps(cur_filter_pix_ptr), sum);
 				sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size), sum);
-				cur_in_pix_ptr += in_pixelStep;	cur_filter_pix_ptr += filter_pixelStep;
+				cur_in_pix_ptr += dilate_W_mul_in_pixStep;	cur_filter_pix_ptr += filter_pixelStep;
 				sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr), zq_mm_load_ps(cur_filter_pix_ptr), sum);
 				sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size), sum);
-				cur_in_pix_ptr += in_pixelStep;	cur_filter_pix_ptr += filter_pixelStep;
-				sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr), zq_mm_load_ps(cur_filter_pix_ptr), sum);
-				sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size), sum);
-
-				cur_in_row_ptr += in_widthStep; cur_filter_row_ptr += filter_widthStep;
-
-				cur_in_pix_ptr = cur_in_row_ptr;	cur_filter_pix_ptr = cur_filter_row_ptr;
-				sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr), zq_mm_load_ps(cur_filter_pix_ptr), sum);
-				sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size), sum);
-				cur_in_pix_ptr += in_pixelStep;	cur_filter_pix_ptr += filter_pixelStep;
-				sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr), zq_mm_load_ps(cur_filter_pix_ptr), sum);
-				sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size), sum);
-				cur_in_pix_ptr += in_pixelStep;	cur_filter_pix_ptr += filter_pixelStep;
+				cur_in_pix_ptr += dilate_W_mul_in_pixStep;	cur_filter_pix_ptr += filter_pixelStep;
 				sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr), zq_mm_load_ps(cur_filter_pix_ptr), sum);
 				sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size), sum);
 
-				cur_in_row_ptr += in_widthStep; cur_filter_row_ptr += filter_widthStep;
+				cur_in_row_ptr += dilate_H_mul_in_widthStep; cur_filter_row_ptr += filter_widthStep;
 
 				cur_in_pix_ptr = cur_in_row_ptr;	cur_filter_pix_ptr = cur_filter_row_ptr;
 				sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr), zq_mm_load_ps(cur_filter_pix_ptr), sum);
 				sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size), sum);
-				cur_in_pix_ptr += in_pixelStep;	cur_filter_pix_ptr += filter_pixelStep;
+				cur_in_pix_ptr += dilate_W_mul_in_pixStep;	cur_filter_pix_ptr += filter_pixelStep;
 				sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr), zq_mm_load_ps(cur_filter_pix_ptr), sum);
 				sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size), sum);
-				cur_in_pix_ptr += in_pixelStep;	cur_filter_pix_ptr += filter_pixelStep;
+				cur_in_pix_ptr += dilate_W_mul_in_pixStep;	cur_filter_pix_ptr += filter_pixelStep;
+				sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr), zq_mm_load_ps(cur_filter_pix_ptr), sum);
+				sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size), sum);
+
+				cur_in_row_ptr += dilate_H_mul_in_widthStep; cur_filter_row_ptr += filter_widthStep;
+
+				cur_in_pix_ptr = cur_in_row_ptr;	cur_filter_pix_ptr = cur_filter_row_ptr;
+				sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr), zq_mm_load_ps(cur_filter_pix_ptr), sum);
+				sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size), sum);
+				cur_in_pix_ptr += dilate_W_mul_in_pixStep;	cur_filter_pix_ptr += filter_pixelStep;
+				sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr), zq_mm_load_ps(cur_filter_pix_ptr), sum);
+				sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size), sum);
+				cur_in_pix_ptr += dilate_W_mul_in_pixStep;	cur_filter_pix_ptr += filter_pixelStep;
 				sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr), zq_mm_load_ps(cur_filter_pix_ptr), sum);
 				sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size), sum);
 				zq_mm_store_ps(q, sum);
@@ -869,6 +850,8 @@ extern "C" {
 		int filter_sliceStep,
 		int stride_H,
 		int stride_W,
+		int dilation_H,
+		int dilation_W,
 		float* out_tensor4D_data,
 		int out_N,	// must be in_N
 		int out_H,	// must be (in_H - filter_H)/stride_H + 1
@@ -898,6 +881,8 @@ extern "C" {
 
 		int stride_H_mul_in_WidthStep = stride_H*in_widthStep;
 		int stride_W_mul_in_pixStep = stride_W*in_pixelStep;
+		int dilate_H_mul_in_widthStep = dilation_H*in_widthStep;
+		int dilate_W_mul_in_pixStep = dilation_W*in_pixelStep;
 		int out_n, out_h, out_w, out_c;
 		double t1, t2;
 		t1 = omp_get_wtime();
@@ -925,41 +910,41 @@ extern "C" {
 						sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr), zq_mm_load_ps(cur_filter_pix_ptr), sum);
 						sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size), sum);
 						sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size_mul_2), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size_mul_2), sum);
-						cur_in_pix_ptr += in_pixelStep;	cur_filter_pix_ptr += filter_pixelStep;
+						cur_in_pix_ptr += dilate_W_mul_in_pixStep;	cur_filter_pix_ptr += filter_pixelStep;
 						sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr), zq_mm_load_ps(cur_filter_pix_ptr), sum);
 						sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size), sum);
 						sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size_mul_2), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size_mul_2), sum);
-						cur_in_pix_ptr += in_pixelStep;	cur_filter_pix_ptr += filter_pixelStep;
-						sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr), zq_mm_load_ps(cur_filter_pix_ptr), sum);
-						sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size), sum);
-						sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size_mul_2), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size_mul_2), sum);
-
-						cur_in_row_ptr += in_widthStep; cur_filter_row_ptr += filter_widthStep;
-
-						cur_in_pix_ptr = cur_in_row_ptr;	cur_filter_pix_ptr = cur_filter_row_ptr;
-						sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr), zq_mm_load_ps(cur_filter_pix_ptr), sum);
-						sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size), sum);
-						sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size_mul_2), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size_mul_2), sum);
-						cur_in_pix_ptr += in_pixelStep;	cur_filter_pix_ptr += filter_pixelStep;
-						sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr), zq_mm_load_ps(cur_filter_pix_ptr), sum);
-						sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size), sum);
-						sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size_mul_2), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size_mul_2), sum);
-						cur_in_pix_ptr += in_pixelStep;	cur_filter_pix_ptr += filter_pixelStep;
+						cur_in_pix_ptr += dilate_W_mul_in_pixStep;	cur_filter_pix_ptr += filter_pixelStep;
 						sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr), zq_mm_load_ps(cur_filter_pix_ptr), sum);
 						sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size), sum);
 						sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size_mul_2), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size_mul_2), sum);
 
-						cur_in_row_ptr += in_widthStep; cur_filter_row_ptr += filter_widthStep;
+						cur_in_row_ptr += dilate_H_mul_in_widthStep; cur_filter_row_ptr += filter_widthStep;
 
 						cur_in_pix_ptr = cur_in_row_ptr;	cur_filter_pix_ptr = cur_filter_row_ptr;
 						sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr), zq_mm_load_ps(cur_filter_pix_ptr), sum);
 						sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size), sum);
 						sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size_mul_2), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size_mul_2), sum);
-						cur_in_pix_ptr += in_pixelStep;	cur_filter_pix_ptr += filter_pixelStep;
+						cur_in_pix_ptr += dilate_W_mul_in_pixStep;	cur_filter_pix_ptr += filter_pixelStep;
 						sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr), zq_mm_load_ps(cur_filter_pix_ptr), sum);
 						sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size), sum);
 						sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size_mul_2), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size_mul_2), sum);
-						cur_in_pix_ptr += in_pixelStep;	cur_filter_pix_ptr += filter_pixelStep;
+						cur_in_pix_ptr += dilate_W_mul_in_pixStep;	cur_filter_pix_ptr += filter_pixelStep;
+						sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr), zq_mm_load_ps(cur_filter_pix_ptr), sum);
+						sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size), sum);
+						sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size_mul_2), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size_mul_2), sum);
+
+						cur_in_row_ptr += dilate_H_mul_in_widthStep; cur_filter_row_ptr += filter_widthStep;
+
+						cur_in_pix_ptr = cur_in_row_ptr;	cur_filter_pix_ptr = cur_filter_row_ptr;
+						sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr), zq_mm_load_ps(cur_filter_pix_ptr), sum);
+						sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size), sum);
+						sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size_mul_2), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size_mul_2), sum);
+						cur_in_pix_ptr += dilate_W_mul_in_pixStep;	cur_filter_pix_ptr += filter_pixelStep;
+						sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr), zq_mm_load_ps(cur_filter_pix_ptr), sum);
+						sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size), sum);
+						sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size_mul_2), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size_mul_2), sum);
+						cur_in_pix_ptr += dilate_W_mul_in_pixStep;	cur_filter_pix_ptr += filter_pixelStep;
 						sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr), zq_mm_load_ps(cur_filter_pix_ptr), sum);
 						sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size), sum);
 						sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size_mul_2), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size_mul_2), sum);
@@ -994,6 +979,8 @@ extern "C" {
 		int filter_sliceStep,
 		int stride_H,
 		int stride_W,
+		int dilation_H,
+		int dilation_W,
 		float* out_tensor4D_data,
 		int out_N,	// must be in_N
 		int out_H,	// must be (in_H - filter_H)/stride_H + 1
@@ -1007,6 +994,8 @@ extern "C" {
 	{
 		int stride_H_mul_in_WidthStep = stride_H*in_widthStep;
 		int stride_W_mul_in_pixStep = stride_W*in_pixelStep;
+		int dilate_H_mul_in_widthStep = dilation_H*in_widthStep;
+		int dilate_W_mul_in_pixStep = dilation_W*in_pixelStep;
 		int out_n, out_h, out_w, out_c;
 		double t1, t2;
 
@@ -1052,41 +1041,41 @@ extern "C" {
 				sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr), zq_mm_load_ps(cur_filter_pix_ptr), sum);
 				sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size), sum);
 				sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size_mul_2), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size_mul_2), sum);
-				cur_in_pix_ptr += in_pixelStep;	cur_filter_pix_ptr += filter_pixelStep;
+				cur_in_pix_ptr += dilate_W_mul_in_pixStep;	cur_filter_pix_ptr += filter_pixelStep;
 				sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr), zq_mm_load_ps(cur_filter_pix_ptr), sum);
 				sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size), sum);
 				sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size_mul_2), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size_mul_2), sum);
-				cur_in_pix_ptr += in_pixelStep;	cur_filter_pix_ptr += filter_pixelStep;
-				sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr), zq_mm_load_ps(cur_filter_pix_ptr), sum);
-				sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size), sum);
-				sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size_mul_2), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size_mul_2), sum);
-
-				cur_in_row_ptr += in_widthStep; cur_filter_row_ptr += filter_widthStep;
-
-				cur_in_pix_ptr = cur_in_row_ptr;	cur_filter_pix_ptr = cur_filter_row_ptr;
-				sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr), zq_mm_load_ps(cur_filter_pix_ptr), sum);
-				sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size), sum);
-				sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size_mul_2), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size_mul_2), sum);
-				cur_in_pix_ptr += in_pixelStep;	cur_filter_pix_ptr += filter_pixelStep;
-				sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr), zq_mm_load_ps(cur_filter_pix_ptr), sum);
-				sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size), sum);
-				sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size_mul_2), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size_mul_2), sum);
-				cur_in_pix_ptr += in_pixelStep;	cur_filter_pix_ptr += filter_pixelStep;
+				cur_in_pix_ptr += dilate_W_mul_in_pixStep;	cur_filter_pix_ptr += filter_pixelStep;
 				sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr), zq_mm_load_ps(cur_filter_pix_ptr), sum);
 				sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size), sum);
 				sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size_mul_2), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size_mul_2), sum);
 
-				cur_in_row_ptr += in_widthStep; cur_filter_row_ptr += filter_widthStep;
+				cur_in_row_ptr += dilate_H_mul_in_widthStep; cur_filter_row_ptr += filter_widthStep;
 
 				cur_in_pix_ptr = cur_in_row_ptr;	cur_filter_pix_ptr = cur_filter_row_ptr;
 				sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr), zq_mm_load_ps(cur_filter_pix_ptr), sum);
 				sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size), sum);
 				sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size_mul_2), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size_mul_2), sum);
-				cur_in_pix_ptr += in_pixelStep;	cur_filter_pix_ptr += filter_pixelStep;
+				cur_in_pix_ptr += dilate_W_mul_in_pixStep;	cur_filter_pix_ptr += filter_pixelStep;
 				sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr), zq_mm_load_ps(cur_filter_pix_ptr), sum);
 				sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size), sum);
 				sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size_mul_2), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size_mul_2), sum);
-				cur_in_pix_ptr += in_pixelStep;	cur_filter_pix_ptr += filter_pixelStep;
+				cur_in_pix_ptr += dilate_W_mul_in_pixStep;	cur_filter_pix_ptr += filter_pixelStep;
+				sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr), zq_mm_load_ps(cur_filter_pix_ptr), sum);
+				sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size), sum);
+				sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size_mul_2), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size_mul_2), sum);
+
+				cur_in_row_ptr += dilate_H_mul_in_widthStep; cur_filter_row_ptr += filter_widthStep;
+
+				cur_in_pix_ptr = cur_in_row_ptr;	cur_filter_pix_ptr = cur_filter_row_ptr;
+				sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr), zq_mm_load_ps(cur_filter_pix_ptr), sum);
+				sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size), sum);
+				sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size_mul_2), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size_mul_2), sum);
+				cur_in_pix_ptr += dilate_W_mul_in_pixStep;	cur_filter_pix_ptr += filter_pixelStep;
+				sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr), zq_mm_load_ps(cur_filter_pix_ptr), sum);
+				sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size), sum);
+				sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size_mul_2), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size_mul_2), sum);
+				cur_in_pix_ptr += dilate_W_mul_in_pixStep;	cur_filter_pix_ptr += filter_pixelStep;
 				sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr), zq_mm_load_ps(cur_filter_pix_ptr), sum);
 				sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size), sum);
 				sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size_mul_2), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size_mul_2), sum);
@@ -1120,6 +1109,8 @@ extern "C" {
 		int filter_sliceStep,
 		int stride_H,
 		int stride_W,
+		int dilation_H,
+		int dilation_W,
 		float* out_tensor4D_data,
 		int out_N,	// must be in_N
 		int out_H,	// must be (in_H - filter_H)/stride_H + 1
@@ -1149,6 +1140,8 @@ extern "C" {
 
 		int stride_H_mul_in_WidthStep = stride_H*in_widthStep;
 		int stride_W_mul_in_pixStep = stride_W*in_pixelStep;
+		int dilate_H_mul_in_widthStep = dilation_H*in_widthStep;
+		int dilate_W_mul_in_pixStep = dilation_W*in_pixelStep;
 		int out_n, out_h, out_w, out_c;
 		double t1, t2;
 		t1 = omp_get_wtime();
@@ -1177,48 +1170,48 @@ extern "C" {
 						sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size), sum);
 						sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size_mul_2), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size_mul_2), sum);
 						sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size_mul_3), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size_mul_3), sum);
-						cur_in_pix_ptr += in_pixelStep;	cur_filter_pix_ptr += filter_pixelStep;
+						cur_in_pix_ptr += dilate_W_mul_in_pixStep;	cur_filter_pix_ptr += filter_pixelStep;
 						sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr), zq_mm_load_ps(cur_filter_pix_ptr), sum);
 						sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size), sum);
 						sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size_mul_2), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size_mul_2), sum);
 						sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size_mul_3), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size_mul_3), sum);
-						cur_in_pix_ptr += in_pixelStep;	cur_filter_pix_ptr += filter_pixelStep;
-						sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr), zq_mm_load_ps(cur_filter_pix_ptr), sum);
-						sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size), sum);
-						sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size_mul_2), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size_mul_2), sum);
-						sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size_mul_3), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size_mul_3), sum);
-
-						cur_in_row_ptr += in_widthStep; cur_filter_row_ptr += filter_widthStep;
-
-						cur_in_pix_ptr = cur_in_row_ptr;	cur_filter_pix_ptr = cur_filter_row_ptr;
-						sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr), zq_mm_load_ps(cur_filter_pix_ptr), sum);
-						sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size), sum);
-						sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size_mul_2), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size_mul_2), sum);
-						sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size_mul_3), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size_mul_3), sum);
-						cur_in_pix_ptr += in_pixelStep;	cur_filter_pix_ptr += filter_pixelStep;
-						sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr), zq_mm_load_ps(cur_filter_pix_ptr), sum);
-						sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size), sum);
-						sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size_mul_2), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size_mul_2), sum);
-						sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size_mul_3), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size_mul_3), sum);
-						cur_in_pix_ptr += in_pixelStep;	cur_filter_pix_ptr += filter_pixelStep;
+						cur_in_pix_ptr += dilate_W_mul_in_pixStep;	cur_filter_pix_ptr += filter_pixelStep;
 						sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr), zq_mm_load_ps(cur_filter_pix_ptr), sum);
 						sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size), sum);
 						sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size_mul_2), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size_mul_2), sum);
 						sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size_mul_3), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size_mul_3), sum);
 
-						cur_in_row_ptr += in_widthStep; cur_filter_row_ptr += filter_widthStep;
+						cur_in_row_ptr += dilate_H_mul_in_widthStep; cur_filter_row_ptr += filter_widthStep;
 
 						cur_in_pix_ptr = cur_in_row_ptr;	cur_filter_pix_ptr = cur_filter_row_ptr;
 						sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr), zq_mm_load_ps(cur_filter_pix_ptr), sum);
 						sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size), sum);
 						sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size_mul_2), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size_mul_2), sum);
 						sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size_mul_3), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size_mul_3), sum);
-						cur_in_pix_ptr += in_pixelStep;	cur_filter_pix_ptr += filter_pixelStep;
+						cur_in_pix_ptr += dilate_W_mul_in_pixStep;	cur_filter_pix_ptr += filter_pixelStep;
 						sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr), zq_mm_load_ps(cur_filter_pix_ptr), sum);
 						sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size), sum);
 						sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size_mul_2), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size_mul_2), sum);
 						sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size_mul_3), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size_mul_3), sum);
-						cur_in_pix_ptr += in_pixelStep;	cur_filter_pix_ptr += filter_pixelStep;
+						cur_in_pix_ptr += dilate_W_mul_in_pixStep;	cur_filter_pix_ptr += filter_pixelStep;
+						sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr), zq_mm_load_ps(cur_filter_pix_ptr), sum);
+						sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size), sum);
+						sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size_mul_2), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size_mul_2), sum);
+						sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size_mul_3), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size_mul_3), sum);
+
+						cur_in_row_ptr += dilate_H_mul_in_widthStep; cur_filter_row_ptr += filter_widthStep;
+
+						cur_in_pix_ptr = cur_in_row_ptr;	cur_filter_pix_ptr = cur_filter_row_ptr;
+						sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr), zq_mm_load_ps(cur_filter_pix_ptr), sum);
+						sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size), sum);
+						sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size_mul_2), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size_mul_2), sum);
+						sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size_mul_3), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size_mul_3), sum);
+						cur_in_pix_ptr += dilate_W_mul_in_pixStep;	cur_filter_pix_ptr += filter_pixelStep;
+						sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr), zq_mm_load_ps(cur_filter_pix_ptr), sum);
+						sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size), sum);
+						sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size_mul_2), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size_mul_2), sum);
+						sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size_mul_3), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size_mul_3), sum);
+						cur_in_pix_ptr += dilate_W_mul_in_pixStep;	cur_filter_pix_ptr += filter_pixelStep;
 						sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr), zq_mm_load_ps(cur_filter_pix_ptr), sum);
 						sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size), sum);
 						sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size_mul_2), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size_mul_2), sum);
@@ -1254,6 +1247,8 @@ extern "C" {
 		int filter_sliceStep,
 		int stride_H,
 		int stride_W,
+		int dilation_H,
+		int dilation_W,
 		float* out_tensor4D_data,
 		int out_N,	// must be in_N
 		int out_H,	// must be (in_H - filter_H)/stride_H + 1
@@ -1267,6 +1262,8 @@ extern "C" {
 	{
 		int stride_H_mul_in_WidthStep = stride_H*in_widthStep;
 		int stride_W_mul_in_pixStep = stride_W*in_pixelStep;
+		int dilate_H_mul_in_widthStep = dilation_H*in_widthStep;
+		int dilate_W_mul_in_pixStep = dilation_W*in_pixelStep;
 		int out_n, out_h, out_w, out_c;
 		double t1, t2;
 
@@ -1313,48 +1310,48 @@ extern "C" {
 				sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size), sum);
 				sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size_mul_2), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size_mul_2), sum);
 				sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size_mul_3), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size_mul_3), sum);
-				cur_in_pix_ptr += in_pixelStep;	cur_filter_pix_ptr += filter_pixelStep;
+				cur_in_pix_ptr += dilate_W_mul_in_pixStep;	cur_filter_pix_ptr += filter_pixelStep;
 				sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr), zq_mm_load_ps(cur_filter_pix_ptr), sum);
 				sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size), sum);
 				sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size_mul_2), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size_mul_2), sum);
 				sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size_mul_3), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size_mul_3), sum);
-				cur_in_pix_ptr += in_pixelStep;	cur_filter_pix_ptr += filter_pixelStep;
-				sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr), zq_mm_load_ps(cur_filter_pix_ptr), sum);
-				sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size), sum);
-				sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size_mul_2), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size_mul_2), sum);
-				sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size_mul_3), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size_mul_3), sum);
-
-				cur_in_row_ptr += in_widthStep; cur_filter_row_ptr += filter_widthStep;
-
-				cur_in_pix_ptr = cur_in_row_ptr;	cur_filter_pix_ptr = cur_filter_row_ptr;
-				sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr), zq_mm_load_ps(cur_filter_pix_ptr), sum);
-				sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size), sum);
-				sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size_mul_2), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size_mul_2), sum);
-				sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size_mul_3), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size_mul_3), sum);
-				cur_in_pix_ptr += in_pixelStep;	cur_filter_pix_ptr += filter_pixelStep;
-				sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr), zq_mm_load_ps(cur_filter_pix_ptr), sum);
-				sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size), sum);
-				sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size_mul_2), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size_mul_2), sum);
-				sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size_mul_3), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size_mul_3), sum);
-				cur_in_pix_ptr += in_pixelStep;	cur_filter_pix_ptr += filter_pixelStep;
+				cur_in_pix_ptr += dilate_W_mul_in_pixStep;	cur_filter_pix_ptr += filter_pixelStep;
 				sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr), zq_mm_load_ps(cur_filter_pix_ptr), sum);
 				sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size), sum);
 				sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size_mul_2), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size_mul_2), sum);
 				sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size_mul_3), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size_mul_3), sum);
 
-				cur_in_row_ptr += in_widthStep; cur_filter_row_ptr += filter_widthStep;
+				cur_in_row_ptr += dilate_H_mul_in_widthStep; cur_filter_row_ptr += filter_widthStep;
 
 				cur_in_pix_ptr = cur_in_row_ptr;	cur_filter_pix_ptr = cur_filter_row_ptr;
 				sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr), zq_mm_load_ps(cur_filter_pix_ptr), sum);
 				sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size), sum);
 				sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size_mul_2), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size_mul_2), sum);
 				sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size_mul_3), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size_mul_3), sum);
-				cur_in_pix_ptr += in_pixelStep;	cur_filter_pix_ptr += filter_pixelStep;
+				cur_in_pix_ptr += dilate_W_mul_in_pixStep;	cur_filter_pix_ptr += filter_pixelStep;
 				sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr), zq_mm_load_ps(cur_filter_pix_ptr), sum);
 				sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size), sum);
 				sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size_mul_2), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size_mul_2), sum);
 				sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size_mul_3), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size_mul_3), sum);
-				cur_in_pix_ptr += in_pixelStep;	cur_filter_pix_ptr += filter_pixelStep;
+				cur_in_pix_ptr += dilate_W_mul_in_pixStep;	cur_filter_pix_ptr += filter_pixelStep;
+				sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr), zq_mm_load_ps(cur_filter_pix_ptr), sum);
+				sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size), sum);
+				sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size_mul_2), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size_mul_2), sum);
+				sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size_mul_3), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size_mul_3), sum);
+
+				cur_in_row_ptr += dilate_H_mul_in_widthStep; cur_filter_row_ptr += filter_widthStep;
+
+				cur_in_pix_ptr = cur_in_row_ptr;	cur_filter_pix_ptr = cur_filter_row_ptr;
+				sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr), zq_mm_load_ps(cur_filter_pix_ptr), sum);
+				sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size), sum);
+				sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size_mul_2), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size_mul_2), sum);
+				sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size_mul_3), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size_mul_3), sum);
+				cur_in_pix_ptr += dilate_W_mul_in_pixStep;	cur_filter_pix_ptr += filter_pixelStep;
+				sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr), zq_mm_load_ps(cur_filter_pix_ptr), sum);
+				sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size), sum);
+				sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size_mul_2), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size_mul_2), sum);
+				sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size_mul_3), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size_mul_3), sum);
+				cur_in_pix_ptr += dilate_W_mul_in_pixStep;	cur_filter_pix_ptr += filter_pixelStep;
 				sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr), zq_mm_load_ps(cur_filter_pix_ptr), sum);
 				sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size), sum);
 				sum = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size_mul_2), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size_mul_2), sum);

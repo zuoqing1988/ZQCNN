@@ -135,6 +135,8 @@ extern "C" {
 		int filter_sliceStep,
 		int stride_H,
 		int stride_W,
+		int dilation_H,
+		int dilation_W,
 		float* out_tensor4D_data,
 		int out_N,	// must be in_N
 		int out_H,	// must be (in_H - filter_H)/stride_H + 1
@@ -148,6 +150,8 @@ extern "C" {
 		/************** image to col **************/
 		int in_widthStep_mul_stride_H = in_widthStep*stride_H;
 		int in_pixelStep_mul_stride_W = in_pixelStep*stride_W;
+		int dilate_H_mul_in_widthStep = dilation_H*in_widthStep;
+		int dilate_W_mul_in_pixStep = dilation_W*in_pixelStep;
 		int filter_pixStep_mul_filter_W = filter_pixelStep*filter_W;
 		int matrix_A_cols = filter_H*filter_W*in_C;
 		int matrix_A_rows = out_H*out_W;
@@ -199,9 +203,9 @@ extern "C" {
 				for (out_w = 0, in_pix_ptr = in_row_ptr; out_w < out_W; out_w++, in_pix_ptr += in_pixelStep_mul_stride_W)
 				{
 					matrix_A_col_ptr = matrix_A_row_ptr;
-					for (kh = 0, cur_in_row_ptr = in_pix_ptr;kh < filter_H;	kh++, cur_in_row_ptr += in_widthStep)
+					for (kh = 0, cur_in_row_ptr = in_pix_ptr;kh < filter_H;	kh++, cur_in_row_ptr += dilate_H_mul_in_widthStep)
 					{
-						for (kw = 0, cur_in_pix_ptr = cur_in_row_ptr; kw < filter_W; kw++, cur_in_pix_ptr += in_pixelStep)
+						for (kw = 0, cur_in_pix_ptr = cur_in_row_ptr; kw < filter_W; kw++, cur_in_pix_ptr += dilate_W_mul_in_pixStep)
 						{
 							memcpy(matrix_A_col_ptr, cur_in_pix_ptr, sizeof(float)*in_C);
 							matrix_A_col_ptr += in_C;
@@ -266,6 +270,8 @@ extern "C" {
 		int filter_sliceStep,
 		int stride_H,
 		int stride_W,
+		int dilation_H,
+		int dilation_W,
 		float* out_tensor4D_data,
 		int out_N,	// must be in_N
 		int out_H,	// must be (in_H - filter_H)/stride_H + 1
@@ -280,6 +286,8 @@ extern "C" {
 		/************** image to col **************/
 		int in_widthStep_mul_stride_H = in_widthStep*stride_H;
 		int in_pixelStep_mul_stride_W = in_pixelStep*stride_W;
+		int dilate_H_mul_in_widthStep = dilation_H*in_widthStep;
+		int dilate_W_mul_in_pixStep = dilation_W*in_pixelStep;
 		int filter_pixStep_mul_filter_W = filter_pixelStep*filter_W;
 		int matrix_A_cols = filter_H*filter_W*in_C;
 		int matrix_A_rows = out_H*out_W;
@@ -356,9 +364,9 @@ extern "C" {
 				in_pix_ptr = in_slice_ptr + in_offsets[idx];
 				matrix_A_row_ptr = matrix_A + matA_offsets[idx];
 				matrix_A_col_ptr = matrix_A_row_ptr;
-				for (kh = 0, cur_in_row_ptr = in_pix_ptr; kh < filter_H; kh++, cur_in_row_ptr += in_widthStep)
+				for (kh = 0, cur_in_row_ptr = in_pix_ptr; kh < filter_H; kh++, cur_in_row_ptr += dilate_H_mul_in_widthStep)
 				{
-					for (kw = 0, cur_in_pix_ptr = cur_in_row_ptr; kw < filter_W; kw++, cur_in_pix_ptr += in_pixelStep)
+					for (kw = 0, cur_in_pix_ptr = cur_in_row_ptr; kw < filter_W; kw++, cur_in_pix_ptr += dilate_W_mul_in_pixStep)
 					{
 						memcpy(matrix_A_col_ptr, cur_in_pix_ptr, sizeof(float)*in_C);
 						matrix_A_col_ptr += in_C;
@@ -441,6 +449,8 @@ extern "C" {
 		int filter_sliceStep,
 		int stride_H,
 		int stride_W,
+		int dilation_H,
+		int dilation_W,
 		float* out_tensor4D_data,
 		int out_N,	// must be in_N
 		int out_H,	// must be (in_H - filter_H)/stride_H + 1
@@ -454,6 +464,8 @@ extern "C" {
 		/************** image to col **************/
 		int in_widthStep_mul_stride_H = in_widthStep*stride_H;
 		int in_pixelStep_mul_stride_W = in_pixelStep*stride_W;
+		int dilate_H_mul_in_widthStep = dilation_H*in_widthStep;
+		int dilate_W_mul_in_pixStep = dilation_W*in_pixelStep;
 		int filter_pixStep_mul_filter_W = filter_pixelStep*filter_W;
 		int matrix_A_cols = in_C;
 		int matrix_A_rows = out_N*out_H*out_W;
@@ -505,9 +517,9 @@ extern "C" {
 				{
 					for (kh = 0, cur_in_row_ptr = in_pix_ptr, matrix_A_col_ptr = matrix_A_row_ptr;
 						kh < filter_H;
-						kh++, cur_in_row_ptr += in_widthStep)
+						kh++, cur_in_row_ptr += dilate_H_mul_in_widthStep)
 					{
-						for (kw = 0, cur_in_pix_ptr = cur_in_row_ptr; kw < filter_W; kw++, cur_in_pix_ptr += in_pixelStep)
+						for (kw = 0, cur_in_pix_ptr = cur_in_row_ptr; kw < filter_W; kw++, cur_in_pix_ptr += dilate_W_mul_in_pixStep)
 						{
 							memcpy(matrix_A_col_ptr, cur_in_pix_ptr, sizeof(float)*in_C);
 							matrix_A_col_ptr += in_C;
@@ -576,6 +588,8 @@ extern "C" {
 		int filter_sliceStep,
 		int stride_H,
 		int stride_W,
+		int dilation_H,
+		int dilation_W,
 		float* out_tensor4D_data,
 		int out_N,	// must be in_N
 		int out_H,	// must be (in_H - filter_H)/stride_H + 1
@@ -590,6 +604,8 @@ extern "C" {
 		/************** image to col **************/
 		int in_widthStep_mul_stride_H = in_widthStep*stride_H;
 		int in_pixelStep_mul_stride_W = in_pixelStep*stride_W;
+		int dilate_H_mul_in_widthStep = dilation_H*in_widthStep;
+		int dilate_W_mul_in_pixStep = dilation_W*in_pixelStep;
 		int filter_pixStep_mul_filter_W = filter_pixelStep*filter_W;
 		int matrix_A_cols = in_C;
 		int matrix_A_rows = out_N*out_H*out_W;
@@ -663,9 +679,9 @@ extern "C" {
 			matrix_A_row_ptr = matrix_A + matA_offsets[idx];
 			for (kh = 0, cur_in_row_ptr = in_pix_ptr, matrix_A_col_ptr = matrix_A_row_ptr;
 				kh < filter_H;
-				kh++, cur_in_row_ptr += in_widthStep)
+				kh++, cur_in_row_ptr += dilate_H_mul_in_widthStep)
 			{
-				for (kw = 0, cur_in_pix_ptr = cur_in_row_ptr; kw < filter_W; kw++, cur_in_pix_ptr += in_pixelStep)
+				for (kw = 0, cur_in_pix_ptr = cur_in_row_ptr; kw < filter_W; kw++, cur_in_pix_ptr += dilate_W_mul_in_pixStep)
 				{
 					memcpy(matrix_A_col_ptr, cur_in_pix_ptr, sizeof(float)*in_C);
 					matrix_A_col_ptr += in_C;

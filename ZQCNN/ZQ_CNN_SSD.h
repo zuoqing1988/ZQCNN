@@ -60,8 +60,13 @@ namespace ZQ
 			if (show_debug_info)
 				net.TurnOnShowDebugInfo();
 			net.GetInputDim(C, H, W);
-			if (C != 3 || H <= 0 || W <= 0)
+			if (C != 3)
 				return false;
+			if (H == 0 || W == 0)
+			{
+				H = height;
+				W = width;
+			}
 			ZQ_CNN_Tensor4D_NHW_C_Align128bit input0, input1;
 			if (!input0.ConvertFromBGR(bgr_img, width, height, widthStep))
 				return false;
