@@ -38,6 +38,9 @@ EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "mxnet2zqcnn", "SamplesZQCNN\mxnet2zqcnn\mxnet2zqcnn.vcxproj", "{29808DFF-D602-432A-8F9E-C64D504EC6B6}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SampleMobileFaceNet", "SamplesZQCNN\SampleMobileFaceNet\SampleMobileFaceNet.vcxproj", "{99A02812-5763-445B-87EA-1AF9107F9F29}"
+	ProjectSection(ProjectDependencies) = postProject
+		{43AA2D6A-447E-4153-8A29-7AE8A8296DC7} = {43AA2D6A-447E-4153-8A29-7AE8A8296DC7}
+	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SampleGenderAge", "SamplesZQCNN\SampleGenderAge\SampleGenderAge.vcxproj", "{C1BFBBCE-E9FE-4655-8841-0E51DF71C89B}"
 	ProjectSection(ProjectDependencies) = postProject

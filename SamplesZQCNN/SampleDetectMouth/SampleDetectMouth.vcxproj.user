@@ -8,6 +8,6 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LocalDebuggerWorkingDirectory>$(SolutionDir)</LocalDebuggerWorkingDirectory>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
-    <LocalDebuggerCommandArguments>fig </LocalDebuggerCommandArguments>
+    <LocalDebuggerCommandArguments>fig data\4.jpg out.txt 60 0.5 draw.jpg</LocalDebuggerCommandArguments>
   </PropertyGroup>
 </Project>

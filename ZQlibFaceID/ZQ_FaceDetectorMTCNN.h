@@ -24,9 +24,9 @@ namespace ZQ
 
 		virtual bool Init()
 		{
-			return mtcnn.Init("model\\det1.param", "model\\det1.nchwbin",
-				"model\\det2.param", "model\\det2.nchwbin",
-				"model\\det3.param", "model\\det3.nchwbin");
+			return mtcnn.Init("model\\det1.zqparams", "model\\det1.nchwbin",
+				"model\\det2.zqparams", "model\\det2.nchwbin",
+				"model\\det3.zqparams", "model\\det3.nchwbin");
 		}
 		void SetThresh(float thresh_p, float thresh_r, float thresh_o, float nms_thresh_p, float nms_thresh_r, float nms_thresh_o)
 		{

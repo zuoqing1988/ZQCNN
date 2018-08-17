@@ -1,37 +1,41 @@
-#include "SampleMouthDetector.h"
+#include "ZQ_CNN_MouthDetector.h"
 #include <cblas.h>
 
 using namespace cv;
 using namespace std;
 using namespace ZQ;
 
-int SampleDetectMouth_cam();
-int SampleDetectMouth_fig();
+int SampleDetectMouth_cam(int argc, const char** argv);
+int SampleDetectMouth_fig(int argc, const char** argv);
 
 int main(int argc, const char** argv)
 {
 	openblas_set_num_threads(1);
-	if (argc == 2)
+	if (argc >= 2)
 	{
 		if (_strcmpi(argv[1], "cam") == 0)
 		{
-			return SampleDetectMouth_cam();
+			return SampleDetectMouth_cam(argc,argv);
 		}
 		else if (_strcmpi(argv[1], "fig") == 0)
 		{
-			return SampleDetectMouth_fig();
+			return SampleDetectMouth_fig(argc,argv);
+		}
+		else
+		{
+			return EXIT_FAILURE;
 		}
 	}
 	return EXIT_FAILURE;
 }
 
-int SampleDetectMouth_cam()
+int SampleDetectMouth_cam(int argc, const char** argv)
 {
-	SampleMouthDetector detector;
-	SampleMouthDetector::InitialArgs init_args;
-	SampleMouthDetector::DetectArgs detect_args;
-	SampleMouthDetector::DetectedResult detected_result;
-	SampleMouthDetector::SimpleDetectedResult simple_detected_result;
+	ZQ_CNN_MouthDetector detector;
+	ZQ_CNN_MouthDetector::InitialArgs init_args;
+	ZQ_CNN_MouthDetector::DetectArgs detect_args;
+	ZQ_CNN_MouthDetector::DetectedResult detected_result;
+	ZQ_CNN_MouthDetector::SimpleDetectedResult simple_detected_result;
 
 
 	detect_args.enable_rot = true;
@@ -101,13 +105,34 @@ int SampleDetectMouth_cam()
 
 }
 
-int SampleDetectMouth_fig()
+int SampleDetectMouth_fig(int argc, const char** argv)
 {
-	SampleMouthDetector detector;
-	SampleMouthDetector::InitialArgs init_args;
-	SampleMouthDetector::DetectArgs detect_args;
-	SampleMouthDetector::DetectedResult detected_result;
-	SampleMouthDetector::SimpleDetectedResult simple_detected_result;
+	int min_size = 60;
+	float ssd_mouth_thresh = 0.5;
+	if (argc < 4)
+	{
+		printf("%s %s image_file out_file [min_size] [thresh] [draw_image_file]\n", min_size, ssd_mouth_thresh);
+		return EXIT_FAILURE;
+	}
+	std::string image_file = argv[2];
+	std::string out_file = argv[3];
+	bool should_save_draw = false;
+	std::string draw_image_file;
+	if (argc > 4)
+		min_size = __max(12, atoi(argv[4]));
+	if (argc > 5)
+		ssd_mouth_thresh = __max(0.15, atoi(argv[5]));
+	if (argc > 6)
+	{
+		should_save_draw = true;
+		draw_image_file = argv[6];
+	}
+
+	ZQ_CNN_MouthDetector detector;
+	ZQ_CNN_MouthDetector::InitialArgs init_args;
+	ZQ_CNN_MouthDetector::DetectArgs detect_args;
+	ZQ_CNN_MouthDetector::DetectedResult detected_result;
+	ZQ_CNN_MouthDetector::SimpleDetectedResult simple_detected_result;
 
 	
 	detect_args.enable_rot = true;
@@ -123,8 +148,8 @@ int SampleDetectMouth_fig()
 		cout << "init failed\n";
 		return EXIT_FAILURE;
 	}
-	std::string input = "data\\4";
-	Mat image = cv::imread(input + ".jpg");
+	
+	Mat image = cv::imread(image_file);
 
 
 	if (image.empty()) 
@@ -132,27 +157,63 @@ int SampleDetectMouth_fig()
 		cout << "failed to load image" << endl;
 		return EXIT_FAILURE;
 	}
-	Mat copy;
-	for (int i = 0; i < 10; i++)
+	
+	if (0)
 	{
-		
-		image.copyTo(copy);
-		double t1 = omp_get_wtime();
-		if (detector.Detect(copy.ptr<unsigned char>(0), copy.cols, copy.rows, copy.step[0], &detect_args, &detected_result))
-			//if (detector.DetectSimpleResult(copy.ptr<unsigned char>(0), copy.cols, copy.rows, copy.step[0], &detect_args, &simple_detected_result))
+		Mat copy;
+		for (int i = 0; i < 10; i++)
 		{
-			double t2 = omp_get_wtime();
-			detector.DrawResult(copy.ptr<unsigned char>(0), copy.cols, copy.rows, copy.step[0], &detected_result);
-			//detector.DrawSimpleResult(copy.ptr<unsigned char>(0), copy.cols, copy.rows, copy.step[0], &simple_detected_result);
-			double t3 = omp_get_wtime();
-			printf("detect : %.3f ms, draw: %.3f ms\n", 1000 * (t2 - t1), 1000 * (t3 - t2));
-
+			image.copyTo(copy);
+			double t1 = omp_get_wtime();
+			if (detector.Detect(copy.ptr<unsigned char>(0), copy.cols, copy.rows, copy.step[0], &detect_args, &detected_result))
+				//if (detector.DetectSimpleResult(copy.ptr<unsigned char>(0), copy.cols, copy.rows, copy.step[0], &detect_args, &simple_detected_result))
+			{
+				double t2 = omp_get_wtime();
+				detector.DrawResult(copy.ptr<unsigned char>(0), copy.cols, copy.rows, copy.step[0], &detected_result);
+				//detector.DrawSimpleResult(copy.ptr<unsigned char>(0), copy.cols, copy.rows, copy.step[0], &simple_detected_result);
+				double t3 = omp_get_wtime();
+				printf("detect : %.3f ms, draw: %.3f ms\n", 1000 * (t2 - t1), 1000 * (t3 - t2));
+			}
 		}
-	}
 
-	cv::imshow("show", copy);
-	cv::waitKey(0);
-	cv::imwrite(input + "_.jpg", copy);
+		cv::imshow("show", copy);
+		cv::waitKey(0);
+	}
+	else
+	{
+		if (!detector.DetectSimpleResult(image.ptr<unsigned char>(0), image.cols, image.rows, image.step[0], &detect_args, &simple_detected_result))
+		{
+			printf("failed to detect\n");
+			return EXIT_FAILURE;
+		}
+
+		if (should_save_draw)
+		{
+			detector.DrawSimpleResult(image.ptr<unsigned char>(0), image.cols, image.rows, image.step[0], &simple_detected_result);
+			if (!cv::imwrite(draw_image_file, image))
+			{
+				printf("failed to save %s\n", draw_image_file.c_str());
+				return EXIT_FAILURE;
+			}
+		}
+		
+		FILE* out = 0;
+		if (0 != fopen_s(&out, out_file.c_str(), "w"))
+		{
+			printf("failed to create file %s\n", out_file.c_str());
+			return EXIT_FAILURE;
+		}
+		
+		int count = simple_detected_result.faces.size();
+		fprintf(out, "%d\n", count);
+
+		for (int i = 0; i < count; i++)
+		{
+			ZQ_CNN_MouthDetector::SimpleFaceInfo& face = simple_detected_result.faces[i];
+			fprintf(out, "%d %d %d %d %f\n", face.face_off_x, face.face_off_y, face.face_width, face.face_height, face.mouth_prob);
+		}
+		fclose(out);
+	}
 
 	return EXIT_SUCCESS;
 

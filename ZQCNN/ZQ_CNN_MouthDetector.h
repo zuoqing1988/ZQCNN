@@ -1,5 +1,5 @@
-#ifndef _SAMPLE_MOUTH_DETECTOR_H_
-#define _SAMPLE_MOUTH_DETECTOR_H_
+#ifndef _ZQ_CNN_MOUTH_DETECTOR_H_
+#define _ZQ_CNN_MOUTH_DETECTOR_H_
 #pragma once
 
 #include <string>
@@ -10,7 +10,7 @@
 
 namespace ZQ
 {
-	class SampleMouthDetector : ZQ_CNN_DetectorInterface
+	class ZQ_CNN_MouthDetector : ZQ_CNN_DetectorInterface
 	{
 	public:
 		class InitialArgs
@@ -27,7 +27,7 @@ namespace ZQ
 			std::string ssd_model;
 			std::string ssd_out_blob_name;
 			std::string ssd_class_names_file;
-			
+
 			InitialArgs()
 			{
 				mtcnn_pnet_proto = "model/det1.zqparams";
@@ -112,10 +112,10 @@ namespace ZQ
 
 
 	public:
-		SampleMouthDetector()
+		ZQ_CNN_MouthDetector()
 		{
 		}
-		~SampleMouthDetector() 
+		~ZQ_CNN_MouthDetector()
 		{
 			_clear();
 		}
@@ -208,7 +208,7 @@ namespace ZQ
 
 			mtcnn_detector.SetPara(width, height, d_arg->mtcnn_min_size, d_arg->mtcnn_thresh_p, d_arg->mtcnn_thresh_r, d_arg->mtcnn_thresh_o,
 				d_arg->mtcnn_thresh_nms_p, d_arg->mtcnn_thresh_nms_r, d_arg->mtcnn_thresh_nms_o, d_arg->mtcnn_scale);
-			if (!mtcnn_detector.Find(bgr_image, width, height, widthStep, thirdBbox,1))
+			if (!mtcnn_detector.Find(bgr_image, width, height, widthStep, thirdBbox, 1))
 			{
 				double t2 = omp_get_wtime();
 				//printf("find no face: %.3f ms\n", 1000*(t2 - t1));
@@ -352,7 +352,7 @@ namespace ZQ
 			std::vector<std::string> file_lines;
 			if (!file.is_open()) return file_lines;
 			for (std::string line; getline(file, line);) file_lines.push_back(line);
-			std::cout << "object names loaded \n";
+			//std::cout << "object names loaded \n";
 			return file_lines;
 		}
 
@@ -429,7 +429,7 @@ namespace ZQ
 
 					w = __max(0, max_x - min_x);
 					h = __max(0, max_y - min_y);
-					
+
 					output_vec[i].col1 = __max(0, out_corners[4] - w*0.5f + off_x);
 					output_vec[i].row1 = __max(0, out_corners[9] - h*0.5f + off_y);
 					output_vec[i].col2 = output_vec[i].col1 + w;
