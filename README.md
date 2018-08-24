@@ -75,33 +75,23 @@ Convolution name=conv1 bottom=data top=conv1 num_output=10 kernel_size=3 stride=
 
 **人脸识别**
 
-模型名称|LFW精度|耗时
---------|-------|----
-[SeetaFace](https://pan.baidu.com/s/17GySgiI8EASfOCuRizMAOw) | 97.8-97.9% | 约110ms，3.6GHz
-
-[SphereFace04bn256](https://pan.baidu.com/s/1YXt2PLbbUg9-VZITcMw5mQ) LFW约97.8%-97.9%，单线程6-7ms，速度最快
-
-[SphereFace04](https://pan.baidu.com/s/1-Bb6yuU3eAN6U2ZdVsC5Mg) LFW约98.2%
-
-[SphereFace04bn](https://pan.baidu.com/s/18uvL3p7PWRpJcHm00-7ABg) LFW约98.5%
-
-[SphereFace06bn](https://pan.baidu.com/s/1LXjAoJWkWp-CT0sTgIHqfg) LFW约98.7%-98.8%
-
-[SphereFace20](https://pan.baidu.com/s/1fGJU9PfPNBot6qGVeGlcug) LFW约99.2%-99.3%
-
-[Mobile-SphereFace10bn512](https://pan.baidu.com/s/1BEP1pg5s3yJCLA2elqTB0A) LFW约98.6%-98.7%，单线程15ms，性价比高
-
-[ArcFace-r100](https://pan.baidu.com/s/1PeujQbIqFfgARIYAdRt3pw) LFW约99.80%-99.82%,单线程1900毫秒，四线程480毫秒（波动很大）
-
-[ArcFace-r50](https://pan.baidu.com/s/1qOIhCauwZNTOCIM9eojPrA) LFW约99.75%-99.78%,单线程700多毫秒
-
-[ArcFace-r34](https://pan.baidu.com/s/1tRt6PxDg4UNv7yf9pMZ_LA) LFW约99.65%-99.70%,单线程500毫秒左右
-
-[MobileFaceNet-v0](https://pan.baidu.com/s/1f-Mfad-7zRvWcy3wYoPrUg) 从[model-y1.zip](https://pan.baidu.com/s/1If28BkHde4fiuweJrbicVA)转的格式，转完之后在LFW上只有99.13%-99.23%，单线程33-35ms，4线程14-15ms
-
-[MobileFaceNet-v1](https://pan.baidu.com/s/1b1g-hH7IWYxplY-XAvSz-Q) 我自己用insightface训练了一把，用matlab crop和C++ crop， flip 和no-flip（也就是四种）在LFW上得到准确度99.17%-99.37%。
-
-[MobileFaceNet-res2-6-10-2](https://pan.baidu.com/s/12pGLuKsYC45eupkDvhBcQQ) LFW99.43%-99.48%， 单线程约85ms，四线程约30ms
+模型名称|LFW精度|耗时|备注
+--------|-------|----|----
+[SeetaFace](https://pan.baidu.com/s/17GySgiI8EASfOCuRizMAOw) | 97.8-97.9% | 单线程约110ms，3.6GHz|-
+--------|-------|----|----
+[SphereFace04bn256](https://pan.baidu.com/s/1YXt2PLbbUg9-VZITcMw5mQ) | 97.8%-97.9% |单线程6-7ms|-
+[SphereFace04](https://pan.baidu.com/s/1-Bb6yuU3eAN6U2ZdVsC5Mg) | 98.2% | -|-
+[SphereFace04bn](https://pan.baidu.com/s/18uvL3p7PWRpJcHm00-7ABg) | 98.5% | -|-
+[SphereFace06bn](https://pan.baidu.com/s/1LXjAoJWkWp-CT0sTgIHqfg) | 98.7%-98.8%| -|-
+[SphereFace20](https://pan.baidu.com/s/1fGJU9PfPNBot6qGVeGlcug) |99.2%-99.3%|-|-
+[Mobile-SphereFace10bn512](https://pan.baidu.com/s/1BEP1pg5s3yJCLA2elqTB0A) | 98.6%-98.7%|单线程15ms|性价比高
+---------|-------|-------
+[MobileFaceNet-v0](https://pan.baidu.com/s/1f-Mfad-7zRvWcy3wYoPrUg) |99.13%-99.23%|单线程33-35ms，4线程14-15ms|从[model-y1.zip](https://pan.baidu.com/s/1If28BkHde4fiuweJrbicVA)转的格式
+[MobileFaceNet-v1](https://pan.baidu.com/s/1b1g-hH7IWYxplY-XAvSz-Q) |99.17%-99.37%|单线程33-35ms，4线程14-15ms|我自己用insightface训练了一把
+[MobileFaceNet-res2-6-10-2](https://pan.baidu.com/s/12pGLuKsYC45eupkDvhBcQQ) |99.43%-99.48%| 单线程约85ms，四线程约30ms|网络结构在下载链接里
+[ArcFace-r34](https://pan.baidu.com/s/1tRt6PxDg4UNv7yf9pMZ_LA) |99.65%-99.70%|单线程500ms|
+[ArcFace-r50](https://pan.baidu.com/s/1qOIhCauwZNTOCIM9eojPrA) |99.75%-99.78%|单线程700ms+|
+[ArcFace-r100](https://pan.baidu.com/s/1PeujQbIqFfgARIYAdRt3pw) |99.80%-99.82%|单线程1900ms，四线程480ms|时间波动很大
 
 **表情识别**
 
