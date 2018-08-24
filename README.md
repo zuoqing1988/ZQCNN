@@ -75,9 +75,7 @@ Convolution name=conv1 bottom=data top=conv1 num_output=10 kernel_size=3 stride=
 
 **人脸识别**
 
-|模型名称|LFW精度|耗时|备注|
-| ------------ | ------------- | ------------ | -------------
-|[SeetaFace](https://pan.baidu.com/s/17GySgiI8EASfOCuRizMAOw) | 97.8-97.9% | 单线程约110ms, 3.6GHz|- |
+|模型名称     |LFW精度        |耗时          |备注           |
 |------------ | ------------- | ------------ | ------------- |
 |[SphereFace04bn256](https://pan.baidu.com/s/1YXt2PLbbUg9-VZITcMw5mQ) | 97.8%-97.9% |单线程6-7ms, 3.6GHz|- |
 |[SphereFace04](https://pan.baidu.com/s/1-Bb6yuU3eAN6U2ZdVsC5Mg) | 98.2% | -|- |
