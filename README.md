@@ -99,6 +99,8 @@ Convolution name=conv1 bottom=data top=conv1 num_output=10 kernel_size=3 stride=
 
 [ArcFace-MobileFaceNet-v1](https://pan.baidu.com/s/1b1g-hH7IWYxplY-XAvSz-Q) 我自己用insightface训练了一把，用matlab crop和C++ crop， flip 和no-flip（也就是四种）在LFW上得到准确度99.17%-99.37%。
 
+[MobileFaceNet-res2-6-10-2](https://pan.baidu.com/s/12pGLuKsYC45eupkDvhBcQQ) LFW99.43%-99.48%， 单线程约85ms，四线程约30ms
+
 **表情识别**
 
 [FacialEmotion](https://pan.baidu.com/s/1zJtRYv-kSGSCTgpvqc4Iug) 七类表情用Fer2013训练
