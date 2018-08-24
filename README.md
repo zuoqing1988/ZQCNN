@@ -74,8 +74,9 @@ Convolution name=conv1 bottom=data top=conv1 num_output=10 kernel_size=3 stride=
 [MTCNN](https://pan.baidu.com/s/1f6_wQ2kXiTZFyH6PFIDc2Q) 从[MTCNN](https://github.com/kpzhang93/MTCNN_face_detection_alignment)转的格式
 
 **人脸识别**
-
-[SeetaFace](https://pan.baidu.com/s/17GySgiI8EASfOCuRizMAOw) LFW约97.8-97.9%，每次提取时间约110ms，3.6GHz
+模型名称|LFW精度|耗时
+--------|-------|----
+[SeetaFace](https://pan.baidu.com/s/17GySgiI8EASfOCuRizMAOw) | 97.8-97.9% | 约110ms，3.6GHz
 
 [SphereFace04bn256](https://pan.baidu.com/s/1YXt2PLbbUg9-VZITcMw5mQ) LFW约97.8%-97.9%，单线程6-7ms，速度最快
 
@@ -95,9 +96,9 @@ Convolution name=conv1 bottom=data top=conv1 num_output=10 kernel_size=3 stride=
 
 [ArcFace-r34](https://pan.baidu.com/s/1tRt6PxDg4UNv7yf9pMZ_LA) LFW约99.65%-99.70%,单线程500毫秒左右
 
-[ArcFace-MobileFaceNet-v0](https://pan.baidu.com/s/1f-Mfad-7zRvWcy3wYoPrUg) 从[model-y1.zip](https://pan.baidu.com/s/1If28BkHde4fiuweJrbicVA)转的格式，转完之后在LFW上只有99.13%-99.23%，单线程33-35ms，4线程14-15ms
+[MobileFaceNet-v0](https://pan.baidu.com/s/1f-Mfad-7zRvWcy3wYoPrUg) 从[model-y1.zip](https://pan.baidu.com/s/1If28BkHde4fiuweJrbicVA)转的格式，转完之后在LFW上只有99.13%-99.23%，单线程33-35ms，4线程14-15ms
 
-[ArcFace-MobileFaceNet-v1](https://pan.baidu.com/s/1b1g-hH7IWYxplY-XAvSz-Q) 我自己用insightface训练了一把，用matlab crop和C++ crop， flip 和no-flip（也就是四种）在LFW上得到准确度99.17%-99.37%。
+[MobileFaceNet-v1](https://pan.baidu.com/s/1b1g-hH7IWYxplY-XAvSz-Q) 我自己用insightface训练了一把，用matlab crop和C++ crop， flip 和no-flip（也就是四种）在LFW上得到准确度99.17%-99.37%。
 
 [MobileFaceNet-res2-6-10-2](https://pan.baidu.com/s/12pGLuKsYC45eupkDvhBcQQ) LFW99.43%-99.48%， 单线程约85ms，四线程约30ms
 
