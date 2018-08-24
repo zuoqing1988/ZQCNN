@@ -74,6 +74,7 @@ Convolution name=conv1 bottom=data top=conv1 num_output=10 kernel_size=3 stride=
 [MTCNN](https://pan.baidu.com/s/1f6_wQ2kXiTZFyH6PFIDc2Q) 从[MTCNN](https://github.com/kpzhang93/MTCNN_face_detection_alignment)转的格式
 
 **人脸识别**
+
 模型名称|LFW精度|耗时
 --------|-------|----
 [SeetaFace](https://pan.baidu.com/s/17GySgiI8EASfOCuRizMAOw) | 97.8-97.9% | 约110ms，3.6GHz
