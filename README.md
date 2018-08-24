@@ -78,10 +78,10 @@ Convolution name=conv1 bottom=data top=conv1 num_output=10 kernel_size=3 stride=
 |模型名称                                                                    |LFW精度        |耗时                               |备注           
 |------------                                                                | ------------- | ------------                      | ------------- 
 |[SphereFace04bn256](https://pan.baidu.com/s/1YXt2PLbbUg9-VZITcMw5mQ)        | 97.8%-97.9%   |单线程6-7ms, 3.6GHz                |速度最快
-|[SphereFace04](https://pan.baidu.com/s/1-Bb6yuU3eAN6U2ZdVsC5Mg)             | 98.2%         | -                                 |不建议使用  
-|[SphereFace04bn](https://pan.baidu.com/s/18uvL3p7PWRpJcHm00-7ABg)           | 98.5%         | -                                 |不建议使用 
-|[SphereFace06bn](https://pan.baidu.com/s/1LXjAoJWkWp-CT0sTgIHqfg)           | 98.7%-98.8%   | -                                 |不建议使用
-|[SphereFace20](https://pan.baidu.com/s/1fGJU9PfPNBot6qGVeGlcug)             |99.2%-99.3%    |单线程约195ms， 3.6GHz             |不建议使用
+~~|[SphereFace04](https://pan.baidu.com/s/1-Bb6yuU3eAN6U2ZdVsC5Mg)             | 98.2%         | -                                 |不建议使用  ~~
+~~|[SphereFace04bn](https://pan.baidu.com/s/18uvL3p7PWRpJcHm00-7ABg)           | 98.5%         | -                                 |不建议使用 ~~
+~~|[SphereFace06bn](https://pan.baidu.com/s/1LXjAoJWkWp-CT0sTgIHqfg)           | 98.7%-98.8%   | -                                 |不建议使用~~
+~~|[SphereFace20](https://pan.baidu.com/s/1fGJU9PfPNBot6qGVeGlcug)             |99.2%-99.3%    |单线程约195ms， 3.6GHz             |不建议使用~~
 |[Mobile-SphereFace10bn](https://pan.baidu.com/s/1BEP1pg5s3yJCLA2elqTB0A)    | 98.6%-98.7%   |单线程15ms, 3.6GHz                 |性价比高 
 |[MobileFaceNet-v0](https://pan.baidu.com/s/1f-Mfad-7zRvWcy3wYoPrUg)         |99.13%-99.23%  |单线程33-35ms，4线程14-15ms, 3.6GHz|从[model-y1.zip](https://pan.baidu.com/s/1If28BkHde4fiuweJrbicVA)转的格式 
 |[MobileFaceNet-v1](https://pan.baidu.com/s/1b1g-hH7IWYxplY-XAvSz-Q)         |99.17%-99.37%  |单线程33-35ms，4线程14-15ms, 3.6GHz|我自己用insightface训练了一把 
