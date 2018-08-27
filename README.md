@@ -90,7 +90,7 @@ Convolution name=conv1 bottom=data top=conv1 num_output=10 kernel_size=3 stride=
 |[MobileFaceNet-v0](https://pan.baidu.com/s/1f-Mfad-7zRvWcy3wYoPrUg)         |99.13%-99.23%  |单线程33-35ms，4线程14-15ms, 3.6GHz|从[model-y1.zip](https://pan.baidu.com/s/1If28BkHde4fiuweJrbicVA)转的格式 
 |[MobileFaceNet-v1](https://pan.baidu.com/s/1b1g-hH7IWYxplY-XAvSz-Q)         |99.17%-99.37%  |单线程33-35ms，4线程14-15ms, 3.6GHz|我自己用insightface训练了一把 
 |[MobileFaceNet-res2-6-10-2-dim256](https://pan.baidu.com/s/143j7eULc2AqpNcSugFdTxA)|99.43%-99.48%  |单线程约85ms，四线程约30ms, 3.6GHz |网络结构在下载链接里,用faces_vgg训练的，faces_emore训练还在进行中 
-|[MobileFaceNet-res2-6-10-2-dim512](https://pan.baidu.com/s/1_0O3kJ5dMmD-HdRwNR0Hpw)|matlab crop 99.52%-99.60%, C++ crop 99.63-99.72%  |时间与dim256接近 |网络结构与dim256一样，只不过输出维数不同
+|[MobileFaceNet-res2-6-10-2-dim512](https://pan.baidu.com/s/1_0O3kJ5dMmD-HdRwNR0Hpw)|99.52%-99.60%(matlab crop), 99.63-99.72%(C++ crop)  |时间与dim256接近 |网络结构与dim256一样，只不过输出维数不同
 |[ArcFace-r34](https://pan.baidu.com/s/1tRt6PxDg4UNv7yf9pMZ_LA)              |99.65%-99.70%  |单线程500ms+,3.6GHz                |-            
 |[ArcFace-r50](https://pan.baidu.com/s/1qOIhCauwZNTOCIM9eojPrA)              |99.75%-99.78%  |单线程700ms+,3.6GHz                |-            
 |[ArcFace-r100](https://pan.baidu.com/s/1PeujQbIqFfgARIYAdRt3pw)             |99.80%-99.82%  |单线程1900ms+，四线程480ms, 3.6GHz |时间波动很大 
