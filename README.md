@@ -93,6 +93,7 @@ Convolution name=conv1 bottom=data top=conv1 num_output=10 kernel_size=3 stride=
 |[MobileFaceNet-res2-6-10-2-dim256](https://pan.baidu.com/s/143j7eULc2AqpNcSugFdTxA)|99.60%-99.60%(matlab crop), 99.62-99.62%(C++ crop)  |单线程约85ms，四线程约30ms, 3.6GHz |网络结构在下载链接里,脚本里虽然是用faces_vgg训练，但是这里的精度是用faces_emore训练的 
 |[MobileFaceNet-res2-6-10-2-dim512](https://pan.baidu.com/s/1_0O3kJ5dMmD-HdRwNR0Hpw)|99.52%-99.60%(matlab crop), 99.63-99.72%(C++ crop)  |时间与dim256接近 |网络结构与dim256一样，只不过输出维数不同
 |[ArcFace-r34](https://pan.baidu.com/s/1tRt6PxDg4UNv7yf9pMZ_LA)              |99.65%-99.70%  |单线程500ms+,3.6GHz                |-            
+|[ArcFace-r34-v2](https://pan.baidu.com/s/1q3ZqQdjabDBESqbsxC7ESQ)           |99.73%-99.77%(matlab crop), 99.68-99.78%(C++ crop) |单线程500ms+,3.6GHz                |-            
 |[ArcFace-r50](https://pan.baidu.com/s/1qOIhCauwZNTOCIM9eojPrA)              |99.75%-99.78%  |单线程700ms+,3.6GHz                |-            
 |[ArcFace-r100](https://pan.baidu.com/s/1PeujQbIqFfgARIYAdRt3pw)             |99.80%-99.82%  |单线程1900ms+，四线程480ms, 3.6GHz |时间波动很大 
 
