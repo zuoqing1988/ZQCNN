@@ -109,27 +109,37 @@ int SampleDetectMouth_fig(int argc, const char** argv)
 {
 	int min_size = 60;
 	float ssd_mouth_thresh = 0.5;
-	if (argc < 4)
+	if (argc < 5)
 	{
-		printf("%s %s image_file out_file [min_size] [thresh] [draw_image_file]\n", min_size, ssd_mouth_thresh);
+		printf("%s %s model_root image_file out_file [min_size] [thresh] [draw_image_file]\n", min_size, ssd_mouth_thresh);
 		return EXIT_FAILURE;
 	}
-	std::string image_file = argv[2];
-	std::string out_file = argv[3];
+	std::string model_root = argv[2];
+	std::string image_file = argv[3];
+	std::string out_file = argv[4];
 	bool should_save_draw = false;
 	std::string draw_image_file;
-	if (argc > 4)
-		min_size = __max(12, atoi(argv[4]));
 	if (argc > 5)
-		ssd_mouth_thresh = __max(0.15, atoi(argv[5]));
+		min_size = __max(12, atoi(argv[5]));
 	if (argc > 6)
+		ssd_mouth_thresh = __max(0.15, atoi(argv[6]));
+	if (argc > 7)
 	{
 		should_save_draw = true;
-		draw_image_file = argv[6];
+		draw_image_file = argv[7];
 	}
 
 	ZQ_CNN_MouthDetector detector;
 	ZQ_CNN_MouthDetector::InitialArgs init_args;
+	init_args.mtcnn_pnet_proto = model_root + "\\det1.zqparams";
+	init_args.mtcnn_pnet_model = model_root + "\\det1.nchwbin";
+	init_args.mtcnn_rnet_proto = model_root + "\\det2.zqparams";
+	init_args.mtcnn_rnet_model = model_root + "\\det2.nchwbin";
+	init_args.mtcnn_onet_proto = model_root + "\\det3.zqparams";
+	init_args.mtcnn_onet_model = model_root + "\\det3.nchwbin";
+	init_args.ssd_proto = model_root + "\\MobileNetSSD_deploy-face.zqparams";
+	init_args.ssd_model = model_root + "\\MobileNetSSD_deploy-face.nchwbin";
+	init_args.ssd_class_names_file = model_root + "\\MobileNetSSD_deploy-face.names";
 	ZQ_CNN_MouthDetector::DetectArgs detect_args;
 	ZQ_CNN_MouthDetector::DetectedResult detected_result;
 	ZQ_CNN_MouthDetector::SimpleDetectedResult simple_detected_result;
