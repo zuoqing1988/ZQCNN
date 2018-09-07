@@ -176,7 +176,7 @@ namespace ZQ
 			if (person_num <= 0 || feat_dim != dim || feat_num <= 0)
 				return false;
 
-			int widthStep = (sizeof(float)*dim + FEAT_ALIGNED_SIZE) / FEAT_ALIGNED_SIZE * FEAT_ALIGNED_SIZE;
+			int widthStep = (sizeof(float)*dim + FEAT_ALIGNED_SIZE-1) / FEAT_ALIGNED_SIZE * FEAT_ALIGNED_SIZE;
 
 			float* feat_aligned = (float*)_aligned_malloc(widthStep*feat_num, FEAT_ALIGNED_SIZE);
 			if (feat_aligned == 0)
@@ -201,25 +201,32 @@ namespace ZQ
 				{
 					float* tmp_feat = (float*)(((char*)feat_aligned) + widthStep*j);
 					int chunk_size = (total_face_num + real_threads - 1) / real_threads;
-					if (dim == 256)
+					if (dim == 128)
 					{
 						for (int i = 0; i < total_face_num; i++)
 						{
-							scores[i] = ZQ_FaceRecognizerSphereFace::_cal_similarity_avx_dim256(tmp_feat, all_face_feats + i*dim);
+							scores[i] = __max(scores[i],ZQ_FaceRecognizerSphereFace::_cal_similarity_avx_dim128(tmp_feat, all_face_feats + i*dim));
+						}
+					}
+					else if (dim == 256)
+					{
+						for (int i = 0; i < total_face_num; i++)
+						{
+							scores[i] = __max(scores[i], ZQ_FaceRecognizerSphereFace::_cal_similarity_avx_dim256(tmp_feat, all_face_feats + i*dim));
 						}
 					}
 					else if (dim == 512)
 					{
 						for (int i = 0; i < total_face_num; i++)
 						{
-							scores[i] = ZQ_FaceRecognizerSphereFace::_cal_similarity_avx_dim512(tmp_feat, all_face_feats + i*dim);
+							scores[i] = __max(scores[i], ZQ_FaceRecognizerSphereFace::_cal_similarity_avx_dim512(tmp_feat, all_face_feats + i*dim));
 						}
 					}
 					else
 					{
 						for (long long i = 0; i < total_face_num; i++)
 						{
-							scores[i] = ZQ_MathBase::DotProduct(dim, tmp_feat, all_face_feats + i*dim);
+							scores[i] = __max(scores[i], ZQ_MathBase::DotProduct(dim, tmp_feat, all_face_feats + i*dim));
 						}
 					}
 				}
@@ -230,12 +237,20 @@ namespace ZQ
 				{
 					float* tmp_feat = (float*)(((char*)feat_aligned) + widthStep*j);
 					int chunk_size = (total_face_num + real_threads - 1) / real_threads;
-					if (dim == 256)
+					if (dim == 128)
 					{
 #pragma omp parallel for schedule(static, chunk_size) num_threads(real_threads)
 						for (int i = 0; i < total_face_num; i++)
 						{
-							scores[i] = ZQ_FaceRecognizerSphereFace::_cal_similarity_avx_dim256(tmp_feat, all_face_feats + i*dim);
+							scores[i] = __max(scores[i], ZQ_FaceRecognizerSphereFace::_cal_similarity_avx_dim128(tmp_feat, all_face_feats + i*dim));
+						}
+					}
+					else if (dim == 256)
+					{
+#pragma omp parallel for schedule(static, chunk_size) num_threads(real_threads)
+						for (int i = 0; i < total_face_num; i++)
+						{
+							scores[i] = __max(scores[i], ZQ_FaceRecognizerSphereFace::_cal_similarity_avx_dim256(tmp_feat, all_face_feats + i*dim));
 						}
 					}
 					else if (dim == 512)
@@ -243,15 +258,16 @@ namespace ZQ
 #pragma omp parallel for schedule(static, chunk_size) num_threads(real_threads)
 						for (int i = 0; i < total_face_num; i++)
 						{
-							scores[i] = ZQ_FaceRecognizerSphereFace::_cal_similarity_avx_dim512(tmp_feat, all_face_feats + i*dim);
+							scores[i] = __max(scores[i], ZQ_FaceRecognizerSphereFace::_cal_similarity_avx_dim512(tmp_feat, all_face_feats + i*dim));
 						}
 					}
+
 					else
 					{
 #pragma omp parallel for schedule(static, chunk_size) num_threads(real_threads)
 						for (long long i = 0; i < total_face_num; i++)
 						{
-							scores[i] = ZQ_MathBase::DotProduct(dim, tmp_feat, all_face_feats + i*dim);
+							scores[i] = __max(scores[i], ZQ_MathBase::DotProduct(dim, tmp_feat, all_face_feats + i*dim));
 						}
 					}
 				}
