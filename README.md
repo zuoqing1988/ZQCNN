@@ -2,6 +2,64 @@ ZQCNN-v0.0是ZuoQing参照mini-caffe写的forward库，随便用用
 
 # 更新日志
 
+**2018-09-12日更新**
+
+利用[insightface](https://github.com/deepinsight/insightface)训练112*96(即sphereface的尺寸)步骤：
+
+(1)修改insightface\src\image_iter.py： def net_sample(sef) line124 return之前加一句img=img[:,8:104,:]
+
+修改前
+
+			header, img = recordio.unpack(s)
+
+            return header.label, img, None, None
+
+修改后
+
+            header, img = recordio.unpack(s)
+
+            img = img[:,8:104,:]#added by zuoqing
+
+            return header.label, img, None, None
+			
+(2)修改insightface\src\image_iter.py： def next(self)  line215 self.postprocess_data(datum)之前加一句datum=datum[:,8:104,:]
+
+修改前
+
+                    #print(datum.shape)
+
+                    batch_data[i][:] = self.postprocess_data(datum)
+
+修改后
+
+                    #print(datum.shape)
+
+                    datum = datum[:,8:104,:]# added by zuoqing
+
+                    batch_data[i][:] = self.postprocess_data(datum)
+					
+(3)修改datasets\faces_emore\property：112,112,改成了112,96 （同理，你用其他数据训练也得改）
+
+(4)修改insightface\src\eval\verification.py： def load_bin(path,image_size) line193 tranpose之前加一句img=img[:,8:104,:]
+
+修改前
+    
+	img = mx.image.imdecode(_bin)
+    
+	img = nd.transpose(img, axes=(2, 0, 1))
+
+修改后
+
+    img = mx.image.imdecode(_bin)
+
+    img = img[:,8:104,:]#added by zuoqing
+
+    img = nd.transpose(img, axes=(2, 0, 1))
+
+(5)修改insightface\src\symbols\symbol_utils.py里面get_fc1把kernel改成(7,6) 
+
+改完之后显存会少使用一些，可以使用更大的batch_size
+
 **2018-08-15日更新**
 
 (1)添加自然场景文本检测，模型从[TextBoxes](https://github.com/MhLiao/TextBoxes)转过来的。我个人觉得速度太慢，而且准确度不高。
