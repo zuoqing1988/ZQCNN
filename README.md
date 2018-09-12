@@ -10,34 +10,34 @@ ZQCNN-v0.0是ZuoQing参照mini-caffe写的forward库，随便用用
 
 修改前
 
-			header, img = recordio.unpack(s)
+	header, img = recordio.unpack(s)
 
-            return header.label, img, None, None
+	return header.label, img, None, None
 
 修改后
 
-            header, img = recordio.unpack(s)
+	header, img = recordio.unpack(s)
 
-            img = img[:,8:104,:]#added by zuoqing
+	img = img[:,8:104,:]#added by zuoqing
 
-            return header.label, img, None, None
-			
+	return header.label, img, None, None
+
 (2)修改insightface\src\image_iter.py： def next(self)  line215 self.postprocess_data(datum)之前加一句datum=datum[:,8:104,:]
 
 修改前
 
-                    #print(datum.shape)
+	#print(datum.shape)
 
-                    batch_data[i][:] = self.postprocess_data(datum)
+	batch_data[i][:] = self.postprocess_data(datum)
 
 修改后
 
-                    #print(datum.shape)
+	#print(datum.shape)
 
-                    datum = datum[:,8:104,:]# added by zuoqing
+	datum = datum[:,8:104,:]# added by zuoqing
 
-                    batch_data[i][:] = self.postprocess_data(datum)
-					
+	batch_data[i][:] = self.postprocess_data(datum)
+
 (3)修改datasets\faces_emore\property：112,112,改成了112,96 （同理，你用其他数据训练也得改）
 
 (4)修改insightface\src\eval\verification.py： def load_bin(path,image_size) line193 tranpose之前加一句img=img[:,8:104,:]
