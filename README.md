@@ -2,9 +2,7 @@ ZQCNN-v0.0是ZuoQing参照mini-caffe写的forward库，随便用用
 
 # 更新日志
 
-**2018-09-12日更新**
-
-利用[insightface](https://github.com/deepinsight/insightface)训练112*96(即sphereface的尺寸)步骤：
+**2018-09-12日更新 利用[insightface](https://github.com/deepinsight/insightface)训练112*96(即sphereface的尺寸)步骤：**
 
 (1)修改insightface\src\image_iter.py： def net_sample(sef) line124 return之前加一句img=img[:,8:104,:]
 
