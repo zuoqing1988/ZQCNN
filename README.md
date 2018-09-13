@@ -2,6 +2,12 @@ ZQCNN-v0.0是ZuoQing参照mini-caffe写的forward库，随便用用
 
 # 更新日志
 
+**2018-09-13日更新**
+
+(1)支持从内存加载模型
+
+(2)增加编译配置ZQ_CNN_CompileConfig.h，可以选择是否使用_mm_fmadd_ps, _mm256_fmadd_ps (可以测一下速度看看到底快了还是慢了)。
+
 **2018-09-12日更新 利用[insightface](https://github.com/deepinsight/insightface)训练112*96(即sphereface的尺寸)步骤：**
 
 (1)修改insightface\src\image_iter.py： def net_sample(sef) line124 return之前加一句img=img[:,8:104,:]
