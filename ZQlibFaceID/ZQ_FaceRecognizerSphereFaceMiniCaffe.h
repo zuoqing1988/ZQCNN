@@ -78,11 +78,11 @@ namespace ZQ
 					{
 						const unsigned char* ori_pix_ptr = img + h*widthStep + w;
 						float* cur_pix_ptr = &bgr_buffer[0] + h*crop_width + w;
-						*cur_pix_ptr = (ori_pix_ptr[0] - 127.5f) / 127.5f;
+						*cur_pix_ptr = (ori_pix_ptr[0] - mean_val) * std_val;
 						cur_pix_ptr += slice_size;
-						*cur_pix_ptr = (ori_pix_ptr[0] - 127.5f) / 127.5f;
+						*cur_pix_ptr = (ori_pix_ptr[0] - mean_val) * std_val;
 						cur_pix_ptr += slice_size;
-						*cur_pix_ptr = (ori_pix_ptr[0] - 127.5f) / 127.5f;
+						*cur_pix_ptr = (ori_pix_ptr[0] - mean_val) * std_val;
 					}
 				}
 				break;
@@ -93,11 +93,11 @@ namespace ZQ
 					{
 						const unsigned char* ori_pix_ptr = img + h*widthStep + w * 3;
 						float* cur_pix_ptr = &bgr_buffer[0] + h*crop_width + w;
-						*cur_pix_ptr = (ori_pix_ptr[0] - 127.5f) / 127.5f;
+						*cur_pix_ptr = (ori_pix_ptr[0] - mean_val) * std_val;
 						cur_pix_ptr += slice_size;
-						*cur_pix_ptr = (ori_pix_ptr[1] - 127.5f) / 127.5f;
+						*cur_pix_ptr = (ori_pix_ptr[1] - mean_val) * std_val;
 						cur_pix_ptr += slice_size;
-						*cur_pix_ptr = (ori_pix_ptr[2] - 127.5f) / 127.5f;
+						*cur_pix_ptr = (ori_pix_ptr[2] - mean_val) * std_val;
 					}
 				}
 				break;
@@ -108,11 +108,11 @@ namespace ZQ
 					{
 						const unsigned char* ori_pix_ptr = img + h*widthStep + w * 3;
 						float* cur_pix_ptr = &bgr_buffer[0] + h*crop_width + w;
-						*cur_pix_ptr = (ori_pix_ptr[2] - 127.5f) / 127.5f;
+						*cur_pix_ptr = (ori_pix_ptr[2] - mean_val) * std_val;
 						cur_pix_ptr += slice_size;
-						*cur_pix_ptr = (ori_pix_ptr[1] - 127.5f) / 127.5f;
+						*cur_pix_ptr = (ori_pix_ptr[1] - mean_val) * std_val;
 						cur_pix_ptr += slice_size;
-						*cur_pix_ptr = (ori_pix_ptr[0] - 127.5f) / 127.5f;
+						*cur_pix_ptr = (ori_pix_ptr[0] - mean_val) * std_val;
 					}
 				}
 				break;
@@ -123,11 +123,11 @@ namespace ZQ
 					{
 						const unsigned char* ori_pix_ptr = img + h*widthStep + w * 4;
 						float* cur_pix_ptr = &bgr_buffer[0] + h*crop_width + w;
-						*cur_pix_ptr = (ori_pix_ptr[0] - 127.5f) / 127.5f;
+						*cur_pix_ptr = (ori_pix_ptr[0] - mean_val) * std_val;
 						cur_pix_ptr += slice_size;
-						*cur_pix_ptr = (ori_pix_ptr[1] - 127.5f) / 127.5f;
+						*cur_pix_ptr = (ori_pix_ptr[1] - mean_val) * std_val;
 						cur_pix_ptr += slice_size;
-						*cur_pix_ptr = (ori_pix_ptr[2] - 127.5f) / 127.5f;
+						*cur_pix_ptr = (ori_pix_ptr[2] - mean_val) * std_val;
 					}
 				}
 				break;
@@ -138,11 +138,11 @@ namespace ZQ
 					{
 						const unsigned char* ori_pix_ptr = img + h*widthStep + w * 4;
 						float* cur_pix_ptr = &bgr_buffer[0] + h*crop_width + w;
-						*cur_pix_ptr = (ori_pix_ptr[2] - 127.5f) / 127.5f;
+						*cur_pix_ptr = (ori_pix_ptr[2] - mean_val) * std_val;
 						cur_pix_ptr += slice_size;
-						*cur_pix_ptr = (ori_pix_ptr[1] - 127.5f) / 127.5f;
+						*cur_pix_ptr = (ori_pix_ptr[1] - mean_val) * std_val;
 						cur_pix_ptr += slice_size;
-						*cur_pix_ptr = (ori_pix_ptr[0] - 127.5f) / 127.5f;
+						*cur_pix_ptr = (ori_pix_ptr[0] - mean_val) * std_val;
 					}
 				}
 				break;
@@ -153,11 +153,11 @@ namespace ZQ
 					{
 						const unsigned char* ori_pix_ptr = img + h*widthStep + w * 4;
 						float* cur_pix_ptr = &bgr_buffer[0] + h*crop_width + w;
-						*cur_pix_ptr = (ori_pix_ptr[1] - 127.5f) / 127.5f;
+						*cur_pix_ptr = (ori_pix_ptr[1] - mean_val) * std_val;
 						cur_pix_ptr += slice_size;
-						*cur_pix_ptr = (ori_pix_ptr[2] - 127.5f) / 127.5f;
+						*cur_pix_ptr = (ori_pix_ptr[2] - mean_val) * std_val;
 						cur_pix_ptr += slice_size;
-						*cur_pix_ptr = (ori_pix_ptr[3] - 127.5f) / 127.5f;
+						*cur_pix_ptr = (ori_pix_ptr[3] - mean_val) * std_val;
 					}
 				}
 				break;
@@ -168,11 +168,11 @@ namespace ZQ
 					{
 						const unsigned char* ori_pix_ptr = img + h*widthStep + w * 3;
 						float* cur_pix_ptr = &bgr_buffer[0] + h*crop_width + w;
-						*cur_pix_ptr = (ori_pix_ptr[3] - 127.5f) / 127.5f;
+						*cur_pix_ptr = (ori_pix_ptr[3] - mean_val) * std_val;
 						cur_pix_ptr += slice_size;
-						*cur_pix_ptr = (ori_pix_ptr[2] - 127.5f) / 127.5f;
+						*cur_pix_ptr = (ori_pix_ptr[2] - mean_val) * std_val;
 						cur_pix_ptr += slice_size;
-						*cur_pix_ptr = (ori_pix_ptr[1] - 127.5f) / 127.5f;
+						*cur_pix_ptr = (ori_pix_ptr[1] - mean_val) * std_val;
 					}
 				}
 				break;
@@ -198,6 +198,10 @@ namespace ZQ
 		}
 
 	private:
+
+		const float mean_val = 127.5f;
+		const float std_val = 0.0078125f;
+
 		caffe::Net*  net;
 		int feat_dim;
 		std::string prototxt_file;
