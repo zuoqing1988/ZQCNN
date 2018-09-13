@@ -40,8 +40,8 @@
 //
 //M*/
 
-#ifndef __OPENCV_VIDEOSTAB_FRAME_SOURCE_HPP__
-#define __OPENCV_VIDEOSTAB_FRAME_SOURCE_HPP__
+#ifndef OPENCV_VIDEOSTAB_FRAME_SOURCE_HPP
+#define OPENCV_VIDEOSTAB_FRAME_SOURCE_HPP
 
 #include <vector>
 #include "opencv2/core.hpp"
@@ -65,8 +65,8 @@ public:
 class CV_EXPORTS NullFrameSource : public IFrameSource
 {
 public:
-    virtual void reset() {}
-    virtual Mat nextFrame() { return Mat(); }
+    virtual void reset() CV_OVERRIDE {}
+    virtual Mat nextFrame() CV_OVERRIDE { return Mat(); }
 };
 
 class CV_EXPORTS VideoFileSource : public IFrameSource
@@ -74,8 +74,8 @@ class CV_EXPORTS VideoFileSource : public IFrameSource
 public:
     VideoFileSource(const String &path, bool volatileFrame = false);
 
-    virtual void reset();
-    virtual Mat nextFrame();
+    virtual void reset() CV_OVERRIDE;
+    virtual Mat nextFrame() CV_OVERRIDE;
 
     int width();
     int height();

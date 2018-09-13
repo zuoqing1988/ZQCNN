@@ -41,8 +41,8 @@
 //M*/
 
 
-#ifndef __OPENCV_STITCHING_TIMELAPSERS_HPP__
-#define __OPENCV_STITCHING_TIMELAPSERS_HPP__
+#ifndef OPENCV_STITCHING_TIMELAPSERS_HPP
+#define OPENCV_STITCHING_TIMELAPSERS_HPP
 
 #include "opencv2/core.hpp"
 
@@ -80,7 +80,7 @@ protected:
 class CV_EXPORTS TimelapserCrop : public Timelapser
 {
 public:
-    virtual void initialize(const std::vector<Point> &corners, const std::vector<Size> &sizes);
+    virtual void initialize(const std::vector<Point> &corners, const std::vector<Size> &sizes) CV_OVERRIDE;
 };
 
 //! @}
@@ -88,4 +88,4 @@ public:
 } // namespace detail
 } // namespace cv
 
-#endif // __OPENCV_STITCHING_TIMELAPSERS_HPP__
+#endif // OPENCV_STITCHING_TIMELAPSERS_HPP

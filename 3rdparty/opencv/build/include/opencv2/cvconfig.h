@@ -1,5 +1,14 @@
+#ifndef OPENCV_CVCONFIG_H_INCLUDED
+#define OPENCV_CVCONFIG_H_INCLUDED
+
 /* OpenCV compiled as static or dynamic libs */
 #define BUILD_SHARED_LIBS
+
+/* OpenCV intrinsics optimized code */
+#define CV_ENABLE_INTRINSICS
+
+/* OpenCV additional optimized code */
+/* #undef CV_DISABLE_OPTIMIZATION */
 
 /* Compile for 'real' NVIDIA GPU architectures */
 #define CUDA_ARCH_BIN ""
@@ -26,10 +35,10 @@
 /* #undef HAVE_CARBON */
 
 /* AMD's Basic Linear Algebra Subprograms Library*/
-#define HAVE_CLAMDBLAS
+/* #undef HAVE_CLAMDBLAS */
 
 /* AMD's OpenCL Fast Fourier Transform Library*/
-#define HAVE_CLAMDFFT
+/* #undef HAVE_CLAMDFFT */
 
 /* Clp support */
 /* #undef HAVE_CLP */
@@ -40,13 +49,13 @@
 /* C= */
 /* #undef HAVE_CSTRIPES */
 
-/* NVidia Cuda Basic Linear Algebra Subprograms (BLAS) API*/
+/* NVIDIA CUDA Basic Linear Algebra Subprograms (BLAS) API*/
 /* #undef HAVE_CUBLAS */
 
-/* NVidia Cuda Runtime API*/
+/* NVIDIA CUDA Runtime API*/
 /* #undef HAVE_CUDA */
 
-/* NVidia Cuda Fast Fourier Transform (FFT) API*/
+/* NVIDIA CUDA Fast Fourier Transform (FFT) API*/
 /* #undef HAVE_CUFFT */
 
 /* IEEE1394 capturing support */
@@ -71,12 +80,6 @@
 /* FFMpeg video library */
 #define HAVE_FFMPEG
 
-/* ffmpeg's libswscale */
-#define HAVE_FFMPEG_SWSCALE
-
-/* ffmpeg in Gentoo */
-#define HAVE_GENTOO_FFMPEG
-
 /* Geospatial Data Abstraction Library */
 /* #undef HAVE_GDAL */
 
@@ -89,15 +92,19 @@
 /* GTK+ 2.x toolkit */
 /* #undef HAVE_GTK */
 
+/* Halide support */
+/* #undef HAVE_HALIDE */
+
 /* Define to 1 if you have the <inttypes.h> header file. */
-/* #undef HAVE_INTTYPES_H */
+#define HAVE_INTTYPES_H 1
 
 /* Intel Perceptual Computing SDK library */
 /* #undef HAVE_INTELPERC */
 
 /* Intel Integrated Performance Primitives */
 #define HAVE_IPP
-#define HAVE_IPP_ICV_ONLY
+#define HAVE_IPP_ICV
+#define HAVE_IPP_IW
 
 /* Intel IPP Async */
 /* #undef HAVE_IPP_A */
@@ -111,14 +118,20 @@
 /* libpng/png.h needs to be included */
 /* #undef HAVE_LIBPNG_PNG_H */
 
+/* GDCM DICOM codec */
+/* #undef HAVE_GDCM */
+
 /* V4L/V4L2 capturing support via libv4l */
 /* #undef HAVE_LIBV4L */
 
 /* Microsoft Media Foundation Capture library */
-/* #undef HAVE_MSMF */
+#define HAVE_MSMF
 
-/* NVidia Video Decoding API*/
+/* NVIDIA Video Decoding API*/
 /* #undef HAVE_NVCUVID */
+
+/* NVIDIA Video Encoding API*/
+/* #undef HAVE_NVCUVENC */
 
 /* OpenCL Support */
 #define HAVE_OPENCL
@@ -141,7 +154,7 @@
 #define HAVE_PNG
 
 /* Posix threads (pthreads) */
-/* #undef HAVE_PTHREADS */
+/* #undef HAVE_PTHREAD */
 
 /* parallel_for with pthreads */
 /* #undef HAVE_PTHREADS_PF */
@@ -194,3 +207,42 @@
 
 /* Intel VA-API/OpenCL */
 /* #undef HAVE_VA_INTEL */
+
+/* Intel Media SDK */
+/* #undef HAVE_MFX */
+
+/* Lapack */
+/* #undef HAVE_LAPACK */
+
+/* Library was compiled with functions instrumentation */
+/* #undef ENABLE_INSTRUMENTATION */
+
+/* OpenVX */
+/* #undef HAVE_OPENVX */
+
+#if defined(HAVE_XINE)         || \
+    defined(HAVE_GSTREAMER)    || \
+    defined(HAVE_QUICKTIME)    || \
+    defined(HAVE_QTKIT)        || \
+    defined(HAVE_AVFOUNDATION) || \
+    /*defined(HAVE_OPENNI)     || too specialized */ \
+    defined(HAVE_FFMPEG)       || \
+    defined(HAVE_MSMF)
+#define HAVE_VIDEO_INPUT
+#endif
+
+#if /*defined(HAVE_XINE)       || */\
+    defined(HAVE_GSTREAMER)    || \
+    defined(HAVE_QUICKTIME)    || \
+    defined(HAVE_QTKIT)        || \
+    defined(HAVE_AVFOUNDATION) || \
+    defined(HAVE_FFMPEG)       || \
+    defined(HAVE_MSMF)
+#define HAVE_VIDEO_OUTPUT
+#endif
+
+/* OpenCV trace utilities */
+#define OPENCV_TRACE
+
+
+#endif // OPENCV_CVCONFIG_H_INCLUDED

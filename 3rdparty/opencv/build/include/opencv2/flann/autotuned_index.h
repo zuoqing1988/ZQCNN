@@ -30,6 +30,8 @@
 #ifndef OPENCV_FLANN_AUTOTUNED_INDEX_H_
 #define OPENCV_FLANN_AUTOTUNED_INDEX_H_
 
+#include <sstream>
+
 #include "general.h"
 #include "nn_index.h"
 #include "ground_truth.h"
@@ -81,6 +83,7 @@ public:
         memory_weight_ = get_param(params, "memory_weight", 0.0f);
         sample_fraction_ = get_param(params,"sample_fraction", 0.1f);
         bestIndex_ = NULL;
+        speedup_ = 0;
     }
 
     AutotunedIndex(const AutotunedIndex&);
@@ -97,7 +100,7 @@ public:
     /**
      *          Method responsible with building the index.
      */
-    virtual void buildIndex()
+    virtual void buildIndex() CV_OVERRIDE
     {
         std::ostringstream stream;
         bestParams_ = estimateBuildParams();
@@ -121,7 +124,7 @@ public:
     /**
      *  Saves the index to a stream
      */
-    virtual void saveIndex(FILE* stream)
+    virtual void saveIndex(FILE* stream) CV_OVERRIDE
     {
         save_value(stream, (int)bestIndex_->getType());
         bestIndex_->saveIndex(stream);
@@ -131,7 +134,7 @@ public:
     /**
      *  Loads the index from a stream
      */
-    virtual void loadIndex(FILE* stream)
+    virtual void loadIndex(FILE* stream) CV_OVERRIDE
     {
         int index_type;
 
@@ -148,7 +151,7 @@ public:
     /**
      *      Method that searches for nearest-neighbors
      */
-    virtual void findNeighbors(ResultSet<DistanceType>& result, const ElementType* vec, const SearchParams& searchParams)
+    virtual void findNeighbors(ResultSet<DistanceType>& result, const ElementType* vec, const SearchParams& searchParams) CV_OVERRIDE
     {
         int checks = get_param<int>(searchParams,"checks",FLANN_CHECKS_AUTOTUNED);
         if (checks == FLANN_CHECKS_AUTOTUNED) {
@@ -160,7 +163,7 @@ public:
     }
 
 
-    IndexParams getParameters() const
+    IndexParams getParameters() const CV_OVERRIDE
     {
         return bestIndex_->getParameters();
     }
@@ -179,7 +182,7 @@ public:
     /**
      *      Number of features in this index.
      */
-    virtual size_t size() const
+    virtual size_t size() const CV_OVERRIDE
     {
         return bestIndex_->size();
     }
@@ -187,7 +190,7 @@ public:
     /**
      *  The length of each vector in this index.
      */
-    virtual size_t veclen() const
+    virtual size_t veclen() const CV_OVERRIDE
     {
         return bestIndex_->veclen();
     }
@@ -195,7 +198,7 @@ public:
     /**
      * The amount of memory (in bytes) this index uses.
      */
-    virtual int usedMemory() const
+    virtual int usedMemory() const CV_OVERRIDE
     {
         return bestIndex_->usedMemory();
     }
@@ -203,7 +206,7 @@ public:
     /**
      * Algorithm name
      */
-    virtual flann_algorithm_t getType() const
+    virtual flann_algorithm_t getType() const CV_OVERRIDE
     {
         return FLANN_INDEX_AUTOTUNED;
     }

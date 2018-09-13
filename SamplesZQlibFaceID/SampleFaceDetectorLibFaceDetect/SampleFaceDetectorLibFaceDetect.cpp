@@ -41,7 +41,8 @@ int main()
 		return EXIT_FAILURE;
 	}
 
-	Mat img = imread("data\\4.jpg");
+	//Mat img = imread("data\\4.jpg");
+	Mat img = imread("data\\moli_001.jpg");
 	vector<ZQ_CNN_BBox> result_libfacedetect;
 	
 	if (!libfacedetect->FindFaceROI(img.data, img.cols, img.rows, img.step[0], ZQ_PIXEL_FMT_BGR, 

@@ -16,7 +16,7 @@ int main()
 	//if (!net.LoadFrom("model\\model-r100-am.zqparams", "model\\model-r100-am.nchwbin", false))
 	if (!net.LoadFrom("model\\mobilefacenet-res4-8-16-4-dim256.zqparams", "model\\mobilefacenet-res4-8-16-4-dim256-emore.nchwbin", false))
 	//if (!net.LoadFrom("model\\mobilefacenet-v112X96.zqparams", "model\\mobilefacenet-v112X96.nchwbin",false))
-	//if (!net.LoadFrom("model\\mobilefacenet-res2-6-10-2-dim128.zqparams", "model\\mobilefacenet-res2-6-10-2-dim128-emore.nchwbin", false))
+	//if (!net.LoadFrom("model\\mobilefacenet-res2-6-10-2-dim256.zqparams", "model\\mobilefacenet-res2-6-10-2-dim256-emore.nchwbin", false))
 		//if (!net.LoadFrom("model\\test.zqparams", "model\\test.nchwbin"))
 		//if (!net.LoadFrom("model\\model-r50-am.zqparams", "model\\model-r50-am.nchwbin"))
 		//if (!net.LoadFrom("model\\mobilenet_sphereface10bn512.zqparams", "model\\mobilenet_sphereface10bn512_iter_50000.nchwbin"))
@@ -88,7 +88,7 @@ int main()
 		input1.ConvertFromBGR(image1.data, image1.cols, image1.rows, image1.step[0]);
 
 		printf("num_MulAdd: %.3f M\n", net.GetNumOfMulAdd() / (1024.0*1024.0));
-		int iters = 10;
+		int iters = 100;
 		double t1 = omp_get_wtime();
 		for (int it = 0; it < iters; it++)
 		{

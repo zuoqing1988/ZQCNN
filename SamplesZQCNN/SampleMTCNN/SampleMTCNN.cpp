@@ -36,7 +36,7 @@ static void Draw(cv::Mat &image, const std::vector<ZQ_CNN_BBox>& thirdBbox)
 
 int main()
 {
-	int num_threads = 2;
+	int num_threads = 1;
 	openblas_set_num_threads(num_threads);
 	Mat image0 = cv::imread("data\\4.jpg", 1);
 	if (image0.empty())

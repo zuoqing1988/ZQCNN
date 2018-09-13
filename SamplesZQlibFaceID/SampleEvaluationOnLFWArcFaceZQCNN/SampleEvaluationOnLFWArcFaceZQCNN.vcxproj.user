@@ -1,8 +1,9 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <LocalDebuggerCommandArguments>F:\Code\Projects\ZQCNN\model\mobilefacenet.zqparams F:\Code\Projects\ZQCNN\model\mobilefacenet.nchwbin  fc5 F:\Code\sphereface\test\data\pairs.txt F:\Code\sphereface\preprocess\data\lfw_arcface_crop 10 1</LocalDebuggerCommandArguments>
+    <LocalDebuggerCommandArguments>mobilefacenet-res4-8-16-4-dim256.zqparams mobilefacenet-res4-8-16-4-dim256-emore.nchwbin  fc5 F:\Code\sphereface\test\data\pairs.txt F:\Code\sphereface\preprocess\data\lfw-112X112 10 1</LocalDebuggerCommandArguments>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
+    <LocalDebuggerWorkingDirectory>C:\Users\ZQ\Desktop\model-y1\model-y1-test4</LocalDebuggerWorkingDirectory>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LocalDebuggerCommandArguments>F:\Code\Projects\ZQCNN\model\model-r34-am_old.zqparams F:\Code\Projects\ZQCNN\model\model-r34-am_old.nchwbin  fc5 F:\Code\sphereface\test\data\pairs.txt F:\Code\sphereface\preprocess\data\lfw_arcface_crop 8 0</LocalDebuggerCommandArguments>

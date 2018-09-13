@@ -40,8 +40,12 @@
 //
 //M*/
 
-#ifndef __OPENCV_STITCHING_EXPOSURE_COMPENSATE_HPP__
-#define __OPENCV_STITCHING_EXPOSURE_COMPENSATE_HPP__
+#ifndef OPENCV_STITCHING_EXPOSURE_COMPENSATE_HPP
+#define OPENCV_STITCHING_EXPOSURE_COMPENSATE_HPP
+
+#if defined(NO)
+#  warning Detected Apple 'NO' macro definition, it can cause build conflicts. Please, include this header before any Apple headers.
+#endif
 
 #include "opencv2/core.hpp"
 
@@ -88,8 +92,8 @@ class CV_EXPORTS NoExposureCompensator : public ExposureCompensator
 {
 public:
     void feed(const std::vector<Point> &/*corners*/, const std::vector<UMat> &/*images*/,
-              const std::vector<std::pair<UMat,uchar> > &/*masks*/) { }
-    void apply(int /*index*/, Point /*corner*/, InputOutputArray /*image*/, InputArray /*mask*/) { }
+              const std::vector<std::pair<UMat,uchar> > &/*masks*/) CV_OVERRIDE { }
+    void apply(int /*index*/, Point /*corner*/, InputOutputArray /*image*/, InputArray /*mask*/) CV_OVERRIDE { }
 };
 
 /** @brief Exposure compensator which tries to remove exposure related artifacts by adjusting image
@@ -99,8 +103,8 @@ class CV_EXPORTS GainCompensator : public ExposureCompensator
 {
 public:
     void feed(const std::vector<Point> &corners, const std::vector<UMat> &images,
-              const std::vector<std::pair<UMat,uchar> > &masks);
-    void apply(int index, Point corner, InputOutputArray image, InputArray mask);
+              const std::vector<std::pair<UMat,uchar> > &masks) CV_OVERRIDE;
+    void apply(int index, Point corner, InputOutputArray image, InputArray mask) CV_OVERRIDE;
     std::vector<double> gains() const;
 
 private:
@@ -116,8 +120,8 @@ public:
     BlocksGainCompensator(int bl_width = 32, int bl_height = 32)
             : bl_width_(bl_width), bl_height_(bl_height) {}
     void feed(const std::vector<Point> &corners, const std::vector<UMat> &images,
-              const std::vector<std::pair<UMat,uchar> > &masks);
-    void apply(int index, Point corner, InputOutputArray image, InputArray mask);
+              const std::vector<std::pair<UMat,uchar> > &masks) CV_OVERRIDE;
+    void apply(int index, Point corner, InputOutputArray image, InputArray mask) CV_OVERRIDE;
 
 private:
     int bl_width_, bl_height_;
@@ -129,4 +133,4 @@ private:
 } // namespace detail
 } // namespace cv
 
-#endif // __OPENCV_STITCHING_EXPOSURE_COMPENSATE_HPP__
+#endif // OPENCV_STITCHING_EXPOSURE_COMPENSATE_HPP

@@ -33,6 +33,10 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SampleFaceRecognizerSphereF
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SampleCropImagesForAgeGender", "SamplesZQlibFaceID\SampleCropImagesForAgeGender\SampleCropImagesForAgeGender.vcxproj", "{3580FEFD-5D5A-4DEF-B8C2-9F403C7F8713}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SampleEvaluationOnLFWArcFaceOpenCV", "SamplesZQlibFaceID\SampleEvaluationOnLFWArcFaceOpenCV\SampleEvaluationOnLFWArcFaceOpenCV.vcxproj", "{7915D7AA-A18E-40D8-B294-0F5BD0056A59}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SampleEvaluationOnLFWSphereFaceOpenCV", "SamplesZQlibFaceID\SampleEvaluationOnLFWSphereFaceOpenCV\SampleEvaluationOnLFWSphereFaceOpenCV.vcxproj", "{EF098726-E668-48BF-BA6E-5713AD5AF605}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -161,6 +165,22 @@ Global
 		{3580FEFD-5D5A-4DEF-B8C2-9F403C7F8713}.Release|x64.Build.0 = Release|x64
 		{3580FEFD-5D5A-4DEF-B8C2-9F403C7F8713}.Release|x86.ActiveCfg = Release|Win32
 		{3580FEFD-5D5A-4DEF-B8C2-9F403C7F8713}.Release|x86.Build.0 = Release|Win32
+		{7915D7AA-A18E-40D8-B294-0F5BD0056A59}.Debug|x64.ActiveCfg = Debug|x64
+		{7915D7AA-A18E-40D8-B294-0F5BD0056A59}.Debug|x64.Build.0 = Debug|x64
+		{7915D7AA-A18E-40D8-B294-0F5BD0056A59}.Debug|x86.ActiveCfg = Debug|Win32
+		{7915D7AA-A18E-40D8-B294-0F5BD0056A59}.Debug|x86.Build.0 = Debug|Win32
+		{7915D7AA-A18E-40D8-B294-0F5BD0056A59}.Release|x64.ActiveCfg = Release|x64
+		{7915D7AA-A18E-40D8-B294-0F5BD0056A59}.Release|x64.Build.0 = Release|x64
+		{7915D7AA-A18E-40D8-B294-0F5BD0056A59}.Release|x86.ActiveCfg = Release|Win32
+		{7915D7AA-A18E-40D8-B294-0F5BD0056A59}.Release|x86.Build.0 = Release|Win32
+		{EF098726-E668-48BF-BA6E-5713AD5AF605}.Debug|x64.ActiveCfg = Debug|x64
+		{EF098726-E668-48BF-BA6E-5713AD5AF605}.Debug|x64.Build.0 = Debug|x64
+		{EF098726-E668-48BF-BA6E-5713AD5AF605}.Debug|x86.ActiveCfg = Debug|Win32
+		{EF098726-E668-48BF-BA6E-5713AD5AF605}.Debug|x86.Build.0 = Debug|Win32
+		{EF098726-E668-48BF-BA6E-5713AD5AF605}.Release|x64.ActiveCfg = Release|x64
+		{EF098726-E668-48BF-BA6E-5713AD5AF605}.Release|x64.Build.0 = Release|x64
+		{EF098726-E668-48BF-BA6E-5713AD5AF605}.Release|x86.ActiveCfg = Release|Win32
+		{EF098726-E668-48BF-BA6E-5713AD5AF605}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

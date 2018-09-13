@@ -8,7 +8,7 @@ using namespace std;
 using namespace cv;
 int main()
 {
-	int num_threads = 4;
+	int num_threads = 1;
 	openblas_set_num_threads(num_threads);
 	Mat image = cv::imread("data\\00_.jpg", 1);
 	if (image.empty())
@@ -30,7 +30,7 @@ int main()
 		return EXIT_FAILURE;
 	}
 	printf("num_MulAdd = %.3f M\n", net.GetNumOfMulAdd()/(1024.0*1024.0));
-
+	//net.TurnOnShowDebugInfo();
 	int iters = 100;
 	double t1 = omp_get_wtime();
 	for (int it = 0; it < iters; it++)

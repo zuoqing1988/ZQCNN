@@ -11,7 +11,7 @@ using namespace cv;
 
 int main()
 {
-	int thread_num = 4;
+	int thread_num = 1;
 	openblas_set_num_threads(thread_num);
 	
 	Mat img0 = cv::imread("data\\004545.jpg", 1);
@@ -30,7 +30,7 @@ int main()
 	}
 	
 	int out_iter = 10;
-	int iters = 1;
+	int iters = 100;
 	std::vector<ZQ_CNN_SSD::BBox> output;
 	const float kScoreThreshold = 0.5f;
 	for (int out_it = 0; out_it < out_iter; out_it++)

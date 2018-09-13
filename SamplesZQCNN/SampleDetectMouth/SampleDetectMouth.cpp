@@ -193,8 +193,16 @@ int SampleDetectMouth_fig(int argc, const char** argv)
 	{
 		if (!detector.DetectSimpleResult(image.ptr<unsigned char>(0), image.cols, image.rows, image.step[0], &detect_args, &simple_detected_result))
 		{
-			printf("failed to detect\n");
-			return EXIT_FAILURE;
+			//printf("failed to detect\n");
+			FILE* out = 0;
+			if (0 != fopen_s(&out, out_file.c_str(), "w"))
+			{
+				printf("failed to create file %s\n", out_file.c_str());
+				return EXIT_FAILURE;
+			}
+			fprintf(out, "0\n");
+			fclose(out);
+			return EXIT_SUCCESS;
 		}
 
 		if (should_save_draw)

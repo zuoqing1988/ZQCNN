@@ -40,8 +40,8 @@
 //
 //M*/
 
-#ifndef __OPENCV_STITCHING_WARPERS_HPP__
-#define __OPENCV_STITCHING_WARPERS_HPP__
+#ifndef OPENCV_STITCHING_WARPERS_HPP
+#define OPENCV_STITCHING_WARPERS_HPP
 
 #include "opencv2/core.hpp"
 #include "opencv2/core/cuda.hpp"
@@ -138,23 +138,23 @@ struct CV_EXPORTS ProjectorBase
 /** @brief Base class for rotation-based warper using a detail::ProjectorBase_ derived class.
  */
 template <class P>
-class CV_EXPORTS RotationWarperBase : public RotationWarper
+class CV_EXPORTS_TEMPLATE RotationWarperBase : public RotationWarper
 {
 public:
-    Point2f warpPoint(const Point2f &pt, InputArray K, InputArray R);
+    Point2f warpPoint(const Point2f &pt, InputArray K, InputArray R) CV_OVERRIDE;
 
-    Rect buildMaps(Size src_size, InputArray K, InputArray R, OutputArray xmap, OutputArray ymap);
+    Rect buildMaps(Size src_size, InputArray K, InputArray R, OutputArray xmap, OutputArray ymap) CV_OVERRIDE;
 
     Point warp(InputArray src, InputArray K, InputArray R, int interp_mode, int border_mode,
-               OutputArray dst);
+               OutputArray dst) CV_OVERRIDE;
 
     void warpBackward(InputArray src, InputArray K, InputArray R, int interp_mode, int border_mode,
-                      Size dst_size, OutputArray dst);
+                      Size dst_size, OutputArray dst) CV_OVERRIDE;
 
-    Rect warpRoi(Size src_size, InputArray K, InputArray R);
+    Rect warpRoi(Size src_size, InputArray K, InputArray R) CV_OVERRIDE;
 
-    float getScale() const { return projector_.scale; }
-    void setScale(float val) { projector_.scale = val; }
+    float getScale() const  CV_OVERRIDE{ return projector_.scale; }
+    void setScale(float val) CV_OVERRIDE { projector_.scale = val; }
 
 protected:
 
@@ -186,22 +186,50 @@ public:
      */
     PlaneWarper(float scale = 1.f) { projector_.scale = scale; }
 
-    Point2f warpPoint(const Point2f &pt, InputArray K, InputArray R);
+    Point2f warpPoint(const Point2f &pt, InputArray K, InputArray R) CV_OVERRIDE;
     Point2f warpPoint(const Point2f &pt, InputArray K, InputArray R, InputArray T);
 
     virtual Rect buildMaps(Size src_size, InputArray K, InputArray R, InputArray T, OutputArray xmap, OutputArray ymap);
-    Rect buildMaps(Size src_size, InputArray K, InputArray R, OutputArray xmap, OutputArray ymap);
+    Rect buildMaps(Size src_size, InputArray K, InputArray R, OutputArray xmap, OutputArray ymap) CV_OVERRIDE;
 
     Point warp(InputArray src, InputArray K, InputArray R,
-               int interp_mode, int border_mode, OutputArray dst);
+               int interp_mode, int border_mode, OutputArray dst) CV_OVERRIDE;
     virtual Point warp(InputArray src, InputArray K, InputArray R, InputArray T, int interp_mode, int border_mode,
                OutputArray dst);
 
-    Rect warpRoi(Size src_size, InputArray K, InputArray R);
+    Rect warpRoi(Size src_size, InputArray K, InputArray R) CV_OVERRIDE;
     Rect warpRoi(Size src_size, InputArray K, InputArray R, InputArray T);
 
 protected:
-    void detectResultRoi(Size src_size, Point &dst_tl, Point &dst_br);
+    void detectResultRoi(Size src_size, Point &dst_tl, Point &dst_br) CV_OVERRIDE;
+};
+
+
+/** @brief Affine warper that uses rotations and translations
+
+ Uses affine transformation in homogeneous coordinates to represent both rotation and
+ translation in camera rotation matrix.
+ */
+class CV_EXPORTS AffineWarper : public PlaneWarper
+{
+public:
+    /** @brief Construct an instance of the affine warper class.
+
+    @param scale Projected image scale multiplier
+     */
+    AffineWarper(float scale = 1.f) : PlaneWarper(scale) {}
+
+    Point2f warpPoint(const Point2f &pt, InputArray K, InputArray R) CV_OVERRIDE;
+    Rect buildMaps(Size src_size, InputArray K, InputArray R, OutputArray xmap, OutputArray ymap) CV_OVERRIDE;
+    Point warp(InputArray src, InputArray K, InputArray R,
+               int interp_mode, int border_mode, OutputArray dst) CV_OVERRIDE;
+    Rect warpRoi(Size src_size, InputArray K, InputArray R) CV_OVERRIDE;
+
+protected:
+    /** @brief Extracts rotation and translation matrices from matrix H representing
+        affine transformation in homogeneous coordinates
+     */
+    void getRTfromHomogeneous(InputArray H, Mat &R, Mat &T);
 };
 
 
@@ -214,7 +242,8 @@ struct CV_EXPORTS SphericalProjector : ProjectorBase
 
 /** @brief Warper that maps an image onto the unit sphere located at the origin.
 
- Projects image onto unit sphere with origin at (0, 0, 0).
+ Projects image onto unit sphere with origin at (0, 0, 0) and radius scale, measured in pixels.
+ A 360 panorama would therefore have a resulting width of 2 * scale * PI pixels.
  Poles are located at (0, -1, 0) and (0, 1, 0) points.
 */
 class CV_EXPORTS SphericalWarper : public RotationWarperBase<SphericalProjector>
@@ -222,14 +251,15 @@ class CV_EXPORTS SphericalWarper : public RotationWarperBase<SphericalProjector>
 public:
     /** @brief Construct an instance of the spherical warper class.
 
-    @param scale Projected image scale multiplier
+    @param scale Radius of the projected sphere, in pixels. An image spanning the
+                 whole sphere will have a width of 2 * scale * PI pixels.
      */
     SphericalWarper(float scale) { projector_.scale = scale; }
 
-    Rect buildMaps(Size src_size, InputArray K, InputArray R, OutputArray xmap, OutputArray ymap);
-    Point warp(InputArray src, InputArray K, InputArray R, int interp_mode, int border_mode, OutputArray dst);
+    Rect buildMaps(Size src_size, InputArray K, InputArray R, OutputArray xmap, OutputArray ymap) CV_OVERRIDE;
+    Point warp(InputArray src, InputArray K, InputArray R, int interp_mode, int border_mode, OutputArray dst) CV_OVERRIDE;
 protected:
-    void detectResultRoi(Size src_size, Point &dst_tl, Point &dst_br);
+    void detectResultRoi(Size src_size, Point &dst_tl, Point &dst_br) CV_OVERRIDE;
 };
 
 
@@ -251,10 +281,10 @@ public:
      */
     CylindricalWarper(float scale) { projector_.scale = scale; }
 
-    Rect buildMaps(Size src_size, InputArray K, InputArray R, OutputArray xmap, OutputArray ymap);
-    Point warp(InputArray src, InputArray K, InputArray R, int interp_mode, int border_mode, OutputArray dst);
+    Rect buildMaps(Size src_size, InputArray K, InputArray R, OutputArray xmap, OutputArray ymap) CV_OVERRIDE;
+    Point warp(InputArray src, InputArray K, InputArray R, int interp_mode, int border_mode, OutputArray dst) CV_OVERRIDE;
 protected:
-    void detectResultRoi(Size src_size, Point &dst_tl, Point &dst_br)
+    void detectResultRoi(Size src_size, Point &dst_tl, Point &dst_br) CV_OVERRIDE
     {
         RotationWarperBase<CylindricalProjector>::detectResultRoiByBorder(src_size, dst_tl, dst_br);
     }
@@ -407,7 +437,7 @@ class CV_EXPORTS PlaneWarperGpu : public PlaneWarper
 public:
     PlaneWarperGpu(float scale = 1.f) : PlaneWarper(scale) {}
 
-    Rect buildMaps(Size src_size, InputArray K, InputArray R, OutputArray xmap, OutputArray ymap)
+    Rect buildMaps(Size src_size, InputArray K, InputArray R, OutputArray xmap, OutputArray ymap) CV_OVERRIDE
     {
         Rect result = buildMaps(src_size, K, R, d_xmap_, d_ymap_);
         d_xmap_.download(xmap);
@@ -415,7 +445,7 @@ public:
         return result;
     }
 
-    Rect buildMaps(Size src_size, InputArray K, InputArray R, InputArray T, OutputArray xmap, OutputArray ymap)
+    Rect buildMaps(Size src_size, InputArray K, InputArray R, InputArray T, OutputArray xmap, OutputArray ymap) CV_OVERRIDE
     {
         Rect result = buildMaps(src_size, K, R, T, d_xmap_, d_ymap_);
         d_xmap_.download(xmap);
@@ -424,7 +454,7 @@ public:
     }
 
     Point warp(InputArray src, InputArray K, InputArray R, int interp_mode, int border_mode,
-               OutputArray dst)
+               OutputArray dst) CV_OVERRIDE
     {
         d_src_.upload(src);
         Point result = warp(d_src_, K, R, interp_mode, border_mode, d_dst_);
@@ -433,7 +463,7 @@ public:
     }
 
     Point warp(InputArray src, InputArray K, InputArray R, InputArray T, int interp_mode, int border_mode,
-               OutputArray dst)
+               OutputArray dst) CV_OVERRIDE
     {
         d_src_.upload(src);
         Point result = warp(d_src_, K, R, T, interp_mode, border_mode, d_dst_);
@@ -461,7 +491,7 @@ class CV_EXPORTS SphericalWarperGpu : public SphericalWarper
 public:
     SphericalWarperGpu(float scale) : SphericalWarper(scale) {}
 
-    Rect buildMaps(Size src_size, InputArray K, InputArray R, OutputArray xmap, OutputArray ymap)
+    Rect buildMaps(Size src_size, InputArray K, InputArray R, OutputArray xmap, OutputArray ymap) CV_OVERRIDE
     {
         Rect result = buildMaps(src_size, K, R, d_xmap_, d_ymap_);
         d_xmap_.download(xmap);
@@ -470,7 +500,7 @@ public:
     }
 
     Point warp(InputArray src, InputArray K, InputArray R, int interp_mode, int border_mode,
-               OutputArray dst)
+               OutputArray dst) CV_OVERRIDE
     {
         d_src_.upload(src);
         Point result = warp(d_src_, K, R, interp_mode, border_mode, d_dst_);
@@ -493,7 +523,7 @@ class CV_EXPORTS CylindricalWarperGpu : public CylindricalWarper
 public:
     CylindricalWarperGpu(float scale) : CylindricalWarper(scale) {}
 
-    Rect buildMaps(Size src_size, InputArray K, InputArray R, OutputArray xmap, OutputArray ymap)
+    Rect buildMaps(Size src_size, InputArray K, InputArray R, OutputArray xmap, OutputArray ymap) CV_OVERRIDE
     {
         Rect result = buildMaps(src_size, K, R, d_xmap_, d_ymap_);
         d_xmap_.download(xmap);
@@ -502,7 +532,7 @@ public:
     }
 
     Point warp(InputArray src, InputArray K, InputArray R, int interp_mode, int border_mode,
-               OutputArray dst)
+               OutputArray dst) CV_OVERRIDE
     {
         d_src_.upload(src);
         Point result = warp(d_src_, K, R, interp_mode, border_mode, d_dst_);
@@ -520,7 +550,7 @@ private:
 };
 
 
-struct SphericalPortraitProjector : ProjectorBase
+struct CV_EXPORTS SphericalPortraitProjector : ProjectorBase
 {
     void mapForward(float x, float y, float &u, float &v);
     void mapBackward(float u, float v, float &x, float &y);
@@ -535,10 +565,10 @@ public:
     SphericalPortraitWarper(float scale) { projector_.scale = scale; }
 
 protected:
-    void detectResultRoi(Size src_size, Point &dst_tl, Point &dst_br);
+    void detectResultRoi(Size src_size, Point &dst_tl, Point &dst_br) CV_OVERRIDE;
 };
 
-struct CylindricalPortraitProjector : ProjectorBase
+struct CV_EXPORTS CylindricalPortraitProjector : ProjectorBase
 {
     void mapForward(float x, float y, float &u, float &v);
     void mapBackward(float u, float v, float &x, float &y);
@@ -551,13 +581,13 @@ public:
     CylindricalPortraitWarper(float scale) { projector_.scale = scale; }
 
 protected:
-    void detectResultRoi(Size src_size, Point &dst_tl, Point &dst_br)
+    void detectResultRoi(Size src_size, Point &dst_tl, Point &dst_br) CV_OVERRIDE
     {
         RotationWarperBase<CylindricalPortraitProjector>::detectResultRoiByBorder(src_size, dst_tl, dst_br);
     }
 };
 
-struct PlanePortraitProjector : ProjectorBase
+struct CV_EXPORTS PlanePortraitProjector : ProjectorBase
 {
     void mapForward(float x, float y, float &u, float &v);
     void mapBackward(float u, float v, float &x, float &y);
@@ -570,7 +600,7 @@ public:
     PlanePortraitWarper(float scale) { projector_.scale = scale; }
 
 protected:
-    void detectResultRoi(Size src_size, Point &dst_tl, Point &dst_br)
+    void detectResultRoi(Size src_size, Point &dst_tl, Point &dst_br) CV_OVERRIDE
     {
         RotationWarperBase<PlanePortraitProjector>::detectResultRoiByBorder(src_size, dst_tl, dst_br);
     }
@@ -583,4 +613,4 @@ protected:
 
 #include "warpers_inl.hpp"
 
-#endif // __OPENCV_STITCHING_WARPERS_HPP__
+#endif // OPENCV_STITCHING_WARPERS_HPP
