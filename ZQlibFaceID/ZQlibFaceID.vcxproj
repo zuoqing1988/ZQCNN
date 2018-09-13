@@ -165,10 +165,12 @@
     <ClInclude Include="ZQ_FaceRecognizerAgeGenderMiniCaffe.h" />
     <ClInclude Include="ZQ_FaceRecognizerAgeGenderZQCNN.h" />
     <ClInclude Include="ZQ_FaceRecognizerArcFaceMiniCaffe.h" />
+    <ClInclude Include="ZQ_FaceRecognizerArcFaceOpenCV.h" />
     <ClInclude Include="ZQ_FaceRecognizerArcFaceZQCNN.h" />
     <ClInclude Include="ZQ_FaceRecognizerSeetaFace.h" />
     <ClInclude Include="ZQ_FaceRecognizerSphereFace.h" />
     <ClInclude Include="ZQ_FaceRecognizerSphereFaceMiniCaffe.h" />
+    <ClInclude Include="ZQ_FaceRecognizerSphereFaceOpenCV.h" />
     <ClInclude Include="ZQ_FaceRecognizerUtils.h" />
     <ClInclude Include="ZQ_FaceRecognizerSphereFaceZQCNN.h" />
     <ClInclude Include="ZQ_FaceSearchTarget.h" />

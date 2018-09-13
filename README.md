@@ -137,29 +137,29 @@ Convolution name=conv1 bottom=data top=conv1 num_output=10 kernel_size=3 stride=
 
 **人脸识别**
 
-|模型名称                                                                    |LFW精度        |耗时                               |备注           
+|模型名称                                                                    |LFW精度(ZQCNN) | LFW精度(OpenCV3.4.2) | LFW精度(minicaffe) |耗时(ZQCNN)  |备注           
 |------------                                                                | ------------- | ------------                      | ------------- 
-|[SphereFace04](https://pan.baidu.com/s/1-Bb6yuU3eAN6U2ZdVsC5Mg)             | 98.2%         | -                                 |不建议使用  
-|[SphereFace04bn](https://pan.baidu.com/s/18uvL3p7PWRpJcHm00-7ABg)           | 98.5%         | -                                 |不建议使用
-|[SphereFace06bn](https://pan.baidu.com/s/1LXjAoJWkWp-CT0sTgIHqfg)           | 98.7%-98.8%   | -                                 |不建议使用
-|[SphereFace20](https://pan.baidu.com/s/1fGJU9PfPNBot6qGVeGlcug)             | 99.2%-99.3%    |单线程约195ms， 3.6GHz            |不建议使用
+|[SphereFace04](https://pan.baidu.com/s/1-Bb6yuU3eAN6U2ZdVsC5Mg)             | 98.2%        | - | - | -                                 |不建议使用  
+|[SphereFace04bn](https://pan.baidu.com/s/18uvL3p7PWRpJcHm00-7ABg)           | 98.5%        | - | - | -                                 |不建议使用
+|[SphereFace06bn](https://pan.baidu.com/s/1LXjAoJWkWp-CT0sTgIHqfg)           | 98.7%-98.8%  | - | - | -                                 |不建议使用
+|[SphereFace20](https://pan.baidu.com/s/1fGJU9PfPNBot6qGVeGlcug)             | 99.2%-99.3%  | - | - |单线程约195ms， 3.6GHz            |不建议使用
 
 
-|模型名称                                                                    |LFW精度        |耗时                               |备注           
-|------------                                                                | ------------- | ------------                      | ------------- 
-|[SphereFace04bn256](https://pan.baidu.com/s/1YXt2PLbbUg9-VZITcMw5mQ)        | 97.8%-97.9%   |单线程6-7ms, 3.6GHz                |速度最快
-|[Mobile-SphereFace10bn](https://pan.baidu.com/s/1BEP1pg5s3yJCLA2elqTB0A)    | 98.6%-98.7%   |单线程15ms, 3.6GHz                 |性价比高 
-|[MobileFaceNet-v0](https://pan.baidu.com/s/1f-Mfad-7zRvWcy3wYoPrUg)         |99.13%-99.23%  |单线程33-35ms，4线程14-15ms, 3.6GHz|从[model-y1.zip](https://pan.baidu.com/s/1If28BkHde4fiuweJrbicVA)转的格式 
-|[MobileFaceNet-v1](https://pan.baidu.com/s/1b1g-hH7IWYxplY-XAvSz-Q)         |99.17%-99.37%  |单线程33-35ms，4线程14-15ms, 3.6GHz|我自己用insightface训练了一把 
-|[MobileFaceNet-res2-6-10-2-dim128](https://pan.baidu.com/s/1AQEad5Zp2cag4UA5KtpbYQ)|99.67%-99.55%(matlab crop), 99.72-99.60%(C++ crop)  |时间与dim256接近 |网络结构与dim256一样，只不过输出维数不同
-|[MobileFaceNet-res2-6-10-2-dim256](https://pan.baidu.com/s/143j7eULc2AqpNcSugFdTxA)|99.60%-99.60%(matlab crop), 99.62-99.62%(C++ crop)  |单线程约85ms，四线程约30ms, 3.6GHz |网络结构在下载链接里,用faces_emore训练的 
-|[MobileFaceNet-res2-6-10-2-dim512](https://pan.baidu.com/s/1_0O3kJ5dMmD-HdRwNR0Hpw)|99.52%-99.60%(matlab crop), 99.63-99.72%(C++ crop)  |时间与dim256接近 |网络结构与dim256一样，只不过输出维数不同。感谢[moli](https://github.com/moli232777144)训练此模型
-|[MobileFaceNet-res4-8-16-4-dim256](https://pan.baidu.com/s/1f_VtqNRxDNe972h8UrOsPw)|99.78%-99.78%(matlab crop), 99.75-99.75%(C++ crop)  |单线程约135ms，四线程约42ms, 3.6GHz |网络结构在下载链接里,用faces_emore训练的 
-|[MobileFaceNet-res4-8-16-4-dim512](https://pan.baidu.com/s/14ukmtAWDhIJC6312WBhZhA)|99.80%-99.72%(matlab crop), 99.85-99.82%(C++ crop)  |时间与dim256接近 |网络结构与dim256一样，只不过输出维数不同。感谢[moli](https://github.com/moli232777144)训练此模型
-|[ArcFace-r34](https://pan.baidu.com/s/1tRt6PxDg4UNv7yf9pMZ_LA)              |99.65%-99.70%  |单线程500ms+,3.6GHz                |-            
-|[ArcFace-r34-v2](https://pan.baidu.com/s/1q3ZqQdjabDBESqbsxC7ESQ)           |99.73%-99.77%(matlab crop), 99.68-99.78%(C++ crop) |单线程500ms+,3.6GHz                |-            
-|[ArcFace-r50](https://pan.baidu.com/s/1qOIhCauwZNTOCIM9eojPrA)              |99.75%-99.78%  |单线程700ms+,3.6GHz                |-            
-|[ArcFace-r100](https://pan.baidu.com/s/1PeujQbIqFfgARIYAdRt3pw)             |99.80%-99.82%  |单线程1900ms+，四线程480ms, 3.6GHz |时间波动很大 
+|模型名称                                                                    |LFW精度(ZQCNN) | LFW精度(OpenCV3.4.2) | LFW精度(minicaffe) |耗时                               |备注           
+|------------                                                                | ------------- |----------------------| ------------       |---------------------              | ------------- 
+|[SphereFace04bn256](https://pan.baidu.com/s/1YXt2PLbbUg9-VZITcMw5mQ)        | 97.8%-97.9%   |-|-|单线程6-7ms, 3.6GHz                |速度最快
+|[Mobile-SphereFace10bn](https://pan.baidu.com/s/1BEP1pg5s3yJCLA2elqTB0A)    | 98.6%-98.7%   |-|-|单线程15ms, 3.6GHz                 |性价比高 
+|[MobileFaceNet-v0](https://pan.baidu.com/s/1f-Mfad-7zRvWcy3wYoPrUg)         |99.13%-99.23%  |-|-|单线程33-35ms，4线程14-15ms, 3.6GHz|从[model-y1.zip](https://pan.baidu.com/s/1If28BkHde4fiuweJrbicVA)转的格式 
+|[MobileFaceNet-v1](https://pan.baidu.com/s/1b1g-hH7IWYxplY-XAvSz-Q)         |99.17%-99.37%  |-|-|单线程33-35ms，4线程14-15ms, 3.6GHz|我自己用insightface训练了一把 
+|[MobileFaceNet-res2-6-10-2-dim128](https://pan.baidu.com/s/1AQEad5Zp2cag4UA5KtpbYQ)|99.67%-99.55%(matlab crop), 99.72-99.60%(C++ crop)  |-|-|时间与dim256接近 |网络结构与dim256一样，只不过输出维数不同
+|[MobileFaceNet-res2-6-10-2-dim256](https://pan.baidu.com/s/143j7eULc2AqpNcSugFdTxA)|99.60%-99.60%(matlab crop), 99.62-99.62%(C++ crop)  |-|-|单线程约85ms，四线程约30ms, 3.6GHz |网络结构在下载链接里,用faces_emore训练的 
+|[MobileFaceNet-res2-6-10-2-dim512](https://pan.baidu.com/s/1_0O3kJ5dMmD-HdRwNR0Hpw)|99.52%-99.60%(matlab crop), 99.63-99.72%(C++ crop)  |-|-|时间与dim256接近 |网络结构与dim256一样，只不过输出维数不同。感谢[moli](https://github.com/moli232777144)训练此模型
+|[MobileFaceNet-res4-8-16-4-dim256](https://pan.baidu.com/s/1f_VtqNRxDNe972h8UrOsPw)|99.78%-99.78%(matlab crop), 99.75-99.75%(C++ crop)  |99.82%-99.82%(matlab crop), 99.80-99.82%(C++ crop) |99.78%-99.??%(matlab crop), 99.??-99.??%(C++ crop)|单线程约135ms，四线程约42ms, 3.6GHz |网络结构在下载链接里,用faces_emore训练的 
+|[MobileFaceNet-res4-8-16-4-dim512](https://pan.baidu.com/s/14ukmtAWDhIJC6312WBhZhA)|99.80%-99.72%(matlab crop), 99.85-99.82%(C++ crop)  |-|-|时间与dim256接近 |网络结构与dim256一样，只不过输出维数不同。感谢[moli](https://github.com/moli232777144)训练此模型
+|[ArcFace-r34](https://pan.baidu.com/s/1tRt6PxDg4UNv7yf9pMZ_LA)              |99.65%-99.70%  |-|-|单线程500ms+,3.6GHz                |-            
+|[ArcFace-r34-v2](https://pan.baidu.com/s/1q3ZqQdjabDBESqbsxC7ESQ)           |99.73%-99.77%(matlab crop), 99.68-99.78%(C++ crop) |-|-|单线程500ms+,3.6GHz                |-            
+|[ArcFace-r50](https://pan.baidu.com/s/1qOIhCauwZNTOCIM9eojPrA)              |99.75%-99.78%  |-|-|单线程700ms+,3.6GHz                |-            
+|[ArcFace-r100](https://pan.baidu.com/s/1PeujQbIqFfgARIYAdRt3pw)             |99.80%-99.82%  |-|-|单线程1900ms+，四线程480ms, 3.6GHz |时间波动很大 
 
 **表情识别**
 
