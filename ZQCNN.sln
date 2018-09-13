@@ -57,6 +57,11 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SampleNSFW", "SamplesZQCNN\
 		{43AA2D6A-447E-4153-8A29-7AE8A8296DC7} = {43AA2D6A-447E-4153-8A29-7AE8A8296DC7}
 	EndProjectSection
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SampleSphereFaceNetLoadFromBuffer", "SamplesZQCNN\SampleSphereFaceNetLoadFromBuffer\SampleSphereFaceNetLoadFromBuffer.vcxproj", "{F31658B6-F186-405E-881D-E5A9C2CAE80D}"
+	ProjectSection(ProjectDependencies) = postProject
+		{43AA2D6A-447E-4153-8A29-7AE8A8296DC7} = {43AA2D6A-447E-4153-8A29-7AE8A8296DC7}
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -161,6 +166,14 @@ Global
 		{A18177EC-DD03-4BBD-BC61-7B704DE64F2B}.Release|x64.Build.0 = Release|x64
 		{A18177EC-DD03-4BBD-BC61-7B704DE64F2B}.Release|x86.ActiveCfg = Release|Win32
 		{A18177EC-DD03-4BBD-BC61-7B704DE64F2B}.Release|x86.Build.0 = Release|Win32
+		{F31658B6-F186-405E-881D-E5A9C2CAE80D}.Debug|x64.ActiveCfg = Debug|x64
+		{F31658B6-F186-405E-881D-E5A9C2CAE80D}.Debug|x64.Build.0 = Debug|x64
+		{F31658B6-F186-405E-881D-E5A9C2CAE80D}.Debug|x86.ActiveCfg = Debug|Win32
+		{F31658B6-F186-405E-881D-E5A9C2CAE80D}.Debug|x86.Build.0 = Debug|Win32
+		{F31658B6-F186-405E-881D-E5A9C2CAE80D}.Release|x64.ActiveCfg = Release|x64
+		{F31658B6-F186-405E-881D-E5A9C2CAE80D}.Release|x64.Build.0 = Release|x64
+		{F31658B6-F186-405E-881D-E5A9C2CAE80D}.Release|x86.ActiveCfg = Release|Win32
+		{F31658B6-F186-405E-881D-E5A9C2CAE80D}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

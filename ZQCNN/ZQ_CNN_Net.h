@@ -60,6 +60,33 @@ namespace ZQ
 			return true;
 		}
 
+		bool LoadFromBuffer(const char*& param_buffer, __int64 param_buffer_len, const char*& model_buffer, __int64 model_buffer_len, bool merge_bn = false)
+		{
+			_clear();
+			if (!_load_param_from_buffer(param_buffer, param_buffer_len))
+			{
+				_clear();
+				return false;
+			}
+			if (!_check_connect())
+			{
+				_clear();
+				return false;
+			}
+			if (!_load_model_from_buffer(model_buffer, model_buffer_len))
+			{
+				_clear();
+				return false;
+			}
+
+			if (merge_bn)
+			{
+				if (!_merge_bn())
+					return false;
+			}
+			return true;
+		}
+
 		__int64 GetNumOfMulAdd() const
 		{
 			__int64 sum = 0;
@@ -139,6 +166,46 @@ namespace ZQ
 			has_input_layer = false;
 		}
 
+		bool _getline(std::fstream& fin, const char*& buffer, __int64& buffer_len, std::string& line)
+		{
+			if (buffer == 0)
+			{
+				if (!fin.is_open() || fin.eof())
+					return false;
+				std::getline(fin, line);
+				return true;
+			}
+			else
+			{
+				if (buffer_len <= 0)
+					return false;
+				__int64 i = 0;
+				for (; i < buffer_len; i++)
+				{
+					if (buffer[i] != '\n' && buffer[i] != '\r')
+						break;
+				}
+				if (i == buffer_len)
+					return false;
+
+				__int64 j = i;
+				for (; j < buffer_len; j++)
+				{
+					if (buffer[j] == '\n' || buffer[j] == '\r')
+						break;
+				}
+
+				if (j == i)
+					return false;
+				__int64 cur_len = j - i;
+				line.clear();
+				line.append(buffer + i, cur_len);
+				buffer += cur_len;
+				buffer_len -= cur_len;
+				return true;
+			}
+		}
+
 		bool _load_param_file(const std::string& file)
 		{
 			std::fstream fin(file, std::ios::in);
@@ -147,10 +214,21 @@ namespace ZQ
 				std::cout << "failed to open file " << file << "\n";
 				return false;
 			}
+			return _load_param_from_file_or_buffer(fin, NULL, 0);
+		}
+
+		bool _load_param_from_buffer(const char* buffer, __int64 buffer_len)
+		{
+			std::fstream fin;
+			return _load_param_from_file_or_buffer(fin, buffer, buffer_len);
+		}
+
+		bool _load_param_from_file_or_buffer(std::fstream& fin, const char* buffer, __int64 buffer_len)
+		{	
 			std::string line;
 			int buf_len = 200;
 			std::vector<char> buf(buf_len+1);
-			while (std::getline(fin,line))
+			while (_getline(fin, buffer, buffer_len, line))
 			{
 				buf[0] = '\0';
 				if (sscanf_s(line.c_str(), "%s", &buf[0], buf_len) == 0)
@@ -643,6 +721,26 @@ namespace ZQ
 				}
 			}
 			fclose(in);
+			return true;
+		}
+
+		bool _load_model_from_buffer(const char* model_buffer, __int64 model_buffer_len)
+		{
+			int layer_num = layers.size();
+			if (layers.size() == 0)
+				return false;
+			
+			for (int i = 0; i < layer_num; i++)
+			{
+				__int64 readed_len_in_bytes = 0;
+				if (!layers[i]->LoadBinary_NCHW(model_buffer, model_buffer_len, readed_len_in_bytes))
+				{
+					std::cout << "Failed to load Binary for layer " << layers[i]->name << "\n";
+					return false;
+				}
+				model_buffer += readed_len_in_bytes;
+				model_buffer_len -= readed_len_in_bytes;
+			}
 			return true;
 		}
 
