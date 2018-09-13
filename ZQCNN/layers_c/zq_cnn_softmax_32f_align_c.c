@@ -13,6 +13,8 @@
 #include <float.h>
 #include "../math/zq_avx_mathfun.h"
 #include "../math/zq_sse_mathfun.h"
+#include "..\ZQ_CNN_ComplieConfig.h"
+
 #if defined(__cplusplus) || defined(c_plusplus) 
 extern "C" {
 #endif

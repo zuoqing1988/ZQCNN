@@ -11,6 +11,7 @@
 #include <stdlib.h>
 #include <float.h>
 #include <stdio.h>
+#include "..\ZQ_CNN_ComplieConfig.h"
 
 #if defined(__cplusplus) || defined(c_plusplus) 
 extern "C" {

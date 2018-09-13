@@ -11,6 +11,7 @@
 #include <stdlib.h>
 #include <math.h>
 #include <malloc.h>
+#include "..\ZQ_CNN_ComplieConfig.h"
 #include "zq_cnn_batchnormscale_32f_align_c.h"
 
 #if defined(__cplusplus) || defined(c_plusplus) 
@@ -33,7 +34,11 @@ extern "C" {
 #define zq_mm_store_ps _mm_store_ps
 #define zq_mm_add_ps _mm_add_ps
 #define zq_mm_mul_ps _mm_mul_ps
+#if ZQ_CNN_USE_FMADD128
 #define zq_mm_fmadd_ps _mm_fmadd_ps
+#else
+#define zq_mm_fmadd_ps(A, B, C) _mm_add_ps(_mm_mul_ps(A, B), C)
+#endif
 #define zq_mm_type __m128
 #define zq_mm_align_size 4
 
@@ -69,7 +74,11 @@ extern "C" {
 #define zq_mm_store_ps _mm256_store_ps
 #define zq_mm_add_ps _mm256_add_ps
 #define zq_mm_mul_ps _mm256_mul_ps
+#if ZQ_CNN_USE_FMADD256
 #define zq_mm_fmadd_ps _mm256_fmadd_ps
+#else
+#define zq_mm_fmadd_ps(A, B, C) _mm256_add_ps(_mm256_mul_ps(A, B), C)
+#endif
 #define zq_mm_type __m256
 #define zq_mm_align_size 8
 

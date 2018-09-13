@@ -10,6 +10,7 @@
 #include <intrin.h>//(include immintrin.h)  
 #include <stdio.h>
 #include <math.h>
+#include "..\ZQ_CNN_ComplieConfig.h"
 
 #if defined(__cplusplus) || defined(c_plusplus) 
 extern "C" {
@@ -24,7 +25,11 @@ extern "C" {
 #define zq_mm_set1_ps _mm_set1_ps
 #define zq_mm_add_ps _mm_add_ps
 #define zq_mm_mul_ps _mm_mul_ps
+#if ZQ_CNN_USE_FMADD128
 #define zq_mm_fmadd_ps _mm_fmadd_ps
+#else
+#define zq_mm_fmadd_ps(A, B, C) _mm_add_ps(_mm_mul_ps(A, B), C)
+#endif
 #define zq_mm_type __m128
 #define zq_mm_align_size 4
 #define zq_mm_align_size_mul_2 8
@@ -71,7 +76,11 @@ extern "C" {
 #define zq_mm_set1_ps _mm256_set1_ps
 #define zq_mm_add_ps _mm256_add_ps
 #define zq_mm_mul_ps _mm256_mul_ps
+#if ZQ_CNN_USE_FMADD256
 #define zq_mm_fmadd_ps _mm256_fmadd_ps
+#else
+#define zq_mm_fmadd_ps(A, B, C) _mm256_add_ps(_mm256_mul_ps(A, B), C)
+#endif
 #define zq_mm_type __m256
 #define zq_mm_align_size 8
 #define zq_mm_align_size_mul_2 16

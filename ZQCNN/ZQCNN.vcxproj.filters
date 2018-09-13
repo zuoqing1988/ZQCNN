@@ -233,5 +233,8 @@
     <ClInclude Include="ZQ_CNN_MouthDetector.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="ZQ_CNN_ComplieConfig.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

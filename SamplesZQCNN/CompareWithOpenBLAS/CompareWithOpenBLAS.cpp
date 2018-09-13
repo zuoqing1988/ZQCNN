@@ -16,6 +16,14 @@
 #include <float.h>
 #include "ZQ_CNN_Tensor4D.h"
 
+#define ZQ_CNN_USE_FMADD256 0
+
+#if ZQ_CNN_USE_FMADD256
+#define zq_mm_fmadd_ps _mm256_fmadd_ps
+#else
+#define zq_mm_fmadd_ps(A, B, C) _mm256_add_ps(_mm256_mul_ps(A, B), C)
+#endif
+
 using namespace ZQ;
 
 double _test_gemm_value()
@@ -74,14 +82,14 @@ double _test_gemv(int M, int N, int K, int iters = 1000)
 	//				for (int k = 0; k < K; k += 64, Aptr += 64, Bptr += 64)
 	//				{
 
-	//					sum_vec = _mm256_fmadd_ps(_mm256_load_ps(Aptr), _mm256_load_ps(Bptr), sum_vec);
-	//					sum_vec = _mm256_fmadd_ps(_mm256_load_ps(Aptr + 8), _mm256_load_ps(Bptr + 8), sum_vec);
-	//					sum_vec = _mm256_fmadd_ps(_mm256_load_ps(Aptr + 16), _mm256_load_ps(Bptr + 16), sum_vec);
-	//					sum_vec = _mm256_fmadd_ps(_mm256_load_ps(Aptr + 24), _mm256_load_ps(Bptr + 24), sum_vec);
-	//					sum_vec = _mm256_fmadd_ps(_mm256_load_ps(Aptr + 32), _mm256_load_ps(Bptr + 32), sum_vec);
-	//					sum_vec = _mm256_fmadd_ps(_mm256_load_ps(Aptr + 40), _mm256_load_ps(Bptr + 40), sum_vec);
-	//					sum_vec = _mm256_fmadd_ps(_mm256_load_ps(Aptr + 48), _mm256_load_ps(Bptr + 48), sum_vec);
-	//					sum_vec = _mm256_fmadd_ps(_mm256_load_ps(Aptr + 56), _mm256_load_ps(Bptr + 56), sum_vec);
+	//					sum_vec = zq_mm_fmadd_ps(_mm256_load_ps(Aptr), _mm256_load_ps(Bptr), sum_vec);
+	//					sum_vec = zq_mm_fmadd_ps(_mm256_load_ps(Aptr + 8), _mm256_load_ps(Bptr + 8), sum_vec);
+	//					sum_vec = zq_mm_fmadd_ps(_mm256_load_ps(Aptr + 16), _mm256_load_ps(Bptr + 16), sum_vec);
+	//					sum_vec = zq_mm_fmadd_ps(_mm256_load_ps(Aptr + 24), _mm256_load_ps(Bptr + 24), sum_vec);
+	//					sum_vec = zq_mm_fmadd_ps(_mm256_load_ps(Aptr + 32), _mm256_load_ps(Bptr + 32), sum_vec);
+	//					sum_vec = zq_mm_fmadd_ps(_mm256_load_ps(Aptr + 40), _mm256_load_ps(Bptr + 40), sum_vec);
+	//					sum_vec = zq_mm_fmadd_ps(_mm256_load_ps(Aptr + 48), _mm256_load_ps(Bptr + 48), sum_vec);
+	//					sum_vec = zq_mm_fmadd_ps(_mm256_load_ps(Aptr + 56), _mm256_load_ps(Bptr + 56), sum_vec);
 	//				}
 	//				_mm256_store_ps(q, sum_vec);
 	//				_mm_store_ps(q, _mm_add_ps(_mm_load_ps(q), _mm_load_ps(q + 4)));
@@ -153,14 +161,14 @@ double _test_gemm(int M, int N, int K, int iters = 1000)
 					for (k = 0,A_c_ptr = Aptr, B_c_ptr = Bptr; k < K; k += 64, A_c_ptr += 64, B_c_ptr += 64)
 					{
 
-						sum_vec = _mm256_fmadd_ps(_mm256_load_ps(A_c_ptr), _mm256_load_ps(B_c_ptr), sum_vec);
-						sum_vec = _mm256_fmadd_ps(_mm256_load_ps(A_c_ptr + 8), _mm256_load_ps(B_c_ptr + 8), sum_vec);
-						sum_vec = _mm256_fmadd_ps(_mm256_load_ps(A_c_ptr + 16), _mm256_load_ps(B_c_ptr + 16), sum_vec);
-						sum_vec = _mm256_fmadd_ps(_mm256_load_ps(A_c_ptr + 24), _mm256_load_ps(B_c_ptr + 24), sum_vec);
-						sum_vec = _mm256_fmadd_ps(_mm256_load_ps(A_c_ptr + 32), _mm256_load_ps(B_c_ptr + 32), sum_vec);
-						sum_vec = _mm256_fmadd_ps(_mm256_load_ps(A_c_ptr + 40), _mm256_load_ps(B_c_ptr + 40), sum_vec);
-						sum_vec = _mm256_fmadd_ps(_mm256_load_ps(A_c_ptr + 48), _mm256_load_ps(B_c_ptr + 48), sum_vec);
-						sum_vec = _mm256_fmadd_ps(_mm256_load_ps(A_c_ptr + 56), _mm256_load_ps(B_c_ptr + 56), sum_vec);
+						sum_vec = zq_mm_fmadd_ps(_mm256_load_ps(A_c_ptr), _mm256_load_ps(B_c_ptr), sum_vec);
+						sum_vec = zq_mm_fmadd_ps(_mm256_load_ps(A_c_ptr + 8), _mm256_load_ps(B_c_ptr + 8), sum_vec);
+						sum_vec = zq_mm_fmadd_ps(_mm256_load_ps(A_c_ptr + 16), _mm256_load_ps(B_c_ptr + 16), sum_vec);
+						sum_vec = zq_mm_fmadd_ps(_mm256_load_ps(A_c_ptr + 24), _mm256_load_ps(B_c_ptr + 24), sum_vec);
+						sum_vec = zq_mm_fmadd_ps(_mm256_load_ps(A_c_ptr + 32), _mm256_load_ps(B_c_ptr + 32), sum_vec);
+						sum_vec = zq_mm_fmadd_ps(_mm256_load_ps(A_c_ptr + 40), _mm256_load_ps(B_c_ptr + 40), sum_vec);
+						sum_vec = zq_mm_fmadd_ps(_mm256_load_ps(A_c_ptr + 48), _mm256_load_ps(B_c_ptr + 48), sum_vec);
+						sum_vec = zq_mm_fmadd_ps(_mm256_load_ps(A_c_ptr + 56), _mm256_load_ps(B_c_ptr + 56), sum_vec);
 					}
 					_mm256_store_ps(q, sum_vec);
 					_mm_store_ps(q, _mm_add_ps(_mm_load_ps(q), _mm_load_ps(q + 4)));
@@ -188,14 +196,14 @@ double _test_gemm(int M, int N, int K, int iters = 1000)
 						for (k = 0,A_c_ptr = Aptr, B_c_ptr = Bptr; k < K; k += 64, A_c_ptr += 64, B_c_ptr += 64)
 						{
 
-							sum_vec = _mm256_fmadd_ps(_mm256_load_ps(A_c_ptr), _mm256_load_ps(B_c_ptr), sum_vec);
-							sum_vec = _mm256_fmadd_ps(_mm256_load_ps(A_c_ptr + 8), _mm256_load_ps(B_c_ptr + 8), sum_vec);
-							sum_vec = _mm256_fmadd_ps(_mm256_load_ps(A_c_ptr + 16), _mm256_load_ps(B_c_ptr + 16), sum_vec);
-							sum_vec = _mm256_fmadd_ps(_mm256_load_ps(A_c_ptr + 24), _mm256_load_ps(B_c_ptr + 24), sum_vec);
-							sum_vec = _mm256_fmadd_ps(_mm256_load_ps(A_c_ptr + 32), _mm256_load_ps(B_c_ptr + 32), sum_vec);
-							sum_vec = _mm256_fmadd_ps(_mm256_load_ps(A_c_ptr + 40), _mm256_load_ps(B_c_ptr + 40), sum_vec);
-							sum_vec = _mm256_fmadd_ps(_mm256_load_ps(A_c_ptr + 48), _mm256_load_ps(B_c_ptr + 48), sum_vec);
-							sum_vec = _mm256_fmadd_ps(_mm256_load_ps(A_c_ptr + 56), _mm256_load_ps(B_c_ptr + 56), sum_vec);
+							sum_vec = zq_mm_fmadd_ps(_mm256_load_ps(A_c_ptr), _mm256_load_ps(B_c_ptr), sum_vec);
+							sum_vec = zq_mm_fmadd_ps(_mm256_load_ps(A_c_ptr + 8), _mm256_load_ps(B_c_ptr + 8), sum_vec);
+							sum_vec = zq_mm_fmadd_ps(_mm256_load_ps(A_c_ptr + 16), _mm256_load_ps(B_c_ptr + 16), sum_vec);
+							sum_vec = zq_mm_fmadd_ps(_mm256_load_ps(A_c_ptr + 24), _mm256_load_ps(B_c_ptr + 24), sum_vec);
+							sum_vec = zq_mm_fmadd_ps(_mm256_load_ps(A_c_ptr + 32), _mm256_load_ps(B_c_ptr + 32), sum_vec);
+							sum_vec = zq_mm_fmadd_ps(_mm256_load_ps(A_c_ptr + 40), _mm256_load_ps(B_c_ptr + 40), sum_vec);
+							sum_vec = zq_mm_fmadd_ps(_mm256_load_ps(A_c_ptr + 48), _mm256_load_ps(B_c_ptr + 48), sum_vec);
+							sum_vec = zq_mm_fmadd_ps(_mm256_load_ps(A_c_ptr + 56), _mm256_load_ps(B_c_ptr + 56), sum_vec);
 						}
 						_mm256_store_ps(q, sum_vec);
 						_mm_store_ps(q, _mm_add_ps(_mm_load_ps(q), _mm_load_ps(q + 4)));
@@ -227,10 +235,10 @@ double _test_gemm(int M, int N, int K, int iters = 1000)
 					for (int k = 0; k < K; k += 32, Aptr += 32, Bptr += 32)
 					{
 
-						sum_vec = _mm256_fmadd_ps(_mm256_load_ps(Aptr), _mm256_load_ps(Bptr), sum_vec);
-						sum_vec = _mm256_fmadd_ps(_mm256_load_ps(Aptr + 8), _mm256_load_ps(Bptr + 8), sum_vec);
-						sum_vec = _mm256_fmadd_ps(_mm256_load_ps(Aptr + 16), _mm256_load_ps(Bptr + 16), sum_vec);
-						sum_vec = _mm256_fmadd_ps(_mm256_load_ps(Aptr + 24), _mm256_load_ps(Bptr + 24), sum_vec);
+						sum_vec = zq_mm_fmadd_ps(_mm256_load_ps(Aptr), _mm256_load_ps(Bptr), sum_vec);
+						sum_vec = zq_mm_fmadd_ps(_mm256_load_ps(Aptr + 8), _mm256_load_ps(Bptr + 8), sum_vec);
+						sum_vec = zq_mm_fmadd_ps(_mm256_load_ps(Aptr + 16), _mm256_load_ps(Bptr + 16), sum_vec);
+						sum_vec = zq_mm_fmadd_ps(_mm256_load_ps(Aptr + 24), _mm256_load_ps(Bptr + 24), sum_vec);
 						
 					}
 					_mm256_store_ps(q, sum_vec);
@@ -260,8 +268,8 @@ double _test_gemm(int M, int N, int K, int iters = 1000)
 					float* Bptr = B + n*K;
 					for (int k = 0; k < K; k += 16, Aptr += 16, Bptr += 16)
 					{
-						sum_vec = _mm256_fmadd_ps(_mm256_load_ps(Aptr), _mm256_load_ps(Bptr), sum_vec);
-						sum_vec = _mm256_fmadd_ps(_mm256_load_ps(Aptr+8), _mm256_load_ps(Bptr+8), sum_vec);
+						sum_vec = zq_mm_fmadd_ps(_mm256_load_ps(Aptr), _mm256_load_ps(Bptr), sum_vec);
+						sum_vec = zq_mm_fmadd_ps(_mm256_load_ps(Aptr+8), _mm256_load_ps(Bptr+8), sum_vec);
 					}
 					_mm256_store_ps(q, sum_vec);
 					_mm_store_ps(q, _mm_add_ps(_mm_load_ps(q), _mm_load_ps(q + 4)));
@@ -290,7 +298,7 @@ double _test_gemm(int M, int N, int K, int iters = 1000)
 					float* Bptr = B + n*K;
 					for (int k = 0; k < K; k += 8, Aptr += 8, Bptr += 8)
 					{
-						sum_vec = _mm256_fmadd_ps(_mm256_load_ps(Aptr), _mm256_load_ps(Bptr), sum_vec);
+						sum_vec = zq_mm_fmadd_ps(_mm256_load_ps(Aptr), _mm256_load_ps(Bptr), sum_vec);
 					}
 					_mm256_store_ps(q, sum_vec);
 					_mm_store_ps(q, _mm_add_ps(_mm_load_ps(q), _mm_load_ps(q + 4)));
@@ -440,7 +448,7 @@ float _test_im2col(int in_H, int in_W, int filter_N, int filter_C, int stride_H,
 
 int main()
 {
-	openblas_set_num_threads(8);
+	openblas_set_num_threads(1);
 	double total_sum = 0;
 	//_test_gemm_value();
 	/*total_sum += 1*_test_im2col(112, 96, 64, 3, 2, 2,1000);

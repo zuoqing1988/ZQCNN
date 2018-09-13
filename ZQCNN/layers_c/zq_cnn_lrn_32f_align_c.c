@@ -13,6 +13,7 @@
 #include <math.h>
 #include "../math/zq_avx_mathfun.h"
 #include "../math/zq_sse_mathfun.h"
+#include "..\ZQ_CNN_ComplieConfig.h"
 
 #if defined(__cplusplus) || defined(c_plusplus) 
 extern "C" {
@@ -23,7 +24,11 @@ extern "C" {
 #define zq_mm_store_ps _mm_store_ps
 #define zq_mm_add_ps _mm_add_ps
 #define zq_mm_mul_ps _mm_mul_ps
+#if ZQ_CNN_USE_FMADD128
 #define zq_mm_fmadd_ps _mm_fmadd_ps
+#else
+#define zq_mm_fmadd_ps(A, B, C) _mm_add_ps(_mm_mul_ps(A, B), C)
+#endif
 #define zq_mm_set1_ps _mm_set1_ps
 #define zq_mm_log_ps zq_mm128_log_ps
 #define zq_mm_exp_ps zq_mm128_exp_ps
@@ -69,7 +74,11 @@ extern "C" {
 #define zq_mm_store_ps _mm256_store_ps
 #define zq_mm_add_ps _mm256_add_ps
 #define zq_mm_mul_ps _mm256_mul_ps
+#if ZQ_CNN_USE_FMADD256
 #define zq_mm_fmadd_ps _mm256_fmadd_ps
+#else
+#define zq_mm_fmadd_ps(A, B, C) _mm256_add_ps(_mm256_mul_ps(A, B), C)
+#endif
 #define zq_mm_set1_ps _mm256_set1_ps
 #define zq_mm_log_ps zq_mm256_log_ps
 #define zq_mm_exp_ps zq_mm256_exp_ps

@@ -10,6 +10,7 @@
 #include <intrin.h>//(include immintrin.h)  
 #include <stdio.h>
 #include <stdlib.h>
+#include "..\ZQ_CNN_ComplieConfig.h"
 
 #if defined(__cplusplus) || defined(c_plusplus) 
 extern "C" {
