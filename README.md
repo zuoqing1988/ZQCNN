@@ -147,7 +147,6 @@ Convolution name=conv1 bottom=data top=conv1 num_output=10 kernel_size=3 stride=
 |[Mobile-SphereFace10bn](https://pan.baidu.com/s/1BEP1pg5s3yJCLA2elqTB0A)    | 98.6%-98.7%   |-|-|单线程15ms, 3.6GHz                 |性价比高 
 |[MobileFaceNet-v0](https://pan.baidu.com/s/1f-Mfad-7zRvWcy3wYoPrUg)         |99.13%-99.23%  |-|-|单线程33-35ms，4线程14-15ms, 3.6GHz|从[model-y1.zip](https://pan.baidu.com/s/1If28BkHde4fiuweJrbicVA)转的格式 
 |[MobileFaceNet-v1](https://pan.baidu.com/s/1b1g-hH7IWYxplY-XAvSz-Q)         |99.17%-99.37%  |-|-|单线程33-35ms，4线程14-15ms, 3.6GHz|我自己用insightface训练了一把 
-
 |[ArcFace-r34](https://pan.baidu.com/s/1tRt6PxDg4UNv7yf9pMZ_LA)              |99.65%-99.70%  |-|-|单线程500ms+,3.6GHz                |-            
 |[ArcFace-r34-v2](https://pan.baidu.com/s/1q3ZqQdjabDBESqbsxC7ESQ)           |99.73%-99.77%(matlab crop), 99.68-99.78%(C++ crop) |-|-|单线程500ms+,3.6GHz                |-            
 |[ArcFace-r50](https://pan.baidu.com/s/1qOIhCauwZNTOCIM9eojPrA)              |99.75%-99.78%  |-|-|单线程700ms+,3.6GHz                |-            
