@@ -45,6 +45,17 @@ namespace ZQ
 				max_thread_num, false);
 		}
 
+		static bool MakeDatabaseAlreadyCropped(std::vector<ZQ_FaceRecognizer*> recognizers,
+			const std::string& database_root, const std::string& database_featsfile, const std::string& database_namesfile,
+			MakeDatabaseType type = ONLY_MERGE_FEATS, bool show_face = false, int max_thread_num = 1)
+		{
+			for (int i = 0; i < recognizers.size(); i++)
+				if (recognizers[i] == 0)
+					return false;
+			return _make_database_already_cropped(recognizers, database_root, database_featsfile, database_namesfile, type, show_face,
+				max_thread_num, false);
+		}
+
 		static bool MakeDatabaseCompact(std::vector<ZQ_FaceDetector*>& detectors, std::vector<ZQ_FaceRecognizer*> recognizers,
 			const std::string& database_root, const std::string& database_featsfile, const std::string& database_namesfile,
 			MakeDatabaseType type = ONLY_MERGE_FEATS, bool show_face = false, int max_thread_num = 1)
@@ -56,6 +67,17 @@ namespace ZQ
 				if (recognizers[i] == 0)
 					return false;
 			return _make_database(detectors, recognizers, database_root, database_featsfile, database_namesfile, type, show_face,
+				max_thread_num, true);
+		}
+
+		static bool MakeDatabaseCompactAlreadyCropped(std::vector<ZQ_FaceRecognizer*> recognizers,
+			const std::string& database_root, const std::string& database_featsfile, const std::string& database_namesfile,
+			MakeDatabaseType type = ONLY_MERGE_FEATS, bool show_face = false, int max_thread_num = 1)
+		{
+			for (int i = 0; i < recognizers.size(); i++)
+				if (recognizers[i] == 0)
+					return false;
+			return _make_database_already_cropped(recognizers, database_root, database_featsfile, database_namesfile, type, show_face,
 				max_thread_num, true);
 		}
 
@@ -170,6 +192,179 @@ namespace ZQ
 				if (need_detect)
 				{
 					if (!_extract_feature_from_img(*detectors[id], *recognizers[id], filenames[i][j], feat, crop, err_code, err_msg))
+					{
+#pragma omp critical
+						{
+							ErrorCodes.push_back(err_code);
+							error_messages.push_back(err_msg);
+						}
+						continue;
+					}
+
+					need_write = true;
+					has_feat = true;
+					if (show_face)
+					{
+						if (id == 0)
+						{
+							cv::namedWindow("crop");
+							cv::imshow("crop", crop);
+							cv::waitKey(5);
+						}
+					}
+				}
+
+#pragma omp critical
+				{
+					if (has_feat)
+					{
+						database.persons[i].features.push_back(feat);
+						database.persons[i].filenames.push_back(filenames[i][j]);
+					}
+				}
+
+				if (need_write)
+					_write_feature_to_file(filenames[i][j], feat);
+
+			}
+
+			double end_time = omp_get_wtime();
+			printf("detect_and_extract total_cost:%.3f s\n", (end_time - start_time));
+
+			/*******************/
+			for (int i = person_num - 1; i >= 0; i--)
+			{
+				if (database.persons[i].features.size() == 0)
+				{
+					printf("person [%d]: %s has no data\n", i, person_names[i].c_str());
+					oss.str("");
+					oss << "person [" << i << "]: " << person_names[i] << " has no data";
+					ErrorCodes.push_back(ERR_WARNING);
+					error_messages.push_back(oss.str());
+					database.persons.erase(database.persons.begin() + i);
+					person_names.erase(person_names.begin() + i);
+				}
+			}
+
+			database.names = person_names;
+
+			if (compact)
+			{
+				if (!database.SaveToFileBinaryCompact(database_featsfile, database_namesfile))
+				{
+					printf("failed to save database\n");
+					return EXIT_FAILURE;
+				}
+			}
+			else
+			{
+				if (!database.SaveToFileBinary(database_featsfile, database_namesfile))
+				{
+					printf("failed to save database\n");
+					return EXIT_FAILURE;
+				}
+			}
+
+			printf("all done\n");
+			_write_error_messages(err_logfile, ErrorCodes, error_messages);
+			return EXIT_SUCCESS;
+		}
+
+		static bool _make_database_already_cropped(std::vector<ZQ_FaceRecognizer*> recognizers,
+			const std::string& database_root, const std::string& database_featsfile, const std::string& database_namesfile,
+			MakeDatabaseType type = ONLY_MERGE_FEATS, bool show_face = false, int max_thread_num = 1, bool compact = false)
+		{
+			if (type != ONLY_MERGE_FEATS && type != UPDATE_WHO_NOT_HAVE_FEATS && type != FORCE_UPDATE_ALL)
+			{
+				printf("type must be : ONLY_MERGE_FEATS(%d), UPDATE_WHO_NOT_HAVE_FEATS(%d), FORCE_UPDATE_ALL(%d)\n",
+					ONLY_MERGE_FEATS, UPDATE_WHO_NOT_HAVE_FEATS, FORCE_UPDATE_ALL);
+				return false;
+			}
+			int num_recognizers = recognizers.size();
+			if (num_recognizers == 0)
+			{
+				printf("You should use at least one recognizer\n");
+				return false;
+			}
+
+			ZQ_FaceDatabase database;
+			std::vector<ErrorCode> ErrorCodes;
+			std::vector<std::string> error_messages;
+			std::string err_logfile = "err_log.txt";
+			std::ostringstream oss;
+
+			std::vector<std::string> person_names;
+			std::vector<std::vector<std::string>> filenames;
+			std::vector<std::vector<ZQ_CNN_BBox>> boxes;
+			std::vector<std::vector<bool>> fail_flag;
+
+			_auto_detect_database(database_root, person_names, filenames);
+
+			int num_cores = omp_get_num_procs() - 1;
+
+			int real_thread_num = __min(max_thread_num, __min(num_cores, num_recognizers));
+			printf("real_thread_num = %d\n", real_thread_num);
+			int feat_dim = 0;
+
+			feat_dim = recognizers[0]->GetFeatDim();
+
+			/****************************************/
+			int person_num = person_names.size();
+			database.persons.resize(person_num);
+			database.names = person_names;
+
+			double start_time = omp_get_wtime();
+			printf("begin\n");
+			std::vector<std::pair<int, int>> pairs;
+			for (int i = 0; i < person_num; i++)
+			{
+				for (int j = 0; j < filenames[i].size(); j++)
+					pairs.push_back(std::make_pair(i, j));
+			}
+
+#pragma omp parallel for schedule(dynamic, 100) num_threads(real_thread_num)
+			for (int p = 0; p < pairs.size(); p++)
+			{
+				int i = pairs[p].first;
+				int j = pairs[p].second;
+				int id = omp_get_thread_num();
+				std::ostringstream oss;
+				ZQ_FaceFeature feat;
+				cv::Mat crop;
+				ErrorCode err_code;
+				std::string err_msg;
+
+				bool has_feat = false;
+				bool need_detect = false;
+				if (type == ONLY_MERGE_FEATS)
+				{
+					if (!_load_feature_from_file(filenames[i][j], feat))
+					{
+						need_detect = false;
+						has_feat = false;
+					}
+					else
+						has_feat = true;
+				}
+				else if (type == UPDATE_WHO_NOT_HAVE_FEATS)
+				{
+					if (!_load_feature_from_file(filenames[i][j], feat))
+					{
+						need_detect = true;
+						has_feat = false;
+					}
+					else
+						has_feat = true;
+				}
+				else if (type == FORCE_UPDATE_ALL)
+					need_detect = true;
+
+
+				bool need_write = false;
+				bool ret = true;
+				if (need_detect)
+				{
+					if (!_extract_feature_from_cropped_image(*recognizers[id], filenames[i][j], feat, crop, err_code, err_msg))
 					{
 #pragma omp critical
 						{
@@ -499,6 +694,30 @@ namespace ZQ
 			return true;
 		}
 
+		static bool _extract_feature_from_cropped_image(ZQ_FaceRecognizer& recognizer, const std::string& imgfile, const cv::Mat& image, 
+			ZQ_FaceFeature& feat, ErrorCode& err_code, std::string& err_msg)
+		{
+			int nChannels = image.channels();
+			ZQ_PixelFormat pixFmt = (nChannels == 1) ? ZQ_PIXEL_FMT_GRAY : ZQ_PIXEL_FMT_BGR;
+			int width = recognizer.GetCropWidth();
+			int height = recognizer.GetCropHeight();
+			
+			int feat_dim = recognizer.GetFeatDim();
+			std::ostringstream oss;
+			feat.ChangeSize(feat_dim);
+			if (image.cols != width || image.rows != height
+				|| !recognizer.ExtractFeature(image.data, image.step[0], pixFmt, feat.pData, true))
+			{
+				printf("failed to extract feature in image: %s\n", imgfile.c_str());
+				oss.str("");
+				oss << "failed to extract feature in image: " << imgfile.c_str();
+				err_code = ERR_WARNING;
+				err_msg = oss.str();
+				return false;
+			}
+			return true;
+		}
+
 		static bool _extract_feature_from_img(ZQ_FaceDetector& detector, ZQ_FaceRecognizer& recognizer,
 			const std::string& imgfile, ZQ_FaceFeature& feat, cv::Mat& crop, ErrorCode& err_code, std::string& err_msg)
 		{
@@ -523,6 +742,29 @@ namespace ZQ
 			double t3 = omp_get_wtime();
 			printf("image: %s done! findface: %.3f, extract: %.3f\n", imgfile.c_str(), t2 - t1, t3 - t2);
 
+			return true;
+		}
+
+		static bool _extract_feature_from_cropped_image(ZQ_FaceRecognizer& recognizer,
+			const std::string& imgfile, ZQ_FaceFeature& feat, cv::Mat& crop, ErrorCode& err_code, std::string& err_msg)
+		{
+			std::ostringstream oss;
+			cv::Mat image = cv::imread(imgfile);
+			if (image.empty())
+			{
+				printf("failed to read image: %s\n", imgfile.c_str());
+				oss.str("");
+				oss << "failed to read image: " << imgfile;
+				err_code = ERR_WARNING;
+				err_msg = oss.str();
+				return false;
+			}
+			double t1 = omp_get_wtime();
+			if (!_extract_feature_from_cropped_image(recognizer, imgfile, image, feat, err_code, err_msg))
+				return false;
+			double t2 = omp_get_wtime();
+			printf("image: %s done! extract: %.3f\n", imgfile.c_str(), t2 - t1);
+			crop = image;
 			return true;
 		}
 
@@ -832,7 +1074,7 @@ namespace ZQ
 			}
 			else
 			{
-				int handled = 0;
+				int handled[1] = { 0 };
 #pragma omp parallel for num_threads(real_thread_num)
 				for (int i = 0; i < person_num; i++)
 				{
@@ -853,10 +1095,10 @@ namespace ZQ
 					person_min_scores_j[i] = out_j;
 #pragma omp critical
 					{
-						handled++;
+						(*handled)++;
 						//if (handled % 100 == 0)
 						{
-							printf("%d/%d handled\n", handled,person_num);
+							printf("%d/%d handled\n", *handled,person_num);
 						}
 					}
 				}

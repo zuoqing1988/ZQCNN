@@ -55,6 +55,11 @@ namespace ZQ
 			return _find_the_best_matches(feat_dim, feat_num, feat, out_ids, out_scores, out_names, max_num, max_thread_num);
 		}
 
+		bool ExportSimilarityForAllPairs(const std::string& out_score_file, const std::string& out_flag_file, int max_thread_num) const
+		{
+			return _export_similarity_for_all_pairs(out_score_file,out_flag_file, max_thread_num);
+		}
+
 	private:
 		int dim;
 		int person_num;
@@ -354,6 +359,139 @@ namespace ZQ
 		
 			free(max_scores);
 			free(ids);
+			return true;
+		}
+
+		//must be aligned
+		static bool _compute_similarity(int dim, const float* v1, const float* v2)
+		{
+			if (dim == 128)
+				return ZQ_FaceRecognizerSphereFace::_cal_similarity_avx_dim128(v1, v2);
+			else if (dim == 256)
+				return ZQ_FaceRecognizerSphereFace::_cal_similarity_avx_dim256(v1, v2);
+			else if (dim == 512)
+				return ZQ_FaceRecognizerSphereFace::_cal_similarity_avx_dim512(v1, v2);
+			else
+				return ZQ_MathBase::DotProduct(dim, v1, v2);
+		}
+
+		bool _export_similarity_for_all_pairs(const std::string& out_score_file, const std::string& out_flag_file, int max_thread_num) const
+		{
+			FILE* out1 = 0;
+			if (0 != fopen_s(&out1, out_score_file.c_str(), "wb"))
+			{
+				printf("failed to create file %s\n", out_score_file.c_str());
+				return false;
+			}
+
+			FILE* out2 = 0;
+			if (0 != fopen_s(&out2, out_flag_file.c_str(), "wb"))
+			{
+				printf("failed to create file %s\n", out_flag_file.c_str());
+				fclose(out1);
+				return false;
+			}
+			
+			__int64 total_pair_num = total_face_num *(total_face_num - 1) / 2;
+			//fprintf(out, "%lld\n", total_pair_num);
+			fwrite(&total_pair_num, sizeof(__int64), 1, out1);
+			fwrite(&total_pair_num, sizeof(__int64), 1, out2);
+			int real_thread_num = __max(1, __min(max_thread_num, omp_get_num_procs() - 1));
+			if (real_thread_num == 1)
+			{
+				for (int pp = 0; pp < person_num; pp++)
+				{
+					__int64 cur_face_offset = person_face_offset[pp];
+					__int64 cur_face_num = person_face_num[pp];
+					__int64 max_pair_num = (total_face_num - cur_face_offset - 1);
+					std::vector<float> scores(max_pair_num);
+					std::vector<char> flags(max_pair_num);
+					for (__int64 i = 0; i < cur_face_num; i++)
+					{
+						float* cur_i_feat = all_face_feats + (cur_face_offset + i)*dim;
+						float* cur_j_feat;
+						int idx = 0;
+						for (__int64 j = i + 1; j < cur_face_num; j++)
+						{
+							cur_j_feat = all_face_feats + (cur_face_offset + j)*dim;
+							scores[idx] = _compute_similarity(dim, cur_i_feat, cur_j_feat);
+							flags[idx] = 1;
+							idx++;
+						}
+						if (pp + 1 < person_num)
+						{
+							for (__int64 j = person_face_offset[pp + 1]; j < total_face_num; j++)
+							{
+								cur_j_feat = all_face_feats + j*dim;
+								scores[idx] = _compute_similarity(dim, cur_i_feat, cur_j_feat);
+								flags[idx] = 0;
+								idx++;
+							}
+						}
+						if (idx > 0)
+						{
+							fwrite(&scores[0], sizeof(float), idx, out1);
+							fwrite(&flags[0], 1, idx, out2);
+						}
+					}
+					printf("%d/%d handled\n", pp + 1, person_num);
+				}
+			}
+			else
+			{
+				int chunk_size = 100;
+				int handled[1] = { 0 };
+				printf("real_thread_num = %d\n", real_thread_num);
+#pragma omp parallel for schedule(dynamic,chunk_size) num_threads(real_thread_num) shared(handled)
+				for (int pp = 0; pp < person_num; pp++)
+				{
+
+					__int64 cur_face_offset = person_face_offset[pp];
+					__int64 cur_face_num = person_face_num[pp];
+					__int64 max_pair_num = (total_face_num - cur_face_offset-1);
+					std::vector<float> scores(max_pair_num);
+					std::vector<char> flags(max_pair_num);
+					for (__int64 i = 0; i < cur_face_num; i++)
+					{
+						float* cur_i_feat = all_face_feats + (cur_face_offset + i)*dim;
+						float* cur_j_feat;
+						int idx = 0;
+						for (__int64 j = i+1; j < cur_face_num; j++)
+						{
+							cur_j_feat = all_face_feats + (cur_face_offset + j)*dim;
+							scores[idx] = _compute_similarity(dim, cur_i_feat, cur_j_feat);
+							flags[idx] = 1;
+							idx++;
+						}
+						if (pp + 1 < person_num)
+						{
+							for (__int64 j = person_face_offset[pp + 1]; j < total_face_num; j++)
+							{
+								cur_j_feat = all_face_feats + j*dim;
+								scores[idx] = _compute_similarity(dim, cur_i_feat, cur_j_feat);
+								flags[idx] = 0;
+								idx++;
+							}
+						}
+#pragma omp critical
+						{
+							if (idx > 0)
+							{
+								fwrite(&scores[0], sizeof(float), idx, out1);
+								fwrite(&flags[0], 1, idx, out2);
+							}
+						}
+					}
+#pragma omp critical
+					{
+						(*handled) ++;
+						printf("%d/%d\n", *handled, person_num);
+					}
+				}
+			}
+
+			fclose(out1);
+			fclose(out2);
 			return true;
 		}
 	};

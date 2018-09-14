@@ -39,6 +39,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SampleEvaluationOnLFWSphere
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SampleDetectOutliersInFaceDatabase", "SamplesZQlibFaceID\SampleDetectOutliersInFaceDatabase\SampleDetectOutliersInFaceDatabase.vcxproj", "{9D5054B4-297B-44C1-85AD-ADE5A1412C4D}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SampleFaceDatabaseZQCNN", "SamplesZQlibFaceID\SampleFaceDatabaseZQCNN\SampleFaceDatabaseZQCNN.vcxproj", "{C9342D77-52D9-4858-BFDB-D86C7B282882}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -191,6 +193,14 @@ Global
 		{9D5054B4-297B-44C1-85AD-ADE5A1412C4D}.Release|x64.Build.0 = Release|x64
 		{9D5054B4-297B-44C1-85AD-ADE5A1412C4D}.Release|x86.ActiveCfg = Release|Win32
 		{9D5054B4-297B-44C1-85AD-ADE5A1412C4D}.Release|x86.Build.0 = Release|Win32
+		{C9342D77-52D9-4858-BFDB-D86C7B282882}.Debug|x64.ActiveCfg = Debug|x64
+		{C9342D77-52D9-4858-BFDB-D86C7B282882}.Debug|x64.Build.0 = Debug|x64
+		{C9342D77-52D9-4858-BFDB-D86C7B282882}.Debug|x86.ActiveCfg = Debug|Win32
+		{C9342D77-52D9-4858-BFDB-D86C7B282882}.Debug|x86.Build.0 = Debug|Win32
+		{C9342D77-52D9-4858-BFDB-D86C7B282882}.Release|x64.ActiveCfg = Release|x64
+		{C9342D77-52D9-4858-BFDB-D86C7B282882}.Release|x64.Build.0 = Release|x64
+		{C9342D77-52D9-4858-BFDB-D86C7B282882}.Release|x86.ActiveCfg = Release|Win32
+		{C9342D77-52D9-4858-BFDB-D86C7B282882}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
