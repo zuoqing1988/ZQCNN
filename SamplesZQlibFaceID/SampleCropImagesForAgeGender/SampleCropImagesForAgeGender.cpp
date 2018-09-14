@@ -1,7 +1,11 @@
 #include "ZQ_FaceDatabaseMaker.h"
 #include "ZQ_FaceRecognizerAgeGenderZQCNN.h"
 #include "ZQ_FaceDetectorMTCNN.h"
+#include "ZQ_CNN_ComplieConfig.h"
+#if ZQ_CNN_USE_BLAS_GEMM
 #include <cblas.h>
+#pragma comment(lib,"libopenblas.lib")
+#endif
 using namespace std;
 using namespace ZQ;
 
@@ -36,7 +40,9 @@ int main(int argc, const char** argv)
 		std::cout << "Use: " << std::string(argv[0]) << " src_root dst_root [max_thread_num] [strict_check(0/1)]\n";
 		return EXIT_FAILURE;
 	}
+#if ZQ_CNN_USE_BLAS_GEMM
 	openblas_set_num_threads(1);
+#endif
 	int max_thread_num = 32;
 	bool strict_check = false;
 	if (argc > 3)

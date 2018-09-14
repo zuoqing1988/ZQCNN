@@ -1,8 +1,12 @@
 #include "ZQ_CNN_Net.h"
-#include <cblas.h>
 #include <vector>
 #include <iostream>
 #include "opencv2\opencv.hpp"
+#include "ZQ_CNN_ComplieConfig.h"
+#if ZQ_CNN_USE_BLAS_GEMM
+#include <cblas.h>
+#pragma comment(lib,"libopenblas.lib")
+#endif
 using namespace ZQ;
 using namespace std;
 using namespace cv;
@@ -10,7 +14,9 @@ using namespace cv;
 
 int main()
 {
+#if ZQ_CNN_USE_BLAS_GEMM
 	openblas_set_num_threads(1);
+#endif
 	for (int out_it = 0; out_it < 1; out_it++)
 	{
 		Mat image0 = cv::imread("data\\00011.jpg", 0);

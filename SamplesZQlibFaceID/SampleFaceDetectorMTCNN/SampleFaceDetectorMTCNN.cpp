@@ -1,6 +1,11 @@
 #include "ZQ_FaceDetectorMTCNN.h"
 #include "opencv2\opencv.hpp"
 #include <iostream>
+#include "ZQ_CNN_ComplieConfig.h"
+#if ZQ_CNN_USE_BLAS_GEMM
+#include <cblas.h>
+#pragma comment(lib,"libopenblas.lib")
+#endif
 
 using namespace std;
 using namespace cv;
@@ -34,6 +39,9 @@ void Draw(cv::Mat &image, const std::vector<ZQ_CNN_BBox>& thirdBbox)
 
 int main()
 {
+#if ZQ_CNN_USE_BLAS_GEMM
+	openblas_set_num_threads(1);
+#endif
 	ZQ_FaceDetector* mtcnn = new ZQ_FaceDetectorMTCNN();
 	if (!mtcnn->Init())
 	{

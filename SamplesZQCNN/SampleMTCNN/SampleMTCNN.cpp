@@ -1,9 +1,13 @@
 #include "ZQ_CNN_Net.h"
 #include "ZQ_CNN_MTCNN.h"
-#include <cblas.h>
 #include <vector>
 #include <iostream>
 #include "opencv2\opencv.hpp"
+#include "ZQ_CNN_ComplieConfig.h"
+#if ZQ_CNN_USE_BLAS_GEMM
+#include <cblas.h>
+#pragma comment(lib,"libopenblas.lib")
+#endif
 using namespace ZQ;
 using namespace std;
 using namespace cv;
@@ -37,7 +41,9 @@ static void Draw(cv::Mat &image, const std::vector<ZQ_CNN_BBox>& thirdBbox)
 int main()
 {
 	int num_threads = 1;
+#if ZQ_CNN_USE_BLAS_GEMM
 	openblas_set_num_threads(num_threads);
+#endif
 	Mat image0 = cv::imread("data\\4.jpg", 1);
 	if (image0.empty())
 	{

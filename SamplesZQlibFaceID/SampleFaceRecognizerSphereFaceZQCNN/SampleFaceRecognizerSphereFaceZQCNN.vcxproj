@@ -108,7 +108,7 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>ZQCNN.lib;opencv_world342d.lib;libopenblas.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>ZQCNN.lib;opencv_world342d.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>$(OutDir);$(SolutionDir)3rdparty\opencv\build\x64\vc14\lib;$(SolutionDir)\3rdparty\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
@@ -148,7 +148,7 @@
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>$(OutDir);$(SolutionDir)3rdparty\opencv\build\x64\vc14\lib;$(SolutionDir)\3rdparty\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>ZQCNN.lib;opencv_world342.lib;libopenblas.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>ZQCNN.lib;opencv_world342.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>

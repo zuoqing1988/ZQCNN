@@ -1,6 +1,10 @@
 #include "ZQ_FaceIDPrecisionEvaluation.h"
 #include "ZQ_FaceRecognizerSphereFaceZQCNN.h"
+#include "ZQ_CNN_ComplieConfig.h"
+#if ZQ_CNN_USE_BLAS_GEMM
 #include "cblas.h"
+#pragma comment(lib,"libopenblas.lib")
+#endif
 
 using namespace std;
 using namespace ZQ;
@@ -41,7 +45,9 @@ int main(int argc, const char** argv)
 	if (argc > 7)
 		use_flip = atoi(argv[7]);
 
+#if ZQ_CNN_USE_BLAS_GEMM
 	openblas_set_num_threads(1);
+#endif
 
 	double t1 = omp_get_wtime();
 	if (!EvaluationSphereFaceZQCNNOnLFW(string(argv[1]), string(argv[2]), string(argv[3]), string(argv[4]), string(argv[5]), max_thread_num, use_flip))

@@ -17,6 +17,7 @@
 #include "ZQ_CNN_Forward_SSEUtils.h"
 #include "ZQ_CNN_BBoxUtils.h"
 #include <algorithm>
+#include "ZQ_CNN_ComplieConfig.h"
 
 using namespace ZQ;
 
@@ -286,6 +287,7 @@ void _convolution_nopadding_case_N_equal_one(int align_mode, const float* in_dat
 		filter_data, filter_N, filter_H, filter_W, filter_C, filter_pixStep, filter_widthStep, filter_sliceStep, strideH, strideW,
 		dilation_H, dilation_W, out_data, out_N, out_H, out_W, out_C, out_pixStep, out_widthStep, out_sliceStep);
 
+#if ZQ_CNN_USE_BLAS_GEMM
 	//gemm method
 	if (!has_handled)
 	{
@@ -338,6 +340,7 @@ void _convolution_nopadding_case_N_equal_one(int align_mode, const float* in_dat
 		}
 	}
 	
+#endif
 
 	//backup method
 	if (!has_handled)
@@ -479,6 +482,7 @@ void _convolution_nopadding_case_N_equal_one_omp(int align_mode, const float* in
 		filter_data, filter_N, filter_H, filter_W, filter_C, filter_pixStep, filter_widthStep, filter_sliceStep, strideH, strideW,
 		dilation_H, dilation_W, out_data, out_N, out_H, out_W, out_C, out_pixStep, out_widthStep, out_sliceStep, num_threads);
 
+#if ZQ_CNN_USE_BLAS_GEMM
 	//gemm method
 	if (!has_handled)
 	{
@@ -530,7 +534,7 @@ void _convolution_nopadding_case_N_equal_one_omp(int align_mode, const float* in
 			}
 		}
 	}
-
+#endif
 
 	//backup method
 	if (!has_handled)
@@ -673,6 +677,7 @@ void _convolution_nopadding_case_N_largerthan_one(int align_mode, const float* i
 		filter_data, filter_N, filter_H, filter_W, filter_C, filter_pixStep, filter_widthStep, filter_sliceStep, strideH, strideW,
 		dilation_H, dilation_W,	out_data, out_N, out_H, out_W, out_C, out_pixStep, out_widthStep, out_sliceStep);*/
 
+#if ZQ_CNN_USE_BLAS_GEMM
 	//gemm
 	if (!has_handled)
 	{
@@ -786,7 +791,8 @@ void _convolution_nopadding_case_N_largerthan_one(int align_mode, const float* i
 			}
 		}
 	}
-	
+#endif
+
 	//backup method
 	if (!has_handled)
 	{
@@ -880,6 +886,7 @@ void _convolution_nopadding_case_N_largerthan_one_omp(int align_mode, const floa
 	int filter_HWC = filter_H*filter_W*filter_C;
 	int batch_need_size = out_NHW*filter_HWC + filter_N*filter_HWC;
 
+#if ZQ_CNN_USE_BLAS_GEMM
 	//gemm
 	if (!has_handled)
 	{
@@ -993,6 +1000,8 @@ void _convolution_nopadding_case_N_largerthan_one_omp(int align_mode, const floa
 			}
 		}
 	}
+#endif
+
 
 	//backup method
 	if (!has_handled)
@@ -1428,12 +1437,14 @@ void ZQ_CNN_Forward_SSEUtils::_inner_product(int align_mode, const float* in_dat
 {
 	if (align_mode == ZQ_CNN_Tensor4D::ALIGN_128bit)
 	{
+#if ZQ_CNN_USE_BLAS_GEMM
 		if (out_N >= 16 && filter_N >= 16 && in_pixStep == filter_pixStep)
 		{
 			zq_cnn_innerproduct_gemm_32f_align128bit_same_pixstep_batch(in_data, in_N, in_H, in_W, in_C, in_pixStep, in_widthStep, in_sliceStep,
 				filter_data, filter_N, filter_pixStep, filter_widthStep, filter_sliceStep, out_data, out_N, filter_N, out_sliceStep, out_sliceStep, out_sliceStep);
 		}
 		else
+#endif
 		{
 			if (in_pixStep * in_W == in_widthStep && in_widthStep*in_H == in_sliceStep
 				&& filter_pixStep*in_W == filter_widthStep && filter_widthStep*in_H == filter_sliceStep)
@@ -1449,13 +1460,14 @@ void ZQ_CNN_Forward_SSEUtils::_inner_product(int align_mode, const float* in_dat
 	}
 	else if (align_mode == ZQ_CNN_Tensor4D::ALIGN_256bit)
 	{
-
+#if ZQ_CNN_USE_BLAS_GEMM
 		if (out_N >= 16 && filter_N >= 16 && in_pixStep == filter_pixStep)
 		{
 			zq_cnn_innerproduct_gemm_32f_align256bit_same_pixstep_batch(in_data, in_N, in_H, in_W, in_C, in_pixStep, in_widthStep, in_sliceStep,
 				filter_data, filter_N, filter_pixStep, filter_widthStep, filter_sliceStep,out_data, out_N, filter_N, out_sliceStep, out_sliceStep, out_sliceStep);
 		}
 		else
+#endif
 		{
 
 			if (in_pixStep * in_W == in_widthStep && in_widthStep*in_H == in_sliceStep

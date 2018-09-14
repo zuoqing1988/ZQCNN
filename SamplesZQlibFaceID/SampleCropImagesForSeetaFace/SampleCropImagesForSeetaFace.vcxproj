@@ -109,7 +109,7 @@
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>$(SolutionDir)3rdparty\opencv\build\x64\vc14\lib;$(OutDir);$(SolutionDir)3rdparty\lib;$(SolutionDir)3rdparty\lib\debug;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>opencv_world342d.lib;SeetaFaceEngine_FaceIdentification.lib;ZQCNN.lib;libopenblas.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>opencv_world342d.lib;SeetaFaceEngine_FaceIdentification.lib;ZQCNN.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -149,7 +149,7 @@
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>$(SolutionDir)3rdparty\opencv\build\x64\vc14\lib;$(OutDir);$(SolutionDir)3rdparty\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>opencv_world342.lib;SeetaFaceEngine_FaceIdentification.lib;ZQCNN.lib;libopenblas.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>opencv_world342.lib;SeetaFaceEngine_FaceIdentification.lib;ZQCNN.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>

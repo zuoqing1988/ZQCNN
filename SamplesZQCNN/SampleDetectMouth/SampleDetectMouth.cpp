@@ -1,5 +1,9 @@
 #include "ZQ_CNN_MouthDetector.h"
+#include "ZQ_CNN_ComplieConfig.h"
+#if ZQ_CNN_USE_BLAS_GEMM
 #include <cblas.h>
+#pragma comment(lib,"libopenblas.lib")
+#endif
 
 using namespace cv;
 using namespace std;
@@ -10,7 +14,9 @@ int SampleDetectMouth_fig(int argc, const char** argv);
 
 int main(int argc, const char** argv)
 {
+#if ZQ_CNN_USE_BLAS_GEMM
 	openblas_set_num_threads(1);
+#endif
 	if (argc >= 2)
 	{
 		if (_strcmpi(argv[1], "cam") == 0)

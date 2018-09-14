@@ -1,15 +1,25 @@
 #include "ZQ_CNN_Net.h"
 #include "ZQ_CNN_NSFW.h"
-#include <cblas.h>
 #include <vector>
 #include <iostream>
 #include "opencv2\opencv.hpp"
+#include "ZQ_CNN_ComplieConfig.h"
+#if ZQ_CNN_USE_BLAS_GEMM
+#include <cblas.h>
+#pragma comment(lib,"libopenblas.lib")
+#endif
 using namespace ZQ;
 using namespace std;
 using namespace cv;
 
 int main()
 {
+	int num_threads = 1;
+
+#if ZQ_CNN_USE_BLAS_GEMM
+	openblas_set_num_threads(num_threads);
+#endif
+
 	ZQ_CNN_NSFW nsfw;
 	if (!nsfw.Init("model\\nsfw.zqparams", "model\\nsfw.nchwbin", "prob"))
 	{
@@ -52,7 +62,11 @@ int main()
 int main1()
 {
 	int num_threads = 1;
+
+#if ZQ_CNN_USE_BLAS_GEMM
 	openblas_set_num_threads(num_threads);
+#endif
+
 	Mat image = cv::imread("data\\sex.jpg", 1);
 	if (image.empty())
 	{

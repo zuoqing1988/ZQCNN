@@ -1,8 +1,12 @@
 #include "ZQ_CNN_TextBoxes.h"
-#include <cblas.h>
 #include <vector>
 #include <iostream>
 #include "opencv2\opencv.hpp"
+#include "ZQ_CNN_ComplieConfig.h"
+#if ZQ_CNN_USE_BLAS_GEMM
+#include <cblas.h>
+#pragma comment(lib,"libopenblas.lib")
+#endif
 using namespace ZQ;
 using namespace std;
 using namespace cv;
@@ -12,8 +16,9 @@ using namespace cv;
 int main()
 {
 	int thread_num = 4;
+#if ZQ_CNN_USE_BLAS_GEMM
 	openblas_set_num_threads(thread_num);
-
+#endif
 	Mat img0 = cv::imread("data\\text4.jpg", 1);
 	if (img0.empty())
 	{

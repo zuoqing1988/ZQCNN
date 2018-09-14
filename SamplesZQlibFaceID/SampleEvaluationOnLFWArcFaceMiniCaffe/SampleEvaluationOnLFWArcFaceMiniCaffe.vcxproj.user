@@ -1,9 +1,9 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <LocalDebuggerCommandArguments>model.prototxt model.caffemodel fc1 F:\Code\sphereface\test\data\pairs.txt F:\Code\sphereface\preprocess\data\lfw_arcface_crop 10 1</LocalDebuggerCommandArguments>
+    <LocalDebuggerCommandArguments>model\mobilefacenet-res4-8-16-4-dim512-minicaffe.prototxt model\mobilefacenet-res4-8-16-4-dim512.caffemodel fc1 F:\Code\sphereface\test\data\pairs.txt F:\Code\sphereface\preprocess\data\lfw-112X112 10 0</LocalDebuggerCommandArguments>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
-    <LocalDebuggerWorkingDirectory>C:\Users\ZQ\Desktop\model-y1\model-y1-test4</LocalDebuggerWorkingDirectory>
+    <LocalDebuggerWorkingDirectory>$(SolutionDir)</LocalDebuggerWorkingDirectory>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LocalDebuggerCommandArguments>C:/Users/ZQ/Desktop/arcface50-caffe/model-r50-am.prototxt C:/Users/ZQ/Desktop/arcface50-caffe/model-r50-am.caffemodel fc1 F:\Code\sphereface\test\data\pairs.txt F:\Code\sphereface\preprocess\data\lfw_arcface_crop 10 0</LocalDebuggerCommandArguments>

@@ -1,8 +1,12 @@
 #include "ZQ_CNN_Net.h"
-#include <cblas.h>
 #include <vector>
 #include <iostream>
 #include "opencv2\opencv.hpp"
+#include "ZQ_CNN_ComplieConfig.h"
+#if ZQ_CNN_USE_BLAS_GEMM
+#include <cblas.h>
+#pragma comment(lib,"libopenblas.lib")
+#endif
 using namespace ZQ;
 using namespace std;
 using namespace cv;
@@ -15,7 +19,9 @@ int main()
 	printf("The automatically converted proto file has two many blobs, wasting too much time.\n"
 	"You can remove some blobs and layers by hand!\n\n\n");
 
+#if ZQ_CNN_USE_BLAS_GEMM
 	openblas_set_num_threads(1);
+#endif
 	Mat image0 = cv::imread("data\\00_.jpg", 1);
 	if (image0.empty())
 	{

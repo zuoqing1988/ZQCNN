@@ -1,12 +1,18 @@
 #include "ZQ_FaceRecognizerArcFaceZQCNN.h"
+#include "ZQ_CNN_ComplieConfig.h"
+#if ZQ_CNN_USE_BLAS_GEMM
 #include <cblas.h>
+#pragma comment(lib,"libopenblas.lib")
+#endif
 using namespace ZQ;
 using namespace cv;
 using namespace std;
 
 int main()
 {
+#if ZQ_CNN_USE_BLAS_GEMM
 	openblas_set_num_threads(1);
+#endif
 	ZQ_FaceRecognizer* recognizer[1] = { 0 };
 	std::string prototxt_file = "model/model-r50-am.zqparams";
 	std::string caffemodel_file = "model/model-r50-am.nchwbin";

@@ -1,7 +1,10 @@
 #include "ZQ_FaceIDPrecisionEvaluation.h"
 #include "ZQ_FaceRecognizerArcFaceZQCNN.h"
+#include "ZQ_CNN_ComplieConfig.h"
+#if ZQ_CNN_USE_BLAS_GEMM
 #include "cblas.h"
-
+#pragma comment(lib,"libopenblas.lib")
+#endif
 using namespace std;
 using namespace ZQ;
 
@@ -17,7 +20,7 @@ bool EvaluationArcFaceZQCNNOnLFW(const std::string& prototxt_file, const std::st
 		recognizers[i] = new ZQ_FaceRecognizerArcFaceZQCNN();
 		if (!recognizers[i]->Init("", prototxt_file, caffemodel_file, out_blob_name))
 		{
-			printf("failed to load sphereface prototxt: %s, caffemodel %s\n", prototxt_file.c_str(), caffemodel_file.c_str());
+			printf("failed to load prototxt: %s, caffemodel %s\n", prototxt_file.c_str(), caffemodel_file.c_str());
 			return false;
 		}
 	}
@@ -41,7 +44,9 @@ int main(int argc, const char** argv)
 	if (argc > 7)
 		use_flip = atoi(argv[7]);
 
+#if ZQ_CNN_USE_BLAS_GEMM
 	openblas_set_num_threads(1);
+#endif
 
 	double t1 = omp_get_wtime();
 	if (!EvaluationArcFaceZQCNNOnLFW(string(argv[1]), string(argv[2]), string(argv[3]), string(argv[4]), string(argv[5]), max_thread_num, use_flip))

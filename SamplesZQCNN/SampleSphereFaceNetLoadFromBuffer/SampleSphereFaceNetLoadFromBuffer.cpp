@@ -1,8 +1,13 @@
 #include "ZQ_CNN_Net.h"
-#include <cblas.h>
 #include <vector>
 #include <iostream>
 #include "opencv2\opencv.hpp"
+#include "ZQ_CNN_ComplieConfig.h"
+#if ZQ_CNN_USE_BLAS_GEMM
+#include <cblas.h>
+#pragma comment(lib,"libopenblas.lib")
+#endif
+
 using namespace ZQ;
 using namespace std;
 using namespace cv;
@@ -59,7 +64,10 @@ bool load_to_buffer(const std::string& param_file, const std::string& model_file
 int main()
 {
 	int num_threads = 1;
+
+#if ZQ_CNN_USE_BLAS_GEMM
 	openblas_set_num_threads(num_threads);
+#endif
 
 	std::string out_blob_name = "fc5";
 	std::string param_file = "model\\mobilefacenet-res2-6-10-2-dim256.zqparams";
