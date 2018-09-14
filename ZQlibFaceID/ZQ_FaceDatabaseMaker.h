@@ -12,6 +12,7 @@
 #include "ZQ_FaceDatabase.h"
 #include "ZQ_FaceDatabaseCompact.h"
 #include "ZQ_FaceRecognizerSphereFace.h"
+#include "ZQ_MergeSort.h"
 
 namespace ZQ
 {
@@ -62,6 +63,13 @@ namespace ZQ
 			const std::string& src_root, const std::string& dst_root, int max_thread_num = 4, bool strict_check = true, std::string err_logfile = "err_log.txt")
 		{
 			return _crop_images_for_database(detectors, recognizers, src_root, dst_root, max_thread_num, strict_check, err_logfile);
+		}
+
+		/*must be cropped image*/
+		static bool DetectOutliersInDatabase(const std::vector<ZQ_FaceRecognizer*>& recognizers, const std::string& src_root, int max_thread_num = 4,
+			const std::string out_file = "outlier_score.txt")
+		{
+			return _detect_outliers_in_database(recognizers, src_root, max_thread_num, out_file);
 		}
 		
 	private:
@@ -763,6 +771,172 @@ namespace ZQ
 			}
 			else
 				box = bbox[0];
+			return true;
+		}
+
+		static bool _detect_outliers_in_database(const std::vector<ZQ_FaceRecognizer*>& recognizers, const std::string& src_root, int max_thread_num,
+			const std::string& out_file)
+		{
+			int num_recognizer = recognizers.size();
+			if (num_recognizer == 0)
+				return false;
+
+			std::vector<ErrorCode> ErrorCodes;
+			std::vector<std::string> error_messages;
+
+			int num_cores = omp_get_num_procs();
+			int real_thread_num = __max(1, __min(num_cores - 1, max_thread_num));
+			real_thread_num = __min(real_thread_num, recognizers.size());
+
+			std::vector<std::string> person_names;
+			std::vector<float> person_min_scores;
+			std::vector<int> person_min_scores_i;
+			std::vector<int> person_min_scores_j;
+			std::vector<std::vector<std::string>> filenames;
+
+			_auto_detect_database(src_root, person_names, filenames);
+
+			int person_num = person_names.size();
+			if (person_num == 0)
+			{
+				printf("no person in %s\n", src_root.c_str());
+				return false;
+			}
+			person_min_scores.resize(person_num);
+			person_min_scores_i.resize(person_num);
+			person_min_scores_j.resize(person_num);
+
+			if (real_thread_num == 1)
+			{
+				for (int i = 0; i < person_num; i++)
+				{
+					float out_min_score;
+					int out_i, out_j;
+					if (!_detect_outlier_for_one_person(*(recognizers[0]), filenames[i], out_min_score, out_i, out_j))
+					{
+						printf("failed to detect outliter for %s\n", person_names[i].c_str());
+						return false;
+					}
+					if (filenames[i].size() == 0)
+						out_min_score = 100;
+					else if (filenames[i].size() == 1)
+						out_min_score = 10;
+					person_min_scores[i] = out_min_score;
+					person_min_scores_i[i] = out_i;
+					person_min_scores_j[i] = out_j;
+					//if ((i + 1) % 100 == 0)
+					{
+						printf("%d/%d handled\n", i + 1, person_num);
+					}
+				}
+			}
+			else
+			{
+				int handled = 0;
+#pragma omp parallel for num_threads(real_thread_num)
+				for (int i = 0; i < person_num; i++)
+				{
+					int thread_id = omp_get_thread_num();
+					float out_min_score;
+					int out_i, out_j;
+					if (!_detect_outlier_for_one_person(*(recognizers[thread_id]), filenames[i], out_min_score, out_i, out_j))
+					{
+						printf("failed to detect outliter for %s\n", person_names[i].c_str());	
+						out_min_score = -1000;
+					}
+					if (filenames[i].size() == 0)
+						out_min_score = 100;
+					else if (filenames[i].size() == 1)
+						out_min_score = 10;
+					person_min_scores[i] = out_min_score;
+					person_min_scores_i[i] = out_i;
+					person_min_scores_j[i] = out_j;
+#pragma omp critical
+					{
+						handled++;
+						//if (handled % 100 == 0)
+						{
+							printf("%d/%d handled\n", handled,person_num);
+						}
+					}
+				}
+			}
+
+			std::vector<int> sort_indices(person_num);
+			for (int i = 0; i < person_num; i++)
+				sort_indices[i] = i;
+
+			ZQ_MergeSort::MergeSort(&person_min_scores[0], &sort_indices[0], person_num, true);
+
+			FILE* out = 0;
+			if (0 != fopen_s(&out,out_file.c_str(), "w"))
+			{
+				printf("failed to create file %s\n", out_file.c_str());
+				return false;
+			}
+
+			for (int i = 0; i < person_num; i++)
+			{
+				int id = sort_indices[i];
+				fprintf(out, "%12.3f %s ", person_min_scores[i], person_names[id].c_str());
+				int img_num = filenames[id].size();
+				int out_i = person_min_scores_i[id];
+				int out_j = person_min_scores_j[id];
+				if (img_num > 1 && out_i >= 0 && out_i < img_num
+					&& out_j >= 0 && out_j < img_num)
+				{
+					fprintf(out, "%s %s\n", filenames[id][out_i].c_str(), filenames[id][out_j].c_str());
+				}
+				else
+				{
+					fprintf(out, "\n");
+				}
+			}
+			fclose(out);
+			return true;
+		}
+
+		static bool _detect_outlier_for_one_person(ZQ_FaceRecognizer& recognier, const std::vector<std::string>& filenames,
+			float& out_min_score, int& out_i, int& out_j)
+		{
+			out_i = 0;
+			out_j = 0;
+			out_min_score = 1;
+			int num = filenames.size();
+			if (num <= 1)
+				return true;
+
+			std::vector<ZQ_FaceFeature> feats(num);
+			int W = recognier.GetCropWidth();
+			int H = recognier.GetCropHeight();
+			int dim = recognier.GetFeatDim();
+			for (int i = 0; i < num; i++)
+			{
+				//printf("%d/%d\n", i + 1, num);
+				cv::Mat img = cv::imread(filenames[i]);
+				if (img.empty())
+					return false;
+				if (img.rows != H || img.cols != W || img.channels() != 3)
+					return false;
+				feats[i].ChangeSize(dim);
+				if (!recognier.ExtractFeature(img.data, img.step[0], ZQ_PIXEL_FMT_BGR, feats[i].pData, true))
+					return false;
+			}
+
+			out_min_score = FLT_MAX;
+			for (int i = 0; i < num - 1; i++)
+			{
+				for (int j = i + 1; j < num; j++)
+				{
+					float tmp_score = ZQ_MathBase::DotProduct(dim, feats[i].pData, feats[j].pData);
+					if (tmp_score <= out_min_score)
+					{
+						out_min_score = tmp_score;
+						out_i = i;
+						out_j = j;
+					}
+				}
+			}
 			return true;
 		}
 	};
