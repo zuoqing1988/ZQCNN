@@ -19,9 +19,9 @@
     </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{BAF944E4-8F43-4E1D-A7DB-CFC343BF0875}</ProjectGuid>
+    <ProjectGuid>{188502A1-1E2A-4021-A4F6-F5FF0BBA8968}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
-    <RootNamespace>SampleCropImagesForSphereFace</RootNamespace>
+    <RootNamespace>SampleCropImagesForAgeGenderFast</RootNamespace>
     <WindowsTargetPlatformVersion>8.1</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
@@ -103,8 +103,7 @@
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>$(SolutionDir)ZQlibFaceID;$(SolutionDir)3rdparty\opencv\build\include;$(SolutionDir)3rdparty\include\ZQlib;$(SolutionDir)ZQCNN;$(SolutionDir)3rdparty\include\openblas</AdditionalIncludeDirectories>
-      <OpenMPSupport>true</OpenMPSupport>
+      <AdditionalIncludeDirectories>$(SolutionDir)ZQlibFaceID;$(SolutionDir)3rdparty\opencv\build\include;$(SolutionDir)3rdparty\include\ZQlib;$(SolutionDir)ZQCNN;$(SolutionDir)3rdparty\include\openblas;$(SolutionDir)3rdparty\include\mini-caffe;$(SolutionDir)3rdparty\include\libfacedetection</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -141,7 +140,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>$(SolutionDir)ZQlibFaceID;$(SolutionDir)3rdparty\opencv\build\include;$(SolutionDir)3rdparty\include\ZQlib;$(SolutionDir)ZQCNN;$(SolutionDir)3rdparty\include\openblas</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)ZQlibFaceID;$(SolutionDir)3rdparty\opencv\build\include;$(SolutionDir)3rdparty\include\ZQlib;$(SolutionDir)ZQCNN;$(SolutionDir)3rdparty\include\openblas;$(SolutionDir)3rdparty\include\mini-caffe;$(SolutionDir)3rdparty\include\libfacedetection</AdditionalIncludeDirectories>
       <OpenMPSupport>true</OpenMPSupport>
     </ClCompile>
     <Link>
@@ -149,12 +148,12 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>$(SolutionDir)3rdparty\opencv\build\x64\vc14\lib;$(OutDir);$(SolutionDir)3rdparty\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>opencv_world342.lib;ZQCNN.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(SolutionDir)3rdparty\opencv\build\x64\vc14\lib;$(OutDir);$(SolutionDir)3rdparty\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="SampleCropImagesForSphereFace.cpp" />
+    <ClCompile Include="SampleCropImagesForAgeGenderFast.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

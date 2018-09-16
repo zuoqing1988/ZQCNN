@@ -82,9 +82,10 @@ namespace ZQ
 		}
 
 		static bool CropImagesForDatabase(const std::vector<ZQ_FaceDetector*>& detectors, const std::vector<ZQ_FaceRecognizer*>& recognizers,
-			const std::string& src_root, const std::string& dst_root, int max_thread_num = 4, bool strict_check = true, std::string err_logfile = "err_log.txt")
+			const std::string& src_root, const std::string& dst_root, int max_thread_num = 4, bool strict_check = true, 
+			std::string err_logfile = "err_log.txt", bool only_for_high_quality = false)
 		{
-			return _crop_images_for_database(detectors, recognizers, src_root, dst_root, max_thread_num, strict_check, err_logfile);
+			return _crop_images_for_database(detectors, recognizers, src_root, dst_root, max_thread_num, strict_check, err_logfile, only_for_high_quality);
 		}
 
 		/*must be cropped image*/
@@ -191,7 +192,7 @@ namespace ZQ
 				bool ret = true;
 				if (need_detect)
 				{
-					if (!_extract_feature_from_img(*detectors[id], *recognizers[id], filenames[i][j], feat, crop, err_code, err_msg))
+					if (!_extract_feature_from_img(*detectors[id], *recognizers[id], filenames[i][j], feat, crop, err_code, err_msg, false))
 					{
 #pragma omp critical
 						{
@@ -444,7 +445,8 @@ namespace ZQ
 		}
 
 		static bool _crop_images_for_database(const std::vector<ZQ_FaceDetector*>& detectors, const std::vector<ZQ_FaceRecognizer*>& recognizers,
-			const std::string& src_root, const std::string& dst_root, int max_thread_num = 4, bool strict_check = true, std::string err_logfile = "err_log.txt")
+			const std::string& src_root, const std::string& dst_root, int max_thread_num = 4, bool strict_check = true, std::string err_logfile = "err_log.txt",
+			bool only_for_high_quality = false)
 		{
 			int num_detector = detectors.size();
 			int num_recognizer = recognizers.size();
@@ -520,7 +522,7 @@ namespace ZQ
 					}
 
 					ZQ_CNN_BBox box;
-					ret = _get_face5point_from_img(*detectors[id], filenames[i][j], image, box, err_code, err_msg, strict_check);
+					ret = _get_face5point_from_img(*detectors[id], filenames[i][j], image, box, err_code, err_msg, strict_check, only_for_high_quality);
 					if (!ret)
 					{
 #pragma omp critical
@@ -603,7 +605,7 @@ namespace ZQ
 					}
 
 					ZQ_CNN_BBox box;
-					ret = _get_face5point_from_img(*detectors[id], filenames[i][j], image, box, err_code, err_msg, strict_check);
+					ret = _get_face5point_from_img(*detectors[id], filenames[i][j], image, box, err_code, err_msg, strict_check, only_for_high_quality);
 					if (!ret)
 					{
 #pragma omp critical
@@ -719,7 +721,8 @@ namespace ZQ
 		}
 
 		static bool _extract_feature_from_img(ZQ_FaceDetector& detector, ZQ_FaceRecognizer& recognizer,
-			const std::string& imgfile, ZQ_FaceFeature& feat, cv::Mat& crop, ErrorCode& err_code, std::string& err_msg)
+			const std::string& imgfile, ZQ_FaceFeature& feat, cv::Mat& crop, ErrorCode& err_code, std::string& err_msg,
+			bool only_for_high_quality)
 		{
 			std::ostringstream oss;
 			cv::Mat image = cv::imread(imgfile);
@@ -734,7 +737,7 @@ namespace ZQ
 			}
 			double t1 = omp_get_wtime();
 			ZQ_CNN_BBox box;
-			if (!_get_face5point_from_img(detector, imgfile, image, box, err_code, err_msg))
+			if (!_get_face5point_from_img(detector, imgfile, image, box, err_code, err_msg, only_for_high_quality))
 				return false;
 			double t2 = omp_get_wtime();
 			if (!_extract_feature_from_box(recognizer, imgfile, image, box, feat, crop, err_code, err_msg))
@@ -884,7 +887,7 @@ namespace ZQ
 		}
 
 		static bool _get_face5point_from_img(ZQ_FaceDetector& detector, const std::string& imgfile, const cv::Mat& image, ZQ_CNN_BBox& box,
-			ErrorCode& err_code, std::string& err_msg, bool strict_check = true)
+			ErrorCode& err_code, std::string& err_msg, bool strict_check = true, bool only_for_high_quality = false)
 		{
 			std::ostringstream oss;
 			bool use_cuda = false;
@@ -905,77 +908,86 @@ namespace ZQ
 			else
 				has_found = true;
 
-			//second try
+			if (!only_for_high_quality)
+			{
+				//second try
+				if (!has_found)
+				{
+					printf("second try\n");
+					if (!detector.FindFace(image.data, image.cols, image.rows, image.step[0], pixFmt, 40, 0.709, bbox) || bbox.size() == 0)
+					{
+						/*printf("failed to find face in image: %s\n", imgfile.c_str());
+						oss.str("");
+						oss << "failed to find face in image: " << imgfile;
+						err_code = ERR_WARNING;
+						err_msg = oss.str();*/
+						has_found = false;
+					}
+					else
+						has_found = true;
+				}
+
+				//third try
+				if (!has_found)
+				{
+					printf("third try\n");
+					if (!detector.FindFace(image.data, image.cols, image.rows, image.step[0], pixFmt, 30, 0.8, bbox) || bbox.size() == 0)
+					{
+						/*printf("failed to find face in image: %s\n", imgfile.c_str());
+						oss.str("");
+						oss << "failed to find face in image: " << imgfile;
+						err_code = ERR_WARNING;
+						err_msg = oss.str();*/
+						has_found = false;
+					}
+					else
+						has_found = true;
+				}
+
+				//fourth try
+				if (!has_found)
+				{
+					printf("fourth try\n");
+					if (!detector.FindFace(image.data, image.cols, image.rows, image.step[0], pixFmt, 20, 0.85, bbox) || bbox.size() == 0)
+					{
+						/*printf("failed to find face in image: %s\n", imgfile.c_str());
+						oss.str("");
+						oss << "failed to find face in image: " << imgfile;
+						err_code = ERR_WARNING;
+						err_msg = oss.str();*/
+						has_found = false;
+					}
+					else
+						has_found = true;
+				}
+
+				//fifth try
+				if (!has_found)
+				{
+
+					printf("fifth try\n");
+					if (!detector.FindFace(image.data, image.cols, image.rows, image.step[0], pixFmt, 12, 0.9, bbox) || bbox.size() == 0)
+					{
+						/*printf("failed to find face in image: %s\n", imgfile.c_str());
+						oss.str("");
+						oss << "failed to find face in image: " << imgfile;
+						err_code = ERR_WARNING;
+						err_msg = oss.str();*/
+						has_found = false;
+					}
+					else
+						has_found = true;
+				}
+			}
 			if (!has_found)
 			{
-				printf("second try\n");
-				if (!detector.FindFace(image.data, image.cols, image.rows, image.step[0], pixFmt, 40, 0.709, bbox) || bbox.size() == 0)
-				{
-					/*printf("failed to find face in image: %s\n", imgfile.c_str());
-					oss.str("");
-					oss << "failed to find face in image: " << imgfile;
-					err_code = ERR_WARNING;
-					err_msg = oss.str();*/
-					has_found = false;
-				}
-				else
-					has_found = true;
-			}
-
-			//third try
-			if (!has_found)
-			{
-				printf("third try\n");
-				if (!detector.FindFace(image.data, image.cols, image.rows, image.step[0], pixFmt, 30, 0.8, bbox) || bbox.size() == 0)
-				{
-					/*printf("failed to find face in image: %s\n", imgfile.c_str());
-					oss.str("");
-					oss << "failed to find face in image: " << imgfile;
-					err_code = ERR_WARNING;
-					err_msg = oss.str();*/
-					has_found = false;
-				}
-				else
-					has_found = true;
-			}
-
-			//fourth try
-			if (!has_found)
-			{
-				printf("fourth try\n");
-				if (!detector.FindFace(image.data, image.cols, image.rows, image.step[0], pixFmt, 20, 0.85, bbox) || bbox.size() == 0)
-				{
-					/*printf("failed to find face in image: %s\n", imgfile.c_str());
-					oss.str("");
-					oss << "failed to find face in image: " << imgfile;
-					err_code = ERR_WARNING;
-					err_msg = oss.str();*/
-					has_found = false;
-				}
-				else
-					has_found = true;
-			}
-
-			//fifth try
-			if (!has_found)
-			{
-				
-				printf("fifth try\n");
-				if (!detector.FindFace(image.data, image.cols, image.rows, image.step[0], pixFmt, 12, 0.9, bbox) || bbox.size() == 0)
-				{
-					printf("failed to find face in image: %s\n", imgfile.c_str());
-					oss.str("");
-					oss << "failed to find face in image: " << imgfile;
-					err_code = ERR_WARNING;
-					err_msg = oss.str();
-					has_found = false;
-				}
-				else
-					has_found = true;
-			}
-
-			if (!has_found)
+				printf("failed to find face in image: %s\n", imgfile.c_str());
+				oss.str("");
+				oss << "failed to find face in image: " << imgfile;
+				err_code = ERR_WARNING;
+				err_msg = oss.str();
 				return false;
+			}
 
 			if (bbox.size() > 1)
 			{

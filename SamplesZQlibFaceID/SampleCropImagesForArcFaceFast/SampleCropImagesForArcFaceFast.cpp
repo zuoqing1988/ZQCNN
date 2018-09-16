@@ -1,6 +1,6 @@
 #include "ZQ_FaceDatabaseMaker.h"
-#include "ZQ_FaceRecognizerSphereFaceZQCNN.h"
-#include "ZQ_FaceDetectorMTCNN.h"
+#include "ZQ_FaceRecognizerArcFaceZQCNN.h"
+#include "ZQ_FaceDetectorLibFaceDetect.h"
 #include "ZQ_CNN_ComplieConfig.h"
 #if ZQ_CNN_USE_BLAS_GEMM
 #include <cblas.h>
@@ -13,13 +13,12 @@ bool CropImagesForDatabase(const std::string& src_fold, const std::string& dst_f
 {
 	int real_num_threads = __max(1, __min(max_thread_num, omp_get_num_procs() - 1));
 
-	std::vector<ZQ_FaceDetectorMTCNN> detectors(real_num_threads);
-	std::vector<ZQ_FaceRecognizerSphereFaceZQCNN> recognizers(real_num_threads);
+	std::vector<ZQ_FaceDetectorLibFaceDetect> detectors(real_num_threads);
+	std::vector<ZQ_FaceRecognizerArcFaceZQCNN> recognizers(real_num_threads);
 
 	for (int i = 0; i < real_num_threads; i++)
 	{
 		detectors[i].Init();
-		detectors[i].SetThresh(0.5, 0.5, 0.5, 0.6, 0.7, 0.7);
 	}
 
 	std::vector<ZQ_FaceDetector*> ptr_detectors(real_num_threads);
@@ -29,7 +28,7 @@ bool CropImagesForDatabase(const std::string& src_fold, const std::string& dst_f
 		ptr_detectors[i] = &detectors[i];
 		ptr_recognizers[i] = &recognizers[i];
 	}
-	return ZQ_FaceDatabaseMaker::CropImagesForDatabase(ptr_detectors, ptr_recognizers, src_fold, dst_fold, real_num_threads, strict_check, "err_log.txt", false);
+	return ZQ_FaceDatabaseMaker::CropImagesForDatabase(ptr_detectors, ptr_recognizers, src_fold, dst_fold, real_num_threads, strict_check, "err_log.txt", true);
 }
 
 int main(int argc, const char** argv)

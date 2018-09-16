@@ -38,7 +38,7 @@ bool CropImagesForDatabase(const std::string& model_file, const std::string& src
 		ptr_detectors[i] = &detectors[i];
 		ptr_recognizers[i] = &recognizers[i];
 	}
-	return ZQ_FaceDatabaseMaker::CropImagesForDatabase(ptr_detectors, ptr_recognizers, src_fold, dst_fold, real_num_threads, strict_check);
+	return ZQ_FaceDatabaseMaker::CropImagesForDatabase(ptr_detectors, ptr_recognizers, src_fold, dst_fold, real_num_threads, strict_check,"err_log.txt",false);
 }
 
 int main(int argc, const char** argv)

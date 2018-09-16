@@ -3,7 +3,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LocalDebuggerWorkingDirectory>$(SolutionDir)</LocalDebuggerWorkingDirectory>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
-    <LocalDebuggerCommandArguments>F:\Code\sphereface\preprocess\data\lfw F:\Code\sphereface\preprocess\data\lfw_sphereface_crop 8</LocalDebuggerCommandArguments>
+    <LocalDebuggerCommandArguments>F:\Code\sphereface\preprocess\data\CASIA-WebFace F:\Code\sphereface\preprocess\data\CASIA-WebFace-112X96 8</LocalDebuggerCommandArguments>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LocalDebuggerWorkingDirectory>$(SolutionDir)</LocalDebuggerWorkingDirectory>
