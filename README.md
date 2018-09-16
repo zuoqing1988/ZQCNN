@@ -24,6 +24,7 @@ ZQCNN-v0.0是ZuoQing参照mini-caffe写的forward库，随便用用
 **2018-08-10日更新**
 
 成功转了mxnet上的[GenderAge-r50模型](https://pan.baidu.com/s/1f8RyNuQd7hl2ItlV-ibBNQ) 以及[Arcface-LResNet100E-IR](https://pan.baidu.com/s/1wuRTf2YIsKt76TxFufsRNA)，与转MobileFaceNet模型步骤一样。
+查看[mxnet2zqcnn](https://github.com/zuoqing1988/ZQCNN-v0.0/wiki/mxnet2zqcnn)
 
 下面Model Zoo 有我转好的模型，比自动转出来的应该略快。
 
@@ -31,19 +32,7 @@ ZQCNN-v0.0是ZuoQing参照mini-caffe写的forward库，随便用用
 
 **2018-08-09日更新**
 
-添加mxnet2zqcnn，成功将mxnet上的MobileFaceNet转成ZQCNN格式（不能保证其他模型也能转成功，ZQCNN还不支持很多Layer）。
-
-第一步：编译出mxnet2zqcnn.exe
-
-第二步：下载[model-y1.zip](https://pan.baidu.com/s/1If28BkHde4fiuweJrbicVA)然后解压
-
-第三步：在刚才解压的目录下运行命令行 mxnet2zqcnn.exe model-symbol.json model-0000.params test.zqparams test.nchwbin
-
-第四步：用记事本打开test.zqparams, 在第一行（Input Layer）后面加上 C=3 H=112 W=112 然后保存
-
-第五步：把test.zqparams和test.nchwbin复制到model文件夹下，然后在VS2015里运行SampleMobileFaceNet.exe，注意工作目录是$(SolutionDir)
-
-自动转出来的速度慢了不少，可以手工修改test.zqparams，可以参考[ArcFace-MobileFaceNet-v0](https://pan.baidu.com/s/1f-Mfad-7zRvWcy3wYoPrUg)
+添加mxnet2zqcnn，成功将mxnet上的MobileFaceNet转成ZQCNN格式（不能保证其他模型也能转成功，ZQCNN还不支持很多Layer）。查看[mxnet2zqcnn](https://github.com/zuoqing1988/ZQCNN-v0.0/wiki/mxnet2zqcnn)
 
 **2018-08-07日更新**
 
