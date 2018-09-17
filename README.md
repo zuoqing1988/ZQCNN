@@ -72,6 +72,18 @@ Convolution name=conv1 bottom=data top=conv1 num_output=10 kernel_size=3 stride=
 
 **人脸识别**
 
+测试集 
+
+[LFW-112X112 matlab crop](https://pan.baidu.com/s/1uneb3SDThd0npib17pLeAg)
+
+[LFW-112X112 C++ crop](https://pan.baidu.com/s/1e2dAW0uxkA1urca37hJFgQ)
+
+[LFW-112X112 mxnet crop](https://pan.baidu.com/s/1d19Na7mmJBQecn4yRAXTaw)
+
+[LFW-112X96 matlab crop](https://pan.baidu.com/s/1tMvs2yn-25ET8wlOJaUDoA)
+
+[LFW-112X96 C++ crop](https://pan.baidu.com/s/1KVA4V-e0gUVW12oBuc0MwA)
+
 |模型名称                                                                    |LFW精度(ZQCNN)                                     |耗时(ZQCNN)                        |备注           
 |------------                                                                | -------------                                     |------                             | ------------- 
 |[SphereFace04](https://pan.baidu.com/s/1-Bb6yuU3eAN6U2ZdVsC5Mg)             | 98.2%                                             | -                                 |不建议使用  
@@ -92,6 +104,10 @@ Convolution name=conv1 bottom=data top=conv1 num_output=10 kernel_size=3 stride=
 |[MobileFaceNet-res2-6-10-2-dim128](https://pan.baidu.com/s/1AQEad5Zp2cag4UA5KtpbYQ)|99.67%-99.55%(matlab crop), 99.72-99.60%(C++ crop)  |99.63%-99.65%(matlab crop), 99.68-99.70%(C++ crop) |99.62%-99.65%(matlab crop), 99.68-99.60%(C++ crop)|时间与dim256接近 |网络结构与dim256一样，只不过输出维数不同
 |[MobileFaceNet-res2-6-10-2-dim256](https://pan.baidu.com/s/143j7eULc2AqpNcSugFdTxA)|99.60%-99.60%(matlab crop), 99.62-99.62%(C++ crop)  |99.73%-99.68%(matlab crop), 99.78-99.68%(C++ crop) |99.55%-99.63%(matlab crop), 99.60-99.62%(C++ crop)|单线程约85ms，四线程约30ms, 3.6GHz |网络结构在下载链接里,用faces_emore训练的 
 |[MobileFaceNet-res2-6-10-2-dim512](https://pan.baidu.com/s/1_0O3kJ5dMmD-HdRwNR0Hpw)|99.52%-99.60%(matlab crop), 99.63-99.72%(C++ crop)  |99.70%-99.67%(matlab crop), 99.77-99.77%(C++ crop) |99.55%-99.62%(matlab crop), 99.62-99.68%(C++ crop)|时间与dim256接近 |网络结构与dim256一样，只不过输出维数不同。感谢[moli](https://github.com/moli232777144)训练此模型
+
+|模型名称                                                                           |LFW精度(ZQCNN)                                      | LFW精度(OpenCV3.4.2)                              | LFW精度(minicaffe)                               |耗时 (ZQCNN)                       |备注           
+|------------                                                                       | -------------                                      |----------------------                             | ------------                                     |---------------------              | ------------- 
+|[MobileFaceNet-res4-8-16-4-dim128](https://pan.baidu.com/s/1z6H5p4b3aVun2-1dZGDXkg)|99.72%-99.72%(matlab crop), 99.72-99.68%(C++ crop)  |99.82%-99.83%(matlab crop), 99.80-99.78%(C++ crop) |99.72%-99.72%(matlab crop), 99.72-99.68%(C++ crop)|时间与dim256接近 |网络结构与dim256一样，只不过输出维数不同
 |[MobileFaceNet-res4-8-16-4-dim256](https://pan.baidu.com/s/1f_VtqNRxDNe972h8UrOsPw)|99.78%-99.78%(matlab crop), 99.75-99.75%(C++ crop)  |99.82%-99.82%(matlab crop), 99.80-99.82%(C++ crop) |99.78%-99.78%(matlab crop), 99.73-99.73%(C++ crop)|单线程约135ms，四线程约42ms, 3.6GHz |网络结构在下载链接里,用faces_emore训练的 
 |[MobileFaceNet-res4-8-16-4-dim512](https://pan.baidu.com/s/14ukmtAWDhIJC6312WBhZhA)|99.80%-99.73%(matlab crop), 99.85-99.83%(C++ crop)  |99.83%-99.82%(matlab crop), 99.87-99.83%(C++ crop) |99.80%-99.73%(matlab crop), 99.85-99.82%(C++ crop)|时间与dim256接近 |网络结构与dim256一样，只不过输出维数不同。感谢[moli](https://github.com/moli232777144)训练此模型
 
