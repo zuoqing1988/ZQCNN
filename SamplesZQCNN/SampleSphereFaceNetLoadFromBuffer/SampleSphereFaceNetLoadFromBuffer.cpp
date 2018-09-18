@@ -84,7 +84,7 @@ int main()
 	const char* model_ptr = &model_buffer[0];
 	__int64 param_buffer_len = param_buffer.size();
 	__int64 model_buffer_len = model_buffer.size();
-
+	
 	ZQ_CNN_Net net;
 	if (!net.LoadFromBuffer(param_ptr,param_buffer_len, model_ptr, model_buffer_len, false))
 	{

@@ -19,6 +19,7 @@ namespace ZQ
 		bool show_debug_info;
 
 		ZQ_CNN_Layer() :show_debug_info(false) {}
+		virtual ~ZQ_CNN_Layer() {}
 		virtual bool Forward(std::vector<ZQ_CNN_Tensor4D*>* bottoms, std::vector<ZQ_CNN_Tensor4D*>* tops, int num_threads = 1) = 0;
 
 		virtual bool ReadParam(const std::string& line) = 0;
@@ -115,7 +116,7 @@ namespace ZQ
 	{
 	public:
 		ZQ_CNN_Layer_Input() :H(0), W(0), C(3), has_H_val(false), has_W_val(false) {}
-		virtual ~ZQ_CNN_Layer_Input() {}
+		~ZQ_CNN_Layer_Input() {}
 		int H, W, C;
 		bool has_H_val, has_W_val;
 
@@ -1612,6 +1613,10 @@ namespace ZQ
 		int bottom_W;
 
 		ZQ_CNN_Layer_PReLU() :slope(0), bottom_C(0) {}
+		~ZQ_CNN_Layer_PReLU() 
+		{
+			if (slope) delete slope;
+		}
 		virtual bool Forward(std::vector<ZQ_CNN_Tensor4D*>* bottoms, std::vector<ZQ_CNN_Tensor4D*>* tops, int num_threads = 1)
 		{
 			if (bottoms == 0 || tops == 0 || bottoms->size() == 0 || tops->size() == 0 || (*bottoms)[0] == 0 || (*tops)[0] == 0)
@@ -1772,6 +1777,8 @@ namespace ZQ
 		int bottom_W;
 
 		ZQ_CNN_Layer_ReLU() :bottom_C(0) {}
+		~ZQ_CNN_Layer_ReLU(){}
+
 		virtual bool Forward(std::vector<ZQ_CNN_Tensor4D*>* bottoms, std::vector<ZQ_CNN_Tensor4D*>* tops, int num_threads = 1)
 		{
 			if (bottoms == 0 || tops == 0 || bottoms->size() == 0 || tops->size() == 0 || (*bottoms)[0] == 0 || (*tops)[0] == 0)
@@ -1892,7 +1899,7 @@ namespace ZQ
 	public:
 		ZQ_CNN_Layer_Pooling() :kernel_H(3), kernel_W(3), stride_H(2), stride_W(2), 
 			pad_H(0), pad_W(0), global_pool(false), type(0) {}
-		virtual ~ZQ_CNN_Layer_Pooling() {}
+		~ZQ_CNN_Layer_Pooling() {}
 		int kernel_H;
 		int kernel_W;
 		int stride_H;
@@ -2127,7 +2134,11 @@ namespace ZQ
 		int bottom_W;
 
 		ZQ_CNN_Layer_InnerProduct() :filters(0), bias(0), with_bias(false) {}
-
+		~ZQ_CNN_Layer_InnerProduct()
+		{
+			if (filters) delete filters;
+			if (bias) delete bias;
+		}
 		virtual bool Forward(std::vector<ZQ_CNN_Tensor4D*>* bottoms, std::vector<ZQ_CNN_Tensor4D*>* tops, int num_threads = 1)
 		{
 			if (bottoms == 0 || tops == 0 || bottoms->size() == 0 || tops->size() == 0 || (*bottoms)[0] == 0 || (*tops)[0] == 0)
@@ -2394,6 +2405,7 @@ namespace ZQ
 		int bottom_W;
 
 		ZQ_CNN_Layer_Softmax() { axis = 1; }
+		~ZQ_CNN_Layer_Softmax() {}
 		virtual bool Forward(std::vector<ZQ_CNN_Tensor4D*>* bottoms, std::vector<ZQ_CNN_Tensor4D*>* tops, int num_threads = 1)
 		{
 			if (bottoms == 0 || tops == 0 || bottoms->size() == 0 || tops->size() == 0 || (*bottoms)[0] == 0 || (*tops)[0] == 0)
@@ -2527,6 +2539,7 @@ namespace ZQ
 		int bottom_W;
 
 		ZQ_CNN_Layer_Dropout():dropout_ratio(1.0f) {}
+		~ZQ_CNN_Layer_Dropout(){}
 		virtual bool Forward(std::vector<ZQ_CNN_Tensor4D*>* bottoms, std::vector<ZQ_CNN_Tensor4D*>* tops, int num_threads = 1)
 		{
 			if (bottoms == 0 || tops == 0 || bottoms->size() == 0 || tops->size() == 0 || (*bottoms)[0] == 0 || (*tops)[0] == 0)
@@ -2660,6 +2673,7 @@ namespace ZQ
 		int bottom_W;
 
 		ZQ_CNN_Layer_Copy() {}
+		~ZQ_CNN_Layer_Copy() {}
 		virtual bool Forward(std::vector<ZQ_CNN_Tensor4D*>* bottoms, std::vector<ZQ_CNN_Tensor4D*>* tops, int num_threads = 1)
 		{
 			if (bottoms == 0 || tops == 0 || bottoms->size() == 0 || tops->size() == 0 || (*bottoms)[0] == 0 || (*tops)[0] == 0)
@@ -2777,6 +2791,8 @@ namespace ZQ
 	{
 	public:
 		ZQ_CNN_Layer_Eltwise() :with_weight(false) {}
+		~ZQ_CNN_Layer_Eltwise(){}
+
 		static const int ELTWISE_MUL = 0;
 		static const int ELTWISE_SUM = 1;
 		static const int ELTWISE_MAX = 2;
@@ -2968,6 +2984,8 @@ namespace ZQ
 	{
 	public:
 		ZQ_CNN_Layer_ScalarOperation():scalar(1),operation(0){}
+		~ZQ_CNN_Layer_ScalarOperation(){}
+
 		static const int SCALAR_MUL = 0;
 		static const int SCALAR_DIV = 1;
 		static const int SCALAR_ADD = 2;
@@ -3230,6 +3248,8 @@ namespace ZQ
 	{
 	public:
 		ZQ_CNN_Layer_LRN(): k(1.0f) { operation = LRN_ACROSS_CHANNELS;}
+		~ZQ_CNN_Layer_LRN(){ }
+
 		static const int LRN_ACROSS_CHANNELS = 0;
 		int operation;//
 		int local_size;
@@ -3410,6 +3430,10 @@ namespace ZQ
 	{
 	public:
 		ZQ_CNN_Layer_Normalize():across_spatial(false),channel_shared(false), eps(1e-10){}
+		~ZQ_CNN_Layer_Normalize(){
+			if (scale) delete scale;
+		}
+
 		bool across_spatial;
 		bool channel_shared;
 		ZQ_CNN_Tensor4D* scale;
@@ -3581,6 +3605,8 @@ namespace ZQ
 	{
 	public:
 		ZQ_CNN_Layer_Permute() { order[0] = 0; order[1] = 1; order[2] = 2; order[3] = 3; }
+		~ZQ_CNN_Layer_Permute() {}
+
 		int order[4];
 		int old_dim[4];
 		int new_dim[4];
@@ -3739,6 +3765,8 @@ namespace ZQ
 	{
 	public:
 		ZQ_CNN_Layer_Flatten() { axis = 1; end_axis = -1; }
+		~ZQ_CNN_Layer_Flatten() {}
+
 		int axis;
 		int end_axis;
 		int old_dim[4];
@@ -3898,6 +3926,8 @@ namespace ZQ
 	{
 	public:
 		ZQ_CNN_Layer_Reshape() { axis = 0; num_axes = -1; }
+		~ZQ_CNN_Layer_Reshape() {}
+
 		std::vector<int> shape;
 		int axis;
 		int num_axes;
@@ -4095,6 +4125,7 @@ namespace ZQ
 			step_w = step_h = 0;
 			offset = 0;
 		}
+		~ZQ_CNN_Layer_PriorBox() {}
 		
 		std::vector<float> min_sizes;
 		std::vector<float> max_sizes;
@@ -4441,6 +4472,7 @@ namespace ZQ
 		{
 			ZQ_CNN_Layer_PriorBox();
 		}
+		~ZQ_CNN_Layer_PriorBoxText() {}
 
 
 		virtual bool Forward(std::vector<ZQ_CNN_Tensor4D*>* bottoms, std::vector<ZQ_CNN_Tensor4D*>* tops, int num_threads = 1)
@@ -4565,6 +4597,7 @@ namespace ZQ
 		{
 			axis = 1;
 		}
+		~ZQ_CNN_Layer_Concat() {}
 
 		int axis;
 
@@ -4699,6 +4732,7 @@ namespace ZQ
 			// Only consider detections whose confidences are larger than a threshold.
 			confidence_threshold = 0.25f;
 		}
+		~ZQ_CNN_Layer_DetectionOutput() {}
 
 
 		int num_classes;

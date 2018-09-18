@@ -18,7 +18,7 @@ namespace ZQ
 		};
 
 	public:
-
+		virtual ~ZQ_CNN_Tensor4D() {}
 		float* const GetFirstPixelPtr() { return firstPixelData; }
 		const float* GetFirstPixelPtr() const { return firstPixelData; }
 		void SetShape(int in_N, int in_C, int in_H, int in_W) { shape_nchw[0] = in_N; shape_nchw[1] = in_C; shape_nchw[2] = in_H; shape_nchw[3] = in_W; }
