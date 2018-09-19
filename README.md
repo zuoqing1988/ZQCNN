@@ -89,7 +89,7 @@ Convolution name=conv1 bottom=data top=conv1 num_output=10 kernel_size=3 stride=
 |[MobileFaceNet-res2-6-10-2-dim128](https://pan.baidu.com/s/1AQEad5Zp2cag4UA5KtpbYQ)|0.78785        |9.274%      |0.66616        |40.459%     |0.45855        |92.716%
 |[MobileFaceNet-res2-6-10-2-dim256](https://pan.baidu.com/s/143j7eULc2AqpNcSugFdTxA)|0.77708        |7.839%      |0.63872        |40.934%     |0.43182        |92.605%
 |[MobileFaceNet-res2-6-10-2-dim512](https://pan.baidu.com/s/1_0O3kJ5dMmD-HdRwNR0Hpw)|0.76699        |8.197%      |0.63452        |38.774%     |0.41572        |93.000%
-|[MobileFaceNet-res4-8-16-4-dim128](https://pan.baidu.com/s/1z6H5p4b3aVun2-1dZGDXkg)|-              |            |-              |            |-
+|[MobileFaceNet-res4-8-16-4-dim128](https://pan.baidu.com/s/1z6H5p4b3aVun2-1dZGDXkg)|0.79268        |9.626%      |0.65770        |48.252%     |0.45431        |95.576%
 |[MobileFaceNet-res4-8-16-4-dim256](https://pan.baidu.com/s/1f_VtqNRxDNe972h8UrOsPw)|0.76858        |9.220%      |0.62852        |46.195%     |0.40010        |96.929%
 |[MobileFaceNet-res4-8-16-4-dim512](https://pan.baidu.com/s/14ukmtAWDhIJC6312WBhZhA)|0.76287        |9.296%      |0.62555        |44.775%     |0.39047        |97.347%
 
