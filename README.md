@@ -72,37 +72,6 @@ Convolution name=conv1 bottom=data top=conv1 num_output=10 kernel_size=3 stride=
 
 **人脸识别**
 
-测试集 
-
-[LFW-112X112 matlab crop](https://pan.baidu.com/s/1uneb3SDThd0npib17pLeAg)
-
-[LFW-112X112 C++ crop](https://pan.baidu.com/s/1e2dAW0uxkA1urca37hJFgQ)
-
-[LFW-112X112 mxnet crop](https://pan.baidu.com/s/1d19Na7mmJBQecn4yRAXTaw)
-
-[LFW-112X96 matlab crop](https://pan.baidu.com/s/1tMvs2yn-25ET8wlOJaUDoA)
-
-[LFW-112X96 C++ crop](https://pan.baidu.com/s/1KVA4V-e0gUVW12oBuc0MwA)
-
-[webface1000X50 C++ crop](https://pan.baidu.com/s/1AoJkj_IhydkiyD1UGm8rDQ)
-
-[webface5000X20 C++ crop](https://pan.baidu.com/s/1AoJkj_IhydkiyD1UGm8rDQ)
-
-|模型名称                                                                    |LFW精度(ZQCNN)                                     |耗时(ZQCNN)                        |备注           
-|------------                                                                | -------------                                     |------                             | ------------- 
-|[SphereFace04](https://pan.baidu.com/s/1-Bb6yuU3eAN6U2ZdVsC5Mg)             | 98.2%                                             | -                                 |不建议使用  
-|[SphereFace04bn](https://pan.baidu.com/s/18uvL3p7PWRpJcHm00-7ABg)           | 98.5%                                             | -                                 |不建议使用
-|[SphereFace06bn](https://pan.baidu.com/s/1LXjAoJWkWp-CT0sTgIHqfg)           | 98.7%-98.8%                                       | -                                 |不建议使用
-|[SphereFace20](https://pan.baidu.com/s/1fGJU9PfPNBot6qGVeGlcug)             | 99.2%-99.3%                                       |单线程约195ms， 3.6GHz             |不建议使用
-|[SphereFace04bn256](https://pan.baidu.com/s/1YXt2PLbbUg9-VZITcMw5mQ)        | 97.8%-97.9%                                       |单线程6-7ms, 3.6GHz                |速度最快
-|[Mobile-SphereFace10bn](https://pan.baidu.com/s/1BEP1pg5s3yJCLA2elqTB0A)    | 98.6%-98.7%                                       |单线程15ms, 3.6GHz                 |性价比高 
-|[MobileFaceNet-v0](https://pan.baidu.com/s/1f-Mfad-7zRvWcy3wYoPrUg)         |99.13%-99.23%                                      |单线程33-35ms，4线程14-15ms, 3.6GHz|从[model-y1.zip](https://pan.baidu.com/s/1If28BkHde4fiuweJrbicVA)转的格式 
-|[MobileFaceNet-v1](https://pan.baidu.com/s/1b1g-hH7IWYxplY-XAvSz-Q)         |99.17%-99.37%                                      |单线程33-35ms，4线程14-15ms, 3.6GHz|我自己用insightface训练了一把 
-|[ArcFace-r34](https://pan.baidu.com/s/1tRt6PxDg4UNv7yf9pMZ_LA)              |99.65%-99.70%                                      |单线程500ms+,3.6GHz                |-            
-|[ArcFace-r34-v2](https://pan.baidu.com/s/1q3ZqQdjabDBESqbsxC7ESQ)           |99.73%-99.77%(matlab crop), 99.68-99.78%(C++ crop) |单线程500ms+,3.6GHz                |-            
-|[ArcFace-r50](https://pan.baidu.com/s/1qOIhCauwZNTOCIM9eojPrA)              |99.75%-99.78%                                      |单线程700ms+,3.6GHz                |-            
-|[ArcFace-r100](https://pan.baidu.com/s/1PeujQbIqFfgARIYAdRt3pw)             |99.80%-99.82%                                      |单线程1900ms+，四线程480ms, 3.6GHz |时间波动很大 
-
 |模型名称                                                                           |LFW精度(ZQCNN)                                      | LFW精度(OpenCV3.4.2)                              | LFW精度(minicaffe)                               |耗时 (ZQCNN)                       |备注           
 |------------                                                                       | -------------                                      |----------------------                             | ------------                                     |---------------------              | ------------- 
 |[MobileFaceNet-res2-6-10-2-dim128](https://pan.baidu.com/s/1AQEad5Zp2cag4UA5KtpbYQ)|99.67%-99.55%(matlab crop), 99.72-99.60%(C++ crop)  |99.63%-99.65%(matlab crop), 99.68-99.70%(C++ crop) |99.62%-99.65%(matlab crop), 99.68-99.60%(C++ crop)|时间与dim256接近 |网络结构与dim256一样，只不过输出维数不同
@@ -133,6 +102,7 @@ Convolution name=conv1 bottom=data top=conv1 num_output=10 kernel_size=3 stride=
 |[MobileFaceNet-res4-8-16-4-dim256](https://pan.baidu.com/s/1f_VtqNRxDNe972h8UrOsPw)|0.68490        |30.639%     |0.46092        |91.900%     |0.39198        |97.696%
 |[MobileFaceNet-res4-8-16-4-dim512](https://pan.baidu.com/s/14ukmtAWDhIJC6312WBhZhA)|0.67303        |32.404%     |0.45216        |92.453%     |0.38344        |98.003%
 
+更多人脸模型请查看[Model-Zoo-for-Face-Recognition](https://github.com/zuoqing1988/ZQCNN-v0.0/wiki/Model-Zoo-for-Face-Recognition)
 
 **表情识别**
 
