@@ -3256,7 +3256,7 @@ bool ZQ_CNN_Forward_SSEUtils::_detection_output(const ZQ_CNN_Tensor4D& loc, cons
 	float* out_ptr;
 	if (num_kept == 0)
 	{
-		printf("Couldn't find any detections\n");
+		//printf("Couldn't find any detections\n");
 		output.ChangeSize(num, 1, 1, 7, 0, 0);
 		out_ptr = output.GetFirstPixelPtr();
 		// Generate fake results per image.

@@ -128,7 +128,7 @@ int SampleDetectMouth_fig(int argc, const char** argv)
 	if (argc > 5)
 		min_size = __max(12, atoi(argv[5]));
 	if (argc > 6)
-		ssd_mouth_thresh = __max(0.15, atoi(argv[6]));
+		ssd_mouth_thresh = __max(0.01, atoi(argv[6]));
 	if (argc > 7)
 	{
 		should_save_draw = true;
@@ -152,11 +152,11 @@ int SampleDetectMouth_fig(int argc, const char** argv)
 
 	
 	detect_args.enable_rot = true;
-	detect_args.mtcnn_min_size = 60;
+	detect_args.mtcnn_min_size = min_size;
 	detect_args.mtcnn_thresh_p = 0.8;
 	detect_args.mtcnn_thresh_r = 0.7;
 	detect_args.mtcnn_thresh_o = 0.7;
-	detect_args.ssd_mouth_thresh = 0.5;
+	detect_args.ssd_mouth_thresh = ssd_mouth_thresh;
 
 	//detect_args.enlarge_border = 1;
 	if (!detector.Initialize(&init_args))

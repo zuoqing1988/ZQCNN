@@ -17,6 +17,20 @@ int main()
 	std::string prototxt_file = "model/model-r50-am.zqparams";
 	std::string caffemodel_file = "model/model-r50-am.nchwbin";
 	std::string out_blob_name = "fc5";
+	for (int i = 0; i < 1000; i++)
+	{
+		std::string prototxt_file = "./model/model-r50-am.zqparams";
+		std::string caffemodel_file = "./model/model-r50-am.nchwbin";
+		std::string out_blob_name = "fc5";
+		ZQ_FaceRecognizerArcFaceZQCNN* pFaceZQCNN = new ZQ_FaceRecognizerArcFaceZQCNN();
+		if (!pFaceZQCNN->Init("", prototxt_file, caffemodel_file, out_blob_name))
+		{
+			cout << "failed to init arcface\n";
+			return 0;
+		}
+		delete pFaceZQCNN;
+	}
+
 	bool fail_flag = false;
 	recognizer[0] = new ZQ_FaceRecognizerArcFaceZQCNN();
 	if (!recognizer[0]->Init("", prototxt_file, caffemodel_file, out_blob_name))

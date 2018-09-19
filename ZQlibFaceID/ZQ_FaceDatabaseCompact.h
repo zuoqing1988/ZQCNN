@@ -55,9 +55,11 @@ namespace ZQ
 			return _find_the_best_matches(feat_dim, feat_num, feat, out_ids, out_scores, out_names, max_num, max_thread_num);
 		}
 
-		bool ExportSimilarityForAllPairs(const std::string& out_score_file, const std::string& out_flag_file, int max_thread_num) const
+		bool ExportSimilarityForAllPairs(const std::string& out_score_file, const std::string& out_flag_file, 
+			__int64& all_pair_num, __int64& same_pair_num, __int64& notsame_pair_num, int max_thread_num) const
 		{
-			return _export_similarity_for_all_pairs(out_score_file,out_flag_file, max_thread_num);
+			return _export_similarity_for_all_pairs(out_score_file,out_flag_file, all_pair_num,
+				same_pair_num, notsame_pair_num, max_thread_num);
 		}
 
 	private:
@@ -363,7 +365,7 @@ namespace ZQ
 		}
 
 		//must be aligned
-		static bool _compute_similarity(int dim, const float* v1, const float* v2)
+		static float _compute_similarity(int dim, const float* v1, const float* v2)
 		{
 			if (dim == 128)
 				return ZQ_FaceRecognizerSphereFace::_cal_similarity_avx_dim128(v1, v2);
@@ -375,7 +377,8 @@ namespace ZQ
 				return ZQ_MathBase::DotProduct(dim, v1, v2);
 		}
 
-		bool _export_similarity_for_all_pairs(const std::string& out_score_file, const std::string& out_flag_file, int max_thread_num) const
+		bool _export_similarity_for_all_pairs(const std::string& out_score_file, const std::string& out_flag_file, 
+			__int64& all_pair_num, __int64& same_pair_num, __int64& notsame_pair_num, int max_thread_num) const
 		{
 			FILE* out1 = 0;
 			if (0 != fopen_s(&out1, out_score_file.c_str(), "wb"))
@@ -392,10 +395,10 @@ namespace ZQ
 				return false;
 			}
 			
-			__int64 total_pair_num = total_face_num *(total_face_num - 1) / 2;
+			all_pair_num = total_face_num *(total_face_num - 1) / 2;
+			same_pair_num = 0;
+			notsame_pair_num = 0;
 			//fprintf(out, "%lld\n", total_pair_num);
-			fwrite(&total_pair_num, sizeof(__int64), 1, out1);
-			fwrite(&total_pair_num, sizeof(__int64), 1, out2);
 			int real_thread_num = __max(1, __min(max_thread_num, omp_get_num_procs() - 1));
 			if (real_thread_num == 1)
 			{
@@ -416,6 +419,7 @@ namespace ZQ
 							cur_j_feat = all_face_feats + (cur_face_offset + j)*dim;
 							scores[idx] = _compute_similarity(dim, cur_i_feat, cur_j_feat);
 							flags[idx] = 1;
+							same_pair_num++;
 							idx++;
 						}
 						if (pp + 1 < person_num)
@@ -425,6 +429,7 @@ namespace ZQ
 								cur_j_feat = all_face_feats + j*dim;
 								scores[idx] = _compute_similarity(dim, cur_i_feat, cur_j_feat);
 								flags[idx] = 0;
+								notsame_pair_num++;
 								idx++;
 							}
 						}
@@ -441,6 +446,7 @@ namespace ZQ
 			{
 				int chunk_size = 100;
 				int handled[1] = { 0 };
+				__int64 tmp_same_pair_num[1] = { 0 };
 				printf("real_thread_num = %d\n", real_thread_num);
 #pragma omp parallel for schedule(dynamic,chunk_size) num_threads(real_thread_num) shared(handled)
 				for (int pp = 0; pp < person_num; pp++)
@@ -477,6 +483,10 @@ namespace ZQ
 						{
 							if (idx > 0)
 							{
+								for (int kk = 0; kk < idx; kk++)
+								{
+									(*tmp_same_pair_num) += flags[kk];
+								}
 								fwrite(&scores[0], sizeof(float), idx, out1);
 								fwrite(&flags[0], 1, idx, out2);
 							}
@@ -488,6 +498,8 @@ namespace ZQ
 						printf("%d/%d\n", *handled, person_num);
 					}
 				}
+				same_pair_num = tmp_same_pair_num[0];
+				notsame_pair_num = all_pair_num - same_pair_num;
 			}
 
 			fclose(out1);

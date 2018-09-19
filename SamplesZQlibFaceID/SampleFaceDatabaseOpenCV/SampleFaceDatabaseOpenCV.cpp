@@ -1,17 +1,15 @@
 #include "ZQ_FaceDatabaseMaker.h"
-#include "ZQ_FaceRecognizerArcFaceZQCNN.h"
-#include "ZQ_FaceRecognizerSphereFaceZQCNN.h"
+#include "ZQ_FaceRecognizerArcFaceOpenCV.h"
+#include "ZQ_FaceRecognizerSphereFaceOpenCV.h"
 #include "ZQ_MergeSort.h"
 #include <stdio.h>
 #include <io.h>
-#include "ZQ_CNN_ComplieConfig.h"
-#if ZQ_CNN_USE_BLAS_GEMM
-#include <cblas.h>
-#pragma comment(lib,"libopenblas.lib")
-#endif
 using namespace ZQ;
 
-int make_database(int argc, char** argv, bool compact);
+const int mode_size_112X112 = 0;
+const int mode_size_112X96 = 1;
+
+int make_database(int argc, char** argv, bool compact, int mode_size);
 int select_subset(int argc, char** argv);
 int select_subset_desired_num(int argc, char** argv);
 int copy_subset_to_fold(int argc, char** argv);
@@ -29,23 +27,33 @@ int main(int argc, char** argv)
 
 	if (argc < 2)
 	{
-		printf("%s make [args]\n", argv[0]);
-		printf("%s make_compact [args]\n", argv[0]);
-		printf("%s select_subset [args]\n", argv[0]);
-		printf("%s select_subset_desired_num [args]\n", argv[0]);
+		printf("%s make112X112 [args]\n", argv[0]);
+		printf("%s make112X96 [args]\n", argv[0]);
+		printf("%s make112X112_compact [args]\n", argv[0]);
+		printf("%s make112X96_compact [args]\n", argv[0]);
+		printf("%s select_subset_compact [args]\n", argv[0]);
+		printf("%s select_subset_desired_num_compact [args]\n", argv[0]);
 		printf("%s copy_subset_to_fold [args]\n", argv[0]);
 		printf("%s compute_similarity [args]\n", argv[0]);
 		printf("%s compute_similarity_compact [args]\n", argv[0]);
-		printf("%s evaluate_tar_far [args]\n",argv[0]);
+		printf("%s evaluate_tar_far [args]\n", argv[0]);
 		return EXIT_FAILURE;
 	}
-	if (_strcmpi(argv[1], "make") == 0)
+	if (_strcmpi(argv[1], "make112X112") == 0)
 	{
-		return make_database(argc, argv, false);
+		return make_database(argc, argv, false, mode_size_112X112);
 	}
-	else if (_strcmpi(argv[1], "make_compact") == 0)
+	else if (_strcmpi(argv[1], "make112X96") == 0)
 	{
-		return make_database(argc, argv, true);
+		return make_database(argc, argv, false, mode_size_112X96);
+	}
+	else if (_strcmpi(argv[1], "make112X112_compact") == 0)
+	{
+		return make_database(argc, argv, true, mode_size_112X112);
+	}
+	else if (_strcmpi(argv[1], "make112X96_compact") == 0)
+	{
+		return make_database(argc, argv, true, mode_size_112X96);
 	}
 	else if (_strcmpi(argv[1], "select_subset") == 0)
 	{
@@ -73,8 +81,10 @@ int main(int argc, char** argv)
 	}
 	else
 	{
-		printf("%s make [args]\n", argv[0]);
-		printf("%s make_compact [args]\n", argv[0]);
+		printf("%s make112X112 [args]\n", argv[0]);
+		printf("%s make112X96 [args]\n", argv[0]);
+		printf("%s make112X112_compact [args]\n", argv[0]);
+		printf("%s make112X96_compact [args]\n", argv[0]);
 		printf("%s select_subset_compact [args]\n", argv[0]);
 		printf("%s select_subset_desired_num_compact [args]\n", argv[0]);
 		printf("%s copy_subset_to_fold [args]\n", argv[0]);
@@ -85,7 +95,7 @@ int main(int argc, char** argv)
 	}
 	return EXIT_SUCCESS;
 }
-int make_database(int argc, char** argv, bool compact)
+int make_database(int argc, char** argv, bool compact, int mode_size)
 {
 	ZQ_FaceDatabaseMaker::MakeDatabaseType type = ZQ_FaceDatabaseMaker::UPDATE_WHO_NOT_HAVE_FEATS;
 	int max_thread_num = 1;
@@ -110,21 +120,10 @@ int make_database(int argc, char** argv, bool compact)
 		show = atoi(argv[10]);
 
 	max_thread_num = __max(1, __min(omp_get_num_procs() - 1, max_thread_num));
-	std::vector<ZQ_FaceRecognizerArcFaceZQCNN> recognizer_112X112(max_thread_num);
-	std::vector<ZQ_FaceRecognizerSphereFaceZQCNN> recognizer_112X96(max_thread_num);
-	ZQ_CNN_Net* net = new ZQ_CNN_Net();
-	if (!net->LoadFrom(prototxt_file, caffemodel_file, false))
-	{
-		printf("failed to init recognizer with model %s %s\n", prototxt_file.c_str(), caffemodel_file.c_str());
-		delete net;
-		return EXIT_FAILURE;
-	}
-	int c, h, w;
-	net->GetInputDim(c, h, w);
-	delete net;
-
+	std::vector<ZQ_FaceRecognizerArcFaceOpenCV> recognizer_112X112(max_thread_num);
+	std::vector<ZQ_FaceRecognizerSphereFaceOpenCV> recognizer_112X96(max_thread_num);
 	std::vector<ZQ_FaceRecognizer*> recognizers;
-	if (c == 3 && h == 112 && w == 112)
+	if (mode_size == mode_size_112X112)
 	{
 		for (int i = 0; i < max_thread_num; i++)
 		{
@@ -154,7 +153,7 @@ int make_database(int argc, char** argv, bool compact)
 			}
 		}
 	}
-	else if (c == 3 && h == 112 && w == 96)
+	else if (mode_size == mode_size_112X96)
 	{
 		for (int i = 0; i < max_thread_num; i++)
 		{
@@ -200,16 +199,16 @@ int select_subset(int argc, char** argv)
 		return EXIT_FAILURE;
 	}
 
-	int max_thread_num = 4;	
+	int max_thread_num = 4;
 	const std::string out_file = argv[2];
 	const std::string feats_file = argv[3];
 	const std::string names_file = argv[4];
 	int num_image_thresh = atoi(argv[5]);
 	float similarity_thresh = atof(argv[6]);
-	
+
 	if (argc > 7)
 		max_thread_num = atoi(argv[5]);
-	
+
 	max_thread_num = __max(1, __min(max_thread_num, omp_get_num_procs() - 1));
 	ZQ_FaceDatabase database;
 	if (EXIT_FAILURE == load_database(database, feats_file, names_file))
@@ -262,7 +261,7 @@ int select_subset_desired_num(int argc, char** argv)
 	return EXIT_SUCCESS;
 }
 
-bool zq_copy_file(const char *src, const char *dst, char* buf, int buf_size) 
+bool zq_copy_file(const char *src, const char *dst, char* buf, int buf_size)
 {
 	FILE* in = 0, *out = 0;
 	if (0 != fopen_s(&in, src, "rb"))
@@ -276,7 +275,7 @@ bool zq_copy_file(const char *src, const char *dst, char* buf, int buf_size)
 		fclose(in);
 		return false;
 	}
-	
+
 	int read_count = 0;
 	while ((read_count = fread(buf, 1, buf_size, in)) > 0)
 		fwrite(buf, 1, read_count, out);
@@ -403,7 +402,7 @@ int compute_similarity_all_pairs(int argc, char**argv, bool compact)
 	const std::string out_info_file = argv[4];
 	const std::string feats_file = argv[5];
 	const std::string names_file = argv[6];
-	
+
 	if (argc > 7)
 		max_thread_num = atoi(argv[7]);
 	ZQ_FaceDatabaseCompact database_compact;
@@ -440,9 +439,9 @@ int compute_similarity_all_pairs(int argc, char**argv, bool compact)
 			return EXIT_FAILURE;
 		}
 	}
-	
+
 	FILE* out = 0;
-	if (0 != fopen_s(&out, out_info_file.c_str(), "w"))
+	if (!fopen_s(&out, out_info_file.c_str(), "w"))
 	{
 		printf("failed to create file %s\n", out_info_file.c_str());
 		return EXIT_FAILURE;
@@ -467,7 +466,7 @@ int evaluate_tar_far(int argc, char** argv)
 
 	std::string dst_score_file = score_file + ".sort";
 	std::string dst_flag_file = flag_file + ".sort";
-	
+
 	__int64 all_pair_num = 0, same_pair_num = 0, notsame_pair_num = 0;
 	FILE* in = 0;
 	if (0 != fopen_s(&in, info_file.c_str(), "r"))
@@ -476,7 +475,7 @@ int evaluate_tar_far(int argc, char** argv)
 		return EXIT_FAILURE;
 	}
 
-	if (1 != fscanf_s(in, "%lld",&all_pair_num)
+	if (1 != fscanf_s(in, "%lld", &all_pair_num)
 		|| 1 != fscanf_s(in, "%lld", &same_pair_num)
 		|| 1 != fscanf_s(in, "%lld", &notsame_pair_num))
 	{
@@ -488,7 +487,7 @@ int evaluate_tar_far(int argc, char** argv)
 		all_pair_num, same_pair_num, notsame_pair_num);
 
 	if (!ZQ_MergeSort::MergeSortWithData_OOC<float>(score_file.c_str(), dst_score_file.c_str(), flag_file.c_str(), dst_flag_file.c_str(),
-		1, false, 1024 * 1024 * 2))
+		1, false, 1024 * 1024))
 	{
 		printf("failed to run MergeSortWithData_OOC\n");
 		return EXIT_FAILURE;
@@ -510,7 +509,7 @@ int evaluate_tar_far(int argc, char** argv)
 
 	const int stage_num = 5;
 	int cur_stage = 0;
-	double stage_far_thresh[stage_num] = 
+	double stage_far_thresh[stage_num] =
 	{
 		1e-7,1e-6,1e-5,1e-4,1e-3
 	};
@@ -544,7 +543,7 @@ int evaluate_tar_far(int argc, char** argv)
 			fclose(in2);
 			return EXIT_FAILURE;
 		}
-		if(read_count1 != read_count2
+		if (read_count1 != read_count2
 			|| (read_count1 != buffer_size && read_count1 != rest_count))
 		{
 			printf("score_file flag_file info_file not match\n");
@@ -559,8 +558,8 @@ int evaluate_tar_far(int argc, char** argv)
 				break;
 			if (cur_far_num > stage_num_thresh[cur_stage])
 			{
-				printf("thresh = %8.5f, far = %12e, tar = %.5f\n", score_buffer[i], 
-					(double)cur_far_num/notsame_pair_num,
+				printf("thresh = %8.5f, far = %12e, tar = %.5f\n", score_buffer[i],
+					(double)cur_far_num / notsame_pair_num,
 					(double)cur_tar_num / same_pair_num);
 				cur_stage++;
 			}

@@ -12,10 +12,11 @@
 #include <malloc.h>
 #include <string.h>
 #include <stdlib.h>
-#include <cblas.h>
 #include <omp.h>
-#include <cblas.h>
+
 #include "..\ZQ_CNN_ComplieConfig.h"
+#if ZQ_CNN_USE_BLAS_GEMM
+#include <cblas.h>
 
 #if defined(__cplusplus) || defined(c_plusplus) 
 extern "C" {
@@ -752,4 +753,6 @@ extern "C" {
 
 #if defined(__cplusplus) || defined(c_plusplus) 
 }
+#endif
+
 #endif
