@@ -103,7 +103,7 @@ Convolution name=conv1 bottom=data top=conv1 num_output=10 kernel_size=3 stride=
 |[MobileFaceNet-res4-8-16-4-dim512](https://pan.baidu.com/s/14ukmtAWDhIJC6312WBhZhA)|0.67303         |32.404%      |0.45216         |92.453%      |0.38344         |98.003%
 
 |模型\私有测试集TAO ids:6606,imgs:87210                                             |thresh@ FAR=1e-7|TAR@ FAR=1e-7|thresh@ FAR=1e-6|TAR@ FAR=1e-6|thresh@ FAR=1e-5|TAR@ FAR=1e-5
-|------------                                                                       | -------------  | ----------  |--------------- |-------      | ------------   |-----------                         
+|------------                                                                       | -------------  |-------------|--------------- |-------------| -------------- |-----------                         
 |[MobileFaceNet-res2-6-10-2-dim128](https://pan.baidu.com/s/1AQEad5Zp2cag4UA5KtpbYQ)|0.92204         |1.282%       |0.88107         |6.837%       |0.78302         |41.740%
 |[MobileFaceNet-res2-6-10-2-dim256](https://pan.baidu.com/s/143j7eULc2AqpNcSugFdTxA)|0.91361         |1.275%       |0.86750         |7.081%       |0.76099         |42.188%
 |[MobileFaceNet-res2-6-10-2-dim512](https://pan.baidu.com/s/1_0O3kJ5dMmD-HdRwNR0Hpw)|0.90657         |1.448%       |0.86061         |7.299%       |0.75488         |41.956%
