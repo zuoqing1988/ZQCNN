@@ -33,10 +33,10 @@ namespace ZQ
 		}
 
 		bool ExportSimilarityForAllPairs(const std::string& out_score_file, const std::string& out_flag_file, 
-			__int64& all_pair_num, __int64& same_pair_num, __int64& notsame_pair_num, int max_thread_num) const
+			__int64& all_pair_num, __int64& same_pair_num, __int64& notsame_pair_num, int max_thread_num, bool quantization) const
 		{
 			return _export_similarity_for_all_pairs(out_score_file, out_flag_file, all_pair_num,
-				same_pair_num, notsame_pair_num, max_thread_num);
+				same_pair_num, notsame_pair_num, max_thread_num, quantization);
 		}
 
 		bool SelectSubset(const std::string& out_file, int max_thread_num, int num_image_thresh = 10, float similarity_thresh = 0.5) const
@@ -450,7 +450,7 @@ namespace ZQ
 		}
 
 		bool _export_similarity_for_all_pairs(const std::string& out_score_file, const std::string& out_flag_file, 
-			__int64& all_pair_num, __int64& same_pair_num, __int64& notsame_pair_num, int max_thread_num) const
+			__int64& all_pair_num, __int64& same_pair_num, __int64& notsame_pair_num, int max_thread_num, bool quantization) const
 		{
 			FILE* out1 = 0;
 			if (0 != fopen_s(&out1, out_score_file.c_str(), "wb"))
@@ -516,7 +516,17 @@ namespace ZQ
 						
 						if (idx > 0)
 						{
-							fwrite(&scores[0], sizeof(float), idx, out1);
+							if (quantization)
+							{
+								std::vector<short> short_scores(idx);
+								for (int j = 0; j < idx; j++)
+									short_scores[j] = __min(SHRT_MAX, __max(-SHRT_MAX, scores[j] * SHRT_MAX));
+								fwrite(&short_scores[0], sizeof(short), idx, out1);
+							}
+							else
+							{
+								fwrite(&scores[0], sizeof(float), idx, out1);
+							}
 							fwrite(&flags[0], 1, idx, out2);
 						}
 					}
@@ -568,7 +578,17 @@ namespace ZQ
 								{
 									(*tmp_same_pair_num) += flags[kk];
 								}
-								fwrite(&scores[0], sizeof(float), idx, out1);
+								if (quantization)
+								{
+									std::vector<short> short_scores(idx);
+									for (int j = 0; j < idx; j++)
+										short_scores[j] = __min(SHRT_MAX, __max(-SHRT_MAX, scores[j] * SHRT_MAX));
+									fwrite(&short_scores[0], sizeof(short), idx, out1);
+								}
+								else
+								{
+									fwrite(&scores[0], sizeof(float), idx, out1);
+								}
 								fwrite(&flags[0], 1, idx, out2);
 							}
 						}

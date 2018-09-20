@@ -75,8 +75,8 @@ int main(int argc, char** argv)
 	{
 		printf("%s make [args]\n", argv[0]);
 		printf("%s make_compact [args]\n", argv[0]);
-		printf("%s select_subset_compact [args]\n", argv[0]);
-		printf("%s select_subset_desired_num_compact [args]\n", argv[0]);
+		printf("%s select_subset [args]\n", argv[0]);
+		printf("%s select_subset_desired_num [args]\n", argv[0]);
 		printf("%s copy_subset_to_fold [args]\n", argv[0]);
 		printf("%s compute_similarity [args]\n", argv[0]);
 		printf("%s compute_similarity_compact [args]\n", argv[0]);
@@ -393,11 +393,12 @@ int compute_similarity_all_pairs(int argc, char**argv, bool compact)
 {
 	if (argc < 7)
 	{
-		printf("%s %s out_score_file out_flag_file out_info_file feats_file names_file [max_thread_num]\n", argv[0], argv[1]);
+		printf("%s %s out_score_file out_flag_file out_info_file feats_file names_file [max_thread_num] [quantization]\n", argv[0], argv[1]);
 		return EXIT_FAILURE;
 	}
 
 	int max_thread_num = 4;
+	bool quantization = false;
 	const std::string out_score_file = argv[2];
 	const std::string out_flag_file = argv[3];
 	const std::string out_info_file = argv[4];
@@ -406,6 +407,8 @@ int compute_similarity_all_pairs(int argc, char**argv, bool compact)
 	
 	if (argc > 7)
 		max_thread_num = atoi(argv[7]);
+	if (argc > 8)
+		quantization = atoi(argv[8]);
 	ZQ_FaceDatabaseCompact database_compact;
 	ZQ_FaceDatabase database;
 
@@ -419,7 +422,7 @@ int compute_similarity_all_pairs(int argc, char**argv, bool compact)
 		}
 
 		if (!database_compact.ExportSimilarityForAllPairs(out_score_file, out_flag_file,
-			all_pair_num, same_pair_num, notsame_pair_num, max_thread_num))
+			all_pair_num, same_pair_num, notsame_pair_num, max_thread_num, quantization))
 		{
 			printf("failed\n");
 			return EXIT_FAILURE;
@@ -434,7 +437,7 @@ int compute_similarity_all_pairs(int argc, char**argv, bool compact)
 		}
 
 		if (!database.ExportSimilarityForAllPairs(out_score_file, out_flag_file,
-			all_pair_num, same_pair_num, notsame_pair_num, max_thread_num))
+			all_pair_num, same_pair_num, notsame_pair_num, max_thread_num, quantization))
 		{
 			printf("failed\n");
 			return EXIT_FAILURE;
@@ -457,13 +460,16 @@ int evaluate_tar_far(int argc, char** argv)
 {
 	if (argc < 5)
 	{
-		printf("%s %s score_file flag_file info_file\n", argv[0], argv[1]);
+		printf("%s %s score_file flag_file info_file [quantization]\n", argv[0], argv[1]);
 		return EXIT_FAILURE;
 	}
 
+	bool quantization = false;
 	const std::string score_file = argv[2];
 	const std::string flag_file = argv[3];
 	const std::string info_file = argv[4];
+	if (argc > 5)
+		quantization = atoi(argv[5]);
 
 	std::string dst_score_file = score_file + ".sort";
 	std::string dst_flag_file = flag_file + ".sort";
@@ -487,11 +493,23 @@ int evaluate_tar_far(int argc, char** argv)
 	printf("all_pair_num = %lld, same_pair_num = %lld, notsame_pair_num = %lld\n",
 		all_pair_num, same_pair_num, notsame_pair_num);
 
-	if (!ZQ_MergeSort::MergeSortWithData_OOC<float>(score_file.c_str(), dst_score_file.c_str(), flag_file.c_str(), dst_flag_file.c_str(),
-		1, false, 1024 * 1024 * 2))
+	if (quantization)
 	{
-		printf("failed to run MergeSortWithData_OOC\n");
-		return EXIT_FAILURE;
+		if (!ZQ_MergeSort::MergeSortWithData_OOC<short>(score_file.c_str(), dst_score_file.c_str(), flag_file.c_str(), dst_flag_file.c_str(),
+			1, false, 1024 * 1024 * 2))
+		{
+			printf("failed to run MergeSortWithData_OOC\n");
+			return EXIT_FAILURE;
+		}
+	}
+	else
+	{
+		if (!ZQ_MergeSort::MergeSortWithData_OOC<float>(score_file.c_str(), dst_score_file.c_str(), flag_file.c_str(), dst_flag_file.c_str(),
+			1, false, 1024 * 1024 * 2))
+		{
+			printf("failed to run MergeSortWithData_OOC\n");
+			return EXIT_FAILURE;
+		}
 	}
 
 	FILE* in1 = 0, *in2 = 0;
@@ -508,27 +526,40 @@ int evaluate_tar_far(int argc, char** argv)
 	}
 	/**************/
 
-	const int stage_num = 5;
 	int cur_stage = 0;
-	double stage_far_thresh[stage_num] = 
+	double stage_far_thresh[] = 
 	{
-		1e-7,1e-6,1e-5,1e-4,1e-3
+		1e-8, 2*1e-8, 5*1e-8, 
+		1e-7, 2*1e-7, 5*1e-7,
+		1e-6, 2*1e-6, 5*1e-6,
+		1e-5, 2*1e-5, 5*1e-5,
+		1e-4, 2*1e-4, 5*1e-4,
+		1e-3
 	};
-	double stage_num_thresh[stage_num];
+	int stage_num = sizeof(stage_far_thresh) / sizeof(double);
+	std::vector<double> stage_num_thresh(stage_num);
 	for (int i = 0; i < stage_num; i++)
 		stage_num_thresh[i] = stage_far_thresh[i] * notsame_pair_num;
 
 	/***************/
 	__int64 cur_far_num = 0, cur_tar_num = 0;
 	float simi_thresh = 10;
-	int buffer_size = 1024 * 1024;
-	std::vector<float> score_buffer(buffer_size);
+	int buffer_size = 1024 * 1024 * 100;
+	std::vector<short> short_score_buffer;
+	std::vector<float> score_buffer;
+	if (quantization)
+		short_score_buffer.resize(buffer_size);
+	else
+		score_buffer.resize(buffer_size);
 	std::vector<char> flag_buffer(buffer_size);
 	__int64 read_count1 = 0, read_count2;
 	__int64 rest_count = all_pair_num;
 	while (rest_count > 0)
 	{
-		read_count1 = fread(&score_buffer[0], sizeof(float), buffer_size, in1);
+		if(quantization)
+			read_count1 = fread(&short_score_buffer[0], sizeof(short), buffer_size, in1);
+		else
+			read_count1 = fread(&score_buffer[0], sizeof(float), buffer_size, in1);
 		if (read_count1 == 0)
 		{
 			printf("failed to read desired data\n");
@@ -559,7 +590,8 @@ int evaluate_tar_far(int argc, char** argv)
 				break;
 			if (cur_far_num > stage_num_thresh[cur_stage])
 			{
-				printf("thresh = %8.5f, far = %12e, tar = %.5f\n", score_buffer[i], 
+				printf("thresh = %8.5f, far = %12e, tar = %.5f\n", 
+					quantization ? ((float)short_score_buffer[i]/SHRT_MAX): score_buffer[i], 
 					(double)cur_far_num/notsame_pair_num,
 					(double)cur_tar_num / same_pair_num);
 				cur_stage++;
