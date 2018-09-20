@@ -2,6 +2,10 @@ ZQCNN-v0.0是ZuoQing参照mini-caffe写的forward库，随便用用
 
 # 更新日志
 
+**2018-09-20日更新**
+
+更新人脸识别模型tar-far精度的测试方法，可以按照步骤[How-to-evaluate-TAR-FAR-on-your-dataset](https://github.com/zuoqing1988/ZQCNN-v0.0/wiki/How-to-evaluate-TAR-FAR-on-your-dataset)自行构造测试集测试模型精度。
+
 **2018-09-13日更新**
 
 (1)支持从内存加载模型
