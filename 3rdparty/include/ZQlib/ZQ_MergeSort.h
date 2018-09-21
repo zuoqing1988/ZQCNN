@@ -12,13 +12,13 @@ namespace ZQ
 	{
 	public:
 		template<class T>
-		static void MergeSort(T* vals, int num, bool ascending_dir);
+		static void MergeSort(T* vals, __int64 num, bool ascending_dir);
 
 		template<class T>
-		static void MergeSort(T* vals, int* idx, int num, bool ascending_dir);
+		static void MergeSort(T* vals, int* idx, __int64 num, bool ascending_dir);
 
 		template<class T>
-		static void MergeSortWithData(T* vals, void* data, int data_elt_size, int num, bool ascending_dir);
+		static void MergeSortWithData(T* vals, void* data, int data_elt_size, __int64 num, bool ascending_dir);
 
 		template<class T>
 		static bool MergeSort_OOC(const char* src_val_file, const char* dst_val_file, bool ascending_dir,
@@ -31,13 +31,13 @@ namespace ZQ
 		
 	private:
 		template<class T>
-		static void _mergeSort(T* vals,int start, int end, bool ascending_dir);
+		static void _mergeSort(T* vals,__int64 start, __int64 end, bool ascending_dir);
 
 		template<class T>
-		static void _mergeSort(T* vals, int* idx, int start, int end, bool ascending_dir);
+		static void _mergeSort(T* vals, int* idx, __int64 start, __int64 end, bool ascending_dir);
 
 		template<class T>
-		static void _mergeSortWithData(T* vals, void* data, int data_elt_size, int start, int end, bool ascending_dir);
+		static void _mergeSortWithData(T* vals, void* data, int data_elt_size, __int64 start, __int64 end, bool ascending_dir);
 
 		template<class T>
 		static bool _mergeSort_OOC(FILE* in_val_file, FILE* tmp_val_files[2], FILE* in_data_file, FILE* tmp_data_files[2],
@@ -153,45 +153,45 @@ namespace ZQ
 	/********************* definitions ***********************************/
 
 	template<class T>
-	void ZQ_MergeSort::MergeSort(T* vals, int num, bool ascending_dir)
+	void ZQ_MergeSort::MergeSort(T* vals, __int64 num, bool ascending_dir)
 	{
 		_mergeSort(vals,0,num-1,ascending_dir);
 	}
 
 	template<class T>
-	void ZQ_MergeSort::MergeSort(T* vals, int* idx, int num, bool ascending_dir)
+	void ZQ_MergeSort::MergeSort(T* vals, int* idx, __int64 num, bool ascending_dir)
 	{
 		_mergeSort(vals,idx,0,num-1,ascending_dir);
 	}
 
 	template<class T>
-	void ZQ_MergeSort::MergeSortWithData(T* vals, void* data, int data_elt_size, int num, bool ascending_dir)
+	void ZQ_MergeSort::MergeSortWithData(T* vals, void* data, int data_elt_size, __int64 num, bool ascending_dir)
 	{
 		_mergeSortWithData(vals, data, data_elt_size, 0, num - 1, ascending_dir);
 	}
 
 	template<class T>
-	void ZQ_MergeSort::_mergeSort(T* vals,int start, int end, bool ascending_dir)
+	void ZQ_MergeSort::_mergeSort(T* vals,__int64 start, __int64 end, bool ascending_dir)
 	{
 		if(start >= end)
 			return ;
 
-		int mid = (start+end)/2;
-		int left_len = mid-start+1;
-		int right_len = end-mid;
+		__int64 mid = (start+end)/2;
+		__int64 left_len = mid-start+1;
+		__int64 right_len = end-mid;
 		T* tmp_left = new T[left_len];
 		T* tmp_right = new T[right_len];
-		for(int i = 0;i < left_len;i++)
+		for(__int64 i = 0;i < left_len;i++)
 			tmp_left[i] = vals[start+i];
-		for(int i = 0;i < right_len;i++)
+		for(__int64 i = 0;i < right_len;i++)
 			tmp_right[i] = vals[mid+1+i];
 
 		_mergeSort(tmp_left,0,left_len-1,ascending_dir);
 		_mergeSort(tmp_right,0,right_len-1,ascending_dir);
 
-		int i_idx = 0;
-		int j_idx = 0;
-		int k_idx = 0;
+		__int64 i_idx = 0;
+		__int64 j_idx = 0;
+		__int64 k_idx = 0;
 		for(;i_idx < left_len && j_idx < right_len;)
 		{
 			if((tmp_left[i_idx] > tmp_right[j_idx]) != ascending_dir)
@@ -223,24 +223,24 @@ namespace ZQ
 	}
 
 	template<class T>
-	void ZQ_MergeSort::_mergeSort(T* vals, int* idx, int start, int end, bool ascending_dir)
+	void ZQ_MergeSort::_mergeSort(T* vals, int* idx, __int64 start, __int64 end, bool ascending_dir)
 	{
 		if(start >= end)
 			return ;
 
-		int mid = (start+end)/2;
-		int left_len = mid-start+1;
-		int right_len = end-mid;
+		__int64 mid = (start+end)/2;
+		__int64 left_len = mid-start+1;
+		__int64 right_len = end-mid;
 		T* tmp_left = new T[left_len];
 		T* tmp_right = new T[right_len];
 		int* tmp_left_idx = new int[left_len];
 		int* tmp_right_idx = new int[right_len];
-		for(int i = 0;i < left_len;i++)
+		for(__int64 i = 0;i < left_len;i++)
 		{
 			tmp_left[i] = vals[start+i];
 			tmp_left_idx[i] = idx[start+i];
 		}
-		for(int i = 0;i < right_len;i++)
+		for(__int64 i = 0;i < right_len;i++)
 		{
 			tmp_right[i] = vals[mid+1+i];
 			tmp_right_idx[i] = idx[mid+1+i];
@@ -249,9 +249,9 @@ namespace ZQ
 		_mergeSort(tmp_left,tmp_left_idx,0,left_len-1,ascending_dir);
 		_mergeSort(tmp_right,tmp_right_idx,0,right_len-1,ascending_dir);
 
-		int i_idx = 0;
-		int j_idx = 0;
-		int k_idx = 0;
+		__int64 i_idx = 0;
+		__int64 j_idx = 0;
+		__int64 k_idx = 0;
 		for(;i_idx < left_len && j_idx < right_len;)
 		{
 			if((tmp_left[i_idx] > tmp_right[j_idx]) != ascending_dir)
@@ -293,25 +293,25 @@ namespace ZQ
 	}
 
 	template<class T>
-	void ZQ_MergeSort::_mergeSortWithData(T* vals, void* data, int data_elt_size, int start, int end, bool ascending_dir)
+	void ZQ_MergeSort::_mergeSortWithData(T* vals, void* data, int data_elt_size, __int64 start, __int64 end, bool ascending_dir)
 	{
 		if (start >= end)
 			return;
 
-		int mid = (start + end) / 2;
-		int left_len = mid - start + 1;
-		int right_len = end - mid;
+		__int64 mid = (start + end) / 2;
+		__int64 left_len = mid - start + 1;
+		__int64 right_len = end - mid;
 		T* tmp_left = new T[left_len];
 		T* tmp_right = new T[right_len];
 		void* tmp_data_left = malloc(data_elt_size*left_len);
 		void* tmp_data_right = malloc(data_elt_size*right_len);
 		memcpy(tmp_data_left, (char*)data + start*data_elt_size, data_elt_size*left_len);
 		memcpy(tmp_data_right, (char*)data + (mid + 1)*data_elt_size, data_elt_size*right_len);
-		for (int i = 0; i < left_len; i++)
+		for (__int64 i = 0; i < left_len; i++)
 		{
 			tmp_left[i] = vals[start + i];
 		}
-		for (int i = 0; i < right_len; i++)
+		for (__int64 i = 0; i < right_len; i++)
 		{
 			tmp_right[i] = vals[mid + 1 + i];
 		}
@@ -319,9 +319,9 @@ namespace ZQ
 		_mergeSortWithData(tmp_left, tmp_data_left, data_elt_size, 0, left_len - 1, ascending_dir);
 		_mergeSortWithData(tmp_right, tmp_data_right, data_elt_size, 0, right_len - 1, ascending_dir);
 
-		int i_idx = 0;
-		int j_idx = 0;
-		int k_idx = 0;
+		__int64 i_idx = 0;
+		__int64 j_idx = 0;
+		__int64 k_idx = 0;
 		for (; i_idx < left_len && j_idx < right_len;)
 		{
 			if ((tmp_left[i_idx] > tmp_right[j_idx]) != ascending_dir)
