@@ -854,19 +854,19 @@ int main(int argc, char** argv)
 		}
 		else if (n.op == "broadcast_add")
 		{
-			fprintf(pp, "%-16s", "BinaryOp");
+			fprintf(pp, "%-16s", "UnaryOperation operation=add");
 		}
 		else if (n.op == "broadcast_div")
 		{
-			fprintf(pp, "%-16s", "BinaryOp");
+			fprintf(pp, "%-16s", "UnaryOperation operation=rdiv");
 		}
 		else if (n.op == "broadcast_mul")
 		{
-			fprintf(pp, "%-16s", "BinaryOp");
+			fprintf(pp, "%-16s", "UnaryOperation operation=mul");
 		}
 		else if (n.op == "broadcast_sub")
 		{
-			fprintf(pp, "%-16s", "BinaryOp");
+			fprintf(pp, "%-16s", "UnaryOperation operation=rminus");
 		}
 		else if (n.op == "ceil")
 		{
@@ -995,7 +995,7 @@ int main(int argc, char** argv)
 		}
 		else if (n.op == "mean")
 		{
-			fprintf(pp, "%-16s", "Reduction");
+			fprintf(pp, "%-16s", "Reduction operation=mean");
 		}
 		else if (n.op == "min")
 		{
@@ -1052,7 +1052,7 @@ int main(int argc, char** argv)
 		}
 		else if (n.op == "sqrt")
 		{
-			fprintf(pp, "%-16s", "UnaryOp");
+			fprintf(pp, "%-16s", "Sqrt");
 		}
 		else if (n.op == "square")
 		{
@@ -1060,7 +1060,7 @@ int main(int argc, char** argv)
 		}
 		else if (n.op == "sum")
 		{
-			fprintf(pp, "%-16s", "Reduction");
+			fprintf(pp, "%-16s", "Reduction operation=sum");
 		}
 		else if (n.op == "tan")
 		{
@@ -1073,6 +1073,10 @@ int main(int argc, char** argv)
 		else if (n.op == "Transpose")
 		{
 			fprintf(pp, "%-16s", "Permute");
+		}
+		else if (n.op == "tile")
+		{
+			fprintf(pp, "%--16s", "Tile");
 		}
 		else
 		{
@@ -1316,23 +1320,23 @@ int main(int argc, char** argv)
 		}
 		else if (n.op == "broadcast_add")
 		{
-			int op_type = 0;
-			fprintf(pp, " 0=%d", op_type);
+			/*int op_type = 0;
+			fprintf(pp, " 0=%d", op_type);*/
 		}
 		else if (n.op == "broadcast_div")
 		{
-			int op_type = 3;
-			fprintf(pp, " 0=%d", op_type);
+			/*int op_type = 3;
+			fprintf(pp, " 0=%d", op_type);*/
 		}
 		else if (n.op == "broadcast_mul")
 		{
-			int op_type = 2;
-			fprintf(pp, " 0=%d", op_type);
+			/*int op_type = 2;
+			fprintf(pp, " 0=%d", op_type);*/
 		}
 		else if (n.op == "broadcast_sub")
 		{
-			int op_type = 1;
-			fprintf(pp, " 0=%d", op_type);
+			/*int op_type = 1;
+			fprintf(pp, " 0=%d", op_type);*/
 		}
 		else if (n.op == "ceil")
 		{
@@ -1691,8 +1695,19 @@ int main(int argc, char** argv)
 		}
 		else if (n.op == "mean")
 		{
-			int operation = 3;
-			fprintf(pp, " 0=%d", operation);
+			/*int operation = 3;
+			fprintf(pp, " 0=%d", operation);*/
+			std::string axes = n.attr("axis");
+			std::string keepdims = n.attr("keepdims");
+			if (!axes.empty())
+			{
+				fprintf(pp, " axis=%s", axes.c_str());
+			}
+			if (!keepdims.empty())
+			{
+				if (keepdims == "True")
+					fprintf(pp, " keepdims=1");
+			}
 		}
 		else if (n.op == "min")
 		{
@@ -1829,8 +1844,8 @@ int main(int argc, char** argv)
 		}
 		else if (n.op == "sqrt")
 		{
-			int op_type = 5;
-			fprintf(pp, " 0=%d", op_type);
+			/*int op_type = 5;
+			fprintf(pp, " 0=%d", op_type);*/
 		}
 		else if (n.op == "square")
 		{
@@ -1839,8 +1854,19 @@ int main(int argc, char** argv)
 		}
 		else if (n.op == "sum")
 		{
-			int operation = 0;
-			fprintf(pp, " 0=%d", operation);
+			/*int operation = 0;
+			fprintf(pp, " 0=%d", operation);*/
+			std::string axes = n.attr("axis");
+			std::string keepdims = n.attr("keepdims");
+			if (!axes.empty())
+			{
+				fprintf(pp, " axis=%s", axes.c_str());
+			}
+			if (!keepdims.empty())
+			{
+				if(keepdims == "True")
+					fprintf(pp, " keepdims=1");
+			}
 		}
 		else if (n.op == "tan")
 		{
@@ -1883,6 +1909,14 @@ int main(int argc, char** argv)
 					fprintf(pp, " 0=5");// c h wx
 				else
 					fprintf(stderr, "Unsupported transpose type !\n");
+			}
+		}
+		else if (n.op == "tile")
+		{
+			std::vector<int> reps = n.attr("reps");
+
+			if (reps.size() == 4) {
+				fprintf(pp, " n=%d c=%d h=%d w=%d ", reps[0], reps[1], reps[2], reps[3]);
 			}
 		}
 		else

@@ -21,7 +21,9 @@ int main()
 	std::string out_blob_name = "fc5";
 	ZQ_CNN_Net net;
 	//if (!net.LoadFrom("model\\model-r100-am.zqparams", "model\\model-r100-am.nchwbin", false))
-	if (!net.LoadFrom("model\\mobilefacenet-res4-8-16-4-dim256.zqparams", "model\\mobilefacenet-res4-8-16-4-dim256-emore.nchwbin", false))
+	//if (!net.LoadFrom("model\\mobilefacenet-res4-8-16-4-dim256.zqparams", "model\\mobilefacenet-res4-8-16-4-dim256-emore.nchwbin", false))
+	//if (!net.LoadFrom("model\\mobilefacenet-res1-3-5-2-dim128-112X96.zqparams", "model\\mobilefacenet-res1-3-5-2-dim128-112X96.nchwbin", false))
+	if (!net.LoadFrom("model\\mobilefacenet-GNAP.zqparams", "model\\mobilefacenet-GNAP.nchwbin", false))
 	//if (!net.LoadFrom("model\\mobilefacenet-v112X96.zqparams", "model\\mobilefacenet-v112X96.nchwbin",false))
 	//if (!net.LoadFrom("model\\mobilefacenet-res2-6-10-2-dim256.zqparams", "model\\mobilefacenet-res2-6-10-2-dim256-emore.nchwbin", false))
 		//if (!net.LoadFrom("model\\test.zqparams", "model\\test.nchwbin"))

@@ -119,7 +119,7 @@ namespace ZQ
 					top_ptrs.push_back(blobs[tops[i][j]]);
 				
 				layers[i]->show_debug_info = show_debug_info;
-				//printf("%d\n", i);
+				/*printf("%d\n", i);*/
 				if (!layers[i]->Forward(&bottom_ptrs, &top_ptrs, num_threads))
 				{
 					blobs[0] = 0;
@@ -128,6 +128,7 @@ namespace ZQ
 					return false;
 				}
 			}
+			
 			blobs[0] = 0;
 			tops[0][0] = 0;
 			return true;
@@ -500,6 +501,82 @@ namespace ZQ
 						return false;
 					}
 					layer_type_names.push_back("ScalarOperation");
+				}
+				else if (_strcmpi(&buf[0], "UnaryOperation") == 0)
+				{
+					if (layers.size() == 0)
+					{
+						std::cout << "Input layer must be the first!\n";
+						return false;
+					}
+					ZQ_CNN_Layer* cur_layer = new ZQ_CNN_Layer_UnaryOperation();
+					if (cur_layer == 0) {
+						std::cout << "failed to create a UnaryOperation layer!\n";
+						return false;
+					}
+					if (!_add_layer_and_blobs(cur_layer, line, false))
+					{
+						delete cur_layer;
+						return false;
+					}
+					layer_type_names.push_back("UnaryOperation");
+				}
+				else if (_strcmpi(&buf[0], "Sqrt") == 0)
+				{
+					if (layers.size() == 0)
+					{
+						std::cout << "Input layer must be the first!\n";
+						return false;
+					}
+					ZQ_CNN_Layer* cur_layer = new ZQ_CNN_Layer_Sqrt();
+					if (cur_layer == 0) {
+						std::cout << "failed to create a Sqrt layer!\n";
+						return false;
+					}
+					if (!_add_layer_and_blobs(cur_layer, line, false))
+					{
+						delete cur_layer;
+						return false;
+					}
+					layer_type_names.push_back("Sqrt");
+				}
+				else if (_strcmpi(&buf[0], "Tile") == 0)
+				{
+					if (layers.size() == 0)
+					{
+						std::cout << "Input layer must be the first!\n";
+						return false;
+					}
+					ZQ_CNN_Layer* cur_layer = new ZQ_CNN_Layer_Tile();
+					if (cur_layer == 0) {
+						std::cout << "failed to create a Tile layer!\n";
+						return false;
+					}
+					if (!_add_layer_and_blobs(cur_layer, line, false))
+					{
+						delete cur_layer;
+						return false;
+					}
+					layer_type_names.push_back("Tile");
+				}
+				else if (_strcmpi(&buf[0], "Reduction") == 0)
+				{
+					if (layers.size() == 0)
+					{
+						std::cout << "Input layer must be the first!\n";
+						return false;
+					}
+					ZQ_CNN_Layer* cur_layer = new ZQ_CNN_Layer_Reduction();
+					if (cur_layer == 0) {
+						std::cout << "failed to create a Reduction layer!\n";
+						return false;
+					}
+					if (!_add_layer_and_blobs(cur_layer, line, false))
+					{
+						delete cur_layer;
+						return false;
+					}
+					layer_type_names.push_back("Reduction");
 				}
 				else if (_strcmpi(&buf[0], "LRN") == 0)
 				{

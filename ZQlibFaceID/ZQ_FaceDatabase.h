@@ -6,6 +6,7 @@
 #include "ZQ_FaceFeature.h"
 #include "ZQ_FaceRecognizerSphereFace.h"
 #include "ZQ_MathBase.h"
+#include "ZQ_MergeSort.h"
 #include <omp.h>
 
 namespace ZQ
@@ -44,10 +45,21 @@ namespace ZQ
 			return _select_subset(out_file, max_thread_num, similarity_thresh, num_image_thresh);
 		}
 
-		bool SelectSubsetDesiredNum(const std::string& out_file, int desired_person_num, int desired_image_num_per_person, 
+		bool SelectSubsetDesiredNum(const std::string& out_file, int desired_person_num, int min_image_num_per_person, int max_image_num_per_person,
 			int max_thread_num, float similarity_thresh = 0.5) const
 		{
-			return _select_subset_desired_num(out_file, desired_person_num, desired_image_num_per_person, max_thread_num, similarity_thresh);
+			return _select_subset_desired_num(out_file, desired_person_num, min_image_num_per_person, max_image_num_per_person,
+				max_thread_num, similarity_thresh);
+		}
+
+		bool DetectRepeatPerson(const std::string& out_file, int max_thread_num, float similarity_thresh = 0.5) const
+		{
+			return _detect_repeat_person(out_file, max_thread_num, similarity_thresh);
+		}
+
+		bool DetectLowestPair(const std::string& out_file, int max_thread_num, float similarity_thresh = 0.5) const
+		{
+			return _detect_lowest_pair(out_file, max_thread_num, similarity_thresh);
 		}
 
 		void Clear()
@@ -608,12 +620,14 @@ namespace ZQ
 			return true;
 		}
 
-		bool _select_subset_desired_num(const std::string& out_file, int desired_person_num, int desired_image_num_per_person,
+		bool _select_subset_desired_num(const std::string& out_file, int desired_person_num, 
+			int min_image_num_per_person, int max_image_num_per_person,
 			int max_thread_num, float similarity_thresh) const
 		{
 			std::vector<int> person_ids, pivot_ids;
 			std::vector<std::vector<int>> other_good_ids;
-			if (!_select_subset(person_ids, pivot_ids, other_good_ids, max_thread_num, similarity_thresh, desired_image_num_per_person))
+			if (!_select_subset(person_ids, pivot_ids, other_good_ids, max_thread_num, similarity_thresh, 
+				min_image_num_per_person))
 			{
 				return false;
 			}
@@ -650,12 +664,13 @@ namespace ZQ
 				int select_id = select_ids[i];
 				int p_id = person_ids[select_id];
 				fprintf(out, "%s\n", persons[p_id].filenames[pivot_ids[select_id]].c_str());
-				if (desired_image_num_per_person > 1)
+				if (min_image_num_per_person > 1)
 				{
 					int good_num = other_good_ids[select_id].size();
 					std::vector<int> select_good_id(good_num);
 					for (int j = 0; j < good_num; j++)
 						select_good_id[j] = j;
+					int desired_image_num_per_person = __min(max_image_num_per_person, good_num + 1);
 					for (int j = 0; j < desired_image_num_per_person - 1; j++)
 					{
 						int rand_id = rand() % (desired_image_num_per_person - 1 - j) + j;
@@ -821,6 +836,269 @@ namespace ZQ
 							person_ids.push_back(p);
 							pivot_ids.push_back(pivot_id);
 							other_good_ids.push_back(ids);
+						}
+					}
+				}
+			}
+			return true;
+		}
+
+		bool _detect_repeat_person(const std::string& out_file, int max_thread_num, float similarity_thresh) const
+		{
+			std::vector<std::pair<int, int>> repeat_pairs;
+			std::vector<float> scores;
+			if (!_detect_repeat_person(repeat_pairs, scores, max_thread_num, similarity_thresh))
+			{
+				return false;
+			}
+
+			int num = scores.size();
+			if (num > 0)
+			{
+				ZQ_MergeSort::MergeSortWithData(&scores[0], &repeat_pairs[0], sizeof(std::pair<int, int>), num, false);
+			}
+
+			FILE* out = 0;
+			if (0 != fopen_s(&out, out_file.c_str(), "w"))
+			{
+				return false;
+			}
+			for (int i = 0; i < num; i++)
+			{
+				fprintf(out, "%.3f %s %s\n", scores[i], names[repeat_pairs[i].first].c_str(), names[repeat_pairs[i].second].c_str());
+			}
+			fclose(out);
+			return true;
+		}
+
+		bool _detect_repeat_person(std::vector<std::pair<int,int>>& repeat_pairs, std::vector<float>& repeat_scores,
+			int max_thread_num, float similarity_thresh) const
+		{
+			int person_num = persons.size();
+			if (person_num == 0 || persons[0].features.size() == 0)
+				return false;
+			int dim = persons[0].features[0].length;
+			if (dim == 0)
+				return false;
+			
+			repeat_pairs.clear();
+			repeat_scores.clear();
+
+			std::vector<int> pivot_ids(person_num);
+			
+			if (max_thread_num <= 1)
+			{
+				for (int p = 0; p < person_num; p++)
+				{
+					int cur_num = persons[p].features.size();
+
+					std::vector<float> scores(cur_num*cur_num);
+					for (int i = 0; i < cur_num; i++)
+					{
+						scores[i*cur_num + i] = 1;
+						const float* cur_i_feat = persons[p].features[i].pData;
+						const float* cur_j_feat;
+						for (int j = i + 1; j < cur_num; j++)
+						{
+							cur_j_feat = persons[p].features[j].pData;
+							float tmp_score = ZQ_MathBase::DotProduct(dim, cur_i_feat, cur_j_feat);
+							scores[i*cur_num + j] = tmp_score;
+							scores[j*cur_num + i] = tmp_score;
+						}
+					}
+					int pivot_id = -1;
+					float sum_score = -FLT_MAX;
+					for (int i = 0; i < cur_num; i++)
+					{
+						float tmp_sum = 0;
+						for (int j = 0; j < cur_num; j++)
+							tmp_sum += scores[i*cur_num + j];
+						if (sum_score < tmp_sum)
+						{
+							pivot_id = i;
+							sum_score = tmp_sum;
+						}
+					}
+					pivot_ids[p] = pivot_id;
+				}
+
+				//
+				for (int i = 0; i < person_num; i++)
+				{
+					for (int j = i + 1; j < person_num; j++)
+					{
+						const float* cur_i_feat = persons[i].features[pivot_ids[i]].pData;
+						const float* cur_j_feat = persons[j].features[pivot_ids[j]].pData;
+						float tmp_score = ZQ_MathBase::DotProduct(dim, cur_i_feat, cur_j_feat);
+						if (tmp_score >= similarity_thresh)
+						{
+							repeat_pairs.push_back(std::make_pair(i, j));
+							repeat_scores.push_back(tmp_score);
+						}
+					}
+				}
+			}
+			else
+			{
+				int chunk_size = (person_num + max_thread_num - 1) / max_thread_num;
+#pragma omp parallel for schedule(static,chunk_size) num_threads(max_thread_num)
+				for (int p = 0; p < person_num; p++)
+				{
+					int cur_num = persons[p].features.size();
+
+					std::vector<float> scores(cur_num*cur_num);
+					for (int i = 0; i < cur_num; i++)
+					{
+						scores[i*cur_num + i] = 1;
+						const float* cur_i_feat = persons[p].features[i].pData;
+						const float* cur_j_feat;
+						for (int j = i + 1; j < cur_num; j++)
+						{
+							cur_j_feat = persons[p].features[j].pData;
+							float tmp_score = ZQ_MathBase::DotProduct(dim, cur_i_feat, cur_j_feat);
+							scores[i*cur_num + j] = tmp_score;
+							scores[j*cur_num + i] = tmp_score;
+						}
+					}
+					int pivot_id = -1;
+					float sum_score = -FLT_MAX;
+					for (int i = 0; i < cur_num; i++)
+					{
+						float tmp_sum = 0;
+						for (int j = 0; j < cur_num; j++)
+							tmp_sum += scores[i*cur_num + j];
+						if (sum_score < tmp_sum)
+						{
+							pivot_id = i;
+							sum_score = tmp_sum;
+						}
+					}
+					pivot_ids[p] = pivot_id;
+				}
+
+#pragma omp parallel for schedule(static,chunk_size) num_threads(max_thread_num)
+				for (int i = 0; i < person_num; i++)
+				{
+					for (int j = i + 1; j < person_num; j++)
+					{
+						const float* cur_i_feat = persons[i].features[pivot_ids[i]].pData;
+						const float* cur_j_feat = persons[j].features[pivot_ids[j]].pData;
+						float tmp_score = ZQ_MathBase::DotProduct(dim, cur_i_feat, cur_j_feat);
+						if (tmp_score >= similarity_thresh)
+						{
+#pragma omp critical
+							{
+								repeat_pairs.push_back(std::make_pair(i, j));
+								repeat_scores.push_back(tmp_score);
+							}
+						}
+					}
+				}
+			}
+			return true;
+		}
+
+		bool _detect_lowest_pair(const std::string& out_file, int max_thread_num, float similarity_thresh) const
+		{
+			std::vector<float> scores;
+			std::vector<std::pair<std::string, std::string>> pairs;
+			std::vector<std::pair<std::string, std::string>* > pair_ptr;
+			if (!_detect_lowest_pair(scores, pairs, max_thread_num, similarity_thresh))
+			{
+				return false;
+			}
+			__int64 num = scores.size();
+			printf("num = %lld\n", num);
+			if (num > 0)
+			{
+				for (__int64 i = 0; i < num; i++)
+					pair_ptr.push_back(&pairs[i]);
+				ZQ_MergeSort::MergeSortWithData(&scores[0], &pair_ptr[0], sizeof(std::pair<std::string, std::string>*), num, true);
+			}
+
+			FILE* out = 0;
+			if (0 != fopen_s(&out, out_file.c_str(), "w"))
+			{
+				return false;
+			}
+
+			for (__int64 i = 0; i < num; i++)
+			{
+				fprintf(out, "%8.3f %s %s\n", scores[i], pair_ptr[i]->first.c_str(), pair_ptr[i]->second.c_str());
+			}
+
+			fclose(out);
+			return true;
+		}
+
+		bool _detect_lowest_pair(std::vector<float>& scores, std::vector<std::pair<std::string, std::string>>& pairs, 
+			int max_thread_num, float similarity_thresh) const
+		{
+			scores.clear();
+			pairs.clear();
+			int person_num = persons.size();
+			if (person_num == 0 || persons[0].features.size() == 0)
+				return false;
+			int dim = persons[0].features[0].length;
+
+			if (max_thread_num <= 1)
+			{
+				
+				for (int p = 0; p < person_num; p++)
+				{
+					int num = persons[p].features.size();
+					float out_min_score = FLT_MAX;
+					int out_i, out_j;
+					for (int i = 0; i < num; i++)
+					{
+						for (int j = i + 1; j < num; j++)
+						{
+							float tmp_score = ZQ_MathBase::DotProduct(dim, persons[p].features[i].pData, 
+								persons[p].features[j].pData);
+							if (tmp_score <= out_min_score)
+							{
+								out_min_score = tmp_score;
+								out_i = i;
+								out_j = j;
+							}
+						}
+					}
+					if (out_min_score <= similarity_thresh)
+					{
+						scores.push_back(out_min_score);
+						pairs.push_back(std::make_pair(persons[p].filenames[out_i], persons[p].filenames[out_j]));
+					}
+				}
+			}
+			else
+			{
+				int chunk_size = 100;
+#pragma omp parallel for schedule(dynamic, chunk_size) num_threads(max_thread_num)
+				for (int p = 0; p < person_num; p++)
+				{
+					int num = persons[p].features.size();
+					float out_min_score = FLT_MAX;
+					int out_i, out_j;
+					for (int i = 0; i < num; i++)
+					{
+						for (int j = i + 1; j < num; j++)
+						{
+							float tmp_score = ZQ_MathBase::DotProduct(dim, persons[p].features[i].pData,
+								persons[p].features[j].pData);
+							if (tmp_score <= out_min_score)
+							{
+								out_min_score = tmp_score;
+								out_i = i;
+								out_j = j;
+							}
+						}
+					}
+					if (out_min_score <= similarity_thresh)
+					{
+#pragma omp critical
+						{
+							scores.push_back(out_min_score);
+							pairs.push_back(std::make_pair(persons[p].filenames[out_i], persons[p].filenames[out_j]));
 						}
 					}
 				}

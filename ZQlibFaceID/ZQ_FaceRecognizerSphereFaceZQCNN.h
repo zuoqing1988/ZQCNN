@@ -72,13 +72,20 @@ namespace ZQ
 					feat_dim = 0;
 					return false;
 				}
-
+				
 				int C, H, W;
 				net.GetInputDim(C, H, W);
 				ZQ_CNN_Tensor4D_NHW_C_Align128bit input;
 				input.ChangeSize(1, H, W, C, 0, 0);
-				net.Forward(input);
+				
+				if (!net.Forward(input))
+				{
+					printf("failed to forward\n");
+					return false;
+				}
 				const ZQ_CNN_Tensor4D* out = net.GetBlobByName(output_blob_name);
+				if (out == NULL)
+					return false;
 				feat_dim = out->GetC();
 				return true;
 			}

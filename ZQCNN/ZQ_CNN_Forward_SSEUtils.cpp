@@ -14,6 +14,8 @@
 #include "layers_c/zq_cnn_scalaroperation_32f_align_c.h"
 #include "layers_c/zq_cnn_lrn_32f_align_c.h"
 #include "layers_c/zq_cnn_normalize_32f_align_c.h"
+#include "layers_c/zq_cnn_reduction_32f_align_c.h"
+#include "layers_c/zq_cnn_sqrt_32f_align_c.h"
 #include "ZQ_CNN_Forward_SSEUtils.h"
 #include "ZQ_CNN_BBoxUtils.h"
 #include <algorithm>
@@ -2364,6 +2366,24 @@ void ZQ_CNN_Forward_SSEUtils::_eltwise_max_omp(int align_mode, int in_tensor_num
 	{
 		zq_cnn_eltwise_max_32f_align0_omp(in_tensor_num, in_data, N, H, W, C, pixStep, widthStep, sliceStep, out_data, out_pixStep, out_widthStep, out_sliceStep, num_threads);
 	}
+}
+
+void ZQ_CNN_Forward_SSEUtils::_reduction_sum(int align_mode, const float* in_data, int N, int H, int W, int C,  int axis, bool keepdims,
+	int pixStep, int widthStep, int sliceStep, float* out_data, int out_pixStep, int out_widthStep, int out_sliceStep)
+{
+	zq_cnn_reduction_sum_32f_align0(in_data, N, H, W, C, axis, keepdims, pixStep, widthStep, sliceStep, out_data, out_pixStep, out_widthStep, out_sliceStep);
+}
+
+void ZQ_CNN_Forward_SSEUtils::_reduction_mean(int align_mode, const float* in_data, int N, int H, int W, int C, int axis, bool keepdims,
+	int pixStep, int widthStep, int sliceStep, float* out_data, int out_pixStep, int out_widthStep, int out_sliceStep)
+{
+	zq_cnn_reduction_mean_32f_align0(in_data, N, H, W, C, axis, keepdims, pixStep, widthStep, sliceStep, out_data, out_pixStep, out_widthStep, out_sliceStep);
+}
+
+void ZQ_CNN_Forward_SSEUtils::_sqrt(int align_mode, float* in_data, int N, int H, int W, int C,
+	int pixStep, int widthStep, int sliceStep)
+{
+	zq_cnn_sqrt_32f_align0(in_data, N, H, W, C, pixStep, widthStep, sliceStep);
 }
 
 void ZQ_CNN_Forward_SSEUtils::_scalaroperation_add(int align_mode, float scalar, const float* in_data, int N, int H, int W, int C, int pixStep, int widthStep, int sliceStep,

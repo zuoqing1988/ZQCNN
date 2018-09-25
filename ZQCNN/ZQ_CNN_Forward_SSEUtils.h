@@ -1082,6 +1082,97 @@ namespace ZQ
 			return true;
 		}
 
+		static bool ReductionSum(const ZQ_CNN_Tensor4D& input, int axis, bool keepdims, ZQ_CNN_Tensor4D& output, int num_threads = 1)
+		{
+			if (axis < 0 || axis > 4)
+				return false;
+			int N = input.GetN();
+			int H = input.GetH();
+			int W = input.GetW();
+			int C = input.GetC();
+			if (N <= 0 || H <= 0 || W <= 0 || C <= 0)
+				return true;
+
+			int out_dims[4] = { N,C,H,W };
+			if (keepdims)
+			{
+				out_dims[axis] = 1;
+			}
+			else
+			{
+				out_dims[0] = 1;
+				out_dims[1] = 1;
+				out_dims[2] = 1;
+				out_dims[3] = 1;
+			}
+
+			if (output.GetN() != out_dims[0] || output.GetH() != out_dims[2] 
+				|| output.GetW() != out_dims[3] || output.GetC() != out_dims[1])
+				output.ChangeSize(out_dims[0],out_dims[2],out_dims[3],out_dims[1], 0, 0);
+			
+			const float* in_data = input.GetFirstPixelPtr();
+			float* out_data = output.GetFirstPixelPtr();
+			int in_pixStep = input.GetPixelStep(), in_widthStep = input.GetWidthStep(), in_sliceStep = input.GetSliceStep();
+			int out_pixStep = output.GetPixelStep(), out_widthStep = output.GetWidthStep(), out_sliceStep = output.GetSliceStep();
+			int align_mode = __min(input.GetAlignType(), output.GetAlignType());
+			_reduction_sum(align_mode, in_data, N, H, W, C, axis,keepdims, in_pixStep, in_widthStep, in_sliceStep, 
+				out_data, out_pixStep, out_widthStep, out_sliceStep);
+			return true;
+		}
+
+		static bool ReductionMean(const ZQ_CNN_Tensor4D& input, int axis, bool keepdims, ZQ_CNN_Tensor4D& output, int num_threads = 1)
+		{
+			if (axis < 0 || axis > 4)
+				return false;
+			int N = input.GetN();
+			int H = input.GetH();
+			int W = input.GetW();
+			int C = input.GetC();
+			if (N <= 0 || H <= 0 || W <= 0 || C <= 0)
+				return true;
+
+			int out_dims[4] = { N,C,H,W };
+			if (keepdims)
+			{
+				out_dims[axis] = 1;
+			}
+			else
+			{
+				out_dims[0] = 1;
+				out_dims[1] = 1;
+				out_dims[2] = 1;
+				out_dims[3] = 1;
+			}
+
+			if (output.GetN() != out_dims[0] || output.GetH() != out_dims[2]
+				|| output.GetW() != out_dims[3] || output.GetC() != out_dims[1])
+				output.ChangeSize(out_dims[0], out_dims[2], out_dims[3], out_dims[1], 0, 0);
+
+			const float* in_data = input.GetFirstPixelPtr();
+			float* out_data = output.GetFirstPixelPtr();
+			int in_pixStep = input.GetPixelStep(), in_widthStep = input.GetWidthStep(), in_sliceStep = input.GetSliceStep();
+			int out_pixStep = output.GetPixelStep(), out_widthStep = output.GetWidthStep(), out_sliceStep = output.GetSliceStep();
+			int align_mode = __min(input.GetAlignType(), output.GetAlignType());
+			_reduction_mean(align_mode, in_data, N, H, W, C, axis, keepdims, in_pixStep, in_widthStep, in_sliceStep,
+				out_data, out_pixStep, out_widthStep, out_sliceStep);
+			return true;
+		}
+
+		static bool Sqrt(ZQ_CNN_Tensor4D& input, int num_threads = 1)
+		{
+			int N = input.GetN();
+			int H = input.GetH();
+			int W = input.GetW();
+			int C = input.GetC();
+			if (N <= 0 || H <= 0 || W <= 0 || C <= 0)
+				return true;
+
+			float* in_data = input.GetFirstPixelPtr();
+			int in_pixStep = input.GetPixelStep(), in_widthStep = input.GetWidthStep(), in_sliceStep = input.GetSliceStep();
+			int align_mode = input.GetAlignType();
+			_sqrt(align_mode, in_data, N, H, W, C, in_pixStep, in_widthStep, in_sliceStep);
+			return true;
+		}
 		
 		static bool ScalarOperation_Add(const ZQ_CNN_Tensor4D& input, float scalar, ZQ_CNN_Tensor4D& output, int num_threads = 1)
 		{
@@ -1328,6 +1419,11 @@ namespace ZQ
 			return true;
 		}
 
+		static bool Tile(const ZQ_CNN_Tensor4D& input, int n, int h, int w, int c, ZQ_CNN_Tensor4D& output, int num_threads = 1)
+		{
+			return input.Tile(output, n, h, w, c);
+		}
+
 		static bool LRN_across_channels(const ZQ_CNN_Tensor4D& input, int local_size, float alpha, float beta, float k, 
 			ZQ_CNN_Tensor4D& output, int num_threads = 1)
 		{
@@ -1557,6 +1653,15 @@ namespace ZQ
 
 		static void _eltwise_max_omp(int align_mode, int in_tensor_num, const float** in_data, int N, int H, int W, int C, const int* pixStep, const int* widthStep, const int* sliceStep,
 			float* out_data, int out_pixStep, int out_widthStep, int out_sliceStep, int num_threads);
+
+		static void _reduction_sum(int align_mode, const float* in_data, int N, int H, int W, int C, int axis, bool keepdims,
+			int pixStep, int widthStep, int sliceStep, float* out_data, int out_pixStep, int out_widthStep, int out_sliceStep);
+
+		static void _reduction_mean(int align_mode, const float* in_data, int N, int H, int W, int C, int axis, bool keepdims,
+			int pixStep, int widthStep, int sliceStep, float* out_data, int out_pixStep, int out_widthStep, int out_sliceStep);
+
+
+		static void _sqrt(int align_mode, float* in_data, int N, int H, int W, int C, int pixStep, int widthStep, int sliceStep);
 
 		static void _scalaroperation_add(int align_mode, float scalar, const float* in_data, int N, int H, int W, int C, int pixStep, int widthStep, int sliceStep,
 			float* out_data, int out_pixStep, int out_widthStep, int out_sliceStep);

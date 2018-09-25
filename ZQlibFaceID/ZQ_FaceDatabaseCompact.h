@@ -8,6 +8,7 @@
 #include <omp.h>
 #include "ZQ_FaceRecognizerSphereFace.h"
 #include "ZQ_MathBase.h"
+#include "ZQ_MergeSort.h"
 
 namespace ZQ
 {
@@ -60,6 +61,11 @@ namespace ZQ
 		{
 			return _export_similarity_for_all_pairs(out_score_file,out_flag_file, all_pair_num,
 				same_pair_num, notsame_pair_num, max_thread_num, quantization);
+		}
+
+		bool DetectRepeatPerson(const std::string& out_file, int max_thread_num, float similarity_thresh = 0.5, bool only_pivot = true) const
+		{
+			return _detect_repeat_person(out_file, max_thread_num, similarity_thresh, only_pivot);
 		}
 
 	private:
@@ -524,6 +530,235 @@ namespace ZQ
 
 			fclose(out1);
 			fclose(out2);
+			return true;
+		}
+
+		bool _detect_repeat_person(const std::string& out_file, int max_thread_num, float similarity_thresh, bool only_pivot) const
+		{
+			std::vector<std::pair<int, int>> repeat_pairs;
+			std::vector<float> scores;
+			if (!_detect_repeat_person(repeat_pairs, scores, max_thread_num, similarity_thresh, only_pivot))
+			{
+				return false;
+			}
+
+			__int64 num = scores.size();
+			printf("num = %lld\n", num);
+			if (num > 0)
+			{
+				ZQ_MergeSort::MergeSortWithData(&scores[0], &repeat_pairs[0], sizeof(std::pair<int, int>), num, false);
+			}
+
+			FILE* out = 0;
+			if (0 != fopen_s(&out, out_file.c_str(), "w"))
+			{
+				return false;
+			}
+			for (__int64 i = 0; i < num; i++)
+			{
+				fprintf(out, "%.3f %s %s\n", scores[i], names[repeat_pairs[i].first].c_str(), names[repeat_pairs[i].second].c_str());
+			}
+			fclose(out);
+			return true;
+		}
+
+		bool _detect_repeat_person(std::vector<std::pair<int, int>>& repeat_pairs, std::vector<float>& repeat_scores,
+			int max_thread_num, float similarity_thresh, bool only_pivot) const
+		{
+			repeat_pairs.clear();
+			repeat_scores.clear();
+
+			if (only_pivot)
+			{
+				std::vector<int> pivot_ids(person_num);
+
+				if (max_thread_num <= 1)
+				{
+					for (int p = 0; p < person_num; p++)
+					{
+						__int64 cur_offset = person_face_offset[p];
+						__int64 cur_num = person_face_num[p];
+						std::vector<float> scores(cur_num*cur_num);
+						int idx = 0;
+						for (__int64 i = 0; i < cur_num; i++)
+						{
+							float* cur_i_feat = all_face_feats + (cur_offset + i)*dim;
+							float* cur_j_feat;
+							scores[i*cur_num + i] = 1;
+							for (__int64 j = i + 1; j < cur_num; j++)
+							{
+								cur_j_feat = all_face_feats + (cur_offset + j)*dim;
+								float tmp_score = _compute_similarity(dim, cur_i_feat, cur_j_feat);
+								scores[i*cur_num + j] = tmp_score;
+								scores[j*cur_num + i] = tmp_score;
+							}
+						}
+
+						int pivot_id = -1;
+						float sum_score = -FLT_MAX;
+						for (int i = 0; i < cur_num; i++)
+						{
+							float tmp_sum = 0;
+							for (int j = 0; j < cur_num; j++)
+								tmp_sum += scores[i*cur_num + j];
+							if (sum_score < tmp_sum)
+							{
+								pivot_id = i;
+								sum_score = tmp_sum;
+							}
+						}
+						pivot_ids[p] = pivot_id;
+					}
+
+					//
+					for (int i = 0; i < person_num; i++)
+					{
+						for (int j = i + 1; j < person_num; j++)
+						{
+							const float* cur_i_feat = all_face_feats + (person_face_offset[i] + pivot_ids[i])*dim;
+							const float* cur_j_feat = all_face_feats + (person_face_offset[j] + pivot_ids[j])*dim;
+							float tmp_score = _compute_similarity(dim, cur_i_feat, cur_j_feat);
+							if (tmp_score >= similarity_thresh)
+							{
+								repeat_pairs.push_back(std::make_pair(i, j));
+								repeat_scores.push_back(tmp_score);
+							}
+						}
+					}
+				}
+				else
+				{
+					int chunk_size = (person_num + max_thread_num - 1) / max_thread_num;
+#pragma omp parallel for schedule(static,chunk_size) num_threads(max_thread_num)
+					for (int p = 0; p < person_num; p++)
+					{
+						__int64 cur_offset = person_face_offset[p];
+						__int64 cur_num = person_face_num[p];
+						std::vector<float> scores(cur_num*cur_num);
+						int idx = 0;
+						for (__int64 i = 0; i < cur_num; i++)
+						{
+							float* cur_i_feat = all_face_feats + (cur_offset + i)*dim;
+							float* cur_j_feat;
+							scores[i*cur_num + i] = 1;
+							for (__int64 j = i + 1; j < cur_num; j++)
+							{
+								cur_j_feat = all_face_feats + (cur_offset + j)*dim;
+								float tmp_score = _compute_similarity(dim, cur_i_feat, cur_j_feat);
+								scores[i*cur_num + j] = tmp_score;
+								scores[j*cur_num + i] = tmp_score;
+							}
+						}
+
+						int pivot_id = -1;
+						float sum_score = -FLT_MAX;
+						for (int i = 0; i < cur_num; i++)
+						{
+							float tmp_sum = 0;
+							for (int j = 0; j < cur_num; j++)
+								tmp_sum += scores[i*cur_num + j];
+							if (sum_score < tmp_sum)
+							{
+								pivot_id = i;
+								sum_score = tmp_sum;
+							}
+						}
+						pivot_ids[p] = pivot_id;
+					}
+
+#pragma omp parallel for schedule(static,chunk_size) num_threads(max_thread_num)
+					for (int i = 0; i < person_num; i++)
+					{
+						for (int j = i + 1; j < person_num; j++)
+						{
+							const float* cur_i_feat = all_face_feats + (person_face_offset[i] + pivot_ids[i])*dim;
+							const float* cur_j_feat = all_face_feats + (person_face_offset[j] + pivot_ids[j])*dim;
+							float tmp_score = _compute_similarity(dim, cur_i_feat, cur_j_feat);
+							if (tmp_score >= similarity_thresh)
+							{
+#pragma omp critical
+								{
+									repeat_pairs.push_back(std::make_pair(i, j));
+									repeat_scores.push_back(tmp_score);
+								}
+							}
+						}
+					}
+				}
+			}
+			else
+			{
+				if (max_thread_num <= 1)
+				{
+					int handled[1] = { 0 };
+					for (int i = 0; i < person_num; i++)
+					{
+						for (int j = i + 1; j < person_num; j++)
+						{
+							float max_score = -FLT_MAX;
+							for (int s = 0; s < person_face_num[i]; s++)
+							{
+								for (int t = 0; t < person_face_num[j]; t++)
+								{
+									const float* cur_i_feat = all_face_feats + (person_face_offset[i] + s)*dim;
+									const float* cur_j_feat = all_face_feats + (person_face_offset[j] + t)*dim;
+									float tmp_score = _compute_similarity(dim, cur_i_feat, cur_j_feat);
+									max_score = __max(max_score, tmp_score);
+								}
+							}
+							if (max_score >= similarity_thresh)
+							{
+								repeat_pairs.push_back(std::make_pair(i, j));
+								repeat_scores.push_back(max_score);
+							}
+						}
+						handled[0]++;
+						if (handled[0] % 10 == 0)
+						{
+							printf("%d/%d handled\n", handled[0], person_num);
+						}
+					}
+				}
+				else
+				{
+					int handled[1] = { 0 };
+					int chunk_size = (person_num + max_thread_num - 1) / max_thread_num;
+#pragma omp parallel for schedule(static,chunk_size) num_threads(max_thread_num)
+					for (int i = 0; i < person_num; i++)
+					{
+						for (int j = i + 1; j < person_num; j++)
+						{
+							float max_score = -FLT_MAX;
+							for (int s = 0; s < person_face_num[i]; s++)
+							{
+								for (int t = 0; t < person_face_num[j]; t++)
+								{
+									const float* cur_i_feat = all_face_feats + (person_face_offset[i] + s)*dim;
+									const float* cur_j_feat = all_face_feats + (person_face_offset[j] + t)*dim;
+									float tmp_score = _compute_similarity(dim, cur_i_feat, cur_j_feat);
+									max_score = __max(max_score, tmp_score);
+								}
+							}
+							if (max_score >= similarity_thresh)
+							{
+#pragma omp critical
+								{
+									repeat_pairs.push_back(std::make_pair(i, j));
+									repeat_scores.push_back(max_score);
+								}
+							}
+						}
+#pragma omp critical
+						{
+							handled[0] ++;
+							if (handled[0] % 10 == 0)
+							{
+								printf("%d/%d handled\n", handled[0], person_num);
+							}
+						}
+					}
+				}
+			}
 			return true;
 		}
 	};
