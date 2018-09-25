@@ -2,6 +2,10 @@ ZQCNN-v0.0是ZuoQing参照mini-caffe写的forward库，随便用用
 
 # 更新日志
 
+**2018-09-25日更新**
+
+支持insightface的GNAP，自动转模型使用mxnet2zqcnn，查看[mxnet2zqcnn](https://github.com/zuoqing1988/ZQCNN-v0.0/wiki/mxnet2zqcnn)。可以试用[MobileFaceNet-GNAP](https://pan.baidu.com/s/1hv4lbYwSLlLiGK07FuJM5Q)
+
 **2018-09-20日更新**
 
 (1)更新人脸识别模型tar-far精度的测试方法，可以按照步骤[How-to-evaluate-TAR-FAR-on-your-dataset](https://github.com/zuoqing1988/ZQCNN-v0.0/wiki/How-to-evaluate-TAR-FAR-on-your-dataset)自行构造测试集测试模型精度。
