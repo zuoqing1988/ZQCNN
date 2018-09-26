@@ -124,6 +124,7 @@ Convolution name=conv1 bottom=data top=conv1 num_output=10 kernel_size=3 stride=
 
 |Ä£ÐÍ\²âÊÔ¼¯ZQCNN-Face_5000_X_20                                                    |thresh@ FAR=1e-8|TAR@ FAR=1e-8|thresh@ FAR=1e-7|TAR@ FAR=1e-7|thresh@ FAR=1e-6|TAR@ FAR=1e-6
 |------------                                                                       | -------------  | ----------  |--------------- |-------      | ------------   |-----------                         
+|[MobileFaceNet-GNAP](https://pan.baidu.com/s/1UL4Am0R2MYQOH6lZnPsvTg)              |0.73537         |11.722%      |0.69903         |20.110%      |0.65734         |33.189%
 |[MobileFaceNet-res2-6-10-2-dim128](https://pan.baidu.com/s/1AQEad5Zp2cag4UA5KtpbYQ)|0.64772         |40.527%      |0.60485         |55.345%      |0.55571         |70.986%
 |[MobileFaceNet-res2-6-10-2-dim256](https://pan.baidu.com/s/143j7eULc2AqpNcSugFdTxA)|0.61647         |42.046%      |0.57561         |55.801%      |0.52852         |70.622%
 |[MobileFaceNet-res2-6-10-2-dim512](https://pan.baidu.com/s/1_0O3kJ5dMmD-HdRwNR0Hpw)|0.59725         |44.651%      |0.55690         |58.220%      |0.51134         |72.294%
@@ -144,7 +145,7 @@ Convolution name=conv1 bottom=data top=conv1 num_output=10 kernel_size=3 stride=
 |[MobileFaceNet-res4-8-16-4-dim256](https://pan.baidu.com/s/1f_VtqNRxDNe972h8UrOsPw)|0.58879         |52.542%      |0.54497         |67.597%      |0.49547         |81.495%
 |[MobileFaceNet-res4-8-16-4-dim512](https://pan.baidu.com/s/14ukmtAWDhIJC6312WBhZhA)|0.58492         |51.752%      |0.54085         |67.104%      |0.49010         |81.836%
 |[ArcFace-r34-v2](https://pan.baidu.com/s/1q3ZqQdjabDBESqbsxC7ESQ)                  |0.61904         |45.072%      |0.57173         |60.964%      |0.52062         |75.789%
-|[ArcFace-r50](https://pan.baidu.com/s/1qOIhCauwZNTOCIM9eojPrA)                     |-               |-            |-               |-            |-               |-      
+|[ArcFace-r50](https://pan.baidu.com/s/1qOIhCauwZNTOCIM9eojPrA)                     |0.61412         |48.155%      |0.56749         |63.676%      |0.51537         |78.138%
 |[ArcFace-r100](https://pan.baidu.com/s/1PeujQbIqFfgARIYAdRt3pw)                    |-               |-            |-               |-            |-               |-      
 
 
