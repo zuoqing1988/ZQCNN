@@ -146,7 +146,7 @@ Convolution name=conv1 bottom=data top=conv1 num_output=10 kernel_size=3 stride=
 |[MobileFaceNet-res4-8-16-4-dim512](https://pan.baidu.com/s/14ukmtAWDhIJC6312WBhZhA)|0.58492         |51.752%      |0.54085         |67.104%      |0.49010         |81.836%
 |[ArcFace-r34-v2](https://pan.baidu.com/s/1q3ZqQdjabDBESqbsxC7ESQ)                  |0.61904         |45.072%      |0.57173         |60.964%      |0.52062         |75.789%
 |[ArcFace-r50](https://pan.baidu.com/s/1qOIhCauwZNTOCIM9eojPrA)                     |0.61412         |48.155%      |0.56749         |63.676%      |0.51537         |78.138%
-|[ArcFace-r100](https://pan.baidu.com/s/1PeujQbIqFfgARIYAdRt3pw)                    |-               |-            |-               |-            |-               |-      
+|[ArcFace-r100](https://pan.baidu.com/s/1PeujQbIqFfgARIYAdRt3pw)                    |0.57891         |63.854%      |0.53337         |78.129%      |0.48079         |89.579%
 
 
 
