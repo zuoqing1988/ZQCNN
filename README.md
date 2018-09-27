@@ -197,3 +197,5 @@ Convolution name=conv1 bottom=data top=conv1 num_output=10 kernel_size=3 stride=
 (10)[ZQCNN增加人脸识别在LFW数据集上的测试代码](https://zhuanlan.zhihu.com/p/41381883)
 
 (11)[抱紧mxnet的大腿，着手写mxnet2zqcnn](https://zhuanlan.zhihu.com/p/41667828)
+
+(12)[大规模人脸测试集，及如何打造自己的人脸测试集](https://zhuanlan.zhihu.com/p/45441865)
