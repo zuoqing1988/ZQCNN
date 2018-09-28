@@ -22,11 +22,11 @@ namespace ZQ
 
 		}
 
-		virtual bool Init()
+		virtual bool Init(const std::string model_root = "model")
 		{
-			return mtcnn.Init("model\\det1.zqparams", "model\\det1.nchwbin",
-				"model\\det2.zqparams", "model\\det2.nchwbin",
-				"model\\det3.zqparams", "model\\det3.nchwbin");
+			return mtcnn.Init(model_root+"\\det1.zqparams", model_root + "\\det1.nchwbin",
+				model_root + "\\det2.zqparams", model_root + "\\det2.nchwbin",
+				model_root + "\\det3.zqparams", model_root + "\\det3.nchwbin");
 		}
 		void SetThresh(float thresh_p, float thresh_r, float thresh_o, float nms_thresh_p, float nms_thresh_r, float nms_thresh_o)
 		{
