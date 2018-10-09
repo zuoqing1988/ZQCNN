@@ -80,7 +80,7 @@ Convolution name=conv1 bottom=data top=conv1 num_output=10 kernel_size=3 stride=
 
 [MTCNN](https://pan.baidu.com/s/1f6_wQ2kXiTZFyH6PFIDc2Q) 从[MTCNN](https://github.com/kpzhang93/MTCNN_face_detection_alignment)转的格式
 
-**人脸识别**
+**人脸识别(如无说明，模型都是ms1m-refine-v2训练的)**
 
 |模型                                                                               |LFW精度(ZQCNN)                                      | LFW精度(OpenCV3.4.2)                              | LFW精度(minicaffe)                               |耗时 (ZQCNN)                       |备注           
 |------------                                                                       | -------------                                      |----------------------                             | ------------                                     |---------------------              | ------------- 
