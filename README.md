@@ -132,8 +132,8 @@ Convolution name=conv1 bottom=data top=conv1 num_output=10 kernel_size=3 stride=
 |[MobileFaceNet-res4-8-16-4-dim256](https://pan.baidu.com/s/1f_VtqNRxDNe972h8UrOsPw)|0.58229         |56.977%      |0.54582         |69.118%      |0.49763         |82.161%
 |[MobileFaceNet-res4-8-16-4-dim512](https://pan.baidu.com/s/14ukmtAWDhIJC6312WBhZhA)|0.58296         |54.731%      |0.54219         |68.613%      |0.49174         |82.812%
 |[ArcFace-r34-v2](https://pan.baidu.com/s/1q3ZqQdjabDBESqbsxC7ESQ)                  |0.61953         |47.103%      |0.57375         |62.207%      |0.52226         |76.758%
-|[ArcFace-r50](https://pan.baidu.com/s/1qOIhCauwZNTOCIM9eojPrA)                     |0.61299         |50.594%      |0.56658         |65.757%      |0.51637         |79.207%
-|[ArcFace-r100](https://pan.baidu.com/s/1PeujQbIqFfgARIYAdRt3pw)                    |0.57350         |67.434%      |0.53136         |79.944%      |0.48164         |90.147%
+|[ArcFace-r50](https://pan.baidu.com/s/1qOIhCauwZNTOCIM9eojPrA) (ms1m-refine-v1)    |0.61299         |50.594%      |0.56658         |65.757%      |0.51637         |79.207%
+|[ArcFace-r100](https://pan.baidu.com/s/1PeujQbIqFfgARIYAdRt3pw)(ms1m-refine-v1)    |0.57350         |67.434%      |0.53136         |79.944%      |0.48164         |90.147%
 
 
 |Ä£ÐÍ\²âÊÔ¼¯ZQCNN-Face_12000_X_10-40                                                |thresh@ FAR=1e-8|TAR@ FAR=1e-8|thresh@ FAR=1e-7|TAR@ FAR=1e-7|thresh@ FAR=1e-6|TAR@ FAR=1e-6
@@ -145,8 +145,8 @@ Convolution name=conv1 bottom=data top=conv1 num_output=10 kernel_size=3 stride=
 |[MobileFaceNet-res4-8-16-4-dim256](https://pan.baidu.com/s/1f_VtqNRxDNe972h8UrOsPw)|0.58879         |52.542%      |0.54497         |67.597%      |0.49547         |81.495%
 |[MobileFaceNet-res4-8-16-4-dim512](https://pan.baidu.com/s/14ukmtAWDhIJC6312WBhZhA)|0.58492         |51.752%      |0.54085         |67.104%      |0.49010         |81.836%
 |[ArcFace-r34-v2](https://pan.baidu.com/s/1q3ZqQdjabDBESqbsxC7ESQ)                  |0.61904         |45.072%      |0.57173         |60.964%      |0.52062         |75.789%
-|[ArcFace-r50](https://pan.baidu.com/s/1qOIhCauwZNTOCIM9eojPrA)                     |0.61412         |48.155%      |0.56749         |63.676%      |0.51537         |78.138%
-|[ArcFace-r100](https://pan.baidu.com/s/1PeujQbIqFfgARIYAdRt3pw)                    |0.57891         |63.854%      |0.53337         |78.129%      |0.48079         |89.579%
+|[ArcFace-r50](https://pan.baidu.com/s/1qOIhCauwZNTOCIM9eojPrA)(ms1m-refine-v1)     |0.61412         |48.155%      |0.56749         |63.676%      |0.51537         |78.138%
+|[ArcFace-r100](https://pan.baidu.com/s/1PeujQbIqFfgARIYAdRt3pw)(ms1m-refine-v1)    |0.57891         |63.854%      |0.53337         |78.129%      |0.48079         |89.579%
 
 
 
