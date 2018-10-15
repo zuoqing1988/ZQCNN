@@ -18,6 +18,7 @@ extern "C" {
 
 
 #define zq_cnn_conv_no_padding_32f_kernel1x1 zq_cnn_conv_no_padding_32f_align128bit_kernel1x1
+#define zq_cnn_conv_no_padding_32f_kernel1x1_C4 zq_cnn_conv_no_padding_32f_align128bit_kernel1x1_C4
 #define zq_cnn_conv_no_padding_32f_kernel1x1_omp zq_cnn_conv_no_padding_32f_align128bit_kernel1x1_omp
 #define zq_cnn_conv_no_padding_32f_kernel2x2 zq_cnn_conv_no_padding_32f_align128bit_kernel2x2
 #define zq_cnn_conv_no_padding_32f_kernel2x2_omp zq_cnn_conv_no_padding_32f_align128bit_kernel2x2_omp
@@ -57,6 +58,7 @@ extern "C" {
 
 
 #undef zq_cnn_conv_no_padding_32f_kernel1x1
+#undef zq_cnn_conv_no_padding_32f_kernel1x1_C4
 #undef zq_cnn_conv_no_padding_32f_kernel1x1_omp
 #undef zq_cnn_conv_no_padding_32f_kernel2x2
 #undef zq_cnn_conv_no_padding_32f_kernel2x2_omp
@@ -90,6 +92,7 @@ extern "C" {
 
 
 #define zq_cnn_conv_no_padding_32f_kernel1x1 zq_cnn_conv_no_padding_32f_align256bit_kernel1x1
+#define zq_cnn_conv_no_padding_32f_kernel1x1_C4 zq_cnn_conv_no_padding_32f_align256bit_kernel1x1_C4
 #define zq_cnn_conv_no_padding_32f_kernel1x1_omp zq_cnn_conv_no_padding_32f_align256bit_kernel1x1_omp
 #define zq_cnn_conv_no_padding_32f_kernel2x2 zq_cnn_conv_no_padding_32f_align256bit_kernel2x2
 #define zq_cnn_conv_no_padding_32f_kernel2x2_omp zq_cnn_conv_no_padding_32f_align256bit_kernel2x2_omp
@@ -129,6 +132,7 @@ extern "C" {
 #include "zq_cnn_convolution_32f_align_c_raw.h"
 
 #undef zq_cnn_conv_no_padding_32f_kernel1x1
+#undef zq_cnn_conv_no_padding_32f_kernel1x1_C4
 #undef zq_cnn_conv_no_padding_32f_kernel1x1_omp
 #undef zq_cnn_conv_no_padding_32f_kernel2x2
 #undef zq_cnn_conv_no_padding_32f_kernel2x2_omp
