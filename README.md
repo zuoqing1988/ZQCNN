@@ -2,6 +2,10 @@ ZQCNN-v0.0是ZuoQing参照mini-caffe写的forward库，随便用用
 
 # 更新日志
 
+**2018-10-15日更新**
+
+改进MTCNN的nms策略：1.每个scale的Pnet的nms的局部极大必须覆盖一定数量的非极大，数量在参数中设置; 2.当Pnet的分辨率太大时，nms进行分块处理。
+
 **2018-09-25日更新**
 
 支持insightface的GNAP，自动转模型使用mxnet2zqcnn，查看[mxnet2zqcnn](https://github.com/zuoqing1988/ZQCNN-v0.0/wiki/mxnet2zqcnn)。可以试用[MobileFaceNet-GNAP](https://pan.baidu.com/s/1hv4lbYwSLlLiGK07FuJM5Q)
