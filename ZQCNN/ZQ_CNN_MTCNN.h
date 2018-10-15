@@ -109,6 +109,7 @@ namespace ZQ
 
 			ZQ_CNN_OrderScore order;
 			pnet.TurnOffShowDebugInfo();
+			//pnet.TurnOnShowDebugInfo();
 			std::vector<std::vector<ZQ_CNN_BBox>> bounding_boxes(scales.size());
 			std::vector<std::vector<ZQ_CNN_OrderScore>> bounding_scores(scales.size());
 			for (int i = 0; i < scales.size(); i++)
@@ -127,7 +128,7 @@ namespace ZQ
 				double t13 = omp_get_wtime();
 				//
 				const ZQ_CNN_Tensor4D* score = pnet.GetBlobByName("prob1");
-				const ZQ_CNN_Tensor4D* location = pnet.GetBlobByName("conv4-2");
+				//const ZQ_CNN_Tensor4D* location = pnet.GetBlobByName("conv4-2");
 				//for pooling 
 				int stride = 2;
 				int cellsize = 12;
@@ -136,9 +137,9 @@ namespace ZQ
 				int scoreH = score->GetH();
 				int scoreW = score->GetW();
 				int scorePixStep = score->GetPixelStep();
-				int locationPixStep = location->GetPixelStep();
+				//int locationPixStep = location->GetPixelStep();
 				const float *p = score->GetFirstPixelPtr() + 1;
-				const float *plocal = location->GetFirstPixelPtr();
+				//const float *plocal = location->GetFirstPixelPtr();
 				ZQ_CNN_BBox bbox;
 				ZQ_CNN_OrderScore order;
 				for (int row = 0; row < scoreH; row++)
@@ -156,17 +157,17 @@ namespace ZQ
 							bbox.col2 = round((stride*col + 1 + cellsize) / scales[i]);
 							bbox.exist = true;
 							bbox.area = (bbox.row2 - bbox.row1)*(bbox.col2 - bbox.col1);
-							for (int channel = 0; channel < 4; channel++)
-								bbox.regreCoord[channel] = *(plocal + channel);
+							//for (int channel = 0; channel < 4; channel++)
+							//	bbox.regreCoord[channel] = *(plocal + channel);
 							bounding_boxes[i].push_back(bbox);
 							bounding_scores[i].push_back(order);
 							count++;
 						}
 						p += scorePixStep;
-						plocal += locationPixStep;
+						//plocal += locationPixStep;
 					}
 				}
-				ZQ_CNN_BBoxUtils::_nms(bounding_boxes[i], bounding_scores[i], 0.5f/*nms_threshold[0]*/, "Union");
+				ZQ_CNN_BBoxUtils::_nms(bounding_boxes[i], bounding_scores[i], 0.5f/*nms_threshold[0]*/, "Union", 4);
 				double t14 = omp_get_wtime();
 				if (show_debug_info)
 					printf("nms cost: %.3f ms\n", 1000 * (t14 - t13));

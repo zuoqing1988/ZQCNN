@@ -22,13 +22,15 @@ namespace ZQ
 			return lsh.score < rsh.score;
 		}
 
-		static void _nms(std::vector<ZQ_CNN_BBox> &boundingBox, std::vector<ZQ_CNN_OrderScore> &bboxScore, const float overlap_threshold, const std::string& modelname = "Union")
+		static void _nms(std::vector<ZQ_CNN_BBox> &boundingBox, std::vector<ZQ_CNN_OrderScore> &bboxScore, const float overlap_threshold, 
+			const std::string& modelname = "Union", int overlap_count_thresh = 0)
 		{
 			if (boundingBox.empty())
 			{
 				return;
 			}
 			std::vector<int> heros;
+			std::vector<int> overlap_num;
 			//sort the score
 			sort(bboxScore.begin(), bboxScore.end(), _cmp_score);
 
@@ -44,6 +46,7 @@ namespace ZQ
 				bboxScore.pop_back();
 				if (order < 0)continue;
 				heros.push_back(order);
+				int cur_overlap = 0;
 				boundingBox.at(order).exist = false;//delete it
 
 				for (int num = 0; num < boundingBox.size(); num++)
@@ -68,6 +71,7 @@ namespace ZQ
 						}
 						if (IOU > overlap_threshold)
 						{
+							cur_overlap++;
 							boundingBox.at(num).exist = false;
 							for (std::vector<ZQ_CNN_OrderScore>::iterator it = bboxScore.begin(); it != bboxScore.end(); it++)
 							{
@@ -80,9 +84,13 @@ namespace ZQ
 						}
 					}
 				}
+				overlap_num.push_back(cur_overlap);
 			}
 			for (int i = 0; i < heros.size(); i++)
-				boundingBox.at(heros.at(i)).exist = true;
+			{
+				if(overlap_num[i] >= overlap_count_thresh)
+					boundingBox.at(heros.at(i)).exist = true;
+			}
 			//clear exist= false;
 			for (int i = boundingBox.size() - 1; i >= 0; i--)
 			{

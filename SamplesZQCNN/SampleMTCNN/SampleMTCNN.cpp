@@ -44,7 +44,7 @@ int main()
 #if ZQ_CNN_USE_BLAS_GEMM
 	openblas_set_num_threads(num_threads);
 #endif
-	Mat image0 = cv::imread("data\\4.jpg", 1);
+	Mat image0 = cv::imread("data\\test2.jpg", 1);
 	if (image0.empty())
 	{
 		cout << "empty image\n";
@@ -64,16 +64,20 @@ int main()
 		return EXIT_FAILURE;
 	}
 
-	mtcnn.SetPara(image0.cols, image0.rows, 60, 0.6, 0.7, 0.7, 0.5, 0.5, 0.5);
-
+	mtcnn.SetPara(image0.cols, image0.rows, 30, 0.6, 0.7, 0.7, 0.5, 0.5, 0.5);
+	//mtcnn.TurnOnShowDebugInfo();
 	int iters = 100;
 	double t1 = omp_get_wtime();
 	for (int i = 0; i < iters; i++)
 	{
+		if(i==iters/2)
+			mtcnn.TurnOnShowDebugInfo();
+		else
+			mtcnn.TurnOffShowDebugInfo();
 		if (!mtcnn.Find(image0.data, image0.cols, image0.rows, image0.step[0], thirdBbox,num_threads))
 		{
 			cout << "failed to find face!\n";
-			return EXIT_FAILURE;
+			//return EXIT_FAILURE;
 		}
 	}
 	double t2 = omp_get_wtime();
