@@ -64,7 +64,7 @@ int main()
 		return EXIT_FAILURE;
 	}
 
-	mtcnn.SetPara(image0.cols, image0.rows, 30, 0.6, 0.7, 0.7, 0.5, 0.5, 0.5);
+	mtcnn.SetPara(image0.cols, image0.rows, 30, 0.6, 0.7, 0.7, 0.5, 0.5, 0.5, 0.709, 4);
 	//mtcnn.TurnOnShowDebugInfo();
 	int iters = 100;
 	double t1 = omp_get_wtime();
