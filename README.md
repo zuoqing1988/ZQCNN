@@ -126,31 +126,33 @@ Convolution name=conv1 bottom=data top=conv1 num_output=10 kernel_size=3 stride=
 |[MobileFaceNet-res4-8-16-4-dim512](https://pan.baidu.com/s/14ukmtAWDhIJC6312WBhZhA)|0.90710         |01.353%      |0.86190         |06.948%      |0.75518         |42.241%
 
 
-|模型\测试集ZQCNN-Face_5000_X_20                                                    |thresh@ FAR=1e-8|TAR@ FAR=1e-8|thresh@ FAR=1e-7|TAR@ FAR=1e-7|thresh@ FAR=1e-6|TAR@ FAR=1e-6
-|------------                                                                       | -------------  | ----------  |--------------- |-------      | ------------   |-----------                         
-|[MobileFaceNet-GNAP](https://pan.baidu.com/s/1UL4Am0R2MYQOH6lZnPsvTg)              |0.73537         |11.722%      |0.69903         |20.110%      |0.65734         |33.189%
-|[MobileFaceNet-res2-6-10-2-dim128](https://pan.baidu.com/s/1AQEad5Zp2cag4UA5KtpbYQ)|0.64772         |40.527%      |0.60485         |55.345%      |0.55571         |70.986%
-|[MobileFaceNet-res2-6-10-2-dim256](https://pan.baidu.com/s/143j7eULc2AqpNcSugFdTxA)|0.61647         |42.046%      |0.57561         |55.801%      |0.52852         |70.622%
-|[MobileFaceNet-res2-6-10-2-dim512](https://pan.baidu.com/s/1_0O3kJ5dMmD-HdRwNR0Hpw)|0.59725         |44.651%      |0.55690         |58.220%      |0.51134         |72.294%
-|[MobileFaceNet-res4-8-16-4-dim128](https://pan.baidu.com/s/1z6H5p4b3aVun2-1dZGDXkg)|0.64519         |47.735%      |0.60247         |62.882%      |0.55342         |77.777%
-|[MobileFaceNet-res4-8-16-4-dim256](https://pan.baidu.com/s/1f_VtqNRxDNe972h8UrOsPw)|0.58229         |56.977%      |0.54582         |69.118%      |0.49763         |82.161%
-|[MobileFaceNet-res4-8-16-4-dim512](https://pan.baidu.com/s/14ukmtAWDhIJC6312WBhZhA)|0.58296         |54.731%      |0.54219         |68.613%      |0.49174         |82.812%
-|[ArcFace-r34-v2](https://pan.baidu.com/s/1q3ZqQdjabDBESqbsxC7ESQ)                  |0.61953         |47.103%      |0.57375         |62.207%      |0.52226         |76.758%
-|[ArcFace-r50](https://pan.baidu.com/s/1qOIhCauwZNTOCIM9eojPrA) (ms1m-refine-v1)    |0.61299         |50.594%      |0.56658         |65.757%      |0.51637         |79.207%
-|[ArcFace-r100](https://pan.baidu.com/s/1PeujQbIqFfgARIYAdRt3pw)(ms1m-refine-v1)    |0.57350         |67.434%      |0.53136         |79.944%      |0.48164         |90.147%
+|模型\测试集ZQCNN-Face_5000_X_20                                                     |thresh@ FAR=1e-8|TAR@ FAR=1e-8|thresh@ FAR=1e-7|TAR@ FAR=1e-7|thresh@ FAR=1e-6|TAR@ FAR=1e-6
+|------------                                                                        | -------------  | ----------  |--------------- |-------      | ------------   |-----------                         
+|[MobileFaceNet-GNAP](https://pan.baidu.com/s/1UL4Am0R2MYQOH6lZnPsvTg)               |0.73537         |11.722%      |0.69903         |20.110%      |0.65734         |33.189%
+|[MobileFaceNet-res2-6-10-2-dim128](https://pan.baidu.com/s/1AQEad5Zp2cag4UA5KtpbYQ) |0.64772         |40.527%      |0.60485         |55.345%      |0.55571         |70.986%
+|[MobileFaceNet-res2-6-10-2-dim256](https://pan.baidu.com/s/143j7eULc2AqpNcSugFdTxA) |0.61647         |42.046%      |0.57561         |55.801%      |0.52852         |70.622%
+|[MobileFaceNet-res2-6-10-2-dim512](https://pan.baidu.com/s/1_0O3kJ5dMmD-HdRwNR0Hpw) |0.59725         |44.651%      |0.55690         |58.220%      |0.51134         |72.294%
+|[MobileFaceNet-res4-8-16-4-dim128](https://pan.baidu.com/s/1z6H5p4b3aVun2-1dZGDXkg) |0.64519         |47.735%      |0.60247         |62.882%      |0.55342         |77.777%
+|[MobileFaceNet-res4-8-16-4-dim256](https://pan.baidu.com/s/1f_VtqNRxDNe972h8UrOsPw) |0.58229         |56.977%      |0.54582         |69.118%      |0.49763         |82.161%
+|[MobileFaceNet-res4-8-16-4-dim512](https://pan.baidu.com/s/14ukmtAWDhIJC6312WBhZhA) |0.58296         |54.731%      |0.54219         |68.613%      |0.49174         |82.812%
+|[MobileFaceNet-res8-16-32-8-dim512](https://pan.baidu.com/s/1On5BfcrOB5jrTrRD40vLkw)|0.58058         |61.826%      |0.53841         |75.281%      |0.49098         |86.554%
+|[ArcFace-r34-v2](https://pan.baidu.com/s/1q3ZqQdjabDBESqbsxC7ESQ)                   |0.61953         |47.103%      |0.57375         |62.207%      |0.52226         |76.758%
+|[ArcFace-r50](https://pan.baidu.com/s/1qOIhCauwZNTOCIM9eojPrA) (ms1m-refine-v1)     |0.61299         |50.594%      |0.56658         |65.757%      |0.51637         |79.207%
+|[ArcFace-r100](https://pan.baidu.com/s/1PeujQbIqFfgARIYAdRt3pw)(ms1m-refine-v1)     |0.57350         |67.434%      |0.53136         |79.944%      |0.48164         |90.147%
 
 
-|模型\测试集ZQCNN-Face_12000_X_10-40                                                |thresh@ FAR=1e-8|TAR@ FAR=1e-8|thresh@ FAR=1e-7|TAR@ FAR=1e-7|thresh@ FAR=1e-6|TAR@ FAR=1e-6
-|------------                                                                       | -------------  | ----------  |--------------- |-------      | ------------   |-----------                         
-|[MobileFaceNet-res2-6-10-2-dim128](https://pan.baidu.com/s/1AQEad5Zp2cag4UA5KtpbYQ)|0.64507         |39.100%      |0.60347         |53.638%      |0.55492         |69.516%
-|[MobileFaceNet-res2-6-10-2-dim256](https://pan.baidu.com/s/143j7eULc2AqpNcSugFdTxA)|0.61589         |39.864%      |0.57402         |54.179%      |0.52596         |69.658%
-|[MobileFaceNet-res2-6-10-2-dim512](https://pan.baidu.com/s/1_0O3kJ5dMmD-HdRwNR0Hpw)|0.60030         |41.309%      |0.55806         |55.676%      |0.50984         |70.979%
-|[MobileFaceNet-res4-8-16-4-dim128](https://pan.baidu.com/s/1z6H5p4b3aVun2-1dZGDXkg)|0.64443         |45.764%      |0.60060         |61.564%      |0.55168         |76.776%
-|[MobileFaceNet-res4-8-16-4-dim256](https://pan.baidu.com/s/1f_VtqNRxDNe972h8UrOsPw)|0.58879         |52.542%      |0.54497         |67.597%      |0.49547         |81.495%
-|[MobileFaceNet-res4-8-16-4-dim512](https://pan.baidu.com/s/14ukmtAWDhIJC6312WBhZhA)|0.58492         |51.752%      |0.54085         |67.104%      |0.49010         |81.836%
-|[ArcFace-r34-v2](https://pan.baidu.com/s/1q3ZqQdjabDBESqbsxC7ESQ)                  |0.61904         |45.072%      |0.57173         |60.964%      |0.52062         |75.789%
-|[ArcFace-r50](https://pan.baidu.com/s/1qOIhCauwZNTOCIM9eojPrA)(ms1m-refine-v1)     |0.61412         |48.155%      |0.56749         |63.676%      |0.51537         |78.138%
-|[ArcFace-r100](https://pan.baidu.com/s/1PeujQbIqFfgARIYAdRt3pw)(ms1m-refine-v1)    |0.57891         |63.854%      |0.53337         |78.129%      |0.48079         |89.579%
+|模型\测试集ZQCNN-Face_12000_X_10-40                                                 |thresh@ FAR=1e-8|TAR@ FAR=1e-8|thresh@ FAR=1e-7|TAR@ FAR=1e-7|thresh@ FAR=1e-6|TAR@ FAR=1e-6
+|------------                                                                        | -------------  | ----------  |--------------- |-------      | ------------   |-----------                         
+|[MobileFaceNet-res2-6-10-2-dim128](https://pan.baidu.com/s/1AQEad5Zp2cag4UA5KtpbYQ) |0.64507         |39.100%      |0.60347         |53.638%      |0.55492         |69.516%
+|[MobileFaceNet-res2-6-10-2-dim256](https://pan.baidu.com/s/143j7eULc2AqpNcSugFdTxA) |0.61589         |39.864%      |0.57402         |54.179%      |0.52596         |69.658%
+|[MobileFaceNet-res2-6-10-2-dim512](https://pan.baidu.com/s/1_0O3kJ5dMmD-HdRwNR0Hpw) |0.60030         |41.309%      |0.55806         |55.676%      |0.50984         |70.979%
+|[MobileFaceNet-res4-8-16-4-dim128](https://pan.baidu.com/s/1z6H5p4b3aVun2-1dZGDXkg) |0.64443         |45.764%      |0.60060         |61.564%      |0.55168         |76.776%
+|[MobileFaceNet-res4-8-16-4-dim256](https://pan.baidu.com/s/1f_VtqNRxDNe972h8UrOsPw) |0.58879         |52.542%      |0.54497         |67.597%      |0.49547         |81.495%
+|[MobileFaceNet-res4-8-16-4-dim512](https://pan.baidu.com/s/14ukmtAWDhIJC6312WBhZhA) |0.58492         |51.752%      |0.54085         |67.104%      |0.49010         |81.836%
+|[MobileFaceNet-res8-16-32-8-dim512](https://pan.baidu.com/s/1On5BfcrOB5jrTrRD40vLkw)|0.58119         |61.412%      |0.53700         |75.520%      |0.48997         |86.647%
+|[ArcFace-r34-v2](https://pan.baidu.com/s/1q3ZqQdjabDBESqbsxC7ESQ)                   |0.61904         |45.072%      |0.57173         |60.964%      |0.52062         |75.789%
+|[ArcFace-r50](https://pan.baidu.com/s/1qOIhCauwZNTOCIM9eojPrA)(ms1m-refine-v1)      |0.61412         |48.155%      |0.56749         |63.676%      |0.51537         |78.138%
+|[ArcFace-r100](https://pan.baidu.com/s/1PeujQbIqFfgARIYAdRt3pw)(ms1m-refine-v1)     |0.57891         |63.854%      |0.53337         |78.129%      |0.48079         |89.579%
 
 
 
