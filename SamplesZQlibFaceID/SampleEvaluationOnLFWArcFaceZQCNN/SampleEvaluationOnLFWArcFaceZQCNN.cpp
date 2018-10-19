@@ -14,7 +14,6 @@ bool EvaluationArcFaceZQCNNOnLFW(const std::string& prototxt_file, const std::st
 	int real_num_threads = __max(1, __min(max_thread_num, omp_get_num_procs() - 1));
 
 	std::vector<ZQ_FaceRecognizer*> recognizers(real_num_threads);
-
 	for (int i = 0; i < real_num_threads; i++)
 	{
 		recognizers[i] = new ZQ_FaceRecognizerArcFaceZQCNN();
@@ -25,7 +24,6 @@ bool EvaluationArcFaceZQCNNOnLFW(const std::string& prototxt_file, const std::st
 		}
 	}
 	printf("load arcface done!\n");
-
 	return ZQ_FaceIDPrecisionEvaluation::EvaluationOnLFW(recognizers, list_file, folder, use_flip);
 }
 

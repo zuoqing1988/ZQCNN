@@ -14,6 +14,8 @@ int select_subset(int argc, char** argv);
 int select_subset_desired_num(int argc, char** argv);
 int copy_subset_to_fold(int argc, char** argv);
 int compute_similarity_all_pairs(int argc, char**argv, bool compact);
+int detect_repeat_person(int argc, char** argv, bool compact);
+int detect_lowest_pair(int argc, char** argv);
 int evaluate_tar_far(int argc, char** argv);
 int load_database(ZQ_FaceDatabase& database, const std::string& feats_file, const std::string& names_file);
 int load_database_compact(ZQ_FaceDatabaseCompact& database, const std::string& feats_file, const std::string& names_file);
@@ -31,11 +33,14 @@ int main(int argc, char** argv)
 		printf("%s make112X96 [args]\n", argv[0]);
 		printf("%s make112X112_compact [args]\n", argv[0]);
 		printf("%s make112X96_compact [args]\n", argv[0]);
-		printf("%s select_subset_compact [args]\n", argv[0]);
-		printf("%s select_subset_desired_num_compact [args]\n", argv[0]);
+		printf("%s select_subset [args]\n", argv[0]);
+		printf("%s select_subset_desired_num [args]\n", argv[0]);
 		printf("%s copy_subset_to_fold [args]\n", argv[0]);
 		printf("%s compute_similarity [args]\n", argv[0]);
 		printf("%s compute_similarity_compact [args]\n", argv[0]);
+		printf("%s detect_repeat [args]\n", argv[0]);
+		printf("%s detect_repeat_compact [args]\n", argv[0]);
+		printf("%s detect_lowest_pair [args]\n", argv[0]);
 		printf("%s evaluate_tar_far [args]\n", argv[0]);
 		return EXIT_FAILURE;
 	}
@@ -75,6 +80,18 @@ int main(int argc, char** argv)
 	{
 		return compute_similarity_all_pairs(argc, argv, true);
 	}
+	else if (_strcmpi(argv[1], "detect_repeat") == 0)
+	{
+		return detect_repeat_person(argc, argv, false);
+	}
+	else if (_strcmpi(argv[1], "detect_repeat_compact") == 0)
+	{
+		return detect_repeat_person(argc, argv, true);
+	}
+	else if (_strcmpi(argv[1], "detect_lowest_pair") == 0)
+	{
+		return detect_lowest_pair(argc, argv);
+	}
 	else if (_strcmpi(argv[1], "evaluate_tar_far") == 0)
 	{
 		return evaluate_tar_far(argc, argv);
@@ -85,11 +102,14 @@ int main(int argc, char** argv)
 		printf("%s make112X96 [args]\n", argv[0]);
 		printf("%s make112X112_compact [args]\n", argv[0]);
 		printf("%s make112X96_compact [args]\n", argv[0]);
-		printf("%s select_subset_compact [args]\n", argv[0]);
-		printf("%s select_subset_desired_num_compact [args]\n", argv[0]);
+		printf("%s select_subset [args]\n", argv[0]);
+		printf("%s select_subset_desired_num [args]\n", argv[0]);
 		printf("%s copy_subset_to_fold [args]\n", argv[0]);
 		printf("%s compute_similarity [args]\n", argv[0]);
 		printf("%s compute_similarity_compact [args]\n", argv[0]);
+		printf("%s detect_repeat [args]\n", argv[0]);
+		printf("%s detect_repeat_compact [args]\n", argv[0]);
+		printf("%s detect_lowest_pair [args]\n", argv[0]);
 		printf("%s evaluate_tar_far [args]\n", argv[0]);
 		return EXIT_FAILURE;
 	}
@@ -228,9 +248,9 @@ int select_subset(int argc, char** argv)
 
 int select_subset_desired_num(int argc, char** argv)
 {
-	if (argc < 8)
+	if (argc < 9)
 	{
-		printf("%s %s out_file feats_file names_file desired_person_num desired_image_num similarity_thresh [max_thread_num] \n", argv[0], argv[1]);
+		printf("%s %s out_file feats_file names_file desired_person_num min_desired_image_num max_desired_image_num similarity_thresh [max_thread_num] \n", argv[0], argv[1]);
 		return EXIT_FAILURE;
 	}
 
@@ -239,10 +259,11 @@ int select_subset_desired_num(int argc, char** argv)
 	const std::string feats_file = argv[3];
 	const std::string names_file = argv[4];
 	int desired_person_num = atoi(argv[5]);
-	int desired_img_num = atoi(argv[6]);
-	float similarity_thresh = atof(argv[7]);
-	if (argc > 8)
-		max_thread_num = atoi(argv[8]);
+	int min_desired_img_num = atoi(argv[6]);
+	int max_desired_img_num = atoi(argv[7]);
+	float similarity_thresh = atof(argv[8]);
+	if (argc > 9)
+		max_thread_num = atoi(argv[9]);
 
 	max_thread_num = __max(1, __min(max_thread_num, omp_get_num_procs() - 1));
 	ZQ_FaceDatabase database;
@@ -252,7 +273,8 @@ int select_subset_desired_num(int argc, char** argv)
 		return EXIT_FAILURE;
 	}
 
-	if (!database.SelectSubsetDesiredNum(out_file, desired_person_num, desired_img_num, max_thread_num, similarity_thresh))
+	if (!database.SelectSubsetDesiredNum(out_file, desired_person_num, min_desired_img_num, max_desired_img_num,
+		max_thread_num, similarity_thresh))
 	{
 		printf("failed\n");
 		return EXIT_FAILURE;
@@ -454,6 +476,95 @@ int compute_similarity_all_pairs(int argc, char**argv, bool compact)
 	printf("all_pair_num:%lld, same_pair_num:%lld, notsame_pair_num:%lld\n", all_pair_num, same_pair_num, notsame_pair_num);
 	return EXIT_SUCCESS;
 }
+
+int detect_repeat_person(int argc, char**argv, bool compact)
+{
+	if (argc < 5)
+	{
+		printf("%s %s out_file feats_file names_file [similarity_thresh] [max_thread_num]\n", argv[0], argv[1]);
+		return EXIT_FAILURE;
+	}
+
+	float similarity_thresh = 0.5f;
+	int max_thread_num = 4;
+	const std::string out_file = argv[2];
+	const std::string feats_file = argv[3];
+	const std::string names_file = argv[4];
+	if (argc > 5)
+		similarity_thresh = atof(argv[5]);
+	if (argc > 6)
+		max_thread_num = atoi(argv[6]);
+	max_thread_num = __max(1, __min(max_thread_num, omp_get_num_procs() - 1));
+	ZQ_FaceDatabaseCompact database_compact;
+	ZQ_FaceDatabase database;
+
+	if (compact)
+	{
+		if (EXIT_FAILURE == load_database_compact(database_compact, feats_file, names_file))
+		{
+			printf("failed to load database %s %s\n", feats_file.c_str(), names_file.c_str());
+			return EXIT_FAILURE;
+		}
+
+		if (!database_compact.DetectRepeatPerson(out_file, max_thread_num, similarity_thresh))
+		{
+			printf("failed\n");
+			return EXIT_FAILURE;
+		}
+	}
+	else
+	{
+		if (EXIT_FAILURE == load_database(database, feats_file, names_file))
+		{
+			printf("failed to load database %s %s\n", feats_file.c_str(), names_file.c_str());
+			return EXIT_FAILURE;
+		}
+
+		if (!database.DetectRepeatPerson(out_file, max_thread_num, similarity_thresh))
+		{
+			printf("failed\n");
+			return EXIT_FAILURE;
+		}
+	}
+
+	return EXIT_SUCCESS;
+}
+
+int detect_lowest_pair(int argc, char** argv)
+{
+	if (argc < 5)
+	{
+		printf("%s %s out_file feats_file names_file [similarity_thresh] [max_thread_num]\n", argv[0], argv[1]);
+		return EXIT_FAILURE;
+	}
+	float similarity_thresh = 0.5f;
+	int max_thread_num = 4;
+	const std::string out_file = argv[2];
+	const std::string feats_file = argv[3];
+	const std::string names_file = argv[4];
+	if (argc > 5)
+		similarity_thresh = atof(argv[5]);
+	if (argc > 6)
+		max_thread_num = atoi(argv[6]);
+	max_thread_num = __max(1, __min(max_thread_num, omp_get_num_procs() - 1));
+	ZQ_FaceDatabase database;
+
+
+	if (EXIT_FAILURE == load_database(database, feats_file, names_file))
+	{
+		printf("failed to load database %s %s\n", feats_file.c_str(), names_file.c_str());
+		return EXIT_FAILURE;
+	}
+
+	if (!database.DetectLowestPair(out_file, max_thread_num, similarity_thresh))
+	{
+		printf("failed\n");
+		return EXIT_FAILURE;
+	}
+
+	return EXIT_SUCCESS;
+}
+
 
 int evaluate_tar_far(int argc, char** argv)
 {

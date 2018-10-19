@@ -42,11 +42,11 @@ int main()
 	}
 
 	//Mat img = imread("data\\4.jpg");
-	Mat img = imread("data\\moli_001.jpg");
+	Mat img = imread("data\\test2.jpg");
 	vector<ZQ_CNN_BBox> result_libfacedetect;
 	
 	if (!libfacedetect->FindFaceROI(img.data, img.cols, img.rows, img.step[0], ZQ_PIXEL_FMT_BGR, 
-		0.0, 0.0, 1.0, 1.0, 60, 1.2, result_libfacedetect))
+		0.0, 0.0, 1.0, 1.0, 20, 1.2, result_libfacedetect))
 	{
 		cout << "failed to find face using LibFaceDetect\n";
 		return EXIT_FAILURE;
