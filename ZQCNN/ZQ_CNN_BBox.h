@@ -42,6 +42,7 @@ namespace ZQ
 		int col2;
 		float area;
 		bool exist;
+		bool need_check_overlap_count;
 		float ppoint[10];
 		float regreCoord[4];
 

@@ -88,7 +88,8 @@ namespace ZQ
 			}
 			for (int i = 0; i < heros.size(); i++)
 			{
-				if(overlap_num[i] >= overlap_count_thresh)
+				if(!boundingBox.at(heros.at(i)).need_check_overlap_count 
+					|| overlap_num[i] >= overlap_count_thresh)
 					boundingBox.at(heros.at(i)).exist = true;
 			}
 			//clear exist= false;

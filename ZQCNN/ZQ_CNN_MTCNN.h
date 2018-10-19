@@ -23,6 +23,9 @@ namespace ZQ
 			height = 0;
 			factor = 0.709;
 			pnet_overlap_thresh_count = 4;
+			pnet_size = 12;
+			pnet_stride = 2;
+			special_handle_very_big_face = false;
 			show_debug_info = false;
 		}
 		~ZQ_CNN_MTCNN()
@@ -37,6 +40,9 @@ namespace ZQ
 		int width, height;
 		float factor;
 		int pnet_overlap_thresh_count;
+		int pnet_size;
+		int pnet_stride;
+		bool special_handle_very_big_face;
 		std::vector<float> scales;
 		std::vector<ZQ_CNN_Tensor4D_NHW_C_Align128bit> pnet_images;
 		ZQ_CNN_Tensor4D_NHW_C_Align128bit input, rnet_image, onet_image;
@@ -51,13 +57,17 @@ namespace ZQ
 		}
 
 		void SetPara(int w, int h, int min_face_size = 60, float pthresh = 0.6, float rthresh = 0.7, float othresh = 0.7,
-			float nms_pthresh = 0.6, float nms_rthresh = 0.7, float nms_othresh = 0.7, float scale_factor = 0.709, int pnet_overlap_thresh_count = 4)
+			float nms_pthresh = 0.6, float nms_rthresh = 0.7, float nms_othresh = 0.7, float scale_factor = 0.709, 
+			int pnet_overlap_thresh_count = 4, int pnet_size = 12, int pnet_stride = 2, bool special_handle_very_big_face = false)
 		{
-			min_size = __max(12, min_face_size);
+			min_size = __max(pnet_size, min_face_size);
 			thresh[0] = __max(0.1, pthresh); thresh[1] = __max(0.1, rthresh); thresh[2] = __max(0.1, othresh);
 			nms_thresh[0] = __max(0.1, nms_pthresh); nms_thresh[1] = __max(0.1, nms_rthresh); nms_thresh[2] = __max(0.1, nms_othresh);
 			scale_factor = __max(0.5, __min(0.9, scale_factor));
 			this->pnet_overlap_thresh_count = __max(0, pnet_overlap_thresh_count);
+			this->pnet_size = pnet_size;
+			this->pnet_stride = pnet_stride;
+			this->special_handle_very_big_face = special_handle_very_big_face;
 			if (width != w || height != h || factor != scale_factor)
 			{
 				scales.clear();
@@ -65,7 +75,7 @@ namespace ZQ
 
 				width = w; height = h;
 				float minside = __min(width, height);
-				int MIN_DET_SIZE = 12;
+				int MIN_DET_SIZE = pnet_size;
 				float m = (float)MIN_DET_SIZE / min_size;
 				minside *= m;
 				while (minside > MIN_DET_SIZE)
@@ -78,12 +88,39 @@ namespace ZQ
 				int count = scales.size();
 				for (int i = scales.size() - 1; i >= 0; i--)
 				{
-					if (scales[i] * minside < MIN_DET_SIZE)
+					if (ceil(scales[i] * minside) <= pnet_size)
+					{
 						count--;
+					}
 				}
-				
-				scales.resize(count);
+				if (special_handle_very_big_face)
+				{
+					if (count > 2)
+						count--;
+
+					scales.resize(count);
+					if (count > 0)
+					{
+						float last_size = ceil(scales[count - 1] * minside);
+						for (int tmp_size = last_size - 1; tmp_size >= pnet_size + 1; tmp_size -= 2)
+						{
+							scales.push_back((float)tmp_size / minside);
+							count++;
+						}
+					}
+					
+					scales.push_back((float)pnet_size / minside);
+					count++;
+				}
+				else
+				{
+					scales.push_back((float)pnet_size / minside);
+					count++;
+				}
+
 				pnet_images.resize(count);
+				
+				
 			}
 		}
 
@@ -92,20 +129,29 @@ namespace ZQ
 			double t1 = omp_get_wtime();
 			if (width != _width || height != _height)
 				return false;
-			std::vector<unsigned char> buffer(width* height * 3);
+			std::vector<unsigned char> buffer_bgr(width* height * 3);
 			for (int h = 0; h < height; h++)
 			{
 				const unsigned char* bgr_row = bgr_img + h*_widthStep;
-				unsigned char* cur_row = &buffer[0] + h*width * 3;
+				unsigned char* cur_bgr_row = &buffer_bgr[0] + h*width * 3;
 				for (int w = 0; w < width; w++)
 				{
-					cur_row[w * 3 + 0] = bgr_row[w * 3 + 2];
-					cur_row[w * 3 + 1] = bgr_row[w * 3 + 1];
-					cur_row[w * 3 + 2] = bgr_row[w * 3 + 0];
+					cur_bgr_row[w * 3 + 2] = bgr_row[w * 3 + 2];
+					cur_bgr_row[w * 3 + 1] = bgr_row[w * 3 + 1];
+					cur_bgr_row[w * 3 + 0] = bgr_row[w * 3 + 0];
 				}
 			}
-			if (!input.ConvertFromBGR(&buffer[0], width, height, width*3))
+			
+			if (!input.ConvertFromBGR(&buffer_bgr[0], width, height, width*3))
 				return false;
+			/*ZQ_CNN_Tensor4D_NHW_C_Align128bit tmp;
+			tmp.CopyData(input);
+			std::vector<ZQ_CNN_Tensor4D*> in_blobs(4);
+			in_blobs[0] = &tmp;
+			in_blobs[1] = &tmp;
+			in_blobs[2] = &tmp;
+			in_blobs[3] = &tmp;
+			ZQ_CNN_Forward_SSEUtils::Concat_NCHW(in_blobs, 0, input);*/
 			double t2 = omp_get_wtime();
 			if(show_debug_info)
 				printf("convert cost: %.3f ms\n", 1000 * (t2 - t1));
@@ -116,26 +162,36 @@ namespace ZQ
 			std::vector<std::vector<ZQ_CNN_BBox>> bounding_boxes(scales.size());
 			std::vector<std::vector<ZQ_CNN_OrderScore>> bounding_scores(scales.size());
 			const int block_size = 64;
+			int stride = pnet_stride;
+			int cellsize = pnet_size;
+			int border_size = cellsize / stride;
 			for (int i = 0; i < scales.size(); i++)
 			{
 				int changedH = (int)ceil(height*scales[i]);
 				int changedW = (int)ceil(width*scales[i]);
-				if (changedH < 2 || changedW < 2)
+				if (changedH < pnet_size || changedW < pnet_size)
 					continue;
-				input.ResizeBilinear(pnet_images[i], changedW, changedH, 0, 0);
+				double t10 = omp_get_wtime();
+				if (scales[i] != 1)
+				{
+					input.ResizeBilinear(pnet_images[i], changedW, changedH, 0, 0);
+				}
+				
 				double t11 = omp_get_wtime();
-				//for(int j = 0;j < 1000;j++)
-				pnet.Forward(pnet_images[i],num_threads);
+				if (scales[i] != 1)
+					pnet.Forward(pnet_images[i], num_threads);
+				else
+					pnet.Forward(input, num_threads);
 				double t12 = omp_get_wtime();
 				if (show_debug_info)
-					printf("Pnet [%d]: resolution [%dx%d], cost:%.3f ms\n", i, changedW, changedH, 1000 * (t12 - t11));
+					printf("Pnet [%d]: resolution [%dx%d], resize:%.3f ms, cost:%.3f ms\n", 
+						i, changedW, changedH, 1000*(t11-t10), 1000 * (t12 - t11));
 				double t13 = omp_get_wtime();
 				//
 				const ZQ_CNN_Tensor4D* score = pnet.GetBlobByName("prob1");
 				//const ZQ_CNN_Tensor4D* location = pnet.GetBlobByName("conv4-2");
 				//for pooling 
-				int stride = 2;
-				int cellsize = 12;
+				
 				int count = 0;
 				//score p
 				int scoreH = score->GetH();
@@ -162,6 +218,8 @@ namespace ZQ
 								bbox.col2 = round((stride*col + 1 + cellsize) / scales[i]);
 								bbox.exist = true;
 								bbox.area = (bbox.row2 - bbox.row1)*(bbox.col2 - bbox.col1);
+								bbox.need_check_overlap_count = (row >= border_size && row < scoreH - border_size)
+									&& (col >= border_size && col < scoreW - border_size);
 								bounding_boxes[i].push_back(bbox);
 								bounding_scores[i].push_back(order);
 								count++;
@@ -181,7 +239,6 @@ namespace ZQ
 					int block_num = block_H_num*block_W_num;
 					int width_per_block = scoreW / block_W_num;
 					int height_per_block = scoreH / block_H_num;
-					int border_size = cellsize / stride;
 					std::vector<std::vector<ZQ_CNN_BBox>> tmp_bounding_boxes(block_num);
 					std::vector<std::vector<ZQ_CNN_OrderScore>> tmp_bounding_scores(block_num);
 					std::vector<int> block_start_w(block_num), block_end_w(block_num);
@@ -220,6 +277,8 @@ namespace ZQ
 									bbox.row2 = round((stride*row + 1 + cellsize) / scales[i]);
 									bbox.col2 = round((stride*col + 1 + cellsize) / scales[i]);
 									bbox.exist = true;
+									bbox.need_check_overlap_count = (row >= border_size && row < scoreH - border_size)
+										&& (col >= border_size && col < scoreW - border_size);
 									bbox.area = (bbox.row2 - bbox.row1)*(bbox.col2 - bbox.col1);
 									tmp_bounding_boxes[bb].push_back(bbox);
 									tmp_bounding_scores[bb].push_back(order);
