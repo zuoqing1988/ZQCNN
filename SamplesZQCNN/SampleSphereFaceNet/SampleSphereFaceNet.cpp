@@ -23,7 +23,8 @@ int main()
 	//if (!net.LoadFrom("model\\model-r100-am.zqparams", "model\\model-r100-am.nchwbin", false))
 	//if (!net.LoadFrom("model\\mobilefacenet-res4-8-16-4-dim256.zqparams", "model\\mobilefacenet-res4-8-16-4-dim256-emore.nchwbin", false))
 	//if (!net.LoadFrom("model\\mobilefacenet-res1-3-5-2-dim128-112X96.zqparams", "model\\mobilefacenet-res1-3-5-2-dim128-112X96.nchwbin", false))
-	if (!net.LoadFrom("model\\mobilefacenet-GNAP.zqparams", "model\\mobilefacenet-GNAP.nchwbin", false))
+	//if (!net.LoadFrom("model\\mobilefacenet-GNAP.zqparams", "model\\mobilefacenet-GNAP.nchwbin", false))
+	if (!net.LoadFrom("model\\mobilefacenet-res8-16-32-8-dim512.zqparams", "model\\mobilefacenet-res8-16-32-8-dim512.nchwbin", false))
 	//if (!net.LoadFrom("model\\mobilefacenet-v112X96.zqparams", "model\\mobilefacenet-v112X96.nchwbin",false))
 	//if (!net.LoadFrom("model\\mobilefacenet-res2-6-10-2-dim256.zqparams", "model\\mobilefacenet-res2-6-10-2-dim256-emore.nchwbin", false))
 		//if (!net.LoadFrom("model\\test.zqparams", "model\\test.nchwbin"))
@@ -150,8 +151,8 @@ int main()
 			feat0[i] /= len0;
 			feat1[i] /= len1;
 		}
-		//std::cout << "feat0[0] = " << feat0[0] << "\n";
-		//std::cout << "feat1[0] = " << feat1[0] << "\n";
+		std::cout << "len0 = " << len0 << "\n";
+		std::cout << "len1 = " << len1 << "\n";
 		std::cout << "Similarity score: " << score << "\n";
 	}
 	return EXIT_SUCCESS;

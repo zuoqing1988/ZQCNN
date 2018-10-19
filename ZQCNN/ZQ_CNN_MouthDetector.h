@@ -154,6 +154,7 @@ namespace ZQ
 		bool DetectSimpleResult(const unsigned char* rgb_image, int width, int height, int widthStep, const void* detect_arg, void* output_detected_data)
 		{
 			DetectedResult tmp_result;
+			const DetectArgs* d_arg = (const DetectArgs*)detect_arg;
 			if (!Detect(rgb_image, width, height, widthStep, detect_arg, &tmp_result))
 				return false;
 
@@ -187,8 +188,8 @@ namespace ZQ
 						info.mouth_off_y = result_vec[j].row1;
 						info.mouth_width = result_vec[j].col2 - result_vec[j].col1;
 						info.mouth_height = result_vec[j].row2 - result_vec[j].row1;
-
-						result->faces.push_back(info);
+						if(info.mouth_prob >= d_arg->ssd_mouth_thresh)
+							result->faces.push_back(info);
 					}
 				}
 			}

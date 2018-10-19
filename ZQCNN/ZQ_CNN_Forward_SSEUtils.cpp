@@ -721,7 +721,7 @@ void _convolution_nopadding_case_N_largerthan_one(int align_mode, const float* i
 					has_handled = true;
 				}
 			}
-			else if (out_NHW >= 8)
+			else if (out_NHW >= 8 || (out_H == 1 && out_W == 1))
 			{
 				if (align_mode == ZQ_CNN_Tensor4D::ALIGN_128bit)
 				{

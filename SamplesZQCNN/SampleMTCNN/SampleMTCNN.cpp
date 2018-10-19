@@ -44,7 +44,7 @@ int main()
 #if ZQ_CNN_USE_BLAS_GEMM
 	openblas_set_num_threads(num_threads);
 #endif
-	Mat image0 = cv::imread("data\\test2.jpg", 1);
+	Mat image0 = cv::imread("data\\keliamoniz1.jpg", 1);
 	if (image0.empty())
 	{
 		cout << "empty image\n";
@@ -55,26 +55,44 @@ int main()
 	ZQ_CNN_MTCNN mtcnn;
 	std::string result_name;
 
-
+	const int use_pnet20 = false;
+	bool special_handle_very_big_face = false;
 	result_name = "resultdet.jpg";
-	if (!mtcnn.Init("model\\det1.zqparams", "model\\det1.nchwbin", "model\\det2.zqparams",
-		"model\\det2.nchwbin", "model\\det3.zqparams", "model\\det3.nchwbin"))
+	if (use_pnet20)
 	{
-		cout << "failed to init!\n";
-		return EXIT_FAILURE;
+		if (!mtcnn.Init("model\\det1-dw20.zqparams", "model\\det1-dw20.nchwbin",
+			"model\\det2.zqparams", "model\\det2_bgr.nchwbin",
+			"model\\det3.zqparams", "model\\det3_bgr.nchwbin"))
+		{
+			cout << "failed to init!\n";
+			return EXIT_FAILURE;
+		}
+
+		mtcnn.SetPara(image0.cols, image0.rows, 48, 0.7, 0.7, 0.7, 0.5, 0.5, 0.5, 0.709, 3, 20, 4, special_handle_very_big_face);
+	}
+	else
+	{
+		if (!mtcnn.Init("model\\det1.zqparams", "model\\det1_bgr.nchwbin",
+			"model\\det2.zqparams", "model\\det2_bgr.nchwbin",
+			"model\\det3.zqparams", "model\\det3_bgr.nchwbin"))
+		{
+			cout << "failed to init!\n";
+			return EXIT_FAILURE;
+		}
+
+		mtcnn.SetPara(image0.cols, image0.rows, 48, 0.6, 0.7, 0.7, 0.5, 0.5, 0.5, 0.709, 4, 12, 2, special_handle_very_big_face);
 	}
 
-	mtcnn.SetPara(image0.cols, image0.rows, 30, 0.6, 0.7, 0.7, 0.5, 0.5, 0.5, 0.709, 4);
 	//mtcnn.TurnOnShowDebugInfo();
-	int iters = 100;
+	int iters = 1000;
 	double t1 = omp_get_wtime();
 	for (int i = 0; i < iters; i++)
 	{
-		if(i==iters/2)
+		if (i == iters / 2)
 			mtcnn.TurnOnShowDebugInfo();
 		else
 			mtcnn.TurnOffShowDebugInfo();
-		if (!mtcnn.Find(image0.data, image0.cols, image0.rows, image0.step[0], thirdBbox,num_threads))
+		if (!mtcnn.Find(image0.data, image0.cols, image0.rows, image0.step[0], thirdBbox, num_threads))
 		{
 			cout << "failed to find face!\n";
 			//return EXIT_FAILURE;
@@ -83,15 +101,10 @@ int main()
 	double t2 = omp_get_wtime();
 	printf("total %.3f s / %d = %.3f ms\n", t2 - t1, iters, 1000 * (t2 - t1) / iters);
 
+	namedWindow("result");
 	Draw(image0, thirdBbox);
-
-	
-	//cv::resize(image0, image0, cv::Size(), 0.5, 0.5);
-
-	namedWindow("resultSSE");
 	imwrite(result_name, image0);
-	imshow("resultSSE", image0);
-
+	imshow("result", image0);
 
 	waitKey(0);
 	return EXIT_SUCCESS;
