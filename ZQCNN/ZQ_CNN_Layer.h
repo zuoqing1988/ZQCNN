@@ -32,8 +32,12 @@ namespace ZQ
 		//should called after SetBottomDim
 		virtual void GetTopDim(int& top_C, int& topH, int &top_W) const = 0;
 
+		virtual bool SwapInputRGBandBGR() = 0;
+
 		//should be called after ZQ_CNN_Net have allocated necessery data
 		virtual bool LoadBinary_NCHW(FILE* in) = 0;
+
+		virtual bool SaveBinary_NCHW(FILE* out) const = 0;
 
 		virtual bool LoadBinary_NCHW(const char* buffer, __int64 buffer_len, __int64& readed_length_in_bytes) = 0;
 
@@ -196,8 +200,12 @@ namespace ZQ
 		//should called after SetBottomDim
 		virtual void GetTopDim(int& top_C, int& top_H, int& top_W) const { top_C = C; top_H = H; top_W = W; }
 
+		virtual bool SwapInputRGBandBGR() { return true; };
+
 		//should be called after ZQ_CNN_Net have allocated necessery data
 		virtual bool LoadBinary_NCHW(FILE* in) { return true; }
+
+		virtual bool SaveBinary_NCHW(FILE* out) const { return true; }
 
 		virtual bool LoadBinary_NCHW(const char* buffer, __int64 buffer_len, __int64& readed_length_in_bytes) 
 		{ 
@@ -505,6 +513,36 @@ namespace ZQ
 			top_W = __max(0, floor((float)(bottom_W + pad_W * 2 - (kernel_W-1)*dilate_W-1) / stride_W) + 1);
 		}
 
+		virtual bool SwapInputRGBandBGR()
+		{
+			if (filters == 0)
+				return false;
+			if (filters->GetC() != 3)
+				return false;
+			int N = filters->GetN();
+			int H = filters->GetH();
+			int W = filters->GetW();
+			int sliceStep = filters->GetSliceStep();
+			int widthStep = filters->GetWidthStep();
+			int pixStep = filters->GetPixelStep();
+			float* ptr = filters->GetFirstPixelPtr();
+			for (int n = 0; n < N; n++)
+			{
+				for (int h = 0; h < H; h++)
+				{
+					for (int w = 0; w < W; w++)
+					{
+						float* cur_ptr = ptr + n*sliceStep + h*widthStep + w*pixStep;
+						float tmp_val = cur_ptr[0];
+						cur_ptr[0] = cur_ptr[2];
+						cur_ptr[2] = tmp_val;
+					}
+				}
+			}
+			return true;
+		};
+
+
 		//should be called after ZQ_CNN_Net have allocated necessery data
 		virtual bool LoadBinary_NCHW(FILE* in)
 		{
@@ -528,6 +566,31 @@ namespace ZQ
 				bias->ConvertFromCompactNCHW(&nchw_raw[0], bias->GetN(), bias->GetC(), bias->GetH(), bias->GetW());
 			}
 			return true;
+		}
+
+		virtual bool SaveBinary_NCHW(FILE* out) const 
+		{ 
+			if (filters == 0)
+				return false;
+			int dst_len = filters->GetN() * filters->GetH() * filters->GetW() * filters->GetC();
+			if (dst_len <= 0)
+				return false;
+			std::vector<float> nchw_raw(dst_len);
+			filters->ConvertToCompactNCHW(&nchw_raw[0]);
+			if (dst_len != fwrite(&nchw_raw[0], sizeof(float), dst_len, out))
+				return false;
+			
+			if (with_bias)
+			{
+				int dst_len = bias->GetN() * bias->GetH() * bias->GetW() * bias->GetC();
+				if (dst_len <= 0)
+					return false;
+				nchw_raw.resize(dst_len);
+				bias->ConvertToCompactNCHW(&nchw_raw[0]);
+				if (dst_len != fwrite(&nchw_raw[0], sizeof(float), dst_len, out))
+					return false;	
+			}
+			return true; 
 		}
 
 		virtual bool LoadBinary_NCHW(const char* buffer, __int64 buffer_len, __int64& readed_length_in_bytes)
@@ -870,6 +933,8 @@ namespace ZQ
 			top_W = __max(0, floor((float)(bottom_W + pad_W * 2 - kernel_W) / stride_W) + 1);
 		}
 
+		virtual bool SwapInputRGBandBGR() { return true; };
+		
 		//should be called after ZQ_CNN_Net have allocated necessery data
 		virtual bool LoadBinary_NCHW(FILE* in)
 		{
@@ -891,6 +956,31 @@ namespace ZQ
 				if (dst_len != fread_s(&nchw_raw[0], dst_len * sizeof(float), sizeof(float), dst_len, in))
 					return false;
 				bias->ConvertFromCompactNCHW(&nchw_raw[0], bias->GetN(), bias->GetC(), bias->GetH(), bias->GetW());
+			}
+			return true;
+		}
+
+		virtual bool SaveBinary_NCHW(FILE* out) const
+		{
+			if (filters == 0)
+				return false;
+			int dst_len = filters->GetN() * filters->GetH() * filters->GetW() * filters->GetC();
+			if (dst_len <= 0)
+				return false;
+			std::vector<float> nchw_raw(dst_len);
+			filters->ConvertToCompactNCHW(&nchw_raw[0]);
+			if (dst_len != fwrite(&nchw_raw[0], sizeof(float), dst_len, out))
+				return false;
+			if (with_bias)
+			{
+				int dst_len = bias->GetN() * bias->GetH() * bias->GetW() * bias->GetC();
+				if (dst_len <= 0)
+					return false;
+				nchw_raw.resize(dst_len);
+				bias->ConvertToCompactNCHW(&nchw_raw[0]);
+				if (dst_len != fwrite(&nchw_raw[0], sizeof(float), dst_len, out))
+					return false;
+				
 			}
 			return true;
 		}
@@ -942,15 +1032,20 @@ namespace ZQ
 		value = b * value + a
 		*/
 	public:
-		ZQ_CNN_Layer_BatchNormScale() : b(0), a(0), with_bias(false), bottom_C(0) {}
+		ZQ_CNN_Layer_BatchNormScale() : mean(0), var(0), scale(0), bias(0), 
+			b(0), a(0), with_bias(false), bottom_C(0) {}
 		~ZQ_CNN_Layer_BatchNormScale() {
+			if (mean) delete mean;
+			if (var) delete var;
+			if (scale) delete scale;
+			if (bias) delete bias;
 			if (b)delete b;
 			if (a)delete a;
 		}
-		/*ZQ_CNN_Tensor4D* mean;
+		ZQ_CNN_Tensor4D* mean;
 		ZQ_CNN_Tensor4D* var;
 		ZQ_CNN_Tensor4D* scale;
-		ZQ_CNN_Tensor4D* bias;*/
+		ZQ_CNN_Tensor4D* bias;
 		ZQ_CNN_Tensor4D* b;
 		ZQ_CNN_Tensor4D* a;
 
@@ -1058,6 +1153,54 @@ namespace ZQ
 			this->bottom_C = bottom_C;
 			this->bottom_H = bottom_H;
 			this->bottom_W = bottom_W;
+			if (mean)
+			{
+				if (!mean->ChangeSize(1, 1, 1, bottom_C, 0, 0))
+					return false;
+			}
+			else
+			{
+				mean = new ZQ_CNN_Tensor4D_NHW_C_Align256bit();
+				if (mean == 0)return false;
+				if (!mean->ChangeSize(1, 1, 1, bottom_C, 0, 0))
+					return false;
+			}
+			if (var)
+			{
+				if (!var->ChangeSize(1, 1, 1, bottom_C, 0, 0))
+					return false;
+			}
+			else
+			{
+				var = new ZQ_CNN_Tensor4D_NHW_C_Align256bit();
+				if (var == 0)return false;
+				if (!var->ChangeSize(1, 1, 1, bottom_C, 0, 0))
+					return false;
+			}
+			if (scale)
+			{
+				if (!scale->ChangeSize(1, 1, 1, bottom_C, 0, 0))
+					return false;
+			}
+			else
+			{
+				scale = new ZQ_CNN_Tensor4D_NHW_C_Align256bit();
+				if (scale == 0)return false;
+				if (!scale->ChangeSize(1, 1, 1, bottom_C, 0, 0))
+					return false;
+			}
+			if (bias)
+			{
+				if (!bias->ChangeSize(1, 1, 1, bottom_C, 0, 0))
+					return false;
+			}
+			else
+			{
+				bias = new ZQ_CNN_Tensor4D_NHW_C_Align256bit();
+				if (bias == 0)return false;
+				if (!bias->ChangeSize(1, 1, 1, bottom_C, 0, 0))
+					return false;
+			}
 			if (b)
 			{
 				if (!b->ChangeSize(1, 1, 1, bottom_C, 0, 0))
@@ -1094,10 +1237,12 @@ namespace ZQ
 			top_W = bottom_W;
 		}
 
+		virtual bool SwapInputRGBandBGR() { return true; };
+
 		//should be called after ZQ_CNN_Net have allocated necessery data
 		virtual bool LoadBinary_NCHW(FILE* in)
 		{
-			if (b == 0 || a == 0)
+			if (mean == 0 || var == 0 || scale == 0 || (with_bias && bias == 0) || b == 0 || a == 0)
 				return false;
 			int N = b->GetN(), H = b->GetH(), W = b->GetW(), C = b->GetC();
 			int dst_len = N*H*W*C;
@@ -1108,31 +1253,60 @@ namespace ZQ
 				std::vector<float> nchw_raw(dst_len * 4);
 				if (dst_len * 4 != fread_s(&nchw_raw[0], dst_len * 4 * sizeof(float), sizeof(float), dst_len * 4, in))
 					return false;
-				ZQ_CNN_Tensor4D_NHW_C_Align0 mean, var, scale, bias;
-				mean.ConvertFromCompactNCHW(&nchw_raw[0], N, C, H, W);
-				var.ConvertFromCompactNCHW(&nchw_raw[0] + dst_len, N, C, H, W);
-				scale.ConvertFromCompactNCHW(&nchw_raw[0] + dst_len * 2, N, C, H, W);
-				bias.ConvertFromCompactNCHW(&nchw_raw[0] + dst_len * 3, N, C, H, W);
-				return ZQ_CNN_Forward_SSEUtils::BatchNormScaleBias_Compute_b_a(*b, *a, mean, var, scale, bias);
+				mean->ConvertFromCompactNCHW(&nchw_raw[0], N, C, H, W);
+				var->ConvertFromCompactNCHW(&nchw_raw[0] + dst_len, N, C, H, W);
+				scale->ConvertFromCompactNCHW(&nchw_raw[0] + dst_len * 2, N, C, H, W);
+				bias->ConvertFromCompactNCHW(&nchw_raw[0] + dst_len * 3, N, C, H, W);
+				return ZQ_CNN_Forward_SSEUtils::BatchNormScaleBias_Compute_b_a(*b, *a, *mean, *var, *scale, *bias);
 			}
 			else
 			{
 				std::vector<float> nchw_raw(dst_len * 3);
 				if (dst_len * 3 != fread_s(&nchw_raw[0], dst_len * 3 * sizeof(float), sizeof(float), dst_len * 3, in))
 					return false;
-				ZQ_CNN_Tensor4D_NHW_C_Align0 mean, var, scale;
-				mean.ConvertFromCompactNCHW(&nchw_raw[0], N, C, H, W);
-				var.ConvertFromCompactNCHW(&nchw_raw[0] + dst_len, N, C, H, W);
-				scale.ConvertFromCompactNCHW(&nchw_raw[0] + dst_len * 2, N, C, H, W);
-				return ZQ_CNN_Forward_SSEUtils::BatchNormScale_Compute_b_a(*b, *a, mean, var, scale);
+				mean->ConvertFromCompactNCHW(&nchw_raw[0], N, C, H, W);
+				var->ConvertFromCompactNCHW(&nchw_raw[0] + dst_len, N, C, H, W);
+				scale->ConvertFromCompactNCHW(&nchw_raw[0] + dst_len * 2, N, C, H, W);
+				return ZQ_CNN_Forward_SSEUtils::BatchNormScale_Compute_b_a(*b, *a, *mean, *var, *scale);
 			}
 			
+		}
+
+		virtual bool SaveBinary_NCHW(FILE* out) const
+		{
+			if (mean == 0 || var == 0 || scale == 0 || (with_bias && bias == 0) || b == 0 || a == 0)
+				return false;
+			int N = b->GetN(), H = b->GetH(), W = b->GetW(), C = b->GetC();
+			int dst_len = N*H*W*C;
+			if (dst_len <= 0)
+				return false;
+			if (with_bias)
+			{
+				std::vector<float> nchw_raw(dst_len * 4);
+				mean->ConvertToCompactNCHW(&nchw_raw[0]);
+				var->ConvertToCompactNCHW(&nchw_raw[0] + dst_len);
+				scale->ConvertToCompactNCHW(&nchw_raw[0] + dst_len * 2);
+				bias->ConvertToCompactNCHW(&nchw_raw[0] + dst_len * 3);
+				if (dst_len * 4 != fwrite(&nchw_raw[0], sizeof(float), dst_len * 4, out))
+					return false;
+				return true;
+			}
+			else
+			{
+				std::vector<float> nchw_raw(dst_len * 3);
+				mean->ConvertToCompactNCHW(&nchw_raw[0]);
+				var->ConvertToCompactNCHW(&nchw_raw[0] + dst_len);
+				scale->ConvertToCompactNCHW(&nchw_raw[0] + dst_len * 2);
+				if (dst_len * 3 != fwrite(&nchw_raw[0], sizeof(float), dst_len * 3, out))
+					return false;
+				return true;
+			}
 		}
 
 		virtual bool LoadBinary_NCHW(const char* buffer, __int64 buffer_len, __int64& readed_length_in_bytes)
 		{
 			readed_length_in_bytes = 0;
-			if (b == 0 || a == 0)
+			if (mean == 0 || var == 0 || scale == 0 || (with_bias && bias == 0) || b == 0 || a == 0)
 				return false;
 			int N = b->GetN(), H = b->GetH(), W = b->GetW(), C = b->GetC();
 			int dst_len = N*H*W*C;
@@ -1146,12 +1320,11 @@ namespace ZQ
 				memcpy(&nchw_raw[0], buffer, dst_len * 4 * sizeof(float));
 				readed_length_in_bytes += dst_len * 4 * sizeof(float);
 				
-				ZQ_CNN_Tensor4D_NHW_C_Align0 mean, var, scale, bias;
-				mean.ConvertFromCompactNCHW(&nchw_raw[0], N, C, H, W);
-				var.ConvertFromCompactNCHW(&nchw_raw[0] + dst_len, N, C, H, W);
-				scale.ConvertFromCompactNCHW(&nchw_raw[0] + dst_len * 2, N, C, H, W);
-				bias.ConvertFromCompactNCHW(&nchw_raw[0] + dst_len * 3, N, C, H, W);
-				return ZQ_CNN_Forward_SSEUtils::BatchNormScaleBias_Compute_b_a(*b, *a, mean, var, scale, bias);
+				mean->ConvertFromCompactNCHW(&nchw_raw[0], N, C, H, W);
+				var->ConvertFromCompactNCHW(&nchw_raw[0] + dst_len, N, C, H, W);
+				scale->ConvertFromCompactNCHW(&nchw_raw[0] + dst_len * 2, N, C, H, W);
+				bias->ConvertFromCompactNCHW(&nchw_raw[0] + dst_len * 3, N, C, H, W);
+				return ZQ_CNN_Forward_SSEUtils::BatchNormScaleBias_Compute_b_a(*b, *a, *mean, *var, *scale, *bias);
 			}
 			else
 			{
@@ -1161,11 +1334,10 @@ namespace ZQ
 				memcpy(&nchw_raw[0], buffer, dst_len * 3 * sizeof(float));
 				readed_length_in_bytes += dst_len * 3 * sizeof(float);
 
-				ZQ_CNN_Tensor4D_NHW_C_Align0 mean, var, scale;
-				mean.ConvertFromCompactNCHW(&nchw_raw[0], N, C, H, W);
-				var.ConvertFromCompactNCHW(&nchw_raw[0] + dst_len, N, C, H, W);
-				scale.ConvertFromCompactNCHW(&nchw_raw[0] + dst_len * 2, N, C, H, W);
-				return ZQ_CNN_Forward_SSEUtils::BatchNormScale_Compute_b_a(*b, *a, mean, var, scale);
+				mean->ConvertFromCompactNCHW(&nchw_raw[0], N, C, H, W);
+				var->ConvertFromCompactNCHW(&nchw_raw[0] + dst_len, N, C, H, W);
+				scale->ConvertFromCompactNCHW(&nchw_raw[0] + dst_len * 2, N, C, H, W);
+				return ZQ_CNN_Forward_SSEUtils::BatchNormScale_Compute_b_a(*b, *a, *mean, *var, *scale);
 			}
 			return true;
 		}
@@ -1184,13 +1356,15 @@ namespace ZQ
 		value = b * value + a
 		*/
 	public:
-		ZQ_CNN_Layer_BatchNorm() : b(0), a(0), bottom_C(0) {}
+		ZQ_CNN_Layer_BatchNorm() : mean(0), var(0), b(0), a(0), bottom_C(0) {}
 		~ZQ_CNN_Layer_BatchNorm() {
+			if (mean) delete mean;
+			if (var) delete var;
 			if (b)delete b;
 			if (a)delete a;
 		}
-		/*ZQ_CNN_Tensor4D* mean;
-		ZQ_CNN_Tensor4D* var;*/
+		ZQ_CNN_Tensor4D* mean;
+		ZQ_CNN_Tensor4D* var;
 		ZQ_CNN_Tensor4D* b;
 		ZQ_CNN_Tensor4D* a;
 
@@ -1290,6 +1464,30 @@ namespace ZQ
 			this->bottom_C = bottom_C;
 			this->bottom_H = bottom_H;
 			this->bottom_W = bottom_W;
+			if (mean)
+			{
+				if (!mean->ChangeSize(1, 1, 1, bottom_C, 0, 0))
+					return false;
+			}
+			else
+			{
+				mean = new ZQ_CNN_Tensor4D_NHW_C_Align256bit();
+				if (mean == 0)return false;
+				if (!mean->ChangeSize(1, 1, 1, bottom_C, 0, 0))
+					return false;
+			}
+			if (var)
+			{
+				if (!var->ChangeSize(1, 1, 1, bottom_C, 0, 0))
+					return false;
+			}
+			else
+			{
+				var = new ZQ_CNN_Tensor4D_NHW_C_Align256bit();
+				if (var == 0)return false;
+				if (!var->ChangeSize(1, 1, 1, bottom_C, 0, 0))
+					return false;
+			}
 			if (b)
 			{
 				if (!b->ChangeSize(1, 1, 1, bottom_C, 0, 0))
@@ -1326,10 +1524,12 @@ namespace ZQ
 			top_W = bottom_W;
 		}
 		
+		virtual bool SwapInputRGBandBGR() { return true; };
+
 		//should be called after ZQ_CNN_Net have allocated necessery data
 		virtual bool LoadBinary_NCHW(FILE* in)
 		{
-			if (b == 0 || a == 0)
+			if (mean == 0 || var == 0 || b == 0 || a == 0)
 				return false;
 			int N = b->GetN(), H = b->GetH(), W = b->GetW(), C = b->GetC();
 			int dst_len = N*H*W*C;
@@ -1338,16 +1538,32 @@ namespace ZQ
 			std::vector<float> nchw_raw(dst_len * 2);
 			if (dst_len * 2 != fread_s(&nchw_raw[0], dst_len * 2 * sizeof(float), sizeof(float), dst_len * 2, in))
 				return false;
-			ZQ_CNN_Tensor4D_NHW_C_Align0 mean, var;
-			mean.ConvertFromCompactNCHW(&nchw_raw[0], N, C, H, W);
-			var.ConvertFromCompactNCHW(&nchw_raw[0] + dst_len, N, C, H, W);
-			return ZQ_CNN_Forward_SSEUtils::BatchNorm_Compute_b_a(*b, *a, mean, var);
+			mean->ConvertFromCompactNCHW(&nchw_raw[0], N, C, H, W);
+			var->ConvertFromCompactNCHW(&nchw_raw[0] + dst_len, N, C, H, W);
+			return ZQ_CNN_Forward_SSEUtils::BatchNorm_Compute_b_a(*b, *a, *mean, *var);
+		}
+
+		virtual bool SaveBinary_NCHW(FILE* out) const
+		{
+			if (mean == 0 || var == 0 || b == 0 || a == 0)
+				return false;
+			int N = b->GetN(), H = b->GetH(), W = b->GetW(), C = b->GetC();
+			int dst_len = N*H*W*C;
+			if (dst_len <= 0)
+				return false;
+			std::vector<float> nchw_raw(dst_len * 2);
+			mean->ConvertToCompactNCHW(&nchw_raw[0]);
+			var->ConvertToCompactNCHW(&nchw_raw[0] + dst_len);
+			if (dst_len * 2 != fwrite(&nchw_raw[0], sizeof(float), dst_len * 2, out))
+				return false;
+			
+			return true;
 		}
 
 		virtual bool LoadBinary_NCHW(const char* buffer, __int64 buffer_len, __int64& readed_length_in_bytes)
 		{
 			readed_length_in_bytes = 0;
-			if (b == 0 || a == 0)
+			if (mean == 0 || var == 0 || b == 0 || a == 0)
 				return false;
 			int N = b->GetN(), H = b->GetH(), W = b->GetW(), C = b->GetC();
 			int dst_len = N*H*W*C;
@@ -1359,10 +1575,9 @@ namespace ZQ
 			memcpy(&nchw_raw[0], buffer, dst_len * 2 * sizeof(float));
 			readed_length_in_bytes += dst_len * 2 * sizeof(float);
 
-			ZQ_CNN_Tensor4D_NHW_C_Align0 mean, var;
-			mean.ConvertFromCompactNCHW(&nchw_raw[0], N, C, H, W);
-			var.ConvertFromCompactNCHW(&nchw_raw[0] + dst_len, N, C, H, W);
-			return ZQ_CNN_Forward_SSEUtils::BatchNorm_Compute_b_a(*b, *a, mean, var);
+			mean->ConvertFromCompactNCHW(&nchw_raw[0], N, C, H, W);
+			var->ConvertFromCompactNCHW(&nchw_raw[0] + dst_len, N, C, H, W);
+			return ZQ_CNN_Forward_SSEUtils::BatchNorm_Compute_b_a(*b, *a, *mean, *var);
 		}
 
 		virtual __int64 GetNumOfMulAdd() const
@@ -1539,6 +1754,8 @@ namespace ZQ
 			top_W = bottom_W;
 		}
 
+		virtual bool SwapInputRGBandBGR() { return true; };
+
 		//should be called after ZQ_CNN_Net have allocated necessery data
 		virtual bool LoadBinary_NCHW(FILE* in)
 		{
@@ -1560,6 +1777,31 @@ namespace ZQ
 				if (dst_len != fread_s(&nchw_raw[0], dst_len * sizeof(float), sizeof(float), dst_len, in))
 					return false;
 				bias->ConvertFromCompactNCHW(&nchw_raw[0], bias->GetN(), bias->GetC(), bias->GetH(), bias->GetW());
+			}
+			return true;
+		}
+
+		virtual bool SaveBinary_NCHW(FILE* out) const
+		{
+			if (scale == 0 || (with_bias && bias == 0))
+				return false;
+			int dst_len = scale->GetN() * scale->GetH() * scale->GetW() * scale->GetC();
+			if (dst_len <= 0)
+				return false;
+			std::vector<float> nchw_raw(dst_len);
+			scale->ConvertToCompactNCHW(&nchw_raw[0]);
+			if (dst_len != fwrite(&nchw_raw[0], sizeof(float), dst_len, out))
+				return false;
+			
+			if (with_bias)
+			{
+				int dst_len = bias->GetN() * bias->GetH() * bias->GetW() * bias->GetC();
+				if (dst_len <= 0)
+					return false;
+				nchw_raw.resize(dst_len);
+				bias->ConvertToCompactNCHW(&nchw_raw[0]);
+				if (dst_len != fwrite(&nchw_raw[0], sizeof(float), dst_len, out))
+					return false;
 			}
 			return true;
 		}
@@ -1731,6 +1973,8 @@ namespace ZQ
 			top_W = bottom_W;
 		}
 
+		virtual bool SwapInputRGBandBGR() { return true; };
+
 		//should be called after ZQ_CNN_Net have allocated necessery data
 		virtual bool LoadBinary_NCHW(FILE* in)
 		{
@@ -1743,6 +1987,21 @@ namespace ZQ
 			if (dst_len != fread_s(&nchw_raw[0], dst_len * sizeof(float), sizeof(float), dst_len, in))
 				return false;
 			slope->ConvertFromCompactNCHW(&nchw_raw[0], slope->GetN(), slope->GetC(), slope->GetH(), slope->GetW());
+			return true;
+		}
+
+		virtual bool SaveBinary_NCHW(FILE* out) const
+		{
+			if (slope == 0)
+				return false;
+			int dst_len = slope->GetN() * slope->GetH() * slope->GetW() * slope->GetC();
+			if (dst_len <= 0)
+				return false;
+			std::vector<float> nchw_raw(dst_len);
+			slope->ConvertToCompactNCHW(&nchw_raw[0]);
+			if (dst_len != fwrite(&nchw_raw[0], sizeof(float), dst_len, out))
+				return false;
+			
 			return true;
 		}
 
@@ -1879,8 +2138,12 @@ namespace ZQ
 			top_W = bottom_W;
 		}
 
+		virtual bool SwapInputRGBandBGR() { return true; };
+
 		//should be called after ZQ_CNN_Net have allocated necessery data
 		virtual bool LoadBinary_NCHW(FILE* in){	return true;}
+
+		virtual bool SaveBinary_NCHW(FILE* out) const { return true; }
 
 		virtual bool LoadBinary_NCHW(const char* buffer, __int64 buffer_len, __int64& readed_length_in_bytes)
 		{
@@ -2101,8 +2364,12 @@ namespace ZQ
 			}
 		}
 
+		virtual bool SwapInputRGBandBGR() { return true; };
+
 		//should be called after ZQ_CNN_Net have allocated necessery data
 		virtual bool LoadBinary_NCHW(FILE* in) { return true; }
+
+		virtual bool SaveBinary_NCHW(FILE* out) const { return true; }
 
 		virtual bool LoadBinary_NCHW(const char* buffer, __int64 buffer_len, __int64& readed_length_in_bytes)
 		{
@@ -2328,8 +2595,38 @@ namespace ZQ
 			top_W = 1;
 		}
 
+		virtual bool SwapInputRGBandBGR()
+		{
+			if (filters == 0)
+				return false;
+			if (filters->GetC() != 3)
+				return false;
+			int N = filters->GetN();
+			int H = filters->GetH();
+			int W = filters->GetW();
+			int sliceStep = filters->GetSliceStep();
+			int widthStep = filters->GetWidthStep();
+			int pixStep = filters->GetPixelStep();
+			float* ptr = filters->GetFirstPixelPtr();
+			for (int n = 0; n < N; n++)
+			{
+				for (int h = 0; h < H; h++)
+				{
+					for (int w = 0; w < W; w++)
+					{
+						float* cur_ptr = ptr + n*sliceStep + h*widthStep + w*pixStep;
+						float tmp_val = cur_ptr[0];
+						cur_ptr[0] = cur_ptr[2];
+						cur_ptr[2] = tmp_val;
+					}
+				}
+			}
+			return true;
+		};
+
 		//should be called after ZQ_CNN_Net have allocated necessery data
-		virtual bool LoadBinary_NCHW(FILE* in) {
+		virtual bool LoadBinary_NCHW(FILE* in) 
+		{
 			if (filters == 0)
 				return false;
 			int dst_len = filters->GetN() * filters->GetH() * filters->GetW() * filters->GetC();
@@ -2351,6 +2648,31 @@ namespace ZQ
 				if (dst_len != readed_len)
 					return false;
 				bias->ConvertFromCompactNCHW(&nchw_raw[0], bias->GetN(), bias->GetC(), bias->GetH(), bias->GetW());
+			}
+			return true;
+		}
+
+		virtual bool SaveBinary_NCHW(FILE* out) const
+		{
+			if (filters == 0 || (with_bias && bias == 0))
+				return false;
+			int dst_len = filters->GetN() * filters->GetH() * filters->GetW() * filters->GetC();
+			if (dst_len <= 0)
+				return false;
+			std::vector<float> nchw_raw(dst_len);
+			filters->ConvertToCompactNCHW(&nchw_raw[0]);
+			if (dst_len != fwrite(&nchw_raw[0], sizeof(float), dst_len, out))
+				return false;
+			
+			if (with_bias)
+			{
+				int dst_len = bias->GetN() * bias->GetH() * bias->GetW() * bias->GetC();
+				if (dst_len <= 0)
+					return false;
+				nchw_raw.resize(dst_len);
+				bias->ConvertToCompactNCHW(&nchw_raw[0]);
+				if (dst_len != fwrite(&nchw_raw[0], sizeof(float), dst_len, out))
+					return false;
 			}
 			return true;
 		}
@@ -2514,8 +2836,12 @@ namespace ZQ
 			top_W = bottom_W;
 		}
 
+		virtual bool SwapInputRGBandBGR() { return true; };
+
 		//should be called after ZQ_CNN_Net have allocated necessery data
 		virtual bool LoadBinary_NCHW(FILE* in) { return true; }
+
+		virtual bool SaveBinary_NCHW(FILE* out) const { return true; }
 
 		virtual bool LoadBinary_NCHW(const char* buffer, __int64 buffer_len, __int64& readed_length_in_bytes)
 		{
@@ -2648,8 +2974,12 @@ namespace ZQ
 			top_W = bottom_W;
 		}
 
+		virtual bool SwapInputRGBandBGR() { return true; };
+
 		//should be called after ZQ_CNN_Net have allocated necessery data
 		virtual bool LoadBinary_NCHW(FILE* in) { return true; }
+
+		virtual bool SaveBinary_NCHW(FILE* out) const { return true; }
 
 		virtual bool LoadBinary_NCHW(const char* buffer, __int64 buffer_len, __int64& readed_length_in_bytes)
 		{
@@ -2772,8 +3102,12 @@ namespace ZQ
 			top_W = bottom_W;
 		}
 
+		virtual bool SwapInputRGBandBGR() { return true; };
+
 		//should be called after ZQ_CNN_Net have allocated necessery data
 		virtual bool LoadBinary_NCHW(FILE* in) { return true; }
+
+		virtual bool SaveBinary_NCHW(FILE* out) const { return true; }
 
 		virtual bool LoadBinary_NCHW(const char* buffer, __int64 buffer_len, __int64& readed_length_in_bytes)
 		{
@@ -2966,8 +3300,12 @@ namespace ZQ
 			top_W = bottom_W;
 		}
 
+		virtual bool SwapInputRGBandBGR() { return true; };
+
 		//should be called after ZQ_CNN_Net have allocated necessery data
 		virtual bool LoadBinary_NCHW(FILE* in) { return true; }
+
+		virtual bool SaveBinary_NCHW(FILE* out) const { return true; }
 
 		virtual bool LoadBinary_NCHW(const char* buffer, __int64 buffer_len, __int64& readed_length_in_bytes)
 		{
@@ -3230,8 +3568,12 @@ namespace ZQ
 			top_W = bottom_W;
 		}
 
+		virtual bool SwapInputRGBandBGR() { return true; };
+
 		//should be called after ZQ_CNN_Net have allocated necessery data
 		virtual bool LoadBinary_NCHW(FILE* in) { return true; }
+
+		virtual bool SaveBinary_NCHW(FILE* out) const { return true; }
 
 		virtual bool LoadBinary_NCHW(const char* buffer, __int64 buffer_len, __int64& readed_length_in_bytes)
 		{
@@ -3488,8 +3830,12 @@ namespace ZQ
 			top_W = bottom_W;
 		}
 
+		virtual bool SwapInputRGBandBGR() { return true; };
+
 		//should be called after ZQ_CNN_Net have allocated necessery data
 		virtual bool LoadBinary_NCHW(FILE* in) { return true; }
+
+		virtual bool SaveBinary_NCHW(FILE* out) const { return true; }
 
 		virtual bool LoadBinary_NCHW(const char* buffer, __int64 buffer_len, __int64& readed_length_in_bytes)
 		{
@@ -3670,8 +4016,12 @@ namespace ZQ
 			top_W = this->bottom_W;
 		}
 
+		virtual bool SwapInputRGBandBGR() { return true; };
+
 		//should be called after ZQ_CNN_Net have allocated necessery data
 		virtual bool LoadBinary_NCHW(FILE* in) { return true; }
+
+		virtual bool SaveBinary_NCHW(FILE* out) const { return true; }
 
 		virtual bool LoadBinary_NCHW(const char* buffer, __int64 buffer_len, __int64& readed_length_in_bytes)
 		{
@@ -3828,6 +4178,8 @@ namespace ZQ
 			top_W = this->bottom_W;
 		}
 
+		virtual bool SwapInputRGBandBGR() { return true; };
+
 		//should be called after ZQ_CNN_Net have allocated necessery data
 		virtual bool LoadBinary_NCHW(FILE* in) 
 		{
@@ -3840,6 +4192,21 @@ namespace ZQ
 			scale->ConvertFromCompactNCHW(&nchw_raw[0], scale->GetN(), scale->GetC(), scale->GetH(), scale->GetW());
 			
 			return true; 
+		}
+
+		virtual bool SaveBinary_NCHW(FILE* out) const
+		{
+			if (scale == 0)
+				return false;
+			int dst_len = scale->GetN() * scale->GetH() * scale->GetW() * scale->GetC();
+			if (dst_len <= 0)
+				return false;
+			std::vector<float> nchw_raw(dst_len);
+			scale->ConvertToCompactNCHW(&nchw_raw[0]);
+			if (dst_len != fwrite(&nchw_raw[0], sizeof(float), dst_len, out))
+				return false;
+			
+			return true;
 		}
 
 		virtual bool LoadBinary_NCHW(const char* buffer, __int64 buffer_len, __int64& readed_length_in_bytes)
@@ -4005,8 +4372,12 @@ namespace ZQ
 			top_W = new_dim[3];
 		}
 
+		virtual bool SwapInputRGBandBGR() { return true; };
+
 		//should be called after ZQ_CNN_Net have allocated necessery data
 		virtual bool LoadBinary_NCHW(FILE* in) { return true; }
+
+		virtual bool SaveBinary_NCHW(FILE* out) const { return true; }
 
 		virtual bool LoadBinary_NCHW(const char* buffer, __int64 buffer_len, __int64& readed_length_in_bytes)
 		{
@@ -4166,8 +4537,12 @@ namespace ZQ
 			top_W = new_dim[3];
 		}
 
+		virtual bool SwapInputRGBandBGR() { return true; };
+
 		//should be called after ZQ_CNN_Net have allocated necessery data
 		virtual bool LoadBinary_NCHW(FILE* in) { return true; }
+
+		virtual bool SaveBinary_NCHW(FILE* out) const { return true; }
 
 		virtual bool LoadBinary_NCHW(const char* buffer, __int64 buffer_len, __int64& readed_length_in_bytes)
 		{
@@ -4356,8 +4731,14 @@ namespace ZQ
 			top_W = new_dim[3];
 		}
 
+
+		virtual bool SwapInputRGBandBGR() { return true; };
+
+
 		//should be called after ZQ_CNN_Net have allocated necessery data
 		virtual bool LoadBinary_NCHW(FILE* in) { return true; }
+
+		virtual bool SaveBinary_NCHW(FILE* out) const { return true; }
 
 		virtual bool LoadBinary_NCHW(const char* buffer, __int64 buffer_len, __int64& readed_length_in_bytes)
 		{
@@ -4611,8 +4992,12 @@ namespace ZQ
 			top_W = 1;
 		}
 
+		virtual bool SwapInputRGBandBGR() { return true; };
+
 		//should be called after ZQ_CNN_Net have allocated necessery data
 		virtual bool LoadBinary_NCHW(FILE* in) { return true; }
+
+		virtual bool SaveBinary_NCHW(FILE* out) const { return true; }
 
 		virtual bool LoadBinary_NCHW(const char* buffer, __int64 buffer_len, __int64& readed_length_in_bytes)
 		{
@@ -4958,8 +5343,12 @@ namespace ZQ
 			
 		}
 
+		virtual bool SwapInputRGBandBGR() { return true; };
+
 		//should be called after ZQ_CNN_Net have allocated necessery data
 		virtual bool LoadBinary_NCHW(FILE* in) { return true; }
+
+		virtual bool SaveBinary_NCHW(FILE* out) const { return true; }
 
 		virtual bool LoadBinary_NCHW(const char* buffer, __int64 buffer_len, __int64& readed_length_in_bytes)
 		{
@@ -5192,8 +5581,12 @@ namespace ZQ
 
 		}
 
+		virtual bool SwapInputRGBandBGR() { return true; };
+
 		//should be called after ZQ_CNN_Net have allocated necessery data
 		virtual bool LoadBinary_NCHW(FILE* in) { return true; }
+
+		virtual bool SaveBinary_NCHW(FILE* out) const { return true; }
 
 		virtual bool LoadBinary_NCHW(const char* buffer, __int64 buffer_len, __int64& readed_length_in_bytes)
 		{
@@ -5407,8 +5800,12 @@ namespace ZQ
 			}
 		}
 
+		virtual bool SwapInputRGBandBGR() { return true; };
+
 		//should be called after ZQ_CNN_Net have allocated necessery data
 		virtual bool LoadBinary_NCHW(FILE* in) { return true; }
+
+		virtual bool SaveBinary_NCHW(FILE* out) const { return true; }
 
 		virtual bool LoadBinary_NCHW(const char* buffer, __int64 buffer_len, __int64& readed_length_in_bytes)
 		{
@@ -5537,8 +5934,12 @@ namespace ZQ
 			top_W = bottom_W;
 		}
 
+		virtual bool SwapInputRGBandBGR() { return true; };
+
 		//should be called after ZQ_CNN_Net have allocated necessery data
 		virtual bool LoadBinary_NCHW(FILE* in) { return true; }
+
+		virtual bool SaveBinary_NCHW(FILE* out) const { return true; }
 
 		virtual bool LoadBinary_NCHW(const char* buffer, __int64 buffer_len, __int64& readed_length_in_bytes)
 		{
@@ -5696,8 +6097,12 @@ namespace ZQ
 			top_W = bottom_W*tile_w;
 		}
 
+		virtual bool SwapInputRGBandBGR() { return true; };
+
 		//should be called after ZQ_CNN_Net have allocated necessery data
 		virtual bool LoadBinary_NCHW(FILE* in) { return true; }
+
+		virtual bool SaveBinary_NCHW(FILE* out) const { return true; }
 
 		virtual bool LoadBinary_NCHW(const char* buffer, __int64 buffer_len, __int64& readed_length_in_bytes)
 		{

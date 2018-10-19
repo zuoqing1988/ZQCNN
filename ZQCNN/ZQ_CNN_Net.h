@@ -60,6 +60,16 @@ namespace ZQ
 			return true;
 		}
 
+		bool SaveModel(const std::string& file) const
+		{
+			return _save_model_file(file);
+		}
+
+		bool SwapInputRGBandBGR(const std::vector<std::string>& layer_names)
+		{
+			return _swap_input_RGB_and_BGR(layer_names);
+		}
+
 		bool LoadFromBuffer(const char*& param_buffer, __int64 param_buffer_len, const char*& model_buffer, __int64 model_buffer_len, bool merge_bn = false)
 		{
 			_clear();
@@ -801,6 +811,31 @@ namespace ZQ
 			return true;
 		}
 
+		bool _save_model_file(const std::string& file) const
+		{
+			int layer_num = layers.size();
+			if (layers.size() == 0)
+				return false;
+			FILE* out = 0;
+			fopen_s(&out, file.c_str(), "wb");
+			if (out == 0)
+			{
+				std::cout << "failed to create " << file << "\n";
+				return false;
+			}
+			for (int i = 0; i < layer_num; i++)
+			{
+				if (!layers[i]->SaveBinary_NCHW(out))
+				{
+					fclose(out);
+					std::cout << "Failed to save Binary for layer " << layers[i]->name << "\n";
+					return false;
+				}
+			}
+			fclose(out);
+			return true;
+		}
+
 		bool _load_model_from_buffer(const char* model_buffer, __int64 model_buffer_len)
 		{
 			int layer_num = layers.size();
@@ -1201,6 +1236,35 @@ namespace ZQ
 					float bias_v = (dwconv_layer->bias->GetFirstPixelPtr())[c];
 					float a_v = (a->GetFirstPixelPtr())[c];
 					(dwconv_layer->bias->GetFirstPixelPtr())[c] = bias_v*b_v + a_v;
+				}
+			}
+			return true;
+		}
+
+		bool _swap_input_RGB_and_BGR(const std::vector<std::string>& layer_names)
+		{
+			int blob_num = blobs.size();
+			int layer_num = layers.size();
+			if (layers.size() == 0 || blob_num == 0)
+				return false;
+			for (int j = 0; j < layer_names.size(); j++)
+			{
+				bool found = false;
+				for (int i = 0; i < layer_num; i++)
+				{
+					if (_strcmpi(layers[i]->name.c_str(), layer_names[j].c_str()) == 0)
+					{
+						found = true;
+						if (!layers[i]->SwapInputRGBandBGR())
+						{
+							printf("failed to swap RGB and BGR for layer %s\n", layer_names[j].c_str());
+							return false;
+						}
+					}
+				}
+				if (!found)
+				{
+					printf("warning: layer %s does not exists\n", layer_names[j].c_str());
 				}
 			}
 			return true;
