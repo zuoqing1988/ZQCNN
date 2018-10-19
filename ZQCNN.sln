@@ -63,8 +63,14 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SampleSphereFaceNetLoadFrom
 	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SamplePnet", "SamplesZQCNN\SamplePnet\SamplePnet.vcxproj", "{CB562B05-93BF-44B5-9186-725690F84106}"
+	ProjectSection(ProjectDependencies) = postProject
+		{43AA2D6A-447E-4153-8A29-7AE8A8296DC7} = {43AA2D6A-447E-4153-8A29-7AE8A8296DC7}
+	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "swapRGBandBGR", "SamplesZQCNN\swapRGBandBGR\swapRGBandBGR.vcxproj", "{F084AD3A-5A34-4E72-84A7-8E325D17AFA9}"
+	ProjectSection(ProjectDependencies) = postProject
+		{43AA2D6A-447E-4153-8A29-7AE8A8296DC7} = {43AA2D6A-447E-4153-8A29-7AE8A8296DC7}
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
