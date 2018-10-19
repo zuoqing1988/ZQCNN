@@ -151,20 +151,15 @@ void zq_cnn_conv_no_padding_32f_kernel1x1(
 		float* out_pix_ptr;
 		float* out_c_ptr;
 
-		const float* cur_in_row_ptr;
-		const float* cur_in_pix_ptr;
-		const float* cur_in_c_ptr;
+		
 		const float* cur_filter_slice_ptr;
-		const float* cur_filter_row_ptr;
-		const float* cur_filter_pix_ptr;
-		const float* cur_filter_c_ptr;
 
 		int stride_H_mul_in_WidthStep = stride_H*in_widthStep;
 		int stride_W_mul_in_pixStep = stride_W*in_alignPixelStep;
 		//int dilate_H_mul_in_widthStep = dilation_H*in_widthStep;
 		//int dilate_W_mul_in_pixStep = dilation_W*in_alignPixelStep;
-		int out_n, out_h, out_w, out_c, /*kh, kw, */kc;
-		int rest_c;
+		int out_n, out_h, out_w, out_c;
+		
 
 
 		for (out_n = 0, in_slice_ptr = in_tensor4D_data, out_slice_ptr = out_tensor4D_data;

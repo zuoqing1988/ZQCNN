@@ -38,6 +38,7 @@ extern "C" {
 		int out_sliceStep
 	);
 
+	
 	/*in_pixStep must be equal to filter_pixStep,
 	and the aligned channels should be set to zero*/
 	void zq_cnn_conv_no_padding_gemm_32f_align128bit_same_pixstep_C4(
@@ -137,6 +138,7 @@ extern "C" {
 		int out_widthStep,
 		int out_sliceStep
 	);
+
 
 	/*in_pixStep must be equal to filter_pixStep,
 	and the aligned channels should be set to zero*/
