@@ -60,7 +60,7 @@ int main()
 	result_name = "resultdet.jpg";
 	if (use_pnet20)
 	{
-		if (!mtcnn.Init("model\\det1-dw20.zqparams", "model\\det1-dw20.nchwbin",
+		if (!mtcnn.Init("model\\det1-dw20.zqparams", "model\\det1-dw20-ori.nchwbin",
 			"model\\det2.zqparams", "model\\det2_bgr.nchwbin",
 			"model\\det3.zqparams", "model\\det3_bgr.nchwbin"))
 		{

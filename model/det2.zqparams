@@ -1,0 +1,14 @@
+Input 		name=data  C=3 H=24 W=24
+Convolution name=conv1 bottom=data top=conv1 num_output=28 kernel_size=3 stride=1 bias
+PReLU 		name=prelu1 bottom=conv1 top=conv1 
+Pooling		name=pool1 bottom=conv1 top=pool1 kernel_size=3 stride=2 pool=MAX 
+Convolution	name=conv2 bottom=pool1 top=conv2 num_output=48 kernel_size=3 stride=1 bias
+PReLU		name=prelu2 bottom=conv2 top=conv2
+Pooling		name=pool2 bottom=conv2 top=pool2 pool=MAX kernel_size=3 stride=2 
+Convolution	name=conv3 bottom=pool2 top=conv3 num_output=64 kernel_size=2 bias
+PReLU		name=prelu3 bottom=conv3 top=conv3 
+InnerProduct name=conv4 bottom=conv3 top=conv4 num_output=128 bias
+PReLU		name=prelu4 bottom=conv4 top=conv4
+InnerProduct name=conv5-1 bottom=conv4 top=conv5-1 num_output=2 bias
+InnerProduct name=conv5-2 bottom=conv4 top=conv5-2 num_output=4 bias
+Softmax 	name=prob1	bottom=conv5-1 top=prob1
