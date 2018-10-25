@@ -31,6 +31,8 @@
 
 #ifndef _ZQ_AVX_MATHFUN_H_
 #define _ZQ_AVX_MATHFUN_H_
+#include "..\ZQ_CNN_CompileConfig.h"
+#if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_AVX
 #include <immintrin.h>
 
 #if defined(__cplusplus) || defined(c_plusplus) 
@@ -69,5 +71,5 @@ extern "C" {
 #if defined(__cplusplus) || defined(c_plusplus) 
 }
 #endif
-
+#endif
 #endif

@@ -1,6 +1,6 @@
 #ifndef _ZQ_CNN_INNER_PRODUCT_32F_ALIGN_C_H_
 #define _ZQ_CNN_INNER_PRODUCT_32F_ALIGN_C_H_
-
+#include "..\ZQ_CNN_CompileConfig.h"
 #if defined(__cplusplus) || defined(c_plusplus) 
 extern "C" {
 #endif
@@ -32,6 +32,7 @@ extern "C" {
 		int out_sliceStep
 	);
 
+#if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_SSE
 	void zq_cnn_innerproduct_32f_align128bit(
 		const float* in_tensor4D_data,
 		int in_N,
@@ -58,7 +59,9 @@ extern "C" {
 		//int out_widthStep,
 		int out_sliceStep
 	);
+#endif
 
+#if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_AVX
 	void zq_cnn_innerproduct_32f_align256bit(
 		const float* in_tensor4D_data,
 		int in_N,
@@ -85,6 +88,8 @@ extern "C" {
 		//int out_widthStep,
 		int out_sliceStep
 	);
+#endif
+
 
 	void zq_cnn_innerproduct_32f_align0_noborder(
 		const float* in_tensor4D_data,
@@ -96,6 +101,7 @@ extern "C" {
 		int out_sliceStep
 	);
 
+#if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_SSE
 	void zq_cnn_innerproduct_32f_align128bit_noborder(
 		const float* in_tensor4D_data,
 		int in_N,
@@ -105,7 +111,9 @@ extern "C" {
 		float* out_tensor4D_data,
 		int out_sliceStep
 	);
+#endif
 
+#if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_AVX
 	void zq_cnn_innerproduct_32f_align256bit_noborder(
 		const float* in_tensor4D_data,
 		int in_N,
@@ -115,7 +123,7 @@ extern "C" {
 		float* out_tensor4D_data,
 		int out_sliceStep
 	);
-
+#endif
 
 
 #if defined(__cplusplus) || defined(c_plusplus) //跨平台定义方法

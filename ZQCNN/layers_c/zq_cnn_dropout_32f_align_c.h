@@ -1,6 +1,6 @@
 #ifndef _ZQ_CNN_DROPOUT_32F_ALIGN_C_H_
 #define _ZQ_CNN_DROPOUT_32F_ALIGN_C_H_
-
+#include "..\ZQ_CNN_CompileConfig.h"
 #if defined(__cplusplus) || defined(c_plusplus) 
 extern "C" {
 #endif
@@ -17,6 +17,7 @@ extern "C" {
 		const float dropout_ratio
 	);
 
+#if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_SSE
 	void zq_cnn_dropout_32f_align128bit(
 		float* in_tensor4D_data,	// in & out
 		int in_N,
@@ -28,7 +29,9 @@ extern "C" {
 		int in_sliceStep,
 		const float dropout_ratio
 	);
+#endif
 
+#if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_AVX
 	void zq_cnn_dropout_32f_align256bit(
 		float* in_tensor4D_data,	// in & out
 		int in_N,
@@ -40,6 +43,8 @@ extern "C" {
 		int in_sliceStep,
 		const float dropout_ratio
 	);
+#endif
+
 
 #if defined(__cplusplus) || defined(c_plusplus) 
 }

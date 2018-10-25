@@ -1,10 +1,11 @@
 #ifndef _ZQ_CNN_INNER_PRODUCT_GEMM_32F_ALIGN_C_H_
 #define _ZQ_CNN_INNER_PRODUCT_GEMM_32F_ALIGN_C_H_
-
+#include "..\ZQ_CNN_CompileConfig.h"
 #if defined(__cplusplus) || defined(c_plusplus) 
 extern "C" {
 #endif
 
+#if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_SSE
 	/*in_pixStep must be equal to filter_pixStep,
 	and the aligned channels should be set to zero*/
 	void zq_cnn_innerproduct_gemm_32f_align128bit_same_pixstep(
@@ -28,7 +29,9 @@ extern "C" {
 		int out_widthStep,
 		int out_sliceStep
 	);
+#endif
 
+#if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_AVX
 	/*in_pixStep must be equal to filter_pixStep,
 	and the aligned channels should be set to zero*/
 	void zq_cnn_innerproduct_gemm_32f_align256bit_same_pixstep(
@@ -52,6 +55,7 @@ extern "C" {
 		int out_widthStep,
 		int out_sliceStep
 	);
+#endif
 
 	/*in_pixStep can be different with filter_pixStep,
 	and the aligned channels should be set to zero*/
@@ -77,6 +81,7 @@ extern "C" {
 		int out_sliceStep
 	);
 
+#if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_SSE
 	/*in_pixStep must be equal to filter_pixStep,
 	and the aligned channels should be set to zero*/
 	void zq_cnn_innerproduct_gemm_32f_align128bit_same_pixstep_batch(
@@ -100,7 +105,9 @@ extern "C" {
 		int out_widthStep,
 		int out_sliceStep
 	);
+#endif
 
+#if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_AVX
 	/*in_pixStep must be equal to filter_pixStep,
 	and the aligned channels should be set to zero*/
 	void zq_cnn_innerproduct_gemm_32f_align256bit_same_pixstep_batch(
@@ -124,6 +131,7 @@ extern "C" {
 		int out_widthStep,
 		int out_sliceStep
 	);
+#endif
 
 #if defined(__cplusplus) || defined(c_plusplus) 
 }

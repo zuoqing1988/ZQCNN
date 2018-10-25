@@ -1,3 +1,7 @@
+#include <stdio.h>
+#include <omp.h>
+#include "..\ZQ_CNN_CompileConfig.h"
+#if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_SSE
 #include <mmintrin.h> //MMX  
 #include <xmmintrin.h> //SSE(include mmintrin.h)  
 #include <emmintrin.h> //SSE2(include xmmintrin.h)  
@@ -5,18 +9,19 @@
 #include <tmmintrin.h>//SSSE3(include pmmintrin.h)  
 #include <smmintrin.h>//SSE4.1(include tmmintrin.h)  
 #include <nmmintrin.h>//SSE4.2(include smmintrin.h)  
+#endif
+#if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_AVX
 #include <wmmintrin.h>//AES(include nmmintrin.h)  
 #include <immintrin.h>//AVX(include wmmintrin.h)  
 #include <intrin.h>//(include immintrin.h)  
-#include <stdio.h>
-#include <omp.h>
-#include "..\ZQ_CNN_CompileConfig.h"
+#endif
+
 
 #if defined(__cplusplus) || defined(c_plusplus) 
 extern "C" {
 #endif
 
-
+#if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_SSE
 #define zq_cnn_conv_no_padding_32f_kernel1x1 zq_cnn_conv_no_padding_32f_align128bit_kernel1x1
 #define zq_cnn_conv_no_padding_32f_kernel1x1_C4 zq_cnn_conv_no_padding_32f_align128bit_kernel1x1_C4
 #define zq_cnn_conv_no_padding_32f_kernel1x1_omp zq_cnn_conv_no_padding_32f_align128bit_kernel1x1_omp
@@ -90,7 +95,8 @@ extern "C" {
 #undef zq_mm_bitor_longlong
 #undef zq_final_sum_q
 
-
+#endif
+#if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_AVX
 #define zq_cnn_conv_no_padding_32f_kernel1x1 zq_cnn_conv_no_padding_32f_align256bit_kernel1x1
 #define zq_cnn_conv_no_padding_32f_kernel1x1_C4 zq_cnn_conv_no_padding_32f_align256bit_kernel1x1_C4
 #define zq_cnn_conv_no_padding_32f_kernel1x1_omp zq_cnn_conv_no_padding_32f_align256bit_kernel1x1_omp
@@ -164,7 +170,7 @@ extern "C" {
 #undef zq_mm_bitor_longlong
 #undef zq_final_sum_q
 
-
+#endif
 
 	void zq_cnn_conv_no_padding_32f_align0_general(
 		const float* in_tensor4D_data,
@@ -358,7 +364,7 @@ extern "C" {
 	}
 
 
-
+#if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_AVX
 #define zq_mm_load_ps _mm256_load_ps
 #define zq_mm_store_ps _mm256_store_ps
 #define zq_mm_add_ps _mm256_add_ps
@@ -1400,6 +1406,8 @@ extern "C" {
 #undef zq_mm_align_size_mul_7
 #undef zq_mm_align_size_mul_8
 #undef zq_final_sum_q
+
+#endif
 
 #if defined(__cplusplus) || defined(c_plusplus) 
 }

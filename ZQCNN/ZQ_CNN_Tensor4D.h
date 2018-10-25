@@ -2,6 +2,7 @@
 #define _ZQ_CNN_TENSOR_4D_H_
 #pragma once
 #include "ZQ_CNN_Defines.h"
+#include "ZQ_CNN_CompileConfig.h"
 #include <string.h>
 #include <stdlib.h>
 #include <vector>

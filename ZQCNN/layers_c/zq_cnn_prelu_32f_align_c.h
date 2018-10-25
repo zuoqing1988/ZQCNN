@@ -1,6 +1,6 @@
 #ifndef _ZQ_CNN_PRELU_32F_ALIGN_C_H_
 #define _ZQ_CNN_PRELU_32F_ALIGN_C_H_
-
+#include "..\ZQ_CNN_CompileConfig.h"
 #if defined(__cplusplus) || defined(c_plusplus) 
 extern "C" {
 #endif
@@ -32,6 +32,8 @@ extern "C" {
 		int thread_count
 	);
 
+
+#if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_SSE
 	/*
 	y = max(0,x)+a*min(0,x)
 	*/
@@ -63,6 +65,9 @@ extern "C" {
 		int thread_count
 	);
 
+#endif
+
+#if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_AVX
 	/*
 	y = max(0,x)+a*min(0,x)
 	*/
@@ -93,7 +98,9 @@ extern "C" {
 		const float* slope_data,
 		int thread_count
 	);
+#endif
 
+#if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_SSE
 	
 	/*
 	y = max(x,a*x)
@@ -126,6 +133,9 @@ extern "C" {
 		int thread_count
 	);
 
+#endif
+
+#if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_AVX
 	/*
 	y = max(x,a*x)
 	*/
@@ -156,7 +166,7 @@ extern "C" {
 		const float* slope_data,
 		int thread_count
 	);
-
+#endif
 
 #if defined(__cplusplus) || defined(c_plusplus) //跨平台定义方法
 }

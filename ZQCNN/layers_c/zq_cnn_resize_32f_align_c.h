@@ -1,5 +1,6 @@
 #ifndef _ZQ_CNN_RESIZE_32F_ALIGN_C_H_
 #define _ZQ_CNN_RESIZE_32F_ALIGN_C_H_
+#include "..\ZQ_CNN_CompileConfig.h"
 #if defined(__cplusplus) || defined(c_plusplus) 
 extern "C" {
 #endif
@@ -58,6 +59,7 @@ extern "C" {
 		int out_sliceStep
 	);
 
+#if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_SSE
 	/*WARNING: when scaling to larger images, it may visit the coordinate input[-1][?] or input[?][-1].
 	so, you should allocate the input image with border.
 	Make sure in_off_x >= 0 && in_off_y >=0 && in_off_x+in_rect_width<=in_W && in_off_y+in_rect_height<= in_H,
@@ -111,7 +113,9 @@ extern "C" {
 		int out_widthStep,
 		int out_sliceStep
 	);
+#endif
 
+#if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_AVX
 	/*WARNING: when scaling to larger images, it may visit the coordinate input[-1][?] or input[?][-1].
 	so, you should allocate the input image with border.
 	Make sure in_off_x >= 0 && in_off_y >=0 && in_off_x+in_rect_width<=in_W && in_off_y+in_rect_height<= in_H,
@@ -165,6 +169,8 @@ extern "C" {
 		int out_widthStep,
 		int out_sliceStep
 	);
+#endif
+
 
 #if defined(__cplusplus) || defined(c_plusplus) 
 }

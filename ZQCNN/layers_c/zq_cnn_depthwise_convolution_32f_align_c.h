@@ -1,6 +1,6 @@
 #ifndef _ZQ_CNN_DEPTHWISE_CONVOLUTION_32F_ALIGN_C_H_
 #define _ZQ_CNN_DEPTHWISE_CONVOLUTION_32F_ALIGN_C_H_
-
+#include "..\ZQ_CNN_CompileConfig.h"
 #if defined(__cplusplus) || defined(c_plusplus) 
 extern "C" {
 #endif
@@ -64,6 +64,7 @@ extern "C" {
 		int thread_count
 	);
 
+#if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_SSE
 	void zq_cnn_depthwise_conv_no_padding_32f_align128bit_general(
 		const float* in_tensor4D_data,
 		int in_N,
@@ -122,7 +123,9 @@ extern "C" {
 		int out_sliceStep,
 		int thread_count
 	);
+#endif
 
+#if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_AVX
 	void zq_cnn_depthwise_conv_no_padding_32f_align256bit_general(
 		const float* in_tensor4D_data,
 		int in_N,
@@ -181,7 +184,9 @@ extern "C" {
 		int out_sliceStep,
 		int thread_count
 	);
+#endif
 
+#if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_SSE
 	void zq_cnn_depthwise_conv_no_padding_32f_align128bit_kernel3x3(
 		const float* in_tensor4D_data,
 		int in_N,
@@ -241,8 +246,9 @@ extern "C" {
 		int thread_count
 	);
 
+#endif
 	
-
+#if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_AVX
 	void zq_cnn_depthwise_conv_no_padding_32f_align256bit_kernel3x3(
 		const float* in_tensor4D_data,
 		int in_N,
@@ -301,8 +307,9 @@ extern "C" {
 		int out_sliceStep,
 		int thread_count
 	);
+#endif
 
-
+#if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_SSE
 	/*if C is not 4 (i.e. 1,2,3), the padded channels of filters must be zero*/
 	void zq_cnn_depthwise_conv_no_padding_32f_align128bit_kernel3x3_C4(
 		const float* in_tensor4D_data,
@@ -363,7 +370,9 @@ extern "C" {
 		int out_sliceStep,
 		int thread_count
 	);
+#endif
 
+#if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_AVX
 	/*if C is not 8 (i.e. 1,2,3,4,5,6,7), the padded channels of filters must be zero*/
 	void zq_cnn_depthwise_conv_no_padding_32f_align256bit_kernel3x3_C8(
 		const float* in_tensor4D_data,
@@ -424,8 +433,9 @@ extern "C" {
 		int out_sliceStep,
 		int thread_count
 	);
+#endif
 
-
+#if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_SSE
 	/*if C is not 8 (i.e. 5,6,7), the padded channels of filters must be zero*/
 	void zq_cnn_depthwise_conv_no_padding_32f_align128bit_kernel3x3_C8(
 		const float* in_tensor4D_data,
@@ -486,7 +496,9 @@ extern "C" {
 		int out_sliceStep,
 		int thread_count
 	);
+#endif
 
+#if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_AVX
 	/*if C is not 16 (i.e. 9,10,11,12,13,14,15), the padded channels of filters must be zero*/
 	void zq_cnn_depthwise_conv_no_padding_32f_align256bit_kernel3x3_C16(
 		const float* in_tensor4D_data,
@@ -547,7 +559,9 @@ extern "C" {
 		int out_sliceStep,
 		int thread_count
 	);
+#endif
 
+#if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_SSE
 	/*if C is not 16 (i.e. 13,14,15), the padded channels of filters must be zero*/
 	void zq_cnn_depthwise_conv_no_padding_32f_align128bit_kernel3x3_C16(
 		const float* in_tensor4D_data,
@@ -608,7 +622,9 @@ extern "C" {
 		int out_sliceStep,
 		int thread_count
 	);
+#endif
 
+#if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_AVX
 	/*if C is not 32 (i.e. 25,26,27,28,29,30,31), the padded channels of filters must be zero*/
 	void zq_cnn_depthwise_conv_no_padding_32f_align256bit_kernel3x3_C32(
 		const float* in_tensor4D_data,
@@ -669,8 +685,9 @@ extern "C" {
 		int out_sliceStep,
 		int thread_count
 	);
+#endif
 
-
+#if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_SSE
 	/*if C is not 32 (i.e. 29,30,31), the padded channels of filters must be zero*/
 	void zq_cnn_depthwise_conv_no_padding_32f_align128bit_kernel3x3_C32(
 		const float* in_tensor4D_data,
@@ -731,7 +748,9 @@ extern "C" {
 		int out_sliceStep,
 		int thread_count
 	);
+#endif
 
+#if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_AVX
 	/*if C is not 64 (i.e. 57,58,59,60,61,62,63), the padded channels of filters must be zero*/
 	void zq_cnn_depthwise_conv_no_padding_32f_align256bit_kernel3x3_C64(
 		const float* in_tensor4D_data,
@@ -793,6 +812,9 @@ extern "C" {
 		int thread_count
 	);
 
+#endif
+
+#if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_SSE
 	/*if C is not 64 (i.e. 61,62,63), the padded channels of filters must be zero*/
 	void zq_cnn_depthwise_conv_no_padding_32f_align128bit_kernel3x3_C64(
 		const float* in_tensor4D_data,
@@ -853,7 +875,9 @@ extern "C" {
 		int out_sliceStep,
 		int thread_count
 	);
+#endif
 
+#if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_AVX
 	/*if C is not 128 (i.e. 121,122,123,124,125,126,127), the padded channels of filters must be zero*/
 	void zq_cnn_depthwise_conv_no_padding_32f_align256bit_kernel3x3_C128(
 		const float* in_tensor4D_data,
@@ -915,6 +939,9 @@ extern "C" {
 		int thread_count
 	);
 
+#endif
+
+#if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_SSE
 	/*if C is not 128 (i.e. 125,126,127), the padded channels of filters must be zero*/
 	void zq_cnn_depthwise_conv_no_padding_32f_align128bit_kernel3x3_C128(
 		const float* in_tensor4D_data,
@@ -975,6 +1002,9 @@ extern "C" {
 		int out_sliceStep,
 		int thread_count
 	);
+#endif
+
+#if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_AVX
 
 	/*if C is not 256 (i.e. 249,250,251,252,253,254,255), the padded channels of filters must be zero*/
 	void zq_cnn_depthwise_conv_no_padding_32f_align256bit_kernel3x3_C256(
@@ -1036,7 +1066,9 @@ extern "C" {
 		int out_sliceStep,
 		int thread_count
 	);
+#endif
 
+#if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_SSE
 	/*if C is not 256 (i.e. 253,254,255), the padded channels of filters must be zero*/
 	void zq_cnn_depthwise_conv_no_padding_32f_align128bit_kernel3x3_C256(
 		const float* in_tensor4D_data,
@@ -1097,7 +1129,9 @@ extern "C" {
 		int out_sliceStep,
 		int thread_count
 	);
+#endif
 
+#if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_AVX
 	/*if C is not 512 (i.e. 505,506,507,508,509,510,511), the padded channels of filters must be zero*/
 	void zq_cnn_depthwise_conv_no_padding_32f_align256bit_kernel3x3_C512(
 		const float* in_tensor4D_data,
@@ -1158,6 +1192,8 @@ extern "C" {
 		int out_sliceStep,
 		int thread_count
 	);
+#endif
+
 
 #if defined(__cplusplus) || defined(c_plusplus) //跨平台定义方法
 }

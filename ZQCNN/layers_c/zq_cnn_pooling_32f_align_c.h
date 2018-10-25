@@ -1,6 +1,6 @@
 #ifndef _ZQ_CNN_POOLING_32F_ALIGN_C_H_
 #define _ZQ_CNN_POOLING_32F_ALIGN_C_H_
-
+#include "..\ZQ_CNN_CompileConfig.h"
 #if defined(__cplusplus) || defined(c_plusplus) 
 extern "C" {
 #endif
@@ -99,6 +99,7 @@ extern "C" {
 		int num_threads
 	);
 
+#if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_SSE
 	void zq_cnn_maxpooling_nopadding_suredivided_32f_align128bit_kernel2x2(
 		const float* in_tensor4D_data,
 		int in_N,
@@ -568,7 +569,9 @@ extern "C" {
 		int out_sliceStep,
 		int num_threads
 	);
+#endif
 
+#if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_AVX
 
 	void zq_cnn_maxpooling_nopadding_suredivided_32f_align256bit_kernel2x2(
 		const float* in_tensor4D_data,
@@ -1039,6 +1042,7 @@ extern "C" {
 		int out_sliceStep,
 		int num_threads
 	);
+#endif
 
 #if defined(__cplusplus) || defined(c_plusplus) 
 }

@@ -26,6 +26,8 @@ misrepresented as being the original software.
 
 #ifndef _ZQ_SSE_MATHFUN_H_
 #define _ZQ_SSE_MATHFUN_H_
+#include "..\ZQ_CNN_CompileConfig.h"
+#if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_SSE
 #include <xmmintrin.h>
 
 #if defined(__cplusplus) || defined(c_plusplus) 
@@ -75,5 +77,5 @@ extern "C" {
 #if defined(__cplusplus) || defined(c_plusplus) 
 }
 #endif
-
+#endif
 #endif

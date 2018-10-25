@@ -22,8 +22,13 @@ misrepresented as being the original software.
 3. This notice may not be removed or altered from any source distribution.
 (this is the zlib license)
 */
-
+#include "..\ZQ_CNN_CompileConfig.h"
+#if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_SSE
 #include <xmmintrin.h>
+#if defined(__cplusplus) || defined(c_plusplus) 
+extern "C" {
+#endif
+
 #define USE_SSE2
 /* yes I know, the top of this file is quite ugly */
 
@@ -701,3 +706,9 @@ void sincos_ps(v4sf x, v4sf *s, v4sf *c) {
 	*s = _mm_xor_ps(xmm1, sign_bit_sin);
 	*c = _mm_xor_ps(xmm2, sign_bit_cos);
 }
+
+#if defined(__cplusplus) || defined(c_plusplus) 
+}
+#endif
+
+#endif

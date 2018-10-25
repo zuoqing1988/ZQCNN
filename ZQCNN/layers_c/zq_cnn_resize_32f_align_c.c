@@ -1,3 +1,9 @@
+#include <malloc.h>
+#include <stdlib.h>
+#include <math.h>
+#include <float.h>
+#include "..\ZQ_CNN_CompileConfig.h"
+#if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_SSE
 #include <mmintrin.h> //MMX  
 #include <xmmintrin.h> //SSE(include mmintrin.h)  
 #include <emmintrin.h> //SSE2(include xmmintrin.h)  
@@ -5,19 +11,18 @@
 #include <tmmintrin.h>//SSSE3(include pmmintrin.h)  
 #include <smmintrin.h>//SSE4.1(include tmmintrin.h)  
 #include <nmmintrin.h>//SSE4.2(include smmintrin.h)  
+#endif
+#if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_AVX
 #include <wmmintrin.h>//AES(include nmmintrin.h)  
 #include <immintrin.h>//AVX(include wmmintrin.h)  
 #include <intrin.h>//(include immintrin.h)  
-#include <malloc.h>
-#include <stdlib.h>
-#include <math.h>
-#include <float.h>
-#include "..\ZQ_CNN_CompileConfig.h"
+#endif
 
 #if defined(__cplusplus) || defined(c_plusplus) 
 extern "C" {
 #endif
 
+#if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_SSE
 #define zq_cnn_resize_with_safeborder zq_cnn_resize_with_safeborder_32f_align128bit
 #define zq_cnn_resize_without_safeborder zq_cnn_resize_without_safeborder_32f_align128bit
 #define zq_mm_load_ps _mm_load_ps
@@ -41,8 +46,9 @@ extern "C" {
 #undef zq_mm_sub_ps
 #undef zq_mm_type
 #undef zq_mm_align_size
+#endif
 
-
+#if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_AVX
 #define zq_cnn_resize_with_safeborder zq_cnn_resize_with_safeborder_32f_align256bit
 #define zq_cnn_resize_without_safeborder zq_cnn_resize_without_safeborder_32f_align256bit
 #define zq_mm_load_ps _mm256_load_ps
@@ -66,6 +72,7 @@ extern "C" {
 #undef zq_mm_sub_ps
 #undef zq_mm_type
 #undef zq_mm_align_size
+#endif
 
 	/*WARNING: when scaling to larger images, it may visit the coordinate input[-1][?] or input[?][-1].
 	so, you should allocate the input image with border.

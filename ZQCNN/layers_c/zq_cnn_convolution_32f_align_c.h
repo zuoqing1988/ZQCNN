@@ -1,6 +1,6 @@
 #ifndef _ZQ_CNN_CONVOLUTION_32F_ALIGN_C_H_
 #define _ZQ_CNN_CONVOLUTION_32F_ALIGN_C_H_
-
+#include "..\ZQ_CNN_CompileConfig.h"
 #if defined(__cplusplus) || defined(c_plusplus) 
 extern "C" {
 #endif
@@ -67,6 +67,8 @@ extern "C" {
 		int out_sliceStep,
 		int thread_count
 	);
+
+#if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_SSE
 
 	void zq_cnn_conv_no_padding_32f_align128bit_kernel1x1(
 		const float* in_tensor4D_data,
@@ -477,7 +479,9 @@ extern "C" {
 		int out_sliceStep,
 		int thread_count
 	);
+#endif
 
+#if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_AVX
 	void zq_cnn_conv_no_padding_32f_align256bit_kernel1x1(
 		const float* in_tensor4D_data,
 		int in_N,
@@ -1148,6 +1152,7 @@ extern "C" {
 		int out_sliceStep,
 		int thread_count
 	);
+#endif
 
 
 #if defined(__cplusplus) || defined(c_plusplus) //跨平台定义方法

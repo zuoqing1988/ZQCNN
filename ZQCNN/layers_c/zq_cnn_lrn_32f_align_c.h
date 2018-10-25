@@ -1,6 +1,6 @@
 #ifndef _ZQ_CNN_LRN_32F_ALIGN_C_H_
 #define _ZQ_CNN_LRN_32F_ALIGN_C_H_
-
+#include "..\ZQ_CNN_CompileConfig.h"
 #if defined(__cplusplus) || defined(c_plusplus) 
 extern "C" {
 #endif
@@ -24,6 +24,7 @@ extern "C" {
 		int out_sliceStep
 	);
 
+#if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_SSE
 	void zq_cnn_lrn_across_channels_32f_align128bit(
 		int local_size,		// must be odd number
 		float alpha,
@@ -42,7 +43,9 @@ extern "C" {
 		int out_widthStep,
 		int out_sliceStep
 	);
+#endif
 
+#if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_AVX
 	void zq_cnn_lrn_across_channels_32f_align256bit(
 		int local_size,		// must be odd number
 		float alpha,
@@ -61,6 +64,8 @@ extern "C" {
 		int out_widthStep,
 		int out_sliceStep
 	);
+#endif
+
 
 #if defined(__cplusplus) || defined(c_plusplus) 
 }

@@ -239,14 +239,14 @@
     <ClInclude Include="ZQ_CNN_MouthDetector.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="ZQ_CNN_ComplieConfig.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
     <ClInclude Include="layers_c\zq_cnn_sqrt_32f_align_c.h">
       <Filter>layers_c</Filter>
     </ClInclude>
     <ClInclude Include="layers_c\zq_cnn_reduction_32f_align_c.h">
       <Filter>layers_c</Filter>
+    </ClInclude>
+    <ClInclude Include="ZQ_CNN_CompileConfig.h">
+      <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

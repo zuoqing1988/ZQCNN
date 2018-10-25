@@ -1,3 +1,6 @@
+#include <stdio.h>
+#include "..\ZQ_CNN_CompileConfig.h"
+#if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_SSE
 #include <mmintrin.h> //MMX  
 #include <xmmintrin.h> //SSE(include mmintrin.h)  
 #include <emmintrin.h> //SSE2(include xmmintrin.h)  
@@ -5,17 +8,18 @@
 #include <tmmintrin.h>//SSSE3(include pmmintrin.h)  
 #include <smmintrin.h>//SSE4.1(include tmmintrin.h)  
 #include <nmmintrin.h>//SSE4.2(include smmintrin.h)  
+#endif 
+#if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_AVX
 #include <wmmintrin.h>//AES(include nmmintrin.h)  
 #include <immintrin.h>//AVX(include wmmintrin.h)  
 #include <intrin.h>//(include immintrin.h)  
-#include <stdio.h>
-#include "..\ZQ_CNN_CompileConfig.h"
+#endif
 
 #if defined(__cplusplus) || defined(c_plusplus) 
 extern "C" {
 #endif
 
-
+#if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_SSE
 #define zq_cnn_addbias_32f_align zq_cnn_addbias_32f_align128bit
 #define zq_cnn_addbias_32f_align_omp zq_cnn_addbias_32f_align128bit_omp
 #define zq_mm_load_ps _mm_load_ps
@@ -53,7 +57,9 @@ extern "C" {
 #undef zq_mm_align_size_mul_16
 #undef zq_mm_align_size_mul_32
 
+#endif
 
+#if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_AVX
 #define zq_cnn_addbias_32f_align zq_cnn_addbias_32f_align256bit
 #define zq_cnn_addbias_32f_align_omp zq_cnn_addbias_32f_align256bit_omp
 #define zq_mm_load_ps _mm256_load_ps
@@ -90,7 +96,7 @@ extern "C" {
 #undef zq_mm_align_size_mul_8
 #undef zq_mm_align_size_mul_16
 #undef zq_mm_align_size_mul_32
-
+#endif
 
 	void zq_cnn_addbias_32f_align0(
 		float* in_tensor4D_data,	// in & out

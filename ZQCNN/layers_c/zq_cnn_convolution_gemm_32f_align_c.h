@@ -1,10 +1,11 @@
 #ifndef _ZQ_CNN_CONVOLUTION_GEMM_32F_ALIGN_C_H_
 #define _ZQ_CNN_CONVOLUTION_GEMM_32F_ALIGN_C_H_
-
+#include "..\ZQ_CNN_CompileConfig.h"
 #if defined(__cplusplus) || defined(c_plusplus) 
 extern "C" {
 #endif
 
+#if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_SSE
 	/*in_pixStep must be equal to filter_pixStep,
 	and the aligned channels should be set to zero*/
 	void zq_cnn_conv_no_padding_gemm_32f_align128bit_same_pixstep(
@@ -105,7 +106,9 @@ extern "C" {
 		int out_sliceStep,
 		int thread_count
 	);
+#endif
 
+#if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_AVX
 	/*in_pixStep must be equal to filter_pixStep,
 	and the aligned channels should be set to zero*/
 	void zq_cnn_conv_no_padding_gemm_32f_align256bit_same_pixstep(
@@ -206,7 +209,9 @@ extern "C" {
 		int out_sliceStep,
 		int thread_count
 	);
+#endif
 
+#if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_SSE
 	/*in_pixStep must be equal to filter_pixStep,
 	and the aligned channels should be set to zero*/
 	void zq_cnn_conv_no_padding_gemm_32f_align128bit_same_pixstep_batch(
@@ -274,6 +279,9 @@ extern "C" {
 		int thread_count
 	);
 
+#endif
+
+#if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_AVX
 	/*in_pixStep must be equal to filter_pixStep,
 	and the aligned channels should be set to zero*/
 	void zq_cnn_conv_no_padding_gemm_32f_align256bit_same_pixstep_batch(
@@ -340,6 +348,7 @@ extern "C" {
 		int out_sliceStep,
 		int thread_count
 	);
+#endif
 
 	/*in_pixStep can be different with filter_pixStep,
 	and the aligned channels should be set to zero*/
@@ -408,6 +417,7 @@ extern "C" {
 		int thread_count
 	);
 
+#if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_SSE
 	/*in_pixStep can be different with filter_pixStep,
 	and the aligned channels should be set to zero*/
 	void zq_cnn_conv_no_padding_gemm_32f_align128bit_same_or_notsame_pixstep(
@@ -541,6 +551,9 @@ extern "C" {
 		int out_sliceStep,
 		int thread_count
 	);
+#endif
+
+#if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_AVX
 
 	/*in_pixStep can be different with filter_pixStep,
 	and the aligned channels should be set to zero*/
@@ -675,6 +688,7 @@ extern "C" {
 		int out_sliceStep,
 		int thread_count
 	);
+#endif
 
 	/*in_pixStep can be different with filter_pixStep,
 	and the aligned channels should be set to zero*/
@@ -743,6 +757,7 @@ extern "C" {
 		int thread_count
 	);
 
+#if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_SSE
 	/*in_pixStep can be different with filter_pixStep,
 	and the aligned channels should be set to zero*/
 	void zq_cnn_conv_no_padding_gemm_32f_align128bit_same_or_notsame_pixstep_batch(
@@ -809,7 +824,9 @@ extern "C" {
 		int out_sliceStep,
 		int thread_count
 	);
+#endif
 
+#if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_AVX
 	/*in_pixStep can be different with filter_pixStep,
 	and the aligned channels should be set to zero*/
 	void zq_cnn_conv_no_padding_gemm_32f_align256bit_same_or_notsame_pixstep_batch(
@@ -876,7 +893,7 @@ extern "C" {
 		int out_sliceStep,
 		int thread_count
 	);
-
+#endif
 
 
 #if defined(__cplusplus) || defined(c_plusplus) 
