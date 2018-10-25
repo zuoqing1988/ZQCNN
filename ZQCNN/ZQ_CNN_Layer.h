@@ -260,10 +260,10 @@ namespace ZQ
 				if (show_debug_info)
 				{
 					double time = __max(1000 * (t2 - t1), 1e-9);
-					double mop = (double)(*tops)[0]->GetH()* (*tops)[0]->GetW()* filters->GetN()* filters->GetH()* filters->GetW()* filters->GetC();
+					double mop = (double)(*tops)[0]->GetN()*(*tops)[0]->GetH()* (*tops)[0]->GetW()* filters->GetN()* filters->GetH()* filters->GetW()* filters->GetC();
 					mop /= 1024 * 1024;
-					printf("Conv layer:%s %.3f ms HW %dx%d filter: NHWC %d x %d x %d x %d, MUL = %.3f M, GFLOPS=%.3f\n",
-						name.c_str(), 1000 * (t2 - t1), (*tops)[0]->GetH(), (*tops)[0]->GetW(), filters->GetN(), filters->GetH(), filters->GetW(), filters->GetC(),
+					printf("Conv layer:%s %.3f ms NHW %dx%dx%d filter: NHWC %d x %d x %d x %d, MUL = %.3f M, GFLOPS=%.3f\n",
+						name.c_str(), 1000 * (t2 - t1), (*tops)[0]->GetN(), (*tops)[0]->GetH(), (*tops)[0]->GetW(), filters->GetN(), filters->GetH(), filters->GetW(), filters->GetC(),
 						mop, mop / time);
 				}
 				return ret;
@@ -279,10 +279,10 @@ namespace ZQ
 				if (show_debug_info)
 				{
 					double time = __max(1000 * (t2 - t1), 1e-9);
-					double mop = (double)(*tops)[0]->GetH()* (*tops)[0]->GetW()* filters->GetN()* filters->GetH()* filters->GetW()* filters->GetC();
+					double mop = (double)(*tops)[0]->GetN()*(*tops)[0]->GetH()* (*tops)[0]->GetW()* filters->GetN()* filters->GetH()* filters->GetW()* filters->GetC();
 					mop /= 1024 * 1024;
-					printf("Conv layer:%s %.3f ms HW %dx%d filter: NHWC %d x %d x %d x %d, MUL = %.3f M, GFLOPS=%.3f\n",
-						name.c_str(), 1000 * (t2 - t1), (*tops)[0]->GetH(), (*tops)[0]->GetW(), filters->GetN(), filters->GetH(), filters->GetW(), filters->GetC(),
+					printf("Conv layer:%s %.3f ms NHW %dx%dx%d filter: NHWC %d x %d x %d x %d, MUL = %.3f M, GFLOPS=%.3f\n",
+						name.c_str(), 1000 * (t2 - t1), (*tops)[0]->GetN(), (*tops)[0]->GetH(), (*tops)[0]->GetW(), filters->GetN(), filters->GetH(), filters->GetW(), filters->GetC(),
 						mop, mop / time);
 				}
 				return ret;
@@ -675,10 +675,10 @@ namespace ZQ
 				if (show_debug_info)
 				{
 					double time = __max(1000 * (t2 - t1),1e-9);
-					double mop = (double)(*tops)[0]->GetH()* (*tops)[0]->GetW()* filters->GetN()* filters->GetH()* filters->GetW()* filters->GetC();
+					double mop = (double)(*tops)[0]->GetN()*(*tops)[0]->GetH()* (*tops)[0]->GetW()* filters->GetN()* filters->GetH()* filters->GetW()* filters->GetC();
 					mop /= 1024 * 1024;
-					printf("DwConv layer:%s %.3f ms HW %dx%d filter: NHWC %d x %d x %d x %d, MUL = %.3f M, GFLOPS=%.3f\n",
-						name.c_str(), 1000 * (t2 - t1), (*tops)[0]->GetH(), (*tops)[0]->GetW(), filters->GetN(), filters->GetH(), filters->GetW(), filters->GetC(),
+					printf("DwConv layer:%s %.3f ms NHW %dx%dx%d filter: NHWC %d x %d x %d x %d, MUL = %.3f M, GFLOPS=%.3f\n",
+						name.c_str(), 1000 * (t2 - t1), (*tops)[0]->GetN(), (*tops)[0]->GetH(), (*tops)[0]->GetW(), filters->GetN(), filters->GetH(), filters->GetW(), filters->GetC(),
 						mop, mop / time);
 					
 				}
@@ -696,10 +696,10 @@ namespace ZQ
 				if (show_debug_info)
 				{
 					double time = __max(1000 * (t2 - t1), 1e-9);
-					double mop = (double)(*tops)[0]->GetH()* (*tops)[0]->GetW()* filters->GetN()* filters->GetH()* filters->GetW()* filters->GetC();
+					double mop = (double)(*tops)[0]->GetN()*(*tops)[0]->GetH()* (*tops)[0]->GetW()* filters->GetN()* filters->GetH()* filters->GetW()* filters->GetC();
 					mop /= 1024 * 1024;
-					printf("DwConv layer:%s %.3f ms HW %dx%d filter: NHWC %d x %d x %d x %d, MUL = %.3f M, GFLOPS=%.3f\n",
-						name.c_str(), 1000 * (t2 - t1), (*tops)[0]->GetH(), (*tops)[0]->GetW(), filters->GetN(), filters->GetH(), filters->GetW(), filters->GetC(),
+					printf("DwConv layer:%s %.3f ms NHW %dx%dx%d filter: NHWC %d x %d x %d x %d, MUL = %.3f M, GFLOPS=%.3f\n",
+						name.c_str(), 1000 * (t2 - t1), (*tops)[0]->GetN(), (*tops)[0]->GetH(), (*tops)[0]->GetW(), filters->GetN(), filters->GetH(), filters->GetW(), filters->GetC(),
 						mop, mop / time);
 				}
 				return ret;
@@ -2420,7 +2420,9 @@ namespace ZQ
 				bool ret = ZQ_CNN_Forward_SSEUtils::InnerProductWithBias(*((*bottoms)[0]), *filters, *bias, *((*tops)[0]));
 				double t2 = omp_get_wtime();
 				if (show_debug_info)
-					printf("Innerproduct layer: %.3f ms HW %dx%d filter: NHWC %d x %d x %d x %d\n", 1000 * (t2 - t1), (*tops)[0]->GetH(), (*tops)[0]->GetW(), filters->GetN(), filters->GetH(), filters->GetW(), filters->GetC());
+					printf("Innerproduct layer: %.3f ms NHW %dx%dx%d filter: NHWC %d x %d x %d x %d\n", 
+						1000 * (t2 - t1), (*tops)[0]->GetN(), (*tops)[0]->GetH(), (*tops)[0]->GetW(), 
+						filters->GetN(), filters->GetH(), filters->GetW(), filters->GetC());
 				return ret;
 			}
 			else
