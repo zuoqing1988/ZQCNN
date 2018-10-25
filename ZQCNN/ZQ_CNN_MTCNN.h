@@ -189,7 +189,7 @@ namespace ZQ
 				double t13 = omp_get_wtime();
 				//
 				const ZQ_CNN_Tensor4D* score = pnet.GetBlobByName("prob1");
-				//const ZQ_CNN_Tensor4D* location = pnet.GetBlobByName("conv4-2");
+				const ZQ_CNN_Tensor4D* location = pnet.GetBlobByName("conv4-2");
 				//for pooling 
 				
 				int count = 0;
@@ -198,7 +198,10 @@ namespace ZQ
 				int scoreW = score->GetW();
 				int scorePixStep = score->GetPixelStep();
 				const float *p = score->GetFirstPixelPtr() + 1;
-				
+				/*const float* location_ptr = location->GetFirstPixelPtr();
+				int locationPixStep = location->GetPixelStep();
+				int locationWidthStep = location->GetWidthStep();*/
+				//printf("p[0]=%f p[1]=%f\n", p[-1], p[0]);
 				if (scoreW <= block_size && scoreH < block_size)
 				{
 					ZQ_CNN_BBox bbox;
@@ -216,6 +219,9 @@ namespace ZQ
 								bbox.col1 = round((stride*col + 1) / scales[i]);
 								bbox.row2 = round((stride*row + 1 + cellsize) / scales[i]);
 								bbox.col2 = round((stride*col + 1 + cellsize) / scales[i]);
+								/*const float* cur_location_ptr = location_ptr + row*locationWidthStep + col*locationPixStep;
+								for (int j = 0; j < 4; j++)
+									bbox.regreCoord[j] = cur_location_ptr[j];*/
 								bbox.exist = true;
 								bbox.area = (bbox.row2 - bbox.row1)*(bbox.col2 - bbox.col1);
 								bbox.need_check_overlap_count = (row >= border_size && row < scoreH - border_size)
@@ -227,13 +233,16 @@ namespace ZQ
 							p += scorePixStep;
 						}
 					}
+					int before_count = bounding_boxes[i].size();
 					ZQ_CNN_BBoxUtils::_nms(bounding_boxes[i], bounding_scores[i], 0.5f/*nms_threshold[0]*/, "Union", pnet_overlap_thresh_count);
+					int after_count = bounding_boxes[i].size();
 					double t14 = omp_get_wtime();
 					if (show_debug_info)
-						printf("nms cost: %.3f ms\n", 1000 * (t14 - t13));
+						printf("nms cost: %.3f ms, (%d-->%d)\n", 1000 * (t14 - t13), before_count, after_count);
 				}
 				else
 				{
+					int before_count = 0, after_count = 0;
 					int block_H_num = __max(1,scoreH / block_size);
 					int block_W_num = __max(1,scoreW / block_size);
 					int block_num = block_H_num*block_W_num;
@@ -274,8 +283,11 @@ namespace ZQ
 									order.oriOrder = count;
 									bbox.row1 = round((stride*row + 1) / scales[i]);
 									bbox.col1 = round((stride*col + 1) / scales[i]);
-									bbox.row2 = round((stride*row + 1 + cellsize) / scales[i]);
-									bbox.col2 = round((stride*col + 1 + cellsize) / scales[i]);
+									bbox.row2 = round((stride*row + 1 + cellsize) / scales[i]) - 1;
+									bbox.col2 = round((stride*col + 1 + cellsize) / scales[i]) - 1;
+									/*const float* cur_location_ptr = location_ptr + row*locationWidthStep + col*locationPixStep;
+									for (int j = 0; j < 4; j++)
+										bbox.regreCoord[j] = cur_location_ptr[j];*/
 									bbox.exist = true;
 									bbox.need_check_overlap_count = (row >= border_size && row < scoreH - border_size)
 										&& (col >= border_size && col < scoreW - border_size);
@@ -287,7 +299,11 @@ namespace ZQ
 								p += scorePixStep;
 							}
 						}
+						int tmp_before_count = tmp_bounding_boxes[bb].size();
 						ZQ_CNN_BBoxUtils::_nms(tmp_bounding_boxes[bb], tmp_bounding_scores[bb], 0.5f/*nms_threshold[0]*/, "Union", 4);	
+						int tmp_after_count = tmp_bounding_boxes[bb].size();
+						before_count += tmp_before_count;
+						after_count += tmp_after_count;
 					}
 					
 					for (int bb = 0; bb < block_num; bb++)
@@ -308,7 +324,7 @@ namespace ZQ
 
 					double t14 = omp_get_wtime();
 					if (show_debug_info)
-						printf("nms cost: %.3f ms\n", 1000 * (t14 - t13));
+						printf("nms cost: %.3f ms, (%d-->%d)\n", 1000 * (t14 - t13), before_count,after_count);
 				}
 				
 			}
@@ -351,6 +367,7 @@ namespace ZQ
 			/////////////////
 			//second stage
 			rnet.TurnOffShowDebugInfo();
+			//rnet.TurnOnShowDebugInfo();
 			count = 0;
 			std::vector<ZQ_CNN_BBox>::iterator it = firstBbox.begin();
 			std::vector<ZQ_CNN_BBox> secondBbox;

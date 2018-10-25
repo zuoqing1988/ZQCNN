@@ -129,7 +129,7 @@ namespace ZQ
 					top_ptrs.push_back(blobs[tops[i][j]]);
 				
 				layers[i]->show_debug_info = show_debug_info;
-				/*printf("%d\n", i);*/
+				//printf("%d\n", i);
 				if (!layers[i]->Forward(&bottom_ptrs, &top_ptrs, num_threads))
 				{
 					blobs[0] = 0;
@@ -914,7 +914,13 @@ namespace ZQ
 						if (name_it == map_name_to_blob_idx.end())
 						{
 							int idx = blobs.size();
+#if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_AVX
 							ZQ_CNN_Tensor4D* blob = new ZQ_CNN_Tensor4D_NHW_C_Align256bit();
+#elif ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_SSE
+							ZQ_CNN_Tensor4D* blob = new ZQ_CNN_Tensor4D_NHW_C_Align128bit();
+#else
+							ZQ_CNN_Tensor4D* blob = new ZQ_CNN_Tensor4D_NHW_C_Align0();
+#endif
 							if (blob == 0)
 							{
 								std::cout << "failed to allocate a ZQ_CNN_Tensor4D\n";

@@ -167,26 +167,28 @@ extern "C" {
 		//int filter_pixelStep,
 		//int filter_widthStep,
 		//int filter_sliceStep,
-		float* out_tensor4D_data
+		float* out_tensor4D_data,
 		//int out_N,	// must be in_N
 		//int out_H,	// must be 1
 		//int out_W,	// must be 1
 		//int out_C,	// must be filter_N
 		//int out_pixelStep,
 		//int out_widthStep,
-		//int out_sliceStep
+		int out_sliceStep
 	)
 	{
 		int out_n, out_c, in_hwc;
 		const float* in_slice_ptr;
+		float* out_slice_ptr;
 		const float* filter_slice_ptr, *filter_c_ptr;
 		const float* cur_in_c_ptr;
 		float* out_pos_ptr;
 		float sum;
-		out_pos_ptr = out_tensor4D_data;
-		for (out_n = 0, in_slice_ptr = in_tensor4D_data;
-			out_n < in_N; out_n++, in_slice_ptr += in_HWC)
+		
+		for (out_n = 0, in_slice_ptr = in_tensor4D_data, out_slice_ptr = out_tensor4D_data;
+			out_n < in_N; out_n++, in_slice_ptr += in_HWC, out_slice_ptr += out_sliceStep)
 		{
+			out_pos_ptr = out_slice_ptr;
 			for (out_c = 0, filter_slice_ptr = filters_data;
 				out_c < filter_N;
 				out_c++, filter_slice_ptr += in_HWC)

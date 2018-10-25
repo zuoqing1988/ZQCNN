@@ -214,7 +214,7 @@ bool ZQ_CNN_Tensor4D_NHW_C_Align0::ResizeBilinearRect(ZQ_CNN_Tensor4D& dst, int 
 				dst.GetFirstPixelPtr(), dst_H, dst_W, dstPixelStep, dstWidthStep, dstSliceStep);
 		else
 #endif
-#if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPESSE
+#if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_SSE
 		if(align_mode == ALIGN_128bit)
 			zq_cnn_resize_with_safeborder_32f_align128bit(firstPixelData, N, H, W, C, pixelStep, widthStep, sliceStep, src_off_x, src_off_y, src_rect_w, src_rect_h,
 				dst.GetFirstPixelPtr(), dst_H, dst_W, dstPixelStep, dstWidthStep, dstSliceStep);

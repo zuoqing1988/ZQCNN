@@ -88,24 +88,28 @@ namespace ZQ
 #else
 			align_mode = __min(align_mode, ZQ_CNN_Tensor4D::ALIGN_0);
 #endif
+			//align_mode = ZQ_CNN_Tensor4D::ALIGN_128bit;
 			//output.Reset();
 			if (num_threads <= 1)
 			{
 				_convolution_nopadding(align_mode, in_firstPixelData, in_N, in_H + (padH << 1), in_W + (padW << 1), in_C, in_pixStep, in_widthStep, in_sliceStep,
 					filter_firstPixelData, filter_N, filter_H, filter_W, filter_C, filter_pixStep, filter_widthStep, filter_sliceStep, strideH, strideW, dilation_H, dilation_W,
 					out_firstPixelData, need_N, need_H, need_W, need_C, out_pixStep, out_widthStep, out_sliceStep);
-				_addbias(__min(bias.GetAlignType(), output.GetAlignType()), out_firstPixelData, need_N, need_H, need_W, need_C, out_pixStep, out_widthStep, out_sliceStep,
+				//printf("out_data = %f\n", out_firstPixelData[0]);
+				_addbias(__min(bias.GetAlignType(), align_mode), out_firstPixelData, need_N, need_H, need_W, need_C, out_pixStep, out_widthStep, out_sliceStep,
 					bias_firstPixelData);
+				//printf("out_data = %f\n", out_firstPixelData[0]);
 			}
 			else
 			{
 				_convolution_nopadding_omp(align_mode, in_firstPixelData, in_N, in_H + (padH << 1), in_W + (padW << 1), in_C, in_pixStep, in_widthStep, in_sliceStep,
 					filter_firstPixelData, filter_N, filter_H, filter_W, filter_C, filter_pixStep, filter_widthStep, filter_sliceStep, strideH, strideW, dilation_H, dilation_W,
 					out_firstPixelData, need_N, need_H, need_W, need_C, out_pixStep, out_widthStep, out_sliceStep, num_threads);
-				_addbias_omp(__min(bias.GetAlignType(), output.GetAlignType()), out_firstPixelData, need_N, need_H, need_W, need_C, out_pixStep, out_widthStep, out_sliceStep,
+				//printf("out_data = %f\n", out_firstPixelData[0]);
+				_addbias_omp(__min(bias.GetAlignType(), align_mode), out_firstPixelData, need_N, need_H, need_W, need_C, out_pixStep, out_widthStep, out_sliceStep,
 					bias_firstPixelData, num_threads);
+				//printf("out_data = %f\n", out_firstPixelData[0]);
 			}
-			
 			
 			double t2 = omp_get_wtime();
 			//printf("utils:conv: %.3f ms\n", (t2 - t1) * 1000);
@@ -180,6 +184,7 @@ namespace ZQ
 #else
 			align_mode = __min(align_mode, ZQ_CNN_Tensor4D::ALIGN_0);
 #endif
+			//align_mode = ZQ_CNN_Tensor4D::ALIGN_128bit;
 			//output.Reset();
 			if (num_threads <= 1)
 			{
@@ -193,7 +198,7 @@ namespace ZQ
 					filter_firstPixelData, filter_N, filter_H, filter_W, filter_C, filter_pixStep, filter_widthStep, filter_sliceStep, strideH, strideW, dilation_H, dilation_W,
 					out_firstPixelData, need_N, need_H, need_W, need_C, out_pixStep, out_widthStep, out_sliceStep, num_threads);
 			}
-			
+			//printf("out_data = %f\n", out_firstPixelData[0]);
 			return true;
 		}
 
@@ -269,13 +274,14 @@ namespace ZQ
 #else
 			align_mode = __min(align_mode, ZQ_CNN_Tensor4D::ALIGN_0);
 #endif
+			//align_mode = ZQ_CNN_Tensor4D::ALIGN_128bit;
 			//output.Reset();
 			if (num_threads <= 1)
 			{
 				_depthwise_convolution_nopadding(align_mode, in_firstPixelData, in_N, in_H + (padH << 1), in_W + (padW << 1), in_C, in_pixStep, in_widthStep, in_sliceStep,
 					filter_firstPixelData, filter_N, filter_H, filter_W, filter_C, filter_pixStep, filter_widthStep, filter_sliceStep, strideH, strideW,
 					out_firstPixelData, need_N, need_H, need_W, need_C, out_pixStep, out_widthStep, out_sliceStep);
-				_addbias(__min(bias.GetAlignType(), output.GetAlignType()), out_firstPixelData, need_N, need_H, need_W, need_C, out_pixStep, out_widthStep, out_sliceStep,
+				_addbias(__min(bias.GetAlignType(), align_mode), out_firstPixelData, need_N, need_H, need_W, need_C, out_pixStep, out_widthStep, out_sliceStep,
 					bias_firstPixelData);
 			}
 			else
@@ -283,7 +289,7 @@ namespace ZQ
 				_depthwise_convolution_nopadding_omp(align_mode, in_firstPixelData, in_N, in_H + (padH << 1), in_W + (padW << 1), in_C, in_pixStep, in_widthStep, in_sliceStep,
 					filter_firstPixelData, filter_N, filter_H, filter_W, filter_C, filter_pixStep, filter_widthStep, filter_sliceStep, strideH, strideW,
 					out_firstPixelData, need_N, need_H, need_W, need_C, out_pixStep, out_widthStep, out_sliceStep, num_threads);
-				_addbias_omp(__min(bias.GetAlignType(), output.GetAlignType()), out_firstPixelData, need_N, need_H, need_W, need_C, out_pixStep, out_widthStep, out_sliceStep,
+				_addbias_omp(__min(bias.GetAlignType(), align_mode), out_firstPixelData, need_N, need_H, need_W, need_C, out_pixStep, out_widthStep, out_sliceStep,
 					bias_firstPixelData, num_threads);
 			}
 			
@@ -361,7 +367,7 @@ namespace ZQ
 #else
 			align_mode = __min(align_mode, ZQ_CNN_Tensor4D::ALIGN_0);
 #endif
-
+			//align_mode = ZQ_CNN_Tensor4D::ALIGN_128bit;
 			//output.Reset();
 			if (num_threads <= 1)
 			{
@@ -443,12 +449,13 @@ namespace ZQ
 #else
 			align_mode = __min(align_mode, ZQ_CNN_Tensor4D::ALIGN_0);
 #endif
+			//align_mode = ZQ_CNN_Tensor4D::ALIGN_0;
 			if (num_threads <= 1)
 			{
 				_inner_product(align_mode, in_firstPixelData, in_N, in_H, in_W, in_C, in_pixStep, in_widthStep, in_sliceStep,
 					filter_firstPixelData, filter_N, filter_pixStep, filter_widthStep, filter_sliceStep,
 					out_firstPixelData, need_N, out_sliceStep, num_threads);
-				_addbias(output.GetAlignType(), output.GetFirstPixelPtr(), need_N, need_H, need_W, need_C, out_pixStep, out_widthStep, out_sliceStep,
+				_addbias(__min(output.GetAlignType(), align_mode), output.GetFirstPixelPtr(), need_N, need_H, need_W, need_C, out_pixStep, out_widthStep, out_sliceStep,
 					bias_firstPixelData);
 			}
 			else
@@ -456,7 +463,7 @@ namespace ZQ
 				_inner_product(align_mode, in_firstPixelData, in_N, in_H, in_W, in_C, in_pixStep, in_widthStep, in_sliceStep,
 					filter_firstPixelData, filter_N, filter_pixStep, filter_widthStep, filter_sliceStep,
 					out_firstPixelData, need_N, out_sliceStep, num_threads);
-				_addbias_omp(output.GetAlignType(), output.GetFirstPixelPtr(), need_N, need_H, need_W, need_C, out_pixStep, out_widthStep, out_sliceStep,
+				_addbias_omp(__min(output.GetAlignType(), align_mode), output.GetFirstPixelPtr(), need_N, need_H, need_W, need_C, out_pixStep, out_widthStep, out_sliceStep,
 					bias_firstPixelData, num_threads);
 			}
 			double t2 = omp_get_wtime();
@@ -524,6 +531,7 @@ namespace ZQ
 #else
 			align_mode = __min(align_mode, ZQ_CNN_Tensor4D::ALIGN_0);
 #endif
+			//align_mode = ZQ_CNN_Tensor4D::ALIGN_0;
 			_inner_product(align_mode, in_firstPixelData, in_N, in_H, in_W, in_C, in_pixStep, in_widthStep, in_sliceStep,
 				filter_firstPixelData, filter_N, filter_pixStep, filter_widthStep, filter_sliceStep,
 				out_firstPixelData, need_N, out_sliceStep, num_threads);
@@ -786,6 +794,7 @@ namespace ZQ
 			align_mode = __min(align_mode, ZQ_CNN_Tensor4D::ALIGN_0);
 #endif
 			_softmax(align_mode, axis, data, N, H, W, C, pixStep, widthStep, sliceStep, num_threads);
+			//printf("data = %f\n", data[0]);
 			return true;
 		}
 

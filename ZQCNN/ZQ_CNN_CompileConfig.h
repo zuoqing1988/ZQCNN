@@ -1,6 +1,5 @@
 #ifndef _ZQ_CNN_COMPILE_CONFIG_H_
 #define _ZQ_CNN_COMPILE_CONFIG_H_
-#pragma once
 
 #define ZQ_CNN_SSETYPE_NONE 0
 #define ZQ_CNN_SSETYPE_SSE 1
