@@ -4,7 +4,7 @@
 #include "ZQ_CNN_Defines.h"
 #include "ZQ_CNN_Tensor4D.h"
 #include "ZQ_CNN_BBoxUtils.h"
-#include "ZQ_CNN_ComplieConfig.h"
+#include "ZQ_CNN_CompileConfig.h"
 #include <vector>
 #include <algorithm>
 #include <fstream>

@@ -19,7 +19,7 @@
 #include "ZQ_CNN_Forward_SSEUtils.h"
 #include "ZQ_CNN_BBoxUtils.h"
 #include <algorithm>
-#include "ZQ_CNN_ComplieConfig.h"
+#include "ZQ_CNN_CompileConfig.h"
 
 using namespace ZQ;
 
