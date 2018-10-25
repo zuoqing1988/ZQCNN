@@ -182,7 +182,7 @@ int make_database(int argc, char** argv, bool compact, int mode_size)
 		}
 		for (int i = 0; i < max_thread_num; i++)
 		{
-			recognizers.push_back(&recognizer_112X112[i]);
+			recognizers.push_back(&recognizer_112X96[i]);
 		}
 		if (compact)
 		{
