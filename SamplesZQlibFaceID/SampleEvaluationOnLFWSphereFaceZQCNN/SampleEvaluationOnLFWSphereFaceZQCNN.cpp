@@ -1,6 +1,6 @@
 #include "ZQ_FaceIDPrecisionEvaluation.h"
 #include "ZQ_FaceRecognizerSphereFaceZQCNN.h"
-#include "ZQ_CNN_ComplieConfig.h"
+#include "ZQ_CNN_CompileConfig.h"
 #if ZQ_CNN_USE_BLAS_GEMM
 #include "cblas.h"
 #pragma comment(lib,"libopenblas.lib")

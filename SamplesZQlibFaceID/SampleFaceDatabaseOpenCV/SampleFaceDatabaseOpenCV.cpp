@@ -23,9 +23,6 @@ int load_database_compact(ZQ_FaceDatabaseCompact& database, const std::string& f
 int main(int argc, char** argv)
 {
 	cv::setNumThreads(1);
-#if ZQ_CNN_USE_BLAS_GEMM
-	openblas_set_num_threads(1);
-#endif
 
 	if (argc < 2)
 	{

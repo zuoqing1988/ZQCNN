@@ -4,7 +4,7 @@
 #include "ZQ_MergeSort.h"
 #include <stdio.h>
 #include <io.h>
-#include "ZQ_CNN_ComplieConfig.h"
+#include "ZQ_CNN_CompileConfig.h"
 #if ZQ_CNN_USE_BLAS_GEMM
 #include <cblas.h>
 #pragma comment(lib,"libopenblas.lib")
