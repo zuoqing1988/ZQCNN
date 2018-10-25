@@ -14,7 +14,7 @@
 #include <stdlib.h>
 #include <omp.h>
 
-#include "..\ZQ_CNN_ComplieConfig.h"
+#include "..\ZQ_CNN_CompileConfig.h"
 #if ZQ_CNN_USE_BLAS_GEMM
 #include <cblas.h>
 

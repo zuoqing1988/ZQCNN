@@ -11,7 +11,7 @@
 #include <stdlib.h>
 #include <math.h>
 #include <malloc.h>
-#include "..\ZQ_CNN_ComplieConfig.h"
+#include "..\ZQ_CNN_CompileConfig.h"
 #include "zq_cnn_batchnormscale_32f_align_c.h"
 
 #if defined(__cplusplus) || defined(c_plusplus) 
