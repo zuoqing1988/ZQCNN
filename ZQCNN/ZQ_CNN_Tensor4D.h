@@ -48,6 +48,62 @@ namespace ZQ
 		virtual bool ChangeSize(int N, int H, int W, int C, int borderW, int borderH) = 0;
 		virtual void ShrinkToFit() = 0;
 		virtual bool IsBorderEnabled() const = 0;
+
+		virtual bool ROI(ZQ_CNN_Tensor4D& dst, int off_x, int off_y, int width, int height, int dst_borderH, int dst_borderW) const 
+		{
+			if (off_x < 0 || off_y < 0 || off_x + width > W || off_y + height > H)
+				return false;
+
+			if (!dst.ChangeSize(N, height, width, C, dst_borderH, dst_borderW))
+				return false;
+			int dstWidthStep = dst.GetWidthStep();
+			int dstPixelStep = dst.GetPixelStep();
+			int dstSliceStep = dst.GetSliceStep();
+			int align_mode = __min(GetAlignType(), dst.GetAlignType());
+			const float* src_slice_ptr = GetFirstPixelPtr() + off_y * widthStep + off_x*pixelStep;
+			float* dst_slice_ptr = dst.GetFirstPixelPtr();
+			for (int n = 0; n < N; n++)
+			{
+				const float* src_row_ptr = src_slice_ptr;
+				float* dst_row_ptr = dst_slice_ptr;
+				for (int h = 0; h < height; h++)
+				{
+					const float* src_pix_ptr = src_row_ptr;
+					float* dst_pix_ptr = dst_row_ptr;
+					for (int w = 0; w < width; w++)
+					{
+						memcpy(dst_pix_ptr, src_pix_ptr, sizeof(float)*C);
+						if (C < dstPixelStep)
+							memset(dst_pix_ptr + C, 0, sizeof(float)*(dstPixelStep - C));
+						src_pix_ptr += pixelStep;
+						dst_pix_ptr += dstPixelStep;
+					}
+					src_row_ptr += widthStep;
+					dst_row_ptr += dstWidthStep;
+				}
+				src_slice_ptr += sliceStep;
+				dst_slice_ptr += dstSliceStep;
+			}
+			dst_slice_ptr = dst.GetFirstPixelPtr();
+			for (int n = 0; n < N; n++, dst_slice_ptr += dstSliceStep)
+			{
+				if (dst_borderH > 0)
+				{
+					memset(dst_slice_ptr - dstPixelStep*dst_borderW - dstWidthStep*dst_borderH, 0, sizeof(float)*dstWidthStep*dst_borderH);
+					memset(dst_slice_ptr - dstPixelStep*dst_borderW + dstWidthStep*dst_borderH, 0, sizeof(float)*dstWidthStep*dst_borderH);
+				}
+				if (dst_borderW > 0)
+				{
+					for (int h = 0; h < dst_borderH; h++)
+					{
+						memset(dst_slice_ptr - dstPixelStep*dst_borderW + dstWidthStep*h, 0, sizeof(float)*dstPixelStep*dst_borderW);
+						memset(dst_slice_ptr - dstPixelStep*(dst_borderW << 1) + dstWidthStep*(h + 1), 0, sizeof(float)*dstPixelStep*dst_borderW);
+					}
+				}
+			}
+			return true;
+		}
+
 		virtual bool ConvertFromCompactNCHW(const float* data, int N, int C, int H, int W, int borderW = 0, int borderH = 0)
 		{
 			if (data == 0 || !ChangeSize(N, H, W, C, borderW, borderH))

@@ -1,4 +1,5 @@
 #include "ZQ_CNN_Net.h"
+#include "ZQ_CNN_MTCNN_old.h"
 #include "ZQ_CNN_MTCNN.h"
 #include <vector>
 #include <iostream>
@@ -44,7 +45,7 @@ int main()
 #if ZQ_CNN_USE_BLAS_GEMM
 	openblas_set_num_threads(num_threads);
 #endif
-	Mat image0 = cv::imread("data\\keliamoniz1.jpg", 1);
+	Mat image0 = cv::imread("data\\test2.jpg", 1);
 	if (image0.empty())
 	{
 		cout << "empty image\n";
@@ -55,36 +56,37 @@ int main()
 	ZQ_CNN_MTCNN mtcnn;
 	std::string result_name;
 
-	const int use_pnet20 = false;
+	const int use_pnet20 = true;
+	int thread_num = 8;
 	bool special_handle_very_big_face = false;
 	result_name = "resultdet.jpg";
 	if (use_pnet20)
 	{
 		if (!mtcnn.Init("model\\det1-dw20.zqparams", "model\\det1-dw20-ori.nchwbin",
 			"model\\det2.zqparams", "model\\det2_bgr.nchwbin",
-			"model\\det3.zqparams", "model\\det3_bgr.nchwbin"))
+			"model\\det3.zqparams", "model\\det3_bgr.nchwbin", thread_num))
 		{
 			cout << "failed to init!\n";
 			return EXIT_FAILURE;
 		}
 
-		mtcnn.SetPara(image0.cols, image0.rows, 48, 0.7, 0.7, 0.7, 0.5, 0.5, 0.5, 0.709, 3, 20, 4, special_handle_very_big_face);
+		mtcnn.SetPara(image0.cols, image0.rows, 20, 0.6, 0.7, 0.9, 0.5, 0.5, 0.5, 0.709, 4, 20, 4, special_handle_very_big_face);
 	}
 	else
 	{
 		if (!mtcnn.Init("model\\det1.zqparams", "model\\det1_bgr.nchwbin",
 			"model\\det2.zqparams", "model\\det2_bgr.nchwbin",
-			"model\\det3.zqparams", "model\\det3_bgr.nchwbin"))
+			"model\\det3.zqparams", "model\\det3_bgr.nchwbin", thread_num))
 		{
 			cout << "failed to init!\n";
 			return EXIT_FAILURE;
 		}
 
-		mtcnn.SetPara(image0.cols, image0.rows, 48, 0.6, 0.7, 0.7, 0.5, 0.5, 0.5, 0.709, 4, 12, 2, special_handle_very_big_face);
+		mtcnn.SetPara(image0.cols, image0.rows, 20, 0.6, 0.7, 0.7, 0.5, 0.5, 0.5, 0.709, 4, 12, 2, special_handle_very_big_face);
 	}
 
 	//mtcnn.TurnOnShowDebugInfo();
-	int iters = 1000;
+	int iters = 100;
 	double t1 = omp_get_wtime();
 	for (int i = 0; i < iters; i++)
 	{
@@ -92,10 +94,11 @@ int main()
 			mtcnn.TurnOnShowDebugInfo();
 		else
 			mtcnn.TurnOffShowDebugInfo();
-		if (!mtcnn.Find(image0.data, image0.cols, image0.rows, image0.step[0], thirdBbox, num_threads))
+		if (!mtcnn.Find(image0.data, image0.cols, image0.rows, image0.step[0], thirdBbox))
 		{
 			cout << "failed to find face!\n";
 			//return EXIT_FAILURE;
+			continue;
 		}
 	}
 	double t2 = omp_get_wtime();

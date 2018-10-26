@@ -189,77 +189,82 @@ bool ZQ_CNN_Tensor4D_NHW_C_Align0::ResizeBilinearRect(ZQ_CNN_Tensor4D& dst, int 
 {
 	if (src_off_x < 0 || src_off_y < 0 || src_off_x + src_rect_w > W || src_off_y + src_rect_h > H)
 		return false;
-
-	if (!dst.ChangeSize(N, dst_H, dst_W, C, dst_borderH, dst_borderW))
-		return false;
-
-	int widthStep = GetWidthStep();
-	int pixelStep = GetPixelStep();
-	int dstWidthStep = dst.GetWidthStep();
-	int dstPixelStep = dst.GetPixelStep();
-	int dstSliceStep = dst.GetSliceStep();
-
-	bool can_call_safeborder = true;
-
-	if (dst_W > src_rect_w && (src_off_x == 0 || src_off_x + src_rect_w == W)
-		|| dst_H > src_rect_h && (src_off_y == 0 || src_off_y + src_rect_h == H))
-		can_call_safeborder = false;
-
-	int align_mode = __min(GetAlignType(), dst.GetAlignType());
-	if (can_call_safeborder)
+	if (dst_W == src_rect_w && dst_H == src_rect_h)
 	{
-#if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_AVX
-		if (align_mode == ALIGN_256bit)
-			zq_cnn_resize_with_safeborder_32f_align256bit(firstPixelData, N, H, W, C, pixelStep, widthStep, sliceStep, src_off_x, src_off_y, src_rect_w, src_rect_h,
-				dst.GetFirstPixelPtr(), dst_H, dst_W, dstPixelStep, dstWidthStep, dstSliceStep);
-		else
-#endif
-#if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_SSE
-		if(align_mode == ALIGN_128bit)
-			zq_cnn_resize_with_safeborder_32f_align128bit(firstPixelData, N, H, W, C, pixelStep, widthStep, sliceStep, src_off_x, src_off_y, src_rect_w, src_rect_h,
-				dst.GetFirstPixelPtr(), dst_H, dst_W, dstPixelStep, dstWidthStep, dstSliceStep);
-		else
-#endif
-			zq_cnn_resize_with_safeborder_32f_align0(firstPixelData, N, H, W, C, pixelStep, widthStep, sliceStep, src_off_x, src_off_y, src_rect_w, src_rect_h,
-				dst.GetFirstPixelPtr(), dst_H, dst_W, dstPixelStep, dstWidthStep, dstSliceStep);
+		return ROI(dst, src_off_x, src_off_y, src_rect_w, src_rect_h, dst_borderH, dst_borderW);
 	}
 	else
 	{
+		if (!dst.ChangeSize(N, dst_H, dst_W, C, dst_borderH, dst_borderW))
+			return false;
+
+		int widthStep = GetWidthStep();
+		int pixelStep = GetPixelStep();
+		int dstWidthStep = dst.GetWidthStep();
+		int dstPixelStep = dst.GetPixelStep();
+		int dstSliceStep = dst.GetSliceStep();
+
+		bool can_call_safeborder = true;
+
+		if (dst_W > src_rect_w && (src_off_x == 0 || src_off_x + src_rect_w == W)
+			|| dst_H > src_rect_h && (src_off_y == 0 || src_off_y + src_rect_h == H))
+			can_call_safeborder = false;
+
+		int align_mode = __min(GetAlignType(), dst.GetAlignType());
+		if (can_call_safeborder)
+		{
 #if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_AVX
-		if (align_mode == ALIGN_256bit)
-			zq_cnn_resize_without_safeborder_32f_align256bit(firstPixelData, N, H, W, C, pixelStep, widthStep, sliceStep, src_off_x, src_off_y, src_rect_w, src_rect_h,
-				dst.GetFirstPixelPtr(), dst_H, dst_W, dstPixelStep, dstWidthStep, dstSliceStep);
-		else
+			if (align_mode == ALIGN_256bit)
+				zq_cnn_resize_with_safeborder_32f_align256bit(firstPixelData, N, H, W, C, pixelStep, widthStep, sliceStep, src_off_x, src_off_y, src_rect_w, src_rect_h,
+					dst.GetFirstPixelPtr(), dst_H, dst_W, dstPixelStep, dstWidthStep, dstSliceStep);
+			else
 #endif
 #if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_SSE
-		if (align_mode == ALIGN_128bit)
-			zq_cnn_resize_without_safeborder_32f_align128bit(firstPixelData, N, H, W, C, pixelStep, widthStep, sliceStep, src_off_x, src_off_y, src_rect_w, src_rect_h,
-				dst.GetFirstPixelPtr(), dst_H, dst_W, dstPixelStep, dstWidthStep, dstSliceStep);
-		else 
+				if (align_mode == ALIGN_128bit)
+					zq_cnn_resize_with_safeborder_32f_align128bit(firstPixelData, N, H, W, C, pixelStep, widthStep, sliceStep, src_off_x, src_off_y, src_rect_w, src_rect_h,
+						dst.GetFirstPixelPtr(), dst_H, dst_W, dstPixelStep, dstWidthStep, dstSliceStep);
+				else
 #endif
-			zq_cnn_resize_without_safeborder_32f_align0(firstPixelData, N, H, W, C, pixelStep, widthStep, sliceStep, src_off_x, src_off_y, src_rect_w, src_rect_h,
-				dst.GetFirstPixelPtr(), dst_H, dst_W, dstPixelStep, dstWidthStep, dstSliceStep);
-	}
-	
-	float* dst_slice_ptr = dst.GetFirstPixelPtr();
-	for (int n = 0; n < N; n++, dst_slice_ptr += dstSliceStep)
-	{
-		
-		if (dst_borderH > 0)
-		{
-			memset(dst_slice_ptr - dstPixelStep*dst_borderW - dstWidthStep*dst_borderH, 0, sizeof(float)*dstWidthStep*dst_borderH);
-			memset(dst_slice_ptr - dstPixelStep*dst_borderW + dstWidthStep*dst_borderH, 0, sizeof(float)*dstWidthStep*dst_borderH);
+					zq_cnn_resize_with_safeborder_32f_align0(firstPixelData, N, H, W, C, pixelStep, widthStep, sliceStep, src_off_x, src_off_y, src_rect_w, src_rect_h,
+						dst.GetFirstPixelPtr(), dst_H, dst_W, dstPixelStep, dstWidthStep, dstSliceStep);
 		}
-		if (dst_borderW > 0)
+		else
 		{
-			for (int h = 0; h < dst_borderH; h++)
+#if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_AVX
+			if (align_mode == ALIGN_256bit)
+				zq_cnn_resize_without_safeborder_32f_align256bit(firstPixelData, N, H, W, C, pixelStep, widthStep, sliceStep, src_off_x, src_off_y, src_rect_w, src_rect_h,
+					dst.GetFirstPixelPtr(), dst_H, dst_W, dstPixelStep, dstWidthStep, dstSliceStep);
+			else
+#endif
+#if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_SSE
+				if (align_mode == ALIGN_128bit)
+					zq_cnn_resize_without_safeborder_32f_align128bit(firstPixelData, N, H, W, C, pixelStep, widthStep, sliceStep, src_off_x, src_off_y, src_rect_w, src_rect_h,
+						dst.GetFirstPixelPtr(), dst_H, dst_W, dstPixelStep, dstWidthStep, dstSliceStep);
+				else
+#endif
+					zq_cnn_resize_without_safeborder_32f_align0(firstPixelData, N, H, W, C, pixelStep, widthStep, sliceStep, src_off_x, src_off_y, src_rect_w, src_rect_h,
+						dst.GetFirstPixelPtr(), dst_H, dst_W, dstPixelStep, dstWidthStep, dstSliceStep);
+		}
+
+		float* dst_slice_ptr = dst.GetFirstPixelPtr();
+		for (int n = 0; n < N; n++, dst_slice_ptr += dstSliceStep)
+		{
+
+			if (dst_borderH > 0)
 			{
-				memset(dst_slice_ptr - dstPixelStep*dst_borderW + dstWidthStep*h, 0, sizeof(float)*dstPixelStep*dst_borderW);
-				memset(dst_slice_ptr - dstPixelStep*(dst_borderW << 1) + dstWidthStep*(h + 1), 0, sizeof(float)*dstPixelStep*dst_borderW);
+				memset(dst_slice_ptr - dstPixelStep*dst_borderW - dstWidthStep*dst_borderH, 0, sizeof(float)*dstWidthStep*dst_borderH);
+				memset(dst_slice_ptr - dstPixelStep*dst_borderW + dstWidthStep*dst_borderH, 0, sizeof(float)*dstWidthStep*dst_borderH);
+			}
+			if (dst_borderW > 0)
+			{
+				for (int h = 0; h < dst_borderH; h++)
+				{
+					memset(dst_slice_ptr - dstPixelStep*dst_borderW + dstWidthStep*h, 0, sizeof(float)*dstPixelStep*dst_borderW);
+					memset(dst_slice_ptr - dstPixelStep*(dst_borderW << 1) + dstWidthStep*(h + 1), 0, sizeof(float)*dstPixelStep*dst_borderW);
+				}
 			}
 		}
 	}
-	
 	return true;
 }
 
@@ -539,77 +544,81 @@ bool ZQ_CNN_Tensor4D_NHW_C_Align128bit::ResizeBilinearRect(ZQ_CNN_Tensor4D& dst,
 	if (src_off_x < 0 || src_off_y < 0 || src_off_x + src_rect_w > W || src_off_y + src_rect_h > H)
 		return false;
 
-	if (!dst.ChangeSize(N, dst_H, dst_W, C, dst_borderH, dst_borderW))
-		return false;
+	
 
-	int widthStep = GetWidthStep();
-	int pixelStep = GetPixelStep();
-	int dstWidthStep = dst.GetWidthStep();
-	int dstPixelStep = dst.GetPixelStep();
-	int dstSliceStep = dst.GetSliceStep();
-
-	bool can_call_safeborder = true;
-
-	if (dst_W > src_rect_w && (src_off_x == 0 || src_off_x + src_rect_w == W)
-		|| dst_H > src_rect_h && (src_off_y == 0 || src_off_y + src_rect_h == H))
-		can_call_safeborder = false;
-
-	int align_mode = __min(GetAlignType(), dst.GetAlignType());
-	if (can_call_safeborder)
+	if (dst_W == src_rect_w && dst_H == src_rect_h)
 	{
-#if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_AVX
-		if (align_mode == ALIGN_256bit)
-			zq_cnn_resize_with_safeborder_32f_align256bit(firstPixelData, N, H, W, C, pixelStep, widthStep, sliceStep, src_off_x, src_off_y, src_rect_w, src_rect_h,
-				dst.GetFirstPixelPtr(), dst_H, dst_W, dstPixelStep, dstWidthStep, dstSliceStep);
-		else
-#endif
-#if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_SSE
-		if (align_mode == ALIGN_128bit)
-			zq_cnn_resize_with_safeborder_32f_align128bit(firstPixelData, N, H, W, C, pixelStep, widthStep, sliceStep, src_off_x, src_off_y, src_rect_w, src_rect_h,
-				dst.GetFirstPixelPtr(), dst_H, dst_W, dstPixelStep, dstWidthStep, dstSliceStep);
-		else
-#endif
-			zq_cnn_resize_with_safeborder_32f_align0(firstPixelData, N, H, W, C, pixelStep, widthStep, sliceStep, src_off_x, src_off_y, src_rect_w, src_rect_h,
-				dst.GetFirstPixelPtr(), dst_H, dst_W, dstPixelStep, dstWidthStep, dstSliceStep);
+		return ROI(dst, src_off_x, src_off_y, src_rect_w, src_rect_h, dst_borderH, dst_borderW);
 	}
 	else
 	{
+		if (!dst.ChangeSize(N, dst_H, dst_W, C, dst_borderH, dst_borderW))
+			return false;
+
+		int dstWidthStep = dst.GetWidthStep();
+		int dstPixelStep = dst.GetPixelStep();
+		int dstSliceStep = dst.GetSliceStep();
+		bool can_call_safeborder = true;
+
+		if (dst_W > src_rect_w && (src_off_x == 0 || src_off_x + src_rect_w == W)
+			|| dst_H > src_rect_h && (src_off_y == 0 || src_off_y + src_rect_h == H))
+			can_call_safeborder = false;
+
+		int align_mode = __min(GetAlignType(), dst.GetAlignType());
+		if (can_call_safeborder)
+		{
 #if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_AVX
-		if (align_mode == ALIGN_256bit)
-			zq_cnn_resize_without_safeborder_32f_align256bit(firstPixelData, N, H, W, C, pixelStep, widthStep, sliceStep, src_off_x, src_off_y, src_rect_w, src_rect_h,
-				dst.GetFirstPixelPtr(), dst_H, dst_W, dstPixelStep, dstWidthStep, dstSliceStep);
-		else
+			if (align_mode == ALIGN_256bit)
+				zq_cnn_resize_with_safeborder_32f_align256bit(firstPixelData, N, H, W, C, pixelStep, widthStep, sliceStep, src_off_x, src_off_y, src_rect_w, src_rect_h,
+					dst.GetFirstPixelPtr(), dst_H, dst_W, dstPixelStep, dstWidthStep, dstSliceStep);
+			else
 #endif
 #if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_SSE
-		if (align_mode == ALIGN_128bit)
-			zq_cnn_resize_without_safeborder_32f_align128bit(firstPixelData, N, H, W, C, pixelStep, widthStep, sliceStep, src_off_x, src_off_y, src_rect_w, src_rect_h,
-				dst.GetFirstPixelPtr(), dst_H, dst_W, dstPixelStep, dstWidthStep, dstSliceStep);
-		else 
+				if (align_mode == ALIGN_128bit)
+					zq_cnn_resize_with_safeborder_32f_align128bit(firstPixelData, N, H, W, C, pixelStep, widthStep, sliceStep, src_off_x, src_off_y, src_rect_w, src_rect_h,
+						dst.GetFirstPixelPtr(), dst_H, dst_W, dstPixelStep, dstWidthStep, dstSliceStep);
+				else
 #endif
-			zq_cnn_resize_without_safeborder_32f_align0(firstPixelData, N, H, W, C, pixelStep, widthStep, sliceStep, src_off_x, src_off_y, src_rect_w, src_rect_h,
-				dst.GetFirstPixelPtr(), dst_H, dst_W, dstPixelStep, dstWidthStep, dstSliceStep);
-	}
-
-	float* dst_slice_ptr = dst.GetFirstPixelPtr();
-	for (int n = 0; n < N; n++, dst_slice_ptr += dstSliceStep)
-	{
-
-		if (dst_borderH > 0)
-		{
-			memset(dst_slice_ptr - dstPixelStep*dst_borderW - dstWidthStep*dst_borderH, 0, sizeof(float)*dstWidthStep*dst_borderH);
-			memset(dst_slice_ptr - dstPixelStep*dst_borderW + dstWidthStep*dst_borderH, 0, sizeof(float)*dstWidthStep*dst_borderH);
+					zq_cnn_resize_with_safeborder_32f_align0(firstPixelData, N, H, W, C, pixelStep, widthStep, sliceStep, src_off_x, src_off_y, src_rect_w, src_rect_h,
+						dst.GetFirstPixelPtr(), dst_H, dst_W, dstPixelStep, dstWidthStep, dstSliceStep);
 		}
-		if (dst_borderW > 0)
+		else
 		{
-			for (int h = 0; h < dst_borderH; h++)
+#if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_AVX
+			if (align_mode == ALIGN_256bit)
+				zq_cnn_resize_without_safeborder_32f_align256bit(firstPixelData, N, H, W, C, pixelStep, widthStep, sliceStep, src_off_x, src_off_y, src_rect_w, src_rect_h,
+					dst.GetFirstPixelPtr(), dst_H, dst_W, dstPixelStep, dstWidthStep, dstSliceStep);
+			else
+#endif
+#if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_SSE
+				if (align_mode == ALIGN_128bit)
+					zq_cnn_resize_without_safeborder_32f_align128bit(firstPixelData, N, H, W, C, pixelStep, widthStep, sliceStep, src_off_x, src_off_y, src_rect_w, src_rect_h,
+						dst.GetFirstPixelPtr(), dst_H, dst_W, dstPixelStep, dstWidthStep, dstSliceStep);
+				else
+#endif
+					zq_cnn_resize_without_safeborder_32f_align0(firstPixelData, N, H, W, C, pixelStep, widthStep, sliceStep, src_off_x, src_off_y, src_rect_w, src_rect_h,
+						dst.GetFirstPixelPtr(), dst_H, dst_W, dstPixelStep, dstWidthStep, dstSliceStep);
+		}
+
+		float* dst_slice_ptr = dst.GetFirstPixelPtr();
+		for (int n = 0; n < N; n++, dst_slice_ptr += dstSliceStep)
+		{
+
+			if (dst_borderH > 0)
 			{
-				memset(dst_slice_ptr - dstPixelStep*dst_borderW + dstWidthStep*h, 0, sizeof(float)*dstPixelStep*dst_borderW);
-				memset(dst_slice_ptr - dstPixelStep*(dst_borderW << 1) + dstWidthStep*(h + 1), 0, sizeof(float)*dstPixelStep*dst_borderW);
+				memset(dst_slice_ptr - dstPixelStep*dst_borderW - dstWidthStep*dst_borderH, 0, sizeof(float)*dstWidthStep*dst_borderH);
+				memset(dst_slice_ptr - dstPixelStep*dst_borderW + dstWidthStep*dst_borderH, 0, sizeof(float)*dstWidthStep*dst_borderH);
+			}
+			if (dst_borderW > 0)
+			{
+				for (int h = 0; h < dst_borderH; h++)
+				{
+					memset(dst_slice_ptr - dstPixelStep*dst_borderW + dstWidthStep*h, 0, sizeof(float)*dstPixelStep*dst_borderW);
+					memset(dst_slice_ptr - dstPixelStep*(dst_borderW << 1) + dstWidthStep*(h + 1), 0, sizeof(float)*dstPixelStep*dst_borderW);
+				}
 			}
 		}
 	}
-
-
 	return true;
 }
 
@@ -884,77 +893,82 @@ bool ZQ_CNN_Tensor4D_NHW_C_Align256bit::ResizeBilinearRect(ZQ_CNN_Tensor4D& dst,
 {
 	if (src_off_x < 0 || src_off_y < 0 || src_off_x + src_rect_w > W || src_off_y + src_rect_h > H)
 		return false;
-
-	if (!dst.ChangeSize(N, dst_H, dst_W, C, dst_borderH, dst_borderW))
-		return false;
-
-	int widthStep = GetWidthStep();
-	int pixelStep = GetPixelStep();
-	int dstWidthStep = dst.GetWidthStep();
-	int dstPixelStep = dst.GetPixelStep();
-	int dstSliceStep = dst.GetSliceStep();
-
-	bool can_call_safeborder = true;
-
-	if (dst_W > src_rect_w && (src_off_x == 0 || src_off_x + src_rect_w == W)
-		|| dst_H > src_rect_h && (src_off_y == 0 || src_off_y + src_rect_h == H))
-		can_call_safeborder = false;
-
-	int align_mode = __min(GetAlignType(), dst.GetAlignType());
-	if (can_call_safeborder)
+	if (dst_W == src_rect_w && dst_H == src_rect_h)
 	{
-#if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_AVX
-		if (align_mode == ALIGN_256bit)
-			zq_cnn_resize_with_safeborder_32f_align256bit(firstPixelData, N, H, W, C, pixelStep, widthStep, sliceStep, src_off_x, src_off_y, src_rect_w, src_rect_h,
-				dst.GetFirstPixelPtr(), dst_H, dst_W, dstPixelStep, dstWidthStep, dstSliceStep);
-		else
-#endif
-#if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_SSE
-		if (align_mode == ALIGN_128bit)
-			zq_cnn_resize_with_safeborder_32f_align128bit(firstPixelData, N, H, W, C, pixelStep, widthStep, sliceStep, src_off_x, src_off_y, src_rect_w, src_rect_h,
-				dst.GetFirstPixelPtr(), dst_H, dst_W, dstPixelStep, dstWidthStep, dstSliceStep);
-		else 
-#endif
-			zq_cnn_resize_with_safeborder_32f_align0(firstPixelData, N, H, W, C, pixelStep, widthStep, sliceStep, src_off_x, src_off_y, src_rect_w, src_rect_h,
-				dst.GetFirstPixelPtr(), dst_H, dst_W, dstPixelStep, dstWidthStep, dstSliceStep);
+		return ROI(dst, src_off_x, src_off_y, src_rect_w, src_rect_h, dst_borderH, dst_borderW);
 	}
 	else
 	{
+		if (!dst.ChangeSize(N, dst_H, dst_W, C, dst_borderH, dst_borderW))
+			return false;
+
+		int widthStep = GetWidthStep();
+		int pixelStep = GetPixelStep();
+		int dstWidthStep = dst.GetWidthStep();
+		int dstPixelStep = dst.GetPixelStep();
+		int dstSliceStep = dst.GetSliceStep();
+
+		bool can_call_safeborder = true;
+
+		if (dst_W > src_rect_w && (src_off_x == 0 || src_off_x + src_rect_w == W)
+			|| dst_H > src_rect_h && (src_off_y == 0 || src_off_y + src_rect_h == H))
+			can_call_safeborder = false;
+
+		int align_mode = __min(GetAlignType(), dst.GetAlignType());
+		if (can_call_safeborder)
+		{
 #if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_AVX
-		if (align_mode == ALIGN_256bit)
-			zq_cnn_resize_without_safeborder_32f_align256bit(firstPixelData, N, H, W, C, pixelStep, widthStep, sliceStep, src_off_x, src_off_y, src_rect_w, src_rect_h,
-				dst.GetFirstPixelPtr(), dst_H, dst_W, dstPixelStep, dstWidthStep, dstSliceStep);
-		else
+			if (align_mode == ALIGN_256bit)
+				zq_cnn_resize_with_safeborder_32f_align256bit(firstPixelData, N, H, W, C, pixelStep, widthStep, sliceStep, src_off_x, src_off_y, src_rect_w, src_rect_h,
+					dst.GetFirstPixelPtr(), dst_H, dst_W, dstPixelStep, dstWidthStep, dstSliceStep);
+			else
 #endif
 #if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_SSE
-		if (align_mode == ALIGN_128bit)
-			zq_cnn_resize_without_safeborder_32f_align128bit(firstPixelData, N, H, W, C, pixelStep, widthStep, sliceStep, src_off_x, src_off_y, src_rect_w, src_rect_h,
-				dst.GetFirstPixelPtr(), dst_H, dst_W, dstPixelStep, dstWidthStep, dstSliceStep);
-		else 
+				if (align_mode == ALIGN_128bit)
+					zq_cnn_resize_with_safeborder_32f_align128bit(firstPixelData, N, H, W, C, pixelStep, widthStep, sliceStep, src_off_x, src_off_y, src_rect_w, src_rect_h,
+						dst.GetFirstPixelPtr(), dst_H, dst_W, dstPixelStep, dstWidthStep, dstSliceStep);
+				else
 #endif
-			zq_cnn_resize_without_safeborder_32f_align0(firstPixelData, N, H, W, C, pixelStep, widthStep, sliceStep, src_off_x, src_off_y, src_rect_w, src_rect_h,
-				dst.GetFirstPixelPtr(), dst_H, dst_W, dstPixelStep, dstWidthStep, dstSliceStep);
-	}
-
-	float* dst_slice_ptr = dst.GetFirstPixelPtr();
-	for (int n = 0; n < N; n++, dst_slice_ptr += dstSliceStep)
-	{
-
-		if (dst_borderH > 0)
-		{
-			memset(dst_slice_ptr - dstPixelStep*dst_borderW - dstWidthStep*dst_borderH, 0, sizeof(float)*dstWidthStep*dst_borderH);
-			memset(dst_slice_ptr - dstPixelStep*dst_borderW + dstWidthStep*dst_borderH, 0, sizeof(float)*dstWidthStep*dst_borderH);
+					zq_cnn_resize_with_safeborder_32f_align0(firstPixelData, N, H, W, C, pixelStep, widthStep, sliceStep, src_off_x, src_off_y, src_rect_w, src_rect_h,
+						dst.GetFirstPixelPtr(), dst_H, dst_W, dstPixelStep, dstWidthStep, dstSliceStep);
 		}
-		if (dst_borderW > 0)
+		else
 		{
-			for (int h = 0; h < dst_borderH; h++)
+#if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_AVX
+			if (align_mode == ALIGN_256bit)
+				zq_cnn_resize_without_safeborder_32f_align256bit(firstPixelData, N, H, W, C, pixelStep, widthStep, sliceStep, src_off_x, src_off_y, src_rect_w, src_rect_h,
+					dst.GetFirstPixelPtr(), dst_H, dst_W, dstPixelStep, dstWidthStep, dstSliceStep);
+			else
+#endif
+#if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_SSE
+				if (align_mode == ALIGN_128bit)
+					zq_cnn_resize_without_safeborder_32f_align128bit(firstPixelData, N, H, W, C, pixelStep, widthStep, sliceStep, src_off_x, src_off_y, src_rect_w, src_rect_h,
+						dst.GetFirstPixelPtr(), dst_H, dst_W, dstPixelStep, dstWidthStep, dstSliceStep);
+				else
+#endif
+					zq_cnn_resize_without_safeborder_32f_align0(firstPixelData, N, H, W, C, pixelStep, widthStep, sliceStep, src_off_x, src_off_y, src_rect_w, src_rect_h,
+						dst.GetFirstPixelPtr(), dst_H, dst_W, dstPixelStep, dstWidthStep, dstSliceStep);
+		}
+
+		float* dst_slice_ptr = dst.GetFirstPixelPtr();
+		for (int n = 0; n < N; n++, dst_slice_ptr += dstSliceStep)
+		{
+
+			if (dst_borderH > 0)
 			{
-				memset(dst_slice_ptr - dstPixelStep*dst_borderW + dstWidthStep*h, 0, sizeof(float)*dstPixelStep*dst_borderW);
-				memset(dst_slice_ptr - dstPixelStep*(dst_borderW << 1) + dstWidthStep*(h + 1), 0, sizeof(float)*dstPixelStep*dst_borderW);
+				memset(dst_slice_ptr - dstPixelStep*dst_borderW - dstWidthStep*dst_borderH, 0, sizeof(float)*dstWidthStep*dst_borderH);
+				memset(dst_slice_ptr - dstPixelStep*dst_borderW + dstWidthStep*dst_borderH, 0, sizeof(float)*dstWidthStep*dst_borderH);
+			}
+			if (dst_borderW > 0)
+			{
+				for (int h = 0; h < dst_borderH; h++)
+				{
+					memset(dst_slice_ptr - dstPixelStep*dst_borderW + dstWidthStep*h, 0, sizeof(float)*dstPixelStep*dst_borderW);
+					memset(dst_slice_ptr - dstPixelStep*(dst_borderW << 1) + dstWidthStep*(h + 1), 0, sizeof(float)*dstPixelStep*dst_borderW);
+				}
 			}
 		}
 	}
-
 	return true;
 }
 

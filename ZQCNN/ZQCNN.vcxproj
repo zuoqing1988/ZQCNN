@@ -228,6 +228,7 @@
     <ClInclude Include="ZQ_CNN_Forward_SSEUtils.h" />
     <ClInclude Include="ZQ_CNN_Layer.h" />
     <ClInclude Include="ZQ_CNN_MouthDetector.h" />
+    <ClInclude Include="ZQ_CNN_MTCNN_old.h" />
     <ClInclude Include="ZQ_CNN_MTCNN.h" />
     <ClInclude Include="ZQ_CNN_Net.h" />
     <ClInclude Include="ZQ_CNN_NSFW.h" />

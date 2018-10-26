@@ -194,9 +194,6 @@
     <ClInclude Include="ZQ_CNN_Tensor4D.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="ZQ_CNN_MTCNN.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
     <ClInclude Include="ZQ_CNN_Defines.h">
       <Filter>头文件</Filter>
     </ClInclude>
@@ -246,6 +243,12 @@
       <Filter>layers_c</Filter>
     </ClInclude>
     <ClInclude Include="ZQ_CNN_CompileConfig.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="ZQ_CNN_MTCNN_old.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="ZQ_CNN_MTCNN.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>

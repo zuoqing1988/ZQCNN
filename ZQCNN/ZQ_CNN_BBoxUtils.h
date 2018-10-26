@@ -23,7 +23,7 @@ namespace ZQ
 		}
 
 		static void _nms(std::vector<ZQ_CNN_BBox> &boundingBox, std::vector<ZQ_CNN_OrderScore> &bboxScore, const float overlap_threshold, 
-			const std::string& modelname = "Union", int overlap_count_thresh = 0)
+			const std::string& modelname = "Union", int overlap_count_thresh = 0, int thread_num = 1)
 		{
 			if (boundingBox.empty())
 			{
@@ -48,37 +48,80 @@ namespace ZQ
 				heros.push_back(order);
 				int cur_overlap = 0;
 				boundingBox.at(order).exist = false;//delete it
-
-				for (int num = 0; num < boundingBox.size(); num++)
+				int box_num = boundingBox.size();
+				if (thread_num == 1)
 				{
-					if (boundingBox.at(num).exist)
+					for (int num = 0; num < box_num; num++)
 					{
-						//the iou
-						maxX = (boundingBox.at(num).row1 > boundingBox.at(order).row1) ? boundingBox.at(num).row1 : boundingBox.at(order).row1;
-						maxY = (boundingBox.at(num).col1 > boundingBox.at(order).col1) ? boundingBox.at(num).col1 : boundingBox.at(order).col1;
-						minX = (boundingBox.at(num).row2 < boundingBox.at(order).row2) ? boundingBox.at(num).row2 : boundingBox.at(order).row2;
-						minY = (boundingBox.at(num).col2 < boundingBox.at(order).col2) ? boundingBox.at(num).col2 : boundingBox.at(order).col2;
-						//maxX1 and maxY1 reuse 
-						maxX = ((minX - maxX + 1) > 0) ? (minX - maxX + 1) : 0;
-						maxY = ((minY - maxY + 1) > 0) ? (minY - maxY + 1) : 0;
-						//IOU reuse for the area of two bbox
-						IOU = maxX * maxY;
-						if (!modelname.compare("Union"))
-							IOU = IOU / (boundingBox.at(num).area + boundingBox.at(order).area - IOU);
-						else if (!modelname.compare("Min"))
+						if (boundingBox.at(num).exist)
 						{
-							IOU = IOU / ((boundingBox.at(num).area < boundingBox.at(order).area) ? boundingBox.at(num).area : boundingBox.at(order).area);
-						}
-						if (IOU > overlap_threshold)
-						{
-							cur_overlap++;
-							boundingBox.at(num).exist = false;
-							for (std::vector<ZQ_CNN_OrderScore>::iterator it = bboxScore.begin(); it != bboxScore.end(); it++)
+							//the iou
+							maxX = (boundingBox.at(num).row1 > boundingBox.at(order).row1) ? boundingBox.at(num).row1 : boundingBox.at(order).row1;
+							maxY = (boundingBox.at(num).col1 > boundingBox.at(order).col1) ? boundingBox.at(num).col1 : boundingBox.at(order).col1;
+							minX = (boundingBox.at(num).row2 < boundingBox.at(order).row2) ? boundingBox.at(num).row2 : boundingBox.at(order).row2;
+							minY = (boundingBox.at(num).col2 < boundingBox.at(order).col2) ? boundingBox.at(num).col2 : boundingBox.at(order).col2;
+							//maxX1 and maxY1 reuse 
+							maxX = ((minX - maxX + 1) > 0) ? (minX - maxX + 1) : 0;
+							maxY = ((minY - maxY + 1) > 0) ? (minY - maxY + 1) : 0;
+							//IOU reuse for the area of two bbox
+							IOU = maxX * maxY;
+							if (!modelname.compare("Union"))
+								IOU = IOU / (boundingBox.at(num).area + boundingBox.at(order).area - IOU);
+							else if (!modelname.compare("Min"))
 							{
-								if ((*it).oriOrder == num)
+								IOU = IOU / ((boundingBox.at(num).area < boundingBox.at(order).area) ? boundingBox.at(num).area : boundingBox.at(order).area);
+							}
+							if (IOU > overlap_threshold)
+							{
+								cur_overlap++;
+								boundingBox.at(num).exist = false;
+								for (std::vector<ZQ_CNN_OrderScore>::iterator it = bboxScore.begin(); it != bboxScore.end(); it++)
 								{
-									(*it).oriOrder = -1;
-									break;
+									if ((*it).oriOrder == num)
+									{
+										(*it).oriOrder = -1;
+										break;
+									}
+								}
+							}
+						}
+					}
+				}
+				else
+				{
+					int chunk_size = ceil(box_num / thread_num);
+#pragma omp parallel for schedule(static, chunk_size) num_threads(thread_num)
+					for (int num = 0; num < box_num; num++)
+					{
+						if (boundingBox.at(num).exist)
+						{
+							//the iou
+							maxX = (boundingBox.at(num).row1 > boundingBox.at(order).row1) ? boundingBox.at(num).row1 : boundingBox.at(order).row1;
+							maxY = (boundingBox.at(num).col1 > boundingBox.at(order).col1) ? boundingBox.at(num).col1 : boundingBox.at(order).col1;
+							minX = (boundingBox.at(num).row2 < boundingBox.at(order).row2) ? boundingBox.at(num).row2 : boundingBox.at(order).row2;
+							minY = (boundingBox.at(num).col2 < boundingBox.at(order).col2) ? boundingBox.at(num).col2 : boundingBox.at(order).col2;
+							//maxX1 and maxY1 reuse 
+							maxX = ((minX - maxX + 1) > 0) ? (minX - maxX + 1) : 0;
+							maxY = ((minY - maxY + 1) > 0) ? (minY - maxY + 1) : 0;
+							//IOU reuse for the area of two bbox
+							IOU = maxX * maxY;
+							if (!modelname.compare("Union"))
+								IOU = IOU / (boundingBox.at(num).area + boundingBox.at(order).area - IOU);
+							else if (!modelname.compare("Min"))
+							{
+								IOU = IOU / ((boundingBox.at(num).area < boundingBox.at(order).area) ? boundingBox.at(num).area : boundingBox.at(order).area);
+							}
+							if (IOU > overlap_threshold)
+							{
+								cur_overlap++;
+								boundingBox.at(num).exist = false;
+								for (std::vector<ZQ_CNN_OrderScore>::iterator it = bboxScore.begin(); it != bboxScore.end(); it++)
+								{
+									if ((*it).oriOrder == num)
+									{
+										(*it).oriOrder = -1;
+										break;
+									}
 								}
 							}
 						}
