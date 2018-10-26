@@ -209,7 +209,7 @@ namespace ZQ
 
 			mtcnn_detector.SetPara(width, height, d_arg->mtcnn_min_size, d_arg->mtcnn_thresh_p, d_arg->mtcnn_thresh_r, d_arg->mtcnn_thresh_o,
 				d_arg->mtcnn_thresh_nms_p, d_arg->mtcnn_thresh_nms_r, d_arg->mtcnn_thresh_nms_o, d_arg->mtcnn_scale);
-			if (!mtcnn_detector.Find(bgr_image, width, height, widthStep, thirdBbox, 1))
+			if (!mtcnn_detector.Find(bgr_image, width, height, widthStep, thirdBbox))
 			{
 				double t2 = omp_get_wtime();
 				//printf("find no face: %.3f ms\n", 1000*(t2 - t1));
