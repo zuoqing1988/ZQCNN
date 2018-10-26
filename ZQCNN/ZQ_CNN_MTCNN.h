@@ -902,7 +902,7 @@ namespace ZQ
 
 				double t5 = omp_get_wtime();
 				if (show_debug_info)
-					printf("run Onet [%d] times (%.3f ms), candidate after nms: %d \n", o_count, 1000 * (t32 - t31), count);
+					printf("run Onet [%d] times (%.3f ms), candidate before nms: %d \n", o_count, 1000 * (t32 - t31), count);
 				if (show_debug_info)
 					printf("stage 3: cost %.3f ms\n", 1000 * (t5 - t4));
 				
