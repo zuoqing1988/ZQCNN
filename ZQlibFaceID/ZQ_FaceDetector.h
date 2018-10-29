@@ -10,7 +10,7 @@ namespace ZQ
 	class ZQ_FaceDetector
 	{
 	public:
-		virtual bool Init(const std::string model_root = "model") = 0;
+		virtual bool Init(const std::string model_root = "model", int thread_num = 1) = 0;
 
 		virtual bool FindFace(const unsigned char* img, int width, int height, int widthStep, ZQ_PixelFormat pixFmt,
 			int min_size, float scale, std::vector<ZQ_CNN_BBox>& bbox) = 0;

@@ -30,7 +30,7 @@ namespace ZQ
 			pBuffer = 0;
 		}
 
-		virtual bool Init(const std::string model_root = "model")
+		virtual bool Init(const std::string model_root = "model", int thread_num = 1)
 		{
 			if (pBuffer == 0)
 			{
