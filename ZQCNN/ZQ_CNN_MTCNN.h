@@ -44,6 +44,7 @@ namespace ZQ
 		int pnet_size;
 		int pnet_stride;
 		bool special_handle_very_big_face;
+		float nms_thresh_per_scale;
 		std::vector<float> scales;
 		std::vector<ZQ_CNN_Tensor4D_NHW_C_Align128bit> pnet_images;
 		ZQ_CNN_Tensor4D_NHW_C_Align128bit input, rnet_image, onet_image;
@@ -89,6 +90,10 @@ namespace ZQ
 			this->pnet_size = pnet_size;
 			this->pnet_stride = pnet_stride;
 			this->special_handle_very_big_face = special_handle_very_big_face;
+			if (pnet_size == 20 && pnet_stride == 4)
+				nms_thresh_per_scale = 0.45;
+			else
+				nms_thresh_per_scale = 0.495;
 			if (width != w || height != h || factor != scale_factor)
 			{
 				scales.clear();
@@ -438,10 +443,10 @@ namespace ZQ
 								bbox.score = *p;
 								order.score = *p;
 								order.oriOrder = count;
-								bbox.row1 = round((stride*row + 1) *cur_scale_y);
-								bbox.col1 = round((stride*col + 1) *cur_scale_x);
-								bbox.row2 = round((stride*row + 1 + cellsize) *cur_scale_y);
-								bbox.col2 = round((stride*col + 1 + cellsize) *cur_scale_x);
+								bbox.row1 = stride*row;
+								bbox.col1 = stride*col;
+								bbox.row2 = stride*row + cellsize;
+								bbox.col2 = stride*col + cellsize;
 								bbox.exist = true;
 								bbox.area = (bbox.row2 - bbox.row1)*(bbox.col2 - bbox.col1);
 								bbox.need_check_overlap_count = (row >= border_size && row < scoreH - border_size)
@@ -454,8 +459,17 @@ namespace ZQ
 						}
 					}
 					int before_count = bounding_boxes[i].size();
-					ZQ_CNN_BBoxUtils::_nms(bounding_boxes[i], bounding_scores[i], 0.5f/*nms_threshold[0]*/, "Union", pnet_overlap_thresh_count);
+					ZQ_CNN_BBoxUtils::_nms(bounding_boxes[i], bounding_scores[i], nms_thresh_per_scale, "Union", pnet_overlap_thresh_count);
 					int after_count = bounding_boxes[i].size();
+					for (int j = 0; j < after_count; j++)
+					{
+						ZQ_CNN_BBox& bbox = bounding_boxes[i][j];
+						bbox.row1 = round(bbox.row1 *cur_scale_y);
+						bbox.col1 = round(bbox.col1 *cur_scale_x);
+						bbox.row2 = round(bbox.row2 *cur_scale_y);
+						bbox.col2 = round(bbox.col2 *cur_scale_x);
+						bbox.area = (bbox.row2 - bbox.row1)*(bbox.col2 - bbox.col1);
+					}
 					double t14 = omp_get_wtime();
 					if (show_debug_info)
 						printf("nms cost: %.3f ms, (%d-->%d)\n", 1000 * (t14 - t13), before_count, after_count);
@@ -500,10 +514,10 @@ namespace ZQ
 									bbox.score = *p;
 									order.score = *p;
 									order.oriOrder = count;
-									bbox.row1 = round((stride*row + 1) *cur_scale_y);
-									bbox.col1 = round((stride*col + 1) *cur_scale_x);
-									bbox.row2 = round((stride*row + 1 + cellsize) *cur_scale_y);
-									bbox.col2 = round((stride*col + 1 + cellsize) *cur_scale_x);
+									bbox.row1 = stride*row;
+									bbox.col1 = stride*col;
+									bbox.row2 = stride*row + cellsize;
+									bbox.col2 = stride*col + cellsize;
 									bbox.exist = true;
 									bbox.need_check_overlap_count = (row >= border_size && row < scoreH - border_size)
 										&& (col >= border_size && col < scoreW - border_size);
@@ -516,12 +530,13 @@ namespace ZQ
 							}
 						}
 						int tmp_before_count = tmp_bounding_boxes[bb].size();
-						ZQ_CNN_BBoxUtils::_nms(tmp_bounding_boxes[bb], tmp_bounding_scores[bb], 0.5f/*nms_threshold[0]*/, "Union", 4);
+						ZQ_CNN_BBoxUtils::_nms(tmp_bounding_boxes[bb], tmp_bounding_scores[bb], nms_thresh_per_scale, "Union", pnet_overlap_thresh_count);
 						int tmp_after_count = tmp_bounding_boxes[bb].size();
 						before_count += tmp_before_count;
 						after_count += tmp_after_count;
 					}
 
+					count = 0;
 					for (int bb = 0; bb < block_num; bb++)
 					{
 						std::vector<ZQ_CNN_BBox>::iterator it = tmp_bounding_boxes[bb].begin();
@@ -538,6 +553,17 @@ namespace ZQ
 						}
 					}
 
+					//ZQ_CNN_BBoxUtils::_nms(bounding_boxes[i], bounding_scores[i], nms_thresh_per_scale, "Union", 0);
+					after_count = bounding_boxes[i].size();
+					for (int j = 0; j < after_count; j++)
+					{
+						ZQ_CNN_BBox& bbox = bounding_boxes[i][j];
+						bbox.row1 = round(bbox.row1 *cur_scale_y);
+						bbox.col1 = round(bbox.col1 *cur_scale_x);
+						bbox.row2 = round(bbox.row2 *cur_scale_y);
+						bbox.col2 = round(bbox.col2 *cur_scale_x);
+						bbox.area = (bbox.row2 - bbox.row1)*(bbox.col2 - bbox.col1);
+					}
 					double t14 = omp_get_wtime();
 					if (show_debug_info)
 						printf("nms cost: %.3f ms, (%d-->%d)\n", 1000 * (t14 - t13), before_count, after_count);
@@ -992,7 +1018,7 @@ namespace ZQ
 				ZQ_CNN_BBoxUtils::_nms(thirdBbox, thirdScore, nms_thresh[2], "Min");
 				double t5 = omp_get_wtime();
 				if (show_debug_info)
-					printf("run Onet [%d] times, candidate after nms: %d \n", o_count, count);
+					printf("run Onet [%d] times, candidate before nms: %d \n", o_count, count);
 				if (show_debug_info)
 					printf("stage 3: cost %.3f ms\n", 1000 * (t5 - t4));
 

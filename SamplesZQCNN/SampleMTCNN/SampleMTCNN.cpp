@@ -70,7 +70,7 @@ int main()
 			return EXIT_FAILURE;
 		}
 
-		mtcnn.SetPara(image0.cols, image0.rows, 20, 0.6, 0.7, 0.9, 0.5, 0.5, 0.5, 0.709, 4, 20, 4, special_handle_very_big_face);
+		mtcnn.SetPara(image0.cols, image0.rows, 20, 0.6, 0.7, 0.9, 0.4, 0.5, 0.5, 0.709, 6, 20, 4, special_handle_very_big_face);
 	}
 	else
 	{
@@ -82,11 +82,11 @@ int main()
 			return EXIT_FAILURE;
 		}
 
-		mtcnn.SetPara(image0.cols, image0.rows, 20, 0.6, 0.7, 0.7, 0.5, 0.5, 0.5, 0.709, 4, 12, 2, special_handle_very_big_face);
+		mtcnn.SetPara(image0.cols, image0.rows, 20, 0.6, 0.7, 0.9, 0.4, 0.5, 0.5, 0.709, 4, 12, 2, special_handle_very_big_face);
 	}
 
 	//mtcnn.TurnOnShowDebugInfo();
-	int iters = 100;
+	int iters = 1;
 	double t1 = omp_get_wtime();
 	for (int i = 0; i < iters; i++)
 	{

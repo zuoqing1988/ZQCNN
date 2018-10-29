@@ -1,5 +1,7 @@
 ZQCNN-v0.0是ZuoQing参照mini-caffe写的forward库，随便用用
 
+我用的编程环境[VS2015 with Update 3](https://pan.baidu.com/s/1zoREccOxVsggV-iI2z4HTg)
+
 # 更新日志
 
 **2018-10-26日更新**
