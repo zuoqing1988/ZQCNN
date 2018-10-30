@@ -12,6 +12,9 @@ ZQCNN-v0.0是ZuoQing参照mini-caffe写的forward库，随便用用
 
 (3)如果是从其他平台转过来模型，要么手工把eps加到var上面，要么在BatchNorm、BatchNormScale后面加上eps=?(?为该平台这个层的eps值)
 
+注意：为了防止除0错，在除var的时候是这么计算的sqrt(__max(var+eps,1e-32))，也就是说如果var+eps小于1e-32，会与理论值略有不同。
+不过今天修改之后下面几个人脸模型的LFW的精度反而与minicaffe的结果一模一样了。
+
 **2018-10-26日更新**
 
 MTCNN支持多线程，大图找小脸而且脸多的情况下，8线程可以取得单线程4倍以上效果，请用data\test2.jpg来测试
