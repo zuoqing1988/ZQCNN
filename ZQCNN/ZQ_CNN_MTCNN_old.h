@@ -300,7 +300,7 @@ namespace ZQ
 							}
 						}
 						int tmp_before_count = tmp_bounding_boxes[bb].size();
-						ZQ_CNN_BBoxUtils::_nms(tmp_bounding_boxes[bb], tmp_bounding_scores[bb], 0.5f/*nms_threshold[0]*/, "Union", 4);	
+						ZQ_CNN_BBoxUtils::_nms(tmp_bounding_boxes[bb], tmp_bounding_scores[bb], 0.5f/*nms_threshold[0]*/, "Union", pnet_overlap_thresh_count);	
 						int tmp_after_count = tmp_bounding_boxes[bb].size();
 						before_count += tmp_before_count;
 						after_count += tmp_after_count;
