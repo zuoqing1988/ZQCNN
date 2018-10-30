@@ -799,7 +799,7 @@ namespace ZQ
 		}
 
 		static bool BatchNormScaleBias(ZQ_CNN_Tensor4D &input, const ZQ_CNN_Tensor4D& mean, const ZQ_CNN_Tensor4D& var, const ZQ_CNN_Tensor4D& slope, 
-			const ZQ_CNN_Tensor4D& bias, int num_threads = 1)
+			const ZQ_CNN_Tensor4D& bias, const float eps, int num_threads = 1)
 		{
 			int N = input.GetN();
 			int H = input.GetH();
@@ -830,14 +830,15 @@ namespace ZQ
 #endif
 			if(num_threads <= 1)
 				_batchnorm_scalebias(align_mode, data, N, H, W, C, pixelStep, widthStep, sliceStep, mean_data, var_data, 
-					slope_data, bias_data);
+					slope_data, bias_data, eps);
 			else
 				_batchnorm_scalebias_omp(align_mode, data, N, H, W, C, pixelStep, widthStep, sliceStep, mean_data, var_data,
-					slope_data, bias_data, num_threads);
+					slope_data, bias_data, eps, num_threads);
 			return true;
 		}
 
-		static bool BatchNorm(ZQ_CNN_Tensor4D &input, const ZQ_CNN_Tensor4D& mean, const ZQ_CNN_Tensor4D& var, int num_threads = 1)
+		static bool BatchNorm(ZQ_CNN_Tensor4D &input, const ZQ_CNN_Tensor4D& mean, const ZQ_CNN_Tensor4D& var,
+			const float eps, int num_threads = 1)
 		{
 			int N = input.GetN();
 			int H = input.GetH();
@@ -865,19 +866,19 @@ namespace ZQ
 			align_mode = __min(align_mode, ZQ_CNN_Tensor4D::ALIGN_0);
 #endif
 			if(num_threads <= 1)
-				_batchnorm(align_mode, data, N, H, W, C, pixelStep, widthStep, sliceStep, mean_data, var_data);
+				_batchnorm(align_mode, data, N, H, W, C, pixelStep, widthStep, sliceStep, mean_data, var_data, eps);
 			else
-				_batchnorm_omp(align_mode, data, N, H, W, C, pixelStep, widthStep, sliceStep, mean_data, var_data, num_threads);
+				_batchnorm_omp(align_mode, data, N, H, W, C, pixelStep, widthStep, sliceStep, mean_data, var_data, eps, num_threads);
 			return true;
 		}
 
 
 		/*
-		a = bias - slope * mean / sqrt(var)
-		b = slope / sqrt(var)
+		a = bias - slope * mean / sqrt(var+eps)
+		b = slope / sqrt(var+eps)
 		value = b * value + a
 		*/
-		static bool BatchNormScaleBias_Compute_b_a(ZQ_CNN_Tensor4D& b, ZQ_CNN_Tensor4D& a, const ZQ_CNN_Tensor4D& mean, const ZQ_CNN_Tensor4D& var, const ZQ_CNN_Tensor4D& scale, const ZQ_CNN_Tensor4D& bias)
+		static bool BatchNormScaleBias_Compute_b_a(ZQ_CNN_Tensor4D& b, ZQ_CNN_Tensor4D& a, const ZQ_CNN_Tensor4D& mean, const ZQ_CNN_Tensor4D& var, const ZQ_CNN_Tensor4D& scale, const ZQ_CNN_Tensor4D& bias, const float eps)
 		{
 			int C = b.GetC();
 			if (C == 0)
@@ -894,18 +895,19 @@ namespace ZQ
 			const float* bias_data = bias.GetFirstPixelPtr();
 			for (int c = 0; c < C; c++)
 			{
-				b_data[c] = scale_data[c] / __max(sqrt(__max(var_data[c],0)),1e-32);
+				b_data[c] = scale_data[c] / sqrt(__max(var_data[c]+eps,1e-32));
 				a_data[c] = bias_data[c] - mean_data[c] * b_data[c];
 			}
 			return true;
 		}
 
 		/*
-		a = - slope * mean / sqrt(var)
-		b = slope / sqrt(var)
+		a = - slope * mean / sqrt(var+eps)
+		b = slope / sqrt(var+eps)
 		value = b * value + a
 		*/
-		static bool BatchNormScale_Compute_b_a(ZQ_CNN_Tensor4D& b, ZQ_CNN_Tensor4D& a, const ZQ_CNN_Tensor4D& mean, const ZQ_CNN_Tensor4D& var, const ZQ_CNN_Tensor4D& scale)
+		static bool BatchNormScale_Compute_b_a(ZQ_CNN_Tensor4D& b, ZQ_CNN_Tensor4D& a, const ZQ_CNN_Tensor4D& mean, const ZQ_CNN_Tensor4D& var, 
+			const ZQ_CNN_Tensor4D& scale, const float eps)
 		{
 			int C = b.GetC();
 			if (C == 0)
@@ -921,18 +923,19 @@ namespace ZQ
 			const float* scale_data = scale.GetFirstPixelPtr();
 			for (int c = 0; c < C; c++)
 			{
-				b_data[c] = scale_data[c] / sqrt(var_data[c]);
+				b_data[c] = scale_data[c] / sqrt(__max(var_data[c]+eps, 1e-32));
 				a_data[c] =  - mean_data[c] * b_data[c];
 			}
 			return true;
 		}
 
 		/*
-		a = - slope * mean / sqrt(var)
-		b = slope / sqrt(var)
+		a = - slope * mean / sqrt(var+eps)
+		b = slope / sqrt(var+eps)
 		value = b * value + a
 		*/
-		static bool BatchNorm_Compute_b_a(ZQ_CNN_Tensor4D& b, ZQ_CNN_Tensor4D& a, const ZQ_CNN_Tensor4D& mean, const ZQ_CNN_Tensor4D& var)
+		static bool BatchNorm_Compute_b_a(ZQ_CNN_Tensor4D& b, ZQ_CNN_Tensor4D& a, 
+			const ZQ_CNN_Tensor4D& mean, const ZQ_CNN_Tensor4D& var, const float eps)
 		{
 			int C = b.GetC();
 			if (C == 0)
@@ -947,19 +950,19 @@ namespace ZQ
 			const float* var_data = var.GetFirstPixelPtr();
 			for (int c = 0; c < C; c++)
 			{
-				b_data[c] = 1.0f / sqrt(var_data[c]);
+				b_data[c] = 1.0f / sqrt(__max(var_data[c]+eps,1e-32));
 				a_data[c] = -mean_data[c] * b_data[c];
 			}
 			return true;
 		}
 
 		/*
-		a = bias - slope * mean / sqrt(var)
-		b = slope / sqrt(var)
+		a = bias - slope * mean / sqrt(var+eps)
+		b = slope / sqrt(var+eps)
 		value = b * value + a
 		***OR***
-		a = -mean/sqrt(var)
-		b = 1/sqrt(var)
+		a = -mean/sqrt(var+eps)
+		b = 1/sqrt(var+eps)
 		value = b * value + a
 		*/
 		static bool BatchNorm_b_a(ZQ_CNN_Tensor4D &input, const ZQ_CNN_Tensor4D& b, const ZQ_CNN_Tensor4D& a, int num_threads = 1)
@@ -1958,16 +1961,16 @@ namespace ZQ
 		static void _avgpooling_omp(int align_mode, const float* in_data, int N, int in_H, int in_W, int C, int in_pixStep, int in_widthStep, int in_sliceStep,
 			int kernel_H, int kernel_W, int stride_H, int stride_W, float* out_data, int out_H, int out_W, int out_pixStep, int out_widthStep, int out_sliceStep, int num_threads);
 
-		static void _batchnorm(int align_mode, float* data, int N, int H, int W, int C, int pixStep, int widthStep, int sliceStep, const float* mean, const float* var);
+		static void _batchnorm(int align_mode, float* data, int N, int H, int W, int C, int pixStep, int widthStep, int sliceStep, const float* mean, const float* var, const float eps);
 
-		static void _batchnorm_omp(int align_mode, float* data, int N, int H, int W, int C, int pixStep, int widthStep, int sliceStep, const float* mean, const float* var,
+		static void _batchnorm_omp(int align_mode, float* data, int N, int H, int W, int C, int pixStep, int widthStep, int sliceStep, const float* mean, const float* var, const float eps,
 			int num_threads);
 
 		static void _batchnorm_scalebias(int align_mode, float* data, int N, int H, int W, int C, int pixStep, int widthStep, int sliceStep,
-			const float* mean, const float* var, const float* slope, const float* bias);
+			const float* mean, const float* var, const float* slope, const float* bias, const float eps);
 
 		static void _batchnorm_scalebias_omp(int align_mode, float* data, int N, int H, int W, int C, int pixStep, int widthStep, int sliceStep,
-			const float* mean, const float* var, const float* slope, const float* bias, int num_threads);
+			const float* mean, const float* var, const float* slope, const float* bias, const float eps, int num_threads);
 
 		/*
 		a = bias - slope * mean / sqrt(var)

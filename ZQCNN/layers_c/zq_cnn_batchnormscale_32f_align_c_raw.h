@@ -1,6 +1,6 @@
 /*
-a = bias - slope * mean / sqrt(var)
-b = slope / sqrt(var)
+a = bias - slope * mean / sqrt(var+eps)
+b = slope / sqrt(var+eps)
 value = b * value + a
 */
 void zq_cnn_batchnormscale_32f_mean_var_scale_bias_align(
@@ -15,7 +15,8 @@ void zq_cnn_batchnormscale_32f_mean_var_scale_bias_align(
 	const float* mean_data,
 	const float* var_data,
 	const float* slope_data,
-	const float* bias_data
+	const float* bias_data,
+	const float eps
 )
 {
 	float* a, *b;
@@ -24,7 +25,7 @@ void zq_cnn_batchnormscale_32f_mean_var_scale_bias_align(
 	b = (float*)_aligned_malloc(in_C, (zq_mm_align_size << 2));
 	for (c = 0; c < in_C; c++)
 	{
-		b[c] = slope_data[c] / sqrt(__max(var_data[c], FLOAT_EPS_FOR_DIV));
+		b[c] = slope_data[c] / sqrt(__max(var_data[c]+eps,FLOAT_EPS_FOR_DIV));
 		a[c] = bias_data[c] - mean_data[c] * b[c];
 	}
 
@@ -35,8 +36,8 @@ void zq_cnn_batchnormscale_32f_mean_var_scale_bias_align(
 }
 
 /*
-a = bias - slope * mean / sqrt(var)
-b = slope / sqrt(var)
+a = bias - slope * mean / sqrt(var+eps)
+b = slope / sqrt(var+eps)
 value = b * value + a
 */
 void zq_cnn_batchnormscale_32f_mean_var_scale_bias_align_omp(
@@ -52,6 +53,7 @@ void zq_cnn_batchnormscale_32f_mean_var_scale_bias_align_omp(
 	const float* var_data,
 	const float* slope_data,
 	const float* bias_data,
+	const float eps,
 	int thread_count
 )
 {
@@ -61,7 +63,7 @@ void zq_cnn_batchnormscale_32f_mean_var_scale_bias_align_omp(
 	b = (float*)_aligned_malloc(in_C, (zq_mm_align_size << 2));
 	for (c = 0; c < in_C; c++)
 	{
-		b[c] = slope_data[c] / sqrt(__max(var_data[c], FLOAT_EPS_FOR_DIV));
+		b[c] = slope_data[c] / sqrt(__max(var_data[c]+eps,FLOAT_EPS_FOR_DIV));
 		a[c] = bias_data[c] - mean_data[c] * b[c];
 	}
 
@@ -72,8 +74,8 @@ void zq_cnn_batchnormscale_32f_mean_var_scale_bias_align_omp(
 }
 
 /*
-a = - mean / sqrt(var)
-b = 1 / sqrt(var)
+a = - mean / sqrt(var+eps)
+b = 1 / sqrt(var+eps)
 value = b * value + a
 */
 void zq_cnn_batchnorm_32f_mean_var_align(
@@ -86,7 +88,8 @@ void zq_cnn_batchnorm_32f_mean_var_align(
 	int in_widthStep,
 	int in_sliceStep,
 	const float* mean_data,
-	const float* var_data
+	const float* var_data,
+	const float eps
 )
 {
 	float* a, *b;
@@ -95,7 +98,7 @@ void zq_cnn_batchnorm_32f_mean_var_align(
 	b = (float*)_aligned_malloc(in_C, (zq_mm_align_size << 2));
 	for (c = 0; c < in_C; c++)
 	{
-		b[c] = 1.0f / sqrt(__max(var_data[c], FLOAT_EPS_FOR_DIV));
+		b[c] = 1.0f / sqrt(__max(var_data[c]+eps, FLOAT_EPS_FOR_DIV));
 		a[c] = -mean_data[c] * b[c];
 	}
 
@@ -106,8 +109,8 @@ void zq_cnn_batchnorm_32f_mean_var_align(
 }
 
 /*
-a = - mean / sqrt(var)
-b = 1 / sqrt(var)
+a = - mean / sqrt(var+eps)
+b = 1 / sqrt(var+eps)
 value = b * value + a
 */
 void zq_cnn_batchnorm_32f_mean_var_align_omp(
@@ -121,6 +124,7 @@ void zq_cnn_batchnorm_32f_mean_var_align_omp(
 	int in_sliceStep,
 	const float* mean_data,
 	const float* var_data,
+	const float eps,
 	int thread_count
 )
 {
@@ -130,7 +134,7 @@ void zq_cnn_batchnorm_32f_mean_var_align_omp(
 	b = (float*)_aligned_malloc(in_C, (zq_mm_align_size << 2));
 	for (c = 0; c < in_C; c++)
 	{
-		b[c] = 1.0f / sqrt(__max(var_data[c], FLOAT_EPS_FOR_DIV));
+		b[c] = 1.0f / sqrt(__max(var_data[c]+eps, FLOAT_EPS_FOR_DIV));
 		a[c] = -mean_data[c] * b[c];
 	}
 
@@ -259,12 +263,12 @@ void zq_cnn_scale_32f_align_omp(
 }
 
 /*
-a = bias - slope * mean / sqrt(var)
-b = slope / sqrt(var)
+a = bias - slope * mean / sqrt(var+eps)
+b = slope / sqrt(var+eps)
 value = b * value + a
 OR
-a = - mean / sqrt(var)
-b = 1 / sqrt(var)
+a = - mean / sqrt(var+eps)
+b = 1 / sqrt(var+eps)
 value = b * value + a
 */
 void zq_cnn_batchnorm_32f_b_a_align(
@@ -303,12 +307,12 @@ void zq_cnn_batchnorm_32f_b_a_align(
 }
 
 /*
-a = bias - slope * mean / sqrt(var)
-b = slope / sqrt(var)
+a = bias - slope * mean / sqrt(var+eps)
+b = slope / sqrt(var+eps)
 value = b * value + a
 OR
-a = - mean / sqrt(var)
-b = 1 / sqrt(var)
+a = - mean / sqrt(var+eps)
+b = 1 / sqrt(var+eps)
 value = b * value + a
 */
 void zq_cnn_batchnorm_32f_b_a_align_omp(

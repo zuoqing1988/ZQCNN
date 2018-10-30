@@ -112,8 +112,8 @@ extern "C" {
 #endif
 
 	/*
-	a = bias - scale * mean / sqrt(var)
-	b = scale / sqrt(var)
+	a = bias - scale * mean / sqrt(var+eps)
+	b = scale / sqrt(var+eps)
 	value = b * value + a
 	*/
 	void zq_cnn_batchnormscale_32f_mean_var_scale_bias_align0(
@@ -128,7 +128,8 @@ extern "C" {
 		const float* mean_data,
 		const float* var_data,
 		const float* scale_data,
-		const float* bias_data
+		const float* bias_data,
+		const float eps
 	)
 	{
 		float* a, *b;
@@ -137,7 +138,7 @@ extern "C" {
 		b = (float*)malloc(in_C);
 		for (c = 0; c < in_C; c++)
 		{
-			b[c] = scale_data[c] / __max(sqrt(var_data[c]), FLOAT_EPS_FOR_DIV);
+			b[c] = scale_data[c] / sqrt(__max(var_data[c]+eps, FLOAT_EPS_FOR_DIV));
 			a[c] = bias_data[c] - mean_data[c] * b[c];
 		}
 
@@ -147,8 +148,8 @@ extern "C" {
 	}
 
 	/*
-	a = bias - scale * mean / sqrt(var)
-	b = scale / sqrt(var)
+	a = bias - scale * mean / sqrt(var+eps)
+	b = scale / sqrt(var+eps)
 	value = b * value + a
 	*/
 	void zq_cnn_batchnormscale_32f_mean_var_scale_bias_align0_omp(
@@ -164,6 +165,7 @@ extern "C" {
 		const float* var_data,
 		const float* scale_data,
 		const float* bias_data,
+		const float eps,
 		int thread_count
 	)
 	{
@@ -173,7 +175,7 @@ extern "C" {
 		b = (float*)malloc(in_C);
 		for (c = 0; c < in_C; c++)
 		{
-			b[c] = scale_data[c] / __max(sqrt(var_data[c]), FLOAT_EPS_FOR_DIV);
+			b[c] = scale_data[c] / sqrt(__max(var_data[c]+eps,FLOAT_EPS_FOR_DIV));
 			a[c] = bias_data[c] - mean_data[c] * b[c];
 		}
 
@@ -183,8 +185,8 @@ extern "C" {
 	}
 
 	/*
-	a = - mean / sqrt(var)
-	b = 1 / sqrt(var)
+	a = - mean / sqrt(var+eps)
+	b = 1 / sqrt(var+eps)
 	value = b * value + a
 	*/
 	void zq_cnn_batchnorm_32f_mean_var_align0(
@@ -197,7 +199,8 @@ extern "C" {
 		int in_widthStep,
 		int in_sliceStep,
 		const float* mean_data,
-		const float* var_data
+		const float* var_data,
+		const float eps
 	)
 	{
 		float* a, *b;
@@ -206,7 +209,7 @@ extern "C" {
 		b = (float*)malloc(in_C);
 		for (c = 0; c < in_C; c++)
 		{
-			b[c] = 1.0f / __max(sqrt(var_data[c]), FLOAT_EPS_FOR_DIV);
+			b[c] = 1.0f / sqrt(__max(var_data[c]+eps,FLOAT_EPS_FOR_DIV));
 			a[c] = - mean_data[c] * b[c];
 		}
 
@@ -216,8 +219,8 @@ extern "C" {
 	}
 
 	/*
-	a = - mean / sqrt(var)
-	b = 1 / sqrt(var)
+	a = - mean / sqrt(var+eps)
+	b = 1 / sqrt(var+eps)
 	value = b * value + a
 	*/
 	void zq_cnn_batchnorm_32f_mean_var_align0_omp(
@@ -231,6 +234,7 @@ extern "C" {
 		int in_sliceStep,
 		const float* mean_data,
 		const float* var_data,
+		const float eps,
 		int thread_count
 	)
 	{
@@ -240,7 +244,7 @@ extern "C" {
 		b = (float*)malloc(in_C);
 		for (c = 0; c < in_C; c++)
 		{
-			b[c] = 1.0f / __max(sqrt(var_data[c]), FLOAT_EPS_FOR_DIV);
+			b[c] = 1.0f / sqrt(__max(var_data[c]+eps,FLOAT_EPS_FOR_DIV));
 			a[c] = -mean_data[c] * b[c];
 		}
 
@@ -359,12 +363,12 @@ extern "C" {
 	}
 
 	/*
-	a = bias - scale * mean / sqrt(var)
-	b = scale / sqrt(var)
+	a = bias - scale * mean / sqrt(var+eps)
+	b = scale / sqrt(var+eps)
 	value = b * value + a
 	OR
-	a = - mean / sqrt(var)
-	b = 1 / sqrt(var)
+	a = - mean / sqrt(var+eps)
+	b = 1 / sqrt(var+eps)
 	value = b * value + a
 	*/
 	void zq_cnn_batchnorm_32f_b_a_align0(
@@ -400,12 +404,12 @@ extern "C" {
 	}
 
 	/*
-	a = bias - scale * mean / sqrt(var)
-	b = scale / sqrt(var)
+	a = bias - scale * mean / sqrt(var+eps)
+	b = scale / sqrt(var+eps)
 	value = b * value + a
 	OR
-	a = - mean / sqrt(var)
-	b = 1 / sqrt(var)
+	a = - mean / sqrt(var+eps)
+	b = 1 / sqrt(var+eps)
 	value = b * value + a
 	*/
 	void zq_cnn_batchnorm_32f_b_a_align0_omp(

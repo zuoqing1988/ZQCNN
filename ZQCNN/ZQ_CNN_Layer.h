@@ -1033,7 +1033,7 @@ namespace ZQ
 		*/
 	public:
 		ZQ_CNN_Layer_BatchNormScale() : mean(0), var(0), scale(0), bias(0), 
-			b(0), a(0), with_bias(false), bottom_C(0) {}
+			b(0), a(0), eps(0), with_bias(false), bottom_C(0) {}
 		~ZQ_CNN_Layer_BatchNormScale() {
 			if (mean) delete mean;
 			if (var) delete var;
@@ -1049,6 +1049,7 @@ namespace ZQ
 		ZQ_CNN_Tensor4D* b;
 		ZQ_CNN_Tensor4D* a;
 
+		float eps;
 		//
 		bool with_bias;
 		int bottom_C;
@@ -1087,6 +1088,13 @@ namespace ZQ
 				if (_strcmpi("BatchNormScale", paras[n][0].c_str()) == 0)
 				{
 
+				}
+				else if (_strcmpi("eps", paras[n][0].c_str()) == 0)
+				{
+					if (paras[n].size() >= 2)
+					{
+						eps = atof(paras[n][1].c_str());
+					}
 				}
 				else if (_strcmpi("top", paras[n][0].c_str()) == 0)
 				{
@@ -1257,7 +1265,7 @@ namespace ZQ
 				var->ConvertFromCompactNCHW(&nchw_raw[0] + dst_len, N, C, H, W);
 				scale->ConvertFromCompactNCHW(&nchw_raw[0] + dst_len * 2, N, C, H, W);
 				bias->ConvertFromCompactNCHW(&nchw_raw[0] + dst_len * 3, N, C, H, W);
-				return ZQ_CNN_Forward_SSEUtils::BatchNormScaleBias_Compute_b_a(*b, *a, *mean, *var, *scale, *bias);
+				return ZQ_CNN_Forward_SSEUtils::BatchNormScaleBias_Compute_b_a(*b, *a, *mean, *var, *scale, *bias, eps);
 			}
 			else
 			{
@@ -1267,7 +1275,7 @@ namespace ZQ
 				mean->ConvertFromCompactNCHW(&nchw_raw[0], N, C, H, W);
 				var->ConvertFromCompactNCHW(&nchw_raw[0] + dst_len, N, C, H, W);
 				scale->ConvertFromCompactNCHW(&nchw_raw[0] + dst_len * 2, N, C, H, W);
-				return ZQ_CNN_Forward_SSEUtils::BatchNormScale_Compute_b_a(*b, *a, *mean, *var, *scale);
+				return ZQ_CNN_Forward_SSEUtils::BatchNormScale_Compute_b_a(*b, *a, *mean, *var, *scale, eps);
 			}
 			
 		}
@@ -1324,7 +1332,7 @@ namespace ZQ
 				var->ConvertFromCompactNCHW(&nchw_raw[0] + dst_len, N, C, H, W);
 				scale->ConvertFromCompactNCHW(&nchw_raw[0] + dst_len * 2, N, C, H, W);
 				bias->ConvertFromCompactNCHW(&nchw_raw[0] + dst_len * 3, N, C, H, W);
-				return ZQ_CNN_Forward_SSEUtils::BatchNormScaleBias_Compute_b_a(*b, *a, *mean, *var, *scale, *bias);
+				return ZQ_CNN_Forward_SSEUtils::BatchNormScaleBias_Compute_b_a(*b, *a, *mean, *var, *scale, *bias, eps);
 			}
 			else
 			{
@@ -1337,7 +1345,7 @@ namespace ZQ
 				mean->ConvertFromCompactNCHW(&nchw_raw[0], N, C, H, W);
 				var->ConvertFromCompactNCHW(&nchw_raw[0] + dst_len, N, C, H, W);
 				scale->ConvertFromCompactNCHW(&nchw_raw[0] + dst_len * 2, N, C, H, W);
-				return ZQ_CNN_Forward_SSEUtils::BatchNormScale_Compute_b_a(*b, *a, *mean, *var, *scale);
+				return ZQ_CNN_Forward_SSEUtils::BatchNormScale_Compute_b_a(*b, *a, *mean, *var, *scale, eps);
 			}
 			return true;
 		}
@@ -1351,12 +1359,12 @@ namespace ZQ
 	class ZQ_CNN_Layer_BatchNorm : public ZQ_CNN_Layer
 	{
 		/*
-		a = - mean / sqrt(var)
-		b = 1 / sqrt(var)
+		a = - mean / sqrt(var+eps)
+		b = 1 / sqrt(var+eps)
 		value = b * value + a
 		*/
 	public:
-		ZQ_CNN_Layer_BatchNorm() : mean(0), var(0), b(0), a(0), bottom_C(0) {}
+		ZQ_CNN_Layer_BatchNorm() : mean(0), var(0), b(0), a(0),eps(0), bottom_C(0) {}
 		~ZQ_CNN_Layer_BatchNorm() {
 			if (mean) delete mean;
 			if (var) delete var;
@@ -1367,6 +1375,8 @@ namespace ZQ
 		ZQ_CNN_Tensor4D* var;
 		ZQ_CNN_Tensor4D* b;
 		ZQ_CNN_Tensor4D* a;
+
+		float eps;
 
 		//
 		int bottom_C;
@@ -1383,7 +1393,7 @@ namespace ZQ
 			if ((*tops)[0] != (*bottoms)[0])
 				(*tops)[0]->CopyData(*(*bottoms)[0]);
 			double t1 = omp_get_wtime();
-			bool ret = ZQ_CNN_Forward_SSEUtils::BatchNorm(*((*tops)[0]), *b, *a);
+			bool ret = ZQ_CNN_Forward_SSEUtils::BatchNorm_b_a(*((*tops)[0]), *b, *a);
 			double t2 = omp_get_wtime();
 			if (show_debug_info)
 				printf("BatchNorm layer: %s cost : %.3f ms\n", name.c_str(), 1000 * (t2 - t1));
@@ -1405,6 +1415,13 @@ namespace ZQ
 				if (_strcmpi("BatchNorm", paras[n][0].c_str()) == 0)
 				{
 
+				}
+				else if (_strcmpi("eps", paras[n][0].c_str()) == 0)
+				{
+					if (paras[n].size() >= 2)
+					{
+						eps = atof(paras[n][1].c_str());
+					}
 				}
 				else if (_strcmpi("top", paras[n][0].c_str()) == 0)
 				{
@@ -1540,7 +1557,7 @@ namespace ZQ
 				return false;
 			mean->ConvertFromCompactNCHW(&nchw_raw[0], N, C, H, W);
 			var->ConvertFromCompactNCHW(&nchw_raw[0] + dst_len, N, C, H, W);
-			return ZQ_CNN_Forward_SSEUtils::BatchNorm_Compute_b_a(*b, *a, *mean, *var);
+			return ZQ_CNN_Forward_SSEUtils::BatchNorm_Compute_b_a(*b, *a, *mean, *var, eps);
 		}
 
 		virtual bool SaveBinary_NCHW(FILE* out) const
@@ -1577,7 +1594,7 @@ namespace ZQ
 
 			mean->ConvertFromCompactNCHW(&nchw_raw[0], N, C, H, W);
 			var->ConvertFromCompactNCHW(&nchw_raw[0] + dst_len, N, C, H, W);
-			return ZQ_CNN_Forward_SSEUtils::BatchNorm_Compute_b_a(*b, *a, *mean, *var);
+			return ZQ_CNN_Forward_SSEUtils::BatchNorm_Compute_b_a(*b, *a, *mean, *var, eps);
 		}
 
 		virtual __int64 GetNumOfMulAdd() const

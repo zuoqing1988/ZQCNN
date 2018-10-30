@@ -2270,86 +2270,86 @@ void ZQ_CNN_Forward_SSEUtils::_avgpooling_omp(int align_mode, const float* in_da
 
 
 void ZQ_CNN_Forward_SSEUtils::_batchnorm(int align_mode, float* data, int N, int H, int W, int C, 
-	int pixStep, int widthStep, int sliceStep, const float* mean, const float* var)
+	int pixStep, int widthStep, int sliceStep, const float* mean, const float* var, const float eps)
 {
 	if (align_mode == ZQ_CNN_Tensor4D::ALIGN_128bit)
 	{
 #if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_SSE
-		zq_cnn_batchnorm_32f_mean_var_align128bit(data, N, H, W, C, pixStep, widthStep, sliceStep, mean, var);
+		zq_cnn_batchnorm_32f_mean_var_align128bit(data, N, H, W, C, pixStep, widthStep, sliceStep, mean, var, eps);
 #endif
 	}
 	else if (align_mode == ZQ_CNN_Tensor4D::ALIGN_256bit)
 	{
 #if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_AVX
-		zq_cnn_batchnorm_32f_mean_var_align256bit(data, N, H, W, C, pixStep, widthStep, sliceStep, mean, var);
+		zq_cnn_batchnorm_32f_mean_var_align256bit(data, N, H, W, C, pixStep, widthStep, sliceStep, mean, var, eps);
 #endif
 	}
 	else
 	{
-		zq_cnn_batchnorm_32f_mean_var_align0(data, N, H, W, C, pixStep, widthStep, sliceStep, mean, var);
+		zq_cnn_batchnorm_32f_mean_var_align0(data, N, H, W, C, pixStep, widthStep, sliceStep, mean, var, eps);
 	}
 }
 
 void ZQ_CNN_Forward_SSEUtils::_batchnorm_omp(int align_mode, float* data, int N, int H, int W, int C,
-	int pixStep, int widthStep, int sliceStep, const float* mean, const float* var, int num_threads)
+	int pixStep, int widthStep, int sliceStep, const float* mean, const float* var, const float eps, int num_threads)
 {
 	if (align_mode == ZQ_CNN_Tensor4D::ALIGN_128bit)
 	{
 #if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_SSE
-		zq_cnn_batchnorm_32f_mean_var_align128bit_omp(data, N, H, W, C, pixStep, widthStep, sliceStep, mean, var, num_threads);
+		zq_cnn_batchnorm_32f_mean_var_align128bit_omp(data, N, H, W, C, pixStep, widthStep, sliceStep, mean, var, eps, num_threads);
 #endif
 	}
 	else if (align_mode == ZQ_CNN_Tensor4D::ALIGN_256bit)
 	{
 #if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_AVX
-		zq_cnn_batchnorm_32f_mean_var_align256bit_omp(data, N, H, W, C, pixStep, widthStep, sliceStep, mean, var, num_threads);
+		zq_cnn_batchnorm_32f_mean_var_align256bit_omp(data, N, H, W, C, pixStep, widthStep, sliceStep, mean, var, eps, num_threads);
 #endif
 	}
 	else
 	{
-		zq_cnn_batchnorm_32f_mean_var_align0_omp(data, N, H, W, C, pixStep, widthStep, sliceStep, mean, var, num_threads);
+		zq_cnn_batchnorm_32f_mean_var_align0_omp(data, N, H, W, C, pixStep, widthStep, sliceStep, mean, var, eps, num_threads);
 	}
 }
 
 void ZQ_CNN_Forward_SSEUtils::_batchnorm_scalebias(int align_mode, float* data, int N, int H, int W, int C, int pixStep, int widthStep, int sliceStep,
-	const float* mean, const float* var, const float* scale, const float* bias)
+	const float* mean, const float* var, const float* scale, const float* bias, const float eps)
 {
 	if (align_mode == ZQ_CNN_Tensor4D::ALIGN_128bit)
 	{
 #if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_SSE
-		zq_cnn_batchnormscale_32f_mean_var_scale_bias_align128bit(data, N, H, W, C, pixStep, widthStep, sliceStep, mean, var, scale,bias);
+		zq_cnn_batchnormscale_32f_mean_var_scale_bias_align128bit(data, N, H, W, C, pixStep, widthStep, sliceStep, mean, var, scale,bias, eps);
 #endif
 	}
 	else if (align_mode == ZQ_CNN_Tensor4D::ALIGN_256bit)
 	{
 #if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_AVX
-		zq_cnn_batchnormscale_32f_mean_var_scale_bias_align256bit(data, N, H, W, C, pixStep, widthStep, sliceStep, mean, var, scale, bias);
+		zq_cnn_batchnormscale_32f_mean_var_scale_bias_align256bit(data, N, H, W, C, pixStep, widthStep, sliceStep, mean, var, scale, bias, eps);
 #endif
 	}
 	else
 	{
-		zq_cnn_batchnormscale_32f_mean_var_scale_bias_align0(data, N, H, W, C, pixStep, widthStep, sliceStep, mean, var, scale, bias);
+		zq_cnn_batchnormscale_32f_mean_var_scale_bias_align0(data, N, H, W, C, pixStep, widthStep, sliceStep, mean, var, scale, bias, eps);
 	}
 }
 
 void ZQ_CNN_Forward_SSEUtils::_batchnorm_scalebias_omp(int align_mode, float* data, int N, int H, int W, int C, int pixStep, int widthStep, int sliceStep,
-	const float* mean, const float* var, const float* scale, const float* bias, int num_threads)
+	const float* mean, const float* var, const float* scale, const float* bias, const float eps, int num_threads)
 {
 	if (align_mode == ZQ_CNN_Tensor4D::ALIGN_128bit)
 	{
 #if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_SSE
-		zq_cnn_batchnormscale_32f_mean_var_scale_bias_align128bit_omp(data, N, H, W, C, pixStep, widthStep, sliceStep, mean, var, scale, bias, num_threads);
+		zq_cnn_batchnormscale_32f_mean_var_scale_bias_align128bit_omp(data, N, H, W, C, pixStep, widthStep, sliceStep, mean, var, scale, bias, eps, num_threads);
 #endif
 	}
 	else if (align_mode == ZQ_CNN_Tensor4D::ALIGN_256bit)
 	{
 #if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_AVX
-		zq_cnn_batchnormscale_32f_mean_var_scale_bias_align256bit_omp(data, N, H, W, C, pixStep, widthStep, sliceStep, mean, var, scale, bias, num_threads);
+		zq_cnn_batchnormscale_32f_mean_var_scale_bias_align256bit_omp(data, N, H, W, C, pixStep, widthStep, sliceStep, mean, var, scale, bias, eps, num_threads);
 #endif
 	}
 	else
 	{
-		zq_cnn_batchnormscale_32f_mean_var_scale_bias_align0_omp(data, N, H, W, C, pixStep, widthStep, sliceStep, mean, var, scale, bias, num_threads);
+		zq_cnn_batchnormscale_32f_mean_var_scale_bias_align0_omp(data, N, H, W, C, pixStep, widthStep, sliceStep, mean, var, scale, bias, eps, num_threads);
 	}
 }
 

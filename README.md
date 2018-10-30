@@ -4,6 +4,14 @@ ZQCNN-v0.0是ZuoQing参照mini-caffe写的forward库，随便用用
 
 # 更新日志
 
+**2018-10-30日更新：BatchNorm的eps问题**
+
+(1)BatchNorm、BatchNormScale的默认eps都是0
+
+(2)如果是用mxnet2zqcnn从mxnet转过来模型，转的过程中会把eps加到var上面当做新的var
+
+(3)如果是从其他平台转过来模型，要么手工把eps加到var上面，要么在BatchNorm、BatchNormScale后面加上eps=?(?为该平台这个层的eps值)
+
 **2018-10-26日更新**
 
 MTCNN支持多线程，大图找小脸而且脸多的情况下，8线程可以取得单线程4倍以上效果，请用data\test2.jpg来测试
