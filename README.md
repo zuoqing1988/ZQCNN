@@ -4,6 +4,8 @@ ZQCNN-v0.0是ZuoQing参照mini-caffe写的forward库，随便用用
 
 # 更新日志
 
+**2018-10-30日更新2：MTCNN大图找小脸建议先用高斯滤波**
+
 **2018-10-30日更新：BatchNorm的eps问题**
 
 (1)BatchNorm、BatchNormScale的默认eps都是0
