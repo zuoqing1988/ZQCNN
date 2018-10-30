@@ -101,7 +101,9 @@ Convolution name=conv1 bottom=data top=conv1 num_output=10 kernel_size=3 stride=
 
 **人脸检测**
 
-[MTCNN](https://pan.baidu.com/s/1f6_wQ2kXiTZFyH6PFIDc2Q) 从[MTCNN](https://github.com/kpzhang93/MTCNN_face_detection_alignment)转的格式
+[MTCNN-author-version](https://pan.baidu.com/s/1lWLKDYv8YQ6Th6KRiKvgug) 从[MTCNN](https://github.com/kpzhang93/MTCNN_face_detection_alignment)转的格式
+
+[MTCNN-ZQ-version](https://pan.baidu.com/s/1j1WqkwbUCf_9f4hCQukoFg)
 
 **人脸识别(如无说明，模型都是ms1m-refine-v2训练的)**
 
