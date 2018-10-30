@@ -45,11 +45,42 @@ int main()
 #if ZQ_CNN_USE_BLAS_GEMM
 	openblas_set_num_threads(num_threads);
 #endif
-	Mat image0 = cv::imread("data\\test2.jpg", 1);
+	Mat image0 = cv::imread("data\\2.jpg", 1);
 	if (image0.empty())
 	{
 		cout << "empty image\n";
 		return EXIT_FAILURE;
+	}
+	/* TIPS: when finding tiny faces for very big image, gaussian blur is very useful for Pnet*/
+	bool run_blur = true;
+	int kernel_size = 3, sigma = 2;
+	if (image0.cols * image0.rows > 2500 * 1600)
+	{
+		run_blur = true;
+		kernel_size = 5;
+		sigma = 3;
+	}
+	else if (image0.cols * image0.rows > 1920 * 1080)
+	{
+		run_blur = true;
+		kernel_size = 3;
+		sigma = 2;
+	}
+	else
+	{
+		run_blur = false;
+	}
+
+	if (run_blur)
+	{
+		cv::Mat blur_image0;
+		int nBlurIters = 1000;
+		double t00 = omp_get_wtime();
+		for (int i = 0; i < nBlurIters; i++)
+			cv::GaussianBlur(image0, blur_image0, cv::Size(kernel_size, kernel_size), sigma, sigma);
+		double t01 = omp_get_wtime();
+		printf("[%d] blur cost %.3f secs, 1 blur costs %.3f ms\n", nBlurIters, t01 - t00, 1000 * (t01 - t00) / nBlurIters);
+		cv::GaussianBlur(image0, image0, cv::Size(kernel_size, kernel_size), sigma, sigma);
 	}
 
 	std::vector<ZQ_CNN_BBox> thirdBbox;
@@ -62,7 +93,7 @@ int main()
 	result_name = "resultdet.jpg";
 	if (use_pnet20)
 	{
-		if (!mtcnn.Init("model\\det1-dw20.zqparams", "model\\det1-dw20-ori.nchwbin",
+		if (!mtcnn.Init("model\\det1-dw20.zqparams", "model\\det1-dw20-7.nchwbin",
 			"model\\det2.zqparams", "model\\det2_bgr.nchwbin",
 			"model\\det3.zqparams", "model\\det3_bgr.nchwbin", thread_num))
 		{
@@ -70,7 +101,7 @@ int main()
 			return EXIT_FAILURE;
 		}
 
-		mtcnn.SetPara(image0.cols, image0.rows, 20, 0.6, 0.7, 0.9, 0.4, 0.5, 0.5, 0.709, 6, 20, 4, special_handle_very_big_face);
+		mtcnn.SetPara(image0.cols, image0.rows, 20, 0.6, 0.7, 0.9, 0.4, 0.5, 0.5, 0.709, 3, 20, 4, special_handle_very_big_face);
 	}
 	else
 	{

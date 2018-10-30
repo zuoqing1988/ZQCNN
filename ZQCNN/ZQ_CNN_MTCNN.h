@@ -152,15 +152,15 @@ namespace ZQ
 		{
 			double t1 = omp_get_wtime();
 			std::vector<ZQ_CNN_BBox> firstBbox, secondBbox;
-			int old_thread_num = thread_num;
-			//thread_num = 1;
 			if (!_Pnet_stage(bgr_img, _width, _height, _widthStep, firstBbox))
 				return false;
-			thread_num = old_thread_num;
+			//results = firstBbox;
+			//return true;
 			double t2 = omp_get_wtime();
 			if (!_Rnet_stage(firstBbox, secondBbox))
 				return false;
-
+			//results = secondBbox;
+			//return true;
 			double t3 = omp_get_wtime();
 			if (!_Onet_stage(secondBbox, results))
 				return false;
