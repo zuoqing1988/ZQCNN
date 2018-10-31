@@ -1661,12 +1661,12 @@ void ZQ_CNN_Forward_SSEUtils::_softmax(int align_mode, int axis, float* data, in
 			zq_cnn_softmax_32f_align128bit_C(data, N, H, W, C, pixStep, widthStep, sliceStep);
 #endif
 		}
-		/*else if (align_mode == ZQ_CNN_Tensor4D::ALIGN_256bit && C >= 8)
+		else if (align_mode == ZQ_CNN_Tensor4D::ALIGN_256bit && C >= 8)
 		{
 #if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_AVX
 			zq_cnn_softmax_32f_align256bit_C(data, N, H, W, C, pixStep, widthStep, sliceStep);
 #endif
-		}*/
+		}
 		else
 		{
 			zq_cnn_softmax_32f_align0_C(data, N, H, W, C, pixStep, widthStep, sliceStep);
