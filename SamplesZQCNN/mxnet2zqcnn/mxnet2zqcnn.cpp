@@ -1042,7 +1042,7 @@ int main(int argc, char** argv)
 			fprintf(pp, "%-16s", "Slice");
 			output_size = n.attr("num_outputs");
 		}
-		else if (n.op == "SoftmaxOutput")
+		else if (n.op == "SoftmaxOutput" || n.op == "softmax" || n.op == "Softmax")
 		{
 			fprintf(pp, "%-16s", "Softmax");
 		}
@@ -1664,7 +1664,7 @@ int main(int argc, char** argv)
 			else if (type == "leaky")
 			{
 				float slope = n.has_attr("slope") ? n.attr("slope") : 0.25f;
-				fprintf(pp, " 0=%f", slope);
+				fprintf(pp, " slope=%f", slope);
 			}
 			else if (type == "prelu")
 			{
