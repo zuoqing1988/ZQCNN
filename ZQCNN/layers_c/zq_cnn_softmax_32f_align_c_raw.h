@@ -35,7 +35,7 @@ void zq_cnn_softmax_32f_align_C(
 					max_val = __max(max_val, *c_ptr);
 				
 				//compute sum
-#if 1
+#if 0
 				sum = zq_mm_set1_ps(0);
 				for (c = 0, c_ptr = pix_ptr; c < in_C - zq_mm_align_size; c += zq_mm_align_size, c_ptr += zq_mm_align_size)
 				{
