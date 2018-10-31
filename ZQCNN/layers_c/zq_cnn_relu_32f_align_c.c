@@ -27,7 +27,19 @@ extern "C" {
 #define zq_mm_load_ps _mm_load_ps
 #define zq_mm_store_ps _mm_store_ps
 #define zq_mm_setzero_ps _mm_setzero_ps
+#define zq_mm_set1_ps _mm_set1_ps
 #define zq_mm_max_ps _mm_max_ps
+#if ZQ_CNN_USE_FMADD128
+#define zq_mm_fmadd_ps _mm_fmadd_ps
+#else
+#define zq_mm_fmadd_ps(A, B, C) _mm_add_ps(_mm_mul_ps(A, B), C)
+#endif
+#define zq_mm_add_ps _mm_add_ps
+#define zq_mm_sub_ps _mm_sub_ps
+#define zq_mm_mul_ps _mm_mul_ps
+#define zq_mm_max_ps _mm_max_ps
+#define zq_mm_min_ps _mm_min_ps
+#define zq_mm_cmp_ps _mm_cmp_ps
 #define zq_mm_type __m128
 #define zq_mm_align_size 4
 #define zq_mm_align_size_mul_2 8
@@ -47,7 +59,15 @@ extern "C" {
 #undef zq_mm_load_ps
 #undef zq_mm_store_ps
 #undef zq_mm_setzero_ps
+#undef zq_mm_set1_ps
 #undef zq_mm_max_ps
+#undef zq_mm_fmadd_ps
+#undef zq_mm_add_ps
+#undef zq_mm_sub_ps
+#undef zq_mm_mul_ps
+#undef zq_mm_max_ps
+#undef zq_mm_min_ps
+#undef zq_mm_cmp_ps
 #undef zq_mm_type
 #undef zq_mm_align_size
 #undef zq_mm_align_size_mul_2
@@ -67,7 +87,19 @@ extern "C" {
 #define zq_mm_load_ps _mm256_load_ps
 #define zq_mm_store_ps _mm256_store_ps
 #define zq_mm_setzero_ps _mm256_setzero_ps
+#define zq_mm_set1_ps _mm256_set1_ps
 #define zq_mm_max_ps _mm256_max_ps
+#if ZQ_CNN_USE_FMADD256
+#define zq_mm_fmadd_ps _mm256_fmadd_ps
+#else
+#define zq_mm256_fmadd_ps(A, B, C) _mm256_add_ps(_mm256_mul_ps(A, B), C)
+#endif
+#define zq_mm_add_ps _mm256_add_ps
+#define zq_mm_sub_ps _mm256_sub_ps
+#define zq_mm_mul_ps _mm256_mul_ps
+#define zq_mm_max_ps _mm256_max_ps
+#define zq_mm_min_ps _mm256_min_ps
+#define zq_mm_cmp_ps _mm256_cmp_ps
 #define zq_mm_type __m256
 #define zq_mm_align_size 8
 #define zq_mm_align_size_mul_2 16
@@ -87,7 +119,15 @@ extern "C" {
 #undef zq_mm_load_ps
 #undef zq_mm_store_ps
 #undef zq_mm_setzero_ps
+#undef zq_mm_set1_ps
 #undef zq_mm_max_ps
+#undef zq_mm_fmadd_ps
+#undef zq_mm_add_ps
+#undef zq_mm_sub_ps
+#undef zq_mm_mul_ps
+#undef zq_mm_max_ps
+#undef zq_mm_min_ps
+#undef zq_mm_cmp_ps
 #undef zq_mm_type
 #undef zq_mm_align_size
 #undef zq_mm_align_size_mul_2
@@ -109,59 +149,45 @@ extern "C" {
 		int in_C,
 		int in_pixelStep,
 		int in_widthStep,
-		int in_sliceStep
+		int in_sliceStep,
+		float slope
 	)
 	{
 		float data_v;
 		int n, h, w, c;
 		float* slice_ptr, *row_ptr, *pix_ptr, *c_ptr;
-
-		for (n = 0, slice_ptr = in_tensor4D_data; n < in_N; n++, slice_ptr += in_sliceStep)
+		if (slope == 0)
 		{
-			for (h = 0, row_ptr = slice_ptr; h < in_H; h++, row_ptr += in_widthStep)
-			{
-				for (w = 0, pix_ptr = row_ptr; w < in_W; w++, pix_ptr += in_pixelStep)
-				{
-					for (c = 0, c_ptr = pix_ptr; c < in_C; c++, c_ptr++)
-					{
-						data_v = *c_ptr;
-						
-						*c_ptr = __max(0,data_v);
-					}
-				}
-			}
-		}
-
-	}
-
-	void zq_cnn_relu_32f_align0_omp(
-		float* in_tensor4D_data,	// in & out
-		int in_N,
-		int in_H,
-		int in_W,
-		int in_C,
-		int in_pixelStep,
-		int in_widthStep,
-		int in_sliceStep,
-		int thread_count
-	)
-	{
-		int c;
-		int chunk_size = (in_C + thread_count - 1) / thread_count;
-		for (c = 0; c < in_C; c++)
-		{
-			int n, h, w;
-			float data_v;
-			float* slice_ptr, *row_ptr, *pix_ptr;
-
-			for (n = 0, slice_ptr = in_tensor4D_data + c; n < in_N; n++, slice_ptr += in_sliceStep)
+			for (n = 0, slice_ptr = in_tensor4D_data; n < in_N; n++, slice_ptr += in_sliceStep)
 			{
 				for (h = 0, row_ptr = slice_ptr; h < in_H; h++, row_ptr += in_widthStep)
 				{
 					for (w = 0, pix_ptr = row_ptr; w < in_W; w++, pix_ptr += in_pixelStep)
 					{
-						data_v = *pix_ptr;
-						*pix_ptr = __max(0, data_v);
+						for (c = 0, c_ptr = pix_ptr; c < in_C; c++, c_ptr++)
+						{
+							data_v = *c_ptr;
+
+							*c_ptr = __max(0, data_v);
+						}
+					}
+				}
+			}
+		}
+		else
+		{
+			for (n = 0, slice_ptr = in_tensor4D_data; n < in_N; n++, slice_ptr += in_sliceStep)
+			{
+				for (h = 0, row_ptr = slice_ptr; h < in_H; h++, row_ptr += in_widthStep)
+				{
+					for (w = 0, pix_ptr = row_ptr; w < in_W; w++, pix_ptr += in_pixelStep)
+					{
+						for (c = 0, c_ptr = pix_ptr; c < in_C; c++, c_ptr++)
+						{
+							data_v = *c_ptr;
+							if (data_v < 0)
+								*c_ptr = data_v*slope;
+						}
 					}
 				}
 			}

@@ -698,7 +698,7 @@ namespace ZQ
 			return true;
 		}
 
-		static void ReLU(ZQ_CNN_Tensor4D &input, int num_threads = 1)
+		static void ReLU(ZQ_CNN_Tensor4D &input, float slope, int num_threads = 1)
 		{
 			//num_threads = 2;
 			int N = input.GetN();
@@ -723,9 +723,9 @@ namespace ZQ
 			align_mode = __min(align_mode, ZQ_CNN_Tensor4D::ALIGN_0);
 #endif
 			if(num_threads <= 1)
-				_relu(align_mode, data, N, H, W, C, pixelStep, widthStep, sliceStep);
+				_relu(align_mode, data, N, H, W, C, pixelStep, widthStep, sliceStep, slope);
 			else
-				_relu_omp(align_mode, data, N, H, W, C, pixelStep, widthStep, sliceStep,num_threads);
+				_relu_omp(align_mode, data, N, H, W, C, pixelStep, widthStep, sliceStep, slope, num_threads);
 		}
 
 		static void Dropout(ZQ_CNN_Tensor4D &input, float dropout_ratio, int num_threads = 1)
@@ -1944,9 +1944,9 @@ namespace ZQ
 		static void _prelu_omp(int align_mode, float* data, int N, int H, int W, int C, int pixelStep, int widthStep, int sliceStep,
 			const float* slope_Data, int num_threads);
 
-		static void _relu(int align_mode, float* data, int N, int H, int W, int C, int pixelStep, int widthStep, int sliceStep);
+		static void _relu(int align_mode, float* data, int N, int H, int W, int C, int pixelStep, int widthStep, int sliceStep, float slope);
 
-		static void _relu_omp(int align_mode, float* data, int N, int H, int W, int C, int pixelStep, int widthStep, int sliceStep,
+		static void _relu_omp(int align_mode, float* data, int N, int H, int W, int C, int pixelStep, int widthStep, int sliceStep, float slope,
 			int num_threads);
 
 		static void _maxpooling(int align_mode, const float* in_data, int N, int in_H, int in_W, int C, int in_pixStep, int in_widthStep, int in_sliceStep,

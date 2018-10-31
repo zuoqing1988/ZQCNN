@@ -2047,12 +2047,14 @@ namespace ZQ
 	class ZQ_CNN_Layer_ReLU : public ZQ_CNN_Layer
 	{
 	public:
+
+		float slope;
 		//
 		int bottom_C;
 		int bottom_H;
 		int bottom_W;
 
-		ZQ_CNN_Layer_ReLU() :bottom_C(0) {}
+		ZQ_CNN_Layer_ReLU() :slope(0),bottom_C(0) {}
 		~ZQ_CNN_Layer_ReLU(){}
 
 		virtual bool Forward(std::vector<ZQ_CNN_Tensor4D*>* bottoms, std::vector<ZQ_CNN_Tensor4D*>* tops, int num_threads = 1)
@@ -2063,7 +2065,7 @@ namespace ZQ
 				(*tops)[0]->CopyData(*(*bottoms)[0]);
 
 			double t1 = omp_get_wtime();
-			ZQ_CNN_Forward_SSEUtils::ReLU(*((*tops)[0]));
+			ZQ_CNN_Forward_SSEUtils::ReLU(*((*tops)[0]), slope);
 			double t2 = omp_get_wtime();
 			if (show_debug_info)
 				printf("ReLU layer: %s %.3f ms \n", name.c_str(), 1000 * (t2 - t1));
@@ -2085,6 +2087,13 @@ namespace ZQ
 				if (_strcmpi("ReLU", paras[n][0].c_str()) == 0)
 				{
 
+				}
+				else if (_strcmpi("slope", paras[n][0].c_str()) == 0)
+				{
+					if (paras[n].size() >= 2)
+					{
+						slope = atof(paras[n][1].c_str());
+					}
 				}
 				else if (_strcmpi("top", paras[n][0].c_str()) == 0)
 				{

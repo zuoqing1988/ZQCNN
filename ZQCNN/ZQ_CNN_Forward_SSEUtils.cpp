@@ -1661,12 +1661,12 @@ void ZQ_CNN_Forward_SSEUtils::_softmax(int align_mode, int axis, float* data, in
 			zq_cnn_softmax_32f_align128bit_C(data, N, H, W, C, pixStep, widthStep, sliceStep);
 #endif
 		}
-		else if (align_mode == ZQ_CNN_Tensor4D::ALIGN_256bit && C >= 8)
+		/*else if (align_mode == ZQ_CNN_Tensor4D::ALIGN_256bit && C >= 8)
 		{
 #if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_AVX
 			zq_cnn_softmax_32f_align256bit_C(data, N, H, W, C, pixStep, widthStep, sliceStep);
 #endif
-		}
+		}*/
 		else
 		{
 			zq_cnn_softmax_32f_align0_C(data, N, H, W, C, pixStep, widthStep, sliceStep);
@@ -1833,44 +1833,44 @@ void ZQ_CNN_Forward_SSEUtils::_prelu_omp(int align_mode, float* data, int N, int
 }
 
 void ZQ_CNN_Forward_SSEUtils::_relu(int align_mode, float* data, int N, int H, int W, int C, 
-	int pixelStep, int widthStep, int sliceStep)
+	int pixelStep, int widthStep, int sliceStep, float slope)
 {
 	if (align_mode == ZQ_CNN_Tensor4D::ALIGN_128bit)
 	{
 #if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_SSE
-		zq_cnn_relu_32f_align128bit(data, N, H, W, C, pixelStep, widthStep, sliceStep);
+		zq_cnn_relu_32f_align128bit(data, N, H, W, C, pixelStep, widthStep, sliceStep, slope);
 #endif
 	}
 	else if (align_mode == ZQ_CNN_Tensor4D::ALIGN_256bit)
 	{
 #if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_AVX
-		zq_cnn_relu_32f_align256bit(data, N, H, W, C, pixelStep, widthStep, sliceStep);
+		zq_cnn_relu_32f_align256bit(data, N, H, W, C, pixelStep, widthStep, sliceStep, slope);
 #endif
 	}
 	else
 	{
-		zq_cnn_relu_32f_align0(data, N, H, W, C, pixelStep, widthStep, sliceStep);
+		zq_cnn_relu_32f_align0(data, N, H, W, C, pixelStep, widthStep, sliceStep, slope);
 	}
 }
 
 void ZQ_CNN_Forward_SSEUtils::_relu_omp(int align_mode, float* data, int N, int H, int W, int C,
-	int pixelStep, int widthStep, int sliceStep, int num_threads)
+	int pixelStep, int widthStep, int sliceStep, float slope, int num_threads)
 {
 	if (align_mode == ZQ_CNN_Tensor4D::ALIGN_128bit)
 	{
 #if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_SSE
-		zq_cnn_relu_32f_align128bit_omp(data, N, H, W, C, pixelStep, widthStep, sliceStep, num_threads);
+		zq_cnn_relu_32f_align128bit(data, N, H, W, C, pixelStep, widthStep, sliceStep, slope);
 #endif
 	}
 	else if (align_mode == ZQ_CNN_Tensor4D::ALIGN_256bit)
 	{
 #if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_AVX
-		zq_cnn_relu_32f_align256bit_omp(data, N, H, W, C, pixelStep, widthStep, sliceStep,num_threads);
+		zq_cnn_relu_32f_align256bit(data, N, H, W, C, pixelStep, widthStep, sliceStep, slope);
 #endif
 	}
 	else
 	{
-		zq_cnn_relu_32f_align0_omp(data, N, H, W, C, pixelStep, widthStep, sliceStep,num_threads);
+		zq_cnn_relu_32f_align0(data, N, H, W, C, pixelStep, widthStep, sliceStep, slope);
 	}
 }
 
