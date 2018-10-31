@@ -33,8 +33,9 @@ void zq_cnn_softmax_32f_align_C(
 				max_val = zq_final_max_q;
 				for (; c < in_C; c++, c_ptr++)
 					max_val = __max(max_val, *c_ptr);
-
+				
 				//compute sum
+#if 1
 				sum = zq_mm_set1_ps(0);
 				for (c = 0, c_ptr = pix_ptr; c < in_C - zq_mm_align_size; c += zq_mm_align_size, c_ptr += zq_mm_align_size)
 				{
@@ -49,6 +50,15 @@ void zq_cnn_softmax_32f_align_C(
 					sum_val += tmp_val;
 					*c_ptr = tmp_val;
 				}
+#else
+				sum_val = 0;
+				for (c = 0, c_ptr = pix_ptr; c < in_C; c++, c_ptr++)
+				{
+					tmp_val = exp(*c_ptr - max_val);
+					sum_val += tmp_val;
+					*c_ptr = tmp_val;
+				}
+#endif
 				
 				//divide
 				sum_val = 1.0f / sum_val;
@@ -59,6 +69,7 @@ void zq_cnn_softmax_32f_align_C(
 				}
 				for (; c < in_C; c++, c_ptr++)
 					*c_ptr *= sum_val;
+				
 			}
 		}
 	}
