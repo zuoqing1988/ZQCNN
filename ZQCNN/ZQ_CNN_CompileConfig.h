@@ -10,7 +10,7 @@
 // your settings
 #define ZQ_CNN_USE_SSETYPE ZQ_CNN_SSETYPE_AVX2
 #define ZQ_CNN_USE_BLAS_GEMM 1 // if you want to use openblas, set to 1
-
+#define ZQ_CNN_USE_PTR_PLUS_CONST 1
 
 
 

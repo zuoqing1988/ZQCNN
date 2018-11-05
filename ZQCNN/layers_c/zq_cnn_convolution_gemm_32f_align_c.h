@@ -36,7 +36,9 @@ extern "C" {
 		int out_C,	// must be filter_N
 		int out_pixelStep,
 		int out_widthStep,
-		int out_sliceStep
+		int out_sliceStep,
+		void** buffer,
+		__int64* buffer_len
 	);
 
 	
@@ -70,7 +72,9 @@ extern "C" {
 		int out_C,	// must be filter_N
 		int out_pixelStep,
 		int out_widthStep,
-		int out_sliceStep
+		int out_sliceStep,
+		void** buffer,
+		__int64* buffer_len
 	);
 
 	/*in_pixStep must be equal to filter_pixStep,
@@ -139,7 +143,9 @@ extern "C" {
 		int out_C,	// must be filter_N
 		int out_pixelStep,
 		int out_widthStep,
-		int out_sliceStep
+		int out_sliceStep,
+		void** buffer,
+		__int64* buffer_len
 	);
 
 
@@ -173,7 +179,9 @@ extern "C" {
 		int out_C,	// must be filter_N
 		int out_pixelStep,
 		int out_widthStep,
-		int out_sliceStep
+		int out_sliceStep,
+		void** buffer,
+		__int64* buffer_len
 	);
 
 	/*in_pixStep must be equal to filter_pixStep,
@@ -242,7 +250,9 @@ extern "C" {
 		int out_C,	// must be filter_N
 		int out_pixelStep,
 		int out_widthStep,
-		int out_sliceStep
+		int out_sliceStep,
+		void** buffer,
+		__int64* buffer_len
 	);
 
 	/*in_pixStep must be equal to filter_pixStep,
@@ -312,7 +322,9 @@ extern "C" {
 		int out_C,	// must be filter_N
 		int out_pixelStep,
 		int out_widthStep,
-		int out_sliceStep
+		int out_sliceStep,
+		void** buffer,
+		__int64* buffer_len
 	);
 
 	/*in_pixStep must be equal to filter_pixStep,
@@ -380,7 +392,9 @@ extern "C" {
 		int out_C,	// must be filter_N
 		int out_pixelStep,
 		int out_widthStep,
-		int out_sliceStep
+		int out_sliceStep,
+		void** buffer,
+		__int64* buffer_len
 	);
 
 	/*in_pixStep can be different with filter_pixStep,
@@ -448,7 +462,9 @@ extern "C" {
 		int out_C,	// must be filter_N
 		int out_pixelStep,
 		int out_widthStep,
-		int out_sliceStep
+		int out_sliceStep,
+		void** buffer,
+		__int64* buffer_len
 	);
 
 	/*in_pixStep can be different with filter_pixStep,
@@ -515,7 +531,9 @@ extern "C" {
 		int out_C,	// must be filter_N
 		int out_pixelStep,
 		int out_widthStep,
-		int out_sliceStep
+		int out_sliceStep,
+		void** buffer,
+		__int64* buffer_len
 	);
 
 	/*in_pixStep can be different with filter_pixStep,
@@ -585,7 +603,9 @@ extern "C" {
 		int out_C,	// must be filter_N
 		int out_pixelStep,
 		int out_widthStep,
-		int out_sliceStep
+		int out_sliceStep,
+		void** buffer,
+		__int64* buffer_len
 	);
 
 	/*in_pixStep can be different with filter_pixStep,
@@ -652,7 +672,9 @@ extern "C" {
 		int out_C,	// must be filter_N
 		int out_pixelStep,
 		int out_widthStep,
-		int out_sliceStep
+		int out_sliceStep,
+		void** buffer,
+		__int64* buffer_len
 	);
 
 	/*in_pixStep can be different with filter_pixStep,
@@ -720,7 +742,9 @@ extern "C" {
 		int out_C,	// must be filter_N
 		int out_pixelStep,
 		int out_widthStep,
-		int out_sliceStep
+		int out_sliceStep,
+		void** buffer,
+		__int64* buffer_len
 	);
 
 	/*in_pixStep can be different with filter_pixStep,
@@ -788,7 +812,9 @@ extern "C" {
 		int out_C,	// must be filter_N
 		int out_pixelStep,
 		int out_widthStep,
-		int out_sliceStep
+		int out_sliceStep,
+		void** buffer,
+		__int64* buffer_len
 	);
 
 	/*in_pixStep can be different with filter_pixStep,
@@ -857,7 +883,9 @@ extern "C" {
 		int out_C,	// must be filter_N
 		int out_pixelStep,
 		int out_widthStep,
-		int out_sliceStep
+		int out_sliceStep,
+		void** buffer,
+		__int64* buffer_len
 	);
 
 	/*in_pixStep can be different with filter_pixStep,

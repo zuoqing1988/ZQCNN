@@ -12,8 +12,21 @@ namespace ZQ
 {
 	class ZQ_CNN_Net
 	{
+	protected:
+		class Buffer
+		{
+		public:
+			void* data;
+			__int64 len;
+
+			Buffer() : data(0), len(0) {}
+			~Buffer() { Release(); }
+			void Release() { if (data) _aligned_free(data); data = 0; len = 0; }
+		};
+
 	public:
-		ZQ_CNN_Net() :has_input_layer(false),show_debug_info(false), has_innerproduct_layer(false) {}
+		ZQ_CNN_Net() :has_input_layer(false),show_debug_info(false),use_buffer(true),
+			has_innerproduct_layer(false) {}
 		~ZQ_CNN_Net() { _clear(); };
 
 	private:
@@ -27,11 +40,15 @@ namespace ZQ
 		std::string input_name;
 		bool has_input_layer;
 		bool show_debug_info;
+		bool use_buffer;
+		Buffer _buffer;
 		bool has_innerproduct_layer;
 		int input_C, input_H, input_W;
 	public:
 		void TurnOnShowDebugInfo() { show_debug_info = true; }
 		void TurnOffShowDebugInfo() { show_debug_info = false; }
+		void TurnOnUseBuffer() { use_buffer = true; }
+		void TurnOffUseBuffer() { use_buffer = false; }
 		void GetInputDim(int& in_C, int& in_H, int& in_W)const { in_C = input_C; in_H = input_H; in_W = input_W; }
 		bool LoadFrom(const std::string& param_file, const std::string& model_file, bool merge_bn = false)
 		{
@@ -130,6 +147,9 @@ namespace ZQ
 				
 				layers[i]->show_debug_info = show_debug_info;
 				//printf("%d\n", i);
+				layers[i]->use_buffer = use_buffer;
+				layers[i]->buffer = &(_buffer.data);
+				layers[i]->buffer_len = &(_buffer.len);
 				if (!layers[i]->Forward(&bottom_ptrs, &top_ptrs, num_threads))
 				{
 					blobs[0] = 0;

@@ -27,7 +27,9 @@ extern "C" {
 		int out_C,	// must be filter_N
 		int out_pixelStep,
 		int out_widthStep,
-		int out_sliceStep
+		int out_sliceStep,
+		void** buffer,
+		__int64 *buffer_len
 	);
 #endif
 
@@ -53,7 +55,9 @@ extern "C" {
 		int out_C,	// must be filter_N
 		int out_pixelStep,
 		int out_widthStep,
-		int out_sliceStep
+		int out_sliceStep,
+		void** buffer,
+		__int64 *buffer_len
 	);
 #endif
 
@@ -78,7 +82,9 @@ extern "C" {
 		int out_C,	// must be filter_N
 		int out_pixelStep,
 		int out_widthStep,
-		int out_sliceStep
+		int out_sliceStep,
+		void** buffer,
+		__int64 *buffer_len
 	);
 
 #if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_SSE
@@ -103,7 +109,9 @@ extern "C" {
 		int out_C,	// must be filter_N
 		int out_pixelStep,
 		int out_widthStep,
-		int out_sliceStep
+		int out_sliceStep,
+		void** buffer,
+		__int64 *buffer_len
 	);
 #endif
 
@@ -129,7 +137,9 @@ extern "C" {
 		int out_C,	// must be filter_N
 		int out_pixelStep,
 		int out_widthStep,
-		int out_sliceStep
+		int out_sliceStep,
+		void** buffer,
+		__int64 *buffer_len
 	);
 #endif
 

@@ -16,9 +16,12 @@ namespace ZQ
 		std::string name;
 		std::vector<std::string> bottom_names;
 		std::vector<std::string> top_names;
+		void** buffer;
+		__int64* buffer_len;
+		bool use_buffer;
 		bool show_debug_info;
 
-		ZQ_CNN_Layer() :show_debug_info(false) {}
+		ZQ_CNN_Layer() :show_debug_info(false),use_buffer(false) {}
 		virtual ~ZQ_CNN_Layer() {}
 		virtual bool Forward(std::vector<ZQ_CNN_Tensor4D*>* bottoms, std::vector<ZQ_CNN_Tensor4D*>* tops, int num_threads = 1) = 0;
 
@@ -254,8 +257,11 @@ namespace ZQ
 				if (filters == 0 || bias == 0)
 					return false;
 				double t1 = omp_get_wtime();
-				bool ret = ZQ_CNN_Forward_SSEUtils::ConvolutionWithBias(*((*bottoms)[0]), *filters, *bias, stride_H, stride_W,dilate_H,dilate_W, pad_H, pad_W, *((*tops)[0]),
-					num_threads);
+				void** tmp_buffer = use_buffer ? buffer : 0;
+				__int64* tmp_buffer_len = use_buffer ? buffer_len : 0;
+				bool ret = ZQ_CNN_Forward_SSEUtils::ConvolutionWithBias(*((*bottoms)[0]), 
+					*filters, *bias, stride_H, stride_W,dilate_H,dilate_W, pad_H, pad_W, *((*tops)[0]),
+					num_threads, tmp_buffer, tmp_buffer_len);
 				double t2 = omp_get_wtime();
 				if (show_debug_info)
 				{
@@ -273,8 +279,10 @@ namespace ZQ
 				if (filters == 0)
 					return false;
 				double t1 = omp_get_wtime();
+				void** tmp_buffer = use_buffer ? buffer : 0;
+				__int64* tmp_buffer_len = use_buffer ? buffer_len : 0;
 				bool ret = ZQ_CNN_Forward_SSEUtils::Convolution(*((*bottoms)[0]), *filters, stride_H, stride_W, dilate_H, dilate_W, pad_H, pad_W, *((*tops)[0]),
-					num_threads);
+					num_threads, tmp_buffer, tmp_buffer_len);
 				double t2 = omp_get_wtime();
 				if (show_debug_info)
 				{
@@ -2443,7 +2451,10 @@ namespace ZQ
 				if (filters == 0 || bias == 0)
 					return false;
 				double t1 = omp_get_wtime();
-				bool ret = ZQ_CNN_Forward_SSEUtils::InnerProductWithBias(*((*bottoms)[0]), *filters, *bias, *((*tops)[0]));
+				void** tmp_buffer = use_buffer ? buffer : 0;
+				__int64* tmp_buffer_len = use_buffer ? buffer_len : 0;
+				bool ret = ZQ_CNN_Forward_SSEUtils::InnerProductWithBias(*((*bottoms)[0]), 
+					*filters, *bias, *((*tops)[0]), 1, tmp_buffer, tmp_buffer_len);
 				double t2 = omp_get_wtime();
 				if (show_debug_info)
 					printf("Innerproduct layer: %.3f ms NHW %dx%dx%d filter: NHWC %d x %d x %d x %d\n", 
@@ -2456,7 +2467,10 @@ namespace ZQ
 				if (filters == 0)
 					return false;
 				double t1 = omp_get_wtime();
-				bool ret = ZQ_CNN_Forward_SSEUtils::InnerProduct(*((*bottoms)[0]), *filters, *((*tops)[0]));
+				void** tmp_buffer = use_buffer ? buffer : 0;
+				__int64* tmp_buffer_len = use_buffer ? buffer_len : 0;
+				bool ret = ZQ_CNN_Forward_SSEUtils::InnerProduct(*((*bottoms)[0]), *filters, *((*tops)[0]),1,
+					buffer,buffer_len);
 				double t2 = omp_get_wtime();
 				if (show_debug_info)
 					printf("Innerproduct layer: %s cost : %.3f ms\n", name.c_str(), 1000 * (t2 - t1));

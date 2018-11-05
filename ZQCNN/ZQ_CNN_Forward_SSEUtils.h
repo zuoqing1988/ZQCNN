@@ -16,7 +16,8 @@ namespace ZQ
 	{
 	public:
 		static bool ConvolutionWithBias(ZQ_CNN_Tensor4D& input, const ZQ_CNN_Tensor4D& filters, const ZQ_CNN_Tensor4D& bias,
-			int strideH, int strideW, int dilation_H, int dilation_W, int padH, int padW, ZQ_CNN_Tensor4D& output, int num_threads = 1)
+			int strideH, int strideW, int dilation_H, int dilation_W, int padH, int padW, ZQ_CNN_Tensor4D& output, int num_threads = 1,
+			void** buffer = 0, __int64* buffer_len = 0)
 		{
 			//num_threads = 4;
 			double t1 = omp_get_wtime();
@@ -94,7 +95,7 @@ namespace ZQ
 			{
 				_convolution_nopadding(align_mode, in_firstPixelData, in_N, in_H + (padH << 1), in_W + (padW << 1), in_C, in_pixStep, in_widthStep, in_sliceStep,
 					filter_firstPixelData, filter_N, filter_H, filter_W, filter_C, filter_pixStep, filter_widthStep, filter_sliceStep, strideH, strideW, dilation_H, dilation_W,
-					out_firstPixelData, need_N, need_H, need_W, need_C, out_pixStep, out_widthStep, out_sliceStep);
+					out_firstPixelData, need_N, need_H, need_W, need_C, out_pixStep, out_widthStep, out_sliceStep,buffer,buffer_len);
 				//printf("out_data = %f\n", out_firstPixelData[0]);
 				_addbias(__min(bias.GetAlignType(), align_mode), out_firstPixelData, need_N, need_H, need_W, need_C, out_pixStep, out_widthStep, out_sliceStep,
 					bias_firstPixelData);
@@ -117,7 +118,7 @@ namespace ZQ
 		}
 
 		static bool Convolution(ZQ_CNN_Tensor4D& input, const ZQ_CNN_Tensor4D& filters, int strideH, int strideW, int dilation_H, int dilation_W, int padH, int padW,
-			ZQ_CNN_Tensor4D& output, int num_threads = 1)
+			ZQ_CNN_Tensor4D& output, int num_threads = 1, void** buffer = 0, __int64* buffer_len = 0)
 		{
 			int in_N = input.GetN();
 			int in_H = input.GetH();
@@ -190,7 +191,7 @@ namespace ZQ
 			{
 				_convolution_nopadding(align_mode, in_firstPixelData, in_N, in_H + (padH << 1), in_W + (padW << 1), in_C, in_pixStep, in_widthStep, in_sliceStep,
 					filter_firstPixelData, filter_N, filter_H, filter_W, filter_C, filter_pixStep, filter_widthStep, filter_sliceStep, strideH, strideW, dilation_H, dilation_W,
-					out_firstPixelData, need_N, need_H, need_W, need_C, out_pixStep, out_widthStep, out_sliceStep);
+					out_firstPixelData, need_N, need_H, need_W, need_C, out_pixStep, out_widthStep, out_sliceStep, buffer, buffer_len);
 			}
 			else
 			{
@@ -386,7 +387,7 @@ namespace ZQ
 		}
 
 		static bool InnerProductWithBias(ZQ_CNN_Tensor4D& input, const ZQ_CNN_Tensor4D& filters, const ZQ_CNN_Tensor4D& bias, 
-			ZQ_CNN_Tensor4D& output, int num_threads = 1)
+			ZQ_CNN_Tensor4D& output, int num_threads = 1, void** buffer = 0, __int64* buffer_len = 0)
 		{
 			double t1 = omp_get_wtime();
 			int in_N = input.GetN();
@@ -454,7 +455,7 @@ namespace ZQ
 			{
 				_inner_product(align_mode, in_firstPixelData, in_N, in_H, in_W, in_C, in_pixStep, in_widthStep, in_sliceStep,
 					filter_firstPixelData, filter_N, filter_pixStep, filter_widthStep, filter_sliceStep,
-					out_firstPixelData, need_N, out_sliceStep, num_threads);
+					out_firstPixelData, need_N, out_sliceStep, num_threads, buffer, buffer_len);
 				_addbias(__min(output.GetAlignType(), align_mode), output.GetFirstPixelPtr(), need_N, need_H, need_W, need_C, out_pixStep, out_widthStep, out_sliceStep,
 					bias_firstPixelData);
 			}
@@ -462,7 +463,7 @@ namespace ZQ
 			{
 				_inner_product(align_mode, in_firstPixelData, in_N, in_H, in_W, in_C, in_pixStep, in_widthStep, in_sliceStep,
 					filter_firstPixelData, filter_N, filter_pixStep, filter_widthStep, filter_sliceStep,
-					out_firstPixelData, need_N, out_sliceStep, num_threads);
+					out_firstPixelData, need_N, out_sliceStep, num_threads, buffer, buffer_len);
 				_addbias_omp(__min(output.GetAlignType(), align_mode), output.GetFirstPixelPtr(), need_N, need_H, need_W, need_C, out_pixStep, out_widthStep, out_sliceStep,
 					bias_firstPixelData, num_threads);
 			}
@@ -471,7 +472,8 @@ namespace ZQ
 			return true;
 		}
 
-		static bool InnerProduct(ZQ_CNN_Tensor4D& input, const ZQ_CNN_Tensor4D& filters, ZQ_CNN_Tensor4D& output, int num_threads = 1)
+		static bool InnerProduct(ZQ_CNN_Tensor4D& input, const ZQ_CNN_Tensor4D& filters, ZQ_CNN_Tensor4D& output, 
+			int num_threads = 1, void** buffer = 0, __int64* buffer_len = 0)
 		{
 			int in_N = input.GetN();
 			int in_H = input.GetH();
@@ -534,7 +536,7 @@ namespace ZQ
 			//align_mode = ZQ_CNN_Tensor4D::ALIGN_0;
 			_inner_product(align_mode, in_firstPixelData, in_N, in_H, in_W, in_C, in_pixStep, in_widthStep, in_sliceStep,
 				filter_firstPixelData, filter_N, filter_pixStep, filter_widthStep, filter_sliceStep,
-				out_firstPixelData, need_N, out_sliceStep, num_threads);
+				out_firstPixelData, need_N, out_sliceStep, num_threads, buffer, buffer_len);
 
 			return true;
 		}
@@ -1905,7 +1907,8 @@ namespace ZQ
 		static void _convolution_nopadding(int align_mode, const float* in_data, int in_N, int in_H, int in_W,
 			int in_C, int in_pixStep, int in_widthStep, int in_sliceStep,const float* filter_data, int filter_N, int filter_H, int filter_W, int filter_C, 
 			int filter_pixStep, int filter_widthStep, int filter_sliceStep,	int strideH, int strideW, int dilation_H, int dilation_W,
-			float* out_data, int out_N, int out_H, int out_W, int out_C, int out_pixStep, int out_widthStep, int out_sliceStep);
+			float* out_data, int out_N, int out_H, int out_W, int out_C, int out_pixStep, int out_widthStep, int out_sliceStep,
+			void** buffer, __int64* buffer_len);
 
 		static void _convolution_nopadding_omp(int align_mode, const float* in_data, int in_N, int in_H, int in_W,
 			int in_C, int in_pixStep, int in_widthStep, int in_sliceStep, const float* filter_data, int filter_N, int filter_H, int filter_W, int filter_C, 
@@ -1924,7 +1927,7 @@ namespace ZQ
 
 		static void _inner_product(int align_mode, const float* in_data, int in_N, int in_H, int in_W, int in_C, int in_pixStep, int in_widthStep, int in_sliceStep,
 			const float* filter_data, int filter_N, int filter_pixStep, int filter_widthStep, int filter_sliceStep,
-			float* out_data, int out_N, int out_sliceStep, int num_threads);
+			float* out_data, int out_N, int out_sliceStep, int num_threads, void** buffer, __int64* buffer_len);
 
 		static void _addbias(int align_mode, float* data, int N, int H, int W, int C, int pixelStep, int widthStep, int sliceStep, 
 			const float* bias_Data);

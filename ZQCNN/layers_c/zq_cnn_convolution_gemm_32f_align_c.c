@@ -162,7 +162,9 @@ extern "C" {
 		int out_C,	// must be filter_N
 		int out_pixelStep,
 		int out_widthStep,
-		int out_sliceStep
+		int out_sliceStep,
+		void** buffer,
+		__int64 *buffer_len
 	)
 	{
 		/************** image to col **************/
@@ -175,13 +177,17 @@ extern "C" {
 		int matrix_A_rows = out_H*out_W;
 		int matrix_B_cols = filter_N;
 		int matrix_B_rows = filter_H*filter_W*filter_C;
-		float* matrix_A = (float*)_aligned_malloc(matrix_A_rows*matrix_A_cols * sizeof(float), 32);
-		float* matrix_Bt = (float*)_aligned_malloc(matrix_B_rows*matrix_B_cols * sizeof(float), 32);
+		__int64 need_A_buffer_len_align32 = (matrix_A_rows*matrix_A_cols * sizeof(float) + 31) / 32 * 32;
+		__int64 need_B_buffer_len_align32 = (matrix_B_rows*matrix_B_cols * sizeof(float) + 31) / 32 * 32;
+		__int64 need_C_buffer_len_align32 = 0;
+		__int64 total_need_buffer_len;
+		float* matrix_A = 0;
+		float* matrix_Bt = 0;
 		const float* in_slice_ptr, *in_row_ptr, *in_pix_ptr, *cur_in_row_ptr,*cur_in_pix_ptr,*filter_slice_ptr,*filter_row_ptr,*filter_pix_ptr;
 		int out_n, out_h, out_w, kn, kh, kw;
 		float* matrix_A_row_ptr, *matrix_A_col_ptr, *cp_dst_ptr;
 		float* out_slice_ptr, *out_row_ptr, *out_pix_ptr;
-		float* matrix_C, *matrix_C_row_ptr;
+		float* matrix_C = 0, *matrix_C_row_ptr;
 		int out_row_idx;
 		int out_HW = out_H*out_W;
 		double t1, t2, t3, t4, t5;
@@ -190,12 +196,35 @@ extern "C" {
 		need_allocate_tmp_out = (out_pixelStep != filter_N) || (out_pixelStep*out_W != out_widthStep) || (out_widthStep*out_H != out_sliceStep);
 		if (need_allocate_tmp_out)
 		{
-			matrix_C = (float*)_aligned_malloc(out_HW*filter_N * sizeof(float), 32);
+			need_C_buffer_len_align32 = (out_HW*filter_N * sizeof(float) + 31) / 32 * 32;
 		}
 		else
 		{
 			matrix_C = out_tensor4D_data;
 		}
+		
+		total_need_buffer_len = need_A_buffer_len_align32 + need_B_buffer_len_align32 + need_C_buffer_len_align32;
+		if (buffer == 0)
+		{
+			matrix_A = _aligned_malloc(need_A_buffer_len_align32, 32);
+			matrix_Bt = _aligned_malloc(need_B_buffer_len_align32, 32);
+			if (need_allocate_tmp_out)
+				matrix_C = _aligned_malloc(need_C_buffer_len_align32, 32);
+		}
+		else
+		{
+			if (*buffer_len < total_need_buffer_len)
+			{
+				_aligned_free(*buffer);
+				*buffer = _aligned_malloc(total_need_buffer_len, 32);
+				*buffer_len = total_need_buffer_len;
+			}
+			matrix_A = *buffer;
+			matrix_Bt = (float*)((char*)(*buffer) + need_A_buffer_len_align32);
+			if (need_allocate_tmp_out)
+				matrix_C = (float*)((char*)(*buffer) + need_A_buffer_len_align32 + need_B_buffer_len_align32);
+		}
+		
 
 		cp_dst_ptr = matrix_Bt;
 		for (kn = 0,filter_slice_ptr = filters_data; kn < filter_N; kn++,filter_slice_ptr+=filter_sliceStep)
@@ -255,11 +284,13 @@ extern "C" {
 				matrix_C += out_sliceStep;
 			t5 = omp_get_wtime();
 		}
-
-		if (need_allocate_tmp_out)
-			_aligned_free(matrix_C);
-		_aligned_free(matrix_A);
-		_aligned_free(matrix_Bt);
+		if (buffer == 0)
+		{
+			_aligned_free(matrix_A);
+			_aligned_free(matrix_Bt);
+			if (need_allocate_tmp_out)
+				_aligned_free(matrix_C);
+		}
 		if (filter_H == 3 && filter_W == 3 && filter_C == 3)
 		{
 			printf("total: %.3f ms, alloc %.3f ms, makeA: %.3f ms, gemm: %.3f ms, copy_C: %.3f ms\n", 1000 * (t5 - t1), 1000 * (t2 - t1),
@@ -476,7 +507,9 @@ extern "C" {
 		int out_C,	// must be filter_N
 		int out_pixelStep,
 		int out_widthStep,
-		int out_sliceStep
+		int out_sliceStep,
+		void** buffer,
+		__int64 *buffer_len
 	)
 	{
 		/************** image to col **************/
@@ -489,25 +522,51 @@ extern "C" {
 		int matrix_A_rows = out_N*out_H*out_W;
 		int matrix_B_cols = filter_N;
 		int matrix_B_rows = filter_H*filter_W*filter_C;
-		float* matrix_A = (float*)_aligned_malloc(matrix_A_rows*matrix_A_cols * sizeof(float), 32);
-		float* matrix_Bt = (float*)_aligned_malloc(matrix_B_rows*matrix_B_cols * sizeof(float), 32);
+		__int64 need_A_buffer_len_align32 = (matrix_A_rows*matrix_A_cols * sizeof(float) + 31) / 32 * 32;
+		__int64 need_B_buffer_len_align32 = (matrix_B_rows*matrix_B_cols * sizeof(float) + 31) / 32 * 32;
+		__int64 need_C_buffer_len_align32 = 0;
+		__int64 total_need_buffer_len;
+		float* matrix_A = 0;
+		float* matrix_Bt = 0;
 		const float* in_slice_ptr, *in_row_ptr, *in_pix_ptr, *cur_in_row_ptr, *cur_in_pix_ptr, *filter_slice_ptr, *filter_row_ptr, *filter_pix_ptr;
 		int out_n, out_h, out_w, kn, kh, kw;
 		float* matrix_A_row_ptr, *matrix_A_col_ptr, *cp_dst_ptr;
 		float* out_slice_ptr, *out_row_ptr, *out_pix_ptr;
-		float* matrix_C, *matrix_C_row_ptr;
+		float* matrix_C = 0, *matrix_C_row_ptr;
 		int out_row_idx;
-		int out_HW = out_H*out_W;
+		int out_NHW = out_N*out_H*out_W;
 		double t1, t2, t3, t4, t5;
 		t1 = omp_get_wtime();
 		int need_allocate_tmp_out = (out_pixelStep != filter_N) || (out_pixelStep*out_W != out_widthStep) || (out_widthStep*out_H != out_sliceStep);
 		if (need_allocate_tmp_out)
 		{
-			matrix_C = (float*)_aligned_malloc(out_HW*filter_N * sizeof(float), 32);
+			need_C_buffer_len_align32 = (out_NHW*filter_N * sizeof(float) + 31) / 32 * 32;
 		}
 		else
 		{
 			matrix_C = out_tensor4D_data;
+		}
+
+		total_need_buffer_len = need_A_buffer_len_align32 + need_B_buffer_len_align32 + need_C_buffer_len_align32;
+		if (buffer == 0)
+		{
+			matrix_A = _aligned_malloc(need_A_buffer_len_align32, 32);
+			matrix_Bt = _aligned_malloc(need_B_buffer_len_align32, 32);
+			if (need_allocate_tmp_out)
+				matrix_C = _aligned_malloc(need_C_buffer_len_align32, 32);
+		}
+		else
+		{
+			if (*buffer_len < total_need_buffer_len)
+			{
+				_aligned_free(*buffer);
+				*buffer = _aligned_malloc(total_need_buffer_len, 32);
+				*buffer_len = total_need_buffer_len;
+			}
+			matrix_A = *buffer;
+			matrix_Bt = (float*)((char*)(*buffer) + need_A_buffer_len_align32);
+			if (need_allocate_tmp_out)
+				matrix_C = (float*)((char*)(*buffer) + need_A_buffer_len_align32 + need_B_buffer_len_align32);
 		}
 		t2 = omp_get_wtime();
 
@@ -574,10 +633,13 @@ extern "C" {
 			matrix_C += out_sliceStep;
 		t5 = omp_get_wtime();
 
-		if (need_allocate_tmp_out)
-			_aligned_free(matrix_C);
-		_aligned_free(matrix_A);
-		_aligned_free(matrix_Bt);
+		if (buffer == 0)
+		{
+			_aligned_free(matrix_A);
+			_aligned_free(matrix_Bt);
+			if (need_allocate_tmp_out)
+				_aligned_free(matrix_C);
+		}
 		if (filter_H == 3 && filter_W == 3 && filter_C == 3)
 		{
 			printf("total: %.3f ms, alloc %.3f ms, makeA: %.3f ms, gemm: %.3f ms, copy_C: %.3f ms\n", 1000 * (t5 - t1), 1000 * (t2 - t1),

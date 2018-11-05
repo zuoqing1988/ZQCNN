@@ -739,62 +739,105 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_mul_2(
 
 				cur_in_row_ptr = in_pix_ptr; cur_filter_row_ptr = filters_data;
 				cur_in_pix_ptr = cur_in_row_ptr; cur_filter_pix_ptr = cur_filter_row_ptr;
+#if ZQ_CNN_USE_PTR_PLUS_CONST
+				zq_mm_store_ps(out_pix_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr), zq_mm_load_ps(cur_filter_pix_ptr), zq_mm_load_ps(out_pix_ptr)));
+				zq_mm_store_ps(out_pix_ptr+zq_mm_align_size, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr+zq_mm_align_size), zq_mm_load_ps(cur_filter_pix_ptr+zq_mm_align_size), zq_mm_load_ps(out_pix_ptr+zq_mm_align_size)));
+#else
 				cur_in_c_ptr = cur_in_pix_ptr; cur_filter_c_ptr = cur_filter_pix_ptr; out_c_ptr = out_pix_ptr;
 				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
 				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
 				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
+#endif
 
 				cur_in_pix_ptr += in_pixelStep; cur_filter_pix_ptr += filter_pixelStep;
+#if ZQ_CNN_USE_PTR_PLUS_CONST
+				zq_mm_store_ps(out_pix_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr), zq_mm_load_ps(cur_filter_pix_ptr), zq_mm_load_ps(out_pix_ptr)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size)));
+#else
 				cur_in_c_ptr = cur_in_pix_ptr; cur_filter_c_ptr = cur_filter_pix_ptr; out_c_ptr = out_pix_ptr;
 				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
 				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
 				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
+#endif
 
 				cur_in_pix_ptr += in_pixelStep; cur_filter_pix_ptr += filter_pixelStep;
+#if ZQ_CNN_USE_PTR_PLUS_CONST
+				zq_mm_store_ps(out_pix_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr), zq_mm_load_ps(cur_filter_pix_ptr), zq_mm_load_ps(out_pix_ptr)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size)));
+#else
 				cur_in_c_ptr = cur_in_pix_ptr; cur_filter_c_ptr = cur_filter_pix_ptr; out_c_ptr = out_pix_ptr;
 				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
 				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
 				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
-
+#endif
 
 				cur_in_row_ptr += in_widthStep; cur_filter_row_ptr += filter_widthStep;
 				cur_in_pix_ptr = cur_in_row_ptr; cur_filter_pix_ptr = cur_filter_row_ptr;
+#if ZQ_CNN_USE_PTR_PLUS_CONST
+				zq_mm_store_ps(out_pix_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr), zq_mm_load_ps(cur_filter_pix_ptr), zq_mm_load_ps(out_pix_ptr)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size)));
+#else
 				cur_in_c_ptr = cur_in_pix_ptr; cur_filter_c_ptr = cur_filter_pix_ptr; out_c_ptr = out_pix_ptr;
 				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
 				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
 				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
+#endif
 
 				cur_in_pix_ptr += in_pixelStep; cur_filter_pix_ptr += filter_pixelStep;
+#if ZQ_CNN_USE_PTR_PLUS_CONST
+				zq_mm_store_ps(out_pix_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr), zq_mm_load_ps(cur_filter_pix_ptr), zq_mm_load_ps(out_pix_ptr)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size)));
+#else
 				cur_in_c_ptr = cur_in_pix_ptr; cur_filter_c_ptr = cur_filter_pix_ptr; out_c_ptr = out_pix_ptr;
 				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
 				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
 				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
+#endif
 
 				cur_in_pix_ptr += in_pixelStep; cur_filter_pix_ptr += filter_pixelStep;
+#if ZQ_CNN_USE_PTR_PLUS_CONST
+				zq_mm_store_ps(out_pix_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr), zq_mm_load_ps(cur_filter_pix_ptr), zq_mm_load_ps(out_pix_ptr)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size)));
+#else
 				cur_in_c_ptr = cur_in_pix_ptr; cur_filter_c_ptr = cur_filter_pix_ptr; out_c_ptr = out_pix_ptr;
 				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
 				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
 				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
-
+#endif
 
 				cur_in_row_ptr += in_widthStep; cur_filter_row_ptr += filter_widthStep;
 				cur_in_pix_ptr = cur_in_row_ptr; cur_filter_pix_ptr = cur_filter_row_ptr;
+#if ZQ_CNN_USE_PTR_PLUS_CONST
+				zq_mm_store_ps(out_pix_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr), zq_mm_load_ps(cur_filter_pix_ptr), zq_mm_load_ps(out_pix_ptr)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size)));
+#else
 				cur_in_c_ptr = cur_in_pix_ptr; cur_filter_c_ptr = cur_filter_pix_ptr; out_c_ptr = out_pix_ptr;
 				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
 				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
 				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
+#endif
 
 				cur_in_pix_ptr += in_pixelStep; cur_filter_pix_ptr += filter_pixelStep;
+#if ZQ_CNN_USE_PTR_PLUS_CONST
+				zq_mm_store_ps(out_pix_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr), zq_mm_load_ps(cur_filter_pix_ptr), zq_mm_load_ps(out_pix_ptr)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size)));
+#else
 				cur_in_c_ptr = cur_in_pix_ptr; cur_filter_c_ptr = cur_filter_pix_ptr; out_c_ptr = out_pix_ptr;
 				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
 				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
 				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
+#endif
 
 				cur_in_pix_ptr += in_pixelStep; cur_filter_pix_ptr += filter_pixelStep;
+#if ZQ_CNN_USE_PTR_PLUS_CONST
+				zq_mm_store_ps(out_pix_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr), zq_mm_load_ps(cur_filter_pix_ptr), zq_mm_load_ps(out_pix_ptr)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size)));
+#else
 				cur_in_c_ptr = cur_in_pix_ptr; cur_filter_c_ptr = cur_filter_pix_ptr; out_c_ptr = out_pix_ptr;
 				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
 				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
 				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
+#endif
 			}
 		}
 	}
@@ -1002,6 +1045,12 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_mul_4(
 
 				cur_in_row_ptr = in_pix_ptr; cur_filter_row_ptr = filters_data;
 				cur_in_pix_ptr = cur_in_row_ptr; cur_filter_pix_ptr = cur_filter_row_ptr;
+#if ZQ_CNN_USE_PTR_PLUS_CONST
+				zq_mm_store_ps(out_pix_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr), zq_mm_load_ps(cur_filter_pix_ptr), zq_mm_load_ps(out_pix_ptr)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size*2, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size*2), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size*2), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size*2)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size*3, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size*3), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size*3), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size*3)));
+#else
 				cur_in_c_ptr = cur_in_pix_ptr; cur_filter_c_ptr = cur_filter_pix_ptr; out_c_ptr = out_pix_ptr;
 				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
 				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
@@ -1010,8 +1059,15 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_mul_4(
 				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
 				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
 				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
+#endif
 
 				cur_in_pix_ptr += in_pixelStep; cur_filter_pix_ptr += filter_pixelStep;
+#if ZQ_CNN_USE_PTR_PLUS_CONST
+				zq_mm_store_ps(out_pix_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr), zq_mm_load_ps(cur_filter_pix_ptr), zq_mm_load_ps(out_pix_ptr)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 2, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 2), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 2), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 2)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 3, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 3), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 3), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 3)));
+#else
 				cur_in_c_ptr = cur_in_pix_ptr; cur_filter_c_ptr = cur_filter_pix_ptr; out_c_ptr = out_pix_ptr;
 				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
 				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
@@ -1020,8 +1076,15 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_mul_4(
 				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
 				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
 				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
+#endif
 
 				cur_in_pix_ptr += in_pixelStep; cur_filter_pix_ptr += filter_pixelStep;
+#if ZQ_CNN_USE_PTR_PLUS_CONST
+				zq_mm_store_ps(out_pix_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr), zq_mm_load_ps(cur_filter_pix_ptr), zq_mm_load_ps(out_pix_ptr)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 2, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 2), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 2), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 2)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 3, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 3), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 3), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 3)));
+#else
 				cur_in_c_ptr = cur_in_pix_ptr; cur_filter_c_ptr = cur_filter_pix_ptr; out_c_ptr = out_pix_ptr;
 				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
 				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
@@ -1030,10 +1093,16 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_mul_4(
 				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
 				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
 				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
-
+#endif
 
 				cur_in_row_ptr += in_widthStep; cur_filter_row_ptr += filter_widthStep;
 				cur_in_pix_ptr = cur_in_row_ptr; cur_filter_pix_ptr = cur_filter_row_ptr;
+#if ZQ_CNN_USE_PTR_PLUS_CONST
+				zq_mm_store_ps(out_pix_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr), zq_mm_load_ps(cur_filter_pix_ptr), zq_mm_load_ps(out_pix_ptr)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 2, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 2), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 2), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 2)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 3, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 3), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 3), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 3)));
+#else
 				cur_in_c_ptr = cur_in_pix_ptr; cur_filter_c_ptr = cur_filter_pix_ptr; out_c_ptr = out_pix_ptr;
 				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
 				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
@@ -1042,8 +1111,15 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_mul_4(
 				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
 				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
 				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
+#endif
 
 				cur_in_pix_ptr += in_pixelStep; cur_filter_pix_ptr += filter_pixelStep;
+#if ZQ_CNN_USE_PTR_PLUS_CONST
+				zq_mm_store_ps(out_pix_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr), zq_mm_load_ps(cur_filter_pix_ptr), zq_mm_load_ps(out_pix_ptr)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 2, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 2), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 2), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 2)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 3, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 3), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 3), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 3)));
+#else
 				cur_in_c_ptr = cur_in_pix_ptr; cur_filter_c_ptr = cur_filter_pix_ptr; out_c_ptr = out_pix_ptr;
 				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
 				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
@@ -1052,8 +1128,15 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_mul_4(
 				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
 				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
 				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
+#endif
 
 				cur_in_pix_ptr += in_pixelStep; cur_filter_pix_ptr += filter_pixelStep;
+#if ZQ_CNN_USE_PTR_PLUS_CONST
+				zq_mm_store_ps(out_pix_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr), zq_mm_load_ps(cur_filter_pix_ptr), zq_mm_load_ps(out_pix_ptr)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 2, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 2), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 2), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 2)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 3, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 3), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 3), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 3)));
+#else
 				cur_in_c_ptr = cur_in_pix_ptr; cur_filter_c_ptr = cur_filter_pix_ptr; out_c_ptr = out_pix_ptr;
 				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
 				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
@@ -1062,10 +1145,16 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_mul_4(
 				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
 				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
 				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
-
+#endif
 
 				cur_in_row_ptr += in_widthStep; cur_filter_row_ptr += filter_widthStep;
 				cur_in_pix_ptr = cur_in_row_ptr; cur_filter_pix_ptr = cur_filter_row_ptr;
+#if ZQ_CNN_USE_PTR_PLUS_CONST
+				zq_mm_store_ps(out_pix_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr), zq_mm_load_ps(cur_filter_pix_ptr), zq_mm_load_ps(out_pix_ptr)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 2, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 2), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 2), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 2)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 3, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 3), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 3), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 3)));
+#else
 				cur_in_c_ptr = cur_in_pix_ptr; cur_filter_c_ptr = cur_filter_pix_ptr; out_c_ptr = out_pix_ptr;
 				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
 				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
@@ -1074,8 +1163,15 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_mul_4(
 				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
 				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
 				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
+#endif
 
 				cur_in_pix_ptr += in_pixelStep; cur_filter_pix_ptr += filter_pixelStep;
+#if ZQ_CNN_USE_PTR_PLUS_CONST
+				zq_mm_store_ps(out_pix_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr), zq_mm_load_ps(cur_filter_pix_ptr), zq_mm_load_ps(out_pix_ptr)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 2, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 2), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 2), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 2)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 3, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 3), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 3), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 3)));
+#else
 				cur_in_c_ptr = cur_in_pix_ptr; cur_filter_c_ptr = cur_filter_pix_ptr; out_c_ptr = out_pix_ptr;
 				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
 				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
@@ -1084,8 +1180,15 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_mul_4(
 				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
 				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
 				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
+#endif
 
 				cur_in_pix_ptr += in_pixelStep; cur_filter_pix_ptr += filter_pixelStep;
+#if ZQ_CNN_USE_PTR_PLUS_CONST
+				zq_mm_store_ps(out_pix_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr), zq_mm_load_ps(cur_filter_pix_ptr), zq_mm_load_ps(out_pix_ptr)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 2, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 2), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 2), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 2)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 3, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 3), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 3), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 3)));
+#else
 				cur_in_c_ptr = cur_in_pix_ptr; cur_filter_c_ptr = cur_filter_pix_ptr; out_c_ptr = out_pix_ptr;
 				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
 				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
@@ -1094,6 +1197,7 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_mul_4(
 				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
 				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
 				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
+#endif
 			}
 		}
 	}
@@ -1347,6 +1451,16 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_mul_8(
 
 				cur_in_row_ptr = in_pix_ptr; cur_filter_row_ptr = filters_data;
 				cur_in_pix_ptr = cur_in_row_ptr; cur_filter_pix_ptr = cur_filter_row_ptr;
+#if ZQ_CNN_USE_PTR_PLUS_CONST
+				zq_mm_store_ps(out_pix_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr), zq_mm_load_ps(cur_filter_pix_ptr), zq_mm_load_ps(out_pix_ptr)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 2, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 2), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 2), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 2)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 3, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 3), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 3), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 3)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 4, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 4), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 4), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 4)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 5, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 5), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 5), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 5)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 6, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 6), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 6), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 6)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 7, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 7), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 7), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 7)));
+#else
 				cur_in_c_ptr = cur_in_pix_ptr; cur_filter_c_ptr = cur_filter_pix_ptr; out_c_ptr = out_pix_ptr;
 				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
 				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
@@ -1363,8 +1477,20 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_mul_8(
 				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
 				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
 				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
+#endif
+				
 
 				cur_in_pix_ptr += in_pixelStep; cur_filter_pix_ptr += filter_pixelStep;
+#if ZQ_CNN_USE_PTR_PLUS_CONST
+				zq_mm_store_ps(out_pix_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr), zq_mm_load_ps(cur_filter_pix_ptr), zq_mm_load_ps(out_pix_ptr)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 2, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 2), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 2), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 2)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 3, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 3), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 3), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 3)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 4, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 4), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 4), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 4)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 5, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 5), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 5), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 5)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 6, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 6), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 6), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 6)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 7, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 7), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 7), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 7)));
+#else
 				cur_in_c_ptr = cur_in_pix_ptr; cur_filter_c_ptr = cur_filter_pix_ptr; out_c_ptr = out_pix_ptr;
 				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
 				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
@@ -1381,8 +1507,19 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_mul_8(
 				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
 				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
 				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
+#endif
 
 				cur_in_pix_ptr += in_pixelStep; cur_filter_pix_ptr += filter_pixelStep;
+#if ZQ_CNN_USE_PTR_PLUS_CONST
+				zq_mm_store_ps(out_pix_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr), zq_mm_load_ps(cur_filter_pix_ptr), zq_mm_load_ps(out_pix_ptr)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 2, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 2), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 2), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 2)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 3, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 3), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 3), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 3)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 4, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 4), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 4), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 4)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 5, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 5), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 5), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 5)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 6, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 6), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 6), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 6)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 7, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 7), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 7), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 7)));
+#else
 				cur_in_c_ptr = cur_in_pix_ptr; cur_filter_c_ptr = cur_filter_pix_ptr; out_c_ptr = out_pix_ptr;
 				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
 				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
@@ -1399,10 +1536,21 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_mul_8(
 				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
 				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
 				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
+#endif
 
 
 				cur_in_row_ptr += in_widthStep; cur_filter_row_ptr += filter_widthStep;
 				cur_in_pix_ptr = cur_in_row_ptr; cur_filter_pix_ptr = cur_filter_row_ptr;
+#if ZQ_CNN_USE_PTR_PLUS_CONST
+				zq_mm_store_ps(out_pix_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr), zq_mm_load_ps(cur_filter_pix_ptr), zq_mm_load_ps(out_pix_ptr)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 2, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 2), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 2), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 2)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 3, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 3), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 3), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 3)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 4, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 4), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 4), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 4)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 5, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 5), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 5), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 5)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 6, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 6), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 6), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 6)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 7, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 7), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 7), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 7)));
+#else
 				cur_in_c_ptr = cur_in_pix_ptr; cur_filter_c_ptr = cur_filter_pix_ptr; out_c_ptr = out_pix_ptr;
 				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
 				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
@@ -1419,8 +1567,19 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_mul_8(
 				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
 				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
 				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
+#endif
 
 				cur_in_pix_ptr += in_pixelStep; cur_filter_pix_ptr += filter_pixelStep;
+#if ZQ_CNN_USE_PTR_PLUS_CONST
+				zq_mm_store_ps(out_pix_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr), zq_mm_load_ps(cur_filter_pix_ptr), zq_mm_load_ps(out_pix_ptr)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 2, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 2), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 2), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 2)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 3, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 3), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 3), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 3)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 4, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 4), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 4), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 4)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 5, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 5), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 5), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 5)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 6, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 6), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 6), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 6)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 7, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 7), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 7), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 7)));
+#else
 				cur_in_c_ptr = cur_in_pix_ptr; cur_filter_c_ptr = cur_filter_pix_ptr; out_c_ptr = out_pix_ptr;
 				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
 				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
@@ -1437,8 +1596,19 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_mul_8(
 				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
 				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
 				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
+#endif
 
 				cur_in_pix_ptr += in_pixelStep; cur_filter_pix_ptr += filter_pixelStep;
+#if ZQ_CNN_USE_PTR_PLUS_CONST
+				zq_mm_store_ps(out_pix_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr), zq_mm_load_ps(cur_filter_pix_ptr), zq_mm_load_ps(out_pix_ptr)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 2, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 2), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 2), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 2)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 3, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 3), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 3), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 3)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 4, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 4), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 4), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 4)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 5, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 5), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 5), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 5)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 6, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 6), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 6), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 6)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 7, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 7), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 7), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 7)));
+#else
 				cur_in_c_ptr = cur_in_pix_ptr; cur_filter_c_ptr = cur_filter_pix_ptr; out_c_ptr = out_pix_ptr;
 				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
 				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
@@ -1455,10 +1625,20 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_mul_8(
 				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
 				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
 				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
-
+#endif
 
 				cur_in_row_ptr += in_widthStep; cur_filter_row_ptr += filter_widthStep;
 				cur_in_pix_ptr = cur_in_row_ptr; cur_filter_pix_ptr = cur_filter_row_ptr;
+#if ZQ_CNN_USE_PTR_PLUS_CONST
+				zq_mm_store_ps(out_pix_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr), zq_mm_load_ps(cur_filter_pix_ptr), zq_mm_load_ps(out_pix_ptr)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 2, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 2), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 2), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 2)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 3, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 3), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 3), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 3)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 4, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 4), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 4), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 4)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 5, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 5), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 5), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 5)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 6, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 6), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 6), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 6)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 7, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 7), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 7), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 7)));
+#else
 				cur_in_c_ptr = cur_in_pix_ptr; cur_filter_c_ptr = cur_filter_pix_ptr; out_c_ptr = out_pix_ptr;
 				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
 				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
@@ -1475,8 +1655,19 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_mul_8(
 				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
 				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
 				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
+#endif
 
 				cur_in_pix_ptr += in_pixelStep; cur_filter_pix_ptr += filter_pixelStep;
+#if ZQ_CNN_USE_PTR_PLUS_CONST
+				zq_mm_store_ps(out_pix_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr), zq_mm_load_ps(cur_filter_pix_ptr), zq_mm_load_ps(out_pix_ptr)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 2, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 2), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 2), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 2)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 3, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 3), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 3), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 3)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 4, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 4), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 4), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 4)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 5, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 5), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 5), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 5)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 6, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 6), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 6), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 6)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 7, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 7), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 7), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 7)));
+#else
 				cur_in_c_ptr = cur_in_pix_ptr; cur_filter_c_ptr = cur_filter_pix_ptr; out_c_ptr = out_pix_ptr;
 				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
 				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
@@ -1493,8 +1684,19 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_mul_8(
 				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
 				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
 				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
+#endif
 
 				cur_in_pix_ptr += in_pixelStep; cur_filter_pix_ptr += filter_pixelStep;
+#if ZQ_CNN_USE_PTR_PLUS_CONST
+				zq_mm_store_ps(out_pix_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr), zq_mm_load_ps(cur_filter_pix_ptr), zq_mm_load_ps(out_pix_ptr)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 2, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 2), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 2), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 2)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 3, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 3), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 3), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 3)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 4, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 4), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 4), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 4)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 5, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 5), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 5), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 5)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 6, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 6), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 6), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 6)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 7, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 7), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 7), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 7)));
+#else
 				cur_in_c_ptr = cur_in_pix_ptr; cur_filter_c_ptr = cur_filter_pix_ptr; out_c_ptr = out_pix_ptr;
 				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
 				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
@@ -1511,6 +1713,7 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_mul_8(
 				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
 				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
 				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
+#endif
 			}
 		}
 	}
@@ -1860,6 +2063,24 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_mul_16(
 
 				cur_in_row_ptr = in_pix_ptr; cur_filter_row_ptr = filters_data;
 				cur_in_pix_ptr = cur_in_row_ptr; cur_filter_pix_ptr = cur_filter_row_ptr;
+#if ZQ_CNN_USE_PTR_PLUS_CONST
+				zq_mm_store_ps(out_pix_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr), zq_mm_load_ps(cur_filter_pix_ptr), zq_mm_load_ps(out_pix_ptr)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 2, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 2), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 2), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 2)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 3, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 3), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 3), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 3)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 4, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 4), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 4), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 4)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 5, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 5), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 5), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 5)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 6, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 6), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 6), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 6)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 7, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 7), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 7), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 7)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 8, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 8), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 8), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 8)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 9, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 9), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 9), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 9)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 10, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 10), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 10), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 10)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 11, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 11), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 11), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 11)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 12, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 12), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 12), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 12)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 13, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 13), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 13), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 13)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 14, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 14), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 14), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 14)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 15, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 15), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 15), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 15)));
+#else
 				cur_in_c_ptr = cur_in_pix_ptr; cur_filter_c_ptr = cur_filter_pix_ptr; out_c_ptr = out_pix_ptr;
 				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
 				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
@@ -1892,8 +2113,28 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_mul_16(
 				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
 				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
 				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
+#endif
+				
 
 				cur_in_pix_ptr += in_pixelStep; cur_filter_pix_ptr += filter_pixelStep;
+#if ZQ_CNN_USE_PTR_PLUS_CONST
+				zq_mm_store_ps(out_pix_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr), zq_mm_load_ps(cur_filter_pix_ptr), zq_mm_load_ps(out_pix_ptr)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 2, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 2), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 2), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 2)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 3, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 3), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 3), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 3)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 4, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 4), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 4), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 4)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 5, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 5), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 5), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 5)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 6, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 6), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 6), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 6)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 7, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 7), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 7), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 7)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 8, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 8), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 8), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 8)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 9, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 9), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 9), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 9)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 10, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 10), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 10), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 10)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 11, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 11), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 11), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 11)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 12, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 12), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 12), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 12)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 13, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 13), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 13), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 13)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 14, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 14), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 14), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 14)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 15, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 15), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 15), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 15)));
+#else
 				cur_in_c_ptr = cur_in_pix_ptr; cur_filter_c_ptr = cur_filter_pix_ptr; out_c_ptr = out_pix_ptr;
 				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
 				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
@@ -1926,8 +2167,27 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_mul_16(
 				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
 				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
 				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
+#endif
 
 				cur_in_pix_ptr += in_pixelStep; cur_filter_pix_ptr += filter_pixelStep;
+#if ZQ_CNN_USE_PTR_PLUS_CONST
+				zq_mm_store_ps(out_pix_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr), zq_mm_load_ps(cur_filter_pix_ptr), zq_mm_load_ps(out_pix_ptr)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 2, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 2), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 2), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 2)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 3, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 3), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 3), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 3)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 4, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 4), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 4), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 4)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 5, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 5), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 5), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 5)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 6, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 6), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 6), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 6)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 7, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 7), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 7), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 7)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 8, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 8), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 8), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 8)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 9, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 9), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 9), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 9)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 10, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 10), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 10), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 10)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 11, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 11), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 11), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 11)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 12, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 12), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 12), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 12)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 13, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 13), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 13), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 13)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 14, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 14), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 14), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 14)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 15, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 15), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 15), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 15)));
+#else
 				cur_in_c_ptr = cur_in_pix_ptr; cur_filter_c_ptr = cur_filter_pix_ptr; out_c_ptr = out_pix_ptr;
 				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
 				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
@@ -1960,10 +2220,28 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_mul_16(
 				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
 				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
 				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
-
+#endif
 
 				cur_in_row_ptr += in_widthStep; cur_filter_row_ptr += filter_widthStep;
 				cur_in_pix_ptr = cur_in_row_ptr; cur_filter_pix_ptr = cur_filter_row_ptr;
+#if ZQ_CNN_USE_PTR_PLUS_CONST
+				zq_mm_store_ps(out_pix_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr), zq_mm_load_ps(cur_filter_pix_ptr), zq_mm_load_ps(out_pix_ptr)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 2, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 2), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 2), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 2)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 3, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 3), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 3), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 3)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 4, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 4), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 4), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 4)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 5, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 5), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 5), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 5)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 6, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 6), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 6), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 6)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 7, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 7), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 7), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 7)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 8, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 8), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 8), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 8)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 9, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 9), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 9), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 9)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 10, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 10), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 10), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 10)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 11, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 11), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 11), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 11)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 12, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 12), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 12), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 12)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 13, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 13), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 13), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 13)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 14, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 14), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 14), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 14)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 15, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 15), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 15), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 15)));
+#else
 				cur_in_c_ptr = cur_in_pix_ptr; cur_filter_c_ptr = cur_filter_pix_ptr; out_c_ptr = out_pix_ptr;
 				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
 				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
@@ -1996,8 +2274,27 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_mul_16(
 				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
 				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
 				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
+#endif
 
 				cur_in_pix_ptr += in_pixelStep; cur_filter_pix_ptr += filter_pixelStep;
+#if ZQ_CNN_USE_PTR_PLUS_CONST
+				zq_mm_store_ps(out_pix_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr), zq_mm_load_ps(cur_filter_pix_ptr), zq_mm_load_ps(out_pix_ptr)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 2, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 2), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 2), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 2)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 3, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 3), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 3), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 3)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 4, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 4), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 4), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 4)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 5, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 5), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 5), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 5)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 6, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 6), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 6), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 6)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 7, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 7), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 7), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 7)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 8, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 8), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 8), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 8)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 9, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 9), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 9), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 9)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 10, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 10), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 10), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 10)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 11, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 11), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 11), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 11)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 12, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 12), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 12), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 12)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 13, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 13), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 13), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 13)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 14, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 14), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 14), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 14)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 15, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 15), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 15), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 15)));
+#else
 				cur_in_c_ptr = cur_in_pix_ptr; cur_filter_c_ptr = cur_filter_pix_ptr; out_c_ptr = out_pix_ptr;
 				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
 				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
@@ -2030,8 +2327,27 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_mul_16(
 				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
 				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
 				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
+#endif
 
 				cur_in_pix_ptr += in_pixelStep; cur_filter_pix_ptr += filter_pixelStep;
+#if ZQ_CNN_USE_PTR_PLUS_CONST
+				zq_mm_store_ps(out_pix_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr), zq_mm_load_ps(cur_filter_pix_ptr), zq_mm_load_ps(out_pix_ptr)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 2, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 2), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 2), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 2)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 3, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 3), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 3), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 3)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 4, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 4), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 4), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 4)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 5, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 5), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 5), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 5)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 6, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 6), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 6), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 6)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 7, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 7), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 7), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 7)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 8, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 8), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 8), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 8)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 9, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 9), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 9), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 9)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 10, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 10), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 10), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 10)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 11, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 11), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 11), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 11)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 12, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 12), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 12), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 12)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 13, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 13), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 13), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 13)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 14, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 14), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 14), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 14)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 15, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 15), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 15), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 15)));
+#else
 				cur_in_c_ptr = cur_in_pix_ptr; cur_filter_c_ptr = cur_filter_pix_ptr; out_c_ptr = out_pix_ptr;
 				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
 				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
@@ -2064,10 +2380,28 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_mul_16(
 				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
 				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
 				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
-
+#endif
 
 				cur_in_row_ptr += in_widthStep; cur_filter_row_ptr += filter_widthStep;
 				cur_in_pix_ptr = cur_in_row_ptr; cur_filter_pix_ptr = cur_filter_row_ptr;
+#if ZQ_CNN_USE_PTR_PLUS_CONST
+				zq_mm_store_ps(out_pix_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr), zq_mm_load_ps(cur_filter_pix_ptr), zq_mm_load_ps(out_pix_ptr)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 2, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 2), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 2), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 2)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 3, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 3), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 3), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 3)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 4, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 4), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 4), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 4)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 5, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 5), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 5), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 5)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 6, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 6), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 6), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 6)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 7, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 7), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 7), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 7)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 8, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 8), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 8), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 8)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 9, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 9), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 9), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 9)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 10, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 10), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 10), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 10)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 11, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 11), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 11), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 11)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 12, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 12), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 12), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 12)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 13, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 13), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 13), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 13)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 14, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 14), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 14), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 14)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 15, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 15), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 15), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 15)));
+#else
 				cur_in_c_ptr = cur_in_pix_ptr; cur_filter_c_ptr = cur_filter_pix_ptr; out_c_ptr = out_pix_ptr;
 				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
 				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
@@ -2100,8 +2434,27 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_mul_16(
 				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
 				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
 				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
+#endif
 
 				cur_in_pix_ptr += in_pixelStep; cur_filter_pix_ptr += filter_pixelStep;
+#if ZQ_CNN_USE_PTR_PLUS_CONST
+				zq_mm_store_ps(out_pix_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr), zq_mm_load_ps(cur_filter_pix_ptr), zq_mm_load_ps(out_pix_ptr)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 2, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 2), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 2), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 2)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 3, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 3), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 3), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 3)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 4, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 4), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 4), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 4)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 5, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 5), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 5), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 5)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 6, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 6), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 6), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 6)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 7, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 7), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 7), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 7)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 8, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 8), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 8), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 8)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 9, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 9), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 9), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 9)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 10, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 10), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 10), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 10)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 11, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 11), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 11), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 11)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 12, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 12), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 12), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 12)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 13, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 13), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 13), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 13)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 14, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 14), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 14), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 14)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 15, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 15), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 15), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 15)));
+#else
 				cur_in_c_ptr = cur_in_pix_ptr; cur_filter_c_ptr = cur_filter_pix_ptr; out_c_ptr = out_pix_ptr;
 				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
 				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
@@ -2134,8 +2487,27 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_mul_16(
 				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
 				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
 				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
+#endif
 
 				cur_in_pix_ptr += in_pixelStep; cur_filter_pix_ptr += filter_pixelStep;
+#if ZQ_CNN_USE_PTR_PLUS_CONST
+				zq_mm_store_ps(out_pix_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr), zq_mm_load_ps(cur_filter_pix_ptr), zq_mm_load_ps(out_pix_ptr)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 2, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 2), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 2), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 2)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 3, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 3), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 3), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 3)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 4, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 4), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 4), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 4)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 5, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 5), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 5), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 5)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 6, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 6), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 6), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 6)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 7, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 7), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 7), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 7)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 8, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 8), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 8), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 8)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 9, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 9), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 9), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 9)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 10, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 10), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 10), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 10)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 11, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 11), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 11), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 11)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 12, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 12), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 12), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 12)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 13, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 13), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 13), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 13)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 14, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 14), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 14), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 14)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 15, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 15), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 15), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 15)));
+#else
 				cur_in_c_ptr = cur_in_pix_ptr; cur_filter_c_ptr = cur_filter_pix_ptr; out_c_ptr = out_pix_ptr;
 				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
 				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
@@ -2168,6 +2540,7 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_mul_16(
 				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
 				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
 				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
+#endif
 			}
 		}
 	}
@@ -2710,6 +3083,40 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_mul_32(
 
 				cur_in_row_ptr = in_pix_ptr; cur_filter_row_ptr = filters_data;
 				cur_in_pix_ptr = cur_in_row_ptr; cur_filter_pix_ptr = cur_filter_row_ptr;
+#if ZQ_CNN_USE_PTR_PLUS_CONST
+				zq_mm_store_ps(out_pix_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr), zq_mm_load_ps(cur_filter_pix_ptr), zq_mm_load_ps(out_pix_ptr)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 2, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 2), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 2), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 2)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 3, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 3), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 3), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 3)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 4, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 4), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 4), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 4)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 5, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 5), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 5), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 5)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 6, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 6), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 6), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 6)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 7, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 7), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 7), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 7)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 8, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 8), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 8), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 8)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 9, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 9), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 9), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 9)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 10, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 10), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 10), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 10)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 11, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 11), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 11), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 11)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 12, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 12), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 12), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 12)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 13, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 13), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 13), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 13)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 14, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 14), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 14), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 14)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 15, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 15), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 15), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 15)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 16, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 16), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 16), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 16)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 17, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 17), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 17), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 17)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 18, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 18), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 18), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 18)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 19, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 19), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 19), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 19)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 20, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 20), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 20), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 20)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 21, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 21), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 21), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 21)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 22, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 22), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 22), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 22)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 23, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 23), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 23), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 23)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 24, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 24), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 24), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 24)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 25, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 25), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 25), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 25)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 26, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 26), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 26), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 26)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 27, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 27), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 27), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 27)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 28, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 28), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 28), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 28)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 29, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 29), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 29), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 29)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 30, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 30), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 30), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 30)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 31, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 31), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 31), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 31)));
+#else
 				cur_in_c_ptr = cur_in_pix_ptr; cur_filter_c_ptr = cur_filter_pix_ptr; out_c_ptr = out_pix_ptr;
 				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
 				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
@@ -2774,8 +3181,44 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_mul_32(
 				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
 				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
 				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
+#endif
+				
 
 				cur_in_pix_ptr += in_pixelStep; cur_filter_pix_ptr += filter_pixelStep;
+#if ZQ_CNN_USE_PTR_PLUS_CONST
+				zq_mm_store_ps(out_pix_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr), zq_mm_load_ps(cur_filter_pix_ptr), zq_mm_load_ps(out_pix_ptr)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 2, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 2), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 2), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 2)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 3, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 3), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 3), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 3)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 4, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 4), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 4), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 4)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 5, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 5), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 5), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 5)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 6, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 6), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 6), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 6)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 7, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 7), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 7), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 7)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 8, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 8), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 8), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 8)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 9, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 9), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 9), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 9)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 10, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 10), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 10), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 10)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 11, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 11), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 11), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 11)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 12, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 12), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 12), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 12)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 13, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 13), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 13), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 13)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 14, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 14), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 14), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 14)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 15, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 15), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 15), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 15)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 16, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 16), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 16), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 16)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 17, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 17), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 17), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 17)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 18, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 18), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 18), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 18)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 19, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 19), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 19), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 19)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 20, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 20), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 20), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 20)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 21, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 21), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 21), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 21)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 22, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 22), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 22), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 22)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 23, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 23), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 23), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 23)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 24, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 24), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 24), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 24)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 25, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 25), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 25), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 25)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 26, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 26), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 26), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 26)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 27, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 27), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 27), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 27)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 28, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 28), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 28), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 28)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 29, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 29), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 29), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 29)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 30, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 30), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 30), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 30)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 31, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 31), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 31), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 31)));
+#else
 				cur_in_c_ptr = cur_in_pix_ptr; cur_filter_c_ptr = cur_filter_pix_ptr; out_c_ptr = out_pix_ptr;
 				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
 				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
@@ -2840,8 +3283,43 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_mul_32(
 				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
 				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
 				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
+#endif
 
 				cur_in_pix_ptr += in_pixelStep; cur_filter_pix_ptr += filter_pixelStep;
+#if ZQ_CNN_USE_PTR_PLUS_CONST
+				zq_mm_store_ps(out_pix_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr), zq_mm_load_ps(cur_filter_pix_ptr), zq_mm_load_ps(out_pix_ptr)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 2, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 2), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 2), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 2)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 3, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 3), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 3), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 3)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 4, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 4), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 4), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 4)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 5, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 5), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 5), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 5)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 6, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 6), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 6), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 6)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 7, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 7), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 7), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 7)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 8, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 8), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 8), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 8)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 9, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 9), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 9), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 9)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 10, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 10), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 10), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 10)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 11, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 11), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 11), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 11)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 12, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 12), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 12), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 12)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 13, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 13), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 13), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 13)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 14, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 14), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 14), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 14)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 15, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 15), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 15), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 15)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 16, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 16), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 16), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 16)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 17, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 17), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 17), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 17)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 18, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 18), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 18), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 18)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 19, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 19), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 19), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 19)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 20, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 20), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 20), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 20)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 21, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 21), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 21), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 21)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 22, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 22), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 22), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 22)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 23, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 23), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 23), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 23)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 24, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 24), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 24), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 24)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 25, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 25), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 25), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 25)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 26, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 26), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 26), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 26)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 27, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 27), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 27), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 27)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 28, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 28), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 28), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 28)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 29, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 29), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 29), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 29)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 30, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 30), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 30), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 30)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 31, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 31), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 31), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 31)));
+#else
 				cur_in_c_ptr = cur_in_pix_ptr; cur_filter_c_ptr = cur_filter_pix_ptr; out_c_ptr = out_pix_ptr;
 				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
 				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
@@ -2906,10 +3384,44 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_mul_32(
 				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
 				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
 				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
-
+#endif
 
 				cur_in_row_ptr += in_widthStep; cur_filter_row_ptr += filter_widthStep;
 				cur_in_pix_ptr = cur_in_row_ptr; cur_filter_pix_ptr = cur_filter_row_ptr;
+#if ZQ_CNN_USE_PTR_PLUS_CONST
+				zq_mm_store_ps(out_pix_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr), zq_mm_load_ps(cur_filter_pix_ptr), zq_mm_load_ps(out_pix_ptr)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 2, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 2), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 2), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 2)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 3, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 3), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 3), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 3)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 4, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 4), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 4), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 4)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 5, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 5), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 5), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 5)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 6, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 6), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 6), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 6)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 7, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 7), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 7), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 7)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 8, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 8), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 8), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 8)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 9, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 9), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 9), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 9)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 10, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 10), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 10), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 10)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 11, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 11), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 11), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 11)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 12, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 12), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 12), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 12)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 13, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 13), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 13), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 13)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 14, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 14), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 14), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 14)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 15, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 15), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 15), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 15)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 16, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 16), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 16), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 16)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 17, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 17), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 17), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 17)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 18, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 18), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 18), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 18)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 19, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 19), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 19), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 19)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 20, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 20), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 20), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 20)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 21, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 21), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 21), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 21)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 22, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 22), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 22), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 22)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 23, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 23), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 23), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 23)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 24, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 24), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 24), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 24)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 25, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 25), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 25), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 25)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 26, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 26), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 26), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 26)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 27, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 27), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 27), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 27)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 28, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 28), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 28), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 28)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 29, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 29), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 29), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 29)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 30, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 30), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 30), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 30)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 31, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 31), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 31), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 31)));
+#else
 				cur_in_c_ptr = cur_in_pix_ptr; cur_filter_c_ptr = cur_filter_pix_ptr; out_c_ptr = out_pix_ptr;
 				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
 				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
@@ -2974,8 +3486,43 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_mul_32(
 				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
 				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
 				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
+#endif
 
 				cur_in_pix_ptr += in_pixelStep; cur_filter_pix_ptr += filter_pixelStep;
+#if ZQ_CNN_USE_PTR_PLUS_CONST
+				zq_mm_store_ps(out_pix_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr), zq_mm_load_ps(cur_filter_pix_ptr), zq_mm_load_ps(out_pix_ptr)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 2, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 2), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 2), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 2)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 3, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 3), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 3), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 3)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 4, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 4), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 4), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 4)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 5, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 5), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 5), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 5)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 6, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 6), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 6), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 6)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 7, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 7), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 7), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 7)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 8, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 8), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 8), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 8)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 9, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 9), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 9), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 9)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 10, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 10), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 10), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 10)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 11, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 11), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 11), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 11)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 12, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 12), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 12), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 12)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 13, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 13), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 13), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 13)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 14, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 14), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 14), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 14)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 15, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 15), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 15), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 15)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 16, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 16), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 16), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 16)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 17, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 17), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 17), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 17)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 18, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 18), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 18), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 18)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 19, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 19), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 19), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 19)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 20, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 20), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 20), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 20)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 21, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 21), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 21), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 21)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 22, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 22), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 22), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 22)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 23, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 23), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 23), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 23)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 24, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 24), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 24), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 24)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 25, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 25), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 25), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 25)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 26, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 26), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 26), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 26)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 27, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 27), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 27), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 27)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 28, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 28), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 28), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 28)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 29, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 29), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 29), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 29)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 30, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 30), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 30), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 30)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 31, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 31), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 31), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 31)));
+#else
 				cur_in_c_ptr = cur_in_pix_ptr; cur_filter_c_ptr = cur_filter_pix_ptr; out_c_ptr = out_pix_ptr;
 				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
 				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
@@ -3040,8 +3587,43 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_mul_32(
 				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
 				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
 				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
+#endif
 
 				cur_in_pix_ptr += in_pixelStep; cur_filter_pix_ptr += filter_pixelStep;
+#if ZQ_CNN_USE_PTR_PLUS_CONST
+				zq_mm_store_ps(out_pix_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr), zq_mm_load_ps(cur_filter_pix_ptr), zq_mm_load_ps(out_pix_ptr)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 2, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 2), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 2), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 2)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 3, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 3), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 3), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 3)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 4, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 4), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 4), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 4)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 5, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 5), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 5), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 5)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 6, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 6), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 6), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 6)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 7, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 7), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 7), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 7)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 8, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 8), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 8), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 8)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 9, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 9), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 9), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 9)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 10, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 10), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 10), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 10)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 11, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 11), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 11), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 11)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 12, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 12), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 12), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 12)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 13, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 13), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 13), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 13)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 14, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 14), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 14), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 14)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 15, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 15), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 15), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 15)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 16, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 16), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 16), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 16)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 17, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 17), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 17), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 17)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 18, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 18), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 18), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 18)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 19, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 19), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 19), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 19)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 20, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 20), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 20), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 20)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 21, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 21), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 21), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 21)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 22, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 22), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 22), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 22)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 23, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 23), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 23), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 23)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 24, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 24), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 24), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 24)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 25, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 25), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 25), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 25)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 26, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 26), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 26), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 26)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 27, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 27), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 27), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 27)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 28, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 28), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 28), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 28)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 29, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 29), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 29), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 29)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 30, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 30), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 30), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 30)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 31, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 31), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 31), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 31)));
+#else
 				cur_in_c_ptr = cur_in_pix_ptr; cur_filter_c_ptr = cur_filter_pix_ptr; out_c_ptr = out_pix_ptr;
 				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
 				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
@@ -3106,10 +3688,44 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_mul_32(
 				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
 				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
 				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
-
+#endif
 
 				cur_in_row_ptr += in_widthStep; cur_filter_row_ptr += filter_widthStep;
 				cur_in_pix_ptr = cur_in_row_ptr; cur_filter_pix_ptr = cur_filter_row_ptr;
+#if ZQ_CNN_USE_PTR_PLUS_CONST
+				zq_mm_store_ps(out_pix_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr), zq_mm_load_ps(cur_filter_pix_ptr), zq_mm_load_ps(out_pix_ptr)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 2, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 2), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 2), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 2)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 3, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 3), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 3), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 3)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 4, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 4), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 4), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 4)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 5, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 5), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 5), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 5)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 6, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 6), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 6), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 6)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 7, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 7), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 7), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 7)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 8, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 8), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 8), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 8)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 9, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 9), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 9), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 9)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 10, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 10), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 10), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 10)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 11, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 11), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 11), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 11)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 12, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 12), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 12), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 12)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 13, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 13), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 13), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 13)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 14, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 14), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 14), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 14)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 15, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 15), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 15), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 15)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 16, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 16), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 16), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 16)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 17, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 17), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 17), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 17)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 18, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 18), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 18), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 18)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 19, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 19), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 19), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 19)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 20, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 20), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 20), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 20)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 21, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 21), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 21), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 21)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 22, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 22), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 22), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 22)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 23, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 23), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 23), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 23)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 24, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 24), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 24), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 24)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 25, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 25), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 25), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 25)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 26, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 26), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 26), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 26)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 27, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 27), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 27), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 27)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 28, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 28), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 28), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 28)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 29, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 29), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 29), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 29)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 30, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 30), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 30), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 30)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 31, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 31), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 31), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 31)));
+#else
 				cur_in_c_ptr = cur_in_pix_ptr; cur_filter_c_ptr = cur_filter_pix_ptr; out_c_ptr = out_pix_ptr;
 				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
 				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
@@ -3174,8 +3790,43 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_mul_32(
 				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
 				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
 				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
+#endif
 
 				cur_in_pix_ptr += in_pixelStep; cur_filter_pix_ptr += filter_pixelStep;
+#if ZQ_CNN_USE_PTR_PLUS_CONST
+				zq_mm_store_ps(out_pix_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr), zq_mm_load_ps(cur_filter_pix_ptr), zq_mm_load_ps(out_pix_ptr)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 2, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 2), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 2), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 2)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 3, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 3), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 3), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 3)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 4, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 4), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 4), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 4)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 5, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 5), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 5), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 5)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 6, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 6), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 6), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 6)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 7, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 7), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 7), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 7)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 8, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 8), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 8), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 8)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 9, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 9), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 9), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 9)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 10, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 10), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 10), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 10)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 11, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 11), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 11), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 11)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 12, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 12), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 12), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 12)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 13, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 13), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 13), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 13)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 14, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 14), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 14), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 14)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 15, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 15), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 15), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 15)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 16, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 16), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 16), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 16)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 17, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 17), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 17), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 17)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 18, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 18), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 18), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 18)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 19, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 19), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 19), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 19)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 20, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 20), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 20), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 20)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 21, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 21), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 21), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 21)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 22, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 22), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 22), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 22)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 23, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 23), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 23), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 23)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 24, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 24), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 24), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 24)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 25, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 25), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 25), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 25)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 26, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 26), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 26), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 26)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 27, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 27), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 27), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 27)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 28, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 28), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 28), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 28)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 29, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 29), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 29), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 29)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 30, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 30), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 30), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 30)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 31, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 31), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 31), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 31)));
+#else
 				cur_in_c_ptr = cur_in_pix_ptr; cur_filter_c_ptr = cur_filter_pix_ptr; out_c_ptr = out_pix_ptr;
 				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
 				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
@@ -3240,8 +3891,43 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_mul_32(
 				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
 				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
 				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
+#endif
 
 				cur_in_pix_ptr += in_pixelStep; cur_filter_pix_ptr += filter_pixelStep;
+#if ZQ_CNN_USE_PTR_PLUS_CONST
+				zq_mm_store_ps(out_pix_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr), zq_mm_load_ps(cur_filter_pix_ptr), zq_mm_load_ps(out_pix_ptr)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 2, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 2), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 2), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 2)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 3, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 3), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 3), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 3)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 4, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 4), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 4), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 4)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 5, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 5), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 5), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 5)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 6, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 6), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 6), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 6)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 7, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 7), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 7), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 7)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 8, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 8), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 8), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 8)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 9, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 9), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 9), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 9)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 10, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 10), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 10), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 10)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 11, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 11), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 11), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 11)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 12, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 12), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 12), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 12)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 13, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 13), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 13), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 13)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 14, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 14), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 14), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 14)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 15, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 15), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 15), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 15)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 16, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 16), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 16), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 16)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 17, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 17), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 17), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 17)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 18, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 18), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 18), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 18)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 19, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 19), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 19), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 19)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 20, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 20), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 20), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 20)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 21, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 21), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 21), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 21)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 22, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 22), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 22), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 22)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 23, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 23), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 23), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 23)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 24, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 24), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 24), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 24)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 25, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 25), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 25), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 25)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 26, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 26), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 26), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 26)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 27, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 27), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 27), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 27)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 28, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 28), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 28), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 28)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 29, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 29), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 29), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 29)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 30, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 30), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 30), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 30)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 31, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 31), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 31), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 31)));
+#else
 				cur_in_c_ptr = cur_in_pix_ptr; cur_filter_c_ptr = cur_filter_pix_ptr; out_c_ptr = out_pix_ptr;
 				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
 				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
@@ -3306,6 +3992,7 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_mul_32(
 				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
 				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
 				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
+#endif
 			}
 		}
 	}
@@ -4233,6 +4920,72 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_mul_64(
 
 				cur_in_row_ptr = in_pix_ptr; cur_filter_row_ptr = filters_data;
 				cur_in_pix_ptr = cur_in_row_ptr; cur_filter_pix_ptr = cur_filter_row_ptr;
+#if ZQ_CNN_USE_PTR_PLUS_CONST
+				zq_mm_store_ps(out_pix_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr), zq_mm_load_ps(cur_filter_pix_ptr), zq_mm_load_ps(out_pix_ptr)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 2, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 2), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 2), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 2)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 3, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 3), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 3), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 3)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 4, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 4), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 4), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 4)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 5, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 5), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 5), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 5)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 6, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 6), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 6), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 6)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 7, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 7), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 7), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 7)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 8, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 8), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 8), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 8)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 9, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 9), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 9), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 9)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 10, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 10), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 10), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 10)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 11, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 11), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 11), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 11)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 12, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 12), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 12), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 12)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 13, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 13), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 13), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 13)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 14, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 14), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 14), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 14)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 15, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 15), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 15), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 15)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 16, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 16), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 16), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 16)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 17, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 17), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 17), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 17)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 18, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 18), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 18), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 18)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 19, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 19), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 19), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 19)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 20, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 20), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 20), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 20)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 21, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 21), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 21), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 21)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 22, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 22), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 22), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 22)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 23, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 23), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 23), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 23)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 24, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 24), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 24), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 24)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 25, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 25), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 25), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 25)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 26, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 26), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 26), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 26)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 27, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 27), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 27), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 27)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 28, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 28), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 28), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 28)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 29, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 29), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 29), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 29)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 30, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 30), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 30), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 30)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 31, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 31), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 31), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 31)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 32, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 32), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 32), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 32)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 33, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 33), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 33), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 33)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 34, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 34), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 34), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 34)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 35, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 35), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 35), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 35)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 36, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 36), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 36), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 36)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 37, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 37), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 37), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 37)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 38, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 38), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 38), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 38)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 39, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 39), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 39), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 39)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 40, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 40), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 40), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 40)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 41, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 41), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 41), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 41)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 42, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 42), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 42), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 42)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 43, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 43), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 43), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 43)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 44, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 44), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 44), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 44)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 45, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 45), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 45), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 45)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 46, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 46), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 46), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 46)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 47, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 47), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 47), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 47)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 48, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 48), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 48), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 48)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 49, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 49), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 49), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 49)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 50, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 50), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 50), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 50)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 51, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 51), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 51), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 51)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 52, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 52), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 52), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 52)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 53, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 53), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 53), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 53)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 54, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 54), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 54), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 54)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 55, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 55), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 55), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 55)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 56, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 56), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 56), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 56)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 57, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 57), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 57), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 57)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 58, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 58), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 58), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 58)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 59, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 59), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 59), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 59)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 60, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 60), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 60), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 60)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 61, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 61), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 61), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 61)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 62, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 62), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 62), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 62)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 63, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 63), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 63), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 63)));
+#else
 				cur_in_c_ptr = cur_in_pix_ptr; cur_filter_c_ptr = cur_filter_pix_ptr; out_c_ptr = out_pix_ptr;
 				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
 				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
@@ -4361,8 +5114,76 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_mul_64(
 				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
 				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
 				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
+#endif
+				
 
 				cur_in_pix_ptr += in_pixelStep; cur_filter_pix_ptr += filter_pixelStep;
+#if ZQ_CNN_USE_PTR_PLUS_CONST
+				zq_mm_store_ps(out_pix_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr), zq_mm_load_ps(cur_filter_pix_ptr), zq_mm_load_ps(out_pix_ptr)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 2, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 2), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 2), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 2)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 3, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 3), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 3), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 3)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 4, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 4), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 4), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 4)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 5, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 5), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 5), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 5)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 6, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 6), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 6), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 6)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 7, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 7), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 7), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 7)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 8, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 8), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 8), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 8)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 9, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 9), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 9), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 9)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 10, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 10), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 10), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 10)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 11, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 11), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 11), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 11)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 12, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 12), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 12), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 12)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 13, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 13), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 13), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 13)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 14, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 14), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 14), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 14)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 15, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 15), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 15), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 15)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 16, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 16), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 16), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 16)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 17, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 17), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 17), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 17)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 18, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 18), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 18), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 18)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 19, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 19), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 19), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 19)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 20, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 20), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 20), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 20)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 21, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 21), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 21), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 21)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 22, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 22), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 22), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 22)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 23, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 23), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 23), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 23)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 24, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 24), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 24), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 24)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 25, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 25), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 25), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 25)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 26, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 26), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 26), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 26)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 27, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 27), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 27), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 27)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 28, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 28), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 28), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 28)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 29, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 29), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 29), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 29)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 30, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 30), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 30), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 30)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 31, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 31), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 31), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 31)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 32, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 32), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 32), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 32)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 33, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 33), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 33), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 33)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 34, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 34), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 34), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 34)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 35, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 35), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 35), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 35)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 36, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 36), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 36), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 36)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 37, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 37), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 37), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 37)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 38, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 38), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 38), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 38)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 39, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 39), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 39), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 39)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 40, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 40), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 40), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 40)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 41, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 41), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 41), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 41)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 42, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 42), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 42), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 42)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 43, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 43), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 43), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 43)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 44, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 44), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 44), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 44)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 45, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 45), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 45), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 45)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 46, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 46), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 46), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 46)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 47, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 47), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 47), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 47)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 48, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 48), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 48), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 48)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 49, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 49), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 49), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 49)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 50, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 50), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 50), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 50)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 51, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 51), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 51), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 51)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 52, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 52), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 52), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 52)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 53, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 53), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 53), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 53)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 54, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 54), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 54), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 54)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 55, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 55), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 55), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 55)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 56, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 56), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 56), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 56)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 57, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 57), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 57), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 57)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 58, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 58), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 58), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 58)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 59, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 59), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 59), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 59)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 60, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 60), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 60), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 60)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 61, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 61), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 61), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 61)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 62, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 62), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 62), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 62)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 63, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 63), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 63), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 63)));
+#else
 				cur_in_c_ptr = cur_in_pix_ptr; cur_filter_c_ptr = cur_filter_pix_ptr; out_c_ptr = out_pix_ptr;
 				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
 				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
@@ -4491,8 +5312,75 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_mul_64(
 				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
 				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
 				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
+#endif
 
 				cur_in_pix_ptr += in_pixelStep; cur_filter_pix_ptr += filter_pixelStep;
+#if ZQ_CNN_USE_PTR_PLUS_CONST
+				zq_mm_store_ps(out_pix_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr), zq_mm_load_ps(cur_filter_pix_ptr), zq_mm_load_ps(out_pix_ptr)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 2, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 2), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 2), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 2)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 3, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 3), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 3), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 3)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 4, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 4), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 4), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 4)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 5, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 5), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 5), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 5)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 6, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 6), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 6), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 6)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 7, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 7), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 7), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 7)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 8, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 8), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 8), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 8)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 9, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 9), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 9), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 9)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 10, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 10), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 10), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 10)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 11, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 11), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 11), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 11)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 12, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 12), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 12), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 12)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 13, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 13), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 13), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 13)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 14, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 14), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 14), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 14)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 15, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 15), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 15), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 15)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 16, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 16), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 16), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 16)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 17, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 17), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 17), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 17)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 18, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 18), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 18), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 18)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 19, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 19), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 19), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 19)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 20, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 20), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 20), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 20)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 21, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 21), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 21), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 21)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 22, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 22), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 22), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 22)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 23, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 23), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 23), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 23)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 24, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 24), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 24), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 24)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 25, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 25), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 25), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 25)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 26, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 26), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 26), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 26)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 27, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 27), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 27), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 27)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 28, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 28), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 28), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 28)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 29, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 29), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 29), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 29)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 30, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 30), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 30), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 30)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 31, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 31), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 31), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 31)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 32, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 32), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 32), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 32)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 33, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 33), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 33), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 33)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 34, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 34), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 34), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 34)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 35, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 35), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 35), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 35)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 36, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 36), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 36), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 36)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 37, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 37), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 37), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 37)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 38, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 38), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 38), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 38)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 39, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 39), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 39), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 39)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 40, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 40), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 40), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 40)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 41, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 41), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 41), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 41)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 42, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 42), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 42), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 42)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 43, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 43), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 43), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 43)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 44, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 44), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 44), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 44)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 45, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 45), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 45), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 45)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 46, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 46), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 46), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 46)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 47, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 47), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 47), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 47)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 48, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 48), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 48), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 48)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 49, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 49), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 49), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 49)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 50, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 50), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 50), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 50)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 51, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 51), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 51), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 51)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 52, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 52), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 52), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 52)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 53, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 53), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 53), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 53)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 54, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 54), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 54), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 54)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 55, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 55), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 55), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 55)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 56, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 56), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 56), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 56)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 57, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 57), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 57), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 57)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 58, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 58), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 58), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 58)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 59, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 59), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 59), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 59)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 60, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 60), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 60), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 60)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 61, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 61), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 61), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 61)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 62, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 62), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 62), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 62)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 63, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 63), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 63), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 63)));
+#else
 				cur_in_c_ptr = cur_in_pix_ptr; cur_filter_c_ptr = cur_filter_pix_ptr; out_c_ptr = out_pix_ptr;
 				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
 				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
@@ -4621,10 +5509,669 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_mul_64(
 				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
 				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
 				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
+#endif
+
+				cur_in_row_ptr += in_widthStep; cur_filter_row_ptr += filter_widthStep;
+				cur_in_pix_ptr = cur_in_row_ptr; cur_filter_pix_ptr = cur_filter_row_ptr;
+#if ZQ_CNN_USE_PTR_PLUS_CONST
+				zq_mm_store_ps(out_pix_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr), zq_mm_load_ps(cur_filter_pix_ptr), zq_mm_load_ps(out_pix_ptr)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 2, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 2), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 2), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 2)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 3, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 3), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 3), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 3)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 4, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 4), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 4), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 4)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 5, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 5), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 5), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 5)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 6, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 6), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 6), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 6)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 7, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 7), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 7), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 7)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 8, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 8), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 8), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 8)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 9, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 9), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 9), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 9)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 10, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 10), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 10), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 10)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 11, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 11), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 11), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 11)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 12, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 12), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 12), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 12)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 13, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 13), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 13), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 13)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 14, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 14), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 14), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 14)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 15, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 15), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 15), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 15)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 16, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 16), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 16), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 16)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 17, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 17), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 17), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 17)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 18, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 18), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 18), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 18)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 19, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 19), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 19), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 19)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 20, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 20), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 20), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 20)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 21, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 21), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 21), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 21)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 22, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 22), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 22), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 22)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 23, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 23), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 23), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 23)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 24, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 24), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 24), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 24)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 25, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 25), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 25), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 25)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 26, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 26), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 26), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 26)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 27, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 27), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 27), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 27)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 28, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 28), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 28), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 28)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 29, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 29), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 29), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 29)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 30, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 30), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 30), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 30)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 31, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 31), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 31), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 31)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 32, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 32), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 32), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 32)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 33, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 33), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 33), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 33)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 34, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 34), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 34), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 34)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 35, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 35), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 35), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 35)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 36, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 36), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 36), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 36)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 37, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 37), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 37), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 37)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 38, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 38), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 38), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 38)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 39, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 39), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 39), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 39)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 40, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 40), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 40), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 40)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 41, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 41), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 41), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 41)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 42, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 42), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 42), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 42)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 43, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 43), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 43), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 43)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 44, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 44), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 44), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 44)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 45, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 45), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 45), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 45)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 46, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 46), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 46), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 46)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 47, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 47), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 47), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 47)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 48, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 48), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 48), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 48)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 49, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 49), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 49), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 49)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 50, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 50), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 50), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 50)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 51, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 51), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 51), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 51)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 52, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 52), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 52), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 52)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 53, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 53), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 53), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 53)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 54, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 54), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 54), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 54)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 55, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 55), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 55), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 55)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 56, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 56), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 56), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 56)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 57, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 57), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 57), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 57)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 58, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 58), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 58), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 58)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 59, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 59), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 59), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 59)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 60, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 60), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 60), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 60)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 61, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 61), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 61), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 61)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 62, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 62), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 62), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 62)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 63, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 63), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 63), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 63)));
+#else
+				cur_in_c_ptr = cur_in_pix_ptr; cur_filter_c_ptr = cur_filter_pix_ptr; out_c_ptr = out_pix_ptr;
+				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
+				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
+				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
+				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
+				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
+				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
+				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
+				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
+				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
+				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
+				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
+				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
+				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
+				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
+				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
+				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
+				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
+				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
+				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
+				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
+				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
+				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
+				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
+				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
+				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
+				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
+				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
+				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
+				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
+				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
+				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
+				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
+				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
+				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
+				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
+				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
+				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
+				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
+				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
+				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
+				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
+				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
+				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
+				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
+				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
+				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
+				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
+				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
+				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
+				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
+				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
+				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
+				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
+				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
+				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
+				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
+				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
+				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
+				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
+				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
+				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
+				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
+				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
+				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
+				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
+				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
+				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
+				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
+				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
+				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
+				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
+				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
+				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
+				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
+				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
+				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
+				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
+				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
+				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
+				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
+				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
+				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
+				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
+				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
+				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
+				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
+				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
+				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
+				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
+				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
+				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
+				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
+				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
+				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
+				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
+				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
+				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
+				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
+				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
+				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
+				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
+				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
+				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
+				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
+				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
+				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
+				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
+				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
+				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
+				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
+				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
+				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
+				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
+				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
+				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
+				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
+				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
+				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
+				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
+				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
+				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
+				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
+				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
+				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
+				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
+				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
+				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
+#endif
+
+				cur_in_pix_ptr += in_pixelStep; cur_filter_pix_ptr += filter_pixelStep;
+#if ZQ_CNN_USE_PTR_PLUS_CONST
+				zq_mm_store_ps(out_pix_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr), zq_mm_load_ps(cur_filter_pix_ptr), zq_mm_load_ps(out_pix_ptr)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 2, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 2), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 2), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 2)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 3, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 3), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 3), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 3)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 4, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 4), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 4), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 4)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 5, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 5), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 5), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 5)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 6, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 6), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 6), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 6)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 7, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 7), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 7), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 7)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 8, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 8), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 8), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 8)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 9, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 9), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 9), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 9)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 10, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 10), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 10), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 10)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 11, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 11), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 11), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 11)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 12, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 12), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 12), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 12)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 13, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 13), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 13), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 13)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 14, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 14), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 14), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 14)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 15, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 15), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 15), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 15)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 16, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 16), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 16), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 16)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 17, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 17), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 17), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 17)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 18, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 18), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 18), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 18)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 19, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 19), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 19), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 19)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 20, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 20), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 20), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 20)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 21, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 21), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 21), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 21)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 22, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 22), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 22), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 22)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 23, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 23), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 23), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 23)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 24, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 24), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 24), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 24)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 25, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 25), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 25), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 25)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 26, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 26), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 26), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 26)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 27, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 27), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 27), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 27)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 28, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 28), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 28), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 28)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 29, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 29), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 29), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 29)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 30, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 30), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 30), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 30)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 31, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 31), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 31), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 31)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 32, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 32), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 32), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 32)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 33, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 33), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 33), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 33)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 34, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 34), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 34), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 34)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 35, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 35), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 35), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 35)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 36, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 36), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 36), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 36)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 37, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 37), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 37), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 37)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 38, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 38), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 38), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 38)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 39, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 39), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 39), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 39)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 40, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 40), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 40), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 40)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 41, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 41), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 41), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 41)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 42, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 42), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 42), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 42)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 43, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 43), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 43), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 43)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 44, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 44), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 44), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 44)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 45, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 45), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 45), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 45)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 46, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 46), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 46), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 46)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 47, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 47), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 47), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 47)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 48, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 48), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 48), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 48)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 49, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 49), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 49), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 49)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 50, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 50), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 50), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 50)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 51, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 51), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 51), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 51)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 52, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 52), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 52), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 52)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 53, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 53), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 53), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 53)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 54, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 54), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 54), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 54)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 55, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 55), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 55), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 55)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 56, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 56), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 56), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 56)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 57, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 57), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 57), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 57)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 58, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 58), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 58), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 58)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 59, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 59), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 59), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 59)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 60, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 60), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 60), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 60)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 61, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 61), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 61), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 61)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 62, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 62), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 62), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 62)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 63, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 63), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 63), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 63)));
+#else
+				cur_in_c_ptr = cur_in_pix_ptr; cur_filter_c_ptr = cur_filter_pix_ptr; out_c_ptr = out_pix_ptr;
+				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
+				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
+				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
+				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
+				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
+				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
+				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
+				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
+				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
+				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
+				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
+				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
+				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
+				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
+				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
+				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
+				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
+				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
+				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
+				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
+				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
+				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
+				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
+				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
+				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
+				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
+				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
+				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
+				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
+				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
+				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
+				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
+				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
+				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
+				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
+				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
+				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
+				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
+				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
+				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
+				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
+				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
+				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
+				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
+				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
+				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
+				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
+				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
+				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
+				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
+				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
+				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
+				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
+				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
+				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
+				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
+				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
+				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
+				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
+				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
+				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
+				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
+				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
+				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
+				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
+				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
+				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
+				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
+				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
+				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
+				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
+				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
+				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
+				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
+				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
+				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
+				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
+				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
+				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
+				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
+				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
+				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
+				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
+				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
+				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
+				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
+				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
+				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
+				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
+				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
+				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
+				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
+				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
+				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
+				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
+				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
+				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
+				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
+				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
+				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
+				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
+				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
+				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
+				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
+				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
+				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
+				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
+				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
+				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
+				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
+				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
+				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
+				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
+				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
+				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
+				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
+				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
+				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
+				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
+				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
+				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
+				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
+				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
+				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
+				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
+				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
+				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
+#endif
+
+				cur_in_pix_ptr += in_pixelStep; cur_filter_pix_ptr += filter_pixelStep;
+#if ZQ_CNN_USE_PTR_PLUS_CONST
+				zq_mm_store_ps(out_pix_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr), zq_mm_load_ps(cur_filter_pix_ptr), zq_mm_load_ps(out_pix_ptr)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 2, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 2), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 2), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 2)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 3, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 3), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 3), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 3)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 4, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 4), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 4), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 4)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 5, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 5), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 5), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 5)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 6, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 6), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 6), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 6)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 7, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 7), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 7), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 7)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 8, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 8), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 8), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 8)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 9, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 9), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 9), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 9)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 10, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 10), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 10), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 10)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 11, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 11), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 11), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 11)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 12, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 12), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 12), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 12)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 13, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 13), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 13), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 13)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 14, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 14), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 14), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 14)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 15, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 15), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 15), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 15)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 16, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 16), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 16), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 16)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 17, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 17), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 17), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 17)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 18, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 18), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 18), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 18)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 19, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 19), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 19), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 19)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 20, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 20), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 20), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 20)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 21, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 21), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 21), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 21)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 22, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 22), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 22), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 22)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 23, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 23), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 23), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 23)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 24, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 24), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 24), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 24)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 25, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 25), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 25), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 25)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 26, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 26), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 26), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 26)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 27, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 27), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 27), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 27)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 28, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 28), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 28), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 28)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 29, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 29), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 29), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 29)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 30, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 30), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 30), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 30)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 31, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 31), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 31), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 31)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 32, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 32), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 32), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 32)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 33, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 33), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 33), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 33)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 34, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 34), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 34), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 34)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 35, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 35), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 35), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 35)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 36, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 36), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 36), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 36)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 37, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 37), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 37), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 37)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 38, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 38), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 38), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 38)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 39, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 39), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 39), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 39)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 40, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 40), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 40), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 40)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 41, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 41), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 41), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 41)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 42, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 42), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 42), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 42)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 43, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 43), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 43), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 43)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 44, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 44), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 44), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 44)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 45, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 45), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 45), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 45)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 46, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 46), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 46), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 46)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 47, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 47), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 47), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 47)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 48, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 48), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 48), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 48)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 49, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 49), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 49), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 49)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 50, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 50), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 50), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 50)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 51, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 51), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 51), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 51)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 52, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 52), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 52), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 52)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 53, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 53), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 53), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 53)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 54, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 54), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 54), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 54)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 55, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 55), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 55), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 55)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 56, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 56), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 56), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 56)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 57, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 57), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 57), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 57)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 58, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 58), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 58), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 58)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 59, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 59), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 59), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 59)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 60, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 60), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 60), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 60)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 61, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 61), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 61), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 61)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 62, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 62), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 62), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 62)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 63, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 63), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 63), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 63)));
+#else
+				cur_in_c_ptr = cur_in_pix_ptr; cur_filter_c_ptr = cur_filter_pix_ptr; out_c_ptr = out_pix_ptr;
+				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
+				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
+				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
+				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
+				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
+				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
+				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
+				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
+				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
+				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
+				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
+				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
+				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
+				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
+				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
+				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
+				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
+				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
+				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
+				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
+				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
+				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
+				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
+				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
+				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
+				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
+				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
+				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
+				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
+				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
+				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
+				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
+				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
+				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
+				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
+				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
+				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
+				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
+				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
+				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
+				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
+				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
+				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
+				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
+				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
+				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
+				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
+				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
+				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
+				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
+				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
+				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
+				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
+				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
+				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
+				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
+				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
+				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
+				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
+				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
+				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
+				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
+				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
+				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
+				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
+				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
+				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
+				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
+				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
+				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
+				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
+				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
+				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
+				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
+				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
+				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
+				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
+				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
+				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
+				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
+				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
+				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
+				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
+				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
+				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
+				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
+				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
+				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
+				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
+				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
+				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
+				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
+				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
+				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
+				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
+				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
+				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
+				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
+				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
+				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
+				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
+				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
+				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
+				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
+				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
+				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
+				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
+				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
+				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
+				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
+				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
+				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
+				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
+				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
+				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
+				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
+				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
+				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
+				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
+				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
+				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
+				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
+				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
+				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
+				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
+				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
+				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
+#endif
 
 
 				cur_in_row_ptr += in_widthStep; cur_filter_row_ptr += filter_widthStep;
 				cur_in_pix_ptr = cur_in_row_ptr; cur_filter_pix_ptr = cur_filter_row_ptr;
+#if ZQ_CNN_USE_PTR_PLUS_CONST
+				zq_mm_store_ps(out_pix_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr), zq_mm_load_ps(cur_filter_pix_ptr), zq_mm_load_ps(out_pix_ptr)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 2, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 2), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 2), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 2)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 3, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 3), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 3), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 3)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 4, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 4), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 4), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 4)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 5, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 5), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 5), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 5)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 6, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 6), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 6), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 6)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 7, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 7), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 7), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 7)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 8, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 8), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 8), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 8)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 9, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 9), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 9), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 9)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 10, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 10), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 10), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 10)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 11, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 11), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 11), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 11)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 12, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 12), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 12), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 12)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 13, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 13), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 13), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 13)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 14, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 14), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 14), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 14)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 15, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 15), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 15), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 15)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 16, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 16), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 16), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 16)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 17, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 17), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 17), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 17)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 18, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 18), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 18), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 18)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 19, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 19), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 19), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 19)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 20, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 20), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 20), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 20)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 21, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 21), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 21), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 21)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 22, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 22), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 22), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 22)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 23, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 23), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 23), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 23)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 24, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 24), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 24), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 24)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 25, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 25), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 25), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 25)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 26, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 26), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 26), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 26)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 27, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 27), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 27), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 27)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 28, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 28), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 28), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 28)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 29, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 29), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 29), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 29)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 30, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 30), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 30), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 30)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 31, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 31), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 31), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 31)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 32, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 32), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 32), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 32)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 33, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 33), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 33), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 33)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 34, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 34), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 34), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 34)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 35, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 35), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 35), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 35)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 36, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 36), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 36), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 36)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 37, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 37), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 37), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 37)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 38, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 38), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 38), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 38)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 39, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 39), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 39), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 39)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 40, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 40), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 40), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 40)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 41, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 41), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 41), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 41)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 42, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 42), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 42), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 42)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 43, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 43), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 43), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 43)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 44, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 44), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 44), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 44)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 45, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 45), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 45), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 45)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 46, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 46), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 46), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 46)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 47, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 47), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 47), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 47)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 48, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 48), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 48), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 48)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 49, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 49), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 49), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 49)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 50, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 50), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 50), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 50)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 51, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 51), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 51), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 51)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 52, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 52), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 52), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 52)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 53, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 53), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 53), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 53)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 54, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 54), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 54), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 54)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 55, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 55), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 55), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 55)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 56, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 56), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 56), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 56)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 57, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 57), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 57), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 57)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 58, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 58), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 58), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 58)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 59, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 59), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 59), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 59)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 60, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 60), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 60), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 60)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 61, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 61), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 61), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 61)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 62, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 62), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 62), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 62)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 63, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 63), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 63), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 63)));
+#else
 				cur_in_c_ptr = cur_in_pix_ptr; cur_filter_c_ptr = cur_filter_pix_ptr; out_c_ptr = out_pix_ptr;
 				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
 				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
@@ -4753,8 +6300,75 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_mul_64(
 				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
 				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
 				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
+#endif
 
 				cur_in_pix_ptr += in_pixelStep; cur_filter_pix_ptr += filter_pixelStep;
+#if ZQ_CNN_USE_PTR_PLUS_CONST
+				zq_mm_store_ps(out_pix_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr), zq_mm_load_ps(cur_filter_pix_ptr), zq_mm_load_ps(out_pix_ptr)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 2, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 2), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 2), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 2)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 3, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 3), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 3), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 3)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 4, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 4), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 4), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 4)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 5, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 5), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 5), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 5)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 6, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 6), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 6), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 6)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 7, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 7), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 7), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 7)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 8, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 8), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 8), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 8)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 9, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 9), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 9), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 9)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 10, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 10), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 10), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 10)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 11, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 11), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 11), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 11)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 12, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 12), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 12), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 12)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 13, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 13), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 13), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 13)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 14, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 14), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 14), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 14)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 15, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 15), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 15), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 15)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 16, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 16), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 16), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 16)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 17, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 17), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 17), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 17)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 18, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 18), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 18), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 18)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 19, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 19), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 19), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 19)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 20, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 20), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 20), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 20)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 21, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 21), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 21), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 21)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 22, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 22), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 22), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 22)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 23, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 23), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 23), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 23)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 24, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 24), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 24), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 24)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 25, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 25), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 25), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 25)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 26, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 26), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 26), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 26)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 27, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 27), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 27), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 27)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 28, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 28), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 28), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 28)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 29, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 29), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 29), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 29)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 30, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 30), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 30), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 30)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 31, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 31), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 31), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 31)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 32, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 32), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 32), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 32)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 33, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 33), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 33), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 33)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 34, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 34), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 34), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 34)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 35, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 35), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 35), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 35)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 36, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 36), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 36), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 36)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 37, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 37), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 37), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 37)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 38, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 38), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 38), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 38)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 39, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 39), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 39), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 39)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 40, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 40), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 40), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 40)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 41, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 41), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 41), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 41)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 42, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 42), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 42), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 42)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 43, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 43), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 43), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 43)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 44, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 44), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 44), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 44)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 45, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 45), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 45), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 45)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 46, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 46), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 46), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 46)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 47, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 47), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 47), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 47)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 48, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 48), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 48), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 48)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 49, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 49), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 49), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 49)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 50, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 50), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 50), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 50)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 51, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 51), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 51), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 51)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 52, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 52), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 52), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 52)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 53, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 53), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 53), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 53)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 54, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 54), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 54), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 54)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 55, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 55), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 55), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 55)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 56, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 56), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 56), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 56)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 57, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 57), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 57), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 57)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 58, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 58), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 58), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 58)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 59, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 59), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 59), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 59)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 60, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 60), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 60), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 60)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 61, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 61), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 61), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 61)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 62, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 62), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 62), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 62)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 63, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 63), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 63), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 63)));
+#else
 				cur_in_c_ptr = cur_in_pix_ptr; cur_filter_c_ptr = cur_filter_pix_ptr; out_c_ptr = out_pix_ptr;
 				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
 				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
@@ -4883,8 +6497,75 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_mul_64(
 				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
 				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
 				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
+#endif
 
 				cur_in_pix_ptr += in_pixelStep; cur_filter_pix_ptr += filter_pixelStep;
+#if ZQ_CNN_USE_PTR_PLUS_CONST
+				zq_mm_store_ps(out_pix_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr), zq_mm_load_ps(cur_filter_pix_ptr), zq_mm_load_ps(out_pix_ptr)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 2, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 2), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 2), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 2)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 3, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 3), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 3), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 3)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 4, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 4), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 4), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 4)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 5, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 5), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 5), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 5)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 6, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 6), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 6), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 6)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 7, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 7), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 7), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 7)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 8, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 8), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 8), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 8)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 9, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 9), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 9), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 9)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 10, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 10), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 10), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 10)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 11, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 11), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 11), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 11)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 12, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 12), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 12), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 12)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 13, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 13), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 13), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 13)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 14, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 14), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 14), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 14)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 15, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 15), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 15), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 15)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 16, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 16), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 16), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 16)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 17, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 17), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 17), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 17)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 18, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 18), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 18), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 18)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 19, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 19), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 19), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 19)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 20, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 20), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 20), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 20)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 21, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 21), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 21), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 21)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 22, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 22), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 22), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 22)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 23, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 23), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 23), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 23)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 24, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 24), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 24), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 24)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 25, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 25), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 25), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 25)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 26, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 26), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 26), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 26)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 27, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 27), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 27), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 27)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 28, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 28), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 28), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 28)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 29, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 29), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 29), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 29)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 30, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 30), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 30), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 30)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 31, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 31), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 31), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 31)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 32, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 32), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 32), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 32)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 33, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 33), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 33), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 33)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 34, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 34), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 34), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 34)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 35, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 35), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 35), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 35)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 36, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 36), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 36), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 36)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 37, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 37), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 37), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 37)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 38, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 38), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 38), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 38)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 39, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 39), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 39), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 39)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 40, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 40), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 40), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 40)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 41, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 41), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 41), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 41)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 42, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 42), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 42), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 42)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 43, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 43), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 43), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 43)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 44, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 44), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 44), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 44)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 45, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 45), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 45), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 45)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 46, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 46), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 46), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 46)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 47, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 47), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 47), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 47)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 48, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 48), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 48), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 48)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 49, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 49), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 49), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 49)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 50, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 50), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 50), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 50)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 51, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 51), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 51), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 51)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 52, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 52), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 52), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 52)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 53, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 53), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 53), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 53)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 54, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 54), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 54), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 54)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 55, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 55), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 55), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 55)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 56, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 56), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 56), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 56)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 57, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 57), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 57), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 57)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 58, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 58), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 58), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 58)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 59, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 59), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 59), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 59)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 60, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 60), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 60), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 60)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 61, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 61), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 61), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 61)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 62, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 62), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 62), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 62)));
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size * 63, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size * 63), zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size * 63), zq_mm_load_ps(out_pix_ptr + zq_mm_align_size * 63)));
+#else
 				cur_in_c_ptr = cur_in_pix_ptr; cur_filter_c_ptr = cur_filter_pix_ptr; out_c_ptr = out_pix_ptr;
 				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
 				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
@@ -5013,399 +6694,7 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_mul_64(
 				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
 				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
 				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
-
-
-				cur_in_row_ptr += in_widthStep; cur_filter_row_ptr += filter_widthStep;
-				cur_in_pix_ptr = cur_in_row_ptr; cur_filter_pix_ptr = cur_filter_row_ptr;
-				cur_in_c_ptr = cur_in_pix_ptr; cur_filter_c_ptr = cur_filter_pix_ptr; out_c_ptr = out_pix_ptr;
-				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
-				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
-				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
-				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
-				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
-				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
-				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
-				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
-				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
-				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
-				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
-				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
-				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
-				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
-				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
-				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
-				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
-				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
-				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
-				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
-				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
-				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
-				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
-				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
-				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
-				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
-				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
-				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
-				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
-				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
-				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
-				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
-				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
-				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
-				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
-				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
-				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
-				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
-				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
-				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
-				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
-				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
-				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
-				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
-				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
-				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
-				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
-				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
-				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
-				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
-				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
-				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
-				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
-				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
-				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
-				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
-				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
-				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
-				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
-				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
-				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
-				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
-				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
-				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
-
-				cur_in_pix_ptr += in_pixelStep; cur_filter_pix_ptr += filter_pixelStep;
-				cur_in_c_ptr = cur_in_pix_ptr; cur_filter_c_ptr = cur_filter_pix_ptr; out_c_ptr = out_pix_ptr;
-				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
-				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
-				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
-				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
-				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
-				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
-				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
-				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
-				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
-				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
-				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
-				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
-				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
-				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
-				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
-				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
-				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
-				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
-				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
-				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
-				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
-				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
-				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
-				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
-				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
-				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
-				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
-				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
-				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
-				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
-				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
-				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
-				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
-				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
-				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
-				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
-				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
-				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
-				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
-				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
-				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
-				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
-				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
-				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
-				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
-				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
-				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
-				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
-				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
-				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
-				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
-				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
-				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
-				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
-				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
-				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
-				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
-				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
-				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
-				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
-				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
-				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
-				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
-				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
-
-				cur_in_pix_ptr += in_pixelStep; cur_filter_pix_ptr += filter_pixelStep;
-				cur_in_c_ptr = cur_in_pix_ptr; cur_filter_c_ptr = cur_filter_pix_ptr; out_c_ptr = out_pix_ptr;
-				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
-				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
-				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
-				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
-				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
-				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
-				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
-				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
-				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
-				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
-				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
-				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
-				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
-				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
-				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
-				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
-				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
-				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
-				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
-				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
-				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
-				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
-				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
-				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
-				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
-				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
-				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
-				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
-				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
-				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
-				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
-				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
-				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
-				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
-				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
-				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
-				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
-				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
-				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
-				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
-				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
-				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
-				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
-				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
-				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
-				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
-				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
-				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
-				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
-				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
-				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
-				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
-				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
-				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
-				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
-				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
-				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
-				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
-				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
-				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
-				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
-				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
-				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
-				cur_in_c_ptr += zq_mm_align_size; cur_filter_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-				zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
-
+#endif
 			}
 		}
 	}

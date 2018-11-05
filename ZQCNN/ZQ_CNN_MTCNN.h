@@ -75,6 +75,8 @@ namespace ZQ
 			}
 			else
 				this->thread_num = thread_num;
+			printf("rnet = %.1f M, onet = %.1f M\n", rnet[0].GetNumOfMulAdd() / (1024.0*1024.0),
+				onet[0].GetNumOfMulAdd() / (1024.0*1024.0));
 			return ret;
 		}
 
