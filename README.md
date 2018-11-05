@@ -191,7 +191,7 @@ Convolution name=conv1 bottom=data top=conv1 num_output=10 kernel_size=3 stride=
 
 **性别年龄识别**
 
-[GenderAge-r50](https://pan.baidu.com/s/1FeuMLNG9jQ0CeD0ZANrY0g)从[insightface](https://github.com/deepinsight/insightface/wiki/Model-Zoo)的[gamodel-r50](https://pan.baidu.com/s/1f8RyNuQd7hl2ItlV-ibBNQ)转的格式。
+[GenderAge-ZQ](https://pan.baidu.com/s/1igSpmFt8XBoMk5d4GiXONg) 使用[train-GenderAge](https://github.com/zuoqing1988/train-GenderAge)训练出来的模型
 
 **目标检测**
 
