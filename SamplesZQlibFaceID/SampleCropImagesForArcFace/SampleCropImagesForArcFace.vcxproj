@@ -103,7 +103,7 @@
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>$(SolutionDir)ZQlibFaceID;$(SolutionDir)3rdparty\opencv\build\include;$(SolutionDir)3rdparty\include\ZQlib;$(SolutionDir)ZQCNN;$(SolutionDir)3rdparty\include\openblas;$(SolutionDir)3rdparty\include\mini-caffe</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)ZQlibFaceID;$(SolutionDir)3rdparty\opencv\build\include;$(SolutionDir)3rdparty\include\ZQlib;$(SolutionDir)ZQCNN;$(SolutionDir)3rdparty\include;$(SolutionDir)3rdparty\include\mini-caffe</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -140,7 +140,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>$(SolutionDir)ZQlibFaceID;$(SolutionDir)3rdparty\opencv\build\include;$(SolutionDir)3rdparty\include\ZQlib;$(SolutionDir)ZQCNN;$(SolutionDir)3rdparty\include\openblas;$(SolutionDir)3rdparty\include\mini-caffe</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)ZQlibFaceID;$(SolutionDir)3rdparty\opencv\build\include;$(SolutionDir)3rdparty\include\ZQlib;$(SolutionDir)ZQCNN;$(SolutionDir)3rdparty\include;$(SolutionDir)3rdparty\include\mini-caffe</AdditionalIncludeDirectories>
       <OpenMPSupport>true</OpenMPSupport>
     </ClCompile>
     <Link>

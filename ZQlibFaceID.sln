@@ -31,8 +31,6 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SampleFaceRecognizerArcFace
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SampleFaceRecognizerSphereFaceZQCNN", "SamplesZQlibFaceID\SampleFaceRecognizerSphereFaceZQCNN\SampleFaceRecognizerSphereFaceZQCNN.vcxproj", "{60DE9F41-1814-46BD-AFC9-16C66FC4E1A7}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SampleCropImagesForAgeGender", "SamplesZQlibFaceID\SampleCropImagesForAgeGender\SampleCropImagesForAgeGender.vcxproj", "{3580FEFD-5D5A-4DEF-B8C2-9F403C7F8713}"
-EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SampleEvaluationOnLFWArcFaceOpenCV", "SamplesZQlibFaceID\SampleEvaluationOnLFWArcFaceOpenCV\SampleEvaluationOnLFWArcFaceOpenCV.vcxproj", "{7915D7AA-A18E-40D8-B294-0F5BD0056A59}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SampleEvaluationOnLFWSphereFaceOpenCV", "SamplesZQlibFaceID\SampleEvaluationOnLFWSphereFaceOpenCV\SampleEvaluationOnLFWSphereFaceOpenCV.vcxproj", "{EF098726-E668-48BF-BA6E-5713AD5AF605}"
@@ -44,8 +42,6 @@ EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SampleCropImagesForArcFaceFast", "SamplesZQlibFaceID\SampleCropImagesForArcFaceFast\SampleCropImagesForArcFaceFast.vcxproj", "{F2B23F77-E3D9-44AD-9725-82BE23A00917}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SampleCropImagesForSphereFaceFast", "SamplesZQlibFaceID\SampleCropImagesForSphereFaceFast\SampleCropImagesForSphereFaceFast.vcxproj", "{FFAFE838-734C-42C6-A6A6-45534F2683AE}"
-EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SampleCropImagesForAgeGenderFast", "SamplesZQlibFaceID\SampleCropImagesForAgeGenderFast\SampleCropImagesForAgeGenderFast.vcxproj", "{188502A1-1E2A-4021-A4F6-F5FF0BBA8968}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SampleFaceDatabaseOpenCV", "SamplesZQlibFaceID\SampleFaceDatabaseOpenCV\SampleFaceDatabaseOpenCV.vcxproj", "{2AC196F6-257E-4EBB-9087-B00B8BA3D820}"
 EndProject
@@ -169,14 +165,6 @@ Global
 		{60DE9F41-1814-46BD-AFC9-16C66FC4E1A7}.Release|x64.Build.0 = Release|x64
 		{60DE9F41-1814-46BD-AFC9-16C66FC4E1A7}.Release|x86.ActiveCfg = Release|Win32
 		{60DE9F41-1814-46BD-AFC9-16C66FC4E1A7}.Release|x86.Build.0 = Release|Win32
-		{3580FEFD-5D5A-4DEF-B8C2-9F403C7F8713}.Debug|x64.ActiveCfg = Debug|x64
-		{3580FEFD-5D5A-4DEF-B8C2-9F403C7F8713}.Debug|x64.Build.0 = Debug|x64
-		{3580FEFD-5D5A-4DEF-B8C2-9F403C7F8713}.Debug|x86.ActiveCfg = Debug|Win32
-		{3580FEFD-5D5A-4DEF-B8C2-9F403C7F8713}.Debug|x86.Build.0 = Debug|Win32
-		{3580FEFD-5D5A-4DEF-B8C2-9F403C7F8713}.Release|x64.ActiveCfg = Release|x64
-		{3580FEFD-5D5A-4DEF-B8C2-9F403C7F8713}.Release|x64.Build.0 = Release|x64
-		{3580FEFD-5D5A-4DEF-B8C2-9F403C7F8713}.Release|x86.ActiveCfg = Release|Win32
-		{3580FEFD-5D5A-4DEF-B8C2-9F403C7F8713}.Release|x86.Build.0 = Release|Win32
 		{7915D7AA-A18E-40D8-B294-0F5BD0056A59}.Debug|x64.ActiveCfg = Debug|x64
 		{7915D7AA-A18E-40D8-B294-0F5BD0056A59}.Debug|x64.Build.0 = Debug|x64
 		{7915D7AA-A18E-40D8-B294-0F5BD0056A59}.Debug|x86.ActiveCfg = Debug|Win32
@@ -225,14 +213,6 @@ Global
 		{FFAFE838-734C-42C6-A6A6-45534F2683AE}.Release|x64.Build.0 = Release|x64
 		{FFAFE838-734C-42C6-A6A6-45534F2683AE}.Release|x86.ActiveCfg = Release|Win32
 		{FFAFE838-734C-42C6-A6A6-45534F2683AE}.Release|x86.Build.0 = Release|Win32
-		{188502A1-1E2A-4021-A4F6-F5FF0BBA8968}.Debug|x64.ActiveCfg = Debug|x64
-		{188502A1-1E2A-4021-A4F6-F5FF0BBA8968}.Debug|x64.Build.0 = Debug|x64
-		{188502A1-1E2A-4021-A4F6-F5FF0BBA8968}.Debug|x86.ActiveCfg = Debug|Win32
-		{188502A1-1E2A-4021-A4F6-F5FF0BBA8968}.Debug|x86.Build.0 = Debug|Win32
-		{188502A1-1E2A-4021-A4F6-F5FF0BBA8968}.Release|x64.ActiveCfg = Release|x64
-		{188502A1-1E2A-4021-A4F6-F5FF0BBA8968}.Release|x64.Build.0 = Release|x64
-		{188502A1-1E2A-4021-A4F6-F5FF0BBA8968}.Release|x86.ActiveCfg = Release|Win32
-		{188502A1-1E2A-4021-A4F6-F5FF0BBA8968}.Release|x86.Build.0 = Release|Win32
 		{2AC196F6-257E-4EBB-9087-B00B8BA3D820}.Debug|x64.ActiveCfg = Debug|x64
 		{2AC196F6-257E-4EBB-9087-B00B8BA3D820}.Debug|x64.Build.0 = Debug|x64
 		{2AC196F6-257E-4EBB-9087-B00B8BA3D820}.Debug|x86.ActiveCfg = Debug|Win32

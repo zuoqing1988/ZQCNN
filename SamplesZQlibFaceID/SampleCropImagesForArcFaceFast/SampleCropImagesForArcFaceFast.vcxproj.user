@@ -1,7 +1,7 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <LocalDebuggerCommandArguments>F:\Code\sphereface\preprocess\data\lfw F:\Code\sphereface\preprocess\data\lfw_arcface_crop-fast 8</LocalDebuggerCommandArguments>
+    <LocalDebuggerCommandArguments>G:\GenderAge\data\wiki_crop G:\GenderAge\data\wiki-112X112 10 1</LocalDebuggerCommandArguments>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
     <LocalDebuggerWorkingDirectory>$(SolutionDir)</LocalDebuggerWorkingDirectory>
   </PropertyGroup>

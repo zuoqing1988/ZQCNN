@@ -3,11 +3,11 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LocalDebuggerWorkingDirectory>$(SolutionDir)</LocalDebuggerWorkingDirectory>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
-    <LocalDebuggerCommandArguments>fig model test.jpg out.txt 20 0.1 draw.jpg</LocalDebuggerCommandArguments>
+    <LocalDebuggerCommandArguments>fig model data\4.jpg out.txt 20 0.3 draw.jpg</LocalDebuggerCommandArguments>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LocalDebuggerWorkingDirectory>$(SolutionDir)</LocalDebuggerWorkingDirectory>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
-    <LocalDebuggerCommandArguments>fig model test.jpg out.txt 20 0.1 draw.jpg</LocalDebuggerCommandArguments>
+    <LocalDebuggerCommandArguments>fig model data\4.jpg out.txt 20 0.3 draw.jpg</LocalDebuggerCommandArguments>
   </PropertyGroup>
 </Project>

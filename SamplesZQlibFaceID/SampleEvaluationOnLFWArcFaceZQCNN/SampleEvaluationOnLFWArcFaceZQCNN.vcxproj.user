@@ -1,7 +1,7 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <LocalDebuggerCommandArguments>model\useless.zqparams model\mobilefacenet.nchwbin  fc5 F:\Code\sphereface\test\data\pairs.txt F:\Code\sphereface\preprocess\data\lfw_arcface_crop 10 0</LocalDebuggerCommandArguments>
+    <LocalDebuggerCommandArguments>model\mobilefacenet-res2-6-10-2-dim128.zqparams model\mobilefacenet-res2-6-10-2-dim128-emore.nchwbin  fc5 F:\Code\sphereface\test\data\pairs.txt F:\Code\sphereface\preprocess\data\lfw_arcface_crop 10 0</LocalDebuggerCommandArguments>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
     <LocalDebuggerWorkingDirectory>$(SolutionDir)</LocalDebuggerWorkingDirectory>
   </PropertyGroup>

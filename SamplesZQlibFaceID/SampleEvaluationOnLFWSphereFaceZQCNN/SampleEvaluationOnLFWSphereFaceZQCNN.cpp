@@ -2,8 +2,11 @@
 #include "ZQ_FaceRecognizerSphereFaceZQCNN.h"
 #include "ZQ_CNN_CompileConfig.h"
 #if ZQ_CNN_USE_BLAS_GEMM
-#include "cblas.h"
+#include <openblas\cblas.h>
 #pragma comment(lib,"libopenblas.lib")
+#elif ZQ_CNN_USE_MKL_GEMM
+#include <mkl\mkl.h>
+#pragma comment(lib,"mklml.lib")
 #endif
 
 using namespace std;
@@ -47,6 +50,8 @@ int main(int argc, const char** argv)
 
 #if ZQ_CNN_USE_BLAS_GEMM
 	openblas_set_num_threads(1);
+#elif ZQ_CNN_USE_MKL_GEMM
+	mkl_set_num_threads(1);
 #endif
 
 	double t1 = omp_get_wtime();

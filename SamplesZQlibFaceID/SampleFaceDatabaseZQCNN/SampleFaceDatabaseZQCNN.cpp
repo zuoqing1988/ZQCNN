@@ -6,8 +6,11 @@
 #include <io.h>
 #include "ZQ_CNN_CompileConfig.h"
 #if ZQ_CNN_USE_BLAS_GEMM
-#include <cblas.h>
+#include <openblas\cblas.h>
 #pragma comment(lib,"libopenblas.lib")
+#elif ZQ_CNN_USE_MKL_GEMM
+#include <mkl\mkl.h>
+#pragma comment(lib,"mklml.lib")
 #endif
 using namespace ZQ;
 
@@ -27,6 +30,8 @@ int main(int argc, char** argv)
 	cv::setNumThreads(1);
 #if ZQ_CNN_USE_BLAS_GEMM
 	openblas_set_num_threads(1);
+#elif ZQ_CNN_USE_MKL_GEMM
+	mkl_set_num_threads(1);
 #endif
 
 	if (argc < 2)

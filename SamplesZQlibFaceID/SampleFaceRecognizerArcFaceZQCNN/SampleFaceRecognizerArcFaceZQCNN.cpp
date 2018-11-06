@@ -1,8 +1,11 @@
 #include "ZQ_FaceRecognizerArcFaceZQCNN.h"
 #include "ZQ_CNN_CompileConfig.h"
 #if ZQ_CNN_USE_BLAS_GEMM
-#include <cblas.h>
+#include <openblas\cblas.h>
 #pragma comment(lib,"libopenblas.lib")
+#elif ZQ_CNN_USE_MKL_GEMM
+#include <mkl\mkl.h>
+#pragma comment(lib,"mklml.lib")
 #endif
 using namespace ZQ;
 using namespace cv;
@@ -12,6 +15,8 @@ int main()
 {
 #if ZQ_CNN_USE_BLAS_GEMM
 	openblas_set_num_threads(1);
+#elif ZQ_CNN_USE_MKL_GEMM
+	mkl_set_num_threads(1);
 #endif
 	ZQ_FaceRecognizer* recognizer[1] = { 0 };
 	std::string prototxt_file = "model/model-r50-am.zqparams";

@@ -4,8 +4,11 @@
 #include "opencv2\opencv.hpp"
 #include "ZQ_CNN_CompileConfig.h"
 #if ZQ_CNN_USE_BLAS_GEMM
-#include <cblas.h>
+#include <openblas\cblas.h>
 #pragma comment(lib,"libopenblas.lib")
+#elif ZQ_CNN_USE_MKL_GEMM
+#include <mkl\mkl.h>
+#pragma comment(lib,"mklml.lib")
 #endif
 using namespace ZQ;
 using namespace std;
@@ -21,7 +24,10 @@ int main()
 
 #if ZQ_CNN_USE_BLAS_GEMM
 	openblas_set_num_threads(1);
+#elif ZQ_CNN_USE_MKL_GEMM
+	mkl_set_num_threads(1);
 #endif
+
 	Mat image0 = cv::imread("data\\00_.jpg", 1);
 	if (image0.empty())
 	{
@@ -53,7 +59,7 @@ int main()
 	for (int it = 0; it < iters; it++)
 	{
 		double t3 = omp_get_wtime();
-		if (!net.Forward(input0, 1))
+		if (!net.Forward(input0))
 		{
 			cout << "failed to run\n";
 			return EXIT_FAILURE;
@@ -73,7 +79,7 @@ int main()
 	double t3 = omp_get_wtime();
 	for (int it = 0; it < iters; it++)
 	{
-		if (!net.Forward(input1, 1))
+		if (!net.Forward(input1))
 		{
 			cout << "failed to run\n";
 			return EXIT_FAILURE;

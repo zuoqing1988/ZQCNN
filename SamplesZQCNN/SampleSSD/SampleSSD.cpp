@@ -4,8 +4,11 @@
 #include "opencv2\opencv.hpp"
 #include "ZQ_CNN_CompileConfig.h"
 #if ZQ_CNN_USE_BLAS_GEMM
-#include <cblas.h>
+#include <openblas\cblas.h>
 #pragma comment(lib,"libopenblas.lib")
+#elif ZQ_CNN_USE_MKL_GEMM
+#include <mkl\mkl.h>
+#pragma comment(lib,"mklml.lib")
 #endif
 
 using namespace ZQ;
@@ -20,6 +23,8 @@ int main()
 
 #if ZQ_CNN_USE_BLAS_GEMM
 	openblas_set_num_threads(thread_num);
+#elif ZQ_CNN_USE_MKL_GEMM
+	mkl_set_num_threads(thread_num);
 #endif
 
 	Mat img0 = cv::imread("data\\004545.jpg", 1);

@@ -4,8 +4,11 @@
 #include "opencv2\opencv.hpp"
 #include "ZQ_CNN_CompileConfig.h"
 #if ZQ_CNN_USE_BLAS_GEMM
-#include <cblas.h>
+#include <openblas\cblas.h>
 #pragma comment(lib,"libopenblas.lib")
+#elif ZQ_CNN_USE_MKL_GEMM
+#include <mkl\mkl.h>
+#pragma comment(lib,"mklml.lib")
 #endif
 using namespace ZQ;
 using namespace std;
@@ -16,17 +19,19 @@ int main()
 
 #if ZQ_CNN_USE_BLAS_GEMM
 	openblas_set_num_threads(num_threads);
+#elif ZQ_CNN_USE_MKL_GEMM
+	mkl_set_num_threads(num_threads);
 #endif
 
 	std::string out_blob_name = "fc5";
 	ZQ_CNN_Net net;
 	//if (!net.LoadFrom("model\\model-r100-am.zqparams", "model\\model-r100-am.nchwbin", false))
-	//if (!net.LoadFrom("model\\mobilefacenet-res4-8-16-4-dim256.zqparams", "model\\mobilefacenet-res4-8-16-4-dim256-emore.nchwbin", false))
+	//if (!net.LoadFrom("model\\mobilefacenet-res4-8-16-4-dim512.zqparams", "model\\mobilefacenet-res4-8-16-4-dim512-emore.nchwbin", false))
 	//if (!net.LoadFrom("model\\mobilefacenet-res1-3-5-2-dim128-112X96.zqparams", "model\\mobilefacenet-res1-3-5-2-dim128-112X96.nchwbin", false))
 	//if (!net.LoadFrom("model\\mobilefacenet-GNAP.zqparams", "model\\mobilefacenet-GNAP.nchwbin", false))
-	if (!net.LoadFrom("model\\mobilefacenet-res8-16-32-8-dim512.zqparams", "model\\mobilefacenet-res8-16-32-8-dim512.nchwbin", false))
+	//if (!net.LoadFrom("model\\mobilefacenet-res8-16-32-8-dim512.zqparams", "model\\mobilefacenet-res8-16-32-8-dim512.nchwbin", false))
 	//if (!net.LoadFrom("model\\mobilefacenet-v112X96.zqparams", "model\\mobilefacenet-v112X96.nchwbin",false))
-	//if (!net.LoadFrom("model\\mobilefacenet-res2-6-10-2-dim256.zqparams", "model\\mobilefacenet-res2-6-10-2-dim256-emore.nchwbin", false))
+	if (!net.LoadFrom("model\\mobilefacenet-res2-6-10-2-dim128.zqparams", "model\\mobilefacenet-res2-6-10-2-dim128-emore.nchwbin", false))
 		//if (!net.LoadFrom("model\\test.zqparams", "model\\test.nchwbin"))
 		//if (!net.LoadFrom("model\\model-r50-am.zqparams", "model\\model-r50-am.nchwbin"))
 		//if (!net.LoadFrom("model\\mobilenet_sphereface10bn512.zqparams", "model\\mobilenet_sphereface10bn512_iter_50000.nchwbin"))
@@ -91,6 +96,7 @@ int main()
 	}
 
 	//net.TurnOnShowDebugInfo();
+	//net.TurnOffUseBuffer();
 	for (int out_it = 0; out_it < 10; out_it++)
 	{
 		ZQ_CNN_Tensor4D_NHW_C_Align128bit input0, input1;
@@ -103,7 +109,7 @@ int main()
 		for (int it = 0; it < iters; it++)
 		{
 			double t3 = omp_get_wtime();
-			if (!net.Forward(input0, 1))
+			if (!net.Forward(input0))
 			{
 				cout << "failed to run\n";
 				return EXIT_FAILURE;
@@ -123,7 +129,7 @@ int main()
 		double t3 = omp_get_wtime();
 		for (int it = 0; it < iters; it++)
 		{
-			if (!net.Forward(input1, 1))
+			if (!net.Forward(input1))
 			{
 				cout << "failed to run\n";
 				return EXIT_FAILURE;
