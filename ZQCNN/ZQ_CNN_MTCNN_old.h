@@ -179,9 +179,9 @@ namespace ZQ
 				
 				double t11 = omp_get_wtime();
 				if (scales[i] != 1)
-					pnet.Forward(pnet_images[i]);
+					pnet.Forward(pnet_images[i], num_threads);
 				else
-					pnet.Forward(input);
+					pnet.Forward(input, num_threads);
 				double t12 = omp_get_wtime();
 				if (show_debug_info)
 					printf("Pnet [%d]: resolution [%dx%d], resize:%.3f ms, cost:%.3f ms\n", 
@@ -405,7 +405,7 @@ namespace ZQ
 				return false;
 			}
 			double t21 = omp_get_wtime();
-			rnet.Forward(rnet_image);
+			rnet.Forward(rnet_image,num_threads);
 			double t22 = omp_get_wtime();
 			const ZQ_CNN_Tensor4D* score = rnet.GetBlobByName("prob1");
 			const ZQ_CNN_Tensor4D* location = rnet.GetBlobByName("conv5-2");
@@ -493,7 +493,7 @@ namespace ZQ
 			}
 
 			double t31 = omp_get_wtime();
-			onet.Forward(onet_image);
+			onet.Forward(onet_image,num_threads);
 			double t32 = omp_get_wtime();
 			score = onet.GetBlobByName("prob1");
 			location = onet.GetBlobByName("conv6-2");

@@ -20,6 +20,22 @@ extern "C" {
 		int out_sliceStep
 	);
 
+	void zq_cnn_eltwise_sum_32f_align0_omp(
+		int in_tensor_num,	//must be >=2
+		const float** in_tensor4D_data,
+		int N,
+		int H,
+		int W,
+		int C,
+		const int* in_pixelStep,
+		const int* in_widthStep,
+		const int* in_sliceStep,
+		float* out_tensor4D_data,
+		int out_pixeStep,
+		int out_widthStep,
+		int out_sliceStep,
+		int thread_count
+	);
 
 	void zq_cnn_eltwise_sum_with_weight_32f_align0(
 		int in_tensor_num,	//must be >=2
@@ -38,6 +54,24 @@ extern "C" {
 		int out_sliceStep
 	);
 
+	void zq_cnn_eltwise_sum_with_weight_32f_align0_omp(
+		int in_tensor_num,	//must be >=2
+		const float** in_tensor4D_data,
+		const float* weight,
+		int N,
+		int H,
+		int W,
+		int C,
+		const int* in_pixelStep,
+		const int* in_widthStep,
+		const int* in_sliceStep,
+		float* out_tensor4D_data,
+		int out_pixeStep,
+		int out_widthStep,
+		int out_sliceStep,
+		int thread_count
+	);
+
 	void zq_cnn_eltwise_mul_32f_align0(
 		int in_tensor_num,	//must be >=2
 		const float** in_tensor4D_data,	
@@ -54,6 +88,22 @@ extern "C" {
 		int out_sliceStep
 	);
 
+	void zq_cnn_eltwise_mul_32f_align0_omp(
+		int in_tensor_num,	//must be >=2
+		const float** in_tensor4D_data,
+		int N,
+		int H,
+		int W,
+		int C,
+		const int* in_pixelStep,
+		const int* in_widthStep,
+		const int* in_sliceStep,
+		float* out_tensor4D_data,
+		int out_pixeStep,
+		int out_widthStep,
+		int out_sliceStep,
+		int thread_count
+	);
 
 	void zq_cnn_eltwise_max_32f_align0(
 		int in_tensor_num,	//must be >=2
@@ -69,6 +119,23 @@ extern "C" {
 		int out_pixeStep,
 		int out_widthStep,
 		int out_sliceStep
+	);
+
+	void zq_cnn_eltwise_max_32f_align0_omp(
+		int in_tensor_num,	//must be >=2
+		const float** in_tensor4D_data,
+		int N,
+		int H,
+		int W,
+		int C,
+		const int* in_pixelStep,
+		const int* in_widthStep,
+		const int* in_sliceStep,
+		float* out_tensor4D_data,
+		int out_pixeStep,
+		int out_widthStep,
+		int out_sliceStep,
+		int thread_count
 	);
 
 #if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_SSE
@@ -88,6 +155,23 @@ extern "C" {
 		int out_sliceStep
 	);
 
+	void zq_cnn_eltwise_sum_32f_align128bit_omp(
+		int in_tensor_num,	//must be >=2
+		const float** in_tensor4D_data,
+		int N,
+		int H,
+		int W,
+		int C,
+		const int* in_pixelStep,
+		const int* in_widthStep,
+		const int* in_sliceStep,
+		float* out_tensor4D_data,
+		int out_pixeStep,
+		int out_widthStep,
+		int out_sliceStep,
+		int thread_count
+	);
+
 	void zq_cnn_eltwise_sum_with_weight_32f_align128bit(
 		int in_tensor_num,	//must be >=2
 		const float** in_tensor4D_data,
@@ -103,6 +187,24 @@ extern "C" {
 		int out_pixeStep,
 		int out_widthStep,
 		int out_sliceStep
+	);
+
+	void zq_cnn_eltwise_sum_with_weight_32f_align128bit_omp(
+		int in_tensor_num,	//must be >=2
+		const float** in_tensor4D_data,
+		const float* weight,
+		int N,
+		int H,
+		int W,
+		int C,
+		const int* in_pixelStep,
+		const int* in_widthStep,
+		const int* in_sliceStep,
+		float* out_tensor4D_data,
+		int out_pixeStep,
+		int out_widthStep,
+		int out_sliceStep,
+		int thread_count
 	);
 
 	void zq_cnn_eltwise_mul_32f_align128bit(
@@ -121,6 +223,23 @@ extern "C" {
 		int out_sliceStep
 	);
 
+	void zq_cnn_eltwise_mul_32f_align128bit_omp(
+		int in_tensor_num,	//must be >=2
+		const float** in_tensor4D_data,
+		int N,
+		int H,
+		int W,
+		int C,
+		const int* in_pixelStep,
+		const int* in_widthStep,
+		const int* in_sliceStep,
+		float* out_tensor4D_data,
+		int out_pixeStep,
+		int out_widthStep,
+		int out_sliceStep,
+		int thread_count
+	);
+
 	void zq_cnn_eltwise_max_32f_align128bit(
 		int in_tensor_num,	//must be >=2
 		const float** in_tensor4D_data,
@@ -137,6 +256,22 @@ extern "C" {
 		int out_sliceStep
 	);
 
+	void zq_cnn_eltwise_max_32f_align128bit_omp(
+		int in_tensor_num,	//must be >=2
+		const float** in_tensor4D_data,
+		int N,
+		int H,
+		int W,
+		int C,
+		const int* in_pixelStep,
+		const int* in_widthStep,
+		const int* in_sliceStep,
+		float* out_tensor4D_data,
+		int out_pixeStep,
+		int out_widthStep,
+		int out_sliceStep,
+		int thread_count
+	);
 #endif
 
 #if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_AVX
@@ -156,6 +291,23 @@ extern "C" {
 		int out_sliceStep
 	);
 
+	void zq_cnn_eltwise_sum_32f_align256bit_omp(
+		int in_tensor_num,	//must be >=2
+		const float** in_tensor4D_data,
+		int N,
+		int H,
+		int W,
+		int C,
+		const int* in_pixelStep,
+		const int* in_widthStep,
+		const int* in_sliceStep,
+		float* out_tensor4D_data,
+		int out_pixeStep,
+		int out_widthStep,
+		int out_sliceStep,
+		int thread_count
+	);
+
 	void zq_cnn_eltwise_sum_with_weight_32f_align256bit(
 		int in_tensor_num,	//must be >=2
 		const float** in_tensor4D_data,
@@ -171,6 +323,24 @@ extern "C" {
 		int out_pixeStep,
 		int out_widthStep,
 		int out_sliceStep
+	);
+
+	void zq_cnn_eltwise_sum_with_weight_32f_align256bit_omp(
+		int in_tensor_num,	//must be >=2
+		const float** in_tensor4D_data,
+		const float* weight,
+		int N,
+		int H,
+		int W,
+		int C,
+		const int* in_pixelStep,
+		const int* in_widthStep,
+		const int* in_sliceStep,
+		float* out_tensor4D_data,
+		int out_pixeStep,
+		int out_widthStep,
+		int out_sliceStep,
+		int thread_count
 	);
 
 	void zq_cnn_eltwise_mul_32f_align256bit(
@@ -189,6 +359,23 @@ extern "C" {
 		int out_sliceStep
 	);
 
+	void zq_cnn_eltwise_mul_32f_align256bit_omp(
+		int in_tensor_num,	//must be >=2
+		const float** in_tensor4D_data,
+		int N,
+		int H,
+		int W,
+		int C,
+		const int* in_pixelStep,
+		const int* in_widthStep,
+		const int* in_sliceStep,
+		float* out_tensor4D_data,
+		int out_pixeStep,
+		int out_widthStep,
+		int out_sliceStep,
+		int thread_count
+	);
+
 	void zq_cnn_eltwise_max_32f_align256bit(
 		int in_tensor_num,	//must be >=2
 		const float** in_tensor4D_data,
@@ -203,6 +390,23 @@ extern "C" {
 		int out_pixeStep,
 		int out_widthStep,
 		int out_sliceStep
+	);
+
+	void zq_cnn_eltwise_max_32f_align256bit_omp(
+		int in_tensor_num,	//must be >=2
+		const float** in_tensor4D_data,
+		int N,
+		int H,
+		int W,
+		int C,
+		const int* in_pixelStep,
+		const int* in_widthStep,
+		const int* in_sliceStep,
+		float* out_tensor4D_data,
+		int out_pixeStep,
+		int out_widthStep,
+		int out_sliceStep,
+		int thread_count
 	);
 #endif
 

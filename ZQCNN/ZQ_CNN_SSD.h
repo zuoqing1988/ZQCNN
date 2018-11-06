@@ -3,6 +3,7 @@
 #pragma once
 
 #include "ZQ_CNN_Net.h"
+#include <cblas.h>
 #include <vector>
 #include <iostream>
 namespace ZQ
@@ -38,7 +39,6 @@ namespace ZQ
 				printf("failed to load net (%s, %s)\n",proto_file.c_str(), model_file.c_str());
 				return false;
 			}
-			printf("MulAdd = %.3f M\n", net.GetNumOfMulAdd() / (1024.0*1024.0));
 			this->proto_file = proto_file;
 			this->model_file = model_file;
 			this->out_blob_name = out_blob_name;
@@ -76,7 +76,7 @@ namespace ZQ
 				{
 					return false;
 				}
-				if (!net.Forward(input1))
+				if (!net.Forward(input1, 1))
 				{
 					printf("failed to run net (%s, %s)!\n", proto_file.c_str(), model_file.c_str());
 					return false;
@@ -84,7 +84,7 @@ namespace ZQ
 			}
 			else
 			{
-				if (!net.Forward(input0))
+				if (!net.Forward(input0, 1))
 				{
 					printf("failed to run net (%s, %s)!\n", proto_file.c_str(), model_file.c_str());
 					return false;

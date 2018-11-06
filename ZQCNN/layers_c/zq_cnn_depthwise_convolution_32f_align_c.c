@@ -277,6 +277,96 @@ extern "C" {
 				}
 			}
 		}
+
+	}
+
+	void zq_cnn_depthwise_conv_no_padding_32f_align0_general_omp(
+		const float* in_tensor4D_data,
+		int in_N,
+		int in_H,
+		int in_W,
+		int in_C,
+		int in_pixelStep,
+		int in_widthStep,
+		int in_sliceStep,
+		const float* filters_data,
+		int filter_N, // must be 1
+		int filter_H, // 
+		int filter_W, // 
+		int filter_C, // must be in_C
+		int filter_pixelStep,
+		int filter_widthStep,
+		int filter_sliceStep,
+		int stride_H,
+		int stride_W,
+		float* out_tensor4D_data,
+		int out_N,	// must be in_N
+		int out_H,	// must be (in_H - filter_H)/stride_H + 1
+		int out_W,	// must be (in_W - filter_W)/stride_W + 1
+		int out_C,	// must be in_C
+		int out_pixelStep,
+		int out_widthStep,
+		int out_sliceStep,
+		int thread_count
+	)
+	{
+		int stride_H_mul_in_WidthStep = stride_H*in_widthStep;
+		int stride_W_mul_in_pixStep = stride_W*in_pixelStep;
+		int out_n, out_h, out_w, out_c, kh, kw, kc;
+
+		int out_NHW = out_N*out_H*out_W;
+		int chunk_size = (out_NHW + thread_count - 1) / thread_count;
+		int* in_offsets = (int*)malloc(out_NHW * sizeof(int));
+		int* out_offsets = (int*)malloc(out_NHW * sizeof(int));
+		int idx = 0;
+		for (out_n = 0; out_n < out_N; out_n++)
+		{
+			for (out_h = 0; out_h < out_H; out_h++)
+			{
+				for (out_w = 0; out_w < out_W; out_w++)
+				{
+					in_offsets[idx] = out_n*in_sliceStep + out_h*stride_H_mul_in_WidthStep + out_w*stride_W_mul_in_pixStep;
+					out_offsets[idx] = out_n*out_sliceStep + out_h*out_widthStep + out_w*out_pixelStep;
+					idx++;
+				}
+			}
+		}
+
+#pragma omp parallel for schedule(static, chunk_size) num_threads(thread_count)
+		for (idx = 0; idx < out_NHW; idx++)
+		{
+			float* out_c_ptr;
+			const float* cur_in_row_ptr, *cur_in_pix_ptr, *cur_in_c_ptr;
+			const float* cur_filter_row_ptr, *cur_filter_pix_ptr, *cur_filter_c_ptr;
+			const float* in_pix_ptr = in_tensor4D_data + in_offsets[idx];
+			float* out_pix_ptr = out_tensor4D_data + out_offsets[idx];
+
+			for (out_c = 0, out_c_ptr = out_pix_ptr; out_c < in_C; out_c++, out_c_ptr++)
+				*out_c_ptr = 0;
+
+
+			for (kh = 0, cur_in_row_ptr = in_pix_ptr, cur_filter_row_ptr = filters_data;
+				kh < filter_H;
+				kh++, cur_in_row_ptr += in_widthStep, cur_filter_row_ptr += filter_widthStep)
+			{
+				for (kw = 0, cur_in_pix_ptr = cur_in_row_ptr, cur_filter_pix_ptr = cur_filter_row_ptr;
+					kw < filter_W;
+					kw++, cur_in_pix_ptr += in_pixelStep, cur_filter_pix_ptr += filter_pixelStep)
+				{
+					for (kc = 0, cur_in_c_ptr = cur_in_pix_ptr, cur_filter_c_ptr = cur_filter_pix_ptr, out_c_ptr = out_pix_ptr;
+						kc < in_C;
+						kc++, cur_in_c_ptr++, cur_filter_c_ptr++, out_c_ptr++)
+					{
+						*out_c_ptr += (*cur_in_c_ptr)*(*cur_filter_c_ptr);
+					}
+				}
+			}
+
+		}
+
+
+		free(in_offsets);
+		free(out_offsets);
 	}
 
 
