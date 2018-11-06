@@ -1,0 +1,22 @@
+﻿  SampleFaceDetectorLibFaceDetect.cpp
+C:\Users\ZQ\Desktop\ZQCNN-v0.0\ZQlibFaceID\ZQ_FaceDetectorLibFaceDetect.h(71): warning C4244: “初始化”: 从“float”转换到“int”，可能丢失数据
+C:\Users\ZQ\Desktop\ZQCNN-v0.0\ZQlibFaceID\ZQ_FaceDetectorLibFaceDetect.h(72): warning C4244: “初始化”: 从“float”转换到“int”，可能丢失数据
+C:\Users\ZQ\Desktop\ZQCNN-v0.0\ZQlibFaceID\ZQ_FaceDetectorLibFaceDetect.h(73): warning C4244: “初始化”: 从“float”转换到“int”，可能丢失数据
+C:\Users\ZQ\Desktop\ZQCNN-v0.0\ZQlibFaceID\ZQ_FaceDetectorLibFaceDetect.h(74): warning C4244: “初始化”: 从“float”转换到“int”，可能丢失数据
+C:\Users\ZQ\Desktop\ZQCNN-v0.0\ZQlibFaceID\ZQ_FaceDetectorLibFaceDetect.h(193): warning C4244: “=”: 从“int”转换到“float”，可能丢失数据
+C:\Users\ZQ\Desktop\ZQCNN-v0.0\ZQlibFaceID\ZQ_FaceDetectorLibFaceDetect.h(196): warning C4244: “=”: 从“double”转换到“float”，可能丢失数据
+C:\Users\ZQ\Desktop\ZQCNN-v0.0\ZQlibFaceID\ZQ_FaceDetectorLibFaceDetect.h(197): warning C4244: “=”: 从“double”转换到“float”，可能丢失数据
+C:\Users\ZQ\Desktop\ZQCNN-v0.0\ZQlibFaceID\ZQ_FaceDetectorLibFaceDetect.h(198): warning C4244: “=”: 从“double”转换到“float”，可能丢失数据
+C:\Users\ZQ\Desktop\ZQCNN-v0.0\ZQlibFaceID\ZQ_FaceDetectorLibFaceDetect.h(199): warning C4244: “=”: 从“double”转换到“float”，可能丢失数据
+C:\Users\ZQ\Desktop\ZQCNN-v0.0\ZQlibFaceID\ZQ_FaceDetectorLibFaceDetect.h(202): warning C4244: “=”: 从“double”转换到“float”，可能丢失数据
+C:\Users\ZQ\Desktop\ZQCNN-v0.0\ZQlibFaceID\ZQ_FaceDetectorLibFaceDetect.h(203): warning C4244: “=”: 从“double”转换到“float”，可能丢失数据
+C:\Users\ZQ\Desktop\ZQCNN-v0.0\ZQlibFaceID\ZQ_FaceDetectorLibFaceDetect.h(204): warning C4244: “=”: 从“double”转换到“float”，可能丢失数据
+C:\Users\ZQ\Desktop\ZQCNN-v0.0\ZQlibFaceID\ZQ_FaceDetectorLibFaceDetect.h(205): warning C4244: “=”: 从“double”转换到“float”，可能丢失数据
+SampleFaceDetectorLibFaceDetect.cpp(26): warning C4244: “参数”: 从“float”转换到“int”，可能丢失数据
+SampleFaceDetectorLibFaceDetect.cpp(49): warning C4305: “参数”: 从“double”到“float”截断
+SampleFaceDetectorLibFaceDetect.cpp(49): warning C4267: “参数”: 从“size_t”转换到“int”，可能丢失数据
+  正在生成代码
+  All 358 functions were compiled because no usable IPDB/IOBJ from previous compilation was found.
+  已完成代码的生成
+  SampleFaceDetectorLibFaceDetect.vcxproj -> C:\Users\ZQ\Desktop\ZQCNN-v0.0\x64\Release\SampleFaceDetectorLibFaceDetect.exe
+  SampleFaceDetectorLibFaceDetect.vcxproj -> C:\Users\ZQ\Desktop\ZQCNN-v0.0\x64\Release\SampleFaceDetectorLibFaceDetect.pdb (Full PDB)

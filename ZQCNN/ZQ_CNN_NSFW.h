@@ -3,9 +3,10 @@
 #pragma once
 
 #include "ZQ_CNN_Net.h"
-#include <cblas.h>
 #include <vector>
 #include <iostream>
+
+
 namespace ZQ
 {
 	class ZQ_CNN_NSFW
@@ -75,7 +76,7 @@ namespace ZQ
 				{
 					return false;
 				}
-				if (!net.Forward(data, 1))
+				if (!net.Forward(data))
 				{
 					printf("failed to run net (%s, %s)!\n", proto_file.c_str(), model_file.c_str());
 					return false;
@@ -86,7 +87,7 @@ namespace ZQ
 				data.CopyData(input);
 			}
 
-			if (!net.Forward(data, 1))
+			if (!net.Forward(data))
 			{
 				printf("failed to run net (%s, %s)!\n", proto_file.c_str(), model_file.c_str());
 				return false;

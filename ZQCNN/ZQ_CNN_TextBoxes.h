@@ -5,7 +5,6 @@
 #include "ZQ_CNN_Net.h"
 #include "ZQ_CNN_BBox.h"
 #include "ZQ_CNN_BBoxUtils.h"
-#include <cblas.h>
 #include <vector>
 #include <iostream>
 namespace ZQ
@@ -95,7 +94,7 @@ namespace ZQ
 					{
 						return false;
 					}
-					if (!net.Forward(input1, 1))
+					if (!net.Forward(input1))
 					{
 						printf("failed to run net (%s, %s)!\n", proto_file.c_str(), model_file.c_str());
 						return false;
@@ -103,7 +102,7 @@ namespace ZQ
 				}
 				else
 				{
-					if (!net.Forward(input0, 1))
+					if (!net.Forward(input0))
 					{
 						printf("failed to run net (%s, %s)!\n", proto_file.c_str(), model_file.c_str());
 						return false;

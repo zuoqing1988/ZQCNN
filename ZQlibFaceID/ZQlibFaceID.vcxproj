@@ -162,8 +162,6 @@
     <ClInclude Include="ZQ_FaceGroup.h" />
     <ClInclude Include="ZQ_FaceIDPrecisionEvaluation.h" />
     <ClInclude Include="ZQ_FaceRecognizer.h" />
-    <ClInclude Include="ZQ_FaceRecognizerAgeGenderMiniCaffe.h" />
-    <ClInclude Include="ZQ_FaceRecognizerAgeGenderZQCNN.h" />
     <ClInclude Include="ZQ_FaceRecognizerArcFaceMiniCaffe.h" />
     <ClInclude Include="ZQ_FaceRecognizerArcFaceOpenCV.h" />
     <ClInclude Include="ZQ_FaceRecognizerArcFaceZQCNN.h" />

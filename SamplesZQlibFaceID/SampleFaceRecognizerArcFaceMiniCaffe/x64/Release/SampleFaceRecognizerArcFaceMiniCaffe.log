@@ -1,0 +1,43 @@
+﻿  SampleFaceRecognizerArcFaceMiniCaffe.cpp
+c:\users\zq\desktop\zqcnn-v0.0\zqlibfaceid\ZQ_FaceRecognizer.h(94): warning C4267: “初始化”: 从“size_t”转换到“int”，可能丢失数据
+c:\users\zq\desktop\zqcnn-v0.0\zqlibfaceid\ZQ_FaceRecognizer.h(112): warning C4267: “初始化”: 从“size_t”转换到“int”，可能丢失数据
+c:\users\zq\desktop\zqcnn-v0.0\zqlibfaceid\ZQ_FaceRecognizer.h(149): warning C4267: “初始化”: 从“size_t”转换到“int”，可能丢失数据
+c:\users\zq\desktop\zqcnn-v0.0\zqlibfaceid\ZQ_FaceRecognizer.h(153): warning C4267: “初始化”: 从“size_t”转换到“int”，可能丢失数据
+c:\users\zq\desktop\zqcnn-v0.0\zqlibfaceid\ZQ_FaceRecognizerSphereFace.h(162): warning C4267: “参数”: 从“size_t”转换到“int”，可能丢失数据
+SampleFaceRecognizerArcFaceMiniCaffe.cpp(47): warning C4267: “参数”: 从“size_t”转换到“int”，可能丢失数据
+SampleFaceRecognizerArcFaceMiniCaffe.cpp(48): warning C4267: “参数”: 从“size_t”转换到“int”，可能丢失数据
+c:\users\zq\desktop\zqcnn-v0.0\zqlibfaceid\ZQ_FaceRecognizerUtils.h(74): warning C4838: 从“double”转换到“float”需要收缩转换
+  c:\users\zq\desktop\zqcnn-v0.0\zqlibfaceid\ZQ_FaceRecognizerSphereFace.h(74): note: 参见对正在编译的函数 模板 实例化“bool ZQ::ZQ_FaceRecognizerUtils::CropImage_160x160<float>(const cv::Mat &,const BaseType *,cv::Mat &)”的引用
+          with
+          [
+              BaseType=float
+          ]
+c:\users\zq\desktop\zqcnn-v0.0\zqlibfaceid\ZQ_FaceRecognizerUtils.h(74): warning C4305: “初始化”: 从“double”到“float”截断
+c:\users\zq\desktop\zqcnn-v0.0\zqlibfaceid\ZQ_FaceRecognizerUtils.h(51): warning C4838: 从“double”转换到“float”需要收缩转换
+  c:\users\zq\desktop\zqcnn-v0.0\zqlibfaceid\ZQ_FaceRecognizerSphereFace.h(79): note: 参见对正在编译的函数 模板 实例化“bool ZQ::ZQ_FaceRecognizerUtils::CropImage_112x112<float>(const cv::Mat &,const BaseType *,cv::Mat &)”的引用
+          with
+          [
+              BaseType=float
+          ]
+c:\users\zq\desktop\zqcnn-v0.0\zqlibfaceid\ZQ_FaceRecognizerUtils.h(51): warning C4305: “初始化”: 从“double”到“float”截断
+c:\users\zq\desktop\zqcnn-v0.0\zqlibfaceid\ZQ_FaceRecognizerUtils.h(28): warning C4838: 从“double”转换到“float”需要收缩转换
+  c:\users\zq\desktop\zqcnn-v0.0\zqlibfaceid\ZQ_FaceRecognizerSphereFace.h(84): note: 参见对正在编译的函数 模板 实例化“bool ZQ::ZQ_FaceRecognizerUtils::CropImage_112x96<float>(const cv::Mat &,const BaseType *,cv::Mat &)”的引用
+          with
+          [
+              BaseType=float
+          ]
+c:\users\zq\desktop\zqcnn-v0.0\zqlibfaceid\ZQ_FaceRecognizerUtils.h(28): warning C4305: “初始化”: 从“double”到“float”截断
+C:\Users\ZQ\Desktop\ZQCNN-v0.0\3rdparty\include\ZQlib\ZQ_MathBase.h(155): warning C4244: “初始化”: 从“double”转换到“float”，可能丢失数据
+  c:\users\zq\desktop\zqcnn-v0.0\zqlibfaceid\ZQ_FaceRecognizerSphereFaceMiniCaffe.h(196): note: 参见对正在编译的函数 模板 实例化“void ZQ::ZQ_MathBase::Normalize<float>(int,T *)”的引用
+          with
+          [
+              T=float
+          ]
+  正在生成代码
+c:\users\zq\desktop\zqcnn-v0.0\zqlibfaceid\zq_facerecognizersphereface.h(226): warning C4752: 发现 Intel(R) 高级矢量扩展；请考虑使用 /arch:AVX
+c:\users\zq\desktop\zqcnn-v0.0\zqlibfaceid\zq_facerecognizersphereface.h(310): warning C4752: 发现 Intel(R) 高级矢量扩展；请考虑使用 /arch:AVX
+c:\users\zq\desktop\zqcnn-v0.0\zqlibfaceid\zq_facerecognizersphereface.h(458): warning C4752: 发现 Intel(R) 高级矢量扩展；请考虑使用 /arch:AVX
+  All 408 functions were compiled because no usable IPDB/IOBJ from previous compilation was found.
+  已完成代码的生成
+  SampleFaceRecognizerArcFaceMiniCaffe.vcxproj -> C:\Users\ZQ\Desktop\ZQCNN-v0.0\x64\Release\SampleFaceRecognizerArcFaceMiniCaffe.exe
+  SampleFaceRecognizerArcFaceMiniCaffe.vcxproj -> C:\Users\ZQ\Desktop\ZQCNN-v0.0\x64\Release\SampleFaceRecognizerArcFaceMiniCaffe.pdb (Full PDB)
