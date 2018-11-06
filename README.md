@@ -4,6 +4,12 @@ ZQCNN-v0.0是ZuoQing参照mini-caffe写的forward库，随便用用
 
 # 更新日志
 
+**2018-11-06日更新**
+
+(1)去掉layers里所有omp多线程的代码，计算量太小，速度比单线程更慢
+
+(2)cblas_gemm可以选择MKL，不过3rdparty带的mkl在我机器上很慢，dll比较大，我没放在3rdparty\bin里，请从[此处下载](https://pan.baidu.com/s/1d75IIf6fgTZ5oeumd0vtTw)。
+
 **2018-10-30日更新2：MTCNN大图找小脸建议先用高斯滤波**
 
 **2018-10-30日更新：BatchNorm的eps问题**
