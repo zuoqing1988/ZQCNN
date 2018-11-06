@@ -212,9 +212,9 @@ namespace ZQ
 
 				double t11 = omp_get_wtime();
 				if (scales[i] != 1)
-					pnet[0].Forward(pnet_images[i], 1);
+					pnet[0].Forward(pnet_images[i]);
 				else
-					pnet[0].Forward(input, 1);
+					pnet[0].Forward(input);
 				double t12 = omp_get_wtime();
 				if (show_debug_info)
 					printf("Pnet [%d]: resolution [%dx%d], resize:%.3f ms, cost:%.3f ms\n",
@@ -353,7 +353,7 @@ namespace ZQ
 						continue;
 				}
 
-				if (!pnet[thread_id].Forward(task_pnet_images[thread_id], 1))
+				if (!pnet[thread_id].Forward(task_pnet_images[thread_id]))
 					continue;
 				const ZQ_CNN_Tensor4D* score = pnet[thread_id].GetBlobByName("prob1");
 
@@ -683,7 +683,7 @@ namespace ZQ
 				ZQ_CNN_OrderScore order;
 				int count = 0;
 				double t21 = omp_get_wtime();
-				rnet[0].Forward(task_rnet_images[0], 1);
+				rnet[0].Forward(task_rnet_images[0]);
 				double t22 = omp_get_wtime();
 				const ZQ_CNN_Tensor4D* score = rnet[0].GetBlobByName("prob1");
 				const ZQ_CNN_Tensor4D* location = rnet[0].GetBlobByName("conv5-2");
@@ -741,7 +741,7 @@ namespace ZQ
 					{
 						continue;
 					}
-					rnet[pp].Forward(task_rnet_images[pp], 1);
+					rnet[pp].Forward(task_rnet_images[pp]);
 					const ZQ_CNN_Tensor4D* score = rnet[pp].GetBlobByName("prob1");
 					const ZQ_CNN_Tensor4D* location = rnet[pp].GetBlobByName("conv5-2");
 					const float* score_ptr = score->GetFirstPixelPtr();
@@ -882,7 +882,7 @@ namespace ZQ
 				int count = 0;
 				ZQ_CNN_OrderScore order;
 				double t31 = omp_get_wtime();
-				onet[0].Forward(task_onet_images[0], 1);
+				onet[0].Forward(task_onet_images[0]);
 				double t32 = omp_get_wtime();
 				const ZQ_CNN_Tensor4D* score = onet[0].GetBlobByName("prob1");
 				const ZQ_CNN_Tensor4D* location = onet[0].GetBlobByName("conv6-2");
@@ -949,7 +949,7 @@ namespace ZQ
 						continue;
 					}
 					double t31 = omp_get_wtime();
-					onet[pp].Forward(task_onet_images[pp], 1);
+					onet[pp].Forward(task_onet_images[pp]);
 					double t32 = omp_get_wtime();
 					const ZQ_CNN_Tensor4D* score = onet[pp].GetBlobByName("prob1");
 					const ZQ_CNN_Tensor4D* location = onet[pp].GetBlobByName("conv6-2");

@@ -21,9 +21,7 @@ extern "C" {
 
 #if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_SSE
 #define zq_cnn_prelu_32f_align zq_cnn_prelu_32f_align128bit
-#define zq_cnn_prelu_32f_align_omp zq_cnn_prelu_32f_align128bit_omp
 #define zq_cnn_prelu_32f_align_sure_slope_lessthan1 zq_cnn_prelu_32f_align128bit_sure_slope_lessthan1
-#define zq_cnn_prelu_32f_align_sure_slope_lessthan1_omp zq_cnn_prelu_32f_align128bit_sure_slope_lessthan1_omp
 #define zq_mm_load_ps _mm_load_ps
 #define zq_mm_maskload_ps _mm_maskload_ps
 #define zq_mm_store_ps _mm_store_ps
@@ -56,9 +54,7 @@ extern "C" {
 #include "zq_cnn_prelu_32f_align_c_raw.h"
 
 #undef zq_cnn_prelu_32f_align
-#undef zq_cnn_prelu_32f_align_omp
 #undef zq_cnn_prelu_32f_align_sure_slope_lessthan1
-#undef zq_cnn_prelu_32f_align_sure_slope_lessthan1_omp
 #undef zq_mm_load_ps
 #undef zq_mm_maskload_ps
 #undef zq_mm_store_ps
@@ -87,9 +83,7 @@ extern "C" {
 
 #if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_AVX
 #define zq_cnn_prelu_32f_align zq_cnn_prelu_32f_align256bit
-#define zq_cnn_prelu_32f_align_omp zq_cnn_prelu_32f_align256bit_omp
 #define zq_cnn_prelu_32f_align_sure_slope_lessthan1 zq_cnn_prelu_32f_align256bit_sure_slope_lessthan1
-#define zq_cnn_prelu_32f_align_sure_slope_lessthan1_omp zq_cnn_prelu_32f_align256bit_sure_slope_lessthan1_omp
 #define zq_mm_load_ps _mm256_load_ps
 #define zq_mm_maskload_ps _mm256_maskload_ps
 #define zq_mm_store_ps _mm256_store_ps
@@ -123,9 +117,7 @@ extern "C" {
 #include "zq_cnn_prelu_32f_align_c_raw.h"
 
 #undef zq_cnn_prelu_32f_align
-#undef zq_cnn_prelu_32f_align_omp
 #undef zq_cnn_prelu_32f_align_sure_slope_lessthan1
-#undef zq_cnn_prelu_32f_align_sure_slope_lessthan1_omp
 #undef zq_mm_load_ps
 #undef zq_mm_maskload_ps
 #undef zq_mm_store_ps
@@ -180,44 +172,6 @@ void zq_cnn_prelu_32f_align0(
 					if (data_v < 0)
 						data_v *= slope_data[c];
 					*c_ptr = data_v;
-				}
-			}
-		}
-	}
-	
-}
-
-void zq_cnn_prelu_32f_align0_omp(
-	float* in_tensor4D_data,	// in & out
-	int in_N,
-	int in_H,
-	int in_W,
-	int in_C,
-	int in_pixelStep,
-	int in_widthStep,
-	int in_sliceStep,
-	const float* slope_data,
-	int thread_count
-)
-{
-	int c;
-	int chunk_size = (in_C + thread_count - 1) / thread_count;
-#pragma omp parallel for schedule(static,chunk_size) num_threads(thread_count)
-	for (c = 0; c < in_C; c++)
-	{
-		int n, h, w;
-		float* slice_ptr, *row_ptr, *pix_ptr;
-		float data_v;
-		for (n = 0, slice_ptr = in_tensor4D_data+c; n < in_N; n++, slice_ptr += in_sliceStep)
-		{
-			for (h = 0, row_ptr = slice_ptr; h < in_H; h++, row_ptr += in_widthStep)
-			{
-				for (w = 0, pix_ptr = row_ptr; w < in_W; w++, pix_ptr += in_pixelStep)
-				{
-					data_v = *pix_ptr;
-					if (data_v < 0)
-						data_v *= slope_data[c];
-					*pix_ptr = data_v;
 				}
 			}
 		}

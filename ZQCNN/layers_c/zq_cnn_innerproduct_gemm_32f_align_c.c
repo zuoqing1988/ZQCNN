@@ -18,8 +18,12 @@
 #include <intrin.h>//(include immintrin.h)  
 #endif
 
+#if (ZQ_CNN_USE_BLAS_GEMM || ZQ_CNN_USE_MKL_GEMM)
 #if ZQ_CNN_USE_BLAS_GEMM
-#include <cblas.h>
+#include <openblas\cblas.h>
+#elif ZQ_CNN_USE_MKL_GEMM
+#include <mkl\mkl.h>
+#endif
 #if defined(__cplusplus) || defined(c_plusplus) 
 extern "C" {
 #endif
