@@ -1,133 +1,133 @@
-ZQCNN-v0.0ÊÇZuoQing²ÎÕÕmini-caffeĞ´µÄforward¿â£¬Ëæ±ãÓÃÓÃ
+ZQCNNæ˜¯ZuoQingå‚ç…§mini-caffeå†™çš„forwardåº“ï¼Œéšä¾¿ç”¨ç”¨
 
-ÎÒÓÃµÄ±à³Ì»·¾³[VS2015 with Update 3](https://pan.baidu.com/s/1zoREccOxVsggV-iI2z4HTg)
+æˆ‘ç”¨çš„ç¼–ç¨‹ç¯å¢ƒ[VS2015 with Update 3](https://pan.baidu.com/s/1zoREccOxVsggV-iI2z4HTg)
 
-MKLÏÂÔØµØÖ·:[´Ë´¦ÏÂÔØ](https://pan.baidu.com/s/1d75IIf6fgTZ5oeumd0vtTw)
+MKLä¸‹è½½åœ°å€:[æ­¤å¤„ä¸‹è½½](https://pan.baidu.com/s/1d75IIf6fgTZ5oeumd0vtTw)
 
-# ¸üĞÂÈÕÖ¾
+# æ›´æ–°æ—¥å¿—
 
-**2018-11-06ÈÕ¸üĞÂ**
+**2018-11-06æ—¥æ›´æ–°**
 
-(1)È¥µôlayersÀïËùÓĞomp¶àÏß³ÌµÄ´úÂë£¬¼ÆËãÁ¿Ì«Ğ¡£¬ËÙ¶È±Èµ¥Ïß³Ì¸üÂı
+(1)å»æ‰layersé‡Œæ‰€æœ‰ompå¤šçº¿ç¨‹çš„ä»£ç ï¼Œè®¡ç®—é‡å¤ªå°ï¼Œé€Ÿåº¦æ¯”å•çº¿ç¨‹æ›´æ…¢
 
-(2)cblas_gemm¿ÉÒÔÑ¡ÔñMKL£¬²»¹ı3rdparty´øµÄmklÔÚÎÒ»úÆ÷ÉÏºÜÂı£¬dll±È½Ï´ó£¬ÎÒÃ»·ÅÔÚ3rdparty\binÀï£¬Çë´Ó[´Ë´¦ÏÂÔØ](https://pan.baidu.com/s/1d75IIf6fgTZ5oeumd0vtTw)¡£
+(2)cblas_gemmå¯ä»¥é€‰æ‹©MKLï¼Œä¸è¿‡3rdpartyå¸¦çš„mklåœ¨æˆ‘æœºå™¨ä¸Šå¾ˆæ…¢ï¼Œdllæ¯”è¾ƒå¤§ï¼Œæˆ‘æ²¡æ”¾åœ¨3rdparty\biné‡Œï¼Œè¯·ä»[æ­¤å¤„ä¸‹è½½](https://pan.baidu.com/s/1d75IIf6fgTZ5oeumd0vtTw)ã€‚
 
-**2018-10-30ÈÕ¸üĞÂ2£ºMTCNN´óÍ¼ÕÒĞ¡Á³½¨ÒéÏÈÓÃ¸ßË¹ÂË²¨**
+**2018-10-30æ—¥æ›´æ–°2ï¼šMTCNNå¤§å›¾æ‰¾å°è„¸å»ºè®®å…ˆç”¨é«˜æ–¯æ»¤æ³¢**
 
-**2018-10-30ÈÕ¸üĞÂ£ºBatchNormµÄepsÎÊÌâ**
+**2018-10-30æ—¥æ›´æ–°ï¼šBatchNormçš„epsé—®é¢˜**
 
-(1)BatchNorm¡¢BatchNormScaleµÄÄ¬ÈÏeps¶¼ÊÇ0
+(1)BatchNormã€BatchNormScaleçš„é»˜è®¤epséƒ½æ˜¯0
 
-(2)Èç¹ûÊÇÓÃmxnet2zqcnn´Ómxnet×ª¹ıÀ´Ä£ĞÍ£¬×ªµÄ¹ı³ÌÖĞ»á°Ñeps¼Óµ½varÉÏÃæµ±×öĞÂµÄvar
+(2)å¦‚æœæ˜¯ç”¨mxnet2zqcnnä»mxnetè½¬è¿‡æ¥æ¨¡å‹ï¼Œè½¬çš„è¿‡ç¨‹ä¸­ä¼šæŠŠepsåŠ åˆ°varä¸Šé¢å½“åšæ–°çš„var
 
-(3)Èç¹ûÊÇ´ÓÆäËûÆ½Ì¨×ª¹ıÀ´Ä£ĞÍ£¬ÒªÃ´ÊÖ¹¤°Ñeps¼Óµ½varÉÏÃæ£¬ÒªÃ´ÔÚBatchNorm¡¢BatchNormScaleºóÃæ¼ÓÉÏeps=?(?Îª¸ÃÆ½Ì¨Õâ¸ö²ãµÄepsÖµ)
+(3)å¦‚æœæ˜¯ä»å…¶ä»–å¹³å°è½¬è¿‡æ¥æ¨¡å‹ï¼Œè¦ä¹ˆæ‰‹å·¥æŠŠepsåŠ åˆ°varä¸Šé¢ï¼Œè¦ä¹ˆåœ¨BatchNormã€BatchNormScaleåé¢åŠ ä¸Šeps=?(?ä¸ºè¯¥å¹³å°è¿™ä¸ªå±‚çš„epså€¼)
 
-×¢Òâ£ºÎªÁË·ÀÖ¹³ı0´í£¬ÔÚ³ıvarµÄÊ±ºòÊÇÕâÃ´¼ÆËãµÄsqrt(__max(var+eps,1e-32))£¬Ò²¾ÍÊÇËµÈç¹ûvar+epsĞ¡ÓÚ1e-32£¬»áÓëÀíÂÛÖµÂÔÓĞ²»Í¬¡£
-²»¹ı½ñÌìĞŞ¸ÄÖ®ºóÏÂÃæ¼¸¸öÈËÁ³Ä£ĞÍµÄLFWµÄ¾«¶È·´¶øÓëminicaffeµÄ½á¹ûÒ»Ä£Ò»ÑùÁË¡£
+æ³¨æ„ï¼šä¸ºäº†é˜²æ­¢é™¤0é”™ï¼Œåœ¨é™¤varçš„æ—¶å€™æ˜¯è¿™ä¹ˆè®¡ç®—çš„sqrt(__max(var+eps,1e-32))ï¼Œä¹Ÿå°±æ˜¯è¯´å¦‚æœvar+epså°äº1e-32ï¼Œä¼šä¸ç†è®ºå€¼ç•¥æœ‰ä¸åŒã€‚
+ä¸è¿‡ä»Šå¤©ä¿®æ”¹ä¹‹åä¸‹é¢å‡ ä¸ªäººè„¸æ¨¡å‹çš„LFWçš„ç²¾åº¦åè€Œä¸minicaffeçš„ç»“æœä¸€æ¨¡ä¸€æ ·äº†ã€‚
 
-**2018-10-26ÈÕ¸üĞÂ**
+**2018-10-26æ—¥æ›´æ–°**
 
-MTCNNÖ§³Ö¶àÏß³Ì£¬´óÍ¼ÕÒĞ¡Á³¶øÇÒÁ³¶àµÄÇé¿öÏÂ£¬8Ïß³Ì¿ÉÒÔÈ¡µÃµ¥Ïß³Ì4±¶ÒÔÉÏĞ§¹û£¬ÇëÓÃdata\test2.jpgÀ´²âÊÔ
+MTCNNæ”¯æŒå¤šçº¿ç¨‹ï¼Œå¤§å›¾æ‰¾å°è„¸è€Œä¸”è„¸å¤šçš„æƒ…å†µä¸‹ï¼Œ8çº¿ç¨‹å¯ä»¥å–å¾—å•çº¿ç¨‹4å€ä»¥ä¸Šæ•ˆæœï¼Œè¯·ç”¨data\test2.jpgæ¥æµ‹è¯•
 
-**2018-10-15ÈÕ¸üĞÂ**
+**2018-10-15æ—¥æ›´æ–°**
 
-¸Ä½øMTCNNµÄnms²ßÂÔ£º1.Ã¿¸öscaleµÄPnetµÄnmsµÄ¾Ö²¿¼«´ó±ØĞë¸²¸ÇÒ»¶¨ÊıÁ¿µÄ·Ç¼«´ó£¬ÊıÁ¿ÔÚ²ÎÊıÖĞÉèÖÃ; 2.µ±PnetµÄ·Ö±æÂÊÌ«´óÊ±£¬nms½øĞĞ·Ö¿é´¦Àí¡£
+æ”¹è¿›MTCNNçš„nmsç­–ç•¥ï¼š1.æ¯ä¸ªscaleçš„Pnetçš„nmsçš„å±€éƒ¨æå¤§å¿…é¡»è¦†ç›–ä¸€å®šæ•°é‡çš„éæå¤§ï¼Œæ•°é‡åœ¨å‚æ•°ä¸­è®¾ç½®; 2.å½“Pnetçš„åˆ†è¾¨ç‡å¤ªå¤§æ—¶ï¼Œnmsè¿›è¡Œåˆ†å—å¤„ç†ã€‚
 
-**2018-09-25ÈÕ¸üĞÂ**
+**2018-09-25æ—¥æ›´æ–°**
 
-Ö§³ÖinsightfaceµÄGNAP£¬×Ô¶¯×ªÄ£ĞÍÊ¹ÓÃmxnet2zqcnn£¬²é¿´[mxnet2zqcnn](https://github.com/zuoqing1988/ZQCNN-v0.0/wiki/mxnet2zqcnn)¡£¿ÉÒÔÊÔÓÃ[MobileFaceNet-GNAP](https://pan.baidu.com/s/1hv4lbYwSLlLiGK07FuJM5Q)
+æ”¯æŒinsightfaceçš„GNAPï¼Œè‡ªåŠ¨è½¬æ¨¡å‹ä½¿ç”¨mxnet2zqcnnï¼ŒæŸ¥çœ‹[mxnet2zqcnn](https://github.com/zuoqing1988/ZQCNN-v0.0/wiki/mxnet2zqcnn)ã€‚å¯ä»¥è¯•ç”¨[MobileFaceNet-GNAP](https://pan.baidu.com/s/1hv4lbYwSLlLiGK07FuJM5Q)
 
-**2018-09-20ÈÕ¸üĞÂ**
+**2018-09-20æ—¥æ›´æ–°**
 
-(1)¸üĞÂÈËÁ³Ê¶±ğÄ£ĞÍtar-far¾«¶ÈµÄ²âÊÔ·½·¨£¬¿ÉÒÔ°´ÕÕ²½Öè[How-to-evaluate-TAR-FAR-on-your-dataset](https://github.com/zuoqing1988/ZQCNN-v0.0/wiki/How-to-evaluate-TAR-FAR-on-your-dataset)×ÔĞĞ¹¹Ôì²âÊÔ¼¯²âÊÔÄ£ĞÍ¾«¶È¡£
+(1)æ›´æ–°äººè„¸è¯†åˆ«æ¨¡å‹tar-farç²¾åº¦çš„æµ‹è¯•æ–¹æ³•ï¼Œå¯ä»¥æŒ‰ç…§æ­¥éª¤[How-to-evaluate-TAR-FAR-on-your-dataset](https://github.com/zuoqing1988/ZQCNN-v0.0/wiki/How-to-evaluate-TAR-FAR-on-your-dataset)è‡ªè¡Œæ„é€ æµ‹è¯•é›†æµ‹è¯•æ¨¡å‹ç²¾åº¦ã€‚
 
-(2)°´ÕÕ(1)ÎÒÇåÏ´CASIA-Webface¹¹ÔìÁËÁ½¸ö²âÊÔ¼¯[webface1000X50](https://pan.baidu.com/s/1AoJkj_IhydkiyD1UGm8rDQ)¡¢[webface5000X20](https://pan.baidu.com/s/1AoJkj_IhydkiyD1UGm8rDQ)£¬²¢²âÊÔÁËÎÒ¿ªÔ´µÄ¼¸¸öÖ÷ÒªÈËÁ³Ê¶±ğÄ£ĞÍµÄ¾«¶È¡£
+(2)æŒ‰ç…§(1)æˆ‘æ¸…æ´—CASIA-Webfaceæ„é€ äº†ä¸¤ä¸ªæµ‹è¯•é›†[webface1000X50](https://pan.baidu.com/s/1AoJkj_IhydkiyD1UGm8rDQ)ã€[webface5000X20](https://pan.baidu.com/s/1AoJkj_IhydkiyD1UGm8rDQ)ï¼Œå¹¶æµ‹è¯•äº†æˆ‘å¼€æºçš„å‡ ä¸ªä¸»è¦äººè„¸è¯†åˆ«æ¨¡å‹çš„ç²¾åº¦ã€‚
 
-**2018-09-13ÈÕ¸üĞÂ**
+**2018-09-13æ—¥æ›´æ–°**
 
-(1)Ö§³Ö´ÓÄÚ´æ¼ÓÔØÄ£ĞÍ
+(1)æ”¯æŒä»å†…å­˜åŠ è½½æ¨¡å‹
 
-(2)Ôö¼Ó±àÒëÅäÖÃZQ_CNN_CompileConfig.h£¬¿ÉÒÔÑ¡ÔñÊÇ·ñÊ¹ÓÃ_mm_fmadd_ps, _mm256_fmadd_ps (¿ÉÒÔ²âÒ»ÏÂËÙ¶È¿´¿´µ½µ×¿ìÁË»¹ÊÇÂıÁË)¡£
+(2)å¢åŠ ç¼–è¯‘é…ç½®ZQ_CNN_CompileConfig.hï¼Œå¯ä»¥é€‰æ‹©æ˜¯å¦ä½¿ç”¨_mm_fmadd_ps, _mm256_fmadd_ps (å¯ä»¥æµ‹ä¸€ä¸‹é€Ÿåº¦çœ‹çœ‹åˆ°åº•å¿«äº†è¿˜æ˜¯æ…¢äº†)ã€‚
 
-**2018-09-12ÈÕ¸üĞÂ ÀûÓÃ[insightface](https://github.com/deepinsight/insightface)ÑµÁ·112*96(¼´spherefaceµÄ³ß´ç)²½Öè£º** [InsightFace£º how to train 112*96](https://github.com/zuoqing1988/ZQCNN-v0.0/wiki/InsightFace%EF%BC%9A-how-to-train-112*96)
+**2018-09-12æ—¥æ›´æ–° åˆ©ç”¨[insightface](https://github.com/deepinsight/insightface)è®­ç»ƒ112*96(å³spherefaceçš„å°ºå¯¸)æ­¥éª¤ï¼š** [InsightFaceï¼š how to train 112*96](https://github.com/zuoqing1988/ZQCNN-v0.0/wiki/InsightFace%EF%BC%9A-how-to-train-112*96)
 
-**2018-08-15ÈÕ¸üĞÂ**
+**2018-08-15æ—¥æ›´æ–°**
 
-(1)Ìí¼Ó×ÔÈ»³¡¾°ÎÄ±¾¼ì²â£¬Ä£ĞÍ´Ó[TextBoxes](https://github.com/MhLiao/TextBoxes)×ª¹ıÀ´µÄ¡£ÎÒ¸öÈË¾õµÃËÙ¶ÈÌ«Âı£¬¶øÇÒ×¼È·¶È²»¸ß¡£
+(1)æ·»åŠ è‡ªç„¶åœºæ™¯æ–‡æœ¬æ£€æµ‹ï¼Œæ¨¡å‹ä»[TextBoxes](https://github.com/MhLiao/TextBoxes)è½¬è¿‡æ¥çš„ã€‚æˆ‘ä¸ªäººè§‰å¾—é€Ÿåº¦å¤ªæ…¢ï¼Œè€Œä¸”å‡†ç¡®åº¦ä¸é«˜ã€‚
 
-×¢ÒâÕâ¸öÏîÄ¿ÀïÓÃµÄPriorBoxLayerÓëSSDÀïµÄPriorBoxLayerÊÇ²»Í¬µÄ£¬ÎªÁËµ¼³öZQCNN¸ñÊ½µÄÈ¨ÖØÎÒĞŞ¸ÄÁËdeploy.prototxt±£´æÎªdeploy_tmp.prototxt¡£
-´Ó[´Ë´¦](https://pan.baidu.com/s/1XOREgRzyimx_AMC9bg8MgQ)ÏÂÔØÄ£ĞÍ¡£
+æ³¨æ„è¿™ä¸ªé¡¹ç›®é‡Œç”¨çš„PriorBoxLayerä¸SSDé‡Œçš„PriorBoxLayeræ˜¯ä¸åŒçš„ï¼Œä¸ºäº†å¯¼å‡ºZQCNNæ ¼å¼çš„æƒé‡æˆ‘ä¿®æ”¹äº†deploy.prototxtä¿å­˜ä¸ºdeploy_tmp.prototxtã€‚
+ä»[æ­¤å¤„](https://pan.baidu.com/s/1XOREgRzyimx_AMC9bg8MgQ)ä¸‹è½½æ¨¡å‹ã€‚
 
-(2)Ìí¼ÓÍ¼Æ¬¼ø»Æ£¬Ä£ĞÍ´Ó[open_nsfw](https://github.com/yahoo/open_nsfw)×ª¹ıÀ´µÄ£¬×¼È·¶È¸ß²»¸ßÎÒÒ²Ã»²â¹ı¡£
+(2)æ·»åŠ å›¾ç‰‡é‰´é»„ï¼Œæ¨¡å‹ä»[open_nsfw](https://github.com/yahoo/open_nsfw)è½¬è¿‡æ¥çš„ï¼Œå‡†ç¡®åº¦é«˜ä¸é«˜æˆ‘ä¹Ÿæ²¡æµ‹è¿‡ã€‚
 
-´Ó[´Ë´¦](https://pan.baidu.com/s/1asjZFr3iTliQ4xlNbtKUtw)ÏÂÔØÄ£ĞÍ¡£
+ä»[æ­¤å¤„](https://pan.baidu.com/s/1asjZFr3iTliQ4xlNbtKUtw)ä¸‹è½½æ¨¡å‹ã€‚
 
-**2018-08-10ÈÕ¸üĞÂ**
+**2018-08-10æ—¥æ›´æ–°**
 
-³É¹¦×ªÁËmxnetÉÏµÄ[GenderAge-r50Ä£ĞÍ](https://pan.baidu.com/s/1f8RyNuQd7hl2ItlV-ibBNQ) ÒÔ¼°[Arcface-LResNet100E-IR](https://pan.baidu.com/s/1wuRTf2YIsKt76TxFufsRNA)£¬Óë×ªMobileFaceNetÄ£ĞÍ²½ÖèÒ»Ñù¡£
-²é¿´[mxnet2zqcnn](https://github.com/zuoqing1988/ZQCNN-v0.0/wiki/mxnet2zqcnn)
+æˆåŠŸè½¬äº†mxnetä¸Šçš„[GenderAge-r50æ¨¡å‹](https://pan.baidu.com/s/1f8RyNuQd7hl2ItlV-ibBNQ) ä»¥åŠ[Arcface-LResNet100E-IR](https://pan.baidu.com/s/1wuRTf2YIsKt76TxFufsRNA)ï¼Œä¸è½¬MobileFaceNetæ¨¡å‹æ­¥éª¤ä¸€æ ·ã€‚
+æŸ¥çœ‹[mxnet2zqcnn](https://github.com/zuoqing1988/ZQCNN-v0.0/wiki/mxnet2zqcnn)
 
-ÏÂÃæModel Zoo ÓĞÎÒ×ªºÃµÄÄ£ĞÍ£¬±È×Ô¶¯×ª³öÀ´µÄÓ¦¸ÃÂÔ¿ì¡£
+ä¸‹é¢Model Zoo æœ‰æˆ‘è½¬å¥½çš„æ¨¡å‹ï¼Œæ¯”è‡ªåŠ¨è½¬å‡ºæ¥çš„åº”è¯¥ç•¥å¿«ã€‚
 
-´ò¿ªZQCNN.slnÔËĞĞSampleGenderAge²é¿´Ğ§¹û¡£ÎÒE5-1650V4µÄCPU£¬µ¥Ïß³ÌÊ±¼ä²¨¶¯ºÜ´ó£¬¾ùÖµÔ¼1900-2000ms£¬ËÄÏß³Ì400¶àms¡£
+æ‰“å¼€ZQCNN.slnè¿è¡ŒSampleGenderAgeæŸ¥çœ‹æ•ˆæœã€‚æˆ‘E5-1650V4çš„CPUï¼Œå•çº¿ç¨‹æ—¶é—´æ³¢åŠ¨å¾ˆå¤§ï¼Œå‡å€¼çº¦1900-2000msï¼Œå››çº¿ç¨‹400å¤šmsã€‚
 
-**2018-08-09ÈÕ¸üĞÂ**
+**2018-08-09æ—¥æ›´æ–°**
 
-Ìí¼Ómxnet2zqcnn£¬³É¹¦½«mxnetÉÏµÄMobileFaceNet×ª³ÉZQCNN¸ñÊ½£¨²»ÄÜ±£Ö¤ÆäËûÄ£ĞÍÒ²ÄÜ×ª³É¹¦£¬ZQCNN»¹²»Ö§³ÖºÜ¶àLayer£©¡£²é¿´[mxnet2zqcnn](https://github.com/zuoqing1988/ZQCNN-v0.0/wiki/mxnet2zqcnn)
+æ·»åŠ mxnet2zqcnnï¼ŒæˆåŠŸå°†mxnetä¸Šçš„MobileFaceNetè½¬æˆZQCNNæ ¼å¼ï¼ˆä¸èƒ½ä¿è¯å…¶ä»–æ¨¡å‹ä¹Ÿèƒ½è½¬æˆåŠŸï¼ŒZQCNNè¿˜ä¸æ”¯æŒå¾ˆå¤šLayerï¼‰ã€‚æŸ¥çœ‹[mxnet2zqcnn](https://github.com/zuoqing1988/ZQCNN-v0.0/wiki/mxnet2zqcnn)
 
-**2018-08-07ÈÕ¸üĞÂ**
+**2018-08-07æ—¥æ›´æ–°**
 
-BUGĞŞ¸´£ºÖ®Ç°Convolution, DepthwiseConvolution, InnerProduct, BatchNormScale/ScaleÄ¬ÈÏwith_bias=true£¬ ÏÖÔÚ¸Ä³ÉÄ¬ÈÏwith_bias=false¡£Ò²¾ÍÊÇÖ®Ç°µÄ´úÂëÎŞ·¨¼ÓÔØ²»´øbiasµÄÕâ¼¸¸öLayer¡£
+BUGä¿®å¤ï¼šä¹‹å‰Convolution, DepthwiseConvolution, InnerProduct, BatchNormScale/Scaleé»˜è®¤with_bias=trueï¼Œ ç°åœ¨æ”¹æˆé»˜è®¤with_bias=falseã€‚ä¹Ÿå°±æ˜¯ä¹‹å‰çš„ä»£ç æ— æ³•åŠ è½½ä¸å¸¦biasçš„è¿™å‡ ä¸ªLayerã€‚
 
-Ê¾Àı£¬ÈçÏÂÕâÑùÒ»¸öLayer£¬ÒÔÇ°»áÄ¬ÈÏÎªÓĞbias_term£¬ÏÖÔÚÄ¬ÈÏÃ»ÓĞbias_term
+ç¤ºä¾‹ï¼Œå¦‚ä¸‹è¿™æ ·ä¸€ä¸ªLayerï¼Œä»¥å‰ä¼šé»˜è®¤ä¸ºæœ‰bias_termï¼Œç°åœ¨é»˜è®¤æ²¡æœ‰bias_term
 
 Convolution name=conv1 bottom=data top=conv1 num_output=10 kernel_size=3 stride=1 
 
-**2018-08-06ÈÕ¸üĞÂ**
+**2018-08-06æ—¥æ›´æ–°**
 
-Ôö¼ÓÈËÁ³Ê¶±ğÔÚLFWÊı¾İ¿âµÄ¾«¶È²âÊÔ¡£´ò¿ªZQlibFaceID.sln¿ÉÒÔ¿´µ½Ïà¹ØProject¡£
+å¢åŠ äººè„¸è¯†åˆ«åœ¨LFWæ•°æ®åº“çš„ç²¾åº¦æµ‹è¯•ã€‚æ‰“å¼€ZQlibFaceID.slnå¯ä»¥çœ‹åˆ°ç›¸å…³Projectã€‚
 
-ÓÉÓÚC++´úÂëµÄ¼ÆËã¾«¶ÈÓëmatlabÂÔÓĞ²î¾à£¬Í³¼Æ³öµÄ¾«¶ÈÒ²ÓĞÒ»Ğ©²î±ğ£¬µ«ÊÇÏà²îÔÚ0.1%ÒÔÄÚ¡£
+ç”±äºC++ä»£ç çš„è®¡ç®—ç²¾åº¦ä¸matlabç•¥æœ‰å·®è·ï¼Œç»Ÿè®¡å‡ºçš„ç²¾åº¦ä¹Ÿæœ‰ä¸€äº›å·®åˆ«ï¼Œä½†æ˜¯ç›¸å·®åœ¨0.1%ä»¥å†…ã€‚
 
-**2018-08-03ÈÕ¸üĞÂ**
+**2018-08-03æ—¥æ›´æ–°**
 
-Ö§³Ö¶àÏß³Ì£¨Í¨¹ıopenmp¼ÓËÙ£©¡£**Çë×¢Òâ£¬Ä¿Ç°¶àÏß³Ì·´¶ø±Èµ¥Ïß³ÌÂı**
+æ”¯æŒå¤šçº¿ç¨‹ï¼ˆé€šè¿‡openmpåŠ é€Ÿï¼‰ã€‚**è¯·æ³¨æ„ï¼Œç›®å‰å¤šçº¿ç¨‹åè€Œæ¯”å•çº¿ç¨‹æ…¢**
 
-**2018-07-26ÈÕ¸üĞÂ**
+**2018-07-26æ—¥æ›´æ–°**
 
-Ö§³ÖMobileNet-SSD¡£caffemodel×ªÎÒÓÃµÄÄ£ĞÍ²Î¿¼export_mobilenet_SSD_caffemodel_to_nchw_binary.m¡£ĞèÒª±àÒë³ömatcaffe²ÅĞĞ¡£
-Äã¿ÉÒÔÊÔÊÔÕâ¸ö°æ±¾[caffe-ZQ](https://github.com/zuoqing1988/caffe-ZQ)
+æ”¯æŒMobileNet-SSDã€‚caffemodelè½¬æˆ‘ç”¨çš„æ¨¡å‹å‚è€ƒexport_mobilenet_SSD_caffemodel_to_nchw_binary.mã€‚éœ€è¦ç¼–è¯‘å‡ºmatcaffeæ‰è¡Œã€‚
+ä½ å¯ä»¥è¯•è¯•è¿™ä¸ªç‰ˆæœ¬[caffe-ZQ](https://github.com/zuoqing1988/caffe-ZQ)
 
-**2018-06-05ÈÕ¸üĞÂ**
+**2018-06-05æ—¥æ›´æ–°**
 
-¸úÉÏÊ±´ú³±Á÷¡¢·¢²¼Ô´Âë¡£
-ÍüÁËËµĞèÒªÒÀÀµopenblas£¬ÎÒÊÇÖ±½ÓÓÃµÄmini-caffeÀïÃæµÄÄÇ¸ö°æ±¾£¬×Ô¼º±àÒë³öÀ´µÄºÜÂı¡£
+è·Ÿä¸Šæ—¶ä»£æ½®æµã€å‘å¸ƒæºç ã€‚
+å¿˜äº†è¯´éœ€è¦ä¾èµ–openblasï¼Œæˆ‘æ˜¯ç›´æ¥ç”¨çš„mini-caffeé‡Œé¢çš„é‚£ä¸ªç‰ˆæœ¬ï¼Œè‡ªå·±ç¼–è¯‘å‡ºæ¥çš„å¾ˆæ…¢ã€‚
 
 
 
 # Model Zoo
 
-**ÈËÁ³¼ì²â**
+**äººè„¸æ£€æµ‹**
 
-[MTCNN-author-version](https://pan.baidu.com/s/1lWLKDYv8YQ6Th6KRiKvgug) ´Ó[MTCNN](https://github.com/kpzhang93/MTCNN_face_detection_alignment)×ªµÄ¸ñÊ½
+[MTCNN-author-version](https://pan.baidu.com/s/1lWLKDYv8YQ6Th6KRiKvgug) ä»[MTCNN](https://github.com/kpzhang93/MTCNN_face_detection_alignment)è½¬çš„æ ¼å¼
 
 [MTCNN-ZQ-version](https://pan.baidu.com/s/1j1WqkwbUCf_9f4hCQukoFg)
 
-**ÈËÁ³Ê¶±ğ(ÈçÎŞËµÃ÷£¬Ä£ĞÍ¶¼ÊÇms1m-refine-v2ÑµÁ·µÄ)**
+**äººè„¸è¯†åˆ«(å¦‚æ— è¯´æ˜ï¼Œæ¨¡å‹éƒ½æ˜¯ms1m-refine-v2è®­ç»ƒçš„)**
 
-|Ä£ĞÍ                                                                               |LFW¾«¶È(ZQCNN)                                      | LFW¾«¶È(OpenCV3.4.2)                              | LFW¾«¶È(minicaffe)                               |ºÄÊ± (ZQCNN)                       |±¸×¢           
+|æ¨¡å‹                                                                               |LFWç²¾åº¦(ZQCNN)                                      | LFWç²¾åº¦(OpenCV3.4.2)                              | LFWç²¾åº¦(minicaffe)                               |è€—æ—¶ (ZQCNN)                       |å¤‡æ³¨           
 |------------                                                                       | -------------                                      |----------------------                             | ------------                                     |---------------------              | ------------- 
-|[MobileFaceNet-res2-6-10-2-dim128](https://pan.baidu.com/s/1AQEad5Zp2cag4UA5KtpbYQ)|99.67%-99.55%(matlab crop), 99.72-99.60%(C++ crop)  |99.63%-99.65%(matlab crop), 99.68-99.70%(C++ crop) |99.62%-99.65%(matlab crop), 99.68-99.60%(C++ crop)|Ê±¼äÓëdim256½Ó½ü |ÍøÂç½á¹¹Óëdim256Ò»Ñù£¬Ö»²»¹ıÊä³öÎ¬Êı²»Í¬
-|[MobileFaceNet-res2-6-10-2-dim256](https://pan.baidu.com/s/143j7eULc2AqpNcSugFdTxA)|99.60%-99.60%(matlab crop), 99.62-99.62%(C++ crop)  |99.73%-99.68%(matlab crop), 99.78-99.68%(C++ crop) |99.55%-99.63%(matlab crop), 99.60-99.62%(C++ crop)|µ¥Ïß³ÌÔ¼85ms£¬ËÄÏß³ÌÔ¼30ms, 3.6GHz |ÍøÂç½á¹¹ÔÚÏÂÔØÁ´½ÓÀï,ÓÃfaces_emoreÑµÁ·µÄ 
-|[MobileFaceNet-res2-6-10-2-dim512](https://pan.baidu.com/s/1_0O3kJ5dMmD-HdRwNR0Hpw)|99.52%-99.60%(matlab crop), 99.63-99.72%(C++ crop)  |99.70%-99.67%(matlab crop), 99.77-99.77%(C++ crop) |99.55%-99.62%(matlab crop), 99.62-99.68%(C++ crop)|Ê±¼äÓëdim256½Ó½ü |ÍøÂç½á¹¹Óëdim256Ò»Ñù£¬Ö»²»¹ıÊä³öÎ¬Êı²»Í¬¡£¸ĞĞ»[moli](https://github.com/moli232777144)ÑµÁ·´ËÄ£ĞÍ
+|[MobileFaceNet-res2-6-10-2-dim128](https://pan.baidu.com/s/1AQEad5Zp2cag4UA5KtpbYQ)|99.67%-99.55%(matlab crop), 99.72-99.60%(C++ crop)  |99.63%-99.65%(matlab crop), 99.68-99.70%(C++ crop) |99.62%-99.65%(matlab crop), 99.68-99.60%(C++ crop)|æ—¶é—´ä¸dim256æ¥è¿‘ |ç½‘ç»œç»“æ„ä¸dim256ä¸€æ ·ï¼Œåªä¸è¿‡è¾“å‡ºç»´æ•°ä¸åŒ
+|[MobileFaceNet-res2-6-10-2-dim256](https://pan.baidu.com/s/143j7eULc2AqpNcSugFdTxA)|99.60%-99.60%(matlab crop), 99.62-99.62%(C++ crop)  |99.73%-99.68%(matlab crop), 99.78-99.68%(C++ crop) |99.55%-99.63%(matlab crop), 99.60-99.62%(C++ crop)|å•çº¿ç¨‹çº¦85msï¼Œå››çº¿ç¨‹çº¦30ms, 3.6GHz |ç½‘ç»œç»“æ„åœ¨ä¸‹è½½é“¾æ¥é‡Œ,ç”¨faces_emoreè®­ç»ƒçš„ 
+|[MobileFaceNet-res2-6-10-2-dim512](https://pan.baidu.com/s/1_0O3kJ5dMmD-HdRwNR0Hpw)|99.52%-99.60%(matlab crop), 99.63-99.72%(C++ crop)  |99.70%-99.67%(matlab crop), 99.77-99.77%(C++ crop) |99.55%-99.62%(matlab crop), 99.62-99.68%(C++ crop)|æ—¶é—´ä¸dim256æ¥è¿‘ |ç½‘ç»œç»“æ„ä¸dim256ä¸€æ ·ï¼Œåªä¸è¿‡è¾“å‡ºç»´æ•°ä¸åŒã€‚æ„Ÿè°¢[moli](https://github.com/moli232777144)è®­ç»ƒæ­¤æ¨¡å‹
 
-|Ä£ĞÍ                                                                               |LFW¾«¶È(ZQCNN)                                      | LFW¾«¶È(OpenCV3.4.2)                              | LFW¾«¶È(minicaffe)                               |ºÄÊ± (ZQCNN)                       |±¸×¢           
+|æ¨¡å‹                                                                               |LFWç²¾åº¦(ZQCNN)                                      | LFWç²¾åº¦(OpenCV3.4.2)                              | LFWç²¾åº¦(minicaffe)                               |è€—æ—¶ (ZQCNN)                       |å¤‡æ³¨           
 |------------                                                                       | -------------                                      |----------------------                             | ------------                                     |---------------------              | ------------- 
-|[MobileFaceNet-res4-8-16-4-dim128](https://pan.baidu.com/s/1z6H5p4b3aVun2-1dZGDXkg)|99.72%-99.72%(matlab crop), 99.72-99.68%(C++ crop)  |99.82%-99.83%(matlab crop), 99.80-99.78%(C++ crop) |99.72%-99.72%(matlab crop), 99.72-99.68%(C++ crop)|Ê±¼äÓëdim256½Ó½ü |ÍøÂç½á¹¹Óëdim256Ò»Ñù£¬Ö»²»¹ıÊä³öÎ¬Êı²»Í¬
-|[MobileFaceNet-res4-8-16-4-dim256](https://pan.baidu.com/s/1f_VtqNRxDNe972h8UrOsPw)|99.78%-99.78%(matlab crop), 99.75-99.75%(C++ crop)  |99.82%-99.82%(matlab crop), 99.80-99.82%(C++ crop) |99.78%-99.78%(matlab crop), 99.73-99.73%(C++ crop)|µ¥Ïß³ÌÔ¼135ms£¬ËÄÏß³ÌÔ¼42ms, 3.6GHz |ÍøÂç½á¹¹ÔÚÏÂÔØÁ´½ÓÀï,ÓÃfaces_emoreÑµÁ·µÄ 
-|[MobileFaceNet-res4-8-16-4-dim512](https://pan.baidu.com/s/14ukmtAWDhIJC6312WBhZhA)|99.80%-99.73%(matlab crop), 99.85-99.83%(C++ crop)  |99.83%-99.82%(matlab crop), 99.87-99.83%(C++ crop) |99.80%-99.73%(matlab crop), 99.85-99.82%(C++ crop)|Ê±¼äÓëdim256½Ó½ü |ÍøÂç½á¹¹Óëdim256Ò»Ñù£¬Ö»²»¹ıÊä³öÎ¬Êı²»Í¬¡£¸ĞĞ»[moli](https://github.com/moli232777144)ÑµÁ·´ËÄ£ĞÍ
+|[MobileFaceNet-res4-8-16-4-dim128](https://pan.baidu.com/s/1z6H5p4b3aVun2-1dZGDXkg)|99.72%-99.72%(matlab crop), 99.72-99.68%(C++ crop)  |99.82%-99.83%(matlab crop), 99.80-99.78%(C++ crop) |99.72%-99.72%(matlab crop), 99.72-99.68%(C++ crop)|æ—¶é—´ä¸dim256æ¥è¿‘ |ç½‘ç»œç»“æ„ä¸dim256ä¸€æ ·ï¼Œåªä¸è¿‡è¾“å‡ºç»´æ•°ä¸åŒ
+|[MobileFaceNet-res4-8-16-4-dim256](https://pan.baidu.com/s/1f_VtqNRxDNe972h8UrOsPw)|99.78%-99.78%(matlab crop), 99.75-99.75%(C++ crop)  |99.82%-99.82%(matlab crop), 99.80-99.82%(C++ crop) |99.78%-99.78%(matlab crop), 99.73-99.73%(C++ crop)|å•çº¿ç¨‹çº¦135msï¼Œå››çº¿ç¨‹çº¦42ms, 3.6GHz |ç½‘ç»œç»“æ„åœ¨ä¸‹è½½é“¾æ¥é‡Œ,ç”¨faces_emoreè®­ç»ƒçš„ 
+|[MobileFaceNet-res4-8-16-4-dim512](https://pan.baidu.com/s/14ukmtAWDhIJC6312WBhZhA)|99.80%-99.73%(matlab crop), 99.85-99.83%(C++ crop)  |99.83%-99.82%(matlab crop), 99.87-99.83%(C++ crop) |99.80%-99.73%(matlab crop), 99.85-99.82%(C++ crop)|æ—¶é—´ä¸dim256æ¥è¿‘ |ç½‘ç»œç»“æ„ä¸dim256ä¸€æ ·ï¼Œåªä¸è¿‡è¾“å‡ºç»´æ•°ä¸åŒã€‚æ„Ÿè°¢[moli](https://github.com/moli232777144)è®­ç»ƒæ­¤æ¨¡å‹
 
-|Ä£ĞÍ\²âÊÔ¼¯webface1000X50                                                          |thresh@ FAR=1e-7|TAR@ FAR=1e-7|thresh@ FAR=1e-6|TAR@ FAR=1e-6|thresh@ FAR=1e-5|TAR@ FAR=1e-5
+|æ¨¡å‹\æµ‹è¯•é›†webface1000X50                                                          |thresh@ FAR=1e-7|TAR@ FAR=1e-7|thresh@ FAR=1e-6|TAR@ FAR=1e-6|thresh@ FAR=1e-5|TAR@ FAR=1e-5
 |------------                                                                       | -------------  | ----------  |--------------- |-------      | ------------   |-----------                         
 |[MobileFaceNet-res2-6-10-2-dim128](https://pan.baidu.com/s/1AQEad5Zp2cag4UA5KtpbYQ)|0.78785         |9.274%       |0.66616         |40.459%      |0.45855         |92.716%
 |[MobileFaceNet-res2-6-10-2-dim256](https://pan.baidu.com/s/143j7eULc2AqpNcSugFdTxA)|0.77708         |7.839%       |0.63872         |40.934%      |0.43182         |92.605%
@@ -136,7 +136,7 @@ Convolution name=conv1 bottom=data top=conv1 num_output=10 kernel_size=3 stride=
 |[MobileFaceNet-res4-8-16-4-dim256](https://pan.baidu.com/s/1f_VtqNRxDNe972h8UrOsPw)|0.76858         |9.220%       |0.62852         |46.195%      |0.40010         |96.929%
 |[MobileFaceNet-res4-8-16-4-dim512](https://pan.baidu.com/s/14ukmtAWDhIJC6312WBhZhA)|0.76287         |9.296%       |0.62555         |44.775%      |0.39047         |97.347%
 
-|Ä£ĞÍ\²âÊÔ¼¯webface5000X20                                                          |thresh@ FAR=1e-7|TAR@ FAR=1e-7|thresh@ FAR=1e-6|TAR@ FAR=1e-6|thresh@ FAR=1e-5|TAR@ FAR=1e-5
+|æ¨¡å‹\æµ‹è¯•é›†webface5000X20                                                          |thresh@ FAR=1e-7|TAR@ FAR=1e-7|thresh@ FAR=1e-6|TAR@ FAR=1e-6|thresh@ FAR=1e-5|TAR@ FAR=1e-5
 |------------                                                                       | -------------  | ----------  |--------------- |-------      | ------------   |-----------                         
 |[MobileFaceNet-res2-6-10-2-dim128](https://pan.baidu.com/s/1AQEad5Zp2cag4UA5KtpbYQ)|0.70933         |29.558%      |0.51732         |85.160%      |0.45108         |94.313%
 |[MobileFaceNet-res2-6-10-2-dim256](https://pan.baidu.com/s/143j7eULc2AqpNcSugFdTxA)|0.68897         |28.376%      |0.48820         |85.278%      |0.42386         |94.244%
@@ -145,7 +145,7 @@ Convolution name=conv1 bottom=data top=conv1 num_output=10 kernel_size=3 stride=
 |[MobileFaceNet-res4-8-16-4-dim256](https://pan.baidu.com/s/1f_VtqNRxDNe972h8UrOsPw)|0.68490         |30.639%      |0.46092         |91.900%      |0.39198         |97.696%
 |[MobileFaceNet-res4-8-16-4-dim512](https://pan.baidu.com/s/14ukmtAWDhIJC6312WBhZhA)|0.67303         |32.404%      |0.45216         |92.453%      |0.38344         |98.003%
 
-|Ä£ĞÍ\²âÊÔ¼¯TAO ids:6606,ims:87210                                                  |thresh@ FAR=1e-7|TAR@ FAR=1e-7|thresh@ FAR=1e-6|TAR@ FAR=1e-6|thresh@ FAR=1e-5|TAR@ FAR=1e-5
+|æ¨¡å‹\æµ‹è¯•é›†TAO ids:6606,ims:87210                                                  |thresh@ FAR=1e-7|TAR@ FAR=1e-7|thresh@ FAR=1e-6|TAR@ FAR=1e-6|thresh@ FAR=1e-5|TAR@ FAR=1e-5
 |------------                                                                       | -------------  |-------------|--------------- |-------------| -------------- |-----------                         
 |[MobileFaceNet-res2-6-10-2-dim128](https://pan.baidu.com/s/1AQEad5Zp2cag4UA5KtpbYQ)|0.92204         |01.282%      |0.88107         |06.837%      |0.78302         |41.740%
 |[MobileFaceNet-res2-6-10-2-dim256](https://pan.baidu.com/s/143j7eULc2AqpNcSugFdTxA)|0.91361         |01.275%      |0.86750         |07.081%      |0.76099         |42.188%
@@ -155,7 +155,7 @@ Convolution name=conv1 bottom=data top=conv1 num_output=10 kernel_size=3 stride=
 |[MobileFaceNet-res4-8-16-4-dim512](https://pan.baidu.com/s/14ukmtAWDhIJC6312WBhZhA)|0.90710         |01.353%      |0.86190         |06.948%      |0.75518         |42.241%
 
 
-|Ä£ĞÍ\²âÊÔ¼¯ZQCNN-Face_5000_X_20                                                     |thresh@ FAR=1e-8|TAR@ FAR=1e-8|thresh@ FAR=1e-7|TAR@ FAR=1e-7|thresh@ FAR=1e-6|TAR@ FAR=1e-6
+|æ¨¡å‹\æµ‹è¯•é›†ZQCNN-Face_5000_X_20                                                     |thresh@ FAR=1e-8|TAR@ FAR=1e-8|thresh@ FAR=1e-7|TAR@ FAR=1e-7|thresh@ FAR=1e-6|TAR@ FAR=1e-6
 |------------                                                                        | -------------  | ----------  |--------------- |-------      | ------------   |-----------                         
 |[MobileFaceNet-GNAP](https://pan.baidu.com/s/1UL4Am0R2MYQOH6lZnPsvTg)               |0.73537         |11.722%      |0.69903         |20.110%      |0.65734         |33.189%
 |[MobileFaceNet-res2-6-10-2-dim128](https://pan.baidu.com/s/1AQEad5Zp2cag4UA5KtpbYQ) |0.64772         |40.527%      |0.60485         |55.345%      |0.55571         |70.986%
@@ -166,14 +166,14 @@ Convolution name=conv1 bottom=data top=conv1 num_output=10 kernel_size=3 stride=
 |[MobileFaceNet-res4-8-16-4-dim512](https://pan.baidu.com/s/14ukmtAWDhIJC6312WBhZhA) |0.58296         |54.731%      |0.54219         |68.613%      |0.49174         |82.812%
 |[MobileFaceNet-res8-16-32-8-dim512](https://pan.baidu.com/s/1On5BfcrOB5jrTrRD40vLkw)|0.58058         |61.826%      |0.53841         |75.281%      |0.49098         |86.554%
 
-|Ä£ĞÍ\²âÊÔ¼¯ZQCNN-Face_5000_X_20                                                               |thresh@ FAR=1e-8|TAR@ FAR=1e-8|thresh@ FAR=1e-7|TAR@ FAR=1e-7|thresh@ FAR=1e-6|TAR@ FAR=1e-6
+|æ¨¡å‹\æµ‹è¯•é›†ZQCNN-Face_5000_X_20                                                               |thresh@ FAR=1e-8|TAR@ FAR=1e-8|thresh@ FAR=1e-7|TAR@ FAR=1e-7|thresh@ FAR=1e-6|TAR@ FAR=1e-6
 |------------                                                                                  | -------------  | ----------  |--------------- |-------      | ------------   |-----------   
-|[ArcFace-r34-v2](https://pan.baidu.com/s/1q3ZqQdjabDBESqbsxC7ESQ)(·Ç±¾ÈËÑµÁ·)                 |0.61953         |47.103%      |0.57375         |62.207%      |0.52226         |76.758%
-|[ArcFace-r50](https://pan.baidu.com/s/1qOIhCauwZNTOCIM9eojPrA) (ms1m-refine-v1·Ç±¾ÈËÑµÁ·)     |0.61299         |50.594%      |0.56658         |65.757%      |0.51637         |79.207%
-|[ArcFace-r100](https://pan.baidu.com/s/1PeujQbIqFfgARIYAdRt3pw) (·Ç±¾ÈËÑµÁ·)                  |0.57350         |67.434%      |0.53136         |79.944%      |0.48164         |90.147%
+|[ArcFace-r34-v2](https://pan.baidu.com/s/1q3ZqQdjabDBESqbsxC7ESQ)(éæœ¬äººè®­ç»ƒ)                 |0.61953         |47.103%      |0.57375         |62.207%      |0.52226         |76.758%
+|[ArcFace-r50](https://pan.baidu.com/s/1qOIhCauwZNTOCIM9eojPrA) (ms1m-refine-v1éæœ¬äººè®­ç»ƒ)     |0.61299         |50.594%      |0.56658         |65.757%      |0.51637         |79.207%
+|[ArcFace-r100](https://pan.baidu.com/s/1PeujQbIqFfgARIYAdRt3pw) (éæœ¬äººè®­ç»ƒ)                  |0.57350         |67.434%      |0.53136         |79.944%      |0.48164         |90.147%
 
 
-|Ä£ĞÍ\²âÊÔ¼¯ZQCNN-Face_12000_X_10-40                                                 |thresh@ FAR=1e-8|TAR@ FAR=1e-8|thresh@ FAR=1e-7|TAR@ FAR=1e-7|thresh@ FAR=1e-6|TAR@ FAR=1e-6
+|æ¨¡å‹\æµ‹è¯•é›†ZQCNN-Face_12000_X_10-40                                                 |thresh@ FAR=1e-8|TAR@ FAR=1e-8|thresh@ FAR=1e-7|TAR@ FAR=1e-7|thresh@ FAR=1e-6|TAR@ FAR=1e-6
 |------------                                                                        | -------------  | ----------  |--------------- |-------      | ------------   |-----------                         
 |[MobileFaceNet-res2-6-10-2-dim128](https://pan.baidu.com/s/1AQEad5Zp2cag4UA5KtpbYQ) |0.64507         |39.100%      |0.60347         |53.638%      |0.55492         |69.516%
 |[MobileFaceNet-res2-6-10-2-dim256](https://pan.baidu.com/s/143j7eULc2AqpNcSugFdTxA) |0.61589         |39.864%      |0.57402         |54.179%      |0.52596         |69.658%
@@ -183,62 +183,62 @@ Convolution name=conv1 bottom=data top=conv1 num_output=10 kernel_size=3 stride=
 |[MobileFaceNet-res4-8-16-4-dim512](https://pan.baidu.com/s/14ukmtAWDhIJC6312WBhZhA) |0.58492         |51.752%      |0.54085         |67.104%      |0.49010         |81.836%
 |[MobileFaceNet-res8-16-32-8-dim512](https://pan.baidu.com/s/1On5BfcrOB5jrTrRD40vLkw)|0.58119         |61.412%      |0.53700         |75.520%      |0.48997         |86.647%
 
-|Ä£ĞÍ\²âÊÔ¼¯ZQCNN-Face_12000_X_10-40                                                         |thresh@ FAR=1e-8|TAR@ FAR=1e-8|thresh@ FAR=1e-7|TAR@ FAR=1e-7|thresh@ FAR=1e-6|TAR@ FAR=1e-6
+|æ¨¡å‹\æµ‹è¯•é›†ZQCNN-Face_12000_X_10-40                                                         |thresh@ FAR=1e-8|TAR@ FAR=1e-8|thresh@ FAR=1e-7|TAR@ FAR=1e-7|thresh@ FAR=1e-6|TAR@ FAR=1e-6
 |------------                                                                                | -------------  | ----------  |--------------- |-------      | ------------   |-----------                         
-|[ArcFace-r34-v2](https://pan.baidu.com/s/1q3ZqQdjabDBESqbsxC7ESQ) (·Ç±¾ÈËÑµÁ·)              |0.61904         |45.072%      |0.57173         |60.964%      |0.52062         |75.789%
-|[ArcFace-r50](https://pan.baidu.com/s/1qOIhCauwZNTOCIM9eojPrA)(ms1m-refine-v1·Ç±¾ÈËÑµÁ·)    |0.61412         |48.155%      |0.56749         |63.676%      |0.51537         |78.138%
-|[ArcFace-r100](https://pan.baidu.com/s/1PeujQbIqFfgARIYAdRt3pw) (·Ç±¾ÈËÑµÁ·)                |0.57891         |63.854%      |0.53337         |78.129%      |0.48079         |89.579%
+|[ArcFace-r34-v2](https://pan.baidu.com/s/1q3ZqQdjabDBESqbsxC7ESQ) (éæœ¬äººè®­ç»ƒ)              |0.61904         |45.072%      |0.57173         |60.964%      |0.52062         |75.789%
+|[ArcFace-r50](https://pan.baidu.com/s/1qOIhCauwZNTOCIM9eojPrA)(ms1m-refine-v1éæœ¬äººè®­ç»ƒ)    |0.61412         |48.155%      |0.56749         |63.676%      |0.51537         |78.138%
+|[ArcFace-r100](https://pan.baidu.com/s/1PeujQbIqFfgARIYAdRt3pw) (éæœ¬äººè®­ç»ƒ)                |0.57891         |63.854%      |0.53337         |78.129%      |0.48079         |89.579%
 
 
 
-¸ü¶àÈËÁ³Ä£ĞÍÇë²é¿´[Model-Zoo-for-Face-Recognition](https://github.com/zuoqing1988/ZQCNN-v0.0/wiki/Model-Zoo-for-Face-Recognition)
+æ›´å¤šäººè„¸æ¨¡å‹è¯·æŸ¥çœ‹[Model-Zoo-for-Face-Recognition](https://github.com/zuoqing1988/ZQCNN-v0.0/wiki/Model-Zoo-for-Face-Recognition)
 
-**±íÇéÊ¶±ğ**
+**è¡¨æƒ…è¯†åˆ«**
 
-[FacialEmotion](https://pan.baidu.com/s/1zJtRYv-kSGSCTgpvqc4Iug) ÆßÀà±íÇéÓÃFer2013ÑµÁ·
+[FacialEmotion](https://pan.baidu.com/s/1zJtRYv-kSGSCTgpvqc4Iug) ä¸ƒç±»è¡¨æƒ…ç”¨Fer2013è®­ç»ƒ
 
-**ĞÔ±ğÄêÁäÊ¶±ğ**
+**æ€§åˆ«å¹´é¾„è¯†åˆ«**
 
-[GenderAge-ZQ](https://pan.baidu.com/s/1igSpmFt8XBoMk5d4GiXONg) Ê¹ÓÃ[train-GenderAge](https://github.com/zuoqing1988/train-GenderAge)ÑµÁ·³öÀ´µÄÄ£ĞÍ
+[GenderAge-ZQ](https://pan.baidu.com/s/1igSpmFt8XBoMk5d4GiXONg) ä½¿ç”¨[train-GenderAge](https://github.com/zuoqing1988/train-GenderAge)è®­ç»ƒå‡ºæ¥çš„æ¨¡å‹
 
-**Ä¿±ê¼ì²â**
+**ç›®æ ‡æ£€æµ‹**
 
-[MobileNetSSD](https://pan.baidu.com/s/1cyly_17cTOJBaCRiiQtWkQ) ´Ó[MobileNet-SSD](https://github.com/chuanqi305/MobileNet-SSD)×ªµÄ¸ñÊ½
+[MobileNetSSD](https://pan.baidu.com/s/1cyly_17cTOJBaCRiiQtWkQ) ä»[MobileNet-SSD](https://github.com/chuanqi305/MobileNet-SSD)è½¬çš„æ ¼å¼
 
-[MobileNetSSD-Mouth](https://pan.baidu.com/s/1_l0Z1R34sOv2R73DB_zXyg) ÓÃÓÚSampleDetectMouth
+[MobileNetSSD-Mouth](https://pan.baidu.com/s/1_l0Z1R34sOv2R73DB_zXyg) ç”¨äºSampleDetectMouth
 
-**ÎÄ×Ö¼ì²â**
+**æ–‡å­—æ£€æµ‹**
 
-[TextBoxes](https://pan.baidu.com/s/1XOREgRzyimx_AMC9bg8MgQ) ´Ó[TextBoxes](https://github.com/MhLiao/TextBoxes)×ªµÄ¸ñÊ½
+[TextBoxes](https://pan.baidu.com/s/1XOREgRzyimx_AMC9bg8MgQ) ä»[TextBoxes](https://github.com/MhLiao/TextBoxes)è½¬çš„æ ¼å¼
 
-**Í¼Æ¬¼ø»Æ**
+**å›¾ç‰‡é‰´é»„**
 
-[NSFW](https://pan.baidu.com/s/1asjZFr3iTliQ4xlNbtKUtw) ´Ó[open_nsfw](https://github.com/yahoo/open_nsfw)×ªµÄ¸ñÊ½
+[NSFW](https://pan.baidu.com/s/1asjZFr3iTliQ4xlNbtKUtw) ä»[open_nsfw](https://github.com/yahoo/open_nsfw)è½¬çš„æ ¼å¼
 
-# Ïà¹ØÎÄÕÂ
+# ç›¸å…³æ–‡ç« 
 
-(1)[ÈËÁ³ÌØÕ÷ÏòÁ¿ÓÃÕûÊı´æ´¢¾«¶ÈËğÊ§¶àÉÙ£¿](https://zhuanlan.zhihu.com/p/35904005)
+(1)[äººè„¸ç‰¹å¾å‘é‡ç”¨æ•´æ•°å­˜å‚¨ç²¾åº¦æŸå¤±å¤šå°‘ï¼Ÿ](https://zhuanlan.zhihu.com/p/35904005)
 
-(2)[Ç§ÍòÕÅÁ³µÄÌØÕ÷ÏòÁ¿£¬¼ÆËãÏàËÆ¶ÈÌáËÙ£¿](https://zhuanlan.zhihu.com/p/35955061)
+(2)[åƒä¸‡å¼ è„¸çš„ç‰¹å¾å‘é‡ï¼Œè®¡ç®—ç›¸ä¼¼åº¦æé€Ÿï¼Ÿ](https://zhuanlan.zhihu.com/p/35955061)
 
-(3)[´òÔìÒ»¿î±Èmini-caffe¸ü¿ìµÄForward¿â](https://zhuanlan.zhihu.com/p/36410185)
+(3)[æ‰“é€ ä¸€æ¬¾æ¯”mini-caffeæ›´å¿«çš„Forwardåº“](https://zhuanlan.zhihu.com/p/36410185)
 
-(4)[ÏòÁ¿µã»ıµÄ¾«¶ÈÎÊÌâ](https://zhuanlan.zhihu.com/p/36488847)
+(4)[å‘é‡ç‚¹ç§¯çš„ç²¾åº¦é—®é¢˜](https://zhuanlan.zhihu.com/p/36488847)
 
-(5)[ZQCNNÖ§³ÖDepthwise Convolution²¢ÓÃmobilenet¸ÄÁËÒ»°ÑSphereFaceNet-10](https://zhuanlan.zhihu.com/p/36630082)
+(5)[ZQCNNæ”¯æŒDepthwise Convolutionå¹¶ç”¨mobilenetæ”¹äº†ä¸€æŠŠSphereFaceNet-10](https://zhuanlan.zhihu.com/p/36630082)
 
-(6)[¸úÉÏÊ±´ú³±Á÷£¬·¢²¼Ò»Ğ©Ô´Âë](https://zhuanlan.zhihu.com/p/37708639)
+(6)[è·Ÿä¸Šæ—¶ä»£æ½®æµï¼Œå‘å¸ƒä¸€äº›æºç ](https://zhuanlan.zhihu.com/p/37708639)
 
-(7)[ZQCNNÖ§³ÖSSD£¬±Èmini-caffe¿ì´ó¸Å30%](https://zhuanlan.zhihu.com/p/40634934)
+(7)[ZQCNNæ”¯æŒSSDï¼Œæ¯”mini-caffeå¿«å¤§æ¦‚30%](https://zhuanlan.zhihu.com/p/40634934)
 
-(8)[ZQCNNµÄSSDÖ§³ÖÍ¬Ò»¸öÄ£ĞÍËæÒâ¸Ä·Ö±æÂÊ](https://zhuanlan.zhihu.com/p/40676503)
+(8)[ZQCNNçš„SSDæ”¯æŒåŒä¸€ä¸ªæ¨¡å‹éšæ„æ”¹åˆ†è¾¨ç‡](https://zhuanlan.zhihu.com/p/40676503)
 
-(9)[ZQCNN¸ñÊ½µÄ99.78%¾«¶ÈµÄÈËÁ³Ê¶±ğÄ£ĞÍ](https://zhuanlan.zhihu.com/p/41197488)
+(9)[ZQCNNæ ¼å¼çš„99.78%ç²¾åº¦çš„äººè„¸è¯†åˆ«æ¨¡å‹](https://zhuanlan.zhihu.com/p/41197488)
 
-(10)[ZQCNNÔö¼ÓÈËÁ³Ê¶±ğÔÚLFWÊı¾İ¼¯ÉÏµÄ²âÊÔ´úÂë](https://zhuanlan.zhihu.com/p/41381883)
+(10)[ZQCNNå¢åŠ äººè„¸è¯†åˆ«åœ¨LFWæ•°æ®é›†ä¸Šçš„æµ‹è¯•ä»£ç ](https://zhuanlan.zhihu.com/p/41381883)
 
-(11)[±§½ômxnetµÄ´óÍÈ£¬×ÅÊÖĞ´mxnet2zqcnn](https://zhuanlan.zhihu.com/p/41667828)
+(11)[æŠ±ç´§mxnetçš„å¤§è…¿ï¼Œç€æ‰‹å†™mxnet2zqcnn](https://zhuanlan.zhihu.com/p/41667828)
 
-(12)[´ó¹æÄ£ÈËÁ³²âÊÔ¼¯£¬¼°ÈçºÎ´òÔì×Ô¼ºµÄÈËÁ³²âÊÔ¼¯](https://zhuanlan.zhihu.com/p/45441865)
+(12)[å¤§è§„æ¨¡äººè„¸æµ‹è¯•é›†ï¼ŒåŠå¦‚ä½•æ‰“é€ è‡ªå·±çš„äººè„¸æµ‹è¯•é›†](https://zhuanlan.zhihu.com/p/45441865)
 
-(13)[ÆÕÍ¨¾í»ı¡¢mobilenet¾í»ı¡¢È«¾ÖÆ½¾ù³Ø»¯µÄ¾ØÕóÃèÊö](https://zhuanlan.zhihu.com/p/45536594)
+(13)[æ™®é€šå·ç§¯ã€mobilenetå·ç§¯ã€å…¨å±€å¹³å‡æ± åŒ–çš„çŸ©é˜µæè¿°](https://zhuanlan.zhihu.com/p/45536594)
