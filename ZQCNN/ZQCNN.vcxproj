@@ -181,6 +181,7 @@
     <ClCompile Include="layers_c\zq_cnn_sqrt_32f_align_c.c" />
     <ClCompile Include="layers_c\zq_cnn_reduction_32f_align_c.c" />
     <ClCompile Include="math\zq_avx_mathfun.c" />
+    <ClCompile Include="math\zq_gemm_32f_align_c.c" />
     <ClCompile Include="math\zq_sse_mathfun.c" />
     <ClCompile Include="ZQ_CNN_Forward_SSEUtils.cpp" />
     <ClCompile Include="ZQ_CNN_Tensor4D.cpp" />
@@ -223,6 +224,8 @@
     <ClInclude Include="layers_c\zq_cnn_sqrt_32f_align_c.h" />
     <ClInclude Include="layers_c\zq_cnn_reduction_32f_align_c.h" />
     <ClInclude Include="math\zq_avx_mathfun.h" />
+    <ClInclude Include="math\zq_gemm_32f_align_c_raw.h" />
+    <ClInclude Include="math\zq_gemm_32f_align_c.h" />
     <ClInclude Include="math\zq_sse_mathfun.h" />
     <ClInclude Include="ZQ_CNN_BBox.h" />
     <ClInclude Include="ZQ_CNN_BBoxUtils.h" />

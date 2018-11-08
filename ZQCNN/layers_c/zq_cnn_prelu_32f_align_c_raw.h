@@ -14,8 +14,8 @@ void zq_cnn_prelu_32f_align(
 	const float* slope_data
 )
 {
-	zq_mm_type value_v;
-	zq_mm_type slope_v;
+	register zq_mm_type value_v;
+	register zq_mm_type slope_v;
 	int n, h, w, c;
 	const float *slope_c_ptr;
 	float* slice_ptr, *row_ptr, *pix_ptr, *c_ptr;
@@ -322,7 +322,7 @@ void zq_cnn_prelu_32f_align_sure_slope_lessthan1(
 	const float* slope_data
 )
 {
-	zq_mm_type data_v;
+	register zq_mm_type data_v;
 	int n, h, w, c;
 	float* slice_ptr, *row_ptr, *pix_ptr, *c_ptr;
 	const float* slope_c_ptr;

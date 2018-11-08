@@ -13,7 +13,7 @@ void zq_cnn_softmax_32f_align_C(
 	// value = exp( value - global max value )
 	// sum all value
 	// value = value / sum
-	zq_mm_type val,tmp, sum;
+	register zq_mm_type val,tmp, sum;
 	float max_val, tmp_val,sum_val;
 	float result[zq_mm_align_size << 2];
 	float* q = (float*)(((long long)result + (zq_mm_align_size << 2) - 1) & zq_mm_bitor_longlong);

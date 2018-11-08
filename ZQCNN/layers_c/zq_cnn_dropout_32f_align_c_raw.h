@@ -11,7 +11,7 @@ void zq_cnn_dropout_32f_align(
 )
 {
 	float scale = 1.0f - dropout_ratio;
-	zq_mm_type scale_vec;
+	register zq_mm_type scale_vec;
 	int n, h, w, c;
 	float* slice_ptr, *row_ptr, *pix_ptr, *c_ptr;
 

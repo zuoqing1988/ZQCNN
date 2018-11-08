@@ -90,6 +90,9 @@
     <ClCompile Include="layers_c\zq_cnn_reduction_32f_align_c.c">
       <Filter>layers_c</Filter>
     </ClCompile>
+    <ClCompile Include="math\zq_gemm_32f_align_c.c">
+      <Filter>math</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="layers_c\zq_cnn_addbias_32f_align_c.h">
@@ -250,6 +253,12 @@
     </ClInclude>
     <ClInclude Include="ZQ_CNN_MTCNN.h">
       <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="math\zq_gemm_32f_align_c.h">
+      <Filter>math</Filter>
+    </ClInclude>
+    <ClInclude Include="math\zq_gemm_32f_align_c_raw.h">
+      <Filter>math</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

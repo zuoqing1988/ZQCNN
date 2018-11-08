@@ -29,7 +29,7 @@ void zq_cnn_conv_no_padding_32f_kernel1x1(
 	int out_alignSliceStep
 )
 {
-	zq_mm_type sum;
+	register zq_mm_type sum;
 	__declspec(align(32)) float q[8];
 	//float result[zq_mm_align_size << 2];
 	//float* q = (float*)(((long long)result + (zq_mm_align_size << 2) - 1) & zq_mm_bitor_longlong);
@@ -138,7 +138,7 @@ void zq_cnn_conv_no_padding_32f_kernel1x1(
 		int out_alignSliceStep
 	)
 	{
-		zq_mm_type sum;
+		register zq_mm_type sum;
 		__declspec(align(32)) float q[8];
 		//float result[zq_mm_align_size << 2];
 		//float* q = (float*)(((long long)result + (zq_mm_align_size << 2) - 1) & zq_mm_bitor_longlong);
@@ -221,7 +221,7 @@ void zq_cnn_conv_no_padding_32f_kernel3x3(
 	int out_sliceStep
 )
 {
-	zq_mm_type sum;
+	register zq_mm_type sum;
 	__declspec(align(32)) float q[8];
 	//float result[zq_mm_align_size << 2];
 	//float* q = (float*)(((long long)result + (zq_mm_align_size << 2) - 1) & zq_mm_bitor_longlong);
@@ -1675,7 +1675,7 @@ void zq_cnn_conv_no_padding_32f_kernel3x3_C3(
 	int out_sliceStep
 )
 {
-	zq_mm_type sum;
+	register zq_mm_type sum;
 	__declspec(align(32)) float q[8];
 	//float result[zq_mm_align_size << 2];
 	//float* q = (float*)(((long long)result + (zq_mm_align_size << 2) - 1) & zq_mm_bitor_longlong);
@@ -1789,7 +1789,7 @@ void zq_cnn_conv_no_padding_32f_kernel2x2(
 	int out_sliceStep
 )
 {
-	zq_mm_type sum;
+	register zq_mm_type sum;
 	__declspec(align(32)) float q[8];
 	//float result[zq_mm_align_size << 2];
 	//float* q = (float*)(((long long)result + (zq_mm_align_size << 2) - 1) & zq_mm_bitor_longlong);
@@ -1913,7 +1913,7 @@ void zq_cnn_conv_no_padding_32f_kernel5x5(
 	int out_sliceStep
 )
 {
-	zq_mm_type sum;
+	register zq_mm_type sum;
 	__declspec(align(32)) float q[8];
 	//float result[zq_mm_align_size << 2];
 	//float* q = (float*)(((long long)result + (zq_mm_align_size << 2) - 1) & zq_mm_bitor_longlong);
@@ -2141,7 +2141,7 @@ void zq_cnn_conv_no_padding_32f_general(
 	int out_sliceStep
 )
 {
-	zq_mm_type sum;
+	register zq_mm_type sum;
 	__declspec(align(32)) float q[8];
 	
 	const float* in_slice_ptr;

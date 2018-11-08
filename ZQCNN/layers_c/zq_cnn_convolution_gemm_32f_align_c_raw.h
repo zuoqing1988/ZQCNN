@@ -146,7 +146,7 @@ void zq_cnn_conv_no_padding_gemm_32f_align_same_pixstep(
 		t4 = omp_get_wtime();
 		make_A_time += t4 - t3;
 		/*gemm*/
-		cblas_sgemm(CblasRowMajor, CblasNoTrans, CblasTrans, matrix_A_rows, matrix_B_cols, matrix_A_cols, 1, matrix_A, matrix_A_cols,
+		zq_cblas_sgemm(CblasRowMajor, CblasNoTrans, CblasTrans, matrix_A_rows, matrix_B_cols, matrix_A_cols, 1, matrix_A, matrix_A_cols,
 			matrix_Bt, matrix_A_cols, 0.0f, matrix_C, matrix_B_cols);
 		t5 = omp_get_wtime();
 		gemm_time += t5 - t4;
@@ -172,7 +172,8 @@ void zq_cnn_conv_no_padding_gemm_32f_align_same_pixstep(
 	if (buffer == 0)
 	{
 		_aligned_free(matrix_A);
-		_aligned_free(matrix_C);
+		if (need_allocate_tmp_out)
+			_aligned_free(matrix_C);
 	}
 	t6 = omp_get_wtime();
 	/*if (filter_H == 1 && filter_W == 1 && filter_C == 4)
@@ -329,8 +330,10 @@ void zq_cnn_conv_no_padding_gemm_32f_align_same_pixstep_C4(
 		t4 = omp_get_wtime();
 		make_A_time += t4 - t3;
 		/*gemm*/
-		cblas_sgemm(CblasRowMajor, CblasNoTrans, CblasTrans, matrix_A_rows, matrix_B_cols, matrix_A_cols, 1, matrix_A, matrix_A_cols,
+
+		zq_cblas_sgemm(CblasRowMajor, CblasNoTrans, CblasTrans, matrix_A_rows, matrix_B_cols, matrix_A_cols, 1, matrix_A, matrix_A_cols,
 			matrix_Bt, matrix_A_cols, 0.0f, matrix_C, matrix_B_cols);
+
 		t5 = omp_get_wtime();
 		gemm_time += t5 - t4;
 		if (need_allocate_tmp_out)
@@ -523,7 +526,7 @@ void zq_cnn_conv_no_padding_gemm_32f_align_same_pixstep_batch(
 
 	t3 = omp_get_wtime();
 	/*gemm*/
-	cblas_sgemm(CblasRowMajor, CblasNoTrans, CblasTrans, matrix_A_rows, matrix_B_cols, matrix_A_cols, 1, matrix_A, matrix_A_cols,
+	zq_cblas_sgemm(CblasRowMajor, CblasNoTrans, CblasTrans, matrix_A_rows, matrix_B_cols, matrix_A_cols, 1, matrix_A, matrix_A_cols,
 		matrix_Bt, matrix_A_cols, 0, matrix_C, matrix_B_cols);
 	t4 = omp_get_wtime();
 
@@ -647,7 +650,7 @@ void zq_cnn_conv_no_padding_gemm_32f_align_same_or_notsame_pixstep(
 	{
 		matrix_A = _aligned_malloc(need_A_buffer_len_align32, 32);
 		if (need_allocate_matrix_Bt)
-			_aligned_malloc(need_B_buffer_len_align32, 32);
+			matrix_Bt = _aligned_malloc(need_B_buffer_len_align32, 32);
 		if (need_allocate_tmp_out)
 			matrix_C = _aligned_malloc(need_C_buffer_len_align32, 32);
 	}
@@ -718,7 +721,7 @@ void zq_cnn_conv_no_padding_gemm_32f_align_same_or_notsame_pixstep(
 		t4 = omp_get_wtime();
 		make_A_time += t4 - t3;
 		/*gemm*/
-		cblas_sgemm(CblasRowMajor, CblasNoTrans, CblasTrans, matrix_A_rows, matrix_B_cols, matrix_A_cols, 1, matrix_A, matrix_A_cols,
+		zq_cblas_sgemm(CblasRowMajor, CblasNoTrans, CblasTrans, matrix_A_rows, matrix_B_cols, matrix_A_cols, 1, matrix_A, matrix_A_cols,
 			matrix_Bt, matrix_A_cols, 0.0f, matrix_C, matrix_B_cols);
 		t5 = omp_get_wtime();
 		gemm_time += t5 - t4;
@@ -793,16 +796,22 @@ void zq_cnn_conv_no_padding_gemm_32f_align_same_or_notsame_pixstep_C3(
 )
 {
 	/************** image to col **************/
-	int common_align_pixStep = __min(in_pixelStep, filter_pixelStep);
+	int K = filter_H*filter_W*filter_C;
+#if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_AVX
+	int padK = (K + 7) / 8*8;
+#elif ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_SSE
+	int padK = (K + 3) / 4 * 4;
+#else
+	int padK = K;
+#endif
 	int in_widthStep_mul_stride_H = in_widthStep*stride_H;
 	int in_pixelStep_mul_stride_W = in_pixelStep*stride_W;
 	int dilate_H_mul_in_widthStep = dilation_H*in_widthStep;
 	int dilate_W_mul_in_pixStep = dilation_W*in_pixelStep;
-	int common_pixStep_mul_filter_W = common_align_pixStep*filter_W;
-	int matrix_A_cols = filter_H*filter_W*common_align_pixStep;
+	int matrix_A_cols = padK;
 	int matrix_A_rows = out_H*out_W;
 	int matrix_B_cols = filter_N;
-	int matrix_B_rows = filter_H*filter_W*common_align_pixStep;
+	int matrix_B_rows = padK;
 	__int64 need_A_buffer_len_align32 = (matrix_A_rows*matrix_A_cols * sizeof(float) + 31) / 32 * 32;
 	__int64 need_B_buffer_len_align32 = 0;
 	__int64 need_C_buffer_len_align32 = 0;
@@ -811,7 +820,7 @@ void zq_cnn_conv_no_padding_gemm_32f_align_same_or_notsame_pixstep_C3(
 	float* matrix_Bt = 0;
 	const float* in_row_ptr, *in_pix_ptr, *cur_in_row_ptr, *cur_in_pix_ptr, *filter_slice_ptr, *filter_row_ptr, *filter_pix_ptr;
 	int out_n, out_h, out_w, kn, kh, kw;
-	float* matrix_A_row_ptr, *matrix_A_col_ptr, *cp_dst_ptr;
+	float* matrix_A_row_ptr, *matrix_A_col_ptr, *matrix_Bt_row_ptr, *cp_dst_ptr;
 	float* out_slice_ptr, *out_row_ptr, *out_pix_ptr;
 	const float* in_slice_ptr;
 
@@ -819,10 +828,9 @@ void zq_cnn_conv_no_padding_gemm_32f_align_same_or_notsame_pixstep_C3(
 	int out_row_idx;
 	int out_HW = out_H*out_W;
 	double t1, t2, t3, t4, t5, alloc_time, make_A_time = 0, gemm_time = 0;
-	int need_allocate_tmp_out, need_allocate_matrix_Bt;
+	int need_allocate_tmp_out;
 	t1 = omp_get_wtime();
 	need_allocate_tmp_out = (out_pixelStep != filter_N) || (out_pixelStep*out_W != out_widthStep) || (out_widthStep*out_H != out_sliceStep);
-	need_allocate_matrix_Bt = common_align_pixStep != filter_pixelStep;
 	if (need_allocate_tmp_out)
 	{
 		need_C_buffer_len_align32 = (out_HW*filter_N * sizeof(float) + 31) / 32 * 32;
@@ -831,20 +839,12 @@ void zq_cnn_conv_no_padding_gemm_32f_align_same_or_notsame_pixstep_C3(
 	{
 		matrix_C = out_tensor4D_data;
 	}
-	if (need_allocate_matrix_Bt)
-	{
-		need_B_buffer_len_align32 = (matrix_B_rows*matrix_B_cols * sizeof(float) + 31) / 32 * 32;
-	}
-	else
-	{
-		matrix_Bt = (float*)filters_data;
-	}
+	need_B_buffer_len_align32 = (matrix_B_rows*matrix_B_cols * sizeof(float) + 31) / 32 * 32;
 	total_need_buffer_len = need_A_buffer_len_align32 + need_B_buffer_len_align32 + need_C_buffer_len_align32;
 	if (buffer == 0)
 	{
 		matrix_A = _aligned_malloc(need_A_buffer_len_align32, 32);
-		if (need_allocate_matrix_Bt)
-			_aligned_malloc(need_B_buffer_len_align32, 32);
+		_aligned_malloc(need_B_buffer_len_align32, 32);
 		if (need_allocate_tmp_out)
 			matrix_C = _aligned_malloc(need_C_buffer_len_align32, 32);
 	}
@@ -857,28 +857,26 @@ void zq_cnn_conv_no_padding_gemm_32f_align_same_or_notsame_pixstep_C3(
 			*buffer_len = total_need_buffer_len;
 		}
 		matrix_A = *buffer;
-		if (need_allocate_matrix_Bt)
-			matrix_Bt = (float*)((char*)(*buffer) + need_A_buffer_len_align32);
+		matrix_Bt = (float*)((char*)(*buffer) + need_A_buffer_len_align32);
 		if (need_allocate_tmp_out)
 			matrix_C = (float*)((char*)(*buffer) + need_A_buffer_len_align32 + need_B_buffer_len_align32);
 	}
 
-	if (need_allocate_matrix_Bt)
+	matrix_Bt_row_ptr = matrix_Bt;
+	for (kn = 0, filter_slice_ptr = filters_data; kn < filter_N; kn++, filter_slice_ptr += filter_sliceStep)
 	{
-		cp_dst_ptr = matrix_Bt;
-		for (kn = 0, filter_slice_ptr = filters_data; kn < filter_N; kn++, filter_slice_ptr += filter_sliceStep)
+		cp_dst_ptr = matrix_Bt_row_ptr;
+		for (kh = 0, filter_row_ptr = filter_slice_ptr; kh < filter_H; kh++, filter_row_ptr += filter_widthStep)
 		{
-			for (kh = 0, filter_row_ptr = filter_slice_ptr; kh < filter_H; kh++, filter_row_ptr += filter_widthStep)
+			for (kw = 0, filter_pix_ptr = filter_row_ptr; kw < filter_W; kw++, filter_pix_ptr += filter_pixelStep)
 			{
-				for (kw = 0, filter_pix_ptr = filter_row_ptr; kw < filter_W; kw++, filter_pix_ptr += filter_pixelStep)
-				{
-					zq_mm_store_ps(cp_dst_ptr, zq_mm_load_ps(filter_pix_ptr));
-					cp_dst_ptr += zq_mm_align_size;
-
-				}
+				memcpy(cp_dst_ptr, filter_pix_ptr, sizeof(float)*filter_C);
+				cp_dst_ptr += filter_C;
 			}
 		}
+		matrix_Bt_row_ptr += matrix_B_rows;
 	}
+	
 
 	t2 = omp_get_wtime();
 	alloc_time = t2 - t1;
@@ -897,8 +895,8 @@ void zq_cnn_conv_no_padding_gemm_32f_align_same_or_notsame_pixstep_C3(
 				{
 					for (kw = 0, cur_in_pix_ptr = cur_in_row_ptr; kw < filter_W; kw++, cur_in_pix_ptr += dilate_W_mul_in_pixStep)
 					{
-						zq_mm_store_ps(matrix_A_col_ptr, zq_mm_load_ps(cur_in_pix_ptr));
-						matrix_A_col_ptr += zq_mm_align_size;
+						memcpy(matrix_A_col_ptr, cur_in_pix_ptr, sizeof(float)*in_C);
+						matrix_A_col_ptr += in_C;
 					}
 				}
 				matrix_A_row_ptr += matrix_A_cols;
@@ -907,7 +905,7 @@ void zq_cnn_conv_no_padding_gemm_32f_align_same_or_notsame_pixstep_C3(
 		t4 = omp_get_wtime();
 		make_A_time += t4 - t3;
 		/*gemm*/
-		cblas_sgemm(CblasRowMajor, CblasNoTrans, CblasTrans, matrix_A_rows, matrix_B_cols, matrix_A_cols, 1, matrix_A, matrix_A_cols,
+		zq_cblas_sgemm(CblasRowMajor, CblasNoTrans, CblasTrans, matrix_A_rows, matrix_B_cols, K, 1, matrix_A, matrix_A_cols,
 			matrix_Bt, matrix_A_cols, 0.0f, matrix_C, matrix_B_cols);
 		t5 = omp_get_wtime();
 		gemm_time += t5 - t4;
@@ -933,8 +931,7 @@ void zq_cnn_conv_no_padding_gemm_32f_align_same_or_notsame_pixstep_C3(
 	if (buffer == 0)
 	{
 		_aligned_free(matrix_A);
-		if (need_allocate_matrix_Bt)
-			_aligned_free(matrix_Bt);
+		_aligned_free(matrix_Bt);
 		if (need_allocate_tmp_out)
 			_aligned_free(matrix_C);
 	}
@@ -1106,7 +1103,7 @@ void zq_cnn_conv_no_padding_gemm_32f_align_same_or_notsame_pixstep_batch(
 
 	t3 = omp_get_wtime();
 	/*gemm*/
-	cblas_sgemm(CblasRowMajor, CblasNoTrans, CblasTrans, matrix_A_rows, matrix_B_cols, matrix_A_cols, 1, matrix_A, matrix_A_cols,
+	zq_cblas_sgemm(CblasRowMajor, CblasNoTrans, CblasTrans, matrix_A_rows, matrix_B_cols, matrix_A_cols, 1, matrix_A, matrix_A_cols,
 		matrix_Bt, matrix_A_cols, 0.0f, matrix_C, matrix_B_cols);
 	t4 = omp_get_wtime();
 	if (need_allocate_tmp_out)

@@ -89,7 +89,7 @@ void zq_cnn_scale_32f_align(
 {
 	int n, h, w, c;
 	float* slice_ptr, *row_ptr, *pix_ptr, *c_ptr;
-	zq_mm_type scale_vec, bias_vec;
+	register zq_mm_type scale_vec, bias_vec;
 
 
 	if (bias_data != NULL)
@@ -153,7 +153,7 @@ void zq_cnn_batchnorm_32f_b_a_align(
 {
 	int n, h, w, c;
 	float* slice_ptr, *row_ptr, *pix_ptr, *c_ptr;
-	zq_mm_type a_vec, b_vec;
+	register zq_mm_type a_vec, b_vec;
 
 
 	for (n = 0, slice_ptr = in_data; n < in_N; n++, slice_ptr += in_sliceStep)

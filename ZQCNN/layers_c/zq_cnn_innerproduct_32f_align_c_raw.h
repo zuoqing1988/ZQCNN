@@ -25,7 +25,7 @@ void zq_cnn_innerproduct_32f_align(
 	int out_sliceStep
 )
 {
-	zq_mm_type sum_vec;
+	register zq_mm_type sum_vec;
 	float result[zq_mm_align_size << 2];
 	float* q = (float*)(((long long)result + (zq_mm_align_size << 2) - 1) & zq_mm_bitor_longlong);
 	int out_n, out_c, kh, kw, kc;
@@ -80,7 +80,7 @@ void zq_cnn_innerproduct_32f_align_noborder(
 	int out_sliceStep
 )
 {
-	zq_mm_type sum_vec;
+	register zq_mm_type sum_vec;
 	float result[zq_mm_align_size << 2];
 	float* q = (float*)(((long long)result + (zq_mm_align_size << 2) - 1) & zq_mm_bitor_longlong);
 	int out_n, out_c, in_hwc;

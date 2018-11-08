@@ -21,7 +21,7 @@ void zq_cnn_maxpooling_nopadding_suredivided_kernel2x2(
 	int out_sliceStep
 )
 {
-	zq_mm_type val;
+	register zq_mm_type val;
 	int n, out_h, out_w, c;
 	const float* in_c_ptr, *in_pix_ptr, *in_row_ptr, *in_slice_ptr;
 	float* out_c_ptr, *out_pix_ptr, *out_row_ptr, *out_slice_ptr;
@@ -90,8 +90,8 @@ void zq_cnn_avgpooling_nopadding_suredivided_kernel2x2(
 	int out_sliceStep
 )
 {
-	zq_mm_type val;
-	zq_mm_type scale = zq_mm_set1_ps(1.0f / (kernel_H*kernel_W));
+	register zq_mm_type val;
+	register zq_mm_type scale = zq_mm_set1_ps(1.0f / (kernel_H*kernel_W));
 	int n, out_h, out_w, c;
 	const float* in_c_ptr, *in_pix_ptr, *in_row_ptr, *in_slice_ptr;
 	float* out_c_ptr, *out_pix_ptr, *out_row_ptr, *out_slice_ptr;
@@ -161,7 +161,7 @@ void zq_cnn_maxpooling_nopadding_suredivided_kernel3x3(
 	int out_sliceStep
 )
 {
-	zq_mm_type val;
+	register zq_mm_type val;
 	int n, out_h, out_w, c;
 	const float* in_c_ptr, *in_pix_ptr, *in_row_ptr, *in_slice_ptr;
 	float* out_c_ptr, *out_pix_ptr, *out_row_ptr, *out_slice_ptr;
@@ -243,8 +243,8 @@ void zq_cnn_avgpooling_nopadding_suredivided_kernel3x3(
 	int out_sliceStep
 )
 {
-	zq_mm_type val;
-	zq_mm_type scale = zq_mm_set1_ps(1.0f / (kernel_H*kernel_W));
+	register zq_mm_type val;
+	register zq_mm_type scale = zq_mm_set1_ps(1.0f / (kernel_H*kernel_W));
 	int n, out_h, out_w, c;
 	const float* in_c_ptr, *in_pix_ptr, *in_row_ptr, *in_slice_ptr;
 	float* out_c_ptr, *out_pix_ptr, *out_row_ptr, *out_slice_ptr;
@@ -327,7 +327,7 @@ void zq_cnn_maxpooling_nopadding_suredivided_kernel5x5(
 	int out_sliceStep
 )
 {
-	zq_mm_type val;
+	register zq_mm_type val;
 	int n, out_h, out_w, c/*, kh, kw*/;
 	const float* in_c_ptr, *in_pix_ptr, *in_row_ptr, *in_slice_ptr;
 	float* out_c_ptr, *out_pix_ptr, *out_row_ptr, *out_slice_ptr;
@@ -447,8 +447,8 @@ void zq_cnn_avgpooling_nopadding_suredivided_kernel5x5(
 	int out_sliceStep
 )
 {
-	zq_mm_type val;
-	zq_mm_type scale = zq_mm_set1_ps(1.0f / (kernel_H*kernel_W));
+	register zq_mm_type val;
+	register zq_mm_type scale = zq_mm_set1_ps(1.0f / (kernel_H*kernel_W));
 	int n, out_h, out_w, c/*, kh, kw*/;
 	const float* in_c_ptr, *in_pix_ptr, *in_row_ptr, *in_slice_ptr;
 	float* out_c_ptr, *out_pix_ptr, *out_row_ptr, *out_slice_ptr;
@@ -570,7 +570,7 @@ void zq_cnn_maxpooling_nopadding_suredivided_general(
 	int out_sliceStep
 )
 {
-	zq_mm_type val;
+	register zq_mm_type val;
 	int n, out_h, out_w, c, kh, kw;
 	const float* in_c_ptr, *in_pix_ptr, *in_row_ptr, *in_slice_ptr;
 	float* out_c_ptr, *out_pix_ptr, *out_row_ptr, *out_slice_ptr;
@@ -631,8 +631,8 @@ void zq_cnn_avgpooling_nopadding_suredivided_general(
 	int out_sliceStep
 )
 {
-	zq_mm_type val;
-	zq_mm_type scale = zq_mm_set1_ps(1.0f / (kernel_H*kernel_W));
+	register zq_mm_type val;
+	register zq_mm_type scale = zq_mm_set1_ps(1.0f / (kernel_H*kernel_W));
 	int n, out_h, out_w, c, kh, kw;
 	const float* in_c_ptr, *in_pix_ptr, *in_row_ptr, *in_slice_ptr;
 	float* out_c_ptr, *out_pix_ptr, *out_row_ptr, *out_slice_ptr;
@@ -694,7 +694,7 @@ void zq_cnn_maxpooling_nopadding_nodivided_general(
 	int out_sliceStep
 )
 {
-	zq_mm_type val;
+	register zq_mm_type val;
 	int n, out_h, out_w, c, kh, kw;
 	const float* in_c_ptr, *in_pix_ptr, *in_row_ptr, *in_slice_ptr;
 	float* out_c_ptr, *out_pix_ptr, *out_row_ptr, *out_slice_ptr;
@@ -796,8 +796,8 @@ void zq_cnn_avgpooling_nopadding_nodivided_general(
 	int out_sliceStep
 )
 {
-	zq_mm_type val;
-	zq_mm_type scale = zq_mm_set1_ps(1.0f / (kernel_H*kernel_W));
+	register zq_mm_type val;
+	register zq_mm_type scale = zq_mm_set1_ps(1.0f / (kernel_H*kernel_W));
 	int n, out_h, out_w, c, kh, kw;
 	const float* in_c_ptr, *in_pix_ptr, *in_row_ptr, *in_slice_ptr;
 	float* out_c_ptr, *out_pix_ptr, *out_row_ptr, *out_slice_ptr;

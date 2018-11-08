@@ -95,7 +95,7 @@ void zq_cnn_innerproduct_gemm_32f_align_same_pixstep(
 
 		t3 = omp_get_wtime();
 		/*gemm*/
-		cblas_sgemm(CblasRowMajor, CblasNoTrans, CblasTrans, matrix_A_rows, matrix_B_cols, matrix_A_cols, 1, matrix_A, matrix_A_cols,
+		zq_cblas_sgemm(zq_CblasRowMajor, zq_CblasNoTrans, zq_CblasTrans, matrix_A_rows, matrix_B_cols, matrix_A_cols, 1, matrix_A, matrix_A_cols,
 			matrix_Bt, matrix_A_cols, 0.0f, matrix_C, matrix_B_cols);
 		t4 = omp_get_wtime();
 		if (need_allocate_tmp_out)
@@ -218,7 +218,7 @@ void zq_cnn_innerproduct_gemm_32f_align_same_pixstep_batch(
 	t3 = omp_get_wtime();
 	make_A_time = t3 - t2;
 	/*gemm*/
-	cblas_sgemm(CblasRowMajor, CblasNoTrans, CblasTrans, matrix_A_rows, matrix_B_cols, matrix_A_cols, 1, matrix_A, matrix_A_cols,
+	zq_cblas_sgemm(zq_CblasRowMajor, zq_CblasNoTrans, zq_CblasTrans, matrix_A_rows, matrix_B_cols, matrix_A_cols, 1, matrix_A, matrix_A_cols,
 		matrix_Bt, matrix_A_cols, 0, matrix_C, matrix_B_cols);
 	t4 = omp_get_wtime();
 	gemm_time = t4 - t3;

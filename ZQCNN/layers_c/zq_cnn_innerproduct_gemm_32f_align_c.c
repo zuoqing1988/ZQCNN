@@ -17,8 +17,8 @@
 #include <immintrin.h>//AVX(include wmmintrin.h)  
 #include <intrin.h>//(include immintrin.h)  
 #endif
+#include"..\math\zq_gemm_32f_align_c.h"
 
-#if (ZQ_CNN_USE_BLAS_GEMM || ZQ_CNN_USE_MKL_GEMM)
 #if ZQ_CNN_USE_BLAS_GEMM
 #include <openblas\cblas.h>
 #elif ZQ_CNN_USE_MKL_GEMM
@@ -46,8 +46,23 @@ extern "C" {
 #define zq_mm_bitor_longlong 0xFFFFFFFFFFFFFFF0
 #define zq_final_sum_q (q[0]+q[1]+q[2]+q[3])
 
+#if (ZQ_CNN_USE_BLAS_GEMM || ZQ_CNN_USE_MKL_GEMM)
+#define	zq_cblas_sgemm cblas_sgemm
+#define zq_CblasRowMajor CblasRowMajor
+#define zq_CblasNoTrans CblasNoTrans
+#define zq_CblasTrans CblasTrans
+#else
+#define zq_CblasRowMajor 1
+#define zq_CblasNoTrans 1
+#define zq_CblasTrans 1
+#define	zq_cblas_sgemm(x1, x2, x3, x4, x5, x6, x7, x8, x9, x10, x11, x12, x13, x14)  \
+      zq_gemm_32f_align128bit_AnoTrans_Btrans(x4,x5,x6,x8,x9,x10,x11,x13,x14)  
+#endif
 #include "zq_cnn_innerproduct_gemm_32f_align_c_raw.h"
-
+#undef zq_cblas_sgemm
+#undef zq_CblasRowMajor
+#undef zq_CblasNoTrans
+#undef zq_CblasTrans
 
 #undef zq_cnn_innerproduct_gemm_32f_align_same_pixstep
 #undef zq_cnn_innerproduct_gemm_32f_align_same_pixstep_batch
@@ -81,7 +96,24 @@ extern "C" {
 #define zq_mm_bitor_longlong 0xFFFFFFFFFFFFFFE0
 #define zq_final_sum_q (q[0]+q[1]+q[2]+q[3]+q[4]+q[5]+q[6]+q[7])
 
+#if (ZQ_CNN_USE_BLAS_GEMM || ZQ_CNN_USE_MKL_GEMM)
+#define	zq_cblas_sgemm cblas_sgemm
+#define zq_CblasRowMajor CblasRowMajor
+#define zq_CblasNoTrans CblasNoTrans
+#define zq_CblasTrans CblasTrans
+#else
+#define zq_CblasRowMajor 1
+#define zq_CblasNoTrans 1
+#define zq_CblasTrans 1
+#define	zq_cblas_sgemm(x1, x2, x3, x4, x5, x6, x7, x8, x9, x10, x11, x12, x13, x14)  \
+      zq_gemm_32f_align256bit_AnoTrans_Btrans(x4,x5,x6,x8,x9,x10,x11,x13,x14)  
+#endif
 #include "zq_cnn_innerproduct_gemm_32f_align_c_raw.h"
+#undef zq_cblas_sgemm
+#undef zq_CblasRowMajor
+#undef zq_CblasNoTrans
+#undef zq_CblasTrans
+
 
 
 #undef zq_cnn_innerproduct_gemm_32f_align_same_pixstep
@@ -101,6 +133,4 @@ extern "C" {
 
 #if defined(__cplusplus) || defined(c_plusplus) 
 }
-#endif
-
 #endif

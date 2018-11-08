@@ -197,8 +197,8 @@ void zq_cnn_relu_32f_align(
 	}
 	else
 	{
-		zq_mm_type slope_v = zq_mm_set1_ps(slope);
-		zq_mm_type value_v;
+		register zq_mm_type slope_v = zq_mm_set1_ps(slope);
+		register zq_mm_type value_v;
 		if (in_C % zq_mm_align_size_mul_32 == 0)
 		{
 			for (n = 0, slice_ptr = in_tensor4D_data; n < in_N; n++, slice_ptr += in_sliceStep)

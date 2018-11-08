@@ -23,10 +23,10 @@ void zq_cnn_lrn_across_channels_32f_align(
 	int n, h, w, c, pad_size, len;
 	float* square_buf, *accumulate_buf, *local_sum_buf, *square_ptr,*acc_ptr, *local_ptr;
 	float alpha_div_local_size = alpha / (float)local_size;
-	zq_mm_type data_v, sum_v,pow_v;
-	zq_mm_type minus_beta_v = zq_mm_set1_ps(-beta);
-	zq_mm_type alpha_div_local_size_v = zq_mm_set1_ps(alpha_div_local_size);
-	zq_mm_type k_v = zq_mm_set1_ps(k);
+	register zq_mm_type data_v, sum_v,pow_v;
+	register zq_mm_type minus_beta_v = zq_mm_set1_ps(-beta);
+	register zq_mm_type alpha_div_local_size_v = zq_mm_set1_ps(alpha_div_local_size);
+	register zq_mm_type k_v = zq_mm_set1_ps(k);
 
 	pad_size = local_size / 2 + zq_mm_align_size - 1;
 	pad_size = pad_size - pad_size%zq_mm_align_size;

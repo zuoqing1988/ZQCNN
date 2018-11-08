@@ -12,7 +12,7 @@ void zq_cnn_normalize_not_across_spatial_32f_align(
 	const float eps
 )
 {
-	zq_mm_type sum_v;
+	register zq_mm_type sum_v;
 	__declspec(align(32)) float q[8];
 	float sum;
 	int n, h, w, c;

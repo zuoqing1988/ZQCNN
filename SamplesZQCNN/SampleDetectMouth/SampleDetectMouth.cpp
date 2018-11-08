@@ -135,7 +135,6 @@ int SampleDetectMouth_fig(int argc, const char** argv)
 			fclose(out);
 			return EXIT_SUCCESS;
 		}
-
 		if (should_save_draw)
 		{
 			detector.DrawSimpleResult(image.ptr<unsigned char>(0), image.cols, image.rows, image.step[0], &simple_detected_result);

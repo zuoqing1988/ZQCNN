@@ -11,12 +11,18 @@
 #include <malloc.h>
 #include <stdlib.h>
 #include <omp.h>
-#include <cblas.h>
 #include <stdio.h>
 #include <float.h>
+#include "math\zq_gemm_32f_align_c.h"
 #include "ZQ_CNN_Tensor4D.h"
-
-#define ZQ_CNN_USE_FMADD256 0
+#include "ZQ_CNN_CompileConfig.h"
+#if ZQ_CNN_USE_BLAS_GEMM
+#include <openblas\cblas.h>
+#pragma comment(lib,"libopenblas.lib")
+#elif ZQ_CNN_USE_MKL_GEMM
+#include <mkl\mkl.h>
+#pragma comment(lib,"mklml.lib")
+#endif
 
 #if ZQ_CNN_USE_FMADD256
 #define zq_mm_fmadd_ps _mm256_fmadd_ps
@@ -25,6 +31,35 @@
 #endif
 
 using namespace ZQ;
+
+bool check_value(int M, int N, const float* C1, int ldc1, const float* C2, int ldc2, float thresh = 1e-5, bool show = false)
+{
+	int m, n;
+	const float* Cptr1, *Cptr2, *C_c_ptr1, *C_c_ptr2;
+	float v1, v2;
+	bool ret = true;
+	for (m = 0, Cptr1 = C1, Cptr2 = C2; m < M; m++, Cptr1+=ldc1, Cptr2 += ldc2)
+	{
+		C_c_ptr1 = Cptr1;
+		C_c_ptr2 = Cptr2;
+		for (n = 0; n < N; n++)
+		{
+			v1 = *C_c_ptr1;
+			v2 = *C_c_ptr2;
+			float scale = __max(fabs(v1), fabs(v2));
+			float real_thresh = __max(thresh, thresh*scale);
+			if (fabs(v1 - v2) > real_thresh)
+			{
+				if(show)
+					printf("%d,%d = %f %f\n", m, n, v1, v2);
+				ret = false;
+			}
+			C_c_ptr1++;
+			C_c_ptr2++;
+		}
+	}
+	return ret;
+}
 
 double _test_gemm_value()
 {
@@ -47,71 +82,32 @@ double _test_gemm_value()
 }
 double _test_gemv(int M, int N, int K, int iters = 1000)
 {
-	/*
-	K = (K + 63) >> 6 << 6;
-	N = (N + 7) >> 3 << 3;*/
-	float* A = (float*)_aligned_malloc(M* K * sizeof(float), 32);
-	float* B = (float*)_aligned_malloc(K*N * sizeof(float), 32);
+	
+	int padK = (K + 7) >> 3 << 3;
+	/*N = (N + 7) >> 3 << 3;*/
+	float* A = (float*)_aligned_malloc(M* padK * sizeof(float), 32);
+	float* B = (float*)_aligned_malloc(padK*N * sizeof(float), 32);
 	float* C = (float*)_aligned_malloc(M* N * sizeof(float), 32);
 	float* q = (float*)_aligned_malloc(32, 32);
 
 
-	for (int i = 0; i < M*K; i++)
+	for (int i = 0; i < M*padK; i++)
 	{
 		//A[i] = rand() % 10001 / 5000.0f - 1.0f;
 		A[i] = i;
 	}
-	for (int i = 0; i < K*N; i++)
+	for (int i = 0; i < padK*N; i++)
 	{
 		B[i] = rand() % 10001 / 5000.0f - 1.0f;
 		B[i] = i;
 	}
 	double t1 = omp_get_wtime(), t2, mul_count, gflops;
 	
-	//if (K % 64 == 0)
-	//{
-	//	for (int it = 0; it < iters; it++)
-	//	{
-	//		for (int m = 0; m < M; m++)
-	//		{
-	//			for (int n = 0; n < N; n++)
-	//			{
-	//				__m256 sum_vec = _mm256_setzero_ps();
-	//				float* Aptr = A + m*K;
-	//				float* Bptr = B + n*K;
-	//				for (int k = 0; k < K; k += 64, Aptr += 64, Bptr += 64)
-	//				{
-
-	//					sum_vec = zq_mm_fmadd_ps(_mm256_load_ps(Aptr), _mm256_load_ps(Bptr), sum_vec);
-	//					sum_vec = zq_mm_fmadd_ps(_mm256_load_ps(Aptr + 8), _mm256_load_ps(Bptr + 8), sum_vec);
-	//					sum_vec = zq_mm_fmadd_ps(_mm256_load_ps(Aptr + 16), _mm256_load_ps(Bptr + 16), sum_vec);
-	//					sum_vec = zq_mm_fmadd_ps(_mm256_load_ps(Aptr + 24), _mm256_load_ps(Bptr + 24), sum_vec);
-	//					sum_vec = zq_mm_fmadd_ps(_mm256_load_ps(Aptr + 32), _mm256_load_ps(Bptr + 32), sum_vec);
-	//					sum_vec = zq_mm_fmadd_ps(_mm256_load_ps(Aptr + 40), _mm256_load_ps(Bptr + 40), sum_vec);
-	//					sum_vec = zq_mm_fmadd_ps(_mm256_load_ps(Aptr + 48), _mm256_load_ps(Bptr + 48), sum_vec);
-	//					sum_vec = zq_mm_fmadd_ps(_mm256_load_ps(Aptr + 56), _mm256_load_ps(Bptr + 56), sum_vec);
-	//				}
-	//				_mm256_store_ps(q, sum_vec);
-	//				_mm_store_ps(q, _mm_add_ps(_mm_load_ps(q), _mm_load_ps(q + 4)));
-	//				C[m*N+n] = q[0] + q[1] + q[2] + q[3];
-
-	//			}
-	//		}
-	//	}
-	//	//printf("C[0] = %f\n", C[0]);
-	//	t2 = omp_get_wtime();
-	//	mul_count = (double)M*N*K*iters;
-	//	gflops = mul_count / (1 << 30) / (t2 - t1);
-	//	printf("%d x %d x %d * %d = %.3e, time = %.3f s, my gflops = %.3f\n", M, N, K, iters, mul_count, t2 - t1, gflops);
-	//}
-
-
-
 	t1 = omp_get_wtime();
 	for (int i = 0; i < iters; i++)
 	{
 		for (int m = 0; m < M; m++)
-			cblas_sgemv(CblasRowMajor, CblasNoTrans, N, K, 1.0, B, K, A + m*K, 1, 0, C + m*N, 1);
+			cblas_sgemv(CblasRowMajor, CblasNoTrans, N, K, 1.0, B, padK, A + m*padK, 1, 0, C + m*N, 1);
 	}
 	//printf("C[0] = %f\n", C[0]);
 	t2 = omp_get_wtime();
@@ -126,220 +122,30 @@ double _test_gemv(int M, int N, int K, int iters = 1000)
 	_aligned_free(q);
 	return (t2 - t1) / iters;
 }
-double _test_gemm(int M, int N, int K, int iters = 1000)
+double _test_gemm(int M, int N, int K, int iters = 1000, float thresh = 1e-4, bool show = false)
 {
-	/*M = (M + 7) >> 3 << 3;
-	K = (K + 63) >> 6 << 6;
-	N = (N + 7) >> 3 << 3;*/
-	float* A = (float*)_aligned_malloc(M*K * sizeof(float), 32);
-	float* B = (float*)_aligned_malloc(K*N * sizeof(float), 32);
-	float* C = (float*)_aligned_malloc(M*N * sizeof(float), 32);
+	int padK = (K + 7) >> 3 << 3;
+	float* A = (float*)_aligned_malloc(M*padK * sizeof(float), 32);
+	float* B = (float*)_aligned_malloc(padK*N * sizeof(float), 32);
+	float* C1 = (float*)_aligned_malloc(M*N * sizeof(float), 32);
+	float* C2 = (float*)_aligned_malloc(M*N * sizeof(float), 32);
 	float* q = (float*)_aligned_malloc(32, 32);
 
 
-	for (int i = 0; i < M*K; i++)
+	for (int i = 0; i < M*padK; i++)
 		A[i] = rand() % 10001 / 5000.0f - 1.0f;
-	for (int i = 0; i < K*N; i++)
+	for (int i = 0; i < padK*N; i++)
 		B[i] = rand() % 10001 / 5000.0f - 1.0f;
 	double t1 = omp_get_wtime(), t2, mul_count, gflops;
 	double time1 = FLT_MAX;
-	if (K % 64 == 0)
 	{
-		if (M == 1)
-		{
-			for (int it = 0; it < iters; it++)
-			{
-				float* Aptr = A;
-				float* A_c_ptr;
-				float* Bptr = B;
-				float* B_c_ptr;
-				int n, k;
-				for (n = 0; n < N; n++, Bptr+=K)
-				{
-					__m256 sum_vec = _mm256_setzero_ps();
-					
-					for (k = 0,A_c_ptr = Aptr, B_c_ptr = Bptr; k < K; k += 64, A_c_ptr += 64, B_c_ptr += 64)
-					{
-
-						sum_vec = zq_mm_fmadd_ps(_mm256_load_ps(A_c_ptr), _mm256_load_ps(B_c_ptr), sum_vec);
-						sum_vec = zq_mm_fmadd_ps(_mm256_load_ps(A_c_ptr + 8), _mm256_load_ps(B_c_ptr + 8), sum_vec);
-						sum_vec = zq_mm_fmadd_ps(_mm256_load_ps(A_c_ptr + 16), _mm256_load_ps(B_c_ptr + 16), sum_vec);
-						sum_vec = zq_mm_fmadd_ps(_mm256_load_ps(A_c_ptr + 24), _mm256_load_ps(B_c_ptr + 24), sum_vec);
-						sum_vec = zq_mm_fmadd_ps(_mm256_load_ps(A_c_ptr + 32), _mm256_load_ps(B_c_ptr + 32), sum_vec);
-						sum_vec = zq_mm_fmadd_ps(_mm256_load_ps(A_c_ptr + 40), _mm256_load_ps(B_c_ptr + 40), sum_vec);
-						sum_vec = zq_mm_fmadd_ps(_mm256_load_ps(A_c_ptr + 48), _mm256_load_ps(B_c_ptr + 48), sum_vec);
-						sum_vec = zq_mm_fmadd_ps(_mm256_load_ps(A_c_ptr + 56), _mm256_load_ps(B_c_ptr + 56), sum_vec);
-					}
-					_mm256_store_ps(q, sum_vec);
-					_mm_store_ps(q, _mm_add_ps(_mm_load_ps(q), _mm_load_ps(q + 4)));
-					C[n] = q[0] + q[1] + q[2] + q[3];
-				}
-
-			}
-		}
-		else
-		{
-			for (int it = 0; it < iters; it++)
-			{
-				float* Aptr = A;
-				float* A_c_ptr;
-				float* Cptr = C;
-				for (int m = 0; m < M; m++, Aptr+=K)
-				{
-					float* Bptr = B;
-					float* B_c_ptr;
-					int n, k;
-					for (n = 0; n < N; n++, Bptr+=K)
-					{
-						__m256 sum_vec = _mm256_setzero_ps();
-						
-						for (k = 0,A_c_ptr = Aptr, B_c_ptr = Bptr; k < K; k += 64, A_c_ptr += 64, B_c_ptr += 64)
-						{
-
-							sum_vec = zq_mm_fmadd_ps(_mm256_load_ps(A_c_ptr), _mm256_load_ps(B_c_ptr), sum_vec);
-							sum_vec = zq_mm_fmadd_ps(_mm256_load_ps(A_c_ptr + 8), _mm256_load_ps(B_c_ptr + 8), sum_vec);
-							sum_vec = zq_mm_fmadd_ps(_mm256_load_ps(A_c_ptr + 16), _mm256_load_ps(B_c_ptr + 16), sum_vec);
-							sum_vec = zq_mm_fmadd_ps(_mm256_load_ps(A_c_ptr + 24), _mm256_load_ps(B_c_ptr + 24), sum_vec);
-							sum_vec = zq_mm_fmadd_ps(_mm256_load_ps(A_c_ptr + 32), _mm256_load_ps(B_c_ptr + 32), sum_vec);
-							sum_vec = zq_mm_fmadd_ps(_mm256_load_ps(A_c_ptr + 40), _mm256_load_ps(B_c_ptr + 40), sum_vec);
-							sum_vec = zq_mm_fmadd_ps(_mm256_load_ps(A_c_ptr + 48), _mm256_load_ps(B_c_ptr + 48), sum_vec);
-							sum_vec = zq_mm_fmadd_ps(_mm256_load_ps(A_c_ptr + 56), _mm256_load_ps(B_c_ptr + 56), sum_vec);
-						}
-						_mm256_store_ps(q, sum_vec);
-						_mm_store_ps(q, _mm_add_ps(_mm_load_ps(q), _mm_load_ps(q + 4)));
-						*(Cptr++) = q[0] + q[1] + q[2] + q[3];
-					}
-				}
-
-			}
-		}
+		for(int i = 0;i < iters;i++)
+			zq_gemm_32f_align256bit_AnoTrans_Btrans(M, N, K, A, padK, B, padK, C1,N );
 		t2 = omp_get_wtime();
 		time1 = t2 - t1;
 		mul_count = (double)M*N*K*iters;
 		gflops = mul_count / (1 << 30) / (t2 - t1);
-		//printf("C[0] = %f\n", C[0]);
-		printf("%d x %d x %d * %d = %.3e, time = %.3f s, my gflops = %.3f\n", M, N, K, iters, mul_count, time1, gflops);
-
-	}
-	else if (K % 32 == 0)
-	{
-		for (int it = 0; it < iters; it++)
-		{
-			for (int m = 0; m < M; m++)
-			{
-				for (int n = 0; n < N; n++)
-				{
-					__m256 sum_vec = _mm256_setzero_ps();
-					float* Aptr = A + m*K;
-					float* Bptr = B + n*K;
-					for (int k = 0; k < K; k += 32, Aptr += 32, Bptr += 32)
-					{
-
-						sum_vec = zq_mm_fmadd_ps(_mm256_load_ps(Aptr), _mm256_load_ps(Bptr), sum_vec);
-						sum_vec = zq_mm_fmadd_ps(_mm256_load_ps(Aptr + 8), _mm256_load_ps(Bptr + 8), sum_vec);
-						sum_vec = zq_mm_fmadd_ps(_mm256_load_ps(Aptr + 16), _mm256_load_ps(Bptr + 16), sum_vec);
-						sum_vec = zq_mm_fmadd_ps(_mm256_load_ps(Aptr + 24), _mm256_load_ps(Bptr + 24), sum_vec);
-						
-					}
-					_mm256_store_ps(q, sum_vec);
-					_mm_store_ps(q, _mm_add_ps(_mm_load_ps(q), _mm_load_ps(q + 4)));
-					C[m*N + n] = q[0] + q[1] + q[2] + q[3];
-				}
-			}
-
-		}
-		t2 = omp_get_wtime();
-		time1 = t2 - t1;
-		mul_count = (double)M*N*K*iters;
-		gflops = mul_count / (1 << 30) / (t2 - t1);
-		//printf("C[0] = %f\n", C[0]);
-		printf("%d x %d x %d * %d = %.3e, time = %.3f s, my gflops = %.3f\n", M, N, K, iters, mul_count, time1, gflops);
-	}
-	else if (K % 16 == 0)
-	{
-		for (int it = 0; it < iters; it++)
-		{
-			for (int m = 0; m < M; m++)
-			{
-				for (int n = 0; n < N; n++)
-				{
-					__m256 sum_vec = _mm256_setzero_ps();
-					float* Aptr = A + m*K;
-					float* Bptr = B + n*K;
-					for (int k = 0; k < K; k += 16, Aptr += 16, Bptr += 16)
-					{
-						sum_vec = zq_mm_fmadd_ps(_mm256_load_ps(Aptr), _mm256_load_ps(Bptr), sum_vec);
-						sum_vec = zq_mm_fmadd_ps(_mm256_load_ps(Aptr+8), _mm256_load_ps(Bptr+8), sum_vec);
-					}
-					_mm256_store_ps(q, sum_vec);
-					_mm_store_ps(q, _mm_add_ps(_mm_load_ps(q), _mm_load_ps(q + 4)));
-					C[m*N + n] = q[0] + q[1] + q[2] + q[3];
-				}
-			}
-
-		}
-		t2 = omp_get_wtime();
-		time1 = t2 - t1;
-		mul_count = (double)M*N*K*iters;
-		gflops = mul_count / (1 << 30) / (t2 - t1);
-		//printf("C[0] = %f\n", C[0]);
-		printf("%d x %d x %d * %d = %.3e, time = %.3f s, my gflops = %.3f\n", M, N, K, iters, mul_count, time1, gflops);
-	}
-	else if (K % 8 == 0)
-	{
-		for (int it = 0; it < iters; it++)
-		{
-			for (int m = 0; m < M; m++)
-			{
-				for (int n = 0; n < N; n++)
-				{
-					__m256 sum_vec = _mm256_setzero_ps();
-					float* Aptr = A + m*K;
-					float* Bptr = B + n*K;
-					for (int k = 0; k < K; k += 8, Aptr += 8, Bptr += 8)
-					{
-						sum_vec = zq_mm_fmadd_ps(_mm256_load_ps(Aptr), _mm256_load_ps(Bptr), sum_vec);
-					}
-					_mm256_store_ps(q, sum_vec);
-					_mm_store_ps(q, _mm_add_ps(_mm_load_ps(q), _mm_load_ps(q + 4)));
-					C[m*N + n] = q[0] + q[1] + q[2] + q[3];
-				}
-			}
-
-		}
-		t2 = omp_get_wtime();
-		time1 = t2 - t1;
-		mul_count = (double)M*N*K*iters;
-		gflops = mul_count / (1 << 30) / (t2 - t1);
-		//printf("C[0] = %f\n", C[0]);
-		printf("%d x %d x %d * %d = %.3e, time = %.3f s, my gflops = %.3f\n", M, N, K, iters, mul_count, time1, gflops);
-	}
-	else if (K % 4 == 0)
-	{
-		for (int it = 0; it < iters; it++)
-		{
-			for (int m = 0; m < M; m++)
-			{
-				for (int n = 0; n < N; n++)
-				{
-					__m128 sum_vec = _mm_setzero_ps();
-					float* Aptr = A + m*K;
-					float* Bptr = B + n*K;
-					for (int k = 0; k < K; k += 4, Aptr += 4, Bptr += 4)
-					{
-						sum_vec = _mm_fmadd_ps(_mm_load_ps(Aptr), _mm_load_ps(Bptr), sum_vec);
-					}
-					_mm_store_ps(q, sum_vec);
-					C[m*N + n] = q[0] + q[1] + q[2] + q[3];
-				}
-			}
-
-		}
-		t2 = omp_get_wtime();
-		time1 = t2 - t1;
-		mul_count = (double)M*N*K*iters;
-		gflops = mul_count / (1 << 30) / (t2 - t1);
-		//printf("C[0] = %f\n", C[0]);
+		//printf("C1[0] = %f\n", C1[0]);
 		printf("%d x %d x %d * %d = %.3e, time = %.3f s, my gflops = %.3f\n", M, N, K, iters, mul_count, time1, gflops);
 	}
 
@@ -348,10 +154,389 @@ double _test_gemm(int M, int N, int K, int iters = 1000)
 	t1 = omp_get_wtime();
 	for (int i = 0; i < iters; i++)
 	{
-		cblas_sgemm(CblasRowMajor, CblasNoTrans, CblasTrans, M, N, K, 1.0, A, K, B, K, 0, C, N);
-		
+		cblas_sgemm(CblasRowMajor, CblasNoTrans, CblasTrans, M, N, K, 1.0, A, padK, B, padK, 0, C2, N);
 	}
-	//printf("C[0] = %f\n", C[0]);
+	//printf("C2[0] = %f\n", C2[0]);
+	t2 = omp_get_wtime();
+	mul_count = (double)M*N*K*iters;
+	gflops = mul_count / (1 << 30) / (t2 - t1);
+	double  time2 = t2 - t1;
+	printf("%d x %d x %d * %d = %.3e, time = %.3f s, gemm gflops = %.3f\n", M, N, K, iters, mul_count, time2, gflops);
+
+	printf("check = %s\n", check_value(M, N, C1, N, C2, N, thresh,show) ? "True" : "False");
+	_aligned_free(A);
+	_aligned_free(B);
+	_aligned_free(C1);
+	_aligned_free(C2);
+	_aligned_free(q);
+
+
+	return __min(time1, time2) / iters;
+}
+
+double _test_gemm2(int M, int N, int K, int iters = 1000)
+{
+	int padK = (K + 7) >> 3 << 3;
+	float* A = (float*)_aligned_malloc(M*padK * sizeof(float), 32);
+	float* B = (float*)_aligned_malloc(padK*N * sizeof(float), 32);
+	float* C = (float*)_aligned_malloc(M*N * sizeof(float), 32);
+	float* q1 = (float*)_aligned_malloc(32, 32);
+	float* q2 = (float*)_aligned_malloc(32, 32);
+	float* q3 = (float*)_aligned_malloc(32, 32);
+	float* q4 = (float*)_aligned_malloc(32, 32);
+
+
+	for (int i = 0; i < M*padK; i++)
+		A[i] = rand() % 10001 / 5000.0f - 1.0f;
+	for (int i = 0; i < padK*N; i++)
+		B[i] = rand() % 10001 / 5000.0f - 1.0f;
+	double t1 = omp_get_wtime(), t2, mul_count, gflops;
+	double time1 = FLT_MAX;
+	if (K % 64 == 0)
+	{
+		for (int it = 0; it < iters; it++)
+		{
+			float* Aptr = A;
+			float* A_c_ptr;
+			float* Cptr = C;
+			for (int m = 0; m < M; m++, Aptr += K)
+			{
+				float* Bptr = B;
+				float* B_c_ptr1;
+				float* B_c_ptr2;
+				float* B_c_ptr3;
+				float* B_c_ptr4;
+				int n, k;
+				for (n = 0; n < N - 3; n += 4, Bptr += padK)
+				{
+					register __m256 sum_vec1 = _mm256_setzero_ps();
+					register __m256 sum_vec2 = _mm256_setzero_ps();
+					register __m256 sum_vec3 = _mm256_setzero_ps();
+					register __m256 sum_vec4 = _mm256_setzero_ps();
+					register __m256 a_vec;
+					float* Bptr1 = Bptr;
+					float* Bptr2 = Bptr1 + padK;
+					float* Bptr3 = Bptr2 + padK;
+					float* Bptr4 = Bptr3 + padK;
+					for (k = 0, A_c_ptr = Aptr, B_c_ptr1 = Bptr1, B_c_ptr2 = Bptr2, B_c_ptr3 = Bptr3, B_c_ptr4 = Bptr4;
+						k < padK;
+						k += 64, A_c_ptr += 64, B_c_ptr1 += 64, B_c_ptr2 += 64, B_c_ptr3 += 64, B_c_ptr4 += 64)
+					{
+						a_vec = _mm256_load_ps(A_c_ptr);
+						sum_vec1 = zq_mm_fmadd_ps(a_vec, _mm256_load_ps(B_c_ptr1), sum_vec1);
+						sum_vec2 = zq_mm_fmadd_ps(a_vec, _mm256_load_ps(B_c_ptr2), sum_vec2);
+						sum_vec3 = zq_mm_fmadd_ps(a_vec, _mm256_load_ps(B_c_ptr3), sum_vec3);
+						sum_vec4 = zq_mm_fmadd_ps(a_vec, _mm256_load_ps(B_c_ptr4), sum_vec4);
+						a_vec = _mm256_load_ps(A_c_ptr + 8);
+						sum_vec1 = zq_mm_fmadd_ps(a_vec, _mm256_load_ps(B_c_ptr1 + 8), sum_vec1);
+						sum_vec2 = zq_mm_fmadd_ps(a_vec, _mm256_load_ps(B_c_ptr2 + 8), sum_vec2);
+						sum_vec3 = zq_mm_fmadd_ps(a_vec, _mm256_load_ps(B_c_ptr3 + 8), sum_vec3);
+						sum_vec4 = zq_mm_fmadd_ps(a_vec, _mm256_load_ps(B_c_ptr4 + 8), sum_vec4);
+						a_vec = _mm256_load_ps(A_c_ptr + 16);
+						sum_vec1 = zq_mm_fmadd_ps(a_vec, _mm256_load_ps(B_c_ptr1 + 16), sum_vec1);
+						sum_vec2 = zq_mm_fmadd_ps(a_vec, _mm256_load_ps(B_c_ptr2 + 16), sum_vec2);
+						sum_vec3 = zq_mm_fmadd_ps(a_vec, _mm256_load_ps(B_c_ptr3 + 16), sum_vec3);
+						sum_vec4 = zq_mm_fmadd_ps(a_vec, _mm256_load_ps(B_c_ptr4 + 16), sum_vec4);
+						a_vec = _mm256_load_ps(A_c_ptr + 24);
+						sum_vec1 = zq_mm_fmadd_ps(a_vec, _mm256_load_ps(B_c_ptr1 + 24), sum_vec1);
+						sum_vec2 = zq_mm_fmadd_ps(a_vec, _mm256_load_ps(B_c_ptr2 + 24), sum_vec2);
+						sum_vec3 = zq_mm_fmadd_ps(a_vec, _mm256_load_ps(B_c_ptr3 + 24), sum_vec3);
+						sum_vec4 = zq_mm_fmadd_ps(a_vec, _mm256_load_ps(B_c_ptr4 + 24), sum_vec4);
+						a_vec = _mm256_load_ps(A_c_ptr + 32);
+						sum_vec1 = zq_mm_fmadd_ps(a_vec, _mm256_load_ps(B_c_ptr1 + 32), sum_vec1);
+						sum_vec2 = zq_mm_fmadd_ps(a_vec, _mm256_load_ps(B_c_ptr2 + 32), sum_vec2);
+						sum_vec3 = zq_mm_fmadd_ps(a_vec, _mm256_load_ps(B_c_ptr3 + 32), sum_vec3);
+						sum_vec4 = zq_mm_fmadd_ps(a_vec, _mm256_load_ps(B_c_ptr4 + 32), sum_vec4);
+						a_vec = _mm256_load_ps(A_c_ptr + 40);
+						sum_vec1 = zq_mm_fmadd_ps(a_vec, _mm256_load_ps(B_c_ptr1 + 40), sum_vec1);
+						sum_vec2 = zq_mm_fmadd_ps(a_vec, _mm256_load_ps(B_c_ptr2 + 40), sum_vec2);
+						sum_vec3 = zq_mm_fmadd_ps(a_vec, _mm256_load_ps(B_c_ptr3 + 40), sum_vec3);
+						sum_vec4 = zq_mm_fmadd_ps(a_vec, _mm256_load_ps(B_c_ptr4 + 40), sum_vec4);
+						a_vec = _mm256_load_ps(A_c_ptr + 48);
+						sum_vec1 = zq_mm_fmadd_ps(a_vec, _mm256_load_ps(B_c_ptr1 + 48), sum_vec1);
+						sum_vec2 = zq_mm_fmadd_ps(a_vec, _mm256_load_ps(B_c_ptr2 + 48), sum_vec2);
+						sum_vec3 = zq_mm_fmadd_ps(a_vec, _mm256_load_ps(B_c_ptr3 + 48), sum_vec3);
+						sum_vec4 = zq_mm_fmadd_ps(a_vec, _mm256_load_ps(B_c_ptr4 + 48), sum_vec4);
+						a_vec = _mm256_load_ps(A_c_ptr + 56);
+						sum_vec1 = zq_mm_fmadd_ps(a_vec, _mm256_load_ps(B_c_ptr1 + 56), sum_vec1);
+						sum_vec2 = zq_mm_fmadd_ps(a_vec, _mm256_load_ps(B_c_ptr2 + 56), sum_vec2);
+						sum_vec3 = zq_mm_fmadd_ps(a_vec, _mm256_load_ps(B_c_ptr3 + 56), sum_vec3);
+						sum_vec4 = zq_mm_fmadd_ps(a_vec, _mm256_load_ps(B_c_ptr4 + 56), sum_vec4);
+					}
+					_mm256_store_ps(q1, sum_vec1);
+					_mm256_store_ps(q2, sum_vec2);
+					_mm256_store_ps(q3, sum_vec3);
+					_mm256_store_ps(q4, sum_vec4);
+					_mm_store_ps(q1, _mm_add_ps(_mm_load_ps(q1), _mm_load_ps(q1 + 4)));
+					_mm_store_ps(q2, _mm_add_ps(_mm_load_ps(q2), _mm_load_ps(q2 + 4)));
+					_mm_store_ps(q3, _mm_add_ps(_mm_load_ps(q3), _mm_load_ps(q3 + 4)));
+					_mm_store_ps(q4, _mm_add_ps(_mm_load_ps(q4), _mm_load_ps(q4 + 4)));
+					*(Cptr++) = q1[0] + q1[1] + q1[2] + q1[3];
+					*(Cptr++) = q2[0] + q2[1] + q2[2] + q2[3];
+					*(Cptr++) = q3[0] + q3[1] + q3[2] + q3[3];
+					*(Cptr++) = q4[0] + q4[1] + q4[2] + q4[3];
+				}
+				for (; n < N; n++, Bptr += padK)
+				{
+					register __m256 sum_vec1 = _mm256_setzero_ps();
+					register __m256 a_vec;
+					float* Bptr1 = Bptr;
+					for (k = 0, A_c_ptr = Aptr, B_c_ptr1 = Bptr1;
+						k < padK;
+						k += 64, A_c_ptr += 64, B_c_ptr1 += 64)
+					{
+						a_vec = _mm256_load_ps(A_c_ptr);
+						sum_vec1 = zq_mm_fmadd_ps(a_vec, _mm256_load_ps(B_c_ptr1), sum_vec1);
+						a_vec = _mm256_load_ps(A_c_ptr + 8);
+						sum_vec1 = zq_mm_fmadd_ps(a_vec, _mm256_load_ps(B_c_ptr1 + 8), sum_vec1);
+						a_vec = _mm256_load_ps(A_c_ptr + 16);
+						sum_vec1 = zq_mm_fmadd_ps(a_vec, _mm256_load_ps(B_c_ptr1 + 16), sum_vec1);
+						a_vec = _mm256_load_ps(A_c_ptr + 24);
+						sum_vec1 = zq_mm_fmadd_ps(a_vec, _mm256_load_ps(B_c_ptr1 + 24), sum_vec1);
+						a_vec = _mm256_load_ps(A_c_ptr + 32);
+						sum_vec1 = zq_mm_fmadd_ps(a_vec, _mm256_load_ps(B_c_ptr1 + 32), sum_vec1);
+						a_vec = _mm256_load_ps(A_c_ptr + 40);
+						sum_vec1 = zq_mm_fmadd_ps(a_vec, _mm256_load_ps(B_c_ptr1 + 40), sum_vec1);
+						a_vec = _mm256_load_ps(A_c_ptr + 48);
+						sum_vec1 = zq_mm_fmadd_ps(a_vec, _mm256_load_ps(B_c_ptr1 + 48), sum_vec1);
+						a_vec = _mm256_load_ps(A_c_ptr + 56);
+						sum_vec1 = zq_mm_fmadd_ps(a_vec, _mm256_load_ps(B_c_ptr1 + 56), sum_vec1);
+					}
+					_mm256_store_ps(q1, sum_vec1);
+					_mm_store_ps(q1, _mm_add_ps(_mm_load_ps(q1), _mm_load_ps(q1 + 4)));
+					*(Cptr++) = q1[0] + q1[1] + q1[2] + q1[3];
+				}
+			}
+
+		}
+
+		t2 = omp_get_wtime();
+		time1 = t2 - t1;
+		mul_count = (double)M*N*K*iters;
+		gflops = mul_count / (1 << 30) / (t2 - t1);
+		printf("C[0] = %f\n", C[0]);
+		printf("%d x %d x %d * %d = %.3e, time = %.3f s, my gflops = %.3f\n", M, N, K, iters, mul_count, time1, gflops);
+
+	}
+	else if (K % 32 == 0)
+	{
+		for (int it = 0; it < iters; it++)
+		{
+			float* Aptr = A;
+			float* A_c_ptr;
+			float* Cptr = C;
+			for (int m = 0; m < M; m++, Aptr += padK)
+			{
+				float* Bptr = B;
+				float* B_c_ptr1;
+				float* B_c_ptr2;
+				float* B_c_ptr3;
+				float* B_c_ptr4;
+				int n, k;
+				for (n = 0; n < N - 3; n += 4, Bptr += padK)
+				{
+					register __m256 sum_vec1 = _mm256_setzero_ps();
+					register __m256 sum_vec2 = _mm256_setzero_ps();
+					register __m256 sum_vec3 = _mm256_setzero_ps();
+					register __m256 sum_vec4 = _mm256_setzero_ps();
+					register __m256 a_vec;
+					float* Bptr1 = Bptr;
+					float* Bptr2 = Bptr1 + padK;
+					float* Bptr3 = Bptr2 + padK;
+					float* Bptr4 = Bptr3 + padK;
+					for (k = 0, A_c_ptr = Aptr, B_c_ptr1 = Bptr1, B_c_ptr2 = Bptr2, B_c_ptr3 = Bptr3, B_c_ptr4 = Bptr4;
+						k < padK;
+						k += 32, A_c_ptr += 32, B_c_ptr1 += 32, B_c_ptr2 += 32, B_c_ptr3 += 32, B_c_ptr4 += 32)
+					{
+						a_vec = _mm256_load_ps(A_c_ptr);
+						sum_vec1 = zq_mm_fmadd_ps(a_vec, _mm256_load_ps(B_c_ptr1), sum_vec1);
+						sum_vec2 = zq_mm_fmadd_ps(a_vec, _mm256_load_ps(B_c_ptr2), sum_vec2);
+						sum_vec3 = zq_mm_fmadd_ps(a_vec, _mm256_load_ps(B_c_ptr3), sum_vec3);
+						sum_vec4 = zq_mm_fmadd_ps(a_vec, _mm256_load_ps(B_c_ptr4), sum_vec4);
+						a_vec = _mm256_load_ps(A_c_ptr + 8);
+						sum_vec1 = zq_mm_fmadd_ps(a_vec, _mm256_load_ps(B_c_ptr1 + 8), sum_vec1);
+						sum_vec2 = zq_mm_fmadd_ps(a_vec, _mm256_load_ps(B_c_ptr2 + 8), sum_vec2);
+						sum_vec3 = zq_mm_fmadd_ps(a_vec, _mm256_load_ps(B_c_ptr3 + 8), sum_vec3);
+						sum_vec4 = zq_mm_fmadd_ps(a_vec, _mm256_load_ps(B_c_ptr4 + 8), sum_vec4);
+						a_vec = _mm256_load_ps(A_c_ptr + 16);
+						sum_vec1 = zq_mm_fmadd_ps(a_vec, _mm256_load_ps(B_c_ptr1 + 16), sum_vec1);
+						sum_vec2 = zq_mm_fmadd_ps(a_vec, _mm256_load_ps(B_c_ptr2 + 16), sum_vec2);
+						sum_vec3 = zq_mm_fmadd_ps(a_vec, _mm256_load_ps(B_c_ptr3 + 16), sum_vec3);
+						sum_vec4 = zq_mm_fmadd_ps(a_vec, _mm256_load_ps(B_c_ptr4 + 16), sum_vec4);
+						a_vec = _mm256_load_ps(A_c_ptr + 24);
+						sum_vec1 = zq_mm_fmadd_ps(a_vec, _mm256_load_ps(B_c_ptr1 + 24), sum_vec1);
+						sum_vec2 = zq_mm_fmadd_ps(a_vec, _mm256_load_ps(B_c_ptr2 + 24), sum_vec2);
+						sum_vec3 = zq_mm_fmadd_ps(a_vec, _mm256_load_ps(B_c_ptr3 + 24), sum_vec3);
+						sum_vec4 = zq_mm_fmadd_ps(a_vec, _mm256_load_ps(B_c_ptr4 + 24), sum_vec4);
+					}
+					_mm256_store_ps(q1, sum_vec1);
+					_mm256_store_ps(q2, sum_vec2);
+					_mm256_store_ps(q3, sum_vec3);
+					_mm256_store_ps(q4, sum_vec4);
+					_mm_store_ps(q1, _mm_add_ps(_mm_load_ps(q1), _mm_load_ps(q1 + 4)));
+					_mm_store_ps(q2, _mm_add_ps(_mm_load_ps(q2), _mm_load_ps(q2 + 4)));
+					_mm_store_ps(q3, _mm_add_ps(_mm_load_ps(q3), _mm_load_ps(q3 + 4)));
+					_mm_store_ps(q4, _mm_add_ps(_mm_load_ps(q4), _mm_load_ps(q4 + 4)));
+					*(Cptr++) = q1[0] + q1[1] + q1[2] + q1[3];
+					*(Cptr++) = q2[0] + q2[1] + q2[2] + q2[3];
+					*(Cptr++) = q3[0] + q3[1] + q3[2] + q3[3];
+					*(Cptr++) = q4[0] + q4[1] + q4[2] + q4[3];
+				}
+				for (; n < N; n++, Bptr += padK)
+				{
+					register __m256 sum_vec1 = _mm256_setzero_ps();
+					register __m256 a_vec;
+					float* Bptr1 = Bptr;
+					for (k = 0, A_c_ptr = Aptr, B_c_ptr1 = Bptr1;
+						k < K;
+						k += 32, A_c_ptr += 32, B_c_ptr1 += 32)
+					{
+						a_vec = _mm256_load_ps(A_c_ptr);
+						sum_vec1 = zq_mm_fmadd_ps(a_vec, _mm256_load_ps(B_c_ptr1), sum_vec1);
+						a_vec = _mm256_load_ps(A_c_ptr + 8);
+						sum_vec1 = zq_mm_fmadd_ps(a_vec, _mm256_load_ps(B_c_ptr1 + 8), sum_vec1);
+						a_vec = _mm256_load_ps(A_c_ptr + 16);
+						sum_vec1 = zq_mm_fmadd_ps(a_vec, _mm256_load_ps(B_c_ptr1 + 16), sum_vec1);
+						a_vec = _mm256_load_ps(A_c_ptr + 24);
+						sum_vec1 = zq_mm_fmadd_ps(a_vec, _mm256_load_ps(B_c_ptr1 + 24), sum_vec1);
+					}
+					_mm256_store_ps(q1, sum_vec1);
+					_mm_store_ps(q1, _mm_add_ps(_mm_load_ps(q1), _mm_load_ps(q1 + 4)));
+					*(Cptr++) = q1[0] + q1[1] + q1[2] + q1[3];
+				}
+			}
+
+		}
+
+		t2 = omp_get_wtime();
+		time1 = t2 - t1;
+		mul_count = (double)M*N*K*iters;
+		gflops = mul_count / (1 << 30) / (t2 - t1);
+		printf("C[0] = %f\n", C[0]);
+		printf("%d x %d x %d * %d = %.3e, time = %.3f s, my gflops = %.3f\n", M, N, K, iters, mul_count, time1, gflops);
+	}
+	else 
+	{
+		for (int it = 0; it < iters; it++)
+		{
+			float* Aptr = A;
+			float* A_c_ptr;
+			float* Cptr = C;
+			for (int m = 0; m < M; m++, Aptr += padK)
+			{
+				float* Bptr = B;
+				float* B_c_ptr1;
+				float* B_c_ptr2;
+				float* B_c_ptr3;
+				float* B_c_ptr4;
+				int n, k;
+				for (n = 0; n < N - 3; n += 4, Bptr += padK)
+				{
+					register __m256 sum_vec1 = _mm256_setzero_ps();
+					register __m256 sum_vec2 = _mm256_setzero_ps();
+					register __m256 sum_vec3 = _mm256_setzero_ps();
+					register __m256 sum_vec4 = _mm256_setzero_ps();
+					register __m256 a_vec;
+					float* Bptr1 = Bptr;
+					float* Bptr2 = Bptr1 + padK;
+					float* Bptr3 = Bptr2 + padK;
+					float* Bptr4 = Bptr3 + padK;
+					for (k = 0, A_c_ptr = Aptr, B_c_ptr1 = Bptr1, B_c_ptr2 = Bptr2, B_c_ptr3 = Bptr3, B_c_ptr4 = Bptr4;
+						k < padK -31;
+						k += 32, A_c_ptr += 32, B_c_ptr1 += 32, B_c_ptr2 += 32, B_c_ptr3 += 32, B_c_ptr4 += 32)
+					{
+						a_vec = _mm256_load_ps(A_c_ptr);
+						sum_vec1 = zq_mm_fmadd_ps(a_vec, _mm256_load_ps(B_c_ptr1), sum_vec1);
+						sum_vec2 = zq_mm_fmadd_ps(a_vec, _mm256_load_ps(B_c_ptr2), sum_vec2);
+						sum_vec3 = zq_mm_fmadd_ps(a_vec, _mm256_load_ps(B_c_ptr3), sum_vec3);
+						sum_vec4 = zq_mm_fmadd_ps(a_vec, _mm256_load_ps(B_c_ptr4), sum_vec4);
+						a_vec = _mm256_load_ps(A_c_ptr + 8);
+						sum_vec1 = zq_mm_fmadd_ps(a_vec, _mm256_load_ps(B_c_ptr1 + 8), sum_vec1);
+						sum_vec2 = zq_mm_fmadd_ps(a_vec, _mm256_load_ps(B_c_ptr2 + 8), sum_vec2);
+						sum_vec3 = zq_mm_fmadd_ps(a_vec, _mm256_load_ps(B_c_ptr3 + 8), sum_vec3);
+						sum_vec4 = zq_mm_fmadd_ps(a_vec, _mm256_load_ps(B_c_ptr4 + 8), sum_vec4);
+						a_vec = _mm256_load_ps(A_c_ptr + 16);
+						sum_vec1 = zq_mm_fmadd_ps(a_vec, _mm256_load_ps(B_c_ptr1 + 16), sum_vec1);
+						sum_vec2 = zq_mm_fmadd_ps(a_vec, _mm256_load_ps(B_c_ptr2 + 16), sum_vec2);
+						sum_vec3 = zq_mm_fmadd_ps(a_vec, _mm256_load_ps(B_c_ptr3 + 16), sum_vec3);
+						sum_vec4 = zq_mm_fmadd_ps(a_vec, _mm256_load_ps(B_c_ptr4 + 16), sum_vec4);
+						a_vec = _mm256_load_ps(A_c_ptr + 24);
+						sum_vec1 = zq_mm_fmadd_ps(a_vec, _mm256_load_ps(B_c_ptr1 + 24), sum_vec1);
+						sum_vec2 = zq_mm_fmadd_ps(a_vec, _mm256_load_ps(B_c_ptr2 + 24), sum_vec2);
+						sum_vec3 = zq_mm_fmadd_ps(a_vec, _mm256_load_ps(B_c_ptr3 + 24), sum_vec3);
+						sum_vec4 = zq_mm_fmadd_ps(a_vec, _mm256_load_ps(B_c_ptr4 + 24), sum_vec4);
+					}
+					for (;k < padK;
+						k += 8, A_c_ptr += 8, B_c_ptr1 += 8, B_c_ptr2 += 8, B_c_ptr3 += 8, B_c_ptr4 += 8)
+					{
+						a_vec = _mm256_load_ps(A_c_ptr);
+						sum_vec1 = zq_mm_fmadd_ps(a_vec, _mm256_load_ps(B_c_ptr1), sum_vec1);
+						sum_vec2 = zq_mm_fmadd_ps(a_vec, _mm256_load_ps(B_c_ptr2), sum_vec2);
+						sum_vec3 = zq_mm_fmadd_ps(a_vec, _mm256_load_ps(B_c_ptr3), sum_vec3);
+						sum_vec4 = zq_mm_fmadd_ps(a_vec, _mm256_load_ps(B_c_ptr4), sum_vec4);
+					}
+					_mm256_store_ps(q1, sum_vec1);
+					_mm256_store_ps(q2, sum_vec2);
+					_mm256_store_ps(q3, sum_vec3);
+					_mm256_store_ps(q4, sum_vec4);
+					_mm_store_ps(q1, _mm_add_ps(_mm_load_ps(q1), _mm_load_ps(q1 + 4)));
+					_mm_store_ps(q2, _mm_add_ps(_mm_load_ps(q2), _mm_load_ps(q2 + 4)));
+					_mm_store_ps(q3, _mm_add_ps(_mm_load_ps(q3), _mm_load_ps(q3 + 4)));
+					_mm_store_ps(q4, _mm_add_ps(_mm_load_ps(q4), _mm_load_ps(q4 + 4)));
+					*(Cptr++) = q1[0] + q1[1] + q1[2] + q1[3];
+					*(Cptr++) = q2[0] + q2[1] + q2[2] + q2[3];
+					*(Cptr++) = q3[0] + q3[1] + q3[2] + q3[3];
+					*(Cptr++) = q4[0] + q4[1] + q4[2] + q4[3];
+				}
+				for (; n < N; n++, Bptr += padK)
+				{
+					register __m256 sum_vec1 = _mm256_setzero_ps();
+					register __m256 a_vec;
+					float* Bptr1 = Bptr;
+					for (k = 0, A_c_ptr = Aptr, B_c_ptr1 = Bptr1;
+						k < padK -31;
+						k += 32, A_c_ptr += 32, B_c_ptr1 += 32)
+					{
+						a_vec = _mm256_load_ps(A_c_ptr);
+						sum_vec1 = zq_mm_fmadd_ps(a_vec, _mm256_load_ps(B_c_ptr1), sum_vec1);
+						a_vec = _mm256_load_ps(A_c_ptr + 8);
+						sum_vec1 = zq_mm_fmadd_ps(a_vec, _mm256_load_ps(B_c_ptr1 + 8), sum_vec1);
+						a_vec = _mm256_load_ps(A_c_ptr + 16);
+						sum_vec1 = zq_mm_fmadd_ps(a_vec, _mm256_load_ps(B_c_ptr1 + 16), sum_vec1);
+						a_vec = _mm256_load_ps(A_c_ptr + 24);
+						sum_vec1 = zq_mm_fmadd_ps(a_vec, _mm256_load_ps(B_c_ptr1 + 24), sum_vec1);
+					}
+					for (; k < padK;
+						k += 8, A_c_ptr += 8, B_c_ptr1 += 8)
+					{
+						a_vec = _mm256_load_ps(A_c_ptr);
+						sum_vec1 = zq_mm_fmadd_ps(a_vec, _mm256_load_ps(B_c_ptr1), sum_vec1);
+					}
+					_mm256_store_ps(q1, sum_vec1);
+					_mm_store_ps(q1, _mm_add_ps(_mm_load_ps(q1), _mm_load_ps(q1 + 4)));
+					*(Cptr++) = q1[0] + q1[1] + q1[2] + q1[3];
+				}
+			}
+
+		}
+
+		t2 = omp_get_wtime();
+		time1 = t2 - t1;
+		mul_count = (double)M*N*K*iters;
+		gflops = mul_count / (1 << 30) / (t2 - t1);
+		printf("C[0] = %f\n", C[0]);
+		printf("%d x %d x %d * %d = %.3e, time = %.3f s, my gflops = %.3f\n", M, N, K, iters, mul_count, time1, gflops);
+	}
+
+
+
+	t1 = omp_get_wtime();
+	for (int i = 0; i < iters; i++)
+	{
+		cblas_sgemm(CblasRowMajor, CblasNoTrans, CblasTrans, M, N, padK, 1.0, A, padK, B, padK, 0, C, N);
+
+	}
+	printf("C[0] = %f\n", C[0]);
 	t2 = omp_get_wtime();
 	mul_count = (double)M*N*K*iters;
 	gflops = mul_count / (1 << 30) / (t2 - t1);
@@ -361,7 +546,10 @@ double _test_gemm(int M, int N, int K, int iters = 1000)
 	_aligned_free(A);
 	_aligned_free(B);
 	_aligned_free(C);
-	_aligned_free(q);
+	_aligned_free(q1);
+	_aligned_free(q2);
+	_aligned_free(q3);
+	_aligned_free(q4);
 
 
 	return __min(time1, time2) / iters;
@@ -448,10 +636,15 @@ float _test_im2col(int in_H, int in_W, int filter_N, int filter_C, int stride_H,
 
 int main()
 {
-	openblas_set_num_threads(1);
-	double total_sum = 0;
-	//_test_gemm_value();
-	/*total_sum += 1*_test_im2col(112, 96, 64, 3, 2, 2,1000);
+	int num_threads = 1;
+#if ZQ_CNN_USE_BLAS_GEMM
+	openblas_set_num_threads(num_threads);
+#elif ZQ_CNN_USE_MKL_GEMM
+	mkl_set_num_threads(num_threads);
+#endif
+	/*double total_sum = 0;
+	_test_gemm_value();
+	total_sum += 1*_test_im2col(112, 96, 64, 3, 2, 2,1000);
 	total_sum += 2 * _test_im2col(56, 48, 64, 64, 1, 1,1000);
 	total_sum+=1*_test_im2col(56, 48, 128, 64, 2, 2,1000);
 	total_sum+=4*_test_im2col(28, 24, 128, 128, 1, 1,1000);
@@ -462,6 +655,15 @@ int main()
 	total_sum += _test_gemm(1 * 1, 512, 7 * 6 * 512,1000);
 	printf("total: %.3f\n", total_sum);*/
 
+	for (int i = 0; i < 1000; i++)
+	{
+		int M = rand()%1000 + 1;
+		int N = rand() % 1000 + 1;
+		int K = rand() % 1000 + 1;
+		_test_gemm(M, N, K, 1, 1e-4, true);
+	}
+	
+
 	//compare gemm the spherefacenet04
 	_test_gemm(56 * 48, 64, 3 * 3 * 3,1000);
 	_test_gemm(56 * 48, 64, 3 * 3 * 4,1000);
@@ -471,12 +673,12 @@ int main()
 	_test_gemm(1 * 1, 512, 7 * 6 * 512,1000);
 
 	//compare gemv
-	/*_test_gemv(56 * 48, 64, 3 * 3 * 3,1000);
-	_test_gemv(56 * 48, 64, 3 * 3 * 4, 1000);
-	_test_gemv(28 * 24, 128, 3 * 3 * 64,1000);
-	_test_gemv(14 * 12, 256, 3 * 3 * 128,1000);
-	_test_gemv(7 * 6, 512, 3 * 3 * 256,1000);*/
-	_test_gemv(1 * 1, 512, 7 * 6 * 512,1000);
+	//_test_gemv(56 * 48, 64, 3 * 3 * 3,1000);
+	//_test_gemv(56 * 48, 64, 3 * 3 * 4, 1000);
+	//_test_gemv(28 * 24, 128, 3 * 3 * 64,1000);
+	//_test_gemv(14 * 12, 256, 3 * 3 * 128,1000);
+	//_test_gemv(7 * 6, 512, 3 * 3 * 256,1000);
+	//_test_gemv(1 * 1, 512, 7 * 6 * 512,1000);
 
 	//compare  MTCNN Pnet
 	_test_gemm(214 * 382, 10, 3 * 3 * 3, 1000);
@@ -491,7 +693,7 @@ int main()
 	
 
 	//other tests
-	/*_test_gemm(92, 128, 3 * 3 * 64);
+	_test_gemm(92, 128, 3 * 3 * 64);
 	_test_gemm(256,  2, 6 * 7 * 512);
 	_test_gemm(256, 4, 6 * 7 * 512);
 	_test_gemm(256, 10, 6 * 7 * 512);
@@ -507,6 +709,25 @@ int main()
 	_test_gemm(512, 512, 3 * 3 * 512);
 	_test_gemm(513, 512 + 1, 3 * 3 * 512 + 1);
 	_test_gemm(1024, 1024, 1024);
-	_test_gemm(1025, 1025, 1025);*/
+	_test_gemm(1025, 1025, 1025);
+
+	_test_gemm(1, 1024, 1024, 10000);
+	_test_gemm2(1, 1024, 1024, 10000);
+	_test_gemm(320 * 240, 16, 64, 1000);
+	_test_gemm2(320 * 240, 16, 64, 1000);
+	_test_gemm(105 * 189, 8, 3 * 3 * 16, 1000);
+	_test_gemm2(105 * 189, 8, 3 * 3 * 16, 1000);
+	_test_gemm(105 * 189, 16, 3 * 3 * 24, 1000);
+	_test_gemm2(105 * 189, 16, 3 * 3 * 24, 1000);
+	_test_gemm(105 * 189, 16, 3 * 3 * 32, 1000);
+	_test_gemm2(105 * 189, 16, 3 * 3 * 32, 1000);
+	_test_gemm(105 * 189, 24, 3 * 3 * 32, 1000);
+	_test_gemm2(105 * 189, 24, 3 * 3 * 32, 1000);
+	_test_gemm(105 * 189, 24, 3 * 3 * 48, 1000);
+	_test_gemm2(105 * 189, 24, 3 * 3 * 48, 1000);
+	_test_gemm(105 * 189, 32, 3 * 3 * 48, 1000);
+	_test_gemm2(105 * 189, 32, 3 * 3 * 48, 1000);
+	_test_gemm(105 * 189, 32, 3 * 3 * 64, 1000);
+	_test_gemm2(105 * 189, 32, 3 * 3 * 64, 1000);
 	return EXIT_SUCCESS;
 }

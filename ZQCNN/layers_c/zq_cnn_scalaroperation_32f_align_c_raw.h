@@ -15,7 +15,7 @@ void zq_cnn_scalaroperation_32f_align(
 	int out_sliceStep
 )
 {
-	zq_mm_type scalar_v = zq_mm_set1_ps(scalar);
+	register zq_mm_type scalar_v = zq_mm_set1_ps(scalar);
 	int n, h, w, c;
 	const float* in_slice_ptr, *in_row_ptr, *in_pix_ptr, *in_c_ptr;
 	float* out_slice_ptr, *out_row_ptr, *out_pix_ptr, *out_c_ptr;
@@ -242,7 +242,7 @@ void zq_cnn_scalaroperation_inplace_32f_align(
 	int in_sliceStep
 )
 {
-	zq_mm_type scalar_v = zq_mm_set1_ps(scalar);
+	register zq_mm_type scalar_v = zq_mm_set1_ps(scalar);
 	int n, h, w, c;
 	float* slice_ptr, *row_ptr, *pix_ptr, *c_ptr;
 
