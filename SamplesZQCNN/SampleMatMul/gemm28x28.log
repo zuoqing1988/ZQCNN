@@ -1,0 +1,265 @@
+784 x 16 x 16, cost = 1.622 s, MM7 gflops = 5.761
+784 x 16 x 16, cost = 4.605 s, MM8 gflops = 2.029
+784 x 16 x 16, cost = 1.349 s, MM9 gflops = 6.929
+784 x 16 x 16, cost = 4.765 s, MM10 gflops = 1.961
+784 x 16 x 16, cost = 1.293 s, MM11 gflops = 7.226
+784 x 16 x 16, cost = 4.779 s, MM12 gflops = 1.955
+check C0 C7 = True
+check C0 C8 = True
+check C0 C9 = True
+check C0 C10 = True
+check C0 C11 = True
+check C0 C12 = True
+784 x 32 x 16, cost = 1.880 s, MM7 gflops = 5.965
+784 x 32 x 16, cost = 5.863 s, MM8 gflops = 1.913
+784 x 32 x 16, cost = 1.704 s, MM9 gflops = 6.582
+784 x 32 x 16, cost = 6.215 s, MM10 gflops = 1.804
+784 x 32 x 16, cost = 1.531 s, MM11 gflops = 7.326
+784 x 32 x 16, cost = 5.939 s, MM12 gflops = 1.888
+check C0 C7 = True
+check C0 C8 = True
+check C0 C9 = True
+check C0 C10 = True
+check C0 C11 = True
+check C0 C12 = True
+784 x 64 x 16, cost = 2.746 s, MM7 gflops = 5.446
+784 x 64 x 16, cost = 6.986 s, MM8 gflops = 2.141
+784 x 64 x 16, cost = 2.184 s, MM9 gflops = 6.847
+784 x 64 x 16, cost = 7.776 s, MM10 gflops = 1.923
+784 x 64 x 16, cost = 2.159 s, MM11 gflops = 6.926
+784 x 64 x 16, cost = 8.201 s, MM12 gflops = 1.823
+check C0 C7 = True
+check C0 C8 = True
+check C0 C9 = True
+check C0 C10 = True
+check C0 C11 = True
+check C0 C12 = True
+784 x 128 x 16, cost = 2.508 s, MM7 gflops = 5.961
+784 x 128 x 16, cost = 7.190 s, MM8 gflops = 2.080
+784 x 128 x 16, cost = 2.196 s, MM9 gflops = 6.809
+784 x 128 x 16, cost = 7.549 s, MM10 gflops = 1.981
+784 x 128 x 16, cost = 2.372 s, MM11 gflops = 6.304
+784 x 128 x 16, cost = 7.759 s, MM12 gflops = 1.927
+check C0 C7 = True
+check C0 C8 = True
+check C0 C9 = True
+check C0 C10 = True
+check C0 C11 = True
+check C0 C12 = True
+784 x 32 x 32, cost = 4.004 s, MM7 gflops = 9.336
+784 x 32 x 32, cost = 6.915 s, MM8 gflops = 5.407
+784 x 32 x 32, cost = 3.937 s, MM9 gflops = 9.495
+784 x 32 x 32, cost = 5.948 s, MM10 gflops = 6.285
+784 x 32 x 32, cost = 4.038 s, MM11 gflops = 9.259
+784 x 32 x 32, cost = 6.267 s, MM12 gflops = 5.965
+check C0 C7 = True
+check C0 C8 = True
+check C0 C9 = True
+check C0 C10 = True
+check C0 C11 = True
+check C0 C12 = True
+784 x 64 x 32, cost = 3.186 s, MM7 gflops = 9.386
+784 x 64 x 32, cost = 5.342 s, MM8 gflops = 5.599
+784 x 64 x 32, cost = 3.059 s, MM9 gflops = 9.777
+784 x 64 x 32, cost = 4.819 s, MM10 gflops = 6.206
+784 x 64 x 32, cost = 3.347 s, MM11 gflops = 8.936
+784 x 64 x 32, cost = 5.005 s, MM12 gflops = 5.975
+check C0 C7 = True
+check C0 C8 = True
+check C0 C9 = True
+check C0 C10 = True
+check C0 C11 = True
+check C0 C12 = True
+784 x 128 x 32, cost = 3.193 s, MM7 gflops = 9.367
+784 x 128 x 32, cost = 5.098 s, MM8 gflops = 5.867
+784 x 128 x 32, cost = 2.968 s, MM9 gflops = 10.078
+784 x 128 x 32, cost = 4.741 s, MM10 gflops = 6.309
+784 x 128 x 32, cost = 3.656 s, MM11 gflops = 8.181
+784 x 128 x 32, cost = 4.900 s, MM12 gflops = 6.104
+check C0 C7 = True
+check C0 C8 = True
+check C0 C9 = True
+check C0 C10 = True
+check C0 C11 = True
+check C0 C12 = True
+784 x 256 x 32, cost = 6.682 s, MM7 gflops = 8.952
+784 x 256 x 32, cost = 10.686 s, MM8 gflops = 5.597
+784 x 256 x 32, cost = 6.442 s, MM9 gflops = 9.286
+784 x 256 x 32, cost = 9.649 s, MM10 gflops = 6.199
+784 x 256 x 32, cost = 6.951 s, MM11 gflops = 8.605
+784 x 256 x 32, cost = 9.786 s, MM12 gflops = 6.112
+check C0 C7 = True
+check C0 C8 = True
+check C0 C9 = True
+check C0 C10 = True
+check C0 C11 = True
+check C0 C12 = True
+784 x 64 x 64, cost = 12.490 s, MM7 gflops = 11.973
+784 x 64 x 64, cost = 14.566 s, MM8 gflops = 10.266
+784 x 64 x 64, cost = 13.072 s, MM9 gflops = 11.439
+784 x 64 x 64, cost = 14.919 s, MM10 gflops = 10.023
+784 x 64 x 64, cost = 13.754 s, MM11 gflops = 10.872
+784 x 64 x 64, cost = 15.233 s, MM12 gflops = 9.816
+check C0 C7 = True
+check C0 C8 = True
+check C0 C9 = True
+check C0 C10 = True
+check C0 C11 = True
+check C0 C12 = True
+784 x 128 x 64, cost = 10.593 s, MM7 gflops = 11.294
+784 x 128 x 64, cost = 12.436 s, MM8 gflops = 9.620
+784 x 128 x 64, cost = 10.775 s, MM9 gflops = 11.102
+784 x 128 x 64, cost = 11.926 s, MM10 gflops = 10.031
+784 x 128 x 64, cost = 11.587 s, MM11 gflops = 10.324
+784 x 128 x 64, cost = 11.669 s, MM12 gflops = 10.252
+check C0 C7 = True
+check C0 C8 = True
+check C0 C9 = True
+check C0 C10 = True
+check C0 C11 = True
+check C0 C12 = True
+784 x 256 x 64, cost = 12.614 s, MM7 gflops = 9.483
+784 x 256 x 64, cost = 14.596 s, MM8 gflops = 8.196
+784 x 256 x 64, cost = 11.151 s, MM9 gflops = 10.728
+784 x 256 x 64, cost = 12.242 s, MM10 gflops = 9.772
+784 x 256 x 64, cost = 11.599 s, MM11 gflops = 10.313
+784 x 256 x 64, cost = 11.768 s, MM12 gflops = 10.166
+check C0 C7 = True
+check C0 C8 = True
+check C0 C9 = True
+check C0 C10 = True
+check C0 C11 = True
+check C0 C12 = True
+784 x 512 x 64, cost = 25.840 s, MM7 gflops = 9.259
+784 x 512 x 64, cost = 29.275 s, MM8 gflops = 8.173
+784 x 512 x 64, cost = 23.631 s, MM9 gflops = 10.125
+784 x 512 x 64, cost = 25.900 s, MM10 gflops = 9.238
+784 x 512 x 64, cost = 23.867 s, MM11 gflops = 10.025
+784 x 512 x 64, cost = 24.643 s, MM12 gflops = 9.709
+check C0 C7 = True
+check C0 C8 = True
+check C0 C9 = True
+check C0 C10 = True
+check C0 C11 = True
+check C0 C12 = True
+784 x 128 x 128, cost = 2.104 s, MM7 gflops = 11.371
+784 x 128 x 128, cost = 2.248 s, MM8 gflops = 10.642
+784 x 128 x 128, cost = 1.929 s, MM9 gflops = 12.402
+784 x 128 x 128, cost = 1.819 s, MM10 gflops = 13.156
+784 x 128 x 128, cost = 2.108 s, MM11 gflops = 11.351
+784 x 128 x 128, cost = 1.764 s, MM12 gflops = 13.564
+check C0 C7 = True
+check C0 C8 = True
+check C0 C9 = True
+check C0 C10 = True
+check C0 C11 = True
+check C0 C12 = True
+784 x 256 x 128, cost = 1.902 s, MM7 gflops = 12.578
+784 x 256 x 128, cost = 2.328 s, MM8 gflops = 10.279
+784 x 256 x 128, cost = 1.898 s, MM9 gflops = 12.603
+784 x 256 x 128, cost = 1.999 s, MM10 gflops = 11.967
+784 x 256 x 128, cost = 2.267 s, MM11 gflops = 10.554
+784 x 256 x 128, cost = 1.662 s, MM12 gflops = 14.396
+check C0 C7 = True
+check C0 C8 = True
+check C0 C9 = True
+check C0 C10 = True
+check C0 C11 = True
+check C0 C12 = True
+784 x 512 x 128, cost = 4.979 s, MM7 gflops = 9.611
+784 x 512 x 128, cost = 4.943 s, MM8 gflops = 9.681
+784 x 512 x 128, cost = 4.495 s, MM9 gflops = 10.646
+784 x 512 x 128, cost = 4.341 s, MM10 gflops = 11.022
+784 x 512 x 128, cost = 4.180 s, MM11 gflops = 11.449
+784 x 512 x 128, cost = 4.068 s, MM12 gflops = 11.763
+check C0 C7 = True
+check C0 C8 = True
+check C0 C9 = True
+check C0 C10 = True
+check C0 C11 = True
+check C0 C12 = True
+784 x 1024 x 128, cost = 6.542 s, MM7 gflops = 7.314
+784 x 1024 x 128, cost = 7.015 s, MM8 gflops = 6.821
+784 x 1024 x 128, cost = 5.588 s, MM9 gflops = 8.564
+784 x 1024 x 128, cost = 5.195 s, MM10 gflops = 9.211
+784 x 1024 x 128, cost = 4.515 s, MM11 gflops = 10.598
+784 x 1024 x 128, cost = 4.166 s, MM12 gflops = 11.487
+check C0 C7 = True
+check C0 C8 = True
+check C0 C9 = True
+check C0 C10 = True
+check C0 C11 = True
+check C0 C12 = True
+784 x 256 x 256, cost = 4.942 s, MM7 gflops = 9.682
+784 x 256 x 256, cost = 4.481 s, MM8 gflops = 10.679
+784 x 256 x 256, cost = 4.169 s, MM9 gflops = 11.477
+784 x 256 x 256, cost = 3.198 s, MM10 gflops = 14.963
+784 x 256 x 256, cost = 4.164 s, MM11 gflops = 11.493
+784 x 256 x 256, cost = 2.881 s, MM12 gflops = 16.607
+check C0 C7 = True
+check C0 C8 = True
+check C0 C9 = True
+check C0 C10 = True
+check C0 C11 = True
+check C0 C12 = True
+784 x 512 x 256, cost = 6.008 s, MM7 gflops = 7.965
+784 x 512 x 256, cost = 6.114 s, MM8 gflops = 7.827
+784 x 512 x 256, cost = 5.065 s, MM9 gflops = 9.448
+784 x 512 x 256, cost = 4.092 s, MM10 gflops = 11.693
+784 x 512 x 256, cost = 4.526 s, MM11 gflops = 10.574
+784 x 512 x 256, cost = 3.199 s, MM12 gflops = 14.958
+check C0 C7 = True
+check C0 C8 = True
+check C0 C9 = True
+check C0 C10 = True
+check C0 C11 = True
+check C0 C12 = True
+784 x 1024 x 256, cost = 12.375 s, MM7 gflops = 7.733
+784 x 1024 x 256, cost = 11.983 s, MM8 gflops = 7.987
+784 x 1024 x 256, cost = 9.189 s, MM9 gflops = 10.415
+784 x 1024 x 256, cost = 8.225 s, MM10 gflops = 11.636
+784 x 1024 x 256, cost = 8.439 s, MM11 gflops = 11.340
+784 x 1024 x 256, cost = 6.525 s, MM12 gflops = 14.668
+check C0 C7 = True
+check C0 C8 = True
+check C0 C9 = True
+check C0 C10 = True
+check C0 C11 = True
+check C0 C12 = True
+784 x 512 x 512, cost = 4.688 s, MM7 gflops = 8.165
+784 x 512 x 512, cost = 4.445 s, MM8 gflops = 8.613
+784 x 512 x 512, cost = 3.933 s, MM9 gflops = 9.733
+784 x 512 x 512, cost = 2.865 s, MM10 gflops = 13.362
+784 x 512 x 512, cost = 3.236 s, MM11 gflops = 11.830
+784 x 512 x 512, cost = 2.407 s, MM12 gflops = 15.901
+check C0 C7 = True
+check C0 C8 = True
+check C0 C9 = True
+check C0 C10 = True
+check C0 C11 = True
+check C0 C12 = True
+784 x 1024 x 512, cost = 4.683 s, MM7 gflops = 8.175
+784 x 1024 x 512, cost = 4.455 s, MM8 gflops = 8.593
+784 x 1024 x 512, cost = 3.928 s, MM9 gflops = 9.747
+784 x 1024 x 512, cost = 3.062 s, MM10 gflops = 12.501
+784 x 1024 x 512, cost = 3.749 s, MM11 gflops = 10.211
+784 x 1024 x 512, cost = 2.679 s, MM12 gflops = 14.291
+check C0 C7 = True
+check C0 C8 = True
+check C0 C9 = True
+check C0 C10 = True
+check C0 C11 = True
+check C0 C12 = True
+784 x 1024 x 1024, cost = 9.396 s, MM7 gflops = 8.149
+784 x 1024 x 1024, cost = 9.028 s, MM8 gflops = 8.481
+784 x 1024 x 1024, cost = 7.032 s, MM9 gflops = 10.888
+784 x 1024 x 1024, cost = 5.216 s, MM10 gflops = 14.678
+784 x 1024 x 1024, cost = 6.661 s, MM11 gflops = 11.494
+784 x 1024 x 1024, cost = 4.318 s, MM12 gflops = 17.733
+check C0 C7 = True
+check C0 C8 = True
+check C0 C9 = True
+check C0 C10 = True
+check C0 C11 = True
+check C0 C12 = True
+请按任意键继续. . .

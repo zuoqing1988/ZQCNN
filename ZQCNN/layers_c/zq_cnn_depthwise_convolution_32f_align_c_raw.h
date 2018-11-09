@@ -375,11 +375,9 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_mul_2(
 
 	const float* cur_in_row_ptr;
 	const float* cur_in_pix_ptr;
-	const float* cur_in_c_ptr;
 	const float* cur_filter_row_ptr;
 	const float* cur_filter_pix_ptr;
-	const float* cur_filter_c_ptr;
-
+	
 	int stride_H_mul_in_WidthStep = stride_H*in_widthStep;
 	int stride_W_mul_in_pixStep = stride_W*in_pixelStep;
 	int out_n, out_h, out_w;
@@ -547,11 +545,9 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_mul_4(
 
 	const float* cur_in_row_ptr;
 	const float* cur_in_pix_ptr;
-	const float* cur_in_c_ptr;
 	const float* cur_filter_row_ptr;
 	const float* cur_filter_pix_ptr;
-	const float* cur_filter_c_ptr;
-
+	
 	int stride_H_mul_in_WidthStep = stride_H*in_widthStep;
 	int stride_W_mul_in_pixStep = stride_W*in_pixelStep;
 	int out_n, out_h, out_w;
@@ -777,11 +773,9 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_mul_8(
 
 	const float* cur_in_row_ptr;
 	const float* cur_in_pix_ptr;
-	const float* cur_in_c_ptr;
 	const float* cur_filter_row_ptr;
 	const float* cur_filter_pix_ptr;
-	const float* cur_filter_c_ptr;
-
+	
 	int stride_H_mul_in_WidthStep = stride_H*in_widthStep;
 	int stride_W_mul_in_pixStep = stride_W*in_pixelStep;
 	int out_n, out_h, out_w;
@@ -1125,11 +1119,9 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_mul_16(
 
 	const float* cur_in_row_ptr;
 	const float* cur_in_pix_ptr;
-	const float* cur_in_c_ptr;
 	const float* cur_filter_row_ptr;
 	const float* cur_filter_pix_ptr;
-	const float* cur_filter_c_ptr;
-
+	
 	int stride_H_mul_in_WidthStep = stride_H*in_widthStep;
 	int stride_W_mul_in_pixStep = stride_W*in_pixelStep;
 	int out_n, out_h, out_w;
@@ -1705,11 +1697,9 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_mul_32(
 
 	const float* cur_in_row_ptr;
 	const float* cur_in_pix_ptr;
-	const float* cur_in_c_ptr;
 	const float* cur_filter_row_ptr;
 	const float* cur_filter_pix_ptr;
-	const float* cur_filter_c_ptr;
-
+	
 	int stride_H_mul_in_WidthStep = stride_H*in_widthStep;
 	int stride_W_mul_in_pixStep = stride_W*in_pixelStep;
 	int out_n, out_h, out_w;
@@ -2747,11 +2737,9 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_mul_64(
 
 	const float* cur_in_row_ptr;
 	const float* cur_in_pix_ptr;
-	const float* cur_in_c_ptr;
 	const float* cur_filter_row_ptr;
 	const float* cur_filter_pix_ptr;
-	const float* cur_filter_c_ptr;
-
+	
 	int stride_H_mul_in_WidthStep = stride_H*in_widthStep;
 	int stride_W_mul_in_pixStep = stride_W*in_pixelStep;
 	int out_n, out_h, out_w;

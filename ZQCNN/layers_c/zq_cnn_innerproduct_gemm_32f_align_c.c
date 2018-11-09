@@ -56,7 +56,7 @@ extern "C" {
 #define zq_CblasNoTrans 1
 #define zq_CblasTrans 1
 #define	zq_cblas_sgemm(x1, x2, x3, x4, x5, x6, x7, x8, x9, x10, x11, x12, x13, x14)  \
-      zq_gemm_32f_align128bit_AnoTrans_Btrans(x4,x5,x6,x8,x9,x10,x11,x13,x14)  
+      zq_gemm_32f_AnoTrans_Btrans_auto(x4,x5,x6,x8,x9,x10,x11,x13,x14)  
 #endif
 #include "zq_cnn_innerproduct_gemm_32f_align_c_raw.h"
 #undef zq_cblas_sgemm
@@ -106,7 +106,7 @@ extern "C" {
 #define zq_CblasNoTrans 1
 #define zq_CblasTrans 1
 #define	zq_cblas_sgemm(x1, x2, x3, x4, x5, x6, x7, x8, x9, x10, x11, x12, x13, x14)  \
-      zq_gemm_32f_align256bit_AnoTrans_Btrans(x4,x5,x6,x8,x9,x10,x11,x13,x14)  
+      zq_gemm_32f_AnoTrans_Btrans_auto(x4,x5,x6,x8,x9,x10,x11,x13,x14)  
 #endif
 #include "zq_cnn_innerproduct_gemm_32f_align_c_raw.h"
 #undef zq_cblas_sgemm

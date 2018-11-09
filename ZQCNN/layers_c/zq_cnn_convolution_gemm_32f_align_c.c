@@ -31,6 +31,7 @@ extern "C" {
 
 #if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_SSE
 #define zq_cnn_conv_no_padding_gemm_32f_align_same_pixstep zq_cnn_conv_no_padding_gemm_32f_align128bit_same_pixstep
+#define zq_cnn_conv_no_padding_gemm_32f_align_same_pixstep_kernel1x1 zq_cnn_conv_no_padding_gemm_32f_align128bit_same_pixstep_kernel1x1
 #define zq_cnn_conv_no_padding_gemm_32f_align_same_pixstep_C4 zq_cnn_conv_no_padding_gemm_32f_align128bit_same_pixstep_C4
 #define zq_cnn_conv_no_padding_gemm_32f_align_same_pixstep_batch zq_cnn_conv_no_padding_gemm_32f_align128bit_same_pixstep_batch
 #define zq_cnn_conv_no_padding_gemm_32f_align_same_or_notsame_pixstep zq_cnn_conv_no_padding_gemm_32f_align128bit_same_or_notsame_pixstep
@@ -61,7 +62,7 @@ extern "C" {
 #define zq_CblasNoTrans 1
 #define zq_CblasTrans 1
 #define	zq_cblas_sgemm(x1, x2, x3, x4, x5, x6, x7, x8, x9, x10, x11, x12, x13, x14)  \
-      zq_gemm_32f_align128bit_AnoTrans_Btrans(x4,x5,x6,x8,x9,x10,x11,x13,x14)   
+      zq_gemm_32f_AnoTrans_Btrans_auto(x4,x5,x6,x8,x9,x10,x11,x13,x14)   
 #endif
 #include "zq_cnn_convolution_gemm_32f_align_c_raw.h"
 #undef zq_cblas_sgemm
@@ -70,6 +71,7 @@ extern "C" {
 #undef zq_CblasTrans
 
 #undef zq_cnn_conv_no_padding_gemm_32f_align_same_pixstep
+#undef zq_cnn_conv_no_padding_gemm_32f_align_same_pixstep_kernel1x1
 #undef zq_cnn_conv_no_padding_gemm_32f_align_same_pixstep_C4
 #undef zq_cnn_conv_no_padding_gemm_32f_align_same_pixstep_batch
 #undef zq_cnn_conv_no_padding_gemm_32f_align_same_or_notsame_pixstep
@@ -90,6 +92,7 @@ extern "C" {
 #if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_AVX
 
 #define zq_cnn_conv_no_padding_gemm_32f_align_same_pixstep zq_cnn_conv_no_padding_gemm_32f_align256bit_same_pixstep
+#define zq_cnn_conv_no_padding_gemm_32f_align_same_pixstep_kernel1x1 zq_cnn_conv_no_padding_gemm_32f_align256bit_same_pixstep_kernel1x1
 #define zq_cnn_conv_no_padding_gemm_32f_align_same_pixstep_C4 zq_cnn_conv_no_padding_gemm_32f_align256bit_same_pixstep_C4
 #define zq_cnn_conv_no_padding_gemm_32f_align_same_pixstep_batch zq_cnn_conv_no_padding_gemm_32f_align256bit_same_pixstep_batch
 #define zq_cnn_conv_no_padding_gemm_32f_align_same_or_notsame_pixstep zq_cnn_conv_no_padding_gemm_32f_align256bit_same_or_notsame_pixstep
@@ -119,7 +122,7 @@ extern "C" {
 #define zq_CblasNoTrans 1
 #define zq_CblasTrans 1
 #define	zq_cblas_sgemm(x1, x2, x3, x4, x5, x6, x7, x8, x9, x10, x11, x12, x13, x14)  \
-      zq_gemm_32f_align256bit_AnoTrans_Btrans(x4,x5,x6,x8,x9,x10,x11,x13,x14)  
+      zq_gemm_32f_AnoTrans_Btrans_auto(x4,x5,x6,x8,x9,x10,x11,x13,x14)  
 #endif
 #include "zq_cnn_convolution_gemm_32f_align_c_raw.h"
 #undef zq_cblas_sgemm
@@ -128,6 +131,7 @@ extern "C" {
 #undef zq_CblasTrans
 
 #undef zq_cnn_conv_no_padding_gemm_32f_align_same_pixstep
+#undef zq_cnn_conv_no_padding_gemm_32f_align_same_pixstep_kernel1x1
 #undef zq_cnn_conv_no_padding_gemm_32f_align_same_pixstep_C4
 #undef zq_cnn_conv_no_padding_gemm_32f_align_same_pixstep_batch
 #undef zq_cnn_conv_no_padding_gemm_32f_align_same_or_notsame_pixstep

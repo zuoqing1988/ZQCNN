@@ -189,7 +189,13 @@ void _convolution_nopadding_case_N_equal_one(int align_mode, const float* in_dat
 				if (align_mode == ZQ_CNN_Tensor4D::ALIGN_128bit)
 				{
 #if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_SSE
-					if (in_C == 4)
+					if (filter_H == 1 && filter_W == 1)
+					{
+						zq_cnn_conv_no_padding_gemm_32f_align128bit_same_pixstep_kernel1x1(in_data, in_N, in_H, in_W, in_C, in_pixStep, in_widthStep, in_sliceStep,
+							filter_data, filter_N, filter_H, filter_W, filter_C, filter_pixStep, filter_widthStep, filter_sliceStep, strideH, strideW,
+							dilation_H, dilation_W, out_data, out_N, out_H, out_W, out_C, out_pixStep, out_widthStep, out_sliceStep, buffer, buffer_len);
+					}
+					else if (in_C == 4)
 					{
 						zq_cnn_conv_no_padding_gemm_32f_align128bit_same_pixstep_C4(in_data, in_N, in_H, in_W, in_C, in_pixStep, in_widthStep, in_sliceStep,
 							filter_data, filter_N, filter_H, filter_W, filter_C, filter_pixStep, filter_widthStep, filter_sliceStep, strideH, strideW,
@@ -207,7 +213,13 @@ void _convolution_nopadding_case_N_equal_one(int align_mode, const float* in_dat
 				else if (align_mode == ZQ_CNN_Tensor4D::ALIGN_256bit)
 				{
 #if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_AVX
-					if (in_C == 4)
+					if (filter_H == 1 && filter_W == 1)
+					{
+						zq_cnn_conv_no_padding_gemm_32f_align256bit_same_pixstep_kernel1x1(in_data, in_N, in_H, in_W, in_C, in_pixStep, in_widthStep, in_sliceStep,
+							filter_data, filter_N, filter_H, filter_W, filter_C, filter_pixStep, filter_widthStep, filter_sliceStep, strideH, strideW,
+							dilation_H, dilation_W, out_data, out_N, out_H, out_W, out_C, out_pixStep, out_widthStep, out_sliceStep, buffer, buffer_len);
+					}
+					else if (in_C == 4)
 					{
 						zq_cnn_conv_no_padding_gemm_32f_align256bit_same_pixstep_C4(in_data, in_N, in_H, in_W, in_C, in_pixStep, in_widthStep, in_sliceStep,
 							filter_data, filter_N, filter_H, filter_W, filter_C, filter_pixStep, filter_widthStep, filter_sliceStep, strideH, strideW,
@@ -660,7 +672,9 @@ void ZQ_CNN_Forward_SSEUtils::_depthwise_convolution_nopadding(int align_mode, c
 	const float* filter_data, int filter_N, int filter_H, int filter_W, int filter_C, int filter_pixStep, int filter_widthStep, int filter_sliceStep,
 	int strideH, int strideW, float* out_data, int out_N, int out_H, int out_W, int out_C, int out_pixStep, int out_widthStep, int out_sliceStep)
 {
+	//align_mode = __min(align_mode, ZQ_CNN_Tensor4D::ALIGN_128bit);
 	bool has_handled = false;
+
 	if (align_mode == ZQ_CNN_Tensor4D::ALIGN_128bit)
 	{
 #if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_SSE
