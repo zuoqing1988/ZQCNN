@@ -92,7 +92,7 @@ extern "C" {
 #if ZQ_CNN_USE_FMADD256
 #define zq_mm_fmadd_ps _mm256_fmadd_ps
 #else
-#define zq_mm256_fmadd_ps(A, B, C) _mm256_add_ps(_mm256_mul_ps(A, B), C)
+#define zq_mm_fmadd_ps(A, B, C) _mm256_add_ps(_mm256_mul_ps(A, B), C)
 #endif
 #define zq_mm_add_ps _mm256_add_ps
 #define zq_mm_sub_ps _mm256_sub_ps
