@@ -32,6 +32,19 @@ extern "C" {
 				handled = 1;
 			}
 		}
+		else if (K == 27) //3*3*3
+		{
+			if (N <= 16)
+			{
+				zq_gemm_32f_align128bit_AnoTrans_Btrans_M2(M, N, K, A, lda, Bt, ldb, C, ldc);
+				handled = 1;
+			}
+			else if(N <= 128)
+			{
+				zq_gemm_32f_align128bit_AnoTrans_Btrans_M1(M, N, K, A, lda, Bt, ldb, C, ldc);
+				handled = 1;
+			}
+		}
 		else if (K == 32)
 		{
 			if (N >= 8)
@@ -48,11 +61,37 @@ extern "C" {
 				handled = 1;
 			}
 		}
+		else if (K == 72) // 3*3*8
+		{
+			if (N <= 64)
+			{
+				zq_gemm_32f_align128bit_AnoTrans_Btrans_M1(M, N, K, A, lda, Bt, ldb, C, ldc);
+				handled = 1;
+			}
+			else if (N <= 128)
+			{
+				zq_gemm_32f_align128bit_AnoTrans_Btrans_M2(M, N, K, A, lda, Bt, ldb, C, ldc);
+				handled = 1;
+			}
+		}
 		else if (K == 128)
 		{
 			if (N >= 8)
 			{
 				zq_gemm_32f_align256bit_AnoTrans_Btrans_M4(M, N, K, A, lda, Bt, ldb, C, ldc);
+				handled = 1;
+			}
+		}
+		else if (K == 144) // 3*3*16
+		{
+			if (N <= 32)
+			{
+				zq_gemm_32f_align128bit_AnoTrans_Btrans_M1(M, N, K, A, lda, Bt, ldb, C, ldc);
+				handled = 1;
+			}
+			else if (N <= 128)
+			{
+				zq_gemm_32f_align128bit_AnoTrans_Btrans_M4(M, N, K, A, lda, Bt, ldb, C, ldc);
 				handled = 1;
 			}
 		}
@@ -105,6 +144,19 @@ extern "C" {
 				handled = 1;
 			}
 		}
+		else if (K == 27) //3*3*3
+		{
+			if (N <= 16)
+			{
+				zq_gemm_32f_align128bit_AnoTrans_Btrans_M2(M, N, K, A, lda, Bt, ldb, C, ldc);
+				handled = 1;
+			}
+			else if (N <= 128)
+			{
+				zq_gemm_32f_align128bit_AnoTrans_Btrans_M1(M, N, K, A, lda, Bt, ldb, C, ldc);
+				handled = 1;
+			}
+		}
 		else if (K == 32)
 		{
 			if (N >= 8)
@@ -121,9 +173,35 @@ extern "C" {
 				handled = 1;
 			}
 		}
+		else if (K == 72) // 3*3*8
+		{
+			if (N <= 64)
+			{
+				zq_gemm_32f_align128bit_AnoTrans_Btrans_M1(M, N, K, A, lda, Bt, ldb, C, ldc);
+				handled = 1;
+			}
+			else if (N <= 128)
+			{
+				zq_gemm_32f_align128bit_AnoTrans_Btrans_M2(M, N, K, A, lda, Bt, ldb, C, ldc);
+				handled = 1;
+			}
+		}
 		else if (K == 128)
 		{
 			if (N >= 256)
+			{
+				zq_gemm_32f_align128bit_AnoTrans_Btrans_M4(M, N, K, A, lda, Bt, ldb, C, ldc);
+				handled = 1;
+			}
+		}
+		else if (K == 144) // 3*3*16
+		{
+			if (N <= 32)
+			{
+				zq_gemm_32f_align128bit_AnoTrans_Btrans_M1(M, N, K, A, lda, Bt, ldb, C, ldc);
+				handled = 1;
+			}
+			else if (N <= 128)
 			{
 				zq_gemm_32f_align128bit_AnoTrans_Btrans_M4(M, N, K, A, lda, Bt, ldb, C, ldc);
 				handled = 1;
