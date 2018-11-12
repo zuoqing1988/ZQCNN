@@ -2246,6 +2246,14 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv4_KdivAlign32(int M, int N, in
 				op_1x4_16;
 				op_1x4_16;
 			}
+			zq_store_to_q(q.s, sum_vec11);
+			*(C_c_ptr1++) = zq_final_sum_q;
+			zq_store_to_q(q.s, sum_vec12);
+			*(C_c_ptr1++) = zq_final_sum_q;
+			zq_store_to_q(q.s, sum_vec13);
+			*(C_c_ptr1++) = zq_final_sum_q;
+			zq_store_to_q(q.s, sum_vec14);
+			*(C_c_ptr1++) = zq_final_sum_q;
 		}
 	}
 }
