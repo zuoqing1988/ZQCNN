@@ -94,13 +94,13 @@ int main()
 	std::string result_name;
 
 	const int use_pnet20 = true;
-	int thread_num = 1;
+	int thread_num = 8;
 	bool special_handle_very_big_face = false;
 	result_name = "resultdet.jpg";
 	if (use_pnet20)
 	{
 		if (!mtcnn.Init("model\\det1-dw20.zqparams", "model\\det1-dw20-13.nchwbin",
-			//"model\\det2-dw24-1.zqparams", "model\\det2-dw24-1.nchwbin",
+			//"model\\det2-dw24.zqparams", "model\\det2-dw24-12.nchwbin",
 			"model\\det2.zqparams", "model\\det2_bgr.nchwbin",
 			"model\\det3.zqparams", "model\\det3_bgr.nchwbin", thread_num))
 		{
@@ -124,7 +124,7 @@ int main()
 	}
 
 	//mtcnn.TurnOnShowDebugInfo();
-	int iters = 1;
+	int iters = 100;
 	double t1 = omp_get_wtime();
 	for (int i = 0; i < iters; i++)
 	{

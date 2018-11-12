@@ -139,8 +139,10 @@ double _test_gemm(int M, int N, int K, int iters = 1000, float thresh = 1e-4, bo
 	double t1 = omp_get_wtime(), t2, mul_count, gflops;
 	double time1 = FLT_MAX;
 	{
-		for(int i = 0;i < iters;i++)
-			zq_gemm_32f_align256bit_AnoTrans_Btrans(M, N, K, A, padK, B, padK, C1,N );
+		for (int i = 0; i < iters; i++)
+		{
+			zq_gemm_32f_AnoTrans_Btrans_auto(M, N, K, A, padK, B, padK, C1, N);
+		}
 		t2 = omp_get_wtime();
 		time1 = t2 - t1;
 		mul_count = (double)M*N*K*iters;
@@ -655,23 +657,22 @@ int main()
 	total_sum += _test_gemm(1 * 1, 512, 7 * 6 * 512,1000);
 	printf("total: %.3f\n", total_sum);*/
 
-	for (int i = 0; i < 1000; i++)
+	for (int i = 0; i < 100000; i++)
 	{
 		int M = rand()%1000 + 1;
 		int N = rand() % 1000 + 1;
 		int K = rand() % 1000 + 1;
 		_test_gemm(M, N, K, 1, 1e-4, true);
+		//_test_gemm(43, 604, 64, 1, 1e-4, true);
 	}
-	
-
-	//compare gemm the spherefacenet04
-	_test_gemm(56 * 48, 64, 3 * 3 * 3,1000);
-	_test_gemm(56 * 48, 64, 3 * 3 * 4,1000);
-	_test_gemm(28 * 24, 128, 3 * 3 * 64,1000);
-	_test_gemm(14 * 12, 256, 3 * 3 * 128,1000);
-	_test_gemm(7 * 6, 512, 3 * 3 * 256,1000);
-	_test_gemm(1 * 1, 512, 7 * 6 * 512,1000);
-
+	return 0;
+	_test_gemm(56 * 48, 64, 3 * 3 * 3,10000);
+	_test_gemm(56 * 48, 64, 3 * 3 * 4,10000);
+	_test_gemm(28 * 24, 128, 3 * 3 * 64,10000);
+	_test_gemm(14 * 12, 256, 3 * 3 * 128,10000);
+	_test_gemm(7 * 6, 512, 3 * 3 * 256,10000);
+	_test_gemm(1 * 1, 512, 7 * 6 * 512,10000);
+	return 0;
 	//compare gemv
 	//_test_gemv(56 * 48, 64, 3 * 3 * 3,1000);
 	//_test_gemv(56 * 48, 64, 3 * 3 * 4, 1000);

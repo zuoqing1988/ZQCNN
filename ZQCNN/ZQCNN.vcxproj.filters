@@ -63,9 +63,6 @@
     <ClCompile Include="layers_c\zq_cnn_softmax_32f_align_c.c">
       <Filter>layers_c</Filter>
     </ClCompile>
-    <ClCompile Include="math\zq_avx_mathfun.c">
-      <Filter>math</Filter>
-    </ClCompile>
     <ClCompile Include="math\zq_sse_mathfun.c">
       <Filter>math</Filter>
     </ClCompile>
@@ -91,6 +88,9 @@
       <Filter>layers_c</Filter>
     </ClCompile>
     <ClCompile Include="math\zq_gemm_32f_align_c.c">
+      <Filter>math</Filter>
+    </ClCompile>
+    <ClCompile Include="math\zq_avx_mathfun.c">
       <Filter>math</Filter>
     </ClCompile>
   </ItemGroup>
@@ -179,9 +179,6 @@
     <ClInclude Include="layers_c\zq_cnn_softmax_32f_align_c_raw.h">
       <Filter>layers_c</Filter>
     </ClInclude>
-    <ClInclude Include="math\zq_avx_mathfun.h">
-      <Filter>math</Filter>
-    </ClInclude>
     <ClInclude Include="math\zq_sse_mathfun.h">
       <Filter>math</Filter>
     </ClInclude>
@@ -258,6 +255,9 @@
       <Filter>math</Filter>
     </ClInclude>
     <ClInclude Include="math\zq_gemm_32f_align_c_raw.h">
+      <Filter>math</Filter>
+    </ClInclude>
+    <ClInclude Include="math\zq_avx_mathfun.h">
       <Filter>math</Filter>
     </ClInclude>
   </ItemGroup>
