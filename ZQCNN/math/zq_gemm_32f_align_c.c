@@ -274,7 +274,7 @@ extern "C" {
 	union union_type_s_mm128
 #define zq_store_to_q(x,y)\
 	_mm_store_ps(x,y)
-
+#define zq_final_sum_q0_4 (q.s[0]+q.s[1]+q.s[2]+q.s[3])
 #define zq_final_sum_q (q.s[0]+q.s[1]+q.s[2]+q.s[3])
 #if ZQ_CNN_USE_FMADD128
 #define zq_mm_fmadd_ps _mm_fmadd_ps
@@ -339,6 +339,7 @@ extern "C" {
 #undef zq_mm_align_size8
 #undef zq_q_type
 #undef zq_store_to_q
+#undef zq_final_sum_q0_4
 #undef zq_final_sum_q
 #undef zq_mm_fmadd_ps
 #undef zq_gemm_32f_align_AnoTrans_Btrans_M1
@@ -398,6 +399,7 @@ extern "C" {
 #define zq_mm_align_size6 48
 #define zq_mm_align_size7 56
 #define zq_mm_align_size8 64
+#define CUR_IS_AVX 1
 union union_type_s_mm256 {
 	float s[8];
 	__m256 v;
@@ -409,6 +411,7 @@ union union_type_s_mm256 {
 #define zq_store_to_q(x,y)\
 	_mm256_store_ps(x,y)
 
+#define zq_final_sum_q0_4 (q.s[0]+q.s[1]+q.s[2]+q.s[3])
 #define zq_final_sum_q (q.s[0]+q.s[1]+q.s[2]+q.s[3]+q.s[4]+q.s[5]+q.s[6]+q.s[7])
 #if ZQ_CNN_USE_FMADD256
 #define zq_mm_fmadd_ps _mm256_fmadd_ps
@@ -470,8 +473,10 @@ union union_type_s_mm256 {
 #undef zq_mm_align_size6
 #undef zq_mm_align_size7
 #undef zq_mm_align_size8
+#undef CUR_IS_AVX
 #undef zq_q_type
 #undef zq_store_to_q
+#undef zq_final_sum_q0_4
 #undef zq_final_sum_q
 #undef zq_mm_fmadd_ps
 #undef zq_gemm_32f_align_AnoTrans_Btrans_M1

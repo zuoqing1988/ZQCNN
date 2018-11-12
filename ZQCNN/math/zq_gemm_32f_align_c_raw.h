@@ -742,6 +742,404 @@
 	op_4x8_8_first;\
 	op_4x8_8
 
+#if CUR_IS_AVX
+#define store_1x1 \
+	zq_store_to_q(q.s, sum_vec11);\
+	q.p[0] = _mm_add_ps(q.p[0],q.p[1]);\
+	*(C_c_ptr1++) = zq_final_sum_q0_4
+
+#define store_1x4 \
+	zq_store_to_q(q.s, sum_vec11);\
+	q.p[0] = _mm_add_ps(q.p[0],q.p[1]);\
+	*(C_c_ptr1++) = zq_final_sum_q0_4;\
+	zq_store_to_q(q.s, sum_vec12);\
+	q.p[0] = _mm_add_ps(q.p[0],q.p[1]);\
+	*(C_c_ptr1++) = zq_final_sum_q0_4;\
+	zq_store_to_q(q.s, sum_vec13);\
+	q.p[0] = _mm_add_ps(q.p[0],q.p[1]);\
+	*(C_c_ptr1++) = zq_final_sum_q0_4;\
+	zq_store_to_q(q.s, sum_vec14);\
+	q.p[0] = _mm_add_ps(q.p[0],q.p[1]);\
+	*(C_c_ptr1++) = zq_final_sum_q0_4
+
+#define store_1x8 \
+	zq_store_to_q(q.s, sum_vec11);\
+	q.p[0] = _mm_add_ps(q.p[0],q.p[1]);\
+	*(C_c_ptr1++) = zq_final_sum_q0_4;\
+	zq_store_to_q(q.s, sum_vec12);\
+	q.p[0] = _mm_add_ps(q.p[0],q.p[1]);\
+	*(C_c_ptr1++) = zq_final_sum_q0_4;\
+	zq_store_to_q(q.s, sum_vec13);\
+	q.p[0] = _mm_add_ps(q.p[0],q.p[1]);\
+	*(C_c_ptr1++) = zq_final_sum_q0_4;\
+	zq_store_to_q(q.s, sum_vec14);\
+	q.p[0] = _mm_add_ps(q.p[0],q.p[1]);\
+	*(C_c_ptr1++) = zq_final_sum_q0_4;\
+	zq_store_to_q(q.s, sum_vec15);\
+	q.p[0] = _mm_add_ps(q.p[0],q.p[1]);\
+	*(C_c_ptr1++) = zq_final_sum_q0_4;\
+	zq_store_to_q(q.s, sum_vec16);\
+	q.p[0] = _mm_add_ps(q.p[0],q.p[1]);\
+	*(C_c_ptr1++) = zq_final_sum_q0_4;\
+	zq_store_to_q(q.s, sum_vec17);\
+	q.p[0] = _mm_add_ps(q.p[0],q.p[1]);\
+	*(C_c_ptr1++) = zq_final_sum_q0_4;\
+	zq_store_to_q(q.s, sum_vec18);\
+	q.p[0] = _mm_add_ps(q.p[0],q.p[1]);\
+	*(C_c_ptr1++) = zq_final_sum_q0_4
+
+#define store_2x1 \
+	zq_store_to_q(q.s, sum_vec11);\
+	q.p[0] = _mm_add_ps(q.p[0],q.p[1]);\
+	*(C_c_ptr1++) = zq_final_sum_q0_4;\
+	zq_store_to_q(q.s, sum_vec21);\
+	q.p[0] = _mm_add_ps(q.p[0],q.p[1]);\
+	*(C_c_ptr2++) = zq_final_sum_q0_4
+
+#define store_2x2 \
+	zq_store_to_q(q.s, sum_vec11);\
+	q.p[0] = _mm_add_ps(q.p[0],q.p[1]);\
+	*(C_c_ptr1++) = zq_final_sum_q0_4;\
+	zq_store_to_q(q.s, sum_vec12);\
+	q.p[0] = _mm_add_ps(q.p[0],q.p[1]);\
+	*(C_c_ptr1++) = zq_final_sum_q0_4;\
+	zq_store_to_q(q.s, sum_vec21);\
+	q.p[0] = _mm_add_ps(q.p[0],q.p[1]);\
+	*(C_c_ptr2++) = zq_final_sum_q0_4;\
+	zq_store_to_q(q.s, sum_vec22);\
+	q.p[0] = _mm_add_ps(q.p[0],q.p[1]);\
+	*(C_c_ptr2++) = zq_final_sum_q0_4
+
+#define store_2x4 \
+	zq_store_to_q(q.s, sum_vec11);\
+	q.p[0] = _mm_add_ps(q.p[0],q.p[1]);\
+	*(C_c_ptr1++) = zq_final_sum_q0_4;\
+	zq_store_to_q(q.s, sum_vec12);\
+	q.p[0] = _mm_add_ps(q.p[0],q.p[1]);\
+	*(C_c_ptr1++) = zq_final_sum_q0_4;\
+	zq_store_to_q(q.s, sum_vec13);\
+	q.p[0] = _mm_add_ps(q.p[0],q.p[1]);\
+	*(C_c_ptr1++) = zq_final_sum_q0_4;\
+	zq_store_to_q(q.s, sum_vec14);\
+	q.p[0] = _mm_add_ps(q.p[0],q.p[1]);\
+	*(C_c_ptr1++) = zq_final_sum_q0_4;\
+	zq_store_to_q(q.s, sum_vec21);\
+	q.p[0] = _mm_add_ps(q.p[0],q.p[1]);\
+	*(C_c_ptr2++) = zq_final_sum_q0_4;\
+	zq_store_to_q(q.s, sum_vec22);\
+	q.p[0] = _mm_add_ps(q.p[0],q.p[1]);\
+	*(C_c_ptr2++) = zq_final_sum_q0_4;\
+	zq_store_to_q(q.s, sum_vec23);\
+	q.p[0] = _mm_add_ps(q.p[0],q.p[1]);\
+	*(C_c_ptr2++) = zq_final_sum_q0_4;\
+	zq_store_to_q(q.s, sum_vec24);\
+	q.p[0] = _mm_add_ps(q.p[0],q.p[1]);\
+	*(C_c_ptr2++) = zq_final_sum_q0_4
+
+#define store_2x8 \
+	zq_store_to_q(q.s, sum_vec11);\
+	q.p[0] = _mm_add_ps(q.p[0],q.p[1]);\
+	*(C_c_ptr1++) = zq_final_sum_q0_4;\
+	zq_store_to_q(q.s, sum_vec12);\
+	q.p[0] = _mm_add_ps(q.p[0],q.p[1]);\
+	*(C_c_ptr1++) = zq_final_sum_q0_4;\
+	zq_store_to_q(q.s, sum_vec13);\
+	q.p[0] = _mm_add_ps(q.p[0],q.p[1]);\
+	*(C_c_ptr1++) = zq_final_sum_q0_4;\
+	zq_store_to_q(q.s, sum_vec14);\
+	q.p[0] = _mm_add_ps(q.p[0],q.p[1]);\
+	*(C_c_ptr1++) = zq_final_sum_q0_4;\
+	zq_store_to_q(q.s, sum_vec15);\
+	q.p[0] = _mm_add_ps(q.p[0],q.p[1]);\
+	*(C_c_ptr1++) = zq_final_sum_q0_4;\
+	zq_store_to_q(q.s, sum_vec16);\
+	q.p[0] = _mm_add_ps(q.p[0],q.p[1]);\
+	*(C_c_ptr1++) = zq_final_sum_q0_4;\
+	zq_store_to_q(q.s, sum_vec17);\
+	q.p[0] = _mm_add_ps(q.p[0],q.p[1]);\
+	*(C_c_ptr1++) = zq_final_sum_q0_4;\
+	zq_store_to_q(q.s, sum_vec18);\
+	q.p[0] = _mm_add_ps(q.p[0],q.p[1]);\
+	*(C_c_ptr1++) = zq_final_sum_q0_4;\
+	zq_store_to_q(q.s, sum_vec21);\
+	q.p[0] = _mm_add_ps(q.p[0],q.p[1]);\
+	*(C_c_ptr2++) = zq_final_sum_q0_4;\
+	zq_store_to_q(q.s, sum_vec22);\
+	q.p[0] = _mm_add_ps(q.p[0],q.p[1]);\
+	*(C_c_ptr2++) = zq_final_sum_q0_4;\
+	zq_store_to_q(q.s, sum_vec23);\
+	q.p[0] = _mm_add_ps(q.p[0],q.p[1]);\
+	*(C_c_ptr2++) = zq_final_sum_q0_4;\
+	zq_store_to_q(q.s, sum_vec24);\
+	q.p[0] = _mm_add_ps(q.p[0],q.p[1]);\
+	*(C_c_ptr2++) = zq_final_sum_q0_4;\
+	zq_store_to_q(q.s, sum_vec25);\
+	q.p[0] = _mm_add_ps(q.p[0],q.p[1]);\
+	*(C_c_ptr2++) = zq_final_sum_q0_4;\
+	zq_store_to_q(q.s, sum_vec26);\
+	q.p[0] = _mm_add_ps(q.p[0],q.p[1]);\
+	*(C_c_ptr2++) = zq_final_sum_q0_4;\
+	zq_store_to_q(q.s, sum_vec27);\
+	q.p[0] = _mm_add_ps(q.p[0],q.p[1]);\
+	*(C_c_ptr2++) = zq_final_sum_q0_4;\
+	zq_store_to_q(q.s, sum_vec28);\
+	q.p[0] = _mm_add_ps(q.p[0],q.p[1]);\
+	*(C_c_ptr2++) = zq_final_sum_q0_4
+
+#define store_4x1 \
+	zq_store_to_q(q.s, sum_vec11);\
+	q.p[0] = _mm_add_ps(q.p[0],q.p[1]);\
+	*(C_c_ptr1++) = zq_final_sum_q0_4;\
+	zq_store_to_q(q.s, sum_vec21);\
+	q.p[0] = _mm_add_ps(q.p[0],q.p[1]);\
+	*(C_c_ptr2++) = zq_final_sum_q0_4;\
+	zq_store_to_q(q.s, sum_vec31);\
+	q.p[0] = _mm_add_ps(q.p[0],q.p[1]);\
+	*(C_c_ptr3++) = zq_final_sum_q0_4;\
+	zq_store_to_q(q.s, sum_vec41);\
+	q.p[0] = _mm_add_ps(q.p[0],q.p[1]);\
+	*(C_c_ptr4++) = zq_final_sum_q0_4
+
+#define store_4x2 \
+	zq_store_to_q(q.s, sum_vec11);\
+	q.p[0] = _mm_add_ps(q.p[0],q.p[1]);\
+	*(C_c_ptr1++) = zq_final_sum_q0_4;\
+	zq_store_to_q(q.s, sum_vec12);\
+	q.p[0] = _mm_add_ps(q.p[0],q.p[1]);\
+	*(C_c_ptr1++) = zq_final_sum_q0_4;\
+	zq_store_to_q(q.s, sum_vec21);\
+	q.p[0] = _mm_add_ps(q.p[0],q.p[1]);\
+	*(C_c_ptr2++) = zq_final_sum_q0_4;\
+	zq_store_to_q(q.s, sum_vec22);\
+	q.p[0] = _mm_add_ps(q.p[0],q.p[1]);\
+	*(C_c_ptr2++) = zq_final_sum_q0_4;\
+	zq_store_to_q(q.s, sum_vec31);\
+	q.p[0] = _mm_add_ps(q.p[0],q.p[1]);\
+	*(C_c_ptr3++) = zq_final_sum_q0_4;\
+	zq_store_to_q(q.s, sum_vec32);\
+	q.p[0] = _mm_add_ps(q.p[0],q.p[1]);\
+	*(C_c_ptr3++) = zq_final_sum_q0_4;\
+	zq_store_to_q(q.s, sum_vec41);\
+	q.p[0] = _mm_add_ps(q.p[0],q.p[1]);\
+	*(C_c_ptr4++) = zq_final_sum_q0_4;\
+	zq_store_to_q(q.s, sum_vec42);\
+	q.p[0] = _mm_add_ps(q.p[0],q.p[1]);\
+	*(C_c_ptr4++) = zq_final_sum_q0_4
+
+#define store_4x4 \
+	zq_store_to_q(q.s, sum_vec11);\
+	q.p[0] = _mm_add_ps(q.p[0],q.p[1]);\
+	*(C_c_ptr1++) = zq_final_sum_q0_4;\
+	zq_store_to_q(q.s, sum_vec12);\
+	q.p[0] = _mm_add_ps(q.p[0],q.p[1]);\
+	*(C_c_ptr1++) = zq_final_sum_q0_4;\
+	zq_store_to_q(q.s, sum_vec13);\
+	q.p[0] = _mm_add_ps(q.p[0],q.p[1]);\
+	*(C_c_ptr1++) = zq_final_sum_q0_4;\
+	zq_store_to_q(q.s, sum_vec14);\
+	q.p[0] = _mm_add_ps(q.p[0],q.p[1]);\
+	*(C_c_ptr1++) = zq_final_sum_q0_4;\
+	zq_store_to_q(q.s, sum_vec21);\
+	q.p[0] = _mm_add_ps(q.p[0],q.p[1]);\
+	*(C_c_ptr2++) = zq_final_sum_q0_4;\
+	zq_store_to_q(q.s, sum_vec22);\
+	q.p[0] = _mm_add_ps(q.p[0],q.p[1]);\
+	*(C_c_ptr2++) = zq_final_sum_q0_4;\
+	zq_store_to_q(q.s, sum_vec23);\
+	q.p[0] = _mm_add_ps(q.p[0],q.p[1]);\
+	*(C_c_ptr2++) = zq_final_sum_q0_4;\
+	zq_store_to_q(q.s, sum_vec24);\
+	q.p[0] = _mm_add_ps(q.p[0],q.p[1]);\
+	*(C_c_ptr2++) = zq_final_sum_q0_4;\
+	zq_store_to_q(q.s, sum_vec31);\
+	q.p[0] = _mm_add_ps(q.p[0],q.p[1]);\
+	*(C_c_ptr3++) = zq_final_sum_q0_4;\
+	zq_store_to_q(q.s, sum_vec32);\
+	q.p[0] = _mm_add_ps(q.p[0],q.p[1]);\
+	*(C_c_ptr3++) = zq_final_sum_q0_4;\
+	zq_store_to_q(q.s, sum_vec33);\
+	q.p[0] = _mm_add_ps(q.p[0],q.p[1]);\
+	*(C_c_ptr3++) = zq_final_sum_q0_4;\
+	zq_store_to_q(q.s, sum_vec34);\
+	q.p[0] = _mm_add_ps(q.p[0],q.p[1]);\
+	*(C_c_ptr3++) = zq_final_sum_q0_4;\
+	zq_store_to_q(q.s, sum_vec41);\
+	q.p[0] = _mm_add_ps(q.p[0],q.p[1]);\
+	*(C_c_ptr4++) = zq_final_sum_q0_4;\
+	zq_store_to_q(q.s, sum_vec42);\
+	q.p[0] = _mm_add_ps(q.p[0],q.p[1]);\
+	*(C_c_ptr4++) = zq_final_sum_q0_4;\
+	zq_store_to_q(q.s, sum_vec43);\
+	q.p[0] = _mm_add_ps(q.p[0],q.p[1]);\
+	*(C_c_ptr4++) = zq_final_sum_q0_4;\
+	zq_store_to_q(q.s, sum_vec44);\
+	q.p[0] = _mm_add_ps(q.p[0],q.p[1]);\
+	*(C_c_ptr4++) = zq_final_sum_q0_4
+
+#else
+#define store_1x1 \
+	zq_store_to_q(q.s, sum_vec11);\
+	*(C_c_ptr1++) = zq_final_sum_q0_4
+
+#define store_1x4 \
+	zq_store_to_q(q.s, sum_vec11);\
+	*(C_c_ptr1++) = zq_final_sum_q0_4;\
+	zq_store_to_q(q.s, sum_vec12);\
+	*(C_c_ptr1++) = zq_final_sum_q0_4;\
+	zq_store_to_q(q.s, sum_vec13);\
+	*(C_c_ptr1++) = zq_final_sum_q0_4;\
+	zq_store_to_q(q.s, sum_vec14);\
+	*(C_c_ptr1++) = zq_final_sum_q0_4
+
+#define store_1x8 \
+	zq_store_to_q(q.s, sum_vec11);\
+	*(C_c_ptr1++) = zq_final_sum_q0_4;\
+	zq_store_to_q(q.s, sum_vec12);\
+	*(C_c_ptr1++) = zq_final_sum_q0_4;\
+	zq_store_to_q(q.s, sum_vec13);\
+	*(C_c_ptr1++) = zq_final_sum_q0_4;\
+	zq_store_to_q(q.s, sum_vec14);\
+	*(C_c_ptr1++) = zq_final_sum_q0_4;\
+	zq_store_to_q(q.s, sum_vec15);\
+	*(C_c_ptr1++) = zq_final_sum_q0_4;\
+	zq_store_to_q(q.s, sum_vec16);\
+	*(C_c_ptr1++) = zq_final_sum_q0_4;\
+	zq_store_to_q(q.s, sum_vec17);\
+	*(C_c_ptr1++) = zq_final_sum_q0_4;\
+	zq_store_to_q(q.s, sum_vec18);\
+	*(C_c_ptr1++) = zq_final_sum_q0_4
+
+#define store_2x1 \
+	zq_store_to_q(q.s, sum_vec11);\
+	*(C_c_ptr1++) = zq_final_sum_q0_4;\
+	zq_store_to_q(q.s, sum_vec21);\
+	*(C_c_ptr2++) = zq_final_sum_q0_4
+
+#define store_2x2 \
+	zq_store_to_q(q.s, sum_vec11);\
+	*(C_c_ptr1++) = zq_final_sum_q0_4;\
+	zq_store_to_q(q.s, sum_vec12);\
+	*(C_c_ptr1++) = zq_final_sum_q0_4;\
+	zq_store_to_q(q.s, sum_vec21);\
+	*(C_c_ptr2++) = zq_final_sum_q0_4;\
+	zq_store_to_q(q.s, sum_vec22);\
+	*(C_c_ptr2++) = zq_final_sum_q0_4
+
+#define store_2x4 \
+	zq_store_to_q(q.s, sum_vec11);\
+	*(C_c_ptr1++) = zq_final_sum_q0_4;\
+	zq_store_to_q(q.s, sum_vec12);\
+	*(C_c_ptr1++) = zq_final_sum_q0_4;\
+	zq_store_to_q(q.s, sum_vec13);\
+	*(C_c_ptr1++) = zq_final_sum_q0_4;\
+	zq_store_to_q(q.s, sum_vec14);\
+	*(C_c_ptr1++) = zq_final_sum_q0_4;\
+	zq_store_to_q(q.s, sum_vec21);\
+	*(C_c_ptr2++) = zq_final_sum_q0_4;\
+	zq_store_to_q(q.s, sum_vec22);\
+	*(C_c_ptr2++) = zq_final_sum_q0_4;\
+	zq_store_to_q(q.s, sum_vec23);\
+	*(C_c_ptr2++) = zq_final_sum_q0_4;\
+	zq_store_to_q(q.s, sum_vec24);\
+	*(C_c_ptr2++) = zq_final_sum_q0_4
+
+#define store_2x8 \
+	zq_store_to_q(q.s, sum_vec11);\
+	*(C_c_ptr1++) = zq_final_sum_q0_4;\
+	zq_store_to_q(q.s, sum_vec12);\
+	*(C_c_ptr1++) = zq_final_sum_q0_4;\
+	zq_store_to_q(q.s, sum_vec13);\
+	*(C_c_ptr1++) = zq_final_sum_q0_4;\
+	zq_store_to_q(q.s, sum_vec14);\
+	*(C_c_ptr1++) = zq_final_sum_q0_4;\
+	zq_store_to_q(q.s, sum_vec15);\
+	*(C_c_ptr1++) = zq_final_sum_q0_4;\
+	zq_store_to_q(q.s, sum_vec16);\
+	*(C_c_ptr1++) = zq_final_sum_q0_4;\
+	zq_store_to_q(q.s, sum_vec17);\
+	*(C_c_ptr1++) = zq_final_sum_q0_4;\
+	zq_store_to_q(q.s, sum_vec18);\
+	*(C_c_ptr1++) = zq_final_sum_q0_4;\
+	zq_store_to_q(q.s, sum_vec21);\
+	*(C_c_ptr2++) = zq_final_sum_q0_4;\
+	zq_store_to_q(q.s, sum_vec22);\
+	*(C_c_ptr2++) = zq_final_sum_q0_4;\
+	zq_store_to_q(q.s, sum_vec23);\
+	*(C_c_ptr2++) = zq_final_sum_q0_4;\
+	zq_store_to_q(q.s, sum_vec24);\
+	*(C_c_ptr2++) = zq_final_sum_q0_4;\
+	zq_store_to_q(q.s, sum_vec25);\
+	*(C_c_ptr2++) = zq_final_sum_q0_4;\
+	zq_store_to_q(q.s, sum_vec26);\
+	*(C_c_ptr2++) = zq_final_sum_q0_4;\
+	zq_store_to_q(q.s, sum_vec27);\
+	*(C_c_ptr2++) = zq_final_sum_q0_4;\
+	zq_store_to_q(q.s, sum_vec28);\
+	*(C_c_ptr2++) = zq_final_sum_q0_4
+
+#define store_4x1 \
+	zq_store_to_q(q.s, sum_vec11);\
+	*(C_c_ptr1++) = zq_final_sum_q0_4;\
+	zq_store_to_q(q.s, sum_vec21);\
+	*(C_c_ptr2++) = zq_final_sum_q0_4;\
+	zq_store_to_q(q.s, sum_vec31);\
+	*(C_c_ptr3++) = zq_final_sum_q0_4;\
+	zq_store_to_q(q.s, sum_vec41);\
+	*(C_c_ptr4++) = zq_final_sum_q0_4
+
+#define store_4x2 \
+	zq_store_to_q(q.s, sum_vec11);\
+	*(C_c_ptr1++) = zq_final_sum_q0_4;\
+	zq_store_to_q(q.s, sum_vec12);\
+	*(C_c_ptr1++) = zq_final_sum_q0_4;\
+	zq_store_to_q(q.s, sum_vec21);\
+	*(C_c_ptr2++) = zq_final_sum_q0_4;\
+	zq_store_to_q(q.s, sum_vec22);\
+	*(C_c_ptr2++) = zq_final_sum_q0_4;\
+	zq_store_to_q(q.s, sum_vec31);\
+	*(C_c_ptr3++) = zq_final_sum_q0_4;\
+	zq_store_to_q(q.s, sum_vec32);\
+	*(C_c_ptr3++) = zq_final_sum_q0_4;\
+	zq_store_to_q(q.s, sum_vec41);\
+	*(C_c_ptr4++) = zq_final_sum_q0_4;\
+	zq_store_to_q(q.s, sum_vec42);\
+	*(C_c_ptr4++) = zq_final_sum_q0_4
+
+#define store_4x4 \
+	zq_store_to_q(q.s, sum_vec11);\
+	*(C_c_ptr1++) = zq_final_sum_q0_4;\
+	zq_store_to_q(q.s, sum_vec12);\
+	*(C_c_ptr1++) = zq_final_sum_q0_4;\
+	zq_store_to_q(q.s, sum_vec13);\
+	*(C_c_ptr1++) = zq_final_sum_q0_4;\
+	zq_store_to_q(q.s, sum_vec14);\
+	*(C_c_ptr1++) = zq_final_sum_q0_4;\
+	zq_store_to_q(q.s, sum_vec21);\
+	*(C_c_ptr2++) = zq_final_sum_q0_4;\
+	zq_store_to_q(q.s, sum_vec22);\
+	*(C_c_ptr2++) = zq_final_sum_q0_4;\
+	zq_store_to_q(q.s, sum_vec23);\
+	*(C_c_ptr2++) = zq_final_sum_q0_4;\
+	zq_store_to_q(q.s, sum_vec24);\
+	*(C_c_ptr2++) = zq_final_sum_q0_4;\
+	zq_store_to_q(q.s, sum_vec31);\
+	*(C_c_ptr3++) = zq_final_sum_q0_4;\
+	zq_store_to_q(q.s, sum_vec32);\
+	*(C_c_ptr3++) = zq_final_sum_q0_4;\
+	zq_store_to_q(q.s, sum_vec33);\
+	*(C_c_ptr3++) = zq_final_sum_q0_4;\
+	zq_store_to_q(q.s, sum_vec34);\
+	*(C_c_ptr3++) = zq_final_sum_q0_4;\
+	zq_store_to_q(q.s, sum_vec41);\
+	*(C_c_ptr4++) = zq_final_sum_q0_4;\
+	zq_store_to_q(q.s, sum_vec42);\
+	*(C_c_ptr4++) = zq_final_sum_q0_4;\
+	zq_store_to_q(q.s, sum_vec43);\
+	*(C_c_ptr4++) = zq_final_sum_q0_4;\
+	zq_store_to_q(q.s, sum_vec44);\
+	*(C_c_ptr4++) = zq_final_sum_q0_4
+#endif
+
 void zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNgeneral(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
 {
 	const float* Aptr1, *A_c_ptr1, *Bptr, *Bptr1, *Bptr2, *Bptr3, *Bptr4;
@@ -778,14 +1176,7 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNgeneral(int M, int N, int K, cons
 				{
 					op_1x4_8;
 				}
-				zq_store_to_q(q.s,sum_vec11);
-				*(C_c_ptr1++) = zq_final_sum_q;
-				zq_store_to_q(q.s, sum_vec12);
-				*(C_c_ptr1++) = zq_final_sum_q;
-				zq_store_to_q(q.s, sum_vec13);
-				*(C_c_ptr1++) = zq_final_sum_q;
-				zq_store_to_q(q.s, sum_vec14);
-				*(C_c_ptr1++) = zq_final_sum_q;
+				store_1x4;
 			}
 			for (; n < N; n++, Bptr += ldb)
 			{
@@ -796,8 +1187,7 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNgeneral(int M, int N, int K, cons
 				{
 					op_1x1_8;
 				}
-				zq_store_to_q(q.s, sum_vec11);
-				*(C_c_ptr1++) = zq_final_sum_q;
+				store_1x1;
 			}
 		}
 
@@ -823,14 +1213,7 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNgeneral(int M, int N, int K, cons
 				{
 					op_1x4_4;
 				}
-				zq_store_to_q(q.s, sum_vec11);
-				*(C_c_ptr1++) = zq_final_sum_q;
-				zq_store_to_q(q.s, sum_vec12);
-				*(C_c_ptr1++) = zq_final_sum_q;
-				zq_store_to_q(q.s, sum_vec13);
-				*(C_c_ptr1++) = zq_final_sum_q;
-				zq_store_to_q(q.s, sum_vec14);
-				*(C_c_ptr1++) = zq_final_sum_q;
+				store_1x4;
 			}
 			for (; n < N; n++, Bptr += ldb)
 			{
@@ -841,8 +1224,7 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNgeneral(int M, int N, int K, cons
 				{
 					op_1x1_4;
 				}
-				zq_store_to_q(q.s, sum_vec11);
-				*(C_c_ptr1++) = zq_final_sum_q;
+				store_1x1;
 			}
 		}
 
@@ -966,22 +1348,7 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNgeneral(int M, int N, int K, cons
 				{
 					op_2x4_8;
 				}
-				zq_store_to_q(q.s, sum_vec11);
-				*(C_c_ptr1++) = zq_final_sum_q;
-				zq_store_to_q(q.s, sum_vec12);
-				*(C_c_ptr1++) = zq_final_sum_q;
-				zq_store_to_q(q.s, sum_vec13);
-				*(C_c_ptr1++) = zq_final_sum_q;
-				zq_store_to_q(q.s, sum_vec14);
-				*(C_c_ptr1++) = zq_final_sum_q;
-				zq_store_to_q(q.s, sum_vec21);
-				*(C_c_ptr2++) = zq_final_sum_q;
-				zq_store_to_q(q.s, sum_vec22);
-				*(C_c_ptr2++) = zq_final_sum_q;
-				zq_store_to_q(q.s, sum_vec23);
-				*(C_c_ptr2++) = zq_final_sum_q;
-				zq_store_to_q(q.s, sum_vec24);
-				*(C_c_ptr2++) = zq_final_sum_q;
+				store_2x4;
 			}
 			for (; n < N; n++, Bptr += ldb)
 			{
@@ -992,10 +1359,7 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNgeneral(int M, int N, int K, cons
 				{
 					op_2x1_8;
 				}
-				zq_store_to_q(q.s, sum_vec11);
-				*(C_c_ptr1++) = zq_final_sum_q;
-				zq_store_to_q(q.s, sum_vec21);
-				*(C_c_ptr2++) = zq_final_sum_q;
+				store_2x1;
 			}
 		}
 
@@ -1016,14 +1380,7 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNgeneral(int M, int N, int K, cons
 				{
 					op_1x4_8;
 				}
-				zq_store_to_q(q.s, sum_vec11);
-				*(C_c_ptr1++) = zq_final_sum_q;
-				zq_store_to_q(q.s, sum_vec12);
-				*(C_c_ptr1++) = zq_final_sum_q;
-				zq_store_to_q(q.s, sum_vec13);
-				*(C_c_ptr1++) = zq_final_sum_q;
-				zq_store_to_q(q.s, sum_vec14);
-				*(C_c_ptr1++) = zq_final_sum_q;
+				store_1x4;
 			}
 			for (; n < N; n++, Bptr += ldb)
 			{
@@ -1034,8 +1391,7 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNgeneral(int M, int N, int K, cons
 				{
 					op_1x1_8;
 				}
-				zq_store_to_q(q.s, sum_vec11);
-				*(C_c_ptr1++) = zq_final_sum_q;
+				store_1x1;
 			}
 		}
 	}
@@ -1063,22 +1419,7 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNgeneral(int M, int N, int K, cons
 				{
 					op_2x4_4;
 				}
-				zq_store_to_q(q.s, sum_vec11);
-				*(C_c_ptr1++) = zq_final_sum_q;
-				zq_store_to_q(q.s, sum_vec12);
-				*(C_c_ptr1++) = zq_final_sum_q;
-				zq_store_to_q(q.s, sum_vec13);
-				*(C_c_ptr1++) = zq_final_sum_q;
-				zq_store_to_q(q.s, sum_vec14);
-				*(C_c_ptr1++) = zq_final_sum_q;
-				zq_store_to_q(q.s, sum_vec21);
-				*(C_c_ptr2++) = zq_final_sum_q;
-				zq_store_to_q(q.s, sum_vec22);
-				*(C_c_ptr2++) = zq_final_sum_q;
-				zq_store_to_q(q.s, sum_vec23);
-				*(C_c_ptr2++) = zq_final_sum_q;
-				zq_store_to_q(q.s, sum_vec24);
-				*(C_c_ptr2++) = zq_final_sum_q;
+				store_2x4;
 			}
 			for (; n < N; n++, Bptr += ldb)
 			{
@@ -1089,10 +1430,7 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNgeneral(int M, int N, int K, cons
 				{
 					op_2x1_4;
 				}
-				zq_store_to_q(q.s, sum_vec11);
-				*(C_c_ptr1++) = zq_final_sum_q;
-				zq_store_to_q(q.s, sum_vec21);
-				*(C_c_ptr2++) = zq_final_sum_q;
+				store_2x1;
 			}
 		}
 
@@ -1113,14 +1451,7 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNgeneral(int M, int N, int K, cons
 				{
 					op_1x4_4;
 				}
-				zq_store_to_q(q.s, sum_vec11);
-				*(C_c_ptr1++) = zq_final_sum_q;
-				zq_store_to_q(q.s, sum_vec12);
-				*(C_c_ptr1++) = zq_final_sum_q;
-				zq_store_to_q(q.s, sum_vec13);
-				*(C_c_ptr1++) = zq_final_sum_q;
-				zq_store_to_q(q.s, sum_vec14);
-				*(C_c_ptr1++) = zq_final_sum_q;
+				store_1x4;
 			}
 			for (; n < N; n++, Bptr += ldb)
 			{
@@ -1131,8 +1462,7 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNgeneral(int M, int N, int K, cons
 				{
 					op_1x1_4;
 				}
-				zq_store_to_q(q.s, sum_vec11);
-				*(C_c_ptr1++) = zq_final_sum_q;
+				store_1x1;
 			}
 		}
 	}
@@ -1350,38 +1680,7 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNgeneral(int M, int N, int K, cons
 				{
 					op_4x4_8;
 				}
-				zq_store_to_q(q.s, sum_vec11);
-				*(C_c_ptr1++) = zq_final_sum_q;
-				zq_store_to_q(q.s, sum_vec12);
-				*(C_c_ptr1++) = zq_final_sum_q;
-				zq_store_to_q(q.s, sum_vec13);
-				*(C_c_ptr1++) = zq_final_sum_q;
-				zq_store_to_q(q.s, sum_vec14);
-				*(C_c_ptr1++) = zq_final_sum_q;
-				zq_store_to_q(q.s, sum_vec21);
-				*(C_c_ptr2++) = zq_final_sum_q;
-				zq_store_to_q(q.s, sum_vec22);
-				*(C_c_ptr2++) = zq_final_sum_q;
-				zq_store_to_q(q.s, sum_vec23);
-				*(C_c_ptr2++) = zq_final_sum_q;
-				zq_store_to_q(q.s, sum_vec24);
-				*(C_c_ptr2++) = zq_final_sum_q;
-				zq_store_to_q(q.s, sum_vec31);
-				*(C_c_ptr3++) = zq_final_sum_q;
-				zq_store_to_q(q.s, sum_vec32);
-				*(C_c_ptr3++) = zq_final_sum_q;
-				zq_store_to_q(q.s, sum_vec33);
-				*(C_c_ptr3++) = zq_final_sum_q;
-				zq_store_to_q(q.s, sum_vec34);
-				*(C_c_ptr3++) = zq_final_sum_q;
-				zq_store_to_q(q.s, sum_vec41);
-				*(C_c_ptr4++) = zq_final_sum_q;
-				zq_store_to_q(q.s, sum_vec42);
-				*(C_c_ptr4++) = zq_final_sum_q;
-				zq_store_to_q(q.s, sum_vec43);
-				*(C_c_ptr4++) = zq_final_sum_q;
-				zq_store_to_q(q.s, sum_vec44);
-				*(C_c_ptr4++) = zq_final_sum_q;
+				store_4x4;
 			}
 			for (; n < N; n++, Bptr += ldb)
 			{
@@ -1393,14 +1692,7 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNgeneral(int M, int N, int K, cons
 				{
 					op_4x1;
 				}
-				zq_store_to_q(q.s, sum_vec11);
-				*(C_c_ptr1++) = zq_final_sum_q;
-				zq_store_to_q(q.s, sum_vec21);
-				*(C_c_ptr2++) = zq_final_sum_q;
-				zq_store_to_q(q.s, sum_vec31);
-				*(C_c_ptr3++) = zq_final_sum_q;
-				zq_store_to_q(q.s, sum_vec41);
-				*(C_c_ptr4++) = zq_final_sum_q;
+				store_4x1;
 			}
 		}
 
@@ -1421,14 +1713,7 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNgeneral(int M, int N, int K, cons
 				{
 					op_1x4_8;
 				}
-				zq_store_to_q(q.s, sum_vec11);
-				*(C_c_ptr1++) = zq_final_sum_q;
-				zq_store_to_q(q.s, sum_vec12);
-				*(C_c_ptr1++) = zq_final_sum_q;
-				zq_store_to_q(q.s, sum_vec13);
-				*(C_c_ptr1++) = zq_final_sum_q;
-				zq_store_to_q(q.s, sum_vec14);
-				*(C_c_ptr1++) = zq_final_sum_q;
+				store_1x4;
 			}
 
 			for (; n < N; n++, Bptr += ldb)
@@ -1440,8 +1725,7 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNgeneral(int M, int N, int K, cons
 				{
 					op_1x1;
 				}
-				zq_store_to_q(q.s, sum_vec11);
-				*(C_c_ptr1++) = zq_final_sum_q;
+				store_1x1;
 			}
 		}
 	}
@@ -1476,38 +1760,7 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNgeneral(int M, int N, int K, cons
 				{
 					op_4x4_4;
 				}
-				zq_store_to_q(q.s, sum_vec11);
-				*(C_c_ptr1++) = zq_final_sum_q;
-				zq_store_to_q(q.s, sum_vec12);
-				*(C_c_ptr1++) = zq_final_sum_q;
-				zq_store_to_q(q.s, sum_vec13);
-				*(C_c_ptr1++) = zq_final_sum_q;
-				zq_store_to_q(q.s, sum_vec14);
-				*(C_c_ptr1++) = zq_final_sum_q;
-				zq_store_to_q(q.s, sum_vec21);
-				*(C_c_ptr2++) = zq_final_sum_q;
-				zq_store_to_q(q.s, sum_vec22);
-				*(C_c_ptr2++) = zq_final_sum_q;
-				zq_store_to_q(q.s, sum_vec23);
-				*(C_c_ptr2++) = zq_final_sum_q;
-				zq_store_to_q(q.s, sum_vec24);
-				*(C_c_ptr2++) = zq_final_sum_q;
-				zq_store_to_q(q.s, sum_vec31);
-				*(C_c_ptr3++) = zq_final_sum_q;
-				zq_store_to_q(q.s, sum_vec32);
-				*(C_c_ptr3++) = zq_final_sum_q;
-				zq_store_to_q(q.s, sum_vec33);
-				*(C_c_ptr3++) = zq_final_sum_q;
-				zq_store_to_q(q.s, sum_vec34);
-				*(C_c_ptr3++) = zq_final_sum_q;
-				zq_store_to_q(q.s, sum_vec41);
-				*(C_c_ptr4++) = zq_final_sum_q;
-				zq_store_to_q(q.s, sum_vec42);
-				*(C_c_ptr4++) = zq_final_sum_q;
-				zq_store_to_q(q.s, sum_vec43);
-				*(C_c_ptr4++) = zq_final_sum_q;
-				zq_store_to_q(q.s, sum_vec44);
-				*(C_c_ptr4++) = zq_final_sum_q;
+				store_4x4;
 			}
 			for (; n < N; n++, Bptr += ldb)
 			{
@@ -1519,14 +1772,7 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNgeneral(int M, int N, int K, cons
 				{
 					op_4x1;
 				}
-				zq_store_to_q(q.s, sum_vec11);
-				*(C_c_ptr1++) = zq_final_sum_q;
-				zq_store_to_q(q.s, sum_vec21);
-				*(C_c_ptr2++) = zq_final_sum_q;
-				zq_store_to_q(q.s, sum_vec31);
-				*(C_c_ptr3++) = zq_final_sum_q;
-				zq_store_to_q(q.s, sum_vec41);
-				*(C_c_ptr4++) = zq_final_sum_q;
+				store_4x1;
 			}
 		}
 
@@ -1547,14 +1793,7 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNgeneral(int M, int N, int K, cons
 				{
 					op_1x4_4;
 				}
-				zq_store_to_q(q.s, sum_vec11);
-				*(C_c_ptr1++) = zq_final_sum_q;
-				zq_store_to_q(q.s, sum_vec12);
-				*(C_c_ptr1++) = zq_final_sum_q;
-				zq_store_to_q(q.s, sum_vec13);
-				*(C_c_ptr1++) = zq_final_sum_q;
-				zq_store_to_q(q.s, sum_vec14);
-				*(C_c_ptr1++) = zq_final_sum_q;
+				store_1x4;
 			}
 
 			for (; n < N; n++, Bptr += ldb)
@@ -1566,8 +1805,7 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNgeneral(int M, int N, int K, cons
 				{
 					op_1x1;
 				}
-				zq_store_to_q(q.s, sum_vec11);
-				*(C_c_ptr1++) = zq_final_sum_q;
+				store_1x1;
 			}
 		}
 	}
@@ -1821,14 +2059,7 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv4_KdivAlign8(int M, int N, int
 			{
 				op_1x4_8;
 			}
-			zq_store_to_q(q.s, sum_vec11);
-			*(C_c_ptr1++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec12);
-			*(C_c_ptr1++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec13);
-			*(C_c_ptr1++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec14);
-			*(C_c_ptr1++) = zq_final_sum_q;
+			store_1x4;
 		}
 	}
 }
@@ -1870,14 +2101,7 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv4_KdivAlign16(int M, int N, in
 			{
 				op_1x4_16;
 			}
-			zq_store_to_q(q.s, sum_vec11);
-			*(C_c_ptr1++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec12);
-			*(C_c_ptr1++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec13);
-			*(C_c_ptr1++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec14);
-			*(C_c_ptr1++) = zq_final_sum_q;
+			store_1x4;
 		}
 	}
 }
@@ -1921,14 +2145,7 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv4_KdivAlign32(int M, int N, in
 				op_1x4_16;
 				op_1x4_16;
 			}
-			zq_store_to_q(q.s, sum_vec11);
-			*(C_c_ptr1++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec12);
-			*(C_c_ptr1++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec13);
-			*(C_c_ptr1++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec14);
-			*(C_c_ptr1++) = zq_final_sum_q;
+			store_1x4;
 		}
 	}
 }
@@ -1976,14 +2193,7 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv4_KdivAlign64(int M, int N, in
 				op_1x4_16;
 				op_1x4_16;
 			}
-			zq_store_to_q(q.s, sum_vec11);
-			*(C_c_ptr1++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec12);
-			*(C_c_ptr1++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec13);
-			*(C_c_ptr1++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec14);
-			*(C_c_ptr1++) = zq_final_sum_q;
+			store_1x4;
 		}
 	}
 }
@@ -2029,22 +2239,7 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv4_KdivAlign8(int M, int N, int
 				op_2x4_8;
 			}
 
-			zq_store_to_q(q.s, sum_vec11);
-			*(C_c_ptr1++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec12);
-			*(C_c_ptr1++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec13);
-			*(C_c_ptr1++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec14);
-			*(C_c_ptr1++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec21);
-			*(C_c_ptr2++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec22);
-			*(C_c_ptr2++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec23);
-			*(C_c_ptr2++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec24);
-			*(C_c_ptr2++) = zq_final_sum_q;
+			store_2x4;
 		}
 	}
 
@@ -2065,14 +2260,7 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv4_KdivAlign8(int M, int N, int
 			{
 				op_1x4_8;
 			}
-			zq_store_to_q(q.s, sum_vec11);
-			*(C_c_ptr1++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec12);
-			*(C_c_ptr1++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec13);
-			*(C_c_ptr1++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec14);
-			*(C_c_ptr1++) = zq_final_sum_q;
+			store_1x4;
 		}
 	}
 }
@@ -2117,22 +2305,7 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv4_KdivAlign16(int M, int N, in
 				op_2x4_16;
 			}
 
-			zq_store_to_q(q.s, sum_vec11);
-			*(C_c_ptr1++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec12);
-			*(C_c_ptr1++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec13);
-			*(C_c_ptr1++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec14);
-			*(C_c_ptr1++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec21);
-			*(C_c_ptr2++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec22);
-			*(C_c_ptr2++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec23);
-			*(C_c_ptr2++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec24);
-			*(C_c_ptr2++) = zq_final_sum_q;
+			store_2x4;
 		}
 	}
 
@@ -2153,14 +2326,7 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv4_KdivAlign16(int M, int N, in
 			{
 				op_1x4_16;
 			}
-			zq_store_to_q(q.s, sum_vec11);
-			*(C_c_ptr1++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec12);
-			*(C_c_ptr1++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec13);
-			*(C_c_ptr1++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec14);
-			*(C_c_ptr1++) = zq_final_sum_q;
+			store_1x4;
 		}
 	}
 }
@@ -2208,22 +2374,7 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv4_KdivAlign32(int M, int N, in
 				op_2x4_16;
 			}
 
-			zq_store_to_q(q.s, sum_vec11);
-			*(C_c_ptr1++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec12);
-			*(C_c_ptr1++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec13);
-			*(C_c_ptr1++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec14);
-			*(C_c_ptr1++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec21);
-			*(C_c_ptr2++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec22);
-			*(C_c_ptr2++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec23);
-			*(C_c_ptr2++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec24);
-			*(C_c_ptr2++) = zq_final_sum_q;
+			store_2x4;
 		}
 	}
 
@@ -2246,14 +2397,7 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv4_KdivAlign32(int M, int N, in
 				op_1x4_16;
 				op_1x4_16;
 			}
-			zq_store_to_q(q.s, sum_vec11);
-			*(C_c_ptr1++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec12);
-			*(C_c_ptr1++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec13);
-			*(C_c_ptr1++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec14);
-			*(C_c_ptr1++) = zq_final_sum_q;
+			store_1x4;
 		}
 	}
 }
@@ -2304,22 +2448,7 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv4_KdivAlign64(int M, int N, in
 				op_2x4_16;
 			}
 
-			zq_store_to_q(q.s, sum_vec11);
-			*(C_c_ptr1++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec12);
-			*(C_c_ptr1++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec13);
-			*(C_c_ptr1++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec14);
-			*(C_c_ptr1++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec21);
-			*(C_c_ptr2++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec22);
-			*(C_c_ptr2++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec23);
-			*(C_c_ptr2++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec24);
-			*(C_c_ptr2++) = zq_final_sum_q;
+			store_2x4;
 		}
 	}
 
@@ -2346,6 +2475,7 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv4_KdivAlign64(int M, int N, in
 				op_1x4_16;
 				op_1x4_16;
 			}
+			store_1x4;
 		}
 	}
 }
@@ -2399,38 +2529,7 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv4_KdivAlign8(int M, int N, int
 			{
 				op_4x4_8;
 			}
-			zq_store_to_q(q.s, sum_vec11);
-			*(C_c_ptr1++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec12);
-			*(C_c_ptr1++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec13);
-			*(C_c_ptr1++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec14);
-			*(C_c_ptr1++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec21);
-			*(C_c_ptr2++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec22);
-			*(C_c_ptr2++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec23);
-			*(C_c_ptr2++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec24);
-			*(C_c_ptr2++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec31);
-			*(C_c_ptr3++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec32);
-			*(C_c_ptr3++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec33);
-			*(C_c_ptr3++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec34);
-			*(C_c_ptr3++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec41);
-			*(C_c_ptr4++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec42);
-			*(C_c_ptr4++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec43);
-			*(C_c_ptr4++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec44);
-			*(C_c_ptr4++) = zq_final_sum_q;
+			store_4x4;
 		}
 	}
 
@@ -2451,14 +2550,7 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv4_KdivAlign8(int M, int N, int
 			{
 				op_1x4_8;
 			}
-			zq_store_to_q(q.s, sum_vec11);
-			*(C_c_ptr1++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec12);
-			*(C_c_ptr1++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec13);
-			*(C_c_ptr1++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec14);
-			*(C_c_ptr1++) = zq_final_sum_q;
+			store_1x4;
 		}
 	}
 }
@@ -2512,38 +2604,7 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv4_KdivAlign16(int M, int N, in
 			{
 				op_4x4_16;
 			}
-			zq_store_to_q(q.s, sum_vec11);
-			*(C_c_ptr1++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec12);
-			*(C_c_ptr1++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec13);
-			*(C_c_ptr1++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec14);
-			*(C_c_ptr1++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec21);
-			*(C_c_ptr2++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec22);
-			*(C_c_ptr2++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec23);
-			*(C_c_ptr2++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec24);
-			*(C_c_ptr2++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec31);
-			*(C_c_ptr3++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec32);
-			*(C_c_ptr3++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec33);
-			*(C_c_ptr3++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec34);
-			*(C_c_ptr3++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec41);
-			*(C_c_ptr4++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec42);
-			*(C_c_ptr4++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec43);
-			*(C_c_ptr4++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec44);
-			*(C_c_ptr4++) = zq_final_sum_q;
+			store_4x4;
 		}
 	}
 
@@ -2564,14 +2625,7 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv4_KdivAlign16(int M, int N, in
 			{
 				op_1x4_16;
 			}
-			zq_store_to_q(q.s, sum_vec11);
-			*(C_c_ptr1++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec12);
-			*(C_c_ptr1++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec13);
-			*(C_c_ptr1++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec14);
-			*(C_c_ptr1++) = zq_final_sum_q;
+			store_1x4;
 		}
 	}
 }
@@ -2627,38 +2681,7 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv4_KdivAlign32(int M, int N, in
 				op_4x4_16;
 				op_4x4_16;
 			}
-			zq_store_to_q(q.s, sum_vec11);
-			*(C_c_ptr1++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec12);
-			*(C_c_ptr1++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec13);
-			*(C_c_ptr1++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec14);
-			*(C_c_ptr1++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec21);
-			*(C_c_ptr2++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec22);
-			*(C_c_ptr2++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec23);
-			*(C_c_ptr2++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec24);
-			*(C_c_ptr2++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec31);
-			*(C_c_ptr3++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec32);
-			*(C_c_ptr3++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec33);
-			*(C_c_ptr3++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec34);
-			*(C_c_ptr3++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec41);
-			*(C_c_ptr4++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec42);
-			*(C_c_ptr4++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec43);
-			*(C_c_ptr4++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec44);
-			*(C_c_ptr4++) = zq_final_sum_q;
+			store_4x4;
 		}
 	}
 
@@ -2681,14 +2704,7 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv4_KdivAlign32(int M, int N, in
 				op_1x4_16;
 				op_1x4_16;
 			}
-			zq_store_to_q(q.s, sum_vec11);
-			*(C_c_ptr1++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec12);
-			*(C_c_ptr1++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec13);
-			*(C_c_ptr1++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec14);
-			*(C_c_ptr1++) = zq_final_sum_q;
+			store_1x4;
 		}
 	}
 }
@@ -2748,38 +2764,7 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv4_KdivAlign64(int M, int N, in
 				op_4x4_16;
 				op_4x4_16;
 			}
-			zq_store_to_q(q.s, sum_vec11);
-			*(C_c_ptr1++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec12);
-			*(C_c_ptr1++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec13);
-			*(C_c_ptr1++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec14);
-			*(C_c_ptr1++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec21);
-			*(C_c_ptr2++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec22);
-			*(C_c_ptr2++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec23);
-			*(C_c_ptr2++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec24);
-			*(C_c_ptr2++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec31);
-			*(C_c_ptr3++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec32);
-			*(C_c_ptr3++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec33);
-			*(C_c_ptr3++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec34);
-			*(C_c_ptr3++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec41);
-			*(C_c_ptr4++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec42);
-			*(C_c_ptr4++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec43);
-			*(C_c_ptr4++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec44);
-			*(C_c_ptr4++) = zq_final_sum_q;
+			store_4x4;
 		}
 	}
 
@@ -2806,14 +2791,7 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv4_KdivAlign64(int M, int N, in
 				op_1x4_16;
 				op_1x4_16;
 			}
-			zq_store_to_q(q.s, sum_vec11);
-			*(C_c_ptr1++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec12);
-			*(C_c_ptr1++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec13);
-			*(C_c_ptr1++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec14);
-			*(C_c_ptr1++) = zq_final_sum_q;
+			store_1x4;
 		}
 	}
 }
@@ -2857,14 +2835,7 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv4_KdivAlign4(int M, int N, int
 				op_1x4;
 				op_1x4;
 			}
-			zq_store_to_q(q.s, sum_vec11);
-			*(C_c_ptr1++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec12);
-			*(C_c_ptr1++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec13);
-			*(C_c_ptr1++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec14);
-			*(C_c_ptr1++) = zq_final_sum_q;
+			store_1x4;
 		}
 	}
 }
@@ -2915,22 +2886,7 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv4_KdivAlign4(int M, int N, int
 				op_2x4;
 			}
 			
-			zq_store_to_q(q.s, sum_vec11);
-			*(C_c_ptr1++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec12);
-			*(C_c_ptr1++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec13);
-			*(C_c_ptr1++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec14);
-			*(C_c_ptr1++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec21);
-			*(C_c_ptr2++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec22);
-			*(C_c_ptr2++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec23);
-			*(C_c_ptr2++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec24);
-			*(C_c_ptr2++) = zq_final_sum_q;
+			store_2x4;
 		}
 	}
 
@@ -2957,14 +2913,7 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv4_KdivAlign4(int M, int N, int
 				op_1x4;
 			}
 			
-			zq_store_to_q(q.s, sum_vec11);
-			*(C_c_ptr1++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec12);
-			*(C_c_ptr1++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec13);
-			*(C_c_ptr1++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec14);
-			*(C_c_ptr1++) = zq_final_sum_q;
+			store_1x4;
 		}
 	}
 }
@@ -3024,38 +2973,7 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv4_KdivAlign4(int M, int N, int
 				op_4x4;
 				op_4x4;
 			}
-			zq_store_to_q(q.s, sum_vec11);
-			*(C_c_ptr1++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec12);
-			*(C_c_ptr1++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec13);
-			*(C_c_ptr1++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec14);
-			*(C_c_ptr1++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec21);
-			*(C_c_ptr2++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec22);
-			*(C_c_ptr2++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec23);
-			*(C_c_ptr2++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec24);
-			*(C_c_ptr2++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec31);
-			*(C_c_ptr3++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec32);
-			*(C_c_ptr3++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec33);
-			*(C_c_ptr3++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec34);
-			*(C_c_ptr3++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec41);
-			*(C_c_ptr4++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec42);
-			*(C_c_ptr4++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec43);
-			*(C_c_ptr4++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec44);
-			*(C_c_ptr4++) = zq_final_sum_q;
+			store_4x4;
 		}
 	}
 
@@ -3081,14 +2999,7 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv4_KdivAlign4(int M, int N, int
 				op_1x4;
 				op_1x4;
 			}
-			zq_store_to_q(q.s, sum_vec11);
-			*(C_c_ptr1++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec12);
-			*(C_c_ptr1++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec13);
-			*(C_c_ptr1++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec14);
-			*(C_c_ptr1++) = zq_final_sum_q;
+			store_1x4;
 		}
 	}
 }
@@ -3510,22 +3421,7 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv8_KdivAlign4(int M, int N, int
 			{
 				op_1x8_4;
 			}
-			zq_store_to_q(q.s, sum_vec11);
-			*(C_c_ptr1++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec12);
-			*(C_c_ptr1++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec13);
-			*(C_c_ptr1++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec14);
-			*(C_c_ptr1++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec15);
-			*(C_c_ptr1++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec16);
-			*(C_c_ptr1++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec17);
-			*(C_c_ptr1++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec18);
-			*(C_c_ptr1++) = zq_final_sum_q;
+			store_1x8;
 		}
 	}
 }
@@ -3572,22 +3468,7 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv8_KdivAlign8(int M, int N, int
 			{
 				op_1x8_8;
 			}
-			zq_store_to_q(q.s, sum_vec11);
-			*(C_c_ptr1++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec12);
-			*(C_c_ptr1++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec13);
-			*(C_c_ptr1++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec14);
-			*(C_c_ptr1++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec15);
-			*(C_c_ptr1++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec16);
-			*(C_c_ptr1++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec17);
-			*(C_c_ptr1++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec18);
-			*(C_c_ptr1++) = zq_final_sum_q;
+			store_1x8;
 		}
 	}
 }
@@ -3635,22 +3516,7 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv8_KdivAlign16(int M, int N, in
 			{
 				op_1x8_16;
 			}
-			zq_store_to_q(q.s, sum_vec11);
-			*(C_c_ptr1++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec12);
-			*(C_c_ptr1++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec13);
-			*(C_c_ptr1++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec14);
-			*(C_c_ptr1++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec15);
-			*(C_c_ptr1++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec16);
-			*(C_c_ptr1++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec17);
-			*(C_c_ptr1++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec18);
-			*(C_c_ptr1++) = zq_final_sum_q;
+			store_1x8;
 		}
 	}
 }
@@ -3700,22 +3566,7 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv8_KdivAlign32(int M, int N, in
 				op_1x8_16;
 				op_1x8_16;
 			}
-			zq_store_to_q(q.s, sum_vec11);
-			*(C_c_ptr1++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec12);
-			*(C_c_ptr1++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec13);
-			*(C_c_ptr1++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec14);
-			*(C_c_ptr1++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec15);
-			*(C_c_ptr1++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec16);
-			*(C_c_ptr1++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec17);
-			*(C_c_ptr1++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec18);
-			*(C_c_ptr1++) = zq_final_sum_q;
+			store_1x8;
 		}
 	}
 }
@@ -3769,22 +3620,7 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv8_KdivAlign64(int M, int N, in
 				op_1x8_16;
 				op_1x8_16;
 			}
-			zq_store_to_q(q.s, sum_vec11);
-			*(C_c_ptr1++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec12);
-			*(C_c_ptr1++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec13);
-			*(C_c_ptr1++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec14);
-			*(C_c_ptr1++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec15);
-			*(C_c_ptr1++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec16);
-			*(C_c_ptr1++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec17);
-			*(C_c_ptr1++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec18);
-			*(C_c_ptr1++) = zq_final_sum_q;
+			store_1x8;
 		}
 	}
 }
@@ -3839,38 +3675,7 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv8_KdivAlign4(int M, int N, int
 				op_2x8_4;
 			}
 
-			zq_store_to_q(q.s, sum_vec11);
-			*(C_c_ptr1++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec12);
-			*(C_c_ptr1++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec13);
-			*(C_c_ptr1++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec14);
-			*(C_c_ptr1++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec15);
-			*(C_c_ptr1++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec16);
-			*(C_c_ptr1++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec17);
-			*(C_c_ptr1++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec18);
-			*(C_c_ptr1++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec21);
-			*(C_c_ptr2++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec22);
-			*(C_c_ptr2++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec23);
-			*(C_c_ptr2++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec24);
-			*(C_c_ptr2++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec25);
-			*(C_c_ptr2++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec26);
-			*(C_c_ptr2++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec27);
-			*(C_c_ptr2++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec28);
-			*(C_c_ptr2++) = zq_final_sum_q;
+			store_2x8;
 		}
 	}
 
@@ -3897,22 +3702,7 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv8_KdivAlign4(int M, int N, int
 				op_1x8_4;
 			}
 
-			zq_store_to_q(q.s, sum_vec11);
-			*(C_c_ptr1++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec12);
-			*(C_c_ptr1++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec13);
-			*(C_c_ptr1++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec14);
-			*(C_c_ptr1++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec15);
-			*(C_c_ptr1++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec16);
-			*(C_c_ptr1++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec17);
-			*(C_c_ptr1++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec18);
-			*(C_c_ptr1++) = zq_final_sum_q;
+			store_1x8;
 		}
 	}
 }
@@ -3967,38 +3757,7 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv8_KdivAlign8(int M, int N, int
 				op_2x8_8;
 			}
 			
-			zq_store_to_q(q.s, sum_vec11);
-			*(C_c_ptr1++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec12);
-			*(C_c_ptr1++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec13);
-			*(C_c_ptr1++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec14);
-			*(C_c_ptr1++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec15);
-			*(C_c_ptr1++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec16);
-			*(C_c_ptr1++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec17);
-			*(C_c_ptr1++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec18);
-			*(C_c_ptr1++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec21);
-			*(C_c_ptr2++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec22);
-			*(C_c_ptr2++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec23);
-			*(C_c_ptr2++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec24);
-			*(C_c_ptr2++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec25);
-			*(C_c_ptr2++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec26);
-			*(C_c_ptr2++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec27);
-			*(C_c_ptr2++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec28);
-			*(C_c_ptr2++) = zq_final_sum_q;
+			store_2x8;
 		}
 	}
 
@@ -4025,22 +3784,7 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv8_KdivAlign8(int M, int N, int
 				op_1x8_8;
 			}
 		
-			zq_store_to_q(q.s, sum_vec11);
-			*(C_c_ptr1++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec12);
-			*(C_c_ptr1++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec13);
-			*(C_c_ptr1++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec14);
-			*(C_c_ptr1++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec15);
-			*(C_c_ptr1++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec16);
-			*(C_c_ptr1++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec17);
-			*(C_c_ptr1++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec18);
-			*(C_c_ptr1++) = zq_final_sum_q;
+			store_1x8;
 		}
 	}
 }
@@ -4095,38 +3839,7 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv8_KdivAlign16(int M, int N, in
 				op_2x8_16;
 			}
 
-			zq_store_to_q(q.s, sum_vec11);
-			*(C_c_ptr1++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec12);
-			*(C_c_ptr1++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec13);
-			*(C_c_ptr1++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec14);
-			*(C_c_ptr1++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec15);
-			*(C_c_ptr1++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec16);
-			*(C_c_ptr1++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec17);
-			*(C_c_ptr1++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec18);
-			*(C_c_ptr1++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec21);
-			*(C_c_ptr2++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec22);
-			*(C_c_ptr2++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec23);
-			*(C_c_ptr2++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec24);
-			*(C_c_ptr2++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec25);
-			*(C_c_ptr2++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec26);
-			*(C_c_ptr2++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec27);
-			*(C_c_ptr2++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec28);
-			*(C_c_ptr2++) = zq_final_sum_q;
+			store_2x8;
 		}
 	}
 
@@ -4153,22 +3866,7 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv8_KdivAlign16(int M, int N, in
 				op_1x8_16;
 			}
 
-			zq_store_to_q(q.s, sum_vec11);
-			*(C_c_ptr1++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec12);
-			*(C_c_ptr1++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec13);
-			*(C_c_ptr1++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec14);
-			*(C_c_ptr1++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec15);
-			*(C_c_ptr1++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec16);
-			*(C_c_ptr1++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec17);
-			*(C_c_ptr1++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec18);
-			*(C_c_ptr1++) = zq_final_sum_q;
+			store_1x8;
 		}
 	}
 }
@@ -4225,38 +3923,7 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv8_KdivAlign32(int M, int N, in
 				op_2x8_16;
 			}
 
-			zq_store_to_q(q.s, sum_vec11);
-			*(C_c_ptr1++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec12);
-			*(C_c_ptr1++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec13);
-			*(C_c_ptr1++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec14);
-			*(C_c_ptr1++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec15);
-			*(C_c_ptr1++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec16);
-			*(C_c_ptr1++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec17);
-			*(C_c_ptr1++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec18);
-			*(C_c_ptr1++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec21);
-			*(C_c_ptr2++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec22);
-			*(C_c_ptr2++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec23);
-			*(C_c_ptr2++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec24);
-			*(C_c_ptr2++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec25);
-			*(C_c_ptr2++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec26);
-			*(C_c_ptr2++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec27);
-			*(C_c_ptr2++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec28);
-			*(C_c_ptr2++) = zq_final_sum_q;
+			store_2x8;
 		}
 	}
 
@@ -4285,22 +3952,7 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv8_KdivAlign32(int M, int N, in
 				op_1x8_16;
 			}
 
-			zq_store_to_q(q.s, sum_vec11);
-			*(C_c_ptr1++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec12);
-			*(C_c_ptr1++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec13);
-			*(C_c_ptr1++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec14);
-			*(C_c_ptr1++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec15);
-			*(C_c_ptr1++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec16);
-			*(C_c_ptr1++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec17);
-			*(C_c_ptr1++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec18);
-			*(C_c_ptr1++) = zq_final_sum_q;
+			store_1x8;
 		}
 	}
 }
@@ -4361,38 +4013,7 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv8_KdivAlign64(int M, int N, in
 				op_2x8_16;
 			}
 
-			zq_store_to_q(q.s, sum_vec11);
-			*(C_c_ptr1++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec12);
-			*(C_c_ptr1++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec13);
-			*(C_c_ptr1++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec14);
-			*(C_c_ptr1++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec15);
-			*(C_c_ptr1++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec16);
-			*(C_c_ptr1++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec17);
-			*(C_c_ptr1++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec18);
-			*(C_c_ptr1++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec21);
-			*(C_c_ptr2++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec22);
-			*(C_c_ptr2++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec23);
-			*(C_c_ptr2++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec24);
-			*(C_c_ptr2++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec25);
-			*(C_c_ptr2++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec26);
-			*(C_c_ptr2++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec27);
-			*(C_c_ptr2++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec28);
-			*(C_c_ptr2++) = zq_final_sum_q;
+			store_2x8;
 		}
 	}
 
@@ -4425,22 +4046,7 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv8_KdivAlign64(int M, int N, in
 				op_1x8_16;
 			}
 
-			zq_store_to_q(q.s, sum_vec11);
-			*(C_c_ptr1++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec12);
-			*(C_c_ptr1++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec13);
-			*(C_c_ptr1++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec14);
-			*(C_c_ptr1++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec15);
-			*(C_c_ptr1++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec16);
-			*(C_c_ptr1++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec17);
-			*(C_c_ptr1++) = zq_final_sum_q;
-			zq_store_to_q(q.s, sum_vec18);
-			*(C_c_ptr1++) = zq_final_sum_q;
+			store_1x8;
 		}
 	}
 }
@@ -4837,3 +4443,14 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M4(int M, int N, int K, const float* A, i
 		return;
 	}
 }
+
+#undef store_1x1
+#undef store_1x4
+#undef store_1x8
+#undef store_2x1
+#undef store_2x2
+#undef store_2x4
+#undef store_2x8
+#undef store_4x1
+#undef store_4x2
+#undef store_4x4
