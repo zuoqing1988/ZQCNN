@@ -21,6 +21,23 @@ extern "C" {
 
 	void zq_gemm_32f_AnoTrans_Btrans_auto(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
 	{
+		const float* oldA = A, *oldB = Bt;
+		float* old_C = C;
+		int old_lda = lda, old_ldb = ldb, old_ldc = ldc, old_M = M, old_N = N;
+		int m, n;
+		int swap = 0;
+		if (M + 8 < N)
+		{
+			swap = 1;
+			A = oldB;
+			Bt = oldA;
+			lda = old_ldb;
+			ldb = old_lda;
+			M = old_N;
+			N = old_M;
+			ldc = N;
+			C = _aligned_malloc(M*N * sizeof(float), 32);
+		}
 		int handled = 0;
 #if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_AVX
 		
@@ -249,6 +266,17 @@ extern "C" {
 #else
 		zq_gemm_32f_align0_AnoTrans_Btrans(M, N, K, A, lda, Bt, ldb, C, ldc);
 #endif
+		if (swap == 1)
+		{
+			for (n = 0; n < N; n++)
+			{
+				for (m = 0; m < M; m++)
+				{
+					old_C[n*old_ldc + m] = C[m*ldc+n];
+				}
+			}
+			_aligned_free(C);
+		}
 	}
 
 #if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_SSE
