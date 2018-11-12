@@ -530,21 +530,96 @@
 	B_c_ptr3 += zq_mm_align_size;\
 	B_c_ptr4 += zq_mm_align_size
 
+#define op2_4x4 \
+	a_vec1 = zq_mm_load_ps(A_c_ptr1);\
+	a_vec2 = zq_mm_load_ps(A_c_ptr2);\
+	a_vec3 = zq_mm_load_ps(A_c_ptr3);\
+	a_vec4 = zq_mm_load_ps(A_c_ptr4);\
+	b_vec1 = zq_mm_load_ps(B_c_ptr1);\
+	b_vec2 = zq_mm_load_ps(B_c_ptr2);\
+	b_vec3 = zq_mm_load_ps(B_c_ptr3);\
+	b_vec4 = zq_mm_load_ps(B_c_ptr4);\
+	a_vec1_ = zq_mm_load_ps(A_c_ptr1+zq_mm_align_size);\
+	a_vec2_ = zq_mm_load_ps(A_c_ptr2 + zq_mm_align_size); \
+	a_vec3_ = zq_mm_load_ps(A_c_ptr3 + zq_mm_align_size); \
+	a_vec4_ = zq_mm_load_ps(A_c_ptr4 + zq_mm_align_size); \
+	b_vec1_ = zq_mm_load_ps(B_c_ptr1+zq_mm_align_size);\
+	b_vec2_ = zq_mm_load_ps(B_c_ptr2+zq_mm_align_size);\
+	b_vec3_ = zq_mm_load_ps(B_c_ptr3 + zq_mm_align_size); \
+	b_vec4_ = zq_mm_load_ps(B_c_ptr4 + zq_mm_align_size); \
+	sum_vec11 = zq_mm_fmadd_ps(a_vec1, b_vec1, sum_vec11);\
+	sum_vec11 = zq_mm_fmadd_ps(a_vec1_, b_vec1_, sum_vec11);\
+	sum_vec21 = zq_mm_fmadd_ps(a_vec2, b_vec1, sum_vec21);\
+	sum_vec21 = zq_mm_fmadd_ps(a_vec2_, b_vec1_, sum_vec21);\
+	sum_vec31 = zq_mm_fmadd_ps(a_vec3, b_vec1, sum_vec31);\
+	sum_vec31 = zq_mm_fmadd_ps(a_vec3_, b_vec1_, sum_vec31);\
+	sum_vec41 = zq_mm_fmadd_ps(a_vec4, b_vec1, sum_vec41);\
+	sum_vec41 = zq_mm_fmadd_ps(a_vec4_, b_vec1_, sum_vec41);\
+	sum_vec12 = zq_mm_fmadd_ps(a_vec1, b_vec2, sum_vec12);\
+	sum_vec12 = zq_mm_fmadd_ps(a_vec1_, b_vec2_, sum_vec12);\
+	sum_vec22 = zq_mm_fmadd_ps(a_vec2, b_vec2, sum_vec22);\
+	sum_vec22 = zq_mm_fmadd_ps(a_vec2_, b_vec2_, sum_vec22);\
+	sum_vec32 = zq_mm_fmadd_ps(a_vec3, b_vec2, sum_vec32);\
+	sum_vec32 = zq_mm_fmadd_ps(a_vec3_, b_vec2_, sum_vec32);\
+	sum_vec42 = zq_mm_fmadd_ps(a_vec4, b_vec2, sum_vec42);\
+	sum_vec42 = zq_mm_fmadd_ps(a_vec4_, b_vec2_, sum_vec42);\
+	sum_vec13 = zq_mm_fmadd_ps(a_vec1, b_vec3, sum_vec13);\
+	sum_vec13 = zq_mm_fmadd_ps(a_vec1_, b_vec3_, sum_vec13);\
+	sum_vec23 = zq_mm_fmadd_ps(a_vec2, b_vec3, sum_vec23);\
+	sum_vec23 = zq_mm_fmadd_ps(a_vec2_, b_vec3_, sum_vec23);\
+	sum_vec33 = zq_mm_fmadd_ps(a_vec3, b_vec3, sum_vec33);\
+	sum_vec33 = zq_mm_fmadd_ps(a_vec3_, b_vec3_, sum_vec33);\
+	sum_vec43 = zq_mm_fmadd_ps(a_vec4, b_vec3, sum_vec43);\
+	sum_vec43 = zq_mm_fmadd_ps(a_vec4_, b_vec3_, sum_vec43);\
+	sum_vec14 = zq_mm_fmadd_ps(a_vec1, b_vec4, sum_vec14);\
+	sum_vec14 = zq_mm_fmadd_ps(a_vec1_, b_vec4_, sum_vec14);\
+	sum_vec24 = zq_mm_fmadd_ps(a_vec2, b_vec4, sum_vec24);\
+	sum_vec24 = zq_mm_fmadd_ps(a_vec2_, b_vec4_, sum_vec24);\
+	sum_vec34 = zq_mm_fmadd_ps(a_vec3, b_vec4, sum_vec34);\
+	sum_vec34 = zq_mm_fmadd_ps(a_vec3_, b_vec4_, sum_vec34);\
+	sum_vec44 = zq_mm_fmadd_ps(a_vec4, b_vec4, sum_vec44);\
+	sum_vec44 = zq_mm_fmadd_ps(a_vec4_, b_vec4_, sum_vec44);\
+	A_c_ptr1 += zq_mm_align_size2;\
+	A_c_ptr2 += zq_mm_align_size2;\
+	A_c_ptr3 += zq_mm_align_size2;\
+	A_c_ptr4 += zq_mm_align_size2;\
+	B_c_ptr1 += zq_mm_align_size2;\
+	B_c_ptr2 += zq_mm_align_size2;\
+	B_c_ptr3 += zq_mm_align_size2;\
+	B_c_ptr4 += zq_mm_align_size2
+
 #define op_4x4_2 \
 	op_4x4;\
 	op_4x4
+
+#define op2_4x4_2 \
+	op2_4x4;\
+	op2_4x4
 
 #define op_4x4_4 \
 	op_4x4_2;\
 	op_4x4_2
 
+#define op2_4x4_4 \
+	op2_4x4_2;\
+	op2_4x4_2
+
 #define op_4x4_8 \
 	op_4x4_4;\
 	op_4x4_4
 
+#define op2_4x4_8 \
+	op2_4x4_4;\
+	op2_4x4_4
+
 #define op_4x4_16 \
 	op_4x4_8;\
 	op_4x4_8
+
+#define op2_4x4_16 \
+	op2_4x4_8;\
+	op2_4x4_8
+
 
 #define op_4x4_first \
 	a_vec1 = zq_mm_load_ps(A_c_ptr1);\
@@ -580,21 +655,96 @@
 	B_c_ptr3 += zq_mm_align_size;\
 	B_c_ptr4 += zq_mm_align_size
 
+#define op2_4x4_first \
+	a_vec1 = zq_mm_load_ps(A_c_ptr1);\
+	a_vec1_ = zq_mm_load_ps(A_c_ptr1+zq_mm_align_size);\
+	a_vec2 = zq_mm_load_ps(A_c_ptr2);\
+	a_vec2_ = zq_mm_load_ps(A_c_ptr2+zq_mm_align_size);\
+	a_vec3 = zq_mm_load_ps(A_c_ptr3);\
+	a_vec3_ = zq_mm_load_ps(A_c_ptr3+zq_mm_align_size);\
+	a_vec4 = zq_mm_load_ps(A_c_ptr4);\
+	a_vec4_ = zq_mm_load_ps(A_c_ptr4+zq_mm_align_size);\
+	b_vec1 = zq_mm_load_ps(B_c_ptr1);\
+	b_vec1_ = zq_mm_load_ps(B_c_ptr1+zq_mm_align_size);\
+	b_vec2 = zq_mm_load_ps(B_c_ptr2);\
+	b_vec2_ = zq_mm_load_ps(B_c_ptr2+zq_mm_align_size);\
+	b_vec3 = zq_mm_load_ps(B_c_ptr3);\
+	b_vec3_ = zq_mm_load_ps(B_c_ptr3+zq_mm_align_size);\
+	b_vec4 = zq_mm_load_ps(B_c_ptr4);\
+	b_vec4_ = zq_mm_load_ps(B_c_ptr4+zq_mm_align_size);\
+	sum_vec11 = zq_mm_mul_ps(a_vec1, b_vec1);\
+	sum_vec21 = zq_mm_mul_ps(a_vec2, b_vec1);\
+	sum_vec31 = zq_mm_mul_ps(a_vec3, b_vec1);\
+	sum_vec41 = zq_mm_mul_ps(a_vec4, b_vec1);\
+	sum_vec12 = zq_mm_mul_ps(a_vec1, b_vec2);\
+	sum_vec22 = zq_mm_mul_ps(a_vec2, b_vec2);\
+	sum_vec32 = zq_mm_mul_ps(a_vec3, b_vec2);\
+	sum_vec42 = zq_mm_mul_ps(a_vec4, b_vec2);\
+	sum_vec13 = zq_mm_mul_ps(a_vec1, b_vec3);\
+	sum_vec23 = zq_mm_mul_ps(a_vec2, b_vec3);\
+	sum_vec33 = zq_mm_mul_ps(a_vec3, b_vec3);\
+	sum_vec43 = zq_mm_mul_ps(a_vec4, b_vec3);\
+	sum_vec14 = zq_mm_mul_ps(a_vec1, b_vec4);\
+	sum_vec24 = zq_mm_mul_ps(a_vec2, b_vec4);\
+	sum_vec34 = zq_mm_mul_ps(a_vec3, b_vec4);\
+	sum_vec44 = zq_mm_mul_ps(a_vec4, b_vec4);\
+	sum_vec11 = zq_mm_fmadd_ps(a_vec1_, b_vec1_, sum_vec11);\
+	sum_vec21 = zq_mm_fmadd_ps(a_vec2_, b_vec1_, sum_vec21);\
+	sum_vec31 = zq_mm_fmadd_ps(a_vec3_, b_vec1_, sum_vec31);\
+	sum_vec41 = zq_mm_fmadd_ps(a_vec4_, b_vec1_, sum_vec41);\
+	sum_vec12 = zq_mm_fmadd_ps(a_vec1_, b_vec2_, sum_vec12);\
+	sum_vec22 = zq_mm_fmadd_ps(a_vec2_, b_vec2_, sum_vec22);\
+	sum_vec32 = zq_mm_fmadd_ps(a_vec3_, b_vec2_, sum_vec32);\
+	sum_vec42 = zq_mm_fmadd_ps(a_vec4_, b_vec2_, sum_vec42);\
+	sum_vec13 = zq_mm_fmadd_ps(a_vec1_, b_vec3_, sum_vec13);\
+	sum_vec23 = zq_mm_fmadd_ps(a_vec2_, b_vec3_, sum_vec23);\
+	sum_vec33 = zq_mm_fmadd_ps(a_vec3_, b_vec3_, sum_vec33);\
+	sum_vec43 = zq_mm_fmadd_ps(a_vec4_, b_vec3_, sum_vec43);\
+	sum_vec14 = zq_mm_fmadd_ps(a_vec1_, b_vec4_, sum_vec14);\
+	sum_vec24 = zq_mm_fmadd_ps(a_vec2_, b_vec4_, sum_vec24);\
+	sum_vec34 = zq_mm_fmadd_ps(a_vec3_, b_vec4_, sum_vec34);\
+	sum_vec44 = zq_mm_fmadd_ps(a_vec4_, b_vec4_, sum_vec44);\
+	A_c_ptr1 += zq_mm_align_size2;\
+	A_c_ptr2 += zq_mm_align_size2;\
+	A_c_ptr3 += zq_mm_align_size2;\
+	A_c_ptr4 += zq_mm_align_size2;\
+	B_c_ptr1 += zq_mm_align_size2;\
+	B_c_ptr2 += zq_mm_align_size2;\
+	B_c_ptr3 += zq_mm_align_size2;\
+	B_c_ptr4 += zq_mm_align_size2
+
 #define op_4x4_2_first \
 	op_4x4_first;\
 	op_4x4
+
+#define op2_4x4_2_first \
+	op2_4x4_first;\
+	op2_4x4
 
 #define op_4x4_4_first \
 	op_4x4_2_first;\
 	op_4x4_2
 
+#define op2_4x4_4_first \
+	op2_4x4_2_first;\
+	op2_4x4_2
+
 #define op_4x4_8_first \
 	op_4x4_4_first;\
 	op_4x4_4
 
+#define op2_4x4_8_first \
+	op2_4x4_4_first;\
+	op2_4x4_4
+
 #define op_4x4_16_first \
 	op_4x4_8_first;\
 	op_4x4_8
+
+#define op2_4x4_16_first \
+	op2_4x4_8_first;\
+	op2_4x4_8
+
 
 #define op_4x8 \
 	a_vec1 = zq_mm_load_ps(A_c_ptr1);\
@@ -2729,6 +2879,8 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv4_KdivAlign64(int M, int N, in
 	register zq_mm_type a_vec1, a_vec2, a_vec3, a_vec4;
 	register zq_mm_type b_vec1, b_vec2, b_vec3, b_vec4;
 	const int zq_mm_align_size64 = zq_mm_align_size << 6;
+	//float* packedB = (float*)_aligned_malloc(N*ldb * sizeof(float), 32);
+	//int pack_size = N * ldb * sizeof(float);
 	Aptr1 = A;
 	Aptr2 = Aptr1 + lda;
 	Aptr3 = Aptr2 + lda;
@@ -2747,6 +2899,8 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv4_KdivAlign64(int M, int N, in
 		C_c_ptr4 = Cptr4;
 		for (n = 0; n < N; n += 4, Bptr += ldb4)
 		{
+			//memcpy(packedB, Bptr, pack_size);
+			//Bptr1 = packedB;
 			Bptr1 = Bptr;
 			Bptr2 = Bptr1 + ldb;
 			Bptr3 = Bptr2 + ldb;
@@ -2794,8 +2948,95 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv4_KdivAlign64(int M, int N, in
 			store_1x4;
 		}
 	}
+	//_aligned_free(packedB);
 }
 
+/*
+void zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv4_KdivAlign64(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+{
+	const float* Aptr1, *Aptr2, *Aptr3, *Aptr4, *A_c_ptr1, *A_c_ptr2, *A_c_ptr3, *A_c_ptr4;
+	const float *Bptr, *Bptr1, *Bptr2, *Bptr3, *Bptr4;
+	const float *B_c_ptr1, *B_c_ptr2, *B_c_ptr3, *B_c_ptr4;
+	float* Cptr1, *Cptr2, *Cptr3, *Cptr4, *C_c_ptr1, *C_c_ptr2, *C_c_ptr3, *C_c_ptr4;
+	int m, n, k;
+	int lda2 = lda + lda;
+	int lda4 = lda2 + lda2;
+	int ldc2 = ldc + ldc;
+	int ldc4 = ldc2 + ldc2;
+	int ldb4 = ldb << 2;
+	zq_q_type q;
+	register zq_mm_type sum_vec11, sum_vec21, sum_vec31, sum_vec41;
+	register zq_mm_type sum_vec12, sum_vec22, sum_vec32, sum_vec42;
+	register zq_mm_type sum_vec13, sum_vec23, sum_vec33, sum_vec43;
+	register zq_mm_type sum_vec14, sum_vec24, sum_vec34, sum_vec44;
+	register zq_mm_type a_vec1, a_vec2, a_vec3, a_vec4;
+	register zq_mm_type a_vec1_, a_vec2_, a_vec3_, a_vec4_;
+	register zq_mm_type b_vec1, b_vec2, b_vec3, b_vec4;
+	register zq_mm_type b_vec1_, b_vec2_, b_vec3_, b_vec4_;
+	const int zq_mm_align_size64 = zq_mm_align_size << 6;
+	Aptr1 = A;
+	Aptr2 = Aptr1 + lda;
+	Aptr3 = Aptr2 + lda;
+	Aptr4 = Aptr3 + lda;
+	Cptr1 = C;
+	Cptr2 = Cptr1 + ldc;
+	Cptr3 = Cptr2 + ldc;
+	Cptr4 = Cptr3 + ldc;
+	for (m = 0; m < M - 3; m += 4, Aptr1 += lda4, Aptr2 += lda4, Aptr3 += lda4, Aptr4 += lda4,
+		Cptr1 += ldc4, Cptr2 += ldc4, Cptr3 += ldc4, Cptr4 += ldc4)
+	{
+		Bptr = Bt;
+		C_c_ptr1 = Cptr1;
+		C_c_ptr2 = Cptr2;
+		C_c_ptr3 = Cptr3;
+		C_c_ptr4 = Cptr4;
+		for (n = 0; n < N; n += 4, Bptr += ldb4)
+		{
+			Bptr1 = Bptr;
+			Bptr2 = Bptr1 + ldb;
+			Bptr3 = Bptr2 + ldb;
+			Bptr4 = Bptr3 + ldb;
+			A_c_ptr1 = Aptr1; A_c_ptr2 = Aptr2; A_c_ptr3 = Aptr3; A_c_ptr4 = Aptr4;
+			B_c_ptr1 = Bptr1; B_c_ptr2 = Bptr2; B_c_ptr3 = Bptr3; B_c_ptr4 = Bptr4;
+			op2_4x4_16_first;
+			op2_4x4_16;
+			for (k = K - zq_mm_align_size64; k; k -= zq_mm_align_size64)
+			{
+				op2_4x4_16;
+				op2_4x4_16;
+			}
+			store_4x4;
+		}
+	}
+
+	for (; m < M; m++, Aptr1 += lda, Cptr1 += ldc)
+	{
+		Bptr = Bt;
+		C_c_ptr1 = Cptr1;
+		for (n = 0; n < N; n += 4, Bptr += ldb4)
+		{
+			Bptr1 = Bptr;
+			Bptr2 = Bptr1 + ldb;
+			Bptr3 = Bptr2 + ldb;
+			Bptr4 = Bptr3 + ldb;
+			A_c_ptr1 = Aptr1;
+			B_c_ptr1 = Bptr1; B_c_ptr2 = Bptr2; B_c_ptr3 = Bptr3; B_c_ptr4 = Bptr4;
+			op_1x4_16_first;
+			op_1x4_16;
+			op_1x4_16;
+			op_1x4_16;
+			for (k = K - zq_mm_align_size64; k; k -= zq_mm_align_size64)
+			{
+				op_1x4_16;
+				op_1x4_16;
+				op_1x4_16;
+				op_1x4_16;
+			}
+			store_1x4;
+		}
+	}
+}
+*/
 
 void zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv4_KdivAlign4(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
 {
