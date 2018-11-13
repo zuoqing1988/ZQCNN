@@ -988,6 +988,7 @@ void zq_cnn_conv_no_padding_gemm_32f_align_same_or_notsame_pixstep_C3(
 	int matrix_A_rows = out_H*out_W;
 	int matrix_B_cols = filter_N;
 	int matrix_B_rows = padK;
+	int padded_len = padK - K;
 	__int64 need_A_buffer_len_align32 = (matrix_A_rows*matrix_A_cols * sizeof(float) + 31) / 32 * 32;
 	__int64 need_B_buffer_len_align32 = 0;
 	__int64 need_C_buffer_len_align32 = 0;
@@ -995,7 +996,7 @@ void zq_cnn_conv_no_padding_gemm_32f_align_same_or_notsame_pixstep_C3(
 	float* matrix_A = 0;
 	float* matrix_Bt = 0;
 	const float* in_row_ptr, *in_pix_ptr, *cur_in_row_ptr, *cur_in_pix_ptr, *filter_slice_ptr, *filter_row_ptr, *filter_pix_ptr;
-	int out_n, out_h, out_w, kn, kh, kw;
+	int out_n, out_h, out_w, kn, kh, kw,kc;
 	float* matrix_A_row_ptr, *matrix_A_col_ptr, *matrix_Bt_row_ptr, *cp_dst_ptr;
 	float* out_slice_ptr, *out_row_ptr, *out_pix_ptr;
 	const float* in_slice_ptr;
@@ -1050,6 +1051,8 @@ void zq_cnn_conv_no_padding_gemm_32f_align_same_or_notsame_pixstep_C3(
 				cp_dst_ptr += filter_C;
 			}
 		}
+		for (kc = 0; kc < padded_len; kc++)
+			*(cp_dst_ptr++) = 0;
 		matrix_Bt_row_ptr += matrix_B_rows;
 	}
 	
@@ -1075,13 +1078,15 @@ void zq_cnn_conv_no_padding_gemm_32f_align_same_or_notsame_pixstep_C3(
 						matrix_A_col_ptr += in_C;
 					}
 				}
+				for (kc = 0; kc < padded_len; kc++)
+					*(matrix_A_col_ptr++) = 0;
 				matrix_A_row_ptr += matrix_A_cols;
 			}
 		}
 		t4 = omp_get_wtime();
 		make_A_time += t4 - t3;
 		/*gemm*/
-		zq_cblas_sgemm(CblasRowMajor, CblasNoTrans, CblasTrans, matrix_A_rows, matrix_B_cols, K, 1, matrix_A, matrix_A_cols,
+		zq_cblas_sgemm(CblasRowMajor, CblasNoTrans, CblasTrans, matrix_A_rows, matrix_B_cols, padK, 1, matrix_A, matrix_A_cols,
 			matrix_Bt, matrix_A_cols, 0.0f, matrix_C, matrix_B_cols);
 		t5 = omp_get_wtime();
 		gemm_time += t5 - t4;

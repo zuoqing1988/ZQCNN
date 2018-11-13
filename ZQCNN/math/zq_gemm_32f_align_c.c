@@ -26,7 +26,7 @@ extern "C" {
 		int old_lda = lda, old_ldb = ldb, old_ldc = ldc, old_M = M, old_N = N;
 		int m, n;
 		int swap = 0;
-		if (M + 8 < N)
+		if (M*N < 0.1*(M*N*K) && M + 8 < N)
 		{
 			swap = 1;
 			A = oldB;
@@ -40,12 +40,12 @@ extern "C" {
 		}
 		int handled = 0;
 #if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_AVX
-		
+
 		if (K == 16)
 		{
 			if (N >= 8)
 			{
-				zq_gemm_32f_align128bit_AnoTrans_Btrans_M2(M, N, K, A, lda, Bt, ldb, C, ldc);
+				zq_gemm_32f_align128bit_AnoTrans_Btrans_M2_N4(M, N, K, A, lda, Bt, ldb, C, ldc);
 				handled = 1;
 			}
 		}
@@ -53,12 +53,12 @@ extern "C" {
 		{
 			if (N <= 16)
 			{
-				zq_gemm_32f_align128bit_AnoTrans_Btrans_M2(M, N, K, A, lda, Bt, ldb, C, ldc);
+				zq_gemm_32f_align128bit_AnoTrans_Btrans_M2_N4(M, N, K, A, lda, Bt, ldb, C, ldc);
 				handled = 1;
 			}
-			else if(N <= 128)
+			else if (N <= 128)
 			{
-				zq_gemm_32f_align128bit_AnoTrans_Btrans_M1(M, N, K, A, lda, Bt, ldb, C, ldc);
+				zq_gemm_32f_align128bit_AnoTrans_Btrans_M1_N4(M, N, K, A, lda, Bt, ldb, C, ldc);
 				handled = 1;
 			}
 		}
@@ -66,7 +66,7 @@ extern "C" {
 		{
 			if (N >= 8)
 			{
-				zq_gemm_32f_align128bit_AnoTrans_Btrans_M2(M, N, K, A, lda, Bt, ldb, C, ldc);
+				zq_gemm_32f_align256bit_AnoTrans_Btrans_M2_N4(M, N, K, A, lda, Bt, ldb, C, ldc);
 				handled = 1;
 			}
 		}
@@ -74,7 +74,7 @@ extern "C" {
 		{
 			if (N >= 8)
 			{
-				zq_gemm_32f_align128bit_AnoTrans_Btrans_M2(M, N, K, A, lda, Bt, ldb, C, ldc);
+				zq_gemm_32f_align256bit_AnoTrans_Btrans_M4_N2(M, N, K, A, lda, Bt, ldb, C, ldc);
 				handled = 1;
 			}
 		}
@@ -82,12 +82,12 @@ extern "C" {
 		{
 			if (N <= 64)
 			{
-				zq_gemm_32f_align128bit_AnoTrans_Btrans_M1(M, N, K, A, lda, Bt, ldb, C, ldc);
+				zq_gemm_32f_align128bit_AnoTrans_Btrans_M1_N4(M, N, K, A, lda, Bt, ldb, C, ldc);
 				handled = 1;
 			}
 			else if (N <= 128)
 			{
-				zq_gemm_32f_align128bit_AnoTrans_Btrans_M2(M, N, K, A, lda, Bt, ldb, C, ldc);
+				zq_gemm_32f_align128bit_AnoTrans_Btrans_M2_N4(M, N, K, A, lda, Bt, ldb, C, ldc);
 				handled = 1;
 			}
 		}
@@ -95,7 +95,7 @@ extern "C" {
 		{
 			if (N >= 8)
 			{
-				zq_gemm_32f_align256bit_AnoTrans_Btrans_M4(M, N, K, A, lda, Bt, ldb, C, ldc);
+				zq_gemm_32f_align256bit_AnoTrans_Btrans_M4_N2(M, N, K, A, lda, Bt, ldb, C, ldc);
 				handled = 1;
 			}
 		}
@@ -103,12 +103,12 @@ extern "C" {
 		{
 			if (N <= 32)
 			{
-				zq_gemm_32f_align128bit_AnoTrans_Btrans_M1(M, N, K, A, lda, Bt, ldb, C, ldc);
+				zq_gemm_32f_align128bit_AnoTrans_Btrans_M1_N4(M, N, K, A, lda, Bt, ldb, C, ldc);
 				handled = 1;
 			}
 			else if (N <= 128)
 			{
-				zq_gemm_32f_align128bit_AnoTrans_Btrans_M4(M, N, K, A, lda, Bt, ldb, C, ldc);
+				zq_gemm_32f_align128bit_AnoTrans_Btrans_M4_N4(M, N, K, A, lda, Bt, ldb, C, ldc);
 				handled = 1;
 			}
 		}
@@ -116,7 +116,7 @@ extern "C" {
 		{
 			if (N >= 8)
 			{
-				zq_gemm_32f_align256bit_AnoTrans_Btrans_M4(M, N, K, A, lda, Bt, ldb, C, ldc);
+				zq_gemm_32f_align256bit_AnoTrans_Btrans_M8_N1(M, N, K, A, lda, Bt, ldb, C, ldc);
 				handled = 1;
 			}
 		}
@@ -124,7 +124,7 @@ extern "C" {
 		{
 			if (N >= 8)
 			{
-				zq_gemm_32f_align256bit_AnoTrans_Btrans_M4(M, N, K, A, lda, Bt, ldb, C, ldc);
+				zq_gemm_32f_align256bit_AnoTrans_Btrans_M8_N1(M, N, K, A, lda, Bt, ldb, C, ldc);
 				handled = 1;
 			}
 		}
@@ -132,7 +132,7 @@ extern "C" {
 		{
 			if (N >= 8)
 			{
-				zq_gemm_32f_align256bit_AnoTrans_Btrans_M4(M, N, K, A, lda, Bt, ldb, C, ldc);
+				zq_gemm_32f_align256bit_AnoTrans_Btrans_M4_N4(M, N, K, A, lda, Bt, ldb, C, ldc);
 				handled = 1;
 			}
 		}
@@ -142,22 +142,22 @@ extern "C" {
 		{
 			if (K <= 64)
 			{
-				zq_gemm_32f_align128bit_AnoTrans_Btrans_M2(M, N, K, A, lda, Bt, ldb, C, ldc);
+				zq_gemm_32f_align128bit_AnoTrans_Btrans_M2_N4(M, N, K, A, lda, Bt, ldb, C, ldc);
 				handled = 1;
 			}
 			else
 			{
-				zq_gemm_32f_align256bit_AnoTrans_Btrans_M4(M, N, K, A, lda, Bt, ldb, C, ldc);
+				zq_gemm_32f_align256bit_AnoTrans_Btrans_M4_N4(M, N, K, A, lda, Bt, ldb, C, ldc);
 				handled = 1;
 			}
 		}
-		
+
 #elif ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_SSE
 		if (K == 16)
 		{
 			if (N >= 8)
 			{
-				zq_gemm_32f_align128bit_AnoTrans_Btrans_M2(M, N, K, A, lda, Bt, ldb, C, ldc);
+				zq_gemm_32f_align128bit_AnoTrans_Btrans_M2_N4(M, N, K, A, lda, Bt, ldb, C, ldc);
 				handled = 1;
 			}
 		}
@@ -165,12 +165,12 @@ extern "C" {
 		{
 			if (N <= 16)
 			{
-				zq_gemm_32f_align128bit_AnoTrans_Btrans_M2(M, N, K, A, lda, Bt, ldb, C, ldc);
+				zq_gemm_32f_align128bit_AnoTrans_Btrans_M2_N4(M, N, K, A, lda, Bt, ldb, C, ldc);
 				handled = 1;
 			}
 			else if (N <= 128)
 			{
-				zq_gemm_32f_align128bit_AnoTrans_Btrans_M1(M, N, K, A, lda, Bt, ldb, C, ldc);
+				zq_gemm_32f_align128bit_AnoTrans_Btrans_M2_N4(M, N, K, A, lda, Bt, ldb, C, ldc);
 				handled = 1;
 			}
 		}
@@ -178,7 +178,7 @@ extern "C" {
 		{
 			if (N >= 8)
 			{
-				zq_gemm_32f_align128bit_AnoTrans_Btrans_M2(M, N, K, A, lda, Bt, ldb, C, ldc);
+				zq_gemm_32f_align128bit_AnoTrans_Btrans_M4_N2(M, N, K, A, lda, Bt, ldb, C, ldc);
 				handled = 1;
 			}
 		}
@@ -186,7 +186,7 @@ extern "C" {
 		{
 			if (N >= 8)
 			{
-				zq_gemm_32f_align128bit_AnoTrans_Btrans_M2(M, N, K, A, lda, Bt, ldb, C, ldc);
+				zq_gemm_32f_align128bit_AnoTrans_Btrans_M4_N2(M, N, K, A, lda, Bt, ldb, C, ldc);
 				handled = 1;
 			}
 		}
@@ -194,12 +194,12 @@ extern "C" {
 		{
 			if (N <= 64)
 			{
-				zq_gemm_32f_align128bit_AnoTrans_Btrans_M1(M, N, K, A, lda, Bt, ldb, C, ldc);
+				zq_gemm_32f_align128bit_AnoTrans_Btrans_M4_N2(M, N, K, A, lda, Bt, ldb, C, ldc);
 				handled = 1;
 			}
 			else if (N <= 128)
 			{
-				zq_gemm_32f_align128bit_AnoTrans_Btrans_M2(M, N, K, A, lda, Bt, ldb, C, ldc);
+				zq_gemm_32f_align128bit_AnoTrans_Btrans_M4_N2(M, N, K, A, lda, Bt, ldb, C, ldc);
 				handled = 1;
 			}
 		}
@@ -207,7 +207,7 @@ extern "C" {
 		{
 			if (N >= 256)
 			{
-				zq_gemm_32f_align128bit_AnoTrans_Btrans_M4(M, N, K, A, lda, Bt, ldb, C, ldc);
+				zq_gemm_32f_align128bit_AnoTrans_Btrans_M4_N2(M, N, K, A, lda, Bt, ldb, C, ldc);
 				handled = 1;
 			}
 		}
@@ -215,12 +215,12 @@ extern "C" {
 		{
 			if (N <= 32)
 			{
-				zq_gemm_32f_align128bit_AnoTrans_Btrans_M1(M, N, K, A, lda, Bt, ldb, C, ldc);
+				zq_gemm_32f_align128bit_AnoTrans_Btrans_M4_N2(M, N, K, A, lda, Bt, ldb, C, ldc);
 				handled = 1;
 			}
 			else if (N <= 128)
 			{
-				zq_gemm_32f_align128bit_AnoTrans_Btrans_M4(M, N, K, A, lda, Bt, ldb, C, ldc);
+				zq_gemm_32f_align128bit_AnoTrans_Btrans_M4_N2(M, N, K, A, lda, Bt, ldb, C, ldc);
 				handled = 1;
 			}
 		}
@@ -228,7 +228,7 @@ extern "C" {
 		{
 			if (N >= 256)
 			{
-				zq_gemm_32f_align128bit_AnoTrans_Btrans_M4(M, N, K, A, lda, Bt, ldb, C, ldc);
+				zq_gemm_32f_align128bit_AnoTrans_Btrans_M8_N1(M, N, K, A, lda, Bt, ldb, C, ldc);
 				handled = 1;
 			}
 		}
@@ -236,7 +236,7 @@ extern "C" {
 		{
 			if (N >= 256)
 			{
-				zq_gemm_32f_align128bit_AnoTrans_Btrans_M4(M, N, K, A, lda, Bt, ldb, C, ldc);
+				zq_gemm_32f_align128bit_AnoTrans_Btrans_M8_N1(M, N, K, A, lda, Bt, ldb, C, ldc);
 				handled = 1;
 			}
 		}
@@ -244,7 +244,7 @@ extern "C" {
 		{
 			if (N >= 256)
 			{
-				zq_gemm_32f_align128bit_AnoTrans_Btrans_M4(M, N, K, A, lda, Bt, ldb, C, ldc);
+				zq_gemm_32f_align128bit_AnoTrans_Btrans_M8_N1(M, N, K, A, lda, Bt, ldb, C, ldc);
 				handled = 1;
 			}
 		}
@@ -254,12 +254,12 @@ extern "C" {
 		{
 			if (K <= 64)
 			{
-				zq_gemm_32f_align128bit_AnoTrans_Btrans_M2(M, N, K, A, lda, Bt, ldb, C, ldc);
+				zq_gemm_32f_align128bit_AnoTrans_Btrans_M4_N2(M, N, K, A, lda, Bt, ldb, C, ldc);
 				handled = 1;
 			}
 			else
 			{
-				zq_gemm_32f_align128bit_AnoTrans_Btrans_M4(M, N, K, A, lda, Bt, ldb, C, ldc);
+				zq_gemm_32f_align128bit_AnoTrans_Btrans_M8_N1(M, N, K, A, lda, Bt, ldb, C, ldc);
 				handled = 1;
 			}
 		}
@@ -272,7 +272,7 @@ extern "C" {
 			{
 				for (m = 0; m < M; m++)
 				{
-					old_C[n*old_ldc + m] = C[m*ldc+n];
+					old_C[n*old_ldc + m] = C[m*ldc + n];
 				}
 			}
 			_aligned_free(C);
@@ -297,12 +297,14 @@ extern "C" {
 	union union_type_s_mm128 {
 		float s[4];
 		__m128 v;
+		__m64 t[2];
 	};
 #define zq_q_type \
 	union union_type_s_mm128
 #define zq_store_to_q(x,y)\
 	_mm_store_ps(x,y)
 #define zq_final_sum_q0_4 (q.s[0]+q.s[1]+q.s[2]+q.s[3])
+#define zq_final_sum_q0_2 (q.s[0]+q.s[1])
 #define zq_final_sum_q (q.s[0]+q.s[1]+q.s[2]+q.s[3])
 #if ZQ_CNN_USE_FMADD128
 #define zq_mm_fmadd_ps _mm_fmadd_ps
@@ -310,44 +312,108 @@ extern "C" {
 #define zq_mm_fmadd_ps(A, B, C) _mm_add_ps(_mm_mul_ps(A, B), C)
 #endif
 
-#define zq_gemm_32f_align_AnoTrans_Btrans_M1 zq_gemm_32f_align128bit_AnoTrans_Btrans_M1
-#define zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNgeneral zq_gemm_32f_align128bit_AnoTrans_Btrans_M1_caseNgeneral 
-#define zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv4_Kgeneral zq_gemm_32f_align128bit_AnoTrans_Btrans_M1_caseNdiv4_Kgeneral
+#define zq_gemm_32f_align_AnoTrans_Btrans_M1_N1 zq_gemm_32f_align128bit_AnoTrans_Btrans_M1_N1
+#define zq_gemm_32f_align_AnoTrans_Btrans_M1_N2 zq_gemm_32f_align128bit_AnoTrans_Btrans_M1_N2
+#define zq_gemm_32f_align_AnoTrans_Btrans_M1_N4 zq_gemm_32f_align128bit_AnoTrans_Btrans_M1_N4
+#define zq_gemm_32f_align_AnoTrans_Btrans_M1_N8 zq_gemm_32f_align128bit_AnoTrans_Btrans_M1_N8
+#define zq_gemm_32f_align_AnoTrans_Btrans_M1_N1_Kgeneral zq_gemm_32f_align128bit_AnoTrans_Btrans_M1_N1_Kgeneral 
+#define zq_gemm_32f_align_AnoTrans_Btrans_M1_N2_Kgeneral zq_gemm_32f_align128bit_AnoTrans_Btrans_M1_N2_Kgeneral 
+#define zq_gemm_32f_align_AnoTrans_Btrans_M1_N4_Kgeneral zq_gemm_32f_align128bit_AnoTrans_Btrans_M1_N4_Kgeneral 
+#define zq_gemm_32f_align_AnoTrans_Btrans_M1_N8_Kgeneral zq_gemm_32f_align128bit_AnoTrans_Btrans_M1_N8_Kgeneral 
+#define zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv1_KdivAlign4 zq_gemm_32f_align128bit_AnoTrans_Btrans_M1_caseNdiv1_Kdiv16
+#define zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv1_KdivAlign8 zq_gemm_32f_align128bit_AnoTrans_Btrans_M1_caseNdiv1_Kdiv32
+#define zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv1_KdivAlign16 zq_gemm_32f_align128bit_AnoTrans_Btrans_M1_caseNdiv1_Kdiv64
+#define zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv1_KdivAlign32 zq_gemm_32f_align128bit_AnoTrans_Btrans_M1_caseNdiv1_Kdiv128
+#define zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv1_KdivAlign64 zq_gemm_32f_align128bit_AnoTrans_Btrans_M1_caseNdiv1_Kdiv256
+#define zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv2_KdivAlign4 zq_gemm_32f_align128bit_AnoTrans_Btrans_M1_caseNdiv2_Kdiv16
+#define zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv2_KdivAlign8 zq_gemm_32f_align128bit_AnoTrans_Btrans_M1_caseNdiv2_Kdiv32
+#define zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv2_KdivAlign16 zq_gemm_32f_align128bit_AnoTrans_Btrans_M1_caseNdiv2_Kdiv64
+#define zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv2_KdivAlign32 zq_gemm_32f_align128bit_AnoTrans_Btrans_M1_caseNdiv2_Kdiv128
+#define zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv2_KdivAlign64 zq_gemm_32f_align128bit_AnoTrans_Btrans_M1_caseNdiv2_Kdiv256
 #define zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv4_KdivAlign4 zq_gemm_32f_align128bit_AnoTrans_Btrans_M1_caseNdiv4_Kdiv16
 #define zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv4_KdivAlign8 zq_gemm_32f_align128bit_AnoTrans_Btrans_M1_caseNdiv4_Kdiv32
 #define zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv4_KdivAlign16 zq_gemm_32f_align128bit_AnoTrans_Btrans_M1_caseNdiv4_Kdiv64
 #define zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv4_KdivAlign32 zq_gemm_32f_align128bit_AnoTrans_Btrans_M1_caseNdiv4_Kdiv128
 #define zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv4_KdivAlign64 zq_gemm_32f_align128bit_AnoTrans_Btrans_M1_caseNdiv4_Kdiv256
-#define zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv8_Kgeneral zq_gemm_32f_align128bit_AnoTrans_Btrans_M1_caseNdiv8_Kgeneral
 #define zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv8_KdivAlign4 zq_gemm_32f_align128bit_AnoTrans_Btrans_M1_caseNdiv8_Kdiv16
 #define zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv8_KdivAlign8 zq_gemm_32f_align128bit_AnoTrans_Btrans_M1_caseNdiv8_Kdiv32
 #define zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv8_KdivAlign16 zq_gemm_32f_align128bit_AnoTrans_Btrans_M1_caseNdiv8_Kdiv64
 #define zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv8_KdivAlign32 zq_gemm_32f_align128bit_AnoTrans_Btrans_M1_caseNdiv8_Kdiv128
 #define zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv8_KdivAlign64 zq_gemm_32f_align128bit_AnoTrans_Btrans_M1_caseNdiv8_Kdiv256
 
-#define zq_gemm_32f_align_AnoTrans_Btrans_M2 zq_gemm_32f_align128bit_AnoTrans_Btrans_M2
-#define zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNgeneral zq_gemm_32f_align128bit_AnoTrans_Btrans_M2_caseNgeneral 
-#define zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv4_Kgeneral zq_gemm_32f_align128bit_AnoTrans_Btrans_M2_caseNdiv4_Kgeneral
+#define zq_gemm_32f_align_AnoTrans_Btrans_M2_N1 zq_gemm_32f_align128bit_AnoTrans_Btrans_M2_N1
+#define zq_gemm_32f_align_AnoTrans_Btrans_M2_N2 zq_gemm_32f_align128bit_AnoTrans_Btrans_M2_N2
+#define zq_gemm_32f_align_AnoTrans_Btrans_M2_N4 zq_gemm_32f_align128bit_AnoTrans_Btrans_M2_N4
+#define zq_gemm_32f_align_AnoTrans_Btrans_M2_N8 zq_gemm_32f_align128bit_AnoTrans_Btrans_M2_N8
+#define zq_gemm_32f_align_AnoTrans_Btrans_M2_N1_Kgeneral zq_gemm_32f_align128bit_AnoTrans_Btrans_M2_N1_Kgeneral 
+#define zq_gemm_32f_align_AnoTrans_Btrans_M2_N2_Kgeneral zq_gemm_32f_align128bit_AnoTrans_Btrans_M2_N2_Kgeneral 
+#define zq_gemm_32f_align_AnoTrans_Btrans_M2_N4_Kgeneral zq_gemm_32f_align128bit_AnoTrans_Btrans_M2_N4_Kgeneral 
+#define zq_gemm_32f_align_AnoTrans_Btrans_M2_N8_Kgeneral zq_gemm_32f_align128bit_AnoTrans_Btrans_M2_N8_Kgeneral 
+#define zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv1_KdivAlign4 zq_gemm_32f_align128bit_AnoTrans_Btrans_M2_caseNdiv1_Kdiv16
+#define zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv1_KdivAlign8 zq_gemm_32f_align128bit_AnoTrans_Btrans_M2_caseNdiv1_Kdiv32
+#define zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv1_KdivAlign16 zq_gemm_32f_align128bit_AnoTrans_Btrans_M2_caseNdiv1_Kdiv64
+#define zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv1_KdivAlign32 zq_gemm_32f_align128bit_AnoTrans_Btrans_M2_caseNdiv1_Kdiv128
+#define zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv1_KdivAlign64 zq_gemm_32f_align128bit_AnoTrans_Btrans_M2_caseNdiv1_Kdiv256
+#define zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv2_KdivAlign4 zq_gemm_32f_align128bit_AnoTrans_Btrans_M2_caseNdiv2_Kdiv16
+#define zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv2_KdivAlign8 zq_gemm_32f_align128bit_AnoTrans_Btrans_M2_caseNdiv2_Kdiv32
+#define zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv2_KdivAlign16 zq_gemm_32f_align128bit_AnoTrans_Btrans_M2_caseNdiv2_Kdiv64
+#define zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv2_KdivAlign32 zq_gemm_32f_align128bit_AnoTrans_Btrans_M2_caseNdiv2_Kdiv128
+#define zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv2_KdivAlign64 zq_gemm_32f_align128bit_AnoTrans_Btrans_M2_caseNdiv2_Kdiv256
 #define zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv4_KdivAlign4 zq_gemm_32f_align128bit_AnoTrans_Btrans_M2_caseNdiv4_Kdiv16
 #define zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv4_KdivAlign8 zq_gemm_32f_align128bit_AnoTrans_Btrans_M2_caseNdiv4_Kdiv32
 #define zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv4_KdivAlign16 zq_gemm_32f_align128bit_AnoTrans_Btrans_M2_caseNdiv4_Kdiv64
 #define zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv4_KdivAlign32 zq_gemm_32f_align128bit_AnoTrans_Btrans_M2_caseNdiv4_Kdiv128
 #define zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv4_KdivAlign64 zq_gemm_32f_align128bit_AnoTrans_Btrans_M2_caseNdiv4_Kdiv256
-#define zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv8_Kgeneral zq_gemm_32f_align128bit_AnoTrans_Btrans_M2_caseNdiv8_Kgeneral
 #define zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv8_KdivAlign4 zq_gemm_32f_align128bit_AnoTrans_Btrans_M2_caseNdiv8_Kdiv16
 #define zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv8_KdivAlign8 zq_gemm_32f_align128bit_AnoTrans_Btrans_M2_caseNdiv8_Kdiv32
 #define zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv8_KdivAlign16 zq_gemm_32f_align128bit_AnoTrans_Btrans_M2_caseNdiv8_Kdiv64
 #define zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv8_KdivAlign32 zq_gemm_32f_align128bit_AnoTrans_Btrans_M2_caseNdiv8_Kdiv128
 #define zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv8_KdivAlign64 zq_gemm_32f_align128bit_AnoTrans_Btrans_M2_caseNdiv8_Kdiv256
 
-#define zq_gemm_32f_align_AnoTrans_Btrans_M4 zq_gemm_32f_align128bit_AnoTrans_Btrans_M4
-#define zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNgeneral zq_gemm_32f_align128bit_AnoTrans_Btrans_M4_caseNgeneral 
-#define zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv4_Kgeneral zq_gemm_32f_align128bit_AnoTrans_Btrans_M4_caseNdiv4_Kgeneral
+#define zq_gemm_32f_align_AnoTrans_Btrans_M4_N1 zq_gemm_32f_align128bit_AnoTrans_Btrans_M4_N1
+#define zq_gemm_32f_align_AnoTrans_Btrans_M4_N2 zq_gemm_32f_align128bit_AnoTrans_Btrans_M4_N2
+#define zq_gemm_32f_align_AnoTrans_Btrans_M4_N4 zq_gemm_32f_align128bit_AnoTrans_Btrans_M4_N4
+#define zq_gemm_32f_align_AnoTrans_Btrans_M4_N1_Kgeneral zq_gemm_32f_align128bit_AnoTrans_Btrans_M4_N1_Kgeneral 
+#define zq_gemm_32f_align_AnoTrans_Btrans_M4_N2_Kgeneral zq_gemm_32f_align128bit_AnoTrans_Btrans_M4_N2_Kgeneral 
+#define zq_gemm_32f_align_AnoTrans_Btrans_M4_N4_Kgeneral zq_gemm_32f_align128bit_AnoTrans_Btrans_M4_N4_Kgeneral 
+#define zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv1_KdivAlign4 zq_gemm_32f_align128bit_AnoTrans_Btrans_M4_caseNdiv1_Kdiv16
+#define zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv1_KdivAlign8 zq_gemm_32f_align128bit_AnoTrans_Btrans_M4_caseNdiv1_Kdiv32
+#define zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv1_KdivAlign16 zq_gemm_32f_align128bit_AnoTrans_Btrans_M4_caseNdiv1_Kdiv64
+#define zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv1_KdivAlign32 zq_gemm_32f_align128bit_AnoTrans_Btrans_M4_caseNdiv1_Kdiv128
+#define zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv1_KdivAlign64 zq_gemm_32f_align128bit_AnoTrans_Btrans_M4_caseNdiv1_Kdiv256
+#define zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv2_KdivAlign4 zq_gemm_32f_align128bit_AnoTrans_Btrans_M4_caseNdiv2_Kdiv16
+#define zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv2_KdivAlign8 zq_gemm_32f_align128bit_AnoTrans_Btrans_M4_caseNdiv2_Kdiv32
+#define zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv2_KdivAlign16 zq_gemm_32f_align128bit_AnoTrans_Btrans_M4_caseNdiv2_Kdiv64
+#define zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv2_KdivAlign32 zq_gemm_32f_align128bit_AnoTrans_Btrans_M4_caseNdiv2_Kdiv128
+#define zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv2_KdivAlign64 zq_gemm_32f_align128bit_AnoTrans_Btrans_M4_caseNdiv2_Kdiv256
 #define zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv4_KdivAlign4 zq_gemm_32f_align128bit_AnoTrans_Btrans_M4_caseNdiv4_Kdiv16
 #define zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv4_KdivAlign8 zq_gemm_32f_align128bit_AnoTrans_Btrans_M4_caseNdiv4_Kdiv32
 #define zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv4_KdivAlign16 zq_gemm_32f_align128bit_AnoTrans_Btrans_M4_caseNdiv4_Kdiv64
 #define zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv4_KdivAlign32 zq_gemm_32f_align128bit_AnoTrans_Btrans_M4_caseNdiv4_Kdiv128
 #define zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv4_KdivAlign64 zq_gemm_32f_align128bit_AnoTrans_Btrans_M4_caseNdiv4_Kdiv256
+
+#define zq_gemm_32f_align_AnoTrans_Btrans_M8_N1 zq_gemm_32f_align128bit_AnoTrans_Btrans_M8_N1
+#define zq_gemm_32f_align_AnoTrans_Btrans_M8_N2 zq_gemm_32f_align128bit_AnoTrans_Btrans_M8_N2
+#define zq_gemm_32f_align_AnoTrans_Btrans_M8_N1_Kgeneral zq_gemm_32f_align128bit_AnoTrans_Btrans_M8_N1_Kgeneral 
+#define zq_gemm_32f_align_AnoTrans_Btrans_M8_N2_Kgeneral zq_gemm_32f_align128bit_AnoTrans_Btrans_M8_N2_Kgeneral 
+#define zq_gemm_32f_align_AnoTrans_Btrans_M8_caseNdiv1_KdivAlign4 zq_gemm_32f_align128bit_AnoTrans_Btrans_M8_caseNdiv1_Kdiv16
+#define zq_gemm_32f_align_AnoTrans_Btrans_M8_caseNdiv1_KdivAlign8 zq_gemm_32f_align128bit_AnoTrans_Btrans_M8_caseNdiv1_Kdiv32
+#define zq_gemm_32f_align_AnoTrans_Btrans_M8_caseNdiv1_KdivAlign16 zq_gemm_32f_align128bit_AnoTrans_Btrans_M8_caseNdiv1_Kdiv64
+#define zq_gemm_32f_align_AnoTrans_Btrans_M8_caseNdiv1_KdivAlign32 zq_gemm_32f_align128bit_AnoTrans_Btrans_M8_caseNdiv1_Kdiv128
+#define zq_gemm_32f_align_AnoTrans_Btrans_M8_caseNdiv1_KdivAlign64 zq_gemm_32f_align128bit_AnoTrans_Btrans_M8_caseNdiv1_Kdiv256
+#define zq_gemm_32f_align_AnoTrans_Btrans_M8_caseNdiv2_KdivAlign4 zq_gemm_32f_align128bit_AnoTrans_Btrans_M8_caseNdiv2_Kdiv16
+#define zq_gemm_32f_align_AnoTrans_Btrans_M8_caseNdiv2_KdivAlign8 zq_gemm_32f_align128bit_AnoTrans_Btrans_M8_caseNdiv2_Kdiv32
+#define zq_gemm_32f_align_AnoTrans_Btrans_M8_caseNdiv2_KdivAlign16 zq_gemm_32f_align128bit_AnoTrans_Btrans_M8_caseNdiv2_Kdiv64
+#define zq_gemm_32f_align_AnoTrans_Btrans_M8_caseNdiv2_KdivAlign32 zq_gemm_32f_align128bit_AnoTrans_Btrans_M8_caseNdiv2_Kdiv128
+#define zq_gemm_32f_align_AnoTrans_Btrans_M8_caseNdiv2_KdivAlign64 zq_gemm_32f_align128bit_AnoTrans_Btrans_M8_caseNdiv2_Kdiv256
+
+#define zq_gemm_32f_align_AnoTrans_Btrans_M16_N1 zq_gemm_32f_align128bit_AnoTrans_Btrans_M16_N1
+#define zq_gemm_32f_align_AnoTrans_Btrans_M16_N1_Kgeneral zq_gemm_32f_align128bit_AnoTrans_Btrans_M16_N1_Kgeneral 
+#define zq_gemm_32f_align_AnoTrans_Btrans_M16_caseNdiv1_KdivAlign4 zq_gemm_32f_align128bit_AnoTrans_Btrans_M16_caseNdiv1_Kdiv16
+#define zq_gemm_32f_align_AnoTrans_Btrans_M16_caseNdiv1_KdivAlign8 zq_gemm_32f_align128bit_AnoTrans_Btrans_M16_caseNdiv1_Kdiv32
+#define zq_gemm_32f_align_AnoTrans_Btrans_M16_caseNdiv1_KdivAlign16 zq_gemm_32f_align128bit_AnoTrans_Btrans_M16_caseNdiv1_Kdiv64
+#define zq_gemm_32f_align_AnoTrans_Btrans_M16_caseNdiv1_KdivAlign32 zq_gemm_32f_align128bit_AnoTrans_Btrans_M16_caseNdiv1_Kdiv128
+#define zq_gemm_32f_align_AnoTrans_Btrans_M16_caseNdiv1_KdivAlign64 zq_gemm_32f_align128bit_AnoTrans_Btrans_M16_caseNdiv1_Kdiv256
 
 #include "zq_gemm_32f_align_c_raw.h"
 
@@ -368,46 +434,111 @@ extern "C" {
 #undef zq_q_type
 #undef zq_store_to_q
 #undef zq_final_sum_q0_4
+#undef zq_final_sum_q0_2
 #undef zq_final_sum_q
 #undef zq_mm_fmadd_ps
-#undef zq_gemm_32f_align_AnoTrans_Btrans_M1
-#undef zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNgeneral
-#undef zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv4_Kgeneral
+#undef zq_gemm_32f_align_AnoTrans_Btrans_M1_N1
+#undef zq_gemm_32f_align_AnoTrans_Btrans_M1_N2
+#undef zq_gemm_32f_align_AnoTrans_Btrans_M1_N4
+#undef zq_gemm_32f_align_AnoTrans_Btrans_M1_N8
+#undef zq_gemm_32f_align_AnoTrans_Btrans_M1_N1_Kgeneral
+#undef zq_gemm_32f_align_AnoTrans_Btrans_M1_N2_Kgeneral
+#undef zq_gemm_32f_align_AnoTrans_Btrans_M1_N4_Kgeneral
+#undef zq_gemm_32f_align_AnoTrans_Btrans_M1_N8_Kgeneral
+#undef zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv1_KdivAlign4
+#undef zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv1_KdivAlign8
+#undef zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv1_KdivAlign16
+#undef zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv1_KdivAlign32
+#undef zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv1_KdivAlign64
+#undef zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv2_KdivAlign4
+#undef zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv2_KdivAlign8
+#undef zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv2_KdivAlign16
+#undef zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv2_KdivAlign32
+#undef zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv2_KdivAlign64
 #undef zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv4_KdivAlign4
 #undef zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv4_KdivAlign8
 #undef zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv4_KdivAlign16
 #undef zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv4_KdivAlign32
 #undef zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv4_KdivAlign64
-#undef zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv8_Kgeneral
 #undef zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv8_KdivAlign4
 #undef zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv8_KdivAlign8
 #undef zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv8_KdivAlign16
 #undef zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv8_KdivAlign32
 #undef zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv8_KdivAlign64
 
-#undef zq_gemm_32f_align_AnoTrans_Btrans_M2
-#undef zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNgeneral
-#undef zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv4_Kgeneral
+#undef zq_gemm_32f_align_AnoTrans_Btrans_M2_N1
+#undef zq_gemm_32f_align_AnoTrans_Btrans_M2_N2
+#undef zq_gemm_32f_align_AnoTrans_Btrans_M2_N4
+#undef zq_gemm_32f_align_AnoTrans_Btrans_M2_N8
+#undef zq_gemm_32f_align_AnoTrans_Btrans_M2_N1_Kgeneral
+#undef zq_gemm_32f_align_AnoTrans_Btrans_M2_N2_Kgeneral
+#undef zq_gemm_32f_align_AnoTrans_Btrans_M2_N4_Kgeneral
+#undef zq_gemm_32f_align_AnoTrans_Btrans_M2_N8_Kgeneral
+#undef zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv1_KdivAlign4
+#undef zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv1_KdivAlign8
+#undef zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv1_KdivAlign16
+#undef zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv1_KdivAlign32
+#undef zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv1_KdivAlign64
+#undef zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv2_KdivAlign4
+#undef zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv2_KdivAlign8
+#undef zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv2_KdivAlign16
+#undef zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv2_KdivAlign32
+#undef zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv2_KdivAlign64
 #undef zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv4_KdivAlign4
 #undef zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv4_KdivAlign8
 #undef zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv4_KdivAlign16
 #undef zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv4_KdivAlign32
 #undef zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv4_KdivAlign64
-#undef zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv8_Kgeneral
 #undef zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv8_KdivAlign4
 #undef zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv8_KdivAlign8
 #undef zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv8_KdivAlign16
 #undef zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv8_KdivAlign32
 #undef zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv8_KdivAlign64
 
-#undef zq_gemm_32f_align_AnoTrans_Btrans_M4
-#undef zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNgeneral
-#undef zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv4_Kgeneral
+#undef zq_gemm_32f_align_AnoTrans_Btrans_M4_N1
+#undef zq_gemm_32f_align_AnoTrans_Btrans_M4_N2
+#undef zq_gemm_32f_align_AnoTrans_Btrans_M4_N4
+#undef zq_gemm_32f_align_AnoTrans_Btrans_M4_N1_Kgeneral
+#undef zq_gemm_32f_align_AnoTrans_Btrans_M4_N2_Kgeneral
+#undef zq_gemm_32f_align_AnoTrans_Btrans_M4_N4_Kgeneral
+#undef zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv1_KdivAlign4
+#undef zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv1_KdivAlign8
+#undef zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv1_KdivAlign16
+#undef zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv1_KdivAlign32
+#undef zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv1_KdivAlign64
+#undef zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv2_KdivAlign4
+#undef zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv2_KdivAlign8
+#undef zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv2_KdivAlign16
+#undef zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv2_KdivAlign32
+#undef zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv2_KdivAlign64
 #undef zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv4_KdivAlign4
 #undef zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv4_KdivAlign8
 #undef zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv4_KdivAlign16
 #undef zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv4_KdivAlign32
 #undef zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv4_KdivAlign64
+
+#undef zq_gemm_32f_align_AnoTrans_Btrans_M8_N1
+#undef zq_gemm_32f_align_AnoTrans_Btrans_M8_N2
+#undef zq_gemm_32f_align_AnoTrans_Btrans_M8_N1_Kgeneral
+#undef zq_gemm_32f_align_AnoTrans_Btrans_M8_N2_Kgeneral
+#undef zq_gemm_32f_align_AnoTrans_Btrans_M8_caseNdiv1_KdivAlign4
+#undef zq_gemm_32f_align_AnoTrans_Btrans_M8_caseNdiv1_KdivAlign8
+#undef zq_gemm_32f_align_AnoTrans_Btrans_M8_caseNdiv1_KdivAlign16
+#undef zq_gemm_32f_align_AnoTrans_Btrans_M8_caseNdiv1_KdivAlign32
+#undef zq_gemm_32f_align_AnoTrans_Btrans_M8_caseNdiv1_KdivAlign64
+#undef zq_gemm_32f_align_AnoTrans_Btrans_M8_caseNdiv2_KdivAlign4
+#undef zq_gemm_32f_align_AnoTrans_Btrans_M8_caseNdiv2_KdivAlign8
+#undef zq_gemm_32f_align_AnoTrans_Btrans_M8_caseNdiv2_KdivAlign16
+#undef zq_gemm_32f_align_AnoTrans_Btrans_M8_caseNdiv2_KdivAlign32
+#undef zq_gemm_32f_align_AnoTrans_Btrans_M8_caseNdiv2_KdivAlign64
+
+#undef zq_gemm_32f_align_AnoTrans_Btrans_M16_N1
+#undef zq_gemm_32f_align_AnoTrans_Btrans_M16_N1_Kgeneral
+#undef zq_gemm_32f_align_AnoTrans_Btrans_M16_caseNdiv1_KdivAlign4
+#undef zq_gemm_32f_align_AnoTrans_Btrans_M16_caseNdiv1_KdivAlign8
+#undef zq_gemm_32f_align_AnoTrans_Btrans_M16_caseNdiv1_KdivAlign16
+#undef zq_gemm_32f_align_AnoTrans_Btrans_M16_caseNdiv1_KdivAlign32
+#undef zq_gemm_32f_align_AnoTrans_Btrans_M16_caseNdiv1_KdivAlign64
 
 #endif
 
@@ -432,6 +563,7 @@ union union_type_s_mm256 {
 	float s[8];
 	__m256 v;
 	__m128 p[2];
+	__m64 t[4];
 };
 #define zq_q_type \
 	union union_type_s_mm256
@@ -440,14 +572,33 @@ union union_type_s_mm256 {
 	_mm256_store_ps(x,y)
 
 #define zq_final_sum_q0_4 (q.s[0]+q.s[1]+q.s[2]+q.s[3])
+#define zq_final_sum_q0_2 (q.s[0]+q.s[1])
 #define zq_final_sum_q (q.s[0]+q.s[1]+q.s[2]+q.s[3]+q.s[4]+q.s[5]+q.s[6]+q.s[7])
 #if ZQ_CNN_USE_FMADD256
 #define zq_mm_fmadd_ps _mm256_fmadd_ps
 #else
 #define zq_mm_fmadd_ps(A, B, C) _mm256_add_ps(_mm256_mul_ps(A, B), C)
 #endif
-#define zq_gemm_32f_align_AnoTrans_Btrans_M1 zq_gemm_32f_align256bit_AnoTrans_Btrans_M1
-#define zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNgeneral zq_gemm_32f_align256bit_AnoTrans_Btrans_M1_caseNgeneral 
+#define zq_gemm_32f_align_AnoTrans_Btrans_M1_N1 zq_gemm_32f_align256bit_AnoTrans_Btrans_M1_N1
+#define zq_gemm_32f_align_AnoTrans_Btrans_M1_N2 zq_gemm_32f_align256bit_AnoTrans_Btrans_M1_N2
+#define zq_gemm_32f_align_AnoTrans_Btrans_M1_N4 zq_gemm_32f_align256bit_AnoTrans_Btrans_M1_N4
+#define zq_gemm_32f_align_AnoTrans_Btrans_M1_N8 zq_gemm_32f_align256bit_AnoTrans_Btrans_M1_N8
+#define zq_gemm_32f_align_AnoTrans_Btrans_M1_N1_Kgeneral zq_gemm_32f_align256bit_AnoTrans_Btrans_M1_N1_Kgeneral 
+#define zq_gemm_32f_align_AnoTrans_Btrans_M1_N2_Kgeneral zq_gemm_32f_align256bit_AnoTrans_Btrans_M1_N2_Kgeneral 
+#define zq_gemm_32f_align_AnoTrans_Btrans_M1_N4_Kgeneral zq_gemm_32f_align256bit_AnoTrans_Btrans_M1_N4_Kgeneral 
+#define zq_gemm_32f_align_AnoTrans_Btrans_M1_N8_Kgeneral zq_gemm_32f_align256bit_AnoTrans_Btrans_M1_N8_Kgeneral 
+#define zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv1_Kgeneral zq_gemm_32f_align256bit_AnoTrans_Btrans_M1_caseNdiv1_Kgeneral
+#define zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv1_KdivAlign4 zq_gemm_32f_align256bit_AnoTrans_Btrans_M1_caseNdiv1_Kdiv32
+#define zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv1_KdivAlign8 zq_gemm_32f_align256bit_AnoTrans_Btrans_M1_caseNdiv1_Kdiv64
+#define zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv1_KdivAlign16 zq_gemm_32f_align256bit_AnoTrans_Btrans_M1_caseNdiv1_Kdiv128
+#define zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv1_KdivAlign32 zq_gemm_32f_align256bit_AnoTrans_Btrans_M1_caseNdiv1_Kdiv256
+#define zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv1_KdivAlign64 zq_gemm_32f_align256bit_AnoTrans_Btrans_M1_caseNdiv1_Kdiv512
+#define zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv2_Kgeneral zq_gemm_32f_align256bit_AnoTrans_Btrans_M1_caseNdiv2_Kgeneral
+#define zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv2_KdivAlign4 zq_gemm_32f_align256bit_AnoTrans_Btrans_M1_caseNdiv2_Kdiv32
+#define zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv2_KdivAlign8 zq_gemm_32f_align256bit_AnoTrans_Btrans_M1_caseNdiv2_Kdiv64
+#define zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv2_KdivAlign16 zq_gemm_32f_align256bit_AnoTrans_Btrans_M1_caseNdiv2_Kdiv128
+#define zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv2_KdivAlign32 zq_gemm_32f_align256bit_AnoTrans_Btrans_M1_caseNdiv2_Kdiv256
+#define zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv2_KdivAlign64 zq_gemm_32f_align256bit_AnoTrans_Btrans_M1_caseNdiv2_Kdiv512
 #define zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv4_Kgeneral zq_gemm_32f_align256bit_AnoTrans_Btrans_M1_caseNdiv4_Kgeneral
 #define zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv4_KdivAlign4 zq_gemm_32f_align256bit_AnoTrans_Btrans_M1_caseNdiv4_Kdiv32
 #define zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv4_KdivAlign8 zq_gemm_32f_align256bit_AnoTrans_Btrans_M1_caseNdiv4_Kdiv64
@@ -461,8 +612,26 @@ union union_type_s_mm256 {
 #define zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv8_KdivAlign32 zq_gemm_32f_align256bit_AnoTrans_Btrans_M1_caseNdiv8_Kdiv256
 #define zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv8_KdivAlign64 zq_gemm_32f_align256bit_AnoTrans_Btrans_M1_caseNdiv8_Kdiv512
 
-#define zq_gemm_32f_align_AnoTrans_Btrans_M2 zq_gemm_32f_align256bit_AnoTrans_Btrans_M2
-#define zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNgeneral zq_gemm_32f_align256bit_AnoTrans_Btrans_M2_caseNgeneral 
+#define zq_gemm_32f_align_AnoTrans_Btrans_M2_N1 zq_gemm_32f_align256bit_AnoTrans_Btrans_M2_N1
+#define zq_gemm_32f_align_AnoTrans_Btrans_M2_N2 zq_gemm_32f_align256bit_AnoTrans_Btrans_M2_N2
+#define zq_gemm_32f_align_AnoTrans_Btrans_M2_N4 zq_gemm_32f_align256bit_AnoTrans_Btrans_M2_N4
+#define zq_gemm_32f_align_AnoTrans_Btrans_M2_N8 zq_gemm_32f_align256bit_AnoTrans_Btrans_M2_N8
+#define zq_gemm_32f_align_AnoTrans_Btrans_M2_N1_Kgeneral zq_gemm_32f_align256bit_AnoTrans_Btrans_M2_N1_Kgeneral 
+#define zq_gemm_32f_align_AnoTrans_Btrans_M2_N2_Kgeneral zq_gemm_32f_align256bit_AnoTrans_Btrans_M2_N2_Kgeneral 
+#define zq_gemm_32f_align_AnoTrans_Btrans_M2_N4_Kgeneral zq_gemm_32f_align256bit_AnoTrans_Btrans_M2_N4_Kgeneral 
+#define zq_gemm_32f_align_AnoTrans_Btrans_M2_N8_Kgeneral zq_gemm_32f_align256bit_AnoTrans_Btrans_M2_N8_Kgeneral 
+#define zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv1_Kgeneral zq_gemm_32f_align256bit_AnoTrans_Btrans_M2_caseNdiv1_Kgeneral
+#define zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv1_KdivAlign4 zq_gemm_32f_align256bit_AnoTrans_Btrans_M2_caseNdiv1_Kdiv32
+#define zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv1_KdivAlign8 zq_gemm_32f_align128it_AnoTrans_Btrans_M2_caseNdiv1_Kdiv64
+#define zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv1_KdivAlign16 zq_gemm_32f_align256bit_AnoTrans_Btrans_M2_caseNdiv1_Kdiv128
+#define zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv1_KdivAlign32 zq_gemm_32f_align256bit_AnoTrans_Btrans_M2_caseNdiv1_Kdiv256
+#define zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv1_KdivAlign64 zq_gemm_32f_align256bit_AnoTrans_Btrans_M2_caseNdiv1_Kdiv512
+#define zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv2_Kgeneral zq_gemm_32f_align256bit_AnoTrans_Btrans_M2_caseNdiv2_Kgeneral
+#define zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv2_KdivAlign4 zq_gemm_32f_align256bit_AnoTrans_Btrans_M2_caseNdiv2_Kdiv32
+#define zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv2_KdivAlign8 zq_gemm_32f_align128it_AnoTrans_Btrans_M2_caseNdiv2_Kdiv64
+#define zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv2_KdivAlign16 zq_gemm_32f_align256bit_AnoTrans_Btrans_M2_caseNdiv2_Kdiv128
+#define zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv2_KdivAlign32 zq_gemm_32f_align256bit_AnoTrans_Btrans_M2_caseNdiv2_Kdiv256
+#define zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv2_KdivAlign64 zq_gemm_32f_align256bit_AnoTrans_Btrans_M2_caseNdiv2_Kdiv512
 #define zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv4_Kgeneral zq_gemm_32f_align256bit_AnoTrans_Btrans_M2_caseNdiv4_Kgeneral
 #define zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv4_KdivAlign4 zq_gemm_32f_align256bit_AnoTrans_Btrans_M2_caseNdiv4_Kdiv32
 #define zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv4_KdivAlign8 zq_gemm_32f_align128it_AnoTrans_Btrans_M2_caseNdiv4_Kdiv64
@@ -476,14 +645,57 @@ union union_type_s_mm256 {
 #define zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv8_KdivAlign32 zq_gemm_32f_align256bit_AnoTrans_Btrans_M2_caseNdiv8_Kdiv256
 #define zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv8_KdivAlign64 zq_gemm_32f_align256bit_AnoTrans_Btrans_M2_caseNdiv8_Kdiv512
 
-#define zq_gemm_32f_align_AnoTrans_Btrans_M4 zq_gemm_32f_align256bit_AnoTrans_Btrans_M4
-#define zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNgeneral zq_gemm_32f_align256bit_AnoTrans_Btrans_M4_caseNgeneral 
+#define zq_gemm_32f_align_AnoTrans_Btrans_M4_N1 zq_gemm_32f_align256bit_AnoTrans_Btrans_M4_N1
+#define zq_gemm_32f_align_AnoTrans_Btrans_M4_N2 zq_gemm_32f_align256bit_AnoTrans_Btrans_M4_N2
+#define zq_gemm_32f_align_AnoTrans_Btrans_M4_N4 zq_gemm_32f_align256bit_AnoTrans_Btrans_M4_N4
+#define zq_gemm_32f_align_AnoTrans_Btrans_M4_N1_Kgeneral zq_gemm_32f_align256bit_AnoTrans_Btrans_M4_N1_Kgeneral 
+#define zq_gemm_32f_align_AnoTrans_Btrans_M4_N2_Kgeneral zq_gemm_32f_align256bit_AnoTrans_Btrans_M4_N2_Kgeneral 
+#define zq_gemm_32f_align_AnoTrans_Btrans_M4_N4_Kgeneral zq_gemm_32f_align256bit_AnoTrans_Btrans_M4_N4_Kgeneral 
+#define zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv1_Kgeneral zq_gemm_32f_align256bit_AnoTrans_Btrans_M4_caseNdiv1_Kgeneral
+#define zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv1_KdivAlign4 zq_gemm_32f_align256bit_AnoTrans_Btrans_M4_caseNdiv1_Kdiv32
+#define zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv1_KdivAlign8 zq_gemm_32f_align256bit_AnoTrans_Btrans_M4_caseNdiv1_Kdiv64
+#define zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv1_KdivAlign16 zq_gemm_32f_align256bit_AnoTrans_Btrans_M4_caseNdiv1_Kdiv128
+#define zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv1_KdivAlign32 zq_gemm_32f_align256bit_AnoTrans_Btrans_M4_caseNdiv1_Kdiv256
+#define zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv1_KdivAlign64 zq_gemm_32f_align256bit_AnoTrans_Btrans_M4_caseNdiv1_Kdiv512
+#define zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv2_Kgeneral zq_gemm_32f_align256bit_AnoTrans_Btrans_M4_caseNdiv2_Kgeneral
+#define zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv2_KdivAlign4 zq_gemm_32f_align256bit_AnoTrans_Btrans_M4_caseNdiv2_Kdiv32
+#define zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv2_KdivAlign8 zq_gemm_32f_align256bit_AnoTrans_Btrans_M4_caseNdiv2_Kdiv64
+#define zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv2_KdivAlign16 zq_gemm_32f_align256bit_AnoTrans_Btrans_M4_caseNdiv2_Kdiv128
+#define zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv2_KdivAlign32 zq_gemm_32f_align256bit_AnoTrans_Btrans_M4_caseNdiv2_Kdiv256
+#define zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv2_KdivAlign64 zq_gemm_32f_align256bit_AnoTrans_Btrans_M4_caseNdiv2_Kdiv512
 #define zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv4_Kgeneral zq_gemm_32f_align256bit_AnoTrans_Btrans_M4_caseNdiv4_Kgeneral
 #define zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv4_KdivAlign4 zq_gemm_32f_align256bit_AnoTrans_Btrans_M4_caseNdiv4_Kdiv32
 #define zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv4_KdivAlign8 zq_gemm_32f_align256bit_AnoTrans_Btrans_M4_caseNdiv4_Kdiv64
 #define zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv4_KdivAlign16 zq_gemm_32f_align256bit_AnoTrans_Btrans_M4_caseNdiv4_Kdiv128
 #define zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv4_KdivAlign32 zq_gemm_32f_align256bit_AnoTrans_Btrans_M4_caseNdiv4_Kdiv256
 #define zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv4_KdivAlign64 zq_gemm_32f_align256bit_AnoTrans_Btrans_M4_caseNdiv4_Kdiv512
+
+#define zq_gemm_32f_align_AnoTrans_Btrans_M8_N1 zq_gemm_32f_align256bit_AnoTrans_Btrans_M8_N1
+#define zq_gemm_32f_align_AnoTrans_Btrans_M8_N2 zq_gemm_32f_align256bit_AnoTrans_Btrans_M8_N2
+#define zq_gemm_32f_align_AnoTrans_Btrans_M8_N1_Kgeneral zq_gemm_32f_align256bit_AnoTrans_Btrans_M8_N1_Kgeneral 
+#define zq_gemm_32f_align_AnoTrans_Btrans_M8_N2_Kgeneral zq_gemm_32f_align256bit_AnoTrans_Btrans_M8_N2_Kgeneral 
+#define zq_gemm_32f_align_AnoTrans_Btrans_M8_caseNdiv1_Kgeneral zq_gemm_32f_align256bit_AnoTrans_Btrans_M8_caseNdiv1_Kgeneral
+#define zq_gemm_32f_align_AnoTrans_Btrans_M8_caseNdiv1_KdivAlign4 zq_gemm_32f_align256bit_AnoTrans_Btrans_M8_caseNdiv1_Kdiv32
+#define zq_gemm_32f_align_AnoTrans_Btrans_M8_caseNdiv1_KdivAlign8 zq_gemm_32f_align256bit_AnoTrans_Btrans_M8_caseNdiv1_Kdiv64
+#define zq_gemm_32f_align_AnoTrans_Btrans_M8_caseNdiv1_KdivAlign16 zq_gemm_32f_align256bit_AnoTrans_Btrans_M8_caseNdiv1_Kdiv128
+#define zq_gemm_32f_align_AnoTrans_Btrans_M8_caseNdiv1_KdivAlign32 zq_gemm_32f_align256bit_AnoTrans_Btrans_M8_caseNdiv1_Kdiv256
+#define zq_gemm_32f_align_AnoTrans_Btrans_M8_caseNdiv1_KdivAlign64 zq_gemm_32f_align256bit_AnoTrans_Btrans_M8_caseNdiv1_Kdiv512
+#define zq_gemm_32f_align_AnoTrans_Btrans_M8_caseNdiv2_Kgeneral zq_gemm_32f_align256bit_AnoTrans_Btrans_M8_caseNdiv2_Kgeneral
+#define zq_gemm_32f_align_AnoTrans_Btrans_M8_caseNdiv2_KdivAlign4 zq_gemm_32f_align256bit_AnoTrans_Btrans_M8_caseNdiv2_Kdiv32
+#define zq_gemm_32f_align_AnoTrans_Btrans_M8_caseNdiv2_KdivAlign8 zq_gemm_32f_align256bit_AnoTrans_Btrans_M8_caseNdiv2_Kdiv64
+#define zq_gemm_32f_align_AnoTrans_Btrans_M8_caseNdiv2_KdivAlign16 zq_gemm_32f_align256bit_AnoTrans_Btrans_M8_caseNdiv2_Kdiv128
+#define zq_gemm_32f_align_AnoTrans_Btrans_M8_caseNdiv2_KdivAlign32 zq_gemm_32f_align256bit_AnoTrans_Btrans_M8_caseNdiv2_Kdiv256
+#define zq_gemm_32f_align_AnoTrans_Btrans_M8_caseNdiv2_KdivAlign64 zq_gemm_32f_align256bit_AnoTrans_Btrans_M8_caseNdiv2_Kdiv512
+
+#define zq_gemm_32f_align_AnoTrans_Btrans_M16_N1 zq_gemm_32f_align256bit_AnoTrans_Btrans_M16_N1
+#define zq_gemm_32f_align_AnoTrans_Btrans_M16_N1_Kgeneral zq_gemm_32f_align256bit_AnoTrans_Btrans_M16_N1_Kgeneral 
+#define zq_gemm_32f_align_AnoTrans_Btrans_M16_caseNdiv1_Kgeneral zq_gemm_32f_align256bit_AnoTrans_Btrans_M16_caseNdiv1_Kgeneral
+#define zq_gemm_32f_align_AnoTrans_Btrans_M16_caseNdiv1_KdivAlign4 zq_gemm_32f_align256bit_AnoTrans_Btrans_M16_caseNdiv1_Kdiv32
+#define zq_gemm_32f_align_AnoTrans_Btrans_M16_caseNdiv1_KdivAlign8 zq_gemm_32f_align256bit_AnoTrans_Btrans_M16_caseNdiv1_Kdiv64
+#define zq_gemm_32f_align_AnoTrans_Btrans_M16_caseNdiv1_KdivAlign16 zq_gemm_32f_align256bit_AnoTrans_Btrans_M16_caseNdiv1_Kdiv128
+#define zq_gemm_32f_align_AnoTrans_Btrans_M16_caseNdiv1_KdivAlign32 zq_gemm_32f_align256bit_AnoTrans_Btrans_M16_caseNdiv1_Kdiv256
+#define zq_gemm_32f_align_AnoTrans_Btrans_M16_caseNdiv1_KdivAlign64 zq_gemm_32f_align256bit_AnoTrans_Btrans_M16_caseNdiv1_Kdiv512
+
 
 #include "zq_gemm_32f_align_c_raw.h"
 
@@ -505,10 +717,29 @@ union union_type_s_mm256 {
 #undef zq_q_type
 #undef zq_store_to_q
 #undef zq_final_sum_q0_4
+#undef zq_final_sum_q0_2
 #undef zq_final_sum_q
 #undef zq_mm_fmadd_ps
-#undef zq_gemm_32f_align_AnoTrans_Btrans_M1
-#undef zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNgeneral
+#undef zq_gemm_32f_align_AnoTrans_Btrans_M1_N1
+#undef zq_gemm_32f_align_AnoTrans_Btrans_M1_N2
+#undef zq_gemm_32f_align_AnoTrans_Btrans_M1_N4
+#undef zq_gemm_32f_align_AnoTrans_Btrans_M1_N8
+#undef zq_gemm_32f_align_AnoTrans_Btrans_M1_N1_Kgeneral
+#undef zq_gemm_32f_align_AnoTrans_Btrans_M1_N2_Kgeneral
+#undef zq_gemm_32f_align_AnoTrans_Btrans_M1_N4_Kgeneral
+#undef zq_gemm_32f_align_AnoTrans_Btrans_M1_N8_Kgeneral
+#undef zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv1_Kgeneral
+#undef zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv1_KdivAlign4
+#undef zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv1_KdivAlign8
+#undef zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv1_KdivAlign16
+#undef zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv1_KdivAlign32
+#undef zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv1_KdivAlign64
+#undef zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv2_Kgeneral
+#undef zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv2_KdivAlign4
+#undef zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv2_KdivAlign8
+#undef zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv2_KdivAlign16
+#undef zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv2_KdivAlign32
+#undef zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv2_KdivAlign64
 #undef zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv4_Kgeneral
 #undef zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv4_KdivAlign4
 #undef zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv4_KdivAlign8
@@ -522,8 +753,26 @@ union union_type_s_mm256 {
 #undef zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv8_KdivAlign32
 #undef zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv8_KdivAlign64
 
-#undef zq_gemm_32f_align_AnoTrans_Btrans_M2
-#undef zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNgeneral
+#undef zq_gemm_32f_align_AnoTrans_Btrans_M2_N1
+#undef zq_gemm_32f_align_AnoTrans_Btrans_M2_N2
+#undef zq_gemm_32f_align_AnoTrans_Btrans_M2_N4
+#undef zq_gemm_32f_align_AnoTrans_Btrans_M2_N8
+#undef zq_gemm_32f_align_AnoTrans_Btrans_M2_N1_Kgeneral
+#undef zq_gemm_32f_align_AnoTrans_Btrans_M2_N2_Kgeneral
+#undef zq_gemm_32f_align_AnoTrans_Btrans_M2_N4_Kgeneral
+#undef zq_gemm_32f_align_AnoTrans_Btrans_M2_N8_Kgeneral
+#undef zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv1_Kgeneral
+#undef zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv1_KdivAlign4
+#undef zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv1_KdivAlign8
+#undef zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv1_KdivAlign16
+#undef zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv1_KdivAlign32
+#undef zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv1_KdivAlign64
+#undef zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv2_Kgeneral
+#undef zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv2_KdivAlign4
+#undef zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv2_KdivAlign8
+#undef zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv2_KdivAlign16
+#undef zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv2_KdivAlign32
+#undef zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv2_KdivAlign64
 #undef zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv4_Kgeneral
 #undef zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv4_KdivAlign4
 #undef zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv4_KdivAlign8
@@ -537,14 +786,55 @@ union union_type_s_mm256 {
 #undef zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv8_KdivAlign32
 #undef zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv8_KdivAlign64
 
-#undef zq_gemm_32f_align_AnoTrans_Btrans_M4
-#undef zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNgeneral
+#undef zq_gemm_32f_align_AnoTrans_Btrans_M4_N1
+#undef zq_gemm_32f_align_AnoTrans_Btrans_M4_N2
+#undef zq_gemm_32f_align_AnoTrans_Btrans_M4_N4
+#undef zq_gemm_32f_align_AnoTrans_Btrans_M4_N1_Kgeneral
+#undef zq_gemm_32f_align_AnoTrans_Btrans_M4_N2_Kgeneral
+#undef zq_gemm_32f_align_AnoTrans_Btrans_M4_N4_Kgeneral
+#undef zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv1_Kgeneral
+#undef zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv1_KdivAlign4
+#undef zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv1_KdivAlign8
+#undef zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv1_KdivAlign16
+#undef zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv1_KdivAlign32
+#undef zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv1_KdivAlign64
+#undef zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv2_Kgeneral
+#undef zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv2_KdivAlign4
+#undef zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv2_KdivAlign8
+#undef zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv2_KdivAlign16
+#undef zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv2_KdivAlign32
+#undef zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv2_KdivAlign64
 #undef zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv4_Kgeneral
 #undef zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv4_KdivAlign4
 #undef zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv4_KdivAlign8
 #undef zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv4_KdivAlign16
 #undef zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv4_KdivAlign32
 #undef zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv4_KdivAlign64
+
+#undef zq_gemm_32f_align_AnoTrans_Btrans_M8_N1
+#undef zq_gemm_32f_align_AnoTrans_Btrans_M8_N2
+#undef zq_gemm_32f_align_AnoTrans_Btrans_M8_N1_Kgeneral
+#undef zq_gemm_32f_align_AnoTrans_Btrans_M8_N2_Kgeneral
+#undef zq_gemm_32f_align_AnoTrans_Btrans_M8_caseNdiv1_KdivAlign4
+#undef zq_gemm_32f_align_AnoTrans_Btrans_M8_caseNdiv1_KdivAlign8
+#undef zq_gemm_32f_align_AnoTrans_Btrans_M8_caseNdiv1_KdivAlign16
+#undef zq_gemm_32f_align_AnoTrans_Btrans_M8_caseNdiv1_KdivAlign32
+#undef zq_gemm_32f_align_AnoTrans_Btrans_M8_caseNdiv1_KdivAlign64
+#undef zq_gemm_32f_align_AnoTrans_Btrans_M8_caseNdiv2_KdivAlign4
+#undef zq_gemm_32f_align_AnoTrans_Btrans_M8_caseNdiv2_KdivAlign8
+#undef zq_gemm_32f_align_AnoTrans_Btrans_M8_caseNdiv2_KdivAlign16
+#undef zq_gemm_32f_align_AnoTrans_Btrans_M8_caseNdiv2_KdivAlign32
+#undef zq_gemm_32f_align_AnoTrans_Btrans_M8_caseNdiv2_KdivAlign64
+
+#undef zq_gemm_32f_align_AnoTrans_Btrans_M16_N1
+#undef zq_gemm_32f_align_AnoTrans_Btrans_M16_N1_Kgeneral
+#undef zq_gemm_32f_align_AnoTrans_Btrans_M16_caseNdiv1_KdivAlign4
+#undef zq_gemm_32f_align_AnoTrans_Btrans_M16_caseNdiv1_KdivAlign8
+#undef zq_gemm_32f_align_AnoTrans_Btrans_M16_caseNdiv1_KdivAlign16
+#undef zq_gemm_32f_align_AnoTrans_Btrans_M16_caseNdiv1_KdivAlign32
+#undef zq_gemm_32f_align_AnoTrans_Btrans_M16_caseNdiv1_KdivAlign64
+
+
 #endif
 	
 	void zq_gemm_32f_align0_AnoTrans_Btrans(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
