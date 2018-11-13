@@ -9342,8 +9342,8 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M16_caseNdiv1_KdivAlign4(int M, int N, in
 			Bptr1 = Bptr;
 			A_c_ptr1 = Aptr1; A_c_ptr2 = Aptr2; A_c_ptr3 = Aptr3; A_c_ptr4 = Aptr4;
 			A_c_ptr5 = Aptr5; A_c_ptr6 = Aptr6; A_c_ptr7 = Aptr7; A_c_ptr8 = Aptr8;
-			A_c_ptr9 = Aptr5; A_c_ptrA = Aptr6; A_c_ptrB = Aptr7; A_c_ptrC = Aptr8;
-			A_c_ptrD = Aptr5; A_c_ptrE = Aptr6; A_c_ptrF = Aptr7; A_c_ptrG = Aptr8;
+			A_c_ptr9 = Aptr9; A_c_ptrA = AptrA; A_c_ptrB = AptrB; A_c_ptrC = AptrC;
+			A_c_ptrD = AptrD; A_c_ptrE = AptrE; A_c_ptrF = AptrF; A_c_ptrG = AptrG;
 			B_c_ptr1 = Bptr1;
 			op_16x1_4_first;
 			for (k = K - zq_mm_align_size4; k; k -= zq_mm_align_size4)
@@ -9463,8 +9463,8 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M16_caseNdiv1_KdivAlign8(int M, int N, in
 			Bptr1 = Bptr;
 			A_c_ptr1 = Aptr1; A_c_ptr2 = Aptr2; A_c_ptr3 = Aptr3; A_c_ptr4 = Aptr4;
 			A_c_ptr5 = Aptr5; A_c_ptr6 = Aptr6; A_c_ptr7 = Aptr7; A_c_ptr8 = Aptr8;
-			A_c_ptr9 = Aptr5; A_c_ptrA = Aptr6; A_c_ptrB = Aptr7; A_c_ptrC = Aptr8;
-			A_c_ptrD = Aptr5; A_c_ptrE = Aptr6; A_c_ptrF = Aptr7; A_c_ptrG = Aptr8;
+			A_c_ptr9 = Aptr9; A_c_ptrA = AptrA; A_c_ptrB = AptrB; A_c_ptrC = AptrC;
+			A_c_ptrD = AptrD; A_c_ptrE = AptrE; A_c_ptrF = AptrF; A_c_ptrG = AptrG;
 			B_c_ptr1 = Bptr1;
 			op_16x1_8_first;
 			for (k = K - zq_mm_align_size8; k; k -= zq_mm_align_size8)
@@ -9585,8 +9585,8 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M16_caseNdiv1_KdivAlign16(int M, int N, i
 			Bptr1 = Bptr;
 			A_c_ptr1 = Aptr1; A_c_ptr2 = Aptr2; A_c_ptr3 = Aptr3; A_c_ptr4 = Aptr4;
 			A_c_ptr5 = Aptr5; A_c_ptr6 = Aptr6; A_c_ptr7 = Aptr7; A_c_ptr8 = Aptr8;
-			A_c_ptr9 = Aptr5; A_c_ptrA = Aptr6; A_c_ptrB = Aptr7; A_c_ptrC = Aptr8;
-			A_c_ptrD = Aptr5; A_c_ptrE = Aptr6; A_c_ptrF = Aptr7; A_c_ptrG = Aptr8;
+			A_c_ptr9 = Aptr9; A_c_ptrA = AptrA; A_c_ptrB = AptrB; A_c_ptrC = AptrC;
+			A_c_ptrD = AptrD; A_c_ptrE = AptrE; A_c_ptrF = AptrF; A_c_ptrG = AptrG;
 			B_c_ptr1 = Bptr1;
 			op_16x1_16_first;
 			for (k = K - zq_mm_align_size16; k; k -= zq_mm_align_size16)
@@ -9707,8 +9707,8 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M16_caseNdiv1_KdivAlign32(int M, int N, i
 			Bptr1 = Bptr;
 			A_c_ptr1 = Aptr1; A_c_ptr2 = Aptr2; A_c_ptr3 = Aptr3; A_c_ptr4 = Aptr4;
 			A_c_ptr5 = Aptr5; A_c_ptr6 = Aptr6; A_c_ptr7 = Aptr7; A_c_ptr8 = Aptr8;
-			A_c_ptr9 = Aptr5; A_c_ptrA = Aptr6; A_c_ptrB = Aptr7; A_c_ptrC = Aptr8;
-			A_c_ptrD = Aptr5; A_c_ptrE = Aptr6; A_c_ptrF = Aptr7; A_c_ptrG = Aptr8;
+			A_c_ptr9 = Aptr9; A_c_ptrA = AptrA; A_c_ptrB = AptrB; A_c_ptrC = AptrC;
+			A_c_ptrD = AptrD; A_c_ptrE = AptrE; A_c_ptrF = AptrF; A_c_ptrG = AptrG;
 			B_c_ptr1 = Bptr1;
 			op_16x1_16_first;
 			op_16x1_16;
@@ -9833,8 +9833,8 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M16_caseNdiv1_KdivAlign64(int M, int N, i
 			Bptr1 = Bptr;
 			A_c_ptr1 = Aptr1; A_c_ptr2 = Aptr2; A_c_ptr3 = Aptr3; A_c_ptr4 = Aptr4;
 			A_c_ptr5 = Aptr5; A_c_ptr6 = Aptr6; A_c_ptr7 = Aptr7; A_c_ptr8 = Aptr8;
-			A_c_ptr9 = Aptr5; A_c_ptrA = Aptr6; A_c_ptrB = Aptr7; A_c_ptrC = Aptr8;
-			A_c_ptrD = Aptr5; A_c_ptrE = Aptr6; A_c_ptrF = Aptr7; A_c_ptrG = Aptr8;
+			A_c_ptr9 = Aptr9; A_c_ptrA = AptrA; A_c_ptrB = AptrB; A_c_ptrC = AptrC;
+			A_c_ptrD = AptrD; A_c_ptrE = AptrE; A_c_ptrF = AptrF; A_c_ptrG = AptrG;
 			B_c_ptr1 = Bptr1;
 			op_16x1_16_first;
 			op_16x1_16;
