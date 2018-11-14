@@ -6,7 +6,7 @@ MKL下载地址:[此处下载](https://pan.baidu.com/s/1d75IIf6fgTZ5oeumd0vtTw)
 
 # 更新日志
 
-**2018-11-014日更新**
+**2018-11-14日更新**
 
 (1)优化ZQ_GEMM，3.6GHz的机器上MKL峰值约46GFLOPS， ZQ_GEMM约32GFLOPS。使用ZQ_GEMM人脸模型总体时间约为使用MKL时1.5倍。
 
