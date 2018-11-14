@@ -32,7 +32,7 @@ int main()
 		return EXIT_FAILURE;
 	}
 
-	Mat image = cv::imread("data\\1.jpg", 1);
+	Mat image = cv::imread("data\\sex.jpg", 1);
 	if (image.empty())
 	{
 		cout << "empty image\n";

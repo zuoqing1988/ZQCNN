@@ -1,4 +1,67 @@
 
+#define op_0_4 \
+	a0 = zq_mm_load_ps(in_c_ptr);\
+	a1 = zq_mm_load_ps(in_c_ptr+zq_mm_align_size);\
+	a2 = zq_mm_load_ps(in_c_ptr+zq_mm_align_size_mul_2);\
+	a3 = zq_mm_load_ps(in_c_ptr+zq_mm_align_size_mul_3);\
+	b0 = zq_mm_operation_ps(a0, scalar_v);\
+	b1 = zq_mm_operation_ps(a1, scalar_v);\
+	b2 = zq_mm_operation_ps(a2, scalar_v);\
+	b3 = zq_mm_operation_ps(a3, scalar_v);\
+	zq_mm_store_ps(out_c_ptr, b0);\
+	zq_mm_store_ps(out_c_ptr+zq_mm_align_size, b1);\
+	zq_mm_store_ps(out_c_ptr+zq_mm_align_size_mul_2, b2);\
+	zq_mm_store_ps(out_c_ptr+zq_mm_align_size_mul_3, b3);\
+	in_c_ptr += zq_mm_align_size_mul_4;\
+	out_c_ptr += zq_mm_align_size_mul_4
+
+#define op_0_4_inplace \
+	a0 = zq_mm_load_ps(c_ptr);\
+	a1 = zq_mm_load_ps(c_ptr+zq_mm_align_size);\
+	a2 = zq_mm_load_ps(c_ptr+zq_mm_align_size_mul_2);\
+	a3 = zq_mm_load_ps(c_ptr+zq_mm_align_size_mul_3);\
+	b0 = zq_mm_operation_ps(a0, scalar_v);\
+	b1 = zq_mm_operation_ps(a1, scalar_v);\
+	b2 = zq_mm_operation_ps(a2, scalar_v);\
+	b3 = zq_mm_operation_ps(a3, scalar_v);\
+	zq_mm_store_ps(c_ptr, b0);\
+	zq_mm_store_ps(c_ptr+zq_mm_align_size, b1);\
+	zq_mm_store_ps(c_ptr+zq_mm_align_size_mul_2, b2);\
+	zq_mm_store_ps(c_ptr+zq_mm_align_size_mul_3, b3);\
+	c_ptr += zq_mm_align_size_mul_4
+
+#define op_0_8 \
+	op_0_4;\
+	op_0_4
+
+#define op_0_8_inplace \
+	op_0_4_inplace;\
+	op_0_4_inplace
+
+#define op_0_16 \
+	op_0_8;\
+	op_0_8
+
+#define op_0_16_inplace \
+	op_0_8_inplace;\
+	op_0_8_inplace
+
+#define op_0_32 \
+	op_0_16;\
+	op_0_16
+
+#define op_0_32_inplace \
+	op_0_16_inplace;\
+	op_0_16_inplace
+
+#define op_0_64 \
+	op_0_32;\
+	op_0_32
+
+#define op_0_64_inplace \
+	op_0_32_inplace;\
+	op_0_32_inplace
+
 void zq_cnn_scalaroperation_32f_align(
 	float scalar,
 	const float* in_tensor4D_data,
@@ -16,10 +79,12 @@ void zq_cnn_scalaroperation_32f_align(
 )
 {
 	register zq_mm_type scalar_v = zq_mm_set1_ps(scalar);
+	register zq_mm_type a0, a1, a2, a3;
+	register zq_mm_type b0, b1, b2, b3;
 	int n, h, w, c;
 	const float* in_slice_ptr, *in_row_ptr, *in_pix_ptr, *in_c_ptr;
 	float* out_slice_ptr, *out_row_ptr, *out_pix_ptr, *out_c_ptr;
-
+	
 	if (in_C%zq_mm_align_size_mul_32 == 0)
 	{
 		for (n = 0, in_slice_ptr = in_tensor4D_data, out_slice_ptr = out_tensor4D_data; 
@@ -38,70 +103,7 @@ void zq_cnn_scalaroperation_32f_align(
 						c < in_C; 
 						c += zq_mm_align_size_mul_32)
 					{
-						zq_mm_store_ps(out_c_ptr, zq_mm_operation_ps(zq_mm_load_ps(in_c_ptr), scalar_v));
-						in_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-						zq_mm_store_ps(out_c_ptr, zq_mm_operation_ps(zq_mm_load_ps(in_c_ptr), scalar_v));
-						in_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-						zq_mm_store_ps(out_c_ptr, zq_mm_operation_ps(zq_mm_load_ps(in_c_ptr), scalar_v));
-						in_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-						zq_mm_store_ps(out_c_ptr, zq_mm_operation_ps(zq_mm_load_ps(in_c_ptr), scalar_v));
-						in_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-						zq_mm_store_ps(out_c_ptr, zq_mm_operation_ps(zq_mm_load_ps(in_c_ptr), scalar_v));
-						in_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-						zq_mm_store_ps(out_c_ptr, zq_mm_operation_ps(zq_mm_load_ps(in_c_ptr), scalar_v));
-						in_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-						zq_mm_store_ps(out_c_ptr, zq_mm_operation_ps(zq_mm_load_ps(in_c_ptr), scalar_v));
-						in_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-						zq_mm_store_ps(out_c_ptr, zq_mm_operation_ps(zq_mm_load_ps(in_c_ptr), scalar_v));
-						in_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-						zq_mm_store_ps(out_c_ptr, zq_mm_operation_ps(zq_mm_load_ps(in_c_ptr), scalar_v));
-						in_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-						zq_mm_store_ps(out_c_ptr, zq_mm_operation_ps(zq_mm_load_ps(in_c_ptr), scalar_v));
-						in_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-						zq_mm_store_ps(out_c_ptr, zq_mm_operation_ps(zq_mm_load_ps(in_c_ptr), scalar_v));
-						in_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-						zq_mm_store_ps(out_c_ptr, zq_mm_operation_ps(zq_mm_load_ps(in_c_ptr), scalar_v));
-						in_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-						zq_mm_store_ps(out_c_ptr, zq_mm_operation_ps(zq_mm_load_ps(in_c_ptr), scalar_v));
-						in_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-						zq_mm_store_ps(out_c_ptr, zq_mm_operation_ps(zq_mm_load_ps(in_c_ptr), scalar_v));
-						in_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-						zq_mm_store_ps(out_c_ptr, zq_mm_operation_ps(zq_mm_load_ps(in_c_ptr), scalar_v));
-						in_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-						zq_mm_store_ps(out_c_ptr, zq_mm_operation_ps(zq_mm_load_ps(in_c_ptr), scalar_v));
-						in_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-						zq_mm_store_ps(out_c_ptr, zq_mm_operation_ps(zq_mm_load_ps(in_c_ptr), scalar_v));
-						in_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-						zq_mm_store_ps(out_c_ptr, zq_mm_operation_ps(zq_mm_load_ps(in_c_ptr), scalar_v));
-						in_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-						zq_mm_store_ps(out_c_ptr, zq_mm_operation_ps(zq_mm_load_ps(in_c_ptr), scalar_v));
-						in_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-						zq_mm_store_ps(out_c_ptr, zq_mm_operation_ps(zq_mm_load_ps(in_c_ptr), scalar_v));
-						in_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-						zq_mm_store_ps(out_c_ptr, zq_mm_operation_ps(zq_mm_load_ps(in_c_ptr), scalar_v));
-						in_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-						zq_mm_store_ps(out_c_ptr, zq_mm_operation_ps(zq_mm_load_ps(in_c_ptr), scalar_v));
-						in_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-						zq_mm_store_ps(out_c_ptr, zq_mm_operation_ps(zq_mm_load_ps(in_c_ptr), scalar_v));
-						in_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-						zq_mm_store_ps(out_c_ptr, zq_mm_operation_ps(zq_mm_load_ps(in_c_ptr), scalar_v));
-						in_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-						zq_mm_store_ps(out_c_ptr, zq_mm_operation_ps(zq_mm_load_ps(in_c_ptr), scalar_v));
-						in_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-						zq_mm_store_ps(out_c_ptr, zq_mm_operation_ps(zq_mm_load_ps(in_c_ptr), scalar_v));
-						in_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-						zq_mm_store_ps(out_c_ptr, zq_mm_operation_ps(zq_mm_load_ps(in_c_ptr), scalar_v));
-						in_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-						zq_mm_store_ps(out_c_ptr, zq_mm_operation_ps(zq_mm_load_ps(in_c_ptr), scalar_v));
-						in_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-						zq_mm_store_ps(out_c_ptr, zq_mm_operation_ps(zq_mm_load_ps(in_c_ptr), scalar_v));
-						in_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-						zq_mm_store_ps(out_c_ptr, zq_mm_operation_ps(zq_mm_load_ps(in_c_ptr), scalar_v));
-						in_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-						zq_mm_store_ps(out_c_ptr, zq_mm_operation_ps(zq_mm_load_ps(in_c_ptr), scalar_v));
-						in_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-						zq_mm_store_ps(out_c_ptr, zq_mm_operation_ps(zq_mm_load_ps(in_c_ptr), scalar_v));
-						in_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
+						op_0_32;
 					}
 				}
 			}
@@ -125,39 +127,7 @@ void zq_cnn_scalaroperation_32f_align(
 						c < in_C;
 						c += zq_mm_align_size_mul_16)
 					{
-						zq_mm_store_ps(out_c_ptr, zq_mm_operation_ps(zq_mm_load_ps(in_c_ptr), scalar_v));
-						in_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-						zq_mm_store_ps(out_c_ptr, zq_mm_operation_ps(zq_mm_load_ps(in_c_ptr), scalar_v));
-						in_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-						zq_mm_store_ps(out_c_ptr, zq_mm_operation_ps(zq_mm_load_ps(in_c_ptr), scalar_v));
-						in_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-						zq_mm_store_ps(out_c_ptr, zq_mm_operation_ps(zq_mm_load_ps(in_c_ptr), scalar_v));
-						in_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-						zq_mm_store_ps(out_c_ptr, zq_mm_operation_ps(zq_mm_load_ps(in_c_ptr), scalar_v));
-						in_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-						zq_mm_store_ps(out_c_ptr, zq_mm_operation_ps(zq_mm_load_ps(in_c_ptr), scalar_v));
-						in_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-						zq_mm_store_ps(out_c_ptr, zq_mm_operation_ps(zq_mm_load_ps(in_c_ptr), scalar_v));
-						in_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-						zq_mm_store_ps(out_c_ptr, zq_mm_operation_ps(zq_mm_load_ps(in_c_ptr), scalar_v));
-						in_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-						zq_mm_store_ps(out_c_ptr, zq_mm_operation_ps(zq_mm_load_ps(in_c_ptr), scalar_v));
-						in_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-						zq_mm_store_ps(out_c_ptr, zq_mm_operation_ps(zq_mm_load_ps(in_c_ptr), scalar_v));
-						in_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-						zq_mm_store_ps(out_c_ptr, zq_mm_operation_ps(zq_mm_load_ps(in_c_ptr), scalar_v));
-						in_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-						zq_mm_store_ps(out_c_ptr, zq_mm_operation_ps(zq_mm_load_ps(in_c_ptr), scalar_v));
-						in_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-						zq_mm_store_ps(out_c_ptr, zq_mm_operation_ps(zq_mm_load_ps(in_c_ptr), scalar_v));
-						in_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-						zq_mm_store_ps(out_c_ptr, zq_mm_operation_ps(zq_mm_load_ps(in_c_ptr), scalar_v));
-						in_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-						zq_mm_store_ps(out_c_ptr, zq_mm_operation_ps(zq_mm_load_ps(in_c_ptr), scalar_v));
-						in_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-						zq_mm_store_ps(out_c_ptr, zq_mm_operation_ps(zq_mm_load_ps(in_c_ptr), scalar_v));
-						in_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-
+						op_0_16;
 					}
 				}
 			}
@@ -181,23 +151,7 @@ void zq_cnn_scalaroperation_32f_align(
 						c < in_C;
 						c += zq_mm_align_size_mul_8)
 					{
-						zq_mm_store_ps(out_c_ptr, zq_mm_operation_ps(zq_mm_load_ps(in_c_ptr), scalar_v));
-						in_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-						zq_mm_store_ps(out_c_ptr, zq_mm_operation_ps(zq_mm_load_ps(in_c_ptr), scalar_v));
-						in_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-						zq_mm_store_ps(out_c_ptr, zq_mm_operation_ps(zq_mm_load_ps(in_c_ptr), scalar_v));
-						in_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-						zq_mm_store_ps(out_c_ptr, zq_mm_operation_ps(zq_mm_load_ps(in_c_ptr), scalar_v));
-						in_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-						zq_mm_store_ps(out_c_ptr, zq_mm_operation_ps(zq_mm_load_ps(in_c_ptr), scalar_v));
-						in_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-						zq_mm_store_ps(out_c_ptr, zq_mm_operation_ps(zq_mm_load_ps(in_c_ptr), scalar_v));
-						in_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-						zq_mm_store_ps(out_c_ptr, zq_mm_operation_ps(zq_mm_load_ps(in_c_ptr), scalar_v));
-						in_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-						zq_mm_store_ps(out_c_ptr, zq_mm_operation_ps(zq_mm_load_ps(in_c_ptr), scalar_v));
-						in_c_ptr += zq_mm_align_size; out_c_ptr += zq_mm_align_size;
-
+						op_0_8;
 					}
 				}
 			}
@@ -243,6 +197,8 @@ void zq_cnn_scalaroperation_inplace_32f_align(
 )
 {
 	register zq_mm_type scalar_v = zq_mm_set1_ps(scalar);
+	register zq_mm_type a0, a1, a2, a3;
+	register zq_mm_type b0, b1, b2, b3;
 	int n, h, w, c;
 	float* slice_ptr, *row_ptr, *pix_ptr, *c_ptr;
 
@@ -256,71 +212,7 @@ void zq_cnn_scalaroperation_inplace_32f_align(
 				{
 					for (c = 0, c_ptr = pix_ptr; c < in_C; c += zq_mm_align_size_mul_32)
 					{
-						zq_mm_store_ps(c_ptr, zq_mm_operation_ps(zq_mm_load_ps(c_ptr), scalar_v));
-						c_ptr += zq_mm_align_size;
-						zq_mm_store_ps(c_ptr, zq_mm_operation_ps(zq_mm_load_ps(c_ptr), scalar_v));
-						c_ptr += zq_mm_align_size;
-						zq_mm_store_ps(c_ptr, zq_mm_operation_ps(zq_mm_load_ps(c_ptr), scalar_v));
-						c_ptr += zq_mm_align_size;
-						zq_mm_store_ps(c_ptr, zq_mm_operation_ps(zq_mm_load_ps(c_ptr), scalar_v));
-						c_ptr += zq_mm_align_size;
-						zq_mm_store_ps(c_ptr, zq_mm_operation_ps(zq_mm_load_ps(c_ptr), scalar_v));
-						c_ptr += zq_mm_align_size;
-						zq_mm_store_ps(c_ptr, zq_mm_operation_ps(zq_mm_load_ps(c_ptr), scalar_v));
-						c_ptr += zq_mm_align_size;
-						zq_mm_store_ps(c_ptr, zq_mm_operation_ps(zq_mm_load_ps(c_ptr), scalar_v));
-						c_ptr += zq_mm_align_size;
-						zq_mm_store_ps(c_ptr, zq_mm_operation_ps(zq_mm_load_ps(c_ptr), scalar_v));
-						c_ptr += zq_mm_align_size;
-						zq_mm_store_ps(c_ptr, zq_mm_operation_ps(zq_mm_load_ps(c_ptr), scalar_v));
-						c_ptr += zq_mm_align_size;
-						zq_mm_store_ps(c_ptr, zq_mm_operation_ps(zq_mm_load_ps(c_ptr), scalar_v));
-						c_ptr += zq_mm_align_size;
-						zq_mm_store_ps(c_ptr, zq_mm_operation_ps(zq_mm_load_ps(c_ptr), scalar_v));
-						c_ptr += zq_mm_align_size;
-						zq_mm_store_ps(c_ptr, zq_mm_operation_ps(zq_mm_load_ps(c_ptr), scalar_v));
-						c_ptr += zq_mm_align_size;
-						zq_mm_store_ps(c_ptr, zq_mm_operation_ps(zq_mm_load_ps(c_ptr), scalar_v));
-						c_ptr += zq_mm_align_size;
-						zq_mm_store_ps(c_ptr, zq_mm_operation_ps(zq_mm_load_ps(c_ptr), scalar_v));
-						c_ptr += zq_mm_align_size;
-						zq_mm_store_ps(c_ptr, zq_mm_operation_ps(zq_mm_load_ps(c_ptr), scalar_v));
-						c_ptr += zq_mm_align_size;
-						zq_mm_store_ps(c_ptr, zq_mm_operation_ps(zq_mm_load_ps(c_ptr), scalar_v));
-						c_ptr += zq_mm_align_size;
-						zq_mm_store_ps(c_ptr, zq_mm_operation_ps(zq_mm_load_ps(c_ptr), scalar_v));
-						c_ptr += zq_mm_align_size;
-						zq_mm_store_ps(c_ptr, zq_mm_operation_ps(zq_mm_load_ps(c_ptr), scalar_v));
-						c_ptr += zq_mm_align_size;
-						zq_mm_store_ps(c_ptr, zq_mm_operation_ps(zq_mm_load_ps(c_ptr), scalar_v));
-						c_ptr += zq_mm_align_size;
-						zq_mm_store_ps(c_ptr, zq_mm_operation_ps(zq_mm_load_ps(c_ptr), scalar_v));
-						c_ptr += zq_mm_align_size;
-						zq_mm_store_ps(c_ptr, zq_mm_operation_ps(zq_mm_load_ps(c_ptr), scalar_v));
-						c_ptr += zq_mm_align_size;
-						zq_mm_store_ps(c_ptr, zq_mm_operation_ps(zq_mm_load_ps(c_ptr), scalar_v));
-						c_ptr += zq_mm_align_size;
-						zq_mm_store_ps(c_ptr, zq_mm_operation_ps(zq_mm_load_ps(c_ptr), scalar_v));
-						c_ptr += zq_mm_align_size;
-						zq_mm_store_ps(c_ptr, zq_mm_operation_ps(zq_mm_load_ps(c_ptr), scalar_v));
-						c_ptr += zq_mm_align_size;
-						zq_mm_store_ps(c_ptr, zq_mm_operation_ps(zq_mm_load_ps(c_ptr), scalar_v));
-						c_ptr += zq_mm_align_size;
-						zq_mm_store_ps(c_ptr, zq_mm_operation_ps(zq_mm_load_ps(c_ptr), scalar_v));
-						c_ptr += zq_mm_align_size;
-						zq_mm_store_ps(c_ptr, zq_mm_operation_ps(zq_mm_load_ps(c_ptr), scalar_v));
-						c_ptr += zq_mm_align_size;
-						zq_mm_store_ps(c_ptr, zq_mm_operation_ps(zq_mm_load_ps(c_ptr), scalar_v));
-						c_ptr += zq_mm_align_size;
-						zq_mm_store_ps(c_ptr, zq_mm_operation_ps(zq_mm_load_ps(c_ptr), scalar_v));
-						c_ptr += zq_mm_align_size;
-						zq_mm_store_ps(c_ptr, zq_mm_operation_ps(zq_mm_load_ps(c_ptr), scalar_v));
-						c_ptr += zq_mm_align_size;
-						zq_mm_store_ps(c_ptr, zq_mm_operation_ps(zq_mm_load_ps(c_ptr), scalar_v));
-						c_ptr += zq_mm_align_size;
-						zq_mm_store_ps(c_ptr, zq_mm_operation_ps(zq_mm_load_ps(c_ptr), scalar_v));
-						c_ptr += zq_mm_align_size;
-
+						op_0_32_inplace;
 					}
 				}
 			}
@@ -336,39 +228,7 @@ void zq_cnn_scalaroperation_inplace_32f_align(
 				{
 					for (c = 0, c_ptr = pix_ptr; c < in_C; c += zq_mm_align_size_mul_16)
 					{
-						zq_mm_store_ps(c_ptr, zq_mm_operation_ps(zq_mm_load_ps(c_ptr), scalar_v));
-						c_ptr += zq_mm_align_size;
-						zq_mm_store_ps(c_ptr, zq_mm_operation_ps(zq_mm_load_ps(c_ptr), scalar_v));
-						c_ptr += zq_mm_align_size;
-						zq_mm_store_ps(c_ptr, zq_mm_operation_ps(zq_mm_load_ps(c_ptr), scalar_v));
-						c_ptr += zq_mm_align_size;
-						zq_mm_store_ps(c_ptr, zq_mm_operation_ps(zq_mm_load_ps(c_ptr), scalar_v));
-						c_ptr += zq_mm_align_size;
-						zq_mm_store_ps(c_ptr, zq_mm_operation_ps(zq_mm_load_ps(c_ptr), scalar_v));
-						c_ptr += zq_mm_align_size;
-						zq_mm_store_ps(c_ptr, zq_mm_operation_ps(zq_mm_load_ps(c_ptr), scalar_v));
-						c_ptr += zq_mm_align_size;
-						zq_mm_store_ps(c_ptr, zq_mm_operation_ps(zq_mm_load_ps(c_ptr), scalar_v));
-						c_ptr += zq_mm_align_size;
-						zq_mm_store_ps(c_ptr, zq_mm_operation_ps(zq_mm_load_ps(c_ptr), scalar_v));
-						c_ptr += zq_mm_align_size;
-						zq_mm_store_ps(c_ptr, zq_mm_operation_ps(zq_mm_load_ps(c_ptr), scalar_v));
-						c_ptr += zq_mm_align_size;
-						zq_mm_store_ps(c_ptr, zq_mm_operation_ps(zq_mm_load_ps(c_ptr), scalar_v));
-						c_ptr += zq_mm_align_size;
-						zq_mm_store_ps(c_ptr, zq_mm_operation_ps(zq_mm_load_ps(c_ptr), scalar_v));
-						c_ptr += zq_mm_align_size;
-						zq_mm_store_ps(c_ptr, zq_mm_operation_ps(zq_mm_load_ps(c_ptr), scalar_v));
-						c_ptr += zq_mm_align_size;
-						zq_mm_store_ps(c_ptr, zq_mm_operation_ps(zq_mm_load_ps(c_ptr), scalar_v));
-						c_ptr += zq_mm_align_size;
-						zq_mm_store_ps(c_ptr, zq_mm_operation_ps(zq_mm_load_ps(c_ptr), scalar_v));
-						c_ptr += zq_mm_align_size;
-						zq_mm_store_ps(c_ptr, zq_mm_operation_ps(zq_mm_load_ps(c_ptr), scalar_v));
-						c_ptr += zq_mm_align_size;
-						zq_mm_store_ps(c_ptr, zq_mm_operation_ps(zq_mm_load_ps(c_ptr), scalar_v));
-						c_ptr += zq_mm_align_size;
-
+						op_0_16_inplace;
 					}
 				}
 			}
@@ -384,23 +244,7 @@ void zq_cnn_scalaroperation_inplace_32f_align(
 				{
 					for (c = 0, c_ptr = pix_ptr; c < in_C; c += zq_mm_align_size_mul_8)
 					{
-						zq_mm_store_ps(c_ptr, zq_mm_operation_ps(zq_mm_load_ps(c_ptr), scalar_v));
-						c_ptr += zq_mm_align_size;
-						zq_mm_store_ps(c_ptr, zq_mm_operation_ps(zq_mm_load_ps(c_ptr), scalar_v));
-						c_ptr += zq_mm_align_size;
-						zq_mm_store_ps(c_ptr, zq_mm_operation_ps(zq_mm_load_ps(c_ptr), scalar_v));
-						c_ptr += zq_mm_align_size;
-						zq_mm_store_ps(c_ptr, zq_mm_operation_ps(zq_mm_load_ps(c_ptr), scalar_v));
-						c_ptr += zq_mm_align_size;
-						zq_mm_store_ps(c_ptr, zq_mm_operation_ps(zq_mm_load_ps(c_ptr), scalar_v));
-						c_ptr += zq_mm_align_size;
-						zq_mm_store_ps(c_ptr, zq_mm_operation_ps(zq_mm_load_ps(c_ptr), scalar_v));
-						c_ptr += zq_mm_align_size;
-						zq_mm_store_ps(c_ptr, zq_mm_operation_ps(zq_mm_load_ps(c_ptr), scalar_v));
-						c_ptr += zq_mm_align_size;
-						zq_mm_store_ps(c_ptr, zq_mm_operation_ps(zq_mm_load_ps(c_ptr), scalar_v));
-						c_ptr += zq_mm_align_size;
-
+						op_0_8_inplace;
 					}
 				}
 			}
@@ -422,3 +266,14 @@ void zq_cnn_scalaroperation_inplace_32f_align(
 		}
 	}
 }
+
+#undef op_0_4
+#undef op_0_8
+#undef op_0_16
+#undef op_0_32
+#undef op_0_64
+#undef op_0_4_inplace
+#undef op_0_8_inplace
+#undef op_0_16_inplace
+#undef op_0_32_inplace
+#undef op_0_64_inplace

@@ -132,7 +132,7 @@ extern "C" {
 		{
 			if (N >= 8)
 			{
-				zq_gemm_32f_align256bit_AnoTrans_Btrans_M4_N2(M, N, K, A, lda, Bt, ldb, C, ldc);
+				zq_gemm_32f_align256bit_AnoTrans_Btrans_M8_N1(M, N, K, A, lda, Bt, ldb, C, ldc);
 				handled = 1;
 			}
 		}

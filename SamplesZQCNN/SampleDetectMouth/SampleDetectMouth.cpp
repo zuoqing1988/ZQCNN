@@ -42,7 +42,7 @@ int SampleDetectMouth_fig(int argc, const char** argv)
 	float ssd_mouth_thresh = 0.5;
 	if (argc < 5)
 	{
-		printf("%s %s model_root image_file out_file [min_size] [thresh] [draw_image_file]\n", min_size, ssd_mouth_thresh);
+		printf("%s %s model_root image_file out_file [min_size] [thresh] [draw_image_file]\n", argv[0],argv[1]);
 		return EXIT_FAILURE;
 	}
 	std::string model_root = argv[2];

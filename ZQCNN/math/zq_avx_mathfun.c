@@ -97,7 +97,7 @@ extern "C" {
 	_PS256_CONST(cephes_log_q1, -2.12194440e-4);
 	_PS256_CONST(cephes_log_q2, 0.693359375);
 
-#ifndef __AVX2__
+#ifndef ZQ__AVX2__
 
 	typedef union imm_xmm_union {
 		v8si imm;
@@ -156,7 +156,7 @@ static inline v8si _mm256_##fn(v8si x, v8si y) \
 		//AVX2_INTOP_USING_SSE2(sub_epi32)
 		//AVX2_INTOP_USING_SSE2(add_epi32)
 
-#endif /* __AVX2__ */
+#endif /* ZQ__AVX2__ */
 
 
 /* natural logarithm computed for 8 simultaneous float
@@ -332,7 +332,7 @@ v8sf log256_ps(v8sf x) {
 		v8sf xmm1, xmm2 = _mm256_setzero_ps(), xmm3, sign_bit, y;
 		v8si imm0, imm2;
 
-#ifndef __AVX2__
+#ifndef ZQ__AVX2__
 		v4si imm0_1, imm0_2;
 		v4si imm2_1, imm2_2;
 #endif
@@ -352,7 +352,7 @@ v8sf log256_ps(v8sf x) {
 		If we don't have AVX, let's perform them using SSE2 directives
 		*/
 
-#ifdef __AVX2__
+#ifdef ZQ__AVX2__
 		/* store the integer part of y in mm0 */
 		imm2 = _mm256_cvttps_epi32(y);
 		/* j=(j+1) & (~1) (see the cephes sources) */
@@ -459,7 +459,7 @@ v8sf log256_ps(v8sf x) {
 		v8sf xmm1, xmm2 = _mm256_setzero_ps(), xmm3, y;
 		v8si imm0, imm2;
 
-#ifndef __AVX2__
+#ifndef ZQ__AVX2__
 		v4si imm0_1, imm0_2;
 		v4si imm2_1, imm2_2;
 #endif
@@ -470,7 +470,7 @@ v8sf log256_ps(v8sf x) {
 		/* scale by 4/Pi */
 		y = _mm256_mul_ps(x, *(v8sf*)_ps256_cephes_FOPI);
 
-#ifdef __AVX2__
+#ifdef ZQ__AVX2__
 		/* store the integer part of y in mm0 */
 		imm2 = _mm256_cvttps_epi32(y);
 		/* j=(j+1) & (~1) (see the cephes sources) */
@@ -577,7 +577,7 @@ v8sf log256_ps(v8sf x) {
 		v8sf xmm1, xmm2, xmm3 = _mm256_setzero_ps(), sign_bit_sin, y;
 		v8si imm0, imm2, imm4;
 
-#ifndef __AVX2__
+#ifndef ZQ__AVX2__
 		v4si imm0_1, imm0_2;
 		v4si imm2_1, imm2_2;
 		v4si imm4_1, imm4_2;
@@ -592,7 +592,7 @@ v8sf log256_ps(v8sf x) {
 		/* scale by 4/Pi */
 		y = _mm256_mul_ps(x, *(v8sf*)_ps256_cephes_FOPI);
 
-#ifdef __AVX2__    
+#ifdef ZQ__AVX2__    
 		/* store the integer part of y in imm2 */
 		imm2 = _mm256_cvttps_epi32(y);
 
@@ -659,7 +659,7 @@ v8sf log256_ps(v8sf x) {
 		x = _mm256_add_ps(x, xmm2);
 		x = _mm256_add_ps(x, xmm3);
 
-#ifdef __AVX2__
+#ifdef ZQ__AVX2__
 		imm4 = _mm256_sub_epi32(imm4, *(v8si*)_pi32_256_2);
 		imm4 = _mm256_andnot_si128(imm4, *(v8si*)_pi32_256_4);
 		imm4 = _mm256_slli_epi32(imm4, 29);

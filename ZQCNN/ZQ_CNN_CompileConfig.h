@@ -16,8 +16,6 @@
 #if (ZQ_CNN_USE_BLAS_GEMM == 0 && ZQ_CNN_USE_MKL_GEMM == 0)
 #define ZQ_CNN_USE_ZQ_GEMM 1
 #endif
-#define ZQ_CNN_USE_PTR_PLUS_CONST 1
-
 
 
 

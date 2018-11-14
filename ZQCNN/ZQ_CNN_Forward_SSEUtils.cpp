@@ -767,6 +767,13 @@ void ZQ_CNN_Forward_SSEUtils::_depthwise_convolution_nopadding(int align_mode, c
 					out_data, out_N, out_H, out_W, out_C, out_pixStep, out_widthStep, out_sliceStep);
 				has_handled = true;
 			}
+			else if (padded_C == 24)
+			{
+				zq_cnn_depthwise_conv_no_padding_32f_align256bit_kernel3x3_C24(in_data, in_N, in_H, in_W, in_C, in_pixStep, in_widthStep, in_sliceStep,
+					filter_data, filter_N, filter_H, filter_W, filter_C, filter_pixStep, filter_widthStep, filter_sliceStep, strideH, strideW,
+					out_data, out_N, out_H, out_W, out_C, out_pixStep, out_widthStep, out_sliceStep);
+				has_handled = true;
+			}
 			else if (padded_C == 32)
 			{
 				zq_cnn_depthwise_conv_no_padding_32f_align256bit_kernel3x3_C32(in_data, in_N, in_H, in_W, in_C, in_pixStep, in_widthStep, in_sliceStep,
