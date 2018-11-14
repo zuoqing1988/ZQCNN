@@ -20,8 +20,9 @@ namespace ZQ
 		__int64* buffer_len;
 		bool use_buffer;
 		bool show_debug_info;
+		float ignore_small_value;
 
-		ZQ_CNN_Layer() :show_debug_info(false),use_buffer(false) {}
+		ZQ_CNN_Layer() :show_debug_info(false),use_buffer(false),ignore_small_value(0) {}
 		virtual ~ZQ_CNN_Layer() {}
 		virtual bool Forward(std::vector<ZQ_CNN_Tensor4D*>* bottoms, std::vector<ZQ_CNN_Tensor4D*>* tops) = 0;
 
@@ -562,6 +563,14 @@ namespace ZQ
 			std::vector<float> nchw_raw(dst_len);
 			if (dst_len != fread_s(&nchw_raw[0], dst_len * sizeof(float), sizeof(float), dst_len, in))
 				return false;
+			if (ignore_small_value != 0)
+			{
+				for (int i = 0; i < dst_len; i++)
+				{
+					if (fabs(nchw_raw[i]) < ignore_small_value)
+						nchw_raw[i] = 0;
+				}
+			}
 			filters->ConvertFromCompactNCHW(&nchw_raw[0], filters->GetN(), filters->GetC(), filters->GetH(), filters->GetW());
 			if (with_bias)
 			{
@@ -571,6 +580,14 @@ namespace ZQ
 				nchw_raw.resize(dst_len);
 				if (dst_len != fread_s(&nchw_raw[0], dst_len * sizeof(float), sizeof(float), dst_len, in))
 					return false;
+				if (ignore_small_value != 0)
+				{
+					for (int i = 0; i < dst_len; i++)
+					{
+						if (fabs(nchw_raw[i]) < ignore_small_value)
+							nchw_raw[i] = 0;
+					}
+				}
 				bias->ConvertFromCompactNCHW(&nchw_raw[0], bias->GetN(), bias->GetC(), bias->GetH(), bias->GetW());
 			}
 			return true;
@@ -952,6 +969,14 @@ namespace ZQ
 			std::vector<float> nchw_raw(dst_len);
 			if (dst_len != fread_s(&nchw_raw[0], dst_len * sizeof(float), sizeof(float), dst_len, in))
 				return false;
+			if (ignore_small_value != 0)
+			{
+				for (int i = 0; i < dst_len; i++)
+				{
+					if (fabs(nchw_raw[i]) < ignore_small_value)
+						nchw_raw[i] = 0;
+				}
+			}
 			filters->ConvertFromCompactNCHW(&nchw_raw[0], filters->GetN(), filters->GetC(), filters->GetH(), filters->GetW());
 			if (with_bias)
 			{
@@ -961,6 +986,14 @@ namespace ZQ
 				nchw_raw.resize(dst_len);
 				if (dst_len != fread_s(&nchw_raw[0], dst_len * sizeof(float), sizeof(float), dst_len, in))
 					return false;
+				if (ignore_small_value != 0)
+				{
+					for (int i = 0; i < dst_len; i++)
+					{
+						if (fabs(nchw_raw[i]) < ignore_small_value)
+							nchw_raw[i] = 0;
+					}
+				}
 				bias->ConvertFromCompactNCHW(&nchw_raw[0], bias->GetN(), bias->GetC(), bias->GetH(), bias->GetW());
 			}
 			return true;
@@ -1267,6 +1300,14 @@ namespace ZQ
 				std::vector<float> nchw_raw(dst_len * 4);
 				if (dst_len * 4 != fread_s(&nchw_raw[0], dst_len * 4 * sizeof(float), sizeof(float), dst_len * 4, in))
 					return false;
+				if (ignore_small_value != 0)
+				{
+					for (int i = 0; i < dst_len*4; i++)
+					{
+						if (fabs(nchw_raw[i]) < ignore_small_value)
+							nchw_raw[i] = 0;
+					}
+				}
 				mean->ConvertFromCompactNCHW(&nchw_raw[0], N, C, H, W);
 				var->ConvertFromCompactNCHW(&nchw_raw[0] + dst_len, N, C, H, W);
 				scale->ConvertFromCompactNCHW(&nchw_raw[0] + dst_len * 2, N, C, H, W);
@@ -1278,6 +1319,14 @@ namespace ZQ
 				std::vector<float> nchw_raw(dst_len * 3);
 				if (dst_len * 3 != fread_s(&nchw_raw[0], dst_len * 3 * sizeof(float), sizeof(float), dst_len * 3, in))
 					return false;
+				if (ignore_small_value != 0)
+				{
+					for (int i = 0; i < dst_len*3; i++)
+					{
+						if (fabs(nchw_raw[i]) < ignore_small_value)
+							nchw_raw[i] = 0;
+					}
+				}
 				mean->ConvertFromCompactNCHW(&nchw_raw[0], N, C, H, W);
 				var->ConvertFromCompactNCHW(&nchw_raw[0] + dst_len, N, C, H, W);
 				scale->ConvertFromCompactNCHW(&nchw_raw[0] + dst_len * 2, N, C, H, W);
@@ -1561,6 +1610,14 @@ namespace ZQ
 			std::vector<float> nchw_raw(dst_len * 2);
 			if (dst_len * 2 != fread_s(&nchw_raw[0], dst_len * 2 * sizeof(float), sizeof(float), dst_len * 2, in))
 				return false;
+			if (ignore_small_value != 0)
+			{
+				for (int i = 0; i < dst_len*2; i++)
+				{
+					if (fabs(nchw_raw[i]) < ignore_small_value)
+						nchw_raw[i] = 0;
+				}
+			}
 			mean->ConvertFromCompactNCHW(&nchw_raw[0], N, C, H, W);
 			var->ConvertFromCompactNCHW(&nchw_raw[0] + dst_len, N, C, H, W);
 			return ZQ_CNN_Forward_SSEUtils::BatchNorm_Compute_b_a(*b, *a, *mean, *var, eps);
@@ -1790,6 +1847,14 @@ namespace ZQ
 			std::vector<float> nchw_raw(dst_len);
 			if (dst_len != fread_s(&nchw_raw[0], dst_len * sizeof(float), sizeof(float), dst_len, in))
 				return false;
+			if (ignore_small_value != 0)
+			{
+				for (int i = 0; i < dst_len; i++)
+				{
+					if (fabs(nchw_raw[i]) < ignore_small_value)
+						nchw_raw[i] = 0;
+				}
+			}
 			scale->ConvertFromCompactNCHW(&nchw_raw[0], scale->GetN(), scale->GetC(), scale->GetH(), scale->GetW());
 			if (with_bias)
 			{
@@ -1799,6 +1864,14 @@ namespace ZQ
 				nchw_raw.resize(dst_len);
 				if (dst_len != fread_s(&nchw_raw[0], dst_len * sizeof(float), sizeof(float), dst_len, in))
 					return false;
+				if (ignore_small_value != 0)
+				{
+					for (int i = 0; i < dst_len; i++)
+					{
+						if (fabs(nchw_raw[i]) < ignore_small_value)
+							nchw_raw[i] = 0;
+					}
+				}
 				bias->ConvertFromCompactNCHW(&nchw_raw[0], bias->GetN(), bias->GetC(), bias->GetH(), bias->GetW());
 			}
 			return true;
@@ -2009,6 +2082,14 @@ namespace ZQ
 			std::vector<float> nchw_raw(dst_len);
 			if (dst_len != fread_s(&nchw_raw[0], dst_len * sizeof(float), sizeof(float), dst_len, in))
 				return false;
+			if (ignore_small_value != 0)
+			{
+				for (int i = 0; i < dst_len; i++)
+				{
+					if (fabs(nchw_raw[i]) < ignore_small_value)
+						nchw_raw[i] = 0;
+				}
+			}
 			slope->ConvertFromCompactNCHW(&nchw_raw[0], slope->GetN(), slope->GetC(), slope->GetH(), slope->GetW());
 			return true;
 		}
@@ -2676,6 +2757,14 @@ namespace ZQ
 			int readed_len = fread_s(&nchw_raw[0], dst_len * sizeof(float), sizeof(float), dst_len, in);
 			if (dst_len != readed_len)
 				return false;
+			if (ignore_small_value != 0)
+			{
+				for (int i = 0; i < dst_len; i++)
+				{
+					if (fabs(nchw_raw[i]) < ignore_small_value)
+						nchw_raw[i] = 0;
+				}
+			}
 			filters->ConvertFromCompactNCHW(&nchw_raw[0], filters->GetN(), filters->GetC(), filters->GetH(), filters->GetW());
 			if (with_bias)
 			{
@@ -2687,6 +2776,14 @@ namespace ZQ
 				readed_len = fread_s(&nchw_raw[0], dst_len * sizeof(float), sizeof(float), dst_len, in);
 				if (dst_len != readed_len)
 					return false;
+				if (ignore_small_value != 0)
+				{
+					for (int i = 0; i < dst_len; i++)
+					{
+						if (fabs(nchw_raw[i]) < ignore_small_value)
+							nchw_raw[i] = 0;
+					}
+				}
 				bias->ConvertFromCompactNCHW(&nchw_raw[0], bias->GetN(), bias->GetC(), bias->GetH(), bias->GetW());
 			}
 			return true;

@@ -26,7 +26,7 @@ namespace ZQ
 
 	public:
 		ZQ_CNN_Net() :has_input_layer(false),show_debug_info(false),use_buffer(true),
-			has_innerproduct_layer(false) {}
+			has_innerproduct_layer(false), ignore_small_value(0) {}
 		~ZQ_CNN_Net() { _clear(); };
 
 	private:
@@ -41,6 +41,7 @@ namespace ZQ
 		bool has_input_layer;
 		bool show_debug_info;
 		bool use_buffer;
+		float ignore_small_value;
 		Buffer _buffer;
 		bool has_innerproduct_layer;
 		int input_C, input_H, input_W;
@@ -50,9 +51,10 @@ namespace ZQ
 		void TurnOnUseBuffer() { use_buffer = true; }
 		void TurnOffUseBuffer() { use_buffer = false; }
 		void GetInputDim(int& in_C, int& in_H, int& in_W)const { in_C = input_C; in_H = input_H; in_W = input_W; }
-		bool LoadFrom(const std::string& param_file, const std::string& model_file, bool merge_bn = false)
+		bool LoadFrom(const std::string& param_file, const std::string& model_file, bool merge_bn = false, float ignore_small_value = 1e-12)
 		{
 			_clear();
+			this->ignore_small_value = ignore_small_value;
 			if (!_load_param_file(param_file))
 			{
 				_clear();
@@ -882,6 +884,7 @@ namespace ZQ
 			{
 				return false;
 			}
+			cur_layer->ignore_small_value = this->ignore_small_value;
 			std::string layer_name = cur_layer->name;
 			if (is_input_layer)
 			{

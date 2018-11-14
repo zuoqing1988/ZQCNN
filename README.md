@@ -8,9 +8,11 @@ MKL下载地址:[此处下载](https://pan.baidu.com/s/1d75IIf6fgTZ5oeumd0vtTw)
 
 **2018-11-014日更新**
 
-优化ZQ_GEMM，3.6GHz的机器上MKL峰值约46GFLOPS， ZQ_GEMM约32GFLOPS。使用ZQ_GEMM人脸模型总体时间约为使用MKL时1.5倍。
+(1)优化ZQ_GEMM，3.6GHz的机器上MKL峰值约46GFLOPS， ZQ_GEMM约32GFLOPS。使用ZQ_GEMM人脸模型总体时间约为使用MKL时1.5倍。
 
 注意：使用VS2017编译出来的ZQ_GEMM比VS2015快，但是SampleMTCNN多线程运行是错的（可能OpenMP的支持规则不同？）。
+
+(2)加载模型时可以去掉非常小的权重。当你发现模型比预料中慢很多的时，多半是由于权重值太小造成的。
 
 **2018-11-06日更新**
 
