@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include "..\ZQ_CNN_CompileConfig.h"
+#include "../ZQ_CNN_CompileConfig.h"
 #if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_SSE
 #include <mmintrin.h> //MMX  
 #include <xmmintrin.h> //SSE(include mmintrin.h)  

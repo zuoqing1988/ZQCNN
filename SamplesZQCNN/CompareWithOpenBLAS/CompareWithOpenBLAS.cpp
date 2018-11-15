@@ -13,14 +13,14 @@
 #include <omp.h>
 #include <stdio.h>
 #include <float.h>
-#include "math\zq_gemm_32f_align_c.h"
+#include "math/zq_gemm_32f_align_c.h"
 #include "ZQ_CNN_Tensor4D.h"
 #include "ZQ_CNN_CompileConfig.h"
 #if ZQ_CNN_USE_BLAS_GEMM
-#include <openblas\cblas.h>
+#include <openblas/cblas.h>
 #pragma comment(lib,"libopenblas.lib")
 #elif ZQ_CNN_USE_MKL_GEMM
-#include <mkl\mkl.h>
+#include <mkl/mkl.h>
 #pragma comment(lib,"mklml.lib")
 #endif
 

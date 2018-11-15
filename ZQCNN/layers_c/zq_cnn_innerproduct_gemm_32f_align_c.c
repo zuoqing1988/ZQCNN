@@ -2,7 +2,7 @@
 #include <malloc.h>
 #include <string.h>
 #include <omp.h>
-#include "..\ZQ_CNN_CompileConfig.h"
+#include "../ZQ_CNN_CompileConfig.h"
 #if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_SSE
 #include <mmintrin.h> //MMX  
 #include <xmmintrin.h> //SSE(include mmintrin.h)  
@@ -17,12 +17,12 @@
 #include <immintrin.h>//AVX(include wmmintrin.h)  
 #include <intrin.h>//(include immintrin.h)  
 #endif
-#include"..\math\zq_gemm_32f_align_c.h"
+#include"../math/zq_gemm_32f_align_c.h"
 
 #if ZQ_CNN_USE_BLAS_GEMM
-#include <openblas\cblas.h>
+#include <openblas/cblas.h>
 #elif ZQ_CNN_USE_MKL_GEMM
-#include <mkl\mkl.h>
+#include <mkl/mkl.h>
 #endif
 #if defined(__cplusplus) || defined(c_plusplus) 
 extern "C" {

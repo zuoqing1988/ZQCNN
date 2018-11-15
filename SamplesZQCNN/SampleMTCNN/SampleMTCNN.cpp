@@ -3,13 +3,13 @@
 #include "ZQ_CNN_MTCNN.h"
 #include <vector>
 #include <iostream>
-#include "opencv2\opencv.hpp"
+#include "opencv2/opencv.hpp"
 #include "ZQ_CNN_CompileConfig.h"
 #if ZQ_CNN_USE_BLAS_GEMM
-#include <openblas\cblas.h>
+#include <openblas/cblas.h>
 #pragma comment(lib,"libopenblas.lib")
 #elif ZQ_CNN_USE_MKL_GEMM
-#include "mkl\mkl.h"
+#include "mkl/mkl.h"
 #pragma comment(lib,"mklml.lib")
 #endif
 using namespace ZQ;
@@ -50,23 +50,23 @@ int main()
 #elif ZQ_CNN_USE_MKL_GEMM
 	mkl_set_num_threads(num_threads);
 #endif
-	Mat image0 = cv::imread("data\\test2.jpg", 1);
+	Mat image0 = cv::imread("data\\4.jpg", 1);
 	if (image0.empty())
 	{
 		cout << "empty image\n";
 		return EXIT_FAILURE;
 	}
-
+	
 	/* TIPS: when finding tiny faces for very big image, gaussian blur is very useful for Pnet*/
 	bool run_blur = true;
 	int kernel_size = 3, sigma = 2;
-	if (image0.cols * image0.rows > 2500 * 1600)
+	if (image0.cols * image0.rows >= 2500 * 1600)
 	{
 		run_blur = true;
 		kernel_size = 5;
 		sigma = 3;
 	}
-	else if (image0.cols * image0.rows > 1920 * 1080)
+	else if (image0.cols * image0.rows >= 1920 * 1080)
 	{
 		run_blur = true;
 		kernel_size = 3;
@@ -94,21 +94,21 @@ int main()
 	std::string result_name;
 
 	const int use_pnet20 = true;
-	int thread_num = 8;
+	int thread_num = 1;
 	bool special_handle_very_big_face = false;
 	result_name = "resultdet.jpg";
 	if (use_pnet20)
 	{
 		if (!mtcnn.Init("model\\det1-dw20.zqparams", "model\\det1-dw20-13.nchwbin",
-			//"model\\det2-dw24.zqparams", "model\\det2-dw24-12.nchwbin",
-			"model\\det2.zqparams", "model\\det2_bgr.nchwbin",
+			"model\\det2-dw24.zqparams", "model\\det2-dw24-20.nchwbin",
+			//"model\\det2.zqparams", "model\\det2_bgr.nchwbin",
 			"model\\det3.zqparams", "model\\det3_bgr.nchwbin", thread_num))
 		{
 			cout << "failed to init!\n";
 			return EXIT_FAILURE;
 		}
 
-		mtcnn.SetPara(image0.cols, image0.rows, 20, 0.6, 0.7, 0.9, 0.4, 0.5, 0.5, 0.709, 3, 20, 4, special_handle_very_big_face);
+		mtcnn.SetPara(image0.cols, image0.rows, 20, 0.6, 0.9, 0.9, 0.4, 0.5, 0.5, 0.709, 3, 20, 4, special_handle_very_big_face);
 	}
 	else
 	{
@@ -124,7 +124,7 @@ int main()
 	}
 
 	//mtcnn.TurnOnShowDebugInfo();
-	int iters = 100;
+	int iters = 1;
 	double t1 = omp_get_wtime();
 	for (int i = 0; i < iters; i++)
 	{

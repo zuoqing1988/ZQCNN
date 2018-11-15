@@ -28,7 +28,7 @@ misrepresented as being the original software.
 
 (this is the zlib license)
 */
-#include "..\ZQ_CNN_CompileConfig.h"
+#include "../ZQ_CNN_CompileConfig.h"
 #if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_AVX
 #include <immintrin.h>
 #if defined(__cplusplus) || defined(c_plusplus) 

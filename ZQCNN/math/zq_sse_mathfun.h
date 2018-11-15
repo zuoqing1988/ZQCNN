@@ -26,7 +26,7 @@ misrepresented as being the original software.
 
 #ifndef _ZQ_SSE_MATHFUN_H_
 #define _ZQ_SSE_MATHFUN_H_
-#include "..\ZQ_CNN_CompileConfig.h"
+#include "../ZQ_CNN_CompileConfig.h"
 #if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_SSE
 #include <xmmintrin.h>
 

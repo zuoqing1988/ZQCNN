@@ -1,6 +1,6 @@
 #ifndef _ZQ_CNN_PRELU_32F_ALIGN_C_H_
 #define _ZQ_CNN_PRELU_32F_ALIGN_C_H_
-#include "..\ZQ_CNN_CompileConfig.h"
+#include "../ZQ_CNN_CompileConfig.h"
 #if defined(__cplusplus) || defined(c_plusplus) 
 extern "C" {
 #endif

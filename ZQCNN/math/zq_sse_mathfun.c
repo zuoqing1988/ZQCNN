@@ -22,7 +22,7 @@ misrepresented as being the original software.
 3. This notice may not be removed or altered from any source distribution.
 (this is the zlib license)
 */
-#include "..\ZQ_CNN_CompileConfig.h"
+#include "../ZQ_CNN_CompileConfig.h"
 #if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_SSE
 #include <xmmintrin.h>
 #if defined(__cplusplus) || defined(c_plusplus) 

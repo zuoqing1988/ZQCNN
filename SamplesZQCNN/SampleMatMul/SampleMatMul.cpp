@@ -5,7 +5,7 @@
 #include <stdlib.h>
 #include "MatMul_ABt.h"
 #include "MatMul_AB.h"
-#include "math\zq_gemm_32f_align_c.h"
+#include "math/zq_gemm_32f_align_c.h"
 
 void test_ABt(int M, int N, int K, int nIters, float thresh = 1e-4, bool show = false);
 
@@ -23,7 +23,10 @@ int main()
 	//	test_ABt(M, N, K, 1, 1e-4, true);
 	//	//test_ABt(805, 628, 576, 1, 1e-4, true);
 	//}
-
+	test_ABt(128, 128, 128, 5000);
+	test_ABt(256, 256, 256, 1000);
+	test_ABt(512, 512, 512, 200);
+	test_ABt(1024, 1024, 1024, 50);
 	test_ABt(56 * 56, 64, 27, 800);
 	test_ABt(64, 56 * 56, 27, 800);
 

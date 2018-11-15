@@ -5,7 +5,7 @@
 #include <string>
 #include "ZQ_CNN_MTCNN.h"
 #include "ZQ_CNN_SSD.h"
-#include "opencv2\opencv.hpp"
+#include "opencv2/opencv.hpp"
 #include "ZQ_CNN_DetectorInterface.h"
 
 namespace ZQ

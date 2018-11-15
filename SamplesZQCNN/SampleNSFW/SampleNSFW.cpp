@@ -2,13 +2,13 @@
 #include "ZQ_CNN_NSFW.h"
 #include <vector>
 #include <iostream>
-#include "opencv2\opencv.hpp"
+#include "opencv2/opencv.hpp"
 #include "ZQ_CNN_CompileConfig.h"
 #if ZQ_CNN_USE_BLAS_GEMM
-#include <openblas\cblas.h>
+#include <openblas/cblas.h>
 #pragma comment(lib,"libopenblas.lib")
 #elif ZQ_CNN_USE_MKL_GEMM
-#include <mkl\mkl.h>
+#include <mkl/mkl.h>
 #pragma comment(lib,"mklml.lib")
 #endif
 using namespace ZQ;

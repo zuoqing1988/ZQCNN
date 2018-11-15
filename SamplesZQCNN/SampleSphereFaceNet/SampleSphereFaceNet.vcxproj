@@ -148,6 +148,7 @@
       <AdditionalIncludeDirectories>$(SolutionDir)ZQCNN;$(SolutionDir)3rdparty\opencv\build\include;$(SolutionDir)3rdparty\include</AdditionalIncludeDirectories>
       <OpenMPSupport>true</OpenMPSupport>
       <EnableEnhancedInstructionSet>AdvancedVectorExtensions</EnableEnhancedInstructionSet>
+      <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
