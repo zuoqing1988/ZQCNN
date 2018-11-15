@@ -47,34 +47,36 @@ namespace ZQ
 				if (order < 0)continue;
 				heros.push_back(order);
 				int cur_overlap = 0;
-				boundingBox.at(order).exist = false;//delete it
+				boundingBox[order].exist = false;//delete it
 				int box_num = boundingBox.size();
 				if (thread_num == 1)
 				{
 					for (int num = 0; num < box_num; num++)
 					{
-						if (boundingBox.at(num).exist)
+						if (boundingBox[num].exist)
 						{
 							//the iou
-							maxX = (boundingBox.at(num).row1 > boundingBox.at(order).row1) ? boundingBox.at(num).row1 : boundingBox.at(order).row1;
-							maxY = (boundingBox.at(num).col1 > boundingBox.at(order).col1) ? boundingBox.at(num).col1 : boundingBox.at(order).col1;
-							minX = (boundingBox.at(num).row2 < boundingBox.at(order).row2) ? boundingBox.at(num).row2 : boundingBox.at(order).row2;
-							minY = (boundingBox.at(num).col2 < boundingBox.at(order).col2) ? boundingBox.at(num).col2 : boundingBox.at(order).col2;
+							maxY = __max(boundingBox[num].row1, boundingBox[order].row1);
+							maxX = __max(boundingBox[num].col1, boundingBox[order].col1);
+							minY = __min(boundingBox[num].row2, boundingBox[order].row2);
+							minX = __min(boundingBox[num].col2, boundingBox[order].col2);
 							//maxX1 and maxY1 reuse 
-							maxX = ((minX - maxX + 1) > 0) ? (minX - maxX + 1) : 0;
-							maxY = ((minY - maxY + 1) > 0) ? (minY - maxY + 1) : 0;
+							maxX = __max(minX - maxX + 1, 0);
+							maxY = __max(minY - maxY + 1, 0);
 							//IOU reuse for the area of two bbox
 							IOU = maxX * maxY;
+							float area1 = boundingBox[num].area;
+							float area2 = boundingBox[order].area;
 							if (!modelname.compare("Union"))
-								IOU = IOU / (boundingBox.at(num).area + boundingBox.at(order).area - IOU);
+								IOU = IOU / (area1 + area2 - IOU);
 							else if (!modelname.compare("Min"))
 							{
-								IOU = IOU / ((boundingBox.at(num).area < boundingBox.at(order).area) ? boundingBox.at(num).area : boundingBox.at(order).area);
+								IOU = IOU / __min(area1, area2);
 							}
 							if (IOU > overlap_threshold)
 							{
 								cur_overlap++;
-								boundingBox.at(num).exist = false;
+								boundingBox[num].exist = false;
 								for (std::vector<ZQ_CNN_OrderScore>::iterator it = bboxScore.begin(); it != bboxScore.end(); it++)
 								{
 									if ((*it).oriOrder == num)
@@ -96,20 +98,22 @@ namespace ZQ
 						if (boundingBox.at(num).exist)
 						{
 							//the iou
-							maxX = (boundingBox.at(num).row1 > boundingBox.at(order).row1) ? boundingBox.at(num).row1 : boundingBox.at(order).row1;
-							maxY = (boundingBox.at(num).col1 > boundingBox.at(order).col1) ? boundingBox.at(num).col1 : boundingBox.at(order).col1;
-							minX = (boundingBox.at(num).row2 < boundingBox.at(order).row2) ? boundingBox.at(num).row2 : boundingBox.at(order).row2;
-							minY = (boundingBox.at(num).col2 < boundingBox.at(order).col2) ? boundingBox.at(num).col2 : boundingBox.at(order).col2;
+							maxY = __max(boundingBox[num].row1, boundingBox[order].row1);
+							maxX = __max(boundingBox[num].col1, boundingBox[order].col1);
+							minY = __min(boundingBox[num].row2, boundingBox[order].row2);
+							minX = __min(boundingBox[num].col2, boundingBox[order].col2);
 							//maxX1 and maxY1 reuse 
-							maxX = ((minX - maxX + 1) > 0) ? (minX - maxX + 1) : 0;
-							maxY = ((minY - maxY + 1) > 0) ? (minY - maxY + 1) : 0;
+							maxX = __max(minX - maxX + 1, 0);
+							maxY = __max(minY - maxY + 1, 0);
 							//IOU reuse for the area of two bbox
 							IOU = maxX * maxY;
+							float area1 = boundingBox[num].area;
+							float area2 = boundingBox[order].area;
 							if (!modelname.compare("Union"))
-								IOU = IOU / (boundingBox.at(num).area + boundingBox.at(order).area - IOU);
+								IOU = IOU / (area1 + area2 - IOU);
 							else if (!modelname.compare("Min"))
 							{
-								IOU = IOU / ((boundingBox.at(num).area < boundingBox.at(order).area) ? boundingBox.at(num).area : boundingBox.at(order).area);
+								IOU = IOU / __min(area1, area2);
 							}
 							if (IOU > overlap_threshold)
 							{
@@ -131,9 +135,9 @@ namespace ZQ
 			}
 			for (int i = 0; i < heros.size(); i++)
 			{
-				if(!boundingBox.at(heros.at(i)).need_check_overlap_count 
+				if(!boundingBox[heros[i]].need_check_overlap_count 
 					|| overlap_num[i] >= overlap_count_thresh)
-					boundingBox.at(heros.at(i)).exist = true;
+					boundingBox[heros[i]].exist = true;
 			}
 			//clear exist= false;
 			for (int i = boundingBox.size() - 1; i >= 0; i--)

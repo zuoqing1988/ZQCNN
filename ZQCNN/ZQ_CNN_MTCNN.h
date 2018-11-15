@@ -624,7 +624,7 @@ namespace ZQ
 					int off_y = it->row1;
 					int rect_w = it->col2 - off_x;
 					int rect_h = it->row2 - off_y;
-					if (off_x < 0 || off_x + rect_w > width || off_y < 0 || off_y + rect_h > height || rect_w <= 2 || rect_h <= 2)
+					if (off_x < 0 || off_x + rect_w > width || off_y < 0 || off_y + rect_h > height || rect_w <= 0.5*min_size || rect_h <= 0.5*min_size)
 					{
 						(*it).exist = false;
 						continue;
@@ -718,8 +718,11 @@ namespace ZQ
 					if (!secondBbox[i].exist)
 						secondBbox.erase(secondBbox.begin() + i);
 				}
-				ZQ_CNN_BBoxUtils::_nms(secondBbox, secondScore, nms_thresh[1], "Union");
+				//ZQ_CNN_BBoxUtils::_nms(secondBbox, secondScore, nms_thresh[1], "Union");
+				ZQ_CNN_BBoxUtils::_nms(secondBbox, secondScore, nms_thresh[1], "Min");
 				ZQ_CNN_BBoxUtils::_refine_and_square_bbox(secondBbox, width, height);
+				count = secondBbox.size();
+				
 
 				double t4 = omp_get_wtime();
 				if (show_debug_info)
@@ -795,8 +798,10 @@ namespace ZQ
 					}
 				}
 		
-				ZQ_CNN_BBoxUtils::_nms(secondBbox, secondScore, nms_thresh[1], "Union");
+				//ZQ_CNN_BBoxUtils::_nms(secondBbox, secondScore, nms_thresh[1], "Union");
+				ZQ_CNN_BBoxUtils::_nms(secondBbox, secondScore, nms_thresh[1], "Min");
 				ZQ_CNN_BBoxUtils::_refine_and_square_bbox(secondBbox, width, height);
+				count = secondBbox.size();
 
 				double t4 = omp_get_wtime();
 				if (show_debug_info)
@@ -824,7 +829,7 @@ namespace ZQ
 					int off_y = it->row1;
 					int rect_w = it->col2 - off_x;
 					int rect_h = it->row2 - off_y;
-					if (off_x < 0 || off_x + rect_w > width || off_y < 0 || off_y + rect_h > height || rect_w <= 2 || rect_h <= 2)
+					if (off_x < 0 || off_x + rect_w > width || off_y < 0 || off_y + rect_h > height || rect_w <= 0.5*min_size || rect_h <= 0.5*min_size)
 					{
 						(*it).exist = false;
 						continue;
