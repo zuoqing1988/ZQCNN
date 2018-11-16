@@ -1,6 +1,6 @@
 #ifndef _ZQ_SSE_MATHFUN_H_
 #define _ZQ_SSE_MATHFUN_H_
-#include "../ZQ_CNN_CompileConfig.h"
+#include "ZQ_CNN_CompileConfig.h"
 
 
 #if defined(__cplusplus) || defined(c_plusplus) 

@@ -18,7 +18,7 @@
 #include <immintrin.h>//AVX(include wmmintrin.h)  
 #include <intrin.h>//(include immintrin.h)  
 #endif
-#include "../math/zq_gemm_32f_align_c.h"
+#include "math/zq_gemm_32f_align_c.h"
 #if ZQ_CNN_USE_BLAS_GEMM
 #include <openblas/cblas.h>
 #elif ZQ_CNN_USE_MKL_GEMM

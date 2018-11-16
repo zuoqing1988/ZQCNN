@@ -107,7 +107,7 @@
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>$(SolutionDir)3rdparty\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)3rdparty\include;$(SolutionDir)ZQ_GEMM;$(SolutionDir)ZQCNN;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
       <EnableEnhancedInstructionSet>AdvancedVectorExtensions</EnableEnhancedInstructionSet>
     </ClCompile>
@@ -146,7 +146,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>$(SolutionDir)3rdparty\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)3rdparty\include;$(SolutionDir)ZQ_GEMM;$(SolutionDir)ZQCNN;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <EnableEnhancedInstructionSet>AdvancedVectorExtensions2</EnableEnhancedInstructionSet>
       <OpenMPSupport>true</OpenMPSupport>
@@ -188,7 +188,6 @@
     <ClCompile Include="layers_c\zq_cnn_sqrt_32f_align_c.c" />
     <ClCompile Include="layers_c\zq_cnn_reduction_32f_align_c.c" />
     <ClCompile Include="math\zq_avx_mathfun.c" />
-    <ClCompile Include="math\zq_gemm_32f_align_c.c" />
     <ClCompile Include="math\zq_sse_mathfun.c" />
     <ClCompile Include="ZQ_CNN_Forward_SSEUtils.cpp" />
     <ClCompile Include="ZQ_CNN_Tensor4D.cpp" />
@@ -231,8 +230,6 @@
     <ClInclude Include="layers_c\zq_cnn_sqrt_32f_align_c.h" />
     <ClInclude Include="layers_c\zq_cnn_reduction_32f_align_c.h" />
     <ClInclude Include="math\zq_avx_mathfun.h" />
-    <ClInclude Include="math\zq_gemm_32f_align_c_raw.h" />
-    <ClInclude Include="math\zq_gemm_32f_align_c.h" />
     <ClInclude Include="math\zq_sse_mathfun.h" />
     <ClInclude Include="ZQ_CNN_BBox.h" />
     <ClInclude Include="ZQ_CNN_BBoxUtils.h" />

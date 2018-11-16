@@ -3,7 +3,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LocalDebuggerWorkingDirectory>$(SolutionDir)</LocalDebuggerWorkingDirectory>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
-    <LocalDebuggerCommandArguments>model\mobilefacenet-res8-16-32-8-dim512.prototxt model\mobilefacenet-res8-16-32-8-dim512.caffemodel fc1_scale F:\Code\sphereface\test\data\pairs.txt F:\Code\sphereface\preprocess\data\lfw_arcface_crop 10 0</LocalDebuggerCommandArguments>
+    <LocalDebuggerCommandArguments>model\mobilefacenet-res4-8-16-4-dim512-opencv.prototxt model\mobilefacenet-res4-8-16-4-dim512.caffemodel fc1_scale F:\Code\sphereface\test\data\pairs.txt F:\Code\sphereface\preprocess\data\lfw_arcface_crop 10 1</LocalDebuggerCommandArguments>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LocalDebuggerCommandArguments>model\mobilefacenet-res4-8-16-4-dim256-cv.prototxt model\mobilefacenet-res4-8-16-4-dim256.caffemodel fc1_scale F:\Code\sphereface\test\data\pairs.txt F:\Code\sphereface\preprocess\data\lfw_arcface_crop 10 0</LocalDebuggerCommandArguments>

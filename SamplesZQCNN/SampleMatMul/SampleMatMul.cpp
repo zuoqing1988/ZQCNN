@@ -1,11 +1,13 @@
 #include <intrin.h>
-#include <omp.h>
+//#include <omp.h>
+#include <time.h>
 #include <stdio.h>
 #include <math.h>
 #include <stdlib.h>
 #include "MatMul_ABt.h"
 #include "MatMul_AB.h"
 #include "math/zq_gemm_32f_align_c.h"
+#pragma comment(lib,"ZQ_GEMM.lib")
 
 void test_ABt(int M, int N, int K, int nIters, float thresh = 1e-4, bool show = false);
 
@@ -24,9 +26,12 @@ int main()
 	//	//test_ABt(805, 628, 576, 1, 1e-4, true);
 	//}
 	test_ABt(128, 128, 128, 5000);
+
 	test_ABt(256, 256, 256, 1000);
 	test_ABt(512, 512, 512, 200);
 	test_ABt(1024, 1024, 1024, 50);
+
+	return 0;
 	test_ABt(56 * 56, 64, 27, 800);
 	test_ABt(64, 56 * 56, 27, 800);
 
@@ -288,212 +293,212 @@ void test_ABt(int M, int N, int K, int nIters, float thresh, bool show)
 	for (int i = 0; i < padK*N; i++)
 		Bt[i] = rand() % 10001 / 5000.0f - 1.0f;
 	double time = 1;
-	double t0 = omp_get_wtime();
-	int naive_nIters = __max(1, nIters / 30);
+	clock_t t0 = clock();
+	int naive_nIters = 1;
 	double navie_mul_count = (double)M*N*K*naive_nIters/(1024.0*1024.0*1024.0);
 	for (int i = 0; i < naive_nIters; i++)
 	{
 		MatMul0_ABt(M, N, K, A, padK, Bt, padK, C0, N);
 	}
-	double t1 = omp_get_wtime(); time = t1 - t0;
-	printf("%d x %d x %d, cost = %.3f s, naive gflops = %.3f\n", M, N, K, time, navie_mul_count / time);
+	clock_t t1 = clock(); time = __max(1e-9,0.001*(t1 - t0));
+	//printf("%d x %d x %d, cost = %.3f s, naive gflops = %.3f\n", M, N, K, time, navie_mul_count / time);
 
 #if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_SSE
-	double t1_1 = omp_get_wtime();
+	clock_t t1_1 = clock();
 	for (int i = 0; i < nIters; i++)
 	{
 		zq_gemm_32f_align128bit_AnoTrans_Btrans_M1_N1(M, N, K, A, padK, Bt, padK, C1_1, N);
 	}
-	double t1_2 = omp_get_wtime(); time = t1_2 - t1_1;
+	clock_t t1_2 = clock(); time = 0.001*(t1_2 - t1_1);
 	printf("%d x %d x %d, cost = %.3f s, SSE-M1-N1 gflops = %.3f\n", M, N, K, time, mul_count / time);
 
 	for (int i = 0; i < nIters; i++)
 	{
 		zq_gemm_32f_align128bit_AnoTrans_Btrans_M1_N2(M, N, K, A, padK, Bt, padK, C1_2, N);
 	}
-	double t1_3 = omp_get_wtime(); time = t1_3 - t1_2;
+	clock_t t1_3 = clock(); time = 0.001*(t1_3 - t1_2);
 	printf("%d x %d x %d, cost = %.3f s, SSE-M1-N2 gflops = %.3f\n", M, N, K, time, mul_count / time);
 	for (int i = 0; i < nIters; i++)
 	{
 		zq_gemm_32f_align128bit_AnoTrans_Btrans_M1_N4(M, N, K, A, padK, Bt, padK, C1_3, N);
 	}
-	double t1_4 = omp_get_wtime(); time = t1_4 - t1_3;
+	clock_t t1_4 = clock(); time = 0.001*(t1_4 - t1_3);
 	printf("%d x %d x %d, cost = %.3f s, SSE-M1-N4 gflops = %.3f\n", M, N, K, time, mul_count / time);
 
 	for (int i = 0; i < nIters; i++)
 	{
 		zq_gemm_32f_align128bit_AnoTrans_Btrans_M1_N8(M, N, K, A, padK, Bt, padK, C1_4, N);
 	}
-	double t1_5 = omp_get_wtime(); time = t1_5 - t1_4;
+	clock_t t1_5 = clock(); time = 0.001*(t1_5 - t1_4);
 	printf("%d x %d x %d, cost = %.3f s, SSE-M1-N8 gflops = %.3f\n", M, N, K, time, mul_count / time);
 
 	for (int i = 0; i < nIters; i++)
 	{
 		zq_gemm_32f_align128bit_AnoTrans_Btrans_M2_N1(M, N, K, A, padK, Bt, padK, C1_5, N);
 	}
-	double t1_6 = omp_get_wtime(); time = t1_6 - t1_5;
+	clock_t t1_6 = clock(); time = 0.001*(t1_6 - t1_5);
 	printf("%d x %d x %d, cost = %.3f s, SSE-M2-N1 gflops = %.3f\n", M, N, K, time, mul_count / time);
 
 	for (int i = 0; i < nIters; i++)
 	{
 		zq_gemm_32f_align128bit_AnoTrans_Btrans_M2_N2(M, N, K, A, padK, Bt, padK, C1_6, N);
 	}
-	double t1_7 = omp_get_wtime(); time = t1_7 - t1_6;
+	clock_t t1_7 = clock(); time = 0.001*(t1_7 - t1_6);
 	printf("%d x %d x %d, cost = %.3f s, SSE-M2-N2 gflops = %.3f\n", M, N, K, time, mul_count / time);
 
 	for (int i = 0; i < nIters; i++)
 	{
 		zq_gemm_32f_align128bit_AnoTrans_Btrans_M2_N4(M, N, K, A, padK, Bt, padK, C1_7, N);
 	}
-	double t1_8 = omp_get_wtime(); time = t1_8 - t1_7;
+	clock_t t1_8 = clock(); time = 0.001*(t1_8 - t1_7);
 	printf("%d x %d x %d, cost = %.3f s, SSE-M2-N4 gflops = %.3f\n", M, N, K, time, mul_count / time);
 
 	for (int i = 0; i < nIters; i++)
 	{
 		zq_gemm_32f_align128bit_AnoTrans_Btrans_M2_N8(M, N, K, A, padK, Bt, padK, C1_8, N);
 	}
-	double t1_9 = omp_get_wtime(); time = t1_9 - t1_8;
+	clock_t t1_9 = clock(); time = 0.001*(t1_9 - t1_8);
 	printf("%d x %d x %d, cost = %.3f s, SSE-M2-N8 gflops = %.3f\n", M, N, K, time, mul_count / time);
 
 	for (int i = 0; i < nIters; i++)
 	{
 		zq_gemm_32f_align128bit_AnoTrans_Btrans_M4_N1(M, N, K, A, padK, Bt, padK, C1_9, N);
 	}
-	double t1_10 = omp_get_wtime(); time = t1_10 - t1_9;
+	clock_t t1_10 = clock(); time = 0.001*(t1_10 - t1_9);
 	printf("%d x %d x %d, cost = %.3f s, SSE-M4-N1 gflops = %.3f\n", M, N, K, time, mul_count / time);
 
 	for (int i = 0; i < nIters; i++)
 	{
 		zq_gemm_32f_align128bit_AnoTrans_Btrans_M4_N2(M, N, K, A, padK, Bt, padK, C1_10, N);
 	}
-	double t1_11 = omp_get_wtime(); time = t1_11 - t1_10;
+	clock_t t1_11 = clock(); time = 0.001*(t1_11 - t1_10);
 	printf("%d x %d x %d, cost = %.3f s, SSE-M4-N2 gflops = %.3f\n", M, N, K, time, mul_count / time);
 
 	for (int i = 0; i < nIters; i++)
 	{
 		zq_gemm_32f_align128bit_AnoTrans_Btrans_M4_N4(M, N, K, A, padK, Bt, padK, C1_11, N);
 	}
-	double t1_12 = omp_get_wtime(); time = t1_12 - t1_11;
+	clock_t t1_12 = clock(); time = 0.001*(t1_12 - t1_11);
 	printf("%d x %d x %d, cost = %.3f s, SSE-M4-N4 gflops = %.3f\n", M, N, K, time, mul_count / time);
 
 	for (int i = 0; i < nIters; i++)
 	{
 		zq_gemm_32f_align128bit_AnoTrans_Btrans_M8_N1(M, N, K, A, padK, Bt, padK, C1_12, N);
 	}
-	double t1_13 = omp_get_wtime(); time = t1_13 - t1_12;
+	clock_t t1_13 = clock(); time = 0.001*(t1_13 - t1_12);
 	printf("%d x %d x %d, cost = %.3f s, SSE-M8-N1 gflops = %.3f\n", M, N, K, time, mul_count / time);
 
 	for (int i = 0; i < nIters; i++)
 	{
 		zq_gemm_32f_align128bit_AnoTrans_Btrans_M8_N2(M, N, K, A, padK, Bt, padK, C1_13, N);
 	}
-	double t1_14 = omp_get_wtime(); time = t1_14 - t1_13;
+	clock_t t1_14 = clock(); time = 0.001*(t1_14 - t1_13);
 	printf("%d x %d x %d, cost = %.3f s, SSE-M8-N2 gflops = %.3f\n", M, N, K, time, mul_count / time);
 
 	for (int i = 0; i < nIters; i++)
 	{
 		zq_gemm_32f_align128bit_AnoTrans_Btrans_M16_N1(M, N, K, A, padK, Bt, padK, C1_14, N);
 	}
-	double t1_15 = omp_get_wtime(); time = t1_15 - t1_14;
+	clock_t t1_15 = clock(); time = 0.001*(t1_15 - t1_14);
 	printf("%d x %d x %d, cost = %.3f s, SSE-M16-N1 gflops = %.3f\n", M, N, K, time, mul_count / time);
 #endif
 #if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_AVX
-	double t2_1 = omp_get_wtime();
+	clock_t t2_1 = clock();
 	for (int i = 0; i < nIters; i++)
 	{
 		zq_gemm_32f_align256bit_AnoTrans_Btrans_M1_N1(M, N, K, A, padK, Bt, padK, C2_1, N);
 	}
-	double t2_2 = omp_get_wtime(); time = t2_2 - t2_1;
+	clock_t t2_2 = clock(); time = 0.001*(t2_2 - t2_1);
 	printf("%d x %d x %d, cost = %.3f s, AVX-M1-N1 gflops = %.3f\n", M, N, K, time, mul_count / time);
 
 	for (int i = 0; i < nIters; i++)
 	{
 		zq_gemm_32f_align256bit_AnoTrans_Btrans_M1_N2(M, N, K, A, padK, Bt, padK, C2_2, N);
 	}
-	double t2_3 = omp_get_wtime(); time = t2_3 - t2_2;
+	clock_t t2_3 = clock(); time = 0.001*(t2_3 - t2_2);
 	printf("%d x %d x %d, cost = %.3f s, AVX-M1-N2 gflops = %.3f\n", M, N, K, time, mul_count / time);
 	for (int i = 0; i < nIters; i++)
 	{
 		zq_gemm_32f_align256bit_AnoTrans_Btrans_M1_N4(M, N, K, A, padK, Bt, padK, C2_3, N);
 	}
-	double t2_4 = omp_get_wtime(); time = t2_4 - t2_3;
+	clock_t t2_4 = clock(); time = 0.001*(t2_4 - t2_3);
 	printf("%d x %d x %d, cost = %.3f s, AVX-M1-N4 gflops = %.3f\n", M, N, K, time, mul_count / time);
 
 	for (int i = 0; i < nIters; i++)
 	{
 		zq_gemm_32f_align256bit_AnoTrans_Btrans_M1_N8(M, N, K, A, padK, Bt, padK, C2_4, N);
 	}
-	double t2_5 = omp_get_wtime(); time = t2_5 - t2_4;
+	clock_t t2_5 = clock(); time = 0.001*(t2_5 - t2_4);
 	printf("%d x %d x %d, cost = %.3f s, AVX-M1-N8 gflops = %.3f\n", M, N, K, time, mul_count / time);
 
 	for (int i = 0; i < nIters; i++)
 	{
 		zq_gemm_32f_align256bit_AnoTrans_Btrans_M2_N1(M, N, K, A, padK, Bt, padK, C2_5, N);
 	}
-	double t2_6 = omp_get_wtime(); time = t2_6 - t2_5;
+	clock_t t2_6 = clock(); time = 0.001*(t2_6 - t2_5);
 	printf("%d x %d x %d, cost = %.3f s, AVX-M2-N1 gflops = %.3f\n", M, N, K, time, mul_count / time);
 
 	for (int i = 0; i < nIters; i++)
 	{
 		zq_gemm_32f_align256bit_AnoTrans_Btrans_M2_N2(M, N, K, A, padK, Bt, padK, C2_6, N);
 	}
-	double t2_7 = omp_get_wtime(); time = t2_7 - t2_6;
+	clock_t t2_7 = clock(); time = 0.001*(t2_7 - t2_6);
 	printf("%d x %d x %d, cost = %.3f s, AVX-M2-N2 gflops = %.3f\n", M, N, K, time, mul_count / time);
 
 	for (int i = 0; i < nIters; i++)
 	{
 		zq_gemm_32f_align256bit_AnoTrans_Btrans_M2_N4(M, N, K, A, padK, Bt, padK, C2_7, N);
 	}
-	double t2_8 = omp_get_wtime(); time = t2_8 - t2_7;
+	clock_t t2_8 = clock(); time = 0.001*(t2_8 - t2_7);
 	printf("%d x %d x %d, cost = %.3f s, AVX-M2-N4 gflops = %.3f\n", M, N, K, time, mul_count / time);
 
 	for (int i = 0; i < nIters; i++)
 	{
 		zq_gemm_32f_align256bit_AnoTrans_Btrans_M2_N8(M, N, K, A, padK, Bt, padK, C2_8, N);
 	}
-	double t2_9 = omp_get_wtime(); time = t2_9 - t2_8;
+	clock_t t2_9 = clock(); time = 0.001*(t2_9 - t2_8);
 	printf("%d x %d x %d, cost = %.3f s, AVX-M2-N8 gflops = %.3f\n", M, N, K, time, mul_count / time);
 
 	for (int i = 0; i < nIters; i++)
 	{
 		zq_gemm_32f_align256bit_AnoTrans_Btrans_M4_N1(M, N, K, A, padK, Bt, padK, C2_9, N);
 	}
-	double t2_10 = omp_get_wtime(); time = t2_10 - t2_9;
+	clock_t t2_10 = clock(); time = 0.001*(t2_10 - t2_9);
 	printf("%d x %d x %d, cost = %.3f s, AVX-M4-N1 gflops = %.3f\n", M, N, K, time, mul_count / time);
 
 	for (int i = 0; i < nIters; i++)
 	{
 		zq_gemm_32f_align256bit_AnoTrans_Btrans_M4_N2(M, N, K, A, padK, Bt, padK, C2_10, N);
 	}
-	double t2_11 = omp_get_wtime(); time = t2_11 - t2_10;
+	clock_t t2_11 = clock(); time = 0.001*(t2_11 - t2_10);
 	printf("%d x %d x %d, cost = %.3f s, AVX-M4-N2 gflops = %.3f\n", M, N, K, time, mul_count / time);
 
 	for (int i = 0; i < nIters; i++)
 	{
 		zq_gemm_32f_align256bit_AnoTrans_Btrans_M4_N4(M, N, K, A, padK, Bt, padK, C2_11, N);
 	}
-	double t2_12 = omp_get_wtime(); time = t2_12 - t2_11;
+	clock_t t2_12 = clock(); time = 0.001*(t2_12 - t2_11);
 	printf("%d x %d x %d, cost = %.3f s, AVX-M4-N4 gflops = %.3f\n", M, N, K, time, mul_count / time);
 
 	for (int i = 0; i < nIters; i++)
 	{
 		zq_gemm_32f_align256bit_AnoTrans_Btrans_M8_N1(M, N, K, A, padK, Bt, padK, C2_12, N);
 	}
-	double t2_13 = omp_get_wtime(); time = t2_13 - t2_12;
+	clock_t t2_13 = clock(); time = 0.001*(t2_13 - t2_12);
 	printf("%d x %d x %d, cost = %.3f s, AVX-M8-N1 gflops = %.3f\n", M, N, K, time, mul_count / time);
 
 	for (int i = 0; i < nIters; i++)
 	{
 		zq_gemm_32f_align256bit_AnoTrans_Btrans_M8_N2(M, N, K, A, padK, Bt, padK, C2_13, N);
 	}
-	double t2_14 = omp_get_wtime(); time = t2_14 - t2_13;
+	clock_t t2_14 = clock(); time = 0.001*(t2_14 - t2_13);
 	printf("%d x %d x %d, cost = %.3f s, AVX-M8-N2 gflops = %.3f\n", M, N, K, time, mul_count / time);
 
 	for (int i = 0; i < nIters; i++)
 	{
 		zq_gemm_32f_align256bit_AnoTrans_Btrans_M16_N1(M, N, K, A, padK, Bt, padK, C2_14, N);
 	}
-	double t2_15 = omp_get_wtime(); time = t2_15 - t2_14;
+	clock_t t2_15 = clock(); time = 0.001*(t2_15 - t2_14);
 	printf("%d x %d x %d, cost = %.3f s, AVX-M16-N1 gflops = %.3f\n", M, N, K, time, mul_count / time);
 #endif
 #if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_SSE
@@ -583,61 +588,47 @@ void test_AB(int M, int N, int K, int nIters, float thresh, bool show)
 		A[i] = rand() % 10001 / 5000.0f - 1.0f;
 	for (int i = 0; i < padN*K; i++)
 		B[i] = rand() % 10001 / 5000.0f - 1.0f;
-	double t0 = omp_get_wtime();
+	double time = 1;
+	clock_t t0 = clock();
 	for (int i = 0; i < nIters; i++)
 	{
 		MatMul0_AB(M, N, K, A, padK, B, padN, C0, N);
 	}
-	double t1 = omp_get_wtime();
-	printf("%d x %d x %d, cost = %.3f s, MM0 gflops = %.3f\n", M, N, K, t1 - t0, mul_count / (t1 - t0));
+	clock_t t1 = clock(); time = 0.001*(t1 - t0);
+	printf("%d x %d x %d, cost = %.3f s, MM0 gflops = %.3f\n", M, N, K, time, mul_count / time);
 
 	for (int i = 0; i < nIters; i++)
 	{
 		MatMul1_AB(M, N, K, A, padK, B, padN, C1, N);
 	}
-	double t2 = omp_get_wtime();
-	printf("%d x %d x %d, cost = %.3f s, MM1 gflops = %.3f\n", M, N, K, t2 - t1, mul_count / (t2 - t1));
+	clock_t t2 = clock(); time = 0.001*(t2 - t1);
+	printf("%d x %d x %d, cost = %.3f s, MM1 gflops = %.3f\n", M, N, K, time, mul_count / time);
 
 	for (int i = 0; i < nIters; i++)
 	{
 		MatMul2_AB(M, N, K, A, padK, B, padN, C2, N);
 	}
-	double t3 = omp_get_wtime();
-	printf("%d x %d x %d, cost = %.3f s, MM2 gflops = %.3f\n", M, N, K, t3 - t2, mul_count / (t3 - t2));
+	clock_t t3 = clock(); time = 0.001*(t3 - t2);
+	printf("%d x %d x %d, cost = %.3f s, MM2 gflops = %.3f\n", M, N, K, time, mul_count / time);
 	for (int i = 0; i < nIters; i++)
 	{
 		MatMul3_AB(M, N, K, A, padK, B, padN, C3, N);
 	}
-	double t4 = omp_get_wtime();
-	printf("%d x %d x %d, cost = %.3f s, MM3 gflops = %.3f\n", M, N, K, t4 - t3, mul_count / (t4 - t3));
+	clock_t t4 = clock(); time = 0.001*(t4 - t3);
+	printf("%d x %d x %d, cost = %.3f s, MM3 gflops = %.3f\n", M, N, K, time, mul_count / time);
 
 	for (int i = 0; i < nIters; i++)
 	{
 		MatMul4_AB(M, N, K, A, padK, B, padN, C4, N);
 	}
-	double t5 = omp_get_wtime();
-	printf("%d x %d x %d, cost = %.3f s, MM4 gflops = %.3f\n", M, N, K, t5 - t4, mul_count / (t5 - t4));
+	clock_t t5 = clock(); time = 0.001*(t5 - t4);
+	printf("%d x %d x %d, cost = %.3f s, MM4 gflops = %.3f\n", M, N, K, time, mul_count / time);
 
 
-	/*for (int i = 0; i < nIters; i++)
-	{
-		MatMul5_AB(M, N, K, A, padK, B, padN, C5, N);
-	}
-	double t6 = omp_get_wtime();
-	printf("%d x %d x %d, cost = %.3f s, MM5 gflops = %.3f\n", M, N, K, t6 - t5, mul_count / (t6 - t5));
-
-	for (int i = 0; i < nIters; i++)
-	{
-		MatMul6_AB(M, N, K, A, padK, B, padN, C6, N);
-	}
-	double t7 = omp_get_wtime();
-	printf("%d x %d x %d, cost = %.3f s, MM6 gflops = %.3f\n", M, N, K, t7 - t6, mul_count / (t7 - t6));*/
 	printf("check C0 C1 = %s\n", check_value(M, N, C0, N, C1, N, thresh, show) ? "True" : "False");
 	printf("check C0 C2 = %s\n", check_value(M, N, C0, N, C2, N, thresh, show) ? "True" : "False");
 	printf("check C0 C3 = %s\n", check_value(M, N, C0, N, C3, N, thresh, show) ? "True" : "False");
 	printf("check C0 C4 = %s\n", check_value(M, N, C0, N, C4, N, thresh, show) ? "True" : "False");
-	//printf("check C0 C5 = %s\n", check_value(M, N, C0, N, C5, N, thresh, show) ? "True" : "False");
-	//printf("check C0 C6 = %s\n", check_value(M, N, C0, N, C6, N, thresh, show) ? "True" : "False");
 
 	_aligned_free(A);
 	_aligned_free(B);
@@ -646,8 +637,6 @@ void test_AB(int M, int N, int K, int nIters, float thresh, bool show)
 	_aligned_free(C2);
 	_aligned_free(C3);
 	_aligned_free(C4);
-	_aligned_free(C5);
-	_aligned_free(C6);
 }
 
 

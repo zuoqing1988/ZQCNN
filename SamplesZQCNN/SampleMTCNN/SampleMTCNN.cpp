@@ -50,7 +50,7 @@ int main()
 #elif ZQ_CNN_USE_MKL_GEMM
 	mkl_set_num_threads(num_threads);
 #endif
-	Mat image0 = cv::imread("data\\4.jpg", 1);
+	Mat image0 = cv::imread("data\\test2.jpg", 1);
 	if (image0.empty())
 	{
 		cout << "empty image\n";
@@ -94,7 +94,7 @@ int main()
 	std::string result_name;
 
 	const int use_pnet20 = true;
-	int thread_num = 1;
+	int thread_num = 8;
 	bool special_handle_very_big_face = false;
 	result_name = "resultdet.jpg";
 	if (use_pnet20)

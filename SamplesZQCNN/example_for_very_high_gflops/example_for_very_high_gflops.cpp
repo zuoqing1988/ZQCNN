@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <intrin.h>//(include immintrin.h)
-#include <omp.h>
+#include <time.h>
 #define zq_mm_fmadd_ps _mm256_fmadd_ps
 //#define zq_mm_fmadd_ps(A,B,C) _mm256_add_ps(_mm256_mul_ps(A,B),C)
 #define final_sum(q) (q[0]+q[1]+q[2]+q[3]+q[4]+q[5]+q[6]+q[7])
@@ -41,7 +41,7 @@ void example_for_very_high_gflops()
 	register __m256 sumb = _mm256_setzero_ps();
 	_declspec(align(32)) float q[8];
 	const int M = 10000, N = 64 * 1000;
-	double t1 = omp_get_wtime();
+	clock_t t1 = clock();
 	int i, j, k;
 	for (i = 0; i < nIters; i++)
 	{
@@ -136,9 +136,10 @@ void example_for_very_high_gflops()
 		}
 		sumb = _mm256_add_ps(sumb, suma);
 	}
-	double t2 = omp_get_wtime();
+	clock_t t2 = clock();
+	double time = (t2 - t1) / 1000.0;
 	double mul_count = (double)nIters*M*N * 8 / (1024.0*1024.0*1024.0);
-	printf("mul_count = %.3f G, time = %.3f s, gflops = %.3f\n", mul_count, t2 - t1, mul_count / (t2 - t1));
+	printf("mul_count = %.3f G, time = %.3f s, gflops = %.3f\n", mul_count, time, mul_count / time);
 	printf("i,j,k=%d,%d,%d\n", i, j, k);
 	_mm256_store_ps(q, sum1);
 	printf("%e %e %e %e %e %e %e %e\n", q[0], q[1], q[2], q[3], q[4], q[5], q[6], q[7]);

@@ -23,6 +23,7 @@
 #include <mkl/mkl.h>
 #pragma comment(lib,"mklml.lib")
 #endif
+#pragma comment(lib,"ZQ_GEMM.lib")
 
 #if ZQ_CNN_USE_FMADD256
 #define zq_mm_fmadd_ps _mm256_fmadd_ps
