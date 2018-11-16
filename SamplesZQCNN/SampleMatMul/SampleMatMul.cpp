@@ -251,300 +251,318 @@ void test_ABt(int M, int N, int K, int nIters, float thresh, bool show)
 	float* A = (float*)_aligned_malloc(M*padK * sizeof(float), 32);
 	float* Bt = (float*)_aligned_malloc(N*padK * sizeof(float), 32);
 	float* C0 = (float*)_aligned_malloc(M*N * sizeof(float), 32);
-	float* C1 = (float*)_aligned_malloc(M*N * sizeof(float), 32);
-	float* C2 = (float*)_aligned_malloc(M*N * sizeof(float), 32);
-	float* C3 = (float*)_aligned_malloc(M*N * sizeof(float), 32);
-	float* C4 = (float*)_aligned_malloc(M*N * sizeof(float), 32);
-	float* C5 = (float*)_aligned_malloc(M*N * sizeof(float), 32);
-	float* C6 = (float*)_aligned_malloc(M*N * sizeof(float), 32);
-	float* C7 = (float*)_aligned_malloc(M*N * sizeof(float), 32);
-	float* C8 = (float*)_aligned_malloc(M*N * sizeof(float), 32);
-	float* C9 = (float*)_aligned_malloc(M*N * sizeof(float), 32);
-	float* C10 = (float*)_aligned_malloc(M*N * sizeof(float), 32);
-	float* C11 = (float*)_aligned_malloc(M*N * sizeof(float), 32);
-	float* C12 = (float*)_aligned_malloc(M*N * sizeof(float), 32);
-	float* C13 = (float*)_aligned_malloc(M*N * sizeof(float), 32);
-	float* C14 = (float*)_aligned_malloc(M*N * sizeof(float), 32);
-	float* C15 = (float*)_aligned_malloc(M*N * sizeof(float), 32);
-	float* C16 = (float*)_aligned_malloc(M*N * sizeof(float), 32);
-	float* C17 = (float*)_aligned_malloc(M*N * sizeof(float), 32);
-	float* C18 = (float*)_aligned_malloc(M*N * sizeof(float), 32);
-	float* C19 = (float*)_aligned_malloc(M*N * sizeof(float), 32);
-	float* C20 = (float*)_aligned_malloc(M*N * sizeof(float), 32);
-	float* C21 = (float*)_aligned_malloc(M*N * sizeof(float), 32);
-	float* C22 = (float*)_aligned_malloc(M*N * sizeof(float), 32);
-	float* C23 = (float*)_aligned_malloc(M*N * sizeof(float), 32);
-	float* C24 = (float*)_aligned_malloc(M*N * sizeof(float), 32);
-	float* C25 = (float*)_aligned_malloc(M*N * sizeof(float), 32);
-	float* C26 = (float*)_aligned_malloc(M*N * sizeof(float), 32);
-	float* C27 = (float*)_aligned_malloc(M*N * sizeof(float), 32);
-	float* C28 = (float*)_aligned_malloc(M*N * sizeof(float), 32);
+#if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_SSE
+	float* C1_1 = (float*)_aligned_malloc(M*N * sizeof(float), 32);
+	float* C1_2 = (float*)_aligned_malloc(M*N * sizeof(float), 32);
+	float* C1_3 = (float*)_aligned_malloc(M*N * sizeof(float), 32);
+	float* C1_4 = (float*)_aligned_malloc(M*N * sizeof(float), 32);
+	float* C1_5 = (float*)_aligned_malloc(M*N * sizeof(float), 32);
+	float* C1_6 = (float*)_aligned_malloc(M*N * sizeof(float), 32);
+	float* C1_7 = (float*)_aligned_malloc(M*N * sizeof(float), 32);
+	float* C1_8 = (float*)_aligned_malloc(M*N * sizeof(float), 32);
+	float* C1_9 = (float*)_aligned_malloc(M*N * sizeof(float), 32);
+	float* C1_10 = (float*)_aligned_malloc(M*N * sizeof(float), 32);
+	float* C1_11 = (float*)_aligned_malloc(M*N * sizeof(float), 32);
+	float* C1_12 = (float*)_aligned_malloc(M*N * sizeof(float), 32);
+	float* C1_13 = (float*)_aligned_malloc(M*N * sizeof(float), 32);
+	float* C1_14 = (float*)_aligned_malloc(M*N * sizeof(float), 32);
+#endif
+#if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_AVX
+	float* C2_1 = (float*)_aligned_malloc(M*N * sizeof(float), 32);
+	float* C2_2 = (float*)_aligned_malloc(M*N * sizeof(float), 32);
+	float* C2_3 = (float*)_aligned_malloc(M*N * sizeof(float), 32);
+	float* C2_4 = (float*)_aligned_malloc(M*N * sizeof(float), 32);
+	float* C2_5 = (float*)_aligned_malloc(M*N * sizeof(float), 32);
+	float* C2_6 = (float*)_aligned_malloc(M*N * sizeof(float), 32);
+	float* C2_7 = (float*)_aligned_malloc(M*N * sizeof(float), 32);
+	float* C2_8 = (float*)_aligned_malloc(M*N * sizeof(float), 32);
+	float* C2_9 = (float*)_aligned_malloc(M*N * sizeof(float), 32);
+	float* C2_10 = (float*)_aligned_malloc(M*N * sizeof(float), 32);
+	float* C2_11 = (float*)_aligned_malloc(M*N * sizeof(float), 32);
+	float* C2_12 = (float*)_aligned_malloc(M*N * sizeof(float), 32);
+	float* C2_13 = (float*)_aligned_malloc(M*N * sizeof(float), 32);
+	float* C2_14 = (float*)_aligned_malloc(M*N * sizeof(float), 32);
+#endif
 	for (int i = 0; i < M*padK; i++)
 		A[i] = rand() % 10001 / 5000.0f - 1.0f;
 	for (int i = 0; i < padK*N; i++)
 		Bt[i] = rand() % 10001 / 5000.0f - 1.0f;
 	double time = 1;
 	double t0 = omp_get_wtime();
-	//for (int i = 0; i < nIters; i++)
+	int naive_nIters = __max(1, nIters / 30);
+	double navie_mul_count = (double)M*N*K*naive_nIters/(1024.0*1024.0*1024.0);
+	for (int i = 0; i < naive_nIters; i++)
 	{
 		MatMul0_ABt(M, N, K, A, padK, Bt, padK, C0, N);
 	}
-	double t1 = omp_get_wtime();
-	//printf("%d x %d x %d, cost = %.3f s, MM0 gflops = %.3f\n", M, N, K, t1 - t0, mul_count / (t1 - t0));
+	double t1 = omp_get_wtime(); time = t1 - t0;
+	printf("%d x %d x %d, cost = %.3f s, naive gflops = %.3f\n", M, N, K, time, navie_mul_count / time);
 
+#if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_SSE
+	double t1_1 = omp_get_wtime();
 	for (int i = 0; i < nIters; i++)
 	{
-		zq_gemm_32f_align128bit_AnoTrans_Btrans_M1_N1(M, N, K, A, padK, Bt, padK, C1, N);
+		zq_gemm_32f_align128bit_AnoTrans_Btrans_M1_N1(M, N, K, A, padK, Bt, padK, C1_1, N);
 	}
-	double t2 = omp_get_wtime(); time = t2 - t1;
+	double t1_2 = omp_get_wtime(); time = t1_2 - t1_1;
 	printf("%d x %d x %d, cost = %.3f s, SSE-M1-N1 gflops = %.3f\n", M, N, K, time, mul_count / time);
 
 	for (int i = 0; i < nIters; i++)
 	{
-		zq_gemm_32f_align128bit_AnoTrans_Btrans_M1_N2(M, N, K, A, padK, Bt, padK, C2, N);
+		zq_gemm_32f_align128bit_AnoTrans_Btrans_M1_N2(M, N, K, A, padK, Bt, padK, C1_2, N);
 	}
-	double t3 = omp_get_wtime(); time = t3 - t2;
+	double t1_3 = omp_get_wtime(); time = t1_3 - t1_2;
 	printf("%d x %d x %d, cost = %.3f s, SSE-M1-N2 gflops = %.3f\n", M, N, K, time, mul_count / time);
 	for (int i = 0; i < nIters; i++)
 	{
-		zq_gemm_32f_align128bit_AnoTrans_Btrans_M1_N4(M, N, K, A, padK, Bt, padK, C3, N);
+		zq_gemm_32f_align128bit_AnoTrans_Btrans_M1_N4(M, N, K, A, padK, Bt, padK, C1_3, N);
 	}
-	double t4 = omp_get_wtime(); time = t4 - t3;
+	double t1_4 = omp_get_wtime(); time = t1_4 - t1_3;
 	printf("%d x %d x %d, cost = %.3f s, SSE-M1-N4 gflops = %.3f\n", M, N, K, time, mul_count / time);
 
 	for (int i = 0; i < nIters; i++)
 	{
-		zq_gemm_32f_align128bit_AnoTrans_Btrans_M1_N8(M, N, K, A, padK, Bt, padK, C4, N);
+		zq_gemm_32f_align128bit_AnoTrans_Btrans_M1_N8(M, N, K, A, padK, Bt, padK, C1_4, N);
 	}
-	double t5 = omp_get_wtime(); time = t5 - t4;
+	double t1_5 = omp_get_wtime(); time = t1_5 - t1_4;
 	printf("%d x %d x %d, cost = %.3f s, SSE-M1-N8 gflops = %.3f\n", M, N, K, time, mul_count / time);
 
 	for (int i = 0; i < nIters; i++)
 	{
-		zq_gemm_32f_align128bit_AnoTrans_Btrans_M2_N1(M, N, K, A, padK, Bt, padK, C5, N);
+		zq_gemm_32f_align128bit_AnoTrans_Btrans_M2_N1(M, N, K, A, padK, Bt, padK, C1_5, N);
 	}
-	double t6 = omp_get_wtime(); time = t6 - t5;
+	double t1_6 = omp_get_wtime(); time = t1_6 - t1_5;
 	printf("%d x %d x %d, cost = %.3f s, SSE-M2-N1 gflops = %.3f\n", M, N, K, time, mul_count / time);
 
 	for (int i = 0; i < nIters; i++)
 	{
-		zq_gemm_32f_align128bit_AnoTrans_Btrans_M2_N2(M, N, K, A, padK, Bt, padK, C6, N);
+		zq_gemm_32f_align128bit_AnoTrans_Btrans_M2_N2(M, N, K, A, padK, Bt, padK, C1_6, N);
 	}
-	double t7 = omp_get_wtime(); time = t7 - t6;
+	double t1_7 = omp_get_wtime(); time = t1_7 - t1_6;
 	printf("%d x %d x %d, cost = %.3f s, SSE-M2-N2 gflops = %.3f\n", M, N, K, time, mul_count / time);
 
 	for (int i = 0; i < nIters; i++)
 	{
-		zq_gemm_32f_align128bit_AnoTrans_Btrans_M2_N4(M, N, K, A, padK, Bt, padK, C7, N);
+		zq_gemm_32f_align128bit_AnoTrans_Btrans_M2_N4(M, N, K, A, padK, Bt, padK, C1_7, N);
 	}
-	double t8 = omp_get_wtime(); time = t8 - t7;
+	double t1_8 = omp_get_wtime(); time = t1_8 - t1_7;
 	printf("%d x %d x %d, cost = %.3f s, SSE-M2-N4 gflops = %.3f\n", M, N, K, time, mul_count / time);
 
 	for (int i = 0; i < nIters; i++)
 	{
-		zq_gemm_32f_align128bit_AnoTrans_Btrans_M2_N8(M, N, K, A, padK, Bt, padK, C8, N);
+		zq_gemm_32f_align128bit_AnoTrans_Btrans_M2_N8(M, N, K, A, padK, Bt, padK, C1_8, N);
 	}
-	double t9 = omp_get_wtime(); time = t9 - t8;
+	double t1_9 = omp_get_wtime(); time = t1_9 - t1_8;
 	printf("%d x %d x %d, cost = %.3f s, SSE-M2-N8 gflops = %.3f\n", M, N, K, time, mul_count / time);
 
 	for (int i = 0; i < nIters; i++)
 	{
-		zq_gemm_32f_align128bit_AnoTrans_Btrans_M4_N1(M, N, K, A, padK, Bt, padK, C9, N);
+		zq_gemm_32f_align128bit_AnoTrans_Btrans_M4_N1(M, N, K, A, padK, Bt, padK, C1_9, N);
 	}
-	double t10 = omp_get_wtime(); time = t10 - t9;
+	double t1_10 = omp_get_wtime(); time = t1_10 - t1_9;
 	printf("%d x %d x %d, cost = %.3f s, SSE-M4-N1 gflops = %.3f\n", M, N, K, time, mul_count / time);
 
 	for (int i = 0; i < nIters; i++)
 	{
-		zq_gemm_32f_align128bit_AnoTrans_Btrans_M4_N2(M, N, K, A, padK, Bt, padK, C10, N);
+		zq_gemm_32f_align128bit_AnoTrans_Btrans_M4_N2(M, N, K, A, padK, Bt, padK, C1_10, N);
 	}
-	double t11 = omp_get_wtime(); time = t11 - t10;
+	double t1_11 = omp_get_wtime(); time = t1_11 - t1_10;
 	printf("%d x %d x %d, cost = %.3f s, SSE-M4-N2 gflops = %.3f\n", M, N, K, time, mul_count / time);
 
 	for (int i = 0; i < nIters; i++)
 	{
-		zq_gemm_32f_align128bit_AnoTrans_Btrans_M4_N4(M, N, K, A, padK, Bt, padK, C11, N);
+		zq_gemm_32f_align128bit_AnoTrans_Btrans_M4_N4(M, N, K, A, padK, Bt, padK, C1_11, N);
 	}
-	double t12 = omp_get_wtime(); time = t12 - t11;
+	double t1_12 = omp_get_wtime(); time = t1_12 - t1_11;
 	printf("%d x %d x %d, cost = %.3f s, SSE-M4-N4 gflops = %.3f\n", M, N, K, time, mul_count / time);
 
 	for (int i = 0; i < nIters; i++)
 	{
-		zq_gemm_32f_align128bit_AnoTrans_Btrans_M8_N1(M, N, K, A, padK, Bt, padK, C12, N);
+		zq_gemm_32f_align128bit_AnoTrans_Btrans_M8_N1(M, N, K, A, padK, Bt, padK, C1_12, N);
 	}
-	double t13 = omp_get_wtime(); time = t13 - t12;
+	double t1_13 = omp_get_wtime(); time = t1_13 - t1_12;
 	printf("%d x %d x %d, cost = %.3f s, SSE-M8-N1 gflops = %.3f\n", M, N, K, time, mul_count / time);
 
 	for (int i = 0; i < nIters; i++)
 	{
-		zq_gemm_32f_align128bit_AnoTrans_Btrans_M8_N2(M, N, K, A, padK, Bt, padK, C13, N);
+		zq_gemm_32f_align128bit_AnoTrans_Btrans_M8_N2(M, N, K, A, padK, Bt, padK, C1_13, N);
 	}
-	double t14 = omp_get_wtime(); time = t14 - t13;
+	double t1_14 = omp_get_wtime(); time = t1_14 - t1_13;
 	printf("%d x %d x %d, cost = %.3f s, SSE-M8-N2 gflops = %.3f\n", M, N, K, time, mul_count / time);
 
 	for (int i = 0; i < nIters; i++)
 	{
-		zq_gemm_32f_align256bit_AnoTrans_Btrans_M1_N1(M, N, K, A, padK, Bt, padK, C14, N);
+		zq_gemm_32f_align128bit_AnoTrans_Btrans_M16_N1(M, N, K, A, padK, Bt, padK, C1_14, N);
 	}
-	double t15 = omp_get_wtime(); time = t15 - t14;
+	double t1_15 = omp_get_wtime(); time = t1_15 - t1_14;
+	printf("%d x %d x %d, cost = %.3f s, SSE-M16-N1 gflops = %.3f\n", M, N, K, time, mul_count / time);
+#endif
+#if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_AVX
+	double t2_1 = omp_get_wtime();
+	for (int i = 0; i < nIters; i++)
+	{
+		zq_gemm_32f_align256bit_AnoTrans_Btrans_M1_N1(M, N, K, A, padK, Bt, padK, C2_1, N);
+	}
+	double t2_2 = omp_get_wtime(); time = t2_2 - t2_1;
 	printf("%d x %d x %d, cost = %.3f s, AVX-M1-N1 gflops = %.3f\n", M, N, K, time, mul_count / time);
 
 	for (int i = 0; i < nIters; i++)
 	{
-		zq_gemm_32f_align256bit_AnoTrans_Btrans_M1_N2(M, N, K, A, padK, Bt, padK, C15, N);
+		zq_gemm_32f_align256bit_AnoTrans_Btrans_M1_N2(M, N, K, A, padK, Bt, padK, C2_2, N);
 	}
-	double t16 = omp_get_wtime(); time = t16 - t15;
+	double t2_3 = omp_get_wtime(); time = t2_3 - t2_2;
 	printf("%d x %d x %d, cost = %.3f s, AVX-M1-N2 gflops = %.3f\n", M, N, K, time, mul_count / time);
 	for (int i = 0; i < nIters; i++)
 	{
-		zq_gemm_32f_align256bit_AnoTrans_Btrans_M1_N4(M, N, K, A, padK, Bt, padK, C16, N);
+		zq_gemm_32f_align256bit_AnoTrans_Btrans_M1_N4(M, N, K, A, padK, Bt, padK, C2_3, N);
 	}
-	double t17 = omp_get_wtime(); time = t17 - t16;
+	double t2_4 = omp_get_wtime(); time = t2_4 - t2_3;
 	printf("%d x %d x %d, cost = %.3f s, AVX-M1-N4 gflops = %.3f\n", M, N, K, time, mul_count / time);
 
 	for (int i = 0; i < nIters; i++)
 	{
-		zq_gemm_32f_align256bit_AnoTrans_Btrans_M1_N8(M, N, K, A, padK, Bt, padK, C17, N);
+		zq_gemm_32f_align256bit_AnoTrans_Btrans_M1_N8(M, N, K, A, padK, Bt, padK, C2_4, N);
 	}
-	double t18 = omp_get_wtime(); time = t18 - t17;
+	double t2_5 = omp_get_wtime(); time = t2_5 - t2_4;
 	printf("%d x %d x %d, cost = %.3f s, AVX-M1-N8 gflops = %.3f\n", M, N, K, time, mul_count / time);
 
 	for (int i = 0; i < nIters; i++)
 	{
-		zq_gemm_32f_align256bit_AnoTrans_Btrans_M2_N1(M, N, K, A, padK, Bt, padK, C18, N);
+		zq_gemm_32f_align256bit_AnoTrans_Btrans_M2_N1(M, N, K, A, padK, Bt, padK, C2_5, N);
 	}
-	double t19 = omp_get_wtime(); time = t19 - t18;
+	double t2_6 = omp_get_wtime(); time = t2_6 - t2_5;
 	printf("%d x %d x %d, cost = %.3f s, AVX-M2-N1 gflops = %.3f\n", M, N, K, time, mul_count / time);
 
 	for (int i = 0; i < nIters; i++)
 	{
-		zq_gemm_32f_align256bit_AnoTrans_Btrans_M2_N2(M, N, K, A, padK, Bt, padK, C19, N);
+		zq_gemm_32f_align256bit_AnoTrans_Btrans_M2_N2(M, N, K, A, padK, Bt, padK, C2_6, N);
 	}
-	double t20 = omp_get_wtime(); time = t20 - t19;
+	double t2_7 = omp_get_wtime(); time = t2_7 - t2_6;
 	printf("%d x %d x %d, cost = %.3f s, AVX-M2-N2 gflops = %.3f\n", M, N, K, time, mul_count / time);
 
 	for (int i = 0; i < nIters; i++)
 	{
-		zq_gemm_32f_align256bit_AnoTrans_Btrans_M2_N4(M, N, K, A, padK, Bt, padK, C20, N);
+		zq_gemm_32f_align256bit_AnoTrans_Btrans_M2_N4(M, N, K, A, padK, Bt, padK, C2_7, N);
 	}
-	double t21 = omp_get_wtime(); time = t21 - t20;
+	double t2_8 = omp_get_wtime(); time = t2_8 - t2_7;
 	printf("%d x %d x %d, cost = %.3f s, AVX-M2-N4 gflops = %.3f\n", M, N, K, time, mul_count / time);
 
 	for (int i = 0; i < nIters; i++)
 	{
-		zq_gemm_32f_align256bit_AnoTrans_Btrans_M2_N8(M, N, K, A, padK, Bt, padK, C21, N);
+		zq_gemm_32f_align256bit_AnoTrans_Btrans_M2_N8(M, N, K, A, padK, Bt, padK, C2_8, N);
 	}
-	double t22 = omp_get_wtime(); time = t22 - t21;
+	double t2_9 = omp_get_wtime(); time = t2_9 - t2_8;
 	printf("%d x %d x %d, cost = %.3f s, AVX-M2-N8 gflops = %.3f\n", M, N, K, time, mul_count / time);
 
 	for (int i = 0; i < nIters; i++)
 	{
-		zq_gemm_32f_align256bit_AnoTrans_Btrans_M4_N1(M, N, K, A, padK, Bt, padK, C22, N);
+		zq_gemm_32f_align256bit_AnoTrans_Btrans_M4_N1(M, N, K, A, padK, Bt, padK, C2_9, N);
 	}
-	double t23 = omp_get_wtime(); time = t23 - t22;
+	double t2_10 = omp_get_wtime(); time = t2_10 - t2_9;
 	printf("%d x %d x %d, cost = %.3f s, AVX-M4-N1 gflops = %.3f\n", M, N, K, time, mul_count / time);
 
 	for (int i = 0; i < nIters; i++)
 	{
-		zq_gemm_32f_align256bit_AnoTrans_Btrans_M4_N2(M, N, K, A, padK, Bt, padK, C23, N);
+		zq_gemm_32f_align256bit_AnoTrans_Btrans_M4_N2(M, N, K, A, padK, Bt, padK, C2_10, N);
 	}
-	double t24 = omp_get_wtime(); time = t24 - t23;
+	double t2_11 = omp_get_wtime(); time = t2_11 - t2_10;
 	printf("%d x %d x %d, cost = %.3f s, AVX-M4-N2 gflops = %.3f\n", M, N, K, time, mul_count / time);
 
 	for (int i = 0; i < nIters; i++)
 	{
-		zq_gemm_32f_align256bit_AnoTrans_Btrans_M4_N4(M, N, K, A, padK, Bt, padK, C24, N);
+		zq_gemm_32f_align256bit_AnoTrans_Btrans_M4_N4(M, N, K, A, padK, Bt, padK, C2_11, N);
 	}
-	double t25 = omp_get_wtime(); time = t25 - t24;
+	double t2_12 = omp_get_wtime(); time = t2_12 - t2_11;
 	printf("%d x %d x %d, cost = %.3f s, AVX-M4-N4 gflops = %.3f\n", M, N, K, time, mul_count / time);
 
 	for (int i = 0; i < nIters; i++)
 	{
-		zq_gemm_32f_align256bit_AnoTrans_Btrans_M8_N1(M, N, K, A, padK, Bt, padK, C25, N);
+		zq_gemm_32f_align256bit_AnoTrans_Btrans_M8_N1(M, N, K, A, padK, Bt, padK, C2_12, N);
 	}
-	double t26 = omp_get_wtime(); time = t26 - t25;
+	double t2_13 = omp_get_wtime(); time = t2_13 - t2_12;
 	printf("%d x %d x %d, cost = %.3f s, AVX-M8-N1 gflops = %.3f\n", M, N, K, time, mul_count / time);
 
 	for (int i = 0; i < nIters; i++)
 	{
-		zq_gemm_32f_align256bit_AnoTrans_Btrans_M8_N2(M, N, K, A, padK, Bt, padK, C26, N);
+		zq_gemm_32f_align256bit_AnoTrans_Btrans_M8_N2(M, N, K, A, padK, Bt, padK, C2_13, N);
 	}
-	double t27 = omp_get_wtime(); time = t27 - t26;
+	double t2_14 = omp_get_wtime(); time = t2_14 - t2_13;
 	printf("%d x %d x %d, cost = %.3f s, AVX-M8-N2 gflops = %.3f\n", M, N, K, time, mul_count / time);
 
 	for (int i = 0; i < nIters; i++)
 	{
-		zq_gemm_32f_align128bit_AnoTrans_Btrans_M16_N1(M, N, K, A, padK, Bt, padK, C27, N);
+		zq_gemm_32f_align256bit_AnoTrans_Btrans_M16_N1(M, N, K, A, padK, Bt, padK, C2_14, N);
 	}
-	double t28 = omp_get_wtime(); time = t28 - t27;
-	printf("%d x %d x %d, cost = %.3f s, SSE-M16-N1 gflops = %.3f\n", M, N, K, time, mul_count / time);
-
-	for (int i = 0; i < nIters; i++)
-	{
-		zq_gemm_32f_align256bit_AnoTrans_Btrans_M16_N1(M, N, K, A, padK, Bt, padK, C28, N);
-	}
-	double t29 = omp_get_wtime(); time = t27 - t26;
+	double t2_15 = omp_get_wtime(); time = t2_15 - t2_14;
 	printf("%d x %d x %d, cost = %.3f s, AVX-M16-N1 gflops = %.3f\n", M, N, K, time, mul_count / time);
-
-	printf("check C0 C1 = %s\n", check_value(M, N, C0, N, C1, N, thresh, show) ? "True" : "False");
-	printf("check C0 C2 = %s\n", check_value(M, N, C0, N, C2, N, thresh, show) ? "True" : "False");
-	printf("check C0 C3 = %s\n", check_value(M, N, C0, N, C3, N, thresh, show) ? "True" : "False");
-	printf("check C0 C4 = %s\n", check_value(M, N, C0, N, C4, N, thresh, show) ? "True" : "False");
-	printf("check C0 C5 = %s\n", check_value(M, N, C0, N, C5, N, thresh, show) ? "True" : "False");
-	printf("check C0 C6 = %s\n", check_value(M, N, C0, N, C6, N, thresh, show) ? "True" : "False");
-	printf("check C0 C7 = %s\n", check_value(M, N, C0, N, C7, N, thresh, show) ? "True" : "False");
-	printf("check C0 C8 = %s\n", check_value(M, N, C0, N, C8, N, thresh, show) ? "True" : "False");
-	printf("check C0 C9 = %s\n", check_value(M, N, C0, N, C9, N, thresh, show) ? "True" : "False");
-	printf("check C0 C10 = %s\n", check_value(M, N, C0, N, C10, N, thresh, show) ? "True" : "False");
-	printf("check C0 C11 = %s\n", check_value(M, N, C0, N, C11, N, thresh, show) ? "True" : "False");
-	printf("check C0 C12 = %s\n", check_value(M, N, C0, N, C12, N, thresh, show) ? "True" : "False");
-	printf("check C0 C13 = %s\n", check_value(M, N, C0, N, C13, N, thresh, show) ? "True" : "False");
-	printf("check C0 C14 = %s\n", check_value(M, N, C0, N, C14, N, thresh, show) ? "True" : "False");
-	printf("check C0 C15 = %s\n", check_value(M, N, C0, N, C15, N, thresh, show) ? "True" : "False");
-	printf("check C0 C16 = %s\n", check_value(M, N, C0, N, C16, N, thresh, show) ? "True" : "False");
-	printf("check C0 C17 = %s\n", check_value(M, N, C0, N, C17, N, thresh, show) ? "True" : "False");
-	printf("check C0 C18 = %s\n", check_value(M, N, C0, N, C18, N, thresh, show) ? "True" : "False");
-	printf("check C0 C19 = %s\n", check_value(M, N, C0, N, C19, N, thresh, show) ? "True" : "False");
-	printf("check C0 C20 = %s\n", check_value(M, N, C0, N, C20, N, thresh, show) ? "True" : "False");
-	printf("check C0 C21 = %s\n", check_value(M, N, C0, N, C21, N, thresh, show) ? "True" : "False");
-	printf("check C0 C22 = %s\n", check_value(M, N, C0, N, C22, N, thresh, show) ? "True" : "False");
-	printf("check C0 C23 = %s\n", check_value(M, N, C0, N, C23, N, thresh, show) ? "True" : "False");
-	printf("check C0 C24 = %s\n", check_value(M, N, C0, N, C24, N, thresh, show) ? "True" : "False");
-	printf("check C0 C25 = %s\n", check_value(M, N, C0, N, C25, N, thresh, show) ? "True" : "False");
-	printf("check C0 C26 = %s\n", check_value(M, N, C0, N, C26, N, thresh, show) ? "True" : "False");
-	printf("check C0 C27 = %s\n", check_value(M, N, C0, N, C27, N, thresh, show) ? "True" : "False");
-	printf("check C0 C28 = %s\n", check_value(M, N, C0, N, C28, N, thresh, show) ? "True" : "False");
+#endif
+#if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_SSE
+	printf("check C0 C1_1 = %s\n", check_value(M, N, C0, N, C1_1, N, thresh, show) ? "True" : "False");
+	printf("check C0 C1_2 = %s\n", check_value(M, N, C0, N, C1_2, N, thresh, show) ? "True" : "False");
+	printf("check C0 C1_3 = %s\n", check_value(M, N, C0, N, C1_3, N, thresh, show) ? "True" : "False");
+	printf("check C0 C1_4 = %s\n", check_value(M, N, C0, N, C1_4, N, thresh, show) ? "True" : "False");
+	printf("check C0 C1_5 = %s\n", check_value(M, N, C0, N, C1_5, N, thresh, show) ? "True" : "False");
+	printf("check C0 C1_6 = %s\n", check_value(M, N, C0, N, C1_6, N, thresh, show) ? "True" : "False");
+	printf("check C0 C1_7 = %s\n", check_value(M, N, C0, N, C1_7, N, thresh, show) ? "True" : "False");
+	printf("check C0 C1_8 = %s\n", check_value(M, N, C0, N, C1_8, N, thresh, show) ? "True" : "False");
+	printf("check C0 C1_9 = %s\n", check_value(M, N, C0, N, C1_9, N, thresh, show) ? "True" : "False");
+	printf("check C0 C1_10 = %s\n", check_value(M, N, C0, N, C1_10, N, thresh, show) ? "True" : "False");
+	printf("check C0 C1_11 = %s\n", check_value(M, N, C0, N, C1_11, N, thresh, show) ? "True" : "False");
+	printf("check C0 C1_12 = %s\n", check_value(M, N, C0, N, C1_12, N, thresh, show) ? "True" : "False");
+	printf("check C0 C1_13 = %s\n", check_value(M, N, C0, N, C1_13, N, thresh, show) ? "True" : "False");
+	printf("check C0 C1_14 = %s\n", check_value(M, N, C0, N, C1_14, N, thresh, show) ? "True" : "False");
+#endif
+#if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_AVX
+	printf("check C0 C2_1 = %s\n", check_value(M, N, C0, N, C2_1, N, thresh, show) ? "True" : "False");
+	printf("check C0 C2_2 = %s\n", check_value(M, N, C0, N, C2_2, N, thresh, show) ? "True" : "False");
+	printf("check C0 C2_3 = %s\n", check_value(M, N, C0, N, C2_3, N, thresh, show) ? "True" : "False");
+	printf("check C0 C2_4 = %s\n", check_value(M, N, C0, N, C2_4, N, thresh, show) ? "True" : "False");
+	printf("check C0 C2_5 = %s\n", check_value(M, N, C0, N, C2_5, N, thresh, show) ? "True" : "False");
+	printf("check C0 C2_6 = %s\n", check_value(M, N, C0, N, C2_6, N, thresh, show) ? "True" : "False");
+	printf("check C0 C2_7 = %s\n", check_value(M, N, C0, N, C2_7, N, thresh, show) ? "True" : "False");
+	printf("check C0 C2_8 = %s\n", check_value(M, N, C0, N, C2_8, N, thresh, show) ? "True" : "False");
+	printf("check C0 C2_9 = %s\n", check_value(M, N, C0, N, C2_9, N, thresh, show) ? "True" : "False");
+	printf("check C0 C2_10 = %s\n", check_value(M, N, C0, N, C2_10, N, thresh, show) ? "True" : "False");
+	printf("check C0 C2_11 = %s\n", check_value(M, N, C0, N, C2_11, N, thresh, show) ? "True" : "False");
+	printf("check C0 C2_12 = %s\n", check_value(M, N, C0, N, C2_12, N, thresh, show) ? "True" : "False");
+	printf("check C0 C2_13 = %s\n", check_value(M, N, C0, N, C2_13, N, thresh, show) ? "True" : "False");
+	printf("check C0 C2_14 = %s\n", check_value(M, N, C0, N, C2_14, N, thresh, show) ? "True" : "False");
+#endif
 	_aligned_free(A);
 	_aligned_free(Bt);
 	_aligned_free(C0);
-	_aligned_free(C1);
-	_aligned_free(C2);
-	_aligned_free(C3);
-	_aligned_free(C4);
-	_aligned_free(C5);
-	_aligned_free(C6);
-	_aligned_free(C7);
-	_aligned_free(C8);
-	_aligned_free(C9);
-	_aligned_free(C10);
-	_aligned_free(C11);
-	_aligned_free(C12);
-	_aligned_free(C13);
-	_aligned_free(C14);
-	_aligned_free(C15);
-	_aligned_free(C16);
-	_aligned_free(C17);
-	_aligned_free(C18);
-	_aligned_free(C19);
-	_aligned_free(C20);
-	_aligned_free(C21);
-	_aligned_free(C22);
-	_aligned_free(C23);
-	_aligned_free(C24);
-	_aligned_free(C25);
-	_aligned_free(C26);
-	_aligned_free(C27);
-	_aligned_free(C28);
+#if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_SSE
+	_aligned_free(C1_1);
+	_aligned_free(C1_2);
+	_aligned_free(C1_3);
+	_aligned_free(C1_4);
+	_aligned_free(C1_5);
+	_aligned_free(C1_6);
+	_aligned_free(C1_7);
+	_aligned_free(C1_8);
+	_aligned_free(C1_9);
+	_aligned_free(C1_10);
+	_aligned_free(C1_11);
+	_aligned_free(C1_12);
+	_aligned_free(C1_13);
+	_aligned_free(C1_14);
+#endif
+#if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_AVX
+	_aligned_free(C2_1);
+	_aligned_free(C2_2);
+	_aligned_free(C2_3);
+	_aligned_free(C2_4);
+	_aligned_free(C2_5);
+	_aligned_free(C2_6);
+	_aligned_free(C2_7);
+	_aligned_free(C2_8);
+	_aligned_free(C2_9);
+	_aligned_free(C2_10);
+	_aligned_free(C2_11);
+	_aligned_free(C2_12);
+	_aligned_free(C2_13);
+	_aligned_free(C2_14);
+#endif
 }
 
 void test_AB(int M, int N, int K, int nIters, float thresh, bool show)
