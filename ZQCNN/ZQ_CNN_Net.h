@@ -89,9 +89,11 @@ namespace ZQ
 			return _swap_input_RGB_and_BGR(layer_names);
 		}
 
-		bool LoadFromBuffer(const char*& param_buffer, __int64 param_buffer_len, const char*& model_buffer, __int64 model_buffer_len, bool merge_bn = false)
+		bool LoadFromBuffer(const char*& param_buffer, __int64 param_buffer_len, const char*& model_buffer, __int64 model_buffer_len, 
+			bool merge_bn = false, float ignore_small_value = 1e-12)
 		{
 			_clear();
+			this->ignore_small_value = ignore_small_value;
 			if (!_load_param_from_buffer(param_buffer, param_buffer_len))
 			{
 				_clear();

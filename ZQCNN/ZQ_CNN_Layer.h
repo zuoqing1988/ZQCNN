@@ -620,6 +620,7 @@ namespace ZQ
 
 		virtual bool LoadBinary_NCHW(const char* buffer, __int64 buffer_len, __int64& readed_length_in_bytes)
 		{ 
+
 			readed_length_in_bytes = 0;
 			if (filters == 0)
 				return false;
@@ -629,7 +630,14 @@ namespace ZQ
 			int dst_len_in_bytes = sizeof(float)*dst_len;
 			if (buffer_len < dst_len_in_bytes)
 				return false;
-			filters->ConvertFromCompactNCHW((const float*)buffer, filters->GetN(), filters->GetC(), filters->GetH(), filters->GetW());
+			std::vector<float> nchw_raw(dst_len);
+			memcpy(&nchw_raw[0], buffer, dst_len_in_bytes);
+			for (int i = 0; i < dst_len; i++)
+			{
+				if (fabs(nchw_raw[i]) < ignore_small_value)
+					nchw_raw[i] = 0;
+			}
+			filters->ConvertFromCompactNCHW(&nchw_raw[0], filters->GetN(), filters->GetC(), filters->GetH(), filters->GetW());
 			buffer += dst_len_in_bytes;
 			buffer_len -= dst_len_in_bytes;
 			readed_length_in_bytes += dst_len_in_bytes;
@@ -639,7 +647,14 @@ namespace ZQ
 				if (dst_len <= 0)
 					return false;
 				int dst_len_in_bytes = sizeof(float)*dst_len;
-				bias->ConvertFromCompactNCHW((const float*)buffer, bias->GetN(), bias->GetC(), bias->GetH(), bias->GetW());
+				nchw_raw.resize(dst_len);
+				memcpy(&nchw_raw[0], buffer, dst_len_in_bytes);
+				for (int i = 0; i < dst_len; i++)
+				{
+					if (fabs(nchw_raw[i]) < ignore_small_value)
+						nchw_raw[i] = 0;
+				}
+				bias->ConvertFromCompactNCHW(&nchw_raw[0], bias->GetN(), bias->GetC(), bias->GetH(), bias->GetW());
 				buffer += dst_len_in_bytes;
 				buffer_len -= dst_len_in_bytes;
 				readed_length_in_bytes += dst_len_in_bytes;
@@ -1035,7 +1050,14 @@ namespace ZQ
 			int dst_len_in_bytes = dst_len * sizeof(float);
 			if (buffer_len < dst_len_in_bytes)
 				return false;
-			filters->ConvertFromCompactNCHW((const float*)buffer, filters->GetN(), filters->GetC(), filters->GetH(), filters->GetW());
+			std::vector<float> nchw_raw(dst_len);
+			memcpy(&nchw_raw[0], buffer, dst_len_in_bytes);
+			for (int i = 0; i < dst_len; i++)
+			{
+				if (fabs(nchw_raw[i]) < ignore_small_value)
+					nchw_raw[i] = 0;
+			}
+			filters->ConvertFromCompactNCHW(&nchw_raw[0], filters->GetN(), filters->GetC(), filters->GetH(), filters->GetW());
 			buffer += dst_len_in_bytes;
 			buffer_len -= dst_len_in_bytes;
 			readed_length_in_bytes += dst_len_in_bytes;
@@ -1047,7 +1069,14 @@ namespace ZQ
 				int dst_len_in_bytes = dst_len * sizeof(float);
 				if (buffer_len < dst_len_in_bytes)
 					return false;
-				bias->ConvertFromCompactNCHW((const float*)buffer, bias->GetN(), bias->GetC(), bias->GetH(), bias->GetW());
+				nchw_raw.resize(dst_len);
+				memcpy(&nchw_raw[0], buffer, dst_len_in_bytes);
+				for (int i = 0; i < dst_len; i++)
+				{
+					if (fabs(nchw_raw[i]) < ignore_small_value)
+						nchw_raw[i] = 0;
+				}
+				bias->ConvertFromCompactNCHW(&nchw_raw[0], bias->GetN(), bias->GetC(), bias->GetH(), bias->GetW());
 				buffer += dst_len_in_bytes;
 				buffer_len -= dst_len_in_bytes;
 				readed_length_in_bytes += dst_len_in_bytes;
@@ -1368,6 +1397,7 @@ namespace ZQ
 
 		virtual bool LoadBinary_NCHW(const char* buffer, __int64 buffer_len, __int64& readed_length_in_bytes)
 		{
+
 			readed_length_in_bytes = 0;
 			if (mean == 0 || var == 0 || scale == 0 || (with_bias && bias == 0) || b == 0 || a == 0)
 				return false;
@@ -1382,7 +1412,11 @@ namespace ZQ
 					return false;
 				memcpy(&nchw_raw[0], buffer, dst_len * 4 * sizeof(float));
 				readed_length_in_bytes += dst_len * 4 * sizeof(float);
-				
+				for (int i = 0; i < dst_len * 4; i++)
+				{
+					if (fabs(nchw_raw[i]) < ignore_small_value)
+						nchw_raw[i] = 0;
+				}
 				mean->ConvertFromCompactNCHW(&nchw_raw[0], N, C, H, W);
 				var->ConvertFromCompactNCHW(&nchw_raw[0] + dst_len, N, C, H, W);
 				scale->ConvertFromCompactNCHW(&nchw_raw[0] + dst_len * 2, N, C, H, W);
@@ -1396,12 +1430,17 @@ namespace ZQ
 					return false;
 				memcpy(&nchw_raw[0], buffer, dst_len * 3 * sizeof(float));
 				readed_length_in_bytes += dst_len * 3 * sizeof(float);
-
+				for (int i = 0; i < dst_len * 3; i++)
+				{
+					if (fabs(nchw_raw[i]) < ignore_small_value)
+						nchw_raw[i] = 0;
+				}
 				mean->ConvertFromCompactNCHW(&nchw_raw[0], N, C, H, W);
 				var->ConvertFromCompactNCHW(&nchw_raw[0] + dst_len, N, C, H, W);
 				scale->ConvertFromCompactNCHW(&nchw_raw[0] + dst_len * 2, N, C, H, W);
 				return ZQ_CNN_Forward_SSEUtils::BatchNormScale_Compute_b_a(*b, *a, *mean, *var, *scale, eps);
 			}
+
 			return true;
 		}
 
@@ -1652,9 +1691,14 @@ namespace ZQ
 			std::vector<float> nchw_raw(dst_len * 2);
 			if (dst_len * 2 * sizeof(float) > buffer_len)
 				return false;
+
 			memcpy(&nchw_raw[0], buffer, dst_len * 2 * sizeof(float));
 			readed_length_in_bytes += dst_len * 2 * sizeof(float);
-
+			for (int i = 0; i < dst_len * 2; i++)
+			{
+				if (fabs(nchw_raw[i]) < ignore_small_value)
+					nchw_raw[i] = 0;
+			}
 			mean->ConvertFromCompactNCHW(&nchw_raw[0], N, C, H, W);
 			var->ConvertFromCompactNCHW(&nchw_raw[0] + dst_len, N, C, H, W);
 			return ZQ_CNN_Forward_SSEUtils::BatchNorm_Compute_b_a(*b, *a, *mean, *var, eps);
@@ -1913,8 +1957,14 @@ namespace ZQ
 			int dst_len_in_bytes = dst_len * sizeof(float);
 			if (dst_len_in_bytes > buffer_len)
 				return false;
-		
-			scale->ConvertFromCompactNCHW((const float*)buffer, scale->GetN(), scale->GetC(), scale->GetH(), scale->GetW());
+			std::vector<float> nchw_raw(dst_len);
+			memcpy(&nchw_raw[0], buffer, dst_len_in_bytes);
+			for (int i = 0; i < dst_len; i++)
+			{
+				if (fabs(nchw_raw[i]) < ignore_small_value)
+					nchw_raw[i] = 0;
+			}
+			scale->ConvertFromCompactNCHW(&nchw_raw[0], scale->GetN(), scale->GetC(), scale->GetH(), scale->GetW());
 			buffer += dst_len_in_bytes;
 			buffer_len -= dst_len_in_bytes;
 			readed_length_in_bytes += dst_len_in_bytes;
@@ -1926,8 +1976,14 @@ namespace ZQ
 				int dst_len_in_bytes = dst_len * sizeof(float);
 				if (dst_len_in_bytes > buffer_len)
 					return false;
-
-				bias->ConvertFromCompactNCHW((const float*)buffer, bias->GetN(), bias->GetC(), bias->GetH(), bias->GetW());
+				nchw_raw.resize(dst_len);
+				memcpy(&nchw_raw[0], buffer, dst_len_in_bytes);
+				for (int i = 0; i < dst_len; i++)
+				{
+					if (fabs(nchw_raw[i]) < ignore_small_value)
+						nchw_raw[i] = 0;
+				}
+				bias->ConvertFromCompactNCHW(&nchw_raw[0], bias->GetN(), bias->GetC(), bias->GetH(), bias->GetW());
 				buffer += dst_len_in_bytes;
 				buffer_len -= dst_len_in_bytes;
 				readed_length_in_bytes += dst_len_in_bytes;
@@ -2120,7 +2176,14 @@ namespace ZQ
 			int dst_len_in_bytes = dst_len * sizeof(float);
 			if (dst_len_in_bytes > buffer_len)
 				return false;
-			slope->ConvertFromCompactNCHW((const float*)buffer, slope->GetN(), slope->GetC(), slope->GetH(), slope->GetW());
+			std::vector<float> nchw_raw(dst_len);
+			memcpy(&nchw_raw[0], buffer, dst_len_in_bytes);
+			for (int i = 0; i < dst_len; i++)
+			{
+				if (fabs(nchw_raw[i]) < ignore_small_value)
+					nchw_raw[i] = 0;
+			}
+			slope->ConvertFromCompactNCHW(&nchw_raw[0], slope->GetN(), slope->GetC(), slope->GetH(), slope->GetW());
 			readed_length_in_bytes += dst_len_in_bytes;
 			return true;
 		}
@@ -2825,7 +2888,14 @@ namespace ZQ
 			int dst_len_in_bytes = dst_len * sizeof(float);
 			if (dst_len_in_bytes > buffer_len)
 				return false;
-			filters->ConvertFromCompactNCHW((const float*)buffer, filters->GetN(), filters->GetC(), filters->GetH(), filters->GetW());
+			std::vector<float> nchw_raw(dst_len);
+			memcpy(&nchw_raw[0], buffer, dst_len_in_bytes);
+			for (int i = 0; i < dst_len; i++)
+			{
+				if (fabs(nchw_raw[i]) < ignore_small_value)
+					nchw_raw[i] = 0;
+			}
+			filters->ConvertFromCompactNCHW(&nchw_raw[0], filters->GetN(), filters->GetC(), filters->GetH(), filters->GetW());
 			buffer += dst_len_in_bytes;
 			buffer_len -= dst_len_in_bytes;
 			readed_length_in_bytes += dst_len_in_bytes;
@@ -2837,6 +2907,13 @@ namespace ZQ
 				int dst_len_in_bytes = dst_len * sizeof(float);
 				if (dst_len_in_bytes > buffer_len)
 					return false;
+				nchw_raw.resize(dst_len);
+				memcpy(&nchw_raw[0], buffer, dst_len_in_bytes);
+				for (int i = 0; i < dst_len; i++)
+				{
+					if (fabs(nchw_raw[i]) < ignore_small_value)
+						nchw_raw[i] = 0;
+				}
 				bias->ConvertFromCompactNCHW((const float*)buffer, bias->GetN(), bias->GetC(), bias->GetH(), bias->GetW());
 				buffer += dst_len_in_bytes;
 				buffer_len -= dst_len_in_bytes;
