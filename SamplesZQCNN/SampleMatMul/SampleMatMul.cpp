@@ -17,27 +17,39 @@ bool check_value(int M, int N, const float* C1, int ldc1, const float* C2, int l
 
 int main()
 {
-	//while (true)
-	//{
-	//	int M = rand() % 1000+1;
-	//	int N = rand() % 1000+1;
-	//	int K = rand() % 1000+1;
-	//	test_ABt(M, N, K, 1, 1e-4, true);
-	//	//test_ABt(805, 628, 576, 1, 1e-4, true);
-	//}
-	test_ABt(128, 128, 128, 5000);
+	/*while (true)
+	{
+		int M = rand() % 1000+1;
+		int N = rand() % 1000+1;
+		int K = rand() % 1000+1;
+		test_ABt(M, N, K, 1, 1e-4, true);
+	}*/
+	//test_ABt(128, 128, 128, 5000);
+	////return 0;
+	//test_ABt(256, 256, 256, 1000);
+	//test_ABt(512, 512, 512, 200);
+	//test_ABt(1024, 1024, 1024, 50);
 
-	test_ABt(256, 256, 256, 1000);
-	test_ABt(512, 512, 512, 200);
-	test_ABt(1024, 1024, 1024, 50);
+	//return 0;
+	/*test_ABt(56 * 56, 16, 8, 8000);
+	test_ABt(16, 56 * 56, 8, 8000);
 
+	test_ABt(56 * 56, 24, 16, 8000);
+	test_ABt(24, 56 * 56, 16, 8000);
+
+	test_ABt(56 * 56, 32, 24, 8000);
+	test_ABt(32, 56 * 56, 24, 8000);
+
+	test_ABt(56 * 56, 64, 27, 8000);
+	test_ABt(64, 56 * 56, 27, 8000);*/
+
+	test_ABt(56 * 56, 64, 28, 8000);
+	test_ABt(64, 56 * 56, 28, 8000);
+
+
+	test_ABt(56 * 56, 64, 32, 8000);
+	test_ABt(64, 56 * 56, 32, 8000);
 	return 0;
-	test_ABt(56 * 56, 64, 27, 800);
-	test_ABt(64, 56 * 56, 27, 800);
-
-	test_ABt(56 * 56, 64, 32, 800);
-	test_ABt(64, 56 * 56, 32, 800);
-
 	test_ABt(56 * 56, 64, 64, 800);
 	test_ABt(64, 56 * 56, 64, 800);
 	

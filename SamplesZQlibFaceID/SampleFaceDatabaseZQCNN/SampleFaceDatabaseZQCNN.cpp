@@ -11,6 +11,8 @@
 #elif ZQ_CNN_USE_MKL_GEMM
 #include <mkl\mkl.h>
 #pragma comment(lib,"mklml.lib")
+#else
+#pragma comment(lib,"ZQ_GEMM.lib")
 #endif
 using namespace ZQ;
 

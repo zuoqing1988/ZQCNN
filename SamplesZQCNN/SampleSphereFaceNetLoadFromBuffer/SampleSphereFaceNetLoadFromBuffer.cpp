@@ -9,6 +9,8 @@
 #elif ZQ_CNN_USE_MKL_GEMM
 #include <mkl/mkl.h>
 #pragma comment(lib,"mklml.lib")
+#else
+#pragma comment(lib,"ZQ_GEMM.lib")
 #endif
 
 using namespace ZQ;
@@ -75,8 +77,8 @@ int main()
 #endif
 
 	std::string out_blob_name = "fc5";
-	std::string param_file = "model\\mobilefacenet-res2-6-10-2-dim256.zqparams";
-	std::string model_file = "model\\mobilefacenet-res2-6-10-2-dim256-emore.nchwbin";
+	std::string param_file = "model\\mobilefacenet-res8-16-32-8-dim512.zqparams";
+	std::string model_file = "model\\mobilefacenet-res8-16-32-8-dim512.nchwbin";
 	
 	std::vector<char> param_buffer, model_buffer;
 	if (!load_to_buffer(param_file, model_file, param_buffer, model_buffer))

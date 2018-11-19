@@ -11,6 +11,8 @@
 #elif ZQ_CNN_USE_MKL_GEMM
 #include "mkl/mkl.h"
 #pragma comment(lib,"mklml.lib")
+#else
+#pragma comment(lib,"ZQ_GEMM.lib")
 #endif
 using namespace ZQ;
 using namespace std;
@@ -108,7 +110,7 @@ int main()
 			return EXIT_FAILURE;
 		}
 
-		mtcnn.SetPara(image0.cols, image0.rows, 20, 0.6, 0.9, 0.9, 0.4, 0.5, 0.5, 0.709, 3, 20, 4, special_handle_very_big_face);
+		mtcnn.SetPara(image0.cols, image0.rows, 20, 0.6, 0.8, 0.9, 0.4, 0.5, 0.5, 0.709, 3, 20, 4, special_handle_very_big_face);
 	}
 	else
 	{

@@ -5114,6 +5114,193 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M16_N1_Kgeneral(int M, int N, int K, cons
 	}
 }
 
+void zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv1_KeqAlign1(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+{
+	const float* Aptr1, *A_c_ptr1, *Bptr, *Bptr1;
+	const float *B_c_ptr1;
+	float* Cptr1, *C_c_ptr1;
+	int m, n;
+	zq_q_type q;
+	register zq_mm_type sum_vec11;
+	register zq_mm_type a_vec1, b_vec1;
+
+	Aptr1 = A;
+	Cptr1 = C;
+	for (m = 0; m < M; m++, Aptr1 += lda, Cptr1 += ldc)
+	{
+		Bptr = Bt;
+		C_c_ptr1 = Cptr1;
+		for (n = 0; n < N; n++, Bptr += ldb)
+		{
+			Bptr1 = Bptr;
+			A_c_ptr1 = Aptr1; B_c_ptr1 = Bptr1;
+			op_1x1_first;
+			store_1x1;
+		}
+	}
+}
+
+void zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv1_KeqAlign2(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+{
+	const float* Aptr1, *A_c_ptr1, *Bptr, *Bptr1;
+	const float *B_c_ptr1;
+	float* Cptr1, *C_c_ptr1;
+	int m, n;
+	zq_q_type q;
+	register zq_mm_type sum_vec11;
+	register zq_mm_type a_vec1, b_vec1;
+
+	Aptr1 = A;
+	Cptr1 = C;
+	for (m = 0; m < M; m++, Aptr1 += lda, Cptr1 += ldc)
+	{
+		Bptr = Bt;
+		C_c_ptr1 = Cptr1;
+		for (n = 0; n < N; n++, Bptr += ldb)
+		{
+			Bptr1 = Bptr;
+			A_c_ptr1 = Aptr1; B_c_ptr1 = Bptr1;
+			op_1x1_2_first;
+			store_1x1;
+		}
+	}
+}
+
+void zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv1_KeqAlign3(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+{
+	const float* Aptr1, *A_c_ptr1, *Bptr, *Bptr1;
+	const float *B_c_ptr1;
+	float* Cptr1, *C_c_ptr1;
+	int m, n;
+	zq_q_type q;
+	register zq_mm_type sum_vec11;
+	register zq_mm_type a_vec1, b_vec1;
+
+	Aptr1 = A;
+	Cptr1 = C;
+	for (m = 0; m < M; m++, Aptr1 += lda, Cptr1 += ldc)
+	{
+		Bptr = Bt;
+		C_c_ptr1 = Cptr1;
+		for (n = 0; n < N; n++, Bptr += ldb)
+		{
+			Bptr1 = Bptr;
+			A_c_ptr1 = Aptr1; B_c_ptr1 = Bptr1;
+			op_1x1_first;
+			op_1x1_2;
+			store_1x1;
+		}
+	}
+}
+
+void zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv1_KeqAlign4(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+{
+	const float* Aptr1, *A_c_ptr1, *Bptr, *Bptr1;
+	const float *B_c_ptr1;
+	float* Cptr1, *C_c_ptr1;
+	int m, n;
+	zq_q_type q;
+	register zq_mm_type sum_vec11;
+	register zq_mm_type a_vec1, b_vec1;
+
+	Aptr1 = A;
+	Cptr1 = C;
+	for (m = 0; m < M; m++, Aptr1 += lda, Cptr1 += ldc)
+	{
+		Bptr = Bt;
+		C_c_ptr1 = Cptr1;
+		for (n = 0; n < N; n++, Bptr += ldb)
+		{
+			Bptr1 = Bptr;
+			A_c_ptr1 = Aptr1; B_c_ptr1 = Bptr1;
+			op_1x1_4_first;
+			store_1x1;
+		}
+	}
+}
+
+void zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv1_KeqAlign5(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+{
+	const float* Aptr1, *A_c_ptr1, *Bptr, *Bptr1;
+	const float *B_c_ptr1;
+	float* Cptr1, *C_c_ptr1;
+	int m, n;
+	zq_q_type q;
+	register zq_mm_type sum_vec11;
+	register zq_mm_type a_vec1, b_vec1;
+
+	Aptr1 = A;
+	Cptr1 = C;
+	for (m = 0; m < M; m++, Aptr1 += lda, Cptr1 += ldc)
+	{
+		Bptr = Bt;
+		C_c_ptr1 = Cptr1;
+		for (n = 0; n < N; n++, Bptr += ldb)
+		{
+			Bptr1 = Bptr;
+			A_c_ptr1 = Aptr1; B_c_ptr1 = Bptr1;
+			op_1x1_first;
+			op_1x1_4;
+			store_1x1;
+		}
+	}
+}
+
+void zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv1_KeqAlign6(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+{
+	const float* Aptr1, *A_c_ptr1, *Bptr, *Bptr1;
+	const float *B_c_ptr1;
+	float* Cptr1, *C_c_ptr1;
+	int m, n;
+	zq_q_type q;
+	register zq_mm_type sum_vec11;
+	register zq_mm_type a_vec1, b_vec1;
+
+	Aptr1 = A;
+	Cptr1 = C;
+	for (m = 0; m < M; m++, Aptr1 += lda, Cptr1 += ldc)
+	{
+		Bptr = Bt;
+		C_c_ptr1 = Cptr1;
+		for (n = 0; n < N; n++, Bptr += ldb)
+		{
+			Bptr1 = Bptr;
+			A_c_ptr1 = Aptr1; B_c_ptr1 = Bptr1;
+			op_1x1_2_first;
+			op_1x1_4;
+			store_1x1;
+		}
+	}
+}
+
+void zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv1_KeqAlign7(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+{
+	const float* Aptr1, *A_c_ptr1, *Bptr, *Bptr1;
+	const float *B_c_ptr1;
+	float* Cptr1, *C_c_ptr1;
+	int m, n;
+	zq_q_type q;
+	register zq_mm_type sum_vec11;
+	register zq_mm_type a_vec1, b_vec1;
+
+	Aptr1 = A;
+	Cptr1 = C;
+	for (m = 0; m < M; m++, Aptr1 += lda, Cptr1 += ldc)
+	{
+		Bptr = Bt;
+		C_c_ptr1 = Cptr1;
+		for (n = 0; n < N; n++, Bptr += ldb)
+		{
+			Bptr1 = Bptr;
+			A_c_ptr1 = Aptr1; B_c_ptr1 = Bptr1;
+			op_1x1_first;
+			op_1x1_2;
+			op_1x1_4;
+			store_1x1;
+		}
+	}
+}
+
 void zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv1_KdivAlign4(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
 {
 	const float* Aptr1, *A_c_ptr1, *Bptr, *Bptr1;
@@ -5272,6 +5459,214 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv1_KdivAlign64(int M, int N, in
 				op_1x1_16;
 			}
 			store_1x1;
+		}
+	}
+}
+
+void zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv2_KeqAlign1(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+{
+	const float* Aptr1, *A_c_ptr1, *Bptr, *Bptr1, *Bptr2;
+	const float *B_c_ptr1, *B_c_ptr2;
+	float* Cptr1, *C_c_ptr1;
+	int m, n;
+	int ldb2 = ldb << 1;
+	zq_q_type q;
+	register zq_mm_type sum_vec11;
+	register zq_mm_type sum_vec12;
+	register zq_mm_type a_vec1, b_vec1, b_vec2;
+
+	Aptr1 = A;
+	Cptr1 = C;
+	for (m = 0; m < M; m++, Aptr1 += lda, Cptr1 += ldc)
+	{
+		Bptr = Bt;
+		C_c_ptr1 = Cptr1;
+		for (n = 0; n < N; n += 2, Bptr += ldb2)
+		{
+			Bptr1 = Bptr;
+			Bptr2 = Bptr1 + ldb;
+			A_c_ptr1 = Aptr1; B_c_ptr1 = Bptr1; B_c_ptr2 = Bptr2;
+			op_1x2_first;
+			store_1x2;
+		}
+	}
+}
+
+void zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv2_KeqAlign2(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+{
+	const float* Aptr1, *A_c_ptr1, *Bptr, *Bptr1, *Bptr2;
+	const float *B_c_ptr1, *B_c_ptr2;
+	float* Cptr1, *C_c_ptr1;
+	int m, n;
+	int ldb2 = ldb << 1;
+	zq_q_type q;
+	register zq_mm_type sum_vec11;
+	register zq_mm_type sum_vec12;
+	register zq_mm_type a_vec1, b_vec1, b_vec2;
+
+	Aptr1 = A;
+	Cptr1 = C;
+	for (m = 0; m < M; m++, Aptr1 += lda, Cptr1 += ldc)
+	{
+		Bptr = Bt;
+		C_c_ptr1 = Cptr1;
+		for (n = 0; n < N; n += 2, Bptr += ldb2)
+		{
+			Bptr1 = Bptr;
+			Bptr2 = Bptr1 + ldb;
+			A_c_ptr1 = Aptr1; B_c_ptr1 = Bptr1; B_c_ptr2 = Bptr2;
+			op_1x2_2_first;
+			store_1x2;
+		}
+	}
+}
+
+void zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv2_KeqAlign3(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+{
+	const float* Aptr1, *A_c_ptr1, *Bptr, *Bptr1, *Bptr2;
+	const float *B_c_ptr1, *B_c_ptr2;
+	float* Cptr1, *C_c_ptr1;
+	int m, n;
+	int ldb2 = ldb << 1;
+	zq_q_type q;
+	register zq_mm_type sum_vec11;
+	register zq_mm_type sum_vec12;
+	register zq_mm_type a_vec1, b_vec1, b_vec2;
+
+	Aptr1 = A;
+	Cptr1 = C;
+	for (m = 0; m < M; m++, Aptr1 += lda, Cptr1 += ldc)
+	{
+		Bptr = Bt;
+		C_c_ptr1 = Cptr1;
+		for (n = 0; n < N; n += 2, Bptr += ldb2)
+		{
+			Bptr1 = Bptr;
+			Bptr2 = Bptr1 + ldb;
+			A_c_ptr1 = Aptr1; B_c_ptr1 = Bptr1; B_c_ptr2 = Bptr2;
+			op_1x2_first;
+			op_1x2_2;
+			store_1x2;
+		}
+	}
+}
+
+void zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv2_KeqAlign4(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+{
+	const float* Aptr1, *A_c_ptr1, *Bptr, *Bptr1, *Bptr2;
+	const float *B_c_ptr1, *B_c_ptr2;
+	float* Cptr1, *C_c_ptr1;
+	int m, n;
+	int ldb2 = ldb << 1;
+	zq_q_type q;
+	register zq_mm_type sum_vec11;
+	register zq_mm_type sum_vec12;
+	register zq_mm_type a_vec1, b_vec1, b_vec2;
+
+	Aptr1 = A;
+	Cptr1 = C;
+	for (m = 0; m < M; m++, Aptr1 += lda, Cptr1 += ldc)
+	{
+		Bptr = Bt;
+		C_c_ptr1 = Cptr1;
+		for (n = 0; n < N; n += 2, Bptr += ldb2)
+		{
+			Bptr1 = Bptr;
+			Bptr2 = Bptr1 + ldb;
+			A_c_ptr1 = Aptr1; B_c_ptr1 = Bptr1; B_c_ptr2 = Bptr2;
+			op_1x2_4_first;
+			store_1x2;
+		}
+	}
+}
+
+void zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv2_KeqAlign5(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+{
+	const float* Aptr1, *A_c_ptr1, *Bptr, *Bptr1, *Bptr2;
+	const float *B_c_ptr1, *B_c_ptr2;
+	float* Cptr1, *C_c_ptr1;
+	int m, n;
+	int ldb2 = ldb << 1;
+	zq_q_type q;
+	register zq_mm_type sum_vec11;
+	register zq_mm_type sum_vec12;
+	register zq_mm_type a_vec1, b_vec1, b_vec2;
+
+	Aptr1 = A;
+	Cptr1 = C;
+	for (m = 0; m < M; m++, Aptr1 += lda, Cptr1 += ldc)
+	{
+		Bptr = Bt;
+		C_c_ptr1 = Cptr1;
+		for (n = 0; n < N; n += 2, Bptr += ldb2)
+		{
+			Bptr1 = Bptr;
+			Bptr2 = Bptr1 + ldb;
+			A_c_ptr1 = Aptr1; B_c_ptr1 = Bptr1; B_c_ptr2 = Bptr2;
+			op_1x2_first;
+			op_1x2_4;
+			store_1x2;
+		}
+	}
+}
+
+void zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv2_KeqAlign6(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+{
+	const float* Aptr1, *A_c_ptr1, *Bptr, *Bptr1, *Bptr2;
+	const float *B_c_ptr1, *B_c_ptr2;
+	float* Cptr1, *C_c_ptr1;
+	int m, n;
+	int ldb2 = ldb << 1;
+	zq_q_type q;
+	register zq_mm_type sum_vec11;
+	register zq_mm_type sum_vec12;
+	register zq_mm_type a_vec1, b_vec1, b_vec2;
+
+	Aptr1 = A;
+	Cptr1 = C;
+	for (m = 0; m < M; m++, Aptr1 += lda, Cptr1 += ldc)
+	{
+		Bptr = Bt;
+		C_c_ptr1 = Cptr1;
+		for (n = 0; n < N; n += 2, Bptr += ldb2)
+		{
+			Bptr1 = Bptr;
+			Bptr2 = Bptr1 + ldb;
+			A_c_ptr1 = Aptr1; B_c_ptr1 = Bptr1; B_c_ptr2 = Bptr2;
+			op_1x2_2_first;
+			op_1x2_4;
+			store_1x2;
+		}
+	}
+}
+
+void zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv2_KeqAlign7(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+{
+	const float* Aptr1, *A_c_ptr1, *Bptr, *Bptr1, *Bptr2;
+	const float *B_c_ptr1, *B_c_ptr2;
+	float* Cptr1, *C_c_ptr1;
+	int m, n;
+	int ldb2 = ldb << 1;
+	zq_q_type q;
+	register zq_mm_type sum_vec11;
+	register zq_mm_type sum_vec12;
+	register zq_mm_type a_vec1, b_vec1, b_vec2;
+
+	Aptr1 = A;
+	Cptr1 = C;
+	for (m = 0; m < M; m++, Aptr1 += lda, Cptr1 += ldc)
+	{
+		Bptr = Bt;
+		C_c_ptr1 = Cptr1;
+		for (n = 0; n < N; n += 2, Bptr += ldb2)
+		{
+			Bptr1 = Bptr;
+			Bptr2 = Bptr1 + ldb;
+			A_c_ptr1 = Aptr1; B_c_ptr1 = Bptr1; B_c_ptr2 = Bptr2;
+			op_1x2_first;
+			op_1x2_2;
+			op_1x2_4;
+			store_1x2;
 		}
 	}
 }
@@ -5449,6 +5844,249 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv2_KdivAlign64(int M, int N, in
 				op_1x2_16;
 			}
 			store_1x2;
+		}
+	}
+}
+
+void zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv4_KeqAlign1(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+{
+	const float* Aptr1, *A_c_ptr1, *Bptr, *Bptr1, *Bptr2, *Bptr3, *Bptr4;
+	const float *B_c_ptr1, *B_c_ptr2, *B_c_ptr3, *B_c_ptr4;
+	float* Cptr1, *C_c_ptr1;
+	int m, n;
+	int ldb4 = ldb << 2;
+	zq_q_type q;
+	register zq_mm_type sum_vec11;
+	register zq_mm_type sum_vec12;
+	register zq_mm_type sum_vec13;
+	register zq_mm_type sum_vec14;
+	register zq_mm_type a_vec1, b_vec1, b_vec2, b_vec3, b_vec4;
+
+	Aptr1 = A;
+	Cptr1 = C;
+	for (m = 0; m < M; m++, Aptr1 += lda, Cptr1 += ldc)
+	{
+		Bptr = Bt;
+		C_c_ptr1 = Cptr1;
+		for (n = 0; n < N; n += 4, Bptr += ldb4)
+		{
+			Bptr1 = Bptr;
+			Bptr2 = Bptr1 + ldb;
+			Bptr3 = Bptr2 + ldb;
+			Bptr4 = Bptr3 + ldb;
+			A_c_ptr1 = Aptr1;
+			B_c_ptr1 = Bptr1; B_c_ptr2 = Bptr2; B_c_ptr3 = Bptr3; B_c_ptr4 = Bptr4;
+			op_1x4_first;
+			store_1x4;
+		}
+	}
+}
+
+void zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv4_KeqAlign2(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+{
+	const float* Aptr1, *A_c_ptr1, *Bptr, *Bptr1, *Bptr2, *Bptr3, *Bptr4;
+	const float *B_c_ptr1, *B_c_ptr2, *B_c_ptr3, *B_c_ptr4;
+	float* Cptr1, *C_c_ptr1;
+	int m, n;
+	int ldb4 = ldb << 2;
+	zq_q_type q;
+	register zq_mm_type sum_vec11;
+	register zq_mm_type sum_vec12;
+	register zq_mm_type sum_vec13;
+	register zq_mm_type sum_vec14;
+	register zq_mm_type a_vec1, b_vec1, b_vec2, b_vec3, b_vec4;
+
+	Aptr1 = A;
+	Cptr1 = C;
+	for (m = 0; m < M; m++, Aptr1 += lda, Cptr1 += ldc)
+	{
+		Bptr = Bt;
+		C_c_ptr1 = Cptr1;
+		for (n = 0; n < N; n += 4, Bptr += ldb4)
+		{
+			Bptr1 = Bptr;
+			Bptr2 = Bptr1 + ldb;
+			Bptr3 = Bptr2 + ldb;
+			Bptr4 = Bptr3 + ldb;
+			A_c_ptr1 = Aptr1;
+			B_c_ptr1 = Bptr1; B_c_ptr2 = Bptr2; B_c_ptr3 = Bptr3; B_c_ptr4 = Bptr4;
+			op_1x4_2_first;
+			store_1x4;
+		}
+	}
+}
+
+void zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv4_KeqAlign3(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+{
+	const float* Aptr1, *A_c_ptr1, *Bptr, *Bptr1, *Bptr2, *Bptr3, *Bptr4;
+	const float *B_c_ptr1, *B_c_ptr2, *B_c_ptr3, *B_c_ptr4;
+	float* Cptr1, *C_c_ptr1;
+	int m, n;
+	int ldb4 = ldb << 2;
+	zq_q_type q;
+	register zq_mm_type sum_vec11;
+	register zq_mm_type sum_vec12;
+	register zq_mm_type sum_vec13;
+	register zq_mm_type sum_vec14;
+	register zq_mm_type a_vec1, b_vec1, b_vec2, b_vec3, b_vec4;
+
+	Aptr1 = A;
+	Cptr1 = C;
+	for (m = 0; m < M; m++, Aptr1 += lda, Cptr1 += ldc)
+	{
+		Bptr = Bt;
+		C_c_ptr1 = Cptr1;
+		for (n = 0; n < N; n += 4, Bptr += ldb4)
+		{
+			Bptr1 = Bptr;
+			Bptr2 = Bptr1 + ldb;
+			Bptr3 = Bptr2 + ldb;
+			Bptr4 = Bptr3 + ldb;
+			A_c_ptr1 = Aptr1;
+			B_c_ptr1 = Bptr1; B_c_ptr2 = Bptr2; B_c_ptr3 = Bptr3; B_c_ptr4 = Bptr4;
+			op_1x4_first;
+			op_1x4_2;
+			store_1x4;
+		}
+	}
+}
+
+void zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv4_KeqAlign4(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+{
+	const float* Aptr1, *A_c_ptr1, *Bptr, *Bptr1, *Bptr2, *Bptr3, *Bptr4;
+	const float *B_c_ptr1, *B_c_ptr2, *B_c_ptr3, *B_c_ptr4;
+	float* Cptr1, *C_c_ptr1;
+	int m, n;
+	int ldb4 = ldb << 2;
+	zq_q_type q;
+	register zq_mm_type sum_vec11;
+	register zq_mm_type sum_vec12;
+	register zq_mm_type sum_vec13;
+	register zq_mm_type sum_vec14;
+	register zq_mm_type a_vec1, b_vec1, b_vec2, b_vec3, b_vec4;
+
+	Aptr1 = A;
+	Cptr1 = C;
+	for (m = 0; m < M; m++, Aptr1 += lda, Cptr1 += ldc)
+	{
+		Bptr = Bt;
+		C_c_ptr1 = Cptr1;
+		for (n = 0; n < N; n += 4, Bptr += ldb4)
+		{
+			Bptr1 = Bptr;
+			Bptr2 = Bptr1 + ldb;
+			Bptr3 = Bptr2 + ldb;
+			Bptr4 = Bptr3 + ldb;
+			A_c_ptr1 = Aptr1;
+			B_c_ptr1 = Bptr1; B_c_ptr2 = Bptr2; B_c_ptr3 = Bptr3; B_c_ptr4 = Bptr4;
+			op_1x4_4_first;
+			store_1x4;
+		}
+	}
+}
+
+void zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv4_KeqAlign5(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+{
+	const float* Aptr1, *A_c_ptr1, *Bptr, *Bptr1, *Bptr2, *Bptr3, *Bptr4;
+	const float *B_c_ptr1, *B_c_ptr2, *B_c_ptr3, *B_c_ptr4;
+	float* Cptr1, *C_c_ptr1;
+	int m, n;
+	int ldb4 = ldb << 2;
+	zq_q_type q;
+	register zq_mm_type sum_vec11;
+	register zq_mm_type sum_vec12;
+	register zq_mm_type sum_vec13;
+	register zq_mm_type sum_vec14;
+	register zq_mm_type a_vec1, b_vec1, b_vec2, b_vec3, b_vec4;
+
+	Aptr1 = A;
+	Cptr1 = C;
+	for (m = 0; m < M; m++, Aptr1 += lda, Cptr1 += ldc)
+	{
+		Bptr = Bt;
+		C_c_ptr1 = Cptr1;
+		for (n = 0; n < N; n += 4, Bptr += ldb4)
+		{
+			Bptr1 = Bptr;
+			Bptr2 = Bptr1 + ldb;
+			Bptr3 = Bptr2 + ldb;
+			Bptr4 = Bptr3 + ldb;
+			A_c_ptr1 = Aptr1;
+			B_c_ptr1 = Bptr1; B_c_ptr2 = Bptr2; B_c_ptr3 = Bptr3; B_c_ptr4 = Bptr4;
+			op_1x4_first;
+			op_1x4_4;
+			store_1x4;
+		}
+	}
+}
+
+void zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv4_KeqAlign6(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+{
+	const float* Aptr1, *A_c_ptr1, *Bptr, *Bptr1, *Bptr2, *Bptr3, *Bptr4;
+	const float *B_c_ptr1, *B_c_ptr2, *B_c_ptr3, *B_c_ptr4;
+	float* Cptr1, *C_c_ptr1;
+	int m, n;
+	int ldb4 = ldb << 2;
+	zq_q_type q;
+	register zq_mm_type sum_vec11;
+	register zq_mm_type sum_vec12;
+	register zq_mm_type sum_vec13;
+	register zq_mm_type sum_vec14;
+	register zq_mm_type a_vec1, b_vec1, b_vec2, b_vec3, b_vec4;
+
+	Aptr1 = A;
+	Cptr1 = C;
+	for (m = 0; m < M; m++, Aptr1 += lda, Cptr1 += ldc)
+	{
+		Bptr = Bt;
+		C_c_ptr1 = Cptr1;
+		for (n = 0; n < N; n += 4, Bptr += ldb4)
+		{
+			Bptr1 = Bptr;
+			Bptr2 = Bptr1 + ldb;
+			Bptr3 = Bptr2 + ldb;
+			Bptr4 = Bptr3 + ldb;
+			A_c_ptr1 = Aptr1;
+			B_c_ptr1 = Bptr1; B_c_ptr2 = Bptr2; B_c_ptr3 = Bptr3; B_c_ptr4 = Bptr4;
+			op_1x4_2_first;
+			op_1x4_4;
+			store_1x4;
+		}
+	}
+}
+
+void zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv4_KeqAlign7(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+{
+	const float* Aptr1, *A_c_ptr1, *Bptr, *Bptr1, *Bptr2, *Bptr3, *Bptr4;
+	const float *B_c_ptr1, *B_c_ptr2, *B_c_ptr3, *B_c_ptr4;
+	float* Cptr1, *C_c_ptr1;
+	int m, n;
+	int ldb4 = ldb << 2;
+	zq_q_type q;
+	register zq_mm_type sum_vec11;
+	register zq_mm_type sum_vec12;
+	register zq_mm_type sum_vec13;
+	register zq_mm_type sum_vec14;
+	register zq_mm_type a_vec1, b_vec1, b_vec2, b_vec3, b_vec4;
+
+	Aptr1 = A;
+	Cptr1 = C;
+	for (m = 0; m < M; m++, Aptr1 += lda, Cptr1 += ldc)
+	{
+		Bptr = Bt;
+		C_c_ptr1 = Cptr1;
+		for (n = 0; n < N; n += 4, Bptr += ldb4)
+		{
+			Bptr1 = Bptr;
+			Bptr2 = Bptr1 + ldb;
+			Bptr3 = Bptr2 + ldb;
+			Bptr4 = Bptr3 + ldb;
+			A_c_ptr1 = Aptr1;
+			B_c_ptr1 = Bptr1; B_c_ptr2 = Bptr2; B_c_ptr3 = Bptr3; B_c_ptr4 = Bptr4;
+			op_1x4_first;
+			op_1x4_2;
+			op_1x4_4;
+			store_1x4;
 		}
 	}
 }
@@ -5647,6 +6285,319 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv4_KdivAlign64(int M, int N, in
 				op_1x4_16;
 			}
 			store_1x4;
+		}
+	}
+}
+
+void zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv8_KeqAlign1(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+{
+	const float* Aptr1, *A_c_ptr1, *Bptr, *Bptr1, *Bptr2, *Bptr3, *Bptr4, *Bptr5, *Bptr6, *Bptr7, *Bptr8;
+	const float *B_c_ptr1, *B_c_ptr2, *B_c_ptr3, *B_c_ptr4, *B_c_ptr5, *B_c_ptr6, *B_c_ptr7, *B_c_ptr8;
+	float* Cptr1, *C_c_ptr1;
+	int m, n;
+	int ldb8 = ldb << 3;
+	zq_q_type q;
+	register zq_mm_type sum_vec11;
+	register zq_mm_type sum_vec12;
+	register zq_mm_type sum_vec13;
+	register zq_mm_type sum_vec14;
+	register zq_mm_type sum_vec15;
+	register zq_mm_type sum_vec16;
+	register zq_mm_type sum_vec17;
+	register zq_mm_type sum_vec18;
+	register zq_mm_type a_vec1;
+	register zq_mm_type b_vec1, b_vec2, b_vec3, b_vec4, b_vec5, b_vec6, b_vec7, b_vec8;
+
+	Aptr1 = A;
+	Cptr1 = C;
+	for (m = 0; m < M; m++, Aptr1 += lda, Cptr1 += ldc)
+	{
+		Bptr = Bt;
+		C_c_ptr1 = Cptr1;
+		for (n = 0; n < N; n += 8, Bptr += ldb8)
+		{
+			Bptr1 = Bptr;
+			Bptr2 = Bptr1 + ldb;
+			Bptr3 = Bptr2 + ldb;
+			Bptr4 = Bptr3 + ldb;
+			Bptr5 = Bptr4 + ldb;
+			Bptr6 = Bptr5 + ldb;
+			Bptr7 = Bptr6 + ldb;
+			Bptr8 = Bptr7 + ldb;
+			A_c_ptr1 = Aptr1;
+			B_c_ptr1 = Bptr1; B_c_ptr2 = Bptr2; B_c_ptr3 = Bptr3; B_c_ptr4 = Bptr4;
+			B_c_ptr5 = Bptr5; B_c_ptr6 = Bptr6; B_c_ptr7 = Bptr7; B_c_ptr8 = Bptr8;
+			op_1x8_first;
+			store_1x8;
+		}
+	}
+}
+
+void zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv8_KeqAlign2(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+{
+	const float* Aptr1, *A_c_ptr1, *Bptr, *Bptr1, *Bptr2, *Bptr3, *Bptr4, *Bptr5, *Bptr6, *Bptr7, *Bptr8;
+	const float *B_c_ptr1, *B_c_ptr2, *B_c_ptr3, *B_c_ptr4, *B_c_ptr5, *B_c_ptr6, *B_c_ptr7, *B_c_ptr8;
+	float* Cptr1, *C_c_ptr1;
+	int m, n;
+	int ldb8 = ldb << 3;
+	zq_q_type q;
+	register zq_mm_type sum_vec11;
+	register zq_mm_type sum_vec12;
+	register zq_mm_type sum_vec13;
+	register zq_mm_type sum_vec14;
+	register zq_mm_type sum_vec15;
+	register zq_mm_type sum_vec16;
+	register zq_mm_type sum_vec17;
+	register zq_mm_type sum_vec18;
+	register zq_mm_type a_vec1;
+	register zq_mm_type b_vec1, b_vec2, b_vec3, b_vec4, b_vec5, b_vec6, b_vec7, b_vec8;
+
+	Aptr1 = A;
+	Cptr1 = C;
+	for (m = 0; m < M; m++, Aptr1 += lda, Cptr1 += ldc)
+	{
+		Bptr = Bt;
+		C_c_ptr1 = Cptr1;
+		for (n = 0; n < N; n += 8, Bptr += ldb8)
+		{
+			Bptr1 = Bptr;
+			Bptr2 = Bptr1 + ldb;
+			Bptr3 = Bptr2 + ldb;
+			Bptr4 = Bptr3 + ldb;
+			Bptr5 = Bptr4 + ldb;
+			Bptr6 = Bptr5 + ldb;
+			Bptr7 = Bptr6 + ldb;
+			Bptr8 = Bptr7 + ldb;
+			A_c_ptr1 = Aptr1;
+			B_c_ptr1 = Bptr1; B_c_ptr2 = Bptr2; B_c_ptr3 = Bptr3; B_c_ptr4 = Bptr4;
+			B_c_ptr5 = Bptr5; B_c_ptr6 = Bptr6; B_c_ptr7 = Bptr7; B_c_ptr8 = Bptr8;
+			op_1x8_2_first;
+			store_1x8;
+		}
+	}
+}
+
+void zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv8_KeqAlign3(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+{
+	const float* Aptr1, *A_c_ptr1, *Bptr, *Bptr1, *Bptr2, *Bptr3, *Bptr4, *Bptr5, *Bptr6, *Bptr7, *Bptr8;
+	const float *B_c_ptr1, *B_c_ptr2, *B_c_ptr3, *B_c_ptr4, *B_c_ptr5, *B_c_ptr6, *B_c_ptr7, *B_c_ptr8;
+	float* Cptr1, *C_c_ptr1;
+	int m, n;
+	int ldb8 = ldb << 3;
+	zq_q_type q;
+	register zq_mm_type sum_vec11;
+	register zq_mm_type sum_vec12;
+	register zq_mm_type sum_vec13;
+	register zq_mm_type sum_vec14;
+	register zq_mm_type sum_vec15;
+	register zq_mm_type sum_vec16;
+	register zq_mm_type sum_vec17;
+	register zq_mm_type sum_vec18;
+	register zq_mm_type a_vec1;
+	register zq_mm_type b_vec1, b_vec2, b_vec3, b_vec4, b_vec5, b_vec6, b_vec7, b_vec8;
+
+	Aptr1 = A;
+	Cptr1 = C;
+	for (m = 0; m < M; m++, Aptr1 += lda, Cptr1 += ldc)
+	{
+		Bptr = Bt;
+		C_c_ptr1 = Cptr1;
+		for (n = 0; n < N; n += 8, Bptr += ldb8)
+		{
+			Bptr1 = Bptr;
+			Bptr2 = Bptr1 + ldb;
+			Bptr3 = Bptr2 + ldb;
+			Bptr4 = Bptr3 + ldb;
+			Bptr5 = Bptr4 + ldb;
+			Bptr6 = Bptr5 + ldb;
+			Bptr7 = Bptr6 + ldb;
+			Bptr8 = Bptr7 + ldb;
+			A_c_ptr1 = Aptr1;
+			B_c_ptr1 = Bptr1; B_c_ptr2 = Bptr2; B_c_ptr3 = Bptr3; B_c_ptr4 = Bptr4;
+			B_c_ptr5 = Bptr5; B_c_ptr6 = Bptr6; B_c_ptr7 = Bptr7; B_c_ptr8 = Bptr8;
+			op_1x8_first;
+			op_1x8_2;
+			store_1x8;
+		}
+	}
+}
+
+void zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv8_KeqAlign4(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+{
+	const float* Aptr1, *A_c_ptr1, *Bptr, *Bptr1, *Bptr2, *Bptr3, *Bptr4, *Bptr5, *Bptr6, *Bptr7, *Bptr8;
+	const float *B_c_ptr1, *B_c_ptr2, *B_c_ptr3, *B_c_ptr4, *B_c_ptr5, *B_c_ptr6, *B_c_ptr7, *B_c_ptr8;
+	float* Cptr1, *C_c_ptr1;
+	int m, n;
+	int ldb8 = ldb << 3;
+	zq_q_type q;
+	register zq_mm_type sum_vec11;
+	register zq_mm_type sum_vec12;
+	register zq_mm_type sum_vec13;
+	register zq_mm_type sum_vec14;
+	register zq_mm_type sum_vec15;
+	register zq_mm_type sum_vec16;
+	register zq_mm_type sum_vec17;
+	register zq_mm_type sum_vec18;
+	register zq_mm_type a_vec1;
+	register zq_mm_type b_vec1, b_vec2, b_vec3, b_vec4, b_vec5, b_vec6, b_vec7, b_vec8;
+
+	Aptr1 = A;
+	Cptr1 = C;
+	for (m = 0; m < M; m++, Aptr1 += lda, Cptr1 += ldc)
+	{
+		Bptr = Bt;
+		C_c_ptr1 = Cptr1;
+		for (n = 0; n < N; n += 8, Bptr += ldb8)
+		{
+			Bptr1 = Bptr;
+			Bptr2 = Bptr1 + ldb;
+			Bptr3 = Bptr2 + ldb;
+			Bptr4 = Bptr3 + ldb;
+			Bptr5 = Bptr4 + ldb;
+			Bptr6 = Bptr5 + ldb;
+			Bptr7 = Bptr6 + ldb;
+			Bptr8 = Bptr7 + ldb;
+			A_c_ptr1 = Aptr1;
+			B_c_ptr1 = Bptr1; B_c_ptr2 = Bptr2; B_c_ptr3 = Bptr3; B_c_ptr4 = Bptr4;
+			B_c_ptr5 = Bptr5; B_c_ptr6 = Bptr6; B_c_ptr7 = Bptr7; B_c_ptr8 = Bptr8;
+			op_1x8_4_first;
+			store_1x8;
+		}
+	}
+}
+
+void zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv8_KeqAlign5(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+{
+	const float* Aptr1, *A_c_ptr1, *Bptr, *Bptr1, *Bptr2, *Bptr3, *Bptr4, *Bptr5, *Bptr6, *Bptr7, *Bptr8;
+	const float *B_c_ptr1, *B_c_ptr2, *B_c_ptr3, *B_c_ptr4, *B_c_ptr5, *B_c_ptr6, *B_c_ptr7, *B_c_ptr8;
+	float* Cptr1, *C_c_ptr1;
+	int m, n;
+	int ldb8 = ldb << 3;
+	zq_q_type q;
+	register zq_mm_type sum_vec11;
+	register zq_mm_type sum_vec12;
+	register zq_mm_type sum_vec13;
+	register zq_mm_type sum_vec14;
+	register zq_mm_type sum_vec15;
+	register zq_mm_type sum_vec16;
+	register zq_mm_type sum_vec17;
+	register zq_mm_type sum_vec18;
+	register zq_mm_type a_vec1;
+	register zq_mm_type b_vec1, b_vec2, b_vec3, b_vec4, b_vec5, b_vec6, b_vec7, b_vec8;
+
+	Aptr1 = A;
+	Cptr1 = C;
+	for (m = 0; m < M; m++, Aptr1 += lda, Cptr1 += ldc)
+	{
+		Bptr = Bt;
+		C_c_ptr1 = Cptr1;
+		for (n = 0; n < N; n += 8, Bptr += ldb8)
+		{
+			Bptr1 = Bptr;
+			Bptr2 = Bptr1 + ldb;
+			Bptr3 = Bptr2 + ldb;
+			Bptr4 = Bptr3 + ldb;
+			Bptr5 = Bptr4 + ldb;
+			Bptr6 = Bptr5 + ldb;
+			Bptr7 = Bptr6 + ldb;
+			Bptr8 = Bptr7 + ldb;
+			A_c_ptr1 = Aptr1;
+			B_c_ptr1 = Bptr1; B_c_ptr2 = Bptr2; B_c_ptr3 = Bptr3; B_c_ptr4 = Bptr4;
+			B_c_ptr5 = Bptr5; B_c_ptr6 = Bptr6; B_c_ptr7 = Bptr7; B_c_ptr8 = Bptr8;
+			op_1x8_first;
+			op_1x8_4;
+			store_1x8;
+		}
+	}
+}
+
+void zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv8_KeqAlign6(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+{
+	const float* Aptr1, *A_c_ptr1, *Bptr, *Bptr1, *Bptr2, *Bptr3, *Bptr4, *Bptr5, *Bptr6, *Bptr7, *Bptr8;
+	const float *B_c_ptr1, *B_c_ptr2, *B_c_ptr3, *B_c_ptr4, *B_c_ptr5, *B_c_ptr6, *B_c_ptr7, *B_c_ptr8;
+	float* Cptr1, *C_c_ptr1;
+	int m, n;
+	int ldb8 = ldb << 3;
+	zq_q_type q;
+	register zq_mm_type sum_vec11;
+	register zq_mm_type sum_vec12;
+	register zq_mm_type sum_vec13;
+	register zq_mm_type sum_vec14;
+	register zq_mm_type sum_vec15;
+	register zq_mm_type sum_vec16;
+	register zq_mm_type sum_vec17;
+	register zq_mm_type sum_vec18;
+	register zq_mm_type a_vec1;
+	register zq_mm_type b_vec1, b_vec2, b_vec3, b_vec4, b_vec5, b_vec6, b_vec7, b_vec8;
+
+	Aptr1 = A;
+	Cptr1 = C;
+	for (m = 0; m < M; m++, Aptr1 += lda, Cptr1 += ldc)
+	{
+		Bptr = Bt;
+		C_c_ptr1 = Cptr1;
+		for (n = 0; n < N; n += 8, Bptr += ldb8)
+		{
+			Bptr1 = Bptr;
+			Bptr2 = Bptr1 + ldb;
+			Bptr3 = Bptr2 + ldb;
+			Bptr4 = Bptr3 + ldb;
+			Bptr5 = Bptr4 + ldb;
+			Bptr6 = Bptr5 + ldb;
+			Bptr7 = Bptr6 + ldb;
+			Bptr8 = Bptr7 + ldb;
+			A_c_ptr1 = Aptr1;
+			B_c_ptr1 = Bptr1; B_c_ptr2 = Bptr2; B_c_ptr3 = Bptr3; B_c_ptr4 = Bptr4;
+			B_c_ptr5 = Bptr5; B_c_ptr6 = Bptr6; B_c_ptr7 = Bptr7; B_c_ptr8 = Bptr8;
+			op_1x8_2_first;
+			op_1x8_4;
+			store_1x8;
+		}
+	}
+}
+
+void zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv8_KeqAlign7(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+{
+	const float* Aptr1, *A_c_ptr1, *Bptr, *Bptr1, *Bptr2, *Bptr3, *Bptr4, *Bptr5, *Bptr6, *Bptr7, *Bptr8;
+	const float *B_c_ptr1, *B_c_ptr2, *B_c_ptr3, *B_c_ptr4, *B_c_ptr5, *B_c_ptr6, *B_c_ptr7, *B_c_ptr8;
+	float* Cptr1, *C_c_ptr1;
+	int m, n;
+	int ldb8 = ldb << 3;
+	zq_q_type q;
+	register zq_mm_type sum_vec11;
+	register zq_mm_type sum_vec12;
+	register zq_mm_type sum_vec13;
+	register zq_mm_type sum_vec14;
+	register zq_mm_type sum_vec15;
+	register zq_mm_type sum_vec16;
+	register zq_mm_type sum_vec17;
+	register zq_mm_type sum_vec18;
+	register zq_mm_type a_vec1;
+	register zq_mm_type b_vec1, b_vec2, b_vec3, b_vec4, b_vec5, b_vec6, b_vec7, b_vec8;
+
+	Aptr1 = A;
+	Cptr1 = C;
+	for (m = 0; m < M; m++, Aptr1 += lda, Cptr1 += ldc)
+	{
+		Bptr = Bt;
+		C_c_ptr1 = Cptr1;
+		for (n = 0; n < N; n += 8, Bptr += ldb8)
+		{
+			Bptr1 = Bptr;
+			Bptr2 = Bptr1 + ldb;
+			Bptr3 = Bptr2 + ldb;
+			Bptr4 = Bptr3 + ldb;
+			Bptr5 = Bptr4 + ldb;
+			Bptr6 = Bptr5 + ldb;
+			Bptr7 = Bptr6 + ldb;
+			Bptr8 = Bptr7 + ldb;
+			A_c_ptr1 = Aptr1;
+			B_c_ptr1 = Bptr1; B_c_ptr2 = Bptr2; B_c_ptr3 = Bptr3; B_c_ptr4 = Bptr4;
+			B_c_ptr5 = Bptr5; B_c_ptr6 = Bptr6; B_c_ptr7 = Bptr7; B_c_ptr8 = Bptr8;
+			op_1x8_first;
+			op_1x8_2;
+			op_1x8_4;
+			store_1x8;
 		}
 	}
 }
@@ -5898,6 +6849,338 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv8_KdivAlign64(int M, int N, in
 				op_1x8_16;
 			}
 			store_1x8;
+		}
+	}
+}
+
+void zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv1_KeqAlign1(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+{
+	const float* Aptr1, *Aptr2, *A_c_ptr1, *A_c_ptr2;
+	const float *Bptr, *Bptr1;
+	const float *B_c_ptr1;
+	float* Cptr1, *Cptr2, *C_c_ptr1, *C_c_ptr2;
+	int m, n;
+	int lda2 = lda << 1;
+	int ldc2 = ldc << 1;
+	zq_q_type q;
+	register zq_mm_type sum_vec11, sum_vec21;
+	register zq_mm_type a_vec1, a_vec2, b_vec1;
+
+	Aptr1 = A;
+	Aptr2 = Aptr1 + lda;
+	Cptr1 = C;
+	Cptr2 = Cptr1 + ldc;
+	for (m = 0; m < M - 1; m += 2, Aptr1 += lda2, Aptr2 += lda2, Cptr1 += ldc2, Cptr2 += ldc2)
+	{
+		Bptr = Bt;
+		C_c_ptr1 = Cptr1;
+		C_c_ptr2 = Cptr2;
+		for (n = 0; n < N; n++, Bptr += ldb)
+		{
+			Bptr1 = Bptr;
+			A_c_ptr1 = Aptr1, A_c_ptr2 = Aptr2;
+			B_c_ptr1 = Bptr1;
+			op_2x1_first;
+			store_2x1;
+		}
+	}
+
+	for (; m < M; m++, Aptr1 += lda, Cptr1 += ldc)
+	{
+		Bptr = Bt;
+		C_c_ptr1 = Cptr1;
+		for (n = 0; n < N; n++, Bptr += ldb)
+		{
+			Bptr1 = Bptr;
+			A_c_ptr1 = Aptr1; B_c_ptr1 = Bptr1;
+			op_1x1_first;
+			store_1x1;
+		}
+	}
+}
+
+void zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv1_KeqAlign2(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+{
+	const float* Aptr1, *Aptr2, *A_c_ptr1, *A_c_ptr2;
+	const float *Bptr, *Bptr1;
+	const float *B_c_ptr1;
+	float* Cptr1, *Cptr2, *C_c_ptr1, *C_c_ptr2;
+	int m, n;
+	int lda2 = lda << 1;
+	int ldc2 = ldc << 1;
+	zq_q_type q;
+	register zq_mm_type sum_vec11, sum_vec21;
+	register zq_mm_type a_vec1, a_vec2, b_vec1;
+
+	Aptr1 = A;
+	Aptr2 = Aptr1 + lda;
+	Cptr1 = C;
+	Cptr2 = Cptr1 + ldc;
+	for (m = 0; m < M - 1; m += 2, Aptr1 += lda2, Aptr2 += lda2, Cptr1 += ldc2, Cptr2 += ldc2)
+	{
+		Bptr = Bt;
+		C_c_ptr1 = Cptr1;
+		C_c_ptr2 = Cptr2;
+		for (n = 0; n < N; n++, Bptr += ldb)
+		{
+			Bptr1 = Bptr;
+			A_c_ptr1 = Aptr1, A_c_ptr2 = Aptr2;
+			B_c_ptr1 = Bptr1;
+			op_2x1_2_first;
+			store_2x1;
+		}
+	}
+
+	for (; m < M; m++, Aptr1 += lda, Cptr1 += ldc)
+	{
+		Bptr = Bt;
+		C_c_ptr1 = Cptr1;
+		for (n = 0; n < N; n++, Bptr += ldb)
+		{
+			Bptr1 = Bptr;
+			A_c_ptr1 = Aptr1; B_c_ptr1 = Bptr1;
+			op_1x1_2_first;
+			store_1x1;
+		}
+	}
+}
+
+void zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv1_KeqAlign3(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+{
+	const float* Aptr1, *Aptr2, *A_c_ptr1, *A_c_ptr2;
+	const float *Bptr, *Bptr1;
+	const float *B_c_ptr1;
+	float* Cptr1, *Cptr2, *C_c_ptr1, *C_c_ptr2;
+	int m, n;
+	int lda2 = lda << 1;
+	int ldc2 = ldc << 1;
+	zq_q_type q;
+	register zq_mm_type sum_vec11, sum_vec21;
+	register zq_mm_type a_vec1, a_vec2, b_vec1;
+
+	Aptr1 = A;
+	Aptr2 = Aptr1 + lda;
+	Cptr1 = C;
+	Cptr2 = Cptr1 + ldc;
+	for (m = 0; m < M - 1; m += 2, Aptr1 += lda2, Aptr2 += lda2, Cptr1 += ldc2, Cptr2 += ldc2)
+	{
+		Bptr = Bt;
+		C_c_ptr1 = Cptr1;
+		C_c_ptr2 = Cptr2;
+		for (n = 0; n < N; n++, Bptr += ldb)
+		{
+			Bptr1 = Bptr;
+			A_c_ptr1 = Aptr1, A_c_ptr2 = Aptr2;
+			B_c_ptr1 = Bptr1;
+			op_2x1_first;
+			op_2x1_2;
+			store_2x1;
+		}
+	}
+
+	for (; m < M; m++, Aptr1 += lda, Cptr1 += ldc)
+	{
+		Bptr = Bt;
+		C_c_ptr1 = Cptr1;
+		for (n = 0; n < N; n++, Bptr += ldb)
+		{
+			Bptr1 = Bptr;
+			A_c_ptr1 = Aptr1; B_c_ptr1 = Bptr1;
+			op_1x1_first;
+			op_1x1_2;
+			store_1x1;
+		}
+	}
+}
+
+void zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv1_KeqAlign4(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+{
+	const float* Aptr1, *Aptr2, *A_c_ptr1, *A_c_ptr2;
+	const float *Bptr, *Bptr1;
+	const float *B_c_ptr1;
+	float* Cptr1, *Cptr2, *C_c_ptr1, *C_c_ptr2;
+	int m, n;
+	int lda2 = lda << 1;
+	int ldc2 = ldc << 1;
+	zq_q_type q;
+	register zq_mm_type sum_vec11, sum_vec21;
+	register zq_mm_type a_vec1, a_vec2, b_vec1;
+
+	Aptr1 = A;
+	Aptr2 = Aptr1 + lda;
+	Cptr1 = C;
+	Cptr2 = Cptr1 + ldc;
+	for (m = 0; m < M - 1; m += 2, Aptr1 += lda2, Aptr2 += lda2, Cptr1 += ldc2, Cptr2 += ldc2)
+	{
+		Bptr = Bt;
+		C_c_ptr1 = Cptr1;
+		C_c_ptr2 = Cptr2;
+		for (n = 0; n < N; n++, Bptr += ldb)
+		{
+			Bptr1 = Bptr;
+			A_c_ptr1 = Aptr1, A_c_ptr2 = Aptr2;
+			B_c_ptr1 = Bptr1;
+			op_2x1_4_first;
+			store_2x1;
+		}
+	}
+
+	for (; m < M; m++, Aptr1 += lda, Cptr1 += ldc)
+	{
+		Bptr = Bt;
+		C_c_ptr1 = Cptr1;
+		for (n = 0; n < N; n++, Bptr += ldb)
+		{
+			Bptr1 = Bptr;
+			A_c_ptr1 = Aptr1; B_c_ptr1 = Bptr1;
+			op_1x1_4_first;
+			store_1x1;
+		}
+	}
+}
+
+void zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv1_KeqAlign5(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+{
+	const float* Aptr1, *Aptr2, *A_c_ptr1, *A_c_ptr2;
+	const float *Bptr, *Bptr1;
+	const float *B_c_ptr1;
+	float* Cptr1, *Cptr2, *C_c_ptr1, *C_c_ptr2;
+	int m, n;
+	int lda2 = lda << 1;
+	int ldc2 = ldc << 1;
+	zq_q_type q;
+	register zq_mm_type sum_vec11, sum_vec21;
+	register zq_mm_type a_vec1, a_vec2, b_vec1;
+
+	Aptr1 = A;
+	Aptr2 = Aptr1 + lda;
+	Cptr1 = C;
+	Cptr2 = Cptr1 + ldc;
+	for (m = 0; m < M - 1; m += 2, Aptr1 += lda2, Aptr2 += lda2, Cptr1 += ldc2, Cptr2 += ldc2)
+	{
+		Bptr = Bt;
+		C_c_ptr1 = Cptr1;
+		C_c_ptr2 = Cptr2;
+		for (n = 0; n < N; n++, Bptr += ldb)
+		{
+			Bptr1 = Bptr;
+			A_c_ptr1 = Aptr1, A_c_ptr2 = Aptr2;
+			B_c_ptr1 = Bptr1;
+			op_2x1_first;
+			op_2x1_4;
+			store_2x1;
+		}
+	}
+
+	for (; m < M; m++, Aptr1 += lda, Cptr1 += ldc)
+	{
+		Bptr = Bt;
+		C_c_ptr1 = Cptr1;
+		for (n = 0; n < N; n++, Bptr += ldb)
+		{
+			Bptr1 = Bptr;
+			A_c_ptr1 = Aptr1; B_c_ptr1 = Bptr1;
+			op_1x1_first;
+			op_1x1_4;
+			store_1x1;
+		}
+	}
+}
+
+void zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv1_KeqAlign6(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+{
+	const float* Aptr1, *Aptr2, *A_c_ptr1, *A_c_ptr2;
+	const float *Bptr, *Bptr1;
+	const float *B_c_ptr1;
+	float* Cptr1, *Cptr2, *C_c_ptr1, *C_c_ptr2;
+	int m, n;
+	int lda2 = lda << 1;
+	int ldc2 = ldc << 1;
+	zq_q_type q;
+	register zq_mm_type sum_vec11, sum_vec21;
+	register zq_mm_type a_vec1, a_vec2, b_vec1;
+
+	Aptr1 = A;
+	Aptr2 = Aptr1 + lda;
+	Cptr1 = C;
+	Cptr2 = Cptr1 + ldc;
+	for (m = 0; m < M - 1; m += 2, Aptr1 += lda2, Aptr2 += lda2, Cptr1 += ldc2, Cptr2 += ldc2)
+	{
+		Bptr = Bt;
+		C_c_ptr1 = Cptr1;
+		C_c_ptr2 = Cptr2;
+		for (n = 0; n < N; n++, Bptr += ldb)
+		{
+			Bptr1 = Bptr;
+			A_c_ptr1 = Aptr1, A_c_ptr2 = Aptr2;
+			B_c_ptr1 = Bptr1;
+			op_2x1_2_first;
+			op_2x1_4;
+			store_2x1;
+		}
+	}
+
+	for (; m < M; m++, Aptr1 += lda, Cptr1 += ldc)
+	{
+		Bptr = Bt;
+		C_c_ptr1 = Cptr1;
+		for (n = 0; n < N; n++, Bptr += ldb)
+		{
+			Bptr1 = Bptr;
+			A_c_ptr1 = Aptr1; B_c_ptr1 = Bptr1;
+			op_1x1_2_first;
+			op_1x1_4;
+			store_1x1;
+		}
+	}
+}
+
+void zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv1_KeqAlign7(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+{
+	const float* Aptr1, *Aptr2, *A_c_ptr1, *A_c_ptr2;
+	const float *Bptr, *Bptr1;
+	const float *B_c_ptr1;
+	float* Cptr1, *Cptr2, *C_c_ptr1, *C_c_ptr2;
+	int m, n;
+	int lda2 = lda << 1;
+	int ldc2 = ldc << 1;
+	zq_q_type q;
+	register zq_mm_type sum_vec11, sum_vec21;
+	register zq_mm_type a_vec1, a_vec2, b_vec1;
+
+	Aptr1 = A;
+	Aptr2 = Aptr1 + lda;
+	Cptr1 = C;
+	Cptr2 = Cptr1 + ldc;
+	for (m = 0; m < M - 1; m += 2, Aptr1 += lda2, Aptr2 += lda2, Cptr1 += ldc2, Cptr2 += ldc2)
+	{
+		Bptr = Bt;
+		C_c_ptr1 = Cptr1;
+		C_c_ptr2 = Cptr2;
+		for (n = 0; n < N; n++, Bptr += ldb)
+		{
+			Bptr1 = Bptr;
+			A_c_ptr1 = Aptr1, A_c_ptr2 = Aptr2;
+			B_c_ptr1 = Bptr1;
+			op_2x1_first;
+			op_2x1_2;
+			op_2x1_4;
+			store_2x1;
+		}
+	}
+
+	for (; m < M; m++, Aptr1 += lda, Cptr1 += ldc)
+	{
+		Bptr = Bt;
+		C_c_ptr1 = Cptr1;
+		for (n = 0; n < N; n++, Bptr += ldb)
+		{
+			Bptr1 = Bptr;
+			A_c_ptr1 = Aptr1; B_c_ptr1 = Bptr1;
+			op_1x1_first;
+			op_1x1_2;
+			op_1x1_4;
+			store_1x1;
 		}
 	}
 }
@@ -6194,6 +7477,366 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv1_KdivAlign64(int M, int N, in
 				op_1x1_16;
 			}
 			store_1x1;
+		}
+	}
+}
+
+void zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv2_KeqAlign1(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+{
+	const float* Aptr1, *Aptr2, *A_c_ptr1, *A_c_ptr2;
+	const float *Bptr, *Bptr1, *Bptr2;
+	const float *B_c_ptr1, *B_c_ptr2;
+	float* Cptr1, *Cptr2, *C_c_ptr1, *C_c_ptr2;
+	int m, n;
+	int lda2 = lda << 1;
+	int ldc2 = ldc << 1;
+	int ldb2 = ldb << 1;
+	zq_q_type q;
+	register zq_mm_type sum_vec11, sum_vec21;
+	register zq_mm_type sum_vec12, sum_vec22;
+	register zq_mm_type a_vec1, a_vec2, b_vec1, b_vec2;
+
+	Aptr1 = A;
+	Aptr2 = Aptr1 + lda;
+	Cptr1 = C;
+	Cptr2 = Cptr1 + ldc;
+	for (m = 0; m < M - 1; m += 2, Aptr1 += lda2, Aptr2 += lda2, Cptr1 += ldc2, Cptr2 += ldc2)
+	{
+		Bptr = Bt;
+		C_c_ptr1 = Cptr1;
+		C_c_ptr2 = Cptr2;
+		for (n = 0; n < N; n += 2, Bptr += ldb2)
+		{
+			Bptr1 = Bptr;
+			Bptr2 = Bptr1 + ldb;
+			A_c_ptr1 = Aptr1, A_c_ptr2 = Aptr2;
+			B_c_ptr1 = Bptr1; B_c_ptr2 = Bptr2;
+			op_2x2_first;
+			store_2x2;
+		}
+	}
+
+	for (; m < M; m++, Aptr1 += lda, Cptr1 += ldc)
+	{
+		Bptr = Bt;
+		C_c_ptr1 = Cptr1;
+		for (n = 0; n < N; n += 2, Bptr += ldb2)
+		{
+			Bptr1 = Bptr;
+			Bptr2 = Bptr1 + ldb;
+			A_c_ptr1 = Aptr1; B_c_ptr1 = Bptr1; B_c_ptr2 = Bptr2;
+			op_1x2_first;
+			store_1x2;
+		}
+	}
+}
+
+void zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv2_KeqAlign2(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+{
+	const float* Aptr1, *Aptr2, *A_c_ptr1, *A_c_ptr2;
+	const float *Bptr, *Bptr1, *Bptr2;
+	const float *B_c_ptr1, *B_c_ptr2;
+	float* Cptr1, *Cptr2, *C_c_ptr1, *C_c_ptr2;
+	int m, n;
+	int lda2 = lda << 1;
+	int ldc2 = ldc << 1;
+	int ldb2 = ldb << 1;
+	zq_q_type q;
+	register zq_mm_type sum_vec11, sum_vec21;
+	register zq_mm_type sum_vec12, sum_vec22;
+	register zq_mm_type a_vec1, a_vec2, b_vec1, b_vec2;
+
+	Aptr1 = A;
+	Aptr2 = Aptr1 + lda;
+	Cptr1 = C;
+	Cptr2 = Cptr1 + ldc;
+	for (m = 0; m < M - 1; m += 2, Aptr1 += lda2, Aptr2 += lda2, Cptr1 += ldc2, Cptr2 += ldc2)
+	{
+		Bptr = Bt;
+		C_c_ptr1 = Cptr1;
+		C_c_ptr2 = Cptr2;
+		for (n = 0; n < N; n += 2, Bptr += ldb2)
+		{
+			Bptr1 = Bptr;
+			Bptr2 = Bptr1 + ldb;
+			A_c_ptr1 = Aptr1, A_c_ptr2 = Aptr2;
+			B_c_ptr1 = Bptr1; B_c_ptr2 = Bptr2;
+			op_2x2_2_first;
+			store_2x2;
+		}
+	}
+
+	for (; m < M; m++, Aptr1 += lda, Cptr1 += ldc)
+	{
+		Bptr = Bt;
+		C_c_ptr1 = Cptr1;
+		for (n = 0; n < N; n += 2, Bptr += ldb2)
+		{
+			Bptr1 = Bptr;
+			Bptr2 = Bptr1 + ldb;
+			A_c_ptr1 = Aptr1; B_c_ptr1 = Bptr1; B_c_ptr2 = Bptr2;
+			op_1x2_2_first;
+			store_1x2;
+		}
+	}
+}
+
+void zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv2_KeqAlign3(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+{
+	const float* Aptr1, *Aptr2, *A_c_ptr1, *A_c_ptr2;
+	const float *Bptr, *Bptr1, *Bptr2;
+	const float *B_c_ptr1, *B_c_ptr2;
+	float* Cptr1, *Cptr2, *C_c_ptr1, *C_c_ptr2;
+	int m, n;
+	int lda2 = lda << 1;
+	int ldc2 = ldc << 1;
+	int ldb2 = ldb << 1;
+	zq_q_type q;
+	register zq_mm_type sum_vec11, sum_vec21;
+	register zq_mm_type sum_vec12, sum_vec22;
+	register zq_mm_type a_vec1, a_vec2, b_vec1, b_vec2;
+
+	Aptr1 = A;
+	Aptr2 = Aptr1 + lda;
+	Cptr1 = C;
+	Cptr2 = Cptr1 + ldc;
+	for (m = 0; m < M - 1; m += 2, Aptr1 += lda2, Aptr2 += lda2, Cptr1 += ldc2, Cptr2 += ldc2)
+	{
+		Bptr = Bt;
+		C_c_ptr1 = Cptr1;
+		C_c_ptr2 = Cptr2;
+		for (n = 0; n < N; n += 2, Bptr += ldb2)
+		{
+			Bptr1 = Bptr;
+			Bptr2 = Bptr1 + ldb;
+			A_c_ptr1 = Aptr1, A_c_ptr2 = Aptr2;
+			B_c_ptr1 = Bptr1; B_c_ptr2 = Bptr2;
+			op_2x2_first;
+			op_2x2_2;
+			store_2x2;
+		}
+	}
+
+	for (; m < M; m++, Aptr1 += lda, Cptr1 += ldc)
+	{
+		Bptr = Bt;
+		C_c_ptr1 = Cptr1;
+		for (n = 0; n < N; n += 2, Bptr += ldb2)
+		{
+			Bptr1 = Bptr;
+			Bptr2 = Bptr1 + ldb;
+			A_c_ptr1 = Aptr1; B_c_ptr1 = Bptr1; B_c_ptr2 = Bptr2;
+			op_1x2_first;
+			op_1x2_2;
+			store_1x2;
+		}
+	}
+}
+
+void zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv2_KeqAlign4(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+{
+	const float* Aptr1, *Aptr2, *A_c_ptr1, *A_c_ptr2;
+	const float *Bptr, *Bptr1, *Bptr2;
+	const float *B_c_ptr1, *B_c_ptr2;
+	float* Cptr1, *Cptr2, *C_c_ptr1, *C_c_ptr2;
+	int m, n;
+	int lda2 = lda << 1;
+	int ldc2 = ldc << 1;
+	int ldb2 = ldb << 1;
+	zq_q_type q;
+	register zq_mm_type sum_vec11, sum_vec21;
+	register zq_mm_type sum_vec12, sum_vec22;
+	register zq_mm_type a_vec1, a_vec2, b_vec1, b_vec2;
+
+	Aptr1 = A;
+	Aptr2 = Aptr1 + lda;
+	Cptr1 = C;
+	Cptr2 = Cptr1 + ldc;
+	for (m = 0; m < M - 1; m += 2, Aptr1 += lda2, Aptr2 += lda2, Cptr1 += ldc2, Cptr2 += ldc2)
+	{
+		Bptr = Bt;
+		C_c_ptr1 = Cptr1;
+		C_c_ptr2 = Cptr2;
+		for (n = 0; n < N; n += 2, Bptr += ldb2)
+		{
+			Bptr1 = Bptr;
+			Bptr2 = Bptr1 + ldb;
+			A_c_ptr1 = Aptr1, A_c_ptr2 = Aptr2;
+			B_c_ptr1 = Bptr1; B_c_ptr2 = Bptr2;
+			op_2x2_4_first;
+			store_2x2;
+		}
+	}
+
+	for (; m < M; m++, Aptr1 += lda, Cptr1 += ldc)
+	{
+		Bptr = Bt;
+		C_c_ptr1 = Cptr1;
+		for (n = 0; n < N; n += 2, Bptr += ldb2)
+		{
+			Bptr1 = Bptr;
+			Bptr2 = Bptr1 + ldb;
+			A_c_ptr1 = Aptr1; B_c_ptr1 = Bptr1; B_c_ptr2 = Bptr2;
+			op_1x2_4_first;
+			store_1x2;
+		}
+	}
+}
+
+void zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv2_KeqAlign5(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+{
+	const float* Aptr1, *Aptr2, *A_c_ptr1, *A_c_ptr2;
+	const float *Bptr, *Bptr1, *Bptr2;
+	const float *B_c_ptr1, *B_c_ptr2;
+	float* Cptr1, *Cptr2, *C_c_ptr1, *C_c_ptr2;
+	int m, n;
+	int lda2 = lda << 1;
+	int ldc2 = ldc << 1;
+	int ldb2 = ldb << 1;
+	zq_q_type q;
+	register zq_mm_type sum_vec11, sum_vec21;
+	register zq_mm_type sum_vec12, sum_vec22;
+	register zq_mm_type a_vec1, a_vec2, b_vec1, b_vec2;
+
+	Aptr1 = A;
+	Aptr2 = Aptr1 + lda;
+	Cptr1 = C;
+	Cptr2 = Cptr1 + ldc;
+	for (m = 0; m < M - 1; m += 2, Aptr1 += lda2, Aptr2 += lda2, Cptr1 += ldc2, Cptr2 += ldc2)
+	{
+		Bptr = Bt;
+		C_c_ptr1 = Cptr1;
+		C_c_ptr2 = Cptr2;
+		for (n = 0; n < N; n += 2, Bptr += ldb2)
+		{
+			Bptr1 = Bptr;
+			Bptr2 = Bptr1 + ldb;
+			A_c_ptr1 = Aptr1, A_c_ptr2 = Aptr2;
+			B_c_ptr1 = Bptr1; B_c_ptr2 = Bptr2;
+			op_2x2_first;
+			op_2x2_4;
+			store_2x2;
+		}
+	}
+
+	for (; m < M; m++, Aptr1 += lda, Cptr1 += ldc)
+	{
+		Bptr = Bt;
+		C_c_ptr1 = Cptr1;
+		for (n = 0; n < N; n += 2, Bptr += ldb2)
+		{
+			Bptr1 = Bptr;
+			Bptr2 = Bptr1 + ldb;
+			A_c_ptr1 = Aptr1; B_c_ptr1 = Bptr1; B_c_ptr2 = Bptr2;
+			op_1x2_first;
+			op_1x2_4;
+			store_1x2;
+		}
+	}
+}
+
+void zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv2_KeqAlign6(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+{
+	const float* Aptr1, *Aptr2, *A_c_ptr1, *A_c_ptr2;
+	const float *Bptr, *Bptr1, *Bptr2;
+	const float *B_c_ptr1, *B_c_ptr2;
+	float* Cptr1, *Cptr2, *C_c_ptr1, *C_c_ptr2;
+	int m, n;
+	int lda2 = lda << 1;
+	int ldc2 = ldc << 1;
+	int ldb2 = ldb << 1;
+	zq_q_type q;
+	register zq_mm_type sum_vec11, sum_vec21;
+	register zq_mm_type sum_vec12, sum_vec22;
+	register zq_mm_type a_vec1, a_vec2, b_vec1, b_vec2;
+
+	Aptr1 = A;
+	Aptr2 = Aptr1 + lda;
+	Cptr1 = C;
+	Cptr2 = Cptr1 + ldc;
+	for (m = 0; m < M - 1; m += 2, Aptr1 += lda2, Aptr2 += lda2, Cptr1 += ldc2, Cptr2 += ldc2)
+	{
+		Bptr = Bt;
+		C_c_ptr1 = Cptr1;
+		C_c_ptr2 = Cptr2;
+		for (n = 0; n < N; n += 2, Bptr += ldb2)
+		{
+			Bptr1 = Bptr;
+			Bptr2 = Bptr1 + ldb;
+			A_c_ptr1 = Aptr1, A_c_ptr2 = Aptr2;
+			B_c_ptr1 = Bptr1; B_c_ptr2 = Bptr2;
+			op_2x2_2_first;
+			op_2x2_4;
+			store_2x2;
+		}
+	}
+
+	for (; m < M; m++, Aptr1 += lda, Cptr1 += ldc)
+	{
+		Bptr = Bt;
+		C_c_ptr1 = Cptr1;
+		for (n = 0; n < N; n += 2, Bptr += ldb2)
+		{
+			Bptr1 = Bptr;
+			Bptr2 = Bptr1 + ldb;
+			A_c_ptr1 = Aptr1; B_c_ptr1 = Bptr1; B_c_ptr2 = Bptr2;
+			op_1x2_2_first;
+			op_1x2_4;
+			store_1x2;
+		}
+	}
+}
+
+void zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv2_KeqAlign7(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+{
+	const float* Aptr1, *Aptr2, *A_c_ptr1, *A_c_ptr2;
+	const float *Bptr, *Bptr1, *Bptr2;
+	const float *B_c_ptr1, *B_c_ptr2;
+	float* Cptr1, *Cptr2, *C_c_ptr1, *C_c_ptr2;
+	int m, n;
+	int lda2 = lda << 1;
+	int ldc2 = ldc << 1;
+	int ldb2 = ldb << 1;
+	zq_q_type q;
+	register zq_mm_type sum_vec11, sum_vec21;
+	register zq_mm_type sum_vec12, sum_vec22;
+	register zq_mm_type a_vec1, a_vec2, b_vec1, b_vec2;
+
+	Aptr1 = A;
+	Aptr2 = Aptr1 + lda;
+	Cptr1 = C;
+	Cptr2 = Cptr1 + ldc;
+	for (m = 0; m < M - 1; m += 2, Aptr1 += lda2, Aptr2 += lda2, Cptr1 += ldc2, Cptr2 += ldc2)
+	{
+		Bptr = Bt;
+		C_c_ptr1 = Cptr1;
+		C_c_ptr2 = Cptr2;
+		for (n = 0; n < N; n += 2, Bptr += ldb2)
+		{
+			Bptr1 = Bptr;
+			Bptr2 = Bptr1 + ldb;
+			A_c_ptr1 = Aptr1, A_c_ptr2 = Aptr2;
+			B_c_ptr1 = Bptr1; B_c_ptr2 = Bptr2;
+			op_2x2_first;
+			op_2x2_2;
+			op_2x2_4;
+			store_2x2;
+		}
+	}
+
+	for (; m < M; m++, Aptr1 += lda, Cptr1 += ldc)
+	{
+		Bptr = Bt;
+		C_c_ptr1 = Cptr1;
+		for (n = 0; n < N; n += 2, Bptr += ldb2)
+		{
+			Bptr1 = Bptr;
+			Bptr2 = Bptr1 + ldb;
+			A_c_ptr1 = Aptr1; B_c_ptr1 = Bptr1; B_c_ptr2 = Bptr2;
+			op_1x2_first;
+			op_1x2_2;
+			op_1x2_4;
+			store_1x2;
 		}
 	}
 }
@@ -6510,6 +8153,408 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv2_KdivAlign64(int M, int N, in
 				op_1x2_16;
 			}
 			store_1x2;
+		}
+	}
+}
+
+void zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv4_KeqAlign1(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+{
+	const float* Aptr1, *Aptr2, *A_c_ptr1, *A_c_ptr2;
+	const float *Bptr, *Bptr1, *Bptr2, *Bptr3, *Bptr4;
+	const float *B_c_ptr1, *B_c_ptr2, *B_c_ptr3, *B_c_ptr4;
+	float* Cptr1, *Cptr2, *C_c_ptr1, *C_c_ptr2;
+	int m, n;
+	int lda2 = lda << 1;
+	int ldc2 = ldc << 1;
+	int ldb4 = ldb << 2;
+	zq_q_type q;
+	register zq_mm_type sum_vec11, sum_vec21;
+	register zq_mm_type sum_vec12, sum_vec22;
+	register zq_mm_type sum_vec13, sum_vec23;
+	register zq_mm_type sum_vec14, sum_vec24;
+	register zq_mm_type a_vec1, a_vec2, b_vec1, b_vec2, b_vec3, b_vec4;
+
+	Aptr1 = A;
+	Aptr2 = Aptr1 + lda;
+	Cptr1 = C;
+	Cptr2 = Cptr1 + ldc;
+	for (m = 0; m < M - 1; m += 2, Aptr1 += lda2, Aptr2 += lda2, Cptr1 += ldc2, Cptr2 += ldc2)
+	{
+		Bptr = Bt;
+		C_c_ptr1 = Cptr1;
+		C_c_ptr2 = Cptr2;
+		for (n = 0; n < N; n += 4, Bptr += ldb4)
+		{
+			Bptr1 = Bptr;
+			Bptr2 = Bptr1 + ldb;
+			Bptr3 = Bptr2 + ldb;
+			Bptr4 = Bptr3 + ldb;
+			A_c_ptr1 = Aptr1, A_c_ptr2 = Aptr2;
+			B_c_ptr1 = Bptr1; B_c_ptr2 = Bptr2; B_c_ptr3 = Bptr3; B_c_ptr4 = Bptr4;
+			op_2x4_first;
+			store_2x4;
+		}
+	}
+
+	for (; m < M; m++, Aptr1 += lda, Cptr1 += ldc)
+	{
+		Bptr = Bt;
+		C_c_ptr1 = Cptr1;
+		for (n = 0; n < N; n += 4, Bptr += ldb * 4)
+		{
+			Bptr1 = Bptr;
+			Bptr2 = Bptr1 + ldb;
+			Bptr3 = Bptr2 + ldb;
+			Bptr4 = Bptr3 + ldb;
+			A_c_ptr1 = Aptr1; B_c_ptr1 = Bptr1; B_c_ptr2 = Bptr2; B_c_ptr3 = Bptr3; B_c_ptr4 = Bptr4;
+			op_1x4_first;
+			store_1x4;
+		}
+	}
+}
+
+void zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv4_KeqAlign2(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+{
+	const float* Aptr1, *Aptr2, *A_c_ptr1, *A_c_ptr2;
+	const float *Bptr, *Bptr1, *Bptr2, *Bptr3, *Bptr4;
+	const float *B_c_ptr1, *B_c_ptr2, *B_c_ptr3, *B_c_ptr4;
+	float* Cptr1, *Cptr2, *C_c_ptr1, *C_c_ptr2;
+	int m, n;
+	int lda2 = lda << 1;
+	int ldc2 = ldc << 1;
+	int ldb4 = ldb << 2;
+	zq_q_type q;
+	register zq_mm_type sum_vec11, sum_vec21;
+	register zq_mm_type sum_vec12, sum_vec22;
+	register zq_mm_type sum_vec13, sum_vec23;
+	register zq_mm_type sum_vec14, sum_vec24;
+	register zq_mm_type a_vec1, a_vec2, b_vec1, b_vec2, b_vec3, b_vec4;
+
+	Aptr1 = A;
+	Aptr2 = Aptr1 + lda;
+	Cptr1 = C;
+	Cptr2 = Cptr1 + ldc;
+	for (m = 0; m < M - 1; m += 2, Aptr1 += lda2, Aptr2 += lda2, Cptr1 += ldc2, Cptr2 += ldc2)
+	{
+		Bptr = Bt;
+		C_c_ptr1 = Cptr1;
+		C_c_ptr2 = Cptr2;
+		for (n = 0; n < N; n += 4, Bptr += ldb4)
+		{
+			Bptr1 = Bptr;
+			Bptr2 = Bptr1 + ldb;
+			Bptr3 = Bptr2 + ldb;
+			Bptr4 = Bptr3 + ldb;
+			A_c_ptr1 = Aptr1, A_c_ptr2 = Aptr2;
+			B_c_ptr1 = Bptr1; B_c_ptr2 = Bptr2; B_c_ptr3 = Bptr3; B_c_ptr4 = Bptr4;
+			op_2x4_2_first;
+			store_2x4;
+		}
+	}
+
+	for (; m < M; m++, Aptr1 += lda, Cptr1 += ldc)
+	{
+		Bptr = Bt;
+		C_c_ptr1 = Cptr1;
+		for (n = 0; n < N; n += 4, Bptr += ldb * 4)
+		{
+			Bptr1 = Bptr;
+			Bptr2 = Bptr1 + ldb;
+			Bptr3 = Bptr2 + ldb;
+			Bptr4 = Bptr3 + ldb;
+			A_c_ptr1 = Aptr1; B_c_ptr1 = Bptr1; B_c_ptr2 = Bptr2; B_c_ptr3 = Bptr3; B_c_ptr4 = Bptr4;
+			op_1x4_2_first;
+			store_1x4;
+		}
+	}
+}
+
+void zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv4_KeqAlign3(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+{
+	const float* Aptr1, *Aptr2, *A_c_ptr1, *A_c_ptr2;
+	const float *Bptr, *Bptr1, *Bptr2, *Bptr3, *Bptr4;
+	const float *B_c_ptr1, *B_c_ptr2, *B_c_ptr3, *B_c_ptr4;
+	float* Cptr1, *Cptr2, *C_c_ptr1, *C_c_ptr2;
+	int m, n;
+	int lda2 = lda << 1;
+	int ldc2 = ldc << 1;
+	int ldb4 = ldb << 2;
+	zq_q_type q;
+	register zq_mm_type sum_vec11, sum_vec21;
+	register zq_mm_type sum_vec12, sum_vec22;
+	register zq_mm_type sum_vec13, sum_vec23;
+	register zq_mm_type sum_vec14, sum_vec24;
+	register zq_mm_type a_vec1, a_vec2, b_vec1, b_vec2, b_vec3, b_vec4;
+
+	Aptr1 = A;
+	Aptr2 = Aptr1 + lda;
+	Cptr1 = C;
+	Cptr2 = Cptr1 + ldc;
+	for (m = 0; m < M - 1; m += 2, Aptr1 += lda2, Aptr2 += lda2, Cptr1 += ldc2, Cptr2 += ldc2)
+	{
+		Bptr = Bt;
+		C_c_ptr1 = Cptr1;
+		C_c_ptr2 = Cptr2;
+		for (n = 0; n < N; n += 4, Bptr += ldb4)
+		{
+			Bptr1 = Bptr;
+			Bptr2 = Bptr1 + ldb;
+			Bptr3 = Bptr2 + ldb;
+			Bptr4 = Bptr3 + ldb;
+			A_c_ptr1 = Aptr1, A_c_ptr2 = Aptr2;
+			B_c_ptr1 = Bptr1; B_c_ptr2 = Bptr2; B_c_ptr3 = Bptr3; B_c_ptr4 = Bptr4;
+			op_2x4_first;
+			op_2x4_2;
+			store_2x4;
+		}
+	}
+
+	for (; m < M; m++, Aptr1 += lda, Cptr1 += ldc)
+	{
+		Bptr = Bt;
+		C_c_ptr1 = Cptr1;
+		for (n = 0; n < N; n += 4, Bptr += ldb * 4)
+		{
+			Bptr1 = Bptr;
+			Bptr2 = Bptr1 + ldb;
+			Bptr3 = Bptr2 + ldb;
+			Bptr4 = Bptr3 + ldb;
+			A_c_ptr1 = Aptr1; B_c_ptr1 = Bptr1; B_c_ptr2 = Bptr2; B_c_ptr3 = Bptr3; B_c_ptr4 = Bptr4;
+			op_1x4_first;
+			op_1x4_2;
+			store_1x4;
+		}
+	}
+}
+
+void zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv4_KeqAlign4(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+{
+	const float* Aptr1, *Aptr2, *A_c_ptr1, *A_c_ptr2;
+	const float *Bptr, *Bptr1, *Bptr2, *Bptr3, *Bptr4;
+	const float *B_c_ptr1, *B_c_ptr2, *B_c_ptr3, *B_c_ptr4;
+	float* Cptr1, *Cptr2, *C_c_ptr1, *C_c_ptr2;
+	int m, n;
+	int lda2 = lda << 1;
+	int ldc2 = ldc << 1;
+	int ldb4 = ldb << 2;
+	zq_q_type q;
+	register zq_mm_type sum_vec11, sum_vec21;
+	register zq_mm_type sum_vec12, sum_vec22;
+	register zq_mm_type sum_vec13, sum_vec23;
+	register zq_mm_type sum_vec14, sum_vec24;
+	register zq_mm_type a_vec1, a_vec2, b_vec1, b_vec2, b_vec3, b_vec4;
+
+	Aptr1 = A;
+	Aptr2 = Aptr1 + lda;
+	Cptr1 = C;
+	Cptr2 = Cptr1 + ldc;
+	for (m = 0; m < M - 1; m += 2, Aptr1 += lda2, Aptr2 += lda2, Cptr1 += ldc2, Cptr2 += ldc2)
+	{
+		Bptr = Bt;
+		C_c_ptr1 = Cptr1;
+		C_c_ptr2 = Cptr2;
+		for (n = 0; n < N; n += 4, Bptr += ldb4)
+		{
+			Bptr1 = Bptr;
+			Bptr2 = Bptr1 + ldb;
+			Bptr3 = Bptr2 + ldb;
+			Bptr4 = Bptr3 + ldb;
+			A_c_ptr1 = Aptr1, A_c_ptr2 = Aptr2;
+			B_c_ptr1 = Bptr1; B_c_ptr2 = Bptr2; B_c_ptr3 = Bptr3; B_c_ptr4 = Bptr4;
+			op_2x4_4_first;
+			store_2x4;
+		}
+	}
+
+	for (; m < M; m++, Aptr1 += lda, Cptr1 += ldc)
+	{
+		Bptr = Bt;
+		C_c_ptr1 = Cptr1;
+		for (n = 0; n < N; n += 4, Bptr += ldb * 4)
+		{
+			Bptr1 = Bptr;
+			Bptr2 = Bptr1 + ldb;
+			Bptr3 = Bptr2 + ldb;
+			Bptr4 = Bptr3 + ldb;
+			A_c_ptr1 = Aptr1; B_c_ptr1 = Bptr1; B_c_ptr2 = Bptr2; B_c_ptr3 = Bptr3; B_c_ptr4 = Bptr4;
+			op_1x4_4_first;
+			store_1x4;
+		}
+	}
+}
+
+void zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv4_KeqAlign5(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+{
+	const float* Aptr1, *Aptr2, *A_c_ptr1, *A_c_ptr2;
+	const float *Bptr, *Bptr1, *Bptr2, *Bptr3, *Bptr4;
+	const float *B_c_ptr1, *B_c_ptr2, *B_c_ptr3, *B_c_ptr4;
+	float* Cptr1, *Cptr2, *C_c_ptr1, *C_c_ptr2;
+	int m, n;
+	int lda2 = lda << 1;
+	int ldc2 = ldc << 1;
+	int ldb4 = ldb << 2;
+	zq_q_type q;
+	register zq_mm_type sum_vec11, sum_vec21;
+	register zq_mm_type sum_vec12, sum_vec22;
+	register zq_mm_type sum_vec13, sum_vec23;
+	register zq_mm_type sum_vec14, sum_vec24;
+	register zq_mm_type a_vec1, a_vec2, b_vec1, b_vec2, b_vec3, b_vec4;
+
+	Aptr1 = A;
+	Aptr2 = Aptr1 + lda;
+	Cptr1 = C;
+	Cptr2 = Cptr1 + ldc;
+	for (m = 0; m < M - 1; m += 2, Aptr1 += lda2, Aptr2 += lda2, Cptr1 += ldc2, Cptr2 += ldc2)
+	{
+		Bptr = Bt;
+		C_c_ptr1 = Cptr1;
+		C_c_ptr2 = Cptr2;
+		for (n = 0; n < N; n += 4, Bptr += ldb4)
+		{
+			Bptr1 = Bptr;
+			Bptr2 = Bptr1 + ldb;
+			Bptr3 = Bptr2 + ldb;
+			Bptr4 = Bptr3 + ldb;
+			A_c_ptr1 = Aptr1, A_c_ptr2 = Aptr2;
+			B_c_ptr1 = Bptr1; B_c_ptr2 = Bptr2; B_c_ptr3 = Bptr3; B_c_ptr4 = Bptr4;
+			op_2x4_first;
+			op_2x4_4;
+			store_2x4;
+		}
+	}
+
+	for (; m < M; m++, Aptr1 += lda, Cptr1 += ldc)
+	{
+		Bptr = Bt;
+		C_c_ptr1 = Cptr1;
+		for (n = 0; n < N; n += 4, Bptr += ldb * 4)
+		{
+			Bptr1 = Bptr;
+			Bptr2 = Bptr1 + ldb;
+			Bptr3 = Bptr2 + ldb;
+			Bptr4 = Bptr3 + ldb;
+			A_c_ptr1 = Aptr1; B_c_ptr1 = Bptr1; B_c_ptr2 = Bptr2; B_c_ptr3 = Bptr3; B_c_ptr4 = Bptr4;
+			op_1x4_first;
+			op_1x4_4;
+			store_1x4;
+		}
+	}
+}
+
+void zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv4_KeqAlign6(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+{
+	const float* Aptr1, *Aptr2, *A_c_ptr1, *A_c_ptr2;
+	const float *Bptr, *Bptr1, *Bptr2, *Bptr3, *Bptr4;
+	const float *B_c_ptr1, *B_c_ptr2, *B_c_ptr3, *B_c_ptr4;
+	float* Cptr1, *Cptr2, *C_c_ptr1, *C_c_ptr2;
+	int m, n;
+	int lda2 = lda << 1;
+	int ldc2 = ldc << 1;
+	int ldb4 = ldb << 2;
+	zq_q_type q;
+	register zq_mm_type sum_vec11, sum_vec21;
+	register zq_mm_type sum_vec12, sum_vec22;
+	register zq_mm_type sum_vec13, sum_vec23;
+	register zq_mm_type sum_vec14, sum_vec24;
+	register zq_mm_type a_vec1, a_vec2, b_vec1, b_vec2, b_vec3, b_vec4;
+
+	Aptr1 = A;
+	Aptr2 = Aptr1 + lda;
+	Cptr1 = C;
+	Cptr2 = Cptr1 + ldc;
+	for (m = 0; m < M - 1; m += 2, Aptr1 += lda2, Aptr2 += lda2, Cptr1 += ldc2, Cptr2 += ldc2)
+	{
+		Bptr = Bt;
+		C_c_ptr1 = Cptr1;
+		C_c_ptr2 = Cptr2;
+		for (n = 0; n < N; n += 4, Bptr += ldb4)
+		{
+			Bptr1 = Bptr;
+			Bptr2 = Bptr1 + ldb;
+			Bptr3 = Bptr2 + ldb;
+			Bptr4 = Bptr3 + ldb;
+			A_c_ptr1 = Aptr1, A_c_ptr2 = Aptr2;
+			B_c_ptr1 = Bptr1; B_c_ptr2 = Bptr2; B_c_ptr3 = Bptr3; B_c_ptr4 = Bptr4;
+			op_2x4_2_first;
+			op_2x4_4;
+			store_2x4;
+		}
+	}
+
+	for (; m < M; m++, Aptr1 += lda, Cptr1 += ldc)
+	{
+		Bptr = Bt;
+		C_c_ptr1 = Cptr1;
+		for (n = 0; n < N; n += 4, Bptr += ldb * 4)
+		{
+			Bptr1 = Bptr;
+			Bptr2 = Bptr1 + ldb;
+			Bptr3 = Bptr2 + ldb;
+			Bptr4 = Bptr3 + ldb;
+			A_c_ptr1 = Aptr1; B_c_ptr1 = Bptr1; B_c_ptr2 = Bptr2; B_c_ptr3 = Bptr3; B_c_ptr4 = Bptr4;
+			op_1x4_2_first;
+			op_1x4_4;
+			store_1x4;
+		}
+	}
+}
+
+void zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv4_KeqAlign7(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+{
+	const float* Aptr1, *Aptr2, *A_c_ptr1, *A_c_ptr2;
+	const float *Bptr, *Bptr1, *Bptr2, *Bptr3, *Bptr4;
+	const float *B_c_ptr1, *B_c_ptr2, *B_c_ptr3, *B_c_ptr4;
+	float* Cptr1, *Cptr2, *C_c_ptr1, *C_c_ptr2;
+	int m, n;
+	int lda2 = lda << 1;
+	int ldc2 = ldc << 1;
+	int ldb4 = ldb << 2;
+	zq_q_type q;
+	register zq_mm_type sum_vec11, sum_vec21;
+	register zq_mm_type sum_vec12, sum_vec22;
+	register zq_mm_type sum_vec13, sum_vec23;
+	register zq_mm_type sum_vec14, sum_vec24;
+	register zq_mm_type a_vec1, a_vec2, b_vec1, b_vec2, b_vec3, b_vec4;
+
+	Aptr1 = A;
+	Aptr2 = Aptr1 + lda;
+	Cptr1 = C;
+	Cptr2 = Cptr1 + ldc;
+	for (m = 0; m < M - 1; m += 2, Aptr1 += lda2, Aptr2 += lda2, Cptr1 += ldc2, Cptr2 += ldc2)
+	{
+		Bptr = Bt;
+		C_c_ptr1 = Cptr1;
+		C_c_ptr2 = Cptr2;
+		for (n = 0; n < N; n += 4, Bptr += ldb4)
+		{
+			Bptr1 = Bptr;
+			Bptr2 = Bptr1 + ldb;
+			Bptr3 = Bptr2 + ldb;
+			Bptr4 = Bptr3 + ldb;
+			A_c_ptr1 = Aptr1, A_c_ptr2 = Aptr2;
+			B_c_ptr1 = Bptr1; B_c_ptr2 = Bptr2; B_c_ptr3 = Bptr3; B_c_ptr4 = Bptr4;
+			op_2x4_first;
+			op_2x4_2;
+			op_2x4_4;
+			store_2x4;
+		}
+	}
+
+	for (; m < M; m++, Aptr1 += lda, Cptr1 += ldc)
+	{
+		Bptr = Bt;
+		C_c_ptr1 = Cptr1;
+		for (n = 0; n < N; n += 4, Bptr += ldb * 4)
+		{
+			Bptr1 = Bptr;
+			Bptr2 = Bptr1 + ldb;
+			Bptr3 = Bptr2 + ldb;
+			Bptr4 = Bptr3 + ldb;
+			A_c_ptr1 = Aptr1; B_c_ptr1 = Bptr1; B_c_ptr2 = Bptr2; B_c_ptr3 = Bptr3; B_c_ptr4 = Bptr4;
+			op_1x4_first;
+			op_1x4_2;
+			op_1x4_4;
+			store_1x4;
 		}
 	}
 }
@@ -6856,6 +8901,520 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv4_KdivAlign64(int M, int N, in
 				op_1x4_16;
 			}
 			store_1x4;
+		}
+	}
+}
+
+void zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv8_KeqAlign1(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+{
+	const float* Aptr1, *Aptr2, *A_c_ptr1, *A_c_ptr2;
+	const float *Bptr, *Bptr1, *Bptr2, *Bptr3, *Bptr4, *Bptr5, *Bptr6, *Bptr7, *Bptr8;
+	const float *B_c_ptr1, *B_c_ptr2, *B_c_ptr3, *B_c_ptr4, *B_c_ptr5, *B_c_ptr6, *B_c_ptr7, *B_c_ptr8;
+	float* Cptr1, *Cptr2, *C_c_ptr1, *C_c_ptr2;
+	int m, n;
+	int lda2 = lda << 1;
+	int ldc2 = ldc << 1;
+	int ldb8 = ldb * 8;
+	zq_q_type q;
+	register zq_mm_type sum_vec11, sum_vec21;
+	register zq_mm_type sum_vec12, sum_vec22;
+	register zq_mm_type sum_vec13, sum_vec23;
+	register zq_mm_type sum_vec14, sum_vec24;
+	register zq_mm_type sum_vec15, sum_vec25;
+	register zq_mm_type sum_vec16, sum_vec26;
+	register zq_mm_type sum_vec17, sum_vec27;
+	register zq_mm_type sum_vec18, sum_vec28;
+	register zq_mm_type a_vec1, a_vec2;
+	register zq_mm_type b_vec1, b_vec2, b_vec3, b_vec4, b_vec5, b_vec6, b_vec7, b_vec8;
+
+	Aptr1 = A;
+	Aptr2 = Aptr1 + lda;
+	Cptr1 = C;
+	Cptr2 = Cptr1 + ldc;
+	for (m = 0; m < M - 1; m += 2, Aptr1 += lda2, Aptr2 += lda2, Cptr1 += ldc2, Cptr2 += ldc2)
+	{
+		Bptr = Bt;
+		C_c_ptr1 = Cptr1;
+		C_c_ptr2 = Cptr2;
+		for (n = 0; n < N; n += 8, Bptr += ldb8)
+		{
+			Bptr1 = Bptr;
+			Bptr2 = Bptr1 + ldb;
+			Bptr3 = Bptr2 + ldb;
+			Bptr4 = Bptr3 + ldb;
+			Bptr5 = Bptr4 + ldb;
+			Bptr6 = Bptr5 + ldb;
+			Bptr7 = Bptr6 + ldb;
+			Bptr8 = Bptr7 + ldb;
+			A_c_ptr1 = Aptr1; A_c_ptr2 = Aptr2;
+			B_c_ptr1 = Bptr1; B_c_ptr2 = Bptr2; B_c_ptr3 = Bptr3; B_c_ptr4 = Bptr4;
+			B_c_ptr5 = Bptr5; B_c_ptr6 = Bptr6; B_c_ptr7 = Bptr7; B_c_ptr8 = Bptr8;
+			op_2x8_first;
+			store_2x8;
+		}
+	}
+
+	for (; m < M; m++, Aptr1 += lda, Cptr1 += ldc)
+	{
+		Bptr = Bt;
+		C_c_ptr1 = Cptr1;
+		for (n = 0; n < N; n += 8, Bptr += ldb8)
+		{
+			Bptr1 = Bptr;
+			Bptr2 = Bptr1 + ldb;
+			Bptr3 = Bptr2 + ldb;
+			Bptr4 = Bptr3 + ldb;
+			Bptr5 = Bptr4 + ldb;
+			Bptr6 = Bptr5 + ldb;
+			Bptr7 = Bptr6 + ldb;
+			Bptr8 = Bptr7 + ldb;
+			A_c_ptr1 = Aptr1;
+			B_c_ptr1 = Bptr1; B_c_ptr2 = Bptr2; B_c_ptr3 = Bptr3; B_c_ptr4 = Bptr4;
+			B_c_ptr5 = Bptr5; B_c_ptr6 = Bptr6; B_c_ptr7 = Bptr7; B_c_ptr8 = Bptr8;
+			op_1x8_first;
+			store_1x8;
+		}
+	}
+}
+
+void zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv8_KeqAlign2(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+{
+	const float* Aptr1, *Aptr2, *A_c_ptr1, *A_c_ptr2;
+	const float *Bptr, *Bptr1, *Bptr2, *Bptr3, *Bptr4, *Bptr5, *Bptr6, *Bptr7, *Bptr8;
+	const float *B_c_ptr1, *B_c_ptr2, *B_c_ptr3, *B_c_ptr4, *B_c_ptr5, *B_c_ptr6, *B_c_ptr7, *B_c_ptr8;
+	float* Cptr1, *Cptr2, *C_c_ptr1, *C_c_ptr2;
+	int m, n;
+	int lda2 = lda << 1;
+	int ldc2 = ldc << 1;
+	int ldb8 = ldb * 8;
+	zq_q_type q;
+	register zq_mm_type sum_vec11, sum_vec21;
+	register zq_mm_type sum_vec12, sum_vec22;
+	register zq_mm_type sum_vec13, sum_vec23;
+	register zq_mm_type sum_vec14, sum_vec24;
+	register zq_mm_type sum_vec15, sum_vec25;
+	register zq_mm_type sum_vec16, sum_vec26;
+	register zq_mm_type sum_vec17, sum_vec27;
+	register zq_mm_type sum_vec18, sum_vec28;
+	register zq_mm_type a_vec1, a_vec2;
+	register zq_mm_type b_vec1, b_vec2, b_vec3, b_vec4, b_vec5, b_vec6, b_vec7, b_vec8;
+
+	Aptr1 = A;
+	Aptr2 = Aptr1 + lda;
+	Cptr1 = C;
+	Cptr2 = Cptr1 + ldc;
+	for (m = 0; m < M - 1; m += 2, Aptr1 += lda2, Aptr2 += lda2, Cptr1 += ldc2, Cptr2 += ldc2)
+	{
+		Bptr = Bt;
+		C_c_ptr1 = Cptr1;
+		C_c_ptr2 = Cptr2;
+		for (n = 0; n < N; n += 8, Bptr += ldb8)
+		{
+			Bptr1 = Bptr;
+			Bptr2 = Bptr1 + ldb;
+			Bptr3 = Bptr2 + ldb;
+			Bptr4 = Bptr3 + ldb;
+			Bptr5 = Bptr4 + ldb;
+			Bptr6 = Bptr5 + ldb;
+			Bptr7 = Bptr6 + ldb;
+			Bptr8 = Bptr7 + ldb;
+			A_c_ptr1 = Aptr1; A_c_ptr2 = Aptr2;
+			B_c_ptr1 = Bptr1; B_c_ptr2 = Bptr2; B_c_ptr3 = Bptr3; B_c_ptr4 = Bptr4;
+			B_c_ptr5 = Bptr5; B_c_ptr6 = Bptr6; B_c_ptr7 = Bptr7; B_c_ptr8 = Bptr8;
+			op_2x8_2_first;
+			store_2x8;
+		}
+	}
+
+	for (; m < M; m++, Aptr1 += lda, Cptr1 += ldc)
+	{
+		Bptr = Bt;
+		C_c_ptr1 = Cptr1;
+		for (n = 0; n < N; n += 8, Bptr += ldb8)
+		{
+			Bptr1 = Bptr;
+			Bptr2 = Bptr1 + ldb;
+			Bptr3 = Bptr2 + ldb;
+			Bptr4 = Bptr3 + ldb;
+			Bptr5 = Bptr4 + ldb;
+			Bptr6 = Bptr5 + ldb;
+			Bptr7 = Bptr6 + ldb;
+			Bptr8 = Bptr7 + ldb;
+			A_c_ptr1 = Aptr1;
+			B_c_ptr1 = Bptr1; B_c_ptr2 = Bptr2; B_c_ptr3 = Bptr3; B_c_ptr4 = Bptr4;
+			B_c_ptr5 = Bptr5; B_c_ptr6 = Bptr6; B_c_ptr7 = Bptr7; B_c_ptr8 = Bptr8;
+			op_1x8_2_first;
+			store_1x8;
+		}
+	}
+}
+
+void zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv8_KeqAlign3(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+{
+	const float* Aptr1, *Aptr2, *A_c_ptr1, *A_c_ptr2;
+	const float *Bptr, *Bptr1, *Bptr2, *Bptr3, *Bptr4, *Bptr5, *Bptr6, *Bptr7, *Bptr8;
+	const float *B_c_ptr1, *B_c_ptr2, *B_c_ptr3, *B_c_ptr4, *B_c_ptr5, *B_c_ptr6, *B_c_ptr7, *B_c_ptr8;
+	float* Cptr1, *Cptr2, *C_c_ptr1, *C_c_ptr2;
+	int m, n;
+	int lda2 = lda << 1;
+	int ldc2 = ldc << 1;
+	int ldb8 = ldb * 8;
+	zq_q_type q;
+	register zq_mm_type sum_vec11, sum_vec21;
+	register zq_mm_type sum_vec12, sum_vec22;
+	register zq_mm_type sum_vec13, sum_vec23;
+	register zq_mm_type sum_vec14, sum_vec24;
+	register zq_mm_type sum_vec15, sum_vec25;
+	register zq_mm_type sum_vec16, sum_vec26;
+	register zq_mm_type sum_vec17, sum_vec27;
+	register zq_mm_type sum_vec18, sum_vec28;
+	register zq_mm_type a_vec1, a_vec2;
+	register zq_mm_type b_vec1, b_vec2, b_vec3, b_vec4, b_vec5, b_vec6, b_vec7, b_vec8;
+
+	Aptr1 = A;
+	Aptr2 = Aptr1 + lda;
+	Cptr1 = C;
+	Cptr2 = Cptr1 + ldc;
+	for (m = 0; m < M - 1; m += 2, Aptr1 += lda2, Aptr2 += lda2, Cptr1 += ldc2, Cptr2 += ldc2)
+	{
+		Bptr = Bt;
+		C_c_ptr1 = Cptr1;
+		C_c_ptr2 = Cptr2;
+		for (n = 0; n < N; n += 8, Bptr += ldb8)
+		{
+			Bptr1 = Bptr;
+			Bptr2 = Bptr1 + ldb;
+			Bptr3 = Bptr2 + ldb;
+			Bptr4 = Bptr3 + ldb;
+			Bptr5 = Bptr4 + ldb;
+			Bptr6 = Bptr5 + ldb;
+			Bptr7 = Bptr6 + ldb;
+			Bptr8 = Bptr7 + ldb;
+			A_c_ptr1 = Aptr1; A_c_ptr2 = Aptr2;
+			B_c_ptr1 = Bptr1; B_c_ptr2 = Bptr2; B_c_ptr3 = Bptr3; B_c_ptr4 = Bptr4;
+			B_c_ptr5 = Bptr5; B_c_ptr6 = Bptr6; B_c_ptr7 = Bptr7; B_c_ptr8 = Bptr8;
+			op_2x8_first;
+			op_2x8_2;
+			store_2x8;
+		}
+	}
+
+	for (; m < M; m++, Aptr1 += lda, Cptr1 += ldc)
+	{
+		Bptr = Bt;
+		C_c_ptr1 = Cptr1;
+		for (n = 0; n < N; n += 8, Bptr += ldb8)
+		{
+			Bptr1 = Bptr;
+			Bptr2 = Bptr1 + ldb;
+			Bptr3 = Bptr2 + ldb;
+			Bptr4 = Bptr3 + ldb;
+			Bptr5 = Bptr4 + ldb;
+			Bptr6 = Bptr5 + ldb;
+			Bptr7 = Bptr6 + ldb;
+			Bptr8 = Bptr7 + ldb;
+			A_c_ptr1 = Aptr1;
+			B_c_ptr1 = Bptr1; B_c_ptr2 = Bptr2; B_c_ptr3 = Bptr3; B_c_ptr4 = Bptr4;
+			B_c_ptr5 = Bptr5; B_c_ptr6 = Bptr6; B_c_ptr7 = Bptr7; B_c_ptr8 = Bptr8;
+			op_1x8_first;
+			op_1x8_2;
+			store_1x8;
+		}
+	}
+}
+
+void zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv8_KeqAlign4(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+{
+	const float* Aptr1, *Aptr2, *A_c_ptr1, *A_c_ptr2;
+	const float *Bptr, *Bptr1, *Bptr2, *Bptr3, *Bptr4, *Bptr5, *Bptr6, *Bptr7, *Bptr8;
+	const float *B_c_ptr1, *B_c_ptr2, *B_c_ptr3, *B_c_ptr4, *B_c_ptr5, *B_c_ptr6, *B_c_ptr7, *B_c_ptr8;
+	float* Cptr1, *Cptr2, *C_c_ptr1, *C_c_ptr2;
+	int m, n;
+	int lda2 = lda << 1;
+	int ldc2 = ldc << 1;
+	int ldb8 = ldb * 8;
+	zq_q_type q;
+	register zq_mm_type sum_vec11, sum_vec21;
+	register zq_mm_type sum_vec12, sum_vec22;
+	register zq_mm_type sum_vec13, sum_vec23;
+	register zq_mm_type sum_vec14, sum_vec24;
+	register zq_mm_type sum_vec15, sum_vec25;
+	register zq_mm_type sum_vec16, sum_vec26;
+	register zq_mm_type sum_vec17, sum_vec27;
+	register zq_mm_type sum_vec18, sum_vec28;
+	register zq_mm_type a_vec1, a_vec2;
+	register zq_mm_type b_vec1, b_vec2, b_vec3, b_vec4, b_vec5, b_vec6, b_vec7, b_vec8;
+
+	Aptr1 = A;
+	Aptr2 = Aptr1 + lda;
+	Cptr1 = C;
+	Cptr2 = Cptr1 + ldc;
+	for (m = 0; m < M - 1; m += 2, Aptr1 += lda2, Aptr2 += lda2, Cptr1 += ldc2, Cptr2 += ldc2)
+	{
+		Bptr = Bt;
+		C_c_ptr1 = Cptr1;
+		C_c_ptr2 = Cptr2;
+		for (n = 0; n < N; n += 8, Bptr += ldb8)
+		{
+			Bptr1 = Bptr;
+			Bptr2 = Bptr1 + ldb;
+			Bptr3 = Bptr2 + ldb;
+			Bptr4 = Bptr3 + ldb;
+			Bptr5 = Bptr4 + ldb;
+			Bptr6 = Bptr5 + ldb;
+			Bptr7 = Bptr6 + ldb;
+			Bptr8 = Bptr7 + ldb;
+			A_c_ptr1 = Aptr1; A_c_ptr2 = Aptr2;
+			B_c_ptr1 = Bptr1; B_c_ptr2 = Bptr2; B_c_ptr3 = Bptr3; B_c_ptr4 = Bptr4;
+			B_c_ptr5 = Bptr5; B_c_ptr6 = Bptr6; B_c_ptr7 = Bptr7; B_c_ptr8 = Bptr8;
+			op_2x8_4_first;
+			store_2x8;
+		}
+	}
+
+	for (; m < M; m++, Aptr1 += lda, Cptr1 += ldc)
+	{
+		Bptr = Bt;
+		C_c_ptr1 = Cptr1;
+		for (n = 0; n < N; n += 8, Bptr += ldb8)
+		{
+			Bptr1 = Bptr;
+			Bptr2 = Bptr1 + ldb;
+			Bptr3 = Bptr2 + ldb;
+			Bptr4 = Bptr3 + ldb;
+			Bptr5 = Bptr4 + ldb;
+			Bptr6 = Bptr5 + ldb;
+			Bptr7 = Bptr6 + ldb;
+			Bptr8 = Bptr7 + ldb;
+			A_c_ptr1 = Aptr1;
+			B_c_ptr1 = Bptr1; B_c_ptr2 = Bptr2; B_c_ptr3 = Bptr3; B_c_ptr4 = Bptr4;
+			B_c_ptr5 = Bptr5; B_c_ptr6 = Bptr6; B_c_ptr7 = Bptr7; B_c_ptr8 = Bptr8;
+			op_1x8_4_first;
+			store_1x8;
+		}
+	}
+}
+
+void zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv8_KeqAlign5(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+{
+	const float* Aptr1, *Aptr2, *A_c_ptr1, *A_c_ptr2;
+	const float *Bptr, *Bptr1, *Bptr2, *Bptr3, *Bptr4, *Bptr5, *Bptr6, *Bptr7, *Bptr8;
+	const float *B_c_ptr1, *B_c_ptr2, *B_c_ptr3, *B_c_ptr4, *B_c_ptr5, *B_c_ptr6, *B_c_ptr7, *B_c_ptr8;
+	float* Cptr1, *Cptr2, *C_c_ptr1, *C_c_ptr2;
+	int m, n;
+	int lda2 = lda << 1;
+	int ldc2 = ldc << 1;
+	int ldb8 = ldb * 8;
+	zq_q_type q;
+	register zq_mm_type sum_vec11, sum_vec21;
+	register zq_mm_type sum_vec12, sum_vec22;
+	register zq_mm_type sum_vec13, sum_vec23;
+	register zq_mm_type sum_vec14, sum_vec24;
+	register zq_mm_type sum_vec15, sum_vec25;
+	register zq_mm_type sum_vec16, sum_vec26;
+	register zq_mm_type sum_vec17, sum_vec27;
+	register zq_mm_type sum_vec18, sum_vec28;
+	register zq_mm_type a_vec1, a_vec2;
+	register zq_mm_type b_vec1, b_vec2, b_vec3, b_vec4, b_vec5, b_vec6, b_vec7, b_vec8;
+
+	Aptr1 = A;
+	Aptr2 = Aptr1 + lda;
+	Cptr1 = C;
+	Cptr2 = Cptr1 + ldc;
+	for (m = 0; m < M - 1; m += 2, Aptr1 += lda2, Aptr2 += lda2, Cptr1 += ldc2, Cptr2 += ldc2)
+	{
+		Bptr = Bt;
+		C_c_ptr1 = Cptr1;
+		C_c_ptr2 = Cptr2;
+		for (n = 0; n < N; n += 8, Bptr += ldb8)
+		{
+			Bptr1 = Bptr;
+			Bptr2 = Bptr1 + ldb;
+			Bptr3 = Bptr2 + ldb;
+			Bptr4 = Bptr3 + ldb;
+			Bptr5 = Bptr4 + ldb;
+			Bptr6 = Bptr5 + ldb;
+			Bptr7 = Bptr6 + ldb;
+			Bptr8 = Bptr7 + ldb;
+			A_c_ptr1 = Aptr1; A_c_ptr2 = Aptr2;
+			B_c_ptr1 = Bptr1; B_c_ptr2 = Bptr2; B_c_ptr3 = Bptr3; B_c_ptr4 = Bptr4;
+			B_c_ptr5 = Bptr5; B_c_ptr6 = Bptr6; B_c_ptr7 = Bptr7; B_c_ptr8 = Bptr8;
+			op_2x8_first;
+			op_2x8_4;
+			store_2x8;
+		}
+	}
+
+	for (; m < M; m++, Aptr1 += lda, Cptr1 += ldc)
+	{
+		Bptr = Bt;
+		C_c_ptr1 = Cptr1;
+		for (n = 0; n < N; n += 8, Bptr += ldb8)
+		{
+			Bptr1 = Bptr;
+			Bptr2 = Bptr1 + ldb;
+			Bptr3 = Bptr2 + ldb;
+			Bptr4 = Bptr3 + ldb;
+			Bptr5 = Bptr4 + ldb;
+			Bptr6 = Bptr5 + ldb;
+			Bptr7 = Bptr6 + ldb;
+			Bptr8 = Bptr7 + ldb;
+			A_c_ptr1 = Aptr1;
+			B_c_ptr1 = Bptr1; B_c_ptr2 = Bptr2; B_c_ptr3 = Bptr3; B_c_ptr4 = Bptr4;
+			B_c_ptr5 = Bptr5; B_c_ptr6 = Bptr6; B_c_ptr7 = Bptr7; B_c_ptr8 = Bptr8;
+			op_1x8_first;
+			op_1x8_4;
+			store_1x8;
+		}
+	}
+}
+
+void zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv8_KeqAlign6(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+{
+	const float* Aptr1, *Aptr2, *A_c_ptr1, *A_c_ptr2;
+	const float *Bptr, *Bptr1, *Bptr2, *Bptr3, *Bptr4, *Bptr5, *Bptr6, *Bptr7, *Bptr8;
+	const float *B_c_ptr1, *B_c_ptr2, *B_c_ptr3, *B_c_ptr4, *B_c_ptr5, *B_c_ptr6, *B_c_ptr7, *B_c_ptr8;
+	float* Cptr1, *Cptr2, *C_c_ptr1, *C_c_ptr2;
+	int m, n;
+	int lda2 = lda << 1;
+	int ldc2 = ldc << 1;
+	int ldb8 = ldb * 8;
+	zq_q_type q;
+	register zq_mm_type sum_vec11, sum_vec21;
+	register zq_mm_type sum_vec12, sum_vec22;
+	register zq_mm_type sum_vec13, sum_vec23;
+	register zq_mm_type sum_vec14, sum_vec24;
+	register zq_mm_type sum_vec15, sum_vec25;
+	register zq_mm_type sum_vec16, sum_vec26;
+	register zq_mm_type sum_vec17, sum_vec27;
+	register zq_mm_type sum_vec18, sum_vec28;
+	register zq_mm_type a_vec1, a_vec2;
+	register zq_mm_type b_vec1, b_vec2, b_vec3, b_vec4, b_vec5, b_vec6, b_vec7, b_vec8;
+
+	Aptr1 = A;
+	Aptr2 = Aptr1 + lda;
+	Cptr1 = C;
+	Cptr2 = Cptr1 + ldc;
+	for (m = 0; m < M - 1; m += 2, Aptr1 += lda2, Aptr2 += lda2, Cptr1 += ldc2, Cptr2 += ldc2)
+	{
+		Bptr = Bt;
+		C_c_ptr1 = Cptr1;
+		C_c_ptr2 = Cptr2;
+		for (n = 0; n < N; n += 8, Bptr += ldb8)
+		{
+			Bptr1 = Bptr;
+			Bptr2 = Bptr1 + ldb;
+			Bptr3 = Bptr2 + ldb;
+			Bptr4 = Bptr3 + ldb;
+			Bptr5 = Bptr4 + ldb;
+			Bptr6 = Bptr5 + ldb;
+			Bptr7 = Bptr6 + ldb;
+			Bptr8 = Bptr7 + ldb;
+			A_c_ptr1 = Aptr1; A_c_ptr2 = Aptr2;
+			B_c_ptr1 = Bptr1; B_c_ptr2 = Bptr2; B_c_ptr3 = Bptr3; B_c_ptr4 = Bptr4;
+			B_c_ptr5 = Bptr5; B_c_ptr6 = Bptr6; B_c_ptr7 = Bptr7; B_c_ptr8 = Bptr8;
+			op_2x8_2_first;
+			op_2x8_4;
+			store_2x8;
+		}
+	}
+
+	for (; m < M; m++, Aptr1 += lda, Cptr1 += ldc)
+	{
+		Bptr = Bt;
+		C_c_ptr1 = Cptr1;
+		for (n = 0; n < N; n += 8, Bptr += ldb8)
+		{
+			Bptr1 = Bptr;
+			Bptr2 = Bptr1 + ldb;
+			Bptr3 = Bptr2 + ldb;
+			Bptr4 = Bptr3 + ldb;
+			Bptr5 = Bptr4 + ldb;
+			Bptr6 = Bptr5 + ldb;
+			Bptr7 = Bptr6 + ldb;
+			Bptr8 = Bptr7 + ldb;
+			A_c_ptr1 = Aptr1;
+			B_c_ptr1 = Bptr1; B_c_ptr2 = Bptr2; B_c_ptr3 = Bptr3; B_c_ptr4 = Bptr4;
+			B_c_ptr5 = Bptr5; B_c_ptr6 = Bptr6; B_c_ptr7 = Bptr7; B_c_ptr8 = Bptr8;
+			op_1x8_2_first;
+			op_1x8_4;
+			store_1x8;
+		}
+	}
+}
+
+void zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv8_KeqAlign7(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+{
+	const float* Aptr1, *Aptr2, *A_c_ptr1, *A_c_ptr2;
+	const float *Bptr, *Bptr1, *Bptr2, *Bptr3, *Bptr4, *Bptr5, *Bptr6, *Bptr7, *Bptr8;
+	const float *B_c_ptr1, *B_c_ptr2, *B_c_ptr3, *B_c_ptr4, *B_c_ptr5, *B_c_ptr6, *B_c_ptr7, *B_c_ptr8;
+	float* Cptr1, *Cptr2, *C_c_ptr1, *C_c_ptr2;
+	int m, n;
+	int lda2 = lda << 1;
+	int ldc2 = ldc << 1;
+	int ldb8 = ldb * 8;
+	zq_q_type q;
+	register zq_mm_type sum_vec11, sum_vec21;
+	register zq_mm_type sum_vec12, sum_vec22;
+	register zq_mm_type sum_vec13, sum_vec23;
+	register zq_mm_type sum_vec14, sum_vec24;
+	register zq_mm_type sum_vec15, sum_vec25;
+	register zq_mm_type sum_vec16, sum_vec26;
+	register zq_mm_type sum_vec17, sum_vec27;
+	register zq_mm_type sum_vec18, sum_vec28;
+	register zq_mm_type a_vec1, a_vec2;
+	register zq_mm_type b_vec1, b_vec2, b_vec3, b_vec4, b_vec5, b_vec6, b_vec7, b_vec8;
+
+	Aptr1 = A;
+	Aptr2 = Aptr1 + lda;
+	Cptr1 = C;
+	Cptr2 = Cptr1 + ldc;
+	for (m = 0; m < M - 1; m += 2, Aptr1 += lda2, Aptr2 += lda2, Cptr1 += ldc2, Cptr2 += ldc2)
+	{
+		Bptr = Bt;
+		C_c_ptr1 = Cptr1;
+		C_c_ptr2 = Cptr2;
+		for (n = 0; n < N; n += 8, Bptr += ldb8)
+		{
+			Bptr1 = Bptr;
+			Bptr2 = Bptr1 + ldb;
+			Bptr3 = Bptr2 + ldb;
+			Bptr4 = Bptr3 + ldb;
+			Bptr5 = Bptr4 + ldb;
+			Bptr6 = Bptr5 + ldb;
+			Bptr7 = Bptr6 + ldb;
+			Bptr8 = Bptr7 + ldb;
+			A_c_ptr1 = Aptr1; A_c_ptr2 = Aptr2;
+			B_c_ptr1 = Bptr1; B_c_ptr2 = Bptr2; B_c_ptr3 = Bptr3; B_c_ptr4 = Bptr4;
+			B_c_ptr5 = Bptr5; B_c_ptr6 = Bptr6; B_c_ptr7 = Bptr7; B_c_ptr8 = Bptr8;
+			op_2x8_first;
+			op_2x8_2;
+			op_2x8_4;
+			store_2x8;
+		}
+	}
+
+	for (; m < M; m++, Aptr1 += lda, Cptr1 += ldc)
+	{
+		Bptr = Bt;
+		C_c_ptr1 = Cptr1;
+		for (n = 0; n < N; n += 8, Bptr += ldb8)
+		{
+			Bptr1 = Bptr;
+			Bptr2 = Bptr1 + ldb;
+			Bptr3 = Bptr2 + ldb;
+			Bptr4 = Bptr3 + ldb;
+			Bptr5 = Bptr4 + ldb;
+			Bptr6 = Bptr5 + ldb;
+			Bptr7 = Bptr6 + ldb;
+			Bptr8 = Bptr7 + ldb;
+			A_c_ptr1 = Aptr1;
+			B_c_ptr1 = Bptr1; B_c_ptr2 = Bptr2; B_c_ptr3 = Bptr3; B_c_ptr4 = Bptr4;
+			B_c_ptr5 = Bptr5; B_c_ptr6 = Bptr6; B_c_ptr7 = Bptr7; B_c_ptr8 = Bptr8;
+			op_1x8_first;
+			op_1x8_2;
+			op_1x8_4;
+			store_1x8;
 		}
 	}
 }
@@ -7286,6 +9845,401 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv8_KdivAlign64(int M, int N, in
 	}
 }
 
+void zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv1_KeqAlign1(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+{
+	const float* Aptr1, *Aptr2, *Aptr3, *Aptr4, *A_c_ptr1, *A_c_ptr2, *A_c_ptr3, *A_c_ptr4;
+	const float *Bptr, *Bptr1;
+	const float *B_c_ptr1;
+	float* Cptr1, *Cptr2, *Cptr3, *Cptr4, *C_c_ptr1, *C_c_ptr2, *C_c_ptr3, *C_c_ptr4;
+	int m, n;
+	int lda4 = lda << 2;
+	int ldc4 = ldc << 2;
+	zq_q_type q;
+	register zq_mm_type sum_vec11, sum_vec21, sum_vec31, sum_vec41;
+	register zq_mm_type a_vec1, a_vec2, a_vec3, a_vec4;
+	register zq_mm_type b_vec1;
+
+	Aptr1 = A;
+	Aptr2 = Aptr1 + lda;
+	Aptr3 = Aptr2 + lda;
+	Aptr4 = Aptr3 + lda;
+	Cptr1 = C;
+	Cptr2 = Cptr1 + ldc;
+	Cptr3 = Cptr2 + ldc;
+	Cptr4 = Cptr3 + ldc;
+	for (m = 0; m < M - 3; m += 4, Aptr1 += lda4, Aptr2 += lda4, Aptr3 += lda4, Aptr4 += lda4,
+		Cptr1 += ldc4, Cptr2 += ldc4, Cptr3 += ldc4, Cptr4 += ldc4)
+	{
+		Bptr = Bt;
+		C_c_ptr1 = Cptr1;
+		C_c_ptr2 = Cptr2;
+		C_c_ptr3 = Cptr3;
+		C_c_ptr4 = Cptr4;
+		for (n = 0; n < N; n++, Bptr += ldb)
+		{
+			Bptr1 = Bptr;
+			A_c_ptr1 = Aptr1; A_c_ptr2 = Aptr2; A_c_ptr3 = Aptr3; A_c_ptr4 = Aptr4;
+			B_c_ptr1 = Bptr1;
+			op_4x1_first;
+			store_4x1;
+		}
+	}
+
+	for (; m < M; m++, Aptr1 += lda, Cptr1 += ldc)
+	{
+		Bptr = Bt;
+		C_c_ptr1 = Cptr1;
+		for (n = 0; n < N; n++, Bptr += ldb)
+		{
+			Bptr1 = Bptr;
+			A_c_ptr1 = Aptr1;
+			B_c_ptr1 = Bptr1;
+			op_1x1_first;
+			store_1x1;
+		}
+	}
+}
+
+void zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv1_KeqAlign2(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+{
+	const float* Aptr1, *Aptr2, *Aptr3, *Aptr4, *A_c_ptr1, *A_c_ptr2, *A_c_ptr3, *A_c_ptr4;
+	const float *Bptr, *Bptr1;
+	const float *B_c_ptr1;
+	float* Cptr1, *Cptr2, *Cptr3, *Cptr4, *C_c_ptr1, *C_c_ptr2, *C_c_ptr3, *C_c_ptr4;
+	int m, n;
+	int lda4 = lda << 2;
+	int ldc4 = ldc << 2;
+	zq_q_type q;
+	register zq_mm_type sum_vec11, sum_vec21, sum_vec31, sum_vec41;
+	register zq_mm_type a_vec1, a_vec2, a_vec3, a_vec4;
+	register zq_mm_type b_vec1;
+
+	Aptr1 = A;
+	Aptr2 = Aptr1 + lda;
+	Aptr3 = Aptr2 + lda;
+	Aptr4 = Aptr3 + lda;
+	Cptr1 = C;
+	Cptr2 = Cptr1 + ldc;
+	Cptr3 = Cptr2 + ldc;
+	Cptr4 = Cptr3 + ldc;
+	for (m = 0; m < M - 3; m += 4, Aptr1 += lda4, Aptr2 += lda4, Aptr3 += lda4, Aptr4 += lda4,
+		Cptr1 += ldc4, Cptr2 += ldc4, Cptr3 += ldc4, Cptr4 += ldc4)
+	{
+		Bptr = Bt;
+		C_c_ptr1 = Cptr1;
+		C_c_ptr2 = Cptr2;
+		C_c_ptr3 = Cptr3;
+		C_c_ptr4 = Cptr4;
+		for (n = 0; n < N; n++, Bptr += ldb)
+		{
+			Bptr1 = Bptr;
+			A_c_ptr1 = Aptr1; A_c_ptr2 = Aptr2; A_c_ptr3 = Aptr3; A_c_ptr4 = Aptr4;
+			B_c_ptr1 = Bptr1;
+			op_4x1_2_first;
+			store_4x1;
+		}
+	}
+
+	for (; m < M; m++, Aptr1 += lda, Cptr1 += ldc)
+	{
+		Bptr = Bt;
+		C_c_ptr1 = Cptr1;
+		for (n = 0; n < N; n++, Bptr += ldb)
+		{
+			Bptr1 = Bptr;
+			A_c_ptr1 = Aptr1;
+			B_c_ptr1 = Bptr1;
+			op_1x1_2_first;
+			store_1x1;
+		}
+	}
+}
+
+void zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv1_KeqAlign3(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+{
+	const float* Aptr1, *Aptr2, *Aptr3, *Aptr4, *A_c_ptr1, *A_c_ptr2, *A_c_ptr3, *A_c_ptr4;
+	const float *Bptr, *Bptr1;
+	const float *B_c_ptr1;
+	float* Cptr1, *Cptr2, *Cptr3, *Cptr4, *C_c_ptr1, *C_c_ptr2, *C_c_ptr3, *C_c_ptr4;
+	int m, n;
+	int lda4 = lda << 2;
+	int ldc4 = ldc << 2;
+	zq_q_type q;
+	register zq_mm_type sum_vec11, sum_vec21, sum_vec31, sum_vec41;
+	register zq_mm_type a_vec1, a_vec2, a_vec3, a_vec4;
+	register zq_mm_type b_vec1;
+
+	Aptr1 = A;
+	Aptr2 = Aptr1 + lda;
+	Aptr3 = Aptr2 + lda;
+	Aptr4 = Aptr3 + lda;
+	Cptr1 = C;
+	Cptr2 = Cptr1 + ldc;
+	Cptr3 = Cptr2 + ldc;
+	Cptr4 = Cptr3 + ldc;
+	for (m = 0; m < M - 3; m += 4, Aptr1 += lda4, Aptr2 += lda4, Aptr3 += lda4, Aptr4 += lda4,
+		Cptr1 += ldc4, Cptr2 += ldc4, Cptr3 += ldc4, Cptr4 += ldc4)
+	{
+		Bptr = Bt;
+		C_c_ptr1 = Cptr1;
+		C_c_ptr2 = Cptr2;
+		C_c_ptr3 = Cptr3;
+		C_c_ptr4 = Cptr4;
+		for (n = 0; n < N; n++, Bptr += ldb)
+		{
+			Bptr1 = Bptr;
+			A_c_ptr1 = Aptr1; A_c_ptr2 = Aptr2; A_c_ptr3 = Aptr3; A_c_ptr4 = Aptr4;
+			B_c_ptr1 = Bptr1;
+			op_4x1_first;
+			op_4x1_2;
+			store_4x1;
+		}
+	}
+
+	for (; m < M; m++, Aptr1 += lda, Cptr1 += ldc)
+	{
+		Bptr = Bt;
+		C_c_ptr1 = Cptr1;
+		for (n = 0; n < N; n++, Bptr += ldb)
+		{
+			Bptr1 = Bptr;
+			A_c_ptr1 = Aptr1;
+			B_c_ptr1 = Bptr1;
+			op_1x1_first;
+			op_1x1_2;
+			store_1x1;
+		}
+	}
+}
+
+void zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv1_KeqAlign4(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+{
+	const float* Aptr1, *Aptr2, *Aptr3, *Aptr4, *A_c_ptr1, *A_c_ptr2, *A_c_ptr3, *A_c_ptr4;
+	const float *Bptr, *Bptr1;
+	const float *B_c_ptr1;
+	float* Cptr1, *Cptr2, *Cptr3, *Cptr4, *C_c_ptr1, *C_c_ptr2, *C_c_ptr3, *C_c_ptr4;
+	int m, n;
+	int lda4 = lda << 2;
+	int ldc4 = ldc << 2;
+	zq_q_type q;
+	register zq_mm_type sum_vec11, sum_vec21, sum_vec31, sum_vec41;
+	register zq_mm_type a_vec1, a_vec2, a_vec3, a_vec4;
+	register zq_mm_type b_vec1;
+
+	Aptr1 = A;
+	Aptr2 = Aptr1 + lda;
+	Aptr3 = Aptr2 + lda;
+	Aptr4 = Aptr3 + lda;
+	Cptr1 = C;
+	Cptr2 = Cptr1 + ldc;
+	Cptr3 = Cptr2 + ldc;
+	Cptr4 = Cptr3 + ldc;
+	for (m = 0; m < M - 3; m += 4, Aptr1 += lda4, Aptr2 += lda4, Aptr3 += lda4, Aptr4 += lda4,
+		Cptr1 += ldc4, Cptr2 += ldc4, Cptr3 += ldc4, Cptr4 += ldc4)
+	{
+		Bptr = Bt;
+		C_c_ptr1 = Cptr1;
+		C_c_ptr2 = Cptr2;
+		C_c_ptr3 = Cptr3;
+		C_c_ptr4 = Cptr4;
+		for (n = 0; n < N; n++, Bptr += ldb)
+		{
+			Bptr1 = Bptr;
+			A_c_ptr1 = Aptr1; A_c_ptr2 = Aptr2; A_c_ptr3 = Aptr3; A_c_ptr4 = Aptr4;
+			B_c_ptr1 = Bptr1;
+			op_4x1_4_first;
+			store_4x1;
+		}
+	}
+
+	for (; m < M; m++, Aptr1 += lda, Cptr1 += ldc)
+	{
+		Bptr = Bt;
+		C_c_ptr1 = Cptr1;
+		for (n = 0; n < N; n++, Bptr += ldb)
+		{
+			Bptr1 = Bptr;
+			A_c_ptr1 = Aptr1;
+			B_c_ptr1 = Bptr1;
+			op_1x1_4_first;
+			store_1x1;
+		}
+	}
+}
+
+void zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv1_KeqAlign5(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+{
+	const float* Aptr1, *Aptr2, *Aptr3, *Aptr4, *A_c_ptr1, *A_c_ptr2, *A_c_ptr3, *A_c_ptr4;
+	const float *Bptr, *Bptr1;
+	const float *B_c_ptr1;
+	float* Cptr1, *Cptr2, *Cptr3, *Cptr4, *C_c_ptr1, *C_c_ptr2, *C_c_ptr3, *C_c_ptr4;
+	int m, n;
+	int lda4 = lda << 2;
+	int ldc4 = ldc << 2;
+	zq_q_type q;
+	register zq_mm_type sum_vec11, sum_vec21, sum_vec31, sum_vec41;
+	register zq_mm_type a_vec1, a_vec2, a_vec3, a_vec4;
+	register zq_mm_type b_vec1;
+
+	Aptr1 = A;
+	Aptr2 = Aptr1 + lda;
+	Aptr3 = Aptr2 + lda;
+	Aptr4 = Aptr3 + lda;
+	Cptr1 = C;
+	Cptr2 = Cptr1 + ldc;
+	Cptr3 = Cptr2 + ldc;
+	Cptr4 = Cptr3 + ldc;
+	for (m = 0; m < M - 3; m += 4, Aptr1 += lda4, Aptr2 += lda4, Aptr3 += lda4, Aptr4 += lda4,
+		Cptr1 += ldc4, Cptr2 += ldc4, Cptr3 += ldc4, Cptr4 += ldc4)
+	{
+		Bptr = Bt;
+		C_c_ptr1 = Cptr1;
+		C_c_ptr2 = Cptr2;
+		C_c_ptr3 = Cptr3;
+		C_c_ptr4 = Cptr4;
+		for (n = 0; n < N; n++, Bptr += ldb)
+		{
+			Bptr1 = Bptr;
+			A_c_ptr1 = Aptr1; A_c_ptr2 = Aptr2; A_c_ptr3 = Aptr3; A_c_ptr4 = Aptr4;
+			B_c_ptr1 = Bptr1;
+			op_4x1_first;
+			op_4x1_4;
+			store_4x1;
+		}
+	}
+
+	for (; m < M; m++, Aptr1 += lda, Cptr1 += ldc)
+	{
+		Bptr = Bt;
+		C_c_ptr1 = Cptr1;
+		for (n = 0; n < N; n++, Bptr += ldb)
+		{
+			Bptr1 = Bptr;
+			A_c_ptr1 = Aptr1;
+			B_c_ptr1 = Bptr1;
+			op_1x1_first;
+			op_1x1_4;
+			store_1x1;
+		}
+	}
+}
+
+void zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv1_KeqAlign6(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+{
+	const float* Aptr1, *Aptr2, *Aptr3, *Aptr4, *A_c_ptr1, *A_c_ptr2, *A_c_ptr3, *A_c_ptr4;
+	const float *Bptr, *Bptr1;
+	const float *B_c_ptr1;
+	float* Cptr1, *Cptr2, *Cptr3, *Cptr4, *C_c_ptr1, *C_c_ptr2, *C_c_ptr3, *C_c_ptr4;
+	int m, n;
+	int lda4 = lda << 2;
+	int ldc4 = ldc << 2;
+	zq_q_type q;
+	register zq_mm_type sum_vec11, sum_vec21, sum_vec31, sum_vec41;
+	register zq_mm_type a_vec1, a_vec2, a_vec3, a_vec4;
+	register zq_mm_type b_vec1;
+
+	Aptr1 = A;
+	Aptr2 = Aptr1 + lda;
+	Aptr3 = Aptr2 + lda;
+	Aptr4 = Aptr3 + lda;
+	Cptr1 = C;
+	Cptr2 = Cptr1 + ldc;
+	Cptr3 = Cptr2 + ldc;
+	Cptr4 = Cptr3 + ldc;
+	for (m = 0; m < M - 3; m += 4, Aptr1 += lda4, Aptr2 += lda4, Aptr3 += lda4, Aptr4 += lda4,
+		Cptr1 += ldc4, Cptr2 += ldc4, Cptr3 += ldc4, Cptr4 += ldc4)
+	{
+		Bptr = Bt;
+		C_c_ptr1 = Cptr1;
+		C_c_ptr2 = Cptr2;
+		C_c_ptr3 = Cptr3;
+		C_c_ptr4 = Cptr4;
+		for (n = 0; n < N; n++, Bptr += ldb)
+		{
+			Bptr1 = Bptr;
+			A_c_ptr1 = Aptr1; A_c_ptr2 = Aptr2; A_c_ptr3 = Aptr3; A_c_ptr4 = Aptr4;
+			B_c_ptr1 = Bptr1;
+			op_4x1_2_first;
+			op_4x1_4;
+			store_4x1;
+		}
+	}
+
+	for (; m < M; m++, Aptr1 += lda, Cptr1 += ldc)
+	{
+		Bptr = Bt;
+		C_c_ptr1 = Cptr1;
+		for (n = 0; n < N; n++, Bptr += ldb)
+		{
+			Bptr1 = Bptr;
+			A_c_ptr1 = Aptr1;
+			B_c_ptr1 = Bptr1;
+			op_1x1_2_first;
+			op_1x1_4;
+			store_1x1;
+		}
+	}
+}
+
+void zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv1_KeqAlign7(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+{
+	const float* Aptr1, *Aptr2, *Aptr3, *Aptr4, *A_c_ptr1, *A_c_ptr2, *A_c_ptr3, *A_c_ptr4;
+	const float *Bptr, *Bptr1;
+	const float *B_c_ptr1;
+	float* Cptr1, *Cptr2, *Cptr3, *Cptr4, *C_c_ptr1, *C_c_ptr2, *C_c_ptr3, *C_c_ptr4;
+	int m, n;
+	int lda4 = lda << 2;
+	int ldc4 = ldc << 2;
+	zq_q_type q;
+	register zq_mm_type sum_vec11, sum_vec21, sum_vec31, sum_vec41;
+	register zq_mm_type a_vec1, a_vec2, a_vec3, a_vec4;
+	register zq_mm_type b_vec1;
+
+	Aptr1 = A;
+	Aptr2 = Aptr1 + lda;
+	Aptr3 = Aptr2 + lda;
+	Aptr4 = Aptr3 + lda;
+	Cptr1 = C;
+	Cptr2 = Cptr1 + ldc;
+	Cptr3 = Cptr2 + ldc;
+	Cptr4 = Cptr3 + ldc;
+	for (m = 0; m < M - 3; m += 4, Aptr1 += lda4, Aptr2 += lda4, Aptr3 += lda4, Aptr4 += lda4,
+		Cptr1 += ldc4, Cptr2 += ldc4, Cptr3 += ldc4, Cptr4 += ldc4)
+	{
+		Bptr = Bt;
+		C_c_ptr1 = Cptr1;
+		C_c_ptr2 = Cptr2;
+		C_c_ptr3 = Cptr3;
+		C_c_ptr4 = Cptr4;
+		for (n = 0; n < N; n++, Bptr += ldb)
+		{
+			Bptr1 = Bptr;
+			A_c_ptr1 = Aptr1; A_c_ptr2 = Aptr2; A_c_ptr3 = Aptr3; A_c_ptr4 = Aptr4;
+			B_c_ptr1 = Bptr1;
+			op_4x1_first;
+			op_4x1_2;
+			op_4x1_4;
+			store_4x1;
+		}
+	}
+
+	for (; m < M; m++, Aptr1 += lda, Cptr1 += ldc)
+	{
+		Bptr = Bt;
+		C_c_ptr1 = Cptr1;
+		for (n = 0; n < N; n++, Bptr += ldb)
+		{
+			Bptr1 = Bptr;
+			A_c_ptr1 = Aptr1;
+			B_c_ptr1 = Bptr1;
+			op_1x1_first;
+			op_1x1_2;
+			op_1x1_4;
+			store_1x1;
+		}
+	}
+}
+
 void zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv1_KdivAlign4(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
 {
 	const float* Aptr1, *Aptr2, *Aptr3, *Aptr4, *A_c_ptr1, *A_c_ptr2, *A_c_ptr3, *A_c_ptr4;
@@ -7620,6 +10574,443 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv1_KdivAlign64(int M, int N, in
 				op_1x1_16;
 			}
 			store_1x1;
+		}
+	}
+}
+
+void zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv2_KeqAlign1(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+{
+	const float* Aptr1, *Aptr2, *Aptr3, *Aptr4, *A_c_ptr1, *A_c_ptr2, *A_c_ptr3, *A_c_ptr4;
+	const float *Bptr, *Bptr1, *Bptr2;
+	const float *B_c_ptr1, *B_c_ptr2;
+	float* Cptr1, *Cptr2, *Cptr3, *Cptr4, *C_c_ptr1, *C_c_ptr2, *C_c_ptr3, *C_c_ptr4;
+	int m, n;
+	int lda2 = lda << 1;
+	int lda4 = lda << 2;
+	int ldc2 = ldc << 1;
+	int ldc4 = ldc << 2;
+	int ldb2 = ldb << 1;
+	zq_q_type q;
+	register zq_mm_type sum_vec11, sum_vec21, sum_vec31, sum_vec41;
+	register zq_mm_type sum_vec12, sum_vec22, sum_vec32, sum_vec42;
+	register zq_mm_type a_vec1, a_vec2, a_vec3, a_vec4;
+	register zq_mm_type b_vec1, b_vec2;
+
+	Aptr1 = A;
+	Aptr2 = Aptr1 + lda;
+	Aptr3 = Aptr2 + lda;
+	Aptr4 = Aptr3 + lda;
+	Cptr1 = C;
+	Cptr2 = Cptr1 + ldc;
+	Cptr3 = Cptr2 + ldc;
+	Cptr4 = Cptr3 + ldc;
+	for (m = 0; m < M - 3; m += 4, Aptr1 += lda4, Aptr2 += lda4, Aptr3 += lda4, Aptr4 += lda4,
+		Cptr1 += ldc4, Cptr2 += ldc4, Cptr3 += ldc4, Cptr4 += ldc4)
+	{
+		Bptr = Bt;
+		C_c_ptr1 = Cptr1;
+		C_c_ptr2 = Cptr2;
+		C_c_ptr3 = Cptr3;
+		C_c_ptr4 = Cptr4;
+		for (n = 0; n < N; n += 2, Bptr += ldb2)
+		{
+			Bptr1 = Bptr;
+			Bptr2 = Bptr1 + ldb;
+			A_c_ptr1 = Aptr1; A_c_ptr2 = Aptr2; A_c_ptr3 = Aptr3; A_c_ptr4 = Aptr4;
+			B_c_ptr1 = Bptr1; B_c_ptr2 = Bptr2;
+			op_4x2_first;
+			store_4x2;
+		}
+	}
+
+	for (; m < M; m++, Aptr1 += lda, Cptr1 += ldc)
+	{
+		Bptr = Bt;
+		C_c_ptr1 = Cptr1;
+		for (n = 0; n < N; n += 2, Bptr += ldb2)
+		{
+			Bptr1 = Bptr;
+			Bptr2 = Bptr1 + ldb;
+			A_c_ptr1 = Aptr1;
+			B_c_ptr1 = Bptr1; B_c_ptr2 = Bptr2;
+			op_1x2_first;
+			store_1x2;
+		}
+	}
+}
+
+void zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv2_KeqAlign2(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+{
+	const float* Aptr1, *Aptr2, *Aptr3, *Aptr4, *A_c_ptr1, *A_c_ptr2, *A_c_ptr3, *A_c_ptr4;
+	const float *Bptr, *Bptr1, *Bptr2;
+	const float *B_c_ptr1, *B_c_ptr2;
+	float* Cptr1, *Cptr2, *Cptr3, *Cptr4, *C_c_ptr1, *C_c_ptr2, *C_c_ptr3, *C_c_ptr4;
+	int m, n;
+	int lda2 = lda << 1;
+	int lda4 = lda << 2;
+	int ldc2 = ldc << 1;
+	int ldc4 = ldc << 2;
+	int ldb2 = ldb << 1;
+	zq_q_type q;
+	register zq_mm_type sum_vec11, sum_vec21, sum_vec31, sum_vec41;
+	register zq_mm_type sum_vec12, sum_vec22, sum_vec32, sum_vec42;
+	register zq_mm_type a_vec1, a_vec2, a_vec3, a_vec4;
+	register zq_mm_type b_vec1, b_vec2;
+
+	Aptr1 = A;
+	Aptr2 = Aptr1 + lda;
+	Aptr3 = Aptr2 + lda;
+	Aptr4 = Aptr3 + lda;
+	Cptr1 = C;
+	Cptr2 = Cptr1 + ldc;
+	Cptr3 = Cptr2 + ldc;
+	Cptr4 = Cptr3 + ldc;
+	for (m = 0; m < M - 3; m += 4, Aptr1 += lda4, Aptr2 += lda4, Aptr3 += lda4, Aptr4 += lda4,
+		Cptr1 += ldc4, Cptr2 += ldc4, Cptr3 += ldc4, Cptr4 += ldc4)
+	{
+		Bptr = Bt;
+		C_c_ptr1 = Cptr1;
+		C_c_ptr2 = Cptr2;
+		C_c_ptr3 = Cptr3;
+		C_c_ptr4 = Cptr4;
+		for (n = 0; n < N; n += 2, Bptr += ldb2)
+		{
+			Bptr1 = Bptr;
+			Bptr2 = Bptr1 + ldb;
+			A_c_ptr1 = Aptr1; A_c_ptr2 = Aptr2; A_c_ptr3 = Aptr3; A_c_ptr4 = Aptr4;
+			B_c_ptr1 = Bptr1; B_c_ptr2 = Bptr2;
+			op_4x2_2_first;
+			store_4x2;
+		}
+	}
+
+	for (; m < M; m++, Aptr1 += lda, Cptr1 += ldc)
+	{
+		Bptr = Bt;
+		C_c_ptr1 = Cptr1;
+		for (n = 0; n < N; n += 2, Bptr += ldb2)
+		{
+			Bptr1 = Bptr;
+			Bptr2 = Bptr1 + ldb;
+			A_c_ptr1 = Aptr1;
+			B_c_ptr1 = Bptr1; B_c_ptr2 = Bptr2;
+			op_1x2_2_first;
+			store_1x2;
+		}
+	}
+}
+
+void zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv2_KeqAlign3(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+{
+	const float* Aptr1, *Aptr2, *Aptr3, *Aptr4, *A_c_ptr1, *A_c_ptr2, *A_c_ptr3, *A_c_ptr4;
+	const float *Bptr, *Bptr1, *Bptr2;
+	const float *B_c_ptr1, *B_c_ptr2;
+	float* Cptr1, *Cptr2, *Cptr3, *Cptr4, *C_c_ptr1, *C_c_ptr2, *C_c_ptr3, *C_c_ptr4;
+	int m, n;
+	int lda2 = lda << 1;
+	int lda4 = lda << 2;
+	int ldc2 = ldc << 1;
+	int ldc4 = ldc << 2;
+	int ldb2 = ldb << 1;
+	zq_q_type q;
+	register zq_mm_type sum_vec11, sum_vec21, sum_vec31, sum_vec41;
+	register zq_mm_type sum_vec12, sum_vec22, sum_vec32, sum_vec42;
+	register zq_mm_type a_vec1, a_vec2, a_vec3, a_vec4;
+	register zq_mm_type b_vec1, b_vec2;
+
+	Aptr1 = A;
+	Aptr2 = Aptr1 + lda;
+	Aptr3 = Aptr2 + lda;
+	Aptr4 = Aptr3 + lda;
+	Cptr1 = C;
+	Cptr2 = Cptr1 + ldc;
+	Cptr3 = Cptr2 + ldc;
+	Cptr4 = Cptr3 + ldc;
+	for (m = 0; m < M - 3; m += 4, Aptr1 += lda4, Aptr2 += lda4, Aptr3 += lda4, Aptr4 += lda4,
+		Cptr1 += ldc4, Cptr2 += ldc4, Cptr3 += ldc4, Cptr4 += ldc4)
+	{
+		Bptr = Bt;
+		C_c_ptr1 = Cptr1;
+		C_c_ptr2 = Cptr2;
+		C_c_ptr3 = Cptr3;
+		C_c_ptr4 = Cptr4;
+		for (n = 0; n < N; n += 2, Bptr += ldb2)
+		{
+			Bptr1 = Bptr;
+			Bptr2 = Bptr1 + ldb;
+			A_c_ptr1 = Aptr1; A_c_ptr2 = Aptr2; A_c_ptr3 = Aptr3; A_c_ptr4 = Aptr4;
+			B_c_ptr1 = Bptr1; B_c_ptr2 = Bptr2;
+			op_4x2_first;
+			op_4x2_2;
+			store_4x2;
+		}
+	}
+
+	for (; m < M; m++, Aptr1 += lda, Cptr1 += ldc)
+	{
+		Bptr = Bt;
+		C_c_ptr1 = Cptr1;
+		for (n = 0; n < N; n += 2, Bptr += ldb2)
+		{
+			Bptr1 = Bptr;
+			Bptr2 = Bptr1 + ldb;
+			A_c_ptr1 = Aptr1;
+			B_c_ptr1 = Bptr1; B_c_ptr2 = Bptr2;
+			op_1x2_first;
+			op_1x2_2;
+			store_1x2;
+		}
+	}
+}
+
+void zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv2_KeqAlign4(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+{
+	const float* Aptr1, *Aptr2, *Aptr3, *Aptr4, *A_c_ptr1, *A_c_ptr2, *A_c_ptr3, *A_c_ptr4;
+	const float *Bptr, *Bptr1, *Bptr2;
+	const float *B_c_ptr1, *B_c_ptr2;
+	float* Cptr1, *Cptr2, *Cptr3, *Cptr4, *C_c_ptr1, *C_c_ptr2, *C_c_ptr3, *C_c_ptr4;
+	int m, n;
+	int lda2 = lda << 1;
+	int lda4 = lda << 2;
+	int ldc2 = ldc << 1;
+	int ldc4 = ldc << 2;
+	int ldb2 = ldb << 1;
+	zq_q_type q;
+	register zq_mm_type sum_vec11, sum_vec21, sum_vec31, sum_vec41;
+	register zq_mm_type sum_vec12, sum_vec22, sum_vec32, sum_vec42;
+	register zq_mm_type a_vec1, a_vec2, a_vec3, a_vec4;
+	register zq_mm_type b_vec1, b_vec2;
+
+	Aptr1 = A;
+	Aptr2 = Aptr1 + lda;
+	Aptr3 = Aptr2 + lda;
+	Aptr4 = Aptr3 + lda;
+	Cptr1 = C;
+	Cptr2 = Cptr1 + ldc;
+	Cptr3 = Cptr2 + ldc;
+	Cptr4 = Cptr3 + ldc;
+	for (m = 0; m < M - 3; m += 4, Aptr1 += lda4, Aptr2 += lda4, Aptr3 += lda4, Aptr4 += lda4,
+		Cptr1 += ldc4, Cptr2 += ldc4, Cptr3 += ldc4, Cptr4 += ldc4)
+	{
+		Bptr = Bt;
+		C_c_ptr1 = Cptr1;
+		C_c_ptr2 = Cptr2;
+		C_c_ptr3 = Cptr3;
+		C_c_ptr4 = Cptr4;
+		for (n = 0; n < N; n += 2, Bptr += ldb2)
+		{
+			Bptr1 = Bptr;
+			Bptr2 = Bptr1 + ldb;
+			A_c_ptr1 = Aptr1; A_c_ptr2 = Aptr2; A_c_ptr3 = Aptr3; A_c_ptr4 = Aptr4;
+			B_c_ptr1 = Bptr1; B_c_ptr2 = Bptr2;
+			op_4x2_4_first;
+			store_4x2;
+		}
+	}
+
+	for (; m < M; m++, Aptr1 += lda, Cptr1 += ldc)
+	{
+		Bptr = Bt;
+		C_c_ptr1 = Cptr1;
+		for (n = 0; n < N; n += 2, Bptr += ldb2)
+		{
+			Bptr1 = Bptr;
+			Bptr2 = Bptr1 + ldb;
+			A_c_ptr1 = Aptr1;
+			B_c_ptr1 = Bptr1; B_c_ptr2 = Bptr2;
+			op_1x2_4_first;
+			store_1x2;
+		}
+	}
+}
+
+void zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv2_KeqAlign5(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+{
+	const float* Aptr1, *Aptr2, *Aptr3, *Aptr4, *A_c_ptr1, *A_c_ptr2, *A_c_ptr3, *A_c_ptr4;
+	const float *Bptr, *Bptr1, *Bptr2;
+	const float *B_c_ptr1, *B_c_ptr2;
+	float* Cptr1, *Cptr2, *Cptr3, *Cptr4, *C_c_ptr1, *C_c_ptr2, *C_c_ptr3, *C_c_ptr4;
+	int m, n;
+	int lda2 = lda << 1;
+	int lda4 = lda << 2;
+	int ldc2 = ldc << 1;
+	int ldc4 = ldc << 2;
+	int ldb2 = ldb << 1;
+	zq_q_type q;
+	register zq_mm_type sum_vec11, sum_vec21, sum_vec31, sum_vec41;
+	register zq_mm_type sum_vec12, sum_vec22, sum_vec32, sum_vec42;
+	register zq_mm_type a_vec1, a_vec2, a_vec3, a_vec4;
+	register zq_mm_type b_vec1, b_vec2;
+
+	Aptr1 = A;
+	Aptr2 = Aptr1 + lda;
+	Aptr3 = Aptr2 + lda;
+	Aptr4 = Aptr3 + lda;
+	Cptr1 = C;
+	Cptr2 = Cptr1 + ldc;
+	Cptr3 = Cptr2 + ldc;
+	Cptr4 = Cptr3 + ldc;
+	for (m = 0; m < M - 3; m += 4, Aptr1 += lda4, Aptr2 += lda4, Aptr3 += lda4, Aptr4 += lda4,
+		Cptr1 += ldc4, Cptr2 += ldc4, Cptr3 += ldc4, Cptr4 += ldc4)
+	{
+		Bptr = Bt;
+		C_c_ptr1 = Cptr1;
+		C_c_ptr2 = Cptr2;
+		C_c_ptr3 = Cptr3;
+		C_c_ptr4 = Cptr4;
+		for (n = 0; n < N; n += 2, Bptr += ldb2)
+		{
+			Bptr1 = Bptr;
+			Bptr2 = Bptr1 + ldb;
+			A_c_ptr1 = Aptr1; A_c_ptr2 = Aptr2; A_c_ptr3 = Aptr3; A_c_ptr4 = Aptr4;
+			B_c_ptr1 = Bptr1; B_c_ptr2 = Bptr2;
+			op_4x2_first;
+			op_4x2_4;
+			store_4x2;
+		}
+	}
+
+	for (; m < M; m++, Aptr1 += lda, Cptr1 += ldc)
+	{
+		Bptr = Bt;
+		C_c_ptr1 = Cptr1;
+		for (n = 0; n < N; n += 2, Bptr += ldb2)
+		{
+			Bptr1 = Bptr;
+			Bptr2 = Bptr1 + ldb;
+			A_c_ptr1 = Aptr1;
+			B_c_ptr1 = Bptr1; B_c_ptr2 = Bptr2;
+			op_1x2_first;
+			op_1x2_4;
+			store_1x2;
+		}
+	}
+}
+
+void zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv2_KeqAlign6(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+{
+	const float* Aptr1, *Aptr2, *Aptr3, *Aptr4, *A_c_ptr1, *A_c_ptr2, *A_c_ptr3, *A_c_ptr4;
+	const float *Bptr, *Bptr1, *Bptr2;
+	const float *B_c_ptr1, *B_c_ptr2;
+	float* Cptr1, *Cptr2, *Cptr3, *Cptr4, *C_c_ptr1, *C_c_ptr2, *C_c_ptr3, *C_c_ptr4;
+	int m, n;
+	int lda2 = lda << 1;
+	int lda4 = lda << 2;
+	int ldc2 = ldc << 1;
+	int ldc4 = ldc << 2;
+	int ldb2 = ldb << 1;
+	zq_q_type q;
+	register zq_mm_type sum_vec11, sum_vec21, sum_vec31, sum_vec41;
+	register zq_mm_type sum_vec12, sum_vec22, sum_vec32, sum_vec42;
+	register zq_mm_type a_vec1, a_vec2, a_vec3, a_vec4;
+	register zq_mm_type b_vec1, b_vec2;
+
+	Aptr1 = A;
+	Aptr2 = Aptr1 + lda;
+	Aptr3 = Aptr2 + lda;
+	Aptr4 = Aptr3 + lda;
+	Cptr1 = C;
+	Cptr2 = Cptr1 + ldc;
+	Cptr3 = Cptr2 + ldc;
+	Cptr4 = Cptr3 + ldc;
+	for (m = 0; m < M - 3; m += 4, Aptr1 += lda4, Aptr2 += lda4, Aptr3 += lda4, Aptr4 += lda4,
+		Cptr1 += ldc4, Cptr2 += ldc4, Cptr3 += ldc4, Cptr4 += ldc4)
+	{
+		Bptr = Bt;
+		C_c_ptr1 = Cptr1;
+		C_c_ptr2 = Cptr2;
+		C_c_ptr3 = Cptr3;
+		C_c_ptr4 = Cptr4;
+		for (n = 0; n < N; n += 2, Bptr += ldb2)
+		{
+			Bptr1 = Bptr;
+			Bptr2 = Bptr1 + ldb;
+			A_c_ptr1 = Aptr1; A_c_ptr2 = Aptr2; A_c_ptr3 = Aptr3; A_c_ptr4 = Aptr4;
+			B_c_ptr1 = Bptr1; B_c_ptr2 = Bptr2;
+			op_4x2_2_first;
+			op_4x2_4;
+			store_4x2;
+		}
+	}
+
+	for (; m < M; m++, Aptr1 += lda, Cptr1 += ldc)
+	{
+		Bptr = Bt;
+		C_c_ptr1 = Cptr1;
+		for (n = 0; n < N; n += 2, Bptr += ldb2)
+		{
+			Bptr1 = Bptr;
+			Bptr2 = Bptr1 + ldb;
+			A_c_ptr1 = Aptr1;
+			B_c_ptr1 = Bptr1; B_c_ptr2 = Bptr2;
+			op_1x2_2_first;
+			op_1x2_4;
+			store_1x2;
+		}
+	}
+}
+
+void zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv2_KeqAlign7(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+{
+	const float* Aptr1, *Aptr2, *Aptr3, *Aptr4, *A_c_ptr1, *A_c_ptr2, *A_c_ptr3, *A_c_ptr4;
+	const float *Bptr, *Bptr1, *Bptr2;
+	const float *B_c_ptr1, *B_c_ptr2;
+	float* Cptr1, *Cptr2, *Cptr3, *Cptr4, *C_c_ptr1, *C_c_ptr2, *C_c_ptr3, *C_c_ptr4;
+	int m, n;
+	int lda2 = lda << 1;
+	int lda4 = lda << 2;
+	int ldc2 = ldc << 1;
+	int ldc4 = ldc << 2;
+	int ldb2 = ldb << 1;
+	zq_q_type q;
+	register zq_mm_type sum_vec11, sum_vec21, sum_vec31, sum_vec41;
+	register zq_mm_type sum_vec12, sum_vec22, sum_vec32, sum_vec42;
+	register zq_mm_type a_vec1, a_vec2, a_vec3, a_vec4;
+	register zq_mm_type b_vec1, b_vec2;
+
+	Aptr1 = A;
+	Aptr2 = Aptr1 + lda;
+	Aptr3 = Aptr2 + lda;
+	Aptr4 = Aptr3 + lda;
+	Cptr1 = C;
+	Cptr2 = Cptr1 + ldc;
+	Cptr3 = Cptr2 + ldc;
+	Cptr4 = Cptr3 + ldc;
+	for (m = 0; m < M - 3; m += 4, Aptr1 += lda4, Aptr2 += lda4, Aptr3 += lda4, Aptr4 += lda4,
+		Cptr1 += ldc4, Cptr2 += ldc4, Cptr3 += ldc4, Cptr4 += ldc4)
+	{
+		Bptr = Bt;
+		C_c_ptr1 = Cptr1;
+		C_c_ptr2 = Cptr2;
+		C_c_ptr3 = Cptr3;
+		C_c_ptr4 = Cptr4;
+		for (n = 0; n < N; n += 2, Bptr += ldb2)
+		{
+			Bptr1 = Bptr;
+			Bptr2 = Bptr1 + ldb;
+			A_c_ptr1 = Aptr1; A_c_ptr2 = Aptr2; A_c_ptr3 = Aptr3; A_c_ptr4 = Aptr4;
+			B_c_ptr1 = Bptr1; B_c_ptr2 = Bptr2;
+			op_4x2_first;
+			op_4x2_2;
+			op_4x2_4;
+			store_4x2;
+		}
+	}
+
+	for (; m < M; m++, Aptr1 += lda, Cptr1 += ldc)
+	{
+		Bptr = Bt;
+		C_c_ptr1 = Cptr1;
+		for (n = 0; n < N; n += 2, Bptr += ldb2)
+		{
+			Bptr1 = Bptr;
+			Bptr2 = Bptr1 + ldb;
+			A_c_ptr1 = Aptr1;
+			B_c_ptr1 = Bptr1; B_c_ptr2 = Bptr2;
+			op_1x2_first;
+			op_1x2_2;
+			op_1x2_4;
+			store_1x2;
 		}
 	}
 }
@@ -7980,6 +11371,485 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv2_KdivAlign64(int M, int N, in
 				op_1x2_16;
 			}
 			store_1x2;
+		}
+	}
+}
+
+void zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv4_KeqAlign1(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+{
+	const float* Aptr1, *Aptr2, *Aptr3, *Aptr4, *A_c_ptr1, *A_c_ptr2, *A_c_ptr3, *A_c_ptr4;
+	const float *Bptr, *Bptr1, *Bptr2, *Bptr3, *Bptr4;
+	const float *B_c_ptr1, *B_c_ptr2, *B_c_ptr3, *B_c_ptr4;
+	float* Cptr1, *Cptr2, *Cptr3, *Cptr4, *C_c_ptr1, *C_c_ptr2, *C_c_ptr3, *C_c_ptr4;
+	int m, n;
+	int lda2 = lda << 1;
+	int lda4 = lda << 2;
+	int ldc2 = ldc << 1;
+	int ldc4 = ldc << 2;
+	int ldb4 = ldb << 2;
+	zq_q_type q;
+	register zq_mm_type sum_vec11, sum_vec21, sum_vec31, sum_vec41;
+	register zq_mm_type sum_vec12, sum_vec22, sum_vec32, sum_vec42;
+	register zq_mm_type sum_vec13, sum_vec23, sum_vec33, sum_vec43;
+	register zq_mm_type sum_vec14, sum_vec24, sum_vec34, sum_vec44;
+	register zq_mm_type a_vec1, a_vec2, a_vec3, a_vec4;
+	register zq_mm_type b_vec1, b_vec2, b_vec3, b_vec4;
+
+	Aptr1 = A;
+	Aptr2 = Aptr1 + lda;
+	Aptr3 = Aptr2 + lda;
+	Aptr4 = Aptr3 + lda;
+	Cptr1 = C;
+	Cptr2 = Cptr1 + ldc;
+	Cptr3 = Cptr2 + ldc;
+	Cptr4 = Cptr3 + ldc;
+	for (m = 0; m < M - 3; m += 4, Aptr1 += lda4, Aptr2 += lda4, Aptr3 += lda4, Aptr4 += lda4,
+		Cptr1 += ldc4, Cptr2 += ldc4, Cptr3 += ldc4, Cptr4 += ldc4)
+	{
+		Bptr = Bt;
+		C_c_ptr1 = Cptr1;
+		C_c_ptr2 = Cptr2;
+		C_c_ptr3 = Cptr3;
+		C_c_ptr4 = Cptr4;
+		for (n = 0; n < N; n += 4, Bptr += ldb4)
+		{
+			Bptr1 = Bptr;
+			Bptr2 = Bptr1 + ldb;
+			Bptr3 = Bptr2 + ldb;
+			Bptr4 = Bptr3 + ldb;
+			A_c_ptr1 = Aptr1; A_c_ptr2 = Aptr2; A_c_ptr3 = Aptr3; A_c_ptr4 = Aptr4;
+			B_c_ptr1 = Bptr1; B_c_ptr2 = Bptr2; B_c_ptr3 = Bptr3; B_c_ptr4 = Bptr4;
+			op_4x4_first;
+			store_4x4;
+		}
+	}
+
+	for (; m < M; m++, Aptr1 += lda, Cptr1 += ldc)
+	{
+		Bptr = Bt;
+		C_c_ptr1 = Cptr1;
+		for (n = 0; n < N; n += 4, Bptr += ldb4)
+		{
+			Bptr1 = Bptr;
+			Bptr2 = Bptr1 + ldb;
+			Bptr3 = Bptr2 + ldb;
+			Bptr4 = Bptr3 + ldb;
+			A_c_ptr1 = Aptr1;
+			B_c_ptr1 = Bptr1; B_c_ptr2 = Bptr2; B_c_ptr3 = Bptr3; B_c_ptr4 = Bptr4;
+			op_1x4_first;
+			store_1x4;
+		}
+	}
+}
+
+void zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv4_KeqAlign2(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+{
+	const float* Aptr1, *Aptr2, *Aptr3, *Aptr4, *A_c_ptr1, *A_c_ptr2, *A_c_ptr3, *A_c_ptr4;
+	const float *Bptr, *Bptr1, *Bptr2, *Bptr3, *Bptr4;
+	const float *B_c_ptr1, *B_c_ptr2, *B_c_ptr3, *B_c_ptr4;
+	float* Cptr1, *Cptr2, *Cptr3, *Cptr4, *C_c_ptr1, *C_c_ptr2, *C_c_ptr3, *C_c_ptr4;
+	int m, n;
+	int lda2 = lda << 1;
+	int lda4 = lda << 2;
+	int ldc2 = ldc << 1;
+	int ldc4 = ldc << 2;
+	int ldb4 = ldb << 2;
+	zq_q_type q;
+	register zq_mm_type sum_vec11, sum_vec21, sum_vec31, sum_vec41;
+	register zq_mm_type sum_vec12, sum_vec22, sum_vec32, sum_vec42;
+	register zq_mm_type sum_vec13, sum_vec23, sum_vec33, sum_vec43;
+	register zq_mm_type sum_vec14, sum_vec24, sum_vec34, sum_vec44;
+	register zq_mm_type a_vec1, a_vec2, a_vec3, a_vec4;
+	register zq_mm_type b_vec1, b_vec2, b_vec3, b_vec4;
+
+	Aptr1 = A;
+	Aptr2 = Aptr1 + lda;
+	Aptr3 = Aptr2 + lda;
+	Aptr4 = Aptr3 + lda;
+	Cptr1 = C;
+	Cptr2 = Cptr1 + ldc;
+	Cptr3 = Cptr2 + ldc;
+	Cptr4 = Cptr3 + ldc;
+	for (m = 0; m < M - 3; m += 4, Aptr1 += lda4, Aptr2 += lda4, Aptr3 += lda4, Aptr4 += lda4,
+		Cptr1 += ldc4, Cptr2 += ldc4, Cptr3 += ldc4, Cptr4 += ldc4)
+	{
+		Bptr = Bt;
+		C_c_ptr1 = Cptr1;
+		C_c_ptr2 = Cptr2;
+		C_c_ptr3 = Cptr3;
+		C_c_ptr4 = Cptr4;
+		for (n = 0; n < N; n += 4, Bptr += ldb4)
+		{
+			Bptr1 = Bptr;
+			Bptr2 = Bptr1 + ldb;
+			Bptr3 = Bptr2 + ldb;
+			Bptr4 = Bptr3 + ldb;
+			A_c_ptr1 = Aptr1; A_c_ptr2 = Aptr2; A_c_ptr3 = Aptr3; A_c_ptr4 = Aptr4;
+			B_c_ptr1 = Bptr1; B_c_ptr2 = Bptr2; B_c_ptr3 = Bptr3; B_c_ptr4 = Bptr4;
+			op_4x4_2_first;
+			store_4x4;
+		}
+	}
+
+	for (; m < M; m++, Aptr1 += lda, Cptr1 += ldc)
+	{
+		Bptr = Bt;
+		C_c_ptr1 = Cptr1;
+		for (n = 0; n < N; n += 4, Bptr += ldb4)
+		{
+			Bptr1 = Bptr;
+			Bptr2 = Bptr1 + ldb;
+			Bptr3 = Bptr2 + ldb;
+			Bptr4 = Bptr3 + ldb;
+			A_c_ptr1 = Aptr1;
+			B_c_ptr1 = Bptr1; B_c_ptr2 = Bptr2; B_c_ptr3 = Bptr3; B_c_ptr4 = Bptr4;
+			op_1x4_2_first;
+			store_1x4;
+		}
+	}
+}
+
+void zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv4_KeqAlign3(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+{
+	const float* Aptr1, *Aptr2, *Aptr3, *Aptr4, *A_c_ptr1, *A_c_ptr2, *A_c_ptr3, *A_c_ptr4;
+	const float *Bptr, *Bptr1, *Bptr2, *Bptr3, *Bptr4;
+	const float *B_c_ptr1, *B_c_ptr2, *B_c_ptr3, *B_c_ptr4;
+	float* Cptr1, *Cptr2, *Cptr3, *Cptr4, *C_c_ptr1, *C_c_ptr2, *C_c_ptr3, *C_c_ptr4;
+	int m, n;
+	int lda2 = lda << 1;
+	int lda4 = lda << 2;
+	int ldc2 = ldc << 1;
+	int ldc4 = ldc << 2;
+	int ldb4 = ldb << 2;
+	zq_q_type q;
+	register zq_mm_type sum_vec11, sum_vec21, sum_vec31, sum_vec41;
+	register zq_mm_type sum_vec12, sum_vec22, sum_vec32, sum_vec42;
+	register zq_mm_type sum_vec13, sum_vec23, sum_vec33, sum_vec43;
+	register zq_mm_type sum_vec14, sum_vec24, sum_vec34, sum_vec44;
+	register zq_mm_type a_vec1, a_vec2, a_vec3, a_vec4;
+	register zq_mm_type b_vec1, b_vec2, b_vec3, b_vec4;
+
+	Aptr1 = A;
+	Aptr2 = Aptr1 + lda;
+	Aptr3 = Aptr2 + lda;
+	Aptr4 = Aptr3 + lda;
+	Cptr1 = C;
+	Cptr2 = Cptr1 + ldc;
+	Cptr3 = Cptr2 + ldc;
+	Cptr4 = Cptr3 + ldc;
+	for (m = 0; m < M - 3; m += 4, Aptr1 += lda4, Aptr2 += lda4, Aptr3 += lda4, Aptr4 += lda4,
+		Cptr1 += ldc4, Cptr2 += ldc4, Cptr3 += ldc4, Cptr4 += ldc4)
+	{
+		Bptr = Bt;
+		C_c_ptr1 = Cptr1;
+		C_c_ptr2 = Cptr2;
+		C_c_ptr3 = Cptr3;
+		C_c_ptr4 = Cptr4;
+		for (n = 0; n < N; n += 4, Bptr += ldb4)
+		{
+			Bptr1 = Bptr;
+			Bptr2 = Bptr1 + ldb;
+			Bptr3 = Bptr2 + ldb;
+			Bptr4 = Bptr3 + ldb;
+			A_c_ptr1 = Aptr1; A_c_ptr2 = Aptr2; A_c_ptr3 = Aptr3; A_c_ptr4 = Aptr4;
+			B_c_ptr1 = Bptr1; B_c_ptr2 = Bptr2; B_c_ptr3 = Bptr3; B_c_ptr4 = Bptr4;
+			op_4x4_first;
+			op_4x4_2;
+			store_4x4;
+		}
+	}
+
+	for (; m < M; m++, Aptr1 += lda, Cptr1 += ldc)
+	{
+		Bptr = Bt;
+		C_c_ptr1 = Cptr1;
+		for (n = 0; n < N; n += 4, Bptr += ldb4)
+		{
+			Bptr1 = Bptr;
+			Bptr2 = Bptr1 + ldb;
+			Bptr3 = Bptr2 + ldb;
+			Bptr4 = Bptr3 + ldb;
+			A_c_ptr1 = Aptr1;
+			B_c_ptr1 = Bptr1; B_c_ptr2 = Bptr2; B_c_ptr3 = Bptr3; B_c_ptr4 = Bptr4;
+			op_1x4_first;
+			op_1x4_2;
+			store_1x4;
+		}
+	}
+}
+
+void zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv4_KeqAlign4(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+{
+	const float* Aptr1, *Aptr2, *Aptr3, *Aptr4, *A_c_ptr1, *A_c_ptr2, *A_c_ptr3, *A_c_ptr4;
+	const float *Bptr, *Bptr1, *Bptr2, *Bptr3, *Bptr4;
+	const float *B_c_ptr1, *B_c_ptr2, *B_c_ptr3, *B_c_ptr4;
+	float* Cptr1, *Cptr2, *Cptr3, *Cptr4, *C_c_ptr1, *C_c_ptr2, *C_c_ptr3, *C_c_ptr4;
+	int m, n;
+	int lda2 = lda << 1;
+	int lda4 = lda << 2;
+	int ldc2 = ldc << 1;
+	int ldc4 = ldc << 2;
+	int ldb4 = ldb << 2;
+	zq_q_type q;
+	register zq_mm_type sum_vec11, sum_vec21, sum_vec31, sum_vec41;
+	register zq_mm_type sum_vec12, sum_vec22, sum_vec32, sum_vec42;
+	register zq_mm_type sum_vec13, sum_vec23, sum_vec33, sum_vec43;
+	register zq_mm_type sum_vec14, sum_vec24, sum_vec34, sum_vec44;
+	register zq_mm_type a_vec1, a_vec2, a_vec3, a_vec4;
+	register zq_mm_type b_vec1, b_vec2, b_vec3, b_vec4;
+
+	Aptr1 = A;
+	Aptr2 = Aptr1 + lda;
+	Aptr3 = Aptr2 + lda;
+	Aptr4 = Aptr3 + lda;
+	Cptr1 = C;
+	Cptr2 = Cptr1 + ldc;
+	Cptr3 = Cptr2 + ldc;
+	Cptr4 = Cptr3 + ldc;
+	for (m = 0; m < M - 3; m += 4, Aptr1 += lda4, Aptr2 += lda4, Aptr3 += lda4, Aptr4 += lda4,
+		Cptr1 += ldc4, Cptr2 += ldc4, Cptr3 += ldc4, Cptr4 += ldc4)
+	{
+		Bptr = Bt;
+		C_c_ptr1 = Cptr1;
+		C_c_ptr2 = Cptr2;
+		C_c_ptr3 = Cptr3;
+		C_c_ptr4 = Cptr4;
+		for (n = 0; n < N; n += 4, Bptr += ldb4)
+		{
+			Bptr1 = Bptr;
+			Bptr2 = Bptr1 + ldb;
+			Bptr3 = Bptr2 + ldb;
+			Bptr4 = Bptr3 + ldb;
+			A_c_ptr1 = Aptr1; A_c_ptr2 = Aptr2; A_c_ptr3 = Aptr3; A_c_ptr4 = Aptr4;
+			B_c_ptr1 = Bptr1; B_c_ptr2 = Bptr2; B_c_ptr3 = Bptr3; B_c_ptr4 = Bptr4;
+			op_4x4_4_first;
+			store_4x4;
+		}
+	}
+
+	for (; m < M; m++, Aptr1 += lda, Cptr1 += ldc)
+	{
+		Bptr = Bt;
+		C_c_ptr1 = Cptr1;
+		for (n = 0; n < N; n += 4, Bptr += ldb4)
+		{
+			Bptr1 = Bptr;
+			Bptr2 = Bptr1 + ldb;
+			Bptr3 = Bptr2 + ldb;
+			Bptr4 = Bptr3 + ldb;
+			A_c_ptr1 = Aptr1;
+			B_c_ptr1 = Bptr1; B_c_ptr2 = Bptr2; B_c_ptr3 = Bptr3; B_c_ptr4 = Bptr4;
+			op_1x4_4_first;
+			store_1x4;
+		}
+	}
+}
+
+void zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv4_KeqAlign5(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+{
+	const float* Aptr1, *Aptr2, *Aptr3, *Aptr4, *A_c_ptr1, *A_c_ptr2, *A_c_ptr3, *A_c_ptr4;
+	const float *Bptr, *Bptr1, *Bptr2, *Bptr3, *Bptr4;
+	const float *B_c_ptr1, *B_c_ptr2, *B_c_ptr3, *B_c_ptr4;
+	float* Cptr1, *Cptr2, *Cptr3, *Cptr4, *C_c_ptr1, *C_c_ptr2, *C_c_ptr3, *C_c_ptr4;
+	int m, n;
+	int lda2 = lda << 1;
+	int lda4 = lda << 2;
+	int ldc2 = ldc << 1;
+	int ldc4 = ldc << 2;
+	int ldb4 = ldb << 2;
+	zq_q_type q;
+	register zq_mm_type sum_vec11, sum_vec21, sum_vec31, sum_vec41;
+	register zq_mm_type sum_vec12, sum_vec22, sum_vec32, sum_vec42;
+	register zq_mm_type sum_vec13, sum_vec23, sum_vec33, sum_vec43;
+	register zq_mm_type sum_vec14, sum_vec24, sum_vec34, sum_vec44;
+	register zq_mm_type a_vec1, a_vec2, a_vec3, a_vec4;
+	register zq_mm_type b_vec1, b_vec2, b_vec3, b_vec4;
+
+	Aptr1 = A;
+	Aptr2 = Aptr1 + lda;
+	Aptr3 = Aptr2 + lda;
+	Aptr4 = Aptr3 + lda;
+	Cptr1 = C;
+	Cptr2 = Cptr1 + ldc;
+	Cptr3 = Cptr2 + ldc;
+	Cptr4 = Cptr3 + ldc;
+	for (m = 0; m < M - 3; m += 4, Aptr1 += lda4, Aptr2 += lda4, Aptr3 += lda4, Aptr4 += lda4,
+		Cptr1 += ldc4, Cptr2 += ldc4, Cptr3 += ldc4, Cptr4 += ldc4)
+	{
+		Bptr = Bt;
+		C_c_ptr1 = Cptr1;
+		C_c_ptr2 = Cptr2;
+		C_c_ptr3 = Cptr3;
+		C_c_ptr4 = Cptr4;
+		for (n = 0; n < N; n += 4, Bptr += ldb4)
+		{
+			Bptr1 = Bptr;
+			Bptr2 = Bptr1 + ldb;
+			Bptr3 = Bptr2 + ldb;
+			Bptr4 = Bptr3 + ldb;
+			A_c_ptr1 = Aptr1; A_c_ptr2 = Aptr2; A_c_ptr3 = Aptr3; A_c_ptr4 = Aptr4;
+			B_c_ptr1 = Bptr1; B_c_ptr2 = Bptr2; B_c_ptr3 = Bptr3; B_c_ptr4 = Bptr4;
+			op_4x4_first;
+			op_4x4_4;
+			store_4x4;
+		}
+	}
+
+	for (; m < M; m++, Aptr1 += lda, Cptr1 += ldc)
+	{
+		Bptr = Bt;
+		C_c_ptr1 = Cptr1;
+		for (n = 0; n < N; n += 4, Bptr += ldb4)
+		{
+			Bptr1 = Bptr;
+			Bptr2 = Bptr1 + ldb;
+			Bptr3 = Bptr2 + ldb;
+			Bptr4 = Bptr3 + ldb;
+			A_c_ptr1 = Aptr1;
+			B_c_ptr1 = Bptr1; B_c_ptr2 = Bptr2; B_c_ptr3 = Bptr3; B_c_ptr4 = Bptr4;
+			op_1x4_first;
+			op_1x4_4;
+			store_1x4;
+		}
+	}
+}
+
+void zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv4_KeqAlign6(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+{
+	const float* Aptr1, *Aptr2, *Aptr3, *Aptr4, *A_c_ptr1, *A_c_ptr2, *A_c_ptr3, *A_c_ptr4;
+	const float *Bptr, *Bptr1, *Bptr2, *Bptr3, *Bptr4;
+	const float *B_c_ptr1, *B_c_ptr2, *B_c_ptr3, *B_c_ptr4;
+	float* Cptr1, *Cptr2, *Cptr3, *Cptr4, *C_c_ptr1, *C_c_ptr2, *C_c_ptr3, *C_c_ptr4;
+	int m, n;
+	int lda2 = lda << 1;
+	int lda4 = lda << 2;
+	int ldc2 = ldc << 1;
+	int ldc4 = ldc << 2;
+	int ldb4 = ldb << 2;
+	zq_q_type q;
+	register zq_mm_type sum_vec11, sum_vec21, sum_vec31, sum_vec41;
+	register zq_mm_type sum_vec12, sum_vec22, sum_vec32, sum_vec42;
+	register zq_mm_type sum_vec13, sum_vec23, sum_vec33, sum_vec43;
+	register zq_mm_type sum_vec14, sum_vec24, sum_vec34, sum_vec44;
+	register zq_mm_type a_vec1, a_vec2, a_vec3, a_vec4;
+	register zq_mm_type b_vec1, b_vec2, b_vec3, b_vec4;
+
+	Aptr1 = A;
+	Aptr2 = Aptr1 + lda;
+	Aptr3 = Aptr2 + lda;
+	Aptr4 = Aptr3 + lda;
+	Cptr1 = C;
+	Cptr2 = Cptr1 + ldc;
+	Cptr3 = Cptr2 + ldc;
+	Cptr4 = Cptr3 + ldc;
+	for (m = 0; m < M - 3; m += 4, Aptr1 += lda4, Aptr2 += lda4, Aptr3 += lda4, Aptr4 += lda4,
+		Cptr1 += ldc4, Cptr2 += ldc4, Cptr3 += ldc4, Cptr4 += ldc4)
+	{
+		Bptr = Bt;
+		C_c_ptr1 = Cptr1;
+		C_c_ptr2 = Cptr2;
+		C_c_ptr3 = Cptr3;
+		C_c_ptr4 = Cptr4;
+		for (n = 0; n < N; n += 4, Bptr += ldb4)
+		{
+			Bptr1 = Bptr;
+			Bptr2 = Bptr1 + ldb;
+			Bptr3 = Bptr2 + ldb;
+			Bptr4 = Bptr3 + ldb;
+			A_c_ptr1 = Aptr1; A_c_ptr2 = Aptr2; A_c_ptr3 = Aptr3; A_c_ptr4 = Aptr4;
+			B_c_ptr1 = Bptr1; B_c_ptr2 = Bptr2; B_c_ptr3 = Bptr3; B_c_ptr4 = Bptr4;
+			op_4x4_2_first;
+			op_4x4_4;
+			store_4x4;
+		}
+	}
+
+	for (; m < M; m++, Aptr1 += lda, Cptr1 += ldc)
+	{
+		Bptr = Bt;
+		C_c_ptr1 = Cptr1;
+		for (n = 0; n < N; n += 4, Bptr += ldb4)
+		{
+			Bptr1 = Bptr;
+			Bptr2 = Bptr1 + ldb;
+			Bptr3 = Bptr2 + ldb;
+			Bptr4 = Bptr3 + ldb;
+			A_c_ptr1 = Aptr1;
+			B_c_ptr1 = Bptr1; B_c_ptr2 = Bptr2; B_c_ptr3 = Bptr3; B_c_ptr4 = Bptr4;
+			op_1x4_2_first;
+			op_1x4_4;
+			store_1x4;
+		}
+	}
+}
+
+void zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv4_KeqAlign7(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+{
+	const float* Aptr1, *Aptr2, *Aptr3, *Aptr4, *A_c_ptr1, *A_c_ptr2, *A_c_ptr3, *A_c_ptr4;
+	const float *Bptr, *Bptr1, *Bptr2, *Bptr3, *Bptr4;
+	const float *B_c_ptr1, *B_c_ptr2, *B_c_ptr3, *B_c_ptr4;
+	float* Cptr1, *Cptr2, *Cptr3, *Cptr4, *C_c_ptr1, *C_c_ptr2, *C_c_ptr3, *C_c_ptr4;
+	int m, n;
+	int lda2 = lda << 1;
+	int lda4 = lda << 2;
+	int ldc2 = ldc << 1;
+	int ldc4 = ldc << 2;
+	int ldb4 = ldb << 2;
+	zq_q_type q;
+	register zq_mm_type sum_vec11, sum_vec21, sum_vec31, sum_vec41;
+	register zq_mm_type sum_vec12, sum_vec22, sum_vec32, sum_vec42;
+	register zq_mm_type sum_vec13, sum_vec23, sum_vec33, sum_vec43;
+	register zq_mm_type sum_vec14, sum_vec24, sum_vec34, sum_vec44;
+	register zq_mm_type a_vec1, a_vec2, a_vec3, a_vec4;
+	register zq_mm_type b_vec1, b_vec2, b_vec3, b_vec4;
+
+	Aptr1 = A;
+	Aptr2 = Aptr1 + lda;
+	Aptr3 = Aptr2 + lda;
+	Aptr4 = Aptr3 + lda;
+	Cptr1 = C;
+	Cptr2 = Cptr1 + ldc;
+	Cptr3 = Cptr2 + ldc;
+	Cptr4 = Cptr3 + ldc;
+	for (m = 0; m < M - 3; m += 4, Aptr1 += lda4, Aptr2 += lda4, Aptr3 += lda4, Aptr4 += lda4,
+		Cptr1 += ldc4, Cptr2 += ldc4, Cptr3 += ldc4, Cptr4 += ldc4)
+	{
+		Bptr = Bt;
+		C_c_ptr1 = Cptr1;
+		C_c_ptr2 = Cptr2;
+		C_c_ptr3 = Cptr3;
+		C_c_ptr4 = Cptr4;
+		for (n = 0; n < N; n += 4, Bptr += ldb4)
+		{
+			Bptr1 = Bptr;
+			Bptr2 = Bptr1 + ldb;
+			Bptr3 = Bptr2 + ldb;
+			Bptr4 = Bptr3 + ldb;
+			A_c_ptr1 = Aptr1; A_c_ptr2 = Aptr2; A_c_ptr3 = Aptr3; A_c_ptr4 = Aptr4;
+			B_c_ptr1 = Bptr1; B_c_ptr2 = Bptr2; B_c_ptr3 = Bptr3; B_c_ptr4 = Bptr4;
+			op_4x4_first;
+			op_4x4_2;
+			op_4x4_4;
+			store_4x4;
+		}
+	}
+
+	for (; m < M; m++, Aptr1 += lda, Cptr1 += ldc)
+	{
+		Bptr = Bt;
+		C_c_ptr1 = Cptr1;
+		for (n = 0; n < N; n += 4, Bptr += ldb4)
+		{
+			Bptr1 = Bptr;
+			Bptr2 = Bptr1 + ldb;
+			Bptr3 = Bptr2 + ldb;
+			Bptr4 = Bptr3 + ldb;
+			A_c_ptr1 = Aptr1;
+			B_c_ptr1 = Bptr1; B_c_ptr2 = Bptr2; B_c_ptr3 = Bptr3; B_c_ptr4 = Bptr4;
+			op_1x4_first;
+			op_1x4_2;
+			op_1x4_4;
+			store_1x4;
 		}
 	}
 }
@@ -8377,6 +12247,534 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv4_KdivAlign64(int M, int N, in
 		}
 	}
 	//_aligned_free(packedB);
+}
+
+void zq_gemm_32f_align_AnoTrans_Btrans_M8_caseNdiv1_KeqAlign1(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+{
+	const float* Aptr1, *Aptr2, *Aptr3, *Aptr4, *A_c_ptr1, *A_c_ptr2, *A_c_ptr3, *A_c_ptr4;
+	const float* Aptr5, *Aptr6, *Aptr7, *Aptr8, *A_c_ptr5, *A_c_ptr6, *A_c_ptr7, *A_c_ptr8;
+	const float *Bptr, *Bptr1;
+	const float *B_c_ptr1;
+	float* Cptr1, *Cptr2, *Cptr3, *Cptr4, *C_c_ptr1, *C_c_ptr2, *C_c_ptr3, *C_c_ptr4;
+	float* Cptr5, *Cptr6, *Cptr7, *Cptr8, *C_c_ptr5, *C_c_ptr6, *C_c_ptr7, *C_c_ptr8;
+	int m, n;
+	int lda8 = lda << 3;
+	int ldc8 = ldc << 3;
+	zq_q_type q;
+	register zq_mm_type sum_vec11, sum_vec21, sum_vec31, sum_vec41;
+	register zq_mm_type sum_vec51, sum_vec61, sum_vec71, sum_vec81;
+	register zq_mm_type a_vec1, a_vec2, a_vec3, a_vec4;
+	register zq_mm_type a_vec5, a_vec6, a_vec7, a_vec8;
+	register zq_mm_type b_vec1;
+
+	Aptr1 = A;
+	Aptr2 = Aptr1 + lda;
+	Aptr3 = Aptr2 + lda;
+	Aptr4 = Aptr3 + lda;
+	Aptr5 = Aptr4 + lda;
+	Aptr6 = Aptr5 + lda;
+	Aptr7 = Aptr6 + lda;
+	Aptr8 = Aptr7 + lda;
+	Cptr1 = C;
+	Cptr2 = Cptr1 + ldc;
+	Cptr3 = Cptr2 + ldc;
+	Cptr4 = Cptr3 + ldc;
+	Cptr5 = Cptr4 + ldc;
+	Cptr6 = Cptr5 + ldc;
+	Cptr7 = Cptr6 + ldc;
+	Cptr8 = Cptr7 + ldc;
+	for (m = 0; m < M - 7; m += 8, Aptr1 += lda8, Aptr2 += lda8, Aptr3 += lda8, Aptr4 += lda8,
+		Aptr5 += lda8, Aptr6 += lda8, Aptr7 += lda8, Aptr8 += lda8,
+		Cptr1 += ldc8, Cptr2 += ldc8, Cptr3 += ldc8, Cptr4 += ldc8,
+		Cptr5 += ldc8, Cptr6 += ldc8, Cptr7 += ldc8, Cptr8 += ldc8)
+	{
+		Bptr = Bt;
+		C_c_ptr1 = Cptr1;
+		C_c_ptr2 = Cptr2;
+		C_c_ptr3 = Cptr3;
+		C_c_ptr4 = Cptr4;
+		C_c_ptr5 = Cptr5;
+		C_c_ptr6 = Cptr6;
+		C_c_ptr7 = Cptr7;
+		C_c_ptr8 = Cptr8;
+		for (n = 0; n < N; n++, Bptr += ldb)
+		{
+			Bptr1 = Bptr;
+			A_c_ptr1 = Aptr1; A_c_ptr2 = Aptr2; A_c_ptr3 = Aptr3; A_c_ptr4 = Aptr4;
+			A_c_ptr5 = Aptr5; A_c_ptr6 = Aptr6; A_c_ptr7 = Aptr7; A_c_ptr8 = Aptr8;
+			B_c_ptr1 = Bptr1;
+			op_8x1_first;
+			store_8x1;
+		}
+	}
+
+	for (; m < M; m++, Aptr1 += lda, Cptr1 += ldc)
+	{
+		Bptr = Bt;
+		C_c_ptr1 = Cptr1;
+		for (n = 0; n < N; n++, Bptr += ldb)
+		{
+			Bptr1 = Bptr;
+			A_c_ptr1 = Aptr1;
+			B_c_ptr1 = Bptr1;
+			op_1x1_first;
+			store_1x1;
+		}
+	}
+}
+
+void zq_gemm_32f_align_AnoTrans_Btrans_M8_caseNdiv1_KeqAlign2(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+{
+	const float* Aptr1, *Aptr2, *Aptr3, *Aptr4, *A_c_ptr1, *A_c_ptr2, *A_c_ptr3, *A_c_ptr4;
+	const float* Aptr5, *Aptr6, *Aptr7, *Aptr8, *A_c_ptr5, *A_c_ptr6, *A_c_ptr7, *A_c_ptr8;
+	const float *Bptr, *Bptr1;
+	const float *B_c_ptr1;
+	float* Cptr1, *Cptr2, *Cptr3, *Cptr4, *C_c_ptr1, *C_c_ptr2, *C_c_ptr3, *C_c_ptr4;
+	float* Cptr5, *Cptr6, *Cptr7, *Cptr8, *C_c_ptr5, *C_c_ptr6, *C_c_ptr7, *C_c_ptr8;
+	int m, n;
+	int lda8 = lda << 3;
+	int ldc8 = ldc << 3;
+	zq_q_type q;
+	register zq_mm_type sum_vec11, sum_vec21, sum_vec31, sum_vec41;
+	register zq_mm_type sum_vec51, sum_vec61, sum_vec71, sum_vec81;
+	register zq_mm_type a_vec1, a_vec2, a_vec3, a_vec4;
+	register zq_mm_type a_vec5, a_vec6, a_vec7, a_vec8;
+	register zq_mm_type b_vec1;
+
+	Aptr1 = A;
+	Aptr2 = Aptr1 + lda;
+	Aptr3 = Aptr2 + lda;
+	Aptr4 = Aptr3 + lda;
+	Aptr5 = Aptr4 + lda;
+	Aptr6 = Aptr5 + lda;
+	Aptr7 = Aptr6 + lda;
+	Aptr8 = Aptr7 + lda;
+	Cptr1 = C;
+	Cptr2 = Cptr1 + ldc;
+	Cptr3 = Cptr2 + ldc;
+	Cptr4 = Cptr3 + ldc;
+	Cptr5 = Cptr4 + ldc;
+	Cptr6 = Cptr5 + ldc;
+	Cptr7 = Cptr6 + ldc;
+	Cptr8 = Cptr7 + ldc;
+	for (m = 0; m < M - 7; m += 8, Aptr1 += lda8, Aptr2 += lda8, Aptr3 += lda8, Aptr4 += lda8,
+		Aptr5 += lda8, Aptr6 += lda8, Aptr7 += lda8, Aptr8 += lda8,
+		Cptr1 += ldc8, Cptr2 += ldc8, Cptr3 += ldc8, Cptr4 += ldc8,
+		Cptr5 += ldc8, Cptr6 += ldc8, Cptr7 += ldc8, Cptr8 += ldc8)
+	{
+		Bptr = Bt;
+		C_c_ptr1 = Cptr1;
+		C_c_ptr2 = Cptr2;
+		C_c_ptr3 = Cptr3;
+		C_c_ptr4 = Cptr4;
+		C_c_ptr5 = Cptr5;
+		C_c_ptr6 = Cptr6;
+		C_c_ptr7 = Cptr7;
+		C_c_ptr8 = Cptr8;
+		for (n = 0; n < N; n++, Bptr += ldb)
+		{
+			Bptr1 = Bptr;
+			A_c_ptr1 = Aptr1; A_c_ptr2 = Aptr2; A_c_ptr3 = Aptr3; A_c_ptr4 = Aptr4;
+			A_c_ptr5 = Aptr5; A_c_ptr6 = Aptr6; A_c_ptr7 = Aptr7; A_c_ptr8 = Aptr8;
+			B_c_ptr1 = Bptr1;
+			op_8x1_2_first;
+			store_8x1;
+		}
+	}
+
+	for (; m < M; m++, Aptr1 += lda, Cptr1 += ldc)
+	{
+		Bptr = Bt;
+		C_c_ptr1 = Cptr1;
+		for (n = 0; n < N; n++, Bptr += ldb)
+		{
+			Bptr1 = Bptr;
+			A_c_ptr1 = Aptr1;
+			B_c_ptr1 = Bptr1;
+			op_1x1_2_first;
+			store_1x1;
+		}
+	}
+}
+
+void zq_gemm_32f_align_AnoTrans_Btrans_M8_caseNdiv1_KeqAlign3(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+{
+	const float* Aptr1, *Aptr2, *Aptr3, *Aptr4, *A_c_ptr1, *A_c_ptr2, *A_c_ptr3, *A_c_ptr4;
+	const float* Aptr5, *Aptr6, *Aptr7, *Aptr8, *A_c_ptr5, *A_c_ptr6, *A_c_ptr7, *A_c_ptr8;
+	const float *Bptr, *Bptr1;
+	const float *B_c_ptr1;
+	float* Cptr1, *Cptr2, *Cptr3, *Cptr4, *C_c_ptr1, *C_c_ptr2, *C_c_ptr3, *C_c_ptr4;
+	float* Cptr5, *Cptr6, *Cptr7, *Cptr8, *C_c_ptr5, *C_c_ptr6, *C_c_ptr7, *C_c_ptr8;
+	int m, n;
+	int lda8 = lda << 3;
+	int ldc8 = ldc << 3;
+	zq_q_type q;
+	register zq_mm_type sum_vec11, sum_vec21, sum_vec31, sum_vec41;
+	register zq_mm_type sum_vec51, sum_vec61, sum_vec71, sum_vec81;
+	register zq_mm_type a_vec1, a_vec2, a_vec3, a_vec4;
+	register zq_mm_type a_vec5, a_vec6, a_vec7, a_vec8;
+	register zq_mm_type b_vec1;
+
+	Aptr1 = A;
+	Aptr2 = Aptr1 + lda;
+	Aptr3 = Aptr2 + lda;
+	Aptr4 = Aptr3 + lda;
+	Aptr5 = Aptr4 + lda;
+	Aptr6 = Aptr5 + lda;
+	Aptr7 = Aptr6 + lda;
+	Aptr8 = Aptr7 + lda;
+	Cptr1 = C;
+	Cptr2 = Cptr1 + ldc;
+	Cptr3 = Cptr2 + ldc;
+	Cptr4 = Cptr3 + ldc;
+	Cptr5 = Cptr4 + ldc;
+	Cptr6 = Cptr5 + ldc;
+	Cptr7 = Cptr6 + ldc;
+	Cptr8 = Cptr7 + ldc;
+	for (m = 0; m < M - 7; m += 8, Aptr1 += lda8, Aptr2 += lda8, Aptr3 += lda8, Aptr4 += lda8,
+		Aptr5 += lda8, Aptr6 += lda8, Aptr7 += lda8, Aptr8 += lda8,
+		Cptr1 += ldc8, Cptr2 += ldc8, Cptr3 += ldc8, Cptr4 += ldc8,
+		Cptr5 += ldc8, Cptr6 += ldc8, Cptr7 += ldc8, Cptr8 += ldc8)
+	{
+		Bptr = Bt;
+		C_c_ptr1 = Cptr1;
+		C_c_ptr2 = Cptr2;
+		C_c_ptr3 = Cptr3;
+		C_c_ptr4 = Cptr4;
+		C_c_ptr5 = Cptr5;
+		C_c_ptr6 = Cptr6;
+		C_c_ptr7 = Cptr7;
+		C_c_ptr8 = Cptr8;
+		for (n = 0; n < N; n++, Bptr += ldb)
+		{
+			Bptr1 = Bptr;
+			A_c_ptr1 = Aptr1; A_c_ptr2 = Aptr2; A_c_ptr3 = Aptr3; A_c_ptr4 = Aptr4;
+			A_c_ptr5 = Aptr5; A_c_ptr6 = Aptr6; A_c_ptr7 = Aptr7; A_c_ptr8 = Aptr8;
+			B_c_ptr1 = Bptr1;
+			op_8x1_first;
+			op_8x1_2;
+			store_8x1;
+		}
+	}
+
+	for (; m < M; m++, Aptr1 += lda, Cptr1 += ldc)
+	{
+		Bptr = Bt;
+		C_c_ptr1 = Cptr1;
+		for (n = 0; n < N; n++, Bptr += ldb)
+		{
+			Bptr1 = Bptr;
+			A_c_ptr1 = Aptr1;
+			B_c_ptr1 = Bptr1;
+			op_1x1_first;
+			op_1x1_2;
+			store_1x1;
+		}
+	}
+}
+
+void zq_gemm_32f_align_AnoTrans_Btrans_M8_caseNdiv1_KeqAlign4(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+{
+	const float* Aptr1, *Aptr2, *Aptr3, *Aptr4, *A_c_ptr1, *A_c_ptr2, *A_c_ptr3, *A_c_ptr4;
+	const float* Aptr5, *Aptr6, *Aptr7, *Aptr8, *A_c_ptr5, *A_c_ptr6, *A_c_ptr7, *A_c_ptr8;
+	const float *Bptr, *Bptr1;
+	const float *B_c_ptr1;
+	float* Cptr1, *Cptr2, *Cptr3, *Cptr4, *C_c_ptr1, *C_c_ptr2, *C_c_ptr3, *C_c_ptr4;
+	float* Cptr5, *Cptr6, *Cptr7, *Cptr8, *C_c_ptr5, *C_c_ptr6, *C_c_ptr7, *C_c_ptr8;
+	int m, n;
+	int lda8 = lda << 3;
+	int ldc8 = ldc << 3;
+	zq_q_type q;
+	register zq_mm_type sum_vec11, sum_vec21, sum_vec31, sum_vec41;
+	register zq_mm_type sum_vec51, sum_vec61, sum_vec71, sum_vec81;
+	register zq_mm_type a_vec1, a_vec2, a_vec3, a_vec4;
+	register zq_mm_type a_vec5, a_vec6, a_vec7, a_vec8;
+	register zq_mm_type b_vec1;
+
+	Aptr1 = A;
+	Aptr2 = Aptr1 + lda;
+	Aptr3 = Aptr2 + lda;
+	Aptr4 = Aptr3 + lda;
+	Aptr5 = Aptr4 + lda;
+	Aptr6 = Aptr5 + lda;
+	Aptr7 = Aptr6 + lda;
+	Aptr8 = Aptr7 + lda;
+	Cptr1 = C;
+	Cptr2 = Cptr1 + ldc;
+	Cptr3 = Cptr2 + ldc;
+	Cptr4 = Cptr3 + ldc;
+	Cptr5 = Cptr4 + ldc;
+	Cptr6 = Cptr5 + ldc;
+	Cptr7 = Cptr6 + ldc;
+	Cptr8 = Cptr7 + ldc;
+	for (m = 0; m < M - 7; m += 8, Aptr1 += lda8, Aptr2 += lda8, Aptr3 += lda8, Aptr4 += lda8,
+		Aptr5 += lda8, Aptr6 += lda8, Aptr7 += lda8, Aptr8 += lda8,
+		Cptr1 += ldc8, Cptr2 += ldc8, Cptr3 += ldc8, Cptr4 += ldc8,
+		Cptr5 += ldc8, Cptr6 += ldc8, Cptr7 += ldc8, Cptr8 += ldc8)
+	{
+		Bptr = Bt;
+		C_c_ptr1 = Cptr1;
+		C_c_ptr2 = Cptr2;
+		C_c_ptr3 = Cptr3;
+		C_c_ptr4 = Cptr4;
+		C_c_ptr5 = Cptr5;
+		C_c_ptr6 = Cptr6;
+		C_c_ptr7 = Cptr7;
+		C_c_ptr8 = Cptr8;
+		for (n = 0; n < N; n++, Bptr += ldb)
+		{
+			Bptr1 = Bptr;
+			A_c_ptr1 = Aptr1; A_c_ptr2 = Aptr2; A_c_ptr3 = Aptr3; A_c_ptr4 = Aptr4;
+			A_c_ptr5 = Aptr5; A_c_ptr6 = Aptr6; A_c_ptr7 = Aptr7; A_c_ptr8 = Aptr8;
+			B_c_ptr1 = Bptr1;
+			op_8x1_4_first;
+			store_8x1;
+		}
+	}
+
+	for (; m < M; m++, Aptr1 += lda, Cptr1 += ldc)
+	{
+		Bptr = Bt;
+		C_c_ptr1 = Cptr1;
+		for (n = 0; n < N; n++, Bptr += ldb)
+		{
+			Bptr1 = Bptr;
+			A_c_ptr1 = Aptr1;
+			B_c_ptr1 = Bptr1;
+			op_1x1_4_first;
+			store_1x1;
+		}
+	}
+}
+
+void zq_gemm_32f_align_AnoTrans_Btrans_M8_caseNdiv1_KeqAlign5(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+{
+	const float* Aptr1, *Aptr2, *Aptr3, *Aptr4, *A_c_ptr1, *A_c_ptr2, *A_c_ptr3, *A_c_ptr4;
+	const float* Aptr5, *Aptr6, *Aptr7, *Aptr8, *A_c_ptr5, *A_c_ptr6, *A_c_ptr7, *A_c_ptr8;
+	const float *Bptr, *Bptr1;
+	const float *B_c_ptr1;
+	float* Cptr1, *Cptr2, *Cptr3, *Cptr4, *C_c_ptr1, *C_c_ptr2, *C_c_ptr3, *C_c_ptr4;
+	float* Cptr5, *Cptr6, *Cptr7, *Cptr8, *C_c_ptr5, *C_c_ptr6, *C_c_ptr7, *C_c_ptr8;
+	int m, n;
+	int lda8 = lda << 3;
+	int ldc8 = ldc << 3;
+	zq_q_type q;
+	register zq_mm_type sum_vec11, sum_vec21, sum_vec31, sum_vec41;
+	register zq_mm_type sum_vec51, sum_vec61, sum_vec71, sum_vec81;
+	register zq_mm_type a_vec1, a_vec2, a_vec3, a_vec4;
+	register zq_mm_type a_vec5, a_vec6, a_vec7, a_vec8;
+	register zq_mm_type b_vec1;
+
+	Aptr1 = A;
+	Aptr2 = Aptr1 + lda;
+	Aptr3 = Aptr2 + lda;
+	Aptr4 = Aptr3 + lda;
+	Aptr5 = Aptr4 + lda;
+	Aptr6 = Aptr5 + lda;
+	Aptr7 = Aptr6 + lda;
+	Aptr8 = Aptr7 + lda;
+	Cptr1 = C;
+	Cptr2 = Cptr1 + ldc;
+	Cptr3 = Cptr2 + ldc;
+	Cptr4 = Cptr3 + ldc;
+	Cptr5 = Cptr4 + ldc;
+	Cptr6 = Cptr5 + ldc;
+	Cptr7 = Cptr6 + ldc;
+	Cptr8 = Cptr7 + ldc;
+	for (m = 0; m < M - 7; m += 8, Aptr1 += lda8, Aptr2 += lda8, Aptr3 += lda8, Aptr4 += lda8,
+		Aptr5 += lda8, Aptr6 += lda8, Aptr7 += lda8, Aptr8 += lda8,
+		Cptr1 += ldc8, Cptr2 += ldc8, Cptr3 += ldc8, Cptr4 += ldc8,
+		Cptr5 += ldc8, Cptr6 += ldc8, Cptr7 += ldc8, Cptr8 += ldc8)
+	{
+		Bptr = Bt;
+		C_c_ptr1 = Cptr1;
+		C_c_ptr2 = Cptr2;
+		C_c_ptr3 = Cptr3;
+		C_c_ptr4 = Cptr4;
+		C_c_ptr5 = Cptr5;
+		C_c_ptr6 = Cptr6;
+		C_c_ptr7 = Cptr7;
+		C_c_ptr8 = Cptr8;
+		for (n = 0; n < N; n++, Bptr += ldb)
+		{
+			Bptr1 = Bptr;
+			A_c_ptr1 = Aptr1; A_c_ptr2 = Aptr2; A_c_ptr3 = Aptr3; A_c_ptr4 = Aptr4;
+			A_c_ptr5 = Aptr5; A_c_ptr6 = Aptr6; A_c_ptr7 = Aptr7; A_c_ptr8 = Aptr8;
+			B_c_ptr1 = Bptr1;
+			op_8x1_first;
+			op_8x1_4;
+			store_8x1;
+		}
+	}
+
+	for (; m < M; m++, Aptr1 += lda, Cptr1 += ldc)
+	{
+		Bptr = Bt;
+		C_c_ptr1 = Cptr1;
+		for (n = 0; n < N; n++, Bptr += ldb)
+		{
+			Bptr1 = Bptr;
+			A_c_ptr1 = Aptr1;
+			B_c_ptr1 = Bptr1;
+			op_1x1_first;
+			op_1x1_4;
+			store_1x1;
+		}
+	}
+}
+
+void zq_gemm_32f_align_AnoTrans_Btrans_M8_caseNdiv1_KeqAlign6(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+{
+	const float* Aptr1, *Aptr2, *Aptr3, *Aptr4, *A_c_ptr1, *A_c_ptr2, *A_c_ptr3, *A_c_ptr4;
+	const float* Aptr5, *Aptr6, *Aptr7, *Aptr8, *A_c_ptr5, *A_c_ptr6, *A_c_ptr7, *A_c_ptr8;
+	const float *Bptr, *Bptr1;
+	const float *B_c_ptr1;
+	float* Cptr1, *Cptr2, *Cptr3, *Cptr4, *C_c_ptr1, *C_c_ptr2, *C_c_ptr3, *C_c_ptr4;
+	float* Cptr5, *Cptr6, *Cptr7, *Cptr8, *C_c_ptr5, *C_c_ptr6, *C_c_ptr7, *C_c_ptr8;
+	int m, n;
+	int lda8 = lda << 3;
+	int ldc8 = ldc << 3;
+	zq_q_type q;
+	register zq_mm_type sum_vec11, sum_vec21, sum_vec31, sum_vec41;
+	register zq_mm_type sum_vec51, sum_vec61, sum_vec71, sum_vec81;
+	register zq_mm_type a_vec1, a_vec2, a_vec3, a_vec4;
+	register zq_mm_type a_vec5, a_vec6, a_vec7, a_vec8;
+	register zq_mm_type b_vec1;
+
+	Aptr1 = A;
+	Aptr2 = Aptr1 + lda;
+	Aptr3 = Aptr2 + lda;
+	Aptr4 = Aptr3 + lda;
+	Aptr5 = Aptr4 + lda;
+	Aptr6 = Aptr5 + lda;
+	Aptr7 = Aptr6 + lda;
+	Aptr8 = Aptr7 + lda;
+	Cptr1 = C;
+	Cptr2 = Cptr1 + ldc;
+	Cptr3 = Cptr2 + ldc;
+	Cptr4 = Cptr3 + ldc;
+	Cptr5 = Cptr4 + ldc;
+	Cptr6 = Cptr5 + ldc;
+	Cptr7 = Cptr6 + ldc;
+	Cptr8 = Cptr7 + ldc;
+	for (m = 0; m < M - 7; m += 8, Aptr1 += lda8, Aptr2 += lda8, Aptr3 += lda8, Aptr4 += lda8,
+		Aptr5 += lda8, Aptr6 += lda8, Aptr7 += lda8, Aptr8 += lda8,
+		Cptr1 += ldc8, Cptr2 += ldc8, Cptr3 += ldc8, Cptr4 += ldc8,
+		Cptr5 += ldc8, Cptr6 += ldc8, Cptr7 += ldc8, Cptr8 += ldc8)
+	{
+		Bptr = Bt;
+		C_c_ptr1 = Cptr1;
+		C_c_ptr2 = Cptr2;
+		C_c_ptr3 = Cptr3;
+		C_c_ptr4 = Cptr4;
+		C_c_ptr5 = Cptr5;
+		C_c_ptr6 = Cptr6;
+		C_c_ptr7 = Cptr7;
+		C_c_ptr8 = Cptr8;
+		for (n = 0; n < N; n++, Bptr += ldb)
+		{
+			Bptr1 = Bptr;
+			A_c_ptr1 = Aptr1; A_c_ptr2 = Aptr2; A_c_ptr3 = Aptr3; A_c_ptr4 = Aptr4;
+			A_c_ptr5 = Aptr5; A_c_ptr6 = Aptr6; A_c_ptr7 = Aptr7; A_c_ptr8 = Aptr8;
+			B_c_ptr1 = Bptr1;
+			op_8x1_2_first;
+			op_8x1_4;
+			store_8x1;
+		}
+	}
+
+	for (; m < M; m++, Aptr1 += lda, Cptr1 += ldc)
+	{
+		Bptr = Bt;
+		C_c_ptr1 = Cptr1;
+		for (n = 0; n < N; n++, Bptr += ldb)
+		{
+			Bptr1 = Bptr;
+			A_c_ptr1 = Aptr1;
+			B_c_ptr1 = Bptr1;
+			op_1x1_2_first;
+			op_1x1_4;
+			store_1x1;
+		}
+	}
+}
+
+void zq_gemm_32f_align_AnoTrans_Btrans_M8_caseNdiv1_KeqAlign7(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+{
+	const float* Aptr1, *Aptr2, *Aptr3, *Aptr4, *A_c_ptr1, *A_c_ptr2, *A_c_ptr3, *A_c_ptr4;
+	const float* Aptr5, *Aptr6, *Aptr7, *Aptr8, *A_c_ptr5, *A_c_ptr6, *A_c_ptr7, *A_c_ptr8;
+	const float *Bptr, *Bptr1;
+	const float *B_c_ptr1;
+	float* Cptr1, *Cptr2, *Cptr3, *Cptr4, *C_c_ptr1, *C_c_ptr2, *C_c_ptr3, *C_c_ptr4;
+	float* Cptr5, *Cptr6, *Cptr7, *Cptr8, *C_c_ptr5, *C_c_ptr6, *C_c_ptr7, *C_c_ptr8;
+	int m, n;
+	int lda8 = lda << 3;
+	int ldc8 = ldc << 3;
+	zq_q_type q;
+	register zq_mm_type sum_vec11, sum_vec21, sum_vec31, sum_vec41;
+	register zq_mm_type sum_vec51, sum_vec61, sum_vec71, sum_vec81;
+	register zq_mm_type a_vec1, a_vec2, a_vec3, a_vec4;
+	register zq_mm_type a_vec5, a_vec6, a_vec7, a_vec8;
+	register zq_mm_type b_vec1;
+
+	Aptr1 = A;
+	Aptr2 = Aptr1 + lda;
+	Aptr3 = Aptr2 + lda;
+	Aptr4 = Aptr3 + lda;
+	Aptr5 = Aptr4 + lda;
+	Aptr6 = Aptr5 + lda;
+	Aptr7 = Aptr6 + lda;
+	Aptr8 = Aptr7 + lda;
+	Cptr1 = C;
+	Cptr2 = Cptr1 + ldc;
+	Cptr3 = Cptr2 + ldc;
+	Cptr4 = Cptr3 + ldc;
+	Cptr5 = Cptr4 + ldc;
+	Cptr6 = Cptr5 + ldc;
+	Cptr7 = Cptr6 + ldc;
+	Cptr8 = Cptr7 + ldc;
+	for (m = 0; m < M - 7; m += 8, Aptr1 += lda8, Aptr2 += lda8, Aptr3 += lda8, Aptr4 += lda8,
+		Aptr5 += lda8, Aptr6 += lda8, Aptr7 += lda8, Aptr8 += lda8,
+		Cptr1 += ldc8, Cptr2 += ldc8, Cptr3 += ldc8, Cptr4 += ldc8,
+		Cptr5 += ldc8, Cptr6 += ldc8, Cptr7 += ldc8, Cptr8 += ldc8)
+	{
+		Bptr = Bt;
+		C_c_ptr1 = Cptr1;
+		C_c_ptr2 = Cptr2;
+		C_c_ptr3 = Cptr3;
+		C_c_ptr4 = Cptr4;
+		C_c_ptr5 = Cptr5;
+		C_c_ptr6 = Cptr6;
+		C_c_ptr7 = Cptr7;
+		C_c_ptr8 = Cptr8;
+		for (n = 0; n < N; n++, Bptr += ldb)
+		{
+			Bptr1 = Bptr;
+			A_c_ptr1 = Aptr1; A_c_ptr2 = Aptr2; A_c_ptr3 = Aptr3; A_c_ptr4 = Aptr4;
+			A_c_ptr5 = Aptr5; A_c_ptr6 = Aptr6; A_c_ptr7 = Aptr7; A_c_ptr8 = Aptr8;
+			B_c_ptr1 = Bptr1;
+			op_8x1_first;
+			op_8x1_2;
+			op_8x1_4;
+			store_8x1;
+		}
+	}
+
+	for (; m < M; m++, Aptr1 += lda, Cptr1 += ldc)
+	{
+		Bptr = Bt;
+		C_c_ptr1 = Cptr1;
+		for (n = 0; n < N; n++, Bptr += ldb)
+		{
+			Bptr1 = Bptr;
+			A_c_ptr1 = Aptr1;
+			B_c_ptr1 = Bptr1;
+			op_1x1_first;
+			op_1x1_2;
+			op_1x1_4;
+			store_1x1;
+		}
+	}
 }
 
 void zq_gemm_32f_align_AnoTrans_Btrans_M8_caseNdiv1_KdivAlign4(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
@@ -8804,6 +13202,555 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M8_caseNdiv1_KdivAlign64(int M, int N, in
 				op_1x1_16;
 			}
 			store_1x1;
+		}
+	}
+}
+
+void zq_gemm_32f_align_AnoTrans_Btrans_M8_caseNdiv2_KeqAlign1(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+{
+	const float* Aptr1, *Aptr2, *Aptr3, *Aptr4, *A_c_ptr1, *A_c_ptr2, *A_c_ptr3, *A_c_ptr4;
+	const float* Aptr5, *Aptr6, *Aptr7, *Aptr8, *A_c_ptr5, *A_c_ptr6, *A_c_ptr7, *A_c_ptr8;
+	const float *Bptr, *Bptr1, *Bptr2;
+	const float *B_c_ptr1, *B_c_ptr2;
+	float* Cptr1, *Cptr2, *Cptr3, *Cptr4, *C_c_ptr1, *C_c_ptr2, *C_c_ptr3, *C_c_ptr4;
+	float* Cptr5, *Cptr6, *Cptr7, *Cptr8, *C_c_ptr5, *C_c_ptr6, *C_c_ptr7, *C_c_ptr8;
+	int m, n;
+	int lda8 = lda << 3;
+	int ldc8 = ldc << 3;
+	int ldb2 = ldb << 1;
+	zq_q_type q;
+	register zq_mm_type sum_vec11, sum_vec21, sum_vec31, sum_vec41, sum_vec51, sum_vec61, sum_vec71, sum_vec81;
+	register zq_mm_type sum_vec12, sum_vec22, sum_vec32, sum_vec42, sum_vec52, sum_vec62, sum_vec72, sum_vec82;
+	register zq_mm_type a_vec1, a_vec2, a_vec3, a_vec4, a_vec5, a_vec6, a_vec7, a_vec8;
+	register zq_mm_type b_vec1, b_vec2;
+
+	Aptr1 = A;
+	Aptr2 = Aptr1 + lda;
+	Aptr3 = Aptr2 + lda;
+	Aptr4 = Aptr3 + lda;
+	Aptr5 = Aptr4 + lda;
+	Aptr6 = Aptr5 + lda;
+	Aptr7 = Aptr6 + lda;
+	Aptr8 = Aptr7 + lda;
+	Cptr1 = C;
+	Cptr2 = Cptr1 + ldc;
+	Cptr3 = Cptr2 + ldc;
+	Cptr4 = Cptr3 + ldc;
+	Cptr5 = Cptr4 + ldc;
+	Cptr6 = Cptr5 + ldc;
+	Cptr7 = Cptr6 + ldc;
+	Cptr8 = Cptr7 + ldc;
+	for (m = 0; m < M - 7; m += 8,
+		Aptr1 += lda8, Aptr2 += lda8, Aptr3 += lda8, Aptr4 += lda8,
+		Aptr5 += lda8, Aptr6 += lda8, Aptr7 += lda8, Aptr8 += lda8,
+		Cptr1 += ldc8, Cptr2 += ldc8, Cptr3 += ldc8, Cptr4 += ldc8,
+		Cptr5 += ldc8, Cptr6 += ldc8, Cptr7 += ldc8, Cptr8 += ldc8)
+	{
+		Bptr = Bt;
+		C_c_ptr1 = Cptr1;
+		C_c_ptr2 = Cptr2;
+		C_c_ptr3 = Cptr3;
+		C_c_ptr4 = Cptr4;
+		C_c_ptr5 = Cptr5;
+		C_c_ptr6 = Cptr6;
+		C_c_ptr7 = Cptr7;
+		C_c_ptr8 = Cptr8;
+		for (n = 0; n < N; n += 2, Bptr += ldb2)
+		{
+			Bptr1 = Bptr;
+			Bptr2 = Bptr1 + ldb;
+			A_c_ptr1 = Aptr1; A_c_ptr2 = Aptr2; A_c_ptr3 = Aptr3; A_c_ptr4 = Aptr4;
+			A_c_ptr5 = Aptr5; A_c_ptr6 = Aptr6; A_c_ptr7 = Aptr7; A_c_ptr8 = Aptr8;
+			B_c_ptr1 = Bptr1; B_c_ptr2 = Bptr2;
+			op_8x2_first;
+			store_8x2;
+		}
+	}
+
+	for (; m < M; m++, Aptr1 += lda, Cptr1 += ldc)
+	{
+		Bptr = Bt;
+		C_c_ptr1 = Cptr1;
+		for (n = 0; n < N; n += 2, Bptr += ldb2)
+		{
+			Bptr1 = Bptr;
+			Bptr2 = Bptr1 + ldb;
+			A_c_ptr1 = Aptr1;
+			B_c_ptr1 = Bptr1; B_c_ptr2 = Bptr2;
+			op_1x2_first;
+			store_1x2;
+		}
+	}
+}
+
+void zq_gemm_32f_align_AnoTrans_Btrans_M8_caseNdiv2_KeqAlign2(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+{
+	const float* Aptr1, *Aptr2, *Aptr3, *Aptr4, *A_c_ptr1, *A_c_ptr2, *A_c_ptr3, *A_c_ptr4;
+	const float* Aptr5, *Aptr6, *Aptr7, *Aptr8, *A_c_ptr5, *A_c_ptr6, *A_c_ptr7, *A_c_ptr8;
+	const float *Bptr, *Bptr1, *Bptr2;
+	const float *B_c_ptr1, *B_c_ptr2;
+	float* Cptr1, *Cptr2, *Cptr3, *Cptr4, *C_c_ptr1, *C_c_ptr2, *C_c_ptr3, *C_c_ptr4;
+	float* Cptr5, *Cptr6, *Cptr7, *Cptr8, *C_c_ptr5, *C_c_ptr6, *C_c_ptr7, *C_c_ptr8;
+	int m, n;
+	int lda8 = lda << 3;
+	int ldc8 = ldc << 3;
+	int ldb2 = ldb << 1;
+	zq_q_type q;
+	register zq_mm_type sum_vec11, sum_vec21, sum_vec31, sum_vec41, sum_vec51, sum_vec61, sum_vec71, sum_vec81;
+	register zq_mm_type sum_vec12, sum_vec22, sum_vec32, sum_vec42, sum_vec52, sum_vec62, sum_vec72, sum_vec82;
+	register zq_mm_type a_vec1, a_vec2, a_vec3, a_vec4, a_vec5, a_vec6, a_vec7, a_vec8;
+	register zq_mm_type b_vec1, b_vec2;
+
+	Aptr1 = A;
+	Aptr2 = Aptr1 + lda;
+	Aptr3 = Aptr2 + lda;
+	Aptr4 = Aptr3 + lda;
+	Aptr5 = Aptr4 + lda;
+	Aptr6 = Aptr5 + lda;
+	Aptr7 = Aptr6 + lda;
+	Aptr8 = Aptr7 + lda;
+	Cptr1 = C;
+	Cptr2 = Cptr1 + ldc;
+	Cptr3 = Cptr2 + ldc;
+	Cptr4 = Cptr3 + ldc;
+	Cptr5 = Cptr4 + ldc;
+	Cptr6 = Cptr5 + ldc;
+	Cptr7 = Cptr6 + ldc;
+	Cptr8 = Cptr7 + ldc;
+	for (m = 0; m < M - 7; m += 8,
+		Aptr1 += lda8, Aptr2 += lda8, Aptr3 += lda8, Aptr4 += lda8,
+		Aptr5 += lda8, Aptr6 += lda8, Aptr7 += lda8, Aptr8 += lda8,
+		Cptr1 += ldc8, Cptr2 += ldc8, Cptr3 += ldc8, Cptr4 += ldc8,
+		Cptr5 += ldc8, Cptr6 += ldc8, Cptr7 += ldc8, Cptr8 += ldc8)
+	{
+		Bptr = Bt;
+		C_c_ptr1 = Cptr1;
+		C_c_ptr2 = Cptr2;
+		C_c_ptr3 = Cptr3;
+		C_c_ptr4 = Cptr4;
+		C_c_ptr5 = Cptr5;
+		C_c_ptr6 = Cptr6;
+		C_c_ptr7 = Cptr7;
+		C_c_ptr8 = Cptr8;
+		for (n = 0; n < N; n += 2, Bptr += ldb2)
+		{
+			Bptr1 = Bptr;
+			Bptr2 = Bptr1 + ldb;
+			A_c_ptr1 = Aptr1; A_c_ptr2 = Aptr2; A_c_ptr3 = Aptr3; A_c_ptr4 = Aptr4;
+			A_c_ptr5 = Aptr5; A_c_ptr6 = Aptr6; A_c_ptr7 = Aptr7; A_c_ptr8 = Aptr8;
+			B_c_ptr1 = Bptr1; B_c_ptr2 = Bptr2;
+			op_8x2_2_first;
+			store_8x2;
+		}
+	}
+
+	for (; m < M; m++, Aptr1 += lda, Cptr1 += ldc)
+	{
+		Bptr = Bt;
+		C_c_ptr1 = Cptr1;
+		for (n = 0; n < N; n += 2, Bptr += ldb2)
+		{
+			Bptr1 = Bptr;
+			Bptr2 = Bptr1 + ldb;
+			A_c_ptr1 = Aptr1;
+			B_c_ptr1 = Bptr1; B_c_ptr2 = Bptr2;
+			op_1x2_2_first;
+			store_1x2;
+		}
+	}
+}
+
+void zq_gemm_32f_align_AnoTrans_Btrans_M8_caseNdiv2_KeqAlign3(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+{
+	const float* Aptr1, *Aptr2, *Aptr3, *Aptr4, *A_c_ptr1, *A_c_ptr2, *A_c_ptr3, *A_c_ptr4;
+	const float* Aptr5, *Aptr6, *Aptr7, *Aptr8, *A_c_ptr5, *A_c_ptr6, *A_c_ptr7, *A_c_ptr8;
+	const float *Bptr, *Bptr1, *Bptr2;
+	const float *B_c_ptr1, *B_c_ptr2;
+	float* Cptr1, *Cptr2, *Cptr3, *Cptr4, *C_c_ptr1, *C_c_ptr2, *C_c_ptr3, *C_c_ptr4;
+	float* Cptr5, *Cptr6, *Cptr7, *Cptr8, *C_c_ptr5, *C_c_ptr6, *C_c_ptr7, *C_c_ptr8;
+	int m, n;
+	int lda8 = lda << 3;
+	int ldc8 = ldc << 3;
+	int ldb2 = ldb << 1;
+	zq_q_type q;
+	register zq_mm_type sum_vec11, sum_vec21, sum_vec31, sum_vec41, sum_vec51, sum_vec61, sum_vec71, sum_vec81;
+	register zq_mm_type sum_vec12, sum_vec22, sum_vec32, sum_vec42, sum_vec52, sum_vec62, sum_vec72, sum_vec82;
+	register zq_mm_type a_vec1, a_vec2, a_vec3, a_vec4, a_vec5, a_vec6, a_vec7, a_vec8;
+	register zq_mm_type b_vec1, b_vec2;
+
+	Aptr1 = A;
+	Aptr2 = Aptr1 + lda;
+	Aptr3 = Aptr2 + lda;
+	Aptr4 = Aptr3 + lda;
+	Aptr5 = Aptr4 + lda;
+	Aptr6 = Aptr5 + lda;
+	Aptr7 = Aptr6 + lda;
+	Aptr8 = Aptr7 + lda;
+	Cptr1 = C;
+	Cptr2 = Cptr1 + ldc;
+	Cptr3 = Cptr2 + ldc;
+	Cptr4 = Cptr3 + ldc;
+	Cptr5 = Cptr4 + ldc;
+	Cptr6 = Cptr5 + ldc;
+	Cptr7 = Cptr6 + ldc;
+	Cptr8 = Cptr7 + ldc;
+	for (m = 0; m < M - 7; m += 8,
+		Aptr1 += lda8, Aptr2 += lda8, Aptr3 += lda8, Aptr4 += lda8,
+		Aptr5 += lda8, Aptr6 += lda8, Aptr7 += lda8, Aptr8 += lda8,
+		Cptr1 += ldc8, Cptr2 += ldc8, Cptr3 += ldc8, Cptr4 += ldc8,
+		Cptr5 += ldc8, Cptr6 += ldc8, Cptr7 += ldc8, Cptr8 += ldc8)
+	{
+		Bptr = Bt;
+		C_c_ptr1 = Cptr1;
+		C_c_ptr2 = Cptr2;
+		C_c_ptr3 = Cptr3;
+		C_c_ptr4 = Cptr4;
+		C_c_ptr5 = Cptr5;
+		C_c_ptr6 = Cptr6;
+		C_c_ptr7 = Cptr7;
+		C_c_ptr8 = Cptr8;
+		for (n = 0; n < N; n += 2, Bptr += ldb2)
+		{
+			Bptr1 = Bptr;
+			Bptr2 = Bptr1 + ldb;
+			A_c_ptr1 = Aptr1; A_c_ptr2 = Aptr2; A_c_ptr3 = Aptr3; A_c_ptr4 = Aptr4;
+			A_c_ptr5 = Aptr5; A_c_ptr6 = Aptr6; A_c_ptr7 = Aptr7; A_c_ptr8 = Aptr8;
+			B_c_ptr1 = Bptr1; B_c_ptr2 = Bptr2;
+			op_8x2_first;
+			op_8x2_2;
+			store_8x2;
+		}
+	}
+
+	for (; m < M; m++, Aptr1 += lda, Cptr1 += ldc)
+	{
+		Bptr = Bt;
+		C_c_ptr1 = Cptr1;
+		for (n = 0; n < N; n += 2, Bptr += ldb2)
+		{
+			Bptr1 = Bptr;
+			Bptr2 = Bptr1 + ldb;
+			A_c_ptr1 = Aptr1;
+			B_c_ptr1 = Bptr1; B_c_ptr2 = Bptr2;
+			op_1x2_first;
+			op_1x2_2;
+			store_1x2;
+		}
+	}
+}
+
+void zq_gemm_32f_align_AnoTrans_Btrans_M8_caseNdiv2_KeqAlign4(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+{
+	const float* Aptr1, *Aptr2, *Aptr3, *Aptr4, *A_c_ptr1, *A_c_ptr2, *A_c_ptr3, *A_c_ptr4;
+	const float* Aptr5, *Aptr6, *Aptr7, *Aptr8, *A_c_ptr5, *A_c_ptr6, *A_c_ptr7, *A_c_ptr8;
+	const float *Bptr, *Bptr1, *Bptr2;
+	const float *B_c_ptr1, *B_c_ptr2;
+	float* Cptr1, *Cptr2, *Cptr3, *Cptr4, *C_c_ptr1, *C_c_ptr2, *C_c_ptr3, *C_c_ptr4;
+	float* Cptr5, *Cptr6, *Cptr7, *Cptr8, *C_c_ptr5, *C_c_ptr6, *C_c_ptr7, *C_c_ptr8;
+	int m, n;
+	int lda8 = lda << 3;
+	int ldc8 = ldc << 3;
+	int ldb2 = ldb << 1;
+	zq_q_type q;
+	register zq_mm_type sum_vec11, sum_vec21, sum_vec31, sum_vec41, sum_vec51, sum_vec61, sum_vec71, sum_vec81;
+	register zq_mm_type sum_vec12, sum_vec22, sum_vec32, sum_vec42, sum_vec52, sum_vec62, sum_vec72, sum_vec82;
+	register zq_mm_type a_vec1, a_vec2, a_vec3, a_vec4, a_vec5, a_vec6, a_vec7, a_vec8;
+	register zq_mm_type b_vec1, b_vec2;
+
+	Aptr1 = A;
+	Aptr2 = Aptr1 + lda;
+	Aptr3 = Aptr2 + lda;
+	Aptr4 = Aptr3 + lda;
+	Aptr5 = Aptr4 + lda;
+	Aptr6 = Aptr5 + lda;
+	Aptr7 = Aptr6 + lda;
+	Aptr8 = Aptr7 + lda;
+	Cptr1 = C;
+	Cptr2 = Cptr1 + ldc;
+	Cptr3 = Cptr2 + ldc;
+	Cptr4 = Cptr3 + ldc;
+	Cptr5 = Cptr4 + ldc;
+	Cptr6 = Cptr5 + ldc;
+	Cptr7 = Cptr6 + ldc;
+	Cptr8 = Cptr7 + ldc;
+	for (m = 0; m < M - 7; m += 8,
+		Aptr1 += lda8, Aptr2 += lda8, Aptr3 += lda8, Aptr4 += lda8,
+		Aptr5 += lda8, Aptr6 += lda8, Aptr7 += lda8, Aptr8 += lda8,
+		Cptr1 += ldc8, Cptr2 += ldc8, Cptr3 += ldc8, Cptr4 += ldc8,
+		Cptr5 += ldc8, Cptr6 += ldc8, Cptr7 += ldc8, Cptr8 += ldc8)
+	{
+		Bptr = Bt;
+		C_c_ptr1 = Cptr1;
+		C_c_ptr2 = Cptr2;
+		C_c_ptr3 = Cptr3;
+		C_c_ptr4 = Cptr4;
+		C_c_ptr5 = Cptr5;
+		C_c_ptr6 = Cptr6;
+		C_c_ptr7 = Cptr7;
+		C_c_ptr8 = Cptr8;
+		for (n = 0; n < N; n += 2, Bptr += ldb2)
+		{
+			Bptr1 = Bptr;
+			Bptr2 = Bptr1 + ldb;
+			A_c_ptr1 = Aptr1; A_c_ptr2 = Aptr2; A_c_ptr3 = Aptr3; A_c_ptr4 = Aptr4;
+			A_c_ptr5 = Aptr5; A_c_ptr6 = Aptr6; A_c_ptr7 = Aptr7; A_c_ptr8 = Aptr8;
+			B_c_ptr1 = Bptr1; B_c_ptr2 = Bptr2;
+			op_8x2_4_first;
+			store_8x2;
+		}
+	}
+
+	for (; m < M; m++, Aptr1 += lda, Cptr1 += ldc)
+	{
+		Bptr = Bt;
+		C_c_ptr1 = Cptr1;
+		for (n = 0; n < N; n += 2, Bptr += ldb2)
+		{
+			Bptr1 = Bptr;
+			Bptr2 = Bptr1 + ldb;
+			A_c_ptr1 = Aptr1;
+			B_c_ptr1 = Bptr1; B_c_ptr2 = Bptr2;
+			op_1x2_4_first;
+			store_1x2;
+		}
+	}
+}
+
+void zq_gemm_32f_align_AnoTrans_Btrans_M8_caseNdiv2_KeqAlign5(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+{
+	const float* Aptr1, *Aptr2, *Aptr3, *Aptr4, *A_c_ptr1, *A_c_ptr2, *A_c_ptr3, *A_c_ptr4;
+	const float* Aptr5, *Aptr6, *Aptr7, *Aptr8, *A_c_ptr5, *A_c_ptr6, *A_c_ptr7, *A_c_ptr8;
+	const float *Bptr, *Bptr1, *Bptr2;
+	const float *B_c_ptr1, *B_c_ptr2;
+	float* Cptr1, *Cptr2, *Cptr3, *Cptr4, *C_c_ptr1, *C_c_ptr2, *C_c_ptr3, *C_c_ptr4;
+	float* Cptr5, *Cptr6, *Cptr7, *Cptr8, *C_c_ptr5, *C_c_ptr6, *C_c_ptr7, *C_c_ptr8;
+	int m, n;
+	int lda8 = lda << 3;
+	int ldc8 = ldc << 3;
+	int ldb2 = ldb << 1;
+	zq_q_type q;
+	register zq_mm_type sum_vec11, sum_vec21, sum_vec31, sum_vec41, sum_vec51, sum_vec61, sum_vec71, sum_vec81;
+	register zq_mm_type sum_vec12, sum_vec22, sum_vec32, sum_vec42, sum_vec52, sum_vec62, sum_vec72, sum_vec82;
+	register zq_mm_type a_vec1, a_vec2, a_vec3, a_vec4, a_vec5, a_vec6, a_vec7, a_vec8;
+	register zq_mm_type b_vec1, b_vec2;
+
+	Aptr1 = A;
+	Aptr2 = Aptr1 + lda;
+	Aptr3 = Aptr2 + lda;
+	Aptr4 = Aptr3 + lda;
+	Aptr5 = Aptr4 + lda;
+	Aptr6 = Aptr5 + lda;
+	Aptr7 = Aptr6 + lda;
+	Aptr8 = Aptr7 + lda;
+	Cptr1 = C;
+	Cptr2 = Cptr1 + ldc;
+	Cptr3 = Cptr2 + ldc;
+	Cptr4 = Cptr3 + ldc;
+	Cptr5 = Cptr4 + ldc;
+	Cptr6 = Cptr5 + ldc;
+	Cptr7 = Cptr6 + ldc;
+	Cptr8 = Cptr7 + ldc;
+	for (m = 0; m < M - 7; m += 8,
+		Aptr1 += lda8, Aptr2 += lda8, Aptr3 += lda8, Aptr4 += lda8,
+		Aptr5 += lda8, Aptr6 += lda8, Aptr7 += lda8, Aptr8 += lda8,
+		Cptr1 += ldc8, Cptr2 += ldc8, Cptr3 += ldc8, Cptr4 += ldc8,
+		Cptr5 += ldc8, Cptr6 += ldc8, Cptr7 += ldc8, Cptr8 += ldc8)
+	{
+		Bptr = Bt;
+		C_c_ptr1 = Cptr1;
+		C_c_ptr2 = Cptr2;
+		C_c_ptr3 = Cptr3;
+		C_c_ptr4 = Cptr4;
+		C_c_ptr5 = Cptr5;
+		C_c_ptr6 = Cptr6;
+		C_c_ptr7 = Cptr7;
+		C_c_ptr8 = Cptr8;
+		for (n = 0; n < N; n += 2, Bptr += ldb2)
+		{
+			Bptr1 = Bptr;
+			Bptr2 = Bptr1 + ldb;
+			A_c_ptr1 = Aptr1; A_c_ptr2 = Aptr2; A_c_ptr3 = Aptr3; A_c_ptr4 = Aptr4;
+			A_c_ptr5 = Aptr5; A_c_ptr6 = Aptr6; A_c_ptr7 = Aptr7; A_c_ptr8 = Aptr8;
+			B_c_ptr1 = Bptr1; B_c_ptr2 = Bptr2;
+			op_8x2_first;
+			op_8x2_4;
+			store_8x2;
+		}
+	}
+
+	for (; m < M; m++, Aptr1 += lda, Cptr1 += ldc)
+	{
+		Bptr = Bt;
+		C_c_ptr1 = Cptr1;
+		for (n = 0; n < N; n += 2, Bptr += ldb2)
+		{
+			Bptr1 = Bptr;
+			Bptr2 = Bptr1 + ldb;
+			A_c_ptr1 = Aptr1;
+			B_c_ptr1 = Bptr1; B_c_ptr2 = Bptr2;
+			op_1x2_first;
+			op_1x2_4;
+			store_1x2;
+		}
+	}
+}
+
+void zq_gemm_32f_align_AnoTrans_Btrans_M8_caseNdiv2_KeqAlign6(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+{
+	const float* Aptr1, *Aptr2, *Aptr3, *Aptr4, *A_c_ptr1, *A_c_ptr2, *A_c_ptr3, *A_c_ptr4;
+	const float* Aptr5, *Aptr6, *Aptr7, *Aptr8, *A_c_ptr5, *A_c_ptr6, *A_c_ptr7, *A_c_ptr8;
+	const float *Bptr, *Bptr1, *Bptr2;
+	const float *B_c_ptr1, *B_c_ptr2;
+	float* Cptr1, *Cptr2, *Cptr3, *Cptr4, *C_c_ptr1, *C_c_ptr2, *C_c_ptr3, *C_c_ptr4;
+	float* Cptr5, *Cptr6, *Cptr7, *Cptr8, *C_c_ptr5, *C_c_ptr6, *C_c_ptr7, *C_c_ptr8;
+	int m, n;
+	int lda8 = lda << 3;
+	int ldc8 = ldc << 3;
+	int ldb2 = ldb << 1;
+	zq_q_type q;
+	register zq_mm_type sum_vec11, sum_vec21, sum_vec31, sum_vec41, sum_vec51, sum_vec61, sum_vec71, sum_vec81;
+	register zq_mm_type sum_vec12, sum_vec22, sum_vec32, sum_vec42, sum_vec52, sum_vec62, sum_vec72, sum_vec82;
+	register zq_mm_type a_vec1, a_vec2, a_vec3, a_vec4, a_vec5, a_vec6, a_vec7, a_vec8;
+	register zq_mm_type b_vec1, b_vec2;
+
+	Aptr1 = A;
+	Aptr2 = Aptr1 + lda;
+	Aptr3 = Aptr2 + lda;
+	Aptr4 = Aptr3 + lda;
+	Aptr5 = Aptr4 + lda;
+	Aptr6 = Aptr5 + lda;
+	Aptr7 = Aptr6 + lda;
+	Aptr8 = Aptr7 + lda;
+	Cptr1 = C;
+	Cptr2 = Cptr1 + ldc;
+	Cptr3 = Cptr2 + ldc;
+	Cptr4 = Cptr3 + ldc;
+	Cptr5 = Cptr4 + ldc;
+	Cptr6 = Cptr5 + ldc;
+	Cptr7 = Cptr6 + ldc;
+	Cptr8 = Cptr7 + ldc;
+	for (m = 0; m < M - 7; m += 8,
+		Aptr1 += lda8, Aptr2 += lda8, Aptr3 += lda8, Aptr4 += lda8,
+		Aptr5 += lda8, Aptr6 += lda8, Aptr7 += lda8, Aptr8 += lda8,
+		Cptr1 += ldc8, Cptr2 += ldc8, Cptr3 += ldc8, Cptr4 += ldc8,
+		Cptr5 += ldc8, Cptr6 += ldc8, Cptr7 += ldc8, Cptr8 += ldc8)
+	{
+		Bptr = Bt;
+		C_c_ptr1 = Cptr1;
+		C_c_ptr2 = Cptr2;
+		C_c_ptr3 = Cptr3;
+		C_c_ptr4 = Cptr4;
+		C_c_ptr5 = Cptr5;
+		C_c_ptr6 = Cptr6;
+		C_c_ptr7 = Cptr7;
+		C_c_ptr8 = Cptr8;
+		for (n = 0; n < N; n += 2, Bptr += ldb2)
+		{
+			Bptr1 = Bptr;
+			Bptr2 = Bptr1 + ldb;
+			A_c_ptr1 = Aptr1; A_c_ptr2 = Aptr2; A_c_ptr3 = Aptr3; A_c_ptr4 = Aptr4;
+			A_c_ptr5 = Aptr5; A_c_ptr6 = Aptr6; A_c_ptr7 = Aptr7; A_c_ptr8 = Aptr8;
+			B_c_ptr1 = Bptr1; B_c_ptr2 = Bptr2;
+			op_8x2_2_first;
+			op_8x2_4;
+			store_8x2;
+		}
+	}
+
+	for (; m < M; m++, Aptr1 += lda, Cptr1 += ldc)
+	{
+		Bptr = Bt;
+		C_c_ptr1 = Cptr1;
+		for (n = 0; n < N; n += 2, Bptr += ldb2)
+		{
+			Bptr1 = Bptr;
+			Bptr2 = Bptr1 + ldb;
+			A_c_ptr1 = Aptr1;
+			B_c_ptr1 = Bptr1; B_c_ptr2 = Bptr2;
+			op_1x2_2_first;
+			op_1x2_4;
+			store_1x2;
+		}
+	}
+}
+
+void zq_gemm_32f_align_AnoTrans_Btrans_M8_caseNdiv2_KeqAlign7(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+{
+	const float* Aptr1, *Aptr2, *Aptr3, *Aptr4, *A_c_ptr1, *A_c_ptr2, *A_c_ptr3, *A_c_ptr4;
+	const float* Aptr5, *Aptr6, *Aptr7, *Aptr8, *A_c_ptr5, *A_c_ptr6, *A_c_ptr7, *A_c_ptr8;
+	const float *Bptr, *Bptr1, *Bptr2;
+	const float *B_c_ptr1, *B_c_ptr2;
+	float* Cptr1, *Cptr2, *Cptr3, *Cptr4, *C_c_ptr1, *C_c_ptr2, *C_c_ptr3, *C_c_ptr4;
+	float* Cptr5, *Cptr6, *Cptr7, *Cptr8, *C_c_ptr5, *C_c_ptr6, *C_c_ptr7, *C_c_ptr8;
+	int m, n;
+	int lda8 = lda << 3;
+	int ldc8 = ldc << 3;
+	int ldb2 = ldb << 1;
+	zq_q_type q;
+	register zq_mm_type sum_vec11, sum_vec21, sum_vec31, sum_vec41, sum_vec51, sum_vec61, sum_vec71, sum_vec81;
+	register zq_mm_type sum_vec12, sum_vec22, sum_vec32, sum_vec42, sum_vec52, sum_vec62, sum_vec72, sum_vec82;
+	register zq_mm_type a_vec1, a_vec2, a_vec3, a_vec4, a_vec5, a_vec6, a_vec7, a_vec8;
+	register zq_mm_type b_vec1, b_vec2;
+
+	Aptr1 = A;
+	Aptr2 = Aptr1 + lda;
+	Aptr3 = Aptr2 + lda;
+	Aptr4 = Aptr3 + lda;
+	Aptr5 = Aptr4 + lda;
+	Aptr6 = Aptr5 + lda;
+	Aptr7 = Aptr6 + lda;
+	Aptr8 = Aptr7 + lda;
+	Cptr1 = C;
+	Cptr2 = Cptr1 + ldc;
+	Cptr3 = Cptr2 + ldc;
+	Cptr4 = Cptr3 + ldc;
+	Cptr5 = Cptr4 + ldc;
+	Cptr6 = Cptr5 + ldc;
+	Cptr7 = Cptr6 + ldc;
+	Cptr8 = Cptr7 + ldc;
+	for (m = 0; m < M - 7; m += 8,
+		Aptr1 += lda8, Aptr2 += lda8, Aptr3 += lda8, Aptr4 += lda8,
+		Aptr5 += lda8, Aptr6 += lda8, Aptr7 += lda8, Aptr8 += lda8,
+		Cptr1 += ldc8, Cptr2 += ldc8, Cptr3 += ldc8, Cptr4 += ldc8,
+		Cptr5 += ldc8, Cptr6 += ldc8, Cptr7 += ldc8, Cptr8 += ldc8)
+	{
+		Bptr = Bt;
+		C_c_ptr1 = Cptr1;
+		C_c_ptr2 = Cptr2;
+		C_c_ptr3 = Cptr3;
+		C_c_ptr4 = Cptr4;
+		C_c_ptr5 = Cptr5;
+		C_c_ptr6 = Cptr6;
+		C_c_ptr7 = Cptr7;
+		C_c_ptr8 = Cptr8;
+		for (n = 0; n < N; n += 2, Bptr += ldb2)
+		{
+			Bptr1 = Bptr;
+			Bptr2 = Bptr1 + ldb;
+			A_c_ptr1 = Aptr1; A_c_ptr2 = Aptr2; A_c_ptr3 = Aptr3; A_c_ptr4 = Aptr4;
+			A_c_ptr5 = Aptr5; A_c_ptr6 = Aptr6; A_c_ptr7 = Aptr7; A_c_ptr8 = Aptr8;
+			B_c_ptr1 = Bptr1; B_c_ptr2 = Bptr2;
+			op_8x2_first;
+			op_8x2_2;
+			op_8x2_4;
+			store_8x2;
+		}
+	}
+
+	for (; m < M; m++, Aptr1 += lda, Cptr1 += ldc)
+	{
+		Bptr = Bt;
+		C_c_ptr1 = Cptr1;
+		for (n = 0; n < N; n += 2, Bptr += ldb2)
+		{
+			Bptr1 = Bptr;
+			Bptr2 = Bptr1 + ldb;
+			A_c_ptr1 = Aptr1;
+			B_c_ptr1 = Bptr1; B_c_ptr2 = Bptr2;
+			op_1x2_first;
+			op_1x2_2;
+			op_1x2_4;
+			store_1x2;
 		}
 	}
 }
@@ -9248,6 +14195,807 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M8_caseNdiv2_KdivAlign64(int M, int N, in
 				op_1x2_16;
 			}
 			store_1x2;
+		}
+	}
+}
+
+void zq_gemm_32f_align_AnoTrans_Btrans_M16_caseNdiv1_KeqAlign1(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+{
+	const float* Aptr1, *Aptr2, *Aptr3, *Aptr4, *A_c_ptr1, *A_c_ptr2, *A_c_ptr3, *A_c_ptr4;
+	const float* Aptr5, *Aptr6, *Aptr7, *Aptr8, *A_c_ptr5, *A_c_ptr6, *A_c_ptr7, *A_c_ptr8;
+	const float* Aptr9, *AptrA, *AptrB, *AptrC, *A_c_ptr9, *A_c_ptrA, *A_c_ptrB, *A_c_ptrC;
+	const float* AptrD, *AptrE, *AptrF, *AptrG, *A_c_ptrD, *A_c_ptrE, *A_c_ptrF, *A_c_ptrG;
+	const float *Bptr, *Bptr1;
+	const float *B_c_ptr1;
+	float* Cptr1, *Cptr2, *Cptr3, *Cptr4, *C_c_ptr1, *C_c_ptr2, *C_c_ptr3, *C_c_ptr4;
+	float* Cptr5, *Cptr6, *Cptr7, *Cptr8, *C_c_ptr5, *C_c_ptr6, *C_c_ptr7, *C_c_ptr8;
+	float* Cptr9, *CptrA, *CptrB, *CptrC, *C_c_ptr9, *C_c_ptrA, *C_c_ptrB, *C_c_ptrC;
+	float* CptrD, *CptrE, *CptrF, *CptrG, *C_c_ptrD, *C_c_ptrE, *C_c_ptrF, *C_c_ptrG;
+	int m, n;
+	int lda16 = lda << 4;
+	int ldc16 = ldc << 4;
+	zq_q_type q;
+	register zq_mm_type sum_vec11, sum_vec21, sum_vec31, sum_vec41;
+	register zq_mm_type sum_vec51, sum_vec61, sum_vec71, sum_vec81;
+	register zq_mm_type sum_vec91, sum_vecA1, sum_vecB1, sum_vecC1;
+	register zq_mm_type sum_vecD1, sum_vecE1, sum_vecF1, sum_vecG1;
+	register zq_mm_type a_vec1, a_vec2, a_vec3, a_vec4;
+	register zq_mm_type a_vec5, a_vec6, a_vec7, a_vec8;
+	register zq_mm_type a_vec9, a_vecA, a_vecB, a_vecC;
+	register zq_mm_type a_vecD, a_vecE, a_vecF, a_vecG;
+	register zq_mm_type b_vec1;
+
+	Aptr1 = A;
+	Aptr2 = Aptr1 + lda;
+	Aptr3 = Aptr2 + lda;
+	Aptr4 = Aptr3 + lda;
+	Aptr5 = Aptr4 + lda;
+	Aptr6 = Aptr5 + lda;
+	Aptr7 = Aptr6 + lda;
+	Aptr8 = Aptr7 + lda;
+	Aptr9 = Aptr8 + lda;
+	AptrA = Aptr9 + lda;
+	AptrB = AptrA + lda;
+	AptrC = AptrB + lda;
+	AptrD = AptrC + lda;
+	AptrE = AptrD + lda;
+	AptrF = AptrE + lda;
+	AptrG = AptrF + lda;
+	Cptr1 = C;
+	Cptr2 = Cptr1 + ldc;
+	Cptr3 = Cptr2 + ldc;
+	Cptr4 = Cptr3 + ldc;
+	Cptr5 = Cptr4 + ldc;
+	Cptr6 = Cptr5 + ldc;
+	Cptr7 = Cptr6 + ldc;
+	Cptr8 = Cptr7 + ldc;
+	Cptr9 = Cptr8 + ldc;
+	CptrA = Cptr9 + ldc;
+	CptrB = CptrA + ldc;
+	CptrC = CptrB + ldc;
+	CptrD = CptrC + ldc;
+	CptrE = CptrD + ldc;
+	CptrF = CptrE + ldc;
+	CptrG = CptrF + ldc;
+	for (m = 0; m < M - 15; m += 16,
+		Aptr1 += lda16, Aptr2 += lda16, Aptr3 += lda16, Aptr4 += lda16,
+		Aptr5 += lda16, Aptr6 += lda16, Aptr7 += lda16, Aptr8 += lda16,
+		Aptr9 += lda16, AptrA += lda16, AptrB += lda16, AptrC += lda16,
+		AptrD += lda16, AptrE += lda16, AptrF += lda16, AptrG += lda16,
+		Cptr1 += ldc16, Cptr2 += ldc16, Cptr3 += ldc16, Cptr4 += ldc16,
+		Cptr5 += ldc16, Cptr6 += ldc16, Cptr7 += ldc16, Cptr8 += ldc16,
+		Cptr9 += ldc16, CptrA += ldc16, CptrB += ldc16, CptrC += ldc16,
+		CptrD += ldc16, CptrE += ldc16, CptrF += ldc16, CptrG += ldc16)
+	{
+		Bptr = Bt;
+		C_c_ptr1 = Cptr1;
+		C_c_ptr2 = Cptr2;
+		C_c_ptr3 = Cptr3;
+		C_c_ptr4 = Cptr4;
+		C_c_ptr5 = Cptr5;
+		C_c_ptr6 = Cptr6;
+		C_c_ptr7 = Cptr7;
+		C_c_ptr8 = Cptr8;
+		C_c_ptr9 = Cptr9;
+		C_c_ptrA = CptrA;
+		C_c_ptrB = CptrB;
+		C_c_ptrC = CptrC;
+		C_c_ptrD = CptrD;
+		C_c_ptrE = CptrE;
+		C_c_ptrF = CptrF;
+		C_c_ptrG = CptrG;
+		for (n = 0; n < N; n++, Bptr += ldb)
+		{
+			Bptr1 = Bptr;
+			A_c_ptr1 = Aptr1; A_c_ptr2 = Aptr2; A_c_ptr3 = Aptr3; A_c_ptr4 = Aptr4;
+			A_c_ptr5 = Aptr5; A_c_ptr6 = Aptr6; A_c_ptr7 = Aptr7; A_c_ptr8 = Aptr8;
+			A_c_ptr9 = Aptr9; A_c_ptrA = AptrA; A_c_ptrB = AptrB; A_c_ptrC = AptrC;
+			A_c_ptrD = AptrD; A_c_ptrE = AptrE; A_c_ptrF = AptrF; A_c_ptrG = AptrG;
+			B_c_ptr1 = Bptr1;
+			op_16x1_first;
+			store_16x1;
+		}
+	}
+
+	for (; m < M; m++, Aptr1 += lda, Cptr1 += ldc)
+	{
+		Bptr = Bt;
+		C_c_ptr1 = Cptr1;
+		for (n = 0; n < N; n++, Bptr += ldb)
+		{
+			Bptr1 = Bptr;
+			A_c_ptr1 = Aptr1;
+			B_c_ptr1 = Bptr1;
+			op_1x1_first;
+			store_1x1;
+		}
+	}
+}
+
+void zq_gemm_32f_align_AnoTrans_Btrans_M16_caseNdiv1_KeqAlign2(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+{
+	const float* Aptr1, *Aptr2, *Aptr3, *Aptr4, *A_c_ptr1, *A_c_ptr2, *A_c_ptr3, *A_c_ptr4;
+	const float* Aptr5, *Aptr6, *Aptr7, *Aptr8, *A_c_ptr5, *A_c_ptr6, *A_c_ptr7, *A_c_ptr8;
+	const float* Aptr9, *AptrA, *AptrB, *AptrC, *A_c_ptr9, *A_c_ptrA, *A_c_ptrB, *A_c_ptrC;
+	const float* AptrD, *AptrE, *AptrF, *AptrG, *A_c_ptrD, *A_c_ptrE, *A_c_ptrF, *A_c_ptrG;
+	const float *Bptr, *Bptr1;
+	const float *B_c_ptr1;
+	float* Cptr1, *Cptr2, *Cptr3, *Cptr4, *C_c_ptr1, *C_c_ptr2, *C_c_ptr3, *C_c_ptr4;
+	float* Cptr5, *Cptr6, *Cptr7, *Cptr8, *C_c_ptr5, *C_c_ptr6, *C_c_ptr7, *C_c_ptr8;
+	float* Cptr9, *CptrA, *CptrB, *CptrC, *C_c_ptr9, *C_c_ptrA, *C_c_ptrB, *C_c_ptrC;
+	float* CptrD, *CptrE, *CptrF, *CptrG, *C_c_ptrD, *C_c_ptrE, *C_c_ptrF, *C_c_ptrG;
+	int m, n;
+	int lda16 = lda << 4;
+	int ldc16 = ldc << 4;
+	zq_q_type q;
+	register zq_mm_type sum_vec11, sum_vec21, sum_vec31, sum_vec41;
+	register zq_mm_type sum_vec51, sum_vec61, sum_vec71, sum_vec81;
+	register zq_mm_type sum_vec91, sum_vecA1, sum_vecB1, sum_vecC1;
+	register zq_mm_type sum_vecD1, sum_vecE1, sum_vecF1, sum_vecG1;
+	register zq_mm_type a_vec1, a_vec2, a_vec3, a_vec4;
+	register zq_mm_type a_vec5, a_vec6, a_vec7, a_vec8;
+	register zq_mm_type a_vec9, a_vecA, a_vecB, a_vecC;
+	register zq_mm_type a_vecD, a_vecE, a_vecF, a_vecG;
+	register zq_mm_type b_vec1;
+
+	Aptr1 = A;
+	Aptr2 = Aptr1 + lda;
+	Aptr3 = Aptr2 + lda;
+	Aptr4 = Aptr3 + lda;
+	Aptr5 = Aptr4 + lda;
+	Aptr6 = Aptr5 + lda;
+	Aptr7 = Aptr6 + lda;
+	Aptr8 = Aptr7 + lda;
+	Aptr9 = Aptr8 + lda;
+	AptrA = Aptr9 + lda;
+	AptrB = AptrA + lda;
+	AptrC = AptrB + lda;
+	AptrD = AptrC + lda;
+	AptrE = AptrD + lda;
+	AptrF = AptrE + lda;
+	AptrG = AptrF + lda;
+	Cptr1 = C;
+	Cptr2 = Cptr1 + ldc;
+	Cptr3 = Cptr2 + ldc;
+	Cptr4 = Cptr3 + ldc;
+	Cptr5 = Cptr4 + ldc;
+	Cptr6 = Cptr5 + ldc;
+	Cptr7 = Cptr6 + ldc;
+	Cptr8 = Cptr7 + ldc;
+	Cptr9 = Cptr8 + ldc;
+	CptrA = Cptr9 + ldc;
+	CptrB = CptrA + ldc;
+	CptrC = CptrB + ldc;
+	CptrD = CptrC + ldc;
+	CptrE = CptrD + ldc;
+	CptrF = CptrE + ldc;
+	CptrG = CptrF + ldc;
+	for (m = 0; m < M - 15; m += 16,
+		Aptr1 += lda16, Aptr2 += lda16, Aptr3 += lda16, Aptr4 += lda16,
+		Aptr5 += lda16, Aptr6 += lda16, Aptr7 += lda16, Aptr8 += lda16,
+		Aptr9 += lda16, AptrA += lda16, AptrB += lda16, AptrC += lda16,
+		AptrD += lda16, AptrE += lda16, AptrF += lda16, AptrG += lda16,
+		Cptr1 += ldc16, Cptr2 += ldc16, Cptr3 += ldc16, Cptr4 += ldc16,
+		Cptr5 += ldc16, Cptr6 += ldc16, Cptr7 += ldc16, Cptr8 += ldc16,
+		Cptr9 += ldc16, CptrA += ldc16, CptrB += ldc16, CptrC += ldc16,
+		CptrD += ldc16, CptrE += ldc16, CptrF += ldc16, CptrG += ldc16)
+	{
+		Bptr = Bt;
+		C_c_ptr1 = Cptr1;
+		C_c_ptr2 = Cptr2;
+		C_c_ptr3 = Cptr3;
+		C_c_ptr4 = Cptr4;
+		C_c_ptr5 = Cptr5;
+		C_c_ptr6 = Cptr6;
+		C_c_ptr7 = Cptr7;
+		C_c_ptr8 = Cptr8;
+		C_c_ptr9 = Cptr9;
+		C_c_ptrA = CptrA;
+		C_c_ptrB = CptrB;
+		C_c_ptrC = CptrC;
+		C_c_ptrD = CptrD;
+		C_c_ptrE = CptrE;
+		C_c_ptrF = CptrF;
+		C_c_ptrG = CptrG;
+		for (n = 0; n < N; n++, Bptr += ldb)
+		{
+			Bptr1 = Bptr;
+			A_c_ptr1 = Aptr1; A_c_ptr2 = Aptr2; A_c_ptr3 = Aptr3; A_c_ptr4 = Aptr4;
+			A_c_ptr5 = Aptr5; A_c_ptr6 = Aptr6; A_c_ptr7 = Aptr7; A_c_ptr8 = Aptr8;
+			A_c_ptr9 = Aptr9; A_c_ptrA = AptrA; A_c_ptrB = AptrB; A_c_ptrC = AptrC;
+			A_c_ptrD = AptrD; A_c_ptrE = AptrE; A_c_ptrF = AptrF; A_c_ptrG = AptrG;
+			B_c_ptr1 = Bptr1;
+			op_16x1_2_first;
+			store_16x1;
+		}
+	}
+
+	for (; m < M; m++, Aptr1 += lda, Cptr1 += ldc)
+	{
+		Bptr = Bt;
+		C_c_ptr1 = Cptr1;
+		for (n = 0; n < N; n++, Bptr += ldb)
+		{
+			Bptr1 = Bptr;
+			A_c_ptr1 = Aptr1;
+			B_c_ptr1 = Bptr1;
+			op_1x1_2_first;
+			store_1x1;
+		}
+	}
+}
+
+void zq_gemm_32f_align_AnoTrans_Btrans_M16_caseNdiv1_KeqAlign3(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+{
+	const float* Aptr1, *Aptr2, *Aptr3, *Aptr4, *A_c_ptr1, *A_c_ptr2, *A_c_ptr3, *A_c_ptr4;
+	const float* Aptr5, *Aptr6, *Aptr7, *Aptr8, *A_c_ptr5, *A_c_ptr6, *A_c_ptr7, *A_c_ptr8;
+	const float* Aptr9, *AptrA, *AptrB, *AptrC, *A_c_ptr9, *A_c_ptrA, *A_c_ptrB, *A_c_ptrC;
+	const float* AptrD, *AptrE, *AptrF, *AptrG, *A_c_ptrD, *A_c_ptrE, *A_c_ptrF, *A_c_ptrG;
+	const float *Bptr, *Bptr1;
+	const float *B_c_ptr1;
+	float* Cptr1, *Cptr2, *Cptr3, *Cptr4, *C_c_ptr1, *C_c_ptr2, *C_c_ptr3, *C_c_ptr4;
+	float* Cptr5, *Cptr6, *Cptr7, *Cptr8, *C_c_ptr5, *C_c_ptr6, *C_c_ptr7, *C_c_ptr8;
+	float* Cptr9, *CptrA, *CptrB, *CptrC, *C_c_ptr9, *C_c_ptrA, *C_c_ptrB, *C_c_ptrC;
+	float* CptrD, *CptrE, *CptrF, *CptrG, *C_c_ptrD, *C_c_ptrE, *C_c_ptrF, *C_c_ptrG;
+	int m, n;
+	int lda16 = lda << 4;
+	int ldc16 = ldc << 4;
+	zq_q_type q;
+	register zq_mm_type sum_vec11, sum_vec21, sum_vec31, sum_vec41;
+	register zq_mm_type sum_vec51, sum_vec61, sum_vec71, sum_vec81;
+	register zq_mm_type sum_vec91, sum_vecA1, sum_vecB1, sum_vecC1;
+	register zq_mm_type sum_vecD1, sum_vecE1, sum_vecF1, sum_vecG1;
+	register zq_mm_type a_vec1, a_vec2, a_vec3, a_vec4;
+	register zq_mm_type a_vec5, a_vec6, a_vec7, a_vec8;
+	register zq_mm_type a_vec9, a_vecA, a_vecB, a_vecC;
+	register zq_mm_type a_vecD, a_vecE, a_vecF, a_vecG;
+	register zq_mm_type b_vec1;
+
+	Aptr1 = A;
+	Aptr2 = Aptr1 + lda;
+	Aptr3 = Aptr2 + lda;
+	Aptr4 = Aptr3 + lda;
+	Aptr5 = Aptr4 + lda;
+	Aptr6 = Aptr5 + lda;
+	Aptr7 = Aptr6 + lda;
+	Aptr8 = Aptr7 + lda;
+	Aptr9 = Aptr8 + lda;
+	AptrA = Aptr9 + lda;
+	AptrB = AptrA + lda;
+	AptrC = AptrB + lda;
+	AptrD = AptrC + lda;
+	AptrE = AptrD + lda;
+	AptrF = AptrE + lda;
+	AptrG = AptrF + lda;
+	Cptr1 = C;
+	Cptr2 = Cptr1 + ldc;
+	Cptr3 = Cptr2 + ldc;
+	Cptr4 = Cptr3 + ldc;
+	Cptr5 = Cptr4 + ldc;
+	Cptr6 = Cptr5 + ldc;
+	Cptr7 = Cptr6 + ldc;
+	Cptr8 = Cptr7 + ldc;
+	Cptr9 = Cptr8 + ldc;
+	CptrA = Cptr9 + ldc;
+	CptrB = CptrA + ldc;
+	CptrC = CptrB + ldc;
+	CptrD = CptrC + ldc;
+	CptrE = CptrD + ldc;
+	CptrF = CptrE + ldc;
+	CptrG = CptrF + ldc;
+	for (m = 0; m < M - 15; m += 16,
+		Aptr1 += lda16, Aptr2 += lda16, Aptr3 += lda16, Aptr4 += lda16,
+		Aptr5 += lda16, Aptr6 += lda16, Aptr7 += lda16, Aptr8 += lda16,
+		Aptr9 += lda16, AptrA += lda16, AptrB += lda16, AptrC += lda16,
+		AptrD += lda16, AptrE += lda16, AptrF += lda16, AptrG += lda16,
+		Cptr1 += ldc16, Cptr2 += ldc16, Cptr3 += ldc16, Cptr4 += ldc16,
+		Cptr5 += ldc16, Cptr6 += ldc16, Cptr7 += ldc16, Cptr8 += ldc16,
+		Cptr9 += ldc16, CptrA += ldc16, CptrB += ldc16, CptrC += ldc16,
+		CptrD += ldc16, CptrE += ldc16, CptrF += ldc16, CptrG += ldc16)
+	{
+		Bptr = Bt;
+		C_c_ptr1 = Cptr1;
+		C_c_ptr2 = Cptr2;
+		C_c_ptr3 = Cptr3;
+		C_c_ptr4 = Cptr4;
+		C_c_ptr5 = Cptr5;
+		C_c_ptr6 = Cptr6;
+		C_c_ptr7 = Cptr7;
+		C_c_ptr8 = Cptr8;
+		C_c_ptr9 = Cptr9;
+		C_c_ptrA = CptrA;
+		C_c_ptrB = CptrB;
+		C_c_ptrC = CptrC;
+		C_c_ptrD = CptrD;
+		C_c_ptrE = CptrE;
+		C_c_ptrF = CptrF;
+		C_c_ptrG = CptrG;
+		for (n = 0; n < N; n++, Bptr += ldb)
+		{
+			Bptr1 = Bptr;
+			A_c_ptr1 = Aptr1; A_c_ptr2 = Aptr2; A_c_ptr3 = Aptr3; A_c_ptr4 = Aptr4;
+			A_c_ptr5 = Aptr5; A_c_ptr6 = Aptr6; A_c_ptr7 = Aptr7; A_c_ptr8 = Aptr8;
+			A_c_ptr9 = Aptr9; A_c_ptrA = AptrA; A_c_ptrB = AptrB; A_c_ptrC = AptrC;
+			A_c_ptrD = AptrD; A_c_ptrE = AptrE; A_c_ptrF = AptrF; A_c_ptrG = AptrG;
+			B_c_ptr1 = Bptr1;
+			op_16x1_first;
+			op_16x1_2;
+			store_16x1;
+		}
+	}
+
+	for (; m < M; m++, Aptr1 += lda, Cptr1 += ldc)
+	{
+		Bptr = Bt;
+		C_c_ptr1 = Cptr1;
+		for (n = 0; n < N; n++, Bptr += ldb)
+		{
+			Bptr1 = Bptr;
+			A_c_ptr1 = Aptr1;
+			B_c_ptr1 = Bptr1;
+			op_1x1_first;
+			op_1x1_2;
+			store_1x1;
+		}
+	}
+}
+
+void zq_gemm_32f_align_AnoTrans_Btrans_M16_caseNdiv1_KeqAlign4(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+{
+	const float* Aptr1, *Aptr2, *Aptr3, *Aptr4, *A_c_ptr1, *A_c_ptr2, *A_c_ptr3, *A_c_ptr4;
+	const float* Aptr5, *Aptr6, *Aptr7, *Aptr8, *A_c_ptr5, *A_c_ptr6, *A_c_ptr7, *A_c_ptr8;
+	const float* Aptr9, *AptrA, *AptrB, *AptrC, *A_c_ptr9, *A_c_ptrA, *A_c_ptrB, *A_c_ptrC;
+	const float* AptrD, *AptrE, *AptrF, *AptrG, *A_c_ptrD, *A_c_ptrE, *A_c_ptrF, *A_c_ptrG;
+	const float *Bptr, *Bptr1;
+	const float *B_c_ptr1;
+	float* Cptr1, *Cptr2, *Cptr3, *Cptr4, *C_c_ptr1, *C_c_ptr2, *C_c_ptr3, *C_c_ptr4;
+	float* Cptr5, *Cptr6, *Cptr7, *Cptr8, *C_c_ptr5, *C_c_ptr6, *C_c_ptr7, *C_c_ptr8;
+	float* Cptr9, *CptrA, *CptrB, *CptrC, *C_c_ptr9, *C_c_ptrA, *C_c_ptrB, *C_c_ptrC;
+	float* CptrD, *CptrE, *CptrF, *CptrG, *C_c_ptrD, *C_c_ptrE, *C_c_ptrF, *C_c_ptrG;
+	int m, n;
+	int lda16 = lda << 4;
+	int ldc16 = ldc << 4;
+	zq_q_type q;
+	register zq_mm_type sum_vec11, sum_vec21, sum_vec31, sum_vec41;
+	register zq_mm_type sum_vec51, sum_vec61, sum_vec71, sum_vec81;
+	register zq_mm_type sum_vec91, sum_vecA1, sum_vecB1, sum_vecC1;
+	register zq_mm_type sum_vecD1, sum_vecE1, sum_vecF1, sum_vecG1;
+	register zq_mm_type a_vec1, a_vec2, a_vec3, a_vec4;
+	register zq_mm_type a_vec5, a_vec6, a_vec7, a_vec8;
+	register zq_mm_type a_vec9, a_vecA, a_vecB, a_vecC;
+	register zq_mm_type a_vecD, a_vecE, a_vecF, a_vecG;
+	register zq_mm_type b_vec1;
+
+	Aptr1 = A;
+	Aptr2 = Aptr1 + lda;
+	Aptr3 = Aptr2 + lda;
+	Aptr4 = Aptr3 + lda;
+	Aptr5 = Aptr4 + lda;
+	Aptr6 = Aptr5 + lda;
+	Aptr7 = Aptr6 + lda;
+	Aptr8 = Aptr7 + lda;
+	Aptr9 = Aptr8 + lda;
+	AptrA = Aptr9 + lda;
+	AptrB = AptrA + lda;
+	AptrC = AptrB + lda;
+	AptrD = AptrC + lda;
+	AptrE = AptrD + lda;
+	AptrF = AptrE + lda;
+	AptrG = AptrF + lda;
+	Cptr1 = C;
+	Cptr2 = Cptr1 + ldc;
+	Cptr3 = Cptr2 + ldc;
+	Cptr4 = Cptr3 + ldc;
+	Cptr5 = Cptr4 + ldc;
+	Cptr6 = Cptr5 + ldc;
+	Cptr7 = Cptr6 + ldc;
+	Cptr8 = Cptr7 + ldc;
+	Cptr9 = Cptr8 + ldc;
+	CptrA = Cptr9 + ldc;
+	CptrB = CptrA + ldc;
+	CptrC = CptrB + ldc;
+	CptrD = CptrC + ldc;
+	CptrE = CptrD + ldc;
+	CptrF = CptrE + ldc;
+	CptrG = CptrF + ldc;
+	for (m = 0; m < M - 15; m += 16,
+		Aptr1 += lda16, Aptr2 += lda16, Aptr3 += lda16, Aptr4 += lda16,
+		Aptr5 += lda16, Aptr6 += lda16, Aptr7 += lda16, Aptr8 += lda16,
+		Aptr9 += lda16, AptrA += lda16, AptrB += lda16, AptrC += lda16,
+		AptrD += lda16, AptrE += lda16, AptrF += lda16, AptrG += lda16,
+		Cptr1 += ldc16, Cptr2 += ldc16, Cptr3 += ldc16, Cptr4 += ldc16,
+		Cptr5 += ldc16, Cptr6 += ldc16, Cptr7 += ldc16, Cptr8 += ldc16,
+		Cptr9 += ldc16, CptrA += ldc16, CptrB += ldc16, CptrC += ldc16,
+		CptrD += ldc16, CptrE += ldc16, CptrF += ldc16, CptrG += ldc16)
+	{
+		Bptr = Bt;
+		C_c_ptr1 = Cptr1;
+		C_c_ptr2 = Cptr2;
+		C_c_ptr3 = Cptr3;
+		C_c_ptr4 = Cptr4;
+		C_c_ptr5 = Cptr5;
+		C_c_ptr6 = Cptr6;
+		C_c_ptr7 = Cptr7;
+		C_c_ptr8 = Cptr8;
+		C_c_ptr9 = Cptr9;
+		C_c_ptrA = CptrA;
+		C_c_ptrB = CptrB;
+		C_c_ptrC = CptrC;
+		C_c_ptrD = CptrD;
+		C_c_ptrE = CptrE;
+		C_c_ptrF = CptrF;
+		C_c_ptrG = CptrG;
+		for (n = 0; n < N; n++, Bptr += ldb)
+		{
+			Bptr1 = Bptr;
+			A_c_ptr1 = Aptr1; A_c_ptr2 = Aptr2; A_c_ptr3 = Aptr3; A_c_ptr4 = Aptr4;
+			A_c_ptr5 = Aptr5; A_c_ptr6 = Aptr6; A_c_ptr7 = Aptr7; A_c_ptr8 = Aptr8;
+			A_c_ptr9 = Aptr9; A_c_ptrA = AptrA; A_c_ptrB = AptrB; A_c_ptrC = AptrC;
+			A_c_ptrD = AptrD; A_c_ptrE = AptrE; A_c_ptrF = AptrF; A_c_ptrG = AptrG;
+			B_c_ptr1 = Bptr1;
+			op_16x1_4_first;
+			store_16x1;
+		}
+	}
+
+	for (; m < M; m++, Aptr1 += lda, Cptr1 += ldc)
+	{
+		Bptr = Bt;
+		C_c_ptr1 = Cptr1;
+		for (n = 0; n < N; n++, Bptr += ldb)
+		{
+			Bptr1 = Bptr;
+			A_c_ptr1 = Aptr1;
+			B_c_ptr1 = Bptr1;
+			op_1x1_4_first;
+			store_1x1;
+		}
+	}
+}
+
+void zq_gemm_32f_align_AnoTrans_Btrans_M16_caseNdiv1_KeqAlign5(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+{
+	const float* Aptr1, *Aptr2, *Aptr3, *Aptr4, *A_c_ptr1, *A_c_ptr2, *A_c_ptr3, *A_c_ptr4;
+	const float* Aptr5, *Aptr6, *Aptr7, *Aptr8, *A_c_ptr5, *A_c_ptr6, *A_c_ptr7, *A_c_ptr8;
+	const float* Aptr9, *AptrA, *AptrB, *AptrC, *A_c_ptr9, *A_c_ptrA, *A_c_ptrB, *A_c_ptrC;
+	const float* AptrD, *AptrE, *AptrF, *AptrG, *A_c_ptrD, *A_c_ptrE, *A_c_ptrF, *A_c_ptrG;
+	const float *Bptr, *Bptr1;
+	const float *B_c_ptr1;
+	float* Cptr1, *Cptr2, *Cptr3, *Cptr4, *C_c_ptr1, *C_c_ptr2, *C_c_ptr3, *C_c_ptr4;
+	float* Cptr5, *Cptr6, *Cptr7, *Cptr8, *C_c_ptr5, *C_c_ptr6, *C_c_ptr7, *C_c_ptr8;
+	float* Cptr9, *CptrA, *CptrB, *CptrC, *C_c_ptr9, *C_c_ptrA, *C_c_ptrB, *C_c_ptrC;
+	float* CptrD, *CptrE, *CptrF, *CptrG, *C_c_ptrD, *C_c_ptrE, *C_c_ptrF, *C_c_ptrG;
+	int m, n;
+	int lda16 = lda << 4;
+	int ldc16 = ldc << 4;
+	zq_q_type q;
+	register zq_mm_type sum_vec11, sum_vec21, sum_vec31, sum_vec41;
+	register zq_mm_type sum_vec51, sum_vec61, sum_vec71, sum_vec81;
+	register zq_mm_type sum_vec91, sum_vecA1, sum_vecB1, sum_vecC1;
+	register zq_mm_type sum_vecD1, sum_vecE1, sum_vecF1, sum_vecG1;
+	register zq_mm_type a_vec1, a_vec2, a_vec3, a_vec4;
+	register zq_mm_type a_vec5, a_vec6, a_vec7, a_vec8;
+	register zq_mm_type a_vec9, a_vecA, a_vecB, a_vecC;
+	register zq_mm_type a_vecD, a_vecE, a_vecF, a_vecG;
+	register zq_mm_type b_vec1;
+
+	Aptr1 = A;
+	Aptr2 = Aptr1 + lda;
+	Aptr3 = Aptr2 + lda;
+	Aptr4 = Aptr3 + lda;
+	Aptr5 = Aptr4 + lda;
+	Aptr6 = Aptr5 + lda;
+	Aptr7 = Aptr6 + lda;
+	Aptr8 = Aptr7 + lda;
+	Aptr9 = Aptr8 + lda;
+	AptrA = Aptr9 + lda;
+	AptrB = AptrA + lda;
+	AptrC = AptrB + lda;
+	AptrD = AptrC + lda;
+	AptrE = AptrD + lda;
+	AptrF = AptrE + lda;
+	AptrG = AptrF + lda;
+	Cptr1 = C;
+	Cptr2 = Cptr1 + ldc;
+	Cptr3 = Cptr2 + ldc;
+	Cptr4 = Cptr3 + ldc;
+	Cptr5 = Cptr4 + ldc;
+	Cptr6 = Cptr5 + ldc;
+	Cptr7 = Cptr6 + ldc;
+	Cptr8 = Cptr7 + ldc;
+	Cptr9 = Cptr8 + ldc;
+	CptrA = Cptr9 + ldc;
+	CptrB = CptrA + ldc;
+	CptrC = CptrB + ldc;
+	CptrD = CptrC + ldc;
+	CptrE = CptrD + ldc;
+	CptrF = CptrE + ldc;
+	CptrG = CptrF + ldc;
+	for (m = 0; m < M - 15; m += 16,
+		Aptr1 += lda16, Aptr2 += lda16, Aptr3 += lda16, Aptr4 += lda16,
+		Aptr5 += lda16, Aptr6 += lda16, Aptr7 += lda16, Aptr8 += lda16,
+		Aptr9 += lda16, AptrA += lda16, AptrB += lda16, AptrC += lda16,
+		AptrD += lda16, AptrE += lda16, AptrF += lda16, AptrG += lda16,
+		Cptr1 += ldc16, Cptr2 += ldc16, Cptr3 += ldc16, Cptr4 += ldc16,
+		Cptr5 += ldc16, Cptr6 += ldc16, Cptr7 += ldc16, Cptr8 += ldc16,
+		Cptr9 += ldc16, CptrA += ldc16, CptrB += ldc16, CptrC += ldc16,
+		CptrD += ldc16, CptrE += ldc16, CptrF += ldc16, CptrG += ldc16)
+	{
+		Bptr = Bt;
+		C_c_ptr1 = Cptr1;
+		C_c_ptr2 = Cptr2;
+		C_c_ptr3 = Cptr3;
+		C_c_ptr4 = Cptr4;
+		C_c_ptr5 = Cptr5;
+		C_c_ptr6 = Cptr6;
+		C_c_ptr7 = Cptr7;
+		C_c_ptr8 = Cptr8;
+		C_c_ptr9 = Cptr9;
+		C_c_ptrA = CptrA;
+		C_c_ptrB = CptrB;
+		C_c_ptrC = CptrC;
+		C_c_ptrD = CptrD;
+		C_c_ptrE = CptrE;
+		C_c_ptrF = CptrF;
+		C_c_ptrG = CptrG;
+		for (n = 0; n < N; n++, Bptr += ldb)
+		{
+			Bptr1 = Bptr;
+			A_c_ptr1 = Aptr1; A_c_ptr2 = Aptr2; A_c_ptr3 = Aptr3; A_c_ptr4 = Aptr4;
+			A_c_ptr5 = Aptr5; A_c_ptr6 = Aptr6; A_c_ptr7 = Aptr7; A_c_ptr8 = Aptr8;
+			A_c_ptr9 = Aptr9; A_c_ptrA = AptrA; A_c_ptrB = AptrB; A_c_ptrC = AptrC;
+			A_c_ptrD = AptrD; A_c_ptrE = AptrE; A_c_ptrF = AptrF; A_c_ptrG = AptrG;
+			B_c_ptr1 = Bptr1;
+			op_16x1_first;
+			op_16x1_4;
+			store_16x1;
+		}
+	}
+
+	for (; m < M; m++, Aptr1 += lda, Cptr1 += ldc)
+	{
+		Bptr = Bt;
+		C_c_ptr1 = Cptr1;
+		for (n = 0; n < N; n++, Bptr += ldb)
+		{
+			Bptr1 = Bptr;
+			A_c_ptr1 = Aptr1;
+			B_c_ptr1 = Bptr1;
+			op_1x1_first;
+			op_1x1_4;
+			store_1x1;
+		}
+	}
+}
+
+void zq_gemm_32f_align_AnoTrans_Btrans_M16_caseNdiv1_KeqAlign6(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+{
+	const float* Aptr1, *Aptr2, *Aptr3, *Aptr4, *A_c_ptr1, *A_c_ptr2, *A_c_ptr3, *A_c_ptr4;
+	const float* Aptr5, *Aptr6, *Aptr7, *Aptr8, *A_c_ptr5, *A_c_ptr6, *A_c_ptr7, *A_c_ptr8;
+	const float* Aptr9, *AptrA, *AptrB, *AptrC, *A_c_ptr9, *A_c_ptrA, *A_c_ptrB, *A_c_ptrC;
+	const float* AptrD, *AptrE, *AptrF, *AptrG, *A_c_ptrD, *A_c_ptrE, *A_c_ptrF, *A_c_ptrG;
+	const float *Bptr, *Bptr1;
+	const float *B_c_ptr1;
+	float* Cptr1, *Cptr2, *Cptr3, *Cptr4, *C_c_ptr1, *C_c_ptr2, *C_c_ptr3, *C_c_ptr4;
+	float* Cptr5, *Cptr6, *Cptr7, *Cptr8, *C_c_ptr5, *C_c_ptr6, *C_c_ptr7, *C_c_ptr8;
+	float* Cptr9, *CptrA, *CptrB, *CptrC, *C_c_ptr9, *C_c_ptrA, *C_c_ptrB, *C_c_ptrC;
+	float* CptrD, *CptrE, *CptrF, *CptrG, *C_c_ptrD, *C_c_ptrE, *C_c_ptrF, *C_c_ptrG;
+	int m, n;
+	int lda16 = lda << 4;
+	int ldc16 = ldc << 4;
+	zq_q_type q;
+	register zq_mm_type sum_vec11, sum_vec21, sum_vec31, sum_vec41;
+	register zq_mm_type sum_vec51, sum_vec61, sum_vec71, sum_vec81;
+	register zq_mm_type sum_vec91, sum_vecA1, sum_vecB1, sum_vecC1;
+	register zq_mm_type sum_vecD1, sum_vecE1, sum_vecF1, sum_vecG1;
+	register zq_mm_type a_vec1, a_vec2, a_vec3, a_vec4;
+	register zq_mm_type a_vec5, a_vec6, a_vec7, a_vec8;
+	register zq_mm_type a_vec9, a_vecA, a_vecB, a_vecC;
+	register zq_mm_type a_vecD, a_vecE, a_vecF, a_vecG;
+	register zq_mm_type b_vec1;
+
+	Aptr1 = A;
+	Aptr2 = Aptr1 + lda;
+	Aptr3 = Aptr2 + lda;
+	Aptr4 = Aptr3 + lda;
+	Aptr5 = Aptr4 + lda;
+	Aptr6 = Aptr5 + lda;
+	Aptr7 = Aptr6 + lda;
+	Aptr8 = Aptr7 + lda;
+	Aptr9 = Aptr8 + lda;
+	AptrA = Aptr9 + lda;
+	AptrB = AptrA + lda;
+	AptrC = AptrB + lda;
+	AptrD = AptrC + lda;
+	AptrE = AptrD + lda;
+	AptrF = AptrE + lda;
+	AptrG = AptrF + lda;
+	Cptr1 = C;
+	Cptr2 = Cptr1 + ldc;
+	Cptr3 = Cptr2 + ldc;
+	Cptr4 = Cptr3 + ldc;
+	Cptr5 = Cptr4 + ldc;
+	Cptr6 = Cptr5 + ldc;
+	Cptr7 = Cptr6 + ldc;
+	Cptr8 = Cptr7 + ldc;
+	Cptr9 = Cptr8 + ldc;
+	CptrA = Cptr9 + ldc;
+	CptrB = CptrA + ldc;
+	CptrC = CptrB + ldc;
+	CptrD = CptrC + ldc;
+	CptrE = CptrD + ldc;
+	CptrF = CptrE + ldc;
+	CptrG = CptrF + ldc;
+	for (m = 0; m < M - 15; m += 16,
+		Aptr1 += lda16, Aptr2 += lda16, Aptr3 += lda16, Aptr4 += lda16,
+		Aptr5 += lda16, Aptr6 += lda16, Aptr7 += lda16, Aptr8 += lda16,
+		Aptr9 += lda16, AptrA += lda16, AptrB += lda16, AptrC += lda16,
+		AptrD += lda16, AptrE += lda16, AptrF += lda16, AptrG += lda16,
+		Cptr1 += ldc16, Cptr2 += ldc16, Cptr3 += ldc16, Cptr4 += ldc16,
+		Cptr5 += ldc16, Cptr6 += ldc16, Cptr7 += ldc16, Cptr8 += ldc16,
+		Cptr9 += ldc16, CptrA += ldc16, CptrB += ldc16, CptrC += ldc16,
+		CptrD += ldc16, CptrE += ldc16, CptrF += ldc16, CptrG += ldc16)
+	{
+		Bptr = Bt;
+		C_c_ptr1 = Cptr1;
+		C_c_ptr2 = Cptr2;
+		C_c_ptr3 = Cptr3;
+		C_c_ptr4 = Cptr4;
+		C_c_ptr5 = Cptr5;
+		C_c_ptr6 = Cptr6;
+		C_c_ptr7 = Cptr7;
+		C_c_ptr8 = Cptr8;
+		C_c_ptr9 = Cptr9;
+		C_c_ptrA = CptrA;
+		C_c_ptrB = CptrB;
+		C_c_ptrC = CptrC;
+		C_c_ptrD = CptrD;
+		C_c_ptrE = CptrE;
+		C_c_ptrF = CptrF;
+		C_c_ptrG = CptrG;
+		for (n = 0; n < N; n++, Bptr += ldb)
+		{
+			Bptr1 = Bptr;
+			A_c_ptr1 = Aptr1; A_c_ptr2 = Aptr2; A_c_ptr3 = Aptr3; A_c_ptr4 = Aptr4;
+			A_c_ptr5 = Aptr5; A_c_ptr6 = Aptr6; A_c_ptr7 = Aptr7; A_c_ptr8 = Aptr8;
+			A_c_ptr9 = Aptr9; A_c_ptrA = AptrA; A_c_ptrB = AptrB; A_c_ptrC = AptrC;
+			A_c_ptrD = AptrD; A_c_ptrE = AptrE; A_c_ptrF = AptrF; A_c_ptrG = AptrG;
+			B_c_ptr1 = Bptr1;
+			op_16x1_2_first;
+			op_16x1_4;
+			store_16x1;
+		}
+	}
+
+	for (; m < M; m++, Aptr1 += lda, Cptr1 += ldc)
+	{
+		Bptr = Bt;
+		C_c_ptr1 = Cptr1;
+		for (n = 0; n < N; n++, Bptr += ldb)
+		{
+			Bptr1 = Bptr;
+			A_c_ptr1 = Aptr1;
+			B_c_ptr1 = Bptr1;
+			op_1x1_2_first;
+			op_1x1_4;
+			store_1x1;
+		}
+	}
+}
+
+void zq_gemm_32f_align_AnoTrans_Btrans_M16_caseNdiv1_KeqAlign7(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+{
+	const float* Aptr1, *Aptr2, *Aptr3, *Aptr4, *A_c_ptr1, *A_c_ptr2, *A_c_ptr3, *A_c_ptr4;
+	const float* Aptr5, *Aptr6, *Aptr7, *Aptr8, *A_c_ptr5, *A_c_ptr6, *A_c_ptr7, *A_c_ptr8;
+	const float* Aptr9, *AptrA, *AptrB, *AptrC, *A_c_ptr9, *A_c_ptrA, *A_c_ptrB, *A_c_ptrC;
+	const float* AptrD, *AptrE, *AptrF, *AptrG, *A_c_ptrD, *A_c_ptrE, *A_c_ptrF, *A_c_ptrG;
+	const float *Bptr, *Bptr1;
+	const float *B_c_ptr1;
+	float* Cptr1, *Cptr2, *Cptr3, *Cptr4, *C_c_ptr1, *C_c_ptr2, *C_c_ptr3, *C_c_ptr4;
+	float* Cptr5, *Cptr6, *Cptr7, *Cptr8, *C_c_ptr5, *C_c_ptr6, *C_c_ptr7, *C_c_ptr8;
+	float* Cptr9, *CptrA, *CptrB, *CptrC, *C_c_ptr9, *C_c_ptrA, *C_c_ptrB, *C_c_ptrC;
+	float* CptrD, *CptrE, *CptrF, *CptrG, *C_c_ptrD, *C_c_ptrE, *C_c_ptrF, *C_c_ptrG;
+	int m, n;
+	int lda16 = lda << 4;
+	int ldc16 = ldc << 4;
+	zq_q_type q;
+	register zq_mm_type sum_vec11, sum_vec21, sum_vec31, sum_vec41;
+	register zq_mm_type sum_vec51, sum_vec61, sum_vec71, sum_vec81;
+	register zq_mm_type sum_vec91, sum_vecA1, sum_vecB1, sum_vecC1;
+	register zq_mm_type sum_vecD1, sum_vecE1, sum_vecF1, sum_vecG1;
+	register zq_mm_type a_vec1, a_vec2, a_vec3, a_vec4;
+	register zq_mm_type a_vec5, a_vec6, a_vec7, a_vec8;
+	register zq_mm_type a_vec9, a_vecA, a_vecB, a_vecC;
+	register zq_mm_type a_vecD, a_vecE, a_vecF, a_vecG;
+	register zq_mm_type b_vec1;
+
+	Aptr1 = A;
+	Aptr2 = Aptr1 + lda;
+	Aptr3 = Aptr2 + lda;
+	Aptr4 = Aptr3 + lda;
+	Aptr5 = Aptr4 + lda;
+	Aptr6 = Aptr5 + lda;
+	Aptr7 = Aptr6 + lda;
+	Aptr8 = Aptr7 + lda;
+	Aptr9 = Aptr8 + lda;
+	AptrA = Aptr9 + lda;
+	AptrB = AptrA + lda;
+	AptrC = AptrB + lda;
+	AptrD = AptrC + lda;
+	AptrE = AptrD + lda;
+	AptrF = AptrE + lda;
+	AptrG = AptrF + lda;
+	Cptr1 = C;
+	Cptr2 = Cptr1 + ldc;
+	Cptr3 = Cptr2 + ldc;
+	Cptr4 = Cptr3 + ldc;
+	Cptr5 = Cptr4 + ldc;
+	Cptr6 = Cptr5 + ldc;
+	Cptr7 = Cptr6 + ldc;
+	Cptr8 = Cptr7 + ldc;
+	Cptr9 = Cptr8 + ldc;
+	CptrA = Cptr9 + ldc;
+	CptrB = CptrA + ldc;
+	CptrC = CptrB + ldc;
+	CptrD = CptrC + ldc;
+	CptrE = CptrD + ldc;
+	CptrF = CptrE + ldc;
+	CptrG = CptrF + ldc;
+	for (m = 0; m < M - 15; m += 16,
+		Aptr1 += lda16, Aptr2 += lda16, Aptr3 += lda16, Aptr4 += lda16,
+		Aptr5 += lda16, Aptr6 += lda16, Aptr7 += lda16, Aptr8 += lda16,
+		Aptr9 += lda16, AptrA += lda16, AptrB += lda16, AptrC += lda16,
+		AptrD += lda16, AptrE += lda16, AptrF += lda16, AptrG += lda16,
+		Cptr1 += ldc16, Cptr2 += ldc16, Cptr3 += ldc16, Cptr4 += ldc16,
+		Cptr5 += ldc16, Cptr6 += ldc16, Cptr7 += ldc16, Cptr8 += ldc16,
+		Cptr9 += ldc16, CptrA += ldc16, CptrB += ldc16, CptrC += ldc16,
+		CptrD += ldc16, CptrE += ldc16, CptrF += ldc16, CptrG += ldc16)
+	{
+		Bptr = Bt;
+		C_c_ptr1 = Cptr1;
+		C_c_ptr2 = Cptr2;
+		C_c_ptr3 = Cptr3;
+		C_c_ptr4 = Cptr4;
+		C_c_ptr5 = Cptr5;
+		C_c_ptr6 = Cptr6;
+		C_c_ptr7 = Cptr7;
+		C_c_ptr8 = Cptr8;
+		C_c_ptr9 = Cptr9;
+		C_c_ptrA = CptrA;
+		C_c_ptrB = CptrB;
+		C_c_ptrC = CptrC;
+		C_c_ptrD = CptrD;
+		C_c_ptrE = CptrE;
+		C_c_ptrF = CptrF;
+		C_c_ptrG = CptrG;
+		for (n = 0; n < N; n++, Bptr += ldb)
+		{
+			Bptr1 = Bptr;
+			A_c_ptr1 = Aptr1; A_c_ptr2 = Aptr2; A_c_ptr3 = Aptr3; A_c_ptr4 = Aptr4;
+			A_c_ptr5 = Aptr5; A_c_ptr6 = Aptr6; A_c_ptr7 = Aptr7; A_c_ptr8 = Aptr8;
+			A_c_ptr9 = Aptr9; A_c_ptrA = AptrA; A_c_ptrB = AptrB; A_c_ptrC = AptrC;
+			A_c_ptrD = AptrD; A_c_ptrE = AptrE; A_c_ptrF = AptrF; A_c_ptrG = AptrG;
+			B_c_ptr1 = Bptr1;
+			op_16x1_first;
+			op_16x1_2;
+			op_16x1_4;
+			store_16x1;
+		}
+	}
+
+	for (; m < M; m++, Aptr1 += lda, Cptr1 += ldc)
+	{
+		Bptr = Bt;
+		C_c_ptr1 = Cptr1;
+		for (n = 0; n < N; n++, Bptr += ldb)
+		{
+			Bptr1 = Bptr;
+			A_c_ptr1 = Aptr1;
+			B_c_ptr1 = Bptr1;
+			op_1x1_first;
+			op_1x1_2;
+			op_1x1_4;
+			store_1x1;
 		}
 	}
 }
@@ -9886,6 +15634,20 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M1_N1(int M, int N, int K, const float* A
 		zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv1_KdivAlign16(M, N, K, A, lda, Bt, ldb, C, ldc);
 	else if (K %zq_mm_align_size8 == 0)
 		zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv1_KdivAlign8(M, N, K, A, lda, Bt, ldb, C, ldc);
+	else if (K == zq_mm_align_size7)
+		zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv1_KeqAlign7(M, N, K, A, lda, Bt, ldb, C, ldc);
+	else if (K == zq_mm_align_size6)
+		zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv1_KeqAlign6(M, N, K, A, lda, Bt, ldb, C, ldc);
+	else if (K == zq_mm_align_size5)
+		zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv1_KeqAlign5(M, N, K, A, lda, Bt, ldb, C, ldc);
+	else if (K == zq_mm_align_size4)
+		zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv1_KeqAlign4(M, N, K, A, lda, Bt, ldb, C, ldc);
+	else if (K == zq_mm_align_size3)
+		zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv1_KeqAlign3(M, N, K, A, lda, Bt, ldb, C, ldc);
+	else if (K == zq_mm_align_size2)
+		zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv1_KeqAlign2(M, N, K, A, lda, Bt, ldb, C, ldc);
+	else if (K == zq_mm_align_size)
+		zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv1_KeqAlign1(M, N, K, A, lda, Bt, ldb, C, ldc);
 	else if (K %zq_mm_align_size4 == 0)
 		zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv1_KdivAlign4(M, N, K, A, lda, Bt, ldb, C, ldc);
 	else
@@ -9919,12 +15681,48 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M1_N2(int M, int N, int K, const float* A
 		zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv2_KdivAlign8(M, partN, K, A, lda, Bt, ldb, C, ldc);
 		handled = 1;
 	}
+	else if (K == zq_mm_align_size7)
+	{
+		zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv2_KeqAlign7(M, partN, K, A, lda, Bt, ldb, C, ldc);
+		handled = 1;
+	}
+	else if (K == zq_mm_align_size6)
+	{
+		zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv2_KeqAlign6(M, partN, K, A, lda, Bt, ldb, C, ldc);
+		handled = 1;
+	}
+	else if (K == zq_mm_align_size5)
+	{
+		zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv2_KeqAlign5(M, partN, K, A, lda, Bt, ldb, C, ldc);
+		handled = 1;
+	}
+	else if (K == zq_mm_align_size4)
+	{
+		zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv2_KeqAlign4(M, partN, K, A, lda, Bt, ldb, C, ldc);
+		handled = 1;
+	}
+	else if (K == zq_mm_align_size3)
+	{
+		zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv2_KeqAlign3(M, partN, K, A, lda, Bt, ldb, C, ldc);
+		handled = 1;
+	}
+	else if (K == zq_mm_align_size2)
+	{
+		zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv2_KeqAlign2(M, partN, K, A, lda, Bt, ldb, C, ldc);
+		handled = 1;
+	}
+	else if (K == zq_mm_align_size)
+	{
+		zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv2_KeqAlign1(M, partN, K, A, lda, Bt, ldb, C, ldc);
+		handled = 1;
+	}
 	else if (K %zq_mm_align_size4 == 0)
 	{
 		zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv2_KdivAlign4(M, partN, K, A, lda, Bt, ldb, C, ldc);
 		handled = 1;
 	}
 	
+
 	if (handled)
 	{
 		if(restN != 0)
@@ -9961,11 +15759,47 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M1_N4(int M, int N, int K, const float* A
 		zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv4_KdivAlign8(M, partN, K, A, lda, Bt, ldb, C, ldc);
 		handled = 1;
 	}
+	else if (K == zq_mm_align_size7)
+	{
+		zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv4_KeqAlign7(M, partN, K, A, lda, Bt, ldb, C, ldc);
+		handled = 1;
+	}
+	else if (K == zq_mm_align_size6)
+	{
+		zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv4_KeqAlign6(M, partN, K, A, lda, Bt, ldb, C, ldc);
+		handled = 1;
+	}
+	else if (K == zq_mm_align_size5)
+	{
+		zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv4_KeqAlign5(M, partN, K, A, lda, Bt, ldb, C, ldc);
+		handled = 1;
+	}
+	else if (K == zq_mm_align_size4)
+	{
+		zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv4_KeqAlign4(M, partN, K, A, lda, Bt, ldb, C, ldc);
+		handled = 1;
+	}
+	else if (K == zq_mm_align_size3)
+	{
+		zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv4_KeqAlign3(M, partN, K, A, lda, Bt, ldb, C, ldc);
+		handled = 1;
+	}
+	else if (K == zq_mm_align_size2)
+	{
+		zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv4_KeqAlign2(M, partN, K, A, lda, Bt, ldb, C, ldc);
+		handled = 1;
+	}
+	else if (K == zq_mm_align_size)
+	{
+		zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv4_KeqAlign1(M, partN, K, A, lda, Bt, ldb, C, ldc);
+		handled = 1;
+	}
 	else if (K %zq_mm_align_size4 == 0)
 	{
 		zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv4_KdivAlign4(M, partN, K, A, lda, Bt, ldb, C, ldc);
 		handled = 1;
 	}
+	
 
 	if (handled)
 	{
@@ -10003,11 +15837,47 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M1_N8(int M, int N, int K, const float* A
 		zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv8_KdivAlign8(M, partN, K, A, lda, Bt, ldb, C, ldc);
 		handled = 1;
 	}
+	else if (K == zq_mm_align_size7)
+	{
+		zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv8_KeqAlign7(M, partN, K, A, lda, Bt, ldb, C, ldc);
+		handled = 1;
+	}
+	else if (K == zq_mm_align_size6)
+	{
+		zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv8_KeqAlign6(M, partN, K, A, lda, Bt, ldb, C, ldc);
+		handled = 1;
+	}
+	else if (K == zq_mm_align_size5)
+	{
+		zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv8_KeqAlign5(M, partN, K, A, lda, Bt, ldb, C, ldc);
+		handled = 1;
+	}
+	else if (K == zq_mm_align_size4)
+	{
+		zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv8_KeqAlign4(M, partN, K, A, lda, Bt, ldb, C, ldc);
+		handled = 1;
+	}
+	else if (K == zq_mm_align_size3)
+	{
+		zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv8_KeqAlign3(M, partN, K, A, lda, Bt, ldb, C, ldc);
+		handled = 1;
+	}
+	else if (K == zq_mm_align_size2)
+	{
+		zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv8_KeqAlign2(M, partN, K, A, lda, Bt, ldb, C, ldc);
+		handled = 1;
+	}
+	else if (K == zq_mm_align_size)
+	{
+		zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv8_KeqAlign1(M, partN, K, A, lda, Bt, ldb, C, ldc);
+		handled = 1;
+	}
 	else if (K %zq_mm_align_size4 == 0)
 	{
 		zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv8_KdivAlign4(M, partN, K, A, lda, Bt, ldb, C, ldc);
 		handled = 1;
 	}
+	
 
 	if (handled)
 	{
@@ -10029,6 +15899,20 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M2_N1(int M, int N, int K, const float* A
 		zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv1_KdivAlign16(M, N, K, A, lda, Bt, ldb, C, ldc);
 	else if (K %zq_mm_align_size8 == 0)
 		zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv1_KdivAlign8(M, N, K, A, lda, Bt, ldb, C, ldc);
+	else if (K == zq_mm_align_size7)
+		zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv1_KeqAlign7(M, N, K, A, lda, Bt, ldb, C, ldc);
+	else if (K == zq_mm_align_size6)
+		zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv1_KeqAlign6(M, N, K, A, lda, Bt, ldb, C, ldc);
+	else if (K == zq_mm_align_size5)
+		zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv1_KeqAlign5(M, N, K, A, lda, Bt, ldb, C, ldc);
+	else if (K == zq_mm_align_size4)
+		zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv1_KeqAlign4(M, N, K, A, lda, Bt, ldb, C, ldc);
+	else if (K == zq_mm_align_size3)
+		zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv1_KeqAlign3(M, N, K, A, lda, Bt, ldb, C, ldc);
+	else if (K == zq_mm_align_size2)
+		zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv1_KeqAlign2(M, N, K, A, lda, Bt, ldb, C, ldc);
+	else if (K == zq_mm_align_size)
+		zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv1_KeqAlign1(M, N, K, A, lda, Bt, ldb, C, ldc);
 	else if (K %zq_mm_align_size4 == 0)
 		zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv1_KdivAlign4(M, N, K, A, lda, Bt, ldb, C, ldc);
 	else
@@ -10062,11 +15946,47 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M2_N2(int M, int N, int K, const float* A
 		zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv2_KdivAlign8(M, partN, K, A, lda, Bt, ldb, C, ldc);
 		handled = 1;
 	}
+	else if (K == zq_mm_align_size7)
+	{
+		zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv2_KeqAlign7(M, partN, K, A, lda, Bt, ldb, C, ldc);
+		handled = 1;
+	}
+	else if (K == zq_mm_align_size6)
+	{
+		zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv2_KeqAlign6(M, partN, K, A, lda, Bt, ldb, C, ldc);
+		handled = 1;
+	}
+	else if (K == zq_mm_align_size5)
+	{
+		zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv2_KeqAlign5(M, partN, K, A, lda, Bt, ldb, C, ldc);
+		handled = 1;
+	}
+	else if (K == zq_mm_align_size4)
+	{
+		zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv2_KeqAlign4(M, partN, K, A, lda, Bt, ldb, C, ldc);
+		handled = 1;
+	}
+	else if (K == zq_mm_align_size3)
+	{
+		zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv2_KeqAlign3(M, partN, K, A, lda, Bt, ldb, C, ldc);
+		handled = 1;
+	}
+	else if (K == zq_mm_align_size2)
+	{
+		zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv2_KeqAlign2(M, partN, K, A, lda, Bt, ldb, C, ldc);
+		handled = 1;
+	}
+	else if (K == zq_mm_align_size)
+	{
+		zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv2_KeqAlign1(M, partN, K, A, lda, Bt, ldb, C, ldc);
+		handled = 1;
+	}
 	else if (K %zq_mm_align_size4 == 0)
 	{
 		zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv2_KdivAlign4(M, partN, K, A, lda, Bt, ldb, C, ldc);
 		handled = 1;
 	}
+	
 
 	if (handled)
 	{
@@ -10104,11 +16024,47 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M2_N4(int M, int N, int K, const float* A
 		zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv4_KdivAlign8(M, partN, K, A, lda, Bt, ldb, C, ldc);
 		handled = 1;
 	}
+	else if (K == zq_mm_align_size7)
+	{
+		zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv4_KeqAlign7(M, partN, K, A, lda, Bt, ldb, C, ldc);
+		handled = 1;
+	}
+	else if (K == zq_mm_align_size6)
+	{
+		zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv4_KeqAlign6(M, partN, K, A, lda, Bt, ldb, C, ldc);
+		handled = 1;
+	}
+	else if (K == zq_mm_align_size5)
+	{
+		zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv4_KeqAlign5(M, partN, K, A, lda, Bt, ldb, C, ldc);
+		handled = 1;
+	}
+	else if (K == zq_mm_align_size4)
+	{
+		zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv4_KeqAlign4(M, partN, K, A, lda, Bt, ldb, C, ldc);
+		handled = 1;
+	}
+	else if (K == zq_mm_align_size3)
+	{
+		zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv4_KeqAlign3(M, partN, K, A, lda, Bt, ldb, C, ldc);
+		handled = 1;
+	}
+	else if (K == zq_mm_align_size2)
+	{
+		zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv4_KeqAlign2(M, partN, K, A, lda, Bt, ldb, C, ldc);
+		handled = 1;
+	}
+	else if (K == zq_mm_align_size)
+	{
+		zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv4_KeqAlign1(M, partN, K, A, lda, Bt, ldb, C, ldc);
+		handled = 1;
+	}
 	else if (K %zq_mm_align_size4 == 0)
 	{
 		zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv4_KdivAlign4(M, partN, K, A, lda, Bt, ldb, C, ldc);
 		handled = 1;
 	}
+	
 
 	if (handled)
 	{
@@ -10146,11 +16102,47 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M2_N8(int M, int N, int K, const float* A
 		zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv8_KdivAlign8(M, partN, K, A, lda, Bt, ldb, C, ldc);
 		handled = 1;
 	}
+	else if (K == zq_mm_align_size7)
+	{
+		zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv8_KeqAlign7(M, partN, K, A, lda, Bt, ldb, C, ldc);
+		handled = 1;
+	}
+	else if (K == zq_mm_align_size6)
+	{
+		zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv8_KeqAlign6(M, partN, K, A, lda, Bt, ldb, C, ldc);
+		handled = 1;
+	}
+	else if (K == zq_mm_align_size5)
+	{
+		zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv8_KeqAlign5(M, partN, K, A, lda, Bt, ldb, C, ldc);
+		handled = 1;
+	}
+	else if (K == zq_mm_align_size4)
+	{
+		zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv8_KeqAlign4(M, partN, K, A, lda, Bt, ldb, C, ldc);
+		handled = 1;
+	}
+	else if (K == zq_mm_align_size3)
+	{
+		zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv8_KeqAlign3(M, partN, K, A, lda, Bt, ldb, C, ldc);
+		handled = 1;
+	}
+	else if (K == zq_mm_align_size2)
+	{
+		zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv8_KeqAlign2(M, partN, K, A, lda, Bt, ldb, C, ldc);
+		handled = 1;
+	}
+	else if (K == zq_mm_align_size)
+	{
+		zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv8_KeqAlign1(M, partN, K, A, lda, Bt, ldb, C, ldc);
+		handled = 1;
+	}
 	else if (K %zq_mm_align_size4 == 0)
 	{
 		zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv8_KdivAlign4(M, partN, K, A, lda, Bt, ldb, C, ldc);
 		handled = 1;
 	}
+	
 
 	if (handled)
 	{
@@ -10172,6 +16164,20 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M4_N1(int M, int N, int K, const float* A
 		zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv1_KdivAlign16(M, N, K, A, lda, Bt, ldb, C, ldc);
 	else if (K %zq_mm_align_size8 == 0)
 		zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv1_KdivAlign8(M, N, K, A, lda, Bt, ldb, C, ldc);
+	else if (K == zq_mm_align_size7)
+		zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv1_KeqAlign7(M, N, K, A, lda, Bt, ldb, C, ldc);
+	else if (K == zq_mm_align_size6)
+		zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv1_KeqAlign6(M, N, K, A, lda, Bt, ldb, C, ldc);
+	else if (K == zq_mm_align_size5)
+		zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv1_KeqAlign5(M, N, K, A, lda, Bt, ldb, C, ldc);
+	else if (K == zq_mm_align_size4)
+		zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv1_KeqAlign4(M, N, K, A, lda, Bt, ldb, C, ldc);
+	else if (K == zq_mm_align_size3)
+		zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv1_KeqAlign3(M, N, K, A, lda, Bt, ldb, C, ldc);
+	else if (K == zq_mm_align_size2)
+		zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv1_KeqAlign2(M, N, K, A, lda, Bt, ldb, C, ldc);
+	else if (K == zq_mm_align_size)
+		zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv1_KeqAlign1(M, N, K, A, lda, Bt, ldb, C, ldc);
 	else if (K %zq_mm_align_size4 == 0)
 		zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv1_KdivAlign4(M, N, K, A, lda, Bt, ldb, C, ldc);
 	else
@@ -10205,11 +16211,47 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M4_N2(int M, int N, int K, const float* A
 		zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv2_KdivAlign8(M, partN, K, A, lda, Bt, ldb, C, ldc);
 		handled = 1;
 	}
+	else if (K == zq_mm_align_size7)
+	{
+		zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv2_KeqAlign7(M, partN, K, A, lda, Bt, ldb, C, ldc);
+		handled = 1;
+	}
+	else if (K == zq_mm_align_size6)
+	{
+		zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv2_KeqAlign6(M, partN, K, A, lda, Bt, ldb, C, ldc);
+		handled = 1;
+	}
+	else if (K == zq_mm_align_size5)
+	{
+		zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv2_KeqAlign5(M, partN, K, A, lda, Bt, ldb, C, ldc);
+		handled = 1;
+	}
+	else if (K == zq_mm_align_size4)
+	{
+		zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv2_KeqAlign4(M, partN, K, A, lda, Bt, ldb, C, ldc);
+		handled = 1;
+	}
+	else if (K == zq_mm_align_size3)
+	{
+		zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv2_KeqAlign3(M, partN, K, A, lda, Bt, ldb, C, ldc);
+		handled = 1;
+	}
+	else if (K == zq_mm_align_size2)
+	{
+		zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv2_KeqAlign2(M, partN, K, A, lda, Bt, ldb, C, ldc);
+		handled = 1;
+	}
+	else if (K == zq_mm_align_size)
+	{
+		zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv2_KeqAlign1(M, partN, K, A, lda, Bt, ldb, C, ldc);
+		handled = 1;
+	}
 	else if (K %zq_mm_align_size4 == 0)
 	{
 		zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv2_KdivAlign4(M, partN, K, A, lda, Bt, ldb, C, ldc);
 		handled = 1;
 	}
+	
 
 	if (handled)
 	{
@@ -10247,11 +16289,47 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M4_N4(int M, int N, int K, const float* A
 		zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv4_KdivAlign8(M, partN, K, A, lda, Bt, ldb, C, ldc);
 		handled = 1;
 	}
+	else if (K == zq_mm_align_size7)
+	{
+		zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv4_KeqAlign7(M, partN, K, A, lda, Bt, ldb, C, ldc);
+		handled = 1;
+	}
+	else if (K == zq_mm_align_size6)
+	{
+		zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv4_KeqAlign6(M, partN, K, A, lda, Bt, ldb, C, ldc);
+		handled = 1;
+	}
+	else if (K == zq_mm_align_size5)
+	{
+		zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv4_KeqAlign5(M, partN, K, A, lda, Bt, ldb, C, ldc);
+		handled = 1;
+	}
+	else if (K == zq_mm_align_size4)
+	{
+		zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv4_KeqAlign4(M, partN, K, A, lda, Bt, ldb, C, ldc);
+		handled = 1;
+	}
+	else if (K == zq_mm_align_size3)
+	{
+		zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv4_KeqAlign3(M, partN, K, A, lda, Bt, ldb, C, ldc);
+		handled = 1;
+	}
+	else if (K == zq_mm_align_size2)
+	{
+		zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv4_KeqAlign2(M, partN, K, A, lda, Bt, ldb, C, ldc);
+		handled = 1;
+	}
+	else if (K == zq_mm_align_size)
+	{
+		zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv4_KeqAlign1(M, partN, K, A, lda, Bt, ldb, C, ldc);
+		handled = 1;
+	}
 	else if (K %zq_mm_align_size4 == 0)
 	{
 		zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv4_KdivAlign4(M, partN, K, A, lda, Bt, ldb, C, ldc);
 		handled = 1;
 	}
+	
 
 	if (handled)
 	{
@@ -10273,6 +16351,20 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M8_N1(int M, int N, int K, const float* A
 		zq_gemm_32f_align_AnoTrans_Btrans_M8_caseNdiv1_KdivAlign16(M, N, K, A, lda, Bt, ldb, C, ldc);
 	else if (K %zq_mm_align_size8 == 0)
 		zq_gemm_32f_align_AnoTrans_Btrans_M8_caseNdiv1_KdivAlign8(M, N, K, A, lda, Bt, ldb, C, ldc);
+	else if (K == zq_mm_align_size7)
+		zq_gemm_32f_align_AnoTrans_Btrans_M8_caseNdiv1_KeqAlign7(M, N, K, A, lda, Bt, ldb, C, ldc);
+	else if (K == zq_mm_align_size6)
+		zq_gemm_32f_align_AnoTrans_Btrans_M8_caseNdiv1_KeqAlign6(M, N, K, A, lda, Bt, ldb, C, ldc);
+	else if (K == zq_mm_align_size5)
+		zq_gemm_32f_align_AnoTrans_Btrans_M8_caseNdiv1_KeqAlign5(M, N, K, A, lda, Bt, ldb, C, ldc);
+	else if (K == zq_mm_align_size4)
+		zq_gemm_32f_align_AnoTrans_Btrans_M8_caseNdiv1_KeqAlign4(M, N, K, A, lda, Bt, ldb, C, ldc);
+	else if (K == zq_mm_align_size3)
+		zq_gemm_32f_align_AnoTrans_Btrans_M8_caseNdiv1_KeqAlign3(M, N, K, A, lda, Bt, ldb, C, ldc);
+	else if (K == zq_mm_align_size2)
+		zq_gemm_32f_align_AnoTrans_Btrans_M8_caseNdiv1_KeqAlign2(M, N, K, A, lda, Bt, ldb, C, ldc);
+	else if (K == zq_mm_align_size)
+		zq_gemm_32f_align_AnoTrans_Btrans_M8_caseNdiv1_KeqAlign1(M, N, K, A, lda, Bt, ldb, C, ldc);
 	else if (K %zq_mm_align_size4 == 0)
 		zq_gemm_32f_align_AnoTrans_Btrans_M8_caseNdiv1_KdivAlign4(M, N, K, A, lda, Bt, ldb, C, ldc);
 	else
@@ -10306,11 +16398,47 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M8_N2(int M, int N, int K, const float* A
 		zq_gemm_32f_align_AnoTrans_Btrans_M8_caseNdiv2_KdivAlign8(M, partN, K, A, lda, Bt, ldb, C, ldc);
 		handled = 1;
 	}
+	else if (K == zq_mm_align_size7)
+	{
+		zq_gemm_32f_align_AnoTrans_Btrans_M8_caseNdiv2_KeqAlign7(M, partN, K, A, lda, Bt, ldb, C, ldc);
+		handled = 1;
+	}
+	else if (K == zq_mm_align_size6)
+	{
+		zq_gemm_32f_align_AnoTrans_Btrans_M8_caseNdiv2_KeqAlign6(M, partN, K, A, lda, Bt, ldb, C, ldc);
+		handled = 1;
+	}
+	else if (K == zq_mm_align_size5)
+	{
+		zq_gemm_32f_align_AnoTrans_Btrans_M8_caseNdiv2_KeqAlign5(M, partN, K, A, lda, Bt, ldb, C, ldc);
+		handled = 1;
+	}
+	else if (K == zq_mm_align_size4)
+	{
+		zq_gemm_32f_align_AnoTrans_Btrans_M8_caseNdiv2_KeqAlign4(M, partN, K, A, lda, Bt, ldb, C, ldc);
+		handled = 1;
+	}
+	else if (K == zq_mm_align_size3)
+	{
+		zq_gemm_32f_align_AnoTrans_Btrans_M8_caseNdiv2_KeqAlign3(M, partN, K, A, lda, Bt, ldb, C, ldc);
+		handled = 1;
+	}
+	else if (K == zq_mm_align_size2)
+	{
+		zq_gemm_32f_align_AnoTrans_Btrans_M8_caseNdiv2_KeqAlign2(M, partN, K, A, lda, Bt, ldb, C, ldc);
+		handled = 1;
+	}
+	else if (K == zq_mm_align_size)
+	{
+		zq_gemm_32f_align_AnoTrans_Btrans_M8_caseNdiv2_KeqAlign1(M, partN, K, A, lda, Bt, ldb, C, ldc);
+		handled = 1;
+	}
 	else if (K %zq_mm_align_size4 == 0)
 	{
 		zq_gemm_32f_align_AnoTrans_Btrans_M8_caseNdiv2_KdivAlign4(M, partN, K, A, lda, Bt, ldb, C, ldc);
 		handled = 1;
 	}
+	
 
 	if (handled)
 	{
@@ -10332,6 +16460,20 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M16_N1(int M, int N, int K, const float* 
 		zq_gemm_32f_align_AnoTrans_Btrans_M16_caseNdiv1_KdivAlign16(M, N, K, A, lda, Bt, ldb, C, ldc);
 	else if (K %zq_mm_align_size8 == 0)
 		zq_gemm_32f_align_AnoTrans_Btrans_M16_caseNdiv1_KdivAlign8(M, N, K, A, lda, Bt, ldb, C, ldc);
+	else if (K == zq_mm_align_size7)
+		zq_gemm_32f_align_AnoTrans_Btrans_M16_caseNdiv1_KeqAlign7(M, N, K, A, lda, Bt, ldb, C, ldc);
+	else if (K == zq_mm_align_size6)
+		zq_gemm_32f_align_AnoTrans_Btrans_M16_caseNdiv1_KeqAlign6(M, N, K, A, lda, Bt, ldb, C, ldc);
+	else if (K == zq_mm_align_size5)
+		zq_gemm_32f_align_AnoTrans_Btrans_M16_caseNdiv1_KeqAlign5(M, N, K, A, lda, Bt, ldb, C, ldc);
+	else if (K == zq_mm_align_size4)
+		zq_gemm_32f_align_AnoTrans_Btrans_M16_caseNdiv1_KeqAlign4(M, N, K, A, lda, Bt, ldb, C, ldc);
+	else if (K == zq_mm_align_size3)
+		zq_gemm_32f_align_AnoTrans_Btrans_M16_caseNdiv1_KeqAlign3(M, N, K, A, lda, Bt, ldb, C, ldc);
+	else if (K == zq_mm_align_size2)
+		zq_gemm_32f_align_AnoTrans_Btrans_M16_caseNdiv1_KeqAlign2(M, N, K, A, lda, Bt, ldb, C, ldc);
+	else if (K == zq_mm_align_size)
+		zq_gemm_32f_align_AnoTrans_Btrans_M16_caseNdiv1_KeqAlign1(M, N, K, A, lda, Bt, ldb, C, ldc);
 	else if (K %zq_mm_align_size4 == 0)
 		zq_gemm_32f_align_AnoTrans_Btrans_M16_caseNdiv1_KdivAlign4(M, N, K, A, lda, Bt, ldb, C, ldc);
 	else
