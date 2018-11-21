@@ -8,6 +8,14 @@ MKL下载地址:[此处下载](https://pan.baidu.com/s/1d75IIf6fgTZ5oeumd0vtTw)
 
 # 更新日志
 
+**2018-11-21日更新**
+
+支持mxnet-ssd训练的模型，mean_val需要设成127.5才能在SampleSSD里面正确运行。
+
+但是使用ReLU训练的好像不正确，我用PReLU训练一个，重头训练的，只有mAP=0.48凑合着看吧。
+
+更改模型之后必须用imagenet先训练分类模型，然后再训练SSD，才能把mAP弄上去。
+
 **2018-11-14日更新**
 
 (1)优化ZQ_GEMM，3.6GHz的机器上MKL峰值约46GFLOPS， ZQ_GEMM约32GFLOPS。使用ZQ_GEMM人脸模型总体时间约为使用MKL时1.5倍。

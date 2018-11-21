@@ -29,13 +29,15 @@ int main()
 	mkl_set_num_threads(thread_num);
 #endif
 
-	Mat img0 = cv::imread("data\\dog.jpg", 1);
-	//Mat img0 = cv::imread("data\\face1.jpg", 1);
-	if (img0.empty())
+	Mat img0;
+	Mat img1 = cv::imread("data\\dog.jpg", 1);
+	//Mat img1 = cv::imread("data\\face1.jpg", 1);
+	if (img1.empty())
 	{
 		cout << "empty image\n";
 		return EXIT_FAILURE;
 	}
+	cv::cvtColor(img1, img0, CV_BGR2RGB);
 	ZQ_CNN_SSD detector;
 	if (!detector.Init("model\\MobileNetSSD_deploy.zqparams", "model\\MobileNetSSD_deploy.nchwbin", "detection_out"))
 	//if (!detector.Init("model\\ssd-zq-300.zqparams", "model\\ssd-zq-300.nchwbin", "detection", true))
@@ -73,14 +75,14 @@ int main()
 	for (auto& bbox : output) 
 	{
 		cv::Rect rect(bbox.col1, bbox.row1, bbox.col2 - bbox.col1 + 1, bbox.row2 - bbox.row1 + 1);
-		cv::rectangle(img0, rect, cv::Scalar(0, 0, 255), 2);
+		cv::rectangle(img1, rect, cv::Scalar(0, 0, 255), 2);
 		char buff[300];
 		sprintf_s(buff, 300, "%s: %.2f", kClassNames[bbox.label], bbox.score);
-		cv::putText(img0, buff, cv::Point(bbox.col1, bbox.row1), FONT_HERSHEY_PLAIN, 1, Scalar(0, 255, 0));
+		cv::putText(img1, buff, cv::Point(bbox.col1, bbox.row1), FONT_HERSHEY_PLAIN, 1, Scalar(0, 255, 0));
 	}
 
-	cv::imwrite("./ssd-result.jpg", img0);
-	cv::imshow("ZQCNN-SSD", img0);
+	cv::imwrite("./ssd-result.jpg", img1);
+	cv::imshow("ZQCNN-SSD", img1);
 	cv::waitKey(0);
 
 	return EXIT_SUCCESS;
