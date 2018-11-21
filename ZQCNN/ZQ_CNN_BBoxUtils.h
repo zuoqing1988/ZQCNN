@@ -437,6 +437,33 @@ namespace ZQ
 			return true;
 		}
 
+		static void TransformLocations_MXNET(float *out, const float *anchors,
+			const float *loc_pred, const bool clip,
+			const float vx, const float vy,	const float vw, const float vh) 
+		{
+			// transform predictions to detection results
+			float al = anchors[0];
+			float at = anchors[1];
+			float ar = anchors[2];
+			float ab = anchors[3];
+			float aw = ar - al;
+			float ah = ab - at;
+			float ax = (al + ar) / 2.f;
+			float ay = (at + ab) / 2.f;
+			float px = loc_pred[0];
+			float py = loc_pred[1];
+			float pw = loc_pred[2];
+			float ph = loc_pred[3];
+			float ox = px * vx * aw + ax;
+			float oy = py * vy * ah + ay;
+			float ow = std::exp(pw * vw) * aw / 2;
+			float oh = std::exp(ph * vh) * ah / 2;
+			out[0] = clip ? __max(0, __min(1, ox - ow)) : (ox - ow);
+			out[1] = clip ? __max(0, __min(1, oy - oh)) : (oy - oh);
+			out[2] = clip ? __max(0, __min(1, ox + ow)) : (ox + ow);
+			out[3] = clip ? __max(0, __min(1, oy + oh)) : (oy + oh);
+		}
+
 		static void GetConfidenceScores(const float* conf_data, const int num,
 			const int num_preds_per_class, const int num_classes,
 			std::vector<std::map<int, std::vector<float> > >* conf_preds) 

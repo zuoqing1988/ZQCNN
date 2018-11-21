@@ -261,7 +261,7 @@ namespace ZQ
 		bool _load_param_from_file_or_buffer(std::fstream& fin, const char* buffer, __int64 buffer_len)
 		{	
 			std::string line;
-			int buf_len = 200;
+			int buf_len = 2000;
 			std::vector<char> buf(buf_len+1);
 			while (_getline(fin, buffer, buffer_len, line))
 			{
@@ -745,6 +745,25 @@ namespace ZQ
 					}
 					layer_type_names.push_back("PriorBoxText");
 				}
+				else if (_strcmpi(&buf[0], "PriorBox_MXNET") == 0)
+				{
+					if (layers.size() == 0)
+					{
+						std::cout << "Input layer must be the first!\n";
+						return false;
+					}
+					ZQ_CNN_Layer* cur_layer = new ZQ_CNN_Layer_PriorBox_MXNET();
+					if (cur_layer == 0) {
+						std::cout << "failed to create a PriorBox_MXNET layer!\n";
+						return false;
+					}
+					if (!_add_layer_and_blobs(cur_layer, line, false))
+					{
+						delete cur_layer;
+						return false;
+					}
+					layer_type_names.push_back("PriorBox_MXNET");
+				}
 				else if (_strcmpi(&buf[0], "Concat") == 0)
 				{
 					if (layers.size() == 0)
@@ -782,6 +801,25 @@ namespace ZQ
 						return false;
 					}
 					layer_type_names.push_back("DetectionOutput");
+				}
+				else if (_strcmpi(&buf[0], "DetectionOutput_MXNET") == 0)
+				{
+					if (layers.size() == 0)
+					{
+						std::cout << "Input layer must be the first!\n";
+						return false;
+					}
+					ZQ_CNN_Layer* cur_layer = new ZQ_CNN_Layer_DetectionOutput_MXNET();
+					if (cur_layer == 0) {
+						std::cout << "failed to create a DetectionOutput_MXNET layer!\n";
+						return false;
+					}
+					if (!_add_layer_and_blobs(cur_layer, line, false))
+					{
+						delete cur_layer;
+						return false;
+					}
+					layer_type_names.push_back("DetectionOutput_MXNET");
 				}
 				else if (_strcmpi(&buf[0], "Input") == 0)
 				{

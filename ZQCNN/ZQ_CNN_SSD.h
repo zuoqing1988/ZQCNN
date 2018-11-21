@@ -26,19 +26,20 @@ namespace ZQ
 
 	private:
 		ZQ_CNN_Net net;
+		bool mxnet_ssd;
 		std::string proto_file;
 		std::string model_file;
 		std::string out_blob_name;
 	public:
 
-		bool Init(const std::string& proto_file, const std::string& model_file, const std::string& out_blob_name)
+		bool Init(const std::string& proto_file, const std::string& model_file, const std::string& out_blob_name, bool mxnet_ssd = false)
 		{
 			if (!net.LoadFrom(proto_file, model_file))
 			{
 				printf("failed to load net (%s, %s)\n",proto_file.c_str(), model_file.c_str());
 				return false;
 			}
-			printf("MulAdd = %.3f M\n", net.GetNumOfMulAdd() / (1024.0*1024.0));
+			//printf("MulAdd = %.3f M\n", net.GetNumOfMulAdd() / (1024.0*1024.0));
 			this->proto_file = proto_file;
 			this->model_file = model_file;
 			this->out_blob_name = out_blob_name;
@@ -48,6 +49,7 @@ namespace ZQ
 				printf("maybe the output blob name (%s) is incorrect\n", out_blob_name.c_str());
 				return false;
 			}
+			this->mxnet_ssd = mxnet_ssd;
 			return true;
 		}
 		
@@ -68,8 +70,16 @@ namespace ZQ
 				W = width;
 			}
 			ZQ_CNN_Tensor4D_NHW_C_Align128bit input0, input1;
-			if (!input0.ConvertFromBGR(bgr_img, width, height, widthStep))
-				return false;
+			if (mxnet_ssd)
+			{
+				if (!input0.ConvertFromBGR(bgr_img, width, height, widthStep, 127.5, 1))
+					return false;
+			}
+			else
+			{
+				if (!input0.ConvertFromBGR(bgr_img, width, height, widthStep))
+					return false;
+			}
 			if (width != W || height != H)
 			{
 				if (!input0.ResizeBilinear(input1, W, H, 0, 0))
@@ -103,16 +113,28 @@ namespace ZQ
 			int sliceStep = ptr->GetSliceStep();
 			int N = ptr->GetN();
 			output.clear();
+			float scale_X = width;
+			float scale_Y = height;
 			for (int k = 0; k < N; k++)
 			{
 				if (result_data[0] != -1 && result_data[2] >= confidence_thresh)
 				{
 					// [image_id, label, score, xmin, ymin, xmax, ymax]
 					BBox bbox;
-					bbox.col1 = result_data[3] * width;
-					bbox.row1 = result_data[4] * height;
-					bbox.col2 = result_data[5] * width;
-					bbox.row2 = result_data[6] * height;
+					if (mxnet_ssd)
+					{
+						bbox.col1 = result_data[3] * scale_X;
+						bbox.row1 = result_data[4] * scale_Y;
+						bbox.col2 = result_data[5] * scale_X;
+						bbox.row2 = result_data[6] * scale_Y;
+					}
+					else
+					{
+						bbox.col1 = result_data[3] * scale_X;
+						bbox.row1 = result_data[4] * scale_Y;
+						bbox.col2 = result_data[5] * scale_X;
+						bbox.row2 = result_data[6] * scale_Y;
+					}
 					bbox.score = result_data[2];
 					bbox.label = static_cast<int>(result_data[1]);
 					output.push_back(bbox);

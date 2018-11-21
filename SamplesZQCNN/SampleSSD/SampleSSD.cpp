@@ -29,25 +29,25 @@ int main()
 	mkl_set_num_threads(thread_num);
 #endif
 
-	Mat img0 = cv::imread("data\\004545.jpg", 1);
+	Mat img0 = cv::imread("data\\dog.jpg", 1);
 	//Mat img0 = cv::imread("data\\face1.jpg", 1);
 	if (img0.empty())
 	{
 		cout << "empty image\n";
 		return EXIT_FAILURE;
 	}
-	
 	ZQ_CNN_SSD detector;
 	if (!detector.Init("model\\MobileNetSSD_deploy.zqparams", "model\\MobileNetSSD_deploy.nchwbin", "detection_out"))
+	//if (!detector.Init("model\\ssd-zq-300.zqparams", "model\\ssd-zq-300.nchwbin", "detection", true))
 	{
 		printf("failed to init detector!\n");
 		return false;
 	}
 	
-	int out_iter = 10;
-	int iters = 100;
+	int out_iter = 1;
+	int iters = 1;
 	std::vector<ZQ_CNN_SSD::BBox> output;
-	const float kScoreThreshold = 0.5f;
+	const float kScoreThreshold = 0.1f;
 	for (int out_it = 0; out_it < out_iter; out_it++)
 	{
 		double t1 = omp_get_wtime();

@@ -4462,6 +4462,7 @@ namespace ZQ
 
 			double t1 = omp_get_wtime();
 			bool ret = ZQ_CNN_Forward_SSEUtils::Permute(*(*(std::vector<const ZQ_CNN_Tensor4D*>*)bottoms)[0], order, *((*tops)[0]));
+			int C = (*bottoms)[0]->GetC();
 			double t2 = omp_get_wtime();
 			if (show_debug_info)
 				printf("Permute layer: %s cost : %.3f ms\n", name.c_str(), 1000 * (t2 - t1));
@@ -4793,6 +4794,7 @@ namespace ZQ
 
 			double t1 = omp_get_wtime();
 			bool ret = ZQ_CNN_Forward_SSEUtils::Reshape(*(*(std::vector<const ZQ_CNN_Tensor4D*>*)bottoms)[0], shape, *((*tops)[0]));
+			const float* ptr = (*bottoms)[0]->GetFirstPixelPtr();
 			double t2 = omp_get_wtime();
 			if (show_debug_info)
 				printf("Reshape layer: %s cost : %.3f ms\n", name.c_str(), 1000 * (t2 - t1));
@@ -5004,6 +5006,18 @@ namespace ZQ
 				return false;
 
 			double t1 = omp_get_wtime();
+			img_w = (*bottoms)[1]->GetW();
+			img_h = (*bottoms)[1]->GetH();
+			for (int i = 0; i < min_sizes.size(); i++)
+			{
+				if (min_sizes[i] < 0)
+					min_sizes[i] = (-min_sizes[i])*img_w;
+			}
+			for (int i = 0; i < max_sizes.size(); i++)
+			{
+				if (max_sizes[i] < 0)
+					max_sizes[i] = (-max_sizes[i])*img_w;
+			}
 			bool ret = ZQ_CNN_Forward_SSEUtils::PriorBox(*(*(std::vector<const ZQ_CNN_Tensor4D*>*)bottoms)[0], *(*(std::vector<const ZQ_CNN_Tensor4D*>*)bottoms)[1],
 				min_sizes, max_sizes, aspect_ratios, variance, flip, num_priors, clip, img_w, img_h, step_w, step_h, offset, *((*tops)[0]));
 			double t2 = omp_get_wtime();
@@ -5232,17 +5246,6 @@ namespace ZQ
 				std::cout << "Layer " << name << " must provide min_size\n";
 				return false;
 			}
-			else
-			{
-				for (int i = 0; i < min_sizes.size(); i++)
-				{
-					if (min_sizes[i] <= 0)
-					{
-						std::cout << "Layer " << name << " min_size " << min_sizes[i] << " must be positive\n";
-						return false;
-					}
-				}
-			}
 			
 			std::vector<float> old_aspect_ratios(aspect_ratios);
 			aspect_ratios.clear();
@@ -5279,11 +5282,6 @@ namespace ZQ
 				
 				for (int i = 0; i < max_sizes.size(); i++) 
 				{
-					if (max_sizes[i] <= min_sizes[i])
-					{
-						std::cout << "Layer " << name << " max_size must be greater than min_size\n";
-						return false;
-					}
 					num_priors ++;
 				}
 			}
@@ -5447,6 +5445,250 @@ namespace ZQ
 		}
 	};
 
+	class ZQ_CNN_Layer_PriorBox_MXNET : public ZQ_CNN_Layer
+	{
+	public:
+		ZQ_CNN_Layer_PriorBox_MXNET()
+		{
+			num_priors = 0;
+			clip = false;
+			step_w = step_h = 0;
+			offset = 0;
+		}
+		~ZQ_CNN_Layer_PriorBox_MXNET() {}
+
+		std::vector<float> sizes;
+		std::vector<float> aspect_ratios;
+		std::vector<float> variances;
+		int num_priors;
+		bool clip;
+		float step_w;
+		float step_h;
+		float offset;
+		//
+		int bottom_C;
+		int bottom_H;
+		int bottom_W;
+
+		virtual bool Forward(std::vector<ZQ_CNN_Tensor4D*>* bottoms, std::vector<ZQ_CNN_Tensor4D*>* tops)
+		{
+			if (bottoms == 0 || tops == 0 || bottoms->size() == 0 || tops->size() == 0 || (*bottoms)[0] == 0 || (*tops)[0] == 0)
+				return false;
+
+			double t1 = omp_get_wtime();
+			for (int i = 0; i < sizes.size(); i++)
+			{
+				if (sizes[i] < 0)
+					sizes[i] = (-sizes[i]);
+			}
+			bool ret = ZQ_CNN_Forward_SSEUtils::PriorBox_MXNET(*(*(std::vector<const ZQ_CNN_Tensor4D*>*)bottoms)[0], 
+				sizes, aspect_ratios, variances, num_priors, clip, step_w, step_h, offset, *((*tops)[0]));
+			double t2 = omp_get_wtime();
+			if (show_debug_info)
+				printf("PriorBox_MXNET layer: %s cost : %.3f ms\n", name.c_str(), 1000 * (t2 - t1));
+			return ret;
+		}
+
+		virtual bool ReadParam(const std::string& line)
+		{
+			bottom_names.clear();
+			top_names.clear();
+			std::vector<std::vector<std::string>> paras = split_line(line);
+			int num = paras.size();
+			bool has_top = false, has_bottom = false, has_name = false;
+			bool has_img_h = false, has_img_w = false, has_step_h = false, has_step_w = false;
+			for (int n = 0; n < num; n++)
+			{
+				if (paras[n].size() == 0)
+					continue;
+				if (_strcmpi("PriorBox_MXNET", paras[n][0].c_str()) == 0)
+				{
+
+				}
+				else if (_strcmpi("top", paras[n][0].c_str()) == 0)
+				{
+					if (paras[n].size() >= 2)
+					{
+						has_top = true;
+						top_names.push_back(paras[n][1]);
+					}
+				}
+				else if (_strcmpi("bottom", paras[n][0].c_str()) == 0)
+				{
+					if (paras[n].size() >= 2)
+					{
+						has_bottom = true;
+						bottom_names.push_back(paras[n][1]);
+					}
+				}
+				else if (_strcmpi("name", paras[n][0].c_str()) == 0)
+				{
+					if (paras[n].size() >= 2)
+					{
+						has_name = true;
+						name = paras[n][1];
+					}
+				}
+				else if (_strcmpi("size", paras[n][0].c_str()) == 0)
+				{
+					if (paras[n].size() >= 2)
+					{
+						sizes.push_back(atof(paras[n][1].c_str()));
+					}
+				}
+				else if (_strcmpi("aspect_ratio", paras[n][0].c_str()) == 0)
+				{
+					if (paras[n].size() >= 2)
+					{
+						aspect_ratios.push_back(atof(paras[n][1].c_str()));
+					}
+				}
+				else if (_strcmpi("variance", paras[n][0].c_str()) == 0)
+				{
+					if (paras[n].size() >= 2)
+					{
+						variances.push_back(atof(paras[n][1].c_str()));
+					}
+				}
+				else if (_strcmpi("clip", paras[n][0].c_str()) == 0)
+				{
+					if (paras[n].size() >= 2)
+					{
+						clip = atoi(paras[n][1].c_str());
+					}
+				}
+				else if (_strcmpi("step", paras[n][0].c_str()) == 0)
+				{
+					if (paras[n].size() >= 2)
+					{
+						step_h = atoi(paras[n][1].c_str());
+						step_w = step_w;
+						has_step_h = true;
+						has_step_w = true;
+					}
+				}
+				else if (_strcmpi("step_h", paras[n][0].c_str()) == 0)
+				{
+					if (paras[n].size() >= 2)
+					{
+						step_h = atoi(paras[n][1].c_str());
+						has_step_h = true;
+					}
+				}
+				else if (_strcmpi("step_w", paras[n][0].c_str()) == 0)
+				{
+					if (paras[n].size() >= 2)
+					{
+						step_w = atoi(paras[n][1].c_str());
+						has_step_w = true;
+					}
+				}
+				else if (_strcmpi("offset", paras[n][0].c_str()) == 0)
+				{
+					if (paras[n].size() >= 2)
+					{
+						offset = atof(paras[n][1].c_str());
+					}
+				}
+			}
+
+			if (!has_bottom)std::cout << "Layer " << name << " missing " << "bottom\n";
+			if (!has_top)std::cout << "Layer " << name << " missing " << "top\n";
+			if (!has_name)
+			{
+				std::cout << "Layer " << name << " missing " << "name\n";
+				std::cout << line << "\n";
+			}
+
+			if (!has_bottom || !has_top || !has_name)
+				return false;
+
+			return _setup();
+		}
+
+		virtual bool LayerSetup(std::vector<ZQ_CNN_Tensor4D*>* bottoms, std::vector<ZQ_CNN_Tensor4D*>* tops)
+		{
+			if (bottoms == 0 || tops == 0 || bottoms->size() == 0 || (*bottoms)[0] == 0 || tops->size() == 0 || (*tops)[0] == 0)
+				return false;
+			int bottom_N, bottom_C, bottom_H, bottom_W;
+			(*bottoms)[0]->GetShape(bottom_N, bottom_C, bottom_H, bottom_W);
+			if (!SetBottomDim(bottom_C, bottom_H, bottom_W))
+				return false;
+			int top_C, top_H, top_W;
+			GetTopDim(top_C, top_H, top_W);
+			(*tops)[0]->SetShape(bottom_N, top_C, top_H, top_W);
+			return true;
+		}
+
+		//should called after ReadParam, allocate memory in this func
+		virtual bool SetBottomDim(int bottom_C, int bottom_H, int bottom_W)
+		{
+			this->bottom_C = bottom_C;
+			this->bottom_H = bottom_H;
+			this->bottom_W = bottom_W;
+			return true;
+		}
+
+		//should called after SetBottomDim
+		virtual void GetTopDim(int& top_C, int& top_H, int& top_W) const
+		{
+			top_C = 1;
+			top_H = bottom_H * bottom_W * num_priors;
+			top_W = 4;
+		}
+
+		virtual bool SwapInputRGBandBGR() { return true; };
+
+		//should be called after ZQ_CNN_Net have allocated necessery data
+		virtual bool LoadBinary_NCHW(FILE* in) { return true; }
+
+		virtual bool SaveBinary_NCHW(FILE* out) const { return true; }
+
+		virtual bool LoadBinary_NCHW(const char* buffer, __int64 buffer_len, __int64& readed_length_in_bytes)
+		{
+			readed_length_in_bytes = 0;
+			return true;
+		}
+
+		virtual __int64 GetNumOfMulAdd() const
+		{
+			return 0;
+		}
+
+	private:
+		virtual bool _setup()
+		{
+			if (sizes.size() == 0)
+			{
+				std::cout << "Layer " << name << " must provide size\n";
+				return false;
+			}
+
+			std::vector<float> old_aspect_ratios(aspect_ratios);
+			aspect_ratios.clear();
+			aspect_ratios.push_back(1.f);
+			for (int i = 0; i < old_aspect_ratios.size(); i++)
+			{
+				float ar = old_aspect_ratios[i];
+				bool already_exist = false;
+				for (int j = 0; j < aspect_ratios.size(); ++j)
+				{
+					if (fabs(ar - aspect_ratios[j]) < 1e-6)
+					{
+						already_exist = true;
+						break;
+					}
+				}
+				if (!already_exist)
+				{
+					aspect_ratios.push_back(ar);
+				}
+			}
+			num_priors = aspect_ratios.size() + sizes.size() - 1;
+			
+			return true;
+		}
+	};
 
 	class ZQ_CNN_Layer_Concat : public ZQ_CNN_Layer
 	{
@@ -5483,7 +5725,7 @@ namespace ZQ
 			{
 				if (paras[n].size() == 0)
 					continue;
-				if (_strcmpi("PriorBox", paras[n][0].c_str()) == 0)
+				if (_strcmpi("Concat", paras[n][0].c_str()) == 0)
 				{
 
 				}
@@ -5645,7 +5887,7 @@ namespace ZQ
 			{
 				if (paras[n].size() == 0)
 					continue;
-				if (_strcmpi("PriorBox", paras[n][0].c_str()) == 0)
+				if (_strcmpi("DetectionOutput", paras[n][0].c_str()) == 0)
 				{
 
 				}
@@ -5756,6 +5998,182 @@ namespace ZQ
 					if (paras[n].size() >= 2)
 					{
 						variance_encoded_in_target = atoi(paras[n][1].c_str());
+					}
+				}
+			}
+
+			if (!has_bottom)std::cout << "Layer " << name << " missing " << "bottom\n";
+			if (bottom_names.size() != 3)std::cout << "Layer " << name << " must have 3 bottoms\n";
+			if (!has_top)std::cout << "Layer " << name << " missing " << "top\n";
+			if (!has_name)
+			{
+				std::cout << "Layer " << name << " missing " << "name\n";
+				std::cout << line << "\n";
+			}
+
+			if (!has_bottom || bottom_names.size() != 3 || !has_top || !has_name)
+				return false;
+			return true;
+		}
+
+		virtual bool LayerSetup(std::vector<ZQ_CNN_Tensor4D*>* bottoms, std::vector<ZQ_CNN_Tensor4D*>* tops)
+		{
+			if (bottoms == 0 || tops == 0 || bottoms->size() < 3 || tops->size() == 0
+				|| (*bottoms)[0] == 0 || (*bottoms)[1] == 0 || (*bottoms)[2] == 0 || (*tops)[0] == 0)
+				return false;
+
+			return true;
+		}
+
+		//should called after ReadParam, allocate memory in this func
+		virtual bool SetBottomDim(int bottom_C, int bottom_H, int bottom_W)
+		{
+			return true;
+		}
+
+		//should called after SetBottomDim
+		virtual void GetTopDim(int& top_C, int& top_H, int& top_W) const
+		{
+
+		}
+
+		virtual bool SwapInputRGBandBGR() { return true; };
+
+		//should be called after ZQ_CNN_Net have allocated necessery data
+		virtual bool LoadBinary_NCHW(FILE* in) { return true; }
+
+		virtual bool SaveBinary_NCHW(FILE* out) const { return true; }
+
+		virtual bool LoadBinary_NCHW(const char* buffer, __int64 buffer_len, __int64& readed_length_in_bytes)
+		{
+			readed_length_in_bytes = 0;
+			return true;
+		}
+
+		virtual __int64 GetNumOfMulAdd() const
+		{
+			return 0;
+		}
+	};
+
+	class ZQ_CNN_Layer_DetectionOutput_MXNET : public ZQ_CNN_Layer
+	{
+	public:
+		ZQ_CNN_Layer_DetectionOutput_MXNET()
+		{
+			nms_threshold = 0.45f;
+			nms_top_k = -1;
+			clip = false;
+			// -1 means keeping all bboxes after nms step.
+			keep_top_k = -1;
+			// Only consider detections whose confidences are larger than a threshold.
+			confidence_threshold = 0.25f;
+		}
+		~ZQ_CNN_Layer_DetectionOutput_MXNET() {}
+		
+		float nms_threshold;
+		int nms_top_k;
+		std::vector<float> variances;
+		bool clip;
+		int keep_top_k;
+		float confidence_threshold;
+		int num_loc_classes;
+
+
+		virtual bool Forward(std::vector<ZQ_CNN_Tensor4D*>* bottoms, std::vector<ZQ_CNN_Tensor4D*>* tops)
+		{
+			if (bottoms == 0 || tops == 0 || bottoms->size() < 3 || tops->size() == 0
+				|| (*bottoms)[0] == 0 || (*bottoms)[1] == 0 || (*bottoms)[2] == 0 || (*tops)[0] == 0)
+				return false;
+
+			double t1 = omp_get_wtime();
+			bool ret = ZQ_CNN_Forward_SSEUtils::DetectionOuput_MXNET(*(*bottoms)[1], *(*bottoms)[0], *(*bottoms)[2],
+				variances,	clip, nms_threshold, nms_top_k, confidence_threshold, keep_top_k, *((*tops)[0]));
+			double t2 = omp_get_wtime();
+			if (show_debug_info)
+				printf("Concat layer: %s cost : %.3f ms\n", name.c_str(), 1000 * (t2 - t1));
+			return ret;
+		}
+
+		virtual bool ReadParam(const std::string& line)
+		{
+			bottom_names.clear();
+			top_names.clear();
+			std::vector<std::vector<std::string>> paras = split_line(line);
+			int num = paras.size();
+			bool has_top = false, has_bottom = false, has_name = false;
+			for (int n = 0; n < num; n++)
+			{
+				if (paras[n].size() == 0)
+					continue;
+				if (_strcmpi("DetectionOutput_MXNET", paras[n][0].c_str()) == 0)
+				{
+
+				}
+				else if (_strcmpi("top", paras[n][0].c_str()) == 0)
+				{
+					if (paras[n].size() >= 2)
+					{
+						has_top = true;
+						top_names.push_back(paras[n][1]);
+					}
+				}
+				else if (_strcmpi("bottom", paras[n][0].c_str()) == 0)
+				{
+					if (paras[n].size() >= 2)
+					{
+						has_bottom = true;
+						bottom_names.push_back(paras[n][1]);
+					}
+				}
+				else if (_strcmpi("name", paras[n][0].c_str()) == 0)
+				{
+					if (paras[n].size() >= 2)
+					{
+						has_name = true;
+						name = paras[n][1];
+					}
+				}
+				else if (_strcmpi("nms_threshold", paras[n][0].c_str()) == 0)
+				{
+					if (paras[n].size() >= 2)
+					{
+						nms_threshold = atof(paras[n][1].c_str());
+					}
+				}
+				else if (_strcmpi("nms_top_k", paras[n][0].c_str()) == 0)
+				{
+					if (paras[n].size() >= 2)
+					{
+						nms_top_k = atoi(paras[n][1].c_str());
+					}
+				}
+				else if (_strcmpi("keep_top_k", paras[n][0].c_str()) == 0)
+				{
+					if (paras[n].size() >= 2)
+					{
+						keep_top_k = atoi(paras[n][1].c_str());
+					}
+				}
+				else if (_strcmpi("confidence_threshold", paras[n][0].c_str()) == 0)
+				{
+					if (paras[n].size() >= 2)
+					{
+						confidence_threshold = atof(paras[n][1].c_str());
+					}
+				}
+				else if (_strcmpi("variance", paras[n][0].c_str()) == 0)
+				{
+					if (paras[n].size() >= 2)
+					{
+						variances.push_back(atof(paras[n][1].c_str()));
+					}
+				}
+				else if (_strcmpi("clip", paras[n][0].c_str()) == 0)
+				{
+					if (paras[n].size() >= 2)
+					{
+						clip = atoi(paras[n][1].c_str());
 					}
 				}
 			}

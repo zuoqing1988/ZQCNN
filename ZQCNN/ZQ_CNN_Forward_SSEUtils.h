@@ -1777,6 +1777,15 @@ namespace ZQ
 				output);
 		}
 
+		static bool PriorBox_MXNET(const ZQ_CNN_Tensor4D& input, 
+			const std::vector<float>& sizes, const std::vector<float>& aspect_ratios, const std::vector<float>& variance,
+			int num_priors, bool clip, float step_w, float step_h, float offset,
+			ZQ_CNN_Tensor4D& output)
+		{
+			return _prior_box_MXNET(input, sizes, aspect_ratios, variance, num_priors, clip, step_w, step_h, offset,
+				output);
+		}
+
 		static bool PriorBoxText(const ZQ_CNN_Tensor4D& input, const ZQ_CNN_Tensor4D& data,
 			const std::vector<float>& min_sizes, const std::vector<float>& max_sizes,
 			const std::vector<float>& aspect_ratios, const std::vector<float>& variance,
@@ -1806,6 +1815,15 @@ namespace ZQ
 			return _detection_output(loc, conf, prior, num_priors, num_loc_classes, num_classes, share_location,
 				background_label_id, code_type, variance_encoded_in_target, nms_thresh, nms_eta, nms_top_k, 
 				confidence_thresh, keep_top_k, output);
+		}
+
+		static bool DetectionOuput_MXNET(const ZQ_CNN_Tensor4D& loc, const ZQ_CNN_Tensor4D& conf,
+			const ZQ_CNN_Tensor4D& prior, const std::vector<float>& variances, bool clip,
+			float nms_thresh, int nms_top_k, float confidence_thresh, int keep_top_k,
+			ZQ_CNN_Tensor4D& output)
+		{
+			return _detection_output_MXNET(loc, conf, prior, variances, clip, nms_thresh, 
+				nms_top_k,	confidence_thresh, keep_top_k, output);
 		}
 
 	private:
@@ -1938,6 +1956,11 @@ namespace ZQ
 			bool flip, int num_priors, bool clip, int img_w, int img_h, float step_w, float step_h, float offset,
 			ZQ_CNN_Tensor4D& output);
 
+		static bool _prior_box_MXNET(const ZQ_CNN_Tensor4D& input,
+			const std::vector<float>& sizes, const std::vector<float>& aspect_ratios, const std::vector<float>& variance,
+			int num_priors, bool clip, float step_w, float step_h, float offset,
+			ZQ_CNN_Tensor4D& output);
+
 		static bool _prior_box_text(const ZQ_CNN_Tensor4D& input, const ZQ_CNN_Tensor4D& data,
 			const std::vector<float>& min_sizes, const std::vector<float>& max_sizes,
 			const std::vector<float>& aspect_ratios, const std::vector<float>& variance,
@@ -1952,6 +1975,11 @@ namespace ZQ
 			const ZQ_CNN_Tensor4D& prior, int num_priors, int num_loc_classes, int num_classes, bool share_location,
 			int background_label_id, ZQ_CNN_BBoxUtils::PriorBoxCodeType code_type, bool variance_encoded_in_target,
 			float nms_thresh, float nms_eta, int nms_top_k, float confidence_thresh, int keep_top_k, ZQ_CNN_Tensor4D& output);
+
+		static bool _detection_output_MXNET(const ZQ_CNN_Tensor4D& loc, const ZQ_CNN_Tensor4D& conf,
+			const ZQ_CNN_Tensor4D& prior, const std::vector<float>& variances, bool clip,
+			float nms_thresh, int nms_top_k, float confidence_thresh, int keep_top_k,
+			ZQ_CNN_Tensor4D& output);
 	};
 
 }
