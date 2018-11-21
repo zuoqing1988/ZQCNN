@@ -12,7 +12,7 @@ MKL下载地址:[此处下载](https://pan.baidu.com/s/1d75IIf6fgTZ5oeumd0vtTw)
 
 支持mxnet-ssd训练的模型，mean_val需要设成127.5才能在SampleSSD里面正确运行。
 
-但是使用ReLU训练的好像不正确，我用PReLU训练一个，重头训练的，只有mAP=0.48凑合着看吧。
+但是使用ReLU训练的好像不正确，我用PReLU训练一个，重头训练的，只有mAP=0.48凑合着看吧，[点此下载](https://pan.baidu.com/s/1-wfpuvGLBGPtlqicdO1raw)。
 
 更改模型之后必须用imagenet先训练分类模型，然后再训练SSD，才能把mAP弄上去。
 
