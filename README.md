@@ -6,6 +6,11 @@ ZQCNN是ZuoQing参照mini-caffe写的forward库，随便用用
 
 MKL下载地址:[此处下载](https://pan.baidu.com/s/1d75IIf6fgTZ5oeumd0vtTw)
 
+训练性别年龄：https://github.com/zuoqing1988/train-GenderAge
+
+训练MTCNN：https://github.com/zuoqing1988/train-mtcnn
+
+
 # 更新日志
 
 **2018-11-21日更新**
