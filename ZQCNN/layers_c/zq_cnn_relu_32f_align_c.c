@@ -23,7 +23,6 @@ extern "C" {
 
 #if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_SSE
 #define zq_cnn_relu_32f_align zq_cnn_relu_32f_align128bit
-#define zq_cnn_relu_32f_align_omp zq_cnn_relu_32f_align128bit_omp
 #define zq_mm_load_ps _mm_load_ps
 #define zq_mm_store_ps _mm_store_ps
 #define zq_mm_setzero_ps _mm_setzero_ps
@@ -55,7 +54,6 @@ extern "C" {
 #include "zq_cnn_relu_32f_align_c_raw.h"
 
 #undef zq_cnn_relu_32f_align
-#undef zq_cnn_relu_32f_align_omp
 #undef zq_mm_load_ps
 #undef zq_mm_store_ps
 #undef zq_mm_setzero_ps
@@ -83,7 +81,6 @@ extern "C" {
 
 #if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_AVX
 #define zq_cnn_relu_32f_align zq_cnn_relu_32f_align256bit
-#define zq_cnn_relu_32f_align_omp zq_cnn_relu_32f_align256bit_omp
 #define zq_mm_load_ps _mm256_load_ps
 #define zq_mm_store_ps _mm256_store_ps
 #define zq_mm_setzero_ps _mm256_setzero_ps
@@ -115,7 +112,6 @@ extern "C" {
 #include "zq_cnn_relu_32f_align_c_raw.h"
 
 #undef zq_cnn_relu_32f_align
-#undef zq_cnn_relu_32f_align_omp
 #undef zq_mm_load_ps
 #undef zq_mm_store_ps
 #undef zq_mm_setzero_ps

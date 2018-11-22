@@ -57,7 +57,6 @@ extern "C" {
 #include "zq_cnn_depthwise_convolution_32f_align_c_raw.h"
 
 #undef zq_cnn_depthwise_conv_no_padding_32f_general
-#undef zq_cnn_depthwise_conv_no_padding_32f_general_omp
 #undef zq_cnn_depthwise_conv_no_padding_32f_kernel3x3
 #undef zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_mul_1
 #undef zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_mul_2
