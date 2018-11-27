@@ -85,6 +85,10 @@ EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ZQ_GEMM", "ZQ_GEMM\ZQ_GEMM.vcxproj", "{68ED426A-4BD4-4703-8741-048A0A07CE9F}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "TrainMTCNNprocessor", "SamplesZQCNN\TrainMTCNNprocessor\TrainMTCNNprocessor.vcxproj", "{A7D2F9EB-1117-48A4-B008-078BED511856}"
+	ProjectSection(ProjectDependencies) = postProject
+		{43AA2D6A-447E-4153-8A29-7AE8A8296DC7} = {43AA2D6A-447E-4153-8A29-7AE8A8296DC7}
+		{68ED426A-4BD4-4703-8741-048A0A07CE9F} = {68ED426A-4BD4-4703-8741-048A0A07CE9F}
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
