@@ -579,7 +579,7 @@ namespace ZQ
 			return true;
 		}
 
-		static bool _generate_data_for_one_image(int i, int size, const std::string& image_file,
+		static bool _generate_data_for_one_image(int idx, int size, const std::string& image_file,
 			const std::vector<float>& boxes, const std::vector<float>& probs, float prob_thresh,
 			const std::string& pos_save_dir, const std::string& part_save_dir,
 			const std::string& neg_save_dir, int base_num, std::vector<std::string>& pos_names,
@@ -631,36 +631,36 @@ namespace ZQ
 					cv::resize(cropped_im, resized_im, cv::Size(size, size));
 					resized_im.convertTo(brighter_im, resized_im.type(), 1.25);
 					resized_im.convertTo(darker_im, resized_im.type(), 0.8);
-					sprintf_s(tmp_buf, BUF_LEN-1,  "%d_%d.jpg", i, neg_num);
+					sprintf_s(tmp_buf, BUF_LEN-1,  "%d_%d.jpg", idx, neg_num);
 					file_name = neg_save_dir + "/" + std::string(tmp_buf);
 					if (!cv::imwrite(file_name, resized_im))
 					{
 						printf("failed to write image %s\n", file_name.c_str());
 						return false;
 					}
-					sprintf_s(tmp_buf, BUF_LEN-1,  "%d_%d 0", i, neg_num);
+					sprintf_s(tmp_buf, BUF_LEN-1,  "%d_%d 0", idx, neg_num);
 					line = neg_save_dir + "/" + std::string(tmp_buf);
 					neg_names.push_back(line);
 					neg_num++;
-					sprintf_s(tmp_buf, BUF_LEN-1,  "%d_%d.jpg", i, neg_num);
+					sprintf_s(tmp_buf, BUF_LEN-1,  "%d_%d.jpg", idx, neg_num);
 					file_name = neg_save_dir + "/" + std::string(tmp_buf);
 					if (!cv::imwrite(file_name, brighter_im))
 					{
 						printf("failed to write image %s\n", file_name.c_str());
 						return false;
 					}
-					sprintf_s(tmp_buf, BUF_LEN-1,  "%d_%d 0", i, neg_num);
+					sprintf_s(tmp_buf, BUF_LEN-1,  "%d_%d 0", idx, neg_num);
 					line = neg_save_dir + "/" + std::string(tmp_buf);
 					neg_names.push_back(line);
 					neg_num++;
-					sprintf_s(tmp_buf, BUF_LEN-1,  "%d_%d.jpg", i, neg_num);
+					sprintf_s(tmp_buf, BUF_LEN-1,  "%d_%d.jpg", idx, neg_num);
 					file_name = neg_save_dir + "/" + std::string(tmp_buf);
 					if (!cv::imwrite(file_name, darker_im))
 					{
 						printf("failed to write image %s\n", file_name.c_str());
 						return false;
 					}
-					sprintf_s(tmp_buf, BUF_LEN-1,  "%d_%d 0", i, neg_num);
+					sprintf_s(tmp_buf, BUF_LEN-1,  "%d_%d 0", idx, neg_num);
 					line = neg_save_dir + "/" + std::string(tmp_buf);
 					neg_names.push_back(line);
 					neg_num++;
@@ -705,36 +705,36 @@ namespace ZQ
 						cv::resize(cropped_im, resized_im, cv::Size(size, size));
 						resized_im.convertTo(brighter_im, resized_im.type(), 1.25);
 						resized_im.convertTo(darker_im, resized_im.type(), 0.8);
-						sprintf_s(tmp_buf, BUF_LEN-1,  "%d_%d.jpg", i, neg_num);
+						sprintf_s(tmp_buf, BUF_LEN-1,  "%d_%d.jpg", idx, neg_num);
 						file_name = neg_save_dir + "/" + std::string(tmp_buf);
 						if (!cv::imwrite(file_name, resized_im))
 						{
 							printf("failed to write image %s\n", file_name.c_str());
 							return false;
 						}
-						sprintf_s(tmp_buf, BUF_LEN-1,  "%d_%d 0", i, neg_num);
+						sprintf_s(tmp_buf, BUF_LEN-1,  "%d_%d 0", idx, neg_num);
 						line = neg_save_dir + "/" + std::string(tmp_buf);
 						neg_names.push_back(line);
 						neg_num++;
-						sprintf_s(tmp_buf, BUF_LEN-1,  "%d_%d.jpg", i, neg_num);
+						sprintf_s(tmp_buf, BUF_LEN-1,  "%d_%d.jpg", idx, neg_num);
 						file_name = neg_save_dir + "/" + std::string(tmp_buf);
 						if (!cv::imwrite(file_name, brighter_im))
 						{
 							printf("failed to write image %s\n", file_name.c_str());
 							return false;
 						}
-						sprintf_s(tmp_buf, BUF_LEN-1,  "%d_%d 0", i, neg_num);
+						sprintf_s(tmp_buf, BUF_LEN-1,  "%d_%d 0", idx, neg_num);
 						line = neg_save_dir + "/" + std::string(tmp_buf);
 						neg_names.push_back(line);
 						neg_num++;
-						sprintf_s(tmp_buf, BUF_LEN-1,  "%d_%d.jpg", i, neg_num);
+						sprintf_s(tmp_buf, BUF_LEN-1,  "%d_%d.jpg", idx, neg_num);
 						file_name = neg_save_dir + "/" + std::string(tmp_buf);
 						if (!cv::imwrite(file_name, darker_im))
 						{
 							printf("failed to write image %s\n", file_name.c_str());
 							return false;
 						}
-						sprintf_s(tmp_buf, BUF_LEN-1,  "%d_%d 0", i, neg_num);
+						sprintf_s(tmp_buf, BUF_LEN-1,  "%d_%d 0", idx, neg_num);
 						line = neg_save_dir + "/" + std::string(tmp_buf);
 						neg_names.push_back(line);
 						neg_num++;
@@ -773,38 +773,38 @@ namespace ZQ
 						cv::resize(cropped_im, resized_im, cv::Size(size, size));
 						resized_im.convertTo(brighter_im, resized_im.type(), 1.25);
 						resized_im.convertTo(darker_im, resized_im.type(), 0.8);
-						sprintf_s(tmp_buf, BUF_LEN-1,  "%d_%d.jpg", i, pos_num);
+						sprintf_s(tmp_buf, BUF_LEN-1,  "%d_%d.jpg", idx, pos_num);
 						file_name = pos_save_dir + "/" + std::string(tmp_buf);
 						if (!cv::imwrite(file_name, resized_im))
 						{
 							printf("failed to write image %s\n", file_name.c_str());
 							return false;
 						}
-						sprintf_s(tmp_buf, BUF_LEN-1,  "%d_%d 1 %.2f %.2f %.2f %.2f", i, pos_num,
+						sprintf_s(tmp_buf, BUF_LEN-1,  "%d_%d 1 %.2f %.2f %.2f %.2f", idx, pos_num,
 							offset_x1, offset_y1, offset_x2, offset_y2);
 						line = pos_save_dir + "/" + std::string(tmp_buf);
 						pos_names.push_back(line);
 						pos_num++;
-						sprintf_s(tmp_buf, BUF_LEN-1,  "%d_%d.jpg", i, pos_num);
+						sprintf_s(tmp_buf, BUF_LEN-1,  "%d_%d.jpg", idx, pos_num);
 						file_name = pos_save_dir + "/" + std::string(tmp_buf);
 						if (!cv::imwrite(file_name, brighter_im))
 						{
 							printf("failed to write image %s\n", file_name.c_str());
 							return false;
 						}
-						sprintf_s(tmp_buf, BUF_LEN-1,  "%d_%d 1 %.2f %.2f %.2f %.2f", i, pos_num,
+						sprintf_s(tmp_buf, BUF_LEN-1,  "%d_%d 1 %.2f %.2f %.2f %.2f", idx, pos_num,
 							offset_x1, offset_y1, offset_x2, offset_y2);
 						line = pos_save_dir + "/" + std::string(tmp_buf);
 						pos_names.push_back(line);
 						pos_num++;
-						sprintf_s(tmp_buf, BUF_LEN-1,  "%d_%d.jpg", i, pos_num);
+						sprintf_s(tmp_buf, BUF_LEN-1,  "%d_%d.jpg", idx, pos_num);
 						file_name = pos_save_dir + "/" + std::string(tmp_buf);
 						if (!cv::imwrite(file_name, darker_im))
 						{
 							printf("failed to write image %s\n", file_name.c_str());
 							return false;
 						}
-						sprintf_s(tmp_buf, BUF_LEN-1,  "%d_%d 1 %.2f %.2f %.2f %.2f", i, pos_num,
+						sprintf_s(tmp_buf, BUF_LEN-1,  "%d_%d 1 %.2f %.2f %.2f %.2f", idx, pos_num,
 							offset_x1, offset_y1, offset_x2, offset_y2);
 						line = pos_save_dir + "/" + std::string(tmp_buf);
 						pos_names.push_back(line);
@@ -817,38 +817,38 @@ namespace ZQ
 							cv::resize(cropped_im, resized_im, cv::Size(size, size));
 							resized_im.convertTo(brighter_im, resized_im.type(), 1.25);
 							resized_im.convertTo(darker_im, resized_im.type(), 0.8);
-							sprintf_s(tmp_buf, BUF_LEN-1,  "%d_%d.jpg", i, part_num);
+							sprintf_s(tmp_buf, BUF_LEN-1,  "%d_%d.jpg", idx, part_num);
 							file_name = part_save_dir + "/" + std::string(tmp_buf);
 							if (!cv::imwrite(file_name, resized_im))
 							{
 								printf("failed to write image %s\n", file_name.c_str());
 								return false;
 							}
-							sprintf_s(tmp_buf, BUF_LEN-1,  "%d_%d -1 %.2f %.2f %.2f %.2f", i, part_num,
+							sprintf_s(tmp_buf, BUF_LEN-1,  "%d_%d -1 %.2f %.2f %.2f %.2f", idx, part_num,
 								offset_x1, offset_y1, offset_x2, offset_y2);
 							line = part_save_dir + "/" + std::string(tmp_buf);
 							part_names.push_back(line);
 							part_num++;
-							sprintf_s(tmp_buf, BUF_LEN-1,  "%d_%d.jpg", i, part_num);
+							sprintf_s(tmp_buf, BUF_LEN-1,  "%d_%d.jpg", idx, part_num);
 							file_name = part_save_dir + "/" + std::string(tmp_buf);
 							if (!cv::imwrite(file_name, brighter_im))
 							{
 								printf("failed to write image %s\n", file_name.c_str());
 								return false;
 							}
-							sprintf_s(tmp_buf, BUF_LEN-1,  "%d_%d -1 %.2f %.2f %.2f %.2f", i, part_num,
+							sprintf_s(tmp_buf, BUF_LEN-1,  "%d_%d -1 %.2f %.2f %.2f %.2f", idx, part_num,
 								offset_x1, offset_y1, offset_x2, offset_y2);
 							line = part_save_dir + "/" + std::string(tmp_buf);
 							part_names.push_back(line);
 							part_num++;
-							sprintf_s(tmp_buf, BUF_LEN-1,  "%d_%d.jpg", i, part_num);
+							sprintf_s(tmp_buf, BUF_LEN-1,  "%d_%d.jpg", idx, part_num);
 							file_name = part_save_dir + "/" + std::string(tmp_buf);
 							if (!cv::imwrite(file_name, darker_im))
 							{
 								printf("failed to write image %s\n", file_name.c_str());
 								return false;
 							}
-							sprintf_s(tmp_buf, BUF_LEN-1,  "%d_%d -1 %.2f %.2f %.2f %.2f", i, part_num,
+							sprintf_s(tmp_buf, BUF_LEN-1,  "%d_%d -1 %.2f %.2f %.2f %.2f", idx, part_num,
 								offset_x1, offset_y1, offset_x2, offset_y2);
 							line = part_save_dir + "/" + std::string(tmp_buf);
 							part_names.push_back(line);
@@ -861,7 +861,7 @@ namespace ZQ
 		}
 
 
-		static bool _generate_landmark_for_one_image(int i, int size, const std::string& image_file,
+		static bool _generate_landmark_for_one_image(int idx, int size, const std::string& image_file,
 			const std::vector<float>& boxes, const std::vector<float>& landmarks, 
 			const std::string& landmark_save_dir, int base_num, std::vector<std::string>& landmark_names)
 		{
@@ -952,7 +952,7 @@ namespace ZQ
 						cv::resize(cropped_im, resized_im, cv::Size(size, size));
 						resized_im.convertTo(brighter_im, resized_im.type(), 1.25);
 						resized_im.convertTo(darker_im, resized_im.type(), 0.8);
-						sprintf_s(tmp_buf, BUF_LEN - 1, "%d_%d.jpg", i, landmark_num);
+						sprintf_s(tmp_buf, BUF_LEN - 1, "%d_%d.jpg", idx, landmark_num);
 						file_name = landmark_save_dir + "/" + std::string(tmp_buf);
 						if (!cv::imwrite(file_name, resized_im))
 						{
@@ -960,13 +960,13 @@ namespace ZQ
 							return false;
 						}
 						sprintf_s(tmp_buf, BUF_LEN - 1, "%d_%d -2 %.2f %.2f %.2f %.2f %.2f %.2f %.2f %.2f %.2f %.2f", 
-							i, landmark_num, offset_x1, offset_y1, 
+							idx, landmark_num, offset_x1, offset_y1, 
 							offset_x2, offset_y2, offset_x3, offset_y3,
 							offset_x4, offset_y4, offset_x5, offset_y5);
 						line = landmark_save_dir + "/" + std::string(tmp_buf);
 						landmark_names.push_back(line);
 						landmark_num++;
-						sprintf_s(tmp_buf, BUF_LEN - 1, "%d_%d.jpg", i, landmark_num);
+						sprintf_s(tmp_buf, BUF_LEN - 1, "%d_%d.jpg", idx, landmark_num);
 						file_name = landmark_save_dir + "/" + std::string(tmp_buf);
 						if (!cv::imwrite(file_name, brighter_im))
 						{
@@ -974,13 +974,13 @@ namespace ZQ
 							return false;
 						}
 						sprintf_s(tmp_buf, BUF_LEN - 1, "%d_%d -2 %.2f %.2f %.2f %.2f %.2f %.2f %.2f %.2f %.2f %.2f",
-							i, landmark_num, offset_x1, offset_y1,
+							idx, landmark_num, offset_x1, offset_y1,
 							offset_x2, offset_y2, offset_x3, offset_y3,
 							offset_x4, offset_y4, offset_x5, offset_y5);
 						line = landmark_save_dir + "/" + std::string(tmp_buf);
 						landmark_names.push_back(line);
 						landmark_num++;
-						sprintf_s(tmp_buf, BUF_LEN - 1, "%d_%d.jpg", i, landmark_num);
+						sprintf_s(tmp_buf, BUF_LEN - 1, "%d_%d.jpg", idx, landmark_num);
 						file_name = landmark_save_dir + "/" + std::string(tmp_buf);
 						if (!cv::imwrite(file_name, darker_im))
 						{
@@ -988,7 +988,7 @@ namespace ZQ
 							return false;
 						}
 						sprintf_s(tmp_buf, BUF_LEN - 1, "%d_%d -2 %.2f %.2f %.2f %.2f %.2f %.2f %.2f %.2f %.2f %.2f",
-							i, landmark_num, offset_x1, offset_y1,
+							idx, landmark_num, offset_x1, offset_y1,
 							offset_x2, offset_y2, offset_x3, offset_y3,
 							offset_x4, offset_y4, offset_x5, offset_y5);
 						line = landmark_save_dir + "/" + std::string(tmp_buf);
