@@ -812,7 +812,7 @@ namespace ZQ
 					}
 					else if (iou >= 0.4)
 					{
-						if (rand() % 100 <= 80)
+						if (rand() % 100 <= 40)
 						{
 							cv::resize(cropped_im, resized_im, cv::Size(size, size));
 							resized_im.convertTo(brighter_im, resized_im.type(), 1.25);
@@ -959,10 +959,10 @@ namespace ZQ
 							printf("failed to write image %s\n", file_name.c_str());
 							return false;
 						}
-						sprintf_s(tmp_buf, BUF_LEN - 1, "%d_%d -2 %.2f %.2f %.2f %.2f %.2f %.2f %.2f %.2f %.2f %.2f", 
-							idx, landmark_num, offset_x1, offset_y1, 
-							offset_x2, offset_y2, offset_x3, offset_y3,
-							offset_x4, offset_y4, offset_x5, offset_y5);
+						sprintf_s(tmp_buf, BUF_LEN - 1, "%d_%d -2 %.2f %.2f %.2f %.2f %.2f %.2f %.2f %.2f %.2f %.2f",
+							idx, landmark_num,
+							offset_x1, offset_x2, offset_x3, offset_x4, offset_x5,
+							offset_y1, offset_y2, offset_y3, offset_y4, offset_y5);
 						line = landmark_save_dir + "/" + std::string(tmp_buf);
 						landmark_names.push_back(line);
 						landmark_num++;
@@ -974,9 +974,9 @@ namespace ZQ
 							return false;
 						}
 						sprintf_s(tmp_buf, BUF_LEN - 1, "%d_%d -2 %.2f %.2f %.2f %.2f %.2f %.2f %.2f %.2f %.2f %.2f",
-							idx, landmark_num, offset_x1, offset_y1,
-							offset_x2, offset_y2, offset_x3, offset_y3,
-							offset_x4, offset_y4, offset_x5, offset_y5);
+							idx, landmark_num,
+							offset_x1, offset_x2, offset_x3, offset_x4, offset_x5,
+							offset_y1, offset_y2, offset_y3, offset_y4, offset_y5);
 						line = landmark_save_dir + "/" + std::string(tmp_buf);
 						landmark_names.push_back(line);
 						landmark_num++;
@@ -988,9 +988,9 @@ namespace ZQ
 							return false;
 						}
 						sprintf_s(tmp_buf, BUF_LEN - 1, "%d_%d -2 %.2f %.2f %.2f %.2f %.2f %.2f %.2f %.2f %.2f %.2f",
-							idx, landmark_num, offset_x1, offset_y1,
-							offset_x2, offset_y2, offset_x3, offset_y3,
-							offset_x4, offset_y4, offset_x5, offset_y5);
+							idx, landmark_num,
+							offset_x1, offset_x2, offset_x3, offset_x4, offset_x5,
+							offset_y1, offset_y2, offset_y3, offset_y4, offset_y5);
 						line = landmark_save_dir + "/" + std::string(tmp_buf);
 						landmark_names.push_back(line);
 						landmark_num++;
