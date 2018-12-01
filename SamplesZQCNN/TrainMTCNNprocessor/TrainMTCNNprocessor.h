@@ -920,9 +920,9 @@ namespace ZQ
 
 					for (int i = 0; i < base_num; i++)
 					{
-						int cur_size = _randint(__min(w, h) * 0.9, ceil(1.11 * __max(w, h)));
-						int delta_x = _randint(-w * 0.1, w * 0.1);
-						int delta_y = _randint(-h * 0.1, h * 0.1);
+						int cur_size = _randint(__min(w, h) * 0.8, ceil(1.25 * __max(w, h)));
+						int delta_x = _randint(-w * 0.15, w * 0.15);
+						int delta_y = _randint(-h * 0.15, h * 0.15);
 						int nx1 = int(__max(x1 + w / 2 + delta_x - cur_size / 2, 0));
 						int ny1 = int(__max(y1 + h / 2 + delta_y - cur_size / 2, 0));
 						int nx2 = nx1 + cur_size;
