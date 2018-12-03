@@ -13,6 +13,21 @@ MKL下载地址:[此处下载](https://pan.baidu.com/s/1d75IIf6fgTZ5oeumd0vtTw)
 
 # 更新日志
 
+**2018-12-03日更新：将模型编译成代码里面**
+
+ZQCNN.sln里 model2code 可以将模型编译成代码
+
+	model2code.exe param_file model_file code_file prefix
+	
+然后在你的工程里面添加
+
+	#include"code_file"
+	
+使用下面的函数加载模型
+
+	LoadFromBuffer(prefix_param, prefix_param_len, prefix_model, prefix_model_len)
+
+
 **2018-11-21日更新**
 
 支持mxnet-ssd训练的模型，mean_val需要设成127.5才能在SampleSSD里面正确运行。
