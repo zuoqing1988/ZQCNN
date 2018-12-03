@@ -44,6 +44,8 @@ namespace ZQ
 		int pnet_size;
 		int pnet_stride;
 		bool special_handle_very_big_face;
+		bool do_landmark;
+		float early_accept_thresh;
 		float nms_thresh_per_scale;
 		std::vector<float> scales;
 		std::vector<ZQ_CNN_Tensor4D_NHW_C_Align128bit> pnet_images;
@@ -82,7 +84,8 @@ namespace ZQ
 
 		void SetPara(int w, int h, int min_face_size = 60, float pthresh = 0.6, float rthresh = 0.7, float othresh = 0.7,
 			float nms_pthresh = 0.6, float nms_rthresh = 0.7, float nms_othresh = 0.7, float scale_factor = 0.709, 
-			int pnet_overlap_thresh_count = 4, int pnet_size = 12, int pnet_stride = 2, bool special_handle_very_big_face = false)
+			int pnet_overlap_thresh_count = 4, int pnet_size = 12, int pnet_stride = 2, bool special_handle_very_big_face = false, 
+			bool do_landmark = true, float early_accept_thresh = 1.00)
 		{
 			min_size = __max(pnet_size, min_face_size);
 			thresh[0] = __max(0.1, pthresh); thresh[1] = __max(0.1, rthresh); thresh[2] = __max(0.1, othresh);
@@ -92,6 +95,8 @@ namespace ZQ
 			this->pnet_size = pnet_size;
 			this->pnet_stride = pnet_stride;
 			this->special_handle_very_big_face = special_handle_very_big_face;
+			this->do_landmark = do_landmark;
+			this->early_accept_thresh = early_accept_thresh;
 			if (pnet_size == 20 && pnet_stride == 4)
 				nms_thresh_per_scale = 0.45;
 			else
@@ -819,6 +824,7 @@ namespace ZQ
 			thirdBbox.clear();
 			std::vector<ZQ_CNN_BBox>::iterator it = secondBbox.begin();
 			std::vector<ZQ_CNN_OrderScore> thirdScore;
+			std::vector<ZQ_CNN_BBox> early_accept_thirdBbox;
 			std::vector<int> src_off_x, src_off_y, src_rect_w, src_rect_h;
 			int o_count = 0;
 			for (; it != secondBbox.end(); it++)
@@ -836,12 +842,19 @@ namespace ZQ
 					}
 					else
 					{
-						src_off_x.push_back(off_x);
-						src_off_y.push_back(off_y);
-						src_rect_w.push_back(rect_w);
-						src_rect_h.push_back(rect_h);
-						o_count++;
-						thirdBbox.push_back(*it);
+						if (!do_landmark && it->score > early_accept_thresh)
+						{
+							early_accept_thirdBbox.push_back(*it);
+						}
+						else
+						{
+							src_off_x.push_back(off_x);
+							src_off_y.push_back(off_y);
+							src_rect_w.push_back(rect_w);
+							src_rect_h.push_back(rect_h);
+							o_count++;
+							thirdBbox.push_back(*it);
+						}
 					}
 				}
 			}
@@ -894,20 +907,27 @@ namespace ZQ
 				const ZQ_CNN_Tensor4D* keyPoint = onet[0].GetBlobByName("conv6-3");
 				const float* score_ptr = score->GetFirstPixelPtr();
 				const float* location_ptr = location->GetFirstPixelPtr();
-				const float* keyPoint_ptr = keyPoint->GetFirstPixelPtr();
+				const float* keyPoint_ptr = 0;
+				if(keyPoint != 0)
+					keyPoint_ptr = keyPoint->GetFirstPixelPtr();
 				int score_sliceStep = score->GetSliceStep();
 				int location_sliceStep = location->GetSliceStep();
-				int keyPoint_sliceStep = keyPoint->GetSliceStep();
+				int keyPoint_sliceStep = 0;
+				if(keyPoint != 0)
+					keyPoint_sliceStep = keyPoint->GetSliceStep();
 				for (int i = 0; i < o_count; i++)
 				{
 					if (score_ptr[i*score_sliceStep + 1] > thresh[2])
 					{
 						for (int j = 0; j < 4; j++)
 							thirdBbox[i].regreCoord[j] = location_ptr[i*location_sliceStep + j];
-						for (int num = 0; num < 5; num++)
+						if (keyPoint != 0)
 						{
-							thirdBbox[i].ppoint[num] = thirdBbox[i].col1 + (thirdBbox[i].col2 - thirdBbox[i].col1)*keyPoint_ptr[i*keyPoint_sliceStep + num];
-							thirdBbox[i].ppoint[num + 5] = thirdBbox[i].row1 + (thirdBbox[i].row2 - thirdBbox[i].row1)*keyPoint_ptr[i*keyPoint_sliceStep + num + 5];
+							for (int num = 0; num < 5; num++)
+							{
+								thirdBbox[i].ppoint[num] = thirdBbox[i].col1 + (thirdBbox[i].col2 - thirdBbox[i].col1)*keyPoint_ptr[i*keyPoint_sliceStep + num];
+								thirdBbox[i].ppoint[num + 5] = thirdBbox[i].row1 + (thirdBbox[i].row2 - thirdBbox[i].row1)*keyPoint_ptr[i*keyPoint_sliceStep + num + 5];
+							}
 						}
 						thirdBbox[i].area = src_rect_w[i] * src_rect_h[i];
 						thirdBbox[i].score = score_ptr[i*score_sliceStep + 1];
@@ -919,6 +939,14 @@ namespace ZQ
 					{
 						thirdBbox[i].exist = false;
 					}
+				}
+
+				for (int i = 0; i < early_accept_thirdBbox.size(); i++)
+				{
+					order.score = early_accept_thirdBbox[i].score;
+					order.oriOrder = count++;
+					thirdScore.push_back(order);
+					thirdBbox.push_back(early_accept_thirdBbox[i]);
 				}
 
 
@@ -961,10 +989,14 @@ namespace ZQ
 					const ZQ_CNN_Tensor4D* keyPoint = onet[pp].GetBlobByName("conv6-3");
 					const float* score_ptr = score->GetFirstPixelPtr();
 					const float* location_ptr = location->GetFirstPixelPtr();
-					const float* keyPoint_ptr = keyPoint->GetFirstPixelPtr();
+					const float* keyPoint_ptr = 0;
+					if(keyPoint != 0)
+						keyPoint_ptr = keyPoint->GetFirstPixelPtr();
 					int score_sliceStep = score->GetSliceStep();
 					int location_sliceStep = location->GetSliceStep();
-					int keyPoint_sliceStep = keyPoint->GetSliceStep();
+					int keyPoint_sliceStep = 0;
+					if(keyPoint != 0)
+						keyPoint_sliceStep = keyPoint->GetSliceStep();
 					int task_count = 0;
 					ZQ_CNN_OrderScore order;
 					for (int i = 0; i < task_thirdBbox[pp].size(); i++)
@@ -973,12 +1005,15 @@ namespace ZQ
 						{
 							for (int j = 0; j < 4; j++)
 								task_thirdBbox[pp][i].regreCoord[j] = location_ptr[i*location_sliceStep + j];
-							for (int num = 0; num < 5; num++)
+							if (keyPoint != 0)
 							{
-								task_thirdBbox[pp][i].ppoint[num] = task_thirdBbox[pp][i].col1 + 
-									(task_thirdBbox[pp][i].col2 - task_thirdBbox[pp][i].col1)*keyPoint_ptr[i*keyPoint_sliceStep + num];
-								task_thirdBbox[pp][i].ppoint[num + 5] = task_thirdBbox[pp][i].row1 + 
-									(task_thirdBbox[pp][i].row2 - task_thirdBbox[pp][i].row1)*keyPoint_ptr[i*keyPoint_sliceStep + num + 5];
+								for (int num = 0; num < 5; num++)
+								{
+									task_thirdBbox[pp][i].ppoint[num] = task_thirdBbox[pp][i].col1 +
+										(task_thirdBbox[pp][i].col2 - task_thirdBbox[pp][i].col1)*keyPoint_ptr[i*keyPoint_sliceStep + num];
+									task_thirdBbox[pp][i].ppoint[num + 5] = task_thirdBbox[pp][i].row1 +
+										(task_thirdBbox[pp][i].row2 - task_thirdBbox[pp][i].row1)*keyPoint_ptr[i*keyPoint_sliceStep + num + 5];
+								}
 							}
 							task_thirdBbox[pp][i].area = task_src_rect_w[pp][i] * task_src_rect_h[pp][i];
 							task_thirdBbox[pp][i].score = score_ptr[i*score_sliceStep + 1];
@@ -1019,6 +1054,14 @@ namespace ZQ
 						thirdScore[id].oriOrder = id;
 						id++;
 					}
+				}
+				ZQ_CNN_OrderScore order;
+				for (int i = 0; i < early_accept_thirdBbox.size(); i++)
+				{
+					order.score = early_accept_thirdBbox[i].score;
+					order.oriOrder = count++;
+					thirdScore.push_back(order);
+					thirdBbox.push_back(early_accept_thirdBbox[i]);
 				}
 
 				ZQ_CNN_BBoxUtils::_refine_and_square_bbox(thirdBbox, width, height);
