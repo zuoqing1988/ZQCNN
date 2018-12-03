@@ -168,6 +168,56 @@ namespace ZQ
 			return true;
 		}
 
+		bool Forward(ZQ_CNN_Tensor4D& input, const std::string& start_layer_name, const std::string& end_layer_name)
+		{
+			if (map_name_to_blob_idx.size() == 0 || map_name_to_layer_idx.size() == 0 || tops.size() == 0)
+				return false;
+			if (has_innerproduct_layer)
+			{
+				if (input.GetH() != input_H || input.GetW() != input_W || input.GetC() != input_C)
+				{
+					std::cout << "The dimenson doesnot match with the needed\n";
+					return false;
+				}
+			}
+			blobs[0] = &input;
+
+			bool has_begin = false, has_end = false;
+			for (int i = 0; i < layers.size(); i++)
+			{
+				if (_strcmpi(layers[i]->name.c_str(), start_layer_name.c_str()) == 0)
+					has_begin = true;
+				if (!has_begin)
+					continue;
+				std::vector<ZQ_CNN_Tensor4D*> bottom_ptrs, top_ptrs;
+				for (int j = 0; j < bottoms[i].size(); j++)
+					bottom_ptrs.push_back(blobs[bottoms[i][j]]);
+				for (int j = 0; j < tops[i].size(); j++)
+					top_ptrs.push_back(blobs[tops[i][j]]);
+
+				layers[i]->show_debug_info = show_debug_info;
+				//printf("%d\n", i);
+				layers[i]->use_buffer = use_buffer;
+				layers[i]->buffer = &(_buffer.data);
+				layers[i]->buffer_len = &(_buffer.len);
+				if (!layers[i]->Forward(&bottom_ptrs, &top_ptrs))
+				{
+					blobs[0] = 0;
+					tops[0][0] = 0;
+					printf("failed to run layer: %s\n", layers[i]->name.c_str());
+					return false;
+				}
+				if (_strcmpi(layers[i]->name.c_str(), end_layer_name.c_str()) == 0)
+					has_end = true;
+				if (has_end)
+					break;
+			}
+
+			blobs[0] = 0;
+			tops[0][0] = 0;
+			return true;
+		}
+
 		const ZQ_CNN_Tensor4D* GetBlobByName(std::string name) 
 		{
 			std::map<std::string, int>::iterator it = map_name_to_blob_idx.find(name);
