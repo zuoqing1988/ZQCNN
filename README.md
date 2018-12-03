@@ -13,7 +13,7 @@ MKL下载地址:[此处下载](https://pan.baidu.com/s/1d75IIf6fgTZ5oeumd0vtTw)
 
 # 更新日志
 
-**2018-12-03日更新：将模型编译成代码里面**
+**2018-12-03日更新：将模型编译到代码里面**
 
 ZQCNN.sln里 model2code 可以将模型编译成代码
 
