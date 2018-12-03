@@ -888,8 +888,8 @@ namespace ZQ
 			
 			cv::Mat rot_im;
 			cv::Mat resized_im, brighter_im, darker_im;
-			double angles[5] = { 0,-15,-30,15,30 };
-			int angle_num = 5;
+			double angles[13] = { 0,-15,-30,-45,-60,-75,-90,15,30,45,60,75,90 };
+			int angle_num = 13;
 			float rot_landmark[10];
 			int landmark_num = 0;
 			for (int bb = 0; bb < box_num; bb++)
