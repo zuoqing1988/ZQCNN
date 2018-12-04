@@ -280,3 +280,5 @@ Convolution name=conv1 bottom=data top=conv1 num_output=10 kernel_size=3 stride=
 (12)[大规模人脸测试集，及如何打造自己的人脸测试集](https://zhuanlan.zhihu.com/p/45441865)
 
 (13)[普通卷积、mobilenet卷积、全局平均池化的矩阵描述](https://zhuanlan.zhihu.com/p/45536594)
+
+(14)[ZQ_FastFaceDetector更快更准的人脸检测库](https://zhuanlan.zhihu.com/p/51561288)
