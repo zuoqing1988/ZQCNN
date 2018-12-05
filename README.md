@@ -10,6 +10,8 @@ MKL下载地址:[此处下载](https://pan.baidu.com/s/1d75IIf6fgTZ5oeumd0vtTw)
 
 训练MTCNN：https://github.com/zuoqing1988/train-mtcnn
 
+训练SSD: https://github.com/zuoqing1988/train-ssd
+
 
 # 更新日志
 
