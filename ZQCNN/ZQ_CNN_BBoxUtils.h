@@ -149,9 +149,10 @@ namespace ZQ
 			}
 		}
 
-		static void _refine_and_square_bbox(std::vector<ZQ_CNN_BBox> &vecBbox, const int width, const int height)
+		static void _refine_and_square_bbox(std::vector<ZQ_CNN_BBox> &vecBbox, const int width, const int height,
+			bool square = true)
 		{
-			float bbw = 0, bbh = 0, maxSide = 0;
+			float bbw = 0, bbh = 0, bboxSize = 0;
 			float h = 0, w = 0;
 			float x1 = 0, y1 = 0, x2 = 0, y2 = 0;
 			for (std::vector<ZQ_CNN_BBox>::iterator it = vecBbox.begin(); it != vecBbox.end(); it++)
@@ -160,21 +161,62 @@ namespace ZQ
 				{
 					bbh = (*it).row2 - (*it).row1 + 1;
 					bbw = (*it).col2 - (*it).col1 + 1;
-					x1 = (*it).row1 + (*it).regreCoord[1] * bbh;
-					y1 = (*it).col1 + (*it).regreCoord[0] * bbw;
-					x2 = (*it).row2 + (*it).regreCoord[3] * bbh;
-					y2 = (*it).col2 + (*it).regreCoord[2] * bbw;
+					y1 = (*it).row1 + (*it).regreCoord[1] * bbh;
+					x1 = (*it).col1 + (*it).regreCoord[0] * bbw;
+					y2 = (*it).row2 + (*it).regreCoord[3] * bbh;
+					x2 = (*it).col2 + (*it).regreCoord[2] * bbw;
 
-					h = x2 - x1 + 1;
-					w = y2 - y1 + 1;
+					w = x2 - x1 + 1;
+					h = y2 - y1 + 1;
+					if (square)
+					{
+						bboxSize = (h > w) ? h : w;
+						y1 = y1 + h*0.5 - bboxSize*0.5;
+						x1 = x1 + w*0.5 - bboxSize*0.5;
+						(*it).row2 = round(y1 + bboxSize - 1);
+						(*it).col2 = round(x1 + bboxSize - 1);
+						(*it).row1 = round(y1);
+						(*it).col1 = round(x1);
+					}
+					else
+					{
+						(*it).row2 = round(y1 + h - 1);
+						(*it).col2 = round(x1 + w - 1);
+						(*it).row1 = round(y1);
+						(*it).col1 = round(x1);
+					}
 
-					maxSide = (h > w) ? h : w;
-					x1 = x1 + h*0.5 - maxSide*0.5;
-					y1 = y1 + w*0.5 - maxSide*0.5;
-					(*it).row2 = round(x1 + maxSide - 1);
-					(*it).col2 = round(y1 + maxSide - 1);
-					(*it).row1 = round(x1);
-					(*it).col1 = round(y1);
+					//boundary check
+					if ((*it).row1 < 0)(*it).row1 = 0;
+					if ((*it).col1 < 0)(*it).col1 = 0;
+					if ((*it).row2 > height)(*it).row2 = height - 1;
+					if ((*it).col2 > width)(*it).col2 = width - 1;
+
+					it->area = (it->row2 - it->row1)*(it->col2 - it->col1);
+				}
+			}
+		}
+
+		static void _square_bbox(std::vector<ZQ_CNN_BBox> &vecBbox, const int width, const int height)
+		{
+			float bbw = 0, bbh = 0, bboxSize = 0;
+			float h = 0, w = 0;
+			float x1 = 0, y1 = 0, x2 = 0, y2 = 0;
+			for (std::vector<ZQ_CNN_BBox>::iterator it = vecBbox.begin(); it != vecBbox.end(); it++)
+			{
+				if ((*it).exist)
+				{
+					y1 = (*it).row1;
+					x1 = (*it).col1;
+					h = (*it).row2 - (*it).row1 + 1;
+					w = (*it).col2 - (*it).col1 + 1;
+					bboxSize = (h > w) ? h : w;
+					y1 = y1 + h*0.5 - bboxSize*0.5;
+					x1 = x1 + w*0.5 - bboxSize*0.5;
+					(*it).row2 = round(y1 + bboxSize - 1);
+					(*it).col2 = round(x1 + bboxSize - 1);
+					(*it).row1 = round(y1);
+					(*it).col1 = round(x1);
 
 					//boundary check
 					if ((*it).row1 < 0)(*it).row1 = 0;

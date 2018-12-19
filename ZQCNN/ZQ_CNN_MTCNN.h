@@ -687,7 +687,7 @@ namespace ZQ
 			if (count < 1) return false;
 			double t15 = omp_get_wtime();
 			ZQ_CNN_BBoxUtils::_nms(firstBbox, firstOrderScore, nms_thresh[0], "Union", 0, 1);
-			ZQ_CNN_BBoxUtils::_refine_and_square_bbox(firstBbox, width, height);
+			ZQ_CNN_BBoxUtils::_refine_and_square_bbox(firstBbox, width, height,true);
 			double t16 = omp_get_wtime();
 			if (show_debug_info)
 				printf("nms cost: %.3f ms\n", 1000 * (t16 - t15));
@@ -891,7 +891,7 @@ namespace ZQ
 		
 				//ZQ_CNN_BBoxUtils::_nms(secondBbox, secondScore, nms_thresh[1], "Union");
 				ZQ_CNN_BBoxUtils::_nms(secondBbox, secondScore, nms_thresh[1], "Min");
-				ZQ_CNN_BBoxUtils::_refine_and_square_bbox(secondBbox, width, height);
+				ZQ_CNN_BBoxUtils::_refine_and_square_bbox(secondBbox, width, height,true);
 				count = secondBbox.size();
 
 				double t4 = omp_get_wtime();
@@ -1044,7 +1044,7 @@ namespace ZQ
 					if (!thirdBbox[i].exist)
 						thirdBbox.erase(thirdBbox.begin() + i);
 				}
-				ZQ_CNN_BBoxUtils::_refine_and_square_bbox(thirdBbox, width, height);
+				ZQ_CNN_BBoxUtils::_refine_and_square_bbox(thirdBbox, width, height, false);
 				ZQ_CNN_BBoxUtils::_nms(thirdBbox, thirdScore, nms_thresh[2], "Min");
 
 				double t5 = omp_get_wtime();
@@ -1149,8 +1149,7 @@ namespace ZQ
 					thirdScore.push_back(order);
 					thirdBbox.push_back(early_accept_thirdBbox[i]);
 				}
-
-				ZQ_CNN_BBoxUtils::_refine_and_square_bbox(thirdBbox, width, height);
+				ZQ_CNN_BBoxUtils::_refine_and_square_bbox(thirdBbox, width, height,false);
 				ZQ_CNN_BBoxUtils::_nms(thirdBbox, thirdScore, nms_thresh[2], "Min");
 				double t5 = omp_get_wtime();
 				if (show_debug_info)
@@ -1185,17 +1184,24 @@ namespace ZQ
 					}
 					else
 					{
-
-						src_off_x.push_back(off_x);
-						src_off_y.push_back(off_y);
-						src_rect_w.push_back(rect_w);
-						src_rect_h.push_back(rect_h);
 						l_count++;
 						fourthBbox.push_back(*it);
 					}
 				}
 			}
-
+			std::vector<ZQ_CNN_BBox> copy_fourthBbox = fourthBbox;
+			ZQ_CNN_BBoxUtils::_square_bbox(copy_fourthBbox, width, height);
+			for (it = copy_fourthBbox.begin(); it != copy_fourthBbox.end(); ++it)
+			{
+				int off_x = it->col1;
+				int off_y = it->row1;
+				int rect_w = it->col2 - off_x;
+				int rect_h = it->row2 - off_y;
+				src_off_x.push_back(off_x);
+				src_off_y.push_back(off_y);
+				src_rect_w.push_back(rect_w);
+				src_rect_h.push_back(rect_h);
+			}
 			std::vector<ZQ_CNN_Tensor4D_NHW_C_Align128bit> task_lnet_images(thread_num);
 			std::vector<std::vector<int>> task_src_off_x(thread_num);
 			std::vector<std::vector<int>> task_src_off_y(thread_num);
@@ -1222,7 +1228,7 @@ namespace ZQ
 						task_src_off_y[i][j] = src_off_y[st_id + j];
 						task_src_rect_w[i][j] = src_rect_w[st_id + j];
 						task_src_rect_h[i][j] = src_rect_h[st_id + j];
-						task_fourthBbox[i][j] = fourthBbox[st_id + j];
+						task_fourthBbox[i][j] = copy_fourthBbox[st_id + j];
 					}
 				}
 			}
@@ -1245,8 +1251,8 @@ namespace ZQ
 				{
 					for (int num = 0; num < 5; num++)
 					{
-						fourthBbox[i].ppoint[num] = fourthBbox[i].col1 + (fourthBbox[i].col2 - fourthBbox[i].col1)*keyPoint_ptr[i*keyPoint_sliceStep + num];
-						fourthBbox[i].ppoint[num + 5] = fourthBbox[i].row1 + (fourthBbox[i].row2 - fourthBbox[i].row1)*keyPoint_ptr[i*keyPoint_sliceStep + num + 5];
+						fourthBbox[i].ppoint[num] = copy_fourthBbox[i].col1 + (copy_fourthBbox[i].col2 - copy_fourthBbox[i].col1)*keyPoint_ptr[i*keyPoint_sliceStep + num];
+						fourthBbox[i].ppoint[num + 5] = copy_fourthBbox[i].row1 + (copy_fourthBbox[i].row2 - copy_fourthBbox[i].row1)*keyPoint_ptr[i*keyPoint_sliceStep + num + 5];
 					}
 				}
 
@@ -1302,7 +1308,7 @@ namespace ZQ
 				{
 					for (int j = 0; j < task_fourthBbox[i].size(); j++)
 					{
-						fourthBbox[id] = task_fourthBbox[i][j];
+						memcpy(fourthBbox[id].ppoint, task_fourthBbox[i][j].ppoint, sizeof(float) * 10);
 						id++;
 					}
 				}
