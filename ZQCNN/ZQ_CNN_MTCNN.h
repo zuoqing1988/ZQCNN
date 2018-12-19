@@ -152,7 +152,7 @@ namespace ZQ
 			min_size = __max(pnet_size, min_face_size);
 			thresh[0] = __max(0.1, pthresh); thresh[1] = __max(0.1, rthresh); thresh[2] = __max(0.1, othresh);
 			nms_thresh[0] = __max(0.1, nms_pthresh); nms_thresh[1] = __max(0.1, nms_rthresh); nms_thresh[2] = __max(0.1, nms_othresh);
-			scale_factor = __max(0.5, __min(0.9, scale_factor));
+			scale_factor = __max(0.5, __min(0.97, scale_factor));
 			this->pnet_overlap_thresh_count = __max(0, pnet_overlap_thresh_count);
 			this->pnet_size = pnet_size;
 			this->pnet_stride = pnet_stride;
@@ -231,7 +231,7 @@ namespace ZQ
 			//results = secondBbox;
 			//return true;
 
-			if (!has_lnet)
+			if (!has_lnet || !do_landmark)
 			{
 				double t3 = omp_get_wtime();
 				if (!_Onet_stage(secondBbox, results))
