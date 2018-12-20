@@ -15,6 +15,12 @@ MKL下载地址:[此处下载](https://pan.baidu.com/s/1d75IIf6fgTZ5oeumd0vtTw)
 
 # 更新日志
 
+**2018-12-20日更新：添加MTCNN106点landmark模型**
+
+在SampleMTCNN里试用（放出来的只是一个不太好的，更好的等着卖钱）
+
+SampleLnet106有计时，单线程约0.6~0.7ms (E5-1650V4, 3.6GHz)
+
 **2018-12-03日更新：将模型编译到代码里面**
 
 ZQCNN.sln里 model2code 可以将模型编译成代码
