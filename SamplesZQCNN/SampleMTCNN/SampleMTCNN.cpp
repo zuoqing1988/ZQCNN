@@ -35,7 +35,33 @@ static void Draw(cv::Mat &image, const std::vector<ZQ_CNN_BBox>& thirdBbox)
 			}
 
 			for (int num = 0; num < 5; num++)
-				circle(image, cv::Point(*(it->ppoint + num) + 0.5f, *(it->ppoint + num + 5) + 0.5f), 3, cv::Scalar(0, 255, 255), -1);
+				circle(image, cv::Point(*(it->ppoint + num) + 0.5f, *(it->ppoint + num + 5) + 0.5f), 1, cv::Scalar(0, 255, 255), -1);
+		}
+		else
+		{
+			printf("not exist!\n");
+		}
+	}
+}
+
+static void Draw(cv::Mat &image, const std::vector<ZQ_CNN_BBox106>& thirdBbox)
+{
+	std::vector<ZQ_CNN_BBox106>::const_iterator it = thirdBbox.begin();
+	for (; it != thirdBbox.end(); it++)
+	{
+		if ((*it).exist)
+		{
+			if (it->score > 0.7)
+			{
+				cv::rectangle(image, cv::Point((*it).col1, (*it).row1), cv::Point((*it).col2, (*it).row2), cv::Scalar(0, 0, 255), 2, 8, 0);
+			}
+			else
+			{
+				cv::rectangle(image, cv::Point((*it).col1, (*it).row1), cv::Point((*it).col2, (*it).row2), cv::Scalar(0, 255, 0), 2, 8, 0);
+			}
+
+			for (int num = 0; num < 106; num++)
+				circle(image, cv::Point(*(it->ppoint + num * 2) + 0.5f, *(it->ppoint + num * 2 + 1) + 0.5f), 1, cv::Scalar(0, 255, 255), -1);
 		}
 		else
 		{
@@ -52,25 +78,28 @@ int main()
 #elif ZQ_CNN_USE_MKL_GEMM
 	mkl_set_num_threads(num_threads);
 #endif
-	Mat image0 = cv::imread("data\\test2.jpg", 1);
+	Mat image0 = cv::imread("data\\4.jpg", 1);
 	if (image0.empty())
 	{
 		cout << "empty image\n";
 		return EXIT_FAILURE;
 	}
-	
+	//cv::resize(image0, image0, cv::Size(), 2, 2);
+	if (image0.channels() == 1)
+		cv::cvtColor(image0, image0, CV_GRAY2BGR);
+	//cv::convertScaleAbs(image0, image0, 2.0);
 	/* TIPS: when finding tiny faces for very big image, gaussian blur is very useful for Pnet*/
 	bool run_blur = true;
 	int kernel_size = 3, sigma = 2;
 	if (image0.cols * image0.rows >= 2500 * 1600)
 	{
-		run_blur = true;
+		run_blur = false;
 		kernel_size = 5;
 		sigma = 3;
 	}
 	else if (image0.cols * image0.rows >= 1920 * 1080)
 	{
-		run_blur = true;
+		run_blur = false;
 		kernel_size = 3;
 		sigma = 2;
 	}
@@ -92,25 +121,48 @@ int main()
 	}
 
 	std::vector<ZQ_CNN_BBox> thirdBbox;
+	std::vector<ZQ_CNN_BBox106> thirdBbox106;
 	ZQ_CNN_MTCNN mtcnn;
 	std::string result_name;
-
+	mtcnn.TurnOnShowDebugInfo();
 	const int use_pnet20 = true;
-	int thread_num = 8;
+	bool landmark106 = true;
+	int thread_num = 1;
 	bool special_handle_very_big_face = false;
 	result_name = "resultdet.jpg";
 	if (use_pnet20)
 	{
-		if (!mtcnn.Init("model\\det1-dw20.zqparams", "model\\det1-dw20-13.nchwbin",
-			"model\\det2-dw24.zqparams", "model\\det2-dw24-20.nchwbin",
-			//"model\\det2.zqparams", "model\\det2_bgr.nchwbin",
-			"model\\det3.zqparams", "model\\det3_bgr.nchwbin", thread_num))
+		if (landmark106)
 		{
-			cout << "failed to init!\n";
-			return EXIT_FAILURE;
+			if (!mtcnn.Init("model\\det1-dw20.zqparams", "model\\det1-dw20-13.nchwbin",
+				"model\\det2-dw24.zqparams", "model\\det2-dw24-20.nchwbin",
+				//"model\\det2.zqparams", "model\\det2_bgr.nchwbin",
+				"model\\det3.zqparams", "model\\det3_bgr.nchwbin", 
+				thread_num, true,
+				"model\\det5-dw48.zqparams", "model\\det5-dw48-1000.nchwbin"
+				//"model\\det3.zqparams", "model\\det3_bgr.nchwbin"
+			))
+			{
+				cout << "failed to init!\n";
+				return EXIT_FAILURE;
+			}
 		}
-
-		mtcnn.SetPara(image0.cols, image0.rows, 20, 0.6, 0.8, 0.9, 0.4, 0.5, 0.5, 0.709, 3, 20, 4, special_handle_very_big_face);
+		else
+		{
+			if (!mtcnn.Init("model\\det1-dw20t.zqparams", "model\\det1-dw20-13.nchwbin",
+				"model\\det2-dw24.zqparams", "model\\det2-dw24-20.nchwbin",
+				//"model\\det2.zqparams", "model\\det2_bgr.nchwbin",
+				"model\\det3.zqparams", "model\\det3_bgr.nchwbin", 
+				thread_num, true,
+				//"model\\det4-dw48-small.zqparams", "model\\det4-dw48-small.nchwbin"
+				"model\\det3.zqparams", "model\\det3_bgr.nchwbin"
+			))
+			{
+				cout << "failed to init!\n";
+				return EXIT_FAILURE;
+			}
+		}
+		mtcnn.SetPara(image0.cols, image0.rows, 20, 0.5, 0.6, 0.8, 0.4, 0.5, 0.5, 0.709, 3, 20, 4, special_handle_very_big_face);
 	}
 	else
 	{
@@ -122,9 +174,9 @@ int main()
 			return EXIT_FAILURE;
 		}
 
-		mtcnn.SetPara(image0.cols, image0.rows, 20, 0.6, 0.7, 0.9, 0.4, 0.5, 0.5, 0.709, 4, 12, 2, special_handle_very_big_face);
+		mtcnn.SetPara(image0.cols, image0.rows, 20, 0.6, 0.7, 0.7, 0.4, 0.5, 0.5, 0.709, 4, 12, 2, special_handle_very_big_face);
 	}
-
+	mtcnn.TurnOffShowDebugInfo();
 	//mtcnn.TurnOnShowDebugInfo();
 	int iters = 1;
 	double t1 = omp_get_wtime();
@@ -134,18 +186,33 @@ int main()
 			mtcnn.TurnOnShowDebugInfo();
 		else
 			mtcnn.TurnOffShowDebugInfo();
-		if (!mtcnn.Find(image0.data, image0.cols, image0.rows, image0.step[0], thirdBbox))
+		if (landmark106 && use_pnet20)
 		{
-			cout << "failed to find face!\n";
-			//return EXIT_FAILURE;
-			continue;
+			if (!mtcnn.Find106(image0.data, image0.cols, image0.rows, image0.step[0], thirdBbox106))
+			{
+				cout << "failed to find face!\n";
+				//return EXIT_FAILURE;
+				continue;
+			}
+		}
+		else
+		{
+			if (!mtcnn.Find(image0.data, image0.cols, image0.rows, image0.step[0], thirdBbox))
+			{
+				cout << "failed to find face!\n";
+				//return EXIT_FAILURE;
+				continue;
+			}
 		}
 	}
 	double t2 = omp_get_wtime();
 	printf("total %.3f s / %d = %.3f ms\n", t2 - t1, iters, 1000 * (t2 - t1) / iters);
 
 	namedWindow("result");
-	Draw(image0, thirdBbox);
+	if (landmark106 && use_pnet20)
+		Draw(image0, thirdBbox106);
+	else
+		Draw(image0, thirdBbox);
 	imwrite(result_name, image0);
 	imshow("result", image0);
 
