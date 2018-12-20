@@ -1444,6 +1444,7 @@ namespace ZQ
 				lnet[0].Forward(task_lnet_images[0]);
 				double t32 = omp_get_wtime();
 				const ZQ_CNN_Tensor4D* keyPoint = lnet[0].GetBlobByName("conv6-3");
+				int keypoint_num = keyPoint->GetC() / 2;
 				const float* keyPoint_ptr = keyPoint->GetFirstPixelPtr();
 				int keyPoint_sliceStep = keyPoint->GetSliceStep();
 				resultBbox.resize(l_count);
@@ -1456,7 +1457,7 @@ namespace ZQ
 					resultBbox[i].score = fourthBbox[i].score;
 					resultBbox[i].exist = fourthBbox[i].exist;
 					resultBbox[i].area = fourthBbox[i].area;
-					for (int num = 0; num < 106; num++)
+					for (int num = 0; num < keypoint_num; num++)
 					{
 						resultBbox[i].ppoint[num*2] = copy_fourthBbox[i].col1 + (copy_fourthBbox[i].col2 - copy_fourthBbox[i].col1)*keyPoint_ptr[i*keyPoint_sliceStep + num*2];
 						resultBbox[i].ppoint[num*2+1] = copy_fourthBbox[i].row1 + (copy_fourthBbox[i].row2 - copy_fourthBbox[i].row1)*keyPoint_ptr[i*keyPoint_sliceStep + num*2 + 1];
@@ -1489,12 +1490,13 @@ namespace ZQ
 					double t32 = omp_get_wtime();
 					const ZQ_CNN_Tensor4D* keyPoint = lnet[pp].GetBlobByName("conv6-3");
 					const float* keyPoint_ptr = keyPoint->GetFirstPixelPtr();
+					int keypoint_num = keyPoint->GetC() / 2;
 					int keyPoint_sliceStep = keyPoint->GetSliceStep();
 					int task_count = 0;
 					ZQ_CNN_OrderScore order;
 					for (int i = 0; i < task_fourthBbox[pp].size(); i++)
 					{
-						for (int num = 0; num < 106; num++)
+						for (int num = 0; num < keypoint_num; num++)
 						{
 							task_fourthBbox[pp][i].ppoint[num*2] = task_fourthBbox[pp][i].col1 +
 								(task_fourthBbox[pp][i].col2 - task_fourthBbox[pp][i].col1)*keyPoint_ptr[i*keyPoint_sliceStep + num*2];
