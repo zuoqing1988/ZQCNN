@@ -1406,7 +1406,7 @@ namespace ZQ
 			std::vector<std::vector<int>> task_src_off_y(thread_num);
 			std::vector<std::vector<int>> task_src_rect_w(thread_num);
 			std::vector<std::vector<int>> task_src_rect_h(thread_num);
-			std::vector<std::vector<ZQ_CNN_BBox>> task_fourthBbox(thread_num);
+			std::vector<std::vector<ZQ_CNN_BBox106>> task_fourthBbox(thread_num);
 			int per_num = ceil((float)l_count / thread_num);
 
 			for (int i = 0; i < thread_num; i++)
@@ -1427,7 +1427,13 @@ namespace ZQ
 						task_src_off_y[i][j] = src_off_y[st_id + j];
 						task_src_rect_w[i][j] = src_rect_w[st_id + j];
 						task_src_rect_h[i][j] = src_rect_h[st_id + j];
-						task_fourthBbox[i][j] = copy_fourthBbox[st_id + j];
+						task_fourthBbox[i][j].col1 = copy_fourthBbox[st_id + j].col1;
+						task_fourthBbox[i][j].col2 = copy_fourthBbox[st_id + j].col2;
+						task_fourthBbox[i][j].row1 = copy_fourthBbox[st_id + j].row1;
+						task_fourthBbox[i][j].row2 = copy_fourthBbox[st_id + j].row2;
+						task_fourthBbox[i][j].area = copy_fourthBbox[st_id + j].area;
+						task_fourthBbox[i][j].score = copy_fourthBbox[st_id + j].score;
+						task_fourthBbox[i][j].exist = copy_fourthBbox[st_id + j].exist;
 					}
 				}
 			}
@@ -1511,7 +1517,7 @@ namespace ZQ
 				{
 					count += task_fourthBbox[i].size();
 				}
-				fourthBbox.resize(count);
+				resultBbox.resize(count);
 				int id = 0;
 				for (int i = 0; i < thread_num; i++)
 				{
