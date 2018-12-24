@@ -1438,6 +1438,18 @@ namespace ZQ
 				}
 			}
 
+			resultBbox.resize(l_count);
+			for (int i = 0; i < l_count; i++)
+			{
+				resultBbox[i].col1 = fourthBbox[i].col1;
+				resultBbox[i].col2 = fourthBbox[i].col2;
+				resultBbox[i].row1 = fourthBbox[i].row1;
+				resultBbox[i].row2 = fourthBbox[i].row2;
+				resultBbox[i].score = fourthBbox[i].score;
+				resultBbox[i].exist = fourthBbox[i].exist;
+				resultBbox[i].area = fourthBbox[i].area;
+			}
+
 			if (thread_num == 1)
 			{
 				if (!input.ResizeBilinearRect(task_lnet_images[0], 48, 48, 0, 0,
@@ -1456,13 +1468,6 @@ namespace ZQ
 				resultBbox.resize(l_count);
 				for (int i = 0; i < l_count; i++)
 				{
-					resultBbox[i].col1 = fourthBbox[i].col1;
-					resultBbox[i].col2 = fourthBbox[i].col2;
-					resultBbox[i].row1 = fourthBbox[i].row1;
-					resultBbox[i].row2 = fourthBbox[i].row2;
-					resultBbox[i].score = fourthBbox[i].score;
-					resultBbox[i].exist = fourthBbox[i].exist;
-					resultBbox[i].area = fourthBbox[i].area;
 					for (int num = 0; num < keypoint_num; num++)
 					{
 						resultBbox[i].ppoint[num*2] = copy_fourthBbox[i].col1 + (copy_fourthBbox[i].col2 - copy_fourthBbox[i].col1)*keyPoint_ptr[i*keyPoint_sliceStep + num*2];
@@ -1523,13 +1528,6 @@ namespace ZQ
 				{
 					for (int j = 0; j < task_fourthBbox[i].size(); j++)
 					{
-						resultBbox[id].col1 = task_fourthBbox[i][j].col1;
-						resultBbox[id].col2 = task_fourthBbox[i][j].col2;
-						resultBbox[id].row1 = task_fourthBbox[i][j].row1;
-						resultBbox[id].row2 = task_fourthBbox[i][j].row2;
-						resultBbox[id].score = task_fourthBbox[i][j].score;
-						resultBbox[id].exist = task_fourthBbox[i][j].exist;
-						resultBbox[id].area = task_fourthBbox[i][j].area;
 						memcpy(resultBbox[id].ppoint, task_fourthBbox[i][j].ppoint, sizeof(float) * 212);
 						id++;
 					}
