@@ -15,6 +15,14 @@ MKL下载地址:[此处下载](https://pan.baidu.com/s/1d75IIf6fgTZ5oeumd0vtTw)
 
 # 更新日志
 
+**2018-12-25日更新:不开源的106点landmark**
+
+生活比较拮据，挣点外快。
+
+	landmark106-normal-1000.jpg是model\det5-dw48-1000.nchwbin生成的landmark
+	landmark106-normal.jpg，与landmark106-big.jpg是我训练的两个没开源的模型
+	其中normal模型2.1M，计算量11.4M，PC单线程耗时0.6-0.7ms，big模型7.56M，计算量36.4M，PC单线程耗时1.5-1.6ms
+
 **2018-12-20日更新：添加MTCNN106点landmark模型**
 
 在SampleMTCNN里试用（放出来的只是一个不太好的，更好的等着卖钱）
