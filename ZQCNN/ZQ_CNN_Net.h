@@ -1288,6 +1288,8 @@ namespace ZQ
 						for (int c = 0; c < kC; c++)
 						{
 							pix_ptr[c] *= b_v;
+							if (fabs(pix_ptr[c]) < this->ignore_small_value)
+								pix_ptr[c] = 0;
 						}
 					}
 				}
@@ -1337,6 +1339,8 @@ namespace ZQ
 					{
 						float* pix_ptr = row_ptr + w*filters->GetPixelStep();
 						pix_ptr[0] *= b_v;
+						if (fabs(pix_ptr[0]) < this->ignore_small_value)
+							pix_ptr[0] = 0;
 					}
 				}
 			}
