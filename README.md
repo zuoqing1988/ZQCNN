@@ -17,6 +17,12 @@ MKL下载地址:[此处下载](https://pan.baidu.com/s/1d75IIf6fgTZ5oeumd0vtTw)
 
 # 更新日志
 
+**2019-01-04日更新：庆祝达到400星，发放快速人脸模型**
+
+[mxnet格式](https://pan.baidu.com/s/1pOvAaXncbarNfD0G-4BwlQ)
+
+[zqcnn格式](https://pan.baidu.com/s/18FLOduY4SoHjXHBCXWQ5LQ)
+
 **2018-12-25日更新:不开源的106点landmark**
 
 生活比较拮据，挣点外快。
