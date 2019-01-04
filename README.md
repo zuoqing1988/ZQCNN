@@ -12,6 +12,8 @@ MKL下载地址:[此处下载](https://pan.baidu.com/s/1d75IIf6fgTZ5oeumd0vtTw)
 
 训练SSD: https://github.com/zuoqing1988/train-ssd
 
+训练MTCNN用于人头检测：https://github.com/zuoqing1988/train-mtcnn-head
+
 
 # 更新日志
 
