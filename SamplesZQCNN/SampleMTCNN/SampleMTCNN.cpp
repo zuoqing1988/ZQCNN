@@ -134,10 +134,10 @@ int main()
 	{
 		if (landmark106)
 		{
-			if (!mtcnn.Init("model\\det1-dw20.zqparams", "model\\det1-dw20-13.nchwbin",
-				"model\\det2-dw24.zqparams", "model\\det2-dw24-20.nchwbin",
+			if (!mtcnn.Init("model\\det1-dw20-fast.zqparams", "model\\det1-dw20-fast.nchwbin",
+				"model\\det2-dw24-fast.zqparams", "model\\det2-dw24-fast.nchwbin",
 				//"model\\det2.zqparams", "model\\det2_bgr.nchwbin",
-				"model\\det3.zqparams", "model\\det3_bgr.nchwbin", 
+				"model\\det3-dw48-fast.zqparams", "model\\det3-dw48-fast.nchwbin", 
 				thread_num, true,
 				"model\\det5-dw48.zqparams", "model\\det5-dw48-1000.nchwbin"
 				//"model\\det3.zqparams", "model\\det3_bgr.nchwbin"
@@ -149,10 +149,10 @@ int main()
 		}
 		else
 		{
-			if (!mtcnn.Init("model\\det1-dw20.zqparams", "model\\det1-dw20-13.nchwbin",
-				"model\\det2-dw24.zqparams", "model\\det2-dw24-20.nchwbin",
+			if (!mtcnn.Init("model\\det1-dw20-fast.zqparams", "model\\det1-dw20-fast.nchwbin",
+				"model\\det2-dw24-fast.zqparams", "model\\det2-dw24-fast.nchwbin",
 				//"model\\det2.zqparams", "model\\det2_bgr.nchwbin",
-				"model\\det3.zqparams", "model\\det3_bgr.nchwbin", 
+				"model\\det3-dw48-fast.zqparams", "model\\det3-dw48-fast.nchwbin", 
 				thread_num, true,
 				//"model\\det4-dw48-small.zqparams", "model\\det4-dw48-small.nchwbin"
 				"model\\det3.zqparams", "model\\det3_bgr.nchwbin"
@@ -162,7 +162,7 @@ int main()
 				return EXIT_FAILURE;
 			}
 		}
-		mtcnn.SetPara(image0.cols, image0.rows, 20, 0.6, 0.7, 0.9, 0.4, 0.5, 0.5, 0.709, 3, 20, 4, special_handle_very_big_face);
+		mtcnn.SetPara(image0.cols, image0.rows, 20, 0.5, 0.6, 0.8, 0.4, 0.5, 0.5, 0.709, 3, 20, 4, special_handle_very_big_face);
 	}
 	else
 	{

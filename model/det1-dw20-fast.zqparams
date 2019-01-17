@@ -1,0 +1,18 @@
+Input            		name=data C=3 H=240 W=320
+Convolution      		name=conv1  	bottom=data 		top=conv1 num_output=8 kernel_H=3 kernel_W=3 stride_H=2 stride_W=2 bias
+PReLU            		name=prelu1  	bottom=conv1 		top=conv1
+DepthwiseConvolution 	name=conv2_dw  	bottom=conv1 		top=conv2_dw num_output=8 kernel_H=3 kernel_W=3 bias
+PReLU            		name=prelu2_dw  bottom=conv2_dw 	top=conv2_dw
+Convolution      		name=conv2_sep  bottom=conv2_dw 	top=conv2_sep num_output=16 kernel_H=1 kernel_W=1 bias
+PReLU            		name=prelu2  	bottom=conv2_sep 	top=conv2_sep
+DepthwiseConvolution 	name=conv3_dw  	bottom=conv2_sep 	top=conv3_dw num_output=16 kernel_H=3 kernel_W=3 stride_H=2 stride_W=2 bias
+PReLU            		name=prelu3_dw  bottom=conv3_dw 	top=conv3_dw
+Convolution      		name=conv3_sep  bottom=conv3_dw 	top=conv3_sep num_output=24 kernel_H=1 kernel_W=1 bias
+PReLU            		name=prelu3  	bottom=conv3_sep 	top=conv3_sep
+DepthwiseConvolution 	name=conv4_dw  	bottom=conv3_sep 	top=conv4_dw num_output=24 kernel_H=3 kernel_W=3 bias
+PReLU            		name=prelu4_dw  bottom=conv4_dw 	top=conv4_dw
+Convolution      		name=conv4_1  	bottom=conv4_dw 	top=conv4-1 num_output=2 kernel_H=1 kernel_W=1 bias
+BatchNormScale   		name=bn4_1  	bottom=conv4-1 		top=conv4-1 bias
+Softmax          		name=cls_prob  	bottom=conv4-1 		top=prob1
+#Convolution      		name=conv4_2  	bottom=conv4_dw 	top=conv4-2 num_output=4 kernel_H=1 kernel_W=1 bias
+#BatchNormScale   		name=bn4_2  	bottom=conv4-2 		top=conv4-2 bias
