@@ -17,6 +17,14 @@ MKL下载地址:[此处下载](https://pan.baidu.com/s/1d75IIf6fgTZ5oeumd0vtTw)
 
 # 更新日志
 
+**2019-01-17日更新**
+
+更改了ZQ_CNN_MTCNN.h
+
+(1)init时设置thread_num小于1时可以强制Pnet_stage执行多线程，也就是会分块，对于大图找小脸来说可以防止内存爆掉
+
+(2)rnet/onet的尺寸可以不是24/48，但是只支持宽高相等
+
 **2019-01-15日更新：庆祝达到500星，发放106点landmark模型**
 
 [mxnet格式&zqcnn格式](https://pan.baidu.com/s/18VTMfChnAEyeU_9vE9GJaw)

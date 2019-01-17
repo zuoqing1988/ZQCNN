@@ -118,6 +118,10 @@ namespace ZQ
 			int thread_num = 1, bool has_lnet = false, 
 			const char* lnet_param = 0, __int64 lnet_param_len = 0, const char* lnet_model = 0, __int64 lnet_model_len = 0)
 		{
+			if (thread_num < 1)
+				force_run_pnet_multithread = true;
+			else
+				force_run_pnet_multithread = false;
 			thread_num = __max(1, thread_num);
 			pnet.resize(thread_num);
 			rnet.resize(thread_num);
