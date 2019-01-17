@@ -47,6 +47,7 @@ namespace ZQ
 		int pnet_stride;
 		int rnet_size;
 		int onet_size;
+		int lnet_size;
 		bool special_handle_very_big_face;
 		bool do_landmark;
 		float early_accept_thresh;
@@ -108,6 +109,11 @@ namespace ZQ
 			rnet_size = H;
 			onet[0].GetInputDim(C, H, W);
 			onet_size = H;
+			if (has_lnet)
+			{
+				lnet[0].GetInputDim(C, H, W);
+				lnet_size = H;
+			}
 			return ret;
 		}
 
@@ -792,15 +798,23 @@ namespace ZQ
 				}
 			}
 
-			std::vector<ZQ_CNN_Tensor4D_NHW_C_Align128bit> task_rnet_images(thread_num);
-			std::vector<std::vector<int>> task_src_off_x(thread_num);
-			std::vector<std::vector<int>> task_src_off_y(thread_num);
-			std::vector<std::vector<int>> task_src_rect_w(thread_num);
-			std::vector<std::vector<int>> task_src_rect_h(thread_num);
-			std::vector<std::vector<ZQ_CNN_BBox>> task_secondBbox(thread_num);
+			int batch_size = 64;
 			int per_num = ceil((float)r_count / thread_num);
+			int need_thread_num = thread_num;
+			if (per_num > batch_size)
+			{
+				need_thread_num = ceil((float)r_count / batch_size);
+				per_num = batch_size;
+			}
+			std::vector<ZQ_CNN_Tensor4D_NHW_C_Align128bit> task_rnet_images(need_thread_num);
+			std::vector<std::vector<int>> task_src_off_x(need_thread_num);
+			std::vector<std::vector<int>> task_src_off_y(need_thread_num);
+			std::vector<std::vector<int>> task_src_rect_w(need_thread_num);
+			std::vector<std::vector<int>> task_src_rect_h(need_thread_num);
+			std::vector<std::vector<ZQ_CNN_BBox>> task_secondBbox(need_thread_num);
+			
 
-			for (int i = 0; i < thread_num; i++)
+			for (int i = 0; i < need_thread_num; i++)
 			{
 				int st_id = per_num*i;
 				int end_id = __min(r_count, per_num*(i + 1));
@@ -825,68 +839,7 @@ namespace ZQ
 
 			if (thread_num == 1)
 			{
-				if (!input.ResizeBilinearRect(task_rnet_images[0], rnet_size, rnet_size, 0, 0,
-					task_src_off_x[0], task_src_off_y[0], task_src_rect_w[0], task_src_rect_h[0]))
-				{
-					return false;
-				}
-				ZQ_CNN_BBox bbox;
-				ZQ_CNN_OrderScore order;
-				int count = 0;
-				double t21 = omp_get_wtime();
-				rnet[0].Forward(task_rnet_images[0]);
-				double t22 = omp_get_wtime();
-				const ZQ_CNN_Tensor4D* score = rnet[0].GetBlobByName("prob1");
-				const ZQ_CNN_Tensor4D* location = rnet[0].GetBlobByName("conv5-2");
-				const float* score_ptr = score->GetFirstPixelPtr();
-				const float* location_ptr = location->GetFirstPixelPtr();
-				int score_sliceStep = score->GetSliceStep();
-				int location_sliceStep = location->GetSliceStep();
-				for (int i = 0; i < r_count; i++)
-				{
-					if (score_ptr[i*score_sliceStep + 1] > thresh[1])
-					{
-						for (int j = 0; j < 4; j++)
-							secondBbox[i].regreCoord[j] = location_ptr[i*location_sliceStep + j];
-						secondBbox[i].area = src_rect_w[i] * src_rect_h[i];
-						secondBbox[i].score = score_ptr[i*score_sliceStep + 1];
-						order.score = secondBbox[i].score;
-						order.oriOrder = count++;
-						secondScore.push_back(order);
-					}
-					else
-					{
-						secondBbox[i].exist = false;
-					}
-				}
-
-				if (count < 1)
-					return false;
-
-
-				for (int i = secondBbox.size() - 1; i >= 0; i--)
-				{
-					if (!secondBbox[i].exist)
-						secondBbox.erase(secondBbox.begin() + i);
-				}
-				//ZQ_CNN_BBoxUtils::_nms(secondBbox, secondScore, nms_thresh[1], "Union");
-				ZQ_CNN_BBoxUtils::_nms(secondBbox, secondScore, nms_thresh[1], "Min");
-				ZQ_CNN_BBoxUtils::_refine_and_square_bbox(secondBbox, width, height);
-				count = secondBbox.size();
-				
-
-				double t4 = omp_get_wtime();
-				if (show_debug_info)
-					printf("run Rnet [%d] times (%.3f ms), candidate after nms: %d \n", r_count, 1000 * (t22 - t21), count);
-				if (show_debug_info)
-					printf("stage 2: cost %.3f ms\n", 1000 * (t4 - t3));
-
-				return true;
-			}
-			else
-			{
-#pragma omp parallel for num_threads(thread_num)
-				for (int pp = 0; pp < thread_num; pp++)
+				for (int pp = 0; pp < need_thread_num; pp++)
 				{
 					if (task_src_off_x.size() == 0)
 						continue;
@@ -895,9 +848,9 @@ namespace ZQ
 					{
 						continue;
 					}
-					rnet[pp].Forward(task_rnet_images[pp]);
-					const ZQ_CNN_Tensor4D* score = rnet[pp].GetBlobByName("prob1");
-					const ZQ_CNN_Tensor4D* location = rnet[pp].GetBlobByName("conv5-2");
+					rnet[0].Forward(task_rnet_images[pp]);
+					const ZQ_CNN_Tensor4D* score = rnet[0].GetBlobByName("prob1");
+					const ZQ_CNN_Tensor4D* location = rnet[0].GetBlobByName("conv5-2");
 					const float* score_ptr = score->GetFirstPixelPtr();
 					const float* location_ptr = location->GetFirstPixelPtr();
 					int score_sliceStep = score->GetSliceStep();
@@ -929,39 +882,87 @@ namespace ZQ
 							task_secondBbox[pp].erase(task_secondBbox[pp].begin() + i);
 					}
 				}
-				
-				int count = 0;
-				for (int i = 0; i < thread_num; i++)
+			}
+			else
+			{
+#pragma omp parallel for num_threads(thread_num) schedule(dynamic,1)
+				for (int pp = 0; pp < need_thread_num; pp++)
 				{
-					count += task_secondBbox[i].size();
-				}
-				secondBbox.resize(count);
-				secondScore.resize(count);
-				int id = 0;
-				for (int i = 0; i < thread_num; i++)
-				{
-					for (int j = 0; j < task_secondBbox[i].size(); j++)
+					int thread_id = omp_get_thread_num();
+					if (task_src_off_x.size() == 0)
+						continue;
+					if (!input.ResizeBilinearRect(task_rnet_images[pp], rnet_size, rnet_size, 0, 0,
+						task_src_off_x[pp], task_src_off_y[pp], task_src_rect_w[pp], task_src_rect_h[pp]))
 					{
-						secondBbox[id] = task_secondBbox[i][j];
-						secondScore[id].score = secondBbox[id].score;
-						secondScore[id].oriOrder = id;
-						id++;
+						continue;
+					}
+					rnet[thread_id].Forward(task_rnet_images[pp]);
+					const ZQ_CNN_Tensor4D* score = rnet[thread_id].GetBlobByName("prob1");
+					const ZQ_CNN_Tensor4D* location = rnet[thread_id].GetBlobByName("conv5-2");
+					const float* score_ptr = score->GetFirstPixelPtr();
+					const float* location_ptr = location->GetFirstPixelPtr();
+					int score_sliceStep = score->GetSliceStep();
+					int location_sliceStep = location->GetSliceStep();
+					int task_count = 0;
+					for (int i = 0; i < task_secondBbox[pp].size(); i++)
+					{
+						if (score_ptr[i*score_sliceStep + 1] > thresh[1])
+						{
+							for (int j = 0; j < 4; j++)
+								task_secondBbox[pp][i].regreCoord[j] = location_ptr[i*location_sliceStep + j];
+							task_secondBbox[pp][i].area = task_src_rect_w[pp][i] * task_src_rect_h[pp][i];
+							task_secondBbox[pp][i].score = score_ptr[i*score_sliceStep + 1];
+							task_count++;
+						}
+						else
+						{
+							task_secondBbox[pp][i].exist = false;
+						}
+					}
+					if (task_count < 1)
+					{
+						task_secondBbox[pp].clear();
+						continue;
+					}
+					for (int i = task_secondBbox[pp].size() - 1; i >= 0; i--)
+					{
+						if (!task_secondBbox[pp][i].exist)
+							task_secondBbox[pp].erase(task_secondBbox[pp].begin() + i);
 					}
 				}
-		
-				//ZQ_CNN_BBoxUtils::_nms(secondBbox, secondScore, nms_thresh[1], "Union");
-				ZQ_CNN_BBoxUtils::_nms(secondBbox, secondScore, nms_thresh[1], "Min");
-				ZQ_CNN_BBoxUtils::_refine_and_square_bbox(secondBbox, width, height,true);
-				count = secondBbox.size();
-
-				double t4 = omp_get_wtime();
-				if (show_debug_info)
-					printf("run Rnet [%d] times, candidate after nms: %d \n", r_count, count);
-				if (show_debug_info)
-					printf("stage 2: cost %.3f ms\n", 1000 * (t4 - t3));
-
-				return true;
 			}
+
+			int count = 0;
+			for (int i = 0; i < need_thread_num; i++)
+			{
+				count += task_secondBbox[i].size();
+			}
+			secondBbox.resize(count);
+			secondScore.resize(count);
+			int id = 0;
+			for (int i = 0; i < need_thread_num; i++)
+			{
+				for (int j = 0; j < task_secondBbox[i].size(); j++)
+				{
+					secondBbox[id] = task_secondBbox[i][j];
+					secondScore[id].score = secondBbox[id].score;
+					secondScore[id].oriOrder = id;
+					id++;
+				}
+			}
+
+			//ZQ_CNN_BBoxUtils::_nms(secondBbox, secondScore, nms_thresh[1], "Union");
+			ZQ_CNN_BBoxUtils::_nms(secondBbox, secondScore, nms_thresh[1], "Min");
+			ZQ_CNN_BBoxUtils::_refine_and_square_bbox(secondBbox, width, height, true);
+			count = secondBbox.size();
+
+			double t4 = omp_get_wtime();
+			if (show_debug_info)
+				printf("run Rnet [%d] times, candidate after nms: %d \n", r_count, count);
+			if (show_debug_info)
+				printf("stage 2: cost %.3f ms\n", 1000 * (t4 - t3));
+
+			return true;
 		}
 
 		bool _Onet_stage(std::vector<ZQ_CNN_BBox>& secondBbox, std::vector<ZQ_CNN_BBox>& thirdBbox)
@@ -1005,15 +1006,23 @@ namespace ZQ
 				}
 			}
 
-			std::vector<ZQ_CNN_Tensor4D_NHW_C_Align128bit> task_onet_images(thread_num);
-			std::vector<std::vector<int>> task_src_off_x(thread_num);
-			std::vector<std::vector<int>> task_src_off_y(thread_num);
-			std::vector<std::vector<int>> task_src_rect_w(thread_num);
-			std::vector<std::vector<int>> task_src_rect_h(thread_num);
-			std::vector<std::vector<ZQ_CNN_BBox>> task_thirdBbox(thread_num);
+			int batch_size = 64;
 			int per_num = ceil((float)o_count / thread_num);
+			int need_thread_num = thread_num;
+			if (per_num > batch_size)
+			{
+				need_thread_num = ceil((float)o_count / batch_size);
+				per_num = batch_size;
+			}
 
-			for (int i = 0; i < thread_num; i++)
+			std::vector<ZQ_CNN_Tensor4D_NHW_C_Align128bit> task_onet_images(need_thread_num);
+			std::vector<std::vector<int>> task_src_off_x(need_thread_num);
+			std::vector<std::vector<int>> task_src_off_y(need_thread_num);
+			std::vector<std::vector<int>> task_src_rect_w(need_thread_num);
+			std::vector<std::vector<int>> task_src_rect_h(need_thread_num);
+			std::vector<std::vector<ZQ_CNN_BBox>> task_thirdBbox(need_thread_num);
+
+			for (int i = 0; i < need_thread_num; i++)
 			{
 				int st_id = per_num*i;
 				int end_id = __min(o_count, per_num*(i + 1));
@@ -1038,87 +1047,7 @@ namespace ZQ
 
 			if (thread_num == 1)
 			{
-				if (!input.ResizeBilinearRect(task_onet_images[0], onet_size, onet_size, 0, 0,
-					task_src_off_x[0], task_src_off_y[0], task_src_rect_w[0], task_src_rect_h[0]))
-				{
-					return false;
-				}
-				int count = 0;
-				ZQ_CNN_OrderScore order;
-				double t31 = omp_get_wtime();
-				onet[0].Forward(task_onet_images[0]);
-				double t32 = omp_get_wtime();
-				const ZQ_CNN_Tensor4D* score = onet[0].GetBlobByName("prob1");
-				const ZQ_CNN_Tensor4D* location = onet[0].GetBlobByName("conv6-2");
-				const ZQ_CNN_Tensor4D* keyPoint = onet[0].GetBlobByName("conv6-3");
-				const float* score_ptr = score->GetFirstPixelPtr();
-				const float* location_ptr = location->GetFirstPixelPtr();
-				const float* keyPoint_ptr = 0;
-				if(keyPoint != 0)
-					keyPoint_ptr = keyPoint->GetFirstPixelPtr();
-				int score_sliceStep = score->GetSliceStep();
-				int location_sliceStep = location->GetSliceStep();
-				int keyPoint_sliceStep = 0;
-				if(keyPoint != 0)
-					keyPoint_sliceStep = keyPoint->GetSliceStep();
-				for (int i = 0; i < o_count; i++)
-				{
-					if (score_ptr[i*score_sliceStep + 1] > thresh[2])
-					{
-						for (int j = 0; j < 4; j++)
-							thirdBbox[i].regreCoord[j] = location_ptr[i*location_sliceStep + j];
-						if (keyPoint != 0)
-						{
-							for (int num = 0; num < 5; num++)
-							{
-								thirdBbox[i].ppoint[num] = thirdBbox[i].col1 + (thirdBbox[i].col2 - thirdBbox[i].col1)*keyPoint_ptr[i*keyPoint_sliceStep + num];
-								thirdBbox[i].ppoint[num + 5] = thirdBbox[i].row1 + (thirdBbox[i].row2 - thirdBbox[i].row1)*keyPoint_ptr[i*keyPoint_sliceStep + num + 5];
-							}
-						}
-						thirdBbox[i].area = src_rect_w[i] * src_rect_h[i];
-						thirdBbox[i].score = score_ptr[i*score_sliceStep + 1];
-						order.score = thirdBbox[i].score;
-						order.oriOrder = count++;
-						thirdScore.push_back(order);
-					}
-					else
-					{
-						thirdBbox[i].exist = false;
-					}
-				}
-
-				for (int i = 0; i < early_accept_thirdBbox.size(); i++)
-				{
-					order.score = early_accept_thirdBbox[i].score;
-					order.oriOrder = count++;
-					thirdScore.push_back(order);
-					thirdBbox.push_back(early_accept_thirdBbox[i]);
-				}
-
-
-				if (count < 1)
-					return false;
-
-				for (int i = thirdBbox.size() - 1; i >= 0; i--)
-				{
-					if (!thirdBbox[i].exist)
-						thirdBbox.erase(thirdBbox.begin() + i);
-				}
-				ZQ_CNN_BBoxUtils::_refine_and_square_bbox(thirdBbox, width, height, false);
-				ZQ_CNN_BBoxUtils::_nms(thirdBbox, thirdScore, nms_thresh[2], "Min");
-
-				double t5 = omp_get_wtime();
-				if (show_debug_info)
-					printf("run Onet [%d] times (%.3f ms), candidate before nms: %d \n", o_count, 1000 * (t32 - t31), count);
-				if (show_debug_info)
-					printf("stage 3: cost %.3f ms\n", 1000 * (t5 - t4));
-				
-				return true;
-			}
-			else
-			{
-#pragma omp parallel for num_threads(thread_num)
-				for (int pp = 0; pp < thread_num; pp++)
+				for (int pp = 0; pp < need_thread_num; pp++)
 				{
 					if (task_src_off_x.size() == 0)
 						continue;
@@ -1128,20 +1057,20 @@ namespace ZQ
 						continue;
 					}
 					double t31 = omp_get_wtime();
-					onet[pp].Forward(task_onet_images[pp]);
+					onet[0].Forward(task_onet_images[pp]);
 					double t32 = omp_get_wtime();
-					const ZQ_CNN_Tensor4D* score = onet[pp].GetBlobByName("prob1");
-					const ZQ_CNN_Tensor4D* location = onet[pp].GetBlobByName("conv6-2");
-					const ZQ_CNN_Tensor4D* keyPoint = onet[pp].GetBlobByName("conv6-3");
+					const ZQ_CNN_Tensor4D* score = onet[0].GetBlobByName("prob1");
+					const ZQ_CNN_Tensor4D* location = onet[0].GetBlobByName("conv6-2");
+					const ZQ_CNN_Tensor4D* keyPoint = onet[0].GetBlobByName("conv6-3");
 					const float* score_ptr = score->GetFirstPixelPtr();
 					const float* location_ptr = location->GetFirstPixelPtr();
 					const float* keyPoint_ptr = 0;
-					if(keyPoint != 0)
+					if (keyPoint != 0)
 						keyPoint_ptr = keyPoint->GetFirstPixelPtr();
 					int score_sliceStep = score->GetSliceStep();
 					int location_sliceStep = location->GetSliceStep();
 					int keyPoint_sliceStep = 0;
-					if(keyPoint != 0)
+					if (keyPoint != 0)
 						keyPoint_sliceStep = keyPoint->GetSliceStep();
 					int task_count = 0;
 					ZQ_CNN_OrderScore order;
@@ -1182,43 +1111,112 @@ namespace ZQ
 							task_thirdBbox[pp].erase(task_thirdBbox[pp].begin() + i);
 					}
 				}
-
-				int count = 0;
-				for (int i = 0; i < thread_num; i++)
+			}
+			else
+			{
+#pragma omp parallel for num_threads(thread_num) schedule(dynamic,1)
+				for (int pp = 0; pp < need_thread_num; pp++)
 				{
-					count += task_thirdBbox[i].size();
-				}
-				thirdBbox.resize(count);
-				thirdScore.resize(count);
-				int id = 0;
-				for (int i = 0; i < thread_num; i++)
-				{
-					for (int j = 0; j < task_thirdBbox[i].size(); j++)
+					int thread_id = omp_get_thread_num();
+					if (task_src_off_x.size() == 0)
+						continue;
+					if (!input.ResizeBilinearRect(task_onet_images[pp], onet_size, onet_size, 0, 0,
+						task_src_off_x[pp], task_src_off_y[pp], task_src_rect_w[pp], task_src_rect_h[pp]))
 					{
-						thirdBbox[id] = task_thirdBbox[i][j];
-						thirdScore[id].score = task_thirdBbox[i][j].score;
-						thirdScore[id].oriOrder = id;
-						id++;
+						continue;
+					}
+					double t31 = omp_get_wtime();
+					onet[thread_id].Forward(task_onet_images[pp]);
+					double t32 = omp_get_wtime();
+					const ZQ_CNN_Tensor4D* score = onet[thread_id].GetBlobByName("prob1");
+					const ZQ_CNN_Tensor4D* location = onet[thread_id].GetBlobByName("conv6-2");
+					const ZQ_CNN_Tensor4D* keyPoint = onet[thread_id].GetBlobByName("conv6-3");
+					const float* score_ptr = score->GetFirstPixelPtr();
+					const float* location_ptr = location->GetFirstPixelPtr();
+					const float* keyPoint_ptr = 0;
+					if (keyPoint != 0)
+						keyPoint_ptr = keyPoint->GetFirstPixelPtr();
+					int score_sliceStep = score->GetSliceStep();
+					int location_sliceStep = location->GetSliceStep();
+					int keyPoint_sliceStep = 0;
+					if (keyPoint != 0)
+						keyPoint_sliceStep = keyPoint->GetSliceStep();
+					int task_count = 0;
+					ZQ_CNN_OrderScore order;
+					for (int i = 0; i < task_thirdBbox[pp].size(); i++)
+					{
+						if (score_ptr[i*score_sliceStep + 1] > thresh[2])
+						{
+							for (int j = 0; j < 4; j++)
+								task_thirdBbox[pp][i].regreCoord[j] = location_ptr[i*location_sliceStep + j];
+							if (keyPoint != 0)
+							{
+								for (int num = 0; num < 5; num++)
+								{
+									task_thirdBbox[pp][i].ppoint[num] = task_thirdBbox[pp][i].col1 +
+										(task_thirdBbox[pp][i].col2 - task_thirdBbox[pp][i].col1)*keyPoint_ptr[i*keyPoint_sliceStep + num];
+									task_thirdBbox[pp][i].ppoint[num + 5] = task_thirdBbox[pp][i].row1 +
+										(task_thirdBbox[pp][i].row2 - task_thirdBbox[pp][i].row1)*keyPoint_ptr[i*keyPoint_sliceStep + num + 5];
+								}
+							}
+							task_thirdBbox[pp][i].area = task_src_rect_w[pp][i] * task_src_rect_h[pp][i];
+							task_thirdBbox[pp][i].score = score_ptr[i*score_sliceStep + 1];
+							task_count++;
+						}
+						else
+						{
+							task_thirdBbox[pp][i].exist = false;
+						}
+					}
+
+					if (task_count < 1)
+					{
+						task_thirdBbox[pp].clear();
+						continue;
+					}
+					for (int i = task_thirdBbox[pp].size() - 1; i >= 0; i--)
+					{
+						if (!task_thirdBbox[pp][i].exist)
+							task_thirdBbox[pp].erase(task_thirdBbox[pp].begin() + i);
 					}
 				}
-				ZQ_CNN_OrderScore order;
-				for (int i = 0; i < early_accept_thirdBbox.size(); i++)
-				{
-					order.score = early_accept_thirdBbox[i].score;
-					order.oriOrder = count++;
-					thirdScore.push_back(order);
-					thirdBbox.push_back(early_accept_thirdBbox[i]);
-				}
-				ZQ_CNN_BBoxUtils::_refine_and_square_bbox(thirdBbox, width, height,false);
-				ZQ_CNN_BBoxUtils::_nms(thirdBbox, thirdScore, nms_thresh[2], "Min");
-				double t5 = omp_get_wtime();
-				if (show_debug_info)
-					printf("run Onet [%d] times, candidate before nms: %d \n", o_count, count);
-				if (show_debug_info)
-					printf("stage 3: cost %.3f ms\n", 1000 * (t5 - t4));
-
-				return true;
 			}
+
+			int count = 0;
+			for (int i = 0; i < need_thread_num; i++)
+			{
+				count += task_thirdBbox[i].size();
+			}
+			thirdBbox.resize(count);
+			thirdScore.resize(count);
+			int id = 0;
+			for (int i = 0; i < need_thread_num; i++)
+			{
+				for (int j = 0; j < task_thirdBbox[i].size(); j++)
+				{
+					thirdBbox[id] = task_thirdBbox[i][j];
+					thirdScore[id].score = task_thirdBbox[i][j].score;
+					thirdScore[id].oriOrder = id;
+					id++;
+				}
+			}
+			ZQ_CNN_OrderScore order;
+			for (int i = 0; i < early_accept_thirdBbox.size(); i++)
+			{
+				order.score = early_accept_thirdBbox[i].score;
+				order.oriOrder = count++;
+				thirdScore.push_back(order);
+				thirdBbox.push_back(early_accept_thirdBbox[i]);
+			}
+			ZQ_CNN_BBoxUtils::_refine_and_square_bbox(thirdBbox, width, height, false);
+			ZQ_CNN_BBoxUtils::_nms(thirdBbox, thirdScore, nms_thresh[2], "Min");
+			double t5 = omp_get_wtime();
+			if (show_debug_info)
+				printf("run Onet [%d] times, candidate before nms: %d \n", o_count, count);
+			if (show_debug_info)
+				printf("stage 3: cost %.3f ms\n", 1000 * (t5 - t4));
+
+			return true;
 		}
 
 
@@ -1262,15 +1260,24 @@ namespace ZQ
 				src_rect_w.push_back(rect_w);
 				src_rect_h.push_back(rect_h);
 			}
-			std::vector<ZQ_CNN_Tensor4D_NHW_C_Align128bit> task_lnet_images(thread_num);
-			std::vector<std::vector<int>> task_src_off_x(thread_num);
-			std::vector<std::vector<int>> task_src_off_y(thread_num);
-			std::vector<std::vector<int>> task_src_rect_w(thread_num);
-			std::vector<std::vector<int>> task_src_rect_h(thread_num);
-			std::vector<std::vector<ZQ_CNN_BBox>> task_fourthBbox(thread_num);
-			int per_num = ceil((float)l_count / thread_num);
 
-			for (int i = 0; i < thread_num; i++)
+			int batch_size = 64;
+			int per_num = ceil((float)l_count / thread_num);
+			int need_thread_num = thread_num;
+			if (per_num > batch_size)
+			{
+				need_thread_num = ceil((float)l_count / batch_size);
+				per_num = batch_size;
+			}
+
+			std::vector<ZQ_CNN_Tensor4D_NHW_C_Align128bit> task_lnet_images(need_thread_num);
+			std::vector<std::vector<int>> task_src_off_x(need_thread_num);
+			std::vector<std::vector<int>> task_src_off_y(need_thread_num);
+			std::vector<std::vector<int>> task_src_rect_w(need_thread_num);
+			std::vector<std::vector<int>> task_src_rect_h(need_thread_num);
+			std::vector<std::vector<ZQ_CNN_BBox>> task_fourthBbox(need_thread_num);
+			
+			for (int i = 0; i < need_thread_num; i++)
 			{
 				int st_id = per_num*i;
 				int end_id = __min(l_count, per_num*(i + 1));
@@ -1295,56 +1302,21 @@ namespace ZQ
 
 			if (thread_num == 1)
 			{
-				if (!input.ResizeBilinearRect(task_lnet_images[0], 48, 48, 0, 0,
-					task_src_off_x[0], task_src_off_y[0], task_src_rect_w[0], task_src_rect_h[0]))
-				{
-					return false;
-				}
-				int count = 0;
-				double t31 = omp_get_wtime();
-				lnet[0].Forward(task_lnet_images[0]);
-				double t32 = omp_get_wtime();
-				const ZQ_CNN_Tensor4D* keyPoint = lnet[0].GetBlobByName("conv6-3");
-				const float* keyPoint_ptr = keyPoint->GetFirstPixelPtr();
-				int keyPoint_sliceStep = keyPoint->GetSliceStep();
-				for (int i = 0; i < l_count; i++)
-				{
-					for (int num = 0; num < 5; num++)
-					{
-						fourthBbox[i].ppoint[num] = copy_fourthBbox[i].col1 + (copy_fourthBbox[i].col2 - copy_fourthBbox[i].col1)*keyPoint_ptr[i*keyPoint_sliceStep + num];
-						fourthBbox[i].ppoint[num + 5] = copy_fourthBbox[i].row1 + (copy_fourthBbox[i].row2 - copy_fourthBbox[i].row1)*keyPoint_ptr[i*keyPoint_sliceStep + num + 5];
-					}
-				}
-
-				
-				double t5 = omp_get_wtime();
-				if (show_debug_info)
-					printf("run Lnet [%d] times (%.3f ms)\n", l_count, 1000 * (t32 - t31));
-				if (show_debug_info)
-					printf("stage 4: cost %.3f ms\n", 1000 * (t5 - t4));
-
-				return true;
-			}
-			else
-			{
-#pragma omp parallel for num_threads(thread_num)
-				for (int pp = 0; pp < thread_num; pp++)
+				for (int pp = 0; pp < need_thread_num; pp++)
 				{
 					if (task_src_off_x.size() == 0)
 						continue;
-					if (!input.ResizeBilinearRect(task_lnet_images[pp], 48, 48, 0, 0,
+					if (!input.ResizeBilinearRect(task_lnet_images[pp], lnet_size, lnet_size, 0, 0,
 						task_src_off_x[pp], task_src_off_y[pp], task_src_rect_w[pp], task_src_rect_h[pp]))
 					{
 						continue;
 					}
 					double t31 = omp_get_wtime();
-					lnet[pp].Forward(task_lnet_images[pp]);
+					lnet[0].Forward(task_lnet_images[pp]);
 					double t32 = omp_get_wtime();
-					const ZQ_CNN_Tensor4D* keyPoint = lnet[pp].GetBlobByName("conv6-3");
+					const ZQ_CNN_Tensor4D* keyPoint = lnet[0].GetBlobByName("conv6-3");
 					const float* keyPoint_ptr = keyPoint->GetFirstPixelPtr();
 					int keyPoint_sliceStep = keyPoint->GetSliceStep();
-					int task_count = 0;
-					ZQ_CNN_OrderScore order;
 					for (int i = 0; i < task_fourthBbox[pp].size(); i++)
 					{
 						for (int num = 0; num < 5; num++)
@@ -1356,30 +1328,62 @@ namespace ZQ
 						}
 					}
 				}
-
-				int count = 0;
-				for (int i = 0; i < thread_num; i++)
+			}
+			else
+			{
+#pragma omp parallel for num_threads(thread_num) schedule(dynamic,1)
+				for (int pp = 0; pp < need_thread_num; pp++)
 				{
-					count += task_fourthBbox[i].size();
-				}
-				fourthBbox.resize(count);
-				int id = 0;
-				for (int i = 0; i < thread_num; i++)
-				{
-					for (int j = 0; j < task_fourthBbox[i].size(); j++)
+					int thread_id = omp_get_thread_num();
+					if (task_src_off_x.size() == 0)
+						continue;
+					if (!input.ResizeBilinearRect(task_lnet_images[pp], lnet_size, lnet_size, 0, 0,
+						task_src_off_x[pp], task_src_off_y[pp], task_src_rect_w[pp], task_src_rect_h[pp]))
 					{
-						memcpy(fourthBbox[id].ppoint, task_fourthBbox[i][j].ppoint, sizeof(float) * 10);
-						id++;
+						continue;
+					}
+					double t31 = omp_get_wtime();
+					lnet[thread_id].Forward(task_lnet_images[pp]);
+					double t32 = omp_get_wtime();
+					const ZQ_CNN_Tensor4D* keyPoint = lnet[thread_id].GetBlobByName("conv6-3");
+					const float* keyPoint_ptr = keyPoint->GetFirstPixelPtr();
+					int keyPoint_sliceStep = keyPoint->GetSliceStep();
+					for (int i = 0; i < task_fourthBbox[pp].size(); i++)
+					{
+						for (int num = 0; num < 5; num++)
+						{
+							task_fourthBbox[pp][i].ppoint[num] = task_fourthBbox[pp][i].col1 +
+								(task_fourthBbox[pp][i].col2 - task_fourthBbox[pp][i].col1)*keyPoint_ptr[i*keyPoint_sliceStep + num];
+							task_fourthBbox[pp][i].ppoint[num + 5] = task_fourthBbox[pp][i].row1 +
+								(task_fourthBbox[pp][i].row2 - task_fourthBbox[pp][i].row1)*keyPoint_ptr[i*keyPoint_sliceStep + num + 5];
+						}
 					}
 				}
-				double t5 = omp_get_wtime();
-				if (show_debug_info)
-					printf("run Lnet [%d] times \n", l_count);
-				if (show_debug_info)
-					printf("stage 4: cost %.3f ms\n", 1000 * (t5 - t4));
-
-				return true;
 			}
+
+			int count = 0;
+			for (int i = 0; i < need_thread_num; i++)
+			{
+				count += task_fourthBbox[i].size();
+			}
+			fourthBbox.resize(count);
+			int id = 0;
+			for (int i = 0; i < need_thread_num; i++)
+			{
+				for (int j = 0; j < task_fourthBbox[i].size(); j++)
+				{
+					memcpy(fourthBbox[id].ppoint, task_fourthBbox[i][j].ppoint, sizeof(float) * 10);
+					id++;
+				}
+			}
+			double t5 = omp_get_wtime();
+			if (show_debug_info)
+				printf("run Lnet [%d] times \n", l_count);
+			if (show_debug_info)
+				printf("stage 4: cost %.3f ms\n", 1000 * (t5 - t4));
+
+			return true;
+
 		}
 
 
@@ -1423,15 +1427,24 @@ namespace ZQ
 				src_rect_w.push_back(rect_w);
 				src_rect_h.push_back(rect_h);
 			}
-			std::vector<ZQ_CNN_Tensor4D_NHW_C_Align128bit> task_lnet_images(thread_num);
-			std::vector<std::vector<int>> task_src_off_x(thread_num);
-			std::vector<std::vector<int>> task_src_off_y(thread_num);
-			std::vector<std::vector<int>> task_src_rect_w(thread_num);
-			std::vector<std::vector<int>> task_src_rect_h(thread_num);
-			std::vector<std::vector<ZQ_CNN_BBox106>> task_fourthBbox(thread_num);
-			int per_num = ceil((float)l_count / thread_num);
 
-			for (int i = 0; i < thread_num; i++)
+			int batch_size = 64;
+			int per_num = ceil((float)l_count / thread_num);
+			int need_thread_num = thread_num;
+			if (per_num > batch_size)
+			{
+				need_thread_num = ceil((float)l_count / batch_size);
+				per_num = batch_size;
+			}
+
+			std::vector<ZQ_CNN_Tensor4D_NHW_C_Align128bit> task_lnet_images(need_thread_num);
+			std::vector<std::vector<int>> task_src_off_x(need_thread_num);
+			std::vector<std::vector<int>> task_src_off_y(need_thread_num);
+			std::vector<std::vector<int>> task_src_rect_w(need_thread_num);
+			std::vector<std::vector<int>> task_src_rect_h(need_thread_num);
+			std::vector<std::vector<ZQ_CNN_BBox106>> task_fourthBbox(need_thread_num);
+
+			for (int i = 0; i < need_thread_num; i++)
 			{
 				int st_id = per_num*i;
 				int end_id = __min(l_count, per_num*(i + 1));
@@ -1474,94 +1487,88 @@ namespace ZQ
 
 			if (thread_num == 1)
 			{
-				if (!input.ResizeBilinearRect(task_lnet_images[0], 48, 48, 0, 0,
-					task_src_off_x[0], task_src_off_y[0], task_src_rect_w[0], task_src_rect_h[0]))
+				for (int pp = 0; pp < need_thread_num; pp++)
 				{
-					return false;
-				}
-				int count = 0;
-				double t31 = omp_get_wtime();
-				lnet[0].Forward(task_lnet_images[0]);
-				double t32 = omp_get_wtime();
-				const ZQ_CNN_Tensor4D* keyPoint = lnet[0].GetBlobByName("conv6-3");
-				int keypoint_num = keyPoint->GetC() / 2;
-				const float* keyPoint_ptr = keyPoint->GetFirstPixelPtr();
-				int keyPoint_sliceStep = keyPoint->GetSliceStep();
-				resultBbox.resize(l_count);
-				for (int i = 0; i < l_count; i++)
-				{
-					for (int num = 0; num < keypoint_num; num++)
-					{
-						resultBbox[i].ppoint[num*2] = copy_fourthBbox[i].col1 + (copy_fourthBbox[i].col2 - copy_fourthBbox[i].col1)*keyPoint_ptr[i*keyPoint_sliceStep + num*2];
-						resultBbox[i].ppoint[num*2+1] = copy_fourthBbox[i].row1 + (copy_fourthBbox[i].row2 - copy_fourthBbox[i].row1)*keyPoint_ptr[i*keyPoint_sliceStep + num*2 + 1];
-					}
-				}
-
-
-				double t5 = omp_get_wtime();
-				if (show_debug_info)
-					printf("run Lnet [%d] times (%.3f ms)\n", l_count, 1000 * (t32 - t31));
-				if (show_debug_info)
-					printf("stage 4: cost %.3f ms\n", 1000 * (t5 - t4));
-
-				return true;
-			}
-			else
-			{
-#pragma omp parallel for num_threads(thread_num)
-				for (int pp = 0; pp < thread_num; pp++)
-				{
-					if (task_src_off_x.size() == 0)
+					if (task_src_off_x[pp].size() == 0)
 						continue;
-					if (!input.ResizeBilinearRect(task_lnet_images[pp], 48, 48, 0, 0,
+					if (!input.ResizeBilinearRect(task_lnet_images[pp], lnet_size, lnet_size, 0, 0,
 						task_src_off_x[pp], task_src_off_y[pp], task_src_rect_w[pp], task_src_rect_h[pp]))
 					{
 						continue;
 					}
 					double t31 = omp_get_wtime();
-					lnet[pp].Forward(task_lnet_images[pp]);
+					lnet[0].Forward(task_lnet_images[pp]);
 					double t32 = omp_get_wtime();
-					const ZQ_CNN_Tensor4D* keyPoint = lnet[pp].GetBlobByName("conv6-3");
+					const ZQ_CNN_Tensor4D* keyPoint = lnet[0].GetBlobByName("conv6-3");
 					const float* keyPoint_ptr = keyPoint->GetFirstPixelPtr();
 					int keypoint_num = keyPoint->GetC() / 2;
 					int keyPoint_sliceStep = keyPoint->GetSliceStep();
-					int task_count = 0;
-					ZQ_CNN_OrderScore order;
 					for (int i = 0; i < task_fourthBbox[pp].size(); i++)
 					{
 						for (int num = 0; num < keypoint_num; num++)
 						{
-							task_fourthBbox[pp][i].ppoint[num*2] = task_fourthBbox[pp][i].col1 +
-								(task_fourthBbox[pp][i].col2 - task_fourthBbox[pp][i].col1)*keyPoint_ptr[i*keyPoint_sliceStep + num*2];
-							task_fourthBbox[pp][i].ppoint[num*2+1] = task_fourthBbox[pp][i].row1 +
-								(task_fourthBbox[pp][i].row2 - task_fourthBbox[pp][i].row1)*keyPoint_ptr[i*keyPoint_sliceStep + num*2+1];
+							task_fourthBbox[pp][i].ppoint[num * 2] = task_fourthBbox[pp][i].col1 +
+								(task_fourthBbox[pp][i].col2 - task_fourthBbox[pp][i].col1)*keyPoint_ptr[i*keyPoint_sliceStep + num * 2];
+							task_fourthBbox[pp][i].ppoint[num * 2 + 1] = task_fourthBbox[pp][i].row1 +
+								(task_fourthBbox[pp][i].row2 - task_fourthBbox[pp][i].row1)*keyPoint_ptr[i*keyPoint_sliceStep + num * 2 + 1];
 						}
 					}
 				}
-
-				int count = 0;
-				for (int i = 0; i < thread_num; i++)
+			}
+			else
+			{
+#pragma omp parallel for num_threads(thread_num)
+				for (int pp = 0; pp < need_thread_num; pp++)
 				{
-					count += task_fourthBbox[i].size();
-				}
-				resultBbox.resize(count);
-				int id = 0;
-				for (int i = 0; i < thread_num; i++)
-				{
-					for (int j = 0; j < task_fourthBbox[i].size(); j++)
+					int thread_id = omp_get_thread_num();
+					if (task_src_off_x.size() == 0)
+						continue;
+					if (!input.ResizeBilinearRect(task_lnet_images[pp], lnet_size, lnet_size, 0, 0,
+						task_src_off_x[pp], task_src_off_y[pp], task_src_rect_w[pp], task_src_rect_h[pp]))
 					{
-						memcpy(resultBbox[id].ppoint, task_fourthBbox[i][j].ppoint, sizeof(float) * 212);
-						id++;
+						continue;
+					}
+					double t31 = omp_get_wtime();
+					lnet[thread_id].Forward(task_lnet_images[pp]);
+					double t32 = omp_get_wtime();
+					const ZQ_CNN_Tensor4D* keyPoint = lnet[thread_id].GetBlobByName("conv6-3");
+					const float* keyPoint_ptr = keyPoint->GetFirstPixelPtr();
+					int keypoint_num = keyPoint->GetC() / 2;
+					int keyPoint_sliceStep = keyPoint->GetSliceStep();
+					for (int i = 0; i < task_fourthBbox[pp].size(); i++)
+					{
+						for (int num = 0; num < keypoint_num; num++)
+						{
+							task_fourthBbox[pp][i].ppoint[num * 2] = task_fourthBbox[pp][i].col1 +
+								(task_fourthBbox[pp][i].col2 - task_fourthBbox[pp][i].col1)*keyPoint_ptr[i*keyPoint_sliceStep + num * 2];
+							task_fourthBbox[pp][i].ppoint[num * 2 + 1] = task_fourthBbox[pp][i].row1 +
+								(task_fourthBbox[pp][i].row2 - task_fourthBbox[pp][i].row1)*keyPoint_ptr[i*keyPoint_sliceStep + num * 2 + 1];
+						}
 					}
 				}
-				double t5 = omp_get_wtime();
-				if (show_debug_info)
-					printf("run Lnet [%d] times \n", l_count);
-				if (show_debug_info)
-					printf("stage 4: cost %.3f ms\n", 1000 * (t5 - t4));
-
-				return true;
 			}
+			int count = 0;
+			for (int i = 0; i < need_thread_num; i++)
+			{
+				count += task_fourthBbox[i].size();
+			}
+			resultBbox.resize(count);
+			int id = 0;
+			for (int i = 0; i < need_thread_num; i++)
+			{
+				for (int j = 0; j < task_fourthBbox[i].size(); j++)
+				{
+					memcpy(resultBbox[id].ppoint, task_fourthBbox[i][j].ppoint, sizeof(float) * 212);
+					id++;
+				}
+			}
+			double t5 = omp_get_wtime();
+			if (show_debug_info)
+				printf("run Lnet [%d] times \n", l_count);
+			if (show_debug_info)
+				printf("stage 4: cost %.3f ms\n", 1000 * (t5 - t4));
+
+			return true;
 		}
 	};
 }
