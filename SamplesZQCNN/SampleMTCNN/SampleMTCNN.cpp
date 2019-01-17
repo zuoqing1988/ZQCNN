@@ -127,7 +127,7 @@ int main()
 	mtcnn.TurnOnShowDebugInfo();
 	const int use_pnet20 = true;
 	bool landmark106 = false;
-	int thread_num = 1;
+	int thread_num = 0;
 	bool special_handle_very_big_face = false;
 	result_name = "resultdet.jpg";
 	if (use_pnet20)
