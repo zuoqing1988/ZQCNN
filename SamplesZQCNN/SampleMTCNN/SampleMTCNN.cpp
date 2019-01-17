@@ -78,7 +78,7 @@ int main()
 #elif ZQ_CNN_USE_MKL_GEMM
 	mkl_set_num_threads(num_threads);
 #endif
-	Mat image0 = cv::imread("data\\4.jpg", 1);
+	Mat image0 = cv::imread("data\\face2500.jpg", 1);
 	if (image0.empty())
 	{
 		cout << "empty image\n";
@@ -126,7 +126,7 @@ int main()
 	std::string result_name;
 	mtcnn.TurnOnShowDebugInfo();
 	const int use_pnet20 = true;
-	bool landmark106 = true;
+	bool landmark106 = false;
 	int thread_num = 1;
 	bool special_handle_very_big_face = false;
 	result_name = "resultdet.jpg";
@@ -153,7 +153,7 @@ int main()
 				"model\\det2-dw24-fast.zqparams", "model\\det2-dw24-fast.nchwbin",
 				//"model\\det2.zqparams", "model\\det2_bgr.nchwbin",
 				"model\\det3-dw48-fast.zqparams", "model\\det3-dw48-fast.nchwbin", 
-				thread_num, true,
+				thread_num, false,
 				//"model\\det4-dw48-small.zqparams", "model\\det4-dw48-small.nchwbin"
 				"model\\det3.zqparams", "model\\det3_bgr.nchwbin"
 			))
@@ -178,7 +178,7 @@ int main()
 	}
 	mtcnn.TurnOffShowDebugInfo();
 	//mtcnn.TurnOnShowDebugInfo();
-	int iters = 1;
+	int iters = 10;
 	double t1 = omp_get_wtime();
 	for (int i = 0; i < iters; i++)
 	{
