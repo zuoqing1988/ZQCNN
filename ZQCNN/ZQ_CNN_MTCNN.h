@@ -26,6 +26,7 @@ namespace ZQ
 			pnet_size = 12;
 			pnet_stride = 2;
 			special_handle_very_big_face = false;
+			force_run_pnet_multithread = false;
 			show_debug_info = false;
 		}
 		~ZQ_CNN_MTCNN()
@@ -44,10 +45,13 @@ namespace ZQ
 		int pnet_overlap_thresh_count;
 		int pnet_size;
 		int pnet_stride;
+		int rnet_size;
+		int onet_size;
 		bool special_handle_very_big_face;
 		bool do_landmark;
 		float early_accept_thresh;
 		float nms_thresh_per_scale;
+		bool force_run_pnet_multithread;
 		std::vector<float> scales;
 		std::vector<ZQ_CNN_Tensor4D_NHW_C_Align128bit> pnet_images;
 		ZQ_CNN_Tensor4D_NHW_C_Align128bit input, rnet_image, onet_image;
@@ -59,6 +63,10 @@ namespace ZQ
 			const string& onet_param, const string& onet_model, int thread_num = 1, 
 			bool has_lnet = false, const string& lnet_param = "", const std::string& lnet_model = "")
 		{
+			if (thread_num < 1)
+				force_run_pnet_multithread = true;
+			else
+				force_run_pnet_multithread = false;
 			thread_num = __max(1, thread_num);
 			pnet.resize(thread_num);
 			rnet.resize(thread_num);
@@ -95,6 +103,11 @@ namespace ZQ
 				if (has_lnet)
 					printf("lnet = %.1f M\n", lnet[0].GetNumOfMulAdd() / (1024.0*1024.0));
 			}
+			int C, H, W;
+			rnet[0].GetInputDim(C, H, W);
+			rnet_size = H;
+			onet[0].GetInputDim(C, H, W);
+			onet_size = H;
 			return ret;
 		}
 
@@ -141,6 +154,11 @@ namespace ZQ
 				if (has_lnet)
 					printf("lnet = %.1f M\n", lnet[0].GetNumOfMulAdd() / (1024.0*1024.0));
 			}
+			int C, H, W;
+			rnet[0].GetInputDim(C, H, W);
+			rnet_size = H;
+			onet[0].GetInputDim(C, H, W);
+			onet_size = H;
 			return ret;
 		}
 
@@ -527,7 +545,7 @@ namespace ZQ
 			std::vector<std::vector<float>> maps;
 			std::vector<int> mapH;
 			std::vector<int> mapW;
-			if (thread_num == 1)
+			if (thread_num == 1 && !force_run_pnet_multithread)
 			{
 				pnet[0].TurnOffShowDebugInfo();
 				//pnet[0].TurnOnShowDebugInfo();
@@ -803,7 +821,7 @@ namespace ZQ
 
 			if (thread_num == 1)
 			{
-				if (!input.ResizeBilinearRect(task_rnet_images[0], 24, 24, 0, 0, 
+				if (!input.ResizeBilinearRect(task_rnet_images[0], rnet_size, rnet_size, 0, 0,
 					task_src_off_x[0], task_src_off_y[0], task_src_rect_w[0], task_src_rect_h[0]))
 				{
 					return false;
@@ -868,7 +886,7 @@ namespace ZQ
 				{
 					if (task_src_off_x.size() == 0)
 						continue;
-					if (!input.ResizeBilinearRect(task_rnet_images[pp], 24, 24, 0, 0,
+					if (!input.ResizeBilinearRect(task_rnet_images[pp], rnet_size, rnet_size, 0, 0,
 						task_src_off_x[pp], task_src_off_y[pp], task_src_rect_w[pp], task_src_rect_h[pp]))
 					{
 						continue;
@@ -1016,7 +1034,7 @@ namespace ZQ
 
 			if (thread_num == 1)
 			{
-				if (!input.ResizeBilinearRect(task_onet_images[0], 48, 48, 0, 0,
+				if (!input.ResizeBilinearRect(task_onet_images[0], onet_size, onet_size, 0, 0,
 					task_src_off_x[0], task_src_off_y[0], task_src_rect_w[0], task_src_rect_h[0]))
 				{
 					return false;
@@ -1100,7 +1118,7 @@ namespace ZQ
 				{
 					if (task_src_off_x.size() == 0)
 						continue;
-					if (!input.ResizeBilinearRect(task_onet_images[pp], 48, 48, 0, 0,
+					if (!input.ResizeBilinearRect(task_onet_images[pp], onet_size, onet_size, 0, 0,
 						task_src_off_x[pp], task_src_off_y[pp], task_src_rect_w[pp], task_src_rect_h[pp]))
 					{
 						continue;
