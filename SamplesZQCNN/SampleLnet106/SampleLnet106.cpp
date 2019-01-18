@@ -29,7 +29,7 @@ int main()
 #endif
 
 	ZQ_CNN_Net net1, net2;
-	if (!net1.LoadFrom("model\\det5-dw48.zqparams", "model\\det5-dw48-1530.nchwbin")
+	if (!net1.LoadFrom("model\\det5-dw48-normal.zqparams", "model\\det5-dw48-normal-5000.nchwbin")
 		|| !net2.LoadFrom("model\\det3.zqparams", "model\\det3_bgr.nchwbin"))
 		//|| !net2.LoadFrom("model\\det4-dw48-1.zqparams", "model\\det4-dw48-1-7.nchwbin"))
 	{
@@ -54,7 +54,7 @@ int main()
 
 	ZQ_CNN_Tensor4D_NHW_C_Align128bit input;
 	input.ConvertFromBGR(img.data, img.cols, img.rows, img.step[0]);
-	int nIters = 1000;
+	int nIters = 1;
 	double t1 = omp_get_wtime();
 	for (int i = 0; i < nIters; i++)
 		net1.Forward(input);
@@ -79,13 +79,13 @@ int main()
 		char buf[10];
 		sprintf_s(buf,10, "%d", i);
 		cv::Point pt = cv::Point(960 * landmark1_data[i * 2], 960 * landmark1_data[i * 2 + 1]);
-		ZQ_PutTextCN::PutTextCN(draw_img, buf, pt, cv::Scalar(100, 0, 0), 8);
+		ZQ_PutTextCN::PutTextCN(draw_img, buf, pt, cv::Scalar(100, 0, 0), 12);
 		cv::circle(draw_img, pt, 2, cv::Scalar(0, 0, 250), 2);
 	}
-	for (int i = 0; i < 5; i++)
+	/*for (int i = 0; i < 5; i++)
 	{
 		cv::circle(draw_img, cv::Point(960 * landmark2_data[i], 960 * landmark2_data[i + 5]), 2, cv::Scalar(0, 120 + 30 * i, 0), 2);
-	}
+	}*/
 
 	namedWindow("landmark");
 
