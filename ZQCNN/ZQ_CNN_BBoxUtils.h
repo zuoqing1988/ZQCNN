@@ -25,7 +25,7 @@ namespace ZQ
 		static void _nms(std::vector<ZQ_CNN_BBox> &boundingBox, std::vector<ZQ_CNN_OrderScore> &bboxScore, const float overlap_threshold, 
 			const std::string& modelname = "Union", int overlap_count_thresh = 0, int thread_num = 1)
 		{
-			if (boundingBox.empty())
+			if (boundingBox.empty() || overlap_threshold >= 1.0)
 			{
 				return;
 			}
