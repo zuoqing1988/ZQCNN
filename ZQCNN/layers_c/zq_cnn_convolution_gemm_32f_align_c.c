@@ -320,11 +320,11 @@ extern "C" {
 			if (need_allocate_tmp_out)
 				_aligned_free(matrix_C);
 		}
-		if (filter_H == 3 && filter_W == 3 && filter_C == 3)
+		/*if (filter_H == 3 && filter_W == 3 && filter_C == 3)
 		{
 			printf("total: %.3f ms, alloc %.3f ms, makeA: %.3f ms, gemm: %.3f ms, copy_C: %.3f ms\n", 1000 * (t5 - t1), 1000 * (t2 - t1),
 				1000 * (t3 - t2), 1000 * (t4 - t3), 1000 * (t5 - t4));
-		}
+		}*/
 	}
 
 	/*in_pixStep can be different with filter_pixStep,
@@ -490,11 +490,11 @@ extern "C" {
 			if (need_allocate_tmp_out)
 				_aligned_free(matrix_C);
 		}
-		if (filter_H == 3 && filter_W == 3 && filter_C == 3)
+		/*if (filter_H == 3 && filter_W == 3 && filter_C == 3)
 		{
 			printf("total: %.3f ms, alloc %.3f ms, makeA: %.3f ms, gemm: %.3f ms, copy_C: %.3f ms\n", 1000 * (t5 - t1), 1000 * (t2 - t1),
 				1000 * (t3 - t2), 1000 * (t4 - t3), 1000 * (t5 - t4));
-		}
+		}*/
 	}
 
 #if defined(__cplusplus) || defined(c_plusplus) 
