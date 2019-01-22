@@ -185,7 +185,7 @@ namespace ZQ
 			bool has_begin = false, has_end = false;
 			for (int i = 0; i < layers.size(); i++)
 			{
-				if (_strcmpi(layers[i]->name.c_str(), start_layer_name.c_str()) == 0)
+				if (ZQ_CNN_Layer::_my_strcmpi(layers[i]->name.c_str(), start_layer_name.c_str()) == 0)
 					has_begin = true;
 				if (!has_begin)
 					continue;
@@ -207,7 +207,7 @@ namespace ZQ
 					printf("failed to run layer: %s\n", layers[i]->name.c_str());
 					return false;
 				}
-				if (_strcmpi(layers[i]->name.c_str(), end_layer_name.c_str()) == 0)
+				if (ZQ_CNN_Layer::_my_strcmpi(layers[i]->name.c_str(), end_layer_name.c_str()) == 0)
 					has_end = true;
 				if (has_end)
 					break;
@@ -318,7 +318,7 @@ namespace ZQ
 				buf[0] = '\0';
 				if (sscanf_s(line.c_str(), "%s", &buf[0], buf_len) == 0)
 					continue;
-				if (_strcmpi(&buf[0], "Convolution") == 0)
+				if (ZQ_CNN_Layer::_my_strcmpi(&buf[0], "Convolution") == 0)
 				{
 					if (layers.size() == 0)
 					{
@@ -337,7 +337,7 @@ namespace ZQ
 					}
 					layer_type_names.push_back("Convolution");
 				}
-				else if (_strcmpi(&buf[0], "DepthwiseConvolution") == 0)
+				else if (ZQ_CNN_Layer::_my_strcmpi(&buf[0], "DepthwiseConvolution") == 0)
 				{
 					if (layers.size() == 0)
 					{
@@ -356,7 +356,7 @@ namespace ZQ
 					}
 					layer_type_names.push_back("DepthwiseConvolution");
 				}
-				else if (_strcmpi(&buf[0], "BatchNormScale") == 0)
+				else if (ZQ_CNN_Layer::_my_strcmpi(&buf[0], "BatchNormScale") == 0)
 				{
 					if (layers.size() == 0)
 					{
@@ -375,7 +375,7 @@ namespace ZQ
 					}
 					layer_type_names.push_back("BatchNormScale");
 				}
-				else if (_strcmpi(&buf[0], "BatchNorm") == 0)
+				else if (ZQ_CNN_Layer::_my_strcmpi(&buf[0], "BatchNorm") == 0)
 				{
 					if (layers.size() == 0)
 					{
@@ -394,7 +394,7 @@ namespace ZQ
 					}
 					layer_type_names.push_back("BatchNorm");
 				}	
-				else if (_strcmpi(&buf[0], "Scale") == 0)
+				else if (ZQ_CNN_Layer::_my_strcmpi(&buf[0], "Scale") == 0)
 				{
 					if (layers.size() == 0)
 					{
@@ -413,7 +413,7 @@ namespace ZQ
 					}
 					layer_type_names.push_back("Scale");
 				}
-				else if (_strcmpi(&buf[0], "PReLU") == 0)
+				else if (ZQ_CNN_Layer::_my_strcmpi(&buf[0], "PReLU") == 0)
 				{
 					if (layers.size() == 0)
 					{
@@ -432,7 +432,7 @@ namespace ZQ
 					}
 					layer_type_names.push_back("PReLU");
 				}
-				else if (_strcmpi(&buf[0], "ReLU") == 0)
+				else if (ZQ_CNN_Layer::_my_strcmpi(&buf[0], "ReLU") == 0)
 				{
 					if (layers.size() == 0)
 					{
@@ -451,7 +451,7 @@ namespace ZQ
 					}
 					layer_type_names.push_back("ReLU");
 				}
-				else if (_strcmpi(&buf[0], "Softmax") == 0)
+				else if (ZQ_CNN_Layer::_my_strcmpi(&buf[0], "Softmax") == 0)
 				{
 					if (layers.size() == 0)
 					{
@@ -470,7 +470,7 @@ namespace ZQ
 					}
 					layer_type_names.push_back("Softmax");
 				}
-				else if (_strcmpi(&buf[0], "Pooling") == 0)
+				else if (ZQ_CNN_Layer::_my_strcmpi(&buf[0], "Pooling") == 0)
 				{
 					if (layers.size() == 0)
 					{
@@ -489,7 +489,7 @@ namespace ZQ
 					}
 					layer_type_names.push_back("Pooling");
 				}
-				else if (_strcmpi(&buf[0], "Copy") == 0)
+				else if (ZQ_CNN_Layer::_my_strcmpi(&buf[0], "Copy") == 0)
 				{
 					if (layers.size() == 0)
 					{
@@ -508,7 +508,7 @@ namespace ZQ
 					}
 					layer_type_names.push_back("Copy");
 				}
-				else if (_strcmpi(&buf[0], "Dropout") == 0)
+				else if (ZQ_CNN_Layer::_my_strcmpi(&buf[0], "Dropout") == 0)
 				{
 					if (layers.size() == 0)
 					{
@@ -527,7 +527,7 @@ namespace ZQ
 					}
 					layer_type_names.push_back("Dropout");
 				}
-				else if (_strcmpi(&buf[0], "InnerProduct") == 0)
+				else if (ZQ_CNN_Layer::_my_strcmpi(&buf[0], "InnerProduct") == 0)
 				{
 					has_innerproduct_layer = true;
 					if (layers.size() == 0)
@@ -548,7 +548,7 @@ namespace ZQ
 					}
 					layer_type_names.push_back("InnerProduct");
 				}
-				else if (_strcmpi(&buf[0], "Eltwise") == 0)
+				else if (ZQ_CNN_Layer::_my_strcmpi(&buf[0], "Eltwise") == 0)
 				{
 					if (layers.size() == 0)
 					{
@@ -567,7 +567,7 @@ namespace ZQ
 					}
 					layer_type_names.push_back("Eltwise");
 				}
-				else if (_strcmpi(&buf[0], "ScalarOperation") == 0)
+				else if (ZQ_CNN_Layer::_my_strcmpi(&buf[0], "ScalarOperation") == 0)
 				{
 					if (layers.size() == 0)
 					{
@@ -586,7 +586,7 @@ namespace ZQ
 					}
 					layer_type_names.push_back("ScalarOperation");
 				}
-				else if (_strcmpi(&buf[0], "UnaryOperation") == 0)
+				else if (ZQ_CNN_Layer::_my_strcmpi(&buf[0], "UnaryOperation") == 0)
 				{
 					if (layers.size() == 0)
 					{
@@ -605,7 +605,7 @@ namespace ZQ
 					}
 					layer_type_names.push_back("UnaryOperation");
 				}
-				else if (_strcmpi(&buf[0], "Sqrt") == 0)
+				else if (ZQ_CNN_Layer::_my_strcmpi(&buf[0], "Sqrt") == 0)
 				{
 					if (layers.size() == 0)
 					{
@@ -624,7 +624,7 @@ namespace ZQ
 					}
 					layer_type_names.push_back("Sqrt");
 				}
-				else if (_strcmpi(&buf[0], "Tile") == 0)
+				else if (ZQ_CNN_Layer::_my_strcmpi(&buf[0], "Tile") == 0)
 				{
 					if (layers.size() == 0)
 					{
@@ -643,7 +643,7 @@ namespace ZQ
 					}
 					layer_type_names.push_back("Tile");
 				}
-				else if (_strcmpi(&buf[0], "Reduction") == 0)
+				else if (ZQ_CNN_Layer::_my_strcmpi(&buf[0], "Reduction") == 0)
 				{
 					if (layers.size() == 0)
 					{
@@ -662,7 +662,7 @@ namespace ZQ
 					}
 					layer_type_names.push_back("Reduction");
 				}
-				else if (_strcmpi(&buf[0], "LRN") == 0)
+				else if (ZQ_CNN_Layer::_my_strcmpi(&buf[0], "LRN") == 0)
 				{
 					if (layers.size() == 0)
 					{
@@ -681,7 +681,7 @@ namespace ZQ
 					}
 					layer_type_names.push_back("LRN");
 				}
-				else if (_strcmpi(&buf[0], "Normalize") == 0)
+				else if (ZQ_CNN_Layer::_my_strcmpi(&buf[0], "Normalize") == 0)
 				{
 					if (layers.size() == 0)
 					{
@@ -700,7 +700,7 @@ namespace ZQ
 					}
 					layer_type_names.push_back("Normalize");
 				}
-				else if (_strcmpi(&buf[0], "Permute") == 0)
+				else if (ZQ_CNN_Layer::_my_strcmpi(&buf[0], "Permute") == 0)
 				{
 					if (layers.size() == 0)
 					{
@@ -719,7 +719,7 @@ namespace ZQ
 					}
 					layer_type_names.push_back("Permute");
 				}
-				else if (_strcmpi(&buf[0], "Flatten") == 0)
+				else if (ZQ_CNN_Layer::_my_strcmpi(&buf[0], "Flatten") == 0)
 				{
 					if (layers.size() == 0)
 					{
@@ -738,7 +738,7 @@ namespace ZQ
 					}
 					layer_type_names.push_back("Flatten");
 				}
-				else if (_strcmpi(&buf[0], "Reshape") == 0)
+				else if (ZQ_CNN_Layer::_my_strcmpi(&buf[0], "Reshape") == 0)
 				{
 					if (layers.size() == 0)
 					{
@@ -757,7 +757,7 @@ namespace ZQ
 					}
 					layer_type_names.push_back("Reshape");
 				}
-				else if (_strcmpi(&buf[0], "PriorBox") == 0)
+				else if (ZQ_CNN_Layer::_my_strcmpi(&buf[0], "PriorBox") == 0)
 				{
 					if (layers.size() == 0)
 					{
@@ -776,7 +776,7 @@ namespace ZQ
 					}
 					layer_type_names.push_back("PriorBox");
 				}
-				else if (_strcmpi(&buf[0], "PriorBoxText") == 0)
+				else if (ZQ_CNN_Layer::_my_strcmpi(&buf[0], "PriorBoxText") == 0)
 				{
 					if (layers.size() == 0)
 					{
@@ -795,7 +795,7 @@ namespace ZQ
 					}
 					layer_type_names.push_back("PriorBoxText");
 				}
-				else if (_strcmpi(&buf[0], "PriorBox_MXNET") == 0)
+				else if (ZQ_CNN_Layer::_my_strcmpi(&buf[0], "PriorBox_MXNET") == 0)
 				{
 					if (layers.size() == 0)
 					{
@@ -814,7 +814,7 @@ namespace ZQ
 					}
 					layer_type_names.push_back("PriorBox_MXNET");
 				}
-				else if (_strcmpi(&buf[0], "Concat") == 0)
+				else if (ZQ_CNN_Layer::_my_strcmpi(&buf[0], "Concat") == 0)
 				{
 					if (layers.size() == 0)
 					{
@@ -833,7 +833,7 @@ namespace ZQ
 					}
 					layer_type_names.push_back("Concat");
 				}
-				else if (_strcmpi(&buf[0], "DetectionOutput") == 0)
+				else if (ZQ_CNN_Layer::_my_strcmpi(&buf[0], "DetectionOutput") == 0)
 				{
 					if (layers.size() == 0)
 					{
@@ -852,7 +852,7 @@ namespace ZQ
 					}
 					layer_type_names.push_back("DetectionOutput");
 				}
-				else if (_strcmpi(&buf[0], "DetectionOutput_MXNET") == 0)
+				else if (ZQ_CNN_Layer::_my_strcmpi(&buf[0], "DetectionOutput_MXNET") == 0)
 				{
 					if (layers.size() == 0)
 					{
@@ -871,7 +871,7 @@ namespace ZQ
 					}
 					layer_type_names.push_back("DetectionOutput_MXNET");
 				}
-				else if (_strcmpi(&buf[0], "Input") == 0)
+				else if (ZQ_CNN_Layer::_my_strcmpi(&buf[0], "Input") == 0)
 				{
 					if (has_input_layer)
 					{
@@ -1180,9 +1180,9 @@ namespace ZQ
 			std::vector<std::vector<int>> tmp_tops;	
 			for (int i = 0; i < layers.size(); i++)
 			{
-				if (_strcmpi(layer_type_names[i].c_str(), "Convolution") == 0)
+				if (ZQ_CNN_Layer::_my_strcmpi(layer_type_names[i].c_str(), "Convolution") == 0)
 				{
-					if (i + 1 < layers.size() && _strcmpi(layer_type_names[i+1].c_str(), "BatchNormScale") == 0)
+					if (i + 1 < layers.size() && ZQ_CNN_Layer::_my_strcmpi(layer_type_names[i+1].c_str(), "BatchNormScale") == 0)
 					{
 						bool later_refer = false;
 						for (int j = i + 2; j < layers.size(); j++)
@@ -1216,9 +1216,9 @@ namespace ZQ
 						}
 					}
 				}
-				else if (_strcmpi(layer_type_names[i].c_str(), "DepthwiseConvolution") == 0)
+				else if (ZQ_CNN_Layer::_my_strcmpi(layer_type_names[i].c_str(), "DepthwiseConvolution") == 0)
 				{
-					if (i + 1 < layers.size() && _strcmpi(layer_type_names[i+1].c_str(), "BatchNormScale") == 0)
+					if (i + 1 < layers.size() && ZQ_CNN_Layer::_my_strcmpi(layer_type_names[i+1].c_str(), "BatchNormScale") == 0)
 					{
 						bool later_refer = false;
 						for (int j = i + 2; j < layers.size(); j++)
@@ -1381,7 +1381,7 @@ namespace ZQ
 				bool found = false;
 				for (int i = 0; i < layer_num; i++)
 				{
-					if (_strcmpi(layers[i]->name.c_str(), layer_names[j].c_str()) == 0)
+					if (ZQ_CNN_Layer::_my_strcmpi(layers[i]->name.c_str(), layer_names[j].c_str()) == 0)
 					{
 						found = true;
 						if (!layers[i]->SwapInputRGBandBGR())

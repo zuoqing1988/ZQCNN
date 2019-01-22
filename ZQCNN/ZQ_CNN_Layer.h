@@ -118,6 +118,27 @@ namespace ZQ
 			}
 			return out;
 		}
+
+	public:
+		static int _my_strcmpi(const char* str1, const char* str2)
+		{
+			char c1, c2;
+			while (true)
+			{
+				c1 = tolower(*str1);
+				c2 = tolower(*str2);
+				str1++;
+				str2++;
+				if (c1 < c2)
+					return -1;
+				else if (c1 > c2)
+					return 1;
+				
+				if (c1 == '\0')
+					break;
+			}
+			return 0;
+		}
 	};
 
 	class ZQ_CNN_Layer_Input : public ZQ_CNN_Layer
@@ -142,11 +163,11 @@ namespace ZQ
 			{
 				if (paras[n].size() == 0)
 					continue;
-				if (_strcmpi("Input", paras[n][0].c_str()) == 0)
+				if (_my_strcmpi("Input", paras[n][0].c_str()) == 0)
 				{
 
 				}
-				else if (_strcmpi("H", paras[n][0].c_str()) == 0)
+				else if (_my_strcmpi("H", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
@@ -154,7 +175,7 @@ namespace ZQ
 						H = atoi(paras[n][1].c_str());
 					}
 				}
-				else if (_strcmpi("W", paras[n][0].c_str()) == 0)
+				else if (_my_strcmpi("W", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
@@ -162,7 +183,7 @@ namespace ZQ
 						W = atoi(paras[n][1].c_str());
 					}
 				}
-				else if (_strcmpi("C", paras[n][0].c_str()) == 0)
+				else if (_my_strcmpi("C", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
@@ -170,7 +191,7 @@ namespace ZQ
 						C = atoi(paras[n][1].c_str());
 					}
 				}
-				else if (_strcmpi("name", paras[n][0].c_str()) == 0)
+				else if (_my_strcmpi("name", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
@@ -310,11 +331,11 @@ namespace ZQ
 			{
 				if (paras[n].size() == 0)
 					continue;
-				if (_strcmpi("Convolution", paras[n][0].c_str()) == 0)
+				if (_my_strcmpi("Convolution", paras[n][0].c_str()) == 0)
 				{
 
 				}
-				else if (_strcmpi("num_output", paras[n][0].c_str()) == 0)
+				else if (_my_strcmpi("num_output", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
@@ -322,7 +343,7 @@ namespace ZQ
 						num_output = atoi(paras[n][1].c_str());
 					}
 				}
-				else if (_strcmpi("kernel_size", paras[n][0].c_str()) == 0)
+				else if (_my_strcmpi("kernel_size", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
@@ -332,7 +353,7 @@ namespace ZQ
 						kernel_W = atoi(paras[n][1].c_str());
 					}
 				}
-				else if (_strcmpi("kernel_H", paras[n][0].c_str()) == 0)
+				else if (_my_strcmpi("kernel_H", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
@@ -340,7 +361,7 @@ namespace ZQ
 						kernel_H = atoi(paras[n][1].c_str());
 					}
 				}
-				else if (_strcmpi("kernel_W", paras[n][0].c_str()) == 0)
+				else if (_my_strcmpi("kernel_W", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
@@ -348,7 +369,7 @@ namespace ZQ
 						kernel_W = atoi(paras[n][1].c_str());
 					}
 				}
-				else if (_strcmpi("dilate", paras[n][0].c_str()) == 0)
+				else if (_my_strcmpi("dilate", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
@@ -356,21 +377,21 @@ namespace ZQ
 						dilate_W = atoi(paras[n][1].c_str());
 					}
 				}
-				else if (_strcmpi("dilate_H", paras[n][0].c_str()) == 0)
+				else if (_my_strcmpi("dilate_H", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
 						dilate_H = atoi(paras[n][1].c_str());
 					}
 				}
-				else if (_strcmpi("dilate_W", paras[n][0].c_str()) == 0)
+				else if (_my_strcmpi("dilate_W", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
 						dilate_W = atoi(paras[n][1].c_str());
 					}
 				}
-				else if (_strcmpi("pad", paras[n][0].c_str()) == 0)
+				else if (_my_strcmpi("pad", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
@@ -378,21 +399,21 @@ namespace ZQ
 						pad_H = pad_W = pad_num;
 					}
 				}
-				else if (_strcmpi("pad_H", paras[n][0].c_str()) == 0)
+				else if (_my_strcmpi("pad_H", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
 						pad_H = atoi(paras[n][1].c_str());
 					}
 				}
-				else if (_strcmpi("pad_W", paras[n][0].c_str()) == 0)
+				else if (_my_strcmpi("pad_W", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
 						pad_W = atoi(paras[n][1].c_str());
 					}
 				}
-				else if (_strcmpi("stride", paras[n][0].c_str()) == 0)
+				else if (_my_strcmpi("stride", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
@@ -400,28 +421,28 @@ namespace ZQ
 						stride_W = atoi(paras[n][1].c_str());
 					}
 				}
-				else if (_strcmpi("stride_H", paras[n][0].c_str()) == 0)
+				else if (_my_strcmpi("stride_H", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
 						stride_H = atoi(paras[n][1].c_str());
 					}
 				}
-				else if (_strcmpi("stride_W", paras[n][0].c_str()) == 0)
+				else if (_my_strcmpi("stride_W", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
 						stride_W = atoi(paras[n][1].c_str());
 					}
 				}
-				else if (_strcmpi("bias", paras[n][0].c_str()) == 0)
+				else if (_my_strcmpi("bias", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() > 1)
 						with_bias = atoi(paras[n][1].c_str());
 					else
 						with_bias = true;
 				}
-				else if (_strcmpi("top", paras[n][0].c_str()) == 0)
+				else if (_my_strcmpi("top", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
@@ -429,7 +450,7 @@ namespace ZQ
 						top_names.push_back(paras[n][1]);
 					}
 				}
-				else if (_strcmpi("bottom", paras[n][0].c_str()) == 0)
+				else if (_my_strcmpi("bottom", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
@@ -437,7 +458,7 @@ namespace ZQ
 						bottom_names.push_back(paras[n][1]);
 					}
 				}
-				else if (_strcmpi("name", paras[n][0].c_str()) == 0)
+				else if (_my_strcmpi("name", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
@@ -756,11 +777,11 @@ namespace ZQ
 			{
 				if (paras[n].size() == 0)
 					continue;
-				if (_strcmpi("DepthwiseConvolution", paras[n][0].c_str()) == 0)
+				if (_my_strcmpi("DepthwiseConvolution", paras[n][0].c_str()) == 0)
 				{
 
 				}
-				else if (_strcmpi("num_output", paras[n][0].c_str()) == 0)
+				else if (_my_strcmpi("num_output", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
@@ -768,7 +789,7 @@ namespace ZQ
 						num_output = atoi(paras[n][1].c_str());
 					}
 				}
-				else if (_strcmpi("kernel_size", paras[n][0].c_str()) == 0)
+				else if (_my_strcmpi("kernel_size", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
@@ -778,7 +799,7 @@ namespace ZQ
 						kernel_W = atoi(paras[n][1].c_str());
 					}
 				}
-				else if (_strcmpi("kernel_H", paras[n][0].c_str()) == 0)
+				else if (_my_strcmpi("kernel_H", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
@@ -786,7 +807,7 @@ namespace ZQ
 						kernel_H = atoi(paras[n][1].c_str());
 					}
 				}
-				else if (_strcmpi("kernel_W", paras[n][0].c_str()) == 0)
+				else if (_my_strcmpi("kernel_W", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
@@ -794,7 +815,7 @@ namespace ZQ
 						kernel_W = atoi(paras[n][1].c_str());
 					}
 				}
-				else if (_strcmpi("dilate", paras[n][0].c_str()) == 0)
+				else if (_my_strcmpi("dilate", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
@@ -802,21 +823,21 @@ namespace ZQ
 						dilate_W = atoi(paras[n][1].c_str());
 					}
 				}
-				else if (_strcmpi("dilate_H", paras[n][0].c_str()) == 0)
+				else if (_my_strcmpi("dilate_H", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
 						dilate_H = atoi(paras[n][1].c_str());
 					}
 				}
-				else if (_strcmpi("dilate_W", paras[n][0].c_str()) == 0)
+				else if (_my_strcmpi("dilate_W", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
 						dilate_W = atoi(paras[n][1].c_str());
 					}
 				}
-				else if (_strcmpi("pad", paras[n][0].c_str()) == 0)
+				else if (_my_strcmpi("pad", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
@@ -824,21 +845,21 @@ namespace ZQ
 						pad_H = pad_W = pad_num;
 					}
 				}
-				else if (_strcmpi("pad_H", paras[n][0].c_str()) == 0)
+				else if (_my_strcmpi("pad_H", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
 						pad_H = atoi(paras[n][1].c_str());
 					}
 				}
-				else if (_strcmpi("pad_W", paras[n][0].c_str()) == 0)
+				else if (_my_strcmpi("pad_W", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
 						pad_W = atoi(paras[n][1].c_str());
 					}
 				}
-				else if (_strcmpi("stride", paras[n][0].c_str()) == 0)
+				else if (_my_strcmpi("stride", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
@@ -846,28 +867,28 @@ namespace ZQ
 						stride_W = atoi(paras[n][1].c_str());
 					}
 				}
-				else if (_strcmpi("stride_H", paras[n][0].c_str()) == 0)
+				else if (_my_strcmpi("stride_H", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
 						stride_H = atoi(paras[n][1].c_str());
 					}
 				}
-				else if (_strcmpi("stride_W", paras[n][0].c_str()) == 0)
+				else if (_my_strcmpi("stride_W", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
 						stride_W = atoi(paras[n][1].c_str());
 					}
 				}
-				else if (_strcmpi("bias", paras[n][0].c_str()) == 0)
+				else if (_my_strcmpi("bias", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() > 1)
 						with_bias = atoi(paras[n][1].c_str());
 					else
 						with_bias = true;
 				}
-				else if (_strcmpi("top", paras[n][0].c_str()) == 0)
+				else if (_my_strcmpi("top", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
@@ -875,7 +896,7 @@ namespace ZQ
 						top_names.push_back(paras[n][1]);
 					}
 				}
-				else if (_strcmpi("bottom", paras[n][0].c_str()) == 0)
+				else if (_my_strcmpi("bottom", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
@@ -883,7 +904,7 @@ namespace ZQ
 						bottom_names.push_back(paras[n][1]);
 					}
 				}
-				else if (_strcmpi("name", paras[n][0].c_str()) == 0)
+				else if (_my_strcmpi("name", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
@@ -1153,18 +1174,18 @@ namespace ZQ
 			{
 				if (paras[n].size() == 0)
 					continue;
-				if (_strcmpi("BatchNormScale", paras[n][0].c_str()) == 0)
+				if (_my_strcmpi("BatchNormScale", paras[n][0].c_str()) == 0)
 				{
 
 				}
-				else if (_strcmpi("eps", paras[n][0].c_str()) == 0)
+				else if (_my_strcmpi("eps", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
 						eps = atof(paras[n][1].c_str());
 					}
 				}
-				else if (_strcmpi("top", paras[n][0].c_str()) == 0)
+				else if (_my_strcmpi("top", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
@@ -1172,7 +1193,7 @@ namespace ZQ
 						top_names.push_back(paras[n][1]);
 					}
 				}
-				else if (_strcmpi("bottom", paras[n][0].c_str()) == 0)
+				else if (_my_strcmpi("bottom", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
@@ -1180,7 +1201,7 @@ namespace ZQ
 						bottom_names.push_back(paras[n][1]);
 					}
 				}
-				else if (_strcmpi("name", paras[n][0].c_str()) == 0)
+				else if (_my_strcmpi("name", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
@@ -1188,7 +1209,7 @@ namespace ZQ
 						name = paras[n][1];
 					}
 				}
-				else if (_strcmpi("bias", paras[n][0].c_str()) == 0)
+				else if (_my_strcmpi("bias", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() > 1)
 						with_bias = atoi(paras[n][1].c_str());
@@ -1506,18 +1527,18 @@ namespace ZQ
 			{
 				if (paras[n].size() == 0)
 					continue;
-				if (_strcmpi("BatchNorm", paras[n][0].c_str()) == 0)
+				if (_my_strcmpi("BatchNorm", paras[n][0].c_str()) == 0)
 				{
 
 				}
-				else if (_strcmpi("eps", paras[n][0].c_str()) == 0)
+				else if (_my_strcmpi("eps", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
 						eps = atof(paras[n][1].c_str());
 					}
 				}
-				else if (_strcmpi("top", paras[n][0].c_str()) == 0)
+				else if (_my_strcmpi("top", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
@@ -1525,7 +1546,7 @@ namespace ZQ
 						top_names.push_back(paras[n][1]);
 					}
 				}
-				else if (_strcmpi("bottom", paras[n][0].c_str()) == 0)
+				else if (_my_strcmpi("bottom", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
@@ -1533,7 +1554,7 @@ namespace ZQ
 						bottom_names.push_back(paras[n][1]);
 					}
 				}
-				else if (_strcmpi("name", paras[n][0].c_str()) == 0)
+				else if (_my_strcmpi("name", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
@@ -1770,18 +1791,18 @@ namespace ZQ
 			{
 				if (paras[n].size() == 0)
 					continue;
-				if (_strcmpi("Scale", paras[n][0].c_str()) == 0)
+				if (_my_strcmpi("Scale", paras[n][0].c_str()) == 0)
 				{
 
 				}
-				else if (_strcmpi("bias", paras[n][0].c_str()) == 0)
+				else if (_my_strcmpi("bias", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() > 1)
 						with_bias = atoi(paras[n][1].c_str());
 					else
 						with_bias = true;
 				}
-				else if (_strcmpi("top", paras[n][0].c_str()) == 0)
+				else if (_my_strcmpi("top", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
@@ -1789,7 +1810,7 @@ namespace ZQ
 						top_names.push_back(paras[n][1]);
 					}
 				}
-				else if (_strcmpi("bottom", paras[n][0].c_str()) == 0)
+				else if (_my_strcmpi("bottom", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
@@ -1797,7 +1818,7 @@ namespace ZQ
 						bottom_names.push_back(paras[n][1]);
 					}
 				}
-				else if (_strcmpi("name", paras[n][0].c_str()) == 0)
+				else if (_my_strcmpi("name", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
@@ -2040,11 +2061,11 @@ namespace ZQ
 			{
 				if (paras[n].size() == 0)
 					continue;
-				if (_strcmpi("PReLU", paras[n][0].c_str()) == 0)
+				if (_my_strcmpi("PReLU", paras[n][0].c_str()) == 0)
 				{
 
 				}
-				else if (_strcmpi("top", paras[n][0].c_str()) == 0)
+				else if (_my_strcmpi("top", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
@@ -2052,7 +2073,7 @@ namespace ZQ
 						top_names.push_back(paras[n][1]);
 					}
 				}
-				else if (_strcmpi("bottom", paras[n][0].c_str()) == 0)
+				else if (_my_strcmpi("bottom", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
@@ -2060,7 +2081,7 @@ namespace ZQ
 						bottom_names.push_back(paras[n][1]);
 					}
 				}
-				else if (_strcmpi("name", paras[n][0].c_str()) == 0)
+				else if (_my_strcmpi("name", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
@@ -2234,18 +2255,18 @@ namespace ZQ
 			{
 				if (paras[n].size() == 0)
 					continue;
-				if (_strcmpi("ReLU", paras[n][0].c_str()) == 0)
+				if (_my_strcmpi("ReLU", paras[n][0].c_str()) == 0)
 				{
 
 				}
-				else if (_strcmpi("slope", paras[n][0].c_str()) == 0)
+				else if (_my_strcmpi("slope", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
 						slope = atof(paras[n][1].c_str());
 					}
 				}
-				else if (_strcmpi("top", paras[n][0].c_str()) == 0)
+				else if (_my_strcmpi("top", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
@@ -2253,7 +2274,7 @@ namespace ZQ
 						top_names.push_back(paras[n][1]);
 					}
 				}
-				else if (_strcmpi("bottom", paras[n][0].c_str()) == 0)
+				else if (_my_strcmpi("bottom", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
@@ -2261,7 +2282,7 @@ namespace ZQ
 						bottom_names.push_back(paras[n][1]);
 					}
 				}
-				else if (_strcmpi("name", paras[n][0].c_str()) == 0)
+				else if (_my_strcmpi("name", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
@@ -2398,11 +2419,11 @@ namespace ZQ
 			{
 				if (paras[n].size() == 0)
 					continue;
-				if (_strcmpi("Pooling", paras[n][0].c_str()) == 0)
+				if (_my_strcmpi("Pooling", paras[n][0].c_str()) == 0)
 				{
 
 				}
-				else if (_strcmpi("kernel_size", paras[n][0].c_str()) == 0)
+				else if (_my_strcmpi("kernel_size", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
@@ -2412,7 +2433,7 @@ namespace ZQ
 						kernel_W = atoi(paras[n][1].c_str());
 					}
 				}
-				else if (_strcmpi("stride", paras[n][0].c_str()) == 0)
+				else if (_my_strcmpi("stride", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
@@ -2422,7 +2443,7 @@ namespace ZQ
 						stride_W = atoi(paras[n][1].c_str());
 					}
 				}
-				else if (_strcmpi("pad", paras[n][0].c_str()) == 0)
+				else if (_my_strcmpi("pad", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
@@ -2430,11 +2451,11 @@ namespace ZQ
 						pad_W = atoi(paras[n][1].c_str());
 					}
 				}
-				else if (_strcmpi("global_pool", paras[n][0].c_str()) == 0)
+				else if (_my_strcmpi("global_pool", paras[n][0].c_str()) == 0)
 				{
 					global_pool = true;
 				}
-				else if (_strcmpi("top", paras[n][0].c_str()) == 0)
+				else if (_my_strcmpi("top", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
@@ -2442,7 +2463,7 @@ namespace ZQ
 						top_names.push_back(paras[n][1]);
 					}
 				}
-				else if (_strcmpi("bottom", paras[n][0].c_str()) == 0)
+				else if (_my_strcmpi("bottom", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
@@ -2450,7 +2471,7 @@ namespace ZQ
 						bottom_names.push_back(paras[n][1]);
 					}
 				}
-				else if (_strcmpi("name", paras[n][0].c_str()) == 0)
+				else if (_my_strcmpi("name", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
@@ -2458,14 +2479,14 @@ namespace ZQ
 						name = paras[n][1];
 					}
 				}
-				else if (_strcmpi("pool", paras[n][0].c_str()) == 0)
+				else if (_my_strcmpi("pool", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
 						const char* str = paras[n][1].c_str();
-						if (_strcmpi(str,"MAX") == 0)
+						if (_my_strcmpi(str,"MAX") == 0)
 							type = TYPE_MAXPOOLING;
-						else if (_strcmpi(str,"AVG") == 0 || _strcmpi(str, "AVE") == 0)
+						else if (_my_strcmpi(str,"AVG") == 0 || _my_strcmpi(str, "AVE") == 0)
 							type = TYPE_AVGPOOLING;
 						else
 						{
@@ -2633,11 +2654,11 @@ namespace ZQ
 			{
 				if (paras[n].size() == 0)
 					continue;
-				if (_strcmpi("InnerProduct", paras[n][0].c_str()) == 0)
+				if (_my_strcmpi("InnerProduct", paras[n][0].c_str()) == 0)
 				{
 
 				}
-				else if (_strcmpi("num_output", paras[n][0].c_str()) == 0)
+				else if (_my_strcmpi("num_output", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
@@ -2645,7 +2666,7 @@ namespace ZQ
 						num_output = atoi(paras[n][1].c_str());
 					}
 				}
-				/*else if (_strcmpi("kernel_size", paras[n][0].c_str()) == 0)
+				/*else if (_my_strcmpi("kernel_size", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
@@ -2655,7 +2676,7 @@ namespace ZQ
 						kernel_W = atoi(paras[n][1].c_str());
 					}
 				}
-				else if (_strcmpi("kernel_H", paras[n][0].c_str()) == 0)
+				else if (_my_strcmpi("kernel_H", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
@@ -2663,7 +2684,7 @@ namespace ZQ
 						kernel_H = atoi(paras[n][1].c_str());
 					}
 				}
-				else if (_strcmpi("kernel_W", paras[n][0].c_str()) == 0)
+				else if (_my_strcmpi("kernel_W", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
@@ -2671,14 +2692,14 @@ namespace ZQ
 						kernel_W = atoi(paras[n][1].c_str());
 					}
 				}*/
-				else if (_strcmpi("bias", paras[n][0].c_str()) == 0)
+				else if (_my_strcmpi("bias", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() > 1)
 						with_bias = atoi(paras[n][1].c_str());
 					else
 						with_bias = true;
 				}
-				else if (_strcmpi("top", paras[n][0].c_str()) == 0)
+				else if (_my_strcmpi("top", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
@@ -2686,7 +2707,7 @@ namespace ZQ
 						top_names.push_back(paras[n][1]);
 					}
 				}
-				else if (_strcmpi("bottom", paras[n][0].c_str()) == 0)
+				else if (_my_strcmpi("bottom", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
@@ -2694,7 +2715,7 @@ namespace ZQ
 						bottom_names.push_back(paras[n][1]);
 					}
 				}
-				else if (_strcmpi("name", paras[n][0].c_str()) == 0)
+				else if (_my_strcmpi("name", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
@@ -2969,11 +2990,11 @@ namespace ZQ
 			{
 				if (paras[n].size() == 0)
 					continue;
-				if (_strcmpi("Softmax", paras[n][0].c_str()) == 0)
+				if (_my_strcmpi("Softmax", paras[n][0].c_str()) == 0)
 				{
 
 				}
-				else if (_strcmpi("top", paras[n][0].c_str()) == 0)
+				else if (_my_strcmpi("top", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
@@ -2981,7 +3002,7 @@ namespace ZQ
 						top_names.push_back(paras[n][1]);
 					}
 				}
-				else if (_strcmpi("bottom", paras[n][0].c_str()) == 0)
+				else if (_my_strcmpi("bottom", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
@@ -2989,7 +3010,7 @@ namespace ZQ
 						bottom_names.push_back(paras[n][1]);
 					}
 				}
-				else if (_strcmpi("name", paras[n][0].c_str()) == 0)
+				else if (_my_strcmpi("name", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
@@ -2997,7 +3018,7 @@ namespace ZQ
 						name = paras[n][1];
 					}
 				}
-				else if (_strcmpi("axis", paras[n][0].c_str()) == 0)
+				else if (_my_strcmpi("axis", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
@@ -3108,18 +3129,18 @@ namespace ZQ
 			{
 				if (paras[n].size() == 0)
 					continue;
-				if (_strcmpi("Dropout", paras[n][0].c_str()) == 0)
+				if (_my_strcmpi("Dropout", paras[n][0].c_str()) == 0)
 				{
 
 				}
-				else if (_strcmpi("dropout_ratio", paras[n][0].c_str()) == 0)
+				else if (_my_strcmpi("dropout_ratio", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
 						dropout_ratio = atof(paras[n][1].c_str());
 					}
 				}
-				else if (_strcmpi("top", paras[n][0].c_str()) == 0)
+				else if (_my_strcmpi("top", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
@@ -3127,7 +3148,7 @@ namespace ZQ
 						top_names.push_back(paras[n][1]);
 					}
 				}
-				else if (_strcmpi("bottom", paras[n][0].c_str()) == 0)
+				else if (_my_strcmpi("bottom", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
@@ -3135,7 +3156,7 @@ namespace ZQ
 						bottom_names.push_back(paras[n][1]);
 					}
 				}
-				else if (_strcmpi("name", paras[n][0].c_str()) == 0)
+				else if (_my_strcmpi("name", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
@@ -3243,11 +3264,11 @@ namespace ZQ
 			{
 				if (paras[n].size() == 0)
 					continue;
-				if (_strcmpi("Copy", paras[n][0].c_str()) == 0)
+				if (_my_strcmpi("Copy", paras[n][0].c_str()) == 0)
 				{
 
 				}
-				else if (_strcmpi("top", paras[n][0].c_str()) == 0)
+				else if (_my_strcmpi("top", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
@@ -3255,7 +3276,7 @@ namespace ZQ
 						top_names.push_back(paras[n][1]);
 					}
 				}
-				else if (_strcmpi("bottom", paras[n][0].c_str()) == 0)
+				else if (_my_strcmpi("bottom", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
@@ -3263,7 +3284,7 @@ namespace ZQ
 						bottom_names.push_back(paras[n][1]);
 					}
 				}
-				else if (_strcmpi("name", paras[n][0].c_str()) == 0)
+				else if (_my_strcmpi("name", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
@@ -3403,26 +3424,26 @@ namespace ZQ
 			{
 				if (paras[n].size() == 0)
 					continue;
-				if (_strcmpi("Eltwise", paras[n][0].c_str()) == 0)
+				if (_my_strcmpi("Eltwise", paras[n][0].c_str()) == 0)
 				{
 
 				}
-				else if (_strcmpi("operation", paras[n][0].c_str()) == 0)
+				else if (_my_strcmpi("operation", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
 						has_operation = true;
 						const char* str = paras[n][1].c_str();
 
-						if (_strcmpi(str, "PROD") == 0 || _strcmpi(str, "MUL") == 0)
+						if (_my_strcmpi(str, "PROD") == 0 || _my_strcmpi(str, "MUL") == 0)
 						{
 							operation = ELTWISE_MUL;
 						}
-						else if (_strcmpi(str, "SUM") == 0 || _strcmpi(str, "ADD") == 0 || _strcmpi(str, "PLUS") == 0)
+						else if (_my_strcmpi(str, "SUM") == 0 || _my_strcmpi(str, "ADD") == 0 || _my_strcmpi(str, "PLUS") == 0)
 						{
 							operation = ELTWISE_SUM;
 						}
-						else if(_strcmpi(str,"MAX") == 0)
+						else if(_my_strcmpi(str,"MAX") == 0)
 						{
 							operation = ELTWISE_MAX;
 						}
@@ -3432,7 +3453,7 @@ namespace ZQ
 						}
 					}
 				}
-				else if (_strcmpi("top", paras[n][0].c_str()) == 0)
+				else if (_my_strcmpi("top", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
@@ -3440,7 +3461,7 @@ namespace ZQ
 						top_names.push_back(paras[n][1]);
 					}
 				}
-				else if (_strcmpi("bottom", paras[n][0].c_str()) == 0)
+				else if (_my_strcmpi("bottom", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
@@ -3448,7 +3469,7 @@ namespace ZQ
 						bottom_names.push_back(paras[n][1]);
 					}
 				}
-				else if (_strcmpi("name", paras[n][0].c_str()) == 0)
+				else if (_my_strcmpi("name", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
@@ -3456,7 +3477,7 @@ namespace ZQ
 						name = paras[n][1];
 					}
 				}
-				else if (_strcmpi("weight", paras[n][0].c_str()) == 0)
+				else if (_my_strcmpi("weight", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
@@ -3649,50 +3670,50 @@ namespace ZQ
 			{
 				if (paras[n].size() == 0)
 					continue;
-				if (_strcmpi("ScalarOperation", paras[n][0].c_str()) == 0)
+				if (_my_strcmpi("ScalarOperation", paras[n][0].c_str()) == 0)
 				{
 
 				}
-				else if (_strcmpi("operation", paras[n][0].c_str()) == 0)
+				else if (_my_strcmpi("operation", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
 						has_operation = true;
 						const char* str = paras[n][1].c_str();
 
-						if (_strcmpi(str, "MUL") == 0 || _strcmpi(str, "PROD") == 0)
+						if (_my_strcmpi(str, "MUL") == 0 || _my_strcmpi(str, "PROD") == 0)
 						{
 							operation = SCALAR_MUL;
 						}
-						else if (_strcmpi(str, "DIV") == 0)
+						else if (_my_strcmpi(str, "DIV") == 0)
 						{
 							operation = SCALAR_DIV;
 						}
-						else if (_strcmpi(str, "ADD") == 0 || _strcmpi(str, "SUM") == 0 || _strcmpi(str, "PLUS") == 0)
+						else if (_my_strcmpi(str, "ADD") == 0 || _my_strcmpi(str, "SUM") == 0 || _my_strcmpi(str, "PLUS") == 0)
 						{
 							operation = SCALAR_ADD;
 						}
-						else if (_strcmpi(str, "MINUS") == 0 || _strcmpi(str, "SUB") == 0)
+						else if (_my_strcmpi(str, "MINUS") == 0 || _my_strcmpi(str, "SUB") == 0)
 						{
 							operation = SCALAR_MINUS;
 						}
-						else if (_strcmpi(str, "MAX") == 0)
+						else if (_my_strcmpi(str, "MAX") == 0)
 						{
 							operation = SCALAR_MAX;
 						}
-						else if (_strcmpi(str, "MIN") == 0)
+						else if (_my_strcmpi(str, "MIN") == 0)
 						{
 							operation = SCALAR_MIN;
 						}
-						else if (_strcmpi(str, "POW") == 0)
+						else if (_my_strcmpi(str, "POW") == 0)
 						{
 							operation = SCALAR_POW;
 						}
-						else if (_strcmpi(str, "RDIV") == 0)
+						else if (_my_strcmpi(str, "RDIV") == 0)
 						{
 							operation = SCALAR_RDIV;
 						}
-						else if (_strcmpi(str, "RMINUS") == 0)
+						else if (_my_strcmpi(str, "RMINUS") == 0)
 						{
 							operation = SCALAR_RMINUS;
 						}
@@ -3702,7 +3723,7 @@ namespace ZQ
 						}
 					}
 				}
-				else if (_strcmpi("top", paras[n][0].c_str()) == 0)
+				else if (_my_strcmpi("top", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
@@ -3710,7 +3731,7 @@ namespace ZQ
 						top_names.push_back(paras[n][1]);
 					}
 				}
-				else if (_strcmpi("bottom", paras[n][0].c_str()) == 0)
+				else if (_my_strcmpi("bottom", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
@@ -3718,7 +3739,7 @@ namespace ZQ
 						bottom_names.push_back(paras[n][1]);
 					}
 				}
-				else if (_strcmpi("name", paras[n][0].c_str()) == 0)
+				else if (_my_strcmpi("name", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
@@ -3726,7 +3747,7 @@ namespace ZQ
 						name = paras[n][1];
 					}
 				}
-				else if (_strcmpi("scalar", paras[n][0].c_str()) == 0)
+				else if (_my_strcmpi("scalar", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
@@ -3917,50 +3938,50 @@ namespace ZQ
 			{
 				if (paras[n].size() == 0)
 					continue;
-				if (_strcmpi("UnaryOperation", paras[n][0].c_str()) == 0)
+				if (_my_strcmpi("UnaryOperation", paras[n][0].c_str()) == 0)
 				{
 
 				}
-				else if (_strcmpi("operation", paras[n][0].c_str()) == 0)
+				else if (_my_strcmpi("operation", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
 						has_operation = true;
 						const char* str = paras[n][1].c_str();
 
-						if (_strcmpi(str, "MUL") == 0 || _strcmpi(str, "PROD") == 0)
+						if (_my_strcmpi(str, "MUL") == 0 || _my_strcmpi(str, "PROD") == 0)
 						{
 							operation = UNARY_MUL;
 						}
-						else if (_strcmpi(str, "DIV") == 0)
+						else if (_my_strcmpi(str, "DIV") == 0)
 						{
 							operation = UNARY_DIV;
 						}
-						else if (_strcmpi(str, "ADD") == 0 || _strcmpi(str, "SUM") == 0 || _strcmpi(str, "PLUS") == 0)
+						else if (_my_strcmpi(str, "ADD") == 0 || _my_strcmpi(str, "SUM") == 0 || _my_strcmpi(str, "PLUS") == 0)
 						{
 							operation = UNARY_ADD;
 						}
-						else if (_strcmpi(str, "MINUS") == 0 || _strcmpi(str, "SUB") == 0)
+						else if (_my_strcmpi(str, "MINUS") == 0 || _my_strcmpi(str, "SUB") == 0)
 						{
 							operation = UNARY_MINUS;
 						}
-						else if (_strcmpi(str, "MAX") == 0)
+						else if (_my_strcmpi(str, "MAX") == 0)
 						{
 							operation = UNARY_MAX;
 						}
-						else if (_strcmpi(str, "MIN") == 0)
+						else if (_my_strcmpi(str, "MIN") == 0)
 						{
 							operation = UNARY_MIN;
 						}
-						else if (_strcmpi(str, "POW") == 0)
+						else if (_my_strcmpi(str, "POW") == 0)
 						{
 							operation = UNARY_POW;
 						}
-						else if (_strcmpi(str, "RDIV") == 0)
+						else if (_my_strcmpi(str, "RDIV") == 0)
 						{
 							operation = UNARY_RDIV;
 						}
-						else if (_strcmpi(str, "RMINUS") == 0)
+						else if (_my_strcmpi(str, "RMINUS") == 0)
 						{
 							operation = UNARY_RMINUS;
 						}
@@ -3970,7 +3991,7 @@ namespace ZQ
 						}
 					}
 				}
-				else if (_strcmpi("top", paras[n][0].c_str()) == 0)
+				else if (_my_strcmpi("top", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
@@ -3978,7 +3999,7 @@ namespace ZQ
 						top_names.push_back(paras[n][1]);
 					}
 				}
-				else if (_strcmpi("bottom", paras[n][0].c_str()) == 0)
+				else if (_my_strcmpi("bottom", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
@@ -3986,7 +4007,7 @@ namespace ZQ
 						bottom_names.push_back(paras[n][1]);
 					}
 				}
-				else if (_strcmpi("name", paras[n][0].c_str()) == 0)
+				else if (_my_strcmpi("name", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
@@ -4116,11 +4137,11 @@ namespace ZQ
 			{
 				if (paras[n].size() == 0)
 					continue;
-				if (_strcmpi("LRN", paras[n][0].c_str()) == 0)
+				if (_my_strcmpi("LRN", paras[n][0].c_str()) == 0)
 				{
 
 				}
-				else if (_strcmpi("operation", paras[n][0].c_str()) == 0)
+				else if (_my_strcmpi("operation", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
@@ -4128,7 +4149,7 @@ namespace ZQ
 						operation = atoi(paras[n][1].c_str());
 					}
 				}
-				else if (_strcmpi("top", paras[n][0].c_str()) == 0)
+				else if (_my_strcmpi("top", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
@@ -4136,7 +4157,7 @@ namespace ZQ
 						top_names.push_back(paras[n][1]);
 					}
 				}
-				else if (_strcmpi("bottom", paras[n][0].c_str()) == 0)
+				else if (_my_strcmpi("bottom", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
@@ -4144,7 +4165,7 @@ namespace ZQ
 						bottom_names.push_back(paras[n][1]);
 					}
 				}
-				else if (_strcmpi("name", paras[n][0].c_str()) == 0)
+				else if (_my_strcmpi("name", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
@@ -4152,7 +4173,7 @@ namespace ZQ
 						name = paras[n][1];
 					}
 				}
-				else if (_strcmpi("local_size", paras[n][0].c_str()) == 0)
+				else if (_my_strcmpi("local_size", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
@@ -4160,7 +4181,7 @@ namespace ZQ
 						has_local_size = true;
 					}
 				}
-				else if (_strcmpi("alpha", paras[n][0].c_str()) == 0)
+				else if (_my_strcmpi("alpha", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
@@ -4168,7 +4189,7 @@ namespace ZQ
 						has_alpha = true;
 					}
 				}
-				else if (_strcmpi("beta", paras[n][0].c_str()) == 0)
+				else if (_my_strcmpi("beta", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
@@ -4176,7 +4197,7 @@ namespace ZQ
 						has_beta = true;
 					}
 				}
-				else if (_strcmpi("k", paras[n][0].c_str()) == 0)
+				else if (_my_strcmpi("k", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
@@ -4294,26 +4315,26 @@ namespace ZQ
 			{
 				if (paras[n].size() == 0)
 					continue;
-				if (_strcmpi("Normalize", paras[n][0].c_str()) == 0)
+				if (_my_strcmpi("Normalize", paras[n][0].c_str()) == 0)
 				{
 
 				}
-				else if (_strcmpi("across_spatial", paras[n][0].c_str()) == 0)
+				else if (_my_strcmpi("across_spatial", paras[n][0].c_str()) == 0)
 				{
 					across_spatial = true;
 				}
-				else if (_strcmpi("channel_shared", paras[n][0].c_str()) == 0)
+				else if (_my_strcmpi("channel_shared", paras[n][0].c_str()) == 0)
 				{
 					across_spatial = true;
 				}
-				else if (_strcmpi("eps", paras[n][0].c_str()) == 0)
+				else if (_my_strcmpi("eps", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
 						eps = atof(paras[n][1].c_str());
 					}
 				}
-				else if (_strcmpi("top", paras[n][0].c_str()) == 0)
+				else if (_my_strcmpi("top", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
@@ -4321,7 +4342,7 @@ namespace ZQ
 						top_names.push_back(paras[n][1]);
 					}
 				}
-				else if (_strcmpi("bottom", paras[n][0].c_str()) == 0)
+				else if (_my_strcmpi("bottom", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
@@ -4329,7 +4350,7 @@ namespace ZQ
 						bottom_names.push_back(paras[n][1]);
 					}
 				}
-				else if (_strcmpi("name", paras[n][0].c_str()) == 0)
+				else if (_my_strcmpi("name", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
@@ -4483,11 +4504,11 @@ namespace ZQ
 			{
 				if (paras[n].size() == 0)
 					continue;
-				if (_strcmpi("Permute", paras[n][0].c_str()) == 0)
+				if (_my_strcmpi("Permute", paras[n][0].c_str()) == 0)
 				{
 
 				}
-				else if (_strcmpi("top", paras[n][0].c_str()) == 0)
+				else if (_my_strcmpi("top", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
@@ -4495,7 +4516,7 @@ namespace ZQ
 						top_names.push_back(paras[n][1]);
 					}
 				}
-				else if (_strcmpi("bottom", paras[n][0].c_str()) == 0)
+				else if (_my_strcmpi("bottom", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
@@ -4503,7 +4524,7 @@ namespace ZQ
 						bottom_names.push_back(paras[n][1]);
 					}
 				}
-				else if (_strcmpi("name", paras[n][0].c_str()) == 0)
+				else if (_my_strcmpi("name", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
@@ -4511,7 +4532,7 @@ namespace ZQ
 						name = paras[n][1];
 					}
 				}
-				else if (_strcmpi("order", paras[n][0].c_str()) == 0)
+				else if (_my_strcmpi("order", paras[n][0].c_str()) == 0)
 				{
 					if (order_num >= 4)
 					{
@@ -4646,11 +4667,11 @@ namespace ZQ
 			{
 				if (paras[n].size() == 0)
 					continue;
-				if (_strcmpi("Flatten", paras[n][0].c_str()) == 0)
+				if (_my_strcmpi("Flatten", paras[n][0].c_str()) == 0)
 				{
 
 				}
-				else if (_strcmpi("top", paras[n][0].c_str()) == 0)
+				else if (_my_strcmpi("top", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
@@ -4658,7 +4679,7 @@ namespace ZQ
 						top_names.push_back(paras[n][1]);
 					}
 				}
-				else if (_strcmpi("bottom", paras[n][0].c_str()) == 0)
+				else if (_my_strcmpi("bottom", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
@@ -4666,7 +4687,7 @@ namespace ZQ
 						bottom_names.push_back(paras[n][1]);
 					}
 				}
-				else if (_strcmpi("name", paras[n][0].c_str()) == 0)
+				else if (_my_strcmpi("name", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
@@ -4674,14 +4695,14 @@ namespace ZQ
 						name = paras[n][1];
 					}
 				}
-				else if (_strcmpi("axis", paras[n][0].c_str()) == 0)
+				else if (_my_strcmpi("axis", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
 						axis = atoi(paras[n][1].c_str());
 					}
 				}
-				else if (_strcmpi("end_axis", paras[n][0].c_str()) == 0)
+				else if (_my_strcmpi("end_axis", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
@@ -4813,11 +4834,11 @@ namespace ZQ
 			{
 				if (paras[n].size() == 0)
 					continue;
-				if (_strcmpi("Reshape", paras[n][0].c_str()) == 0)
+				if (_my_strcmpi("Reshape", paras[n][0].c_str()) == 0)
 				{
 
 				}
-				else if (_strcmpi("top", paras[n][0].c_str()) == 0)
+				else if (_my_strcmpi("top", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
@@ -4825,7 +4846,7 @@ namespace ZQ
 						top_names.push_back(paras[n][1]);
 					}
 				}
-				else if (_strcmpi("bottom", paras[n][0].c_str()) == 0)
+				else if (_my_strcmpi("bottom", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
@@ -4833,7 +4854,7 @@ namespace ZQ
 						bottom_names.push_back(paras[n][1]);
 					}
 				}
-				else if (_strcmpi("name", paras[n][0].c_str()) == 0)
+				else if (_my_strcmpi("name", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
@@ -4841,21 +4862,21 @@ namespace ZQ
 						name = paras[n][1];
 					}
 				}
-				else if (_strcmpi("dim", paras[n][0].c_str()) == 0)
+				else if (_my_strcmpi("dim", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
 						shape.push_back(atoi(paras[n][1].c_str()));
 					}
 				}
-				else if (_strcmpi("axis", paras[n][0].c_str()) == 0)
+				else if (_my_strcmpi("axis", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
 						axis = atoi(paras[n][1].c_str());
 					}
 				}
-				else if (_strcmpi("num_axes", paras[n][0].c_str()) == 0)
+				else if (_my_strcmpi("num_axes", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
@@ -5038,11 +5059,11 @@ namespace ZQ
 			{
 				if (paras[n].size() == 0)
 					continue;
-				if (_strcmpi("PriorBox", paras[n][0].c_str()) == 0)
+				if (_my_strcmpi("PriorBox", paras[n][0].c_str()) == 0)
 				{
 
 				}
-				else if (_strcmpi("top", paras[n][0].c_str()) == 0)
+				else if (_my_strcmpi("top", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
@@ -5050,7 +5071,7 @@ namespace ZQ
 						top_names.push_back(paras[n][1]);
 					}
 				}
-				else if (_strcmpi("bottom", paras[n][0].c_str()) == 0)
+				else if (_my_strcmpi("bottom", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
@@ -5058,7 +5079,7 @@ namespace ZQ
 						bottom_names.push_back(paras[n][1]);
 					}
 				}
-				else if (_strcmpi("name", paras[n][0].c_str()) == 0)
+				else if (_my_strcmpi("name", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
@@ -5066,49 +5087,49 @@ namespace ZQ
 						name = paras[n][1];
 					}
 				}
-				else if (_strcmpi("min_size", paras[n][0].c_str()) == 0)
+				else if (_my_strcmpi("min_size", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
 						min_sizes.push_back(atof(paras[n][1].c_str()));
 					}
 				}
-				else if (_strcmpi("max_size", paras[n][0].c_str()) == 0)
+				else if (_my_strcmpi("max_size", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
 						max_sizes.push_back(atof(paras[n][1].c_str()));
 					}
 				}
-				else if (_strcmpi("aspect_ratio", paras[n][0].c_str()) == 0)
+				else if (_my_strcmpi("aspect_ratio", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
 						aspect_ratios.push_back(atof(paras[n][1].c_str()));
 					}
 				}
-				else if (_strcmpi("variance", paras[n][0].c_str()) == 0)
+				else if (_my_strcmpi("variance", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
 						variance.push_back(atof(paras[n][1].c_str()));
 					}
 				}
-				else if (_strcmpi("flip", paras[n][0].c_str()) == 0)
+				else if (_my_strcmpi("flip", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
 						flip = atoi(paras[n][1].c_str());
 					}
 				}
-				else if (_strcmpi("clip", paras[n][0].c_str()) == 0)
+				else if (_my_strcmpi("clip", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
 						clip = atoi(paras[n][1].c_str());
 					}
 				}
-				else if (_strcmpi("img_size", paras[n][0].c_str()) == 0)
+				else if (_my_strcmpi("img_size", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
@@ -5118,7 +5139,7 @@ namespace ZQ
 						has_img_w = true;
 					}
 				}
-				else if (_strcmpi("img_h", paras[n][0].c_str()) == 0)
+				else if (_my_strcmpi("img_h", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
@@ -5126,7 +5147,7 @@ namespace ZQ
 						has_img_h = true;
 					}
 				}
-				else if (_strcmpi("img_w", paras[n][0].c_str()) == 0)
+				else if (_my_strcmpi("img_w", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
@@ -5134,7 +5155,7 @@ namespace ZQ
 						has_img_w = true;
 					}
 				}
-				else if (_strcmpi("step", paras[n][0].c_str()) == 0)
+				else if (_my_strcmpi("step", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
@@ -5144,7 +5165,7 @@ namespace ZQ
 						has_step_w = true;
 					}
 				}
-				else if (_strcmpi("step_h", paras[n][0].c_str()) == 0)
+				else if (_my_strcmpi("step_h", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
@@ -5152,7 +5173,7 @@ namespace ZQ
 						has_step_h = true;
 					}
 				}
-				else if (_strcmpi("step_w", paras[n][0].c_str()) == 0)
+				else if (_my_strcmpi("step_w", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
@@ -5160,7 +5181,7 @@ namespace ZQ
 						has_step_w = true;
 					}
 				}
-				else if (_strcmpi("offset", paras[n][0].c_str()) == 0)
+				else if (_my_strcmpi("offset", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
@@ -5501,11 +5522,11 @@ namespace ZQ
 			{
 				if (paras[n].size() == 0)
 					continue;
-				if (_strcmpi("PriorBox_MXNET", paras[n][0].c_str()) == 0)
+				if (_my_strcmpi("PriorBox_MXNET", paras[n][0].c_str()) == 0)
 				{
 
 				}
-				else if (_strcmpi("top", paras[n][0].c_str()) == 0)
+				else if (_my_strcmpi("top", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
@@ -5513,7 +5534,7 @@ namespace ZQ
 						top_names.push_back(paras[n][1]);
 					}
 				}
-				else if (_strcmpi("bottom", paras[n][0].c_str()) == 0)
+				else if (_my_strcmpi("bottom", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
@@ -5521,7 +5542,7 @@ namespace ZQ
 						bottom_names.push_back(paras[n][1]);
 					}
 				}
-				else if (_strcmpi("name", paras[n][0].c_str()) == 0)
+				else if (_my_strcmpi("name", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
@@ -5529,35 +5550,35 @@ namespace ZQ
 						name = paras[n][1];
 					}
 				}
-				else if (_strcmpi("size", paras[n][0].c_str()) == 0)
+				else if (_my_strcmpi("size", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
 						sizes.push_back(atof(paras[n][1].c_str()));
 					}
 				}
-				else if (_strcmpi("aspect_ratio", paras[n][0].c_str()) == 0)
+				else if (_my_strcmpi("aspect_ratio", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
 						aspect_ratios.push_back(atof(paras[n][1].c_str()));
 					}
 				}
-				else if (_strcmpi("variance", paras[n][0].c_str()) == 0)
+				else if (_my_strcmpi("variance", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
 						variances.push_back(atof(paras[n][1].c_str()));
 					}
 				}
-				else if (_strcmpi("clip", paras[n][0].c_str()) == 0)
+				else if (_my_strcmpi("clip", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
 						clip = atoi(paras[n][1].c_str());
 					}
 				}
-				else if (_strcmpi("step", paras[n][0].c_str()) == 0)
+				else if (_my_strcmpi("step", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
@@ -5567,7 +5588,7 @@ namespace ZQ
 						has_step_w = true;
 					}
 				}
-				else if (_strcmpi("step_h", paras[n][0].c_str()) == 0)
+				else if (_my_strcmpi("step_h", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
@@ -5575,7 +5596,7 @@ namespace ZQ
 						has_step_h = true;
 					}
 				}
-				else if (_strcmpi("step_w", paras[n][0].c_str()) == 0)
+				else if (_my_strcmpi("step_w", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
@@ -5583,7 +5604,7 @@ namespace ZQ
 						has_step_w = true;
 					}
 				}
-				else if (_strcmpi("offset", paras[n][0].c_str()) == 0)
+				else if (_my_strcmpi("offset", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
@@ -5725,11 +5746,11 @@ namespace ZQ
 			{
 				if (paras[n].size() == 0)
 					continue;
-				if (_strcmpi("Concat", paras[n][0].c_str()) == 0)
+				if (_my_strcmpi("Concat", paras[n][0].c_str()) == 0)
 				{
 
 				}
-				else if (_strcmpi("top", paras[n][0].c_str()) == 0)
+				else if (_my_strcmpi("top", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
@@ -5737,7 +5758,7 @@ namespace ZQ
 						top_names.push_back(paras[n][1]);
 					}
 				}
-				else if (_strcmpi("bottom", paras[n][0].c_str()) == 0)
+				else if (_my_strcmpi("bottom", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
@@ -5745,7 +5766,7 @@ namespace ZQ
 						bottom_names.push_back(paras[n][1]);
 					}
 				}
-				else if (_strcmpi("name", paras[n][0].c_str()) == 0)
+				else if (_my_strcmpi("name", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
@@ -5753,7 +5774,7 @@ namespace ZQ
 						name = paras[n][1];
 					}
 				}
-				else if (_strcmpi("axis", paras[n][0].c_str()) == 0)
+				else if (_my_strcmpi("axis", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
@@ -5887,11 +5908,11 @@ namespace ZQ
 			{
 				if (paras[n].size() == 0)
 					continue;
-				if (_strcmpi("DetectionOutput", paras[n][0].c_str()) == 0)
+				if (_my_strcmpi("DetectionOutput", paras[n][0].c_str()) == 0)
 				{
 
 				}
-				else if (_strcmpi("top", paras[n][0].c_str()) == 0)
+				else if (_my_strcmpi("top", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
@@ -5899,7 +5920,7 @@ namespace ZQ
 						top_names.push_back(paras[n][1]);
 					}
 				}
-				else if (_strcmpi("bottom", paras[n][0].c_str()) == 0)
+				else if (_my_strcmpi("bottom", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
@@ -5907,7 +5928,7 @@ namespace ZQ
 						bottom_names.push_back(paras[n][1]);
 					}
 				}
-				else if (_strcmpi("name", paras[n][0].c_str()) == 0)
+				else if (_my_strcmpi("name", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
@@ -5915,61 +5936,61 @@ namespace ZQ
 						name = paras[n][1];
 					}
 				}
-				else if (_strcmpi("num_classes", paras[n][0].c_str()) == 0)
+				else if (_my_strcmpi("num_classes", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
 						num_classes = atoi(paras[n][1].c_str());
 					}
 				}
-				else if (_strcmpi("share_location", paras[n][0].c_str()) == 0)
+				else if (_my_strcmpi("share_location", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
 						share_location = atoi(paras[n][1].c_str());
 					}
 				}
-				else if (_strcmpi("background_label_id", paras[n][0].c_str()) == 0)
+				else if (_my_strcmpi("background_label_id", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
 						background_label_id = atoi(paras[n][1].c_str());
 					}
 				}
-				else if (_strcmpi("nms_threshold", paras[n][0].c_str()) == 0)
+				else if (_my_strcmpi("nms_threshold", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
 						nms_threshold = atof(paras[n][1].c_str());
 					}
 				}
-				else if (_strcmpi("nms_top_k", paras[n][0].c_str()) == 0)
+				else if (_my_strcmpi("nms_top_k", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
 						nms_top_k = atoi(paras[n][1].c_str());
 					}
 				}
-				else if (_strcmpi("nms_eta", paras[n][0].c_str()) == 0)
+				else if (_my_strcmpi("nms_eta", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
 						nms_eta = atof(paras[n][1].c_str());
 					}
 				}
-				else if (_strcmpi("code_type", paras[n][0].c_str()) == 0)
+				else if (_my_strcmpi("code_type", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
-						if (_strcmpi(paras[n][1].c_str(), "CORNER") == 0)
+						if (_my_strcmpi(paras[n][1].c_str(), "CORNER") == 0)
 						{
 							code_type = ZQ_CNN_BBoxUtils::PriorBoxCodeType_CORNER;
 						}
-						else if (_strcmpi(paras[n][1].c_str(), "CORNER_SIZE") == 0)
+						else if (_my_strcmpi(paras[n][1].c_str(), "CORNER_SIZE") == 0)
 						{
 							code_type = ZQ_CNN_BBoxUtils::PriorBoxCodeType_CORNER_SIZE;
 						}
-						else if (_strcmpi(paras[n][1].c_str(), "CENTER_SIZE") == 0)
+						else if (_my_strcmpi(paras[n][1].c_str(), "CENTER_SIZE") == 0)
 						{
 							code_type = ZQ_CNN_BBoxUtils::PriorBoxCodeType_CENTER_SIZE;
 						}
@@ -5979,21 +6000,21 @@ namespace ZQ
 						}
 					}
 				}
-				else if (_strcmpi("keep_top_k", paras[n][0].c_str()) == 0)
+				else if (_my_strcmpi("keep_top_k", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
 						keep_top_k = atoi(paras[n][1].c_str());
 					}
 				}
-				else if (_strcmpi("confidence_threshold", paras[n][0].c_str()) == 0)
+				else if (_my_strcmpi("confidence_threshold", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
 						confidence_threshold = atof(paras[n][1].c_str());
 					}
 				}
-				else if (_strcmpi("variance_encoded_in_target", paras[n][0].c_str()) == 0)
+				else if (_my_strcmpi("variance_encoded_in_target", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
@@ -6106,11 +6127,11 @@ namespace ZQ
 			{
 				if (paras[n].size() == 0)
 					continue;
-				if (_strcmpi("DetectionOutput_MXNET", paras[n][0].c_str()) == 0)
+				if (_my_strcmpi("DetectionOutput_MXNET", paras[n][0].c_str()) == 0)
 				{
 
 				}
-				else if (_strcmpi("top", paras[n][0].c_str()) == 0)
+				else if (_my_strcmpi("top", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
@@ -6118,7 +6139,7 @@ namespace ZQ
 						top_names.push_back(paras[n][1]);
 					}
 				}
-				else if (_strcmpi("bottom", paras[n][0].c_str()) == 0)
+				else if (_my_strcmpi("bottom", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
@@ -6126,7 +6147,7 @@ namespace ZQ
 						bottom_names.push_back(paras[n][1]);
 					}
 				}
-				else if (_strcmpi("name", paras[n][0].c_str()) == 0)
+				else if (_my_strcmpi("name", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
@@ -6134,42 +6155,42 @@ namespace ZQ
 						name = paras[n][1];
 					}
 				}
-				else if (_strcmpi("nms_threshold", paras[n][0].c_str()) == 0)
+				else if (_my_strcmpi("nms_threshold", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
 						nms_threshold = atof(paras[n][1].c_str());
 					}
 				}
-				else if (_strcmpi("nms_top_k", paras[n][0].c_str()) == 0)
+				else if (_my_strcmpi("nms_top_k", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
 						nms_top_k = atoi(paras[n][1].c_str());
 					}
 				}
-				else if (_strcmpi("keep_top_k", paras[n][0].c_str()) == 0)
+				else if (_my_strcmpi("keep_top_k", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
 						keep_top_k = atoi(paras[n][1].c_str());
 					}
 				}
-				else if (_strcmpi("confidence_threshold", paras[n][0].c_str()) == 0)
+				else if (_my_strcmpi("confidence_threshold", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
 						confidence_threshold = atof(paras[n][1].c_str());
 					}
 				}
-				else if (_strcmpi("variance", paras[n][0].c_str()) == 0)
+				else if (_my_strcmpi("variance", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
 						variances.push_back(atof(paras[n][1].c_str()));
 					}
 				}
-				else if (_strcmpi("clip", paras[n][0].c_str()) == 0)
+				else if (_my_strcmpi("clip", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
@@ -6285,22 +6306,22 @@ namespace ZQ
 			{
 				if (paras[n].size() == 0)
 					continue;
-				if (_strcmpi("Reduction", paras[n][0].c_str()) == 0)
+				if (_my_strcmpi("Reduction", paras[n][0].c_str()) == 0)
 				{
 
 				}
-				else if (_strcmpi("operation", paras[n][0].c_str()) == 0)
+				else if (_my_strcmpi("operation", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
 						has_operation = true;
 						const char* str = paras[n][1].c_str();
 
-						if (_strcmpi(str, "SUM") == 0 || _strcmpi(str, "ADD") == 0 || _strcmpi(str, "PLUS") == 0)
+						if (_my_strcmpi(str, "SUM") == 0 || _my_strcmpi(str, "ADD") == 0 || _my_strcmpi(str, "PLUS") == 0)
 						{
 							operation = REDUCTION_SUM;
 						}
-						else if (_strcmpi(str, "MEAN") == 0 || _strcmpi(str, "AVG") == 0)
+						else if (_my_strcmpi(str, "MEAN") == 0 || _my_strcmpi(str, "AVG") == 0)
 						{
 							operation = REDUCTION_MEAN;
 						}
@@ -6310,21 +6331,21 @@ namespace ZQ
 						}
 					}
 				}
-				else if (_strcmpi("axis", paras[n][0].c_str()) == 0)
+				else if (_my_strcmpi("axis", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
 						axis = atoi(paras[n][1].c_str());
 					}
 				}
-				else if (_strcmpi("keepdims", paras[n][0].c_str()) == 0)
+				else if (_my_strcmpi("keepdims", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
 						keepdims = atoi(paras[n][1].c_str());
 					}
 				}
-				else if (_strcmpi("top", paras[n][0].c_str()) == 0)
+				else if (_my_strcmpi("top", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
@@ -6332,7 +6353,7 @@ namespace ZQ
 						top_names.push_back(paras[n][1]);
 					}
 				}
-				else if (_strcmpi("bottom", paras[n][0].c_str()) == 0)
+				else if (_my_strcmpi("bottom", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
@@ -6340,7 +6361,7 @@ namespace ZQ
 						bottom_names.push_back(paras[n][1]);
 					}
 				}
-				else if (_strcmpi("name", paras[n][0].c_str()) == 0)
+				else if (_my_strcmpi("name", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
@@ -6491,11 +6512,11 @@ namespace ZQ
 			{
 				if (paras[n].size() == 0)
 					continue;
-				if (_strcmpi("Sqrt", paras[n][0].c_str()) == 0)
+				if (_my_strcmpi("Sqrt", paras[n][0].c_str()) == 0)
 				{
 
 				}
-				else if (_strcmpi("top", paras[n][0].c_str()) == 0)
+				else if (_my_strcmpi("top", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
@@ -6503,7 +6524,7 @@ namespace ZQ
 						top_names.push_back(paras[n][1]);
 					}
 				}
-				else if (_strcmpi("bottom", paras[n][0].c_str()) == 0)
+				else if (_my_strcmpi("bottom", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
@@ -6511,7 +6532,7 @@ namespace ZQ
 						bottom_names.push_back(paras[n][1]);
 					}
 				}
-				else if (_strcmpi("name", paras[n][0].c_str()) == 0)
+				else if (_my_strcmpi("name", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
@@ -6626,39 +6647,39 @@ namespace ZQ
 			{
 				if (paras[n].size() == 0)
 					continue;
-				if (_strcmpi("Tile", paras[n][0].c_str()) == 0)
+				if (_my_strcmpi("Tile", paras[n][0].c_str()) == 0)
 				{
 
 				}
-				else if (_strcmpi("n", paras[n][0].c_str()) == 0)
+				else if (_my_strcmpi("n", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
 						tile_n = atoi(paras[n][1].c_str());
 					}
 				}
-				else if (_strcmpi("h", paras[n][0].c_str()) == 0)
+				else if (_my_strcmpi("h", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
 						tile_h = atoi(paras[n][1].c_str());
 					}
 				}
-				else if (_strcmpi("w", paras[n][0].c_str()) == 0)
+				else if (_my_strcmpi("w", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
 						tile_w = atoi(paras[n][1].c_str());
 					}
 				}
-				else if (_strcmpi("c", paras[n][0].c_str()) == 0)
+				else if (_my_strcmpi("c", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
 						tile_c = atoi(paras[n][1].c_str());
 					}
 				}
-				else if (_strcmpi("top", paras[n][0].c_str()) == 0)
+				else if (_my_strcmpi("top", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
@@ -6666,7 +6687,7 @@ namespace ZQ
 						top_names.push_back(paras[n][1]);
 					}
 				}
-				else if (_strcmpi("bottom", paras[n][0].c_str()) == 0)
+				else if (_my_strcmpi("bottom", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
@@ -6674,7 +6695,7 @@ namespace ZQ
 						bottom_names.push_back(paras[n][1]);
 					}
 				}
-				else if (_strcmpi("name", paras[n][0].c_str()) == 0)
+				else if (_my_strcmpi("name", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
