@@ -1255,6 +1255,7 @@ union union_type_s_mm256 {
 		const float* Aptr, *A_c_ptr, *Bptr, *Bptr1, *Bptr2, *Bptr3, *Bptr4;
 		const float *B_c_ptr1, *B_c_ptr2, *B_c_ptr3, *B_c_ptr4;
 		float* Cptr, *C_c_ptr;
+		int ldb4 = ldb << 2;
 		int m, n, k;
 		float sum1, sum2, sum3, sum4, a_val;
 		Aptr = A;
@@ -1263,7 +1264,7 @@ union union_type_s_mm256 {
 		{
 			Bptr = Bt;
 			C_c_ptr = Cptr;
-			for (n = 0; n < N - 3; n += 4, Bptr += ldb)
+			for (n = 0; n < N - 3; n += 4, Bptr += ldb4)
 			{
 				sum1 = 0;
 				sum2 = 0;
