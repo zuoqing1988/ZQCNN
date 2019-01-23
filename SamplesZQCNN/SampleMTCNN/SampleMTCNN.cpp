@@ -78,7 +78,7 @@ int main()
 #elif ZQ_CNN_USE_MKL_GEMM
 	mkl_set_num_threads(num_threads);
 #endif
-	Mat image0 = cv::imread("data\\face2500.jpg", 1);
+	Mat image0 = cv::imread("../../data/face2500.jpg", 1);
 	if (image0.empty())
 	{
 		cout << "empty image\n";
@@ -149,13 +149,13 @@ int main()
 		}
 		else
 		{
-			if (!mtcnn.Init("model\\det1-dw20-fast.zqparams", "model\\det1-dw20-fast.nchwbin",
-				"model\\det2-dw24-fast.zqparams", "model\\det2-dw24-fast.nchwbin",
+			if (!mtcnn.Init("../../model/det1-dw20-fast.zqparams", "../../model/det1-dw20-fast.nchwbin",
+				"../../model/det2-dw24-fast.zqparams", "../../model/det2-dw24-fast.nchwbin",
 				//"model\\det2.zqparams", "model\\det2_bgr.nchwbin",
-				"model\\det3-dw48-fast.zqparams", "model\\det3-dw48-fast.nchwbin", 
+				"../../model/det3-dw48-fast.zqparams", "../../model/det3-dw48-fast.nchwbin", 
 				thread_num, false,
 				//"model\\det4-dw48-small.zqparams", "model\\det4-dw48-small.nchwbin"
-				"model\\det3.zqparams", "model\\det3_bgr.nchwbin"
+				"../../model/det3.zqparams", "../../model/det3_bgr.nchwbin"
 			))
 			{
 				cout << "failed to init!\n";
