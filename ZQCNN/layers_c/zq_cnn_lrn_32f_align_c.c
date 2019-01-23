@@ -2,6 +2,16 @@
 #include <omp.h>
 #include <math.h>
 #include "../ZQ_CNN_CompileConfig.h"
+#if defined(__GNUC__)
+#if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_SSE
+#include <smmintrin.h>
+#include "../math/zq_sse_mathfun.h"
+#endif
+#if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_AVX
+#include <x86intrin.h>
+#include "../math/zq_avx_mathfun.h"
+#endif
+#elif defined(_WIN32)
 #if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_SSE
 #include <mmintrin.h> //MMX  
 #include <xmmintrin.h> //SSE(include mmintrin.h)  
@@ -11,14 +21,14 @@
 #include <smmintrin.h>//SSE4.1(include tmmintrin.h)  
 #include <nmmintrin.h>//SSE4.2(include smmintrin.h)  
 #include "../math/zq_sse_mathfun.h"
-#endif
+#endif 
 #if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_AVX
 #include <wmmintrin.h>//AES(include nmmintrin.h)  
 #include <immintrin.h>//AVX(include wmmintrin.h)  
 #include <intrin.h>//(include immintrin.h)  
 #include "../math/zq_avx_mathfun.h"
 #endif
-
+#endif
 
 
 #if defined(__cplusplus) || defined(c_plusplus) 
