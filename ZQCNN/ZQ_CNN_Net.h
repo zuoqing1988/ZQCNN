@@ -316,8 +316,13 @@ namespace ZQ
 			while (_getline(fin, buffer, buffer_len, line))
 			{
 				buf[0] = '\0';
+#if defined(_WIN32)
 				if (sscanf_s(line.c_str(), "%s", &buf[0], buf_len) == 0)
 					continue;
+#else
+				if (sscanf(line.c_str(), "%s", &buf[0]) == 0)
+					continue;
+#endif
 				if (ZQ_CNN_Layer::_my_strcmpi(&buf[0], "Convolution") == 0)
 				{
 					if (layers.size() == 0)
@@ -904,7 +909,11 @@ namespace ZQ
 			if (layers.size() == 0)
 				return false;
 			FILE* in = 0;
+#if defined(_WIN32)
 			fopen_s(&in, file.c_str(), "rb");
+#else
+			in = fopen(file.c_str(), "rb");
+#endif
 			if (in == 0)
 			{
 				std::cout << "failed to open " << file << "\n";
@@ -929,7 +938,11 @@ namespace ZQ
 			if (layers.size() == 0)
 				return false;
 			FILE* out = 0;
+#if defined(_WIN32)
 			fopen_s(&out, file.c_str(), "wb");
+#else
+			out = fopen(file.c_str(), "wb");
+#endif
 			if (out == 0)
 			{
 				std::cout << "failed to create " << file << "\n";

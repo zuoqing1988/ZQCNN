@@ -30,6 +30,7 @@
 #define ZQ_CNN_USE_FMADD256 0 
 #endif
 
+
 /**   for linux system      **/
 #else //#if !defined(_WIN32)
 
@@ -70,6 +71,10 @@
 
 #ifndef _aligned_free
 #define _aligned_free free
+#endif
+
+#ifndef fread_s
+#define fread_s(a,b,c,d,e) fread(a,c,d,e)
 #endif
 
 #endif// defined(WIN32) || defined(_WINDOWS_)
