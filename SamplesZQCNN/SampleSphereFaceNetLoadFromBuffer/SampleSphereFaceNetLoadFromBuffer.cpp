@@ -24,7 +24,11 @@ bool load_to_buffer(const std::string& param_file, const std::string& model_file
 	model_buffer.clear();
 
 	FILE* in = 0;
+#if defined(_WIN32)
 	if (0 != fopen_s(&in, param_file.c_str(), "rb"))
+#else
+	if(0 == (in = fopen(param_file.c_str(), "rb")))
+#endif
 	{
 		cout << "failed to open " << param_file << "\n";
 		return false;
