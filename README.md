@@ -17,6 +17,10 @@ MKL下载地址:[此处下载](https://pan.baidu.com/s/1d75IIf6fgTZ5oeumd0vtTw)
 
 # 更新日志
 
+**2019-01-24日更新：核心模块支持linux**
+
+如果按照[build-with-cmake.md](https://github.com/zuoqing1988/ZQCNN/blob/master/build-with-cmake.md)不能完全编译，可以只编译ZQ_GEMM，ZQCNN，和其他你想测试的程序
+
 **2019-01-17日更新**
 
 更改了ZQ_CNN_MTCNN.h
