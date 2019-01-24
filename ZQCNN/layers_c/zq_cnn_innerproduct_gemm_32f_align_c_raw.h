@@ -58,9 +58,9 @@ void zq_cnn_innerproduct_gemm_32f_align_same_pixstep(
 	total_need_buffer_len = need_A_buffer_len_align32 + need_B_buffer_len_align32 + need_C_buffer_len_align32;
 	if (buffer == 0)
 	{
-		matrix_A = _aligned_malloc(need_A_buffer_len_align32, 32);
+		matrix_A = (float*)_aligned_malloc(need_A_buffer_len_align32, 32);
 		if (need_allocate_tmp_out)
-			matrix_C = _aligned_malloc(need_C_buffer_len_align32, 32);
+			matrix_C = (float*)_aligned_malloc(need_C_buffer_len_align32, 32);
 	}
 	else
 	{
@@ -181,9 +181,9 @@ void zq_cnn_innerproduct_gemm_32f_align_same_pixstep_batch(
 	total_need_buffer_len = need_A_buffer_len_align32 + need_B_buffer_len_align32 + need_C_buffer_len_align32;
 	if (buffer == 0)
 	{
-		matrix_A = _aligned_malloc(need_A_buffer_len_align32,32);
+		matrix_A = (float*)_aligned_malloc(need_A_buffer_len_align32,32);
 		if (need_allocate_tmp_out)
-			matrix_C = _aligned_malloc(need_C_buffer_len_align32, 32);
+			matrix_C = (float*)_aligned_malloc(need_C_buffer_len_align32, 32);
 	}
 	else
 	{
