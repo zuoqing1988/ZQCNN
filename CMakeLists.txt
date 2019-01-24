@@ -4,6 +4,10 @@ project(ZQCNN)
 
 set(CMAKE_CXX_STANDARD 11)
 
+if(NOT CMAKE_BUILD_TYPE)
+	set(CMAKE_BUILD_TYPE release CACHE STRING "Choose the type of build" FORCE)
+endif()
+
 if(CMAKE_SIZEOF_VOID_P EQUAL 8)
 	set(archbit "x64")
 else()
