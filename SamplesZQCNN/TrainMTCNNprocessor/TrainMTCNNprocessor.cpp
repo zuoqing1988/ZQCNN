@@ -61,8 +61,8 @@ int generate_wider_prob(int argc, const char** argv)
 	}
 	const char* anno_file = argv[2];
 	const char* prob_file = argv[3];
-	const char* param_file = "model\\det3.zqparams";
-	const char* model_file = "model\\det3_bgr.nchwbin";
+	const char* param_file = "model/det3.zqparams";
+	const char* model_file = "model/det3_bgr.nchwbin";
 	const char* out_blob_name = "prob1";
 	if (argc >= 5)
 		param_file = argv[4];

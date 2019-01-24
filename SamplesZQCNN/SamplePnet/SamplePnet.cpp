@@ -31,15 +31,15 @@ int main()
 	ZQ_CNN_Net net;
 	int stride = 4;
 	int cell_size = 20;
-	if (!net.LoadFrom("model\\det1-dw20-fast.zqparams", "model\\det1-dw20-fast.nchwbin"))
-	//if (!net.LoadFrom("model\\det1.zqparams", "model\\det1_bgr.nchwbin"))
+	if (!net.LoadFrom("model/det1-dw20-v1.zqparams", "model/det1-dw20-v1-16.nchwbin"))
+	//if (!net.LoadFrom("model/det1.zqparams", "model/det1_bgr.nchwbin"))
 	{
 		cout << "failed to load model\n";
 		return EXIT_FAILURE;
 	}
 	printf("num_MulAdd = %.1f M\n", net.GetNumOfMulAdd() / (1024.0*1024.0));
 
-	Mat img = imread("data\\4.jpg");
+	Mat img = imread("data/4.jpg");
 	if (img.empty())
 	{
 		cout << "failed to load image\n";
@@ -90,7 +90,7 @@ int main()
 			for (int w = 0; w < prob_width; w++)
 			{
 				uchar cur_prob = __max(0, __min(255, 255.0f*prob_data[h*prob_widthStep + w*prob_pixStep + 1]));
-				if (cur_prob < (255*0.6))
+				if (cur_prob < (255*0.7))
 					cur_prob = 0;
 				int start_hh = h * stride;
 				int end_hh = __min(start_hh + cell_size, scale_img.rows);

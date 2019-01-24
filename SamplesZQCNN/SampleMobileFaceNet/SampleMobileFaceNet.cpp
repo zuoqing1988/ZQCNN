@@ -30,13 +30,13 @@ int main()
 	mkl_set_num_threads(1);
 #endif
 
-	Mat image0 = cv::imread("data\\00_.jpg", 1);
+	Mat image0 = cv::imread("data/00_.jpg", 1);
 	if (image0.empty())
 	{
 		cout << "empty image\n";
 		return EXIT_FAILURE;
 	}
-	Mat image1 = cv::imread("data\\01_.jpg", 1);
+	Mat image1 = cv::imread("data/01_.jpg", 1);
 	if (image1.empty())
 	{
 		cout << "empty image\n";
@@ -50,7 +50,7 @@ int main()
 	std::string out_blob_name = "fc1";
 	ZQ_CNN_Net net;
 
-	if (!net.LoadFrom("model\\test.zqparams", "model\\test.nchwbin"))
+	if (!net.LoadFrom("model/test.zqparams", "model/test.nchwbin"))
 	{
 		cout << "failed to load net\n";
 		return EXIT_FAILURE;

@@ -160,8 +160,8 @@ namespace ZQ
 			std::string neg_file = std::string(save_dir) + "/neg.txt";
 			
 			std::vector<std::string> image_files;
-			std::vector<std::vector<float>> all_boxes;
-			std::vector<std::vector<float>> all_probs;
+			std::vector<std::vector<float> > all_boxes;
+			std::vector<std::vector<float> > all_probs;
 
 			if (!_load_anno_and_prob(anno_file, prob_file, image_files, all_boxes, all_probs))
 			{
@@ -263,8 +263,8 @@ namespace ZQ
 			std::string landmark_file = std::string(save_dir) + "/landmark.txt";
 			
 			std::vector<std::string> image_files;
-			std::vector<std::vector<float>> all_boxes;
-			std::vector<std::vector<float>> all_landmarks;
+			std::vector<std::vector<float> > all_boxes;
+			std::vector<std::vector<float> > all_landmarks;
 
 			if (!_load_celeba_bbox_and_landmarks(celeba_bbox_file, celeba_landmark_file, image_files, all_boxes, all_landmarks))
 			{
@@ -385,8 +385,8 @@ namespace ZQ
 		}
 
 		static bool _load_anno_and_prob(const char* anno_file, const char* prob_file,
-			std::vector<std::string>& image_files, std::vector<std::vector<float>>& all_boxes, 
-			std::vector<std::vector<float>>& all_probs)
+			std::vector<std::string>& image_files, std::vector<std::vector<float> >& all_boxes, 
+			std::vector<std::vector<float> >& all_probs)
 		{
 			image_files.clear();
 			all_boxes.clear();
@@ -475,8 +475,8 @@ namespace ZQ
 
 		static bool _load_celeba_bbox_and_landmarks(const char* celeba_bbox_file, 
 			const char* celeba_landmark_file, std::vector<std::string>& image_files, 
-			std::vector<std::vector<float>>& all_boxes, 
-			std::vector<std::vector<float>>& all_landmarks)
+			std::vector<std::vector<float> >& all_boxes, 
+			std::vector<std::vector<float> >& all_landmarks)
 		{
 			image_files.clear();
 			all_boxes.clear();

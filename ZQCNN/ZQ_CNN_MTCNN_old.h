@@ -159,8 +159,8 @@ namespace ZQ
 			ZQ_CNN_OrderScore order;
 			pnet.TurnOffShowDebugInfo();
 			//pnet.TurnOnShowDebugInfo();
-			std::vector<std::vector<ZQ_CNN_BBox>> bounding_boxes(scales.size());
-			std::vector<std::vector<ZQ_CNN_OrderScore>> bounding_scores(scales.size());
+			std::vector<std::vector<ZQ_CNN_BBox> > bounding_boxes(scales.size());
+			std::vector<std::vector<ZQ_CNN_OrderScore> > bounding_scores(scales.size());
 			const int block_size = 64;
 			int stride = pnet_stride;
 			int cellsize = pnet_size;
@@ -248,8 +248,8 @@ namespace ZQ
 					int block_num = block_H_num*block_W_num;
 					int width_per_block = scoreW / block_W_num;
 					int height_per_block = scoreH / block_H_num;
-					std::vector<std::vector<ZQ_CNN_BBox>> tmp_bounding_boxes(block_num);
-					std::vector<std::vector<ZQ_CNN_OrderScore>> tmp_bounding_scores(block_num);
+					std::vector<std::vector<ZQ_CNN_BBox> > tmp_bounding_boxes(block_num);
+					std::vector<std::vector<ZQ_CNN_OrderScore> > tmp_bounding_scores(block_num);
 					std::vector<int> block_start_w(block_num), block_end_w(block_num);
 					std::vector<int> block_start_h(block_num), block_end_h(block_num);
 					for (int bh = 0; bh < block_H_num; bh++)

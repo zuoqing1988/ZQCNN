@@ -625,7 +625,7 @@ namespace ZQ
 			int max_thread_num, float similarity_thresh) const
 		{
 			std::vector<int> person_ids, pivot_ids;
-			std::vector<std::vector<int>> other_good_ids;
+			std::vector<std::vector<int> > other_good_ids;
 			if (!_select_subset(person_ids, pivot_ids, other_good_ids, max_thread_num, similarity_thresh, 
 				min_image_num_per_person))
 			{
@@ -695,7 +695,7 @@ namespace ZQ
 		bool _select_subset(const std::string& out_file, int max_thread_num, float similarity_thresh, int num_image_thresh) const
 		{
 			std::vector<int> person_ids, pivot_ids;
-			std::vector<std::vector<int>> other_good_ids;
+			std::vector<std::vector<int> > other_good_ids;
 			if (!_select_subset(person_ids, pivot_ids, other_good_ids, max_thread_num, similarity_thresh, num_image_thresh))
 			{
 				return false;
@@ -719,7 +719,7 @@ namespace ZQ
 			return true;
 		}
 		
-		bool _select_subset(std::vector<int>& person_ids, std::vector<int>& pivot_ids, std::vector<std::vector<int>>& other_good_ids,
+		bool _select_subset(std::vector<int>& person_ids, std::vector<int>& pivot_ids, std::vector<std::vector<int> >& other_good_ids,
 			int max_thread_num, float similarity_thresh, int num_image_thresh) const
 		{
 			int person_num = persons.size();
@@ -845,7 +845,7 @@ namespace ZQ
 
 		bool _detect_repeat_person(const std::string& out_file, int max_thread_num, float similarity_thresh) const
 		{
-			std::vector<std::pair<int, int>> repeat_pairs;
+			std::vector<std::pair<int, int> > repeat_pairs;
 			std::vector<float> scores;
 			if (!_detect_repeat_person(repeat_pairs, scores, max_thread_num, similarity_thresh))
 			{
@@ -871,7 +871,7 @@ namespace ZQ
 			return true;
 		}
 
-		bool _detect_repeat_person(std::vector<std::pair<int,int>>& repeat_pairs, std::vector<float>& repeat_scores,
+		bool _detect_repeat_person(std::vector<std::pair<int,int> >& repeat_pairs, std::vector<float>& repeat_scores,
 			int max_thread_num, float similarity_thresh) const
 		{
 			int person_num = persons.size();
@@ -1001,7 +1001,7 @@ namespace ZQ
 		bool _detect_lowest_pair(const std::string& out_file, int max_thread_num, float similarity_thresh) const
 		{
 			std::vector<float> scores;
-			std::vector<std::pair<std::string, std::string>> pairs;
+			std::vector<std::pair<std::string, std::string> > pairs;
 			std::vector<std::pair<std::string, std::string>* > pair_ptr;
 			if (!_detect_lowest_pair(scores, pairs, max_thread_num, similarity_thresh))
 			{
@@ -1031,7 +1031,7 @@ namespace ZQ
 			return true;
 		}
 
-		bool _detect_lowest_pair(std::vector<float>& scores, std::vector<std::pair<std::string, std::string>>& pairs, 
+		bool _detect_lowest_pair(std::vector<float>& scores, std::vector<std::pair<std::string, std::string> >& pairs, 
 			int max_thread_num, float similarity_thresh) const
 		{
 			scores.clear();

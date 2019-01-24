@@ -54,7 +54,7 @@ int main()
 #elif ZQ_CNN_USE_MKL_GEMM
 	mkl_set_num_threads(num_threads);
 #endif
-	Mat image0 = cv::imread("data\\test2.jpg", 1);
+	Mat image0 = cv::imread("data/test2.jpg", 1);
 	if (image0.empty())
 	{
 		cout << "empty image\n";

@@ -122,9 +122,9 @@ namespace ZQ
 			std::ostringstream oss;
 
 			std::vector<std::string> person_names;
-			std::vector<std::vector<std::string>> filenames;
-			std::vector<std::vector<ZQ_CNN_BBox>> boxes;
-			std::vector<std::vector<bool>> fail_flag;
+			std::vector<std::vector<std::string> > filenames;
+			std::vector<std::vector<ZQ_CNN_BBox> > boxes;
+			std::vector<std::vector<bool> > fail_flag;
 
 			_auto_detect_database(database_root, person_names, filenames);
 			
@@ -143,7 +143,7 @@ namespace ZQ
 
 			double start_time = omp_get_wtime();
 			printf("begin\n");
-			std::vector<std::pair<int, int>> pairs;
+			std::vector<std::pair<int, int> > pairs;
 			for (int i = 0; i < person_num; i++)
 			{
 				for (int j = 0; j < filenames[i].size(); j++)
@@ -295,9 +295,9 @@ namespace ZQ
 			std::ostringstream oss;
 
 			std::vector<std::string> person_names;
-			std::vector<std::vector<std::string>> filenames;
-			std::vector<std::vector<ZQ_CNN_BBox>> boxes;
-			std::vector<std::vector<bool>> fail_flag;
+			std::vector<std::vector<std::string> > filenames;
+			std::vector<std::vector<ZQ_CNN_BBox> > boxes;
+			std::vector<std::vector<bool> > fail_flag;
 
 			_auto_detect_database(database_root, person_names, filenames);
 
@@ -316,7 +316,7 @@ namespace ZQ
 
 			double start_time = omp_get_wtime();
 			printf("begin\n");
-			std::vector<std::pair<int, int>> pairs;
+			std::vector<std::pair<int, int> > pairs;
 			for (int i = 0; i < person_num; i++)
 			{
 				for (int j = 0; j < filenames[i].size(); j++)
@@ -461,7 +461,7 @@ namespace ZQ
 			real_thread_num = __min(real_thread_num, __min(detectors.size(), recognizers.size()));
 
 			std::vector<std::string> person_names;
-			std::vector<std::vector<std::string>> filenames;
+			std::vector<std::vector<std::string> > filenames;
 
 			_auto_detect_database(src_root, person_names, filenames);
 
@@ -476,7 +476,7 @@ namespace ZQ
 			clock_t start_time = clock();
 			//double start_time = omp_get_wtime();
 			printf("begin\n");
-			std::vector<std::pair<int, int>> pairs;
+			std::vector<std::pair<int, int> > pairs;
 			for (int i = 0; i < person_num; i++)
 			{
 				for (int j = 0; j < filenames[i].size(); j++)
@@ -814,7 +814,7 @@ namespace ZQ
 			return true;
 		}
 
-		static bool _auto_detect_database(const std::string& root_path, std::vector<std::string>& person_names, std::vector<std::vector<std::string>>& filenames)
+		static bool _auto_detect_database(const std::string& root_path, std::vector<std::string>& person_names, std::vector<std::vector<std::string> >& filenames)
 		{
 			std::string dir(root_path);
 			dir.append("\\*.*");
@@ -862,7 +862,7 @@ namespace ZQ
 			return true;
 		}
 
-		static bool _write_database_txt(const std::string& data_base_file, const std::vector<std::vector<std::string>>& filenames)
+		static bool _write_database_txt(const std::string& data_base_file, const std::vector<std::vector<std::string> >& filenames)
 		{
 			int num = filenames.size();
 			FILE* out = 0;
@@ -1046,7 +1046,7 @@ namespace ZQ
 			std::vector<float> person_min_scores;
 			std::vector<int> person_min_scores_i;
 			std::vector<int> person_min_scores_j;
-			std::vector<std::vector<std::string>> filenames;
+			std::vector<std::vector<std::string> > filenames;
 
 			_auto_detect_database(src_root, person_names, filenames);
 

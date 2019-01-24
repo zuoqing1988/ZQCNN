@@ -24,7 +24,11 @@ bool load_to_buffer(const std::string& param_file, const std::string& model_file
 	model_buffer.clear();
 
 	FILE* in = 0;
+#if defined(_WIN32)
 	if (0 != fopen_s(&in, param_file.c_str(), "rb"))
+#else
+	if(0 == (in = fopen(param_file.c_str(), "rb")))
+#endif
 	{
 		cout << "failed to open " << param_file << "\n";
 		return false;
@@ -77,8 +81,8 @@ int main()
 #endif
 
 	std::string out_blob_name = "fc5";
-	std::string param_file = "model\\mobilefacenet-res8-16-32-8-dim512.zqparams";
-	std::string model_file = "model\\mobilefacenet-res8-16-32-8-dim512.nchwbin";
+	std::string param_file = "model/mobilefacenet-res8-16-32-8-dim512.zqparams";
+	std::string model_file = "model/mobilefacenet-res8-16-32-8-dim512.nchwbin";
 	
 	std::vector<char> param_buffer, model_buffer;
 	if (!load_to_buffer(param_file, model_file, param_buffer, model_buffer))
@@ -112,14 +116,14 @@ int main()
 	Mat image0, image1;
 	if (input_C == 3 && input_H == 112 && input_W == 112)
 	{
-		std::string name = "data\\00_.jpg";
+		std::string name = "data/00_.jpg";
 		image0 = cv::imread(name, 1);
 		if (image0.empty())
 		{
 			cout << name << " does not exist!\n";
 			return EXIT_FAILURE;
 		}
-		name = "data\\01_.jpg";
+		name = "data/01_.jpg";
 		image1 = cv::imread(name, 1);
 		if (image1.empty())
 		{
@@ -129,14 +133,14 @@ int main()
 	}
 	else if (input_C == 3 && input_H == 112 && input_W == 96)
 	{
-		std::string name = "data\\00.jpg";
+		std::string name = "data/00.jpg";
 		image0 = cv::imread(name, 1);
 		if (image0.empty())
 		{
 			cout << name << " does not exist!\n";
 			return EXIT_FAILURE;
 		}
-		name = "data\\01.jpg";
+		name = "data/01.jpg";
 		image1 = cv::imread(name, 1);
 		if (image1.empty())
 		{

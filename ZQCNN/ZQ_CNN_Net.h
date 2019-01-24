@@ -35,8 +35,8 @@ namespace ZQ
 		std::vector<ZQ_CNN_Tensor4D*> blobs; //blobs[0] stores a pointer to input blob
 		std::map<std::string, int> map_name_to_layer_idx;
 		std::map<std::string, int> map_name_to_blob_idx; 
-		std::vector<std::vector<int>> bottoms;
-		std::vector<std::vector<int>> tops;	//tops[0][0] stores input blob pointer
+		std::vector<std::vector<int> > bottoms;
+		std::vector<std::vector<int> > tops;	//tops[0][0] stores input blob pointer
 		std::string input_name;
 		bool has_input_layer;
 		bool show_debug_info;
@@ -1189,8 +1189,8 @@ namespace ZQ
 		{
 			std::vector<ZQ_CNN_Layer*> tmp_layers;
 			std::vector<std::string> tmp_layer_type_names;
-			std::vector<std::vector<int>> tmp_bottoms;
-			std::vector<std::vector<int>> tmp_tops;	
+			std::vector<std::vector<int> > tmp_bottoms;
+			std::vector<std::vector<int> > tmp_tops;	
 			for (int i = 0; i < layers.size(); i++)
 			{
 				if (ZQ_CNN_Layer::_my_strcmpi(layer_type_names[i].c_str(), "Convolution") == 0)

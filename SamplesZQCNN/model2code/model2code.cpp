@@ -13,12 +13,20 @@ int main(int argc, const char** argv)
 	const char* code_file = argv[3];
 	const char* prefix = argv[4];
 	FILE* in1 = 0, *in2 = 0;
+#if defined(_WIN32)
 	if (0 != fopen_s(&in1, param_file, "r"))
+#else
+	if (0 ==(in1 = fopen(param_file, "r")))
+#endif
 	{
 		printf("failed to open file %s\n", param_file);
 		return EXIT_FAILURE;
 	}
+#if defined(_WIN32)
 	if (0 != fopen_s(&in2, model_file, "rb"))
+#else
+	if (0 == (in2 = fopen(model_file, "rb")))
+#endif
 	{
 		printf("failed to open file %s\n", model_file);
 		fclose(in1);
@@ -26,7 +34,11 @@ int main(int argc, const char** argv)
 	}
 
 	FILE* out = 0;
+#if defined(_WIN32)
 	if (0 != fopen_s(&out, code_file, "w"))
+#else
+	if (0 == (out = fopen(code_file, "w")))
+#endif
 	{
 		printf("failed to create file %s\n", code_file);
 		fclose(in1);

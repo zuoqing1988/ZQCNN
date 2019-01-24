@@ -23,7 +23,7 @@ int main()
 #elif ZQ_CNN_USE_MKL_GEMM
 	mkl_set_num_threads(num_threads);
 #endif
-	Mat image = cv::imread("data\\00_.jpg", 1);
+	Mat image = cv::imread("data/00_.jpg", 1);
 	if (image.empty())
 	{
 		cout << "empty image\n";
@@ -36,7 +36,7 @@ int main()
 	std::string out_blob_name = "fc1";
 	ZQ_CNN_Net net;
 
-	if (!net.LoadFrom("model\\GA112.zqparams", "model\\GA112-100.nchwbin"))
+	if (!net.LoadFrom("model/GA112.zqparams", "model/GA112-100.nchwbin"))
 	{
 		cout << "failed to load net\n";
 		return EXIT_FAILURE;
@@ -45,7 +45,7 @@ int main()
 	//net.TurnOnShowDebugInfo();
 	//net.TurnOffUseBuffer();
 	//net.TurnOnUseBuffer();
-	int iters = 1000;
+	int iters = 10000;
 	double t1 = omp_get_wtime();
 	for (int it = 0; it < iters; it++)
 	{

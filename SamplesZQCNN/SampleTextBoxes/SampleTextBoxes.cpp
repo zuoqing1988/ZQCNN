@@ -26,7 +26,7 @@ int main()
 #elif ZQ_CNN_USE_MKL_GEMM
 	mkl_set_num_threads(thread_num);
 #endif
-	Mat img0 = cv::imread("data\\text4.jpg", 1);
+	Mat img0 = cv::imread("data/0113.jpg", 1);
 	if (img0.empty())
 	{
 		cout << "empty image\n";
@@ -35,7 +35,7 @@ int main()
 	//resize(img0, img0, Size(), 0.5, 0.5);
 
 	ZQ_CNN_TextBoxes detector;
-	if (!detector.Init("model\\TextBoxes_icdar13.zqparams", "model\\TextBoxes_icdar13.nchwbin", "detection_out"))
+	if (!detector.Init("model/TextBoxes_icdar13.zqparams", "model/TextBoxes_icdar13.nchwbin", "detection_out"))
 	{
 		printf("failed to init detector!\n");
 		return false;

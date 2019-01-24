@@ -28,10 +28,10 @@ int main()
 #endif
 
 	ZQ_CNN_Net net1,net2;
-	if (!net1.LoadFrom("model\\det4-dw48-tiny.zqparams", "model\\det4-dw48-tiny.nchwbin")
-	//if (!net1.LoadFrom("model\\det3-dw48.zqparams", "model\\det3-dw48-5.nchwbin")
-	||!net2.LoadFrom("model\\det3.zqparams", "model\\det3_bgr.nchwbin"))
-	//|| !net2.LoadFrom("model\\det4-dw48-1.zqparams", "model\\det4-dw48-1-7.nchwbin"))
+	if (!net1.LoadFrom("model/det4-dw48-normal.zqparams", "model/det4-dw48-normal-770.nchwbin")
+	//if (!net1.LoadFrom("model/det3-dw48.zqparams", "model/det3-dw48-5.nchwbin")
+	||!net2.LoadFrom("model/det3.zqparams", "model/det3_bgr.nchwbin"))
+	//|| !net2.LoadFrom("model/det4-dw48-1.zqparams", "model/det4-dw48-1-7.nchwbin"))
 	{
 		cout << "failed to load model\n";
 		return EXIT_FAILURE;
@@ -39,7 +39,7 @@ int main()
 	printf("num_MulAdd = %.1f M\n", net1.GetNumOfMulAdd() / (1024.0*1024.0));
 	printf("num_MulAdd = %.1f M\n", net2.GetNumOfMulAdd() / (1024.0*1024.0));
 
-	Mat img = imread("data\\onet4.jpg",1);
+	Mat img = imread("data/onet6.jpg",1);
 	if (img.empty())
 	{
 		cout << "failed to load image\n";

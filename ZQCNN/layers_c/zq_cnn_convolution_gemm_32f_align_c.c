@@ -4,6 +4,14 @@
 #include <stdlib.h>
 #include <omp.h>
 #include "../ZQ_CNN_CompileConfig.h"
+#if defined(__GNUC__)
+#if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_SSE
+#include <smmintrin.h>
+#endif
+#if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_AVX
+#include <x86intrin.h>
+#endif
+#elif defined(_WIN32)
 #if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_SSE
 #include <mmintrin.h> //MMX  
 #include <xmmintrin.h> //SSE(include mmintrin.h)  
@@ -12,12 +20,14 @@
 #include <tmmintrin.h>//SSSE3(include pmmintrin.h)  
 #include <smmintrin.h>//SSE4.1(include tmmintrin.h)  
 #include <nmmintrin.h>//SSE4.2(include smmintrin.h)  
-#endif
+#endif 
 #if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_AVX
 #include <wmmintrin.h>//AES(include nmmintrin.h)  
 #include <immintrin.h>//AVX(include wmmintrin.h)  
 #include <intrin.h>//(include immintrin.h)  
 #endif
+#endif
+
 #include "math/zq_gemm_32f_align_c.h"
 #if ZQ_CNN_USE_BLAS_GEMM
 #include <openblas/cblas.h>
@@ -235,10 +245,10 @@ extern "C" {
 		total_need_buffer_len = need_A_buffer_len_align32 + need_B_buffer_len_align32 + need_C_buffer_len_align32;
 		if (buffer == 0)
 		{
-			matrix_A = _aligned_malloc(need_A_buffer_len_align32, 32);
-			matrix_Bt = _aligned_malloc(need_B_buffer_len_align32, 32);
+			matrix_A = (float*)_aligned_malloc(need_A_buffer_len_align32, 32);
+			matrix_Bt = (float*)_aligned_malloc(need_B_buffer_len_align32, 32);
 			if (need_allocate_tmp_out)
-				matrix_C = _aligned_malloc(need_C_buffer_len_align32, 32);
+				matrix_C = (float*)_aligned_malloc(need_C_buffer_len_align32, 32);
 		}
 		else
 		{
@@ -400,10 +410,10 @@ extern "C" {
 		total_need_buffer_len = need_A_buffer_len_align32 + need_B_buffer_len_align32 + need_C_buffer_len_align32;
 		if (buffer == 0)
 		{
-			matrix_A = _aligned_malloc(need_A_buffer_len_align32, 32);
-			matrix_Bt = _aligned_malloc(need_B_buffer_len_align32, 32);
+			matrix_A = (float*)_aligned_malloc(need_A_buffer_len_align32, 32);
+			matrix_Bt = (float*)_aligned_malloc(need_B_buffer_len_align32, 32);
 			if (need_allocate_tmp_out)
-				matrix_C = _aligned_malloc(need_C_buffer_len_align32, 32);
+				matrix_C = (float*)_aligned_malloc(need_C_buffer_len_align32, 32);
 		}
 		else
 		{

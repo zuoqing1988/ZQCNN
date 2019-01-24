@@ -30,7 +30,7 @@ namespace ZQ
 		}
 	};
 
-	using ZQ_CNN_LabelBBox = std::map<int, std::vector<ZQ_CNN_NormalizedBBox>>;
+	using ZQ_CNN_LabelBBox = std::map<int, std::vector<ZQ_CNN_NormalizedBBox> >;
 
 	class ZQ_CNN_BBox
 	{

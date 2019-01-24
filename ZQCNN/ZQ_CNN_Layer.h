@@ -47,11 +47,11 @@ namespace ZQ
 
 		virtual __int64 GetNumOfMulAdd() const = 0;
 	public:
-		static std::vector<std::vector<std::string>> split_line(const std::string& line)
+		static std::vector<std::vector<std::string> > split_line(const std::string& line)
 		{
 			std::vector<std::string> first_splits = _split_blank(line.c_str());
 			int num = first_splits.size();
-			std::vector<std::vector<std::string>> second_splits(num);
+			std::vector<std::vector<std::string> > second_splits(num);
 			for (int n = 0; n < num; n++)
 			{
 				second_splits[n] = _split_separater(first_splits[n].c_str());
@@ -156,7 +156,7 @@ namespace ZQ
 		{
 			bottom_names.clear();
 			top_names.clear();
-			std::vector<std::vector<std::string>> paras = split_line(line);
+			std::vector<std::vector<std::string> > paras = split_line(line);
 			int num = paras.size();
 			bool has_C = false, has_name = false;
 			for (int n = 0; n < num; n++)
@@ -323,7 +323,7 @@ namespace ZQ
 		{
 			bottom_names.clear();
 			top_names.clear();
-			std::vector<std::vector<std::string>> paras = split_line(line);
+			std::vector<std::vector<std::string> > paras = split_line(line);
 			int num = paras.size();
 			bool has_num_output = false, has_kernelH = false, has_kernelW = false;
 			bool has_top = false, has_bottom = false, has_name = false;
@@ -769,7 +769,7 @@ namespace ZQ
 		{
 			bottom_names.clear();
 			top_names.clear();
-			std::vector<std::vector<std::string>> paras = split_line(line);
+			std::vector<std::vector<std::string> > paras = split_line(line);
 			int num = paras.size();
 			bool has_num_output = false, has_kernelH = false, has_kernelW = false;
 			bool has_top = false, has_bottom = false, has_name = false;
@@ -1167,7 +1167,7 @@ namespace ZQ
 		{
 			bottom_names.clear();
 			top_names.clear();
-			std::vector<std::vector<std::string>> paras = split_line(line);
+			std::vector<std::vector<std::string> > paras = split_line(line);
 			int num = paras.size();
 			bool has_top = false, has_bottom = false, has_name = false;
 			for (int n = 0; n < num; n++)
@@ -1520,7 +1520,7 @@ namespace ZQ
 		{
 			bottom_names.clear();
 			top_names.clear();
-			std::vector<std::vector<std::string>> paras = split_line(line);
+			std::vector<std::vector<std::string> > paras = split_line(line);
 			int num = paras.size();
 			bool has_top = false, has_bottom = false, has_name = false;
 			for (int n = 0; n < num; n++)
@@ -1784,7 +1784,7 @@ namespace ZQ
 		{
 			bottom_names.clear();
 			top_names.clear();
-			std::vector<std::vector<std::string>> paras = split_line(line);
+			std::vector<std::vector<std::string> > paras = split_line(line);
 			int num = paras.size();
 			bool has_top = false, has_bottom = false, has_name = false;
 			for (int n = 0; n < num; n++)
@@ -2054,7 +2054,7 @@ namespace ZQ
 		{
 			bottom_names.clear();
 			top_names.clear();
-			std::vector<std::vector<std::string>> paras = split_line(line);
+			std::vector<std::vector<std::string> > paras = split_line(line);
 			int num = paras.size();
 			bool has_top = false, has_bottom = false, has_name = false;
 			for (int n = 0; n < num; n++)
@@ -2248,7 +2248,7 @@ namespace ZQ
 		{
 			bottom_names.clear();
 			top_names.clear();
-			std::vector<std::vector<std::string>> paras = split_line(line);
+			std::vector<std::vector<std::string> > paras = split_line(line);
 			int num = paras.size();
 			bool has_top = false, has_bottom = false, has_name = false;
 			for (int n = 0; n < num; n++)
@@ -2410,7 +2410,7 @@ namespace ZQ
 		{
 			bottom_names.clear();
 			top_names.clear();
-			std::vector<std::vector<std::string>> paras = split_line(line);
+			std::vector<std::vector<std::string> > paras = split_line(line);
 			int num = paras.size();
 			bool has_kernelH = false, has_kernelW = false;
 			bool has_strideH = false, has_strideW = false;
@@ -2646,7 +2646,7 @@ namespace ZQ
 		{
 			bottom_names.clear();
 			top_names.clear();
-			std::vector<std::vector<std::string>> paras = split_line(line);
+			std::vector<std::vector<std::string> > paras = split_line(line);
 			int num = paras.size();
 			bool has_num_output = false/*, has_kernelH = false, has_kernelW = false*/;
 			bool has_top = false, has_bottom = false, has_name = false;
@@ -2983,7 +2983,7 @@ namespace ZQ
 		{
 			bottom_names.clear();
 			top_names.clear();
-			std::vector<std::vector<std::string>> paras = split_line(line);
+			std::vector<std::vector<std::string> > paras = split_line(line);
 			int num = paras.size();
 			bool has_top = false, has_bottom = false, has_name = false;
 			for (int n = 0; n < num; n++)
@@ -3122,7 +3122,7 @@ namespace ZQ
 		{
 			bottom_names.clear();
 			top_names.clear();
-			std::vector<std::vector<std::string>> paras = split_line(line);
+			std::vector<std::vector<std::string> > paras = split_line(line);
 			int num = paras.size();
 			bool has_top = false, has_bottom = false, has_name = false;
 			for (int n = 0; n < num; n++)
@@ -3257,7 +3257,7 @@ namespace ZQ
 		{
 			bottom_names.clear();
 			top_names.clear();
-			std::vector<std::vector<std::string>> paras = split_line(line);
+			std::vector<std::vector<std::string> > paras = split_line(line);
 			int num = paras.size();
 			bool has_top = false, has_bottom = false, has_name = false;
 			for (int n = 0; n < num; n++)
@@ -3415,7 +3415,7 @@ namespace ZQ
 			bottom_names.clear();
 			top_names.clear();
 			weight.clear();
-			std::vector<std::vector<std::string>> paras = split_line(line);
+			std::vector<std::vector<std::string> > paras = split_line(line);
 			int num = paras.size();
 			bool has_operation = false;
 			bool has_top = false, has_bottom = false, has_name = false;
@@ -3661,7 +3661,7 @@ namespace ZQ
 		{
 			bottom_names.clear();
 			top_names.clear();
-			std::vector<std::vector<std::string>> paras = split_line(line);
+			std::vector<std::vector<std::string> > paras = split_line(line);
 			int num = paras.size();
 			bool has_operation = false;
 			bool has_top = false, has_bottom = false, has_name = false;
@@ -3930,7 +3930,7 @@ namespace ZQ
 		{
 			bottom_names.clear();
 			top_names.clear();
-			std::vector<std::vector<std::string>> paras = split_line(line);
+			std::vector<std::vector<std::string> > paras = split_line(line);
 			int num = paras.size();
 			bool has_operation = false;
 			bool has_top = false, has_bottom = false, has_name = false;
@@ -4127,7 +4127,7 @@ namespace ZQ
 		{
 			bottom_names.clear();
 			top_names.clear();
-			std::vector<std::vector<std::string>> paras = split_line(line);
+			std::vector<std::vector<std::string> > paras = split_line(line);
 			int num = paras.size();
 			bool has_operation = false;
 			bool has_top = false, has_bottom = false, has_name = false;
@@ -4307,7 +4307,7 @@ namespace ZQ
 		{
 			bottom_names.clear();
 			top_names.clear();
-			std::vector<std::vector<std::string>> paras = split_line(line);
+			std::vector<std::vector<std::string> > paras = split_line(line);
 			int num = paras.size();
 			bool has_top = false, has_bottom = false, has_name = false;
 			
@@ -4494,7 +4494,7 @@ namespace ZQ
 		{
 			bottom_names.clear();
 			top_names.clear();
-			std::vector<std::vector<std::string>> paras = split_line(line);
+			std::vector<std::vector<std::string> > paras = split_line(line);
 			int num = paras.size();
 			int order_num = 0;
 			bool has_order_flag[4] = { false };
@@ -4659,7 +4659,7 @@ namespace ZQ
 		{
 			bottom_names.clear();
 			top_names.clear();
-			std::vector<std::vector<std::string>> paras = split_line(line);
+			std::vector<std::vector<std::string> > paras = split_line(line);
 			int num = paras.size();
 			bool has_top = false, has_bottom = false, has_name = false;
 
@@ -4826,7 +4826,7 @@ namespace ZQ
 		{
 			bottom_names.clear();
 			top_names.clear();
-			std::vector<std::vector<std::string>> paras = split_line(line);
+			std::vector<std::vector<std::string> > paras = split_line(line);
 			int num = paras.size();
 			bool has_top = false, has_bottom = false, has_name = false;
 
@@ -5051,7 +5051,7 @@ namespace ZQ
 		{
 			bottom_names.clear();
 			top_names.clear();
-			std::vector<std::vector<std::string>> paras = split_line(line);
+			std::vector<std::vector<std::string> > paras = split_line(line);
 			int num = paras.size();
 			bool has_top = false, has_bottom = false, has_name = false;
 			bool has_img_h = false, has_img_w = false, has_step_h = false, has_step_w = false;
@@ -5514,7 +5514,7 @@ namespace ZQ
 		{
 			bottom_names.clear();
 			top_names.clear();
-			std::vector<std::vector<std::string>> paras = split_line(line);
+			std::vector<std::vector<std::string> > paras = split_line(line);
 			int num = paras.size();
 			bool has_top = false, has_bottom = false, has_name = false;
 			bool has_img_h = false, has_img_w = false, has_step_h = false, has_step_w = false;
@@ -5739,7 +5739,7 @@ namespace ZQ
 		{
 			bottom_names.clear();
 			top_names.clear();
-			std::vector<std::vector<std::string>> paras = split_line(line);
+			std::vector<std::vector<std::string> > paras = split_line(line);
 			int num = paras.size();
 			bool has_top = false, has_bottom = false, has_name = false;
 			for (int n = 0; n < num; n++)
@@ -5901,7 +5901,7 @@ namespace ZQ
 		{
 			bottom_names.clear();
 			top_names.clear();
-			std::vector<std::vector<std::string>> paras = split_line(line);
+			std::vector<std::vector<std::string> > paras = split_line(line);
 			int num = paras.size();
 			bool has_top = false, has_bottom = false, has_name = false;
 			for (int n = 0; n < num; n++)
@@ -6120,7 +6120,7 @@ namespace ZQ
 		{
 			bottom_names.clear();
 			top_names.clear();
-			std::vector<std::vector<std::string>> paras = split_line(line);
+			std::vector<std::vector<std::string> > paras = split_line(line);
 			int num = paras.size();
 			bool has_top = false, has_bottom = false, has_name = false;
 			for (int n = 0; n < num; n++)
@@ -6298,7 +6298,7 @@ namespace ZQ
 		{
 			bottom_names.clear();
 			top_names.clear();
-			std::vector<std::vector<std::string>> paras = split_line(line);
+			std::vector<std::vector<std::string> > paras = split_line(line);
 			int num = paras.size();
 			bool has_operation = false;
 			bool has_top = false, has_bottom = false, has_name = false;
@@ -6505,7 +6505,7 @@ namespace ZQ
 		{
 			bottom_names.clear();
 			top_names.clear();
-			std::vector<std::vector<std::string>> paras = split_line(line);
+			std::vector<std::vector<std::string> > paras = split_line(line);
 			int num = paras.size();
 			bool has_top = false, has_bottom = false, has_name = false;
 			for (int n = 0; n < num; n++)
@@ -6640,7 +6640,7 @@ namespace ZQ
 		{
 			bottom_names.clear();
 			top_names.clear();
-			std::vector<std::vector<std::string>> paras = split_line(line);
+			std::vector<std::vector<std::string> > paras = split_line(line);
 			int num = paras.size();
 			bool has_top = false, has_bottom = false, has_name = false;
 			for (int n = 0; n < num; n++)

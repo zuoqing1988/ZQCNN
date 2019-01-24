@@ -25,7 +25,7 @@ int main(int argc, const char** argv)
 #endif
 	if (argc >= 2)
 	{
-		if (_strcmpi(argv[1], "fig") == 0)
+		if (strcmp(argv[1], "fig") == 0)
 		{
 			return SampleDetectMouth_fig(argc,argv);
 		}
@@ -64,15 +64,15 @@ int SampleDetectMouth_fig(int argc, const char** argv)
 
 	ZQ_CNN_MouthDetector detector;
 	ZQ_CNN_MouthDetector::InitialArgs init_args;
-	init_args.mtcnn_pnet_proto = model_root + "\\det1.zqparams";
-	init_args.mtcnn_pnet_model = model_root + "\\det1_bgr.nchwbin";
-	init_args.mtcnn_rnet_proto = model_root + "\\det2.zqparams";
-	init_args.mtcnn_rnet_model = model_root + "\\det2_bgr.nchwbin";
-	init_args.mtcnn_onet_proto = model_root + "\\det3.zqparams";
-	init_args.mtcnn_onet_model = model_root + "\\det3_bgr.nchwbin";
-	init_args.ssd_proto = model_root + "\\MobileNetSSD_deploy-face.zqparams";
-	init_args.ssd_model = model_root + "\\MobileNetSSD_deploy-face.nchwbin";
-	init_args.ssd_class_names_file = model_root + "\\MobileNetSSD_deploy-face.names";
+	init_args.mtcnn_pnet_proto = model_root + "/det1.zqparams";
+	init_args.mtcnn_pnet_model = model_root + "/det1_bgr.nchwbin";
+	init_args.mtcnn_rnet_proto = model_root + "/det2.zqparams";
+	init_args.mtcnn_rnet_model = model_root + "/det2_bgr.nchwbin";
+	init_args.mtcnn_onet_proto = model_root + "/det3.zqparams";
+	init_args.mtcnn_onet_model = model_root + "/det3_bgr.nchwbin";
+	init_args.ssd_proto = model_root + "/MobileNetSSD_deploy-face.zqparams";
+	init_args.ssd_model = model_root + "/MobileNetSSD_deploy-face.nchwbin";
+	init_args.ssd_class_names_file = model_root + "/MobileNetSSD_deploy-face.names";
 	ZQ_CNN_MouthDetector::DetectArgs detect_args;
 	ZQ_CNN_MouthDetector::DetectedResult detected_result;
 	ZQ_CNN_MouthDetector::SimpleDetectedResult simple_detected_result;
@@ -128,7 +128,11 @@ int SampleDetectMouth_fig(int argc, const char** argv)
 		{
 			//printf("failed to detect\n");
 			FILE* out = 0;
+#if defined(_WIN32)
 			if (0 != fopen_s(&out, out_file.c_str(), "w"))
+#else
+			if (0 == (out = fopen(out_file.c_str(), "w")))
+#endif
 			{
 				printf("failed to create file %s\n", out_file.c_str());
 				return EXIT_FAILURE;
@@ -148,7 +152,11 @@ int SampleDetectMouth_fig(int argc, const char** argv)
 		}
 		
 		FILE* out = 0;
+#if defined(_WIN32)
 		if (0 != fopen_s(&out, out_file.c_str(), "w"))
+#else
+		if (0 == (out = fopen(out_file.c_str(), "w")))
+#endif
 		{
 			printf("failed to create file %s\n", out_file.c_str());
 			return EXIT_FAILURE;

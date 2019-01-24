@@ -535,7 +535,7 @@ namespace ZQ
 
 		bool _detect_repeat_person(const std::string& out_file, int max_thread_num, float similarity_thresh, bool only_pivot) const
 		{
-			std::vector<std::pair<int, int>> repeat_pairs;
+			std::vector<std::pair<int, int> > repeat_pairs;
 			std::vector<float> scores;
 			if (!_detect_repeat_person(repeat_pairs, scores, max_thread_num, similarity_thresh, only_pivot))
 			{
@@ -562,7 +562,7 @@ namespace ZQ
 			return true;
 		}
 
-		bool _detect_repeat_person(std::vector<std::pair<int, int>>& repeat_pairs, std::vector<float>& repeat_scores,
+		bool _detect_repeat_person(std::vector<std::pair<int, int> >& repeat_pairs, std::vector<float>& repeat_scores,
 			int max_thread_num, float similarity_thresh, bool only_pivot) const
 		{
 			repeat_pairs.clear();

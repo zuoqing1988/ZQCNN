@@ -335,7 +335,7 @@ namespace ZQ
 		}
 
 	private:
-		void _compute_Pnet_single_thread(std::vector<std::vector<float>>& maps, 
+		void _compute_Pnet_single_thread(std::vector<std::vector<float> >& maps, 
 			std::vector<int>& mapH, std::vector<int>& mapW)
 		{
 			int scale_num = 0;
@@ -393,7 +393,7 @@ namespace ZQ
 				}
 			}
 		}
-		void _compute_Pnet_multi_thread(std::vector<std::vector<float>>& maps,
+		void _compute_Pnet_multi_thread(std::vector<std::vector<float> >& maps,
 			std::vector<int>& mapH, std::vector<int>& mapW)
 		{
 #pragma omp parallel for num_threads(thread_num)
@@ -552,7 +552,7 @@ namespace ZQ
 			if (show_debug_info)
 				printf("convert cost: %.3f ms\n", 1000 * (t2 - t1));
 
-			std::vector<std::vector<float>> maps;
+			std::vector<std::vector<float> > maps;
 			std::vector<int> mapH;
 			std::vector<int> mapW;
 			if (thread_num == 1 && !force_run_pnet_multithread)
@@ -566,8 +566,8 @@ namespace ZQ
 				_compute_Pnet_multi_thread(maps, mapH, mapW);
 			}
 			ZQ_CNN_OrderScore order;
-			std::vector<std::vector<ZQ_CNN_BBox>> bounding_boxes(scales.size());
-			std::vector<std::vector<ZQ_CNN_OrderScore>> bounding_scores(scales.size());
+			std::vector<std::vector<ZQ_CNN_BBox> > bounding_boxes(scales.size());
+			std::vector<std::vector<ZQ_CNN_OrderScore> > bounding_scores(scales.size());
 			const int block_size = 32;
 			int stride = pnet_stride;
 			int cellsize = pnet_size;
@@ -641,8 +641,8 @@ namespace ZQ
 					int block_num = block_H_num*block_W_num;
 					int width_per_block = scoreW / block_W_num;
 					int height_per_block = scoreH / block_H_num;
-					std::vector<std::vector<ZQ_CNN_BBox>> tmp_bounding_boxes(block_num);
-					std::vector<std::vector<ZQ_CNN_OrderScore>> tmp_bounding_scores(block_num);
+					std::vector<std::vector<ZQ_CNN_BBox> > tmp_bounding_boxes(block_num);
+					std::vector<std::vector<ZQ_CNN_OrderScore> > tmp_bounding_scores(block_num);
 					std::vector<int> block_start_w(block_num), block_end_w(block_num);
 					std::vector<int> block_start_h(block_num), block_end_h(block_num);
 					for (int bh = 0; bh < block_H_num; bh++)
@@ -781,7 +781,7 @@ namespace ZQ
 					int off_y = it->row1;
 					int rect_w = it->col2 - off_x;
 					int rect_h = it->row2 - off_y;
-					if (off_x < 0 || off_x + rect_w > width || off_y < 0 || off_y + rect_h > height || rect_w <= 0.5*min_size || rect_h <= 0.5*min_size)
+					if (/*off_x < 0 || off_x + rect_w > width || off_y < 0 || off_y + rect_h > height ||*/ rect_w <= 0.5*min_size || rect_h <= 0.5*min_size)
 					{
 						(*it).exist = false;
 						continue;
@@ -807,11 +807,11 @@ namespace ZQ
 				per_num = batch_size;
 			}
 			std::vector<ZQ_CNN_Tensor4D_NHW_C_Align128bit> task_rnet_images(need_thread_num);
-			std::vector<std::vector<int>> task_src_off_x(need_thread_num);
-			std::vector<std::vector<int>> task_src_off_y(need_thread_num);
-			std::vector<std::vector<int>> task_src_rect_w(need_thread_num);
-			std::vector<std::vector<int>> task_src_rect_h(need_thread_num);
-			std::vector<std::vector<ZQ_CNN_BBox>> task_secondBbox(need_thread_num);
+			std::vector<std::vector<int> > task_src_off_x(need_thread_num);
+			std::vector<std::vector<int> > task_src_off_y(need_thread_num);
+			std::vector<std::vector<int> > task_src_rect_w(need_thread_num);
+			std::vector<std::vector<int> > task_src_rect_h(need_thread_num);
+			std::vector<std::vector<ZQ_CNN_BBox> > task_secondBbox(need_thread_num);
 			
 
 			for (int i = 0; i < need_thread_num; i++)
@@ -982,7 +982,7 @@ namespace ZQ
 					int off_y = it->row1;
 					int rect_w = it->col2 - off_x;
 					int rect_h = it->row2 - off_y;
-					if (off_x < 0 || off_x + rect_w > width || off_y < 0 || off_y + rect_h > height || rect_w <= 0.5*min_size || rect_h <= 0.5*min_size)
+					if (/*off_x < 0 || off_x + rect_w > width || off_y < 0 || off_y + rect_h > height ||*/ rect_w <= 0.5*min_size || rect_h <= 0.5*min_size)
 					{
 						(*it).exist = false;
 						continue;
@@ -1016,11 +1016,11 @@ namespace ZQ
 			}
 
 			std::vector<ZQ_CNN_Tensor4D_NHW_C_Align128bit> task_onet_images(need_thread_num);
-			std::vector<std::vector<int>> task_src_off_x(need_thread_num);
-			std::vector<std::vector<int>> task_src_off_y(need_thread_num);
-			std::vector<std::vector<int>> task_src_rect_w(need_thread_num);
-			std::vector<std::vector<int>> task_src_rect_h(need_thread_num);
-			std::vector<std::vector<ZQ_CNN_BBox>> task_thirdBbox(need_thread_num);
+			std::vector<std::vector<int> > task_src_off_x(need_thread_num);
+			std::vector<std::vector<int> > task_src_off_y(need_thread_num);
+			std::vector<std::vector<int> > task_src_rect_w(need_thread_num);
+			std::vector<std::vector<int> > task_src_rect_h(need_thread_num);
+			std::vector<std::vector<ZQ_CNN_BBox> > task_thirdBbox(need_thread_num);
 
 			for (int i = 0; i < need_thread_num; i++)
 			{
@@ -1235,7 +1235,7 @@ namespace ZQ
 					int off_y = it->row1;
 					int rect_w = it->col2 - off_x;
 					int rect_h = it->row2 - off_y;
-					if (off_x < 0 || off_x + rect_w > width || off_y < 0 || off_y + rect_h > height || rect_w <= 0.5*min_size || rect_h <= 0.5*min_size)
+					if (/*off_x < 0 || off_x + rect_w > width || off_y < 0 || off_y + rect_h > height ||*/ rect_w <= 0.5*min_size || rect_h <= 0.5*min_size)
 					{
 						(*it).exist = false;
 						continue;
@@ -1271,11 +1271,11 @@ namespace ZQ
 			}
 
 			std::vector<ZQ_CNN_Tensor4D_NHW_C_Align128bit> task_lnet_images(need_thread_num);
-			std::vector<std::vector<int>> task_src_off_x(need_thread_num);
-			std::vector<std::vector<int>> task_src_off_y(need_thread_num);
-			std::vector<std::vector<int>> task_src_rect_w(need_thread_num);
-			std::vector<std::vector<int>> task_src_rect_h(need_thread_num);
-			std::vector<std::vector<ZQ_CNN_BBox>> task_fourthBbox(need_thread_num);
+			std::vector<std::vector<int> > task_src_off_x(need_thread_num);
+			std::vector<std::vector<int> > task_src_off_y(need_thread_num);
+			std::vector<std::vector<int> > task_src_rect_w(need_thread_num);
+			std::vector<std::vector<int> > task_src_rect_h(need_thread_num);
+			std::vector<std::vector<ZQ_CNN_BBox> > task_fourthBbox(need_thread_num);
 			
 			for (int i = 0; i < need_thread_num; i++)
 			{
@@ -1402,7 +1402,7 @@ namespace ZQ
 					int off_y = it->row1;
 					int rect_w = it->col2 - off_x;
 					int rect_h = it->row2 - off_y;
-					if (off_x < 0 || off_x + rect_w > width || off_y < 0 || off_y + rect_h > height || rect_w <= 0.5*min_size || rect_h <= 0.5*min_size)
+					if (/*off_x < 0 || off_x + rect_w > width || off_y < 0 || off_y + rect_h > height ||*/ rect_w <= 0.5*min_size || rect_h <= 0.5*min_size)
 					{
 						(*it).exist = false;
 						continue;
@@ -1438,11 +1438,11 @@ namespace ZQ
 			}
 
 			std::vector<ZQ_CNN_Tensor4D_NHW_C_Align128bit> task_lnet_images(need_thread_num);
-			std::vector<std::vector<int>> task_src_off_x(need_thread_num);
-			std::vector<std::vector<int>> task_src_off_y(need_thread_num);
-			std::vector<std::vector<int>> task_src_rect_w(need_thread_num);
-			std::vector<std::vector<int>> task_src_rect_h(need_thread_num);
-			std::vector<std::vector<ZQ_CNN_BBox106>> task_fourthBbox(need_thread_num);
+			std::vector<std::vector<int> > task_src_off_x(need_thread_num);
+			std::vector<std::vector<int> > task_src_off_y(need_thread_num);
+			std::vector<std::vector<int> > task_src_rect_w(need_thread_num);
+			std::vector<std::vector<int> > task_src_rect_h(need_thread_num);
+			std::vector<std::vector<ZQ_CNN_BBox106> > task_fourthBbox(need_thread_num);
 
 			for (int i = 0; i < need_thread_num; i++)
 			{
