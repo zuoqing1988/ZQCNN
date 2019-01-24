@@ -45,11 +45,17 @@ int main(int argc, const char** argv)
 		fclose(in2);
 		return EXIT_FAILURE;
 	}
-
+#if defined(_WIN32)
 	_fseeki64(in1, 0, SEEK_END);
 	__int64 param_len = _ftelli64(in1);
 	char* buffer = (char*)malloc(param_len);
 	_fseeki64(in1, 0, SEEK_SET);
+#else
+	fseek(in1, 0, SEEK_END);
+	__int64 param_len = ftell(in1);
+	char* buffer = (char*)malloc(param_len);
+	fseek(in1, 0, SEEK_SET);
+#endif
 	fread(buffer, 1, param_len, in1);
 	fclose(in1);
 	fprintf(out, "__int64 %s_param_len = %lld;\n", prefix, param_len);
@@ -69,12 +75,19 @@ int main(int argc, const char** argv)
 			fprintf(out, "\n");
 	}
 
-
+#if defined(_WIN32)
 	_fseeki64(in2, 0, SEEK_END);
 	__int64 model_len = _ftelli64(in2);
 	free(buffer);
 	buffer = (char*)malloc(model_len);
 	_fseeki64(in2, 0, SEEK_SET);
+#else
+	fseek(in2, 0, SEEK_END);
+	__int64 model_len = ftell(in2);
+	free(buffer);
+	buffer = (char*)malloc(model_len);
+	fseek(in2, 0, SEEK_SET);
+#endif
 	fread(buffer, 1, model_len, in2);
 	fclose(in2);
 	fprintf(out, "__int64 %s_model_len = %lld;\n", prefix, model_len);

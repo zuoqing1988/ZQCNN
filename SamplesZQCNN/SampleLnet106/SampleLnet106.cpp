@@ -1,5 +1,5 @@
 #include "ZQ_CNN_Net.h"
-#include "ZQlib\ZQ_PutTextCN.h"
+#include "ZQlib/ZQ_PutTextCN.h"
 #include <vector>
 #include <iostream>
 #include "opencv2/opencv.hpp"
