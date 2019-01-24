@@ -8,6 +8,7 @@
 #include <vector>
 #include <algorithm>
 #include <fstream>
+#include <math.h>
 #include <omp.h>
 
 namespace ZQ
