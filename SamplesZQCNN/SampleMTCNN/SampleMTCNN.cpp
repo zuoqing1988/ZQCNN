@@ -79,9 +79,9 @@ int main()
 	mkl_set_num_threads(num_threads);
 #endif
 #if defined(_WIN32)
-	Mat image0 = cv::imread("../../data/face2500.jpg", 1);
+	Mat image0 = cv::imread("data/face2500.jpg", 1);
 #else
-  Mat image0 = cv::imread("data/face2500.jpg", 1);
+	Mat image0 = cv::imread("../../data/face2500.jpg", 1);
 #endif
 	if (image0.empty())
 	{
