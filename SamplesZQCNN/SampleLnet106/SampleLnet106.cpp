@@ -1,5 +1,7 @@
 #include "ZQ_CNN_Net.h"
+#if defined(_WIN32)
 #include "ZQlib/ZQ_PutTextCN.h"
+#endif
 #include <vector>
 #include <iostream>
 #include "opencv2/opencv.hpp"
@@ -79,7 +81,9 @@ int main()
 		char buf[10];
 		sprintf_s(buf,10, "%d", i);
 		cv::Point pt = cv::Point(960 * landmark1_data[i * 2], 960 * landmark1_data[i * 2 + 1]);
+#if defined(_WIN32)
 		ZQ_PutTextCN::PutTextCN(draw_img, buf, pt, cv::Scalar(100, 0, 0), 12);
+#endif
 		cv::circle(draw_img, pt, 2, cv::Scalar(0, 0, 250), 2);
 	}
 	/*for (int i = 0; i < 5; i++)
