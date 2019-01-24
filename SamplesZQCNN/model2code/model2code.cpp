@@ -1,5 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
+#ifndef __int64 
+#define __int64 long long
+#endif
 
 int main(int argc, const char** argv)
 {
