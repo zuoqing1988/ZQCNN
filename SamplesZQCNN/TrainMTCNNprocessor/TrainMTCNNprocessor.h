@@ -154,15 +154,29 @@ namespace ZQ
 			
 			if (root[len - 1] == '/' || root[len - 1] == '\\')
 			{
+#if defined(_WIN32)
 				sprintf_s(save_dir, BUF_LEN - 1, "%sprepare_data/%d", root, size);
+#else
+				sprintf(save_dir, "%sprepare_data/%d", root, size);
+#endif
 			}
 			else
 			{
+#if defined(_WIN32)
 				sprintf_s(save_dir, BUF_LEN - 1, "%s/prepare_data/%d", root, size);
+#else
+				sprintf(save_dir, "%s/prepare_data/%d", root, size);
+#endif
 			}
+#if defined(_WIN32)
 			sprintf_s(pos_save_dir, BUF_LEN - 1, "%s/positive", save_dir);
 			sprintf_s(part_save_dir, BUF_LEN - 1, "%s/part", save_dir);
 			sprintf_s(neg_save_dir, BUF_LEN - 1, "%s/negative", save_dir);
+#else
+			sprintf(pos_save_dir, "%s/positive", save_dir);
+			sprintf(part_save_dir, "%s/part", save_dir);
+			sprintf(neg_save_dir, "%s/negative", save_dir);
+#endif
 
 			std::string pos_file = std::string(save_dir) + "/pos.txt";
 			std::string part_file = std::string(save_dir) + "/part.txt";
@@ -446,7 +460,7 @@ namespace ZQ
 #if defined(_WIN32)
 			if (0 != fopen_s(&in2, prob_file, "r"))
 #else
-			if (0 == (in2 = fopen_s(prob_file, "r")))
+			if (0 == (in2 = fopen(prob_file, "r")))
 #endif
 			{
 				printf("failed to open %s\n", prob_file);
