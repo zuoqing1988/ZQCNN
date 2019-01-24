@@ -26,7 +26,7 @@ namespace ZQ
 		std::vector<ZQ_FaceFeature> face_clusters;
 		std::vector<int> pivot_frame_ids;
 		std::vector<Rect> pivot_rects;	
-		std::vector<std::vector<int>> appear_frame_ids;
+		std::vector<std::vector<int> > appear_frame_ids;
 
 	public:
 		ZQ_FaceClustersForVideo()
@@ -182,7 +182,7 @@ namespace ZQ
 
 			int skip = container.skip;
 			int feat_dim = container.frames[0].feat_dim;
-			std::vector<std::vector<bool>> use_flag(fr_num);
+			std::vector<std::vector<bool> > use_flag(fr_num);
 			float face_pose_thresh = 0.8f;
 			int valid_face_num = 0;
 			for (int i = 0; i < fr_num; i++)
@@ -233,7 +233,7 @@ namespace ZQ
 
 			std::vector<int> idx_for_unions(nPts);
 			std::vector<int> idx_for_conquers(nPts);
-			std::vector<std::vector<int>> unions;
+			std::vector<std::vector<int> > unions;
 			double t1 = omp_get_wtime();
 			if (!recognizer.Clustering(nPts, dim, points_ptr, unions, &idx_for_unions[0], &idx_for_conquers[0],
 				union_thresh, conquer_thresh, shuffle, 0))
@@ -268,8 +268,8 @@ namespace ZQ
 			pivot_frame_ids.resize(union_num);
 			pivot_rects.resize(union_num);
 			
-			std::vector<std::map<int, int>> tmp_appear_fr_ids(union_num);
-			std::vector<std::vector<float>> center(union_num);
+			std::vector<std::map<int, int> > tmp_appear_fr_ids(union_num);
+			std::vector<std::vector<float> > center(union_num);
 			printf("union_num = %d\n", union_num);
 			for (int i = 0; i < union_num; i++)
 			{

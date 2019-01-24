@@ -2580,11 +2580,11 @@ bool ZQ_CNN_Forward_SSEUtils::_detection_output_MXNET(const ZQ_CNN_Tensor4D& loc
 	int prior_widthStep = prior.GetWidthStep();
 	int prior_pixStep = prior.GetPixelStep();
 	float tmp_buffer_bbox[4];
-	std::vector<std::vector<float>> tmp_outs(num);
+	std::vector<std::vector<float> > tmp_outs(num);
 	int num_kept = 0;
 	std::vector<ZQ_CNN_LabelBBox> all_bboxes(num);
-	std::vector<std::map<int, std::vector<float>>> all_scores(num);
-	std::vector<std::map<int, std::vector<int>>> all_indices(num);
+	std::vector<std::map<int, std::vector<float> > > all_scores(num);
+	std::vector<std::map<int, std::vector<int> > > all_indices(num);
 	for (int n = 0; n < num; n++)
 	{
 		const float *p_cls_prob = conf.GetFirstPixelPtr() + n * conf_sliceStep;
@@ -2592,8 +2592,8 @@ bool ZQ_CNN_Forward_SSEUtils::_detection_output_MXNET(const ZQ_CNN_Tensor4D& loc
 		tmp_outs[n].resize(num_anchors * 6);
 		float *p_out = &tmp_outs[n][0];
 		ZQ_CNN_LabelBBox& bboxes = all_bboxes[n];
-		std::map<int, std::vector<float>>& scores = all_scores[n];
-		std::map<int, std::vector<int>> indices;
+		std::map<int, std::vector<float> >& scores = all_scores[n];
+		std::map<int, std::vector<int> > indices;
 		int num_det = 0;
 
 		for (int i = 0; i < num_anchors; i++) 

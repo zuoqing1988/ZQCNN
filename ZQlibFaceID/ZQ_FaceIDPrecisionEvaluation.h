@@ -94,7 +94,7 @@ namespace ZQ
 			int feat_dim = recognizers[0]->GetFeatDim();
 			int real_dim = use_flip ? (feat_dim * 2) : feat_dim;
 			printf("feat_dim = %d, real_dim = %d\n", feat_dim, real_dim);
-			std::vector<std::vector<EvaluationPair>> pairs;
+			std::vector<std::vector<EvaluationPair> > pairs;
 			if (!_parse_lfw_list(list_file, folder, pairs))
 			{
 				printf("failed to parse list file %s\n", list_file.c_str());
@@ -103,7 +103,7 @@ namespace ZQ
 
 			printf("parse list file %s done!\n", list_file.c_str());
 			int part_num = pairs.size();
-			std::vector<std::pair<int, int>> pair_list;
+			std::vector<std::pair<int, int> > pair_list;
 			for (int i = 0; i < part_num; i++)
 			{
 				for (int j = 0; j < pairs[i].size(); j++)
@@ -306,7 +306,7 @@ namespace ZQ
 
 
 	private:
-		static float _compute_accuracy(const std::vector<std::vector<EvaluationPair>>& pairs)
+		static float _compute_accuracy(const std::vector<std::vector<EvaluationPair> >& pairs)
 		{
 			int part_num = pairs.size();
 			std::vector<float> ACCs(part_num);
@@ -355,7 +355,7 @@ namespace ZQ
 			return ACC;
 		}
 
-		static bool _parse_lfw_list(const std::string& list_file, const std::string& folder, std::vector<std::vector<EvaluationPair>>& pairs)
+		static bool _parse_lfw_list(const std::string& list_file, const std::string& folder, std::vector<std::vector<EvaluationPair> >& pairs)
 		{
 			FILE* in = 0;
 			if(0 != fopen_s(&in, list_file.c_str(), "r"))
