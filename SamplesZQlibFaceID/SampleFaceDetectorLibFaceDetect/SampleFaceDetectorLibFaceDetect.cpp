@@ -41,8 +41,8 @@ int main()
 		return EXIT_FAILURE;
 	}
 
-	//Mat img = imread("data\\4.jpg");
-	Mat img = imread("data\\test2.jpg");
+	//Mat img = imread("data/4.jpg");
+	Mat img = imread("data/test2.jpg");
 	vector<ZQ_CNN_BBox> result_libfacedetect;
 	
 	if (!libfacedetect->FindFaceROI(img.data, img.cols, img.rows, img.step[0], ZQ_PIXEL_FMT_BGR, 
@@ -51,13 +51,14 @@ int main()
 		cout << "failed to find face using LibFaceDetect\n";
 		return EXIT_FAILURE;
 	}
-
+	cout << "result_libfacedetect: " << result_libfacedetect.size() << "\n";
 	Mat draw_libfacedetect;
 	img.copyTo(draw_libfacedetect);
 	Draw(draw_libfacedetect, result_libfacedetect);
+	imwrite("libfacedetect.jpg", draw_libfacedetect);
 	namedWindow("LibFaceDetect");
 	imshow("LibFaceDetect", draw_libfacedetect);
-	waitKey(0);
+	waitKey(0);	
 	delete libfacedetect;
 	return EXIT_SUCCESS;
 }

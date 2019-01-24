@@ -30,17 +30,18 @@ int main()
 #endif
 
 	Mat img0;
-	Mat img1 = cv::imread("data\\dog.jpg", 1);
-	//Mat img1 = cv::imread("data\\face1.jpg", 1);
+	//Mat img1 = cv::imread("data/dog.jpg", 1);
+	Mat img1 = cv::imread("data/004545.jpg", 1);
 	if (img1.empty())
 	{
 		cout << "empty image\n";
 		return EXIT_FAILURE;
 	}
 	cv::cvtColor(img1, img0, CV_BGR2RGB);
+	//img0 = img1;
 	ZQ_CNN_SSD detector;
-	if (!detector.Init("model\\MobileNetSSD_deploy.zqparams", "model\\MobileNetSSD_deploy.nchwbin", "detection_out"))
-	//if (!detector.Init("model\\ssd-zq-300.zqparams", "model\\ssd-zq-300.nchwbin", "detection", true))
+	//if (!detector.Init("model/MobileNetSSD_deploy.zqparams", "model/MobileNetSSD_deploy.nchwbin", "detection_out"))
+	if (!detector.Init("model/ssd-300.zqparams", "model/ssd-300.nchwbin", "detection", true))
 	{
 		printf("failed to init detector!\n");
 		return false;
@@ -49,7 +50,7 @@ int main()
 	int out_iter = 1;
 	int iters = 1;
 	std::vector<ZQ_CNN_SSD::BBox> output;
-	const float kScoreThreshold = 0.1f;
+	const float kScoreThreshold = 0.3f;
 	for (int out_it = 0; out_it < out_iter; out_it++)
 	{
 		double t1 = omp_get_wtime();

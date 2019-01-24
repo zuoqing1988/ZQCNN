@@ -28,13 +28,13 @@ int main()
 #endif
 
 	ZQ_CNN_NSFW nsfw;
-	if (!nsfw.Init("model\\nsfw.zqparams", "model\\nsfw.nchwbin", "prob"))
+	if (!nsfw.Init("model/nsfw.zqparams", "model/nsfw.nchwbin", "prob"))
 	{
 		printf("failed to init net\n");
 		return EXIT_FAILURE;
 	}
 
-	Mat image = cv::imread("data\\sex.jpg", 1);
+	Mat image = cv::imread("data/sex.jpg", 1);
 	if (image.empty())
 	{
 		cout << "empty image\n";
@@ -49,7 +49,7 @@ int main()
 	}
 	printf("\n");
 
-	image = cv::imread("data\\4.jpg", 1);
+	image = cv::imread("data/4.jpg", 1);
 	if (image.empty())
 	{
 		cout << "empty image\n";
@@ -74,7 +74,7 @@ int main1()
 	openblas_set_num_threads(num_threads);
 #endif
 
-	Mat image = cv::imread("data\\sex.jpg", 1);
+	Mat image = cv::imread("data/sex.jpg", 1);
 	if (image.empty())
 	{
 		cout << "empty image\n";
@@ -102,7 +102,7 @@ int main1()
 	std::string out_blob_name = "prob";
 	ZQ_CNN_Net net;
 
-	if (!net.LoadFrom("model\\nsfw.zqparams", "model\\nsfw.nchwbin"))
+	if (!net.LoadFrom("model/nsfw.zqparams", "model/nsfw.nchwbin"))
 	{
 		cout << "failed to load net\n";
 		return EXIT_FAILURE;

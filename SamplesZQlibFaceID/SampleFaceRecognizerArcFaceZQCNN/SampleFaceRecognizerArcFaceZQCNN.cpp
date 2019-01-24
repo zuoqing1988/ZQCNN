@@ -52,8 +52,8 @@ int main()
 		return EXIT_FAILURE;
 	}
 
-	Mat img0 = imread("data\\00_.jpg");
-	Mat img1 = imread("data\\01_.jpg");
+	Mat img0 = imread("data/00_.jpg");
+	Mat img1 = imread("data/01_.jpg");
 	double t1 = omp_get_wtime();
 	int iters = 200;
 	for (int it = 0; it < iters; it++)

@@ -26,7 +26,7 @@ int main()
 #endif
 	for (int out_it = 0; out_it < 1; out_it++)
 	{
-		Mat image0 = cv::imread("data\\00011.jpg", 0);
+		Mat image0 = cv::imread("data/00011.jpg", 0);
 		if (image0.empty())
 		{
 			cout << "empty image\n";
@@ -39,7 +39,7 @@ int main()
 
 
 		ZQ_CNN_Net net;
-		if (!net.LoadFrom("model\\FacialNet.zqparam", "model\\FacialNet.nchwbin"))
+		if (!net.LoadFrom("model/FacialNet.zqparam", "model/FacialNet.nchwbin"))
 		{
 			cout << "failed to load net\n";
 			return EXIT_FAILURE;

@@ -28,17 +28,17 @@ int main()
 	std::string out_blob_name = "fc5";
 	ZQ_CNN_Net net;
 	
-	//if (!net.LoadFrom("model\\mobilefacenet-res4-8-16-4-dim512.zqparams", "model\\mobilefacenet-res4-8-16-4-dim512-emore.nchwbin", false))
-	//if (!net.LoadFrom("model\\mobilefacenet-res1-3-5-2-dim128-112X96.zqparams", "model\\mobilefacenet-res1-3-5-2-dim128-112X96.nchwbin", false))
-	//if (!net.LoadFrom("model\\mobilefacenet-GNAP.zqparams", "model\\mobilefacenet-GNAP.nchwbin", false))
-	//if (!net.LoadFrom("model\\mobilefacenet-v0.zqparams", "model\\mobilefacenet-v0.nchwbin", false))
-	//if (!net.LoadFrom("model\\mobilefacenet-res8-16-32-8-dim512.zqparams", "model\\mobilefacenet-res8-16-32-8-dim512.nchwbin", false,1e-12))
-	//if (!net.LoadFrom("model\\mobilefacenet-v112X96.zqparams", "model\\mobilefacenet-v112X96.nchwbin",false))
-	if (!net.LoadFrom("model\\mobilefacenet-res2-6-10-2-dim128.zqparams", "model\\mobilefacenet-res2-6-10-2-dim128-emore.nchwbin", false))
-	//if (!net.LoadFrom("model\\mobilefacenet-res2-6-10-2-dim512-112X96.zqparams", "model\\mobilefacenet-res2-6-10-2-dim512-112X96.nchwbin", false,1e-12))
-	//if (!net.LoadFrom("model\\model-r34-am.zqparams", "model\\model-r34-am.nchwbin"))
-	//if (!net.LoadFrom("model\\model-r50-am.zqparams", "model\\model-r50-am.nchwbin"))
-	//if (!net.LoadFrom("model\\model-r100-am.zqparams", "model\\model-r100-am.nchwbin", false))
+	//if (!net.LoadFrom("model/mobilefacenet-res4-8-16-4-dim512.zqparams", "model/mobilefacenet-res4-8-16-4-dim512-emore.nchwbin", false))
+	//if (!net.LoadFrom("model/mobilefacenet-res1-3-5-2-dim128-112X96.zqparams", "model/mobilefacenet-res1-3-5-2-dim128-112X96.nchwbin", false))
+	//if (!net.LoadFrom("model/mobilefacenet-GNAP.zqparams", "model/mobilefacenet-GNAP.nchwbin", false))
+	//if (!net.LoadFrom("model/mobilefacenet-v0.zqparams", "model/mobilefacenet-v0.nchwbin", false))
+	if (!net.LoadFrom("model/mobilefacenet-res8-16-32-8-dim512.zqparams", "model/mobilefacenet-res8-16-32-8-dim512.nchwbin", true,1e-12))
+	//if (!net.LoadFrom("model/mobilefacenet-v112X96.zqparams", "model/mobilefacenet-v112X96.nchwbin",false))
+	//if (!net.LoadFrom("model/mobilefacenet-res2-6-10-2-dim128.zqparams", "model/mobilefacenet-res2-6-10-2-dim128-emore.nchwbin", false))
+	//if (!net.LoadFrom("model/mobilefacenet-res2-6-10-2-dim512-112X96.zqparams", "model/mobilefacenet-res2-6-10-2-dim512-112X96.nchwbin", false,1e-12))
+	//if (!net.LoadFrom("model/model-r34-am.zqparams", "model/model-r34-am.nchwbin"))
+	//if (!net.LoadFrom("model/model-r50-am.zqparams", "model/model-r50-am.nchwbin"))
+	//if (!net.LoadFrom("model/model-r100-am.zqparams", "model/model-r100-am.nchwbin", false))
 	{
 		cout << "failed to load net\n";
 		return EXIT_FAILURE;
@@ -57,14 +57,14 @@ int main()
 	Mat image0, image1;
 	if (input_C == 3 && input_H == 112 && input_W == 112)
 	{
-		std::string name = "data\\00_.jpg";
+		std::string name = "data/00_.jpg";
 		image0 = cv::imread(name, 1);
 		if (image0.empty())
 		{
 			cout << name << " does not exist!\n";
 			return EXIT_FAILURE;
 		}
-		name = "data\\01_.jpg";
+		name = "data/01_.jpg";
 		image1 = cv::imread(name, 1);
 		if (image1.empty())
 		{
@@ -74,14 +74,14 @@ int main()
 	}
 	else if(input_C == 3 && input_H == 112 && input_W == 96)
 	{
-		std::string name = "data\\00.jpg";
+		std::string name = "data/00.jpg";
 		image0 = cv::imread(name, 1);
 		if (image0.empty())
 		{
 			cout << name << " does not exist!\n";
 			return EXIT_FAILURE;
 		}
-		name = "data\\01.jpg";
+		name = "data/01.jpg";
 		image1 = cv::imread(name, 1);
 		if (image1.empty())
 		{

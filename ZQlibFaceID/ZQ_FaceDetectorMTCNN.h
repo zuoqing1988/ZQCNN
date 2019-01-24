@@ -24,9 +24,9 @@ namespace ZQ
 
 		virtual bool Init(const std::string model_root = "model", int thread_num = 1)
 		{
-			return mtcnn.Init(model_root+"\\det1.zqparams", model_root + "\\det1_bgr.nchwbin",
-				model_root + "\\det2.zqparams", model_root + "\\det2_bgr.nchwbin",
-				model_root + "\\det3.zqparams", model_root + "\\det3_bgr.nchwbin", thread_num);
+			return mtcnn.Init(model_root+"/det1.zqparams", model_root + "/det1_bgr.nchwbin",
+				model_root + "/det2.zqparams", model_root + "/det2_bgr.nchwbin",
+				model_root + "/det3.zqparams", model_root + "/det3_bgr.nchwbin", thread_num);
 		}
 		void SetThresh(float thresh_p, float thresh_r, float thresh_o, float nms_thresh_p, float nms_thresh_r, float nms_thresh_o)
 		{

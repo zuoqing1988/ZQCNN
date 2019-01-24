@@ -56,7 +56,7 @@ int main()
 		return EXIT_FAILURE;
 	}
 	
-	Mat img = imread("data\\4.jpg");
+	Mat img = imread("data/4.jpg");
 	vector<ZQ_CNN_BBox> result_mtcnn;
 	int iters = 1000;
 	double t1 = omp_get_wtime();
