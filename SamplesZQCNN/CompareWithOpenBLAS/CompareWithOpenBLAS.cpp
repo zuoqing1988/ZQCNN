@@ -9,9 +9,6 @@
 #include <wmmintrin.h>//AES(include nmmintrin.h)  
 #include <immintrin.h>//AVX(include wmmintrin.h)  
 #include <intrin.h>//(include immintrin.h)  
-#else
-#include <x86intrin.h>
-#endif
 #include <malloc.h>
 #include <stdlib.h>
 #include <omp.h>
@@ -737,3 +734,11 @@ int main()
 	_test_gemm2(105 * 189, 32, 3 * 3 * 64, 1000);
 	return EXIT_SUCCESS;
 }
+
+#else
+#include <x86intrin.h>
+int main()
+{
+	return EXIT_SUCCESS;
+}
+#endif
