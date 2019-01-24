@@ -1,3 +1,5 @@
 .idea/
 cmake-build*/
 build*/
+cmake-out*/
+3rdparty/lib/*.so
