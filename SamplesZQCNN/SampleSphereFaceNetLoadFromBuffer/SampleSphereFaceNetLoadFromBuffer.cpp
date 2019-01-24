@@ -55,12 +55,12 @@ bool load_to_buffer(const std::string& param_file, const std::string& model_file
 		return false;
 	}
 	fclose(in);
+#if defined(_WIN32)
 	if (0 != fopen_s(&in, model_file.c_str(), "rb"))
 	{
 		cout << "failed to open " << model_file << "\n";
 		return false;
 	}
-#if defined(_WIN32)
 	_fseeki64(in, 0, SEEK_END);
 	__int64 model_buffer_len = _ftelli64(in);
 	model_buffer.resize(model_buffer_len);
@@ -75,6 +75,11 @@ bool load_to_buffer(const std::string& param_file, const std::string& model_file
 		return false;
 	}
 #else
+	if (0 == (in = fopen(model_file.c_str(), "rb")))
+	{
+		cout << "failed to open " << model_file << "\n";
+		return false;
+	}
 	fseek(in, 0, SEEK_END);
 	__int64 model_buffer_len = ftell(in);
 	model_buffer.resize(model_buffer_len);
