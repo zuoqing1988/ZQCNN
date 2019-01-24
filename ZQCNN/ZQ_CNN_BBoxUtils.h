@@ -187,10 +187,10 @@ namespace ZQ
 					}
 
 					//boundary check
-					if ((*it).row1 < 0)(*it).row1 = 0;
+					/*if ((*it).row1 < 0)(*it).row1 = 0;
 					if ((*it).col1 < 0)(*it).col1 = 0;
 					if ((*it).row2 > height)(*it).row2 = height - 1;
-					if ((*it).col2 > width)(*it).col2 = width - 1;
+					if ((*it).col2 > width)(*it).col2 = width - 1;*/
 
 					it->area = (it->row2 - it->row1)*(it->col2 - it->col1);
 				}
@@ -219,10 +219,10 @@ namespace ZQ
 					(*it).col1 = round(x1);
 
 					//boundary check
-					if ((*it).row1 < 0)(*it).row1 = 0;
+					/*if ((*it).row1 < 0)(*it).row1 = 0;
 					if ((*it).col1 < 0)(*it).col1 = 0;
 					if ((*it).row2 > height)(*it).row2 = height - 1;
-					if ((*it).col2 > width)(*it).col2 = width - 1;
+					if ((*it).col2 > width)(*it).col2 = width - 1;*/
 
 					it->area = (it->row2 - it->row1)*(it->col2 - it->col1);
 				}

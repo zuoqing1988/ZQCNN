@@ -781,7 +781,7 @@ namespace ZQ
 					int off_y = it->row1;
 					int rect_w = it->col2 - off_x;
 					int rect_h = it->row2 - off_y;
-					if (off_x < 0 || off_x + rect_w > width || off_y < 0 || off_y + rect_h > height || rect_w <= 0.5*min_size || rect_h <= 0.5*min_size)
+					if (/*off_x < 0 || off_x + rect_w > width || off_y < 0 || off_y + rect_h > height ||*/ rect_w <= 0.5*min_size || rect_h <= 0.5*min_size)
 					{
 						(*it).exist = false;
 						continue;
@@ -982,7 +982,7 @@ namespace ZQ
 					int off_y = it->row1;
 					int rect_w = it->col2 - off_x;
 					int rect_h = it->row2 - off_y;
-					if (off_x < 0 || off_x + rect_w > width || off_y < 0 || off_y + rect_h > height || rect_w <= 0.5*min_size || rect_h <= 0.5*min_size)
+					if (/*off_x < 0 || off_x + rect_w > width || off_y < 0 || off_y + rect_h > height ||*/ rect_w <= 0.5*min_size || rect_h <= 0.5*min_size)
 					{
 						(*it).exist = false;
 						continue;
@@ -1235,7 +1235,7 @@ namespace ZQ
 					int off_y = it->row1;
 					int rect_w = it->col2 - off_x;
 					int rect_h = it->row2 - off_y;
-					if (off_x < 0 || off_x + rect_w > width || off_y < 0 || off_y + rect_h > height || rect_w <= 0.5*min_size || rect_h <= 0.5*min_size)
+					if (/*off_x < 0 || off_x + rect_w > width || off_y < 0 || off_y + rect_h > height ||*/ rect_w <= 0.5*min_size || rect_h <= 0.5*min_size)
 					{
 						(*it).exist = false;
 						continue;
@@ -1402,7 +1402,7 @@ namespace ZQ
 					int off_y = it->row1;
 					int rect_w = it->col2 - off_x;
 					int rect_h = it->row2 - off_y;
-					if (off_x < 0 || off_x + rect_w > width || off_y < 0 || off_y + rect_h > height || rect_w <= 0.5*min_size || rect_h <= 0.5*min_size)
+					if (/*off_x < 0 || off_x + rect_w > width || off_y < 0 || off_y + rect_h > height ||*/ rect_w <= 0.5*min_size || rect_h <= 0.5*min_size)
 					{
 						(*it).exist = false;
 						continue;
