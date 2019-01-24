@@ -1,4 +1,8 @@
+#if defined(_WIN32)
 #include <intrin.h>
+#else
+#include <x86intrin.h>
+#endif
 #include <omp.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -1025,7 +1029,7 @@ void MatMul4_AB(int M, int N, int K, const float* A, int lda, const float* B, in
 	register __m256 sum10, sum11, sum12, sum13;
 	register __m256 sum20, sum21, sum22, sum23;
 	register __m256 sum30, sum31, sum32, sum33;
-	__declspec(align(32)) float q[8];
+	ZQ_DECLSPEC_ALIGN32 float q[8];
 	const float *A_row_ptr0, *A_row_ptr1, *A_row_ptr2, *A_row_ptr3;
 	const float *B_row_ptr0, *B_row_ptr1, *B_row_ptr2, *B_row_ptr3;
 	float *C_row_ptr0, *C_row_ptr1, *C_row_ptr2, *C_row_ptr3;

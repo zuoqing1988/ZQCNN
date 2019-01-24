@@ -1,4 +1,8 @@
+#if defined(_WIN32)
 #include <intrin.h>
+#else
+#include <x86intrin.h>
+#endif
 #include <omp.h>
 #include <stdio.h>
 #include <stdlib.h>

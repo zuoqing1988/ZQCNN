@@ -1,4 +1,5 @@
 #include <stdio.h>
+#if defined(_WIN32)
 #include <intrin.h>//(include immintrin.h)
 #include <time.h>
 #define ZQ_CNN_SSETYPE_SSE 1
@@ -18,6 +19,9 @@
 #include <wmmintrin.h>//AES(include nmmintrin.h)  
 #include <immintrin.h>//AVX(include wmmintrin.h)  
 #include <intrin.h>//(include immintrin.h)  
+#endif
+#else
+#include <x86intrin.h>
 #endif
 
 #if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_AVX2

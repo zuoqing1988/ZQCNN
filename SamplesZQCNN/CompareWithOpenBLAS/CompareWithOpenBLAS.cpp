@@ -1,3 +1,4 @@
+#if defined(_WIN32)
 #include <mmintrin.h> //MMX  
 #include <xmmintrin.h> //SSE(include mmintrin.h)  
 #include <emmintrin.h> //SSE2(include xmmintrin.h)  
@@ -8,6 +9,9 @@
 #include <wmmintrin.h>//AES(include nmmintrin.h)  
 #include <immintrin.h>//AVX(include wmmintrin.h)  
 #include <intrin.h>//(include immintrin.h)  
+#else
+#include <x86intrin.h>
+#endif
 #include <malloc.h>
 #include <stdlib.h>
 #include <omp.h>
