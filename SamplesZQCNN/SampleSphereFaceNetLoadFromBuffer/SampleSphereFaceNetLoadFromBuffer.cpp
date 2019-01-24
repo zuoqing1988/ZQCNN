@@ -33,10 +33,18 @@ bool load_to_buffer(const std::string& param_file, const std::string& model_file
 		cout << "failed to open " << param_file << "\n";
 		return false;
 	}
+#if defined(_WIN32)
 	_fseeki64(in, 0, SEEK_END);
 	__int64 param_buffer_len = _ftelli64(in);
 	param_buffer.resize(param_buffer_len);
 	_fseeki64(in, 0, SEEK_SET);
+#else
+	fseek(in, 0, SEEK_END);
+	__int64 param_buffer_len = ftell(in);
+	param_buffer.resize(param_buffer_len);
+	fseek(in, 0, SEEK_SET);
+#endif
+
 	if (param_buffer_len > 0)
 	{
 		fread_s(&param_buffer[0], param_buffer_len, 1, param_buffer_len, in);
@@ -52,6 +60,7 @@ bool load_to_buffer(const std::string& param_file, const std::string& model_file
 		cout << "failed to open " << model_file << "\n";
 		return false;
 	}
+#if defined(_WIN32)
 	_fseeki64(in, 0, SEEK_END);
 	__int64 model_buffer_len = _ftelli64(in);
 	model_buffer.resize(model_buffer_len);
@@ -65,6 +74,21 @@ bool load_to_buffer(const std::string& param_file, const std::string& model_file
 		cout << "empty file " << model_file << "\n";
 		return false;
 	}
+#else
+	fseek(in, 0, SEEK_END);
+	__int64 model_buffer_len = ftell(in);
+	model_buffer.resize(model_buffer_len);
+	fseek(in, 0, SEEK_SET);
+	if (model_buffer_len > 0)
+	{
+		fread(&model_buffer[0], 1, model_buffer_len, in);
+	}
+	else
+	{
+		cout << "empty file " << model_file << "\n";
+		return false;
+	}
+#endif
 	fclose(in);
 
 	return true;
