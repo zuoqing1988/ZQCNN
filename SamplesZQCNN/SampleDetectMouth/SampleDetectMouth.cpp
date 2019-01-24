@@ -25,7 +25,7 @@ int main(int argc, const char** argv)
 #endif
 	if (argc >= 2)
 	{
-		if (_strcmpi(argv[1], "fig") == 0)
+		if (strcmp(argv[1], "fig") == 0)
 		{
 			return SampleDetectMouth_fig(argc,argv);
 		}
