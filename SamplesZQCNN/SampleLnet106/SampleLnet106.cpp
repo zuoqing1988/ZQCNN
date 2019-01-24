@@ -79,7 +79,11 @@ int main()
 	for (int i = 0; i < 106; i++)
 	{
 		char buf[10];
+#if defined(_WIN32)
 		sprintf_s(buf,10, "%d", i);
+#else
+		sprintf(buf, "%d", i);
+#endif
 		cv::Point pt = cv::Point(960 * landmark1_data[i * 2], 960 * landmark1_data[i * 2 + 1]);
 #if defined(_WIN32)
 		ZQ_PutTextCN::PutTextCN(draw_img, buf, pt, cv::Scalar(100, 0, 0), 12);

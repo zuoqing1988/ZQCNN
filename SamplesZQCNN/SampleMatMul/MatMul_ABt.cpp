@@ -6,6 +6,7 @@
 #include <omp.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include "ZQ_CNN_CompileConfig.h"
 
 #define sum_sse_q (q[0]+q[1]+q[2]+q[3])
 #define sum_avx_q (q[0]+q[1]+q[2]+q[3]+q[4]+q[5]+q[6]+q[7])
@@ -649,7 +650,7 @@ void MatMul6_ABt(int M, int N, int K, const float* A, int lda, const float* Bt, 
 	register __m256 sum10, sum11, sum12, sum13;
 	register __m256 sum20, sum21, sum22, sum23;
 	register __m256 sum30, sum31, sum32, sum33;
-	__declspec(align(32)) float q[8];
+	ZQ_DECLSPEC_ALIGN32 float q[8];
 	const float *A_row_ptr0, *A_row_ptr1, *A_row_ptr2, *A_row_ptr3;
 	const float *B_row_ptr0, *B_row_ptr1, *B_row_ptr2, *B_row_ptr3;
 	float *C_row_ptr0, *C_row_ptr1, *C_row_ptr2, *C_row_ptr3;
