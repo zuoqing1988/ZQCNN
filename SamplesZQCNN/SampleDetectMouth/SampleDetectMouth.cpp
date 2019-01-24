@@ -128,7 +128,11 @@ int SampleDetectMouth_fig(int argc, const char** argv)
 		{
 			//printf("failed to detect\n");
 			FILE* out = 0;
+#if defined(_WIN32)
 			if (0 != fopen_s(&out, out_file.c_str(), "w"))
+#else
+			if (0 == (out = fopen(out_file.c_str(), "w")))
+#endif
 			{
 				printf("failed to create file %s\n", out_file.c_str());
 				return EXIT_FAILURE;
@@ -148,7 +152,11 @@ int SampleDetectMouth_fig(int argc, const char** argv)
 		}
 		
 		FILE* out = 0;
+#if defined(_WIN32)
 		if (0 != fopen_s(&out, out_file.c_str(), "w"))
+#else
+		if (0 == (out = fopen(out_file.c_str(), "w")))
+#endif
 		{
 			printf("failed to create file %s\n", out_file.c_str());
 			return EXIT_FAILURE;

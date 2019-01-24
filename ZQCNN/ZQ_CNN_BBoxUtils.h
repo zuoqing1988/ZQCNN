@@ -3,6 +3,7 @@
 #pragma once
 
 #include "ZQ_CNN_BBox.h"
+#include <string>
 #include <algorithm>
 
 namespace ZQ
