@@ -4,6 +4,7 @@
 
 #include "ZQ_CNN_BBox.h"
 #include <string>
+#include <math.h>
 #include <algorithm>
 
 namespace ZQ
@@ -499,8 +500,8 @@ namespace ZQ
 			float ph = loc_pred[3];
 			float ox = px * vx * aw + ax;
 			float oy = py * vy * ah + ay;
-			float ow = std::exp(pw * vw) * aw / 2;
-			float oh = std::exp(ph * vh) * ah / 2;
+			float ow = exp(pw * vw) * aw / 2;
+			float oh = exp(ph * vh) * ah / 2;
 			out[0] = clip ? __max(0, __min(1, ox - ow)) : (ox - ow);
 			out[1] = clip ? __max(0, __min(1, oy - oh)) : (oy - oh);
 			out[2] = clip ? __max(0, __min(1, ox + ow)) : (ox + ow);
