@@ -59,7 +59,7 @@ int main()
 
 	test_ABt(56 * 56, 64, 32, 8000);
 	test_ABt(64, 56 * 56, 32, 8000);
-	return 0;
+	//return 0;
 	test_ABt(56 * 56, 64, 64, 800);
 	test_ABt(64, 56 * 56, 64, 800);
 	
