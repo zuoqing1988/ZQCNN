@@ -75,7 +75,11 @@ int main()
 		cv::Rect rect(bbox.col1, bbox.row1, bbox.col2 - bbox.col1 + 1, bbox.row2 - bbox.row1 + 1);
 		cv::rectangle(img0, rect, cv::Scalar(0, 0, 255), 2);
 		char buff[300];
+#if defined(_WIN32)
 		sprintf_s(buff, 300, "%s: %.2f", kClassNames[bbox.label], bbox.score);
+#else
+		sprintf(buff, "%s: %.2f", kClassNames[bbox.label], bbox.score);
+#endif
 		cv::putText(img0, buff, cv::Point(bbox.col1, bbox.row1), FONT_HERSHEY_PLAIN, 1, Scalar(0, 255, 0));
 	}
 
