@@ -110,7 +110,7 @@ void zq_cnn_normalize_not_across_spatial_32f_align(
 	register zq_mm_type a0, a1, a2, a3;
 	register zq_mm_type b0, b1, b2, b3;
 	register zq_mm_type c0, c1, c2, c3;
-	__declspec(align(32)) float q[8];
+	ZQ_DECLSPEC_ALIGN32 float q[8];
 	float sum;
 	int n, h, w, c;
 	float* slice_ptr, *row_ptr, *pix_ptr, *c_ptr;
@@ -280,7 +280,7 @@ void zq_cnn_normalize_across_spatial_32f_align(
 	register zq_mm_type a0, a1, a2, a3;
 	register zq_mm_type b0, b1, b2, b3;
 	register zq_mm_type c0, c1, c2, c3;
-	__declspec(align(32)) float q[8];
+	ZQ_DECLSPEC_ALIGN32 float q[8];
 	float sum;
 	int n, h, w, c;
 	float* slice_ptr, *row_ptr, *pix_ptr, *c_ptr;

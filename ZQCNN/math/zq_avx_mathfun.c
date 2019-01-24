@@ -42,7 +42,7 @@ extern "C" {
 #define sincos256_ps zq_mm256_sincos_ps
 
 	/* yes I know, the top of this file is quite ugly */
-# define ALIGN32_BEG __declspec(align(32))
+# define ALIGN32_BEG ZQ_DECLSPEC_ALIGN32
 # define ALIGN32_END //__attribute__((aligned(32)))
 
 /* __m128 is ugly to write */
@@ -105,14 +105,14 @@ extern "C" {
 	} imm_xmm_union;
 
 #define COPY_IMM_TO_XMM(imm_, xmm0_, xmm1_) {    \
-    __declspec(align(32)) imm_xmm_union u;  \
+    ZQ_DECLSPEC_ALIGN32 imm_xmm_union u;  \
     u.imm = imm_;				   \
     xmm0_ = u.xmm[0];                            \
     xmm1_ = u.xmm[1];                            \
 }
 
 #define COPY_XMM_TO_IMM(xmm0_, xmm1_, imm_) {                       \
-    __declspec(align(32)) imm_xmm_union u; \
+    ZQ_DECLSPEC_ALIGN32 imm_xmm_union u; \
     u.xmm[0]=xmm0_; u.xmm[1]=xmm1_; imm_ = u.imm; \
   }
 

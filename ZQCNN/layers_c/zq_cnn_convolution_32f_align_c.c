@@ -310,7 +310,7 @@ extern "C" {
 	)
 	{
 		zq_mm_type sum;
-		__declspec(align(32)) float q[8];
+		ZQ_DECLSPEC_ALIGN32 float q[8];
 
 		const float* in_slice_ptr;
 		const float* in_row_ptr;
@@ -423,7 +423,7 @@ extern "C" {
 	)
 	{
 		zq_mm_type sum;
-		__declspec(align(32)) float q[8];
+		ZQ_DECLSPEC_ALIGN32 float q[8];
 
 		const float* in_slice_ptr;
 		const float* in_row_ptr;
@@ -544,7 +544,7 @@ extern "C" {
 	)
 	{
 		zq_mm_type sum;
-		__declspec(align(32)) float q[8];
+		ZQ_DECLSPEC_ALIGN32 float q[8];
 
 		const float* in_slice_ptr;
 		const float* in_row_ptr;
@@ -674,7 +674,7 @@ extern "C" {
 	)
 	{
 		zq_mm_type sum;
-		__declspec(align(32)) float q[8];
+		ZQ_DECLSPEC_ALIGN32 float q[8];
 
 		const float* in_slice_ptr;
 		const float* in_row_ptr;

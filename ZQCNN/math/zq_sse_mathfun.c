@@ -33,7 +33,7 @@ extern "C" {
 /* yes I know, the top of this file is quite ugly */
 
 #ifdef _MSC_VER /* visual c++ */
-# define ALIGN16_BEG __declspec(align(16))
+# define ALIGN16_BEG ZQ_DECLSPEC_ALIGN16
 # define ALIGN16_END 
 #else /* gcc or icc */
 # define ALIGN16_BEG
