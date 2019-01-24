@@ -263,7 +263,11 @@ namespace ZQ
 			char save_dir[BUF_LEN] = { 0 };
 			char landmark_save_dir[BUF_LEN] = { 0 };
 			std::string celeba_img_root;
+#if defined(_WIN32)
 			strcpy_s(save_dir, BUF_LEN - 1, celeba_img_fold);
+#else
+			strcpy(save_dir, celeba_img_fold);
+#endif
 			int len = strlen(save_dir);
 
 			if (save_dir[len - 1] == '/' || save_dir[len - 1] == '\\')
@@ -273,13 +277,25 @@ namespace ZQ
 			len = strlen(root);
 			if (root[len - 1] == '/' || root[len - 1] == '\\')
 			{
+#if defined(_WIN32)
 				sprintf_s(save_dir, BUF_LEN - 1, "%sprepare_data/%d", root, size);
+#else
+				sprintf(save_dir, "%sprepare_data/%d", root, size);
+#endif
 			}
 			else
 			{
+#if defined(_WIN32)
 				sprintf_s(save_dir, BUF_LEN - 1, "%s/prepare_data/%d", root, size);
+#else
+				sprintf(save_dir, "%s/prepare_data/%d", root, size);
+#endif
 			}
+#if defined(_WIN32)
 			sprintf_s(landmark_save_dir, BUF_LEN - 1, "%s/landmark", save_dir);
+#else
+			sprintf(landmark_save_dir, "%s/landmark", save_dir);
+#endif
 			
 			std::string landmark_file = std::string(save_dir) + "/landmark.txt";
 			
