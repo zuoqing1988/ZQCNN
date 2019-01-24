@@ -84,7 +84,11 @@ void example_for_very_high_gflops()
 	register zq_mm_type sum8_ = zq_mm_setzero_ps();
 	register zq_mm_type suma = zq_mm_setzero_ps();
 	register zq_mm_type sumb = zq_mm_setzero_ps();
+#if defined(_WIN32)
 	_declspec(align(32)) float q[8];
+#else
+	__attribute__((aligned(32))) float q[8];
+#endif
 	const int M = 10000, N = 64 * 1000;
 	clock_t t1 = clock();
 	int i, j, k;
