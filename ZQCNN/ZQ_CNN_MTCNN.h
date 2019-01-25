@@ -727,42 +727,84 @@ namespace ZQ
 						}
 					}
 					int chunk_size = ceil(block_num / thread_num);
-#pragma omp parallel for schedule(static, chunk_size) num_threads(thread_num)
-					for (int bb = 0; bb < block_num; bb++)
+					if (thread_num <= 1)
 					{
-						ZQ_CNN_BBox bbox;
-						ZQ_CNN_OrderScore order;
-						int count = 0;
-						for (int row = block_start_h[bb]; row < block_end_h[bb]; row++)
+						for (int bb = 0; bb < block_num; bb++)
 						{
-							p = &maps[i][0] + row*scoreW + block_start_w[bb];
-							for (int col = block_start_w[bb]; col < block_end_w[bb]; col++)
+							ZQ_CNN_BBox bbox;
+							ZQ_CNN_OrderScore order;
+							int count = 0;
+							for (int row = block_start_h[bb]; row < block_end_h[bb]; row++)
 							{
-								if (*p > thresh[0])
+								p = &maps[i][0] + row*scoreW + block_start_w[bb];
+								for (int col = block_start_w[bb]; col < block_end_w[bb]; col++)
 								{
-									bbox.score = *p;
-									order.score = *p;
-									order.oriOrder = count;
-									bbox.row1 = stride*row;
-									bbox.col1 = stride*col;
-									bbox.row2 = stride*row + cellsize;
-									bbox.col2 = stride*col + cellsize;
-									bbox.exist = true;
-									bbox.need_check_overlap_count = (row >= border_size && row < scoreH - border_size)
-										&& (col >= border_size && col < scoreW - border_size);
-									bbox.area = (bbox.row2 - bbox.row1)*(bbox.col2 - bbox.col1);
-									tmp_bounding_boxes[bb].push_back(bbox);
-									tmp_bounding_scores[bb].push_back(order);
-									count++;
+									if (*p > thresh[0])
+									{
+										bbox.score = *p;
+										order.score = *p;
+										order.oriOrder = count;
+										bbox.row1 = stride*row;
+										bbox.col1 = stride*col;
+										bbox.row2 = stride*row + cellsize;
+										bbox.col2 = stride*col + cellsize;
+										bbox.exist = true;
+										bbox.need_check_overlap_count = (row >= border_size && row < scoreH - border_size)
+											&& (col >= border_size && col < scoreW - border_size);
+										bbox.area = (bbox.row2 - bbox.row1)*(bbox.col2 - bbox.col1);
+										tmp_bounding_boxes[bb].push_back(bbox);
+										tmp_bounding_scores[bb].push_back(order);
+										count++;
+									}
+									p++;
 								}
-								p++;
 							}
+							int tmp_before_count = tmp_bounding_boxes[bb].size();
+							ZQ_CNN_BBoxUtils::_nms(tmp_bounding_boxes[bb], tmp_bounding_scores[bb], nms_thresh_per_scale, "Union", pnet_overlap_thresh_count);
+							int tmp_after_count = tmp_bounding_boxes[bb].size();
+							before_count += tmp_before_count;
+							after_count += tmp_after_count;
 						}
-						int tmp_before_count = tmp_bounding_boxes[bb].size();
-						ZQ_CNN_BBoxUtils::_nms(tmp_bounding_boxes[bb], tmp_bounding_scores[bb], nms_thresh_per_scale, "Union", pnet_overlap_thresh_count);
-						int tmp_after_count = tmp_bounding_boxes[bb].size();
-						before_count += tmp_before_count;
-						after_count += tmp_after_count;
+					}
+					else
+					{
+#pragma omp parallel for schedule(static, chunk_size) num_threads(thread_num)
+						for (int bb = 0; bb < block_num; bb++)
+						{
+							ZQ_CNN_BBox bbox;
+							ZQ_CNN_OrderScore order;
+							int count = 0;
+							for (int row = block_start_h[bb]; row < block_end_h[bb]; row++)
+							{
+								p = &maps[i][0] + row*scoreW + block_start_w[bb];
+								for (int col = block_start_w[bb]; col < block_end_w[bb]; col++)
+								{
+									if (*p > thresh[0])
+									{
+										bbox.score = *p;
+										order.score = *p;
+										order.oriOrder = count;
+										bbox.row1 = stride*row;
+										bbox.col1 = stride*col;
+										bbox.row2 = stride*row + cellsize;
+										bbox.col2 = stride*col + cellsize;
+										bbox.exist = true;
+										bbox.need_check_overlap_count = (row >= border_size && row < scoreH - border_size)
+											&& (col >= border_size && col < scoreW - border_size);
+										bbox.area = (bbox.row2 - bbox.row1)*(bbox.col2 - bbox.col1);
+										tmp_bounding_boxes[bb].push_back(bbox);
+										tmp_bounding_scores[bb].push_back(order);
+										count++;
+									}
+									p++;
+								}
+							}
+							int tmp_before_count = tmp_bounding_boxes[bb].size();
+							ZQ_CNN_BBoxUtils::_nms(tmp_bounding_boxes[bb], tmp_bounding_scores[bb], nms_thresh_per_scale, "Union", pnet_overlap_thresh_count);
+							int tmp_after_count = tmp_bounding_boxes[bb].size();
+							before_count += tmp_before_count;
+							after_count += tmp_after_count;
+						}
 					}
 
 					count = 0;
@@ -907,7 +949,7 @@ namespace ZQ
 				}
 			}
 
-			if (thread_num == 1)
+			if (thread_num <= 1)
 			{
 				for (int pp = 0; pp < need_thread_num; pp++)
 				{
@@ -1115,7 +1157,7 @@ namespace ZQ
 				}
 			}
 
-			if (thread_num == 1)
+			if (thread_num <= 1)
 			{
 				for (int pp = 0; pp < need_thread_num; pp++)
 				{
@@ -1370,7 +1412,7 @@ namespace ZQ
 				}
 			}
 
-			if (thread_num == 1)
+			if (thread_num <= 1)
 			{
 				for (int pp = 0; pp < need_thread_num; pp++)
 				{
@@ -1555,7 +1597,7 @@ namespace ZQ
 				resultBbox[i].area = fourthBbox[i].area;
 			}
 
-			if (thread_num == 1)
+			if (thread_num <= 1)
 			{
 				for (int pp = 0; pp < need_thread_num; pp++)
 				{
