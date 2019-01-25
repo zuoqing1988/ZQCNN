@@ -188,7 +188,11 @@ void example_for_very_high_gflops()
 		sumb = zq_mm_add_ps(sumb, suma);
 	}
 	clock_t t2 = clock();
+#if defined(_WIN32)
 	double time = (t2 - t1) / 1000.0;
+#else
+	double time = (t2 - t1) / 1000000.0;
+#endif
 	double mul_count = (double)nIters*M*N * num_per_op / (1024.0*1024.0*1024.0);
 	printf("mul_count = %.3f G, time = %.3f s, gflops = %.3f\n", mul_count, time, mul_count / time);
 	printf("i,j,k=%d,%d,%d\n", i, j, k);
