@@ -756,6 +756,6 @@ int load_database_compact(ZQ_FaceDatabaseCompact& database, const std::string& f
 int main(int argc, const char** argv)
 {
 	printf("%s only support windows\n", argv[0]);
-	return EXIT_SUCCESS;
+	return 0;
 }
 #endif

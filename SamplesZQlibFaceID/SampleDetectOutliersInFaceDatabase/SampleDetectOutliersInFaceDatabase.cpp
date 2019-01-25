@@ -105,6 +105,6 @@ int main(int argc, const char** argv)
 int main(int argc, const char** argv)
 {
 	printf("%s only support windows\n", argv[0]);
-	return EXIT_SUCCESS;
+	return 0;
 }
 #endif

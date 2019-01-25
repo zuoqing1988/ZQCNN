@@ -1,7 +1,7 @@
 #include <stdio.h>
+#include <time.h>
 #if defined(_WIN32)
 #include <intrin.h>//(include immintrin.h)
-#include <time.h>
 #define ZQ_CNN_SSETYPE_SSE 1
 #define ZQ_CNN_SSETYPE_AVX 2
 #define ZQ_CNN_SSETYPE_AVX2 3
