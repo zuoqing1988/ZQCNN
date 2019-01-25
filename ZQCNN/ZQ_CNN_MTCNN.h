@@ -396,16 +396,33 @@ namespace ZQ
 		void _compute_Pnet_multi_thread(std::vector<std::vector<float> >& maps,
 			std::vector<int>& mapH, std::vector<int>& mapW)
 		{
-#pragma omp parallel for num_threads(thread_num)
-			for (int i = 0; i < scales.size(); i++)
+			if (thread_num <= 1)
 			{
-				int changedH = (int)ceil(height*scales[i]);
-				int changedW = (int)ceil(width*scales[i]);
-				if (changedH < pnet_size || changedW < pnet_size)
-					continue;
-				if (scales[i] != 1)
+				for (int i = 0; i < scales.size(); i++)
 				{
-					input.ResizeBilinear(pnet_images[i], changedW, changedH, 0, 0);
+					int changedH = (int)ceil(height*scales[i]);
+					int changedW = (int)ceil(width*scales[i]);
+					if (changedH < pnet_size || changedW < pnet_size)
+						continue;
+					if (scales[i] != 1)
+					{
+						input.ResizeBilinear(pnet_images[i], changedW, changedH, 0, 0);
+					}
+				}
+			}
+			else
+			{
+#pragma omp parallel for num_threads(thread_num)
+				for (int i = 0; i < scales.size(); i++)
+				{
+					int changedH = (int)ceil(height*scales[i]);
+					int changedW = (int)ceil(width*scales[i]);
+					if (changedH < pnet_size || changedW < pnet_size)
+						continue;
+					if (scales[i] != 1)
+					{
+						input.ResizeBilinear(pnet_images[i], changedW, changedH, 0, 0);
+					}
 				}
 			}
 			int scale_num = 0;
@@ -487,51 +504,104 @@ namespace ZQ
 			int task_num = task_scale.size();
 			std::vector<ZQ_CNN_Tensor4D_NHW_C_Align128bit> task_pnet_images(thread_num);
 
-#pragma omp parallel for num_threads(thread_num)
-			for (int i = 0; i < task_num; i++)
+			if (thread_num <= 1)
 			{
-				int thread_id = omp_get_thread_num();
-				int scale_id = task_scale_id[i];
-				float cur_scale = task_scale[i];
-				int i_rect_off_x = task_rect_off_x[i];
-				int i_rect_off_y = task_rect_off_y[i];
-				int i_rect_width = task_rect_width[i];
-				int i_rect_height = task_rect_height[i];
-				if (scale_id == 0 && scales[0] == 1)
+				for (int i = 0; i < task_num; i++)
 				{
-					if (!input.ROI(task_pnet_images[thread_id],
-						i_rect_off_x, i_rect_off_y, i_rect_width, i_rect_height, 0, 0))
-						continue;
-				}
-				else
-				{
-					if (!pnet_images[scale_id].ROI(task_pnet_images[thread_id],
-						i_rect_off_x, i_rect_off_y, i_rect_width, i_rect_height, 0, 0))
-						continue;
-				}
-
-				if (!pnet[thread_id].Forward(task_pnet_images[thread_id]))
-					continue;
-				const ZQ_CNN_Tensor4D* score = pnet[thread_id].GetBlobByName("prob1");
-
-				int task_count = 0;
-				//score p
-				int scoreH = score->GetH();
-				int scoreW = score->GetW();
-				int scorePixStep = score->GetPixelStep();
-				const float *p = score->GetFirstPixelPtr() + 1;
-				ZQ_CNN_BBox bbox;
-				ZQ_CNN_OrderScore order;
-				for (int row = 0; row < scoreH; row++)
-				{
-					for (int col = 0; col < scoreW; col++)
+					int thread_id = omp_get_thread_num();
+					int scale_id = task_scale_id[i];
+					float cur_scale = task_scale[i];
+					int i_rect_off_x = task_rect_off_x[i];
+					int i_rect_off_y = task_rect_off_y[i];
+					int i_rect_width = task_rect_width[i];
+					int i_rect_height = task_rect_height[i];
+					if (scale_id == 0 && scales[0] == 1)
 					{
-						int real_row = row + i_rect_off_y / stride;
-						int real_col = col + i_rect_off_x / stride;
-						if (real_row < mapH[scale_id] && real_col < mapW[scale_id])
-							maps[scale_id][real_row*mapW[scale_id] + real_col] = *p;
+						if (!input.ROI(task_pnet_images[thread_id],
+							i_rect_off_x, i_rect_off_y, i_rect_width, i_rect_height, 0, 0))
+							continue;
+					}
+					else
+					{
+						if (!pnet_images[scale_id].ROI(task_pnet_images[thread_id],
+							i_rect_off_x, i_rect_off_y, i_rect_width, i_rect_height, 0, 0))
+							continue;
+					}
 
-						p += scorePixStep;
+					if (!pnet[thread_id].Forward(task_pnet_images[thread_id]))
+						continue;
+					const ZQ_CNN_Tensor4D* score = pnet[thread_id].GetBlobByName("prob1");
+
+					int task_count = 0;
+					//score p
+					int scoreH = score->GetH();
+					int scoreW = score->GetW();
+					int scorePixStep = score->GetPixelStep();
+					const float *p = score->GetFirstPixelPtr() + 1;
+					ZQ_CNN_BBox bbox;
+					ZQ_CNN_OrderScore order;
+					for (int row = 0; row < scoreH; row++)
+					{
+						for (int col = 0; col < scoreW; col++)
+						{
+							int real_row = row + i_rect_off_y / stride;
+							int real_col = col + i_rect_off_x / stride;
+							if (real_row < mapH[scale_id] && real_col < mapW[scale_id])
+								maps[scale_id][real_row*mapW[scale_id] + real_col] = *p;
+
+							p += scorePixStep;
+						}
+					}
+				}
+			}
+			else
+			{
+#pragma omp parallel for num_threads(thread_num)
+				for (int i = 0; i < task_num; i++)
+				{
+					int thread_id = omp_get_thread_num();
+					int scale_id = task_scale_id[i];
+					float cur_scale = task_scale[i];
+					int i_rect_off_x = task_rect_off_x[i];
+					int i_rect_off_y = task_rect_off_y[i];
+					int i_rect_width = task_rect_width[i];
+					int i_rect_height = task_rect_height[i];
+					if (scale_id == 0 && scales[0] == 1)
+					{
+						if (!input.ROI(task_pnet_images[thread_id],
+							i_rect_off_x, i_rect_off_y, i_rect_width, i_rect_height, 0, 0))
+							continue;
+					}
+					else
+					{
+						if (!pnet_images[scale_id].ROI(task_pnet_images[thread_id],
+							i_rect_off_x, i_rect_off_y, i_rect_width, i_rect_height, 0, 0))
+							continue;
+					}
+
+					if (!pnet[thread_id].Forward(task_pnet_images[thread_id]))
+						continue;
+					const ZQ_CNN_Tensor4D* score = pnet[thread_id].GetBlobByName("prob1");
+
+					int task_count = 0;
+					//score p
+					int scoreH = score->GetH();
+					int scoreW = score->GetW();
+					int scorePixStep = score->GetPixelStep();
+					const float *p = score->GetFirstPixelPtr() + 1;
+					ZQ_CNN_BBox bbox;
+					ZQ_CNN_OrderScore order;
+					for (int row = 0; row < scoreH; row++)
+					{
+						for (int col = 0; col < scoreW; col++)
+						{
+							int real_row = row + i_rect_off_y / stride;
+							int real_col = col + i_rect_off_x / stride;
+							if (real_row < mapH[scale_id] && real_col < mapW[scale_id])
+								maps[scale_id][real_row*mapW[scale_id] + real_col] = *p;
+
+							p += scorePixStep;
+						}
 					}
 				}
 			}
