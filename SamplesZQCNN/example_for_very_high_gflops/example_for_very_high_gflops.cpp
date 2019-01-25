@@ -1,10 +1,11 @@
 #include <stdio.h>
 #include <time.h>
-#if defined(_WIN32)
-#include <intrin.h>//(include immintrin.h)
 #define ZQ_CNN_SSETYPE_SSE 1
 #define ZQ_CNN_SSETYPE_AVX 2
 #define ZQ_CNN_SSETYPE_AVX2 3
+
+#if defined(_WIN32)
+#include <intrin.h>//(include immintrin.h)
 #define ZQ_CNN_USE_SSETYPE ZQ_CNN_SSETYPE_AVX2
 #if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_SSE
 #include <mmintrin.h> //MMX  
@@ -21,6 +22,7 @@
 #include <intrin.h>//(include immintrin.h)  
 #endif
 #else
+#define ZQ_CNN_USE_SSETYPE ZQ_CNN_SSETYPE_AVX
 #include <x86intrin.h>
 #endif
 
