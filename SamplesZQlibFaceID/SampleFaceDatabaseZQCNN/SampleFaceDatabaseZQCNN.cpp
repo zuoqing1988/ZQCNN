@@ -1,3 +1,4 @@
+#if defined(_WIN32)
 #include "ZQ_FaceDatabaseMaker.h"
 #include "ZQ_FaceRecognizerArcFaceZQCNN.h"
 #include "ZQ_FaceRecognizerSphereFaceZQCNN.h"
@@ -748,3 +749,13 @@ int load_database_compact(ZQ_FaceDatabaseCompact& database, const std::string& f
 	else
 		return EXIT_FAILURE;
 }
+
+
+#else
+#include <stdio.h>
+int main(int argc, const char** argv)
+{
+	printf("%s only support windows\n", argv[0]);
+	return EXIT_SUCCESS;
+}
+#endif

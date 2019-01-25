@@ -1,3 +1,4 @@
+#if defined(_WIN32)
 #include "ZQ_FaceRecognizerArcFaceZQCNN.h"
 #include "ZQ_FaceRecognizerSphereFaceZQCNN.h"
 #include "ZQ_FaceDatabaseMaker.h"
@@ -99,3 +100,11 @@ int main(int argc, const char** argv)
 	return ret ? EXIT_SUCCESS : EXIT_FAILURE;
 }
 
+#else
+#include <stdio.h>
+int main(int argc, const char** argv)
+{
+	printf("%s only support windows\n", argv[0]);
+	return EXIT_SUCCESS;
+}
+#endif

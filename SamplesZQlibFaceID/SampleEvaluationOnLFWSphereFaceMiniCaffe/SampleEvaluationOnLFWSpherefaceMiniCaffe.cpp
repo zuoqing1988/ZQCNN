@@ -1,3 +1,4 @@
+#if defined(_WIN32)
 #include "ZQ_FaceIDPrecisionEvaluation.h"
 #include "ZQ_FaceRecognizerSphereFaceMiniCaffe.h"
 #include "ZQ_CNN_CompileConfig.h"
@@ -63,3 +64,12 @@ int main(int argc, const char** argv)
 	printf("total cost: %.3f secs\n", t2 - t1);
 	return EXIT_SUCCESS;
 }
+
+#else
+#include <stdio.h>
+int main(int argc, const char** argv)
+{
+	printf("%s only support windows\n", argv[0]);
+	return EXIT_SUCCESS;
+}
+#endif

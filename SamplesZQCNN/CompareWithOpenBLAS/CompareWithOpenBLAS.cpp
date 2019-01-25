@@ -736,9 +736,10 @@ int main()
 }
 
 #else
-#include <x86intrin.h>
-int main()
+#include <stdio.h>
+int main(int argc, const char** argv)
 {
+	printf("%s only support windows\n", argv[0]);
 	return EXIT_SUCCESS;
 }
 #endif

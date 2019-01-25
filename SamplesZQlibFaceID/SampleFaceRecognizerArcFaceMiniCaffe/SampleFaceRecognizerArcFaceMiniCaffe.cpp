@@ -1,3 +1,4 @@
+#if defined(_WIN32)
 #include "ZQ_FaceRecognizerArcFaceMiniCaffe.h"
 #include "ZQ_CNN_CompileConfig.h"
 #if ZQ_CNN_USE_BLAS_GEMM
@@ -58,3 +59,12 @@ int main()
 
 	return EXIT_SUCCESS;
 }
+
+#else
+#include <stdio.h>
+int main(int argc, const char** argv)
+{
+	printf("%s only support windows\n", argv[0]);
+	return EXIT_SUCCESS;
+}
+#endif

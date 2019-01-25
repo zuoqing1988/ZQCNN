@@ -1,3 +1,4 @@
+#if defined(_WIN32)
 #include "ZQ_FaceDetectorLibFaceDetect.h"
 #include "opencv2\opencv.hpp"
 #include <iostream>
@@ -62,3 +63,12 @@ int main()
 	delete libfacedetect;
 	return EXIT_SUCCESS;
 }
+
+#else
+#include <stdio.h>
+int main(int argc, const char** argv)
+{
+	printf("%s only support windows\n", argv[0]);
+	return EXIT_SUCCESS;
+}
+#endif
