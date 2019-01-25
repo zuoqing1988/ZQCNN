@@ -776,7 +776,7 @@ namespace ZQ
 							int count = 0;
 							for (int row = block_start_h[bb]; row < block_end_h[bb]; row++)
 							{
-								p = &maps[i][0] + row*scoreW + block_start_w[bb];
+								const float* p = &maps[i][0] + row*scoreW + block_start_w[bb];
 								for (int col = block_start_w[bb]; col < block_end_w[bb]; col++)
 								{
 									if (*p > thresh[0])
