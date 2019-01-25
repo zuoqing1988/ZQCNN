@@ -1,15 +1,17 @@
+# 简介
+
 ZQCNN是ZuoQing参照mini-caffe写的forward库，使用depthwise convolution的网络，ZQCNN性能远超minicaffe、opencv。
 
-**主开发环境**：[VS2015 with Update 3](https://pan.baidu.com/s/1zoREccOxVsggV-iI2z4HTg)
+## 主开发环境 ：[VS2015 with Update 3](https://pan.baidu.com/s/1zoREccOxVsggV-iI2z4HTg)
 
   MKL下载地址:[此处下载](https://pan.baidu.com/s/1d75IIf6fgTZ5oeumd0vtTw)
 
-**核心模块支持linux**:
+## 核心模块支持linux:
 
   如果按照[build-with-cmake.md](https://github.com/zuoqing1988/ZQCNN/blob/master/build-with-cmake.md)不能完全编译，可以只编译ZQ_GEMM，ZQCNN，和其他你想测试的程序
 
 
-**训练相关**
+## 训练相关
 
   训练性别年龄：https://github.com/zuoqing1988/train-GenderAge
 	
