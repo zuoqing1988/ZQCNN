@@ -24,6 +24,14 @@ ZQCNN是ZuoQing参照mini-caffe写的forward库，使用depthwise convolution的
 
 # 更新日志
 
+**2019-01-31日更新：达到60星，公布MTCNN人头检测模型**
+
+hollywoodheads数据训练的，效果一般，凑合用吧
+
+人头检测mtcnn-head[mxnet-v0](https://pan.baidu.com/s/1eqzgeoszon_6bNgS1psa7w)&[zqcnn-v0](https://pan.baidu.com/s/1Xh27qm_LmuV6ZIDLBUXfPQ)
+
+
+
 **2019-01-24日更新：核心模块支持linux**
 
 如果按照[build-with-cmake.md](https://github.com/zuoqing1988/ZQCNN/blob/master/build-with-cmake.md)不能完全编译，可以只编译ZQ_GEMM，ZQCNN，和其他你想测试的程序
