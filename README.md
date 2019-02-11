@@ -24,7 +24,7 @@ ZQCNN是ZuoQing参照mini-caffe写的forward库，使用depthwise convolution的
 
 # 更新日志
 
-**2019-01-31日更新：达到60星，公布MTCNN人头检测模型**
+**2019-01-31日更新：达到600星，公布MTCNN人头检测模型**
 
 hollywoodheads数据训练的，效果一般，凑合用吧
 
