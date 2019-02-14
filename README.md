@@ -24,6 +24,34 @@ ZQCNN是ZuoQing参照mini-caffe写的forward库，使用depthwise convolution的
 
 # 更新日志
 
+**2019-02-14日更新：达到700星，公布人脸检测精选模型**
+
+[ZQCNN格式：精选6种Pnet、2种Rnet、2种Onet、2种Lnet](https://pan.baidu.com/s/1X2U9Y-6MJw3md8WuYxaotw)
+
+| 六种Pnet                                                        | 输入尺寸     | 计算量（不计bbox）| 训练时精度      |  备注                |
+| --------                                                        | ------       | ------------      | -----------     | -------------------- |
+| [Pnet20_v00](https://pan.baidu.com/s/1g7JnOxnbXIbNWPXGI-IzrQ)   | 320x240      | 8.5 M             | 0.888-0.894     | 对标libfacedetection |
+| [Pnet20_v0](https://pan.baidu.com/s/1r3VcmEX1a2C5gKlGKnC4kw)    | 320x240      | 11.6 M            | 0.900-0.908     | 对标libfacedetection |
+| [Pnet20_v1](https://pan.baidu.com/s/1qVU3_nporbOUzXYu7giZkA)    | 320x240      | 14.6 M            | 0.915-0.920     |                      |
+| [Pnet20_v2](https://pan.baidu.com/s/1bXzdmsTgfqU_TJHsozSmrQ)    | 320x240      | 18.4 M            | 0.928-0.933     | 对标原版pnet         |
+| [Pnet16_v0](https://pan.baidu.com/s/1s5eZLeAKnqp1ZDTrzaOD_w)    | 256x192      | 7.5 M             | 0.857-0.865     |         stride=4     |
+| [Pnet16_v1](https://pan.baidu.com/s/1Lf0z6rRq5WUKE_DMze_C7w)    | 256x192      | 9.8 M             | 0.873-0.879     |         stride=4     |
+
+| 两种Rnet                                                      | 输入尺寸   | 计算量           | 训练时精度      |  备注                |
+| --------                                                      | ------     | ------------     | -----------     | -------------------- |
+| [Rnet_v1](https://pan.baidu.com/s/1SEIolnvmtPvdqbHxU1vPWQ)    | 24x24      | 0.5 M            | 0.943-0.948     | 对标原版Rnet         |
+| [Rnet_v2](https://pan.baidu.com/s/1APWYGcFC5MAn6Ba5vWo80w)    | 24x24      | 1.4 M            | 0.957-0.962     |                      |
+
+| 两种Onet                                                      | 输入尺寸   | 计算量           | 训练时精度      |  备注                |
+| --------                                                      | ------     | ------------     | -----------     | -------------------- |
+| [Onet_v1](https://pan.baidu.com/s/1UTvSKErOul2wkT5EMxXgVA)    | 48x48      | 2.0 M            | 0.947-0.954     | 不含landmark         |
+| [Onet_v2](https://pan.baidu.com/s/19QomSIy3Py516OEIBFDcVg)    | 48x48      | 3.2 M            | 0.961-0.967     | 不含landmark         |
+
+| 两种Lnet                                                      | 输入尺寸   | 计算量            | 训练时L2   | 训练时L1    |  备注                |
+| --------                                                      | ------     | ------------      | -----------| ----------- | -------------------- |
+| [Lnet_v2](https://pan.baidu.com/s/1W6bxNeD0psxwxbou_xwK-g)    | 48x48      |  3.5 M            | 约0.0014   | 约0.027     | lnet_basenum=16      |
+| [Lnet_v2](https://pan.baidu.com/s/1e3tuwrR3AoU_zRKkIFK8xg)    | 48x48      | 10.8 M            | 约0.0012   | 约0.025     | lnet_basenum=32      |
+
 **2019-01-31日更新：达到600星，公布MTCNN人头检测模型**
 
 hollywoodheads数据训练的，效果一般，凑合用吧
