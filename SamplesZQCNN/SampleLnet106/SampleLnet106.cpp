@@ -40,7 +40,10 @@ int main()
 	}
 	printf("num_MulAdd = %.1f M\n", net1.GetNumOfMulAdd() / (1024.0*1024.0));
 	printf("num_MulAdd = %.1f M\n", net2.GetNumOfMulAdd() / (1024.0*1024.0));
-
+	int net1_H, net1_W, net1_C;
+	int net2_H, net2_W, net2_C;
+	net1.GetInputDim(net1_C, net1_H, net1_W);
+	net2.GetInputDim(net2_C, net2_H, net2_W);
 	Mat img = imread("data/onet.jpg", 1);
 	if (img.empty())
 	{
@@ -49,20 +52,22 @@ int main()
 	}
 	if (img.channels() == 1)
 		cv::cvtColor(img, img, CV_GRAY2BGR);
-	cv::resize(img, img, cv::Size(48, 48));
+	Mat img1, img2;
+	cv::resize(img, img1, cv::Size(net1_W, net1_H));
+	cv::resize(img, img2, cv::Size(net2_W, net2_H));
 	Mat draw_img;
-	img.copyTo(draw_img);
-	cv::resize(draw_img, draw_img, cv::Size(), 20, 20);
+	cv::resize(img, draw_img, cv::Size(960,960));
 
-	ZQ_CNN_Tensor4D_NHW_C_Align128bit input;
-	input.ConvertFromBGR(img.data, img.cols, img.rows, img.step[0]);
+	ZQ_CNN_Tensor4D_NHW_C_Align128bit input1, input2;
+	input1.ConvertFromBGR(img1.data, img1.cols, img1.rows, img1.step[0]);
+	input2.ConvertFromBGR(img2.data, img2.cols, img2.rows, img2.step[0]);
 	int nIters = 1;
 	double t1 = omp_get_wtime();
 	for (int i = 0; i < nIters; i++)
-		net1.Forward(input);
+		net1.Forward(input1);
 	double t2 = omp_get_wtime();
 	for (int i = 0; i < nIters; i++)
-		net2.Forward(input);
+		net2.Forward(input2);
 	double t3 = omp_get_wtime();
 	printf("net1 %.3f s / %d = %.3f ms\n", t2 - t1, nIters, 1000 * (t2 - t1) / nIters);
 	printf("net2 %.3f s / %d = %.3f ms\n", t3 - t2, nIters, 1000 * (t3 - t2) / nIters);
