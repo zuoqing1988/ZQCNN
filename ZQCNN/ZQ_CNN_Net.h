@@ -1012,6 +1012,9 @@ namespace ZQ
 						if (name_it == map_name_to_blob_idx.end())
 						{
 							int idx = blobs.size();
+#if __ARM_NEON
+							ZQ_CNN_Tensor4D* blob = new ZQ_CNN_Tensor4D_NHW_C_Align128bit();
+#else
 #if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_AVX
 							ZQ_CNN_Tensor4D* blob = new ZQ_CNN_Tensor4D_NHW_C_Align256bit();
 #elif ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_SSE
@@ -1019,6 +1022,7 @@ namespace ZQ
 #else
 							ZQ_CNN_Tensor4D* blob = new ZQ_CNN_Tensor4D_NHW_C_Align0();
 #endif
+#endif //__ARM_NEON
 							if (blob == 0)
 							{
 								std::cout << "failed to allocate a ZQ_CNN_Tensor4D\n";
@@ -1040,6 +1044,9 @@ namespace ZQ
 						if (name_it == map_name_to_blob_idx.end())
 						{
 							int idx = blobs.size();
+#if __ARM_NEON
+							ZQ_CNN_Tensor4D* blob = new ZQ_CNN_Tensor4D_NHW_C_Align128bit();
+#else
 #if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_AVX
 							ZQ_CNN_Tensor4D* blob = new ZQ_CNN_Tensor4D_NHW_C_Align256bit();
 #elif ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_SSE
@@ -1047,6 +1054,7 @@ namespace ZQ
 #else
 							ZQ_CNN_Tensor4D* blob = new ZQ_CNN_Tensor4D_NHW_C_Align0();
 #endif
+#endif //__ARM_NEON
 							if (blob == 0)
 							{
 								std::cout << "failed to allocate a ZQ_CNN_Tensor4D\n";
