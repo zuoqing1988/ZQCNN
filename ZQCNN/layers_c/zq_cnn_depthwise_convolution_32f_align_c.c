@@ -1,6 +1,9 @@
 #include <stdio.h>
 #include <omp.h>
 #include "../ZQ_CNN_CompileConfig.h"
+#if __ARM_NEON
+#include <arm_neon.h>
+#else
 #if defined(__GNUC__)
 #if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_SSE
 #include <smmintrin.h>
@@ -24,10 +27,78 @@
 #include <intrin.h>//(include immintrin.h)  
 #endif
 #endif
+#endif //__ARM_NEON
 
 #if defined(__cplusplus) || defined(c_plusplus) 
 extern "C" {
 #endif
+
+#if __ARM_NEON
+#define zq_cnn_depthwise_conv_no_padding_32f_general zq_cnn_depthwise_conv_no_padding_32f_align128bit_general
+#define zq_cnn_depthwise_conv_no_padding_32f_kernel3x3 zq_cnn_depthwise_conv_no_padding_32f_align128bit_kernel3x3
+#define zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_mul_1 zq_cnn_depthwise_conv_no_padding_32f_align128bit_kernel3x3_C4
+#define zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_mul_2 zq_cnn_depthwise_conv_no_padding_32f_align128bit_kernel3x3_C8
+#define zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_mul_4 zq_cnn_depthwise_conv_no_padding_32f_align128bit_kernel3x3_C16
+#define zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_mul_8 zq_cnn_depthwise_conv_no_padding_32f_align128bit_kernel3x3_C32
+#define zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_mul_16 zq_cnn_depthwise_conv_no_padding_32f_align128bit_kernel3x3_C64
+#define zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_mul_32 zq_cnn_depthwise_conv_no_padding_32f_align128bit_kernel3x3_C128
+#define zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_mul_64 zq_cnn_depthwise_conv_no_padding_32f_align128bit_kernel3x3_C256
+#define zq_mm_load_ps vld1q_f32
+#define zq_mm_store_ps vst1q_f32
+#define zq_mm_add_ps vaddq_f32
+#if ZQ_CNN_USE_FMADD128
+#define zq_mm_fmadd_ps vfmaq_f32
+#else
+#define zq_mm_fmadd_ps(A, B, C) vaddq_f32(vmulq_f32(A, B), C)
+#endif
+#define zq_mm_mul_ps vmulq_f32
+#define zq_mm_setzero_ps() vdupq_n_f32(0)
+#define zq_mm_type float32x4_t
+#define zq_mm_align_size 4
+#define zq_mm_align_size_mul_2 8
+#define zq_mm_align_size_mul_3 12
+#define zq_mm_align_size_mul_4 16
+#define zq_mm_align_size_mul_5 20
+#define zq_mm_align_size_mul_6 24
+#define zq_mm_align_size_mul_7 28
+#define zq_mm_align_size_mul_8 32
+#define zq_mm_align_size_mul_16 64
+#define zq_mm_align_size_mul_32 128
+#define zq_mm_align_size_mul_64 256
+#define zq_final_sum_q (q[0]+q[1]+q[2]+q[3])
+
+#include "zq_cnn_depthwise_convolution_32f_align_c_raw.h"
+
+#undef zq_cnn_depthwise_conv_no_padding_32f_general
+#undef zq_cnn_depthwise_conv_no_padding_32f_kernel3x3
+#undef zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_mul_1
+#undef zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_mul_2
+#undef zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_mul_4
+#undef zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_mul_8
+#undef zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_mul_16
+#undef zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_mul_32
+#undef zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_mul_64
+#undef zq_mm_load_ps
+#undef zq_mm_store_ps
+#undef zq_mm_add_ps
+#undef zq_mm_fmadd_ps
+#undef zq_mm_mul_ps
+#undef zq_mm_setzero_ps
+#undef zq_mm_type
+#undef zq_mm_align_size
+#undef zq_mm_align_size_mul_2
+#undef zq_mm_align_size_mul_3
+#undef zq_mm_align_size_mul_4
+#undef zq_mm_align_size_mul_5
+#undef zq_mm_align_size_mul_6
+#undef zq_mm_align_size_mul_7
+#undef zq_mm_align_size_mul_8
+#undef zq_mm_align_size_mul_16
+#undef zq_mm_align_size_mul_32
+#undef zq_mm_align_size_mul_64
+#undef zq_final_sum_q
+
+#else
 
 #if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_SSE
 #define zq_cnn_depthwise_conv_no_padding_32f_general zq_cnn_depthwise_conv_no_padding_32f_align128bit_general
@@ -165,7 +236,7 @@ extern "C" {
 #undef zq_mm_align_size_mul_64
 #undef zq_final_sum_q
 #endif
-
+#endif //__ARM_NEON
 
 	void zq_cnn_depthwise_conv_no_padding_32f_align0_general(
 		const float* in_tensor4D_data,
