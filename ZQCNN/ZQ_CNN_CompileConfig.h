@@ -5,6 +5,14 @@
 #include <malloc.h>
 #include <string.h>
 
+#define __ARM_NEON 0
+
+#if __ARM_NEON
+
+#define ZQ_CNN_USE_FMADD128 1
+
+#else
+
 #define ZQ_CNN_SSETYPE_NONE 0
 #define ZQ_CNN_SSETYPE_SSE 1
 #define ZQ_CNN_SSETYPE_AVX 2
@@ -86,4 +94,5 @@
 
 #endif// defined(WIN32) || defined(_WINDOWS_)
 
+#endif // __ARM_NEON
 #endif// _ZQ_CNN_COMPILE_CONFIG_H_
