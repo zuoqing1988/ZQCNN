@@ -38,7 +38,7 @@ endif()
 if((CMAKE_CXX_COMPILER_ID MATCHES "GNU") OR (CMAKE_CXX_COMPILER_ID MATCHES "Clang"))
     if(SIMD_ARCH_TYPE EQUAL arm)
 		add_compile_options(-mfpu=neon)
-    else
+    else()
 	    add_compile_options(-mavx2)
 	endif()
 elseif(CMAKE_CXX_COMPILER_ID MATCHES "Intel")
