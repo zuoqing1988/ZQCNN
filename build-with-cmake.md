@@ -26,7 +26,6 @@ make -j4
 edit ZQ_CNN_CompileConfig.h 
 #define __ARM_NEON 1
 
-```shell
 mkdir cmake-build-release && cd cmake-build-release
 cmake .. -DSIMD_ARCH_TYPE=arm
 make SampleMatMulNEON
