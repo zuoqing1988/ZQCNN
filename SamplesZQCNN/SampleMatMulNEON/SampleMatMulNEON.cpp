@@ -294,14 +294,14 @@ void test_ABt(int M, int N, int K, int nIters, float thresh, bool show)
 		Bt[i] = rand() % 10001 / 5000.0f - 1.0f;
 	double time = 1;
 	clock_t t0 = clock();
-	int naive_nIters = 1;
+	int naive_nIters = __max(1,nIters/10);
 	double navie_mul_count = (double)M*N*K*naive_nIters / (1024.0*1024.0*1024.0);
 	for (int i = 0; i < naive_nIters; i++)
 	{
 		MatMul0_ABt(M, N, K, A, padK, Bt, padK, C0, N);
 	}
 	clock_t t1 = clock(); time = __max(1e-9, time_scale*(t1 - t0));
-	//printf("%d x %d x %d, cost = %.3f s, naive gflops = %.3f\n", M, N, K, time, navie_mul_count / time);
+	printf("%d x %d x %d, cost = %.3f s, naive gflops = %.3f\n", M, N, K, time, navie_mul_count / time);
 
 	clock_t t1_1 = clock();
 	for (int i = 0; i < nIters; i++)
