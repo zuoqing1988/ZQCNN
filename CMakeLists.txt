@@ -8,6 +8,10 @@ if(NOT CMAKE_BUILD_TYPE)
 	set(CMAKE_BUILD_TYPE release CACHE STRING "Choose the type of build" FORCE)
 endif()
 
+if(NOT SIMD_ARCH_TYPE)
+    set(SIMD_ARCH_TYPE x86)
+endif()
+
 if(CMAKE_SIZEOF_VOID_P EQUAL 8)
 	set(archbit "x64")
 else()
@@ -32,7 +36,11 @@ elseif(UNIX)
 endif()
 
 if((CMAKE_CXX_COMPILER_ID MATCHES "GNU") OR (CMAKE_CXX_COMPILER_ID MATCHES "Clang"))
-		add_compile_options(-mavx2)
+    if(SIMD_ARCH_TYPE EQUAL arm)
+		add_compile_options(-mfpu=neon)
+    else
+	    add_compile_options(-mavx2)
+	endif()
 elseif(CMAKE_CXX_COMPILER_ID MATCHES "Intel")
 		add_compile_options(/QxAVX2)
 elseif(CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
