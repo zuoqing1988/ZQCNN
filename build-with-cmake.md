@@ -15,6 +15,18 @@ If you are using 3rdparty blas libraries, please download [mklmk_lnx](https://gi
 
 ```shell
 mkdir cmake-build-release && cd cmake-build-release
-cmake .. -DCMAKE_BUILD_TYPE=release
+cmake .. 
 make -j4
 ```
+
+## arm
+
+
+```shell
+edit ZQ_CNN_CompileConfig.h 
+#define __ARM_NEON 1
+
+```shell
+mkdir cmake-build-release && cd cmake-build-release
+cmake .. -DSIMD_ARCH_TYPE=arm
+make SampleMatMulNEON
