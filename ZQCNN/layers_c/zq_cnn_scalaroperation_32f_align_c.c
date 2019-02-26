@@ -2,6 +2,9 @@
 #include <stdlib.h>
 #include <math.h>
 #include "../ZQ_CNN_CompileConfig.h"
+#if __ARM_NEON
+#include <arm_neon.h>
+#else
 #if defined(__GNUC__)
 #if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_SSE
 #include <smmintrin.h>
@@ -25,13 +28,96 @@
 #include <intrin.h>//(include immintrin.h)  
 #endif
 #endif
+#endif//__ARM_NEON
 
 
 #if defined(__cplusplus) || defined(c_plusplus) 
 extern "C" {
 #endif
 
+#if __ARM_NEON
+#define zq_mm_load_ps vld1q_f32
+#define zq_mm_store_ps vst1q_f32
+#define zq_mm_type float32x4_t
+#define zq_mm_set1_ps vdupq_n_f32
+#define zq_mm_align_size 4
+#define zq_mm_align_size_mul_2 8
+#define zq_mm_align_size_mul_3 12
+#define zq_mm_align_size_mul_4 16
+#define zq_mm_align_size_mul_5 20
+#define zq_mm_align_size_mul_6 24
+#define zq_mm_align_size_mul_7 28
+#define zq_mm_align_size_mul_8 32
+#define zq_mm_align_size_mul_16 64
+#define zq_mm_align_size_mul_32 128
 
+#define zq_cnn_scalaroperation_32f_align zq_cnn_scalaroperation_add_32f_align128bit
+#define zq_cnn_scalaroperation_inplace_32f_align zq_cnn_scalaroperation_add_inplace_32f_align128bit
+#define zq_mm_operation_ps vaddq_f32
+#include "zq_cnn_scalaroperation_32f_align_c_raw.h"
+#undef zq_mm_operation_ps
+#undef zq_cnn_scalaroperation_32f_align
+#undef zq_cnn_scalaroperation_inplace_32f_align
+
+#define zq_cnn_scalaroperation_32f_align zq_cnn_scalaroperation_mul_32f_align128bit
+#define zq_cnn_scalaroperation_inplace_32f_align zq_cnn_scalaroperation_mul_inplace_32f_align128bit
+#define zq_mm_operation_ps vmulq_f32
+#include "zq_cnn_scalaroperation_32f_align_c_raw.h"
+#undef zq_mm_operation_ps
+#undef zq_cnn_scalaroperation_32f_align
+#undef zq_cnn_scalaroperation_inplace_32f_align
+
+
+#define zq_cnn_scalaroperation_32f_align zq_cnn_scalaroperation_max_32f_align128bit
+#define zq_cnn_scalaroperation_inplace_32f_align zq_cnn_scalaroperation_max_inplace_32f_align128bit
+#define zq_mm_operation_ps vmaxq_f32
+#include "zq_cnn_scalaroperation_32f_align_c_raw.h"
+#undef zq_mm_operation_ps
+#undef zq_cnn_scalaroperation_32f_align
+#undef zq_cnn_scalaroperation_inplace_32f_align
+
+#define zq_cnn_scalaroperation_32f_align zq_cnn_scalaroperation_min_32f_align128bit
+#define zq_cnn_scalaroperation_inplace_32f_align zq_cnn_scalaroperation_min_inplace_32f_align128bit
+#define zq_mm_operation_ps vminq_f32
+#include "zq_cnn_scalaroperation_32f_align_c_raw.h"
+#undef zq_mm_operation_ps
+#undef zq_cnn_scalaroperation_32f_align
+#undef zq_cnn_scalaroperation_inplace_32f_align
+
+
+#define zq_cnn_scalaroperation_32f_align zq_cnn_scalaroperation_rminus_32f_align128bit
+#define zq_cnn_scalaroperation_inplace_32f_align zq_cnn_scalaroperation_rminus_inplace_32f_align128bit
+#define zq_mm_operation_ps(x,y) vsubq_f32(y,x)
+#include "zq_cnn_scalaroperation_32f_align_c_raw.h"
+#undef zq_mm_operation_ps
+#undef zq_cnn_scalaroperation_32f_align
+#undef zq_cnn_scalaroperation_inplace_32f_align
+
+#define zq_cnn_scalaroperation_32f_align zq_cnn_scalaroperation_rdiv_32f_align128bit
+#define zq_cnn_scalaroperation_inplace_32f_align zq_cnn_scalaroperation_rdiv_inplace_32f_align128bit
+#define zq_mm_operation_ps(x,y) vdivq_f32(y,x)
+#include "zq_cnn_scalaroperation_32f_align_c_raw.h"
+#undef zq_mm_operation_ps
+#undef zq_cnn_scalaroperation_32f_align
+#undef zq_cnn_scalaroperation_inplace_32f_align
+
+#undef zq_mm_load_ps
+#undef zq_mm_store_ps
+#undef zq_mm_add_ps
+#undef zq_mm_type
+#undef zq_mm_set1_ps
+#undef zq_mm_align_size
+#undef zq_mm_align_size_mul_2
+#undef zq_mm_align_size_mul_3
+#undef zq_mm_align_size_mul_4
+#undef zq_mm_align_size_mul_5
+#undef zq_mm_align_size_mul_6
+#undef zq_mm_align_size_mul_7
+#undef zq_mm_align_size_mul_8
+#undef zq_mm_align_size_mul_16
+#undef zq_mm_align_size_mul_32
+
+#else
 #if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_SSE
 #define zq_mm_load_ps _mm_load_ps
 #define zq_mm_store_ps _mm_store_ps
@@ -199,6 +285,7 @@ extern "C" {
 #undef zq_mm_align_size_mul_16
 #undef zq_mm_align_size_mul_32
 #endif
+#endif//__ARM_NEON
 
 	void zq_cnn_scalaroperation_add_32f_align0(
 		float scalar,

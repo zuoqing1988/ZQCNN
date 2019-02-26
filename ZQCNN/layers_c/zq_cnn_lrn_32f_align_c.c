@@ -2,6 +2,9 @@
 #include <omp.h>
 #include <math.h>
 #include "../ZQ_CNN_CompileConfig.h"
+#if __ARM_NEON
+
+#else
 #if defined(__GNUC__)
 #if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_SSE
 #include <smmintrin.h>
@@ -29,11 +32,15 @@
 #include "../math/zq_avx_mathfun.h"
 #endif
 #endif
-
+#endif //__ARM_NEON
 
 #if defined(__cplusplus) || defined(c_plusplus) 
 extern "C" {
 #endif
+
+#if __ARM_NEON
+
+#else
 
 #if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_SSE
 #define zq_cnn_lrn_across_channels_32f_align zq_cnn_lrn_across_channels_32f_align128bit
@@ -136,6 +143,8 @@ extern "C" {
 #undef zq_mm_align_size_mul_16
 #undef zq_mm_align_size_mul_32
 #endif
+
+#endif //__ARM_NEON
 
 	/* it is safe to use out_tensor4D_data = in_tensor4D_data */
 	void zq_cnn_lrn_across_channels_32f_align0(

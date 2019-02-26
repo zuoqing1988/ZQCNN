@@ -5,6 +5,10 @@
 extern "C" {
 #endif
 
+
+
+#if __ARM_NEON
+
 	void zq_cnn_addbias_32f_align0(
 		float* in_tensor4D_data,	// in & out
 		int in_N,
@@ -17,7 +21,30 @@ extern "C" {
 		const float* bias_data
 	);
 
+	void zq_cnn_addbias_32f_align128bit(
+		float* in_tensor4D_data,	// in & out
+		int in_N,
+		int in_H,
+		int in_W,
+		int in_C,
+		int in_alignPixelStep,
+		int in_widthStep,
+		int in_SliceStep,
+		const float* bias_data
+	);
+#else
 
+	void zq_cnn_addbias_32f_align0(
+		float* in_tensor4D_data,	// in & out
+		int in_N,
+		int in_H,
+		int in_W,
+		int in_C,
+		int in_pixelStep,
+		int in_widthStep,
+		int in_sliceStep,
+		const float* bias_data
+	);
 
 #if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_SSE
 	void zq_cnn_addbias_32f_align128bit(
@@ -48,6 +75,8 @@ extern "C" {
 	);
 
 #endif
+
+#endif //__ARM_NEON
 
 #if defined(__cplusplus) || defined(c_plusplus) 
 }

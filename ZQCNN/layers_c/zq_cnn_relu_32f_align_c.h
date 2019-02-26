@@ -5,6 +5,10 @@
 extern "C" {
 #endif
 
+	
+
+#if __ARM_NEON
+
 	/*
 	y = slope*min(0, x) + max(0, x)
 	*/
@@ -20,7 +24,39 @@ extern "C" {
 		float slope
 	);
 
+	/*
+	y = slope*min(0,x)+max(0,x)
+	*/
+	void zq_cnn_relu_32f_align128bit(
+		float* in_tensor4D_data,	// in & out
+		int in_N,
+		int in_H,
+		int in_W,
+		int in_C,
+		int in_pixelStep,
+		int in_widthStep,
+		int in_sliceStep,
+		float slope
+	);
+
+#else
+
 #if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_SSE
+
+	/*
+	y = slope*min(0, x) + max(0, x)
+	*/
+	void zq_cnn_relu_32f_align0(
+		float* in_tensor4D_data,	// in & out
+		int in_N,
+		int in_H,
+		int in_W,
+		int in_C,
+		int in_pixelStep,
+		int in_widthStep,
+		int in_sliceStep,
+		float slope
+	);
 
 	/*
 	y = slope*min(0,x)+max(0,x)
@@ -55,6 +91,8 @@ extern "C" {
 	);
 
 #endif
+
+#endif //__ARM_NEON
 
 #if defined(__cplusplus) || defined(c_plusplus) //跨平台定义方法
 }

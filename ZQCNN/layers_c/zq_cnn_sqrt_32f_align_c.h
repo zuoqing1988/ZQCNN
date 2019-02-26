@@ -1,5 +1,5 @@
 #ifndef _ZQ_CNN_SQRT_32F_ALIGN_C_H_
-#define _ZQ_CNN_QRT_32F_ALIGN_C_H_
+#define _ZQ_CNN_SQRT_32F_ALIGN_C_H_
 
 #if defined(__cplusplus) || defined(c_plusplus) 
 extern "C" {

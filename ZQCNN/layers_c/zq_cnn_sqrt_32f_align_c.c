@@ -1,29 +1,6 @@
 #include <stdio.h>
 #include <math.h>
 #include "../ZQ_CNN_CompileConfig.h"
-#if defined(__GNUC__)
-#if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_SSE
-#include <smmintrin.h>
-#endif
-#if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_AVX
-#include <x86intrin.h>
-#endif
-#elif defined(_WIN32)
-#if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_SSE
-#include <mmintrin.h> //MMX  
-#include <xmmintrin.h> //SSE(include mmintrin.h)  
-#include <emmintrin.h> //SSE2(include xmmintrin.h)  
-#include <pmmintrin.h> //SSE3(include emmintrin.h)  
-#include <tmmintrin.h>//SSSE3(include pmmintrin.h)  
-#include <smmintrin.h>//SSE4.1(include tmmintrin.h)  
-#include <nmmintrin.h>//SSE4.2(include smmintrin.h)  
-#endif 
-#if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_AVX
-#include <wmmintrin.h>//AES(include nmmintrin.h)  
-#include <immintrin.h>//AVX(include wmmintrin.h)  
-#include <intrin.h>//(include immintrin.h)  
-#endif
-#endif
 
 #if defined(__cplusplus) || defined(c_plusplus) 
 extern "C" {

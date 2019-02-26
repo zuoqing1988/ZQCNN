@@ -1,6 +1,9 @@
 #include <stdio.h>
 #include <omp.h>
 #include "../ZQ_CNN_CompileConfig.h"
+#if __ARM_NEON
+#include <arm_neon.h>
+#else
 #if defined(__GNUC__)
 #if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_SSE
 #include <smmintrin.h>
@@ -24,11 +27,47 @@
 #include <intrin.h>//(include immintrin.h)  
 #endif
 #endif
+#endif
 
 #if defined(__cplusplus) || defined(c_plusplus) 
 extern "C" {
 #endif
 
+#if __ARM_NEON
+#define zq_cnn_innerproduct_32f_align zq_cnn_innerproduct_32f_align128bit
+#define	zq_cnn_innerproduct_32f_align_noborder zq_cnn_innerproduct_32f_align128bit_noborder
+#define zq_mm_load_ps vld1q_f32
+#define zq_mm_store_ps vst1q_f32
+#define zq_mm_add_ps vaddq_f32
+#if ZQ_CNN_USE_FMADD128
+#define zq_mm_fmadd_ps vfmaq_f32
+#else
+#define zq_mm_fmadd_ps(A, B, C) vaddq_f32(vmulq_f32(A, B), C)
+#endif
+#define zq_mm_mul_ps vmulq_f32
+#define zq_mm_setzero_ps() vdupq_n_f32(0)
+#define zq_mm_type float32x4_t
+#define zq_mm_align_size 4
+#define zq_mm_bitor_longlong 0xFFFFFFFFFFFFFFF0
+#define zq_final_sum_q (q[0]+q[1]+q[2]+q[3])
+
+#include "zq_cnn_innerproduct_32f_align_c_raw.h"
+
+
+#undef zq_cnn_innerproduct_32f_align 
+#undef zq_cnn_innerproduct_32f_align_noborder
+#undef zq_mm_load_ps
+#undef zq_mm_store_ps
+#undef zq_mm_add_ps
+#undef zq_mm_fmadd_ps
+#undef zq_mm_mul_ps
+#undef zq_mm_setzero_ps
+#undef zq_mm_type
+#undef zq_mm_align_size
+#undef zq_mm_bitor_longlong
+#undef zq_final_sum_q
+
+#else
 #if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_SSE
 #define zq_cnn_innerproduct_32f_align zq_cnn_innerproduct_32f_align128bit
 #define	zq_cnn_innerproduct_32f_align_noborder zq_cnn_innerproduct_32f_align128bit_noborder
@@ -98,6 +137,7 @@ extern "C" {
 #undef zq_mm_bitor_longlong
 #undef zq_final_sum_q
 #endif
+#endif //__ARM_NEON
 
 	void zq_cnn_innerproduct_32f_align0_general(
 		const float* in_tensor4D_data,

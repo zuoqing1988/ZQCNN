@@ -3,6 +3,9 @@
 #include <math.h>
 #include <float.h>
 #include "../ZQ_CNN_CompileConfig.h"
+#if __ARM_NEON
+#include <arm_neon.h>
+#else
 #if defined(__GNUC__)
 #if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_SSE
 #include <smmintrin.h>
@@ -26,11 +29,38 @@
 #include <intrin.h>//(include immintrin.h)  
 #endif
 #endif
+#endif //__ARM_NEON
 
 #if defined(__cplusplus) || defined(c_plusplus) 
 extern "C" {
 #endif
 
+#if __ARM_NEON
+#define zq_cnn_resize_with_safeborder zq_cnn_resize_with_safeborder_32f_align128bit
+#define zq_cnn_resize_without_safeborder zq_cnn_resize_without_safeborder_32f_align128bit
+#define zq_mm_load_ps vld1q_f32
+#define zq_mm_store_ps vst1q_f32
+#define zq_mm_set1_ps vdupq_n_f32
+#define zq_mm_add_ps vaddq_f32
+#define zq_mm_mul_ps vmulq_f32
+#define zq_mm_sub_ps vsubq_f32
+#define zq_mm_type float32x4_t
+#define zq_mm_align_size 4
+
+#include "zq_cnn_resize_32f_align_c_raw.h"
+
+#undef zq_cnn_resize_with_safeborder
+#undef zq_cnn_resize_without_safeborder
+#undef zq_mm_load_ps
+#undef zq_mm_store_ps
+#undef zq_mm_set1_ps
+#undef zq_mm_add_ps
+#undef zq_mm_mul_ps
+#undef zq_mm_sub_ps
+#undef zq_mm_type
+#undef zq_mm_align_size
+
+#else
 #if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_SSE
 #define zq_cnn_resize_with_safeborder zq_cnn_resize_with_safeborder_32f_align128bit
 #define zq_cnn_resize_without_safeborder zq_cnn_resize_without_safeborder_32f_align128bit
@@ -82,6 +112,8 @@ extern "C" {
 #undef zq_mm_type
 #undef zq_mm_align_size
 #endif
+#endif//__ARM_NEON
+
 
 	/*WARNING: when scaling to larger images, it may visit the coordinate input[-1][?] or input[?][-1].
 	so, you should allocate the input image with border.

@@ -2,6 +2,9 @@
 #include <float.h>
 #include <stdio.h>
 #include "../ZQ_CNN_CompileConfig.h"
+#if __ARM_NEON
+#include <arm_neon.h>
+#else
 #if defined(__GNUC__)
 #if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_SSE
 #include <smmintrin.h>
@@ -25,11 +28,55 @@
 #include <intrin.h>//(include immintrin.h)  
 #endif
 #endif
+#endif //__ARM_NEON
 
 #if defined(__cplusplus) || defined(c_plusplus) 
 extern "C" {
 #endif
 
+#if __ARM_NEON
+#define zq_cnn_maxpooling_nopadding_suredivided_kernel2x2 zq_cnn_maxpooling_nopadding_suredivided_32f_align128bit_kernel2x2
+#define zq_cnn_maxpooling_nopadding_suredivided_kernel3x3 zq_cnn_maxpooling_nopadding_suredivided_32f_align128bit_kernel3x3
+#define zq_cnn_maxpooling_nopadding_suredivided_kernel5x5 zq_cnn_maxpooling_nopadding_suredivided_32f_align128bit_kernel5x5
+#define zq_cnn_maxpooling_nopadding_suredivided_general zq_cnn_maxpooling_nopadding_suredivided_32f_align128bit_general
+#define zq_cnn_maxpooling_nopadding_nodivided_general zq_cnn_maxpooling_nopadding_nodivided_32f_align128bit_general
+#define zq_cnn_avgpooling_nopadding_suredivided_kernel2x2 zq_cnn_avgpooling_nopadding_suredivided_32f_align128bit_kernel2x2
+#define zq_cnn_avgpooling_nopadding_suredivided_kernel3x3 zq_cnn_avgpooling_nopadding_suredivided_32f_align128bit_kernel3x3
+#define zq_cnn_avgpooling_nopadding_suredivided_kernel5x5 zq_cnn_avgpooling_nopadding_suredivided_32f_align128bit_kernel5x5
+#define zq_cnn_avgpooling_nopadding_suredivided_general zq_cnn_avgpooling_nopadding_suredivided_32f_align128bit_general
+#define zq_cnn_avgpooling_nopadding_nodivided_general zq_cnn_avgpooling_nopadding_nodivided_32f_align128bit_general
+#define zq_mm_load_ps vld1q_f32
+#define zq_mm_store_ps vst1q_f32
+#define zq_mm_max_ps vmaxq_f32
+#define zq_mm_add_ps vaddq_f32
+#define zq_mm_mul_ps vmulq_f32
+#define zq_mm_set1_ps vdupq_n_f32
+#define zq_mm_type float32x4_t
+#define zq_mm_align_size 4
+
+#include "zq_cnn_pooling_32f_align_c_raw.h"
+
+
+#undef zq_cnn_maxpooling_nopadding_suredivided_kernel2x2
+#undef zq_cnn_maxpooling_nopadding_suredivided_kernel3x3
+#undef zq_cnn_maxpooling_nopadding_suredivided_kernel5x5
+#undef zq_cnn_maxpooling_nopadding_suredivided_general
+#undef zq_cnn_maxpooling_nopadding_nodivided_general
+#undef zq_cnn_avgpooling_nopadding_suredivided_kernel2x2
+#undef zq_cnn_avgpooling_nopadding_suredivided_kernel3x3
+#undef zq_cnn_avgpooling_nopadding_suredivided_kernel5x5
+#undef zq_cnn_avgpooling_nopadding_suredivided_general
+#undef zq_cnn_avgpooling_nopadding_nodivided_general
+#undef zq_mm_load_ps
+#undef zq_mm_store_ps
+#undef zq_mm_max_ps
+#undef zq_mm_add_ps
+#undef zq_mm_mul_ps
+#undef zq_mm_set1_ps
+#undef zq_mm_type
+#undef zq_mm_align_size
+
+#else
 #if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_SSE
 #define zq_cnn_maxpooling_nopadding_suredivided_kernel2x2 zq_cnn_maxpooling_nopadding_suredivided_32f_align128bit_kernel2x2
 #define zq_cnn_maxpooling_nopadding_suredivided_kernel3x3 zq_cnn_maxpooling_nopadding_suredivided_32f_align128bit_kernel3x3
@@ -114,6 +161,7 @@ extern "C" {
 #undef zq_mm_type
 #undef zq_mm_align_size
 #endif
+#endif //__ARM_NEON
 
 void zq_cnn_maxpooling_nopadding_32f_align0_general(
 	const float* in_tensor4D_data,

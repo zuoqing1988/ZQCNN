@@ -1,5 +1,8 @@
 #include <stdlib.h>
 #include "../ZQ_CNN_CompileConfig.h"
+#if __ARM_NEON
+#include <arm_neon.h>
+#else
 #if defined(__GNUC__)
 #if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_SSE
 #include <smmintrin.h>
@@ -23,11 +26,61 @@
 #include <intrin.h>//(include immintrin.h)  
 #endif
 #endif
+#endif //__ARM_NEON
 
 #if defined(__cplusplus) || defined(c_plusplus) 
 extern "C" {
 #endif
 
+#if __ARM_NEON
+#define zq_cnn_eltwise_sum_32f_align zq_cnn_eltwise_sum_32f_align128bit
+#define zq_cnn_eltwise_sum_with_weight_32f_align zq_cnn_eltwise_sum_with_weight_32f_align128bit
+#define zq_cnn_eltwise_mul_32f_align zq_cnn_eltwise_mul_32f_align128bit
+#define zq_cnn_eltwise_max_32f_align zq_cnn_eltwise_max_32f_align128bit
+#define zq_mm_load_ps vld1q_f32
+#define zq_mm_store_ps vst1q_f32
+#define zq_mm_mul_ps vmulq_f32
+#define zq_mm_add_ps vaddq_f32
+#define zq_mm_max_ps vmaxq_f32
+#define zq_mm_setzero_ps() vdupq_n_f32(0)
+#define zq_mm_type float32x4_t
+#define zq_mm_align_size 4
+#define zq_mm_align_size_mul_2 8
+#define zq_mm_align_size_mul_3 12
+#define zq_mm_align_size_mul_4 16
+#define zq_mm_align_size_mul_5 20
+#define zq_mm_align_size_mul_6 24
+#define zq_mm_align_size_mul_7 28
+#define zq_mm_align_size_mul_8 32
+#define zq_mm_align_size_mul_16 64
+#define zq_mm_align_size_mul_32 128
+
+#include "zq_cnn_eltwise_32f_align_c_raw.h"
+
+
+#undef zq_cnn_eltwise_sum_32f_align
+#undef zq_cnn_eltwise_sum_with_weight_32f_align
+#undef zq_cnn_eltwise_mul_32f_align
+#undef zq_cnn_eltwise_max_32f_align
+#undef zq_mm_load_ps
+#undef zq_mm_store_ps
+#undef zq_mm_mul_ps
+#undef zq_mm_add_ps
+#undef zq_mm_max_ps
+#undef zq_mm_set1_ps
+#undef zq_mm_type
+#undef zq_mm_align_size
+#undef zq_mm_align_size_mul_2
+#undef zq_mm_align_size_mul_3
+#undef zq_mm_align_size_mul_4
+#undef zq_mm_align_size_mul_5
+#undef zq_mm_align_size_mul_6
+#undef zq_mm_align_size_mul_7
+#undef zq_mm_align_size_mul_8
+#undef zq_mm_align_size_mul_16
+#undef zq_mm_align_size_mul_32
+
+#else
 #if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_SSE
 #define zq_cnn_eltwise_sum_32f_align zq_cnn_eltwise_sum_32f_align128bit
 #define zq_cnn_eltwise_sum_with_weight_32f_align zq_cnn_eltwise_sum_with_weight_32f_align128bit
@@ -125,6 +178,7 @@ extern "C" {
 #undef zq_mm_align_size_mul_16
 #undef zq_mm_align_size_mul_32
 #endif
+#endif //__ARM_NEON
 
 	void zq_cnn_eltwise_sum_32f_align0(
 		int in_tensor_num,	//must be >=2

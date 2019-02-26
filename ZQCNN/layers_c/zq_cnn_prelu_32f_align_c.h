@@ -5,8 +5,53 @@
 extern "C" {
 #endif
 
-	
-	
+
+#if __ARM_NEON
+	void zq_cnn_prelu_32f_align0(
+		float* in_tensor4D_data,	// in & out
+		int in_N,
+		int in_H,
+		int in_W,
+		int in_C,
+		int in_pixelStep,
+		int in_widthStep,
+		int in_sliceStep,
+		const float* slope_data
+	);
+
+	/*
+	y = max(0,x)+a*min(0,x)
+	*/
+	void zq_cnn_prelu_32f_align128bit(
+		float* in_tensor4D_data,	// in & out
+		int in_N,
+		int in_H,
+		int in_W,
+		int in_C,
+		int in_pixelStep,
+		int in_widthStep,
+		int in_sliceStep,
+		const float* slope_data
+	);
+
+
+	/*
+	y = max(x,a*x)
+	*/
+	void zq_cnn_prelu_32f_align128bit_sure_slope_lessthan1(
+		float* in_tensor4D_data,	// in & out
+		int in_N,
+		int in_H,
+		int in_W,
+		int in_C,
+		int in_pixelStep,
+		int in_widthStep,
+		int in_sliceStep,
+		const float* slope_data
+	);
+
+#else
+
 	void zq_cnn_prelu_32f_align0(
 		float* in_tensor4D_data,	// in & out
 		int in_N,
@@ -92,6 +137,8 @@ extern "C" {
 	);
 
 #endif
+
+#endif //__ARM_NEON
 
 #if defined(__cplusplus) || defined(c_plusplus) //跨平台定义方法
 }

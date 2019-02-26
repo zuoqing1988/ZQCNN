@@ -2,6 +2,9 @@
 #include <math.h>
 #include <float.h>
 #include "../ZQ_CNN_CompileConfig.h"
+#if __ARM_NEON
+
+#else
 #if defined(__GNUC__)
 #if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_SSE
 #include <smmintrin.h>
@@ -25,6 +28,7 @@
 #include <intrin.h>//(include immintrin.h)  
 #endif
 #endif
+#endif //__ARM_NEON
 
 
 
@@ -32,6 +36,9 @@
 extern "C" {
 #endif
 
+#if __ARM_NEON
+
+#else
 #if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_SSE
 #define zq_cnn_softmax_32f_align_C zq_cnn_softmax_32f_align128bit_C
 #define zq_mm_load_ps _mm_load_ps
@@ -100,6 +107,8 @@ extern "C" {
 #undef zq_final_max_q
 #undef zq_final_sum_q
 #endif
+
+#endif //__ARM_NEON
 
 void zq_cnn_softmax_32f_align0_C(
 	float* in_tensor4D_data,	// in & out

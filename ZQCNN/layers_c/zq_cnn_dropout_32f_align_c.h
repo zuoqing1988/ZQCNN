@@ -5,6 +5,34 @@
 extern "C" {
 #endif
 
+#if __ARM_NEON
+
+	void zq_cnn_dropout_32f_align0(
+		float* in_tensor4D_data,	// in & out
+		int in_N,
+		int in_H,
+		int in_W,
+		int in_C,
+		int in_pixelStep,
+		int in_widthStep,
+		int in_sliceStep,
+		const float dropout_ratio
+	);
+
+	void zq_cnn_dropout_32f_align128bit(
+		float* in_tensor4D_data,	// in & out
+		int in_N,
+		int in_H,
+		int in_W,
+		int in_C,
+		int in_pixelStep,
+		int in_widthStep,
+		int in_sliceStep,
+		const float dropout_ratio
+	);
+
+#else
+
 	void zq_cnn_dropout_32f_align0(
 		float* in_tensor4D_data,	// in & out
 		int in_N,
@@ -45,6 +73,7 @@ extern "C" {
 	);
 #endif
 
+#endif //__ARM_NEON
 
 #if defined(__cplusplus) || defined(c_plusplus) 
 }
