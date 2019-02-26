@@ -21,6 +21,9 @@
     <ClCompile Include="math\zq_gemm_32f_align_c.c">
       <Filter>math</Filter>
     </ClCompile>
+    <ClCompile Include="math\zq_gemm_32f_auto.c">
+      <Filter>math</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="math\zq_gemm_32f_align_c.h">
