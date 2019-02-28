@@ -93,6 +93,7 @@ extern "C" {
 #undef zq_cnn_scalaroperation_32f_align
 #undef zq_cnn_scalaroperation_inplace_32f_align
 
+/*
 #define zq_cnn_scalaroperation_32f_align zq_cnn_scalaroperation_rdiv_32f_align128bit
 #define zq_cnn_scalaroperation_inplace_32f_align zq_cnn_scalaroperation_rdiv_inplace_32f_align128bit
 #define zq_mm_operation_ps(x,y) vdivq_f32(y,x)
@@ -100,10 +101,10 @@ extern "C" {
 #undef zq_mm_operation_ps
 #undef zq_cnn_scalaroperation_32f_align
 #undef zq_cnn_scalaroperation_inplace_32f_align
+*/
 
 #undef zq_mm_load_ps
 #undef zq_mm_store_ps
-#undef zq_mm_add_ps
 #undef zq_mm_type
 #undef zq_mm_set1_ps
 #undef zq_mm_align_size

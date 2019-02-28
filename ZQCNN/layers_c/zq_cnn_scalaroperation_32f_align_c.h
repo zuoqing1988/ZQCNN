@@ -233,7 +233,7 @@ extern "C" {
 		int sliceStep
 	);
 
-
+	
 	void zq_cnn_scalaroperation_rdiv_32f_align0(
 		float scalar,
 		const float* in_data,
@@ -249,7 +249,7 @@ extern "C" {
 		int out_widthStep,
 		int out_sliceStep
 	);
-
+	/*
 	void zq_cnn_scalaroperation_rdiv_32f_align128bit(
 		float scalar,
 		const float* in_data,
@@ -265,7 +265,7 @@ extern "C" {
 		int out_widthStep,
 		int out_sliceStep
 	);
-
+	*/
 	void zq_cnn_scalaroperation_rdiv_inplace_32f_align0(
 		float scalar,
 		float* data,	// in & out
@@ -277,7 +277,7 @@ extern "C" {
 		int widthStep,
 		int sliceStep
 	);
-
+	/*
 	void zq_cnn_scalaroperation_rdiv_inplace_32f_align128bit(
 		float scalar,
 		float* data,	// in & out
@@ -289,6 +289,8 @@ extern "C" {
 		int widthStep,
 		int sliceStep
 	);
+
+	*/
 
 	void zq_cnn_scalaroperation_rminus_32f_align0(
 		float scalar,

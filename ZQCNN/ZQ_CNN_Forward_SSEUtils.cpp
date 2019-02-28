@@ -2553,14 +2553,14 @@ void ZQ_CNN_Forward_SSEUtils::_scalaroperation_min(int align_mode, float scalar,
 void ZQ_CNN_Forward_SSEUtils::_scalaroperation_rdiv(int align_mode, float scalar, const float* in_data, int N, int H, int W, int C, int pixStep, int widthStep, int sliceStep,
 	float* out_data, int out_pixStep, int out_widthStep, int out_sliceStep)
 {
-	if (align_mode == ZQ_CNN_Tensor4D::ALIGN_128bit)
+	/*if (align_mode == ZQ_CNN_Tensor4D::ALIGN_128bit)
 	{
 		zq_cnn_scalaroperation_rdiv_32f_align128bit(scalar, in_data, N, H, W, C, pixStep, widthStep, sliceStep, out_data, out_pixStep, out_widthStep, out_sliceStep);
 	}
 	else if (align_mode == ZQ_CNN_Tensor4D::ALIGN_256bit)
 	{
 	}
-	else
+	else*/
 	{
 		zq_cnn_scalaroperation_rdiv_32f_align0(scalar, in_data, N, H, W, C, pixStep, widthStep, sliceStep, out_data, out_pixStep, out_widthStep, out_sliceStep);
 	}
@@ -2595,14 +2595,14 @@ void ZQ_CNN_Forward_SSEUtils::_scalaroperation_rdiv(int align_mode, float scalar
 
 void ZQ_CNN_Forward_SSEUtils::_scalaroperation_rdiv(int align_mode, float scalar, float* data, int N, int H, int W, int C, int pixStep, int widthStep, int sliceStep)
 {
-	if (align_mode == ZQ_CNN_Tensor4D::ALIGN_128bit)
+	/*if (align_mode == ZQ_CNN_Tensor4D::ALIGN_128bit)
 	{
 		zq_cnn_scalaroperation_rdiv_inplace_32f_align128bit(scalar, data, N, H, W, C, pixStep, widthStep, sliceStep);
 	}
 	else if (align_mode == ZQ_CNN_Tensor4D::ALIGN_256bit)
 	{
 	}
-	else
+	else*/
 	{
 		zq_cnn_scalaroperation_rdiv_inplace_32f_align0(scalar, data, N, H, W, C, pixStep, widthStep, sliceStep);
 	}
