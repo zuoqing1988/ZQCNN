@@ -42,7 +42,7 @@ extern "C" {
 #define zq_mm_mul_ps vmulq_f32
 #define zq_mm_add_ps vaddq_f32
 #define zq_mm_max_ps vmaxq_f32
-#define zq_mm_setzero_ps() vdupq_n_f32(0)
+#define zq_mm_set1_ps vdupq_n_f32
 #define zq_mm_type float32x4_t
 #define zq_mm_align_size 4
 #define zq_mm_align_size_mul_2 8
