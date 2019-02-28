@@ -186,7 +186,6 @@ extern "C" {
 
 #undef zq_mm_load_ps
 #undef zq_mm_store_ps
-#undef zq_mm_add_ps
 #undef zq_mm_type
 #undef zq_mm_set1_ps
 #undef zq_mm_align_size
