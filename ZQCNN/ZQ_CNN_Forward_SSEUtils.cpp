@@ -1182,20 +1182,6 @@ void ZQ_CNN_Forward_SSEUtils::_inner_product(int align_mode, const float* in_dat
 	else if (align_mode == ZQ_CNN_Tensor4D::ALIGN_256bit)
 	{
 
-		{
-
-			if (in_pixStep * in_W == in_widthStep && in_widthStep*in_H == in_sliceStep
-				&& filter_pixStep*in_W == filter_widthStep && filter_widthStep*in_H == filter_sliceStep)
-			{
-				zq_cnn_innerproduct_32f_align256bit_noborder(in_data, in_N, in_H*in_W*in_C,
-					filter_data, filter_N, out_data, out_sliceStep);
-			}
-			else
-			{
-				zq_cnn_innerproduct_32f_align256bit(in_data, in_N, in_H, in_W, in_C, in_pixStep, in_widthStep, in_sliceStep,
-					filter_data, filter_N, filter_pixStep, filter_widthStep, filter_sliceStep, out_data, out_sliceStep);
-			}
-		}
 	}
 	else
 	{
