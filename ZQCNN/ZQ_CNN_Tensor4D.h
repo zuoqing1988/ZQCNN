@@ -90,7 +90,7 @@ namespace ZQ
 				if (dst_borderH > 0)
 				{
 					memset(dst_slice_ptr - dstPixelStep*dst_borderW - dstWidthStep*dst_borderH, 0, sizeof(float)*dstWidthStep*dst_borderH);
-					memset(dst_slice_ptr - dstPixelStep*dst_borderW + dstWidthStep*dst_borderH, 0, sizeof(float)*dstWidthStep*dst_borderH);
+					memset(dst_slice_ptr - dstPixelStep*dst_borderW + dstWidthStep*height, 0, sizeof(float)*dstWidthStep*dst_borderH);
 				}
 				if (dst_borderW > 0)
 				{
