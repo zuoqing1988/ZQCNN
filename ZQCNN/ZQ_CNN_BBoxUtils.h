@@ -5,6 +5,7 @@
 #include "ZQ_CNN_BBox.h"
 #include <string>
 #include <math.h>
+#include <stdlib.h>
 #include <algorithm>
 
 namespace ZQ
@@ -438,10 +439,10 @@ namespace ZQ
 
 		static void ClipBBox(const ZQ_CNN_NormalizedBBox& bbox, ZQ_CNN_NormalizedBBox* clip_bbox) 
 		{
-			clip_bbox->col1 = std::max(std::min(bbox.col1, 1.f), 0.f);
-			clip_bbox->row1 = std::max(std::min(bbox.row1, 1.f), 0.f);
-			clip_bbox->col2 = std::max(std::min(bbox.col2, 1.f), 0.f);
-			clip_bbox->row2 = std::max(std::min(bbox.row2, 1.f), 0.f);
+			clip_bbox->col1 = __max(__min(bbox.col1, 1.f), 0.f);
+			clip_bbox->row1 = __max(__min(bbox.row1, 1.f), 0.f);
+			clip_bbox->col2 = __max(__min(bbox.col2, 1.f), 0.f);
+			clip_bbox->row2 = __max(__min(bbox.row2, 1.f), 0.f);
 			clip_bbox->size = BBoxSize(*clip_bbox, true);
 			clip_bbox->difficult = bbox.difficult;
 		}
@@ -711,10 +712,10 @@ namespace ZQ
 			}
 			else 
 			{
-				intersect_bbox->col1 = std::max(bbox1.col1, bbox2.col1);
-				intersect_bbox->row1 = std::max(bbox1.row1, bbox2.row1);
-				intersect_bbox->col2 = std::min(bbox1.col2, bbox2.col2);
-				intersect_bbox->row2 = std::min(bbox1.row2, bbox2.row2);
+				intersect_bbox->col1 = __max(bbox1.col1, bbox2.col1);
+				intersect_bbox->row1 = __max(bbox1.row1, bbox2.row1);
+				intersect_bbox->col2 = __min(bbox1.col2, bbox2.col2);
+				intersect_bbox->row2 = __min(bbox1.row2, bbox2.row2);
 			}
 		}
 	};
