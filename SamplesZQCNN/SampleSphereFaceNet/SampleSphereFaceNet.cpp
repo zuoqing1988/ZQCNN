@@ -30,7 +30,11 @@ int main()
 	
 	//if (!net.LoadFrom("model/mobilefacenet-res4-8-16-4-dim512.zqparams", "model/mobilefacenet-res4-8-16-4-dim512-emore.nchwbin", false))
 	//if (!net.LoadFrom("model/mobilefacenet-res1-3-5-2-dim128-112X96.zqparams", "model/mobilefacenet-res1-3-5-2-dim128-112X96.nchwbin", false))
+#if defined(_WIN32)
 	if (!net.LoadFrom("model/mobilefacenet-GNAP.zqparams", "model/mobilefacenet-GNAP.nchwbin", false,1e-12))
+#else
+	if (!net.LoadFrom("../../model/mobilefacenet-GNAP.zqparams", "../../model/mobilefacenet-GNAP.nchwbin", false,1e-12))
+#endif
 	//if (!net.LoadFrom("model/mobilefacenet-v1.zqparams", "model/mobilefacenet-v1.nchwbin", false))
 	//if (!net.LoadFrom("model/mobilefacenet-res8-16-32-8-dim512.zqparams", "model/mobilefacenet-res8-16-32-8-dim512.nchwbin", true,1e-16))
 	//if (!net.LoadFrom("model/sphereface04bn256.zqparams", "model/sphereface04bn256.nchwbin", true, 1e-12))
@@ -58,14 +62,22 @@ int main()
 	Mat image0, image1;
 	if (input_C == 3 && input_H == 112 && input_W == 112)
 	{
+#if defined(_WIN32)
 		std::string name = "data/00_.jpg";
+#else
+		std::string name = "../../data/00_.jpg";
+#endif
 		image0 = cv::imread(name, 1);
 		if (image0.empty())
 		{
 			cout << name << " does not exist!\n";
 			return EXIT_FAILURE;
 		}
+#if defined(_WIN32)
 		name = "data/01_.jpg";
+#else
+		name = "../../data/01_.jpg";
+#endif
 		image1 = cv::imread(name, 1);
 		if (image1.empty())
 		{
@@ -75,14 +87,22 @@ int main()
 	}
 	else if(input_C == 3 && input_H == 112 && input_W == 96)
 	{
+#if defined(_WIN32)
 		std::string name = "data/00.jpg";
+#else
+		std::string name = "../../data/00.jpg";
+#endif
 		image0 = cv::imread(name, 1);
 		if (image0.empty())
 		{
 			cout << name << " does not exist!\n";
 			return EXIT_FAILURE;
 		}
+#if defined(_WIN32)
 		name = "data/01.jpg";
+#else
+		name = "../../data/01.jpg";
+#endif
 		image1 = cv::imread(name, 1);
 		if (image1.empty())
 		{
