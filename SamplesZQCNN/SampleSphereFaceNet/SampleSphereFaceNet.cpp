@@ -27,14 +27,11 @@ int main()
 
 	std::string out_blob_name = "fc5";
 	ZQ_CNN_Net net;
-	
+		
+#if defined(_WIN32)
 	//if (!net.LoadFrom("model/mobilefacenet-res4-8-16-4-dim512.zqparams", "model/mobilefacenet-res4-8-16-4-dim512-emore.nchwbin", false))
 	//if (!net.LoadFrom("model/mobilefacenet-res1-3-5-2-dim128-112X96.zqparams", "model/mobilefacenet-res1-3-5-2-dim128-112X96.nchwbin", false))
-#if defined(_WIN32)
 	if (!net.LoadFrom("model/mobilefacenet-GNAP.zqparams", "model/mobilefacenet-GNAP.nchwbin", false,1e-12))
-#else
-	if (!net.LoadFrom("../../model/mobilefacenet-GNAP.zqparams", "../../model/mobilefacenet-GNAP.nchwbin", false,1e-12))
-#endif
 	//if (!net.LoadFrom("model/mobilefacenet-v1.zqparams", "model/mobilefacenet-v1.nchwbin", false))
 	//if (!net.LoadFrom("model/mobilefacenet-res8-16-32-8-dim512.zqparams", "model/mobilefacenet-res8-16-32-8-dim512.nchwbin", true,1e-16))
 	//if (!net.LoadFrom("model/sphereface04bn256.zqparams", "model/sphereface04bn256.nchwbin", true, 1e-12))
@@ -44,6 +41,21 @@ int main()
 	//if (!net.LoadFrom("model/model-r34-am.zqparams", "model/model-r34-am.nchwbin"))
 	//if (!net.LoadFrom("model/model-r50-am.zqparams", "model/model-r50-am.nchwbin"))
 	//if (!net.LoadFrom("model/model-r100-am.zqparams", "model/model-r100-am.nchwbin", false))
+#else
+	//if (!net.LoadFrom("../../model/mobilefacenet-res4-8-16-4-dim512.zqparams", "../../model/mobilefacenet-res4-8-16-4-dim512-emore.nchwbin", false))
+	//if (!net.LoadFrom("../../model/mobilefacenet-res1-3-5-2-dim128-112X96.zqparams", "../../model/mobilefacenet-res1-3-5-2-dim128-112X96.nchwbin", false))
+	if (!net.LoadFrom("../../model/mobilefacenet-GNAP.zqparams", "../../model/mobilefacenet-GNAP.nchwbin", false, 1e-12))
+	//if (!net.LoadFrom("../../model/mobilefacenet-v1.zqparams", "../../model/mobilefacenet-v1.nchwbin", false))
+	//if (!net.LoadFrom("../../model/mobilefacenet-res8-16-32-8-dim512.zqparams", "../../model/mobilefacenet-res8-16-32-8-dim512.nchwbin", true,1e-16))
+	//if (!net.LoadFrom("../../model/sphereface04bn256.zqparams", "../../model/sphereface04bn256.nchwbin", true, 1e-12))
+	//if (!net.LoadFrom("../../model/mobilefacenet-v112X96.zqparams", "../../model/mobilefacenet-v112X96.nchwbin",false))
+	//if (!net.LoadFrom("../../model/mobilefacenet-res2-6-10-2-dim128.zqparams", "../../model/mobilefacenet-res2-6-10-2-dim128-emore.nchwbin", false))
+	//if (!net.LoadFrom("../../model/mobilefacenet-res2-6-10-2-dim512-112X96.zqparams", "../../model/mobilefacenet-res2-6-10-2-dim512-112X96.nchwbin", false,1e-12))
+	//if (!net.LoadFrom("../../model/model-r34-am.zqparams", "../../model/model-r34-am.nchwbin"))
+	//if (!net.LoadFrom("../../model/model-r50-am.zqparams", "../../model/model-r50-am.nchwbin"))
+	//if (!net.LoadFrom("../../model/model-r100-am.zqparams", "../../model/model-r100-am.nchwbin", false))
+#endif
+	
 	{
 		cout << "failed to load net\n";
 		return EXIT_FAILURE;
