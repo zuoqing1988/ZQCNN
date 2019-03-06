@@ -27,6 +27,124 @@ extern "C" {
 		int handled = 0;
 
 #if __ARM_NEON
+#define Snapdragon835 1
+#if Snapdragon835
+		if (K == 16)
+		{
+			if (N >= 8)
+			{
+				zq_gemm_32f_align128bit_AnoTrans_Btrans_M4_N4(M, N, K, A, lda, Bt, ldb, C, ldc);
+				handled = 1;
+			}
+		}
+		else if (K == 27) //3*3*3
+		{
+			if (N <= 16)
+			{
+				zq_gemm_32f_align128bit_AnoTrans_Btrans_M4_N4(M, N, K, A, lda, Bt, ldb, C, ldc);
+				handled = 1;
+			}
+			else if (N <= 128)
+			{
+				zq_gemm_32f_align128bit_AnoTrans_Btrans_M4_N4(M, N, K, A, lda, Bt, ldb, C, ldc);
+				handled = 1;
+			}
+		}
+		else if (K == 28)
+		{
+			zq_gemm_32f_align128bit_AnoTrans_Btrans_M4_N4(M, N, K, A, lda, Bt, ldb, C, ldc);
+			handled = 1;
+		}
+		else if (K == 32)
+		{
+			if (N >= 8)
+			{
+				zq_gemm_32f_align128bit_AnoTrans_Btrans_M4_N4(M, N, K, A, lda, Bt, ldb, C, ldc);
+				handled = 1;
+			}
+		}
+		else if (K == 64)
+		{
+			if (N >= 8)
+			{
+				zq_gemm_32f_align128bit_AnoTrans_Btrans_M4_N4(M, N, K, A, lda, Bt, ldb, C, ldc);
+				handled = 1;
+			}
+		}
+		else if (K == 72) // 3*3*8
+		{
+			if (N <= 64)
+			{
+				zq_gemm_32f_align128bit_AnoTrans_Btrans_M4_N4(M, N, K, A, lda, Bt, ldb, C, ldc);
+				handled = 1;
+			}
+			else if (N <= 128)
+			{
+				zq_gemm_32f_align128bit_AnoTrans_Btrans_M4_N4(M, N, K, A, lda, Bt, ldb, C, ldc);
+				handled = 1;
+			}
+		}
+		else if (K == 128)
+		{
+			if (N >= 256)
+			{
+				zq_gemm_32f_align128bit_AnoTrans_Btrans_M4_N4(M, N, K, A, lda, Bt, ldb, C, ldc);
+				handled = 1;
+			}
+		}
+		else if (K == 144) // 3*3*16
+		{
+			if (N <= 32)
+			{
+				zq_gemm_32f_align128bit_AnoTrans_Btrans_M4_N4(M, N, K, A, lda, Bt, ldb, C, ldc);
+				handled = 1;
+			}
+			else if (N <= 128)
+			{
+				zq_gemm_32f_align128bit_AnoTrans_Btrans_M4_N4(M, N, K, A, lda, Bt, ldb, C, ldc);
+				handled = 1;
+			}
+		}
+		else if (K == 256)
+		{
+			if (N >= 256)
+			{
+				zq_gemm_32f_align128bit_AnoTrans_Btrans_M4_N4(M, N, K, A, lda, Bt, ldb, C, ldc);
+				handled = 1;
+			}
+		}
+		else if (K == 512)
+		{
+			if (N >= 256)
+			{
+				zq_gemm_32f_align128bit_AnoTrans_Btrans_M4_N4(M, N, K, A, lda, Bt, ldb, C, ldc);
+				handled = 1;
+			}
+		}
+		else if (K == 1024)
+		{
+			if (N >= 256)
+			{
+				zq_gemm_32f_align128bit_AnoTrans_Btrans_M4_N4(M, N, K, A, lda, Bt, ldb, C, ldc);
+				handled = 1;
+			}
+		}
+
+		//back up methods
+		if (handled == 0)
+		{
+			if (K <= 64)
+			{
+				zq_gemm_32f_align128bit_AnoTrans_Btrans_M4_N4(M, N, K, A, lda, Bt, ldb, C, ldc);
+				handled = 1;
+			}
+			else
+			{
+				zq_gemm_32f_align128bit_AnoTrans_Btrans_M4_N4(M, N, K, A, lda, Bt, ldb, C, ldc);
+				handled = 1;
+			}
+		}
+#else
 		if (K == 16)
 		{
 			if (N >= 8)
@@ -142,6 +260,7 @@ extern "C" {
 				handled = 1;
 			}
 		}
+#endif
 #else
 
 #if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_AVX
