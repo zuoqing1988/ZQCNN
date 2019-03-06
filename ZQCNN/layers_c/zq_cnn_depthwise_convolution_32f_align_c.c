@@ -47,7 +47,7 @@ extern "C" {
 #define zq_mm_store_ps vst1q_f32
 #define zq_mm_add_ps vaddq_f32
 #if ZQ_CNN_USE_FMADD128
-#define zq_mm_fmadd_ps vfmaq_f32
+#define zq_mm_fmadd_ps(A, B, C) vfmaq_f32(C, A, B)
 #else
 #define zq_mm_fmadd_ps(A, B, C) vaddq_f32(vmulq_f32(A, B), C)
 #endif

@@ -59,7 +59,7 @@
 #define zq_final_sum_q0_2 (q.s[0]+q.s[1])
 #define zq_final_sum_q (q.s[0]+q.s[1]+q.s[2]+q.s[3])
 #if ZQ_CNN_USE_FMADD128
-#define zq_mm_fmadd_ps vfmaq_f32
+#define zq_mm_fmadd_ps(A, B, C) vfmaq_f32(C, A, B)
 #else
 #define zq_mm_fmadd_ps(A, B, C) vaddq_f32(vmulq_f32(A, B), C)
 #endif
