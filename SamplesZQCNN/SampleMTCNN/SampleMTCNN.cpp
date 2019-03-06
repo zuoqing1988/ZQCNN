@@ -143,7 +143,7 @@ int main()
 				//"model/det2.zqparams", "model/det2_bgr.nchwbin",
 				"model/det3-dw48-fast.zqparams", "model/det3-dw48-fast.nchwbin", 
 				thread_num, true,
-				"model/det5-dw48.zqparams", "model/det5-dw48-1000.nchwbin"
+				"model/det5-dw96-v2s.zqparams", "model/det5-dw96-v2s-8000.nchwbin"
 				//"model/det3.zqparams", "model/det3_bgr.nchwbin"
 			))
 			{
