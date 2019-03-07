@@ -39,6 +39,6 @@ make SampleMTCNN
 make SampleSphereFaceNet
 ```
 
-**使用OpenBLAS**
+**use OpenBLAS**
 
 add cmake flag: -DBLAS_TYPE=openblas
