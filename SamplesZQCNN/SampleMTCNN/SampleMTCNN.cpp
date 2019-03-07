@@ -8,7 +8,7 @@
 #if ZQ_CNN_USE_BLAS_GEMM
 #if __ARM_NEON
 #include <openblas/arm/cblas.h>
-#pragma comment(lib,"libopenblas_armv7p-r0.2.14.so")
+#pragma comment(lib,"libopenblas_armv7p-r0.2.14.a")
 #else
 #include <openblas/cblas.h>
 #pragma comment(lib,"libopenblas.lib")
