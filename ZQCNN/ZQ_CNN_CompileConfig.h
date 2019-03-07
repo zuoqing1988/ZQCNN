@@ -50,7 +50,7 @@
 #endif
 
 #if __ARM_NEON
-#define ZQ_CNN_USE_FMADD128 1
+//#define ZQ_CNN_USE_FMADD128 1
 #define ZQ_CNN_USE_SSETYPE ZQ_CNN_SSETYPE_NONE
 //#define ZQ_CNN_USE_ZQ_GEMM 1
 #else
