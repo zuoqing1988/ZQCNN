@@ -46,6 +46,7 @@ if((CMAKE_CXX_COMPILER_ID MATCHES "GNU") OR (CMAKE_CXX_COMPILER_ID MATCHES "Clan
         add_definitions(-march=native)
         add_definitions(-mfpu=neon)
         add_definitions(-mfloat-abi=hard)
+		add_definitions(-DZQ_CNN_USE_ARM_NEON)
     else()
 	    add_compile_options(-mavx2)
 	endif()

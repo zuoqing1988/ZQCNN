@@ -43,7 +43,11 @@
 #define ZQ_DECLSPEC_ALIGN32 __attribute__((aligned(32)))
 #define ZQ_DECLSPEC_ALIGN16 __attribute__((aligned(16)))
 
+#if defined(ZQ_CNN_USE_ARM_NEON)
+#define __ARM_NEON 1
+#else
 #define __ARM_NEON 0
+#endif
 
 #if __ARM_NEON
 #define ZQ_CNN_USE_FMADD128 1
