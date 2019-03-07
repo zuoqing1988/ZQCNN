@@ -21,11 +21,23 @@ make -j4
 
 ## arm
 
-
+**32bit**
 ```shell
-edit ZQ_CNN_CompileConfig.h 
-#define __ARM_NEON 1
-
 mkdir cmake-build-release && cd cmake-build-release
 cmake .. -DSIMD_ARCH_TYPE=arm
 make SampleMatMulNEON
+make SampleMTCNN
+make SampleSphereFaceNet
+```
+
+**64bit**
+```shell
+mkdir cmake-build-release && cd cmake-build-release
+cmake .. -DSIMD_ARCH_TYPE=arm64
+make SampleMatMulNEON
+make SampleMTCNN
+make SampleSphereFaceNet
+```
+
+**使用OpenBLAS**
+add cmake flag: -DBLAS_TYPE=openblas
