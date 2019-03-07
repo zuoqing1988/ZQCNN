@@ -4,8 +4,12 @@
 #include "opencv2/opencv.hpp"
 #include "ZQ_CNN_CompileConfig.h"
 #if ZQ_CNN_USE_BLAS_GEMM
+#if __ARM_NEON
+#include <openblas/arm/cblas.h>
+#else
 #include <openblas/cblas.h>
 #pragma comment(lib,"libopenblas.lib")
+#endif
 #elif ZQ_CNN_USE_MKL_GEMM
 #include <mkl/mkl.h>
 #pragma comment(lib,"mklml.lib")
