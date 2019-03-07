@@ -36,7 +36,7 @@ elseif(UNIX)
 endif()
 
 if((CMAKE_CXX_COMPILER_ID MATCHES "GNU") OR (CMAKE_CXX_COMPILER_ID MATCHES "Clang"))
-    add_definitions(-Wall -Wextra -Wno-unused-function)
+    #add_definitions(-Wall -Wextra -Wno-unused-function)
     add_definitions(-fPIC)
     if(CMAKE_BUILD_TYPE MATCHES "(Release|RELEASE|release)")
         add_definitions(-Ofast)
