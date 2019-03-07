@@ -172,7 +172,7 @@ extern "C" {
 			a[c] = bias_data[c] - mean_data[c] * b[c];
 		}
 
-		zq_cnn_batchnorm_32f_b_a_align0(in_data, in_N, in_H, in_W, in_C, in_pixStep, in_widthStep, in_sliceStep, b, a);
+		zq_cnn_batchnorm_32f_b_a_align0(in_data, in_N, in_H, in_W, in_C, in_pixStep, in_widthStep, in_sliceStep, (const float*)b, (const float*)a);
 		free(a);
 		free(b);
 	}
@@ -206,7 +206,7 @@ extern "C" {
 			a[c] = - mean_data[c] * b[c];
 		}
 
-		zq_cnn_batchnorm_32f_b_a_align0(in_data, in_N, in_H, in_W, in_C, in_pixStep, in_widthStep, in_sliceStep, b, a);
+		zq_cnn_batchnorm_32f_b_a_align0(in_data, in_N, in_H, in_W, in_C, in_pixStep, in_widthStep, in_sliceStep, (const float*)b, (const float*)a);
 		free(a);
 		free(b);
 	}

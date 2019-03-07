@@ -29,7 +29,7 @@ void zq_cnn_batchnormscale_32f_mean_var_scale_bias_align(
 		a[c] = bias_data[c] - mean_data[c] * b[c];
 	}
 
-	zq_cnn_batchnorm_32f_b_a_align(in_data, in_N, in_H, in_W, in_C, in_pixStep, in_widthStep, in_sliceStep, b, a);
+	zq_cnn_batchnorm_32f_b_a_align(in_data, in_N, in_H, in_W, in_C, in_pixStep, in_widthStep, in_sliceStep, (const float*)b, (const float*)a);
 
 	_aligned_free(a);
 	_aligned_free(b);
@@ -66,7 +66,7 @@ void zq_cnn_batchnorm_32f_mean_var_align(
 		a[c] = -mean_data[c] * b[c];
 	}
 
-	zq_cnn_batchnorm_32f_b_a_align(in_data, in_N, in_H, in_W, in_C, in_pixStep, in_widthStep, in_sliceStep, b, a);
+	zq_cnn_batchnorm_32f_b_a_align(in_data, in_N, in_H, in_W, in_C, in_pixStep, in_widthStep, in_sliceStep, (const float*)b, (const float*)a);
 
 	_aligned_free(a);
 	_aligned_free(b);
