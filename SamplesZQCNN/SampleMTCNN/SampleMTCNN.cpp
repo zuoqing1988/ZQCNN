@@ -78,6 +78,7 @@ int main()
 {
 	int num_threads = 1;
 #if ZQ_CNN_USE_BLAS_GEMM
+	printf("set openblas thread_num = 1\n");
 	openblas_set_num_threads(num_threads);
 #elif ZQ_CNN_USE_MKL_GEMM
 	mkl_set_num_threads(num_threads);
