@@ -2065,8 +2065,9 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M1_N1_Kgeneral(int M, int N, int K, const
 		{
 			sum_vec11 = zq_mm_setzero_ps();
 			Bptr1 = Bptr;
-			for (k = 0, A_c_ptr1 = Aptr1, B_c_ptr1 = Bptr1;
-				k < padK - zq_mm_align_size64;	k += zq_mm_align_size64)
+			k = 0; A_c_ptr1 = Aptr1; B_c_ptr1 = Bptr1;
+#if !__ARM_NEON
+			for (; k < padK - zq_mm_align_size64;	k += zq_mm_align_size64)
 			{
 				op_1x1_16;
 				op_1x1_16;
@@ -2082,6 +2083,7 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M1_N1_Kgeneral(int M, int N, int K, const
 			{
 				op_1x1_16;
 			}
+#endif
 			for (; k < padK - zq_mm_align_size8; k += zq_mm_align_size8)
 			{
 				op_1x1_8;
@@ -2141,8 +2143,9 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M1_N2_Kgeneral(int M, int N, int K, const
 			sum_vec12 = zq_mm_setzero_ps();
 			Bptr1 = Bptr;
 			Bptr2 = Bptr1 + ldb;
-			for (k = 0, A_c_ptr1 = Aptr1, B_c_ptr1 = Bptr1, B_c_ptr2 = Bptr2;
-				k < padK - zq_mm_align_size64;	k += zq_mm_align_size64)
+			k = 0; A_c_ptr1 = Aptr1; B_c_ptr1 = Bptr1; B_c_ptr2 = Bptr2;
+#if !__ARM_NEON
+			for (; k < padK - zq_mm_align_size64;	k += zq_mm_align_size64)
 			{
 				op_1x2_16;
 				op_1x2_16;
@@ -2158,6 +2161,7 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M1_N2_Kgeneral(int M, int N, int K, const
 			{
 				op_1x2_16;
 			}
+#endif
 			for (; k < padK - zq_mm_align_size8; k += zq_mm_align_size8)
 			{
 				op_1x2_8;
@@ -2191,8 +2195,9 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M1_N2_Kgeneral(int M, int N, int K, const
 		{
 			sum_vec11 = zq_mm_setzero_ps();
 			Bptr1 = Bptr;
-			for (k = 0, A_c_ptr1 = Aptr1, B_c_ptr1 = Bptr1;
-				k < padK - zq_mm_align_size64;	k += zq_mm_align_size64)
+			k = 0; A_c_ptr1 = Aptr1; B_c_ptr1 = Bptr1;
+#if !__ARM_NEON
+			for (;k < padK - zq_mm_align_size64;	k += zq_mm_align_size64)
 			{
 				op_1x1_16;
 				op_1x1_16;
@@ -2208,6 +2213,7 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M1_N2_Kgeneral(int M, int N, int K, const
 			{
 				op_1x1_16;
 			}
+#endif
 			for (; k < padK - zq_mm_align_size8; k += zq_mm_align_size8)
 			{
 				op_1x1_8;
@@ -2270,9 +2276,9 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M1_N4_Kgeneral(int M, int N, int K, const
 			Bptr2 = Bptr1 + ldb;
 			Bptr3 = Bptr2 + ldb;
 			Bptr4 = Bptr3 + ldb;
-			for (k = 0, A_c_ptr1 = Aptr1, B_c_ptr1 = Bptr1, B_c_ptr2 = Bptr2, B_c_ptr3 = Bptr3, B_c_ptr4 = Bptr4;
-				k < padK - zq_mm_align_size64;
-				k += zq_mm_align_size64)
+			k = 0; A_c_ptr1 = Aptr1; B_c_ptr1 = Bptr1; B_c_ptr2 = Bptr2; B_c_ptr3 = Bptr3; B_c_ptr4 = Bptr4;
+#if !__ARM_NEON
+			for (;k < padK - zq_mm_align_size64; k += zq_mm_align_size64)
 			{
 				op_1x4_16;
 				op_1x4_16;
@@ -2288,6 +2294,7 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M1_N4_Kgeneral(int M, int N, int K, const
 			{
 				op_1x4_16;
 			}
+#endif
 			for (; k < padK - zq_mm_align_size8; k += zq_mm_align_size8)
 			{
 				op_1x4_8;
@@ -2327,8 +2334,9 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M1_N4_Kgeneral(int M, int N, int K, const
 		{
 			sum_vec11 = zq_mm_setzero_ps();
 			Bptr1 = Bptr;
-			for (k = 0, A_c_ptr1 = Aptr1, B_c_ptr1 = Bptr1;
-				k < padK - zq_mm_align_size64;	k += zq_mm_align_size64)
+			k = 0; A_c_ptr1 = Aptr1; B_c_ptr1 = Bptr1;
+#if !__ARM_NEON
+			for (; k < padK - zq_mm_align_size64;	k += zq_mm_align_size64)
 			{
 				op_1x1_16;
 				op_1x1_16;
@@ -2344,6 +2352,7 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M1_N4_Kgeneral(int M, int N, int K, const
 			{
 				op_1x1_16;
 			}
+#endif
 			for (; k < padK - zq_mm_align_size8; k += zq_mm_align_size8)
 			{
 				op_1x1_8;
@@ -2418,9 +2427,11 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M1_N8_Kgeneral(int M, int N, int K, const
 			Bptr6 = Bptr5 + ldb;
 			Bptr7 = Bptr6 + ldb;
 			Bptr8 = Bptr7 + ldb;
-			for (k = 0, A_c_ptr1 = Aptr1, B_c_ptr1 = Bptr1, B_c_ptr2 = Bptr2, B_c_ptr3 = Bptr3, B_c_ptr4 = Bptr4,
-				B_c_ptr5 = Bptr5, B_c_ptr6 = Bptr6, B_c_ptr7 = Bptr7, B_c_ptr8 = Bptr8;
-				k < padK - zq_mm_align_size64;	k += zq_mm_align_size64)
+			k = 0; A_c_ptr1 = Aptr1; 
+			B_c_ptr1 = Bptr1; B_c_ptr2 = Bptr2; B_c_ptr3 = Bptr3; B_c_ptr4 = Bptr4;
+			B_c_ptr5 = Bptr5; B_c_ptr6 = Bptr6; B_c_ptr7 = Bptr7; B_c_ptr8 = Bptr8;
+#if !__ARM_NEON
+			for (; k < padK - zq_mm_align_size64;	k += zq_mm_align_size64)
 			{
 				op_1x8_16;
 				op_1x8_16;
@@ -2436,6 +2447,7 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M1_N8_Kgeneral(int M, int N, int K, const
 			{
 				op_1x8_16;
 			}
+#endif
 			for (; k < padK - zq_mm_align_size8; k += zq_mm_align_size8)
 			{
 				op_1x8_8;
@@ -2487,8 +2499,9 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M1_N8_Kgeneral(int M, int N, int K, const
 		{
 			sum_vec11 = zq_mm_setzero_ps();
 			Bptr1 = Bptr;
-			for (k = 0, A_c_ptr1 = Aptr1, B_c_ptr1 = Bptr1;
-				k < padK - zq_mm_align_size64;	k += zq_mm_align_size64)
+			k = 0; A_c_ptr1 = Aptr1; B_c_ptr1 = Bptr1;
+#if !__ARM_NEON
+			for (; k < padK - zq_mm_align_size64;	k += zq_mm_align_size64)
 			{
 				op_1x1_16;
 				op_1x1_16;
@@ -2504,6 +2517,7 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M1_N8_Kgeneral(int M, int N, int K, const
 			{
 				op_1x1_16;
 			}
+#endif
 			for (; k < padK - zq_mm_align_size8; k += zq_mm_align_size8)
 			{
 				op_1x1_8;
@@ -2562,8 +2576,9 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M2_N1_Kgeneral(int M, int N, int K, const
 		{
 			sum_vec11 = zq_mm_setzero_ps(); sum_vec21 = zq_mm_setzero_ps();
 			Bptr1 = Bptr;
-			for (k = 0, A_c_ptr1 = Aptr1, A_c_ptr2 = Aptr2, B_c_ptr1 = Bptr1;
-				k < padK - zq_mm_align_size64; k += zq_mm_align_size64)
+			k = 0; A_c_ptr1 = Aptr1; A_c_ptr2 = Aptr2; B_c_ptr1 = Bptr1;
+#if !__ARM_NEON
+			for (; k < padK - zq_mm_align_size64; k += zq_mm_align_size64)
 			{
 				op_2x1_16;
 				op_2x1_16;
@@ -2579,6 +2594,7 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M2_N1_Kgeneral(int M, int N, int K, const
 			{
 				op_2x1_16;
 			}
+#endif
 			for (; k < padK - zq_mm_align_size8; k += zq_mm_align_size8)
 			{
 				op_2x1_8;
@@ -2620,8 +2636,9 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M2_N1_Kgeneral(int M, int N, int K, const
 		{
 			sum_vec11 = zq_mm_setzero_ps();
 			Bptr1 = Bptr;
-			for (k = 0, A_c_ptr1 = Aptr1, B_c_ptr1 = Bptr1;
-				k < padK - zq_mm_align_size64; k += zq_mm_align_size64)
+			k = 0; A_c_ptr1 = Aptr1; B_c_ptr1 = Bptr1;
+#if !__ARM_NEON
+			for (; k < padK - zq_mm_align_size64; k += zq_mm_align_size64)
 			{
 				op_1x1_16;
 				op_1x1_16;
@@ -2637,6 +2654,7 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M2_N1_Kgeneral(int M, int N, int K, const
 			{
 				op_1x1_16;
 			}
+#endif
 			for (; k < padK - zq_mm_align_size8; k += zq_mm_align_size8)
 			{
 				op_1x1_8;
@@ -2700,9 +2718,10 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M2_N2_Kgeneral(int M, int N, int K, const
 			sum_vec12 = zq_mm_setzero_ps(); sum_vec22 = zq_mm_setzero_ps();
 			Bptr1 = Bptr;
 			Bptr2 = Bptr1 + ldb;
-			for (k = 0, A_c_ptr1 = Aptr1, A_c_ptr2 = Aptr2,
-				B_c_ptr1 = Bptr1, B_c_ptr2 = Bptr2;
-				k < padK - zq_mm_align_size64; k += zq_mm_align_size64)
+			k = 0; A_c_ptr1 = Aptr1; A_c_ptr2 = Aptr2;
+			B_c_ptr1 = Bptr1; B_c_ptr2 = Bptr2;
+#if !__ARM_NEON
+			for (; k < padK - zq_mm_align_size64; k += zq_mm_align_size64)
 			{
 				op_2x2_16;
 				op_2x2_16;
@@ -2718,6 +2737,7 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M2_N2_Kgeneral(int M, int N, int K, const
 			{
 				op_2x2_16;
 			}
+#endif
 			for (; k < padK - zq_mm_align_size8; k += zq_mm_align_size8)
 			{
 				op_2x2_8;
@@ -2759,8 +2779,9 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M2_N2_Kgeneral(int M, int N, int K, const
 		{
 			sum_vec11 = zq_mm_setzero_ps(); sum_vec21 = zq_mm_setzero_ps();
 			Bptr1 = Bptr;
-			for (k = 0, A_c_ptr1 = Aptr1, A_c_ptr2 = Aptr2, B_c_ptr1 = Bptr1;
-				k < padK - zq_mm_align_size64; k += zq_mm_align_size64)
+			k = 0; A_c_ptr1 = Aptr1; A_c_ptr2 = Aptr2; B_c_ptr1 = Bptr1;
+#if !__ARM_NEON
+			for (; k < padK - zq_mm_align_size64; k += zq_mm_align_size64)
 			{
 				op_2x1_16;
 				op_2x1_16;
@@ -2776,6 +2797,7 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M2_N2_Kgeneral(int M, int N, int K, const
 			{
 				op_2x1_16;
 			}
+#endif
 			for (; k < padK - zq_mm_align_size8; k += zq_mm_align_size8)
 			{
 				op_2x1_8;
@@ -2818,8 +2840,9 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M2_N2_Kgeneral(int M, int N, int K, const
 			sum_vec12 = zq_mm_setzero_ps();
 			Bptr1 = Bptr;
 			Bptr2 = Bptr1 + ldb;
-			for (k = 0, A_c_ptr1 = Aptr1, B_c_ptr1 = Bptr1, B_c_ptr2 = Bptr2;
-				k < padK - zq_mm_align_size64; k += zq_mm_align_size64)
+			k = 0; A_c_ptr1 = Aptr1; B_c_ptr1 = Bptr1; B_c_ptr2 = Bptr2;
+#if !__ARM_NEON
+			for (; k < padK - zq_mm_align_size64; k += zq_mm_align_size64)
 			{
 				op_1x2_16;
 				op_1x2_16;
@@ -2835,6 +2858,7 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M2_N2_Kgeneral(int M, int N, int K, const
 			{
 				op_1x2_16;
 			}
+#endif
 			for (; k < padK - zq_mm_align_size8; k += zq_mm_align_size8)
 			{
 				op_1x2_8;
@@ -2867,8 +2891,9 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M2_N2_Kgeneral(int M, int N, int K, const
 		{
 			sum_vec11 = zq_mm_setzero_ps();
 			Bptr1 = Bptr;
-			for (k = 0, A_c_ptr1 = Aptr1, B_c_ptr1 = Bptr1;
-				k < padK - zq_mm_align_size64; k += zq_mm_align_size64)
+			k = 0; A_c_ptr1 = Aptr1; B_c_ptr1 = Bptr1;
+#if !__ARM_NEON
+			for (; k < padK - zq_mm_align_size64; k += zq_mm_align_size64)
 			{
 				op_1x1_16;
 				op_1x1_16;
@@ -2884,6 +2909,7 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M2_N2_Kgeneral(int M, int N, int K, const
 			{
 				op_1x1_16;
 			}
+#endif
 			for (; k < padK - zq_mm_align_size8; k += zq_mm_align_size8)
 			{
 				op_1x1_8;
@@ -2953,9 +2979,10 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M2_N4_Kgeneral(int M, int N, int K, const
 			Bptr2 = Bptr1 + ldb;
 			Bptr3 = Bptr2 + ldb;
 			Bptr4 = Bptr3 + ldb;
-			for (k = 0, A_c_ptr1 = Aptr1, A_c_ptr2 = Aptr2,
-				B_c_ptr1 = Bptr1, B_c_ptr2 = Bptr2, B_c_ptr3 = Bptr3, B_c_ptr4 = Bptr4;
-				k < padK - zq_mm_align_size64; k += zq_mm_align_size64)
+			k = 0; A_c_ptr1 = Aptr1; A_c_ptr2 = Aptr2;
+			B_c_ptr1 = Bptr1; B_c_ptr2 = Bptr2; B_c_ptr3 = Bptr3; B_c_ptr4 = Bptr4;
+#if !__ARM_NEON
+			for (; k < padK - zq_mm_align_size64; k += zq_mm_align_size64)
 			{
 				op_2x4_16;
 				op_2x4_16;
@@ -2971,6 +2998,7 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M2_N4_Kgeneral(int M, int N, int K, const
 			{
 				op_2x4_16;
 			}
+#endif
 			for (; k < padK - zq_mm_align_size8; k += zq_mm_align_size8)
 			{
 				op_2x4_8;
@@ -3024,8 +3052,9 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M2_N4_Kgeneral(int M, int N, int K, const
 		{
 			sum_vec11 = zq_mm_setzero_ps(); sum_vec21 = zq_mm_setzero_ps();
 			Bptr1 = Bptr;
-			for (k = 0, A_c_ptr1 = Aptr1, A_c_ptr2 = Aptr2, B_c_ptr1 = Bptr1;
-				k < padK - zq_mm_align_size64; k += zq_mm_align_size64)
+			k = 0; A_c_ptr1 = Aptr1; A_c_ptr2 = Aptr2; B_c_ptr1 = Bptr1;
+#if !__ARM_NEON
+			for (; k < padK - zq_mm_align_size64; k += zq_mm_align_size64)
 			{
 				op_2x1_16;
 				op_2x1_16;
@@ -3041,6 +3070,7 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M2_N4_Kgeneral(int M, int N, int K, const
 			{
 				op_2x1_16;
 			}
+#endif
 			for (; k < padK - zq_mm_align_size8; k += zq_mm_align_size8)
 			{
 				op_2x1_8;
@@ -3087,9 +3117,10 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M2_N4_Kgeneral(int M, int N, int K, const
 			Bptr2 = Bptr1 + ldb;
 			Bptr3 = Bptr2 + ldb;
 			Bptr4 = Bptr3 + ldb;
-			for (k = 0, A_c_ptr1 = Aptr1,
-				B_c_ptr1 = Bptr1, B_c_ptr2 = Bptr2, B_c_ptr3 = Bptr3, B_c_ptr4 = Bptr4;
-				k < padK - zq_mm_align_size64; k += zq_mm_align_size64)
+			k = 0; A_c_ptr1 = Aptr1;
+			B_c_ptr1 = Bptr1; B_c_ptr2 = Bptr2; B_c_ptr3 = Bptr3; B_c_ptr4 = Bptr4;
+#if !__ARM_NEON
+			for (; k < padK - zq_mm_align_size64; k += zq_mm_align_size64)
 			{
 				op_1x4_16;
 				op_1x4_16;
@@ -3105,6 +3136,7 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M2_N4_Kgeneral(int M, int N, int K, const
 			{
 				op_1x4_16;
 			}
+#endif
 			for (; k < padK - zq_mm_align_size8; k += zq_mm_align_size8)
 			{
 				op_1x4_8;
@@ -3143,8 +3175,9 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M2_N4_Kgeneral(int M, int N, int K, const
 		{
 			sum_vec11 = zq_mm_setzero_ps();
 			Bptr1 = Bptr;
-			for (k = 0, A_c_ptr1 = Aptr1, B_c_ptr1 = Bptr1;
-				k < padK - zq_mm_align_size64; k += zq_mm_align_size64)
+			k = 0; A_c_ptr1 = Aptr1; B_c_ptr1 = Bptr1;
+#if !__ARM_NEON
+			for (; k < padK - zq_mm_align_size64; k += zq_mm_align_size64)
 			{
 				op_1x1_16;
 				op_1x1_16;
@@ -3160,6 +3193,7 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M2_N4_Kgeneral(int M, int N, int K, const
 			{
 				op_1x1_16;
 			}
+#endif
 			for (; k < padK - zq_mm_align_size8; k += zq_mm_align_size8)
 			{
 				op_1x1_8;
@@ -3241,10 +3275,11 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M2_N8_Kgeneral(int M, int N, int K, const
 			Bptr6 = Bptr5 + ldb;
 			Bptr7 = Bptr6 + ldb;
 			Bptr8 = Bptr7 + ldb;
-			for (k = 0, A_c_ptr1 = Aptr1, A_c_ptr2 = Aptr2,
-				B_c_ptr1 = Bptr1, B_c_ptr2 = Bptr2, B_c_ptr3 = Bptr3, B_c_ptr4 = Bptr4,
-				B_c_ptr5 = Bptr5, B_c_ptr6 = Bptr6, B_c_ptr7 = Bptr7, B_c_ptr8 = Bptr8;
-				k < padK - zq_mm_align_size64; k += zq_mm_align_size64)
+			k = 0; A_c_ptr1 = Aptr1; A_c_ptr2 = Aptr2;
+			B_c_ptr1 = Bptr1; B_c_ptr2 = Bptr2; B_c_ptr3 = Bptr3; B_c_ptr4 = Bptr4;
+			B_c_ptr5 = Bptr5; B_c_ptr6 = Bptr6; B_c_ptr7 = Bptr7; B_c_ptr8 = Bptr8;
+#if !__ARM_NEON
+			for (; k < padK - zq_mm_align_size64; k += zq_mm_align_size64)
 			{
 				op_2x8_16;
 				op_2x8_16;
@@ -3260,6 +3295,7 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M2_N8_Kgeneral(int M, int N, int K, const
 			{
 				op_2x8_16;
 			}
+#endif
 			for (; k < padK - zq_mm_align_size8; k += zq_mm_align_size8)
 			{
 				op_2x8_8;
@@ -3337,8 +3373,9 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M2_N8_Kgeneral(int M, int N, int K, const
 		{
 			sum_vec11 = zq_mm_setzero_ps(); sum_vec21 = zq_mm_setzero_ps();
 			Bptr1 = Bptr;
-			for (k = 0, A_c_ptr1 = Aptr1, A_c_ptr2 = Aptr2, B_c_ptr1 = Bptr1;
-				k < padK - zq_mm_align_size64; k += zq_mm_align_size64)
+			k = 0; A_c_ptr1 = Aptr1; A_c_ptr2 = Aptr2; B_c_ptr1 = Bptr1;
+#if !__ARM_NEON
+			for (; k < padK - zq_mm_align_size64; k += zq_mm_align_size64)
 			{
 				op_2x1_16;
 				op_2x1_16;
@@ -3354,6 +3391,7 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M2_N8_Kgeneral(int M, int N, int K, const
 			{
 				op_2x1_16;
 			}
+#endif
 			for (; k < padK - zq_mm_align_size8; k += zq_mm_align_size8)
 			{
 				op_2x1_8;
@@ -3408,10 +3446,11 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M2_N8_Kgeneral(int M, int N, int K, const
 			Bptr6 = Bptr5 + ldb;
 			Bptr7 = Bptr6 + ldb;
 			Bptr8 = Bptr7 + ldb;
-			for (k = 0, A_c_ptr1 = Aptr1,
-				B_c_ptr1 = Bptr1, B_c_ptr2 = Bptr2, B_c_ptr3 = Bptr3, B_c_ptr4 = Bptr4,
-				B_c_ptr5 = Bptr5, B_c_ptr6 = Bptr6, B_c_ptr7 = Bptr7, B_c_ptr8 = Bptr8;
-				k < padK - zq_mm_align_size64; k += zq_mm_align_size64)
+			k = 0; A_c_ptr1 = Aptr1;
+			B_c_ptr1 = Bptr1; B_c_ptr2 = Bptr2; B_c_ptr3 = Bptr3; B_c_ptr4 = Bptr4;
+			B_c_ptr5 = Bptr5; B_c_ptr6 = Bptr6; B_c_ptr7 = Bptr7; B_c_ptr8 = Bptr8;
+#if !__ARM_NEON
+			for (; k < padK - zq_mm_align_size64; k += zq_mm_align_size64)
 			{
 				op_1x8_16;
 				op_1x8_16;
@@ -3427,6 +3466,7 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M2_N8_Kgeneral(int M, int N, int K, const
 			{
 				op_1x8_16;
 			}
+#endif
 			for (; k < padK - zq_mm_align_size8; k += zq_mm_align_size8)
 			{
 				op_1x8_8;
@@ -3477,8 +3517,9 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M2_N8_Kgeneral(int M, int N, int K, const
 		{
 			sum_vec11 = zq_mm_setzero_ps();
 			Bptr1 = Bptr;
-			for (k = 0, A_c_ptr1 = Aptr1, B_c_ptr1 = Bptr1;
-				k < padK - zq_mm_align_size64; k += zq_mm_align_size64)
+			k = 0; A_c_ptr1 = Aptr1; B_c_ptr1 = Bptr1;
+#if !__ARM_NEON
+			for (; k < padK - zq_mm_align_size64; k += zq_mm_align_size64)
 			{
 				op_1x1_16;
 				op_1x1_16;
@@ -3494,6 +3535,7 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M2_N8_Kgeneral(int M, int N, int K, const
 			{
 				op_1x1_16;
 			}
+#endif
 			for (; k < padK - zq_mm_align_size8; k += zq_mm_align_size8)
 			{
 				op_1x1_8;
@@ -3561,9 +3603,10 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M4_N1_Kgeneral(int M, int N, int K, const
 		{
 			sum_vec11 = zq_mm_setzero_ps(); sum_vec21 = zq_mm_setzero_ps(); sum_vec31 = zq_mm_setzero_ps(); sum_vec41 = zq_mm_setzero_ps();
 			Bptr1 = Bptr;
-			for (k = 0, A_c_ptr1 = Aptr1, A_c_ptr2 = Aptr2, A_c_ptr3 = Aptr3, A_c_ptr4 = Aptr4,
-				B_c_ptr1 = Bptr1;
-				k < padK - zq_mm_align_size64; k += zq_mm_align_size64)
+			k = 0; A_c_ptr1 = Aptr1; A_c_ptr2 = Aptr2; A_c_ptr3 = Aptr3; A_c_ptr4 = Aptr4;
+			B_c_ptr1 = Bptr1;
+#if !__ARM_NEON
+			for (; k < padK - zq_mm_align_size64; k += zq_mm_align_size64)
 			{
 				op_4x1_16;
 				op_4x1_16;
@@ -3579,6 +3622,7 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M4_N1_Kgeneral(int M, int N, int K, const
 			{
 				op_4x1_16;
 			}
+#endif
 			for (; k < padK - zq_mm_align_size8; k += zq_mm_align_size8)
 			{
 				op_4x1_8;
@@ -3632,8 +3676,9 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M4_N1_Kgeneral(int M, int N, int K, const
 		{
 			sum_vec11 = zq_mm_setzero_ps();
 			Bptr1 = Bptr;
-			for (k = 0, A_c_ptr1 = Aptr1, B_c_ptr1 = Bptr1;
-				k < padK - zq_mm_align_size64; k += zq_mm_align_size64)
+			k = 0; A_c_ptr1 = Aptr1; B_c_ptr1 = Bptr1;
+#if !__ARM_NEON
+			for (; k < padK - zq_mm_align_size64; k += zq_mm_align_size64)
 			{
 				op_1x1_16;
 				op_1x1_16;
@@ -3649,6 +3694,7 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M4_N1_Kgeneral(int M, int N, int K, const
 			{
 				op_1x1_16;
 			}
+#endif
 			for (; k < padK - zq_mm_align_size8; k += zq_mm_align_size8)
 			{
 				op_1x1_8;
@@ -3720,9 +3766,10 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M4_N2_Kgeneral(int M, int N, int K, const
 			sum_vec12 = zq_mm_setzero_ps(); sum_vec22 = zq_mm_setzero_ps(); sum_vec32 = zq_mm_setzero_ps(); sum_vec42 = zq_mm_setzero_ps();
 			Bptr1 = Bptr;
 			Bptr2 = Bptr1 + ldb;
-			for (k = 0, A_c_ptr1 = Aptr1, A_c_ptr2 = Aptr2, A_c_ptr3 = Aptr3, A_c_ptr4 = Aptr4,
-				B_c_ptr1 = Bptr1, B_c_ptr2 = Bptr2;
-				k < padK - zq_mm_align_size64; k += zq_mm_align_size64)
+			k = 0; A_c_ptr1 = Aptr1; A_c_ptr2 = Aptr2; A_c_ptr3 = Aptr3; A_c_ptr4 = Aptr4;
+			B_c_ptr1 = Bptr1; B_c_ptr2 = Bptr2;
+#if !__ARM_NEON
+			for (; k < padK - zq_mm_align_size64; k += zq_mm_align_size64)
 			{
 				op_4x2_16;
 				op_4x2_16;
@@ -3738,6 +3785,7 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M4_N2_Kgeneral(int M, int N, int K, const
 			{
 				op_4x2_16;
 			}
+#endif
 			for (; k < padK - zq_mm_align_size8; k += zq_mm_align_size8)
 			{
 				op_4x2_8;
@@ -3797,9 +3845,10 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M4_N2_Kgeneral(int M, int N, int K, const
 		{
 			sum_vec11 = zq_mm_setzero_ps(); sum_vec21 = zq_mm_setzero_ps(); sum_vec31 = zq_mm_setzero_ps(); sum_vec41 = zq_mm_setzero_ps();
 			Bptr1 = Bptr;
-			for (k = 0, A_c_ptr1 = Aptr1, A_c_ptr2 = Aptr2, A_c_ptr3 = Aptr3, A_c_ptr4 = Aptr4,
-				B_c_ptr1 = Bptr1;
-				k < padK - zq_mm_align_size64; k += zq_mm_align_size64)
+			k = 0; A_c_ptr1 = Aptr1; A_c_ptr2 = Aptr2; A_c_ptr3 = Aptr3; A_c_ptr4 = Aptr4;
+			B_c_ptr1 = Bptr1;
+#if !__ARM_NEON
+			for (; k < padK - zq_mm_align_size64; k += zq_mm_align_size64)
 			{
 				op_4x1_16;
 				op_4x1_16;
@@ -3815,6 +3864,7 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M4_N2_Kgeneral(int M, int N, int K, const
 			{
 				op_4x1_16;
 			}
+#endif
 			for (; k < padK - zq_mm_align_size8; k += zq_mm_align_size8)
 			{
 				op_4x1_8;
@@ -3867,9 +3917,10 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M4_N2_Kgeneral(int M, int N, int K, const
 			sum_vec12 = zq_mm_setzero_ps();
 			Bptr1 = Bptr;
 			Bptr2 = Bptr1 + ldb;
-			for (k = 0, A_c_ptr1 = Aptr1,
-				B_c_ptr1 = Bptr1, B_c_ptr2 = Bptr2;
-				k < padK - zq_mm_align_size64; k += zq_mm_align_size64)
+			k = 0; A_c_ptr1 = Aptr1;
+			B_c_ptr1 = Bptr1; B_c_ptr2 = Bptr2;
+#if !__ARM_NEON
+			for (; k < padK - zq_mm_align_size64; k += zq_mm_align_size64)
 			{
 				op_1x2_16;
 				op_1x2_16;
@@ -3885,6 +3936,7 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M4_N2_Kgeneral(int M, int N, int K, const
 			{
 				op_1x2_16;
 			}
+#endif
 			for (; k < padK - zq_mm_align_size8; k += zq_mm_align_size8)
 			{
 				op_1x2_8;
@@ -4011,9 +4063,10 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M4_N4_Kgeneral(int M, int N, int K, const
 			Bptr2 = Bptr1 + ldb;
 			Bptr3 = Bptr2 + ldb;
 			Bptr4 = Bptr3 + ldb;
-			for (k = 0, A_c_ptr1 = Aptr1, A_c_ptr2 = Aptr2, A_c_ptr3 = Aptr3, A_c_ptr4 = Aptr4,
-				B_c_ptr1 = Bptr1, B_c_ptr2 = Bptr2, B_c_ptr3 = Bptr3, B_c_ptr4 = Bptr4;
-				k < padK - zq_mm_align_size64; k += zq_mm_align_size64)
+			k = 0; A_c_ptr1 = Aptr1; A_c_ptr2 = Aptr2; A_c_ptr3 = Aptr3; A_c_ptr4 = Aptr4;
+			B_c_ptr1 = Bptr1; B_c_ptr2 = Bptr2; B_c_ptr3 = Bptr3; B_c_ptr4 = Bptr4;
+#if !__ARM_NEON
+			for (; k < padK - zq_mm_align_size64; k += zq_mm_align_size64)
 			{
 				op_4x4_16;
 				op_4x4_16;
@@ -4029,6 +4082,7 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M4_N4_Kgeneral(int M, int N, int K, const
 			{
 				op_4x4_16;
 			}
+#endif
 			for (; k < padK - zq_mm_align_size8; k += zq_mm_align_size8)
 			{
 				op_4x4_8;
@@ -4112,9 +4166,10 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M4_N4_Kgeneral(int M, int N, int K, const
 		{
 			sum_vec11 = zq_mm_setzero_ps(); sum_vec21 = zq_mm_setzero_ps(); sum_vec31 = zq_mm_setzero_ps(); sum_vec41 = zq_mm_setzero_ps();
 			Bptr1 = Bptr;
-			for (k = 0, A_c_ptr1 = Aptr1, A_c_ptr2 = Aptr2, A_c_ptr3 = Aptr3, A_c_ptr4 = Aptr4,
-				B_c_ptr1 = Bptr1;
-				k < padK - zq_mm_align_size64; k += zq_mm_align_size64)
+			k = 0; A_c_ptr1 = Aptr1; A_c_ptr2 = Aptr2; A_c_ptr3 = Aptr3; A_c_ptr4 = Aptr4;
+			B_c_ptr1 = Bptr1;
+#if !__ARM_NEON
+			for (; k < padK - zq_mm_align_size64; k += zq_mm_align_size64)
 			{
 				op_4x1_16;
 				op_4x1_16;
@@ -4130,6 +4185,7 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M4_N4_Kgeneral(int M, int N, int K, const
 			{
 				op_4x1_16;
 			}
+#endif
 			for (; k < padK - zq_mm_align_size8; k += zq_mm_align_size8)
 			{
 				op_4x1_8;
@@ -4186,9 +4242,10 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M4_N4_Kgeneral(int M, int N, int K, const
 			Bptr2 = Bptr1 + ldb;
 			Bptr3 = Bptr2 + ldb;
 			Bptr4 = Bptr3 + ldb;
-			for (k = 0, A_c_ptr1 = Aptr1,
-				B_c_ptr1 = Bptr1, B_c_ptr2 = Bptr2, B_c_ptr3 = Bptr3, B_c_ptr4 = Bptr4;
-				k < padK - zq_mm_align_size64; k += zq_mm_align_size64)
+			k = 0; A_c_ptr1 = Aptr1;
+			B_c_ptr1 = Bptr1; B_c_ptr2 = Bptr2; B_c_ptr3 = Bptr3; B_c_ptr4 = Bptr4;
+#if !__ARM_NEON
+			for (; k < padK - zq_mm_align_size64; k += zq_mm_align_size64)
 			{
 				op_1x4_16;
 				op_1x4_16;
@@ -4204,6 +4261,7 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M4_N4_Kgeneral(int M, int N, int K, const
 			{
 				op_1x4_16;
 			}
+#endif
 			for (; k < padK - zq_mm_align_size8; k += zq_mm_align_size8)
 			{
 				op_1x4_8;
@@ -4242,8 +4300,9 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M4_N4_Kgeneral(int M, int N, int K, const
 		{
 			sum_vec11 = zq_mm_setzero_ps();
 			Bptr1 = Bptr;
-			for (k = 0, A_c_ptr1 = Aptr1, B_c_ptr1 = Bptr1;
-				k < padK - zq_mm_align_size64; k += zq_mm_align_size64)
+			k = 0; A_c_ptr1 = Aptr1; B_c_ptr1 = Bptr1;
+#if !__ARM_NEON
+			for (; k < padK - zq_mm_align_size64; k += zq_mm_align_size64)
 			{
 				op_1x1_16;
 				op_1x1_16;
@@ -4259,6 +4318,7 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M4_N4_Kgeneral(int M, int N, int K, const
 			{
 				op_1x1_16;
 			}
+#endif
 			for (; k < padK - zq_mm_align_size8; k += zq_mm_align_size8)
 			{
 				op_1x1_8;
@@ -4344,10 +4404,11 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M8_N1_Kgeneral(int M, int N, int K, const
 			sum_vec11 = zq_mm_setzero_ps(); sum_vec21 = zq_mm_setzero_ps(); sum_vec31 = zq_mm_setzero_ps(); sum_vec41 = zq_mm_setzero_ps();
 			sum_vec51 = zq_mm_setzero_ps(); sum_vec61 = zq_mm_setzero_ps(); sum_vec71 = zq_mm_setzero_ps(); sum_vec81 = zq_mm_setzero_ps();
 			Bptr1 = Bptr;
-			for (k = 0, A_c_ptr1 = Aptr1, A_c_ptr2 = Aptr2, A_c_ptr3 = Aptr3, A_c_ptr4 = Aptr4,
-				A_c_ptr5 = Aptr5, A_c_ptr6 = Aptr6, A_c_ptr7 = Aptr7, A_c_ptr8 = Aptr8,
-				B_c_ptr1 = Bptr1;
-				k < padK - zq_mm_align_size64; k += zq_mm_align_size64)
+			k = 0; A_c_ptr1 = Aptr1; A_c_ptr2 = Aptr2; A_c_ptr3 = Aptr3; A_c_ptr4 = Aptr4;
+			A_c_ptr5 = Aptr5; A_c_ptr6 = Aptr6; A_c_ptr7 = Aptr7; A_c_ptr8 = Aptr8;
+			B_c_ptr1 = Bptr1;
+#if !__ARM_NEON
+			for (; k < padK - zq_mm_align_size64; k += zq_mm_align_size64)
 			{
 				op_8x1_16;
 				op_8x1_16;
@@ -4363,6 +4424,7 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M8_N1_Kgeneral(int M, int N, int K, const
 			{
 				op_8x1_16;
 			}
+#endif
 			for (; k < padK - zq_mm_align_size8; k += zq_mm_align_size8)
 			{
 				op_8x1_8;
@@ -4436,8 +4498,9 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M8_N1_Kgeneral(int M, int N, int K, const
 		{
 			sum_vec11 = zq_mm_setzero_ps();
 			Bptr1 = Bptr;
-			for (k = 0, A_c_ptr1 = Aptr1, B_c_ptr1 = Bptr1;
-				k < padK - zq_mm_align_size64; k += zq_mm_align_size64)
+			k = 0; A_c_ptr1 = Aptr1; B_c_ptr1 = Bptr1;
+#if !__ARM_NEON
+			for (; k < padK - zq_mm_align_size64; k += zq_mm_align_size64)
 			{
 				op_1x1_16;
 				op_1x1_16;
@@ -4453,6 +4516,7 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M8_N1_Kgeneral(int M, int N, int K, const
 			{
 				op_1x1_16;
 			}
+#endif
 			for (; k < padK - zq_mm_align_size8; k += zq_mm_align_size8)
 			{
 				op_1x1_8;
@@ -4543,10 +4607,11 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M8_N2_Kgeneral(int M, int N, int K, const
 			sum_vec52 = zq_mm_setzero_ps(); sum_vec62 = zq_mm_setzero_ps(); sum_vec72 = zq_mm_setzero_ps(); sum_vec82 = zq_mm_setzero_ps();
 			Bptr1 = Bptr;
 			Bptr2 = Bptr1 + ldb;
-			for (k = 0, A_c_ptr1 = Aptr1, A_c_ptr2 = Aptr2, A_c_ptr3 = Aptr3, A_c_ptr4 = Aptr4,
-				A_c_ptr5 = Aptr5, A_c_ptr6 = Aptr6, A_c_ptr7 = Aptr7, A_c_ptr8 = Aptr8,
-				B_c_ptr1 = Bptr1, B_c_ptr2 = Bptr2;
-				k < padK - zq_mm_align_size64; k += zq_mm_align_size64)
+			k = 0; A_c_ptr1 = Aptr1; A_c_ptr2 = Aptr2; A_c_ptr3 = Aptr3; A_c_ptr4 = Aptr4;
+			A_c_ptr5 = Aptr5; A_c_ptr6 = Aptr6; A_c_ptr7 = Aptr7; A_c_ptr8 = Aptr8;
+			B_c_ptr1 = Bptr1; B_c_ptr2 = Bptr2;
+#if !__ARM_NEON
+			for (; k < padK - zq_mm_align_size64; k += zq_mm_align_size64)
 			{
 				op_8x2_16;
 				op_8x2_16;
@@ -4562,6 +4627,7 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M8_N2_Kgeneral(int M, int N, int K, const
 			{
 				op_8x2_16;
 			}
+#endif
 			for (; k < padK - zq_mm_align_size8; k += zq_mm_align_size8)
 			{
 				op_8x2_8;
@@ -4655,10 +4721,11 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M8_N2_Kgeneral(int M, int N, int K, const
 			sum_vec51 = zq_mm_setzero_ps(); sum_vec61 = zq_mm_setzero_ps(); sum_vec71 = zq_mm_setzero_ps(); sum_vec81 = zq_mm_setzero_ps();
 			Bptr1 = Bptr;
 			Bptr2 = Bptr1 + ldb;
-			for (k = 0, A_c_ptr1 = Aptr1, A_c_ptr2 = Aptr2, A_c_ptr3 = Aptr3, A_c_ptr4 = Aptr4,
-				A_c_ptr5 = Aptr5, A_c_ptr6 = Aptr6, A_c_ptr7 = Aptr7, A_c_ptr8 = Aptr8,
-				B_c_ptr1 = Bptr1, B_c_ptr2 = Bptr2;
-				k < padK - zq_mm_align_size64; k += zq_mm_align_size64)
+			k = 0; A_c_ptr1 = Aptr1; A_c_ptr2 = Aptr2; A_c_ptr3 = Aptr3; A_c_ptr4 = Aptr4;
+			A_c_ptr5 = Aptr5; A_c_ptr6 = Aptr6; A_c_ptr7 = Aptr7; A_c_ptr8 = Aptr8;
+			B_c_ptr1 = Bptr1; B_c_ptr2 = Bptr2;
+#if !__ARM_NEON
+			for (; k < padK - zq_mm_align_size64; k += zq_mm_align_size64)
 			{
 				op_8x1_16;
 				op_8x1_16;
@@ -4674,6 +4741,7 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M8_N2_Kgeneral(int M, int N, int K, const
 			{
 				op_8x1_16;
 			}
+#endif
 			for (; k < padK - zq_mm_align_size8; k += zq_mm_align_size8)
 			{
 				op_8x1_8;
@@ -4746,9 +4814,10 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M8_N2_Kgeneral(int M, int N, int K, const
 			sum_vec12 = zq_mm_setzero_ps();
 			Bptr1 = Bptr;
 			Bptr2 = Bptr1 + ldb;
-			for (k = 0, A_c_ptr1 = Aptr1,
-				B_c_ptr1 = Bptr1, B_c_ptr2 = Bptr2;
-				k < padK - zq_mm_align_size64; k += zq_mm_align_size64)
+			k = 0; A_c_ptr1 = Aptr1;
+			B_c_ptr1 = Bptr1; B_c_ptr2 = Bptr2;
+#if !__ARM_NEON
+			for (; k < padK - zq_mm_align_size64; k += zq_mm_align_size64)
 			{
 				op_1x2_16;
 				op_1x2_16;
@@ -4764,6 +4833,7 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M8_N2_Kgeneral(int M, int N, int K, const
 			{
 				op_1x2_16;
 			}
+#endif
 			for (; k < padK - zq_mm_align_size8; k += zq_mm_align_size8)
 			{
 				op_1x2_8;
@@ -4796,8 +4866,9 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M8_N2_Kgeneral(int M, int N, int K, const
 		{
 			sum_vec11 = zq_mm_setzero_ps();
 			Bptr1 = Bptr;
-			for (k = 0, A_c_ptr1 = Aptr1, B_c_ptr1 = Bptr1;
-				k < padK - zq_mm_align_size64; k += zq_mm_align_size64)
+			k = 0; A_c_ptr1 = Aptr1; B_c_ptr1 = Bptr1;
+#if !__ARM_NEON
+			for (; k < padK - zq_mm_align_size64; k += zq_mm_align_size64)
 			{
 				op_1x1_16;
 				op_1x1_16;
@@ -4813,6 +4884,7 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M8_N2_Kgeneral(int M, int N, int K, const
 			{
 				op_1x1_16;
 			}
+#endif
 			for (; k < padK - zq_mm_align_size8; k += zq_mm_align_size8)
 			{
 				op_1x1_8;
@@ -4935,12 +5007,13 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M16_N1_Kgeneral(int M, int N, int K, cons
 			sum_vec91 = zq_mm_setzero_ps(); sum_vecA1 = zq_mm_setzero_ps(); sum_vecB1 = zq_mm_setzero_ps(); sum_vecC1 = zq_mm_setzero_ps();
 			sum_vecD1 = zq_mm_setzero_ps(); sum_vecE1 = zq_mm_setzero_ps(); sum_vecF1 = zq_mm_setzero_ps(); sum_vecG1 = zq_mm_setzero_ps();
 			Bptr1 = Bptr;
-			for (k = 0, A_c_ptr1 = Aptr1, A_c_ptr2 = Aptr2, A_c_ptr3 = Aptr3, A_c_ptr4 = Aptr4,
-				A_c_ptr5 = Aptr5, A_c_ptr6 = Aptr6, A_c_ptr7 = Aptr7, A_c_ptr8 = Aptr8,
-				A_c_ptr9 = Aptr9, A_c_ptrA = AptrA, A_c_ptrB = AptrB, A_c_ptrC = AptrC,
-				A_c_ptrD = AptrD, A_c_ptrE = AptrE, A_c_ptrF = AptrF, A_c_ptrG = AptrG,
-				B_c_ptr1 = Bptr1;
-				k < padK - zq_mm_align_size64; k += zq_mm_align_size64)
+			k = 0; A_c_ptr1 = Aptr1; A_c_ptr2 = Aptr2; A_c_ptr3 = Aptr3; A_c_ptr4 = Aptr4;
+			A_c_ptr5 = Aptr5; A_c_ptr6 = Aptr6; A_c_ptr7 = Aptr7; A_c_ptr8 = Aptr8;
+			A_c_ptr9 = Aptr9; A_c_ptrA = AptrA; A_c_ptrB = AptrB; A_c_ptrC = AptrC;
+			A_c_ptrD = AptrD; A_c_ptrE = AptrE; A_c_ptrF = AptrF; A_c_ptrG = AptrG;
+			B_c_ptr1 = Bptr1;
+#if !__ARM_NEON
+			for (; k < padK - zq_mm_align_size64; k += zq_mm_align_size64)
 			{
 				op_16x1_16;
 				op_16x1_16;
@@ -4956,6 +5029,7 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M16_N1_Kgeneral(int M, int N, int K, cons
 			{
 				op_16x1_16;
 			}
+#endif
 			for (; k < padK - zq_mm_align_size8; k += zq_mm_align_size8)
 			{
 				op_16x1_8;
@@ -5069,8 +5143,9 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M16_N1_Kgeneral(int M, int N, int K, cons
 		{
 			sum_vec11 = zq_mm_setzero_ps();
 			Bptr1 = Bptr;
-			for (k = 0, A_c_ptr1 = Aptr1, B_c_ptr1 = Bptr1;
-				k < padK - zq_mm_align_size64; k += zq_mm_align_size64)
+			k = 0; A_c_ptr1 = Aptr1; B_c_ptr1 = Bptr1;
+#if !__ARM_NEON
+			for (; k < padK - zq_mm_align_size64; k += zq_mm_align_size64)
 			{
 				op_1x1_16;
 				op_1x1_16;
@@ -5086,6 +5161,7 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M16_N1_Kgeneral(int M, int N, int K, cons
 			{
 				op_1x1_16;
 			}
+#endif
 			for (; k < padK - zq_mm_align_size8; k += zq_mm_align_size8)
 			{
 				op_1x1_8;
@@ -5362,6 +5438,8 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv1_KdivAlign8(int M, int N, int
 	}
 }
 
+#if !__ARM_NEON
+
 void zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv1_KdivAlign16(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
 {
 	const float* Aptr1, *A_c_ptr1, *Bptr, *Bptr1;
@@ -5462,6 +5540,8 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv1_KdivAlign64(int M, int N, in
 		}
 	}
 }
+
+#endif
 
 void zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv2_KeqAlign1(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
 {
@@ -5738,6 +5818,8 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv2_KdivAlign8(int M, int N, int
 	}
 }
 
+#if !__ARM_NEON
+
 void zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv2_KdivAlign16(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
 {
 	const float* Aptr1, *A_c_ptr1, *Bptr, *Bptr1, *Bptr2;
@@ -5847,6 +5929,8 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv2_KdivAlign64(int M, int N, in
 		}
 	}
 }
+
+#endif 
 
 void zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv4_KeqAlign1(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
 {
@@ -6167,6 +6251,8 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv4_KdivAlign8(int M, int N, int
 	}
 }
 
+#if !__ARM_NEON
+
 void zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv4_KdivAlign16(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
 {
 	const float* Aptr1, *A_c_ptr1, *Bptr, *Bptr1, *Bptr2, *Bptr3, *Bptr4;
@@ -6288,6 +6374,8 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv4_KdivAlign64(int M, int N, in
 		}
 	}
 }
+
+#endif
 
 void zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv8_KeqAlign1(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
 {
@@ -6698,6 +6786,8 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv8_KdivAlign8(int M, int N, int
 	}
 }
 
+#if !__ARM_NEON
+
 void zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv8_KdivAlign16(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
 {
 	const float* Aptr1, *A_c_ptr1, *Bptr, *Bptr1, *Bptr2, *Bptr3, *Bptr4, *Bptr5, *Bptr6, *Bptr7, *Bptr8;
@@ -6852,6 +6942,8 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv8_KdivAlign64(int M, int N, in
 		}
 	}
 }
+
+#endif
 
 void zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv1_KeqAlign1(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
 {
@@ -7297,6 +7389,8 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv1_KdivAlign8(int M, int N, int
 	}
 }
 
+#if !__ARM_NEON
+
 void zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv1_KdivAlign16(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
 {
 	const float* Aptr1, *Aptr2, *A_c_ptr1, *A_c_ptr2;
@@ -7480,6 +7574,8 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv1_KdivAlign64(int M, int N, in
 		}
 	}
 }
+
+#endif
 
 void zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv2_KeqAlign1(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
 {
@@ -7961,6 +8057,8 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv2_KdivAlign8(int M, int N, int
 	}
 }
 
+#if !__ARM_NEON
+
 void zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv2_KdivAlign16(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
 {
 	const float* Aptr1, *Aptr2, *A_c_ptr1, *A_c_ptr2;
@@ -8156,6 +8254,8 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv2_KdivAlign64(int M, int N, in
 		}
 	}
 }
+
+#endif
 
 void zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv4_KeqAlign1(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
 {
@@ -8691,6 +8791,8 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv4_KdivAlign8(int M, int N, int
 	}
 }
 
+#if !__ARM_NEON
+
 void zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv4_KdivAlign16(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
 {
 	const float* Aptr1, *Aptr2, *A_c_ptr1, *A_c_ptr2;
@@ -8904,6 +9006,8 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv4_KdivAlign64(int M, int N, in
 		}
 	}
 }
+
+#endif
 
 void zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv8_KeqAlign1(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
 {
@@ -9583,6 +9687,8 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv8_KdivAlign8(int M, int N, int
 	}
 }
 
+#if !__ARM_NEON
+
 void zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv8_KdivAlign16(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
 {
 	const float* Aptr1, *Aptr2, *A_c_ptr1, *A_c_ptr2;
@@ -9844,6 +9950,8 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv8_KdivAlign64(int M, int N, in
 		}
 	}
 }
+
+#endif
 
 void zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv1_KeqAlign1(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
 {
@@ -10367,6 +10475,8 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv1_KdivAlign8(int M, int N, int
 	}
 }
 
+#if !__ARM_NEON
+
 void zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv1_KdivAlign16(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
 {
 	const float* Aptr1, *Aptr2, *Aptr3, *Aptr4, *A_c_ptr1, *A_c_ptr2, *A_c_ptr3, *A_c_ptr4;
@@ -10577,6 +10687,8 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv1_KdivAlign64(int M, int N, in
 		}
 	}
 }
+
+#endif
 
 void zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv2_KeqAlign1(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
 {
@@ -11152,6 +11264,8 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv2_KdivAlign8(int M, int N, int
 	}
 }
 
+#if !__ARM_NEON
+
 void zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv2_KdivAlign16(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
 {
 	const float* Aptr1, *Aptr2, *Aptr3, *Aptr4, *A_c_ptr1, *A_c_ptr2, *A_c_ptr3, *A_c_ptr4;
@@ -11374,6 +11488,8 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv2_KdivAlign64(int M, int N, in
 		}
 	}
 }
+
+#endif
 
 void zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv4_KeqAlign1(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
 {
@@ -12003,6 +12119,8 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv4_KdivAlign8(int M, int N, int
 	}
 }
 
+#if !__ARM_NEON
+
 void zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv4_KdivAlign16(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
 {
 	const float* Aptr1, *Aptr2, *Aptr3, *Aptr4, *A_c_ptr1, *A_c_ptr2, *A_c_ptr3, *A_c_ptr4;
@@ -12248,6 +12366,8 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv4_KdivAlign64(int M, int N, in
 	}
 	//_aligned_free(packedB);
 }
+
+#endif
 
 void zq_gemm_32f_align_AnoTrans_Btrans_M8_caseNdiv1_KeqAlign1(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
 {
@@ -12941,6 +13061,8 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M8_caseNdiv1_KdivAlign8(int M, int N, int
 	}
 }
 
+#if !__ARM_NEON
+
 void zq_gemm_32f_align_AnoTrans_Btrans_M8_caseNdiv1_KdivAlign16(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
 {
 	const float* Aptr1, *Aptr2, *Aptr3, *Aptr4, *A_c_ptr1, *A_c_ptr2, *A_c_ptr3, *A_c_ptr4;
@@ -13205,6 +13327,8 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M8_caseNdiv1_KdivAlign64(int M, int N, in
 		}
 	}
 }
+
+#endif
 
 void zq_gemm_32f_align_AnoTrans_Btrans_M8_caseNdiv2_KeqAlign1(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
 {
@@ -13925,6 +14049,8 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M8_caseNdiv2_KdivAlign8(int M, int N, int
 	}
 }
 
+#if !__ARM_NEON
+
 void zq_gemm_32f_align_AnoTrans_Btrans_M8_caseNdiv2_KdivAlign16(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
 {
 	const float* Aptr1, *Aptr2, *Aptr3, *Aptr4, *A_c_ptr1, *A_c_ptr2, *A_c_ptr3, *A_c_ptr4;
@@ -14198,6 +14324,8 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M8_caseNdiv2_KdivAlign64(int M, int N, in
 		}
 	}
 }
+
+#endif
 
 void zq_gemm_32f_align_AnoTrans_Btrans_M16_caseNdiv1_KeqAlign1(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
 {
@@ -15242,6 +15370,8 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M16_caseNdiv1_KdivAlign8(int M, int N, in
 	}
 }
 
+#if !__ARM_NEON
+
 void zq_gemm_32f_align_AnoTrans_Btrans_M16_caseNdiv1_KdivAlign16(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
 {
 	const float* Aptr1, *Aptr2, *Aptr3, *Aptr4, *A_c_ptr1, *A_c_ptr2, *A_c_ptr3, *A_c_ptr4;
@@ -15624,15 +15754,20 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M16_caseNdiv1_KdivAlign64(int M, int N, i
 	}
 }
 
+#endif
+
 void zq_gemm_32f_align_AnoTrans_Btrans_M1_N1(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
 {
+#if !__ARM_NEON
 	if (K % (zq_mm_align_size << 6) == 0)
 		zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv1_KdivAlign64(M, N, K, A, lda, Bt, ldb, C, ldc);
 	else if (K % (zq_mm_align_size << 5) == 0)
 		zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv1_KdivAlign32(M, N, K, A, lda, Bt, ldb, C, ldc);
 	else if (K % (zq_mm_align_size << 4) == 0)
 		zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv1_KdivAlign16(M, N, K, A, lda, Bt, ldb, C, ldc);
-	else if (K %zq_mm_align_size8 == 0)
+	else 
+#endif
+		if (K %zq_mm_align_size8 == 0)
 		zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv1_KdivAlign8(M, N, K, A, lda, Bt, ldb, C, ldc);
 	else if (K == zq_mm_align_size7)
 		zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv1_KeqAlign7(M, N, K, A, lda, Bt, ldb, C, ldc);
@@ -15660,7 +15795,7 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M1_N2(int M, int N, int K, const float* A
 	int restN = N % 2;
 	int partN = N - restN;
 	int handled = 0;
-
+#if !__ARM_NEON
 	if (K % (zq_mm_align_size << 6) == 0)
 	{
 		zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv2_KdivAlign64(M, partN, K, A, lda, Bt, ldb, C, ldc);
@@ -15676,7 +15811,9 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M1_N2(int M, int N, int K, const float* A
 		zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv2_KdivAlign16(M, partN, K, A, lda, Bt, ldb, C, ldc);
 		handled = 1;
 	}
-	else if (K %zq_mm_align_size8 == 0)
+	else 
+#endif
+		if (K %zq_mm_align_size8 == 0)
 	{
 		zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv2_KdivAlign8(M, partN, K, A, lda, Bt, ldb, C, ldc);
 		handled = 1;
@@ -15738,7 +15875,7 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M1_N4(int M, int N, int K, const float* A
 	int restN = N % 4;
 	int partN = N - restN;
 	int handled = 0;
-
+#if !__ARM_NEON
 	if (K % (zq_mm_align_size << 6) == 0)
 	{
 		zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv4_KdivAlign64(M, partN, K, A, lda, Bt, ldb, C, ldc);
@@ -15754,7 +15891,9 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M1_N4(int M, int N, int K, const float* A
 		zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv4_KdivAlign16(M, partN, K, A, lda, Bt, ldb, C, ldc);
 		handled = 1;
 	}
-	else if (K %zq_mm_align_size8 == 0)
+	else 
+#endif
+		if (K %zq_mm_align_size8 == 0)
 	{
 		zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv4_KdivAlign8(M, partN, K, A, lda, Bt, ldb, C, ldc);
 		handled = 1;
@@ -15816,7 +15955,7 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M1_N8(int M, int N, int K, const float* A
 	int restN = N % 8;
 	int partN = N - restN;
 	int handled = 0;
-
+#if !__ARM_NEON
 	if (K % (zq_mm_align_size << 6) == 0)
 	{
 		zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv8_KdivAlign64(M, partN, K, A, lda, Bt, ldb, C, ldc);
@@ -15832,7 +15971,9 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M1_N8(int M, int N, int K, const float* A
 		zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv8_KdivAlign16(M, partN, K, A, lda, Bt, ldb, C, ldc);
 		handled = 1;
 	}
-	else if (K %zq_mm_align_size8 == 0)
+	else 
+#endif
+		if (K %zq_mm_align_size8 == 0)
 	{
 		zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv8_KdivAlign8(M, partN, K, A, lda, Bt, ldb, C, ldc);
 		handled = 1;
@@ -15891,13 +16032,16 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M1_N8(int M, int N, int K, const float* A
 
 void zq_gemm_32f_align_AnoTrans_Btrans_M2_N1(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
 {
+#if !__ARM_NEON
 	if (K % (zq_mm_align_size << 6) == 0)
 		zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv1_KdivAlign64(M, N, K, A, lda, Bt, ldb, C, ldc);
 	else if (K % (zq_mm_align_size << 5) == 0)
 		zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv1_KdivAlign32(M, N, K, A, lda, Bt, ldb, C, ldc);
 	else if (K % (zq_mm_align_size << 4) == 0)
 		zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv1_KdivAlign16(M, N, K, A, lda, Bt, ldb, C, ldc);
-	else if (K %zq_mm_align_size8 == 0)
+	else 
+#endif
+		if (K %zq_mm_align_size8 == 0)
 		zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv1_KdivAlign8(M, N, K, A, lda, Bt, ldb, C, ldc);
 	else if (K == zq_mm_align_size7)
 		zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv1_KeqAlign7(M, N, K, A, lda, Bt, ldb, C, ldc);
@@ -15925,7 +16069,7 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M2_N2(int M, int N, int K, const float* A
 	int restN = N % 2;
 	int partN = N - restN;
 	int handled = 0;
-
+#if !__ARM_NEON
 	if (K % (zq_mm_align_size << 6) == 0)
 	{
 		zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv2_KdivAlign64(M, partN, K, A, lda, Bt, ldb, C, ldc);
@@ -15941,7 +16085,9 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M2_N2(int M, int N, int K, const float* A
 		zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv2_KdivAlign16(M, partN, K, A, lda, Bt, ldb, C, ldc);
 		handled = 1;
 	}
-	else if (K %zq_mm_align_size8 == 0)
+	else
+#endif
+		if (K %zq_mm_align_size8 == 0)
 	{
 		zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv2_KdivAlign8(M, partN, K, A, lda, Bt, ldb, C, ldc);
 		handled = 1;
@@ -16003,7 +16149,7 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M2_N4(int M, int N, int K, const float* A
 	int restN = N % 4;
 	int partN = N - restN;
 	int handled = 0;
-
+#if !__ARM_NEON
 	if (K % (zq_mm_align_size << 6) == 0)
 	{
 		zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv4_KdivAlign64(M, partN, K, A, lda, Bt, ldb, C, ldc);
@@ -16019,7 +16165,9 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M2_N4(int M, int N, int K, const float* A
 		zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv4_KdivAlign16(M, partN, K, A, lda, Bt, ldb, C, ldc);
 		handled = 1;
 	}
-	else if (K %zq_mm_align_size8 == 0)
+	else
+#endif
+		if (K %zq_mm_align_size8 == 0)
 	{
 		zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv4_KdivAlign8(M, partN, K, A, lda, Bt, ldb, C, ldc);
 		handled = 1;
@@ -16081,7 +16229,7 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M2_N8(int M, int N, int K, const float* A
 	int restN = N % 8;
 	int partN = N - restN;
 	int handled = 0;
-
+#if !__ARM_NEON
 	if (K % (zq_mm_align_size << 6) == 0)
 	{
 		zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv8_KdivAlign64(M, partN, K, A, lda, Bt, ldb, C, ldc);
@@ -16097,7 +16245,9 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M2_N8(int M, int N, int K, const float* A
 		zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv8_KdivAlign16(M, partN, K, A, lda, Bt, ldb, C, ldc);
 		handled = 1;
 	}
-	else if (K %zq_mm_align_size8 == 0)
+	else
+#endif
+		if (K %zq_mm_align_size8 == 0)
 	{
 		zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv8_KdivAlign8(M, partN, K, A, lda, Bt, ldb, C, ldc);
 		handled = 1;
@@ -16156,13 +16306,16 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M2_N8(int M, int N, int K, const float* A
 
 void zq_gemm_32f_align_AnoTrans_Btrans_M4_N1(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
 {
+#if !__ARM_NEON
 	if (K % (zq_mm_align_size << 6) == 0)
 		zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv1_KdivAlign64(M, N, K, A, lda, Bt, ldb, C, ldc);
 	else if (K % (zq_mm_align_size << 5) == 0)
 		zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv1_KdivAlign32(M, N, K, A, lda, Bt, ldb, C, ldc);
 	else if (K % (zq_mm_align_size << 4) == 0)
 		zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv1_KdivAlign16(M, N, K, A, lda, Bt, ldb, C, ldc);
-	else if (K %zq_mm_align_size8 == 0)
+	else
+#endif
+		if (K %zq_mm_align_size8 == 0)
 		zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv1_KdivAlign8(M, N, K, A, lda, Bt, ldb, C, ldc);
 	else if (K == zq_mm_align_size7)
 		zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv1_KeqAlign7(M, N, K, A, lda, Bt, ldb, C, ldc);
@@ -16190,7 +16343,7 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M4_N2(int M, int N, int K, const float* A
 	int restN = N % 2;
 	int partN = N - restN;
 	int handled = 0;
-
+#if !__ARM_NEON
 	if (K % (zq_mm_align_size << 6) == 0)
 	{
 		zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv2_KdivAlign64(M, partN, K, A, lda, Bt, ldb, C, ldc);
@@ -16206,7 +16359,9 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M4_N2(int M, int N, int K, const float* A
 		zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv2_KdivAlign16(M, partN, K, A, lda, Bt, ldb, C, ldc);
 		handled = 1;
 	}
-	else if (K %zq_mm_align_size8 == 0)
+	else
+#endif
+		if (K %zq_mm_align_size8 == 0)
 	{
 		zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv2_KdivAlign8(M, partN, K, A, lda, Bt, ldb, C, ldc);
 		handled = 1;
@@ -16268,7 +16423,7 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M4_N4(int M, int N, int K, const float* A
 	int restN = N % 4;
 	int partN = N - restN;
 	int handled = 0;
-
+#if !__ARM_NEON
 	if (K % (zq_mm_align_size << 6) == 0)
 	{
 		zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv4_KdivAlign64(M, partN, K, A, lda, Bt, ldb, C, ldc);
@@ -16284,7 +16439,9 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M4_N4(int M, int N, int K, const float* A
 		zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv4_KdivAlign16(M, partN, K, A, lda, Bt, ldb, C, ldc);
 		handled = 1;
 	}
-	else if (K %zq_mm_align_size8 == 0)
+	else
+#endif
+		if (K %zq_mm_align_size8 == 0)
 	{
 		zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv4_KdivAlign8(M, partN, K, A, lda, Bt, ldb, C, ldc);
 		handled = 1;
@@ -16343,13 +16500,16 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M4_N4(int M, int N, int K, const float* A
 
 void zq_gemm_32f_align_AnoTrans_Btrans_M8_N1(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
 {
+#if !__ARM_NEON
 	if (K % (zq_mm_align_size << 6) == 0)
 		zq_gemm_32f_align_AnoTrans_Btrans_M8_caseNdiv1_KdivAlign64(M, N, K, A, lda, Bt, ldb, C, ldc);
 	else if (K % (zq_mm_align_size << 5) == 0)
 		zq_gemm_32f_align_AnoTrans_Btrans_M8_caseNdiv1_KdivAlign32(M, N, K, A, lda, Bt, ldb, C, ldc);
 	else if (K % (zq_mm_align_size << 4) == 0)
 		zq_gemm_32f_align_AnoTrans_Btrans_M8_caseNdiv1_KdivAlign16(M, N, K, A, lda, Bt, ldb, C, ldc);
-	else if (K %zq_mm_align_size8 == 0)
+	else
+#endif
+		if (K %zq_mm_align_size8 == 0)
 		zq_gemm_32f_align_AnoTrans_Btrans_M8_caseNdiv1_KdivAlign8(M, N, K, A, lda, Bt, ldb, C, ldc);
 	else if (K == zq_mm_align_size7)
 		zq_gemm_32f_align_AnoTrans_Btrans_M8_caseNdiv1_KeqAlign7(M, N, K, A, lda, Bt, ldb, C, ldc);
@@ -16377,7 +16537,7 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M8_N2(int M, int N, int K, const float* A
 	int restN = N % 2;
 	int partN = N - restN;
 	int handled = 0;
-
+#if !__ARM_NEON
 	if (K % (zq_mm_align_size << 6) == 0)
 	{
 		zq_gemm_32f_align_AnoTrans_Btrans_M8_caseNdiv2_KdivAlign64(M, partN, K, A, lda, Bt, ldb, C, ldc);
@@ -16393,7 +16553,9 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M8_N2(int M, int N, int K, const float* A
 		zq_gemm_32f_align_AnoTrans_Btrans_M8_caseNdiv2_KdivAlign16(M, partN, K, A, lda, Bt, ldb, C, ldc);
 		handled = 1;
 	}
-	else if (K %zq_mm_align_size8 == 0)
+	else 
+#endif
+		if (K %zq_mm_align_size8 == 0)
 	{
 		zq_gemm_32f_align_AnoTrans_Btrans_M8_caseNdiv2_KdivAlign8(M, partN, K, A, lda, Bt, ldb, C, ldc);
 		handled = 1;
@@ -16452,13 +16614,16 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M8_N2(int M, int N, int K, const float* A
 
 void zq_gemm_32f_align_AnoTrans_Btrans_M16_N1(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
 {
+#if !__ARM_NEON
 	if (K % (zq_mm_align_size << 6) == 0)
 		zq_gemm_32f_align_AnoTrans_Btrans_M16_caseNdiv1_KdivAlign64(M, N, K, A, lda, Bt, ldb, C, ldc);
 	else if (K % (zq_mm_align_size << 5) == 0)
 		zq_gemm_32f_align_AnoTrans_Btrans_M16_caseNdiv1_KdivAlign32(M, N, K, A, lda, Bt, ldb, C, ldc);
 	else if (K % (zq_mm_align_size << 4) == 0)
 		zq_gemm_32f_align_AnoTrans_Btrans_M16_caseNdiv1_KdivAlign16(M, N, K, A, lda, Bt, ldb, C, ldc);
-	else if (K %zq_mm_align_size8 == 0)
+	else
+#endif
+		if (K %zq_mm_align_size8 == 0)
 		zq_gemm_32f_align_AnoTrans_Btrans_M16_caseNdiv1_KdivAlign8(M, N, K, A, lda, Bt, ldb, C, ldc);
 	else if (K == zq_mm_align_size7)
 		zq_gemm_32f_align_AnoTrans_Btrans_M16_caseNdiv1_KeqAlign7(M, N, K, A, lda, Bt, ldb, C, ldc);
