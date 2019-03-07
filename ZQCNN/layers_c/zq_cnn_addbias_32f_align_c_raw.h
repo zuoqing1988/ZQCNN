@@ -50,7 +50,7 @@ void zq_cnn_addbias_32f_align(
 	register zq_mm_type b0, b1, b2, b3;
 
 #if 1
-
+#if !__ARM_NEON
 	if (in_C%zq_mm_align_size_mul_32 == 0)
 	{
 		for (n = 0, slice_ptr = in_tensor4D_data; n < in_N; n++, slice_ptr += in_sliceStep)
@@ -83,7 +83,9 @@ void zq_cnn_addbias_32f_align(
 			}
 		}
 	}
-	else if (in_C%zq_mm_align_size_mul_8 == 0)
+	else
+#endif
+		if (in_C%zq_mm_align_size_mul_8 == 0)
 	{
 		for (n = 0, slice_ptr = in_tensor4D_data; n < in_N; n++, slice_ptr += in_sliceStep)
 		{

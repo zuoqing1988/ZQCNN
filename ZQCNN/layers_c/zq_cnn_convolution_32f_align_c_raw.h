@@ -283,6 +283,7 @@ void zq_cnn_conv_no_padding_32f_kernel3x3(
 	register zq_mm_type b0, b1, b2, b3;
 
 	t1 = omp_get_wtime();
+#if !__ARM_NEON
 	if (filter_C % zq_mm_align_size_mul_32 == 0)
 	{
 		for (out_n = 0, in_slice_ptr = in_tensor4D_data, out_slice_ptr = out_tensor4D_data;
@@ -453,7 +454,9 @@ void zq_cnn_conv_no_padding_32f_kernel3x3(
 			}
 		}
 	}
-	else if (filter_C % zq_mm_align_size_mul_8 == 0)
+	else
+#endif
+		if (filter_C % zq_mm_align_size_mul_8 == 0)
 	{
 		for (out_n = 0, in_slice_ptr = in_tensor4D_data, out_slice_ptr = out_tensor4D_data;
 			out_n < out_N;

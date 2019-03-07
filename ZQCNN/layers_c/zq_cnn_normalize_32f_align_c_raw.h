@@ -115,7 +115,7 @@ void zq_cnn_normalize_not_across_spatial_32f_align(
 	int n, h, w, c;
 	float* slice_ptr, *row_ptr, *pix_ptr, *c_ptr;
 	const float *scale_c_ptr;
-
+#if !__ARM_NEON
 	if (in_C%zq_mm_align_size_mul_32 == 0)
 	{
 		for (n = 0, slice_ptr = in_tensor4D_data; n < in_N; n++, slice_ptr += in_sliceStep)
@@ -188,7 +188,9 @@ void zq_cnn_normalize_not_across_spatial_32f_align(
 			}
 		}
 	}
-	else if (in_C%zq_mm_align_size_mul_8 == 0)
+	else
+#endif
+		if (in_C%zq_mm_align_size_mul_8 == 0)
 	{
 		for (n = 0, slice_ptr = in_tensor4D_data; n < in_N; n++, slice_ptr += in_sliceStep)
 		{
@@ -285,7 +287,7 @@ void zq_cnn_normalize_across_spatial_32f_align(
 	int n, h, w, c;
 	float* slice_ptr, *row_ptr, *pix_ptr, *c_ptr;
 	const float *scale_c_ptr;
-	
+#if !__ARM_NEON
 	if (in_C%zq_mm_align_size_mul_32 == 0)
 	{
 		for (n = 0, slice_ptr = in_tensor4D_data; n < in_N; n++, slice_ptr += in_sliceStep)
@@ -382,7 +384,9 @@ void zq_cnn_normalize_across_spatial_32f_align(
 			}
 		}
 	}
-	else if (in_C%zq_mm_align_size_mul_8 == 0)
+	else
+#endif
+		if (in_C%zq_mm_align_size_mul_8 == 0)
 	{
 		for (n = 0, slice_ptr = in_tensor4D_data; n < in_N; n++, slice_ptr += in_sliceStep)
 		{

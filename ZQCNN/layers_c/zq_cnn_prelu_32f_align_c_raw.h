@@ -103,7 +103,7 @@ void zq_cnn_prelu_32f_align(
 	register zq_mm_type  c0, c1, c2, c3;
 	register zq_mm_type  d0, d1, d2, d3;
 	register zq_mm_type zero_v = zq_mm_setzero_ps();
-
+#if !__ARM_NEON
 	if (in_C % zq_mm_align_size_mul_32 == 0)
 	{
 		for (n = 0, slice_ptr = in_tensor4D_data; n < in_N; n++, slice_ptr += in_sliceStep)
@@ -136,7 +136,9 @@ void zq_cnn_prelu_32f_align(
 			}
 		}
 	}
-	else if (in_C % zq_mm_align_size_mul_8 == 0)
+	else
+#endif
+		if (in_C % zq_mm_align_size_mul_8 == 0)
 	{
 		for (n = 0, slice_ptr = in_tensor4D_data; n < in_N; n++, slice_ptr += in_sliceStep)
 		{
@@ -211,6 +213,7 @@ void zq_cnn_prelu_32f_align_sure_slope_lessthan1(
 	register zq_mm_type  d0, d1, d2, d3;
 
 #if 1
+#if !__ARM_NEON
 	if (in_C % zq_mm_align_size_mul_32 == 0)
 	{
 		for (n = 0, slice_ptr = in_tensor4D_data; n < in_N; n++, slice_ptr += in_sliceStep)
@@ -244,7 +247,9 @@ void zq_cnn_prelu_32f_align_sure_slope_lessthan1(
 			}
 		}
 	}
-	else if (in_C % zq_mm_align_size_mul_8 == 0)
+	else
+#endif
+		if (in_C % zq_mm_align_size_mul_8 == 0)
 	{
 		for (n = 0, slice_ptr = in_tensor4D_data; n < in_N; n++, slice_ptr += in_sliceStep)
 		{
