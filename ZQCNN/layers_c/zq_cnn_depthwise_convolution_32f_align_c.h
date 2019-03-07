@@ -194,7 +194,7 @@ extern "C" {
 		int in_N,
 		int in_H,
 		int in_W,
-		int in_C,	//must be 57,58,59,60,61,62,63,64
+		int in_C,	//must be 29,30,31,32
 		int in_pixelStep,
 		int in_widthStep,
 		int in_sliceStep,
@@ -202,7 +202,37 @@ extern "C" {
 		int filter_N, //must be 1
 		int filter_H, // must be 3
 		int filter_W, // must be 3
-		int filter_C,	//must be 25,26,27,28,29,30,31,32
+		int filter_C,	//must be 29,30,31,32
+		int filter_pixelStep,
+		int filter_widthStep,
+		int filter_sliceStep,
+		int stride_H,
+		int stride_W,
+		float* out_tensor4D_data,
+		int out_N,	// must be in_N
+		int out_H,	// must be (in_H - filter_H)/stride_H + 1
+		int out_W,	// must be (in_W - filter_W)/stride_W + 1
+		int out_C,	// must be filter_N
+		int out_pixelStep,
+		int out_widthStep,
+		int out_sliceStep
+	);
+
+	/*if C is not 32x , the padded channels of filters must be zero*/
+	void zq_cnn_depthwise_conv_no_padding_32f_align128bit_kernel3x3_Cdiv32(
+		const float* in_tensor4D_data,
+		int in_N,
+		int in_H,
+		int in_W,
+		int in_C,
+		int in_pixelStep,
+		int in_widthStep,
+		int in_sliceStep,
+		const float* filters_data,
+		int filter_N, //must be 1
+		int filter_H, // must be 3
+		int filter_W, // must be 3
+		int filter_C,
 		int filter_pixelStep,
 		int filter_widthStep,
 		int filter_sliceStep,
