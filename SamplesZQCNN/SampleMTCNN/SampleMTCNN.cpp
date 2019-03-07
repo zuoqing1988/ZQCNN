@@ -82,7 +82,11 @@ int main()
 #elif ZQ_CNN_USE_MKL_GEMM
 	mkl_set_num_threads(num_threads);
 #endif
-	Mat image0 = cv::imread("data/test16.jpg", 1);
+#if defined(_WIN32)
+	Mat image0 = cv::imread("data/face2500.jpg", 1);
+#else
+	Mat image0 = cv::imread("../../data/face2500.jpg", 1);
+#endif
 	if (image0.empty())
 	{
 		cout << "empty image\n";
@@ -91,15 +95,15 @@ int main()
 	//cv::resize(image0, image0, cv::Size(), 2, 2);
 	if (image0.channels() == 1)
 		cv::cvtColor(image0, image0, CV_GRAY2BGR);
-	//cv::convertScaleAbs(image0, image0, 0.5);
+	//cv::convertScaleAbs(image0, image0, 2.0);
 	/* TIPS: when finding tiny faces for very big image, gaussian blur is very useful for Pnet*/
 	bool run_blur = true;
 	int kernel_size = 3, sigma = 2;
 	if (image0.cols * image0.rows >= 2500 * 1600)
 	{
 		run_blur = false;
-		kernel_size = 3;
-		sigma = 2;
+		kernel_size = 5;
+		sigma = 3;
 	}
 	else if (image0.cols * image0.rows >= 1920 * 1080)
 	{
@@ -115,7 +119,7 @@ int main()
 	if (run_blur)
 	{
 		cv::Mat blur_image0;
-		int nBlurIters = 100;
+		int nBlurIters = 1000;
 		double t00 = omp_get_wtime();
 		for (int i = 0; i < nBlurIters; i++)
 			cv::GaussianBlur(image0, blur_image0, cv::Size(kernel_size, kernel_size), sigma, sigma);
@@ -132,19 +136,19 @@ int main()
 	const int use_pnet20 = true;
 	bool landmark106 = false;
 	int thread_num = 0;
-	bool special_handle_very_big_face = true;
+	bool special_handle_very_big_face = false;
 	result_name = "resultdet.jpg";
 	if (use_pnet20)
 	{
 		if (landmark106)
 		{
-			if (!mtcnn.Init("model/det1-dw20-v3.zqparams", "model/det1-dw20-v3-16.nchwbin",
-				"model/det2-dw24-v1.zqparams", "model/det2-dw24-v1-16.nchwbin",
+			if (!mtcnn.Init("model/det1-dw20-fast.zqparams", "model/det1-dw20-fast.nchwbin",
+				"model/det2-dw24-fast.zqparams", "model/det2-dw24-fast.nchwbin",
 				//"model/det2.zqparams", "model/det2_bgr.nchwbin",
-				//"model/det3.zqparams", "model/det3_bgr.nchwbin", 
-				"model/det3-dw48-v1.zqparams", "model/det3-dw48-v1-16.nchwbin",
+				"model/det3-dw48-fast.zqparams", "model/det3-dw48-fast.nchwbin", 
 				thread_num, true,
-				"model/det5-dw96-v2s.zqparams", "model/det5-dw96-v2s-8000.nchwbin"
+				"model/det5-dw48.zqparams", "model/det5-dw48-1000.nchwbin"
+				//"model/det3.zqparams", "model/det3_bgr.nchwbin"
 			))
 			{
 				cout << "failed to init!\n";
@@ -153,21 +157,30 @@ int main()
 		}
 		else
 		{
+#if defined(_WIN32)
 			if (!mtcnn.Init("model/det1-dw20-fast.zqparams", "model/det1-dw20-fast.nchwbin",
 				"model/det2-dw24-fast.zqparams", "model/det2-dw24-fast.nchwbin",
-				//"model/det2.zqparams", "model/det2_bgr.nchwbin",
-				//"model/det3.zqparams", "model/det3_bgr.nchwbin", 
+				//"model\\det2.zqparams", "model\\det2_bgr.nchwbin",
 				"model/det3-dw48-fast.zqparams", "model/det3-dw48-fast.nchwbin",
 				thread_num, false,
-				"model/det4-dw48-v2s.zqparams", "model/det4-dw48-v2s-3150.nchwbin"
-				//"model/det3.zqparams", "model/det3_bgr.nchwbin"
+				//"model\\det4-dw48-small.zqparams", "model\\det4-dw48-small.nchwbin"
+				"model/det3.zqparams", "model/det3_bgr.nchwbin"
+#else
+			if (!mtcnn.Init("../../model/det1-dw20-fast.zqparams", "../../model/det1-dw20-fast.nchwbin",
+				"../../model/det2-dw24-fast.zqparams", "../../model/det2-dw24-fast.nchwbin",
+				//"model/det2.zqparams", "model/det2_bgr.nchwbin",
+				"../../model/det3-dw48-fast.zqparams", "../../model/det3-dw48-fast.nchwbin", 
+				thread_num, false,
+				//"model/det4-dw48-small.zqparams", "model/det4-dw48-small.nchwbin"
+				"../../model/det3.zqparams", "../../model/det3_bgr.nchwbin"
+#endif
 			))
 			{
 				cout << "failed to init!\n";
 				return EXIT_FAILURE;
 			}
 		}
-		mtcnn.SetPara(image0.cols, image0.rows, 20, 0.3, 0.6, 0.7, 0.4, 0.5, 0.5, 0.709, 3, 20, 4, special_handle_very_big_face);
+		mtcnn.SetPara(image0.cols, image0.rows, 20, 0.5, 0.6, 0.8, 0.4, 0.5, 0.5, 0.709, 3, 20, 4, special_handle_very_big_face);
 	}
 	else
 	{
@@ -179,7 +192,7 @@ int main()
 			return EXIT_FAILURE;
 		}
 
-		mtcnn.SetPara(image0.cols, image0.rows, 20, 0.6, 0.7, 0.8, 0.4, 0.5, 0.5, 0.709, 4, 12, 2, special_handle_very_big_face);
+		mtcnn.SetPara(image0.cols, image0.rows, 20, 0.6, 0.7, 0.7, 0.4, 0.5, 0.5, 0.709, 4, 12, 2, special_handle_very_big_face);
 	}
 	mtcnn.TurnOffShowDebugInfo();
 	//mtcnn.TurnOnShowDebugInfo();
