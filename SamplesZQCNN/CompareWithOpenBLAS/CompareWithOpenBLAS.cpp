@@ -531,13 +531,16 @@ int main()
 #include <openblas/cblas.h>
 #include <sched.h>
 
-int main()
+int main(int argc, const char** argv)
 {
-	cpu_set_t mask;
-	CPU_ZERO(&mask);
-	CPU_SET(0, &mask);
-	if (sched_setaffinity(0, sizeof(mask), &mask) < 0) {
-		perror("sched_setaffinity");
+	if (argc != 1)
+	{
+		cpu_set_t mask;
+		CPU_ZERO(&mask);
+		CPU_SET(atoi(argv[0]), &mask);
+		if (sched_setaffinity(0, sizeof(mask), &mask) < 0) {
+			perror("sched_setaffinity");
+		}
 	}
 
 	int num_threads = 1;
@@ -622,7 +625,7 @@ int main()
 	_test_gemm(105 * 189, 24, 3 * 3 * 48, 100);
 	_test_gemm(105 * 189, 32, 3 * 3 * 48, 100);
 	_test_gemm(105 * 189, 32, 3 * 3 * 64, 100);
-	return EXIT_SUCCESS;
+	return 0;
 }
 
 #else

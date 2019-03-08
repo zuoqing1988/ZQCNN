@@ -22,14 +22,17 @@
 using namespace ZQ;
 using namespace std;
 using namespace cv;
-int main()
+int main(int argc, const char** argv)
 {
 #if !defined(_WIN32)
-	cpu_set_t mask;
-	CPU_ZERO(&mask);
-	CPU_SET(0, &mask);
-	if (sched_setaffinity(0, sizeof(mask), &mask) < 0) {
-		perror("sched_setaffinity");
+	if (argc != 1)
+	{
+		cpu_set_t mask;
+		CPU_ZERO(&mask);
+		CPU_SET(atoi(argv[0]), &mask);
+		if (sched_setaffinity(0, sizeof(mask), &mask) < 0) {
+			perror("sched_setaffinity");
+		}
 	}
 #endif
 	int num_threads = 1;
