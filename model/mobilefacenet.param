@@ -2,7 +2,7 @@
 160 172
 Input            data                             0 1 data
 BinaryOp         _minusscalar0                    1 1 data _minusscalar0 0=1 1=1 2=127.500000
-BinaryOp         _mulscalar0                      1 1 _minusscalar0 _mulscalar0 0=2 1=1 2=0.007812
+BinaryOp         _mulscalar0                      1 1 _minusscalar0 _mulscalar0 0=2 1=1 2=0.007813
 Convolution      conv_1_conv2d                    1 1 _mulscalar0 conv_1_conv2d 0=64 1=3 11=3 3=2 13=2 4=1 14=1 5=0 6=1728
 BatchNorm        conv_1_batchnorm                 1 1 conv_1_conv2d conv_1_batchnorm 0=64
 PReLU            conv_1_relu                      1 1 conv_1_batchnorm conv_1_relu 0=64
@@ -158,5 +158,5 @@ BatchNorm        conv_6sep_batchnorm              1 1 conv_6sep_conv2d conv_6sep
 PReLU            conv_6sep_relu                   1 1 conv_6sep_batchnorm conv_6sep_relu 0=512
 ConvolutionDepthWise conv_6dw7_7_conv2d               1 1 conv_6sep_relu conv_6dw7_7_conv2d 0=512 1=7 11=7 3=1 13=1 4=0 14=0 5=0 6=25088 7=512
 BatchNorm        conv_6dw7_7_batchnorm            1 1 conv_6dw7_7_conv2d conv_6dw7_7_batchnorm 0=512
-InnerProduct     pre_fc1                          1 1 conv_6dw7_7_batchnorm pre_fc1 0=256 1=1 2=131072
-BatchNorm        fc1                              1 1 pre_fc1 fc1 0=256
+InnerProduct     pre_fc1                          1 1 conv_6dw7_7_batchnorm pre_fc1 0=128 1=1 2=65536
+BatchNorm        fc1                              1 1 pre_fc1 fc1 0=128
