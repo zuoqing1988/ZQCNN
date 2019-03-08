@@ -16,11 +16,22 @@
 #else
 #pragma comment(lib,"ZQ_GEMM.lib")
 #endif
+#if !defined(_WIN32)
+#include <sched.h>
+#endif
 using namespace ZQ;
 using namespace std;
 using namespace cv;
 int main()
 {
+#if !defined(_WIN32)
+	cpu_set_t mask;
+	CPU_ZERO(&mask);
+	CPU_SET(0, &mask);
+	if (sched_setaffinity(0, sizeof(mask), &mask) < 0) {
+		perror("sched_setaffinity");
+	}
+#endif
 	int num_threads = 1;
 
 #if ZQ_CNN_USE_BLAS_GEMM
