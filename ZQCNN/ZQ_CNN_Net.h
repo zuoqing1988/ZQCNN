@@ -131,7 +131,7 @@ namespace ZQ
 			__int64 sum = 0;
 			for (int i = 0; i < layers.size(); i++)
 			{
-				if(_strcmpi(layer_type_names[i].c_str(),"Convolution") == 0)
+				if(ZQ_CNN_Layer::_my_strcmpi(layer_type_names[i].c_str(),"Convolution") == 0)
 					sum += layers[i]->GetNumOfMulAdd();
 			}
 			return sum;
@@ -141,7 +141,7 @@ namespace ZQ
 			__int64 sum = 0;
 			for (int i = 0; i < layers.size(); i++)
 			{
-				if (_strcmpi(layer_type_names[i].c_str(), "DepthwiseConvolution") == 0)
+				if (ZQ_CNN_Layer::_my_strcmpi(layer_type_names[i].c_str(), "DepthwiseConvolution") == 0)
 					sum += layers[i]->GetNumOfMulAdd();
 			}
 			return sum;
