@@ -1,5 +1,5 @@
 7767517
-170 185
+160 172
 Input            data                             0 1 data
 BinaryOp         _minusscalar0                    1 1 data _minusscalar0 0=1 1=1 2=127.500000
 BinaryOp         _mulscalar0                      1 1 _minusscalar0 _mulscalar0 0=2 1=1 2=0.007813
@@ -156,17 +156,7 @@ BinaryOp         _plus11                          2 1 res_5_block1_conv_proj_bat
 Convolution      conv_6sep_conv2d                 1 1 _plus11 conv_6sep_conv2d 0=512 1=1 11=1 3=1 13=1 4=0 14=0 5=0 6=65536
 BatchNorm        conv_6sep_batchnorm              1 1 conv_6sep_conv2d conv_6sep_batchnorm 0=512
 PReLU            conv_6sep_relu                   1 1 conv_6sep_batchnorm conv_6sep_relu 0=512
-BatchNorm        bn6f                             1 1 conv_6sep_relu bn6f 0=512
-Split            splitncnn_12                     1 3 bn6f bn6f_splitncnn_0 bn6f_splitncnn_1 bn6f_splitncnn_2
-BinaryOp         _mul0                            2 1 bn6f_splitncnn_2 bn6f_splitncnn_1 _mul0 0=2
-Reduction        sum0                             1 1 _mul0 sum0 0=0
-UnaryOp          sqrt0                            1 1 sum0 sqrt0 0=5
-Split            splitncnn_13                     1 2 sqrt0 sqrt0_splitncnn_0 sqrt0_splitncnn_1
-Reduction        mean0                            1 1 sqrt0_splitncnn_1 mean0 0=3
-BinaryOp         broadcast_div0                   2 1 mean0 sqrt0_splitncnn_0 broadcast_div0 0=3
-tile             tile0                            1 1 broadcast_div0 tile0
-BinaryOp         _mul1                            2 1 bn6f_splitncnn_0 tile0 _mul1 0=2
-Pooling          pooling0                         1 1 _mul1 pooling0 0=1 1=7 4=1 5=1
-BatchNorm        bn6w                             1 1 pooling0 bn6w 0=512
-InnerProduct     pre_fc1                          1 1 bn6w pre_fc1 0=256 1=1 2=131072
-BatchNorm        fc1                              1 1 pre_fc1 fc1 0=256
+ConvolutionDepthWise conv_6dw7_7_conv2d               1 1 conv_6sep_relu conv_6dw7_7_conv2d 0=512 1=7 11=7 3=1 13=1 4=0 14=0 5=0 6=25088 7=512
+BatchNorm        conv_6dw7_7_batchnorm            1 1 conv_6dw7_7_conv2d conv_6dw7_7_batchnorm 0=512
+InnerProduct     pre_fc1                          1 1 conv_6dw7_7_batchnorm pre_fc1 0=128 1=1 2=65536
+BatchNorm        fc1                              1 1 pre_fc1 fc1 0=128
