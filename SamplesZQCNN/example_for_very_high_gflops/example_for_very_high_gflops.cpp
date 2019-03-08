@@ -1,12 +1,15 @@
+#if !defined(_WIN32)
+#include "ZQ_CNN_CompileConfig.h"
+#endif
+
+
 #include <stdio.h>
 #include <time.h>
-#define ZQ_CNN_SSETYPE_SSE 1
-#define ZQ_CNN_SSETYPE_AVX 2
-#define ZQ_CNN_SSETYPE_AVX2 3
+
+#if !__ARM_NEON
 
 #if defined(_WIN32)
 #include <intrin.h>//(include immintrin.h)
-#define ZQ_CNN_USE_SSETYPE ZQ_CNN_SSETYPE_AVX2
 #if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_SSE
 #include <mmintrin.h> //MMX  
 #include <xmmintrin.h> //SSE(include mmintrin.h)  
@@ -22,7 +25,6 @@
 #include <intrin.h>//(include immintrin.h)  
 #endif
 #else
-#define ZQ_CNN_USE_SSETYPE ZQ_CNN_SSETYPE_AVX
 #include <x86intrin.h>
 #endif
 
@@ -51,6 +53,21 @@
 #define num_per_op 4
 #endif
 
+#else
+#include <arm_neon.h>
+#define final_sum(q) (q[0]+q[1]+q[2]+q[3])
+#define zq_mm_store_ps vst1q_f32
+#define zq_mm_add_ps vaddq_f32
+#if ZQ_CNN_USE_FMADD128
+#define zq_mm_fmadd_ps(A, B, C) vfmaq_f32(C, A, B)
+#else
+#define zq_mm_fmadd_ps(A, B, C) vaddq_f32(vmulq_f32(A, B), C)
+#endif
+#define zq_mm_mul_ps vmulq_f32
+#define zq_mm_setzero_ps() vdupq_n_f32(0)
+#define zq_mm_set1_ps vdupq_n_f32
+#endif
+
 void example_for_very_high_gflops();
 
 int main()
@@ -63,7 +80,11 @@ int main()
 
 void example_for_very_high_gflops()
 {
+#if __ARM_NEON
+	int nIters = 5;
+#else
 	int nIters = 50;
+#endif
 	register zq_mm_type a1 = zq_mm_set1_ps(1), a2 = zq_mm_set1_ps(1), a3 = zq_mm_set1_ps(1), a4 = zq_mm_set1_ps(1);
 	register zq_mm_type a5 = zq_mm_set1_ps(1), a6 = zq_mm_set1_ps(1), a7 = zq_mm_set1_ps(1), a8 = zq_mm_set1_ps(1);
 	register zq_mm_type b1 = zq_mm_set1_ps(1), b2 = zq_mm_set1_ps(1), b3 = zq_mm_set1_ps(1), b4 = zq_mm_set1_ps(1);
@@ -89,7 +110,7 @@ void example_for_very_high_gflops()
 #if defined(_WIN32)
 	_declspec(align(32)) float q[8];
 #else
-	__attribute__((aligned(32))) float q[8];
+	ZQ_DECLSPEC_ALIGN32 float q[8];
 #endif
 	const int M = 10000, N = 64 * 1000;
 	clock_t t1 = clock();
@@ -203,3 +224,4 @@ void example_for_very_high_gflops()
 	zq_mm_store_ps(q, sumb);
 	printf("%e %e %e %e %e %e %e %e\n", q[0], q[1], q[2], q[3], q[4], q[5], q[6], q[7]);
 }
+
