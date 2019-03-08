@@ -83,7 +83,7 @@ int main()
 void example_for_very_high_gflops()
 {
 #if __ARM_NEON
-	int nIters = 5;
+	int nIters = 20;
 #else
 	int nIters = 50;
 #endif
