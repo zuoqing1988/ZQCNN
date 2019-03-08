@@ -537,7 +537,7 @@ int main(int argc, const char** argv)
 	{
 		cpu_set_t mask;
 		CPU_ZERO(&mask);
-		CPU_SET(atoi(argv[0]), &mask);
+		CPU_SET(atoi(argv[1]), &mask);
 		if (sched_setaffinity(0, sizeof(mask), &mask) < 0) {
 			perror("sched_setaffinity");
 		}
