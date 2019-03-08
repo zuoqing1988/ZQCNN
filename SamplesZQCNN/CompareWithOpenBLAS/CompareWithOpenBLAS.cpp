@@ -529,9 +529,17 @@ int main()
 #include "ZQ_CNN_CompileConfig.h"
 #if ZQ_CNN_USE_BLAS_GEMM
 #include <openblas/cblas.h>
+#include <sched.h>
 
 int main()
 {
+	cpu_set_t mask;
+	CPU_ZERO(&mask);
+	CPU_SET(0, &mask);
+	if (sched_setaffinity(0, sizeof(mask), &mask) < 0) {
+		perror("sched_setaffinity");
+	}
+
 	int num_threads = 1;
 #if ZQ_CNN_USE_BLAS_GEMM
 	openblas_set_num_threads(num_threads);
