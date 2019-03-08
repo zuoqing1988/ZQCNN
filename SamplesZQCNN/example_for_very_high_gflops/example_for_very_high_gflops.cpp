@@ -66,6 +66,8 @@
 #define zq_mm_mul_ps vmulq_f32
 #define zq_mm_setzero_ps() vdupq_n_f32(0)
 #define zq_mm_set1_ps vdupq_n_f32
+#define zq_mm_type float32x4_t
+#define num_per_op 4
 #endif
 
 void example_for_very_high_gflops();
