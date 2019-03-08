@@ -3,6 +3,7 @@
 #include <omp.h>
 #include <stdio.h>
 #include <float.h>
+#include <math.h>
 #include "math/zq_gemm_32f_align_c.h"
 #include "ZQ_CNN_Tensor4D.h"
 #include "ZQ_CNN_CompileConfig.h"
