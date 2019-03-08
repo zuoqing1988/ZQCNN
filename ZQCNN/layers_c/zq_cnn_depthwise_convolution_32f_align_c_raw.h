@@ -1,31 +1,3 @@
-#if __ARM_NEON
-
-#define op_0_4 \
-	a0 = zq_mm_load_ps(cur_in_c_ptr);\
-	b0 = zq_mm_load_ps(cur_filter_c_ptr);\
-	c0 = zq_mm_load_ps(out_c_ptr);\
-	a1 = zq_mm_load_ps(cur_in_c_ptr+zq_mm_align_size);\
-	b1 = zq_mm_load_ps(cur_filter_c_ptr+zq_mm_align_size);\
-	c1 = zq_mm_load_ps(out_c_ptr+zq_mm_align_size);\
-	d0 = zq_mm_fmadd_ps(a0,b0,c0);\
-	d1 = zq_mm_fmadd_ps(a1,b1,c1);\
-	zq_mm_store_ps(out_c_ptr, d0);\
-	zq_mm_store_ps(out_c_ptr+zq_mm_align_size, d1);\
-	a2 = zq_mm_load_ps(cur_in_c_ptr + zq_mm_align_size_mul_2); \
-	b2 = zq_mm_load_ps(cur_filter_c_ptr + zq_mm_align_size_mul_2); \
-	c2 = zq_mm_load_ps(out_c_ptr + zq_mm_align_size_mul_2); \
-	a3 = zq_mm_load_ps(cur_in_c_ptr + zq_mm_align_size_mul_3); \
-	b3 = zq_mm_load_ps(cur_filter_c_ptr + zq_mm_align_size_mul_3); \
-	c3 = zq_mm_load_ps(out_c_ptr + zq_mm_align_size_mul_3); \
-	d2 = zq_mm_fmadd_ps(a2,b2,c2);\
-	d3 = zq_mm_fmadd_ps(a3,b3,c3);\
-	zq_mm_store_ps(out_c_ptr+zq_mm_align_size_mul_2, d2);\
-	zq_mm_store_ps(out_c_ptr+zq_mm_align_size_mul_3, d3);\
-	cur_in_c_ptr += zq_mm_align_size_mul_4;\
-	cur_filter_c_ptr += zq_mm_align_size_mul_4;\
-	out_c_ptr += zq_mm_align_size_mul_4
-
-#else
 
 #define op_0_4 \
 	a0 = zq_mm_load_ps(cur_in_c_ptr);\
@@ -51,8 +23,6 @@
 	cur_in_c_ptr += zq_mm_align_size_mul_4;\
 	cur_filter_c_ptr += zq_mm_align_size_mul_4;\
 	out_c_ptr += zq_mm_align_size_mul_4
-
-#endif
 
 
 #define op_0_4_first \
