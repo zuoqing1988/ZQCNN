@@ -126,6 +126,27 @@ namespace ZQ
 			return sum;
 		}
 
+		__int64 GetNumOfMulAddConv() const
+		{
+			__int64 sum = 0;
+			for (int i = 0; i < layers.size(); i++)
+			{
+				if(_strcmpi(layer_type_names[i].c_str(),"Convolution") == 0)
+					sum += layers[i]->GetNumOfMulAdd();
+			}
+			return sum;
+		}
+		__int64 GetNumOfMulAddDwConv() const
+		{
+			__int64 sum = 0;
+			for (int i = 0; i < layers.size(); i++)
+			{
+				if (_strcmpi(layer_type_names[i].c_str(), "DepthwiseConvolution") == 0)
+					sum += layers[i]->GetNumOfMulAdd();
+			}
+			return sum;
+		}
+
 		/*it may change input in case of padding, but the data will not be lost*/
 		bool Forward(ZQ_CNN_Tensor4D& input)
 		{

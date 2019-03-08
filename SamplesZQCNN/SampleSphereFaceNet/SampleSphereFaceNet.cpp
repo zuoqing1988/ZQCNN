@@ -24,7 +24,7 @@ int main()
 	int num_threads = 1;
 
 #if ZQ_CNN_USE_BLAS_GEMM
-	printf("set openblas thread_num = 1\n");
+	printf("set openblas thread_num = %d\n",num_threads);
 	openblas_set_num_threads(num_threads);
 #elif ZQ_CNN_USE_MKL_GEMM
 	mkl_set_num_threads(num_threads);
@@ -141,7 +141,10 @@ int main()
 		input0.ConvertFromBGR(image0.data, image0.cols, image0.rows, image0.step[0]);
 		input1.ConvertFromBGR(image1.data, image1.cols, image1.rows, image1.step[0]);
 
-		printf("num_MulAdd: %.3f M\n", net.GetNumOfMulAdd() / (1024.0*1024.0));
+		printf("num_MulAdd: %.3f M, (conv: %.3f M, dwconv: %.3f M)\n", 
+			net.GetNumOfMulAdd() / (1024.0*1024.0),
+			net.GetNumOfMulAddConv() / (1024.0*1024.0),
+			net.GetNumOfMulAddDwConv() / (1024.0*1024.0));
 		int iters = 100;
 		double t1 = omp_get_wtime();
 		for (int it = 0; it < iters; it++)
