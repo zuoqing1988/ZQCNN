@@ -4,6 +4,7 @@
 
 
 #include <stdio.h>
+#include <malloc.h>
 #include <time.h>
 
 #if !__ARM_NEON
@@ -41,6 +42,7 @@
 #define zq_mm_setzero_ps _mm256_setzero_ps
 #define zq_mm_add_ps _mm256_add_ps
 #define zq_mm_store_ps _mm256_store_ps
+#define zq_mm_load_ps _mm256_load_ps
 #define zq_mm_type __m256
 #define num_per_op 8
 #else
@@ -49,6 +51,7 @@
 #define zq_mm_setzero_ps _mm_setzero_ps
 #define zq_mm_add_ps _mm_add_ps
 #define zq_mm_store_ps _mm_store_ps
+#define zq_mm_load_ps _mm_load_ps
 #define zq_mm_type __m128
 #define num_per_op 4
 #endif
@@ -57,6 +60,7 @@
 #include <arm_neon.h>
 #define final_sum(q) (q[0]+q[1]+q[2]+q[3])
 #define zq_mm_store_ps vst1q_f32
+#define zq_mm_load_ps vld1q_f32
 #define zq_mm_add_ps vaddq_f32
 #if ZQ_CNN_USE_FMADD128
 #define zq_mm_fmadd_ps(A, B, C) vfmaq_f32(C, A, B)
@@ -71,12 +75,16 @@
 #endif
 
 void example_for_very_high_gflops();
+void test_memcpy();
 
 int main()
 {
 	example_for_very_high_gflops();
 	example_for_very_high_gflops();
 	example_for_very_high_gflops();
+	test_memcpy();
+	test_memcpy();
+	test_memcpy();
 	return 0;
 }
 
@@ -227,3 +235,40 @@ void example_for_very_high_gflops()
 	printf("%e %e %e %e %e %e %e %e\n", q[0], q[1], q[2], q[3], q[4], q[5], q[6], q[7]);
 }
 
+void test_memcpy()
+{
+#if __ARM_NEON
+	int nIters = 5;
+#else
+	int nIters = 50;
+#endif
+	clock_t t1, t2;
+	register zq_mm_type vec;
+	int M = 1000, N = 1024*1024*num_per_op;
+	float* src = (float*)_aligned_malloc(N*sizeof(float),32);
+	float* dst = (float*)_aligned_malloc(N*sizeof(float),32);
+	for(int i = 0;i < N;i++)
+		src[i] = i;
+	for(int i = 0;i < nIters;i++)
+	{
+		t1 = clock();
+		for(int j = 0;j < M;j++)
+		{
+			for(int k = 0;k < N;k+=num_per_op)
+			{
+				vec = zq_mm_load_ps(src+k);
+				zq_mm_store_ps(dst+k,vec);
+			}
+		}
+		t2 = clock();
+#if defined(_WIN32)
+		double time = (t2-t1)*0.001;
+#else
+		double time = (t2-t1)*0.000001;
+#endif
+		double gflops = (double)M*N/(1024.0*1024.0*1024.0)/time;
+		printf("time=%.3f s, gflops=%.3f\n",time,gflops);
+	}
+	_aligned_free(src);
+	_aligned_free(dst);
+}
