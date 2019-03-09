@@ -237,11 +237,7 @@ void example_for_very_high_gflops()
 
 void test_memcpy()
 {
-#if __ARM_NEON
 	int nIters = 5;
-#else
-	int nIters = 50;
-#endif
 	clock_t t1, t2;
 	register zq_mm_type vec;
 	int M = 1000, N = 1024*1024*num_per_op;
