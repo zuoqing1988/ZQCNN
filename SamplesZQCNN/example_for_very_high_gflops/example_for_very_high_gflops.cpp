@@ -88,14 +88,20 @@
 
 void example_for_very_high_gflops();
 void test_memcpy(int type,bool in_cache);
-void test_4x4x4_in_cache();
-void test_4x4x8_in_cache();
-void test_4x4x16_in_cache();
+void test_4x4x4_in_cache(int iter);
+void test_4x4x8_in_cache(int iter);
+void test_4x4x16_in_cache(int iter);
 int main()
 {
-	test_4x4x4_in_cache();
-	test_4x4x8_in_cache();
-	test_4x4x16_in_cache();
+	test_4x4x4_in_cache(1);
+	test_4x4x4_in_cache(2);
+	test_4x4x4_in_cache(3);
+	test_4x4x8_in_cache(1);
+	test_4x4x8_in_cache(2);
+	test_4x4x8_in_cache(3);
+	test_4x4x16_in_cache(1);
+	test_4x4x16_in_cache(2);
+	test_4x4x16_in_cache(3);
 	example_for_very_high_gflops();
 	example_for_very_high_gflops();
 	example_for_very_high_gflops();
@@ -375,7 +381,7 @@ void test_memcpy(int type, bool in_cache)
 	_aligned_free(dst);
 }
 
-void test_4x4x4_in_cache()
+void test_4x4x4_in_cache(int iter)
 {
 	float* A = (float*)_aligned_malloc(4 * 4 * num_per_op * sizeof(float), num_per_op * 4);
 	float* B = (float*)_aligned_malloc(4 * 4 * num_per_op * sizeof(float), num_per_op * 4);
@@ -394,7 +400,7 @@ void test_4x4x4_in_cache()
 	register zq_mm_type a0, a1, a2, a3, b0, b1, b2, b3;
 	register zq_mm_type c00, c01, c02, c03, c10, c11, c12, c13, c20, c21, c22, c23, c30, c31, c32, c33;
 	int nIters = 5;
-	int M = 10 * 1024 * 1024;
+	int M = 10 * 1024 * 1024*iter;
 	printf("test 4x4x%d\n", num_per_op * 4);
 	for(int i = 0;i < nIters;i++)
 	{ 
@@ -548,7 +554,7 @@ void test_4x4x4_in_cache()
 	free(C);
 }
 
-void test_4x4x8_in_cache()
+void test_4x4x8_in_cache(int iter)
 {
 	float* A = (float*)_aligned_malloc(4 * 8 * num_per_op * sizeof(float), num_per_op * 8);
 	float* B = (float*)_aligned_malloc(4 * 8 * num_per_op * sizeof(float), num_per_op * 8);
@@ -567,7 +573,7 @@ void test_4x4x8_in_cache()
 	register zq_mm_type a0, a1, a2, a3, b0, b1, b2, b3;
 	register zq_mm_type c00, c01, c02, c03, c10, c11, c12, c13, c20, c21, c22, c23, c30, c31, c32, c33;
 	int nIters = 5;
-	int M = 2 * 1024 * 1024;
+	int M = 5 * 1024 * 1024*iter;
 	printf("test 4x4x%d\n", num_per_op * 8);
 	for (int i = 0; i < nIters; i++)
 	{
@@ -817,7 +823,7 @@ void test_4x4x8_in_cache()
 	free(C);
 }
 
-void test_4x4x16_in_cache()
+void test_4x4x16_in_cache(int iter)
 {
 	float* A = (float*)_aligned_malloc(4 * 16 * num_per_op * sizeof(float), num_per_op * 16);
 	float* B = (float*)_aligned_malloc(4 * 16 * num_per_op * sizeof(float), num_per_op * 16);
@@ -836,7 +842,7 @@ void test_4x4x16_in_cache()
 	register zq_mm_type a0, a1, a2, a3, b0, b1, b2, b3;
 	register zq_mm_type c00, c01, c02, c03, c10, c11, c12, c13, c20, c21, c22, c23, c30, c31, c32, c33;
 	int nIters = 5;
-	int M = 2 * 1024 * 1024;
+	int M = 3 * 1024 * 1024*iter;
 	printf("test 4x4x%d\n", num_per_op * 16);
 	for (int i = 0; i < nIters; i++)
 	{
