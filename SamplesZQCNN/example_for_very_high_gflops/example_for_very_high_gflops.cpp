@@ -394,6 +394,7 @@ void test_4x4x4_in_cache()
 	register zq_mm_type c00, c01, c02, c03, c10, c11, c12, c13, c20, c21, c22, c23, c30, c31, c32, c33;
 	int nIters = 5;
 	int M = 10 * 1024 * 1024;
+	float total_sum_C0 = 0;
 	printf("test 4x4x%d\n", num_per_op * 4);
 	for(int i = 0;i < nIters;i++)
 	{ 
@@ -528,6 +529,7 @@ void test_4x4x4_in_cache()
 			C[14] = final_sum(q);
 			zq_mm_store_ps(q, c33);
 			C[15] = final_sum(q);
+			total_sum_C0 += C[0];
 		}
 		clock_t t2 = clock();
 #if defined(_WIN32)
@@ -537,6 +539,7 @@ void test_4x4x4_in_cache()
 #endif
 		double gflops = 4.0*4.0*4.0*num_per_op*M / (1024.0*1024.0*1024.0)/time;
 		printf("time = %.3f s, gflops = %.3f\n", time, gflops);
+		printf("%e\n", total_sum_C0);
 	}
 	_aligned_free(A);
 	_aligned_free(B);
@@ -563,6 +566,7 @@ void test_4x4x8_in_cache()
 	register zq_mm_type c00, c01, c02, c03, c10, c11, c12, c13, c20, c21, c22, c23, c30, c31, c32, c33;
 	int nIters = 5;
 	int M = 2 * 1024 * 1024;
+	float total_sum_C0 = 0;
 	printf("test 4x4x%d\n", num_per_op * 8);
 	for (int i = 0; i < nIters; i++)
 	{
@@ -793,6 +797,7 @@ void test_4x4x8_in_cache()
 			C[14] = final_sum(q);
 			zq_mm_store_ps(q, c33);
 			C[15] = final_sum(q);
+			total_sum_C0 += C[0];
 		}
 		clock_t t2 = clock();
 #if defined(_WIN32)
@@ -802,6 +807,7 @@ void test_4x4x8_in_cache()
 #endif
 		double gflops = 4.0*4.0*8.0*num_per_op*M / (1024.0*1024.0*1024.0) / time;
 		printf("time = %.3f s, gflops = %.3f\n", time, gflops);
+		printf("%e\n", total_sum_C0);
 	}
 	_aligned_free(A);
 	_aligned_free(B);
@@ -828,6 +834,7 @@ void test_4x4x16_in_cache()
 	register zq_mm_type c00, c01, c02, c03, c10, c11, c12, c13, c20, c21, c22, c23, c30, c31, c32, c33;
 	int nIters = 5;
 	int M = 2 * 1024 * 1024;
+	float total_sum_C0 = 0;
 	printf("test 4x4x%d\n", num_per_op * 16);
 	for (int i = 0; i < nIters; i++)
 	{
@@ -1250,6 +1257,7 @@ void test_4x4x16_in_cache()
 			C[14] = final_sum(q);
 			zq_mm_store_ps(q, c33);
 			C[15] = final_sum(q);
+			total_sum_C0 += C[0];
 		}
 		clock_t t2 = clock();
 #if defined(_WIN32)
@@ -1259,6 +1267,7 @@ void test_4x4x16_in_cache()
 #endif
 		double gflops = 4.0*4.0*16.0*num_per_op*M / (1024.0*1024.0*1024.0)/time;
 		printf("time = %.3f s, gflops = %.3f\n", time, gflops);
+		printf("%e\n", total_sum_C0);
 	}
 	_aligned_free(A);
 	_aligned_free(B);
