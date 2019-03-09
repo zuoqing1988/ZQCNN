@@ -75,16 +75,16 @@
 #endif
 
 void example_for_very_high_gflops();
-void test_memcpy();
+void test_memcpy(int type);
 
 int main()
 {
 	example_for_very_high_gflops();
 	example_for_very_high_gflops();
 	example_for_very_high_gflops();
-	test_memcpy();
-	test_memcpy();
-	test_memcpy();
+	test_memcpy(0);
+	test_memcpy(1);
+	test_memcpy(2);
 	return 0;
 }
 
@@ -235,7 +235,7 @@ void example_for_very_high_gflops()
 	printf("%e %e %e %e %e %e %e %e\n", q[0], q[1], q[2], q[3], q[4], q[5], q[6], q[7]);
 }
 
-void test_memcpy()
+void test_memcpy(int type)
 {
 	int nIters = 5;
 	clock_t t1, t2;
@@ -245,25 +245,77 @@ void test_memcpy()
 	float* dst = (float*)_aligned_malloc(N*sizeof(float),32);
 	for(int i = 0;i < N;i++)
 		src[i] = i;
-	for(int i = 0;i < nIters;i++)
+	if (type == 0)
 	{
-		t1 = clock();
-		for(int j = 0;j < M;j++)
+		printf("test load & store\n");
+		for (int i = 0; i < nIters; i++)
 		{
-			for(int k = 0;k < N;k+=num_per_op)
+			t1 = clock();
+			for (int j = 0; j < M; j++)
 			{
-				vec = zq_mm_load_ps(src+k);
-				zq_mm_store_ps(dst+k,vec);
+				for (int k = 0; k < N; k += num_per_op)
+				{
+					vec = zq_mm_load_ps(src + k);
+					zq_mm_store_ps(dst+k, vec);
+				}
 			}
-		}
-		t2 = clock();
+			t2 = clock();
 #if defined(_WIN32)
-		double time = (t2-t1)*0.001;
+			double time = (t2 - t1)*0.001;
 #else
-		double time = (t2-t1)*0.000001;
+			double time = (t2 - t1)*0.000001;
 #endif
-		double gflops = (double)M*N/(1024.0*1024.0*1024.0)/time;
-		printf("time=%.3f s, gflops=%.3f\n",time,gflops);
+			double gflops = (double)M*N / (1024.0*1024.0*1024.0) / time;
+			printf("time=%.3f s, gflops=%.3f\n", time, gflops);
+		}
+	}
+	else if (type == 1)
+	{
+		printf("test only load (store to same addr)\n");
+		for (int i = 0; i < nIters; i++)
+		{
+			t1 = clock();
+			for (int j = 0; j < M; j++)
+			{
+				for (int k = 0; k < N; k += num_per_op)
+				{
+					vec = zq_mm_load_ps(src + k);
+					zq_mm_store_ps(dst, vec);
+				}
+			}
+			t2 = clock();
+#if defined(_WIN32)
+			double time = (t2 - t1)*0.001;
+#else
+			double time = (t2 - t1)*0.000001;
+#endif
+			double gflops = (double)M*N / (1024.0*1024.0*1024.0) / time;
+			printf("time=%.3f s, gflops=%.3f\n", time, gflops);
+		}
+	}
+	else
+	{
+		printf("test only store (load from same addr)\n");
+		for (int i = 0; i < nIters; i++)
+		{
+			t1 = clock();
+			for (int j = 0; j < M; j++)
+			{
+				for (int k = 0; k < N; k += num_per_op)
+				{
+					vec = zq_mm_load_ps(src);
+					zq_mm_store_ps(dst+k, vec);
+				}
+			}
+			t2 = clock();
+#if defined(_WIN32)
+			double time = (t2 - t1)*0.001;
+#else
+			double time = (t2 - t1)*0.000001;
+#endif
+			double gflops = (double)M*N / (1024.0*1024.0*1024.0) / time;
+			printf("time=%.3f s, gflops=%.3f\n", time, gflops);
+		}
 	}
 	_aligned_free(src);
 	_aligned_free(dst);
