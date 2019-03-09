@@ -5,6 +5,7 @@
 
 #include <stdio.h>
 #include <malloc.h>
+#include <string.h>
 #include <time.h>
 
 #if !__ARM_NEON
@@ -383,8 +384,9 @@ void test_4x4x4_in_cache()
 	for (i = 0; i < 4 * 4 * num_per_op; i++)
 	{
 		A[i] = i;
-		B[i] = i;
+		B[i] = 1;
 	}
+	memset(C, 0, sizeof(float) * 16);
 #if defined(_WIN32)
 	_declspec(align(32)) float q[8];
 #else
@@ -394,7 +396,6 @@ void test_4x4x4_in_cache()
 	register zq_mm_type c00, c01, c02, c03, c10, c11, c12, c13, c20, c21, c22, c23, c30, c31, c32, c33;
 	int nIters = 5;
 	int M = 10 * 1024 * 1024;
-	float total_sum_C0 = 0;
 	printf("test 4x4x%d\n", num_per_op * 4);
 	for(int i = 0;i < nIters;i++)
 	{ 
@@ -498,38 +499,37 @@ void test_4x4x4_in_cache()
 			c32 = zq_mm_fmadd_ps(a3, b2, c32);
 			c33 = zq_mm_fmadd_ps(a3, b3, c33);
 			zq_mm_store_ps(q, c00);
-			C[0] = final_sum(q);
+			C[0] += final_sum(q);
 			zq_mm_store_ps(q, c01);
-			C[1] = final_sum(q);
+			C[1] += final_sum(q);
 			zq_mm_store_ps(q, c02);
-			C[2] = final_sum(q);
+			C[2] += final_sum(q);
 			zq_mm_store_ps(q, c03);
-			C[3] = final_sum(q);
+			C[3] += final_sum(q);
 			zq_mm_store_ps(q, c10);
-			C[4] = final_sum(q);
+			C[4] += final_sum(q);
 			zq_mm_store_ps(q, c11);
-			C[5] = final_sum(q);
+			C[5] += final_sum(q);
 			zq_mm_store_ps(q, c12);
-			C[6] = final_sum(q);
+			C[6] += final_sum(q);
 			zq_mm_store_ps(q, c13);
-			C[7] = final_sum(q);
+			C[7] += final_sum(q);
 			zq_mm_store_ps(q, c20);
-			C[8] = final_sum(q);
+			C[8] += final_sum(q);
 			zq_mm_store_ps(q, c21);
-			C[9] = final_sum(q);
+			C[9] += final_sum(q);
 			zq_mm_store_ps(q, c22);
-			C[10] = final_sum(q);
+			C[10] += final_sum(q);
 			zq_mm_store_ps(q, c23);
-			C[11] = final_sum(q);
+			C[11] += final_sum(q);
 			zq_mm_store_ps(q, c30);
-			C[12] = final_sum(q);
+			C[12] += final_sum(q);
 			zq_mm_store_ps(q, c31);
-			C[13] = final_sum(q);
+			C[13] += final_sum(q);
 			zq_mm_store_ps(q, c32);
-			C[14] = final_sum(q);
+			C[14] += final_sum(q);
 			zq_mm_store_ps(q, c33);
-			C[15] = final_sum(q);
-			total_sum_C0 += C[0];
+			C[15] += final_sum(q);
 		}
 		clock_t t2 = clock();
 #if defined(_WIN32)
@@ -539,7 +539,9 @@ void test_4x4x4_in_cache()
 #endif
 		double gflops = 4.0*4.0*4.0*num_per_op*M / (1024.0*1024.0*1024.0)/time;
 		printf("time = %.3f s, gflops = %.3f\n", time, gflops);
-		printf("%e\n", total_sum_C0);
+		for (k = 0; k < 1; k++)
+			printf("%.1e ", C[k]);
+		printf("\n");
 	}
 	_aligned_free(A);
 	_aligned_free(B);
@@ -555,8 +557,9 @@ void test_4x4x8_in_cache()
 	for (i = 0; i < 4 * 8 * num_per_op; i++)
 	{
 		A[i] = i;
-		B[i] = i;
+		B[i] = 1;
 	}
+	memset(C, 0, sizeof(float) * 16);
 #if defined(_WIN32)
 	_declspec(align(32)) float q[8];
 #else
@@ -566,7 +569,6 @@ void test_4x4x8_in_cache()
 	register zq_mm_type c00, c01, c02, c03, c10, c11, c12, c13, c20, c21, c22, c23, c30, c31, c32, c33;
 	int nIters = 5;
 	int M = 2 * 1024 * 1024;
-	float total_sum_C0 = 0;
 	printf("test 4x4x%d\n", num_per_op * 8);
 	for (int i = 0; i < nIters; i++)
 	{
@@ -766,38 +768,37 @@ void test_4x4x8_in_cache()
 			c32 = zq_mm_fmadd_ps(a3, b2, c32);
 			c33 = zq_mm_fmadd_ps(a3, b3, c33);
 			zq_mm_store_ps(q, c00);
-			C[0] = final_sum(q);
+			C[0] += final_sum(q);
 			zq_mm_store_ps(q, c01);
-			C[1] = final_sum(q);
+			C[1] += final_sum(q);
 			zq_mm_store_ps(q, c02);
-			C[2] = final_sum(q);
+			C[2] += final_sum(q);
 			zq_mm_store_ps(q, c03);
-			C[3] = final_sum(q);
+			C[3] += final_sum(q);
 			zq_mm_store_ps(q, c10);
-			C[4] = final_sum(q);
+			C[4] += final_sum(q);
 			zq_mm_store_ps(q, c11);
-			C[5] = final_sum(q);
+			C[5] += final_sum(q);
 			zq_mm_store_ps(q, c12);
-			C[6] = final_sum(q);
+			C[6] += final_sum(q);
 			zq_mm_store_ps(q, c13);
-			C[7] = final_sum(q);
+			C[7] += final_sum(q);
 			zq_mm_store_ps(q, c20);
-			C[8] = final_sum(q);
+			C[8] += final_sum(q);
 			zq_mm_store_ps(q, c21);
-			C[9] = final_sum(q);
+			C[9] += final_sum(q);
 			zq_mm_store_ps(q, c22);
-			C[10] = final_sum(q);
+			C[10] += final_sum(q);
 			zq_mm_store_ps(q, c23);
-			C[11] = final_sum(q);
+			C[11] += final_sum(q);
 			zq_mm_store_ps(q, c30);
-			C[12] = final_sum(q);
+			C[12] += final_sum(q);
 			zq_mm_store_ps(q, c31);
-			C[13] = final_sum(q);
+			C[13] += final_sum(q);
 			zq_mm_store_ps(q, c32);
-			C[14] = final_sum(q);
+			C[14] += final_sum(q);
 			zq_mm_store_ps(q, c33);
-			C[15] = final_sum(q);
-			total_sum_C0 += C[0];
+			C[15] += final_sum(q);
 		}
 		clock_t t2 = clock();
 #if defined(_WIN32)
@@ -807,7 +808,9 @@ void test_4x4x8_in_cache()
 #endif
 		double gflops = 4.0*4.0*8.0*num_per_op*M / (1024.0*1024.0*1024.0) / time;
 		printf("time = %.3f s, gflops = %.3f\n", time, gflops);
-		printf("%e\n", total_sum_C0);
+		for (k = 0; k < 1; k++)
+			printf("%.1e ", C[k]);
+		printf("\n");
 	}
 	_aligned_free(A);
 	_aligned_free(B);
@@ -823,8 +826,9 @@ void test_4x4x16_in_cache()
 	for (i = 0; i < 4 * 16 * num_per_op; i++)
 	{
 		A[i] = i;
-		B[i] = i;
+		B[i] = 1;
 	}
+	memset(C, 0, sizeof(float) * 16);
 #if defined(_WIN32)
 	_declspec(align(32)) float q[8];
 #else
@@ -834,7 +838,6 @@ void test_4x4x16_in_cache()
 	register zq_mm_type c00, c01, c02, c03, c10, c11, c12, c13, c20, c21, c22, c23, c30, c31, c32, c33;
 	int nIters = 5;
 	int M = 2 * 1024 * 1024;
-	float total_sum_C0 = 0;
 	printf("test 4x4x%d\n", num_per_op * 16);
 	for (int i = 0; i < nIters; i++)
 	{
@@ -1226,38 +1229,37 @@ void test_4x4x16_in_cache()
 			c32 = zq_mm_fmadd_ps(a3, b2, c32);
 			c33 = zq_mm_fmadd_ps(a3, b3, c33);
 			zq_mm_store_ps(q, c00);
-			C[0] = final_sum(q);
+			C[0] += final_sum(q);
 			zq_mm_store_ps(q, c01);
-			C[1] = final_sum(q);
+			C[1] += final_sum(q);
 			zq_mm_store_ps(q, c02);
-			C[2] = final_sum(q);
+			C[2] += final_sum(q);
 			zq_mm_store_ps(q, c03);
-			C[3] = final_sum(q);
+			C[3] += final_sum(q);
 			zq_mm_store_ps(q, c10);
-			C[4] = final_sum(q);
+			C[4] += final_sum(q);
 			zq_mm_store_ps(q, c11);
-			C[5] = final_sum(q);
+			C[5] += final_sum(q);
 			zq_mm_store_ps(q, c12);
-			C[6] = final_sum(q);
+			C[6] += final_sum(q);
 			zq_mm_store_ps(q, c13);
-			C[7] = final_sum(q);
+			C[7] += final_sum(q);
 			zq_mm_store_ps(q, c20);
-			C[8] = final_sum(q);
+			C[8] += final_sum(q);
 			zq_mm_store_ps(q, c21);
-			C[9] = final_sum(q);
+			C[9] += final_sum(q);
 			zq_mm_store_ps(q, c22);
-			C[10] = final_sum(q);
+			C[10] += final_sum(q);
 			zq_mm_store_ps(q, c23);
-			C[11] = final_sum(q);
+			C[11] += final_sum(q);
 			zq_mm_store_ps(q, c30);
-			C[12] = final_sum(q);
+			C[12] += final_sum(q);
 			zq_mm_store_ps(q, c31);
-			C[13] = final_sum(q);
+			C[13] += final_sum(q);
 			zq_mm_store_ps(q, c32);
-			C[14] = final_sum(q);
+			C[14] += final_sum(q);
 			zq_mm_store_ps(q, c33);
-			C[15] = final_sum(q);
-			total_sum_C0 += C[0];
+			C[15] += final_sum(q);
 		}
 		clock_t t2 = clock();
 #if defined(_WIN32)
@@ -1267,7 +1269,9 @@ void test_4x4x16_in_cache()
 #endif
 		double gflops = 4.0*4.0*16.0*num_per_op*M / (1024.0*1024.0*1024.0)/time;
 		printf("time = %.3f s, gflops = %.3f\n", time, gflops);
-		printf("%e\n", total_sum_C0);
+		for (k = 0; k < 1; k++)
+			printf("%.1e ", C[k]);
+		printf("\n");
 	}
 	_aligned_free(A);
 	_aligned_free(B);
