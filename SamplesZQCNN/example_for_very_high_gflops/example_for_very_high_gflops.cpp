@@ -45,6 +45,9 @@
 #define zq_mm_load_ps _mm256_load_ps
 #define zq_mm_type __m256
 #define num_per_op 8
+#define num_per_op2 16
+#define num_per_op3 24
+#define num_per_op4 32
 #else
 #define final_sum(q) (q[0]+q[1]+q[2]+q[3])
 #define zq_mm_set1_ps _mm_set1_ps
@@ -54,6 +57,9 @@
 #define zq_mm_load_ps _mm_load_ps
 #define zq_mm_type __m128
 #define num_per_op 4
+#define num_per_op2 8
+#define num_per_op3 12
+#define num_per_op4 16
 #endif
 
 #else
@@ -72,19 +78,25 @@
 #define zq_mm_set1_ps vdupq_n_f32
 #define zq_mm_type float32x4_t
 #define num_per_op 4
+#define num_per_op2 8
+#define num_per_op3 12
+#define num_per_op4 16
 #endif
 
 void example_for_very_high_gflops();
-void test_memcpy(int type);
+void test_memcpy(int type,bool in_cache);
 
 int main()
 {
 	example_for_very_high_gflops();
 	example_for_very_high_gflops();
 	example_for_very_high_gflops();
-	test_memcpy(0);
-	test_memcpy(1);
-	test_memcpy(2);
+	test_memcpy(0, false);
+	test_memcpy(1, false);
+	test_memcpy(2, false);
+	test_memcpy(0, true);
+	test_memcpy(1, true);
+	test_memcpy(2, true);
 	return 0;
 }
 
@@ -235,28 +247,44 @@ void example_for_very_high_gflops()
 	printf("%e %e %e %e %e %e %e %e\n", q[0], q[1], q[2], q[3], q[4], q[5], q[6], q[7]);
 }
 
-void test_memcpy(int type)
+void test_memcpy(int type, bool in_cache)
 {
 	int nIters = 5;
 	clock_t t1, t2;
-	register zq_mm_type vec;
+	register zq_mm_type vec0,vec1,vec2,vec3;
 	int M = 1000, N = 1024*1024*num_per_op;
+	if (in_cache)
+	{
+		M *= 1024*128;
+		N /= 1024*128;
+	}
 	float* src = (float*)_aligned_malloc(N*sizeof(float),32);
 	float* dst = (float*)_aligned_malloc(N*sizeof(float),32);
+	float* cur_src_ptr, *cur_dst_ptr;
 	for(int i = 0;i < N;i++)
 		src[i] = i;
 	if (type == 0)
 	{
-		printf("test load & store\n");
+		printf("test load & store %s\n", in_cache ? "in cache":"not in cache");
 		for (int i = 0; i < nIters; i++)
 		{
 			t1 = clock();
 			for (int j = 0; j < M; j++)
 			{
-				for (int k = 0; k < N; k += num_per_op)
+				cur_src_ptr = src;
+				cur_dst_ptr = dst;
+				for (int k = 0; k < N; k += num_per_op4)
 				{
-					vec = zq_mm_load_ps(src + k);
-					zq_mm_store_ps(dst+k, vec);
+					vec0 = zq_mm_load_ps(cur_src_ptr);
+					zq_mm_store_ps(cur_dst_ptr, vec0);
+					vec1 = zq_mm_load_ps(cur_src_ptr + num_per_op);
+					zq_mm_store_ps(cur_dst_ptr + num_per_op, vec1);
+					vec2 = zq_mm_load_ps(cur_src_ptr + num_per_op2);
+					zq_mm_store_ps(cur_dst_ptr + num_per_op2, vec2);
+					vec3 = zq_mm_load_ps(cur_src_ptr + num_per_op3);
+					zq_mm_store_ps(cur_dst_ptr + num_per_op3, vec3);
+					cur_src_ptr += num_per_op4;
+					cur_dst_ptr += num_per_op4;
 				}
 			}
 			t2 = clock();
@@ -271,16 +299,25 @@ void test_memcpy(int type)
 	}
 	else if (type == 1)
 	{
-		printf("test only load (store to same addr)\n");
+		printf("test only load (store to same addr) %s\n", in_cache ? "in cache" : "not in cache");
 		for (int i = 0; i < nIters; i++)
 		{
 			t1 = clock();
 			for (int j = 0; j < M; j++)
 			{
-				for (int k = 0; k < N; k += num_per_op)
+				cur_src_ptr = src;
+				cur_dst_ptr = dst;
+				for (int k = 0; k < N; k += num_per_op4)
 				{
-					vec = zq_mm_load_ps(src + k);
-					zq_mm_store_ps(dst, vec);
+					vec0 = zq_mm_load_ps(cur_src_ptr);
+					zq_mm_store_ps(cur_dst_ptr, vec0);
+					vec1 = zq_mm_load_ps(cur_src_ptr+num_per_op);
+					zq_mm_store_ps(cur_dst_ptr + num_per_op, vec1);
+					vec2 = zq_mm_load_ps(cur_src_ptr+num_per_op2);
+					zq_mm_store_ps(cur_dst_ptr + num_per_op2, vec2);
+					vec3 = zq_mm_load_ps(cur_src_ptr+num_per_op3);
+					zq_mm_store_ps(cur_dst_ptr + num_per_op3, vec3);
+					cur_src_ptr += num_per_op4;
 				}
 			}
 			t2 = clock();
@@ -295,16 +332,25 @@ void test_memcpy(int type)
 	}
 	else
 	{
-		printf("test only store (load from same addr)\n");
+		printf("test only store (load from same addr) %s\n", in_cache ? "in cache" : "not in cache");
 		for (int i = 0; i < nIters; i++)
 		{
 			t1 = clock();
 			for (int j = 0; j < M; j++)
 			{
-				for (int k = 0; k < N; k += num_per_op)
+				cur_src_ptr = src;
+				cur_dst_ptr = dst;
+				for (int k = 0; k < N; k += num_per_op4)
 				{
-					vec = zq_mm_load_ps(src);
-					zq_mm_store_ps(dst+k, vec);
+					vec0 = zq_mm_load_ps(cur_src_ptr);
+					zq_mm_store_ps(cur_dst_ptr, vec0);
+					vec1 = zq_mm_load_ps(cur_src_ptr + num_per_op);
+					zq_mm_store_ps(cur_dst_ptr + num_per_op, vec1);
+					vec2 = zq_mm_load_ps(cur_src_ptr + num_per_op2);
+					zq_mm_store_ps(cur_dst_ptr + num_per_op2, vec2);
+					vec3 = zq_mm_load_ps(cur_src_ptr + num_per_op3);
+					zq_mm_store_ps(cur_dst_ptr + num_per_op3, vec3);
+					cur_dst_ptr += num_per_op4;
 				}
 			}
 			t2 = clock();
