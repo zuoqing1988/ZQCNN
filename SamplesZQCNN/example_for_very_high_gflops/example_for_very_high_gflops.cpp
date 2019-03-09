@@ -386,7 +386,6 @@ void test_4x4x4_in_cache()
 		A[i] = i;
 		B[i] = 1;
 	}
-	memset(C, 0, sizeof(float) * 16);
 #if defined(_WIN32)
 	_declspec(align(32)) float q[8];
 #else
@@ -399,6 +398,7 @@ void test_4x4x4_in_cache()
 	printf("test 4x4x%d\n", num_per_op * 4);
 	for(int i = 0;i < nIters;i++)
 	{ 
+		memset(C, 0, sizeof(float) * 16);
 		clock_t t1 = clock();
 		for (j = 0; j < M; j++)
 		{
@@ -426,14 +426,14 @@ void test_4x4x4_in_cache()
 			c31 = zq_mm_mul_ps(a3, b1);
 			c32 = zq_mm_mul_ps(a3, b2);
 			c33 = zq_mm_mul_ps(a3, b3);
-			a0 = zq_mm_load_ps(A + num_per_op);
-			a1 = zq_mm_load_ps(A + num_per_op + 4 * num_per_op);
-			a2 = zq_mm_load_ps(A + num_per_op + 8 * num_per_op);
-			a3 = zq_mm_load_ps(A + num_per_op + 12 * num_per_op);
-			b0 = zq_mm_load_ps(B + num_per_op);
-			b1 = zq_mm_load_ps(B + num_per_op + 4 * num_per_op);
-			b2 = zq_mm_load_ps(B + num_per_op + 8 * num_per_op);
-			b3 = zq_mm_load_ps(B + num_per_op + 12 * num_per_op);
+			a0 = zq_mm_load_ps(A + 1 * num_per_op);
+			a1 = zq_mm_load_ps(A + 5 * num_per_op);
+			a2 = zq_mm_load_ps(A + 9 * num_per_op);
+			a3 = zq_mm_load_ps(A + 13 * num_per_op);
+			b0 = zq_mm_load_ps(B + 1 * num_per_op);
+			b1 = zq_mm_load_ps(B + 5 * num_per_op);
+			b2 = zq_mm_load_ps(B + 9 * num_per_op);
+			b3 = zq_mm_load_ps(B + 13 * num_per_op);
 			c00 = zq_mm_fmadd_ps(a0, b0, c00);
 			c01 = zq_mm_fmadd_ps(a0, b1, c01);
 			c02 = zq_mm_fmadd_ps(a0, b2, c02);
@@ -450,14 +450,14 @@ void test_4x4x4_in_cache()
 			c31 = zq_mm_fmadd_ps(a3, b1, c31);
 			c32 = zq_mm_fmadd_ps(a3, b2, c32);
 			c33 = zq_mm_fmadd_ps(a3, b3, c33);
-			a0 = zq_mm_load_ps(A + num_per_op2);
-			a1 = zq_mm_load_ps(A + num_per_op2 + 4 * num_per_op);
-			a2 = zq_mm_load_ps(A + num_per_op2 + 8 * num_per_op);
-			a3 = zq_mm_load_ps(A + num_per_op2 + 12 * num_per_op);
-			b0 = zq_mm_load_ps(B + num_per_op2);
-			b1 = zq_mm_load_ps(B + num_per_op2 + 4 * num_per_op);
-			b2 = zq_mm_load_ps(B + num_per_op2 + 8 * num_per_op);
-			b3 = zq_mm_load_ps(B + num_per_op2 + 12 * num_per_op);
+			a0 = zq_mm_load_ps(A + 2 * num_per_op);
+			a1 = zq_mm_load_ps(A + 6 * num_per_op);
+			a2 = zq_mm_load_ps(A + 10 * num_per_op);
+			a3 = zq_mm_load_ps(A + 14 * num_per_op);
+			b0 = zq_mm_load_ps(B + 2 * num_per_op);
+			b1 = zq_mm_load_ps(B + 6 * num_per_op);
+			b2 = zq_mm_load_ps(B + 10 * num_per_op);
+			b3 = zq_mm_load_ps(B + 14 * num_per_op);
 			c00 = zq_mm_fmadd_ps(a0, b0, c00);
 			c01 = zq_mm_fmadd_ps(a0, b1, c01);
 			c02 = zq_mm_fmadd_ps(a0, b2, c02);
@@ -474,14 +474,14 @@ void test_4x4x4_in_cache()
 			c31 = zq_mm_fmadd_ps(a3, b1, c31);
 			c32 = zq_mm_fmadd_ps(a3, b2, c32);
 			c33 = zq_mm_fmadd_ps(a3, b3, c33);
-			a0 = zq_mm_load_ps(A + num_per_op3);
-			a1 = zq_mm_load_ps(A + num_per_op3 + 4 * num_per_op);
-			a2 = zq_mm_load_ps(A + num_per_op3 + 8 * num_per_op);
-			a3 = zq_mm_load_ps(A + num_per_op3 + 12 * num_per_op);
-			b0 = zq_mm_load_ps(B + num_per_op3);
-			b1 = zq_mm_load_ps(B + num_per_op3 + 4 * num_per_op);
-			b2 = zq_mm_load_ps(B + num_per_op3 + 8 * num_per_op);
-			b3 = zq_mm_load_ps(B + num_per_op3 + 12 * num_per_op);
+			a0 = zq_mm_load_ps(A + 3 * num_per_op);
+			a1 = zq_mm_load_ps(A + 7 * num_per_op);
+			a2 = zq_mm_load_ps(A + 11 * num_per_op);
+			a3 = zq_mm_load_ps(A + 15 * num_per_op);
+			b0 = zq_mm_load_ps(B + 3 * num_per_op);
+			b1 = zq_mm_load_ps(B + 7 * num_per_op);
+			b2 = zq_mm_load_ps(B + 11 * num_per_op);
+			b3 = zq_mm_load_ps(B + 15 * num_per_op);
 			c00 = zq_mm_fmadd_ps(a0, b0, c00);
 			c01 = zq_mm_fmadd_ps(a0, b1, c01);
 			c02 = zq_mm_fmadd_ps(a0, b2, c02);
@@ -559,7 +559,6 @@ void test_4x4x8_in_cache()
 		A[i] = i;
 		B[i] = 1;
 	}
-	memset(C, 0, sizeof(float) * 16);
 #if defined(_WIN32)
 	_declspec(align(32)) float q[8];
 #else
@@ -572,6 +571,7 @@ void test_4x4x8_in_cache()
 	printf("test 4x4x%d\n", num_per_op * 8);
 	for (int i = 0; i < nIters; i++)
 	{
+		memset(C, 0, sizeof(float) * 16);
 		clock_t t1 = clock();
 		for (j = 0; j < M; j++)
 		{
@@ -828,7 +828,6 @@ void test_4x4x16_in_cache()
 		A[i] = i;
 		B[i] = 1;
 	}
-	memset(C, 0, sizeof(float) * 16);
 #if defined(_WIN32)
 	_declspec(align(32)) float q[8];
 #else
@@ -841,6 +840,7 @@ void test_4x4x16_in_cache()
 	printf("test 4x4x%d\n", num_per_op * 16);
 	for (int i = 0; i < nIters; i++)
 	{
+		memset(C, 0, sizeof(float) * 16);
 		clock_t t1 = clock();
 		for (j = 0; j < M; j++)
 		{
