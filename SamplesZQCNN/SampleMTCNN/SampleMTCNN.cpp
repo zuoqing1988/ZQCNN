@@ -143,13 +143,23 @@ int main()
 	{
 		if (landmark106)
 		{
+#if defined(_WIN32)
 			if (!mtcnn.Init("model/det1-dw20-fast.zqparams", "model/det1-dw20-fast.nchwbin",
 				"model/det2-dw24-fast.zqparams", "model/det2-dw24-fast.nchwbin",
 				//"model/det2.zqparams", "model/det2_bgr.nchwbin",
 				"model/det3-dw48-fast.zqparams", "model/det3-dw48-fast.nchwbin", 
 				thread_num, true,
-				"model/det5-dw48.zqparams", "model/det5-dw48-1000.nchwbin"
+				"model/det5-dw96-v2s.zqparams", "model/det5-dw96-v2s-8000.nchwbin"
 				//"model/det3.zqparams", "model/det3_bgr.nchwbin"
+#else
+			if (!mtcnn.Init("../../model/det1-dw20-fast.zqparams", "../../model/det1-dw20-fast.nchwbin",
+				"../../model/det2-dw24-fast.zqparams", "../../model/det2-dw24-fast.nchwbin",
+				//"../../model/det2.zqparams", "../../model/det2_bgr.nchwbin",
+				"../../model/det3-dw48-fast.zqparams", "../../model/det3-dw48-fast.nchwbin",
+				thread_num, true,
+				"../../model/det5-dw96-v2s.zqparams", "../../model/det5-dw96-v2s-8000.nchwbin"
+				//"../../model/det3.zqparams", "../../model/det3_bgr.nchwbin"
+#endif
 			))
 			{
 				cout << "failed to init!\n";
@@ -185,9 +195,15 @@ int main()
 	}
 	else
 	{
+#if defined(_WIN32)
 		if (!mtcnn.Init("model/det1.zqparams", "model/det1_bgr.nchwbin",
 			"model/det2.zqparams", "model/det2_bgr.nchwbin",
 			"model/det3.zqparams", "model/det3_bgr.nchwbin", thread_num))
+#else
+		if (!mtcnn.Init("../../model/det1.zqparams", "../../model/det1_bgr.nchwbin",
+			"../../model/det2.zqparams", "../../model/det2_bgr.nchwbin",
+			"../../model/det3.zqparams", "../../model/det3_bgr.nchwbin", thread_num))
+#endif
 		{
 			cout << "failed to init!\n";
 			return EXIT_FAILURE;
