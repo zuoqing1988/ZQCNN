@@ -73,7 +73,7 @@ int main()
 	ZQ_CNN_Tensor4D_NHW_C_Align128bit input1, input2;
 	input1.ConvertFromBGR(img1.data, img1.cols, img1.rows, img1.step[0]);
 	input2.ConvertFromBGR(img2.data, img2.cols, img2.rows, img2.step[0]);
-	int nIters = 10;
+	int nIters = 1000;
 	double t1 = omp_get_wtime();
 	for (int i = 0; i < nIters; i++)
 		net1.Forward(input1);
