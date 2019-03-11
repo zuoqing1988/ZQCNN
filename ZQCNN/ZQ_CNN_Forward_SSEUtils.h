@@ -81,6 +81,9 @@ namespace ZQ
 				align_mode = __min(align_mode, ZQ_CNN_Tensor4D::ALIGN_128bit);
 			else if (in_C <= 8)
 				align_mode = __min(align_mode, ZQ_CNN_Tensor4D::ALIGN_256bit);
+#if __ARM_NEON
+			align_mode = __min(align_mode, ZQ_CNN_Tensor4D::ALIGN_128bit);
+#else
 #if ZQ_CNN_USE_SSETYPE == ZQ_CNN_SSETYPE_AVX2
 			align_mode = __min(align_mode, ZQ_CNN_Tensor4D::ALIGN_256bit);
 #elif ZQ_CNN_USE_SSETYPE == ZQ_CNN_SSETYPE_AVX
@@ -89,6 +92,7 @@ namespace ZQ
 			align_mode = __min(align_mode, ZQ_CNN_Tensor4D::ALIGN_128bit);
 #else
 			align_mode = __min(align_mode, ZQ_CNN_Tensor4D::ALIGN_0);
+#endif
 #endif
 			//align_mode = ZQ_CNN_Tensor4D::ALIGN_128bit;
 			//output.Reset();
@@ -165,6 +169,9 @@ namespace ZQ
 				align_mode = __min(align_mode, ZQ_CNN_Tensor4D::ALIGN_128bit);
 			else if (in_C <= 8)
 				align_mode = __min(align_mode, ZQ_CNN_Tensor4D::ALIGN_256bit);
+#if __ARM_NEON
+			align_mode = __min(align_mode, ZQ_CNN_Tensor4D::ALIGN_128bit);
+#else
 #if ZQ_CNN_USE_SSETYPE == ZQ_CNN_SSETYPE_AVX2
 			align_mode = __min(align_mode, ZQ_CNN_Tensor4D::ALIGN_256bit);
 #elif ZQ_CNN_USE_SSETYPE == ZQ_CNN_SSETYPE_AVX
@@ -173,6 +180,7 @@ namespace ZQ
 			align_mode = __min(align_mode, ZQ_CNN_Tensor4D::ALIGN_128bit);
 #else
 			align_mode = __min(align_mode, ZQ_CNN_Tensor4D::ALIGN_0);
+#endif
 #endif
 			//align_mode = ZQ_CNN_Tensor4D::ALIGN_128bit;
 			//output.Reset();
@@ -248,6 +256,9 @@ namespace ZQ
 				align_mode = __min(align_mode, ZQ_CNN_Tensor4D::ALIGN_128bit);
 			else if (in_C <= 8)
 				align_mode = __min(align_mode, ZQ_CNN_Tensor4D::ALIGN_256bit);
+#if __ARM_NEON
+			align_mode = __min(align_mode, ZQ_CNN_Tensor4D::ALIGN_128bit);
+#else
 #if ZQ_CNN_USE_SSETYPE == ZQ_CNN_SSETYPE_AVX2
 			align_mode = __min(align_mode, ZQ_CNN_Tensor4D::ALIGN_256bit);
 #elif ZQ_CNN_USE_SSETYPE == ZQ_CNN_SSETYPE_AVX
@@ -256,6 +267,7 @@ namespace ZQ
 			align_mode = __min(align_mode, ZQ_CNN_Tensor4D::ALIGN_128bit);
 #else
 			align_mode = __min(align_mode, ZQ_CNN_Tensor4D::ALIGN_0);
+#endif
 #endif
 			//align_mode = ZQ_CNN_Tensor4D::ALIGN_128bit;
 			//output.Reset();
@@ -330,6 +342,9 @@ namespace ZQ
 				align_mode = __min(align_mode, ZQ_CNN_Tensor4D::ALIGN_128bit);
 			else if (in_C <= 8)
 				align_mode = __min(align_mode, ZQ_CNN_Tensor4D::ALIGN_256bit);
+#if __ARM_NEON
+			align_mode = __min(align_mode, ZQ_CNN_Tensor4D::ALIGN_128bit);
+#else
 #if ZQ_CNN_USE_SSETYPE == ZQ_CNN_SSETYPE_AVX2
 			align_mode = __min(align_mode, ZQ_CNN_Tensor4D::ALIGN_256bit);
 #elif ZQ_CNN_USE_SSETYPE == ZQ_CNN_SSETYPE_AVX
@@ -338,6 +353,7 @@ namespace ZQ
 			align_mode = __min(align_mode, ZQ_CNN_Tensor4D::ALIGN_128bit);
 #else
 			align_mode = __min(align_mode, ZQ_CNN_Tensor4D::ALIGN_0);
+#endif
 #endif
 			//align_mode = ZQ_CNN_Tensor4D::ALIGN_128bit;
 			//output.Reset();
@@ -403,6 +419,9 @@ namespace ZQ
 				align_mode = __min(align_mode, ZQ_CNN_Tensor4D::ALIGN_128bit);
 			else if (in_C <= 8)
 				align_mode = __min(align_mode, ZQ_CNN_Tensor4D::ALIGN_256bit);
+#if __ARM_NEON
+			align_mode = __min(align_mode, ZQ_CNN_Tensor4D::ALIGN_128bit);
+#else
 #if ZQ_CNN_USE_SSETYPE == ZQ_CNN_SSETYPE_AVX2
 			align_mode = __min(align_mode, ZQ_CNN_Tensor4D::ALIGN_256bit);
 #elif ZQ_CNN_USE_SSETYPE == ZQ_CNN_SSETYPE_AVX
@@ -411,6 +430,7 @@ namespace ZQ
 			align_mode = __min(align_mode, ZQ_CNN_Tensor4D::ALIGN_128bit);
 #else
 			align_mode = __min(align_mode, ZQ_CNN_Tensor4D::ALIGN_0);
+#endif
 #endif
 			//align_mode = ZQ_CNN_Tensor4D::ALIGN_0;
 			_inner_product(align_mode, in_firstPixelData, in_N, in_H, in_W, in_C, in_pixStep, in_widthStep, in_sliceStep,
@@ -476,6 +496,9 @@ namespace ZQ
 				align_mode = __min(align_mode, ZQ_CNN_Tensor4D::ALIGN_128bit);
 			else if (in_C <= 8)
 				align_mode = __min(align_mode, ZQ_CNN_Tensor4D::ALIGN_256bit);
+#if __ARM_NEON
+			align_mode = __min(align_mode, ZQ_CNN_Tensor4D::ALIGN_128bit);
+#else
 #if ZQ_CNN_USE_SSETYPE == ZQ_CNN_SSETYPE_AVX2
 			align_mode = __min(align_mode, ZQ_CNN_Tensor4D::ALIGN_256bit);
 #elif ZQ_CNN_USE_SSETYPE == ZQ_CNN_SSETYPE_AVX
@@ -484,6 +507,7 @@ namespace ZQ
 			align_mode = __min(align_mode, ZQ_CNN_Tensor4D::ALIGN_128bit);
 #else
 			align_mode = __min(align_mode, ZQ_CNN_Tensor4D::ALIGN_0);
+#endif
 #endif
 			//align_mode = ZQ_CNN_Tensor4D::ALIGN_0;
 			_inner_product(align_mode, in_firstPixelData, in_N, in_H, in_W, in_C, in_pixStep, in_widthStep, in_sliceStep,
@@ -538,6 +562,9 @@ namespace ZQ
 			float* out_data = output.GetFirstPixelPtr();
 
 			int align_mode = __min(input.GetAlignType(), output.GetAlignType());
+#if __ARM_NEON
+			align_mode = __min(align_mode, ZQ_CNN_Tensor4D::ALIGN_128bit);
+#else
 #if ZQ_CNN_USE_SSETYPE == ZQ_CNN_SSETYPE_AVX2
 			align_mode = __min(align_mode, ZQ_CNN_Tensor4D::ALIGN_256bit);
 #elif ZQ_CNN_USE_SSETYPE == ZQ_CNN_SSETYPE_AVX
@@ -546,6 +573,7 @@ namespace ZQ
 			align_mode = __min(align_mode, ZQ_CNN_Tensor4D::ALIGN_128bit);
 #else
 			align_mode = __min(align_mode, ZQ_CNN_Tensor4D::ALIGN_0);
+#endif
 #endif
 			_maxpooling(align_mode, in_data, in_N, in_H, in_W, in_C, in_pixStep, in_widthStep, in_sliceStep, kernel_H, kernel_W, stride_H, stride_W,
 				out_data, need_H, need_W, out_pixStep, out_widthStep, out_sliceStep);
@@ -597,6 +625,9 @@ namespace ZQ
 			float* out_data = output.GetFirstPixelPtr();
 
 			int align_mode = __min(input.GetAlignType(), output.GetAlignType());
+#if __ARM_NEON
+			align_mode = __min(align_mode, ZQ_CNN_Tensor4D::ALIGN_128bit);
+#else
 #if ZQ_CNN_USE_SSETYPE == ZQ_CNN_SSETYPE_AVX2
 			align_mode = __min(align_mode, ZQ_CNN_Tensor4D::ALIGN_256bit);
 #elif ZQ_CNN_USE_SSETYPE == ZQ_CNN_SSETYPE_AVX
@@ -605,6 +636,7 @@ namespace ZQ
 			align_mode = __min(align_mode, ZQ_CNN_Tensor4D::ALIGN_128bit);
 #else
 			align_mode = __min(align_mode, ZQ_CNN_Tensor4D::ALIGN_0);
+#endif
 #endif
 			_avgpooling(align_mode, in_data, in_N, in_H, in_W, in_C, in_pixStep, in_widthStep, in_sliceStep, kernel_H, kernel_W, stride_H, stride_W,
 				out_data, need_H, need_W, out_pixStep, out_widthStep, out_sliceStep);
@@ -627,6 +659,9 @@ namespace ZQ
 			int sliceStep = input.GetSliceStep();
 
 			int align_mode = __min(input.GetAlignType(), slope.GetAlignType());
+#if __ARM_NEON
+			align_mode = __min(align_mode, ZQ_CNN_Tensor4D::ALIGN_128bit);
+#else
 #if ZQ_CNN_USE_SSETYPE == ZQ_CNN_SSETYPE_AVX2
 			align_mode = __min(align_mode, ZQ_CNN_Tensor4D::ALIGN_256bit);
 #elif ZQ_CNN_USE_SSETYPE == ZQ_CNN_SSETYPE_AVX
@@ -635,6 +670,7 @@ namespace ZQ
 			align_mode = __min(align_mode, ZQ_CNN_Tensor4D::ALIGN_128bit);
 #else
 			align_mode = __min(align_mode, ZQ_CNN_Tensor4D::ALIGN_0);
+#endif
 #endif
 			_prelu(align_mode, data, N, H, W, C, pixelStep, widthStep, sliceStep, slope_Data);
 			return true;
@@ -655,6 +691,9 @@ namespace ZQ
 			int sliceStep = input.GetSliceStep();
 
 			int align_mode = input.GetAlignType();
+#if __ARM_NEON
+			align_mode = __min(align_mode, ZQ_CNN_Tensor4D::ALIGN_128bit);
+#else
 #if ZQ_CNN_USE_SSETYPE == ZQ_CNN_SSETYPE_AVX2
 			align_mode = __min(align_mode, ZQ_CNN_Tensor4D::ALIGN_256bit);
 #elif ZQ_CNN_USE_SSETYPE == ZQ_CNN_SSETYPE_AVX
@@ -663,6 +702,7 @@ namespace ZQ
 			align_mode = __min(align_mode, ZQ_CNN_Tensor4D::ALIGN_128bit);
 #else
 			align_mode = __min(align_mode, ZQ_CNN_Tensor4D::ALIGN_0);
+#endif
 #endif
 			_relu(align_mode, data, N, H, W, C, pixelStep, widthStep, sliceStep, slope);
 		}
@@ -687,6 +727,9 @@ namespace ZQ
 				float* data = input.GetFirstPixelPtr();
 
 				int align_mode = input.GetAlignType();
+#if __ARM_NEON
+				align_mode = __min(align_mode, ZQ_CNN_Tensor4D::ALIGN_128bit);
+#else
 #if ZQ_CNN_USE_SSETYPE == ZQ_CNN_SSETYPE_AVX2
 				align_mode = __min(align_mode, ZQ_CNN_Tensor4D::ALIGN_256bit);
 #elif ZQ_CNN_USE_SSETYPE == ZQ_CNN_SSETYPE_AVX
@@ -695,6 +738,7 @@ namespace ZQ
 				align_mode = __min(align_mode, ZQ_CNN_Tensor4D::ALIGN_128bit);
 #else
 				align_mode = __min(align_mode, ZQ_CNN_Tensor4D::ALIGN_0);
+#endif
 #endif
 				_dropout(align_mode, data, N, H, W, C, pixStep, widthStep, sliceStep, dropout_ratio);
 			}
@@ -723,6 +767,9 @@ namespace ZQ
 			else if (C <= 32)
 				align_mode = __min(align_mode, ZQ_CNN_Tensor4D::ALIGN_256bit);
 			*/
+#if __ARM_NEON
+			align_mode = __min(align_mode, ZQ_CNN_Tensor4D::ALIGN_128bit);
+#else
 #if ZQ_CNN_USE_SSETYPE == ZQ_CNN_SSETYPE_AVX2
 			align_mode = __min(align_mode, ZQ_CNN_Tensor4D::ALIGN_256bit);
 #elif ZQ_CNN_USE_SSETYPE == ZQ_CNN_SSETYPE_AVX
@@ -731,6 +778,7 @@ namespace ZQ
 			align_mode = __min(align_mode, ZQ_CNN_Tensor4D::ALIGN_128bit);
 #else
 			align_mode = __min(align_mode, ZQ_CNN_Tensor4D::ALIGN_0);
+#endif
 #endif
 			_softmax(align_mode, axis, data, N, H, W, C, pixStep, widthStep, sliceStep);
 			//printf("data = %f\n", data[0]);
@@ -758,6 +806,9 @@ namespace ZQ
 			int sliceStep = input.GetSliceStep();
 
 			int align_mode = __min(input.GetAlignType(), __min(mean.GetAlignType(), __min(var.GetAlignType(), __min(slope.GetAlignType(), bias.GetAlignType()))));
+#if __ARM_NEON
+			align_mode = __min(align_mode, ZQ_CNN_Tensor4D::ALIGN_128bit);
+#else
 #if ZQ_CNN_USE_SSETYPE == ZQ_CNN_SSETYPE_AVX2
 			align_mode = __min(align_mode, ZQ_CNN_Tensor4D::ALIGN_256bit);
 #elif ZQ_CNN_USE_SSETYPE == ZQ_CNN_SSETYPE_AVX
@@ -766,6 +817,7 @@ namespace ZQ
 			align_mode = __min(align_mode, ZQ_CNN_Tensor4D::ALIGN_128bit);
 #else
 			align_mode = __min(align_mode, ZQ_CNN_Tensor4D::ALIGN_0);
+#endif
 #endif
 			_batchnorm_scalebias(align_mode, data, N, H, W, C, pixelStep, widthStep, sliceStep, mean_data, var_data, 
 				slope_data, bias_data, eps);
@@ -791,6 +843,9 @@ namespace ZQ
 			int sliceStep = input.GetSliceStep();
 
 			int align_mode = __min(input.GetAlignType(), __min(mean.GetAlignType(), var.GetAlignType()));
+#if __ARM_NEON
+			align_mode = __min(align_mode, ZQ_CNN_Tensor4D::ALIGN_128bit);
+#else
 #if ZQ_CNN_USE_SSETYPE == ZQ_CNN_SSETYPE_AVX2
 			align_mode = __min(align_mode, ZQ_CNN_Tensor4D::ALIGN_256bit);
 #elif ZQ_CNN_USE_SSETYPE == ZQ_CNN_SSETYPE_AVX
@@ -799,6 +854,7 @@ namespace ZQ
 			align_mode = __min(align_mode, ZQ_CNN_Tensor4D::ALIGN_128bit);
 #else
 			align_mode = __min(align_mode, ZQ_CNN_Tensor4D::ALIGN_0);
+#endif
 #endif
 			_batchnorm(align_mode, data, N, H, W, C, pixelStep, widthStep, sliceStep, mean_data, var_data, eps);
 			return true;
@@ -915,6 +971,9 @@ namespace ZQ
 			int sliceStep = input.GetSliceStep();
 
 			int align_mode = __min(input.GetAlignType(), __min(b.GetAlignType(),a.GetAlignType()));
+#if __ARM_NEON
+			align_mode = __min(align_mode, ZQ_CNN_Tensor4D::ALIGN_128bit);
+#else
 #if ZQ_CNN_USE_SSETYPE == ZQ_CNN_SSETYPE_AVX2
 			align_mode = __min(align_mode, ZQ_CNN_Tensor4D::ALIGN_256bit);
 #elif ZQ_CNN_USE_SSETYPE == ZQ_CNN_SSETYPE_AVX
@@ -923,6 +982,7 @@ namespace ZQ
 			align_mode = __min(align_mode, ZQ_CNN_Tensor4D::ALIGN_128bit);
 #else
 			align_mode = __min(align_mode, ZQ_CNN_Tensor4D::ALIGN_0);
+#endif
 #endif
 			_batchnorm_b_a(align_mode, data, N, H, W, C, pixelStep, widthStep, sliceStep, b_data, a_data);
 			return true;
@@ -976,6 +1036,9 @@ namespace ZQ
 			int sliceStep = input.GetSliceStep();
 
 			int align_mode = __min(input.GetAlignType(), scale.GetAlignType());
+#if __ARM_NEON
+			align_mode = __min(align_mode, ZQ_CNN_Tensor4D::ALIGN_128bit);
+#else
 #if ZQ_CNN_USE_SSETYPE == ZQ_CNN_SSETYPE_AVX2
 			align_mode = __min(align_mode, ZQ_CNN_Tensor4D::ALIGN_256bit);
 #elif ZQ_CNN_USE_SSETYPE == ZQ_CNN_SSETYPE_AVX
@@ -984,6 +1047,7 @@ namespace ZQ
 			align_mode = __min(align_mode, ZQ_CNN_Tensor4D::ALIGN_128bit);
 #else
 			align_mode = __min(align_mode, ZQ_CNN_Tensor4D::ALIGN_0);
+#endif
 #endif
 			_scalebias(align_mode, data, N, H, W, C, pixelStep, widthStep, sliceStep, scale_data, NULL);
 			return true;
@@ -1025,6 +1089,9 @@ namespace ZQ
 			int align_mode = output.GetAlignType();
 			for (int i = 0; i < in_num; i++)
 				align_mode = __min(align_mode, input[i]->GetAlignType());
+#if __ARM_NEON
+			align_mode = __min(align_mode, ZQ_CNN_Tensor4D::ALIGN_128bit);
+#else
 #if ZQ_CNN_USE_SSETYPE == ZQ_CNN_SSETYPE_AVX2
 			align_mode = __min(align_mode, ZQ_CNN_Tensor4D::ALIGN_256bit);
 #elif ZQ_CNN_USE_SSETYPE == ZQ_CNN_SSETYPE_AVX
@@ -1033,6 +1100,7 @@ namespace ZQ
 			align_mode = __min(align_mode, ZQ_CNN_Tensor4D::ALIGN_128bit);
 #else
 			align_mode = __min(align_mode, ZQ_CNN_Tensor4D::ALIGN_0);
+#endif
 #endif
 			_eltwise_sum(align_mode, in_num, &in_tensor_data[0], N, H, W, C, &in_pixStep[0], &in_widthStep[0], &in_sliceStep[0], out_data, out_pixStep, out_widthStep,
 				out_sliceStep);
@@ -1077,6 +1145,9 @@ namespace ZQ
 			int align_mode = output.GetAlignType();
 			for (int i = 0; i < in_num; i++)
 				align_mode = __min(align_mode, input[i]->GetAlignType());
+#if __ARM_NEON
+			align_mode = __min(align_mode, ZQ_CNN_Tensor4D::ALIGN_128bit);
+#else
 #if ZQ_CNN_USE_SSETYPE == ZQ_CNN_SSETYPE_AVX2
 			align_mode = __min(align_mode, ZQ_CNN_Tensor4D::ALIGN_256bit);
 #elif ZQ_CNN_USE_SSETYPE == ZQ_CNN_SSETYPE_AVX
@@ -1085,6 +1156,7 @@ namespace ZQ
 			align_mode = __min(align_mode, ZQ_CNN_Tensor4D::ALIGN_128bit);
 #else
 			align_mode = __min(align_mode, ZQ_CNN_Tensor4D::ALIGN_0);
+#endif
 #endif
 			_eltwise_sum_with_weight(align_mode, in_num, &in_tensor_data[0], &weight[0], N, H, W, C, &in_pixStep[0], &in_widthStep[0], &in_sliceStep[0], out_data, out_pixStep, out_widthStep,
 				out_sliceStep);
@@ -1127,6 +1199,9 @@ namespace ZQ
 			int align_mode = output.GetAlignType();
 			for (int i = 0; i < in_num; i++)
 				align_mode = __min(align_mode, input[i]->GetAlignType());
+#if __ARM_NEON
+			align_mode = __min(align_mode, ZQ_CNN_Tensor4D::ALIGN_128bit);
+#else
 #if ZQ_CNN_USE_SSETYPE == ZQ_CNN_SSETYPE_AVX2
 			align_mode = __min(align_mode, ZQ_CNN_Tensor4D::ALIGN_256bit);
 #elif ZQ_CNN_USE_SSETYPE == ZQ_CNN_SSETYPE_AVX
@@ -1135,6 +1210,7 @@ namespace ZQ
 			align_mode = __min(align_mode, ZQ_CNN_Tensor4D::ALIGN_128bit);
 #else
 			align_mode = __min(align_mode, ZQ_CNN_Tensor4D::ALIGN_0);
+#endif
 #endif
 			_eltwise_mul(align_mode, in_num, &in_tensor_data[0], N, H, W, C, &in_pixStep[0], &in_widthStep[0], &in_sliceStep[0], out_data, out_pixStep, out_widthStep,
 				out_sliceStep);
@@ -1177,6 +1253,9 @@ namespace ZQ
 			int align_mode = output.GetAlignType();
 			for (int i = 0; i < in_num; i++)
 				align_mode = __min(align_mode, input[i]->GetAlignType());
+#if __ARM_NEON
+			align_mode = __min(align_mode, ZQ_CNN_Tensor4D::ALIGN_128bit);
+#else
 #if ZQ_CNN_USE_SSETYPE == ZQ_CNN_SSETYPE_AVX2
 			align_mode = __min(align_mode, ZQ_CNN_Tensor4D::ALIGN_256bit);
 #elif ZQ_CNN_USE_SSETYPE == ZQ_CNN_SSETYPE_AVX
@@ -1185,6 +1264,7 @@ namespace ZQ
 			align_mode = __min(align_mode, ZQ_CNN_Tensor4D::ALIGN_128bit);
 #else
 			align_mode = __min(align_mode, ZQ_CNN_Tensor4D::ALIGN_0);
+#endif
 #endif
 			_eltwise_max(align_mode, in_num, &in_tensor_data[0], N, H, W, C, &in_pixStep[0], &in_widthStep[0], &in_sliceStep[0], out_data, out_pixStep, out_widthStep, 
 				out_sliceStep);
@@ -1224,6 +1304,9 @@ namespace ZQ
 			int in_pixStep = input.GetPixelStep(), in_widthStep = input.GetWidthStep(), in_sliceStep = input.GetSliceStep();
 			int out_pixStep = output.GetPixelStep(), out_widthStep = output.GetWidthStep(), out_sliceStep = output.GetSliceStep();
 			int align_mode = __min(input.GetAlignType(), output.GetAlignType());
+#if __ARM_NEON
+			align_mode = __min(align_mode, ZQ_CNN_Tensor4D::ALIGN_128bit);
+#else
 #if ZQ_CNN_USE_SSETYPE == ZQ_CNN_SSETYPE_AVX2
 			align_mode = __min(align_mode, ZQ_CNN_Tensor4D::ALIGN_256bit);
 #elif ZQ_CNN_USE_SSETYPE == ZQ_CNN_SSETYPE_AVX
@@ -1232,6 +1315,7 @@ namespace ZQ
 			align_mode = __min(align_mode, ZQ_CNN_Tensor4D::ALIGN_128bit);
 #else
 			align_mode = __min(align_mode, ZQ_CNN_Tensor4D::ALIGN_0);
+#endif
 #endif
 			_reduction_sum(align_mode, in_data, N, H, W, C, axis,keepdims, in_pixStep, in_widthStep, in_sliceStep, 
 				out_data, out_pixStep, out_widthStep, out_sliceStep);
@@ -1271,6 +1355,9 @@ namespace ZQ
 			int in_pixStep = input.GetPixelStep(), in_widthStep = input.GetWidthStep(), in_sliceStep = input.GetSliceStep();
 			int out_pixStep = output.GetPixelStep(), out_widthStep = output.GetWidthStep(), out_sliceStep = output.GetSliceStep();
 			int align_mode = __min(input.GetAlignType(), output.GetAlignType());
+#if __ARM_NEON
+			align_mode = __min(align_mode, ZQ_CNN_Tensor4D::ALIGN_128bit);
+#else
 #if ZQ_CNN_USE_SSETYPE == ZQ_CNN_SSETYPE_AVX2
 			align_mode = __min(align_mode, ZQ_CNN_Tensor4D::ALIGN_256bit);
 #elif ZQ_CNN_USE_SSETYPE == ZQ_CNN_SSETYPE_AVX
@@ -1279,6 +1366,7 @@ namespace ZQ
 			align_mode = __min(align_mode, ZQ_CNN_Tensor4D::ALIGN_128bit);
 #else
 			align_mode = __min(align_mode, ZQ_CNN_Tensor4D::ALIGN_0);
+#endif
 #endif
 			_reduction_mean(align_mode, in_data, N, H, W, C, axis, keepdims, in_pixStep, in_widthStep, in_sliceStep,
 				out_data, out_pixStep, out_widthStep, out_sliceStep);
@@ -1297,6 +1385,9 @@ namespace ZQ
 			float* in_data = input.GetFirstPixelPtr();
 			int in_pixStep = input.GetPixelStep(), in_widthStep = input.GetWidthStep(), in_sliceStep = input.GetSliceStep();
 			int align_mode = input.GetAlignType();
+#if __ARM_NEON
+			align_mode = __min(align_mode, ZQ_CNN_Tensor4D::ALIGN_128bit);
+#else
 #if ZQ_CNN_USE_SSETYPE == ZQ_CNN_SSETYPE_AVX2
 			align_mode = __min(align_mode, ZQ_CNN_Tensor4D::ALIGN_256bit);
 #elif ZQ_CNN_USE_SSETYPE == ZQ_CNN_SSETYPE_AVX
@@ -1305,6 +1396,7 @@ namespace ZQ
 			align_mode = __min(align_mode, ZQ_CNN_Tensor4D::ALIGN_128bit);
 #else
 			align_mode = __min(align_mode, ZQ_CNN_Tensor4D::ALIGN_0);
+#endif
 #endif
 			_sqrt(align_mode, in_data, N, H, W, C, in_pixStep, in_widthStep, in_sliceStep);
 			return true;
@@ -1323,6 +1415,9 @@ namespace ZQ
 			int in_pixStep = input.GetPixelStep(), in_widthStep = input.GetWidthStep(), in_sliceStep = input.GetSliceStep();
 			int out_pixStep = output.GetPixelStep(), out_widthStep = output.GetWidthStep(), out_sliceStep = output.GetSliceStep();
 			int align_mode = __min(input.GetAlignType(), output.GetAlignType());
+#if __ARM_NEON
+			align_mode = __min(align_mode, ZQ_CNN_Tensor4D::ALIGN_128bit);
+#else
 #if ZQ_CNN_USE_SSETYPE == ZQ_CNN_SSETYPE_AVX2
 			align_mode = __min(align_mode, ZQ_CNN_Tensor4D::ALIGN_256bit);
 #elif ZQ_CNN_USE_SSETYPE == ZQ_CNN_SSETYPE_AVX
@@ -1331,6 +1426,7 @@ namespace ZQ
 			align_mode = __min(align_mode, ZQ_CNN_Tensor4D::ALIGN_128bit);
 #else
 			align_mode = __min(align_mode, ZQ_CNN_Tensor4D::ALIGN_0);
+#endif
 #endif
 			const float* in_data = input.GetFirstPixelPtr();
 			float* out_data = output.GetFirstPixelPtr();
@@ -1349,6 +1445,9 @@ namespace ZQ
 				return true;
 			int in_pixStep = input.GetPixelStep(), in_widthStep = input.GetWidthStep(), in_sliceStep = input.GetSliceStep();
 			int align_mode = input.GetAlignType();
+#if __ARM_NEON
+			align_mode = __min(align_mode, ZQ_CNN_Tensor4D::ALIGN_128bit);
+#else
 #if ZQ_CNN_USE_SSETYPE == ZQ_CNN_SSETYPE_AVX2
 			align_mode = __min(align_mode, ZQ_CNN_Tensor4D::ALIGN_256bit);
 #elif ZQ_CNN_USE_SSETYPE == ZQ_CNN_SSETYPE_AVX
@@ -1357,6 +1456,7 @@ namespace ZQ
 			align_mode = __min(align_mode, ZQ_CNN_Tensor4D::ALIGN_128bit);
 #else
 			align_mode = __min(align_mode, ZQ_CNN_Tensor4D::ALIGN_0);
+#endif
 #endif
 			float* in_data = input.GetFirstPixelPtr();
 			_scalaroperation_add(align_mode, scalar, in_data, N, H, W, C, in_pixStep, in_widthStep, in_sliceStep);
@@ -1376,6 +1476,9 @@ namespace ZQ
 			int in_pixStep = input.GetPixelStep(), in_widthStep = input.GetWidthStep(), in_sliceStep = input.GetSliceStep();
 			int out_pixStep = output.GetPixelStep(), out_widthStep = output.GetWidthStep(), out_sliceStep = output.GetSliceStep();
 			int align_mode = __min(input.GetAlignType(), output.GetAlignType());
+#if __ARM_NEON
+			align_mode = __min(align_mode, ZQ_CNN_Tensor4D::ALIGN_128bit);
+#else
 #if ZQ_CNN_USE_SSETYPE == ZQ_CNN_SSETYPE_AVX2
 			align_mode = __min(align_mode, ZQ_CNN_Tensor4D::ALIGN_256bit);
 #elif ZQ_CNN_USE_SSETYPE == ZQ_CNN_SSETYPE_AVX
@@ -1384,6 +1487,7 @@ namespace ZQ
 			align_mode = __min(align_mode, ZQ_CNN_Tensor4D::ALIGN_128bit);
 #else
 			align_mode = __min(align_mode, ZQ_CNN_Tensor4D::ALIGN_0);
+#endif
 #endif
 			const float* in_data = input.GetFirstPixelPtr();
 			float* out_data = output.GetFirstPixelPtr();
@@ -1402,6 +1506,9 @@ namespace ZQ
 				return true;
 			int in_pixStep = input.GetPixelStep(), in_widthStep = input.GetWidthStep(), in_sliceStep = input.GetSliceStep();
 			int align_mode = input.GetAlignType();
+#if __ARM_NEON
+			align_mode = __min(align_mode, ZQ_CNN_Tensor4D::ALIGN_128bit);
+#else
 #if ZQ_CNN_USE_SSETYPE == ZQ_CNN_SSETYPE_AVX2
 			align_mode = __min(align_mode, ZQ_CNN_Tensor4D::ALIGN_256bit);
 #elif ZQ_CNN_USE_SSETYPE == ZQ_CNN_SSETYPE_AVX
@@ -1410,6 +1517,7 @@ namespace ZQ
 			align_mode = __min(align_mode, ZQ_CNN_Tensor4D::ALIGN_128bit);
 #else
 			align_mode = __min(align_mode, ZQ_CNN_Tensor4D::ALIGN_0);
+#endif
 #endif
 			float* in_data = input.GetFirstPixelPtr();
 			_scalaroperation_mul(align_mode, scalar, in_data, N, H, W, C, in_pixStep, in_widthStep, in_sliceStep);
@@ -1429,6 +1537,9 @@ namespace ZQ
 			int in_pixStep = input.GetPixelStep(), in_widthStep = input.GetWidthStep(), in_sliceStep = input.GetSliceStep();
 			int out_pixStep = output.GetPixelStep(), out_widthStep = output.GetWidthStep(), out_sliceStep = output.GetSliceStep();
 			int align_mode = __min(input.GetAlignType(), output.GetAlignType());
+#if __ARM_NEON
+			align_mode = __min(align_mode, ZQ_CNN_Tensor4D::ALIGN_128bit);
+#else
 #if ZQ_CNN_USE_SSETYPE == ZQ_CNN_SSETYPE_AVX2
 			align_mode = __min(align_mode, ZQ_CNN_Tensor4D::ALIGN_256bit);
 #elif ZQ_CNN_USE_SSETYPE == ZQ_CNN_SSETYPE_AVX
@@ -1437,6 +1548,7 @@ namespace ZQ
 			align_mode = __min(align_mode, ZQ_CNN_Tensor4D::ALIGN_128bit);
 #else
 			align_mode = __min(align_mode, ZQ_CNN_Tensor4D::ALIGN_0);
+#endif
 #endif
 			const float* in_data = input.GetFirstPixelPtr();
 			float* out_data = output.GetFirstPixelPtr();
@@ -1455,6 +1567,9 @@ namespace ZQ
 				return true;
 			int in_pixStep = input.GetPixelStep(), in_widthStep = input.GetWidthStep(), in_sliceStep = input.GetSliceStep();
 			int align_mode = input.GetAlignType();
+#if __ARM_NEON
+			align_mode = __min(align_mode, ZQ_CNN_Tensor4D::ALIGN_128bit);
+#else
 #if ZQ_CNN_USE_SSETYPE == ZQ_CNN_SSETYPE_AVX2
 			align_mode = __min(align_mode, ZQ_CNN_Tensor4D::ALIGN_256bit);
 #elif ZQ_CNN_USE_SSETYPE == ZQ_CNN_SSETYPE_AVX
@@ -1463,6 +1578,7 @@ namespace ZQ
 			align_mode = __min(align_mode, ZQ_CNN_Tensor4D::ALIGN_128bit);
 #else
 			align_mode = __min(align_mode, ZQ_CNN_Tensor4D::ALIGN_0);
+#endif
 #endif
 			float* in_data = input.GetFirstPixelPtr();
 			_scalaroperation_max(align_mode, scalar, in_data, N, H, W, C, in_pixStep, in_widthStep, in_sliceStep);
@@ -1482,6 +1598,9 @@ namespace ZQ
 			int in_pixStep = input.GetPixelStep(), in_widthStep = input.GetWidthStep(), in_sliceStep = input.GetSliceStep();
 			int out_pixStep = output.GetPixelStep(), out_widthStep = output.GetWidthStep(), out_sliceStep = output.GetSliceStep();
 			int align_mode = __min(input.GetAlignType(), output.GetAlignType());
+#if __ARM_NEON
+			align_mode = __min(align_mode, ZQ_CNN_Tensor4D::ALIGN_128bit);
+#else
 #if ZQ_CNN_USE_SSETYPE == ZQ_CNN_SSETYPE_AVX2
 			align_mode = __min(align_mode, ZQ_CNN_Tensor4D::ALIGN_256bit);
 #elif ZQ_CNN_USE_SSETYPE == ZQ_CNN_SSETYPE_AVX
@@ -1490,6 +1609,7 @@ namespace ZQ
 			align_mode = __min(align_mode, ZQ_CNN_Tensor4D::ALIGN_128bit);
 #else
 			align_mode = __min(align_mode, ZQ_CNN_Tensor4D::ALIGN_0);
+#endif
 #endif
 			const float* in_data = input.GetFirstPixelPtr();
 			float* out_data = output.GetFirstPixelPtr();
@@ -1508,6 +1628,9 @@ namespace ZQ
 				return true;
 			int in_pixStep = input.GetPixelStep(), in_widthStep = input.GetWidthStep(), in_sliceStep = input.GetSliceStep();
 			int align_mode = input.GetAlignType();
+#if __ARM_NEON
+			align_mode = __min(align_mode, ZQ_CNN_Tensor4D::ALIGN_128bit);
+#else
 #if ZQ_CNN_USE_SSETYPE == ZQ_CNN_SSETYPE_AVX2
 			align_mode = __min(align_mode, ZQ_CNN_Tensor4D::ALIGN_256bit);
 #elif ZQ_CNN_USE_SSETYPE == ZQ_CNN_SSETYPE_AVX
@@ -1516,6 +1639,7 @@ namespace ZQ
 			align_mode = __min(align_mode, ZQ_CNN_Tensor4D::ALIGN_128bit);
 #else
 			align_mode = __min(align_mode, ZQ_CNN_Tensor4D::ALIGN_0);
+#endif
 #endif
 			float* in_data = input.GetFirstPixelPtr();
 			_scalaroperation_min(align_mode, scalar, in_data, N, H, W, C, in_pixStep, in_widthStep, in_sliceStep);
@@ -1535,6 +1659,9 @@ namespace ZQ
 			int in_pixStep = input.GetPixelStep(), in_widthStep = input.GetWidthStep(), in_sliceStep = input.GetSliceStep();
 			int out_pixStep = output.GetPixelStep(), out_widthStep = output.GetWidthStep(), out_sliceStep = output.GetSliceStep();
 			int align_mode = __min(input.GetAlignType(), output.GetAlignType());
+#if __ARM_NEON
+			align_mode = __min(align_mode, ZQ_CNN_Tensor4D::ALIGN_128bit);
+#else
 #if ZQ_CNN_USE_SSETYPE == ZQ_CNN_SSETYPE_AVX2
 			align_mode = __min(align_mode, ZQ_CNN_Tensor4D::ALIGN_256bit);
 #elif ZQ_CNN_USE_SSETYPE == ZQ_CNN_SSETYPE_AVX
@@ -1543,6 +1670,7 @@ namespace ZQ
 			align_mode = __min(align_mode, ZQ_CNN_Tensor4D::ALIGN_128bit);
 #else
 			align_mode = __min(align_mode, ZQ_CNN_Tensor4D::ALIGN_0);
+#endif
 #endif
 			const float* in_data = input.GetFirstPixelPtr();
 			float* out_data = output.GetFirstPixelPtr();
@@ -1561,6 +1689,9 @@ namespace ZQ
 				return true;
 			int in_pixStep = input.GetPixelStep(), in_widthStep = input.GetWidthStep(), in_sliceStep = input.GetSliceStep();
 			int align_mode = input.GetAlignType();
+#if __ARM_NEON
+			align_mode = __min(align_mode, ZQ_CNN_Tensor4D::ALIGN_128bit);
+#else
 #if ZQ_CNN_USE_SSETYPE == ZQ_CNN_SSETYPE_AVX2
 			align_mode = __min(align_mode, ZQ_CNN_Tensor4D::ALIGN_256bit);
 #elif ZQ_CNN_USE_SSETYPE == ZQ_CNN_SSETYPE_AVX
@@ -1569,6 +1700,7 @@ namespace ZQ
 			align_mode = __min(align_mode, ZQ_CNN_Tensor4D::ALIGN_128bit);
 #else
 			align_mode = __min(align_mode, ZQ_CNN_Tensor4D::ALIGN_0);
+#endif
 #endif
 			float* in_data = input.GetFirstPixelPtr();
 			_scalaroperation_pow(align_mode, scalar, in_data, N, H, W, C, in_pixStep, in_widthStep, in_sliceStep);
@@ -1588,6 +1720,9 @@ namespace ZQ
 			int in_pixStep = input.GetPixelStep(), in_widthStep = input.GetWidthStep(), in_sliceStep = input.GetSliceStep();
 			int out_pixStep = output.GetPixelStep(), out_widthStep = output.GetWidthStep(), out_sliceStep = output.GetSliceStep();
 			int align_mode = __min(input.GetAlignType(), output.GetAlignType());
+#if __ARM_NEON
+			align_mode = __min(align_mode, ZQ_CNN_Tensor4D::ALIGN_128bit);
+#else
 #if ZQ_CNN_USE_SSETYPE == ZQ_CNN_SSETYPE_AVX2
 			align_mode = __min(align_mode, ZQ_CNN_Tensor4D::ALIGN_256bit);
 #elif ZQ_CNN_USE_SSETYPE == ZQ_CNN_SSETYPE_AVX
@@ -1596,6 +1731,7 @@ namespace ZQ
 			align_mode = __min(align_mode, ZQ_CNN_Tensor4D::ALIGN_128bit);
 #else
 			align_mode = __min(align_mode, ZQ_CNN_Tensor4D::ALIGN_0);
+#endif
 #endif
 			const float* in_data = input.GetFirstPixelPtr();
 			float* out_data = output.GetFirstPixelPtr();
@@ -1614,6 +1750,9 @@ namespace ZQ
 				return true;
 			int in_pixStep = input.GetPixelStep(), in_widthStep = input.GetWidthStep(), in_sliceStep = input.GetSliceStep();
 			int align_mode = input.GetAlignType();
+#if __ARM_NEON
+			align_mode = __min(align_mode, ZQ_CNN_Tensor4D::ALIGN_128bit);
+#else
 #if ZQ_CNN_USE_SSETYPE == ZQ_CNN_SSETYPE_AVX2
 			align_mode = __min(align_mode, ZQ_CNN_Tensor4D::ALIGN_256bit);
 #elif ZQ_CNN_USE_SSETYPE == ZQ_CNN_SSETYPE_AVX
@@ -1622,6 +1761,7 @@ namespace ZQ
 			align_mode = __min(align_mode, ZQ_CNN_Tensor4D::ALIGN_128bit);
 #else
 			align_mode = __min(align_mode, ZQ_CNN_Tensor4D::ALIGN_0);
+#endif
 #endif
 			float* in_data = input.GetFirstPixelPtr();
 			_scalaroperation_rdiv(align_mode, scalar, in_data, N, H, W, C, in_pixStep, in_widthStep, in_sliceStep);
@@ -1641,6 +1781,9 @@ namespace ZQ
 			int in_pixStep = input.GetPixelStep(), in_widthStep = input.GetWidthStep(), in_sliceStep = input.GetSliceStep();
 			int out_pixStep = output.GetPixelStep(), out_widthStep = output.GetWidthStep(), out_sliceStep = output.GetSliceStep();
 			int align_mode = __min(input.GetAlignType(), output.GetAlignType());
+#if __ARM_NEON
+			align_mode = __min(align_mode, ZQ_CNN_Tensor4D::ALIGN_128bit);
+#else
 #if ZQ_CNN_USE_SSETYPE == ZQ_CNN_SSETYPE_AVX2
 			align_mode = __min(align_mode, ZQ_CNN_Tensor4D::ALIGN_256bit);
 #elif ZQ_CNN_USE_SSETYPE == ZQ_CNN_SSETYPE_AVX
@@ -1649,6 +1792,7 @@ namespace ZQ
 			align_mode = __min(align_mode, ZQ_CNN_Tensor4D::ALIGN_128bit);
 #else
 			align_mode = __min(align_mode, ZQ_CNN_Tensor4D::ALIGN_0);
+#endif
 #endif
 			const float* in_data = input.GetFirstPixelPtr();
 			float* out_data = output.GetFirstPixelPtr();
@@ -1667,6 +1811,9 @@ namespace ZQ
 				return true;
 			int in_pixStep = input.GetPixelStep(), in_widthStep = input.GetWidthStep(), in_sliceStep = input.GetSliceStep();
 			int align_mode = input.GetAlignType();
+#if __ARM_NEON
+			align_mode = __min(align_mode, ZQ_CNN_Tensor4D::ALIGN_128bit);
+#else
 #if ZQ_CNN_USE_SSETYPE == ZQ_CNN_SSETYPE_AVX2
 			align_mode = __min(align_mode, ZQ_CNN_Tensor4D::ALIGN_256bit);
 #elif ZQ_CNN_USE_SSETYPE == ZQ_CNN_SSETYPE_AVX
@@ -1675,6 +1822,7 @@ namespace ZQ
 			align_mode = __min(align_mode, ZQ_CNN_Tensor4D::ALIGN_128bit);
 #else
 			align_mode = __min(align_mode, ZQ_CNN_Tensor4D::ALIGN_0);
+#endif
 #endif
 			float* in_data = input.GetFirstPixelPtr();
 			_scalaroperation_rminus(align_mode, scalar, in_data, N, H, W, C, in_pixStep, in_widthStep, in_sliceStep);
@@ -1711,6 +1859,9 @@ namespace ZQ
 			const float* in_data = input.GetFirstPixelPtr();
 			float* out_data = output.GetFirstPixelPtr();
 			int align_mode = __min(input.GetAlignType(), output.GetAlignType());
+#if __ARM_NEON
+			align_mode = __min(align_mode, ZQ_CNN_Tensor4D::ALIGN_128bit);
+#else
 #if ZQ_CNN_USE_SSETYPE == ZQ_CNN_SSETYPE_AVX2
 			align_mode = __min(align_mode, ZQ_CNN_Tensor4D::ALIGN_256bit);
 #elif ZQ_CNN_USE_SSETYPE == ZQ_CNN_SSETYPE_AVX
@@ -1719,6 +1870,7 @@ namespace ZQ
 			align_mode = __min(align_mode, ZQ_CNN_Tensor4D::ALIGN_128bit);
 #else
 			align_mode = __min(align_mode, ZQ_CNN_Tensor4D::ALIGN_0);
+#endif
 #endif
 			_lrn_across_channels(align_mode, local_size, alpha, beta, k, in_data, N, H, W, C, in_pixStep, in_widthStep, in_sliceStep, out_data, out_pixStep, out_widthStep, 
 				out_sliceStep);
@@ -1740,6 +1892,9 @@ namespace ZQ
 			float* in_data = input.GetFirstPixelPtr();
 			const float* scale_data = scale.GetFirstPixelPtr();
 			int align_mode = __min(input.GetAlignType(), scale.GetAlignType());
+#if __ARM_NEON
+			align_mode = __min(align_mode, ZQ_CNN_Tensor4D::ALIGN_128bit);
+#else
 #if ZQ_CNN_USE_SSETYPE == ZQ_CNN_SSETYPE_AVX2
 			align_mode = __min(align_mode, ZQ_CNN_Tensor4D::ALIGN_256bit);
 #elif ZQ_CNN_USE_SSETYPE == ZQ_CNN_SSETYPE_AVX
@@ -1748,6 +1903,7 @@ namespace ZQ
 			align_mode = __min(align_mode, ZQ_CNN_Tensor4D::ALIGN_128bit);
 #else
 			align_mode = __min(align_mode, ZQ_CNN_Tensor4D::ALIGN_0);
+#endif
 #endif
 			_normalize(align_mode, across_spatial, channel_shared, in_data, scale_data, N, H, W, C, in_pixStep, in_widthStep, in_sliceStep,eps);
 			return true;
