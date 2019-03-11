@@ -7,8 +7,12 @@
 #include "opencv2/opencv.hpp"
 #include "ZQ_CNN_CompileConfig.h"
 #if ZQ_CNN_USE_BLAS_GEMM
+#if __ARM_NEON
+#include <openblas/arm/cblas.h>
+#else
 #include <openblas/cblas.h>
 #pragma comment(lib,"libopenblas.lib")
+#endif
 #elif ZQ_CNN_USE_MKL_GEMM
 #include <mkl/mkl.h>
 #pragma comment(lib,"mklml.lib")
@@ -31,9 +35,13 @@ int main()
 #endif
 	int show_H = 640, show_W = 640;
 	ZQ_CNN_Net net1, net2;
-	if (!net1.LoadFrom("model/det5-dw96-v2n.zqparams", "model/det5-dw96-v2n-6000.nchwbin")
+#if defined(_WIN32)
+	if (!net1.LoadFrom("model/det5-dw96-v2s.zqparams", "model/det5-dw96-v2s-8000.nchwbin")
 		|| !net2.LoadFrom("model/det3.zqparams", "model/det3_bgr.nchwbin"))
-		//|| !net2.LoadFrom("model/det4-dw48-1.zqparams", "model/det4-dw48-1-7.nchwbin"))
+#else
+	if (!net1.LoadFrom("../../model/det5-dw96-v2s.zqparams", "../../model/det5-dw96-v2s-8000.nchwbin")
+		|| !net2.LoadFrom("../../model/det3.zqparams", "../../model/det3_bgr.nchwbin"))
+#endif
 	{
 		cout << "failed to load model\n";
 		return EXIT_FAILURE;
@@ -44,7 +52,11 @@ int main()
 	int net2_H, net2_W, net2_C;
 	net1.GetInputDim(net1_C, net1_H, net1_W);
 	net2.GetInputDim(net2_C, net2_H, net2_W);
+#if defined(_WIN32)
 	Mat img = imread("data/onet.jpg", 1);
+#else
+	Mat img = imread("../../data/onet.jpg", 1);
+#endif
 	if (img.empty())
 	{
 		cout << "failed to load image\n";
