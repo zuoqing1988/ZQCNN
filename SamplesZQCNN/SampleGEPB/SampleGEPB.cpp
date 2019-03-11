@@ -49,6 +49,10 @@
 #define zq_mm_align_size2 8
 #define zq_mm_align_size3 12
 #define zq_mm_align_size4 16
+#define zq_mm_align_size5 20
+#define zq_mm_align_size6 24
+#define zq_mm_align_size7 28
+#define zq_mm_align_size8 32
 #else
 #if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_AVX
 #define zq_mm_load_ps _mm256_load_ps
@@ -64,6 +68,10 @@
 #define zq_mm_align_size2 16
 #define zq_mm_align_size3 24
 #define zq_mm_align_size4 32
+#define zq_mm_align_size5 40
+#define zq_mm_align_size6 48
+#define zq_mm_align_size7 56
+#define zq_mm_align_size8 64
 #elif ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_SSE
 #define zq_mm_load_ps _mm_load_ps
 #define zq_mm_broadcast_ss _mm_broadcast_ss
@@ -78,6 +86,10 @@
 #define zq_mm_align_size2 8
 #define zq_mm_align_size3 12
 #define zq_mm_align_size4 16
+#define zq_mm_align_size5 20
+#define zq_mm_align_size6 24
+#define zq_mm_align_size7 28
+#define zq_mm_align_size8 32
 #endif
 #endif
 
@@ -92,10 +104,10 @@ void inner_kernel_MxALIGN2_template(int K, const float *packA, const float *pack
 	const float *aptr = packA;
 	const float *bptr = packB;
 	float *cptr = c;
-	zq_mm_type va;
-	zq_mm_type vb0, vb1;
-	zq_mm_type vc00, vc10, vc20, vc30, vc40, vc50, vc60, vc70;
-	zq_mm_type vc01, vc11, vc21, vc31, vc41, vc51, vc61, vc71;
+	register zq_mm_type va;
+	register zq_mm_type vb0, vb1;
+	register zq_mm_type vc00, vc10, vc20, vc30, vc40, vc50, vc60, vc70;
+	register zq_mm_type vc01, vc11, vc21, vc31, vc41, vc51, vc61, vc71;
 
 	vc00 = zq_mm_load_ps(cptr);
 	vc01 = zq_mm_load_ps(cptr + zq_mm_align_size);
@@ -280,11 +292,11 @@ void inner_kernel_MxALIGN3_template(int K, const float *packA, const float *pack
 	const float *aptr = packA;
 	const float *bptr = packB;
 	float *cptr = c;
-	zq_mm_type va;
-	zq_mm_type vb0, vb1, vb2;
-	zq_mm_type vc00, vc10, vc20, vc30, vc40, vc50, vc60, vc70;
-	zq_mm_type vc01, vc11, vc21, vc31, vc41, vc51, vc61, vc71;
-	zq_mm_type vc02, vc12, vc22, vc32, vc42, vc52, vc62, vc72;
+	register zq_mm_type va;
+	register zq_mm_type vb0, vb1, vb2;
+	register zq_mm_type vc00, vc10, vc20, vc30, vc40, vc50, vc60, vc70;
+	register zq_mm_type vc01, vc11, vc21, vc31, vc41, vc51, vc61, vc71;
+	register zq_mm_type vc02, vc12, vc22, vc32, vc42, vc52, vc62, vc72;
 
 	vc00 = zq_mm_load_ps(cptr);
 	vc01 = zq_mm_load_ps(cptr + zq_mm_align_size);
@@ -503,12 +515,12 @@ void inner_kernel_MxALIGN4_template(int K, const float *packA, const float *pack
 	const float *aptr = packA;
 	const float *bptr = packB;
 	float *cptr = c;
-	zq_mm_type va;
-	zq_mm_type vb0, vb1, vb2, vb3;
-	zq_mm_type vc00, vc10, vc20, vc30, vc40, vc50, vc60, vc70;
-	zq_mm_type vc01, vc11, vc21, vc31, vc41, vc51, vc61, vc71;
-	zq_mm_type vc02, vc12, vc22, vc32, vc42, vc52, vc62, vc72;
-	zq_mm_type vc03, vc13, vc23, vc33, vc43, vc53, vc63, vc73;
+	register zq_mm_type va;
+	register zq_mm_type vb0, vb1, vb2, vb3;
+	register zq_mm_type vc00, vc10, vc20, vc30, vc40, vc50, vc60, vc70;
+	register zq_mm_type vc01, vc11, vc21, vc31, vc41, vc51, vc61, vc71;
+	register zq_mm_type vc02, vc12, vc22, vc32, vc42, vc52, vc62, vc72;
+	register zq_mm_type vc03, vc13, vc23, vc33, vc43, vc53, vc63, vc73;
 
 	vc00 = zq_mm_load_ps(cptr);
 	vc01 = zq_mm_load_ps(cptr + zq_mm_align_size);
@@ -756,6 +768,406 @@ void inner_kernel_MxALIGN4_template(int K, const float *packA, const float *pack
 	}
 }
 
+template<const int M>
+void inner_kernel_MxALIGN8_template(int K, const float *packA, const float *packB, float *c, int ldc)
+{
+	const float *aptr = packA;
+	const float *bptr = packB;
+	float *cptr = c;
+	register zq_mm_type va;
+	register zq_mm_type vb0, vb1, vb2, vb3, vb4, vb5, vb6, vb7;
+	register zq_mm_type vc00, vc10, vc20, vc30, vc40, vc50, vc60, vc70;
+	register zq_mm_type vc01, vc11, vc21, vc31, vc41, vc51, vc61, vc71;
+	register zq_mm_type vc02, vc12, vc22, vc32, vc42, vc52, vc62, vc72;
+	register zq_mm_type vc03, vc13, vc23, vc33, vc43, vc53, vc63, vc73;
+	register zq_mm_type vc04, vc14, vc24, vc34, vc44, vc54, vc64, vc74;
+	register zq_mm_type vc05, vc15, vc25, vc35, vc45, vc55, vc65, vc75;
+	register zq_mm_type vc06, vc16, vc26, vc36, vc46, vc56, vc66, vc76;
+	register zq_mm_type vc07, vc17, vc27, vc37, vc47, vc57, vc67, vc77;
+
+	vc00 = zq_mm_load_ps(cptr);
+	vc01 = zq_mm_load_ps(cptr + zq_mm_align_size);
+	vc02 = zq_mm_load_ps(cptr + zq_mm_align_size2);
+	vc03 = zq_mm_load_ps(cptr + zq_mm_align_size3);
+	vc04 = zq_mm_load_ps(cptr + zq_mm_align_size4);
+	vc05 = zq_mm_load_ps(cptr + zq_mm_align_size5);
+	vc06 = zq_mm_load_ps(cptr + zq_mm_align_size6);
+	vc07 = zq_mm_load_ps(cptr + zq_mm_align_size7);
+	cptr += ldc;
+	if (M > 1)
+	{
+		vc10 = zq_mm_load_ps(cptr);
+		vc11 = zq_mm_load_ps(cptr + zq_mm_align_size);
+		vc12 = zq_mm_load_ps(cptr + zq_mm_align_size2);
+		vc13 = zq_mm_load_ps(cptr + zq_mm_align_size3);
+		vc14 = zq_mm_load_ps(cptr + zq_mm_align_size4);
+		vc15 = zq_mm_load_ps(cptr + zq_mm_align_size5);
+		vc16 = zq_mm_load_ps(cptr + zq_mm_align_size6);
+		vc17 = zq_mm_load_ps(cptr + zq_mm_align_size7);
+		cptr += ldc;
+	}
+	if (M > 2)
+	{
+		vc20 = zq_mm_load_ps(cptr);
+		vc21 = zq_mm_load_ps(cptr + zq_mm_align_size);
+		vc22 = zq_mm_load_ps(cptr + zq_mm_align_size2);
+		vc23 = zq_mm_load_ps(cptr + zq_mm_align_size3);
+		vc24 = zq_mm_load_ps(cptr + zq_mm_align_size4);
+		vc25 = zq_mm_load_ps(cptr + zq_mm_align_size5);
+		vc26 = zq_mm_load_ps(cptr + zq_mm_align_size6);
+		vc27 = zq_mm_load_ps(cptr + zq_mm_align_size7);
+		cptr += ldc;
+	}
+	if (M > 3)
+	{
+		vc30 = zq_mm_load_ps(cptr);
+		vc31 = zq_mm_load_ps(cptr + zq_mm_align_size);
+		vc32 = zq_mm_load_ps(cptr + zq_mm_align_size2);
+		vc33 = zq_mm_load_ps(cptr + zq_mm_align_size3);
+		vc34 = zq_mm_load_ps(cptr + zq_mm_align_size4);
+		vc35 = zq_mm_load_ps(cptr + zq_mm_align_size5);
+		vc36 = zq_mm_load_ps(cptr + zq_mm_align_size6);
+		vc37 = zq_mm_load_ps(cptr + zq_mm_align_size7);
+		cptr += ldc;
+	}
+	if (M > 4)
+	{
+		vc40 = zq_mm_load_ps(cptr);
+		vc41 = zq_mm_load_ps(cptr + zq_mm_align_size);
+		vc42 = zq_mm_load_ps(cptr + zq_mm_align_size2);
+		vc43 = zq_mm_load_ps(cptr + zq_mm_align_size3);
+		vc44 = zq_mm_load_ps(cptr + zq_mm_align_size4);
+		vc45 = zq_mm_load_ps(cptr + zq_mm_align_size5);
+		vc46 = zq_mm_load_ps(cptr + zq_mm_align_size6);
+		vc47 = zq_mm_load_ps(cptr + zq_mm_align_size7);
+		cptr += ldc;
+	}
+	if (M > 5)
+	{
+		vc50 = zq_mm_load_ps(cptr);
+		vc51 = zq_mm_load_ps(cptr + zq_mm_align_size);
+		vc52 = zq_mm_load_ps(cptr + zq_mm_align_size2);
+		vc53 = zq_mm_load_ps(cptr + zq_mm_align_size3);
+		vc54 = zq_mm_load_ps(cptr + zq_mm_align_size4);
+		vc55 = zq_mm_load_ps(cptr + zq_mm_align_size5);
+		vc56 = zq_mm_load_ps(cptr + zq_mm_align_size6);
+		vc57 = zq_mm_load_ps(cptr + zq_mm_align_size7);
+		cptr += ldc;
+	}
+	if (M > 6)
+	{
+		vc60 = zq_mm_load_ps(cptr);
+		vc61 = zq_mm_load_ps(cptr + zq_mm_align_size);
+		vc62 = zq_mm_load_ps(cptr + zq_mm_align_size2);
+		vc63 = zq_mm_load_ps(cptr + zq_mm_align_size3);
+		vc64 = zq_mm_load_ps(cptr + zq_mm_align_size4);
+		vc65 = zq_mm_load_ps(cptr + zq_mm_align_size5);
+		vc66 = zq_mm_load_ps(cptr + zq_mm_align_size6);
+		vc67 = zq_mm_load_ps(cptr + zq_mm_align_size7);
+		cptr += ldc;
+	}
+	if (M > 7)
+	{
+		vc70 = zq_mm_load_ps(cptr);
+		vc71 = zq_mm_load_ps(cptr + zq_mm_align_size);
+		vc72 = zq_mm_load_ps(cptr + zq_mm_align_size2);
+		vc73 = zq_mm_load_ps(cptr + zq_mm_align_size3);
+		vc74 = zq_mm_load_ps(cptr + zq_mm_align_size4);
+		vc75 = zq_mm_load_ps(cptr + zq_mm_align_size5);
+		vc76 = zq_mm_load_ps(cptr + zq_mm_align_size6);
+		vc77 = zq_mm_load_ps(cptr + zq_mm_align_size7);
+	}
+	vb0 = zq_mm_load_ps(bptr);
+	vb1 = zq_mm_load_ps(bptr + zq_mm_align_size);
+	vb2 = zq_mm_load_ps(bptr + zq_mm_align_size2);
+	vb3 = zq_mm_load_ps(bptr + zq_mm_align_size3);
+	vb4 = zq_mm_load_ps(bptr + zq_mm_align_size4);
+	vb5 = zq_mm_load_ps(bptr + zq_mm_align_size5);
+	vb6 = zq_mm_load_ps(bptr + zq_mm_align_size6);
+	vb7 = zq_mm_load_ps(bptr + zq_mm_align_size7);
+
+	for (int p = 0; p < (K - 1); ++p)
+	{
+		va = zq_mm_broadcast_ss(aptr);
+		vc00 = zq_mm_fmadd_ps(vb0, va, vc00);
+		vc01 = zq_mm_fmadd_ps(vb1, va, vc01);
+		vc02 = zq_mm_fmadd_ps(vb2, va, vc02);
+		vc03 = zq_mm_fmadd_ps(vb3, va, vc03);
+		vc04 = zq_mm_fmadd_ps(vb4, va, vc04);
+		vc05 = zq_mm_fmadd_ps(vb5, va, vc05);
+		vc06 = zq_mm_fmadd_ps(vb6, va, vc06);
+		vc07 = zq_mm_fmadd_ps(vb7, va, vc07);
+
+		if (M > 1)
+		{
+			va = zq_mm_broadcast_ss(aptr + 1);
+			vc10 = zq_mm_fmadd_ps(vb0, va, vc10);
+			vc11 = zq_mm_fmadd_ps(vb1, va, vc11);
+			vc12 = zq_mm_fmadd_ps(vb2, va, vc12);
+			vc13 = zq_mm_fmadd_ps(vb3, va, vc13);
+			vc14 = zq_mm_fmadd_ps(vb4, va, vc14);
+			vc15 = zq_mm_fmadd_ps(vb5, va, vc15);
+			vc16 = zq_mm_fmadd_ps(vb6, va, vc16);
+			vc17 = zq_mm_fmadd_ps(vb7, va, vc17);
+		}
+
+		if (M > 2)
+		{
+			va = zq_mm_broadcast_ss(aptr + 2);
+			vc20 = zq_mm_fmadd_ps(vb0, va, vc20);
+			vc21 = zq_mm_fmadd_ps(vb1, va, vc21);
+			vc22 = zq_mm_fmadd_ps(vb2, va, vc22);
+			vc23 = zq_mm_fmadd_ps(vb3, va, vc23);
+			vc24 = zq_mm_fmadd_ps(vb4, va, vc24);
+			vc25 = zq_mm_fmadd_ps(vb5, va, vc25);
+			vc26 = zq_mm_fmadd_ps(vb6, va, vc26);
+			vc27 = zq_mm_fmadd_ps(vb7, va, vc27);
+		}
+
+		if (M > 3)
+		{
+			va = zq_mm_broadcast_ss(aptr + 3);
+			vc30 = zq_mm_fmadd_ps(vb0, va, vc30);
+			vc31 = zq_mm_fmadd_ps(vb1, va, vc31);
+			vc32 = zq_mm_fmadd_ps(vb2, va, vc32);
+			vc33 = zq_mm_fmadd_ps(vb3, va, vc33);
+			vc34 = zq_mm_fmadd_ps(vb4, va, vc34);
+			vc35 = zq_mm_fmadd_ps(vb5, va, vc35);
+			vc36 = zq_mm_fmadd_ps(vb6, va, vc36);
+			vc37 = zq_mm_fmadd_ps(vb7, va, vc37);
+		}
+
+		if (M > 4)
+		{
+			va = zq_mm_broadcast_ss(aptr + 4);
+			vc40 = zq_mm_fmadd_ps(vb0, va, vc40);
+			vc41 = zq_mm_fmadd_ps(vb1, va, vc41);
+			vc42 = zq_mm_fmadd_ps(vb2, va, vc42);
+			vc43 = zq_mm_fmadd_ps(vb3, va, vc43);
+			vc44 = zq_mm_fmadd_ps(vb4, va, vc44);
+			vc45 = zq_mm_fmadd_ps(vb5, va, vc45);
+			vc46 = zq_mm_fmadd_ps(vb6, va, vc46);
+			vc47 = zq_mm_fmadd_ps(vb7, va, vc47);
+		}
+
+		if (M > 5)
+		{
+			va = zq_mm_broadcast_ss(aptr + 5);
+			vc50 = zq_mm_fmadd_ps(vb0, va, vc50);
+			vc51 = zq_mm_fmadd_ps(vb1, va, vc51);
+			vc52 = zq_mm_fmadd_ps(vb2, va, vc52);
+			vc53 = zq_mm_fmadd_ps(vb3, va, vc53);
+			vc54 = zq_mm_fmadd_ps(vb4, va, vc54);
+			vc55 = zq_mm_fmadd_ps(vb5, va, vc55);
+			vc56 = zq_mm_fmadd_ps(vb6, va, vc56);
+			vc57 = zq_mm_fmadd_ps(vb7, va, vc57);
+		}
+
+		if (M > 6)
+		{
+			va = zq_mm_broadcast_ss(aptr + 6);
+			vc60 = zq_mm_fmadd_ps(vb0, va, vc60);
+			vc61 = zq_mm_fmadd_ps(vb1, va, vc61);
+			vc62 = zq_mm_fmadd_ps(vb2, va, vc62);
+			vc63 = zq_mm_fmadd_ps(vb3, va, vc63);
+			vc64 = zq_mm_fmadd_ps(vb4, va, vc64);
+			vc65 = zq_mm_fmadd_ps(vb5, va, vc65);
+			vc66 = zq_mm_fmadd_ps(vb6, va, vc66);
+			vc67 = zq_mm_fmadd_ps(vb7, va, vc67);
+		}
+
+		if (M > 7)
+		{
+			va = zq_mm_broadcast_ss(aptr + 7);
+			vc70 = zq_mm_fmadd_ps(vb0, va, vc70);
+			vc71 = zq_mm_fmadd_ps(vb1, va, vc71);
+			vc72 = zq_mm_fmadd_ps(vb2, va, vc72);
+			vc73 = zq_mm_fmadd_ps(vb3, va, vc73);
+			vc74 = zq_mm_fmadd_ps(vb4, va, vc74);
+			vc75 = zq_mm_fmadd_ps(vb5, va, vc75);
+			vc76 = zq_mm_fmadd_ps(vb6, va, vc76);
+			vc77 = zq_mm_fmadd_ps(vb7, va, vc77);
+		}
+
+		bptr += zq_mm_align_size8;
+		aptr += M;
+		vb0 = zq_mm_load_ps(bptr);
+		vb1 = zq_mm_load_ps(bptr + zq_mm_align_size);
+		vb2 = zq_mm_load_ps(bptr + zq_mm_align_size2);
+		vb3 = zq_mm_load_ps(bptr + zq_mm_align_size3);
+		vb4 = zq_mm_load_ps(bptr + zq_mm_align_size4);
+		vb5 = zq_mm_load_ps(bptr + zq_mm_align_size5);
+		vb6 = zq_mm_load_ps(bptr + zq_mm_align_size6);
+		vb7 = zq_mm_load_ps(bptr + zq_mm_align_size7);
+
+	}
+	cptr = c;
+	va = zq_mm_broadcast_ss(aptr);
+	vc00 = zq_mm_fmadd_ps(vb0, va, vc00);
+	vc01 = zq_mm_fmadd_ps(vb1, va, vc01);
+	vc02 = zq_mm_fmadd_ps(vb2, va, vc02);
+	vc03 = zq_mm_fmadd_ps(vb3, va, vc03);
+	vc04 = zq_mm_fmadd_ps(vb4, va, vc04);
+	vc05 = zq_mm_fmadd_ps(vb5, va, vc05);
+	vc06 = zq_mm_fmadd_ps(vb6, va, vc06);
+	vc07 = zq_mm_fmadd_ps(vb7, va, vc07);
+	zq_mm_store_ps(cptr, vc00);
+	zq_mm_store_ps(cptr + zq_mm_align_size, vc01);
+	zq_mm_store_ps(cptr + zq_mm_align_size2, vc02);
+	zq_mm_store_ps(cptr + zq_mm_align_size3, vc03);
+	zq_mm_store_ps(cptr + zq_mm_align_size4, vc04);
+	zq_mm_store_ps(cptr + zq_mm_align_size5, vc05);
+	zq_mm_store_ps(cptr + zq_mm_align_size6, vc06);
+	zq_mm_store_ps(cptr + zq_mm_align_size7, vc07);
+	if (M > 1)
+	{
+		va = zq_mm_broadcast_ss(aptr + 1);
+		vc10 = zq_mm_fmadd_ps(vb0, va, vc10);
+		vc11 = zq_mm_fmadd_ps(vb1, va, vc11);
+		vc12 = zq_mm_fmadd_ps(vb2, va, vc12);
+		vc13 = zq_mm_fmadd_ps(vb3, va, vc13);
+		vc14 = zq_mm_fmadd_ps(vb4, va, vc14);
+		vc15 = zq_mm_fmadd_ps(vb5, va, vc15);
+		vc16 = zq_mm_fmadd_ps(vb6, va, vc16);
+		vc17 = zq_mm_fmadd_ps(vb7, va, vc17);
+		cptr += ldc;
+		zq_mm_store_ps(cptr, vc10);
+		zq_mm_store_ps(cptr + zq_mm_align_size, vc11);
+		zq_mm_store_ps(cptr + zq_mm_align_size2, vc12);
+		zq_mm_store_ps(cptr + zq_mm_align_size3, vc13);
+		zq_mm_store_ps(cptr + zq_mm_align_size4, vc14);
+		zq_mm_store_ps(cptr + zq_mm_align_size5, vc15);
+		zq_mm_store_ps(cptr + zq_mm_align_size6, vc16);
+		zq_mm_store_ps(cptr + zq_mm_align_size7, vc17);
+	}
+	if (M > 2)
+	{
+		va = zq_mm_broadcast_ss(aptr + 2);
+		vc20 = zq_mm_fmadd_ps(vb0, va, vc20);
+		vc21 = zq_mm_fmadd_ps(vb1, va, vc21);
+		vc22 = zq_mm_fmadd_ps(vb2, va, vc22);
+		vc23 = zq_mm_fmadd_ps(vb3, va, vc23);
+		vc24 = zq_mm_fmadd_ps(vb4, va, vc24);
+		vc25 = zq_mm_fmadd_ps(vb5, va, vc25);
+		vc26 = zq_mm_fmadd_ps(vb6, va, vc26);
+		vc27 = zq_mm_fmadd_ps(vb7, va, vc27);
+		cptr += ldc;
+		zq_mm_store_ps(cptr, vc20);
+		zq_mm_store_ps(cptr + zq_mm_align_size, vc21);
+		zq_mm_store_ps(cptr + zq_mm_align_size2, vc22);
+		zq_mm_store_ps(cptr + zq_mm_align_size3, vc23);
+		zq_mm_store_ps(cptr + zq_mm_align_size4, vc24);
+		zq_mm_store_ps(cptr + zq_mm_align_size5, vc25);
+		zq_mm_store_ps(cptr + zq_mm_align_size6, vc26);
+		zq_mm_store_ps(cptr + zq_mm_align_size7, vc27);
+	}
+	if (M > 3)
+	{
+		va = zq_mm_broadcast_ss(aptr + 3);
+		vc30 = zq_mm_fmadd_ps(vb0, va, vc30);
+		vc31 = zq_mm_fmadd_ps(vb1, va, vc31);
+		vc32 = zq_mm_fmadd_ps(vb2, va, vc32);
+		vc33 = zq_mm_fmadd_ps(vb3, va, vc33);
+		vc34 = zq_mm_fmadd_ps(vb4, va, vc34);
+		vc35 = zq_mm_fmadd_ps(vb5, va, vc35);
+		vc36 = zq_mm_fmadd_ps(vb6, va, vc36);
+		vc37 = zq_mm_fmadd_ps(vb7, va, vc37);
+		cptr += ldc;
+		zq_mm_store_ps(cptr, vc30);
+		zq_mm_store_ps(cptr + zq_mm_align_size, vc31);
+		zq_mm_store_ps(cptr + zq_mm_align_size2, vc32);
+		zq_mm_store_ps(cptr + zq_mm_align_size3, vc33);
+		zq_mm_store_ps(cptr + zq_mm_align_size4, vc34);
+		zq_mm_store_ps(cptr + zq_mm_align_size5, vc35);
+		zq_mm_store_ps(cptr + zq_mm_align_size6, vc36);
+		zq_mm_store_ps(cptr + zq_mm_align_size7, vc37);
+	}
+	if (M > 4)
+	{
+		va = zq_mm_broadcast_ss(aptr + 4);
+		vc40 = zq_mm_fmadd_ps(vb0, va, vc40);
+		vc41 = zq_mm_fmadd_ps(vb1, va, vc41);
+		vc42 = zq_mm_fmadd_ps(vb2, va, vc42);
+		vc43 = zq_mm_fmadd_ps(vb3, va, vc43);
+		vc44 = zq_mm_fmadd_ps(vb4, va, vc44);
+		vc45 = zq_mm_fmadd_ps(vb5, va, vc45);
+		vc46 = zq_mm_fmadd_ps(vb6, va, vc46);
+		vc47 = zq_mm_fmadd_ps(vb7, va, vc47);
+		cptr += ldc;
+		zq_mm_store_ps(cptr, vc40);
+		zq_mm_store_ps(cptr + zq_mm_align_size, vc41);
+		zq_mm_store_ps(cptr + zq_mm_align_size2, vc42);
+		zq_mm_store_ps(cptr + zq_mm_align_size3, vc43);
+		zq_mm_store_ps(cptr + zq_mm_align_size4, vc44);
+		zq_mm_store_ps(cptr + zq_mm_align_size5, vc45);
+		zq_mm_store_ps(cptr + zq_mm_align_size6, vc46);
+		zq_mm_store_ps(cptr + zq_mm_align_size7, vc47);
+	}
+	if (M > 5)
+	{
+		va = zq_mm_broadcast_ss(aptr + 5);
+		vc50 = zq_mm_fmadd_ps(vb0, va, vc50);
+		vc51 = zq_mm_fmadd_ps(vb1, va, vc51);
+		vc52 = zq_mm_fmadd_ps(vb2, va, vc52);
+		vc53 = zq_mm_fmadd_ps(vb3, va, vc53);
+		vc54 = zq_mm_fmadd_ps(vb4, va, vc54);
+		vc55 = zq_mm_fmadd_ps(vb5, va, vc55);
+		vc56 = zq_mm_fmadd_ps(vb6, va, vc56);
+		vc57 = zq_mm_fmadd_ps(vb7, va, vc57);
+		cptr += ldc;
+		zq_mm_store_ps(cptr, vc50);
+		zq_mm_store_ps(cptr + zq_mm_align_size, vc51);
+		zq_mm_store_ps(cptr + zq_mm_align_size2, vc52);
+		zq_mm_store_ps(cptr + zq_mm_align_size3, vc53);
+		zq_mm_store_ps(cptr + zq_mm_align_size4, vc54);
+		zq_mm_store_ps(cptr + zq_mm_align_size5, vc55);
+		zq_mm_store_ps(cptr + zq_mm_align_size6, vc56);
+		zq_mm_store_ps(cptr + zq_mm_align_size7, vc57);
+	}
+	if (M > 6)
+	{
+		va = zq_mm_broadcast_ss(aptr + 6);
+		vc60 = zq_mm_fmadd_ps(vb0, va, vc60);
+		vc61 = zq_mm_fmadd_ps(vb1, va, vc61);
+		vc62 = zq_mm_fmadd_ps(vb2, va, vc62);
+		vc63 = zq_mm_fmadd_ps(vb3, va, vc63);
+		vc64 = zq_mm_fmadd_ps(vb4, va, vc64);
+		vc65 = zq_mm_fmadd_ps(vb5, va, vc65);
+		vc66 = zq_mm_fmadd_ps(vb6, va, vc66);
+		vc67 = zq_mm_fmadd_ps(vb7, va, vc67);
+		cptr += ldc;
+		zq_mm_store_ps(cptr, vc60);
+		zq_mm_store_ps(cptr + zq_mm_align_size, vc61);
+		zq_mm_store_ps(cptr + zq_mm_align_size2, vc62);
+		zq_mm_store_ps(cptr + zq_mm_align_size3, vc63);
+		zq_mm_store_ps(cptr + zq_mm_align_size4, vc64);
+		zq_mm_store_ps(cptr + zq_mm_align_size5, vc65);
+		zq_mm_store_ps(cptr + zq_mm_align_size6, vc66);
+		zq_mm_store_ps(cptr + zq_mm_align_size7, vc67);
+	}
+	if (M > 7)
+	{
+		va = zq_mm_broadcast_ss(aptr + 7);
+		vc70 = zq_mm_fmadd_ps(vb0, va, vc70);
+		vc71 = zq_mm_fmadd_ps(vb1, va, vc71);
+		vc72 = zq_mm_fmadd_ps(vb2, va, vc72);
+		vc73 = zq_mm_fmadd_ps(vb3, va, vc73);
+		vc74 = zq_mm_fmadd_ps(vb4, va, vc74);
+		vc75 = zq_mm_fmadd_ps(vb5, va, vc75);
+		vc76 = zq_mm_fmadd_ps(vb6, va, vc76);
+		vc77 = zq_mm_fmadd_ps(vb7, va, vc77);
+		cptr += ldc;
+		zq_mm_store_ps(cptr, vc70);
+		zq_mm_store_ps(cptr + zq_mm_align_size, vc71);
+		zq_mm_store_ps(cptr + zq_mm_align_size2, vc72);
+		zq_mm_store_ps(cptr + zq_mm_align_size3, vc73);
+		zq_mm_store_ps(cptr + zq_mm_align_size4, vc74);
+		zq_mm_store_ps(cptr + zq_mm_align_size5, vc75);
+		zq_mm_store_ps(cptr + zq_mm_align_size6, vc76);
+		zq_mm_store_ps(cptr + zq_mm_align_size7, vc77);
+	}
+}
+
 typedef void(*kernel)(int, const float *, const float *, float *, int);
 
 template<const int COL_BATCH>
@@ -848,6 +1260,36 @@ kernel get_kernel_MxCOL(int k)
 			break;
 		case 0:case 8:
 			return inner_kernel_MxALIGN4_template<8>;
+			break;
+		}
+	}
+	else if (COL_BATCH == zq_mm_align_size8)
+	{
+		switch (k)
+		{
+		case 1:
+			return inner_kernel_MxALIGN8_template<1>;
+			break;
+		case 2:
+			return inner_kernel_MxALIGN8_template<2>;
+			break;
+		case 3:
+			return inner_kernel_MxALIGN8_template<3>;
+			break;
+		case 4:
+			return inner_kernel_MxALIGN8_template<4>;
+			break;
+		case 5:
+			return inner_kernel_MxALIGN8_template<5>;
+			break;
+		case 6:
+			return inner_kernel_MxALIGN8_template<6>;
+			break;
+		case 7:
+			return inner_kernel_MxALIGN8_template<7>;
+			break;
+		case 0:case 8:
+			return inner_kernel_MxALIGN8_template<8>;
 			break;
 		}
 	}
@@ -1179,12 +1621,12 @@ int test(int M, int N, int K, int nIters, float thresh, bool show, int nc = 96, 
 int main()
 {
 #if __ARM_NEON
-	const int ALIGN2 = 8, ALIGN3 = 12, ALIGN4 = 16;
+	const int ALIGN2 = 8, ALIGN3 = 12, ALIGN4 = 16, ALIGN8 = 32;
 #else
 #if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_AVX
-	const int ALIGN2 = 16, ALIGN3 = 24, ALIGN4 = 32;
+	const int ALIGN2 = 16, ALIGN3 = 24, ALIGN4 = 32, ALIGN8 = 64;
 #elif ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_SSE
-	const int ALIGN2 = 8, ALIGN3 = 12, ALIGN4 = 16;
+	const int ALIGN2 = 8, ALIGN3 = 12, ALIGN4 = 16, ALIGN8 = 32;
 #endif
 #endif
 	
@@ -1207,71 +1649,91 @@ int main()
 		test<2, ALIGN4>(M, N, K, 1, 1e-4, true);
 	}*/
 
-	test<8, ALIGN2>(1024, 1024, 1024, 16, 1e-4, false);
-	test<8, ALIGN3>(1024, 1024, 1024, 16, 1e-4, false);
-	test<8, ALIGN4>(1024, 1024, 1024, 16, 1e-4, false);
-	test<6, ALIGN2>(1024, 1024, 1024, 16, 1e-4, false);
-	test<6, ALIGN3>(1024, 1024, 1024, 16, 1e-4, false);
-	test<6, ALIGN4>(1024, 1024, 1024, 16, 1e-4, false);
-	test<4, ALIGN2>(1024, 1024, 1024, 16, 1e-4, false);
-	test<4, ALIGN3>(1024, 1024, 1024, 16, 1e-4, false);
-	test<4, ALIGN4>(1024, 1024, 1024, 16, 1e-4, false);
-	test<2, ALIGN2>(1024, 1024, 1024, 16, 1e-4, false);
-	test<2, ALIGN3>(1024, 1024, 1024, 16, 1e-4, false);
-	test<2, ALIGN4>(1024, 1024, 1024, 16, 1e-4, false);
-
+	
 	test<8, ALIGN2>(64, 64, 64, 50000, 1e-5, false);
 	test<8, ALIGN3>(64, 64, 64, 50000, 1e-5, false);
 	test<8, ALIGN4>(64, 64, 64, 50000, 1e-5, false);
+	test<8, ALIGN8>(64, 64, 64, 50000, 1e-5, false);
 	test<6, ALIGN2>(64, 64, 64, 50000, 1e-5, false);
 	test<6, ALIGN3>(64, 64, 64, 50000, 1e-5, false);
 	test<6, ALIGN4>(64, 64, 64, 50000, 1e-5, false);
+	test<6, ALIGN8>(64, 64, 64, 50000, 1e-5, false);
 	test<4, ALIGN2>(64, 64, 64, 50000, 1e-5, false);
 	test<4, ALIGN3>(64, 64, 64, 50000, 1e-5, false);
 	test<4, ALIGN4>(64, 64, 64, 50000, 1e-5, false);
+	test<4, ALIGN8>(64, 64, 64, 50000, 1e-5, false);
 	test<2, ALIGN2>(64, 64, 64, 50000, 1e-5, false);
 	test<2, ALIGN3>(64, 64, 64, 50000, 1e-5, false);
 	test<2, ALIGN4>(64, 64, 64, 50000, 1e-5, false);
+	test<2, ALIGN8>(64, 64, 64, 50000, 1e-5, false);
 
 	test<8, ALIGN2>(128, 128, 128, 8000, 1e-5, false);
 	test<8, ALIGN3>(128, 128, 128, 8000, 1e-5, false);
 	test<8, ALIGN4>(128, 128, 128, 8000, 1e-5, false);
+	test<8, ALIGN8>(128, 128, 128, 8000, 1e-5, false);
 	test<6, ALIGN2>(128, 128, 128, 8000, 1e-5, false);
 	test<6, ALIGN3>(128, 128, 128, 8000, 1e-5, false);
 	test<6, ALIGN4>(128, 128, 128, 8000, 1e-5, false);
+	test<6, ALIGN8>(128, 128, 128, 8000, 1e-5, false);
 	test<4, ALIGN2>(128, 128, 128, 8000, 1e-5, false);
 	test<4, ALIGN3>(128, 128, 128, 8000, 1e-5, false);
 	test<4, ALIGN4>(128, 128, 128, 8000, 1e-5, false);
+	test<4, ALIGN8>(128, 128, 128, 8000, 1e-5, false);
 	test<2, ALIGN2>(128, 128, 128, 8000, 1e-5, false);
 	test<2, ALIGN3>(128, 128, 128, 8000, 1e-5, false);
 	test<2, ALIGN4>(128, 128, 128, 8000, 1e-5, false);
+	test<2, ALIGN8>(128, 128, 128, 8000, 1e-5, false);
 
 	test<8, ALIGN2>(256, 256, 256, 1000, 1e-5, false);
 	test<8, ALIGN3>(256, 256, 256, 1000, 1e-5, false);
 	test<8, ALIGN4>(256, 256, 256, 1000, 1e-5, false);
+	test<8, ALIGN8>(256, 256, 256, 1000, 1e-5, false);
 	test<6, ALIGN2>(256, 256, 256, 1000, 1e-5, false);
 	test<6, ALIGN3>(256, 256, 256, 1000, 1e-5, false);
 	test<6, ALIGN4>(256, 256, 256, 1000, 1e-5, false);
+	test<6, ALIGN8>(256, 256, 256, 1000, 1e-5, false);
 	test<4, ALIGN2>(256, 256, 256, 1000, 1e-5, false);
 	test<4, ALIGN3>(256, 256, 256, 1000, 1e-5, false);
 	test<4, ALIGN4>(256, 256, 256, 1000, 1e-5, false);
+	test<4, ALIGN8>(256, 256, 256, 1000, 1e-5, false);
 	test<2, ALIGN2>(256, 256, 256, 1000, 1e-5, false);
 	test<2, ALIGN3>(256, 256, 256, 1000, 1e-5, false);
 	test<2, ALIGN4>(256, 256, 256, 1000, 1e-5, false);
+	test<2, ALIGN8>(256, 256, 256, 1000, 1e-5, false);
 
 	test<8, ALIGN2>(512, 512, 512, 125, 1e-5, false);
 	test<8, ALIGN3>(512, 512, 512, 125, 1e-5, false);
 	test<8, ALIGN4>(512, 512, 512, 125, 1e-5, false);
+	test<8, ALIGN4>(512, 512, 512, 125, 1e-5, false);
 	test<6, ALIGN2>(512, 512, 512, 125, 1e-5, false);
 	test<6, ALIGN3>(512, 512, 512, 125, 1e-5, false);
 	test<6, ALIGN4>(512, 512, 512, 125, 1e-5, false);
+	test<6, ALIGN8>(512, 512, 512, 125, 1e-5, false);
 	test<4, ALIGN2>(512, 512, 512, 125, 1e-5, false);
 	test<4, ALIGN3>(512, 512, 512, 125, 1e-5, false);
 	test<4, ALIGN4>(512, 512, 512, 125, 1e-5, false);
+	test<4, ALIGN8>(512, 512, 512, 125, 1e-5, false);
 	test<2, ALIGN2>(512, 512, 512, 125, 1e-5, false);
 	test<2, ALIGN3>(512, 512, 512, 125, 1e-5, false);
 	test<2, ALIGN4>(512, 512, 512, 125, 1e-5, false);
+	test<2, ALIGN8>(512, 512, 512, 125, 1e-5, false);
 
+	test<8, ALIGN2>(1024, 1024, 1024, 16, 1e-4, false);
+	test<8, ALIGN3>(1024, 1024, 1024, 16, 1e-4, false);
+	test<8, ALIGN4>(1024, 1024, 1024, 16, 1e-4, false);
+	test<8, ALIGN8>(1024, 1024, 1024, 16, 1e-4, false);
+	test<6, ALIGN2>(1024, 1024, 1024, 16, 1e-4, false);
+	test<6, ALIGN3>(1024, 1024, 1024, 16, 1e-4, false);
+	test<6, ALIGN4>(1024, 1024, 1024, 16, 1e-4, false);
+	test<6, ALIGN8>(1024, 1024, 1024, 16, 1e-4, false);
+	test<4, ALIGN2>(1024, 1024, 1024, 16, 1e-4, false);
+	test<4, ALIGN3>(1024, 1024, 1024, 16, 1e-4, false);
+	test<4, ALIGN4>(1024, 1024, 1024, 16, 1e-4, false);
+	test<4, ALIGN8>(1024, 1024, 1024, 16, 1e-4, false);
+	test<2, ALIGN2>(1024, 1024, 1024, 16, 1e-4, false);
+	test<2, ALIGN3>(1024, 1024, 1024, 16, 1e-4, false);
+	test<2, ALIGN4>(1024, 1024, 1024, 16, 1e-4, false);
+	test<2, ALIGN8>(1024, 1024, 1024, 16, 1e-4, false);
 
 
 	return 0;
