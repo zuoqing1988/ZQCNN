@@ -37,7 +37,7 @@
 
 #if __ARM_NEON
 #define zq_mm_load_ps vld1q_f32
-#define zq_mm_broadcast_ss vld1_dup_f32
+#define zq_mm_broadcast_ss vld1q_dup_f32
 #define zq_mm_store_ps vst1q_f32
 #if ZQ_CNN_USE_FMADD128
 #define zq_mm_fmadd_ps(A, B, C) vfmaq_f32(C, A, B)
