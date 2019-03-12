@@ -50,9 +50,9 @@
 #include <limits.h>
 #include <time.h> 
 
-#include <bl_sgemm.h>
-#include <bl_sgemm_ref.h>
-#include <bl_config.h>
+#include "bl_sgemm.h"
+#include "bl_sgemm_ref.h"
+#include "bl_config.h"
 
 #define USE_SET_DIFF 1
 #define TOLERANCE 1E0
