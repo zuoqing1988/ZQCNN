@@ -189,10 +189,10 @@ void bl_sgemm(
     // sequential is the default situation
     bl_ic_nt = 1;
     // check the environment variable
-    str = getenv( "BLISLAB_IC_NT" );
-    if ( str != NULL ) {
-        bl_ic_nt = (int)strtol( str, NULL, 10 );
-    }
+    //str = getenv( "BLISLAB_IC_NT" );
+    //if ( str != NULL ) {
+    //   bl_ic_nt = (int)strtol( str, NULL, 10 );
+    //}
 
     // Allocate packing buffers
     packA  = bl_malloc_aligned( SGEMM_KC, ( SGEMM_MC + 1 ) * bl_ic_nt, sizeof(float) );
