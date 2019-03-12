@@ -21,8 +21,9 @@ namespace ZQ
 		bool use_buffer;
 		bool show_debug_info;
 		float ignore_small_value;
+		float last_cost_time;
 
-		ZQ_CNN_Layer() :show_debug_info(false),use_buffer(false),ignore_small_value(0) {}
+		ZQ_CNN_Layer() :show_debug_info(false),use_buffer(false),ignore_small_value(0),last_cost_time(0) {}
 		virtual ~ZQ_CNN_Layer() {}
 		virtual bool Forward(std::vector<ZQ_CNN_Tensor4D*>* bottoms, std::vector<ZQ_CNN_Tensor4D*>* tops) = 0;
 
@@ -285,6 +286,7 @@ namespace ZQ
 					*filters, *bias, stride_H, stride_W,dilate_H,dilate_W, pad_H, pad_W, *((*tops)[0]),
 					tmp_buffer, tmp_buffer_len);
 				double t2 = omp_get_wtime();
+				last_cost_time = t2 - t1;
 				if (show_debug_info)
 				{
 					double time = __max(1000 * (t2 - t1), 1e-9);
@@ -306,6 +308,7 @@ namespace ZQ
 				bool ret = ZQ_CNN_Forward_SSEUtils::Convolution(*((*bottoms)[0]), *filters, stride_H, stride_W, dilate_H, dilate_W, pad_H, pad_W, *((*tops)[0]),
 					 tmp_buffer, tmp_buffer_len);
 				double t2 = omp_get_wtime();
+				last_cost_time = t2 - t1;
 				if (show_debug_info)
 				{
 					double time = __max(1000 * (t2 - t1), 1e-9);
@@ -732,6 +735,7 @@ namespace ZQ
 				double t1 = omp_get_wtime();
 				bool ret = ZQ_CNN_Forward_SSEUtils::DepthwiseConvolutionWithBias(*((*bottoms)[0]), *filters, *bias, stride_H, stride_W, pad_H, pad_W, *((*tops)[0]));
 				double t2 = omp_get_wtime();
+				last_cost_time = t2 - t1;
 				if (show_debug_info)
 				{
 					double time = __max(1000 * (t2 - t1),1e-9);
@@ -752,6 +756,7 @@ namespace ZQ
 				double t1 = omp_get_wtime();
 				bool ret = ZQ_CNN_Forward_SSEUtils::DepthwiseConvolution(*((*bottoms)[0]), *filters, stride_H, stride_W, pad_H, pad_W, *((*tops)[0]));
 				double t2 = omp_get_wtime();
+				last_cost_time = t2 - t1;
 				if (show_debug_info)
 				{
 					double time = __max(1000 * (t2 - t1), 1e-9);
@@ -1157,6 +1162,7 @@ namespace ZQ
 			double t1 = omp_get_wtime();
 			bool ret = ZQ_CNN_Forward_SSEUtils::BatchNorm_b_a(*((*tops)[0]), *b, *a);
 			double t2 = omp_get_wtime();
+			last_cost_time = t2 - t1;
 			if (show_debug_info)
 				printf("BatchNorm layer: %s cost : %.3f ms\n", name.c_str(), 1000 * (t2 - t1));
 			return ret;
@@ -1510,6 +1516,7 @@ namespace ZQ
 			double t1 = omp_get_wtime();
 			bool ret = ZQ_CNN_Forward_SSEUtils::BatchNorm_b_a(*((*tops)[0]), *b, *a);
 			double t2 = omp_get_wtime();
+			last_cost_time = t2 - t1;
 			if (show_debug_info)
 				printf("BatchNorm layer: %s cost : %.3f ms\n", name.c_str(), 1000 * (t2 - t1));
 			return ret;
@@ -1762,6 +1769,7 @@ namespace ZQ
 				double t1 = omp_get_wtime();
 				bool ret = ZQ_CNN_Forward_SSEUtils::ScaleWithBias(*((*tops)[0]), *scale, *bias);
 				double t2 = omp_get_wtime();
+				last_cost_time = t2 - t1;
 				if (show_debug_info)
 					printf("Scale layer: %s cost : %.3f ms\n", name.c_str(), 1000 * (t2 - t1));
 				return ret;
@@ -1773,6 +1781,7 @@ namespace ZQ
 				double t1 = omp_get_wtime();
 				bool ret = ZQ_CNN_Forward_SSEUtils::Scale(*((*tops)[0]), *scale);
 				double t2 = omp_get_wtime();
+				last_cost_time = t2 - t1;
 				if (show_debug_info)
 					printf("Scale layer: %s cost : %.3f ms\n", name.c_str(), 1000 * (t2 - t1));
 				return ret;
@@ -2044,6 +2053,7 @@ namespace ZQ
 			double t1 = omp_get_wtime();
 			bool ret = ZQ_CNN_Forward_SSEUtils::PReLU(*((*tops)[0]), *slope);
 			double t2 = omp_get_wtime();
+			last_cost_time = t2 - t1;
 			if (show_debug_info)
 				printf("PReLU layer: %s %.3f ms \n", name.c_str(), 1000 * (t2 - t1));
 			return ret;
@@ -2238,6 +2248,7 @@ namespace ZQ
 			double t1 = omp_get_wtime();
 			ZQ_CNN_Forward_SSEUtils::ReLU(*((*tops)[0]), slope);
 			double t2 = omp_get_wtime();
+			last_cost_time = t2 - t1;
 			if (show_debug_info)
 				printf("ReLU layer: %s %.3f ms \n", name.c_str(), 1000 * (t2 - t1));
 			return true;
@@ -2385,6 +2396,7 @@ namespace ZQ
 				double t1 = omp_get_wtime();
 				ZQ_CNN_Forward_SSEUtils::MaxPooling(*((*bottoms)[0]), *((*tops)[0]), kernel_H, kernel_W, stride_H, stride_W, global_pool);
 				double t2 = omp_get_wtime();
+				last_cost_time = t2 - t1;
 				if (show_debug_info)
 					printf("Pooling layer: %s cost : %.3f ms\n", name.c_str(), 1000 * (t2 - t1));
 				return true;
@@ -2394,6 +2406,7 @@ namespace ZQ
 				double t1 = omp_get_wtime();
 				ZQ_CNN_Forward_SSEUtils::AVGPooling(*((*bottoms)[0]), *((*tops)[0]), kernel_H, kernel_W, stride_H, stride_W, global_pool);
 				double t2 = omp_get_wtime();
+				last_cost_time = t2 - t1;
 				if (show_debug_info)
 					printf("Pooling layer: %s cost : %.3f ms\n", name.c_str(), 1000 * (t2 - t1));
 				return true;
@@ -2619,6 +2632,7 @@ namespace ZQ
 				bool ret = ZQ_CNN_Forward_SSEUtils::InnerProductWithBias(*((*bottoms)[0]), 
 					*filters, *bias, *((*tops)[0]), tmp_buffer, tmp_buffer_len);
 				double t2 = omp_get_wtime();
+				last_cost_time = t2 - t1;
 				if (show_debug_info)
 					printf("Innerproduct layer: %.3f ms NHW %dx%dx%d filter: NHWC %d x %d x %d x %d\n", 
 						1000 * (t2 - t1), (*tops)[0]->GetN(), (*tops)[0]->GetH(), (*tops)[0]->GetW(), 
@@ -2635,6 +2649,7 @@ namespace ZQ
 				bool ret = ZQ_CNN_Forward_SSEUtils::InnerProduct(*((*bottoms)[0]), *filters, *((*tops)[0]),
 					buffer,buffer_len);
 				double t2 = omp_get_wtime();
+				last_cost_time = t2 - t1;
 				if (show_debug_info)
 					printf("Innerproduct layer: %s cost : %.3f ms\n", name.c_str(), 1000 * (t2 - t1));
 				return ret;
@@ -2974,6 +2989,7 @@ namespace ZQ
 			double t1 = omp_get_wtime();
 			ZQ_CNN_Forward_SSEUtils::Softmax(*((*tops)[0]), axis);
 			double t2 = omp_get_wtime();
+			last_cost_time = t2 - t1;
 			if (show_debug_info)
 				printf("Softmax layer: %s cost : %.3f ms\n", name.c_str(), 1000 * (t2 - t1));
 			return true;
@@ -3113,6 +3129,7 @@ namespace ZQ
 			/*dropout ratio is not used in test phase*/
 			//ZQ_CNN_Forward_SSEUtils::Dropout(*((*tops)[0]), dropout_ratio);
 			double t2 = omp_get_wtime();
+			last_cost_time = t2 - t1;
 			if (show_debug_info)
 				printf("Dropout layer: %s cost : %.3f ms\n", name.c_str(), 1000 * (t2 - t1));
 			return true;
@@ -3248,6 +3265,7 @@ namespace ZQ
 			if ((*tops)[0] != (*bottoms)[0])
 				(*tops)[0]->CopyData(*(*bottoms)[0]);
 			double t2 = omp_get_wtime();
+			last_cost_time = t2 - t1;
 			if (show_debug_info)
 				printf("Copy layer: %s cost : %.3f ms\n", name.c_str(), 1000 * (t2 - t1));
 			return true;
@@ -3405,6 +3423,7 @@ namespace ZQ
 				return false;
 			}
 			double t2 = omp_get_wtime();
+			last_cost_time = t2 - t1;
 			if (show_debug_info)
 				printf("Eltwise layer: %s cost : %.3f ms\n", name.c_str(), 1000 * (t2 - t1));
 			return ret;
@@ -3652,6 +3671,7 @@ namespace ZQ
 				return false;
 			}
 			double t2 = omp_get_wtime();
+			last_cost_time = t2 - t1;
 			if (show_debug_info)
 				printf("ScalarOperation layer: %s cost : %.3f ms\n", name.c_str(), 1000 * (t2 - t1));
 			return true;
@@ -3921,6 +3941,7 @@ namespace ZQ
 				return false;
 			}
 			double t2 = omp_get_wtime();
+			last_cost_time = t2 - t1;
 			if (show_debug_info)
 				printf("UnaryOperation layer: %s cost : %.3f ms\n", name.c_str(), 1000 * (t2 - t1));
 			return true;
@@ -4110,6 +4131,7 @@ namespace ZQ
 				double t1 = omp_get_wtime();
 				bool ret = ZQ_CNN_Forward_SSEUtils::LRN_across_channels(*(*(std::vector<const ZQ_CNN_Tensor4D*>*)bottoms)[0],local_size,alpha,beta,k, *((*tops)[0]));
 				double t2 = omp_get_wtime();
+				last_cost_time = t2 - t1;
 				if (show_debug_info)
 					printf("LRN layer: %s cost : %.3f ms\n", name.c_str(), 1000 * (t2 - t1));
 				return ret;
@@ -4485,6 +4507,7 @@ namespace ZQ
 			bool ret = ZQ_CNN_Forward_SSEUtils::Permute(*(*(std::vector<const ZQ_CNN_Tensor4D*>*)bottoms)[0], order, *((*tops)[0]));
 			int C = (*bottoms)[0]->GetC();
 			double t2 = omp_get_wtime();
+			last_cost_time = t2 - t1;
 			if (show_debug_info)
 				printf("Permute layer: %s cost : %.3f ms\n", name.c_str(), 1000 * (t2 - t1));
 			return ret;
@@ -4650,6 +4673,7 @@ namespace ZQ
 			double t1 = omp_get_wtime();
 			bool ret = ZQ_CNN_Forward_SSEUtils::Flatten(*(*(std::vector<const ZQ_CNN_Tensor4D*>*)bottoms)[0], axis, end_axis, *((*tops)[0]));
 			double t2 = omp_get_wtime();
+			last_cost_time = t2 - t1;
 			if (show_debug_info)
 				printf("Flatten layer: %s cost : %.3f ms\n", name.c_str(), 1000 * (t2 - t1));
 			return ret;
@@ -4817,6 +4841,7 @@ namespace ZQ
 			bool ret = ZQ_CNN_Forward_SSEUtils::Reshape(*(*(std::vector<const ZQ_CNN_Tensor4D*>*)bottoms)[0], shape, *((*tops)[0]));
 			const float* ptr = (*bottoms)[0]->GetFirstPixelPtr();
 			double t2 = omp_get_wtime();
+			last_cost_time = t2 - t1;
 			if (show_debug_info)
 				printf("Reshape layer: %s cost : %.3f ms\n", name.c_str(), 1000 * (t2 - t1));
 			return ret;
@@ -5042,6 +5067,7 @@ namespace ZQ
 			bool ret = ZQ_CNN_Forward_SSEUtils::PriorBox(*(*(std::vector<const ZQ_CNN_Tensor4D*>*)bottoms)[0], *(*(std::vector<const ZQ_CNN_Tensor4D*>*)bottoms)[1],
 				min_sizes, max_sizes, aspect_ratios, variance, flip, num_priors, clip, img_w, img_h, step_w, step_h, offset, *((*tops)[0]));
 			double t2 = omp_get_wtime();
+			last_cost_time = t2 - t1;
 			if (show_debug_info)
 				printf("PriorBox layer: %s cost : %.3f ms\n", name.c_str(), 1000 * (t2 - t1));
 			return ret;
@@ -5361,6 +5387,7 @@ namespace ZQ
 			bool ret = ZQ_CNN_Forward_SSEUtils::PriorBoxText(*(*(std::vector<const ZQ_CNN_Tensor4D*>*)bottoms)[0], *(*(std::vector<const ZQ_CNN_Tensor4D*>*)bottoms)[1],
 				min_sizes, max_sizes, aspect_ratios, variance, flip, num_priors, clip, img_w, img_h, step_w, step_h, offset, *((*tops)[0]));
 			double t2 = omp_get_wtime();
+			last_cost_time = t2 - t1;
 			if (show_debug_info)
 				printf("PriorBox layer: %s cost : %.3f ms\n", name.c_str(), 1000 * (t2 - t1));
 			return ret;
@@ -5505,6 +5532,7 @@ namespace ZQ
 			bool ret = ZQ_CNN_Forward_SSEUtils::PriorBox_MXNET(*(*(std::vector<const ZQ_CNN_Tensor4D*>*)bottoms)[0], 
 				sizes, aspect_ratios, variances, num_priors, clip, step_w, step_h, offset, *((*tops)[0]));
 			double t2 = omp_get_wtime();
+			last_cost_time = t2 - t1;
 			if (show_debug_info)
 				printf("PriorBox_MXNET layer: %s cost : %.3f ms\n", name.c_str(), 1000 * (t2 - t1));
 			return ret;
@@ -5730,6 +5758,7 @@ namespace ZQ
 			double t1 = omp_get_wtime();
 			bool ret = ZQ_CNN_Forward_SSEUtils::Concat_NCHW(*bottoms, axis, *((*tops)[0]));
 			double t2 = omp_get_wtime();
+			last_cost_time = t2 - t1;
 			if (show_debug_info)
 				printf("Concat layer: %s cost : %.3f ms\n", name.c_str(), 1000 * (t2 - t1));
 			return ret;
@@ -5892,6 +5921,7 @@ namespace ZQ
 				num_priors, num_loc_classes, num_classes, share_location, background_label_id, code_type, variance_encoded_in_target,
 				nms_threshold, nms_eta, nms_top_k, confidence_threshold, keep_top_k, *((*tops)[0]));
 			double t2 = omp_get_wtime();
+			last_cost_time = t2 - t1;
 			if (show_debug_info)
 				printf("Concat layer: %s cost : %.3f ms\n", name.c_str(), 1000 * (t2 - t1));
 			return ret;
@@ -6111,6 +6141,7 @@ namespace ZQ
 			bool ret = ZQ_CNN_Forward_SSEUtils::DetectionOuput_MXNET(*(*bottoms)[1], *(*bottoms)[0], *(*bottoms)[2],
 				variances,	clip, nms_threshold, nms_top_k, confidence_threshold, keep_top_k, *((*tops)[0]));
 			double t2 = omp_get_wtime();
+			last_cost_time = t2 - t1;
 			if (show_debug_info)
 				printf("Concat layer: %s cost : %.3f ms\n", name.c_str(), 1000 * (t2 - t1));
 			return ret;
@@ -6289,6 +6320,7 @@ namespace ZQ
 				return false;
 			}
 			double t2 = omp_get_wtime();
+			last_cost_time = t2 - t1;
 			if (show_debug_info)
 				printf("Reduction layer: %s cost : %.3f ms\n", name.c_str(), 1000 * (t2 - t1));
 			return ret;
@@ -6496,6 +6528,7 @@ namespace ZQ
 			ret = ZQ_CNN_Forward_SSEUtils::Sqrt(*((*tops)[0]));
 
 			double t2 = omp_get_wtime();
+			last_cost_time = t2 - t1;
 			if (show_debug_info)
 				printf("Sqrt layer: %s cost : %.3f ms\n", name.c_str(), 1000 * (t2 - t1));
 			return ret;
@@ -6631,6 +6664,7 @@ namespace ZQ
 			ret = ZQ_CNN_Forward_SSEUtils::Tile(*((*bottoms)[0]),tile_n, tile_h, tile_w, tile_c, *((*tops)[0]));
 
 			double t2 = omp_get_wtime();
+			last_cost_time = t2 - t1;
 			if (show_debug_info)
 				printf("Tile layer: %s cost : %.3f ms\n", name.c_str(), 1000 * (t2 - t1));
 			return ret;

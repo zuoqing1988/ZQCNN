@@ -174,6 +174,7 @@ int main(int argc, const char** argv)
 		}
 		double t2 = omp_get_wtime();
 		printf("[%d] times cost %.3f s, 1 iter cost %.3f ms\n", iters, t2 - t1, 1000 * (t2 - t1) / iters);
+		
 
 		ptr = net.GetBlobByName(out_blob_name);
 		int dim = ptr->GetC();
@@ -192,7 +193,7 @@ int main(int argc, const char** argv)
 		}
 		double t4 = omp_get_wtime();
 		printf("[%d] times cost %.3f s, 1 iter cost %.3f ms\n", iters, t4 - t3, 1000 * (t4 - t3) / iters);
-
+		printf("last time: conv = %.3f ms, dwonv = %.3f ms\n", 1000*net.GetLastTimeOfConv(), 1000*net.GetLastTimeOfDwConv());
 		ptr = net.GetBlobByName(out_blob_name);
 		std::vector<float> feat1(dim);
 		memcpy(&feat1[0], ptr->GetFirstPixelPtr(), sizeof(float)*dim);
