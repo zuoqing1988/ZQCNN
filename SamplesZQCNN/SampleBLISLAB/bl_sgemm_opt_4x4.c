@@ -37,7 +37,6 @@
 #include <stdio.h>
 
 #include "bl_sgemm_kernel.h"
-#include "avx_types.h"
 
 #define inc_t unsigned long long 
 
