@@ -973,12 +973,18 @@ void zq_cnn_conv_no_padding_gemm_32f_align_same_or_notsame_pixstep_C3(
 {
 	/************** image to col **************/
 	int K = filter_H*filter_W*filter_C;
+#if __ARM_NEON
+#if !__ARM_NEON_FP16
+	int padK = (K + 3) / 4 * 4;
+#endif
+#else
 #if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_AVX
 	int padK = (K + 7) / 8*8;
 #elif ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_SSE
 	int padK = (K + 3) / 4 * 4;
 #else
 	int padK = K;
+#endif
 #endif
 	int in_widthStep_mul_stride_H = in_widthStep*stride_H;
 	int in_pixelStep_mul_stride_W = in_pixelStep*stride_W;
