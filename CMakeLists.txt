@@ -53,7 +53,7 @@ if((CMAKE_CXX_COMPILER_ID MATCHES "GNU") OR (CMAKE_CXX_COMPILER_ID MATCHES "Clan
             add_definitions(-DZQ_CNN_USE_FMADD128)
             if(SIMD_ARCH_TYPE MATCHES "arm64-fp16")
                 add_definitions(-DZQ_CNN_USE_ARM_NEON_FP16)
-                add_definitions(-mfpu=neon-fp16)
+                #add_definitions(-mfpu=neon-fp16)
             endif()
         else()
             add_definitions(-march=native)
