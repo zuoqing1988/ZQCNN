@@ -36,11 +36,11 @@ int main()
 	int show_H = 640, show_W = 640;
 	ZQ_CNN_Net net1, net2;
 #if defined(_WIN32)
-	if (!net1.LoadFrom("model/det5-dw96-v2s.zqparams", "model/det5-dw96-v2s-8000.nchwbin")
-		|| !net2.LoadFrom("model/det3.zqparams", "model/det3_bgr.nchwbin"))
+	if (!net1.LoadFrom("model/det5-dw96-v2s.zqparams", "model/det5-dw96-v2s-8000.nchwbin",true,1e-9)
+		|| !net2.LoadFrom("model/det3.zqparams", "model/det3_bgr.nchwbin", true, 1e-9))
 #else
-	if (!net1.LoadFrom("../../model/det5-dw96-v2s.zqparams", "../../model/det5-dw96-v2s-8000.nchwbin")
-		|| !net2.LoadFrom("../../model/det3.zqparams", "../../model/det3_bgr.nchwbin"))
+	if (!net1.LoadFrom("../../model/det5-dw96-v2s.zqparams", "../../model/det5-dw96-v2s-8000.nchwbin", true, 1e-9)
+		|| !net2.LoadFrom("../../model/det3.zqparams", "../../model/det3_bgr.nchwbin", true, 1e-9))
 #endif
 	{
 		cout << "failed to load model\n";
@@ -83,7 +83,18 @@ int main()
 	double t3 = omp_get_wtime();
 	printf("net1 %.3f s / %d = %.3f ms\n", t2 - t1, nIters, 1000 * (t2 - t1) / nIters);
 	printf("net2 %.3f s / %d = %.3f ms\n", t3 - t2, nIters, 1000 * (t3 - t2) / nIters);
-
+	printf("last time of net1:\n conv = %.3f ms, dwonv = %.3f ms, bns = %.3f ms, prelu = %.3f ms\n",
+		1000 * net1.GetLastTimeOfLayerType("Convolution"),
+		1000 * net1.GetLastTimeOfLayerType("DepthwiseConvolution"),
+		1000 * net1.GetLastTimeOfLayerType("BatchNormScale"),
+		1000 * net1.GetLastTimeOfLayerType("PReLU")
+	);
+	printf("last time of net2:\n conv = %.3f ms, dwonv = %.3f ms, bns = %.3f ms, prelu = %.3f ms\n",
+		1000 * net2.GetLastTimeOfLayerType("Convolution"),
+		1000 * net2.GetLastTimeOfLayerType("DepthwiseConvolution"),
+		1000 * net2.GetLastTimeOfLayerType("BatchNormScale"),
+		1000 * net2.GetLastTimeOfLayerType("PReLU")
+	);
 	const ZQ_CNN_Tensor4D* landmark1 = net1.GetBlobByName("conv6-3");
 	const ZQ_CNN_Tensor4D* landmark2 = net2.GetBlobByName("conv6-3");
 	if (landmark1 == 0 || landmark2 == 0)
