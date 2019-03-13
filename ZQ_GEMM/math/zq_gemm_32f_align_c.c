@@ -58,7 +58,7 @@
 	vst1q_f32(x,y)
 #define zq_final_sum_q0_4 (q.s[0]+q.s[1]+q.s[2]+q.s[3])
 #define zq_final_sum_q0_2 (q.s[0]+q.s[1])
-#define zq_final_sum_q (q.s[0]+q.s[1]+q.s[2]+q.s[3]+q.s[4]+q.s[5]+q.s[6]+q.s[7])
+#define zq_final_sum_q (q.s[0]+q.s[1]+q.s[2]+q.s[3])
 #if ZQ_CNN_USE_FMADD128
 #define zq_mm_fmadd_ps(A, B, C) vfmaq_f32(C, A, B)
 #else
