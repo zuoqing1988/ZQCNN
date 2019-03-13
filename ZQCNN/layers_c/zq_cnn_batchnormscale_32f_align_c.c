@@ -2,10 +2,10 @@
 #include <math.h>
 #include <malloc.h>
 #include "../ZQ_CNN_CompileConfig.h"
+#include "zq_cnn_batchnormscale_32f_align_c.h"
 #if __ARM_NEON
 #include <arm_neon.h>
 #else
-#include "zq_cnn_batchnormscale_32f_align_c.h"
 #if defined(__GNUC__)
 #if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_SSE
 #include <smmintrin.h>
