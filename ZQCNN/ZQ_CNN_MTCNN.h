@@ -268,7 +268,7 @@ namespace ZQ
 				double t4 = omp_get_wtime();
 				if (show_debug_info)
 				{
-					printf("final found num: %d\n", results.size());
+					printf("final found num: %d\n", (int)results.size());
 					printf("total cost: %.3f ms (P: %.3f ms, R: %.3f ms, O: %.3f ms)\n",
 						1000 * (t4 - t1), 1000 * (t2 - t1), 1000 * (t3 - t2), 1000 * (t4 - t3));
 				}
@@ -287,7 +287,7 @@ namespace ZQ
 				double t5 = omp_get_wtime();
 				if (show_debug_info)
 				{
-					printf("final found num: %d\n", results.size());
+					printf("final found num: %d\n", (int)results.size());
 					printf("total cost: %.3f ms (P: %.3f ms, R: %.3f ms, O: %.3f ms, L: %.3f ms)\n",
 						1000 * (t5 - t1), 1000 * (t2 - t1), 1000 * (t3 - t2), 1000 * (t4 - t3), 1000 * (t5 - t4));
 				}
@@ -326,7 +326,7 @@ namespace ZQ
 			double t5 = omp_get_wtime();
 			if (show_debug_info)
 			{
-				printf("final found num: %d\n", results.size());
+				printf("final found num: %d\n", (int)results.size());
 				printf("total cost: %.3f ms (P: %.3f ms, R: %.3f ms, O: %.3f ms, L: %.3f ms)\n",
 					1000 * (t5 - t1), 1000 * (t2 - t1), 1000 * (t3 - t2), 1000 * (t4 - t3), 1000 * (t5 - t4));
 			}
