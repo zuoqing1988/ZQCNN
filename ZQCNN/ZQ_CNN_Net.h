@@ -147,27 +147,17 @@ namespace ZQ
 			return sum;
 		}
 
-		float GetLastTimeOfConv() const
+		float GetLastTimeOfLayerType(const std::string& layer_typename) const
 		{
 			float sum = 0;
 			for (int i = 0; i < layers.size(); i++)
 			{
-				if (ZQ_CNN_Layer::_my_strcmpi(layer_type_names[i].c_str(), "Convolution") == 0)
+				if (ZQ_CNN_Layer::_my_strcmpi(layer_type_names[i].c_str(), layer_typename.c_str()) == 0)
 					sum += layers[i]->last_cost_time;
 			}
 			return sum;
 		}
 
-		float GetLastTimeOfDwConv() const
-		{
-			float sum = 0;
-			for (int i = 0; i < layers.size(); i++)
-			{
-				if (ZQ_CNN_Layer::_my_strcmpi(layer_type_names[i].c_str(), "DepthwiseConvolution") == 0)
-					sum += layers[i]->last_cost_time;
-			}
-			return sum;
-		}
 
 		/*it may change input in case of padding, but the data will not be lost*/
 		bool Forward(ZQ_CNN_Tensor4D& input)

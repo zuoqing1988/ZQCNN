@@ -50,12 +50,12 @@ int main(int argc, const char** argv)
 #if defined(_WIN32)
 	//if (!net.LoadFrom("model/mobilefacenet-res4-8-16-4-dim512.zqparams", "model/mobilefacenet-res4-8-16-4-dim512-emore.nchwbin", false))
 	//if (!net.LoadFrom("model/mobilefacenet-res1-3-5-2-dim128-112X96.zqparams", "model/mobilefacenet-res1-3-5-2-dim128-112X96.nchwbin", false))
-	if (!net.LoadFrom("model/mobilefacenet-GNAP.zqparams", "model/mobilefacenet-GNAP.nchwbin", false,1e-12))
+	//if (!net.LoadFrom("model/mobilefacenet-GNAP.zqparams", "model/mobilefacenet-GNAP.nchwbin", false,1e-12))
 	//if (!net.LoadFrom("model/mobilefacenet-v1.zqparams", "model/mobilefacenet-v1.nchwbin", false))
 	//if (!net.LoadFrom("model/mobilefacenet-res8-16-32-8-dim512.zqparams", "model/mobilefacenet-res8-16-32-8-dim512.nchwbin", true,1e-16))
 	//if (!net.LoadFrom("model/sphereface04bn256.zqparams", "model/sphereface04bn256.nchwbin", true, 1e-12))
 	//if (!net.LoadFrom("model/mobilefacenet-v112X96.zqparams", "model/mobilefacenet-v112X96.nchwbin",false))
-	//if (!net.LoadFrom("model/mobilefacenet-res2-6-10-2-dim128.zqparams", "model/mobilefacenet-res2-6-10-2-dim128-emore.nchwbin", false))
+	if (!net.LoadFrom("model/mobilefacenet-res2-6-10-2-dim128.zqparams", "model/mobilefacenet-res2-6-10-2-dim128-emore.nchwbin", false))
 	//if (!net.LoadFrom("model/mobilefacenet-res2-6-10-2-dim512-112X96.zqparams", "model/mobilefacenet-res2-6-10-2-dim512-112X96.nchwbin", false,1e-12))
 	//if (!net.LoadFrom("model/model-r34-am.zqparams", "model/model-r34-am.nchwbin"))
 	//if (!net.LoadFrom("model/model-r50-am.zqparams", "model/model-r50-am.nchwbin"))
@@ -193,7 +193,13 @@ int main(int argc, const char** argv)
 		}
 		double t4 = omp_get_wtime();
 		printf("[%d] times cost %.3f s, 1 iter cost %.3f ms\n", iters, t4 - t3, 1000 * (t4 - t3) / iters);
-		printf("last time: conv = %.3f ms, dwonv = %.3f ms\n", 1000*net.GetLastTimeOfConv(), 1000*net.GetLastTimeOfDwConv());
+		printf("last time: conv = %.3f ms, dwonv = %.3f ms, bns = %.3f ms, prelu = %.3f ms, eltwise = %.3f\n", 
+			1000 * net.GetLastTimeOfLayerType("Convolution"),
+			1000 * net.GetLastTimeOfLayerType("DepthwiseConvolution"),
+			1000 * net.GetLastTimeOfLayerType("BatchNormScale"),
+			1000 * net.GetLastTimeOfLayerType("PReLU"),
+			1000 * net.GetLastTimeOfLayerType("Eltwise")
+			);
 		ptr = net.GetBlobByName(out_blob_name);
 		std::vector<float> feat1(dim);
 		memcpy(&feat1[0], ptr->GetFirstPixelPtr(), sizeof(float)*dim);
