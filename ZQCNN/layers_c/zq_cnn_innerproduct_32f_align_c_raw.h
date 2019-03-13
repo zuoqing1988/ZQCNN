@@ -1,5 +1,5 @@
 void zq_cnn_innerproduct_32f_align(
-	const float* in_tensor4D_data,
+	const zq_base_type* in_tensor4D_data,
 	int in_N,
 	int in_H,
 	int in_W,
@@ -7,7 +7,7 @@ void zq_cnn_innerproduct_32f_align(
 	int in_pixelStep,
 	int in_widthStep,
 	int in_sliceStep,
-	const float* filters_data,
+	const zq_base_type* filters_data,
 	int filter_N,
 	//int filter_H, // must be in_H
 	//int filter_W, // must be in_W
@@ -15,7 +15,7 @@ void zq_cnn_innerproduct_32f_align(
 	int filter_pixelStep,
 	int filter_widthStep,
 	int filter_sliceStep,
-	float* out_tensor4D_data,
+	zq_base_type* out_tensor4D_data,
 	//int out_N,	// must be in_N
 	//int out_H,	// must be 1
 	//int out_W,	// must be 1
@@ -26,14 +26,14 @@ void zq_cnn_innerproduct_32f_align(
 )
 {
 	register zq_mm_type sum_vec;
-	float result[zq_mm_align_size << 2];
-	float* q = (float*)(((long long)result + (zq_mm_align_size << 2) - 1) & zq_mm_bitor_longlong);
+	zq_base_type result[zq_mm_align_size << 2];
+	zq_base_type* q = (zq_base_type*)(((long long)result + (zq_mm_align_size << 2) - 1) & zq_mm_bitor_longlong);
 	int out_n, out_c, kh, kw, kc;
-	const float* in_slice_ptr;
-	const float* filter_slice_ptr, *filter_row_ptr, *filter_pix_ptr, *filter_c_ptr;
-	float* out_slice_ptr, *out_c_ptr;
-	const float* cur_in_row_ptr, *cur_in_pix_ptr, *cur_in_c_ptr;
-	float sum;
+	const zq_base_type* in_slice_ptr;
+	const zq_base_type* filter_slice_ptr, *filter_row_ptr, *filter_pix_ptr, *filter_c_ptr;
+	zq_base_type* out_slice_ptr, *out_c_ptr;
+	const zq_base_type* cur_in_row_ptr, *cur_in_pix_ptr, *cur_in_c_ptr;
+	zq_base_type sum;
 	
 	for (out_n = 0, in_slice_ptr = in_tensor4D_data, out_slice_ptr = out_tensor4D_data;
 		out_n < in_N; out_n++, in_slice_ptr += in_sliceStep, out_slice_ptr += out_sliceStep)
@@ -71,23 +71,23 @@ void zq_cnn_innerproduct_32f_align(
 }
 
 void zq_cnn_innerproduct_32f_align_noborder(
-	const float* in_tensor4D_data,
+	const zq_base_type* in_tensor4D_data,
 	int in_N,
 	int in_HWC,
-	const float* filters_data,
+	const zq_base_type* filters_data,
 	int filter_N,
-	float* out_tensor4D_data,
+	zq_base_type* out_tensor4D_data,
 	int out_sliceStep
 )
 {
 	register zq_mm_type sum_vec;
-	float result[zq_mm_align_size << 2];
-	float* q = (float*)(((long long)result + (zq_mm_align_size << 2) - 1) & zq_mm_bitor_longlong);
+	zq_base_type result[zq_mm_align_size << 2];
+	zq_base_type* q = (zq_base_type*)(((long long)result + (zq_mm_align_size << 2) - 1) & zq_mm_bitor_longlong);
 	int out_n, out_c, in_hwc;
-	const float* in_slice_ptr;
-	const float* filter_slice_ptr, *filter_c_ptr;
-	float* out_slice_ptr, *out_c_ptr;
-	const float* cur_in_c_ptr;
+	const zq_base_type* in_slice_ptr;
+	const zq_base_type* filter_slice_ptr, *filter_c_ptr;
+	zq_base_type* out_slice_ptr, *out_c_ptr;
+	const zq_base_type* cur_in_c_ptr;
 
 	for (out_n = 0, in_slice_ptr = in_tensor4D_data, out_slice_ptr = out_tensor4D_data;
 		out_n < in_N; out_n++, in_slice_ptr += in_HWC, out_slice_ptr += out_sliceStep)

@@ -51,6 +51,51 @@ extern "C" {
 		const float eps
 	);
 
+#if __ARM_NEON_FP16
+	void zq_cnn_normalize_16f_align0(
+		int across_spatial,
+		int channel_shared,
+		float16_t* in_tensor4D_data,	// in & out
+		const float16_t* scale_data,
+		int in_N,
+		int in_H,
+		int in_W,
+		int in_C,
+		int in_pixelStep,
+		int in_widthStep,
+		int in_sliceStep,
+		const float16_t eps
+	);
+
+	void zq_cnn_normalize_not_across_spatial_16f_align128bit(
+		int channel_shared,
+		float16_t* in_tensor4D_data,	// in & out
+		const float16_t* scale_data,
+		int in_N,
+		int in_H,
+		int in_W,
+		int in_C,
+		int in_pixelStep,
+		int in_widthStep,
+		int in_sliceStep,
+		const float16_t eps
+	);
+
+	void zq_cnn_normalize_across_spatial_16f_align128bit(
+		int channel_shared,
+		float16_t* in_tensor4D_data,	// in & out
+		const float16_t* scale_data,
+		int in_N,
+		int in_H,
+		int in_W,
+		int in_C,
+		int in_pixelStep,
+		int in_widthStep,
+		int in_sliceStep,
+		const float16_t eps
+	);
+#endif//__ARM_NEON_FP16
+
 #else
 
 	void zq_cnn_normalize_32f_align0(

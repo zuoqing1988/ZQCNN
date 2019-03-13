@@ -4,7 +4,7 @@ b = slope / sqrt(var+eps)
 value = b * value + a
 */
 void zq_cnn_batchnormscale_32f_mean_var_scale_bias_align(
-	float* in_data,
+	zq_base_type* in_data,
 	int in_N,
 	int in_H,
 	int in_W,
@@ -12,24 +12,24 @@ void zq_cnn_batchnormscale_32f_mean_var_scale_bias_align(
 	int in_pixStep,
 	int in_widthStep,
 	int in_sliceStep,
-	const float* mean_data,
-	const float* var_data,
-	const float* slope_data,
-	const float* bias_data,
-	const float eps
+	const zq_base_type* mean_data,
+	const zq_base_type* var_data,
+	const zq_base_type* slope_data,
+	const zq_base_type* bias_data,
+	const zq_base_type eps
 )
 {
-	float* a, *b;
+	zq_base_type* a, *b;
 	int c;
-	a = (float*)_aligned_malloc(in_C, (zq_mm_align_size << 2));
-	b = (float*)_aligned_malloc(in_C, (zq_mm_align_size << 2));
+	a = (zq_base_type*)_aligned_malloc(in_C*sizeof(zq_base_type), (zq_mm_align_size << 2));
+	b = (zq_base_type*)_aligned_malloc(in_C*sizeof(zq_base_type), (zq_mm_align_size << 2));
 	for (c = 0; c < in_C; c++)
 	{
 		b[c] = slope_data[c] / sqrt(__max(var_data[c]+eps,FLOAT_EPS_FOR_DIV));
 		a[c] = bias_data[c] - mean_data[c] * b[c];
 	}
 
-	zq_cnn_batchnorm_32f_b_a_align(in_data, in_N, in_H, in_W, in_C, in_pixStep, in_widthStep, in_sliceStep, (const float*)b, (const float*)a);
+	zq_cnn_batchnorm_32f_b_a_align(in_data, in_N, in_H, in_W, in_C, in_pixStep, in_widthStep, in_sliceStep, (const zq_base_type*)b, (const zq_base_type*)a);
 
 	_aligned_free(a);
 	_aligned_free(b);
@@ -43,7 +43,7 @@ b = 1 / sqrt(var+eps)
 value = b * value + a
 */
 void zq_cnn_batchnorm_32f_mean_var_align(
-	float* in_data,
+	zq_base_type* in_data,
 	int in_N,
 	int in_H,
 	int in_W,
@@ -51,22 +51,22 @@ void zq_cnn_batchnorm_32f_mean_var_align(
 	int in_pixStep,
 	int in_widthStep,
 	int in_sliceStep,
-	const float* mean_data,
-	const float* var_data,
-	const float eps
+	const zq_base_type* mean_data,
+	const zq_base_type* var_data,
+	const zq_base_type eps
 )
 {
-	float* a, *b;
+	zq_base_type* a, *b;
 	int c;
-	a = (float*)_aligned_malloc(in_C, (zq_mm_align_size << 2));
-	b = (float*)_aligned_malloc(in_C, (zq_mm_align_size << 2));
+	a = (zq_base_type*)_aligned_malloc(in_C * sizeof(zq_base_type), (zq_mm_align_size << 2));
+	b = (zq_base_type*)_aligned_malloc(in_C * sizeof(zq_base_type), (zq_mm_align_size << 2));
 	for (c = 0; c < in_C; c++)
 	{
 		b[c] = 1.0f / sqrt(__max(var_data[c]+eps, FLOAT_EPS_FOR_DIV));
 		a[c] = -mean_data[c] * b[c];
 	}
 
-	zq_cnn_batchnorm_32f_b_a_align(in_data, in_N, in_H, in_W, in_C, in_pixStep, in_widthStep, in_sliceStep, (const float*)b, (const float*)a);
+	zq_cnn_batchnorm_32f_b_a_align(in_data, in_N, in_H, in_W, in_C, in_pixStep, in_widthStep, in_sliceStep, (const zq_base_type*)b, (const zq_base_type*)a);
 
 	_aligned_free(a);
 	_aligned_free(b);
@@ -75,7 +75,7 @@ void zq_cnn_batchnorm_32f_mean_var_align(
 
 
 void zq_cnn_scale_32f_align(
-	float* in_data,
+	zq_base_type* in_data,
 	int in_N,
 	int in_H,
 	int in_W,
@@ -83,12 +83,12 @@ void zq_cnn_scale_32f_align(
 	int in_pixStep,
 	int in_widthStep,
 	int in_sliceStep,
-	const float* scale_data,
-	const float* bias_data
+	const zq_base_type* scale_data,
+	const zq_base_type* bias_data
 )
 {
 	int n, h, w, c;
-	float* slice_ptr, *row_ptr, *pix_ptr, *c_ptr;
+	zq_base_type* slice_ptr, *row_ptr, *pix_ptr, *c_ptr;
 	register zq_mm_type scale_vec, bias_vec;
 
 
@@ -139,7 +139,7 @@ b = 1 / sqrt(var+eps)
 value = b * value + a
 */
 void zq_cnn_batchnorm_32f_b_a_align(
-	float* in_data,
+	zq_base_type* in_data,
 	int in_N,
 	int in_H,
 	int in_W,
@@ -147,12 +147,12 @@ void zq_cnn_batchnorm_32f_b_a_align(
 	int in_pixStep,
 	int in_widthStep,
 	int in_sliceStep,
-	const float* b_data,
-	const float* a_data
+	const zq_base_type* b_data,
+	const zq_base_type* a_data
 )
 {
 	int n, h, w, c;
-	float* slice_ptr, *row_ptr, *pix_ptr, *c_ptr, *a_ptr, *b_ptr;
+	zq_base_type* slice_ptr, *row_ptr, *pix_ptr, *c_ptr, *a_ptr, *b_ptr;
 	register zq_mm_type a_vec0, a_vec1, a_vec2, a_vec3, b_vec0, b_vec1, b_vec2, b_vec3;
 	register zq_mm_type c_vec0, c_vec1, c_vec2, c_vec3;
 

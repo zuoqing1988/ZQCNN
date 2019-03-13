@@ -376,6 +376,378 @@ extern "C" {
 		int sliceStep
 	);
 
+#if __ARM_NEON_FP16
+	void zq_cnn_scalaroperation_add_16f_align0(
+		float16_t scalar,
+		const float16_t* in_data,
+		int in_N,
+		int in_H,
+		int in_W,
+		int in_C,
+		int in_pixelStep,
+		int in_widthStep,
+		int in_sliceStep,
+		float16_t* out_data,
+		int out_pixelStep,
+		int out_widthStep,
+		int out_sliceStep
+	);
+
+	void zq_cnn_scalaroperation_add_16f_align128bit(
+		float16_t scalar,
+		const float16_t* in_data,
+		int in_N,
+		int in_H,
+		int in_W,
+		int in_C,
+		int in_pixelStep,
+		int in_widthStep,
+		int in_sliceStep,
+		float16_t* out_data,
+		int out_pixelStep,
+		int out_widthStep,
+		int out_sliceStep
+	);
+
+	void zq_cnn_scalaroperation_add_inplace_16f_align0(
+		float16_t scalar,
+		float16_t* data,	// in & out
+		int N,
+		int H,
+		int W,
+		int C,
+		int pixelStep,
+		int widthStep,
+		int sliceStep
+	);
+
+	void zq_cnn_scalaroperation_add_inplace_16f_align128bit(
+		float16_t scalar,
+		float16_t* data,	// in & out
+		int N,
+		int H,
+		int W,
+		int C,
+		int pixelStep,
+		int widthStep,
+		int sliceStep
+	);
+
+	void zq_cnn_scalaroperation_mul_16f_align0(
+		float16_t scalar,
+		const float16_t* in_data,
+		int in_N,
+		int in_H,
+		int in_W,
+		int in_C,
+		int in_pixelStep,
+		int in_widthStep,
+		int in_sliceStep,
+		float16_t* out_data,
+		int out_pixelStep,
+		int out_widthStep,
+		int out_sliceStep
+	);
+
+	void zq_cnn_scalaroperation_mul_16f_align128bit(
+		float16_t scalar,
+		const float16_t* in_data,
+		int in_N,
+		int in_H,
+		int in_W,
+		int in_C,
+		int in_pixelStep,
+		int in_widthStep,
+		int in_sliceStep,
+		float16_t* out_data,
+		int out_pixelStep,
+		int out_widthStep,
+		int out_sliceStep
+	);
+
+
+	void zq_cnn_scalaroperation_mul_inplace_16f_align0(
+		float16_t scalar,
+		float16_t* data,	// in & out
+		int N,
+		int H,
+		int W,
+		int C,
+		int pixelStep,
+		int widthStep,
+		int sliceStep
+	);
+
+
+	void zq_cnn_scalaroperation_mul_inplace_16f_align128bit(
+		float16_t scalar,
+		float16_t* data,	// in & out
+		int N,
+		int H,
+		int W,
+		int C,
+		int pixelStep,
+		int widthStep,
+		int sliceStep
+	);
+
+	void zq_cnn_scalaroperation_max_16f_align0(
+		float16_t scalar,
+		const float16_t* in_data,
+		int in_N,
+		int in_H,
+		int in_W,
+		int in_C,
+		int in_pixelStep,
+		int in_widthStep,
+		int in_sliceStep,
+		float16_t* out_data,
+		int out_pixelStep,
+		int out_widthStep,
+		int out_sliceStep
+	);
+
+	void zq_cnn_scalaroperation_max_16f_align128bit(
+		float16_t scalar,
+		const float16_t* in_data,
+		int in_N,
+		int in_H,
+		int in_W,
+		int in_C,
+		int in_pixelStep,
+		int in_widthStep,
+		int in_sliceStep,
+		float16_t* out_data,
+		int out_pixelStep,
+		int out_widthStep,
+		int out_sliceStep
+	);
+
+	void zq_cnn_scalaroperation_max_inplace_16f_align0(
+		float16_t scalar,
+		float16_t* data,	// in & out
+		int N,
+		int H,
+		int W,
+		int C,
+		int pixelStep,
+		int widthStep,
+		int sliceStep
+	);
+
+	void zq_cnn_scalaroperation_max_inplace_16f_align128bit(
+		float16_t scalar,
+		float16_t* data,	// in & out
+		int N,
+		int H,
+		int W,
+		int C,
+		int pixelStep,
+		int widthStep,
+		int sliceStep
+	);
+
+
+	void zq_cnn_scalaroperation_min_16f_align0(
+		float16_t scalar,
+		const float16_t* in_data,
+		int in_N,
+		int in_H,
+		int in_W,
+		int in_C,
+		int in_pixelStep,
+		int in_widthStep,
+		int in_sliceStep,
+		float16_t* out_data,
+		int out_pixelStep,
+		int out_widthStep,
+		int out_sliceStep
+	);
+
+	void zq_cnn_scalaroperation_min_16f_align128bit(
+		float16_t scalar,
+		const float16_t* in_data,
+		int in_N,
+		int in_H,
+		int in_W,
+		int in_C,
+		int in_pixelStep,
+		int in_widthStep,
+		int in_sliceStep,
+		float16_t* out_data,
+		int out_pixelStep,
+		int out_widthStep,
+		int out_sliceStep
+	);
+
+	void zq_cnn_scalaroperation_min_inplace_16f_align0(
+		float16_t scalar,
+		float16_t* data,	// in & out
+		int N,
+		int H,
+		int W,
+		int C,
+		int pixelStep,
+		int widthStep,
+		int sliceStep
+	);
+
+	void zq_cnn_scalaroperation_min_inplace_16f_align128bit(
+		float16_t scalar,
+		float16_t* data,	// in & out
+		int N,
+		int H,
+		int W,
+		int C,
+		int pixelStep,
+		int widthStep,
+		int sliceStep
+	);
+
+
+	void zq_cnn_scalaroperation_rdiv_16f_align0(
+		float16_t scalar,
+		const float16_t* in_data,
+		int in_N,
+		int in_H,
+		int in_W,
+		int in_C,
+		int in_pixelStep,
+		int in_widthStep,
+		int in_sliceStep,
+		float16_t* out_data,
+		int out_pixelStep,
+		int out_widthStep,
+		int out_sliceStep
+	);
+	/*
+	void zq_cnn_scalaroperation_rdiv_16f_align128bit(
+	float16_t scalar,
+	const float16_t* in_data,
+	int in_N,
+	int in_H,
+	int in_W,
+	int in_C,
+	int in_pixelStep,
+	int in_widthStep,
+	int in_sliceStep,
+	float16_t* out_data,
+	int out_pixelStep,
+	int out_widthStep,
+	int out_sliceStep
+	);
+	*/
+	void zq_cnn_scalaroperation_rdiv_inplace_16f_align0(
+		float16_t scalar,
+		float16_t* data,	// in & out
+		int N,
+		int H,
+		int W,
+		int C,
+		int pixelStep,
+		int widthStep,
+		int sliceStep
+	);
+	/*
+	void zq_cnn_scalaroperation_rdiv_inplace_16f_align128bit(
+	float16_t scalar,
+	float16_t* data,	// in & out
+	int N,
+	int H,
+	int W,
+	int C,
+	int pixelStep,
+	int widthStep,
+	int sliceStep
+	);
+
+	*/
+
+	void zq_cnn_scalaroperation_rminus_16f_align0(
+		float16_t scalar,
+		const float16_t* in_data,
+		int in_N,
+		int in_H,
+		int in_W,
+		int in_C,
+		int in_pixelStep,
+		int in_widthStep,
+		int in_sliceStep,
+		float16_t* out_data,
+		int out_pixelStep,
+		int out_widthStep,
+		int out_sliceStep
+	);
+
+	void zq_cnn_scalaroperation_rminus_16f_align128bit(
+		float16_t scalar,
+		const float16_t* in_data,
+		int in_N,
+		int in_H,
+		int in_W,
+		int in_C,
+		int in_pixelStep,
+		int in_widthStep,
+		int in_sliceStep,
+		float16_t* out_data,
+		int out_pixelStep,
+		int out_widthStep,
+		int out_sliceStep
+	);
+
+	void zq_cnn_scalaroperation_rminus_inplace_16f_align0(
+		float16_t scalar,
+		float16_t* data,	// in & out
+		int N,
+		int H,
+		int W,
+		int C,
+		int pixelStep,
+		int widthStep,
+		int sliceStep
+	);
+
+	void zq_cnn_scalaroperation_rminus_inplace_16f_align128bit(
+		float16_t scalar,
+		float16_t* data,	// in & out
+		int N,
+		int H,
+		int W,
+		int C,
+		int pixelStep,
+		int widthStep,
+		int sliceStep
+	);
+	void zq_cnn_scalaroperation_pow_16f_align0(
+		float16_t scalar,
+		const float16_t* in_data,
+		int in_N,
+		int in_H,
+		int in_W,
+		int in_C,
+		int in_pixelStep,
+		int in_widthStep,
+		int in_sliceStep,
+		float16_t* out_data,
+		int out_pixelStep,
+		int out_widthStep,
+		int out_sliceStep
+	);
+
+
+	void zq_cnn_scalaroperation_pow_inplace_16f_align0(
+		float16_t scalar,
+		float16_t* data,	// in & out
+		int N,
+		int H,
+		int W,
+		int C,
+		int pixelStep,
+		int widthStep,
+		int sliceStep
+	);
+#endif//__ARM_NEON_FP16
+
 #else
 
 	void zq_cnn_scalaroperation_add_32f_align0(

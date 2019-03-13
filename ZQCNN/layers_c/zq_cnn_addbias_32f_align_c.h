@@ -31,6 +31,31 @@ extern "C" {
 		int in_widthStep,
 		int in_SliceStep,
 		const float* bias_data
+
+#if __ARM_NEON_FP16
+		void zq_cnn_addbias_16f_align0(
+			float16_t* in_tensor4D_data,	// in & out
+			int in_N,
+			int in_H,
+			int in_W,
+			int in_C,
+			int in_pixelStep,
+			int in_widthStep,
+			int in_sliceStep,
+			const float16_t* bias_data
+		);
+
+	void zq_cnn_addbias_16f_align128bit(
+		float16_t* in_tensor4D_data,	// in & out
+		int in_N,
+		int in_H,
+		int in_W,
+		int in_C,
+		int in_alignPixelStep,
+		int in_widthStep,
+		int in_SliceStep,
+		const float16_t* bias_data
+#endif
 	);
 #else
 

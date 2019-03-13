@@ -1,5 +1,5 @@
 void zq_cnn_maxpooling_nopadding_suredivided_kernel2x2(
-	const float* in_tensor4D_data,
+	const zq_base_type* in_tensor4D_data,
 	int in_N,
 	int in_H,
 	int in_W,
@@ -11,7 +11,7 @@ void zq_cnn_maxpooling_nopadding_suredivided_kernel2x2(
 	int kernel_W,
 	int stride_H,
 	int stride_W,
-	float* out_tensor4D_data,
+	zq_base_type* out_tensor4D_data,
 	int out_N,	// must be in_N
 	int out_H,	// must be ceil((in_H - filter_H)/stride_H) + 1
 	int out_W,	// must be ceil((in_W - filter_W)/stride_W) + 1
@@ -23,9 +23,9 @@ void zq_cnn_maxpooling_nopadding_suredivided_kernel2x2(
 {
 	register zq_mm_type val;
 	int n, out_h, out_w, c;
-	const float* in_c_ptr, *in_pix_ptr, *in_row_ptr, *in_slice_ptr;
-	float* out_c_ptr, *out_pix_ptr, *out_row_ptr, *out_slice_ptr;
-	const float* cur_pix_ptr, *cur_row_ptr;
+	const zq_base_type* in_c_ptr, *in_pix_ptr, *in_row_ptr, *in_slice_ptr;
+	zq_base_type* out_c_ptr, *out_pix_ptr, *out_row_ptr, *out_slice_ptr;
+	const zq_base_type* cur_pix_ptr, *cur_row_ptr;
 	int in_widthStep_mul_strideH = in_widthStep*stride_H;
 	int in_pixelStep_mul_strideW = in_pixelStep*stride_W;
 	for (n = 0, in_slice_ptr = in_tensor4D_data, out_slice_ptr = out_tensor4D_data;
@@ -68,7 +68,7 @@ void zq_cnn_maxpooling_nopadding_suredivided_kernel2x2(
 }
 
 void zq_cnn_avgpooling_nopadding_suredivided_kernel2x2(
-	const float* in_tensor4D_data,
+	const zq_base_type* in_tensor4D_data,
 	int in_N,
 	int in_H,
 	int in_W,
@@ -80,7 +80,7 @@ void zq_cnn_avgpooling_nopadding_suredivided_kernel2x2(
 	int kernel_W,
 	int stride_H,
 	int stride_W,
-	float* out_tensor4D_data,
+	zq_base_type* out_tensor4D_data,
 	int out_N,	// must be in_N
 	int out_H,	// must be ceil((in_H - filter_H)/stride_H) + 1
 	int out_W,	// must be ceil((in_W - filter_W)/stride_W) + 1
@@ -93,9 +93,9 @@ void zq_cnn_avgpooling_nopadding_suredivided_kernel2x2(
 	register zq_mm_type val;
 	register zq_mm_type scale = zq_mm_set1_ps(1.0f / (kernel_H*kernel_W));
 	int n, out_h, out_w, c;
-	const float* in_c_ptr, *in_pix_ptr, *in_row_ptr, *in_slice_ptr;
-	float* out_c_ptr, *out_pix_ptr, *out_row_ptr, *out_slice_ptr;
-	const float* cur_pix_ptr, *cur_row_ptr;
+	const zq_base_type* in_c_ptr, *in_pix_ptr, *in_row_ptr, *in_slice_ptr;
+	zq_base_type* out_c_ptr, *out_pix_ptr, *out_row_ptr, *out_slice_ptr;
+	const zq_base_type* cur_pix_ptr, *cur_row_ptr;
 	int in_widthStep_mul_strideH = in_widthStep*stride_H;
 	int in_pixelStep_mul_strideW = in_pixelStep*stride_W;
 	for (n = 0, in_slice_ptr = in_tensor4D_data, out_slice_ptr = out_tensor4D_data;
@@ -139,7 +139,7 @@ void zq_cnn_avgpooling_nopadding_suredivided_kernel2x2(
 
 
 void zq_cnn_maxpooling_nopadding_suredivided_kernel3x3(
-	const float* in_tensor4D_data,
+	const zq_base_type* in_tensor4D_data,
 	int in_N,
 	int in_H,
 	int in_W,
@@ -151,7 +151,7 @@ void zq_cnn_maxpooling_nopadding_suredivided_kernel3x3(
 	int kernel_W,
 	int stride_H,
 	int stride_W,
-	float* out_tensor4D_data,
+	zq_base_type* out_tensor4D_data,
 	int out_N,	// must be in_N
 	int out_H,	// must be ceil((in_H - filter_H)/stride_H) + 1
 	int out_W,	// must be ceil((in_W - filter_W)/stride_W) + 1
@@ -163,9 +163,9 @@ void zq_cnn_maxpooling_nopadding_suredivided_kernel3x3(
 {
 	register zq_mm_type val;
 	int n, out_h, out_w, c;
-	const float* in_c_ptr, *in_pix_ptr, *in_row_ptr, *in_slice_ptr;
-	float* out_c_ptr, *out_pix_ptr, *out_row_ptr, *out_slice_ptr;
-	const float* cur_pix_ptr, *cur_row_ptr;
+	const zq_base_type* in_c_ptr, *in_pix_ptr, *in_row_ptr, *in_slice_ptr;
+	zq_base_type* out_c_ptr, *out_pix_ptr, *out_row_ptr, *out_slice_ptr;
+	const zq_base_type* cur_pix_ptr, *cur_row_ptr;
 	int in_widthStep_mul_strideH = in_widthStep*stride_H;
 	int in_pixelStep_mul_strideW = in_pixelStep*stride_W;
 	for (n = 0, in_slice_ptr = in_tensor4D_data, out_slice_ptr = out_tensor4D_data;
@@ -221,7 +221,7 @@ void zq_cnn_maxpooling_nopadding_suredivided_kernel3x3(
 }
 
 void zq_cnn_avgpooling_nopadding_suredivided_kernel3x3(
-	const float* in_tensor4D_data,
+	const zq_base_type* in_tensor4D_data,
 	int in_N,
 	int in_H,
 	int in_W,
@@ -233,7 +233,7 @@ void zq_cnn_avgpooling_nopadding_suredivided_kernel3x3(
 	int kernel_W,
 	int stride_H,
 	int stride_W,
-	float* out_tensor4D_data,
+	zq_base_type* out_tensor4D_data,
 	int out_N,	// must be in_N
 	int out_H,	// must be ceil((in_H - filter_H)/stride_H) + 1
 	int out_W,	// must be ceil((in_W - filter_W)/stride_W) + 1
@@ -246,9 +246,9 @@ void zq_cnn_avgpooling_nopadding_suredivided_kernel3x3(
 	register zq_mm_type val;
 	register zq_mm_type scale = zq_mm_set1_ps(1.0f / (kernel_H*kernel_W));
 	int n, out_h, out_w, c;
-	const float* in_c_ptr, *in_pix_ptr, *in_row_ptr, *in_slice_ptr;
-	float* out_c_ptr, *out_pix_ptr, *out_row_ptr, *out_slice_ptr;
-	const float* cur_pix_ptr, *cur_row_ptr;
+	const zq_base_type* in_c_ptr, *in_pix_ptr, *in_row_ptr, *in_slice_ptr;
+	zq_base_type* out_c_ptr, *out_pix_ptr, *out_row_ptr, *out_slice_ptr;
+	const zq_base_type* cur_pix_ptr, *cur_row_ptr;
 	int in_widthStep_mul_strideH = in_widthStep*stride_H;
 	int in_pixelStep_mul_strideW = in_pixelStep*stride_W;
 	for (n = 0, in_slice_ptr = in_tensor4D_data, out_slice_ptr = out_tensor4D_data;
@@ -305,7 +305,7 @@ void zq_cnn_avgpooling_nopadding_suredivided_kernel3x3(
 
 
 void zq_cnn_maxpooling_nopadding_suredivided_kernel5x5(
-	const float* in_tensor4D_data,
+	const zq_base_type* in_tensor4D_data,
 	int in_N,
 	int in_H,
 	int in_W,
@@ -317,7 +317,7 @@ void zq_cnn_maxpooling_nopadding_suredivided_kernel5x5(
 	int kernel_W,
 	int stride_H,
 	int stride_W,
-	float* out_tensor4D_data,
+	zq_base_type* out_tensor4D_data,
 	int out_N,	// must be in_N
 	int out_H,	// must be ceil((in_H - filter_H)/stride_H) + 1
 	int out_W,	// must be ceil((in_W - filter_W)/stride_W) + 1
@@ -329,9 +329,9 @@ void zq_cnn_maxpooling_nopadding_suredivided_kernel5x5(
 {
 	register zq_mm_type val;
 	int n, out_h, out_w, c/*, kh, kw*/;
-	const float* in_c_ptr, *in_pix_ptr, *in_row_ptr, *in_slice_ptr;
-	float* out_c_ptr, *out_pix_ptr, *out_row_ptr, *out_slice_ptr;
-	const float* cur_pix_ptr, *cur_row_ptr;
+	const zq_base_type* in_c_ptr, *in_pix_ptr, *in_row_ptr, *in_slice_ptr;
+	zq_base_type* out_c_ptr, *out_pix_ptr, *out_row_ptr, *out_slice_ptr;
+	const zq_base_type* cur_pix_ptr, *cur_row_ptr;
 	int in_widthStep_mul_strideH = in_widthStep*stride_H;
 	int in_pixelStep_mul_strideW = in_pixelStep*stride_W;
 	for (n = 0, in_slice_ptr = in_tensor4D_data, out_slice_ptr = out_tensor4D_data;
@@ -425,7 +425,7 @@ void zq_cnn_maxpooling_nopadding_suredivided_kernel5x5(
 }
 
 void zq_cnn_avgpooling_nopadding_suredivided_kernel5x5(
-	const float* in_tensor4D_data,
+	const zq_base_type* in_tensor4D_data,
 	int in_N,
 	int in_H,
 	int in_W,
@@ -437,7 +437,7 @@ void zq_cnn_avgpooling_nopadding_suredivided_kernel5x5(
 	int kernel_W,
 	int stride_H,
 	int stride_W,
-	float* out_tensor4D_data,
+	zq_base_type* out_tensor4D_data,
 	int out_N,	// must be in_N
 	int out_H,	// must be ceil((in_H - filter_H)/stride_H) + 1
 	int out_W,	// must be ceil((in_W - filter_W)/stride_W) + 1
@@ -450,9 +450,9 @@ void zq_cnn_avgpooling_nopadding_suredivided_kernel5x5(
 	register zq_mm_type val;
 	register zq_mm_type scale = zq_mm_set1_ps(1.0f / (kernel_H*kernel_W));
 	int n, out_h, out_w, c/*, kh, kw*/;
-	const float* in_c_ptr, *in_pix_ptr, *in_row_ptr, *in_slice_ptr;
-	float* out_c_ptr, *out_pix_ptr, *out_row_ptr, *out_slice_ptr;
-	const float* cur_pix_ptr, *cur_row_ptr;
+	const zq_base_type* in_c_ptr, *in_pix_ptr, *in_row_ptr, *in_slice_ptr;
+	zq_base_type* out_c_ptr, *out_pix_ptr, *out_row_ptr, *out_slice_ptr;
+	const zq_base_type* cur_pix_ptr, *cur_row_ptr;
 	int in_widthStep_mul_strideH = in_widthStep*stride_H;
 	int in_pixelStep_mul_strideW = in_pixelStep*stride_W;
 	for (n = 0, in_slice_ptr = in_tensor4D_data, out_slice_ptr = out_tensor4D_data;
@@ -548,7 +548,7 @@ void zq_cnn_avgpooling_nopadding_suredivided_kernel5x5(
 
 
 void zq_cnn_maxpooling_nopadding_suredivided_general(
-	const float* in_tensor4D_data,
+	const zq_base_type* in_tensor4D_data,
 	int in_N,
 	int in_H,
 	int in_W,
@@ -560,7 +560,7 @@ void zq_cnn_maxpooling_nopadding_suredivided_general(
 	int kernel_W,
 	int stride_H,
 	int stride_W,
-	float* out_tensor4D_data,
+	zq_base_type* out_tensor4D_data,
 	int out_N,	// must be in_N
 	int out_H,	// must be ceil((in_H - filter_H)/stride_H) + 1
 	int out_W,	// must be ceil((in_W - filter_W)/stride_W) + 1
@@ -572,9 +572,9 @@ void zq_cnn_maxpooling_nopadding_suredivided_general(
 {
 	register zq_mm_type val;
 	int n, out_h, out_w, c, kh, kw;
-	const float* in_c_ptr, *in_pix_ptr, *in_row_ptr, *in_slice_ptr;
-	float* out_c_ptr, *out_pix_ptr, *out_row_ptr, *out_slice_ptr;
-	const float* cur_pix_ptr, *cur_row_ptr;
+	const zq_base_type* in_c_ptr, *in_pix_ptr, *in_row_ptr, *in_slice_ptr;
+	zq_base_type* out_c_ptr, *out_pix_ptr, *out_row_ptr, *out_slice_ptr;
+	const zq_base_type* cur_pix_ptr, *cur_row_ptr;
 	int in_widthStep_mul_strideH = in_widthStep*stride_H;
 	int in_pixelStep_mul_strideW = in_pixelStep*stride_W;
 	for (n = 0, in_slice_ptr = in_tensor4D_data, out_slice_ptr = out_tensor4D_data;
@@ -609,7 +609,7 @@ void zq_cnn_maxpooling_nopadding_suredivided_general(
 }
 
 void zq_cnn_avgpooling_nopadding_suredivided_general(
-	const float* in_tensor4D_data,
+	const zq_base_type* in_tensor4D_data,
 	int in_N,
 	int in_H,
 	int in_W,
@@ -621,7 +621,7 @@ void zq_cnn_avgpooling_nopadding_suredivided_general(
 	int kernel_W,
 	int stride_H,
 	int stride_W,
-	float* out_tensor4D_data,
+	zq_base_type* out_tensor4D_data,
 	int out_N,	// must be in_N
 	int out_H,	// must be ceil((in_H - filter_H)/stride_H) + 1
 	int out_W,	// must be ceil((in_W - filter_W)/stride_W) + 1
@@ -634,9 +634,9 @@ void zq_cnn_avgpooling_nopadding_suredivided_general(
 	register zq_mm_type val;
 	register zq_mm_type scale = zq_mm_set1_ps(1.0f / (kernel_H*kernel_W));
 	int n, out_h, out_w, c, kh, kw;
-	const float* in_c_ptr, *in_pix_ptr, *in_row_ptr, *in_slice_ptr;
-	float* out_c_ptr, *out_pix_ptr, *out_row_ptr, *out_slice_ptr;
-	const float* cur_pix_ptr, *cur_row_ptr;
+	const zq_base_type* in_c_ptr, *in_pix_ptr, *in_row_ptr, *in_slice_ptr;
+	zq_base_type* out_c_ptr, *out_pix_ptr, *out_row_ptr, *out_slice_ptr;
+	const zq_base_type* cur_pix_ptr, *cur_row_ptr;
 	int in_widthStep_mul_strideH = in_widthStep*stride_H;
 	int in_pixelStep_mul_strideW = in_pixelStep*stride_W;
 	for (n = 0, in_slice_ptr = in_tensor4D_data, out_slice_ptr = out_tensor4D_data;
@@ -672,7 +672,7 @@ void zq_cnn_avgpooling_nopadding_suredivided_general(
 
 
 void zq_cnn_maxpooling_nopadding_nodivided_general(
-	const float* in_tensor4D_data,
+	const zq_base_type* in_tensor4D_data,
 	int in_N,
 	int in_H,
 	int in_W,
@@ -684,7 +684,7 @@ void zq_cnn_maxpooling_nopadding_nodivided_general(
 	int kernel_W,
 	int stride_H,
 	int stride_W,
-	float* out_tensor4D_data,
+	zq_base_type* out_tensor4D_data,
 	int out_N,	// must be in_N
 	int out_H,	// must be ceil((in_H - filter_H)/stride_H) + 1
 	int out_W,	// must be ceil((in_W - filter_W)/stride_W) + 1
@@ -696,9 +696,9 @@ void zq_cnn_maxpooling_nopadding_nodivided_general(
 {
 	register zq_mm_type val;
 	int n, out_h, out_w, c, kh, kw;
-	const float* in_c_ptr, *in_pix_ptr, *in_row_ptr, *in_slice_ptr;
-	float* out_c_ptr, *out_pix_ptr, *out_row_ptr, *out_slice_ptr;
-	const float* cur_pix_ptr, *cur_row_ptr;
+	const zq_base_type* in_c_ptr, *in_pix_ptr, *in_row_ptr, *in_slice_ptr;
+	zq_base_type* out_c_ptr, *out_pix_ptr, *out_row_ptr, *out_slice_ptr;
+	const zq_base_type* cur_pix_ptr, *cur_row_ptr;
 	int in_widthStep_mul_strideH = in_widthStep*stride_H;
 	int in_pixelStep_mul_strideW = in_pixelStep*stride_W;
 
@@ -774,7 +774,7 @@ void zq_cnn_maxpooling_nopadding_nodivided_general(
 }
 
 void zq_cnn_avgpooling_nopadding_nodivided_general(
-	const float* in_tensor4D_data,
+	const zq_base_type* in_tensor4D_data,
 	int in_N,
 	int in_H,
 	int in_W,
@@ -786,7 +786,7 @@ void zq_cnn_avgpooling_nopadding_nodivided_general(
 	int kernel_W,
 	int stride_H,
 	int stride_W,
-	float* out_tensor4D_data,
+	zq_base_type* out_tensor4D_data,
 	int out_N,	// must be in_N
 	int out_H,	// must be ceil((in_H - filter_H)/stride_H) + 1
 	int out_W,	// must be ceil((in_W - filter_W)/stride_W) + 1
@@ -799,9 +799,9 @@ void zq_cnn_avgpooling_nopadding_nodivided_general(
 	register zq_mm_type val;
 	register zq_mm_type scale = zq_mm_set1_ps(1.0f / (kernel_H*kernel_W));
 	int n, out_h, out_w, c, kh, kw;
-	const float* in_c_ptr, *in_pix_ptr, *in_row_ptr, *in_slice_ptr;
-	float* out_c_ptr, *out_pix_ptr, *out_row_ptr, *out_slice_ptr;
-	const float* cur_pix_ptr, *cur_row_ptr;
+	const zq_base_type* in_c_ptr, *in_pix_ptr, *in_row_ptr, *in_slice_ptr;
+	zq_base_type* out_c_ptr, *out_pix_ptr, *out_row_ptr, *out_slice_ptr;
+	const zq_base_type* cur_pix_ptr, *cur_row_ptr;
 	int in_widthStep_mul_strideH = in_widthStep*stride_H;
 	int in_pixelStep_mul_strideW = in_pixelStep*stride_W;
 

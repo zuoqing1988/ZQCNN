@@ -27,6 +27,28 @@ extern "C" {
 		int out_sliceStep
 	);
 
+#if __ARM_NEON_FP16
+	void zq_cnn_lrn_across_channels_16f_align0(
+		int local_size,		// must be odd number
+		float16_t alpha,
+		float16_t beta,
+		float16_t k,
+		const float16_t* in_tensor4D_data,
+		int N,
+		int H,
+		int W,
+		int C,
+		int in_pixelStep,
+		int in_widthStep,
+		int in_sliceStep,
+		float16_t* out_tensor4D_data,
+		int out_pixStep,
+		int out_widthStep,
+		int out_sliceStep
+	);
+
+#endif//__ARM_NEON_FP16
+
 #else
 
 	void zq_cnn_lrn_across_channels_32f_align0(

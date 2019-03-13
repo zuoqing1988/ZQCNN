@@ -50,6 +50,7 @@ extern "C" {
 #define zq_mm_set1_ps _mm_set1_ps
 #define zq_mm_exp_ps zq_mm128_exp_ps//_mm_exp_ps
 #define zq_mm_type __m128
+#define zq_base_type float
 #define zq_mm_align_size 4
 #define zq_mm_bitor_longlong 0xFFFFFFFFFFFFFFF0
 #define zq_final_max_q __max(q[0],__max(q[1],__max(q[2],q[3])))
@@ -68,6 +69,7 @@ extern "C" {
 #undef zq_mm_set1_ps
 #undef zq_mm_exp_ps
 #undef zq_mm_type
+#undef zq_base_type
 #undef zq_mm_align_size
 #undef zq_mm_bitor_longlong
 #undef zq_final_max_q
@@ -85,6 +87,7 @@ extern "C" {
 #define zq_mm_set1_ps _mm256_set1_ps
 #define zq_mm_exp_ps zq_mm256_exp_ps//_mm256_exp_ps
 #define zq_mm_type __m256
+#define zq_base_type float
 #define zq_mm_align_size 8
 #define zq_mm_bitor_longlong 0xFFFFFFFFFFFFFFE0
 #define zq_final_max_q __max(q[0],__max(q[1],__max(q[2],__max(q[3],__max(q[4],__max(q[5],__max(q[6],q[7])))))))
@@ -102,6 +105,7 @@ extern "C" {
 #undef zq_mm_set1_ps
 #undef zq_mm_exp_ps
 #undef zq_mm_type
+#undef zq_base_type
 #undef zq_mm_align_size
 #undef zq_mm_bitor_longlong
 #undef zq_final_max_q
@@ -254,6 +258,157 @@ void zq_cnn_softmax_32f_align0_W(
 		}
 	}
 }
+
+#if __ARM_NEON
+#if __ARM_NEON_FP16
+#define zq_base_type float16_t
+void zq_cnn_softmax_16f_align0_C(
+	zq_base_type* in_tensor4D_data,	// in & out
+	int in_N,
+	int in_H,
+	int in_W,
+	int in_C,
+	int in_alignPixelStep,
+	int in_widthStep,
+	int in_SliceStep
+)
+{
+	/* value = exp( value - global max value )
+	sum all value
+	value = value / sum*/
+	zq_base_type max_val, tmp_val, sum_val;
+	int n, h, w, c;
+	zq_base_type* slice_ptr, *row_ptr, *pix_ptr, *c_ptr;
+	for (n = 0, slice_ptr = in_tensor4D_data; n < in_N; n++, slice_ptr += in_SliceStep)
+	{
+		for (h = 0, row_ptr = slice_ptr; h < in_H; h++, row_ptr += in_widthStep)
+		{
+			for (w = 0, pix_ptr = row_ptr; w < in_W; w++, pix_ptr += in_alignPixelStep)
+			{
+				//compute max_val
+				max_val = -FLT_MAX;
+				for (c = 0, c_ptr = pix_ptr; c < in_C; c++, c_ptr++)
+					max_val = __max(max_val, *(c_ptr));
+
+				//compute sum
+
+				sum_val = 0;
+				for (c = 0, c_ptr = pix_ptr; c < in_C; c++, c_ptr++)
+				{
+					tmp_val = exp((*c_ptr) - max_val);
+					sum_val += tmp_val;
+					*c_ptr = tmp_val;
+				}
+
+
+				//divide
+				sum_val = 1.0f / sum_val;
+				for (c = 0, c_ptr = pix_ptr; c < in_C; c++, c_ptr++)
+					*c_ptr *= sum_val;
+			}
+		}
+	}
+}
+
+void zq_cnn_softmax_16f_align0_H(
+	zq_base_type* in_tensor4D_data,	// in & out
+	int in_N,
+	int in_H,
+	int in_W,
+	int in_C,
+	int in_alignPixelStep,
+	int in_widthStep,
+	int in_SliceStep
+)
+{
+	/* value = exp( value - global max value )
+	sum all value
+	value = value / sum*/
+	zq_base_type max_val, tmp_val, sum_val;
+	int n, h, w, c;
+	zq_base_type* slice_ptr, *row_ptr, *pix_ptr, *c_ptr;
+	for (n = 0, slice_ptr = in_tensor4D_data; n < in_N; n++, slice_ptr += in_SliceStep)
+	{
+		for (c = 0, c_ptr = slice_ptr; c < in_C; c++, c_ptr++)
+		{
+			for (w = 0, pix_ptr = c_ptr; w < in_W; w++, pix_ptr += in_alignPixelStep)
+			{
+				//compute max_val
+				max_val = -FLT_MAX;
+				for (h = 0, row_ptr = pix_ptr; h < in_H; h++, row_ptr += in_widthStep)
+					max_val = __max(max_val, *(row_ptr));
+
+				//compute sum
+
+				sum_val = 0;
+				for (h = 0, row_ptr = pix_ptr; h < in_H; h++, row_ptr += in_widthStep)
+				{
+					tmp_val = exp((*row_ptr) - max_val);
+					sum_val += tmp_val;
+					*row_ptr = tmp_val;
+				}
+
+
+				//divide
+				sum_val = 1.0f / sum_val;
+				for (h = 0, row_ptr = pix_ptr; h < in_H; h++, row_ptr += in_widthStep)
+					*row_ptr *= sum_val;
+			}
+		}
+	}
+}
+
+
+void zq_cnn_softmax_16f_align0_W(
+	zq_base_type* in_tensor4D_data,	// in & out
+	int in_N,
+	int in_H,
+	int in_W,
+	int in_C,
+	int in_alignPixelStep,
+	int in_widthStep,
+	int in_SliceStep
+)
+{
+	/* value = exp( value - global max value )
+	sum all value
+	value = value / sum*/
+	zq_base_type max_val, tmp_val, sum_val;
+	int n, h, w, c;
+	zq_base_type* slice_ptr, *row_ptr, *pix_ptr, *c_ptr;
+	for (n = 0, slice_ptr = in_tensor4D_data; n < in_N; n++, slice_ptr += in_SliceStep)
+	{
+		for (h = 0, row_ptr = slice_ptr; h < in_H; h++, row_ptr += in_widthStep)
+		{
+			for (c = 0, c_ptr = row_ptr; c < in_C; c++, c_ptr++)
+			{
+				//compute max_val
+				max_val = -FLT_MAX;
+				for (w = 0, pix_ptr = c_ptr; w < in_W; w++, pix_ptr += in_alignPixelStep)
+					max_val = __max(max_val, *(pix_ptr));
+
+				//compute sum
+
+				sum_val = 0;
+				for (w = 0, pix_ptr = c_ptr; w < in_W; w++, pix_ptr += in_alignPixelStep)
+				{
+					tmp_val = exp((*pix_ptr) - max_val);
+					sum_val += tmp_val;
+					*pix_ptr = tmp_val;
+				}
+
+
+				//divide
+				sum_val = 1.0f / sum_val;
+				for (w = 0, pix_ptr = c_ptr; w < in_W; w++, pix_ptr += in_alignPixelStep)
+					*pix_ptr *= sum_val;
+			}
+		}
+	}
+}
+#undef zq_base_type
+#endif//__ARM_NEON_FP16
+#endif//__ARM_NEON
 
 #if defined(__cplusplus) || defined(c_plusplus) 
 }

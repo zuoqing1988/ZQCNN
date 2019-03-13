@@ -2041,12 +2041,12 @@
 	*(C_c_ptrG++) = zq_final_sum_q0_4
 #endif
 
-void zq_gemm_32f_align_AnoTrans_Btrans_M1_N1_Kgeneral(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+void zq_gemm_32f_align_AnoTrans_Btrans_M1_N1_Kgeneral(int M, int N, int K, const zq_base_type* A, int lda, const zq_base_type* Bt, int ldb, zq_base_type* C, int ldc)
 {
-	const float* Aptr1, *A_c_ptr1, *Bptr, *Bptr1;
-	const float *B_c_ptr1;
-	float* Cptr1, *C_c_ptr1;
-	float a1;
+	const zq_base_type* Aptr1, *A_c_ptr1, *Bptr, *Bptr1;
+	const zq_base_type *B_c_ptr1;
+	zq_base_type* Cptr1, *C_c_ptr1;
+	zq_base_type a1;
 	int m, n, k;
 	int padK = (K + zq_mm_align_size - 1) / zq_mm_align_size * zq_mm_align_size;
 	zq_q_type q;
@@ -2114,12 +2114,12 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M1_N1_Kgeneral(int M, int N, int K, const
 	}
 }
 
-void zq_gemm_32f_align_AnoTrans_Btrans_M1_N2_Kgeneral(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+void zq_gemm_32f_align_AnoTrans_Btrans_M1_N2_Kgeneral(int M, int N, int K, const zq_base_type* A, int lda, const zq_base_type* Bt, int ldb, zq_base_type* C, int ldc)
 {
-	const float* Aptr1, *A_c_ptr1, *Bptr, *Bptr1, *Bptr2;
-	const float *B_c_ptr1, *B_c_ptr2;
-	float* Cptr1, *C_c_ptr1;
-	float a1;
+	const zq_base_type* Aptr1, *A_c_ptr1, *Bptr, *Bptr1, *Bptr2;
+	const zq_base_type *B_c_ptr1, *B_c_ptr2;
+	zq_base_type* Cptr1, *C_c_ptr1;
+	zq_base_type a1;
 	int m, n, k;
 	int ldb2 = ldb << 1;
 	int padK = (K + zq_mm_align_size - 1) / zq_mm_align_size * zq_mm_align_size;
@@ -2241,12 +2241,12 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M1_N2_Kgeneral(int M, int N, int K, const
 	}
 }
 
-void zq_gemm_32f_align_AnoTrans_Btrans_M1_N4_Kgeneral(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+void zq_gemm_32f_align_AnoTrans_Btrans_M1_N4_Kgeneral(int M, int N, int K, const zq_base_type* A, int lda, const zq_base_type* Bt, int ldb, zq_base_type* C, int ldc)
 {
-	const float* Aptr1, *A_c_ptr1, *Bptr, *Bptr1, *Bptr2, *Bptr3, *Bptr4;
-	const float *B_c_ptr1, *B_c_ptr2, *B_c_ptr3, *B_c_ptr4;
-	float* Cptr1, *C_c_ptr1;
-	float a1;
+	const zq_base_type* Aptr1, *A_c_ptr1, *Bptr, *Bptr1, *Bptr2, *Bptr3, *Bptr4;
+	const zq_base_type *B_c_ptr1, *B_c_ptr2, *B_c_ptr3, *B_c_ptr4;
+	zq_base_type* Cptr1, *C_c_ptr1;
+	zq_base_type a1;
 	int m, n, k;
 	int ldb4 = ldb << 2;
 	int padK = (K + zq_mm_align_size - 1) / zq_mm_align_size * zq_mm_align_size;
@@ -2380,12 +2380,12 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M1_N4_Kgeneral(int M, int N, int K, const
 	}
 }
 
-void zq_gemm_32f_align_AnoTrans_Btrans_M1_N8_Kgeneral(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+void zq_gemm_32f_align_AnoTrans_Btrans_M1_N8_Kgeneral(int M, int N, int K, const zq_base_type* A, int lda, const zq_base_type* Bt, int ldb, zq_base_type* C, int ldc)
 {
-	const float* Aptr1, *A_c_ptr1, *Bptr, *Bptr1, *Bptr2, *Bptr3, *Bptr4, *Bptr5, *Bptr6, *Bptr7, *Bptr8;
-	const float *B_c_ptr1, *B_c_ptr2, *B_c_ptr3, *B_c_ptr4, *B_c_ptr5, *B_c_ptr6, *B_c_ptr7, *B_c_ptr8;
-	float* Cptr1, *C_c_ptr1;
-	float a1;
+	const zq_base_type* Aptr1, *A_c_ptr1, *Bptr, *Bptr1, *Bptr2, *Bptr3, *Bptr4, *Bptr5, *Bptr6, *Bptr7, *Bptr8;
+	const zq_base_type *B_c_ptr1, *B_c_ptr2, *B_c_ptr3, *B_c_ptr4, *B_c_ptr5, *B_c_ptr6, *B_c_ptr7, *B_c_ptr8;
+	zq_base_type* Cptr1, *C_c_ptr1;
+	zq_base_type a1;
 	int m, n, k;
 	int ldb8 = ldb << 3;
 	int padK = (K + zq_mm_align_size - 1) / zq_mm_align_size * zq_mm_align_size;
@@ -2545,13 +2545,13 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M1_N8_Kgeneral(int M, int N, int K, const
 	}
 }
 
-void zq_gemm_32f_align_AnoTrans_Btrans_M2_N1_Kgeneral(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+void zq_gemm_32f_align_AnoTrans_Btrans_M2_N1_Kgeneral(int M, int N, int K, const zq_base_type* A, int lda, const zq_base_type* Bt, int ldb, zq_base_type* C, int ldc)
 {
-	const float* Aptr1, *Aptr2, *A_c_ptr1, *A_c_ptr2;
-	const float* Bptr, *Bptr1;
-	const float *B_c_ptr1;
-	float* Cptr1, *Cptr2, *C_c_ptr1, *C_c_ptr2;
-	float a1, a2;
+	const zq_base_type* Aptr1, *Aptr2, *A_c_ptr1, *A_c_ptr2;
+	const zq_base_type* Bptr, *Bptr1;
+	const zq_base_type *B_c_ptr1;
+	zq_base_type* Cptr1, *Cptr2, *C_c_ptr1, *C_c_ptr2;
+	zq_base_type a1, a2;
 	int m, n, k;
 	int lda2 = lda << 1;
 	int ldc2 = ldc << 1;
@@ -2683,13 +2683,13 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M2_N1_Kgeneral(int M, int N, int K, const
 	}
 }
 
-void zq_gemm_32f_align_AnoTrans_Btrans_M2_N2_Kgeneral(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+void zq_gemm_32f_align_AnoTrans_Btrans_M2_N2_Kgeneral(int M, int N, int K, const zq_base_type* A, int lda, const zq_base_type* Bt, int ldb, zq_base_type* C, int ldc)
 {
-	const float* Aptr1, *Aptr2, *A_c_ptr1, *A_c_ptr2;
-	const float* Bptr, *Bptr1, *Bptr2;
-	const float *B_c_ptr1, *B_c_ptr2;
-	float* Cptr1, *Cptr2, *C_c_ptr1, *C_c_ptr2;
-	float a1, a2;
+	const zq_base_type* Aptr1, *Aptr2, *A_c_ptr1, *A_c_ptr2;
+	const zq_base_type* Bptr, *Bptr1, *Bptr2;
+	const zq_base_type *B_c_ptr1, *B_c_ptr2;
+	zq_base_type* Cptr1, *Cptr2, *C_c_ptr1, *C_c_ptr2;
+	zq_base_type a1, a2;
 	int m, n, k;
 	int lda2 = lda << 1;
 	int ldc2 = ldc << 1;
@@ -2938,13 +2938,13 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M2_N2_Kgeneral(int M, int N, int K, const
 	}
 }
 
-void zq_gemm_32f_align_AnoTrans_Btrans_M2_N4_Kgeneral(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+void zq_gemm_32f_align_AnoTrans_Btrans_M2_N4_Kgeneral(int M, int N, int K, const zq_base_type* A, int lda, const zq_base_type* Bt, int ldb, zq_base_type* C, int ldc)
 {
-	const float* Aptr1, *Aptr2, *A_c_ptr1, *A_c_ptr2;
-	const float* Bptr, *Bptr1, *Bptr2, *Bptr3, *Bptr4;
-	const float *B_c_ptr1, *B_c_ptr2, *B_c_ptr3, *B_c_ptr4;
-	float* Cptr1, *Cptr2, *C_c_ptr1, *C_c_ptr2;
-	float a1, a2;
+	const zq_base_type* Aptr1, *Aptr2, *A_c_ptr1, *A_c_ptr2;
+	const zq_base_type* Bptr, *Bptr1, *Bptr2, *Bptr3, *Bptr4;
+	const zq_base_type *B_c_ptr1, *B_c_ptr2, *B_c_ptr3, *B_c_ptr4;
+	zq_base_type* Cptr1, *Cptr2, *C_c_ptr1, *C_c_ptr2;
+	zq_base_type a1, a2;
 	int m, n, k;
 	int lda2 = lda << 1;
 	int ldc2 = ldc << 1;
@@ -3222,13 +3222,13 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M2_N4_Kgeneral(int M, int N, int K, const
 	}
 }
 
-void zq_gemm_32f_align_AnoTrans_Btrans_M2_N8_Kgeneral(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+void zq_gemm_32f_align_AnoTrans_Btrans_M2_N8_Kgeneral(int M, int N, int K, const zq_base_type* A, int lda, const zq_base_type* Bt, int ldb, zq_base_type* C, int ldc)
 {
-	const float* Aptr1, *Aptr2, *A_c_ptr1, *A_c_ptr2;
-	const float* Bptr, *Bptr1, *Bptr2, *Bptr3, *Bptr4, *Bptr5, *Bptr6, *Bptr7, *Bptr8;
-	const float *B_c_ptr1, *B_c_ptr2, *B_c_ptr3, *B_c_ptr4, *B_c_ptr5, *B_c_ptr6, *B_c_ptr7, *B_c_ptr8;
-	float* Cptr1, *Cptr2, *C_c_ptr1, *C_c_ptr2;
-	float a1, a2;
+	const zq_base_type* Aptr1, *Aptr2, *A_c_ptr1, *A_c_ptr2;
+	const zq_base_type* Bptr, *Bptr1, *Bptr2, *Bptr3, *Bptr4, *Bptr5, *Bptr6, *Bptr7, *Bptr8;
+	const zq_base_type *B_c_ptr1, *B_c_ptr2, *B_c_ptr3, *B_c_ptr4, *B_c_ptr5, *B_c_ptr6, *B_c_ptr7, *B_c_ptr8;
+	zq_base_type* Cptr1, *Cptr2, *C_c_ptr1, *C_c_ptr2;
+	zq_base_type a1, a2;
 	int m, n, k;
 	int lda2 = lda << 1;
 	int ldc2 = ldc << 1;
@@ -3564,13 +3564,13 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M2_N8_Kgeneral(int M, int N, int K, const
 	}
 }
 
-void zq_gemm_32f_align_AnoTrans_Btrans_M4_N1_Kgeneral(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+void zq_gemm_32f_align_AnoTrans_Btrans_M4_N1_Kgeneral(int M, int N, int K, const zq_base_type* A, int lda, const zq_base_type* Bt, int ldb, zq_base_type* C, int ldc)
 {
-	const float* Aptr1, *Aptr2, *Aptr3, *Aptr4, *A_c_ptr1, *A_c_ptr2, *A_c_ptr3, *A_c_ptr4;
-	const float* Bptr, *Bptr1;
-	const float *B_c_ptr1;
-	float* Cptr1, *Cptr2, *Cptr3, *Cptr4, *C_c_ptr1, *C_c_ptr2, *C_c_ptr3, *C_c_ptr4;
-	float a1, a2, a3, a4;
+	const zq_base_type* Aptr1, *Aptr2, *Aptr3, *Aptr4, *A_c_ptr1, *A_c_ptr2, *A_c_ptr3, *A_c_ptr4;
+	const zq_base_type* Bptr, *Bptr1;
+	const zq_base_type *B_c_ptr1;
+	zq_base_type* Cptr1, *Cptr2, *Cptr3, *Cptr4, *C_c_ptr1, *C_c_ptr2, *C_c_ptr3, *C_c_ptr4;
+	zq_base_type a1, a2, a3, a4;
 	int m, n, k;
 	int lda4 = lda << 2;
 	int ldc4 = ldc << 2;
@@ -3723,13 +3723,13 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M4_N1_Kgeneral(int M, int N, int K, const
 	}
 }
 
-void zq_gemm_32f_align_AnoTrans_Btrans_M4_N2_Kgeneral(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+void zq_gemm_32f_align_AnoTrans_Btrans_M4_N2_Kgeneral(int M, int N, int K, const zq_base_type* A, int lda, const zq_base_type* Bt, int ldb, zq_base_type* C, int ldc)
 {
-	const float* Aptr1, *Aptr2, *Aptr3, *Aptr4, *A_c_ptr1, *A_c_ptr2, *A_c_ptr3, *A_c_ptr4;
-	const float* Bptr, *Bptr1, *Bptr2;
-	const float *B_c_ptr1, *B_c_ptr2;
-	float* Cptr1, *Cptr2, *Cptr3, *Cptr4, *C_c_ptr1, *C_c_ptr2, *C_c_ptr3, *C_c_ptr4;
-	float a1, a2, a3, a4;
+	const zq_base_type* Aptr1, *Aptr2, *Aptr3, *Aptr4, *A_c_ptr1, *A_c_ptr2, *A_c_ptr3, *A_c_ptr4;
+	const zq_base_type* Bptr, *Bptr1, *Bptr2;
+	const zq_base_type *B_c_ptr1, *B_c_ptr2;
+	zq_base_type* Cptr1, *Cptr2, *Cptr3, *Cptr4, *C_c_ptr1, *C_c_ptr2, *C_c_ptr3, *C_c_ptr4;
+	zq_base_type a1, a2, a3, a4;
 	int m, n, k;
 	int lda4 = lda << 2;
 	int ldc4 = ldc << 2;
@@ -4014,13 +4014,13 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M4_N2_Kgeneral(int M, int N, int K, const
 	}
 }
 
-void zq_gemm_32f_align_AnoTrans_Btrans_M4_N4_Kgeneral(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+void zq_gemm_32f_align_AnoTrans_Btrans_M4_N4_Kgeneral(int M, int N, int K, const zq_base_type* A, int lda, const zq_base_type* Bt, int ldb, zq_base_type* C, int ldc)
 {
-	const float* Aptr1, *Aptr2, *Aptr3, *Aptr4, *A_c_ptr1, *A_c_ptr2, *A_c_ptr3, *A_c_ptr4;
-	const float* Bptr, *Bptr1, *Bptr2, *Bptr3, *Bptr4;
-	const float *B_c_ptr1, *B_c_ptr2, *B_c_ptr3, *B_c_ptr4;
-	float* Cptr1, *Cptr2, *Cptr3, *Cptr4, *C_c_ptr1, *C_c_ptr2, *C_c_ptr3, *C_c_ptr4;
-	float a1, a2, a3, a4;
+	const zq_base_type* Aptr1, *Aptr2, *Aptr3, *Aptr4, *A_c_ptr1, *A_c_ptr2, *A_c_ptr3, *A_c_ptr4;
+	const zq_base_type* Bptr, *Bptr1, *Bptr2, *Bptr3, *Bptr4;
+	const zq_base_type *B_c_ptr1, *B_c_ptr2, *B_c_ptr3, *B_c_ptr4;
+	zq_base_type* Cptr1, *Cptr2, *Cptr3, *Cptr4, *C_c_ptr1, *C_c_ptr2, *C_c_ptr3, *C_c_ptr4;
+	zq_base_type a1, a2, a3, a4;
 	int m, n, k;
 	int lda4 = lda << 2;
 	int ldc4 = ldc << 2;
@@ -4347,15 +4347,15 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M4_N4_Kgeneral(int M, int N, int K, const
 	}
 }
 
-void zq_gemm_32f_align_AnoTrans_Btrans_M8_N1_Kgeneral(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+void zq_gemm_32f_align_AnoTrans_Btrans_M8_N1_Kgeneral(int M, int N, int K, const zq_base_type* A, int lda, const zq_base_type* Bt, int ldb, zq_base_type* C, int ldc)
 {
-	const float* Aptr1, *Aptr2, *Aptr3, *Aptr4, *A_c_ptr1, *A_c_ptr2, *A_c_ptr3, *A_c_ptr4;
-	const float* Aptr5, *Aptr6, *Aptr7, *Aptr8, *A_c_ptr5, *A_c_ptr6, *A_c_ptr7, *A_c_ptr8;
-	const float* Bptr, *Bptr1;
-	const float *B_c_ptr1;
-	float* Cptr1, *Cptr2, *Cptr3, *Cptr4, *C_c_ptr1, *C_c_ptr2, *C_c_ptr3, *C_c_ptr4;
-	float* Cptr5, *Cptr6, *Cptr7, *Cptr8, *C_c_ptr5, *C_c_ptr6, *C_c_ptr7, *C_c_ptr8;
-	float a1, a2, a3, a4, a5, a6, a7, a8;
+	const zq_base_type* Aptr1, *Aptr2, *Aptr3, *Aptr4, *A_c_ptr1, *A_c_ptr2, *A_c_ptr3, *A_c_ptr4;
+	const zq_base_type* Aptr5, *Aptr6, *Aptr7, *Aptr8, *A_c_ptr5, *A_c_ptr6, *A_c_ptr7, *A_c_ptr8;
+	const zq_base_type* Bptr, *Bptr1;
+	const zq_base_type *B_c_ptr1;
+	zq_base_type* Cptr1, *Cptr2, *Cptr3, *Cptr4, *C_c_ptr1, *C_c_ptr2, *C_c_ptr3, *C_c_ptr4;
+	zq_base_type* Cptr5, *Cptr6, *Cptr7, *Cptr8, *C_c_ptr5, *C_c_ptr6, *C_c_ptr7, *C_c_ptr8;
+	zq_base_type a1, a2, a3, a4, a5, a6, a7, a8;
 	int m, n, k;
 	int lda8 = lda << 3;
 	int ldc8 = ldc << 3;
@@ -4545,15 +4545,15 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M8_N1_Kgeneral(int M, int N, int K, const
 	}
 }
 
-void zq_gemm_32f_align_AnoTrans_Btrans_M8_N2_Kgeneral(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+void zq_gemm_32f_align_AnoTrans_Btrans_M8_N2_Kgeneral(int M, int N, int K, const zq_base_type* A, int lda, const zq_base_type* Bt, int ldb, zq_base_type* C, int ldc)
 {
-	const float* Aptr1, *Aptr2, *Aptr3, *Aptr4, *A_c_ptr1, *A_c_ptr2, *A_c_ptr3, *A_c_ptr4;
-	const float* Aptr5, *Aptr6, *Aptr7, *Aptr8, *A_c_ptr5, *A_c_ptr6, *A_c_ptr7, *A_c_ptr8;
-	const float* Bptr, *Bptr1, *Bptr2;
-	const float *B_c_ptr1, *B_c_ptr2;
-	float* Cptr1, *Cptr2, *Cptr3, *Cptr4, *C_c_ptr1, *C_c_ptr2, *C_c_ptr3, *C_c_ptr4;
-	float* Cptr5, *Cptr6, *Cptr7, *Cptr8, *C_c_ptr5, *C_c_ptr6, *C_c_ptr7, *C_c_ptr8;
-	float a1, a2, a3, a4, a5, a6, a7, a8;
+	const zq_base_type* Aptr1, *Aptr2, *Aptr3, *Aptr4, *A_c_ptr1, *A_c_ptr2, *A_c_ptr3, *A_c_ptr4;
+	const zq_base_type* Aptr5, *Aptr6, *Aptr7, *Aptr8, *A_c_ptr5, *A_c_ptr6, *A_c_ptr7, *A_c_ptr8;
+	const zq_base_type* Bptr, *Bptr1, *Bptr2;
+	const zq_base_type *B_c_ptr1, *B_c_ptr2;
+	zq_base_type* Cptr1, *Cptr2, *Cptr3, *Cptr4, *C_c_ptr1, *C_c_ptr2, *C_c_ptr3, *C_c_ptr4;
+	zq_base_type* Cptr5, *Cptr6, *Cptr7, *Cptr8, *C_c_ptr5, *C_c_ptr6, *C_c_ptr7, *C_c_ptr8;
+	zq_base_type a1, a2, a3, a4, a5, a6, a7, a8;
 	int m, n, k;
 	int lda8 = lda << 3;
 	int ldc8 = ldc << 3;
@@ -4913,20 +4913,20 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M8_N2_Kgeneral(int M, int N, int K, const
 	}
 }
 
-void zq_gemm_32f_align_AnoTrans_Btrans_M16_N1_Kgeneral(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+void zq_gemm_32f_align_AnoTrans_Btrans_M16_N1_Kgeneral(int M, int N, int K, const zq_base_type* A, int lda, const zq_base_type* Bt, int ldb, zq_base_type* C, int ldc)
 {
-	const float* Aptr1, *Aptr2, *Aptr3, *Aptr4, *A_c_ptr1, *A_c_ptr2, *A_c_ptr3, *A_c_ptr4;
-	const float* Aptr5, *Aptr6, *Aptr7, *Aptr8, *A_c_ptr5, *A_c_ptr6, *A_c_ptr7, *A_c_ptr8;
-	const float* Aptr9, *AptrA, *AptrB, *AptrC, *A_c_ptr9, *A_c_ptrA, *A_c_ptrB, *A_c_ptrC;
-	const float* AptrD, *AptrE, *AptrF, *AptrG, *A_c_ptrD, *A_c_ptrE, *A_c_ptrF, *A_c_ptrG;
-	const float* Bptr, *Bptr1;
-	const float *B_c_ptr1;
-	float* Cptr1, *Cptr2, *Cptr3, *Cptr4, *C_c_ptr1, *C_c_ptr2, *C_c_ptr3, *C_c_ptr4;
-	float* Cptr5, *Cptr6, *Cptr7, *Cptr8, *C_c_ptr5, *C_c_ptr6, *C_c_ptr7, *C_c_ptr8;
-	float* Cptr9, *CptrA, *CptrB, *CptrC, *C_c_ptr9, *C_c_ptrA, *C_c_ptrB, *C_c_ptrC;
-	float* CptrD, *CptrE, *CptrF, *CptrG, *C_c_ptrD, *C_c_ptrE, *C_c_ptrF, *C_c_ptrG;
-	float a1, a2, a3, a4, a5, a6, a7, a8;
-	float a9, aA, aB, aC, aD, aE, aF, aG;
+	const zq_base_type* Aptr1, *Aptr2, *Aptr3, *Aptr4, *A_c_ptr1, *A_c_ptr2, *A_c_ptr3, *A_c_ptr4;
+	const zq_base_type* Aptr5, *Aptr6, *Aptr7, *Aptr8, *A_c_ptr5, *A_c_ptr6, *A_c_ptr7, *A_c_ptr8;
+	const zq_base_type* Aptr9, *AptrA, *AptrB, *AptrC, *A_c_ptr9, *A_c_ptrA, *A_c_ptrB, *A_c_ptrC;
+	const zq_base_type* AptrD, *AptrE, *AptrF, *AptrG, *A_c_ptrD, *A_c_ptrE, *A_c_ptrF, *A_c_ptrG;
+	const zq_base_type* Bptr, *Bptr1;
+	const zq_base_type *B_c_ptr1;
+	zq_base_type* Cptr1, *Cptr2, *Cptr3, *Cptr4, *C_c_ptr1, *C_c_ptr2, *C_c_ptr3, *C_c_ptr4;
+	zq_base_type* Cptr5, *Cptr6, *Cptr7, *Cptr8, *C_c_ptr5, *C_c_ptr6, *C_c_ptr7, *C_c_ptr8;
+	zq_base_type* Cptr9, *CptrA, *CptrB, *CptrC, *C_c_ptr9, *C_c_ptrA, *C_c_ptrB, *C_c_ptrC;
+	zq_base_type* CptrD, *CptrE, *CptrF, *CptrG, *C_c_ptrD, *C_c_ptrE, *C_c_ptrF, *C_c_ptrG;
+	zq_base_type a1, a2, a3, a4, a5, a6, a7, a8;
+	zq_base_type a9, aA, aB, aC, aD, aE, aF, aG;
 	int m, n, k;
 	int lda16 = lda << 4;
 	int ldc16 = ldc << 4;
@@ -5190,11 +5190,11 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M16_N1_Kgeneral(int M, int N, int K, cons
 	}
 }
 
-void zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv1_KeqAlign1(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+void zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv1_KeqAlign1(int M, int N, int K, const zq_base_type* A, int lda, const zq_base_type* Bt, int ldb, zq_base_type* C, int ldc)
 {
-	const float* Aptr1, *A_c_ptr1, *Bptr, *Bptr1;
-	const float *B_c_ptr1;
-	float* Cptr1, *C_c_ptr1;
+	const zq_base_type* Aptr1, *A_c_ptr1, *Bptr, *Bptr1;
+	const zq_base_type *B_c_ptr1;
+	zq_base_type* Cptr1, *C_c_ptr1;
 	int m, n;
 	zq_q_type q;
 	register zq_mm_type sum_vec11;
@@ -5216,11 +5216,11 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv1_KeqAlign1(int M, int N, int 
 	}
 }
 
-void zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv1_KeqAlign2(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+void zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv1_KeqAlign2(int M, int N, int K, const zq_base_type* A, int lda, const zq_base_type* Bt, int ldb, zq_base_type* C, int ldc)
 {
-	const float* Aptr1, *A_c_ptr1, *Bptr, *Bptr1;
-	const float *B_c_ptr1;
-	float* Cptr1, *C_c_ptr1;
+	const zq_base_type* Aptr1, *A_c_ptr1, *Bptr, *Bptr1;
+	const zq_base_type *B_c_ptr1;
+	zq_base_type* Cptr1, *C_c_ptr1;
 	int m, n;
 	zq_q_type q;
 	register zq_mm_type sum_vec11;
@@ -5242,11 +5242,11 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv1_KeqAlign2(int M, int N, int 
 	}
 }
 
-void zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv1_KeqAlign3(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+void zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv1_KeqAlign3(int M, int N, int K, const zq_base_type* A, int lda, const zq_base_type* Bt, int ldb, zq_base_type* C, int ldc)
 {
-	const float* Aptr1, *A_c_ptr1, *Bptr, *Bptr1;
-	const float *B_c_ptr1;
-	float* Cptr1, *C_c_ptr1;
+	const zq_base_type* Aptr1, *A_c_ptr1, *Bptr, *Bptr1;
+	const zq_base_type *B_c_ptr1;
+	zq_base_type* Cptr1, *C_c_ptr1;
 	int m, n;
 	zq_q_type q;
 	register zq_mm_type sum_vec11;
@@ -5269,11 +5269,11 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv1_KeqAlign3(int M, int N, int 
 	}
 }
 
-void zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv1_KeqAlign4(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+void zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv1_KeqAlign4(int M, int N, int K, const zq_base_type* A, int lda, const zq_base_type* Bt, int ldb, zq_base_type* C, int ldc)
 {
-	const float* Aptr1, *A_c_ptr1, *Bptr, *Bptr1;
-	const float *B_c_ptr1;
-	float* Cptr1, *C_c_ptr1;
+	const zq_base_type* Aptr1, *A_c_ptr1, *Bptr, *Bptr1;
+	const zq_base_type *B_c_ptr1;
+	zq_base_type* Cptr1, *C_c_ptr1;
 	int m, n;
 	zq_q_type q;
 	register zq_mm_type sum_vec11;
@@ -5295,11 +5295,11 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv1_KeqAlign4(int M, int N, int 
 	}
 }
 
-void zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv1_KeqAlign5(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+void zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv1_KeqAlign5(int M, int N, int K, const zq_base_type* A, int lda, const zq_base_type* Bt, int ldb, zq_base_type* C, int ldc)
 {
-	const float* Aptr1, *A_c_ptr1, *Bptr, *Bptr1;
-	const float *B_c_ptr1;
-	float* Cptr1, *C_c_ptr1;
+	const zq_base_type* Aptr1, *A_c_ptr1, *Bptr, *Bptr1;
+	const zq_base_type *B_c_ptr1;
+	zq_base_type* Cptr1, *C_c_ptr1;
 	int m, n;
 	zq_q_type q;
 	register zq_mm_type sum_vec11;
@@ -5322,11 +5322,11 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv1_KeqAlign5(int M, int N, int 
 	}
 }
 
-void zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv1_KeqAlign6(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+void zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv1_KeqAlign6(int M, int N, int K, const zq_base_type* A, int lda, const zq_base_type* Bt, int ldb, zq_base_type* C, int ldc)
 {
-	const float* Aptr1, *A_c_ptr1, *Bptr, *Bptr1;
-	const float *B_c_ptr1;
-	float* Cptr1, *C_c_ptr1;
+	const zq_base_type* Aptr1, *A_c_ptr1, *Bptr, *Bptr1;
+	const zq_base_type *B_c_ptr1;
+	zq_base_type* Cptr1, *C_c_ptr1;
 	int m, n;
 	zq_q_type q;
 	register zq_mm_type sum_vec11;
@@ -5349,11 +5349,11 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv1_KeqAlign6(int M, int N, int 
 	}
 }
 
-void zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv1_KeqAlign7(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+void zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv1_KeqAlign7(int M, int N, int K, const zq_base_type* A, int lda, const zq_base_type* Bt, int ldb, zq_base_type* C, int ldc)
 {
-	const float* Aptr1, *A_c_ptr1, *Bptr, *Bptr1;
-	const float *B_c_ptr1;
-	float* Cptr1, *C_c_ptr1;
+	const zq_base_type* Aptr1, *A_c_ptr1, *Bptr, *Bptr1;
+	const zq_base_type *B_c_ptr1;
+	zq_base_type* Cptr1, *C_c_ptr1;
 	int m, n;
 	zq_q_type q;
 	register zq_mm_type sum_vec11;
@@ -5377,11 +5377,11 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv1_KeqAlign7(int M, int N, int 
 	}
 }
 
-void zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv1_KdivAlign4(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+void zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv1_KdivAlign4(int M, int N, int K, const zq_base_type* A, int lda, const zq_base_type* Bt, int ldb, zq_base_type* C, int ldc)
 {
-	const float* Aptr1, *A_c_ptr1, *Bptr, *Bptr1;
-	const float *B_c_ptr1;
-	float* Cptr1, *C_c_ptr1;
+	const zq_base_type* Aptr1, *A_c_ptr1, *Bptr, *Bptr1;
+	const zq_base_type *B_c_ptr1;
+	zq_base_type* Cptr1, *C_c_ptr1;
 	int m, n, k;
 	zq_q_type q;
 	register zq_mm_type sum_vec11;
@@ -5407,11 +5407,11 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv1_KdivAlign4(int M, int N, int
 	}
 }
 
-void zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv1_KdivAlign8(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+void zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv1_KdivAlign8(int M, int N, int K, const zq_base_type* A, int lda, const zq_base_type* Bt, int ldb, zq_base_type* C, int ldc)
 {
-	const float* Aptr1, *A_c_ptr1, *Bptr, *Bptr1;
-	const float *B_c_ptr1;
-	float* Cptr1, *C_c_ptr1;
+	const zq_base_type* Aptr1, *A_c_ptr1, *Bptr, *Bptr1;
+	const zq_base_type *B_c_ptr1;
+	zq_base_type* Cptr1, *C_c_ptr1;
 	int m, n, k;
 	zq_q_type q;
 	register zq_mm_type sum_vec11;
@@ -5440,11 +5440,11 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv1_KdivAlign8(int M, int N, int
 
 #if !__ARM_NEON
 
-void zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv1_KdivAlign16(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+void zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv1_KdivAlign16(int M, int N, int K, const zq_base_type* A, int lda, const zq_base_type* Bt, int ldb, zq_base_type* C, int ldc)
 {
-	const float* Aptr1, *A_c_ptr1, *Bptr, *Bptr1;
-	const float *B_c_ptr1;
-	float* Cptr1, *C_c_ptr1;
+	const zq_base_type* Aptr1, *A_c_ptr1, *Bptr, *Bptr1;
+	const zq_base_type *B_c_ptr1;
+	zq_base_type* Cptr1, *C_c_ptr1;
 	int m, n, k;
 	zq_q_type q;
 	register zq_mm_type sum_vec11;
@@ -5471,11 +5471,11 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv1_KdivAlign16(int M, int N, in
 	}
 }
 
-void zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv1_KdivAlign32(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+void zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv1_KdivAlign32(int M, int N, int K, const zq_base_type* A, int lda, const zq_base_type* Bt, int ldb, zq_base_type* C, int ldc)
 {
-	const float* Aptr1, *A_c_ptr1, *Bptr, *Bptr1;
-	const float *B_c_ptr1;
-	float* Cptr1, *C_c_ptr1;
+	const zq_base_type* Aptr1, *A_c_ptr1, *Bptr, *Bptr1;
+	const zq_base_type *B_c_ptr1;
+	zq_base_type* Cptr1, *C_c_ptr1;
 	int m, n, k;
 	zq_q_type q;
 	register zq_mm_type sum_vec11;
@@ -5504,11 +5504,11 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv1_KdivAlign32(int M, int N, in
 	}
 }
 
-void zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv1_KdivAlign64(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+void zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv1_KdivAlign64(int M, int N, int K, const zq_base_type* A, int lda, const zq_base_type* Bt, int ldb, zq_base_type* C, int ldc)
 {
-	const float* Aptr1, *A_c_ptr1, *Bptr, *Bptr1;
-	const float *B_c_ptr1;
-	float* Cptr1, *C_c_ptr1;
+	const zq_base_type* Aptr1, *A_c_ptr1, *Bptr, *Bptr1;
+	const zq_base_type *B_c_ptr1;
+	zq_base_type* Cptr1, *C_c_ptr1;
 	int m, n, k;
 	zq_q_type q;
 	register zq_mm_type sum_vec11;
@@ -5543,11 +5543,11 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv1_KdivAlign64(int M, int N, in
 
 #endif
 
-void zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv2_KeqAlign1(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+void zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv2_KeqAlign1(int M, int N, int K, const zq_base_type* A, int lda, const zq_base_type* Bt, int ldb, zq_base_type* C, int ldc)
 {
-	const float* Aptr1, *A_c_ptr1, *Bptr, *Bptr1, *Bptr2;
-	const float *B_c_ptr1, *B_c_ptr2;
-	float* Cptr1, *C_c_ptr1;
+	const zq_base_type* Aptr1, *A_c_ptr1, *Bptr, *Bptr1, *Bptr2;
+	const zq_base_type *B_c_ptr1, *B_c_ptr2;
+	zq_base_type* Cptr1, *C_c_ptr1;
 	int m, n;
 	int ldb2 = ldb << 1;
 	zq_q_type q;
@@ -5572,11 +5572,11 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv2_KeqAlign1(int M, int N, int 
 	}
 }
 
-void zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv2_KeqAlign2(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+void zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv2_KeqAlign2(int M, int N, int K, const zq_base_type* A, int lda, const zq_base_type* Bt, int ldb, zq_base_type* C, int ldc)
 {
-	const float* Aptr1, *A_c_ptr1, *Bptr, *Bptr1, *Bptr2;
-	const float *B_c_ptr1, *B_c_ptr2;
-	float* Cptr1, *C_c_ptr1;
+	const zq_base_type* Aptr1, *A_c_ptr1, *Bptr, *Bptr1, *Bptr2;
+	const zq_base_type *B_c_ptr1, *B_c_ptr2;
+	zq_base_type* Cptr1, *C_c_ptr1;
 	int m, n;
 	int ldb2 = ldb << 1;
 	zq_q_type q;
@@ -5601,11 +5601,11 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv2_KeqAlign2(int M, int N, int 
 	}
 }
 
-void zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv2_KeqAlign3(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+void zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv2_KeqAlign3(int M, int N, int K, const zq_base_type* A, int lda, const zq_base_type* Bt, int ldb, zq_base_type* C, int ldc)
 {
-	const float* Aptr1, *A_c_ptr1, *Bptr, *Bptr1, *Bptr2;
-	const float *B_c_ptr1, *B_c_ptr2;
-	float* Cptr1, *C_c_ptr1;
+	const zq_base_type* Aptr1, *A_c_ptr1, *Bptr, *Bptr1, *Bptr2;
+	const zq_base_type *B_c_ptr1, *B_c_ptr2;
+	zq_base_type* Cptr1, *C_c_ptr1;
 	int m, n;
 	int ldb2 = ldb << 1;
 	zq_q_type q;
@@ -5631,11 +5631,11 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv2_KeqAlign3(int M, int N, int 
 	}
 }
 
-void zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv2_KeqAlign4(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+void zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv2_KeqAlign4(int M, int N, int K, const zq_base_type* A, int lda, const zq_base_type* Bt, int ldb, zq_base_type* C, int ldc)
 {
-	const float* Aptr1, *A_c_ptr1, *Bptr, *Bptr1, *Bptr2;
-	const float *B_c_ptr1, *B_c_ptr2;
-	float* Cptr1, *C_c_ptr1;
+	const zq_base_type* Aptr1, *A_c_ptr1, *Bptr, *Bptr1, *Bptr2;
+	const zq_base_type *B_c_ptr1, *B_c_ptr2;
+	zq_base_type* Cptr1, *C_c_ptr1;
 	int m, n;
 	int ldb2 = ldb << 1;
 	zq_q_type q;
@@ -5660,11 +5660,11 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv2_KeqAlign4(int M, int N, int 
 	}
 }
 
-void zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv2_KeqAlign5(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+void zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv2_KeqAlign5(int M, int N, int K, const zq_base_type* A, int lda, const zq_base_type* Bt, int ldb, zq_base_type* C, int ldc)
 {
-	const float* Aptr1, *A_c_ptr1, *Bptr, *Bptr1, *Bptr2;
-	const float *B_c_ptr1, *B_c_ptr2;
-	float* Cptr1, *C_c_ptr1;
+	const zq_base_type* Aptr1, *A_c_ptr1, *Bptr, *Bptr1, *Bptr2;
+	const zq_base_type *B_c_ptr1, *B_c_ptr2;
+	zq_base_type* Cptr1, *C_c_ptr1;
 	int m, n;
 	int ldb2 = ldb << 1;
 	zq_q_type q;
@@ -5690,11 +5690,11 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv2_KeqAlign5(int M, int N, int 
 	}
 }
 
-void zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv2_KeqAlign6(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+void zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv2_KeqAlign6(int M, int N, int K, const zq_base_type* A, int lda, const zq_base_type* Bt, int ldb, zq_base_type* C, int ldc)
 {
-	const float* Aptr1, *A_c_ptr1, *Bptr, *Bptr1, *Bptr2;
-	const float *B_c_ptr1, *B_c_ptr2;
-	float* Cptr1, *C_c_ptr1;
+	const zq_base_type* Aptr1, *A_c_ptr1, *Bptr, *Bptr1, *Bptr2;
+	const zq_base_type *B_c_ptr1, *B_c_ptr2;
+	zq_base_type* Cptr1, *C_c_ptr1;
 	int m, n;
 	int ldb2 = ldb << 1;
 	zq_q_type q;
@@ -5720,11 +5720,11 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv2_KeqAlign6(int M, int N, int 
 	}
 }
 
-void zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv2_KeqAlign7(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+void zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv2_KeqAlign7(int M, int N, int K, const zq_base_type* A, int lda, const zq_base_type* Bt, int ldb, zq_base_type* C, int ldc)
 {
-	const float* Aptr1, *A_c_ptr1, *Bptr, *Bptr1, *Bptr2;
-	const float *B_c_ptr1, *B_c_ptr2;
-	float* Cptr1, *C_c_ptr1;
+	const zq_base_type* Aptr1, *A_c_ptr1, *Bptr, *Bptr1, *Bptr2;
+	const zq_base_type *B_c_ptr1, *B_c_ptr2;
+	zq_base_type* Cptr1, *C_c_ptr1;
 	int m, n;
 	int ldb2 = ldb << 1;
 	zq_q_type q;
@@ -5751,11 +5751,11 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv2_KeqAlign7(int M, int N, int 
 	}
 }
 
-void zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv2_KdivAlign4(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+void zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv2_KdivAlign4(int M, int N, int K, const zq_base_type* A, int lda, const zq_base_type* Bt, int ldb, zq_base_type* C, int ldc)
 {
-	const float* Aptr1, *A_c_ptr1, *Bptr, *Bptr1, *Bptr2;
-	const float *B_c_ptr1, *B_c_ptr2;
-	float* Cptr1, *C_c_ptr1;
+	const zq_base_type* Aptr1, *A_c_ptr1, *Bptr, *Bptr1, *Bptr2;
+	const zq_base_type *B_c_ptr1, *B_c_ptr2;
+	zq_base_type* Cptr1, *C_c_ptr1;
 	int m, n, k;
 	int ldb2 = ldb << 1;
 	zq_q_type q;
@@ -5784,11 +5784,11 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv2_KdivAlign4(int M, int N, int
 	}
 }
 
-void zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv2_KdivAlign8(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+void zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv2_KdivAlign8(int M, int N, int K, const zq_base_type* A, int lda, const zq_base_type* Bt, int ldb, zq_base_type* C, int ldc)
 {
-	const float* Aptr1, *A_c_ptr1, *Bptr, *Bptr1, *Bptr2;
-	const float *B_c_ptr1, *B_c_ptr2;
-	float* Cptr1, *C_c_ptr1;
+	const zq_base_type* Aptr1, *A_c_ptr1, *Bptr, *Bptr1, *Bptr2;
+	const zq_base_type *B_c_ptr1, *B_c_ptr2;
+	zq_base_type* Cptr1, *C_c_ptr1;
 	int m, n, k;
 	int ldb2 = ldb << 1;
 	zq_q_type q;
@@ -5820,11 +5820,11 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv2_KdivAlign8(int M, int N, int
 
 #if !__ARM_NEON
 
-void zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv2_KdivAlign16(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+void zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv2_KdivAlign16(int M, int N, int K, const zq_base_type* A, int lda, const zq_base_type* Bt, int ldb, zq_base_type* C, int ldc)
 {
-	const float* Aptr1, *A_c_ptr1, *Bptr, *Bptr1, *Bptr2;
-	const float *B_c_ptr1, *B_c_ptr2;
-	float* Cptr1, *C_c_ptr1;
+	const zq_base_type* Aptr1, *A_c_ptr1, *Bptr, *Bptr1, *Bptr2;
+	const zq_base_type *B_c_ptr1, *B_c_ptr2;
+	zq_base_type* Cptr1, *C_c_ptr1;
 	int m, n, k;
 	int ldb2 = ldb << 1;
 	zq_q_type q;
@@ -5854,11 +5854,11 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv2_KdivAlign16(int M, int N, in
 	}
 }
 
-void zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv2_KdivAlign32(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+void zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv2_KdivAlign32(int M, int N, int K, const zq_base_type* A, int lda, const zq_base_type* Bt, int ldb, zq_base_type* C, int ldc)
 {
-	const float* Aptr1, *A_c_ptr1, *Bptr, *Bptr1, *Bptr2;
-	const float *B_c_ptr1, *B_c_ptr2;
-	float* Cptr1, *C_c_ptr1;
+	const zq_base_type* Aptr1, *A_c_ptr1, *Bptr, *Bptr1, *Bptr2;
+	const zq_base_type *B_c_ptr1, *B_c_ptr2;
+	zq_base_type* Cptr1, *C_c_ptr1;
 	int m, n, k;
 	int ldb2 = ldb << 1;
 	zq_q_type q;
@@ -5890,11 +5890,11 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv2_KdivAlign32(int M, int N, in
 	}
 }
 
-void zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv2_KdivAlign64(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+void zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv2_KdivAlign64(int M, int N, int K, const zq_base_type* A, int lda, const zq_base_type* Bt, int ldb, zq_base_type* C, int ldc)
 {
-	const float* Aptr1, *A_c_ptr1, *Bptr, *Bptr1, *Bptr2;
-	const float *B_c_ptr1, *B_c_ptr2;
-	float* Cptr1, *C_c_ptr1;
+	const zq_base_type* Aptr1, *A_c_ptr1, *Bptr, *Bptr1, *Bptr2;
+	const zq_base_type *B_c_ptr1, *B_c_ptr2;
+	zq_base_type* Cptr1, *C_c_ptr1;
 	int m, n, k;
 	int ldb2 = ldb << 1;
 	zq_q_type q;
@@ -5932,11 +5932,11 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv2_KdivAlign64(int M, int N, in
 
 #endif 
 
-void zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv4_KeqAlign1(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+void zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv4_KeqAlign1(int M, int N, int K, const zq_base_type* A, int lda, const zq_base_type* Bt, int ldb, zq_base_type* C, int ldc)
 {
-	const float* Aptr1, *A_c_ptr1, *Bptr, *Bptr1, *Bptr2, *Bptr3, *Bptr4;
-	const float *B_c_ptr1, *B_c_ptr2, *B_c_ptr3, *B_c_ptr4;
-	float* Cptr1, *C_c_ptr1;
+	const zq_base_type* Aptr1, *A_c_ptr1, *Bptr, *Bptr1, *Bptr2, *Bptr3, *Bptr4;
+	const zq_base_type *B_c_ptr1, *B_c_ptr2, *B_c_ptr3, *B_c_ptr4;
+	zq_base_type* Cptr1, *C_c_ptr1;
 	int m, n;
 	int ldb4 = ldb << 2;
 	zq_q_type q;
@@ -5966,11 +5966,11 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv4_KeqAlign1(int M, int N, int 
 	}
 }
 
-void zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv4_KeqAlign2(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+void zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv4_KeqAlign2(int M, int N, int K, const zq_base_type* A, int lda, const zq_base_type* Bt, int ldb, zq_base_type* C, int ldc)
 {
-	const float* Aptr1, *A_c_ptr1, *Bptr, *Bptr1, *Bptr2, *Bptr3, *Bptr4;
-	const float *B_c_ptr1, *B_c_ptr2, *B_c_ptr3, *B_c_ptr4;
-	float* Cptr1, *C_c_ptr1;
+	const zq_base_type* Aptr1, *A_c_ptr1, *Bptr, *Bptr1, *Bptr2, *Bptr3, *Bptr4;
+	const zq_base_type *B_c_ptr1, *B_c_ptr2, *B_c_ptr3, *B_c_ptr4;
+	zq_base_type* Cptr1, *C_c_ptr1;
 	int m, n;
 	int ldb4 = ldb << 2;
 	zq_q_type q;
@@ -6000,11 +6000,11 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv4_KeqAlign2(int M, int N, int 
 	}
 }
 
-void zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv4_KeqAlign3(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+void zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv4_KeqAlign3(int M, int N, int K, const zq_base_type* A, int lda, const zq_base_type* Bt, int ldb, zq_base_type* C, int ldc)
 {
-	const float* Aptr1, *A_c_ptr1, *Bptr, *Bptr1, *Bptr2, *Bptr3, *Bptr4;
-	const float *B_c_ptr1, *B_c_ptr2, *B_c_ptr3, *B_c_ptr4;
-	float* Cptr1, *C_c_ptr1;
+	const zq_base_type* Aptr1, *A_c_ptr1, *Bptr, *Bptr1, *Bptr2, *Bptr3, *Bptr4;
+	const zq_base_type *B_c_ptr1, *B_c_ptr2, *B_c_ptr3, *B_c_ptr4;
+	zq_base_type* Cptr1, *C_c_ptr1;
 	int m, n;
 	int ldb4 = ldb << 2;
 	zq_q_type q;
@@ -6035,11 +6035,11 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv4_KeqAlign3(int M, int N, int 
 	}
 }
 
-void zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv4_KeqAlign4(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+void zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv4_KeqAlign4(int M, int N, int K, const zq_base_type* A, int lda, const zq_base_type* Bt, int ldb, zq_base_type* C, int ldc)
 {
-	const float* Aptr1, *A_c_ptr1, *Bptr, *Bptr1, *Bptr2, *Bptr3, *Bptr4;
-	const float *B_c_ptr1, *B_c_ptr2, *B_c_ptr3, *B_c_ptr4;
-	float* Cptr1, *C_c_ptr1;
+	const zq_base_type* Aptr1, *A_c_ptr1, *Bptr, *Bptr1, *Bptr2, *Bptr3, *Bptr4;
+	const zq_base_type *B_c_ptr1, *B_c_ptr2, *B_c_ptr3, *B_c_ptr4;
+	zq_base_type* Cptr1, *C_c_ptr1;
 	int m, n;
 	int ldb4 = ldb << 2;
 	zq_q_type q;
@@ -6069,11 +6069,11 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv4_KeqAlign4(int M, int N, int 
 	}
 }
 
-void zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv4_KeqAlign5(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+void zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv4_KeqAlign5(int M, int N, int K, const zq_base_type* A, int lda, const zq_base_type* Bt, int ldb, zq_base_type* C, int ldc)
 {
-	const float* Aptr1, *A_c_ptr1, *Bptr, *Bptr1, *Bptr2, *Bptr3, *Bptr4;
-	const float *B_c_ptr1, *B_c_ptr2, *B_c_ptr3, *B_c_ptr4;
-	float* Cptr1, *C_c_ptr1;
+	const zq_base_type* Aptr1, *A_c_ptr1, *Bptr, *Bptr1, *Bptr2, *Bptr3, *Bptr4;
+	const zq_base_type *B_c_ptr1, *B_c_ptr2, *B_c_ptr3, *B_c_ptr4;
+	zq_base_type* Cptr1, *C_c_ptr1;
 	int m, n;
 	int ldb4 = ldb << 2;
 	zq_q_type q;
@@ -6104,11 +6104,11 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv4_KeqAlign5(int M, int N, int 
 	}
 }
 
-void zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv4_KeqAlign6(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+void zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv4_KeqAlign6(int M, int N, int K, const zq_base_type* A, int lda, const zq_base_type* Bt, int ldb, zq_base_type* C, int ldc)
 {
-	const float* Aptr1, *A_c_ptr1, *Bptr, *Bptr1, *Bptr2, *Bptr3, *Bptr4;
-	const float *B_c_ptr1, *B_c_ptr2, *B_c_ptr3, *B_c_ptr4;
-	float* Cptr1, *C_c_ptr1;
+	const zq_base_type* Aptr1, *A_c_ptr1, *Bptr, *Bptr1, *Bptr2, *Bptr3, *Bptr4;
+	const zq_base_type *B_c_ptr1, *B_c_ptr2, *B_c_ptr3, *B_c_ptr4;
+	zq_base_type* Cptr1, *C_c_ptr1;
 	int m, n;
 	int ldb4 = ldb << 2;
 	zq_q_type q;
@@ -6139,11 +6139,11 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv4_KeqAlign6(int M, int N, int 
 	}
 }
 
-void zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv4_KeqAlign7(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+void zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv4_KeqAlign7(int M, int N, int K, const zq_base_type* A, int lda, const zq_base_type* Bt, int ldb, zq_base_type* C, int ldc)
 {
-	const float* Aptr1, *A_c_ptr1, *Bptr, *Bptr1, *Bptr2, *Bptr3, *Bptr4;
-	const float *B_c_ptr1, *B_c_ptr2, *B_c_ptr3, *B_c_ptr4;
-	float* Cptr1, *C_c_ptr1;
+	const zq_base_type* Aptr1, *A_c_ptr1, *Bptr, *Bptr1, *Bptr2, *Bptr3, *Bptr4;
+	const zq_base_type *B_c_ptr1, *B_c_ptr2, *B_c_ptr3, *B_c_ptr4;
+	zq_base_type* Cptr1, *C_c_ptr1;
 	int m, n;
 	int ldb4 = ldb << 2;
 	zq_q_type q;
@@ -6175,11 +6175,11 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv4_KeqAlign7(int M, int N, int 
 	}
 }
 
-void zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv4_KdivAlign4(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+void zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv4_KdivAlign4(int M, int N, int K, const zq_base_type* A, int lda, const zq_base_type* Bt, int ldb, zq_base_type* C, int ldc)
 {
-	const float* Aptr1, *A_c_ptr1, *Bptr, *Bptr1, *Bptr2, *Bptr3, *Bptr4;
-	const float *B_c_ptr1, *B_c_ptr2, *B_c_ptr3, *B_c_ptr4;
-	float* Cptr1, *C_c_ptr1;
+	const zq_base_type* Aptr1, *A_c_ptr1, *Bptr, *Bptr1, *Bptr2, *Bptr3, *Bptr4;
+	const zq_base_type *B_c_ptr1, *B_c_ptr2, *B_c_ptr3, *B_c_ptr4;
+	zq_base_type* Cptr1, *C_c_ptr1;
 	int m, n, k;
 	int ldb4 = ldb << 2;
 	zq_q_type q;
@@ -6213,11 +6213,11 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv4_KdivAlign4(int M, int N, int
 	}
 }
 
-void zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv4_KdivAlign8(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+void zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv4_KdivAlign8(int M, int N, int K, const zq_base_type* A, int lda, const zq_base_type* Bt, int ldb, zq_base_type* C, int ldc)
 {
-	const float* Aptr1, *A_c_ptr1, *Bptr, *Bptr1, *Bptr2, *Bptr3, *Bptr4;
-	const float *B_c_ptr1, *B_c_ptr2, *B_c_ptr3, *B_c_ptr4;
-	float* Cptr1, *C_c_ptr1;
+	const zq_base_type* Aptr1, *A_c_ptr1, *Bptr, *Bptr1, *Bptr2, *Bptr3, *Bptr4;
+	const zq_base_type *B_c_ptr1, *B_c_ptr2, *B_c_ptr3, *B_c_ptr4;
+	zq_base_type* Cptr1, *C_c_ptr1;
 	int m, n, k;
 	int ldb4 = ldb << 2;
 	zq_q_type q;
@@ -6253,11 +6253,11 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv4_KdivAlign8(int M, int N, int
 
 #if !__ARM_NEON
 
-void zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv4_KdivAlign16(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+void zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv4_KdivAlign16(int M, int N, int K, const zq_base_type* A, int lda, const zq_base_type* Bt, int ldb, zq_base_type* C, int ldc)
 {
-	const float* Aptr1, *A_c_ptr1, *Bptr, *Bptr1, *Bptr2, *Bptr3, *Bptr4;
-	const float *B_c_ptr1, *B_c_ptr2, *B_c_ptr3, *B_c_ptr4;
-	float* Cptr1, *C_c_ptr1;
+	const zq_base_type* Aptr1, *A_c_ptr1, *Bptr, *Bptr1, *Bptr2, *Bptr3, *Bptr4;
+	const zq_base_type *B_c_ptr1, *B_c_ptr2, *B_c_ptr3, *B_c_ptr4;
+	zq_base_type* Cptr1, *C_c_ptr1;
 	int m, n, k;
 	int ldb4 = ldb << 2;
 	zq_q_type q;
@@ -6291,11 +6291,11 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv4_KdivAlign16(int M, int N, in
 	}
 }
 
-void zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv4_KdivAlign32(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+void zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv4_KdivAlign32(int M, int N, int K, const zq_base_type* A, int lda, const zq_base_type* Bt, int ldb, zq_base_type* C, int ldc)
 {
-	const float* Aptr1, *A_c_ptr1, *Bptr, *Bptr1, *Bptr2, *Bptr3, *Bptr4;
-	const float *B_c_ptr1, *B_c_ptr2, *B_c_ptr3, *B_c_ptr4;
-	float* Cptr1, *C_c_ptr1;
+	const zq_base_type* Aptr1, *A_c_ptr1, *Bptr, *Bptr1, *Bptr2, *Bptr3, *Bptr4;
+	const zq_base_type *B_c_ptr1, *B_c_ptr2, *B_c_ptr3, *B_c_ptr4;
+	zq_base_type* Cptr1, *C_c_ptr1;
 	int m, n, k;
 	int ldb4 = ldb << 2;
 	zq_q_type q;
@@ -6331,11 +6331,11 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv4_KdivAlign32(int M, int N, in
 	}
 }
 
-void zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv4_KdivAlign64(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+void zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv4_KdivAlign64(int M, int N, int K, const zq_base_type* A, int lda, const zq_base_type* Bt, int ldb, zq_base_type* C, int ldc)
 {
-	const float* Aptr1, *A_c_ptr1, *Bptr, *Bptr1, *Bptr2, *Bptr3, *Bptr4;
-	const float *B_c_ptr1, *B_c_ptr2, *B_c_ptr3, *B_c_ptr4;
-	float* Cptr1, *C_c_ptr1;
+	const zq_base_type* Aptr1, *A_c_ptr1, *Bptr, *Bptr1, *Bptr2, *Bptr3, *Bptr4;
+	const zq_base_type *B_c_ptr1, *B_c_ptr2, *B_c_ptr3, *B_c_ptr4;
+	zq_base_type* Cptr1, *C_c_ptr1;
 	int m, n, k;
 	int ldb4 = ldb << 2;
 	zq_q_type q;
@@ -6377,11 +6377,11 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv4_KdivAlign64(int M, int N, in
 
 #endif
 
-void zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv8_KeqAlign1(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+void zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv8_KeqAlign1(int M, int N, int K, const zq_base_type* A, int lda, const zq_base_type* Bt, int ldb, zq_base_type* C, int ldc)
 {
-	const float* Aptr1, *A_c_ptr1, *Bptr, *Bptr1, *Bptr2, *Bptr3, *Bptr4, *Bptr5, *Bptr6, *Bptr7, *Bptr8;
-	const float *B_c_ptr1, *B_c_ptr2, *B_c_ptr3, *B_c_ptr4, *B_c_ptr5, *B_c_ptr6, *B_c_ptr7, *B_c_ptr8;
-	float* Cptr1, *C_c_ptr1;
+	const zq_base_type* Aptr1, *A_c_ptr1, *Bptr, *Bptr1, *Bptr2, *Bptr3, *Bptr4, *Bptr5, *Bptr6, *Bptr7, *Bptr8;
+	const zq_base_type *B_c_ptr1, *B_c_ptr2, *B_c_ptr3, *B_c_ptr4, *B_c_ptr5, *B_c_ptr6, *B_c_ptr7, *B_c_ptr8;
+	zq_base_type* Cptr1, *C_c_ptr1;
 	int m, n;
 	int ldb8 = ldb << 3;
 	zq_q_type q;
@@ -6421,11 +6421,11 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv8_KeqAlign1(int M, int N, int 
 	}
 }
 
-void zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv8_KeqAlign2(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+void zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv8_KeqAlign2(int M, int N, int K, const zq_base_type* A, int lda, const zq_base_type* Bt, int ldb, zq_base_type* C, int ldc)
 {
-	const float* Aptr1, *A_c_ptr1, *Bptr, *Bptr1, *Bptr2, *Bptr3, *Bptr4, *Bptr5, *Bptr6, *Bptr7, *Bptr8;
-	const float *B_c_ptr1, *B_c_ptr2, *B_c_ptr3, *B_c_ptr4, *B_c_ptr5, *B_c_ptr6, *B_c_ptr7, *B_c_ptr8;
-	float* Cptr1, *C_c_ptr1;
+	const zq_base_type* Aptr1, *A_c_ptr1, *Bptr, *Bptr1, *Bptr2, *Bptr3, *Bptr4, *Bptr5, *Bptr6, *Bptr7, *Bptr8;
+	const zq_base_type *B_c_ptr1, *B_c_ptr2, *B_c_ptr3, *B_c_ptr4, *B_c_ptr5, *B_c_ptr6, *B_c_ptr7, *B_c_ptr8;
+	zq_base_type* Cptr1, *C_c_ptr1;
 	int m, n;
 	int ldb8 = ldb << 3;
 	zq_q_type q;
@@ -6465,11 +6465,11 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv8_KeqAlign2(int M, int N, int 
 	}
 }
 
-void zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv8_KeqAlign3(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+void zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv8_KeqAlign3(int M, int N, int K, const zq_base_type* A, int lda, const zq_base_type* Bt, int ldb, zq_base_type* C, int ldc)
 {
-	const float* Aptr1, *A_c_ptr1, *Bptr, *Bptr1, *Bptr2, *Bptr3, *Bptr4, *Bptr5, *Bptr6, *Bptr7, *Bptr8;
-	const float *B_c_ptr1, *B_c_ptr2, *B_c_ptr3, *B_c_ptr4, *B_c_ptr5, *B_c_ptr6, *B_c_ptr7, *B_c_ptr8;
-	float* Cptr1, *C_c_ptr1;
+	const zq_base_type* Aptr1, *A_c_ptr1, *Bptr, *Bptr1, *Bptr2, *Bptr3, *Bptr4, *Bptr5, *Bptr6, *Bptr7, *Bptr8;
+	const zq_base_type *B_c_ptr1, *B_c_ptr2, *B_c_ptr3, *B_c_ptr4, *B_c_ptr5, *B_c_ptr6, *B_c_ptr7, *B_c_ptr8;
+	zq_base_type* Cptr1, *C_c_ptr1;
 	int m, n;
 	int ldb8 = ldb << 3;
 	zq_q_type q;
@@ -6510,11 +6510,11 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv8_KeqAlign3(int M, int N, int 
 	}
 }
 
-void zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv8_KeqAlign4(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+void zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv8_KeqAlign4(int M, int N, int K, const zq_base_type* A, int lda, const zq_base_type* Bt, int ldb, zq_base_type* C, int ldc)
 {
-	const float* Aptr1, *A_c_ptr1, *Bptr, *Bptr1, *Bptr2, *Bptr3, *Bptr4, *Bptr5, *Bptr6, *Bptr7, *Bptr8;
-	const float *B_c_ptr1, *B_c_ptr2, *B_c_ptr3, *B_c_ptr4, *B_c_ptr5, *B_c_ptr6, *B_c_ptr7, *B_c_ptr8;
-	float* Cptr1, *C_c_ptr1;
+	const zq_base_type* Aptr1, *A_c_ptr1, *Bptr, *Bptr1, *Bptr2, *Bptr3, *Bptr4, *Bptr5, *Bptr6, *Bptr7, *Bptr8;
+	const zq_base_type *B_c_ptr1, *B_c_ptr2, *B_c_ptr3, *B_c_ptr4, *B_c_ptr5, *B_c_ptr6, *B_c_ptr7, *B_c_ptr8;
+	zq_base_type* Cptr1, *C_c_ptr1;
 	int m, n;
 	int ldb8 = ldb << 3;
 	zq_q_type q;
@@ -6554,11 +6554,11 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv8_KeqAlign4(int M, int N, int 
 	}
 }
 
-void zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv8_KeqAlign5(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+void zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv8_KeqAlign5(int M, int N, int K, const zq_base_type* A, int lda, const zq_base_type* Bt, int ldb, zq_base_type* C, int ldc)
 {
-	const float* Aptr1, *A_c_ptr1, *Bptr, *Bptr1, *Bptr2, *Bptr3, *Bptr4, *Bptr5, *Bptr6, *Bptr7, *Bptr8;
-	const float *B_c_ptr1, *B_c_ptr2, *B_c_ptr3, *B_c_ptr4, *B_c_ptr5, *B_c_ptr6, *B_c_ptr7, *B_c_ptr8;
-	float* Cptr1, *C_c_ptr1;
+	const zq_base_type* Aptr1, *A_c_ptr1, *Bptr, *Bptr1, *Bptr2, *Bptr3, *Bptr4, *Bptr5, *Bptr6, *Bptr7, *Bptr8;
+	const zq_base_type *B_c_ptr1, *B_c_ptr2, *B_c_ptr3, *B_c_ptr4, *B_c_ptr5, *B_c_ptr6, *B_c_ptr7, *B_c_ptr8;
+	zq_base_type* Cptr1, *C_c_ptr1;
 	int m, n;
 	int ldb8 = ldb << 3;
 	zq_q_type q;
@@ -6599,11 +6599,11 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv8_KeqAlign5(int M, int N, int 
 	}
 }
 
-void zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv8_KeqAlign6(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+void zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv8_KeqAlign6(int M, int N, int K, const zq_base_type* A, int lda, const zq_base_type* Bt, int ldb, zq_base_type* C, int ldc)
 {
-	const float* Aptr1, *A_c_ptr1, *Bptr, *Bptr1, *Bptr2, *Bptr3, *Bptr4, *Bptr5, *Bptr6, *Bptr7, *Bptr8;
-	const float *B_c_ptr1, *B_c_ptr2, *B_c_ptr3, *B_c_ptr4, *B_c_ptr5, *B_c_ptr6, *B_c_ptr7, *B_c_ptr8;
-	float* Cptr1, *C_c_ptr1;
+	const zq_base_type* Aptr1, *A_c_ptr1, *Bptr, *Bptr1, *Bptr2, *Bptr3, *Bptr4, *Bptr5, *Bptr6, *Bptr7, *Bptr8;
+	const zq_base_type *B_c_ptr1, *B_c_ptr2, *B_c_ptr3, *B_c_ptr4, *B_c_ptr5, *B_c_ptr6, *B_c_ptr7, *B_c_ptr8;
+	zq_base_type* Cptr1, *C_c_ptr1;
 	int m, n;
 	int ldb8 = ldb << 3;
 	zq_q_type q;
@@ -6644,11 +6644,11 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv8_KeqAlign6(int M, int N, int 
 	}
 }
 
-void zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv8_KeqAlign7(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+void zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv8_KeqAlign7(int M, int N, int K, const zq_base_type* A, int lda, const zq_base_type* Bt, int ldb, zq_base_type* C, int ldc)
 {
-	const float* Aptr1, *A_c_ptr1, *Bptr, *Bptr1, *Bptr2, *Bptr3, *Bptr4, *Bptr5, *Bptr6, *Bptr7, *Bptr8;
-	const float *B_c_ptr1, *B_c_ptr2, *B_c_ptr3, *B_c_ptr4, *B_c_ptr5, *B_c_ptr6, *B_c_ptr7, *B_c_ptr8;
-	float* Cptr1, *C_c_ptr1;
+	const zq_base_type* Aptr1, *A_c_ptr1, *Bptr, *Bptr1, *Bptr2, *Bptr3, *Bptr4, *Bptr5, *Bptr6, *Bptr7, *Bptr8;
+	const zq_base_type *B_c_ptr1, *B_c_ptr2, *B_c_ptr3, *B_c_ptr4, *B_c_ptr5, *B_c_ptr6, *B_c_ptr7, *B_c_ptr8;
+	zq_base_type* Cptr1, *C_c_ptr1;
 	int m, n;
 	int ldb8 = ldb << 3;
 	zq_q_type q;
@@ -6690,11 +6690,11 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv8_KeqAlign7(int M, int N, int 
 	}
 }
 
-void zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv8_KdivAlign4(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+void zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv8_KdivAlign4(int M, int N, int K, const zq_base_type* A, int lda, const zq_base_type* Bt, int ldb, zq_base_type* C, int ldc)
 {
-	const float* Aptr1, *A_c_ptr1, *Bptr, *Bptr1, *Bptr2, *Bptr3, *Bptr4, *Bptr5, *Bptr6, *Bptr7, *Bptr8;
-	const float *B_c_ptr1, *B_c_ptr2, *B_c_ptr3, *B_c_ptr4, *B_c_ptr5, *B_c_ptr6, *B_c_ptr7, *B_c_ptr8;
-	float* Cptr1, *C_c_ptr1;
+	const zq_base_type* Aptr1, *A_c_ptr1, *Bptr, *Bptr1, *Bptr2, *Bptr3, *Bptr4, *Bptr5, *Bptr6, *Bptr7, *Bptr8;
+	const zq_base_type *B_c_ptr1, *B_c_ptr2, *B_c_ptr3, *B_c_ptr4, *B_c_ptr5, *B_c_ptr6, *B_c_ptr7, *B_c_ptr8;
+	zq_base_type* Cptr1, *C_c_ptr1;
 	int m, n, k;
 	int ldb8 = ldb << 3;
 	zq_q_type q;
@@ -6738,11 +6738,11 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv8_KdivAlign4(int M, int N, int
 	}
 }
 
-void zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv8_KdivAlign8(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+void zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv8_KdivAlign8(int M, int N, int K, const zq_base_type* A, int lda, const zq_base_type* Bt, int ldb, zq_base_type* C, int ldc)
 {
-	const float* Aptr1, *A_c_ptr1, *Bptr, *Bptr1, *Bptr2, *Bptr3, *Bptr4, *Bptr5, *Bptr6, *Bptr7, *Bptr8;
-	const float *B_c_ptr1, *B_c_ptr2, *B_c_ptr3, *B_c_ptr4, *B_c_ptr5, *B_c_ptr6, *B_c_ptr7, *B_c_ptr8;
-	float* Cptr1, *C_c_ptr1;
+	const zq_base_type* Aptr1, *A_c_ptr1, *Bptr, *Bptr1, *Bptr2, *Bptr3, *Bptr4, *Bptr5, *Bptr6, *Bptr7, *Bptr8;
+	const zq_base_type *B_c_ptr1, *B_c_ptr2, *B_c_ptr3, *B_c_ptr4, *B_c_ptr5, *B_c_ptr6, *B_c_ptr7, *B_c_ptr8;
+	zq_base_type* Cptr1, *C_c_ptr1;
 	int m, n, k;
 	int ldb8 = ldb << 3;
 	zq_q_type q;
@@ -6788,11 +6788,11 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv8_KdivAlign8(int M, int N, int
 
 #if !__ARM_NEON
 
-void zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv8_KdivAlign16(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+void zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv8_KdivAlign16(int M, int N, int K, const zq_base_type* A, int lda, const zq_base_type* Bt, int ldb, zq_base_type* C, int ldc)
 {
-	const float* Aptr1, *A_c_ptr1, *Bptr, *Bptr1, *Bptr2, *Bptr3, *Bptr4, *Bptr5, *Bptr6, *Bptr7, *Bptr8;
-	const float *B_c_ptr1, *B_c_ptr2, *B_c_ptr3, *B_c_ptr4, *B_c_ptr5, *B_c_ptr6, *B_c_ptr7, *B_c_ptr8;
-	float* Cptr1, *C_c_ptr1;
+	const zq_base_type* Aptr1, *A_c_ptr1, *Bptr, *Bptr1, *Bptr2, *Bptr3, *Bptr4, *Bptr5, *Bptr6, *Bptr7, *Bptr8;
+	const zq_base_type *B_c_ptr1, *B_c_ptr2, *B_c_ptr3, *B_c_ptr4, *B_c_ptr5, *B_c_ptr6, *B_c_ptr7, *B_c_ptr8;
+	zq_base_type* Cptr1, *C_c_ptr1;
 	int m, n, k;
 	int ldb8 = ldb << 3;
 	zq_q_type q;
@@ -6837,11 +6837,11 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv8_KdivAlign16(int M, int N, in
 	}
 }
 
-void zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv8_KdivAlign32(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+void zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv8_KdivAlign32(int M, int N, int K, const zq_base_type* A, int lda, const zq_base_type* Bt, int ldb, zq_base_type* C, int ldc)
 {
-	const float* Aptr1, *A_c_ptr1, *Bptr, *Bptr1, *Bptr2, *Bptr3, *Bptr4, *Bptr5, *Bptr6, *Bptr7, *Bptr8;
-	const float *B_c_ptr1, *B_c_ptr2, *B_c_ptr3, *B_c_ptr4, *B_c_ptr5, *B_c_ptr6, *B_c_ptr7, *B_c_ptr8;
-	float* Cptr1, *C_c_ptr1;
+	const zq_base_type* Aptr1, *A_c_ptr1, *Bptr, *Bptr1, *Bptr2, *Bptr3, *Bptr4, *Bptr5, *Bptr6, *Bptr7, *Bptr8;
+	const zq_base_type *B_c_ptr1, *B_c_ptr2, *B_c_ptr3, *B_c_ptr4, *B_c_ptr5, *B_c_ptr6, *B_c_ptr7, *B_c_ptr8;
+	zq_base_type* Cptr1, *C_c_ptr1;
 	int m, n, k;
 	int ldb8 = ldb << 3;
 	zq_q_type q;
@@ -6888,11 +6888,11 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv8_KdivAlign32(int M, int N, in
 	}
 }
 
-void zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv8_KdivAlign64(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+void zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv8_KdivAlign64(int M, int N, int K, const zq_base_type* A, int lda, const zq_base_type* Bt, int ldb, zq_base_type* C, int ldc)
 {
-	const float* Aptr1, *A_c_ptr1, *Bptr, *Bptr1, *Bptr2, *Bptr3, *Bptr4, *Bptr5, *Bptr6, *Bptr7, *Bptr8;
-	const float *B_c_ptr1, *B_c_ptr2, *B_c_ptr3, *B_c_ptr4, *B_c_ptr5, *B_c_ptr6, *B_c_ptr7, *B_c_ptr8;
-	float* Cptr1, *C_c_ptr1;
+	const zq_base_type* Aptr1, *A_c_ptr1, *Bptr, *Bptr1, *Bptr2, *Bptr3, *Bptr4, *Bptr5, *Bptr6, *Bptr7, *Bptr8;
+	const zq_base_type *B_c_ptr1, *B_c_ptr2, *B_c_ptr3, *B_c_ptr4, *B_c_ptr5, *B_c_ptr6, *B_c_ptr7, *B_c_ptr8;
+	zq_base_type* Cptr1, *C_c_ptr1;
 	int m, n, k;
 	int ldb8 = ldb << 3;
 	zq_q_type q;
@@ -6945,12 +6945,12 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M1_caseNdiv8_KdivAlign64(int M, int N, in
 
 #endif
 
-void zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv1_KeqAlign1(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+void zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv1_KeqAlign1(int M, int N, int K, const zq_base_type* A, int lda, const zq_base_type* Bt, int ldb, zq_base_type* C, int ldc)
 {
-	const float* Aptr1, *Aptr2, *A_c_ptr1, *A_c_ptr2;
-	const float *Bptr, *Bptr1;
-	const float *B_c_ptr1;
-	float* Cptr1, *Cptr2, *C_c_ptr1, *C_c_ptr2;
+	const zq_base_type* Aptr1, *Aptr2, *A_c_ptr1, *A_c_ptr2;
+	const zq_base_type *Bptr, *Bptr1;
+	const zq_base_type *B_c_ptr1;
+	zq_base_type* Cptr1, *Cptr2, *C_c_ptr1, *C_c_ptr2;
 	int m, n;
 	int lda2 = lda << 1;
 	int ldc2 = ldc << 1;
@@ -6991,12 +6991,12 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv1_KeqAlign1(int M, int N, int 
 	}
 }
 
-void zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv1_KeqAlign2(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+void zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv1_KeqAlign2(int M, int N, int K, const zq_base_type* A, int lda, const zq_base_type* Bt, int ldb, zq_base_type* C, int ldc)
 {
-	const float* Aptr1, *Aptr2, *A_c_ptr1, *A_c_ptr2;
-	const float *Bptr, *Bptr1;
-	const float *B_c_ptr1;
-	float* Cptr1, *Cptr2, *C_c_ptr1, *C_c_ptr2;
+	const zq_base_type* Aptr1, *Aptr2, *A_c_ptr1, *A_c_ptr2;
+	const zq_base_type *Bptr, *Bptr1;
+	const zq_base_type *B_c_ptr1;
+	zq_base_type* Cptr1, *Cptr2, *C_c_ptr1, *C_c_ptr2;
 	int m, n;
 	int lda2 = lda << 1;
 	int ldc2 = ldc << 1;
@@ -7037,12 +7037,12 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv1_KeqAlign2(int M, int N, int 
 	}
 }
 
-void zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv1_KeqAlign3(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+void zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv1_KeqAlign3(int M, int N, int K, const zq_base_type* A, int lda, const zq_base_type* Bt, int ldb, zq_base_type* C, int ldc)
 {
-	const float* Aptr1, *Aptr2, *A_c_ptr1, *A_c_ptr2;
-	const float *Bptr, *Bptr1;
-	const float *B_c_ptr1;
-	float* Cptr1, *Cptr2, *C_c_ptr1, *C_c_ptr2;
+	const zq_base_type* Aptr1, *Aptr2, *A_c_ptr1, *A_c_ptr2;
+	const zq_base_type *Bptr, *Bptr1;
+	const zq_base_type *B_c_ptr1;
+	zq_base_type* Cptr1, *Cptr2, *C_c_ptr1, *C_c_ptr2;
 	int m, n;
 	int lda2 = lda << 1;
 	int ldc2 = ldc << 1;
@@ -7085,12 +7085,12 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv1_KeqAlign3(int M, int N, int 
 	}
 }
 
-void zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv1_KeqAlign4(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+void zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv1_KeqAlign4(int M, int N, int K, const zq_base_type* A, int lda, const zq_base_type* Bt, int ldb, zq_base_type* C, int ldc)
 {
-	const float* Aptr1, *Aptr2, *A_c_ptr1, *A_c_ptr2;
-	const float *Bptr, *Bptr1;
-	const float *B_c_ptr1;
-	float* Cptr1, *Cptr2, *C_c_ptr1, *C_c_ptr2;
+	const zq_base_type* Aptr1, *Aptr2, *A_c_ptr1, *A_c_ptr2;
+	const zq_base_type *Bptr, *Bptr1;
+	const zq_base_type *B_c_ptr1;
+	zq_base_type* Cptr1, *Cptr2, *C_c_ptr1, *C_c_ptr2;
 	int m, n;
 	int lda2 = lda << 1;
 	int ldc2 = ldc << 1;
@@ -7131,12 +7131,12 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv1_KeqAlign4(int M, int N, int 
 	}
 }
 
-void zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv1_KeqAlign5(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+void zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv1_KeqAlign5(int M, int N, int K, const zq_base_type* A, int lda, const zq_base_type* Bt, int ldb, zq_base_type* C, int ldc)
 {
-	const float* Aptr1, *Aptr2, *A_c_ptr1, *A_c_ptr2;
-	const float *Bptr, *Bptr1;
-	const float *B_c_ptr1;
-	float* Cptr1, *Cptr2, *C_c_ptr1, *C_c_ptr2;
+	const zq_base_type* Aptr1, *Aptr2, *A_c_ptr1, *A_c_ptr2;
+	const zq_base_type *Bptr, *Bptr1;
+	const zq_base_type *B_c_ptr1;
+	zq_base_type* Cptr1, *Cptr2, *C_c_ptr1, *C_c_ptr2;
 	int m, n;
 	int lda2 = lda << 1;
 	int ldc2 = ldc << 1;
@@ -7179,12 +7179,12 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv1_KeqAlign5(int M, int N, int 
 	}
 }
 
-void zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv1_KeqAlign6(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+void zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv1_KeqAlign6(int M, int N, int K, const zq_base_type* A, int lda, const zq_base_type* Bt, int ldb, zq_base_type* C, int ldc)
 {
-	const float* Aptr1, *Aptr2, *A_c_ptr1, *A_c_ptr2;
-	const float *Bptr, *Bptr1;
-	const float *B_c_ptr1;
-	float* Cptr1, *Cptr2, *C_c_ptr1, *C_c_ptr2;
+	const zq_base_type* Aptr1, *Aptr2, *A_c_ptr1, *A_c_ptr2;
+	const zq_base_type *Bptr, *Bptr1;
+	const zq_base_type *B_c_ptr1;
+	zq_base_type* Cptr1, *Cptr2, *C_c_ptr1, *C_c_ptr2;
 	int m, n;
 	int lda2 = lda << 1;
 	int ldc2 = ldc << 1;
@@ -7227,12 +7227,12 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv1_KeqAlign6(int M, int N, int 
 	}
 }
 
-void zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv1_KeqAlign7(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+void zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv1_KeqAlign7(int M, int N, int K, const zq_base_type* A, int lda, const zq_base_type* Bt, int ldb, zq_base_type* C, int ldc)
 {
-	const float* Aptr1, *Aptr2, *A_c_ptr1, *A_c_ptr2;
-	const float *Bptr, *Bptr1;
-	const float *B_c_ptr1;
-	float* Cptr1, *Cptr2, *C_c_ptr1, *C_c_ptr2;
+	const zq_base_type* Aptr1, *Aptr2, *A_c_ptr1, *A_c_ptr2;
+	const zq_base_type *Bptr, *Bptr1;
+	const zq_base_type *B_c_ptr1;
+	zq_base_type* Cptr1, *Cptr2, *C_c_ptr1, *C_c_ptr2;
 	int m, n;
 	int lda2 = lda << 1;
 	int ldc2 = ldc << 1;
@@ -7277,12 +7277,12 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv1_KeqAlign7(int M, int N, int 
 	}
 }
 
-void zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv1_KdivAlign4(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+void zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv1_KdivAlign4(int M, int N, int K, const zq_base_type* A, int lda, const zq_base_type* Bt, int ldb, zq_base_type* C, int ldc)
 {
-	const float* Aptr1, *Aptr2, *A_c_ptr1, *A_c_ptr2;
-	const float *Bptr, *Bptr1;
-	const float *B_c_ptr1;
-	float* Cptr1, *Cptr2, *C_c_ptr1, *C_c_ptr2;
+	const zq_base_type* Aptr1, *Aptr2, *A_c_ptr1, *A_c_ptr2;
+	const zq_base_type *Bptr, *Bptr1;
+	const zq_base_type *B_c_ptr1;
+	zq_base_type* Cptr1, *Cptr2, *C_c_ptr1, *C_c_ptr2;
 	int m, n, k;
 	int lda2 = lda << 1;
 	int ldc2 = ldc << 1;
@@ -7333,12 +7333,12 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv1_KdivAlign4(int M, int N, int
 	}
 }
 
-void zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv1_KdivAlign8(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+void zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv1_KdivAlign8(int M, int N, int K, const zq_base_type* A, int lda, const zq_base_type* Bt, int ldb, zq_base_type* C, int ldc)
 {
-	const float* Aptr1, *Aptr2, *A_c_ptr1, *A_c_ptr2;
-	const float *Bptr, *Bptr1;
-	const float *B_c_ptr1;
-	float* Cptr1, *Cptr2, *C_c_ptr1, *C_c_ptr2;
+	const zq_base_type* Aptr1, *Aptr2, *A_c_ptr1, *A_c_ptr2;
+	const zq_base_type *Bptr, *Bptr1;
+	const zq_base_type *B_c_ptr1;
+	zq_base_type* Cptr1, *Cptr2, *C_c_ptr1, *C_c_ptr2;
 	int m, n, k;
 	int lda2 = lda << 1;
 	int ldc2 = ldc << 1;
@@ -7391,12 +7391,12 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv1_KdivAlign8(int M, int N, int
 
 #if !__ARM_NEON
 
-void zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv1_KdivAlign16(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+void zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv1_KdivAlign16(int M, int N, int K, const zq_base_type* A, int lda, const zq_base_type* Bt, int ldb, zq_base_type* C, int ldc)
 {
-	const float* Aptr1, *Aptr2, *A_c_ptr1, *A_c_ptr2;
-	const float *Bptr, *Bptr1;
-	const float *B_c_ptr1;
-	float* Cptr1, *Cptr2, *C_c_ptr1, *C_c_ptr2;
+	const zq_base_type* Aptr1, *Aptr2, *A_c_ptr1, *A_c_ptr2;
+	const zq_base_type *Bptr, *Bptr1;
+	const zq_base_type *B_c_ptr1;
+	zq_base_type* Cptr1, *Cptr2, *C_c_ptr1, *C_c_ptr2;
 	int m, n, k;
 	int lda2 = lda << 1;
 	int ldc2 = ldc << 1;
@@ -7447,12 +7447,12 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv1_KdivAlign16(int M, int N, in
 	}
 }
 
-void zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv1_KdivAlign32(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+void zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv1_KdivAlign32(int M, int N, int K, const zq_base_type* A, int lda, const zq_base_type* Bt, int ldb, zq_base_type* C, int ldc)
 {
-	const float* Aptr1, *Aptr2, *A_c_ptr1, *A_c_ptr2;
-	const float *Bptr, *Bptr1;
-	const float *B_c_ptr1;
-	float* Cptr1, *Cptr2, *C_c_ptr1, *C_c_ptr2;
+	const zq_base_type* Aptr1, *Aptr2, *A_c_ptr1, *A_c_ptr2;
+	const zq_base_type *Bptr, *Bptr1;
+	const zq_base_type *B_c_ptr1;
+	zq_base_type* Cptr1, *Cptr2, *C_c_ptr1, *C_c_ptr2;
 	int m, n, k;
 	int lda2 = lda << 1;
 	int ldc2 = ldc << 1;
@@ -7507,12 +7507,12 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv1_KdivAlign32(int M, int N, in
 	}
 }
 
-void zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv1_KdivAlign64(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+void zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv1_KdivAlign64(int M, int N, int K, const zq_base_type* A, int lda, const zq_base_type* Bt, int ldb, zq_base_type* C, int ldc)
 {
-	const float* Aptr1, *Aptr2, *A_c_ptr1, *A_c_ptr2;
-	const float *Bptr, *Bptr1;
-	const float *B_c_ptr1;
-	float* Cptr1, *Cptr2, *C_c_ptr1, *C_c_ptr2;
+	const zq_base_type* Aptr1, *Aptr2, *A_c_ptr1, *A_c_ptr2;
+	const zq_base_type *Bptr, *Bptr1;
+	const zq_base_type *B_c_ptr1;
+	zq_base_type* Cptr1, *Cptr2, *C_c_ptr1, *C_c_ptr2;
 	int m, n, k;
 	int lda2 = lda << 1;
 	int ldc2 = ldc << 1;
@@ -7577,12 +7577,12 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv1_KdivAlign64(int M, int N, in
 
 #endif
 
-void zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv2_KeqAlign1(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+void zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv2_KeqAlign1(int M, int N, int K, const zq_base_type* A, int lda, const zq_base_type* Bt, int ldb, zq_base_type* C, int ldc)
 {
-	const float* Aptr1, *Aptr2, *A_c_ptr1, *A_c_ptr2;
-	const float *Bptr, *Bptr1, *Bptr2;
-	const float *B_c_ptr1, *B_c_ptr2;
-	float* Cptr1, *Cptr2, *C_c_ptr1, *C_c_ptr2;
+	const zq_base_type* Aptr1, *Aptr2, *A_c_ptr1, *A_c_ptr2;
+	const zq_base_type *Bptr, *Bptr1, *Bptr2;
+	const zq_base_type *B_c_ptr1, *B_c_ptr2;
+	zq_base_type* Cptr1, *Cptr2, *C_c_ptr1, *C_c_ptr2;
 	int m, n;
 	int lda2 = lda << 1;
 	int ldc2 = ldc << 1;
@@ -7627,12 +7627,12 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv2_KeqAlign1(int M, int N, int 
 	}
 }
 
-void zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv2_KeqAlign2(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+void zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv2_KeqAlign2(int M, int N, int K, const zq_base_type* A, int lda, const zq_base_type* Bt, int ldb, zq_base_type* C, int ldc)
 {
-	const float* Aptr1, *Aptr2, *A_c_ptr1, *A_c_ptr2;
-	const float *Bptr, *Bptr1, *Bptr2;
-	const float *B_c_ptr1, *B_c_ptr2;
-	float* Cptr1, *Cptr2, *C_c_ptr1, *C_c_ptr2;
+	const zq_base_type* Aptr1, *Aptr2, *A_c_ptr1, *A_c_ptr2;
+	const zq_base_type *Bptr, *Bptr1, *Bptr2;
+	const zq_base_type *B_c_ptr1, *B_c_ptr2;
+	zq_base_type* Cptr1, *Cptr2, *C_c_ptr1, *C_c_ptr2;
 	int m, n;
 	int lda2 = lda << 1;
 	int ldc2 = ldc << 1;
@@ -7677,12 +7677,12 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv2_KeqAlign2(int M, int N, int 
 	}
 }
 
-void zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv2_KeqAlign3(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+void zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv2_KeqAlign3(int M, int N, int K, const zq_base_type* A, int lda, const zq_base_type* Bt, int ldb, zq_base_type* C, int ldc)
 {
-	const float* Aptr1, *Aptr2, *A_c_ptr1, *A_c_ptr2;
-	const float *Bptr, *Bptr1, *Bptr2;
-	const float *B_c_ptr1, *B_c_ptr2;
-	float* Cptr1, *Cptr2, *C_c_ptr1, *C_c_ptr2;
+	const zq_base_type* Aptr1, *Aptr2, *A_c_ptr1, *A_c_ptr2;
+	const zq_base_type *Bptr, *Bptr1, *Bptr2;
+	const zq_base_type *B_c_ptr1, *B_c_ptr2;
+	zq_base_type* Cptr1, *Cptr2, *C_c_ptr1, *C_c_ptr2;
 	int m, n;
 	int lda2 = lda << 1;
 	int ldc2 = ldc << 1;
@@ -7729,12 +7729,12 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv2_KeqAlign3(int M, int N, int 
 	}
 }
 
-void zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv2_KeqAlign4(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+void zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv2_KeqAlign4(int M, int N, int K, const zq_base_type* A, int lda, const zq_base_type* Bt, int ldb, zq_base_type* C, int ldc)
 {
-	const float* Aptr1, *Aptr2, *A_c_ptr1, *A_c_ptr2;
-	const float *Bptr, *Bptr1, *Bptr2;
-	const float *B_c_ptr1, *B_c_ptr2;
-	float* Cptr1, *Cptr2, *C_c_ptr1, *C_c_ptr2;
+	const zq_base_type* Aptr1, *Aptr2, *A_c_ptr1, *A_c_ptr2;
+	const zq_base_type *Bptr, *Bptr1, *Bptr2;
+	const zq_base_type *B_c_ptr1, *B_c_ptr2;
+	zq_base_type* Cptr1, *Cptr2, *C_c_ptr1, *C_c_ptr2;
 	int m, n;
 	int lda2 = lda << 1;
 	int ldc2 = ldc << 1;
@@ -7779,12 +7779,12 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv2_KeqAlign4(int M, int N, int 
 	}
 }
 
-void zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv2_KeqAlign5(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+void zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv2_KeqAlign5(int M, int N, int K, const zq_base_type* A, int lda, const zq_base_type* Bt, int ldb, zq_base_type* C, int ldc)
 {
-	const float* Aptr1, *Aptr2, *A_c_ptr1, *A_c_ptr2;
-	const float *Bptr, *Bptr1, *Bptr2;
-	const float *B_c_ptr1, *B_c_ptr2;
-	float* Cptr1, *Cptr2, *C_c_ptr1, *C_c_ptr2;
+	const zq_base_type* Aptr1, *Aptr2, *A_c_ptr1, *A_c_ptr2;
+	const zq_base_type *Bptr, *Bptr1, *Bptr2;
+	const zq_base_type *B_c_ptr1, *B_c_ptr2;
+	zq_base_type* Cptr1, *Cptr2, *C_c_ptr1, *C_c_ptr2;
 	int m, n;
 	int lda2 = lda << 1;
 	int ldc2 = ldc << 1;
@@ -7831,12 +7831,12 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv2_KeqAlign5(int M, int N, int 
 	}
 }
 
-void zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv2_KeqAlign6(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+void zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv2_KeqAlign6(int M, int N, int K, const zq_base_type* A, int lda, const zq_base_type* Bt, int ldb, zq_base_type* C, int ldc)
 {
-	const float* Aptr1, *Aptr2, *A_c_ptr1, *A_c_ptr2;
-	const float *Bptr, *Bptr1, *Bptr2;
-	const float *B_c_ptr1, *B_c_ptr2;
-	float* Cptr1, *Cptr2, *C_c_ptr1, *C_c_ptr2;
+	const zq_base_type* Aptr1, *Aptr2, *A_c_ptr1, *A_c_ptr2;
+	const zq_base_type *Bptr, *Bptr1, *Bptr2;
+	const zq_base_type *B_c_ptr1, *B_c_ptr2;
+	zq_base_type* Cptr1, *Cptr2, *C_c_ptr1, *C_c_ptr2;
 	int m, n;
 	int lda2 = lda << 1;
 	int ldc2 = ldc << 1;
@@ -7883,12 +7883,12 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv2_KeqAlign6(int M, int N, int 
 	}
 }
 
-void zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv2_KeqAlign7(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+void zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv2_KeqAlign7(int M, int N, int K, const zq_base_type* A, int lda, const zq_base_type* Bt, int ldb, zq_base_type* C, int ldc)
 {
-	const float* Aptr1, *Aptr2, *A_c_ptr1, *A_c_ptr2;
-	const float *Bptr, *Bptr1, *Bptr2;
-	const float *B_c_ptr1, *B_c_ptr2;
-	float* Cptr1, *Cptr2, *C_c_ptr1, *C_c_ptr2;
+	const zq_base_type* Aptr1, *Aptr2, *A_c_ptr1, *A_c_ptr2;
+	const zq_base_type *Bptr, *Bptr1, *Bptr2;
+	const zq_base_type *B_c_ptr1, *B_c_ptr2;
+	zq_base_type* Cptr1, *Cptr2, *C_c_ptr1, *C_c_ptr2;
 	int m, n;
 	int lda2 = lda << 1;
 	int ldc2 = ldc << 1;
@@ -7937,12 +7937,12 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv2_KeqAlign7(int M, int N, int 
 	}
 }
 
-void zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv2_KdivAlign4(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+void zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv2_KdivAlign4(int M, int N, int K, const zq_base_type* A, int lda, const zq_base_type* Bt, int ldb, zq_base_type* C, int ldc)
 {
-	const float* Aptr1, *Aptr2, *A_c_ptr1, *A_c_ptr2;
-	const float *Bptr, *Bptr1, *Bptr2;
-	const float *B_c_ptr1, *B_c_ptr2;
-	float* Cptr1, *Cptr2, *C_c_ptr1, *C_c_ptr2;
+	const zq_base_type* Aptr1, *Aptr2, *A_c_ptr1, *A_c_ptr2;
+	const zq_base_type *Bptr, *Bptr1, *Bptr2;
+	const zq_base_type *B_c_ptr1, *B_c_ptr2;
+	zq_base_type* Cptr1, *Cptr2, *C_c_ptr1, *C_c_ptr2;
 	int m, n, k;
 	int lda2 = lda << 1;
 	int ldc2 = ldc << 1;
@@ -7997,12 +7997,12 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv2_KdivAlign4(int M, int N, int
 	}
 }
 
-void zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv2_KdivAlign8(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+void zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv2_KdivAlign8(int M, int N, int K, const zq_base_type* A, int lda, const zq_base_type* Bt, int ldb, zq_base_type* C, int ldc)
 {
-	const float* Aptr1, *Aptr2, *A_c_ptr1, *A_c_ptr2;
-	const float *Bptr, *Bptr1, *Bptr2;
-	const float *B_c_ptr1, *B_c_ptr2;
-	float* Cptr1, *Cptr2, *C_c_ptr1, *C_c_ptr2;
+	const zq_base_type* Aptr1, *Aptr2, *A_c_ptr1, *A_c_ptr2;
+	const zq_base_type *Bptr, *Bptr1, *Bptr2;
+	const zq_base_type *B_c_ptr1, *B_c_ptr2;
+	zq_base_type* Cptr1, *Cptr2, *C_c_ptr1, *C_c_ptr2;
 	int m, n, k;
 	int lda2 = lda << 1;
 	int ldc2 = ldc << 1;
@@ -8059,12 +8059,12 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv2_KdivAlign8(int M, int N, int
 
 #if !__ARM_NEON
 
-void zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv2_KdivAlign16(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+void zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv2_KdivAlign16(int M, int N, int K, const zq_base_type* A, int lda, const zq_base_type* Bt, int ldb, zq_base_type* C, int ldc)
 {
-	const float* Aptr1, *Aptr2, *A_c_ptr1, *A_c_ptr2;
-	const float *Bptr, *Bptr1, *Bptr2;
-	const float *B_c_ptr1, *B_c_ptr2;
-	float* Cptr1, *Cptr2, *C_c_ptr1, *C_c_ptr2;
+	const zq_base_type* Aptr1, *Aptr2, *A_c_ptr1, *A_c_ptr2;
+	const zq_base_type *Bptr, *Bptr1, *Bptr2;
+	const zq_base_type *B_c_ptr1, *B_c_ptr2;
+	zq_base_type* Cptr1, *Cptr2, *C_c_ptr1, *C_c_ptr2;
 	int m, n, k;
 	int lda2 = lda << 1;
 	int ldc2 = ldc << 1;
@@ -8119,12 +8119,12 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv2_KdivAlign16(int M, int N, in
 	}
 }
 
-void zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv2_KdivAlign32(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+void zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv2_KdivAlign32(int M, int N, int K, const zq_base_type* A, int lda, const zq_base_type* Bt, int ldb, zq_base_type* C, int ldc)
 {
-	const float* Aptr1, *Aptr2, *A_c_ptr1, *A_c_ptr2;
-	const float *Bptr, *Bptr1, *Bptr2;
-	const float *B_c_ptr1, *B_c_ptr2;
-	float* Cptr1, *Cptr2, *C_c_ptr1, *C_c_ptr2;
+	const zq_base_type* Aptr1, *Aptr2, *A_c_ptr1, *A_c_ptr2;
+	const zq_base_type *Bptr, *Bptr1, *Bptr2;
+	const zq_base_type *B_c_ptr1, *B_c_ptr2;
+	zq_base_type* Cptr1, *Cptr2, *C_c_ptr1, *C_c_ptr2;
 	int m, n, k;
 	int lda2 = lda << 1;
 	int ldc2 = ldc << 1;
@@ -8183,12 +8183,12 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv2_KdivAlign32(int M, int N, in
 	}
 }
 
-void zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv2_KdivAlign64(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+void zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv2_KdivAlign64(int M, int N, int K, const zq_base_type* A, int lda, const zq_base_type* Bt, int ldb, zq_base_type* C, int ldc)
 {
-	const float* Aptr1, *Aptr2, *A_c_ptr1, *A_c_ptr2;
-	const float *Bptr, *Bptr1, *Bptr2;
-	const float *B_c_ptr1, *B_c_ptr2;
-	float* Cptr1, *Cptr2, *C_c_ptr1, *C_c_ptr2;
+	const zq_base_type* Aptr1, *Aptr2, *A_c_ptr1, *A_c_ptr2;
+	const zq_base_type *Bptr, *Bptr1, *Bptr2;
+	const zq_base_type *B_c_ptr1, *B_c_ptr2;
+	zq_base_type* Cptr1, *Cptr2, *C_c_ptr1, *C_c_ptr2;
 	int m, n, k;
 	int lda2 = lda << 1;
 	int ldc2 = ldc << 1;
@@ -8257,12 +8257,12 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv2_KdivAlign64(int M, int N, in
 
 #endif
 
-void zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv4_KeqAlign1(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+void zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv4_KeqAlign1(int M, int N, int K, const zq_base_type* A, int lda, const zq_base_type* Bt, int ldb, zq_base_type* C, int ldc)
 {
-	const float* Aptr1, *Aptr2, *A_c_ptr1, *A_c_ptr2;
-	const float *Bptr, *Bptr1, *Bptr2, *Bptr3, *Bptr4;
-	const float *B_c_ptr1, *B_c_ptr2, *B_c_ptr3, *B_c_ptr4;
-	float* Cptr1, *Cptr2, *C_c_ptr1, *C_c_ptr2;
+	const zq_base_type* Aptr1, *Aptr2, *A_c_ptr1, *A_c_ptr2;
+	const zq_base_type *Bptr, *Bptr1, *Bptr2, *Bptr3, *Bptr4;
+	const zq_base_type *B_c_ptr1, *B_c_ptr2, *B_c_ptr3, *B_c_ptr4;
+	zq_base_type* Cptr1, *Cptr2, *C_c_ptr1, *C_c_ptr2;
 	int m, n;
 	int lda2 = lda << 1;
 	int ldc2 = ldc << 1;
@@ -8313,12 +8313,12 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv4_KeqAlign1(int M, int N, int 
 	}
 }
 
-void zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv4_KeqAlign2(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+void zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv4_KeqAlign2(int M, int N, int K, const zq_base_type* A, int lda, const zq_base_type* Bt, int ldb, zq_base_type* C, int ldc)
 {
-	const float* Aptr1, *Aptr2, *A_c_ptr1, *A_c_ptr2;
-	const float *Bptr, *Bptr1, *Bptr2, *Bptr3, *Bptr4;
-	const float *B_c_ptr1, *B_c_ptr2, *B_c_ptr3, *B_c_ptr4;
-	float* Cptr1, *Cptr2, *C_c_ptr1, *C_c_ptr2;
+	const zq_base_type* Aptr1, *Aptr2, *A_c_ptr1, *A_c_ptr2;
+	const zq_base_type *Bptr, *Bptr1, *Bptr2, *Bptr3, *Bptr4;
+	const zq_base_type *B_c_ptr1, *B_c_ptr2, *B_c_ptr3, *B_c_ptr4;
+	zq_base_type* Cptr1, *Cptr2, *C_c_ptr1, *C_c_ptr2;
 	int m, n;
 	int lda2 = lda << 1;
 	int ldc2 = ldc << 1;
@@ -8369,12 +8369,12 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv4_KeqAlign2(int M, int N, int 
 	}
 }
 
-void zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv4_KeqAlign3(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+void zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv4_KeqAlign3(int M, int N, int K, const zq_base_type* A, int lda, const zq_base_type* Bt, int ldb, zq_base_type* C, int ldc)
 {
-	const float* Aptr1, *Aptr2, *A_c_ptr1, *A_c_ptr2;
-	const float *Bptr, *Bptr1, *Bptr2, *Bptr3, *Bptr4;
-	const float *B_c_ptr1, *B_c_ptr2, *B_c_ptr3, *B_c_ptr4;
-	float* Cptr1, *Cptr2, *C_c_ptr1, *C_c_ptr2;
+	const zq_base_type* Aptr1, *Aptr2, *A_c_ptr1, *A_c_ptr2;
+	const zq_base_type *Bptr, *Bptr1, *Bptr2, *Bptr3, *Bptr4;
+	const zq_base_type *B_c_ptr1, *B_c_ptr2, *B_c_ptr3, *B_c_ptr4;
+	zq_base_type* Cptr1, *Cptr2, *C_c_ptr1, *C_c_ptr2;
 	int m, n;
 	int lda2 = lda << 1;
 	int ldc2 = ldc << 1;
@@ -8427,12 +8427,12 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv4_KeqAlign3(int M, int N, int 
 	}
 }
 
-void zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv4_KeqAlign4(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+void zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv4_KeqAlign4(int M, int N, int K, const zq_base_type* A, int lda, const zq_base_type* Bt, int ldb, zq_base_type* C, int ldc)
 {
-	const float* Aptr1, *Aptr2, *A_c_ptr1, *A_c_ptr2;
-	const float *Bptr, *Bptr1, *Bptr2, *Bptr3, *Bptr4;
-	const float *B_c_ptr1, *B_c_ptr2, *B_c_ptr3, *B_c_ptr4;
-	float* Cptr1, *Cptr2, *C_c_ptr1, *C_c_ptr2;
+	const zq_base_type* Aptr1, *Aptr2, *A_c_ptr1, *A_c_ptr2;
+	const zq_base_type *Bptr, *Bptr1, *Bptr2, *Bptr3, *Bptr4;
+	const zq_base_type *B_c_ptr1, *B_c_ptr2, *B_c_ptr3, *B_c_ptr4;
+	zq_base_type* Cptr1, *Cptr2, *C_c_ptr1, *C_c_ptr2;
 	int m, n;
 	int lda2 = lda << 1;
 	int ldc2 = ldc << 1;
@@ -8483,12 +8483,12 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv4_KeqAlign4(int M, int N, int 
 	}
 }
 
-void zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv4_KeqAlign5(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+void zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv4_KeqAlign5(int M, int N, int K, const zq_base_type* A, int lda, const zq_base_type* Bt, int ldb, zq_base_type* C, int ldc)
 {
-	const float* Aptr1, *Aptr2, *A_c_ptr1, *A_c_ptr2;
-	const float *Bptr, *Bptr1, *Bptr2, *Bptr3, *Bptr4;
-	const float *B_c_ptr1, *B_c_ptr2, *B_c_ptr3, *B_c_ptr4;
-	float* Cptr1, *Cptr2, *C_c_ptr1, *C_c_ptr2;
+	const zq_base_type* Aptr1, *Aptr2, *A_c_ptr1, *A_c_ptr2;
+	const zq_base_type *Bptr, *Bptr1, *Bptr2, *Bptr3, *Bptr4;
+	const zq_base_type *B_c_ptr1, *B_c_ptr2, *B_c_ptr3, *B_c_ptr4;
+	zq_base_type* Cptr1, *Cptr2, *C_c_ptr1, *C_c_ptr2;
 	int m, n;
 	int lda2 = lda << 1;
 	int ldc2 = ldc << 1;
@@ -8541,12 +8541,12 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv4_KeqAlign5(int M, int N, int 
 	}
 }
 
-void zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv4_KeqAlign6(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+void zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv4_KeqAlign6(int M, int N, int K, const zq_base_type* A, int lda, const zq_base_type* Bt, int ldb, zq_base_type* C, int ldc)
 {
-	const float* Aptr1, *Aptr2, *A_c_ptr1, *A_c_ptr2;
-	const float *Bptr, *Bptr1, *Bptr2, *Bptr3, *Bptr4;
-	const float *B_c_ptr1, *B_c_ptr2, *B_c_ptr3, *B_c_ptr4;
-	float* Cptr1, *Cptr2, *C_c_ptr1, *C_c_ptr2;
+	const zq_base_type* Aptr1, *Aptr2, *A_c_ptr1, *A_c_ptr2;
+	const zq_base_type *Bptr, *Bptr1, *Bptr2, *Bptr3, *Bptr4;
+	const zq_base_type *B_c_ptr1, *B_c_ptr2, *B_c_ptr3, *B_c_ptr4;
+	zq_base_type* Cptr1, *Cptr2, *C_c_ptr1, *C_c_ptr2;
 	int m, n;
 	int lda2 = lda << 1;
 	int ldc2 = ldc << 1;
@@ -8599,12 +8599,12 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv4_KeqAlign6(int M, int N, int 
 	}
 }
 
-void zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv4_KeqAlign7(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+void zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv4_KeqAlign7(int M, int N, int K, const zq_base_type* A, int lda, const zq_base_type* Bt, int ldb, zq_base_type* C, int ldc)
 {
-	const float* Aptr1, *Aptr2, *A_c_ptr1, *A_c_ptr2;
-	const float *Bptr, *Bptr1, *Bptr2, *Bptr3, *Bptr4;
-	const float *B_c_ptr1, *B_c_ptr2, *B_c_ptr3, *B_c_ptr4;
-	float* Cptr1, *Cptr2, *C_c_ptr1, *C_c_ptr2;
+	const zq_base_type* Aptr1, *Aptr2, *A_c_ptr1, *A_c_ptr2;
+	const zq_base_type *Bptr, *Bptr1, *Bptr2, *Bptr3, *Bptr4;
+	const zq_base_type *B_c_ptr1, *B_c_ptr2, *B_c_ptr3, *B_c_ptr4;
+	zq_base_type* Cptr1, *Cptr2, *C_c_ptr1, *C_c_ptr2;
 	int m, n;
 	int lda2 = lda << 1;
 	int ldc2 = ldc << 1;
@@ -8659,12 +8659,12 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv4_KeqAlign7(int M, int N, int 
 	}
 }
 
-void zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv4_KdivAlign4(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+void zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv4_KdivAlign4(int M, int N, int K, const zq_base_type* A, int lda, const zq_base_type* Bt, int ldb, zq_base_type* C, int ldc)
 {
-	const float* Aptr1, *Aptr2, *A_c_ptr1, *A_c_ptr2;
-	const float *Bptr, *Bptr1, *Bptr2, *Bptr3, *Bptr4;
-	const float *B_c_ptr1, *B_c_ptr2, *B_c_ptr3, *B_c_ptr4;
-	float* Cptr1, *Cptr2, *C_c_ptr1, *C_c_ptr2;
+	const zq_base_type* Aptr1, *Aptr2, *A_c_ptr1, *A_c_ptr2;
+	const zq_base_type *Bptr, *Bptr1, *Bptr2, *Bptr3, *Bptr4;
+	const zq_base_type *B_c_ptr1, *B_c_ptr2, *B_c_ptr3, *B_c_ptr4;
+	zq_base_type* Cptr1, *Cptr2, *C_c_ptr1, *C_c_ptr2;
 	int m, n, k;
 	int lda2 = lda << 1;
 	int ldc2 = ldc << 1;
@@ -8725,12 +8725,12 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv4_KdivAlign4(int M, int N, int
 	}
 }
 
-void zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv4_KdivAlign8(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+void zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv4_KdivAlign8(int M, int N, int K, const zq_base_type* A, int lda, const zq_base_type* Bt, int ldb, zq_base_type* C, int ldc)
 {
-	const float* Aptr1, *Aptr2, *A_c_ptr1, *A_c_ptr2;
-	const float *Bptr, *Bptr1, *Bptr2, *Bptr3, *Bptr4;
-	const float *B_c_ptr1, *B_c_ptr2, *B_c_ptr3, *B_c_ptr4;
-	float* Cptr1, *Cptr2, *C_c_ptr1, *C_c_ptr2;
+	const zq_base_type* Aptr1, *Aptr2, *A_c_ptr1, *A_c_ptr2;
+	const zq_base_type *Bptr, *Bptr1, *Bptr2, *Bptr3, *Bptr4;
+	const zq_base_type *B_c_ptr1, *B_c_ptr2, *B_c_ptr3, *B_c_ptr4;
+	zq_base_type* Cptr1, *Cptr2, *C_c_ptr1, *C_c_ptr2;
 	int m, n, k;
 	int lda2 = lda << 1;
 	int ldc2 = ldc << 1;
@@ -8793,12 +8793,12 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv4_KdivAlign8(int M, int N, int
 
 #if !__ARM_NEON
 
-void zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv4_KdivAlign16(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+void zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv4_KdivAlign16(int M, int N, int K, const zq_base_type* A, int lda, const zq_base_type* Bt, int ldb, zq_base_type* C, int ldc)
 {
-	const float* Aptr1, *Aptr2, *A_c_ptr1, *A_c_ptr2;
-	const float *Bptr, *Bptr1, *Bptr2, *Bptr3, *Bptr4;
-	const float *B_c_ptr1, *B_c_ptr2, *B_c_ptr3, *B_c_ptr4;
-	float* Cptr1, *Cptr2, *C_c_ptr1, *C_c_ptr2;
+	const zq_base_type* Aptr1, *Aptr2, *A_c_ptr1, *A_c_ptr2;
+	const zq_base_type *Bptr, *Bptr1, *Bptr2, *Bptr3, *Bptr4;
+	const zq_base_type *B_c_ptr1, *B_c_ptr2, *B_c_ptr3, *B_c_ptr4;
+	zq_base_type* Cptr1, *Cptr2, *C_c_ptr1, *C_c_ptr2;
 	int m, n, k;
 	int lda2 = lda << 1;
 	int ldc2 = ldc << 1;
@@ -8859,12 +8859,12 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv4_KdivAlign16(int M, int N, in
 	}
 }
 
-void zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv4_KdivAlign32(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+void zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv4_KdivAlign32(int M, int N, int K, const zq_base_type* A, int lda, const zq_base_type* Bt, int ldb, zq_base_type* C, int ldc)
 {
-	const float* Aptr1, *Aptr2, *A_c_ptr1, *A_c_ptr2;
-	const float *Bptr, *Bptr1, *Bptr2, *Bptr3, *Bptr4;
-	const float *B_c_ptr1, *B_c_ptr2, *B_c_ptr3, *B_c_ptr4;
-	float* Cptr1, *Cptr2, *C_c_ptr1, *C_c_ptr2;
+	const zq_base_type* Aptr1, *Aptr2, *A_c_ptr1, *A_c_ptr2;
+	const zq_base_type *Bptr, *Bptr1, *Bptr2, *Bptr3, *Bptr4;
+	const zq_base_type *B_c_ptr1, *B_c_ptr2, *B_c_ptr3, *B_c_ptr4;
+	zq_base_type* Cptr1, *Cptr2, *C_c_ptr1, *C_c_ptr2;
 	int m, n, k;
 	int lda2 = lda << 1;
 	int ldc2 = ldc << 1;
@@ -8929,12 +8929,12 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv4_KdivAlign32(int M, int N, in
 	}
 }
 
-void zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv4_KdivAlign64(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+void zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv4_KdivAlign64(int M, int N, int K, const zq_base_type* A, int lda, const zq_base_type* Bt, int ldb, zq_base_type* C, int ldc)
 {
-	const float* Aptr1, *Aptr2, *A_c_ptr1, *A_c_ptr2;
-	const float *Bptr, *Bptr1, *Bptr2, *Bptr3, *Bptr4;
-	const float *B_c_ptr1, *B_c_ptr2, *B_c_ptr3, *B_c_ptr4;
-	float* Cptr1, *Cptr2, *C_c_ptr1, *C_c_ptr2;
+	const zq_base_type* Aptr1, *Aptr2, *A_c_ptr1, *A_c_ptr2;
+	const zq_base_type *Bptr, *Bptr1, *Bptr2, *Bptr3, *Bptr4;
+	const zq_base_type *B_c_ptr1, *B_c_ptr2, *B_c_ptr3, *B_c_ptr4;
+	zq_base_type* Cptr1, *Cptr2, *C_c_ptr1, *C_c_ptr2;
 	int m, n, k;
 	int lda2 = lda << 1;
 	int ldc2 = ldc << 1;
@@ -9009,12 +9009,12 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv4_KdivAlign64(int M, int N, in
 
 #endif
 
-void zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv8_KeqAlign1(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+void zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv8_KeqAlign1(int M, int N, int K, const zq_base_type* A, int lda, const zq_base_type* Bt, int ldb, zq_base_type* C, int ldc)
 {
-	const float* Aptr1, *Aptr2, *A_c_ptr1, *A_c_ptr2;
-	const float *Bptr, *Bptr1, *Bptr2, *Bptr3, *Bptr4, *Bptr5, *Bptr6, *Bptr7, *Bptr8;
-	const float *B_c_ptr1, *B_c_ptr2, *B_c_ptr3, *B_c_ptr4, *B_c_ptr5, *B_c_ptr6, *B_c_ptr7, *B_c_ptr8;
-	float* Cptr1, *Cptr2, *C_c_ptr1, *C_c_ptr2;
+	const zq_base_type* Aptr1, *Aptr2, *A_c_ptr1, *A_c_ptr2;
+	const zq_base_type *Bptr, *Bptr1, *Bptr2, *Bptr3, *Bptr4, *Bptr5, *Bptr6, *Bptr7, *Bptr8;
+	const zq_base_type *B_c_ptr1, *B_c_ptr2, *B_c_ptr3, *B_c_ptr4, *B_c_ptr5, *B_c_ptr6, *B_c_ptr7, *B_c_ptr8;
+	zq_base_type* Cptr1, *Cptr2, *C_c_ptr1, *C_c_ptr2;
 	int m, n;
 	int lda2 = lda << 1;
 	int ldc2 = ldc << 1;
@@ -9081,12 +9081,12 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv8_KeqAlign1(int M, int N, int 
 	}
 }
 
-void zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv8_KeqAlign2(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+void zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv8_KeqAlign2(int M, int N, int K, const zq_base_type* A, int lda, const zq_base_type* Bt, int ldb, zq_base_type* C, int ldc)
 {
-	const float* Aptr1, *Aptr2, *A_c_ptr1, *A_c_ptr2;
-	const float *Bptr, *Bptr1, *Bptr2, *Bptr3, *Bptr4, *Bptr5, *Bptr6, *Bptr7, *Bptr8;
-	const float *B_c_ptr1, *B_c_ptr2, *B_c_ptr3, *B_c_ptr4, *B_c_ptr5, *B_c_ptr6, *B_c_ptr7, *B_c_ptr8;
-	float* Cptr1, *Cptr2, *C_c_ptr1, *C_c_ptr2;
+	const zq_base_type* Aptr1, *Aptr2, *A_c_ptr1, *A_c_ptr2;
+	const zq_base_type *Bptr, *Bptr1, *Bptr2, *Bptr3, *Bptr4, *Bptr5, *Bptr6, *Bptr7, *Bptr8;
+	const zq_base_type *B_c_ptr1, *B_c_ptr2, *B_c_ptr3, *B_c_ptr4, *B_c_ptr5, *B_c_ptr6, *B_c_ptr7, *B_c_ptr8;
+	zq_base_type* Cptr1, *Cptr2, *C_c_ptr1, *C_c_ptr2;
 	int m, n;
 	int lda2 = lda << 1;
 	int ldc2 = ldc << 1;
@@ -9153,12 +9153,12 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv8_KeqAlign2(int M, int N, int 
 	}
 }
 
-void zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv8_KeqAlign3(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+void zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv8_KeqAlign3(int M, int N, int K, const zq_base_type* A, int lda, const zq_base_type* Bt, int ldb, zq_base_type* C, int ldc)
 {
-	const float* Aptr1, *Aptr2, *A_c_ptr1, *A_c_ptr2;
-	const float *Bptr, *Bptr1, *Bptr2, *Bptr3, *Bptr4, *Bptr5, *Bptr6, *Bptr7, *Bptr8;
-	const float *B_c_ptr1, *B_c_ptr2, *B_c_ptr3, *B_c_ptr4, *B_c_ptr5, *B_c_ptr6, *B_c_ptr7, *B_c_ptr8;
-	float* Cptr1, *Cptr2, *C_c_ptr1, *C_c_ptr2;
+	const zq_base_type* Aptr1, *Aptr2, *A_c_ptr1, *A_c_ptr2;
+	const zq_base_type *Bptr, *Bptr1, *Bptr2, *Bptr3, *Bptr4, *Bptr5, *Bptr6, *Bptr7, *Bptr8;
+	const zq_base_type *B_c_ptr1, *B_c_ptr2, *B_c_ptr3, *B_c_ptr4, *B_c_ptr5, *B_c_ptr6, *B_c_ptr7, *B_c_ptr8;
+	zq_base_type* Cptr1, *Cptr2, *C_c_ptr1, *C_c_ptr2;
 	int m, n;
 	int lda2 = lda << 1;
 	int ldc2 = ldc << 1;
@@ -9227,12 +9227,12 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv8_KeqAlign3(int M, int N, int 
 	}
 }
 
-void zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv8_KeqAlign4(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+void zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv8_KeqAlign4(int M, int N, int K, const zq_base_type* A, int lda, const zq_base_type* Bt, int ldb, zq_base_type* C, int ldc)
 {
-	const float* Aptr1, *Aptr2, *A_c_ptr1, *A_c_ptr2;
-	const float *Bptr, *Bptr1, *Bptr2, *Bptr3, *Bptr4, *Bptr5, *Bptr6, *Bptr7, *Bptr8;
-	const float *B_c_ptr1, *B_c_ptr2, *B_c_ptr3, *B_c_ptr4, *B_c_ptr5, *B_c_ptr6, *B_c_ptr7, *B_c_ptr8;
-	float* Cptr1, *Cptr2, *C_c_ptr1, *C_c_ptr2;
+	const zq_base_type* Aptr1, *Aptr2, *A_c_ptr1, *A_c_ptr2;
+	const zq_base_type *Bptr, *Bptr1, *Bptr2, *Bptr3, *Bptr4, *Bptr5, *Bptr6, *Bptr7, *Bptr8;
+	const zq_base_type *B_c_ptr1, *B_c_ptr2, *B_c_ptr3, *B_c_ptr4, *B_c_ptr5, *B_c_ptr6, *B_c_ptr7, *B_c_ptr8;
+	zq_base_type* Cptr1, *Cptr2, *C_c_ptr1, *C_c_ptr2;
 	int m, n;
 	int lda2 = lda << 1;
 	int ldc2 = ldc << 1;
@@ -9299,12 +9299,12 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv8_KeqAlign4(int M, int N, int 
 	}
 }
 
-void zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv8_KeqAlign5(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+void zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv8_KeqAlign5(int M, int N, int K, const zq_base_type* A, int lda, const zq_base_type* Bt, int ldb, zq_base_type* C, int ldc)
 {
-	const float* Aptr1, *Aptr2, *A_c_ptr1, *A_c_ptr2;
-	const float *Bptr, *Bptr1, *Bptr2, *Bptr3, *Bptr4, *Bptr5, *Bptr6, *Bptr7, *Bptr8;
-	const float *B_c_ptr1, *B_c_ptr2, *B_c_ptr3, *B_c_ptr4, *B_c_ptr5, *B_c_ptr6, *B_c_ptr7, *B_c_ptr8;
-	float* Cptr1, *Cptr2, *C_c_ptr1, *C_c_ptr2;
+	const zq_base_type* Aptr1, *Aptr2, *A_c_ptr1, *A_c_ptr2;
+	const zq_base_type *Bptr, *Bptr1, *Bptr2, *Bptr3, *Bptr4, *Bptr5, *Bptr6, *Bptr7, *Bptr8;
+	const zq_base_type *B_c_ptr1, *B_c_ptr2, *B_c_ptr3, *B_c_ptr4, *B_c_ptr5, *B_c_ptr6, *B_c_ptr7, *B_c_ptr8;
+	zq_base_type* Cptr1, *Cptr2, *C_c_ptr1, *C_c_ptr2;
 	int m, n;
 	int lda2 = lda << 1;
 	int ldc2 = ldc << 1;
@@ -9373,12 +9373,12 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv8_KeqAlign5(int M, int N, int 
 	}
 }
 
-void zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv8_KeqAlign6(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+void zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv8_KeqAlign6(int M, int N, int K, const zq_base_type* A, int lda, const zq_base_type* Bt, int ldb, zq_base_type* C, int ldc)
 {
-	const float* Aptr1, *Aptr2, *A_c_ptr1, *A_c_ptr2;
-	const float *Bptr, *Bptr1, *Bptr2, *Bptr3, *Bptr4, *Bptr5, *Bptr6, *Bptr7, *Bptr8;
-	const float *B_c_ptr1, *B_c_ptr2, *B_c_ptr3, *B_c_ptr4, *B_c_ptr5, *B_c_ptr6, *B_c_ptr7, *B_c_ptr8;
-	float* Cptr1, *Cptr2, *C_c_ptr1, *C_c_ptr2;
+	const zq_base_type* Aptr1, *Aptr2, *A_c_ptr1, *A_c_ptr2;
+	const zq_base_type *Bptr, *Bptr1, *Bptr2, *Bptr3, *Bptr4, *Bptr5, *Bptr6, *Bptr7, *Bptr8;
+	const zq_base_type *B_c_ptr1, *B_c_ptr2, *B_c_ptr3, *B_c_ptr4, *B_c_ptr5, *B_c_ptr6, *B_c_ptr7, *B_c_ptr8;
+	zq_base_type* Cptr1, *Cptr2, *C_c_ptr1, *C_c_ptr2;
 	int m, n;
 	int lda2 = lda << 1;
 	int ldc2 = ldc << 1;
@@ -9447,12 +9447,12 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv8_KeqAlign6(int M, int N, int 
 	}
 }
 
-void zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv8_KeqAlign7(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+void zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv8_KeqAlign7(int M, int N, int K, const zq_base_type* A, int lda, const zq_base_type* Bt, int ldb, zq_base_type* C, int ldc)
 {
-	const float* Aptr1, *Aptr2, *A_c_ptr1, *A_c_ptr2;
-	const float *Bptr, *Bptr1, *Bptr2, *Bptr3, *Bptr4, *Bptr5, *Bptr6, *Bptr7, *Bptr8;
-	const float *B_c_ptr1, *B_c_ptr2, *B_c_ptr3, *B_c_ptr4, *B_c_ptr5, *B_c_ptr6, *B_c_ptr7, *B_c_ptr8;
-	float* Cptr1, *Cptr2, *C_c_ptr1, *C_c_ptr2;
+	const zq_base_type* Aptr1, *Aptr2, *A_c_ptr1, *A_c_ptr2;
+	const zq_base_type *Bptr, *Bptr1, *Bptr2, *Bptr3, *Bptr4, *Bptr5, *Bptr6, *Bptr7, *Bptr8;
+	const zq_base_type *B_c_ptr1, *B_c_ptr2, *B_c_ptr3, *B_c_ptr4, *B_c_ptr5, *B_c_ptr6, *B_c_ptr7, *B_c_ptr8;
+	zq_base_type* Cptr1, *Cptr2, *C_c_ptr1, *C_c_ptr2;
 	int m, n;
 	int lda2 = lda << 1;
 	int ldc2 = ldc << 1;
@@ -9523,12 +9523,12 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv8_KeqAlign7(int M, int N, int 
 	}
 }
 
-void zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv8_KdivAlign4(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+void zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv8_KdivAlign4(int M, int N, int K, const zq_base_type* A, int lda, const zq_base_type* Bt, int ldb, zq_base_type* C, int ldc)
 {
-	const float* Aptr1, *Aptr2, *A_c_ptr1, *A_c_ptr2;
-	const float *Bptr, *Bptr1, *Bptr2, *Bptr3, *Bptr4, *Bptr5, *Bptr6, *Bptr7, *Bptr8;
-	const float *B_c_ptr1, *B_c_ptr2, *B_c_ptr3, *B_c_ptr4, *B_c_ptr5, *B_c_ptr6, *B_c_ptr7, *B_c_ptr8;
-	float* Cptr1, *Cptr2, *C_c_ptr1, *C_c_ptr2;
+	const zq_base_type* Aptr1, *Aptr2, *A_c_ptr1, *A_c_ptr2;
+	const zq_base_type *Bptr, *Bptr1, *Bptr2, *Bptr3, *Bptr4, *Bptr5, *Bptr6, *Bptr7, *Bptr8;
+	const zq_base_type *B_c_ptr1, *B_c_ptr2, *B_c_ptr3, *B_c_ptr4, *B_c_ptr5, *B_c_ptr6, *B_c_ptr7, *B_c_ptr8;
+	zq_base_type* Cptr1, *Cptr2, *C_c_ptr1, *C_c_ptr2;
 	int m, n, k;
 	int lda2 = lda << 1;
 	int ldc2 = ldc << 1;
@@ -9605,12 +9605,12 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv8_KdivAlign4(int M, int N, int
 	}
 }
 
-void zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv8_KdivAlign8(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+void zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv8_KdivAlign8(int M, int N, int K, const zq_base_type* A, int lda, const zq_base_type* Bt, int ldb, zq_base_type* C, int ldc)
 {
-	const float* Aptr1, *Aptr2, *A_c_ptr1, *A_c_ptr2;
-	const float *Bptr, *Bptr1, *Bptr2, *Bptr3, *Bptr4, *Bptr5, *Bptr6, *Bptr7, *Bptr8;
-	const float *B_c_ptr1, *B_c_ptr2, *B_c_ptr3, *B_c_ptr4, *B_c_ptr5, *B_c_ptr6, *B_c_ptr7, *B_c_ptr8;
-	float* Cptr1, *Cptr2, *C_c_ptr1, *C_c_ptr2;
+	const zq_base_type* Aptr1, *Aptr2, *A_c_ptr1, *A_c_ptr2;
+	const zq_base_type *Bptr, *Bptr1, *Bptr2, *Bptr3, *Bptr4, *Bptr5, *Bptr6, *Bptr7, *Bptr8;
+	const zq_base_type *B_c_ptr1, *B_c_ptr2, *B_c_ptr3, *B_c_ptr4, *B_c_ptr5, *B_c_ptr6, *B_c_ptr7, *B_c_ptr8;
+	zq_base_type* Cptr1, *Cptr2, *C_c_ptr1, *C_c_ptr2;
 	int m, n, k;
 	int lda2 = lda << 1;
 	int ldc2 = ldc << 1;
@@ -9689,12 +9689,12 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv8_KdivAlign8(int M, int N, int
 
 #if !__ARM_NEON
 
-void zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv8_KdivAlign16(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+void zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv8_KdivAlign16(int M, int N, int K, const zq_base_type* A, int lda, const zq_base_type* Bt, int ldb, zq_base_type* C, int ldc)
 {
-	const float* Aptr1, *Aptr2, *A_c_ptr1, *A_c_ptr2;
-	const float *Bptr, *Bptr1, *Bptr2, *Bptr3, *Bptr4, *Bptr5, *Bptr6, *Bptr7, *Bptr8;
-	const float *B_c_ptr1, *B_c_ptr2, *B_c_ptr3, *B_c_ptr4, *B_c_ptr5, *B_c_ptr6, *B_c_ptr7, *B_c_ptr8;
-	float* Cptr1, *Cptr2, *C_c_ptr1, *C_c_ptr2;
+	const zq_base_type* Aptr1, *Aptr2, *A_c_ptr1, *A_c_ptr2;
+	const zq_base_type *Bptr, *Bptr1, *Bptr2, *Bptr3, *Bptr4, *Bptr5, *Bptr6, *Bptr7, *Bptr8;
+	const zq_base_type *B_c_ptr1, *B_c_ptr2, *B_c_ptr3, *B_c_ptr4, *B_c_ptr5, *B_c_ptr6, *B_c_ptr7, *B_c_ptr8;
+	zq_base_type* Cptr1, *Cptr2, *C_c_ptr1, *C_c_ptr2;
 	int m, n, k;
 	int lda2 = lda << 1;
 	int ldc2 = ldc << 1;
@@ -9771,12 +9771,12 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv8_KdivAlign16(int M, int N, in
 	}
 }
 
-void zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv8_KdivAlign32(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+void zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv8_KdivAlign32(int M, int N, int K, const zq_base_type* A, int lda, const zq_base_type* Bt, int ldb, zq_base_type* C, int ldc)
 {
-	const float* Aptr1, *Aptr2, *A_c_ptr1, *A_c_ptr2;
-	const float *Bptr, *Bptr1, *Bptr2, *Bptr3, *Bptr4, *Bptr5, *Bptr6, *Bptr7, *Bptr8;
-	const float *B_c_ptr1, *B_c_ptr2, *B_c_ptr3, *B_c_ptr4, *B_c_ptr5, *B_c_ptr6, *B_c_ptr7, *B_c_ptr8;
-	float* Cptr1, *Cptr2, *C_c_ptr1, *C_c_ptr2;
+	const zq_base_type* Aptr1, *Aptr2, *A_c_ptr1, *A_c_ptr2;
+	const zq_base_type *Bptr, *Bptr1, *Bptr2, *Bptr3, *Bptr4, *Bptr5, *Bptr6, *Bptr7, *Bptr8;
+	const zq_base_type *B_c_ptr1, *B_c_ptr2, *B_c_ptr3, *B_c_ptr4, *B_c_ptr5, *B_c_ptr6, *B_c_ptr7, *B_c_ptr8;
+	zq_base_type* Cptr1, *Cptr2, *C_c_ptr1, *C_c_ptr2;
 	int m, n, k;
 	int lda2 = lda << 1;
 	int ldc2 = ldc << 1;
@@ -9857,12 +9857,12 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv8_KdivAlign32(int M, int N, in
 	}
 }
 
-void zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv8_KdivAlign64(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+void zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv8_KdivAlign64(int M, int N, int K, const zq_base_type* A, int lda, const zq_base_type* Bt, int ldb, zq_base_type* C, int ldc)
 {
-	const float* Aptr1, *Aptr2, *A_c_ptr1, *A_c_ptr2;
-	const float *Bptr, *Bptr1, *Bptr2, *Bptr3, *Bptr4, *Bptr5, *Bptr6, *Bptr7, *Bptr8;
-	const float *B_c_ptr1, *B_c_ptr2, *B_c_ptr3, *B_c_ptr4, *B_c_ptr5, *B_c_ptr6, *B_c_ptr7, *B_c_ptr8;
-	float* Cptr1, *Cptr2, *C_c_ptr1, *C_c_ptr2;
+	const zq_base_type* Aptr1, *Aptr2, *A_c_ptr1, *A_c_ptr2;
+	const zq_base_type *Bptr, *Bptr1, *Bptr2, *Bptr3, *Bptr4, *Bptr5, *Bptr6, *Bptr7, *Bptr8;
+	const zq_base_type *B_c_ptr1, *B_c_ptr2, *B_c_ptr3, *B_c_ptr4, *B_c_ptr5, *B_c_ptr6, *B_c_ptr7, *B_c_ptr8;
+	zq_base_type* Cptr1, *Cptr2, *C_c_ptr1, *C_c_ptr2;
 	int m, n, k;
 	int lda2 = lda << 1;
 	int ldc2 = ldc << 1;
@@ -9953,12 +9953,12 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M2_caseNdiv8_KdivAlign64(int M, int N, in
 
 #endif
 
-void zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv1_KeqAlign1(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+void zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv1_KeqAlign1(int M, int N, int K, const zq_base_type* A, int lda, const zq_base_type* Bt, int ldb, zq_base_type* C, int ldc)
 {
-	const float* Aptr1, *Aptr2, *Aptr3, *Aptr4, *A_c_ptr1, *A_c_ptr2, *A_c_ptr3, *A_c_ptr4;
-	const float *Bptr, *Bptr1;
-	const float *B_c_ptr1;
-	float* Cptr1, *Cptr2, *Cptr3, *Cptr4, *C_c_ptr1, *C_c_ptr2, *C_c_ptr3, *C_c_ptr4;
+	const zq_base_type* Aptr1, *Aptr2, *Aptr3, *Aptr4, *A_c_ptr1, *A_c_ptr2, *A_c_ptr3, *A_c_ptr4;
+	const zq_base_type *Bptr, *Bptr1;
+	const zq_base_type *B_c_ptr1;
+	zq_base_type* Cptr1, *Cptr2, *Cptr3, *Cptr4, *C_c_ptr1, *C_c_ptr2, *C_c_ptr3, *C_c_ptr4;
 	int m, n;
 	int lda4 = lda << 2;
 	int ldc4 = ldc << 2;
@@ -10008,12 +10008,12 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv1_KeqAlign1(int M, int N, int 
 	}
 }
 
-void zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv1_KeqAlign2(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+void zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv1_KeqAlign2(int M, int N, int K, const zq_base_type* A, int lda, const zq_base_type* Bt, int ldb, zq_base_type* C, int ldc)
 {
-	const float* Aptr1, *Aptr2, *Aptr3, *Aptr4, *A_c_ptr1, *A_c_ptr2, *A_c_ptr3, *A_c_ptr4;
-	const float *Bptr, *Bptr1;
-	const float *B_c_ptr1;
-	float* Cptr1, *Cptr2, *Cptr3, *Cptr4, *C_c_ptr1, *C_c_ptr2, *C_c_ptr3, *C_c_ptr4;
+	const zq_base_type* Aptr1, *Aptr2, *Aptr3, *Aptr4, *A_c_ptr1, *A_c_ptr2, *A_c_ptr3, *A_c_ptr4;
+	const zq_base_type *Bptr, *Bptr1;
+	const zq_base_type *B_c_ptr1;
+	zq_base_type* Cptr1, *Cptr2, *Cptr3, *Cptr4, *C_c_ptr1, *C_c_ptr2, *C_c_ptr3, *C_c_ptr4;
 	int m, n;
 	int lda4 = lda << 2;
 	int ldc4 = ldc << 2;
@@ -10063,12 +10063,12 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv1_KeqAlign2(int M, int N, int 
 	}
 }
 
-void zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv1_KeqAlign3(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+void zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv1_KeqAlign3(int M, int N, int K, const zq_base_type* A, int lda, const zq_base_type* Bt, int ldb, zq_base_type* C, int ldc)
 {
-	const float* Aptr1, *Aptr2, *Aptr3, *Aptr4, *A_c_ptr1, *A_c_ptr2, *A_c_ptr3, *A_c_ptr4;
-	const float *Bptr, *Bptr1;
-	const float *B_c_ptr1;
-	float* Cptr1, *Cptr2, *Cptr3, *Cptr4, *C_c_ptr1, *C_c_ptr2, *C_c_ptr3, *C_c_ptr4;
+	const zq_base_type* Aptr1, *Aptr2, *Aptr3, *Aptr4, *A_c_ptr1, *A_c_ptr2, *A_c_ptr3, *A_c_ptr4;
+	const zq_base_type *Bptr, *Bptr1;
+	const zq_base_type *B_c_ptr1;
+	zq_base_type* Cptr1, *Cptr2, *Cptr3, *Cptr4, *C_c_ptr1, *C_c_ptr2, *C_c_ptr3, *C_c_ptr4;
 	int m, n;
 	int lda4 = lda << 2;
 	int ldc4 = ldc << 2;
@@ -10120,12 +10120,12 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv1_KeqAlign3(int M, int N, int 
 	}
 }
 
-void zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv1_KeqAlign4(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+void zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv1_KeqAlign4(int M, int N, int K, const zq_base_type* A, int lda, const zq_base_type* Bt, int ldb, zq_base_type* C, int ldc)
 {
-	const float* Aptr1, *Aptr2, *Aptr3, *Aptr4, *A_c_ptr1, *A_c_ptr2, *A_c_ptr3, *A_c_ptr4;
-	const float *Bptr, *Bptr1;
-	const float *B_c_ptr1;
-	float* Cptr1, *Cptr2, *Cptr3, *Cptr4, *C_c_ptr1, *C_c_ptr2, *C_c_ptr3, *C_c_ptr4;
+	const zq_base_type* Aptr1, *Aptr2, *Aptr3, *Aptr4, *A_c_ptr1, *A_c_ptr2, *A_c_ptr3, *A_c_ptr4;
+	const zq_base_type *Bptr, *Bptr1;
+	const zq_base_type *B_c_ptr1;
+	zq_base_type* Cptr1, *Cptr2, *Cptr3, *Cptr4, *C_c_ptr1, *C_c_ptr2, *C_c_ptr3, *C_c_ptr4;
 	int m, n;
 	int lda4 = lda << 2;
 	int ldc4 = ldc << 2;
@@ -10175,12 +10175,12 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv1_KeqAlign4(int M, int N, int 
 	}
 }
 
-void zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv1_KeqAlign5(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+void zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv1_KeqAlign5(int M, int N, int K, const zq_base_type* A, int lda, const zq_base_type* Bt, int ldb, zq_base_type* C, int ldc)
 {
-	const float* Aptr1, *Aptr2, *Aptr3, *Aptr4, *A_c_ptr1, *A_c_ptr2, *A_c_ptr3, *A_c_ptr4;
-	const float *Bptr, *Bptr1;
-	const float *B_c_ptr1;
-	float* Cptr1, *Cptr2, *Cptr3, *Cptr4, *C_c_ptr1, *C_c_ptr2, *C_c_ptr3, *C_c_ptr4;
+	const zq_base_type* Aptr1, *Aptr2, *Aptr3, *Aptr4, *A_c_ptr1, *A_c_ptr2, *A_c_ptr3, *A_c_ptr4;
+	const zq_base_type *Bptr, *Bptr1;
+	const zq_base_type *B_c_ptr1;
+	zq_base_type* Cptr1, *Cptr2, *Cptr3, *Cptr4, *C_c_ptr1, *C_c_ptr2, *C_c_ptr3, *C_c_ptr4;
 	int m, n;
 	int lda4 = lda << 2;
 	int ldc4 = ldc << 2;
@@ -10232,12 +10232,12 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv1_KeqAlign5(int M, int N, int 
 	}
 }
 
-void zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv1_KeqAlign6(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+void zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv1_KeqAlign6(int M, int N, int K, const zq_base_type* A, int lda, const zq_base_type* Bt, int ldb, zq_base_type* C, int ldc)
 {
-	const float* Aptr1, *Aptr2, *Aptr3, *Aptr4, *A_c_ptr1, *A_c_ptr2, *A_c_ptr3, *A_c_ptr4;
-	const float *Bptr, *Bptr1;
-	const float *B_c_ptr1;
-	float* Cptr1, *Cptr2, *Cptr3, *Cptr4, *C_c_ptr1, *C_c_ptr2, *C_c_ptr3, *C_c_ptr4;
+	const zq_base_type* Aptr1, *Aptr2, *Aptr3, *Aptr4, *A_c_ptr1, *A_c_ptr2, *A_c_ptr3, *A_c_ptr4;
+	const zq_base_type *Bptr, *Bptr1;
+	const zq_base_type *B_c_ptr1;
+	zq_base_type* Cptr1, *Cptr2, *Cptr3, *Cptr4, *C_c_ptr1, *C_c_ptr2, *C_c_ptr3, *C_c_ptr4;
 	int m, n;
 	int lda4 = lda << 2;
 	int ldc4 = ldc << 2;
@@ -10289,12 +10289,12 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv1_KeqAlign6(int M, int N, int 
 	}
 }
 
-void zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv1_KeqAlign7(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+void zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv1_KeqAlign7(int M, int N, int K, const zq_base_type* A, int lda, const zq_base_type* Bt, int ldb, zq_base_type* C, int ldc)
 {
-	const float* Aptr1, *Aptr2, *Aptr3, *Aptr4, *A_c_ptr1, *A_c_ptr2, *A_c_ptr3, *A_c_ptr4;
-	const float *Bptr, *Bptr1;
-	const float *B_c_ptr1;
-	float* Cptr1, *Cptr2, *Cptr3, *Cptr4, *C_c_ptr1, *C_c_ptr2, *C_c_ptr3, *C_c_ptr4;
+	const zq_base_type* Aptr1, *Aptr2, *Aptr3, *Aptr4, *A_c_ptr1, *A_c_ptr2, *A_c_ptr3, *A_c_ptr4;
+	const zq_base_type *Bptr, *Bptr1;
+	const zq_base_type *B_c_ptr1;
+	zq_base_type* Cptr1, *Cptr2, *Cptr3, *Cptr4, *C_c_ptr1, *C_c_ptr2, *C_c_ptr3, *C_c_ptr4;
 	int m, n;
 	int lda4 = lda << 2;
 	int ldc4 = ldc << 2;
@@ -10348,12 +10348,12 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv1_KeqAlign7(int M, int N, int 
 	}
 }
 
-void zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv1_KdivAlign4(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+void zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv1_KdivAlign4(int M, int N, int K, const zq_base_type* A, int lda, const zq_base_type* Bt, int ldb, zq_base_type* C, int ldc)
 {
-	const float* Aptr1, *Aptr2, *Aptr3, *Aptr4, *A_c_ptr1, *A_c_ptr2, *A_c_ptr3, *A_c_ptr4;
-	const float *Bptr, *Bptr1;
-	const float *B_c_ptr1;
-	float* Cptr1, *Cptr2, *Cptr3, *Cptr4, *C_c_ptr1, *C_c_ptr2, *C_c_ptr3, *C_c_ptr4;
+	const zq_base_type* Aptr1, *Aptr2, *Aptr3, *Aptr4, *A_c_ptr1, *A_c_ptr2, *A_c_ptr3, *A_c_ptr4;
+	const zq_base_type *Bptr, *Bptr1;
+	const zq_base_type *B_c_ptr1;
+	zq_base_type* Cptr1, *Cptr2, *Cptr3, *Cptr4, *C_c_ptr1, *C_c_ptr2, *C_c_ptr3, *C_c_ptr4;
 	int m, n, k;
 	int lda4 = lda << 2;
 	int ldc4 = ldc << 2;
@@ -10411,12 +10411,12 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv1_KdivAlign4(int M, int N, int
 	}
 }
 
-void zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv1_KdivAlign8(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+void zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv1_KdivAlign8(int M, int N, int K, const zq_base_type* A, int lda, const zq_base_type* Bt, int ldb, zq_base_type* C, int ldc)
 {
-	const float* Aptr1, *Aptr2, *Aptr3, *Aptr4, *A_c_ptr1, *A_c_ptr2, *A_c_ptr3, *A_c_ptr4;
-	const float *Bptr, *Bptr1;
-	const float *B_c_ptr1;
-	float* Cptr1, *Cptr2, *Cptr3, *Cptr4, *C_c_ptr1, *C_c_ptr2, *C_c_ptr3, *C_c_ptr4;
+	const zq_base_type* Aptr1, *Aptr2, *Aptr3, *Aptr4, *A_c_ptr1, *A_c_ptr2, *A_c_ptr3, *A_c_ptr4;
+	const zq_base_type *Bptr, *Bptr1;
+	const zq_base_type *B_c_ptr1;
+	zq_base_type* Cptr1, *Cptr2, *Cptr3, *Cptr4, *C_c_ptr1, *C_c_ptr2, *C_c_ptr3, *C_c_ptr4;
 	int m, n, k;
 	int lda2 = lda << 1;
 	int lda4 = lda << 2;
@@ -10477,12 +10477,12 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv1_KdivAlign8(int M, int N, int
 
 #if !__ARM_NEON
 
-void zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv1_KdivAlign16(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+void zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv1_KdivAlign16(int M, int N, int K, const zq_base_type* A, int lda, const zq_base_type* Bt, int ldb, zq_base_type* C, int ldc)
 {
-	const float* Aptr1, *Aptr2, *Aptr3, *Aptr4, *A_c_ptr1, *A_c_ptr2, *A_c_ptr3, *A_c_ptr4;
-	const float *Bptr, *Bptr1;
-	const float *B_c_ptr1;
-	float* Cptr1, *Cptr2, *Cptr3, *Cptr4, *C_c_ptr1, *C_c_ptr2, *C_c_ptr3, *C_c_ptr4;
+	const zq_base_type* Aptr1, *Aptr2, *Aptr3, *Aptr4, *A_c_ptr1, *A_c_ptr2, *A_c_ptr3, *A_c_ptr4;
+	const zq_base_type *Bptr, *Bptr1;
+	const zq_base_type *B_c_ptr1;
+	zq_base_type* Cptr1, *Cptr2, *Cptr3, *Cptr4, *C_c_ptr1, *C_c_ptr2, *C_c_ptr3, *C_c_ptr4;
 	int m, n, k;
 	int lda2 = lda << 1;
 	int lda4 = lda << 2;
@@ -10542,12 +10542,12 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv1_KdivAlign16(int M, int N, in
 	}
 }
 
-void zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv1_KdivAlign32(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+void zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv1_KdivAlign32(int M, int N, int K, const zq_base_type* A, int lda, const zq_base_type* Bt, int ldb, zq_base_type* C, int ldc)
 {
-	const float* Aptr1, *Aptr2, *Aptr3, *Aptr4, *A_c_ptr1, *A_c_ptr2, *A_c_ptr3, *A_c_ptr4;
-	const float *Bptr, *Bptr1;
-	const float *B_c_ptr1;
-	float* Cptr1, *Cptr2, *Cptr3, *Cptr4, *C_c_ptr1, *C_c_ptr2, *C_c_ptr3, *C_c_ptr4;
+	const zq_base_type* Aptr1, *Aptr2, *Aptr3, *Aptr4, *A_c_ptr1, *A_c_ptr2, *A_c_ptr3, *A_c_ptr4;
+	const zq_base_type *Bptr, *Bptr1;
+	const zq_base_type *B_c_ptr1;
+	zq_base_type* Cptr1, *Cptr2, *Cptr3, *Cptr4, *C_c_ptr1, *C_c_ptr2, *C_c_ptr3, *C_c_ptr4;
 	int m, n, k;
 	int lda2 = lda << 1;
 	int lda4 = lda << 2;
@@ -10611,12 +10611,12 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv1_KdivAlign32(int M, int N, in
 	}
 }
 
-void zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv1_KdivAlign64(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+void zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv1_KdivAlign64(int M, int N, int K, const zq_base_type* A, int lda, const zq_base_type* Bt, int ldb, zq_base_type* C, int ldc)
 {
-	const float* Aptr1, *Aptr2, *Aptr3, *Aptr4, *A_c_ptr1, *A_c_ptr2, *A_c_ptr3, *A_c_ptr4;
-	const float *Bptr, *Bptr1;
-	const float *B_c_ptr1;
-	float* Cptr1, *Cptr2, *Cptr3, *Cptr4, *C_c_ptr1, *C_c_ptr2, *C_c_ptr3, *C_c_ptr4;
+	const zq_base_type* Aptr1, *Aptr2, *Aptr3, *Aptr4, *A_c_ptr1, *A_c_ptr2, *A_c_ptr3, *A_c_ptr4;
+	const zq_base_type *Bptr, *Bptr1;
+	const zq_base_type *B_c_ptr1;
+	zq_base_type* Cptr1, *Cptr2, *Cptr3, *Cptr4, *C_c_ptr1, *C_c_ptr2, *C_c_ptr3, *C_c_ptr4;
 	int m, n, k;
 	int lda2 = lda << 1;
 	int lda4 = lda << 2;
@@ -10690,12 +10690,12 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv1_KdivAlign64(int M, int N, in
 
 #endif
 
-void zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv2_KeqAlign1(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+void zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv2_KeqAlign1(int M, int N, int K, const zq_base_type* A, int lda, const zq_base_type* Bt, int ldb, zq_base_type* C, int ldc)
 {
-	const float* Aptr1, *Aptr2, *Aptr3, *Aptr4, *A_c_ptr1, *A_c_ptr2, *A_c_ptr3, *A_c_ptr4;
-	const float *Bptr, *Bptr1, *Bptr2;
-	const float *B_c_ptr1, *B_c_ptr2;
-	float* Cptr1, *Cptr2, *Cptr3, *Cptr4, *C_c_ptr1, *C_c_ptr2, *C_c_ptr3, *C_c_ptr4;
+	const zq_base_type* Aptr1, *Aptr2, *Aptr3, *Aptr4, *A_c_ptr1, *A_c_ptr2, *A_c_ptr3, *A_c_ptr4;
+	const zq_base_type *Bptr, *Bptr1, *Bptr2;
+	const zq_base_type *B_c_ptr1, *B_c_ptr2;
+	zq_base_type* Cptr1, *Cptr2, *Cptr3, *Cptr4, *C_c_ptr1, *C_c_ptr2, *C_c_ptr3, *C_c_ptr4;
 	int m, n;
 	int lda2 = lda << 1;
 	int lda4 = lda << 2;
@@ -10751,12 +10751,12 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv2_KeqAlign1(int M, int N, int 
 	}
 }
 
-void zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv2_KeqAlign2(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+void zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv2_KeqAlign2(int M, int N, int K, const zq_base_type* A, int lda, const zq_base_type* Bt, int ldb, zq_base_type* C, int ldc)
 {
-	const float* Aptr1, *Aptr2, *Aptr3, *Aptr4, *A_c_ptr1, *A_c_ptr2, *A_c_ptr3, *A_c_ptr4;
-	const float *Bptr, *Bptr1, *Bptr2;
-	const float *B_c_ptr1, *B_c_ptr2;
-	float* Cptr1, *Cptr2, *Cptr3, *Cptr4, *C_c_ptr1, *C_c_ptr2, *C_c_ptr3, *C_c_ptr4;
+	const zq_base_type* Aptr1, *Aptr2, *Aptr3, *Aptr4, *A_c_ptr1, *A_c_ptr2, *A_c_ptr3, *A_c_ptr4;
+	const zq_base_type *Bptr, *Bptr1, *Bptr2;
+	const zq_base_type *B_c_ptr1, *B_c_ptr2;
+	zq_base_type* Cptr1, *Cptr2, *Cptr3, *Cptr4, *C_c_ptr1, *C_c_ptr2, *C_c_ptr3, *C_c_ptr4;
 	int m, n;
 	int lda2 = lda << 1;
 	int lda4 = lda << 2;
@@ -10812,12 +10812,12 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv2_KeqAlign2(int M, int N, int 
 	}
 }
 
-void zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv2_KeqAlign3(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+void zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv2_KeqAlign3(int M, int N, int K, const zq_base_type* A, int lda, const zq_base_type* Bt, int ldb, zq_base_type* C, int ldc)
 {
-	const float* Aptr1, *Aptr2, *Aptr3, *Aptr4, *A_c_ptr1, *A_c_ptr2, *A_c_ptr3, *A_c_ptr4;
-	const float *Bptr, *Bptr1, *Bptr2;
-	const float *B_c_ptr1, *B_c_ptr2;
-	float* Cptr1, *Cptr2, *Cptr3, *Cptr4, *C_c_ptr1, *C_c_ptr2, *C_c_ptr3, *C_c_ptr4;
+	const zq_base_type* Aptr1, *Aptr2, *Aptr3, *Aptr4, *A_c_ptr1, *A_c_ptr2, *A_c_ptr3, *A_c_ptr4;
+	const zq_base_type *Bptr, *Bptr1, *Bptr2;
+	const zq_base_type *B_c_ptr1, *B_c_ptr2;
+	zq_base_type* Cptr1, *Cptr2, *Cptr3, *Cptr4, *C_c_ptr1, *C_c_ptr2, *C_c_ptr3, *C_c_ptr4;
 	int m, n;
 	int lda2 = lda << 1;
 	int lda4 = lda << 2;
@@ -10875,12 +10875,12 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv2_KeqAlign3(int M, int N, int 
 	}
 }
 
-void zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv2_KeqAlign4(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+void zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv2_KeqAlign4(int M, int N, int K, const zq_base_type* A, int lda, const zq_base_type* Bt, int ldb, zq_base_type* C, int ldc)
 {
-	const float* Aptr1, *Aptr2, *Aptr3, *Aptr4, *A_c_ptr1, *A_c_ptr2, *A_c_ptr3, *A_c_ptr4;
-	const float *Bptr, *Bptr1, *Bptr2;
-	const float *B_c_ptr1, *B_c_ptr2;
-	float* Cptr1, *Cptr2, *Cptr3, *Cptr4, *C_c_ptr1, *C_c_ptr2, *C_c_ptr3, *C_c_ptr4;
+	const zq_base_type* Aptr1, *Aptr2, *Aptr3, *Aptr4, *A_c_ptr1, *A_c_ptr2, *A_c_ptr3, *A_c_ptr4;
+	const zq_base_type *Bptr, *Bptr1, *Bptr2;
+	const zq_base_type *B_c_ptr1, *B_c_ptr2;
+	zq_base_type* Cptr1, *Cptr2, *Cptr3, *Cptr4, *C_c_ptr1, *C_c_ptr2, *C_c_ptr3, *C_c_ptr4;
 	int m, n;
 	int lda2 = lda << 1;
 	int lda4 = lda << 2;
@@ -10936,12 +10936,12 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv2_KeqAlign4(int M, int N, int 
 	}
 }
 
-void zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv2_KeqAlign5(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+void zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv2_KeqAlign5(int M, int N, int K, const zq_base_type* A, int lda, const zq_base_type* Bt, int ldb, zq_base_type* C, int ldc)
 {
-	const float* Aptr1, *Aptr2, *Aptr3, *Aptr4, *A_c_ptr1, *A_c_ptr2, *A_c_ptr3, *A_c_ptr4;
-	const float *Bptr, *Bptr1, *Bptr2;
-	const float *B_c_ptr1, *B_c_ptr2;
-	float* Cptr1, *Cptr2, *Cptr3, *Cptr4, *C_c_ptr1, *C_c_ptr2, *C_c_ptr3, *C_c_ptr4;
+	const zq_base_type* Aptr1, *Aptr2, *Aptr3, *Aptr4, *A_c_ptr1, *A_c_ptr2, *A_c_ptr3, *A_c_ptr4;
+	const zq_base_type *Bptr, *Bptr1, *Bptr2;
+	const zq_base_type *B_c_ptr1, *B_c_ptr2;
+	zq_base_type* Cptr1, *Cptr2, *Cptr3, *Cptr4, *C_c_ptr1, *C_c_ptr2, *C_c_ptr3, *C_c_ptr4;
 	int m, n;
 	int lda2 = lda << 1;
 	int lda4 = lda << 2;
@@ -10999,12 +10999,12 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv2_KeqAlign5(int M, int N, int 
 	}
 }
 
-void zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv2_KeqAlign6(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+void zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv2_KeqAlign6(int M, int N, int K, const zq_base_type* A, int lda, const zq_base_type* Bt, int ldb, zq_base_type* C, int ldc)
 {
-	const float* Aptr1, *Aptr2, *Aptr3, *Aptr4, *A_c_ptr1, *A_c_ptr2, *A_c_ptr3, *A_c_ptr4;
-	const float *Bptr, *Bptr1, *Bptr2;
-	const float *B_c_ptr1, *B_c_ptr2;
-	float* Cptr1, *Cptr2, *Cptr3, *Cptr4, *C_c_ptr1, *C_c_ptr2, *C_c_ptr3, *C_c_ptr4;
+	const zq_base_type* Aptr1, *Aptr2, *Aptr3, *Aptr4, *A_c_ptr1, *A_c_ptr2, *A_c_ptr3, *A_c_ptr4;
+	const zq_base_type *Bptr, *Bptr1, *Bptr2;
+	const zq_base_type *B_c_ptr1, *B_c_ptr2;
+	zq_base_type* Cptr1, *Cptr2, *Cptr3, *Cptr4, *C_c_ptr1, *C_c_ptr2, *C_c_ptr3, *C_c_ptr4;
 	int m, n;
 	int lda2 = lda << 1;
 	int lda4 = lda << 2;
@@ -11062,12 +11062,12 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv2_KeqAlign6(int M, int N, int 
 	}
 }
 
-void zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv2_KeqAlign7(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+void zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv2_KeqAlign7(int M, int N, int K, const zq_base_type* A, int lda, const zq_base_type* Bt, int ldb, zq_base_type* C, int ldc)
 {
-	const float* Aptr1, *Aptr2, *Aptr3, *Aptr4, *A_c_ptr1, *A_c_ptr2, *A_c_ptr3, *A_c_ptr4;
-	const float *Bptr, *Bptr1, *Bptr2;
-	const float *B_c_ptr1, *B_c_ptr2;
-	float* Cptr1, *Cptr2, *Cptr3, *Cptr4, *C_c_ptr1, *C_c_ptr2, *C_c_ptr3, *C_c_ptr4;
+	const zq_base_type* Aptr1, *Aptr2, *Aptr3, *Aptr4, *A_c_ptr1, *A_c_ptr2, *A_c_ptr3, *A_c_ptr4;
+	const zq_base_type *Bptr, *Bptr1, *Bptr2;
+	const zq_base_type *B_c_ptr1, *B_c_ptr2;
+	zq_base_type* Cptr1, *Cptr2, *Cptr3, *Cptr4, *C_c_ptr1, *C_c_ptr2, *C_c_ptr3, *C_c_ptr4;
 	int m, n;
 	int lda2 = lda << 1;
 	int lda4 = lda << 2;
@@ -11127,12 +11127,12 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv2_KeqAlign7(int M, int N, int 
 	}
 }
 
-void zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv2_KdivAlign4(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+void zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv2_KdivAlign4(int M, int N, int K, const zq_base_type* A, int lda, const zq_base_type* Bt, int ldb, zq_base_type* C, int ldc)
 {
-	const float* Aptr1, *Aptr2, *Aptr3, *Aptr4, *A_c_ptr1, *A_c_ptr2, *A_c_ptr3, *A_c_ptr4;
-	const float *Bptr, *Bptr1, *Bptr2;
-	const float *B_c_ptr1, *B_c_ptr2;
-	float* Cptr1, *Cptr2, *Cptr3, *Cptr4, *C_c_ptr1, *C_c_ptr2, *C_c_ptr3, *C_c_ptr4;
+	const zq_base_type* Aptr1, *Aptr2, *Aptr3, *Aptr4, *A_c_ptr1, *A_c_ptr2, *A_c_ptr3, *A_c_ptr4;
+	const zq_base_type *Bptr, *Bptr1, *Bptr2;
+	const zq_base_type *B_c_ptr1, *B_c_ptr2;
+	zq_base_type* Cptr1, *Cptr2, *Cptr3, *Cptr4, *C_c_ptr1, *C_c_ptr2, *C_c_ptr3, *C_c_ptr4;
 	int m, n, k;
 	int lda2 = lda << 1;
 	int lda4 = lda << 2;
@@ -11196,12 +11196,12 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv2_KdivAlign4(int M, int N, int
 	}
 }
 
-void zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv2_KdivAlign8(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+void zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv2_KdivAlign8(int M, int N, int K, const zq_base_type* A, int lda, const zq_base_type* Bt, int ldb, zq_base_type* C, int ldc)
 {
-	const float* Aptr1, *Aptr2, *Aptr3, *Aptr4, *A_c_ptr1, *A_c_ptr2, *A_c_ptr3, *A_c_ptr4;
-	const float *Bptr, *Bptr1, *Bptr2;
-	const float *B_c_ptr1, *B_c_ptr2;
-	float* Cptr1, *Cptr2, *Cptr3, *Cptr4, *C_c_ptr1, *C_c_ptr2, *C_c_ptr3, *C_c_ptr4;
+	const zq_base_type* Aptr1, *Aptr2, *Aptr3, *Aptr4, *A_c_ptr1, *A_c_ptr2, *A_c_ptr3, *A_c_ptr4;
+	const zq_base_type *Bptr, *Bptr1, *Bptr2;
+	const zq_base_type *B_c_ptr1, *B_c_ptr2;
+	zq_base_type* Cptr1, *Cptr2, *Cptr3, *Cptr4, *C_c_ptr1, *C_c_ptr2, *C_c_ptr3, *C_c_ptr4;
 	int m, n, k;
 	int lda2 = lda << 1;
 	int lda4 = lda << 2;
@@ -11266,12 +11266,12 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv2_KdivAlign8(int M, int N, int
 
 #if !__ARM_NEON
 
-void zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv2_KdivAlign16(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+void zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv2_KdivAlign16(int M, int N, int K, const zq_base_type* A, int lda, const zq_base_type* Bt, int ldb, zq_base_type* C, int ldc)
 {
-	const float* Aptr1, *Aptr2, *Aptr3, *Aptr4, *A_c_ptr1, *A_c_ptr2, *A_c_ptr3, *A_c_ptr4;
-	const float *Bptr, *Bptr1, *Bptr2;
-	const float *B_c_ptr1, *B_c_ptr2;
-	float* Cptr1, *Cptr2, *Cptr3, *Cptr4, *C_c_ptr1, *C_c_ptr2, *C_c_ptr3, *C_c_ptr4;
+	const zq_base_type* Aptr1, *Aptr2, *Aptr3, *Aptr4, *A_c_ptr1, *A_c_ptr2, *A_c_ptr3, *A_c_ptr4;
+	const zq_base_type *Bptr, *Bptr1, *Bptr2;
+	const zq_base_type *B_c_ptr1, *B_c_ptr2;
+	zq_base_type* Cptr1, *Cptr2, *Cptr3, *Cptr4, *C_c_ptr1, *C_c_ptr2, *C_c_ptr3, *C_c_ptr4;
 	int m, n, k;
 	int lda2 = lda << 1;
 	int lda4 = lda << 2;
@@ -11335,12 +11335,12 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv2_KdivAlign16(int M, int N, in
 	}
 }
 
-void zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv2_KdivAlign32(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+void zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv2_KdivAlign32(int M, int N, int K, const zq_base_type* A, int lda, const zq_base_type* Bt, int ldb, zq_base_type* C, int ldc)
 {
-	const float* Aptr1, *Aptr2, *Aptr3, *Aptr4, *A_c_ptr1, *A_c_ptr2, *A_c_ptr3, *A_c_ptr4;
-	const float *Bptr, *Bptr1, *Bptr2;
-	const float *B_c_ptr1, *B_c_ptr2;
-	float* Cptr1, *Cptr2, *Cptr3, *Cptr4, *C_c_ptr1, *C_c_ptr2, *C_c_ptr3, *C_c_ptr4;
+	const zq_base_type* Aptr1, *Aptr2, *Aptr3, *Aptr4, *A_c_ptr1, *A_c_ptr2, *A_c_ptr3, *A_c_ptr4;
+	const zq_base_type *Bptr, *Bptr1, *Bptr2;
+	const zq_base_type *B_c_ptr1, *B_c_ptr2;
+	zq_base_type* Cptr1, *Cptr2, *Cptr3, *Cptr4, *C_c_ptr1, *C_c_ptr2, *C_c_ptr3, *C_c_ptr4;
 	int m, n, k;
 	int lda2 = lda << 1;
 	int lda4 = lda << 2;
@@ -11408,12 +11408,12 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv2_KdivAlign32(int M, int N, in
 	}
 }
 
-void zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv2_KdivAlign64(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+void zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv2_KdivAlign64(int M, int N, int K, const zq_base_type* A, int lda, const zq_base_type* Bt, int ldb, zq_base_type* C, int ldc)
 {
-	const float* Aptr1, *Aptr2, *Aptr3, *Aptr4, *A_c_ptr1, *A_c_ptr2, *A_c_ptr3, *A_c_ptr4;
-	const float *Bptr, *Bptr1, *Bptr2;
-	const float *B_c_ptr1, *B_c_ptr2;
-	float* Cptr1, *Cptr2, *Cptr3, *Cptr4, *C_c_ptr1, *C_c_ptr2, *C_c_ptr3, *C_c_ptr4;
+	const zq_base_type* Aptr1, *Aptr2, *Aptr3, *Aptr4, *A_c_ptr1, *A_c_ptr2, *A_c_ptr3, *A_c_ptr4;
+	const zq_base_type *Bptr, *Bptr1, *Bptr2;
+	const zq_base_type *B_c_ptr1, *B_c_ptr2;
+	zq_base_type* Cptr1, *Cptr2, *Cptr3, *Cptr4, *C_c_ptr1, *C_c_ptr2, *C_c_ptr3, *C_c_ptr4;
 	int m, n, k;
 	int lda2 = lda << 1;
 	int lda4 = lda << 2;
@@ -11491,12 +11491,12 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv2_KdivAlign64(int M, int N, in
 
 #endif
 
-void zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv4_KeqAlign1(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+void zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv4_KeqAlign1(int M, int N, int K, const zq_base_type* A, int lda, const zq_base_type* Bt, int ldb, zq_base_type* C, int ldc)
 {
-	const float* Aptr1, *Aptr2, *Aptr3, *Aptr4, *A_c_ptr1, *A_c_ptr2, *A_c_ptr3, *A_c_ptr4;
-	const float *Bptr, *Bptr1, *Bptr2, *Bptr3, *Bptr4;
-	const float *B_c_ptr1, *B_c_ptr2, *B_c_ptr3, *B_c_ptr4;
-	float* Cptr1, *Cptr2, *Cptr3, *Cptr4, *C_c_ptr1, *C_c_ptr2, *C_c_ptr3, *C_c_ptr4;
+	const zq_base_type* Aptr1, *Aptr2, *Aptr3, *Aptr4, *A_c_ptr1, *A_c_ptr2, *A_c_ptr3, *A_c_ptr4;
+	const zq_base_type *Bptr, *Bptr1, *Bptr2, *Bptr3, *Bptr4;
+	const zq_base_type *B_c_ptr1, *B_c_ptr2, *B_c_ptr3, *B_c_ptr4;
+	zq_base_type* Cptr1, *Cptr2, *Cptr3, *Cptr4, *C_c_ptr1, *C_c_ptr2, *C_c_ptr3, *C_c_ptr4;
 	int m, n;
 	int lda2 = lda << 1;
 	int lda4 = lda << 2;
@@ -11558,12 +11558,12 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv4_KeqAlign1(int M, int N, int 
 	}
 }
 
-void zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv4_KeqAlign2(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+void zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv4_KeqAlign2(int M, int N, int K, const zq_base_type* A, int lda, const zq_base_type* Bt, int ldb, zq_base_type* C, int ldc)
 {
-	const float* Aptr1, *Aptr2, *Aptr3, *Aptr4, *A_c_ptr1, *A_c_ptr2, *A_c_ptr3, *A_c_ptr4;
-	const float *Bptr, *Bptr1, *Bptr2, *Bptr3, *Bptr4;
-	const float *B_c_ptr1, *B_c_ptr2, *B_c_ptr3, *B_c_ptr4;
-	float* Cptr1, *Cptr2, *Cptr3, *Cptr4, *C_c_ptr1, *C_c_ptr2, *C_c_ptr3, *C_c_ptr4;
+	const zq_base_type* Aptr1, *Aptr2, *Aptr3, *Aptr4, *A_c_ptr1, *A_c_ptr2, *A_c_ptr3, *A_c_ptr4;
+	const zq_base_type *Bptr, *Bptr1, *Bptr2, *Bptr3, *Bptr4;
+	const zq_base_type *B_c_ptr1, *B_c_ptr2, *B_c_ptr3, *B_c_ptr4;
+	zq_base_type* Cptr1, *Cptr2, *Cptr3, *Cptr4, *C_c_ptr1, *C_c_ptr2, *C_c_ptr3, *C_c_ptr4;
 	int m, n;
 	int lda2 = lda << 1;
 	int lda4 = lda << 2;
@@ -11625,12 +11625,12 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv4_KeqAlign2(int M, int N, int 
 	}
 }
 
-void zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv4_KeqAlign3(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+void zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv4_KeqAlign3(int M, int N, int K, const zq_base_type* A, int lda, const zq_base_type* Bt, int ldb, zq_base_type* C, int ldc)
 {
-	const float* Aptr1, *Aptr2, *Aptr3, *Aptr4, *A_c_ptr1, *A_c_ptr2, *A_c_ptr3, *A_c_ptr4;
-	const float *Bptr, *Bptr1, *Bptr2, *Bptr3, *Bptr4;
-	const float *B_c_ptr1, *B_c_ptr2, *B_c_ptr3, *B_c_ptr4;
-	float* Cptr1, *Cptr2, *Cptr3, *Cptr4, *C_c_ptr1, *C_c_ptr2, *C_c_ptr3, *C_c_ptr4;
+	const zq_base_type* Aptr1, *Aptr2, *Aptr3, *Aptr4, *A_c_ptr1, *A_c_ptr2, *A_c_ptr3, *A_c_ptr4;
+	const zq_base_type *Bptr, *Bptr1, *Bptr2, *Bptr3, *Bptr4;
+	const zq_base_type *B_c_ptr1, *B_c_ptr2, *B_c_ptr3, *B_c_ptr4;
+	zq_base_type* Cptr1, *Cptr2, *Cptr3, *Cptr4, *C_c_ptr1, *C_c_ptr2, *C_c_ptr3, *C_c_ptr4;
 	int m, n;
 	int lda2 = lda << 1;
 	int lda4 = lda << 2;
@@ -11694,12 +11694,12 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv4_KeqAlign3(int M, int N, int 
 	}
 }
 
-void zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv4_KeqAlign4(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+void zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv4_KeqAlign4(int M, int N, int K, const zq_base_type* A, int lda, const zq_base_type* Bt, int ldb, zq_base_type* C, int ldc)
 {
-	const float* Aptr1, *Aptr2, *Aptr3, *Aptr4, *A_c_ptr1, *A_c_ptr2, *A_c_ptr3, *A_c_ptr4;
-	const float *Bptr, *Bptr1, *Bptr2, *Bptr3, *Bptr4;
-	const float *B_c_ptr1, *B_c_ptr2, *B_c_ptr3, *B_c_ptr4;
-	float* Cptr1, *Cptr2, *Cptr3, *Cptr4, *C_c_ptr1, *C_c_ptr2, *C_c_ptr3, *C_c_ptr4;
+	const zq_base_type* Aptr1, *Aptr2, *Aptr3, *Aptr4, *A_c_ptr1, *A_c_ptr2, *A_c_ptr3, *A_c_ptr4;
+	const zq_base_type *Bptr, *Bptr1, *Bptr2, *Bptr3, *Bptr4;
+	const zq_base_type *B_c_ptr1, *B_c_ptr2, *B_c_ptr3, *B_c_ptr4;
+	zq_base_type* Cptr1, *Cptr2, *Cptr3, *Cptr4, *C_c_ptr1, *C_c_ptr2, *C_c_ptr3, *C_c_ptr4;
 	int m, n;
 	int lda2 = lda << 1;
 	int lda4 = lda << 2;
@@ -11761,12 +11761,12 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv4_KeqAlign4(int M, int N, int 
 	}
 }
 
-void zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv4_KeqAlign5(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+void zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv4_KeqAlign5(int M, int N, int K, const zq_base_type* A, int lda, const zq_base_type* Bt, int ldb, zq_base_type* C, int ldc)
 {
-	const float* Aptr1, *Aptr2, *Aptr3, *Aptr4, *A_c_ptr1, *A_c_ptr2, *A_c_ptr3, *A_c_ptr4;
-	const float *Bptr, *Bptr1, *Bptr2, *Bptr3, *Bptr4;
-	const float *B_c_ptr1, *B_c_ptr2, *B_c_ptr3, *B_c_ptr4;
-	float* Cptr1, *Cptr2, *Cptr3, *Cptr4, *C_c_ptr1, *C_c_ptr2, *C_c_ptr3, *C_c_ptr4;
+	const zq_base_type* Aptr1, *Aptr2, *Aptr3, *Aptr4, *A_c_ptr1, *A_c_ptr2, *A_c_ptr3, *A_c_ptr4;
+	const zq_base_type *Bptr, *Bptr1, *Bptr2, *Bptr3, *Bptr4;
+	const zq_base_type *B_c_ptr1, *B_c_ptr2, *B_c_ptr3, *B_c_ptr4;
+	zq_base_type* Cptr1, *Cptr2, *Cptr3, *Cptr4, *C_c_ptr1, *C_c_ptr2, *C_c_ptr3, *C_c_ptr4;
 	int m, n;
 	int lda2 = lda << 1;
 	int lda4 = lda << 2;
@@ -11830,12 +11830,12 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv4_KeqAlign5(int M, int N, int 
 	}
 }
 
-void zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv4_KeqAlign6(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+void zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv4_KeqAlign6(int M, int N, int K, const zq_base_type* A, int lda, const zq_base_type* Bt, int ldb, zq_base_type* C, int ldc)
 {
-	const float* Aptr1, *Aptr2, *Aptr3, *Aptr4, *A_c_ptr1, *A_c_ptr2, *A_c_ptr3, *A_c_ptr4;
-	const float *Bptr, *Bptr1, *Bptr2, *Bptr3, *Bptr4;
-	const float *B_c_ptr1, *B_c_ptr2, *B_c_ptr3, *B_c_ptr4;
-	float* Cptr1, *Cptr2, *Cptr3, *Cptr4, *C_c_ptr1, *C_c_ptr2, *C_c_ptr3, *C_c_ptr4;
+	const zq_base_type* Aptr1, *Aptr2, *Aptr3, *Aptr4, *A_c_ptr1, *A_c_ptr2, *A_c_ptr3, *A_c_ptr4;
+	const zq_base_type *Bptr, *Bptr1, *Bptr2, *Bptr3, *Bptr4;
+	const zq_base_type *B_c_ptr1, *B_c_ptr2, *B_c_ptr3, *B_c_ptr4;
+	zq_base_type* Cptr1, *Cptr2, *Cptr3, *Cptr4, *C_c_ptr1, *C_c_ptr2, *C_c_ptr3, *C_c_ptr4;
 	int m, n;
 	int lda2 = lda << 1;
 	int lda4 = lda << 2;
@@ -11899,12 +11899,12 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv4_KeqAlign6(int M, int N, int 
 	}
 }
 
-void zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv4_KeqAlign7(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+void zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv4_KeqAlign7(int M, int N, int K, const zq_base_type* A, int lda, const zq_base_type* Bt, int ldb, zq_base_type* C, int ldc)
 {
-	const float* Aptr1, *Aptr2, *Aptr3, *Aptr4, *A_c_ptr1, *A_c_ptr2, *A_c_ptr3, *A_c_ptr4;
-	const float *Bptr, *Bptr1, *Bptr2, *Bptr3, *Bptr4;
-	const float *B_c_ptr1, *B_c_ptr2, *B_c_ptr3, *B_c_ptr4;
-	float* Cptr1, *Cptr2, *Cptr3, *Cptr4, *C_c_ptr1, *C_c_ptr2, *C_c_ptr3, *C_c_ptr4;
+	const zq_base_type* Aptr1, *Aptr2, *Aptr3, *Aptr4, *A_c_ptr1, *A_c_ptr2, *A_c_ptr3, *A_c_ptr4;
+	const zq_base_type *Bptr, *Bptr1, *Bptr2, *Bptr3, *Bptr4;
+	const zq_base_type *B_c_ptr1, *B_c_ptr2, *B_c_ptr3, *B_c_ptr4;
+	zq_base_type* Cptr1, *Cptr2, *Cptr3, *Cptr4, *C_c_ptr1, *C_c_ptr2, *C_c_ptr3, *C_c_ptr4;
 	int m, n;
 	int lda2 = lda << 1;
 	int lda4 = lda << 2;
@@ -11970,12 +11970,12 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv4_KeqAlign7(int M, int N, int 
 	}
 }
 
-void zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv4_KdivAlign4(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+void zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv4_KdivAlign4(int M, int N, int K, const zq_base_type* A, int lda, const zq_base_type* Bt, int ldb, zq_base_type* C, int ldc)
 {
-	const float* Aptr1, *Aptr2, *Aptr3, *Aptr4, *A_c_ptr1, *A_c_ptr2, *A_c_ptr3, *A_c_ptr4;
-	const float *Bptr, *Bptr1, *Bptr2, *Bptr3, *Bptr4;
-	const float *B_c_ptr1, *B_c_ptr2, *B_c_ptr3, *B_c_ptr4;
-	float* Cptr1, *Cptr2, *Cptr3, *Cptr4, *C_c_ptr1, *C_c_ptr2, *C_c_ptr3, *C_c_ptr4;
+	const zq_base_type* Aptr1, *Aptr2, *Aptr3, *Aptr4, *A_c_ptr1, *A_c_ptr2, *A_c_ptr3, *A_c_ptr4;
+	const zq_base_type *Bptr, *Bptr1, *Bptr2, *Bptr3, *Bptr4;
+	const zq_base_type *B_c_ptr1, *B_c_ptr2, *B_c_ptr3, *B_c_ptr4;
+	zq_base_type* Cptr1, *Cptr2, *Cptr3, *Cptr4, *C_c_ptr1, *C_c_ptr2, *C_c_ptr3, *C_c_ptr4;
 	int m, n, k;
 	int lda2 = lda << 1;
 	int lda4 = lda << 2;
@@ -12045,12 +12045,12 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv4_KdivAlign4(int M, int N, int
 	}
 }
 
-void zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv4_KdivAlign8(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+void zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv4_KdivAlign8(int M, int N, int K, const zq_base_type* A, int lda, const zq_base_type* Bt, int ldb, zq_base_type* C, int ldc)
 {
-	const float* Aptr1, *Aptr2, *Aptr3, *Aptr4, *A_c_ptr1, *A_c_ptr2, *A_c_ptr3, *A_c_ptr4;
-	const float *Bptr, *Bptr1, *Bptr2, *Bptr3, *Bptr4;
-	const float *B_c_ptr1, *B_c_ptr2, *B_c_ptr3, *B_c_ptr4;
-	float* Cptr1, *Cptr2, *Cptr3, *Cptr4, *C_c_ptr1, *C_c_ptr2, *C_c_ptr3, *C_c_ptr4;
+	const zq_base_type* Aptr1, *Aptr2, *Aptr3, *Aptr4, *A_c_ptr1, *A_c_ptr2, *A_c_ptr3, *A_c_ptr4;
+	const zq_base_type *Bptr, *Bptr1, *Bptr2, *Bptr3, *Bptr4;
+	const zq_base_type *B_c_ptr1, *B_c_ptr2, *B_c_ptr3, *B_c_ptr4;
+	zq_base_type* Cptr1, *Cptr2, *Cptr3, *Cptr4, *C_c_ptr1, *C_c_ptr2, *C_c_ptr3, *C_c_ptr4;
 	int m, n, k;
 	int lda2 = lda << 1;
 	int lda4 = lda << 2;
@@ -12121,12 +12121,12 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv4_KdivAlign8(int M, int N, int
 
 #if !__ARM_NEON
 
-void zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv4_KdivAlign16(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+void zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv4_KdivAlign16(int M, int N, int K, const zq_base_type* A, int lda, const zq_base_type* Bt, int ldb, zq_base_type* C, int ldc)
 {
-	const float* Aptr1, *Aptr2, *Aptr3, *Aptr4, *A_c_ptr1, *A_c_ptr2, *A_c_ptr3, *A_c_ptr4;
-	const float *Bptr, *Bptr1, *Bptr2, *Bptr3, *Bptr4;
-	const float *B_c_ptr1, *B_c_ptr2, *B_c_ptr3, *B_c_ptr4;
-	float* Cptr1, *Cptr2, *Cptr3, *Cptr4, *C_c_ptr1, *C_c_ptr2, *C_c_ptr3, *C_c_ptr4;
+	const zq_base_type* Aptr1, *Aptr2, *Aptr3, *Aptr4, *A_c_ptr1, *A_c_ptr2, *A_c_ptr3, *A_c_ptr4;
+	const zq_base_type *Bptr, *Bptr1, *Bptr2, *Bptr3, *Bptr4;
+	const zq_base_type *B_c_ptr1, *B_c_ptr2, *B_c_ptr3, *B_c_ptr4;
+	zq_base_type* Cptr1, *Cptr2, *Cptr3, *Cptr4, *C_c_ptr1, *C_c_ptr2, *C_c_ptr3, *C_c_ptr4;
 	int m, n, k;
 	int lda2 = lda << 1;
 	int lda4 = lda << 2;
@@ -12196,12 +12196,12 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv4_KdivAlign16(int M, int N, in
 	}
 }
 
-void zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv4_KdivAlign32(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+void zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv4_KdivAlign32(int M, int N, int K, const zq_base_type* A, int lda, const zq_base_type* Bt, int ldb, zq_base_type* C, int ldc)
 {
-	const float* Aptr1, *Aptr2, *Aptr3, *Aptr4, *A_c_ptr1, *A_c_ptr2, *A_c_ptr3, *A_c_ptr4;
-	const float *Bptr, *Bptr1, *Bptr2, *Bptr3, *Bptr4;
-	const float *B_c_ptr1, *B_c_ptr2, *B_c_ptr3, *B_c_ptr4;
-	float* Cptr1, *Cptr2, *Cptr3, *Cptr4, *C_c_ptr1, *C_c_ptr2, *C_c_ptr3, *C_c_ptr4;
+	const zq_base_type* Aptr1, *Aptr2, *Aptr3, *Aptr4, *A_c_ptr1, *A_c_ptr2, *A_c_ptr3, *A_c_ptr4;
+	const zq_base_type *Bptr, *Bptr1, *Bptr2, *Bptr3, *Bptr4;
+	const zq_base_type *B_c_ptr1, *B_c_ptr2, *B_c_ptr3, *B_c_ptr4;
+	zq_base_type* Cptr1, *Cptr2, *Cptr3, *Cptr4, *C_c_ptr1, *C_c_ptr2, *C_c_ptr3, *C_c_ptr4;
 	int m, n, k;
 	int lda2 = lda << 1;
 	int lda4 = lda << 2;
@@ -12275,12 +12275,12 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv4_KdivAlign32(int M, int N, in
 	}
 }
 
-void zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv4_KdivAlign64(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+void zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv4_KdivAlign64(int M, int N, int K, const zq_base_type* A, int lda, const zq_base_type* Bt, int ldb, zq_base_type* C, int ldc)
 {
-	const float* Aptr1, *Aptr2, *Aptr3, *Aptr4, *A_c_ptr1, *A_c_ptr2, *A_c_ptr3, *A_c_ptr4;
-	const float *Bptr, *Bptr1, *Bptr2, *Bptr3, *Bptr4;
-	const float *B_c_ptr1, *B_c_ptr2, *B_c_ptr3, *B_c_ptr4;
-	float* Cptr1, *Cptr2, *Cptr3, *Cptr4, *C_c_ptr1, *C_c_ptr2, *C_c_ptr3, *C_c_ptr4;
+	const zq_base_type* Aptr1, *Aptr2, *Aptr3, *Aptr4, *A_c_ptr1, *A_c_ptr2, *A_c_ptr3, *A_c_ptr4;
+	const zq_base_type *Bptr, *Bptr1, *Bptr2, *Bptr3, *Bptr4;
+	const zq_base_type *B_c_ptr1, *B_c_ptr2, *B_c_ptr3, *B_c_ptr4;
+	zq_base_type* Cptr1, *Cptr2, *Cptr3, *Cptr4, *C_c_ptr1, *C_c_ptr2, *C_c_ptr3, *C_c_ptr4;
 	int m, n, k;
 	int lda2 = lda << 1;
 	int lda4 = lda << 2;
@@ -12295,8 +12295,8 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv4_KdivAlign64(int M, int N, in
 	register zq_mm_type a_vec1, a_vec2, a_vec3, a_vec4;
 	register zq_mm_type b_vec1, b_vec2, b_vec3, b_vec4;
 	const int zq_mm_align_size64 = zq_mm_align_size << 6;
-	//float* packedB = (float*)_aligned_malloc(N*ldb * sizeof(float), 32);
-	//int pack_size = N * ldb * sizeof(float);
+	//zq_base_type* packedB = (zq_base_type*)_aligned_malloc(N*ldb * sizeof(zq_base_type), 32);
+	//int pack_size = N * ldb * sizeof(zq_base_type);
 	Aptr1 = A;
 	Aptr2 = Aptr1 + lda;
 	Aptr3 = Aptr2 + lda;
@@ -12369,14 +12369,14 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M4_caseNdiv4_KdivAlign64(int M, int N, in
 
 #endif
 
-void zq_gemm_32f_align_AnoTrans_Btrans_M8_caseNdiv1_KeqAlign1(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+void zq_gemm_32f_align_AnoTrans_Btrans_M8_caseNdiv1_KeqAlign1(int M, int N, int K, const zq_base_type* A, int lda, const zq_base_type* Bt, int ldb, zq_base_type* C, int ldc)
 {
-	const float* Aptr1, *Aptr2, *Aptr3, *Aptr4, *A_c_ptr1, *A_c_ptr2, *A_c_ptr3, *A_c_ptr4;
-	const float* Aptr5, *Aptr6, *Aptr7, *Aptr8, *A_c_ptr5, *A_c_ptr6, *A_c_ptr7, *A_c_ptr8;
-	const float *Bptr, *Bptr1;
-	const float *B_c_ptr1;
-	float* Cptr1, *Cptr2, *Cptr3, *Cptr4, *C_c_ptr1, *C_c_ptr2, *C_c_ptr3, *C_c_ptr4;
-	float* Cptr5, *Cptr6, *Cptr7, *Cptr8, *C_c_ptr5, *C_c_ptr6, *C_c_ptr7, *C_c_ptr8;
+	const zq_base_type* Aptr1, *Aptr2, *Aptr3, *Aptr4, *A_c_ptr1, *A_c_ptr2, *A_c_ptr3, *A_c_ptr4;
+	const zq_base_type* Aptr5, *Aptr6, *Aptr7, *Aptr8, *A_c_ptr5, *A_c_ptr6, *A_c_ptr7, *A_c_ptr8;
+	const zq_base_type *Bptr, *Bptr1;
+	const zq_base_type *B_c_ptr1;
+	zq_base_type* Cptr1, *Cptr2, *Cptr3, *Cptr4, *C_c_ptr1, *C_c_ptr2, *C_c_ptr3, *C_c_ptr4;
+	zq_base_type* Cptr5, *Cptr6, *Cptr7, *Cptr8, *C_c_ptr5, *C_c_ptr6, *C_c_ptr7, *C_c_ptr8;
 	int m, n;
 	int lda8 = lda << 3;
 	int ldc8 = ldc << 3;
@@ -12443,14 +12443,14 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M8_caseNdiv1_KeqAlign1(int M, int N, int 
 	}
 }
 
-void zq_gemm_32f_align_AnoTrans_Btrans_M8_caseNdiv1_KeqAlign2(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+void zq_gemm_32f_align_AnoTrans_Btrans_M8_caseNdiv1_KeqAlign2(int M, int N, int K, const zq_base_type* A, int lda, const zq_base_type* Bt, int ldb, zq_base_type* C, int ldc)
 {
-	const float* Aptr1, *Aptr2, *Aptr3, *Aptr4, *A_c_ptr1, *A_c_ptr2, *A_c_ptr3, *A_c_ptr4;
-	const float* Aptr5, *Aptr6, *Aptr7, *Aptr8, *A_c_ptr5, *A_c_ptr6, *A_c_ptr7, *A_c_ptr8;
-	const float *Bptr, *Bptr1;
-	const float *B_c_ptr1;
-	float* Cptr1, *Cptr2, *Cptr3, *Cptr4, *C_c_ptr1, *C_c_ptr2, *C_c_ptr3, *C_c_ptr4;
-	float* Cptr5, *Cptr6, *Cptr7, *Cptr8, *C_c_ptr5, *C_c_ptr6, *C_c_ptr7, *C_c_ptr8;
+	const zq_base_type* Aptr1, *Aptr2, *Aptr3, *Aptr4, *A_c_ptr1, *A_c_ptr2, *A_c_ptr3, *A_c_ptr4;
+	const zq_base_type* Aptr5, *Aptr6, *Aptr7, *Aptr8, *A_c_ptr5, *A_c_ptr6, *A_c_ptr7, *A_c_ptr8;
+	const zq_base_type *Bptr, *Bptr1;
+	const zq_base_type *B_c_ptr1;
+	zq_base_type* Cptr1, *Cptr2, *Cptr3, *Cptr4, *C_c_ptr1, *C_c_ptr2, *C_c_ptr3, *C_c_ptr4;
+	zq_base_type* Cptr5, *Cptr6, *Cptr7, *Cptr8, *C_c_ptr5, *C_c_ptr6, *C_c_ptr7, *C_c_ptr8;
 	int m, n;
 	int lda8 = lda << 3;
 	int ldc8 = ldc << 3;
@@ -12517,14 +12517,14 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M8_caseNdiv1_KeqAlign2(int M, int N, int 
 	}
 }
 
-void zq_gemm_32f_align_AnoTrans_Btrans_M8_caseNdiv1_KeqAlign3(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+void zq_gemm_32f_align_AnoTrans_Btrans_M8_caseNdiv1_KeqAlign3(int M, int N, int K, const zq_base_type* A, int lda, const zq_base_type* Bt, int ldb, zq_base_type* C, int ldc)
 {
-	const float* Aptr1, *Aptr2, *Aptr3, *Aptr4, *A_c_ptr1, *A_c_ptr2, *A_c_ptr3, *A_c_ptr4;
-	const float* Aptr5, *Aptr6, *Aptr7, *Aptr8, *A_c_ptr5, *A_c_ptr6, *A_c_ptr7, *A_c_ptr8;
-	const float *Bptr, *Bptr1;
-	const float *B_c_ptr1;
-	float* Cptr1, *Cptr2, *Cptr3, *Cptr4, *C_c_ptr1, *C_c_ptr2, *C_c_ptr3, *C_c_ptr4;
-	float* Cptr5, *Cptr6, *Cptr7, *Cptr8, *C_c_ptr5, *C_c_ptr6, *C_c_ptr7, *C_c_ptr8;
+	const zq_base_type* Aptr1, *Aptr2, *Aptr3, *Aptr4, *A_c_ptr1, *A_c_ptr2, *A_c_ptr3, *A_c_ptr4;
+	const zq_base_type* Aptr5, *Aptr6, *Aptr7, *Aptr8, *A_c_ptr5, *A_c_ptr6, *A_c_ptr7, *A_c_ptr8;
+	const zq_base_type *Bptr, *Bptr1;
+	const zq_base_type *B_c_ptr1;
+	zq_base_type* Cptr1, *Cptr2, *Cptr3, *Cptr4, *C_c_ptr1, *C_c_ptr2, *C_c_ptr3, *C_c_ptr4;
+	zq_base_type* Cptr5, *Cptr6, *Cptr7, *Cptr8, *C_c_ptr5, *C_c_ptr6, *C_c_ptr7, *C_c_ptr8;
 	int m, n;
 	int lda8 = lda << 3;
 	int ldc8 = ldc << 3;
@@ -12593,14 +12593,14 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M8_caseNdiv1_KeqAlign3(int M, int N, int 
 	}
 }
 
-void zq_gemm_32f_align_AnoTrans_Btrans_M8_caseNdiv1_KeqAlign4(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+void zq_gemm_32f_align_AnoTrans_Btrans_M8_caseNdiv1_KeqAlign4(int M, int N, int K, const zq_base_type* A, int lda, const zq_base_type* Bt, int ldb, zq_base_type* C, int ldc)
 {
-	const float* Aptr1, *Aptr2, *Aptr3, *Aptr4, *A_c_ptr1, *A_c_ptr2, *A_c_ptr3, *A_c_ptr4;
-	const float* Aptr5, *Aptr6, *Aptr7, *Aptr8, *A_c_ptr5, *A_c_ptr6, *A_c_ptr7, *A_c_ptr8;
-	const float *Bptr, *Bptr1;
-	const float *B_c_ptr1;
-	float* Cptr1, *Cptr2, *Cptr3, *Cptr4, *C_c_ptr1, *C_c_ptr2, *C_c_ptr3, *C_c_ptr4;
-	float* Cptr5, *Cptr6, *Cptr7, *Cptr8, *C_c_ptr5, *C_c_ptr6, *C_c_ptr7, *C_c_ptr8;
+	const zq_base_type* Aptr1, *Aptr2, *Aptr3, *Aptr4, *A_c_ptr1, *A_c_ptr2, *A_c_ptr3, *A_c_ptr4;
+	const zq_base_type* Aptr5, *Aptr6, *Aptr7, *Aptr8, *A_c_ptr5, *A_c_ptr6, *A_c_ptr7, *A_c_ptr8;
+	const zq_base_type *Bptr, *Bptr1;
+	const zq_base_type *B_c_ptr1;
+	zq_base_type* Cptr1, *Cptr2, *Cptr3, *Cptr4, *C_c_ptr1, *C_c_ptr2, *C_c_ptr3, *C_c_ptr4;
+	zq_base_type* Cptr5, *Cptr6, *Cptr7, *Cptr8, *C_c_ptr5, *C_c_ptr6, *C_c_ptr7, *C_c_ptr8;
 	int m, n;
 	int lda8 = lda << 3;
 	int ldc8 = ldc << 3;
@@ -12667,14 +12667,14 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M8_caseNdiv1_KeqAlign4(int M, int N, int 
 	}
 }
 
-void zq_gemm_32f_align_AnoTrans_Btrans_M8_caseNdiv1_KeqAlign5(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+void zq_gemm_32f_align_AnoTrans_Btrans_M8_caseNdiv1_KeqAlign5(int M, int N, int K, const zq_base_type* A, int lda, const zq_base_type* Bt, int ldb, zq_base_type* C, int ldc)
 {
-	const float* Aptr1, *Aptr2, *Aptr3, *Aptr4, *A_c_ptr1, *A_c_ptr2, *A_c_ptr3, *A_c_ptr4;
-	const float* Aptr5, *Aptr6, *Aptr7, *Aptr8, *A_c_ptr5, *A_c_ptr6, *A_c_ptr7, *A_c_ptr8;
-	const float *Bptr, *Bptr1;
-	const float *B_c_ptr1;
-	float* Cptr1, *Cptr2, *Cptr3, *Cptr4, *C_c_ptr1, *C_c_ptr2, *C_c_ptr3, *C_c_ptr4;
-	float* Cptr5, *Cptr6, *Cptr7, *Cptr8, *C_c_ptr5, *C_c_ptr6, *C_c_ptr7, *C_c_ptr8;
+	const zq_base_type* Aptr1, *Aptr2, *Aptr3, *Aptr4, *A_c_ptr1, *A_c_ptr2, *A_c_ptr3, *A_c_ptr4;
+	const zq_base_type* Aptr5, *Aptr6, *Aptr7, *Aptr8, *A_c_ptr5, *A_c_ptr6, *A_c_ptr7, *A_c_ptr8;
+	const zq_base_type *Bptr, *Bptr1;
+	const zq_base_type *B_c_ptr1;
+	zq_base_type* Cptr1, *Cptr2, *Cptr3, *Cptr4, *C_c_ptr1, *C_c_ptr2, *C_c_ptr3, *C_c_ptr4;
+	zq_base_type* Cptr5, *Cptr6, *Cptr7, *Cptr8, *C_c_ptr5, *C_c_ptr6, *C_c_ptr7, *C_c_ptr8;
 	int m, n;
 	int lda8 = lda << 3;
 	int ldc8 = ldc << 3;
@@ -12743,14 +12743,14 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M8_caseNdiv1_KeqAlign5(int M, int N, int 
 	}
 }
 
-void zq_gemm_32f_align_AnoTrans_Btrans_M8_caseNdiv1_KeqAlign6(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+void zq_gemm_32f_align_AnoTrans_Btrans_M8_caseNdiv1_KeqAlign6(int M, int N, int K, const zq_base_type* A, int lda, const zq_base_type* Bt, int ldb, zq_base_type* C, int ldc)
 {
-	const float* Aptr1, *Aptr2, *Aptr3, *Aptr4, *A_c_ptr1, *A_c_ptr2, *A_c_ptr3, *A_c_ptr4;
-	const float* Aptr5, *Aptr6, *Aptr7, *Aptr8, *A_c_ptr5, *A_c_ptr6, *A_c_ptr7, *A_c_ptr8;
-	const float *Bptr, *Bptr1;
-	const float *B_c_ptr1;
-	float* Cptr1, *Cptr2, *Cptr3, *Cptr4, *C_c_ptr1, *C_c_ptr2, *C_c_ptr3, *C_c_ptr4;
-	float* Cptr5, *Cptr6, *Cptr7, *Cptr8, *C_c_ptr5, *C_c_ptr6, *C_c_ptr7, *C_c_ptr8;
+	const zq_base_type* Aptr1, *Aptr2, *Aptr3, *Aptr4, *A_c_ptr1, *A_c_ptr2, *A_c_ptr3, *A_c_ptr4;
+	const zq_base_type* Aptr5, *Aptr6, *Aptr7, *Aptr8, *A_c_ptr5, *A_c_ptr6, *A_c_ptr7, *A_c_ptr8;
+	const zq_base_type *Bptr, *Bptr1;
+	const zq_base_type *B_c_ptr1;
+	zq_base_type* Cptr1, *Cptr2, *Cptr3, *Cptr4, *C_c_ptr1, *C_c_ptr2, *C_c_ptr3, *C_c_ptr4;
+	zq_base_type* Cptr5, *Cptr6, *Cptr7, *Cptr8, *C_c_ptr5, *C_c_ptr6, *C_c_ptr7, *C_c_ptr8;
 	int m, n;
 	int lda8 = lda << 3;
 	int ldc8 = ldc << 3;
@@ -12819,14 +12819,14 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M8_caseNdiv1_KeqAlign6(int M, int N, int 
 	}
 }
 
-void zq_gemm_32f_align_AnoTrans_Btrans_M8_caseNdiv1_KeqAlign7(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+void zq_gemm_32f_align_AnoTrans_Btrans_M8_caseNdiv1_KeqAlign7(int M, int N, int K, const zq_base_type* A, int lda, const zq_base_type* Bt, int ldb, zq_base_type* C, int ldc)
 {
-	const float* Aptr1, *Aptr2, *Aptr3, *Aptr4, *A_c_ptr1, *A_c_ptr2, *A_c_ptr3, *A_c_ptr4;
-	const float* Aptr5, *Aptr6, *Aptr7, *Aptr8, *A_c_ptr5, *A_c_ptr6, *A_c_ptr7, *A_c_ptr8;
-	const float *Bptr, *Bptr1;
-	const float *B_c_ptr1;
-	float* Cptr1, *Cptr2, *Cptr3, *Cptr4, *C_c_ptr1, *C_c_ptr2, *C_c_ptr3, *C_c_ptr4;
-	float* Cptr5, *Cptr6, *Cptr7, *Cptr8, *C_c_ptr5, *C_c_ptr6, *C_c_ptr7, *C_c_ptr8;
+	const zq_base_type* Aptr1, *Aptr2, *Aptr3, *Aptr4, *A_c_ptr1, *A_c_ptr2, *A_c_ptr3, *A_c_ptr4;
+	const zq_base_type* Aptr5, *Aptr6, *Aptr7, *Aptr8, *A_c_ptr5, *A_c_ptr6, *A_c_ptr7, *A_c_ptr8;
+	const zq_base_type *Bptr, *Bptr1;
+	const zq_base_type *B_c_ptr1;
+	zq_base_type* Cptr1, *Cptr2, *Cptr3, *Cptr4, *C_c_ptr1, *C_c_ptr2, *C_c_ptr3, *C_c_ptr4;
+	zq_base_type* Cptr5, *Cptr6, *Cptr7, *Cptr8, *C_c_ptr5, *C_c_ptr6, *C_c_ptr7, *C_c_ptr8;
 	int m, n;
 	int lda8 = lda << 3;
 	int ldc8 = ldc << 3;
@@ -12897,14 +12897,14 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M8_caseNdiv1_KeqAlign7(int M, int N, int 
 	}
 }
 
-void zq_gemm_32f_align_AnoTrans_Btrans_M8_caseNdiv1_KdivAlign4(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+void zq_gemm_32f_align_AnoTrans_Btrans_M8_caseNdiv1_KdivAlign4(int M, int N, int K, const zq_base_type* A, int lda, const zq_base_type* Bt, int ldb, zq_base_type* C, int ldc)
 {
-	const float* Aptr1, *Aptr2, *Aptr3, *Aptr4, *A_c_ptr1, *A_c_ptr2, *A_c_ptr3, *A_c_ptr4;
-	const float* Aptr5, *Aptr6, *Aptr7, *Aptr8, *A_c_ptr5, *A_c_ptr6, *A_c_ptr7, *A_c_ptr8;
-	const float *Bptr, *Bptr1;
-	const float *B_c_ptr1;
-	float* Cptr1, *Cptr2, *Cptr3, *Cptr4, *C_c_ptr1, *C_c_ptr2, *C_c_ptr3, *C_c_ptr4;
-	float* Cptr5, *Cptr6, *Cptr7, *Cptr8, *C_c_ptr5, *C_c_ptr6, *C_c_ptr7, *C_c_ptr8;
+	const zq_base_type* Aptr1, *Aptr2, *Aptr3, *Aptr4, *A_c_ptr1, *A_c_ptr2, *A_c_ptr3, *A_c_ptr4;
+	const zq_base_type* Aptr5, *Aptr6, *Aptr7, *Aptr8, *A_c_ptr5, *A_c_ptr6, *A_c_ptr7, *A_c_ptr8;
+	const zq_base_type *Bptr, *Bptr1;
+	const zq_base_type *B_c_ptr1;
+	zq_base_type* Cptr1, *Cptr2, *Cptr3, *Cptr4, *C_c_ptr1, *C_c_ptr2, *C_c_ptr3, *C_c_ptr4;
+	zq_base_type* Cptr5, *Cptr6, *Cptr7, *Cptr8, *C_c_ptr5, *C_c_ptr6, *C_c_ptr7, *C_c_ptr8;
 	int m, n, k;
 	int lda8 = lda << 3;
 	int ldc8 = ldc << 3;
@@ -12979,14 +12979,14 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M8_caseNdiv1_KdivAlign4(int M, int N, int
 	}
 }
 
-void zq_gemm_32f_align_AnoTrans_Btrans_M8_caseNdiv1_KdivAlign8(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+void zq_gemm_32f_align_AnoTrans_Btrans_M8_caseNdiv1_KdivAlign8(int M, int N, int K, const zq_base_type* A, int lda, const zq_base_type* Bt, int ldb, zq_base_type* C, int ldc)
 {
-	const float* Aptr1, *Aptr2, *Aptr3, *Aptr4, *A_c_ptr1, *A_c_ptr2, *A_c_ptr3, *A_c_ptr4;
-	const float* Aptr5, *Aptr6, *Aptr7, *Aptr8, *A_c_ptr5, *A_c_ptr6, *A_c_ptr7, *A_c_ptr8;
-	const float *Bptr, *Bptr1;
-	const float *B_c_ptr1;
-	float* Cptr1, *Cptr2, *Cptr3, *Cptr4, *C_c_ptr1, *C_c_ptr2, *C_c_ptr3, *C_c_ptr4;
-	float* Cptr5, *Cptr6, *Cptr7, *Cptr8, *C_c_ptr5, *C_c_ptr6, *C_c_ptr7, *C_c_ptr8;
+	const zq_base_type* Aptr1, *Aptr2, *Aptr3, *Aptr4, *A_c_ptr1, *A_c_ptr2, *A_c_ptr3, *A_c_ptr4;
+	const zq_base_type* Aptr5, *Aptr6, *Aptr7, *Aptr8, *A_c_ptr5, *A_c_ptr6, *A_c_ptr7, *A_c_ptr8;
+	const zq_base_type *Bptr, *Bptr1;
+	const zq_base_type *B_c_ptr1;
+	zq_base_type* Cptr1, *Cptr2, *Cptr3, *Cptr4, *C_c_ptr1, *C_c_ptr2, *C_c_ptr3, *C_c_ptr4;
+	zq_base_type* Cptr5, *Cptr6, *Cptr7, *Cptr8, *C_c_ptr5, *C_c_ptr6, *C_c_ptr7, *C_c_ptr8;
 	int m, n, k;
 	int lda8 = lda << 3;
 	int ldc8 = ldc << 3;
@@ -13063,14 +13063,14 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M8_caseNdiv1_KdivAlign8(int M, int N, int
 
 #if !__ARM_NEON
 
-void zq_gemm_32f_align_AnoTrans_Btrans_M8_caseNdiv1_KdivAlign16(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+void zq_gemm_32f_align_AnoTrans_Btrans_M8_caseNdiv1_KdivAlign16(int M, int N, int K, const zq_base_type* A, int lda, const zq_base_type* Bt, int ldb, zq_base_type* C, int ldc)
 {
-	const float* Aptr1, *Aptr2, *Aptr3, *Aptr4, *A_c_ptr1, *A_c_ptr2, *A_c_ptr3, *A_c_ptr4;
-	const float* Aptr5, *Aptr6, *Aptr7, *Aptr8, *A_c_ptr5, *A_c_ptr6, *A_c_ptr7, *A_c_ptr8;
-	const float *Bptr, *Bptr1;
-	const float *B_c_ptr1;
-	float* Cptr1, *Cptr2, *Cptr3, *Cptr4, *C_c_ptr1, *C_c_ptr2, *C_c_ptr3, *C_c_ptr4;
-	float* Cptr5, *Cptr6, *Cptr7, *Cptr8, *C_c_ptr5, *C_c_ptr6, *C_c_ptr7, *C_c_ptr8;
+	const zq_base_type* Aptr1, *Aptr2, *Aptr3, *Aptr4, *A_c_ptr1, *A_c_ptr2, *A_c_ptr3, *A_c_ptr4;
+	const zq_base_type* Aptr5, *Aptr6, *Aptr7, *Aptr8, *A_c_ptr5, *A_c_ptr6, *A_c_ptr7, *A_c_ptr8;
+	const zq_base_type *Bptr, *Bptr1;
+	const zq_base_type *B_c_ptr1;
+	zq_base_type* Cptr1, *Cptr2, *Cptr3, *Cptr4, *C_c_ptr1, *C_c_ptr2, *C_c_ptr3, *C_c_ptr4;
+	zq_base_type* Cptr5, *Cptr6, *Cptr7, *Cptr8, *C_c_ptr5, *C_c_ptr6, *C_c_ptr7, *C_c_ptr8;
 	int m, n, k;
 	int lda8 = lda << 3;
 	int ldc8 = ldc << 3;
@@ -13146,14 +13146,14 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M8_caseNdiv1_KdivAlign16(int M, int N, in
 	}
 }
 
-void zq_gemm_32f_align_AnoTrans_Btrans_M8_caseNdiv1_KdivAlign32(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+void zq_gemm_32f_align_AnoTrans_Btrans_M8_caseNdiv1_KdivAlign32(int M, int N, int K, const zq_base_type* A, int lda, const zq_base_type* Bt, int ldb, zq_base_type* C, int ldc)
 {
-	const float* Aptr1, *Aptr2, *Aptr3, *Aptr4, *A_c_ptr1, *A_c_ptr2, *A_c_ptr3, *A_c_ptr4;
-	const float* Aptr5, *Aptr6, *Aptr7, *Aptr8, *A_c_ptr5, *A_c_ptr6, *A_c_ptr7, *A_c_ptr8;
-	const float *Bptr, *Bptr1;
-	const float *B_c_ptr1;
-	float* Cptr1, *Cptr2, *Cptr3, *Cptr4, *C_c_ptr1, *C_c_ptr2, *C_c_ptr3, *C_c_ptr4;
-	float* Cptr5, *Cptr6, *Cptr7, *Cptr8, *C_c_ptr5, *C_c_ptr6, *C_c_ptr7, *C_c_ptr8;
+	const zq_base_type* Aptr1, *Aptr2, *Aptr3, *Aptr4, *A_c_ptr1, *A_c_ptr2, *A_c_ptr3, *A_c_ptr4;
+	const zq_base_type* Aptr5, *Aptr6, *Aptr7, *Aptr8, *A_c_ptr5, *A_c_ptr6, *A_c_ptr7, *A_c_ptr8;
+	const zq_base_type *Bptr, *Bptr1;
+	const zq_base_type *B_c_ptr1;
+	zq_base_type* Cptr1, *Cptr2, *Cptr3, *Cptr4, *C_c_ptr1, *C_c_ptr2, *C_c_ptr3, *C_c_ptr4;
+	zq_base_type* Cptr5, *Cptr6, *Cptr7, *Cptr8, *C_c_ptr5, *C_c_ptr6, *C_c_ptr7, *C_c_ptr8;
 	int m, n, k;
 	int lda8 = lda << 3;
 	int ldc8 = ldc << 3;
@@ -13233,14 +13233,14 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M8_caseNdiv1_KdivAlign32(int M, int N, in
 	}
 }
 
-void zq_gemm_32f_align_AnoTrans_Btrans_M8_caseNdiv1_KdivAlign64(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+void zq_gemm_32f_align_AnoTrans_Btrans_M8_caseNdiv1_KdivAlign64(int M, int N, int K, const zq_base_type* A, int lda, const zq_base_type* Bt, int ldb, zq_base_type* C, int ldc)
 {
-	const float* Aptr1, *Aptr2, *Aptr3, *Aptr4, *A_c_ptr1, *A_c_ptr2, *A_c_ptr3, *A_c_ptr4;
-	const float* Aptr5, *Aptr6, *Aptr7, *Aptr8, *A_c_ptr5, *A_c_ptr6, *A_c_ptr7, *A_c_ptr8;
-	const float *Bptr, *Bptr1;
-	const float *B_c_ptr1;
-	float* Cptr1, *Cptr2, *Cptr3, *Cptr4, *C_c_ptr1, *C_c_ptr2, *C_c_ptr3, *C_c_ptr4;
-	float* Cptr5, *Cptr6, *Cptr7, *Cptr8, *C_c_ptr5, *C_c_ptr6, *C_c_ptr7, *C_c_ptr8;
+	const zq_base_type* Aptr1, *Aptr2, *Aptr3, *Aptr4, *A_c_ptr1, *A_c_ptr2, *A_c_ptr3, *A_c_ptr4;
+	const zq_base_type* Aptr5, *Aptr6, *Aptr7, *Aptr8, *A_c_ptr5, *A_c_ptr6, *A_c_ptr7, *A_c_ptr8;
+	const zq_base_type *Bptr, *Bptr1;
+	const zq_base_type *B_c_ptr1;
+	zq_base_type* Cptr1, *Cptr2, *Cptr3, *Cptr4, *C_c_ptr1, *C_c_ptr2, *C_c_ptr3, *C_c_ptr4;
+	zq_base_type* Cptr5, *Cptr6, *Cptr7, *Cptr8, *C_c_ptr5, *C_c_ptr6, *C_c_ptr7, *C_c_ptr8;
 	int m, n, k;
 	int lda8 = lda << 3;
 	int ldc8 = ldc << 3;
@@ -13330,14 +13330,14 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M8_caseNdiv1_KdivAlign64(int M, int N, in
 
 #endif
 
-void zq_gemm_32f_align_AnoTrans_Btrans_M8_caseNdiv2_KeqAlign1(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+void zq_gemm_32f_align_AnoTrans_Btrans_M8_caseNdiv2_KeqAlign1(int M, int N, int K, const zq_base_type* A, int lda, const zq_base_type* Bt, int ldb, zq_base_type* C, int ldc)
 {
-	const float* Aptr1, *Aptr2, *Aptr3, *Aptr4, *A_c_ptr1, *A_c_ptr2, *A_c_ptr3, *A_c_ptr4;
-	const float* Aptr5, *Aptr6, *Aptr7, *Aptr8, *A_c_ptr5, *A_c_ptr6, *A_c_ptr7, *A_c_ptr8;
-	const float *Bptr, *Bptr1, *Bptr2;
-	const float *B_c_ptr1, *B_c_ptr2;
-	float* Cptr1, *Cptr2, *Cptr3, *Cptr4, *C_c_ptr1, *C_c_ptr2, *C_c_ptr3, *C_c_ptr4;
-	float* Cptr5, *Cptr6, *Cptr7, *Cptr8, *C_c_ptr5, *C_c_ptr6, *C_c_ptr7, *C_c_ptr8;
+	const zq_base_type* Aptr1, *Aptr2, *Aptr3, *Aptr4, *A_c_ptr1, *A_c_ptr2, *A_c_ptr3, *A_c_ptr4;
+	const zq_base_type* Aptr5, *Aptr6, *Aptr7, *Aptr8, *A_c_ptr5, *A_c_ptr6, *A_c_ptr7, *A_c_ptr8;
+	const zq_base_type *Bptr, *Bptr1, *Bptr2;
+	const zq_base_type *B_c_ptr1, *B_c_ptr2;
+	zq_base_type* Cptr1, *Cptr2, *Cptr3, *Cptr4, *C_c_ptr1, *C_c_ptr2, *C_c_ptr3, *C_c_ptr4;
+	zq_base_type* Cptr5, *Cptr6, *Cptr7, *Cptr8, *C_c_ptr5, *C_c_ptr6, *C_c_ptr7, *C_c_ptr8;
 	int m, n;
 	int lda8 = lda << 3;
 	int ldc8 = ldc << 3;
@@ -13407,14 +13407,14 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M8_caseNdiv2_KeqAlign1(int M, int N, int 
 	}
 }
 
-void zq_gemm_32f_align_AnoTrans_Btrans_M8_caseNdiv2_KeqAlign2(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+void zq_gemm_32f_align_AnoTrans_Btrans_M8_caseNdiv2_KeqAlign2(int M, int N, int K, const zq_base_type* A, int lda, const zq_base_type* Bt, int ldb, zq_base_type* C, int ldc)
 {
-	const float* Aptr1, *Aptr2, *Aptr3, *Aptr4, *A_c_ptr1, *A_c_ptr2, *A_c_ptr3, *A_c_ptr4;
-	const float* Aptr5, *Aptr6, *Aptr7, *Aptr8, *A_c_ptr5, *A_c_ptr6, *A_c_ptr7, *A_c_ptr8;
-	const float *Bptr, *Bptr1, *Bptr2;
-	const float *B_c_ptr1, *B_c_ptr2;
-	float* Cptr1, *Cptr2, *Cptr3, *Cptr4, *C_c_ptr1, *C_c_ptr2, *C_c_ptr3, *C_c_ptr4;
-	float* Cptr5, *Cptr6, *Cptr7, *Cptr8, *C_c_ptr5, *C_c_ptr6, *C_c_ptr7, *C_c_ptr8;
+	const zq_base_type* Aptr1, *Aptr2, *Aptr3, *Aptr4, *A_c_ptr1, *A_c_ptr2, *A_c_ptr3, *A_c_ptr4;
+	const zq_base_type* Aptr5, *Aptr6, *Aptr7, *Aptr8, *A_c_ptr5, *A_c_ptr6, *A_c_ptr7, *A_c_ptr8;
+	const zq_base_type *Bptr, *Bptr1, *Bptr2;
+	const zq_base_type *B_c_ptr1, *B_c_ptr2;
+	zq_base_type* Cptr1, *Cptr2, *Cptr3, *Cptr4, *C_c_ptr1, *C_c_ptr2, *C_c_ptr3, *C_c_ptr4;
+	zq_base_type* Cptr5, *Cptr6, *Cptr7, *Cptr8, *C_c_ptr5, *C_c_ptr6, *C_c_ptr7, *C_c_ptr8;
 	int m, n;
 	int lda8 = lda << 3;
 	int ldc8 = ldc << 3;
@@ -13484,14 +13484,14 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M8_caseNdiv2_KeqAlign2(int M, int N, int 
 	}
 }
 
-void zq_gemm_32f_align_AnoTrans_Btrans_M8_caseNdiv2_KeqAlign3(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+void zq_gemm_32f_align_AnoTrans_Btrans_M8_caseNdiv2_KeqAlign3(int M, int N, int K, const zq_base_type* A, int lda, const zq_base_type* Bt, int ldb, zq_base_type* C, int ldc)
 {
-	const float* Aptr1, *Aptr2, *Aptr3, *Aptr4, *A_c_ptr1, *A_c_ptr2, *A_c_ptr3, *A_c_ptr4;
-	const float* Aptr5, *Aptr6, *Aptr7, *Aptr8, *A_c_ptr5, *A_c_ptr6, *A_c_ptr7, *A_c_ptr8;
-	const float *Bptr, *Bptr1, *Bptr2;
-	const float *B_c_ptr1, *B_c_ptr2;
-	float* Cptr1, *Cptr2, *Cptr3, *Cptr4, *C_c_ptr1, *C_c_ptr2, *C_c_ptr3, *C_c_ptr4;
-	float* Cptr5, *Cptr6, *Cptr7, *Cptr8, *C_c_ptr5, *C_c_ptr6, *C_c_ptr7, *C_c_ptr8;
+	const zq_base_type* Aptr1, *Aptr2, *Aptr3, *Aptr4, *A_c_ptr1, *A_c_ptr2, *A_c_ptr3, *A_c_ptr4;
+	const zq_base_type* Aptr5, *Aptr6, *Aptr7, *Aptr8, *A_c_ptr5, *A_c_ptr6, *A_c_ptr7, *A_c_ptr8;
+	const zq_base_type *Bptr, *Bptr1, *Bptr2;
+	const zq_base_type *B_c_ptr1, *B_c_ptr2;
+	zq_base_type* Cptr1, *Cptr2, *Cptr3, *Cptr4, *C_c_ptr1, *C_c_ptr2, *C_c_ptr3, *C_c_ptr4;
+	zq_base_type* Cptr5, *Cptr6, *Cptr7, *Cptr8, *C_c_ptr5, *C_c_ptr6, *C_c_ptr7, *C_c_ptr8;
 	int m, n;
 	int lda8 = lda << 3;
 	int ldc8 = ldc << 3;
@@ -13563,14 +13563,14 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M8_caseNdiv2_KeqAlign3(int M, int N, int 
 	}
 }
 
-void zq_gemm_32f_align_AnoTrans_Btrans_M8_caseNdiv2_KeqAlign4(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+void zq_gemm_32f_align_AnoTrans_Btrans_M8_caseNdiv2_KeqAlign4(int M, int N, int K, const zq_base_type* A, int lda, const zq_base_type* Bt, int ldb, zq_base_type* C, int ldc)
 {
-	const float* Aptr1, *Aptr2, *Aptr3, *Aptr4, *A_c_ptr1, *A_c_ptr2, *A_c_ptr3, *A_c_ptr4;
-	const float* Aptr5, *Aptr6, *Aptr7, *Aptr8, *A_c_ptr5, *A_c_ptr6, *A_c_ptr7, *A_c_ptr8;
-	const float *Bptr, *Bptr1, *Bptr2;
-	const float *B_c_ptr1, *B_c_ptr2;
-	float* Cptr1, *Cptr2, *Cptr3, *Cptr4, *C_c_ptr1, *C_c_ptr2, *C_c_ptr3, *C_c_ptr4;
-	float* Cptr5, *Cptr6, *Cptr7, *Cptr8, *C_c_ptr5, *C_c_ptr6, *C_c_ptr7, *C_c_ptr8;
+	const zq_base_type* Aptr1, *Aptr2, *Aptr3, *Aptr4, *A_c_ptr1, *A_c_ptr2, *A_c_ptr3, *A_c_ptr4;
+	const zq_base_type* Aptr5, *Aptr6, *Aptr7, *Aptr8, *A_c_ptr5, *A_c_ptr6, *A_c_ptr7, *A_c_ptr8;
+	const zq_base_type *Bptr, *Bptr1, *Bptr2;
+	const zq_base_type *B_c_ptr1, *B_c_ptr2;
+	zq_base_type* Cptr1, *Cptr2, *Cptr3, *Cptr4, *C_c_ptr1, *C_c_ptr2, *C_c_ptr3, *C_c_ptr4;
+	zq_base_type* Cptr5, *Cptr6, *Cptr7, *Cptr8, *C_c_ptr5, *C_c_ptr6, *C_c_ptr7, *C_c_ptr8;
 	int m, n;
 	int lda8 = lda << 3;
 	int ldc8 = ldc << 3;
@@ -13640,14 +13640,14 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M8_caseNdiv2_KeqAlign4(int M, int N, int 
 	}
 }
 
-void zq_gemm_32f_align_AnoTrans_Btrans_M8_caseNdiv2_KeqAlign5(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+void zq_gemm_32f_align_AnoTrans_Btrans_M8_caseNdiv2_KeqAlign5(int M, int N, int K, const zq_base_type* A, int lda, const zq_base_type* Bt, int ldb, zq_base_type* C, int ldc)
 {
-	const float* Aptr1, *Aptr2, *Aptr3, *Aptr4, *A_c_ptr1, *A_c_ptr2, *A_c_ptr3, *A_c_ptr4;
-	const float* Aptr5, *Aptr6, *Aptr7, *Aptr8, *A_c_ptr5, *A_c_ptr6, *A_c_ptr7, *A_c_ptr8;
-	const float *Bptr, *Bptr1, *Bptr2;
-	const float *B_c_ptr1, *B_c_ptr2;
-	float* Cptr1, *Cptr2, *Cptr3, *Cptr4, *C_c_ptr1, *C_c_ptr2, *C_c_ptr3, *C_c_ptr4;
-	float* Cptr5, *Cptr6, *Cptr7, *Cptr8, *C_c_ptr5, *C_c_ptr6, *C_c_ptr7, *C_c_ptr8;
+	const zq_base_type* Aptr1, *Aptr2, *Aptr3, *Aptr4, *A_c_ptr1, *A_c_ptr2, *A_c_ptr3, *A_c_ptr4;
+	const zq_base_type* Aptr5, *Aptr6, *Aptr7, *Aptr8, *A_c_ptr5, *A_c_ptr6, *A_c_ptr7, *A_c_ptr8;
+	const zq_base_type *Bptr, *Bptr1, *Bptr2;
+	const zq_base_type *B_c_ptr1, *B_c_ptr2;
+	zq_base_type* Cptr1, *Cptr2, *Cptr3, *Cptr4, *C_c_ptr1, *C_c_ptr2, *C_c_ptr3, *C_c_ptr4;
+	zq_base_type* Cptr5, *Cptr6, *Cptr7, *Cptr8, *C_c_ptr5, *C_c_ptr6, *C_c_ptr7, *C_c_ptr8;
 	int m, n;
 	int lda8 = lda << 3;
 	int ldc8 = ldc << 3;
@@ -13719,14 +13719,14 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M8_caseNdiv2_KeqAlign5(int M, int N, int 
 	}
 }
 
-void zq_gemm_32f_align_AnoTrans_Btrans_M8_caseNdiv2_KeqAlign6(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+void zq_gemm_32f_align_AnoTrans_Btrans_M8_caseNdiv2_KeqAlign6(int M, int N, int K, const zq_base_type* A, int lda, const zq_base_type* Bt, int ldb, zq_base_type* C, int ldc)
 {
-	const float* Aptr1, *Aptr2, *Aptr3, *Aptr4, *A_c_ptr1, *A_c_ptr2, *A_c_ptr3, *A_c_ptr4;
-	const float* Aptr5, *Aptr6, *Aptr7, *Aptr8, *A_c_ptr5, *A_c_ptr6, *A_c_ptr7, *A_c_ptr8;
-	const float *Bptr, *Bptr1, *Bptr2;
-	const float *B_c_ptr1, *B_c_ptr2;
-	float* Cptr1, *Cptr2, *Cptr3, *Cptr4, *C_c_ptr1, *C_c_ptr2, *C_c_ptr3, *C_c_ptr4;
-	float* Cptr5, *Cptr6, *Cptr7, *Cptr8, *C_c_ptr5, *C_c_ptr6, *C_c_ptr7, *C_c_ptr8;
+	const zq_base_type* Aptr1, *Aptr2, *Aptr3, *Aptr4, *A_c_ptr1, *A_c_ptr2, *A_c_ptr3, *A_c_ptr4;
+	const zq_base_type* Aptr5, *Aptr6, *Aptr7, *Aptr8, *A_c_ptr5, *A_c_ptr6, *A_c_ptr7, *A_c_ptr8;
+	const zq_base_type *Bptr, *Bptr1, *Bptr2;
+	const zq_base_type *B_c_ptr1, *B_c_ptr2;
+	zq_base_type* Cptr1, *Cptr2, *Cptr3, *Cptr4, *C_c_ptr1, *C_c_ptr2, *C_c_ptr3, *C_c_ptr4;
+	zq_base_type* Cptr5, *Cptr6, *Cptr7, *Cptr8, *C_c_ptr5, *C_c_ptr6, *C_c_ptr7, *C_c_ptr8;
 	int m, n;
 	int lda8 = lda << 3;
 	int ldc8 = ldc << 3;
@@ -13798,14 +13798,14 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M8_caseNdiv2_KeqAlign6(int M, int N, int 
 	}
 }
 
-void zq_gemm_32f_align_AnoTrans_Btrans_M8_caseNdiv2_KeqAlign7(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+void zq_gemm_32f_align_AnoTrans_Btrans_M8_caseNdiv2_KeqAlign7(int M, int N, int K, const zq_base_type* A, int lda, const zq_base_type* Bt, int ldb, zq_base_type* C, int ldc)
 {
-	const float* Aptr1, *Aptr2, *Aptr3, *Aptr4, *A_c_ptr1, *A_c_ptr2, *A_c_ptr3, *A_c_ptr4;
-	const float* Aptr5, *Aptr6, *Aptr7, *Aptr8, *A_c_ptr5, *A_c_ptr6, *A_c_ptr7, *A_c_ptr8;
-	const float *Bptr, *Bptr1, *Bptr2;
-	const float *B_c_ptr1, *B_c_ptr2;
-	float* Cptr1, *Cptr2, *Cptr3, *Cptr4, *C_c_ptr1, *C_c_ptr2, *C_c_ptr3, *C_c_ptr4;
-	float* Cptr5, *Cptr6, *Cptr7, *Cptr8, *C_c_ptr5, *C_c_ptr6, *C_c_ptr7, *C_c_ptr8;
+	const zq_base_type* Aptr1, *Aptr2, *Aptr3, *Aptr4, *A_c_ptr1, *A_c_ptr2, *A_c_ptr3, *A_c_ptr4;
+	const zq_base_type* Aptr5, *Aptr6, *Aptr7, *Aptr8, *A_c_ptr5, *A_c_ptr6, *A_c_ptr7, *A_c_ptr8;
+	const zq_base_type *Bptr, *Bptr1, *Bptr2;
+	const zq_base_type *B_c_ptr1, *B_c_ptr2;
+	zq_base_type* Cptr1, *Cptr2, *Cptr3, *Cptr4, *C_c_ptr1, *C_c_ptr2, *C_c_ptr3, *C_c_ptr4;
+	zq_base_type* Cptr5, *Cptr6, *Cptr7, *Cptr8, *C_c_ptr5, *C_c_ptr6, *C_c_ptr7, *C_c_ptr8;
 	int m, n;
 	int lda8 = lda << 3;
 	int ldc8 = ldc << 3;
@@ -13879,14 +13879,14 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M8_caseNdiv2_KeqAlign7(int M, int N, int 
 	}
 }
 
-void zq_gemm_32f_align_AnoTrans_Btrans_M8_caseNdiv2_KdivAlign4(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+void zq_gemm_32f_align_AnoTrans_Btrans_M8_caseNdiv2_KdivAlign4(int M, int N, int K, const zq_base_type* A, int lda, const zq_base_type* Bt, int ldb, zq_base_type* C, int ldc)
 {
-	const float* Aptr1, *Aptr2, *Aptr3, *Aptr4, *A_c_ptr1, *A_c_ptr2, *A_c_ptr3, *A_c_ptr4;
-	const float* Aptr5, *Aptr6, *Aptr7, *Aptr8, *A_c_ptr5, *A_c_ptr6, *A_c_ptr7, *A_c_ptr8;
-	const float *Bptr, *Bptr1, *Bptr2;
-	const float *B_c_ptr1, *B_c_ptr2;
-	float* Cptr1, *Cptr2, *Cptr3, *Cptr4, *C_c_ptr1, *C_c_ptr2, *C_c_ptr3, *C_c_ptr4;
-	float* Cptr5, *Cptr6, *Cptr7, *Cptr8, *C_c_ptr5, *C_c_ptr6, *C_c_ptr7, *C_c_ptr8;
+	const zq_base_type* Aptr1, *Aptr2, *Aptr3, *Aptr4, *A_c_ptr1, *A_c_ptr2, *A_c_ptr3, *A_c_ptr4;
+	const zq_base_type* Aptr5, *Aptr6, *Aptr7, *Aptr8, *A_c_ptr5, *A_c_ptr6, *A_c_ptr7, *A_c_ptr8;
+	const zq_base_type *Bptr, *Bptr1, *Bptr2;
+	const zq_base_type *B_c_ptr1, *B_c_ptr2;
+	zq_base_type* Cptr1, *Cptr2, *Cptr3, *Cptr4, *C_c_ptr1, *C_c_ptr2, *C_c_ptr3, *C_c_ptr4;
+	zq_base_type* Cptr5, *Cptr6, *Cptr7, *Cptr8, *C_c_ptr5, *C_c_ptr6, *C_c_ptr7, *C_c_ptr8;
 	int m, n, k;
 	int lda8 = lda << 3;
 	int ldc8 = ldc << 3;
@@ -13964,14 +13964,14 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M8_caseNdiv2_KdivAlign4(int M, int N, int
 	}
 }
 
-void zq_gemm_32f_align_AnoTrans_Btrans_M8_caseNdiv2_KdivAlign8(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+void zq_gemm_32f_align_AnoTrans_Btrans_M8_caseNdiv2_KdivAlign8(int M, int N, int K, const zq_base_type* A, int lda, const zq_base_type* Bt, int ldb, zq_base_type* C, int ldc)
 {
-	const float* Aptr1, *Aptr2, *Aptr3, *Aptr4, *A_c_ptr1, *A_c_ptr2, *A_c_ptr3, *A_c_ptr4;
-	const float* Aptr5, *Aptr6, *Aptr7, *Aptr8, *A_c_ptr5, *A_c_ptr6, *A_c_ptr7, *A_c_ptr8;
-	const float *Bptr, *Bptr1, *Bptr2;
-	const float *B_c_ptr1, *B_c_ptr2;
-	float* Cptr1, *Cptr2, *Cptr3, *Cptr4, *C_c_ptr1, *C_c_ptr2, *C_c_ptr3, *C_c_ptr4;
-	float* Cptr5, *Cptr6, *Cptr7, *Cptr8, *C_c_ptr5, *C_c_ptr6, *C_c_ptr7, *C_c_ptr8;
+	const zq_base_type* Aptr1, *Aptr2, *Aptr3, *Aptr4, *A_c_ptr1, *A_c_ptr2, *A_c_ptr3, *A_c_ptr4;
+	const zq_base_type* Aptr5, *Aptr6, *Aptr7, *Aptr8, *A_c_ptr5, *A_c_ptr6, *A_c_ptr7, *A_c_ptr8;
+	const zq_base_type *Bptr, *Bptr1, *Bptr2;
+	const zq_base_type *B_c_ptr1, *B_c_ptr2;
+	zq_base_type* Cptr1, *Cptr2, *Cptr3, *Cptr4, *C_c_ptr1, *C_c_ptr2, *C_c_ptr3, *C_c_ptr4;
+	zq_base_type* Cptr5, *Cptr6, *Cptr7, *Cptr8, *C_c_ptr5, *C_c_ptr6, *C_c_ptr7, *C_c_ptr8;
 	int m, n, k;
 	int lda8 = lda << 3;
 	int ldc8 = ldc << 3;
@@ -14051,14 +14051,14 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M8_caseNdiv2_KdivAlign8(int M, int N, int
 
 #if !__ARM_NEON
 
-void zq_gemm_32f_align_AnoTrans_Btrans_M8_caseNdiv2_KdivAlign16(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+void zq_gemm_32f_align_AnoTrans_Btrans_M8_caseNdiv2_KdivAlign16(int M, int N, int K, const zq_base_type* A, int lda, const zq_base_type* Bt, int ldb, zq_base_type* C, int ldc)
 {
-	const float* Aptr1, *Aptr2, *Aptr3, *Aptr4, *A_c_ptr1, *A_c_ptr2, *A_c_ptr3, *A_c_ptr4;
-	const float* Aptr5, *Aptr6, *Aptr7, *Aptr8, *A_c_ptr5, *A_c_ptr6, *A_c_ptr7, *A_c_ptr8;
-	const float *Bptr, *Bptr1, *Bptr2;
-	const float *B_c_ptr1, *B_c_ptr2;
-	float* Cptr1, *Cptr2, *Cptr3, *Cptr4, *C_c_ptr1, *C_c_ptr2, *C_c_ptr3, *C_c_ptr4;
-	float* Cptr5, *Cptr6, *Cptr7, *Cptr8, *C_c_ptr5, *C_c_ptr6, *C_c_ptr7, *C_c_ptr8;
+	const zq_base_type* Aptr1, *Aptr2, *Aptr3, *Aptr4, *A_c_ptr1, *A_c_ptr2, *A_c_ptr3, *A_c_ptr4;
+	const zq_base_type* Aptr5, *Aptr6, *Aptr7, *Aptr8, *A_c_ptr5, *A_c_ptr6, *A_c_ptr7, *A_c_ptr8;
+	const zq_base_type *Bptr, *Bptr1, *Bptr2;
+	const zq_base_type *B_c_ptr1, *B_c_ptr2;
+	zq_base_type* Cptr1, *Cptr2, *Cptr3, *Cptr4, *C_c_ptr1, *C_c_ptr2, *C_c_ptr3, *C_c_ptr4;
+	zq_base_type* Cptr5, *Cptr6, *Cptr7, *Cptr8, *C_c_ptr5, *C_c_ptr6, *C_c_ptr7, *C_c_ptr8;
 	int m, n, k;
 	int lda8 = lda << 3;
 	int ldc8 = ldc << 3;
@@ -14137,14 +14137,14 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M8_caseNdiv2_KdivAlign16(int M, int N, in
 	}
 }
 
-void zq_gemm_32f_align_AnoTrans_Btrans_M8_caseNdiv2_KdivAlign32(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+void zq_gemm_32f_align_AnoTrans_Btrans_M8_caseNdiv2_KdivAlign32(int M, int N, int K, const zq_base_type* A, int lda, const zq_base_type* Bt, int ldb, zq_base_type* C, int ldc)
 {
-	const float* Aptr1, *Aptr2, *Aptr3, *Aptr4, *A_c_ptr1, *A_c_ptr2, *A_c_ptr3, *A_c_ptr4;
-	const float* Aptr5, *Aptr6, *Aptr7, *Aptr8, *A_c_ptr5, *A_c_ptr6, *A_c_ptr7, *A_c_ptr8;
-	const float *Bptr, *Bptr1, *Bptr2;
-	const float *B_c_ptr1, *B_c_ptr2;
-	float* Cptr1, *Cptr2, *Cptr3, *Cptr4, *C_c_ptr1, *C_c_ptr2, *C_c_ptr3, *C_c_ptr4;
-	float* Cptr5, *Cptr6, *Cptr7, *Cptr8, *C_c_ptr5, *C_c_ptr6, *C_c_ptr7, *C_c_ptr8;
+	const zq_base_type* Aptr1, *Aptr2, *Aptr3, *Aptr4, *A_c_ptr1, *A_c_ptr2, *A_c_ptr3, *A_c_ptr4;
+	const zq_base_type* Aptr5, *Aptr6, *Aptr7, *Aptr8, *A_c_ptr5, *A_c_ptr6, *A_c_ptr7, *A_c_ptr8;
+	const zq_base_type *Bptr, *Bptr1, *Bptr2;
+	const zq_base_type *B_c_ptr1, *B_c_ptr2;
+	zq_base_type* Cptr1, *Cptr2, *Cptr3, *Cptr4, *C_c_ptr1, *C_c_ptr2, *C_c_ptr3, *C_c_ptr4;
+	zq_base_type* Cptr5, *Cptr6, *Cptr7, *Cptr8, *C_c_ptr5, *C_c_ptr6, *C_c_ptr7, *C_c_ptr8;
 	int m, n, k;
 	int lda8 = lda << 3;
 	int ldc8 = ldc << 3;
@@ -14227,14 +14227,14 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M8_caseNdiv2_KdivAlign32(int M, int N, in
 	}
 }
 
-void zq_gemm_32f_align_AnoTrans_Btrans_M8_caseNdiv2_KdivAlign64(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+void zq_gemm_32f_align_AnoTrans_Btrans_M8_caseNdiv2_KdivAlign64(int M, int N, int K, const zq_base_type* A, int lda, const zq_base_type* Bt, int ldb, zq_base_type* C, int ldc)
 {
-	const float* Aptr1, *Aptr2, *Aptr3, *Aptr4, *A_c_ptr1, *A_c_ptr2, *A_c_ptr3, *A_c_ptr4;
-	const float* Aptr5, *Aptr6, *Aptr7, *Aptr8, *A_c_ptr5, *A_c_ptr6, *A_c_ptr7, *A_c_ptr8;
-	const float *Bptr, *Bptr1, *Bptr2;
-	const float *B_c_ptr1, *B_c_ptr2;
-	float* Cptr1, *Cptr2, *Cptr3, *Cptr4, *C_c_ptr1, *C_c_ptr2, *C_c_ptr3, *C_c_ptr4;
-	float* Cptr5, *Cptr6, *Cptr7, *Cptr8, *C_c_ptr5, *C_c_ptr6, *C_c_ptr7, *C_c_ptr8;
+	const zq_base_type* Aptr1, *Aptr2, *Aptr3, *Aptr4, *A_c_ptr1, *A_c_ptr2, *A_c_ptr3, *A_c_ptr4;
+	const zq_base_type* Aptr5, *Aptr6, *Aptr7, *Aptr8, *A_c_ptr5, *A_c_ptr6, *A_c_ptr7, *A_c_ptr8;
+	const zq_base_type *Bptr, *Bptr1, *Bptr2;
+	const zq_base_type *B_c_ptr1, *B_c_ptr2;
+	zq_base_type* Cptr1, *Cptr2, *Cptr3, *Cptr4, *C_c_ptr1, *C_c_ptr2, *C_c_ptr3, *C_c_ptr4;
+	zq_base_type* Cptr5, *Cptr6, *Cptr7, *Cptr8, *C_c_ptr5, *C_c_ptr6, *C_c_ptr7, *C_c_ptr8;
 	int m, n, k;
 	int lda8 = lda << 3;
 	int ldc8 = ldc << 3;
@@ -14327,18 +14327,18 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M8_caseNdiv2_KdivAlign64(int M, int N, in
 
 #endif
 
-void zq_gemm_32f_align_AnoTrans_Btrans_M16_caseNdiv1_KeqAlign1(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+void zq_gemm_32f_align_AnoTrans_Btrans_M16_caseNdiv1_KeqAlign1(int M, int N, int K, const zq_base_type* A, int lda, const zq_base_type* Bt, int ldb, zq_base_type* C, int ldc)
 {
-	const float* Aptr1, *Aptr2, *Aptr3, *Aptr4, *A_c_ptr1, *A_c_ptr2, *A_c_ptr3, *A_c_ptr4;
-	const float* Aptr5, *Aptr6, *Aptr7, *Aptr8, *A_c_ptr5, *A_c_ptr6, *A_c_ptr7, *A_c_ptr8;
-	const float* Aptr9, *AptrA, *AptrB, *AptrC, *A_c_ptr9, *A_c_ptrA, *A_c_ptrB, *A_c_ptrC;
-	const float* AptrD, *AptrE, *AptrF, *AptrG, *A_c_ptrD, *A_c_ptrE, *A_c_ptrF, *A_c_ptrG;
-	const float *Bptr, *Bptr1;
-	const float *B_c_ptr1;
-	float* Cptr1, *Cptr2, *Cptr3, *Cptr4, *C_c_ptr1, *C_c_ptr2, *C_c_ptr3, *C_c_ptr4;
-	float* Cptr5, *Cptr6, *Cptr7, *Cptr8, *C_c_ptr5, *C_c_ptr6, *C_c_ptr7, *C_c_ptr8;
-	float* Cptr9, *CptrA, *CptrB, *CptrC, *C_c_ptr9, *C_c_ptrA, *C_c_ptrB, *C_c_ptrC;
-	float* CptrD, *CptrE, *CptrF, *CptrG, *C_c_ptrD, *C_c_ptrE, *C_c_ptrF, *C_c_ptrG;
+	const zq_base_type* Aptr1, *Aptr2, *Aptr3, *Aptr4, *A_c_ptr1, *A_c_ptr2, *A_c_ptr3, *A_c_ptr4;
+	const zq_base_type* Aptr5, *Aptr6, *Aptr7, *Aptr8, *A_c_ptr5, *A_c_ptr6, *A_c_ptr7, *A_c_ptr8;
+	const zq_base_type* Aptr9, *AptrA, *AptrB, *AptrC, *A_c_ptr9, *A_c_ptrA, *A_c_ptrB, *A_c_ptrC;
+	const zq_base_type* AptrD, *AptrE, *AptrF, *AptrG, *A_c_ptrD, *A_c_ptrE, *A_c_ptrF, *A_c_ptrG;
+	const zq_base_type *Bptr, *Bptr1;
+	const zq_base_type *B_c_ptr1;
+	zq_base_type* Cptr1, *Cptr2, *Cptr3, *Cptr4, *C_c_ptr1, *C_c_ptr2, *C_c_ptr3, *C_c_ptr4;
+	zq_base_type* Cptr5, *Cptr6, *Cptr7, *Cptr8, *C_c_ptr5, *C_c_ptr6, *C_c_ptr7, *C_c_ptr8;
+	zq_base_type* Cptr9, *CptrA, *CptrB, *CptrC, *C_c_ptr9, *C_c_ptrA, *C_c_ptrB, *C_c_ptrC;
+	zq_base_type* CptrD, *CptrE, *CptrF, *CptrG, *C_c_ptrD, *C_c_ptrE, *C_c_ptrF, *C_c_ptrG;
 	int m, n;
 	int lda16 = lda << 4;
 	int ldc16 = ldc << 4;
@@ -14440,18 +14440,18 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M16_caseNdiv1_KeqAlign1(int M, int N, int
 	}
 }
 
-void zq_gemm_32f_align_AnoTrans_Btrans_M16_caseNdiv1_KeqAlign2(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+void zq_gemm_32f_align_AnoTrans_Btrans_M16_caseNdiv1_KeqAlign2(int M, int N, int K, const zq_base_type* A, int lda, const zq_base_type* Bt, int ldb, zq_base_type* C, int ldc)
 {
-	const float* Aptr1, *Aptr2, *Aptr3, *Aptr4, *A_c_ptr1, *A_c_ptr2, *A_c_ptr3, *A_c_ptr4;
-	const float* Aptr5, *Aptr6, *Aptr7, *Aptr8, *A_c_ptr5, *A_c_ptr6, *A_c_ptr7, *A_c_ptr8;
-	const float* Aptr9, *AptrA, *AptrB, *AptrC, *A_c_ptr9, *A_c_ptrA, *A_c_ptrB, *A_c_ptrC;
-	const float* AptrD, *AptrE, *AptrF, *AptrG, *A_c_ptrD, *A_c_ptrE, *A_c_ptrF, *A_c_ptrG;
-	const float *Bptr, *Bptr1;
-	const float *B_c_ptr1;
-	float* Cptr1, *Cptr2, *Cptr3, *Cptr4, *C_c_ptr1, *C_c_ptr2, *C_c_ptr3, *C_c_ptr4;
-	float* Cptr5, *Cptr6, *Cptr7, *Cptr8, *C_c_ptr5, *C_c_ptr6, *C_c_ptr7, *C_c_ptr8;
-	float* Cptr9, *CptrA, *CptrB, *CptrC, *C_c_ptr9, *C_c_ptrA, *C_c_ptrB, *C_c_ptrC;
-	float* CptrD, *CptrE, *CptrF, *CptrG, *C_c_ptrD, *C_c_ptrE, *C_c_ptrF, *C_c_ptrG;
+	const zq_base_type* Aptr1, *Aptr2, *Aptr3, *Aptr4, *A_c_ptr1, *A_c_ptr2, *A_c_ptr3, *A_c_ptr4;
+	const zq_base_type* Aptr5, *Aptr6, *Aptr7, *Aptr8, *A_c_ptr5, *A_c_ptr6, *A_c_ptr7, *A_c_ptr8;
+	const zq_base_type* Aptr9, *AptrA, *AptrB, *AptrC, *A_c_ptr9, *A_c_ptrA, *A_c_ptrB, *A_c_ptrC;
+	const zq_base_type* AptrD, *AptrE, *AptrF, *AptrG, *A_c_ptrD, *A_c_ptrE, *A_c_ptrF, *A_c_ptrG;
+	const zq_base_type *Bptr, *Bptr1;
+	const zq_base_type *B_c_ptr1;
+	zq_base_type* Cptr1, *Cptr2, *Cptr3, *Cptr4, *C_c_ptr1, *C_c_ptr2, *C_c_ptr3, *C_c_ptr4;
+	zq_base_type* Cptr5, *Cptr6, *Cptr7, *Cptr8, *C_c_ptr5, *C_c_ptr6, *C_c_ptr7, *C_c_ptr8;
+	zq_base_type* Cptr9, *CptrA, *CptrB, *CptrC, *C_c_ptr9, *C_c_ptrA, *C_c_ptrB, *C_c_ptrC;
+	zq_base_type* CptrD, *CptrE, *CptrF, *CptrG, *C_c_ptrD, *C_c_ptrE, *C_c_ptrF, *C_c_ptrG;
 	int m, n;
 	int lda16 = lda << 4;
 	int ldc16 = ldc << 4;
@@ -14553,18 +14553,18 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M16_caseNdiv1_KeqAlign2(int M, int N, int
 	}
 }
 
-void zq_gemm_32f_align_AnoTrans_Btrans_M16_caseNdiv1_KeqAlign3(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+void zq_gemm_32f_align_AnoTrans_Btrans_M16_caseNdiv1_KeqAlign3(int M, int N, int K, const zq_base_type* A, int lda, const zq_base_type* Bt, int ldb, zq_base_type* C, int ldc)
 {
-	const float* Aptr1, *Aptr2, *Aptr3, *Aptr4, *A_c_ptr1, *A_c_ptr2, *A_c_ptr3, *A_c_ptr4;
-	const float* Aptr5, *Aptr6, *Aptr7, *Aptr8, *A_c_ptr5, *A_c_ptr6, *A_c_ptr7, *A_c_ptr8;
-	const float* Aptr9, *AptrA, *AptrB, *AptrC, *A_c_ptr9, *A_c_ptrA, *A_c_ptrB, *A_c_ptrC;
-	const float* AptrD, *AptrE, *AptrF, *AptrG, *A_c_ptrD, *A_c_ptrE, *A_c_ptrF, *A_c_ptrG;
-	const float *Bptr, *Bptr1;
-	const float *B_c_ptr1;
-	float* Cptr1, *Cptr2, *Cptr3, *Cptr4, *C_c_ptr1, *C_c_ptr2, *C_c_ptr3, *C_c_ptr4;
-	float* Cptr5, *Cptr6, *Cptr7, *Cptr8, *C_c_ptr5, *C_c_ptr6, *C_c_ptr7, *C_c_ptr8;
-	float* Cptr9, *CptrA, *CptrB, *CptrC, *C_c_ptr9, *C_c_ptrA, *C_c_ptrB, *C_c_ptrC;
-	float* CptrD, *CptrE, *CptrF, *CptrG, *C_c_ptrD, *C_c_ptrE, *C_c_ptrF, *C_c_ptrG;
+	const zq_base_type* Aptr1, *Aptr2, *Aptr3, *Aptr4, *A_c_ptr1, *A_c_ptr2, *A_c_ptr3, *A_c_ptr4;
+	const zq_base_type* Aptr5, *Aptr6, *Aptr7, *Aptr8, *A_c_ptr5, *A_c_ptr6, *A_c_ptr7, *A_c_ptr8;
+	const zq_base_type* Aptr9, *AptrA, *AptrB, *AptrC, *A_c_ptr9, *A_c_ptrA, *A_c_ptrB, *A_c_ptrC;
+	const zq_base_type* AptrD, *AptrE, *AptrF, *AptrG, *A_c_ptrD, *A_c_ptrE, *A_c_ptrF, *A_c_ptrG;
+	const zq_base_type *Bptr, *Bptr1;
+	const zq_base_type *B_c_ptr1;
+	zq_base_type* Cptr1, *Cptr2, *Cptr3, *Cptr4, *C_c_ptr1, *C_c_ptr2, *C_c_ptr3, *C_c_ptr4;
+	zq_base_type* Cptr5, *Cptr6, *Cptr7, *Cptr8, *C_c_ptr5, *C_c_ptr6, *C_c_ptr7, *C_c_ptr8;
+	zq_base_type* Cptr9, *CptrA, *CptrB, *CptrC, *C_c_ptr9, *C_c_ptrA, *C_c_ptrB, *C_c_ptrC;
+	zq_base_type* CptrD, *CptrE, *CptrF, *CptrG, *C_c_ptrD, *C_c_ptrE, *C_c_ptrF, *C_c_ptrG;
 	int m, n;
 	int lda16 = lda << 4;
 	int ldc16 = ldc << 4;
@@ -14668,18 +14668,18 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M16_caseNdiv1_KeqAlign3(int M, int N, int
 	}
 }
 
-void zq_gemm_32f_align_AnoTrans_Btrans_M16_caseNdiv1_KeqAlign4(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+void zq_gemm_32f_align_AnoTrans_Btrans_M16_caseNdiv1_KeqAlign4(int M, int N, int K, const zq_base_type* A, int lda, const zq_base_type* Bt, int ldb, zq_base_type* C, int ldc)
 {
-	const float* Aptr1, *Aptr2, *Aptr3, *Aptr4, *A_c_ptr1, *A_c_ptr2, *A_c_ptr3, *A_c_ptr4;
-	const float* Aptr5, *Aptr6, *Aptr7, *Aptr8, *A_c_ptr5, *A_c_ptr6, *A_c_ptr7, *A_c_ptr8;
-	const float* Aptr9, *AptrA, *AptrB, *AptrC, *A_c_ptr9, *A_c_ptrA, *A_c_ptrB, *A_c_ptrC;
-	const float* AptrD, *AptrE, *AptrF, *AptrG, *A_c_ptrD, *A_c_ptrE, *A_c_ptrF, *A_c_ptrG;
-	const float *Bptr, *Bptr1;
-	const float *B_c_ptr1;
-	float* Cptr1, *Cptr2, *Cptr3, *Cptr4, *C_c_ptr1, *C_c_ptr2, *C_c_ptr3, *C_c_ptr4;
-	float* Cptr5, *Cptr6, *Cptr7, *Cptr8, *C_c_ptr5, *C_c_ptr6, *C_c_ptr7, *C_c_ptr8;
-	float* Cptr9, *CptrA, *CptrB, *CptrC, *C_c_ptr9, *C_c_ptrA, *C_c_ptrB, *C_c_ptrC;
-	float* CptrD, *CptrE, *CptrF, *CptrG, *C_c_ptrD, *C_c_ptrE, *C_c_ptrF, *C_c_ptrG;
+	const zq_base_type* Aptr1, *Aptr2, *Aptr3, *Aptr4, *A_c_ptr1, *A_c_ptr2, *A_c_ptr3, *A_c_ptr4;
+	const zq_base_type* Aptr5, *Aptr6, *Aptr7, *Aptr8, *A_c_ptr5, *A_c_ptr6, *A_c_ptr7, *A_c_ptr8;
+	const zq_base_type* Aptr9, *AptrA, *AptrB, *AptrC, *A_c_ptr9, *A_c_ptrA, *A_c_ptrB, *A_c_ptrC;
+	const zq_base_type* AptrD, *AptrE, *AptrF, *AptrG, *A_c_ptrD, *A_c_ptrE, *A_c_ptrF, *A_c_ptrG;
+	const zq_base_type *Bptr, *Bptr1;
+	const zq_base_type *B_c_ptr1;
+	zq_base_type* Cptr1, *Cptr2, *Cptr3, *Cptr4, *C_c_ptr1, *C_c_ptr2, *C_c_ptr3, *C_c_ptr4;
+	zq_base_type* Cptr5, *Cptr6, *Cptr7, *Cptr8, *C_c_ptr5, *C_c_ptr6, *C_c_ptr7, *C_c_ptr8;
+	zq_base_type* Cptr9, *CptrA, *CptrB, *CptrC, *C_c_ptr9, *C_c_ptrA, *C_c_ptrB, *C_c_ptrC;
+	zq_base_type* CptrD, *CptrE, *CptrF, *CptrG, *C_c_ptrD, *C_c_ptrE, *C_c_ptrF, *C_c_ptrG;
 	int m, n;
 	int lda16 = lda << 4;
 	int ldc16 = ldc << 4;
@@ -14781,18 +14781,18 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M16_caseNdiv1_KeqAlign4(int M, int N, int
 	}
 }
 
-void zq_gemm_32f_align_AnoTrans_Btrans_M16_caseNdiv1_KeqAlign5(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+void zq_gemm_32f_align_AnoTrans_Btrans_M16_caseNdiv1_KeqAlign5(int M, int N, int K, const zq_base_type* A, int lda, const zq_base_type* Bt, int ldb, zq_base_type* C, int ldc)
 {
-	const float* Aptr1, *Aptr2, *Aptr3, *Aptr4, *A_c_ptr1, *A_c_ptr2, *A_c_ptr3, *A_c_ptr4;
-	const float* Aptr5, *Aptr6, *Aptr7, *Aptr8, *A_c_ptr5, *A_c_ptr6, *A_c_ptr7, *A_c_ptr8;
-	const float* Aptr9, *AptrA, *AptrB, *AptrC, *A_c_ptr9, *A_c_ptrA, *A_c_ptrB, *A_c_ptrC;
-	const float* AptrD, *AptrE, *AptrF, *AptrG, *A_c_ptrD, *A_c_ptrE, *A_c_ptrF, *A_c_ptrG;
-	const float *Bptr, *Bptr1;
-	const float *B_c_ptr1;
-	float* Cptr1, *Cptr2, *Cptr3, *Cptr4, *C_c_ptr1, *C_c_ptr2, *C_c_ptr3, *C_c_ptr4;
-	float* Cptr5, *Cptr6, *Cptr7, *Cptr8, *C_c_ptr5, *C_c_ptr6, *C_c_ptr7, *C_c_ptr8;
-	float* Cptr9, *CptrA, *CptrB, *CptrC, *C_c_ptr9, *C_c_ptrA, *C_c_ptrB, *C_c_ptrC;
-	float* CptrD, *CptrE, *CptrF, *CptrG, *C_c_ptrD, *C_c_ptrE, *C_c_ptrF, *C_c_ptrG;
+	const zq_base_type* Aptr1, *Aptr2, *Aptr3, *Aptr4, *A_c_ptr1, *A_c_ptr2, *A_c_ptr3, *A_c_ptr4;
+	const zq_base_type* Aptr5, *Aptr6, *Aptr7, *Aptr8, *A_c_ptr5, *A_c_ptr6, *A_c_ptr7, *A_c_ptr8;
+	const zq_base_type* Aptr9, *AptrA, *AptrB, *AptrC, *A_c_ptr9, *A_c_ptrA, *A_c_ptrB, *A_c_ptrC;
+	const zq_base_type* AptrD, *AptrE, *AptrF, *AptrG, *A_c_ptrD, *A_c_ptrE, *A_c_ptrF, *A_c_ptrG;
+	const zq_base_type *Bptr, *Bptr1;
+	const zq_base_type *B_c_ptr1;
+	zq_base_type* Cptr1, *Cptr2, *Cptr3, *Cptr4, *C_c_ptr1, *C_c_ptr2, *C_c_ptr3, *C_c_ptr4;
+	zq_base_type* Cptr5, *Cptr6, *Cptr7, *Cptr8, *C_c_ptr5, *C_c_ptr6, *C_c_ptr7, *C_c_ptr8;
+	zq_base_type* Cptr9, *CptrA, *CptrB, *CptrC, *C_c_ptr9, *C_c_ptrA, *C_c_ptrB, *C_c_ptrC;
+	zq_base_type* CptrD, *CptrE, *CptrF, *CptrG, *C_c_ptrD, *C_c_ptrE, *C_c_ptrF, *C_c_ptrG;
 	int m, n;
 	int lda16 = lda << 4;
 	int ldc16 = ldc << 4;
@@ -14896,18 +14896,18 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M16_caseNdiv1_KeqAlign5(int M, int N, int
 	}
 }
 
-void zq_gemm_32f_align_AnoTrans_Btrans_M16_caseNdiv1_KeqAlign6(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+void zq_gemm_32f_align_AnoTrans_Btrans_M16_caseNdiv1_KeqAlign6(int M, int N, int K, const zq_base_type* A, int lda, const zq_base_type* Bt, int ldb, zq_base_type* C, int ldc)
 {
-	const float* Aptr1, *Aptr2, *Aptr3, *Aptr4, *A_c_ptr1, *A_c_ptr2, *A_c_ptr3, *A_c_ptr4;
-	const float* Aptr5, *Aptr6, *Aptr7, *Aptr8, *A_c_ptr5, *A_c_ptr6, *A_c_ptr7, *A_c_ptr8;
-	const float* Aptr9, *AptrA, *AptrB, *AptrC, *A_c_ptr9, *A_c_ptrA, *A_c_ptrB, *A_c_ptrC;
-	const float* AptrD, *AptrE, *AptrF, *AptrG, *A_c_ptrD, *A_c_ptrE, *A_c_ptrF, *A_c_ptrG;
-	const float *Bptr, *Bptr1;
-	const float *B_c_ptr1;
-	float* Cptr1, *Cptr2, *Cptr3, *Cptr4, *C_c_ptr1, *C_c_ptr2, *C_c_ptr3, *C_c_ptr4;
-	float* Cptr5, *Cptr6, *Cptr7, *Cptr8, *C_c_ptr5, *C_c_ptr6, *C_c_ptr7, *C_c_ptr8;
-	float* Cptr9, *CptrA, *CptrB, *CptrC, *C_c_ptr9, *C_c_ptrA, *C_c_ptrB, *C_c_ptrC;
-	float* CptrD, *CptrE, *CptrF, *CptrG, *C_c_ptrD, *C_c_ptrE, *C_c_ptrF, *C_c_ptrG;
+	const zq_base_type* Aptr1, *Aptr2, *Aptr3, *Aptr4, *A_c_ptr1, *A_c_ptr2, *A_c_ptr3, *A_c_ptr4;
+	const zq_base_type* Aptr5, *Aptr6, *Aptr7, *Aptr8, *A_c_ptr5, *A_c_ptr6, *A_c_ptr7, *A_c_ptr8;
+	const zq_base_type* Aptr9, *AptrA, *AptrB, *AptrC, *A_c_ptr9, *A_c_ptrA, *A_c_ptrB, *A_c_ptrC;
+	const zq_base_type* AptrD, *AptrE, *AptrF, *AptrG, *A_c_ptrD, *A_c_ptrE, *A_c_ptrF, *A_c_ptrG;
+	const zq_base_type *Bptr, *Bptr1;
+	const zq_base_type *B_c_ptr1;
+	zq_base_type* Cptr1, *Cptr2, *Cptr3, *Cptr4, *C_c_ptr1, *C_c_ptr2, *C_c_ptr3, *C_c_ptr4;
+	zq_base_type* Cptr5, *Cptr6, *Cptr7, *Cptr8, *C_c_ptr5, *C_c_ptr6, *C_c_ptr7, *C_c_ptr8;
+	zq_base_type* Cptr9, *CptrA, *CptrB, *CptrC, *C_c_ptr9, *C_c_ptrA, *C_c_ptrB, *C_c_ptrC;
+	zq_base_type* CptrD, *CptrE, *CptrF, *CptrG, *C_c_ptrD, *C_c_ptrE, *C_c_ptrF, *C_c_ptrG;
 	int m, n;
 	int lda16 = lda << 4;
 	int ldc16 = ldc << 4;
@@ -15011,18 +15011,18 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M16_caseNdiv1_KeqAlign6(int M, int N, int
 	}
 }
 
-void zq_gemm_32f_align_AnoTrans_Btrans_M16_caseNdiv1_KeqAlign7(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+void zq_gemm_32f_align_AnoTrans_Btrans_M16_caseNdiv1_KeqAlign7(int M, int N, int K, const zq_base_type* A, int lda, const zq_base_type* Bt, int ldb, zq_base_type* C, int ldc)
 {
-	const float* Aptr1, *Aptr2, *Aptr3, *Aptr4, *A_c_ptr1, *A_c_ptr2, *A_c_ptr3, *A_c_ptr4;
-	const float* Aptr5, *Aptr6, *Aptr7, *Aptr8, *A_c_ptr5, *A_c_ptr6, *A_c_ptr7, *A_c_ptr8;
-	const float* Aptr9, *AptrA, *AptrB, *AptrC, *A_c_ptr9, *A_c_ptrA, *A_c_ptrB, *A_c_ptrC;
-	const float* AptrD, *AptrE, *AptrF, *AptrG, *A_c_ptrD, *A_c_ptrE, *A_c_ptrF, *A_c_ptrG;
-	const float *Bptr, *Bptr1;
-	const float *B_c_ptr1;
-	float* Cptr1, *Cptr2, *Cptr3, *Cptr4, *C_c_ptr1, *C_c_ptr2, *C_c_ptr3, *C_c_ptr4;
-	float* Cptr5, *Cptr6, *Cptr7, *Cptr8, *C_c_ptr5, *C_c_ptr6, *C_c_ptr7, *C_c_ptr8;
-	float* Cptr9, *CptrA, *CptrB, *CptrC, *C_c_ptr9, *C_c_ptrA, *C_c_ptrB, *C_c_ptrC;
-	float* CptrD, *CptrE, *CptrF, *CptrG, *C_c_ptrD, *C_c_ptrE, *C_c_ptrF, *C_c_ptrG;
+	const zq_base_type* Aptr1, *Aptr2, *Aptr3, *Aptr4, *A_c_ptr1, *A_c_ptr2, *A_c_ptr3, *A_c_ptr4;
+	const zq_base_type* Aptr5, *Aptr6, *Aptr7, *Aptr8, *A_c_ptr5, *A_c_ptr6, *A_c_ptr7, *A_c_ptr8;
+	const zq_base_type* Aptr9, *AptrA, *AptrB, *AptrC, *A_c_ptr9, *A_c_ptrA, *A_c_ptrB, *A_c_ptrC;
+	const zq_base_type* AptrD, *AptrE, *AptrF, *AptrG, *A_c_ptrD, *A_c_ptrE, *A_c_ptrF, *A_c_ptrG;
+	const zq_base_type *Bptr, *Bptr1;
+	const zq_base_type *B_c_ptr1;
+	zq_base_type* Cptr1, *Cptr2, *Cptr3, *Cptr4, *C_c_ptr1, *C_c_ptr2, *C_c_ptr3, *C_c_ptr4;
+	zq_base_type* Cptr5, *Cptr6, *Cptr7, *Cptr8, *C_c_ptr5, *C_c_ptr6, *C_c_ptr7, *C_c_ptr8;
+	zq_base_type* Cptr9, *CptrA, *CptrB, *CptrC, *C_c_ptr9, *C_c_ptrA, *C_c_ptrB, *C_c_ptrC;
+	zq_base_type* CptrD, *CptrE, *CptrF, *CptrG, *C_c_ptrD, *C_c_ptrE, *C_c_ptrF, *C_c_ptrG;
 	int m, n;
 	int lda16 = lda << 4;
 	int ldc16 = ldc << 4;
@@ -15128,18 +15128,18 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M16_caseNdiv1_KeqAlign7(int M, int N, int
 	}
 }
 
-void zq_gemm_32f_align_AnoTrans_Btrans_M16_caseNdiv1_KdivAlign4(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+void zq_gemm_32f_align_AnoTrans_Btrans_M16_caseNdiv1_KdivAlign4(int M, int N, int K, const zq_base_type* A, int lda, const zq_base_type* Bt, int ldb, zq_base_type* C, int ldc)
 {
-	const float* Aptr1, *Aptr2, *Aptr3, *Aptr4, *A_c_ptr1, *A_c_ptr2, *A_c_ptr3, *A_c_ptr4;
-	const float* Aptr5, *Aptr6, *Aptr7, *Aptr8, *A_c_ptr5, *A_c_ptr6, *A_c_ptr7, *A_c_ptr8;
-	const float* Aptr9, *AptrA, *AptrB, *AptrC, *A_c_ptr9, *A_c_ptrA, *A_c_ptrB, *A_c_ptrC;
-	const float* AptrD, *AptrE, *AptrF, *AptrG, *A_c_ptrD, *A_c_ptrE, *A_c_ptrF, *A_c_ptrG;
-	const float *Bptr, *Bptr1;
-	const float *B_c_ptr1;
-	float* Cptr1, *Cptr2, *Cptr3, *Cptr4, *C_c_ptr1, *C_c_ptr2, *C_c_ptr3, *C_c_ptr4;
-	float* Cptr5, *Cptr6, *Cptr7, *Cptr8, *C_c_ptr5, *C_c_ptr6, *C_c_ptr7, *C_c_ptr8;
-	float* Cptr9, *CptrA, *CptrB, *CptrC, *C_c_ptr9, *C_c_ptrA, *C_c_ptrB, *C_c_ptrC;
-	float* CptrD, *CptrE, *CptrF, *CptrG, *C_c_ptrD, *C_c_ptrE, *C_c_ptrF, *C_c_ptrG;
+	const zq_base_type* Aptr1, *Aptr2, *Aptr3, *Aptr4, *A_c_ptr1, *A_c_ptr2, *A_c_ptr3, *A_c_ptr4;
+	const zq_base_type* Aptr5, *Aptr6, *Aptr7, *Aptr8, *A_c_ptr5, *A_c_ptr6, *A_c_ptr7, *A_c_ptr8;
+	const zq_base_type* Aptr9, *AptrA, *AptrB, *AptrC, *A_c_ptr9, *A_c_ptrA, *A_c_ptrB, *A_c_ptrC;
+	const zq_base_type* AptrD, *AptrE, *AptrF, *AptrG, *A_c_ptrD, *A_c_ptrE, *A_c_ptrF, *A_c_ptrG;
+	const zq_base_type *Bptr, *Bptr1;
+	const zq_base_type *B_c_ptr1;
+	zq_base_type* Cptr1, *Cptr2, *Cptr3, *Cptr4, *C_c_ptr1, *C_c_ptr2, *C_c_ptr3, *C_c_ptr4;
+	zq_base_type* Cptr5, *Cptr6, *Cptr7, *Cptr8, *C_c_ptr5, *C_c_ptr6, *C_c_ptr7, *C_c_ptr8;
+	zq_base_type* Cptr9, *CptrA, *CptrB, *CptrC, *C_c_ptr9, *C_c_ptrA, *C_c_ptrB, *C_c_ptrC;
+	zq_base_type* CptrD, *CptrE, *CptrF, *CptrG, *C_c_ptrD, *C_c_ptrE, *C_c_ptrF, *C_c_ptrG;
 	int m, n, k;
 	int lda16 = lda << 4;
 	int ldc16 = ldc << 4;
@@ -15249,18 +15249,18 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M16_caseNdiv1_KdivAlign4(int M, int N, in
 	}
 }
 
-void zq_gemm_32f_align_AnoTrans_Btrans_M16_caseNdiv1_KdivAlign8(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+void zq_gemm_32f_align_AnoTrans_Btrans_M16_caseNdiv1_KdivAlign8(int M, int N, int K, const zq_base_type* A, int lda, const zq_base_type* Bt, int ldb, zq_base_type* C, int ldc)
 {
-	const float* Aptr1, *Aptr2, *Aptr3, *Aptr4, *A_c_ptr1, *A_c_ptr2, *A_c_ptr3, *A_c_ptr4;
-	const float* Aptr5, *Aptr6, *Aptr7, *Aptr8, *A_c_ptr5, *A_c_ptr6, *A_c_ptr7, *A_c_ptr8;
-	const float* Aptr9, *AptrA, *AptrB, *AptrC, *A_c_ptr9, *A_c_ptrA, *A_c_ptrB, *A_c_ptrC;
-	const float* AptrD, *AptrE, *AptrF, *AptrG, *A_c_ptrD, *A_c_ptrE, *A_c_ptrF, *A_c_ptrG;
-	const float *Bptr, *Bptr1;
-	const float *B_c_ptr1;
-	float* Cptr1, *Cptr2, *Cptr3, *Cptr4, *C_c_ptr1, *C_c_ptr2, *C_c_ptr3, *C_c_ptr4;
-	float* Cptr5, *Cptr6, *Cptr7, *Cptr8, *C_c_ptr5, *C_c_ptr6, *C_c_ptr7, *C_c_ptr8;
-	float* Cptr9, *CptrA, *CptrB, *CptrC, *C_c_ptr9, *C_c_ptrA, *C_c_ptrB, *C_c_ptrC;
-	float* CptrD, *CptrE, *CptrF, *CptrG, *C_c_ptrD, *C_c_ptrE, *C_c_ptrF, *C_c_ptrG;
+	const zq_base_type* Aptr1, *Aptr2, *Aptr3, *Aptr4, *A_c_ptr1, *A_c_ptr2, *A_c_ptr3, *A_c_ptr4;
+	const zq_base_type* Aptr5, *Aptr6, *Aptr7, *Aptr8, *A_c_ptr5, *A_c_ptr6, *A_c_ptr7, *A_c_ptr8;
+	const zq_base_type* Aptr9, *AptrA, *AptrB, *AptrC, *A_c_ptr9, *A_c_ptrA, *A_c_ptrB, *A_c_ptrC;
+	const zq_base_type* AptrD, *AptrE, *AptrF, *AptrG, *A_c_ptrD, *A_c_ptrE, *A_c_ptrF, *A_c_ptrG;
+	const zq_base_type *Bptr, *Bptr1;
+	const zq_base_type *B_c_ptr1;
+	zq_base_type* Cptr1, *Cptr2, *Cptr3, *Cptr4, *C_c_ptr1, *C_c_ptr2, *C_c_ptr3, *C_c_ptr4;
+	zq_base_type* Cptr5, *Cptr6, *Cptr7, *Cptr8, *C_c_ptr5, *C_c_ptr6, *C_c_ptr7, *C_c_ptr8;
+	zq_base_type* Cptr9, *CptrA, *CptrB, *CptrC, *C_c_ptr9, *C_c_ptrA, *C_c_ptrB, *C_c_ptrC;
+	zq_base_type* CptrD, *CptrE, *CptrF, *CptrG, *C_c_ptrD, *C_c_ptrE, *C_c_ptrF, *C_c_ptrG;
 	int m, n, k;
 	int lda16 = lda << 4;
 	int ldc16 = ldc << 4;
@@ -15372,18 +15372,18 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M16_caseNdiv1_KdivAlign8(int M, int N, in
 
 #if !__ARM_NEON
 
-void zq_gemm_32f_align_AnoTrans_Btrans_M16_caseNdiv1_KdivAlign16(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+void zq_gemm_32f_align_AnoTrans_Btrans_M16_caseNdiv1_KdivAlign16(int M, int N, int K, const zq_base_type* A, int lda, const zq_base_type* Bt, int ldb, zq_base_type* C, int ldc)
 {
-	const float* Aptr1, *Aptr2, *Aptr3, *Aptr4, *A_c_ptr1, *A_c_ptr2, *A_c_ptr3, *A_c_ptr4;
-	const float* Aptr5, *Aptr6, *Aptr7, *Aptr8, *A_c_ptr5, *A_c_ptr6, *A_c_ptr7, *A_c_ptr8;
-	const float* Aptr9, *AptrA, *AptrB, *AptrC, *A_c_ptr9, *A_c_ptrA, *A_c_ptrB, *A_c_ptrC;
-	const float* AptrD, *AptrE, *AptrF, *AptrG, *A_c_ptrD, *A_c_ptrE, *A_c_ptrF, *A_c_ptrG;
-	const float *Bptr, *Bptr1;
-	const float *B_c_ptr1;
-	float* Cptr1, *Cptr2, *Cptr3, *Cptr4, *C_c_ptr1, *C_c_ptr2, *C_c_ptr3, *C_c_ptr4;
-	float* Cptr5, *Cptr6, *Cptr7, *Cptr8, *C_c_ptr5, *C_c_ptr6, *C_c_ptr7, *C_c_ptr8;
-	float* Cptr9, *CptrA, *CptrB, *CptrC, *C_c_ptr9, *C_c_ptrA, *C_c_ptrB, *C_c_ptrC;
-	float* CptrD, *CptrE, *CptrF, *CptrG, *C_c_ptrD, *C_c_ptrE, *C_c_ptrF, *C_c_ptrG;
+	const zq_base_type* Aptr1, *Aptr2, *Aptr3, *Aptr4, *A_c_ptr1, *A_c_ptr2, *A_c_ptr3, *A_c_ptr4;
+	const zq_base_type* Aptr5, *Aptr6, *Aptr7, *Aptr8, *A_c_ptr5, *A_c_ptr6, *A_c_ptr7, *A_c_ptr8;
+	const zq_base_type* Aptr9, *AptrA, *AptrB, *AptrC, *A_c_ptr9, *A_c_ptrA, *A_c_ptrB, *A_c_ptrC;
+	const zq_base_type* AptrD, *AptrE, *AptrF, *AptrG, *A_c_ptrD, *A_c_ptrE, *A_c_ptrF, *A_c_ptrG;
+	const zq_base_type *Bptr, *Bptr1;
+	const zq_base_type *B_c_ptr1;
+	zq_base_type* Cptr1, *Cptr2, *Cptr3, *Cptr4, *C_c_ptr1, *C_c_ptr2, *C_c_ptr3, *C_c_ptr4;
+	zq_base_type* Cptr5, *Cptr6, *Cptr7, *Cptr8, *C_c_ptr5, *C_c_ptr6, *C_c_ptr7, *C_c_ptr8;
+	zq_base_type* Cptr9, *CptrA, *CptrB, *CptrC, *C_c_ptr9, *C_c_ptrA, *C_c_ptrB, *C_c_ptrC;
+	zq_base_type* CptrD, *CptrE, *CptrF, *CptrG, *C_c_ptrD, *C_c_ptrE, *C_c_ptrF, *C_c_ptrG;
 	int m, n, k;
 	int lda16 = lda << 4;
 	int ldc16 = ldc << 4;
@@ -15494,18 +15494,18 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M16_caseNdiv1_KdivAlign16(int M, int N, i
 	}
 }
 
-void zq_gemm_32f_align_AnoTrans_Btrans_M16_caseNdiv1_KdivAlign32(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+void zq_gemm_32f_align_AnoTrans_Btrans_M16_caseNdiv1_KdivAlign32(int M, int N, int K, const zq_base_type* A, int lda, const zq_base_type* Bt, int ldb, zq_base_type* C, int ldc)
 {
-	const float* Aptr1, *Aptr2, *Aptr3, *Aptr4, *A_c_ptr1, *A_c_ptr2, *A_c_ptr3, *A_c_ptr4;
-	const float* Aptr5, *Aptr6, *Aptr7, *Aptr8, *A_c_ptr5, *A_c_ptr6, *A_c_ptr7, *A_c_ptr8;
-	const float* Aptr9, *AptrA, *AptrB, *AptrC, *A_c_ptr9, *A_c_ptrA, *A_c_ptrB, *A_c_ptrC;
-	const float* AptrD, *AptrE, *AptrF, *AptrG, *A_c_ptrD, *A_c_ptrE, *A_c_ptrF, *A_c_ptrG;
-	const float *Bptr, *Bptr1;
-	const float *B_c_ptr1;
-	float* Cptr1, *Cptr2, *Cptr3, *Cptr4, *C_c_ptr1, *C_c_ptr2, *C_c_ptr3, *C_c_ptr4;
-	float* Cptr5, *Cptr6, *Cptr7, *Cptr8, *C_c_ptr5, *C_c_ptr6, *C_c_ptr7, *C_c_ptr8;
-	float* Cptr9, *CptrA, *CptrB, *CptrC, *C_c_ptr9, *C_c_ptrA, *C_c_ptrB, *C_c_ptrC;
-	float* CptrD, *CptrE, *CptrF, *CptrG, *C_c_ptrD, *C_c_ptrE, *C_c_ptrF, *C_c_ptrG;
+	const zq_base_type* Aptr1, *Aptr2, *Aptr3, *Aptr4, *A_c_ptr1, *A_c_ptr2, *A_c_ptr3, *A_c_ptr4;
+	const zq_base_type* Aptr5, *Aptr6, *Aptr7, *Aptr8, *A_c_ptr5, *A_c_ptr6, *A_c_ptr7, *A_c_ptr8;
+	const zq_base_type* Aptr9, *AptrA, *AptrB, *AptrC, *A_c_ptr9, *A_c_ptrA, *A_c_ptrB, *A_c_ptrC;
+	const zq_base_type* AptrD, *AptrE, *AptrF, *AptrG, *A_c_ptrD, *A_c_ptrE, *A_c_ptrF, *A_c_ptrG;
+	const zq_base_type *Bptr, *Bptr1;
+	const zq_base_type *B_c_ptr1;
+	zq_base_type* Cptr1, *Cptr2, *Cptr3, *Cptr4, *C_c_ptr1, *C_c_ptr2, *C_c_ptr3, *C_c_ptr4;
+	zq_base_type* Cptr5, *Cptr6, *Cptr7, *Cptr8, *C_c_ptr5, *C_c_ptr6, *C_c_ptr7, *C_c_ptr8;
+	zq_base_type* Cptr9, *CptrA, *CptrB, *CptrC, *C_c_ptr9, *C_c_ptrA, *C_c_ptrB, *C_c_ptrC;
+	zq_base_type* CptrD, *CptrE, *CptrF, *CptrG, *C_c_ptrD, *C_c_ptrE, *C_c_ptrF, *C_c_ptrG;
 	int m, n, k;
 	int lda16 = lda << 4;
 	int ldc16 = ldc << 4;
@@ -15620,18 +15620,18 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M16_caseNdiv1_KdivAlign32(int M, int N, i
 	}
 }
 
-void zq_gemm_32f_align_AnoTrans_Btrans_M16_caseNdiv1_KdivAlign64(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+void zq_gemm_32f_align_AnoTrans_Btrans_M16_caseNdiv1_KdivAlign64(int M, int N, int K, const zq_base_type* A, int lda, const zq_base_type* Bt, int ldb, zq_base_type* C, int ldc)
 {
-	const float* Aptr1, *Aptr2, *Aptr3, *Aptr4, *A_c_ptr1, *A_c_ptr2, *A_c_ptr3, *A_c_ptr4;
-	const float* Aptr5, *Aptr6, *Aptr7, *Aptr8, *A_c_ptr5, *A_c_ptr6, *A_c_ptr7, *A_c_ptr8;
-	const float* Aptr9, *AptrA, *AptrB, *AptrC, *A_c_ptr9, *A_c_ptrA, *A_c_ptrB, *A_c_ptrC;
-	const float* AptrD, *AptrE, *AptrF, *AptrG, *A_c_ptrD, *A_c_ptrE, *A_c_ptrF, *A_c_ptrG;
-	const float *Bptr, *Bptr1;
-	const float *B_c_ptr1;
-	float* Cptr1, *Cptr2, *Cptr3, *Cptr4, *C_c_ptr1, *C_c_ptr2, *C_c_ptr3, *C_c_ptr4;
-	float* Cptr5, *Cptr6, *Cptr7, *Cptr8, *C_c_ptr5, *C_c_ptr6, *C_c_ptr7, *C_c_ptr8;
-	float* Cptr9, *CptrA, *CptrB, *CptrC, *C_c_ptr9, *C_c_ptrA, *C_c_ptrB, *C_c_ptrC;
-	float* CptrD, *CptrE, *CptrF, *CptrG, *C_c_ptrD, *C_c_ptrE, *C_c_ptrF, *C_c_ptrG;
+	const zq_base_type* Aptr1, *Aptr2, *Aptr3, *Aptr4, *A_c_ptr1, *A_c_ptr2, *A_c_ptr3, *A_c_ptr4;
+	const zq_base_type* Aptr5, *Aptr6, *Aptr7, *Aptr8, *A_c_ptr5, *A_c_ptr6, *A_c_ptr7, *A_c_ptr8;
+	const zq_base_type* Aptr9, *AptrA, *AptrB, *AptrC, *A_c_ptr9, *A_c_ptrA, *A_c_ptrB, *A_c_ptrC;
+	const zq_base_type* AptrD, *AptrE, *AptrF, *AptrG, *A_c_ptrD, *A_c_ptrE, *A_c_ptrF, *A_c_ptrG;
+	const zq_base_type *Bptr, *Bptr1;
+	const zq_base_type *B_c_ptr1;
+	zq_base_type* Cptr1, *Cptr2, *Cptr3, *Cptr4, *C_c_ptr1, *C_c_ptr2, *C_c_ptr3, *C_c_ptr4;
+	zq_base_type* Cptr5, *Cptr6, *Cptr7, *Cptr8, *C_c_ptr5, *C_c_ptr6, *C_c_ptr7, *C_c_ptr8;
+	zq_base_type* Cptr9, *CptrA, *CptrB, *CptrC, *C_c_ptr9, *C_c_ptrA, *C_c_ptrB, *C_c_ptrC;
+	zq_base_type* CptrD, *CptrE, *CptrF, *CptrG, *C_c_ptrD, *C_c_ptrE, *C_c_ptrF, *C_c_ptrG;
 	int m, n, k;
 	int lda16 = lda << 4;
 	int ldc16 = ldc << 4;
@@ -15756,7 +15756,7 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M16_caseNdiv1_KdivAlign64(int M, int N, i
 
 #endif
 
-void zq_gemm_32f_align_AnoTrans_Btrans_M1_N1(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+void zq_gemm_32f_align_AnoTrans_Btrans_M1_N1(int M, int N, int K, const zq_base_type* A, int lda, const zq_base_type* Bt, int ldb, zq_base_type* C, int ldc)
 {
 #if !__ARM_NEON
 	if (K % (zq_mm_align_size << 6) == 0)
@@ -15790,7 +15790,7 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M1_N1(int M, int N, int K, const float* A
 	return;
 }
 
-void zq_gemm_32f_align_AnoTrans_Btrans_M1_N2(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+void zq_gemm_32f_align_AnoTrans_Btrans_M1_N2(int M, int N, int K, const zq_base_type* A, int lda, const zq_base_type* Bt, int ldb, zq_base_type* C, int ldc)
 {
 	int restN = N % 2;
 	int partN = N - restN;
@@ -15870,7 +15870,7 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M1_N2(int M, int N, int K, const float* A
 	return;
 }
 
-void zq_gemm_32f_align_AnoTrans_Btrans_M1_N4(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+void zq_gemm_32f_align_AnoTrans_Btrans_M1_N4(int M, int N, int K, const zq_base_type* A, int lda, const zq_base_type* Bt, int ldb, zq_base_type* C, int ldc)
 {
 	int restN = N % 4;
 	int partN = N - restN;
@@ -15950,7 +15950,7 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M1_N4(int M, int N, int K, const float* A
 	return;
 }
 
-void zq_gemm_32f_align_AnoTrans_Btrans_M1_N8(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+void zq_gemm_32f_align_AnoTrans_Btrans_M1_N8(int M, int N, int K, const zq_base_type* A, int lda, const zq_base_type* Bt, int ldb, zq_base_type* C, int ldc)
 {
 	int restN = N % 8;
 	int partN = N - restN;
@@ -16030,7 +16030,7 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M1_N8(int M, int N, int K, const float* A
 	return;
 }
 
-void zq_gemm_32f_align_AnoTrans_Btrans_M2_N1(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+void zq_gemm_32f_align_AnoTrans_Btrans_M2_N1(int M, int N, int K, const zq_base_type* A, int lda, const zq_base_type* Bt, int ldb, zq_base_type* C, int ldc)
 {
 #if !__ARM_NEON
 	if (K % (zq_mm_align_size << 6) == 0)
@@ -16064,7 +16064,7 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M2_N1(int M, int N, int K, const float* A
 	return;
 }
 
-void zq_gemm_32f_align_AnoTrans_Btrans_M2_N2(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+void zq_gemm_32f_align_AnoTrans_Btrans_M2_N2(int M, int N, int K, const zq_base_type* A, int lda, const zq_base_type* Bt, int ldb, zq_base_type* C, int ldc)
 {
 	int restN = N % 2;
 	int partN = N - restN;
@@ -16144,7 +16144,7 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M2_N2(int M, int N, int K, const float* A
 	return;
 }
 
-void zq_gemm_32f_align_AnoTrans_Btrans_M2_N4(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+void zq_gemm_32f_align_AnoTrans_Btrans_M2_N4(int M, int N, int K, const zq_base_type* A, int lda, const zq_base_type* Bt, int ldb, zq_base_type* C, int ldc)
 {
 	int restN = N % 4;
 	int partN = N - restN;
@@ -16224,7 +16224,7 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M2_N4(int M, int N, int K, const float* A
 	return;
 }
 
-void zq_gemm_32f_align_AnoTrans_Btrans_M2_N8(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+void zq_gemm_32f_align_AnoTrans_Btrans_M2_N8(int M, int N, int K, const zq_base_type* A, int lda, const zq_base_type* Bt, int ldb, zq_base_type* C, int ldc)
 {
 	int restN = N % 8;
 	int partN = N - restN;
@@ -16304,7 +16304,7 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M2_N8(int M, int N, int K, const float* A
 	return;
 }
 
-void zq_gemm_32f_align_AnoTrans_Btrans_M4_N1(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+void zq_gemm_32f_align_AnoTrans_Btrans_M4_N1(int M, int N, int K, const zq_base_type* A, int lda, const zq_base_type* Bt, int ldb, zq_base_type* C, int ldc)
 {
 #if !__ARM_NEON
 	if (K % (zq_mm_align_size << 6) == 0)
@@ -16338,7 +16338,7 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M4_N1(int M, int N, int K, const float* A
 	return;
 }
 
-void zq_gemm_32f_align_AnoTrans_Btrans_M4_N2(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+void zq_gemm_32f_align_AnoTrans_Btrans_M4_N2(int M, int N, int K, const zq_base_type* A, int lda, const zq_base_type* Bt, int ldb, zq_base_type* C, int ldc)
 {
 	int restN = N % 2;
 	int partN = N - restN;
@@ -16418,7 +16418,7 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M4_N2(int M, int N, int K, const float* A
 	return;
 }
 
-void zq_gemm_32f_align_AnoTrans_Btrans_M4_N4(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+void zq_gemm_32f_align_AnoTrans_Btrans_M4_N4(int M, int N, int K, const zq_base_type* A, int lda, const zq_base_type* Bt, int ldb, zq_base_type* C, int ldc)
 {
 	int restN = N % 4;
 	int partN = N - restN;
@@ -16498,7 +16498,7 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M4_N4(int M, int N, int K, const float* A
 	return;
 }
 
-void zq_gemm_32f_align_AnoTrans_Btrans_M8_N1(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+void zq_gemm_32f_align_AnoTrans_Btrans_M8_N1(int M, int N, int K, const zq_base_type* A, int lda, const zq_base_type* Bt, int ldb, zq_base_type* C, int ldc)
 {
 #if !__ARM_NEON
 	if (K % (zq_mm_align_size << 6) == 0)
@@ -16532,7 +16532,7 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M8_N1(int M, int N, int K, const float* A
 	return;
 }
 
-void zq_gemm_32f_align_AnoTrans_Btrans_M8_N2(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+void zq_gemm_32f_align_AnoTrans_Btrans_M8_N2(int M, int N, int K, const zq_base_type* A, int lda, const zq_base_type* Bt, int ldb, zq_base_type* C, int ldc)
 {
 	int restN = N % 2;
 	int partN = N - restN;
@@ -16612,7 +16612,7 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M8_N2(int M, int N, int K, const float* A
 	return;
 }
 
-void zq_gemm_32f_align_AnoTrans_Btrans_M16_N1(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+void zq_gemm_32f_align_AnoTrans_Btrans_M16_N1(int M, int N, int K, const zq_base_type* A, int lda, const zq_base_type* Bt, int ldb, zq_base_type* C, int ldc)
 {
 #if !__ARM_NEON
 	if (K % (zq_mm_align_size << 6) == 0)

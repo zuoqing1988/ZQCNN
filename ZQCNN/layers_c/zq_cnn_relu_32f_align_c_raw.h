@@ -65,7 +65,7 @@
 y = max(0,x)
 */
 void zq_cnn_relu_32f_align(
-	float* in_tensor4D_data,	// in & out
+	zq_base_type* in_tensor4D_data,	// in & out
 	int in_N,
 	int in_H,
 	int in_W,
@@ -73,12 +73,12 @@ void zq_cnn_relu_32f_align(
 	int in_pixelStep,
 	int in_widthStep,
 	int in_sliceStep,
-	float slope
+	zq_base_type slope
 )
 {
 
 	int n, h, w, c;
-	float* slice_ptr, *row_ptr, *pix_ptr, *c_ptr;
+	zq_base_type* slice_ptr, *row_ptr, *pix_ptr, *c_ptr;
 	register zq_mm_type a0, a1, a2, a3;
 	register zq_mm_type c0, c1, c2, c3;
 	register zq_mm_type d0, d1, d2, d3;

@@ -57,6 +57,7 @@ extern "C" {
 #define zq_mm_log_ps zq_mm128_log_ps
 #define zq_mm_exp_ps zq_mm128_exp_ps
 #define zq_mm_type __m128
+#define zq_base_type float
 #define zq_mm_align_size 4
 #define zq_mm_align_size_mul_2 8
 #define zq_mm_align_size_mul_3 12
@@ -81,6 +82,7 @@ extern "C" {
 #undef zq_mm_log_ps
 #undef zq_mm_exp_ps
 #undef zq_mm_type
+#undef zq_base_type
 #undef zq_mm_align_size
 #undef zq_mm_align_size_mul_2
 #undef zq_mm_align_size_mul_3
@@ -108,6 +110,7 @@ extern "C" {
 #define zq_mm_log_ps zq_mm256_log_ps
 #define zq_mm_exp_ps zq_mm256_exp_ps
 #define zq_mm_type __m256
+#define zq_base_type float
 #define zq_mm_align_size 8
 #define zq_mm_align_size_mul_2 16
 #define zq_mm_align_size_mul_3 24
@@ -132,6 +135,7 @@ extern "C" {
 #undef zq_mm_log_ps
 #undef zq_mm_exp_ps
 #undef zq_mm_type
+#undef zq_base_type
 #undef zq_mm_align_size
 #undef zq_mm_align_size_mul_2
 #undef zq_mm_align_size_mul_3
@@ -216,6 +220,83 @@ extern "C" {
 			}
 		}
 	}
+
+#if __ARM_NEON
+#if __ARM_NEON_FP16
+#define zq_base_type float16_t
+	/* it is safe to use out_tensor4D_data = in_tensor4D_data */
+	void zq_cnn_lrn_across_channels_32f_align0(
+		int local_size,		// must be odd number
+		zq_base_type alpha,
+		zq_base_type beta,
+		zq_base_type k,
+		const zq_base_type* in_tensor4D_data,
+		int N,
+		int H,
+		int W,
+		int C,
+		int in_pixelStep,
+		int in_widthStep,
+		int in_sliceStep,
+		zq_base_type* out_tensor4D_data,
+		int out_pixStep,
+		int out_widthStep,
+		int out_sliceStep
+	)
+	{
+		const zq_base_type* in_slice_ptr, *in_row_ptr, *in_pix_ptr, *in_c_ptr;
+		zq_base_type* out_slice_ptr, *out_row_ptr, *out_pix_ptr, *out_c_ptr;
+		int n, h, w, c;
+		int pad_size = local_size / 2;
+		int len = C + (pad_size << 1);
+		zq_base_type local_sum_square, pow_val;
+		zq_base_type* square_buf = (zq_base_type*)malloc(sizeof(zq_base_type)*len);
+		zq_base_type* accumulate_buf = (zq_base_type*)malloc(sizeof(zq_base_type)*(len + 1));
+		zq_base_type alpha_div_local_size = alpha / (zq_base_type)local_size;
+
+		accumulate_buf[0] = 0;
+		for (c = 0; c < pad_size; c++)
+		{
+			square_buf[c] = 0;
+			square_buf[len - 1 - c] = 0;
+			accumulate_buf[c + 1] = 0;
+		}
+
+
+		for (n = 0, in_slice_ptr = in_tensor4D_data, out_slice_ptr = out_tensor4D_data;
+			n < N;
+			n++, in_slice_ptr += in_sliceStep, out_slice_ptr += out_sliceStep)
+		{
+			for (h = 0, in_row_ptr = in_slice_ptr, out_row_ptr = out_slice_ptr;
+				h < H;
+				h++, in_row_ptr += in_widthStep, out_row_ptr += out_widthStep)
+			{
+				for (w = 0, in_pix_ptr = in_row_ptr, out_pix_ptr = out_row_ptr;
+					w < W;
+					w++, in_pix_ptr += in_pixelStep, out_pix_ptr += out_pixStep)
+				{
+					//compute x^2
+					for (c = 0, in_c_ptr = in_pix_ptr; c < C; c++, in_c_ptr++)
+					{
+						square_buf[pad_size + c] = (*in_c_ptr)*(*in_c_ptr);
+					}
+					//compute accumulate
+					for (c = pad_size; c < len; c++)
+						accumulate_buf[c + 1] = accumulate_buf[c] + square_buf[c];
+
+					for (c = 0, in_c_ptr = in_pix_ptr, out_c_ptr = out_pix_ptr; c < C; c++, in_c_ptr++, out_c_ptr++)
+					{
+						local_sum_square = accumulate_buf[c + local_size] - accumulate_buf[c];
+						pow_val = pow(k + alpha_div_local_size*local_sum_square, -beta);
+						*out_c_ptr = *in_c_ptr * pow_val;
+					}
+				}
+			}
+		}
+	}
+#undef zq_base_type
+#endif//__ARM_NEON_FP16
+#endif//__ARM_NEON
 
 #if defined(__cplusplus) || defined(c_plusplus) 
 }

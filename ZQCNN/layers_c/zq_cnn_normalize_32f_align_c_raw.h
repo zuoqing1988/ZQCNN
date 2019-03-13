@@ -94,8 +94,8 @@
 
 void zq_cnn_normalize_not_across_spatial_32f_align(
 	int channel_shared,
-	float* in_tensor4D_data,	// in & out
-	const float* scale_data,
+	zq_base_type* in_tensor4D_data,	// in & out
+	const zq_base_type* scale_data,
 	int in_N,
 	int in_H,
 	int in_W,
@@ -103,18 +103,18 @@ void zq_cnn_normalize_not_across_spatial_32f_align(
 	int in_pixelStep,
 	int in_widthStep,
 	int in_sliceStep,
-	const float eps
+	const zq_base_type eps
 )
 {
 	register zq_mm_type sum_v, sum_mul_scale_v;
 	register zq_mm_type a0, a1, a2, a3;
 	register zq_mm_type b0, b1, b2, b3;
 	register zq_mm_type c0, c1, c2, c3;
-	ZQ_DECLSPEC_ALIGN32 float q[8];
-	float sum;
+	ZQ_DECLSPEC_ALIGN32 zq_base_type q[8];
+	zq_base_type sum;
 	int n, h, w, c;
-	float* slice_ptr, *row_ptr, *pix_ptr, *c_ptr;
-	const float *scale_c_ptr;
+	zq_base_type* slice_ptr, *row_ptr, *pix_ptr, *c_ptr;
+	const zq_base_type *scale_c_ptr;
 #if !__ARM_NEON
 	if (in_C%zq_mm_align_size_mul_32 == 0)
 	{
@@ -266,8 +266,8 @@ void zq_cnn_normalize_not_across_spatial_32f_align(
 
 void zq_cnn_normalize_across_spatial_32f_align(
 	int channel_shared,
-	float* in_tensor4D_data,	// in & out
-	const float* scale_data,
+	zq_base_type* in_tensor4D_data,	// in & out
+	const zq_base_type* scale_data,
 	int in_N,
 	int in_H,
 	int in_W,
@@ -275,18 +275,18 @@ void zq_cnn_normalize_across_spatial_32f_align(
 	int in_pixelStep,
 	int in_widthStep,
 	int in_sliceStep,
-	const float eps
+	const zq_base_type eps
 )
 {
 	register zq_mm_type sum_v, sum_mul_scale_v;
 	register zq_mm_type a0, a1, a2, a3;
 	register zq_mm_type b0, b1, b2, b3;
 	register zq_mm_type c0, c1, c2, c3;
-	ZQ_DECLSPEC_ALIGN32 float q[8];
-	float sum;
+	ZQ_DECLSPEC_ALIGN32 zq_base_type q[8];
+	zq_base_type sum;
 	int n, h, w, c;
-	float* slice_ptr, *row_ptr, *pix_ptr, *c_ptr;
-	const float *scale_c_ptr;
+	zq_base_type* slice_ptr, *row_ptr, *pix_ptr, *c_ptr;
+	const zq_base_type *scale_c_ptr;
 #if !__ARM_NEON
 	if (in_C%zq_mm_align_size_mul_32 == 0)
 	{

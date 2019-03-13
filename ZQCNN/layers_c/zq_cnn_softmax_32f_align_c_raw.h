@@ -1,6 +1,6 @@
 
 void zq_cnn_softmax_32f_align_C(
-	float* in_tensor4D_data,	// in & out
+	zq_base_type* in_tensor4D_data,	// in & out
 	int in_N,
 	int in_H,
 	int in_W,
@@ -14,11 +14,11 @@ void zq_cnn_softmax_32f_align_C(
 	// sum all value
 	// value = value / sum
 	register zq_mm_type val,tmp, sum;
-	float max_val, tmp_val,sum_val;
-	float result[zq_mm_align_size << 2];
-	float* q = (float*)(((long long)result + (zq_mm_align_size << 2) - 1) & zq_mm_bitor_longlong);
+	zq_base_type max_val, tmp_val,sum_val;
+	zq_base_type result[zq_mm_align_size << 2];
+	zq_base_type* q = (zq_base_type*)(((long long)result + (zq_mm_align_size << 2) - 1) & zq_mm_bitor_longlong);
 	int n, h, w, c;
-	float* slice_ptr, *row_ptr, *pix_ptr, *c_ptr;
+	zq_base_type* slice_ptr, *row_ptr, *pix_ptr, *c_ptr;
 	for (n = 0, slice_ptr = in_tensor4D_data; n < in_N; n++, slice_ptr += in_sliceStep)
 	{
 		for (h = 0, row_ptr = slice_ptr; h < in_H; h++, row_ptr+= in_widthStep)

@@ -1,7 +1,7 @@
 /*in_pixStep must be equal to filter_pixStep,
 and the aligned channels should be set to zero*/
 void zq_cnn_innerproduct_gemm_32f_align_same_pixstep(
-	const float* in_tensor4D_data,
+	const zq_base_type* in_tensor4D_data,
 	int in_N,
 	int in_H,
 	int in_W,
@@ -9,12 +9,12 @@ void zq_cnn_innerproduct_gemm_32f_align_same_pixstep(
 	int in_pixelStep,
 	int in_widthStep,
 	int in_sliceStep,
-	const float* filters_data,
+	const zq_base_type* filters_data,
 	int filter_N,
 	int filter_pixelStep,
 	int filter_widthStep,
 	int filter_sliceStep,
-	float* out_tensor4D_data,
+	zq_base_type* out_tensor4D_data,
 	int out_N,	// must be in_N
 	int out_C,	// must be filter_N
 	int out_pixelStep,
@@ -30,26 +30,26 @@ void zq_cnn_innerproduct_gemm_32f_align_same_pixstep(
 	int matrix_A_rows = 1;
 	int matrix_B_cols = filter_N;
 	int matrix_B_rows = filter_sliceStep;
-	__int64 need_A_buffer_len_align32 = (matrix_A_rows*matrix_A_cols * sizeof(float) + 31) / 32 * 32;
+	__int64 need_A_buffer_len_align32 = (matrix_A_rows*matrix_A_cols * sizeof(zq_base_type) + 31) / 32 * 32;
 	__int64 need_B_buffer_len_align32 = 0;
 	__int64 need_C_buffer_len_align32 = 0;
 	__int64 total_need_buffer_len;
-	float* matrix_A = 0;
-	const float *cur_in_row_ptr;
+	zq_base_type* matrix_A = 0;
+	const zq_base_type *cur_in_row_ptr;
 	int out_n, kh, pp;
-	float* matrix_A_row_ptr, *matrix_A_col_ptr, *cp_dst_ptr;
-	const float* cp_src_ptr;
-	float* out_slice_ptr;
-	const float* in_slice_ptr;
-	const float* matrix_Bt = filters_data;
-	float* matrix_C = 0, *matrix_C_row_ptr;
+	zq_base_type* matrix_A_row_ptr, *matrix_A_col_ptr, *cp_dst_ptr;
+	const zq_base_type* cp_src_ptr;
+	zq_base_type* out_slice_ptr;
+	const zq_base_type* in_slice_ptr;
+	const zq_base_type* matrix_Bt = filters_data;
+	zq_base_type* matrix_C = 0, *matrix_C_row_ptr;
 	int out_row_idx;
 	double t1, t2, t3, t4, t5;
 	t1 = omp_get_wtime();
 	int need_allocate_tmp_out = (out_pixelStep != filter_N) || (out_pixelStep != out_widthStep) || (out_widthStep != out_sliceStep);
 	if (need_allocate_tmp_out)
 	{
-		need_C_buffer_len_align32 = (filter_N * sizeof(float) + 31) / 32 * 32;
+		need_C_buffer_len_align32 = (filter_N * sizeof(zq_base_type) + 31) / 32 * 32;
 	}
 	else
 	{
@@ -58,9 +58,9 @@ void zq_cnn_innerproduct_gemm_32f_align_same_pixstep(
 	total_need_buffer_len = need_A_buffer_len_align32 + need_B_buffer_len_align32 + need_C_buffer_len_align32;
 	if (buffer == 0)
 	{
-		matrix_A = (float*)_aligned_malloc(need_A_buffer_len_align32, 32);
+		matrix_A = (zq_base_type*)_aligned_malloc(need_A_buffer_len_align32, 32);
 		if (need_allocate_tmp_out)
-			matrix_C = (float*)_aligned_malloc(need_C_buffer_len_align32, 32);
+			matrix_C = (zq_base_type*)_aligned_malloc(need_C_buffer_len_align32, 32);
 	}
 	else
 	{
@@ -72,7 +72,7 @@ void zq_cnn_innerproduct_gemm_32f_align_same_pixstep(
 		}
 		matrix_A = *buffer;
 		if (need_allocate_tmp_out)
-			matrix_C = (float*)((char*)(*buffer) + need_A_buffer_len_align32);
+			matrix_C = (zq_base_type*)((char*)(*buffer) + need_A_buffer_len_align32);
 	}
 
 	for (out_n = 0, in_slice_ptr = in_tensor4D_data, out_slice_ptr = out_tensor4D_data;
@@ -86,7 +86,7 @@ void zq_cnn_innerproduct_gemm_32f_align_same_pixstep(
 			kh < in_H;
 			kh++, cur_in_row_ptr += in_widthStep, matrix_A_col_ptr += filter_pixStep_mul_filter_W)
 		{
-			//memcpy(matrix_A_col_ptr, cur_in_row_ptr, sizeof(float)*filter_pixStep_mul_filter_W);
+			//memcpy(matrix_A_col_ptr, cur_in_row_ptr, sizeof(zq_base_type)*filter_pixStep_mul_filter_W);
 			for (pp = 0, cp_src_ptr = cur_in_row_ptr, cp_dst_ptr = matrix_A_col_ptr;
 				pp < filter_pixStep_mul_filter_W;
 				pp += zq_mm_align_size, cp_src_ptr += zq_mm_align_size, cp_dst_ptr += zq_mm_align_size)
@@ -103,7 +103,7 @@ void zq_cnn_innerproduct_gemm_32f_align_same_pixstep(
 			/*   col2im      */
 			out_row_idx = 0;
 			matrix_C_row_ptr = matrix_C;
-			memcpy(out_tensor4D_data, matrix_C_row_ptr, sizeof(float)*matrix_B_cols);
+			memcpy(out_tensor4D_data, matrix_C_row_ptr, sizeof(zq_base_type)*matrix_B_cols);
 		}
 		else
 			matrix_C += out_sliceStep;
@@ -123,7 +123,7 @@ void zq_cnn_innerproduct_gemm_32f_align_same_pixstep(
 /*in_pixStep must be equal to filter_pixStep,
 and the aligned channels should be set to zero*/
 void zq_cnn_innerproduct_gemm_32f_align_same_pixstep_batch(
-	const float* in_tensor4D_data,
+	const zq_base_type* in_tensor4D_data,
 	int in_N,
 	int in_H,
 	int in_W,
@@ -131,12 +131,12 @@ void zq_cnn_innerproduct_gemm_32f_align_same_pixstep_batch(
 	int in_pixelStep,
 	int in_widthStep,
 	int in_sliceStep,
-	const float* filters_data,
+	const zq_base_type* filters_data,
 	int filter_N,
 	int filter_pixelStep,
 	int filter_widthStep,
 	int filter_sliceStep,
-	float* out_tensor4D_data,
+	zq_base_type* out_tensor4D_data,
 	int out_N,	// must be in_N
 	int out_C,	// must be filter_N
 	int out_pixelStep,
@@ -152,18 +152,18 @@ void zq_cnn_innerproduct_gemm_32f_align_same_pixstep_batch(
 	int matrix_A_rows = out_N;
 	int matrix_B_cols = filter_N;
 	int matrix_B_rows = filter_sliceStep;
-	__int64 need_A_buffer_len_align32 = (matrix_A_rows*matrix_A_cols * sizeof(float) + 31) / 32 * 32;
+	__int64 need_A_buffer_len_align32 = (matrix_A_rows*matrix_A_cols * sizeof(zq_base_type) + 31) / 32 * 32;
 	__int64 need_B_buffer_len_align32 = 0;
 	__int64 need_C_buffer_len_align32 = 0;
 	__int64 total_need_buffer_len;
-	float* matrix_A = 0;
-	const float* cur_in_row_ptr;
+	zq_base_type* matrix_A = 0;
+	const zq_base_type* cur_in_row_ptr;
 	int out_n, kh;
-	float* matrix_A_row_ptr, *matrix_A_col_ptr;
-	float* out_slice_ptr;
-	const float* in_slice_ptr;
-	const float* matrix_Bt = filters_data;
-	float* matrix_C = 0, *matrix_C_row_ptr = 0;
+	zq_base_type* matrix_A_row_ptr, *matrix_A_col_ptr;
+	zq_base_type* out_slice_ptr;
+	const zq_base_type* in_slice_ptr;
+	const zq_base_type* matrix_Bt = filters_data;
+	zq_base_type* matrix_C = 0, *matrix_C_row_ptr = 0;
 	int out_row_idx;
 	int out_NHW = out_N;
 	double t1, t2, t3, t4, t5, alloc_time, make_A_time, gemm_time;
@@ -172,7 +172,7 @@ void zq_cnn_innerproduct_gemm_32f_align_same_pixstep_batch(
 	t1 = omp_get_wtime();
 	if (need_allocate_tmp_out)
 	{
-		need_C_buffer_len_align32 = (out_N*filter_N * sizeof(float) + 31) / 32 * 32;
+		need_C_buffer_len_align32 = (out_N*filter_N * sizeof(zq_base_type) + 31) / 32 * 32;
 	}
 	else
 	{
@@ -181,9 +181,9 @@ void zq_cnn_innerproduct_gemm_32f_align_same_pixstep_batch(
 	total_need_buffer_len = need_A_buffer_len_align32 + need_B_buffer_len_align32 + need_C_buffer_len_align32;
 	if (buffer == 0)
 	{
-		matrix_A = (float*)_aligned_malloc(need_A_buffer_len_align32,32);
+		matrix_A = (zq_base_type*)_aligned_malloc(need_A_buffer_len_align32,32);
 		if (need_allocate_tmp_out)
-			matrix_C = (float*)_aligned_malloc(need_C_buffer_len_align32, 32);
+			matrix_C = (zq_base_type*)_aligned_malloc(need_C_buffer_len_align32, 32);
 	}
 	else
 	{
@@ -195,7 +195,7 @@ void zq_cnn_innerproduct_gemm_32f_align_same_pixstep_batch(
 		}
 		matrix_A = *buffer;
 		if (need_allocate_tmp_out)
-			matrix_C = (float*)((char*)(*buffer) + need_A_buffer_len_align32);
+			matrix_C = (zq_base_type*)((char*)(*buffer) + need_A_buffer_len_align32);
 	}
 	t2 = omp_get_wtime();
 	alloc_time = t2 - t1;
@@ -209,7 +209,7 @@ void zq_cnn_innerproduct_gemm_32f_align_same_pixstep_batch(
 			kh < in_H;
 			kh++, cur_in_row_ptr += in_widthStep, matrix_A_col_ptr += filter_pixStep_mul_filter_W)
 		{
-			memcpy(matrix_A_col_ptr, cur_in_row_ptr, sizeof(float)*filter_pixStep_mul_filter_W);
+			memcpy(matrix_A_col_ptr, cur_in_row_ptr, sizeof(zq_base_type)*filter_pixStep_mul_filter_W);
 		}
 			
 		matrix_A_row_ptr += matrix_A_cols;
@@ -231,7 +231,7 @@ void zq_cnn_innerproduct_gemm_32f_align_same_pixstep_batch(
 		matrix_C_row_ptr = matrix_C;
 		for (out_n = 0, out_slice_ptr = out_tensor4D_data; out_n < out_N; out_n++, out_slice_ptr += out_sliceStep)
 		{
-			memcpy(out_slice_ptr, matrix_C_row_ptr, sizeof(float)*matrix_B_cols);
+			memcpy(out_slice_ptr, matrix_C_row_ptr, sizeof(zq_base_type)*matrix_B_cols);
 			matrix_C_row_ptr += matrix_B_cols;
 		}
 	}

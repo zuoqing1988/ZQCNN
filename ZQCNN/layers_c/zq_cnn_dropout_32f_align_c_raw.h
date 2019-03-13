@@ -1,5 +1,5 @@
 void zq_cnn_dropout_32f_align(
-	float* in_tensor4D_data,	// in & out
+	zq_base_type* in_tensor4D_data,	// in & out
 	int in_N,
 	int in_H,
 	int in_W,
@@ -7,13 +7,13 @@ void zq_cnn_dropout_32f_align(
 	int in_pixelStep,
 	int in_widthStep,
 	int in_sliceStep,
-	const float dropout_ratio
+	const zq_base_type dropout_ratio
 )
 {
-	float scale = 1.0f - dropout_ratio;
+	zq_base_type scale = 1.0f - dropout_ratio;
 	register zq_mm_type scale_vec;
 	int n, h, w, c;
-	float* slice_ptr, *row_ptr, *pix_ptr, *c_ptr;
+	zq_base_type* slice_ptr, *row_ptr, *pix_ptr, *c_ptr;
 
 	if (scale == 1.0f)
 	{

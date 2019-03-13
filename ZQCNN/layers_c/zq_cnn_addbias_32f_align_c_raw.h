@@ -31,7 +31,7 @@
 	op_0_32
 
 void zq_cnn_addbias_32f_align(
-	float* in_tensor4D_data,	// in & out
+	zq_base_type* in_tensor4D_data,	// in & out
 	int in_N,
 	int in_H,
 	int in_W,
@@ -39,13 +39,13 @@ void zq_cnn_addbias_32f_align(
 	int in_pixelStep,
 	int in_widthStep,
 	int in_sliceStep,
-	const float* bias_data
+	const zq_base_type* bias_data
 )
 {
 	//zq_mm_type bias_v;
 	int n, h, w, c;
-	float* slice_ptr, *row_ptr, *pix_ptr, *c_ptr;
-	const float* bias_ptr;
+	zq_base_type* slice_ptr, *row_ptr, *pix_ptr, *c_ptr;
+	const zq_base_type* bias_ptr;
 	register zq_mm_type a0, a1, a2, a3;
 	register zq_mm_type b0, b1, b2, b3;
 

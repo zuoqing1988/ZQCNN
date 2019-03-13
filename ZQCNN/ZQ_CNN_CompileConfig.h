@@ -49,6 +49,12 @@
 #define __ARM_NEON 0
 #endif
 
+#if defined(ZQ_CNN_USE_ARM_NEON_FP16)
+#define __ARM_NEON_FP16 1
+#else
+#define __ARM_NEON_FP16 0
+#endif
+
 #if __ARM_NEON
 //#define ZQ_CNN_USE_FMADD128 1
 #define ZQ_CNN_USE_SSETYPE ZQ_CNN_SSETYPE_NONE

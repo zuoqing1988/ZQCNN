@@ -41,6 +41,42 @@ extern "C" {
 		int in_sliceStep
 	);
 
+#if __ARM_NEON_FP16
+	void zq_cnn_softmax_16f_align0_C(
+		float16_t* in_tensor4D_data,	// in & out
+		int in_N,
+		int in_H,
+		int in_W,
+		int in_C,
+		int in_pixelStep,
+		int in_widthStep,
+		int in_sliceStep
+	);
+
+	void zq_cnn_softmax_16f_align0_H(
+		float16_t* in_tensor4D_data,	// in & out
+		int in_N,
+		int in_H,
+		int in_W,
+		int in_C,
+		int in_pixelStep,
+		int in_widthStep,
+		int in_sliceStep
+	);
+
+
+	void zq_cnn_softmax_16f_align0_W(
+		float16_t* in_tensor4D_data,	// in & out
+		int in_N,
+		int in_H,
+		int in_W,
+		int in_C,
+		int in_pixelStep,
+		int in_widthStep,
+		int in_sliceStep
+	);
+#endif//__ARM_NEON_FP16
+
 #else
 
 	void zq_cnn_softmax_32f_align0_C(

@@ -31,7 +31,7 @@
 	op_0_32
 
 void zq_cnn_conv_no_padding_32f_kernel1x1(
-	const float* in_tensor4D_data,
+	const zq_base_type* in_tensor4D_data,
 	int in_N,
 	int in_H,
 	int in_W,
@@ -39,7 +39,7 @@ void zq_cnn_conv_no_padding_32f_kernel1x1(
 	int in_alignPixelStep,
 	int in_widthStep,
 	int in_SliceStep,
-	const float* filters_data,
+	const zq_base_type* filters_data,
 	int filter_N,
 	int filter_H, // must be 1
 	int filter_W, // must be 1
@@ -51,7 +51,7 @@ void zq_cnn_conv_no_padding_32f_kernel1x1(
 	int stride_W,
 	int dilation_H,
 	int dilation_W,
-	float* out_tensor4D_data,
+	zq_base_type* out_tensor4D_data,
 	int out_N,	// must be in_N
 	int out_H,	// must be (in_H - filter_H)/stride_H + 1
 	int out_W,	// must be (in_W - filter_W)/stride_W + 1
@@ -62,25 +62,25 @@ void zq_cnn_conv_no_padding_32f_kernel1x1(
 )
 {
 	register zq_mm_type sum;
-	ZQ_DECLSPEC_ALIGN32 float q[8];
-	//float result[zq_mm_align_size << 2];
-	//float* q = (float*)(((long long)result + (zq_mm_align_size << 2) - 1) & zq_mm_bitor_longlong);
+	ZQ_DECLSPEC_ALIGN32 zq_base_type q[8];
+	//zq_base_type result[zq_mm_align_size << 2];
+	//zq_base_type* q = (zq_base_type*)(((long long)result + (zq_mm_align_size << 2) - 1) & zq_mm_bitor_longlong);
 
-	const float* in_slice_ptr;
-	const float* in_row_ptr;
-	const float* in_pix_ptr;
-	float* out_slice_ptr;
-	float* out_row_ptr;
-	float* out_pix_ptr;
-	float* out_c_ptr;
+	const zq_base_type* in_slice_ptr;
+	const zq_base_type* in_row_ptr;
+	const zq_base_type* in_pix_ptr;
+	zq_base_type* out_slice_ptr;
+	zq_base_type* out_row_ptr;
+	zq_base_type* out_pix_ptr;
+	zq_base_type* out_c_ptr;
 
-	const float* cur_in_row_ptr;
-	const float* cur_in_pix_ptr;
-	const float* cur_in_c_ptr;
-	const float* cur_filter_slice_ptr;
-	const float* cur_filter_row_ptr;
-	const float* cur_filter_pix_ptr;
-	const float* cur_filter_c_ptr;
+	const zq_base_type* cur_in_row_ptr;
+	const zq_base_type* cur_in_pix_ptr;
+	const zq_base_type* cur_in_c_ptr;
+	const zq_base_type* cur_filter_slice_ptr;
+	const zq_base_type* cur_filter_row_ptr;
+	const zq_base_type* cur_filter_pix_ptr;
+	const zq_base_type* cur_filter_c_ptr;
 
 	int stride_H_mul_in_WidthStep = stride_H*in_widthStep;
 	int stride_W_mul_in_pixStep = stride_W*in_alignPixelStep;
@@ -138,7 +138,7 @@ void zq_cnn_conv_no_padding_32f_kernel1x1(
 }
 
 	void zq_cnn_conv_no_padding_32f_kernel1x1_C4(
-		const float* in_tensor4D_data,
+		const zq_base_type* in_tensor4D_data,
 		int in_N,
 		int in_H,
 		int in_W,
@@ -146,7 +146,7 @@ void zq_cnn_conv_no_padding_32f_kernel1x1(
 		int in_alignPixelStep,
 		int in_widthStep,
 		int in_SliceStep,
-		const float* filters_data,
+		const zq_base_type* filters_data,
 		int filter_N,
 		int filter_H, // must be 1
 		int filter_W, // must be 1
@@ -158,7 +158,7 @@ void zq_cnn_conv_no_padding_32f_kernel1x1(
 		int stride_W,
 		int dilation_H,
 		int dilation_W,
-		float* out_tensor4D_data,
+		zq_base_type* out_tensor4D_data,
 		int out_N,	// must be in_N
 		int out_H,	// must be (in_H - filter_H)/stride_H + 1
 		int out_W,	// must be (in_W - filter_W)/stride_W + 1
@@ -169,20 +169,20 @@ void zq_cnn_conv_no_padding_32f_kernel1x1(
 	)
 	{
 		register zq_mm_type sum;
-		ZQ_DECLSPEC_ALIGN32 float q[8];
-		//float result[zq_mm_align_size << 2];
-		//float* q = (float*)(((long long)result + (zq_mm_align_size << 2) - 1) & zq_mm_bitor_longlong);
+		ZQ_DECLSPEC_ALIGN32 zq_base_type q[8];
+		//zq_base_type result[zq_mm_align_size << 2];
+		//zq_base_type* q = (zq_base_type*)(((long long)result + (zq_mm_align_size << 2) - 1) & zq_mm_bitor_longlong);
 
-		const float* in_slice_ptr;
-		const float* in_row_ptr;
-		const float* in_pix_ptr;
-		float* out_slice_ptr;
-		float* out_row_ptr;
-		float* out_pix_ptr;
-		float* out_c_ptr;
+		const zq_base_type* in_slice_ptr;
+		const zq_base_type* in_row_ptr;
+		const zq_base_type* in_pix_ptr;
+		zq_base_type* out_slice_ptr;
+		zq_base_type* out_row_ptr;
+		zq_base_type* out_pix_ptr;
+		zq_base_type* out_c_ptr;
 
 		
-		const float* cur_filter_slice_ptr;
+		const zq_base_type* cur_filter_slice_ptr;
 
 		int stride_H_mul_in_WidthStep = stride_H*in_widthStep;
 		int stride_W_mul_in_pixStep = stride_W*in_alignPixelStep;
@@ -221,7 +221,7 @@ void zq_cnn_conv_no_padding_32f_kernel1x1(
 
 
 void zq_cnn_conv_no_padding_32f_kernel3x3(
-	const float* in_tensor4D_data,
+	const zq_base_type* in_tensor4D_data,
 	int in_N,
 	int in_H,
 	int in_W,
@@ -229,7 +229,7 @@ void zq_cnn_conv_no_padding_32f_kernel3x3(
 	int in_pixelStep,
 	int in_widthStep,
 	int in_sliceStep,
-	const float* filters_data,
+	const zq_base_type* filters_data,
 	int filter_N,
 	int filter_H, // must be 3
 	int filter_W, // must be 3
@@ -241,7 +241,7 @@ void zq_cnn_conv_no_padding_32f_kernel3x3(
 	int stride_W,
 	int dilation_H,
 	int dilation_W,
-	float* out_tensor4D_data,
+	zq_base_type* out_tensor4D_data,
 	int out_N,	// must be in_N
 	int out_H,	// must be (in_H - filter_H)/stride_H + 1
 	int out_W,	// must be (in_W - filter_W)/stride_W + 1
@@ -252,25 +252,25 @@ void zq_cnn_conv_no_padding_32f_kernel3x3(
 )
 {
 	register zq_mm_type sum;
-	ZQ_DECLSPEC_ALIGN32 float q[8];
-	//float result[zq_mm_align_size << 2];
-	//float* q = (float*)(((long long)result + (zq_mm_align_size << 2) - 1) & zq_mm_bitor_longlong);
+	ZQ_DECLSPEC_ALIGN32 zq_base_type q[8];
+	//zq_base_type result[zq_mm_align_size << 2];
+	//zq_base_type* q = (zq_base_type*)(((long long)result + (zq_mm_align_size << 2) - 1) & zq_mm_bitor_longlong);
 
-	const float* in_slice_ptr;
-	const float* in_row_ptr;
-	const float* in_pix_ptr;
-	float* out_slice_ptr;
-	float* out_row_ptr;
-	float* out_pix_ptr;
-	float* out_c_ptr;
+	const zq_base_type* in_slice_ptr;
+	const zq_base_type* in_row_ptr;
+	const zq_base_type* in_pix_ptr;
+	zq_base_type* out_slice_ptr;
+	zq_base_type* out_row_ptr;
+	zq_base_type* out_pix_ptr;
+	zq_base_type* out_c_ptr;
 
-	const float* cur_in_row_ptr;
-	const float* cur_in_pix_ptr;
-	const float* cur_in_c_ptr;
-	const float* cur_filter_slice_ptr;
-	const float* cur_filter_row_ptr;
-	const float* cur_filter_pix_ptr;
-	const float* cur_filter_c_ptr;
+	const zq_base_type* cur_in_row_ptr;
+	const zq_base_type* cur_in_pix_ptr;
+	const zq_base_type* cur_in_c_ptr;
+	const zq_base_type* cur_filter_slice_ptr;
+	const zq_base_type* cur_filter_row_ptr;
+	const zq_base_type* cur_filter_pix_ptr;
+	const zq_base_type* cur_filter_c_ptr;
 
 	int stride_H_mul_in_WidthStep = stride_H*in_widthStep;
 	int stride_W_mul_in_pixStep = stride_W*in_pixelStep;
@@ -699,7 +699,7 @@ void zq_cnn_conv_no_padding_32f_kernel3x3(
 
 
 void zq_cnn_conv_no_padding_32f_kernel3x3_C3(
-	const float* in_tensor4D_data,
+	const zq_base_type* in_tensor4D_data,
 	int in_N,
 	int in_H,
 	int in_W,
@@ -707,7 +707,7 @@ void zq_cnn_conv_no_padding_32f_kernel3x3_C3(
 	int in_pixelStep,
 	int in_widthStep,
 	int in_sliceStep,
-	const float* filters_data,
+	const zq_base_type* filters_data,
 	int filter_N,
 	int filter_H, // must be 3
 	int filter_W, // must be 3
@@ -719,7 +719,7 @@ void zq_cnn_conv_no_padding_32f_kernel3x3_C3(
 	int stride_W,
 	int dilation_H,
 	int dilation_W,
-	float* out_tensor4D_data,
+	zq_base_type* out_tensor4D_data,
 	int out_N,	// must be in_N
 	int out_H,	// must be (in_H - filter_H)/stride_H + 1
 	int out_W,	// must be (in_W - filter_W)/stride_W + 1
@@ -730,23 +730,23 @@ void zq_cnn_conv_no_padding_32f_kernel3x3_C3(
 )
 {
 	register zq_mm_type sum;
-	ZQ_DECLSPEC_ALIGN32 float q[8];
-	//float result[zq_mm_align_size << 2];
-	//float* q = (float*)(((long long)result + (zq_mm_align_size << 2) - 1) & zq_mm_bitor_longlong);
+	ZQ_DECLSPEC_ALIGN32 zq_base_type q[8];
+	//zq_base_type result[zq_mm_align_size << 2];
+	//zq_base_type* q = (zq_base_type*)(((long long)result + (zq_mm_align_size << 2) - 1) & zq_mm_bitor_longlong);
 
-	const float* in_slice_ptr;
-	const float* in_row_ptr;
-	const float* in_pix_ptr;
-	float* out_slice_ptr;
-	float* out_row_ptr;
-	float* out_pix_ptr;
-	float* out_c_ptr;
+	const zq_base_type* in_slice_ptr;
+	const zq_base_type* in_row_ptr;
+	const zq_base_type* in_pix_ptr;
+	zq_base_type* out_slice_ptr;
+	zq_base_type* out_row_ptr;
+	zq_base_type* out_pix_ptr;
+	zq_base_type* out_c_ptr;
 
-	const float* cur_in_row_ptr;
-	const float* cur_in_pix_ptr;
-	const float* cur_filter_slice_ptr;
-	const float* cur_filter_row_ptr;
-	const float* cur_filter_pix_ptr;
+	const zq_base_type* cur_in_row_ptr;
+	const zq_base_type* cur_in_pix_ptr;
+	const zq_base_type* cur_filter_slice_ptr;
+	const zq_base_type* cur_filter_row_ptr;
+	const zq_base_type* cur_filter_pix_ptr;
 
 	int stride_H_mul_in_WidthStep = stride_H*in_widthStep;
 	int stride_W_mul_in_pixStep = stride_W*in_pixelStep;
@@ -813,7 +813,7 @@ void zq_cnn_conv_no_padding_32f_kernel3x3_C3(
 
 
 void zq_cnn_conv_no_padding_32f_kernel2x2(
-	const float* in_tensor4D_data,
+	const zq_base_type* in_tensor4D_data,
 	int in_N,
 	int in_H,
 	int in_W,
@@ -821,7 +821,7 @@ void zq_cnn_conv_no_padding_32f_kernel2x2(
 	int in_pixelStep,
 	int in_widthStep,
 	int in_sliceStep,
-	const float* filters_data,
+	const zq_base_type* filters_data,
 	int filter_N,
 	int filter_H, // must be 3
 	int filter_W, // must be 3
@@ -833,7 +833,7 @@ void zq_cnn_conv_no_padding_32f_kernel2x2(
 	int stride_W,	
 	int dilation_H,
 	int dilation_W,
-	float* out_tensor4D_data,
+	zq_base_type* out_tensor4D_data,
 	int out_N,	// must be in_N
 	int out_H,	// must be (in_H - filter_H)/stride_H + 1
 	int out_W,	// must be (in_W - filter_W)/stride_W + 1
@@ -844,25 +844,25 @@ void zq_cnn_conv_no_padding_32f_kernel2x2(
 )
 {
 	register zq_mm_type sum;
-	ZQ_DECLSPEC_ALIGN32 float q[8];
-	//float result[zq_mm_align_size << 2];
-	//float* q = (float*)(((long long)result + (zq_mm_align_size << 2) - 1) & zq_mm_bitor_longlong);
+	ZQ_DECLSPEC_ALIGN32 zq_base_type q[8];
+	//zq_base_type result[zq_mm_align_size << 2];
+	//zq_base_type* q = (zq_base_type*)(((long long)result + (zq_mm_align_size << 2) - 1) & zq_mm_bitor_longlong);
 
-	const float* in_slice_ptr;
-	const float* in_row_ptr;
-	const float* in_pix_ptr;
-	float* out_slice_ptr;
-	float* out_row_ptr;
-	float* out_pix_ptr;
-	float* out_c_ptr;
+	const zq_base_type* in_slice_ptr;
+	const zq_base_type* in_row_ptr;
+	const zq_base_type* in_pix_ptr;
+	zq_base_type* out_slice_ptr;
+	zq_base_type* out_row_ptr;
+	zq_base_type* out_pix_ptr;
+	zq_base_type* out_c_ptr;
 
-	const float* cur_in_row_ptr;
-	const float* cur_in_pix_ptr;
-	const float* cur_in_c_ptr;
-	const float* cur_filter_slice_ptr;
-	const float* cur_filter_row_ptr;
-	const float* cur_filter_pix_ptr;
-	const float* cur_filter_c_ptr;
+	const zq_base_type* cur_in_row_ptr;
+	const zq_base_type* cur_in_pix_ptr;
+	const zq_base_type* cur_in_c_ptr;
+	const zq_base_type* cur_filter_slice_ptr;
+	const zq_base_type* cur_filter_row_ptr;
+	const zq_base_type* cur_filter_pix_ptr;
+	const zq_base_type* cur_filter_c_ptr;
 
 	int stride_H_mul_in_WidthStep = stride_H*in_widthStep;
 	int stride_W_mul_in_pixStep = stride_W*in_pixelStep;
@@ -937,7 +937,7 @@ void zq_cnn_conv_no_padding_32f_kernel2x2(
 
 
 void zq_cnn_conv_no_padding_32f_kernel5x5(
-	const float* in_tensor4D_data,
+	const zq_base_type* in_tensor4D_data,
 	int in_N,
 	int in_H,
 	int in_W,
@@ -945,7 +945,7 @@ void zq_cnn_conv_no_padding_32f_kernel5x5(
 	int in_pixelStep,
 	int in_widthStep,
 	int in_sliceStep,
-	const float* filters_data,
+	const zq_base_type* filters_data,
 	int filter_N,
 	int filter_H, // must be 5
 	int filter_W, // must be 5
@@ -957,7 +957,7 @@ void zq_cnn_conv_no_padding_32f_kernel5x5(
 	int stride_W,
 	int dilation_H,
 	int dilation_W,
-	float* out_tensor4D_data,
+	zq_base_type* out_tensor4D_data,
 	int out_N,	// must be in_N
 	int out_H,	// must be (in_H - filter_H)/stride_H + 1
 	int out_W,	// must be (in_W - filter_W)/stride_W + 1
@@ -968,25 +968,25 @@ void zq_cnn_conv_no_padding_32f_kernel5x5(
 )
 {
 	register zq_mm_type sum;
-	ZQ_DECLSPEC_ALIGN32 float q[8];
-	//float result[zq_mm_align_size << 2];
-	//float* q = (float*)(((long long)result + (zq_mm_align_size << 2) - 1) & zq_mm_bitor_longlong);
+	ZQ_DECLSPEC_ALIGN32 zq_base_type q[8];
+	//zq_base_type result[zq_mm_align_size << 2];
+	//zq_base_type* q = (zq_base_type*)(((long long)result + (zq_mm_align_size << 2) - 1) & zq_mm_bitor_longlong);
 
-	const float* in_slice_ptr;
-	const float* in_row_ptr;
-	const float* in_pix_ptr;
-	float* out_slice_ptr;
-	float* out_row_ptr;
-	float* out_pix_ptr;
-	float* out_c_ptr;
+	const zq_base_type* in_slice_ptr;
+	const zq_base_type* in_row_ptr;
+	const zq_base_type* in_pix_ptr;
+	zq_base_type* out_slice_ptr;
+	zq_base_type* out_row_ptr;
+	zq_base_type* out_pix_ptr;
+	zq_base_type* out_c_ptr;
 
-	const float* cur_in_row_ptr;
-	const float* cur_in_pix_ptr;
-	const float* cur_in_c_ptr;
-	const float* cur_filter_slice_ptr;
-	const float* cur_filter_row_ptr;
-	const float* cur_filter_pix_ptr;
-	const float* cur_filter_c_ptr;
+	const zq_base_type* cur_in_row_ptr;
+	const zq_base_type* cur_in_pix_ptr;
+	const zq_base_type* cur_in_c_ptr;
+	const zq_base_type* cur_filter_slice_ptr;
+	const zq_base_type* cur_filter_row_ptr;
+	const zq_base_type* cur_filter_pix_ptr;
+	const zq_base_type* cur_filter_c_ptr;
 
 	int stride_H_mul_in_WidthStep = stride_H*in_widthStep;
 	int stride_W_mul_in_pixStep = stride_W*in_pixelStep;
@@ -1165,7 +1165,7 @@ void zq_cnn_conv_no_padding_32f_kernel5x5(
 
 
 void zq_cnn_conv_no_padding_32f_general(
-	const float* in_tensor4D_data,
+	const zq_base_type* in_tensor4D_data,
 	int in_N,
 	int in_H,
 	int in_W,
@@ -1173,7 +1173,7 @@ void zq_cnn_conv_no_padding_32f_general(
 	int in_pixelStep,
 	int in_widthStep,
 	int in_sliceStep,
-	const float* filters_data,
+	const zq_base_type* filters_data,
 	int filter_N,
 	int filter_H,
 	int filter_W,
@@ -1185,7 +1185,7 @@ void zq_cnn_conv_no_padding_32f_general(
 	int stride_W,
 	int dilation_H,
 	int dilation_W,
-	float* out_tensor4D_data,
+	zq_base_type* out_tensor4D_data,
 	int out_N,	// must be in_N
 	int out_H,	// must be (in_H - filter_H)/stride_H + 1
 	int out_W,	// must be (in_W - filter_W)/stride_W + 1
@@ -1196,23 +1196,23 @@ void zq_cnn_conv_no_padding_32f_general(
 )
 {
 	register zq_mm_type sum;
-	ZQ_DECLSPEC_ALIGN32 float q[8];
+	ZQ_DECLSPEC_ALIGN32 zq_base_type q[8];
 	
-	const float* in_slice_ptr;
-	const float* in_row_ptr;
-	const float* in_pix_ptr;
-	float* out_slice_ptr;
-	float* out_row_ptr;
-	float* out_pix_ptr;
-	float* out_c_ptr;
+	const zq_base_type* in_slice_ptr;
+	const zq_base_type* in_row_ptr;
+	const zq_base_type* in_pix_ptr;
+	zq_base_type* out_slice_ptr;
+	zq_base_type* out_row_ptr;
+	zq_base_type* out_pix_ptr;
+	zq_base_type* out_c_ptr;
 
-	const float* cur_in_row_ptr;
-	const float* cur_in_pix_ptr;
-	const float* cur_in_c_ptr;
-	const float* cur_filter_slice_ptr;
-	const float* cur_filter_row_ptr;
-	const float* cur_filter_pix_ptr;
-	const float* cur_filter_c_ptr;
+	const zq_base_type* cur_in_row_ptr;
+	const zq_base_type* cur_in_pix_ptr;
+	const zq_base_type* cur_in_c_ptr;
+	const zq_base_type* cur_filter_slice_ptr;
+	const zq_base_type* cur_filter_row_ptr;
+	const zq_base_type* cur_filter_pix_ptr;
+	const zq_base_type* cur_filter_c_ptr;
 
 	int stride_H_mul_in_WidthStep = stride_H*in_widthStep;
 	int stride_W_mul_in_pixStep = stride_W*in_pixelStep;

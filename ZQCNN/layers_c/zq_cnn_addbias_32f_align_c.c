@@ -37,6 +37,7 @@ extern "C" {
 #define zq_mm_store_ps vst1q_f32
 #define zq_mm_add_ps vaddq_f32
 #define zq_mm_type float32x4_t
+#define zq_base_type float
 #define zq_mm_align_size 4
 #define zq_mm_align_size_mul_2 8
 #define zq_mm_align_size_mul_3 12
@@ -56,6 +57,7 @@ extern "C" {
 #undef zq_mm_store_ps
 #undef zq_mm_add_ps
 #undef zq_mm_type
+#undef zq_base_type
 #undef zq_mm_align_size
 #undef zq_mm_align_size_mul_2
 #undef zq_mm_align_size_mul_3
@@ -67,6 +69,45 @@ extern "C" {
 #undef zq_mm_align_size_mul_16
 #undef zq_mm_align_size_mul_32
 
+#if __ARM_NEON_FP16
+#define zq_cnn_addbias_32f_align zq_cnn_addbias_16f_align128bit
+#define zq_mm_load_ps vld1q_f16
+#define zq_mm_store_ps vst1q_f16
+#define zq_mm_add_ps vaddq_f16
+#define zq_mm_type float16x8_t
+#define zq_base_type float16_t
+#define zq_mm_align_size 8
+#define zq_mm_align_size_mul_2 16
+#define zq_mm_align_size_mul_3 24
+#define zq_mm_align_size_mul_4 32
+#define zq_mm_align_size_mul_5 40
+#define zq_mm_align_size_mul_6 48
+#define zq_mm_align_size_mul_7 56
+#define zq_mm_align_size_mul_8 64
+#define zq_mm_align_size_mul_16 128
+#define zq_mm_align_size_mul_32 256
+
+#include "zq_cnn_addbias_32f_align_c_raw.h"
+
+
+#undef zq_cnn_addbias_32f_align
+#undef zq_mm_load_ps
+#undef zq_mm_store_ps
+#undef zq_mm_add_ps
+#undef zq_mm_type
+#undef zq_base_type
+#undef zq_mm_align_size
+#undef zq_mm_align_size_mul_2
+#undef zq_mm_align_size_mul_3
+#undef zq_mm_align_size_mul_4
+#undef zq_mm_align_size_mul_5
+#undef zq_mm_align_size_mul_6
+#undef zq_mm_align_size_mul_7
+#undef zq_mm_align_size_mul_8
+#undef zq_mm_align_size_mul_16
+#undef zq_mm_align_size_mul_32
+#endif
+
 #else
 #if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_SSE
 #define zq_cnn_addbias_32f_align zq_cnn_addbias_32f_align128bit
@@ -74,6 +115,7 @@ extern "C" {
 #define zq_mm_store_ps _mm_store_ps
 #define zq_mm_add_ps _mm_add_ps
 #define zq_mm_type __m128
+#define zq_base_type float
 #define zq_mm_align_size 4
 #define zq_mm_align_size_mul_2 8
 #define zq_mm_align_size_mul_3 12
@@ -93,6 +135,7 @@ extern "C" {
 #undef zq_mm_store_ps
 #undef zq_mm_add_ps
 #undef zq_mm_type
+#undef zq_base_type
 #undef zq_mm_align_size
 #undef zq_mm_align_size_mul_2
 #undef zq_mm_align_size_mul_3
@@ -112,6 +155,7 @@ extern "C" {
 #define zq_mm_store_ps _mm256_store_ps
 #define zq_mm_add_ps _mm256_add_ps
 #define zq_mm_type __m256
+#define zq_base_type float
 #define zq_mm_align_size 8
 #define zq_mm_align_size_mul_2 16
 #define zq_mm_align_size_mul_3 24
@@ -131,6 +175,7 @@ extern "C" {
 #undef zq_mm_store_ps
 #undef zq_mm_add_ps
 #undef zq_mm_type
+#undef zq_base_type
 #undef zq_mm_align_size
 #undef zq_mm_align_size_mul_2
 #undef zq_mm_align_size_mul_3
@@ -178,6 +223,45 @@ extern "C" {
 		}
 	}
 
+#if __ARM_NEON
+#if __ARM_NEON_FP16
+#define zq_base_type float16_t
+
+	void zq_cnn_addbias_16f_align0(
+		zq_base_type* in_tensor4D_data,	// in & out
+		int in_N,
+		int in_H,
+		int in_W,
+		int in_C,
+		int in_pixelStep,
+		int in_widthStep,
+		int in_sliceStep,
+		const zq_base_type* bias_data,
+		int bias_C // must be in_C
+	)
+	{
+		zq_base_type bias_v;
+		int n, h, w, c;
+		zq_base_type* slice_ptr, *row_ptr, *pix_ptr, *c_ptr;
+
+		for (c = 0, c_ptr = in_tensor4D_data; c < in_C; c++, c_ptr++)
+		{
+			bias_v = *(bias_data + c);
+			for (n = 0, slice_ptr = c_ptr; n < in_N; n++, slice_ptr += in_sliceStep)
+			{
+				for (h = 0, row_ptr = slice_ptr; h < in_H; h++, row_ptr += in_widthStep)
+				{
+					for (w = 0, pix_ptr = row_ptr; w < in_W; w++, pix_ptr += in_pixelStep)
+					{
+						*pix_ptr += bias_v;
+					}
+				}
+			}
+		}
+	}
+#undef zq_base_type
+#endif
+#endif
 
 #if defined(__cplusplus) || defined(c_plusplus) 
 }

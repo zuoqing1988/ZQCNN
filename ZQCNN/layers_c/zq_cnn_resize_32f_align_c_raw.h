@@ -1,5 +1,5 @@
 void zq_cnn_resize_with_safeborder(
-	const float* in_tensor4D_data,
+	const zq_base_type* in_tensor4D_data,
 	int in_N,
 	int in_H,
 	int in_W,
@@ -11,7 +11,7 @@ void zq_cnn_resize_with_safeborder(
 	int in_off_y,
 	int in_rect_width,
 	int in_rect_height,
-	float* out_tensor4D_data,
+	zq_base_type* out_tensor4D_data,
 	int out_H,
 	int out_W,
 	int out_pixelStep,
@@ -21,19 +21,19 @@ void zq_cnn_resize_with_safeborder(
 {
 	int* x0 = (int*)malloc(sizeof(int)*(out_W));
 	int* x1 = (int*)malloc(sizeof(int)*(out_W));
-	float* sx = (float*)malloc(sizeof(float)*(out_W));
-	float src_H = in_rect_height;
-	float src_W = in_rect_width;
-	float w_step = 1.0f / (float)out_W*src_W;
-	float h_step = 1.0f / (float)out_H*src_H;
-	float coord_y_ini = 0.5f * h_step - 0.5f + (float)in_off_y;
-	float coord_x_ini = 0.5f*w_step - 0.5f + (float)in_off_x;
-	float x0_f, y0_f;
+	zq_base_type* sx = (zq_base_type*)malloc(sizeof(zq_base_type)*(out_W));
+	zq_base_type src_H = in_rect_height;
+	zq_base_type src_W = in_rect_width;
+	zq_base_type w_step = 1.0f / (zq_base_type)out_W*src_W;
+	zq_base_type h_step = 1.0f / (zq_base_type)out_H*src_H;
+	zq_base_type coord_y_ini = 0.5f * h_step - 0.5f + (zq_base_type)in_off_y;
+	zq_base_type coord_x_ini = 0.5f*w_step - 0.5f + (zq_base_type)in_off_x;
+	zq_base_type x0_f, y0_f;
 	int y0, y1;
-	float sy;
-	float coord_x, coord_y;
-	const float* in_slice_ptr, *in_row0_ptr, *in_row1_ptr;
-	float* out_slice_ptr, *out_row_ptr, *out_pix_ptr;
+	zq_base_type sy;
+	zq_base_type coord_x, coord_y;
+	const zq_base_type* in_slice_ptr, *in_row0_ptr, *in_row1_ptr;
+	zq_base_type* out_slice_ptr, *out_row_ptr, *out_pix_ptr;
 	int n, h, w, c, cur_x0, cur_x1;
 	zq_mm_type cur_sx, v00, dx0, result0, v10, dx1, result1, dy, sum;
 
@@ -329,7 +329,7 @@ void zq_cnn_resize_with_safeborder(
 
 
 void zq_cnn_resize_without_safeborder(
-	const float* in_tensor4D_data,
+	const zq_base_type* in_tensor4D_data,
 	int in_N,
 	int in_H,
 	int in_W,
@@ -341,7 +341,7 @@ void zq_cnn_resize_without_safeborder(
 	int in_off_y,
 	int in_rect_width,
 	int in_rect_height,
-	float* out_tensor4D_data,
+	zq_base_type* out_tensor4D_data,
 	int out_H,
 	int out_W,
 	int out_pixelStep,
@@ -351,19 +351,19 @@ void zq_cnn_resize_without_safeborder(
 {
 	int* x0 = (int*)malloc(sizeof(int)*(out_W));
 	int* x1 = (int*)malloc(sizeof(int)*(out_W));
-	float* sx = (float*)malloc(sizeof(float)*(out_W));
-	float src_H = in_rect_height;
-	float src_W = in_rect_width;
-	float w_step = 1.0f / (float)out_W*src_W;
-	float h_step = 1.0f / (float)out_H*src_H;
-	float coord_y_ini = 0.5f * h_step - 0.5f + (float)in_off_y;
-	float coord_x_ini = 0.5f*w_step - 0.5f + (float)in_off_x;
-	float x0_f, y0_f;
+	zq_base_type* sx = (zq_base_type*)malloc(sizeof(zq_base_type)*(out_W));
+	zq_base_type src_H = in_rect_height;
+	zq_base_type src_W = in_rect_width;
+	zq_base_type w_step = 1.0f / (zq_base_type)out_W*src_W;
+	zq_base_type h_step = 1.0f / (zq_base_type)out_H*src_H;
+	zq_base_type coord_y_ini = 0.5f * h_step - 0.5f + (zq_base_type)in_off_y;
+	zq_base_type coord_x_ini = 0.5f*w_step - 0.5f + (zq_base_type)in_off_x;
+	zq_base_type x0_f, y0_f;
 	int y0, y1;
-	float sy;
-	float coord_x, coord_y;
-	const float* in_slice_ptr, *in_row0_ptr, *in_row1_ptr;
-	float* out_slice_ptr, *out_row_ptr, *out_pix_ptr;
+	zq_base_type sy;
+	zq_base_type coord_x, coord_y;
+	const zq_base_type* in_slice_ptr, *in_row0_ptr, *in_row1_ptr;
+	zq_base_type* out_slice_ptr, *out_row_ptr, *out_pix_ptr;
 	int n, h, w, c, cur_x0, cur_x1;
 	zq_mm_type cur_sx, v00, dx0, result0, v10, dx1, result1, dy, sum;
 
