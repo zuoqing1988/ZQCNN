@@ -265,7 +265,7 @@ void MatMul0_ABt(int M, int N, int K, const float* A, int lda, const float* Bt, 
 
 void test_ABt(int M, int N, int K, int nIters, float thresh, bool show)
 {
-	int padK = (K + 7) >> 3 << 3;
+	int padK = (K + 3) >> 2 << 2;
 	/*if (padK % 128 == 0)
 	padK += 8;*/
 	double mul_count = (double)M*N*K*nIters / (1024.0*1024.0*1024.0);
