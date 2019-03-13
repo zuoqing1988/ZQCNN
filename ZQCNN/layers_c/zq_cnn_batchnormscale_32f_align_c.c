@@ -60,6 +60,10 @@ extern "C" {
 #define zq_mm_align_size2 8
 #define zq_mm_align_size3 12
 #define zq_mm_align_size4 16
+#define zq_mm_align_size5 20
+#define zq_mm_align_size6 24
+#define zq_mm_align_size7 28
+#define zq_mm_align_size8 32
 
 #include "zq_cnn_batchnormscale_32f_align_c_raw.h"
 
@@ -79,6 +83,10 @@ extern "C" {
 #undef zq_mm_align_size2
 #undef zq_mm_align_size3
 #undef zq_mm_align_size4
+#undef zq_mm_align_size5
+#undef zq_mm_align_size6
+#undef zq_mm_align_size7
+#undef zq_mm_align_size8
 
 #if __ARM_NEON_FP16
 
@@ -101,6 +109,10 @@ extern "C" {
 #define zq_mm_align_size2 16
 #define zq_mm_align_size3 24
 #define zq_mm_align_size4 32
+#define zq_mm_align_size5 40
+#define zq_mm_align_size6 48
+#define zq_mm_align_size7 56
+#define zq_mm_align_size8 64
 
 #include "zq_cnn_batchnormscale_32f_align_c_raw.h"
 
@@ -120,6 +132,10 @@ extern "C" {
 #undef zq_mm_align_size2
 #undef zq_mm_align_size3
 #undef zq_mm_align_size4
+#undef zq_mm_align_size5
+#undef zq_mm_align_size6
+#undef zq_mm_align_size7
+#undef zq_mm_align_size8
 
 #endif
 
@@ -144,6 +160,10 @@ extern "C" {
 #define zq_mm_align_size2 8
 #define zq_mm_align_size3 12
 #define zq_mm_align_size4 16
+#define zq_mm_align_size5 20
+#define zq_mm_align_size6 24
+#define zq_mm_align_size7 28
+#define zq_mm_align_size8 32
 
 #include "zq_cnn_batchnormscale_32f_align_c_raw.h"
 
@@ -163,6 +183,10 @@ extern "C" {
 #undef zq_mm_align_size2
 #undef zq_mm_align_size3
 #undef zq_mm_align_size4
+#undef zq_mm_align_size5
+#undef zq_mm_align_size6
+#undef zq_mm_align_size7
+#undef zq_mm_align_size8
 
 #endif
 
@@ -187,6 +211,10 @@ extern "C" {
 #define zq_mm_align_size2 16
 #define zq_mm_align_size3 24
 #define zq_mm_align_size4 32
+#define zq_mm_align_size5 40
+#define zq_mm_align_size6 48
+#define zq_mm_align_size7 56
+#define zq_mm_align_size8 64
 
 #include "zq_cnn_batchnormscale_32f_align_c_raw.h"
 
@@ -206,6 +234,10 @@ extern "C" {
 #undef zq_mm_align_size2
 #undef zq_mm_align_size3
 #undef zq_mm_align_size4
+#undef zq_mm_align_size5
+#undef zq_mm_align_size6
+#undef zq_mm_align_size7
+#undef zq_mm_align_size8
 #endif
 #endif //__ARM_NEON
 	/*
