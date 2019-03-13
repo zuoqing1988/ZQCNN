@@ -152,7 +152,8 @@ void zq_cnn_batchnorm_32f_b_a_align(
 )
 {
 	int n, h, w, c;
-	zq_base_type* slice_ptr, *row_ptr, *pix_ptr, *c_ptr, *a_ptr, *b_ptr;
+	zq_base_type* slice_ptr, *row_ptr, *pix_ptr, *c_ptr;
+	const zq_base_type* a_ptr, *b_ptr;
 	register zq_mm_type a_vec0, a_vec1, a_vec2, a_vec3, b_vec0, b_vec1, b_vec2, b_vec3;
 	register zq_mm_type c_vec0, c_vec1, c_vec2, c_vec3;
 
