@@ -601,34 +601,49 @@ int main(int argc, const char** argv)
 	_test_gemm(20 * 28, 1, 24, 50000);
 	_test_gemm(20 * 28, 4, 24, 50000);
 	printf("test det2-dw24-fast\n");
-	_test_gemm(22 * 22, 16, 28, 50000);
-	_test_gemm(22 * 22, 16, 28, 50000);
-	_test_gemm(11 * 11, 32, 16, 50000);
-	_test_gemm(5 * 5, 64, 32, 50000);
-	_test_gemm(3 * 3, 128, 64, 20000);
-	_test_gemm(1, 2, 128, 10000);
-	_test_gemm(1, 4, 128, 10000);
+	for (int i = 1; i <= 64; i++)
+	{
+		printf("batchsize= %d\n", i);
+		_test_gemm(22 * 22*i, 16, 28, 50000/i);
+		_test_gemm(22 * 22*i, 16, 28, 50000/i);
+		_test_gemm(11 * 11*i, 32, 16, 50000/i);
+		_test_gemm(5 * 5*i, 64, 32, 50000/i);
+		_test_gemm(3 * 3*i, 128, 64, 20000/i);
+		_test_gemm(1*i, 2, 128, 10000/i);
+		_test_gemm(1*i, 4, 128, 10000/i);
+	}
+	
 	printf("test det3-dw48-fast\n");
-	_test_gemm(48 * 48, 16, 28, 10000);
-	_test_gemm(48 * 48, 16, 28, 10000);
-	_test_gemm(24 * 24, 32, 16, 10000);
-	_test_gemm(12 * 12, 64, 32, 10000);
-	_test_gemm(5 * 5, 64, 64, 10000);
-	_test_gemm(3 * 3, 128, 64, 10000);
-	_test_gemm(1, 2, 128, 10000);
-	_test_gemm(1, 4, 128, 10000);
+	for (int i = 1; i <= 64; i++)
+	{
+		printf("batchsize= %d\n", i);
+		_test_gemm(48 * 48*i, 16, 28, 10000/i);
+		_test_gemm(48 * 48*i, 16, 28, 10000/i);
+		_test_gemm(24 * 24*i, 32, 16, 10000/i);
+		_test_gemm(12 * 12*i, 64, 32, 10000/i);
+		_test_gemm(5 * 5*i, 64, 64, 10000/i);
+		_test_gemm(3 * 3*i, 128, 64, 10000/i);
+		_test_gemm(1*i, 2, 128, 10000/i);
+		_test_gemm(1*i, 4, 128, 10000/i);
+	}
+	
 	printf("test det5-dw96-v2s\n");
-	_test_gemm(94 * 94, 32, 28, 1000);
-	_test_gemm(93 * 93, 32, 32, 1000);
-	_test_gemm(46 * 46, 64, 32, 1000);
-	_test_gemm(45 * 45, 64, 64, 1000);
-	_test_gemm(22 * 22, 64, 64, 2000);
-	_test_gemm(21 * 21, 64, 64, 2000);
-	_test_gemm(10 * 10, 128, 64, 5000);
-	_test_gemm(9 * 9, 128, 128, 5000);
-	_test_gemm(4 * 4, 256, 128, 10000);
-	_test_gemm(3 * 3, 256, 256, 10000);
-	_test_gemm(1 * 1, 212, 256, 10000);
+	for (int i = 1; i <= 64; i++)
+	{
+		printf("batchsize= %d\n", i);
+		_test_gemm(94 * 94*i, 32, 28, 1000/i);
+		_test_gemm(93 * 93*i, 32, 32, 1000/i);
+		_test_gemm(46 * 46*i, 64, 32, 1000/i);
+		_test_gemm(45 * 45*i, 64, 64, 1000/i);
+		_test_gemm(22 * 22*i, 64, 64, 2000/i);
+		_test_gemm(21 * 21*i, 64, 64, 2000/i);
+		_test_gemm(10 * 10*i, 128, 64, 5000/i);
+		_test_gemm(9 * 9*i, 128, 128, 5000/i);
+		_test_gemm(4 * 4*i, 256, 128, 10000/i);
+		_test_gemm(3 * 3*i, 256, 256, 10000/i);
+		_test_gemm(1 * 1*i, 212, 256, 10000/i);
+	}
+	
 	printf("test mobilefacenet\n");
 	_test_gemm(56 * 56, 64, 28, 1000);
 	_test_gemm(56 * 56, 64, 28, 1000);
