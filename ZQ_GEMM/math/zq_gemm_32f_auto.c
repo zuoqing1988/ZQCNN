@@ -29,13 +29,24 @@ extern "C" {
 #if __ARM_NEON_ARMV8
 		if (K == 8)
 		{
+#if ZQ_CNN_USE_BLAS_GEMM
+#else
 			zq_gemm_32f_align128bit_AnoTrans_Btrans_M4_N4(M, N, K, A, lda, Bt, ldb, C, ldc);
 			handled = 1;
+#endif
 		}
 		else if (K == 16)
 		{
+#if ZQ_CNN_USE_BLAS_GEMM
+			if (N % 32 == 0)
+			{
+				zq_gemm_32f_align128bit_AnoTrans_Btrans_M4_N4(M, N, K, A, lda, Bt, ldb, C, ldc);
+				handled = 1;
+			}
+#else
 			zq_gemm_32f_align128bit_AnoTrans_Btrans_M4_N4(M, N, K, A, lda, Bt, ldb, C, ldc);
 			handled = 1;
+#endif
 		}
 		else if (K == 24)
 		{
@@ -70,43 +81,77 @@ extern "C" {
 		}
 		else if (K == 32)
 		{
+#if ZQ_CNN_USE_BLAS_GEMM
+			if (N % 32 == 0)
+			{
+				zq_gemm_32f_align128bit_AnoTrans_Btrans_M4_N4(M, N, K, A, lda, Bt, ldb, C, ldc);
+				handled = 1;
+			}
+#else
 			zq_gemm_32f_align128bit_AnoTrans_Btrans_M4_N4(M, N, K, A, lda, Bt, ldb, C, ldc);
 			handled = 1;
+#endif
 		}
 		else if (K == 64)
 		{
+#if ZQ_CNN_USE_BLAS_GEMM
+			if (N % 32 == 0 && N <= 128)
+			{
+				zq_gemm_32f_align128bit_AnoTrans_Btrans_M4_N4(M, N, K, A, lda, Bt, ldb, C, ldc);
+				handled = 1;
+			}
+#else
 			zq_gemm_32f_align128bit_AnoTrans_Btrans_M4_N4(M, N, K, A, lda, Bt, ldb, C, ldc);
 			handled = 1;
+#endif
 		}
 		else if (K == 72) // 3*3*8
 		{
+#if ZQ_CNN_USE_BLAS_GEMM
+#else
 			zq_gemm_32f_align128bit_AnoTrans_Btrans_M4_N4(M, N, K, A, lda, Bt, ldb, C, ldc);
 			handled = 1;
+#endif
 		}
 		else if (K == 128)
 		{
+#if ZQ_CNN_USE_BLAS_GEMM
+#else
 			zq_gemm_32f_align128bit_AnoTrans_Btrans_M4_N4(M, N, K, A, lda, Bt, ldb, C, ldc);
 			handled = 1;
+#endif
 		}
 		else if (K == 144) // 3*3*16
 		{
+#if ZQ_CNN_USE_BLAS_GEMM
+#else
 			zq_gemm_32f_align128bit_AnoTrans_Btrans_M4_N4(M, N, K, A, lda, Bt, ldb, C, ldc);
 			handled = 1;
+#endif
 		}
 		else if (K == 256)
 		{
+#if ZQ_CNN_USE_BLAS_GEMM
+#else
 			zq_gemm_32f_align128bit_AnoTrans_Btrans_M4_N4(M, N, K, A, lda, Bt, ldb, C, ldc);
 			handled = 1;
+#endif
 		}
 		else if (K == 512)
 		{
+#if ZQ_CNN_USE_BLAS_GEMM
+#else
 			zq_gemm_32f_align128bit_AnoTrans_Btrans_M4_N4(M, N, K, A, lda, Bt, ldb, C, ldc);
 			handled = 1;
+#endif
 		}
 		else if (K == 1024)
 		{
+#if ZQ_CNN_USE_BLAS_GEMM
+#else
 			zq_gemm_32f_align128bit_AnoTrans_Btrans_M4_N4(M, N, K, A, lda, Bt, ldb, C, ldc);
 			handled = 1;
+#endif
 		}
 
 		//back up methods
