@@ -620,8 +620,20 @@ int main(int argc, const char** argv)
 	_test_gemm(1 * 1, 128, 512, 1000);
 	_test_gemm(1 * 1, 256, 512, 1000);
 	_test_gemm(1 * 1, 512, 512, 1000);
-	//printf("test mobilefacenet-res2-6-10-2");
-	
+	printf("test mobilefacenet-res2-6-10-2");
+	_test_gemm(56 * 56, 64, 28, 1000);
+	_test_gemm(56 * 56, 64, 28, 1000);
+	_test_gemm(56 * 56, 64, 64, 1000);
+	_test_gemm(56 * 56, 128, 64, 1000);
+	_test_gemm(28 * 28, 128, 128, 1000);
+	_test_gemm(28 * 28, 256, 128, 1000);
+	_test_gemm(14 * 14, 256, 256, 1000);
+	_test_gemm(14 * 14, 512, 256, 1000);
+	_test_gemm(7 * 7, 512, 512, 1000);
+	_test_gemm(1 * 1, 128, 512, 1000);
+	_test_gemm(1 * 1, 256, 512, 1000);
+	_test_gemm(1 * 1, 512, 512, 1000);
+
 	//return 0;
 	//compare gemv
 	//_test_gemv(56 * 48, 64, 3 * 3 * 3,1000);
