@@ -57,7 +57,7 @@ extern "C" {
 		else if (K == 24)
 		{
 			if ((M >= 1 && N == 2) //det1-dw20-fast
-				|| (M >=1 && N == 4) //det1-dw20-fast
+				|| (M >= 1 && N == 4) //det1-dw20-fast
 				)
 			{
 				SWAP_A_Bt;
@@ -139,7 +139,7 @@ extern "C" {
 		}
 		else if (K == 512)
 		{
-			if ((M == 1 && (N == 128 || N == 256 || N == 512) ////mobilefacenet & mobilefacenet-res2-6-10-2
+			if ((M == 1 && (N == 128 || N == 256 || N == 512)) ////mobilefacenet & mobilefacenet-res2-6-10-2
 				|| (M == 49 && N == 512) //mobilefacenet-res2-6-10-2
 				)
 			{
