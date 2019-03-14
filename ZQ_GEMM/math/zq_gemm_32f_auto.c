@@ -68,8 +68,9 @@ extern "C" {
 		}
 		else if (K == 28)
 		{
-			if ((M == 3136 && N == 64) //mobilefacenet
-				|| (M == 8836 && N == 32) //det5-dw96-v2s
+			if (
+				(M == 3136 && N == 64) //mobilefacenet
+				||(M == 8836 && N == 32) //det5-dw96-v2s
 				|| (M == 2304 && N == 16) //det3-dw48-fast
 				|| (M == 484 && N == 16) //det2-dw24-fast
 				|| (M >= 2500 && N == 8) //det1-dw20-fast
@@ -97,8 +98,10 @@ extern "C" {
 		}
 		else if (K == 64)
 		{
-			if ((M == 3136 && N == 128) //mobilefacenet
-				|| (M == 3136 && N == 64) //mobilefacenet-res2-6-10-2
+			if (
+				//(M == 3136 && N == 128) //mobilefacenet
+				//||
+				(M == 3136 && N == 64) //mobilefacenet-res2-6-10-2
 				|| (M == 2025 && N == 64) //det5-dw96-v2s
 				|| (M == 484 && N == 64) //det5-dw96-v2s
 				|| (M == 441 && N == 64) //det5-dw96-v2s
