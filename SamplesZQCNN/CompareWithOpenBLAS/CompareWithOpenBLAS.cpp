@@ -592,6 +592,20 @@ int main(int argc, const char** argv)
 		_test_gemm(M, N, K, 1, 1e-4, true);
 	}
 	return 0;*/
+
+	printf("test det5-dw96-v2s\n");
+	_test_gemm(94 * 94, 32, 28, 1000);
+	_test_gemm(93 * 93, 32, 32, 1000);
+	_test_gemm(46 * 46, 64, 32, 1000);
+	_test_gemm(45 * 45, 64, 64, 1000);
+	_test_gemm(22 * 22, 64, 64, 2000);
+	_test_gemm(21 * 21, 64, 64, 2000);
+	_test_gemm(10 * 10, 128, 64, 5000);
+	_test_gemm(9 * 9, 128, 128, 5000);
+	_test_gemm(4 * 4, 256, 128, 10000);
+	_test_gemm(3 * 3, 256, 256, 10000);
+	_test_gemm(1 * 1, 212, 256, 10000);
+	printf("test mobilefacenet\n");
 	_test_gemm(56 * 56, 64, 28, 1000);
 	_test_gemm(56 * 56, 64, 28, 1000);
 	_test_gemm(56 * 56, 128, 64, 1000);
@@ -606,13 +620,8 @@ int main(int argc, const char** argv)
 	_test_gemm(1 * 1, 128, 512, 1000);
 	_test_gemm(1 * 1, 256, 512, 1000);
 	_test_gemm(1 * 1, 512, 512, 1000);
-
-	_test_gemm(56 * 48, 64, 3 * 3 * 3, 1000);
-	_test_gemm(56 * 48, 64, 3 * 3 * 4, 1000);
-	_test_gemm(28 * 24, 128, 3 * 3 * 64, 1000);
-	_test_gemm(14 * 12, 256, 3 * 3 * 128, 1000);
-	_test_gemm(7 * 6, 512, 3 * 3 * 256, 1000);
-	_test_gemm(1 * 1, 512, 7 * 6 * 512, 1000);
+	//printf("test mobilefacenet-res2-6-10-2");
+	
 	//return 0;
 	//compare gemv
 	//_test_gemv(56 * 48, 64, 3 * 3 * 3,1000);
