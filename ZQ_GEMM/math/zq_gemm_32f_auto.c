@@ -42,16 +42,11 @@ extern "C" {
 		int handled = 0;
 
 #if __ARM_NEON_ARMV8
-		if (K == 8)
+		if (K == 16)
 		{
-			SWAP_A_Bt;
-			zq_gemm_32f_align128bit_AnoTrans_Btrans_M4_N4(M, N, K, A, lda, Bt, ldb, C, ldc);
-			handled = 1;
-			SWAP_C;
-		}
-		else if (K == 16)
-		{
-			if (N == 32 || N == 64)
+			if ((M == 576 && N == 32) //det3-dw48-fast
+				|| (M == 121 && N == 32) //det2-dw24-fast
+				)
 			{
 				SWAP_A_Bt;
 				zq_gemm_32f_align128bit_AnoTrans_Btrans_M4_N4(M, N, K, A, lda, Bt, ldb, C, ldc);
@@ -61,41 +56,24 @@ extern "C" {
 		}
 		else if (K == 24)
 		{
-			if (N == 8 || N == 16)
+			if ((M >= 1 && N == 2) //det1-dw20-fast
+				|| (M >=1 && N == 4) //det1-dw20-fast
+				)
 			{
 				SWAP_A_Bt;
 				zq_gemm_32f_align128bit_AnoTrans_Btrans_M2_N8(M, N, K, A, lda, Bt, ldb, C, ldc);
 				handled = 1;
 				SWAP_C;
 			}
-			else
-			{
-				SWAP_A_Bt;
-				zq_gemm_32f_align128bit_AnoTrans_Btrans_M4_N4(M, N, K, A, lda, Bt, ldb, C, ldc);
-				handled = 1;
-				SWAP_C;
-			}
-		}
-		else if (K == 27) //3*3*3
-		{
-			if (N <= 16)
-			{
-				SWAP_A_Bt;
-				zq_gemm_32f_align128bit_AnoTrans_Btrans_M4_N4(M, N, K, A, lda, Bt, ldb, C, ldc);
-				handled = 1;
-				SWAP_C;
-			}
-			else if (N <= 128)
-			{
-				SWAP_A_Bt;
-				zq_gemm_32f_align128bit_AnoTrans_Btrans_M4_N4(M, N, K, A, lda, Bt, ldb, C, ldc);
-				handled = 1;
-				SWAP_C;
-			}
 		}
 		else if (K == 28)
 		{
-			if (N == 8 || N == 16 || N == 32)
+			if ((M == 3136 && N == 64) //mobilefacenet
+				|| (M == 8836 && N == 32) //det5-dw96-v2s
+				|| (M == 2304 && N == 16) //det3-dw48-fast
+				|| (M == 484 && N == 16) //det2-dw24-fast
+				|| (M >= 2500 && N == 8) //det1-dw20-fast
+				)
 			{
 				SWAP_A_Bt;
 				zq_gemm_32f_align128bit_AnoTrans_Btrans_M4_N4(M, N, K, A, lda, Bt, ldb, C, ldc);
@@ -105,7 +83,11 @@ extern "C" {
 		}
 		else if (K == 32)
 		{
-			if (N == 32)
+			if ((M == 8649 && N == 32) //det5-dw96-v2s
+				|| (M == 2116 && N == 64) //det5-dw96-v2s
+				|| (M == 144 && N == 64) //det3-dw48-fast
+				|| (M == 25 && N == 64) //det2-dw24-fast
+				)
 			{
 				SWAP_A_Bt;
 				zq_gemm_32f_align128bit_AnoTrans_Btrans_M4_N4(M, N, K, A, lda, Bt, ldb, C, ldc);
@@ -115,7 +97,51 @@ extern "C" {
 		}
 		else if (K == 64)
 		{
-			if (N == 32)
+			if ((M == 3136 && N == 128) //mobilefacenet
+				(M == 3136 && N == 64) //mobilefacenet-res2-6-10-2
+				|| (M == 2025 && N == 64) //det5-dw96-v2s
+				|| (M == 484 && N == 64) //det5-dw96-v2s
+				|| (M == 441 && N == 64) //det5-dw96-v2s
+				|| (M == 25 && N == 64) //det3-dw48-fast
+				|| (M == 9 && N == 128) //det3-dw48-fast && det2-dw24-fast
+				)
+			{
+				SWAP_A_Bt;
+				zq_gemm_32f_align128bit_AnoTrans_Btrans_M4_N4(M, N, K, A, lda, Bt, ldb, C, ldc);
+				handled = 1;
+				SWAP_C;
+			}
+		}
+		else if (K == 128)
+		{
+			if ((M == 16 && N == 256) //det5-dw96-v2s
+				|| (M == 1 && N == 2) //det3-dw48-fast && det2-dw24-fast
+				|| (M == 1 && N == 4) //det3-dw48-fast && det2-dw24-fast
+				)
+			{
+				SWAP_A_Bt;
+				zq_gemm_32f_align128bit_AnoTrans_Btrans_M4_N4(M, N, K, A, lda, Bt, ldb, C, ldc);
+				handled = 1;
+				SWAP_C;
+			}
+		}
+		else if (K == 256)
+		{
+			if ((M == 9 && N == 256) //det5-dw96-v2s
+				|| (M == 1 && N == 212) //det5-dw96-v2s
+				)
+			{
+				SWAP_A_Bt;
+				zq_gemm_32f_align128bit_AnoTrans_Btrans_M4_N4(M, N, K, A, lda, Bt, ldb, C, ldc);
+				handled = 1;
+				SWAP_C;
+			}
+		}
+		else if (K == 512)
+		{
+			if ((M == 1 && (N == 128 || N == 256 || N == 512) ////mobilefacenet & mobilefacenet-res2-6-10-2
+				|| (M == 49 && N == 512) //mobilefacenet-res2-6-10-2
+				)
 			{
 				SWAP_A_Bt;
 				zq_gemm_32f_align128bit_AnoTrans_Btrans_M4_N4(M, N, K, A, lda, Bt, ldb, C, ldc);
@@ -344,12 +370,12 @@ extern "C" {
 				SWAP_A_Bt;
 				zq_gemm_32f_align128bit_AnoTrans_Btrans_M4_N1(M, N, K, A, lda, Bt, ldb, C, ldc);
 				handled = 1;
-		
-		}
+
+			}
 #endif// __ARM_NEON_ARMV8
 
-		SWAP_C;
-	}
+			SWAP_C;
+		}
 
 
 #else // not __ARM_NEON
@@ -631,5 +657,5 @@ extern "C" {
 #endif
 
 #if defined(__cplusplus) || defined(c_plusplus) 
-}
+	}
 #endif
