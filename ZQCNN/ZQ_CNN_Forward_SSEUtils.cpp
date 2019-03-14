@@ -1016,6 +1016,13 @@ void ZQ_CNN_Forward_SSEUtils::_depthwise_convolution_nopadding(int align_mode, c
 					out_data, out_N, out_H, out_W, out_C, out_pixStep, out_widthStep, out_sliceStep);
 				has_handled = true;
 			}
+			else if (padded_C == 24)
+			{
+				zq_cnn_depthwise_conv_no_padding_32f_align128bit_kernel3x3_C24(in_data, in_N, in_H, in_W, in_C, in_pixStep, in_widthStep, in_sliceStep,
+					filter_data, filter_N, filter_H, filter_W, filter_C, filter_pixStep, filter_widthStep, filter_sliceStep, strideH, strideW,
+					out_data, out_N, out_H, out_W, out_C, out_pixStep, out_widthStep, out_sliceStep);
+				has_handled = true;
+			}
 			else if (padded_C == 32)
 			{
 				zq_cnn_depthwise_conv_no_padding_32f_align128bit_kernel3x3_C32(in_data, in_N, in_H, in_W, in_C, in_pixStep, in_widthStep, in_sliceStep,
@@ -1023,7 +1030,6 @@ void ZQ_CNN_Forward_SSEUtils::_depthwise_convolution_nopadding(int align_mode, c
 					out_data, out_N, out_H, out_W, out_C, out_pixStep, out_widthStep, out_sliceStep);
 				has_handled = true;
 			}
-#if !__ARM_NEON
 			else if (padded_C == 64)
 			{
 				zq_cnn_depthwise_conv_no_padding_32f_align128bit_kernel3x3_C64(in_data, in_N, in_H, in_W, in_C, in_pixStep, in_widthStep, in_sliceStep,
@@ -1045,7 +1051,6 @@ void ZQ_CNN_Forward_SSEUtils::_depthwise_convolution_nopadding(int align_mode, c
 					out_data, out_N, out_H, out_W, out_C, out_pixStep, out_widthStep, out_sliceStep);
 				has_handled = true;
 			}
-#endif
 			else if (padded_C % 32 == 0)
 			{
 				zq_cnn_depthwise_conv_no_padding_32f_align128bit_kernel3x3_Cdiv32(in_data, in_N, in_H, in_W, in_C, in_pixStep, in_widthStep, in_sliceStep,
@@ -1056,6 +1061,80 @@ void ZQ_CNN_Forward_SSEUtils::_depthwise_convolution_nopadding(int align_mode, c
 			else
 			{
 				zq_cnn_depthwise_conv_no_padding_32f_align128bit_kernel3x3(in_data, in_N, in_H, in_W, in_C, in_pixStep, in_widthStep, in_sliceStep,
+					filter_data, filter_N, filter_H, filter_W, filter_C, filter_pixStep, filter_widthStep, filter_sliceStep, strideH, strideW,
+					out_data, out_N, out_H, out_W, out_C, out_pixStep, out_widthStep, out_sliceStep);
+				has_handled = true;
+			}
+		}
+		else if (filter_H == 2 && filter_W == 2)
+		{
+			int padded_C = (in_C + 3) >> 2 << 2;
+			if (padded_C == 4)
+			{
+				zq_cnn_depthwise_conv_no_padding_32f_align128bit_kernel2x2_C4(in_data, in_N, in_H, in_W, in_C, in_pixStep, in_widthStep, in_sliceStep,
+					filter_data, filter_N, filter_H, filter_W, filter_C, filter_pixStep, filter_widthStep, filter_sliceStep, strideH, strideW,
+					out_data, out_N, out_H, out_W, out_C, out_pixStep, out_widthStep, out_sliceStep);
+				has_handled = true;
+			}
+			else if (padded_C == 8)
+			{
+				zq_cnn_depthwise_conv_no_padding_32f_align128bit_kernel2x2_C8(in_data, in_N, in_H, in_W, in_C, in_pixStep, in_widthStep, in_sliceStep,
+					filter_data, filter_N, filter_H, filter_W, filter_C, filter_pixStep, filter_widthStep, filter_sliceStep, strideH, strideW,
+					out_data, out_N, out_H, out_W, out_C, out_pixStep, out_widthStep, out_sliceStep);
+				has_handled = true;
+			}
+			else if (padded_C == 16)
+			{
+				zq_cnn_depthwise_conv_no_padding_32f_align128bit_kernel2x2_C16(in_data, in_N, in_H, in_W, in_C, in_pixStep, in_widthStep, in_sliceStep,
+					filter_data, filter_N, filter_H, filter_W, filter_C, filter_pixStep, filter_widthStep, filter_sliceStep, strideH, strideW,
+					out_data, out_N, out_H, out_W, out_C, out_pixStep, out_widthStep, out_sliceStep);
+				has_handled = true;
+			}
+			else if (padded_C == 24)
+			{
+				zq_cnn_depthwise_conv_no_padding_32f_align128bit_kernel2x2_C24(in_data, in_N, in_H, in_W, in_C, in_pixStep, in_widthStep, in_sliceStep,
+					filter_data, filter_N, filter_H, filter_W, filter_C, filter_pixStep, filter_widthStep, filter_sliceStep, strideH, strideW,
+					out_data, out_N, out_H, out_W, out_C, out_pixStep, out_widthStep, out_sliceStep);
+				has_handled = true;
+			}
+			else if (padded_C == 32)
+			{
+				zq_cnn_depthwise_conv_no_padding_32f_align128bit_kernel2x2_C32(in_data, in_N, in_H, in_W, in_C, in_pixStep, in_widthStep, in_sliceStep,
+					filter_data, filter_N, filter_H, filter_W, filter_C, filter_pixStep, filter_widthStep, filter_sliceStep, strideH, strideW,
+					out_data, out_N, out_H, out_W, out_C, out_pixStep, out_widthStep, out_sliceStep);
+				has_handled = true;
+			}
+			else if (padded_C == 64)
+			{
+				zq_cnn_depthwise_conv_no_padding_32f_align128bit_kernel2x2_C64(in_data, in_N, in_H, in_W, in_C, in_pixStep, in_widthStep, in_sliceStep,
+					filter_data, filter_N, filter_H, filter_W, filter_C, filter_pixStep, filter_widthStep, filter_sliceStep, strideH, strideW,
+					out_data, out_N, out_H, out_W, out_C, out_pixStep, out_widthStep, out_sliceStep);
+				has_handled = true;
+			}
+			else if (padded_C == 128)
+			{
+				zq_cnn_depthwise_conv_no_padding_32f_align128bit_kernel2x2_C128(in_data, in_N, in_H, in_W, in_C, in_pixStep, in_widthStep, in_sliceStep,
+					filter_data, filter_N, filter_H, filter_W, filter_C, filter_pixStep, filter_widthStep, filter_sliceStep, strideH, strideW,
+					out_data, out_N, out_H, out_W, out_C, out_pixStep, out_widthStep, out_sliceStep);
+				has_handled = true;
+			}
+			else if (padded_C == 256)
+			{
+				zq_cnn_depthwise_conv_no_padding_32f_align128bit_kernel2x2_C256(in_data, in_N, in_H, in_W, in_C, in_pixStep, in_widthStep, in_sliceStep,
+					filter_data, filter_N, filter_H, filter_W, filter_C, filter_pixStep, filter_widthStep, filter_sliceStep, strideH, strideW,
+					out_data, out_N, out_H, out_W, out_C, out_pixStep, out_widthStep, out_sliceStep);
+				has_handled = true;
+			}
+			else if (padded_C % 32 == 0)
+			{
+				zq_cnn_depthwise_conv_no_padding_32f_align128bit_kernel2x2_Cdiv32(in_data, in_N, in_H, in_W, in_C, in_pixStep, in_widthStep, in_sliceStep,
+					filter_data, filter_N, filter_H, filter_W, filter_C, filter_pixStep, filter_widthStep, filter_sliceStep, strideH, strideW,
+					out_data, out_N, out_H, out_W, out_C, out_pixStep, out_widthStep, out_sliceStep);
+				has_handled = true;
+			}
+			else
+			{
+				zq_cnn_depthwise_conv_no_padding_32f_align128bit_kernel2x2(in_data, in_N, in_H, in_W, in_C, in_pixStep, in_widthStep, in_sliceStep,
 					filter_data, filter_N, filter_H, filter_W, filter_C, filter_pixStep, filter_widthStep, filter_sliceStep, strideH, strideW,
 					out_data, out_N, out_H, out_W, out_C, out_pixStep, out_widthStep, out_sliceStep);
 				has_handled = true;
@@ -1169,6 +1248,73 @@ void ZQ_CNN_Forward_SSEUtils::_depthwise_convolution_nopadding(int align_mode, c
 				has_handled = true;
 			}
 		}
+		else if (filter_H == 2 && filter_W == 2)
+		{
+			int padded_C = (in_C + 3) >> 2 << 2;
+			if (padded_C == 4)
+			{
+				zq_cnn_depthwise_conv_no_padding_32f_align128bit_kernel2x2_C4(in_data, in_N, in_H, in_W, in_C, in_pixStep, in_widthStep, in_sliceStep,
+					filter_data, filter_N, filter_H, filter_W, filter_C, filter_pixStep, filter_widthStep, filter_sliceStep, strideH, strideW,
+					out_data, out_N, out_H, out_W, out_C, out_pixStep, out_widthStep, out_sliceStep);
+				has_handled = true;
+			}
+			else if (padded_C == 8)
+			{
+				zq_cnn_depthwise_conv_no_padding_32f_align128bit_kernel2x2_C8(in_data, in_N, in_H, in_W, in_C, in_pixStep, in_widthStep, in_sliceStep,
+					filter_data, filter_N, filter_H, filter_W, filter_C, filter_pixStep, filter_widthStep, filter_sliceStep, strideH, strideW,
+					out_data, out_N, out_H, out_W, out_C, out_pixStep, out_widthStep, out_sliceStep);
+				has_handled = true;
+			}
+			else if (padded_C == 16)
+			{
+				zq_cnn_depthwise_conv_no_padding_32f_align128bit_kernel2x2_C16(in_data, in_N, in_H, in_W, in_C, in_pixStep, in_widthStep, in_sliceStep,
+					filter_data, filter_N, filter_H, filter_W, filter_C, filter_pixStep, filter_widthStep, filter_sliceStep, strideH, strideW,
+					out_data, out_N, out_H, out_W, out_C, out_pixStep, out_widthStep, out_sliceStep);
+				has_handled = true;
+			}
+			else if (padded_C == 32)
+			{
+				zq_cnn_depthwise_conv_no_padding_32f_align128bit_kernel2x2_C32(in_data, in_N, in_H, in_W, in_C, in_pixStep, in_widthStep, in_sliceStep,
+					filter_data, filter_N, filter_H, filter_W, filter_C, filter_pixStep, filter_widthStep, filter_sliceStep, strideH, strideW,
+					out_data, out_N, out_H, out_W, out_C, out_pixStep, out_widthStep, out_sliceStep);
+				has_handled = true;
+			}
+			else if (padded_C == 64)
+			{
+				zq_cnn_depthwise_conv_no_padding_32f_align128bit_kernel2x2_C64(in_data, in_N, in_H, in_W, in_C, in_pixStep, in_widthStep, in_sliceStep,
+					filter_data, filter_N, filter_H, filter_W, filter_C, filter_pixStep, filter_widthStep, filter_sliceStep, strideH, strideW,
+					out_data, out_N, out_H, out_W, out_C, out_pixStep, out_widthStep, out_sliceStep);
+				has_handled = true;
+			}
+			else if (padded_C == 128)
+			{
+				zq_cnn_depthwise_conv_no_padding_32f_align128bit_kernel2x2_C128(in_data, in_N, in_H, in_W, in_C, in_pixStep, in_widthStep, in_sliceStep,
+					filter_data, filter_N, filter_H, filter_W, filter_C, filter_pixStep, filter_widthStep, filter_sliceStep, strideH, strideW,
+					out_data, out_N, out_H, out_W, out_C, out_pixStep, out_widthStep, out_sliceStep);
+				has_handled = true;
+			}
+			else if (padded_C == 256)
+			{
+				zq_cnn_depthwise_conv_no_padding_32f_align128bit_kernel2x2_C256(in_data, in_N, in_H, in_W, in_C, in_pixStep, in_widthStep, in_sliceStep,
+					filter_data, filter_N, filter_H, filter_W, filter_C, filter_pixStep, filter_widthStep, filter_sliceStep, strideH, strideW,
+					out_data, out_N, out_H, out_W, out_C, out_pixStep, out_widthStep, out_sliceStep);
+				has_handled = true;
+			}
+			else if (padded_C % 32 == 0)
+			{
+				zq_cnn_depthwise_conv_no_padding_32f_align128bit_kernel2x2_Cdiv32(in_data, in_N, in_H, in_W, in_C, in_pixStep, in_widthStep, in_sliceStep,
+					filter_data, filter_N, filter_H, filter_W, filter_C, filter_pixStep, filter_widthStep, filter_sliceStep, strideH, strideW,
+					out_data, out_N, out_H, out_W, out_C, out_pixStep, out_widthStep, out_sliceStep);
+				has_handled = true;
+			}
+			else
+			{
+				zq_cnn_depthwise_conv_no_padding_32f_align128bit_kernel2x2(in_data, in_N, in_H, in_W, in_C, in_pixStep, in_widthStep, in_sliceStep,
+					filter_data, filter_N, filter_H, filter_W, filter_C, filter_pixStep, filter_widthStep, filter_sliceStep, strideH, strideW,
+					out_data, out_N, out_H, out_W, out_C, out_pixStep, out_widthStep, out_sliceStep);
+				has_handled = true;
+			}
+		}
 		else
 		{
 			zq_cnn_depthwise_conv_no_padding_32f_align128bit_general(in_data, in_N, in_H, in_W, in_C, in_pixStep, in_widthStep, in_sliceStep,
@@ -1257,6 +1403,80 @@ void ZQ_CNN_Forward_SSEUtils::_depthwise_convolution_nopadding(int align_mode, c
 			else
 			{
 				zq_cnn_depthwise_conv_no_padding_32f_align256bit_kernel3x3(in_data, in_N, in_H, in_W, in_C, in_pixStep, in_widthStep, in_sliceStep,
+					filter_data, filter_N, filter_H, filter_W, filter_C, filter_pixStep, filter_widthStep, filter_sliceStep, strideH, strideW,
+					out_data, out_N, out_H, out_W, out_C, out_pixStep, out_widthStep, out_sliceStep);
+				has_handled = true;
+			}
+		}
+		else if (filter_H == 2 && filter_W == 2)
+		{
+			int padded_C = (in_C + 7) >> 3 << 3;
+			if (padded_C == 8)
+			{
+				zq_cnn_depthwise_conv_no_padding_32f_align256bit_kernel2x2_C8(in_data, in_N, in_H, in_W, in_C, in_pixStep, in_widthStep, in_sliceStep,
+					filter_data, filter_N, filter_H, filter_W, filter_C, filter_pixStep, filter_widthStep, filter_sliceStep, strideH, strideW,
+					out_data, out_N, out_H, out_W, out_C, out_pixStep, out_widthStep, out_sliceStep);
+				has_handled = true;
+			}
+			else if (padded_C == 16)
+			{
+				zq_cnn_depthwise_conv_no_padding_32f_align256bit_kernel2x2_C16(in_data, in_N, in_H, in_W, in_C, in_pixStep, in_widthStep, in_sliceStep,
+					filter_data, filter_N, filter_H, filter_W, filter_C, filter_pixStep, filter_widthStep, filter_sliceStep, strideH, strideW,
+					out_data, out_N, out_H, out_W, out_C, out_pixStep, out_widthStep, out_sliceStep);
+				has_handled = true;
+			}
+			else if (padded_C == 24)
+			{
+				zq_cnn_depthwise_conv_no_padding_32f_align256bit_kernel2x2_C24(in_data, in_N, in_H, in_W, in_C, in_pixStep, in_widthStep, in_sliceStep,
+					filter_data, filter_N, filter_H, filter_W, filter_C, filter_pixStep, filter_widthStep, filter_sliceStep, strideH, strideW,
+					out_data, out_N, out_H, out_W, out_C, out_pixStep, out_widthStep, out_sliceStep);
+				has_handled = true;
+			}
+			else if (padded_C == 32)
+			{
+				zq_cnn_depthwise_conv_no_padding_32f_align256bit_kernel2x2_C32(in_data, in_N, in_H, in_W, in_C, in_pixStep, in_widthStep, in_sliceStep,
+					filter_data, filter_N, filter_H, filter_W, filter_C, filter_pixStep, filter_widthStep, filter_sliceStep, strideH, strideW,
+					out_data, out_N, out_H, out_W, out_C, out_pixStep, out_widthStep, out_sliceStep);
+				has_handled = true;
+			}
+			else if (padded_C == 64)
+			{
+				zq_cnn_depthwise_conv_no_padding_32f_align256bit_kernel2x2_C64(in_data, in_N, in_H, in_W, in_C, in_pixStep, in_widthStep, in_sliceStep,
+					filter_data, filter_N, filter_H, filter_W, filter_C, filter_pixStep, filter_widthStep, filter_sliceStep, strideH, strideW,
+					out_data, out_N, out_H, out_W, out_C, out_pixStep, out_widthStep, out_sliceStep);
+				has_handled = true;
+			}
+			else if (padded_C == 128)
+			{
+				zq_cnn_depthwise_conv_no_padding_32f_align256bit_kernel2x2_C128(in_data, in_N, in_H, in_W, in_C, in_pixStep, in_widthStep, in_sliceStep,
+					filter_data, filter_N, filter_H, filter_W, filter_C, filter_pixStep, filter_widthStep, filter_sliceStep, strideH, strideW,
+					out_data, out_N, out_H, out_W, out_C, out_pixStep, out_widthStep, out_sliceStep);
+				has_handled = true;
+			}
+			else if (padded_C == 256)
+			{
+				zq_cnn_depthwise_conv_no_padding_32f_align256bit_kernel2x2_C256(in_data, in_N, in_H, in_W, in_C, in_pixStep, in_widthStep, in_sliceStep,
+					filter_data, filter_N, filter_H, filter_W, filter_C, filter_pixStep, filter_widthStep, filter_sliceStep, strideH, strideW,
+					out_data, out_N, out_H, out_W, out_C, out_pixStep, out_widthStep, out_sliceStep);
+				has_handled = true;
+			}
+			else if (padded_C == 512)
+			{
+				zq_cnn_depthwise_conv_no_padding_32f_align256bit_kernel2x2_C512(in_data, in_N, in_H, in_W, in_C, in_pixStep, in_widthStep, in_sliceStep,
+					filter_data, filter_N, filter_H, filter_W, filter_C, filter_pixStep, filter_widthStep, filter_sliceStep, strideH, strideW,
+					out_data, out_N, out_H, out_W, out_C, out_pixStep, out_widthStep, out_sliceStep);
+				has_handled = true;
+			}
+			else if (padded_C % 64 == 0)
+			{
+				zq_cnn_depthwise_conv_no_padding_32f_align256bit_kernel2x2_C64(in_data, in_N, in_H, in_W, in_C, in_pixStep, in_widthStep, in_sliceStep,
+					filter_data, filter_N, filter_H, filter_W, filter_C, filter_pixStep, filter_widthStep, filter_sliceStep, strideH, strideW,
+					out_data, out_N, out_H, out_W, out_C, out_pixStep, out_widthStep, out_sliceStep);
+				has_handled = true;
+			}
+			else
+			{
+				zq_cnn_depthwise_conv_no_padding_32f_align256bit_kernel2x2(in_data, in_N, in_H, in_W, in_C, in_pixStep, in_widthStep, in_sliceStep,
 					filter_data, filter_N, filter_H, filter_W, filter_C, filter_pixStep, filter_widthStep, filter_sliceStep, strideH, strideW,
 					out_data, out_N, out_H, out_W, out_C, out_pixStep, out_widthStep, out_sliceStep);
 				has_handled = true;
