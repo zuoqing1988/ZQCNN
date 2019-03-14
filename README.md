@@ -10,6 +10,9 @@ ZQCNN是ZuoQing参照mini-caffe写的forward库，使用depthwise convolution的
 
   如果按照[build-with-cmake.md](https://github.com/zuoqing1988/ZQCNN/blob/master/build-with-cmake.md)不能完全编译，可以只编译ZQ_GEMM，ZQCNN，和其他你想测试的程序
 
+## 核心模块支持arm-linux:
+
+  如果按照[build-with-cmake.md](https://github.com/zuoqing1988/ZQCNN/blob/master/build-with-cmake.md)不能完全编译，可以只编译ZQ_GEMM，ZQCNN，和其他你想测试的程序
 
 ## 训练相关
 
