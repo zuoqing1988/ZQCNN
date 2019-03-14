@@ -593,6 +593,15 @@ int main(int argc, const char** argv)
 	}
 	return 0;*/
 
+	printf("test det3-dw48-fast\n");
+	_test_gemm(48 * 48, 16, 28, 10000);
+	_test_gemm(48 * 48, 16, 28, 10000);
+	_test_gemm(24 * 24, 32, 16, 10000);
+	_test_gemm(12 * 12, 64, 32, 10000);
+	_test_gemm(5 * 5, 64, 64, 10000);
+	_test_gemm(3 * 3, 128, 64, 10000);
+	_test_gemm(1, 2, 128, 10000);
+	_test_gemm(1, 4, 128, 10000);
 	printf("test det5-dw96-v2s\n");
 	_test_gemm(94 * 94, 32, 28, 1000);
 	_test_gemm(93 * 93, 32, 32, 1000);
