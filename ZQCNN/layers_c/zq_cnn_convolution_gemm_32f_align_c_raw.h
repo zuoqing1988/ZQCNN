@@ -142,12 +142,21 @@ void zq_cnn_conv_no_padding_gemm_32f_align_same_pixstep(
 				}
 			}
 		}
-		
+
 		t4 = omp_get_wtime();
 		make_A_time += t4 - t3;
 		/*gemm*/
+#if __ARM_NEON && ZQ_CNN_USE_ZQ_GEMM && ZQ_CNN_USE_BLAS_GEMM
+		if (0 == zq_gemm_32f_AnoTrans_Btrans_special(matrix_A_rows, matrix_B_cols, matrix_A_cols, matrix_A, matrix_A_cols,
+			matrix_Bt, matrix_A_cols, matrix_C, matrix_B_cols))
+		{
+			zq_cblas_sgemm(CblasRowMajor, CblasNoTrans, CblasTrans, matrix_A_rows, matrix_B_cols, matrix_A_cols, 1, matrix_A, matrix_A_cols,
+				matrix_Bt, matrix_A_cols, 0.0f, matrix_C, matrix_B_cols);
+		}
+#else
 		zq_cblas_sgemm(CblasRowMajor, CblasNoTrans, CblasTrans, matrix_A_rows, matrix_B_cols, matrix_A_cols, 1, matrix_A, matrix_A_cols,
 			matrix_Bt, matrix_A_cols, 0.0f, matrix_C, matrix_B_cols);
+#endif
 		t5 = omp_get_wtime();
 		gemm_time += t5 - t4;
 		if (need_allocate_tmp_out)
@@ -238,9 +247,17 @@ void zq_cnn_conv_no_padding_gemm_32f_align_same_pixstep_kernel1x1(
 #endif
 	if (matrix_A_cols == padK && in_sliceStep == in_H*in_W*in_pixelStep && out_sliceStep == out_H*out_W*out_pixelStep)
 	{
-		/*gemm*/
+#if __ARM_NEON && ZQ_CNN_USE_ZQ_GEMM && ZQ_CNN_USE_BLAS_GEMM
+		if (0 == zq_gemm_32f_AnoTrans_Btrans_special(matrix_A_rows, matrix_B_cols, matrix_A_cols, in_tensor4D_data, matrix_A_cols,
+			filters_data, matrix_A_cols, out_tensor4D_data, out_pixelStep))
+		{
+			zq_cblas_sgemm(CblasRowMajor, CblasNoTrans, CblasTrans, matrix_A_rows, matrix_B_cols, matrix_A_cols, 1, matrix_A, matrix_A_cols,
+				matrix_Bt, matrix_A_cols, 0.0f, matrix_C, matrix_B_cols);
+		}
+#else
 		zq_cblas_sgemm(CblasRowMajor, CblasNoTrans, CblasTrans, matrix_A_rows, matrix_B_cols, matrix_A_cols, 1, in_tensor4D_data, matrix_A_cols,
 			filters_data, matrix_A_cols, 0.0f, out_tensor4D_data, out_pixelStep);
+#endif
 	}
 	else
 	{
@@ -248,7 +265,7 @@ void zq_cnn_conv_no_padding_gemm_32f_align_same_pixstep_kernel1x1(
 		__int64 need_C_buffer_len_align32 = 0;
 		__int64 total_need_buffer_len;
 		zq_base_type* matrix_A = 0;
-		const zq_base_type* in_row_ptr, *in_pix_ptr, *cur_in_row_ptr, *cur_in_pix_ptr;
+		const zq_base_type* in_row_ptr, *in_pix_ptr, *cur_in_row_ptr;
 		int out_n, out_h, out_w, pp;
 		zq_base_type* matrix_A_row_ptr, *matrix_A_col_ptr, *cp_dst_ptr;
 		const zq_base_type* cp_src_ptr;
@@ -319,8 +336,18 @@ void zq_cnn_conv_no_padding_gemm_32f_align_same_pixstep_kernel1x1(
 			t4 = omp_get_wtime();
 			make_A_time += t4 - t3;
 			/*gemm*/
+#if __ARM_NEON && ZQ_CNN_USE_ZQ_GEMM && ZQ_CNN_USE_BLAS_GEMM
+			if (0 == zq_gemm_32f_AnoTrans_Btrans_special(matrix_A_rows, matrix_B_cols, matrix_A_cols, matrix_A, matrix_A_cols,
+				matrix_Bt, matrix_A_cols, matrix_C, matrix_B_cols))
+			{
+				zq_cblas_sgemm(CblasRowMajor, CblasNoTrans, CblasTrans, matrix_A_rows, matrix_B_cols, matrix_A_cols, 1, matrix_A, matrix_A_cols,
+					matrix_Bt, matrix_A_cols, 0.0f, matrix_C, matrix_B_cols);
+			}
+#else
 			zq_cblas_sgemm(CblasRowMajor, CblasNoTrans, CblasTrans, matrix_A_rows, matrix_B_cols, matrix_A_cols, 1, matrix_A, matrix_A_cols,
 				matrix_Bt, matrix_A_cols, 0.0f, matrix_C, matrix_B_cols);
+#endif
+			
 			t5 = omp_get_wtime();
 			gemm_time += t5 - t4;
 			if (need_allocate_tmp_out)
@@ -504,10 +531,17 @@ void zq_cnn_conv_no_padding_gemm_32f_align_same_pixstep_C4(
 		t4 = omp_get_wtime();
 		make_A_time += t4 - t3;
 		/*gemm*/
-
+#if __ARM_NEON && ZQ_CNN_USE_ZQ_GEMM && ZQ_CNN_USE_BLAS_GEMM
+		if (0 == zq_gemm_32f_AnoTrans_Btrans_special(matrix_A_rows, matrix_B_cols, matrix_A_cols, matrix_A, matrix_A_cols,
+			matrix_Bt, matrix_A_cols, matrix_C, matrix_B_cols))
+		{
+			zq_cblas_sgemm(CblasRowMajor, CblasNoTrans, CblasTrans, matrix_A_rows, matrix_B_cols, matrix_A_cols, 1, matrix_A, matrix_A_cols,
+				matrix_Bt, matrix_A_cols, 0.0f, matrix_C, matrix_B_cols);
+		}
+#else
 		zq_cblas_sgemm(CblasRowMajor, CblasNoTrans, CblasTrans, matrix_A_rows, matrix_B_cols, matrix_A_cols, 1, matrix_A, matrix_A_cols,
 			matrix_Bt, matrix_A_cols, 0.0f, matrix_C, matrix_B_cols);
-
+#endif
 		t5 = omp_get_wtime();
 		gemm_time += t5 - t4;
 		if (need_allocate_tmp_out)
@@ -700,8 +734,17 @@ void zq_cnn_conv_no_padding_gemm_32f_align_same_pixstep_batch(
 
 	t3 = omp_get_wtime();
 	/*gemm*/
+#if __ARM_NEON && ZQ_CNN_USE_ZQ_GEMM && ZQ_CNN_USE_BLAS_GEMM
+	if (0 == zq_gemm_32f_AnoTrans_Btrans_special(matrix_A_rows, matrix_B_cols, matrix_A_cols, matrix_A, matrix_A_cols,
+		matrix_Bt, matrix_A_cols, matrix_C, matrix_B_cols))
+	{
+		zq_cblas_sgemm(CblasRowMajor, CblasNoTrans, CblasTrans, matrix_A_rows, matrix_B_cols, matrix_A_cols, 1, matrix_A, matrix_A_cols,
+			matrix_Bt, matrix_A_cols, 0, matrix_C, matrix_B_cols);
+	}
+#else
 	zq_cblas_sgemm(CblasRowMajor, CblasNoTrans, CblasTrans, matrix_A_rows, matrix_B_cols, matrix_A_cols, 1, matrix_A, matrix_A_cols,
 		matrix_Bt, matrix_A_cols, 0, matrix_C, matrix_B_cols);
+#endif
 	t4 = omp_get_wtime();
 
 
@@ -895,8 +938,18 @@ void zq_cnn_conv_no_padding_gemm_32f_align_same_or_notsame_pixstep(
 		t4 = omp_get_wtime();
 		make_A_time += t4 - t3;
 		/*gemm*/
+#if __ARM_NEON && ZQ_CNN_USE_ZQ_GEMM && ZQ_CNN_USE_BLAS_GEMM
+		if (0 == zq_gemm_32f_AnoTrans_Btrans_special(matrix_A_rows, matrix_B_cols, matrix_A_cols, matrix_A, matrix_A_cols,
+			matrix_Bt, matrix_A_cols, matrix_C, matrix_B_cols))
+		{
+			zq_cblas_sgemm(CblasRowMajor, CblasNoTrans, CblasTrans, matrix_A_rows, matrix_B_cols, matrix_A_cols, 1, matrix_A, matrix_A_cols,
+				matrix_Bt, matrix_A_cols, 0.0f, matrix_C, matrix_B_cols);
+		}
+#else
 		zq_cblas_sgemm(CblasRowMajor, CblasNoTrans, CblasTrans, matrix_A_rows, matrix_B_cols, matrix_A_cols, 1, matrix_A, matrix_A_cols,
 			matrix_Bt, matrix_A_cols, 0.0f, matrix_C, matrix_B_cols);
+#endif
+		
 		t5 = omp_get_wtime();
 		gemm_time += t5 - t4;
 		if (need_allocate_tmp_out)
@@ -1090,8 +1143,17 @@ void zq_cnn_conv_no_padding_gemm_32f_align_same_or_notsame_pixstep_C3(
 		t4 = omp_get_wtime();
 		make_A_time += t4 - t3;
 		/*gemm*/
+#if __ARM_NEON && ZQ_CNN_USE_ZQ_GEMM && ZQ_CNN_USE_BLAS_GEMM
+		if (0 == zq_gemm_32f_AnoTrans_Btrans_special(matrix_A_rows, matrix_B_cols, padK, matrix_A, matrix_A_cols,
+			matrix_Bt, matrix_A_cols, matrix_C, matrix_B_cols))
+		{
+			zq_cblas_sgemm(CblasRowMajor, CblasNoTrans, CblasTrans, matrix_A_rows, matrix_B_cols, padK, 1, matrix_A, matrix_A_cols,
+				matrix_Bt, matrix_A_cols, 0.0f, matrix_C, matrix_B_cols);
+		}
+#else
 		zq_cblas_sgemm(CblasRowMajor, CblasNoTrans, CblasTrans, matrix_A_rows, matrix_B_cols, padK, 1, matrix_A, matrix_A_cols,
 			matrix_Bt, matrix_A_cols, 0.0f, matrix_C, matrix_B_cols);
+#endif
 		t5 = omp_get_wtime();
 		gemm_time += t5 - t4;
 		if (need_allocate_tmp_out)
@@ -1288,8 +1350,17 @@ void zq_cnn_conv_no_padding_gemm_32f_align_same_or_notsame_pixstep_batch(
 
 	t3 = omp_get_wtime();
 	/*gemm*/
+#if __ARM_NEON && ZQ_CNN_USE_ZQ_GEMM && ZQ_CNN_USE_BLAS_GEMM
+	if (0 == zq_gemm_32f_AnoTrans_Btrans_special(matrix_A_rows, matrix_B_cols, matrix_A_cols, matrix_A, matrix_A_cols,
+		matrix_Bt, matrix_A_cols, matrix_C, matrix_B_cols))
+	{
+		zq_cblas_sgemm(CblasRowMajor, CblasNoTrans, CblasTrans, matrix_A_rows, matrix_B_cols, matrix_A_cols, 1, matrix_A, matrix_A_cols,
+			matrix_Bt, matrix_A_cols, 0.0f, matrix_C, matrix_B_cols);
+	}
+#else
 	zq_cblas_sgemm(CblasRowMajor, CblasNoTrans, CblasTrans, matrix_A_rows, matrix_B_cols, matrix_A_cols, 1, matrix_A, matrix_A_cols,
 		matrix_Bt, matrix_A_cols, 0.0f, matrix_C, matrix_B_cols);
+#endif
 	t4 = omp_get_wtime();
 	if (need_allocate_tmp_out)
 	{

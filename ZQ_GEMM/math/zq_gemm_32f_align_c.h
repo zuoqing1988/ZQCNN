@@ -1,11 +1,6 @@
 #ifndef _ZQ_GEMM_H_
 #define _ZQ_GEMM_H_
 #include "ZQ_CNN_CompileConfig.h"
-#if __ARM_NEON
-#if ZQ_CNN_USE_BLAS_GEMM
-#include "openblas/cblas.h"
-#endif
-#endif
 
 #if defined(__cplusplus) || defined(c_plusplus) 
 extern "C" {
@@ -16,6 +11,8 @@ extern "C" {
 	void zq_gemm_32f_align0_AnoTrans_Btrans(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc);
 
 #if __ARM_NEON
+
+	int zq_gemm_32f_AnoTrans_Btrans_special(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc);
 
 	/*C = A*B ,
 	A: M * K,
