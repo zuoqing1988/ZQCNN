@@ -219,144 +219,142 @@ void zq_cnn_conv_no_padding_gemm_32f_align_same_pixstep_kernel1x1(
 )
 {
 	/************** image to col **************/
-	int in_widthStep_mul_stride_H = in_widthStep*stride_H;
-	int in_pixelStep_mul_stride_W = in_pixelStep*stride_W;
-	int dilate_H_mul_in_widthStep = dilation_H*in_widthStep;
-	int dilate_W_mul_in_pixStep = dilation_W*in_pixelStep;
-	int filter_pixStep_mul_filter_W = filter_pixelStep*filter_W;
-	int matrix_A_cols = filter_sliceStep;
+	int matrix_A_cols = in_pixelStep;
 	int matrix_A_rows = out_H*out_W;
 	int matrix_B_cols = filter_N;
-	int matrix_B_rows = filter_sliceStep;
-	__int64 need_A_buffer_len_align32 = (matrix_A_rows*matrix_A_cols * sizeof(zq_base_type) + 31) / 32 * 32;
-	__int64 need_C_buffer_len_align32 = 0;
-	__int64 total_need_buffer_len;
-	zq_base_type* matrix_A = 0;
-	const zq_base_type* in_row_ptr, *in_pix_ptr, *cur_in_row_ptr, *cur_in_pix_ptr;
-	int out_n, out_h, out_w, pp;
-	zq_base_type* matrix_A_row_ptr, *matrix_A_col_ptr, *cp_dst_ptr;
-	const zq_base_type* cp_src_ptr;
-	zq_base_type* out_slice_ptr, *out_row_ptr, *out_pix_ptr;
-	const zq_base_type* in_slice_ptr;
-	const zq_base_type* matrix_Bt = filters_data;
-	zq_base_type* matrix_C = 0, *matrix_C_row_ptr;
-	int out_row_idx;
-	int out_HW = out_H*out_W;
-	double t1, t2, t3, t4, t5, t6, alloc_time, make_A_time = 0, gemm_time = 0;
-	t1 = omp_get_wtime();
-	int need_allocate_tmp_out = (out_pixelStep != filter_N) || (out_pixelStep*out_W != out_widthStep) || (out_widthStep*out_H != out_sliceStep);
-	if (need_allocate_tmp_out)
+	int matrix_B_rows = filter_pixelStep;
+#if __ARM_NEON
+#if !__ARM_NEON_FP16
+	int padK = (matrix_A_cols + 3) >> 2 << 2;
+#endif
+#else
+#if ZQ_CNN_USE_SSETYPE > ZQ_CNN_SSETYPE_AVX
+	int padK = (matrix_A_cols + 7) >> 3 << 3;
+#elif ZQ_CNN_USE_SSETYPE > ZQ_CNN_SSETYPE_SSE
+	int padK = (matrix_A_cols + 3) >> 2 << 2;
+#else
+	int padK = matrix_A_cols;
+#endif
+#endif
+	if (matrix_A_cols == padK && in_sliceStep == in_H*in_W*in_pixelStep && out_sliceStep == out_H*out_W*out_pixelStep)
 	{
-		need_C_buffer_len_align32 = (out_HW*filter_N * sizeof(zq_base_type) + 31) / 32 * 32;
+		/*gemm*/
+		zq_cblas_sgemm(CblasRowMajor, CblasNoTrans, CblasTrans, matrix_A_rows, matrix_B_cols, matrix_A_cols, 1, in_tensor4D_data, matrix_A_cols,
+			filters_data, matrix_A_cols, 0.0f, out_tensor4D_data, out_pixelStep);
 	}
 	else
 	{
-		need_C_buffer_len_align32 = 0;
-		matrix_C = out_tensor4D_data;
-	}
-	total_need_buffer_len = need_A_buffer_len_align32 + need_C_buffer_len_align32;
-	if (buffer == 0)
-	{
-		matrix_A = (zq_base_type*)_aligned_malloc(need_A_buffer_len_align32, 32);
+		__int64 need_A_buffer_len_align32 = (matrix_A_rows*padK * sizeof(zq_base_type) + 31) / 32 * 32;
+		__int64 need_C_buffer_len_align32 = 0;
+		__int64 total_need_buffer_len;
+		zq_base_type* matrix_A = 0;
+		const zq_base_type* in_row_ptr, *in_pix_ptr, *cur_in_row_ptr, *cur_in_pix_ptr;
+		int out_n, out_h, out_w, pp;
+		zq_base_type* matrix_A_row_ptr, *matrix_A_col_ptr, *cp_dst_ptr;
+		const zq_base_type* cp_src_ptr;
+		zq_base_type* out_slice_ptr, *out_row_ptr, *out_pix_ptr;
+		const zq_base_type* in_slice_ptr;
+		const zq_base_type* matrix_Bt = filters_data;
+		zq_base_type* matrix_C = 0, *matrix_C_row_ptr;
+		int out_row_idx;
+		int out_HW = out_H*out_W;
+		double t1, t2, t3, t4, t5, t6, alloc_time, make_A_time = 0, gemm_time = 0;
+		t1 = omp_get_wtime();
+		int need_allocate_tmp_out = (out_pixelStep != filter_N) || (out_pixelStep*out_W != out_widthStep) || (out_widthStep*out_H != out_sliceStep);
 		if (need_allocate_tmp_out)
-			matrix_C = (zq_base_type*)_aligned_malloc(need_C_buffer_len_align32, 32);
-	}
-	else
-	{
-		if (*buffer_len < total_need_buffer_len)
 		{
-			_aligned_free(*buffer);
-			*buffer = _aligned_malloc(total_need_buffer_len, 32);
-			*buffer_len = total_need_buffer_len;
+			need_C_buffer_len_align32 = (out_HW*filter_N * sizeof(zq_base_type) + 31) / 32 * 32;
 		}
-		matrix_A = (zq_base_type*)(*buffer);
-		if (need_allocate_tmp_out)
-			matrix_C = (zq_base_type*)((char*)(*buffer) + need_A_buffer_len_align32);
-	}
-
-	t2 = omp_get_wtime();
-	alloc_time = t2 - t1;
-	for (out_n = 0, in_slice_ptr = in_tensor4D_data, out_slice_ptr = out_tensor4D_data;
-		out_n < out_N;
-		out_n++, in_slice_ptr += in_sliceStep, out_slice_ptr += out_sliceStep)
-	{
-		t3 = omp_get_wtime();
-		matrix_A_row_ptr = matrix_A;
-		if (dilation_W == 1)
+		else
 		{
-			for (out_h = 0, in_row_ptr = in_slice_ptr; out_h < out_H; out_h++, in_row_ptr += in_widthStep_mul_stride_H)
+			need_C_buffer_len_align32 = 0;
+			matrix_C = out_tensor4D_data;
+		}
+		total_need_buffer_len = need_A_buffer_len_align32 + need_C_buffer_len_align32;
+		if (buffer == 0)
+		{
+			matrix_A = (zq_base_type*)_aligned_malloc(need_A_buffer_len_align32, 32);
+			if (need_allocate_tmp_out)
+				matrix_C = (zq_base_type*)_aligned_malloc(need_C_buffer_len_align32, 32);
+		}
+		else
+		{
+			if (*buffer_len < total_need_buffer_len)
 			{
-				for (out_w = 0, in_pix_ptr = in_row_ptr; out_w < out_W; out_w++, in_pix_ptr += in_pixelStep_mul_stride_W)
+				_aligned_free(*buffer);
+				*buffer = _aligned_malloc(total_need_buffer_len, 32);
+				*buffer_len = total_need_buffer_len;
+			}
+			matrix_A = (zq_base_type*)(*buffer);
+			if (need_allocate_tmp_out)
+				matrix_C = (zq_base_type*)((char*)(*buffer) + need_A_buffer_len_align32);
+		}
+
+		t2 = omp_get_wtime();
+		alloc_time = t2 - t1;
+		for (out_n = 0, in_slice_ptr = in_tensor4D_data, out_slice_ptr = out_tensor4D_data;
+			out_n < out_N;
+			out_n++, in_slice_ptr += in_sliceStep, out_slice_ptr += out_sliceStep)
+		{
+			t3 = omp_get_wtime();
+			matrix_A_row_ptr = matrix_A;
+
+			for (out_h = 0, in_row_ptr = in_slice_ptr; out_h < out_H; out_h++, in_row_ptr += in_widthStep)
+			{
+				for (out_w = 0, in_pix_ptr = in_row_ptr; out_w < out_W; out_w++, in_pix_ptr += in_pixelStep)
 				{
 					cur_in_row_ptr = in_pix_ptr;
 					matrix_A_col_ptr = matrix_A_row_ptr;
 					for (pp = 0, cp_src_ptr = cur_in_row_ptr, cp_dst_ptr = matrix_A_col_ptr;
-							pp < filter_pixStep_mul_filter_W;
-							pp += zq_mm_align_size, cp_src_ptr += zq_mm_align_size, cp_dst_ptr += zq_mm_align_size)
-							zq_mm_store_ps(cp_dst_ptr, zq_mm_load_ps(cp_src_ptr));
-
-					matrix_A_row_ptr += matrix_A_cols;
-				}
-			}
-		}
-		else
-		{
-			for (out_h = 0, in_row_ptr = in_slice_ptr; out_h < out_H; out_h++, in_row_ptr += in_widthStep_mul_stride_H)
-			{
-				for (out_w = 0, in_pix_ptr = in_row_ptr; out_w < out_W; out_w++, in_pix_ptr += in_pixelStep_mul_stride_W)
-				{
-					cur_in_row_ptr = in_pix_ptr; 
-					matrix_A_col_ptr = matrix_A_row_ptr;
-					cp_dst_ptr = matrix_A_col_ptr;
-					cur_in_pix_ptr = cur_in_row_ptr; 
-					for (pp = 0, cp_src_ptr = cur_in_pix_ptr;
-						pp < filter_C;
+						pp < filter_pixelStep;
 						pp += zq_mm_align_size, cp_src_ptr += zq_mm_align_size, cp_dst_ptr += zq_mm_align_size)
 						zq_mm_store_ps(cp_dst_ptr, zq_mm_load_ps(cp_src_ptr));
-
-					matrix_A_row_ptr += matrix_A_cols;
+					for (; pp < padK; pp++,cp_dst_ptr++)
+						*cp_dst_ptr = 0;
+					matrix_A_row_ptr += padK;
 				}
 			}
-		}
 
-		t4 = omp_get_wtime();
-		make_A_time += t4 - t3;
-		/*gemm*/
-		zq_cblas_sgemm(CblasRowMajor, CblasNoTrans, CblasTrans, matrix_A_rows, matrix_B_cols, matrix_A_cols, 1, matrix_A, matrix_A_cols,
-			matrix_Bt, matrix_A_cols, 0.0f, matrix_C, matrix_B_cols);
-		t5 = omp_get_wtime();
-		gemm_time += t5 - t4;
-		if (need_allocate_tmp_out)
-		{
-			/*   col2im      */
-			out_row_idx = 0;
-			matrix_C_row_ptr = matrix_C;
-			for (out_h = 0, out_row_ptr = out_slice_ptr; out_h < out_H; out_h++, out_row_ptr += out_widthStep)
+
+			t4 = omp_get_wtime();
+			make_A_time += t4 - t3;
+			/*gemm*/
+			zq_cblas_sgemm(CblasRowMajor, CblasNoTrans, CblasTrans, matrix_A_rows, matrix_B_cols, matrix_A_cols, 1, matrix_A, matrix_A_cols,
+				matrix_Bt, matrix_A_cols, 0.0f, matrix_C, matrix_B_cols);
+			t5 = omp_get_wtime();
+			gemm_time += t5 - t4;
+			if (need_allocate_tmp_out)
 			{
-				for (out_w = 0, out_pix_ptr = out_row_ptr; out_w < out_W; out_w++, out_pix_ptr += out_pixelStep)
+				/*   col2im      */
+				out_row_idx = 0;
+				matrix_C_row_ptr = matrix_C;
+				for (out_h = 0, out_row_ptr = out_slice_ptr; out_h < out_H; out_h++, out_row_ptr += out_widthStep)
 				{
-					memcpy(out_pix_ptr, matrix_C_row_ptr, sizeof(zq_base_type)*matrix_B_cols);
-					matrix_C_row_ptr += matrix_B_cols;
+					for (out_w = 0, out_pix_ptr = out_row_ptr; out_w < out_W; out_w++, out_pix_ptr += out_pixelStep)
+					{
+						memcpy(out_pix_ptr, matrix_C_row_ptr, sizeof(zq_base_type)*matrix_B_cols);
+						matrix_C_row_ptr += matrix_B_cols;
+					}
 				}
 			}
+			else
+				matrix_C += out_sliceStep;
+
 		}
-		else
-			matrix_C += out_sliceStep;
 
+		if (buffer == 0)
+		{
+			_aligned_free(matrix_A);
+			if (need_allocate_tmp_out)
+				_aligned_free(matrix_C);
+		}
+		t6 = omp_get_wtime();
+		/*if (filter_H == 1 && filter_W == 1 && filter_C == 4)
+		{
+		printf("gemm_same_pixstep total: %.3f ms, alloc %.3f ms, makeA: %.3f ms, gemm: %.3f ms\n", 1000 * (t6 - t1), 1000 * alloc_time,
+		1000 * make_A_time, 1000 * gemm_time);
+		}*/
 	}
-
-	if (buffer == 0)
-	{
-		_aligned_free(matrix_A);
-		if (need_allocate_tmp_out)
-			_aligned_free(matrix_C);
-	}
-	t6 = omp_get_wtime();
-	/*if (filter_H == 1 && filter_W == 1 && filter_C == 4)
-	{
-	printf("gemm_same_pixstep total: %.3f ms, alloc %.3f ms, makeA: %.3f ms, gemm: %.3f ms\n", 1000 * (t6 - t1), 1000 * alloc_time,
-	1000 * make_A_time, 1000 * gemm_time);
-	}*/
 }
 
 /*in_pixStep must be equal to filter_pixStep,
