@@ -4052,8 +4052,6 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel2x2_div_8(
 	}
 }
 
-#if !__ARM_NEON
-
 void zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_mul_16(
 	const zq_base_type* in_tensor4D_data,
 	int in_N,
@@ -4680,8 +4678,6 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel2x2_mul_64(
 		}
 	}
 }
-
-#endif
 
 #undef op_0_4
 #undef op_0_4_first
