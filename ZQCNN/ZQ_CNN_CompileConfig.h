@@ -49,6 +49,12 @@
 #define __ARM_NEON 0
 #endif
 
+#if defined(ZQ_CNN_USE_ARM_NEON_ARMV8)
+#define __ARM_NEON_ARMV8 1
+#else
+#define __ARM_NEON_ARMV8 0
+#endif
+
 #if defined(ZQ_CNN_USE_ARM_NEON_FP16)
 #define __ARM_NEON_FP16 1
 #else
@@ -58,7 +64,8 @@
 #if __ARM_NEON
 //#define ZQ_CNN_USE_FMADD128 1
 #define ZQ_CNN_USE_SSETYPE ZQ_CNN_SSETYPE_NONE
-//#define ZQ_CNN_USE_ZQ_GEMM 1
+#define ZQ_CNN_USE_ZQ_GEMM 1
+//#define ZQ_CNN_USE_BLAS_GEMM 1
 #else
 // your settings
 #define ZQ_CNN_USE_SSETYPE ZQ_CNN_SSETYPE_AVX

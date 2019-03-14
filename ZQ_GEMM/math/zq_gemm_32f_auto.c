@@ -1,4 +1,3 @@
-#include "ZQ_CNN_CompileConfig.h"
 #include "zq_gemm_32f_align_c.h"
 
 #if defined(__cplusplus) || defined(c_plusplus) 
@@ -27,11 +26,25 @@ extern "C" {
 		int handled = 0;
 
 #if __ARM_NEON
-#define Snapdragon835 1
-#if Snapdragon835
-		if (K == 16)
+#if __ARM_NEON_ARMV8
+		if (K == 8)
 		{
-			if (N >= 8)
+			zq_gemm_32f_align128bit_AnoTrans_Btrans_M4_N4(M, N, K, A, lda, Bt, ldb, C, ldc);
+			handled = 1;
+		}
+		else if (K == 16)
+		{
+			zq_gemm_32f_align128bit_AnoTrans_Btrans_M4_N4(M, N, K, A, lda, Bt, ldb, C, ldc);
+			handled = 1;
+		}
+		else if (K == 24)
+		{
+			if (N % 8 == 0)
+			{
+				zq_gemm_32f_align128bit_AnoTrans_Btrans_M2_N8(M, N, K, A, lda, Bt, ldb, C, ldc);
+				handled = 1;
+			}
+			else
 			{
 				zq_gemm_32f_align128bit_AnoTrans_Btrans_M4_N4(M, N, K, A, lda, Bt, ldb, C, ldc);
 				handled = 1;
@@ -57,94 +70,58 @@ extern "C" {
 		}
 		else if (K == 32)
 		{
-			if (N >= 8)
-			{
-				zq_gemm_32f_align128bit_AnoTrans_Btrans_M4_N4(M, N, K, A, lda, Bt, ldb, C, ldc);
-				handled = 1;
-			}
+			zq_gemm_32f_align128bit_AnoTrans_Btrans_M4_N4(M, N, K, A, lda, Bt, ldb, C, ldc);
+			handled = 1;
 		}
 		else if (K == 64)
 		{
-			if (N >= 8)
-			{
-				zq_gemm_32f_align128bit_AnoTrans_Btrans_M4_N4(M, N, K, A, lda, Bt, ldb, C, ldc);
-				handled = 1;
-			}
+			zq_gemm_32f_align128bit_AnoTrans_Btrans_M4_N4(M, N, K, A, lda, Bt, ldb, C, ldc);
+			handled = 1;
 		}
 		else if (K == 72) // 3*3*8
 		{
-			if (N <= 64)
-			{
-				zq_gemm_32f_align128bit_AnoTrans_Btrans_M4_N4(M, N, K, A, lda, Bt, ldb, C, ldc);
-				handled = 1;
-			}
-			else if (N <= 128)
-			{
-				zq_gemm_32f_align128bit_AnoTrans_Btrans_M4_N4(M, N, K, A, lda, Bt, ldb, C, ldc);
-				handled = 1;
-			}
+			zq_gemm_32f_align128bit_AnoTrans_Btrans_M4_N4(M, N, K, A, lda, Bt, ldb, C, ldc);
+			handled = 1;
 		}
 		else if (K == 128)
 		{
-			if (N >= 256)
-			{
-				zq_gemm_32f_align128bit_AnoTrans_Btrans_M4_N4(M, N, K, A, lda, Bt, ldb, C, ldc);
-				handled = 1;
-			}
+			zq_gemm_32f_align128bit_AnoTrans_Btrans_M4_N4(M, N, K, A, lda, Bt, ldb, C, ldc);
+			handled = 1;
 		}
 		else if (K == 144) // 3*3*16
 		{
-			if (N <= 32)
-			{
-				zq_gemm_32f_align128bit_AnoTrans_Btrans_M4_N4(M, N, K, A, lda, Bt, ldb, C, ldc);
-				handled = 1;
-			}
-			else if (N <= 128)
-			{
-				zq_gemm_32f_align128bit_AnoTrans_Btrans_M4_N4(M, N, K, A, lda, Bt, ldb, C, ldc);
-				handled = 1;
-			}
+			zq_gemm_32f_align128bit_AnoTrans_Btrans_M4_N4(M, N, K, A, lda, Bt, ldb, C, ldc);
+			handled = 1;
 		}
 		else if (K == 256)
 		{
-			if (N >= 256)
-			{
-				zq_gemm_32f_align128bit_AnoTrans_Btrans_M4_N4(M, N, K, A, lda, Bt, ldb, C, ldc);
-				handled = 1;
-			}
+			zq_gemm_32f_align128bit_AnoTrans_Btrans_M4_N4(M, N, K, A, lda, Bt, ldb, C, ldc);
+			handled = 1;
 		}
 		else if (K == 512)
 		{
-			if (N >= 256)
-			{
-				zq_gemm_32f_align128bit_AnoTrans_Btrans_M4_N4(M, N, K, A, lda, Bt, ldb, C, ldc);
-				handled = 1;
-			}
+			zq_gemm_32f_align128bit_AnoTrans_Btrans_M4_N4(M, N, K, A, lda, Bt, ldb, C, ldc);
+			handled = 1;
 		}
 		else if (K == 1024)
 		{
-			if (N >= 256)
-			{
-				zq_gemm_32f_align128bit_AnoTrans_Btrans_M4_N4(M, N, K, A, lda, Bt, ldb, C, ldc);
-				handled = 1;
-			}
+			zq_gemm_32f_align128bit_AnoTrans_Btrans_M4_N4(M, N, K, A, lda, Bt, ldb, C, ldc);
+			handled = 1;
 		}
 
 		//back up methods
 		if (handled == 0)
 		{
-			if (K <= 64)
-			{
-				zq_gemm_32f_align128bit_AnoTrans_Btrans_M4_N4(M, N, K, A, lda, Bt, ldb, C, ldc);
-				handled = 1;
-			}
-			else
-			{
-				zq_gemm_32f_align128bit_AnoTrans_Btrans_M4_N4(M, N, K, A, lda, Bt, ldb, C, ldc);
-				handled = 1;
-			}
-		}
+#if ZQ_CNN_USE_BLAS_GEMM
+			cblas_sgemm(CblasRowMajor, CblasNoTrans, CblasTrans, M, N, K, 1.0, A, padK, B, padK, 0, C2, N);
 #else
+			zq_gemm_32f_align128bit_AnoTrans_Btrans_M4_N4(M, N, K, A, lda, Bt, ldb, C, ldc);
+			handled = 1;
+#endif//ZQ_CNN_USE_BLAS_GEMM
+		}
+
+#else // not ARMV8
+
 		if (K == 16)
 		{
 			if (N >= 8)
@@ -249,6 +226,9 @@ extern "C" {
 		//back up methods
 		if (handled == 0)
 		{
+#if ZQ_CNN_USE_BLAS_GEMM
+			cblas_sgemm(CblasRowMajor, CblasNoTrans, CblasTrans, M, N, K, 1.0, A, padK, B, padK, 0, C2, N);
+#else
 			if (K <= 64)
 			{
 				zq_gemm_32f_align128bit_AnoTrans_Btrans_M4_N1(M, N, K, A, lda, Bt, ldb, C, ldc);
@@ -259,9 +239,11 @@ extern "C" {
 				zq_gemm_32f_align128bit_AnoTrans_Btrans_M4_N1(M, N, K, A, lda, Bt, ldb, C, ldc);
 				handled = 1;
 			}
-		}
 #endif
-#else
+		}
+#endif// __ARM_NEON_ARMV8
+
+#else // not ARM_NEON
 
 #if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_AVX
 
