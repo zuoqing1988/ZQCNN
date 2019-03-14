@@ -135,7 +135,7 @@ int main()
 	std::string result_name;
 	mtcnn.TurnOnShowDebugInfo();
 	const int use_pnet20 = true;
-	bool landmark106 = true;
+	bool landmark106 = false;
 	int thread_num = 0;
 	bool special_handle_very_big_face = false;
 	result_name = "resultdet.jpg";
@@ -174,16 +174,16 @@ int main()
 				//"model\\det2.zqparams", "model\\det2_bgr.nchwbin",
 				"model/det3-dw48-fast.zqparams", "model/det3-dw48-fast.nchwbin",
 				thread_num, false,
-				//"model\\det4-dw48-small.zqparams", "model\\det4-dw48-small.nchwbin"
-				"model/det3.zqparams", "model/det3_bgr.nchwbin"
+				"model\\det4-dw48-v2n.zqparams", "model\\det4-dw48-v2n.nchwbin"
+				//"model/det3.zqparams", "model/det3_bgr.nchwbin"
 #else
 			if (!mtcnn.Init("../../model/det1-dw20-fast.zqparams", "../../model/det1-dw20-fast.nchwbin",
 				"../../model/det2-dw24-fast.zqparams", "../../model/det2-dw24-fast.nchwbin",
 				//"model/det2.zqparams", "model/det2_bgr.nchwbin",
 				"../../model/det3-dw48-fast.zqparams", "../../model/det3-dw48-fast.nchwbin", 
 				thread_num, false,
-				//"model/det4-dw48-small.zqparams", "model/det4-dw48-small.nchwbin"
-				"../../model/det3.zqparams", "../../model/det3_bgr.nchwbin"
+				"model/det4-dw48-v2s.zqparams", "model/det4-dw48-v2s.nchwbin"
+				//"../../model/det3.zqparams", "../../model/det3_bgr.nchwbin"
 #endif
 			))
 			{
