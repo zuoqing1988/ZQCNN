@@ -60,7 +60,7 @@ extern "C" {
 #define zq_mm_bitor_longlong 0xFFFFFFFFFFFFFFF0
 #define zq_final_sum_q (q[0]+q[1]+q[2]+q[3])
 
-#if (ZQ_CNN_USE_BLAS_GEMM || ZQ_CNN_USE_MKL_GEMM)
+#if ((ZQ_CNN_USE_BLAS_GEMM || ZQ_CNN_USE_MKL_GEMM) && !ZQ_CNN_USE_ZQ_GEMM)
 #define	zq_cblas_sgemm cblas_sgemm
 #define zq_CblasRowMajor CblasRowMajor
 #define zq_CblasNoTrans CblasNoTrans
@@ -111,7 +111,7 @@ extern "C" {
 #define zq_mm_bitor_longlong 0xFFFFFFFFFFFFFFF0
 #define zq_final_sum_q (q[0]+q[1]+q[2]+q[3]+q[4]+q[5]+q[6]+q[7])
 
-#if (ZQ_CNN_USE_BLAS_GEMM || ZQ_CNN_USE_MKL_GEMM)
+#if ((ZQ_CNN_USE_BLAS_GEMM || ZQ_CNN_USE_MKL_GEMM) && !ZQ_CNN_USE_ZQ_GEMM)
 #define	zq_cblas_sgemm cblas_sgemm
 #define zq_CblasRowMajor CblasRowMajor
 #define zq_CblasNoTrans CblasNoTrans
