@@ -1,5 +1,5 @@
-#ifndef _ZQ_SSE_MATHFUN_H_
-#define _ZQ_SSE_MATHFUN_H_
+#ifndef _ZQ_GEMM_H_
+#define _ZQ_GEMM_H_
 #include "ZQ_CNN_CompileConfig.h"
 #if __ARM_NEON
 #if ZQ_CNN_USE_BLAS_GEMM
