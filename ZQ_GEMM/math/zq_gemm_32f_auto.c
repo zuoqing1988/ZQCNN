@@ -5,7 +5,7 @@ extern "C" {
 #endif
 
 #if __ARM_NEON
-#define SWAP_A_Bt \ 
+#define SWAP_A_Bt \
 	if (M*N < 0.1*(M*N*K) && M + 8 < N) \
 	{ \
 		swap = 1; \
@@ -41,20 +41,21 @@ extern "C" {
 		else if (K == 16)
 		{
 #if ZQ_CNN_USE_BLAS_GEMM
-			if (N % 32 == 0)
+			if (N == 32 || N == 64)
 			{
 				SWAP_A_Bt;
 				zq_gemm_32f_align128bit_AnoTrans_Btrans_M4_N4(M, N, K, A, lda, Bt, ldb, C, ldc);
 				handled = 1;
 			}
 #else
+			SWAP_A_Bt;
 			zq_gemm_32f_align128bit_AnoTrans_Btrans_M4_N4(M, N, K, A, lda, Bt, ldb, C, ldc);
 			handled = 1;
 #endif
 		}
 		else if (K == 24)
 		{
-			if (N % 8 == 0)
+			if (N == 8 || N == 16)
 			{
 				SWAP_A_Bt;
 				zq_gemm_32f_align128bit_AnoTrans_Btrans_M2_N8(M, N, K, A, lda, Bt, ldb, C, ldc);
@@ -84,14 +85,21 @@ extern "C" {
 		}
 		else if (K == 28)
 		{
-			SWAP_A_Bt;
+#if ZQ_CNN_USE_BLAS_GEMM
+			if (N == 8 || N == 16 || N == 32)
+			{
+				SWAP_A_Bt;
+				zq_gemm_32f_align128bit_AnoTrans_Btrans_M4_N4(M, N, K, A, lda, Bt, ldb, C, ldc);
+				handled = 1;
+			}
+#else
 			zq_gemm_32f_align128bit_AnoTrans_Btrans_M4_N4(M, N, K, A, lda, Bt, ldb, C, ldc);
 			handled = 1;
 		}
 		else if (K == 32)
 		{
 #if ZQ_CNN_USE_BLAS_GEMM
-			if (N % 32 == 0)
+			if (N == 32)
 			{
 				SWAP_A_Bt;
 				zq_gemm_32f_align128bit_AnoTrans_Btrans_M4_N4(M, N, K, A, lda, Bt, ldb, C, ldc);
@@ -106,7 +114,7 @@ extern "C" {
 		else if (K == 64)
 		{
 #if ZQ_CNN_USE_BLAS_GEMM
-			if (N % 32 == 0 && N <= 128)
+			if (N == 32)
 			{
 				SWAP_A_Bt;
 				zq_gemm_32f_align128bit_AnoTrans_Btrans_M4_N4(M, N, K, A, lda, Bt, ldb, C, ldc);
