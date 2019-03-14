@@ -251,8 +251,8 @@ void zq_cnn_conv_no_padding_gemm_32f_align_same_pixstep_kernel1x1(
 		if (0 == zq_gemm_32f_AnoTrans_Btrans_special(matrix_A_rows, matrix_B_cols, matrix_A_cols, in_tensor4D_data, matrix_A_cols,
 			filters_data, matrix_A_cols, out_tensor4D_data, out_pixelStep))
 		{
-			zq_cblas_sgemm(CblasRowMajor, CblasNoTrans, CblasTrans, matrix_A_rows, matrix_B_cols, matrix_A_cols, 1, matrix_A, matrix_A_cols,
-				matrix_Bt, matrix_A_cols, 0.0f, matrix_C, matrix_B_cols);
+			zq_cblas_sgemm(CblasRowMajor, CblasNoTrans, CblasTrans, matrix_A_rows, matrix_B_cols, matrix_A_cols, 1, in_tensor4D_data, matrix_A_cols,
+				filters_data, matrix_A_cols, 0.0f, out_tensor4D_data, out_pixelStep);
 		}
 #else
 		zq_cblas_sgemm(CblasRowMajor, CblasNoTrans, CblasTrans, matrix_A_rows, matrix_B_cols, matrix_A_cols, 1, in_tensor4D_data, matrix_A_cols,
