@@ -98,7 +98,7 @@ extern "C" {
 		else if (K == 64)
 		{
 			if ((M == 3136 && N == 128) //mobilefacenet
-				(M == 3136 && N == 64) //mobilefacenet-res2-6-10-2
+				|| (M == 3136 && N == 64) //mobilefacenet-res2-6-10-2
 				|| (M == 2025 && N == 64) //det5-dw96-v2s
 				|| (M == 484 && N == 64) //det5-dw96-v2s
 				|| (M == 441 && N == 64) //det5-dw96-v2s
