@@ -436,6 +436,28 @@ int main()
 #elif ZQ_CNN_USE_MKL_GEMM
 	mkl_set_num_threads(num_threads);
 #endif
+	_test_gemm(56 * 56, 64, 32, 10000);
+	_test_gemm(56 * 56, 128, 64, 10000);
+	_test_gemm(56 * 56, 64, 128, 10000);
+	_test_gemm(28 * 28, 256, 128, 10000);
+	_test_gemm(28 * 28, 128, 256, 10000);
+	_test_gemm(14 * 14, 256, 512, 10000);
+	_test_gemm(14 * 14, 512, 256, 10000);
+	_test_gemm(7 * 7, 256, 512, 10000);
+	_test_gemm(7 * 7, 512, 256, 10000);
+	
+	_test_gemm(128, 128, 128, 80000);
+	_test_gemm(128, 128, 128, 80000);
+	_test_gemm(128, 128, 128, 80000);
+	_test_gemm(256, 256, 256, 10000);
+	_test_gemm(256, 256, 256, 10000);
+	_test_gemm(256, 256, 256, 10000);
+	_test_gemm(512, 512, 512, 20000);
+	_test_gemm(512, 512, 512, 20000);
+	_test_gemm(512, 512, 512, 20000);
+	_test_gemm(1024, 1024, 1024, 40000);
+	_test_gemm(1024, 1024, 1024, 40000);
+	_test_gemm(1024, 1024, 1024, 40000);
 	/*double total_sum = 0;
 	_test_gemm_value();
 	total_sum += 1*_test_im2col(112, 96, 64, 3, 2, 2,1000);
@@ -570,6 +592,21 @@ int main(int argc, const char** argv)
 		_test_gemm(M, N, K, 1, 1e-4, true);
 	}
 	return 0;*/
+	_test_gemm(56 * 56, 64, 28, 1000);
+	_test_gemm(56 * 56, 64, 28, 1000);
+	_test_gemm(56 * 56, 128, 64, 1000);
+	_test_gemm(28 * 28, 64, 128, 1000);
+	_test_gemm(28 * 28, 128, 64, 1000);
+	_test_gemm(28 * 28, 256, 64, 1000);
+	_test_gemm(14 * 14, 128, 256, 1000);
+	_test_gemm(14 * 14, 256, 128, 1000);
+	_test_gemm(14 * 14, 512, 128, 1000);
+	_test_gemm(7 * 7, 256, 128, 1000);
+	_test_gemm(7 * 7, 128, 256, 1000);
+	_test_gemm(1 * 1, 128, 512, 1000);
+	_test_gemm(1 * 1, 256, 512, 1000);
+	_test_gemm(1 * 1, 512, 512, 1000);
+
 	_test_gemm(56 * 48, 64, 3 * 3 * 3, 1000);
 	_test_gemm(56 * 48, 64, 3 * 3 * 4, 1000);
 	_test_gemm(28 * 24, 128, 3 * 3 * 64, 1000);
