@@ -593,6 +593,13 @@ int main(int argc, const char** argv)
 	}
 	return 0;*/
 
+	printf("test det1-dw20-fast\n");
+	_test_gemm(47 * 63, 8, 28, 20000);
+	_test_gemm(47 * 63, 8, 28, 20000);
+	_test_gemm(45 * 61, 16, 8, 50000);
+	_test_gemm(22 * 30, 24, 16, 50000);
+	_test_gemm(20 * 28, 1, 24, 50000);
+	_test_gemm(20 * 28, 4, 24, 50000);
 	printf("test det2-dw24-fast\n");
 	_test_gemm(22 * 22, 16, 28, 50000);
 	_test_gemm(22 * 22, 16, 28, 50000);
@@ -637,7 +644,7 @@ int main(int argc, const char** argv)
 	_test_gemm(1 * 1, 128, 512, 1000);
 	_test_gemm(1 * 1, 256, 512, 1000);
 	_test_gemm(1 * 1, 512, 512, 1000);
-	printf("test mobilefacenet-res2-6-10-2");
+	printf("test mobilefacenet-res2-6-10-2\n");
 	_test_gemm(56 * 56, 64, 28, 1000);
 	_test_gemm(56 * 56, 64, 28, 1000);
 	_test_gemm(56 * 56, 64, 64, 1000);
