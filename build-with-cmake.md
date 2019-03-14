@@ -42,3 +42,5 @@ make SampleSphereFaceNet
 **use OpenBLAS**
 
 add cmake flag: -DBLAS_TYPE=openblas
+or
+add cmake flag: -DBLAS_TYPE=openblas+zq_gemm
