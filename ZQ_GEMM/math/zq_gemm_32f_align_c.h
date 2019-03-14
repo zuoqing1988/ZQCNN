@@ -1,7 +1,11 @@
 #ifndef _ZQ_SSE_MATHFUN_H_
 #define _ZQ_SSE_MATHFUN_H_
 #include "ZQ_CNN_CompileConfig.h"
-
+#if __ARM_NEON
+#if ZQ_CNN_USE_BLAS_GEMM
+#include "openblas/cblas.h"
+#endif
+#endif
 
 #if defined(__cplusplus) || defined(c_plusplus) 
 extern "C" {
