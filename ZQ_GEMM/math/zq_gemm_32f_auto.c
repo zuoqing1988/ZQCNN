@@ -95,6 +95,7 @@ extern "C" {
 #else
 			zq_gemm_32f_align128bit_AnoTrans_Btrans_M4_N4(M, N, K, A, lda, Bt, ldb, C, ldc);
 			handled = 1;
+#endif
 		}
 		else if (K == 32)
 		{
