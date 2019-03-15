@@ -13,16 +13,39 @@
 // specific language governing permissions and limitations under the License.
 
 #include <stdio.h>
+#include <string.h>
 #include <algorithm>
 #include <vector>
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
 #include <omp.h>
 #include "net.h"
+#if !defined(_WIN32)
+#include <sched.h>
+#endif
 
 
 int main(int argc, char** argv)
 {
+
+#if !defined(_WIN32)
+	if (argc > 1)
+	{
+		cpu_set_t mask;
+		CPU_ZERO(&mask);
+		CPU_SET(atoi(argv[1]), &mask);
+		if (sched_setaffinity(0, sizeof(mask), &mask) < 0) {
+			perror("sched_setaffinity");
+		}
+	}
+	int num_threads = 1;
+	if(argc > 2)
+		num_threads = atoi(argv[2]);
+	ncnn::set_cpu_powersave(0);
+	ncnn::set_omp_dynamic(0);
+	ncnn::set_omp_num_threads(num_threads);
+#endif
+
 	ncnn::Net net;
 	net.load_param("mobilefacenet.param");
 	net.load_model("mobilefacenet.bin");
