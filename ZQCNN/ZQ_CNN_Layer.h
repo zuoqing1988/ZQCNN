@@ -748,6 +748,8 @@ namespace ZQ
 			__int64 total_num = (__int64)top_H*top_W*filters->GetN()*filters->GetH()*filters->GetW()*filters->GetC();
 			if (with_bias)
 				total_num += (__int64)top_H*top_W*top_C;
+			if(with_prelu)
+				total_num += (__int64)top_H*top_W*top_C*3;
 			return total_num;
 		}
 	};
