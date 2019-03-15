@@ -35,6 +35,11 @@ namespace ZQ
 		}
 
 	private:
+#if __ARM_NEON
+		const int BATCH_SIZE = 4;
+#else
+		const int BATCH_SIZE = 64;
+#endif
 		std::vector<ZQ_CNN_Net> pnet, rnet, onet, lnet;
 		bool has_lnet;
 		int thread_num;
@@ -912,7 +917,7 @@ namespace ZQ
 				}
 			}
 
-			int batch_size = 64;
+			int batch_size = BATCH_SIZE;
 			int per_num = ceil((float)r_count / thread_num);
 			int need_thread_num = thread_num;
 			if (per_num > batch_size)
@@ -1120,7 +1125,7 @@ namespace ZQ
 				}
 			}
 
-			int batch_size = 64;
+			int batch_size = BATCH_SIZE;
 			int per_num = ceil((float)o_count / thread_num);
 			int need_thread_num = thread_num;
 			if (per_num > batch_size)
@@ -1375,7 +1380,7 @@ namespace ZQ
 				src_rect_h.push_back(rect_h);
 			}
 
-			int batch_size = 64;
+			int batch_size = BATCH_SIZE;
 			int per_num = ceil((float)l_count / thread_num);
 			int need_thread_num = thread_num;
 			if (per_num > batch_size)
@@ -1542,7 +1547,7 @@ namespace ZQ
 				src_rect_h.push_back(rect_h);
 			}
 
-			int batch_size = 64;
+			int batch_size = BATCH_SIZE;
 			int per_num = ceil((float)l_count / thread_num);
 			int need_thread_num = thread_num;
 			if (per_num > batch_size)
