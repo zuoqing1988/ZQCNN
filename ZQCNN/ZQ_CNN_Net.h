@@ -1339,44 +1339,43 @@ namespace ZQ
 			std::vector<std::vector<int> > tmp_tops;
 			for (int i = 0; i < layers.size(); i++)
 			{
-				//if (ZQ_CNN_Layer::_my_strcmpi(layer_type_names[i].c_str(), "Convolution") == 0)
-				//{
-				//	if (i + 1 < layers.size() && ZQ_CNN_Layer::_my_strcmpi(layer_type_names[i + 1].c_str(), "PReLU") == 0)
-				//	{
-				//		bool later_refer = false;
-				//		for (int j = i + 2; j < layers.size(); j++)
-				//		{
-				//			for (int k = 0; k < bottoms[j].size(); k++)
-				//			{
-				//				if (bottoms[j][k] == tops[i][0])
-				//				{
-				//					later_refer = true;
-				//					break;
-				//				}
-				//			}
-				//			if (later_refer)
-				//				break;
-				//		}
-				//		if (tops[i + 1][0] == bottoms[i + 1][0] || !later_refer)
-				//		{
-				//			//do merge
-				//			ZQ_CNN_Layer_Convolution* conv_layer = (ZQ_CNN_Layer_Convolution*)layers[i];
-				//			ZQ_CNN_Layer_PReLU* prelu_layer = (ZQ_CNN_Layer_PReLU*)layers[i + 1];
-				//			if (!_merge_prelu_to_conv(conv_layer, prelu_layer))
-				//				return false;
+				if (ZQ_CNN_Layer::_my_strcmpi(layer_type_names[i].c_str(), "Convolution") == 0)
+				{
+					if (i + 1 < layers.size() && ZQ_CNN_Layer::_my_strcmpi(layer_type_names[i + 1].c_str(), "PReLU") == 0)
+					{
+						bool later_refer = false;
+						for (int j = i + 2; j < layers.size(); j++)
+						{
+							for (int k = 0; k < bottoms[j].size(); k++)
+							{
+								if (bottoms[j][k] == tops[i][0])
+								{
+									later_refer = true;
+									break;
+								}
+							}
+							if (later_refer)
+								break;
+						}
+						if (tops[i + 1][0] == bottoms[i + 1][0] || !later_refer)
+						{
+							//do merge
+							ZQ_CNN_Layer_Convolution* conv_layer = (ZQ_CNN_Layer_Convolution*)layers[i];
+							ZQ_CNN_Layer_PReLU* prelu_layer = (ZQ_CNN_Layer_PReLU*)layers[i + 1];
+							if (!_merge_prelu_to_conv(conv_layer, prelu_layer))
+								return false;
 
-				//			delete prelu_layer; prelu_layer = 0;
-				//			tmp_layers.push_back(conv_layer);
-				//			tmp_layer_type_names.push_back(layer_type_names[i]);
-				//			tmp_bottoms.push_back(bottoms[i]);
-				//			tmp_tops.push_back(tops[i + 1]);
-				//			i++;
-				//			continue;
-				//		}
-				//	}
-				//}
-				//else 
-				if (ZQ_CNN_Layer::_my_strcmpi(layer_type_names[i].c_str(), "DepthwiseConvolution") == 0)
+							delete prelu_layer; prelu_layer = 0;
+							tmp_layers.push_back(conv_layer);
+							tmp_layer_type_names.push_back(layer_type_names[i]);
+							tmp_bottoms.push_back(bottoms[i]);
+							tmp_tops.push_back(tops[i + 1]);
+							i++;
+							continue;
+						}
+					}
+				}
+				else if (ZQ_CNN_Layer::_my_strcmpi(layer_type_names[i].c_str(), "DepthwiseConvolution") == 0)
 				{
 					if (i + 1 < layers.size() && ZQ_CNN_Layer::_my_strcmpi(layer_type_names[i + 1].c_str(), "PReLU") == 0)
 					{
@@ -1480,12 +1479,14 @@ namespace ZQ
 			return true;
 		}
 
-		/*bool _merge_prelu_to_conv(ZQ_CNN_Layer_Convolution* conv_layer, ZQ_CNN_Layer_PReLU* prelu_layer)
+		bool _merge_prelu_to_conv(ZQ_CNN_Layer_Convolution* conv_layer, ZQ_CNN_Layer_PReLU* prelu_layer)
 		{
 			ZQ_CNN_Tensor4D* slope = prelu_layer->slope;
-			
+			conv_layer->with_prelu = true;
+			conv_layer->prelu_slope = slope;
+			prelu_layer->slope = 0;
 			return true;
-		}*/
+		}
 
 		bool _merge_bns_to_dwconv(ZQ_CNN_Layer_DepthwiseConvolution* dwconv_layer, ZQ_CNN_Layer_BatchNormScale* bns_layer)
 		{

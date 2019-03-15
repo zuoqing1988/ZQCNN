@@ -246,13 +246,16 @@ namespace ZQ
 	{
 	public:
 		ZQ_CNN_Layer_Convolution() :filters(0), bias(0), num_output(0), kernel_H(0), kernel_W(0),
-			stride_H(1), stride_W(1), dilate_H(1), dilate_W(1), pad_H(0), pad_W(), with_bias(false), bottom_C(0) {}
+			stride_H(1), stride_W(1), dilate_H(1), dilate_W(1), pad_H(0), pad_W(), 
+			with_bias(false), with_prelu(false), prelu_slope(0), bottom_C(0) {}
 		~ZQ_CNN_Layer_Convolution() {
 			if (filters)delete filters;
 			if (bias)delete bias;
+			if (prelu_slope) delete prelu_slope;
 		}
 		ZQ_CNN_Tensor4D* filters;
 		ZQ_CNN_Tensor4D* bias;
+		ZQ_CNN_Tensor4D* prelu_slope;
 		int num_output;
 		int kernel_H;
 		int kernel_W;
@@ -263,6 +266,7 @@ namespace ZQ
 		int pad_H;
 		int pad_W;
 		bool with_bias;
+		bool with_prelu;
 
 		//
 		int bottom_C;
@@ -277,48 +281,99 @@ namespace ZQ
 				return false;
 			if (with_bias)
 			{
-				if (filters == 0 || bias == 0)
-					return false;
-				double t1 = omp_get_wtime();
-				void** tmp_buffer = use_buffer ? buffer : 0;
-				__int64* tmp_buffer_len = use_buffer ? buffer_len : 0;
-				bool ret = ZQ_CNN_Forward_SSEUtils::ConvolutionWithBias(*((*bottoms)[0]), 
-					*filters, *bias, stride_H, stride_W,dilate_H,dilate_W, pad_H, pad_W, *((*tops)[0]),
-					tmp_buffer, tmp_buffer_len);
-				double t2 = omp_get_wtime();
-				last_cost_time = t2 - t1;
-				if (show_debug_info)
+				if (with_prelu)
 				{
-					double time = __max(1000 * (t2 - t1), 1e-9);
-					double mop = (double)(*tops)[0]->GetN()*(*tops)[0]->GetH()* (*tops)[0]->GetW()* filters->GetN()* filters->GetH()* filters->GetW()* filters->GetC();
-					mop /= 1024 * 1024;
-					printf("Conv layer:%s %.3f ms NHW %dx%dx%d filter: NHWC %d x %d x %d x %d, MUL = %.3f M, GFLOPS=%.3f\n",
-						name.c_str(), 1000 * (t2 - t1), (*tops)[0]->GetN(), (*tops)[0]->GetH(), (*tops)[0]->GetW(), filters->GetN(), filters->GetH(), filters->GetW(), filters->GetC(),
-						mop, mop / time);
+					if (filters == 0 || bias == 0 || prelu_slope == 0)
+						return false;
+					double t1 = omp_get_wtime();
+					void** tmp_buffer = use_buffer ? buffer : 0;
+					__int64* tmp_buffer_len = use_buffer ? buffer_len : 0;
+					bool ret = ZQ_CNN_Forward_SSEUtils::ConvolutionWithBiasPReLU(*((*bottoms)[0]),
+						*filters, *bias, *prelu_slope, stride_H, stride_W, dilate_H, dilate_W, pad_H, pad_W, *((*tops)[0]),
+						tmp_buffer, tmp_buffer_len);
+					double t2 = omp_get_wtime();
+					last_cost_time = t2 - t1;
+					if (show_debug_info)
+					{
+						double time = __max(1000 * (t2 - t1), 1e-9);
+						double mop = (double)(*tops)[0]->GetN()*(*tops)[0]->GetH()* (*tops)[0]->GetW()* filters->GetN()* filters->GetH()* filters->GetW()* filters->GetC();
+						mop /= 1024 * 1024;
+						printf("Conv layer:%s %.3f ms NHW %dx%dx%d filter: NHWC %d x %d x %d x %d, MUL = %.3f M, GFLOPS=%.3f\n",
+							name.c_str(), 1000 * (t2 - t1), (*tops)[0]->GetN(), (*tops)[0]->GetH(), (*tops)[0]->GetW(), filters->GetN(), filters->GetH(), filters->GetW(), filters->GetC(),
+							mop, mop / time);
+					}
+					return ret;
 				}
-				return ret;
+				else
+				{
+					if (filters == 0 || bias == 0)
+						return false;
+					double t1 = omp_get_wtime();
+					void** tmp_buffer = use_buffer ? buffer : 0;
+					__int64* tmp_buffer_len = use_buffer ? buffer_len : 0;
+					bool ret = ZQ_CNN_Forward_SSEUtils::ConvolutionWithBias(*((*bottoms)[0]),
+						*filters, *bias, stride_H, stride_W, dilate_H, dilate_W, pad_H, pad_W, *((*tops)[0]),
+						tmp_buffer, tmp_buffer_len);
+					double t2 = omp_get_wtime();
+					last_cost_time = t2 - t1;
+					if (show_debug_info)
+					{
+						double time = __max(1000 * (t2 - t1), 1e-9);
+						double mop = (double)(*tops)[0]->GetN()*(*tops)[0]->GetH()* (*tops)[0]->GetW()* filters->GetN()* filters->GetH()* filters->GetW()* filters->GetC();
+						mop /= 1024 * 1024;
+						printf("Conv layer:%s %.3f ms NHW %dx%dx%d filter: NHWC %d x %d x %d x %d, MUL = %.3f M, GFLOPS=%.3f\n",
+							name.c_str(), 1000 * (t2 - t1), (*tops)[0]->GetN(), (*tops)[0]->GetH(), (*tops)[0]->GetW(), filters->GetN(), filters->GetH(), filters->GetW(), filters->GetC(),
+							mop, mop / time);
+					}
+					return ret;
+				}
 			}
 			else
 			{
-				if (filters == 0)
-					return false;
-				double t1 = omp_get_wtime();
-				void** tmp_buffer = use_buffer ? buffer : 0;
-				__int64* tmp_buffer_len = use_buffer ? buffer_len : 0;
-				bool ret = ZQ_CNN_Forward_SSEUtils::Convolution(*((*bottoms)[0]), *filters, stride_H, stride_W, dilate_H, dilate_W, pad_H, pad_W, *((*tops)[0]),
-					 tmp_buffer, tmp_buffer_len);
-				double t2 = omp_get_wtime();
-				last_cost_time = t2 - t1;
-				if (show_debug_info)
+				if (with_prelu)
 				{
-					double time = __max(1000 * (t2 - t1), 1e-9);
-					double mop = (double)(*tops)[0]->GetN()*(*tops)[0]->GetH()* (*tops)[0]->GetW()* filters->GetN()* filters->GetH()* filters->GetW()* filters->GetC();
-					mop /= 1024 * 1024;
-					printf("Conv layer:%s %.3f ms NHW %dx%dx%d filter: NHWC %d x %d x %d x %d, MUL = %.3f M, GFLOPS=%.3f\n",
-						name.c_str(), 1000 * (t2 - t1), (*tops)[0]->GetN(), (*tops)[0]->GetH(), (*tops)[0]->GetW(), filters->GetN(), filters->GetH(), filters->GetW(), filters->GetC(),
-						mop, mop / time);
+					if (filters == 0 || prelu_slope == 0)
+						return false;
+					double t1 = omp_get_wtime();
+					void** tmp_buffer = use_buffer ? buffer : 0;
+					__int64* tmp_buffer_len = use_buffer ? buffer_len : 0;
+					bool ret = ZQ_CNN_Forward_SSEUtils::ConvolutionWithPReLU(*((*bottoms)[0]), *filters, *prelu_slope, stride_H, stride_W, dilate_H, dilate_W, pad_H, pad_W, *((*tops)[0]),
+						tmp_buffer, tmp_buffer_len);
+					double t2 = omp_get_wtime();
+					last_cost_time = t2 - t1;
+					if (show_debug_info)
+					{
+						double time = __max(1000 * (t2 - t1), 1e-9);
+						double mop = (double)(*tops)[0]->GetN()*(*tops)[0]->GetH()* (*tops)[0]->GetW()* filters->GetN()* filters->GetH()* filters->GetW()* filters->GetC();
+						mop /= 1024 * 1024;
+						printf("Conv layer:%s %.3f ms NHW %dx%dx%d filter: NHWC %d x %d x %d x %d, MUL = %.3f M, GFLOPS=%.3f\n",
+							name.c_str(), 1000 * (t2 - t1), (*tops)[0]->GetN(), (*tops)[0]->GetH(), (*tops)[0]->GetW(), filters->GetN(), filters->GetH(), filters->GetW(), filters->GetC(),
+							mop, mop / time);
+					}
+					return ret;
 				}
-				return ret;
+				else
+				{
+					if (filters == 0)
+						return false;
+					double t1 = omp_get_wtime();
+					void** tmp_buffer = use_buffer ? buffer : 0;
+					__int64* tmp_buffer_len = use_buffer ? buffer_len : 0;
+					bool ret = ZQ_CNN_Forward_SSEUtils::Convolution(*((*bottoms)[0]), *filters, stride_H, stride_W, dilate_H, dilate_W, pad_H, pad_W, *((*tops)[0]),
+						tmp_buffer, tmp_buffer_len);
+					double t2 = omp_get_wtime();
+					last_cost_time = t2 - t1;
+					if (show_debug_info)
+					{
+						double time = __max(1000 * (t2 - t1), 1e-9);
+						double mop = (double)(*tops)[0]->GetN()*(*tops)[0]->GetH()* (*tops)[0]->GetW()* filters->GetN()* filters->GetH()* filters->GetW()* filters->GetC();
+						mop /= 1024 * 1024;
+						printf("Conv layer:%s %.3f ms NHW %dx%dx%d filter: NHWC %d x %d x %d x %d, MUL = %.3f M, GFLOPS=%.3f\n",
+							name.c_str(), 1000 * (t2 - t1), (*tops)[0]->GetN(), (*tops)[0]->GetH(), (*tops)[0]->GetW(), filters->GetN(), filters->GetH(), filters->GetW(), filters->GetC(),
+							mop, mop / time);
+					}
+					return ret;
+				}
 			}
 		}
 
@@ -690,7 +745,10 @@ namespace ZQ
 		{ 
 			int top_C, top_H, top_W;
 			GetTopDim(top_C, top_H, top_W);
-			return (__int64)top_H*top_W*filters->GetN()*filters->GetH()*filters->GetW()*filters->GetC();
+			__int64 total_num = (__int64)top_H*top_W*filters->GetN()*filters->GetH()*filters->GetW()*filters->GetC();
+			if (with_bias)
+				total_num += (__int64)top_H*top_W*top_C;
+			return total_num;
 		}
 	};
 
@@ -700,7 +758,7 @@ namespace ZQ
 	public:
 		ZQ_CNN_Layer_DepthwiseConvolution() :filters(0), bias(0), num_output(0), kernel_H(0), kernel_W(0),
 			stride_H(1), stride_W(1),dilate_H(1),dilate_W(1), pad_H(0), pad_W(), with_bias(false), bottom_C(0), 
-			with_prelu(false) {}
+			with_prelu(false), prelu_slope(0) {}
 		~ZQ_CNN_Layer_DepthwiseConvolution() {
 			if (filters)delete filters;
 			if (bias)delete bias;
@@ -1142,7 +1200,12 @@ namespace ZQ
 		{
 			int top_C, top_H, top_W;
 			GetTopDim(top_C, top_H, top_W);
-			return (__int64)top_H*top_W*filters->GetN()*filters->GetH()*filters->GetW()*filters->GetC();
+			__int64 total_num = (__int64)top_H*top_W*filters->GetN()*filters->GetH()*filters->GetW()*filters->GetC();
+			if (with_bias)
+				total_num += (__int64)top_H*top_W*top_C;
+			if (with_prelu)
+				total_num += (__int64)top_H*top_W*top_C * 3;
+			return total_num;
 		}
 	};
 
@@ -2249,7 +2312,7 @@ namespace ZQ
 
 		virtual __int64 GetNumOfMulAdd() const
 		{
-			return bottom_W*bottom_H*bottom_C;
+			return (__int64)bottom_W*bottom_H*bottom_C*3;
 		}
 	};
 

@@ -2318,7 +2318,60 @@ void ZQ_CNN_Forward_SSEUtils::_prelu(int align_mode, float* data, int N, int H, 
 	}
 }
 
+void ZQ_CNN_Forward_SSEUtils::_addbias_prelu(int align_mode, float* data, int N, int H, int W, int C, int pixelStep, int widthStep, int sliceStep,
+	const float* bias, const float* slope_Data)
+{
+	bool sure_slope_lessthan1 = false;
+	if (N*H*W > 4)
+	{
+		sure_slope_lessthan1 = true;
+		for (int i = 0; i < C; i++)
+		{
+			if (slope_Data[i] > 1)
+			{
+				sure_slope_lessthan1 = false;
+				break;
+			}
+		}
+	}
+
+	if (sure_slope_lessthan1)
+	{
+		if (C == 1)
+			align_mode = __min(align_mode, ZQ_CNN_Tensor4D::ALIGN_0);
+		else if (C <= 4)
+			align_mode = __min(align_mode, ZQ_CNN_Tensor4D::ALIGN_128bit);
+		
+		if (align_mode == ZQ_CNN_Tensor4D::ALIGN_128bit)
+		{
+			zq_cnn_addbias_prelu_32f_align128bit_sure_slope_lessthan1(data, N, H, W, C, pixelStep, widthStep, sliceStep, bias, slope_Data);
+		}
+		else if (align_mode == ZQ_CNN_Tensor4D::ALIGN_256bit)
+		{
+		}
+		else
+		{
+			zq_cnn_addbias_prelu_32f_align0(data, N, H, W, C, pixelStep, widthStep, sliceStep, bias, slope_Data);
+		}
+	}
+	else
+	{
+		if (align_mode == ZQ_CNN_Tensor4D::ALIGN_128bit)
+		{
+			zq_cnn_addbias_prelu_32f_align128bit(data, N, H, W, C, pixelStep, widthStep, sliceStep, bias, slope_Data);
+		}
+		else if (align_mode == ZQ_CNN_Tensor4D::ALIGN_256bit)
+		{
+		}
+		else
+		{
+			zq_cnn_addbias_prelu_32f_align0(data, N, H, W, C, pixelStep, widthStep, sliceStep, bias, slope_Data);
+		}
+	}
+}
+
 #else
+
 void ZQ_CNN_Forward_SSEUtils::_prelu(int align_mode, float* data, int N, int H, int W, int C, int pixelStep, int widthStep, int sliceStep,
 	const float* slope_Data)
 {
@@ -2382,6 +2435,71 @@ void ZQ_CNN_Forward_SSEUtils::_prelu(int align_mode, float* data, int N, int H, 
 		}
 	}
 }
+
+void ZQ_CNN_Forward_SSEUtils::_addbias_prelu(int align_mode, float* data, int N, int H, int W, int C, int pixelStep, int widthStep, int sliceStep,
+	const float* bias, const float* slope_Data)
+{
+	bool sure_slope_lessthan1 = false;
+	if (N*H*W > 4)
+	{
+		sure_slope_lessthan1 = true;
+		for (int i = 0; i < C; i++)
+		{
+			if (slope_Data[i] > 1)
+			{
+				sure_slope_lessthan1 = false;
+				break;
+			}
+		}
+	}
+
+	if (sure_slope_lessthan1)
+	{
+		if (C == 1)
+			align_mode = __min(align_mode, ZQ_CNN_Tensor4D::ALIGN_0);
+		else if (C <= 4)
+			align_mode = __min(align_mode, ZQ_CNN_Tensor4D::ALIGN_128bit);
+		else if (C <= 8)
+			align_mode = __min(align_mode, ZQ_CNN_Tensor4D::ALIGN_256bit);
+
+		if (align_mode == ZQ_CNN_Tensor4D::ALIGN_128bit)
+		{
+#if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_SSE
+			zq_cnn_addbias_prelu_32f_align128bit_sure_slope_lessthan1(data, N, H, W, C, pixelStep, widthStep, sliceStep, bias, slope_Data);
+#endif
+		}
+		else if (align_mode == ZQ_CNN_Tensor4D::ALIGN_256bit)
+		{
+#if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_AVX
+			zq_cnn_addbias_prelu_32f_align256bit_sure_slope_lessthan1(data, N, H, W, C, pixelStep, widthStep, sliceStep, bias, slope_Data);
+#endif
+		}
+		else
+		{
+			zq_cnn_addbias_prelu_32f_align0(data, N, H, W, C, pixelStep, widthStep, sliceStep, bias, slope_Data);
+		}
+	}
+	else
+	{
+		if (align_mode == ZQ_CNN_Tensor4D::ALIGN_128bit)
+		{
+#if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_SSE
+			zq_cnn_addbias_prelu_32f_align128bit(data, N, H, W, C, pixelStep, widthStep, sliceStep, bias, slope_Data);
+#endif
+		}
+		else if (align_mode == ZQ_CNN_Tensor4D::ALIGN_256bit)
+		{
+#if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_AVX
+			zq_cnn_addbias_prelu_32f_align256bit(data, N, H, W, C, pixelStep, widthStep, sliceStep, bias, slope_Data);
+#endif
+		}
+		else
+		{
+			zq_cnn_addbias_prelu_32f_align0(data, N, H, W, C, pixelStep, widthStep, sliceStep, bias, slope_Data);
+		}
+	}
+}
+
 #endif //__ARM_NEON
 
 #if __ARM_NEON
