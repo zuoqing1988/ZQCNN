@@ -22,7 +22,7 @@ ZQCNN是ZuoQing参照mini-caffe写的forward库，使用depthwise convolution的
 	#define ZQ_CNN_USE_ZQ_GEMM 1
 	#define ZQ_CNN_USE_BLAS_GEMM 1
 	
-  可以注释掉
+可以注释掉
   
 	line 67: #if defined(ZQ_CNN_USE_BOTH_BLAS_ZQ_GEMM)
 	line 70: #endif
