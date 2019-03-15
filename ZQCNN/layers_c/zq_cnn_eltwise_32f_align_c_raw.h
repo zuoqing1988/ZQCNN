@@ -3,33 +3,33 @@
 	b0 = zq_mm_load_ps(in1_c_ptr);\
 	a1 = zq_mm_load_ps(in_c_ptr+zq_mm_align_size);\
 	b1 = zq_mm_load_ps(in1_c_ptr+zq_mm_align_size);\
-	a2 = zq_mm_load_ps(in_c_ptr+zq_mm_align_size_mul_2);\
-	b2 = zq_mm_load_ps(in1_c_ptr+zq_mm_align_size_mul_2);\
-	a3 = zq_mm_load_ps(in_c_ptr+zq_mm_align_size_mul_3);\
-	b3 = zq_mm_load_ps(in1_c_ptr+zq_mm_align_size_mul_3);\
+	a2 = zq_mm_load_ps(in_c_ptr+zq_mm_align_size2);\
+	b2 = zq_mm_load_ps(in1_c_ptr+zq_mm_align_size2);\
+	a3 = zq_mm_load_ps(in_c_ptr+zq_mm_align_size3);\
+	b3 = zq_mm_load_ps(in1_c_ptr+zq_mm_align_size3);\
 	zq_mm_store_ps(out_c_ptr, zq_mm_add_ps(a0, b0));\
 	zq_mm_store_ps(out_c_ptr+zq_mm_align_size, zq_mm_add_ps(a1, b1));\
-	zq_mm_store_ps(out_c_ptr+zq_mm_align_size_mul_2, zq_mm_add_ps(a2, b2));\
-	zq_mm_store_ps(out_c_ptr+zq_mm_align_size_mul_3, zq_mm_add_ps(a3, b3));\
-	in_c_ptr += zq_mm_align_size_mul_4;\
-	in1_c_ptr += zq_mm_align_size_mul_4;\
-	out_c_ptr += zq_mm_align_size_mul_4
+	zq_mm_store_ps(out_c_ptr+zq_mm_align_size2, zq_mm_add_ps(a2, b2));\
+	zq_mm_store_ps(out_c_ptr+zq_mm_align_size3, zq_mm_add_ps(a3, b3));\
+	in_c_ptr += zq_mm_align_size4;\
+	in1_c_ptr += zq_mm_align_size4;\
+	out_c_ptr += zq_mm_align_size4
 
 #define op_sum_0_4 \
 	a0 = zq_mm_load_ps(in_c_ptr);\
 	b0 = zq_mm_load_ps(out_c_ptr);\
 	a1 = zq_mm_load_ps(in_c_ptr+zq_mm_align_size);\
 	b1 = zq_mm_load_ps(out_c_ptr+zq_mm_align_size);\
-	a2 = zq_mm_load_ps(in_c_ptr+zq_mm_align_size_mul_2);\
-	b2 = zq_mm_load_ps(out_c_ptr+zq_mm_align_size_mul_2);\
-	a3 = zq_mm_load_ps(in_c_ptr+zq_mm_align_size_mul_3);\
-	b3 = zq_mm_load_ps(out_c_ptr+zq_mm_align_size_mul_3);\
+	a2 = zq_mm_load_ps(in_c_ptr+zq_mm_align_size2);\
+	b2 = zq_mm_load_ps(out_c_ptr+zq_mm_align_size2);\
+	a3 = zq_mm_load_ps(in_c_ptr+zq_mm_align_size3);\
+	b3 = zq_mm_load_ps(out_c_ptr+zq_mm_align_size3);\
 	zq_mm_store_ps(out_c_ptr, zq_mm_add_ps(a0, b0));\
 	zq_mm_store_ps(out_c_ptr+zq_mm_align_size, zq_mm_add_ps(a1, b1));\
-	zq_mm_store_ps(out_c_ptr+zq_mm_align_size_mul_2, zq_mm_add_ps(a2, b2));\
-	zq_mm_store_ps(out_c_ptr+zq_mm_align_size_mul_3, zq_mm_add_ps(a3, b3));\
-	in_c_ptr += zq_mm_align_size_mul_4;\
-	out_c_ptr += zq_mm_align_size_mul_4
+	zq_mm_store_ps(out_c_ptr+zq_mm_align_size2, zq_mm_add_ps(a2, b2));\
+	zq_mm_store_ps(out_c_ptr+zq_mm_align_size3, zq_mm_add_ps(a3, b3));\
+	in_c_ptr += zq_mm_align_size4;\
+	out_c_ptr += zq_mm_align_size4
 	
 #define op_sum_0_8 \
 	op_sum_0_4;\
@@ -144,8 +144,8 @@ void zq_cnn_eltwise_sum_32f_align(
 	zq_base_type* out_slice_ptr, *out_row_ptr, *out_pix_ptr, *out_c_ptr;
 	register zq_mm_type a0, a1, a2, a3;
 	register zq_mm_type b0, b1, b2, b3;
-#if !__ARM_NEON
-	if (C%zq_mm_align_size_mul_32 == 0)
+
+	if (C%zq_mm_align_size32 == 0)
 	{
 		for (n = 0, in_slice_ptr = in_tensor4D_data[0], in1_slice_ptr = in_tensor4D_data[1], out_slice_ptr = out_tensor4D_data;
 			n < N;
@@ -160,7 +160,7 @@ void zq_cnn_eltwise_sum_32f_align(
 					w++, in_pix_ptr += in_pixelStep[0], in1_pix_ptr += in_pixelStep[1], out_pix_ptr += out_pixelStep)
 				{
 					for (c = 0, in_c_ptr = in_pix_ptr, in1_c_ptr = in1_pix_ptr, out_c_ptr = out_pix_ptr;
-						c < C; c += zq_mm_align_size_mul_32)
+						c < C; c += zq_mm_align_size32)
 					{
 						op_sum_0_32_first;
 					}
@@ -181,7 +181,7 @@ void zq_cnn_eltwise_sum_32f_align(
 						w < W;
 						w++, in_pix_ptr += in_pixelStep[tensor_id], out_pix_ptr += out_pixelStep)
 					{
-						for (c = 0, in_c_ptr = in_pix_ptr, out_c_ptr = out_pix_ptr; c < C; c += zq_mm_align_size_mul_32)
+						for (c = 0, in_c_ptr = in_pix_ptr, out_c_ptr = out_pix_ptr; c < C; c += zq_mm_align_size32)
 						{
 							op_sum_0_32;
 						}
@@ -190,7 +190,7 @@ void zq_cnn_eltwise_sum_32f_align(
 			}
 		}
 	}
-	else if (C%zq_mm_align_size_mul_16 == 0)
+	else if (C%zq_mm_align_size16 == 0)
 	{
 		for (n = 0, in_slice_ptr = in_tensor4D_data[0], in1_slice_ptr = in_tensor4D_data[1], out_slice_ptr = out_tensor4D_data;
 			n < N;
@@ -205,7 +205,7 @@ void zq_cnn_eltwise_sum_32f_align(
 					w++, in_pix_ptr += in_pixelStep[0], in1_pix_ptr += in_pixelStep[1], out_pix_ptr += out_pixelStep)
 				{
 					for (c = 0, in_c_ptr = in_pix_ptr, in1_c_ptr = in1_pix_ptr, out_c_ptr = out_pix_ptr;
-						c < C; c += zq_mm_align_size_mul_16)
+						c < C; c += zq_mm_align_size16)
 					{
 						op_sum_0_16_first;
 					}
@@ -226,7 +226,7 @@ void zq_cnn_eltwise_sum_32f_align(
 						w < W;
 						w++, in_pix_ptr += in_pixelStep[tensor_id], out_pix_ptr += out_pixelStep)
 					{
-						for (c = 0, in_c_ptr = in_pix_ptr, out_c_ptr = out_pix_ptr; c < C; c += zq_mm_align_size_mul_16)
+						for (c = 0, in_c_ptr = in_pix_ptr, out_c_ptr = out_pix_ptr; c < C; c += zq_mm_align_size16)
 						{
 							op_sum_0_16;
 						}
@@ -235,9 +235,7 @@ void zq_cnn_eltwise_sum_32f_align(
 			}
 		}
 	}
-	else
-#endif
-		if (C%zq_mm_align_size_mul_8 == 0)
+	else if (C%zq_mm_align_size8 == 0)
 	{
 		for (n = 0, in_slice_ptr = in_tensor4D_data[0], in1_slice_ptr = in_tensor4D_data[1], out_slice_ptr = out_tensor4D_data;
 			n < N;
@@ -252,7 +250,7 @@ void zq_cnn_eltwise_sum_32f_align(
 					w++, in_pix_ptr += in_pixelStep[0], in1_pix_ptr += in_pixelStep[1], out_pix_ptr += out_pixelStep)
 				{
 					for (c = 0, in_c_ptr = in_pix_ptr, in1_c_ptr = in1_pix_ptr, out_c_ptr = out_pix_ptr;
-						c < C; c += zq_mm_align_size_mul_8)
+						c < C; c += zq_mm_align_size8)
 					{
 						op_sum_0_8_first;
 					}
@@ -273,7 +271,7 @@ void zq_cnn_eltwise_sum_32f_align(
 						w < W;
 						w++, in_pix_ptr += in_pixelStep[tensor_id], out_pix_ptr += out_pixelStep)
 					{
-						for (c = 0, in_c_ptr = in_pix_ptr, out_c_ptr = out_pix_ptr;	c < C;	c += zq_mm_align_size_mul_8)
+						for (c = 0, in_c_ptr = in_pix_ptr, out_c_ptr = out_pix_ptr;	c < C;	c += zq_mm_align_size8)
 						{
 							op_sum_0_8;
 						}
@@ -355,8 +353,8 @@ void zq_cnn_eltwise_sum_with_weight_32f_align(
 	const zq_base_type* in_slice_ptr, *in_row_ptr, *in_pix_ptr, *in_c_ptr;
 	const zq_base_type* in1_slice_ptr, *in1_row_ptr, *in1_pix_ptr, *in1_c_ptr;
 	zq_base_type* out_slice_ptr, *out_row_ptr, *out_pix_ptr, *out_c_ptr;
-#if !__ARM_NEON
-	if (C%zq_mm_align_size_mul_32 == 0)
+
+	if (C%zq_mm_align_size32 == 0)
 	{
 		for (n = 0, in_slice_ptr = in_tensor4D_data[0], in1_slice_ptr = in_tensor4D_data[1], out_slice_ptr = out_tensor4D_data;
 			n < N;
@@ -371,7 +369,7 @@ void zq_cnn_eltwise_sum_with_weight_32f_align(
 					w++, in_pix_ptr += in_pixelStep[0], in1_pix_ptr += in_pixelStep[1], out_pix_ptr += out_pixelStep)
 				{
 					for (c = 0, in_c_ptr = in_pix_ptr, in1_c_ptr = in1_pix_ptr, out_c_ptr = out_pix_ptr;
-						c < C;	c += zq_mm_align_size_mul_32)
+						c < C;	c += zq_mm_align_size32)
 					{
 						op_weight_sum_0_32_first;
 					}
@@ -393,7 +391,7 @@ void zq_cnn_eltwise_sum_with_weight_32f_align(
 						w++, in_pix_ptr += in_pixelStep[tensor_id], out_pix_ptr += out_pixelStep)
 					{
 						for (c = 0, in_c_ptr = in_pix_ptr, out_c_ptr = out_pix_ptr;
-							c < C;	c += zq_mm_align_size_mul_32)
+							c < C;	c += zq_mm_align_size32)
 						{
 							op_weight_sum_0_32;
 						}
@@ -402,7 +400,7 @@ void zq_cnn_eltwise_sum_with_weight_32f_align(
 			}
 		}
 	}
-	else if (C%zq_mm_align_size_mul_16 == 0)
+	else if (C%zq_mm_align_size16 == 0)
 	{
 		for (n = 0, in_slice_ptr = in_tensor4D_data[0], in1_slice_ptr = in_tensor4D_data[1], out_slice_ptr = out_tensor4D_data;
 			n < N;
@@ -417,7 +415,7 @@ void zq_cnn_eltwise_sum_with_weight_32f_align(
 					w++, in_pix_ptr += in_pixelStep[0], in1_pix_ptr += in_pixelStep[1], out_pix_ptr += out_pixelStep)
 				{
 					for (c = 0, in_c_ptr = in_pix_ptr, in1_c_ptr = in1_pix_ptr, out_c_ptr = out_pix_ptr;
-						c < C;	c += zq_mm_align_size_mul_16)
+						c < C;	c += zq_mm_align_size16)
 					{
 						op_weight_sum_0_16_first;
 					}
@@ -439,7 +437,7 @@ void zq_cnn_eltwise_sum_with_weight_32f_align(
 						w++, in_pix_ptr += in_pixelStep[tensor_id], out_pix_ptr += out_pixelStep)
 					{
 						for (c = 0, in_c_ptr = in_pix_ptr, out_c_ptr = out_pix_ptr;
-							c < C;	c += zq_mm_align_size_mul_16)
+							c < C;	c += zq_mm_align_size16)
 						{
 							op_weight_sum_0_16;
 						}
@@ -448,9 +446,7 @@ void zq_cnn_eltwise_sum_with_weight_32f_align(
 			}
 		}
 	}
-	else
-#endif
-		if (C%zq_mm_align_size_mul_8 == 0)
+	else if (C%zq_mm_align_size8 == 0)
 	{
 		for (n = 0, in_slice_ptr = in_tensor4D_data[0], in1_slice_ptr = in_tensor4D_data[1], out_slice_ptr = out_tensor4D_data;
 			n < N;
@@ -465,7 +461,7 @@ void zq_cnn_eltwise_sum_with_weight_32f_align(
 					w++, in_pix_ptr += in_pixelStep[0], in1_pix_ptr += in_pixelStep[1], out_pix_ptr += out_pixelStep)
 				{
 					for (c = 0, in_c_ptr = in_pix_ptr, in1_c_ptr = in1_pix_ptr, out_c_ptr = out_pix_ptr;
-						c < C;	c += zq_mm_align_size_mul_8)
+						c < C;	c += zq_mm_align_size8)
 					{
 						op_weight_sum_0_8_first;
 					}
@@ -487,7 +483,7 @@ void zq_cnn_eltwise_sum_with_weight_32f_align(
 						w++, in_pix_ptr += in_pixelStep[tensor_id], out_pix_ptr += out_pixelStep)
 					{
 						for (c = 0, in_c_ptr = in_pix_ptr, out_c_ptr = out_pix_ptr;
-							c < C;	c += zq_mm_align_size_mul_8)
+							c < C;	c += zq_mm_align_size8)
 						{
 							op_weight_sum_0_8;
 						}
