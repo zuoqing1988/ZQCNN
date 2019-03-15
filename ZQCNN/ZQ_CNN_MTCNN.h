@@ -36,7 +36,7 @@ namespace ZQ
 
 	private:
 #if __ARM_NEON
-		const int BATCH_SIZE = 4;
+		const int BATCH_SIZE = 16;
 #else
 		const int BATCH_SIZE = 64;
 #endif
