@@ -4,7 +4,7 @@
 extern "C" {
 #endif
 
-#if __ARM_NEON
+#if __ARM_NEON 
 #define SWAP_A_Bt \
 	if (M*N < 0.1*(M*N*K) && M + 8 < N) \
 	{ \
@@ -70,9 +70,9 @@ extern "C" {
 		{
 			if (
 				(M == 3136 && N == 64) //mobilefacenet
-				||(M == 8836 && N == 32) //det5-dw96-v2s
-				|| (M%2304 == 0 && N == 16) //det3-dw48-fast
-				|| (M%484 == 0 && N == 16) //det2-dw24-fast
+				|| (M == 8836 && N == 32) //det5-dw96-v2s
+				|| (M % 2304 == 0 && N == 16) //det3-dw48-fast
+				|| (M % 484 == 0 && N == 16) //det2-dw24-fast
 				|| (M >= 2500 && N == 8) //det1-dw20-fast
 				)
 			{
@@ -156,6 +156,8 @@ extern "C" {
 		return handled;
 	}
 
+	
+#if __ARM_NEON_ARMV8
 	void zq_gemm_32f_AnoTrans_Btrans_auto(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
 	{
 		const float* oldA = A, *oldB = Bt;
@@ -164,8 +166,6 @@ extern "C" {
 		int m, n;
 		int swap = 0;
 		int handled = 0;
-
-#if __ARM_NEON_ARMV8
 		if (K == 8)
 		{
 			SWAP_A_Bt;
@@ -240,9 +240,18 @@ extern "C" {
 			zq_gemm_32f_align128bit_AnoTrans_Btrans_M4_N4(M, N, K, A, lda, Bt, ldb, C, ldc);
 			handled = 1;
 		}
+	}
 
 #else // not ARMV8
-
+	
+	void zq_gemm_32f_AnoTrans_Btrans_auto(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+	{
+		const float* oldA = A, *oldB = Bt;
+		float* old_C = C;
+		int old_lda = lda, old_ldb = ldb, old_ldc = ldc, old_M = M, old_N = N;
+		int m, n;
+		int swap = 0;
+		int handled = 0;
 		if (K == 16)
 		{
 			if (N >= 8)
@@ -375,13 +384,13 @@ extern "C" {
 				handled = 1;
 
 			}
-#endif// __ARM_NEON_ARMV8
+
 
 			SWAP_C;
 		}
 	}
-
-
+#endif// __ARM_NEON_ARMV8
+	
 #else // not __ARM_NEON
 
 	void zq_gemm_32f_AnoTrans_Btrans_auto(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
