@@ -51,7 +51,8 @@ namespace ZQ
 		void TurnOnUseBuffer() { use_buffer = true; }
 		void TurnOffUseBuffer() { use_buffer = false; }
 		void GetInputDim(int& in_C, int& in_H, int& in_W)const { in_C = input_C; in_H = input_H; in_W = input_W; }
-		bool LoadFrom(const std::string& param_file, const std::string& model_file, bool merge_bn = false, float ignore_small_value = 1e-12)
+		bool LoadFrom(const std::string& param_file, const std::string& model_file, bool merge_bn = false, float ignore_small_value = 1e-12,
+			bool merge_prelu = false)
 		{
 			_clear();
 			this->ignore_small_value = ignore_small_value;
@@ -76,6 +77,11 @@ namespace ZQ
 				if (!_merge_bn())
 					return false;
 			}
+			if (merge_prelu)
+			{
+				if (!_merge_prelu())
+					return false;
+			}
 			return true;
 		}
 
@@ -90,7 +96,7 @@ namespace ZQ
 		}
 
 		bool LoadFromBuffer(const char*& param_buffer, __int64 param_buffer_len, const char*& model_buffer, __int64 model_buffer_len, 
-			bool merge_bn = false, float ignore_small_value = 1e-12)
+			bool merge_bn = false, float ignore_small_value = 1e-12, bool merge_prelu = false)
 		{
 			_clear();
 			this->ignore_small_value = ignore_small_value;
@@ -113,6 +119,11 @@ namespace ZQ
 			if (merge_bn)
 			{
 				if (!_merge_bn())
+					return false;
+			}
+			if (merge_prelu)
+			{
+				if (!_merge_prelu())
 					return false;
 			}
 			return true;
@@ -1320,6 +1331,101 @@ namespace ZQ
 			return true;
 		}
 
+		bool _merge_prelu()
+		{
+			std::vector<ZQ_CNN_Layer*> tmp_layers;
+			std::vector<std::string> tmp_layer_type_names;
+			std::vector<std::vector<int> > tmp_bottoms;
+			std::vector<std::vector<int> > tmp_tops;
+			for (int i = 0; i < layers.size(); i++)
+			{
+				//if (ZQ_CNN_Layer::_my_strcmpi(layer_type_names[i].c_str(), "Convolution") == 0)
+				//{
+				//	if (i + 1 < layers.size() && ZQ_CNN_Layer::_my_strcmpi(layer_type_names[i + 1].c_str(), "PReLU") == 0)
+				//	{
+				//		bool later_refer = false;
+				//		for (int j = i + 2; j < layers.size(); j++)
+				//		{
+				//			for (int k = 0; k < bottoms[j].size(); k++)
+				//			{
+				//				if (bottoms[j][k] == tops[i][0])
+				//				{
+				//					later_refer = true;
+				//					break;
+				//				}
+				//			}
+				//			if (later_refer)
+				//				break;
+				//		}
+				//		if (tops[i + 1][0] == bottoms[i + 1][0] || !later_refer)
+				//		{
+				//			//do merge
+				//			ZQ_CNN_Layer_Convolution* conv_layer = (ZQ_CNN_Layer_Convolution*)layers[i];
+				//			ZQ_CNN_Layer_PReLU* prelu_layer = (ZQ_CNN_Layer_PReLU*)layers[i + 1];
+				//			if (!_merge_prelu_to_conv(conv_layer, prelu_layer))
+				//				return false;
+
+				//			delete prelu_layer; prelu_layer = 0;
+				//			tmp_layers.push_back(conv_layer);
+				//			tmp_layer_type_names.push_back(layer_type_names[i]);
+				//			tmp_bottoms.push_back(bottoms[i]);
+				//			tmp_tops.push_back(tops[i + 1]);
+				//			i++;
+				//			continue;
+				//		}
+				//	}
+				//}
+				//else 
+				if (ZQ_CNN_Layer::_my_strcmpi(layer_type_names[i].c_str(), "DepthwiseConvolution") == 0)
+				{
+					if (i + 1 < layers.size() && ZQ_CNN_Layer::_my_strcmpi(layer_type_names[i + 1].c_str(), "PReLU") == 0)
+					{
+						bool later_refer = false;
+						for (int j = i + 2; j < layers.size(); j++)
+						{
+							for (int k = 0; k < bottoms[j].size(); k++)
+							{
+								if (bottoms[j][k] == tops[i][0])
+								{
+									later_refer = true;
+									break;
+								}
+							}
+							if (later_refer)
+								break;
+						}
+						if (tops[i + 1][0] == bottoms[i + 1][0] || !later_refer)
+						{
+							//do merge
+							ZQ_CNN_Layer_DepthwiseConvolution* dwconv_layer = (ZQ_CNN_Layer_DepthwiseConvolution*)layers[i];
+							ZQ_CNN_Layer_PReLU* prelu_layer = (ZQ_CNN_Layer_PReLU*)layers[i + 1];
+							if (!_merge_prelu_to_dwconv(dwconv_layer, prelu_layer))
+								return false;
+
+							delete prelu_layer; prelu_layer = 0;
+							tmp_layers.push_back(dwconv_layer);
+							tmp_layer_type_names.push_back(layer_type_names[i]);
+							tmp_bottoms.push_back(bottoms[i]);
+							tmp_tops.push_back(tops[i + 1]);
+							i++;
+							continue;
+						}
+					}
+				}
+
+				tmp_layers.push_back(layers[i]);
+				tmp_layer_type_names.push_back(layer_type_names[i]);
+				tmp_bottoms.push_back(bottoms[i]);
+				tmp_tops.push_back(tops[i]);
+			}
+
+			layers = tmp_layers;
+			layer_type_names = tmp_layer_type_names;
+			bottoms = tmp_bottoms;
+			tops = tmp_tops;
+			return true;
+		}
+
 		bool _merge_bns_to_conv(ZQ_CNN_Layer_Convolution* conv_layer, ZQ_CNN_Layer_BatchNormScale* bns_layer)
 		{
 			ZQ_CNN_Tensor4D* filters = conv_layer->filters;
@@ -1374,6 +1480,13 @@ namespace ZQ
 			return true;
 		}
 
+		/*bool _merge_prelu_to_conv(ZQ_CNN_Layer_Convolution* conv_layer, ZQ_CNN_Layer_PReLU* prelu_layer)
+		{
+			ZQ_CNN_Tensor4D* slope = prelu_layer->slope;
+			
+			return true;
+		}*/
+
 		bool _merge_bns_to_dwconv(ZQ_CNN_Layer_DepthwiseConvolution* dwconv_layer, ZQ_CNN_Layer_BatchNormScale* bns_layer)
 		{
 			ZQ_CNN_Tensor4D* filters = dwconv_layer->filters;
@@ -1421,6 +1534,15 @@ namespace ZQ
 					(dwconv_layer->bias->GetFirstPixelPtr())[c] = bias_v*b_v + a_v;
 				}
 			}
+			return true;
+		}
+
+		bool _merge_prelu_to_dwconv(ZQ_CNN_Layer_DepthwiseConvolution* dwconv_layer, ZQ_CNN_Layer_PReLU* prelu_layer)
+		{
+			ZQ_CNN_Tensor4D* slope = prelu_layer->slope;
+			dwconv_layer->with_prelu = true;
+			dwconv_layer->prelu_slope = slope;
+			prelu_layer->slope = 0;
 			return true;
 		}
 

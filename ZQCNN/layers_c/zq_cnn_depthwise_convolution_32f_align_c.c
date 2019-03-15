@@ -38,6 +38,8 @@ extern "C" {
 #define zq_mm_load_ps vld1q_f32
 #define zq_mm_store_ps vst1q_f32
 #define zq_mm_add_ps vaddq_f32
+#define zq_mm_min_ps vminq_f32
+#define zq_mm_max_ps vmaxq_f32
 #if ZQ_CNN_USE_FMADD128
 #define zq_mm_fmadd_ps(A, B, C) vfmaq_f32(C, A, B)
 #else
@@ -60,7 +62,6 @@ extern "C" {
 #define zq_mm_align_size64 256
 #define zq_final_sum_q (q[0]+q[1]+q[2]+q[3])
 
-#define WITH_BIAS 0
 #define zq_cnn_depthwise_conv_no_padding_32f_general zq_cnn_depthwise_conv_no_padding_32f_align128bit_general
 #define zq_cnn_depthwise_conv_no_padding_32f_kernel3x3 zq_cnn_depthwise_conv_no_padding_32f_align128bit_kernel3x3
 #define zq_cnn_depthwise_conv_no_padding_32f_kernel2x2 zq_cnn_depthwise_conv_no_padding_32f_align128bit_kernel2x2
@@ -85,8 +86,9 @@ extern "C" {
 #define zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_mul_64 zq_cnn_depthwise_conv_no_padding_32f_align128bit_kernel3x3_C256
 #define zq_cnn_depthwise_conv_no_padding_32f_kernel2x2_mul_64 zq_cnn_depthwise_conv_no_padding_32f_align128bit_kernel2x2_C256
 
-
+#define WITH_BIAS 0
 #include "zq_cnn_depthwise_convolution_32f_align_c_raw.h"
+#undef WITH_BIAS
 
 #undef zq_cnn_depthwise_conv_no_padding_32f_general
 #undef zq_cnn_depthwise_conv_no_padding_32f_kernel3x3
@@ -111,9 +113,8 @@ extern "C" {
 #undef zq_cnn_depthwise_conv_no_padding_32f_kernel2x2_mul_32
 #undef zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_mul_64
 #undef zq_cnn_depthwise_conv_no_padding_32f_kernel2x2_mul_64
-#undef WITH_BIAS
 
-#define WITH_BIAS 1
+
 #define zq_cnn_depthwise_conv_no_padding_32f_general zq_cnn_depthwise_conv_no_padding_32f_align128bit_general_with_bias
 #define zq_cnn_depthwise_conv_no_padding_32f_kernel3x3 zq_cnn_depthwise_conv_no_padding_32f_align128bit_kernel3x3_with_bias
 #define zq_cnn_depthwise_conv_no_padding_32f_kernel2x2 zq_cnn_depthwise_conv_no_padding_32f_align128bit_kernel2x2_with_bias
@@ -138,8 +139,9 @@ extern "C" {
 #define zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_mul_64 zq_cnn_depthwise_conv_no_padding_32f_align128bit_kernel3x3_C256_with_bias
 #define zq_cnn_depthwise_conv_no_padding_32f_kernel2x2_mul_64 zq_cnn_depthwise_conv_no_padding_32f_align128bit_kernel2x2_C256_with_bias
 
-
+#define WITH_BIAS 1
 #include "zq_cnn_depthwise_convolution_32f_align_c_raw.h"
+#undef WITH_BIAS
 
 #undef zq_cnn_depthwise_conv_no_padding_32f_general
 #undef zq_cnn_depthwise_conv_no_padding_32f_kernel3x3
@@ -164,11 +166,68 @@ extern "C" {
 #undef zq_cnn_depthwise_conv_no_padding_32f_kernel2x2_mul_32
 #undef zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_mul_64
 #undef zq_cnn_depthwise_conv_no_padding_32f_kernel2x2_mul_64
+
+
+#define zq_cnn_depthwise_conv_no_padding_32f_general zq_cnn_depthwise_conv_no_padding_32f_align128bit_general_with_bias_prelu
+#define zq_cnn_depthwise_conv_no_padding_32f_kernel3x3 zq_cnn_depthwise_conv_no_padding_32f_align128bit_kernel3x3_with_bias_prelu
+#define zq_cnn_depthwise_conv_no_padding_32f_kernel2x2 zq_cnn_depthwise_conv_no_padding_32f_align128bit_kernel2x2_with_bias_prelu
+#define zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_mul_1 zq_cnn_depthwise_conv_no_padding_32f_align128bit_kernel3x3_C4_with_bias_prelu
+#define zq_cnn_depthwise_conv_no_padding_32f_kernel2x2_mul_1 zq_cnn_depthwise_conv_no_padding_32f_align128bit_kernel2x2_C4_with_bias_prelu
+#define zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_mul_2 zq_cnn_depthwise_conv_no_padding_32f_align128bit_kernel3x3_C8_with_bias_prelu
+#define zq_cnn_depthwise_conv_no_padding_32f_kernel2x2_mul_2 zq_cnn_depthwise_conv_no_padding_32f_align128bit_kernel2x2_C8_with_bias_prelu
+#define zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_mul_3 zq_cnn_depthwise_conv_no_padding_32f_align128bit_kernel3x3_C12_with_bias_prelu
+#define zq_cnn_depthwise_conv_no_padding_32f_kernel2x2_mul_3 zq_cnn_depthwise_conv_no_padding_32f_align128bit_kernel2x2_C12_with_bias_prelu
+#define zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_mul_4 zq_cnn_depthwise_conv_no_padding_32f_align128bit_kernel3x3_C16_with_bias_prelu
+#define zq_cnn_depthwise_conv_no_padding_32f_kernel2x2_mul_4 zq_cnn_depthwise_conv_no_padding_32f_align128bit_kernel2x2_C16_with_bias_prelu
+#define zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_mul_6 zq_cnn_depthwise_conv_no_padding_32f_align128bit_kernel3x3_C24_with_bias_prelu
+#define zq_cnn_depthwise_conv_no_padding_32f_kernel2x2_mul_6 zq_cnn_depthwise_conv_no_padding_32f_align128bit_kernel2x2_C24_with_bias_prelu
+#define zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_mul_8 zq_cnn_depthwise_conv_no_padding_32f_align128bit_kernel3x3_C32_with_bias_prelu
+#define zq_cnn_depthwise_conv_no_padding_32f_kernel2x2_mul_8 zq_cnn_depthwise_conv_no_padding_32f_align128bit_kernel2x2_C32_with_bias_prelu
+#define zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_div_8 zq_cnn_depthwise_conv_no_padding_32f_align128bit_kernel3x3_Cdiv32_with_bias_prelu
+#define zq_cnn_depthwise_conv_no_padding_32f_kernel2x2_div_8 zq_cnn_depthwise_conv_no_padding_32f_align128bit_kernel2x2_Cdiv32_with_bias_prelu
+#define zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_mul_16 zq_cnn_depthwise_conv_no_padding_32f_align128bit_kernel3x3_C64_with_bias_prelu
+#define zq_cnn_depthwise_conv_no_padding_32f_kernel2x2_mul_16 zq_cnn_depthwise_conv_no_padding_32f_align128bit_kernel2x2_C64_with_bias_prelu
+#define zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_mul_32 zq_cnn_depthwise_conv_no_padding_32f_align128bit_kernel3x3_C128_with_bias_prelu
+#define zq_cnn_depthwise_conv_no_padding_32f_kernel2x2_mul_32 zq_cnn_depthwise_conv_no_padding_32f_align128bit_kernel2x2_C128_with_bias_prelu
+#define zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_mul_64 zq_cnn_depthwise_conv_no_padding_32f_align128bit_kernel3x3_C256_with_bias_prelu
+#define zq_cnn_depthwise_conv_no_padding_32f_kernel2x2_mul_64 zq_cnn_depthwise_conv_no_padding_32f_align128bit_kernel2x2_C256_with_bias_prelu
+
+#define WITH_BIAS 1
+#define WITH_PRELU 1
+#include "zq_cnn_depthwise_convolution_32f_align_c_raw.h"
 #undef WITH_BIAS
+#undef WITH_PRELU
+
+#undef zq_cnn_depthwise_conv_no_padding_32f_general
+#undef zq_cnn_depthwise_conv_no_padding_32f_kernel3x3
+#undef zq_cnn_depthwise_conv_no_padding_32f_kernel2x2
+#undef zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_mul_1
+#undef zq_cnn_depthwise_conv_no_padding_32f_kernel2x2_mul_1
+#undef zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_mul_2
+#undef zq_cnn_depthwise_conv_no_padding_32f_kernel2x2_mul_2
+#undef zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_mul_3
+#undef zq_cnn_depthwise_conv_no_padding_32f_kernel2x2_mul_3
+#undef zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_mul_4
+#undef zq_cnn_depthwise_conv_no_padding_32f_kernel2x2_mul_4
+#undef zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_mul_6
+#undef zq_cnn_depthwise_conv_no_padding_32f_kernel2x2_mul_6
+#undef zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_mul_8
+#undef zq_cnn_depthwise_conv_no_padding_32f_kernel2x2_mul_8
+#undef zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_div_8
+#undef zq_cnn_depthwise_conv_no_padding_32f_kernel2x2_div_8
+#undef zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_mul_16
+#undef zq_cnn_depthwise_conv_no_padding_32f_kernel2x2_mul_16
+#undef zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_mul_32
+#undef zq_cnn_depthwise_conv_no_padding_32f_kernel2x2_mul_32
+#undef zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_mul_64
+#undef zq_cnn_depthwise_conv_no_padding_32f_kernel2x2_mul_64
+
 
 #undef zq_mm_load_ps
 #undef zq_mm_store_ps
 #undef zq_mm_add_ps
+#undef zq_mm_min_ps
+#undef zq_mm_max_ps
 #undef zq_mm_fmadd_ps
 #undef zq_mm_mul_ps
 #undef zq_mm_setzero_ps
@@ -191,6 +250,8 @@ extern "C" {
 #define zq_mm_load_ps vld1q_f16
 #define zq_mm_store_ps vst1q_f16
 #define zq_mm_add_ps vaddq_f16
+#define zq_mm_min_ps vminq_f16
+#define zq_mm_max_ps vmaxq_f16
 #if ZQ_CNN_USE_FMADD128
 #define zq_mm_fmadd_ps(A, B, C) vfmaq_f16(C, A, B)
 #else
@@ -213,7 +274,7 @@ extern "C" {
 #define zq_mm_align_size64 512
 #define zq_final_sum_q (q[0]+q[1]+q[2]+q[3]+q[4]+q[5]+q[6]+q[7])
 
-#define WITH_BIAS 0
+
 #define zq_cnn_depthwise_conv_no_padding_32f_general zq_cnn_depthwise_conv_no_padding_16f_align128bit_general
 #define zq_cnn_depthwise_conv_no_padding_32f_kernel3x3 zq_cnn_depthwise_conv_no_padding_16f_align128bit_kernel3x3
 #define zq_cnn_depthwise_conv_no_padding_32f_kernel2x2 zq_cnn_depthwise_conv_no_padding_16f_align128bit_kernel2x2
@@ -238,7 +299,9 @@ extern "C" {
 #define zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_mul_64 zq_cnn_depthwise_conv_no_padding_16f_align128bit_kernel3x3_C512
 #define zq_cnn_depthwise_conv_no_padding_32f_kernel2x2_mul_64 zq_cnn_depthwise_conv_no_padding_16f_align128bit_kernel2x2_C512
 
+#define WITH_BIAS 0
 #include "zq_cnn_depthwise_convolution_32f_align_c_raw.h"
+#undef WITH_BIAS
 
 #undef zq_cnn_depthwise_conv_no_padding_32f_general
 #undef zq_cnn_depthwise_conv_no_padding_32f_kernel3x3
@@ -263,9 +326,8 @@ extern "C" {
 #undef zq_cnn_depthwise_conv_no_padding_32f_kernel2x2_mul_32
 #undef zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_mul_64
 #undef zq_cnn_depthwise_conv_no_padding_32f_kernel2x2_mul_64
-#undef WITH_BIAS
 
-#define WITH_BIAS 1
+
 #define zq_cnn_depthwise_conv_no_padding_32f_general zq_cnn_depthwise_conv_no_padding_16f_align128bit_general_with_bias
 #define zq_cnn_depthwise_conv_no_padding_32f_kernel3x3 zq_cnn_depthwise_conv_no_padding_16f_align128bit_kernel3x3_with_bias
 #define zq_cnn_depthwise_conv_no_padding_32f_kernel2x2 zq_cnn_depthwise_conv_no_padding_16f_align128bit_kernel2x2_with_bias
@@ -290,7 +352,9 @@ extern "C" {
 #define zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_mul_64 zq_cnn_depthwise_conv_no_padding_16f_align128bit_kernel3x3_C512_with_bias
 #define zq_cnn_depthwise_conv_no_padding_32f_kernel2x2_mul_64 zq_cnn_depthwise_conv_no_padding_16f_align128bit_kernel2x2_C512_with_bias
 
+#define WITH_BIAS 1
 #include "zq_cnn_depthwise_convolution_32f_align_c_raw.h"
+#undef WITH_BIAS
 
 #undef zq_cnn_depthwise_conv_no_padding_32f_general
 #undef zq_cnn_depthwise_conv_no_padding_32f_kernel3x3
@@ -315,11 +379,66 @@ extern "C" {
 #undef zq_cnn_depthwise_conv_no_padding_32f_kernel2x2_mul_32
 #undef zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_mul_64
 #undef zq_cnn_depthwise_conv_no_padding_32f_kernel2x2_mul_64
+
+#define zq_cnn_depthwise_conv_no_padding_32f_general zq_cnn_depthwise_conv_no_padding_16f_align128bit_general_with_bias_prelu
+#define zq_cnn_depthwise_conv_no_padding_32f_kernel3x3 zq_cnn_depthwise_conv_no_padding_16f_align128bit_kernel3x3_with_bias_prelu
+#define zq_cnn_depthwise_conv_no_padding_32f_kernel2x2 zq_cnn_depthwise_conv_no_padding_16f_align128bit_kernel2x2_with_bias_prelu
+#define zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_mul_1 zq_cnn_depthwise_conv_no_padding_16f_align128bit_kernel3x3_C8_with_bias_prelu
+#define zq_cnn_depthwise_conv_no_padding_32f_kernel2x2_mul_1 zq_cnn_depthwise_conv_no_padding_16f_align128bit_kernel2x2_C8_with_bias_prelu
+#define zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_mul_2 zq_cnn_depthwise_conv_no_padding_16f_align128bit_kernel3x3_C16_with_bias_prelu
+#define zq_cnn_depthwise_conv_no_padding_32f_kernel2x2_mul_2 zq_cnn_depthwise_conv_no_padding_16f_align128bit_kernel2x2_C16_with_bias_prelu
+#define zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_mul_3 zq_cnn_depthwise_conv_no_padding_16f_align128bit_kernel3x3_C24_with_bias_prelu
+#define zq_cnn_depthwise_conv_no_padding_32f_kernel2x2_mul_3 zq_cnn_depthwise_conv_no_padding_16f_align128bit_kernel2x2_C24_with_bias_prelu
+#define zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_mul_4 zq_cnn_depthwise_conv_no_padding_16f_align128bit_kernel3x3_C32_with_bias_prelu
+#define zq_cnn_depthwise_conv_no_padding_32f_kernel2x2_mul_4 zq_cnn_depthwise_conv_no_padding_16f_align128bit_kernel2x2_C32_with_bias_prelu
+#define zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_mul_6 zq_cnn_depthwise_conv_no_padding_16f_align128bit_kernel3x3_C48_with_bias_prelu
+#define zq_cnn_depthwise_conv_no_padding_32f_kernel2x2_mul_6 zq_cnn_depthwise_conv_no_padding_16f_align128bit_kernel2x2_C48_with_bias_prelu
+#define zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_mul_8 zq_cnn_depthwise_conv_no_padding_16f_align128bit_kernel3x3_C64_with_bias_prelu
+#define zq_cnn_depthwise_conv_no_padding_32f_kernel2x2_mul_8 zq_cnn_depthwise_conv_no_padding_16f_align128bit_kernel2x2_C64_with_bias_prelu
+#define zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_div_8 zq_cnn_depthwise_conv_no_padding_16f_align128bit_kernel3x3_Cdiv64_with_bias_prelu
+#define zq_cnn_depthwise_conv_no_padding_32f_kernel2x2_div_8 zq_cnn_depthwise_conv_no_padding_16f_align128bit_kernel2x2_Cdiv64_with_bias_prelu
+#define zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_mul_16 zq_cnn_depthwise_conv_no_padding_16f_align128bit_kernel3x3_C128_with_bias_prelu
+#define zq_cnn_depthwise_conv_no_padding_32f_kernel2x2_mul_16 zq_cnn_depthwise_conv_no_padding_16f_align128bit_kernel2x2_C128_with_bias_prelu
+#define zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_mul_32 zq_cnn_depthwise_conv_no_padding_16f_align128bit_kernel3x3_C256_with_bias_prelu
+#define zq_cnn_depthwise_conv_no_padding_32f_kernel2x2_mul_32 zq_cnn_depthwise_conv_no_padding_16f_align128bit_kernel2x2_C256_with_bias_prelu
+#define zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_mul_64 zq_cnn_depthwise_conv_no_padding_16f_align128bit_kernel3x3_C512_with_bias_prelu
+#define zq_cnn_depthwise_conv_no_padding_32f_kernel2x2_mul_64 zq_cnn_depthwise_conv_no_padding_16f_align128bit_kernel2x2_C512_with_bias_prelu
+
+#define WITH_BIAS 1
+#define WITH_PRELU 1
+#include "zq_cnn_depthwise_convolution_32f_align_c_raw.h"
 #undef WITH_BIAS
+#undef WITH_PRELU
+
+#undef zq_cnn_depthwise_conv_no_padding_32f_general
+#undef zq_cnn_depthwise_conv_no_padding_32f_kernel3x3
+#undef zq_cnn_depthwise_conv_no_padding_32f_kernel2x2
+#undef zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_mul_1
+#undef zq_cnn_depthwise_conv_no_padding_32f_kernel2x2_mul_1
+#undef zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_mul_2
+#undef zq_cnn_depthwise_conv_no_padding_32f_kernel2x2_mul_2
+#undef zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_mul_3
+#undef zq_cnn_depthwise_conv_no_padding_32f_kernel2x2_mul_3
+#undef zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_mul_4
+#undef zq_cnn_depthwise_conv_no_padding_32f_kernel2x2_mul_4
+#undef zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_mul_6
+#undef zq_cnn_depthwise_conv_no_padding_32f_kernel2x2_mul_6
+#undef zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_mul_8
+#undef zq_cnn_depthwise_conv_no_padding_32f_kernel2x2_mul_8
+#undef zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_div_8
+#undef zq_cnn_depthwise_conv_no_padding_32f_kernel2x2_div_8
+#undef zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_mul_16
+#undef zq_cnn_depthwise_conv_no_padding_32f_kernel2x2_mul_16
+#undef zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_mul_32
+#undef zq_cnn_depthwise_conv_no_padding_32f_kernel2x2_mul_32
+#undef zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_mul_64
+#undef zq_cnn_depthwise_conv_no_padding_32f_kernel2x2_mul_64
 
 #undef zq_mm_load_ps
 #undef zq_mm_store_ps
 #undef zq_mm_add_ps
+#undef zq_mm_min_ps
+#undef zq_mm_max_ps
 #undef zq_mm_fmadd_ps
 #undef zq_mm_mul_ps
 #undef zq_mm_setzero_ps
@@ -345,6 +464,8 @@ extern "C" {
 #define zq_mm_load_ps _mm_load_ps
 #define zq_mm_store_ps _mm_store_ps
 #define zq_mm_add_ps _mm_add_ps
+#define zq_mm_min_ps _mm_min_ps
+#define zq_mm_max_ps _mm_max_ps
 #if ZQ_CNN_USE_FMADD128
 #define zq_mm_fmadd_ps _mm_fmadd_ps
 #else
@@ -472,10 +593,65 @@ extern "C" {
 #undef zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_mul_64
 #undef zq_cnn_depthwise_conv_no_padding_32f_kernel2x2_mul_64
 
+#define zq_cnn_depthwise_conv_no_padding_32f_general zq_cnn_depthwise_conv_no_padding_32f_align128bit_general_with_bias_prelu
+#define zq_cnn_depthwise_conv_no_padding_32f_kernel3x3 zq_cnn_depthwise_conv_no_padding_32f_align128bit_kernel3x3_with_bias_prelu
+#define zq_cnn_depthwise_conv_no_padding_32f_kernel2x2 zq_cnn_depthwise_conv_no_padding_32f_align128bit_kernel2x2_with_bias_prelu
+#define zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_mul_1 zq_cnn_depthwise_conv_no_padding_32f_align128bit_kernel3x3_C4_with_bias_prelu
+#define zq_cnn_depthwise_conv_no_padding_32f_kernel2x2_mul_1 zq_cnn_depthwise_conv_no_padding_32f_align128bit_kernel2x2_C4_with_bias_prelu
+#define zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_mul_2 zq_cnn_depthwise_conv_no_padding_32f_align128bit_kernel3x3_C8_with_bias_prelu
+#define zq_cnn_depthwise_conv_no_padding_32f_kernel2x2_mul_2 zq_cnn_depthwise_conv_no_padding_32f_align128bit_kernel2x2_C8_with_bias_prelu
+#define zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_mul_3 zq_cnn_depthwise_conv_no_padding_32f_align128bit_kernel3x3_C12_with_bias_prelu
+#define zq_cnn_depthwise_conv_no_padding_32f_kernel2x2_mul_3 zq_cnn_depthwise_conv_no_padding_32f_align128bit_kernel2x2_C12_with_bias_prelu
+#define zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_mul_4 zq_cnn_depthwise_conv_no_padding_32f_align128bit_kernel3x3_C16_with_bias_prelu
+#define zq_cnn_depthwise_conv_no_padding_32f_kernel2x2_mul_4 zq_cnn_depthwise_conv_no_padding_32f_align128bit_kernel2x2_C16_with_bias_prelu
+#define zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_mul_6 zq_cnn_depthwise_conv_no_padding_32f_align128bit_kernel3x3_C24_with_bias_prelu
+#define zq_cnn_depthwise_conv_no_padding_32f_kernel2x2_mul_6 zq_cnn_depthwise_conv_no_padding_32f_align128bit_kernel2x2_C24_with_bias_prelu
+#define zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_mul_8 zq_cnn_depthwise_conv_no_padding_32f_align128bit_kernel3x3_C32_with_bias_prelu
+#define zq_cnn_depthwise_conv_no_padding_32f_kernel2x2_mul_8 zq_cnn_depthwise_conv_no_padding_32f_align128bit_kernel2x2_C32_with_bias_prelu
+#define zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_div_8 zq_cnn_depthwise_conv_no_padding_32f_align128bit_kernel3x3_Cdiv32_with_bias_prelu
+#define zq_cnn_depthwise_conv_no_padding_32f_kernel2x2_div_8 zq_cnn_depthwise_conv_no_padding_32f_align128bit_kernel2x2_Cdiv32_with_bias_prelu
+#define zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_mul_16 zq_cnn_depthwise_conv_no_padding_32f_align128bit_kernel3x3_C64_with_bias_prelu
+#define zq_cnn_depthwise_conv_no_padding_32f_kernel2x2_mul_16 zq_cnn_depthwise_conv_no_padding_32f_align128bit_kernel2x2_C64_with_bias_prelu
+#define zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_mul_32 zq_cnn_depthwise_conv_no_padding_32f_align128bit_kernel3x3_C128_with_bias_prelu
+#define zq_cnn_depthwise_conv_no_padding_32f_kernel2x2_mul_32 zq_cnn_depthwise_conv_no_padding_32f_align128bit_kernel2x2_C128_with_bias_prelu
+#define zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_mul_64 zq_cnn_depthwise_conv_no_padding_32f_align128bit_kernel3x3_C256_with_bias_prelu
+#define zq_cnn_depthwise_conv_no_padding_32f_kernel2x2_mul_64 zq_cnn_depthwise_conv_no_padding_32f_align128bit_kernel2x2_C256_with_bias_prelu
+
+#define WITH_BIAS 1
+#define WITH_PRELU 1
+#include "zq_cnn_depthwise_convolution_32f_align_c_raw.h"
+#undef WITH_BIAS
+#undef WITH_PRELU
+
+#undef zq_cnn_depthwise_conv_no_padding_32f_general
+#undef zq_cnn_depthwise_conv_no_padding_32f_kernel3x3
+#undef zq_cnn_depthwise_conv_no_padding_32f_kernel2x2
+#undef zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_mul_1
+#undef zq_cnn_depthwise_conv_no_padding_32f_kernel2x2_mul_1
+#undef zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_mul_2
+#undef zq_cnn_depthwise_conv_no_padding_32f_kernel2x2_mul_2
+#undef zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_mul_3
+#undef zq_cnn_depthwise_conv_no_padding_32f_kernel2x2_mul_3
+#undef zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_mul_4
+#undef zq_cnn_depthwise_conv_no_padding_32f_kernel2x2_mul_4
+#undef zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_mul_6
+#undef zq_cnn_depthwise_conv_no_padding_32f_kernel2x2_mul_6
+#undef zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_mul_8
+#undef zq_cnn_depthwise_conv_no_padding_32f_kernel2x2_mul_8
+#undef zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_div_8
+#undef zq_cnn_depthwise_conv_no_padding_32f_kernel2x2_div_8
+#undef zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_mul_16
+#undef zq_cnn_depthwise_conv_no_padding_32f_kernel2x2_mul_16
+#undef zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_mul_32
+#undef zq_cnn_depthwise_conv_no_padding_32f_kernel2x2_mul_32
+#undef zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_mul_64
+#undef zq_cnn_depthwise_conv_no_padding_32f_kernel2x2_mul_64
 
 #undef zq_mm_load_ps
 #undef zq_mm_store_ps
 #undef zq_mm_add_ps
+#undef zq_mm_min_ps
+#undef zq_mm_max_ps
 #undef zq_mm_fmadd_ps
 #undef zq_mm_mul_ps
 #undef zq_mm_setzero_ps
@@ -501,6 +677,8 @@ extern "C" {
 #define zq_mm_load_ps _mm256_load_ps
 #define zq_mm_store_ps _mm256_store_ps
 #define zq_mm_add_ps _mm256_add_ps
+#define zq_mm_min_ps _mm256_min_ps
+#define zq_mm_max_ps _mm256_max_ps
 #if ZQ_CNN_USE_FMADD256
 #define zq_mm_fmadd_ps _mm256_fmadd_ps
 #else
@@ -627,10 +805,66 @@ extern "C" {
 #undef zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_mul_64
 #undef zq_cnn_depthwise_conv_no_padding_32f_kernel2x2_mul_64
 
+#define zq_cnn_depthwise_conv_no_padding_32f_general zq_cnn_depthwise_conv_no_padding_32f_align256bit_general_with_bias_prelu
+#define zq_cnn_depthwise_conv_no_padding_32f_kernel3x3 zq_cnn_depthwise_conv_no_padding_32f_align256bit_kernel3x3_with_bias_prelu
+#define zq_cnn_depthwise_conv_no_padding_32f_kernel2x2 zq_cnn_depthwise_conv_no_padding_32f_align256bit_kernel2x2_with_bias_prelu
+#define zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_mul_1 zq_cnn_depthwise_conv_no_padding_32f_align256bit_kernel3x3_C8_with_bias_prelu
+#define zq_cnn_depthwise_conv_no_padding_32f_kernel2x2_mul_1 zq_cnn_depthwise_conv_no_padding_32f_align256bit_kernel2x2_C8_with_bias_prelu
+#define zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_mul_2 zq_cnn_depthwise_conv_no_padding_32f_align256bit_kernel3x3_C16_with_bias_prelu
+#define zq_cnn_depthwise_conv_no_padding_32f_kernel2x2_mul_2 zq_cnn_depthwise_conv_no_padding_32f_align256bit_kernel2x2_C16_with_bias_prelu
+#define zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_mul_3 zq_cnn_depthwise_conv_no_padding_32f_align256bit_kernel3x3_C24_with_bias_prelu
+#define zq_cnn_depthwise_conv_no_padding_32f_kernel2x2_mul_3 zq_cnn_depthwise_conv_no_padding_32f_align256bit_kernel2x2_C24_with_bias_prelu
+#define zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_mul_4 zq_cnn_depthwise_conv_no_padding_32f_align256bit_kernel3x3_C32_with_bias_prelu
+#define zq_cnn_depthwise_conv_no_padding_32f_kernel2x2_mul_4 zq_cnn_depthwise_conv_no_padding_32f_align256bit_kernel2x2_C32_with_bias_prelu
+#define zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_mul_6 zq_cnn_depthwise_conv_no_padding_32f_align256bit_kernel3x3_C48_with_bias_prelu
+#define zq_cnn_depthwise_conv_no_padding_32f_kernel2x2_mul_6 zq_cnn_depthwise_conv_no_padding_32f_align256bit_kernel2x2_C48_with_bias_prelu
+#define zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_mul_8 zq_cnn_depthwise_conv_no_padding_32f_align256bit_kernel3x3_C64_with_bias_prelu
+#define zq_cnn_depthwise_conv_no_padding_32f_kernel2x2_mul_8 zq_cnn_depthwise_conv_no_padding_32f_align256bit_kernel2x2_C64_with_bias_prelu
+#define zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_div_8 zq_cnn_depthwise_conv_no_padding_32f_align256bit_kernel3x3_Cdiv64_with_bias_prelu
+#define zq_cnn_depthwise_conv_no_padding_32f_kernel2x2_div_8 zq_cnn_depthwise_conv_no_padding_32f_align256bit_kernel2x2_Cdiv64_with_bias_prelu
+#define zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_mul_16 zq_cnn_depthwise_conv_no_padding_32f_align256bit_kernel3x3_C128_with_bias_prelu
+#define zq_cnn_depthwise_conv_no_padding_32f_kernel2x2_mul_16 zq_cnn_depthwise_conv_no_padding_32f_align256bit_kernel2x2_C128_with_bias_prelu
+#define zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_mul_32 zq_cnn_depthwise_conv_no_padding_32f_align256bit_kernel3x3_C256_with_bias_prelu
+#define zq_cnn_depthwise_conv_no_padding_32f_kernel2x2_mul_32 zq_cnn_depthwise_conv_no_padding_32f_align256bit_kernel2x2_C256_with_bias_prelu
+#define zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_mul_64 zq_cnn_depthwise_conv_no_padding_32f_align256bit_kernel3x3_C512_with_bias_prelu
+#define zq_cnn_depthwise_conv_no_padding_32f_kernel2x2_mul_64 zq_cnn_depthwise_conv_no_padding_32f_align256bit_kernel2x2_C512_with_bias_prelu
+
+#define WITH_BIAS 1
+#define WITH_PRELU 1
+#include "zq_cnn_depthwise_convolution_32f_align_c_raw.h"
+#undef WITH_BIAS
+#undef WITH_PRELU
+
+#undef zq_cnn_depthwise_conv_no_padding_32f_general
+#undef zq_cnn_depthwise_conv_no_padding_32f_kernel3x3
+#undef zq_cnn_depthwise_conv_no_padding_32f_kernel2x2
+#undef zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_mul_1
+#undef zq_cnn_depthwise_conv_no_padding_32f_kernel2x2_mul_1
+#undef zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_mul_2
+#undef zq_cnn_depthwise_conv_no_padding_32f_kernel2x2_mul_2
+#undef zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_mul_3
+#undef zq_cnn_depthwise_conv_no_padding_32f_kernel2x2_mul_3
+#undef zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_mul_4
+#undef zq_cnn_depthwise_conv_no_padding_32f_kernel2x2_mul_4
+#undef zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_mul_6
+#undef zq_cnn_depthwise_conv_no_padding_32f_kernel2x2_mul_6
+#undef zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_mul_8
+#undef zq_cnn_depthwise_conv_no_padding_32f_kernel2x2_mul_8
+#undef zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_div_8
+#undef zq_cnn_depthwise_conv_no_padding_32f_kernel2x2_div_8
+#undef zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_mul_16
+#undef zq_cnn_depthwise_conv_no_padding_32f_kernel2x2_mul_16
+#undef zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_mul_32
+#undef zq_cnn_depthwise_conv_no_padding_32f_kernel2x2_mul_32
+#undef zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_mul_64
+#undef zq_cnn_depthwise_conv_no_padding_32f_kernel2x2_mul_64
+
 
 #undef zq_mm_load_ps
 #undef zq_mm_store_ps
 #undef zq_mm_add_ps
+#undef zq_mm_min_ps
+#undef zq_mm_max_ps
 #undef zq_mm_fmadd_ps
 #undef zq_mm_mul_ps
 #undef zq_mm_setzero_ps
@@ -827,6 +1061,96 @@ extern "C" {
 		}
 	}
 
+	void zq_cnn_depthwise_conv_no_padding_32f_align0_general_with_bias_prelu(
+		const float* in_tensor4D_data,
+		int in_N,
+		int in_H,
+		int in_W,
+		int in_C,
+		int in_pixelStep,
+		int in_widthStep,
+		int in_sliceStep,
+		const float* filters_data,
+		int filter_N, // must be 1
+		int filter_H, // 
+		int filter_W, // 
+		int filter_C, // must be in_C
+		int filter_pixelStep,
+		int filter_widthStep,
+		int filter_sliceStep,
+		int stride_H,
+		int stride_W,
+		float* out_tensor4D_data,
+		int out_N,	// must be in_N
+		int out_H,	// must be (in_H - filter_H)/stride_H + 1
+		int out_W,	// must be (in_W - filter_W)/stride_W + 1
+		int out_C,	// must be in_C
+		int out_pixelStep,
+		int out_widthStep,
+		int out_sliceStep,
+		const float* bias,
+		const float* slope
+	)
+	{
+
+		const float* in_slice_ptr;
+		const float* in_row_ptr;
+		const float* in_pix_ptr;
+		float* out_slice_ptr;
+		float* out_row_ptr;
+		float* out_pix_ptr;
+		float* out_c_ptr;
+
+		const float* cur_in_row_ptr;
+		const float* cur_in_pix_ptr;
+		const float* cur_in_c_ptr;
+		const float* cur_filter_row_ptr;
+		const float* cur_filter_pix_ptr;
+		const float* cur_filter_c_ptr;
+
+		int stride_H_mul_in_WidthStep = stride_H*in_widthStep;
+		int stride_W_mul_in_pixStep = stride_W*in_pixelStep;
+		int out_n, out_h, out_w, out_c, kh, kw, kc;
+
+		for (out_n = 0, in_slice_ptr = in_tensor4D_data, out_slice_ptr = out_tensor4D_data;
+			out_n < out_N;
+			out_n++, in_slice_ptr += in_sliceStep, out_slice_ptr += out_sliceStep)
+		{
+			for (out_h = 0, in_row_ptr = in_slice_ptr, out_row_ptr = out_slice_ptr;
+				out_h < out_H;
+				out_h++, in_row_ptr += stride_H_mul_in_WidthStep, out_row_ptr += out_widthStep)
+			{
+				for (out_w = 0, in_pix_ptr = in_row_ptr, out_pix_ptr = out_row_ptr;
+					out_w < out_W;
+					out_w++, in_pix_ptr += stride_W_mul_in_pixStep, out_pix_ptr += out_pixelStep)
+				{
+					for (out_c = 0, out_c_ptr = out_pix_ptr; out_c < in_C; out_c++, out_c_ptr++)
+						*out_c_ptr = bias[out_c];
+
+
+					for (kh = 0, cur_in_row_ptr = in_pix_ptr, cur_filter_row_ptr = filters_data;
+						kh < filter_H;
+						kh++, cur_in_row_ptr += in_widthStep, cur_filter_row_ptr += filter_widthStep)
+					{
+						for (kw = 0, cur_in_pix_ptr = cur_in_row_ptr, cur_filter_pix_ptr = cur_filter_row_ptr;
+							kw < filter_W;
+							kw++, cur_in_pix_ptr += in_pixelStep, cur_filter_pix_ptr += filter_pixelStep)
+						{
+							for (kc = 0, cur_in_c_ptr = cur_in_pix_ptr, cur_filter_c_ptr = cur_filter_pix_ptr, out_c_ptr = out_pix_ptr;
+								kc < in_C;
+								kc++, cur_in_c_ptr++, cur_filter_c_ptr++, out_c_ptr++)
+							{
+								*out_c_ptr += (*cur_in_c_ptr)*(*cur_filter_c_ptr);
+								if (*out_c_ptr < 0)
+									*out_c_ptr *= slope[kc];
+							}
+						}
+					}
+
+				}
+			}
+		}
+	}
 
 #if __ARM_NEON
 #if __ARM_NEON_FP16
@@ -996,6 +1320,97 @@ extern "C" {
 								kc++, cur_in_c_ptr++, cur_filter_c_ptr++, out_c_ptr++)
 							{
 								*out_c_ptr += (*cur_in_c_ptr)*(*cur_filter_c_ptr);
+							}
+						}
+					}
+
+				}
+			}
+		}
+	}
+
+	void zq_cnn_depthwise_conv_no_padding_16f_align0_general_with_bias_prelu(
+		const zq_base_type* in_tensor4D_data,
+		int in_N,
+		int in_H,
+		int in_W,
+		int in_C,
+		int in_pixelStep,
+		int in_widthStep,
+		int in_sliceStep,
+		const zq_base_type* filters_data,
+		int filter_N, // must be 1
+		int filter_H, // 
+		int filter_W, // 
+		int filter_C, // must be in_C
+		int filter_pixelStep,
+		int filter_widthStep,
+		int filter_sliceStep,
+		int stride_H,
+		int stride_W,
+		zq_base_type* out_tensor4D_data,
+		int out_N,	// must be in_N
+		int out_H,	// must be (in_H - filter_H)/stride_H + 1
+		int out_W,	// must be (in_W - filter_W)/stride_W + 1
+		int out_C,	// must be in_C
+		int out_pixelStep,
+		int out_widthStep,
+		int out_sliceStep,
+		const float* bias,
+		const float* slope
+	)
+	{
+
+		const zq_base_type* in_slice_ptr;
+		const zq_base_type* in_row_ptr;
+		const zq_base_type* in_pix_ptr;
+		zq_base_type* out_slice_ptr;
+		zq_base_type* out_row_ptr;
+		zq_base_type* out_pix_ptr;
+		zq_base_type* out_c_ptr;
+
+		const zq_base_type* cur_in_row_ptr;
+		const zq_base_type* cur_in_pix_ptr;
+		const zq_base_type* cur_in_c_ptr;
+		const zq_base_type* cur_filter_row_ptr;
+		const zq_base_type* cur_filter_pix_ptr;
+		const zq_base_type* cur_filter_c_ptr;
+
+		int stride_H_mul_in_WidthStep = stride_H*in_widthStep;
+		int stride_W_mul_in_pixStep = stride_W*in_pixelStep;
+		int out_n, out_h, out_w, out_c, kh, kw, kc;
+
+		for (out_n = 0, in_slice_ptr = in_tensor4D_data, out_slice_ptr = out_tensor4D_data;
+			out_n < out_N;
+			out_n++, in_slice_ptr += in_sliceStep, out_slice_ptr += out_sliceStep)
+		{
+			for (out_h = 0, in_row_ptr = in_slice_ptr, out_row_ptr = out_slice_ptr;
+				out_h < out_H;
+				out_h++, in_row_ptr += stride_H_mul_in_WidthStep, out_row_ptr += out_widthStep)
+			{
+				for (out_w = 0, in_pix_ptr = in_row_ptr, out_pix_ptr = out_row_ptr;
+					out_w < out_W;
+					out_w++, in_pix_ptr += stride_W_mul_in_pixStep, out_pix_ptr += out_pixelStep)
+				{
+					for (out_c = 0, out_c_ptr = out_pix_ptr; out_c < in_C; out_c++, out_c_ptr++)
+						*out_c_ptr = bias[out_c];
+
+
+					for (kh = 0, cur_in_row_ptr = in_pix_ptr, cur_filter_row_ptr = filters_data;
+						kh < filter_H;
+						kh++, cur_in_row_ptr += in_widthStep, cur_filter_row_ptr += filter_widthStep)
+					{
+						for (kw = 0, cur_in_pix_ptr = cur_in_row_ptr, cur_filter_pix_ptr = cur_filter_row_ptr;
+							kw < filter_W;
+							kw++, cur_in_pix_ptr += in_pixelStep, cur_filter_pix_ptr += filter_pixelStep)
+						{
+							for (kc = 0, cur_in_c_ptr = cur_in_pix_ptr, cur_filter_c_ptr = cur_filter_pix_ptr, out_c_ptr = out_pix_ptr;
+								kc < in_C;
+								kc++, cur_in_c_ptr++, cur_filter_c_ptr++, out_c_ptr++)
+							{
+								*out_c_ptr += (*cur_in_c_ptr)*(*cur_filter_c_ptr);
+								if (*out_c_ptr < 0)
+									*out_c_ptr *= slope[kc];
 							}
 						}
 					}
