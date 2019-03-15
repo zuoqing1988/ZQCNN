@@ -16,8 +16,8 @@ ZQCNN是ZuoQing参照mini-caffe写的forward库，使用depthwise convolution的
   
 **BUG:** cmake .. -DSIMD_ARCH_TYPE=arm64 -DBLAS_TYPE=openblas_zq_gemm 
 
-理想情况下会使用openblas和zq_gemm较快的一方来计算卷积（我通过在cortex-A72上测试时间来选择分支）。然而目标这个选项并不能达到预期效果，
-  需要手工注释掉ZQ_CNN_CompileConfig.h定义
+理想情况下会使用openblas和ZQ_GEMM较快的一方来计算卷积（我通过在cortex-A72上测试时间来选择分支）。然而目前这个选项并不能达到预期效果，
+  需要手工注在ZQ_CNN_CompileConfig.h里定义
   
 	#define ZQ_CNN_USE_ZQ_GEMM 1
 	#define ZQ_CNN_USE_BLAS_GEMM 1
