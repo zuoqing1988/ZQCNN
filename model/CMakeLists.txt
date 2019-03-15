@@ -28,6 +28,3 @@ target_link_libraries(squeezenetssd ncnn ${OpenCV_LIBS})
 add_executable(mobilefacenet mobilefacenet.cpp)
 target_link_libraries(mobilefacenet ncnn ${OpenCV_LIBS})
 
-
-add_executable(genderage genderage.cpp)
-target_link_libraries(genderage ncnn ${OpenCV_LIBS})
