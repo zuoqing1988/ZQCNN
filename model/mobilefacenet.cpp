@@ -20,6 +20,7 @@
 #include <opencv2/highgui/highgui.hpp>
 #include <omp.h>
 #include "net.h"
+#include "cpu.h"
 #if !defined(_WIN32)
 #include <sched.h>
 #endif
