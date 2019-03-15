@@ -24,7 +24,33 @@
 	cur_filter_c_ptr += zq_mm_align_size4;\
 	out_c_ptr += zq_mm_align_size4
 
-
+#if WITH_BIAS
+#define op_0_4_first \
+	a0 = zq_mm_load_ps(cur_in_c_ptr);\
+	b0 = zq_mm_load_ps(cur_filter_c_ptr);\
+	c0 = zq_mm_load_ps(cur_bias_ptr);\
+	a1 = zq_mm_load_ps(cur_in_c_ptr+zq_mm_align_size);\
+	b1 = zq_mm_load_ps(cur_filter_c_ptr+zq_mm_align_size);\
+	c1 = zq_mm_load_ps(cur_bias_ptr+zq_mm_align_size);\
+	a2 = zq_mm_load_ps(cur_in_c_ptr+zq_mm_align_size2);\
+	b2 = zq_mm_load_ps(cur_filter_c_ptr+zq_mm_align_size2);\
+	c2 = zq_mm_load_ps(cur_bias_ptr+zq_mm_align_size2);\
+	a3 = zq_mm_load_ps(cur_in_c_ptr+zq_mm_align_size3);\
+	b3 = zq_mm_load_ps(cur_filter_c_ptr+zq_mm_align_size3);\
+	c3 = zq_mm_load_ps(cur_bias_ptr+zq_mm_align_size3);\
+	d0 = zq_mm_fmadd_ps(a0,b0,c0);\
+	d1 = zq_mm_fmadd_ps(a1,b1,c1);\
+	d2 = zq_mm_fmadd_ps(a2,b2,c2);\
+	d3 = zq_mm_fmadd_ps(a3,b3,c3);\
+	zq_mm_store_ps(out_c_ptr, d0);\
+	zq_mm_store_ps(out_c_ptr+zq_mm_align_size, d1);\
+	zq_mm_store_ps(out_c_ptr+zq_mm_align_size2, d2);\
+	zq_mm_store_ps(out_c_ptr+zq_mm_align_size3, d3);\
+	cur_in_c_ptr += zq_mm_align_size4;\
+	cur_filter_c_ptr += zq_mm_align_size4;\
+	cur_bias_ptr += zq_mm_align_size4;\
+	out_c_ptr += zq_mm_align_size4
+#else
 #define op_0_4_first \
 	a0 = zq_mm_load_ps(cur_in_c_ptr);\
 	b0 = zq_mm_load_ps(cur_filter_c_ptr);\
@@ -45,6 +71,7 @@
 	cur_in_c_ptr += zq_mm_align_size4;\
 	cur_filter_c_ptr += zq_mm_align_size4;\
 	out_c_ptr += zq_mm_align_size4
+#endif//WITH_BIAS
 
 #define op_0_8 \
 	op_0_4;\
@@ -105,6 +132,9 @@ void zq_cnn_depthwise_conv_no_padding_32f_general(
 	int out_pixelStep,
 	int out_widthStep,
 	int out_sliceStep
+#if WITH_BIAS
+	,const zq_base_type* bias
+#endif
 )
 {
 	const zq_base_type* in_slice_ptr;
@@ -121,7 +151,9 @@ void zq_cnn_depthwise_conv_no_padding_32f_general(
 	const zq_base_type* cur_filter_row_ptr;
 	const zq_base_type* cur_filter_pix_ptr;
 	const zq_base_type* cur_filter_c_ptr;
-
+#if WITH_BIAS
+	const zq_base_type* cur_bias_ptr;
+#endif
 	int stride_H_mul_in_WidthStep = stride_H*in_widthStep;
 	int stride_W_mul_in_pixStep = stride_W*in_pixelStep;
 	int out_n, out_h, out_w, out_c, kh, kw, kc;
@@ -138,9 +170,14 @@ void zq_cnn_depthwise_conv_no_padding_32f_general(
 				out_w < out_W;
 				out_w++, in_pix_ptr += stride_W_mul_in_pixStep, out_pix_ptr += out_pixelStep)
 			{
+#if WITH_BIAS
+				for (out_c = 0, out_c_ptr = out_pix_ptr, cur_bias_ptr = bias; out_c < in_C; 
+					out_c += zq_mm_align_size, out_c_ptr += zq_mm_align_size, cur_bias_ptr += zq_mm_align_size)
+					zq_mm_store_ps(out_c_ptr, zq_mm_load_ps(cur_bias_ptr));
+#else
 				for (out_c = 0, out_c_ptr = out_pix_ptr; out_c < in_C; out_c += zq_mm_align_size, out_c_ptr += zq_mm_align_size)
 					zq_mm_store_ps(out_c_ptr, zq_mm_setzero_ps());
-
+#endif
 
 				for (kh = 0, cur_in_row_ptr = in_pix_ptr, cur_filter_row_ptr = filters_data;
 					kh < filter_H;
@@ -156,1772 +193,6 @@ void zq_cnn_depthwise_conv_no_padding_32f_general(
 						{
 							zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
 						}
-					}
-				}
-			}
-		}
-	}
-}
-
-void zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_s1d1(
-	const zq_base_type* in_tensor4D_data,
-	int in_N,
-	int in_H,
-	int in_W,
-	int in_C,
-	int in_pixelStep,
-	int in_widthStep,
-	int in_sliceStep,
-	const zq_base_type* filters_data,
-	int filter_N, // must be 1
-	int filter_H, // must be 3
-	int filter_W, // must be 3
-	int filter_C, // must be in_C
-	int filter_pixelStep,
-	int filter_widthStep,
-	int filter_sliceStep,
-	zq_base_type* out_tensor4D_data,
-	int out_N,	// must be in_N
-	int out_H,	// must be (in_H - filter_H)/stride_H + 1
-	int out_W,	// must be (in_W - filter_W)/stride_W + 1
-	int out_C,	// must be in_C
-	int out_pixelStep,
-	int out_widthStep,
-	int out_sliceStep
-)
-{
-	const zq_base_type* in_slice_ptr;
-	const zq_base_type* in_row_ptr;
-	const zq_base_type* in_pix_ptr;
-	const zq_base_type* in_c_ptr;
-	zq_base_type* out_slice_ptr;
-	zq_base_type* out_row_ptr;
-	zq_base_type* out_pix_ptr;
-	zq_base_type* out_c_ptr;
-
-	const zq_base_type* cur_in_row_ptr;
-	const zq_base_type* cur_in_pix_ptr;
-	const zq_base_type* cur_in_c_ptr;
-	const zq_base_type* cur_filter_row_ptr;
-	const zq_base_type* cur_filter_pix_ptr;
-	const zq_base_type* cur_filter_c_ptr;
-	register zq_mm_type a00, a01, a02, a10, a11, a12, a20, a21, a22, a30, a31, a32;
-	register zq_mm_type b00, b01, b02, b10, b11, b12, b20, b21, b22, b30, b31, b32;
-	register zq_mm_type c00, c10, c20, c30;
-	int out_n, out_h, out_w, out_c, kc;
-
-	if (out_W % 3 == 0)
-	{
-		for (out_n = 0, in_slice_ptr = in_tensor4D_data, out_slice_ptr = out_tensor4D_data;
-			out_n < out_N;
-			out_n++, in_slice_ptr += in_sliceStep, out_slice_ptr += out_sliceStep)
-		{
-			for (out_c = 0, in_c_ptr = in_slice_ptr, out_c_ptr = out_slice_ptr;
-				out_c < in_C - zq_mm_align_size3;
-				out_c += zq_mm_align_size4, in_c_ptr += zq_mm_align_size4, out_c_ptr += zq_mm_align_size4)
-			{
-				cur_filter_c_ptr = filters_data + out_c;
-				cur_filter_row_ptr = cur_filter_c_ptr;
-				in_row_ptr = in_c_ptr;
-				cur_filter_pix_ptr = cur_filter_row_ptr;
-				b00 = zq_mm_load_ps(cur_filter_pix_ptr);
-				b10 = zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size);
-				b20 = zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size2);
-				b30 = zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size3);
-				cur_filter_pix_ptr += filter_pixelStep;
-				b01 = zq_mm_load_ps(cur_filter_pix_ptr);
-				b11 = zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size);
-				b21 = zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size2);
-				b31 = zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size3);
-				cur_filter_pix_ptr += filter_pixelStep;
-				b02 = zq_mm_load_ps(cur_filter_pix_ptr);
-				b12 = zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size);
-				b22 = zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size2);
-				b32 = zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size3);
-
-				for (out_h = 0, cur_in_row_ptr = in_row_ptr, out_row_ptr = out_c_ptr;
-					out_h < out_H;
-					out_h++, cur_in_row_ptr += in_widthStep, out_row_ptr += out_widthStep)
-				{
-					cur_in_pix_ptr = cur_in_row_ptr;
-					a00 = zq_mm_load_ps(cur_in_pix_ptr);
-					a10 = zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size);
-					a20 = zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size2);
-					a30 = zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size3);
-					cur_in_pix_ptr += in_pixelStep;
-					a01 = zq_mm_load_ps(cur_in_pix_ptr);
-					a11 = zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size);
-					a21 = zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size2);
-					a31 = zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size3);
-					cur_in_pix_ptr += in_pixelStep;
-					for (out_w = 0, out_pix_ptr = out_row_ptr; out_w < out_W; out_w += 3)
-					{
-						a02 = zq_mm_load_ps(cur_in_pix_ptr);
-						a12 = zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size);
-						a22 = zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size2);
-						a32 = zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size3);
-						cur_in_pix_ptr += in_pixelStep;
-						c00 = zq_mm_mul_ps(a00, b00);
-						c10 = zq_mm_mul_ps(a10, b10);
-						c20 = zq_mm_mul_ps(a20, b20);
-						c30 = zq_mm_mul_ps(a30, b30);
-						c00 = zq_mm_fmadd_ps(a01, b01, c00);
-						c10 = zq_mm_fmadd_ps(a11, b11, c10);
-						c20 = zq_mm_fmadd_ps(a21, b21, c20);
-						c30 = zq_mm_fmadd_ps(a31, b31, c30);
-						c00 = zq_mm_fmadd_ps(a02, b02, c00);
-						c10 = zq_mm_fmadd_ps(a12, b12, c10);
-						c20 = zq_mm_fmadd_ps(a22, b22, c20);
-						c30 = zq_mm_fmadd_ps(a32, b32, c30);
-						zq_mm_store_ps(out_pix_ptr, c00);
-						zq_mm_store_ps(out_pix_ptr + zq_mm_align_size, c10);
-						zq_mm_store_ps(out_pix_ptr + zq_mm_align_size2, c20);
-						zq_mm_store_ps(out_pix_ptr + zq_mm_align_size3, c30);
-						out_pix_ptr += out_pixelStep;
-
-						a00 = zq_mm_load_ps(cur_in_pix_ptr);
-						a10 = zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size);
-						a20 = zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size2);
-						a30 = zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size3);
-						cur_in_pix_ptr += in_pixelStep;
-						c00 = zq_mm_mul_ps(a01, b00);
-						c10 = zq_mm_mul_ps(a11, b10);
-						c20 = zq_mm_mul_ps(a21, b20);
-						c30 = zq_mm_mul_ps(a31, b30);
-						c00 = zq_mm_fmadd_ps(a02, b01, c00);
-						c10 = zq_mm_fmadd_ps(a12, b11, c10);
-						c20 = zq_mm_fmadd_ps(a22, b21, c20);
-						c30 = zq_mm_fmadd_ps(a32, b31, c30);
-						c00 = zq_mm_fmadd_ps(a00, b02, c00);
-						c10 = zq_mm_fmadd_ps(a10, b12, c10);
-						c20 = zq_mm_fmadd_ps(a20, b22, c20);
-						c30 = zq_mm_fmadd_ps(a30, b32, c30);
-						zq_mm_store_ps(out_pix_ptr, c00);
-						zq_mm_store_ps(out_pix_ptr + zq_mm_align_size, c10);
-						zq_mm_store_ps(out_pix_ptr + zq_mm_align_size2, c20);
-						zq_mm_store_ps(out_pix_ptr + zq_mm_align_size3, c30);
-						out_pix_ptr += out_pixelStep;
-
-						a01 = zq_mm_load_ps(cur_in_pix_ptr);
-						a11 = zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size);
-						a21 = zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size2);
-						a31 = zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size3);
-						cur_in_pix_ptr += in_pixelStep;
-						c00 = zq_mm_mul_ps(a02, b00);
-						c10 = zq_mm_mul_ps(a12, b10);
-						c20 = zq_mm_mul_ps(a22, b20);
-						c30 = zq_mm_mul_ps(a32, b30);
-						c00 = zq_mm_fmadd_ps(a00, b01, c00);
-						c10 = zq_mm_fmadd_ps(a10, b11, c10);
-						c20 = zq_mm_fmadd_ps(a20, b21, c20);
-						c30 = zq_mm_fmadd_ps(a30, b31, c30);
-						c00 = zq_mm_fmadd_ps(a01, b02, c00);
-						c10 = zq_mm_fmadd_ps(a11, b12, c10);
-						c20 = zq_mm_fmadd_ps(a21, b22, c20);
-						c30 = zq_mm_fmadd_ps(a31, b32, c30);
-						zq_mm_store_ps(out_pix_ptr, c00);
-						zq_mm_store_ps(out_pix_ptr + zq_mm_align_size, c10);
-						zq_mm_store_ps(out_pix_ptr + zq_mm_align_size2, c20);
-						zq_mm_store_ps(out_pix_ptr + zq_mm_align_size3, c30);
-						out_pix_ptr += out_pixelStep;
-					}
-				}
-
-				cur_filter_row_ptr += filter_widthStep;
-				in_row_ptr += in_widthStep;
-				cur_filter_pix_ptr = cur_filter_row_ptr;
-				b00 = zq_mm_load_ps(cur_filter_pix_ptr);
-				b10 = zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size);
-				b20 = zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size2);
-				b30 = zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size3);
-				cur_filter_pix_ptr += filter_pixelStep;
-				b01 = zq_mm_load_ps(cur_filter_pix_ptr);
-				b11 = zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size);
-				b21 = zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size2);
-				b31 = zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size3);
-				cur_filter_pix_ptr += filter_pixelStep;
-				b02 = zq_mm_load_ps(cur_filter_pix_ptr);
-				b12 = zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size);
-				b22 = zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size2);
-				b32 = zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size3);
-
-				for (out_h = 0, cur_in_row_ptr = in_row_ptr, out_row_ptr = out_c_ptr;
-					out_h < out_H;
-					out_h++, cur_in_row_ptr += in_widthStep, out_row_ptr += out_widthStep)
-				{
-					cur_in_pix_ptr = cur_in_row_ptr;
-					a00 = zq_mm_load_ps(cur_in_pix_ptr);
-					a10 = zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size);
-					a20 = zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size2);
-					a30 = zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size3);
-					cur_in_pix_ptr += in_pixelStep;
-					a01 = zq_mm_load_ps(cur_in_pix_ptr);
-					a11 = zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size);
-					a21 = zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size2);
-					a31 = zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size3);
-					cur_in_pix_ptr += in_pixelStep;
-					for (out_w = 0, out_pix_ptr = out_row_ptr; out_w < out_W; out_w += 3)
-					{
-						a02 = zq_mm_load_ps(cur_in_pix_ptr);
-						a12 = zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size);
-						a22 = zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size2);
-						a32 = zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size3);
-						cur_in_pix_ptr += in_pixelStep;
-						c00 = zq_mm_fmadd_ps(a00, b00, zq_mm_load_ps(out_pix_ptr));
-						c10 = zq_mm_fmadd_ps(a10, b10, zq_mm_load_ps(out_pix_ptr + zq_mm_align_size));
-						c20 = zq_mm_fmadd_ps(a20, b20, zq_mm_load_ps(out_pix_ptr + zq_mm_align_size2));
-						c30 = zq_mm_fmadd_ps(a30, b30, zq_mm_load_ps(out_pix_ptr + zq_mm_align_size3));
-						c00 = zq_mm_fmadd_ps(a01, b01, c00);
-						c10 = zq_mm_fmadd_ps(a11, b11, c10);
-						c20 = zq_mm_fmadd_ps(a21, b21, c20);
-						c30 = zq_mm_fmadd_ps(a31, b31, c30);
-						c00 = zq_mm_fmadd_ps(a02, b02, c00);
-						c10 = zq_mm_fmadd_ps(a12, b12, c10);
-						c20 = zq_mm_fmadd_ps(a22, b22, c20);
-						c30 = zq_mm_fmadd_ps(a32, b32, c30);
-						zq_mm_store_ps(out_pix_ptr, c00);
-						zq_mm_store_ps(out_pix_ptr + zq_mm_align_size, c10);
-						zq_mm_store_ps(out_pix_ptr + zq_mm_align_size2, c20);
-						zq_mm_store_ps(out_pix_ptr + zq_mm_align_size3, c30);
-						out_pix_ptr += out_pixelStep;
-
-						a00 = zq_mm_load_ps(cur_in_pix_ptr);
-						a10 = zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size);
-						a20 = zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size2);
-						a30 = zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size3);
-						cur_in_pix_ptr += in_pixelStep;
-						c00 = zq_mm_fmadd_ps(a01, b00, zq_mm_load_ps(out_pix_ptr));
-						c10 = zq_mm_fmadd_ps(a11, b10, zq_mm_load_ps(out_pix_ptr + zq_mm_align_size));
-						c20 = zq_mm_fmadd_ps(a21, b20, zq_mm_load_ps(out_pix_ptr + zq_mm_align_size2));
-						c30 = zq_mm_fmadd_ps(a31, b30, zq_mm_load_ps(out_pix_ptr + zq_mm_align_size3));
-						c00 = zq_mm_fmadd_ps(a02, b01, c00);
-						c10 = zq_mm_fmadd_ps(a12, b11, c10);
-						c10 = zq_mm_fmadd_ps(a22, b21, c20);
-						c10 = zq_mm_fmadd_ps(a32, b31, c30);
-						c00 = zq_mm_fmadd_ps(a00, b02, c00);
-						c10 = zq_mm_fmadd_ps(a10, b12, c10);
-						c20 = zq_mm_fmadd_ps(a20, b22, c20);
-						c30 = zq_mm_fmadd_ps(a30, b32, c30);
-						zq_mm_store_ps(out_pix_ptr, c00);
-						zq_mm_store_ps(out_pix_ptr + zq_mm_align_size, c10);
-						zq_mm_store_ps(out_pix_ptr + zq_mm_align_size2, c20);
-						zq_mm_store_ps(out_pix_ptr + zq_mm_align_size3, c30);
-						out_pix_ptr += out_pixelStep;
-
-						a01 = zq_mm_load_ps(cur_in_pix_ptr);
-						a11 = zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size);
-						a21 = zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size2);
-						a31 = zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size3);
-						cur_in_pix_ptr += in_pixelStep;
-						c00 = zq_mm_fmadd_ps(a02, b00, zq_mm_load_ps(out_pix_ptr));
-						c10 = zq_mm_fmadd_ps(a12, b10, zq_mm_load_ps(out_pix_ptr + zq_mm_align_size));
-						c20 = zq_mm_fmadd_ps(a22, b20, zq_mm_load_ps(out_pix_ptr + zq_mm_align_size2));
-						c30 = zq_mm_fmadd_ps(a32, b30, zq_mm_load_ps(out_pix_ptr + zq_mm_align_size3));
-						c00 = zq_mm_fmadd_ps(a00, b01, c00);
-						c10 = zq_mm_fmadd_ps(a10, b11, c10);
-						c20 = zq_mm_fmadd_ps(a20, b21, c20);
-						c30 = zq_mm_fmadd_ps(a30, b31, c30);
-						c00 = zq_mm_fmadd_ps(a01, b02, c00);
-						c10 = zq_mm_fmadd_ps(a11, b12, c10);
-						c20 = zq_mm_fmadd_ps(a21, b22, c20);
-						c30 = zq_mm_fmadd_ps(a31, b32, c30);
-						zq_mm_store_ps(out_pix_ptr, c00);
-						zq_mm_store_ps(out_pix_ptr + zq_mm_align_size, c10);
-						zq_mm_store_ps(out_pix_ptr + zq_mm_align_size2, c20);
-						zq_mm_store_ps(out_pix_ptr + zq_mm_align_size3, c30);
-						out_pix_ptr += out_pixelStep;
-					}
-				}
-
-				cur_filter_row_ptr += filter_widthStep;
-				in_row_ptr += in_widthStep;
-				cur_filter_pix_ptr = cur_filter_row_ptr;
-				b00 = zq_mm_load_ps(cur_filter_pix_ptr);
-				b10 = zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size);
-				b20 = zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size2);
-				b30 = zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size3);
-				cur_filter_pix_ptr += filter_pixelStep;
-				b01 = zq_mm_load_ps(cur_filter_pix_ptr);
-				b11 = zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size);
-				b21 = zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size2);
-				b31 = zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size3);
-				cur_filter_pix_ptr += filter_pixelStep;
-				b02 = zq_mm_load_ps(cur_filter_pix_ptr);
-				b12 = zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size);
-				b22 = zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size2);
-				b32 = zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size3);
-
-				for (out_h = 0, cur_in_row_ptr = in_row_ptr, out_row_ptr = out_c_ptr;
-					out_h < out_H;
-					out_h++, cur_in_row_ptr += in_widthStep, out_row_ptr += out_widthStep)
-				{
-					cur_in_pix_ptr = cur_in_row_ptr;
-					a00 = zq_mm_load_ps(cur_in_pix_ptr);
-					a10 = zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size);
-					a20 = zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size2);
-					a30 = zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size3);
-					cur_in_pix_ptr += in_pixelStep;
-					a01 = zq_mm_load_ps(cur_in_pix_ptr);
-					a11 = zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size);
-					a21 = zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size2);
-					a31 = zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size3);
-					cur_in_pix_ptr += in_pixelStep;
-					for (out_w = 0, out_pix_ptr = out_row_ptr; out_w < out_W; out_w += 3)
-					{
-						a02 = zq_mm_load_ps(cur_in_pix_ptr);
-						a12 = zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size);
-						a22 = zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size2);
-						a32 = zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size3);
-						cur_in_pix_ptr += in_pixelStep;
-						c00 = zq_mm_fmadd_ps(a00, b00, zq_mm_load_ps(out_pix_ptr));
-						c10 = zq_mm_fmadd_ps(a10, b10, zq_mm_load_ps(out_pix_ptr + zq_mm_align_size));
-						c20 = zq_mm_fmadd_ps(a20, b20, zq_mm_load_ps(out_pix_ptr + zq_mm_align_size2));
-						c30 = zq_mm_fmadd_ps(a30, b30, zq_mm_load_ps(out_pix_ptr + zq_mm_align_size3));
-						c00 = zq_mm_fmadd_ps(a01, b01, c00);
-						c10 = zq_mm_fmadd_ps(a11, b11, c10);
-						c20 = zq_mm_fmadd_ps(a21, b21, c20);
-						c30 = zq_mm_fmadd_ps(a31, b31, c30);
-						c00 = zq_mm_fmadd_ps(a02, b02, c00);
-						c10 = zq_mm_fmadd_ps(a12, b12, c10);
-						c20 = zq_mm_fmadd_ps(a22, b22, c20);
-						c30 = zq_mm_fmadd_ps(a32, b32, c30);
-						zq_mm_store_ps(out_pix_ptr, c00);
-						zq_mm_store_ps(out_pix_ptr + zq_mm_align_size, c10);
-						zq_mm_store_ps(out_pix_ptr + zq_mm_align_size2, c20);
-						zq_mm_store_ps(out_pix_ptr + zq_mm_align_size3, c30);
-						out_pix_ptr += out_pixelStep;
-
-						a00 = zq_mm_load_ps(cur_in_pix_ptr);
-						a10 = zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size);
-						a20 = zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size2);
-						a30 = zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size3);
-						cur_in_pix_ptr += in_pixelStep;
-						c00 = zq_mm_fmadd_ps(a01, b00, zq_mm_load_ps(out_pix_ptr));
-						c10 = zq_mm_fmadd_ps(a11, b10, zq_mm_load_ps(out_pix_ptr + zq_mm_align_size));
-						c20 = zq_mm_fmadd_ps(a21, b20, zq_mm_load_ps(out_pix_ptr + zq_mm_align_size2));
-						c30 = zq_mm_fmadd_ps(a31, b30, zq_mm_load_ps(out_pix_ptr + zq_mm_align_size3));
-						c00 = zq_mm_fmadd_ps(a02, b01, c00);
-						c10 = zq_mm_fmadd_ps(a12, b11, c10);
-						c20 = zq_mm_fmadd_ps(a22, b21, c20);
-						c30 = zq_mm_fmadd_ps(a32, b31, c30);
-						c00 = zq_mm_fmadd_ps(a00, b02, c00);
-						c10 = zq_mm_fmadd_ps(a10, b12, c10);
-						c20 = zq_mm_fmadd_ps(a20, b22, c20);
-						c30 = zq_mm_fmadd_ps(a30, b32, c30);
-						zq_mm_store_ps(out_pix_ptr, c00);
-						zq_mm_store_ps(out_pix_ptr + zq_mm_align_size, c10);
-						zq_mm_store_ps(out_pix_ptr + zq_mm_align_size2, c20);
-						zq_mm_store_ps(out_pix_ptr + zq_mm_align_size3, c30);
-						out_pix_ptr += out_pixelStep;
-
-						a01 = zq_mm_load_ps(cur_in_pix_ptr);
-						a11 = zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size);
-						a21 = zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size2);
-						a31 = zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size3);
-						cur_in_pix_ptr += in_pixelStep;
-						c00 = zq_mm_fmadd_ps(a02, b00, zq_mm_load_ps(out_pix_ptr));
-						c10 = zq_mm_fmadd_ps(a12, b10, zq_mm_load_ps(out_pix_ptr + zq_mm_align_size));
-						c20 = zq_mm_fmadd_ps(a22, b20, zq_mm_load_ps(out_pix_ptr + zq_mm_align_size2));
-						c30 = zq_mm_fmadd_ps(a32, b30, zq_mm_load_ps(out_pix_ptr + zq_mm_align_size3));
-						c00 = zq_mm_fmadd_ps(a00, b01, c00);
-						c10 = zq_mm_fmadd_ps(a10, b11, c10);
-						c20 = zq_mm_fmadd_ps(a20, b21, c20);
-						c30 = zq_mm_fmadd_ps(a30, b31, c30);
-						c00 = zq_mm_fmadd_ps(a01, b02, c00);
-						c10 = zq_mm_fmadd_ps(a11, b12, c10);
-						c20 = zq_mm_fmadd_ps(a21, b22, c20);
-						c30 = zq_mm_fmadd_ps(a31, b32, c30);
-						zq_mm_store_ps(out_pix_ptr, c00);
-						zq_mm_store_ps(out_pix_ptr + zq_mm_align_size, c10);
-						zq_mm_store_ps(out_pix_ptr + zq_mm_align_size2, c20);
-						zq_mm_store_ps(out_pix_ptr + zq_mm_align_size3, c30);
-						out_pix_ptr += out_pixelStep;
-					}
-				}
-			}
-
-			for (; out_c < in_C;
-				out_c += zq_mm_align_size, in_c_ptr += zq_mm_align_size, out_c_ptr += zq_mm_align_size)
-			{
-				cur_filter_c_ptr = filters_data + out_c;
-				cur_filter_row_ptr = cur_filter_c_ptr;
-				in_row_ptr = in_c_ptr;
-				cur_filter_pix_ptr = cur_filter_row_ptr;
-				b00 = zq_mm_load_ps(cur_filter_pix_ptr);
-				cur_filter_pix_ptr += filter_pixelStep;
-				b01 = zq_mm_load_ps(cur_filter_pix_ptr);
-				cur_filter_pix_ptr += filter_pixelStep;
-				b02 = zq_mm_load_ps(cur_filter_pix_ptr);
-
-				for (out_h = 0, cur_in_row_ptr = in_row_ptr, out_row_ptr = out_c_ptr;
-					out_h < out_H;
-					out_h++, cur_in_row_ptr += in_widthStep, out_row_ptr += out_widthStep)
-				{
-					cur_in_pix_ptr = cur_in_row_ptr;
-					a00 = zq_mm_load_ps(cur_in_pix_ptr);
-					cur_in_pix_ptr += in_pixelStep;
-					a01 = zq_mm_load_ps(cur_in_pix_ptr);
-					cur_in_pix_ptr += in_pixelStep;
-					for (out_w = 0, out_pix_ptr = out_row_ptr; out_w < out_W; out_w += 3)
-					{
-						a02 = zq_mm_load_ps(cur_in_pix_ptr);
-						cur_in_pix_ptr += in_pixelStep;
-						c00 = zq_mm_mul_ps(a00, b00);
-						c00 = zq_mm_fmadd_ps(a01, b01, c00);
-						c00 = zq_mm_fmadd_ps(a02, b02, c00);
-						zq_mm_store_ps(out_pix_ptr, c00);
-						out_pix_ptr += out_pixelStep;
-
-						a00 = zq_mm_load_ps(cur_in_pix_ptr);
-						cur_in_pix_ptr += in_pixelStep;
-						c00 = zq_mm_mul_ps(a01, b00);
-						c00 = zq_mm_fmadd_ps(a02, b01, c00);
-						c00 = zq_mm_fmadd_ps(a00, b02, c00);
-						zq_mm_store_ps(out_pix_ptr, c00);
-						out_pix_ptr += out_pixelStep;
-
-						a01 = zq_mm_load_ps(cur_in_pix_ptr);
-						cur_in_pix_ptr += in_pixelStep;
-						c00 = zq_mm_mul_ps(a02, b00);
-						c00 = zq_mm_fmadd_ps(a00, b01, c00);
-						c00 = zq_mm_fmadd_ps(a01, b02, c00);
-						zq_mm_store_ps(out_pix_ptr, c00);
-						out_pix_ptr += out_pixelStep;
-					}
-				}
-
-				cur_filter_row_ptr += filter_widthStep;
-				in_row_ptr += in_widthStep;
-				cur_filter_pix_ptr = cur_filter_row_ptr;
-				b00 = zq_mm_load_ps(cur_filter_pix_ptr);
-				cur_filter_pix_ptr += filter_pixelStep;
-				b01 = zq_mm_load_ps(cur_filter_pix_ptr);
-				cur_filter_pix_ptr += filter_pixelStep;
-				b02 = zq_mm_load_ps(cur_filter_pix_ptr);
-
-				for (out_h = 0, cur_in_row_ptr = in_row_ptr, out_row_ptr = out_c_ptr;
-					out_h < out_H;
-					out_h++, cur_in_row_ptr += in_widthStep, out_row_ptr += out_widthStep)
-				{
-					cur_in_pix_ptr = cur_in_row_ptr;
-					a00 = zq_mm_load_ps(cur_in_pix_ptr);
-					cur_in_pix_ptr += in_pixelStep;
-					a01 = zq_mm_load_ps(cur_in_pix_ptr);
-					cur_in_pix_ptr += in_pixelStep;
-					for (out_w = 0, out_pix_ptr = out_row_ptr; out_w < out_W; out_w += 3)
-					{
-						a02 = zq_mm_load_ps(cur_in_pix_ptr);
-						cur_in_pix_ptr += in_pixelStep;
-						c00 = zq_mm_fmadd_ps(a00, b00, zq_mm_load_ps(out_pix_ptr));
-						c00 = zq_mm_fmadd_ps(a01, b01, c00);
-						c00 = zq_mm_fmadd_ps(a02, b02, c00);
-						zq_mm_store_ps(out_pix_ptr, c00);
-						out_pix_ptr += out_pixelStep;
-
-						a00 = zq_mm_load_ps(cur_in_pix_ptr);
-						cur_in_pix_ptr += in_pixelStep;
-						c00 = zq_mm_fmadd_ps(a01, b00, zq_mm_load_ps(out_pix_ptr));
-						c00 = zq_mm_fmadd_ps(a02, b01, c00);
-						c00 = zq_mm_fmadd_ps(a00, b02, c00);
-						zq_mm_store_ps(out_pix_ptr, c00);
-						out_pix_ptr += out_pixelStep;
-
-						a01 = zq_mm_load_ps(cur_in_pix_ptr);
-						cur_in_pix_ptr += in_pixelStep;
-						c00 = zq_mm_fmadd_ps(a02, b00, zq_mm_load_ps(out_pix_ptr));
-						c00 = zq_mm_fmadd_ps(a00, b01, c00);
-						c00 = zq_mm_fmadd_ps(a01, b02, c00);
-						zq_mm_store_ps(out_pix_ptr, c00);
-						out_pix_ptr += out_pixelStep;
-					}
-				}
-
-				cur_filter_row_ptr += filter_widthStep;
-				in_row_ptr += in_widthStep;
-				cur_filter_pix_ptr = cur_filter_row_ptr;
-				b00 = zq_mm_load_ps(cur_filter_pix_ptr);
-				cur_filter_pix_ptr += filter_pixelStep;
-				b01 = zq_mm_load_ps(cur_filter_pix_ptr);
-				cur_filter_pix_ptr += filter_pixelStep;
-				b02 = zq_mm_load_ps(cur_filter_pix_ptr);
-
-				for (out_h = 0, cur_in_row_ptr = in_row_ptr, out_row_ptr = out_c_ptr;
-					out_h < out_H;
-					out_h++, cur_in_row_ptr += in_widthStep, out_row_ptr += out_widthStep)
-				{
-					cur_in_pix_ptr = cur_in_row_ptr;
-					a00 = zq_mm_load_ps(cur_in_pix_ptr);
-					cur_in_pix_ptr += in_pixelStep;
-					a01 = zq_mm_load_ps(cur_in_pix_ptr);
-					cur_in_pix_ptr += in_pixelStep;
-					for (out_w = 0, out_pix_ptr = out_row_ptr; out_w < out_W; out_w += 3)
-					{
-						a02 = zq_mm_load_ps(cur_in_pix_ptr);
-						cur_in_pix_ptr += in_pixelStep;
-						c00 = zq_mm_fmadd_ps(a00, b00, zq_mm_load_ps(out_pix_ptr));
-						c00 = zq_mm_fmadd_ps(a01, b01, c00);
-						c00 = zq_mm_fmadd_ps(a02, b02, c00);
-						zq_mm_store_ps(out_pix_ptr, c00);
-						out_pix_ptr += out_pixelStep;
-
-						a00 = zq_mm_load_ps(cur_in_pix_ptr);
-						cur_in_pix_ptr += in_pixelStep;
-						c00 = zq_mm_fmadd_ps(a01, b00, zq_mm_load_ps(out_pix_ptr));
-						c00 = zq_mm_fmadd_ps(a02, b01, c00);
-						c00 = zq_mm_fmadd_ps(a00, b02, c00);
-						zq_mm_store_ps(out_pix_ptr, c00);
-						out_pix_ptr += out_pixelStep;
-
-						a01 = zq_mm_load_ps(cur_in_pix_ptr);
-						cur_in_pix_ptr += in_pixelStep;
-						c00 = zq_mm_fmadd_ps(a02, b00, zq_mm_load_ps(out_pix_ptr));
-						c00 = zq_mm_fmadd_ps(a00, b01, c00);
-						c00 = zq_mm_fmadd_ps(a01, b02, c00);
-						zq_mm_store_ps(out_pix_ptr, c00);
-						out_pix_ptr += out_pixelStep;
-					}
-				}
-			}
-		}
-	}
-	else if (out_W % 3 == 1)
-	{
-		for (out_n = 0, in_slice_ptr = in_tensor4D_data, out_slice_ptr = out_tensor4D_data;
-			out_n < out_N;
-			out_n++, in_slice_ptr += in_sliceStep, out_slice_ptr += out_sliceStep)
-		{
-			for (out_c = 0, in_c_ptr = in_slice_ptr, out_c_ptr = out_slice_ptr;
-				out_c < in_C - zq_mm_align_size3;
-				out_c += zq_mm_align_size4, in_c_ptr += zq_mm_align_size4, out_c_ptr += zq_mm_align_size4)
-			{
-				cur_filter_c_ptr = filters_data + out_c;
-				cur_filter_row_ptr = cur_filter_c_ptr;
-				in_row_ptr = in_c_ptr;
-				cur_filter_pix_ptr = cur_filter_row_ptr;
-				b00 = zq_mm_load_ps(cur_filter_pix_ptr);
-				b10 = zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size);
-				b20 = zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size2);
-				b30 = zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size3);
-				cur_filter_pix_ptr += filter_pixelStep;
-				b01 = zq_mm_load_ps(cur_filter_pix_ptr);
-				b11 = zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size);
-				b21 = zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size2);
-				b31 = zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size3);
-				cur_filter_pix_ptr += filter_pixelStep;
-				b02 = zq_mm_load_ps(cur_filter_pix_ptr);
-				b12 = zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size);
-				b22 = zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size2);
-				b32 = zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size3);
-
-				for (out_h = 0, cur_in_row_ptr = in_row_ptr, out_row_ptr = out_c_ptr;
-					out_h < out_H;
-					out_h++, cur_in_row_ptr += in_widthStep, out_row_ptr += out_widthStep)
-				{
-					out_pix_ptr = out_row_ptr;
-					cur_in_pix_ptr = cur_in_row_ptr;
-					a00 = zq_mm_load_ps(cur_in_pix_ptr);
-					a10 = zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size);
-					a20 = zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size2);
-					a30 = zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size3);
-					cur_in_pix_ptr += in_pixelStep;
-					a01 = zq_mm_load_ps(cur_in_pix_ptr);
-					a11 = zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size);
-					a21 = zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size2);
-					a31 = zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size3);
-					cur_in_pix_ptr += in_pixelStep;
-					a02 = zq_mm_load_ps(cur_in_pix_ptr);
-					a12 = zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size);
-					a22 = zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size2);
-					a32 = zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size3);
-					cur_in_pix_ptr += in_pixelStep;
-					c00 = zq_mm_mul_ps(a00, b00);
-					c10 = zq_mm_mul_ps(a10, b10);
-					c20 = zq_mm_mul_ps(a20, b20);
-					c30 = zq_mm_mul_ps(a30, b30);
-					c00 = zq_mm_fmadd_ps(a01, b01, c00);
-					c10 = zq_mm_fmadd_ps(a11, b11, c10);
-					c20 = zq_mm_fmadd_ps(a21, b21, c20);
-					c30 = zq_mm_fmadd_ps(a31, b31, c30);
-					c00 = zq_mm_fmadd_ps(a02, b02, c00);
-					c10 = zq_mm_fmadd_ps(a12, b12, c10);
-					c20 = zq_mm_fmadd_ps(a22, b22, c20);
-					c30 = zq_mm_fmadd_ps(a32, b32, c30);
-					zq_mm_store_ps(out_pix_ptr, c00);
-					zq_mm_store_ps(out_pix_ptr + zq_mm_align_size, c10);
-					zq_mm_store_ps(out_pix_ptr + zq_mm_align_size2, c20);
-					zq_mm_store_ps(out_pix_ptr + zq_mm_align_size3, c30);
-					out_pix_ptr += out_pixelStep;
-
-					for (out_w = 1; out_w < out_W; out_w += 3)
-					{
-						a00 = zq_mm_load_ps(cur_in_pix_ptr);
-						a10 = zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size);
-						a20 = zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size2);
-						a30 = zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size3);
-						cur_in_pix_ptr += in_pixelStep;
-						c00 = zq_mm_mul_ps(a01, b00);
-						c10 = zq_mm_mul_ps(a11, b10);
-						c20 = zq_mm_mul_ps(a21, b20);
-						c30 = zq_mm_mul_ps(a31, b30);
-						c00 = zq_mm_fmadd_ps(a02, b01, c00);
-						c10 = zq_mm_fmadd_ps(a12, b11, c10);
-						c20 = zq_mm_fmadd_ps(a22, b21, c20);
-						c30 = zq_mm_fmadd_ps(a32, b31, c30);
-						c00 = zq_mm_fmadd_ps(a00, b02, c00);
-						c10 = zq_mm_fmadd_ps(a10, b12, c10);
-						c20 = zq_mm_fmadd_ps(a20, b22, c20);
-						c30 = zq_mm_fmadd_ps(a30, b32, c30);
-						zq_mm_store_ps(out_pix_ptr, c00);
-						zq_mm_store_ps(out_pix_ptr + zq_mm_align_size, c10);
-						zq_mm_store_ps(out_pix_ptr + zq_mm_align_size2, c20);
-						zq_mm_store_ps(out_pix_ptr + zq_mm_align_size3, c30);
-						out_pix_ptr += out_pixelStep;
-
-						a01 = zq_mm_load_ps(cur_in_pix_ptr);
-						a11 = zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size);
-						a21 = zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size2);
-						a31 = zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size3);
-						cur_in_pix_ptr += in_pixelStep;
-						c00 = zq_mm_mul_ps(a02, b00);
-						c10 = zq_mm_mul_ps(a12, b10);
-						c20 = zq_mm_mul_ps(a22, b20);
-						c30 = zq_mm_mul_ps(a32, b30);
-						c00 = zq_mm_fmadd_ps(a00, b01, c00);
-						c10 = zq_mm_fmadd_ps(a10, b11, c10);
-						c20 = zq_mm_fmadd_ps(a20, b21, c20);
-						c30 = zq_mm_fmadd_ps(a30, b31, c30);
-						c00 = zq_mm_fmadd_ps(a01, b02, c00);
-						c10 = zq_mm_fmadd_ps(a11, b12, c10);
-						c20 = zq_mm_fmadd_ps(a21, b22, c20);
-						c30 = zq_mm_fmadd_ps(a31, b32, c30);
-						zq_mm_store_ps(out_pix_ptr, c00);
-						zq_mm_store_ps(out_pix_ptr + zq_mm_align_size, c10);
-						zq_mm_store_ps(out_pix_ptr + zq_mm_align_size2, c20);
-						zq_mm_store_ps(out_pix_ptr + zq_mm_align_size3, c30);
-						out_pix_ptr += out_pixelStep;
-
-						a02 = zq_mm_load_ps(cur_in_pix_ptr);
-						a12 = zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size);
-						a22 = zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size2);
-						a32 = zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size3);
-						cur_in_pix_ptr += in_pixelStep;
-						c00 = zq_mm_mul_ps(a00, b00);
-						c10 = zq_mm_mul_ps(a10, b10);
-						c20 = zq_mm_mul_ps(a20, b20);
-						c30 = zq_mm_mul_ps(a30, b30);
-						c00 = zq_mm_fmadd_ps(a01, b01, c00);
-						c10 = zq_mm_fmadd_ps(a11, b11, c10);
-						c20 = zq_mm_fmadd_ps(a21, b21, c20);
-						c30 = zq_mm_fmadd_ps(a31, b31, c30);
-						c00 = zq_mm_fmadd_ps(a02, b02, c00);
-						c10 = zq_mm_fmadd_ps(a12, b12, c10);
-						c20 = zq_mm_fmadd_ps(a22, b22, c20);
-						c30 = zq_mm_fmadd_ps(a32, b32, c30);
-						zq_mm_store_ps(out_pix_ptr, c00);
-						zq_mm_store_ps(out_pix_ptr + zq_mm_align_size, c10);
-						zq_mm_store_ps(out_pix_ptr + zq_mm_align_size2, c20);
-						zq_mm_store_ps(out_pix_ptr + zq_mm_align_size3, c30);
-						out_pix_ptr += out_pixelStep;
-
-					}
-				}
-
-				cur_filter_row_ptr += filter_widthStep;
-				in_row_ptr += in_widthStep;
-				cur_filter_pix_ptr = cur_filter_row_ptr;
-				b00 = zq_mm_load_ps(cur_filter_pix_ptr);
-				b10 = zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size);
-				b20 = zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size2);
-				b30 = zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size3);
-				cur_filter_pix_ptr += filter_pixelStep;
-				b01 = zq_mm_load_ps(cur_filter_pix_ptr);
-				b11 = zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size);
-				b21 = zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size2);
-				b31 = zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size3);
-				cur_filter_pix_ptr += filter_pixelStep;
-				b02 = zq_mm_load_ps(cur_filter_pix_ptr);
-				b12 = zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size);
-				b22 = zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size2);
-				b32 = zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size3);
-
-				for (out_h = 0, cur_in_row_ptr = in_row_ptr, out_row_ptr = out_c_ptr;
-					out_h < out_H;
-					out_h++, cur_in_row_ptr += in_widthStep, out_row_ptr += out_widthStep)
-				{
-					out_pix_ptr = out_row_ptr;
-					cur_in_pix_ptr = cur_in_row_ptr;
-					a00 = zq_mm_load_ps(cur_in_pix_ptr);
-					a10 = zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size);
-					a20 = zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size2);
-					a30 = zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size3);
-					cur_in_pix_ptr += in_pixelStep;
-					a01 = zq_mm_load_ps(cur_in_pix_ptr);
-					a11 = zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size);
-					a21 = zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size2);
-					a31 = zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size3);
-					cur_in_pix_ptr += in_pixelStep;
-					a02 = zq_mm_load_ps(cur_in_pix_ptr);
-					a12 = zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size);
-					a22 = zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size2);
-					a32 = zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size3);
-					cur_in_pix_ptr += in_pixelStep;
-					c00 = zq_mm_fmadd_ps(a00, b00, zq_mm_load_ps(out_pix_ptr));
-					c10 = zq_mm_fmadd_ps(a10, b10, zq_mm_load_ps(out_pix_ptr + zq_mm_align_size));
-					c20 = zq_mm_fmadd_ps(a20, b20, zq_mm_load_ps(out_pix_ptr + zq_mm_align_size2));
-					c30 = zq_mm_fmadd_ps(a30, b30, zq_mm_load_ps(out_pix_ptr + zq_mm_align_size3));
-					c00 = zq_mm_fmadd_ps(a01, b01, c00);
-					c10 = zq_mm_fmadd_ps(a11, b11, c10);
-					c20 = zq_mm_fmadd_ps(a21, b21, c20);
-					c30 = zq_mm_fmadd_ps(a31, b31, c30);
-					c00 = zq_mm_fmadd_ps(a02, b02, c00);
-					c10 = zq_mm_fmadd_ps(a12, b12, c10);
-					c20 = zq_mm_fmadd_ps(a22, b22, c20);
-					c30 = zq_mm_fmadd_ps(a32, b32, c30);
-					zq_mm_store_ps(out_pix_ptr, c00);
-					zq_mm_store_ps(out_pix_ptr + zq_mm_align_size, c10);
-					zq_mm_store_ps(out_pix_ptr + zq_mm_align_size2, c20);
-					zq_mm_store_ps(out_pix_ptr + zq_mm_align_size3, c30);
-					out_pix_ptr += out_pixelStep;
-
-
-					for (out_w = 1; out_w < out_W; out_w += 3)
-					{
-						a00 = zq_mm_load_ps(cur_in_pix_ptr);
-						a10 = zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size);
-						a20 = zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size2);
-						a30 = zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size3);
-						cur_in_pix_ptr += in_pixelStep;
-						c00 = zq_mm_fmadd_ps(a01, b00, zq_mm_load_ps(out_pix_ptr));
-						c10 = zq_mm_fmadd_ps(a11, b10, zq_mm_load_ps(out_pix_ptr + zq_mm_align_size));
-						c20 = zq_mm_fmadd_ps(a21, b20, zq_mm_load_ps(out_pix_ptr + zq_mm_align_size2));
-						c30 = zq_mm_fmadd_ps(a31, b30, zq_mm_load_ps(out_pix_ptr + zq_mm_align_size3));
-						c00 = zq_mm_fmadd_ps(a02, b01, c00);
-						c10 = zq_mm_fmadd_ps(a12, b11, c10);
-						c20 = zq_mm_fmadd_ps(a22, b21, c20);
-						c30 = zq_mm_fmadd_ps(a32, b31, c30);
-						c00 = zq_mm_fmadd_ps(a00, b02, c00);
-						c10 = zq_mm_fmadd_ps(a10, b12, c10);
-						c20 = zq_mm_fmadd_ps(a20, b22, c20);
-						c30 = zq_mm_fmadd_ps(a30, b32, c30);
-						zq_mm_store_ps(out_pix_ptr, c00);
-						zq_mm_store_ps(out_pix_ptr + zq_mm_align_size, c10);
-						zq_mm_store_ps(out_pix_ptr + zq_mm_align_size2, c20);
-						zq_mm_store_ps(out_pix_ptr + zq_mm_align_size3, c30);
-						out_pix_ptr += out_pixelStep;
-
-						a01 = zq_mm_load_ps(cur_in_pix_ptr);
-						a11 = zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size);
-						a21 = zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size2);
-						a31 = zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size3);
-						cur_in_pix_ptr += in_pixelStep;
-						c00 = zq_mm_fmadd_ps(a02, b00, zq_mm_load_ps(out_pix_ptr));
-						c10 = zq_mm_fmadd_ps(a12, b10, zq_mm_load_ps(out_pix_ptr + zq_mm_align_size));
-						c20 = zq_mm_fmadd_ps(a22, b20, zq_mm_load_ps(out_pix_ptr + zq_mm_align_size2));
-						c30 = zq_mm_fmadd_ps(a32, b30, zq_mm_load_ps(out_pix_ptr + zq_mm_align_size3));
-						c00 = zq_mm_fmadd_ps(a00, b01, c00);
-						c10 = zq_mm_fmadd_ps(a10, b11, c10);
-						c20 = zq_mm_fmadd_ps(a20, b21, c20);
-						c30 = zq_mm_fmadd_ps(a30, b31, c30);
-						c00 = zq_mm_fmadd_ps(a01, b02, c00);
-						c10 = zq_mm_fmadd_ps(a11, b12, c10);
-						c20 = zq_mm_fmadd_ps(a21, b22, c20);
-						c30 = zq_mm_fmadd_ps(a31, b32, c30);
-						zq_mm_store_ps(out_pix_ptr, c00);
-						zq_mm_store_ps(out_pix_ptr + zq_mm_align_size, c10);
-						zq_mm_store_ps(out_pix_ptr + zq_mm_align_size2, c20);
-						zq_mm_store_ps(out_pix_ptr + zq_mm_align_size3, c30);
-						out_pix_ptr += out_pixelStep;
-
-						a02 = zq_mm_load_ps(cur_in_pix_ptr);
-						a12 = zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size);
-						a22 = zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size2);
-						a32 = zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size3);
-						cur_in_pix_ptr += in_pixelStep;
-						c00 = zq_mm_fmadd_ps(a00, b00, zq_mm_load_ps(out_pix_ptr));
-						c10 = zq_mm_fmadd_ps(a10, b10, zq_mm_load_ps(out_pix_ptr + zq_mm_align_size));
-						c20 = zq_mm_fmadd_ps(a20, b20, zq_mm_load_ps(out_pix_ptr + zq_mm_align_size2));
-						c30 = zq_mm_fmadd_ps(a30, b30, zq_mm_load_ps(out_pix_ptr + zq_mm_align_size3));
-						c00 = zq_mm_fmadd_ps(a01, b01, c00);
-						c10 = zq_mm_fmadd_ps(a11, b11, c10);
-						c20 = zq_mm_fmadd_ps(a21, b21, c20);
-						c30 = zq_mm_fmadd_ps(a31, b31, c30);
-						c00 = zq_mm_fmadd_ps(a02, b02, c00);
-						c10 = zq_mm_fmadd_ps(a12, b12, c10);
-						c20 = zq_mm_fmadd_ps(a22, b22, c20);
-						c30 = zq_mm_fmadd_ps(a32, b32, c30);
-						zq_mm_store_ps(out_pix_ptr, c00);
-						zq_mm_store_ps(out_pix_ptr + zq_mm_align_size, c10);
-						zq_mm_store_ps(out_pix_ptr + zq_mm_align_size2, c20);
-						zq_mm_store_ps(out_pix_ptr + zq_mm_align_size3, c30);
-						out_pix_ptr += out_pixelStep;
-
-					}
-				}
-
-				cur_filter_row_ptr += filter_widthStep;
-				in_row_ptr += in_widthStep;
-				cur_filter_pix_ptr = cur_filter_row_ptr;
-				b00 = zq_mm_load_ps(cur_filter_pix_ptr);
-				b10 = zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size);
-				b20 = zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size2);
-				b30 = zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size3);
-				cur_filter_pix_ptr += filter_pixelStep;
-				b01 = zq_mm_load_ps(cur_filter_pix_ptr);
-				b11 = zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size);
-				b21 = zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size2);
-				b31 = zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size3);
-				cur_filter_pix_ptr += filter_pixelStep;
-				b02 = zq_mm_load_ps(cur_filter_pix_ptr);
-				b12 = zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size);
-				b22 = zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size2);
-				b32 = zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size3);
-
-				for (out_h = 0, cur_in_row_ptr = in_row_ptr, out_row_ptr = out_c_ptr;
-					out_h < out_H;
-					out_h++, cur_in_row_ptr += in_widthStep, out_row_ptr += out_widthStep)
-				{
-					out_pix_ptr = out_row_ptr;
-					cur_in_pix_ptr = cur_in_row_ptr;
-					a00 = zq_mm_load_ps(cur_in_pix_ptr);
-					a10 = zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size);
-					a20 = zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size2);
-					a30 = zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size3);
-					cur_in_pix_ptr += in_pixelStep;
-					a01 = zq_mm_load_ps(cur_in_pix_ptr);
-					a11 = zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size);
-					a21 = zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size2);
-					a31 = zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size3);
-					cur_in_pix_ptr += in_pixelStep;
-					a02 = zq_mm_load_ps(cur_in_pix_ptr);
-					a12 = zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size);
-					a22 = zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size2);
-					a32 = zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size3);
-					cur_in_pix_ptr += in_pixelStep;
-					c00 = zq_mm_fmadd_ps(a00, b00, zq_mm_load_ps(out_pix_ptr));
-					c10 = zq_mm_fmadd_ps(a10, b10, zq_mm_load_ps(out_pix_ptr + zq_mm_align_size));
-					c20 = zq_mm_fmadd_ps(a20, b20, zq_mm_load_ps(out_pix_ptr + zq_mm_align_size2));
-					c30 = zq_mm_fmadd_ps(a30, b30, zq_mm_load_ps(out_pix_ptr + zq_mm_align_size3));
-					c00 = zq_mm_fmadd_ps(a01, b01, c00);
-					c10 = zq_mm_fmadd_ps(a11, b11, c10);
-					c20 = zq_mm_fmadd_ps(a21, b21, c20);
-					c30 = zq_mm_fmadd_ps(a31, b31, c30);
-					c00 = zq_mm_fmadd_ps(a02, b02, c00);
-					c10 = zq_mm_fmadd_ps(a12, b12, c10);
-					c20 = zq_mm_fmadd_ps(a22, b22, c20);
-					c30 = zq_mm_fmadd_ps(a32, b32, c30);
-					zq_mm_store_ps(out_pix_ptr, c00);
-					zq_mm_store_ps(out_pix_ptr + zq_mm_align_size, c10);
-					zq_mm_store_ps(out_pix_ptr + zq_mm_align_size2, c20);
-					zq_mm_store_ps(out_pix_ptr + zq_mm_align_size3, c30);
-					out_pix_ptr += out_pixelStep;
-
-
-					for (out_w = 1; out_w < out_W; out_w += 3)
-					{
-						a00 = zq_mm_load_ps(cur_in_pix_ptr);
-						a10 = zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size);
-						a20 = zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size2);
-						a30 = zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size3);
-						cur_in_pix_ptr += in_pixelStep;
-						c00 = zq_mm_fmadd_ps(a01, b00, zq_mm_load_ps(out_pix_ptr));
-						c10 = zq_mm_fmadd_ps(a11, b10, zq_mm_load_ps(out_pix_ptr + zq_mm_align_size));
-						c20 = zq_mm_fmadd_ps(a21, b20, zq_mm_load_ps(out_pix_ptr + zq_mm_align_size2));
-						c30 = zq_mm_fmadd_ps(a31, b30, zq_mm_load_ps(out_pix_ptr + zq_mm_align_size3));
-						c00 = zq_mm_fmadd_ps(a02, b01, c00);
-						c10 = zq_mm_fmadd_ps(a12, b11, c10);
-						c20 = zq_mm_fmadd_ps(a22, b21, c20);
-						c30 = zq_mm_fmadd_ps(a32, b31, c30);
-						c00 = zq_mm_fmadd_ps(a00, b02, c00);
-						c10 = zq_mm_fmadd_ps(a10, b12, c10);
-						c20 = zq_mm_fmadd_ps(a20, b22, c20);
-						c30 = zq_mm_fmadd_ps(a30, b32, c30);
-						zq_mm_store_ps(out_pix_ptr, c00);
-						zq_mm_store_ps(out_pix_ptr + zq_mm_align_size, c10);
-						zq_mm_store_ps(out_pix_ptr + zq_mm_align_size2, c20);
-						zq_mm_store_ps(out_pix_ptr + zq_mm_align_size3, c30);
-						out_pix_ptr += out_pixelStep;
-
-						a01 = zq_mm_load_ps(cur_in_pix_ptr);
-						a11 = zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size);
-						a21 = zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size2);
-						a31 = zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size3);
-						cur_in_pix_ptr += in_pixelStep;
-						c00 = zq_mm_fmadd_ps(a02, b00, zq_mm_load_ps(out_pix_ptr));
-						c10 = zq_mm_fmadd_ps(a12, b10, zq_mm_load_ps(out_pix_ptr + zq_mm_align_size));
-						c20 = zq_mm_fmadd_ps(a22, b20, zq_mm_load_ps(out_pix_ptr + zq_mm_align_size2));
-						c30 = zq_mm_fmadd_ps(a32, b30, zq_mm_load_ps(out_pix_ptr + zq_mm_align_size3));
-						c00 = zq_mm_fmadd_ps(a00, b01, c00);
-						c10 = zq_mm_fmadd_ps(a10, b11, c10);
-						c20 = zq_mm_fmadd_ps(a20, b21, c20);
-						c30 = zq_mm_fmadd_ps(a30, b31, c30);
-						c00 = zq_mm_fmadd_ps(a01, b02, c00);
-						c10 = zq_mm_fmadd_ps(a11, b12, c10);
-						c20 = zq_mm_fmadd_ps(a21, b22, c20);
-						c30 = zq_mm_fmadd_ps(a31, b32, c30);
-						zq_mm_store_ps(out_pix_ptr, c00);
-						zq_mm_store_ps(out_pix_ptr + zq_mm_align_size, c10);
-						zq_mm_store_ps(out_pix_ptr + zq_mm_align_size2, c20);
-						zq_mm_store_ps(out_pix_ptr + zq_mm_align_size3, c30);
-						out_pix_ptr += out_pixelStep;
-
-						a02 = zq_mm_load_ps(cur_in_pix_ptr);
-						a12 = zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size);
-						a22 = zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size2);
-						a32 = zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size3);
-						cur_in_pix_ptr += in_pixelStep;
-						c00 = zq_mm_fmadd_ps(a00, b00, zq_mm_load_ps(out_pix_ptr));
-						c10 = zq_mm_fmadd_ps(a10, b10, zq_mm_load_ps(out_pix_ptr + zq_mm_align_size));
-						c20 = zq_mm_fmadd_ps(a20, b20, zq_mm_load_ps(out_pix_ptr + zq_mm_align_size2));
-						c30 = zq_mm_fmadd_ps(a30, b30, zq_mm_load_ps(out_pix_ptr + zq_mm_align_size3));
-						c00 = zq_mm_fmadd_ps(a01, b01, c00);
-						c10 = zq_mm_fmadd_ps(a11, b11, c10);
-						c20 = zq_mm_fmadd_ps(a21, b21, c20);
-						c30 = zq_mm_fmadd_ps(a31, b31, c30);
-						c00 = zq_mm_fmadd_ps(a02, b02, c00);
-						c10 = zq_mm_fmadd_ps(a12, b12, c10);
-						c20 = zq_mm_fmadd_ps(a22, b22, c20);
-						c30 = zq_mm_fmadd_ps(a32, b32, c30);
-						zq_mm_store_ps(out_pix_ptr, c00);
-						zq_mm_store_ps(out_pix_ptr + zq_mm_align_size, c10);
-						zq_mm_store_ps(out_pix_ptr + zq_mm_align_size2, c20);
-						zq_mm_store_ps(out_pix_ptr + zq_mm_align_size3, c30);
-						out_pix_ptr += out_pixelStep;
-
-					}
-				}
-			}
-
-			for (; out_c < in_C;
-				out_c += zq_mm_align_size, in_c_ptr += zq_mm_align_size, out_c_ptr += zq_mm_align_size)
-			{
-				cur_filter_c_ptr = filters_data + out_c;
-				cur_filter_row_ptr = cur_filter_c_ptr;
-				in_row_ptr = in_c_ptr;
-				cur_filter_pix_ptr = cur_filter_row_ptr;
-				b00 = zq_mm_load_ps(cur_filter_pix_ptr);
-				cur_filter_pix_ptr += filter_pixelStep;
-				b01 = zq_mm_load_ps(cur_filter_pix_ptr);
-				cur_filter_pix_ptr += filter_pixelStep;
-				b02 = zq_mm_load_ps(cur_filter_pix_ptr);
-
-				for (out_h = 0, cur_in_row_ptr = in_row_ptr, out_row_ptr = out_c_ptr;
-					out_h < out_H;
-					out_h++, cur_in_row_ptr += in_widthStep, out_row_ptr += out_widthStep)
-				{
-					out_pix_ptr = out_row_ptr;
-					cur_in_pix_ptr = cur_in_row_ptr;
-					a00 = zq_mm_load_ps(cur_in_pix_ptr);
-					cur_in_pix_ptr += in_pixelStep;
-					a01 = zq_mm_load_ps(cur_in_pix_ptr);
-					cur_in_pix_ptr += in_pixelStep;
-					a02 = zq_mm_load_ps(cur_in_pix_ptr);
-					cur_in_pix_ptr += in_pixelStep;
-					c00 = zq_mm_mul_ps(a00, b00);
-					c00 = zq_mm_fmadd_ps(a01, b01, c00);
-					c00 = zq_mm_fmadd_ps(a02, b02, c00);
-					zq_mm_store_ps(out_pix_ptr, c00);
-					out_pix_ptr += out_pixelStep;
-
-
-					for (out_w = 1; out_w < out_W; out_w += 3)
-					{
-						a00 = zq_mm_load_ps(cur_in_pix_ptr);
-						cur_in_pix_ptr += in_pixelStep;
-						c00 = zq_mm_mul_ps(a01, b00);
-						c00 = zq_mm_fmadd_ps(a02, b01, c00);
-						c00 = zq_mm_fmadd_ps(a00, b02, c00);
-						zq_mm_store_ps(out_pix_ptr, c00);
-						out_pix_ptr += out_pixelStep;
-
-						a01 = zq_mm_load_ps(cur_in_pix_ptr);
-						cur_in_pix_ptr += in_pixelStep;
-						c00 = zq_mm_mul_ps(a02, b00);
-						c00 = zq_mm_fmadd_ps(a00, b01, c00);
-						c00 = zq_mm_fmadd_ps(a01, b02, c00);
-						zq_mm_store_ps(out_pix_ptr, c00);
-						out_pix_ptr += out_pixelStep;
-
-						a02 = zq_mm_load_ps(cur_in_pix_ptr);
-						cur_in_pix_ptr += in_pixelStep;
-						c00 = zq_mm_mul_ps(a00, b00);
-						c00 = zq_mm_fmadd_ps(a01, b01, c00);
-						c00 = zq_mm_fmadd_ps(a02, b02, c00);
-						zq_mm_store_ps(out_pix_ptr, c00);
-						out_pix_ptr += out_pixelStep;
-					}
-				}
-
-				cur_filter_row_ptr += filter_widthStep;
-				in_row_ptr += in_widthStep;
-				cur_filter_pix_ptr = cur_filter_row_ptr;
-				b00 = zq_mm_load_ps(cur_filter_pix_ptr);
-				cur_filter_pix_ptr += filter_pixelStep;
-				b01 = zq_mm_load_ps(cur_filter_pix_ptr);
-				cur_filter_pix_ptr += filter_pixelStep;
-				b02 = zq_mm_load_ps(cur_filter_pix_ptr);
-
-				for (out_h = 0, cur_in_row_ptr = in_row_ptr, out_row_ptr = out_c_ptr;
-					out_h < out_H;
-					out_h++, cur_in_row_ptr += in_widthStep, out_row_ptr += out_widthStep)
-				{
-					out_pix_ptr = out_row_ptr;
-					cur_in_pix_ptr = cur_in_row_ptr;
-					a00 = zq_mm_load_ps(cur_in_pix_ptr);
-					cur_in_pix_ptr += in_pixelStep;
-					a01 = zq_mm_load_ps(cur_in_pix_ptr);
-					cur_in_pix_ptr += in_pixelStep;
-					a02 = zq_mm_load_ps(cur_in_pix_ptr);
-					cur_in_pix_ptr += in_pixelStep;
-					c00 = zq_mm_fmadd_ps(a00, b00, zq_mm_load_ps(out_pix_ptr));
-					c00 = zq_mm_fmadd_ps(a01, b01, c00);
-					c00 = zq_mm_fmadd_ps(a02, b02, c00);
-					zq_mm_store_ps(out_pix_ptr, c00);
-					out_pix_ptr += out_pixelStep;
-
-					for (out_w = 1; out_w < out_W; out_w += 3)
-					{
-						a00 = zq_mm_load_ps(cur_in_pix_ptr);
-						cur_in_pix_ptr += in_pixelStep;
-						c00 = zq_mm_fmadd_ps(a01, b00, zq_mm_load_ps(out_pix_ptr));
-						c00 = zq_mm_fmadd_ps(a02, b01, c00);
-						c00 = zq_mm_fmadd_ps(a00, b02, c00);
-						zq_mm_store_ps(out_pix_ptr, c00);
-						out_pix_ptr += out_pixelStep;
-
-						a01 = zq_mm_load_ps(cur_in_pix_ptr);
-						cur_in_pix_ptr += in_pixelStep;
-						c00 = zq_mm_fmadd_ps(a02, b00, zq_mm_load_ps(out_pix_ptr));
-						c00 = zq_mm_fmadd_ps(a00, b01, c00);
-						c00 = zq_mm_fmadd_ps(a01, b02, c00);
-						zq_mm_store_ps(out_pix_ptr, c00);
-						out_pix_ptr += out_pixelStep;
-
-						a02 = zq_mm_load_ps(cur_in_pix_ptr);
-						cur_in_pix_ptr += in_pixelStep;
-						c00 = zq_mm_fmadd_ps(a00, b00, zq_mm_load_ps(out_pix_ptr));
-						c00 = zq_mm_fmadd_ps(a01, b01, c00);
-						c00 = zq_mm_fmadd_ps(a02, b02, c00);
-						zq_mm_store_ps(out_pix_ptr, c00);
-						out_pix_ptr += out_pixelStep;
-					}
-				}
-
-				cur_filter_row_ptr += filter_widthStep;
-				in_row_ptr += in_widthStep;
-				cur_filter_pix_ptr = cur_filter_row_ptr;
-				b00 = zq_mm_load_ps(cur_filter_pix_ptr);
-				cur_filter_pix_ptr += filter_pixelStep;
-				b01 = zq_mm_load_ps(cur_filter_pix_ptr);
-				cur_filter_pix_ptr += filter_pixelStep;
-				b02 = zq_mm_load_ps(cur_filter_pix_ptr);
-
-				for (out_h = 0, cur_in_row_ptr = in_row_ptr, out_row_ptr = out_c_ptr;
-					out_h < out_H;
-					out_h++, cur_in_row_ptr += in_widthStep, out_row_ptr += out_widthStep)
-				{
-					out_pix_ptr = out_row_ptr;
-					cur_in_pix_ptr = cur_in_row_ptr;
-					a00 = zq_mm_load_ps(cur_in_pix_ptr);
-					cur_in_pix_ptr += in_pixelStep;
-					a01 = zq_mm_load_ps(cur_in_pix_ptr);
-					cur_in_pix_ptr += in_pixelStep;
-					a02 = zq_mm_load_ps(cur_in_pix_ptr);
-					cur_in_pix_ptr += in_pixelStep;
-					c00 = zq_mm_fmadd_ps(a00, b00, zq_mm_load_ps(out_pix_ptr));
-					c00 = zq_mm_fmadd_ps(a01, b01, c00);
-					c00 = zq_mm_fmadd_ps(a02, b02, c00);
-					zq_mm_store_ps(out_pix_ptr, c00);
-					out_pix_ptr += out_pixelStep;
-
-					for (out_w = 1; out_w < out_W; out_w += 3)
-					{
-						a00 = zq_mm_load_ps(cur_in_pix_ptr);
-						cur_in_pix_ptr += in_pixelStep;
-						c00 = zq_mm_fmadd_ps(a01, b00, zq_mm_load_ps(out_pix_ptr));
-						c00 = zq_mm_fmadd_ps(a02, b01, c00);
-						c00 = zq_mm_fmadd_ps(a00, b02, c00);
-						zq_mm_store_ps(out_pix_ptr, c00);
-						out_pix_ptr += out_pixelStep;
-
-						a01 = zq_mm_load_ps(cur_in_pix_ptr);
-						cur_in_pix_ptr += in_pixelStep;
-						c00 = zq_mm_fmadd_ps(a02, b00, zq_mm_load_ps(out_pix_ptr));
-						c00 = zq_mm_fmadd_ps(a00, b01, c00);
-						c00 = zq_mm_fmadd_ps(a01, b02, c00);
-						zq_mm_store_ps(out_pix_ptr, c00);
-						out_pix_ptr += out_pixelStep;
-
-						a02 = zq_mm_load_ps(cur_in_pix_ptr);
-						cur_in_pix_ptr += in_pixelStep;
-						c00 = zq_mm_fmadd_ps(a00, b00, zq_mm_load_ps(out_pix_ptr));
-						c00 = zq_mm_fmadd_ps(a01, b01, c00);
-						c00 = zq_mm_fmadd_ps(a02, b02, c00);
-						zq_mm_store_ps(out_pix_ptr, c00);
-						out_pix_ptr += out_pixelStep;
-
-					}
-				}
-			}
-		}
-	}
-	else// if (out_W % 3 == 2)
-	{
-		for (out_n = 0, in_slice_ptr = in_tensor4D_data, out_slice_ptr = out_tensor4D_data;
-			out_n < out_N;
-			out_n++, in_slice_ptr += in_sliceStep, out_slice_ptr += out_sliceStep)
-		{
-			for (out_c = 0, in_c_ptr = in_slice_ptr, out_c_ptr = out_slice_ptr;
-				out_c < in_C - zq_mm_align_size3;
-				out_c += zq_mm_align_size4, in_c_ptr += zq_mm_align_size4, out_c_ptr += zq_mm_align_size4)
-			{
-				cur_filter_c_ptr = filters_data + out_c;
-				cur_filter_row_ptr = cur_filter_c_ptr;
-				in_row_ptr = in_c_ptr;
-				cur_filter_pix_ptr = cur_filter_row_ptr;
-				b00 = zq_mm_load_ps(cur_filter_pix_ptr);
-				b10 = zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size);
-				b20 = zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size2);
-				b30 = zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size3);
-				cur_filter_pix_ptr += filter_pixelStep;
-				b01 = zq_mm_load_ps(cur_filter_pix_ptr);
-				b11 = zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size);
-				b21 = zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size2);
-				b31 = zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size3);
-				cur_filter_pix_ptr += filter_pixelStep;
-				b02 = zq_mm_load_ps(cur_filter_pix_ptr);
-				b12 = zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size);
-				b22 = zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size2);
-				b32 = zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size3);
-
-				for (out_h = 0, cur_in_row_ptr = in_row_ptr, out_row_ptr = out_c_ptr;
-					out_h < out_H;
-					out_h++, cur_in_row_ptr += in_widthStep, out_row_ptr += out_widthStep)
-				{
-					out_pix_ptr = out_row_ptr;
-					cur_in_pix_ptr = cur_in_row_ptr;
-					a00 = zq_mm_load_ps(cur_in_pix_ptr);
-					a10 = zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size);
-					a20 = zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size2);
-					a30 = zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size3);
-					cur_in_pix_ptr += in_pixelStep;
-					a01 = zq_mm_load_ps(cur_in_pix_ptr);
-					a11 = zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size);
-					a21 = zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size2);
-					a31 = zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size3);
-					cur_in_pix_ptr += in_pixelStep;
-					a02 = zq_mm_load_ps(cur_in_pix_ptr);
-					a12 = zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size);
-					a22 = zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size2);
-					a32 = zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size3);
-					cur_in_pix_ptr += in_pixelStep;
-					c00 = zq_mm_mul_ps(a00, b00);
-					c10 = zq_mm_mul_ps(a10, b10);
-					c20 = zq_mm_mul_ps(a20, b20);
-					c30 = zq_mm_mul_ps(a30, b30);
-					c00 = zq_mm_fmadd_ps(a01, b01, c00);
-					c10 = zq_mm_fmadd_ps(a11, b11, c10);
-					c20 = zq_mm_fmadd_ps(a21, b21, c20);
-					c30 = zq_mm_fmadd_ps(a31, b31, c30);
-					c00 = zq_mm_fmadd_ps(a02, b02, c00);
-					c10 = zq_mm_fmadd_ps(a12, b12, c10);
-					c20 = zq_mm_fmadd_ps(a22, b22, c20);
-					c30 = zq_mm_fmadd_ps(a32, b32, c30);
-					zq_mm_store_ps(out_pix_ptr, c00);
-					zq_mm_store_ps(out_pix_ptr + zq_mm_align_size, c10);
-					zq_mm_store_ps(out_pix_ptr + zq_mm_align_size2, c20);
-					zq_mm_store_ps(out_pix_ptr + zq_mm_align_size3, c30);
-					out_pix_ptr += out_pixelStep;
-
-					a00 = zq_mm_load_ps(cur_in_pix_ptr);
-					a10 = zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size);
-					a20 = zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size2);
-					a30 = zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size3);
-					cur_in_pix_ptr += in_pixelStep;
-					c00 = zq_mm_mul_ps(a01, b00);
-					c10 = zq_mm_mul_ps(a11, b10);
-					c20 = zq_mm_mul_ps(a21, b20);
-					c30 = zq_mm_mul_ps(a31, b30);
-					c00 = zq_mm_fmadd_ps(a02, b01, c00);
-					c10 = zq_mm_fmadd_ps(a12, b11, c10);
-					c20 = zq_mm_fmadd_ps(a22, b21, c20);
-					c30 = zq_mm_fmadd_ps(a32, b31, c30);
-					c00 = zq_mm_fmadd_ps(a00, b02, c00);
-					c10 = zq_mm_fmadd_ps(a10, b12, c10);
-					c20 = zq_mm_fmadd_ps(a20, b22, c20);
-					c30 = zq_mm_fmadd_ps(a30, b32, c30);
-					zq_mm_store_ps(out_pix_ptr, c00);
-					zq_mm_store_ps(out_pix_ptr + zq_mm_align_size, c10);
-					zq_mm_store_ps(out_pix_ptr + zq_mm_align_size2, c20);
-					zq_mm_store_ps(out_pix_ptr + zq_mm_align_size3, c30);
-					out_pix_ptr += out_pixelStep;
-					for (out_w = 2; out_w < out_W; out_w += 3)
-					{
-						a01 = zq_mm_load_ps(cur_in_pix_ptr);
-						a11 = zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size);
-						a21 = zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size2);
-						a31 = zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size3);
-						cur_in_pix_ptr += in_pixelStep;
-						c00 = zq_mm_mul_ps(a02, b00);
-						c10 = zq_mm_mul_ps(a12, b10);
-						c20 = zq_mm_mul_ps(a22, b20);
-						c30 = zq_mm_mul_ps(a32, b30);
-						c00 = zq_mm_fmadd_ps(a00, b01, c00);
-						c10 = zq_mm_fmadd_ps(a10, b11, c10);
-						c20 = zq_mm_fmadd_ps(a20, b21, c20);
-						c30 = zq_mm_fmadd_ps(a30, b31, c30);
-						c00 = zq_mm_fmadd_ps(a01, b02, c00);
-						c10 = zq_mm_fmadd_ps(a11, b12, c10);
-						c20 = zq_mm_fmadd_ps(a21, b22, c20);
-						c30 = zq_mm_fmadd_ps(a31, b32, c30);
-						zq_mm_store_ps(out_pix_ptr, c00);
-						zq_mm_store_ps(out_pix_ptr + zq_mm_align_size, c10);
-						zq_mm_store_ps(out_pix_ptr + zq_mm_align_size2, c20);
-						zq_mm_store_ps(out_pix_ptr + zq_mm_align_size3, c30);
-						out_pix_ptr += out_pixelStep;
-
-						a02 = zq_mm_load_ps(cur_in_pix_ptr);
-						a12 = zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size);
-						a22 = zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size2);
-						a32 = zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size3);
-						cur_in_pix_ptr += in_pixelStep;
-						c00 = zq_mm_mul_ps(a00, b00);
-						c10 = zq_mm_mul_ps(a10, b10);
-						c20 = zq_mm_mul_ps(a20, b20);
-						c30 = zq_mm_mul_ps(a30, b30);
-						c00 = zq_mm_fmadd_ps(a01, b01, c00);
-						c10 = zq_mm_fmadd_ps(a11, b11, c10);
-						c20 = zq_mm_fmadd_ps(a21, b21, c20);
-						c30 = zq_mm_fmadd_ps(a31, b31, c30);
-						c00 = zq_mm_fmadd_ps(a02, b02, c00);
-						c10 = zq_mm_fmadd_ps(a12, b12, c10);
-						c20 = zq_mm_fmadd_ps(a22, b22, c20);
-						c30 = zq_mm_fmadd_ps(a32, b32, c30);
-						zq_mm_store_ps(out_pix_ptr, c00);
-						zq_mm_store_ps(out_pix_ptr + zq_mm_align_size, c10);
-						zq_mm_store_ps(out_pix_ptr + zq_mm_align_size2, c20);
-						zq_mm_store_ps(out_pix_ptr + zq_mm_align_size3, c30);
-						out_pix_ptr += out_pixelStep;
-
-						a00 = zq_mm_load_ps(cur_in_pix_ptr);
-						a10 = zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size);
-						a20 = zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size2);
-						a30 = zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size3);
-						cur_in_pix_ptr += in_pixelStep;
-						c00 = zq_mm_mul_ps(a01, b00);
-						c10 = zq_mm_mul_ps(a11, b10);
-						c20 = zq_mm_mul_ps(a21, b20);
-						c30 = zq_mm_mul_ps(a31, b30);
-						c00 = zq_mm_fmadd_ps(a02, b01, c00);
-						c10 = zq_mm_fmadd_ps(a12, b11, c10);
-						c20 = zq_mm_fmadd_ps(a22, b21, c20);
-						c30 = zq_mm_fmadd_ps(a32, b31, c30);
-						c00 = zq_mm_fmadd_ps(a00, b02, c00);
-						c10 = zq_mm_fmadd_ps(a10, b12, c10);
-						c20 = zq_mm_fmadd_ps(a20, b22, c20);
-						c30 = zq_mm_fmadd_ps(a30, b32, c30);
-						zq_mm_store_ps(out_pix_ptr, c00);
-						zq_mm_store_ps(out_pix_ptr + zq_mm_align_size, c10);
-						zq_mm_store_ps(out_pix_ptr + zq_mm_align_size2, c20);
-						zq_mm_store_ps(out_pix_ptr + zq_mm_align_size3, c30);
-						out_pix_ptr += out_pixelStep;
-					}
-				}
-
-				cur_filter_row_ptr += filter_widthStep;
-				in_row_ptr += in_widthStep;
-				cur_filter_pix_ptr = cur_filter_row_ptr;
-				b00 = zq_mm_load_ps(cur_filter_pix_ptr);
-				b10 = zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size);
-				b20 = zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size2);
-				b30 = zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size3);
-				cur_filter_pix_ptr += filter_pixelStep;
-				b01 = zq_mm_load_ps(cur_filter_pix_ptr);
-				b11 = zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size);
-				b21 = zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size2);
-				b31 = zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size3);
-				cur_filter_pix_ptr += filter_pixelStep;
-				b02 = zq_mm_load_ps(cur_filter_pix_ptr);
-				b12 = zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size);
-				b22 = zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size2);
-				b32 = zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size3);
-
-				for (out_h = 0, cur_in_row_ptr = in_row_ptr, out_row_ptr = out_c_ptr;
-					out_h < out_H;
-					out_h++, cur_in_row_ptr += in_widthStep, out_row_ptr += out_widthStep)
-				{
-					out_pix_ptr = out_row_ptr;
-					cur_in_pix_ptr = cur_in_row_ptr;
-					a00 = zq_mm_load_ps(cur_in_pix_ptr);
-					a10 = zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size);
-					a20 = zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size2);
-					a30 = zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size3);
-					cur_in_pix_ptr += in_pixelStep;
-					a01 = zq_mm_load_ps(cur_in_pix_ptr);
-					a11 = zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size);
-					a21 = zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size2);
-					a31 = zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size3);
-					cur_in_pix_ptr += in_pixelStep;
-					a02 = zq_mm_load_ps(cur_in_pix_ptr);
-					a12 = zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size);
-					a22 = zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size2);
-					a32 = zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size3);
-					cur_in_pix_ptr += in_pixelStep;
-					c00 = zq_mm_fmadd_ps(a00, b00, zq_mm_load_ps(out_pix_ptr));
-					c10 = zq_mm_fmadd_ps(a10, b10, zq_mm_load_ps(out_pix_ptr + zq_mm_align_size));
-					c20 = zq_mm_fmadd_ps(a20, b20, zq_mm_load_ps(out_pix_ptr + zq_mm_align_size2));
-					c30 = zq_mm_fmadd_ps(a30, b30, zq_mm_load_ps(out_pix_ptr + zq_mm_align_size3));
-					c00 = zq_mm_fmadd_ps(a01, b01, c00);
-					c10 = zq_mm_fmadd_ps(a11, b11, c10);
-					c20 = zq_mm_fmadd_ps(a21, b21, c20);
-					c30 = zq_mm_fmadd_ps(a31, b31, c30);
-					c00 = zq_mm_fmadd_ps(a02, b02, c00);
-					c10 = zq_mm_fmadd_ps(a12, b12, c10);
-					c20 = zq_mm_fmadd_ps(a22, b22, c20);
-					c30 = zq_mm_fmadd_ps(a32, b32, c30);
-					zq_mm_store_ps(out_pix_ptr, c00);
-					zq_mm_store_ps(out_pix_ptr + zq_mm_align_size, c10);
-					zq_mm_store_ps(out_pix_ptr + zq_mm_align_size2, c20);
-					zq_mm_store_ps(out_pix_ptr + zq_mm_align_size3, c30);
-					out_pix_ptr += out_pixelStep;
-
-					a00 = zq_mm_load_ps(cur_in_pix_ptr);
-					a10 = zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size);
-					a20 = zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size2);
-					a30 = zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size3);
-					cur_in_pix_ptr += in_pixelStep;
-					c00 = zq_mm_fmadd_ps(a01, b00, zq_mm_load_ps(out_pix_ptr));
-					c10 = zq_mm_fmadd_ps(a11, b10, zq_mm_load_ps(out_pix_ptr + zq_mm_align_size));
-					c20 = zq_mm_fmadd_ps(a21, b20, zq_mm_load_ps(out_pix_ptr + zq_mm_align_size2));
-					c30 = zq_mm_fmadd_ps(a31, b30, zq_mm_load_ps(out_pix_ptr + zq_mm_align_size3));
-					c00 = zq_mm_fmadd_ps(a02, b01, c00);
-					c10 = zq_mm_fmadd_ps(a12, b11, c10);
-					c20 = zq_mm_fmadd_ps(a22, b21, c20);
-					c30 = zq_mm_fmadd_ps(a32, b31, c30);
-					c00 = zq_mm_fmadd_ps(a00, b02, c00);
-					c10 = zq_mm_fmadd_ps(a10, b12, c10);
-					c20 = zq_mm_fmadd_ps(a20, b22, c20);
-					c30 = zq_mm_fmadd_ps(a30, b32, c30);
-					zq_mm_store_ps(out_pix_ptr, c00);
-					zq_mm_store_ps(out_pix_ptr + zq_mm_align_size, c10);
-					zq_mm_store_ps(out_pix_ptr + zq_mm_align_size2, c20);
-					zq_mm_store_ps(out_pix_ptr + zq_mm_align_size3, c30);
-					out_pix_ptr += out_pixelStep;
-
-					for (out_w = 2; out_w < out_W; out_w += 3)
-					{
-						a01 = zq_mm_load_ps(cur_in_pix_ptr);
-						a11 = zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size);
-						a21 = zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size2);
-						a31 = zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size3);
-						cur_in_pix_ptr += in_pixelStep;
-						c00 = zq_mm_fmadd_ps(a02, b00, zq_mm_load_ps(out_pix_ptr));
-						c10 = zq_mm_fmadd_ps(a12, b10, zq_mm_load_ps(out_pix_ptr + zq_mm_align_size));
-						c20 = zq_mm_fmadd_ps(a22, b20, zq_mm_load_ps(out_pix_ptr + zq_mm_align_size2));
-						c30 = zq_mm_fmadd_ps(a32, b30, zq_mm_load_ps(out_pix_ptr + zq_mm_align_size3));
-						c00 = zq_mm_fmadd_ps(a00, b01, c00);
-						c10 = zq_mm_fmadd_ps(a10, b11, c10);
-						c20 = zq_mm_fmadd_ps(a20, b21, c20);
-						c30 = zq_mm_fmadd_ps(a30, b31, c30);
-						c00 = zq_mm_fmadd_ps(a01, b02, c00);
-						c10 = zq_mm_fmadd_ps(a11, b12, c10);
-						c20 = zq_mm_fmadd_ps(a21, b22, c20);
-						c30 = zq_mm_fmadd_ps(a31, b32, c30);
-						zq_mm_store_ps(out_pix_ptr, c00);
-						zq_mm_store_ps(out_pix_ptr + zq_mm_align_size, c10);
-						zq_mm_store_ps(out_pix_ptr + zq_mm_align_size2, c20);
-						zq_mm_store_ps(out_pix_ptr + zq_mm_align_size3, c30);
-						out_pix_ptr += out_pixelStep;
-
-						a02 = zq_mm_load_ps(cur_in_pix_ptr);
-						a12 = zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size);
-						a22 = zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size2);
-						a32 = zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size3);
-						cur_in_pix_ptr += in_pixelStep;
-						c00 = zq_mm_fmadd_ps(a00, b00, zq_mm_load_ps(out_pix_ptr));
-						c10 = zq_mm_fmadd_ps(a10, b10, zq_mm_load_ps(out_pix_ptr + zq_mm_align_size));
-						c20 = zq_mm_fmadd_ps(a20, b20, zq_mm_load_ps(out_pix_ptr + zq_mm_align_size2));
-						c30 = zq_mm_fmadd_ps(a30, b30, zq_mm_load_ps(out_pix_ptr + zq_mm_align_size3));
-						c00 = zq_mm_fmadd_ps(a01, b01, c00);
-						c10 = zq_mm_fmadd_ps(a11, b11, c10);
-						c20 = zq_mm_fmadd_ps(a21, b21, c20);
-						c30 = zq_mm_fmadd_ps(a31, b31, c30);
-						c00 = zq_mm_fmadd_ps(a02, b02, c00);
-						c10 = zq_mm_fmadd_ps(a12, b12, c10);
-						c20 = zq_mm_fmadd_ps(a22, b22, c20);
-						c30 = zq_mm_fmadd_ps(a32, b32, c30);
-						zq_mm_store_ps(out_pix_ptr, c00);
-						zq_mm_store_ps(out_pix_ptr + zq_mm_align_size, c10);
-						zq_mm_store_ps(out_pix_ptr + zq_mm_align_size2, c20);
-						zq_mm_store_ps(out_pix_ptr + zq_mm_align_size3, c30);
-						out_pix_ptr += out_pixelStep;
-
-						a00 = zq_mm_load_ps(cur_in_pix_ptr);
-						a10 = zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size);
-						a20 = zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size2);
-						a30 = zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size3);
-						cur_in_pix_ptr += in_pixelStep;
-						c00 = zq_mm_fmadd_ps(a01, b00, zq_mm_load_ps(out_pix_ptr));
-						c10 = zq_mm_fmadd_ps(a11, b10, zq_mm_load_ps(out_pix_ptr + zq_mm_align_size));
-						c20 = zq_mm_fmadd_ps(a21, b20, zq_mm_load_ps(out_pix_ptr + zq_mm_align_size2));
-						c30 = zq_mm_fmadd_ps(a31, b30, zq_mm_load_ps(out_pix_ptr + zq_mm_align_size3));
-						c00 = zq_mm_fmadd_ps(a02, b01, c00);
-						c10 = zq_mm_fmadd_ps(a12, b11, c10);
-						c20 = zq_mm_fmadd_ps(a22, b21, c20);
-						c30 = zq_mm_fmadd_ps(a32, b31, c30);
-						c00 = zq_mm_fmadd_ps(a00, b02, c00);
-						c10 = zq_mm_fmadd_ps(a10, b12, c10);
-						c20 = zq_mm_fmadd_ps(a20, b22, c20);
-						c30 = zq_mm_fmadd_ps(a30, b32, c30);
-						zq_mm_store_ps(out_pix_ptr, c00);
-						zq_mm_store_ps(out_pix_ptr + zq_mm_align_size, c10);
-						zq_mm_store_ps(out_pix_ptr + zq_mm_align_size2, c20);
-						zq_mm_store_ps(out_pix_ptr + zq_mm_align_size3, c30);
-						out_pix_ptr += out_pixelStep;
-					}
-				}
-
-				cur_filter_row_ptr += filter_widthStep;
-				in_row_ptr += in_widthStep;
-				cur_filter_pix_ptr = cur_filter_row_ptr;
-				b00 = zq_mm_load_ps(cur_filter_pix_ptr);
-				b10 = zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size);
-				b20 = zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size2);
-				b30 = zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size3);
-				cur_filter_pix_ptr += filter_pixelStep;
-				b01 = zq_mm_load_ps(cur_filter_pix_ptr);
-				b11 = zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size);
-				b21 = zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size2);
-				b31 = zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size3);
-				cur_filter_pix_ptr += filter_pixelStep;
-				b02 = zq_mm_load_ps(cur_filter_pix_ptr);
-				b12 = zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size);
-				b22 = zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size2);
-				b32 = zq_mm_load_ps(cur_filter_pix_ptr + zq_mm_align_size3);
-
-				for (out_h = 0, cur_in_row_ptr = in_row_ptr, out_row_ptr = out_c_ptr;
-					out_h < out_H;
-					out_h++, cur_in_row_ptr += in_widthStep, out_row_ptr += out_widthStep)
-				{
-					out_pix_ptr = out_row_ptr;
-					cur_in_pix_ptr = cur_in_row_ptr;
-					a00 = zq_mm_load_ps(cur_in_pix_ptr);
-					a10 = zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size);
-					a20 = zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size2);
-					a30 = zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size3);
-					cur_in_pix_ptr += in_pixelStep;
-					a01 = zq_mm_load_ps(cur_in_pix_ptr);
-					a11 = zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size);
-					a21 = zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size2);
-					a31 = zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size3);
-					cur_in_pix_ptr += in_pixelStep;
-					a02 = zq_mm_load_ps(cur_in_pix_ptr);
-					a12 = zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size);
-					a22 = zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size2);
-					a32 = zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size3);
-					cur_in_pix_ptr += in_pixelStep;
-					c00 = zq_mm_fmadd_ps(a00, b00, zq_mm_load_ps(out_pix_ptr));
-					c10 = zq_mm_fmadd_ps(a10, b10, zq_mm_load_ps(out_pix_ptr + zq_mm_align_size));
-					c20 = zq_mm_fmadd_ps(a20, b20, zq_mm_load_ps(out_pix_ptr + zq_mm_align_size2));
-					c30 = zq_mm_fmadd_ps(a30, b30, zq_mm_load_ps(out_pix_ptr + zq_mm_align_size3));
-					c00 = zq_mm_fmadd_ps(a01, b01, c00);
-					c10 = zq_mm_fmadd_ps(a11, b11, c10);
-					c20 = zq_mm_fmadd_ps(a21, b21, c20);
-					c30 = zq_mm_fmadd_ps(a31, b31, c30);
-					c00 = zq_mm_fmadd_ps(a02, b02, c00);
-					c10 = zq_mm_fmadd_ps(a12, b12, c10);
-					c20 = zq_mm_fmadd_ps(a22, b22, c20);
-					c30 = zq_mm_fmadd_ps(a32, b32, c30);
-					zq_mm_store_ps(out_pix_ptr, c00);
-					zq_mm_store_ps(out_pix_ptr + zq_mm_align_size, c10);
-					zq_mm_store_ps(out_pix_ptr + zq_mm_align_size2, c20);
-					zq_mm_store_ps(out_pix_ptr + zq_mm_align_size3, c30);
-					out_pix_ptr += out_pixelStep;
-
-					a00 = zq_mm_load_ps(cur_in_pix_ptr);
-					a10 = zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size);
-					a20 = zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size2);
-					a30 = zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size3);
-					cur_in_pix_ptr += in_pixelStep;
-					c00 = zq_mm_fmadd_ps(a01, b00, zq_mm_load_ps(out_pix_ptr));
-					c10 = zq_mm_fmadd_ps(a11, b10, zq_mm_load_ps(out_pix_ptr + zq_mm_align_size));
-					c20 = zq_mm_fmadd_ps(a21, b20, zq_mm_load_ps(out_pix_ptr + zq_mm_align_size2));
-					c30 = zq_mm_fmadd_ps(a31, b30, zq_mm_load_ps(out_pix_ptr + zq_mm_align_size3));
-					c00 = zq_mm_fmadd_ps(a02, b01, c00);
-					c10 = zq_mm_fmadd_ps(a12, b11, c10);
-					c20 = zq_mm_fmadd_ps(a22, b21, c20);
-					c30 = zq_mm_fmadd_ps(a32, b31, c30);
-					c00 = zq_mm_fmadd_ps(a00, b02, c00);
-					c10 = zq_mm_fmadd_ps(a10, b12, c10);
-					c20 = zq_mm_fmadd_ps(a20, b22, c20);
-					c30 = zq_mm_fmadd_ps(a30, b32, c30);
-					zq_mm_store_ps(out_pix_ptr, c00);
-					zq_mm_store_ps(out_pix_ptr + zq_mm_align_size, c10);
-					zq_mm_store_ps(out_pix_ptr + zq_mm_align_size2, c20);
-					zq_mm_store_ps(out_pix_ptr + zq_mm_align_size3, c30);
-					out_pix_ptr += out_pixelStep;
-
-					for (out_w = 2; out_w < out_W; out_w += 3)
-					{
-						a01 = zq_mm_load_ps(cur_in_pix_ptr);
-						a11 = zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size);
-						a21 = zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size2);
-						a31 = zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size3);
-						cur_in_pix_ptr += in_pixelStep;
-						c00 = zq_mm_fmadd_ps(a02, b00, zq_mm_load_ps(out_pix_ptr));
-						c10 = zq_mm_fmadd_ps(a12, b10, zq_mm_load_ps(out_pix_ptr + zq_mm_align_size));
-						c20 = zq_mm_fmadd_ps(a22, b20, zq_mm_load_ps(out_pix_ptr + zq_mm_align_size2));
-						c30 = zq_mm_fmadd_ps(a32, b30, zq_mm_load_ps(out_pix_ptr + zq_mm_align_size3));
-						c00 = zq_mm_fmadd_ps(a00, b01, c00);
-						c10 = zq_mm_fmadd_ps(a10, b11, c10);
-						c20 = zq_mm_fmadd_ps(a20, b21, c20);
-						c30 = zq_mm_fmadd_ps(a30, b31, c30);
-						c00 = zq_mm_fmadd_ps(a01, b02, c00);
-						c10 = zq_mm_fmadd_ps(a11, b12, c10);
-						c20 = zq_mm_fmadd_ps(a21, b22, c20);
-						c30 = zq_mm_fmadd_ps(a31, b32, c30);
-						zq_mm_store_ps(out_pix_ptr, c00);
-						zq_mm_store_ps(out_pix_ptr + zq_mm_align_size, c10);
-						zq_mm_store_ps(out_pix_ptr + zq_mm_align_size2, c20);
-						zq_mm_store_ps(out_pix_ptr + zq_mm_align_size3, c30);
-						out_pix_ptr += out_pixelStep;
-
-						a02 = zq_mm_load_ps(cur_in_pix_ptr);
-						a12 = zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size);
-						a22 = zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size2);
-						a32 = zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size3);
-						cur_in_pix_ptr += in_pixelStep;
-						c00 = zq_mm_fmadd_ps(a00, b00, zq_mm_load_ps(out_pix_ptr));
-						c10 = zq_mm_fmadd_ps(a10, b10, zq_mm_load_ps(out_pix_ptr + zq_mm_align_size));
-						c20 = zq_mm_fmadd_ps(a20, b20, zq_mm_load_ps(out_pix_ptr + zq_mm_align_size2));
-						c30 = zq_mm_fmadd_ps(a30, b30, zq_mm_load_ps(out_pix_ptr + zq_mm_align_size3));
-						c00 = zq_mm_fmadd_ps(a01, b01, c00);
-						c10 = zq_mm_fmadd_ps(a11, b11, c10);
-						c20 = zq_mm_fmadd_ps(a21, b21, c20);
-						c30 = zq_mm_fmadd_ps(a31, b31, c30);
-						c00 = zq_mm_fmadd_ps(a02, b02, c00);
-						c10 = zq_mm_fmadd_ps(a12, b12, c10);
-						c20 = zq_mm_fmadd_ps(a22, b22, c20);
-						c30 = zq_mm_fmadd_ps(a32, b32, c30);
-						zq_mm_store_ps(out_pix_ptr, c00);
-						zq_mm_store_ps(out_pix_ptr + zq_mm_align_size, c10);
-						zq_mm_store_ps(out_pix_ptr + zq_mm_align_size2, c20);
-						zq_mm_store_ps(out_pix_ptr + zq_mm_align_size3, c30);
-						out_pix_ptr += out_pixelStep;
-
-						a00 = zq_mm_load_ps(cur_in_pix_ptr);
-						a10 = zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size);
-						a20 = zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size2);
-						a30 = zq_mm_load_ps(cur_in_pix_ptr + zq_mm_align_size3);
-						cur_in_pix_ptr += in_pixelStep;
-						c00 = zq_mm_fmadd_ps(a01, b00, zq_mm_load_ps(out_pix_ptr));
-						c10 = zq_mm_fmadd_ps(a11, b10, zq_mm_load_ps(out_pix_ptr + zq_mm_align_size));
-						c20 = zq_mm_fmadd_ps(a21, b20, zq_mm_load_ps(out_pix_ptr + zq_mm_align_size2));
-						c30 = zq_mm_fmadd_ps(a31, b30, zq_mm_load_ps(out_pix_ptr + zq_mm_align_size3));
-						c00 = zq_mm_fmadd_ps(a02, b01, c00);
-						c10 = zq_mm_fmadd_ps(a12, b11, c10);
-						c20 = zq_mm_fmadd_ps(a22, b21, c20);
-						c30 = zq_mm_fmadd_ps(a32, b31, c30);
-						c00 = zq_mm_fmadd_ps(a00, b02, c00);
-						c10 = zq_mm_fmadd_ps(a10, b12, c10);
-						c20 = zq_mm_fmadd_ps(a20, b22, c20);
-						c30 = zq_mm_fmadd_ps(a30, b32, c30);
-						zq_mm_store_ps(out_pix_ptr, c00);
-						zq_mm_store_ps(out_pix_ptr + zq_mm_align_size, c10);
-						zq_mm_store_ps(out_pix_ptr + zq_mm_align_size2, c20);
-						zq_mm_store_ps(out_pix_ptr + zq_mm_align_size3, c30);
-						out_pix_ptr += out_pixelStep;
-					}
-				}
-			}
-
-			for (; out_c < in_C;
-				out_c += zq_mm_align_size, in_c_ptr += zq_mm_align_size, out_c_ptr += zq_mm_align_size)
-			{
-				cur_filter_c_ptr = filters_data + out_c;
-				cur_filter_row_ptr = cur_filter_c_ptr;
-				in_row_ptr = in_c_ptr;
-				cur_filter_pix_ptr = cur_filter_row_ptr;
-				b00 = zq_mm_load_ps(cur_filter_pix_ptr);
-				cur_filter_pix_ptr += filter_pixelStep;
-				b01 = zq_mm_load_ps(cur_filter_pix_ptr);
-				cur_filter_pix_ptr += filter_pixelStep;
-				b02 = zq_mm_load_ps(cur_filter_pix_ptr);
-
-				for (out_h = 0, cur_in_row_ptr = in_row_ptr, out_row_ptr = out_c_ptr;
-					out_h < out_H;
-					out_h++, cur_in_row_ptr += in_widthStep, out_row_ptr += out_widthStep)
-				{
-					out_pix_ptr = out_row_ptr;
-					cur_in_pix_ptr = cur_in_row_ptr;
-					a00 = zq_mm_load_ps(cur_in_pix_ptr);
-					cur_in_pix_ptr += in_pixelStep;
-					a01 = zq_mm_load_ps(cur_in_pix_ptr);
-					cur_in_pix_ptr += in_pixelStep;
-					a02 = zq_mm_load_ps(cur_in_pix_ptr);
-					cur_in_pix_ptr += in_pixelStep;
-					c00 = zq_mm_mul_ps(a00, b00);
-					c00 = zq_mm_fmadd_ps(a01, b01, c00);
-					c00 = zq_mm_fmadd_ps(a02, b02, c00);
-					zq_mm_store_ps(out_pix_ptr, c00);
-					out_pix_ptr += out_pixelStep;
-
-					a00 = zq_mm_load_ps(cur_in_pix_ptr);
-					cur_in_pix_ptr += in_pixelStep;
-					c00 = zq_mm_mul_ps(a01, b00);
-					c00 = zq_mm_fmadd_ps(a02, b01, c00);
-					c00 = zq_mm_fmadd_ps(a00, b02, c00);
-					zq_mm_store_ps(out_pix_ptr, c00);
-					out_pix_ptr += out_pixelStep;
-					for (out_w = 2; out_w < out_W; out_w += 3)
-					{
-						a01 = zq_mm_load_ps(cur_in_pix_ptr);
-						cur_in_pix_ptr += in_pixelStep;
-						c00 = zq_mm_mul_ps(a02, b00);
-						c00 = zq_mm_fmadd_ps(a00, b01, c00);
-						c00 = zq_mm_fmadd_ps(a01, b02, c00);
-						zq_mm_store_ps(out_pix_ptr, c00);
-						out_pix_ptr += out_pixelStep;
-
-						a02 = zq_mm_load_ps(cur_in_pix_ptr);
-						cur_in_pix_ptr += in_pixelStep;
-						c00 = zq_mm_mul_ps(a00, b00);
-						c00 = zq_mm_fmadd_ps(a01, b01, c00);
-						c00 = zq_mm_fmadd_ps(a02, b02, c00);
-						zq_mm_store_ps(out_pix_ptr, c00);
-						out_pix_ptr += out_pixelStep;
-
-						a00 = zq_mm_load_ps(cur_in_pix_ptr);
-						cur_in_pix_ptr += in_pixelStep;
-						c00 = zq_mm_mul_ps(a01, b00);
-						c00 = zq_mm_fmadd_ps(a02, b01, c00);
-						c00 = zq_mm_fmadd_ps(a00, b02, c00);
-						zq_mm_store_ps(out_pix_ptr, c00);
-						out_pix_ptr += out_pixelStep;
-					}
-				}
-
-				cur_filter_row_ptr += filter_widthStep;
-				in_row_ptr += in_widthStep;
-				cur_filter_pix_ptr = cur_filter_row_ptr;
-				b00 = zq_mm_load_ps(cur_filter_pix_ptr);
-				cur_filter_pix_ptr += filter_pixelStep;
-				b01 = zq_mm_load_ps(cur_filter_pix_ptr);
-				cur_filter_pix_ptr += filter_pixelStep;
-				b02 = zq_mm_load_ps(cur_filter_pix_ptr);
-
-				for (out_h = 0, cur_in_row_ptr = in_row_ptr, out_row_ptr = out_c_ptr;
-					out_h < out_H;
-					out_h++, cur_in_row_ptr += in_widthStep, out_row_ptr += out_widthStep)
-				{
-					out_pix_ptr = out_row_ptr;
-					cur_in_pix_ptr = cur_in_row_ptr;
-					a00 = zq_mm_load_ps(cur_in_pix_ptr);
-					cur_in_pix_ptr += in_pixelStep;
-					a01 = zq_mm_load_ps(cur_in_pix_ptr);
-					cur_in_pix_ptr += in_pixelStep;
-					a02 = zq_mm_load_ps(cur_in_pix_ptr);
-					cur_in_pix_ptr += in_pixelStep;
-					c00 = zq_mm_fmadd_ps(a00, b00, zq_mm_load_ps(out_pix_ptr));
-					c00 = zq_mm_fmadd_ps(a01, b01, c00);
-					c00 = zq_mm_fmadd_ps(a02, b02, c00);
-					zq_mm_store_ps(out_pix_ptr, c00);
-					out_pix_ptr += out_pixelStep;
-
-					a00 = zq_mm_load_ps(cur_in_pix_ptr);
-					cur_in_pix_ptr += in_pixelStep;
-					c00 = zq_mm_fmadd_ps(a01, b00, zq_mm_load_ps(out_pix_ptr));
-					c00 = zq_mm_fmadd_ps(a02, b01, c00);
-					c00 = zq_mm_fmadd_ps(a00, b02, c00);
-					zq_mm_store_ps(out_pix_ptr, c00);
-					out_pix_ptr += out_pixelStep;
-
-					for (out_w = 2; out_w < out_W; out_w += 3)
-					{
-						a01 = zq_mm_load_ps(cur_in_pix_ptr);
-						cur_in_pix_ptr += in_pixelStep;
-						c00 = zq_mm_fmadd_ps(a02, b00, zq_mm_load_ps(out_pix_ptr));
-						c00 = zq_mm_fmadd_ps(a00, b01, c00);
-						c00 = zq_mm_fmadd_ps(a01, b02, c00);
-						zq_mm_store_ps(out_pix_ptr, c00);
-						out_pix_ptr += out_pixelStep;
-
-						a02 = zq_mm_load_ps(cur_in_pix_ptr);
-						cur_in_pix_ptr += in_pixelStep;
-						c00 = zq_mm_fmadd_ps(a00, b00, zq_mm_load_ps(out_pix_ptr));
-						c00 = zq_mm_fmadd_ps(a01, b01, c00);
-						c00 = zq_mm_fmadd_ps(a02, b02, c00);
-						zq_mm_store_ps(out_pix_ptr, c00);
-						out_pix_ptr += out_pixelStep;
-
-						a00 = zq_mm_load_ps(cur_in_pix_ptr);
-						cur_in_pix_ptr += in_pixelStep;
-						c00 = zq_mm_fmadd_ps(a01, b00, zq_mm_load_ps(out_pix_ptr));
-						c00 = zq_mm_fmadd_ps(a02, b01, c00);
-						c00 = zq_mm_fmadd_ps(a00, b02, c00);
-						zq_mm_store_ps(out_pix_ptr, c00);
-						out_pix_ptr += out_pixelStep;
-					}
-				}
-
-				cur_filter_row_ptr += filter_widthStep;
-				in_row_ptr += in_widthStep;
-				cur_filter_pix_ptr = cur_filter_row_ptr;
-				b00 = zq_mm_load_ps(cur_filter_pix_ptr);
-				cur_filter_pix_ptr += filter_pixelStep;
-				b01 = zq_mm_load_ps(cur_filter_pix_ptr);
-				cur_filter_pix_ptr += filter_pixelStep;
-				b02 = zq_mm_load_ps(cur_filter_pix_ptr);
-
-				for (out_h = 0, cur_in_row_ptr = in_row_ptr, out_row_ptr = out_c_ptr;
-					out_h < out_H;
-					out_h++, cur_in_row_ptr += in_widthStep, out_row_ptr += out_widthStep)
-				{
-					out_pix_ptr = out_row_ptr;
-					cur_in_pix_ptr = cur_in_row_ptr;
-					a00 = zq_mm_load_ps(cur_in_pix_ptr);
-					cur_in_pix_ptr += in_pixelStep;
-					a01 = zq_mm_load_ps(cur_in_pix_ptr);
-					cur_in_pix_ptr += in_pixelStep;
-					a02 = zq_mm_load_ps(cur_in_pix_ptr);
-					cur_in_pix_ptr += in_pixelStep;
-					c00 = zq_mm_fmadd_ps(a00, b00, zq_mm_load_ps(out_pix_ptr));
-					c00 = zq_mm_fmadd_ps(a01, b01, c00);
-					c00 = zq_mm_fmadd_ps(a02, b02, c00);
-					zq_mm_store_ps(out_pix_ptr, c00);
-					out_pix_ptr += out_pixelStep;
-
-					a00 = zq_mm_load_ps(cur_in_pix_ptr);
-					cur_in_pix_ptr += in_pixelStep;
-					c00 = zq_mm_fmadd_ps(a01, b00, zq_mm_load_ps(out_pix_ptr));
-					c00 = zq_mm_fmadd_ps(a02, b01, c00);
-					c00 = zq_mm_fmadd_ps(a00, b02, c00);
-					zq_mm_store_ps(out_pix_ptr, c00);
-					out_pix_ptr += out_pixelStep;
-					for (out_w = 2; out_w < out_W; out_w += 3)
-					{
-						a01 = zq_mm_load_ps(cur_in_pix_ptr);
-						cur_in_pix_ptr += in_pixelStep;
-						c00 = zq_mm_fmadd_ps(a02, b00, zq_mm_load_ps(out_pix_ptr));
-						c00 = zq_mm_fmadd_ps(a00, b01, c00);
-						c00 = zq_mm_fmadd_ps(a01, b02, c00);
-						zq_mm_store_ps(out_pix_ptr, c00);
-						out_pix_ptr += out_pixelStep;
-
-						a02 = zq_mm_load_ps(cur_in_pix_ptr);
-						cur_in_pix_ptr += in_pixelStep;
-						c00 = zq_mm_fmadd_ps(a00, b00, zq_mm_load_ps(out_pix_ptr));
-						c00 = zq_mm_fmadd_ps(a01, b01, c00);
-						c00 = zq_mm_fmadd_ps(a02, b02, c00);
-						zq_mm_store_ps(out_pix_ptr, c00);
-						out_pix_ptr += out_pixelStep;
-
-						a00 = zq_mm_load_ps(cur_in_pix_ptr);
-						cur_in_pix_ptr += in_pixelStep;
-						c00 = zq_mm_fmadd_ps(a01, b00, zq_mm_load_ps(out_pix_ptr));
-						c00 = zq_mm_fmadd_ps(a02, b01, c00);
-						c00 = zq_mm_fmadd_ps(a00, b02, c00);
-						zq_mm_store_ps(out_pix_ptr, c00);
-						out_pix_ptr += out_pixelStep;
 					}
 				}
 			}
@@ -1956,6 +227,9 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel3x3(
 	int out_pixelStep,
 	int out_widthStep,
 	int out_sliceStep
+#if WITH_BIAS
+	, const zq_base_type* bias
+#endif
 )
 {
 	const zq_base_type* in_slice_ptr;
@@ -1972,6 +246,9 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel3x3(
 	const zq_base_type* cur_filter_row_ptr;
 	const zq_base_type* cur_filter_pix_ptr;
 	const zq_base_type* cur_filter_c_ptr;
+#if WITH_BIAS
+	const zq_base_type* cur_bias_ptr;
+#endif
 
 	int stride_H_mul_in_WidthStep = stride_H*in_widthStep;
 	int stride_W_mul_in_pixStep = stride_W*in_pixelStep;
@@ -1989,9 +266,14 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel3x3(
 				out_w < out_W;
 				out_w++, in_pix_ptr += stride_W_mul_in_pixStep, out_pix_ptr += out_pixelStep)
 			{
+#if WITH_BIAS
+				for (out_c = 0, out_c_ptr = out_pix_ptr, cur_bias_ptr = bias; out_c < in_C; 
+					out_c += zq_mm_align_size, out_c_ptr += zq_mm_align_size, cur_bias_ptr += zq_mm_align_size)
+					zq_mm_store_ps(out_c_ptr, zq_mm_load_ps(cur_bias_ptr));
+#else
 				for (out_c = 0, out_c_ptr = out_pix_ptr; out_c < in_C; out_c += zq_mm_align_size, out_c_ptr += zq_mm_align_size)
 					zq_mm_store_ps(out_c_ptr, zq_mm_setzero_ps());
-
+#endif
 				cur_in_row_ptr = in_pix_ptr; cur_filter_row_ptr = filters_data;
 				cur_in_pix_ptr = cur_in_row_ptr; cur_filter_pix_ptr = cur_filter_row_ptr;
 				for (kc = 0, cur_in_c_ptr = cur_in_pix_ptr, cur_filter_c_ptr = cur_filter_pix_ptr, out_c_ptr = out_pix_ptr;
@@ -2099,6 +381,9 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel2x2(
 	int out_pixelStep,
 	int out_widthStep,
 	int out_sliceStep
+#if WITH_BIAS
+	, const zq_base_type* bias
+#endif
 )
 {
 	const zq_base_type* in_slice_ptr;
@@ -2115,6 +400,9 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel2x2(
 	const zq_base_type* cur_filter_row_ptr;
 	const zq_base_type* cur_filter_pix_ptr;
 	const zq_base_type* cur_filter_c_ptr;
+#if WITH_BIAS
+	const zq_base_type* cur_bias_ptr;
+#endif
 
 	int stride_H_mul_in_WidthStep = stride_H*in_widthStep;
 	int stride_W_mul_in_pixStep = stride_W*in_pixelStep;
@@ -2132,8 +420,14 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel2x2(
 				out_w < out_W;
 				out_w++, in_pix_ptr += stride_W_mul_in_pixStep, out_pix_ptr += out_pixelStep)
 			{
+#if WITH_BIAS
+				for (out_c = 0, out_c_ptr = out_pix_ptr, cur_bias_ptr = bias; out_c < in_C;
+					out_c += zq_mm_align_size, out_c_ptr += zq_mm_align_size, cur_bias_ptr += zq_mm_align_size)
+					zq_mm_store_ps(out_c_ptr, zq_mm_load_ps(cur_bias_ptr));
+#else
 				for (out_c = 0, out_c_ptr = out_pix_ptr; out_c < in_C; out_c += zq_mm_align_size, out_c_ptr += zq_mm_align_size)
 					zq_mm_store_ps(out_c_ptr, zq_mm_setzero_ps());
+#endif
 
 				cur_in_row_ptr = in_pix_ptr; cur_filter_row_ptr = filters_data;
 				cur_in_pix_ptr = cur_in_row_ptr; cur_filter_pix_ptr = cur_filter_row_ptr;
@@ -2202,6 +496,9 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_mul_1(
 	int out_pixelStep,
 	int out_widthStep,
 	int out_sliceStep
+#if WITH_BIAS
+	, const zq_base_type* bias
+#endif
 )
 {
 	const zq_base_type* in_slice_ptr;
@@ -2220,6 +517,9 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_mul_1(
 	register zq_mm_type a11, a12, a13, a21, a22, a23, a31, a32, a33;
 	register zq_mm_type b11, b12, b13, b21, b22, b23, b31, b32, b33;
 	register zq_mm_type sum;
+#if WITH_BIAS
+	register zq_mm_type c1 = zq_mm_load_ps(bias);
+#endif
 	register int in_pixStep2 = in_pixelStep << 1;
 	for (out_n = 0, in_slice_ptr = in_tensor4D_data, out_slice_ptr = out_tensor4D_data;
 		out_n < out_N;
@@ -2237,7 +537,6 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_mul_1(
 		b31 = zq_mm_load_ps(cur_filter_pix_ptr);
 		b32 = zq_mm_load_ps(cur_filter_pix_ptr + filter_pixelStep);
 		b33 = zq_mm_load_ps(cur_filter_pix_ptr + filter_pixelStep * 2);
-
 		for (out_h = 0, in_row_ptr = in_slice_ptr, out_row_ptr = out_slice_ptr;
 			out_h < out_H;
 			out_h++, in_row_ptr += stride_H_mul_in_WidthStep, out_row_ptr += out_widthStep)
@@ -2259,7 +558,11 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_mul_1(
 				a31 = zq_mm_load_ps(cur_in_pix_ptr3);
 				a32 = zq_mm_load_ps(cur_in_pix_ptr3 + in_pixelStep);
 				a33 = zq_mm_load_ps(cur_in_pix_ptr3 + in_pixStep2);
+#if WITH_BIAS
+				sum = zq_mm_fmadd_ps(a11, b11, c1);
+#else
 				sum = zq_mm_mul_ps(a11, b11);
+#endif
 				sum = zq_mm_fmadd_ps(a21, b21, sum);
 				sum = zq_mm_fmadd_ps(a31, b31, sum);
 				sum = zq_mm_fmadd_ps(a12, b12, sum);
@@ -2303,6 +606,9 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel2x2_mul_1(
 	int out_pixelStep,
 	int out_widthStep,
 	int out_sliceStep
+#if WITH_BIAS
+	, const zq_base_type* bias
+#endif
 )
 {
 	const zq_base_type* in_slice_ptr;
@@ -2321,6 +627,9 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel2x2_mul_1(
 	register zq_mm_type a11, a12, a21, a22;
 	register zq_mm_type b11, b12, b21, b22;
 	register zq_mm_type sum;
+#if WITH_BIAS
+	register zq_mm_type c1 = zq_mm_load_ps(bias);
+#endif
 	register int in_pixStep2 = in_pixelStep << 1;
 	for (out_n = 0, in_slice_ptr = in_tensor4D_data, out_slice_ptr = out_tensor4D_data;
 		out_n < out_N;
@@ -2348,7 +657,11 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel2x2_mul_1(
 				a12 = zq_mm_load_ps(cur_in_pix_ptr1 + in_pixelStep);
 				a21 = zq_mm_load_ps(cur_in_pix_ptr2);
 				a22 = zq_mm_load_ps(cur_in_pix_ptr2 + in_pixelStep);
+#if WITH_BIAS
+				sum = zq_mm_fmadd_ps(a11, b11, c1);
+#else
 				sum = zq_mm_mul_ps(a11, b11);
+#endif
 				sum = zq_mm_fmadd_ps(a21, b21, sum);
 				sum = zq_mm_fmadd_ps(a12, b12, sum);
 				sum = zq_mm_fmadd_ps(a22, b22, sum);
@@ -2387,6 +700,9 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_mul_2(
 	int out_pixelStep,
 	int out_widthStep,
 	int out_sliceStep
+#if WITH_BIAS
+	, const zq_base_type* bias
+#endif
 )
 {
 	const zq_base_type* in_slice_ptr;
@@ -2406,6 +722,10 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_mul_2(
 	register zq_mm_type b11_1, b12_1, b13_1, b21_1, b22_1, b23_1, b31_1, b32_1, b33_1;
 	register zq_mm_type b11_2, b12_2, b13_2, b21_2, b22_2, b23_2, b31_2, b32_2, b33_2;
 	register zq_mm_type sum;
+#if WITH_BIAS
+	register zq_mm_type c1 = zq_mm_load_ps(bias);
+	register zq_mm_type c2 = zq_mm_load_ps(bias+zq_mm_align_size);
+#endif
 	register int in_pixStep2 = in_pixelStep << 1;
 	for (out_n = 0, in_slice_ptr = in_tensor4D_data, out_slice_ptr = out_tensor4D_data;
 		out_n < out_N;
@@ -2457,7 +777,11 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_mul_2(
 				a31 = zq_mm_load_ps(cur_in_pix_ptr3);
 				a32 = zq_mm_load_ps(cur_in_pix_ptr3 + in_pixelStep);
 				a33 = zq_mm_load_ps(cur_in_pix_ptr3 + in_pixStep2);
+#if WITH_BIAS
+				sum = zq_mm_fmadd_ps(a11, b11_1,c1);
+#else
 				sum = zq_mm_mul_ps(a11, b11_1);
+#endif
 				sum = zq_mm_fmadd_ps(a21, b21_1, sum);
 				sum = zq_mm_fmadd_ps(a31, b31_1, sum);
 				sum = zq_mm_fmadd_ps(a12, b12_1, sum);
@@ -2482,7 +806,11 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_mul_2(
 				a31 = zq_mm_load_ps(cur_in_pix_ptr3);
 				a32 = zq_mm_load_ps(cur_in_pix_ptr3 + in_pixelStep);
 				a33 = zq_mm_load_ps(cur_in_pix_ptr3 + in_pixStep2);
+#if WITH_BIAS
+				sum = zq_mm_fmadd_ps(a11, b11_2, c2);
+#else
 				sum = zq_mm_mul_ps(a11, b11_2);
+#endif
 				sum = zq_mm_fmadd_ps(a21, b21_2, sum);
 				sum = zq_mm_fmadd_ps(a31, b31_2, sum);
 				sum = zq_mm_fmadd_ps(a12, b12_2, sum);
@@ -2525,6 +853,9 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel2x2_mul_2(
 	int out_pixelStep,
 	int out_widthStep,
 	int out_sliceStep
+#if WITH_BIAS
+	, const zq_base_type* bias
+#endif
 )
 {
 	const zq_base_type* in_slice_ptr;
@@ -2535,7 +866,7 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel2x2_mul_2(
 	zq_base_type* out_pix_ptr;
 
 	const zq_base_type* cur_filter_pix_ptr;
-	const zq_base_type* cur_in_pix_ptr1, *cur_in_pix_ptr2, *cur_in_pix_ptr3;
+	const zq_base_type* cur_in_pix_ptr1, *cur_in_pix_ptr2;
 
 	int stride_H_mul_in_WidthStep = stride_H*in_widthStep;
 	int stride_W_mul_in_pixStep = stride_W*in_pixelStep;
@@ -2544,6 +875,10 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel2x2_mul_2(
 	register zq_mm_type b11_1, b12_1, b21_1, b22_1;
 	register zq_mm_type b11_2, b12_2, b21_2, b22_2;
 	register zq_mm_type sum;
+#if WITH_BIAS
+	register zq_mm_type c1 = zq_mm_load_ps(bias);
+	register zq_mm_type c2 = zq_mm_load_ps(bias + zq_mm_align_size);
+#endif
 	register int in_pixStep2 = in_pixelStep << 1;
 	for (out_n = 0, in_slice_ptr = in_tensor4D_data, out_slice_ptr = out_tensor4D_data;
 		out_n < out_N;
@@ -2577,7 +912,11 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel2x2_mul_2(
 				a12 = zq_mm_load_ps(cur_in_pix_ptr1 + in_pixelStep);
 				a21 = zq_mm_load_ps(cur_in_pix_ptr2);
 				a22 = zq_mm_load_ps(cur_in_pix_ptr2 + in_pixelStep);
+#if WITH_BIAS
+				sum = zq_mm_fmadd_ps(a11, b11_1, c1);
+#else
 				sum = zq_mm_mul_ps(a11, b11_1);
+#endif
 				sum = zq_mm_fmadd_ps(a21, b21_1, sum);
 				sum = zq_mm_fmadd_ps(a12, b12_1, sum);
 				sum = zq_mm_fmadd_ps(a22, b22_1, sum);
@@ -2591,7 +930,11 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel2x2_mul_2(
 				a12 = zq_mm_load_ps(cur_in_pix_ptr1 + in_pixelStep);
 				a21 = zq_mm_load_ps(cur_in_pix_ptr2);
 				a22 = zq_mm_load_ps(cur_in_pix_ptr2 + in_pixelStep);
+#if WITH_BIAS
+				sum = zq_mm_fmadd_ps(a11, b11_2, c2);
+#else
 				sum = zq_mm_mul_ps(a11, b11_2);
+#endif
 				sum = zq_mm_fmadd_ps(a21, b21_2, sum);
 				sum = zq_mm_fmadd_ps(a12, b12_2, sum);
 				sum = zq_mm_fmadd_ps(a22, b22_2, sum);
@@ -2629,6 +972,9 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_mul_3(
 	int out_pixelStep,
 	int out_widthStep,
 	int out_sliceStep
+#if WITH_BIAS
+	, const zq_base_type* bias
+#endif
 )
 {
 	const zq_base_type* in_slice_ptr;
@@ -2649,6 +995,11 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_mul_3(
 	register zq_mm_type b11_2, b12_2, b13_2, b21_2, b22_2, b23_2, b31_2, b32_2, b33_2;
 	register zq_mm_type b11_3, b12_3, b13_3, b21_3, b22_3, b23_3, b31_3, b32_3, b33_3;
 	register zq_mm_type sum;
+#if WITH_BIAS
+	register zq_mm_type c1 = zq_mm_load_ps(bias);
+	register zq_mm_type c2 = zq_mm_load_ps(bias + zq_mm_align_size);
+	register zq_mm_type c3 = zq_mm_load_ps(bias + zq_mm_align_size2);
+#endif
 	register int in_pixStep2 = in_pixelStep << 1;
 	for (out_n = 0, in_slice_ptr = in_tensor4D_data, out_slice_ptr = out_tensor4D_data;
 		out_n < out_N;
@@ -2713,7 +1064,11 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_mul_3(
 				a31 = zq_mm_load_ps(cur_in_pix_ptr3);
 				a32 = zq_mm_load_ps(cur_in_pix_ptr3 + in_pixelStep);
 				a33 = zq_mm_load_ps(cur_in_pix_ptr3 + in_pixStep2);
+#if WITH_BIAS
+				sum = zq_mm_fmadd_ps(a11, b11_1, c1);
+#else
 				sum = zq_mm_mul_ps(a11, b11_1);
+#endif
 				sum = zq_mm_fmadd_ps(a21, b21_1, sum);
 				sum = zq_mm_fmadd_ps(a31, b31_1, sum);
 				sum = zq_mm_fmadd_ps(a12, b12_1, sum);
@@ -2738,7 +1093,11 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_mul_3(
 				a31 = zq_mm_load_ps(cur_in_pix_ptr3);
 				a32 = zq_mm_load_ps(cur_in_pix_ptr3 + in_pixelStep);
 				a33 = zq_mm_load_ps(cur_in_pix_ptr3 + in_pixStep2);
+#if WITH_BIAS
+				sum = zq_mm_fmadd_ps(a11, b11_2, c2);
+#else
 				sum = zq_mm_mul_ps(a11, b11_2);
+#endif
 				sum = zq_mm_fmadd_ps(a21, b21_2, sum);
 				sum = zq_mm_fmadd_ps(a31, b31_2, sum);
 				sum = zq_mm_fmadd_ps(a12, b12_2, sum);
@@ -2763,7 +1122,11 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_mul_3(
 				a31 = zq_mm_load_ps(cur_in_pix_ptr3);
 				a32 = zq_mm_load_ps(cur_in_pix_ptr3 + in_pixelStep);
 				a33 = zq_mm_load_ps(cur_in_pix_ptr3 + in_pixStep2);
+#if WITH_BIAS
+				sum = zq_mm_fmadd_ps(a11, b11_3, c3);
+#else
 				sum = zq_mm_mul_ps(a11, b11_3);
+#endif
 				sum = zq_mm_fmadd_ps(a21, b21_3, sum);
 				sum = zq_mm_fmadd_ps(a31, b31_3, sum);
 				sum = zq_mm_fmadd_ps(a12, b12_3, sum);
@@ -2806,6 +1169,9 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel2x2_mul_3(
 	int out_pixelStep,
 	int out_widthStep,
 	int out_sliceStep
+#if WITH_BIAS
+	, const zq_base_type* bias
+#endif
 )
 {
 	const zq_base_type* in_slice_ptr;
@@ -2816,7 +1182,7 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel2x2_mul_3(
 	zq_base_type* out_pix_ptr;
 
 	const zq_base_type* cur_filter_pix_ptr;
-	const zq_base_type* cur_in_pix_ptr1, *cur_in_pix_ptr2, *cur_in_pix_ptr3;
+	const zq_base_type* cur_in_pix_ptr1, *cur_in_pix_ptr2;
 
 	int stride_H_mul_in_WidthStep = stride_H*in_widthStep;
 	int stride_W_mul_in_pixStep = stride_W*in_pixelStep;
@@ -2826,6 +1192,11 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel2x2_mul_3(
 	register zq_mm_type b11_2, b12_2, b21_2, b22_2;
 	register zq_mm_type b11_3, b12_3, b21_3, b22_3;
 	register zq_mm_type sum;
+#if WITH_BIAS
+	register zq_mm_type c1 = zq_mm_load_ps(bias);
+	register zq_mm_type c2 = zq_mm_load_ps(bias + zq_mm_align_size);
+	register zq_mm_type c3 = zq_mm_load_ps(bias + zq_mm_align_size2);
+#endif
 	register int in_pixStep2 = in_pixelStep << 1;
 	for (out_n = 0, in_slice_ptr = in_tensor4D_data, out_slice_ptr = out_tensor4D_data;
 		out_n < out_N;
@@ -2865,7 +1236,11 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel2x2_mul_3(
 				a12 = zq_mm_load_ps(cur_in_pix_ptr1 + in_pixelStep);
 				a21 = zq_mm_load_ps(cur_in_pix_ptr2);
 				a22 = zq_mm_load_ps(cur_in_pix_ptr2 + in_pixelStep);
+#if WITH_BIAS
+				sum = zq_mm_fmadd_ps(a11, b11_1, c1);
+#else
 				sum = zq_mm_mul_ps(a11, b11_1);
+#endif
 				sum = zq_mm_fmadd_ps(a21, b21_1, sum);
 				sum = zq_mm_fmadd_ps(a12, b12_1, sum);
 				sum = zq_mm_fmadd_ps(a22, b22_1, sum);
@@ -2879,7 +1254,11 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel2x2_mul_3(
 				a12 = zq_mm_load_ps(cur_in_pix_ptr1 + in_pixelStep);
 				a21 = zq_mm_load_ps(cur_in_pix_ptr2);
 				a22 = zq_mm_load_ps(cur_in_pix_ptr2 + in_pixelStep);
+#if WITH_BIAS
+				sum = zq_mm_fmadd_ps(a11, b11_2, c2);
+#else
 				sum = zq_mm_mul_ps(a11, b11_2);
+#endif
 				sum = zq_mm_fmadd_ps(a21, b21_2, sum);
 				sum = zq_mm_fmadd_ps(a12, b12_2, sum);
 				sum = zq_mm_fmadd_ps(a22, b22_2, sum);
@@ -2893,7 +1272,11 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel2x2_mul_3(
 				a12 = zq_mm_load_ps(cur_in_pix_ptr1 + in_pixelStep);
 				a21 = zq_mm_load_ps(cur_in_pix_ptr2);
 				a22 = zq_mm_load_ps(cur_in_pix_ptr2 + in_pixelStep);
+#if WITH_BIAS
+				sum = zq_mm_fmadd_ps(a11, b11_3, c3);
+#else
 				sum = zq_mm_mul_ps(a11, b11_3);
+#endif
 				sum = zq_mm_fmadd_ps(a21, b21_3, sum);
 				sum = zq_mm_fmadd_ps(a12, b12_3, sum);
 				sum = zq_mm_fmadd_ps(a22, b22_3, sum);
@@ -2931,6 +1314,9 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_mul_6(
 	int out_pixelStep,
 	int out_widthStep,
 	int out_sliceStep
+#if WITH_BIAS
+	, const zq_base_type* bias
+#endif
 )
 {
 	const zq_base_type* in_slice_ptr;
@@ -2954,6 +1340,14 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_mul_6(
 	register zq_mm_type b11_5, b12_5, b13_5, b21_5, b22_5, b23_5, b31_5, b32_5, b33_5;
 	register zq_mm_type b11_6, b12_6, b13_6, b21_6, b22_6, b23_6, b31_6, b32_6, b33_6;
 	register zq_mm_type sum;
+#if WITH_BIAS
+	register zq_mm_type c1 = zq_mm_load_ps(bias);
+	register zq_mm_type c2 = zq_mm_load_ps(bias + zq_mm_align_size);
+	register zq_mm_type c3 = zq_mm_load_ps(bias + zq_mm_align_size2);
+	register zq_mm_type c4 = zq_mm_load_ps(bias + zq_mm_align_size3);
+	register zq_mm_type c5 = zq_mm_load_ps(bias + zq_mm_align_size4);
+	register zq_mm_type c6 = zq_mm_load_ps(bias + zq_mm_align_size5);
+#endif
 	register int in_pixStep2 = in_pixelStep << 1;
 	for (out_n = 0, in_slice_ptr = in_tensor4D_data, out_slice_ptr = out_tensor4D_data;
 		out_n < out_N;
@@ -3053,7 +1447,11 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_mul_6(
 				a31 = zq_mm_load_ps(cur_in_pix_ptr3);
 				a32 = zq_mm_load_ps(cur_in_pix_ptr3 + in_pixelStep);
 				a33 = zq_mm_load_ps(cur_in_pix_ptr3 + in_pixStep2);
+#if WITH_BIAS
+				sum = zq_mm_fmadd_ps(a11, b11_1, c1);
+#else
 				sum = zq_mm_mul_ps(a11, b11_1);
+#endif
 				sum = zq_mm_fmadd_ps(a21, b21_1, sum);
 				sum = zq_mm_fmadd_ps(a31, b31_1, sum);
 				sum = zq_mm_fmadd_ps(a12, b12_1, sum);
@@ -3078,7 +1476,11 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_mul_6(
 				a31 = zq_mm_load_ps(cur_in_pix_ptr3);
 				a32 = zq_mm_load_ps(cur_in_pix_ptr3 + in_pixelStep);
 				a33 = zq_mm_load_ps(cur_in_pix_ptr3 + in_pixStep2);
+#if WITH_BIAS
+				sum = zq_mm_fmadd_ps(a11, b11_2, c2);
+#else
 				sum = zq_mm_mul_ps(a11, b11_2);
+#endif
 				sum = zq_mm_fmadd_ps(a21, b21_2, sum);
 				sum = zq_mm_fmadd_ps(a31, b31_2, sum);
 				sum = zq_mm_fmadd_ps(a12, b12_2, sum);
@@ -3103,7 +1505,11 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_mul_6(
 				a31 = zq_mm_load_ps(cur_in_pix_ptr3);
 				a32 = zq_mm_load_ps(cur_in_pix_ptr3 + in_pixelStep);
 				a33 = zq_mm_load_ps(cur_in_pix_ptr3 + in_pixStep2);
+#if WITH_BIAS
+				sum = zq_mm_fmadd_ps(a11, b11_3, c3);
+#else
 				sum = zq_mm_mul_ps(a11, b11_3);
+#endif
 				sum = zq_mm_fmadd_ps(a21, b21_3, sum);
 				sum = zq_mm_fmadd_ps(a31, b31_3, sum);
 				sum = zq_mm_fmadd_ps(a12, b12_3, sum);
@@ -3128,7 +1534,11 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_mul_6(
 				a31 = zq_mm_load_ps(cur_in_pix_ptr3);
 				a32 = zq_mm_load_ps(cur_in_pix_ptr3 + in_pixelStep);
 				a33 = zq_mm_load_ps(cur_in_pix_ptr3 + in_pixStep2);
+#if WITH_BIAS
+				sum = zq_mm_fmadd_ps(a11, b11_4, c4);
+#else
 				sum = zq_mm_mul_ps(a11, b11_4);
+#endif
 				sum = zq_mm_fmadd_ps(a21, b21_4, sum);
 				sum = zq_mm_fmadd_ps(a31, b31_4, sum);
 				sum = zq_mm_fmadd_ps(a12, b12_4, sum);
@@ -3153,7 +1563,11 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_mul_6(
 				a31 = zq_mm_load_ps(cur_in_pix_ptr3);
 				a32 = zq_mm_load_ps(cur_in_pix_ptr3 + in_pixelStep);
 				a33 = zq_mm_load_ps(cur_in_pix_ptr3 + in_pixStep2);
+#if WITH_BIAS
+				sum = zq_mm_fmadd_ps(a11, b11_5, c5);
+#else
 				sum = zq_mm_mul_ps(a11, b11_5);
+#endif
 				sum = zq_mm_fmadd_ps(a21, b21_5, sum);
 				sum = zq_mm_fmadd_ps(a31, b31_5, sum);
 				sum = zq_mm_fmadd_ps(a12, b12_5, sum);
@@ -3178,7 +1592,11 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_mul_6(
 				a31 = zq_mm_load_ps(cur_in_pix_ptr3);
 				a32 = zq_mm_load_ps(cur_in_pix_ptr3 + in_pixelStep);
 				a33 = zq_mm_load_ps(cur_in_pix_ptr3 + in_pixStep2);
+#if WITH_BIAS
+				sum = zq_mm_fmadd_ps(a11, b11_6, c6);
+#else
 				sum = zq_mm_mul_ps(a11, b11_6);
+#endif
 				sum = zq_mm_fmadd_ps(a21, b21_6, sum);
 				sum = zq_mm_fmadd_ps(a31, b31_6, sum);
 				sum = zq_mm_fmadd_ps(a12, b12_6, sum);
@@ -3221,6 +1639,9 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel2x2_mul_6(
 	int out_pixelStep,
 	int out_widthStep,
 	int out_sliceStep
+#if WITH_BIAS
+	, const zq_base_type* bias
+#endif
 )
 {
 	const zq_base_type* in_slice_ptr;
@@ -3231,7 +1652,7 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel2x2_mul_6(
 	zq_base_type* out_pix_ptr;
 
 	const zq_base_type* cur_filter_pix_ptr;
-	const zq_base_type* cur_in_pix_ptr1, *cur_in_pix_ptr2, *cur_in_pix_ptr3;
+	const zq_base_type* cur_in_pix_ptr1, *cur_in_pix_ptr2;
 
 	int stride_H_mul_in_WidthStep = stride_H*in_widthStep;
 	int stride_W_mul_in_pixStep = stride_W*in_pixelStep;
@@ -3244,6 +1665,14 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel2x2_mul_6(
 	register zq_mm_type b11_5, b12_5, b21_5, b22_5;
 	register zq_mm_type b11_6, b12_6, b21_6, b22_6;
 	register zq_mm_type sum;
+#if WITH_BIAS
+	register zq_mm_type c1 = zq_mm_load_ps(bias);
+	register zq_mm_type c2 = zq_mm_load_ps(bias + zq_mm_align_size);
+	register zq_mm_type c3 = zq_mm_load_ps(bias + zq_mm_align_size2);
+	register zq_mm_type c4 = zq_mm_load_ps(bias + zq_mm_align_size3);
+	register zq_mm_type c5 = zq_mm_load_ps(bias + zq_mm_align_size4);
+	register zq_mm_type c6 = zq_mm_load_ps(bias + zq_mm_align_size5);
+#endif
 	register int in_pixStep2 = in_pixelStep << 1;
 	for (out_n = 0, in_slice_ptr = in_tensor4D_data, out_slice_ptr = out_tensor4D_data;
 		out_n < out_N;
@@ -3301,7 +1730,11 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel2x2_mul_6(
 				a12 = zq_mm_load_ps(cur_in_pix_ptr1 + in_pixelStep);
 				a21 = zq_mm_load_ps(cur_in_pix_ptr2);
 				a22 = zq_mm_load_ps(cur_in_pix_ptr2 + in_pixelStep);
+#if WITH_BIAS
+				sum = zq_mm_fmadd_ps(a11, b11_1, c1);
+#else
 				sum = zq_mm_mul_ps(a11, b11_1);
+#endif
 				sum = zq_mm_fmadd_ps(a21, b21_1, sum);
 				sum = zq_mm_fmadd_ps(a12, b12_1, sum);
 				sum = zq_mm_fmadd_ps(a22, b22_1, sum);
@@ -3315,7 +1748,11 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel2x2_mul_6(
 				a12 = zq_mm_load_ps(cur_in_pix_ptr1 + in_pixelStep);
 				a21 = zq_mm_load_ps(cur_in_pix_ptr2);
 				a22 = zq_mm_load_ps(cur_in_pix_ptr2 + in_pixelStep);
+#if WITH_BIAS
+				sum = zq_mm_fmadd_ps(a11, b11_2, c2);
+#else
 				sum = zq_mm_mul_ps(a11, b11_2);
+#endif
 				sum = zq_mm_fmadd_ps(a21, b21_2, sum);
 				sum = zq_mm_fmadd_ps(a12, b12_2, sum);
 				sum = zq_mm_fmadd_ps(a22, b22_2, sum);
@@ -3329,7 +1766,11 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel2x2_mul_6(
 				a12 = zq_mm_load_ps(cur_in_pix_ptr1 + in_pixelStep);
 				a21 = zq_mm_load_ps(cur_in_pix_ptr2);
 				a22 = zq_mm_load_ps(cur_in_pix_ptr2 + in_pixelStep);
+#if WITH_BIAS
+				sum = zq_mm_fmadd_ps(a11, b11_3, c3);
+#else
 				sum = zq_mm_mul_ps(a11, b11_3);
+#endif
 				sum = zq_mm_fmadd_ps(a21, b21_3, sum);
 				sum = zq_mm_fmadd_ps(a12, b12_3, sum);
 				sum = zq_mm_fmadd_ps(a22, b22_3, sum);
@@ -3343,7 +1784,11 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel2x2_mul_6(
 				a12 = zq_mm_load_ps(cur_in_pix_ptr1 + in_pixelStep);
 				a21 = zq_mm_load_ps(cur_in_pix_ptr2);
 				a22 = zq_mm_load_ps(cur_in_pix_ptr2 + in_pixelStep);
+#if WITH_BIAS
+				sum = zq_mm_fmadd_ps(a11, b11_4, c4);
+#else
 				sum = zq_mm_mul_ps(a11, b11_4);
+#endif
 				sum = zq_mm_fmadd_ps(a21, b21_4, sum);
 				sum = zq_mm_fmadd_ps(a12, b12_4, sum);
 				sum = zq_mm_fmadd_ps(a22, b22_4, sum);
@@ -3357,7 +1802,11 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel2x2_mul_6(
 				a12 = zq_mm_load_ps(cur_in_pix_ptr1 + in_pixelStep);
 				a21 = zq_mm_load_ps(cur_in_pix_ptr2);
 				a22 = zq_mm_load_ps(cur_in_pix_ptr2 + in_pixelStep);
+#if WITH_BIAS
+				sum = zq_mm_fmadd_ps(a11, b11_5, c5);
+#else
 				sum = zq_mm_mul_ps(a11, b11_5);
+#endif
 				sum = zq_mm_fmadd_ps(a21, b21_5, sum);
 				sum = zq_mm_fmadd_ps(a12, b12_5, sum);
 				sum = zq_mm_fmadd_ps(a22, b22_5, sum);
@@ -3371,12 +1820,16 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel2x2_mul_6(
 				a12 = zq_mm_load_ps(cur_in_pix_ptr1 + in_pixelStep);
 				a21 = zq_mm_load_ps(cur_in_pix_ptr2);
 				a22 = zq_mm_load_ps(cur_in_pix_ptr2 + in_pixelStep);
+#if WITH_BIAS
+				sum = zq_mm_fmadd_ps(a11, b11_6, c6);
+#else
 				sum = zq_mm_mul_ps(a11, b11_6);
+#endif
 				sum = zq_mm_fmadd_ps(a21, b21_6, sum);
 				sum = zq_mm_fmadd_ps(a12, b12_6, sum);
 				sum = zq_mm_fmadd_ps(a22, b22_6, sum);
 
-				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size6, sum);
+				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size5, sum);
 			}
 		}
 	}
@@ -3410,6 +1863,9 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_mul_4(
 	int out_pixelStep,
 	int out_widthStep,
 	int out_sliceStep
+#if WITH_BIAS
+	, const zq_base_type* bias
+#endif
 )
 {
 	const zq_base_type* in_slice_ptr;
@@ -3426,6 +1882,9 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_mul_4(
 	const zq_base_type* cur_filter_row_ptr;
 	const zq_base_type* cur_filter_pix_ptr;
 	const zq_base_type* cur_filter_c_ptr;
+#if WITH_BIAS
+	const zq_base_type* cur_bias_ptr;
+#endif
 
 	int stride_H_mul_in_WidthStep = stride_H*in_widthStep;
 	int stride_W_mul_in_pixStep = stride_W*in_pixelStep;
@@ -3451,6 +1910,9 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_mul_4(
 				cur_in_pix_ptr = cur_in_row_ptr; cur_filter_pix_ptr = cur_filter_row_ptr;
 				cur_in_c_ptr = cur_in_pix_ptr; cur_filter_c_ptr = cur_filter_pix_ptr;
 				out_c_ptr = out_pix_ptr;
+#if WITH_BIAS
+				cur_bias_ptr = bias;
+#endif
 				op_0_4_first;
 
 				cur_in_pix_ptr += in_pixelStep; cur_filter_pix_ptr += filter_pixelStep;
@@ -3526,6 +1988,9 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel2x2_mul_4(
 	int out_pixelStep,
 	int out_widthStep,
 	int out_sliceStep
+#if WITH_BIAS
+	, const zq_base_type* bias
+#endif
 )
 {
 	const zq_base_type* in_slice_ptr;
@@ -3542,6 +2007,9 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel2x2_mul_4(
 	const zq_base_type* cur_filter_row_ptr;
 	const zq_base_type* cur_filter_pix_ptr;
 	const zq_base_type* cur_filter_c_ptr;
+#if WITH_BIAS
+	const zq_base_type* cur_bias_ptr;
+#endif
 
 	int stride_H_mul_in_WidthStep = stride_H*in_widthStep;
 	int stride_W_mul_in_pixStep = stride_W*in_pixelStep;
@@ -3567,6 +2035,9 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel2x2_mul_4(
 				cur_in_pix_ptr = cur_in_row_ptr; cur_filter_pix_ptr = cur_filter_row_ptr;
 				cur_in_c_ptr = cur_in_pix_ptr; cur_filter_c_ptr = cur_filter_pix_ptr;
 				out_c_ptr = out_pix_ptr;
+#if WITH_BIAS
+				cur_bias_ptr = bias;
+#endif
 				op_0_4_first;
 
 				cur_in_pix_ptr += in_pixelStep; cur_filter_pix_ptr += filter_pixelStep;
@@ -3617,6 +2088,9 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_mul_8(
 	int out_pixelStep,
 	int out_widthStep,
 	int out_sliceStep
+#if WITH_BIAS
+	, const zq_base_type* bias
+#endif
 )
 {
 	const zq_base_type* in_slice_ptr;
@@ -3633,6 +2107,9 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_mul_8(
 	const zq_base_type* cur_filter_row_ptr;
 	const zq_base_type* cur_filter_pix_ptr;
 	const zq_base_type* cur_filter_c_ptr;
+#if WITH_BIAS
+	const zq_base_type* cur_bias_ptr;
+#endif
 
 	int stride_H_mul_in_WidthStep = stride_H*in_widthStep;
 	int stride_W_mul_in_pixStep = stride_W*in_pixelStep;
@@ -3658,6 +2135,9 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_mul_8(
 				cur_in_pix_ptr = cur_in_row_ptr; cur_filter_pix_ptr = cur_filter_row_ptr;
 				cur_in_c_ptr = cur_in_pix_ptr; cur_filter_c_ptr = cur_filter_pix_ptr;
 				out_c_ptr = out_pix_ptr;
+#if WITH_BIAS
+				cur_bias_ptr = bias;
+#endif
 				op_0_8_first;
 
 				cur_in_pix_ptr += in_pixelStep; cur_filter_pix_ptr += filter_pixelStep;
@@ -3733,6 +2213,9 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel2x2_mul_8(
 	int out_pixelStep,
 	int out_widthStep,
 	int out_sliceStep
+#if WITH_BIAS
+	, const zq_base_type* bias
+#endif
 )
 {
 	const zq_base_type* in_slice_ptr;
@@ -3749,6 +2232,9 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel2x2_mul_8(
 	const zq_base_type* cur_filter_row_ptr;
 	const zq_base_type* cur_filter_pix_ptr;
 	const zq_base_type* cur_filter_c_ptr;
+#if WITH_BIAS
+	const zq_base_type* cur_bias_ptr;
+#endif
 
 	int stride_H_mul_in_WidthStep = stride_H*in_widthStep;
 	int stride_W_mul_in_pixStep = stride_W*in_pixelStep;
@@ -3774,6 +2260,9 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel2x2_mul_8(
 				cur_in_pix_ptr = cur_in_row_ptr; cur_filter_pix_ptr = cur_filter_row_ptr;
 				cur_in_c_ptr = cur_in_pix_ptr; cur_filter_c_ptr = cur_filter_pix_ptr;
 				out_c_ptr = out_pix_ptr;
+#if WITH_BIAS
+				cur_bias_ptr = bias;
+#endif
 				op_0_8_first;
 
 				cur_in_pix_ptr += in_pixelStep; cur_filter_pix_ptr += filter_pixelStep;
@@ -3825,6 +2314,9 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_div_8(
 	int out_pixelStep,
 	int out_widthStep,
 	int out_sliceStep
+#if WITH_BIAS
+	, const zq_base_type* bias
+#endif
 )
 {
 	const zq_base_type* in_slice_ptr;
@@ -3841,6 +2333,9 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_div_8(
 	const zq_base_type* cur_filter_row_ptr;
 	const zq_base_type* cur_filter_pix_ptr;
 	const zq_base_type* cur_filter_c_ptr;
+#if WITH_BIAS
+	const zq_base_type* cur_bias_ptr;
+#endif
 
 	int stride_H_mul_in_WidthStep = stride_H*in_widthStep;
 	int stride_W_mul_in_pixStep = stride_W*in_pixelStep;
@@ -3862,9 +2357,14 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_div_8(
 				out_w < out_W;
 				out_w++, in_pix_ptr += stride_W_mul_in_pixStep, out_pix_ptr += out_pixelStep)
 			{
+#if WITH_BIAS
+				for (out_c = 0, out_c_ptr = out_pix_ptr, cur_bias_ptr = bias; out_c < in_C; 
+					out_c += zq_mm_align_size, out_c_ptr += zq_mm_align_size, cur_bias_ptr += zq_mm_align_size)
+					zq_mm_store_ps(out_c_ptr, zq_mm_load_ps(cur_bias_ptr));
+#else
 				for (out_c = 0, out_c_ptr = out_pix_ptr; out_c < in_C; out_c += zq_mm_align_size, out_c_ptr += zq_mm_align_size)
 					zq_mm_store_ps(out_c_ptr, zq_mm_setzero_ps());
-
+#endif
 				cur_in_row_ptr = in_pix_ptr; cur_filter_row_ptr = filters_data;
 				cur_in_pix_ptr = cur_in_row_ptr; cur_filter_pix_ptr = cur_filter_row_ptr;
 				cur_in_c_ptr = cur_in_pix_ptr; cur_filter_c_ptr = cur_filter_pix_ptr;
@@ -3972,6 +2472,9 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel2x2_div_8(
 	int out_pixelStep,
 	int out_widthStep,
 	int out_sliceStep
+#if WITH_BIAS
+	, const zq_base_type* bias
+#endif
 )
 {
 	const zq_base_type* in_slice_ptr;
@@ -3988,6 +2491,9 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel2x2_div_8(
 	const zq_base_type* cur_filter_row_ptr;
 	const zq_base_type* cur_filter_pix_ptr;
 	const zq_base_type* cur_filter_c_ptr;
+#if WITH_BIAS
+	const zq_base_type* cur_bias_ptr;
+#endif
 
 	int stride_H_mul_in_WidthStep = stride_H*in_widthStep;
 	int stride_W_mul_in_pixStep = stride_W*in_pixelStep;
@@ -4009,8 +2515,14 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel2x2_div_8(
 				out_w < out_W;
 				out_w++, in_pix_ptr += stride_W_mul_in_pixStep, out_pix_ptr += out_pixelStep)
 			{
+#if WITH_BIAS
+				for (out_c = 0, out_c_ptr = out_pix_ptr, cur_bias_ptr = bias; out_c < in_C;
+					out_c += zq_mm_align_size, out_c_ptr += zq_mm_align_size, cur_bias_ptr += zq_mm_align_size)
+					zq_mm_store_ps(out_c_ptr, zq_mm_load_ps(cur_bias_ptr));
+#else
 				for (out_c = 0, out_c_ptr = out_pix_ptr; out_c < in_C; out_c += zq_mm_align_size, out_c_ptr += zq_mm_align_size)
 					zq_mm_store_ps(out_c_ptr, zq_mm_setzero_ps());
+#endif
 
 				cur_in_row_ptr = in_pix_ptr; cur_filter_row_ptr = filters_data;
 				cur_in_pix_ptr = cur_in_row_ptr; cur_filter_pix_ptr = cur_filter_row_ptr;
@@ -4079,6 +2591,9 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_mul_16(
 	int out_pixelStep,
 	int out_widthStep,
 	int out_sliceStep
+#if WITH_BIAS
+	, const zq_base_type* bias
+#endif
 )
 {
 	const zq_base_type* in_slice_ptr;
@@ -4095,6 +2610,9 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_mul_16(
 	const zq_base_type* cur_filter_row_ptr;
 	const zq_base_type* cur_filter_pix_ptr;
 	const zq_base_type* cur_filter_c_ptr;
+#if WITH_BIAS
+	const zq_base_type* cur_bias_ptr;
+#endif
 
 	int stride_H_mul_in_WidthStep = stride_H*in_widthStep;
 	int stride_W_mul_in_pixStep = stride_W*in_pixelStep;
@@ -4120,6 +2638,9 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_mul_16(
 				cur_in_pix_ptr = cur_in_row_ptr; cur_filter_pix_ptr = cur_filter_row_ptr;
 				cur_in_c_ptr = cur_in_pix_ptr; cur_filter_c_ptr = cur_filter_pix_ptr;
 				out_c_ptr = out_pix_ptr;
+#if WITH_BIAS
+				cur_bias_ptr = bias;
+#endif
 				op_0_16_first;
 
 				cur_in_pix_ptr += in_pixelStep; cur_filter_pix_ptr += filter_pixelStep;
@@ -4196,6 +2717,9 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel2x2_mul_16(
 	int out_pixelStep,
 	int out_widthStep,
 	int out_sliceStep
+#if WITH_BIAS
+	, const zq_base_type* bias
+#endif
 )
 {
 	const zq_base_type* in_slice_ptr;
@@ -4212,6 +2736,9 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel2x2_mul_16(
 	const zq_base_type* cur_filter_row_ptr;
 	const zq_base_type* cur_filter_pix_ptr;
 	const zq_base_type* cur_filter_c_ptr;
+#if WITH_BIAS
+	const zq_base_type* cur_bias_ptr;
+#endif
 
 	int stride_H_mul_in_WidthStep = stride_H*in_widthStep;
 	int stride_W_mul_in_pixStep = stride_W*in_pixelStep;
@@ -4237,6 +2764,9 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel2x2_mul_16(
 				cur_in_pix_ptr = cur_in_row_ptr; cur_filter_pix_ptr = cur_filter_row_ptr;
 				cur_in_c_ptr = cur_in_pix_ptr; cur_filter_c_ptr = cur_filter_pix_ptr;
 				out_c_ptr = out_pix_ptr;
+#if WITH_BIAS
+				cur_bias_ptr = bias;
+#endif
 				op_0_16_first;
 
 				cur_in_pix_ptr += in_pixelStep; cur_filter_pix_ptr += filter_pixelStep;
@@ -4290,6 +2820,9 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_mul_32(
 	int out_pixelStep,
 	int out_widthStep,
 	int out_sliceStep
+#if WITH_BIAS
+	, const zq_base_type* bias
+#endif
 )
 {
 	const zq_base_type* in_slice_ptr;
@@ -4306,6 +2839,9 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_mul_32(
 	const zq_base_type* cur_filter_row_ptr;
 	const zq_base_type* cur_filter_pix_ptr;
 	const zq_base_type* cur_filter_c_ptr;
+#if WITH_BIAS
+	const zq_base_type* cur_bias_ptr;
+#endif
 
 	int stride_H_mul_in_WidthStep = stride_H*in_widthStep;
 	int stride_W_mul_in_pixStep = stride_W*in_pixelStep;
@@ -4331,6 +2867,9 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_mul_32(
 				cur_in_pix_ptr = cur_in_row_ptr; cur_filter_pix_ptr = cur_filter_row_ptr;
 				cur_in_c_ptr = cur_in_pix_ptr; cur_filter_c_ptr = cur_filter_pix_ptr;
 				out_c_ptr = out_pix_ptr;
+#if WITH_BIAS
+				cur_bias_ptr = bias;
+#endif
 				op_0_32_first;
 
 				cur_in_pix_ptr += in_pixelStep; cur_filter_pix_ptr += filter_pixelStep;
@@ -4406,6 +2945,9 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel2x2_mul_32(
 	int out_pixelStep,
 	int out_widthStep,
 	int out_sliceStep
+#if WITH_BIAS
+	, const zq_base_type* bias
+#endif
 )
 {
 	const zq_base_type* in_slice_ptr;
@@ -4422,6 +2964,9 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel2x2_mul_32(
 	const zq_base_type* cur_filter_row_ptr;
 	const zq_base_type* cur_filter_pix_ptr;
 	const zq_base_type* cur_filter_c_ptr;
+#if WITH_BIAS
+	const zq_base_type* cur_bias_ptr;
+#endif
 
 	int stride_H_mul_in_WidthStep = stride_H*in_widthStep;
 	int stride_W_mul_in_pixStep = stride_W*in_pixelStep;
@@ -4447,6 +2992,9 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel2x2_mul_32(
 				cur_in_pix_ptr = cur_in_row_ptr; cur_filter_pix_ptr = cur_filter_row_ptr;
 				cur_in_c_ptr = cur_in_pix_ptr; cur_filter_c_ptr = cur_filter_pix_ptr;
 				out_c_ptr = out_pix_ptr;
+#if WITH_BIAS
+				cur_bias_ptr = bias;
+#endif
 				op_0_32_first;
 
 				cur_in_pix_ptr += in_pixelStep; cur_filter_pix_ptr += filter_pixelStep;
@@ -4498,6 +3046,9 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_mul_64(
 	int out_pixelStep,
 	int out_widthStep,
 	int out_sliceStep
+#if WITH_BIAS
+	, const zq_base_type* bias
+#endif
 )
 {
 	const zq_base_type* in_slice_ptr;
@@ -4514,6 +3065,9 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_mul_64(
 	const zq_base_type* cur_filter_row_ptr;
 	const zq_base_type* cur_filter_pix_ptr;
 	const zq_base_type* cur_filter_c_ptr;
+#if WITH_BIAS
+	const zq_base_type* cur_bias_ptr;
+#endif
 
 	int stride_H_mul_in_WidthStep = stride_H*in_widthStep;
 	int stride_W_mul_in_pixStep = stride_W*in_pixelStep;
@@ -4539,6 +3093,9 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_mul_64(
 				cur_in_pix_ptr = cur_in_row_ptr; cur_filter_pix_ptr = cur_filter_row_ptr;
 				cur_in_c_ptr = cur_in_pix_ptr; cur_filter_c_ptr = cur_filter_pix_ptr;
 				out_c_ptr = out_pix_ptr;
+#if WITH_BIAS
+				cur_bias_ptr = bias;
+#endif
 				op_0_64_first;
 
 				cur_in_pix_ptr += in_pixelStep; cur_filter_pix_ptr += filter_pixelStep;
@@ -4615,6 +3172,9 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel2x2_mul_64(
 	int out_pixelStep,
 	int out_widthStep,
 	int out_sliceStep
+#if WITH_BIAS
+	, const zq_base_type* bias
+#endif
 )
 {
 	const zq_base_type* in_slice_ptr;
@@ -4631,6 +3191,9 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel2x2_mul_64(
 	const zq_base_type* cur_filter_row_ptr;
 	const zq_base_type* cur_filter_pix_ptr;
 	const zq_base_type* cur_filter_c_ptr;
+#if WITH_BIAS
+	const zq_base_type* cur_bias_ptr;
+#endif
 
 	int stride_H_mul_in_WidthStep = stride_H*in_widthStep;
 	int stride_W_mul_in_pixStep = stride_W*in_pixelStep;
@@ -4656,6 +3219,9 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel2x2_mul_64(
 				cur_in_pix_ptr = cur_in_row_ptr; cur_filter_pix_ptr = cur_filter_row_ptr;
 				cur_in_c_ptr = cur_in_pix_ptr; cur_filter_c_ptr = cur_filter_pix_ptr;
 				out_c_ptr = out_pix_ptr;
+#if WITH_BIAS
+				cur_bias_ptr = bias;
+#endif
 				op_0_64_first;
 
 				cur_in_pix_ptr += in_pixelStep; cur_filter_pix_ptr += filter_pixelStep;

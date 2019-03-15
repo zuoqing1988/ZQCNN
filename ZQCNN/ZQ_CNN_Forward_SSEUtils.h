@@ -249,7 +249,7 @@ namespace ZQ
 			float* out_firstPixelData = output.GetFirstPixelPtr();
 			const float* bias_firstPixelData = bias.GetFirstPixelPtr();
 
-			int align_mode = __min((int)input.GetAlignType(), __min((int)filters.GetAlignType(), (int)output.GetAlignType()));
+			int align_mode = __min(bias.GetAlignType(), __min((int)input.GetAlignType(), __min((int)filters.GetAlignType(), (int)output.GetAlignType())));
 			if (in_C == 1)
 				align_mode = __min(align_mode, ZQ_CNN_Tensor4D::ALIGN_0);
 			else if (in_C <= 4)
@@ -269,14 +269,10 @@ namespace ZQ
 			align_mode = __min(align_mode, ZQ_CNN_Tensor4D::ALIGN_0);
 #endif
 #endif
-			//align_mode = ZQ_CNN_Tensor4D::ALIGN_128bit;
-			//output.Reset();
 			_depthwise_convolution_nopadding(align_mode, in_firstPixelData, in_N, in_H + (padH << 1), in_W + (padW << 1), in_C, in_pixStep, in_widthStep, in_sliceStep,
 				filter_firstPixelData, filter_N, filter_H, filter_W, filter_C, filter_pixStep, filter_widthStep, filter_sliceStep, strideH, strideW,
-				out_firstPixelData, need_N, need_H, need_W, need_C, out_pixStep, out_widthStep, out_sliceStep);
-			_addbias(__min(bias.GetAlignType(), align_mode), out_firstPixelData, need_N, need_H, need_W, need_C, out_pixStep, out_widthStep, out_sliceStep,
-				bias_firstPixelData);
-
+				out_firstPixelData, need_N, need_H, need_W, need_C, out_pixStep, out_widthStep, out_sliceStep, bias_firstPixelData);
+		
 			double t2 = omp_get_wtime();
 			//printf("utils:conv: %.3f ms\n", (t2 - t1) * 1000);
 			return true;
@@ -359,7 +355,7 @@ namespace ZQ
 			//output.Reset();
 			_depthwise_convolution_nopadding(align_mode, in_firstPixelData, in_N, in_H + (padH << 1), in_W + (padW << 1), in_C, in_pixStep, in_widthStep, in_sliceStep,
 				filter_firstPixelData, filter_N, filter_H, filter_W, filter_C, filter_pixStep, filter_widthStep, filter_sliceStep, strideH, strideW,
-				out_firstPixelData, need_N, need_H, need_W, need_C, out_pixStep, out_widthStep, out_sliceStep);
+				out_firstPixelData, need_N, need_H, need_W, need_C, out_pixStep, out_widthStep, out_sliceStep, NULL);
 
 			return true;
 		}
@@ -1993,7 +1989,7 @@ namespace ZQ
 		static void _depthwise_convolution_nopadding(int align_mode, const float* in_data, int in_N, int in_H, int in_W,
 			int in_C, int in_pixStep, int in_widthStep, int in_sliceStep,
 			const float* filter_data, int filter_N, int filter_H, int filter_W, int filter_C, int filter_pixStep, int filter_widthStep, int filter_sliceStep,
-			int strideH, int strideW, float* out_data, int out_N, int out_H, int out_W, int out_C, int out_pixStep, int out_widthStep, int out_sliceStep);
+			int strideH, int strideW, float* out_data, int out_N, int out_H, int out_W, int out_C, int out_pixStep, int out_widthStep, int out_sliceStep, const float* bias);
 
 		static void _inner_product(int align_mode, const float* in_data, int in_N, int in_H, int in_W, int in_C, int in_pixStep, int in_widthStep, int in_sliceStep,
 			const float* filter_data, int filter_N, int filter_pixStep, int filter_widthStep, int filter_sliceStep,
