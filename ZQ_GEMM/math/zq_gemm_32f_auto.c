@@ -379,6 +379,7 @@ extern "C" {
 
 			SWAP_C;
 		}
+	}
 
 
 #else // not __ARM_NEON
