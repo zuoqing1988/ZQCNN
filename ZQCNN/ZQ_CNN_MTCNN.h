@@ -85,11 +85,11 @@ namespace ZQ
 			bool ret = true;
 			for (int i = 0; i < thread_num; i++)
 			{
-				ret = pnet[i].LoadFrom(pnet_param, pnet_model,true,1e-9) 
-					&& rnet[i].LoadFrom(rnet_param, rnet_model, true, 1e-9) 
-					&& onet[i].LoadFrom(onet_param, onet_model, true, 1e-9);
+				ret = pnet[i].LoadFrom(pnet_param, pnet_model,true,1e-9, true) 
+					&& rnet[i].LoadFrom(rnet_param, rnet_model, true, 1e-9, true)
+					&& onet[i].LoadFrom(onet_param, onet_model, true, 1e-9, true);
 				if (has_lnet && ret)
-					ret = lnet[i].LoadFrom(lnet_param, lnet_model, true, 1e-9);
+					ret = lnet[i].LoadFrom(lnet_param, lnet_model, true, 1e-9, true);
 				if (!ret)
 					break;
 			}
@@ -145,11 +145,11 @@ namespace ZQ
 			bool ret = true;
 			for (int i = 0; i < thread_num; i++)
 			{
-				ret = pnet[i].LoadFromBuffer(pnet_param, pnet_param_len,pnet_model,pnet_model_len, true, 1e-9)
-					&& rnet[i].LoadFromBuffer(rnet_param, rnet_param_len, rnet_model, rnet_model_len, true, 1e-9)
-					&& onet[i].LoadFromBuffer(onet_param, onet_param_len, onet_model, onet_model_len, true, 1e-9);
+				ret = pnet[i].LoadFromBuffer(pnet_param, pnet_param_len,pnet_model,pnet_model_len, true, 1e-9, true)
+					&& rnet[i].LoadFromBuffer(rnet_param, rnet_param_len, rnet_model, rnet_model_len, true, 1e-9, true)
+					&& onet[i].LoadFromBuffer(onet_param, onet_param_len, onet_model, onet_model_len, true, 1e-9, true);
 				if (has_lnet && ret)
-					ret = lnet[i].LoadFromBuffer(lnet_param, lnet_param_len, lnet_model, lnet_model_len, true, 1e-9);
+					ret = lnet[i].LoadFromBuffer(lnet_param, lnet_param_len, lnet_model, lnet_model_len, true, 1e-9, true);
 				if (!ret)
 					break;
 			}
