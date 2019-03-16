@@ -42,7 +42,7 @@ ZQCNN是ZuoQing参照mini-caffe写的forward库，ZQCNN性能远超mini-caffe、
 
 **2019-03-16日更新：达到800星，公布更准的106点landmark模型**
 
-[ZQCNN格式:det5-dw96-v2s]model文件夹中
+[ZQCNN格式:det5-dw96-v2s](https://github.com/zuoqing1988/ZQCNN/tree/master/model)model文件夹中
 
 [mxnet格式:Lnet106_96_v2s](https://pan.baidu.com/s/1sx63SH0BM2dZnQ3kebU0MA)提取码：y25m 
 
