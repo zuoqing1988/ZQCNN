@@ -44,7 +44,7 @@ ZQCNN是ZuoQing参照mini-caffe写的forward库，ZQCNN性能远超mini-caffe、
 
 [ZQCNN格式:det5-dw96-v2s](https://github.com/zuoqing1988/ZQCNN/tree/master/model)model文件夹中det5-dw96-v2s.zqparams, det5-dw96-v2s.nchwbin
 
-[mxnet格式:Lnet106_96_v2s](https://pan.baidu.com/s/1sx63SH0BM2dZnQ3kebU0MA)提取码：y25m 
+[mxnet格式:Lnet106_96_v2s](https://pan.baidu.com/s/1iuuAHgJBsdWsUoAdU5H58Q)提取码：r5h2
 
 **2019-02-14日更新：达到700星，公布人脸检测精选模型**
 
