@@ -40,6 +40,12 @@ ZQCNN是ZuoQing参照mini-caffe写的forward库，ZQCNN性能远超mini-caffe、
 
 # 更新日志
 
+**2019-03-16日更新：达到800星，公布更准的106点landmark模型**
+
+[ZQCNN格式:det5-dw96-v2s]model文件夹中
+
+[mxnet格式:Lnet106_96_v2s](https://pan.baidu.com/s/1sx63SH0BM2dZnQ3kebU0MA)提取码：y25m 
+
 **2019-02-14日更新：达到700星，公布人脸检测精选模型**
 
 [ZQCNN格式：精选6种Pnet、2种Rnet、2种Onet、2种Lnet](https://pan.baidu.com/s/1X2U9Y-6MJw3md8WuYxaotw)
