@@ -1,6 +1,6 @@
 # 简介
 
-ZQCNN是ZuoQing参照mini-caffe写的forward库，使用depthwise convolution的网络，ZQCNN性能远超mini-caffe、opencv。
+ZQCNN是ZuoQing参照mini-caffe写的forward库，ZQCNN性能远超mini-caffe、opencv。
 
 ## 主开发环境 ：[VS2015 with Update 3](https://pan.baidu.com/s/1zoREccOxVsggV-iI2z4HTg)
 
