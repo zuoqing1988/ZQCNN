@@ -36,10 +36,10 @@ int main()
 	int show_H = 640, show_W = 640;
 	ZQ_CNN_Net net1, net2;
 #if defined(_WIN32)
-	if (!net1.LoadFrom("model/det5-dw96-v2s.zqparams", "model/det5-dw96-v2s-8000.nchwbin",true,1e-9)
+	if (!net1.LoadFrom("model/det5-dw96-v2s.zqparams", "model/det5-dw96-v2s.nchwbin",true,1e-9)
 		|| !net2.LoadFrom("model/det3.zqparams", "model/det3_bgr.nchwbin", true, 1e-9))
 #else
-	if (!net1.LoadFrom("../../model/det5-dw96-v2s.zqparams", "../../model/det5-dw96-v2s-8000.nchwbin", true, 1e-9)
+	if (!net1.LoadFrom("../../model/det5-dw96-v2s.zqparams", "../../model/det5-dw96-v2s.nchwbin", true, 1e-9)
 		|| !net2.LoadFrom("../../model/det3.zqparams", "../../model/det3_bgr.nchwbin", true, 1e-9))
 #endif
 	{
