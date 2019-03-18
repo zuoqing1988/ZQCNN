@@ -35,6 +35,7 @@ namespace ZQ
 		std::vector<ZQ_CNN_Tensor4D*> blobs; //blobs[0] stores a pointer to input blob
 		std::map<std::string, int> map_name_to_layer_idx;
 		std::map<std::string, int> map_name_to_blob_idx; 
+		std::map<int, int> simplify_inplace_blob_map;
 		std::vector<std::vector<int> > bottoms;
 		std::vector<std::vector<int> > tops;	//tops[0][0] stores input blob pointer
 		std::string input_name;
@@ -71,6 +72,8 @@ namespace ZQ
 				_clear();
 				return false;
 			}
+
+			_simplify_inplace();
 
 			if (merge_bn)
 			{
@@ -115,6 +118,8 @@ namespace ZQ
 				_clear();
 				return false;
 			}
+
+			_simplify_inplace();
 
 			if (merge_bn)
 			{
@@ -269,7 +274,10 @@ namespace ZQ
 				return 0;
 			else
 			{
-				return blobs[it->second];
+				if (simplify_inplace_blob_map.find(it->second) == simplify_inplace_blob_map.end())
+					return blobs[it->second];
+				else
+					return blobs[simplify_inplace_blob_map[it->second]];
 			}
 		}
 
@@ -1235,6 +1243,53 @@ namespace ZQ
 			blobs[0] = 0;
 			tops[0][0] = 0;
 			return true;
+		}
+
+		void _simplify_inplace()
+		{
+			for (int i = 0; i < layers.size(); i++)
+			{
+				if (ZQ_CNN_Layer::_my_strcmpi(layer_type_names[i].c_str(), "ReLU") == 0
+					|| ZQ_CNN_Layer::_my_strcmpi(layer_type_names[i].c_str(), "PReLU") == 0
+					|| ZQ_CNN_Layer::_my_strcmpi(layer_type_names[i].c_str(), "BatchNormScale") == 0
+					|| ZQ_CNN_Layer::_my_strcmpi(layer_type_names[i].c_str(), "BatchNorm") == 0
+					|| ZQ_CNN_Layer::_my_strcmpi(layer_type_names[i].c_str(), "Scale") == 0)
+				{
+					bool later_refer = false;
+					for (int j = i + 1; j < layers.size(); j++)
+					{
+						for (int k = 0; k < bottoms[j].size(); k++)
+						{
+							if (bottoms[j][k] == bottoms[i][0])
+							{
+								later_refer = true;
+								break;
+							}
+						}
+						if (later_refer)
+							break;
+					}
+					if (later_refer)
+						continue;
+
+					for (int j = i + 1; j < layers.size(); j++)
+					{
+						for (int k = 0; k < bottoms[j].size(); k++)
+						{
+							if (bottoms[j][k] == tops[i][0])
+							{
+								bottoms[j][k] = bottoms[i][0];
+							}
+						}
+					}
+
+					if (simplify_inplace_blob_map.find(tops[i][0]) == simplify_inplace_blob_map.end())
+					{
+						simplify_inplace_blob_map[tops[i][0]] = bottoms[i][0];
+					}
+					tops[i][0] = bottoms[i][0];
+				}
+			}
 		}
 
 		bool _merge_bn()
