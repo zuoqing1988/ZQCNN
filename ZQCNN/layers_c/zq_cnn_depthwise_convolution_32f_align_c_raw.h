@@ -1967,8 +1967,8 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel2x2_mul_6(
 		b21_3 = zq_mm_load_ps(cur_filter_pix_ptr);
 		b22_3 = zq_mm_load_ps(cur_filter_pix_ptr + filter_pixelStep);
 		cur_filter_pix_ptr = filters_data + zq_mm_align_size3;
-		b11_3 = zq_mm_load_ps(cur_filter_pix_ptr);
-		b12_3 = zq_mm_load_ps(cur_filter_pix_ptr + filter_pixelStep);
+		b11_4 = zq_mm_load_ps(cur_filter_pix_ptr);
+		b12_4 = zq_mm_load_ps(cur_filter_pix_ptr + filter_pixelStep);
 		cur_filter_pix_ptr += filter_widthStep;
 		b21_4 = zq_mm_load_ps(cur_filter_pix_ptr);
 		b22_4 = zq_mm_load_ps(cur_filter_pix_ptr + filter_pixelStep);
