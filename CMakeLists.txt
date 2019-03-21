@@ -61,7 +61,7 @@ if((CMAKE_CXX_COMPILER_ID MATCHES "GNU") OR (CMAKE_CXX_COMPILER_ID MATCHES "Clan
             add_definitions(-mfpu=neon)
             add_definitions(-mfloat-abi=hard)
         endif()
-		if(BLAS_TYPE MATCHES "zq_gemm")
+        if(BLAS_TYPE MATCHES "zq_gemm")
             add_definitions(-DZQ_CNN_USE_ZQ_GEMM=1)
         elseif(BLAS_TYPE MATCHES "openblas")
             add_definitions(-DZQ_CNN_USE_BLAS_GEMM=1)
