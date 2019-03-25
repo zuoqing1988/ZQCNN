@@ -377,8 +377,8 @@ void zq_cnn_resize_without_safeborder(
 		x0[w] = (int)x0_f;
 		x1[w] = x0[w] + 1;
 		sx[w] = coord_x - x0_f;
-		x0[w] = __min(src_W - 1, __max(0, x0[w]));
-		x1[w] = __min(src_W - 1, __max(0, x1[w]));
+		x0[w] = __min(in_W - 1, __max(0, x0[w]));
+		x1[w] = __min(in_W - 1, __max(0, x1[w]));
 		x0[w] *= in_pixelStep;
 		x1[w] *= in_pixelStep;
 	}
