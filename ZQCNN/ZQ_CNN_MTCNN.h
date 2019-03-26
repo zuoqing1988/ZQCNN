@@ -62,9 +62,19 @@ namespace ZQ
 		std::vector<ZQ_CNN_Tensor4D_NHW_C_Align128bit> pnet_images;
 		ZQ_CNN_Tensor4D_NHW_C_Align128bit input, rnet_image, onet_image;
 		bool show_debug_info;
+		int limit_r_num;
+		int limit_o_num;
+		int limit_l_num;
 	public:
 		void TurnOnShowDebugInfo() { show_debug_info = true; }
 		void TurnOffShowDebugInfo() { show_debug_info = false; }
+		void SetLimit(int limit_r = 0, int limit_o = 0, int limit_l = 0) 
+		{
+			limit_r_num = limit_r;
+			limit_o_num = limit_o;
+			limit_l_num = limit_l;
+		}
+
 		bool Init(const string& pnet_param, const string& pnet_model, const string& rnet_param, const string& rnet_model,
 			const string& onet_param, const string& onet_model, int thread_num = 1, 
 			bool has_lnet = false, const string& lnet_param = "", const std::string& lnet_model = "")
@@ -260,11 +270,21 @@ namespace ZQ
 				return false;
 			//results = firstBbox;
 			//return true;
+			if (limit_r_num > 0)
+			{
+				_select(firstBbox, limit_r_num, _width, _height);
+			}
+
 			double t2 = omp_get_wtime();
 			if (!_Rnet_stage(firstBbox, secondBbox))
 				return false;
 			//results = secondBbox;
 			//return true;
+
+			if (limit_o_num > 0)
+			{
+				_select(secondBbox, limit_o_num, _width, _height);
+			}
 
 			if (!has_lnet || !do_landmark)
 			{
@@ -285,6 +305,11 @@ namespace ZQ
 				double t3 = omp_get_wtime();
 				if (!_Onet_stage(secondBbox, thirdBbox))
 					return false;
+
+				if (limit_l_num > 0)
+				{
+					_select(thirdBbox, limit_l_num, _width, _height);
+				}
 
 				double t4 = omp_get_wtime();
 
@@ -311,12 +336,19 @@ namespace ZQ
 				return false;
 			//results = firstBbox;
 			//return true;
+			if (limit_r_num > 0)
+			{
+				_select(firstBbox, limit_r_num, _width, _height);
+			}
 			double t2 = omp_get_wtime();
 			if (!_Rnet_stage(firstBbox, secondBbox))
 				return false;
 			//results = secondBbox;
 			//return true;
-
+			if (limit_o_num > 0)
+			{
+				_select(secondBbox, limit_o_num, _width, _height);
+			}
 			if (!has_lnet || !do_landmark)
 			{
 				return false;
@@ -325,6 +357,10 @@ namespace ZQ
 			if (!_Onet_stage(secondBbox, thirdBbox))
 				return false;
 
+			if (limit_l_num > 0)
+			{
+				_select(thirdBbox, limit_l_num, _width, _height);
+			}
 			double t4 = omp_get_wtime();
 
 			if (!_Lnet106_stage(thirdBbox, results))
@@ -1688,6 +1724,14 @@ namespace ZQ
 				printf("stage 4: cost %.3f ms\n", 1000 * (t5 - t4));
 
 			return true;
+		}
+
+		void _select(std::vector<ZQ_CNN_BBox>& bbox, int limit_num, int width, int height)
+		{
+			int in_num = bbox.size();
+			if (limit_num >= in_num)
+				return;
+			bbox.resize(limit_num);
 		}
 	};
 }
