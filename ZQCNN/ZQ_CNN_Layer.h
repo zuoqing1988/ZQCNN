@@ -4388,7 +4388,7 @@ namespace ZQ
 	class ZQ_CNN_Layer_Normalize : public ZQ_CNN_Layer
 	{
 	public:
-		ZQ_CNN_Layer_Normalize():across_spatial(false),channel_shared(false), eps(1e-10){}
+		ZQ_CNN_Layer_Normalize():across_spatial(false),channel_shared(false), eps(1e-10),scale(0){}
 		~ZQ_CNN_Layer_Normalize(){
 			if (scale) delete scale;
 		}
