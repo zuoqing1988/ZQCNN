@@ -251,7 +251,7 @@ void zq_cnn_prelu_32f_align(
 #if WITH_BIAS
 					bias_c_ptr = bias;
 #endif
-					for (c = 0, c_ptr = pix_ptr, slope_c_ptr = slope_data; c < in_C; c += zq_mm_align_size8)
+					for (c = 0, c_ptr = pix_ptr, slope_c_ptr = slope_data; c < in_C; c += zq_mm_align_size4)
 					{
 						op_0_4;
 					}
