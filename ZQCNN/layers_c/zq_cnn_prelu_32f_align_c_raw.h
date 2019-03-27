@@ -275,6 +275,7 @@ void zq_cnn_prelu_32f_align(
 						value_v = zq_mm_load_ps(c_ptr);
 #if WITH_BIAS
 						value_v = zq_mm_add_ps(value_v, zq_mm_load_ps(bias_c_ptr));
+						bias_c_ptr += zq_mm_align_size;
 #endif
 						slope_v = zq_mm_load_ps(slope_c_ptr);
 						zq_mm_store_ps(c_ptr, zq_mm_fmadd_ps(slope_v, zq_mm_min_ps(zq_mm_setzero_ps(), value_v), zq_mm_max_ps(zq_mm_setzero_ps(), value_v)));
@@ -406,9 +407,10 @@ void zq_cnn_prelu_32f_align_sure_slope_lessthan1(
 						data_v = zq_mm_load_ps(c_ptr);
 #if WITH_BIAS
 						data_v = zq_mm_add_ps(data_v, zq_mm_load_ps(bias_c_ptr));
+						bias_c_ptr += zq_mm_align_size;
 #endif
 						zq_mm_store_ps(c_ptr, zq_mm_max_ps(data_v, zq_mm_mul_ps(data_v, zq_mm_load_ps(slope_c_ptr))));
-						c_ptr += zq_mm_align_size; slope_c_ptr += zq_mm_align_size;
+						c_ptr += zq_mm_align_size; slope_c_ptr += zq_mm_align_size; 
 					}
 				}
 			}
