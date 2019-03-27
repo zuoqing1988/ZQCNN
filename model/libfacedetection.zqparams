@@ -1,0 +1,77 @@
+Input name=data H=240 W=320 C=3
+Convolution				name=conv1_1		bottom=data 		top=conv1_1		num_output=16 kernel_size=3 stride=2 pad=1
+ReLU 					name=relu1_1		bottom=conv1_1 		top=conv1_1
+Convolution				name=conv1_2		bottom=conv1_1 		top=conv1_2 	num_output=16 kernel_size=1
+ReLU 					name=relu1_2		bottom=conv1_2 		top=conv1_2
+Pooling	pool=MAX		name=pool1			bottom=conv1_2		top=pool1 		kernel_size=2 stride=2
+Convolution				name=conv2_1		bottom=pool1 		top=conv2_1 	num_output=16 kernel_size=3 pad=1
+ReLU 					name=relu2_1		bottom=conv2_1 		top=conv2_1
+Convolution				name=conv2_2 		bottom=conv2_1 		top=conv2_2 	num_output=16 kernel_size=1
+ReLU 					name=relu2_2		bottom=conv2_2 		top=conv2_2
+Pooling	pool=MAX		name=pool2			bottom=conv2_2		top=pool2 		kernel_size=2 stride=2
+Convolution				name=conv3_1		bottom=pool2 		top=conv3_1 	num_output=32 kernel_size=3 pad=1
+ReLU 					name=relu3_1		bottom=conv3_1 		top=conv3_1
+Convolution				name=conv3_2		bottom=conv3_1 		top=conv3_2 	num_output=32 kernel_size=1
+ReLU 					name=relu3_2		bottom=conv3_2 		top=conv3_2
+Convolution				name=conv3_3		bottom=conv3_2 		top=conv3_3 	num_output=32 kernel_size=3 pad=1
+ReLU 					name=relu3_3		bottom=conv3_3 		top=conv3_3
+Pooling	pool=MAX		name=pool3			bottom=conv3_3		top=pool3 		kernel_size=2 stride=2
+Convolution				name=conv4_1		bottom=pool3 		top=conv4_1 	num_output=64 kernel_size=3 pad=1
+ReLU 					name=relu4_1		bottom=conv4_1 		top=conv4_1
+Convolution				name=conv4_2 		bottom=conv4_1 		top=conv4_2 	num_output=64 kernel_size=1
+ReLU 					name=relu4_2		bottom=conv4_2 		top=conv4_2
+Convolution				name=conv4_3		bottom=conv4_2 		top=conv4_3 	num_output=64 kernel_size=3 pad=1
+ReLU 					name=relu4_3		bottom=conv4_3 		top=conv4_3
+Pooling	pool=MAX		name=pool4			bottom=conv4_3		top=pool4 		kernel_size=2 stride=2
+Convolution				name=conv5_1		bottom=pool4 		top=conv5_1 	num_output=128 kernel_size=3 pad=1
+ReLU 					name=relu5_1		bottom=conv5_1 		top=conv5_1
+Convolution				name=conv5_2 		bottom=conv5_1 		top=conv5_2 	num_output=128 kernel_size=1
+ReLU 					name=relu5_2		bottom=conv5_2 		top=conv5_2
+Convolution				name=conv5_3		bottom=conv5_2 		top=conv5_3 	num_output=128 kernel_size=3 pad=1
+ReLU 					name=relu5_3		bottom=conv5_3 		top=conv5_3
+Pooling	pool=MAX		name=pool5			bottom=conv5_3		top=pool5 		kernel_size=2 stride=2
+Convolution				name=conv6_1		bottom=pool5 		top=conv6_1 	num_output=128 kernel_size=3 pad=1
+ReLU 					name=relu6_1		bottom=conv6_1 		top=conv6_1
+Convolution				name=conv6_2 		bottom=conv6_1 		top=conv6_2 	num_output=128 kernel_size=1
+ReLU 					name=relu6_2		bottom=conv6_2 		top=conv6_2
+Convolution				name=conv6_3		bottom=conv6_2 		top=conv6_3 	num_output=128 kernel_size=3 pad=1
+ReLU 					name=relu6_3		bottom=conv6_3 		top=conv6_3
+Normalize				name=conv3_3_norm	bottom=conv3_3		top=conv3_3_norm
+Convolution				name=conv3_3_norm_mbox_loc_new 		bottom=conv3_3_norm					top=conv3_3_norm_mbox_loc_new	num_output=12 kernel_size=3 pad=1
+Permute					name=conv3_3_norm_mbox_loc_perm		bottom=conv3_3_norm_mbox_loc_new 	top=conv3_3_norm_mbox_loc_perm 	order=0 order=2 order=3 order=1
+Flatten					name=conv3_3_norm_mbox_loc_flat		bottom=conv3_3_norm_mbox_loc_perm	top=conv3_3_norm_mbox_loc_flat 	axis=1
+Convolution				name=conv3_3_norm_mbox_conf_new		bottom=conv3_3_norm					top=conv3_3_norm_mbox_conf_new	num_output=6 kernel_size=3 pad=1
+Permute					name=conv3_3_norm_mbox_conf_perm 	bottom=conv3_3_norm_mbox_conf_new	top=conv3_3_norm_mbox_conf_perm order=0 order=2 order=3 order=1
+Flatten					name=conv3_3_norm_mbox_conf_flat	bottom=conv3_3_norm_mbox_conf_perm	top=conv3_3_norm_mbox_conf_flat axis=1
+PriorBox				name=conv3_3_norm_mbox_priorbox		bottom=conv3_3_norm	bottom=data		top=conv3_3_norm_mbox_priorbox 	min_size=10 min_size=16 min_size=24 step=8 clip=0 variance=0.1 variance=0.1 variance=0.2 variance=0.2 offset=0.5
+Normalize				name=conv4_3_norm	bottom=conv4_3		top=conv4_3_norm
+Convolution				name=conv4_3_norm_mbox_loc 			bottom=conv4_3_norm					top=conv4_3_norm_mbox_loc		num_output=8 kernel_size=3 pad=1
+Permute					name=conv4_3_norm_mbox_loc_perm		bottom=conv4_3_norm_mbox_loc 		top=conv4_3_norm_mbox_loc_perm 	order=0 order=2 order=3 order=1
+Flatten					name=conv4_3_norm_mbox_loc_flat		bottom=conv4_3_norm_mbox_loc_perm	top=conv4_3_norm_mbox_loc_flat 	axis=1
+Convolution				name=conv4_3_norm_mbox_conf			bottom=conv4_3_norm					top=conv4_3_norm_mbox_conf		num_output=4 kernel_size=3 pad=1
+Permute					name=conv4_3_norm_mbox_conf_perm 	bottom=conv4_3_norm_mbox_conf		top=conv4_3_norm_mbox_conf_perm order=0 order=2 order=3 order=1
+Flatten					name=conv4_3_norm_mbox_conf_flat	bottom=conv4_3_norm_mbox_conf_perm	top=conv4_3_norm_mbox_conf_flat axis=1
+PriorBox				name=conv4_3_norm_mbox_priorbox		bottom=conv4_3_norm	bottom=data		top=conv4_3_norm_mbox_priorbox 	min_size=32 min_size=48 step=16 clip=0 variance=0.1 variance=0.1 variance=0.2 variance=0.2 offset=0.5
+Normalize				name=conv5_3_norm	bottom=conv5_3		top=conv5_3_norm
+Convolution				name=conv5_3_norm_mbox_loc 			bottom=conv5_3_norm					top=conv5_3_norm_mbox_loc		num_output=8 kernel_size=3 pad=1
+Permute					name=conv5_3_norm_mbox_loc_perm		bottom=conv5_3_norm_mbox_loc 		top=conv5_3_norm_mbox_loc_perm 	order=0 order=2 order=3 order=1
+Flatten					name=conv5_3_norm_mbox_loc_flat		bottom=conv5_3_norm_mbox_loc_perm	top=conv5_3_norm_mbox_loc_flat 	axis=1
+Convolution				name=conv5_3_norm_mbox_conf			bottom=conv5_3_norm					top=conv5_3_norm_mbox_conf		num_output=4 kernel_size=3 pad=1
+Permute					name=conv5_3_norm_mbox_conf_perm 	bottom=conv5_3_norm_mbox_conf		top=conv5_3_norm_mbox_conf_perm order=0 order=2 order=3 order=1
+Flatten					name=conv5_3_norm_mbox_conf_flat	bottom=conv5_3_norm_mbox_conf_perm	top=conv5_3_norm_mbox_conf_flat axis=1
+PriorBox				name=conv5_3_norm_mbox_priorbox		bottom=conv5_3_norm	bottom=data		top=conv5_3_norm_mbox_priorbox 	min_size=64 min_size=96 step=32 clip=0 variance=0.1 variance=0.1 variance=0.2 variance=0.2 offset=0.5
+Normalize				name=conv6_3_norm	bottom=conv6_3		top=conv6_3_norm
+Convolution				name=conv6_3_norm_mbox_loc 			bottom=conv6_3_norm					top=conv6_3_norm_mbox_loc		num_output=12 kernel_size=3 pad=1
+Permute					name=conv6_3_norm_mbox_loc_perm		bottom=conv6_3_norm_mbox_loc 		top=conv6_3_norm_mbox_loc_perm 	order=0 order=2 order=3 order=1
+Flatten					name=conv6_3_norm_mbox_loc_flat		bottom=conv6_3_norm_mbox_loc_perm	top=conv6_3_norm_mbox_loc_flat 	axis=1
+Convolution				name=conv6_3_norm_mbox_conf			bottom=conv6_3_norm					top=conv6_3_norm_mbox_conf		num_output=6 kernel_size=3 pad=1
+Permute					name=conv6_3_norm_mbox_conf_perm 	bottom=conv6_3_norm_mbox_conf		top=conv6_3_norm_mbox_conf_perm order=0 order=2 order=3 order=1
+Flatten					name=conv6_3_norm_mbox_conf_flat	bottom=conv6_3_norm_mbox_conf_perm	top=conv6_3_norm_mbox_conf_flat axis=1
+PriorBox				name=conv6_3_norm_mbox_priorbox		bottom=conv6_3_norm	bottom=data		top=conv6_3_norm_mbox_priorbox 	min_size=128 min_size=192 min_size=256 step=64 clip=0 variance=0.1 variance=0.1 variance=0.2 variance=0.2 offset=0.5
+Concat				name=mbox_loc		bottom=conv3_3_norm_mbox_loc_flat bottom=conv4_3_norm_mbox_loc_flat bottom=conv5_3_norm_mbox_loc_flat bottom=conv6_3_norm_mbox_loc_flat top=mbox_loc axis=1
+Concat				name=mbox_conf		bottom=conv3_3_norm_mbox_conf_flat bottom=conv4_3_norm_mbox_conf_flat bottom=conv5_3_norm_mbox_conf_flat bottom=conv6_3_norm_mbox_conf_flat top=mbox_conf axis=1
+Concat				name=mbox_priorbox	bottom=conv3_3_norm_mbox_priorbox bottom=conv4_3_norm_mbox_priorbox bottom=conv5_3_norm_mbox_priorbox bottom=conv6_3_norm_mbox_priorbox top=mbox_priorbox axis=2
+Reshape				name=mbox_conf_reshape	bottom=mbox_conf top=mbox_conf_reshape dim=0 dim=-1 dim=2
+Softmax				name=mbox_conf_softmax	bottom=mbox_conf_reshape top=mbox_conf_softmax axis=2
+Flatten				name=mbox_conf_flatten	bottom=mbox_conf_softmax top=mbox_conf_flatten axis=1
+DetectionOutput		name=detection_out	bottom=mbox_loc bottom=mbox_conf_flatten bottom=mbox_priorbox top=detection_out num_classes=2 share_location=1 background_label_id=0 nms_threshold=0.15 nms_top_k=100 code_type=CENTER_SIZE keep_top_k=100 confidence_threshold=0.01

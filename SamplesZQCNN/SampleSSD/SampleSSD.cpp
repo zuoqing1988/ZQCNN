@@ -31,7 +31,8 @@ int main()
 
 	Mat img0;
 	//Mat img1 = cv::imread("data/dog.jpg", 1);
-	Mat img1 = cv::imread("data/004545.jpg", 1);
+	//Mat img1 = cv::imread("data/004545.jpg", 1);
+	Mat img1 = cv::imread("data/4_320x240.jpg", 1);
 	if (img1.empty())
 	{
 		cout << "empty image\n";
@@ -41,14 +42,15 @@ int main()
 	//img0 = img1;
 	ZQ_CNN_SSD detector;
 	//if (!detector.Init("model/MobileNetSSD_deploy.zqparams", "model/MobileNetSSD_deploy.nchwbin", "detection_out"))
-	if (!detector.Init("model/ssd-300.zqparams", "model/ssd-300.nchwbin", "detection", true))
+	if (!detector.Init("model/libfacedetection.zqparams", "model/libfacedetection.nchwbin", "detection_out"))
+	//if (!detector.Init("model/ssd-300.zqparams", "model/ssd-300.nchwbin", "detection", true))
 	{
 		printf("failed to init detector!\n");
 		return false;
 	}
 	
-	int out_iter = 1;
-	int iters = 1;
+	int out_iter = 10;
+	int iters = 100;
 	std::vector<ZQ_CNN_SSD::BBox> output;
 	const float kScoreThreshold = 0.3f;
 	for (int out_it = 0; out_it < out_iter; out_it++)
@@ -65,12 +67,14 @@ int main()
 		double t2 = omp_get_wtime();
 		printf("[%d] times cost %.3f s, 1 iter cost %.3f ms\n", iters, t2 - t1, 1000 * (t2 - t1) / iters);
 	}
-	const char* kClassNames[] = { "__background__", "aeroplane", "bicycle", "bird", "boat",
+	/*const char* kClassNames[] = { "__background__", "aeroplane", "bicycle", "bird", "boat",
 		"bottle", "bus", "car", "cat", "chair",
 		"cow", "diningtable", "dog", "horse",
 		"motorbike", "person", "pottedplant",
-		"sheep", "sofa", "train", "tvmonitor" };
+		"sheep", "sofa", "train", "tvmonitor" };*/
+	const char* kClassNames[] = { "__background__", "face"};
 	//const char* kClassNames[] = { "__background__", "eye", "nose", "mouth", "face" };
+	
 	
 	// draw
 	for (auto& bbox : output) 
