@@ -30,9 +30,16 @@ int main()
 #endif
 
 	Mat img0;
+#if defined(_WIN32)
 	//Mat img1 = cv::imread("data/dog.jpg", 1);
 	//Mat img1 = cv::imread("data/004545.jpg", 1);
 	Mat img1 = cv::imread("data/4_320x240.jpg", 1);
+#else
+	//Mat img1 = cv::imread("../../data/dog.jpg", 1);
+	//Mat img1 = cv::imread("../../data/004545.jpg", 1);
+	Mat img1 = cv::imread("../../data/4_320x240.jpg", 1);
+#endif
+	
 	if (img1.empty())
 	{
 		cout << "empty image\n";
@@ -41,9 +48,15 @@ int main()
 	cv::cvtColor(img1, img0, CV_BGR2RGB);
 	//img0 = img1;
 	ZQ_CNN_SSD detector;
+#if defined(_WIN32)
 	//if (!detector.Init("model/MobileNetSSD_deploy.zqparams", "model/MobileNetSSD_deploy.nchwbin", "detection_out"))
 	if (!detector.Init("model/libfacedetection.zqparams", "model/libfacedetection.nchwbin", "detection_out"))
 	//if (!detector.Init("model/ssd-300.zqparams", "model/ssd-300.nchwbin", "detection", true))
+#else
+	//if (!detector.Init("../../model/MobileNetSSD_deploy.zqparams", "../../model/MobileNetSSD_deploy.nchwbin", "detection_out"))
+	if (!detector.Init("../../model/libfacedetection.zqparams", "../../model/libfacedetection.nchwbin", "detection_out"))
+		//if (!detector.Init("../../model/ssd-300.zqparams", "../../model/ssd-300.nchwbin", "detection", true))
+#endif
 	{
 		printf("failed to init detector!\n");
 		return false;
