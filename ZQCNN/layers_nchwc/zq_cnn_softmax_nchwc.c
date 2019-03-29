@@ -182,7 +182,7 @@ extern "C" {
 		float* slice_ptr, *row_ptr, *pix_ptr, *im_ptr;
 		for (n = 0, im_ptr = in_tensor4D_data; n < in_N; n++, im_ptr += in_imStep)
 		{
-			for (c = 0, slice_ptr = slice_ptr; c < in_C; c++, slice_ptr++)
+			for (c = 0, slice_ptr = im_ptr; c < in_C; c++, slice_ptr++)
 			{
 				for (w = 0, pix_ptr = slice_ptr; w < in_W; w++, pix_ptr ++)
 				{
