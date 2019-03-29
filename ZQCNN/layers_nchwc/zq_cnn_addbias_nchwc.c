@@ -41,7 +41,7 @@ extern "C" {
 #define zq_base_type float
 #define zq_mm_align_size 4
 
-#include "zq_cnn_addbias_32f_nchwc_raw.h"
+#include "zq_cnn_addbias_nchwc_raw.h"
 
 
 #undef zq_cnn_addbias_32f_align
