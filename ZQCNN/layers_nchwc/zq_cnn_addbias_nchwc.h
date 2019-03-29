@@ -29,6 +29,7 @@ extern "C" {
 		int in_sliceStep,
 		int in_imStep,
 		const float* bias_data
+	);	
 
 #else
 
