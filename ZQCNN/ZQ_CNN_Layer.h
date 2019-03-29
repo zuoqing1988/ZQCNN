@@ -4,7 +4,6 @@
 #include <string>
 #include <vector>
 #include <iostream>
-#include "ZQ_CNN_Defines.h"
 #include "ZQ_CNN_Tensor4D.h"
 #include "ZQ_CNN_BBoxUtils.h"
 #include "ZQ_CNN_Forward_SSEUtils.h"

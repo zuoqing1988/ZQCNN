@@ -1,7 +1,6 @@
 #ifndef _ZQ_CNN_NET_H_
 #define _ZQ_CNN_NET_H_
 #pragma once
-#include "ZQ_CNN_Defines.h"
 #include "ZQ_CNN_Layer.h"
 #include <map>
 #include <vector>

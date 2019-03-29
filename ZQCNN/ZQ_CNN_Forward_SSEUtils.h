@@ -1,7 +1,6 @@
 #ifndef _ZQ_CNN_FORWARD_SSE_UTILS_H_
 #define _ZQ_CNN_FORWARD_SSE_UTILS_H_
 #pragma once
-#include "ZQ_CNN_Defines.h"
 #include "ZQ_CNN_Tensor4D.h"
 #include "ZQ_CNN_BBoxUtils.h"
 #include "ZQ_CNN_CompileConfig.h"
