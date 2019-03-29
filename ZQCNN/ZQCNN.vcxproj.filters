@@ -19,6 +19,9 @@
     <Filter Include="math">
       <UniqueIdentifier>{6ee43eee-57de-4e9e-8b17-0eb3b3925d49}</UniqueIdentifier>
     </Filter>
+    <Filter Include="layers_nchwc">
+      <UniqueIdentifier>{b0047998-091d-4c62-9884-fc2258d18ca0}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="layers_c\zq_cnn_addbias_32f_align_c.c">
@@ -89,6 +92,39 @@
     </ClCompile>
     <ClCompile Include="math\zq_avx_mathfun.c">
       <Filter>math</Filter>
+    </ClCompile>
+    <ClCompile Include="ZQ_CNN_Forward_SSEUtils_NCHWC.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="layers_nchwc\zq_cnn_addbias_nchwc.c">
+      <Filter>layers_nchwc</Filter>
+    </ClCompile>
+    <ClCompile Include="layers_nchwc\zq_cnn_relu_nchwc.c">
+      <Filter>layers_nchwc</Filter>
+    </ClCompile>
+    <ClCompile Include="layers_nchwc\zq_cnn_prelu_nchwc.c">
+      <Filter>layers_nchwc</Filter>
+    </ClCompile>
+    <ClCompile Include="layers_nchwc\zq_cnn_eltwise_nchwc.c">
+      <Filter>layers_nchwc</Filter>
+    </ClCompile>
+    <ClCompile Include="layers_nchwc\zq_cnn_softmax_nchwc.c">
+      <Filter>layers_nchwc</Filter>
+    </ClCompile>
+    <ClCompile Include="layers_nchwc\zq_cnn_resize_nchwc.c">
+      <Filter>layers_nchwc</Filter>
+    </ClCompile>
+    <ClCompile Include="layers_nchwc\zq_cnn_pooling_nchwc.c">
+      <Filter>layers_nchwc</Filter>
+    </ClCompile>
+    <ClCompile Include="layers_nchwc\zq_cnn_batchnormscale_nchwc.c">
+      <Filter>layers_nchwc</Filter>
+    </ClCompile>
+    <ClCompile Include="layers_nchwc\zq_cnn_depthwise_convolution_nchwc.c">
+      <Filter>layers_nchwc</Filter>
+    </ClCompile>
+    <ClCompile Include="layers_nchwc\zq_cnn_convolution_gemm_nchwc.c">
+      <Filter>layers_nchwc</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -191,16 +227,10 @@
     <ClInclude Include="ZQ_CNN_Tensor4D.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="ZQ_CNN_Defines.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
     <ClInclude Include="ZQ_CNN_BBox.h">
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="layers_c\zq_cnn_depthwise_convolution_32f_align_c.h">
-      <Filter>layers_c</Filter>
-    </ClInclude>
-    <ClInclude Include="layers_c\zq_cnn_depthwise_convolution_32f_align_c_raw.h">
       <Filter>layers_c</Filter>
     </ClInclude>
     <ClInclude Include="ZQ_CNN_BBoxUtils.h">
@@ -250,6 +280,84 @@
     </ClInclude>
     <ClInclude Include="math\zq_avx_mathfun.h">
       <Filter>math</Filter>
+    </ClInclude>
+    <ClInclude Include="layers_c\zq_cnn_depthwise_convolution_32f_align_c_raw.h">
+      <Filter>layers_c</Filter>
+    </ClInclude>
+    <ClInclude Include="ZQ_CNN_Tensor4D_NCHWC.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="ZQ_CNN_Net_NCHWC.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="ZQ_CNN_Layer_NCHWC.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="ZQ_CNN_Forward_SSEUtils_NCHWC.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="layers_nchwc\zq_cnn_addbias_nchwc.h">
+      <Filter>layers_nchwc</Filter>
+    </ClInclude>
+    <ClInclude Include="layers_nchwc\zq_cnn_addbias_nchwc_raw.h">
+      <Filter>layers_nchwc</Filter>
+    </ClInclude>
+    <ClInclude Include="layers_nchwc\zq_cnn_base_operator.h">
+      <Filter>layers_nchwc</Filter>
+    </ClInclude>
+    <ClInclude Include="layers_nchwc\zq_cnn_relu_nchwc.h">
+      <Filter>layers_nchwc</Filter>
+    </ClInclude>
+    <ClInclude Include="layers_nchwc\zq_cnn_relu_nchwc_raw.h">
+      <Filter>layers_nchwc</Filter>
+    </ClInclude>
+    <ClInclude Include="layers_nchwc\zq_cnn_prelu_nchwc.h">
+      <Filter>layers_nchwc</Filter>
+    </ClInclude>
+    <ClInclude Include="layers_nchwc\zq_cnn_prelu_nchwc_raw.h">
+      <Filter>layers_nchwc</Filter>
+    </ClInclude>
+    <ClInclude Include="layers_nchwc\zq_cnn_eltwise_nchwc.h">
+      <Filter>layers_nchwc</Filter>
+    </ClInclude>
+    <ClInclude Include="layers_nchwc\zq_cnn_eltwise_nchwc_raw.h">
+      <Filter>layers_nchwc</Filter>
+    </ClInclude>
+    <ClInclude Include="layers_nchwc\zq_cnn_softmax_nchwc.h">
+      <Filter>layers_nchwc</Filter>
+    </ClInclude>
+    <ClInclude Include="layers_nchwc\zq_cnn_softmax_nchwc_raw.h">
+      <Filter>layers_nchwc</Filter>
+    </ClInclude>
+    <ClInclude Include="layers_nchwc\zq_cnn_resize_nchwc_raw.h">
+      <Filter>layers_nchwc</Filter>
+    </ClInclude>
+    <ClInclude Include="layers_nchwc\zq_cnn_resize_nchwc.h">
+      <Filter>layers_nchwc</Filter>
+    </ClInclude>
+    <ClInclude Include="layers_nchwc\zq_cnn_pooling_nchwc.h">
+      <Filter>layers_nchwc</Filter>
+    </ClInclude>
+    <ClInclude Include="layers_nchwc\zq_cnn_pooling_nchwc_raw.h">
+      <Filter>layers_nchwc</Filter>
+    </ClInclude>
+    <ClInclude Include="layers_nchwc\zq_cnn_batchnormscale_nchwc.h">
+      <Filter>layers_nchwc</Filter>
+    </ClInclude>
+    <ClInclude Include="layers_nchwc\zq_cnn_batchnormscale_nchwc_raw.h">
+      <Filter>layers_nchwc</Filter>
+    </ClInclude>
+    <ClInclude Include="layers_nchwc\zq_cnn_depthwise_convolution_nchwc.h">
+      <Filter>layers_nchwc</Filter>
+    </ClInclude>
+    <ClInclude Include="layers_nchwc\zq_cnn_depthwise_convolution_nchwc_raw.h">
+      <Filter>layers_nchwc</Filter>
+    </ClInclude>
+    <ClInclude Include="layers_nchwc\zq_cnn_convolution_gemm_nchwc_raw.h">
+      <Filter>layers_nchwc</Filter>
+    </ClInclude>
+    <ClInclude Include="layers_nchwc\zq_cnn_convolution_gemm_nchwc.h">
+      <Filter>layers_nchwc</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

@@ -305,7 +305,7 @@ void zq_cnn_resize_with_safeborder(
 				for (w = 0, out_pix_ptr = out_row_ptr; w < out_W; w++, out_pix_ptr += out_pixelStep)
 				{
 					cur_sx = zq_mm_set1_ps(sx[w]);
-					for (c = 0, cur_x0 = x0[w], cur_x1 = x1[w]; c < in_C; c += zq_mm_align_size, cur_x0 += 4, cur_x1 += 4)
+					for (c = 0, cur_x0 = x0[w], cur_x1 = x1[w]; c < in_C; c += zq_mm_align_size, cur_x0 += zq_mm_align_size, cur_x1 += zq_mm_align_size)
 					{
 						v00 = zq_mm_load_ps(in_row0_ptr + cur_x0);
 						dx0 = zq_mm_sub_ps(zq_mm_load_ps(in_row0_ptr + cur_x1), v00);
@@ -647,7 +647,7 @@ void zq_cnn_resize_without_safeborder(
 				for (w = 0, out_pix_ptr = out_row_ptr; w < out_W; w++, out_pix_ptr += out_pixelStep)
 				{
 					cur_sx = zq_mm_set1_ps(sx[w]);
-					for (c = 0, cur_x0 = x0[w], cur_x1 = x1[w]; c < in_C; c += zq_mm_align_size, cur_x0 += 4, cur_x1 += 4)
+					for (c = 0, cur_x0 = x0[w], cur_x1 = x1[w]; c < in_C; c += zq_mm_align_size, cur_x0 += zq_mm_align_size, cur_x1 += zq_mm_align_size)
 					{
 						v00 = zq_mm_load_ps(in_row0_ptr + cur_x0);
 						dx0 = zq_mm_sub_ps(zq_mm_load_ps(in_row0_ptr + cur_x1), v00);

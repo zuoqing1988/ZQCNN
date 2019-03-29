@@ -156,7 +156,7 @@
       <ControlFlowGuard>false</ControlFlowGuard>
       <FloatingPointExceptions>false</FloatingPointExceptions>
       <CreateHotpatchableImage>false</CreateHotpatchableImage>
-      <DebugInformationFormat>None</DebugInformationFormat>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -187,9 +187,20 @@
     <ClCompile Include="layers_c\zq_cnn_softmax_32f_align_c.c" />
     <ClCompile Include="layers_c\zq_cnn_sqrt_32f_align_c.c" />
     <ClCompile Include="layers_c\zq_cnn_reduction_32f_align_c.c" />
+    <ClCompile Include="layers_nchwc\zq_cnn_addbias_nchwc.c" />
+    <ClCompile Include="layers_nchwc\zq_cnn_batchnormscale_nchwc.c" />
+    <ClCompile Include="layers_nchwc\zq_cnn_convolution_gemm_nchwc.c" />
+    <ClCompile Include="layers_nchwc\zq_cnn_depthwise_convolution_nchwc.c" />
+    <ClCompile Include="layers_nchwc\zq_cnn_eltwise_nchwc.c" />
+    <ClCompile Include="layers_nchwc\zq_cnn_pooling_nchwc.c" />
+    <ClCompile Include="layers_nchwc\zq_cnn_prelu_nchwc.c" />
+    <ClCompile Include="layers_nchwc\zq_cnn_relu_nchwc.c" />
+    <ClCompile Include="layers_nchwc\zq_cnn_resize_nchwc.c" />
+    <ClCompile Include="layers_nchwc\zq_cnn_softmax_nchwc.c" />
     <ClCompile Include="math\zq_avx_mathfun.c" />
     <ClCompile Include="math\zq_sse_mathfun.c" />
     <ClCompile Include="ZQ_CNN_Forward_SSEUtils.cpp" />
+    <ClCompile Include="ZQ_CNN_Forward_SSEUtils_NCHWC.cpp" />
     <ClCompile Include="ZQ_CNN_Tensor4D.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -229,22 +240,46 @@
     <ClInclude Include="layers_c\zq_cnn_softmax_32f_align_c_raw.h" />
     <ClInclude Include="layers_c\zq_cnn_sqrt_32f_align_c.h" />
     <ClInclude Include="layers_c\zq_cnn_reduction_32f_align_c.h" />
+    <ClInclude Include="layers_nchwc\zq_cnn_addbias_nchwc.h" />
+    <ClInclude Include="layers_nchwc\zq_cnn_addbias_nchwc_raw.h" />
+    <ClInclude Include="layers_nchwc\zq_cnn_base_operator.h" />
+    <ClInclude Include="layers_nchwc\zq_cnn_batchnormscale_nchwc.h" />
+    <ClInclude Include="layers_nchwc\zq_cnn_batchnormscale_nchwc_raw.h" />
+    <ClInclude Include="layers_nchwc\zq_cnn_convolution_gemm_nchwc.h" />
+    <ClInclude Include="layers_nchwc\zq_cnn_convolution_gemm_nchwc_raw.h" />
+    <ClInclude Include="layers_nchwc\zq_cnn_depthwise_convolution_nchwc.h" />
+    <ClInclude Include="layers_nchwc\zq_cnn_depthwise_convolution_nchwc_raw.h" />
+    <ClInclude Include="layers_nchwc\zq_cnn_eltwise_nchwc.h" />
+    <ClInclude Include="layers_nchwc\zq_cnn_eltwise_nchwc_raw.h" />
+    <ClInclude Include="layers_nchwc\zq_cnn_pooling_nchwc.h" />
+    <ClInclude Include="layers_nchwc\zq_cnn_pooling_nchwc_raw.h" />
+    <ClInclude Include="layers_nchwc\zq_cnn_prelu_nchwc.h" />
+    <ClInclude Include="layers_nchwc\zq_cnn_prelu_nchwc_raw.h" />
+    <ClInclude Include="layers_nchwc\zq_cnn_relu_nchwc.h" />
+    <ClInclude Include="layers_nchwc\zq_cnn_relu_nchwc_raw.h" />
+    <ClInclude Include="layers_nchwc\zq_cnn_resize_nchwc.h" />
+    <ClInclude Include="layers_nchwc\zq_cnn_resize_nchwc_raw.h" />
+    <ClInclude Include="layers_nchwc\zq_cnn_softmax_nchwc.h" />
+    <ClInclude Include="layers_nchwc\zq_cnn_softmax_nchwc_raw.h" />
     <ClInclude Include="math\zq_avx_mathfun.h" />
     <ClInclude Include="math\zq_sse_mathfun.h" />
     <ClInclude Include="ZQ_CNN_BBox.h" />
     <ClInclude Include="ZQ_CNN_BBoxUtils.h" />
     <ClInclude Include="ZQ_CNN_CompileConfig.h" />
-    <ClInclude Include="ZQ_CNN_Defines.h" />
     <ClInclude Include="ZQ_CNN_DetectorInterface.h" />
     <ClInclude Include="ZQ_CNN_Forward_SSEUtils.h" />
+    <ClInclude Include="ZQ_CNN_Forward_SSEUtils_NCHWC.h" />
     <ClInclude Include="ZQ_CNN_Layer.h" />
+    <ClInclude Include="ZQ_CNN_Layer_NCHWC.h" />
     <ClInclude Include="ZQ_CNN_MouthDetector.h" />
     <ClInclude Include="ZQ_CNN_MTCNN_old.h" />
     <ClInclude Include="ZQ_CNN_MTCNN.h" />
     <ClInclude Include="ZQ_CNN_Net.h" />
+    <ClInclude Include="ZQ_CNN_Net_NCHWC.h" />
     <ClInclude Include="ZQ_CNN_NSFW.h" />
     <ClInclude Include="ZQ_CNN_SSD.h" />
     <ClInclude Include="ZQ_CNN_Tensor4D.h" />
+    <ClInclude Include="ZQ_CNN_Tensor4D_NCHWC.h" />
     <ClInclude Include="ZQ_CNN_TextBoxes.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
