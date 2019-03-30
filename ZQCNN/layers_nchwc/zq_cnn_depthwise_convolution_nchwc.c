@@ -58,7 +58,7 @@ extern "C" {
 #define zq_cnn_depthwise_conv_no_padding_nchwc_kernel2x2 zq_cnn_depthwise_conv_no_padding_nchwc4_kernel2x2
 
 #define WITH_BIAS 0
-#include "zq_cnn_depthwise_convolution_32f_align_c_raw.h"
+#include "zq_cnn_depthwise_convolution_nchwc_raw.h"
 #undef WITH_BIAS
 
 #undef zq_cnn_depthwise_conv_no_padding_nchwc_general
@@ -70,7 +70,7 @@ extern "C" {
 #define zq_cnn_depthwise_conv_no_padding_nchwc_kernel2x2 zq_cnn_depthwise_conv_no_padding_nchwc4_kernel2x2_with_bias
 
 #define WITH_BIAS 1
-#include "zq_cnn_depthwise_convolution_32f_align_c_raw.h"
+#include "zq_cnn_depthwise_convolution_nchwc_raw.h"
 #undef WITH_BIAS
 
 #undef zq_cnn_depthwise_conv_no_padding_nchwc_general
@@ -83,7 +83,7 @@ extern "C" {
 
 #define WITH_BIAS 1
 #define WITH_PRELU 1
-#include "zq_cnn_depthwise_convolution_32f_align_c_raw.h"
+#include "zq_cnn_depthwise_convolution_nchwc_raw.h"
 #undef WITH_BIAS
 #undef WITH_PRELU
 
