@@ -48,7 +48,7 @@ void zq_cnn_eltwise_sum_nchwc(
 		{
 			for (c = 0, in_slice_ptr = in_im_ptr, out_slice_ptr = out_im_ptr;
 				c < C;
-				c += zq_mm_align_size, in_slice_ptr += in_sliceStep[tensor_id], in1_slice_ptr += in_sliceStep[1], out_slice_ptr += out_sliceStep)
+				c += zq_mm_align_size, in_slice_ptr += in_sliceStep[tensor_id], out_slice_ptr += out_sliceStep)
 			{
 				for (h = 0, in_row_ptr = in_slice_ptr, out_row_ptr = out_slice_ptr;
 					h < H;
