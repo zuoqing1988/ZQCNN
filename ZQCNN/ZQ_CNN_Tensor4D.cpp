@@ -47,6 +47,10 @@ ZQ_CNN_Tensor4D_NHW_C_Align0::~ZQ_CNN_Tensor4D_NHW_C_Align0()
 
 void ZQ_CNN_Tensor4D_NHW_C_Align0::Swap(ZQ_CNN_Tensor4D_NHW_C_Align0& other)
 {
+	int tmp_shape[4];
+	memcpy(tmp_shape, shape_nchw, sizeof(int) * 4);
+	memcpy(shape_nchw, other.shape_nchw, sizeof(int) * 4);
+	memcpy(other.shape_nchw,tmp_shape,sizeof(int) * 4);
 	int tmp_N = N; N = other.N; other.N = tmp_N;
 	int tmp_H = H; H = other.H; other.H = tmp_H;
 	int tmp_W = W; W = other.W; other.W = tmp_W;
@@ -402,7 +406,10 @@ ZQ_CNN_Tensor4D_NHW_C_Align128bit::~ZQ_CNN_Tensor4D_NHW_C_Align128bit()
 
 void ZQ_CNN_Tensor4D_NHW_C_Align128bit::Swap(ZQ_CNN_Tensor4D_NHW_C_Align128bit& other)
 {
-	
+	int tmp_shape[4];
+	memcpy(tmp_shape, shape_nchw, sizeof(int) * 4);
+	memcpy(shape_nchw, other.shape_nchw, sizeof(int) * 4);
+	memcpy(other.shape_nchw, tmp_shape, sizeof(int) * 4);
 	int tmp_N = N; N = other.N; other.N = tmp_N;
 	int tmp_H = H; H = other.H; other.H = tmp_H;
 	int tmp_W = W; W = other.W; other.W = tmp_W;
@@ -790,7 +797,10 @@ ZQ_CNN_Tensor4D_NHW_C_Align256bit::~ZQ_CNN_Tensor4D_NHW_C_Align256bit()
 
 void ZQ_CNN_Tensor4D_NHW_C_Align256bit::Swap(ZQ_CNN_Tensor4D_NHW_C_Align256bit& other)
 {
-
+	int tmp_shape[4];
+	memcpy(tmp_shape, shape_nchw, sizeof(int) * 4);
+	memcpy(shape_nchw, other.shape_nchw, sizeof(int) * 4);
+	memcpy(other.shape_nchw, tmp_shape, sizeof(int) * 4);
 	int tmp_N = N; N = other.N; other.N = tmp_N;
 	int tmp_H = H; H = other.H; other.H = tmp_H;
 	int tmp_W = W; W = other.W; other.W = tmp_W;
