@@ -43,9 +43,9 @@ extern "C" {
 #define zq_mm_mul_ps vmulq_f32
 #define zq_mm_add_ps vaddq_f32
 #if ZQ_CNN_USE_FMADD128
-#define zq_mm_fmadd_ps _mm_fmadd_ps
+#define zq_mm_fmadd_ps(A, B, C) vfmaq_f32(C, A, B)
 #else
-#define zq_mm_fmadd_ps(A, B, C) _mm_add_ps(_mm_mul_ps(A, B), C)
+#define zq_mm_fmadd_ps(A, B, C) vaddq_f32(vmulq_f32(A, B), C)
 #endif
 #define zq_mm_max_ps vmaxq_f32
 #define zq_mm_set1_ps vdupq_n_f32
