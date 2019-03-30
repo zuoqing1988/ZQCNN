@@ -44,7 +44,7 @@ extern "C" {
 #include "zq_cnn_addbias_nchwc_raw.h"
 
 
-#undef zq_cnn_addbias_32f_align
+#undef zq_cnn_addbias_nchwc
 #undef zq_mm_load_ps
 #undef zq_mm_store_ps
 #undef zq_mm_add_ps
