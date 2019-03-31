@@ -2008,7 +2008,7 @@ namespace ZQ
 						const char* str = paras[n][1].c_str();
 						if (ZQ_CNN_Layer_NCHWC<Tensor4D>::_my_strcmpi(str, "MAX") == 0)
 							type = TYPE_MAXPOOLING;
-						else if (ZQ_CNN_Layer_NCHWC<Tensor4D>::_my_strcmpi(str, "AVG") == 0 || _my_strcmpi(str, "AVE") == 0)
+						else if (ZQ_CNN_Layer_NCHWC<Tensor4D>::_my_strcmpi(str, "AVG") == 0 || ZQ_CNN_Layer_NCHWC<Tensor4D>::_my_strcmpi(str, "AVE") == 0)
 							type = TYPE_AVGPOOLING;
 						else
 						{
@@ -2637,11 +2637,11 @@ namespace ZQ
 						has_operation = true;
 						const char* str = paras[n][1].c_str();
 
-						if (ZQ_CNN_Layer_NCHWC<Tensor4D>::_my_strcmpi(str, "PROD") == 0 || _my_strcmpi(str, "MUL") == 0)
+						if (ZQ_CNN_Layer_NCHWC<Tensor4D>::_my_strcmpi(str, "PROD") == 0 || ZQ_CNN_Layer_NCHWC<Tensor4D>::_my_strcmpi(str, "MUL") == 0)
 						{
 							operation = ELTWISE_MUL;
 						}
-						else if (ZQ_CNN_Layer_NCHWC<Tensor4D>::_my_strcmpi(str, "SUM") == 0 || _my_strcmpi(str, "ADD") == 0 || _my_strcmpi(str, "PLUS") == 0)
+						else if (ZQ_CNN_Layer_NCHWC<Tensor4D>::_my_strcmpi(str, "SUM") == 0 || ZQ_CNN_Layer_NCHWC<Tensor4D>::_my_strcmpi(str, "ADD") == 0 || ZQ_CNN_Layer_NCHWC<Tensor4D>::_my_strcmpi(str, "PLUS") == 0)
 						{
 							operation = ELTWISE_SUM;
 						}
