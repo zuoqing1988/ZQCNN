@@ -38,7 +38,38 @@ extern "C" {
 #endif
 
 #if __ARM_NEON
+#define zq_cnn_softmax_nchwc_C zq_cnn_softmax_nchwc4_C
+#define zq_mm_load_ps vld1q_f32
+#define zq_mm_store_ps vst1q_f32
+#define zq_mm_max_ps vmax1q_f32
+#define zq_mm_add_ps vaddq_f32
+#define zq_mm_sub_ps vsubq_f32
+#define zq_mm_mul_ps vmulq_f32
+#define zq_mm_set1_ps vdupq_n_f32
+#define zq_mm_type float32x4_t
+#define zq_base_type float
+#define zq_mm_align_size 4
+#define zq_mm_bitor_longlong 0xFFFFFFFFFFFFFFF0
+#define zq_final_max_q __max(q[0],__max(q[1],__max(q[2],q[3])))
+#define zq_final_sum_q (q[0]+q[1]+q[2]+q[3])
 
+#include "zq_cnn_softmax_nchwc_raw.h"
+
+
+#undef zq_cnn_softmax_nchwc_C
+#undef zq_mm_load_ps
+#undef zq_mm_store_ps
+#undef zq_mm_max_ps
+#undef zq_mm_add_ps
+#undef zq_mm_sub_ps
+#undef zq_mm_mul_ps
+#undef zq_mm_set1_ps
+#undef zq_mm_type
+#undef zq_base_type
+#undef zq_mm_align_size
+#undef zq_mm_bitor_longlong
+#undef zq_final_max_q
+#undef zq_final_sum_q
 #else
 #if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_SSE
 #define zq_cnn_softmax_nchwc_C zq_cnn_softmax_nchwc4_C

@@ -16,7 +16,7 @@ extern "C" {
 		int in_imStep
 	);
 
-#if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_SSE
+#if __ARM_NEON || (ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_SSE)
 	void zq_cnn_softmax_nchwc4_C(
 		float* in_tensor4D_data,	// in & out
 		int in_N,
@@ -27,7 +27,7 @@ extern "C" {
 		int in_sliceStep,
 		int in_imStep
 	);
-#endif
+#endif //__ARM_NEON || (ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_SSE)
 
 #if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_AVX
 	void zq_cnn_softmax_nchwc8_C(
