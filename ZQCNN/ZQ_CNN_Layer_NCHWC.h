@@ -165,11 +165,11 @@ namespace ZQ
 			{
 				if (paras[n].size() == 0)
 					continue;
-				if (_my_strcmpi("Input", paras[n][0].c_str()) == 0)
+				if (ZQ_CNN_Layer_NCHWC<Tensor4D>::_my_strcmpi("Input", paras[n][0].c_str()) == 0)
 				{
 
 				}
-				else if (_my_strcmpi("H", paras[n][0].c_str()) == 0)
+				else if (ZQ_CNN_Layer_NCHWC<Tensor4D>::_my_strcmpi("H", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
@@ -177,7 +177,7 @@ namespace ZQ
 						H = atoi(paras[n][1].c_str());
 					}
 				}
-				else if (_my_strcmpi("W", paras[n][0].c_str()) == 0)
+				else if (ZQ_CNN_Layer_NCHWC<Tensor4D>::_my_strcmpi("W", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
@@ -185,7 +185,7 @@ namespace ZQ
 						W = atoi(paras[n][1].c_str());
 					}
 				}
-				else if (_my_strcmpi("C", paras[n][0].c_str()) == 0)
+				else if (ZQ_CNN_Layer_NCHWC<Tensor4D>::_my_strcmpi("C", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
@@ -193,7 +193,7 @@ namespace ZQ
 						C = atoi(paras[n][1].c_str());
 					}
 				}
-				else if (_my_strcmpi("name", paras[n][0].c_str()) == 0)
+				else if (ZQ_CNN_Layer_NCHWC<Tensor4D>::_my_strcmpi("name", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
@@ -389,11 +389,11 @@ namespace ZQ
 			{
 				if (paras[n].size() == 0)
 					continue;
-				if (_my_strcmpi("Convolution", paras[n][0].c_str()) == 0)
+				if (ZQ_CNN_Layer_NCHWC<Tensor4D>::_my_strcmpi("Convolution", paras[n][0].c_str()) == 0)
 				{
 
 				}
-				else if (_my_strcmpi("num_output", paras[n][0].c_str()) == 0)
+				else if (ZQ_CNN_Layer_NCHWC<Tensor4D>::_my_strcmpi("num_output", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
@@ -401,7 +401,7 @@ namespace ZQ
 						num_output = atoi(paras[n][1].c_str());
 					}
 				}
-				else if (_my_strcmpi("kernel_size", paras[n][0].c_str()) == 0)
+				else if (ZQ_CNN_Layer_NCHWC<Tensor4D>::_my_strcmpi("kernel_size", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
@@ -411,7 +411,7 @@ namespace ZQ
 						kernel_W = atoi(paras[n][1].c_str());
 					}
 				}
-				else if (_my_strcmpi("kernel_H", paras[n][0].c_str()) == 0)
+				else if (ZQ_CNN_Layer_NCHWC<Tensor4D>::_my_strcmpi("kernel_H", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
@@ -419,7 +419,7 @@ namespace ZQ
 						kernel_H = atoi(paras[n][1].c_str());
 					}
 				}
-				else if (_my_strcmpi("kernel_W", paras[n][0].c_str()) == 0)
+				else if (ZQ_CNN_Layer_NCHWC<Tensor4D>::_my_strcmpi("kernel_W", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
@@ -427,7 +427,7 @@ namespace ZQ
 						kernel_W = atoi(paras[n][1].c_str());
 					}
 				}
-				else if (_my_strcmpi("dilate", paras[n][0].c_str()) == 0)
+				else if (ZQ_CNN_Layer_NCHWC<Tensor4D>::_my_strcmpi("dilate", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
@@ -435,21 +435,21 @@ namespace ZQ
 						dilate_W = atoi(paras[n][1].c_str());
 					}
 				}
-				else if (_my_strcmpi("dilate_H", paras[n][0].c_str()) == 0)
+				else if (ZQ_CNN_Layer_NCHWC<Tensor4D>::_my_strcmpi("dilate_H", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
 						dilate_H = atoi(paras[n][1].c_str());
 					}
 				}
-				else if (_my_strcmpi("dilate_W", paras[n][0].c_str()) == 0)
+				else if (ZQ_CNN_Layer_NCHWC<Tensor4D>::_my_strcmpi("dilate_W", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
 						dilate_W = atoi(paras[n][1].c_str());
 					}
 				}
-				else if (_my_strcmpi("pad", paras[n][0].c_str()) == 0)
+				else if (ZQ_CNN_Layer_NCHWC<Tensor4D>::_my_strcmpi("pad", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
@@ -457,21 +457,21 @@ namespace ZQ
 						pad_H = pad_W = pad_num;
 					}
 				}
-				else if (_my_strcmpi("pad_H", paras[n][0].c_str()) == 0)
+				else if (ZQ_CNN_Layer_NCHWC<Tensor4D>::_my_strcmpi("pad_H", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
 						pad_H = atoi(paras[n][1].c_str());
 					}
 				}
-				else if (_my_strcmpi("pad_W", paras[n][0].c_str()) == 0)
+				else if (ZQ_CNN_Layer_NCHWC<Tensor4D>::_my_strcmpi("pad_W", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
 						pad_W = atoi(paras[n][1].c_str());
 					}
 				}
-				else if (_my_strcmpi("stride", paras[n][0].c_str()) == 0)
+				else if (ZQ_CNN_Layer_NCHWC<Tensor4D>::_my_strcmpi("stride", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
@@ -479,28 +479,28 @@ namespace ZQ
 						stride_W = atoi(paras[n][1].c_str());
 					}
 				}
-				else if (_my_strcmpi("stride_H", paras[n][0].c_str()) == 0)
+				else if (ZQ_CNN_Layer_NCHWC<Tensor4D>::_my_strcmpi("stride_H", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
 						stride_H = atoi(paras[n][1].c_str());
 					}
 				}
-				else if (_my_strcmpi("stride_W", paras[n][0].c_str()) == 0)
+				else if (ZQ_CNN_Layer_NCHWC<Tensor4D>::_my_strcmpi("stride_W", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
 						stride_W = atoi(paras[n][1].c_str());
 					}
 				}
-				else if (_my_strcmpi("bias", paras[n][0].c_str()) == 0)
+				else if (ZQ_CNN_Layer_NCHWC<Tensor4D>::_my_strcmpi("bias", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() > 1)
 						with_bias = atoi(paras[n][1].c_str());
 					else
 						with_bias = true;
 				}
-				else if (_my_strcmpi("top", paras[n][0].c_str()) == 0)
+				else if (ZQ_CNN_Layer_NCHWC<Tensor4D>::_my_strcmpi("top", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
@@ -508,7 +508,7 @@ namespace ZQ
 						top_names.push_back(paras[n][1]);
 					}
 				}
-				else if (_my_strcmpi("bottom", paras[n][0].c_str()) == 0)
+				else if (ZQ_CNN_Layer_NCHWC<Tensor4D>::_my_strcmpi("bottom", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
@@ -516,7 +516,7 @@ namespace ZQ
 						bottom_names.push_back(paras[n][1]);
 					}
 				}
-				else if (_my_strcmpi("name", paras[n][0].c_str()) == 0)
+				else if (ZQ_CNN_Layer_NCHWC<Tensor4D>::_my_strcmpi("name", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
@@ -840,11 +840,11 @@ namespace ZQ
 			{
 				if (paras[n].size() == 0)
 					continue;
-				if (_my_strcmpi("DepthwiseConvolution", paras[n][0].c_str()) == 0)
+				if (ZQ_CNN_Layer_NCHWC<Tensor4D>::_my_strcmpi("DepthwiseConvolution", paras[n][0].c_str()) == 0)
 				{
 
 				}
-				else if (_my_strcmpi("num_output", paras[n][0].c_str()) == 0)
+				else if (ZQ_CNN_Layer_NCHWC<Tensor4D>::_my_strcmpi("num_output", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
@@ -852,7 +852,7 @@ namespace ZQ
 						num_output = atoi(paras[n][1].c_str());
 					}
 				}
-				else if (_my_strcmpi("kernel_size", paras[n][0].c_str()) == 0)
+				else if (ZQ_CNN_Layer_NCHWC<Tensor4D>::_my_strcmpi("kernel_size", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
@@ -862,7 +862,7 @@ namespace ZQ
 						kernel_W = atoi(paras[n][1].c_str());
 					}
 				}
-				else if (_my_strcmpi("kernel_H", paras[n][0].c_str()) == 0)
+				else if (ZQ_CNN_Layer_NCHWC<Tensor4D>::_my_strcmpi("kernel_H", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
@@ -870,7 +870,7 @@ namespace ZQ
 						kernel_H = atoi(paras[n][1].c_str());
 					}
 				}
-				else if (_my_strcmpi("kernel_W", paras[n][0].c_str()) == 0)
+				else if (ZQ_CNN_Layer_NCHWC<Tensor4D>::_my_strcmpi("kernel_W", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
@@ -878,7 +878,7 @@ namespace ZQ
 						kernel_W = atoi(paras[n][1].c_str());
 					}
 				}
-				else if (_my_strcmpi("dilate", paras[n][0].c_str()) == 0)
+				else if (ZQ_CNN_Layer_NCHWC<Tensor4D>::_my_strcmpi("dilate", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
@@ -886,21 +886,21 @@ namespace ZQ
 						dilate_W = atoi(paras[n][1].c_str());
 					}
 				}
-				else if (_my_strcmpi("dilate_H", paras[n][0].c_str()) == 0)
+				else if (ZQ_CNN_Layer_NCHWC<Tensor4D>::_my_strcmpi("dilate_H", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
 						dilate_H = atoi(paras[n][1].c_str());
 					}
 				}
-				else if (_my_strcmpi("dilate_W", paras[n][0].c_str()) == 0)
+				else if (ZQ_CNN_Layer_NCHWC<Tensor4D>::_my_strcmpi("dilate_W", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
 						dilate_W = atoi(paras[n][1].c_str());
 					}
 				}
-				else if (_my_strcmpi("pad", paras[n][0].c_str()) == 0)
+				else if (ZQ_CNN_Layer_NCHWC<Tensor4D>::_my_strcmpi("pad", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
@@ -908,21 +908,21 @@ namespace ZQ
 						pad_H = pad_W = pad_num;
 					}
 				}
-				else if (_my_strcmpi("pad_H", paras[n][0].c_str()) == 0)
+				else if (ZQ_CNN_Layer_NCHWC<Tensor4D>::_my_strcmpi("pad_H", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
 						pad_H = atoi(paras[n][1].c_str());
 					}
 				}
-				else if (_my_strcmpi("pad_W", paras[n][0].c_str()) == 0)
+				else if (ZQ_CNN_Layer_NCHWC<Tensor4D>::_my_strcmpi("pad_W", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
 						pad_W = atoi(paras[n][1].c_str());
 					}
 				}
-				else if (_my_strcmpi("stride", paras[n][0].c_str()) == 0)
+				else if (ZQ_CNN_Layer_NCHWC<Tensor4D>::_my_strcmpi("stride", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
@@ -930,28 +930,28 @@ namespace ZQ
 						stride_W = atoi(paras[n][1].c_str());
 					}
 				}
-				else if (_my_strcmpi("stride_H", paras[n][0].c_str()) == 0)
+				else if (ZQ_CNN_Layer_NCHWC<Tensor4D>::_my_strcmpi("stride_H", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
 						stride_H = atoi(paras[n][1].c_str());
 					}
 				}
-				else if (_my_strcmpi("stride_W", paras[n][0].c_str()) == 0)
+				else if (ZQ_CNN_Layer_NCHWC<Tensor4D>::_my_strcmpi("stride_W", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
 						stride_W = atoi(paras[n][1].c_str());
 					}
 				}
-				else if (_my_strcmpi("bias", paras[n][0].c_str()) == 0)
+				else if (ZQ_CNN_Layer_NCHWC<Tensor4D>::_my_strcmpi("bias", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() > 1)
 						with_bias = atoi(paras[n][1].c_str());
 					else
 						with_bias = true;
 				}
-				else if (_my_strcmpi("top", paras[n][0].c_str()) == 0)
+				else if (ZQ_CNN_Layer_NCHWC<Tensor4D>::_my_strcmpi("top", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
@@ -959,7 +959,7 @@ namespace ZQ
 						top_names.push_back(paras[n][1]);
 					}
 				}
-				else if (_my_strcmpi("bottom", paras[n][0].c_str()) == 0)
+				else if (ZQ_CNN_Layer_NCHWC<Tensor4D>::_my_strcmpi("bottom", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
@@ -967,7 +967,7 @@ namespace ZQ
 						bottom_names.push_back(paras[n][1]);
 					}
 				}
-				else if (_my_strcmpi("name", paras[n][0].c_str()) == 0)
+				else if (ZQ_CNN_Layer_NCHWC<Tensor4D>::_my_strcmpi("name", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
@@ -1242,18 +1242,18 @@ namespace ZQ
 			{
 				if (paras[n].size() == 0)
 					continue;
-				if (_my_strcmpi("BatchNormScale", paras[n][0].c_str()) == 0)
+				if (ZQ_CNN_Layer_NCHWC<Tensor4D>::_my_strcmpi("BatchNormScale", paras[n][0].c_str()) == 0)
 				{
 
 				}
-				else if (_my_strcmpi("eps", paras[n][0].c_str()) == 0)
+				else if (ZQ_CNN_Layer_NCHWC<Tensor4D>::_my_strcmpi("eps", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
 						eps = atof(paras[n][1].c_str());
 					}
 				}
-				else if (_my_strcmpi("top", paras[n][0].c_str()) == 0)
+				else if (ZQ_CNN_Layer_NCHWC<Tensor4D>::_my_strcmpi("top", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
@@ -1261,7 +1261,7 @@ namespace ZQ
 						top_names.push_back(paras[n][1]);
 					}
 				}
-				else if (_my_strcmpi("bottom", paras[n][0].c_str()) == 0)
+				else if (ZQ_CNN_Layer_NCHWC<Tensor4D>::_my_strcmpi("bottom", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
@@ -1269,7 +1269,7 @@ namespace ZQ
 						bottom_names.push_back(paras[n][1]);
 					}
 				}
-				else if (_my_strcmpi("name", paras[n][0].c_str()) == 0)
+				else if (ZQ_CNN_Layer_NCHWC<Tensor4D>::_my_strcmpi("name", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
@@ -1277,7 +1277,7 @@ namespace ZQ
 						name = paras[n][1];
 					}
 				}
-				else if (_my_strcmpi("bias", paras[n][0].c_str()) == 0)
+				else if (ZQ_CNN_Layer_NCHWC<Tensor4D>::_my_strcmpi("bias", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() > 1)
 						with_bias = atoi(paras[n][1].c_str());
@@ -1582,11 +1582,11 @@ namespace ZQ
 			{
 				if (paras[n].size() == 0)
 					continue;
-				if (_my_strcmpi("PReLU", paras[n][0].c_str()) == 0)
+				if (ZQ_CNN_Layer_NCHWC<Tensor4D>::_my_strcmpi("PReLU", paras[n][0].c_str()) == 0)
 				{
 
 				}
-				else if (_my_strcmpi("top", paras[n][0].c_str()) == 0)
+				else if (ZQ_CNN_Layer_NCHWC<Tensor4D>::_my_strcmpi("top", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
@@ -1594,7 +1594,7 @@ namespace ZQ
 						top_names.push_back(paras[n][1]);
 					}
 				}
-				else if (_my_strcmpi("bottom", paras[n][0].c_str()) == 0)
+				else if (ZQ_CNN_Layer_NCHWC<Tensor4D>::_my_strcmpi("bottom", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
@@ -1602,7 +1602,7 @@ namespace ZQ
 						bottom_names.push_back(paras[n][1]);
 					}
 				}
-				else if (_my_strcmpi("name", paras[n][0].c_str()) == 0)
+				else if (ZQ_CNN_Layer_NCHWC<Tensor4D>::_my_strcmpi("name", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
@@ -1776,18 +1776,18 @@ namespace ZQ
 			{
 				if (paras[n].size() == 0)
 					continue;
-				if (_my_strcmpi("ReLU", paras[n][0].c_str()) == 0)
+				if (ZQ_CNN_Layer_NCHWC<Tensor4D>::_my_strcmpi("ReLU", paras[n][0].c_str()) == 0)
 				{
 
 				}
-				else if (_my_strcmpi("slope", paras[n][0].c_str()) == 0)
+				else if (ZQ_CNN_Layer_NCHWC<Tensor4D>::_my_strcmpi("slope", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
 						slope = atof(paras[n][1].c_str());
 					}
 				}
-				else if (_my_strcmpi("top", paras[n][0].c_str()) == 0)
+				else if (ZQ_CNN_Layer_NCHWC<Tensor4D>::_my_strcmpi("top", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
@@ -1795,7 +1795,7 @@ namespace ZQ
 						top_names.push_back(paras[n][1]);
 					}
 				}
-				else if (_my_strcmpi("bottom", paras[n][0].c_str()) == 0)
+				else if (ZQ_CNN_Layer_NCHWC<Tensor4D>::_my_strcmpi("bottom", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
@@ -1803,7 +1803,7 @@ namespace ZQ
 						bottom_names.push_back(paras[n][1]);
 					}
 				}
-				else if (_my_strcmpi("name", paras[n][0].c_str()) == 0)
+				else if (ZQ_CNN_Layer_NCHWC<Tensor4D>::_my_strcmpi("name", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
@@ -1941,11 +1941,11 @@ namespace ZQ
 			{
 				if (paras[n].size() == 0)
 					continue;
-				if (_my_strcmpi("Pooling", paras[n][0].c_str()) == 0)
+				if (ZQ_CNN_Layer_NCHWC<Tensor4D>::_my_strcmpi("Pooling", paras[n][0].c_str()) == 0)
 				{
 
 				}
-				else if (_my_strcmpi("kernel_size", paras[n][0].c_str()) == 0)
+				else if (ZQ_CNN_Layer_NCHWC<Tensor4D>::_my_strcmpi("kernel_size", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
@@ -1955,7 +1955,7 @@ namespace ZQ
 						kernel_W = atoi(paras[n][1].c_str());
 					}
 				}
-				else if (_my_strcmpi("stride", paras[n][0].c_str()) == 0)
+				else if (ZQ_CNN_Layer_NCHWC<Tensor4D>::_my_strcmpi("stride", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
@@ -1965,7 +1965,7 @@ namespace ZQ
 						stride_W = atoi(paras[n][1].c_str());
 					}
 				}
-				else if (_my_strcmpi("pad", paras[n][0].c_str()) == 0)
+				else if (ZQ_CNN_Layer_NCHWC<Tensor4D>::_my_strcmpi("pad", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
@@ -1973,11 +1973,11 @@ namespace ZQ
 						pad_W = atoi(paras[n][1].c_str());
 					}
 				}
-				else if (_my_strcmpi("global_pool", paras[n][0].c_str()) == 0)
+				else if (ZQ_CNN_Layer_NCHWC<Tensor4D>::_my_strcmpi("global_pool", paras[n][0].c_str()) == 0)
 				{
 					global_pool = true;
 				}
-				else if (_my_strcmpi("top", paras[n][0].c_str()) == 0)
+				else if (ZQ_CNN_Layer_NCHWC<Tensor4D>::_my_strcmpi("top", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
@@ -1985,7 +1985,7 @@ namespace ZQ
 						top_names.push_back(paras[n][1]);
 					}
 				}
-				else if (_my_strcmpi("bottom", paras[n][0].c_str()) == 0)
+				else if (ZQ_CNN_Layer_NCHWC<Tensor4D>::_my_strcmpi("bottom", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
@@ -1993,7 +1993,7 @@ namespace ZQ
 						bottom_names.push_back(paras[n][1]);
 					}
 				}
-				else if (_my_strcmpi("name", paras[n][0].c_str()) == 0)
+				else if (ZQ_CNN_Layer_NCHWC<Tensor4D>::_my_strcmpi("name", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
@@ -2001,14 +2001,14 @@ namespace ZQ
 						name = paras[n][1];
 					}
 				}
-				else if (_my_strcmpi("pool", paras[n][0].c_str()) == 0)
+				else if (ZQ_CNN_Layer_NCHWC<Tensor4D>::_my_strcmpi("pool", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
 						const char* str = paras[n][1].c_str();
-						if (_my_strcmpi(str, "MAX") == 0)
+						if (ZQ_CNN_Layer_NCHWC<Tensor4D>::_my_strcmpi(str, "MAX") == 0)
 							type = TYPE_MAXPOOLING;
-						else if (_my_strcmpi(str, "AVG") == 0 || _my_strcmpi(str, "AVE") == 0)
+						else if (ZQ_CNN_Layer_NCHWC<Tensor4D>::_my_strcmpi(str, "AVG") == 0 || _my_strcmpi(str, "AVE") == 0)
 							type = TYPE_AVGPOOLING;
 						else
 						{
@@ -2177,11 +2177,11 @@ namespace ZQ
 			{
 				if (paras[n].size() == 0)
 					continue;
-				if (_my_strcmpi("InnerProduct", paras[n][0].c_str()) == 0)
+				if (ZQ_CNN_Layer_NCHWC<Tensor4D>::_my_strcmpi("InnerProduct", paras[n][0].c_str()) == 0)
 				{
 
 				}
-				else if (_my_strcmpi("num_output", paras[n][0].c_str()) == 0)
+				else if (ZQ_CNN_Layer_NCHWC<Tensor4D>::_my_strcmpi("num_output", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
@@ -2189,14 +2189,14 @@ namespace ZQ
 						num_output = atoi(paras[n][1].c_str());
 					}
 				}
-				else if (_my_strcmpi("bias", paras[n][0].c_str()) == 0)
+				else if (ZQ_CNN_Layer_NCHWC<Tensor4D>::_my_strcmpi("bias", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() > 1)
 						with_bias = atoi(paras[n][1].c_str());
 					else
 						with_bias = true;
 				}
-				else if (_my_strcmpi("top", paras[n][0].c_str()) == 0)
+				else if (ZQ_CNN_Layer_NCHWC<Tensor4D>::_my_strcmpi("top", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
@@ -2204,7 +2204,7 @@ namespace ZQ
 						top_names.push_back(paras[n][1]);
 					}
 				}
-				else if (_my_strcmpi("bottom", paras[n][0].c_str()) == 0)
+				else if (ZQ_CNN_Layer_NCHWC<Tensor4D>::_my_strcmpi("bottom", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
@@ -2212,7 +2212,7 @@ namespace ZQ
 						bottom_names.push_back(paras[n][1]);
 					}
 				}
-				else if (_my_strcmpi("name", paras[n][0].c_str()) == 0)
+				else if (ZQ_CNN_Layer_NCHWC<Tensor4D>::_my_strcmpi("name", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
@@ -2458,11 +2458,11 @@ namespace ZQ
 			{
 				if (paras[n].size() == 0)
 					continue;
-				if (_my_strcmpi("Softmax", paras[n][0].c_str()) == 0)
+				if (ZQ_CNN_Layer_NCHWC<Tensor4D>::_my_strcmpi("Softmax", paras[n][0].c_str()) == 0)
 				{
 
 				}
-				else if (_my_strcmpi("top", paras[n][0].c_str()) == 0)
+				else if (ZQ_CNN_Layer_NCHWC<Tensor4D>::_my_strcmpi("top", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
@@ -2470,7 +2470,7 @@ namespace ZQ
 						top_names.push_back(paras[n][1]);
 					}
 				}
-				else if (_my_strcmpi("bottom", paras[n][0].c_str()) == 0)
+				else if (ZQ_CNN_Layer_NCHWC<Tensor4D>::_my_strcmpi("bottom", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
@@ -2478,7 +2478,7 @@ namespace ZQ
 						bottom_names.push_back(paras[n][1]);
 					}
 				}
-				else if (_my_strcmpi("name", paras[n][0].c_str()) == 0)
+				else if (ZQ_CNN_Layer_NCHWC<Tensor4D>::_my_strcmpi("name", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
@@ -2486,7 +2486,7 @@ namespace ZQ
 						name = paras[n][1];
 					}
 				}
-				else if (_my_strcmpi("axis", paras[n][0].c_str()) == 0)
+				else if (ZQ_CNN_Layer_NCHWC<Tensor4D>::_my_strcmpi("axis", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
@@ -2626,26 +2626,26 @@ namespace ZQ
 			{
 				if (paras[n].size() == 0)
 					continue;
-				if (_my_strcmpi("Eltwise", paras[n][0].c_str()) == 0)
+				if (ZQ_CNN_Layer_NCHWC<Tensor4D>::_my_strcmpi("Eltwise", paras[n][0].c_str()) == 0)
 				{
 
 				}
-				else if (_my_strcmpi("operation", paras[n][0].c_str()) == 0)
+				else if (ZQ_CNN_Layer_NCHWC<Tensor4D>::_my_strcmpi("operation", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
 						has_operation = true;
 						const char* str = paras[n][1].c_str();
 
-						if (_my_strcmpi(str, "PROD") == 0 || _my_strcmpi(str, "MUL") == 0)
+						if (ZQ_CNN_Layer_NCHWC<Tensor4D>::_my_strcmpi(str, "PROD") == 0 || _my_strcmpi(str, "MUL") == 0)
 						{
 							operation = ELTWISE_MUL;
 						}
-						else if (_my_strcmpi(str, "SUM") == 0 || _my_strcmpi(str, "ADD") == 0 || _my_strcmpi(str, "PLUS") == 0)
+						else if (ZQ_CNN_Layer_NCHWC<Tensor4D>::_my_strcmpi(str, "SUM") == 0 || _my_strcmpi(str, "ADD") == 0 || _my_strcmpi(str, "PLUS") == 0)
 						{
 							operation = ELTWISE_SUM;
 						}
-						else if (_my_strcmpi(str, "MAX") == 0)
+						else if (ZQ_CNN_Layer_NCHWC<Tensor4D>::_my_strcmpi(str, "MAX") == 0)
 						{
 							operation = ELTWISE_MAX;
 						}
@@ -2655,7 +2655,7 @@ namespace ZQ
 						}
 					}
 				}
-				else if (_my_strcmpi("top", paras[n][0].c_str()) == 0)
+				else if (ZQ_CNN_Layer_NCHWC<Tensor4D>::_my_strcmpi("top", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
@@ -2663,7 +2663,7 @@ namespace ZQ
 						top_names.push_back(paras[n][1]);
 					}
 				}
-				else if (_my_strcmpi("bottom", paras[n][0].c_str()) == 0)
+				else if (ZQ_CNN_Layer_NCHWC<Tensor4D>::_my_strcmpi("bottom", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
@@ -2671,7 +2671,7 @@ namespace ZQ
 						bottom_names.push_back(paras[n][1]);
 					}
 				}
-				else if (_my_strcmpi("name", paras[n][0].c_str()) == 0)
+				else if (ZQ_CNN_Layer_NCHWC<Tensor4D>::_my_strcmpi("name", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
@@ -2679,7 +2679,7 @@ namespace ZQ
 						name = paras[n][1];
 					}
 				}
-				else if (_my_strcmpi("weight", paras[n][0].c_str()) == 0)
+				else if (ZQ_CNN_Layer_NCHWC<Tensor4D>::_my_strcmpi("weight", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
