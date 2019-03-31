@@ -76,53 +76,51 @@ bool ZQ_CNN_Forward_SSEUtils_NCHWC::ConvolutionWithBias(ZQ_CNN_Tensor4D_NCHWC1& 
 	{
 		if (filter_C == 3)
 		{
-			zq_cnn_conv_no_padding_gemm_nchwc1_kernel3x3_C3(in_firstPixelData, in_N, in_H, in_W, in_C,
+			zq_cnn_conv_no_padding_gemm_nchwc1_kernel3x3_C3_with_bias(in_firstPixelData, in_N, in_H, in_W, in_C,
 				in_widthStep, in_sliceStep, in_imStep, filter_firstPixelData, filter_N, filter_H, filter_W, filter_C,
 				filter_widthStep, filter_sliceStep, filter_imStep, strideH, strideW, dilation_H, dilation_W,
-				out_firstPixelData, need_N, need_H, need_W, need_C, out_widthStep, out_sliceStep, out_imStep, buffer, buffer_len);
+				out_firstPixelData, need_N, need_H, need_W, need_C, out_widthStep, out_sliceStep, out_imStep, bias_firstPixelData, buffer, buffer_len);
 		}
 		else
 		{
-			zq_cnn_conv_no_padding_gemm_nchwc1_kernel3x3(in_firstPixelData, in_N, in_H, in_W, in_C,
+			zq_cnn_conv_no_padding_gemm_nchwc1_kernel3x3_with_bias(in_firstPixelData, in_N, in_H, in_W, in_C,
 				in_widthStep, in_sliceStep, in_imStep, filter_firstPixelData, filter_N, filter_H, filter_W, filter_C,
 				filter_widthStep, filter_sliceStep, filter_imStep, strideH, strideW, dilation_H, dilation_W,
-				out_firstPixelData, need_N, need_H, need_W, need_C, out_widthStep, out_sliceStep, out_imStep, buffer, buffer_len);
+				out_firstPixelData, need_N, need_H, need_W, need_C, out_widthStep, out_sliceStep, out_imStep, bias_firstPixelData, buffer, buffer_len);
 		}
 	}
 	else if (filter_H == 2 && filter_W == 2)
 	{
 		if (filter_C == 3)
 		{
-			zq_cnn_conv_no_padding_gemm_nchwc1_kernel2x2_C3(in_firstPixelData, in_N, in_H, in_W, in_C,
+			zq_cnn_conv_no_padding_gemm_nchwc1_kernel2x2_C3_with_bias(in_firstPixelData, in_N, in_H, in_W, in_C,
 				in_widthStep, in_sliceStep, in_imStep, filter_firstPixelData, filter_N, filter_H, filter_W, filter_C,
 				filter_widthStep, filter_sliceStep, filter_imStep, strideH, strideW, dilation_H, dilation_W,
-				out_firstPixelData, need_N, need_H, need_W, need_C, out_widthStep, out_sliceStep, out_imStep, buffer, buffer_len);
+				out_firstPixelData, need_N, need_H, need_W, need_C, out_widthStep, out_sliceStep, out_imStep, bias_firstPixelData, buffer, buffer_len);
 		}
 		else
 		{
-			zq_cnn_conv_no_padding_gemm_nchwc1_kernel2x2(in_firstPixelData, in_N, in_H, in_W, in_C,
+			zq_cnn_conv_no_padding_gemm_nchwc1_kernel2x2_with_bias(in_firstPixelData, in_N, in_H, in_W, in_C,
 				in_widthStep, in_sliceStep, in_imStep, filter_firstPixelData, filter_N, filter_H, filter_W, filter_C,
 				filter_widthStep, filter_sliceStep, filter_imStep, strideH, strideW, dilation_H, dilation_W,
-				out_firstPixelData, need_N, need_H, need_W, need_C, out_widthStep, out_sliceStep, out_imStep, buffer, buffer_len);
+				out_firstPixelData, need_N, need_H, need_W, need_C, out_widthStep, out_sliceStep, out_imStep, bias_firstPixelData, buffer, buffer_len);
 		}
 	}
 	else if (filter_H == 1 && filter_W == 1)
 	{
-		zq_cnn_conv_no_padding_gemm_nchwc1_kernel1x1(in_firstPixelData, in_N, in_H, in_W, in_C,
+		zq_cnn_conv_no_padding_gemm_nchwc1_kernel1x1_with_bias(in_firstPixelData, in_N, in_H, in_W, in_C,
 			in_widthStep, in_sliceStep, in_imStep, filter_firstPixelData, filter_N, filter_H, filter_W, filter_C,
 			filter_widthStep, filter_sliceStep, filter_imStep, strideH, strideW, dilation_H, dilation_W,
-			out_firstPixelData, need_N, need_H, need_W, need_C, out_widthStep, out_sliceStep, out_imStep, buffer, buffer_len);
+			out_firstPixelData, need_N, need_H, need_W, need_C, out_widthStep, out_sliceStep, out_imStep, bias_firstPixelData, buffer, buffer_len);
 	}
 	else
 	{
-		zq_cnn_conv_no_padding_gemm_nchwc1_general(in_firstPixelData, in_N, in_H, in_W, in_C,
+		zq_cnn_conv_no_padding_gemm_nchwc1_general_with_bias(in_firstPixelData, in_N, in_H, in_W, in_C,
 			in_widthStep, in_sliceStep, in_imStep, filter_firstPixelData, filter_N, filter_H, filter_W, filter_C,
 			filter_widthStep, filter_sliceStep, filter_imStep, strideH, strideW, dilation_H, dilation_W,
-			out_firstPixelData, need_N, need_H, need_W, need_C, out_widthStep, out_sliceStep, out_imStep, buffer, buffer_len);
+			out_firstPixelData, need_N, need_H, need_W, need_C, out_widthStep, out_sliceStep, out_imStep, bias_firstPixelData, buffer, buffer_len);
 	}
 	
-	zq_cnn_addbias_nchwc1(out_firstPixelData, need_N, need_H, need_W, need_C, out_widthStep, out_sliceStep, out_imStep, bias_firstPixelData);
-
 	double t2 = omp_get_wtime();
 	//printf("utils:conv: %.3f ms\n", (t2 - t1) * 1000);
 	return true;
@@ -192,52 +190,50 @@ bool ZQ_CNN_Forward_SSEUtils_NCHWC::ConvolutionWithBiasPReLU(ZQ_CNN_Tensor4D_NCH
 	{
 		if (filter_C == 3)
 		{
-			zq_cnn_conv_no_padding_gemm_nchwc1_kernel3x3_C3(in_firstPixelData, in_N, in_H, in_W, in_C,
+			zq_cnn_conv_no_padding_gemm_nchwc1_kernel3x3_C3_with_bias_prelu(in_firstPixelData, in_N, in_H, in_W, in_C,
 				in_widthStep, in_sliceStep, in_imStep, filter_firstPixelData, filter_N, filter_H, filter_W, filter_C,
 				filter_widthStep, filter_sliceStep, filter_imStep, strideH, strideW, dilation_H, dilation_W,
-				out_firstPixelData, need_N, need_H, need_W, need_C, out_widthStep, out_sliceStep, out_imStep, buffer, buffer_len);
+				out_firstPixelData, need_N, need_H, need_W, need_C, out_widthStep, out_sliceStep, out_imStep, bias_firstPixelData, slope_firstPixelData, buffer, buffer_len);
 		}
 		else
 		{
-			zq_cnn_conv_no_padding_gemm_nchwc1_kernel3x3(in_firstPixelData, in_N, in_H, in_W, in_C,
+			zq_cnn_conv_no_padding_gemm_nchwc1_kernel3x3_with_bias_prelu(in_firstPixelData, in_N, in_H, in_W, in_C,
 				in_widthStep, in_sliceStep, in_imStep, filter_firstPixelData, filter_N, filter_H, filter_W, filter_C,
 				filter_widthStep, filter_sliceStep, filter_imStep, strideH, strideW, dilation_H, dilation_W,
-				out_firstPixelData, need_N, need_H, need_W, need_C, out_widthStep, out_sliceStep, out_imStep, buffer, buffer_len);
+				out_firstPixelData, need_N, need_H, need_W, need_C, out_widthStep, out_sliceStep, out_imStep, bias_firstPixelData, slope_firstPixelData, buffer, buffer_len);
 		}
 	}
 	else if (filter_H == 2 && filter_W == 2)
 	{
 		if (filter_C == 3)
 		{
-			zq_cnn_conv_no_padding_gemm_nchwc1_kernel2x2_C3(in_firstPixelData, in_N, in_H, in_W, in_C,
+			zq_cnn_conv_no_padding_gemm_nchwc1_kernel2x2_C3_with_bias_prelu(in_firstPixelData, in_N, in_H, in_W, in_C,
 				in_widthStep, in_sliceStep, in_imStep, filter_firstPixelData, filter_N, filter_H, filter_W, filter_C,
 				filter_widthStep, filter_sliceStep, filter_imStep, strideH, strideW, dilation_H, dilation_W,
-				out_firstPixelData, need_N, need_H, need_W, need_C, out_widthStep, out_sliceStep, out_imStep, buffer, buffer_len);
+				out_firstPixelData, need_N, need_H, need_W, need_C, out_widthStep, out_sliceStep, out_imStep, bias_firstPixelData, slope_firstPixelData, buffer, buffer_len);
 		}
 		else
 		{
-			zq_cnn_conv_no_padding_gemm_nchwc1_kernel2x2(in_firstPixelData, in_N, in_H, in_W, in_C,
+			zq_cnn_conv_no_padding_gemm_nchwc1_kernel2x2_with_bias_prelu(in_firstPixelData, in_N, in_H, in_W, in_C,
 				in_widthStep, in_sliceStep, in_imStep, filter_firstPixelData, filter_N, filter_H, filter_W, filter_C,
 				filter_widthStep, filter_sliceStep, filter_imStep, strideH, strideW, dilation_H, dilation_W,
-				out_firstPixelData, need_N, need_H, need_W, need_C, out_widthStep, out_sliceStep, out_imStep, buffer, buffer_len);
+				out_firstPixelData, need_N, need_H, need_W, need_C, out_widthStep, out_sliceStep, out_imStep, bias_firstPixelData, slope_firstPixelData, buffer, buffer_len);
 		}
 	}
 	else if (filter_H == 1 && filter_W == 1)
 	{
-		zq_cnn_conv_no_padding_gemm_nchwc1_kernel1x1(in_firstPixelData, in_N, in_H, in_W, in_C,
+		zq_cnn_conv_no_padding_gemm_nchwc1_kernel1x1_with_bias_prelu(in_firstPixelData, in_N, in_H, in_W, in_C,
 			in_widthStep, in_sliceStep, in_imStep, filter_firstPixelData, filter_N, filter_H, filter_W, filter_C,
 			filter_widthStep, filter_sliceStep, filter_imStep, strideH, strideW, dilation_H, dilation_W,
-			out_firstPixelData, need_N, need_H, need_W, need_C, out_widthStep, out_sliceStep, out_imStep, buffer, buffer_len);
+			out_firstPixelData, need_N, need_H, need_W, need_C, out_widthStep, out_sliceStep, out_imStep, bias_firstPixelData, slope_firstPixelData, buffer, buffer_len);
 	}
 	else
 	{
-		zq_cnn_conv_no_padding_gemm_nchwc1_general(in_firstPixelData, in_N, in_H, in_W, in_C,
+		zq_cnn_conv_no_padding_gemm_nchwc1_general_with_bias_prelu(in_firstPixelData, in_N, in_H, in_W, in_C,
 			in_widthStep, in_sliceStep, in_imStep, filter_firstPixelData, filter_N, filter_H, filter_W, filter_C,
 			filter_widthStep, filter_sliceStep, filter_imStep, strideH, strideW, dilation_H, dilation_W,
-			out_firstPixelData, need_N, need_H, need_W, need_C, out_widthStep, out_sliceStep, out_imStep, buffer, buffer_len);
+			out_firstPixelData, need_N, need_H, need_W, need_C, out_widthStep, out_sliceStep, out_imStep, bias_firstPixelData, slope_firstPixelData, buffer, buffer_len);
 	}
-
-	zq_cnn_addbias_prelu_nchwc1(out_firstPixelData, need_N, need_H, need_W, need_C, out_widthStep, out_sliceStep, out_imStep, bias_firstPixelData, slope_firstPixelData);
 
 	double t2 = omp_get_wtime();
 	//printf("utils:conv: %.3f ms\n", (t2 - t1) * 1000);
@@ -1233,52 +1229,50 @@ bool ZQ_CNN_Forward_SSEUtils_NCHWC::ConvolutionWithBias(ZQ_CNN_Tensor4D_NCHWC4& 
 	{
 		if (filter_C == 3)
 		{
-			zq_cnn_conv_no_padding_gemm_nchwc4_kernel3x3_C3(in_firstPixelData, in_N, in_H, in_W, in_C,
+			zq_cnn_conv_no_padding_gemm_nchwc4_kernel3x3_C3_with_bias(in_firstPixelData, in_N, in_H, in_W, in_C,
 				in_widthStep, in_sliceStep, in_imStep, filter_firstPixelData, filter_N, filter_H, filter_W, filter_C,
 				filter_widthStep, filter_sliceStep, filter_imStep, strideH, strideW, dilation_H, dilation_W,
-				out_firstPixelData, need_N, need_H, need_W, need_C, out_widthStep, out_sliceStep, out_imStep, buffer, buffer_len);
+				out_firstPixelData, need_N, need_H, need_W, need_C, out_widthStep, out_sliceStep, out_imStep, bias_firstPixelData, buffer, buffer_len);
 		}
 		else
 		{
-			zq_cnn_conv_no_padding_gemm_nchwc4_kernel3x3(in_firstPixelData, in_N, in_H, in_W, in_C,
+			zq_cnn_conv_no_padding_gemm_nchwc4_kernel3x3_with_bias(in_firstPixelData, in_N, in_H, in_W, in_C,
 				in_widthStep, in_sliceStep, in_imStep, filter_firstPixelData, filter_N, filter_H, filter_W, filter_C,
 				filter_widthStep, filter_sliceStep, filter_imStep, strideH, strideW, dilation_H, dilation_W,
-				out_firstPixelData, need_N, need_H, need_W, need_C, out_widthStep, out_sliceStep, out_imStep, buffer, buffer_len);
+				out_firstPixelData, need_N, need_H, need_W, need_C, out_widthStep, out_sliceStep, out_imStep, bias_firstPixelData, buffer, buffer_len);
 		}
 	}
 	else if (filter_H == 2 && filter_W == 2)
 	{
 		if (filter_C == 3)
 		{
-			zq_cnn_conv_no_padding_gemm_nchwc4_kernel2x2_C3(in_firstPixelData, in_N, in_H, in_W, in_C,
+			zq_cnn_conv_no_padding_gemm_nchwc4_kernel2x2_C3_with_bias(in_firstPixelData, in_N, in_H, in_W, in_C,
 				in_widthStep, in_sliceStep, in_imStep, filter_firstPixelData, filter_N, filter_H, filter_W, filter_C,
 				filter_widthStep, filter_sliceStep, filter_imStep, strideH, strideW, dilation_H, dilation_W,
-				out_firstPixelData, need_N, need_H, need_W, need_C, out_widthStep, out_sliceStep, out_imStep, buffer, buffer_len);
+				out_firstPixelData, need_N, need_H, need_W, need_C, out_widthStep, out_sliceStep, out_imStep, bias_firstPixelData, buffer, buffer_len);
 		}
 		else
 		{
-			zq_cnn_conv_no_padding_gemm_nchwc4_kernel2x2(in_firstPixelData, in_N, in_H, in_W, in_C,
+			zq_cnn_conv_no_padding_gemm_nchwc4_kernel2x2_with_bias(in_firstPixelData, in_N, in_H, in_W, in_C,
 				in_widthStep, in_sliceStep, in_imStep, filter_firstPixelData, filter_N, filter_H, filter_W, filter_C,
 				filter_widthStep, filter_sliceStep, filter_imStep, strideH, strideW, dilation_H, dilation_W,
-				out_firstPixelData, need_N, need_H, need_W, need_C, out_widthStep, out_sliceStep, out_imStep, buffer, buffer_len);
+				out_firstPixelData, need_N, need_H, need_W, need_C, out_widthStep, out_sliceStep, out_imStep, bias_firstPixelData, buffer, buffer_len);
 		}
 	}
 	else if (filter_H == 1 && filter_W == 1)
 	{
-		zq_cnn_conv_no_padding_gemm_nchwc4_kernel1x1(in_firstPixelData, in_N, in_H, in_W, in_C,
+		zq_cnn_conv_no_padding_gemm_nchwc4_kernel1x1_with_bias(in_firstPixelData, in_N, in_H, in_W, in_C,
 			in_widthStep, in_sliceStep, in_imStep, filter_firstPixelData, filter_N, filter_H, filter_W, filter_C,
 			filter_widthStep, filter_sliceStep, filter_imStep, strideH, strideW, dilation_H, dilation_W,
-			out_firstPixelData, need_N, need_H, need_W, need_C, out_widthStep, out_sliceStep, out_imStep, buffer, buffer_len);
+			out_firstPixelData, need_N, need_H, need_W, need_C, out_widthStep, out_sliceStep, out_imStep, bias_firstPixelData, buffer, buffer_len);
 	}
 	else
 	{
-		zq_cnn_conv_no_padding_gemm_nchwc4_general(in_firstPixelData, in_N, in_H, in_W, in_C,
+		zq_cnn_conv_no_padding_gemm_nchwc4_general_with_bias(in_firstPixelData, in_N, in_H, in_W, in_C,
 			in_widthStep, in_sliceStep, in_imStep, filter_firstPixelData, filter_N, filter_H, filter_W, filter_C,
 			filter_widthStep, filter_sliceStep, filter_imStep, strideH, strideW, dilation_H, dilation_W,
-			out_firstPixelData, need_N, need_H, need_W, need_C, out_widthStep, out_sliceStep, out_imStep, buffer, buffer_len);
+			out_firstPixelData, need_N, need_H, need_W, need_C, out_widthStep, out_sliceStep, out_imStep, bias_firstPixelData, buffer, buffer_len);
 	}
-
-	zq_cnn_addbias_nchwc4(out_firstPixelData, need_N, need_H, need_W, need_C, out_widthStep, out_sliceStep, out_imStep, bias_firstPixelData);
 
 	double t2 = omp_get_wtime();
 	//printf("utils:conv: %.3f ms\n", (t2 - t1) * 1000);
@@ -1349,52 +1343,50 @@ bool ZQ_CNN_Forward_SSEUtils_NCHWC::ConvolutionWithBiasPReLU(ZQ_CNN_Tensor4D_NCH
 	{
 		if (filter_C == 3)
 		{
-			zq_cnn_conv_no_padding_gemm_nchwc4_kernel3x3_C3(in_firstPixelData, in_N, in_H, in_W, in_C,
+			zq_cnn_conv_no_padding_gemm_nchwc4_kernel3x3_C3_with_bias_prelu(in_firstPixelData, in_N, in_H, in_W, in_C,
 				in_widthStep, in_sliceStep, in_imStep, filter_firstPixelData, filter_N, filter_H, filter_W, filter_C,
 				filter_widthStep, filter_sliceStep, filter_imStep, strideH, strideW, dilation_H, dilation_W,
-				out_firstPixelData, need_N, need_H, need_W, need_C, out_widthStep, out_sliceStep, out_imStep, buffer, buffer_len);
+				out_firstPixelData, need_N, need_H, need_W, need_C, out_widthStep, out_sliceStep, out_imStep, bias_firstPixelData, slope_firstPixelData, buffer, buffer_len);
 		}
 		else
 		{
-			zq_cnn_conv_no_padding_gemm_nchwc4_kernel3x3(in_firstPixelData, in_N, in_H, in_W, in_C,
+			zq_cnn_conv_no_padding_gemm_nchwc4_kernel3x3_with_bias_prelu(in_firstPixelData, in_N, in_H, in_W, in_C,
 				in_widthStep, in_sliceStep, in_imStep, filter_firstPixelData, filter_N, filter_H, filter_W, filter_C,
 				filter_widthStep, filter_sliceStep, filter_imStep, strideH, strideW, dilation_H, dilation_W,
-				out_firstPixelData, need_N, need_H, need_W, need_C, out_widthStep, out_sliceStep, out_imStep, buffer, buffer_len);
+				out_firstPixelData, need_N, need_H, need_W, need_C, out_widthStep, out_sliceStep, out_imStep, bias_firstPixelData, slope_firstPixelData, buffer, buffer_len);
 		}
 	}
 	else if (filter_H == 2 && filter_W == 2)
 	{
 		if (filter_C == 3)
 		{
-			zq_cnn_conv_no_padding_gemm_nchwc4_kernel2x2_C3(in_firstPixelData, in_N, in_H, in_W, in_C,
+			zq_cnn_conv_no_padding_gemm_nchwc4_kernel2x2_C3_with_bias_prelu(in_firstPixelData, in_N, in_H, in_W, in_C,
 				in_widthStep, in_sliceStep, in_imStep, filter_firstPixelData, filter_N, filter_H, filter_W, filter_C,
 				filter_widthStep, filter_sliceStep, filter_imStep, strideH, strideW, dilation_H, dilation_W,
-				out_firstPixelData, need_N, need_H, need_W, need_C, out_widthStep, out_sliceStep, out_imStep, buffer, buffer_len);
+				out_firstPixelData, need_N, need_H, need_W, need_C, out_widthStep, out_sliceStep, out_imStep, bias_firstPixelData, slope_firstPixelData, buffer, buffer_len);
 		}
 		else
 		{
-			zq_cnn_conv_no_padding_gemm_nchwc4_kernel2x2(in_firstPixelData, in_N, in_H, in_W, in_C,
+			zq_cnn_conv_no_padding_gemm_nchwc4_kernel2x2_with_bias_prelu(in_firstPixelData, in_N, in_H, in_W, in_C,
 				in_widthStep, in_sliceStep, in_imStep, filter_firstPixelData, filter_N, filter_H, filter_W, filter_C,
 				filter_widthStep, filter_sliceStep, filter_imStep, strideH, strideW, dilation_H, dilation_W,
-				out_firstPixelData, need_N, need_H, need_W, need_C, out_widthStep, out_sliceStep, out_imStep, buffer, buffer_len);
+				out_firstPixelData, need_N, need_H, need_W, need_C, out_widthStep, out_sliceStep, out_imStep, bias_firstPixelData, slope_firstPixelData, buffer, buffer_len);
 		}
 	}
 	else if (filter_H == 1 && filter_W == 1)
 	{
-		zq_cnn_conv_no_padding_gemm_nchwc4_kernel1x1(in_firstPixelData, in_N, in_H, in_W, in_C,
+		zq_cnn_conv_no_padding_gemm_nchwc4_kernel1x1_with_bias_prelu(in_firstPixelData, in_N, in_H, in_W, in_C,
 			in_widthStep, in_sliceStep, in_imStep, filter_firstPixelData, filter_N, filter_H, filter_W, filter_C,
 			filter_widthStep, filter_sliceStep, filter_imStep, strideH, strideW, dilation_H, dilation_W,
-			out_firstPixelData, need_N, need_H, need_W, need_C, out_widthStep, out_sliceStep, out_imStep, buffer, buffer_len);
+			out_firstPixelData, need_N, need_H, need_W, need_C, out_widthStep, out_sliceStep, out_imStep, bias_firstPixelData, slope_firstPixelData, buffer, buffer_len);
 	}
 	else
 	{
-		zq_cnn_conv_no_padding_gemm_nchwc4_general(in_firstPixelData, in_N, in_H, in_W, in_C,
+		zq_cnn_conv_no_padding_gemm_nchwc4_general_with_bias_prelu(in_firstPixelData, in_N, in_H, in_W, in_C,
 			in_widthStep, in_sliceStep, in_imStep, filter_firstPixelData, filter_N, filter_H, filter_W, filter_C,
 			filter_widthStep, filter_sliceStep, filter_imStep, strideH, strideW, dilation_H, dilation_W,
-			out_firstPixelData, need_N, need_H, need_W, need_C, out_widthStep, out_sliceStep, out_imStep, buffer, buffer_len);
+			out_firstPixelData, need_N, need_H, need_W, need_C, out_widthStep, out_sliceStep, out_imStep, bias_firstPixelData, slope_firstPixelData, buffer, buffer_len);
 	}
-
-	zq_cnn_addbias_prelu_nchwc4(out_firstPixelData, need_N, need_H, need_W, need_C, out_widthStep, out_sliceStep, out_imStep, bias_firstPixelData, slope_firstPixelData);
 
 	double t2 = omp_get_wtime();
 	//printf("utils:conv: %.3f ms\n", (t2 - t1) * 1000);
@@ -2394,52 +2386,50 @@ bool ZQ_CNN_Forward_SSEUtils_NCHWC::ConvolutionWithBias(ZQ_CNN_Tensor4D_NCHWC8& 
 	{
 		if (filter_C == 3)
 		{
-			zq_cnn_conv_no_padding_gemm_nchwc8_kernel3x3_C3(in_firstPixelData, in_N, in_H, in_W, in_C,
+			zq_cnn_conv_no_padding_gemm_nchwc8_kernel3x3_C3_with_bias(in_firstPixelData, in_N, in_H, in_W, in_C,
 				in_widthStep, in_sliceStep, in_imStep, filter_firstPixelData, filter_N, filter_H, filter_W, filter_C,
 				filter_widthStep, filter_sliceStep, filter_imStep, strideH, strideW, dilation_H, dilation_W,
-				out_firstPixelData, need_N, need_H, need_W, need_C, out_widthStep, out_sliceStep, out_imStep, buffer, buffer_len);
+				out_firstPixelData, need_N, need_H, need_W, need_C, out_widthStep, out_sliceStep, out_imStep, bias_firstPixelData, buffer, buffer_len);
 		}
 		else
 		{
-			zq_cnn_conv_no_padding_gemm_nchwc8_kernel3x3(in_firstPixelData, in_N, in_H, in_W, in_C,
+			zq_cnn_conv_no_padding_gemm_nchwc8_kernel3x3_with_bias(in_firstPixelData, in_N, in_H, in_W, in_C,
 				in_widthStep, in_sliceStep, in_imStep, filter_firstPixelData, filter_N, filter_H, filter_W, filter_C,
 				filter_widthStep, filter_sliceStep, filter_imStep, strideH, strideW, dilation_H, dilation_W,
-				out_firstPixelData, need_N, need_H, need_W, need_C, out_widthStep, out_sliceStep, out_imStep, buffer, buffer_len);
+				out_firstPixelData, need_N, need_H, need_W, need_C, out_widthStep, out_sliceStep, out_imStep, bias_firstPixelData, buffer, buffer_len);
 		}
 	}
 	else if (filter_H == 2 && filter_W == 2)
 	{
 		if (filter_C == 3)
 		{
-			zq_cnn_conv_no_padding_gemm_nchwc8_kernel2x2_C3(in_firstPixelData, in_N, in_H, in_W, in_C,
+			zq_cnn_conv_no_padding_gemm_nchwc8_kernel2x2_C3_with_bias(in_firstPixelData, in_N, in_H, in_W, in_C,
 				in_widthStep, in_sliceStep, in_imStep, filter_firstPixelData, filter_N, filter_H, filter_W, filter_C,
 				filter_widthStep, filter_sliceStep, filter_imStep, strideH, strideW, dilation_H, dilation_W,
-				out_firstPixelData, need_N, need_H, need_W, need_C, out_widthStep, out_sliceStep, out_imStep, buffer, buffer_len);
+				out_firstPixelData, need_N, need_H, need_W, need_C, out_widthStep, out_sliceStep, out_imStep, bias_firstPixelData, buffer, buffer_len);
 		}
 		else
 		{
-			zq_cnn_conv_no_padding_gemm_nchwc8_kernel2x2(in_firstPixelData, in_N, in_H, in_W, in_C,
+			zq_cnn_conv_no_padding_gemm_nchwc8_kernel2x2_with_bias(in_firstPixelData, in_N, in_H, in_W, in_C,
 				in_widthStep, in_sliceStep, in_imStep, filter_firstPixelData, filter_N, filter_H, filter_W, filter_C,
 				filter_widthStep, filter_sliceStep, filter_imStep, strideH, strideW, dilation_H, dilation_W,
-				out_firstPixelData, need_N, need_H, need_W, need_C, out_widthStep, out_sliceStep, out_imStep, buffer, buffer_len);
+				out_firstPixelData, need_N, need_H, need_W, need_C, out_widthStep, out_sliceStep, out_imStep, bias_firstPixelData, buffer, buffer_len);
 		}
 	}
 	else if (filter_H == 1 && filter_W == 1)
 	{
-		zq_cnn_conv_no_padding_gemm_nchwc8_kernel1x1(in_firstPixelData, in_N, in_H, in_W, in_C,
+		zq_cnn_conv_no_padding_gemm_nchwc8_kernel1x1_with_bias(in_firstPixelData, in_N, in_H, in_W, in_C,
 			in_widthStep, in_sliceStep, in_imStep, filter_firstPixelData, filter_N, filter_H, filter_W, filter_C,
 			filter_widthStep, filter_sliceStep, filter_imStep, strideH, strideW, dilation_H, dilation_W,
-			out_firstPixelData, need_N, need_H, need_W, need_C, out_widthStep, out_sliceStep, out_imStep, buffer, buffer_len);
+			out_firstPixelData, need_N, need_H, need_W, need_C, out_widthStep, out_sliceStep, out_imStep, bias_firstPixelData, buffer, buffer_len);
 	}
 	else
 	{
-		zq_cnn_conv_no_padding_gemm_nchwc8_general(in_firstPixelData, in_N, in_H, in_W, in_C,
+		zq_cnn_conv_no_padding_gemm_nchwc8_general_with_bias(in_firstPixelData, in_N, in_H, in_W, in_C,
 			in_widthStep, in_sliceStep, in_imStep, filter_firstPixelData, filter_N, filter_H, filter_W, filter_C,
 			filter_widthStep, filter_sliceStep, filter_imStep, strideH, strideW, dilation_H, dilation_W,
-			out_firstPixelData, need_N, need_H, need_W, need_C, out_widthStep, out_sliceStep, out_imStep, buffer, buffer_len);
+			out_firstPixelData, need_N, need_H, need_W, need_C, out_widthStep, out_sliceStep, out_imStep, bias_firstPixelData, buffer, buffer_len);
 	}
-
-	zq_cnn_addbias_nchwc8(out_firstPixelData, need_N, need_H, need_W, need_C, out_widthStep, out_sliceStep, out_imStep, bias_firstPixelData);
 
 	double t2 = omp_get_wtime();
 	//printf("utils:conv: %.3f ms\n", (t2 - t1) * 1000);
@@ -2510,34 +2500,34 @@ bool ZQ_CNN_Forward_SSEUtils_NCHWC::ConvolutionWithBiasPReLU(ZQ_CNN_Tensor4D_NCH
 	{
 		if (filter_C == 3)
 		{
-			zq_cnn_conv_no_padding_gemm_nchwc8_kernel3x3_C3(in_firstPixelData, in_N, in_H, in_W, in_C,
+			zq_cnn_conv_no_padding_gemm_nchwc8_kernel3x3_C3_with_bias_prelu(in_firstPixelData, in_N, in_H, in_W, in_C,
 				in_widthStep, in_sliceStep, in_imStep, filter_firstPixelData, filter_N, filter_H, filter_W, filter_C,
 				filter_widthStep, filter_sliceStep, filter_imStep, strideH, strideW, dilation_H, dilation_W,
-				out_firstPixelData, need_N, need_H, need_W, need_C, out_widthStep, out_sliceStep, out_imStep, buffer, buffer_len);
+				out_firstPixelData, need_N, need_H, need_W, need_C, out_widthStep, out_sliceStep, out_imStep, bias_firstPixelData, slope_firstPixelData, buffer, buffer_len);
 		}
 		else
 		{
-			zq_cnn_conv_no_padding_gemm_nchwc8_kernel3x3(in_firstPixelData, in_N, in_H, in_W, in_C,
+			zq_cnn_conv_no_padding_gemm_nchwc8_kernel3x3_with_bias_prelu(in_firstPixelData, in_N, in_H, in_W, in_C,
 				in_widthStep, in_sliceStep, in_imStep, filter_firstPixelData, filter_N, filter_H, filter_W, filter_C,
 				filter_widthStep, filter_sliceStep, filter_imStep, strideH, strideW, dilation_H, dilation_W,
-				out_firstPixelData, need_N, need_H, need_W, need_C, out_widthStep, out_sliceStep, out_imStep, buffer, buffer_len);
+				out_firstPixelData, need_N, need_H, need_W, need_C, out_widthStep, out_sliceStep, out_imStep, bias_firstPixelData, slope_firstPixelData, buffer, buffer_len);
 		}
 	}
 	else if (filter_H == 2 && filter_W == 2)
 	{
 		if (filter_C == 3)
 		{
-			zq_cnn_conv_no_padding_gemm_nchwc8_kernel2x2_C3(in_firstPixelData, in_N, in_H, in_W, in_C,
+			zq_cnn_conv_no_padding_gemm_nchwc8_kernel2x2_C3_with_bias_prelu(in_firstPixelData, in_N, in_H, in_W, in_C,
 				in_widthStep, in_sliceStep, in_imStep, filter_firstPixelData, filter_N, filter_H, filter_W, filter_C,
 				filter_widthStep, filter_sliceStep, filter_imStep, strideH, strideW, dilation_H, dilation_W,
-				out_firstPixelData, need_N, need_H, need_W, need_C, out_widthStep, out_sliceStep, out_imStep, buffer, buffer_len);
+				out_firstPixelData, need_N, need_H, need_W, need_C, out_widthStep, out_sliceStep, out_imStep, bias_firstPixelData, slope_firstPixelData, buffer, buffer_len);
 		}
 		else
 		{
-			zq_cnn_conv_no_padding_gemm_nchwc8_kernel2x2(in_firstPixelData, in_N, in_H, in_W, in_C,
+			zq_cnn_conv_no_padding_gemm_nchwc8_kernel2x2_with_bias_prelu(in_firstPixelData, in_N, in_H, in_W, in_C,
 				in_widthStep, in_sliceStep, in_imStep, filter_firstPixelData, filter_N, filter_H, filter_W, filter_C,
 				filter_widthStep, filter_sliceStep, filter_imStep, strideH, strideW, dilation_H, dilation_W,
-				out_firstPixelData, need_N, need_H, need_W, need_C, out_widthStep, out_sliceStep, out_imStep, buffer, buffer_len);
+				out_firstPixelData, need_N, need_H, need_W, need_C, out_widthStep, out_sliceStep, out_imStep, bias_firstPixelData, slope_firstPixelData, buffer, buffer_len);
 		}
 	}
 	else if (filter_H == 1 && filter_W == 1)
@@ -2549,14 +2539,11 @@ bool ZQ_CNN_Forward_SSEUtils_NCHWC::ConvolutionWithBiasPReLU(ZQ_CNN_Tensor4D_NCH
 	}
 	else
 	{
-		zq_cnn_conv_no_padding_gemm_nchwc8_general(in_firstPixelData, in_N, in_H, in_W, in_C,
+		zq_cnn_conv_no_padding_gemm_nchwc8_general_with_bias_prelu(in_firstPixelData, in_N, in_H, in_W, in_C,
 			in_widthStep, in_sliceStep, in_imStep, filter_firstPixelData, filter_N, filter_H, filter_W, filter_C,
 			filter_widthStep, filter_sliceStep, filter_imStep, strideH, strideW, dilation_H, dilation_W,
-			out_firstPixelData, need_N, need_H, need_W, need_C, out_widthStep, out_sliceStep, out_imStep, buffer, buffer_len);
+			out_firstPixelData, need_N, need_H, need_W, need_C, out_widthStep, out_sliceStep, out_imStep, bias_firstPixelData, slope_firstPixelData, buffer, buffer_len);
 	}
-
-	if(!(filter_H == 1 && filter_W == 1))
-	zq_cnn_addbias_prelu_nchwc8(out_firstPixelData, need_N, need_H, need_W, need_C, out_widthStep, out_sliceStep, out_imStep, bias_firstPixelData, slope_firstPixelData);
 
 	double t2 = omp_get_wtime();
 	//printf("utils:conv: %.3f ms\n", (t2 - t1) * 1000);
