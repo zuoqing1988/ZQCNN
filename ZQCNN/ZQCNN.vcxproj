@@ -188,6 +188,7 @@
     <ClCompile Include="layers_c\zq_cnn_sqrt_32f_align_c.c" />
     <ClCompile Include="layers_c\zq_cnn_reduction_32f_align_c.c" />
     <ClCompile Include="layers_nchwc\zq_cnn_addbias_nchwc.c" />
+    <ClCompile Include="layers_nchwc\zq_cnn_base_operator.c" />
     <ClCompile Include="layers_nchwc\zq_cnn_batchnormscale_nchwc.c" />
     <ClCompile Include="layers_nchwc\zq_cnn_convolution_gemm_nchwc.c" />
     <ClCompile Include="layers_nchwc\zq_cnn_depthwise_convolution_nchwc.c" />
