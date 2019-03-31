@@ -286,8 +286,8 @@ namespace ZQ
 					if (filters == 0 || bias == 0 || prelu_slope == 0)
 						return false;
 					double t1 = omp_get_wtime();
-					void** tmp_buffer = use_buffer ? buffer : 0;
-					__int64* tmp_buffer_len = use_buffer ? buffer_len : 0;
+					void** tmp_buffer = ZQ_CNN_Layer_NCHWC<Tensor4D>::use_buffer ? ZQ_CNN_Layer_NCHWC<Tensor4D>::buffer : 0;
+					__int64* tmp_buffer_len = ZQ_CNN_Layer_NCHWC<Tensor4D>::use_buffer ? ZQ_CNN_Layer_NCHWC<Tensor4D>::buffer_len : 0;
 					bool ret = ZQ_CNN_Forward_SSEUtils_NCHWC::ConvolutionWithBiasPReLU(*((*bottoms)[0]),
 						*filters, *bias, *prelu_slope, stride_H, stride_W, dilate_H, dilate_W, pad_H, pad_W, *((*tops)[0]),
 						tmp_buffer, tmp_buffer_len);
@@ -309,8 +309,8 @@ namespace ZQ
 					if (filters == 0 || bias == 0)
 						return false;
 					double t1 = omp_get_wtime();
-					void** tmp_buffer = use_buffer ? buffer : 0;
-					__int64* tmp_buffer_len = use_buffer ? buffer_len : 0;
+					void** tmp_buffer = ZQ_CNN_Layer_NCHWC<Tensor4D>::use_buffer ? ZQ_CNN_Layer_NCHWC<Tensor4D>::buffer : 0;
+					__int64* tmp_buffer_len = ZQ_CNN_Layer_NCHWC<Tensor4D>::use_buffer ? ZQ_CNN_Layer_NCHWC<Tensor4D>::buffer_len : 0;
 					bool ret = ZQ_CNN_Forward_SSEUtils_NCHWC::ConvolutionWithBias(*((*bottoms)[0]),
 						*filters, *bias, stride_H, stride_W, dilate_H, dilate_W, pad_H, pad_W, *((*tops)[0]),
 						tmp_buffer, tmp_buffer_len);
@@ -335,8 +335,8 @@ namespace ZQ
 					if (filters == 0 || prelu_slope == 0)
 						return false;
 					double t1 = omp_get_wtime();
-					void** tmp_buffer = use_buffer ? buffer : 0;
-					__int64* tmp_buffer_len = use_buffer ? buffer_len : 0;
+					void** tmp_buffer = ZQ_CNN_Layer_NCHWC<Tensor4D>::use_buffer ? ZQ_CNN_Layer_NCHWC<Tensor4D>::buffer : 0;
+					__int64* tmp_buffer_len = ZQ_CNN_Layer_NCHWC<Tensor4D>::use_buffer ? ZQ_CNN_Layer_NCHWC<Tensor4D>::buffer_len : 0;
 					bool ret = ZQ_CNN_Forward_SSEUtils_NCHWC::ConvolutionWithPReLU(*((*bottoms)[0]), *filters, *prelu_slope, stride_H, stride_W, dilate_H, dilate_W, pad_H, pad_W, *((*tops)[0]),
 						tmp_buffer, tmp_buffer_len);
 					double t2 = omp_get_wtime();
@@ -357,8 +357,8 @@ namespace ZQ
 					if (filters == 0)
 						return false;
 					double t1 = omp_get_wtime();
-					void** tmp_buffer = use_buffer ? buffer : 0;
-					__int64* tmp_buffer_len = use_buffer ? buffer_len : 0;
+					void** tmp_buffer = ZQ_CNN_Layer_NCHWC<Tensor4D>::use_buffer ? ZQ_CNN_Layer_NCHWC<Tensor4D>::buffer : 0;
+					__int64* tmp_buffer_len = ZQ_CNN_Layer_NCHWC<Tensor4D>::use_buffer ? ZQ_CNN_Layer_NCHWC<Tensor4D>::buffer_len : 0;
 					bool ret = ZQ_CNN_Forward_SSEUtils_NCHWC::Convolution(*((*bottoms)[0]), *filters, stride_H, stride_W, dilate_H, dilate_W, pad_H, pad_W, *((*tops)[0]),
 						tmp_buffer, tmp_buffer_len);
 					double t2 = omp_get_wtime();
@@ -2135,8 +2135,8 @@ namespace ZQ
 				if (filters == 0 || bias == 0)
 					return false;
 				double t1 = omp_get_wtime();
-				void** tmp_buffer = use_buffer ? buffer : 0;
-				__int64* tmp_buffer_len = use_buffer ? buffer_len : 0;
+				void** tmp_buffer = ZQ_CNN_Layer_NCHWC<Tensor4D>::use_buffer ? ZQ_CNN_Layer_NCHWC<Tensor4D>::buffer : 0;
+				__int64* tmp_buffer_len = ZQ_CNN_Layer_NCHWC<Tensor4D>::use_buffer ? ZQ_CNN_Layer_NCHWC<Tensor4D>::buffer_len : 0;
 				bool ret = ZQ_CNN_Forward_SSEUtils_NCHWC::InnerProductWithBias(*((*bottoms)[0]),
 					*filters, *bias, *((*tops)[0]), tmp_buffer, tmp_buffer_len);
 				double t2 = omp_get_wtime();
@@ -2152,8 +2152,8 @@ namespace ZQ
 				if (filters == 0)
 					return false;
 				double t1 = omp_get_wtime();
-				void** tmp_buffer = use_buffer ? buffer : 0;
-				__int64* tmp_buffer_len = use_buffer ? buffer_len : 0;
+				void** tmp_buffer = ZQ_CNN_Layer_NCHWC<Tensor4D>::use_buffer ? ZQ_CNN_Layer_NCHWC<Tensor4D>::buffer : 0;
+				__int64* tmp_buffer_len = ZQ_CNN_Layer_NCHWC<Tensor4D>::use_buffer ? ZQ_CNN_Layer_NCHWC<Tensor4D>::buffer_len : 0;
 				bool ret = ZQ_CNN_Forward_SSEUtils_NCHWC::InnerProduct(*((*bottoms)[0]), *filters, *((*tops)[0]),
 					buffer, buffer_len);
 				double t2 = omp_get_wtime();
