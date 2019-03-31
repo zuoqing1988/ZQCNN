@@ -437,6 +437,7 @@ bool ZQ_CNN_Tensor4D_NCHWC1::CopyData(const ZQ_CNN_Tensor4D_NCHWC1& other)
 
 /**************************************/
 
+#if __ARM_NEON || (ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_SSE)
 
 ZQ_CNN_Tensor4D_NCHWC4::ZQ_CNN_Tensor4D_NCHWC4()
 {
@@ -866,7 +867,11 @@ bool ZQ_CNN_Tensor4D_NCHWC4::CopyData(const ZQ_CNN_Tensor4D_NCHWC4& other)
 	return true;
 }
 
+#endif //__ARM_NEON || (ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_SSE)
+
 /****************************/
+
+#if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_AVX
 
 ZQ_CNN_Tensor4D_NCHWC8::ZQ_CNN_Tensor4D_NCHWC8()
 {
@@ -1294,3 +1299,5 @@ bool ZQ_CNN_Tensor4D_NCHWC8::CopyData(const ZQ_CNN_Tensor4D_NCHWC8& other)
 	}
 	return true;
 }
+
+#endif //ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_AVX

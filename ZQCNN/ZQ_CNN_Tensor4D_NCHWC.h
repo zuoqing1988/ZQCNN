@@ -557,6 +557,8 @@ namespace ZQ
 		bool CopyData(const ZQ_CNN_Tensor4D_NCHWC1& other);
 	};
 
+#if __ARM_NEON || (ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_SSE)
+
 	class ZQ_CNN_Tensor4D_NCHWC4 : public ZQ_CNN_Tensor4D_NCHWC
 	{
 	public:
@@ -585,6 +587,10 @@ namespace ZQ
 
 	};
 
+#endif //__ARM_NEON || (ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_SSE)
+
+#if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_AVX
+
 	class ZQ_CNN_Tensor4D_NCHWC8 : public ZQ_CNN_Tensor4D_NCHWC
 	{
 	public:
@@ -612,6 +618,8 @@ namespace ZQ
 		bool CopyData(const ZQ_CNN_Tensor4D_NCHWC8& other);
 
 	};
+
+#endif //ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_AVX
 }
 
 
