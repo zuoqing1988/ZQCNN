@@ -79,6 +79,7 @@ extern "C" {
 
 #undef zq_cnn_depthwise_conv_no_padding_nchwc_general
 #undef zq_cnn_depthwise_conv_no_padding_nchwc_kernel3x3
+#undef zq_cnn_depthwise_conv_no_padding_nchwc_kernel3x3_s1d1
 #undef zq_cnn_depthwise_conv_no_padding_nchwc_kernel2x2
 
 #define zq_cnn_depthwise_conv_no_padding_nchwc_general zq_cnn_depthwise_conv_no_padding_nchwc4_general_with_bias_prelu
