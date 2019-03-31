@@ -4,9 +4,9 @@
 #include <string>
 #include <vector>
 #include <iostream>
-#include "ZQ_CNN_Tensor4D.h"
+#include "ZQ_CNN_Tensor4D_NCHWC.h"
 #include "ZQ_CNN_BBoxUtils.h"
-#include "ZQ_CNN_Forward_SSEUtils.h"
+#include "ZQ_CNN_Forward_SSEUtils_NCHWC.h"
 namespace ZQ
 {
 	template<class Tensor4D>
@@ -36,8 +36,6 @@ namespace ZQ
 
 		//should called after SetBottomDim
 		virtual void GetTopDim(int& top_C, int& topH, int &top_W) const = 0;
-
-		virtual bool SwapInputRGBandBGR() = 0;
 
 		//should be called after ZQ_CNN_Net have allocated necessery data
 		virtual bool LoadBinary_NCHW(FILE* in) = 0;
@@ -229,8 +227,6 @@ namespace ZQ
 		//should called after SetBottomDim
 		virtual void GetTopDim(int& top_C, int& top_H, int& top_W) const { top_C = C; top_H = H; top_W = W; }
 
-		virtual bool SwapInputRGBandBGR() { return true; };
-
 		//should be called after ZQ_CNN_Net have allocated necessery data
 		virtual bool LoadBinary_NCHW(FILE* in) { return true; }
 
@@ -245,7 +241,7 @@ namespace ZQ
 		virtual __int64 GetNumOfMulAdd() const { return 0; }
 	};
 
-	template<class Tesnor4D>
+	template<class Tensor4D>
 	class ZQ_CNN_Layer_NCHWC_Convolution : public ZQ_CNN_Layer_NCHWC<Tensor4D>
 	{
 	public:
@@ -602,36 +598,6 @@ namespace ZQ
 			top_W = __max(0, floor((float)(bottom_W + pad_W * 2 - (kernel_W - 1)*dilate_W - 1) / stride_W) + 1);
 		}
 
-		virtual bool SwapInputRGBandBGR()
-		{
-			if (filters == 0)
-				return false;
-			if (filters->GetC() != 3)
-				return false;
-			int N = filters->GetN();
-			int H = filters->GetH();
-			int W = filters->GetW();
-			int sliceStep = filters->GetSliceStep();
-			int widthStep = filters->GetWidthStep();
-			int pixStep = filters->GetPixelStep();
-			float* ptr = filters->GetFirstPixelPtr();
-			for (int n = 0; n < N; n++)
-			{
-				for (int h = 0; h < H; h++)
-				{
-					for (int w = 0; w < W; w++)
-					{
-						float* cur_ptr = ptr + n*sliceStep + h*widthStep + w*pixStep;
-						float tmp_val = cur_ptr[0];
-						cur_ptr[0] = cur_ptr[2];
-						cur_ptr[2] = tmp_val;
-					}
-				}
-			}
-			return true;
-		};
-
-
 		//should be called after ZQ_CNN_Net have allocated necessery data
 		virtual bool LoadBinary_NCHW(FILE* in)
 		{
@@ -800,7 +766,8 @@ namespace ZQ
 					if (filters == 0 || bias == 0 || prelu_slope == 0)
 						return false;
 					double t1 = omp_get_wtime();
-					bool ret = ZQ_CNN_Forward_SSEUtils_NCHWC::DepthwiseConvolutionWithBiasPReLU(*((*bottoms)[0]), *filters, *bias, *prelu_slope, stride_H, stride_W, pad_H, pad_W, *((*tops)[0]));
+					bool ret = ZQ_CNN_Forward_SSEUtils_NCHWC::DepthwiseConvolutionWithBiasPReLU(*((*bottoms)[0]), *filters, *bias, *prelu_slope, stride_H, stride_W, 
+						dilate_H, dilate_W, pad_H, pad_W, *((*tops)[0]));
 					double t2 = omp_get_wtime();
 					last_cost_time = t2 - t1;
 					if (show_debug_info)
@@ -821,7 +788,8 @@ namespace ZQ
 					if (filters == 0 || bias == 0)
 						return false;
 					double t1 = omp_get_wtime();
-					bool ret = ZQ_CNN_Forward_SSEUtils_NCHWC::DepthwiseConvolutionWithBias(*((*bottoms)[0]), *filters, *bias, stride_H, stride_W, pad_H, pad_W, *((*tops)[0]));
+					bool ret = ZQ_CNN_Forward_SSEUtils_NCHWC::DepthwiseConvolutionWithBias(*((*bottoms)[0]), *filters, *bias, stride_H, stride_W, 
+						dilate_H, dilate_W, pad_H, pad_W, *((*tops)[0]));
 					double t2 = omp_get_wtime();
 					last_cost_time = t2 - t1;
 					if (show_debug_info)
@@ -843,7 +811,8 @@ namespace ZQ
 				if (filters == 0)
 					return false;
 				double t1 = omp_get_wtime();
-				bool ret = ZQ_CNN_Forward_SSEUtils_NCHWC::DepthwiseConvolution(*((*bottoms)[0]), *filters, stride_H, stride_W, pad_H, pad_W, *((*tops)[0]));
+				bool ret = ZQ_CNN_Forward_SSEUtils_NCHWC::DepthwiseConvolution(*((*bottoms)[0]), *filters, stride_H, stride_W, 
+					dilate_H, dilate_W, pad_H, pad_W, *((*tops)[0]));
 				double t2 = omp_get_wtime();
 				last_cost_time = t2 - t1;
 				if (show_debug_info)
@@ -1085,8 +1054,6 @@ namespace ZQ
 			top_H = __max(0, floor((float)(bottom_H + pad_H * 2 - kernel_H) / stride_H) + 1);
 			top_W = __max(0, floor((float)(bottom_W + pad_W * 2 - kernel_W) / stride_W) + 1);
 		}
-
-		virtual bool SwapInputRGBandBGR() { return true; };
 
 		//should be called after ZQ_CNN_Net have allocated necessery data
 		virtual bool LoadBinary_NCHW(FILE* in)
@@ -1435,8 +1402,6 @@ namespace ZQ
 			top_W = bottom_W;
 		}
 
-		virtual bool SwapInputRGBandBGR() { return true; };
-
 		//should be called after ZQ_CNN_Net have allocated necessery data
 		virtual bool LoadBinary_NCHW(FILE* in)
 		{
@@ -1702,8 +1667,6 @@ namespace ZQ
 			top_W = bottom_W;
 		}
 
-		virtual bool SwapInputRGBandBGR() { return true; };
-
 		//should be called after ZQ_CNN_Net have allocated necessery data
 		virtual bool LoadBinary_NCHW(FILE* in)
 		{
@@ -1892,8 +1855,6 @@ namespace ZQ
 			top_H = bottom_H;
 			top_W = bottom_W;
 		}
-
-		virtual bool SwapInputRGBandBGR() { return true; };
 
 		//should be called after ZQ_CNN_Net have allocated necessery data
 		virtual bool LoadBinary_NCHW(FILE* in) { return true; }
@@ -2122,8 +2083,6 @@ namespace ZQ
 			}
 		}
 
-		virtual bool SwapInputRGBandBGR() { return true; };
-
 		//should be called after ZQ_CNN_Net have allocated necessery data
 		virtual bool LoadBinary_NCHW(FILE* in) { return true; }
 
@@ -2335,35 +2294,6 @@ namespace ZQ
 			top_H = 1;
 			top_W = 1;
 		}
-
-		virtual bool SwapInputRGBandBGR()
-		{
-			if (filters == 0)
-				return false;
-			if (filters->GetC() != 3)
-				return false;
-			int N = filters->GetN();
-			int H = filters->GetH();
-			int W = filters->GetW();
-			int sliceStep = filters->GetSliceStep();
-			int widthStep = filters->GetWidthStep();
-			int pixStep = filters->GetPixelStep();
-			float* ptr = filters->GetFirstPixelPtr();
-			for (int n = 0; n < N; n++)
-			{
-				for (int h = 0; h < H; h++)
-				{
-					for (int w = 0; w < W; w++)
-					{
-						float* cur_ptr = ptr + n*sliceStep + h*widthStep + w*pixStep;
-						float tmp_val = cur_ptr[0];
-						cur_ptr[0] = cur_ptr[2];
-						cur_ptr[2] = tmp_val;
-					}
-				}
-			}
-			return true;
-		};
 
 		//should be called after ZQ_CNN_Net have allocated necessery data
 		virtual bool LoadBinary_NCHW(FILE* in)
@@ -2609,8 +2539,6 @@ namespace ZQ
 			top_W = bottom_W;
 		}
 
-		virtual bool SwapInputRGBandBGR() { return true; };
-
 		//should be called after ZQ_CNN_Net have allocated necessery data
 		virtual bool LoadBinary_NCHW(FILE* in) { return true; }
 
@@ -2808,8 +2736,6 @@ namespace ZQ
 			top_H = bottom_H;
 			top_W = bottom_W;
 		}
-
-		virtual bool SwapInputRGBandBGR() { return true; };
 
 		//should be called after ZQ_CNN_Net have allocated necessery data
 		virtual bool LoadBinary_NCHW(FILE* in) { return true; }

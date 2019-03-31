@@ -126,6 +126,12 @@
     <ClCompile Include="layers_nchwc\zq_cnn_convolution_gemm_nchwc.c">
       <Filter>layers_nchwc</Filter>
     </ClCompile>
+    <ClCompile Include="ZQ_CNN_Tensor4D_NCHWC.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="ZQ_CNN_Net_NCHWC.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="layers_c\zq_cnn_addbias_32f_align_c.h">

@@ -10,7 +10,7 @@
 namespace ZQ
 {
 	template<class Tensor4D>
-	class ZQ_CNN_Net
+	class ZQ_CNN_Net_NCHWC
 	{
 		using My_CNN_Layer = ZQ_CNN_Layer_NCHWC<Tensor4D>;
 	protected:
@@ -26,9 +26,9 @@ namespace ZQ
 		};
 
 	public:
-		ZQ_CNN_Net() :has_input_layer(false), show_debug_info(false), use_buffer(true),
+		ZQ_CNN_Net_NCHWC() :has_input_layer(false), show_debug_info(false), use_buffer(true),
 			has_innerproduct_layer(false), ignore_small_value(0) {}
-		~ZQ_CNN_Net() { _clear(); };
+		~ZQ_CNN_Net_NCHWC() { _clear(); };
 
 	private:
 		std::vector<My_CNN_Layer*> layers;
@@ -94,11 +94,7 @@ namespace ZQ
 			return _save_model_file(file);
 		}
 
-		bool SwapInputRGBandBGR(const std::vector<std::string>& layer_names)
-		{
-			return _swap_input_RGB_and_BGR(layer_names);
-		}
-
+		
 		bool LoadFromBuffer(const char*& param_buffer, __int64 param_buffer_len, const char*& model_buffer, __int64 model_buffer_len,
 			bool merge_bn = false, float ignore_small_value = 1e-12, bool merge_prelu = false)
 		{
@@ -1070,21 +1066,30 @@ namespace ZQ
 			int kH = filters->GetH();
 			int kW = filters->GetW();
 			int kC = filters->GetC();
-			for (int n = 0; n < N; n++)
+			int filterImageStep = filters->GetImageStep();
+			int filterSliceStep = filters->GetSliceStep();
+			int filterWithStep = filters->GetWidthStep();
+			int align_size = filters->GetAlignSize();
+			float* im_ptr = filters->GetFirstPixelPtr();
+			for (int n = 0; n < N; n++, im_ptr += filterImageStep)
 			{
 				float b_v = (b->GetFirstPixelPtr())[n];
-				float* slice_ptr = filters->GetFirstPixelPtr() + n*filters->GetSliceStep();
-				for (int h = 0; h < kH; h++)
+				float* slice_ptr = im_ptr;
+				for (int c = 0; c < kC; c += align_size, slice_ptr += filterSliceStep)
 				{
-					float* row_ptr = slice_ptr + h*filters->GetWidthStep();
-					for (int w = 0; w < kW; w++)
+
+					float* row_ptr = slice_ptr;
+					for (int h = 0; h < kH; h++, row_ptr += filterWithStep)
 					{
-						float* pix_ptr = row_ptr + w*filters->GetPixelStep();
-						for (int c = 0; c < kC; c++)
+						float* pix_ptr = row_ptr;
+						for (int w = 0; w < kW; w++, pix_ptr += align_size)
 						{
-							pix_ptr[c] *= b_v;
-							if (fabs(pix_ptr[c]) < this->ignore_small_value)
-								pix_ptr[c] = 0;
+							for (int i = 0; i < align_size; i++)
+							{
+								pix_ptr[i] *= b_v;
+								if (fabs(pix_ptr[i]) < this->ignore_small_value)
+									pix_ptr[i] = 0;
+							}
 						}
 					}
 				}
@@ -1132,19 +1137,25 @@ namespace ZQ
 			int kH = filters->GetH();
 			int kW = filters->GetW();
 			int kC = filters->GetC();
-			for (int c = 0; c < kC; c++)
+			int filterSliceStep = filters->GetSliceStep();
+			int filterWidthStep = filters->GetWidthStep();
+			int align_size = filters->GetAlignSize();
+			float* b_data = b->GetFirstPixelPtr();
+			float* slice_ptr = filters->GetFirstPixelPtr();
+			for (int c = 0; c < kC; c += align_size, slice_ptr += filterSliceStep)
 			{
-				float b_v = (b->GetFirstPixelPtr())[c];
-				float* slice_ptr = filters->GetFirstPixelPtr();
-				for (int h = 0; h < kH; h++)
+				float* row_ptr = slice_ptr;
+				for (int h = 0; h < kH; h++, row_ptr += filterWidthStep)
 				{
-					float* row_ptr = slice_ptr + h*filters->GetWidthStep() + c;
-					for (int w = 0; w < kW; w++)
+					float* pix_ptr = row_ptr;
+					for (int w = 0; w < kW; w++, pix_ptr += align_size)
 					{
-						float* pix_ptr = row_ptr + w*filters->GetPixelStep();
-						pix_ptr[0] *= b_v;
-						if (fabs(pix_ptr[0]) < this->ignore_small_value)
-							pix_ptr[0] = 0;
+						for (int i = 0; i < align_size; i++)
+						{
+							pix_ptr[i] *= b_data[c + i];
+							if (fabs(pix_ptr[i]) < this->ignore_small_value)
+								pix_ptr[i] = 0;
+						}
 					}
 				}
 			}
@@ -1180,35 +1191,6 @@ namespace ZQ
 			dwconv_layer->with_prelu = true;
 			dwconv_layer->prelu_slope = slope;
 			prelu_layer->slope = 0;
-			return true;
-		}
-
-		bool _swap_input_RGB_and_BGR(const std::vector<std::string>& layer_names)
-		{
-			int blob_num = blobs.size();
-			int layer_num = layers.size();
-			if (layers.size() == 0 || blob_num == 0)
-				return false;
-			for (int j = 0; j < layer_names.size(); j++)
-			{
-				bool found = false;
-				for (int i = 0; i < layer_num; i++)
-				{
-					if (My_CNN_Layer::_my_strcmpi(layers[i]->name.c_str(), layer_names[j].c_str()) == 0)
-					{
-						found = true;
-						if (!layers[i]->SwapInputRGBandBGR())
-						{
-							printf("failed to swap RGB and BGR for layer %s\n", layer_names[j].c_str());
-							return false;
-						}
-					}
-				}
-				if (!found)
-				{
-					printf("warning: layer %s does not exists\n", layer_names[j].c_str());
-				}
-			}
 			return true;
 		}
 	};

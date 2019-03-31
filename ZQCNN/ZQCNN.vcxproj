@@ -201,7 +201,9 @@
     <ClCompile Include="math\zq_sse_mathfun.c" />
     <ClCompile Include="ZQ_CNN_Forward_SSEUtils.cpp" />
     <ClCompile Include="ZQ_CNN_Forward_SSEUtils_NCHWC.cpp" />
+    <ClCompile Include="ZQ_CNN_Net_NCHWC.cpp" />
     <ClCompile Include="ZQ_CNN_Tensor4D.cpp" />
+    <ClCompile Include="ZQ_CNN_Tensor4D_NCHWC.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="layers_c\zq_cnn_addbias_32f_align_c.h" />

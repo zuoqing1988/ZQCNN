@@ -341,11 +341,11 @@ namespace ZQ
 				for (int w = 0; w < W; w++, cur_pix += pixelStep, bgr_pix += 3)
 				{
 					tmp = (cur_pix[0] + 1.0f)*scale + 0.5f;
-					bgr_pix[2] = __min(255, __max(0, (int)tmp));
+					bgr_pix[0] = __min(255, __max(0, (int)tmp));
 					tmp = (cur_pix[1] + 1.0f)*scale + 0.5f;
 					bgr_pix[1] = __min(255, __max(0, (int)tmp));
 					tmp = (cur_pix[2] + 1.0f)*scale + 0.5f;
-					bgr_pix[0] = __min(255, __max(0, (int)tmp));
+					bgr_pix[2] = __min(255, __max(0, (int)tmp));
 				}
 			}
 			return true;

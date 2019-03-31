@@ -52,6 +52,9 @@ extern "C" {
 #define zq_mm_type float32x4_t
 #define zq_base_type float
 #define zq_mm_align_size 4
+#define zq_mm_align_size2 8
+#define zq_mm_align_size3 12
+#define zq_mm_align_size4 16
 
 #include "zq_cnn_eltwise_nchwc_raw.h"
 
@@ -70,6 +73,10 @@ extern "C" {
 #undef zq_mm_type
 #undef zq_base_type
 #undef zq_mm_align_size
+#undef zq_mm_align_size2
+#undef zq_mm_align_size3
+#undef zq_mm_align_size4
+
 
 #else
 #if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_SSE
@@ -91,6 +98,9 @@ extern "C" {
 #define zq_mm_type __m128
 #define zq_base_type float
 #define zq_mm_align_size 4
+#define zq_mm_align_size2 8
+#define zq_mm_align_size3 12
+#define zq_mm_align_size4 16
 
 #include "zq_cnn_eltwise_nchwc_raw.h"
 
@@ -109,6 +119,10 @@ extern "C" {
 #undef zq_mm_type
 #undef zq_base_type
 #undef zq_mm_align_size
+#undef zq_mm_align_size2
+#undef zq_mm_align_size3
+#undef zq_mm_align_size4
+
 #endif
 
 #if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_AVX
@@ -130,6 +144,9 @@ extern "C" {
 #define zq_mm_type __m256
 #define zq_base_type float
 #define zq_mm_align_size 8
+#define zq_mm_align_size2 16
+#define zq_mm_align_size3 24
+#define zq_mm_align_size4 32
 
 #include "zq_cnn_eltwise_nchwc_raw.h"
 
@@ -148,6 +165,10 @@ extern "C" {
 #undef zq_mm_type
 #undef zq_base_type
 #undef zq_mm_align_size
+#undef zq_mm_align_size2
+#undef zq_mm_align_size3
+#undef zq_mm_align_size4
+
 #endif
 #endif //__ARM_NEON
 
@@ -165,6 +186,9 @@ extern "C" {
 #define zq_mm_type float
 #define zq_base_type float
 #define zq_mm_align_size 1
+#define zq_mm_align_size2 2
+#define zq_mm_align_size3 3
+#define zq_mm_align_size4 4
 
 #include "zq_cnn_eltwise_nchwc_raw.h"
 
@@ -183,6 +207,9 @@ extern "C" {
 #undef zq_mm_type
 #undef zq_base_type
 #undef zq_mm_align_size
+#undef zq_mm_align_size2
+#undef zq_mm_align_size3
+#undef zq_mm_align_size4
 
 #if defined(__cplusplus) || defined(c_plusplus) 
 }

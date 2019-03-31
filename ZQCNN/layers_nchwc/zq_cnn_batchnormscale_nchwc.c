@@ -158,7 +158,7 @@ extern "C" {
 #define zq_mm_add_ps my_mm_add_ps
 #define zq_mm_mul_ps my_mm_mul_ps
 #define zq_mm_fmadd_ps my_mm_fmadd_ps
-#define zq_mm_type _float
+#define zq_mm_type float
 #define zq_base_type float
 #define zq_mm_align_size 1
 

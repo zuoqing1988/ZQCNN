@@ -1,5 +1,5 @@
 inline float my_mm_load_ps(const float* ptr) { return *ptr; }
-inline float my_mm_store_ps(float* ptr, float val) { *ptr = val; }
+inline void my_mm_store_ps(float* ptr, float val) { *ptr = val; }
 inline float my_mm_add_ps(float a, float b) { return a + b; }
 inline float my_mm_sub_ps(float a, float b) { return a - b; }
 inline float my_mm_mul_ps(float a, float b) { return a * b; }

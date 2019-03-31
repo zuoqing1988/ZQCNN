@@ -18,6 +18,7 @@ namespace ZQ
 		};
 
 	public:
+		virtual int GetAlignSize() const = 0;
 		virtual ~ZQ_CNN_Tensor4D_NCHWC() {}
 		float* const GetFirstPixelPtr() { return firstPixelData; }
 		const float* GetFirstPixelPtr() const { return firstPixelData; }
@@ -39,16 +40,275 @@ namespace ZQ
 				memset(rawData, 0, rawDataLen);
 		}
 
+	public:
 		virtual bool Padding(int padW, int padH, int mode) = 0;
 		virtual bool ChangeSize(int N, int H, int W, int C, int borderW, int borderH) = 0;
 		virtual void ShrinkToFit() = 0;
 		virtual bool IsBorderEnabled() const = 0;
-		virtual bool ConvertFromCompactNCHW(const float* data, int N, int C, int H, int W, int borderW = 0, int borderH = 0) = 0;
-		virtual void ConvertToCompactNCHW(float* data) const = 0;
-		virtual bool ConvertFromBGR(const unsigned char* BGR_img, int _width, int _height, int _widthStep, const float mean_val = 127.5f, const float scale = 0.0078125f) = 0;
-		virtual bool ConvertFromGray(const unsigned char* gray_img, int _width, int _height, int _widthStep, const float mean_val = 127.5f, const float scale = 0.0078125f) = 0;
+
+		bool ConvertFromCompactNCHW(const float* data, int N, int C, int H, int W, int borderW = 0, int borderH = 0)
+		{
+			if (data == 0 || !ChangeSize(N, H, W, C, borderW, borderH))
+				return false;
+			memset(rawData, 0, sizeof(float)*N*imageStep);
+			int align_size = GetAlignSize();
+			int rest_c = C %align_size;
+			int floor_c = C - rest_c;
+			int CHW = C*H*W;
+			int HW = H*W;
+			float* im_ptr = firstPixelData;
+			float* slice_ptr, *row_ptr, *pix_ptr;
+			for (int n = 0; n < N; n++, im_ptr += imageStep)
+			{
+				slice_ptr = im_ptr;
+				
+				for (int c = 0; c < C - rest_c; c+=align_size, slice_ptr+=sliceStep)
+				{
+					row_ptr = slice_ptr;
+					for (int h = 0; h < H; h++, row_ptr += widthStep)
+					{
+						pix_ptr = row_ptr;
+						for (int w = 0; w < W; w++, pix_ptr += align_size)
+						{
+							for (int k = 0; k < align_size; k++)
+								pix_ptr[k] = data[n*CHW + (c + k)*HW + h*W + w];
+						}
+					}
+				}
+				if (rest_c > 0)
+				{
+					row_ptr = slice_ptr;
+					for (int h = 0; h < H; h++, row_ptr += widthStep)
+					{
+						pix_ptr = row_ptr;
+						for (int w = 0; w < W; w++, pix_ptr += align_size)
+						{
+							for (int k = 0; k < rest_c; k++)
+								pix_ptr[k] = data[n*CHW + (floor_c + k)*HW + h*W + w];
+						}
+					}
+				}
+			}
+			return true;
+		}
+		
+		void ConvertToCompactNCHW(float* data) const
+		{
+			int align_size = GetAlignSize();
+			int rest_c = C %align_size;
+			int floor_c = C - rest_c;
+			int CHW = C*H*W;
+			int HW = H*W;
+			float* im_ptr = firstPixelData;
+			float* slice_ptr, *row_ptr, *pix_ptr;
+			for (int n = 0; n < N; n++, im_ptr += imageStep)
+			{
+				slice_ptr = im_ptr;
+
+				for (int c = 0; c < C - rest_c; c += align_size, slice_ptr += sliceStep)
+				{
+					row_ptr = slice_ptr;
+					for (int h = 0; h < H; h++, row_ptr += widthStep)
+					{
+						pix_ptr = row_ptr;
+						for (int w = 0; w < W; w++, pix_ptr += align_size)
+						{
+							for (int k = 0; k < align_size; k++)
+								data[n*CHW + (c + k)*HW + h*W + w] = pix_ptr[k];
+						}
+					}
+				}
+				if (rest_c > 0)
+				{
+					row_ptr = slice_ptr;
+					for (int h = 0; h < H; h++, row_ptr += widthStep)
+					{
+						pix_ptr = row_ptr;
+						for (int w = 0; w < W; w++, pix_ptr += align_size)
+						{
+							for (int k = 0; k < rest_c; k++)
+								data[n*CHW + (floor_c + k)*HW + h*W + w] = pix_ptr[k];
+						}
+					}
+				}
+			}
+		}
+
+		bool ConvertFromBGR(const unsigned char* BGR_img, int _width, int _height, int _widthStep, const float mean_val = 127.5f, const float scale = 0.0078125f)
+		{
+			int align_size = GetAlignSize();	
+			//static const float mean_val = 127.5f;
+			//static const float scale = 0.0078125f;
+			if (align_size == 1)
+			{
+				if (!ChangeSize(1, _height, _width, 3, 1, 1))
+					return false;
+				memset(rawData, 0, rawDataLen);
+				const unsigned char* bgr_row = BGR_img;
+				float* row_ptr = firstPixelData;
+				int sliceStep2 = sliceStep * 2;
+				for (int h = 0; h < H; h++, row_ptr += widthStep, bgr_row += _widthStep)
+				{
+					float* pix_ptr = row_ptr;
+					const unsigned char* bgr_pix = bgr_row;
+					for (int w = 0; w < W; w++, pix_ptr ++, bgr_pix += 3)
+					{
+						pix_ptr[0] = (bgr_pix[0] - mean_val)*scale;
+						pix_ptr[sliceStep] = (bgr_pix[1] - mean_val)*scale;
+						pix_ptr[sliceStep2] = (bgr_pix[2] - mean_val)*scale;
+					}
+				}
+				return true;
+			}
+			else if (align_size >= 4)
+			{
+				if (!ChangeSize(1, _height, _width, 3, 1, 1))
+					return false;
+				const unsigned char* bgr_row = BGR_img;
+				float* row_ptr = firstPixelData;
+				for (int h = 0; h < H; h++, row_ptr += widthStep, bgr_row += _widthStep)
+				{
+					float* pix_ptr = row_ptr;
+					const unsigned char* bgr_pix = bgr_row;
+					for (int w = 0; w < W; w++, pix_ptr += align_size, bgr_pix += 3)
+					{
+						pix_ptr[0] = (bgr_pix[0] - mean_val)*scale;
+						pix_ptr[1] = (bgr_pix[1] - mean_val)*scale;
+						pix_ptr[2] = (bgr_pix[2] - mean_val)*scale;
+					}
+				}
+				if (borderH > 0)
+				{
+					memset(firstPixelData - align_size*borderW - widthStep*borderH, 0, sizeof(float)*widthStep*borderH);
+					memset(firstPixelData - align_size*borderW + widthStep*H, 0, sizeof(float)*widthStep*borderH);
+				}
+				if (borderW > 0)
+				{
+					for (int h = 0; h < H; h++)
+					{
+						memset(firstPixelData - align_size*borderW + widthStep*h, 0, sizeof(float)*align_size*borderW);
+						memset(firstPixelData - align_size*(borderW << 1) + widthStep*(h + 1), 0, sizeof(float)*align_size*borderW);
+					}
+				}
+				return true;
+			}
+			else
+				return false;
+		}
+
+		virtual bool ConvertFromGray(const unsigned char* gray_img, int _width, int _height, int _widthStep, const float mean_val = 127.5f, const float scale = 0.0078125f)
+		{
+			int align_size = GetAlignSize();
+			//static const float mean_val = 127.5f;
+			//static const float scale = 0.0078125f;
+			if (align_size == 1)
+			{
+				if (!ChangeSize(1, _height, _width, 1, 1, 1))
+					return false;
+				memset(rawData, 0, rawDataLen);
+				const unsigned char* gray_row = gray_img;
+				float* row_ptr = firstPixelData;
+				for (int h = 0; h < H; h++, row_ptr += widthStep, gray_row += _widthStep)
+				{
+					float* pix_ptr = row_ptr;
+					const unsigned char* gray_pix = gray_row;
+					for (int w = 0; w < W; w++, pix_ptr++, gray_pix ++)
+					{
+						pix_ptr[0] = (gray_pix[0] - mean_val)*scale;
+					}
+				}
+				return true;
+			}
+			else if (align_size >= 4)
+			{
+				if (!ChangeSize(1, _height, _width, 1, 1, 1))
+					return false;
+				const unsigned char* gray_row = gray_img;
+				float* row_ptr = firstPixelData;
+				for (int h = 0; h < H; h++, row_ptr += widthStep, gray_row += _widthStep)
+				{
+					float* pix_ptr = row_ptr;
+					const unsigned char* gray_pix = gray_row;
+					for (int w = 0; w < W; w++, pix_ptr += align_size, gray_pix ++)
+					{
+						pix_ptr[0] = (gray_pix[0] - mean_val)*scale;
+					}
+				}
+				if (borderH > 0)
+				{
+					memset(firstPixelData - align_size*borderW - widthStep*borderH, 0, sizeof(float)*widthStep*borderH);
+					memset(firstPixelData - align_size*borderW + widthStep*H, 0, sizeof(float)*widthStep*borderH);
+				}
+				if (borderW > 0)
+				{
+					for (int h = 0; h < H; h++)
+					{
+						memset(firstPixelData - align_size*borderW + widthStep*h, 0, sizeof(float)*align_size*borderW);
+						memset(firstPixelData - align_size*(borderW << 1) + widthStep*(h + 1), 0, sizeof(float)*align_size*borderW);
+					}
+				}
+				return true;
+			}
+			else
+				return false;
+		}
+
 		/*image size should match*/
-		virtual bool ConvertToBGR(unsigned char* BGR_img, int _width, int _height, int _widthStep, int n_id = 0) const = 0;
+		virtual bool ConvertToBGR(unsigned char* BGR_img, int _width, int _height, int _widthStep, int n_id = 0) const
+		{
+			int align_size = GetAlignSize();
+			if (W != _width || H != _height || n_id < 0 || n_id >= N)
+				return false;
+
+			static const float scale = 127.5f;
+
+			if (align_size == 1)
+			{
+				unsigned char* bgr_row = BGR_img;
+				const float* row_ptr = firstPixelData + n_id*imageStep;
+				int sliceStep2 = sliceStep * 2;
+				float tmp;
+				for (int h = 0; h < H; h++, row_ptr += widthStep, bgr_row += _widthStep)
+				{
+					const float* pix_ptr = row_ptr;
+					unsigned char* bgr_pix = bgr_row;
+					for (int w = 0; w < W; w++, pix_ptr++, bgr_pix += 3)
+					{
+						tmp = (pix_ptr[0] + 1.0f)*scale + 0.5f;
+						bgr_pix[0] = __min(255, __max(0, (int)tmp));
+						tmp = (pix_ptr[sliceStep] + 1.0f)*scale + 0.5f;
+						bgr_pix[1] = __min(255, __max(0, (int)tmp));
+						tmp = (pix_ptr[sliceStep2] + 1.0f)*scale + 0.5f;
+						bgr_pix[2] = __min(255, __max(0, (int)tmp));
+					}
+				}
+				return true;
+			}
+			else if (align_size >= 4)
+			{
+				float tmp;
+				float* cur_row = firstPixelData + n_id*imageStep;
+				int widthStep = GetWidthStep();
+				unsigned char* bgr_row = BGR_img;
+				for (int h = 0; h < H; h++, cur_row += widthStep, bgr_row += _widthStep)
+				{
+					float* cur_pix = cur_row;
+					unsigned char* bgr_pix = bgr_row;
+					for (int w = 0; w < W; w++, cur_pix += align_size, bgr_pix += 3)
+					{
+						tmp = (cur_pix[0] + 1.0f)*scale + 0.5f;
+						bgr_pix[0] = __min(255, __max(0, (int)tmp));
+						tmp = (cur_pix[1] + 1.0f)*scale + 0.5f;
+						bgr_pix[1] = __min(255, __max(0, (int)tmp));
+						tmp = (cur_pix[2] + 1.0f)*scale + 0.5f;
+						bgr_pix[2] = __min(255, __max(0, (int)tmp));
+					}
+				}
+				return true;
+			}
+			else
+				return false;
+		}
 
 		static bool Permute_NCHW_get_size(const int order[4], int in_N, int in_C, int in_H, int in_W,
 			int& out_N, int& out_C, int& out_H, int& out_W)
@@ -274,20 +534,17 @@ namespace ZQ
 	{
 	public:
 		/*interface*/
+		int GetAlignSize() const { return 1; }
 		bool Padding(int padW, int padH, int mode);
 		bool ChangeSize(int N, int H, int W, int C, int borderW, int borderH);
-		void ShrinkToFit();
-		bool IsBorderEnabled() const;
-		bool ConvertFromCompactNCHW(const float* data, int N, int C, int H, int W, int borderW = 0, int borderH = 0);
-		void ConvertToCompactNCHW(float* data) const;
-		bool ConvertFromBGR(const unsigned char* BGR_img, int _width, int _height, int _widthStep, const float mean_val = 127.5f, const float scale = 0.0078125f);
-		bool ConvertFromGray(const unsigned char* gray_img, int _width, int _height, int _widthStep, const float mean_val = 127.5f, const float scale = 0.0078125f);
-		/*image size should match*/
-		bool ConvertToBGR(unsigned char* BGR_img, int _width, int _height, int _widthStep, int n_id = 0) const;
-
+		void ShrinkToFit() { ChangeSize(0, 0, 0, 0, 0, 0); }
+		bool IsBorderEnabled() const { return true; }
+		
 		/*other*/
 		ZQ_CNN_Tensor4D_NCHWC1();
 		~ZQ_CNN_Tensor4D_NCHWC1();
+		
+		void Swap(ZQ_CNN_Tensor4D_NCHWC1& other);
 
 		bool ResizeBilinearRect(ZQ_CNN_Tensor4D_NCHWC1& dst, int dst_W, int dst_H, int dst_borderW, int dst_borderH,
 			int src_off_x, int src_off_y, int src_rect_w, int src_rect_h) const;
@@ -298,28 +555,23 @@ namespace ZQ
 		bool ROI(ZQ_CNN_Tensor4D_NCHWC1& dst, int off_x, int off_y, int width, int height, int dst_borderH, int dst_borderW) const;
 
 		bool CopyData(const ZQ_CNN_Tensor4D_NCHWC1& other);
-
-		bool Tile(ZQ_CNN_Tensor4D_NCHWC1& out, int tile_n, int tile_h, int tile_w, int tile_c) const;
 	};
 
 	class ZQ_CNN_Tensor4D_NCHWC4 : public ZQ_CNN_Tensor4D_NCHWC
 	{
 	public:
 		/*interface*/
+		int GetAlignSize() const { return 4; }
 		bool Padding(int padW, int padH, int mode);
 		bool ChangeSize(int N, int H, int W, int C, int borderW, int borderH);
-		void ShrinkToFit();
-		bool IsBorderEnabled() const;
-		bool ConvertFromCompactNCHW(const float* data, int N, int C, int H, int W, int borderW = 0, int borderH = 0);
-		void ConvertToCompactNCHW(float* data) const;
-		bool ConvertFromBGR(const unsigned char* BGR_img, int _width, int _height, int _widthStep, const float mean_val = 127.5f, const float scale = 0.0078125f);
-		bool ConvertFromGray(const unsigned char* gray_img, int _width, int _height, int _widthStep, const float mean_val = 127.5f, const float scale = 0.0078125f);
-		/*image size should match*/
-		bool ConvertToBGR(unsigned char* BGR_img, int _width, int _height, int _widthStep, int n_id = 0) const;
-
+		void ShrinkToFit() { ChangeSize(0, 0, 0, 0, 0, 0); }
+		bool IsBorderEnabled() const { return true; }
+		
 		/*other*/
 		ZQ_CNN_Tensor4D_NCHWC4();
 		~ZQ_CNN_Tensor4D_NCHWC4();
+
+		void Swap(ZQ_CNN_Tensor4D_NCHWC4& other);
 
 		bool ResizeBilinearRect(ZQ_CNN_Tensor4D_NCHWC4& dst, int dst_W, int dst_H, int dst_borderW, int dst_borderH,
 			int src_off_x, int src_off_y, int src_rect_w, int src_rect_h) const;
@@ -331,27 +583,23 @@ namespace ZQ
 
 		bool CopyData(const ZQ_CNN_Tensor4D_NCHWC4& other);
 
-		bool Tile(ZQ_CNN_Tensor4D_NCHWC4& out, int tile_n, int tile_h, int tile_w, int tile_c) const;
 	};
 
 	class ZQ_CNN_Tensor4D_NCHWC8 : public ZQ_CNN_Tensor4D_NCHWC
 	{
 	public:
 		/*interface*/
+		int GetAlignSize() const { return 8; }
 		bool Padding(int padW, int padH, int mode);
 		bool ChangeSize(int N, int H, int W, int C, int borderW, int borderH);
-		void ShrinkToFit();
-		bool IsBorderEnabled() const;
-		bool ConvertFromCompactNCHW(const float* data, int N, int C, int H, int W, int borderW = 0, int borderH = 0);
-		void ConvertToCompactNCHW(float* data) const;
-		bool ConvertFromBGR(const unsigned char* BGR_img, int _width, int _height, int _widthStep, const float mean_val = 127.5f, const float scale = 0.0078125f);
-		bool ConvertFromGray(const unsigned char* gray_img, int _width, int _height, int _widthStep, const float mean_val = 127.5f, const float scale = 0.0078125f);
-		/*image size should match*/
-		bool ConvertToBGR(unsigned char* BGR_img, int _width, int _height, int _widthStep, int n_id = 0) const;
-
+		void ShrinkToFit() { ChangeSize(0, 0, 0, 0, 0, 0); }
+		bool IsBorderEnabled() const { return true; }
+		
 		/*other*/
 		ZQ_CNN_Tensor4D_NCHWC8();
 		~ZQ_CNN_Tensor4D_NCHWC8();
+
+		void Swap(ZQ_CNN_Tensor4D_NCHWC8& other);
 
 		bool ResizeBilinearRect(ZQ_CNN_Tensor4D_NCHWC8& dst, int dst_W, int dst_H, int dst_borderW, int dst_borderH,
 			int src_off_x, int src_off_y, int src_rect_w, int src_rect_h) const;
@@ -363,7 +611,6 @@ namespace ZQ
 
 		bool CopyData(const ZQ_CNN_Tensor4D_NCHWC8& other);
 
-		bool Tile(ZQ_CNN_Tensor4D_NCHWC8& out, int tile_n, int tile_h, int tile_w, int tile_c) const;
 	};
 }
 
