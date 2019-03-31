@@ -41,7 +41,7 @@ extern "C" {
 #define zq_cnn_softmax_nchwc_C zq_cnn_softmax_nchwc4_C
 #define zq_mm_load_ps vld1q_f32
 #define zq_mm_store_ps vst1q_f32
-#define zq_mm_max_ps vmax1q_f32
+#define zq_mm_max_ps vmaxq_f32
 #define zq_mm_add_ps vaddq_f32
 #define zq_mm_sub_ps vsubq_f32
 #define zq_mm_mul_ps vmulq_f32
