@@ -156,8 +156,8 @@ namespace ZQ
 
 		virtual bool ReadParam(const std::string& line)
 		{
-			bottom_names.clear();
-			top_names.clear();
+			ZQ_CNN_Layer_NCHWC<Tensor4D>::bottom_names.clear();
+			ZQ_CNN_Layer_NCHWC<Tensor4D>::top_names.clear();
 			std::vector<std::vector<std::string> > paras = ZQ_CNN_Layer_NCHWC<Tensor4D>::split_line(line);
 			int num = paras.size();
 			bool has_C = false, has_name = false;
@@ -379,8 +379,8 @@ namespace ZQ
 
 		virtual bool ReadParam(const std::string& line)
 		{
-			bottom_names.clear();
-			top_names.clear();
+			ZQ_CNN_Layer_NCHWC<Tensor4D>::bottom_names.clear();
+			ZQ_CNN_Layer_NCHWC<Tensor4D>::top_names.clear();
 			std::vector<std::vector<std::string> > paras = ZQ_CNN_Layer_NCHWC<Tensor4D>::split_line(line);
 			int num = paras.size();
 			bool has_num_output = false, has_kernelH = false, has_kernelW = false;
@@ -609,11 +609,11 @@ namespace ZQ
 			std::vector<float> nchw_raw(dst_len);
 			if (dst_len != fread_s(&nchw_raw[0], dst_len * sizeof(float), sizeof(float), dst_len, in))
 				return false;
-			if (ignore_small_value != 0)
+			if (ZQ_CNN_Layer_NCHWC<Tensor4D>::ignore_small_value != 0)
 			{
 				for (int i = 0; i < dst_len; i++)
 				{
-					if (fabs(nchw_raw[i]) < ignore_small_value)
+					if (fabs(nchw_raw[i]) < ZQ_CNN_Layer_NCHWC<Tensor4D>::ignore_small_value)
 						nchw_raw[i] = 0;
 				}
 			}
@@ -626,11 +626,11 @@ namespace ZQ
 				nchw_raw.resize(dst_len);
 				if (dst_len != fread_s(&nchw_raw[0], dst_len * sizeof(float), sizeof(float), dst_len, in))
 					return false;
-				if (ignore_small_value != 0)
+				if (ZQ_CNN_Layer_NCHWC<Tensor4D>::ignore_small_value != 0)
 				{
 					for (int i = 0; i < dst_len; i++)
 					{
-						if (fabs(nchw_raw[i]) < ignore_small_value)
+						if (fabs(nchw_raw[i]) < ZQ_CNN_Layer_NCHWC<Tensor4D>::ignore_small_value)
 							nchw_raw[i] = 0;
 					}
 				}
@@ -680,7 +680,7 @@ namespace ZQ
 			memcpy(&nchw_raw[0], buffer, dst_len_in_bytes);
 			for (int i = 0; i < dst_len; i++)
 			{
-				if (fabs(nchw_raw[i]) < ignore_small_value)
+				if (fabs(nchw_raw[i]) < ZQ_CNN_Layer_NCHWC<Tensor4D>::ignore_small_value)
 					nchw_raw[i] = 0;
 			}
 			filters->ConvertFromCompactNCHW(&nchw_raw[0], filters->GetN(), filters->GetC(), filters->GetH(), filters->GetW());
@@ -697,7 +697,7 @@ namespace ZQ
 				memcpy(&nchw_raw[0], buffer, dst_len_in_bytes);
 				for (int i = 0; i < dst_len; i++)
 				{
-					if (fabs(nchw_raw[i]) < ignore_small_value)
+					if (fabs(nchw_raw[i]) < ZQ_CNN_Layer_NCHWC<Tensor4D>::ignore_small_value)
 						nchw_raw[i] = 0;
 				}
 				bias->ConvertFromCompactNCHW(&nchw_raw[0], bias->GetN(), bias->GetC(), bias->GetH(), bias->GetW());
@@ -830,8 +830,8 @@ namespace ZQ
 
 		virtual bool ReadParam(const std::string& line)
 		{
-			bottom_names.clear();
-			top_names.clear();
+			ZQ_CNN_Layer_NCHWC<Tensor4D>::bottom_names.clear();
+			ZQ_CNN_Layer_NCHWC<Tensor4D>::top_names.clear();
 			std::vector<std::vector<std::string> > paras = ZQ_CNN_Layer_NCHWC<Tensor4D>::split_line(line);
 			int num = paras.size();
 			bool has_num_output = false, has_kernelH = false, has_kernelW = false;
@@ -1066,11 +1066,11 @@ namespace ZQ
 			std::vector<float> nchw_raw(dst_len);
 			if (dst_len != fread_s(&nchw_raw[0], dst_len * sizeof(float), sizeof(float), dst_len, in))
 				return false;
-			if (ignore_small_value != 0)
+			if (ZQ_CNN_Layer_NCHWC<Tensor4D>::ignore_small_value != 0)
 			{
 				for (int i = 0; i < dst_len; i++)
 				{
-					if (fabs(nchw_raw[i]) < ignore_small_value)
+					if (fabs(nchw_raw[i]) < ZQ_CNN_Layer_NCHWC<Tensor4D>::ignore_small_value)
 						nchw_raw[i] = 0;
 				}
 			}
@@ -1083,11 +1083,11 @@ namespace ZQ
 				nchw_raw.resize(dst_len);
 				if (dst_len != fread_s(&nchw_raw[0], dst_len * sizeof(float), sizeof(float), dst_len, in))
 					return false;
-				if (ignore_small_value != 0)
+				if (ZQ_CNN_Layer_NCHWC<Tensor4D>::ignore_small_value != 0)
 				{
 					for (int i = 0; i < dst_len; i++)
 					{
-						if (fabs(nchw_raw[i]) < ignore_small_value)
+						if (fabs(nchw_raw[i]) < ZQ_CNN_Layer_NCHWC<Tensor4D>::ignore_small_value)
 							nchw_raw[i] = 0;
 					}
 				}
@@ -1136,7 +1136,7 @@ namespace ZQ
 			memcpy(&nchw_raw[0], buffer, dst_len_in_bytes);
 			for (int i = 0; i < dst_len; i++)
 			{
-				if (fabs(nchw_raw[i]) < ignore_small_value)
+				if (fabs(nchw_raw[i]) < ZQ_CNN_Layer_NCHWC<Tensor4D>::ignore_small_value)
 					nchw_raw[i] = 0;
 			}
 			filters->ConvertFromCompactNCHW(&nchw_raw[0], filters->GetN(), filters->GetC(), filters->GetH(), filters->GetW());
@@ -1155,7 +1155,7 @@ namespace ZQ
 				memcpy(&nchw_raw[0], buffer, dst_len_in_bytes);
 				for (int i = 0; i < dst_len; i++)
 				{
-					if (fabs(nchw_raw[i]) < ignore_small_value)
+					if (fabs(nchw_raw[i]) < ZQ_CNN_Layer_NCHWC<Tensor4D>::ignore_small_value)
 						nchw_raw[i] = 0;
 				}
 				bias->ConvertFromCompactNCHW(&nchw_raw[0], bias->GetN(), bias->GetC(), bias->GetH(), bias->GetW());
@@ -1233,8 +1233,8 @@ namespace ZQ
 
 		virtual bool ReadParam(const std::string& line)
 		{
-			bottom_names.clear();
-			top_names.clear();
+			ZQ_CNN_Layer_NCHWC<Tensor4D>::bottom_names.clear();
+			ZQ_CNN_Layer_NCHWC<Tensor4D>::top_names.clear();
 			std::vector<std::vector<std::string> > paras = ZQ_CNN_Layer_NCHWC<Tensor4D>::split_line(line);
 			int num = paras.size();
 			bool has_top = false, has_bottom = false, has_name = false;
@@ -1416,11 +1416,11 @@ namespace ZQ
 				std::vector<float> nchw_raw(dst_len * 4);
 				if (dst_len * 4 != fread_s(&nchw_raw[0], dst_len * 4 * sizeof(float), sizeof(float), dst_len * 4, in))
 					return false;
-				if (ignore_small_value != 0)
+				if (ZQ_CNN_Layer_NCHWC<Tensor4D>::ignore_small_value != 0)
 				{
 					for (int i = 0; i < dst_len * 4; i++)
 					{
-						if (fabs(nchw_raw[i]) < ignore_small_value)
+						if (fabs(nchw_raw[i]) < ZQ_CNN_Layer_NCHWC<Tensor4D>::ignore_small_value)
 							nchw_raw[i] = 0;
 					}
 				}
@@ -1435,11 +1435,11 @@ namespace ZQ
 				std::vector<float> nchw_raw(dst_len * 3);
 				if (dst_len * 3 != fread_s(&nchw_raw[0], dst_len * 3 * sizeof(float), sizeof(float), dst_len * 3, in))
 					return false;
-				if (ignore_small_value != 0)
+				if (ZQ_CNN_Layer_NCHWC<Tensor4D>::ignore_small_value != 0)
 				{
 					for (int i = 0; i < dst_len * 3; i++)
 					{
-						if (fabs(nchw_raw[i]) < ignore_small_value)
+						if (fabs(nchw_raw[i]) < ZQ_CNN_Layer_NCHWC<Tensor4D>::ignore_small_value)
 							nchw_raw[i] = 0;
 					}
 				}
@@ -1501,7 +1501,7 @@ namespace ZQ
 				readed_length_in_bytes += dst_len * 4 * sizeof(float);
 				for (int i = 0; i < dst_len * 4; i++)
 				{
-					if (fabs(nchw_raw[i]) < ignore_small_value)
+					if (fabs(nchw_raw[i]) < ZQ_CNN_Layer_NCHWC<Tensor4D>::ignore_small_value)
 						nchw_raw[i] = 0;
 				}
 				mean->ConvertFromCompactNCHW(&nchw_raw[0], N, C, H, W);
@@ -1519,7 +1519,7 @@ namespace ZQ
 				readed_length_in_bytes += dst_len * 3 * sizeof(float);
 				for (int i = 0; i < dst_len * 3; i++)
 				{
-					if (fabs(nchw_raw[i]) < ignore_small_value)
+					if (fabs(nchw_raw[i]) < ZQ_CNN_Layer_NCHWC<Tensor4D>::ignore_small_value)
 						nchw_raw[i] = 0;
 				}
 				mean->ConvertFromCompactNCHW(&nchw_raw[0], N, C, H, W);
@@ -1573,8 +1573,8 @@ namespace ZQ
 
 		virtual bool ReadParam(const std::string& line)
 		{
-			bottom_names.clear();
-			top_names.clear();
+			ZQ_CNN_Layer_NCHWC<Tensor4D>::bottom_names.clear();
+			ZQ_CNN_Layer_NCHWC<Tensor4D>::top_names.clear();
 			std::vector<std::vector<std::string> > paras = ZQ_CNN_Layer_NCHWC<Tensor4D>::split_line(line);
 			int num = paras.size();
 			bool has_top = false, has_bottom = false, has_name = false;
@@ -1678,11 +1678,11 @@ namespace ZQ
 			std::vector<float> nchw_raw(dst_len);
 			if (dst_len != fread_s(&nchw_raw[0], dst_len * sizeof(float), sizeof(float), dst_len, in))
 				return false;
-			if (ignore_small_value != 0)
+			if (ZQ_CNN_Layer_NCHWC<Tensor4D>::ignore_small_value != 0)
 			{
 				for (int i = 0; i < dst_len; i++)
 				{
-					if (fabs(nchw_raw[i]) < ignore_small_value)
+					if (fabs(nchw_raw[i]) < ZQ_CNN_Layer_NCHWC<Tensor4D>::ignore_small_value)
 						nchw_raw[i] = 0;
 				}
 			}
@@ -1720,7 +1720,7 @@ namespace ZQ
 			memcpy(&nchw_raw[0], buffer, dst_len_in_bytes);
 			for (int i = 0; i < dst_len; i++)
 			{
-				if (fabs(nchw_raw[i]) < ignore_small_value)
+				if (fabs(nchw_raw[i]) < ZQ_CNN_Layer_NCHWC<Tensor4D>::ignore_small_value)
 					nchw_raw[i] = 0;
 			}
 			slope->ConvertFromCompactNCHW(&nchw_raw[0], slope->GetN(), slope->GetC(), slope->GetH(), slope->GetW());
@@ -1767,8 +1767,8 @@ namespace ZQ
 
 		virtual bool ReadParam(const std::string& line)
 		{
-			bottom_names.clear();
-			top_names.clear();
+			ZQ_CNN_Layer_NCHWC<Tensor4D>::bottom_names.clear();
+			ZQ_CNN_Layer_NCHWC<Tensor4D>::top_names.clear();
 			std::vector<std::vector<std::string> > paras = ZQ_CNN_Layer_NCHWC<Tensor4D>::split_line(line);
 			int num = paras.size();
 			bool has_top = false, has_bottom = false, has_name = false;
@@ -1930,8 +1930,8 @@ namespace ZQ
 
 		virtual bool ReadParam(const std::string& line)
 		{
-			bottom_names.clear();
-			top_names.clear();
+			ZQ_CNN_Layer_NCHWC<Tensor4D>::bottom_names.clear();
+			ZQ_CNN_Layer_NCHWC<Tensor4D>::top_names.clear();
 			std::vector<std::vector<std::string> > paras = ZQ_CNN_Layer_NCHWC<Tensor4D>::split_line(line);
 			int num = paras.size();
 			bool has_kernelH = false, has_kernelW = false;
@@ -2167,8 +2167,8 @@ namespace ZQ
 
 		virtual bool ReadParam(const std::string& line)
 		{
-			bottom_names.clear();
-			top_names.clear();
+			ZQ_CNN_Layer_NCHWC<Tensor4D>::bottom_names.clear();
+			ZQ_CNN_Layer_NCHWC<Tensor4D>::top_names.clear();
 			std::vector<std::vector<std::string> > paras = ZQ_CNN_Layer_NCHWC<Tensor4D>::split_line(line);
 			int num = paras.size();
 			bool has_num_output = false;
@@ -2307,11 +2307,11 @@ namespace ZQ
 			int readed_len = fread_s(&nchw_raw[0], dst_len * sizeof(float), sizeof(float), dst_len, in);
 			if (dst_len != readed_len)
 				return false;
-			if (ignore_small_value != 0)
+			if (ZQ_CNN_Layer_NCHWC<Tensor4D>::ignore_small_value != 0)
 			{
 				for (int i = 0; i < dst_len; i++)
 				{
-					if (fabs(nchw_raw[i]) < ignore_small_value)
+					if (fabs(nchw_raw[i]) < ZQ_CNN_Layer_NCHWC<Tensor4D>::ignore_small_value)
 						nchw_raw[i] = 0;
 				}
 			}
@@ -2326,11 +2326,11 @@ namespace ZQ
 				readed_len = fread_s(&nchw_raw[0], dst_len * sizeof(float), sizeof(float), dst_len, in);
 				if (dst_len != readed_len)
 					return false;
-				if (ignore_small_value != 0)
+				if (ZQ_CNN_Layer_NCHWC<Tensor4D>::ignore_small_value != 0)
 				{
 					for (int i = 0; i < dst_len; i++)
 					{
-						if (fabs(nchw_raw[i]) < ignore_small_value)
+						if (fabs(nchw_raw[i]) < ZQ_CNN_Layer_NCHWC<Tensor4D>::ignore_small_value)
 							nchw_raw[i] = 0;
 					}
 				}
@@ -2379,7 +2379,7 @@ namespace ZQ
 			memcpy(&nchw_raw[0], buffer, dst_len_in_bytes);
 			for (int i = 0; i < dst_len; i++)
 			{
-				if (fabs(nchw_raw[i]) < ignore_small_value)
+				if (fabs(nchw_raw[i]) < ZQ_CNN_Layer_NCHWC<Tensor4D>::ignore_small_value)
 					nchw_raw[i] = 0;
 			}
 			filters->ConvertFromCompactNCHW(&nchw_raw[0], filters->GetN(), filters->GetC(), filters->GetH(), filters->GetW());
@@ -2398,7 +2398,7 @@ namespace ZQ
 				memcpy(&nchw_raw[0], buffer, dst_len_in_bytes);
 				for (int i = 0; i < dst_len; i++)
 				{
-					if (fabs(nchw_raw[i]) < ignore_small_value)
+					if (fabs(nchw_raw[i]) < ZQ_CNN_Layer_NCHWC<Tensor4D>::ignore_small_value)
 						nchw_raw[i] = 0;
 				}
 				bias->ConvertFromCompactNCHW((const float*)buffer, bias->GetN(), bias->GetC(), bias->GetH(), bias->GetW());
@@ -2449,8 +2449,8 @@ namespace ZQ
 
 		virtual bool ReadParam(const std::string& line)
 		{
-			bottom_names.clear();
-			top_names.clear();
+			ZQ_CNN_Layer_NCHWC<Tensor4D>::bottom_names.clear();
+			ZQ_CNN_Layer_NCHWC<Tensor4D>::top_names.clear();
 			std::vector<std::vector<std::string> > paras = ZQ_CNN_Layer_NCHWC<Tensor4D>::split_line(line);
 			int num = paras.size();
 			bool has_top = false, has_bottom = false, has_name = false;
@@ -2614,8 +2614,8 @@ namespace ZQ
 
 		virtual bool ReadParam(const std::string& line)
 		{
-			bottom_names.clear();
-			top_names.clear();
+			ZQ_CNN_Layer_NCHWC<Tensor4D>::bottom_names.clear();
+			ZQ_CNN_Layer_NCHWC<Tensor4D>::top_names.clear();
 			weight.clear();
 			std::vector<std::vector<std::string> > paras = ZQ_CNN_Layer_NCHWC<Tensor4D>::split_line(line);
 			int num = paras.size();
