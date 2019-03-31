@@ -43,6 +43,8 @@
 extern "C" {
 #endif
 
+#define EXPAND_CHANNEL 0
+
 #if __ARM_NEON
 
 #define zq_mm_load_ps vld1q_f32
@@ -546,6 +548,8 @@ static inline float my_mm_set1_ps(float v) { return v; }
 #undef zq_mm_align_size8
 #undef zq_mm_bitor_longlong
 #undef zq_final_sum_q
+
+#undef EXPAND_CHANNEL
 
 #if defined(__cplusplus) || defined(c_plusplus) 
 }
