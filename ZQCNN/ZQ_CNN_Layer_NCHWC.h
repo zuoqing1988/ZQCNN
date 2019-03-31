@@ -198,7 +198,7 @@ namespace ZQ
 					if (paras[n].size() >= 2)
 					{
 						has_name = true;
-						name = paras[n][1];
+						ZQ_CNN_Layer_NCHWC<Tensor4D>::name = paras[n][1];
 						top_names.push_back(name);
 					}
 				}
@@ -521,7 +521,7 @@ namespace ZQ
 					if (paras[n].size() >= 2)
 					{
 						has_name = true;
-						name = paras[n][1];
+						ZQ_CNN_Layer_NCHWC<Tensor4D>::name = paras[n][1];
 					}
 				}
 				else
@@ -972,7 +972,7 @@ namespace ZQ
 					if (paras[n].size() >= 2)
 					{
 						has_name = true;
-						name = paras[n][1];
+						ZQ_CNN_Layer_NCHWC<Tensor4D>::name = paras[n][1];
 					}
 				}
 				else
@@ -1274,7 +1274,7 @@ namespace ZQ
 					if (paras[n].size() >= 2)
 					{
 						has_name = true;
-						name = paras[n][1];
+						ZQ_CNN_Layer_NCHWC<Tensor4D>::name = paras[n][1];
 					}
 				}
 				else if (ZQ_CNN_Layer_NCHWC<Tensor4D>::_my_strcmpi("bias", paras[n][0].c_str()) == 0)
@@ -1607,7 +1607,7 @@ namespace ZQ
 					if (paras[n].size() >= 2)
 					{
 						has_name = true;
-						name = paras[n][1];
+						ZQ_CNN_Layer_NCHWC<Tensor4D>::name = paras[n][1];
 					}
 				}
 				else
@@ -1808,7 +1808,7 @@ namespace ZQ
 					if (paras[n].size() >= 2)
 					{
 						has_name = true;
-						name = paras[n][1];
+						ZQ_CNN_Layer_NCHWC<Tensor4D>::name = paras[n][1];
 					}
 				}
 				else
@@ -1998,7 +1998,7 @@ namespace ZQ
 					if (paras[n].size() >= 2)
 					{
 						has_name = true;
-						name = paras[n][1];
+						ZQ_CNN_Layer_NCHWC<Tensor4D>::name = paras[n][1];
 					}
 				}
 				else if (ZQ_CNN_Layer_NCHWC<Tensor4D>::_my_strcmpi("pool", paras[n][0].c_str()) == 0)
@@ -2217,7 +2217,7 @@ namespace ZQ
 					if (paras[n].size() >= 2)
 					{
 						has_name = true;
-						name = paras[n][1];
+						ZQ_CNN_Layer_NCHWC<Tensor4D>::name = paras[n][1];
 					}
 				}
 				else
@@ -2483,7 +2483,7 @@ namespace ZQ
 					if (paras[n].size() >= 2)
 					{
 						has_name = true;
-						name = paras[n][1];
+						ZQ_CNN_Layer_NCHWC<Tensor4D>::name = paras[n][1];
 					}
 				}
 				else if (ZQ_CNN_Layer_NCHWC<Tensor4D>::_my_strcmpi("axis", paras[n][0].c_str()) == 0)
@@ -2676,7 +2676,7 @@ namespace ZQ
 					if (paras[n].size() >= 2)
 					{
 						has_name = true;
-						name = paras[n][1];
+						ZQ_CNN_Layer_NCHWC<Tensor4D>::name = paras[n][1];
 					}
 				}
 				else if (ZQ_CNN_Layer_NCHWC<Tensor4D>::_my_strcmpi("weight", paras[n][0].c_str()) == 0)
@@ -2696,14 +2696,14 @@ namespace ZQ
 			if (!has_operation)std::cout << "Layer " << ZQ_CNN_Layer_NCHWC<Tensor4D>::name << " missing " << "operation\n";
 			if (!has_bottom)std::cout << "Layer " << ZQ_CNN_Layer_NCHWC<Tensor4D>::name << " missing " << "bottom\n";
 			if (bottom_names.size() < 2)std::cout << "Layer " << ZQ_CNN_Layer_NCHWC<Tensor4D>::name << " must have at least 2 bottoms\n";
-			if (with_weight && weight.size() != bottom_names.size()) std::cout << "Layer " << ZQ_CNN_Layer_NCHWC<Tensor4D>::name << " weight num should match with bottom num\n";
+			if (with_weight && weight.size() != ZQ_CNN_Layer_NCHWC<Tensor4D>::bottom_names.size()) std::cout << "Layer " << ZQ_CNN_Layer_NCHWC<Tensor4D>::name << " weight num should match with bottom num\n";
 			if (!has_top)std::cout << "Layer " << ZQ_CNN_Layer_NCHWC<Tensor4D>::name << " missing " << "top\n";
 			if (!has_name) {
 				std::cout << "Layer " << ZQ_CNN_Layer_NCHWC<Tensor4D>::name << " missing " << "name\n";
 				std::cout << line << "\n";
 			}
-			return has_operation && has_bottom && bottom_names.size() >= 2 && has_top && has_name
-				&& (!with_weight || (with_weight && weight.size() != bottom_names.size()));
+			return has_operation && has_bottom && ZQ_CNN_Layer_NCHWC<Tensor4D>::bottom_names.size() >= 2 && has_top && has_name
+				&& (!with_weight || (with_weight && weight.size() != ZQ_CNN_Layer_NCHWC<Tensor4D>::bottom_names.size()));
 		}
 
 		virtual bool LayerSetup(std::vector<Tensor4D*>* bottoms, std::vector<Tensor4D*>* tops)
