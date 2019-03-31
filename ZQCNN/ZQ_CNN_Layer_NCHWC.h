@@ -158,7 +158,7 @@ namespace ZQ
 		{
 			bottom_names.clear();
 			top_names.clear();
-			std::vector<std::vector<std::string> > paras = split_line(line);
+			std::vector<std::vector<std::string> > paras = ZQ_CNN_Layer_NCHWC<Tensor4D>::split_line(line);
 			int num = paras.size();
 			bool has_C = false, has_name = false;
 			for (int n = 0; n < num; n++)
@@ -292,8 +292,8 @@ namespace ZQ
 						*filters, *bias, *prelu_slope, stride_H, stride_W, dilate_H, dilate_W, pad_H, pad_W, *((*tops)[0]),
 						tmp_buffer, tmp_buffer_len);
 					double t2 = omp_get_wtime();
-					last_cost_time = t2 - t1;
-					if (show_debug_info)
+					ZQ_CNN_Layer_NCHWC<Tensor4D>::last_cost_time = t2 - t1;
+					if (ZQ_CNN_Layer_NCHWC<Tensor4D>::show_debug_info)
 					{
 						double time = __max(1000 * (t2 - t1), 1e-9);
 						double mop = (double)(*tops)[0]->GetN()*(*tops)[0]->GetH()* (*tops)[0]->GetW()* filters->GetN()* filters->GetH()* filters->GetW()* filters->GetC();
@@ -315,8 +315,8 @@ namespace ZQ
 						*filters, *bias, stride_H, stride_W, dilate_H, dilate_W, pad_H, pad_W, *((*tops)[0]),
 						tmp_buffer, tmp_buffer_len);
 					double t2 = omp_get_wtime();
-					last_cost_time = t2 - t1;
-					if (show_debug_info)
+					ZQ_CNN_Layer_NCHWC<Tensor4D>::last_cost_time = t2 - t1;
+					if (ZQ_CNN_Layer_NCHWC<Tensor4D>::show_debug_info)
 					{
 						double time = __max(1000 * (t2 - t1), 1e-9);
 						double mop = (double)(*tops)[0]->GetN()*(*tops)[0]->GetH()* (*tops)[0]->GetW()* filters->GetN()* filters->GetH()* filters->GetW()* filters->GetC();
@@ -340,8 +340,8 @@ namespace ZQ
 					bool ret = ZQ_CNN_Forward_SSEUtils_NCHWC::ConvolutionWithPReLU(*((*bottoms)[0]), *filters, *prelu_slope, stride_H, stride_W, dilate_H, dilate_W, pad_H, pad_W, *((*tops)[0]),
 						tmp_buffer, tmp_buffer_len);
 					double t2 = omp_get_wtime();
-					last_cost_time = t2 - t1;
-					if (show_debug_info)
+					ZQ_CNN_Layer_NCHWC<Tensor4D>::last_cost_time = t2 - t1;
+					if (ZQ_CNN_Layer_NCHWC<Tensor4D>::show_debug_info)
 					{
 						double time = __max(1000 * (t2 - t1), 1e-9);
 						double mop = (double)(*tops)[0]->GetN()*(*tops)[0]->GetH()* (*tops)[0]->GetW()* filters->GetN()* filters->GetH()* filters->GetW()* filters->GetC();
@@ -362,8 +362,8 @@ namespace ZQ
 					bool ret = ZQ_CNN_Forward_SSEUtils_NCHWC::Convolution(*((*bottoms)[0]), *filters, stride_H, stride_W, dilate_H, dilate_W, pad_H, pad_W, *((*tops)[0]),
 						tmp_buffer, tmp_buffer_len);
 					double t2 = omp_get_wtime();
-					last_cost_time = t2 - t1;
-					if (show_debug_info)
+					ZQ_CNN_Layer_NCHWC<Tensor4D>::last_cost_time = t2 - t1;
+					if (ZQ_CNN_Layer_NCHWC<Tensor4D>::show_debug_info)
 					{
 						double time = __max(1000 * (t2 - t1), 1e-9);
 						double mop = (double)(*tops)[0]->GetN()*(*tops)[0]->GetH()* (*tops)[0]->GetW()* filters->GetN()* filters->GetH()* filters->GetW()* filters->GetC();
@@ -381,7 +381,7 @@ namespace ZQ
 		{
 			bottom_names.clear();
 			top_names.clear();
-			std::vector<std::vector<std::string> > paras = split_line(line);
+			std::vector<std::vector<std::string> > paras = ZQ_CNN_Layer_NCHWC<Tensor4D>::split_line(line);
 			int num = paras.size();
 			bool has_num_output = false, has_kernelH = false, has_kernelW = false;
 			bool has_top = false, has_bottom = false, has_name = false;
@@ -769,8 +769,8 @@ namespace ZQ
 					bool ret = ZQ_CNN_Forward_SSEUtils_NCHWC::DepthwiseConvolutionWithBiasPReLU(*((*bottoms)[0]), *filters, *bias, *prelu_slope, stride_H, stride_W, 
 						dilate_H, dilate_W, pad_H, pad_W, *((*tops)[0]));
 					double t2 = omp_get_wtime();
-					last_cost_time = t2 - t1;
-					if (show_debug_info)
+					ZQ_CNN_Layer_NCHWC<Tensor4D>::last_cost_time = t2 - t1;
+					if (ZQ_CNN_Layer_NCHWC<Tensor4D>::show_debug_info)
 					{
 						double time = __max(1000 * (t2 - t1), 1e-9);
 						double mop = (double)(*tops)[0]->GetN()*(*tops)[0]->GetH()* (*tops)[0]->GetW()* filters->GetN()* filters->GetH()* filters->GetW()* filters->GetC();
@@ -791,8 +791,8 @@ namespace ZQ
 					bool ret = ZQ_CNN_Forward_SSEUtils_NCHWC::DepthwiseConvolutionWithBias(*((*bottoms)[0]), *filters, *bias, stride_H, stride_W, 
 						dilate_H, dilate_W, pad_H, pad_W, *((*tops)[0]));
 					double t2 = omp_get_wtime();
-					last_cost_time = t2 - t1;
-					if (show_debug_info)
+					ZQ_CNN_Layer_NCHWC<Tensor4D>::last_cost_time = t2 - t1;
+					if (ZQ_CNN_Layer_NCHWC<Tensor4D>::show_debug_info)
 					{
 						double time = __max(1000 * (t2 - t1), 1e-9);
 						double mop = (double)(*tops)[0]->GetN()*(*tops)[0]->GetH()* (*tops)[0]->GetW()* filters->GetN()* filters->GetH()* filters->GetW()* filters->GetC();
@@ -814,8 +814,8 @@ namespace ZQ
 				bool ret = ZQ_CNN_Forward_SSEUtils_NCHWC::DepthwiseConvolution(*((*bottoms)[0]), *filters, stride_H, stride_W, 
 					dilate_H, dilate_W, pad_H, pad_W, *((*tops)[0]));
 				double t2 = omp_get_wtime();
-				last_cost_time = t2 - t1;
-				if (show_debug_info)
+				ZQ_CNN_Layer_NCHWC<Tensor4D>::last_cost_time = t2 - t1;
+				if (ZQ_CNN_Layer_NCHWC<Tensor4D>::show_debug_info)
 				{
 					double time = __max(1000 * (t2 - t1), 1e-9);
 					double mop = (double)(*tops)[0]->GetN()*(*tops)[0]->GetH()* (*tops)[0]->GetW()* filters->GetN()* filters->GetH()* filters->GetW()* filters->GetC();
@@ -832,7 +832,7 @@ namespace ZQ
 		{
 			bottom_names.clear();
 			top_names.clear();
-			std::vector<std::vector<std::string> > paras = split_line(line);
+			std::vector<std::vector<std::string> > paras = ZQ_CNN_Layer_NCHWC<Tensor4D>::split_line(line);
 			int num = paras.size();
 			bool has_num_output = false, has_kernelH = false, has_kernelW = false;
 			bool has_top = false, has_bottom = false, has_name = false;
@@ -1224,8 +1224,8 @@ namespace ZQ
 			double t1 = omp_get_wtime();
 			bool ret = ZQ_CNN_Forward_SSEUtils_NCHWC::BatchNorm_b_a(*((*tops)[0]), *b, *a);
 			double t2 = omp_get_wtime();
-			last_cost_time = t2 - t1;
-			if (show_debug_info)
+			ZQ_CNN_Layer_NCHWC<Tensor4D>::last_cost_time = t2 - t1;
+			if (ZQ_CNN_Layer_NCHWC<Tensor4D>::show_debug_info)
 				printf("BatchNorm layer: %s cost : %.3f ms\n", name.c_str(), 1000 * (t2 - t1));
 			return ret;
 		}
@@ -1235,7 +1235,7 @@ namespace ZQ
 		{
 			bottom_names.clear();
 			top_names.clear();
-			std::vector<std::vector<std::string> > paras = split_line(line);
+			std::vector<std::vector<std::string> > paras = ZQ_CNN_Layer_NCHWC<Tensor4D>::split_line(line);
 			int num = paras.size();
 			bool has_top = false, has_bottom = false, has_name = false;
 			for (int n = 0; n < num; n++)
@@ -1564,8 +1564,8 @@ namespace ZQ
 			double t1 = omp_get_wtime();
 			bool ret = ZQ_CNN_Forward_SSEUtils_NCHWC::PReLU(*((*tops)[0]), *slope);
 			double t2 = omp_get_wtime();
-			last_cost_time = t2 - t1;
-			if (show_debug_info)
+			ZQ_CNN_Layer_NCHWC<Tensor4D>::last_cost_time = t2 - t1;
+			if (ZQ_CNN_Layer_NCHWC<Tensor4D>::show_debug_info)
 				printf("PReLU layer: %s %.3f ms \n", name.c_str(), 1000 * (t2 - t1));
 			return ret;
 		}
@@ -1575,7 +1575,7 @@ namespace ZQ
 		{
 			bottom_names.clear();
 			top_names.clear();
-			std::vector<std::vector<std::string> > paras = split_line(line);
+			std::vector<std::vector<std::string> > paras = ZQ_CNN_Layer_NCHWC<Tensor4D>::split_line(line);
 			int num = paras.size();
 			bool has_top = false, has_bottom = false, has_name = false;
 			for (int n = 0; n < num; n++)
@@ -1758,8 +1758,8 @@ namespace ZQ
 			double t1 = omp_get_wtime();
 			ZQ_CNN_Forward_SSEUtils_NCHWC::ReLU(*((*tops)[0]), slope);
 			double t2 = omp_get_wtime();
-			last_cost_time = t2 - t1;
-			if (show_debug_info)
+			ZQ_CNN_Layer_NCHWC<Tensor4D>::last_cost_time = t2 - t1;
+			if (ZQ_CNN_Layer_NCHWC<Tensor4D>::show_debug_info)
 				printf("ReLU layer: %s %.3f ms \n", name.c_str(), 1000 * (t2 - t1));
 			return true;
 		}
@@ -1769,7 +1769,7 @@ namespace ZQ
 		{
 			bottom_names.clear();
 			top_names.clear();
-			std::vector<std::vector<std::string> > paras = split_line(line);
+			std::vector<std::vector<std::string> > paras = ZQ_CNN_Layer_NCHWC<Tensor4D>::split_line(line);
 			int num = paras.size();
 			bool has_top = false, has_bottom = false, has_name = false;
 			for (int n = 0; n < num; n++)
@@ -1905,8 +1905,8 @@ namespace ZQ
 				double t1 = omp_get_wtime();
 				ZQ_CNN_Forward_SSEUtils_NCHWC::MaxPooling(*((*bottoms)[0]), *((*tops)[0]), kernel_H, kernel_W, stride_H, stride_W, global_pool);
 				double t2 = omp_get_wtime();
-				last_cost_time = t2 - t1;
-				if (show_debug_info)
+				ZQ_CNN_Layer_NCHWC<Tensor4D>::last_cost_time = t2 - t1;
+				if (ZQ_CNN_Layer_NCHWC<Tensor4D>::show_debug_info)
 					printf("Pooling layer: %s cost : %.3f ms\n", name.c_str(), 1000 * (t2 - t1));
 				return true;
 			}
@@ -1915,8 +1915,8 @@ namespace ZQ
 				double t1 = omp_get_wtime();
 				ZQ_CNN_Forward_SSEUtils_NCHWC::AVGPooling(*((*bottoms)[0]), *((*tops)[0]), kernel_H, kernel_W, stride_H, stride_W, global_pool);
 				double t2 = omp_get_wtime();
-				last_cost_time = t2 - t1;
-				if (show_debug_info)
+				ZQ_CNN_Layer_NCHWC<Tensor4D>::last_cost_time = t2 - t1;
+				if (ZQ_CNN_Layer_NCHWC<Tensor4D>::show_debug_info)
 					printf("Pooling layer: %s cost : %.3f ms\n", name.c_str(), 1000 * (t2 - t1));
 				return true;
 			}
@@ -1932,7 +1932,7 @@ namespace ZQ
 		{
 			bottom_names.clear();
 			top_names.clear();
-			std::vector<std::vector<std::string> > paras = split_line(line);
+			std::vector<std::vector<std::string> > paras = ZQ_CNN_Layer_NCHWC<Tensor4D>::split_line(line);
 			int num = paras.size();
 			bool has_kernelH = false, has_kernelW = false;
 			bool has_strideH = false, has_strideW = false;
@@ -2140,8 +2140,8 @@ namespace ZQ
 				bool ret = ZQ_CNN_Forward_SSEUtils_NCHWC::InnerProductWithBias(*((*bottoms)[0]),
 					*filters, *bias, *((*tops)[0]), tmp_buffer, tmp_buffer_len);
 				double t2 = omp_get_wtime();
-				last_cost_time = t2 - t1;
-				if (show_debug_info)
+				ZQ_CNN_Layer_NCHWC<Tensor4D>::last_cost_time = t2 - t1;
+				if (ZQ_CNN_Layer_NCHWC<Tensor4D>::show_debug_info)
 					printf("Innerproduct layer: %.3f ms NHW %dx%dx%d filter: NHWC %d x %d x %d x %d\n",
 						1000 * (t2 - t1), (*tops)[0]->GetN(), (*tops)[0]->GetH(), (*tops)[0]->GetW(),
 						filters->GetN(), filters->GetH(), filters->GetW(), filters->GetC());
@@ -2157,8 +2157,8 @@ namespace ZQ
 				bool ret = ZQ_CNN_Forward_SSEUtils_NCHWC::InnerProduct(*((*bottoms)[0]), *filters, *((*tops)[0]),
 					buffer, buffer_len);
 				double t2 = omp_get_wtime();
-				last_cost_time = t2 - t1;
-				if (show_debug_info)
+				ZQ_CNN_Layer_NCHWC<Tensor4D>::last_cost_time = t2 - t1;
+				if (ZQ_CNN_Layer_NCHWC<Tensor4D>::show_debug_info)
 					printf("Innerproduct layer: %s cost : %.3f ms\n", name.c_str(), 1000 * (t2 - t1));
 				return ret;
 			}
@@ -2169,7 +2169,7 @@ namespace ZQ
 		{
 			bottom_names.clear();
 			top_names.clear();
-			std::vector<std::vector<std::string> > paras = split_line(line);
+			std::vector<std::vector<std::string> > paras = ZQ_CNN_Layer_NCHWC<Tensor4D>::split_line(line);
 			int num = paras.size();
 			bool has_num_output = false;
 			bool has_top = false, has_bottom = false, has_name = false;
@@ -2441,8 +2441,8 @@ namespace ZQ
 			double t1 = omp_get_wtime();
 			ZQ_CNN_Forward_SSEUtils_NCHWC::Softmax(*((*tops)[0]), axis);
 			double t2 = omp_get_wtime();
-			last_cost_time = t2 - t1;
-			if (show_debug_info)
+			ZQ_CNN_Layer_NCHWC<Tensor4D>::last_cost_time = t2 - t1;
+			if (ZQ_CNN_Layer_NCHWC<Tensor4D>::show_debug_info)
 				printf("Softmax layer: %s cost : %.3f ms\n", name.c_str(), 1000 * (t2 - t1));
 			return true;
 		}
@@ -2451,7 +2451,7 @@ namespace ZQ
 		{
 			bottom_names.clear();
 			top_names.clear();
-			std::vector<std::vector<std::string> > paras = split_line(line);
+			std::vector<std::vector<std::string> > paras = ZQ_CNN_Layer_NCHWC<Tensor4D>::split_line(line);
 			int num = paras.size();
 			bool has_top = false, has_bottom = false, has_name = false;
 			for (int n = 0; n < num; n++)
@@ -2606,8 +2606,8 @@ namespace ZQ
 				return false;
 			}
 			double t2 = omp_get_wtime();
-			last_cost_time = t2 - t1;
-			if (show_debug_info)
+			ZQ_CNN_Layer_NCHWC<Tensor4D>::last_cost_time = t2 - t1;
+			if (ZQ_CNN_Layer_NCHWC<Tensor4D>::show_debug_info)
 				printf("Eltwise layer: %s cost : %.3f ms\n", name.c_str(), 1000 * (t2 - t1));
 			return ret;
 		}
@@ -2617,7 +2617,7 @@ namespace ZQ
 			bottom_names.clear();
 			top_names.clear();
 			weight.clear();
-			std::vector<std::vector<std::string> > paras = split_line(line);
+			std::vector<std::vector<std::string> > paras = ZQ_CNN_Layer_NCHWC<Tensor4D>::split_line(line);
 			int num = paras.size();
 			bool has_operation = false;
 			bool has_top = false, has_bottom = false, has_name = false;
