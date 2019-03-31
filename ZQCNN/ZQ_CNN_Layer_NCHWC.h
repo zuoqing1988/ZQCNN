@@ -299,7 +299,7 @@ namespace ZQ
 						double mop = (double)(*tops)[0]->GetN()*(*tops)[0]->GetH()* (*tops)[0]->GetW()* filters->GetN()* filters->GetH()* filters->GetW()* filters->GetC();
 						mop /= 1024 * 1024;
 						printf("Conv layer:%s %.3f ms NHW %dx%dx%d filter: NHWC %d x %d x %d x %d, MUL = %.3f M, GFLOPS=%.3f\n",
-							name.c_str(), 1000 * (t2 - t1), (*tops)[0]->GetN(), (*tops)[0]->GetH(), (*tops)[0]->GetW(), filters->GetN(), filters->GetH(), filters->GetW(), filters->GetC(),
+							ZQ_CNN_Layer_NCHWC<Tensor4D>::name.c_str(), 1000 * (t2 - t1), (*tops)[0]->GetN(), (*tops)[0]->GetH(), (*tops)[0]->GetW(), filters->GetN(), filters->GetH(), filters->GetW(), filters->GetC(),
 							mop, mop / time);
 					}
 					return ret;
@@ -322,7 +322,7 @@ namespace ZQ
 						double mop = (double)(*tops)[0]->GetN()*(*tops)[0]->GetH()* (*tops)[0]->GetW()* filters->GetN()* filters->GetH()* filters->GetW()* filters->GetC();
 						mop /= 1024 * 1024;
 						printf("Conv layer:%s %.3f ms NHW %dx%dx%d filter: NHWC %d x %d x %d x %d, MUL = %.3f M, GFLOPS=%.3f\n",
-							name.c_str(), 1000 * (t2 - t1), (*tops)[0]->GetN(), (*tops)[0]->GetH(), (*tops)[0]->GetW(), filters->GetN(), filters->GetH(), filters->GetW(), filters->GetC(),
+							ZQ_CNN_Layer_NCHWC<Tensor4D>::name.c_str(), 1000 * (t2 - t1), (*tops)[0]->GetN(), (*tops)[0]->GetH(), (*tops)[0]->GetW(), filters->GetN(), filters->GetH(), filters->GetW(), filters->GetC(),
 							mop, mop / time);
 					}
 					return ret;
@@ -347,7 +347,7 @@ namespace ZQ
 						double mop = (double)(*tops)[0]->GetN()*(*tops)[0]->GetH()* (*tops)[0]->GetW()* filters->GetN()* filters->GetH()* filters->GetW()* filters->GetC();
 						mop /= 1024 * 1024;
 						printf("Conv layer:%s %.3f ms NHW %dx%dx%d filter: NHWC %d x %d x %d x %d, MUL = %.3f M, GFLOPS=%.3f\n",
-							name.c_str(), 1000 * (t2 - t1), (*tops)[0]->GetN(), (*tops)[0]->GetH(), (*tops)[0]->GetW(), filters->GetN(), filters->GetH(), filters->GetW(), filters->GetC(),
+							ZQ_CNN_Layer_NCHWC<Tensor4D>::name.c_str(), 1000 * (t2 - t1), (*tops)[0]->GetN(), (*tops)[0]->GetH(), (*tops)[0]->GetW(), filters->GetN(), filters->GetH(), filters->GetW(), filters->GetC(),
 							mop, mop / time);
 					}
 					return ret;
@@ -369,7 +369,7 @@ namespace ZQ
 						double mop = (double)(*tops)[0]->GetN()*(*tops)[0]->GetH()* (*tops)[0]->GetW()* filters->GetN()* filters->GetH()* filters->GetW()* filters->GetC();
 						mop /= 1024 * 1024;
 						printf("Conv layer:%s %.3f ms NHW %dx%dx%d filter: NHWC %d x %d x %d x %d, MUL = %.3f M, GFLOPS=%.3f\n",
-							name.c_str(), 1000 * (t2 - t1), (*tops)[0]->GetN(), (*tops)[0]->GetH(), (*tops)[0]->GetW(), filters->GetN(), filters->GetH(), filters->GetW(), filters->GetC(),
+							ZQ_CNN_Layer_NCHWC<Tensor4D>::name.c_str(), 1000 * (t2 - t1), (*tops)[0]->GetN(), (*tops)[0]->GetH(), (*tops)[0]->GetW(), filters->GetN(), filters->GetH(), filters->GetW(), filters->GetC(),
 							mop, mop / time);
 					}
 					return ret;
@@ -776,7 +776,7 @@ namespace ZQ
 						double mop = (double)(*tops)[0]->GetN()*(*tops)[0]->GetH()* (*tops)[0]->GetW()* filters->GetN()* filters->GetH()* filters->GetW()* filters->GetC();
 						mop /= 1024 * 1024;
 						printf("DwConv layer:%s %.3f ms NHW %dx%dx%d filter: NHWC %d x %d x %d x %d, MUL = %.3f M, GFLOPS=%.3f\n",
-							name.c_str(), 1000 * (t2 - t1), (*tops)[0]->GetN(), (*tops)[0]->GetH(), (*tops)[0]->GetW(), filters->GetN(), filters->GetH(), filters->GetW(), filters->GetC(),
+							ZQ_CNN_Layer_NCHWC<Tensor4D>::name.c_str(), 1000 * (t2 - t1), (*tops)[0]->GetN(), (*tops)[0]->GetH(), (*tops)[0]->GetW(), filters->GetN(), filters->GetH(), filters->GetW(), filters->GetC(),
 							mop, mop / time);
 
 					}
@@ -798,7 +798,7 @@ namespace ZQ
 						double mop = (double)(*tops)[0]->GetN()*(*tops)[0]->GetH()* (*tops)[0]->GetW()* filters->GetN()* filters->GetH()* filters->GetW()* filters->GetC();
 						mop /= 1024 * 1024;
 						printf("DwConv layer:%s %.3f ms NHW %dx%dx%d filter: NHWC %d x %d x %d x %d, MUL = %.3f M, GFLOPS=%.3f\n",
-							name.c_str(), 1000 * (t2 - t1), (*tops)[0]->GetN(), (*tops)[0]->GetH(), (*tops)[0]->GetW(), filters->GetN(), filters->GetH(), filters->GetW(), filters->GetC(),
+							ZQ_CNN_Layer_NCHWC<Tensor4D>::name.c_str(), 1000 * (t2 - t1), (*tops)[0]->GetN(), (*tops)[0]->GetH(), (*tops)[0]->GetW(), filters->GetN(), filters->GetH(), filters->GetW(), filters->GetC(),
 							mop, mop / time);
 
 					}
@@ -821,7 +821,7 @@ namespace ZQ
 					double mop = (double)(*tops)[0]->GetN()*(*tops)[0]->GetH()* (*tops)[0]->GetW()* filters->GetN()* filters->GetH()* filters->GetW()* filters->GetC();
 					mop /= 1024 * 1024;
 					printf("DwConv layer:%s %.3f ms NHW %dx%dx%d filter: NHWC %d x %d x %d x %d, MUL = %.3f M, GFLOPS=%.3f\n",
-						name.c_str(), 1000 * (t2 - t1), (*tops)[0]->GetN(), (*tops)[0]->GetH(), (*tops)[0]->GetW(), filters->GetN(), filters->GetH(), filters->GetW(), filters->GetC(),
+						ZQ_CNN_Layer_NCHWC<Tensor4D>::name.c_str(), 1000 * (t2 - t1), (*tops)[0]->GetN(), (*tops)[0]->GetH(), (*tops)[0]->GetW(), filters->GetN(), filters->GetH(), filters->GetW(), filters->GetC(),
 						mop, mop / time);
 				}
 				return ret;
@@ -1226,7 +1226,7 @@ namespace ZQ
 			double t2 = omp_get_wtime();
 			ZQ_CNN_Layer_NCHWC<Tensor4D>::last_cost_time = t2 - t1;
 			if (ZQ_CNN_Layer_NCHWC<Tensor4D>::show_debug_info)
-				printf("BatchNorm layer: %s cost : %.3f ms\n", name.c_str(), 1000 * (t2 - t1));
+				printf("BatchNorm layer: %s cost : %.3f ms\n", ZQ_CNN_Layer_NCHWC<Tensor4D>::name.c_str(), 1000 * (t2 - t1));
 			return ret;
 		}
 
@@ -1566,7 +1566,7 @@ namespace ZQ
 			double t2 = omp_get_wtime();
 			ZQ_CNN_Layer_NCHWC<Tensor4D>::last_cost_time = t2 - t1;
 			if (ZQ_CNN_Layer_NCHWC<Tensor4D>::show_debug_info)
-				printf("PReLU layer: %s %.3f ms \n", name.c_str(), 1000 * (t2 - t1));
+				printf("PReLU layer: %s %.3f ms \n", ZQ_CNN_Layer_NCHWC<Tensor4D>::name.c_str(), 1000 * (t2 - t1));
 			return ret;
 		}
 
@@ -1760,7 +1760,7 @@ namespace ZQ
 			double t2 = omp_get_wtime();
 			ZQ_CNN_Layer_NCHWC<Tensor4D>::last_cost_time = t2 - t1;
 			if (ZQ_CNN_Layer_NCHWC<Tensor4D>::show_debug_info)
-				printf("ReLU layer: %s %.3f ms \n", name.c_str(), 1000 * (t2 - t1));
+				printf("ReLU layer: %s %.3f ms \n", ZQ_CNN_Layer_NCHWC<Tensor4D>::name.c_str(), 1000 * (t2 - t1));
 			return true;
 		}
 
@@ -1907,7 +1907,7 @@ namespace ZQ
 				double t2 = omp_get_wtime();
 				ZQ_CNN_Layer_NCHWC<Tensor4D>::last_cost_time = t2 - t1;
 				if (ZQ_CNN_Layer_NCHWC<Tensor4D>::show_debug_info)
-					printf("Pooling layer: %s cost : %.3f ms\n", name.c_str(), 1000 * (t2 - t1));
+					printf("Pooling layer: %s cost : %.3f ms\n", ZQ_CNN_Layer_NCHWC<Tensor4D>::name.c_str(), 1000 * (t2 - t1));
 				return true;
 			}
 			else if (type == TYPE_AVGPOOLING)
@@ -1917,7 +1917,7 @@ namespace ZQ
 				double t2 = omp_get_wtime();
 				ZQ_CNN_Layer_NCHWC<Tensor4D>::last_cost_time = t2 - t1;
 				if (ZQ_CNN_Layer_NCHWC<Tensor4D>::show_debug_info)
-					printf("Pooling layer: %s cost : %.3f ms\n", name.c_str(), 1000 * (t2 - t1));
+					printf("Pooling layer: %s cost : %.3f ms\n", ZQ_CNN_Layer_NCHWC<Tensor4D>::name.c_str(), 1000 * (t2 - t1));
 				return true;
 			}
 			else
@@ -2159,7 +2159,7 @@ namespace ZQ
 				double t2 = omp_get_wtime();
 				ZQ_CNN_Layer_NCHWC<Tensor4D>::last_cost_time = t2 - t1;
 				if (ZQ_CNN_Layer_NCHWC<Tensor4D>::show_debug_info)
-					printf("Innerproduct layer: %s cost : %.3f ms\n", name.c_str(), 1000 * (t2 - t1));
+					printf("Innerproduct layer: %s cost : %.3f ms\n", ZQ_CNN_Layer_NCHWC<Tensor4D>::name.c_str(), 1000 * (t2 - t1));
 				return ret;
 			}
 
@@ -2443,7 +2443,7 @@ namespace ZQ
 			double t2 = omp_get_wtime();
 			ZQ_CNN_Layer_NCHWC<Tensor4D>::last_cost_time = t2 - t1;
 			if (ZQ_CNN_Layer_NCHWC<Tensor4D>::show_debug_info)
-				printf("Softmax layer: %s cost : %.3f ms\n", name.c_str(), 1000 * (t2 - t1));
+				printf("Softmax layer: %s cost : %.3f ms\n", ZQ_CNN_Layer_NCHWC<Tensor4D>::name.c_str(), 1000 * (t2 - t1));
 			return true;
 		}
 
@@ -2608,7 +2608,7 @@ namespace ZQ
 			double t2 = omp_get_wtime();
 			ZQ_CNN_Layer_NCHWC<Tensor4D>::last_cost_time = t2 - t1;
 			if (ZQ_CNN_Layer_NCHWC<Tensor4D>::show_debug_info)
-				printf("Eltwise layer: %s cost : %.3f ms\n", name.c_str(), 1000 * (t2 - t1));
+				printf("Eltwise layer: %s cost : %.3f ms\n", ZQ_CNN_Layer_NCHWC<Tensor4D>::name.c_str(), 1000 * (t2 - t1));
 			return ret;
 		}
 
