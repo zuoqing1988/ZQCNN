@@ -4,7 +4,7 @@
 #include "zq_cnn_base_operator.h"
 #include "../ZQ_CNN_CompileConfig.h"
 #if __ARM_NEON
-
+#include <arm_neon.h>
 #else
 #if defined(__GNUC__)
 #if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_SSE
