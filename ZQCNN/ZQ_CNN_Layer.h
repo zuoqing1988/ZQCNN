@@ -2739,7 +2739,7 @@ namespace ZQ
 				void** tmp_buffer = use_buffer ? buffer : 0;
 				__int64* tmp_buffer_len = use_buffer ? buffer_len : 0;
 				bool ret = ZQ_CNN_Forward_SSEUtils::InnerProduct(*((*bottoms)[0]), *filters, *((*tops)[0]),
-					buffer,buffer_len);
+					tmp_buffer,tmp_buffer_len);
 				double t2 = omp_get_wtime();
 				last_cost_time = t2 - t1;
 				if (show_debug_info)

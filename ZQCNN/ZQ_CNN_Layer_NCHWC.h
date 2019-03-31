@@ -2155,7 +2155,7 @@ namespace ZQ
 				void** tmp_buffer = ZQ_CNN_Layer_NCHWC<Tensor4D>::use_buffer ? ZQ_CNN_Layer_NCHWC<Tensor4D>::buffer : 0;
 				__int64* tmp_buffer_len = ZQ_CNN_Layer_NCHWC<Tensor4D>::use_buffer ? ZQ_CNN_Layer_NCHWC<Tensor4D>::buffer_len : 0;
 				bool ret = ZQ_CNN_Forward_SSEUtils_NCHWC::InnerProduct(*((*bottoms)[0]), *filters, *((*tops)[0]),
-					buffer, buffer_len);
+					tmp_buffer, tmp_buffer_len);
 				double t2 = omp_get_wtime();
 				ZQ_CNN_Layer_NCHWC<Tensor4D>::last_cost_time = t2 - t1;
 				if (ZQ_CNN_Layer_NCHWC<Tensor4D>::show_debug_info)
