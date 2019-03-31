@@ -1,7 +1,6 @@
 #include <stdlib.h>
 #include <math.h>
 #include <float.h>
-#include "zq_cnn_base_operator.h"
 #include "../ZQ_CNN_CompileConfig.h"
 #if __ARM_NEON
 #include <arm_neon.h>

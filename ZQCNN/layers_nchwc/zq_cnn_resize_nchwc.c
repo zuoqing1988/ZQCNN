@@ -2,7 +2,6 @@
 #include <stdlib.h>
 #include <math.h>
 #include <float.h>
-#include "zq_cnn_base_operator.h"
 #include "../ZQ_CNN_CompileConfig.h"
 #if __ARM_NEON
 #include <arm_neon.h>
@@ -121,6 +120,16 @@ extern "C" {
 #endif
 #endif//__ARM_NEON
 
+inline float my_mm_load_ps(const float* ptr) { return *ptr; }
+inline void my_mm_store_ps(float* ptr, float val) { *ptr = val; }
+inline float my_mm_add_ps(float a, float b) { return a + b; }
+inline float my_mm_sub_ps(float a, float b) { return a - b; }
+inline float my_mm_mul_ps(float a, float b) { return a * b; }
+inline float my_mm_fmadd_ps(float a, float b, float c) { return a*b + c; }
+inline float my_mm_max_ps(float a, float b) { return a > b ? a : b; }
+inline float my_mm_min_ps(float a, float b) { return a < b ? a : b; }
+inline float my_mm_setzero_ps() { return 0; }
+inline float my_mm_set1_ps(float v) { return v; }
 
 #define zq_cnn_resize_with_safeborder zq_cnn_resize_with_safeborder_nchwc1
 #define zq_cnn_resize_without_safeborder zq_cnn_resize_without_safeborder_nchwc1
