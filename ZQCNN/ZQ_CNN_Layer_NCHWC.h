@@ -204,13 +204,13 @@ namespace ZQ
 				}
 				else
 				{
-					std::cout << "warning: unknown para " << paras[n][0] << " in Layer " << name << "\n";
+					std::cout << "warning: unknown para " << paras[n][0] << " in Layer " << ZQ_CNN_Layer_NCHWC<Tensor4D>::name << "\n";
 				}
 			}
 
-			if (!has_C)std::cout << "Layer " << name << " missing " << "C\n";
+			if (!has_C)std::cout << "Layer " << ZQ_CNN_Layer_NCHWC<Tensor4D>::name << " missing " << "C\n";
 			if (!has_name) {
-				std::cout << "Layer " << name << " missing " << "name\n";
+				std::cout << "Layer " << ZQ_CNN_Layer_NCHWC<Tensor4D>::name << " missing " << "name\n";
 				std::cout << line << "\n";
 			}
 			return has_C && has_name;
@@ -526,16 +526,16 @@ namespace ZQ
 				}
 				else
 				{
-					std::cout << "warning: unknown para " << paras[n][0] << " in Layer " << name << "\n";
+					std::cout << "warning: unknown para " << paras[n][0] << " in Layer " << ZQ_CNN_Layer_NCHWC<Tensor4D>::name << "\n";
 				}
 			}
-			if (!has_num_output)std::cout << "Layer " << name << " missing " << "num_output\n";
-			if (!has_kernelH)std::cout << "Layer " << name << " missing " << "kernel_H (kernel_size)\n";
-			if (!has_kernelW)std::cout << "Layer " << name << " missing " << "kernel_W (kernel_size)\n";
-			if (!has_bottom)std::cout << "Layer " << name << " missing " << "bottom\n";
-			if (!has_top)std::cout << "Layer " << name << " missing " << "top\n";
+			if (!has_num_output)std::cout << "Layer " << ZQ_CNN_Layer_NCHWC<Tensor4D>::name << " missing " << "num_output\n";
+			if (!has_kernelH)std::cout << "Layer " << ZQ_CNN_Layer_NCHWC<Tensor4D>::name << " missing " << "kernel_H (kernel_size)\n";
+			if (!has_kernelW)std::cout << "Layer " << ZQ_CNN_Layer_NCHWC<Tensor4D>::name << " missing " << "kernel_W (kernel_size)\n";
+			if (!has_bottom)std::cout << "Layer " << ZQ_CNN_Layer_NCHWC<Tensor4D>::name << " missing " << "bottom\n";
+			if (!has_top)std::cout << "Layer " << ZQ_CNN_Layer_NCHWC<Tensor4D>::name << " missing " << "top\n";
 			if (!has_name) {
-				std::cout << "Layer " << name << " missing " << "name\n";
+				std::cout << "Layer " << ZQ_CNN_Layer_NCHWC<Tensor4D>::name << " missing " << "name\n";
 				std::cout << line << "\n";
 			}
 			return has_num_output && has_kernelH && has_kernelW && has_bottom && has_top && has_name;
@@ -977,16 +977,16 @@ namespace ZQ
 				}
 				else
 				{
-					std::cout << "warning: unknown para " << paras[n][0] << " in Layer " << name << "\n";
+					std::cout << "warning: unknown para " << paras[n][0] << " in Layer " << ZQ_CNN_Layer_NCHWC<Tensor4D>::name << "\n";
 				}
 			}
-			if (!has_num_output)std::cout << "Layer " << name << " missing " << "num_output\n";
-			if (!has_kernelH)std::cout << "Layer " << name << " missing " << "kernel_H (kernel_size)\n";
-			if (!has_kernelW)std::cout << "Layer " << name << " missing " << "kernel_W (kernel_size)\n";
-			if (!has_bottom)std::cout << "Layer " << name << " missing " << "bottom\n";
-			if (!has_top)std::cout << "Layer " << name << " missing " << "top\n";
+			if (!has_num_output)std::cout << "Layer " << ZQ_CNN_Layer_NCHWC<Tensor4D>::name << " missing " << "num_output\n";
+			if (!has_kernelH)std::cout << "Layer " << ZQ_CNN_Layer_NCHWC<Tensor4D>::name << " missing " << "kernel_H (kernel_size)\n";
+			if (!has_kernelW)std::cout << "Layer " << ZQ_CNN_Layer_NCHWC<Tensor4D>::name << " missing " << "kernel_W (kernel_size)\n";
+			if (!has_bottom)std::cout << "Layer " << ZQ_CNN_Layer_NCHWC<Tensor4D>::name << " missing " << "bottom\n";
+			if (!has_top)std::cout << "Layer " << ZQ_CNN_Layer_NCHWC<Tensor4D>::name << " missing " << "top\n";
 			if (!has_name) {
-				std::cout << "Layer " << name << " missing " << "name\n";
+				std::cout << "Layer " << ZQ_CNN_Layer_NCHWC<Tensor4D>::name << " missing " << "name\n";
 				std::cout << line << "\n";
 			}
 			return has_num_output && has_kernelH && has_kernelW && has_bottom && has_top && has_name;
@@ -1010,7 +1010,7 @@ namespace ZQ
 		virtual bool SetBottomDim(int bottom_C, int bottom_H, int bottom_W) {
 			if (bottom_C != num_output)
 			{
-				std::cout << "Layer " << name << "'s num_output should match bottom's C\n";
+				std::cout << "Layer " << ZQ_CNN_Layer_NCHWC<Tensor4D>::name << "'s num_output should match bottom's C\n";
 				return false;
 			}
 
@@ -1286,13 +1286,13 @@ namespace ZQ
 				}
 				else
 				{
-					std::cout << "warning: unknown para " << paras[n][0] << " in Layer " << name << "\n";
+					std::cout << "warning: unknown para " << paras[n][0] << " in Layer " << ZQ_CNN_Layer_NCHWC<Tensor4D>::name << "\n";
 				}
 			}
-			if (!has_bottom)std::cout << "Layer " << name << " missing " << "bottom\n";
-			if (!has_top)std::cout << "Layer " << name << " missing " << "top\n";
+			if (!has_bottom)std::cout << "Layer " << ZQ_CNN_Layer_NCHWC<Tensor4D>::name << " missing " << "bottom\n";
+			if (!has_top)std::cout << "Layer " << ZQ_CNN_Layer_NCHWC<Tensor4D>::name << " missing " << "top\n";
 			if (!has_name) {
-				std::cout << "Layer " << name << " missing " << "name\n";
+				std::cout << "Layer " << ZQ_CNN_Layer_NCHWC<Tensor4D>::name << " missing " << "name\n";
 				std::cout << line << "\n";
 			}
 			return has_bottom && has_top && has_name;
@@ -1612,13 +1612,13 @@ namespace ZQ
 				}
 				else
 				{
-					std::cout << "warning: unknown para " << paras[n][0] << " in Layer " << name << "\n";
+					std::cout << "warning: unknown para " << paras[n][0] << " in Layer " << ZQ_CNN_Layer_NCHWC<Tensor4D>::name << "\n";
 				}
 			}
-			if (!has_bottom)std::cout << "Layer " << name << " missing " << "bottom\n";
-			if (!has_top)std::cout << "Layer " << name << " missing " << "top\n";
+			if (!has_bottom)std::cout << "Layer " << ZQ_CNN_Layer_NCHWC<Tensor4D>::name << " missing " << "bottom\n";
+			if (!has_top)std::cout << "Layer " << ZQ_CNN_Layer_NCHWC<Tensor4D>::name << " missing " << "top\n";
 			if (!has_name) {
-				std::cout << "Layer " << name << " missing " << "name\n";
+				std::cout << "Layer " << ZQ_CNN_Layer_NCHWC<Tensor4D>::name << " missing " << "name\n";
 				std::cout << line << "\n";
 			}
 			return has_bottom && has_top && has_name;
@@ -1813,13 +1813,13 @@ namespace ZQ
 				}
 				else
 				{
-					std::cout << "warning: unknown para " << paras[n][0] << " in Layer " << name << "\n";
+					std::cout << "warning: unknown para " << paras[n][0] << " in Layer " << ZQ_CNN_Layer_NCHWC<Tensor4D>::name << "\n";
 				}
 			}
-			if (!has_bottom)std::cout << "Layer " << name << " missing " << "bottom\n";
-			if (!has_top)std::cout << "Layer " << name << " missing " << "top\n";
+			if (!has_bottom)std::cout << "Layer " << ZQ_CNN_Layer_NCHWC<Tensor4D>::name << " missing " << "bottom\n";
+			if (!has_top)std::cout << "Layer " << ZQ_CNN_Layer_NCHWC<Tensor4D>::name << " missing " << "top\n";
 			if (!has_name) {
-				std::cout << "Layer " << name << " missing " << "name\n";
+				std::cout << "Layer " << ZQ_CNN_Layer_NCHWC<Tensor4D>::name << " missing " << "name\n";
 				std::cout << line << "\n";
 			}
 			return has_bottom && has_top && has_name;
@@ -2018,21 +2018,21 @@ namespace ZQ
 				}
 				else
 				{
-					std::cout << "warning: unknown para " << paras[n][0] << " in Layer " << name << "\n";
+					std::cout << "warning: unknown para " << paras[n][0] << " in Layer " << ZQ_CNN_Layer_NCHWC<Tensor4D>::name << "\n";
 				}
 			}
 			if (!global_pool)
 			{
-				if (!has_kernelH)std::cout << "Layer " << name << " missing " << "kernel_H (kernel_size)\n";
-				if (!has_kernelW)std::cout << "Layer " << name << " missing " << "kernel_W (kernel_size)\n";
-				if (!has_strideH)std::cout << "Layer " << name << " missing " << "stride_H (stride)\n";
-				if (!has_strideW)std::cout << "Layer " << name << " missing " << "stride_W (stride)\n";
+				if (!has_kernelH)std::cout << "Layer " << ZQ_CNN_Layer_NCHWC<Tensor4D>::name << " missing " << "kernel_H (kernel_size)\n";
+				if (!has_kernelW)std::cout << "Layer " << ZQ_CNN_Layer_NCHWC<Tensor4D>::name << " missing " << "kernel_W (kernel_size)\n";
+				if (!has_strideH)std::cout << "Layer " << ZQ_CNN_Layer_NCHWC<Tensor4D>::name << " missing " << "stride_H (stride)\n";
+				if (!has_strideW)std::cout << "Layer " << ZQ_CNN_Layer_NCHWC<Tensor4D>::name << " missing " << "stride_W (stride)\n";
 			}
 
-			if (!has_bottom)std::cout << "Layer " << name << " missing " << "bottom\n";
-			if (!has_top)std::cout << "Layer " << name << " missing " << "top\n";
+			if (!has_bottom)std::cout << "Layer " << ZQ_CNN_Layer_NCHWC<Tensor4D>::name << " missing " << "bottom\n";
+			if (!has_top)std::cout << "Layer " << ZQ_CNN_Layer_NCHWC<Tensor4D>::name << " missing " << "top\n";
 			if (!has_name) {
-				std::cout << "Layer " << name << " missing " << "name\n";
+				std::cout << "Layer " << ZQ_CNN_Layer_NCHWC<Tensor4D>::name << " missing " << "name\n";
 				std::cout << line << "\n";
 			}
 			if (!global_pool)
@@ -2222,14 +2222,14 @@ namespace ZQ
 				}
 				else
 				{
-					std::cout << "warning: unknown para " << paras[n][0] << " in Layer " << name << "\n";
+					std::cout << "warning: unknown para " << paras[n][0] << " in Layer " << ZQ_CNN_Layer_NCHWC<Tensor4D>::name << "\n";
 				}
 			}
-			if (!has_num_output)std::cout << "Layer " << name << " missing " << "num_output\n";
-			if (!has_bottom)std::cout << "Layer " << name << " missing " << "bottom\n";
-			if (!has_top)std::cout << "Layer " << name << " missing " << "top\n";
+			if (!has_num_output)std::cout << "Layer " << ZQ_CNN_Layer_NCHWC<Tensor4D>::name << " missing " << "num_output\n";
+			if (!has_bottom)std::cout << "Layer " << ZQ_CNN_Layer_NCHWC<Tensor4D>::name << " missing " << "bottom\n";
+			if (!has_top)std::cout << "Layer " << ZQ_CNN_Layer_NCHWC<Tensor4D>::name << " missing " << "top\n";
 			if (!has_name) {
-				std::cout << "Layer " << name << " missing " << "name\n";
+				std::cout << "Layer " << ZQ_CNN_Layer_NCHWC<Tensor4D>::name << " missing " << "name\n";
 				std::cout << line << "\n";
 			}
 			return has_num_output && has_bottom && has_top && has_name;
@@ -2495,14 +2495,14 @@ namespace ZQ
 				}
 				else
 				{
-					std::cout << "warning: unknown para " << paras[n][0] << " in Layer " << name << "\n";
+					std::cout << "warning: unknown para " << paras[n][0] << " in Layer " << ZQ_CNN_Layer_NCHWC<Tensor4D>::name << "\n";
 				}
 			}
-			if (axis < 0 || axis > 3)std::cout << "Layer " << name << " invalid axis " << axis << "\n";
-			if (!has_bottom)std::cout << "Layer " << name << " missing " << "bottom\n";
-			if (!has_top)std::cout << "Layer " << name << " missing " << "top\n";
+			if (axis < 0 || axis > 3)std::cout << "Layer " << ZQ_CNN_Layer_NCHWC<Tensor4D>::name << " invalid axis " << axis << "\n";
+			if (!has_bottom)std::cout << "Layer " << ZQ_CNN_Layer_NCHWC<Tensor4D>::name << " missing " << "bottom\n";
+			if (!has_top)std::cout << "Layer " << ZQ_CNN_Layer_NCHWC<Tensor4D>::name << " missing " << "top\n";
 			if (!has_name) {
-				std::cout << "Layer " << name << " missing " << "name\n";
+				std::cout << "Layer " << ZQ_CNN_Layer_NCHWC<Tensor4D>::name << " missing " << "name\n";
 				std::cout << line << "\n";
 			}
 			return axis >= 0 && axis <= 3 && has_bottom && has_top && has_name;
@@ -2602,7 +2602,7 @@ namespace ZQ
 			}
 			else
 			{
-				std::cout << "unknown eltwise operation " << operation << " in Layer " << name << "\n";
+				std::cout << "unknown eltwise operation " << operation << " in Layer " << ZQ_CNN_Layer_NCHWC<Tensor4D>::name << "\n";
 				return false;
 			}
 			double t2 = omp_get_wtime();
@@ -2689,17 +2689,17 @@ namespace ZQ
 				}
 				else
 				{
-					std::cout << "warning: unknown para " << paras[n][0] << " in Layer " << name << "\n";
+					std::cout << "warning: unknown para " << paras[n][0] << " in Layer " << ZQ_CNN_Layer_NCHWC<Tensor4D>::name << "\n";
 				}
 
 			}
-			if (!has_operation)std::cout << "Layer " << name << " missing " << "operation\n";
-			if (!has_bottom)std::cout << "Layer " << name << " missing " << "bottom\n";
-			if (bottom_names.size() < 2)std::cout << "Layer " << name << " must have at least 2 bottoms\n";
-			if (with_weight && weight.size() != bottom_names.size()) std::cout << "Layer " << name << " weight num should match with bottom num\n";
-			if (!has_top)std::cout << "Layer " << name << " missing " << "top\n";
+			if (!has_operation)std::cout << "Layer " << ZQ_CNN_Layer_NCHWC<Tensor4D>::name << " missing " << "operation\n";
+			if (!has_bottom)std::cout << "Layer " << ZQ_CNN_Layer_NCHWC<Tensor4D>::name << " missing " << "bottom\n";
+			if (bottom_names.size() < 2)std::cout << "Layer " << ZQ_CNN_Layer_NCHWC<Tensor4D>::name << " must have at least 2 bottoms\n";
+			if (with_weight && weight.size() != bottom_names.size()) std::cout << "Layer " << ZQ_CNN_Layer_NCHWC<Tensor4D>::name << " weight num should match with bottom num\n";
+			if (!has_top)std::cout << "Layer " << ZQ_CNN_Layer_NCHWC<Tensor4D>::name << " missing " << "top\n";
 			if (!has_name) {
-				std::cout << "Layer " << name << " missing " << "name\n";
+				std::cout << "Layer " << ZQ_CNN_Layer_NCHWC<Tensor4D>::name << " missing " << "name\n";
 				std::cout << line << "\n";
 			}
 			return has_operation && has_bottom && bottom_names.size() >= 2 && has_top && has_name
