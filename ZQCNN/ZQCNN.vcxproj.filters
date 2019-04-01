@@ -362,5 +362,8 @@
     <ClInclude Include="layers_nchwc\zq_cnn_convolution_gemm_nchwc.h">
       <Filter>layers_nchwc</Filter>
     </ClInclude>
+    <ClInclude Include="layers_nchwc\zq_cnn_convolution_gemm_nchwc_col2im.h">
+      <Filter>layers_nchwc</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

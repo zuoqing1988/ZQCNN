@@ -247,6 +247,7 @@
     <ClInclude Include="layers_nchwc\zq_cnn_batchnormscale_nchwc.h" />
     <ClInclude Include="layers_nchwc\zq_cnn_batchnormscale_nchwc_raw.h" />
     <ClInclude Include="layers_nchwc\zq_cnn_convolution_gemm_nchwc.h" />
+    <ClInclude Include="layers_nchwc\zq_cnn_convolution_gemm_nchwc_col2im.h" />
     <ClInclude Include="layers_nchwc\zq_cnn_convolution_gemm_nchwc_raw.h" />
     <ClInclude Include="layers_nchwc\zq_cnn_depthwise_convolution_nchwc.h" />
     <ClInclude Include="layers_nchwc\zq_cnn_depthwise_convolution_nchwc_raw.h" />
