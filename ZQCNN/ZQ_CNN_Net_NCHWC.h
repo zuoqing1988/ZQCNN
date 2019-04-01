@@ -898,7 +898,6 @@ namespace ZQ
 						}
 						if (tops[i + 1][0] == bottoms[i + 1][0] || !later_refer)
 						{
-							//do merge
 							ZQ_CNN_Layer_NCHWC_InnerProduct<Tensor4D>* conv_layer = (ZQ_CNN_Layer_NCHWC_InnerProduct<Tensor4D>*)layers[i];
 							ZQ_CNN_Layer_NCHWC_BatchNormScale<Tensor4D>* bns_layer = (ZQ_CNN_Layer_NCHWC_BatchNormScale<Tensor4D>*)layers[i + 1];
 							if (!_merge_bns_to_innerproduct(conv_layer, bns_layer))

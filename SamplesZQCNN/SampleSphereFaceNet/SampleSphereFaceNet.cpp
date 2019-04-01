@@ -225,7 +225,7 @@ int main(int argc, const char** argv)
 			net.GetNumOfMulAdd() / (1024.0*1024.0),
 			net.GetNumOfMulAddConv() / (1024.0*1024.0),
 			net.GetNumOfMulAddDwConv() / (1024.0*1024.0));
-		int iters = 100;
+		int iters = 1000;
 		double t1 = omp_get_wtime();
 		for (int it = 0; it < iters; it++)
 		{
@@ -276,14 +276,16 @@ int main(int argc, const char** argv)
 		double t6 = omp_get_wtime();
 		printf("[%d] times cost %.3f s, 1 iter cost %.3f ms\n", iters, t6 - t5, 1000 * (t6 - t5) / iters);
 
-		printf("last time: conv = %.3f ms, dwonv = %.3f ms, bns = %.3f ms, prelu = %.3f ms, eltwise = %.3f\n",
+		printf("last time: inner = %.3f ms, conv = %.3f ms, dwonv = %.3f ms, bns = %.3f ms, prelu = %.3f ms, eltwise = %.3f\n",
+			1000 * net.GetLastTimeOfLayerType("InnerProduct"),
 			1000 * net.GetLastTimeOfLayerType("Convolution"),
 			1000 * net.GetLastTimeOfLayerType("DepthwiseConvolution"),
 			1000 * net.GetLastTimeOfLayerType("BatchNormScale"),
 			1000 * net.GetLastTimeOfLayerType("PReLU"),
 			1000 * net.GetLastTimeOfLayerType("Eltwise")
 		);
-		printf("last time: conv = %.3f ms, dwonv = %.3f ms, bns = %.3f ms, prelu = %.3f ms, eltwise = %.3f\n",
+		printf("last time: inner = %.3f ms, conv = %.3f ms, dwonv = %.3f ms, bns = %.3f ms, prelu = %.3f ms, eltwise = %.3f\n",
+			1000 * net_nchwc.GetLastTimeOfLayerType("InnerProduct"),
 			1000 * net_nchwc.GetLastTimeOfLayerType("Convolution"),
 			1000 * net_nchwc.GetLastTimeOfLayerType("DepthwiseConvolution"),
 			1000 * net_nchwc.GetLastTimeOfLayerType("BatchNormScale"),

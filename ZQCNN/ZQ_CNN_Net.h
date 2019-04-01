@@ -1320,7 +1320,6 @@ namespace ZQ
 						}
 						if (tops[i + 1][0] == bottoms[i + 1][0] || !later_refer)
 						{
-							//do merge
 							ZQ_CNN_Layer_InnerProduct* conv_layer = (ZQ_CNN_Layer_InnerProduct*)layers[i];
 							ZQ_CNN_Layer_BatchNormScale* bns_layer = (ZQ_CNN_Layer_BatchNormScale*)layers[i + 1];
 							if (!_merge_bns_to_innerproduct(conv_layer, bns_layer))
