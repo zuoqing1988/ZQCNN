@@ -1,0 +1,146 @@
+Input           name=data  C=3 H=112 W=112
+Convolution					name=conv1 			bottom=data			top=conv1 num_output=64 kernel_size=3 stride=2 pad=1
+BatchNormScale				name=conv1_bn	 	bottom=conv1 		top=conv1 bias
+PReLU 						name=relu1 			bottom=conv1 		top=conv1
+DepthwiseConvolution		name=conv2_1_dw		bottom=conv1		top=conv2_1_dw num_output=64 kernel_size=3 stride=1 pad=1
+BatchNormScale				name=conv2_1_dw_bn	bottom=conv2_1_dw	top=conv2_1_dw bias
+PReLU						name=relu2_1_dw		bottom=conv2_1_dw	top=conv2_1_dw
+Convolution					name=conv2_1_sep	bottom=conv2_1_dw	top=conv2_1_sep num_output=128 kernel_size=1 stride=1 pad=0
+BatchNormScale				name=conv2_1_sep_bn	bottom=conv2_1_sep	top=conv2_1_sep bias
+PReLU						name=relu2_1_sep	bottom=conv2_1_sep	top=conv2_1_sep
+DepthwiseConvolution		name=conv2_2_dw		bottom=conv2_1_sep	top=conv2_2_dw num_output=128 kernel_size=3 stride=2 pad=1
+BatchNormScale				name=conv2_2_dw_bn	bottom=conv2_2_dw	top=conv2_2_dw bias
+PReLU						name=relu2_2_dw		bottom=conv2_2_dw	top=conv2_2_dw
+Convolution					name=conv2_2_sep	bottom=conv2_2_dw	top=conv2_2_sep num_output=64 kernel_size=1 stride=1 pad=0
+BatchNormScale				name=conv2_2_sep_bn	bottom=conv2_2_sep	top=conv2_2_sep bias
+Convolution					name=res3_block0_conv				bottom=conv2_2_sep			top=res3_block0_conv num_output=128 kernel_size=1 stride=1 pad=0
+BatchNormScale				name=res3_block0_conv_bn			bottom=res3_block0_conv		top=res3_block0_conv bias
+PReLU						name=res3_block0_conv_relu			bottom=res3_block0_conv		top=res3_block0_conv
+DepthwiseConvolution		name=res3_block0_conv_dw			bottom=res3_block0_conv		top=res3_block0_conv_dw num_output=128 kernel_size=3 stride=1 pad=1
+BatchNormScale				name=res3_block0_conv_dw_bn			bottom=res3_block0_conv_dw	top=res3_block0_conv_dw bias
+PReLU						name=res3_block0_conv_dw_relu		bottom=res3_block0_conv_dw	top=res3_block0_conv_dw
+Convolution					name=res3_block0_conv_sep			bottom=res3_block0_conv_dw	top=res3_block0_conv_sep num_output=64 kernel_size=1 stride=1 pad=0
+BatchNormScale				name=res3_block0_conv_sep_bn		bottom=res3_block0_conv_sep	top=res3_block0_conv_sep bias
+Eltwise						name=_plus0		bottom=res3_block0_conv_sep bottom=conv2_2_sep 	top=_plus0 	operation=1
+Convolution					name=res3_block1_conv				bottom=_plus0				top=res3_block1_conv num_output=128 kernel_size=1 stride=1 pad=0
+BatchNormScale				name=res3_block1_conv_bn			bottom=res3_block1_conv		top=res3_block1_conv bias
+PReLU						name=res3_block1_conv_relu			bottom=res3_block1_conv		top=res3_block1_conv
+DepthwiseConvolution		name=res3_block1_conv_dw			bottom=res3_block1_conv		top=res3_block1_conv_dw num_output=128 kernel_size=3 stride=1 pad=1
+BatchNormScale				name=res3_block1_conv_dw_bn			bottom=res3_block1_conv_dw	top=res3_block1_conv_dw bias
+PReLU						name=res3_block1_conv_dw_relu		bottom=res3_block1_conv_dw	top=res3_block1_conv_dw
+Convolution					name=res3_block1_conv_sep			bottom=res3_block1_conv_dw	top=res3_block1_conv_sep num_output=64 kernel_size=1 stride=1 pad=0
+BatchNormScale				name=res3_block1_conv_sep_bn		bottom=res3_block1_conv_sep	top=res3_block1_conv_sep bias
+Eltwise						name=_plus1		bottom=res3_block1_conv_sep bottom=_plus0 	top=_plus1 	operation=1
+Convolution					name=res3_block2_conv				bottom=_plus1				top=res3_block1_conv num_output=128 kernel_size=1 stride=1 pad=0
+BatchNormScale				name=res3_block2_conv_bn			bottom=res3_block1_conv		top=res3_block1_conv bias
+PReLU						name=res3_block2_conv_relu			bottom=res3_block1_conv		top=res3_block1_conv
+DepthwiseConvolution		name=res3_block2_conv_dw			bottom=res3_block1_conv		top=res3_block1_conv_dw num_output=128 kernel_size=3 stride=1 pad=1
+BatchNormScale				name=res3_block2_conv_dw_bn			bottom=res3_block1_conv_dw	top=res3_block1_conv_dw bias
+PReLU						name=res3_block2_conv_dw_relu		bottom=res3_block1_conv_dw	top=res3_block1_conv_dw
+Convolution					name=res3_block2_conv_sep			bottom=res3_block1_conv_dw	top=res3_block1_conv_sep num_output=64 kernel_size=1 stride=1 pad=0
+BatchNormScale				name=res3_block2_conv_sep_bn		bottom=res3_block1_conv_sep	top=res3_block1_conv_sep bias
+Eltwise						name=_plus2		bottom=res3_block1_conv_sep bottom=_plus1 	top=_plus2 	operation=1
+Convolution					name=res3_block3_conv				bottom=_plus2				top=res3_block1_conv num_output=128 kernel_size=1 stride=1 pad=0
+BatchNormScale				name=res3_block3_conv_bn			bottom=res3_block1_conv		top=res3_block1_conv bias
+PReLU						name=res3_block3_conv_relu			bottom=res3_block1_conv		top=res3_block1_conv
+DepthwiseConvolution		name=res3_block3_conv_dw			bottom=res3_block1_conv		top=res3_block1_conv_dw num_output=128 kernel_size=3 stride=1 pad=1
+BatchNormScale				name=res3_block3_conv_dw_bn			bottom=res3_block1_conv_dw	top=res3_block1_conv_dw bias
+PReLU						name=res3_block3_conv_dw_relu		bottom=res3_block1_conv_dw	top=res3_block1_conv_dw
+Convolution					name=res3_block3_conv_sep			bottom=res3_block1_conv_dw	top=res3_block1_conv_sep num_output=64 kernel_size=1 stride=1 pad=0
+BatchNormScale				name=res3_block3_conv_sep_bn		bottom=res3_block1_conv_sep	top=res3_block1_conv_sep bias
+Eltwise						name=_plus3		bottom=res3_block1_conv_sep bottom=_plus2 	top=_plus3 	operation=1
+Convolution					name=conv3				bottom=_plus3		top=conv3 num_output=256 kernel_size=1 stride=1 pad=0
+BatchNormScale				name=conv3_bn			bottom=conv3		top=conv3 bias
+PReLU						name=conv3_relu			bottom=conv3		top=conv3
+DepthwiseConvolution		name=conv3_dw			bottom=conv3		top=conv3_dw num_output=256 kernel_size=3 stride=2 pad=1
+BatchNormScale				name=conv3_dw_bn		bottom=conv3_dw		top=conv3_dw bias
+PReLU						name=conv3_dw_relu		bottom=conv3_dw		top=conv3_dw
+Convolution					name=conv3_sep			bottom=conv3_dw		top=conv3_sep num_output=128 kernel_size=1 stride=1 pad=0
+BatchNormScale				name=conv3_sep_bn		bottom=conv3_sep	top=conv3_sep bias
+Convolution					name=res4_block0_conv				bottom=conv3_sep			top=res4_block0_conv num_output=256 kernel_size=1 stride=1 pad=0
+BatchNormScale				name=res4_block0_conv_bn			bottom=res4_block0_conv		top=res4_block0_conv bias
+PReLU						name=res4_block0_conv_relu			bottom=res4_block0_conv		top=res4_block0_conv
+DepthwiseConvolution		name=res4_block0_conv_dw			bottom=res4_block0_conv		top=res4_block0_conv_dw num_output=256 kernel_size=3 stride=1 pad=1
+BatchNormScale				name=res4_block0_conv_dw_bn			bottom=res4_block0_conv_dw	top=res4_block0_conv_dw bias
+PReLU						name=res4_block0_conv_dw_relu		bottom=res4_block0_conv_dw	top=res4_block0_conv_dw
+Convolution					name=res4_block0_conv_sep			bottom=res4_block0_conv_dw	top=res4_block0_conv_sep num_output=128 kernel_size=1 stride=1 pad=0
+BatchNormScale				name=res4_block0_conv_sep_bn		bottom=res4_block0_conv_sep	top=res4_block0_conv_sep bias
+Eltwise						name=_plus4		bottom=res4_block0_conv_sep bottom=conv3_sep 	top=_plus4 	operation=1
+Convolution					name=res4_block1_conv				bottom=_plus4				top=res4_block1_conv num_output=256 kernel_size=1 stride=1 pad=0
+BatchNormScale				name=res4_block1_conv_bn			bottom=res4_block1_conv		top=res4_block1_conv bias
+PReLU						name=res4_block1_conv_relu			bottom=res4_block1_conv		top=res4_block1_conv
+DepthwiseConvolution		name=res4_block1_conv_dw			bottom=res4_block1_conv		top=res4_block1_conv_dw num_output=256 kernel_size=3 stride=1 pad=1
+BatchNormScale				name=res4_block1_conv_dw_bn			bottom=res4_block1_conv_dw	top=res4_block1_conv_dw bias
+PReLU						name=res4_block1_conv_dw_relu		bottom=res4_block1_conv_dw	top=res4_block1_conv_dw
+Convolution					name=res4_block1_conv_sep			bottom=res4_block1_conv_dw	top=res4_block1_conv_sep num_output=128 kernel_size=1 stride=1 pad=0
+BatchNormScale				name=res4_block1_conv_sep_bn		bottom=res4_block1_conv_sep	top=res4_block1_conv_sep bias
+Eltwise						name=_plus5		bottom=res4_block1_conv_sep bottom=_plus4 	top=_plus5 	operation=1
+Convolution					name=res4_block2_conv				bottom=_plus5				top=res4_block1_conv num_output=256 kernel_size=1 stride=1 pad=0
+BatchNormScale				name=res4_block2_conv_bn			bottom=res4_block1_conv		top=res4_block1_conv bias
+PReLU						name=res4_block2_conv_relu			bottom=res4_block1_conv		top=res4_block1_conv
+DepthwiseConvolution		name=res4_block2_conv_dw			bottom=res4_block1_conv		top=res4_block1_conv_dw num_output=256 kernel_size=3 stride=1 pad=1
+BatchNormScale				name=res4_block2_conv_dw_bn			bottom=res4_block1_conv_dw	top=res4_block1_conv_dw bias
+PReLU						name=res4_block2_conv_dw_relu		bottom=res4_block1_conv_dw	top=res4_block1_conv_dw
+Convolution					name=res4_block2_conv_sep			bottom=res4_block1_conv_dw	top=res4_block1_conv_sep num_output=128 kernel_size=1 stride=1 pad=0
+BatchNormScale				name=res4_block2_conv_sep_bn		bottom=res4_block1_conv_sep	top=res4_block1_conv_sep bias
+Eltwise						name=_plus6		bottom=res4_block1_conv_sep bottom=_plus5 	top=_plus6 	operation=1
+Convolution					name=res4_block3_conv				bottom=_plus6				top=res4_block1_conv num_output=256 kernel_size=1 stride=1 pad=0
+BatchNormScale				name=res4_block3_conv_bn			bottom=res4_block1_conv		top=res4_block1_conv bias
+PReLU						name=res4_block3_conv_relu			bottom=res4_block1_conv		top=res4_block1_conv
+DepthwiseConvolution		name=res4_block3_conv_dw			bottom=res4_block1_conv		top=res4_block1_conv_dw num_output=256 kernel_size=3 stride=1 pad=1
+BatchNormScale				name=res4_block3_conv_dw_bn			bottom=res4_block1_conv_dw	top=res4_block1_conv_dw bias
+PReLU						name=res4_block3_conv_dw_relu		bottom=res4_block1_conv_dw	top=res4_block1_conv_dw
+Convolution					name=res4_block3_conv_sep			bottom=res4_block1_conv_dw	top=res4_block1_conv_sep num_output=128 kernel_size=1 stride=1 pad=0
+BatchNormScale				name=res4_block3_conv_sep_bn		bottom=res4_block1_conv_sep	top=res4_block1_conv_sep bias
+Eltwise						name=_plus7		bottom=res4_block1_conv_sep bottom=_plus6 	top=_plus7 	operation=1
+Convolution					name=res4_block4_conv				bottom=_plus7				top=res4_block1_conv num_output=256 kernel_size=1 stride=1 pad=0
+BatchNormScale				name=res4_block4_conv_bn			bottom=res4_block1_conv		top=res4_block1_conv bias
+PReLU						name=res4_block4_conv_relu			bottom=res4_block1_conv		top=res4_block1_conv
+DepthwiseConvolution		name=res4_block4_conv_dw			bottom=res4_block1_conv		top=res4_block1_conv_dw num_output=256 kernel_size=3 stride=1 pad=1
+BatchNormScale				name=res4_block4_conv_dw_bn			bottom=res4_block1_conv_dw	top=res4_block1_conv_dw bias
+PReLU						name=res4_block4_conv_dw_relu		bottom=res4_block1_conv_dw	top=res4_block1_conv_dw
+Convolution					name=res4_block4_conv_sep			bottom=res4_block1_conv_dw	top=res4_block1_conv_sep num_output=128 kernel_size=1 stride=1 pad=0
+BatchNormScale				name=res4_block4_conv_sep_bn		bottom=res4_block1_conv_sep	top=res4_block1_conv_sep bias
+Eltwise						name=_plus8		bottom=res4_block1_conv_sep bottom=_plus7 	top=_plus8 	operation=1
+Convolution					name=res4_block5_conv				bottom=_plus8				top=res4_block1_conv num_output=256 kernel_size=1 stride=1 pad=0
+BatchNormScale				name=res4_block5_conv_bn			bottom=res4_block1_conv		top=res4_block1_conv bias
+PReLU						name=res4_block5_conv_relu			bottom=res4_block1_conv		top=res4_block1_conv
+DepthwiseConvolution		name=res4_block5_conv_dw			bottom=res4_block1_conv	top=res4_block5_conv_dw num_output=256 kernel_size=3 stride=1 pad=1
+BatchNormScale				name=res4_block5_conv_dw_bn			bottom=res4_block1_conv_dw	top=res4_block1_conv_dw bias
+PReLU						name=res4_block5_conv_dw_relu		bottom=res4_block1_conv_dw	top=res4_block1_conv_dw
+Convolution					name=res4_block5_conv_sep			bottom=res4_block1_conv_dw	top=res4_block1_conv_sep num_output=128 kernel_size=1 stride=1 pad=0
+BatchNormScale				name=res4_block5_conv_sep_bn		bottom=res4_block1_conv_sep	top=res4_block1_conv_sep bias
+Eltwise						name=_plus9		bottom=res4_block1_conv_sep bottom=_plus8 	top=_plus9 	operation=1
+Convolution					name=conv4				bottom=_plus9		top=conv4 num_output=512 kernel_size=1 stride=1 pad=0
+BatchNormScale				name=conv4_bn			bottom=conv4		top=conv4 bias
+PReLU						name=conv4_relu			bottom=conv4		top=conv4
+DepthwiseConvolution		name=conv4_dw			bottom=conv4		top=conv4_dw num_output=512 kernel_size=3 stride=2 pad=1
+BatchNormScale				name=conv4_dw_bn		bottom=conv4_dw		top=conv4_dw bias
+PReLU						name=conv4_dw_relu		bottom=conv4_dw		top=conv4_dw
+Convolution					name=conv4_sep			bottom=conv4_dw		top=conv4_sep num_output=128 kernel_size=1 stride=1 pad=0
+BatchNormScale				name=conv4_sep_bn		bottom=conv4_sep	top=conv4_sep bias
+Convolution					name=res5_block0_conv				bottom=conv4_sep			top=res5_block0_conv num_output=256 kernel_size=1 stride=1 pad=0
+BatchNormScale				name=res5_block0_conv_bn			bottom=res5_block0_conv		top=res5_block0_conv bias
+PReLU						name=res5_block0_conv_relu			bottom=res5_block0_conv		top=res5_block0_conv
+DepthwiseConvolution		name=res5_block0_conv_dw			bottom=res5_block0_conv		top=res5_block0_conv_dw num_output=256 kernel_size=3 stride=1 pad=1
+BatchNormScale				name=res5_block0_conv_dw_bn			bottom=res5_block0_conv_dw	top=res5_block0_conv_dw bias
+PReLU						name=res5_block0_conv_dw_relu		bottom=res5_block0_conv_dw	top=res5_block0_conv_dw
+Convolution					name=res5_block0_conv_sep			bottom=res5_block0_conv_dw	top=res5_block0_conv_sep num_output=128 kernel_size=1 stride=1 pad=0
+BatchNormScale				name=res5_block0_conv_sep_bn		bottom=res5_block0_conv_sep	top=res5_block0_conv_sep bias
+Eltwise						name=_plus10		bottom=res5_block0_conv_sep bottom=conv4_sep 	top=_plus10 	operation=1
+Convolution					name=res5_block1_conv				bottom=_plus10				top=res5_block1_conv num_output=256 kernel_size=1 stride=1 pad=0
+BatchNormScale				name=res5_block1_conv_bn			bottom=res5_block1_conv		top=res5_block1_conv bias
+PReLU						name=res5_block1_conv_relu			bottom=res5_block1_conv		top=res5_block1_conv
+DepthwiseConvolution		name=res5_block1_conv_dw			bottom=res5_block1_conv		top=res5_block1_conv_dw num_output=256 kernel_size=3 stride=1 pad=1
+BatchNormScale				name=res5_block1_conv_dw_bn			bottom=res5_block1_conv_dw	top=res5_block1_conv_dw bias
+PReLU						name=res5_block1_conv_dw_relu		bottom=res5_block1_conv_dw	top=res5_block1_conv_dw
+Convolution					name=res5_block1_conv_sep			bottom=res5_block1_conv_dw	top=res5_block1_conv_sep num_output=128 kernel_size=1 stride=1 pad=0
+BatchNormScale				name=res5_block1_conv_sep_bn		bottom=res5_block1_conv_sep	top=res5_block1_conv_sep bias
+Eltwise						name=_plus11		bottom=res5_block1_conv_sep bottom=_plus10 	top=_plus11 	operation=1
+Convolution					name=conv6				bottom=_plus11		top=conv6 num_output=512 kernel_size=1 stride=1 pad=0
+BatchNormScale				name=conv6_bn			bottom=conv6		top=conv6 bias
+PReLU						name=conv6_relu			bottom=conv6		top=conv6
+DepthwiseConvolution		name=conv6_dw			bottom=conv6		top=conv6_dw num_output=512 kernel_size=7 stride=1 pad=0
+BatchNormScale				name=conv6_dw_bn		bottom=conv6_dw		top=conv6_dw bias
+InnerProduct				name=fc5			bottom=conv6_dw		top=fc5	num_output=128	bias
+BatchNormScale				name=fc5_bn			bottom=fc5			top=fc5 bias
