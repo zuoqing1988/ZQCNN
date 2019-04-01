@@ -37,6 +37,11 @@ int main(int argc, const char** argv)
 	}
 #endif
 	int num_threads = 1;
+#if __ARM_NEON
+	int iters = 100;
+#else
+	int iters = 1000;
+#endif
 
 #if ZQ_CNN_USE_BLAS_GEMM
 	printf("set openblas thread_num = %d\n",num_threads);
@@ -225,7 +230,7 @@ int main(int argc, const char** argv)
 			net.GetNumOfMulAdd() / (1024.0*1024.0),
 			net.GetNumOfMulAddConv() / (1024.0*1024.0),
 			net.GetNumOfMulAddDwConv() / (1024.0*1024.0));
-		int iters = 1000;
+
 		double t1 = omp_get_wtime();
 		for (int it = 0; it < iters; it++)
 		{
