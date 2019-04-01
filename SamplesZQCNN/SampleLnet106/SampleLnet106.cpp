@@ -101,7 +101,7 @@ int main()
 	input2.ConvertFromBGR(img2.data, img2.cols, img2.rows, img2.step[0]);
 	for (int out_it = 0; out_it < 3; out_it++)
 	{
-		int nIters = 10000;
+		int nIters = 1000;
 		double t1 = omp_get_wtime();
 		for (int i = 0; i < nIters; i++)
 			net1.Forward(input1);
