@@ -146,7 +146,8 @@ namespace ZQ
 			__int64 sum = 0;
 			for (int i = 0; i < layers.size(); i++)
 			{
-				if(ZQ_CNN_Layer::_my_strcmpi(layer_type_names[i].c_str(),"Convolution") == 0)
+				if(ZQ_CNN_Layer::_my_strcmpi(layer_type_names[i].c_str(),"Convolution") == 0
+					|| ZQ_CNN_Layer::_my_strcmpi(layer_type_names[i].c_str(), "InnerProduct") == 0)
 					sum += layers[i]->GetNumOfMulAdd();
 			}
 			return sum;
@@ -1299,7 +1300,43 @@ namespace ZQ
 			std::vector<std::vector<int> > tmp_tops;	
 			for (int i = 0; i < layers.size(); i++)
 			{
-				if (ZQ_CNN_Layer::_my_strcmpi(layer_type_names[i].c_str(), "Convolution") == 0)
+				if (ZQ_CNN_Layer::_my_strcmpi(layer_type_names[i].c_str(), "InnerProduct") == 0)
+				{
+					if (i + 1 < layers.size() && ZQ_CNN_Layer::_my_strcmpi(layer_type_names[i + 1].c_str(), "BatchNormScale") == 0)
+					{
+						bool later_refer = false;
+						for (int j = i + 2; j < layers.size(); j++)
+						{
+							for (int k = 0; k < bottoms[j].size(); k++)
+							{
+								if (bottoms[j][k] == tops[i][0])
+								{
+									later_refer = true;
+									break;
+								}
+							}
+							if (later_refer)
+								break;
+						}
+						if (tops[i + 1][0] == bottoms[i + 1][0] || !later_refer)
+						{
+							//do merge
+							ZQ_CNN_Layer_InnerProduct* conv_layer = (ZQ_CNN_Layer_InnerProduct*)layers[i];
+							ZQ_CNN_Layer_BatchNormScale* bns_layer = (ZQ_CNN_Layer_BatchNormScale*)layers[i + 1];
+							if (!_merge_bns_to_innerproduct(conv_layer, bns_layer))
+								return false;
+
+							delete bns_layer; bns_layer = 0;
+							tmp_layers.push_back(conv_layer);
+							tmp_layer_type_names.push_back(layer_type_names[i]);
+							tmp_bottoms.push_back(bottoms[i]);
+							tmp_tops.push_back(tops[i + 1]);
+							i++;
+							continue;
+						}
+					}
+				}
+				else if (ZQ_CNN_Layer::_my_strcmpi(layer_type_names[i].c_str(), "Convolution") == 0)
 				{
 					if (i + 1 < layers.size() && ZQ_CNN_Layer::_my_strcmpi(layer_type_names[i+1].c_str(), "BatchNormScale") == 0)
 					{
@@ -1478,6 +1515,61 @@ namespace ZQ
 			tops = tmp_tops;
 			return true;
 		}
+
+		bool _merge_bns_to_innerproduct(ZQ_CNN_Layer_InnerProduct* conv_layer, ZQ_CNN_Layer_BatchNormScale* bns_layer)
+		{
+			ZQ_CNN_Tensor4D* filters = conv_layer->filters;
+			ZQ_CNN_Tensor4D* b = bns_layer->b;
+			ZQ_CNN_Tensor4D* a = bns_layer->a;
+			int N = filters->GetN();
+			int kH = filters->GetH();
+			int kW = filters->GetW();
+			int kC = filters->GetC();
+			for (int n = 0; n < N; n++)
+			{
+				float b_v = (b->GetFirstPixelPtr())[n];
+				float* slice_ptr = filters->GetFirstPixelPtr() + n*filters->GetSliceStep();
+				for (int h = 0; h < kH; h++)
+				{
+					float* row_ptr = slice_ptr + h*filters->GetWidthStep();
+					for (int w = 0; w < kW; w++)
+					{
+						float* pix_ptr = row_ptr + w*filters->GetPixelStep();
+						for (int c = 0; c < kC; c++)
+						{
+							pix_ptr[c] *= b_v;
+							if (fabs(pix_ptr[c]) < this->ignore_small_value)
+								pix_ptr[c] = 0;
+						}
+					}
+				}
+			}
+
+			if (conv_layer->bias == 0)
+			{
+				conv_layer->with_bias = true;
+				conv_layer->bias = new ZQ_CNN_Tensor4D_NHW_C_Align256bit();
+				if (conv_layer->bias == 0 || !conv_layer->bias->ChangeSize(1, 1, 1, N, 0, 0))
+					return false;
+				for (int n = 0; n < N; n++)
+				{
+					float a_v = (a->GetFirstPixelPtr())[n];
+					(conv_layer->bias->GetFirstPixelPtr())[n] = a_v;
+				}
+			}
+			else
+			{
+				for (int n = 0; n < N; n++)
+				{
+					float b_v = (b->GetFirstPixelPtr())[n];
+					float bias_v = (conv_layer->bias->GetFirstPixelPtr())[n];
+					float a_v = (a->GetFirstPixelPtr())[n];
+					(conv_layer->bias->GetFirstPixelPtr())[n] = bias_v*b_v + a_v;
+				}
+			}
+			return true;
+		}
+
 
 		bool _merge_bns_to_conv(ZQ_CNN_Layer_Convolution* conv_layer, ZQ_CNN_Layer_BatchNormScale* bns_layer)
 		{
