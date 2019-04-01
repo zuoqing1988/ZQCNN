@@ -18,7 +18,7 @@ void zq_cnn_eltwise_sum_nchwc(
 	const zq_base_type* in_slice_ptr, *in_row_ptr, *in_pix_ptr, *in_im_ptr;
 	const zq_base_type* in1_slice_ptr, *in1_row_ptr, *in1_pix_ptr, *in1_im_ptr;
 	zq_base_type* out_slice_ptr, *out_row_ptr, *out_pix_ptr, *out_im_ptr;
-	zq_mm_type a0, a1, a2, a3, b0, b1, b2, b3;
+	register zq_mm_type a0, a1, a2, a3, b0, b1, b2, b3;
 
 	if (W % 4 == 0)
 	{
