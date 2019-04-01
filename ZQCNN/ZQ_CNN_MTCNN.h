@@ -28,6 +28,9 @@ namespace ZQ
 			special_handle_very_big_face = false;
 			force_run_pnet_multithread = false;
 			show_debug_info = false;
+			limit_r_num = 0;
+			limit_o_num = 0;
+			limit_l_num = 0;
 		}
 		~ZQ_CNN_MTCNN()
 		{
