@@ -49,9 +49,9 @@ int main()
 #endif
 	
 #if defined(_WIN32)
-	if (!net1.LoadFrom("model/det5-dw96-v2s.zqparams", "model/det5-dw96-v2s-8000.nchwbin",true,1e-9,true)
+	if (!net1.LoadFrom("model/det5-dw96-v2s.zqparams", "model/det5-dw96-v2s.nchwbin",true,1e-9,true)
 		//|| !net2.LoadFrom("model/det3.zqparams", "model/det3_bgr.nchwbin", true, 1e-9))
-		|| !net2.LoadFrom("model/det5-dw96-v2s.zqparams", "model/det5-dw96-v2s-8000.nchwbin", true, 1e-9, true))
+		|| !net2.LoadFrom("model/det5-dw96-v2s.zqparams", "model/det5-dw96-v2s.nchwbin", true, 1e-9, true))
 #else
 	if (!net1.LoadFrom("../../model/det5-dw96-v2s.zqparams", "../../model/det5-dw96-v2s-8000.nchwbin", true, 1e-9)
 		|| !net2.LoadFrom("../../model/det3.zqparams", "../../model/det3_bgr.nchwbin", true, 1e-9))
