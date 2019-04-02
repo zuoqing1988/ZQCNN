@@ -86,7 +86,7 @@ int main()
 #if defined(_WIN32)
 	Mat image0 = cv::imread("data/11.jpg", 1);
 #else
-	Mat image0 = cv::imread("../../data/face2500.jpg", 1);
+	Mat image0 = cv::imread("../../data/11.jpg", 1);
 #endif
 	if (image0.empty())
 	{
@@ -193,7 +193,7 @@ int main()
 				return EXIT_FAILURE;
 			}
 		}
-		mtcnn.SetPara(image0.cols, image0.rows, 20, 0.5, 0.6, 0.8, 0.4, 0.5, 0.5, 0.709, 3, 20, 4, special_handle_very_big_face);
+		mtcnn.SetPara(image0.cols, image0.rows, 80, 0.5, 0.6, 0.8, 0.4, 0.5, 0.5, 0.709, 3, 20, 4, special_handle_very_big_face);
 	}
 	else
 	{
