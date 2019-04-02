@@ -186,3 +186,59 @@ void zq_cnn_innerproduct_gemm_nchwc_general(
 			_aligned_free(matrix_C);
 	}
 }
+
+
+void zq_cnn_innerproduct_nchwc_noborder(
+	const zq_base_type* in_tensor4D_data,
+	int in_N,
+	int in_HWC,
+	const zq_base_type* filters_data,
+	int filter_N,
+	zq_base_type* out_tensor4D_data,
+	int out_sliceStep
+#if WITH_BIAS
+	,const zq_base_type* bias
+#endif
+#if WITH_PRELU
+	,const zq_base_type* slope
+#endif
+)
+{
+	register zq_mm_type sum_vec;
+	zq_base_type result[zq_mm_align_size << 2];
+	zq_base_type* q = (zq_base_type*)(((long long)result + (zq_mm_align_size << 2) - 1) & zq_mm_bitor_longlong);
+	int out_n, out_c, in_hwc;
+	const zq_base_type* in_slice_ptr;
+	const zq_base_type* filter_slice_ptr, *filter_c_ptr;
+	zq_base_type* out_slice_ptr, *out_c_ptr;
+	const zq_base_type* cur_in_c_ptr;
+
+	for (out_n = 0, in_slice_ptr = in_tensor4D_data, out_slice_ptr = out_tensor4D_data;
+		out_n < in_N; out_n++, in_slice_ptr += in_HWC, out_slice_ptr += out_sliceStep)
+	{
+		for (out_c = 0, out_c_ptr = out_slice_ptr, filter_slice_ptr = filters_data;
+			out_c < filter_N;
+			out_c++, out_c_ptr++, filter_slice_ptr += in_HWC)
+		{
+#if WITH_BIAS
+			sum_vec = zq_mm_set1_ps(bias[out_c]);
+#else
+			sum_vec = zq_mm_setzero_ps();
+#endif
+			for (in_hwc = 0, cur_in_c_ptr = in_slice_ptr, filter_c_ptr = filter_slice_ptr;
+				in_hwc < in_HWC;
+				in_hwc += zq_mm_align_size, cur_in_c_ptr += zq_mm_align_size, filter_c_ptr += zq_mm_align_size)
+			{
+				sum_vec = zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(filter_c_ptr), sum_vec);
+			}
+
+			zq_mm_store_ps(q, sum_vec);
+			*out_c_ptr = zq_final_sum_q;
+#if WITH_PRELU
+			if(*out_c_ptr < 0)
+				*out_c_ptr *= slope[out_c];
+#endif
+		}
+	}
+}
+

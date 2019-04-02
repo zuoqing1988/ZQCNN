@@ -90,6 +90,39 @@ extern "C" {
 		__int64* buffer_len
 	);
 
+	void zq_cnn_innerproduct_nchwc1_noborder(
+		const float* in_tensor4D_data,
+		int in_N,
+		int in_HWC,
+		const float* filters_data,
+		int filter_N,
+		float* out_tensor4D_data,
+		int out_sliceStep
+	);
+
+	void zq_cnn_innerproduct_nchwc1_noborder_with_bias(
+		const float* in_tensor4D_data,
+		int in_N,
+		int in_HWC,
+		const float* filters_data,
+		int filter_N,
+		float* out_tensor4D_data,
+		int out_sliceStep,
+		const float* bias
+	);
+
+	void zq_cnn_innerproduct_nchwc1_noborder_with_bias_prelu(
+		const float* in_tensor4D_data,
+		int in_N,
+		int in_HWC,
+		const float* filters_data,
+		int filter_N,
+		float* out_tensor4D_data,
+		int out_sliceStep,
+		const float* bias,
+		const float* slope
+	);
+
 #if __ARM_NEON || (ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_SSE)
 
 	
@@ -175,6 +208,39 @@ extern "C" {
 		const float* slope,
 		void** buffer,
 		__int64* buffer_len
+	);
+
+	void zq_cnn_innerproduct_nchwc4_noborder(
+		const float* in_tensor4D_data,
+		int in_N,
+		int in_HWC,
+		const float* filters_data,
+		int filter_N,
+		float* out_tensor4D_data,
+		int out_sliceStep
+	);
+
+	void zq_cnn_innerproduct_nchwc4_noborder_with_bias(
+		const float* in_tensor4D_data,
+		int in_N,
+		int in_HWC,
+		const float* filters_data,
+		int filter_N,
+		float* out_tensor4D_data,
+		int out_sliceStep,
+		const float* bias
+	);
+
+	void zq_cnn_innerproduct_nchwc4_noborder_with_bias_prelu(
+		const float* in_tensor4D_data,
+		int in_N,
+		int in_HWC,
+		const float* filters_data,
+		int filter_N,
+		float* out_tensor4D_data,
+		int out_sliceStep,
+		const float* bias,
+		const float* slope
 	);
 
 #endif// __ARM_NEON || (ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_SSE)
@@ -263,6 +329,39 @@ extern "C" {
 		const float* slope,
 		void** buffer,
 		__int64* buffer_len
+	);
+
+	void zq_cnn_innerproduct_nchwc8_noborder(
+		const float* in_tensor4D_data,
+		int in_N,
+		int in_HWC,
+		const float* filters_data,
+		int filter_N,
+		float* out_tensor4D_data,
+		int out_sliceStep
+	);
+
+	void zq_cnn_innerproduct_nchwc8_noborder_with_bias(
+		const float* in_tensor4D_data,
+		int in_N,
+		int in_HWC,
+		const float* filters_data,
+		int filter_N,
+		float* out_tensor4D_data,
+		int out_sliceStep,
+		const float* bias
+	);
+
+	void zq_cnn_innerproduct_nchwc8_noborder_with_bias_prelu(
+		const float* in_tensor4D_data,
+		int in_N,
+		int in_HWC,
+		const float* filters_data,
+		int filter_N,
+		float* out_tensor4D_data,
+		int out_sliceStep,
+		const float* bias,
+		const float* slope
 	);
 
 #endif//ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_AVX

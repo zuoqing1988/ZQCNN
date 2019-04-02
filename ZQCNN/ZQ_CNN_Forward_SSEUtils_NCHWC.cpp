@@ -66,10 +66,33 @@ bool ZQ_CNN_Forward_SSEUtils_NCHWC::InnerProductWithBias(ZQ_CNN_Tensor4D_NCHWC1&
 	float* out_firstPixelData = output.GetFirstPixelPtr();
 	const float* bias_firstPixelData = bias.GetFirstPixelPtr();
 
-	zq_cnn_innerproduct_gemm_nchwc1_general_with_bias(in_firstPixelData, in_N, in_H, in_W, in_C,
-		in_widthStep, in_sliceStep, in_imStep, filter_firstPixelData, filter_N, filter_H, filter_W, filter_C,
-		filter_widthStep, filter_sliceStep, filter_imStep,
-		out_firstPixelData, need_N, need_C, out_widthStep, out_sliceStep, out_imStep, bias_firstPixelData, buffer, buffer_len);
+#if (ZQ_CNN_USE_BLAS_GEMM || ZQ_CNN_USE_MKL_GEMM || ZQ_CNN_USE_ZQ_GEMM)
+	if (out_N >= 16 && filter_N >= 16)
+	{
+		zq_cnn_innerproduct_gemm_nchwc1_general_with_bias(in_firstPixelData, in_N, in_H, in_W, in_C,
+			in_widthStep, in_sliceStep, in_imStep, filter_firstPixelData, filter_N, filter_H, filter_W, filter_C,
+			filter_widthStep, filter_sliceStep, filter_imStep,
+			out_firstPixelData, need_N, need_C, out_widthStep, out_sliceStep, out_imStep, bias_firstPixelData, buffer, buffer_len);
+
+	}
+	else
+#endif
+	{
+		if (in_W == in_widthStep && in_widthStep*in_H == in_sliceStep
+			&& in_W == filter_widthStep && filter_widthStep*in_H == filter_sliceStep
+			&& out_W == out_widthStep && out_widthStep * out_H == out_sliceStep)
+		{
+			zq_cnn_innerproduct_nchwc1_noborder_with_bias(in_firstPixelData, in_N, in_H*in_W*in_C, filter_firstPixelData, filter_N, 
+				out_firstPixelData, out_sliceStep, bias_firstPixelData);
+		}
+		else
+		{
+			zq_cnn_innerproduct_gemm_nchwc1_general_with_bias(in_firstPixelData, in_N, in_H, in_W, in_C,
+				in_widthStep, in_sliceStep, in_imStep, filter_firstPixelData, filter_N, filter_H, filter_W, filter_C,
+				filter_widthStep, filter_sliceStep, filter_imStep,
+				out_firstPixelData, need_N, need_C, out_widthStep, out_sliceStep, out_imStep, bias_firstPixelData, buffer, buffer_len);
+		}
+	}
 
 	double t2 = omp_get_wtime();
 	//printf("utils:conv: %.3f ms\n", (t2 - t1) * 1000);
@@ -129,10 +152,34 @@ bool ZQ_CNN_Forward_SSEUtils_NCHWC::InnerProductWithBiasPReLU(ZQ_CNN_Tensor4D_NC
 	const float* bias_firstPixelData = bias.GetFirstPixelPtr();
 	const float* slope_firstPixelData = slope.GetFirstPixelPtr();
 
-	zq_cnn_innerproduct_gemm_nchwc1_general_with_bias_prelu(in_firstPixelData, in_N, in_H, in_W, in_C,
-		in_widthStep, in_sliceStep, in_imStep, filter_firstPixelData, filter_N, filter_H, filter_W, filter_C,
-		filter_widthStep, filter_sliceStep, filter_imStep,
-		out_firstPixelData, need_N, need_C, out_widthStep, out_sliceStep, out_imStep, bias_firstPixelData, slope_firstPixelData, buffer, buffer_len);
+
+#if (ZQ_CNN_USE_BLAS_GEMM || ZQ_CNN_USE_MKL_GEMM || ZQ_CNN_USE_ZQ_GEMM)
+	if (out_N >= 16 && filter_N >= 16)
+	{
+		zq_cnn_innerproduct_gemm_nchwc1_general_with_bias_prelu(in_firstPixelData, in_N, in_H, in_W, in_C,
+			in_widthStep, in_sliceStep, in_imStep, filter_firstPixelData, filter_N, filter_H, filter_W, filter_C,
+			filter_widthStep, filter_sliceStep, filter_imStep,
+			out_firstPixelData, need_N, need_C, out_widthStep, out_sliceStep, out_imStep, bias_firstPixelData, slope_firstPixelData, buffer, buffer_len);
+
+	}
+	else
+#endif
+	{
+		if (in_W == in_widthStep && in_widthStep*in_H == in_sliceStep
+			&& in_W == filter_widthStep && filter_widthStep*in_H == filter_sliceStep
+			&& out_W == out_widthStep && out_widthStep * out_H == out_sliceStep)
+		{
+			zq_cnn_innerproduct_nchwc1_noborder_with_bias_prelu(in_firstPixelData, in_N, in_H*in_W*in_C, filter_firstPixelData, filter_N,
+				out_firstPixelData, out_sliceStep, bias_firstPixelData, slope_firstPixelData);
+		}
+		else
+		{
+			zq_cnn_innerproduct_gemm_nchwc1_general_with_bias_prelu(in_firstPixelData, in_N, in_H, in_W, in_C,
+				in_widthStep, in_sliceStep, in_imStep, filter_firstPixelData, filter_N, filter_H, filter_W, filter_C,
+				filter_widthStep, filter_sliceStep, filter_imStep,
+				out_firstPixelData, need_N, need_C, out_widthStep, out_sliceStep, out_imStep, bias_firstPixelData, slope_firstPixelData, buffer, buffer_len);
+		}
+	}
 
 	double t2 = omp_get_wtime();
 	//printf("utils:conv: %.3f ms\n", (t2 - t1) * 1000);
@@ -191,11 +238,33 @@ bool ZQ_CNN_Forward_SSEUtils_NCHWC::InnerProductWithPReLU(ZQ_CNN_Tensor4D_NCHWC1
 	const float* slope_firstPixelData = slope.GetFirstPixelPtr();
 
 
-	zq_cnn_innerproduct_gemm_nchwc1_general(in_firstPixelData, in_N, in_H, in_W, in_C,
-		in_widthStep, in_sliceStep, in_imStep, filter_firstPixelData, filter_N, filter_H, filter_W, filter_C,
-		filter_widthStep, filter_sliceStep, filter_imStep,
-		out_firstPixelData, need_N, need_C, out_widthStep, out_sliceStep, out_imStep, buffer, buffer_len);
+#if (ZQ_CNN_USE_BLAS_GEMM || ZQ_CNN_USE_MKL_GEMM || ZQ_CNN_USE_ZQ_GEMM)
+	if (out_N >= 16 && filter_N >= 16)
+	{
+		zq_cnn_innerproduct_gemm_nchwc1_general(in_firstPixelData, in_N, in_H, in_W, in_C,
+			in_widthStep, in_sliceStep, in_imStep, filter_firstPixelData, filter_N, filter_H, filter_W, filter_C,
+			filter_widthStep, filter_sliceStep, filter_imStep,
+			out_firstPixelData, need_N, need_C, out_widthStep, out_sliceStep, out_imStep, buffer, buffer_len);
 
+	}
+	else
+#endif
+	{
+		if (in_W == in_widthStep && in_widthStep*in_H == in_sliceStep
+			&& in_W == filter_widthStep && filter_widthStep*in_H == filter_sliceStep
+			&& out_W == out_widthStep && out_widthStep * out_H == out_sliceStep)
+		{
+			zq_cnn_innerproduct_nchwc1_noborder(in_firstPixelData, in_N, in_H*in_W*in_C, filter_firstPixelData, filter_N,
+				out_firstPixelData, out_sliceStep);
+		}
+		else
+		{
+			zq_cnn_innerproduct_gemm_nchwc1_general(in_firstPixelData, in_N, in_H, in_W, in_C,
+				in_widthStep, in_sliceStep, in_imStep, filter_firstPixelData, filter_N, filter_H, filter_W, filter_C,
+				filter_widthStep, filter_sliceStep, filter_imStep,
+				out_firstPixelData, need_N, need_C, out_widthStep, out_sliceStep, out_imStep, buffer, buffer_len);
+		}
+	}
 	zq_cnn_prelu_nchwc1(out_firstPixelData, need_N, need_H, need_W, need_C, out_widthStep, out_sliceStep, out_imStep, slope_firstPixelData);
 
 	double t2 = omp_get_wtime();
@@ -249,10 +318,34 @@ bool ZQ_CNN_Forward_SSEUtils_NCHWC::InnerProduct(ZQ_CNN_Tensor4D_NCHWC1& input, 
 	const float* filter_firstPixelData = filters.GetFirstPixelPtr();
 	float* out_firstPixelData = output.GetFirstPixelPtr();
 
-	zq_cnn_innerproduct_gemm_nchwc1_general(in_firstPixelData, in_N, in_H, in_W, in_C,
-		in_widthStep, in_sliceStep, in_imStep, filter_firstPixelData, filter_N, filter_H, filter_W, filter_C,
-		filter_widthStep, filter_sliceStep, filter_imStep,
-		out_firstPixelData, need_N, need_C, out_widthStep, out_sliceStep, out_imStep, buffer, buffer_len);
+
+#if (ZQ_CNN_USE_BLAS_GEMM || ZQ_CNN_USE_MKL_GEMM || ZQ_CNN_USE_ZQ_GEMM)
+	if (out_N >= 16 && filter_N >= 16)
+	{
+		zq_cnn_innerproduct_gemm_nchwc1_general(in_firstPixelData, in_N, in_H, in_W, in_C,
+			in_widthStep, in_sliceStep, in_imStep, filter_firstPixelData, filter_N, filter_H, filter_W, filter_C,
+			filter_widthStep, filter_sliceStep, filter_imStep,
+			out_firstPixelData, need_N, need_C, out_widthStep, out_sliceStep, out_imStep, buffer, buffer_len);
+
+	}
+	else
+#endif
+	{
+		if (in_W == in_widthStep && in_widthStep*in_H == in_sliceStep
+			&& in_W == filter_widthStep && filter_widthStep*in_H == filter_sliceStep
+			&& out_W == out_widthStep && out_widthStep * out_H == out_sliceStep)
+		{
+			zq_cnn_innerproduct_nchwc1_noborder(in_firstPixelData, in_N, in_H*in_W*in_C, filter_firstPixelData, filter_N,
+				out_firstPixelData, out_sliceStep);
+		}
+		else
+		{
+			zq_cnn_innerproduct_gemm_nchwc1_general(in_firstPixelData, in_N, in_H, in_W, in_C,
+				in_widthStep, in_sliceStep, in_imStep, filter_firstPixelData, filter_N, filter_H, filter_W, filter_C,
+				filter_widthStep, filter_sliceStep, filter_imStep,
+				out_firstPixelData, need_N, need_C, out_widthStep, out_sliceStep, out_imStep, buffer, buffer_len);
+		}
+	}
 
 	return true;
 }
@@ -1505,10 +1598,34 @@ bool ZQ_CNN_Forward_SSEUtils_NCHWC::InnerProductWithBias(ZQ_CNN_Tensor4D_NCHWC4&
 	float* out_firstPixelData = output.GetFirstPixelPtr();
 	const float* bias_firstPixelData = bias.GetFirstPixelPtr();
 
-	zq_cnn_innerproduct_gemm_nchwc4_general_with_bias(in_firstPixelData, in_N, in_H, in_W, in_C,
-		in_widthStep, in_sliceStep, in_imStep, filter_firstPixelData, filter_N, filter_H, filter_W, filter_C,
-		filter_widthStep, filter_sliceStep, filter_imStep,
-		out_firstPixelData, need_N, need_C, out_widthStep, out_sliceStep, out_imStep, bias_firstPixelData, buffer, buffer_len);
+
+#if (ZQ_CNN_USE_BLAS_GEMM || ZQ_CNN_USE_MKL_GEMM || ZQ_CNN_USE_ZQ_GEMM)
+	if (out_N >= 16 && filter_N >= 16)
+	{
+		zq_cnn_innerproduct_gemm_nchwc4_general_with_bias(in_firstPixelData, in_N, in_H, in_W, in_C,
+			in_widthStep, in_sliceStep, in_imStep, filter_firstPixelData, filter_N, filter_H, filter_W, filter_C,
+			filter_widthStep, filter_sliceStep, filter_imStep,
+			out_firstPixelData, need_N, need_C, out_widthStep, out_sliceStep, out_imStep, bias_firstPixelData, buffer, buffer_len);
+
+	}
+	else
+#endif
+	{
+		if (4 * in_W == in_widthStep && in_widthStep*in_H == in_sliceStep
+			&& 4 * in_W == filter_widthStep && filter_widthStep*in_H == filter_sliceStep
+			&& 4 * out_W == out_widthStep && out_widthStep * out_H == out_sliceStep)
+		{
+			zq_cnn_innerproduct_nchwc4_noborder_with_bias(in_firstPixelData, in_N, in_H*in_W*in_C, filter_firstPixelData, filter_N,
+				out_firstPixelData, out_sliceStep, bias_firstPixelData);
+		}
+		else
+		{
+			zq_cnn_innerproduct_gemm_nchwc4_general_with_bias(in_firstPixelData, in_N, in_H, in_W, in_C,
+				in_widthStep, in_sliceStep, in_imStep, filter_firstPixelData, filter_N, filter_H, filter_W, filter_C,
+				filter_widthStep, filter_sliceStep, filter_imStep,
+				out_firstPixelData, need_N, need_C, out_widthStep, out_sliceStep, out_imStep, bias_firstPixelData, buffer, buffer_len);
+		}
+	}
 
 	double t2 = omp_get_wtime();
 	//printf("utils:conv: %.3f ms\n", (t2 - t1) * 1000);
@@ -1568,11 +1685,34 @@ bool ZQ_CNN_Forward_SSEUtils_NCHWC::InnerProductWithBiasPReLU(ZQ_CNN_Tensor4D_NC
 	const float* bias_firstPixelData = bias.GetFirstPixelPtr();
 	const float* slope_firstPixelData = slope.GetFirstPixelPtr();
 
-	zq_cnn_innerproduct_gemm_nchwc4_general_with_bias_prelu(in_firstPixelData, in_N, in_H, in_W, in_C,
-		in_widthStep, in_sliceStep, in_imStep, filter_firstPixelData, filter_N, filter_H, filter_W, filter_C,
-		filter_widthStep, filter_sliceStep, filter_imStep,
-		out_firstPixelData, need_N, need_C, out_widthStep, out_sliceStep, out_imStep, bias_firstPixelData, slope_firstPixelData, buffer, buffer_len);
 
+#if (ZQ_CNN_USE_BLAS_GEMM || ZQ_CNN_USE_MKL_GEMM || ZQ_CNN_USE_ZQ_GEMM)
+	if (out_N >= 16 && filter_N >= 16)
+	{
+		zq_cnn_innerproduct_gemm_nchwc4_general_with_bias_prelu(in_firstPixelData, in_N, in_H, in_W, in_C,
+			in_widthStep, in_sliceStep, in_imStep, filter_firstPixelData, filter_N, filter_H, filter_W, filter_C,
+			filter_widthStep, filter_sliceStep, filter_imStep,
+			out_firstPixelData, need_N, need_C, out_widthStep, out_sliceStep, out_imStep, bias_firstPixelData, slope_firstPixelData, buffer, buffer_len);
+
+	}
+	else
+#endif
+	{
+		if (4 * in_W == in_widthStep && in_widthStep*in_H == in_sliceStep
+			&& 4 * in_W == filter_widthStep && filter_widthStep*in_H == filter_sliceStep
+			&& 4 * out_W == out_widthStep && out_widthStep * out_H == out_sliceStep)
+		{
+			zq_cnn_innerproduct_nchwc4_noborder_with_bias_prelu(in_firstPixelData, in_N, in_H*in_W*in_C, filter_firstPixelData, filter_N,
+				out_firstPixelData, out_sliceStep, bias_firstPixelData, slope_firstPixelData);
+		}
+		else
+		{
+			zq_cnn_innerproduct_gemm_nchwc4_general_with_bias_prelu(in_firstPixelData, in_N, in_H, in_W, in_C,
+				in_widthStep, in_sliceStep, in_imStep, filter_firstPixelData, filter_N, filter_H, filter_W, filter_C,
+				filter_widthStep, filter_sliceStep, filter_imStep,
+				out_firstPixelData, need_N, need_C, out_widthStep, out_sliceStep, out_imStep, bias_firstPixelData, slope_firstPixelData, buffer, buffer_len);
+		}
+	}
 	double t2 = omp_get_wtime();
 	//printf("utils:conv: %.3f ms\n", (t2 - t1) * 1000);
 	return true;
@@ -1629,11 +1769,34 @@ bool ZQ_CNN_Forward_SSEUtils_NCHWC::InnerProductWithPReLU(ZQ_CNN_Tensor4D_NCHWC4
 	float* out_firstPixelData = output.GetFirstPixelPtr();
 	const float* slope_firstPixelData = slope.GetFirstPixelPtr();
 
-	zq_cnn_innerproduct_gemm_nchwc4_general(in_firstPixelData, in_N, in_H, in_W, in_C,
-		in_widthStep, in_sliceStep, in_imStep, filter_firstPixelData, filter_N, filter_H, filter_W, filter_C,
-		filter_widthStep, filter_sliceStep, filter_imStep,
-		out_firstPixelData, need_N, need_C, out_widthStep, out_sliceStep, out_imStep, buffer, buffer_len);
 
+#if (ZQ_CNN_USE_BLAS_GEMM || ZQ_CNN_USE_MKL_GEMM || ZQ_CNN_USE_ZQ_GEMM)
+	if (out_N >= 16 && filter_N >= 16)
+	{
+		zq_cnn_innerproduct_gemm_nchwc4_general(in_firstPixelData, in_N, in_H, in_W, in_C,
+			in_widthStep, in_sliceStep, in_imStep, filter_firstPixelData, filter_N, filter_H, filter_W, filter_C,
+			filter_widthStep, filter_sliceStep, filter_imStep,
+			out_firstPixelData, need_N, need_C, out_widthStep, out_sliceStep, out_imStep, buffer, buffer_len);
+
+	}
+	else
+#endif
+	{
+		if (4 * in_W == in_widthStep && in_widthStep*in_H == in_sliceStep
+			&& 4 * in_W == filter_widthStep && filter_widthStep*in_H == filter_sliceStep
+			&& 4 * out_W == out_widthStep && out_widthStep * out_H == out_sliceStep)
+		{
+			zq_cnn_innerproduct_nchwc4_noborder(in_firstPixelData, in_N, in_H*in_W*in_C, filter_firstPixelData, filter_N,
+				out_firstPixelData, out_sliceStep);
+		}
+		else
+		{
+			zq_cnn_innerproduct_gemm_nchwc4_general(in_firstPixelData, in_N, in_H, in_W, in_C,
+				in_widthStep, in_sliceStep, in_imStep, filter_firstPixelData, filter_N, filter_H, filter_W, filter_C,
+				filter_widthStep, filter_sliceStep, filter_imStep,
+				out_firstPixelData, need_N, need_C, out_widthStep, out_sliceStep, out_imStep, buffer, buffer_len);
+		}
+	}
 	zq_cnn_prelu_nchwc4(out_firstPixelData, need_N, need_H, need_W, need_C, out_widthStep, out_sliceStep, out_imStep, slope_firstPixelData);
 
 	double t2 = omp_get_wtime();
@@ -1687,11 +1850,34 @@ bool ZQ_CNN_Forward_SSEUtils_NCHWC::InnerProduct(ZQ_CNN_Tensor4D_NCHWC4& input, 
 	const float* filter_firstPixelData = filters.GetFirstPixelPtr();
 	float* out_firstPixelData = output.GetFirstPixelPtr();
 
-	zq_cnn_innerproduct_gemm_nchwc4_general(in_firstPixelData, in_N, in_H, in_W, in_C,
-		in_widthStep, in_sliceStep, in_imStep, filter_firstPixelData, filter_N, filter_H, filter_W, filter_C,
-		filter_widthStep, filter_sliceStep, filter_imStep,
-		out_firstPixelData, need_N, need_C, out_widthStep, out_sliceStep, out_imStep, buffer, buffer_len);
 
+#if (ZQ_CNN_USE_BLAS_GEMM || ZQ_CNN_USE_MKL_GEMM || ZQ_CNN_USE_ZQ_GEMM)
+	if (out_N >= 16 && filter_N >= 16)
+	{
+		zq_cnn_innerproduct_gemm_nchwc4_general(in_firstPixelData, in_N, in_H, in_W, in_C,
+			in_widthStep, in_sliceStep, in_imStep, filter_firstPixelData, filter_N, filter_H, filter_W, filter_C,
+			filter_widthStep, filter_sliceStep, filter_imStep,
+			out_firstPixelData, need_N, need_C, out_widthStep, out_sliceStep, out_imStep, buffer, buffer_len);
+
+	}
+	else
+#endif
+	{
+		if (4 * in_W == in_widthStep && in_widthStep*in_H == in_sliceStep
+			&& 4 * in_W == filter_widthStep && filter_widthStep*in_H == filter_sliceStep
+			&& 4 * out_W == out_widthStep && out_widthStep * out_H == out_sliceStep)
+		{
+			zq_cnn_innerproduct_nchwc4_noborder(in_firstPixelData, in_N, in_H*in_W*in_C, filter_firstPixelData, filter_N,
+				out_firstPixelData, out_sliceStep);
+		}
+		else
+		{
+			zq_cnn_innerproduct_gemm_nchwc4_general(in_firstPixelData, in_N, in_H, in_W, in_C,
+				in_widthStep, in_sliceStep, in_imStep, filter_firstPixelData, filter_N, filter_H, filter_W, filter_C,
+				filter_widthStep, filter_sliceStep, filter_imStep,
+				out_firstPixelData, need_N, need_C, out_widthStep, out_sliceStep, out_imStep, buffer, buffer_len);
+		}
+	}
 	return true;
 }
 
@@ -2949,11 +3135,34 @@ bool ZQ_CNN_Forward_SSEUtils_NCHWC::InnerProductWithBias(ZQ_CNN_Tensor4D_NCHWC8&
 	const float* bias_firstPixelData = bias.GetFirstPixelPtr();
 
 	
-	zq_cnn_innerproduct_gemm_nchwc8_general_with_bias(in_firstPixelData, in_N, in_H, in_W, in_C,
-		in_widthStep, in_sliceStep, in_imStep, filter_firstPixelData, filter_N, filter_H, filter_W, filter_C,
-		filter_widthStep, filter_sliceStep, filter_imStep,
-		out_firstPixelData, need_N, need_C, out_widthStep, out_sliceStep, out_imStep, bias_firstPixelData, buffer, buffer_len);
 
+#if (ZQ_CNN_USE_BLAS_GEMM || ZQ_CNN_USE_MKL_GEMM || ZQ_CNN_USE_ZQ_GEMM)
+	if (out_N >= 16 && filter_N >= 16)
+	{
+		zq_cnn_innerproduct_gemm_nchwc8_general_with_bias(in_firstPixelData, in_N, in_H, in_W, in_C,
+			in_widthStep, in_sliceStep, in_imStep, filter_firstPixelData, filter_N, filter_H, filter_W, filter_C,
+			filter_widthStep, filter_sliceStep, filter_imStep,
+			out_firstPixelData, need_N, need_C, out_widthStep, out_sliceStep, out_imStep, bias_firstPixelData, buffer, buffer_len);
+
+	}
+	else
+#endif
+	{
+		if (8 * in_W == in_widthStep && in_widthStep*in_H == in_sliceStep
+			&& 8 * in_W == filter_widthStep && filter_widthStep*in_H == filter_sliceStep
+			&& 8 * out_W == out_widthStep && out_widthStep * out_H == out_sliceStep)
+		{
+			zq_cnn_innerproduct_nchwc8_noborder_with_bias(in_firstPixelData, in_N, in_H*in_W*in_C, filter_firstPixelData, filter_N,
+				out_firstPixelData, out_sliceStep, bias_firstPixelData);
+		}
+		else
+		{
+			zq_cnn_innerproduct_gemm_nchwc8_general_with_bias(in_firstPixelData, in_N, in_H, in_W, in_C,
+				in_widthStep, in_sliceStep, in_imStep, filter_firstPixelData, filter_N, filter_H, filter_W, filter_C,
+				filter_widthStep, filter_sliceStep, filter_imStep,
+				out_firstPixelData, need_N, need_C, out_widthStep, out_sliceStep, out_imStep, bias_firstPixelData, buffer, buffer_len);
+		}
+	}
 	double t2 = omp_get_wtime();
 	//printf("utils:conv: %.3f ms\n", (t2 - t1) * 1000);
 	return true;
@@ -3012,11 +3221,34 @@ bool ZQ_CNN_Forward_SSEUtils_NCHWC::InnerProductWithBiasPReLU(ZQ_CNN_Tensor4D_NC
 	const float* bias_firstPixelData = bias.GetFirstPixelPtr();
 	const float* slope_firstPixelData = slope.GetFirstPixelPtr();
 
-	zq_cnn_innerproduct_gemm_nchwc8_general_with_bias_prelu(in_firstPixelData, in_N, in_H, in_W, in_C,
-		in_widthStep, in_sliceStep, in_imStep, filter_firstPixelData, filter_N, filter_H, filter_W, filter_C,
-		filter_widthStep, filter_sliceStep, filter_imStep,
-		out_firstPixelData, need_N, need_C, out_widthStep, out_sliceStep, out_imStep, bias_firstPixelData, slope_firstPixelData, buffer, buffer_len);
 
+#if (ZQ_CNN_USE_BLAS_GEMM || ZQ_CNN_USE_MKL_GEMM || ZQ_CNN_USE_ZQ_GEMM)
+	if (out_N >= 16 && filter_N >= 16)
+	{
+		zq_cnn_innerproduct_gemm_nchwc8_general_with_bias_prelu(in_firstPixelData, in_N, in_H, in_W, in_C,
+			in_widthStep, in_sliceStep, in_imStep, filter_firstPixelData, filter_N, filter_H, filter_W, filter_C,
+			filter_widthStep, filter_sliceStep, filter_imStep,
+			out_firstPixelData, need_N, need_C, out_widthStep, out_sliceStep, out_imStep, bias_firstPixelData, slope_firstPixelData, buffer, buffer_len);
+
+	}
+	else
+#endif
+	{
+		if (8 * in_W == in_widthStep && in_widthStep*in_H == in_sliceStep
+			&& 8 * in_W == filter_widthStep && filter_widthStep*in_H == filter_sliceStep
+			&& 8 * out_W == out_widthStep && out_widthStep * out_H == out_sliceStep)
+		{
+			zq_cnn_innerproduct_nchwc8_noborder_with_bias_prelu(in_firstPixelData, in_N, in_H*in_W*in_C, filter_firstPixelData, filter_N,
+				out_firstPixelData, out_sliceStep, bias_firstPixelData, slope_firstPixelData);
+		}
+		else
+		{
+			zq_cnn_innerproduct_gemm_nchwc8_general_with_bias_prelu(in_firstPixelData, in_N, in_H, in_W, in_C,
+				in_widthStep, in_sliceStep, in_imStep, filter_firstPixelData, filter_N, filter_H, filter_W, filter_C,
+				filter_widthStep, filter_sliceStep, filter_imStep,
+				out_firstPixelData, need_N, need_C, out_widthStep, out_sliceStep, out_imStep, bias_firstPixelData, slope_firstPixelData, buffer, buffer_len);
+		}
+	}
 	double t2 = omp_get_wtime();
 	//printf("utils:conv: %.3f ms\n", (t2 - t1) * 1000);
 	return true;
@@ -3073,12 +3305,34 @@ bool ZQ_CNN_Forward_SSEUtils_NCHWC::InnerProductWithPReLU(ZQ_CNN_Tensor4D_NCHWC8
 	float* out_firstPixelData = output.GetFirstPixelPtr();
 	const float* slope_firstPixelData = slope.GetFirstPixelPtr();
 
-	zq_cnn_innerproduct_gemm_nchwc8_general(in_firstPixelData, in_N, in_H, in_W, in_C,
-		in_widthStep, in_sliceStep, in_imStep, filter_firstPixelData, filter_N, filter_H, filter_W, filter_C,
-		filter_widthStep, filter_sliceStep, filter_imStep,
-		out_firstPixelData, need_N, need_C, out_widthStep, out_sliceStep, out_imStep, buffer, buffer_len);
 
+#if (ZQ_CNN_USE_BLAS_GEMM || ZQ_CNN_USE_MKL_GEMM || ZQ_CNN_USE_ZQ_GEMM)
+	if (out_N >= 16 && filter_N >= 16)
+	{
+		zq_cnn_innerproduct_gemm_nchwc8_general(in_firstPixelData, in_N, in_H, in_W, in_C,
+			in_widthStep, in_sliceStep, in_imStep, filter_firstPixelData, filter_N, filter_H, filter_W, filter_C,
+			filter_widthStep, filter_sliceStep, filter_imStep,
+			out_firstPixelData, need_N, need_C, out_widthStep, out_sliceStep, out_imStep, buffer, buffer_len);
 
+	}
+	else
+#endif
+	{
+		if (8 * in_W == in_widthStep && in_widthStep*in_H == in_sliceStep
+			&& 8 * in_W == filter_widthStep && filter_widthStep*in_H == filter_sliceStep
+			&& 8 * out_W == out_widthStep && out_widthStep * out_H == out_sliceStep)
+		{
+			zq_cnn_innerproduct_nchwc8_noborder(in_firstPixelData, in_N, in_H*in_W*in_C, filter_firstPixelData, filter_N,
+				out_firstPixelData, out_sliceStep);
+		}
+		else
+		{
+			zq_cnn_innerproduct_gemm_nchwc8_general(in_firstPixelData, in_N, in_H, in_W, in_C,
+				in_widthStep, in_sliceStep, in_imStep, filter_firstPixelData, filter_N, filter_H, filter_W, filter_C,
+				filter_widthStep, filter_sliceStep, filter_imStep,
+				out_firstPixelData, need_N, need_C, out_widthStep, out_sliceStep, out_imStep, buffer, buffer_len);
+		}
+	}
 	zq_cnn_prelu_nchwc8(out_firstPixelData, need_N, need_H, need_W, need_C, out_widthStep, out_sliceStep, out_imStep, slope_firstPixelData);
 
 	double t2 = omp_get_wtime();
@@ -3132,11 +3386,34 @@ bool ZQ_CNN_Forward_SSEUtils_NCHWC::InnerProduct(ZQ_CNN_Tensor4D_NCHWC8& input, 
 	const float* filter_firstPixelData = filters.GetFirstPixelPtr();
 	float* out_firstPixelData = output.GetFirstPixelPtr();
 
-	zq_cnn_innerproduct_gemm_nchwc8_general(in_firstPixelData, in_N, in_H, in_W, in_C,
-		in_widthStep, in_sliceStep, in_imStep, filter_firstPixelData, filter_N, filter_H, filter_W, filter_C,
-		filter_widthStep, filter_sliceStep, filter_imStep,
-		out_firstPixelData, need_N, need_C, out_widthStep, out_sliceStep, out_imStep, buffer, buffer_len);
 
+#if (ZQ_CNN_USE_BLAS_GEMM || ZQ_CNN_USE_MKL_GEMM || ZQ_CNN_USE_ZQ_GEMM)
+	if (out_N >= 16 && filter_N >= 16)
+	{
+		zq_cnn_innerproduct_gemm_nchwc8_general(in_firstPixelData, in_N, in_H, in_W, in_C,
+			in_widthStep, in_sliceStep, in_imStep, filter_firstPixelData, filter_N, filter_H, filter_W, filter_C,
+			filter_widthStep, filter_sliceStep, filter_imStep,
+			out_firstPixelData, need_N, need_C, out_widthStep, out_sliceStep, out_imStep, buffer, buffer_len);
+
+	}
+	else
+#endif
+	{
+		if (8 * in_W == in_widthStep && in_widthStep*in_H == in_sliceStep
+			&& 8 * in_W == filter_widthStep && filter_widthStep*in_H == filter_sliceStep
+			&& 8 * out_W == out_widthStep && out_widthStep * out_H == out_sliceStep)
+		{
+			zq_cnn_innerproduct_nchwc8_noborder(in_firstPixelData, in_N, in_H*in_W*in_C, filter_firstPixelData, filter_N,
+				out_firstPixelData, out_sliceStep);
+		}
+		else
+		{
+			zq_cnn_innerproduct_gemm_nchwc8_general(in_firstPixelData, in_N, in_H, in_W, in_C,
+				in_widthStep, in_sliceStep, in_imStep, filter_firstPixelData, filter_N, filter_H, filter_W, filter_C,
+				filter_widthStep, filter_sliceStep, filter_imStep,
+				out_firstPixelData, need_N, need_C, out_widthStep, out_sliceStep, out_imStep, buffer, buffer_len);
+		}
+	}
 	return true;
 }
 

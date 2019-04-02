@@ -59,6 +59,7 @@ extern "C" {
 #endif
 #define zq_mm_mul_ps vmulq_f32
 #define zq_mm_setzero_ps() vdupq_n_f32(0)
+#define zq_mm_set1_ps vdupq_n_f32
 #define zq_mm_type float32x4_t
 #define zq_base_type float
 #define zq_mm_align_size 4
@@ -86,6 +87,7 @@ extern "C" {
 #endif
 
 #define zq_cnn_innerproduct_gemm_nchwc_general zq_cnn_innerproduct_gemm_nchwc4_general
+#define zq_cnn_innerproduct_nchwc_noborder zq_cnn_innerproduct_nchwc4_noborder
 
 #define WITH_BIAS 0
 #define WITH_PRELU 0
@@ -94,22 +96,27 @@ extern "C" {
 #undef WITH_PRELU
 
 #undef zq_cnn_innerproduct_gemm_nchwc_general
+#undef zq_cnn_innerproduct_nchwc_noborder
 
 #define zq_cnn_innerproduct_gemm_nchwc_general zq_cnn_innerproduct_gemm_nchwc4_general_with_bias
+#define zq_cnn_innerproduct_nchwc_noborder zq_cnn_innerproduct_nchwc4_noborder_with_bias
 #define WITH_BIAS 1
 #define WITH_PRELU 0
 #include "zq_cnn_innerproduct_gemm_nchwc_raw.h"
 #undef WITH_BIAS
 #undef WITH_PRELU
 #undef zq_cnn_innerproduct_gemm_nchwc_general
+#undef zq_cnn_innerproduct_nchwc_noborder
 
 #define zq_cnn_innerproduct_gemm_nchwc_general zq_cnn_innerproduct_gemm_nchwc4_general_with_bias_prelu
+#define zq_cnn_innerproduct_nchwc_noborder zq_cnn_innerproduct_nchwc4_noborder_with_bias_prelu
 #define WITH_BIAS 1
 #define WITH_PRELU 1
 #include "zq_cnn_innerproduct_gemm_nchwc_raw.h"
 #undef WITH_BIAS
 #undef WITH_PRELU
 #undef zq_cnn_innerproduct_gemm_nchwc_general
+#undef zq_cnn_innerproduct_nchwc_noborder
 
 #undef zq_cblas_sgemm
 #undef zq_CblasRowMajor
@@ -124,6 +131,7 @@ extern "C" {
 #undef zq_mm_fmadd_ps
 #undef zq_mm_mul_ps
 #undef zq_mm_setzero_ps
+#undef zq_mm_set1_ps
 #undef zq_mm_type
 #undef zq_base_type
 #undef zq_mm_align_size
@@ -153,6 +161,7 @@ extern "C" {
 #endif
 #define zq_mm_mul_ps _mm_mul_ps
 #define zq_mm_setzero_ps _mm_setzero_ps
+#define zq_mm_set1_ps _mm_set1_ps
 #define zq_mm_type __m128
 #define zq_base_type float
 #define zq_mm_align_size 4
@@ -180,6 +189,7 @@ extern "C" {
 #endif
 
 #define zq_cnn_innerproduct_gemm_nchwc_general zq_cnn_innerproduct_gemm_nchwc4_general
+#define zq_cnn_innerproduct_nchwc_noborder zq_cnn_innerproduct_nchwc4_noborder
 
 #define WITH_BIAS 0
 #define WITH_PRELU 0
@@ -188,22 +198,27 @@ extern "C" {
 #undef WITH_PRELU
 
 #undef zq_cnn_innerproduct_gemm_nchwc_general
+#undef zq_cnn_innerproduct_nchwc_noborder
 
 #define zq_cnn_innerproduct_gemm_nchwc_general zq_cnn_innerproduct_gemm_nchwc4_general_with_bias
+#define zq_cnn_innerproduct_nchwc_noborder zq_cnn_innerproduct_nchwc4_noborder_with_bias
 #define WITH_BIAS 1
 #define WITH_PRELU 0
 #include "zq_cnn_innerproduct_gemm_nchwc_raw.h"
 #undef WITH_BIAS
 #undef WITH_PRELU
 #undef zq_cnn_innerproduct_gemm_nchwc_general
+#undef zq_cnn_innerproduct_nchwc_noborder
 
 #define zq_cnn_innerproduct_gemm_nchwc_general zq_cnn_innerproduct_gemm_nchwc4_general_with_bias_prelu
+#define zq_cnn_innerproduct_nchwc_noborder zq_cnn_innerproduct_nchwc4_noborder_with_bias_prelu
 #define WITH_BIAS 1
 #define WITH_PRELU 1
 #include "zq_cnn_innerproduct_gemm_nchwc_raw.h"
 #undef WITH_BIAS
 #undef WITH_PRELU
 #undef zq_cnn_innerproduct_gemm_nchwc_general
+#undef zq_cnn_innerproduct_nchwc_noborder
 
 #undef zq_mm_load_ps
 #undef zq_mm_loadu_ps
@@ -214,6 +229,7 @@ extern "C" {
 #undef zq_mm_fmadd_ps
 #undef zq_mm_mul_ps
 #undef zq_mm_setzero_ps
+#undef zq_mm_set1_ps
 #undef zq_mm_type
 #undef zq_base_type
 #undef zq_mm_align_size
@@ -243,6 +259,7 @@ extern "C" {
 #endif
 #define zq_mm_mul_ps _mm256_mul_ps
 #define zq_mm_setzero_ps _mm256_setzero_ps
+#define zq_mm_set1_ps _mm256_set1_ps
 #define zq_mm_type __m256
 #define zq_base_type float
 #define zq_mm_align_size 8
@@ -270,7 +287,7 @@ extern "C" {
 
 
 #define zq_cnn_innerproduct_gemm_nchwc_general zq_cnn_innerproduct_gemm_nchwc8_general
-
+#define zq_cnn_innerproduct_nchwc_noborder zq_cnn_innerproduct_nchwc8_noborder
 #define WITH_BIAS 0
 #define WITH_PRELU 0
 #include "zq_cnn_innerproduct_gemm_nchwc_raw.h"
@@ -278,22 +295,27 @@ extern "C" {
 #undef WITH_PRELU
 
 #undef zq_cnn_innerproduct_gemm_nchwc_general
+#undef zq_cnn_innerproduct_nchwc_noborder
 
 #define zq_cnn_innerproduct_gemm_nchwc_general zq_cnn_innerproduct_gemm_nchwc8_general_with_bias
+#define zq_cnn_innerproduct_nchwc_noborder zq_cnn_innerproduct_nchwc8_noborder_with_bias
 #define WITH_BIAS 1
 #define WITH_PRELU 0
 #include "zq_cnn_innerproduct_gemm_nchwc_raw.h"
 #undef WITH_BIAS
 #undef WITH_PRELU
 #undef zq_cnn_innerproduct_gemm_nchwc_general
+#undef zq_cnn_innerproduct_nchwc_noborder
 
 #define zq_cnn_innerproduct_gemm_nchwc_general zq_cnn_innerproduct_gemm_nchwc8_general_with_bias_prelu
+#define zq_cnn_innerproduct_nchwc_noborder zq_cnn_innerproduct_nchwc8_noborder_with_bias_prelu
 #define WITH_BIAS 1
 #define WITH_PRELU 1
 #include "zq_cnn_innerproduct_gemm_nchwc_raw.h"
 #undef WITH_BIAS
 #undef WITH_PRELU
 #undef zq_cnn_innerproduct_gemm_nchwc_general
+#undef zq_cnn_innerproduct_nchwc_noborder
 
 #undef zq_cblas_sgemm
 #undef zq_CblasRowMajor
@@ -308,6 +330,7 @@ extern "C" {
 #undef zq_mm_fmadd_ps
 #undef zq_mm_mul_ps
 #undef zq_mm_setzero_ps
+#undef zq_mm_set1_ps
 #undef zq_mm_type
 #undef zq_base_type
 #undef zq_mm_align_size
@@ -344,6 +367,7 @@ static inline float my_mm_set1_ps(float v) { return v; }
 #define zq_mm_fmadd_ps my_mm_fmadd_ps
 #define zq_mm_mul_ps my_mm_mul_ps
 #define zq_mm_setzero_ps my_mm_setzero_ps
+#define zq_mm_set1_ps my_mm_set1_ps
 #define zq_mm_type float
 #define zq_base_type float
 #define zq_mm_align_size 1
@@ -371,6 +395,7 @@ static inline float my_mm_set1_ps(float v) { return v; }
 #endif
 
 #define zq_cnn_innerproduct_gemm_nchwc_general zq_cnn_innerproduct_gemm_nchwc1_general
+#define zq_cnn_innerproduct_nchwc_noborder zq_cnn_innerproduct_nchwc1_noborder
 
 #define WITH_BIAS 0
 #define WITH_PRELU 0
@@ -379,22 +404,27 @@ static inline float my_mm_set1_ps(float v) { return v; }
 #undef WITH_PRELU
 
 #undef zq_cnn_innerproduct_gemm_nchwc_general
+#undef zq_cnn_innerproduct_nchwc_noborder
 
 #define zq_cnn_innerproduct_gemm_nchwc_general zq_cnn_innerproduct_gemm_nchwc1_general_with_bias
+#define zq_cnn_innerproduct_nchwc_noborder zq_cnn_innerproduct_nchwc1_noborder_with_bias
 #define WITH_BIAS 1
 #define WITH_PRELU 0
 #include "zq_cnn_innerproduct_gemm_nchwc_raw.h"
 #undef WITH_BIAS
 #undef WITH_PRELU
 #undef zq_cnn_innerproduct_gemm_nchwc_general
+#undef zq_cnn_innerproduct_nchwc_noborder
 
 #define zq_cnn_innerproduct_gemm_nchwc_general zq_cnn_innerproduct_gemm_nchwc1_general_with_bias_prelu
+#define zq_cnn_innerproduct_nchwc_noborder zq_cnn_innerproduct_nchwc1_noborder_with_bias_prelu
 #define WITH_BIAS 1
 #define WITH_PRELU 1
 #include "zq_cnn_innerproduct_gemm_nchwc_raw.h"
 #undef WITH_BIAS
 #undef WITH_PRELU
 #undef zq_cnn_innerproduct_gemm_nchwc_general
+#undef zq_cnn_innerproduct_nchwc_noborder
 
 
 #undef zq_cblas_sgemm
@@ -410,6 +440,7 @@ static inline float my_mm_set1_ps(float v) { return v; }
 #undef zq_mm_fmadd_ps
 #undef zq_mm_mul_ps
 #undef zq_mm_setzero_ps
+#undef zq_mm_set1_ps
 #undef zq_mm_type
 #undef zq_base_type
 #undef zq_mm_align_size
