@@ -2141,10 +2141,14 @@ namespace ZQ
 					*filters, *bias, *((*tops)[0]), tmp_buffer, tmp_buffer_len);
 				double t2 = omp_get_wtime();
 				ZQ_CNN_Layer_NCHWC<Tensor4D>::last_cost_time = t2 - t1;
+				double time = __max(1000 * (t2 - t1), 1e-9);
+				double mop = (double)(*tops)[0]->GetN()*(*tops)[0]->GetH()* (*tops)[0]->GetW()* filters->GetN()* filters->GetH()* filters->GetW()* filters->GetC();
+				mop /= 1024 * 1024;
 				if (ZQ_CNN_Layer_NCHWC<Tensor4D>::show_debug_info)
-					printf("Innerproduct layer: %.3f ms NHW %dx%dx%d filter: NHWC %d x %d x %d x %d\n",
+					printf("Innerproduct layer: %.3f ms NHW %dx%dx%d filter: NHWC %d x %d x %d x %d, MUL = %.3f M, GFLOPS=%.3f\n",
 						1000 * (t2 - t1), (*tops)[0]->GetN(), (*tops)[0]->GetH(), (*tops)[0]->GetW(),
-						filters->GetN(), filters->GetH(), filters->GetW(), filters->GetC());
+						filters->GetN(), filters->GetH(), filters->GetW(), filters->GetC(),
+						mop, mop / time);
 				return ret;
 			}
 			else
@@ -2158,8 +2162,14 @@ namespace ZQ
 					tmp_buffer, tmp_buffer_len);
 				double t2 = omp_get_wtime();
 				ZQ_CNN_Layer_NCHWC<Tensor4D>::last_cost_time = t2 - t1;
+				double time = __max(1000 * (t2 - t1), 1e-9);
+				double mop = (double)(*tops)[0]->GetN()*(*tops)[0]->GetH()* (*tops)[0]->GetW()* filters->GetN()* filters->GetH()* filters->GetW()* filters->GetC();
+				mop /= 1024 * 1024;
 				if (ZQ_CNN_Layer_NCHWC<Tensor4D>::show_debug_info)
-					printf("Innerproduct layer: %s cost : %.3f ms\n", ZQ_CNN_Layer_NCHWC<Tensor4D>::name.c_str(), 1000 * (t2 - t1));
+					printf("Innerproduct layer: %.3f ms NHW %dx%dx%d filter: NHWC %d x %d x %d x %d, MUL = %.3f M, GFLOPS=%.3f\n",
+						1000 * (t2 - t1), (*tops)[0]->GetN(), (*tops)[0]->GetH(), (*tops)[0]->GetW(),
+						filters->GetN(), filters->GetH(), filters->GetW(), filters->GetC(),
+						mop, mop / time);
 				return ret;
 			}
 
