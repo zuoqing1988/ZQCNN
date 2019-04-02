@@ -878,7 +878,8 @@ namespace ZQ
 			std::vector<std::vector<int> > tmp_tops;
 			for (int i = 0; i < layers.size(); i++)
 			{
-				if (My_CNN_Layer::_my_strcmpi(layer_type_names[i].c_str(), "InnerProduct") == 0)
+				/*BUG: merge innerproduct will lead MTCNN fail*/
+				/*if (My_CNN_Layer::_my_strcmpi(layer_type_names[i].c_str(), "InnerProduct") == 0)
 				{
 					if (i + 1 < layers.size() && My_CNN_Layer::_my_strcmpi(layer_type_names[i + 1].c_str(), "BatchNormScale") == 0)
 					{
@@ -913,7 +914,7 @@ namespace ZQ
 						}
 					}
 				}
-				else if (My_CNN_Layer::_my_strcmpi(layer_type_names[i].c_str(), "Convolution") == 0)
+				else */if (My_CNN_Layer::_my_strcmpi(layer_type_names[i].c_str(), "Convolution") == 0)
 				{
 					if (i + 1 < layers.size() && My_CNN_Layer::_my_strcmpi(layer_type_names[i + 1].c_str(), "BatchNormScale") == 0)
 					{

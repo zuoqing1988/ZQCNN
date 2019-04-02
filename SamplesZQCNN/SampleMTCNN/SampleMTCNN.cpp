@@ -84,7 +84,7 @@ int main()
 	mkl_set_num_threads(num_threads);
 #endif
 #if defined(_WIN32)
-	Mat image0 = cv::imread("data/face2500.jpg", 1);
+	Mat image0 = cv::imread("data/11.jpg", 1);
 #else
 	Mat image0 = cv::imread("../../data/face2500.jpg", 1);
 #endif
@@ -136,7 +136,7 @@ int main()
 	mtcnn.TurnOnShowDebugInfo();
 	//mtcnn.SetLimit(300, 50, 20);
 	const int use_pnet20 = true;
-	bool landmark106 = false;
+	bool landmark106 = true;
 	int thread_num = 0;
 	bool special_handle_very_big_face = false;
 	result_name = "resultdet.jpg";
@@ -150,7 +150,7 @@ int main()
 				//"model/det2.zqparams", "model/det2_bgr.nchwbin",
 				"model/det3-dw48-fast.zqparams", "model/det3-dw48-fast.nchwbin", 
 				thread_num, true,
-				"model/det5-dw96-v3s.zqparams", "model/det5-dw96-v3s.nchwbin"
+				"model/det5-dw64-v3s.zqparams", "model/det5-dw64-v3s.nchwbin"
 				//"model/det3.zqparams", "model/det3_bgr.nchwbin"
 #else
 			if (!mtcnn.Init("../../model/det1-dw20-fast.zqparams", "../../model/det1-dw20-fast.nchwbin",
@@ -158,7 +158,7 @@ int main()
 				//"../../model/det2.zqparams", "../../model/det2_bgr.nchwbin",
 				"../../model/det3-dw48-fast.zqparams", "../../model/det3-dw48-fast.nchwbin",
 				thread_num, true,
-				"../../model/det5-dw96-v3s.zqparams", "../../model/det5-dw96-v3s.nchwbin"
+				"../../model/det5-dw64-v3s.zqparams", "../../model/det5-dw64-v3s.nchwbin"
 				//"../../model/det3.zqparams", "../../model/det3_bgr.nchwbin"
 #endif
 			))
@@ -174,8 +174,9 @@ int main()
 				"model/det2-dw24-fast.zqparams", "model/det2-dw24-fast.nchwbin",
 				//"model\\det2.zqparams", "model\\det2_bgr.nchwbin",
 				"model/det3-dw48-fast.zqparams", "model/det3-dw48-fast.nchwbin",
+				//"model/det3.zqparams", "model/det3_bgr.nchwbin",
 				thread_num, false,
-				"model\\det4-dw48-v2n.zqparams", "model\\det4-dw48-v2n.nchwbin"
+				"model/det4-dw48-v2n.zqparams", "model/det4-dw48-v2n.nchwbin"
 				//"model/det3.zqparams", "model/det3_bgr.nchwbin"
 #else
 			if (!mtcnn.Init("../../model/det1-dw20-fast.zqparams", "../../model/det1-dw20-fast.nchwbin",
@@ -214,7 +215,7 @@ int main()
 	}
 	mtcnn.TurnOffShowDebugInfo();
 	//mtcnn.TurnOnShowDebugInfo();
-	int iters = 10;
+	int iters = 100;
 	double t1 = omp_get_wtime();
 	for (int i = 0; i < iters; i++)
 	{
