@@ -77,8 +77,6 @@ int main(int argc, char** argv)
 			ncnn::Extractor ex2 = net.create_extractor();
 			ex1.set_light_mode(false);
 			ex2.set_light_mode(false);
-			ex1.set_num_threads(8);
-			ex2.set_num_threads(8);
 			ex1.input("data", in1);
 			ex1.extract("fc1", out1);
 			ex2.input("data", in2);
