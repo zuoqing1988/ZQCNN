@@ -62,13 +62,11 @@ int main(int argc, char** argv)
 	ncnn::set_omp_dynamic(0);
 	ncnn::set_omp_num_threads(num_threads);
 
-	g_blob_pool_allocator.clear();
-	g_workspace_pool_allocator.clear();
-
-
 	ncnn::Net net;
 	net.load_param("mobilefacenet.param");
 	net.load_model("mobilefacenet.bin");
+	g_blob_pool_allocator.clear();
+	g_workspace_pool_allocator.clear();
     const char* imagepath1 = "00_.jpg";
 	const char* imagepath2 = "01_.jpg";
 	cv::Mat img1 = cv::imread(imagepath1);
