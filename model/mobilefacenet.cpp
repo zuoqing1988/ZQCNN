@@ -32,7 +32,7 @@ int main(int argc, char** argv)
 #if !defined(_WIN32)
 	if (argc > 1)
 	{
-		int core_id = atoi(argv[i]);
+		int core_id = atoi(argv[1]);
 		if(core_id >= 0)
 		{
 			cpu_set_t mask;
@@ -77,7 +77,7 @@ int main(int argc, char** argv)
 	ncnn::Mat in2 = ncnn::Mat::from_pixels_resize(img2.data, ncnn::Mat::PIXEL_BGR, img2.cols, img2.rows, 112, 112);
 
 	const float mean_vals[3] = { 127.5f, 127.5f, 127.5f };
-	const float norm_vals[3] = { 1.0 / 127.5,1.0 / 127.5,1.0 / 127.5 };
+	const float norm_vals[3] = { 1.0 / 128, 1.0 / 128,1.0 / 128 };
 	//in1.substract_mean_normalize(mean_vals, norm_vals);
 	//in2.substract_mean_normalize(mean_vals, norm_vals);
 
