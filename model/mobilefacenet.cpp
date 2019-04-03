@@ -28,24 +28,43 @@
 
 int main(int argc, char** argv)
 {
-
+	int num_threads = 1;
 #if !defined(_WIN32)
 	if (argc > 1)
 	{
-		cpu_set_t mask;
-		CPU_ZERO(&mask);
-		CPU_SET(atoi(argv[1]), &mask);
-		if (sched_setaffinity(0, sizeof(mask), &mask) < 0) {
-			perror("sched_setaffinity");
+		int core_id = atoi(argv[i]);
+		if(core_id >= 0)
+		{
+			cpu_set_t mask;
+			CPU_ZERO(&mask);
+			CPU_SET(atoi(argv[1]), &mask);
+			if (sched_setaffinity(0, sizeof(mask), &mask) < 0) {
+				perror("sched_setaffinity");
+			}
 		}
 	}
-	int num_threads = 1;
+	
 	if(argc > 2)
 		num_threads = atoi(argv[2]);
+	
+#endif
+
+	static ncnn::UnlockedPoolAllocator g_blob_pool_allocator;
+	static ncnn::PoolAllocator g_workspace_pool_allocator;
+
+	ncnn::Option opt;
+	opt.lightmode = true;
+	opt.num_threads = num_threads;
+	opt.blob_allocator = &g_blob_pool_allocator;
+	opt.workspace_allocator = &g_workspace_pool_allocator;
+	ncnn::set_default_option(opt);
 	ncnn::set_cpu_powersave(0);
 	ncnn::set_omp_dynamic(0);
 	ncnn::set_omp_num_threads(num_threads);
-#endif
+
+	g_blob_pool_allocator.clear();
+	g_workspace_pool_allocator.clear();
+
 
 	ncnn::Net net;
 	net.load_param("mobilefacenet.param");
@@ -75,8 +94,6 @@ int main(int argc, char** argv)
 		{
 			ncnn::Extractor ex1 = net.create_extractor();
 			ncnn::Extractor ex2 = net.create_extractor();
-			ex1.set_light_mode(false);
-			ex2.set_light_mode(false);
 			ex1.input("data", in1);
 			ex1.extract("fc1", out1);
 			ex2.input("data", in2);
