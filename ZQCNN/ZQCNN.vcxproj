@@ -250,6 +250,9 @@
     <ClInclude Include="layers_nchwc\zq_cnn_convolution_gemm_nchwc.h" />
     <ClInclude Include="layers_nchwc\zq_cnn_convolution_gemm_nchwc_col2im.h" />
     <ClInclude Include="layers_nchwc\zq_cnn_convolution_gemm_nchwc_packed4.h" />
+    <ClInclude Include="layers_nchwc\zq_cnn_convolution_gemm_nchwc_packed4_handle_bias_prelu_1x4.h" />
+    <ClInclude Include="layers_nchwc\zq_cnn_convolution_gemm_nchwc_packed4_handle_bias_prelu_4x4.h" />
+    <ClInclude Include="layers_nchwc\zq_cnn_convolution_gemm_nchwc_packed4_handle_bias_prelu_8x4.h" />
     <ClInclude Include="layers_nchwc\zq_cnn_convolution_gemm_nchwc_prepack4.h" />
     <ClInclude Include="layers_nchwc\zq_cnn_convolution_gemm_nchwc_raw.h" />
     <ClInclude Include="layers_nchwc\zq_cnn_depthwise_convolution_nchwc.h" />

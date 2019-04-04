@@ -645,7 +645,7 @@ extern "C" {
 		__int64* buffer_len
 	);
 
-	void zq_cnn_convolution_gemm_nchwc4_packed4_kernel1x1(
+	void zq_cnn_convolution_gemm_nchwc4_packedM4N4_kernel1x1(
 		const float* in_data,
 		int in_N,
 		int in_H,
@@ -667,7 +667,7 @@ extern "C" {
 		__int64* buffer_len
 	);
 
-	void zq_cnn_convolution_gemm_nchwc4_packed4_kernel1x1_with_bias(
+	void zq_cnn_convolution_gemm_nchwc4_packedM4N4_kernel1x1_with_bias(
 		const float* in_data,
 		int in_N,
 		int in_H,
@@ -690,7 +690,76 @@ extern "C" {
 		__int64* buffer_len
 	);
 
-	void zq_cnn_convolution_gemm_nchwc4_packed4_kernel1x1_with_bias_prelu(
+	void zq_cnn_convolution_gemm_nchwc4_packedM4N4_kernel1x1_with_bias_prelu(
+		const float* in_data,
+		int in_N,
+		int in_H,
+		int in_W,
+		int in_C,
+		int in_widthStep,
+		int in_sliceStep,
+		int in_imStep,
+		const float* packed_filter,
+		float* out_data,
+		int out_N,
+		int out_H,
+		int out_W,
+		int out_C,
+		int out_widthStep,
+		int out_sliceStep,
+		int out_imStep,
+		const float* bias,
+		const float* slope,
+		void** buffer,
+		__int64* buffer_len
+	);
+
+	void zq_cnn_convolution_gemm_nchwc4_packedM8N4_kernel1x1(
+		const float* in_data,
+		int in_N,
+		int in_H,
+		int in_W,
+		int in_C,
+		int in_widthStep,
+		int in_sliceStep,
+		int in_imStep,
+		const float* packed_filter,
+		float* out_data,
+		int out_N,
+		int out_H,
+		int out_W,
+		int out_C,
+		int out_widthStep,
+		int out_sliceStep,
+		int out_imStep,
+		void** buffer,
+		__int64* buffer_len
+	);
+
+	void zq_cnn_convolution_gemm_nchwc4_packedM8N4_kernel1x1_with_bias(
+		const float* in_data,
+		int in_N,
+		int in_H,
+		int in_W,
+		int in_C,
+		int in_widthStep,
+		int in_sliceStep,
+		int in_imStep,
+		const float* packed_filter,
+		float* out_data,
+		int out_N,
+		int out_H,
+		int out_W,
+		int out_C,
+		int out_widthStep,
+		int out_sliceStep,
+		int out_imStep,
+		const float* bias,
+		void** buffer,
+		__int64* buffer_len
+	);
+
+	void zq_cnn_convolution_gemm_nchwc4_packedM8N4_kernel1x1_with_bias_prelu(
 		const float* in_data,
 		int in_N,
 		int in_H,
