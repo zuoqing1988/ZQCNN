@@ -31,7 +31,8 @@
    OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 */
-
+#if defined(_WIN32)
+#else
 #include "arm_neon.h" //NEON
 
 #include <stdio.h>
@@ -288,6 +289,6 @@ void bl_sgemm_opt_4x4(
 	}
 }
 
-
+#endif
 
 

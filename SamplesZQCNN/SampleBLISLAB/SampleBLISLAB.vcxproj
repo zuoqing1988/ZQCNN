@@ -154,6 +154,9 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="bl_sgemm_opt_4x4.c" />
+    <ClCompile Include="bl_sgemm_ref.c" />
+    <ClCompile Include="bl_sgemm_util.c" />
+    <ClCompile Include="my_sgemm.c" />
     <ClCompile Include="test_bl_sgemm.c" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

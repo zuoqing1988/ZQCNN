@@ -1,3 +1,5 @@
+#if defined(_WIN32)
+#else
 /*
  * --------------------------------------------------------------------------
  * BLISLAB 
@@ -93,4 +95,4 @@ void bl_printmatrix(
 #endif
 
 #endif
-
+#endif

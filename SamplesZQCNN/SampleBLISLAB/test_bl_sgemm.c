@@ -1,3 +1,9 @@
+#if defined(_WIN32)
+int main()
+{
+	return 0;
+}
+#else
 /*
  * --------------------------------------------------------------------------
  * BLISLAB 
@@ -210,4 +216,6 @@ int main( int argc, char *argv[] )
 
     return 0;
 }
+
+#endif
 
