@@ -258,6 +258,8 @@
     <ClInclude Include="layers_nchwc\zq_cnn_eltwise_nchwc_raw.h" />
     <ClInclude Include="layers_nchwc\zq_cnn_innerproduct_gemm_nchwc.h" />
     <ClInclude Include="layers_nchwc\zq_cnn_innerproduct_gemm_nchwc_col2im.h" />
+    <ClInclude Include="layers_nchwc\zq_cnn_innerproduct_gemm_nchwc_packed4.h" />
+    <ClInclude Include="layers_nchwc\zq_cnn_innerproduct_gemm_nchwc_prepack4.h" />
     <ClInclude Include="layers_nchwc\zq_cnn_innerproduct_gemm_nchwc_raw.h" />
     <ClInclude Include="layers_nchwc\zq_cnn_pooling_nchwc.h" />
     <ClInclude Include="layers_nchwc\zq_cnn_pooling_nchwc_raw.h" />

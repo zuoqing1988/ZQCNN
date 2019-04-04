@@ -1566,6 +1566,212 @@ bool ZQ_CNN_Forward_SSEUtils_NCHWC::ConvolutionPrePack(const ZQ_CNN_Tensor4D_NCH
 	return true;
 }
 
+bool ZQ_CNN_Forward_SSEUtils_NCHWC::InnerProductPrePack(const ZQ_CNN_Tensor4D_NCHWC4& filters,
+	ZQ_CNN_Tensor4D_NCHWC::Buffer& packedfilters)
+{
+	const float* data = filters.GetFirstPixelPtr();
+	int N = filters.GetN();
+	int H = filters.GetH();
+	int W = filters.GetW();
+	int C = filters.GetC();
+	int widthStep = filters.GetWidthStep();
+	int sliceStep = filters.GetSliceStep();
+	int imStep = filters.GetImageStep();
+	zq_cnn_innerproduct_gemm_nchwc4_prepack4(filters.GetFirstPixelPtr(), N, H, W, C, widthStep, sliceStep, imStep,
+		(void**)&(packedfilters.data), &(packedfilters.len));
+	return true;
+}
+
+bool ZQ_CNN_Forward_SSEUtils_NCHWC::InnerProductWithBias(ZQ_CNN_Tensor4D_NCHWC4& input,
+	const ZQ_CNN_Tensor4D_NCHWC::Buffer& packedfilters, int filter_N,
+	const ZQ_CNN_Tensor4D_NCHWC4& bias,
+	ZQ_CNN_Tensor4D_NCHWC4& output, void** buffer, __int64* buffer_len)
+{
+	int in_N = input.GetN();
+	int in_H = input.GetH();
+	int in_W = input.GetW();
+	int in_C = input.GetC();
+	int out_N = output.GetN();
+	int out_H = output.GetH();
+	int out_W = output.GetW();
+	int out_C = output.GetC();
+	int bias_C = bias.GetC();
+	int need_H = 1;
+	int need_W = 1;
+	if (in_N <= 0 || in_H <= 0 || in_W <= 0 || in_C == 0
+		|| need_H < 0 || need_W < 0)
+	{
+		output.ChangeSize(0, 0, 0, 0, 0, 0);
+		return true;
+	}
+
+	int need_N = in_N;
+
+	int need_C = filter_N;
+	if (out_N != need_N || out_H != need_H || out_W != need_W || out_C != need_C)
+	{
+		output.ChangeSize(need_N, need_H, need_W, need_C, 0, 0);
+	}
+
+	int in_sliceStep = input.GetSliceStep();
+	int in_widthStep = input.GetWidthStep();
+	int in_imStep = input.GetImageStep();
+	int out_sliceStep = output.GetSliceStep();
+	int out_widthStep = output.GetWidthStep();
+	int out_imStep = output.GetImageStep();
+	float* in_firstPixelData = input.GetFirstPixelPtr();
+	float* out_firstPixelData = output.GetFirstPixelPtr();
+	const float* bias_firstPixelData = bias.GetFirstPixelPtr();
+
+	zq_cnn_innerproduct_gemm_nchwc4_packed4_with_bias(in_firstPixelData, in_N, in_H, in_W, in_C,
+		in_widthStep, in_sliceStep, in_imStep, (const float*)(packedfilters.data),
+		out_firstPixelData, need_N, need_H, need_W, need_C,
+		out_widthStep, out_sliceStep, out_imStep, bias_firstPixelData, buffer, buffer_len);
+	return true;
+}
+
+bool ZQ_CNN_Forward_SSEUtils_NCHWC::InnerProductWithBiasPReLU(ZQ_CNN_Tensor4D_NCHWC4& input,
+	const ZQ_CNN_Tensor4D_NCHWC::Buffer& packedfilters, int filter_N,
+	const ZQ_CNN_Tensor4D_NCHWC4& bias, const ZQ_CNN_Tensor4D_NCHWC4& slope,
+	ZQ_CNN_Tensor4D_NCHWC4& output,
+	void** buffer, __int64* buffer_len)
+{
+	int in_N = input.GetN();
+	int in_H = input.GetH();
+	int in_W = input.GetW();
+	int in_C = input.GetC();
+	int out_N = output.GetN();
+	int out_H = output.GetH();
+	int out_W = output.GetW();
+	int out_C = output.GetC();
+	int bias_C = bias.GetC();
+	int need_H = 1;
+	int need_W = 1;
+	if (in_N <= 0 || in_H <= 0 || in_W <= 0 || in_C == 0
+		|| need_H < 0 || need_W < 0)
+	{
+		output.ChangeSize(0, 0, 0, 0, 0, 0);
+		return true;
+	}
+
+	int need_N = in_N;
+
+	int need_C = filter_N;
+	if (out_N != need_N || out_H != need_H || out_W != need_W || out_C != need_C)
+	{
+		output.ChangeSize(need_N, need_H, need_W, need_C, 0, 0);
+	}
+
+	int in_sliceStep = input.GetSliceStep();
+	int in_widthStep = input.GetWidthStep();
+	int in_imStep = input.GetImageStep();
+	int out_sliceStep = output.GetSliceStep();
+	int out_widthStep = output.GetWidthStep();
+	int out_imStep = output.GetImageStep();
+	float* in_firstPixelData = input.GetFirstPixelPtr();
+	float* out_firstPixelData = output.GetFirstPixelPtr();
+	const float* bias_firstPixelData = bias.GetFirstPixelPtr();
+	const float* slope_firstPixelData = slope.GetFirstPixelPtr();
+
+	zq_cnn_innerproduct_gemm_nchwc4_packed4_with_bias_prelu(in_firstPixelData, in_N, in_H, in_W, in_C,
+		in_widthStep, in_sliceStep, in_imStep, (const float*)(packedfilters.data),
+		out_firstPixelData, need_N, need_H, need_W, need_C,
+		out_widthStep, out_sliceStep, out_imStep, bias_firstPixelData, slope_firstPixelData, buffer, buffer_len);
+	return true;
+}
+
+bool ZQ_CNN_Forward_SSEUtils_NCHWC::InnerProductWithPReLU(ZQ_CNN_Tensor4D_NCHWC4& input,
+	const ZQ_CNN_Tensor4D_NCHWC::Buffer& packedfilters, int filter_N,
+	const ZQ_CNN_Tensor4D_NCHWC4& slope,
+	ZQ_CNN_Tensor4D_NCHWC4& output, void** buffer, __int64* buffer_len)
+{
+	int in_N = input.GetN();
+	int in_H = input.GetH();
+	int in_W = input.GetW();
+	int in_C = input.GetC();
+	int out_N = output.GetN();
+	int out_H = output.GetH();
+	int out_W = output.GetW();
+	int out_C = output.GetC();
+	int need_H = 1;
+	int need_W = 1;
+	if (in_N <= 0 || in_H <= 0 || in_W <= 0 || in_C == 0
+		|| need_H < 0 || need_W < 0)
+	{
+		output.ChangeSize(0, 0, 0, 0, 0, 0);
+		return true;
+	}
+
+	int need_N = in_N;
+
+	int need_C = filter_N;
+	if (out_N != need_N || out_H != need_H || out_W != need_W || out_C != need_C)
+	{
+		output.ChangeSize(need_N, need_H, need_W, need_C, 0, 0);
+	}
+
+	int in_sliceStep = input.GetSliceStep();
+	int in_widthStep = input.GetWidthStep();
+	int in_imStep = input.GetImageStep();
+	int out_sliceStep = output.GetSliceStep();
+	int out_widthStep = output.GetWidthStep();
+	int out_imStep = output.GetImageStep();
+	float* in_firstPixelData = input.GetFirstPixelPtr();
+	float* out_firstPixelData = output.GetFirstPixelPtr();
+	const float* slope_firstPixelData = slope.GetFirstPixelPtr();
+
+	zq_cnn_innerproduct_gemm_nchwc4_packed4(in_firstPixelData, in_N, in_H, in_W, in_C,
+		in_widthStep, in_sliceStep, in_imStep, (const float*)(packedfilters.data),
+		out_firstPixelData, need_N, need_H, need_W, need_C,
+		out_widthStep, out_sliceStep, out_imStep, buffer, buffer_len);
+	zq_cnn_prelu_nchwc4(in_firstPixelData, in_N, in_H, in_W, in_C, in_widthStep, in_sliceStep, in_imStep, slope_firstPixelData);
+	return true;
+}
+
+bool ZQ_CNN_Forward_SSEUtils_NCHWC::InnerProduct(ZQ_CNN_Tensor4D_NCHWC4& input,
+	const ZQ_CNN_Tensor4D_NCHWC::Buffer& packedfilters, int filter_N,
+	ZQ_CNN_Tensor4D_NCHWC4& output, void** buffer, __int64* buffer_len)
+{
+	int in_N = input.GetN();
+	int in_H = input.GetH();
+	int in_W = input.GetW();
+	int in_C = input.GetC();
+	int out_N = output.GetN();
+	int out_H = output.GetH();
+	int out_W = output.GetW();
+	int out_C = output.GetC();
+	int need_H = 1;
+	int need_W = 1;
+	if (in_N <= 0 || in_H <= 0 || in_W <= 0 || in_C == 0
+		|| need_H < 0 || need_W < 0)
+	{
+		output.ChangeSize(0, 0, 0, 0, 0, 0);
+		return true;
+	}
+
+	int need_N = in_N;
+
+	int need_C = filter_N;
+	if (out_N != need_N || out_H != need_H || out_W != need_W || out_C != need_C)
+	{
+		output.ChangeSize(need_N, need_H, need_W, need_C, 0, 0);
+	}
+
+	int in_sliceStep = input.GetSliceStep();
+	int in_widthStep = input.GetWidthStep();
+	int in_imStep = input.GetImageStep();
+	int out_sliceStep = output.GetSliceStep();
+	int out_widthStep = output.GetWidthStep();
+	int out_imStep = output.GetImageStep();
+	float* in_firstPixelData = input.GetFirstPixelPtr();
+	float* out_firstPixelData = output.GetFirstPixelPtr();
+	zq_cnn_innerproduct_gemm_nchwc4_packed4(in_firstPixelData, in_N, in_H, in_W, in_C,
+		in_widthStep, in_sliceStep, in_imStep, (const float*)(packedfilters.data),
+		out_firstPixelData, need_N, need_H, need_W, need_C,
+		out_widthStep, out_sliceStep, out_imStep, buffer, buffer_len);
+	return true;
+}
+
 bool ZQ_CNN_Forward_SSEUtils_NCHWC::ConvolutionWithBias(ZQ_CNN_Tensor4D_NCHWC4& input,
 	const ZQ_CNN_Tensor4D_NCHWC::Buffer& packedfilters, int filter_N, int filter_H, int filter_W, int filter_C,
 	const ZQ_CNN_Tensor4D_NCHWC4& bias, int strideH, int strideW, int dilation_H, int dilation_W, int padH, int padW,

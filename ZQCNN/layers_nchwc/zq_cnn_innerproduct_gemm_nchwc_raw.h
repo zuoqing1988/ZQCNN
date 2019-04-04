@@ -62,13 +62,12 @@ void zq_cnn_innerproduct_gemm_nchwc_general(
 	int compactC = out_imStep == filter_N;
 	zq_base_type* matrix_A = 0;
 	const zq_base_type* matrix_Bt = filters_data;
-	const zq_base_type *in_im_ptr, *in_slice_ptr, *in_row_ptr, *in_pix_ptr, *cur_in_row_ptr, *cur_in_pix_ptr;
-	const zq_base_type *filter_im_ptr, *filter_slice_ptr, *filter_row_ptr, *filter_pix_ptr;
+	const zq_base_type *in_im_ptr, *in_slice_ptr, *cur_in_row_ptr, *cur_in_pix_ptr;
 	int out_n, out_h, out_w, kn, kh, kw, kc, i;
-	zq_base_type* matrix_A_row_ptr, *matrix_A_col_ptr, *cp_dst_ptr;
-	zq_base_type* out_slice_ptr, *out_row_ptr, *out_pix_ptr, *out_im_ptr;
+	zq_base_type* matrix_A_row_ptr, *matrix_A_col_ptr;
+	zq_base_type* out_slice_ptr, *out_row_ptr, *out_im_ptr;
 	zq_base_type* out_slice_ptr0, *out_slice_ptr1, *out_slice_ptr2, *out_slice_ptr3, *out_slice_ptr4, *out_slice_ptr5, *out_slice_ptr6, *out_slice_ptr7;
-	zq_base_type* matrix_C = 0, *matrix_C_row_ptr, *matrix_C_col_ptr, *cur_matrix_C_row_ptr;
+	zq_base_type* matrix_C = 0, *matrix_C_row_ptr, *matrix_C_col_ptr;
 #if WITH_BIAS
 	register zq_mm_type bias_v;
 	const zq_base_type* bias_ptr;

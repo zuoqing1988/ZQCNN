@@ -79,27 +79,24 @@ void zq_cnn_conv_no_padding_gemm_nchwc_general(
 	int out_n, out_h, out_w, kn, kh, kw, kc, i;
 	zq_base_type* matrix_A_row_ptr, *matrix_A_col_ptr, *cp_dst_ptr;
 	zq_base_type* out_slice_ptr, *out_row_ptr, *out_pix_ptr, *out_im_ptr;
-	zq_base_type* out_slice_ptr0, *out_slice_ptr1, *out_slice_ptr2, *out_slice_ptr3, *out_slice_ptr4, *out_slice_ptr5, *out_slice_ptr6, *out_slice_ptr7;
 	zq_base_type* matrix_C = 0, *matrix_C_row_ptr, *matrix_C_col_ptr, *cur_matrix_C_row_ptr;
 #if WITH_BIAS
 	register zq_mm_type bias_v;
-	const zq_base_type* bias_ptr;
 #if EXPAND_CHANNEL
 	register zq_mm_type bias_v0, bias_v1, bias_v2, bias_v3, bias_v4, bias_v5, bias_v6, bias_v7;
 #endif
 #endif
 #if WITH_PRELU
-	const zq_base_type* slope_ptr;
 	register zq_mm_type slope_v;
-	register zq_mm_type b0, b1, b2, b3, b4, b5, b6, b7;
-	register zq_mm_type c0, c1, c2, c3, c4, c5, c6, c7;
+	register zq_mm_type b0, b1, b2, b3;
+	register zq_mm_type c0, c1, c2, c3;
 #if EXPAND_CHANNEL
 	register slope_v0, slope_v1, slope_v2, slope_v3, slope_v4, slope_v5, slope_v6, slope_v7;
 #endif
 	register zq_mm_type zero_v = zq_mm_setzero_ps();
 #endif
-	register zq_mm_type a0, a1, a2, a3, a4, a5, a6, a7;
-	float val, val1, val2;
+	register zq_mm_type a0, a1, a2, a3;
+	float val;
 
 	double t1, t2, t3, t4, t5;
 	t1 = omp_get_wtime();
@@ -281,27 +278,24 @@ void zq_cnn_conv_no_padding_gemm_nchwc_kernel1x1(
 	int out_n, out_h, out_w, kc, i;
 	zq_base_type* matrix_A_row_ptr, *matrix_A_col_ptr;
 	zq_base_type* out_slice_ptr, *out_row_ptr, *out_pix_ptr, *out_im_ptr;
-	zq_base_type* out_slice_ptr0, *out_slice_ptr1, *out_slice_ptr2, *out_slice_ptr3, *out_slice_ptr4, *out_slice_ptr5, *out_slice_ptr6, *out_slice_ptr7;
 	zq_base_type* matrix_C = 0, *matrix_C_row_ptr, *matrix_C_col_ptr, *cur_matrix_C_row_ptr;
 #if WITH_BIAS
 	register zq_mm_type bias_v;
-	const zq_base_type* bias_ptr;
 #if EXPAND_CHANNEL
 	register zq_mm_type bias_v0, bias_v1, bias_v2, bias_v3, bias_v4, bias_v5, bias_v6, bias_v7;
 #endif
 #endif
 #if WITH_PRELU
-	const zq_base_type* slope_ptr;
 	register zq_mm_type slope_v;
-	register zq_mm_type b0, b1, b2, b3, b4, b5, b6, b7;
-	register zq_mm_type c0, c1, c2, c3, c4, c5, c6, c7;
+	register zq_mm_type b0, b1, b2, b3;
+	register zq_mm_type c0, c1, c2, c3;
 #if EXPAND_CHANNEL
 	register slope_v0, slope_v1, slope_v2, slope_v3, slope_v4, slope_v5, slope_v6, slope_v7;
 #endif
 	register zq_mm_type zero_v = zq_mm_setzero_ps();
 #endif
-	register zq_mm_type a0, a1, a2, a3, a4, a5, a6, a7;
-	float val, val1, val2;
+	register zq_mm_type a0, a1, a2, a3;
+	float val;
 
 	double t1, t2, t3, t4, t5;
 	t1 = omp_get_wtime();
@@ -510,27 +504,25 @@ void zq_cnn_conv_no_padding_gemm_nchwc_kernel2x2(
 	const zq_base_type *filter_im_ptr, *filter_slice_ptr, *filter_row_ptr, *filter_pix_ptr;
 	int out_n, out_h, out_w, kn, kc, i;
 	zq_base_type* matrix_A_row_ptr, *matrix_A_col_ptr, *cp_dst_ptr;
-	zq_base_type* out_slice_ptr, *out_row_ptr, *out_pix_ptr, *out_im_ptr; zq_base_type* out_slice_ptr0, *out_slice_ptr1, *out_slice_ptr2, *out_slice_ptr3, *out_slice_ptr4, *out_slice_ptr5, *out_slice_ptr6, *out_slice_ptr7;
+	zq_base_type* out_slice_ptr, *out_row_ptr, *out_pix_ptr, *out_im_ptr; 
 	zq_base_type* matrix_C = 0, *matrix_C_row_ptr, *matrix_C_col_ptr, *cur_matrix_C_row_ptr;
 #if WITH_BIAS
 	register zq_mm_type bias_v;
-	const zq_base_type* bias_ptr;
 #if EXPAND_CHANNEL
 	register zq_mm_type bias_v0, bias_v1, bias_v2, bias_v3, bias_v4, bias_v5, bias_v6, bias_v7;
 #endif
 #endif
 #if WITH_PRELU
-	const zq_base_type* slope_ptr;
 	register zq_mm_type slope_v;
-	register zq_mm_type b0, b1, b2, b3, b4, b5, b6, b7;
-	register zq_mm_type c0, c1, c2, c3, c4, c5, c6, c7;
+	register zq_mm_type b0, b1, b2, b3;
+	register zq_mm_type c0, c1, c2, c3;
 #if EXPAND_CHANNEL
 	register slope_v0, slope_v1, slope_v2, slope_v3, slope_v4, slope_v5, slope_v6, slope_v7;
 #endif
 	register zq_mm_type zero_v = zq_mm_setzero_ps();
 #endif
-	register zq_mm_type a0, a1, a2, a3, a4, a5, a6, a7;
-	float val, val1, val2;
+	register zq_mm_type a0, a1, a2, a3;
+	float val;
 
 	double t1, t2, t3, t4, t5;
 	t1 = omp_get_wtime();
@@ -741,27 +733,24 @@ void zq_cnn_conv_no_padding_gemm_nchwc_kernel3x3(
 	int out_n, out_h, out_w, kn, kc, i;
 	zq_base_type* matrix_A_row_ptr, *matrix_A_col_ptr, *cp_dst_ptr;
 	zq_base_type* out_slice_ptr, *out_row_ptr, *out_pix_ptr, *out_im_ptr;
-	zq_base_type* out_slice_ptr0, *out_slice_ptr1, *out_slice_ptr2, *out_slice_ptr3, *out_slice_ptr4, *out_slice_ptr5, *out_slice_ptr6, *out_slice_ptr7;
 	zq_base_type* matrix_C = 0, *matrix_C_row_ptr, *matrix_C_col_ptr, *cur_matrix_C_row_ptr;
 #if WITH_BIAS
 	register zq_mm_type bias_v;
-	const zq_base_type* bias_ptr;
 #if EXPAND_CHANNEL
 	register zq_mm_type bias_v0, bias_v1, bias_v2, bias_v3, bias_v4, bias_v5, bias_v6, bias_v7;
 #endif
 #endif
 #if WITH_PRELU
-	const zq_base_type* slope_ptr;
 	register zq_mm_type slope_v;
-	register zq_mm_type b0, b1, b2, b3, b4, b5, b6, b7;
-	register zq_mm_type c0, c1, c2, c3, c4, c5, c6, c7;
+	register zq_mm_type b0, b1, b2, b3;
+	register zq_mm_type c0, c1, c2, c3;
 #if EXPAND_CHANNEL
 	register slope_v0, slope_v1, slope_v2, slope_v3, slope_v4, slope_v5, slope_v6, slope_v7;
 #endif
 	register zq_mm_type zero_v = zq_mm_setzero_ps();
 #endif
-	register zq_mm_type a0, a1, a2, a3, a4, a5, a6, a7;
-	float val, val1, val2;
+	register zq_mm_type a0, a1, a2, a3;
+	float val;
 
 	double t1, t2, t3, t4, t5;
 	t1 = omp_get_wtime();
@@ -1039,27 +1028,24 @@ void zq_cnn_conv_no_padding_gemm_nchwc_kernel2x2_C3(
 	int out_n, out_h, out_w, kn, kc, i;
 	zq_base_type* matrix_A_row_ptr, *matrix_A_col_ptr, *cp_dst_ptr;
 	zq_base_type* out_slice_ptr, *out_row_ptr, *out_pix_ptr, *out_im_ptr;
-	zq_base_type* out_slice_ptr0, *out_slice_ptr1, *out_slice_ptr2, *out_slice_ptr3, *out_slice_ptr4, *out_slice_ptr5, *out_slice_ptr6, *out_slice_ptr7;
 	zq_base_type* matrix_C = 0, *matrix_C_row_ptr, *matrix_C_col_ptr, *cur_matrix_C_row_ptr;
 #if WITH_BIAS
 	register zq_mm_type bias_v; 
-	const zq_base_type* bias_ptr;
 #if EXPAND_CHANNEL
 	register zq_mm_type bias_v0, bias_v1, bias_v2, bias_v3, bias_v4, bias_v5, bias_v6, bias_v7;
 #endif
 #endif
 #if WITH_PRELU
-	const zq_base_type* slope_ptr;
 	register zq_mm_type slope_v;
-	register zq_mm_type b0, b1, b2, b3, b4, b5, b6, b7;
-	register zq_mm_type c0, c1, c2, c3, c4, c5, c6, c7;
+	register zq_mm_type b0, b1, b2, b3;
+	register zq_mm_type c0, c1, c2, c3;
 #if EXPAND_CHANNEL
 	register slope_v0, slope_v1, slope_v2, slope_v3, slope_v4, slope_v5, slope_v6, slope_v7;
 #endif
 	register zq_mm_type zero_v = zq_mm_setzero_ps();
 #endif
-	register zq_mm_type a0, a1, a2, a3, a4, a5, a6, a7;
-	float val, val1, val2;
+	register zq_mm_type a0, a1, a2, a3;
+	float val;
 
 	double t1, t2, t3, t4, t5;
 	t1 = omp_get_wtime();
@@ -1255,27 +1241,25 @@ void zq_cnn_conv_no_padding_gemm_nchwc_kernel3x3_C3(
 	int out_n, out_h, out_w, kn, kc, i;
 	zq_base_type* matrix_A_row_ptr, *cp_dst_ptr;
 	zq_base_type* out_slice_ptr, *out_row_ptr, *out_pix_ptr, *out_im_ptr;
-	zq_base_type* out_slice_ptr0, *out_slice_ptr1, *out_slice_ptr2, *out_slice_ptr3, *out_slice_ptr4, *out_slice_ptr5, *out_slice_ptr6, *out_slice_ptr7;
 	zq_base_type* matrix_C = 0, *matrix_C_row_ptr, *matrix_C_col_ptr, *cur_matrix_C_row_ptr;
 #if WITH_BIAS
 	register zq_mm_type bias_v;
-	const zq_base_type* bias_ptr;
+
 #if EXPAND_CHANNEL
 	register zq_mm_type bias_v0, bias_v1, bias_v2, bias_v3, bias_v4, bias_v5, bias_v6, bias_v7;
 #endif
 #endif
 #if WITH_PRELU
-	const zq_base_type* slope_ptr;
 	register zq_mm_type slope_v;
-	register zq_mm_type b0, b1, b2, b3, b4, b5, b6, b7;
-	register zq_mm_type c0, c1, c2, c3, c4, c5, c6, c7;
+	register zq_mm_type b0, b1, b2, b3;
+	register zq_mm_type c0, c1, c2, c3;
 #if EXPAND_CHANNEL
 	register slope_v0, slope_v1, slope_v2, slope_v3, slope_v4, slope_v5, slope_v6, slope_v7;
 #endif
 	register zq_mm_type zero_v = zq_mm_setzero_ps();
 #endif
-	register zq_mm_type a0, a1, a2, a3, a4, a5, a6, a7;
-	float val, val1, val2;
+	register zq_mm_type a0, a1, a2, a3;
+	float val;
 
 	double t1, t2, t3, t4, t5;
 	t1 = omp_get_wtime();

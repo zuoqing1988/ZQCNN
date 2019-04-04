@@ -2162,6 +2162,7 @@ namespace ZQ
 
 		Tensor4D* filters;
 		Tensor4D* bias;
+		ZQ_CNN_Tensor4D_NCHWC::Buffer packedfilters;
 		bool with_bias;
 		int num_output;
 		int kernel_H;
@@ -2190,8 +2191,14 @@ namespace ZQ
 				double t1 = omp_get_wtime();
 				void** tmp_buffer = ZQ_CNN_Layer_NCHWC<Tensor4D>::use_buffer ? ZQ_CNN_Layer_NCHWC<Tensor4D>::buffer : 0;
 				__int64* tmp_buffer_len = ZQ_CNN_Layer_NCHWC<Tensor4D>::use_buffer ? ZQ_CNN_Layer_NCHWC<Tensor4D>::buffer_len : 0;
-				bool ret = ZQ_CNN_Forward_SSEUtils_NCHWC::InnerProductWithBias(*((*bottoms)[0]),
-					*filters, *bias, *((*tops)[0]), tmp_buffer, tmp_buffer_len);
+				bool ret = false;
+				ret = ZQ_CNN_Forward_SSEUtils_NCHWC::InnerProductWithBias(*((*bottoms)[0]),
+					packedfilters, filters->GetN(), *bias, *((*tops)[0]), tmp_buffer, tmp_buffer_len);
+				if (!ret)
+				{
+					ret = ZQ_CNN_Forward_SSEUtils_NCHWC::InnerProductWithBias(*((*bottoms)[0]),
+						*filters, *bias, *((*tops)[0]), tmp_buffer, tmp_buffer_len);
+				}
 				double t2 = omp_get_wtime();
 				ZQ_CNN_Layer_NCHWC<Tensor4D>::last_cost_time = t2 - t1;
 				double time = __max(1000 * (t2 - t1), 1e-9);
@@ -2211,8 +2218,14 @@ namespace ZQ
 				double t1 = omp_get_wtime();
 				void** tmp_buffer = ZQ_CNN_Layer_NCHWC<Tensor4D>::use_buffer ? ZQ_CNN_Layer_NCHWC<Tensor4D>::buffer : 0;
 				__int64* tmp_buffer_len = ZQ_CNN_Layer_NCHWC<Tensor4D>::use_buffer ? ZQ_CNN_Layer_NCHWC<Tensor4D>::buffer_len : 0;
-				bool ret = ZQ_CNN_Forward_SSEUtils_NCHWC::InnerProduct(*((*bottoms)[0]), *filters, *((*tops)[0]),
-					tmp_buffer, tmp_buffer_len);
+				bool ret = false;
+				ret = ZQ_CNN_Forward_SSEUtils_NCHWC::InnerProduct(*((*bottoms)[0]),
+					packedfilters, filters->GetN(), *((*tops)[0]), tmp_buffer, tmp_buffer_len);
+				if (!ret)
+				{
+					ret = ZQ_CNN_Forward_SSEUtils_NCHWC::InnerProduct(*((*bottoms)[0]),
+						*filters, *((*tops)[0]), tmp_buffer, tmp_buffer_len);
+				}
 				double t2 = omp_get_wtime();
 				ZQ_CNN_Layer_NCHWC<Tensor4D>::last_cost_time = t2 - t1;
 				double time = __max(1000 * (t2 - t1), 1e-9);
@@ -2477,6 +2490,11 @@ namespace ZQ
 			int top_C, top_H, top_W;
 			GetTopDim(top_C, top_H, top_W);
 			return (__int64)top_H*top_W*filters->GetN()*filters->GetH()*filters->GetW()*filters->GetC();
+		}
+
+		virtual void Prepack()
+		{
+			ZQ_CNN_Forward_SSEUtils_NCHWC::InnerProductPrePack(*filters, packedfilters);
 		}
 
 	};

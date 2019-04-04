@@ -76,7 +76,14 @@ namespace ZQ
 
 		/****************************/
 		static bool ConvolutionPrePack(const ZQ_CNN_Tensor4D_NCHWC1& filters,
-			ZQ_CNN_Tensor4D_NCHWC::Buffer& packedfilters) {
+			ZQ_CNN_Tensor4D_NCHWC::Buffer& packedfilters) 
+		{
+			return false;
+		}
+
+		static bool InnerProductPrePack(const ZQ_CNN_Tensor4D_NCHWC1& filters,
+			ZQ_CNN_Tensor4D_NCHWC::Buffer& packedfilters) 
+		{
 			return false;
 		}
 
@@ -94,6 +101,38 @@ namespace ZQ
 
 		static bool InnerProduct(ZQ_CNN_Tensor4D_NCHWC1& input, const ZQ_CNN_Tensor4D_NCHWC1& filters,
 			ZQ_CNN_Tensor4D_NCHWC1& output, void** buffer = 0, __int64* buffer_len = 0);
+
+		static bool InnerProductWithBias(ZQ_CNN_Tensor4D_NCHWC1& input,
+			const ZQ_CNN_Tensor4D_NCHWC::Buffer& packedfilters, int filter_N, 
+			const ZQ_CNN_Tensor4D_NCHWC1& bias,
+			ZQ_CNN_Tensor4D_NCHWC1& output, void** buffer = 0, __int64* buffer_len = 0)
+		{
+			return false;
+		}
+
+		static bool InnerProductWithBiasPReLU(ZQ_CNN_Tensor4D_NCHWC1& input,
+			const ZQ_CNN_Tensor4D_NCHWC::Buffer& packedfilters, int filter_N, 
+			const ZQ_CNN_Tensor4D_NCHWC1& bias, const ZQ_CNN_Tensor4D_NCHWC1& slope, 
+			ZQ_CNN_Tensor4D_NCHWC1& output,
+			void** buffer = 0, __int64* buffer_len = 0)
+		{
+			return false;
+		}
+
+		static bool InnerProductWithPReLU(ZQ_CNN_Tensor4D_NCHWC1& input,
+			const ZQ_CNN_Tensor4D_NCHWC::Buffer& packedfilters, int filter_N, 
+			const ZQ_CNN_Tensor4D_NCHWC1& slope, 
+			ZQ_CNN_Tensor4D_NCHWC1& output, void** buffer = 0, __int64* buffer_len = 0)
+		{
+			return false;
+		}
+
+		static bool InnerProduct(ZQ_CNN_Tensor4D_NCHWC1& input,
+			const ZQ_CNN_Tensor4D_NCHWC::Buffer& packedfilters, int filter_N, 
+			ZQ_CNN_Tensor4D_NCHWC1& output, void** buffer = 0, __int64* buffer_len = 0) 
+		{
+			return false;
+		}
 
 		static bool ConvolutionWithBias(ZQ_CNN_Tensor4D_NCHWC1& input, const ZQ_CNN_Tensor4D_NCHWC1& filters,
 			const ZQ_CNN_Tensor4D_NCHWC1& bias, int strideH, int strideW, int dilation_H, int dilation_W, int padH, int padW,
@@ -141,7 +180,8 @@ namespace ZQ
 			const ZQ_CNN_Tensor4D_NCHWC::Buffer& packedfilters, int filter_N, int filter_H, int filter_W, int filter_C,
 			int strideH, int strideW,
 			int dilation_H, int dilation_W, int padH, int padW,
-			ZQ_CNN_Tensor4D_NCHWC1& output, void** buffer = 0, __int64* buffer_len = 0) {
+			ZQ_CNN_Tensor4D_NCHWC1& output, void** buffer = 0, __int64* buffer_len = 0) 
+		{
 			return false;
 		}
 
@@ -195,6 +235,29 @@ namespace ZQ
 
 		static bool ConvolutionPrePack(const ZQ_CNN_Tensor4D_NCHWC4& filters,
 			ZQ_CNN_Tensor4D_NCHWC::Buffer& packedfilters);
+
+		static bool InnerProductPrePack(const ZQ_CNN_Tensor4D_NCHWC4& filters,
+			ZQ_CNN_Tensor4D_NCHWC::Buffer& packedfilters);
+
+		static bool InnerProductWithBias(ZQ_CNN_Tensor4D_NCHWC4& input,
+			const ZQ_CNN_Tensor4D_NCHWC::Buffer& packedfilters, int filter_N,
+			const ZQ_CNN_Tensor4D_NCHWC4& bias,
+			ZQ_CNN_Tensor4D_NCHWC4& output, void** buffer = 0, __int64* buffer_len = 0);
+
+		static bool InnerProductWithBiasPReLU(ZQ_CNN_Tensor4D_NCHWC4& input,
+			const ZQ_CNN_Tensor4D_NCHWC::Buffer& packedfilters, int filter_N,
+			const ZQ_CNN_Tensor4D_NCHWC4& bias, const ZQ_CNN_Tensor4D_NCHWC4& slope,
+			ZQ_CNN_Tensor4D_NCHWC4& output,
+			void** buffer = 0, __int64* buffer_len = 0);
+
+		static bool InnerProductWithPReLU(ZQ_CNN_Tensor4D_NCHWC4& input,
+			const ZQ_CNN_Tensor4D_NCHWC::Buffer& packedfilters, int filter_N,
+			const ZQ_CNN_Tensor4D_NCHWC4& slope,
+			ZQ_CNN_Tensor4D_NCHWC4& output, void** buffer = 0, __int64* buffer_len = 0);
+
+		static bool InnerProduct(ZQ_CNN_Tensor4D_NCHWC4& input,
+			const ZQ_CNN_Tensor4D_NCHWC::Buffer& packedfilters, int filter_N,
+			ZQ_CNN_Tensor4D_NCHWC4& output, void** buffer = 0, __int64* buffer_len = 0);
 
 		static bool ConvolutionWithBias(ZQ_CNN_Tensor4D_NCHWC4& input,
 			const ZQ_CNN_Tensor4D_NCHWC::Buffer& packedfilters, int filter_N, int filter_H, int filter_W, int filter_C,
@@ -293,6 +356,44 @@ namespace ZQ
 
 		static bool ConvolutionPrePack(const ZQ_CNN_Tensor4D_NCHWC8& filters,
 			ZQ_CNN_Tensor4D_NCHWC::Buffer& packedfilters)
+		{
+			return false;
+		}
+
+		static bool InnerProductPrePack(const ZQ_CNN_Tensor4D_NCHWC8& filters,
+			ZQ_CNN_Tensor4D_NCHWC::Buffer& packedfilters)
+		{
+			return false;
+		}
+
+		static bool InnerProductWithBias(ZQ_CNN_Tensor4D_NCHWC8& input,
+			const ZQ_CNN_Tensor4D_NCHWC::Buffer& packedfilters, int filter_N,
+			const ZQ_CNN_Tensor4D_NCHWC8& bias,
+			ZQ_CNN_Tensor4D_NCHWC8& output, void** buffer = 0, __int64* buffer_len = 0)
+		{
+			return false;
+		}
+
+		static bool InnerProductWithBiasPReLU(ZQ_CNN_Tensor4D_NCHWC8& input,
+			const ZQ_CNN_Tensor4D_NCHWC::Buffer& packedfilters, int filter_N,
+			const ZQ_CNN_Tensor4D_NCHWC8& bias, const ZQ_CNN_Tensor4D_NCHWC8& slope,
+			ZQ_CNN_Tensor4D_NCHWC8& output,
+			void** buffer = 0, __int64* buffer_len = 0)
+		{
+			return false;
+		}
+
+		static bool InnerProductWithPReLU(ZQ_CNN_Tensor4D_NCHWC8& input,
+			const ZQ_CNN_Tensor4D_NCHWC::Buffer& packedfilters, int filter_N,
+			const ZQ_CNN_Tensor4D_NCHWC8& slope,
+			ZQ_CNN_Tensor4D_NCHWC8& output, void** buffer = 0, __int64* buffer_len = 0)
+		{
+			return false;
+		}
+
+		static bool InnerProduct(ZQ_CNN_Tensor4D_NCHWC8& input,
+			const ZQ_CNN_Tensor4D_NCHWC::Buffer& packedfilters, int filter_N,
+			ZQ_CNN_Tensor4D_NCHWC8& output, void** buffer = 0, __int64* buffer_len = 0) 
 		{
 			return false;
 		}

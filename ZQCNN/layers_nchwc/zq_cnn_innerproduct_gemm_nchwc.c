@@ -70,6 +70,7 @@ extern "C" {
 #define zq_mm_align_size6 24
 #define zq_mm_align_size7 28
 #define zq_mm_align_size8 32
+#define zq_mm_align_size16 64
 #define zq_mm_bitor_longlong 0xFFFFFFFFFFFFFFF0
 #define zq_final_sum_q (q[0]+q[1]+q[2]+q[3])
 
@@ -86,35 +87,48 @@ extern "C" {
       zq_gemm_32f_AnoTrans_Btrans_auto(x4,x5,x6,x8,x9,x10,x11,x13,x14)   
 #endif
 
+#define zq_cnn_innerproduct_gemm_nchwc_prepack4 zq_cnn_innerproduct_gemm_nchwc4_prepack4
+#include "zq_cnn_innerproduct_gemm_nchwc_prepack4.h"
+#undef zq_cnn_innerproduct_gemm_nchwc_prepack4
+
+#define zq_cnn_innerproduct_gemm_nchwc_packed4 zq_cnn_innerproduct_gemm_nchwc4_packed4
 #define zq_cnn_innerproduct_gemm_nchwc_general zq_cnn_innerproduct_gemm_nchwc4_general
 #define zq_cnn_innerproduct_nchwc_noborder zq_cnn_innerproduct_nchwc4_noborder
 
 #define WITH_BIAS 0
 #define WITH_PRELU 0
 #include "zq_cnn_innerproduct_gemm_nchwc_raw.h"
+#include "zq_cnn_innerproduct_gemm_nchwc_packed4.h"
 #undef WITH_BIAS
 #undef WITH_PRELU
 
+#undef zq_cnn_innerproduct_gemm_nchwc_packed4
 #undef zq_cnn_innerproduct_gemm_nchwc_general
 #undef zq_cnn_innerproduct_nchwc_noborder
 
+#define zq_cnn_innerproduct_gemm_nchwc_packed4 zq_cnn_innerproduct_gemm_nchwc4_packed4_with_bias
 #define zq_cnn_innerproduct_gemm_nchwc_general zq_cnn_innerproduct_gemm_nchwc4_general_with_bias
 #define zq_cnn_innerproduct_nchwc_noborder zq_cnn_innerproduct_nchwc4_noborder_with_bias
 #define WITH_BIAS 1
 #define WITH_PRELU 0
 #include "zq_cnn_innerproduct_gemm_nchwc_raw.h"
+#include "zq_cnn_innerproduct_gemm_nchwc_packed4.h"
 #undef WITH_BIAS
 #undef WITH_PRELU
+#undef zq_cnn_innerproduct_gemm_nchwc_packed4
 #undef zq_cnn_innerproduct_gemm_nchwc_general
 #undef zq_cnn_innerproduct_nchwc_noborder
 
+#define zq_cnn_innerproduct_gemm_nchwc_packed4 zq_cnn_innerproduct_gemm_nchwc4_packed4_with_bias_prelu
 #define zq_cnn_innerproduct_gemm_nchwc_general zq_cnn_innerproduct_gemm_nchwc4_general_with_bias_prelu
 #define zq_cnn_innerproduct_nchwc_noborder zq_cnn_innerproduct_nchwc4_noborder_with_bias_prelu
 #define WITH_BIAS 1
 #define WITH_PRELU 1
 #include "zq_cnn_innerproduct_gemm_nchwc_raw.h"
+#include "zq_cnn_innerproduct_gemm_nchwc_packed4.h"
 #undef WITH_BIAS
 #undef WITH_PRELU
+#undef zq_cnn_innerproduct_gemm_nchwc_packed4
 #undef zq_cnn_innerproduct_gemm_nchwc_general
 #undef zq_cnn_innerproduct_nchwc_noborder
 
@@ -142,6 +156,7 @@ extern "C" {
 #undef zq_mm_align_size6
 #undef zq_mm_align_size7
 #undef zq_mm_align_size8
+#undef zq_mm_align_size16
 #undef zq_mm_bitor_longlong
 #undef zq_final_sum_q
 
@@ -172,6 +187,7 @@ extern "C" {
 #define zq_mm_align_size6 24
 #define zq_mm_align_size7 28
 #define zq_mm_align_size8 32
+#define zq_mm_align_size16 64
 #define zq_mm_bitor_longlong 0xFFFFFFFFFFFFFFF0
 #define zq_final_sum_q (q[0]+q[1]+q[2]+q[3])
 
@@ -188,35 +204,48 @@ extern "C" {
       zq_gemm_32f_AnoTrans_Btrans_auto(x4,x5,x6,x8,x9,x10,x11,x13,x14)   
 #endif
 
+#define zq_cnn_innerproduct_gemm_nchwc_prepack4 zq_cnn_innerproduct_gemm_nchwc4_prepack4
+#include "zq_cnn_innerproduct_gemm_nchwc_prepack4.h"
+#undef zq_cnn_innerproduct_gemm_nchwc_prepack4
+
+#define zq_cnn_innerproduct_gemm_nchwc_packed4 zq_cnn_innerproduct_gemm_nchwc4_packed4
 #define zq_cnn_innerproduct_gemm_nchwc_general zq_cnn_innerproduct_gemm_nchwc4_general
 #define zq_cnn_innerproduct_nchwc_noborder zq_cnn_innerproduct_nchwc4_noborder
 
 #define WITH_BIAS 0
 #define WITH_PRELU 0
 #include "zq_cnn_innerproduct_gemm_nchwc_raw.h"
+#include "zq_cnn_innerproduct_gemm_nchwc_packed4.h"
 #undef WITH_BIAS
 #undef WITH_PRELU
 
+#undef zq_cnn_innerproduct_gemm_nchwc_packed4
 #undef zq_cnn_innerproduct_gemm_nchwc_general
 #undef zq_cnn_innerproduct_nchwc_noborder
 
+#define zq_cnn_innerproduct_gemm_nchwc_packed4 zq_cnn_innerproduct_gemm_nchwc4_packed4_with_bias
 #define zq_cnn_innerproduct_gemm_nchwc_general zq_cnn_innerproduct_gemm_nchwc4_general_with_bias
 #define zq_cnn_innerproduct_nchwc_noborder zq_cnn_innerproduct_nchwc4_noborder_with_bias
 #define WITH_BIAS 1
 #define WITH_PRELU 0
 #include "zq_cnn_innerproduct_gemm_nchwc_raw.h"
+#include "zq_cnn_innerproduct_gemm_nchwc_packed4.h"
 #undef WITH_BIAS
 #undef WITH_PRELU
+#undef zq_cnn_innerproduct_gemm_nchwc_packed4
 #undef zq_cnn_innerproduct_gemm_nchwc_general
 #undef zq_cnn_innerproduct_nchwc_noborder
 
+#define zq_cnn_innerproduct_gemm_nchwc_packed4 zq_cnn_innerproduct_gemm_nchwc4_packed4_with_bias_prelu
 #define zq_cnn_innerproduct_gemm_nchwc_general zq_cnn_innerproduct_gemm_nchwc4_general_with_bias_prelu
 #define zq_cnn_innerproduct_nchwc_noborder zq_cnn_innerproduct_nchwc4_noborder_with_bias_prelu
 #define WITH_BIAS 1
 #define WITH_PRELU 1
 #include "zq_cnn_innerproduct_gemm_nchwc_raw.h"
+#include "zq_cnn_innerproduct_gemm_nchwc_packed4.h"
 #undef WITH_BIAS
 #undef WITH_PRELU
+#undef zq_cnn_innerproduct_gemm_nchwc_packed4
 #undef zq_cnn_innerproduct_gemm_nchwc_general
 #undef zq_cnn_innerproduct_nchwc_noborder
 
@@ -240,6 +269,7 @@ extern "C" {
 #undef zq_mm_align_size6
 #undef zq_mm_align_size7
 #undef zq_mm_align_size8
+#undef zq_mm_align_size16
 #undef zq_mm_bitor_longlong
 #undef zq_final_sum_q
 

@@ -383,5 +383,11 @@
     <ClInclude Include="layers_nchwc\zq_cnn_convolution_gemm_nchwc_prepack4.h">
       <Filter>layers_nchwc</Filter>
     </ClInclude>
+    <ClInclude Include="layers_nchwc\zq_cnn_innerproduct_gemm_nchwc_prepack4.h">
+      <Filter>layers_nchwc</Filter>
+    </ClInclude>
+    <ClInclude Include="layers_nchwc\zq_cnn_innerproduct_gemm_nchwc_packed4.h">
+      <Filter>layers_nchwc</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
