@@ -866,23 +866,30 @@ bool ZQ_CNN_Forward_SSEUtils_NCHWC::DepthwiseConvolutionWithBias(ZQ_CNN_Tensor4D
 		}
 		else
 		{
-			if (strideH == 1 && strideW == 1 && dilation_H == 1 && dilation_W == 1)
-			{
-				zq_cnn_depthwise_conv_no_padding_nchwc1_kernel2x2_s1d1_with_bias(in_firstPixelData, in_N, in_H, in_W, in_C, in_widthStep, in_sliceStep, in_imStep,
-					filter_firstPixelData, filter_N, filter_H, filter_W, filter_C, filter_widthStep, filter_sliceStep, filter_imStep, strideH, strideW,
-					dilation_H, dilation_W, out_firstPixelData, need_N, need_H, need_W, need_C, out_widthStep, out_sliceStep, out_imStep, bias_firstPixelData);
-			}
-			else
-			{
-				zq_cnn_depthwise_conv_no_padding_nchwc1_kernel3x3_with_bias(in_firstPixelData, in_N, in_H, in_W, in_C, in_widthStep, in_sliceStep, in_imStep,
-					filter_firstPixelData, filter_N, filter_H, filter_W, filter_C, filter_widthStep, filter_sliceStep, filter_imStep, strideH, strideW,
-					dilation_H, dilation_W, out_firstPixelData, need_N, need_H, need_W, need_C, out_widthStep, out_sliceStep, out_imStep, bias_firstPixelData);
-			}
+			zq_cnn_depthwise_conv_no_padding_nchwc1_kernel3x3_with_bias(in_firstPixelData, in_N, in_H, in_W, in_C, in_widthStep, in_sliceStep, in_imStep,
+				filter_firstPixelData, filter_N, filter_H, filter_W, filter_C, filter_widthStep, filter_sliceStep, filter_imStep, strideH, strideW,
+				dilation_H, dilation_W, out_firstPixelData, need_N, need_H, need_W, need_C, out_widthStep, out_sliceStep, out_imStep, bias_firstPixelData);
 		}
 	}
 	else if (filter_H == 2 && filter_W == 2)
 	{
-		zq_cnn_depthwise_conv_no_padding_nchwc1_kernel2x2_with_bias(in_firstPixelData, in_N, in_H, in_W, in_C, in_widthStep, in_sliceStep, in_imStep,
+		if (strideH == 1 && strideW == 1 && dilation_H == 1 && dilation_W == 1)
+		{
+			zq_cnn_depthwise_conv_no_padding_nchwc1_kernel2x2_s1d1_with_bias(in_firstPixelData, in_N, in_H, in_W, in_C, in_widthStep, in_sliceStep, in_imStep,
+				filter_firstPixelData, filter_N, filter_H, filter_W, filter_C, filter_widthStep, filter_sliceStep, filter_imStep, strideH, strideW,
+				dilation_H, dilation_W, out_firstPixelData, need_N, need_H, need_W, need_C, out_widthStep, out_sliceStep, out_imStep, bias_firstPixelData);
+		}
+		else
+		{
+			zq_cnn_depthwise_conv_no_padding_nchwc1_kernel2x2_with_bias(in_firstPixelData, in_N, in_H, in_W, in_C, in_widthStep, in_sliceStep, in_imStep,
+				filter_firstPixelData, filter_N, filter_H, filter_W, filter_C, filter_widthStep, filter_sliceStep, filter_imStep, strideH, strideW,
+				dilation_H, dilation_W, out_firstPixelData, need_N, need_H, need_W, need_C, out_widthStep, out_sliceStep, out_imStep, bias_firstPixelData);
+		}
+	}
+	else if (filter_H == 5 && filter_W == 5
+		&& strideH == 1 && strideW == 1 && dilation_H == 1 && dilation_W == 1)
+	{
+		zq_cnn_depthwise_conv_no_padding_nchwc1_kernel5x5_s1d1_with_bias(in_firstPixelData, in_N, in_H, in_W, in_C, in_widthStep, in_sliceStep, in_imStep,
 			filter_firstPixelData, filter_N, filter_H, filter_W, filter_C, filter_widthStep, filter_sliceStep, filter_imStep, strideH, strideW,
 			dilation_H, dilation_W, out_firstPixelData, need_N, need_H, need_W, need_C, out_widthStep, out_sliceStep, out_imStep, bias_firstPixelData);
 	}
@@ -992,6 +999,13 @@ bool ZQ_CNN_Forward_SSEUtils_NCHWC::DepthwiseConvolutionWithBiasPReLU(ZQ_CNN_Ten
 				dilation_H, dilation_W, out_firstPixelData, need_N, need_H, need_W, need_C, out_widthStep, out_sliceStep, out_imStep, bias_firstPixelData, slope_firstPixelData);
 		}
 	}
+	else if (filter_H == 5 && filter_W == 5
+		&& strideH == 1 && strideW == 1 && dilation_H == 1 && dilation_W == 1)
+	{
+		zq_cnn_depthwise_conv_no_padding_nchwc1_kernel5x5_s1d1_with_bias_prelu(in_firstPixelData, in_N, in_H, in_W, in_C, in_widthStep, in_sliceStep, in_imStep,
+			filter_firstPixelData, filter_N, filter_H, filter_W, filter_C, filter_widthStep, filter_sliceStep, filter_imStep, strideH, strideW,
+			dilation_H, dilation_W, out_firstPixelData, need_N, need_H, need_W, need_C, out_widthStep, out_sliceStep, out_imStep, bias_firstPixelData, slope_firstPixelData);
+	}
 	else
 	{
 		zq_cnn_depthwise_conv_no_padding_nchwc1_general_with_bias_prelu(in_firstPixelData, in_N, in_H, in_W, in_C, in_widthStep, in_sliceStep, in_imStep,
@@ -1093,6 +1107,13 @@ bool ZQ_CNN_Forward_SSEUtils_NCHWC::DepthwiseConvolution(ZQ_CNN_Tensor4D_NCHWC1&
 				filter_firstPixelData, filter_N, filter_H, filter_W, filter_C, filter_widthStep, filter_sliceStep, filter_imStep, strideH, strideW,
 				dilation_H, dilation_W, out_firstPixelData, need_N, need_H, need_W, need_C, out_widthStep, out_sliceStep, out_imStep);
 		}
+	}
+	else if (filter_H == 5 && filter_W == 5
+		&& strideH == 1 && strideW == 1 && dilation_H == 1 && dilation_W == 1)
+	{
+		zq_cnn_depthwise_conv_no_padding_nchwc1_kernel5x5_s1d1(in_firstPixelData, in_N, in_H, in_W, in_C, in_widthStep, in_sliceStep, in_imStep,
+			filter_firstPixelData, filter_N, filter_H, filter_W, filter_C, filter_widthStep, filter_sliceStep, filter_imStep, strideH, strideW,
+			dilation_H, dilation_W, out_firstPixelData, need_N, need_H, need_W, need_C, out_widthStep, out_sliceStep, out_imStep);
 	}
 	else
 	{
@@ -2961,6 +2982,13 @@ bool ZQ_CNN_Forward_SSEUtils_NCHWC::DepthwiseConvolutionWithBias(ZQ_CNN_Tensor4D
 				dilation_H, dilation_W, out_firstPixelData, need_N, need_H, need_W, need_C, out_widthStep, out_sliceStep, out_imStep, bias_firstPixelData);
 		}
 	}
+	else if (filter_H == 5 && filter_W == 5
+		&& strideH == 1 && strideW == 1 && dilation_H == 1 && dilation_W == 1)
+	{
+		zq_cnn_depthwise_conv_no_padding_nchwc4_kernel5x5_s1d1_with_bias(in_firstPixelData, in_N, in_H, in_W, in_C, in_widthStep, in_sliceStep, in_imStep,
+			filter_firstPixelData, filter_N, filter_H, filter_W, filter_C, filter_widthStep, filter_sliceStep, filter_imStep, strideH, strideW,
+			dilation_H, dilation_W, out_firstPixelData, need_N, need_H, need_W, need_C, out_widthStep, out_sliceStep, out_imStep, bias_firstPixelData);
+	}
 	else
 	{
 		zq_cnn_depthwise_conv_no_padding_nchwc4_general_with_bias(in_firstPixelData, in_N, in_H, in_W, in_C, in_widthStep, in_sliceStep, in_imStep,
@@ -3067,6 +3095,13 @@ bool ZQ_CNN_Forward_SSEUtils_NCHWC::DepthwiseConvolutionWithBiasPReLU(ZQ_CNN_Ten
 				dilation_H, dilation_W, out_firstPixelData, need_N, need_H, need_W, need_C, out_widthStep, out_sliceStep, out_imStep, bias_firstPixelData, slope_firstPixelData);
 		}
 	}
+	else if (filter_H == 5 && filter_W == 5
+		&& strideH == 1 && strideW == 1 && dilation_H == 1 && dilation_W == 1)
+	{
+		zq_cnn_depthwise_conv_no_padding_nchwc4_kernel5x5_s1d1_with_bias_prelu(in_firstPixelData, in_N, in_H, in_W, in_C, in_widthStep, in_sliceStep, in_imStep,
+			filter_firstPixelData, filter_N, filter_H, filter_W, filter_C, filter_widthStep, filter_sliceStep, filter_imStep, strideH, strideW,
+			dilation_H, dilation_W, out_firstPixelData, need_N, need_H, need_W, need_C, out_widthStep, out_sliceStep, out_imStep, bias_firstPixelData, slope_firstPixelData);
+	}
 	else
 	{
 		zq_cnn_depthwise_conv_no_padding_nchwc4_general_with_bias_prelu(in_firstPixelData, in_N, in_H, in_W, in_C, in_widthStep, in_sliceStep, in_imStep,
@@ -3168,6 +3203,13 @@ bool ZQ_CNN_Forward_SSEUtils_NCHWC::DepthwiseConvolution(ZQ_CNN_Tensor4D_NCHWC4&
 				filter_firstPixelData, filter_N, filter_H, filter_W, filter_C, filter_widthStep, filter_sliceStep, filter_imStep, strideH, strideW,
 				dilation_H, dilation_W, out_firstPixelData, need_N, need_H, need_W, need_C, out_widthStep, out_sliceStep, out_imStep);
 		}
+	}
+	else if (filter_H == 5 && filter_W == 5
+		&& strideH == 1 && strideW == 1 && dilation_H == 1 && dilation_W == 1)
+	{
+		zq_cnn_depthwise_conv_no_padding_nchwc4_kernel5x5_s1d1(in_firstPixelData, in_N, in_H, in_W, in_C, in_widthStep, in_sliceStep, in_imStep,
+			filter_firstPixelData, filter_N, filter_H, filter_W, filter_C, filter_widthStep, filter_sliceStep, filter_imStep, strideH, strideW,
+			dilation_H, dilation_W, out_firstPixelData, need_N, need_H, need_W, need_C, out_widthStep, out_sliceStep, out_imStep);
 	}
 	else
 	{
@@ -4497,6 +4539,13 @@ bool ZQ_CNN_Forward_SSEUtils_NCHWC::DepthwiseConvolutionWithBias(ZQ_CNN_Tensor4D
 				dilation_H, dilation_W, out_firstPixelData, need_N, need_H, need_W, need_C, out_widthStep, out_sliceStep, out_imStep, bias_firstPixelData);
 		}
 	}
+	else if (filter_H == 5 && filter_W == 5
+		&& strideH == 1 && strideW == 1 && dilation_H == 1 && dilation_W == 1)
+	{
+		zq_cnn_depthwise_conv_no_padding_nchwc8_kernel5x5_s1d1_with_bias(in_firstPixelData, in_N, in_H, in_W, in_C, in_widthStep, in_sliceStep, in_imStep,
+			filter_firstPixelData, filter_N, filter_H, filter_W, filter_C, filter_widthStep, filter_sliceStep, filter_imStep, strideH, strideW,
+			dilation_H, dilation_W, out_firstPixelData, need_N, need_H, need_W, need_C, out_widthStep, out_sliceStep, out_imStep, bias_firstPixelData);
+	}
 	else
 	{
 		zq_cnn_depthwise_conv_no_padding_nchwc8_general_with_bias(in_firstPixelData, in_N, in_H, in_W, in_C, in_widthStep, in_sliceStep, in_imStep,
@@ -4603,6 +4652,13 @@ bool ZQ_CNN_Forward_SSEUtils_NCHWC::DepthwiseConvolutionWithBiasPReLU(ZQ_CNN_Ten
 				dilation_H, dilation_W, out_firstPixelData, need_N, need_H, need_W, need_C, out_widthStep, out_sliceStep, out_imStep, bias_firstPixelData, slope_firstPixelData);
 		}
 	}
+	else if (filter_H == 5 && filter_W == 5
+		&& strideH == 1 && strideW == 1 && dilation_H == 1 && dilation_W == 1)
+	{
+		zq_cnn_depthwise_conv_no_padding_nchwc8_kernel5x5_s1d1_with_bias_prelu(in_firstPixelData, in_N, in_H, in_W, in_C, in_widthStep, in_sliceStep, in_imStep,
+			filter_firstPixelData, filter_N, filter_H, filter_W, filter_C, filter_widthStep, filter_sliceStep, filter_imStep, strideH, strideW,
+			dilation_H, dilation_W, out_firstPixelData, need_N, need_H, need_W, need_C, out_widthStep, out_sliceStep, out_imStep, bias_firstPixelData, slope_firstPixelData);
+	}
 	else
 	{
 		zq_cnn_depthwise_conv_no_padding_nchwc8_general_with_bias_prelu(in_firstPixelData, in_N, in_H, in_W, in_C, in_widthStep, in_sliceStep, in_imStep,
@@ -4704,6 +4760,13 @@ bool ZQ_CNN_Forward_SSEUtils_NCHWC::DepthwiseConvolution(ZQ_CNN_Tensor4D_NCHWC8&
 				filter_firstPixelData, filter_N, filter_H, filter_W, filter_C, filter_widthStep, filter_sliceStep, filter_imStep, strideH, strideW,
 				dilation_H, dilation_W, out_firstPixelData, need_N, need_H, need_W, need_C, out_widthStep, out_sliceStep, out_imStep);
 		}
+	}
+	else if (filter_H == 5 && filter_W == 5
+		&& strideH == 1 && strideW == 1 && dilation_H == 1 && dilation_W == 1)
+	{
+		zq_cnn_depthwise_conv_no_padding_nchwc8_kernel5x5_s1d1(in_firstPixelData, in_N, in_H, in_W, in_C, in_widthStep, in_sliceStep, in_imStep,
+			filter_firstPixelData, filter_N, filter_H, filter_W, filter_C, filter_widthStep, filter_sliceStep, filter_imStep, strideH, strideW,
+			dilation_H, dilation_W, out_firstPixelData, need_N, need_H, need_W, need_C, out_widthStep, out_sliceStep, out_imStep);
 	}
 	else
 	{

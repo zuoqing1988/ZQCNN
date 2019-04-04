@@ -389,13 +389,13 @@
     <ClInclude Include="layers_nchwc\zq_cnn_innerproduct_gemm_nchwc_packed4.h">
       <Filter>layers_nchwc</Filter>
     </ClInclude>
-    <ClInclude Include="layers_nchwc\zq_cnn_convolution_gemm_nchwc_packed4_handle_bias_prelu_8x4.h">
-      <Filter>layers_nchwc</Filter>
-    </ClInclude>
     <ClInclude Include="layers_nchwc\zq_cnn_convolution_gemm_nchwc_packed4_handle_bias_prelu_4x4.h">
       <Filter>layers_nchwc</Filter>
     </ClInclude>
     <ClInclude Include="layers_nchwc\zq_cnn_convolution_gemm_nchwc_packed4_handle_bias_prelu_1x4.h">
+      <Filter>layers_nchwc</Filter>
+    </ClInclude>
+    <ClInclude Include="layers_nchwc\zq_cnn_convolution_gemm_nchwc_packed4_handle_bias_prelu_6x4.h">
       <Filter>layers_nchwc</Filter>
     </ClInclude>
   </ItemGroup>

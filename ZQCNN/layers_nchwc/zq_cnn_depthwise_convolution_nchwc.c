@@ -51,10 +51,14 @@ extern "C" {
 #define zq_base_type float
 #define zq_mm_align_size 4
 #define zq_mm_align_size2 8
+#define zq_mm_align_size3 12
+#define zq_mm_align_size4 16
+#define zq_mm_align_size5 20
 #define zq_final_sum_q (q[0]+q[1]+q[2]+q[3])
 
 #define zq_cnn_depthwise_conv_no_padding_nchwc_general zq_cnn_depthwise_conv_no_padding_nchwc4_general
 #define zq_cnn_depthwise_conv_no_padding_nchwc_kernel3x3 zq_cnn_depthwise_conv_no_padding_nchwc4_kernel3x3
+#define zq_cnn_depthwise_conv_no_padding_nchwc_kernel5x5_s1d1 zq_cnn_depthwise_conv_no_padding_nchwc4_kernel5x5_s1d1
 #define zq_cnn_depthwise_conv_no_padding_nchwc_kernel3x3_s1d1 zq_cnn_depthwise_conv_no_padding_nchwc4_kernel3x3_s1d1
 #define zq_cnn_depthwise_conv_no_padding_nchwc_kernel3x3_s2d1 zq_cnn_depthwise_conv_no_padding_nchwc4_kernel3x3_s2d1
 #define zq_cnn_depthwise_conv_no_padding_nchwc_kernel2x2 zq_cnn_depthwise_conv_no_padding_nchwc4_kernel2x2
@@ -66,6 +70,7 @@ extern "C" {
 
 #undef zq_cnn_depthwise_conv_no_padding_nchwc_general
 #undef zq_cnn_depthwise_conv_no_padding_nchwc_kernel3x3
+#undef zq_cnn_depthwise_conv_no_padding_nchwc_kernel5x5_s1d1
 #undef zq_cnn_depthwise_conv_no_padding_nchwc_kernel3x3_s1d1
 #undef zq_cnn_depthwise_conv_no_padding_nchwc_kernel3x3_s2d1
 #undef zq_cnn_depthwise_conv_no_padding_nchwc_kernel2x2
@@ -73,6 +78,7 @@ extern "C" {
 
 #define zq_cnn_depthwise_conv_no_padding_nchwc_general zq_cnn_depthwise_conv_no_padding_nchwc4_general_with_bias
 #define zq_cnn_depthwise_conv_no_padding_nchwc_kernel3x3 zq_cnn_depthwise_conv_no_padding_nchwc4_kernel3x3_with_bias
+#define zq_cnn_depthwise_conv_no_padding_nchwc_kernel5x5_s1d1 zq_cnn_depthwise_conv_no_padding_nchwc4_kernel5x5_s1d1_with_bias
 #define zq_cnn_depthwise_conv_no_padding_nchwc_kernel3x3_s1d1 zq_cnn_depthwise_conv_no_padding_nchwc4_kernel3x3_s1d1_with_bias
 #define zq_cnn_depthwise_conv_no_padding_nchwc_kernel3x3_s2d1 zq_cnn_depthwise_conv_no_padding_nchwc4_kernel3x3_s2d1_with_bias
 #define zq_cnn_depthwise_conv_no_padding_nchwc_kernel2x2 zq_cnn_depthwise_conv_no_padding_nchwc4_kernel2x2_with_bias
@@ -84,6 +90,7 @@ extern "C" {
 
 #undef zq_cnn_depthwise_conv_no_padding_nchwc_general
 #undef zq_cnn_depthwise_conv_no_padding_nchwc_kernel3x3
+#undef zq_cnn_depthwise_conv_no_padding_nchwc_kernel5x5_s1d1
 #undef zq_cnn_depthwise_conv_no_padding_nchwc_kernel3x3_s1d1
 #undef zq_cnn_depthwise_conv_no_padding_nchwc_kernel3x3_s2d1
 #undef zq_cnn_depthwise_conv_no_padding_nchwc_kernel2x2
@@ -91,6 +98,7 @@ extern "C" {
 
 #define zq_cnn_depthwise_conv_no_padding_nchwc_general zq_cnn_depthwise_conv_no_padding_nchwc4_general_with_bias_prelu
 #define zq_cnn_depthwise_conv_no_padding_nchwc_kernel3x3 zq_cnn_depthwise_conv_no_padding_nchwc4_kernel3x3_with_bias_prelu
+#define zq_cnn_depthwise_conv_no_padding_nchwc_kernel5x5_s1d1 zq_cnn_depthwise_conv_no_padding_nchwc4_kernel5x5_s1d1_with_bias_prelu
 #define zq_cnn_depthwise_conv_no_padding_nchwc_kernel3x3_s1d1 zq_cnn_depthwise_conv_no_padding_nchwc4_kernel3x3_s1d1_with_bias_prelu
 #define zq_cnn_depthwise_conv_no_padding_nchwc_kernel3x3_s2d1 zq_cnn_depthwise_conv_no_padding_nchwc4_kernel3x3_s2d1_with_bias_prelu
 #define zq_cnn_depthwise_conv_no_padding_nchwc_kernel2x2 zq_cnn_depthwise_conv_no_padding_nchwc4_kernel2x2_with_bias_prelu
@@ -104,6 +112,7 @@ extern "C" {
 
 #undef zq_cnn_depthwise_conv_no_padding_nchwc_general
 #undef zq_cnn_depthwise_conv_no_padding_nchwc_kernel3x3
+#undef zq_cnn_depthwise_conv_no_padding_nchwc_kernel5x5_s1d1
 #undef zq_cnn_depthwise_conv_no_padding_nchwc_kernel3x3_s1d1
 #undef zq_cnn_depthwise_conv_no_padding_nchwc_kernel3x3_s2d1
 #undef zq_cnn_depthwise_conv_no_padding_nchwc_kernel2x2
@@ -121,6 +130,9 @@ extern "C" {
 #undef zq_base_type
 #undef zq_mm_align_size
 #undef zq_mm_align_size2
+#undef zq_mm_align_size3
+#undef zq_mm_align_size4
+#undef zq_mm_align_size5
 #undef zq_final_sum_q
 
 #else
@@ -142,11 +154,15 @@ extern "C" {
 #define zq_base_type float
 #define zq_mm_align_size 4
 #define zq_mm_align_size2 8
+#define zq_mm_align_size3 12
+#define zq_mm_align_size4 16
+#define zq_mm_align_size5 20
 #define zq_final_sum_q (q[0]+q[1]+q[2]+q[3])
 
 
 #define zq_cnn_depthwise_conv_no_padding_nchwc_general zq_cnn_depthwise_conv_no_padding_nchwc4_general
 #define zq_cnn_depthwise_conv_no_padding_nchwc_kernel3x3 zq_cnn_depthwise_conv_no_padding_nchwc4_kernel3x3
+#define zq_cnn_depthwise_conv_no_padding_nchwc_kernel5x5_s1d1 zq_cnn_depthwise_conv_no_padding_nchwc4_kernel5x5_s1d1
 #define zq_cnn_depthwise_conv_no_padding_nchwc_kernel3x3_s1d1 zq_cnn_depthwise_conv_no_padding_nchwc4_kernel3x3_s1d1
 #define zq_cnn_depthwise_conv_no_padding_nchwc_kernel3x3_s2d1 zq_cnn_depthwise_conv_no_padding_nchwc4_kernel3x3_s2d1
 #define zq_cnn_depthwise_conv_no_padding_nchwc_kernel2x2 zq_cnn_depthwise_conv_no_padding_nchwc4_kernel2x2
@@ -158,6 +174,7 @@ extern "C" {
 
 #undef zq_cnn_depthwise_conv_no_padding_nchwc_general
 #undef zq_cnn_depthwise_conv_no_padding_nchwc_kernel3x3
+#undef zq_cnn_depthwise_conv_no_padding_nchwc_kernel5x5_s1d1
 #undef zq_cnn_depthwise_conv_no_padding_nchwc_kernel3x3_s1d1
 #undef zq_cnn_depthwise_conv_no_padding_nchwc_kernel3x3_s2d1
 #undef zq_cnn_depthwise_conv_no_padding_nchwc_kernel2x2
@@ -165,6 +182,7 @@ extern "C" {
 
 #define zq_cnn_depthwise_conv_no_padding_nchwc_general zq_cnn_depthwise_conv_no_padding_nchwc4_general_with_bias
 #define zq_cnn_depthwise_conv_no_padding_nchwc_kernel3x3 zq_cnn_depthwise_conv_no_padding_nchwc4_kernel3x3_with_bias
+#define zq_cnn_depthwise_conv_no_padding_nchwc_kernel5x5_s1d1 zq_cnn_depthwise_conv_no_padding_nchwc4_kernel5x5_s1d1_with_bias
 #define zq_cnn_depthwise_conv_no_padding_nchwc_kernel3x3_s1d1 zq_cnn_depthwise_conv_no_padding_nchwc4_kernel3x3_s1d1_with_bias
 #define zq_cnn_depthwise_conv_no_padding_nchwc_kernel3x3_s2d1 zq_cnn_depthwise_conv_no_padding_nchwc4_kernel3x3_s2d1_with_bias
 #define zq_cnn_depthwise_conv_no_padding_nchwc_kernel2x2 zq_cnn_depthwise_conv_no_padding_nchwc4_kernel2x2_with_bias
@@ -176,6 +194,7 @@ extern "C" {
 
 #undef zq_cnn_depthwise_conv_no_padding_nchwc_general
 #undef zq_cnn_depthwise_conv_no_padding_nchwc_kernel3x3
+#undef zq_cnn_depthwise_conv_no_padding_nchwc_kernel5x5_s1d1
 #undef zq_cnn_depthwise_conv_no_padding_nchwc_kernel3x3_s1d1
 #undef zq_cnn_depthwise_conv_no_padding_nchwc_kernel3x3_s2d1
 #undef zq_cnn_depthwise_conv_no_padding_nchwc_kernel2x2
@@ -183,6 +202,7 @@ extern "C" {
 
 #define zq_cnn_depthwise_conv_no_padding_nchwc_general zq_cnn_depthwise_conv_no_padding_nchwc4_general_with_bias_prelu
 #define zq_cnn_depthwise_conv_no_padding_nchwc_kernel3x3 zq_cnn_depthwise_conv_no_padding_nchwc4_kernel3x3_with_bias_prelu
+#define zq_cnn_depthwise_conv_no_padding_nchwc_kernel5x5_s1d1 zq_cnn_depthwise_conv_no_padding_nchwc4_kernel5x5_s1d1_with_bias_prelu
 #define zq_cnn_depthwise_conv_no_padding_nchwc_kernel3x3_s1d1 zq_cnn_depthwise_conv_no_padding_nchwc4_kernel3x3_s1d1_with_bias_prelu
 #define zq_cnn_depthwise_conv_no_padding_nchwc_kernel3x3_s2d1 zq_cnn_depthwise_conv_no_padding_nchwc4_kernel3x3_s2d1_with_bias_prelu
 #define zq_cnn_depthwise_conv_no_padding_nchwc_kernel2x2 zq_cnn_depthwise_conv_no_padding_nchwc4_kernel2x2_with_bias_prelu
@@ -196,6 +216,7 @@ extern "C" {
 
 #undef zq_cnn_depthwise_conv_no_padding_nchwc_general
 #undef zq_cnn_depthwise_conv_no_padding_nchwc_kernel3x3
+#undef zq_cnn_depthwise_conv_no_padding_nchwc_kernel5x5_s1d1
 #undef zq_cnn_depthwise_conv_no_padding_nchwc_kernel3x3_s1d1
 #undef zq_cnn_depthwise_conv_no_padding_nchwc_kernel3x3_s2d1
 #undef zq_cnn_depthwise_conv_no_padding_nchwc_kernel2x2
@@ -213,6 +234,9 @@ extern "C" {
 #undef zq_base_type
 #undef zq_mm_align_size
 #undef zq_mm_align_size2
+#undef zq_mm_align_size3
+#undef zq_mm_align_size4
+#undef zq_mm_align_size5
 #undef zq_final_sum_q
 
 #endif//ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_SSE
@@ -235,10 +259,14 @@ extern "C" {
 #define zq_base_type float
 #define zq_mm_align_size 8
 #define zq_mm_align_size2 16
+#define zq_mm_align_size3 24
+#define zq_mm_align_size4 32
+#define zq_mm_align_size5 40
 #define zq_final_sum_q (q[0]+q[1]+q[2]+q[3]+q[4]+q[5]+q[6]+q[7])
 
 #define zq_cnn_depthwise_conv_no_padding_nchwc_general zq_cnn_depthwise_conv_no_padding_nchwc8_general
 #define zq_cnn_depthwise_conv_no_padding_nchwc_kernel3x3 zq_cnn_depthwise_conv_no_padding_nchwc8_kernel3x3
+#define zq_cnn_depthwise_conv_no_padding_nchwc_kernel5x5_s1d1 zq_cnn_depthwise_conv_no_padding_nchwc8_kernel5x5_s1d1
 #define zq_cnn_depthwise_conv_no_padding_nchwc_kernel3x3_s1d1 zq_cnn_depthwise_conv_no_padding_nchwc8_kernel3x3_s1d1
 #define zq_cnn_depthwise_conv_no_padding_nchwc_kernel3x3_s2d1 zq_cnn_depthwise_conv_no_padding_nchwc8_kernel3x3_s2d1
 #define zq_cnn_depthwise_conv_no_padding_nchwc_kernel2x2 zq_cnn_depthwise_conv_no_padding_nchwc8_kernel2x2
@@ -250,6 +278,7 @@ extern "C" {
 
 #undef zq_cnn_depthwise_conv_no_padding_nchwc_general
 #undef zq_cnn_depthwise_conv_no_padding_nchwc_kernel3x3
+#undef zq_cnn_depthwise_conv_no_padding_nchwc_kernel5x5_s1d1
 #undef zq_cnn_depthwise_conv_no_padding_nchwc_kernel3x3_s1d1
 #undef zq_cnn_depthwise_conv_no_padding_nchwc_kernel3x3_s2d1
 #undef zq_cnn_depthwise_conv_no_padding_nchwc_kernel2x2
@@ -257,6 +286,7 @@ extern "C" {
 
 #define zq_cnn_depthwise_conv_no_padding_nchwc_general zq_cnn_depthwise_conv_no_padding_nchwc8_general_with_bias
 #define zq_cnn_depthwise_conv_no_padding_nchwc_kernel3x3 zq_cnn_depthwise_conv_no_padding_nchwc8_kernel3x3_with_bias
+#define zq_cnn_depthwise_conv_no_padding_nchwc_kernel5x5_s1d1 zq_cnn_depthwise_conv_no_padding_nchwc8_kernel5x5_s1d1_with_bias
 #define zq_cnn_depthwise_conv_no_padding_nchwc_kernel3x3_s1d1 zq_cnn_depthwise_conv_no_padding_nchwc8_kernel3x3_s1d1_with_bias
 #define zq_cnn_depthwise_conv_no_padding_nchwc_kernel3x3_s2d1 zq_cnn_depthwise_conv_no_padding_nchwc8_kernel3x3_s2d1_with_bias
 #define zq_cnn_depthwise_conv_no_padding_nchwc_kernel2x2 zq_cnn_depthwise_conv_no_padding_nchwc8_kernel2x2_with_bias
@@ -268,6 +298,7 @@ extern "C" {
 
 #undef zq_cnn_depthwise_conv_no_padding_nchwc_general
 #undef zq_cnn_depthwise_conv_no_padding_nchwc_kernel3x3
+#undef zq_cnn_depthwise_conv_no_padding_nchwc_kernel5x5_s1d1
 #undef zq_cnn_depthwise_conv_no_padding_nchwc_kernel3x3_s1d1
 #undef zq_cnn_depthwise_conv_no_padding_nchwc_kernel3x3_s2d1
 #undef zq_cnn_depthwise_conv_no_padding_nchwc_kernel2x2
@@ -275,6 +306,7 @@ extern "C" {
 
 #define zq_cnn_depthwise_conv_no_padding_nchwc_general zq_cnn_depthwise_conv_no_padding_nchwc8_general_with_bias_prelu
 #define zq_cnn_depthwise_conv_no_padding_nchwc_kernel3x3 zq_cnn_depthwise_conv_no_padding_nchwc8_kernel3x3_with_bias_prelu
+#define zq_cnn_depthwise_conv_no_padding_nchwc_kernel5x5_s1d1 zq_cnn_depthwise_conv_no_padding_nchwc8_kernel5x5_s1d1_with_bias_prelu
 #define zq_cnn_depthwise_conv_no_padding_nchwc_kernel3x3_s1d1 zq_cnn_depthwise_conv_no_padding_nchwc8_kernel3x3_s1d1_with_bias_prelu
 #define zq_cnn_depthwise_conv_no_padding_nchwc_kernel3x3_s2d1 zq_cnn_depthwise_conv_no_padding_nchwc8_kernel3x3_s2d1_with_bias_prelu
 #define zq_cnn_depthwise_conv_no_padding_nchwc_kernel2x2 zq_cnn_depthwise_conv_no_padding_nchwc8_kernel2x2_with_bias_prelu
@@ -288,6 +320,7 @@ extern "C" {
 
 #undef zq_cnn_depthwise_conv_no_padding_nchwc_general
 #undef zq_cnn_depthwise_conv_no_padding_nchwc_kernel3x3
+#undef zq_cnn_depthwise_conv_no_padding_nchwc_kernel5x5_s1d1
 #undef zq_cnn_depthwise_conv_no_padding_nchwc_kernel3x3_s1d1
 #undef zq_cnn_depthwise_conv_no_padding_nchwc_kernel3x3_s2d1
 #undef zq_cnn_depthwise_conv_no_padding_nchwc_kernel2x2
@@ -305,6 +338,9 @@ extern "C" {
 #undef zq_base_type
 #undef zq_mm_align_size
 #undef zq_mm_align_size2
+#undef zq_mm_align_size3
+#undef zq_mm_align_size4
+#undef zq_mm_align_size5
 #undef zq_final_sum_q
 #endif //ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_AVX
 
@@ -333,11 +369,15 @@ static inline float my_mm_set1_ps(float v) { return v; }
 #define zq_base_type float
 #define zq_mm_align_size 1
 #define zq_mm_align_size2 2 
+#define zq_mm_align_size3 3 
+#define zq_mm_align_size4 4 
+#define zq_mm_align_size5 5 
 #define zq_final_sum_q q[0]
 
 
 #define zq_cnn_depthwise_conv_no_padding_nchwc_general zq_cnn_depthwise_conv_no_padding_nchwc1_general
 #define zq_cnn_depthwise_conv_no_padding_nchwc_kernel3x3 zq_cnn_depthwise_conv_no_padding_nchwc1_kernel3x3
+#define zq_cnn_depthwise_conv_no_padding_nchwc_kernel5x5_s1d1 zq_cnn_depthwise_conv_no_padding_nchwc1_kernel5x5_s1d1
 #define zq_cnn_depthwise_conv_no_padding_nchwc_kernel3x3_s1d1 zq_cnn_depthwise_conv_no_padding_nchwc1_kernel3x3_s1d1
 #define zq_cnn_depthwise_conv_no_padding_nchwc_kernel3x3_s2d1 zq_cnn_depthwise_conv_no_padding_nchwc1_kernel3x3_s2d1
 #define zq_cnn_depthwise_conv_no_padding_nchwc_kernel2x2 zq_cnn_depthwise_conv_no_padding_nchwc1_kernel2x2
@@ -349,6 +389,7 @@ static inline float my_mm_set1_ps(float v) { return v; }
 
 #undef zq_cnn_depthwise_conv_no_padding_nchwc_general
 #undef zq_cnn_depthwise_conv_no_padding_nchwc_kernel3x3
+#undef zq_cnn_depthwise_conv_no_padding_nchwc_kernel5x5_s1d1
 #undef zq_cnn_depthwise_conv_no_padding_nchwc_kernel3x3_s1d1
 #undef zq_cnn_depthwise_conv_no_padding_nchwc_kernel3x3_s2d1
 #undef zq_cnn_depthwise_conv_no_padding_nchwc_kernel2x2
@@ -356,6 +397,7 @@ static inline float my_mm_set1_ps(float v) { return v; }
 
 #define zq_cnn_depthwise_conv_no_padding_nchwc_general zq_cnn_depthwise_conv_no_padding_nchwc1_general_with_bias
 #define zq_cnn_depthwise_conv_no_padding_nchwc_kernel3x3 zq_cnn_depthwise_conv_no_padding_nchwc1_kernel3x3_with_bias
+#define zq_cnn_depthwise_conv_no_padding_nchwc_kernel5x5_s1d1 zq_cnn_depthwise_conv_no_padding_nchwc1_kernel5x5_s1d1_with_bias
 #define zq_cnn_depthwise_conv_no_padding_nchwc_kernel3x3_s1d1 zq_cnn_depthwise_conv_no_padding_nchwc1_kernel3x3_s1d1_with_bias
 #define zq_cnn_depthwise_conv_no_padding_nchwc_kernel3x3_s2d1 zq_cnn_depthwise_conv_no_padding_nchwc1_kernel3x3_s2d1_with_bias
 #define zq_cnn_depthwise_conv_no_padding_nchwc_kernel2x2 zq_cnn_depthwise_conv_no_padding_nchwc1_kernel2x2_with_bias
@@ -367,6 +409,7 @@ static inline float my_mm_set1_ps(float v) { return v; }
 
 #undef zq_cnn_depthwise_conv_no_padding_nchwc_general
 #undef zq_cnn_depthwise_conv_no_padding_nchwc_kernel3x3
+#undef zq_cnn_depthwise_conv_no_padding_nchwc_kernel5x5_s1d1
 #undef zq_cnn_depthwise_conv_no_padding_nchwc_kernel3x3_s1d1
 #undef zq_cnn_depthwise_conv_no_padding_nchwc_kernel3x3_s2d1
 #undef zq_cnn_depthwise_conv_no_padding_nchwc_kernel2x2
@@ -374,6 +417,7 @@ static inline float my_mm_set1_ps(float v) { return v; }
 
 #define zq_cnn_depthwise_conv_no_padding_nchwc_general zq_cnn_depthwise_conv_no_padding_nchwc1_general_with_bias_prelu
 #define zq_cnn_depthwise_conv_no_padding_nchwc_kernel3x3 zq_cnn_depthwise_conv_no_padding_nchwc1_kernel3x3_with_bias_prelu
+#define zq_cnn_depthwise_conv_no_padding_nchwc_kernel5x5_s1d1 zq_cnn_depthwise_conv_no_padding_nchwc1_kernel5x5_s1d1_with_bias_prelu
 #define zq_cnn_depthwise_conv_no_padding_nchwc_kernel3x3_s1d1 zq_cnn_depthwise_conv_no_padding_nchwc1_kernel3x3_s1d1_with_bias_prelu
 #define zq_cnn_depthwise_conv_no_padding_nchwc_kernel3x3_s2d1 zq_cnn_depthwise_conv_no_padding_nchwc1_kernel3x3_s2d1_with_bias_prelu
 #define zq_cnn_depthwise_conv_no_padding_nchwc_kernel2x2 zq_cnn_depthwise_conv_no_padding_nchwc1_kernel2x2_with_bias_prelu
@@ -387,6 +431,7 @@ static inline float my_mm_set1_ps(float v) { return v; }
 
 #undef zq_cnn_depthwise_conv_no_padding_nchwc_general
 #undef zq_cnn_depthwise_conv_no_padding_nchwc_kernel3x3
+#undef zq_cnn_depthwise_conv_no_padding_nchwc_kernel5x5_s1d1
 #undef zq_cnn_depthwise_conv_no_padding_nchwc_kernel3x3_s1d1
 #undef zq_cnn_depthwise_conv_no_padding_nchwc_kernel3x3_s2d1
 #undef zq_cnn_depthwise_conv_no_padding_nchwc_kernel2x2
@@ -404,6 +449,9 @@ static inline float my_mm_set1_ps(float v) { return v; }
 #undef zq_base_type
 #undef zq_mm_align_size
 #undef zq_mm_align_size2
+#undef zq_mm_align_size3
+#undef zq_mm_align_size4
+#undef zq_mm_align_size5
 #undef zq_final_sum_q
 
 #if defined(__cplusplus) || defined(c_plusplus) 
