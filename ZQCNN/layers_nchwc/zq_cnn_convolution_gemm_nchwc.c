@@ -71,6 +71,8 @@ extern "C" {
 #define zq_mm_align_size7 28
 #define zq_mm_align_size8 32
 #define zq_mm_align_size16 64
+#define zq_mm_align_size32 128
+#define zq_mm_align_size64 256
 #define zq_mm_bitor_longlong 0xFFFFFFFFFFFFFFF0
 #define zq_final_sum_q (q[0]+q[1]+q[2]+q[3])
 
@@ -194,6 +196,8 @@ extern "C" {
 #undef zq_mm_align_size7
 #undef zq_mm_align_size8
 #undef zq_mm_align_size16
+#undef zq_mm_align_size32
+#undef zq_mm_align_size64
 #undef zq_mm_bitor_longlong
 #undef zq_final_sum_q
 
@@ -224,6 +228,8 @@ extern "C" {
 #define zq_mm_align_size7 28
 #define zq_mm_align_size8 32
 #define zq_mm_align_size16 64
+#define zq_mm_align_size32 128
+#define zq_mm_align_size64 256
 #define zq_mm_bitor_longlong 0xFFFFFFFFFFFFFFF0
 #define zq_final_sum_q (q[0]+q[1]+q[2]+q[3])
 
@@ -343,6 +349,8 @@ extern "C" {
 #undef zq_mm_align_size7
 #undef zq_mm_align_size8
 #undef zq_mm_align_size16
+#undef zq_mm_align_size32
+#undef zq_mm_align_size64
 #undef zq_mm_bitor_longlong
 #undef zq_final_sum_q
 

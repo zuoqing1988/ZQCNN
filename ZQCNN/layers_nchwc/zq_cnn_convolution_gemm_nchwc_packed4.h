@@ -213,6 +213,22 @@ op8x4_8
 op8x4_8;\
 op8x4_8
 
+#define op8x4_32_first \
+op8x4_16_first;\
+op8x4_16
+
+#define op8x4_32 \
+op8x4_16;\
+op8x4_16
+
+#define op8x4_64_first \
+op8x4_32_first;\
+op8x4_32
+
+#define op8x4_64 \
+op8x4_32;\
+op8x4_32
+
 #define op4x4_2_first \
 op4x4_1_first;\
 op4x4_1
@@ -249,6 +265,22 @@ op4x4_8
 op4x4_8;\
 op4x4_8
 
+#define op4x4_32_first \
+op4x4_16_first;\
+op4x4_16
+
+#define op4x4_32 \
+op4x4_16;\
+op4x4_16
+
+#define op4x4_64_first \
+op4x4_32_first;\
+op4x4_32
+
+#define op4x4_64 \
+op4x4_32;\
+op4x4_32
+
 #define op1x4_2_first \
 op1x4_1_first;\
 op1x4_1
@@ -280,6 +312,22 @@ op1x4_8
 #define op1x4_16 \
 op1x4_8;\
 op1x4_8
+
+#define op1x4_32_first \
+op1x4_16_first;\
+op1x4_16
+
+#define op1x4_32 \
+op1x4_16;\
+op1x4_16
+
+#define op1x4_64_first \
+op1x4_32_first;\
+op1x4_32
+
+#define op1x4_64 \
+op1x4_32;\
+op1x4_32
 
 #define store8x4 \
 zq_mm_store_ps(q, c00);\
@@ -530,7 +578,7 @@ void zq_cnn_convolution_gemm_nchwc_packedM8N4_kernel1x1(
 
 	for (i = 0;i < div4_size;i++)
 	{
-		ii = div8_size * 8 + i*div4_size;
+		ii = div8_size * 8 + i*4;
 		dst_ptr = A_buffer + packed_A_step*(i+div8_size);
 		n = ii / HW;
 		h = (ii%HW) / in_W;
@@ -624,7 +672,58 @@ void zq_cnn_convolution_gemm_nchwc_packedM8N4_kernel1x1(
 		h = (ii%HW) / in_W;
 		w = (ii%HW) % in_W;
 		dst_ptr7 = out_data + n*out_imStep + h*out_widthStep + w*zq_mm_align_size;
-		if (paddedC % zq_mm_align_size16 == 0)
+
+		if (paddedC % zq_mm_align_size64 == 0)
+		{
+			for (out_c = 0; out_c < out_C; out_c += zq_mm_align_size)
+			{
+				src_ptr0 = A_buffer + packed_A_step*i;
+				src_ptr1 = packed_filter + packed_B_step*(out_c / zq_mm_align_size);
+
+				op8x4_64_first;
+				c = zq_mm_align_size64;
+				for (; c < paddedC; c += zq_mm_align_size64)
+				{
+					op8x4_64;
+				}
+				store8x4;
+#include "zq_cnn_convolution_gemm_nchwc_packed4_handle_bias_prelu_8x4.h"
+				dst_ptr0 += out_sliceStep;
+				dst_ptr1 += out_sliceStep;
+				dst_ptr2 += out_sliceStep;
+				dst_ptr3 += out_sliceStep;
+				dst_ptr4 += out_sliceStep;
+				dst_ptr5 += out_sliceStep;
+				dst_ptr6 += out_sliceStep;
+				dst_ptr7 += out_sliceStep;
+			}
+		}
+		else if (paddedC % zq_mm_align_size32 == 0)
+		{
+			for (out_c = 0; out_c < out_C; out_c += zq_mm_align_size)
+			{
+				src_ptr0 = A_buffer + packed_A_step*i;
+				src_ptr1 = packed_filter + packed_B_step*(out_c / zq_mm_align_size);
+
+				op8x4_32_first;
+				c = zq_mm_align_size32;
+				for (; c < paddedC; c += zq_mm_align_size32)
+				{
+					op8x4_32;
+				}
+				store8x4;
+#include "zq_cnn_convolution_gemm_nchwc_packed4_handle_bias_prelu_8x4.h"
+				dst_ptr0 += out_sliceStep;
+				dst_ptr1 += out_sliceStep;
+				dst_ptr2 += out_sliceStep;
+				dst_ptr3 += out_sliceStep;
+				dst_ptr4 += out_sliceStep;
+				dst_ptr5 += out_sliceStep;
+				dst_ptr6 += out_sliceStep;
+				dst_ptr7 += out_sliceStep;
+			}
+		}
+		else if (paddedC % zq_mm_align_size16 == 0)
 		{
 			for (out_c = 0; out_c < out_C; out_c += zq_mm_align_size)
 			{
@@ -769,7 +868,49 @@ void zq_cnn_convolution_gemm_nchwc_packedM8N4_kernel1x1(
 		h = (ii%HW) / in_W;
 		w = (ii%HW) % in_W;
 		dst_ptr3 = out_data + n*out_imStep + h*out_widthStep + w*zq_mm_align_size;
-		if (paddedC % zq_mm_align_size16 == 0)
+		if (paddedC % zq_mm_align_size64 == 0)
+		{
+			for (out_c = 0; out_c < out_C; out_c += zq_mm_align_size)
+			{
+				src_ptr0 = A_buffer + packed_A_step*i;
+				src_ptr1 = packed_filter + packed_B_step*(out_c / zq_mm_align_size);
+
+				op4x4_64_first;
+				c = zq_mm_align_size64;
+				for (; c < paddedC; c += zq_mm_align_size64)
+				{
+					op4x4_64;
+				}
+				store4x4;
+#include "zq_cnn_convolution_gemm_nchwc_packed4_handle_bias_prelu_4x4.h"
+				dst_ptr0 += out_sliceStep;
+				dst_ptr1 += out_sliceStep;
+				dst_ptr2 += out_sliceStep;
+				dst_ptr3 += out_sliceStep;
+			}
+		}
+		else if (paddedC % zq_mm_align_size32 == 0)
+		{
+			for (out_c = 0; out_c < out_C; out_c += zq_mm_align_size)
+			{
+				src_ptr0 = A_buffer + packed_A_step*i;
+				src_ptr1 = packed_filter + packed_B_step*(out_c / zq_mm_align_size);
+
+				op4x4_32_first;
+				c = zq_mm_align_size32;
+				for (; c < paddedC; c += zq_mm_align_size32)
+				{
+					op4x4_32;
+				}
+				store4x4;
+#include "zq_cnn_convolution_gemm_nchwc_packed4_handle_bias_prelu_4x4.h"
+				dst_ptr0 += out_sliceStep;
+				dst_ptr1 += out_sliceStep;
+				dst_ptr2 += out_sliceStep;
+				dst_ptr3 += out_sliceStep;
+			}
+		}
+		else if (paddedC % zq_mm_align_size16 == 0)
 		{
 			for (out_c = 0; out_c < out_C; out_c += zq_mm_align_size)
 			{
@@ -880,7 +1021,41 @@ void zq_cnn_convolution_gemm_nchwc_packedM8N4_kernel1x1(
 		h = (ii%HW) / in_W;
 		w = (ii%HW) % in_W;
 		dst_ptr0 = out_data + n*out_imStep + h*out_widthStep + w*zq_mm_align_size;
-		if (paddedC % zq_mm_align_size16 == 0)
+		if (paddedC % zq_mm_align_size64 == 0)
+		{
+			for (out_c = 0; out_c < out_C; out_c += zq_mm_align_size)
+			{
+				src_ptr0 = A_buffer + packed_A_step*(i + div4_size);
+				src_ptr1 = packed_filter + packed_B_step*(out_c / zq_mm_align_size);
+				op1x4_64_first;
+				c = zq_mm_align_size64;
+				for (; c < paddedC; c += zq_mm_align_size64)
+				{
+					op1x4_64;
+				}
+				store1x4;
+#include "zq_cnn_convolution_gemm_nchwc_packed4_handle_bias_prelu_1x4.h"
+				dst_ptr0 += out_sliceStep;
+			}
+		}
+		else if (paddedC % zq_mm_align_size32 == 0)
+		{
+			for (out_c = 0; out_c < out_C; out_c += zq_mm_align_size)
+			{
+				src_ptr0 = A_buffer + packed_A_step*(i + div4_size);
+				src_ptr1 = packed_filter + packed_B_step*(out_c / zq_mm_align_size);
+				op1x4_32_first;
+				c = zq_mm_align_size32;
+				for (; c < paddedC; c += zq_mm_align_size32)
+				{
+					op1x4_32;
+				}
+				store1x4;
+#include "zq_cnn_convolution_gemm_nchwc_packed4_handle_bias_prelu_1x4.h"
+				dst_ptr0 += out_sliceStep;
+			}
+		}
+		else if (paddedC % zq_mm_align_size16 == 0)
 		{
 			for (out_c = 0; out_c < out_C; out_c += zq_mm_align_size)
 			{
@@ -1109,7 +1284,49 @@ void zq_cnn_convolution_gemm_nchwc_packedM4N4_kernel1x1(
 		h = (ii%HW) / in_W;
 		w = (ii%HW) % in_W;
 		dst_ptr3 = out_data + n*out_imStep + h*out_widthStep + w*zq_mm_align_size;
-		if (paddedC % zq_mm_align_size16 == 0)
+		if (paddedC % zq_mm_align_size64 == 0)
+		{
+			for (out_c = 0; out_c < out_C; out_c += zq_mm_align_size)
+			{
+				src_ptr0 = A_buffer + packed_A_step*i;
+				src_ptr1 = packed_filter + packed_B_step*(out_c / zq_mm_align_size);
+
+				op4x4_64_first;
+				c = zq_mm_align_size64;
+				for (; c < paddedC; c += zq_mm_align_size64)
+				{
+					op4x4_64;
+				}
+				store4x4;
+#include "zq_cnn_convolution_gemm_nchwc_packed4_handle_bias_prelu_4x4.h"
+				dst_ptr0 += out_sliceStep;
+				dst_ptr1 += out_sliceStep;
+				dst_ptr2 += out_sliceStep;
+				dst_ptr3 += out_sliceStep;
+			}
+		}
+		else if (paddedC % zq_mm_align_size32 == 0)
+		{
+			for (out_c = 0; out_c < out_C; out_c += zq_mm_align_size)
+			{
+				src_ptr0 = A_buffer + packed_A_step*i;
+				src_ptr1 = packed_filter + packed_B_step*(out_c / zq_mm_align_size);
+
+				op4x4_32_first;
+				c = zq_mm_align_size32;
+				for (; c < paddedC; c += zq_mm_align_size32)
+				{
+					op4x4_32;
+				}
+				store4x4;
+#include "zq_cnn_convolution_gemm_nchwc_packed4_handle_bias_prelu_4x4.h"
+				dst_ptr0 += out_sliceStep;
+				dst_ptr1 += out_sliceStep;
+				dst_ptr2 += out_sliceStep;
+				dst_ptr3 += out_sliceStep;
+			}
+		}
+		else if (paddedC % zq_mm_align_size16 == 0)
 		{
 			for (out_c = 0; out_c < out_C; out_c += zq_mm_align_size)
 			{
@@ -1220,7 +1437,41 @@ void zq_cnn_convolution_gemm_nchwc_packedM4N4_kernel1x1(
 		h = (ii%HW) / in_W;
 		w = (ii%HW) % in_W;
 		dst_ptr0 = out_data + n*out_imStep + h*out_widthStep + w*zq_mm_align_size;
-		if (paddedC % zq_mm_align_size16 == 0)
+		if (paddedC % zq_mm_align_size64 == 0)
+		{
+			for (out_c = 0; out_c < out_C; out_c += zq_mm_align_size)
+			{
+				src_ptr0 = A_buffer + packed_A_step*(i + div4_size);
+				src_ptr1 = packed_filter + packed_B_step*(out_c / zq_mm_align_size);
+				op1x4_64_first;
+				c = zq_mm_align_size64;
+				for (; c < paddedC; c += zq_mm_align_size64)
+				{
+					op1x4_64;
+				}
+				store1x4;
+#include "zq_cnn_convolution_gemm_nchwc_packed4_handle_bias_prelu_1x4.h"
+				dst_ptr0 += out_sliceStep;
+			}
+		}
+		else if (paddedC % zq_mm_align_size32 == 0)
+		{
+			for (out_c = 0; out_c < out_C; out_c += zq_mm_align_size)
+			{
+				src_ptr0 = A_buffer + packed_A_step*(i + div4_size);
+				src_ptr1 = packed_filter + packed_B_step*(out_c / zq_mm_align_size);
+				op1x4_32_first;
+				c = zq_mm_align_size32;
+				for (; c < paddedC; c += zq_mm_align_size32)
+				{
+					op1x4_32;
+				}
+				store1x4;
+#include "zq_cnn_convolution_gemm_nchwc_packed4_handle_bias_prelu_1x4.h"
+				dst_ptr0 += out_sliceStep;
+			}
+		}
+		else if (paddedC % zq_mm_align_size16 == 0)
 		{
 			for (out_c = 0; out_c < out_C; out_c += zq_mm_align_size)
 			{
