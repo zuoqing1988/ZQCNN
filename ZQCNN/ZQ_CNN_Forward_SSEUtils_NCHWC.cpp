@@ -1835,13 +1835,13 @@ bool ZQ_CNN_Forward_SSEUtils_NCHWC::ConvolutionWithBias(ZQ_CNN_Tensor4D_NCHWC4& 
 			out_firstPixelData, need_N, need_H, need_W, need_C,
 			out_widthStep, out_sliceStep, out_imStep, bias_firstPixelData, buffer, buffer_len);
 	}
-	else if (filter_H == 3 && filter_W == 3 && in_C <= 4)
+	/*else if (filter_H == 3 && filter_W == 3 && in_C <= 4)
 	{
 		zq_cnn_convolution_gemm_nchwc4_packed4_kernel3x3_C3C4_with_bias(in_firstPixelData, in_N, in_H, in_W, in_C,
 			in_widthStep, in_sliceStep, in_imStep, (const float*)(packedfilters.data), filter_H, filter_W,
 			strideH, strideW, dilation_H, dilation_W, out_firstPixelData, need_N, need_H, need_W, need_C,
 			out_widthStep, out_sliceStep, out_imStep, bias_firstPixelData, buffer, buffer_len);
-	}
+	}*/
 	else
 		return false;
 	return true;
@@ -1908,13 +1908,13 @@ bool ZQ_CNN_Forward_SSEUtils_NCHWC::ConvolutionWithBiasPReLU(ZQ_CNN_Tensor4D_NCH
 			out_firstPixelData, need_N, need_H, need_W, need_C,
 			out_widthStep, out_sliceStep, out_imStep, bias_firstPixelData, slope_firstPixelData, buffer, buffer_len);
 	}
-	else if (filter_H == 3 && filter_W == 3 && in_C <= 4)
+	/*else if (filter_H == 3 && filter_W == 3 && in_C <= 4)
 	{
 		zq_cnn_convolution_gemm_nchwc4_packed4_kernel3x3_C3C4_with_bias_prelu(in_firstPixelData, in_N, in_H, in_W, in_C,
 			in_widthStep, in_sliceStep, in_imStep, (const float*)(packedfilters.data), filter_H, filter_W,
 			strideH, strideW, dilation_H, dilation_W, out_firstPixelData, need_N, need_H, need_W, need_C,
 			out_widthStep, out_sliceStep, out_imStep, bias_firstPixelData, slope_firstPixelData, buffer, buffer_len);
-	}
+	}*/
 	else
 		return false;
 	return true;
@@ -1977,13 +1977,13 @@ bool ZQ_CNN_Forward_SSEUtils_NCHWC::ConvolutionWithPReLU(ZQ_CNN_Tensor4D_NCHWC4&
 			out_firstPixelData, need_N, need_H, need_W, need_C,
 			out_widthStep, out_sliceStep, out_imStep, buffer, buffer_len);
 	}
-	else if (filter_H == 3 && filter_W == 3 && in_C <= 4)
+	/*else if (filter_H == 3 && filter_W == 3 && in_C <= 4)
 	{
 		zq_cnn_convolution_gemm_nchwc4_packed4_kernel3x3_C3C4(in_firstPixelData, in_N, in_H, in_W, in_C,
 			in_widthStep, in_sliceStep, in_imStep, (const float*)(packedfilters.data), filter_H, filter_W,
 			strideH, strideW, dilation_H, dilation_W, out_firstPixelData, need_N, need_H, need_W, need_C,
 			out_widthStep, out_sliceStep, out_imStep, buffer, buffer_len);
-	}
+	}*/
 	else
 		return false;
 	zq_cnn_prelu_nchwc4(in_firstPixelData, in_N, in_H, in_W, in_C, in_widthStep, in_sliceStep, in_imStep, slope_firstPixelData);
@@ -2047,13 +2047,13 @@ bool ZQ_CNN_Forward_SSEUtils_NCHWC::Convolution(ZQ_CNN_Tensor4D_NCHWC4& input,
 			out_firstPixelData, need_N, need_H, need_W, need_C,
 			out_widthStep, out_sliceStep, out_imStep, buffer, buffer_len);
 	}
-	else if (filter_H == 3 && filter_W == 3 && in_C <= 4)
+	/*else if (filter_H == 3 && filter_W == 3 && in_C <= 4)
 	{
 		zq_cnn_convolution_gemm_nchwc4_packed4_kernel3x3_C3C4(in_firstPixelData, in_N, in_H, in_W, in_C,
 			in_widthStep, in_sliceStep, in_imStep, (const float*)(packedfilters.data), filter_H, filter_W,
 			strideH, strideW, dilation_H, dilation_W, out_firstPixelData, need_N, need_H, need_W, need_C,
 			out_widthStep, out_sliceStep, out_imStep, buffer, buffer_len);
-	}
+	}*/
 	else
 		return false;
 	return true;
