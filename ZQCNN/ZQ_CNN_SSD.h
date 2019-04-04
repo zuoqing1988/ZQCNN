@@ -39,7 +39,7 @@ namespace ZQ
 				printf("failed to load net (%s, %s)\n",proto_file.c_str(), model_file.c_str());
 				return false;
 			}
-			//printf("MulAdd = %.3f M\n", net.GetNumOfMulAdd() / (1024.0*1024.0));
+			printf("MulAdd = %.3f M\n", net.GetNumOfMulAdd() / (1024.0*1024.0));
 			this->proto_file = proto_file;
 			this->model_file = model_file;
 			this->out_blob_name = out_blob_name;
@@ -72,7 +72,7 @@ namespace ZQ
 			ZQ_CNN_Tensor4D_NHW_C_Align128bit input0, input1;
 			if (mxnet_ssd)
 			{
-				if (!input0.ConvertFromBGR(bgr_img, width, height, widthStep, 127.5, 1))
+				if (!input0.ConvertFromBGR(bgr_img, width, height, widthStep))
 					return false;
 			}
 			else

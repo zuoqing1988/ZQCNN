@@ -10,6 +10,17 @@ namespace ZQ
 	class ZQ_CNN_Tensor4D_NCHWC
 	{
 	public:
+		class Buffer
+		{
+		public:
+			void* data;
+			__int64 len;
+
+			Buffer() : data(0), len(0) {}
+			~Buffer() { Release(); }
+			void Release() { if (data) _aligned_free(data); data = 0; len = 0; }
+		};
+	public:
 		enum ALIGN_TYPE {
 			ALIGN_C1 = 0,
 			ALIGN_C4,
@@ -507,6 +518,42 @@ namespace ZQ
 				ConvertToCompactNCHW(&buf[0]);
 				output.ConvertFromCompactNCHW(&buf[0], out_N, out_C, out_H, out_W, 0, 0);
 			}
+			return true;
+		}
+
+		bool SaveToFile(const char* file)
+		{
+			int HW = H*W;
+			int CHW = C*HW;
+			int buf_len = N*CHW;
+			std::vector<float> buffer(buf_len);
+			FILE* out;
+#if defined(_WIN32)
+			if (0 != fopen_s(&out, file, "w"))
+				return false;
+#else
+			out = fopen(file, "w");
+			if (out == 0)
+				return false;
+#endif
+			if (buf_len > 0)
+			{
+				ConvertToCompactNCHW(&buffer[0]);
+				for (int n = 0; n < N; n++)
+				{
+					for (int h = 0; h < H; h++)
+					{
+						for (int w = 0; w < W; w++)
+						{
+							fprintf(out, "[n,h,w]=[%04d,%04d,%04d]: ",n,h,w);
+								for (int c = 0; c < C; c++)
+									fprintf(out, " %4d:%12.7f", c,buffer[n*CHW + c*HW + h*W + w]);
+							fprintf(out, "\n");
+						}
+					}
+				}
+			}
+			fclose(out);
 			return true;
 		}
 

@@ -86,6 +86,7 @@ namespace ZQ
 				if (!_merge_prelu())
 					return false;
 			}
+			_prepack();
 			return true;
 		}
 
@@ -128,6 +129,7 @@ namespace ZQ
 				if (!_merge_prelu())
 					return false;
 			}
+			_prepack();
 			return true;
 		}
 
@@ -1092,6 +1094,12 @@ namespace ZQ
 			bottoms = tmp_bottoms;
 			tops = tmp_tops;
 			return true;
+		}
+
+		void _prepack()
+		{
+			for (int i = 0; i < layers.size(); i++)
+				layers[i]->Prepack();
 		}
 
 		bool _merge_bns_to_innerproduct(ZQ_CNN_Layer_NCHWC_InnerProduct<Tensor4D>* conv_layer, ZQ_CNN_Layer_NCHWC_BatchNormScale<Tensor4D>* bns_layer)

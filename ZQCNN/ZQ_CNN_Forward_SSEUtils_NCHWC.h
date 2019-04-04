@@ -75,6 +75,10 @@ namespace ZQ
 		}
 
 		/****************************/
+		static bool ConvolutionPrePack(const ZQ_CNN_Tensor4D_NCHWC1& filters,
+			ZQ_CNN_Tensor4D_NCHWC::Buffer& packedfilters) {
+			return false;
+		}
 
 		static bool InnerProductWithBias(ZQ_CNN_Tensor4D_NCHWC1& input, const ZQ_CNN_Tensor4D_NCHWC1& filters,
 			const ZQ_CNN_Tensor4D_NCHWC1& bias, ZQ_CNN_Tensor4D_NCHWC1& output,
@@ -107,6 +111,40 @@ namespace ZQ
 		static bool Convolution(ZQ_CNN_Tensor4D_NCHWC1& input, const ZQ_CNN_Tensor4D_NCHWC1& filters, int strideH, int strideW,
 			int dilation_H, int dilation_W, int padH, int padW,
 			ZQ_CNN_Tensor4D_NCHWC1& output, void** buffer = 0, __int64* buffer_len = 0);
+
+		static bool ConvolutionWithBias(ZQ_CNN_Tensor4D_NCHWC1& input,
+			const ZQ_CNN_Tensor4D_NCHWC::Buffer& packedfilters, int filter_N, int filter_H, int filter_W, int filter_C,
+			const ZQ_CNN_Tensor4D_NCHWC1& bias, int strideH, int strideW, int dilation_H, int dilation_W, int padH, int padW,
+			ZQ_CNN_Tensor4D_NCHWC1& output, void** buffer = 0, __int64* buffer_len = 0)
+		{
+			return false;
+		}
+
+		static bool ConvolutionWithBiasPReLU(ZQ_CNN_Tensor4D_NCHWC1& input,
+			const ZQ_CNN_Tensor4D_NCHWC::Buffer& packedfilters, int filter_N, int filter_H, int filter_W, int filter_C,
+			const ZQ_CNN_Tensor4D_NCHWC1& bias, const ZQ_CNN_Tensor4D_NCHWC1& slope, int strideH, int strideW,
+			int dilation_H, int dilation_W, int padH, int padW, ZQ_CNN_Tensor4D_NCHWC1& output,
+			void** buffer = 0, __int64* buffer_len = 0)
+		{
+			return false;
+		}
+
+		static bool ConvolutionWithPReLU(ZQ_CNN_Tensor4D_NCHWC1& input,
+			const ZQ_CNN_Tensor4D_NCHWC::Buffer& packedfilters, int filter_N, int filter_H, int filter_W, int filter_C,
+			const ZQ_CNN_Tensor4D_NCHWC1& slope, int strideH, int strideW, int dilation_H, int dilation_W, int padH, int padW,
+			ZQ_CNN_Tensor4D_NCHWC1& output, void** buffer = 0, __int64* buffer_len = 0)
+		{
+			return false;
+		}
+
+		static bool Convolution(ZQ_CNN_Tensor4D_NCHWC1& input,
+			const ZQ_CNN_Tensor4D_NCHWC::Buffer& packedfilters, int filter_N, int filter_H, int filter_W, int filter_C,
+			int strideH, int strideW,
+			int dilation_H, int dilation_W, int padH, int padW,
+			ZQ_CNN_Tensor4D_NCHWC1& output, void** buffer = 0, __int64* buffer_len = 0) {
+			return false;
+		}
+
 
 		static bool DepthwiseConvolutionWithBias(ZQ_CNN_Tensor4D_NCHWC1& input, const ZQ_CNN_Tensor4D_NCHWC1& filters,
 			const ZQ_CNN_Tensor4D_NCHWC1& bias, int strideH, int strideW, int dilation_H, int dilation_W, int padH, int padW, ZQ_CNN_Tensor4D_NCHWC1& output);
@@ -154,6 +192,33 @@ namespace ZQ
 
 
 #if __ARM_NEON || (ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_SSE)
+
+		static bool ConvolutionPrePack(const ZQ_CNN_Tensor4D_NCHWC4& filters,
+			ZQ_CNN_Tensor4D_NCHWC::Buffer& packedfilters);
+
+		static bool ConvolutionWithBias(ZQ_CNN_Tensor4D_NCHWC4& input,
+			const ZQ_CNN_Tensor4D_NCHWC::Buffer& packedfilters, int filter_N, int filter_H, int filter_W, int filter_C,
+			const ZQ_CNN_Tensor4D_NCHWC4& bias, int strideH, int strideW, int dilation_H, int dilation_W, int padH, int padW,
+			ZQ_CNN_Tensor4D_NCHWC4& output, void** buffer = 0, __int64* buffer_len = 0);
+
+
+		static bool ConvolutionWithBiasPReLU(ZQ_CNN_Tensor4D_NCHWC4& input,
+			const ZQ_CNN_Tensor4D_NCHWC::Buffer& packedfilters, int filter_N, int filter_H, int filter_W, int filter_C,
+			const ZQ_CNN_Tensor4D_NCHWC4& bias, const ZQ_CNN_Tensor4D_NCHWC4& slope, int strideH, int strideW,
+			int dilation_H, int dilation_W, int padH, int padW, ZQ_CNN_Tensor4D_NCHWC4& output,
+			void** buffer = 0, __int64* buffer_len = 0);
+
+		static bool ConvolutionWithPReLU(ZQ_CNN_Tensor4D_NCHWC4& input,
+			const ZQ_CNN_Tensor4D_NCHWC::Buffer& packedfilters, int filter_N, int filter_H, int filter_W, int filter_C,
+			const ZQ_CNN_Tensor4D_NCHWC4& slope, int strideH, int strideW, int dilation_H, int dilation_W, int padH, int padW,
+			ZQ_CNN_Tensor4D_NCHWC4& output, void** buffer = 0, __int64* buffer_len = 0);
+
+		static bool Convolution(ZQ_CNN_Tensor4D_NCHWC4& input,
+			const ZQ_CNN_Tensor4D_NCHWC::Buffer& packedfilters, int filter_N, int filter_H, int filter_W, int filter_C,
+			int strideH, int strideW,
+			int dilation_H, int dilation_W, int padH, int padW,
+			ZQ_CNN_Tensor4D_NCHWC4& output, void** buffer = 0, __int64* buffer_len = 0);
+
 
 		static bool InnerProductWithBias(ZQ_CNN_Tensor4D_NCHWC4& input, const ZQ_CNN_Tensor4D_NCHWC4& filters,
 			const ZQ_CNN_Tensor4D_NCHWC4& bias, ZQ_CNN_Tensor4D_NCHWC4& output,
@@ -226,6 +291,12 @@ namespace ZQ
 
 #if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_AVX
 
+		static bool ConvolutionPrePack(const ZQ_CNN_Tensor4D_NCHWC8& filters,
+			ZQ_CNN_Tensor4D_NCHWC::Buffer& packedfilters)
+		{
+			return false;
+		}
+
 		static bool InnerProductWithBias(ZQ_CNN_Tensor4D_NCHWC8& input, const ZQ_CNN_Tensor4D_NCHWC8& filters,
 			const ZQ_CNN_Tensor4D_NCHWC8& bias, ZQ_CNN_Tensor4D_NCHWC8& output, 
 			void** buffer = 0, __int64* buffer_len = 0);
@@ -257,6 +328,39 @@ namespace ZQ
 		static bool Convolution(ZQ_CNN_Tensor4D_NCHWC8& input, const ZQ_CNN_Tensor4D_NCHWC8& filters, int strideH, int strideW,
 			int dilation_H, int dilation_W, int padH, int padW,
 			ZQ_CNN_Tensor4D_NCHWC8& output, void** buffer = 0, __int64* buffer_len = 0);
+
+		static bool ConvolutionWithBias(ZQ_CNN_Tensor4D_NCHWC8& input,
+			const ZQ_CNN_Tensor4D_NCHWC::Buffer& packedfilters, int filter_N, int filter_H, int filter_W, int filter_C,
+			const ZQ_CNN_Tensor4D_NCHWC8& bias, int strideH, int strideW, int dilation_H, int dilation_W, int padH, int padW,
+			ZQ_CNN_Tensor4D_NCHWC8& output, void** buffer = 0, __int64* buffer_len = 0)
+		{
+			return false;
+		}
+
+		static bool ConvolutionWithBiasPReLU(ZQ_CNN_Tensor4D_NCHWC8& input,
+			const ZQ_CNN_Tensor4D_NCHWC::Buffer& packedfilters, int filter_N, int filter_H, int filter_W, int filter_C,
+			const ZQ_CNN_Tensor4D_NCHWC8& bias, const ZQ_CNN_Tensor4D_NCHWC8& slope, int strideH, int strideW,
+			int dilation_H, int dilation_W, int padH, int padW, ZQ_CNN_Tensor4D_NCHWC8& output,
+			void** buffer = 0, __int64* buffer_len = 0)
+		{
+			return false;
+		}
+
+		static bool ConvolutionWithPReLU(ZQ_CNN_Tensor4D_NCHWC8& input,
+			const ZQ_CNN_Tensor4D_NCHWC::Buffer& packedfilters, int filter_N, int filter_H, int filter_W, int filter_C,
+			const ZQ_CNN_Tensor4D_NCHWC8& slope, int strideH, int strideW, int dilation_H, int dilation_W, int padH, int padW,
+			ZQ_CNN_Tensor4D_NCHWC8& output, void** buffer = 0, __int64* buffer_len = 0)
+		{
+			return false;
+		}
+
+		static bool Convolution(ZQ_CNN_Tensor4D_NCHWC8& input,
+			const ZQ_CNN_Tensor4D_NCHWC::Buffer& packedfilters, int filter_N, int filter_H, int filter_W, int filter_C,
+			int strideH, int strideW,
+			int dilation_H, int dilation_W, int padH, int padW,
+			ZQ_CNN_Tensor4D_NCHWC8& output, void** buffer = 0, __int64* buffer_len = 0) {
+			return false;
+		}
 
 		static bool DepthwiseConvolutionWithBias(ZQ_CNN_Tensor4D_NCHWC8& input, const ZQ_CNN_Tensor4D_NCHWC8& filters,
 			const ZQ_CNN_Tensor4D_NCHWC8& bias, int strideH, int strideW, int dilation_H, int dilation_W, int padH, int padW, ZQ_CNN_Tensor4D_NCHWC8& output);
