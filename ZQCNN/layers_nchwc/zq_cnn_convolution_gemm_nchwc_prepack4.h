@@ -80,7 +80,7 @@ void zq_cnn_convolution_gemm_nchwc_prepack4_kernel3x3_C3C4(
 	int div4_size = (N + 3) >> 2;
 	int paddedC = 36;
 	int packed_B_step = paddedC * 4;
-	int i, ii, c, h, w;
+	int i, ii, h, w;
 	__int64 need_buffer_size = (__int64)packed_B_step*div4_size * sizeof(zq_base_type);
 	zq_base_type* B_buffer, *dst_ptr;
 	const zq_base_type* row_ptr0, *row_ptr1, *row_ptr2, *row_ptr3;
