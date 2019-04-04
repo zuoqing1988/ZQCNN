@@ -581,7 +581,7 @@ void zq_cnn_convolution_gemm_nchwc_packedM6N4_kernel1x1(
 	for (i = 0; i < div6_size; i++)
 	{
 		src_ptr2 = A_buffer + packed_A_step*i;
-		ii = i << 3;
+		ii = i * 6;
 		n = ii / HW;
 		h = (ii%HW) / in_W;
 		w = (ii%HW) % in_W;
