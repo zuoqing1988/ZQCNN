@@ -897,7 +897,7 @@ void zq_cnn_convolution_gemm_nchwc_packed4_kernel3x3_C3C4(
 	const zq_base_type* row_ptr0, *row_ptr1, *row_ptr2, *row_ptr3;
 	const zq_base_type* pix_ptr0, *pix_ptr1, *pix_ptr2, *pix_ptr3;
 	zq_base_type* dst_ptr0, *dst_ptr1, *dst_ptr2, *dst_ptr3;
-	zq_base_type* src_ptr0, *src_ptr1;
+	const zq_base_type* src_ptr0, *src_ptr1;
 	register zq_mm_type a0, a1, a2, a3, b0, b1, b2, b3;
 	register zq_mm_type c00, c01, c02, c03;
 	register zq_mm_type c10, c11, c12, c13;

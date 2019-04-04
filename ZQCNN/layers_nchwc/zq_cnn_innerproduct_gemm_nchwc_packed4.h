@@ -227,8 +227,7 @@ void zq_cnn_innerproduct_gemm_nchwc_packed4(
 	int packed_B_num = (out_C + 3) >> 2;
 	int i, ii, h, w, c, out_c;
 	zq_base_type* A_buffer, *dst_ptr;
-	zq_base_type* src_ptr0;
-	const zq_base_type* src_ptr1;
+	const zq_base_type* src_ptr0, *src_ptr1;
 	const zq_base_type* slice_ptr0, *slice_ptr1, *slice_ptr2, *slice_ptr3;
 	const zq_base_type* row_ptr0, *row_ptr1, *row_ptr2, *row_ptr3;
 	const zq_base_type* pix_ptr0, *pix_ptr1, *pix_ptr2, *pix_ptr3;
