@@ -842,8 +842,282 @@ void zq_cnn_convolution_gemm_nchwc_packed4_kernel1x1(
 			}
 		}
 	}
+}
 
-	/*  */
+/*zq_mm_align_size must be 4*/
+void zq_cnn_convolution_gemm_nchwc_packed4_kernel3x3_C3C4(
+	const zq_base_type* in_data,
+	int in_N,
+	int in_H,
+	int in_W,
+	int in_C,
+	int in_widthStep,
+	int in_sliceStep,
+	int in_imStep,
+	const zq_base_type* packed_filter,
+	int kernel_H,
+	int kernel_W,
+	int stride_H,
+	int stride_W,
+	int dilate_H,
+	int dilate_W,
+	zq_base_type* out_data,
+	int out_N,
+	int out_H,
+	int out_W,
+	int out_C,
+	int out_widthStep,
+	int out_sliceStep,
+	int out_imStep,
+#if WITH_BIAS
+	const zq_base_type* bias,
+#endif
+#if WITH_PRELU
+	const zq_base_type* slope,
+#endif
+	void** buffer,
+	__int64* buffer_len
+)
+{
+	int HW = out_H*out_W;
+	int NHW = out_N*HW;
+	int div4_size = NHW >> 2;
+	int paddedC = 36;
+	int packed_A_num = div4_size + (NHW - (div4_size << 2));
+	int packed_A_step = paddedC * 4;
+	int packed_B_step = paddedC * 4;
+	int packed_B_num = (out_C + 3) >> 2;
+	int stride_H_mul_widthStep = stride_H*in_widthStep;
+	int stride_W_mul_pixStep = stride_W*zq_mm_align_size;
+	int dilate_H_mul_widthStep = dilate_H*in_widthStep;
+	int dilate_W_mul_pixStep = dilate_W*zq_mm_align_size;
+	int i, ii, n, h, w, c, out_c;
+	zq_base_type* A_buffer, *dst_ptr;
+	const zq_base_type* im_ptr0, *im_ptr1, *im_ptr2, *im_ptr3;
+	const zq_base_type* row_ptr0, *row_ptr1, *row_ptr2, *row_ptr3;
+	const zq_base_type* pix_ptr0, *pix_ptr1, *pix_ptr2, *pix_ptr3;
+	zq_base_type* dst_ptr0, *dst_ptr1, *dst_ptr2, *dst_ptr3;
+	zq_base_type* src_ptr0, *src_ptr1;
+	register zq_mm_type a0, a1, a2, a3, b0, b1, b2, b3;
+	register zq_mm_type c00, c01, c02, c03;
+	register zq_mm_type c10, c11, c12, c13;
+	register zq_mm_type c20, c21, c22, c23;
+	register zq_mm_type c30, c31, c32, c33;
+	ZQ_DECLSPEC_ALIGN32 zq_base_type q[16];
+#if WITH_BIAS
+	register zq_mm_type bias_v;
+#endif
+#if WITH_PRELU
+	register zq_mm_type slope_v;
+	register zq_mm_type zero_v = zq_mm_setzero_ps();
+#endif
+
+	__int64 need_buffer_size = (__int64)packed_A_step*packed_A_num * sizeof(zq_base_type);
+	if (*buffer_len < need_buffer_size)
+	{
+		if (*buffer != 0)
+			_aligned_free(*buffer);
+		*buffer = _aligned_malloc(need_buffer_size, 32);
+		*buffer_len = need_buffer_size;
+	}
+	A_buffer = (zq_base_type*)(*buffer);
+	/* pack in_data */
+	for (i = 0; i < div4_size; i++)
+	{
+		ii = i * 4;
+		dst_ptr = A_buffer + packed_A_step*i;
+		n = ii / HW;
+		h = (ii%HW) / out_W;
+		w = (ii%HW) % out_W;
+		im_ptr0 = in_data + n*in_imStep + h*stride_H_mul_widthStep + w*stride_W_mul_pixStep;
+		ii++;
+		n = ii / HW;
+		h = (ii%HW) / out_W;
+		w = (ii%HW) % out_W;
+		im_ptr1 = in_data + n*in_imStep + h*stride_H_mul_widthStep + w*stride_W_mul_pixStep;
+		ii++;
+		n = ii / HW;
+		h = (ii%HW) / out_W;
+		w = (ii%HW) % out_W;
+		im_ptr2 = in_data + n*in_imStep + h*stride_H_mul_widthStep + w*stride_W_mul_pixStep;
+		ii++;
+		n = ii / HW;
+		h = (ii%HW) / out_W;
+		w = (ii%HW) % out_W;
+		im_ptr3 = in_data + n*in_imStep + h*stride_H_mul_widthStep + w*stride_W_mul_pixStep;
+		row_ptr0 = im_ptr0;
+		row_ptr1 = im_ptr1;
+		row_ptr2 = im_ptr2;
+		row_ptr3 = im_ptr3;
+		for (h = 0; h < 3; h++)
+		{
+			pix_ptr0 = row_ptr0;
+			pix_ptr1 = row_ptr1;
+			pix_ptr2 = row_ptr2;
+			pix_ptr3 = row_ptr3;
+			for (w = 0; w < 3; w++)
+			{
+				zq_mm_store_ps(dst_ptr, zq_mm_load_ps(pix_ptr0));
+				zq_mm_store_ps(dst_ptr + zq_mm_align_size, zq_mm_load_ps(pix_ptr1));
+				zq_mm_store_ps(dst_ptr + zq_mm_align_size2, zq_mm_load_ps(pix_ptr2));
+				zq_mm_store_ps(dst_ptr + zq_mm_align_size3, zq_mm_load_ps(pix_ptr3));
+				dst_ptr += zq_mm_align_size4;
+				pix_ptr0 += dilate_W_mul_pixStep;
+				pix_ptr1 += dilate_W_mul_pixStep;
+				pix_ptr2 += dilate_W_mul_pixStep;
+				pix_ptr3 += dilate_W_mul_pixStep;
+			}
+			row_ptr0 += dilate_H_mul_widthStep;
+			row_ptr1 += dilate_H_mul_widthStep;
+			row_ptr2 += dilate_H_mul_widthStep;
+			row_ptr3 += dilate_H_mul_widthStep;
+		}
+	}
+
+	for (i = 0; i < NHW - div4_size * 4; i++)
+	{
+		ii = div4_size * 4 + i;
+		dst_ptr = A_buffer + packed_A_step*(i + div4_size);
+		n = ii / HW;
+		h = (ii%HW) / out_W;
+		w = (ii%HW) % out_W;
+		im_ptr0 = in_data + n*in_imStep + h*stride_H_mul_widthStep + w*stride_W_mul_pixStep;
+		row_ptr0 = im_ptr0;
+		for (h = 0; h < 3; h++)
+		{
+			pix_ptr0 = row_ptr0;
+			for (w = 0; w < 3; w++)
+			{
+				zq_mm_store_ps(dst_ptr, zq_mm_load_ps(pix_ptr0));
+				dst_ptr += zq_mm_align_size;
+				pix_ptr0 += dilate_W_mul_pixStep;
+			}
+			row_ptr0 += dilate_H_mul_widthStep;
+		}
+	}
+
+	/* gemm */
+	for (i = 0; i < div4_size; i++)
+	{
+		ii = i * 4;
+		n = ii / HW;
+		h = (ii%HW) / out_W;
+		w = (ii%HW) % out_W;
+		dst_ptr0 = out_data + n*out_imStep + h*out_widthStep + w*zq_mm_align_size;
+		ii++;
+		n = ii / HW;
+		h = (ii%HW) / out_W;
+		w = (ii%HW) % out_W;
+		dst_ptr1 = out_data + n*out_imStep + h*out_widthStep + w*zq_mm_align_size;
+		ii++;
+		n = ii / HW;
+		h = (ii%HW) / out_W;
+		w = (ii%HW) % out_W;
+		dst_ptr2 = out_data + n*out_imStep + h*out_widthStep + w*zq_mm_align_size;
+		ii++;
+		n = ii / HW;
+		h = (ii%HW) / out_W;
+		w = (ii%HW) % out_W;
+		dst_ptr3 = out_data + n*out_imStep + h*out_widthStep + w*zq_mm_align_size;
+
+		for (out_c = 0; out_c < out_C; out_c += zq_mm_align_size)
+		{
+			src_ptr0 = A_buffer + packed_A_step*i;
+			src_ptr1 = packed_filter + packed_B_step*(out_c / zq_mm_align_size);
+			op4x4_1_first;
+			op4x4_8;
+			store4x4;
+#if WITH_BIAS
+			bias_v = zq_mm_load_ps(bias + out_c);
+			a0 = zq_mm_add_ps(bias_v, zq_mm_load_ps(dst_ptr0));
+			a1 = zq_mm_add_ps(bias_v, zq_mm_load_ps(dst_ptr1));
+			a2 = zq_mm_add_ps(bias_v, zq_mm_load_ps(dst_ptr2));
+			a3 = zq_mm_add_ps(bias_v, zq_mm_load_ps(dst_ptr3));
+#if WITH_PRELU
+			slope_v = zq_mm_load_ps(slope + out_c);
+			c00 = zq_mm_min_ps(a0, zero_v);
+			c01 = zq_mm_min_ps(a1, zero_v);
+			c02 = zq_mm_min_ps(a2, zero_v);
+			c03 = zq_mm_min_ps(a3, zero_v);
+			c10 = zq_mm_max_ps(a0, zero_v);
+			c11 = zq_mm_max_ps(a1, zero_v);
+			c12 = zq_mm_max_ps(a2, zero_v);
+			c13 = zq_mm_max_ps(a3, zero_v);
+			a0 = zq_mm_fmadd_ps(slope_v, c00, c10);
+			a1 = zq_mm_fmadd_ps(slope_v, c01, c11);
+			a2 = zq_mm_fmadd_ps(slope_v, c02, c12);
+			a3 = zq_mm_fmadd_ps(slope_v, c03, c13);
+#endif
+			zq_mm_store_ps(dst_ptr0, a0);
+			zq_mm_store_ps(dst_ptr1, a1);
+			zq_mm_store_ps(dst_ptr2, a2);
+			zq_mm_store_ps(dst_ptr3, a3);
+#else
+#if WITH_PRELU
+			slope_v = zq_mm_load_ps(slope + out_c);
+			a0 = zq_mm_load_ps(dst_ptr0);
+			a1 = zq_mm_load_ps(dst_ptr1);
+			a2 = zq_mm_load_ps(dst_ptr2);
+			a3 = zq_mm_load_ps(dst_ptr3);
+			c00 = zq_mm_min_ps(a0, zero_v);
+			c01 = zq_mm_min_ps(a1, zero_v);
+			c02 = zq_mm_min_ps(a2, zero_v);
+			c03 = zq_mm_min_ps(a3, zero_v);
+			c10 = zq_mm_max_ps(a0, zero_v);
+			c11 = zq_mm_max_ps(a1, zero_v);
+			c12 = zq_mm_max_ps(a2, zero_v);
+			c13 = zq_mm_max_ps(a3, zero_v);
+			zq_mm_store_ps(dst_ptr0, zq_mm_fmadd_ps(slope_v, c00, c10));
+			zq_mm_store_ps(dst_ptr1, zq_mm_fmadd_ps(slope_v, c01, c11));
+			zq_mm_store_ps(dst_ptr2, zq_mm_fmadd_ps(slope_v, c02, c12));
+			zq_mm_store_ps(dst_ptr3, zq_mm_fmadd_ps(slope_v, c03, c13));
+#endif
+#endif
+			dst_ptr0 += out_sliceStep;
+			dst_ptr1 += out_sliceStep;
+			dst_ptr2 += out_sliceStep;
+			dst_ptr3 += out_sliceStep;
+		}
+	}
+
+	//rest 
+	for (i = 0; i < NHW - div4_size * 4; i++)
+	{
+		ii = (div4_size << 2) + i;
+		n = ii / HW;
+		h = (ii%HW) / out_W;
+		w = (ii%HW) % out_W;
+		dst_ptr0 = out_data + n*out_imStep + h*out_widthStep + w*zq_mm_align_size;
+
+		for (out_c = 0; out_c < out_C; out_c += zq_mm_align_size)
+		{
+			src_ptr0 = A_buffer + packed_A_step*(i + div4_size);
+			src_ptr1 = packed_filter + packed_B_step*(out_c / zq_mm_align_size);
+			op1x4_1_first;
+			op1x4_8;
+			store1x4;
+#if WITH_BIAS
+			bias_v = zq_mm_load_ps(bias + out_c);
+			a0 = zq_mm_add_ps(bias_v, zq_mm_load_ps(dst_ptr0));
+#if WITH_PRELU
+			slope_v = zq_mm_load_ps(slope + out_c);
+			c00 = zq_mm_min_ps(a0, zero_v);
+			c10 = zq_mm_max_ps(a0, zero_v);
+			a0 = zq_mm_fmadd_ps(slope_v, c00, c10);
+#endif
+			zq_mm_store_ps(dst_ptr0, a0);
+#else
+#if WITH_PRELU
+			slope_v = zq_mm_load_ps(slope + out_c);
+			a0 = zq_mm_load_ps(dst_ptr0);
+			c00 = zq_mm_min_ps(a0, zero_v);
+			c10 = zq_mm_max_ps(a0, zero_v);
+			zq_mm_store_ps(dst_ptr0, zq_mm_fmadd_ps(slope_v, c00, c10));
+#endif
+#endif
+			dst_ptr0 += out_sliceStep;
+		}
+	}
 }
 
 
