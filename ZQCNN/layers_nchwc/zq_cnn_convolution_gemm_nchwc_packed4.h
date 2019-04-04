@@ -309,6 +309,60 @@ op1x4_32
 op1x4_32;\
 op1x4_32
 
+#if __ARM_NEON && __ARM_NEON_ARMV8
+
+#define store6x4 \
+dst_ptr0[0] = vaddvq_f32(c00);\
+dst_ptr0[1] = vaddvq_f32(c01);\
+dst_ptr0[2] = vaddvq_f32(c02);\
+dst_ptr0[3] = vaddvq_f32(c03);\
+dst_ptr1[0] = vaddvq_f32(c10);\
+dst_ptr1[1] = vaddvq_f32(c11);\
+dst_ptr1[2] = vaddvq_f32(c12);\
+dst_ptr1[3] = vaddvq_f32(c13);\
+dst_ptr2[0] = vaddvq_f32(c20);\
+dst_ptr2[1] = vaddvq_f32(c21);\
+dst_ptr2[2] = vaddvq_f32(c22);\
+dst_ptr2[3] = vaddvq_f32(c23);\
+dst_ptr3[0] = vaddvq_f32(c30);\
+dst_ptr3[1] = vaddvq_f32(c31);\
+dst_ptr3[2] = vaddvq_f32(c32);\
+dst_ptr3[3] = vaddvq_f32(c33);\
+dst_ptr4[0] = vaddvq_f32(c40);\
+dst_ptr4[1] = vaddvq_f32(c41);\
+dst_ptr4[2] = vaddvq_f32(c42);\
+dst_ptr4[3] = vaddvq_f32(c43);\
+dst_ptr5[0] = vaddvq_f32(c50);\
+dst_ptr5[1] = vaddvq_f32(c51);\
+dst_ptr5[2] = vaddvq_f32(c52);\
+dst_ptr5[3] = vaddvq_f32(c53)
+
+#define store4x4 \
+dst_ptr0[0] = vaddvq_f32(c00);\
+dst_ptr0[1] = vaddvq_f32(c01);\
+dst_ptr0[2] = vaddvq_f32(c02);\
+dst_ptr0[3] = vaddvq_f32(c03);\
+dst_ptr1[0] = vaddvq_f32(c10);\
+dst_ptr1[1] = vaddvq_f32(c11);\
+dst_ptr1[2] = vaddvq_f32(c12);\
+dst_ptr1[3] = vaddvq_f32(c13);\
+dst_ptr2[0] = vaddvq_f32(c20);\
+dst_ptr2[1] = vaddvq_f32(c21);\
+dst_ptr2[2] = vaddvq_f32(c22);\
+dst_ptr2[3] = vaddvq_f32(c23);\
+dst_ptr3[0] = vaddvq_f32(c30);\
+dst_ptr3[1] = vaddvq_f32(c31);\
+dst_ptr3[2] = vaddvq_f32(c32);\
+dst_ptr3[3] = vaddvq_f32(c33)
+
+#define store1x4 \
+dst_ptr0[0] = vaddvq_f32(c00);\
+dst_ptr0[1] = vaddvq_f32(c01);\
+dst_ptr0[2] = vaddvq_f32(c02);\
+dst_ptr0[3] = vaddvq_f32(c03)
+
+#else 
+
 #define store6x4 \
 zq_mm_store_ps(q, c00);\
 dst_ptr0[0] = zq_final_sum_q;\
@@ -403,6 +457,9 @@ dst_ptr0[2] = zq_final_sum_q;\
 zq_mm_store_ps(q, c03);\
 dst_ptr0[3] = zq_final_sum_q
 
+#endif
+
+
 
 /*zq_mm_align_size must be 4*/
 void zq_cnn_convolution_gemm_nchwc_packedM6N4_kernel1x1(
@@ -444,8 +501,8 @@ void zq_cnn_convolution_gemm_nchwc_packedM6N4_kernel1x1(
 	int packed_B_num = (out_C + 3) >> 2;
 	int i,ii,n,h,w,c,out_c;
 	zq_base_type* A_buffer,*dst_ptr;
-	const zq_base_type* src_ptr0, *src_ptr1, *src_ptr2, *src_ptr3, *src_ptr4, *src_ptr5, *src_ptr6, *src_ptr7;
-	zq_base_type* dst_ptr0, *dst_ptr1, *dst_ptr2, *dst_ptr3, *dst_ptr4, *dst_ptr5, *dst_ptr6, *dst_ptr7;
+	const zq_base_type* src_ptr0, *src_ptr1, *src_ptr2, *src_ptr3, *src_ptr4, *src_ptr5;
+	zq_base_type* dst_ptr0, *dst_ptr1, *dst_ptr2, *dst_ptr3, *dst_ptr4, *dst_ptr5;
 	register zq_mm_type a0, a1, a2, a3, a4, a5;
 	register zq_mm_type b0, b1, b2, b3;
 	register zq_mm_type c00, c01, c02, c03, c04, c05;
