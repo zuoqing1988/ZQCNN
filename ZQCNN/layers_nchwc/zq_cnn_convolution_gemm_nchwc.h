@@ -714,7 +714,7 @@ extern "C" {
 		__int64* buffer_len
 	);
 
-	void zq_cnn_convolution_gemm_nchwc4_packedM8N4_kernel1x1(
+	void zq_cnn_convolution_gemm_nchwc4_packedM6N4_kernel1x1(
 		const float* in_data,
 		int in_N,
 		int in_H,
@@ -736,7 +736,7 @@ extern "C" {
 		__int64* buffer_len
 	);
 
-	void zq_cnn_convolution_gemm_nchwc4_packedM8N4_kernel1x1_with_bias(
+	void zq_cnn_convolution_gemm_nchwc4_packedM6N4_kernel1x1_with_bias(
 		const float* in_data,
 		int in_N,
 		int in_H,
@@ -759,7 +759,7 @@ extern "C" {
 		__int64* buffer_len
 	);
 
-	void zq_cnn_convolution_gemm_nchwc4_packedM8N4_kernel1x1_with_bias_prelu(
+	void zq_cnn_convolution_gemm_nchwc4_packedM6N4_kernel1x1_with_bias_prelu(
 		const float* in_data,
 		int in_N,
 		int in_H,

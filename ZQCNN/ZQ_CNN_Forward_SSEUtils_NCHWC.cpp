@@ -1830,8 +1830,8 @@ bool ZQ_CNN_Forward_SSEUtils_NCHWC::ConvolutionWithBias(ZQ_CNN_Tensor4D_NCHWC4& 
 
 	if (filter_H == 1 && filter_W == 1)
 	{
-#if __ARM_NEON&&__ARM_NEON_ARMV8 && 0
-		zq_cnn_convolution_gemm_nchwc4_packedM8N4_kernel1x1_with_bias(in_firstPixelData, in_N, in_H, in_W, in_C,
+#if __ARM_NEON&&__ARM_NEON_ARMV8 && 1
+		zq_cnn_convolution_gemm_nchwc4_packedM6N4_kernel1x1_with_bias(in_firstPixelData, in_N, in_H, in_W, in_C,
 			in_widthStep, in_sliceStep, in_imStep, (const float*)(packedfilters.data),
 			out_firstPixelData, need_N, need_H, need_W, need_C,
 			out_widthStep, out_sliceStep, out_imStep, bias_firstPixelData, buffer, buffer_len);
@@ -1910,8 +1910,8 @@ bool ZQ_CNN_Forward_SSEUtils_NCHWC::ConvolutionWithBiasPReLU(ZQ_CNN_Tensor4D_NCH
 
 	if (filter_H == 1 && filter_W == 1)
 	{
-#if __ARM_NEON&&__ARM_NEON_ARMV8 && 0
-		zq_cnn_convolution_gemm_nchwc4_packedM8N4_kernel1x1_with_bias_prelu(in_firstPixelData, in_N, in_H, in_W, in_C,
+#if __ARM_NEON&&__ARM_NEON_ARMV8 && 1
+		zq_cnn_convolution_gemm_nchwc4_packedM6N4_kernel1x1_with_bias_prelu(in_firstPixelData, in_N, in_H, in_W, in_C,
 			in_widthStep, in_sliceStep, in_imStep, (const float*)(packedfilters.data),
 			out_firstPixelData, need_N, need_H, need_W, need_C,
 			out_widthStep, out_sliceStep, out_imStep, bias_firstPixelData, slope_firstPixelData, buffer, buffer_len);
@@ -1988,8 +1988,8 @@ bool ZQ_CNN_Forward_SSEUtils_NCHWC::ConvolutionWithPReLU(ZQ_CNN_Tensor4D_NCHWC4&
 
 	if (filter_H == 1 && filter_W == 1)
 	{
-#if __ARM_NEON && __ARM_NEON_ARMV8 && 0
-		zq_cnn_convolution_gemm_nchwc4_packedM8N4_kernel1x1(in_firstPixelData, in_N, in_H, in_W, in_C,
+#if __ARM_NEON && __ARM_NEON_ARMV8 && 1
+		zq_cnn_convolution_gemm_nchwc4_packedM6N4_kernel1x1(in_firstPixelData, in_N, in_H, in_W, in_C,
 			in_widthStep, in_sliceStep, in_imStep, (const float*)(packedfilters.data),
 			out_firstPixelData, need_N, need_H, need_W, need_C,
 			out_widthStep, out_sliceStep, out_imStep, buffer, buffer_len);
@@ -2065,8 +2065,8 @@ bool ZQ_CNN_Forward_SSEUtils_NCHWC::Convolution(ZQ_CNN_Tensor4D_NCHWC4& input,
 	
 	if (filter_H == 1 && filter_W == 1)
 	{
-#if __ARM_NEON && __ARM_NEON_ARMV8 && 0
-		zq_cnn_convolution_gemm_nchwc4_packedM4N4_kernel1x1(in_firstPixelData, in_N, in_H, in_W, in_C,
+#if __ARM_NEON && __ARM_NEON_ARMV8 && 1
+		zq_cnn_convolution_gemm_nchwc4_packedM6N4_kernel1x1(in_firstPixelData, in_N, in_H, in_W, in_C,
 			in_widthStep, in_sliceStep, in_imStep, (const float*)(packedfilters.data),
 			out_firstPixelData, need_N, need_H, need_W, need_C,
 			out_widthStep, out_sliceStep, out_imStep, buffer, buffer_len);
