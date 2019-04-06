@@ -929,7 +929,7 @@ namespace ZQ
 							block_end_h[bb] = (bh == block_num - 1) ? scoreH : ((bh + 1)*height_per_block);
 						}
 					}
-					int chunk_size = ceil((float)block_num / thread_num);
+					int chunk_size = 1;
 					if (thread_num <= 1)
 					{
 						for (int bb = 0; bb < block_num; bb++)
@@ -971,7 +971,7 @@ namespace ZQ
 					}
 					else
 					{
-#pragma omp parallel for schedule(static, chunk_size) num_threads(thread_num)
+#pragma omp parallel for schedule(dynamic, chunk_size) num_threads(thread_num)
 						for (int bb = 0; bb < block_num; bb++)
 						{
 							ZQ_CNN_BBox bbox;
@@ -1067,7 +1067,7 @@ namespace ZQ
 			//the first stage's nms
 			if (count < 1) return false;
 			double t15 = omp_get_wtime();
-			_nms(firstBbox, firstOrderScore, nms_thresh[0], "Union", 0, 1);
+			_nms(firstBbox, firstOrderScore, nms_thresh[0], "Union", 0);
 			_refine_and_square_bbox(firstBbox, width, height, true);
 			double t16 = omp_get_wtime();
 			if (show_debug_info)
