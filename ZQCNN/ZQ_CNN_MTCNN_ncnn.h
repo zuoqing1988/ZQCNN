@@ -2,7 +2,7 @@
 #define _ZQ_CNN_MTCNN_H_
 #pragma once
 #include "net.h"
-#include "ZQ_CNN_BBoxUtils.h"
+#include <algorithm>
 #include <omp.h>
 #ifndef __max
 #define __max(x,y) ((x>y)?(x):(y))
@@ -15,7 +15,261 @@ namespace ZQ
 	class ZQ_CNN_MTCNN_ncnn
 	{
 	public:
-		using string = std::string;
+		class ZQ_CNN_BBox
+		{
+		public:
+			float score;
+			int row1;
+			int col1;
+			int row2;
+			int col2;
+			float area;
+			bool exist;
+			bool need_check_overlap_count;
+			float ppoint[10];
+			float regreCoord[4];
+
+			ZQ_CNN_BBox()
+			{
+				memset(this, 0, sizeof(ZQ_CNN_BBox));
+			}
+
+			~ZQ_CNN_BBox() {}
+
+			bool ReadFromBinary(FILE* in)
+			{
+				if (fread(this, sizeof(ZQ_CNN_BBox), 1, in) != 1)
+					return false;
+				return true;
+			}
+
+			bool WriteBinary(FILE* out) const
+			{
+				if (fwrite(this, sizeof(ZQ_CNN_BBox), 1, out) != 1)
+					return false;
+				return true;
+			}
+		};
+
+		class ZQ_CNN_BBox106
+		{
+		public:
+			float score;
+			int row1;
+			int col1;
+			int row2;
+			int col2;
+			float area;
+			bool exist;
+			bool need_check_overlap_count;
+			float ppoint[212];
+			float regreCoord[4];
+
+			ZQ_CNN_BBox106()
+			{
+				memset(this, 0, sizeof(ZQ_CNN_BBox106));
+			}
+
+			~ZQ_CNN_BBox106() {}
+
+			bool ReadFromBinary(FILE* in)
+			{
+				if (fread(this, sizeof(ZQ_CNN_BBox106), 1, in) != 1)
+					return false;
+				return true;
+			}
+
+			bool WriteBinary(FILE* out) const
+			{
+				if (fwrite(this, sizeof(ZQ_CNN_BBox106), 1, out) != 1)
+					return false;
+				return true;
+			}
+		};
+
+		class ZQ_CNN_OrderScore
+		{
+		public:
+			float score;
+			int oriOrder;
+
+			ZQ_CNN_OrderScore()
+			{
+				memset(this, 0, sizeof(ZQ_CNN_OrderScore));
+			}
+		};
+
+		static bool _cmp_score(const ZQ_CNN_OrderScore& lsh, const ZQ_CNN_OrderScore& rsh)
+		{
+			return lsh.score < rsh.score;
+		}
+
+		static void _nms(std::vector<ZQ_CNN_BBox> &boundingBox, std::vector<ZQ_CNN_OrderScore> &bboxScore, const float overlap_threshold,
+			const std::string& modelname = "Union", int overlap_count_thresh = 0)
+		{
+			if (boundingBox.empty() || overlap_threshold >= 1.0)
+			{
+				return;
+			}
+			std::vector<int> heros;
+			std::vector<int> overlap_num;
+			//sort the score
+			sort(bboxScore.begin(), bboxScore.end(), _cmp_score);
+
+			int order = 0;
+			float IOU = 0;
+			float maxX = 0;
+			float maxY = 0;
+			float minX = 0;
+			float minY = 0;
+			while (bboxScore.size() > 0)
+			{
+				order = bboxScore.back().oriOrder;
+				bboxScore.pop_back();
+				if (order < 0)continue;
+				heros.push_back(order);
+				int cur_overlap = 0;
+				boundingBox[order].exist = false;//delete it
+				int box_num = boundingBox.size();
+
+				for (int num = 0; num < box_num; num++)
+				{
+					if (boundingBox[num].exist)
+					{
+						//the iou
+						maxY = __max(boundingBox[num].row1, boundingBox[order].row1);
+						maxX = __max(boundingBox[num].col1, boundingBox[order].col1);
+						minY = __min(boundingBox[num].row2, boundingBox[order].row2);
+						minX = __min(boundingBox[num].col2, boundingBox[order].col2);
+						//maxX1 and maxY1 reuse 
+						maxX = __max(minX - maxX + 1, 0);
+						maxY = __max(minY - maxY + 1, 0);
+						//IOU reuse for the area of two bbox
+						IOU = maxX * maxY;
+						float area1 = boundingBox[num].area;
+						float area2 = boundingBox[order].area;
+						if (!modelname.compare("Union"))
+							IOU = IOU / (area1 + area2 - IOU);
+						else if (!modelname.compare("Min"))
+						{
+							IOU = IOU / __min(area1, area2);
+						}
+						if (IOU > overlap_threshold)
+						{
+							cur_overlap++;
+							boundingBox[num].exist = false;
+							for (std::vector<ZQ_CNN_OrderScore>::iterator it = bboxScore.begin(); it != bboxScore.end(); it++)
+							{
+								if ((*it).oriOrder == num)
+								{
+									(*it).oriOrder = -1;
+									break;
+								}
+							}
+						}
+					}
+				}
+
+				
+				overlap_num.push_back(cur_overlap);
+			}
+			for (int i = 0; i < heros.size(); i++)
+			{
+				if (!boundingBox[heros[i]].need_check_overlap_count
+					|| overlap_num[i] >= overlap_count_thresh)
+					boundingBox[heros[i]].exist = true;
+			}
+			//clear exist= false;
+			for (int i = boundingBox.size() - 1; i >= 0; i--)
+			{
+				if (!boundingBox[i].exist)
+				{
+					boundingBox.erase(boundingBox.begin() + i);
+				}
+			}
+		}
+
+		static void _refine_and_square_bbox(std::vector<ZQ_CNN_BBox> &vecBbox, const int width, const int height,
+			bool square = true)
+		{
+			float bbw = 0, bbh = 0, bboxSize = 0;
+			float h = 0, w = 0;
+			float x1 = 0, y1 = 0, x2 = 0, y2 = 0;
+			for (std::vector<ZQ_CNN_BBox>::iterator it = vecBbox.begin(); it != vecBbox.end(); it++)
+			{
+				if ((*it).exist)
+				{
+					bbh = (*it).row2 - (*it).row1 + 1;
+					bbw = (*it).col2 - (*it).col1 + 1;
+					y1 = (*it).row1 + (*it).regreCoord[1] * bbh;
+					x1 = (*it).col1 + (*it).regreCoord[0] * bbw;
+					y2 = (*it).row2 + (*it).regreCoord[3] * bbh;
+					x2 = (*it).col2 + (*it).regreCoord[2] * bbw;
+
+					w = x2 - x1 + 1;
+					h = y2 - y1 + 1;
+					if (square)
+					{
+						bboxSize = (h > w) ? h : w;
+						y1 = y1 + h*0.5 - bboxSize*0.5;
+						x1 = x1 + w*0.5 - bboxSize*0.5;
+						(*it).row2 = round(y1 + bboxSize - 1);
+						(*it).col2 = round(x1 + bboxSize - 1);
+						(*it).row1 = round(y1);
+						(*it).col1 = round(x1);
+					}
+					else
+					{
+						(*it).row2 = round(y1 + h - 1);
+						(*it).col2 = round(x1 + w - 1);
+						(*it).row1 = round(y1);
+						(*it).col1 = round(x1);
+					}
+
+					//boundary check
+					/*if ((*it).row1 < 0)(*it).row1 = 0;
+					if ((*it).col1 < 0)(*it).col1 = 0;
+					if ((*it).row2 > height)(*it).row2 = height - 1;
+					if ((*it).col2 > width)(*it).col2 = width - 1;*/
+
+					it->area = (it->row2 - it->row1)*(it->col2 - it->col1);
+				}
+			}
+		}
+
+		static void _square_bbox(std::vector<ZQ_CNN_BBox> &vecBbox, const int width, const int height)
+		{
+			float bbw = 0, bbh = 0, bboxSize = 0;
+			float h = 0, w = 0;
+			float x1 = 0, y1 = 0, x2 = 0, y2 = 0;
+			for (std::vector<ZQ_CNN_BBox>::iterator it = vecBbox.begin(); it != vecBbox.end(); it++)
+			{
+				if ((*it).exist)
+				{
+					y1 = (*it).row1;
+					x1 = (*it).col1;
+					h = (*it).row2 - (*it).row1 + 1;
+					w = (*it).col2 - (*it).col1 + 1;
+					bboxSize = (h > w) ? h : w;
+					y1 = y1 + h*0.5 - bboxSize*0.5;
+					x1 = x1 + w*0.5 - bboxSize*0.5;
+					(*it).row2 = round(y1 + bboxSize - 1);
+					(*it).col2 = round(x1 + bboxSize - 1);
+					(*it).row1 = round(y1);
+					(*it).col1 = round(x1);
+
+					//boundary check
+					/*if ((*it).row1 < 0)(*it).row1 = 0;
+					if ((*it).col1 < 0)(*it).col1 = 0;
+					if ((*it).row2 > height)(*it).row2 = height - 1;
+					if ((*it).col2 > width)(*it).col2 = width - 1;*/
+
+					it->area = (it->row2 - it->row1)*(it->col2 - it->col1);
+				}
+			}
+		}
+
+	public:
 		ZQ_CNN_MTCNN_ncnn()
 		{
 			min_size = 60;
@@ -44,12 +298,9 @@ namespace ZQ
 		}
 
 	private:
-#if __ARM_NEON
-		const int BATCH_SIZE = 16;
-#else
-		const int BATCH_SIZE = 64;
-#endif
 		std::vector<ncnn::Net> pnet, rnet, onet, lnet;
+		std::vector<ncnn::UnlockedPoolAllocator> g_blob_pool_allocator;
+		std::vector<ncnn::UnlockedPoolAllocator> g_workspace_pool_allocator;
 		bool has_lnet;
 		int thread_num;
 		float thresh[3], nms_thresh[3];
@@ -74,6 +325,7 @@ namespace ZQ
 		int limit_r_num;
 		int limit_o_num;
 		int limit_l_num;
+		
 	public:
 		void TurnOnShowDebugInfo() { show_debug_info = true; }
 		void TurnOffShowDebugInfo() { show_debug_info = false; }
@@ -85,7 +337,7 @@ namespace ZQ
 		}
 
 	private:
-		static bool _load(ncnn::Net& net, const string& param, const string& model)
+		static bool _load(ncnn::Net& net, const std::string& param, const std::string& model)
 		{
 			if (-1 == net.load_param(param.c_str()))
 				return false;
@@ -106,9 +358,10 @@ namespace ZQ
 		}
 
 	public:
-		bool Init(const string& pnet_param, const string& pnet_model, const string& rnet_param, const string& rnet_model,
-			const string& onet_param, const string& onet_model, int thread_num = 1,
-			bool has_lnet = false, const string& lnet_param = "", const std::string& lnet_model = "")
+		bool Init(const std::string& pnet_param, const std::string& pnet_model, 
+			const std::string& rnet_param, const std::string& rnet_model,
+			const std::string& onet_param, const std::string& onet_model, int thread_num = 1,
+			bool has_lnet = false, const std::string& lnet_param = "", const std::string& lnet_model = "")
 		{
 			if (thread_num < 1)
 				force_run_pnet_multithread = true;
@@ -123,6 +376,10 @@ namespace ZQ
 			{
 				lnet.resize(thread_num);
 			}
+			
+			g_blob_pool_allocator.resize(thread_num);
+			g_workspace_pool_allocator.resize(thread_num);
+			
 			bool ret = true;
 			for (int i = 0; i < thread_num; i++)
 			{
@@ -145,7 +402,11 @@ namespace ZQ
 			}
 			else
 				this->thread_num = thread_num;
-
+			for (int i = 0; i < thread_num; i++)
+			{
+				g_blob_pool_allocator[i].clear();
+				g_workspace_pool_allocator[i].clear();
+			}
 			return ret;
 		}
 
@@ -297,6 +558,9 @@ namespace ZQ
 				double t11 = omp_get_wtime();
 				ncnn::Extractor ex = pnet[0].create_extractor();
 				ex.set_light_mode(true);
+				ex.set_blob_allocator(&g_blob_pool_allocator[0]);
+				ex.set_workspace_allocator(&g_workspace_pool_allocator[0]);
+				ex.set_num_threads(1);
 				if (scales[i] == 1)
 					ex.input("data", input);
 				else
@@ -460,6 +724,9 @@ namespace ZQ
 
 					ncnn::Extractor ex = pnet[thread_id].create_extractor();
 					ex.set_light_mode(true);
+					ex.set_blob_allocator(&g_blob_pool_allocator[0]);
+					ex.set_workspace_allocator(&g_workspace_pool_allocator[0]);
+					ex.set_num_threads(1);
 					ex.input("data", task_pnet_images[thread_id]);
 					ncnn::Mat score, location;
 					ex.extract("prob1", score);
@@ -513,6 +780,8 @@ namespace ZQ
 
 					ncnn::Extractor ex = pnet[thread_id].create_extractor();
 					ex.set_light_mode(true);
+					ex.set_blob_allocator(&g_blob_pool_allocator[thread_id]);
+					ex.set_workspace_allocator(&g_workspace_pool_allocator[thread_id]);
 					ex.input("data", task_pnet_images[thread_id]);
 					ncnn::Mat score, location;
 					ex.extract("prob1", score);
@@ -622,7 +891,7 @@ namespace ZQ
 						}
 					}
 					int before_count = bounding_boxes[i].size();
-					ZQ_CNN_BBoxUtils::_nms(bounding_boxes[i], bounding_scores[i], nms_thresh_per_scale, "Union", pnet_overlap_thresh_count);
+					_nms(bounding_boxes[i], bounding_scores[i], nms_thresh_per_scale, "Union", pnet_overlap_thresh_count);
 					int after_count = bounding_boxes[i].size();
 					for (int j = 0; j < after_count; j++)
 					{
@@ -694,7 +963,7 @@ namespace ZQ
 								}
 							}
 							int tmp_before_count = tmp_bounding_boxes[bb].size();
-							ZQ_CNN_BBoxUtils::_nms(tmp_bounding_boxes[bb], tmp_bounding_scores[bb], nms_thresh_per_scale, "Union", pnet_overlap_thresh_count);
+							_nms(tmp_bounding_boxes[bb], tmp_bounding_scores[bb], nms_thresh_per_scale, "Union", pnet_overlap_thresh_count);
 							int tmp_after_count = tmp_bounding_boxes[bb].size();
 							before_count += tmp_before_count;
 							after_count += tmp_after_count;
@@ -734,7 +1003,7 @@ namespace ZQ
 								}
 							}
 							int tmp_before_count = tmp_bounding_boxes[bb].size();
-							ZQ_CNN_BBoxUtils::_nms(tmp_bounding_boxes[bb], tmp_bounding_scores[bb], nms_thresh_per_scale, "Union", pnet_overlap_thresh_count);
+							_nms(tmp_bounding_boxes[bb], tmp_bounding_scores[bb], nms_thresh_per_scale, "Union", pnet_overlap_thresh_count);
 							int tmp_after_count = tmp_bounding_boxes[bb].size();
 							before_count += tmp_before_count;
 							after_count += tmp_after_count;
@@ -798,8 +1067,8 @@ namespace ZQ
 			//the first stage's nms
 			if (count < 1) return false;
 			double t15 = omp_get_wtime();
-			ZQ_CNN_BBoxUtils::_nms(firstBbox, firstOrderScore, nms_thresh[0], "Union", 0, 1);
-			ZQ_CNN_BBoxUtils::_refine_and_square_bbox(firstBbox, width, height, true);
+			_nms(firstBbox, firstOrderScore, nms_thresh[0], "Union", 0, 1);
+			_refine_and_square_bbox(firstBbox, width, height, true);
 			double t16 = omp_get_wtime();
 			if (show_debug_info)
 				printf("nms cost: %.3f ms\n", 1000 * (t16 - t15));
@@ -856,6 +1125,9 @@ namespace ZQ
 					resize_bilinear(tempIm, task_rnet_images, 24, 24);
 					ncnn::Extractor ex = rnet[0].create_extractor();
 					ex.set_light_mode(true);
+					ex.set_blob_allocator(&g_blob_pool_allocator[0]);
+					ex.set_workspace_allocator(&g_workspace_pool_allocator[0]);
+					ex.set_num_threads(1);
 					ex.input("data", task_rnet_images);
 					ncnn::Mat score, bbox, keyPoint;
 					ex.extract("prob1", score);
@@ -878,12 +1150,16 @@ namespace ZQ
 #pragma omp parallel for num_threads(thread_num) schedule(dynamic,1)
 				for (int pp = 0; pp < r_count; pp++)
 				{
+					int thread_id = omp_get_thread_num();
 					ncnn::Mat task_rnet_images;
 					ncnn::Mat tempIm;
 					copy_cut_border(input, tempIm, src_off_y[pp], input.h - src_off_y[pp] - src_rect_h[pp], src_off_x[pp], input.w - src_off_x[pp] - src_rect_w[pp]);
 					resize_bilinear(tempIm, task_rnet_images, 24, 24);
-					ncnn::Extractor ex = rnet[pp].create_extractor();
+					ncnn::Extractor ex = rnet[thread_id].create_extractor();
 					ex.set_light_mode(true);
+					ex.set_blob_allocator(&g_blob_pool_allocator[thread_id]);
+					ex.set_workspace_allocator(&g_workspace_pool_allocator[thread_id]);
+					ex.set_num_threads(1);
 					ex.input("data", task_rnet_images);
 					ncnn::Mat score, bbox, keyPoint;
 					ex.extract("prob1", score);
@@ -916,9 +1192,9 @@ namespace ZQ
 				secondScore[i].oriOrder = i;
 			}
 
-			//ZQ_CNN_BBoxUtils::_nms(secondBbox, secondScore, nms_thresh[1], "Union");
-			ZQ_CNN_BBoxUtils::_nms(secondBbox, secondScore, nms_thresh[1], "Min");
-			ZQ_CNN_BBoxUtils::_refine_and_square_bbox(secondBbox, width, height, true);
+			//_nms(secondBbox, secondScore, nms_thresh[1], "Union");
+			_nms(secondBbox, secondScore, nms_thresh[1], "Min");
+			_refine_and_square_bbox(secondBbox, width, height, true);
 			count = secondBbox.size();
 
 			double t4 = omp_get_wtime();
@@ -976,6 +1252,9 @@ namespace ZQ
 					resize_bilinear(tempIm, task_onet_images, 48, 48);
 					ncnn::Extractor ex = onet[0].create_extractor();
 					ex.set_light_mode(true);
+					ex.set_blob_allocator(&g_blob_pool_allocator[0]);
+					ex.set_workspace_allocator(&g_workspace_pool_allocator[0]);
+					ex.set_num_threads(1);
 					ex.input("data", task_onet_images);
 					ncnn::Mat score, bbox, keyPoint;
 					ex.extract("prob1", score);
@@ -998,13 +1277,17 @@ namespace ZQ
 #pragma omp parallel for num_threads(thread_num) schedule(dynamic,1)
 				for (int pp = 0; pp < o_count; pp++)
 				{
+					int thread_id = omp_get_thread_num();
 					ncnn::Mat task_onet_images;
 					ncnn::Mat tempIm;
 					copy_cut_border(input, tempIm, src_off_y[pp], input.h - src_off_y[pp] - src_rect_h[pp], src_off_x[pp],
 						input.w - src_off_x[pp] - src_rect_w[pp]);
 					resize_bilinear(tempIm, task_onet_images, 48, 48);
-					ncnn::Extractor ex = onet[pp].create_extractor();
+					ncnn::Extractor ex = onet[thread_id].create_extractor();
 					ex.set_light_mode(true);
+					ex.set_blob_allocator(&g_blob_pool_allocator[thread_id]);
+					ex.set_workspace_allocator(&g_workspace_pool_allocator[thread_id]);
+					ex.set_num_threads(1);
 					ex.input("data", task_onet_images);
 					ncnn::Mat score, bbox, keyPoint;
 					ex.extract("prob1", score);
@@ -1037,8 +1320,8 @@ namespace ZQ
 				thirdScore[i].oriOrder = i;
 			}
 
-			ZQ_CNN_BBoxUtils::_nms(thirdBbox, thirdScore, nms_thresh[2], "Min");
-			ZQ_CNN_BBoxUtils::_refine_and_square_bbox(thirdBbox, width, height, true);
+			_nms(thirdBbox, thirdScore, nms_thresh[2], "Min");
+			_refine_and_square_bbox(thirdBbox, width, height, true);
 			count = thirdBbox.size();
 
 			double t4 = omp_get_wtime();
