@@ -285,6 +285,7 @@
     <ClInclude Include="ZQ_CNN_Layer.h" />
     <ClInclude Include="ZQ_CNN_Layer_NCHWC.h" />
     <ClInclude Include="ZQ_CNN_MouthDetector.h" />
+    <ClInclude Include="ZQ_CNN_MTCNN_ncnn.h" />
     <ClInclude Include="ZQ_CNN_MTCNN_old.h" />
     <ClInclude Include="ZQ_CNN_MTCNN.h" />
     <ClInclude Include="ZQ_CNN_Net.h" />

@@ -398,5 +398,8 @@
     <ClInclude Include="layers_nchwc\zq_cnn_convolution_gemm_nchwc_packed4_handle_bias_prelu_6x4.h">
       <Filter>layers_nchwc</Filter>
     </ClInclude>
+    <ClInclude Include="ZQ_CNN_MTCNN_ncnn.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
