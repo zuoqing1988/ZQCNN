@@ -4,6 +4,12 @@
 #include "net.h"
 #include "ZQ_CNN_BBoxUtils.h"
 #include <omp.h>
+#ifndef __max
+#define __max(x,y) ((x>y)?(x):(y))
+#endif
+#ifndef __min
+#define __min(x,y) ((x<y)?(x):(y))
+#endif
 namespace ZQ
 {
 	class ZQ_CNN_MTCNN_ncnn
@@ -90,7 +96,7 @@ namespace ZQ
 
 		static bool _roi(const ncnn::Mat& input, ncnn::Mat& output, int off_x, int off_y, int width, int height)
 		{
-			if (off_x > 0 && off_y > 0 && width > 0 && height > 0 && off_x + width < input.w && off_y + height < input.h)
+			if (off_x >= 0 && off_y >= 0 && width > 0 && height > 0 && off_x + width <= input.w && off_y + height <= input.h)
 			{
 				copy_cut_border(input, output, off_y, input.h - off_y - height, off_x, input.w - off_x - width);
 				return true;
