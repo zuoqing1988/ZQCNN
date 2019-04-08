@@ -34,6 +34,27 @@ void _convolution_handle_special_channel_case_N_equal_one(bool& has_handled, int
 
 	if (align_mode == ZQ_CNN_Tensor4D::ALIGN_128bit)
 	{
+#if __ARM_NEON
+		if (filter_H == 3 && filter_W == 3 && in_C == 3)
+		{
+			if (strideH == 1 && strideW == 1 && dilation_H == 1 && dilation_W == 1)
+			{
+				zq_cnn_conv_no_padding_32f_align128bit_kernel3x3_C3_s1d1(in_data, in_N, in_H, in_W, in_C, in_pixStep, in_widthStep, in_sliceStep,
+					filter_data, filter_N, filter_H, filter_W, filter_C, filter_pixStep, filter_widthStep, filter_sliceStep, strideH, strideW,
+					dilation_H, dilation_W, out_data, out_N, out_H, out_W, out_C, out_pixStep, out_widthStep, out_sliceStep);
+				has_handled = true;
+
+			}
+			else if (strideH == 2 && strideW == 2 && dilation_H == 1 && dilation_W == 1)
+			{
+				zq_cnn_conv_no_padding_32f_align128bit_kernel3x3_C3_s2d1(in_data, in_N, in_H, in_W, in_C, in_pixStep, in_widthStep, in_sliceStep,
+					filter_data, filter_N, filter_H, filter_W, filter_C, filter_pixStep, filter_widthStep, filter_sliceStep, strideH, strideW,
+					dilation_H, dilation_W, out_data, out_N, out_H, out_W, out_C, out_pixStep, out_widthStep, out_sliceStep);
+				has_handled = true;
+
+			}
+		}
+#else
 #if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_SSE
 		if (filter_H == 3 && filter_W == 3)
 		{
@@ -47,6 +68,7 @@ void _convolution_handle_special_channel_case_N_equal_one(bool& has_handled, int
 
 			}*/
 		}
+#endif
 #endif
 	}
 	else if (align_mode == ZQ_CNN_Tensor4D::ALIGN_256bit)
@@ -175,9 +197,9 @@ void _convolution_nopadding_case_N_equal_one(int align_mode, const float* in_dat
 	int filter_HWC = filter_H*filter_W*filter_C;
 	int batch_need_size = out_NHW*filter_HWC + filter_N*filter_HWC;
 	
-	/*_convolution_handle_special_channel_case_N_equal_one(has_handled, align_mode, in_data, in_N, in_H, in_W, in_C, in_pixStep, in_widthStep, in_sliceStep,
+	_convolution_handle_special_channel_case_N_equal_one(has_handled, align_mode, in_data, in_N, in_H, in_W, in_C, in_pixStep, in_widthStep, in_sliceStep,
 		filter_data, filter_N, filter_H, filter_W, filter_C, filter_pixStep, filter_widthStep, filter_sliceStep, strideH, strideW,
-		dilation_H, dilation_W, out_data, out_N, out_H, out_W, out_C, out_pixStep, out_widthStep, out_sliceStep);*/
+		dilation_H, dilation_W, out_data, out_N, out_H, out_W, out_C, out_pixStep, out_widthStep, out_sliceStep);
 
 #if (ZQ_CNN_USE_BLAS_GEMM || ZQ_CNN_USE_MKL_GEMM || ZQ_CNN_USE_ZQ_GEMM)
 	//gemm method
