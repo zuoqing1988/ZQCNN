@@ -1288,6 +1288,20 @@ void zq_cnn_conv_no_padding_gemm_nchwc_kernel3x3_C3(
 	{
 		for (kn = 0, filter_im_ptr = filters_data; kn < filter_N; kn++, filter_im_ptr += filter_imStep, cp_dst_ptr += matrix_B_rows)
 		{
+#if __ARM_NEON && __ARM_NEON_ARMV8
+			filter_row_ptr = filter_im_ptr;
+			vst1q_f32(cp_dst_ptr, vld1q_f32(filter_row_ptr));
+			vst1q_f32(cp_dst_ptr+3, vld1q_f32(filter_row_ptr + zq_mm_align_size));
+			vst1q_f32(cp_dst_ptr+6, vld1q_f32(filter_row_ptr + zq_mm_align_size2));
+			filter_row_ptr += filter_widthStep;
+			vst1q_f32(cp_dst_ptr + 9, vld1q_f32(filter_row_ptr));
+			vst1q_f32(cp_dst_ptr + 12, vld1q_f32(filter_row_ptr + zq_mm_align_size));
+			vst1q_f32(cp_dst_ptr + 15, vld1q_f32(filter_row_ptr + zq_mm_align_size2));
+			filter_row_ptr += filter_widthStep;
+			vst1q_f32(cp_dst_ptr + 18, vld1q_f32(filter_row_ptr));
+			vst1q_f32(cp_dst_ptr + 21, vld1q_f32(filter_row_ptr + zq_mm_align_size));
+			vst1q_f32(cp_dst_ptr + 24, vld1q_f32(filter_row_ptr + zq_mm_align_size2));
+#else
 			filter_row_ptr = filter_im_ptr;
 			filter_pix_ptr = filter_row_ptr;
 			cp_dst_ptr[0] = filter_pix_ptr[0];
@@ -1332,6 +1346,7 @@ void zq_cnn_conv_no_padding_gemm_nchwc_kernel3x3_C3(
 
 			for (kc = 27; kc < matrix_B_rows; kc++)
 				cp_dst_ptr[kc] = 0;
+#endif
 		}
 	}
 	else
@@ -1399,6 +1414,32 @@ void zq_cnn_conv_no_padding_gemm_nchwc_kernel3x3_C3(
 			{
 				for (out_w = 0, in_pix_ptr = in_row_ptr; out_w < out_W; out_w++, in_pix_ptr += in_pixelStep_mul_stride_W)
 				{
+#if __ARM_NEON && __ARM_NEON_ARMV8
+					cur_in_row_ptr = in_pix_ptr;
+					cur_in_pix_ptr = cur_in_row_ptr;
+					vst1q_f32(matrix_A_row_ptr, vld1q_f32(cur_in_pix_ptr));
+					cur_in_pix_ptr += dilate_W_mul_in_pixStep;
+					vst1q_f32(matrix_A_row_ptr + 3, vld1q_f32(cur_in_pix_ptr));
+					cur_in_pix_ptr += dilate_W_mul_in_pixStep;
+					vst1q_f32(matrix_A_row_ptr + 6, vld1q_f32(cur_in_pix_ptr));
+					cur_in_row_ptr += dilate_H_mul_in_widthStep;
+					cur_in_pix_ptr = cur_in_row_ptr;
+					vst1q_f32(matrix_A_row_ptr + 9, vld1q_f32(cur_in_pix_ptr));
+					cur_in_pix_ptr += dilate_W_mul_in_pixStep;
+					vst1q_f32(matrix_A_row_ptr + 12, vld1q_f32(cur_in_pix_ptr));
+					cur_in_pix_ptr += dilate_W_mul_in_pixStep;
+					vst1q_f32(matrix_A_row_ptr + 15, vld1q_f32(cur_in_pix_ptr));
+					cur_in_row_ptr += dilate_H_mul_in_widthStep;
+					cur_in_pix_ptr = cur_in_row_ptr;
+					vst1q_f32(matrix_A_row_ptr + 18, vld1q_f32(cur_in_pix_ptr));
+					cur_in_pix_ptr += dilate_W_mul_in_pixStep;
+					vst1q_f32(matrix_A_row_ptr + 21, vld1q_f32(cur_in_pix_ptr));
+					cur_in_pix_ptr += dilate_W_mul_in_pixStep;
+					vst1q_f32(matrix_A_row_ptr + 24, vld1q_f32(cur_in_pix_ptr));
+					for (kc = 27; kc < matrix_B_rows; kc++)
+						matrix_A_row_ptr[kc] = 0;
+					matrix_A_row_ptr += matrix_A_cols;
+#else
 					cur_in_row_ptr = in_pix_ptr;
 					cur_in_pix_ptr = cur_in_row_ptr;
 					matrix_A_row_ptr[0] = cur_in_pix_ptr[0];
@@ -1441,6 +1482,8 @@ void zq_cnn_conv_no_padding_gemm_nchwc_kernel3x3_C3(
 					for (kc = 27; kc < matrix_B_rows; kc++)
 						matrix_A_row_ptr[kc] = 0;
 					matrix_A_row_ptr += matrix_A_cols;
+#endif
+					
 				}
 			}
 		}
