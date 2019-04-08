@@ -144,6 +144,33 @@ op1x4_8
 op1x4_8;\
 op1x4_8
 
+#if __ARM_NEON && __ARM_NEON_ARMV8
+#define store4x4 \
+dst_ptr0[0] = vaddvq_f32(c00);\
+dst_ptr0[1] = vaddvq_f32(c01);\
+dst_ptr0[2] = vaddvq_f32(c02);\
+dst_ptr0[3] = vaddvq_f32(c03);\
+dst_ptr1[0] = vaddvq_f32(c10);\
+dst_ptr1[1] = vaddvq_f32(c11);\
+dst_ptr1[2] = vaddvq_f32(c12);\
+dst_ptr1[3] = vaddvq_f32(c13);\
+dst_ptr2[0] = vaddvq_f32(c20);\
+dst_ptr2[1] = vaddvq_f32(c21);\
+dst_ptr2[2] = vaddvq_f32(c22);\
+dst_ptr2[3] = vaddvq_f32(c23);\
+dst_ptr3[0] = vaddvq_f32(c30);\
+dst_ptr3[1] = vaddvq_f32(c31);\
+dst_ptr3[2] = vaddvq_f32(c32);\
+dst_ptr3[3] = vaddvq_f32(c33)
+
+#define store1x4 \
+dst_ptr0[0] = vaddvq_f32(c00);\
+dst_ptr0[1] = vaddvq_f32(c01);\
+dst_ptr0[2] = vaddvq_f32(c02);\
+dst_ptr0[3] = vaddvq_f32(c03)
+
+#else
+
 #define store4x4 \
 zq_mm_store_ps(q, c00);\
 dst_ptr0[0] = zq_final_sum_q;\
@@ -187,7 +214,7 @@ zq_mm_store_ps(q, c02);\
 dst_ptr0[2] = zq_final_sum_q;\
 zq_mm_store_ps(q, c03);\
 dst_ptr0[3] = zq_final_sum_q
-
+#endif
 
 /*zq_mm_align_size must be 4*/
 void zq_cnn_innerproduct_gemm_nchwc_packed4(
