@@ -520,7 +520,9 @@ bool ZQ_CNN_Tensor4D_NHW_C_Align128bit::ChangeSize(int dst_N, int dst_H, int dst
 			unsigned char* tmp_data = (unsigned char*)_aligned_malloc(needed_dst_raw_len, 16);
 			if (tmp_data == 0)
 				return false;
-			//memset(tmp_data, 0, needed_dst_raw_len);
+#if __ARM_NEON
+			memset(tmp_data, 0, needed_dst_raw_len);
+#endif
 			_aligned_free(rawData);
 			rawData = tmp_data;
 		}
