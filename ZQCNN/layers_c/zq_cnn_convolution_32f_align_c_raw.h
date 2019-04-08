@@ -867,7 +867,7 @@ void zq_cnn_conv_no_padding_32f_kernel3x3_C3_s1d1(
 			out_n++, in_slice_ptr += in_sliceStep, out_slice_ptr += out_sliceStep)
 		{
 			for (out_c = 0, out_c_ptr = out_slice_ptr, filter_slice_ptr = filters_data;
-				out_c < filter_N;
+				out_c < out_C;
 				out_c ++, out_c_ptr ++, filter_slice_ptr += filter_sliceStep)
 			{
 				cur_filter_row_ptr = filter_slice_ptr;
@@ -979,7 +979,7 @@ void zq_cnn_conv_no_padding_32f_kernel3x3_C3_s1d1(
 			out_n++, in_slice_ptr += in_sliceStep, out_slice_ptr += out_sliceStep)
 		{
 			for (out_c = 0, out_c_ptr = out_slice_ptr, filter_slice_ptr = filters_data;
-				out_c < filter_N;
+				out_c < out_C;
 				out_c++, out_c_ptr ++, filter_slice_ptr += filter_sliceStep)
 			{
 				cur_filter_row_ptr = filter_slice_ptr;
@@ -1109,7 +1109,7 @@ void zq_cnn_conv_no_padding_32f_kernel3x3_C3_s1d1(
 			out_n++, in_slice_ptr += in_sliceStep, out_slice_ptr += out_sliceStep)
 		{
 			for (out_c = 0, out_c_ptr = out_slice_ptr, filter_slice_ptr = filters_data;
-				out_c < filter_N;
+				out_c < out_C;
 				out_c++, out_c_ptr ++, filter_slice_ptr += filter_sliceStep)
 			{
 				cur_filter_row_ptr = filter_slice_ptr;
@@ -1311,7 +1311,7 @@ void zq_cnn_conv_no_padding_32f_kernel3x3_C3_s2d1(
 			out_n++, in_slice_ptr += in_sliceStep, out_slice_ptr += out_sliceStep)
 		{
 			for (out_c = 0, out_c_ptr = out_slice_ptr, filter_slice_ptr = filters_data;
-				out_c < filter_N;
+				out_c < out_C;
 				out_c ++, out_c_ptr ++, filter_slice_ptr += filter_sliceStep)
 			{
 				cur_filter_row_ptr = filter_slice_ptr;
@@ -1415,7 +1415,7 @@ void zq_cnn_conv_no_padding_32f_kernel3x3_C3_s2d1(
 			out_n++, in_slice_ptr += in_sliceStep, out_slice_ptr += out_sliceStep)
 		{
 			for (out_c = 0, out_c_ptr = out_slice_ptr, filter_slice_ptr = filters_data;
-				out_c < in_C;
+				out_c < out_C;
 				out_c ++, out_c_ptr ++, filter_slice_ptr += filter_sliceStep)
 			{
 				cur_filter_row_ptr = filter_slice_ptr;
