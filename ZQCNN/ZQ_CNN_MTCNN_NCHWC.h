@@ -674,7 +674,7 @@ namespace ZQ
 			if (thread_num == 1 && !force_run_pnet_multithread)
 			{
 				pnet[0].TurnOffShowDebugInfo();
-				pnet[0].TurnOnShowDebugInfo();
+				//pnet[0].TurnOnShowDebugInfo();
 				_compute_Pnet_single_thread(maps, mapH, mapW);
 			}
 			else
