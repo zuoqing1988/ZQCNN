@@ -593,6 +593,11 @@ namespace ZQ
 		
 		void Swap(ZQ_CNN_Tensor4D_NCHWC1& other);
 
+		bool ResizeBilinear(ZQ_CNN_Tensor4D_NCHWC1& dst, int dst_W, int dst_H, int dst_borderW, int dst_borderH) const
+		{
+			return ResizeBilinearRect(dst, dst_W, dst_H, dst_borderW, dst_borderH, 0, 0, W, H);
+		}
+
 		bool ResizeBilinearRect(ZQ_CNN_Tensor4D_NCHWC1& dst, int dst_W, int dst_H, int dst_borderW, int dst_borderH,
 			int src_off_x, int src_off_y, int src_rect_w, int src_rect_h) const;
 
@@ -621,6 +626,12 @@ namespace ZQ
 		~ZQ_CNN_Tensor4D_NCHWC4();
 
 		void Swap(ZQ_CNN_Tensor4D_NCHWC4& other);
+
+		bool ResizeBilinear(ZQ_CNN_Tensor4D_NCHWC4& dst, int dst_W, int dst_H, int dst_borderW, int dst_borderH) const
+		{
+			return ResizeBilinearRect(dst, dst_W, dst_H, dst_borderW, dst_borderH, 0, 0, W, H);
+		}
+
 
 		bool ResizeBilinearRect(ZQ_CNN_Tensor4D_NCHWC4& dst, int dst_W, int dst_H, int dst_borderW, int dst_borderH,
 			int src_off_x, int src_off_y, int src_rect_w, int src_rect_h) const;
@@ -653,6 +664,12 @@ namespace ZQ
 		~ZQ_CNN_Tensor4D_NCHWC8();
 
 		void Swap(ZQ_CNN_Tensor4D_NCHWC8& other);
+
+		bool ResizeBilinear(ZQ_CNN_Tensor4D_NCHWC8& dst, int dst_W, int dst_H, int dst_borderW, int dst_borderH) const
+		{
+			return ResizeBilinearRect(dst, dst_W, dst_H, dst_borderW, dst_borderH, 0, 0, W, H);
+		}
+
 
 		bool ResizeBilinearRect(ZQ_CNN_Tensor4D_NCHWC8& dst, int dst_W, int dst_H, int dst_borderW, int dst_borderH,
 			int src_off_x, int src_off_y, int src_rect_w, int src_rect_h) const;

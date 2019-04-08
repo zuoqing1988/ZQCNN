@@ -85,7 +85,7 @@ int main()
 #if defined(_WIN32)
 	Mat image0 = cv::imread("data/4_320x240.jpg", 1);
 #else
-	Mat image0 = cv::imread("../../data/11.jpg", 1);
+	Mat image0 = cv::imread("../../data/4_320x240.jpg", 1);
 #endif
 	if (image0.empty())
 	{
