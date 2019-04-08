@@ -358,7 +358,7 @@ bool ZQ_CNN_Tensor4D_NCHWC1::ROI(ZQ_CNN_Tensor4D_NCHWC1& dst, int off_x, int off
 		{
 			src_row_ptr = src_slice_ptr;
 			dst_row_ptr = dst_slice_ptr;
-			for (int h = 0; h < height; h++)
+			for (int h = 0; h < height; h++, src_row_ptr += widthStep, dst_row_ptr += dstWidthStep)
 			{
 				src_pix_ptr = src_row_ptr;
 				dst_pix_ptr = dst_row_ptr;
@@ -790,7 +790,7 @@ bool ZQ_CNN_Tensor4D_NCHWC4::ROI(ZQ_CNN_Tensor4D_NCHWC4& dst, int off_x, int off
 		{
 			src_row_ptr = src_slice_ptr;
 			dst_row_ptr = dst_slice_ptr;
-			for (int h = 0; h < height; h++)
+			for (int h = 0; h < height; h++,src_row_ptr += widthStep, dst_row_ptr += dstWidthStep)
 			{
 				src_pix_ptr = src_row_ptr;
 				dst_pix_ptr = dst_row_ptr;
@@ -1223,7 +1223,7 @@ bool ZQ_CNN_Tensor4D_NCHWC8::ROI(ZQ_CNN_Tensor4D_NCHWC8& dst, int off_x, int off
 		{
 			src_row_ptr = src_slice_ptr;
 			dst_row_ptr = dst_slice_ptr;
-			for (int h = 0; h < height; h++)
+			for (int h = 0; h < height; h++, src_row_ptr += widthStep, dst_row_ptr += dstWidthStep)
 			{
 				src_pix_ptr = src_row_ptr;
 				dst_pix_ptr = dst_row_ptr;
