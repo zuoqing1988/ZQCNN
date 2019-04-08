@@ -1327,7 +1327,7 @@ void zq_cnn_conv_no_padding_32f_kernel3x3_C3_s2d1(
 				w21 = zq_mm_load_ps(cur_filter_row_ptr + filter_pixelStep);
 				w22 = zq_mm_load_ps(cur_filter_row_ptr + filter_pixelStep2);
 
-				for (out_h = 0, in_row_ptr = in_slice_ptr, out_row_ptr = out_slice_ptr;
+				for (out_h = 0, in_row_ptr = in_slice_ptr, out_row_ptr = out_c_ptr;
 					out_h < out_H;
 					out_h++, in_row_ptr += in_widthStep2, out_row_ptr += out_widthStep)
 				{
@@ -1431,7 +1431,7 @@ void zq_cnn_conv_no_padding_32f_kernel3x3_C3_s2d1(
 				w21 = zq_mm_load_ps(cur_filter_row_ptr + filter_pixelStep);
 				w22 = zq_mm_load_ps(cur_filter_row_ptr + filter_pixelStep2);
 
-				for (out_h = 0, in_row_ptr = in_slice_ptr, out_row_ptr = out_slice_ptr;
+				for (out_h = 0, in_row_ptr = in_slice_ptr, out_row_ptr = out_c_ptr;
 					out_h < out_H;
 					out_h++, in_row_ptr += in_widthStep2, out_row_ptr += out_widthStep)
 				{
