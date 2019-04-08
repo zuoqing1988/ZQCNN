@@ -210,6 +210,13 @@ namespace ZQ
 					printf("failed to run layer: %s\n", layers[i]->name.c_str());
 					return false;
 				}
+//				char buf[100];
+//#if defined(_WIN32)
+//				sprintf_s(buf, "NHWC_%d.txt", i);
+//#else
+//				sprintf(buf, "NHWC_%d.txt", i);
+//#endif
+//				top_ptrs[0]->SaveToFile(buf);
 			}
 			
 			blobs[0] = 0;

@@ -19,7 +19,7 @@ void zq_cnn_softmax_nchwc_C(
 	zq_base_type* q = (zq_base_type*)(((long long)result + (zq_mm_align_size << 2) - 1) & zq_mm_bitor_longlong);
 	int n, h, w, c, i;
 	zq_base_type* slice_ptr, *row_ptr, *pix_ptr, *im_ptr;
-	for (n = 0, im_ptr = in_tensor4D_data; n < in_N; n++, im_ptr += in_sliceStep)
+	for (n = 0, im_ptr = in_tensor4D_data; n < in_N; n++, im_ptr += in_imStep)
 	{
 		for (h = 0, row_ptr = im_ptr; h < in_H; h++, row_ptr += in_widthStep)
 		{
@@ -27,7 +27,7 @@ void zq_cnn_softmax_nchwc_C(
 			{
 				//compute max_val
 				val = zq_mm_set1_ps(-FLT_MAX);
-				for (c = 0, slice_ptr = pix_ptr; c < in_C - zq_mm_align_size; c += zq_mm_align_size, slice_ptr += zq_mm_align_size)
+				for (c = 0, slice_ptr = pix_ptr; c < in_C - zq_mm_align_size; c += zq_mm_align_size, slice_ptr += in_sliceStep)
 					val = zq_mm_max_ps(val, zq_mm_load_ps(slice_ptr));
 				zq_mm_store_ps(q, val);
 				max_val = zq_final_max_q;
@@ -45,12 +45,12 @@ void zq_cnn_softmax_nchwc_C(
 						sum_val += tmp_val;
 						slice_ptr[i] = tmp_val;
 					}
-					for (; c < in_C; c++, slice_ptr++)
-					{
-						tmp_val = exp(*slice_ptr - max_val);
-						sum_val += tmp_val;
-						*slice_ptr = tmp_val;
-					}
+				}
+				for (; c < in_C; c++, slice_ptr++)
+				{
+					tmp_val = exp(*slice_ptr - max_val);
+					sum_val += tmp_val;
+					*slice_ptr = tmp_val;
 				}
 
 				//divide
