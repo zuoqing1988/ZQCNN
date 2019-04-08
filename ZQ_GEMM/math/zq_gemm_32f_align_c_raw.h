@@ -2327,8 +2327,8 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M1_N2_Kgeneral(int M, int N, int K, const
 				op_1x2;
 			}
 #if __ARM_NEON && __ARM_NEON_ARMV8
-			zq_store_to_q(*(C_c_ptr1), sum_vec11);
-			zq_store_to_q(*(C_c_ptr1 + 1), sum_vec12);
+			*(C_c_ptr1) = vaddvq_f32(sum_vec11);
+			*(C_c_ptr1 + 1) = vaddvq_f32(sum_vec12);
 #else
 			zq_store_to_q(q.s, sum_vec11);
 			*(C_c_ptr1) = zq_final_sum_q;
