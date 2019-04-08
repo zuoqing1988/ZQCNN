@@ -214,7 +214,7 @@ int main()
 	}
 	mtcnn.TurnOffShowDebugInfo();
 	//mtcnn.TurnOnShowDebugInfo();
-	int iters = 1;
+	int iters = 100;
 	double t1 = omp_get_wtime();
 	for (int i = 0; i < iters; i++)
 	{
