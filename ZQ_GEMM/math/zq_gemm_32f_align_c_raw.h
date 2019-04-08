@@ -1,3 +1,4 @@
+
 #define op_1x1 \
 	a_vec1 = zq_mm_load_ps(A_c_ptr1);\
 	b_vec1 = zq_mm_load_ps(B_c_ptr1);\
@@ -1785,6 +1786,149 @@
 	q.p[0] = _mm_add_ps(q.p[0],q.p[1]);\
 	*(C_c_ptrG++) = zq_final_sum_q0_4
 
+#elif __ARM_NEON && __ARM_NEON_ARMV8
+
+#define store_1x1 \
+	vaddvq_f32(*(C_c_ptr1++), sum_vec11)
+
+#define store_1x2 \
+	zq_store_to_q(*(C_c_ptr1++), sum_vec11);\
+	zq_store_to_q(*(C_c_ptr1++), sum_vec12)
+
+#define store_1x4 \
+	zq_store_to_q(*(C_c_ptr1++), sum_vec11);\
+	zq_store_to_q(*(C_c_ptr1++), sum_vec12);\
+	zq_store_to_q(*(C_c_ptr1++), sum_vec13);\
+	zq_store_to_q(*(C_c_ptr1++), sum_vec14)
+
+#define store_1x8 \
+	zq_store_to_q(*(C_c_ptr1++), sum_vec11);\
+	zq_store_to_q(*(C_c_ptr1++), sum_vec12);\
+	zq_store_to_q(*(C_c_ptr1++), sum_vec13);\
+	zq_store_to_q(*(C_c_ptr1++), sum_vec14);\
+	zq_store_to_q(*(C_c_ptr1++), sum_vec15);\
+	zq_store_to_q(*(C_c_ptr1++), sum_vec16);\
+	zq_store_to_q(*(C_c_ptr1++), sum_vec17);\
+	zq_store_to_q(*(C_c_ptr1++), sum_vec18)
+
+#define store_2x1 \
+	zq_store_to_q(*(C_c_ptr1++), sum_vec11);\
+	zq_store_to_q(*(C_c_ptr2++), sum_vec21)
+
+#define store_2x2 \
+	zq_store_to_q(*(C_c_ptr1++), sum_vec11);\
+	zq_store_to_q(*(C_c_ptr1++), sum_vec12);\
+	zq_store_to_q(*(C_c_ptr2++), sum_vec21);\
+	zq_store_to_q(*(C_c_ptr2++), sum_vec22)
+
+#define store_2x4 \
+	zq_store_to_q(*(C_c_ptr1++), sum_vec11);\
+	zq_store_to_q(*(C_c_ptr1++), sum_vec12);\
+	zq_store_to_q(*(C_c_ptr1++), sum_vec13);\
+	zq_store_to_q(*(C_c_ptr1++), sum_vec14);\
+	zq_store_to_q(*(C_c_ptr2++), sum_vec21);\
+	zq_store_to_q(*(C_c_ptr2++), sum_vec22);\
+	zq_store_to_q(*(C_c_ptr2++), sum_vec23);\
+	zq_store_to_q(*(C_c_ptr2++), sum_vec24)
+
+#define store_2x8 \
+	zq_store_to_q(*(C_c_ptr1++), sum_vec11);\
+	zq_store_to_q(*(C_c_ptr1++), sum_vec12);\
+	zq_store_to_q(*(C_c_ptr1++), sum_vec13);\
+	zq_store_to_q(*(C_c_ptr1++), sum_vec14);\
+	zq_store_to_q(*(C_c_ptr1++), sum_vec15);\
+	zq_store_to_q(*(C_c_ptr1++), sum_vec16);\
+	zq_store_to_q(*(C_c_ptr1++), sum_vec17);\
+	zq_store_to_q(*(C_c_ptr1++), sum_vec18);\
+	zq_store_to_q(*(C_c_ptr2++), sum_vec21);\
+	zq_store_to_q(*(C_c_ptr2++), sum_vec22);\
+	zq_store_to_q(*(C_c_ptr2++), sum_vec23);\
+	zq_store_to_q(*(C_c_ptr2++), sum_vec24);\
+	zq_store_to_q(*(C_c_ptr2++), sum_vec25);\
+	zq_store_to_q(*(C_c_ptr2++), sum_vec26);\
+	zq_store_to_q(*(C_c_ptr2++), sum_vec27);\
+	zq_store_to_q(*(C_c_ptr2++), sum_vec28)
+
+#define store_4x1 \
+	zq_store_to_q(*(C_c_ptr1++), sum_vec11);\
+	zq_store_to_q(*(C_c_ptr2++), sum_vec21);\
+	zq_store_to_q(*(C_c_ptr3++), sum_vec31);\
+	zq_store_to_q(*(C_c_ptr4++), sum_vec41)
+
+#define store_4x2 \
+	zq_store_to_q(*(C_c_ptr1++), sum_vec11);\
+	zq_store_to_q(*(C_c_ptr1++), sum_vec12);\
+	zq_store_to_q(*(C_c_ptr2++), sum_vec21);\
+	zq_store_to_q(*(C_c_ptr2++), sum_vec22);\
+	zq_store_to_q(*(C_c_ptr3++), sum_vec31);\
+	zq_store_to_q(*(C_c_ptr3++), sum_vec32);\
+	zq_store_to_q(*(C_c_ptr4++), sum_vec41);\
+	zq_store_to_q(*(C_c_ptr4++), sum_vec42)
+
+#define store_4x4 \
+	zq_store_to_q(*(C_c_ptr1++), sum_vec11);\
+	zq_store_to_q(*(C_c_ptr1++), sum_vec12);\
+	zq_store_to_q(*(C_c_ptr1++), sum_vec13);\
+	zq_store_to_q(*(C_c_ptr1++), sum_vec14);\
+	zq_store_to_q(*(C_c_ptr2++), sum_vec21);\
+	zq_store_to_q(*(C_c_ptr2++), sum_vec22);\
+	zq_store_to_q(*(C_c_ptr2++), sum_vec23);\
+	zq_store_to_q(*(C_c_ptr2++), sum_vec24);\
+	zq_store_to_q(*(C_c_ptr3++), sum_vec31);\
+	zq_store_to_q(*(C_c_ptr3++), sum_vec32);\
+	zq_store_to_q(*(C_c_ptr3++), sum_vec33);\
+	zq_store_to_q(*(C_c_ptr3++), sum_vec34);\
+	zq_store_to_q(*(C_c_ptr4++), sum_vec41);\
+	zq_store_to_q(*(C_c_ptr4++), sum_vec42);\
+	zq_store_to_q(*(C_c_ptr4++), sum_vec43);\
+	zq_store_to_q(*(C_c_ptr4++), sum_vec44)
+
+#define store_8x1 \
+	zq_store_to_q(*(C_c_ptr1++), sum_vec11);\
+	zq_store_to_q(*(C_c_ptr2++), sum_vec21);\
+	zq_store_to_q(*(C_c_ptr3++), sum_vec31);\
+	zq_store_to_q(*(C_c_ptr4++), sum_vec41);\
+	zq_store_to_q(*(C_c_ptr5++), sum_vec51);\
+	zq_store_to_q(*(C_c_ptr6++), sum_vec61);\
+	zq_store_to_q(*(C_c_ptr7++), sum_vec71);\
+	zq_store_to_q(*(C_c_ptr8++), sum_vec81)
+
+#define store_8x2 \
+	zq_store_to_q(*(C_c_ptr1++), sum_vec11);\
+	zq_store_to_q(*(C_c_ptr1++), sum_vec12);\
+	zq_store_to_q(*(C_c_ptr2++), sum_vec21);\
+	zq_store_to_q(*(C_c_ptr2++), sum_vec22);\
+	zq_store_to_q(*(C_c_ptr3++), sum_vec31);\
+	zq_store_to_q(*(C_c_ptr3++), sum_vec32);\
+	zq_store_to_q(*(C_c_ptr4++), sum_vec41);\
+	zq_store_to_q(*(C_c_ptr4++), sum_vec42);\
+	zq_store_to_q(*(C_c_ptr5++), sum_vec51);\
+	zq_store_to_q(*(C_c_ptr5++), sum_vec52);\
+	zq_store_to_q(*(C_c_ptr6++), sum_vec61);\
+	zq_store_to_q(*(C_c_ptr6++), sum_vec62);\
+	zq_store_to_q(*(C_c_ptr7++), sum_vec71);\
+	zq_store_to_q(*(C_c_ptr7++), sum_vec72);\
+	zq_store_to_q(*(C_c_ptr8++), sum_vec81);\
+	zq_store_to_q(*(C_c_ptr8++), sum_vec82)
+
+#define store_16x1 \
+	zq_store_to_q(*(C_c_ptr1++), sum_vec11);\
+	zq_store_to_q(*(C_c_ptr2++), sum_vec21);\
+	zq_store_to_q(*(C_c_ptr3++), sum_vec31);\
+	zq_store_to_q(*(C_c_ptr4++), sum_vec41);\
+	zq_store_to_q(*(C_c_ptr5++), sum_vec51);\
+	zq_store_to_q(*(C_c_ptr6++), sum_vec61);\
+	zq_store_to_q(*(C_c_ptr7++), sum_vec71);\
+	zq_store_to_q(*(C_c_ptr8++), sum_vec81);\
+	zq_store_to_q(*(C_c_ptr9++), sum_vec91);\
+	zq_store_to_q(*(C_c_ptrA++), sum_vecA1);\
+	zq_store_to_q(*(C_c_ptrB++), sum_vecB1);\
+	zq_store_to_q(*(C_c_ptrC++), sum_vecC1);\
+	zq_store_to_q(*(C_c_ptrD++), sum_vecD1);\
+	zq_store_to_q(*(C_c_ptrE++), sum_vecE1);\
+	zq_store_to_q(*(C_c_ptrF++), sum_vecF1);\
+	zq_store_to_q(*(C_c_ptrG++), sum_vecG1)
+
 #else
 #define store_1x1 \
 	zq_store_to_q(q.s, sum_vec11);\
@@ -2100,8 +2244,12 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M1_N1_Kgeneral(int M, int N, int K, const
 			{
 				op_1x1;
 			}
+#if __ARM_NEON && __ARM_NEON_ARMV8
+			*C_c_ptr1 = vaddvq_f32(sum_vec11);
+#else
 			zq_store_to_q(q.s, sum_vec11);
 			*(C_c_ptr1) = zq_final_sum_q;
+#endif
 
 			for (; k < K; k++)
 			{
@@ -2178,10 +2326,15 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M1_N2_Kgeneral(int M, int N, int K, const
 			{
 				op_1x2;
 			}
+#if __ARM_NEON && __ARM_NEON_ARMV8
+			zq_store_to_q(*(C_c_ptr1), sum_vec11);
+			zq_store_to_q(*(C_c_ptr1 + 1), sum_vec12);
+#else
 			zq_store_to_q(q.s, sum_vec11);
 			*(C_c_ptr1) = zq_final_sum_q;
 			zq_store_to_q(q.s, sum_vec12);
 			*(C_c_ptr1 + 1) = zq_final_sum_q;
+#endif
 			for (; k < K; k++)
 			{
 				a1 = *(A_c_ptr1++);
