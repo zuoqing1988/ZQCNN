@@ -245,9 +245,9 @@ void zq_cnn_innerproduct_gemm_nchwc_prepack8_other(
 			for (h = 0; h < H; h++)
 			{
 				pix_ptr0 = row_ptr0;
-				pix_ptr1 = row_ptr1 == 0 ? 0 : pix_ptr1;
-				pix_ptr2 = row_ptr2 == 0 ? 0 : pix_ptr2;
-				pix_ptr3 = row_ptr3 == 0 ? 0 : pix_ptr3;
+				pix_ptr1 = row_ptr1 == 0 ? 0 : row_ptr1;
+				pix_ptr2 = row_ptr2 == 0 ? 0 : row_ptr2;
+				pix_ptr3 = row_ptr3 == 0 ? 0 : row_ptr3;
 				for (w = 0; w < H; w++)
 				{
 					for (ii = 0; ii < zq_mm_align_size; ii++)

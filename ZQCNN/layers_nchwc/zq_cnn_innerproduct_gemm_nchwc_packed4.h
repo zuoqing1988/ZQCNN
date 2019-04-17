@@ -941,7 +941,7 @@ void zq_cnn_innerproduct_gemm_nchwc_packed8_other(
 #endif
 
 	__int64 need_buffer_size = (__int64)packed_A_step*packed_A_num * sizeof(zq_base_type);
-	printf("out_C = %d, B_div8_num = %d, B_div4_num = %d\n", out_C, B_div8_num, B_div4_num);
+	//printf("out_C = %d, B_div8_num = %d, B_div4_num = %d\n", out_C, B_div8_num, B_div4_num);
 	if (*buffer_len < need_buffer_size)
 	{
 		if (*buffer != 0)
