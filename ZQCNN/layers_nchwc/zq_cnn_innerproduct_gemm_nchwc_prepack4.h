@@ -157,6 +157,10 @@ void zq_cnn_innerproduct_gemm_nchwc_prepack8_other(
 		slice_ptr1 = im_ptr1;
 		slice_ptr2 = im_ptr2;
 		slice_ptr3 = im_ptr3;
+		slice_ptr4 = im_ptr4;
+		slice_ptr5 = im_ptr5;
+		slice_ptr6 = im_ptr6;
+		slice_ptr7 = im_ptr7;
 		for (c = 0; c < C; c += zq_mm_align_size)
 		{
 			row_ptr0 = slice_ptr0;
