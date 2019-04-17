@@ -1603,8 +1603,13 @@ bool ZQ_CNN_Forward_SSEUtils_NCHWC::InnerProductPrePack(const ZQ_CNN_Tensor4D_NC
 	int widthStep = filters.GetWidthStep();
 	int sliceStep = filters.GetSliceStep();
 	int imStep = filters.GetImageStep();
+#if __ARM_NEON && __ARM_NEON_ARMV8
+	zq_cnn_innerproduct_gemm_nchwc4_prepack8_other(filters.GetFirstPixelPtr(), N, H, W, C, widthStep, sliceStep, imStep,
+		(void**)&(packedfilters.data), &(packedfilters.len));
+#else
 	zq_cnn_innerproduct_gemm_nchwc4_prepack4(filters.GetFirstPixelPtr(), N, H, W, C, widthStep, sliceStep, imStep,
 		(void**)&(packedfilters.data), &(packedfilters.len));
+#endif
 	return true;
 }
 
@@ -1649,10 +1654,17 @@ bool ZQ_CNN_Forward_SSEUtils_NCHWC::InnerProductWithBias(ZQ_CNN_Tensor4D_NCHWC4&
 	float* out_firstPixelData = output.GetFirstPixelPtr();
 	const float* bias_firstPixelData = bias.GetFirstPixelPtr();
 
+#if __ARM_NEON && __ARM_NEON_ARMV8
+	zq_cnn_innerproduct_gemm_nchwc4_packed8_other_with_bias(in_firstPixelData, in_N, in_H, in_W, in_C,
+		in_widthStep, in_sliceStep, in_imStep, (const float*)(packedfilters.data),
+		out_firstPixelData, need_N, need_H, need_W, need_C,
+		out_widthStep, out_sliceStep, out_imStep, bias_firstPixelData, buffer, buffer_len);
+#else
 	zq_cnn_innerproduct_gemm_nchwc4_packed4_with_bias(in_firstPixelData, in_N, in_H, in_W, in_C,
 		in_widthStep, in_sliceStep, in_imStep, (const float*)(packedfilters.data),
 		out_firstPixelData, need_N, need_H, need_W, need_C,
 		out_widthStep, out_sliceStep, out_imStep, bias_firstPixelData, buffer, buffer_len);
+#endif
 	return true;
 }
 
@@ -1699,10 +1711,17 @@ bool ZQ_CNN_Forward_SSEUtils_NCHWC::InnerProductWithBiasPReLU(ZQ_CNN_Tensor4D_NC
 	const float* bias_firstPixelData = bias.GetFirstPixelPtr();
 	const float* slope_firstPixelData = slope.GetFirstPixelPtr();
 
+#if __ARM_NEON && _ARM_NEON_ARMV8
+	zq_cnn_innerproduct_gemm_nchwc4_packed8_other_with_bias_prelu(in_firstPixelData, in_N, in_H, in_W, in_C,
+		in_widthStep, in_sliceStep, in_imStep, (const float*)(packedfilters.data),
+		out_firstPixelData, need_N, need_H, need_W, need_C,
+		out_widthStep, out_sliceStep, out_imStep, bias_firstPixelData, slope_firstPixelData, buffer, buffer_len);
+#else
 	zq_cnn_innerproduct_gemm_nchwc4_packed4_with_bias_prelu(in_firstPixelData, in_N, in_H, in_W, in_C,
 		in_widthStep, in_sliceStep, in_imStep, (const float*)(packedfilters.data),
 		out_firstPixelData, need_N, need_H, need_W, need_C,
 		out_widthStep, out_sliceStep, out_imStep, bias_firstPixelData, slope_firstPixelData, buffer, buffer_len);
+#endif
 	return true;
 }
 
@@ -1746,10 +1765,17 @@ bool ZQ_CNN_Forward_SSEUtils_NCHWC::InnerProductWithPReLU(ZQ_CNN_Tensor4D_NCHWC4
 	float* out_firstPixelData = output.GetFirstPixelPtr();
 	const float* slope_firstPixelData = slope.GetFirstPixelPtr();
 
+#if __ARM_NEON && __ARM_NEON_ARMV8
+	zq_cnn_innerproduct_gemm_nchwc4_packed8_other(in_firstPixelData, in_N, in_H, in_W, in_C,
+		in_widthStep, in_sliceStep, in_imStep, (const float*)(packedfilters.data),
+		out_firstPixelData, need_N, need_H, need_W, need_C,
+		out_widthStep, out_sliceStep, out_imStep, buffer, buffer_len);
+#else
 	zq_cnn_innerproduct_gemm_nchwc4_packed4(in_firstPixelData, in_N, in_H, in_W, in_C,
 		in_widthStep, in_sliceStep, in_imStep, (const float*)(packedfilters.data),
 		out_firstPixelData, need_N, need_H, need_W, need_C,
 		out_widthStep, out_sliceStep, out_imStep, buffer, buffer_len);
+#endif
 	zq_cnn_prelu_nchwc4(in_firstPixelData, in_N, in_H, in_W, in_C, in_widthStep, in_sliceStep, in_imStep, slope_firstPixelData);
 	return true;
 }
@@ -1791,10 +1817,17 @@ bool ZQ_CNN_Forward_SSEUtils_NCHWC::InnerProduct(ZQ_CNN_Tensor4D_NCHWC4& input,
 	int out_imStep = output.GetImageStep();
 	float* in_firstPixelData = input.GetFirstPixelPtr();
 	float* out_firstPixelData = output.GetFirstPixelPtr();
+#if __ARM_NEON && __ARM_NEON_ARMV8
+	zq_cnn_innerproduct_gemm_nchwc4_packed8_other(in_firstPixelData, in_N, in_H, in_W, in_C,
+		in_widthStep, in_sliceStep, in_imStep, (const float*)(packedfilters.data),
+		out_firstPixelData, need_N, need_H, need_W, need_C,
+		out_widthStep, out_sliceStep, out_imStep, buffer, buffer_len);
+#else
 	zq_cnn_innerproduct_gemm_nchwc4_packed4(in_firstPixelData, in_N, in_H, in_W, in_C,
 		in_widthStep, in_sliceStep, in_imStep, (const float*)(packedfilters.data),
 		out_firstPixelData, need_N, need_H, need_W, need_C,
 		out_widthStep, out_sliceStep, out_imStep, buffer, buffer_len);
+#endif
 	return true;
 }
 

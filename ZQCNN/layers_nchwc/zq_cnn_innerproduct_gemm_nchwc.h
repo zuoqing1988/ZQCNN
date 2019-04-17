@@ -207,6 +207,92 @@ extern "C" {
 		__int64* buffer_len
 	);
 
+#if __ARM_NEON && __ARM_NEON_ARMV8
+
+	void zq_cnn_innerproduct_gemm_nchwc4_prepack8_other(
+		const float* filters_data,
+		int N,
+		int H,
+		int W,
+		int C,
+		int filter_widthStep,
+		int filter_sliceStep,
+		int filter_imStep,
+		void** buffer,
+		__int64* buffer_len
+	);
+
+	void zq_cnn_innerproduct_gemm_nchwc4_packed8_other(
+		const float* in_data,
+		int in_N,
+		int in_H,
+		int in_W,
+		int in_C,
+		int in_widthStep,
+		int in_sliceStep,
+		int in_imStep,
+		const float* packed_filter,
+		float* out_data,
+		int out_N,
+		int out_H,
+		int out_W,
+		int out_C,
+		int out_widthStep,
+		int out_sliceStep,
+		int out_imStep,
+		void** buffer,
+		__int64* buffer_len
+	);
+
+	void zq_cnn_innerproduct_gemm_nchwc4_packed8_other_with_bias(
+		const float* in_data,
+		int in_N,
+		int in_H,
+		int in_W,
+		int in_C,
+		int in_widthStep,
+		int in_sliceStep,
+		int in_imStep,
+		const float* packed_filter,
+		float* out_data,
+		int out_N,
+		int out_H,
+		int out_W,
+		int out_C,
+		int out_widthStep,
+		int out_sliceStep,
+		int out_imStep,
+		const float* bias,
+		void** buffer,
+		__int64* buffer_len
+	);
+
+	void zq_cnn_innerproduct_gemm_nchwc4_packed8_other_with_bias_prelu(
+		const float* in_data,
+		int in_N,
+		int in_H,
+		int in_W,
+		int in_C,
+		int in_widthStep,
+		int in_sliceStep,
+		int in_imStep,
+		const float* packed_filter,
+		float* out_data,
+		int out_N,
+		int out_H,
+		int out_W,
+		int out_C,
+		int out_widthStep,
+		int out_sliceStep,
+		int out_imStep,
+		const float* bias,
+		const float* slope,
+		void** buffer,
+		__int64* buffer_len
+	);
+
+#endif
+
 	void zq_cnn_innerproduct_gemm_nchwc4_general(
 		const float* in_tensor4D_data,
 		int in_N,
