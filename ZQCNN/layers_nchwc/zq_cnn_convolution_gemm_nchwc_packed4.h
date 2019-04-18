@@ -2346,7 +2346,7 @@ void zq_cnn_convolution_gemm_nchwc_packedM4N8_other_kernel3x3_C3(
 	int stride_W_mul_pixStep = stride_W*zq_mm_align_size;
 	int dilate_H_mul_widthStep = dilate_H*in_widthStep;
 	int dilate_W_mul_pixStep = dilate_W*zq_mm_align_size;
-	int i, j, ii, n, h, w, out_c;
+	int i, j, ii, n, h, w, c;
 	zq_base_type* A_buffer, *dst_ptr;
 	const zq_base_type* im_ptr0, *im_ptr1, *im_ptr2, *im_ptr3;
 	const zq_base_type* row_ptr0, *row_ptr1, *row_ptr2, *row_ptr3;
