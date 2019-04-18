@@ -1086,7 +1086,7 @@ c30 = vfmaq_laneq_f32(c30, b0, a3, 2)
 #endif
 
 #define op8x8_other_1 \
-src_ptr0 += zq_mm_align_size4;\
+src_ptr0 += zq_mm_align_size8;\
 a0 = zq_mm_load_ps(src_ptr0);\
 a1 = zq_mm_load_ps(src_ptr0 + zq_mm_align_size);\
 a2 = zq_mm_load_ps(src_ptr0 + zq_mm_align_size2);\
@@ -1173,7 +1173,7 @@ c70 = vfmaq_laneq_f32(c70, b0, a7, 3);\
 c71 = vfmaq_laneq_f32(c71, b1, a7, 3)
 
 #define op8x8_C3_other_1 \
-src_ptr0 += zq_mm_align_size4;\
+src_ptr0 += zq_mm_align_size8;\
 a0 = zq_mm_load_ps(src_ptr0);\
 a1 = zq_mm_load_ps(src_ptr0 + zq_mm_align_size);\
 a2 = zq_mm_load_ps(src_ptr0 + zq_mm_align_size2);\
@@ -1241,7 +1241,7 @@ c70 = vfmaq_laneq_f32(c70, b0, a7, 2);\
 c71 = vfmaq_laneq_f32(c71, b1, a7, 2)
 
 #define op8x4_other_1 \
-src_ptr0 += zq_mm_align_size4;\
+src_ptr0 += zq_mm_align_size8;\
 a0 = zq_mm_load_ps(src_ptr0);\
 a1 = zq_mm_load_ps(src_ptr0 + zq_mm_align_size);\
 a2 = zq_mm_load_ps(src_ptr0 + zq_mm_align_size2);\
@@ -1292,7 +1292,7 @@ c60 = vfmaq_laneq_f32(c60, b0, a6, 3);\
 c70 = vfmaq_laneq_f32(c70, b0, a7, 3)
 
 #define op8x4_C3_other_1 \
-src_ptr0 += zq_mm_align_size4;\
+src_ptr0 += zq_mm_align_size8;\
 a0 = zq_mm_load_ps(src_ptr0);\
 a1 = zq_mm_load_ps(src_ptr0 + zq_mm_align_size);\
 a2 = zq_mm_load_ps(src_ptr0 + zq_mm_align_size2);\
