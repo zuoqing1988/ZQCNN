@@ -3848,10 +3848,10 @@ void zq_cnn_convolution_gemm_nchwc_packedM8N8_other_kernel1x1(
 			zq_mm_store_ps(dst_ptr + zq_mm_align_size, zq_mm_load_ps(src_ptr1));
 			zq_mm_store_ps(dst_ptr + zq_mm_align_size2, zq_mm_load_ps(src_ptr2));
 			zq_mm_store_ps(dst_ptr + zq_mm_align_size3, zq_mm_load_ps(src_ptr3));
-			zq_mm_store_ps(dst_ptr + zq_mm_align_size4, zq_mm_load_ps(src_ptr3));
-			zq_mm_store_ps(dst_ptr + zq_mm_align_size5, zq_mm_load_ps(src_ptr3));
-			zq_mm_store_ps(dst_ptr + zq_mm_align_size6, zq_mm_load_ps(src_ptr3));
-			zq_mm_store_ps(dst_ptr + zq_mm_align_size7, zq_mm_load_ps(src_ptr3));
+			zq_mm_store_ps(dst_ptr + zq_mm_align_size4, zq_mm_load_ps(src_ptr4));
+			zq_mm_store_ps(dst_ptr + zq_mm_align_size5, zq_mm_load_ps(src_ptr5));
+			zq_mm_store_ps(dst_ptr + zq_mm_align_size6, zq_mm_load_ps(src_ptr6));
+			zq_mm_store_ps(dst_ptr + zq_mm_align_size7, zq_mm_load_ps(src_ptr7));
 			dst_ptr += zq_mm_align_size8;
 			src_ptr0 += in_sliceStep;
 			src_ptr1 += in_sliceStep;
