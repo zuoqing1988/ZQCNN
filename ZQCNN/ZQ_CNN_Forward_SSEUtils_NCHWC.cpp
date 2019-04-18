@@ -1582,7 +1582,7 @@ bool ZQ_CNN_Forward_SSEUtils_NCHWC::ConvolutionPrePack(const ZQ_CNN_Tensor4D_NCH
 	if (H == 1 && W == 1)
 	{
 #if __ARM_NEON && __ARM_NEON_ARMV8
-		if (N <= 32)
+		if (1 || N <= 32)
 		{
 			zq_cnn_convolution_gemm_nchwc4_prepack8_other_kernel1x1(filters.GetFirstPixelPtr(), N, H, W, C, widthStep, sliceStep, imStep,
 				(void**)&(packedfilters.data), &(packedfilters.len));
