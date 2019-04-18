@@ -621,6 +621,19 @@ extern "C" {
 
 #if __ARM_NEON && __ARM_NEON_ARMV8
 
+	void zq_cnn_convolution_gemm_nchwc4_prepack8_other_kernel3x3_C3(
+		const float* filters_data,
+		int N,
+		int H,
+		int W,
+		int C,
+		int filter_widthStep,
+		int filter_sliceStep,
+		int filter_imStep,
+		void** buffer,
+		__int64* buffer_len
+	);
+
 	void zq_cnn_convolution_gemm_nchwc4_prepack8_other_kernel1x1(
 		const float* filters_data,
 		int N,
@@ -689,6 +702,93 @@ extern "C" {
 		int in_sliceStep,
 		int in_imStep,
 		const float* packed_filter,
+		float* out_data,
+		int out_N,
+		int out_H,
+		int out_W,
+		int out_C,
+		int out_widthStep,
+		int out_sliceStep,
+		int out_imStep,
+		const float* bias,
+		const float* slope,
+		void** buffer,
+		__int64* buffer_len
+	);
+
+	void zq_cnn_convolution_gemm_nchwc4_packedM4N8_other_kernel3x3_C3(
+		const float* in_data,
+		int in_N,
+		int in_H,
+		int in_W,
+		int in_C,
+		int in_widthStep,
+		int in_sliceStep,
+		int in_imStep,
+		const float* packed_filter,
+		int kernel_H,
+		int kernel_W,
+		int stride_H,
+		int stride_W,
+		int dilate_H,
+		int dilate_W,
+		float* out_data,
+		int out_N,
+		int out_H,
+		int out_W,
+		int out_C,
+		int out_widthStep,
+		int out_sliceStep,
+		int out_imStep,
+		void** buffer,
+		__int64* buffer_len
+	);
+
+	void zq_cnn_convolution_gemm_nchwc4_packedM4N8_other_kernel3x3_C3_with_bias(
+		const float* in_data,
+		int in_N,
+		int in_H,
+		int in_W,
+		int in_C,
+		int in_widthStep,
+		int in_sliceStep,
+		int in_imStep,
+		const float* packed_filter,
+		int kernel_H,
+		int kernel_W,
+		int stride_H,
+		int stride_W,
+		int dilate_H,
+		int dilate_W,
+		float* out_data,
+		int out_N,
+		int out_H,
+		int out_W,
+		int out_C,
+		int out_widthStep,
+		int out_sliceStep,
+		int out_imStep,
+		const float* bias,
+		void** buffer,
+		__int64* buffer_len
+	);
+
+	void zq_cnn_convolution_gemm_nchwc4_packedM4N8_other_kernel3x3_C3_with_bias_prelu(
+		const float* in_data,
+		int in_N,
+		int in_H,
+		int in_W,
+		int in_C,
+		int in_widthStep,
+		int in_sliceStep,
+		int in_imStep,
+		const float* packed_filter,
+		int kernel_H,
+		int kernel_W,
+		int stride_H,
+		int stride_W,
+		int dilate_H,
+		int dilate_W,
 		float* out_data,
 		int out_N,
 		int out_H,
