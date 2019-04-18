@@ -1573,6 +1573,515 @@ void zq_cnn_convolution_gemm_nchwc_packedM4N4_kernel1x1(
 	}
 }
 
+#if __ARM_NEON && __ARM_NEON_ARMV8
+
+/*zq_mm_align_size must be 4*/
+void zq_cnn_convolution_gemm_nchwc_packedM4N8_other_kernel1x1(
+	const zq_base_type* in_data,
+	int in_N,
+	int in_H,
+	int in_W,
+	int in_C,
+	int in_widthStep,
+	int in_sliceStep,
+	int in_imStep,
+	const zq_base_type* packed_filter,
+	zq_base_type* out_data,
+	int out_N,
+	int out_H,
+	int out_W,
+	int out_C,
+	int out_widthStep,
+	int out_sliceStep,
+	int out_imStep,
+#if WITH_BIAS
+	const zq_base_type* bias,
+#endif
+#if WITH_PRELU
+	const zq_base_type* slope,
+#endif
+	void** buffer,
+	__int64* buffer_len
+)
+{
+	int HW = in_H*in_W;
+	int NHW = in_N*HW;
+	int A_div4_num = NHW >> 2;
+	int paddedC = (in_C + 3) >> 2 << 2;
+	int packed_A_num = A_div4_num + (NHW - (A_div4_num << 2));
+	int packed_A_step = paddedC * 4;
+	int packed_B_step = paddedC * 8;
+	int out_alignC = (out_C + 3) >> 2 << 2;
+	int B_div8_num = out_alignC >> 3;
+	int B_div4_num = (out_alignC - (B_div8_num << 3)) >> 2;
+	int B_pack_num = B_div8_num + B_div4_num;
+	int i, j, ii, n, h, w, c, out_c;
+	zq_base_type* A_buffer, *dst_ptr;
+	const zq_base_type* src_ptr0, *src_ptr1, *src_ptr2, *src_ptr3;
+	zq_base_type* dst_ptr0, *dst_ptr1, *dst_ptr2, *dst_ptr3;
+	register zq_mm_type a0, a1, a2, a3, b0, b1;
+	register zq_mm_type c00, c01, c10, c11, c20, c21, c30, c31;
+#if WITH_BIAS
+	register zq_mm_type bias_v0, bias_v1;
+#endif
+#if WITH_PRELU
+	register zq_mm_type slope_v0, slope_v1;
+	register zq_mm_type zero_v = zq_mm_setzero_ps();
+#endif
+
+	__int64 need_buffer_size = (__int64)packed_A_step*packed_A_num * sizeof(zq_base_type);
+	if (*buffer_len < need_buffer_size)
+	{
+		if (*buffer != 0)
+			_aligned_free(*buffer);
+		*buffer = _aligned_malloc(need_buffer_size, 32);
+		*buffer_len = need_buffer_size;
+	}
+	A_buffer = (zq_base_type*)(*buffer);
+	/* pack in_data */
+	for (i = 0; i < A_div4_num; i++)
+	{
+		ii = i * 4;
+		dst_ptr = A_buffer + packed_A_step*i;
+		n = ii / HW;
+		h = (ii%HW) / in_W;
+		w = (ii%HW) % in_W;
+		src_ptr0 = in_data + n*in_imStep + h*in_widthStep + w*zq_mm_align_size;
+		ii++;
+		n = ii / HW;
+		h = (ii%HW) / in_W;
+		w = (ii%HW) % in_W;
+		src_ptr1 = in_data + n*in_imStep + h*in_widthStep + w*zq_mm_align_size;
+		ii++;
+		n = ii / HW;
+		h = (ii%HW) / in_W;
+		w = (ii%HW) % in_W;
+		src_ptr2 = in_data + n*in_imStep + h*in_widthStep + w*zq_mm_align_size;
+		ii++;
+		n = ii / HW;
+		h = (ii%HW) / in_W;
+		w = (ii%HW) % in_W;
+		src_ptr3 = in_data + n*in_imStep + h*in_widthStep + w*zq_mm_align_size;
+		for (c = 0; c < in_C; c += zq_mm_align_size)
+		{
+			zq_mm_store_ps(dst_ptr, zq_mm_load_ps(src_ptr0));
+			zq_mm_store_ps(dst_ptr + zq_mm_align_size, zq_mm_load_ps(src_ptr1));
+			zq_mm_store_ps(dst_ptr + zq_mm_align_size2, zq_mm_load_ps(src_ptr2));
+			zq_mm_store_ps(dst_ptr + zq_mm_align_size3, zq_mm_load_ps(src_ptr3));
+			dst_ptr += zq_mm_align_size4;
+			src_ptr0 += in_sliceStep;
+			src_ptr1 += in_sliceStep;
+			src_ptr2 += in_sliceStep;
+			src_ptr3 += in_sliceStep;
+		}
+	}
+
+	for (i = 0; i < NHW - A_div4_num * 4; i++)
+	{
+		ii = A_div4_num * 4 + i;
+		dst_ptr = A_buffer + packed_A_step*(i + A_div4_num);
+		n = ii / HW;
+		h = (ii%HW) / in_W;
+		w = (ii%HW) % in_W;
+		src_ptr0 = in_data + n*in_imStep + h*in_widthStep + w*zq_mm_align_size;
+		for (c = 0; c < in_C; c += zq_mm_align_size)
+		{
+			zq_mm_store_ps(dst_ptr, zq_mm_load_ps(src_ptr0));
+			dst_ptr += zq_mm_align_size;
+			src_ptr0 += in_sliceStep;
+		}
+	}
+
+	/* gemm */
+	for (i = 0; i < A_div4_num; i++)
+	{
+		src_ptr2 = A_buffer + packed_A_step*i;
+		ii = i * 4;
+		n = ii / HW;
+		h = (ii%HW) / in_W;
+		w = (ii%HW) % in_W;
+		dst_ptr0 = out_data + n*out_imStep + h*out_widthStep + w*zq_mm_align_size;
+		ii++;
+		n = ii / HW;
+		h = (ii%HW) / in_W;
+		w = (ii%HW) % in_W;
+		dst_ptr1 = out_data + n*out_imStep + h*out_widthStep + w*zq_mm_align_size;
+		ii++;
+		n = ii / HW;
+		h = (ii%HW) / in_W;
+		w = (ii%HW) % in_W;
+		dst_ptr2 = out_data + n*out_imStep + h*out_widthStep + w*zq_mm_align_size;
+		ii++;
+		n = ii / HW;
+		h = (ii%HW) / in_W;
+		w = (ii%HW) % in_W;
+		dst_ptr3 = out_data + n*out_imStep + h*out_widthStep + w*zq_mm_align_size;
+		for (j = 0; j < B_div8_num; j++)
+		{
+			src_ptr0 = A_buffer + packed_A_step*i;
+			src_ptr1 = packed_filter + packed_B_step*j;
+			a0 = zq_mm_load_ps(src_ptr0);
+			a1 = zq_mm_load_ps(src_ptr0 + zq_mm_align_size);
+			a2 = zq_mm_load_ps(src_ptr0 + zq_mm_align_size2);
+			a3 = zq_mm_load_ps(src_ptr0 + zq_mm_align_size3);
+			b0 = zq_mm_load_ps(src_ptr1);
+			b1 = zq_mm_load_ps(src_ptr1 + zq_mm_align_size);
+#if WITH_BIAS
+			bias_v0 = zq_mm_load_ps(bias + j * 8);
+			bias_v1 = zq_mm_load_ps(bias + j * 8 + 4);
+			c00 = vfmaq_laneq_f32(bias_v0, b0, a0, 0);
+			c01 = vfmaq_laneq_f32(bias_v1, b1, a0, 0);
+			c10 = vfmaq_laneq_f32(bias_v0, b0, a1, 0);
+			c11 = vfmaq_laneq_f32(bias_v1, b1, a1, 0);
+			c20 = vfmaq_laneq_f32(bias_v0, b0, a2, 0);
+			c21 = vfmaq_laneq_f32(bias_v1, b1, a2, 0);
+			c30 = vfmaq_laneq_f32(bias_v0, b0, a3, 0);
+			c31 = vfmaq_laneq_f32(bias_v1, b1, a3, 0);
+#else
+			c00 = vmulq_laneq_f32(b0, a0, 0);
+			c01 = vmulq_laneq_f32(b1, a0, 0);
+			c10 = vmulq_laneq_f32(b0, a1, 0);
+			c11 = vmulq_laneq_f32(b1, a1, 0);
+			c20 = vmulq_laneq_f32(b0, a2, 0);
+			c21 = vmulq_laneq_f32(b1, a2, 0);
+			c30 = vmulq_laneq_f32(b0, a3, 0);
+			c31 = vmulq_laneq_f32(b1, a3, 0);
+#endif
+			src_ptr1 += zq_mm_align_size2;
+			b0 = zq_mm_load_ps(src_ptr1);
+			b1 = zq_mm_load_ps(src_ptr1 + zq_mm_align_size);
+			c00 = vfmaq_laneq_f32(c00, b0, a0, 1);
+			c01 = vfmaq_laneq_f32(c01, b1, a0, 1);
+			c10 = vfmaq_laneq_f32(c10, b0, a1, 1);
+			c11 = vfmaq_laneq_f32(c11, b1, a1, 1);
+			c20 = vfmaq_laneq_f32(c20, b0, a2, 1);
+			c21 = vfmaq_laneq_f32(c21, b1, a2, 1);
+			c30 = vfmaq_laneq_f32(c30, b0, a3, 1);
+			c31 = vfmaq_laneq_f32(c31, b1, a3, 1);
+			src_ptr1 += zq_mm_align_size2;
+			b0 = zq_mm_load_ps(src_ptr1);
+			b1 = zq_mm_load_ps(src_ptr1 + zq_mm_align_size);
+			c00 = vfmaq_laneq_f32(c00, b0, a0, 2);
+			c01 = vfmaq_laneq_f32(c01, b1, a0, 2);
+			c10 = vfmaq_laneq_f32(c10, b0, a1, 2);
+			c11 = vfmaq_laneq_f32(c11, b1, a1, 2);
+			c20 = vfmaq_laneq_f32(c20, b0, a2, 2);
+			c21 = vfmaq_laneq_f32(c21, b1, a2, 2);
+			c30 = vfmaq_laneq_f32(c30, b0, a3, 2);
+			c31 = vfmaq_laneq_f32(c31, b1, a3, 2);
+			src_ptr1 += zq_mm_align_size2;
+			b0 = zq_mm_load_ps(src_ptr1);
+			b1 = zq_mm_load_ps(src_ptr1 + zq_mm_align_size);
+			c00 = vfmaq_laneq_f32(c00, b0, a0, 3);
+			c01 = vfmaq_laneq_f32(c01, b1, a0, 3);
+			c10 = vfmaq_laneq_f32(c10, b0, a1, 3);
+			c11 = vfmaq_laneq_f32(c11, b1, a1, 3);
+			c20 = vfmaq_laneq_f32(c20, b0, a2, 3);
+			c21 = vfmaq_laneq_f32(c21, b1, a2, 3);
+			c30 = vfmaq_laneq_f32(c30, b0, a3, 3);
+			c31 = vfmaq_laneq_f32(c31, b1, a3, 3);
+			for (c = 4; c < paddedC; c += zq_mm_align_size)
+			{
+				src_ptr0 += zq_mm_align_size4;
+				a0 = zq_mm_load_ps(src_ptr0);
+				a1 = zq_mm_load_ps(src_ptr0 + zq_mm_align_size);
+				a2 = zq_mm_load_ps(src_ptr0 + zq_mm_align_size2);
+				a3 = zq_mm_load_ps(src_ptr0 + zq_mm_align_size3);
+
+				src_ptr1 += zq_mm_align_size2;
+				b0 = zq_mm_load_ps(src_ptr1);
+				b1 = zq_mm_load_ps(src_ptr1 + zq_mm_align_size);
+				c00 = vfmaq_laneq_f32(c00, b0, a0, 0);
+				c01 = vfmaq_laneq_f32(c01, b1, a0, 0);
+				c10 = vfmaq_laneq_f32(c10, b0, a1, 0);
+				c11 = vfmaq_laneq_f32(c11, b1, a1, 0);
+				c20 = vfmaq_laneq_f32(c20, b0, a2, 0);
+				c21 = vfmaq_laneq_f32(c21, b1, a2, 0);
+				c30 = vfmaq_laneq_f32(c30, b0, a3, 0);
+				c31 = vfmaq_laneq_f32(c31, b1, a3, 0);
+				src_ptr1 += zq_mm_align_size2;
+				b0 = zq_mm_load_ps(src_ptr1);
+				b1 = zq_mm_load_ps(src_ptr1 + zq_mm_align_size);
+				c00 = vfmaq_laneq_f32(c00, b0, a0, 1);
+				c01 = vfmaq_laneq_f32(c01, b1, a0, 1);
+				c10 = vfmaq_laneq_f32(c10, b0, a1, 1);
+				c11 = vfmaq_laneq_f32(c11, b1, a1, 1);
+				c20 = vfmaq_laneq_f32(c20, b0, a2, 1);
+				c21 = vfmaq_laneq_f32(c21, b1, a2, 1);
+				c30 = vfmaq_laneq_f32(c30, b0, a3, 1);
+				c31 = vfmaq_laneq_f32(c31, b1, a3, 1);
+				src_ptr1 += zq_mm_align_size2;
+				b0 = zq_mm_load_ps(src_ptr1);
+				b1 = zq_mm_load_ps(src_ptr1 + zq_mm_align_size);
+				c00 = vfmaq_laneq_f32(c00, b0, a0, 2);
+				c01 = vfmaq_laneq_f32(c01, b1, a0, 2);
+				c10 = vfmaq_laneq_f32(c10, b0, a1, 2);
+				c11 = vfmaq_laneq_f32(c11, b1, a1, 2);
+				c20 = vfmaq_laneq_f32(c20, b0, a2, 2);
+				c21 = vfmaq_laneq_f32(c21, b1, a2, 2);
+				c30 = vfmaq_laneq_f32(c30, b0, a3, 2);
+				c31 = vfmaq_laneq_f32(c31, b1, a3, 2);
+				src_ptr1 += zq_mm_align_size2;
+				b0 = zq_mm_load_ps(src_ptr1);
+				b1 = zq_mm_load_ps(src_ptr1 + zq_mm_align_size);
+				c00 = vfmaq_laneq_f32(c00, b0, a0, 3);
+				c01 = vfmaq_laneq_f32(c01, b1, a0, 3);
+				c10 = vfmaq_laneq_f32(c10, b0, a1, 3);
+				c11 = vfmaq_laneq_f32(c11, b1, a1, 3);
+				c20 = vfmaq_laneq_f32(c20, b0, a2, 3);
+				c21 = vfmaq_laneq_f32(c21, b1, a2, 3);
+				c30 = vfmaq_laneq_f32(c30, b0, a3, 3);
+				c31 = vfmaq_laneq_f32(c31, b1, a3, 3);
+			}
+#if WITH_PRELU	
+			slope_v0 = zq_mm_load_ps(slope + j * 8);
+			slope_v1 = zq_mm_load_ps(slope + j * 8 + 4);
+			c00 = zq_mm_fmadd_ps(slope_v0, zq_mm_min_ps(c00, zero_v), zq_mm_max_ps(c00, zero_v));
+			c01 = zq_mm_fmadd_ps(slope_v1, zq_mm_min_ps(c01, zero_v), zq_mm_max_ps(c01, zero_v));
+			c10 = zq_mm_fmadd_ps(slope_v0, zq_mm_min_ps(c10, zero_v), zq_mm_max_ps(c10, zero_v));
+			c11 = zq_mm_fmadd_ps(slope_v1, zq_mm_min_ps(c11, zero_v), zq_mm_max_ps(c11, zero_v));
+			c20 = zq_mm_fmadd_ps(slope_v0, zq_mm_min_ps(c20, zero_v), zq_mm_max_ps(c20, zero_v));
+			c21 = zq_mm_fmadd_ps(slope_v1, zq_mm_min_ps(c21, zero_v), zq_mm_max_ps(c21, zero_v));
+			c30 = zq_mm_fmadd_ps(slope_v0, zq_mm_min_ps(c30, zero_v), zq_mm_max_ps(c30, zero_v));
+			c31 = zq_mm_fmadd_ps(slope_v1, zq_mm_min_ps(c31, zero_v), zq_mm_max_ps(c31, zero_v));
+#endif
+			zq_mm_store_ps(dst_ptr0, c00);
+			zq_mm_store_ps(dst_ptr1, c10);
+			zq_mm_store_ps(dst_ptr2, c20);
+			zq_mm_store_ps(dst_ptr3, c30);
+			dst_ptr0 += out_sliceStep;
+			dst_ptr1 += out_sliceStep;
+			dst_ptr2 += out_sliceStep;
+			dst_ptr3 += out_sliceStep;
+			zq_mm_store_ps(dst_ptr0, c01);
+			zq_mm_store_ps(dst_ptr1, c11);
+			zq_mm_store_ps(dst_ptr2, c21);
+			zq_mm_store_ps(dst_ptr3, c31);
+			dst_ptr0 += out_sliceStep;
+			dst_ptr1 += out_sliceStep;
+			dst_ptr2 += out_sliceStep;
+			dst_ptr3 += out_sliceStep;
+		}
+
+		for (j = 0; j < B_div4_num; j++)
+		{
+			src_ptr0 = A_buffer + packed_A_step*i;
+			src_ptr1 = packed_filter + packed_B_step*(B_div8_num + j);
+			a0 = zq_mm_load_ps(src_ptr0);
+			a1 = zq_mm_load_ps(src_ptr0 + zq_mm_align_size);
+			a2 = zq_mm_load_ps(src_ptr0 + zq_mm_align_size2);
+			a3 = zq_mm_load_ps(src_ptr0 + zq_mm_align_size3);
+			b0 = zq_mm_load_ps(src_ptr1);
+#if WITH_BIAS
+			bias_v0 = zq_mm_load_ps(bias + B_div8_num * 8 + j * 4);
+			c00 = vfmaq_laneq_f32(bias_v0, b0, a0, 0);
+			c10 = vfmaq_laneq_f32(bias_v0, b0, a1, 0);
+			c20 = vfmaq_laneq_f32(bias_v0, b0, a2, 0);
+			c30 = vfmaq_laneq_f32(bias_v0, b0, a3, 0);
+#else
+			c00 = vmulq_laneq_f32(b0, a0, 0);
+			c10 = vmulq_laneq_f32(b0, a1, 0);
+			c20 = vmulq_laneq_f32(b0, a2, 0);
+			c30 = vmulq_laneq_f32(b0, a3, 0);
+#endif
+			src_ptr1 += zq_mm_align_size;
+			b0 = zq_mm_load_ps(src_ptr1);
+			c00 = vfmaq_laneq_f32(c00, b0, a0, 1);
+			c10 = vfmaq_laneq_f32(c10, b0, a1, 1);
+			c20 = vfmaq_laneq_f32(c20, b0, a2, 1);
+			c30 = vfmaq_laneq_f32(c30, b0, a3, 1);
+			src_ptr1 += zq_mm_align_size;
+			b0 = zq_mm_load_ps(src_ptr1);
+			c00 = vfmaq_laneq_f32(c00, b0, a0, 2);
+			c10 = vfmaq_laneq_f32(c10, b0, a1, 2);
+			c20 = vfmaq_laneq_f32(c20, b0, a2, 2);
+			c30 = vfmaq_laneq_f32(c30, b0, a3, 2);
+			src_ptr1 += zq_mm_align_size;
+			b0 = zq_mm_load_ps(src_ptr1);
+			c00 = vfmaq_laneq_f32(c00, b0, a0, 3);
+			c10 = vfmaq_laneq_f32(c10, b0, a1, 3);
+			c20 = vfmaq_laneq_f32(c20, b0, a2, 3);
+			c30 = vfmaq_laneq_f32(c30, b0, a3, 3);
+			for (c = 4; c < paddedC; c += zq_mm_align_size)
+			{
+				src_ptr0 += zq_mm_align_size4;
+				a0 = zq_mm_load_ps(src_ptr0);
+				a1 = zq_mm_load_ps(src_ptr0 + zq_mm_align_size);
+				a2 = zq_mm_load_ps(src_ptr0 + zq_mm_align_size2);
+				a3 = zq_mm_load_ps(src_ptr0 + zq_mm_align_size3);
+
+				src_ptr1 += zq_mm_align_size;
+				b0 = zq_mm_load_ps(src_ptr1);
+				c00 = vfmaq_laneq_f32(c00, b0, a0, 0);
+				c10 = vfmaq_laneq_f32(c10, b0, a1, 0);
+				c20 = vfmaq_laneq_f32(c20, b0, a2, 0);
+				c30 = vfmaq_laneq_f32(c30, b0, a3, 0);
+				src_ptr1 += zq_mm_align_size;
+				b0 = zq_mm_load_ps(src_ptr1);
+				c00 = vfmaq_laneq_f32(c00, b0, a0, 1);
+				c10 = vfmaq_laneq_f32(c10, b0, a1, 1);
+				c20 = vfmaq_laneq_f32(c20, b0, a2, 1);
+				c30 = vfmaq_laneq_f32(c30, b0, a3, 1);
+				src_ptr1 += zq_mm_align_size;
+				b0 = zq_mm_load_ps(src_ptr1);
+				c00 = vfmaq_laneq_f32(c00, b0, a0, 2);
+				c10 = vfmaq_laneq_f32(c10, b0, a1, 2);
+				c20 = vfmaq_laneq_f32(c20, b0, a2, 2);
+				c30 = vfmaq_laneq_f32(c30, b0, a3, 2);
+				src_ptr1 += zq_mm_align_size;
+				b0 = zq_mm_load_ps(src_ptr1);
+				c00 = vfmaq_laneq_f32(c00, b0, a0, 3);
+				c10 = vfmaq_laneq_f32(c10, b0, a1, 3);
+				c20 = vfmaq_laneq_f32(c20, b0, a2, 3);
+				c30 = vfmaq_laneq_f32(c30, b0, a3, 3);
+			}
+#if WITH_PRELU	
+			slope_v0 = zq_mm_load_ps(slope + B_div8_num * 8 + j * 4);
+			c00 = zq_mm_fmadd_ps(slope_v0, zq_mm_min_ps(c00, zero_v), zq_mm_max_ps(c00, zero_v));
+			c10 = zq_mm_fmadd_ps(slope_v0, zq_mm_min_ps(c10, zero_v), zq_mm_max_ps(c10, zero_v));
+			c20 = zq_mm_fmadd_ps(slope_v0, zq_mm_min_ps(c20, zero_v), zq_mm_max_ps(c20, zero_v));
+			c30 = zq_mm_fmadd_ps(slope_v0, zq_mm_min_ps(c30, zero_v), zq_mm_max_ps(c30, zero_v));
+#endif
+			zq_mm_store_ps(dst_ptr0, c00);
+			zq_mm_store_ps(dst_ptr1, c10);
+			zq_mm_store_ps(dst_ptr2, c20);
+			zq_mm_store_ps(dst_ptr3, c30);
+			dst_ptr0 += out_sliceStep;
+			dst_ptr1 += out_sliceStep;
+			dst_ptr2 += out_sliceStep;
+			dst_ptr3 += out_sliceStep;
+		}
+	}
+	
+	//rest 
+	for (i = 0; i < NHW - A_div4_num * 4; i++)
+	{
+		src_ptr2 = A_buffer + packed_A_step*(i + A_div4_num);
+		ii = (A_div4_num << 2) + i;
+		n = ii / HW;
+		h = (ii%HW) / in_W;
+		w = (ii%HW) % in_W;
+		dst_ptr0 = out_data + n*out_imStep + h*out_widthStep + w*zq_mm_align_size;
+		for (j = 0; j < B_div8_num; j++)
+		{
+			src_ptr0 = A_buffer + packed_A_step*(A_div4_num + i);
+			src_ptr1 = packed_filter + packed_B_step*j;
+			a0 = zq_mm_load_ps(src_ptr0);
+			b0 = zq_mm_load_ps(src_ptr1);
+			b1 = zq_mm_load_ps(src_ptr1 + zq_mm_align_size);
+#if WITH_BIAS
+			bias_v0 = zq_mm_load_ps(bias + j * 8);
+			bias_v1 = zq_mm_load_ps(bias + j * 8 + 4);
+			c00 = vfmaq_laneq_f32(bias_v0, b0, a0, 0);
+			c01 = vfmaq_laneq_f32(bias_v1, b1, a0, 0);
+#else
+			c00 = vmulq_laneq_f32(b0, a0, 0);
+			c01 = vmulq_laneq_f32(b1, a0, 0);
+#endif
+			src_ptr1 += zq_mm_align_size2;
+			b0 = zq_mm_load_ps(src_ptr1);
+			b1 = zq_mm_load_ps(src_ptr1 + zq_mm_align_size);
+			c00 = vfmaq_laneq_f32(c00, b0, a0, 1);
+			c01 = vfmaq_laneq_f32(c01, b1, a0, 1);
+			src_ptr1 += zq_mm_align_size2;
+			b0 = zq_mm_load_ps(src_ptr1);
+			b1 = zq_mm_load_ps(src_ptr1 + zq_mm_align_size);
+			c00 = vfmaq_laneq_f32(c00, b0, a0, 2);
+			c01 = vfmaq_laneq_f32(c01, b1, a0, 2);
+			src_ptr1 += zq_mm_align_size2;
+			b0 = zq_mm_load_ps(src_ptr1);
+			b1 = zq_mm_load_ps(src_ptr1 + zq_mm_align_size);
+			c00 = vfmaq_laneq_f32(c00, b0, a0, 3);
+			c01 = vfmaq_laneq_f32(c01, b1, a0, 3);
+			for (c = 4; c < paddedC; c += zq_mm_align_size)
+			{
+				src_ptr0 += zq_mm_align_size;
+				a0 = zq_mm_load_ps(src_ptr0);
+
+				src_ptr1 += zq_mm_align_size2;
+				b0 = zq_mm_load_ps(src_ptr1);
+				b1 = zq_mm_load_ps(src_ptr1 + zq_mm_align_size);
+				c00 = vfmaq_laneq_f32(c00, b0, a0, 0);
+				c01 = vfmaq_laneq_f32(c01, b1, a0, 0);
+				src_ptr1 += zq_mm_align_size2;
+				b0 = zq_mm_load_ps(src_ptr1);
+				b1 = zq_mm_load_ps(src_ptr1 + zq_mm_align_size);
+				c00 = vfmaq_laneq_f32(c00, b0, a0, 1);
+				c01 = vfmaq_laneq_f32(c01, b1, a0, 1);
+				src_ptr1 += zq_mm_align_size2;
+				b0 = zq_mm_load_ps(src_ptr1);
+				b1 = zq_mm_load_ps(src_ptr1 + zq_mm_align_size);
+				c00 = vfmaq_laneq_f32(c00, b0, a0, 2);
+				c01 = vfmaq_laneq_f32(c01, b1, a0, 2);
+				src_ptr1 += zq_mm_align_size2;
+				b0 = zq_mm_load_ps(src_ptr1);
+				b1 = zq_mm_load_ps(src_ptr1 + zq_mm_align_size);
+				c00 = vfmaq_laneq_f32(c00, b0, a0, 3);
+				c01 = vfmaq_laneq_f32(c01, b1, a0, 3);
+			}
+#if WITH_PRELU	
+			slope_v0 = zq_mm_load_ps(slope + j * 8);
+			slope_v1 = zq_mm_load_ps(slope + j * 8 + 4);
+			c00 = zq_mm_fmadd_ps(slope_v0, zq_mm_min_ps(c00, zero_v), zq_mm_max_ps(c00, zero_v));
+			c01 = zq_mm_fmadd_ps(slope_v1, zq_mm_min_ps(c01, zero_v), zq_mm_max_ps(c01, zero_v));
+#endif
+			zq_mm_store_ps(dst_ptr0, c00);
+			dst_ptr0 += out_sliceStep;
+			zq_mm_store_ps(dst_ptr0, c01);
+			dst_ptr0 += out_sliceStep;
+		}
+
+		for (j = 0; j < B_div4_num; j++)
+		{
+			src_ptr0 = A_buffer + packed_A_step*(A_div4_num + i);
+			src_ptr1 = packed_filter + packed_B_step*(B_div8_num + j);
+			a0 = zq_mm_load_ps(src_ptr0);
+			b0 = zq_mm_load_ps(src_ptr1);
+#if WITH_BIAS
+			bias_v0 = zq_mm_load_ps(bias + B_div8_num * 8 + j * 4);
+			c00 = vfmaq_laneq_f32(bias_v0, b0, a0, 0);
+#else
+			c00 = vmulq_laneq_f32(b0, a0, 0);
+#endif
+			src_ptr1 += zq_mm_align_size;
+			b0 = zq_mm_load_ps(src_ptr1);
+			c00 = vfmaq_laneq_f32(c00, b0, a0, 1);
+			src_ptr1 += zq_mm_align_size;
+			b0 = zq_mm_load_ps(src_ptr1);
+			c00 = vfmaq_laneq_f32(c00, b0, a0, 2);
+			src_ptr1 += zq_mm_align_size;
+			b0 = zq_mm_load_ps(src_ptr1);
+			c00 = vfmaq_laneq_f32(c00, b0, a0, 3);
+			for (c = 4; c < paddedC; c += zq_mm_align_size)
+			{
+				src_ptr0 += zq_mm_align_size;
+				a0 = zq_mm_load_ps(src_ptr0);
+
+				src_ptr1 += zq_mm_align_size;
+				b0 = zq_mm_load_ps(src_ptr1);
+				c00 = vfmaq_laneq_f32(c00, b0, a0, 0);
+				src_ptr1 += zq_mm_align_size;
+				b0 = zq_mm_load_ps(src_ptr1);
+				c00 = vfmaq_laneq_f32(c00, b0, a0, 1);
+				src_ptr1 += zq_mm_align_size;
+				b0 = zq_mm_load_ps(src_ptr1);
+				c00 = vfmaq_laneq_f32(c00, b0, a0, 2);
+				src_ptr1 += zq_mm_align_size;
+				b0 = zq_mm_load_ps(src_ptr1);
+				c00 = vfmaq_laneq_f32(c00, b0, a0, 3);
+			}
+#if WITH_PRELU	
+			slope_v0 = zq_mm_load_ps(slope + B_div8_num * 8 + j * 4);
+			c00 = zq_mm_fmadd_ps(slope_v0, zq_mm_min_ps(c00, zero_v), zq_mm_max_ps(c00, zero_v));
+#endif
+			zq_mm_store_ps(dst_ptr0, c00);
+			dst_ptr0 += out_sliceStep;
+		}
+	}
+}
+
+#endif
+
 /*zq_mm_align_size must be 4*/
 void zq_cnn_convolution_gemm_nchwc_packed4_kernel3x3_C3C4(
 	const zq_base_type* in_data,

@@ -89,12 +89,21 @@ extern "C" {
       zq_gemm_32f_AnoTrans_Btrans_auto(x4,x5,x6,x8,x9,x10,x11,x13,x14)   
 #endif
 
+#if __ARM_NEON_ARMV8
+#define zq_cnn_convolution_gemm_nchwc_prepack8_other_kernel1x1 zq_cnn_convolution_gemm_nchwc4_prepack8_other_kernel1x1
+#endif
 #define zq_cnn_convolution_gemm_nchwc_prepack4_kernel1x1 zq_cnn_convolution_gemm_nchwc4_prepack4_kernel1x1
 #define zq_cnn_convolution_gemm_nchwc_prepack4_kernel3x3_C3C4 zq_cnn_convolution_gemm_nchwc4_prepack4_kernel3x3_C3C4
 #include "zq_cnn_convolution_gemm_nchwc_prepack4.h"
+#if __ARM_NEON_ARMV8
+#undef zq_cnn_convolution_gemm_nchwc_prepack8_other_kernel1x1
+#endif
 #undef zq_cnn_convolution_gemm_nchwc_prepack4_kernel1x1
 #undef zq_cnn_convolution_gemm_nchwc_prepack4_kernel3x3_C3C4
 
+#if __ARM_NEON_ARMV8
+#define zq_cnn_convolution_gemm_nchwc_packedM4N8_other_kernel1x1 zq_cnn_convolution_gemm_nchwc4_packedM4N8_other_kernel1x1
+#endif
 #define zq_cnn_convolution_gemm_nchwc_packedM4N4_kernel1x1 zq_cnn_convolution_gemm_nchwc4_packedM4N4_kernel1x1
 #define zq_cnn_convolution_gemm_nchwc_packedM6N4_kernel1x1 zq_cnn_convolution_gemm_nchwc4_packedM6N4_kernel1x1
 #define zq_cnn_convolution_gemm_nchwc_packed4_kernel3x3_C3C4 zq_cnn_convolution_gemm_nchwc4_packed4_kernel3x3_C3C4
@@ -112,6 +121,9 @@ extern "C" {
 #undef WITH_BIAS
 #undef WITH_PRELU
 
+#if __ARM_NEON_ARMV8
+#undef zq_cnn_convolution_gemm_nchwc_packedM4N8_other_kernel1x1
+#endif
 #undef zq_cnn_convolution_gemm_nchwc_packedM4N4_kernel1x1
 #undef zq_cnn_convolution_gemm_nchwc_packedM6N4_kernel1x1
 #undef zq_cnn_convolution_gemm_nchwc_packed4_kernel3x3_C3C4
@@ -122,6 +134,9 @@ extern "C" {
 #undef zq_cnn_conv_no_padding_gemm_nchwc_kernel3x3
 #undef zq_cnn_conv_no_padding_gemm_nchwc_kernel3x3_C3
 
+#if __ARM_NEON_ARMV8
+#define zq_cnn_convolution_gemm_nchwc_packedM4N8_other_kernel1x1 zq_cnn_convolution_gemm_nchwc4_packedM4N8_other_kernel1x1_with_bias
+#endif
 #define zq_cnn_convolution_gemm_nchwc_packedM4N4_kernel1x1 zq_cnn_convolution_gemm_nchwc4_packedM4N4_kernel1x1_with_bias
 #define zq_cnn_convolution_gemm_nchwc_packedM6N4_kernel1x1 zq_cnn_convolution_gemm_nchwc4_packedM6N4_kernel1x1_with_bias
 #define zq_cnn_convolution_gemm_nchwc_packed4_kernel3x3_C3C4 zq_cnn_convolution_gemm_nchwc4_packed4_kernel3x3_C3C4_with_bias
@@ -137,6 +152,10 @@ extern "C" {
 #include "zq_cnn_convolution_gemm_nchwc_raw.h"
 #undef WITH_BIAS
 #undef WITH_PRELU
+
+#if __ARM_NEON_ARMV8
+#undef zq_cnn_convolution_gemm_nchwc_packedM4N8_other_kernel1x1
+#endif
 #undef zq_cnn_convolution_gemm_nchwc_packedM4N4_kernel1x1
 #undef zq_cnn_convolution_gemm_nchwc_packedM6N4_kernel1x1
 #undef zq_cnn_convolution_gemm_nchwc_packed4_kernel3x3_C3C4
@@ -147,6 +166,9 @@ extern "C" {
 #undef zq_cnn_conv_no_padding_gemm_nchwc_kernel3x3
 #undef zq_cnn_conv_no_padding_gemm_nchwc_kernel3x3_C3
 
+#if __ARM_NEON_ARMV8
+#define zq_cnn_convolution_gemm_nchwc_packedM4N8_other_kernel1x1 zq_cnn_convolution_gemm_nchwc4_packedM4N8_other_kernel1x1_with_bias_prelu
+#endif
 #define zq_cnn_convolution_gemm_nchwc_packedM4N4_kernel1x1 zq_cnn_convolution_gemm_nchwc4_packedM4N4_kernel1x1_with_bias_prelu
 #define zq_cnn_convolution_gemm_nchwc_packedM6N4_kernel1x1 zq_cnn_convolution_gemm_nchwc4_packedM6N4_kernel1x1_with_bias_prelu
 #define zq_cnn_convolution_gemm_nchwc_packed4_kernel3x3_C3C4 zq_cnn_convolution_gemm_nchwc4_packed4_kernel3x3_C3C4_with_bias_prelu
@@ -162,6 +184,10 @@ extern "C" {
 #include "zq_cnn_convolution_gemm_nchwc_raw.h"
 #undef WITH_BIAS
 #undef WITH_PRELU
+
+#if __ARM_NEON_ARMV8
+#undef zq_cnn_convolution_gemm_nchwc_packedM4N8_other_kernel1x1
+#endif
 #undef zq_cnn_convolution_gemm_nchwc_packedM4N4_kernel1x1
 #undef zq_cnn_convolution_gemm_nchwc_packedM6N4_kernel1x1
 #undef zq_cnn_convolution_gemm_nchwc_packed4_kernel3x3_C3C4

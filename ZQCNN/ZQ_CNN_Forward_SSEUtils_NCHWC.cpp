@@ -1581,8 +1581,13 @@ bool ZQ_CNN_Forward_SSEUtils_NCHWC::ConvolutionPrePack(const ZQ_CNN_Tensor4D_NCH
 	int imStep = filters.GetImageStep();
 	if (H == 1 && W == 1)
 	{
+#if __ARM_NEON&&__ARM_NEON_ARMV8
+		zq_cnn_convolution_gemm_nchwc4_prepack8_other_kernel1x1(filters.GetFirstPixelPtr(), N, H, W, C, widthStep, sliceStep, imStep,
+			(void**)&(packedfilters.data), &(packedfilters.len));
+#else
 		zq_cnn_convolution_gemm_nchwc4_prepack4_kernel1x1(filters.GetFirstPixelPtr(), N, H, W, C, widthStep, sliceStep, imStep,
 			(void**)&(packedfilters.data), &(packedfilters.len));
+#endif
 	}
 	else if (H == 3 && W == 3 && C <= 4)
 	{
@@ -1884,8 +1889,8 @@ bool ZQ_CNN_Forward_SSEUtils_NCHWC::ConvolutionWithBias(ZQ_CNN_Tensor4D_NCHWC4& 
 
 	if (filter_H == 1 && filter_W == 1)
 	{
-#if __ARM_NEON&&__ARM_NEON_ARMV8 && 0
-		zq_cnn_convolution_gemm_nchwc4_packedM6N4_kernel1x1_with_bias(in_firstPixelData, in_N, in_H, in_W, in_C,
+#if __ARM_NEON&&__ARM_NEON_ARMV8 && 1
+		zq_cnn_convolution_gemm_nchwc4_packedM4N8_other_kernel1x1_with_bias(in_firstPixelData, in_N, in_H, in_W, in_C,
 			in_widthStep, in_sliceStep, in_imStep, (const float*)(packedfilters.data),
 			out_firstPixelData, need_N, need_H, need_W, need_C,
 			out_widthStep, out_sliceStep, out_imStep, bias_firstPixelData, buffer, buffer_len);
