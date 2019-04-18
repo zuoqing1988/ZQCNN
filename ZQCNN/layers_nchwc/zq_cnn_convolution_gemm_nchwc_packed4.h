@@ -2917,97 +2917,9 @@ void zq_cnn_convolution_gemm_nchwc_packedM4N8_other_kernel3x3_C3(
 		{
 			src_ptr0 = A_buffer + packed_A_step*i;
 			src_ptr1 = packed_filter + packed_B_step*j;
-			a0 = zq_mm_load_ps(src_ptr0);
-			a1 = zq_mm_load_ps(src_ptr0 + zq_mm_align_size);
-			a2 = zq_mm_load_ps(src_ptr0 + zq_mm_align_size2);
-			a3 = zq_mm_load_ps(src_ptr0 + zq_mm_align_size3);
-			b0 = zq_mm_load_ps(src_ptr1);
-			b1 = zq_mm_load_ps(src_ptr1 + zq_mm_align_size);
-#if WITH_BIAS
-			bias_v0 = zq_mm_load_ps(bias + j * 8);
-			bias_v1 = zq_mm_load_ps(bias + j * 8 + 4);
-			c00 = vfmaq_laneq_f32(bias_v0, b0, a0, 0);
-			c01 = vfmaq_laneq_f32(bias_v1, b1, a0, 0);
-			c10 = vfmaq_laneq_f32(bias_v0, b0, a1, 0);
-			c11 = vfmaq_laneq_f32(bias_v1, b1, a1, 0);
-			c20 = vfmaq_laneq_f32(bias_v0, b0, a2, 0);
-			c21 = vfmaq_laneq_f32(bias_v1, b1, a2, 0);
-			c30 = vfmaq_laneq_f32(bias_v0, b0, a3, 0);
-			c31 = vfmaq_laneq_f32(bias_v1, b1, a3, 0);
-#else
-			c00 = vmulq_laneq_f32(b0, a0, 0);
-			c01 = vmulq_laneq_f32(b1, a0, 0);
-			c10 = vmulq_laneq_f32(b0, a1, 0);
-			c11 = vmulq_laneq_f32(b1, a1, 0);
-			c20 = vmulq_laneq_f32(b0, a2, 0);
-			c21 = vmulq_laneq_f32(b1, a2, 0);
-			c30 = vmulq_laneq_f32(b0, a3, 0);
-			c31 = vmulq_laneq_f32(b1, a3, 0);
-#endif
-			src_ptr1 += zq_mm_align_size2;
-			b0 = zq_mm_load_ps(src_ptr1);
-			b1 = zq_mm_load_ps(src_ptr1 + zq_mm_align_size);
-			c00 = vfmaq_laneq_f32(c00, b0, a0, 1);
-			c01 = vfmaq_laneq_f32(c01, b1, a0, 1);
-			c10 = vfmaq_laneq_f32(c10, b0, a1, 1);
-			c11 = vfmaq_laneq_f32(c11, b1, a1, 1);
-			c20 = vfmaq_laneq_f32(c20, b0, a2, 1);
-			c21 = vfmaq_laneq_f32(c21, b1, a2, 1);
-			c30 = vfmaq_laneq_f32(c30, b0, a3, 1);
-			c31 = vfmaq_laneq_f32(c31, b1, a3, 1);
-			src_ptr1 += zq_mm_align_size2;
-			b0 = zq_mm_load_ps(src_ptr1);
-			b1 = zq_mm_load_ps(src_ptr1 + zq_mm_align_size);
-			c00 = vfmaq_laneq_f32(c00, b0, a0, 2);
-			c01 = vfmaq_laneq_f32(c01, b1, a0, 2);
-			c10 = vfmaq_laneq_f32(c10, b0, a1, 2);
-			c11 = vfmaq_laneq_f32(c11, b1, a1, 2);
-			c20 = vfmaq_laneq_f32(c20, b0, a2, 2);
-			c21 = vfmaq_laneq_f32(c21, b1, a2, 2);
-			c30 = vfmaq_laneq_f32(c30, b0, a3, 2);
-			c31 = vfmaq_laneq_f32(c31, b1, a3, 2);
-			for (c = 4; c < paddedC; c += zq_mm_align_size)
-			{
-				src_ptr0 += zq_mm_align_size4;
-				a0 = zq_mm_load_ps(src_ptr0);
-				a1 = zq_mm_load_ps(src_ptr0 + zq_mm_align_size);
-				a2 = zq_mm_load_ps(src_ptr0 + zq_mm_align_size2);
-				a3 = zq_mm_load_ps(src_ptr0 + zq_mm_align_size3);
-
-				src_ptr1 += zq_mm_align_size2;
-				b0 = zq_mm_load_ps(src_ptr1);
-				b1 = zq_mm_load_ps(src_ptr1 + zq_mm_align_size);
-				c00 = vfmaq_laneq_f32(c00, b0, a0, 0);
-				c01 = vfmaq_laneq_f32(c01, b1, a0, 0);
-				c10 = vfmaq_laneq_f32(c10, b0, a1, 0);
-				c11 = vfmaq_laneq_f32(c11, b1, a1, 0);
-				c20 = vfmaq_laneq_f32(c20, b0, a2, 0);
-				c21 = vfmaq_laneq_f32(c21, b1, a2, 0);
-				c30 = vfmaq_laneq_f32(c30, b0, a3, 0);
-				c31 = vfmaq_laneq_f32(c31, b1, a3, 0);
-				src_ptr1 += zq_mm_align_size2;
-				b0 = zq_mm_load_ps(src_ptr1);
-				b1 = zq_mm_load_ps(src_ptr1 + zq_mm_align_size);
-				c00 = vfmaq_laneq_f32(c00, b0, a0, 1);
-				c01 = vfmaq_laneq_f32(c01, b1, a0, 1);
-				c10 = vfmaq_laneq_f32(c10, b0, a1, 1);
-				c11 = vfmaq_laneq_f32(c11, b1, a1, 1);
-				c20 = vfmaq_laneq_f32(c20, b0, a2, 1);
-				c21 = vfmaq_laneq_f32(c21, b1, a2, 1);
-				c30 = vfmaq_laneq_f32(c30, b0, a3, 1);
-				c31 = vfmaq_laneq_f32(c31, b1, a3, 1);
-				src_ptr1 += zq_mm_align_size2;
-				b0 = zq_mm_load_ps(src_ptr1);
-				b1 = zq_mm_load_ps(src_ptr1 + zq_mm_align_size);
-				c00 = vfmaq_laneq_f32(c00, b0, a0, 2);
-				c01 = vfmaq_laneq_f32(c01, b1, a0, 2);
-				c10 = vfmaq_laneq_f32(c10, b0, a1, 2);
-				c11 = vfmaq_laneq_f32(c11, b1, a1, 2);
-				c20 = vfmaq_laneq_f32(c20, b0, a2, 2);
-				c21 = vfmaq_laneq_f32(c21, b1, a2, 2);
-				c30 = vfmaq_laneq_f32(c30, b0, a3, 2);
-				c31 = vfmaq_laneq_f32(c31, b1, a3, 2);
-			}
+			op4x8_other_1_first;
+			op4x8_other_2;
+			op4x8_other_4;
 #if WITH_PRELU	
 			slope_v0 = zq_mm_load_ps(slope + j * 8);
 			slope_v1 = zq_mm_load_ps(slope + j * 8 + 4);
@@ -3042,62 +2954,9 @@ void zq_cnn_convolution_gemm_nchwc_packedM4N8_other_kernel3x3_C3(
 		{
 			src_ptr0 = A_buffer + packed_A_step*i;
 			src_ptr1 = packed_filter + packed_B_step*(B_div8_num + j);
-			a0 = zq_mm_load_ps(src_ptr0);
-			a1 = zq_mm_load_ps(src_ptr0 + zq_mm_align_size);
-			a2 = zq_mm_load_ps(src_ptr0 + zq_mm_align_size2);
-			a3 = zq_mm_load_ps(src_ptr0 + zq_mm_align_size3);
-			b0 = zq_mm_load_ps(src_ptr1);
-#if WITH_BIAS
-			bias_v0 = zq_mm_load_ps(bias + B_div8_num * 8 + j * 4);
-			c00 = vfmaq_laneq_f32(bias_v0, b0, a0, 0);
-			c10 = vfmaq_laneq_f32(bias_v0, b0, a1, 0);
-			c20 = vfmaq_laneq_f32(bias_v0, b0, a2, 0);
-			c30 = vfmaq_laneq_f32(bias_v0, b0, a3, 0);
-#else
-			c00 = vmulq_laneq_f32(b0, a0, 0);
-			c10 = vmulq_laneq_f32(b0, a1, 0);
-			c20 = vmulq_laneq_f32(b0, a2, 0);
-			c30 = vmulq_laneq_f32(b0, a3, 0);
-#endif
-			src_ptr1 += zq_mm_align_size;
-			b0 = zq_mm_load_ps(src_ptr1);
-			c00 = vfmaq_laneq_f32(c00, b0, a0, 1);
-			c10 = vfmaq_laneq_f32(c10, b0, a1, 1);
-			c20 = vfmaq_laneq_f32(c20, b0, a2, 1);
-			c30 = vfmaq_laneq_f32(c30, b0, a3, 1);
-			src_ptr1 += zq_mm_align_size;
-			b0 = zq_mm_load_ps(src_ptr1);
-			c00 = vfmaq_laneq_f32(c00, b0, a0, 2);
-			c10 = vfmaq_laneq_f32(c10, b0, a1, 2);
-			c20 = vfmaq_laneq_f32(c20, b0, a2, 2);
-			c30 = vfmaq_laneq_f32(c30, b0, a3, 2);
-			for (c = 4; c < paddedC; c += zq_mm_align_size)
-			{
-				src_ptr0 += zq_mm_align_size4;
-				a0 = zq_mm_load_ps(src_ptr0);
-				a1 = zq_mm_load_ps(src_ptr0 + zq_mm_align_size);
-				a2 = zq_mm_load_ps(src_ptr0 + zq_mm_align_size2);
-				a3 = zq_mm_load_ps(src_ptr0 + zq_mm_align_size3);
-
-				src_ptr1 += zq_mm_align_size;
-				b0 = zq_mm_load_ps(src_ptr1);
-				c00 = vfmaq_laneq_f32(c00, b0, a0, 0);
-				c10 = vfmaq_laneq_f32(c10, b0, a1, 0);
-				c20 = vfmaq_laneq_f32(c20, b0, a2, 0);
-				c30 = vfmaq_laneq_f32(c30, b0, a3, 0);
-				src_ptr1 += zq_mm_align_size;
-				b0 = zq_mm_load_ps(src_ptr1);
-				c00 = vfmaq_laneq_f32(c00, b0, a0, 1);
-				c10 = vfmaq_laneq_f32(c10, b0, a1, 1);
-				c20 = vfmaq_laneq_f32(c20, b0, a2, 1);
-				c30 = vfmaq_laneq_f32(c30, b0, a3, 1);
-				src_ptr1 += zq_mm_align_size;
-				b0 = zq_mm_load_ps(src_ptr1);
-				c00 = vfmaq_laneq_f32(c00, b0, a0, 2);
-				c10 = vfmaq_laneq_f32(c10, b0, a1, 2);
-				c20 = vfmaq_laneq_f32(c20, b0, a2, 2);
-				c30 = vfmaq_laneq_f32(c30, b0, a3, 2);
-			}
+			op4x4_other_1_first;
+			op4x4_other_2;
+			op4x4_other_4;
 #if WITH_PRELU	
 			slope_v0 = zq_mm_load_ps(slope + B_div8_num * 8 + j * 4);
 			c00 = zq_mm_fmadd_ps(slope_v0, zq_mm_min_ps(c00, zero_v), zq_mm_max_ps(c00, zero_v));
