@@ -1923,10 +1923,9 @@ bool ZQ_CNN_Forward_SSEUtils_NCHWC::ConvolutionWithBias(ZQ_CNN_Tensor4D_NCHWC4& 
 				out_widthStep, out_sliceStep, out_imStep, bias_firstPixelData, buffer, buffer_len);
 		}
 		else
-#else
-		{
 			return false;
-		}
+#else
+		return false;
 #endif
 	}
 	else
@@ -2015,10 +2014,9 @@ bool ZQ_CNN_Forward_SSEUtils_NCHWC::ConvolutionWithBiasPReLU(ZQ_CNN_Tensor4D_NCH
 				out_widthStep, out_sliceStep, out_imStep, bias_firstPixelData, slope_firstPixelData, buffer, buffer_len);
 		}
 		else
-#else
-		{
 			return false;
-		}
+#else
+		return false;
 #endif
 	}
 	else
@@ -2101,10 +2099,9 @@ bool ZQ_CNN_Forward_SSEUtils_NCHWC::ConvolutionWithPReLU(ZQ_CNN_Tensor4D_NCHWC4&
 				out_widthStep, out_sliceStep, out_imStep, buffer, buffer_len);
 		}
 		else
-#else
-		{
 			return false;
-		}
+#else
+		return false;
 #endif
 	}
 	else
@@ -2188,10 +2185,10 @@ bool ZQ_CNN_Forward_SSEUtils_NCHWC::Convolution(ZQ_CNN_Tensor4D_NCHWC4& input,
 				out_widthStep, out_sliceStep, out_imStep, buffer, buffer_len);
 		}
 		else
-#else
-		{
 			return false;
-		}
+#else
+		return false;
+		
 #endif
 	}
 	else
