@@ -1598,12 +1598,11 @@ bool ZQ_CNN_Forward_SSEUtils_NCHWC::ConvolutionPrePack(const ZQ_CNN_Tensor4D_NCH
 				(void**)&(packedfilters.data), &(packedfilters.len));
 	    }
 		else
-#else
+#endif
 		{
 			zq_cnn_convolution_gemm_nchwc4_prepack4_kernel3x3_C3C4(filters.GetFirstPixelPtr(), N, H, W, C, widthStep, sliceStep, imStep,
 				(void**)&(packedfilters.data), &(packedfilters.len));
 		}
-#endif
 	}
 	return true;
 }
