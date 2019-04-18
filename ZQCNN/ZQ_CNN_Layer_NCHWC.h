@@ -293,13 +293,11 @@ namespace ZQ
 					__int64* tmp_buffer_len = ZQ_CNN_Layer_NCHWC<Tensor4D>::use_buffer ? ZQ_CNN_Layer_NCHWC<Tensor4D>::buffer_len : 0;
 					bool ret = false;
 #if __ARM_NEON
-					if (filters->GetH() == 1 && filters->GetW() == 1)
-					{
-						ret = ZQ_CNN_Forward_SSEUtils_NCHWC::ConvolutionWithBiasPReLU(*((*bottoms)[0]),
-							packedfilters, filters->GetN(), filters->GetH(), filters->GetW(), filters->GetC(),
-							*bias, *prelu_slope, stride_H, stride_W, dilate_H, dilate_W, pad_H, pad_W, *((*tops)[0]),
-							tmp_buffer, tmp_buffer_len);
-					}
+					ret = ZQ_CNN_Forward_SSEUtils_NCHWC::ConvolutionWithBiasPReLU(*((*bottoms)[0]),
+						packedfilters, filters->GetN(), filters->GetH(), filters->GetW(), filters->GetC(),
+						*bias, *prelu_slope, stride_H, stride_W, dilate_H, dilate_W, pad_H, pad_W, *((*tops)[0]),
+						tmp_buffer, tmp_buffer_len);
+
 #endif
 					if(!ret)
 					{
@@ -329,13 +327,10 @@ namespace ZQ
 					__int64* tmp_buffer_len = ZQ_CNN_Layer_NCHWC<Tensor4D>::use_buffer ? ZQ_CNN_Layer_NCHWC<Tensor4D>::buffer_len : 0;
 					bool ret = false;
 #if __ARM_NEON
-					if (filters->GetH() == 1 && filters->GetW() == 1)
-					{
-						ret = ZQ_CNN_Forward_SSEUtils_NCHWC::ConvolutionWithBias(*((*bottoms)[0]),
-							packedfilters, filters->GetN(), filters->GetH(), filters->GetW(), filters->GetC(),
-							*bias, stride_H, stride_W, dilate_H, dilate_W, pad_H, pad_W, *((*tops)[0]),
-							tmp_buffer, tmp_buffer_len);
-					}
+					ret = ZQ_CNN_Forward_SSEUtils_NCHWC::ConvolutionWithBias(*((*bottoms)[0]),
+						packedfilters, filters->GetN(), filters->GetH(), filters->GetW(), filters->GetC(),
+						*bias, stride_H, stride_W, dilate_H, dilate_W, pad_H, pad_W, *((*tops)[0]),
+						tmp_buffer, tmp_buffer_len);
 #endif
 					if(!ret)
 					{
@@ -368,13 +363,10 @@ namespace ZQ
 					__int64* tmp_buffer_len = ZQ_CNN_Layer_NCHWC<Tensor4D>::use_buffer ? ZQ_CNN_Layer_NCHWC<Tensor4D>::buffer_len : 0;
 					bool ret = false;
 #if __ARM_NEON
-					if (filters->GetH() == 1 && filters->GetW() == 1)
-					{
-						ret = ZQ_CNN_Forward_SSEUtils_NCHWC::ConvolutionWithPReLU(*((*bottoms)[0]),
-							packedfilters, filters->GetN(), filters->GetH(), filters->GetW(), filters->GetC(),
-							*prelu_slope, stride_H, stride_W, dilate_H, dilate_W, pad_H, pad_W, *((*tops)[0]),
-							tmp_buffer, tmp_buffer_len);
-					}
+					ret = ZQ_CNN_Forward_SSEUtils_NCHWC::ConvolutionWithPReLU(*((*bottoms)[0]),
+						packedfilters, filters->GetN(), filters->GetH(), filters->GetW(), filters->GetC(),
+						*prelu_slope, stride_H, stride_W, dilate_H, dilate_W, pad_H, pad_W, *((*tops)[0]),
+						tmp_buffer, tmp_buffer_len);
 #endif
 					if(!ret)
 					{
@@ -403,13 +395,10 @@ namespace ZQ
 					__int64* tmp_buffer_len = ZQ_CNN_Layer_NCHWC<Tensor4D>::use_buffer ? ZQ_CNN_Layer_NCHWC<Tensor4D>::buffer_len : 0;
 					bool ret = false;
 #if __ARM_NEON
-					if (filters->GetH() == 1 && filters->GetW() == 1)
-					{
-						ret = ZQ_CNN_Forward_SSEUtils_NCHWC::Convolution(*((*bottoms)[0]),
-							packedfilters, filters->GetN(), filters->GetH(), filters->GetW(), filters->GetC(),
-							stride_H, stride_W, dilate_H, dilate_W, pad_H, pad_W, *((*tops)[0]),
-							tmp_buffer, tmp_buffer_len);
-					}
+					ret = ZQ_CNN_Forward_SSEUtils_NCHWC::Convolution(*((*bottoms)[0]),
+						packedfilters, filters->GetN(), filters->GetH(), filters->GetW(), filters->GetC(),
+						stride_H, stride_W, dilate_H, dilate_W, pad_H, pad_W, *((*tops)[0]),
+						tmp_buffer, tmp_buffer_len);
 #endif
 					if(!ret)
 					{
