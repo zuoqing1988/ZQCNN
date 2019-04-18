@@ -3205,8 +3205,7 @@ void zq_cnn_convolution_gemm_nchwc_packedM4N8_other_kernel3x3_C3(
 			src_ptr0 = A_buffer + packed_A_step*i;
 			src_ptr1 = packed_filter + packed_B_step*j;
 			op4x8_C3_other_1_first;
-			op4x8_C3_other_2;
-			op4x8_C3_other_4;
+			op4x8_C3_other_8;
 #if WITH_PRELU	
 			slope_v0 = zq_mm_load_ps(slope + j * 8);
 			slope_v1 = zq_mm_load_ps(slope + j * 8 + 4);
@@ -3242,8 +3241,7 @@ void zq_cnn_convolution_gemm_nchwc_packedM4N8_other_kernel3x3_C3(
 			src_ptr0 = A_buffer + packed_A_step*i;
 			src_ptr1 = packed_filter + packed_B_step*(B_div8_num + j);
 			op4x4_C3_other_1_first;
-			op4x4_C3_other_2;
-			op4x4_C3_other_4;
+			op4x4_C3_other_8;
 #if WITH_PRELU	
 			slope_v0 = zq_mm_load_ps(slope + B_div8_num * 8 + j * 4);
 			c00 = zq_mm_fmadd_ps(slope_v0, zq_mm_min_ps(c00, zero_v), zq_mm_max_ps(c00, zero_v));
