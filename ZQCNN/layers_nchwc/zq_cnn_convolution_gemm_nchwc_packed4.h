@@ -363,6 +363,46 @@ c21 = vfmaq_laneq_f32(c21, b1, a2, 3);\
 c30 = vfmaq_laneq_f32(c30, b0, a3, 3);\
 c31 = vfmaq_laneq_f32(c31, b1, a3, 3)
 
+#define op4x8_C3_other_1_first \
+a0 = zq_mm_load_ps(src_ptr0);\
+a1 = zq_mm_load_ps(src_ptr0 + zq_mm_align_size);\
+a2 = zq_mm_load_ps(src_ptr0 + zq_mm_align_size2);\
+a3 = zq_mm_load_ps(src_ptr0 + zq_mm_align_size3);\
+b0 = zq_mm_load_ps(src_ptr1);\
+b1 = zq_mm_load_ps(src_ptr1 + zq_mm_align_size);\
+bias_v0 = zq_mm_load_ps(bias + j * 8);\
+bias_v1 = zq_mm_load_ps(bias + j * 8 + 4);\
+c00 = vfmaq_laneq_f32(bias_v0, b0, a0, 0);\
+c01 = vfmaq_laneq_f32(bias_v1, b1, a0, 0);\
+c10 = vfmaq_laneq_f32(bias_v0, b0, a1, 0);\
+c11 = vfmaq_laneq_f32(bias_v1, b1, a1, 0);\
+c20 = vfmaq_laneq_f32(bias_v0, b0, a2, 0);\
+c21 = vfmaq_laneq_f32(bias_v1, b1, a2, 0);\
+c30 = vfmaq_laneq_f32(bias_v0, b0, a3, 0);\
+c31 = vfmaq_laneq_f32(bias_v1, b1, a3, 0);\
+src_ptr1 += zq_mm_align_size2;\
+b0 = zq_mm_load_ps(src_ptr1);\
+b1 = zq_mm_load_ps(src_ptr1 + zq_mm_align_size);\
+c00 = vfmaq_laneq_f32(c00, b0, a0, 1);\
+c01 = vfmaq_laneq_f32(c01, b1, a0, 1);\
+c10 = vfmaq_laneq_f32(c10, b0, a1, 1);\
+c11 = vfmaq_laneq_f32(c11, b1, a1, 1);\
+c20 = vfmaq_laneq_f32(c20, b0, a2, 1);\
+c21 = vfmaq_laneq_f32(c21, b1, a2, 1);\
+c30 = vfmaq_laneq_f32(c30, b0, a3, 1);\
+c31 = vfmaq_laneq_f32(c31, b1, a3, 1);\
+src_ptr1 += zq_mm_align_size2;\
+b0 = zq_mm_load_ps(src_ptr1);\
+b1 = zq_mm_load_ps(src_ptr1 + zq_mm_align_size);\
+c00 = vfmaq_laneq_f32(c00, b0, a0, 2);\
+c01 = vfmaq_laneq_f32(c01, b1, a0, 2);\
+c10 = vfmaq_laneq_f32(c10, b0, a1, 2);\
+c11 = vfmaq_laneq_f32(c11, b1, a1, 2);\
+c20 = vfmaq_laneq_f32(c20, b0, a2, 2);\
+c21 = vfmaq_laneq_f32(c21, b1, a2, 2);\
+c30 = vfmaq_laneq_f32(c30, b0, a3, 2);\
+c31 = vfmaq_laneq_f32(c31, b1, a3, 2)
+
 #define op4x4_other_1_first \
 a0 = zq_mm_load_ps(src_ptr0);\
 a1 = zq_mm_load_ps(src_ptr0 + zq_mm_align_size);\
@@ -392,6 +432,30 @@ c00 = vfmaq_laneq_f32(c00, b0, a0, 3);\
 c10 = vfmaq_laneq_f32(c10, b0, a1, 3);\
 c20 = vfmaq_laneq_f32(c20, b0, a2, 3);\
 c30 = vfmaq_laneq_f32(c30, b0, a3, 3)
+
+#define op4x4_C3_other_1_first \
+a0 = zq_mm_load_ps(src_ptr0);\
+a1 = zq_mm_load_ps(src_ptr0 + zq_mm_align_size);\
+a2 = zq_mm_load_ps(src_ptr0 + zq_mm_align_size2);\
+a3 = zq_mm_load_ps(src_ptr0 + zq_mm_align_size3);\
+b0 = zq_mm_load_ps(src_ptr1);\
+bias_v0 = zq_mm_load_ps(bias + j * 8);\
+c00 = vfmaq_laneq_f32(bias_v0, b0, a0, 0);\
+c10 = vfmaq_laneq_f32(bias_v0, b0, a1, 0);\
+c20 = vfmaq_laneq_f32(bias_v0, b0, a2, 0);\
+c30 = vfmaq_laneq_f32(bias_v0, b0, a3, 0);\
+src_ptr1 += zq_mm_align_size;\
+b0 = zq_mm_load_ps(src_ptr1);\
+c00 = vfmaq_laneq_f32(c00, b0, a0, 1);\
+c10 = vfmaq_laneq_f32(c10, b0, a1, 1);\
+c20 = vfmaq_laneq_f32(c20, b0, a2, 1);\
+c30 = vfmaq_laneq_f32(c30, b0, a3, 1);\
+src_ptr1 += zq_mm_align_size;\
+b0 = zq_mm_load_ps(src_ptr1);\
+c00 = vfmaq_laneq_f32(c00, b0, a0, 2);\
+c10 = vfmaq_laneq_f32(c10, b0, a1, 2);\
+c20 = vfmaq_laneq_f32(c20, b0, a2, 2);\
+c30 = vfmaq_laneq_f32(c30, b0, a3, 2)
 
 #else
 
@@ -444,6 +508,44 @@ c21 = vfmaq_laneq_f32(c21, b1, a2, 3);\
 c30 = vfmaq_laneq_f32(c30, b0, a3, 3);\
 c31 = vfmaq_laneq_f32(c31, b1, a3, 3)
 
+#define op4x8_C3_other_1_first \
+a0 = zq_mm_load_ps(src_ptr0);\
+a1 = zq_mm_load_ps(src_ptr0 + zq_mm_align_size);\
+a2 = zq_mm_load_ps(src_ptr0 + zq_mm_align_size2);\
+a3 = zq_mm_load_ps(src_ptr0 + zq_mm_align_size3);\
+b0 = zq_mm_load_ps(src_ptr1);\
+b1 = zq_mm_load_ps(src_ptr1 + zq_mm_align_size);\
+c00 = vmulq_laneq_f32(b0, a0, 0);\
+c01 = vmulq_laneq_f32(b1, a0, 0);\
+c10 = vmulq_laneq_f32(b0, a1, 0);\
+c11 = vmulq_laneq_f32(b1, a1, 0);\
+c20 = vmulq_laneq_f32(b0, a2, 0);\
+c21 = vmulq_laneq_f32(b1, a2, 0);\
+c30 = vmulq_laneq_f32(b0, a3, 0);\
+c31 = vmulq_laneq_f32(b1, a3, 0);\
+src_ptr1 += zq_mm_align_size2;\
+b0 = zq_mm_load_ps(src_ptr1);\
+b1 = zq_mm_load_ps(src_ptr1 + zq_mm_align_size);\
+c00 = vfmaq_laneq_f32(c00, b0, a0, 1);\
+c01 = vfmaq_laneq_f32(c01, b1, a0, 1);\
+c10 = vfmaq_laneq_f32(c10, b0, a1, 1);\
+c11 = vfmaq_laneq_f32(c11, b1, a1, 1);\
+c20 = vfmaq_laneq_f32(c20, b0, a2, 1);\
+c21 = vfmaq_laneq_f32(c21, b1, a2, 1);\
+c30 = vfmaq_laneq_f32(c30, b0, a3, 1);\
+c31 = vfmaq_laneq_f32(c31, b1, a3, 1);\
+src_ptr1 += zq_mm_align_size2;\
+b0 = zq_mm_load_ps(src_ptr1);\
+b1 = zq_mm_load_ps(src_ptr1 + zq_mm_align_size);\
+c00 = vfmaq_laneq_f32(c00, b0, a0, 2);\
+c01 = vfmaq_laneq_f32(c01, b1, a0, 2);\
+c10 = vfmaq_laneq_f32(c10, b0, a1, 2);\
+c11 = vfmaq_laneq_f32(c11, b1, a1, 2);\
+c20 = vfmaq_laneq_f32(c20, b0, a2, 2);\
+c21 = vfmaq_laneq_f32(c21, b1, a2, 2);\
+c30 = vfmaq_laneq_f32(c30, b0, a3, 2);\
+c31 = vfmaq_laneq_f32(c31, b1, a3, 2)
+
 #define op4x4_other_1_first \
 a0 = zq_mm_load_ps(src_ptr0);\
 a1 = zq_mm_load_ps(src_ptr0 + zq_mm_align_size);\
@@ -472,6 +574,30 @@ c00 = vfmaq_laneq_f32(c00, b0, a0, 3);\
 c10 = vfmaq_laneq_f32(c10, b0, a1, 3);\
 c20 = vfmaq_laneq_f32(c20, b0, a2, 3);\
 c30 = vfmaq_laneq_f32(c30, b0, a3, 3)
+
+#define op4x4_C3_other_1_first \
+a0 = zq_mm_load_ps(src_ptr0);\
+a1 = zq_mm_load_ps(src_ptr0 + zq_mm_align_size);\
+a2 = zq_mm_load_ps(src_ptr0 + zq_mm_align_size2);\
+a3 = zq_mm_load_ps(src_ptr0 + zq_mm_align_size3);\
+b0 = zq_mm_load_ps(src_ptr1);\
+c00 = vmulq_laneq_f32(b0, a0, 0);\
+c10 = vmulq_laneq_f32(b0, a1, 0);\
+c20 = vmulq_laneq_f32(b0, a2, 0);\
+c30 = vmulq_laneq_f32(b0, a3, 0);\
+src_ptr1 += zq_mm_align_size;\
+b0 = zq_mm_load_ps(src_ptr1);\
+c00 = vfmaq_laneq_f32(c00, b0, a0, 1);\
+c10 = vfmaq_laneq_f32(c10, b0, a1, 1);\
+c20 = vfmaq_laneq_f32(c20, b0, a2, 1);\
+c30 = vfmaq_laneq_f32(c30, b0, a3, 1);\
+src_ptr1 += zq_mm_align_size;\
+b0 = zq_mm_load_ps(src_ptr1);\
+c00 = vfmaq_laneq_f32(c00, b0, a0, 2);\
+c10 = vfmaq_laneq_f32(c10, b0, a1, 2);\
+c20 = vfmaq_laneq_f32(c20, b0, a2, 2);\
+c30 = vfmaq_laneq_f32(c30, b0, a3, 2)
+
 
 #endif
 
@@ -526,6 +652,46 @@ c21 = vfmaq_laneq_f32(c21, b1, a2, 3);\
 c30 = vfmaq_laneq_f32(c30, b0, a3, 3);\
 c31 = vfmaq_laneq_f32(c31, b1, a3, 3)
 
+#define op4x8_C3_other_1 \
+src_ptr0 += zq_mm_align_size4;\
+a0 = zq_mm_load_ps(src_ptr0);\
+a1 = zq_mm_load_ps(src_ptr0 + zq_mm_align_size);\
+a2 = zq_mm_load_ps(src_ptr0 + zq_mm_align_size2);\
+a3 = zq_mm_load_ps(src_ptr0 + zq_mm_align_size3);\
+src_ptr1 += zq_mm_align_size2;\
+b0 = zq_mm_load_ps(src_ptr1);\
+b1 = zq_mm_load_ps(src_ptr1 + zq_mm_align_size);\
+c00 = vfmaq_laneq_f32(c00, b0, a0, 0);\
+c01 = vfmaq_laneq_f32(c01, b1, a0, 0);\
+c10 = vfmaq_laneq_f32(c10, b0, a1, 0);\
+c11 = vfmaq_laneq_f32(c11, b1, a1, 0);\
+c20 = vfmaq_laneq_f32(c20, b0, a2, 0);\
+c21 = vfmaq_laneq_f32(c21, b1, a2, 0);\
+c30 = vfmaq_laneq_f32(c30, b0, a3, 0);\
+c31 = vfmaq_laneq_f32(c31, b1, a3, 0);\
+src_ptr1 += zq_mm_align_size2;\
+b0 = zq_mm_load_ps(src_ptr1);\
+b1 = zq_mm_load_ps(src_ptr1 + zq_mm_align_size);\
+c00 = vfmaq_laneq_f32(c00, b0, a0, 1);\
+c01 = vfmaq_laneq_f32(c01, b1, a0, 1);\
+c10 = vfmaq_laneq_f32(c10, b0, a1, 1);\
+c11 = vfmaq_laneq_f32(c11, b1, a1, 1);\
+c20 = vfmaq_laneq_f32(c20, b0, a2, 1);\
+c21 = vfmaq_laneq_f32(c21, b1, a2, 1);\
+c30 = vfmaq_laneq_f32(c30, b0, a3, 1);\
+c31 = vfmaq_laneq_f32(c31, b1, a3, 1);\
+src_ptr1 += zq_mm_align_size2;\
+b0 = zq_mm_load_ps(src_ptr1);\
+b1 = zq_mm_load_ps(src_ptr1 + zq_mm_align_size);\
+c00 = vfmaq_laneq_f32(c00, b0, a0, 2);\
+c01 = vfmaq_laneq_f32(c01, b1, a0, 2);\
+c10 = vfmaq_laneq_f32(c10, b0, a1, 2);\
+c11 = vfmaq_laneq_f32(c11, b1, a1, 2);\
+c20 = vfmaq_laneq_f32(c20, b0, a2, 2);\
+c21 = vfmaq_laneq_f32(c21, b1, a2, 2);\
+c30 = vfmaq_laneq_f32(c30, b0, a3, 2);\
+c31 = vfmaq_laneq_f32(c31, b1, a3, 2)
+
 #define op4x4_other_1 \
 src_ptr0 += zq_mm_align_size4;\
 a0 = zq_mm_load_ps(src_ptr0);\
@@ -556,6 +722,31 @@ c00 = vfmaq_laneq_f32(c00, b0, a0, 3);\
 c10 = vfmaq_laneq_f32(c10, b0, a1, 3);\
 c20 = vfmaq_laneq_f32(c20, b0, a2, 3);\
 c30 = vfmaq_laneq_f32(c30, b0, a3, 3)
+
+#define op4x4_C3_other_1 \
+src_ptr0 += zq_mm_align_size4;\
+a0 = zq_mm_load_ps(src_ptr0);\
+a1 = zq_mm_load_ps(src_ptr0 + zq_mm_align_size);\
+a2 = zq_mm_load_ps(src_ptr0 + zq_mm_align_size2);\
+a3 = zq_mm_load_ps(src_ptr0 + zq_mm_align_size3);\
+src_ptr1 += zq_mm_align_size;\
+b0 = zq_mm_load_ps(src_ptr1);\
+c00 = vfmaq_laneq_f32(c00, b0, a0, 0);\
+c10 = vfmaq_laneq_f32(c10, b0, a1, 0);\
+c20 = vfmaq_laneq_f32(c20, b0, a2, 0);\
+c30 = vfmaq_laneq_f32(c30, b0, a3, 0);\
+src_ptr1 += zq_mm_align_size;\
+b0 = zq_mm_load_ps(src_ptr1);\
+c00 = vfmaq_laneq_f32(c00, b0, a0, 1);\
+c10 = vfmaq_laneq_f32(c10, b0, a1, 1);\
+c20 = vfmaq_laneq_f32(c20, b0, a2, 1);\
+c30 = vfmaq_laneq_f32(c30, b0, a3, 1);\
+src_ptr1 += zq_mm_align_size;\
+b0 = zq_mm_load_ps(src_ptr1);\
+c00 = vfmaq_laneq_f32(c00, b0, a0, 2);\
+c10 = vfmaq_laneq_f32(c10, b0, a1, 2);\
+c20 = vfmaq_laneq_f32(c20, b0, a2, 2);\
+c30 = vfmaq_laneq_f32(c30, b0, a3, 2)
 
 #define op4x8_other_2_first \
 op4x8_other_1_first;\
@@ -652,6 +843,102 @@ op4x4_other_32
 #define op4x4_other_64 \
 op4x4_other_32;\
 op4x4_other_32
+
+#define op4x8_C3_other_2_first \
+op4x8_C3_other_1_first;\
+op4x8_C3_other_1
+
+#define op4x8_C3_other_2 \
+op4x8_C3_other_1;\
+op4x8_C3_other_1
+
+#define op4x8_C3_other_4_first \
+op4x8_C3_other_2_first;\
+op4x8_C3_other_2
+
+#define op4x8_C3_other_4 \
+op4x8_C3_other_2;\
+op4x8_C3_other_2
+
+#define op4x8_C3_other_8_first \
+op4x8_C3_other_4_first;\
+op4x8_C3_other_4
+
+#define op4x8_C3_other_8 \
+op4x8_C3_other_4;\
+op4x8_C3_other_4
+
+#define op4x8_C3_other_16_first \
+op4x8_C3_other_8_first;\
+op4x8_C3_other_8
+
+#define op4x8_C3_other_16 \
+op4x8_C3_other_8;\
+op4x8_C3_other_8
+
+#define op4x8_C3_other_32_first \
+op4x8_C3_other_16_first;\
+op4x8_C3_other_16
+
+#define op4x8_C3_other_32 \
+op4x8_C3_other_16;\
+op4x8_C3_other_16
+
+#define op4x8_C3_other_64_first \
+op4x8_C3_other_32_first;\
+op4x8_C3_other_32
+
+#define op4x8_C3_other_64 \
+op4x8_C3_other_32;\
+op4x8_C3_other_32
+
+#define op4x4_C3_other_2_first \
+op4x4_C3_other_1_first;\
+op4x4_C3_other_1
+
+#define op4x4_C3_other_2 \
+op4x4_C3_other_1;\
+op4x4_C3_other_1
+
+#define op4x4_C3_other_4_first \
+op4x4_C3_other_2_first;\
+op4x4_C3_other_2
+
+#define op4x4_C3_other_4 \
+op4x4_C3_other_2;\
+op4x4_C3_other_2
+
+#define op4x4_C3_other_8_first \
+op4x4_C3_other_4_first;\
+op4x4_C3_other_4
+
+#define op4x4_C3_other_8 \
+op4x4_C3_other_4;\
+op4x4_C3_other_4
+
+#define op4x4_C3_other_16_first \
+op4x4_C3_other_8_first;\
+op4x4_C3_other_8
+
+#define op4x4_C3_other_16 \
+op4x4_C3_other_8;\
+op4x4_C3_other_8
+
+#define op4x4_C3_other_32_first \
+op4x4_C3_other_16_first;\
+op4x4_C3_other_16
+
+#define op4x4_C3_other_32 \
+op4x4_C3_other_16;\
+op4x4_C3_other_16
+
+#define op4x4_C3_other_64_first \
+op4x4_C3_other_32_first;\
+op4x4_C3_other_32
+
+#define op4x4_C3_other_64 \
+op4x4_C3_other_32;\
+op4x4_C3_other_32
 
 #define store6x4 \
 dst_ptr0[0] = vaddvq_f32(c00);\
@@ -2917,9 +3204,9 @@ void zq_cnn_convolution_gemm_nchwc_packedM4N8_other_kernel3x3_C3(
 		{
 			src_ptr0 = A_buffer + packed_A_step*i;
 			src_ptr1 = packed_filter + packed_B_step*j;
-			op4x8_other_1_first;
-			op4x8_other_2;
-			op4x8_other_4;
+			op4x8_C3_other_1_first;
+			op4x8_C3_other_2;
+			op4x8_C3_other_4;
 #if WITH_PRELU	
 			slope_v0 = zq_mm_load_ps(slope + j * 8);
 			slope_v1 = zq_mm_load_ps(slope + j * 8 + 4);
@@ -2954,9 +3241,9 @@ void zq_cnn_convolution_gemm_nchwc_packedM4N8_other_kernel3x3_C3(
 		{
 			src_ptr0 = A_buffer + packed_A_step*i;
 			src_ptr1 = packed_filter + packed_B_step*(B_div8_num + j);
-			op4x4_other_1_first;
-			op4x4_other_2;
-			op4x4_other_4;
+			op4x4_C3_other_1_first;
+			op4x4_C3_other_2;
+			op4x4_C3_other_4;
 #if WITH_PRELU	
 			slope_v0 = zq_mm_load_ps(slope + B_div8_num * 8 + j * 4);
 			c00 = zq_mm_fmadd_ps(slope_v0, zq_mm_min_ps(c00, zero_v), zq_mm_max_ps(c00, zero_v));
@@ -3153,4 +3440,32 @@ void zq_cnn_convolution_gemm_nchwc_packedM4N8_other_kernel3x3_C3(
 #undef op4x4_other_32
 #undef op4x4_other_64_first
 #undef op4x4_other_64
+#undef op4x8_C3_other_1_first
+#undef op4x8_C3_other_1
+#undef op4x8_C3_other_2_first
+#undef op4x8_C3_other_2
+#undef op4x8_C3_other_4_first
+#undef op4x8_C3_other_4
+#undef op4x8_C3_other_8_first
+#undef op4x8_C3_other_8
+#undef op4x8_C3_other_16_first
+#undef op4x8_C3_other_16
+#undef op4x8_C3_other_32_first
+#undef op4x8_C3_other_32
+#undef op4x8_C3_other_64_first
+#undef op4x8_C3_other_64
+#undef op4x4_C3_other_1_first
+#undef op4x4_C3_other_1
+#undef op4x4_C3_other_2_first
+#undef op4x4_C3_other_2
+#undef op4x4_C3_other_4_first
+#undef op4x4_C3_other_4
+#undef op4x4_C3_other_8_first
+#undef op4x4_C3_other_8
+#undef op4x4_C3_other_16_first
+#undef op4x4_C3_other_16
+#undef op4x4_C3_other_32_first
+#undef op4x4_C3_other_32
+#undef op4x4_C3_other_64_first
+#undef op4x4_C3_other_64
 #endif
