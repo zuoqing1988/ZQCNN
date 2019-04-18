@@ -312,7 +312,7 @@ op1x4_32
 #if __ARM_NEON && __ARM_NEON_ARMV8
 
 #if WITH_BIAS
-#define op4x8_other_1_first\
+#define op4x8_other_1_first \
 a0 = zq_mm_load_ps(src_ptr0);\
 a1 = zq_mm_load_ps(src_ptr0 + zq_mm_align_size);\
 a2 = zq_mm_load_ps(src_ptr0 + zq_mm_align_size2);\
@@ -363,7 +363,7 @@ c21 = vfmaq_laneq_f32(c21, b1, a2, 3);\
 c30 = vfmaq_laneq_f32(c30, b0, a3, 3);\
 c31 = vfmaq_laneq_f32(c31, b1, a3, 3)
 
-#define op4x4_other_1_first\
+#define op4x4_other_1_first \
 a0 = zq_mm_load_ps(src_ptr0);\
 a1 = zq_mm_load_ps(src_ptr0 + zq_mm_align_size);\
 a2 = zq_mm_load_ps(src_ptr0 + zq_mm_align_size2);\
@@ -395,7 +395,7 @@ c30 = vfmaq_laneq_f32(c30, b0, a3, 3)
 
 #else
 
-#define op4x8_other_1_first\
+#define op4x8_other_1_first \
 a0 = zq_mm_load_ps(src_ptr0);\
 a1 = zq_mm_load_ps(src_ptr0 + zq_mm_align_size);\
 a2 = zq_mm_load_ps(src_ptr0 + zq_mm_align_size2);\
@@ -444,7 +444,7 @@ c21 = vfmaq_laneq_f32(c21, b1, a2, 3);\
 c30 = vfmaq_laneq_f32(c30, b0, a3, 3);\
 c31 = vfmaq_laneq_f32(c31, b1, a3, 3)
 
-#define op4x4_other_1_first\
+#define op4x4_other_1_first \
 a0 = zq_mm_load_ps(src_ptr0);\
 a1 = zq_mm_load_ps(src_ptr0 + zq_mm_align_size);\
 a2 = zq_mm_load_ps(src_ptr0 + zq_mm_align_size2);\
@@ -475,7 +475,7 @@ c30 = vfmaq_laneq_f32(c30, b0, a3, 3)
 
 #endif
 
-#define op4x8_other_1\
+#define op4x8_other_1 \
 src_ptr0 += zq_mm_align_size4;\
 a0 = zq_mm_load_ps(src_ptr0);\
 a1 = zq_mm_load_ps(src_ptr0 + zq_mm_align_size);\
@@ -526,7 +526,7 @@ c21 = vfmaq_laneq_f32(c21, b1, a2, 3);\
 c30 = vfmaq_laneq_f32(c30, b0, a3, 3);\
 c31 = vfmaq_laneq_f32(c31, b1, a3, 3)
 
-#define op4x4_other_1\
+#define op4x4_other_1 \
 src_ptr0 += zq_mm_align_size4;\
 a0 = zq_mm_load_ps(src_ptr0);\
 a1 = zq_mm_load_ps(src_ptr0 + zq_mm_align_size);\
@@ -557,99 +557,99 @@ c10 = vfmaq_laneq_f32(c10, b0, a1, 3);\
 c20 = vfmaq_laneq_f32(c20, b0, a2, 3);\
 c30 = vfmaq_laneq_f32(c30, b0, a3, 3)
 
-#define op4x8_other_2_first\
+#define op4x8_other_2_first \
 op4x8_other_1_first;\
 op4x8_other_1
 
-#define op4x8_other_2\
+#define op4x8_other_2 \
 op4x8_other_1;\
 op4x8_other_1
 
-#define op4x8_other_4_first\
+#define op4x8_other_4_first \
 op4x8_other_2_first;\
 op4x8_other_2
 
-#define op4x8_other_4\
+#define op4x8_other_4 \
 op4x8_other_2;\
 op4x8_other_2
 
-#define op4x8_other_8_first\
+#define op4x8_other_8_first \
 op4x8_other_4_first;\
 op4x8_other_4
 
-#define op4x8_other_8\
+#define op4x8_other_8 \
 op4x8_other_4;\
 op4x8_other_4
 
-#define op4x8_other_16_first\
+#define op4x8_other_16_first \
 op4x8_other_8_first;\
 op4x8_other_8
 
-#define op4x8_other_16\
+#define op4x8_other_16 \
 op4x8_other_8;\
 op4x8_other_8
 
-#define op4x8_other_32_first\
+#define op4x8_other_32_first \
 op4x8_other_16_first;\
 op4x8_other_16
 
-#define op4x8_other_32\
+#define op4x8_other_32 \
 op4x8_other_16;\
 op4x8_other_16
 
-#define op4x8_other_64_first\
+#define op4x8_other_64_first \
 op4x8_other_32_first;\
 op4x8_other_32
 
-#define op4x8_other_64\
+#define op4x8_other_64 \
 op4x8_other_32;\
 op4x8_other_32
 
-#define op4x4_other_2_first\
+#define op4x4_other_2_first \
 op4x4_other_1_first;\
 op4x4_other_1
 
-#define op4x4_other_2\
+#define op4x4_other_2 \
 op4x4_other_1;\
 op4x4_other_1
 
-#define op4x4_other_4_first\
+#define op4x4_other_4_first \
 op4x4_other_2_first;\
 op4x4_other_2
 
-#define op4x4_other_4\
+#define op4x4_other_4 \
 op4x4_other_2;\
 op4x4_other_2
 
-#define op4x4_other_8_first\
+#define op4x4_other_8_first \
 op4x4_other_4_first;\
 op4x4_other_4
 
-#define op4x4_other_8\
+#define op4x4_other_8 \
 op4x4_other_4;\
 op4x4_other_4
 
-#define op4x4_other_16_first\
+#define op4x4_other_16_first \
 op4x4_other_8_first;\
 op4x4_other_8
 
-#define op4x4_other_16\
+#define op4x4_other_16 \
 op4x4_other_8;\
 op4x4_other_8
 
-#define op4x4_other_32_first\
+#define op4x4_other_32_first \
 op4x4_other_16_first;\
 op4x4_other_16
 
-#define op4x4_other_32\
+#define op4x4_other_32 \
 op4x4_other_16;\
 op4x4_other_16
 
-#define op4x4_other_64_first\
+#define op4x4_other_64_first \
 op4x4_other_32_first;\
 op4x4_other_32
 
-#define op4x4_other_64\
+#define op4x4_other_64 \
 op4x4_other_32;\
 op4x4_other_32
 
