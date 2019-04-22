@@ -25,7 +25,7 @@ int main()
 	ZQ_FaceRecognizer* recognizer[1] = { 0 };
 	std::string prototxt_file = "model/mobilefacenet-res2-6-10-2-dim512-opencv.prototxt";
 	std::string caffemodel_file = "model/mobilefacenet-res2-6-10-2-dim512.caffemodel";
-	std::string out_blob_name = "fc1";
+	std::string out_blob_name = "fc1_scale";
 	bool fail_flag = false;
 	recognizer[0] = new ZQ_FaceRecognizerArcFaceOpenCV();
 	if (!recognizer[0]->Init("", prototxt_file, caffemodel_file, out_blob_name))
