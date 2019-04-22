@@ -22,8 +22,8 @@ int main()
 	mkl_set_num_threads(1);
 #endif
 	ZQ_FaceRecognizer* recognizer[1] = { 0 };
-	std::string prototxt_file = "model/model-r50-am.prototxt";
-	std::string caffemodel_file = "model/model-r50-am.caffemodel";
+	std::string prototxt_file = "model/mobilefacenet-res2-6-10-2-dim512-minicaffe.prototxt";
+	std::string caffemodel_file = "model/mobilefacenet-res2-6-10-2-dim512.caffemodel";
 	std::string out_blob_name = "fc1";
 	bool fail_flag = false;
 	recognizer[0] = new ZQ_FaceRecognizerArcFaceMiniCaffe();

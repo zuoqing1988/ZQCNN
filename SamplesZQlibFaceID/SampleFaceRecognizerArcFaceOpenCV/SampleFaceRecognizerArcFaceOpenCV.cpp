@@ -1,6 +1,7 @@
 #if defined(_WIN32)
-#include "ZQ_FaceRecognizerArcFaceZQCNN.h"
+#include "ZQ_FaceRecognizerArcFaceOpenCV.h"
 #include "ZQ_CNN_CompileConfig.h"
+#include <iostream>
 #if ZQ_CNN_USE_BLAS_GEMM
 #include <openblas\cblas.h>
 #pragma comment(lib,"libopenblas.lib")
@@ -22,25 +23,11 @@ int main()
 	mkl_set_num_threads(1);
 #endif
 	ZQ_FaceRecognizer* recognizer[1] = { 0 };
-	std::string prototxt_file = "model/mobilefacenet-res2-6-10-2-dim512.zqparams";
-	std::string caffemodel_file = "model/mobilefacenet-res2-6-10-2-dim512-emore.nchwbin";
-	std::string out_blob_name = "fc5";
-	for (int i = 0; i < 1; i++)
-	{
-		std::string prototxt_file = "./model/mobilefacenet-res2-6-10-2-dim512.zqparams";
-		std::string caffemodel_file = "./model/mobilefacenet-res2-6-10-2-dim512-emore.nchwbin";
-		std::string out_blob_name = "fc5";
-		ZQ_FaceRecognizerArcFaceZQCNN* pFaceZQCNN = new ZQ_FaceRecognizerArcFaceZQCNN();
-		if (!pFaceZQCNN->Init("", prototxt_file, caffemodel_file, out_blob_name))
-		{
-			cout << "failed to init arcface\n";
-			return 0;
-		}
-		delete pFaceZQCNN;
-	}
-
+	std::string prototxt_file = "model/mobilefacenet-res2-6-10-2-dim512-opencv.prototxt";
+	std::string caffemodel_file = "model/mobilefacenet-res2-6-10-2-dim512.caffemodel";
+	std::string out_blob_name = "fc1";
 	bool fail_flag = false;
-	recognizer[0] = new ZQ_FaceRecognizerArcFaceZQCNN();
+	recognizer[0] = new ZQ_FaceRecognizerArcFaceOpenCV();
 	if (!recognizer[0]->Init("", prototxt_file, caffemodel_file, out_blob_name))
 	{
 		cout << "failed to init arcface\n";
@@ -56,7 +43,7 @@ int main()
 	Mat img0 = imread("data/00_.jpg");
 	Mat img1 = imread("data/01_.jpg");
 	double t1 = omp_get_wtime();
-	int iters = 2;
+	int iters = 1;
 	for (int it = 0; it < iters; it++)
 	{
 		int feat_dim = recognizer[0]->GetFeatDim();
