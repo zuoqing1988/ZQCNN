@@ -152,8 +152,8 @@ void resize_nn_c3(const unsigned char* src, int srcw, int srch, int src_widthSte
 	int* coord_x = (int*)malloc(w * sizeof(int));
 	const unsigned char* cur_src_ptr;
 	unsigned char* cur_dst_ptr, *cur_pix_ptr;
-	float fx, fy;
-	int ix, iy, dx, dy;
+	register float fx, fy;
+	register int ix, iy, dx, dy;
 	for (dx = 0; dx < w; dx++)
 	{
 		fx = (float)((dx + 0.5f) * scale_x - 0.5f);
