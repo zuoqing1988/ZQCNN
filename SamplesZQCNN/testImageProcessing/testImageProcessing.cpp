@@ -73,7 +73,12 @@ int main(int argc, const char** argv)
 		for (int i = 0; i < nIters; i++)
 			transpose_c3(dst_img_my.data, dst_img_my.cols, dst_img_my.rows, dst_img_my.step[0], trans_img_my.data, trans_img_my.step[0]);
 		clock_t t3 = clock();
+#if __ARM_NEON
+		printf("cv      :%12.5f ms\n", (t2 - t1)*1e-3 / nIters);
+		printf("my      :%12.5f ms\n", (t3 - t2)*1e-3 / nIters);
+#else
 		printf("cv:%d\nmy:%d\n", t2 - t1, t3 - t2);
+#endif
 	}
 
 	cv::namedWindow("cv");
