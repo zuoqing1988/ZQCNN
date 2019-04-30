@@ -164,149 +164,127 @@ void resize_nn_c3(const unsigned char* src, int srcw, int srch, int src_widthSte
 	}
 
 	cur_dst_ptr = dst;
-	for (dy = 0; dy < h; dy++)
+	if (w % 8 == 0)
 	{
-		fy = (float)((dy + 0.5f) * scale_y - 0.5f);
-		iy = fy + 0.5f;
-		iy = iy < 0 ? 0 : iy;
-		iy = iy >= srch ? srch - 1 : iy;
-		cur_src_ptr = src + iy*src_widthStep;
-		cur_pix_ptr = cur_dst_ptr;
-		for (dx = 0; dx < w - 15; dx += 16)
+		for (dy = 0; dy < h; dy++)
 		{
-			ix = coord_x[dx];
-			cur_pix_ptr[0] = cur_src_ptr[ix];
-			cur_pix_ptr[1] = cur_src_ptr[ix + 1];
-			cur_pix_ptr[2] = cur_src_ptr[ix + 2];
-			cur_pix_ptr += 3;
-			ix = coord_x[dx + 1];
-			cur_pix_ptr[0] = cur_src_ptr[ix];
-			cur_pix_ptr[1] = cur_src_ptr[ix + 1];
-			cur_pix_ptr[2] = cur_src_ptr[ix + 2];
-			cur_pix_ptr += 3;
-			ix = coord_x[dx + 2];
-			cur_pix_ptr[0] = cur_src_ptr[ix];
-			cur_pix_ptr[1] = cur_src_ptr[ix + 1];
-			cur_pix_ptr[2] = cur_src_ptr[ix + 2];
-			cur_pix_ptr += 3;
-			ix = coord_x[dx + 3];
-			cur_pix_ptr[0] = cur_src_ptr[ix];
-			cur_pix_ptr[1] = cur_src_ptr[ix + 1];
-			cur_pix_ptr[2] = cur_src_ptr[ix + 2];
-			cur_pix_ptr += 3;
-			ix = coord_x[dx + 4];
-			cur_pix_ptr[0] = cur_src_ptr[ix];
-			cur_pix_ptr[1] = cur_src_ptr[ix + 1];
-			cur_pix_ptr[2] = cur_src_ptr[ix + 2];
-			cur_pix_ptr += 3;
-			ix = coord_x[dx + 5];
-			cur_pix_ptr[0] = cur_src_ptr[ix];
-			cur_pix_ptr[1] = cur_src_ptr[ix + 1];
-			cur_pix_ptr[2] = cur_src_ptr[ix + 2];
-			cur_pix_ptr += 3;
-			ix = coord_x[dx + 6];
-			cur_pix_ptr[0] = cur_src_ptr[ix];
-			cur_pix_ptr[1] = cur_src_ptr[ix + 1];
-			cur_pix_ptr[2] = cur_src_ptr[ix + 2];
-			cur_pix_ptr += 3;
-			ix = coord_x[dx + 7];
-			cur_pix_ptr[0] = cur_src_ptr[ix];
-			cur_pix_ptr[1] = cur_src_ptr[ix + 1];
-			cur_pix_ptr[2] = cur_src_ptr[ix + 2];
-			cur_pix_ptr += 3;
-			ix = coord_x[dx + 8];
-			cur_pix_ptr[0] = cur_src_ptr[ix];
-			cur_pix_ptr[1] = cur_src_ptr[ix + 1];
-			cur_pix_ptr[2] = cur_src_ptr[ix + 2];
-			cur_pix_ptr += 3;
-			ix = coord_x[dx + 9];
-			cur_pix_ptr[0] = cur_src_ptr[ix];
-			cur_pix_ptr[1] = cur_src_ptr[ix + 1];
-			cur_pix_ptr[2] = cur_src_ptr[ix + 2];
-			cur_pix_ptr += 3;
-			ix = coord_x[dx + 10];
-			cur_pix_ptr[0] = cur_src_ptr[ix];
-			cur_pix_ptr[1] = cur_src_ptr[ix + 1];
-			cur_pix_ptr[2] = cur_src_ptr[ix + 2];
-			cur_pix_ptr += 3;
-			ix = coord_x[dx + 11];
-			cur_pix_ptr[0] = cur_src_ptr[ix];
-			cur_pix_ptr[1] = cur_src_ptr[ix + 1];
-			cur_pix_ptr[2] = cur_src_ptr[ix + 2];
-			cur_pix_ptr += 3;
-			ix = coord_x[dx + 12];
-			cur_pix_ptr[0] = cur_src_ptr[ix];
-			cur_pix_ptr[1] = cur_src_ptr[ix + 1];
-			cur_pix_ptr[2] = cur_src_ptr[ix + 2];
-			cur_pix_ptr += 3;
-			ix = coord_x[dx + 13];
-			cur_pix_ptr[0] = cur_src_ptr[ix];
-			cur_pix_ptr[1] = cur_src_ptr[ix + 1];
-			cur_pix_ptr[2] = cur_src_ptr[ix + 2];
-			cur_pix_ptr += 3;
-			ix = coord_x[dx + 14];
-			cur_pix_ptr[0] = cur_src_ptr[ix];
-			cur_pix_ptr[1] = cur_src_ptr[ix + 1];
-			cur_pix_ptr[2] = cur_src_ptr[ix + 2];
-			cur_pix_ptr += 3;
-			ix = coord_x[dx + 15];
-			cur_pix_ptr[0] = cur_src_ptr[ix];
-			cur_pix_ptr[1] = cur_src_ptr[ix + 1];
-			cur_pix_ptr[2] = cur_src_ptr[ix + 2];
-			cur_pix_ptr += 3;
+			fy = (float)((dy + 0.5f) * scale_y - 0.5f);
+			iy = fy + 0.5f;
+			iy = iy < 0 ? 0 : iy;
+			iy = iy >= srch ? srch - 1 : iy;
+			cur_src_ptr = src + iy*src_widthStep;
+			cur_pix_ptr = cur_dst_ptr;
+			dx = 0;
+			for (; dx < w; dx += 8)
+			{
+				ix = coord_x[dx];
+				cur_pix_ptr[0] = cur_src_ptr[ix];
+				cur_pix_ptr[1] = cur_src_ptr[ix + 1];
+				cur_pix_ptr[2] = cur_src_ptr[ix + 2];
+				cur_pix_ptr += 3;
+				ix = coord_x[dx + 1];
+				cur_pix_ptr[0] = cur_src_ptr[ix];
+				cur_pix_ptr[1] = cur_src_ptr[ix + 1];
+				cur_pix_ptr[2] = cur_src_ptr[ix + 2];
+				cur_pix_ptr += 3;
+				ix = coord_x[dx + 2];
+				cur_pix_ptr[0] = cur_src_ptr[ix];
+				cur_pix_ptr[1] = cur_src_ptr[ix + 1];
+				cur_pix_ptr[2] = cur_src_ptr[ix + 2];
+				cur_pix_ptr += 3;
+				ix = coord_x[dx + 3];
+				cur_pix_ptr[0] = cur_src_ptr[ix];
+				cur_pix_ptr[1] = cur_src_ptr[ix + 1];
+				cur_pix_ptr[2] = cur_src_ptr[ix + 2];
+				cur_pix_ptr += 3;
+				ix = coord_x[dx + 4];
+				cur_pix_ptr[0] = cur_src_ptr[ix];
+				cur_pix_ptr[1] = cur_src_ptr[ix + 1];
+				cur_pix_ptr[2] = cur_src_ptr[ix + 2];
+				cur_pix_ptr += 3;
+				ix = coord_x[dx + 5];
+				cur_pix_ptr[0] = cur_src_ptr[ix];
+				cur_pix_ptr[1] = cur_src_ptr[ix + 1];
+				cur_pix_ptr[2] = cur_src_ptr[ix + 2];
+				cur_pix_ptr += 3;
+				ix = coord_x[dx + 6];
+				cur_pix_ptr[0] = cur_src_ptr[ix];
+				cur_pix_ptr[1] = cur_src_ptr[ix + 1];
+				cur_pix_ptr[2] = cur_src_ptr[ix + 2];
+				cur_pix_ptr += 3;
+				ix = coord_x[dx + 7];
+				cur_pix_ptr[0] = cur_src_ptr[ix];
+				cur_pix_ptr[1] = cur_src_ptr[ix + 1];
+				cur_pix_ptr[2] = cur_src_ptr[ix + 2];
+				cur_pix_ptr += 3;
+			}
+			cur_dst_ptr += widthStep;
 		}
-		for (; dx < w - 7; dx+=8)
+	}
+	else
+	{
+		for (dy = 0; dy < h; dy++)
 		{
-			ix = coord_x[dx];
-			cur_pix_ptr[0] = cur_src_ptr[ix];
-			cur_pix_ptr[1] = cur_src_ptr[ix + 1];
-			cur_pix_ptr[2] = cur_src_ptr[ix + 2];
-			cur_pix_ptr += 3;
-			ix = coord_x[dx + 1];
-			cur_pix_ptr[0] = cur_src_ptr[ix];
-			cur_pix_ptr[1] = cur_src_ptr[ix + 1];
-			cur_pix_ptr[2] = cur_src_ptr[ix + 2];
-			cur_pix_ptr += 3;
-			ix = coord_x[dx + 2];
-			cur_pix_ptr[0] = cur_src_ptr[ix];
-			cur_pix_ptr[1] = cur_src_ptr[ix + 1];
-			cur_pix_ptr[2] = cur_src_ptr[ix + 2];
-			cur_pix_ptr += 3;
-			ix = coord_x[dx + 3];
-			cur_pix_ptr[0] = cur_src_ptr[ix];
-			cur_pix_ptr[1] = cur_src_ptr[ix + 1];
-			cur_pix_ptr[2] = cur_src_ptr[ix + 2];
-			cur_pix_ptr += 3;
-			ix = coord_x[dx + 4];
-			cur_pix_ptr[0] = cur_src_ptr[ix];
-			cur_pix_ptr[1] = cur_src_ptr[ix + 1];
-			cur_pix_ptr[2] = cur_src_ptr[ix + 2];
-			cur_pix_ptr += 3;
-			ix = coord_x[dx + 5];
-			cur_pix_ptr[0] = cur_src_ptr[ix];
-			cur_pix_ptr[1] = cur_src_ptr[ix + 1];
-			cur_pix_ptr[2] = cur_src_ptr[ix + 2];
-			cur_pix_ptr += 3;
-			ix = coord_x[dx + 6];
-			cur_pix_ptr[0] = cur_src_ptr[ix];
-			cur_pix_ptr[1] = cur_src_ptr[ix + 1];
-			cur_pix_ptr[2] = cur_src_ptr[ix + 2];
-			cur_pix_ptr += 3;
-			ix = coord_x[dx + 7];
-			cur_pix_ptr[0] = cur_src_ptr[ix];
-			cur_pix_ptr[1] = cur_src_ptr[ix + 1];
-			cur_pix_ptr[2] = cur_src_ptr[ix + 2];
-			cur_pix_ptr += 3;
+			fy = (float)((dy + 0.5f) * scale_y - 0.5f);
+			iy = fy + 0.5f;
+			iy = iy < 0 ? 0 : iy;
+			iy = iy >= srch ? srch - 1 : iy;
+			cur_src_ptr = src + iy*src_widthStep;
+			cur_pix_ptr = cur_dst_ptr;
+			dx = 0;
+			for (; dx < w - 7; dx += 8)
+			{
+				ix = coord_x[dx];
+				cur_pix_ptr[0] = cur_src_ptr[ix];
+				cur_pix_ptr[1] = cur_src_ptr[ix + 1];
+				cur_pix_ptr[2] = cur_src_ptr[ix + 2];
+				cur_pix_ptr += 3;
+				ix = coord_x[dx + 1];
+				cur_pix_ptr[0] = cur_src_ptr[ix];
+				cur_pix_ptr[1] = cur_src_ptr[ix + 1];
+				cur_pix_ptr[2] = cur_src_ptr[ix + 2];
+				cur_pix_ptr += 3;
+				ix = coord_x[dx + 2];
+				cur_pix_ptr[0] = cur_src_ptr[ix];
+				cur_pix_ptr[1] = cur_src_ptr[ix + 1];
+				cur_pix_ptr[2] = cur_src_ptr[ix + 2];
+				cur_pix_ptr += 3;
+				ix = coord_x[dx + 3];
+				cur_pix_ptr[0] = cur_src_ptr[ix];
+				cur_pix_ptr[1] = cur_src_ptr[ix + 1];
+				cur_pix_ptr[2] = cur_src_ptr[ix + 2];
+				cur_pix_ptr += 3;
+				ix = coord_x[dx + 4];
+				cur_pix_ptr[0] = cur_src_ptr[ix];
+				cur_pix_ptr[1] = cur_src_ptr[ix + 1];
+				cur_pix_ptr[2] = cur_src_ptr[ix + 2];
+				cur_pix_ptr += 3;
+				ix = coord_x[dx + 5];
+				cur_pix_ptr[0] = cur_src_ptr[ix];
+				cur_pix_ptr[1] = cur_src_ptr[ix + 1];
+				cur_pix_ptr[2] = cur_src_ptr[ix + 2];
+				cur_pix_ptr += 3;
+				ix = coord_x[dx + 6];
+				cur_pix_ptr[0] = cur_src_ptr[ix];
+				cur_pix_ptr[1] = cur_src_ptr[ix + 1];
+				cur_pix_ptr[2] = cur_src_ptr[ix + 2];
+				cur_pix_ptr += 3;
+				ix = coord_x[dx + 7];
+				cur_pix_ptr[0] = cur_src_ptr[ix];
+				cur_pix_ptr[1] = cur_src_ptr[ix + 1];
+				cur_pix_ptr[2] = cur_src_ptr[ix + 2];
+				cur_pix_ptr += 3;
+			}
+			for (; dx < w; dx++)
+			{
+				ix = coord_x[dx];
+				cur_pix_ptr[0] = cur_src_ptr[ix];
+				cur_pix_ptr[1] = cur_src_ptr[ix + 1];
+				cur_pix_ptr[2] = cur_src_ptr[ix + 2];
+				cur_pix_ptr += 3;
+			}
+			cur_dst_ptr += widthStep;
 		}
-		for (; dx < w; dx++)
-		{
-			ix = coord_x[dx];
-			cur_pix_ptr[0] = cur_src_ptr[ix];
-			cur_pix_ptr[1] = cur_src_ptr[ix + 1];
-			cur_pix_ptr[2] = cur_src_ptr[ix + 2];
-			cur_pix_ptr += 3;
-		}
-		cur_dst_ptr += widthStep;
 	}
 	free(coord_x);
 }
