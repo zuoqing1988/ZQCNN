@@ -1,7 +1,7 @@
 #include "ZQ_CNN_CompileConfig.h"
 #include <stdio.h>
 #include <malloc.h>
-#include <opencv2\opencv.hpp>
+#include <opencv2/opencv.hpp>
 #include <time.h>
 #if __ARM_NEON
 #include <arm_neon.h>
