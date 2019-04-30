@@ -324,7 +324,82 @@ void transpose_c3(const unsigned char* src, int w, int h, int src_widthStep,
 	{
 		cur_src_c_ptr = src;
 		cur_dst_ptr = dst;
-		for (dy = 0; dy < w; dy++, cur_src_c_ptr += 3,cur_dst_ptr += widthStep)
+		for (dy = 0; dy < w-1; dy++, cur_src_c_ptr += 3,cur_dst_ptr += widthStep)
+		{
+			cur_src_pix_ptr = cur_src_c_ptr;
+			cur_pix_ptr = cur_dst_ptr;
+			for (dx = 0; dx < h-8; dx += 8)
+			{
+				*((float*)cur_pix_ptr) = *((const float*)cur_src_pix_ptr);
+				cur_pix_ptr += 3;
+				cur_src_pix_ptr += src_widthStep;
+				*((float*)cur_pix_ptr) = *((const float*)cur_src_pix_ptr);
+				cur_pix_ptr += 3;
+				cur_src_pix_ptr += src_widthStep;
+				*((float*)cur_pix_ptr) = *((const float*)cur_src_pix_ptr);
+				cur_pix_ptr += 3;
+				cur_src_pix_ptr += src_widthStep;
+				*((float*)cur_pix_ptr) = *((const float*)cur_src_pix_ptr);
+				cur_pix_ptr += 3;
+				cur_src_pix_ptr += src_widthStep;
+				*((float*)cur_pix_ptr) = *((const float*)cur_src_pix_ptr);
+				cur_pix_ptr += 3;
+				cur_src_pix_ptr += src_widthStep;
+				*((float*)cur_pix_ptr) = *((const float*)cur_src_pix_ptr);
+				cur_pix_ptr += 3;
+				cur_src_pix_ptr += src_widthStep;
+				*((float*)cur_pix_ptr) = *((const float*)cur_src_pix_ptr);
+				cur_pix_ptr += 3;
+				cur_src_pix_ptr += src_widthStep;
+				*((float*)cur_pix_ptr) = *((const float*)cur_src_pix_ptr);
+				cur_pix_ptr += 3;
+				cur_src_pix_ptr += src_widthStep;
+			}
+			//last 8 pix
+			{
+				cur_pix_ptr[0] = cur_src_pix_ptr[0];
+				cur_pix_ptr[1] = cur_src_pix_ptr[1];
+				cur_pix_ptr[2] = cur_src_pix_ptr[2];
+				cur_pix_ptr += 3;
+				cur_src_pix_ptr += src_widthStep;
+				cur_pix_ptr[0] = cur_src_pix_ptr[0];
+				cur_pix_ptr[1] = cur_src_pix_ptr[1];
+				cur_pix_ptr[2] = cur_src_pix_ptr[2];
+				cur_pix_ptr += 3;
+				cur_src_pix_ptr += src_widthStep;
+				cur_pix_ptr[0] = cur_src_pix_ptr[0];
+				cur_pix_ptr[1] = cur_src_pix_ptr[1];
+				cur_pix_ptr[2] = cur_src_pix_ptr[2];
+				cur_pix_ptr += 3;
+				cur_src_pix_ptr += src_widthStep;
+				cur_pix_ptr[0] = cur_src_pix_ptr[0];
+				cur_pix_ptr[1] = cur_src_pix_ptr[1];
+				cur_pix_ptr[2] = cur_src_pix_ptr[2];
+				cur_pix_ptr += 3;
+				cur_src_pix_ptr += src_widthStep;
+				cur_pix_ptr[0] = cur_src_pix_ptr[0];
+				cur_pix_ptr[1] = cur_src_pix_ptr[1];
+				cur_pix_ptr[2] = cur_src_pix_ptr[2];
+				cur_pix_ptr += 3;
+				cur_src_pix_ptr += src_widthStep;
+				cur_pix_ptr[0] = cur_src_pix_ptr[0];
+				cur_pix_ptr[1] = cur_src_pix_ptr[1];
+				cur_pix_ptr[2] = cur_src_pix_ptr[2];
+				cur_pix_ptr += 3;
+				cur_src_pix_ptr += src_widthStep;
+				cur_pix_ptr[0] = cur_src_pix_ptr[0];
+				cur_pix_ptr[1] = cur_src_pix_ptr[1];
+				cur_pix_ptr[2] = cur_src_pix_ptr[2];
+				cur_pix_ptr += 3;
+				cur_src_pix_ptr += src_widthStep;
+				cur_pix_ptr[0] = cur_src_pix_ptr[0];
+				cur_pix_ptr[1] = cur_src_pix_ptr[1];
+				cur_pix_ptr[2] = cur_src_pix_ptr[2];
+				cur_pix_ptr += 3;
+				cur_src_pix_ptr += src_widthStep;
+			}
+		}
+		//last row
 		{
 			cur_src_pix_ptr = cur_src_c_ptr;
 			cur_pix_ptr = cur_dst_ptr;
