@@ -52,9 +52,9 @@ int main(int argc, const char** argv)
 		for (int i = 0; i < nIters; i++)
 			resize_nn_c3_arm32(src_img.data, src_img.cols, src_img.rows, src_img.step[0], dst_img_my.data, dst_W, dst_H, dst_img_my.step[0]);
 		clock_t t4 = clock();
-		printf("cv      :%12.5f ms\n", (t2 - t1)*1e-6);
-		printf("my      :%12.5f ms\n", (t3 - t2)*1e-6);
-		printf("my_arm32:%12.5f ms\n", (t4 - t3)*1e-6);
+		printf("cv      :%12.5f ms\n", (t2 - t1)*1e-3/nIters);
+		printf("my      :%12.5f ms\n", (t3 - t2)*1e-3/nIters);
+		printf("my_arm32:%12.5f ms\n", (t4 - t3)*1e-3/nIters);
 #else
 		printf("cv:%d\nmy:%d\n", t2 - t1, t3 - t2);
 #endif
@@ -335,10 +335,10 @@ void resize_nn_c3_arm32(const unsigned char* src, int srcw, int srch, int src_wi
 			cur_pix_ptr2 += 3;
 			cur_pix_ptr3 += 3;
 		}
-		cur_dst_ptr0 += widthStep2;
-		cur_dst_ptr1 += widthStep2;
-		cur_dst_ptr2 += widthStep2;
-		cur_dst_ptr3 += widthStep2;
+		cur_dst_ptr0 += widthStep4;
+		cur_dst_ptr1 += widthStep4;
+		cur_dst_ptr2 += widthStep4;
+		cur_dst_ptr3 += widthStep4;
 	}
 
 	for (; dy < h; dy ++)
