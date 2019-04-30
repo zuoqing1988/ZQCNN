@@ -344,48 +344,48 @@ void resize_nn_c3_arm32(const unsigned char* src, int srcw, int srch, int src_wi
 	for (; dy < h; dy ++)
 	{
 		fy = (float)((dy + 0.5f) * scale_y - 0.5f);
-		iy1 = fy + 0.5f;
-		iy1 = iy1 < 0 ? 0 : iy1;
-		iy1 = iy1 >= srch ? srch - 1 : iy1;
-		cur_src_ptr1 = src + iy1*src_widthStep;
+		iy = fy + 0.5f;
+		iy = iy < 0 ? 0 : iy;
+		iy = iy >= srch ? srch - 1 : iy;
+		cur_src_ptr0 = src + iy*src_widthStep;
 		dx = 0;
-		cur_pix_ptr1 = cur_dst_ptr1;
+		cur_pix_ptr0 = cur_dst_ptr0;
 		for (; dx < w - 16; dx += 8)
 		{
 			ix = coord_x[dx];
-			vst1_u8(cur_pix_ptr1, vld1_u8(cur_src_ptr1 + ix));
-			cur_pix_ptr1 += 3;
+			vst1_u8(cur_pix_ptr0, vld1_u8(cur_src_ptr0 + ix));
+			cur_pix_ptr0 += 3;
 			ix = coord_x[dx + 1];
-			vst1_u8(cur_pix_ptr1, vld1_u8(cur_src_ptr1 + ix));
-			cur_pix_ptr1 += 3;
+			vst1_u8(cur_pix_ptr0, vld1_u8(cur_src_ptr0 + ix));
+			cur_pix_ptr0 += 3;
 			ix = coord_x[dx + 2];
-			vst1_u8(cur_pix_ptr1, vld1_u8(cur_src_ptr1 + ix));
-			cur_pix_ptr1 += 3;
+			vst1_u8(cur_pix_ptr0, vld1_u8(cur_src_ptr0 + ix));
+			cur_pix_ptr0 += 3;
 			ix = coord_x[dx + 3];
-			vst1_u8(cur_pix_ptr1, vld1_u8(cur_src_ptr1 + ix));
-			cur_pix_ptr1 += 3;
+			vst1_u8(cur_pix_ptr0, vld1_u8(cur_src_ptr0 + ix));
+			cur_pix_ptr0 += 3;
 			ix = coord_x[dx + 4];
-			vst1_u8(cur_pix_ptr1, vld1_u8(cur_src_ptr1 + ix));
-			cur_pix_ptr1 += 3;
+			vst1_u8(cur_pix_ptr0, vld1_u8(cur_src_ptr0 + ix));
+			cur_pix_ptr0 += 3;
 			ix = coord_x[dx + 5];
-			vst1_u8(cur_pix_ptr1, vld1_u8(cur_src_ptr1 + ix));
-			cur_pix_ptr1 += 3;
+			vst1_u8(cur_pix_ptr0, vld1_u8(cur_src_ptr0 + ix));
+			cur_pix_ptr0 += 3;
 			ix = coord_x[dx + 6];
-			vst1_u8(cur_pix_ptr1, vld1_u8(cur_src_ptr1 + ix));
-			cur_pix_ptr1 += 3;
+			vst1_u8(cur_pix_ptr0, vld1_u8(cur_src_ptr0 + ix));
+			cur_pix_ptr0 += 3;
 			ix = coord_x[dx + 7];
-			vst1_u8(cur_pix_ptr1, vld1_u8(cur_src_ptr1 + ix));
-			cur_pix_ptr1 += 3;
+			vst1_u8(cur_pix_ptr0, vld1_u8(cur_src_ptr0 + ix));
+			cur_pix_ptr0 += 3;
 		}
 		for (; dx < w; dx++)
 		{
 			ix = coord_x[dx];
-			cur_pix_ptr1[0] = cur_src_ptr1[ix];
-			cur_pix_ptr1[1] = cur_src_ptr1[ix + 1];
-			cur_pix_ptr1[2] = cur_src_ptr1[ix + 2];
-			cur_pix_ptr1 += 3;
+			cur_pix_ptr0[0] = cur_src_ptr0[ix];
+			cur_pix_ptr0[1] = cur_src_ptr0[ix + 1];
+			cur_pix_ptr0[2] = cur_src_ptr0[ix + 2];
+			cur_pix_ptr0 += 3;
 		}
-		cur_dst_ptr1 += widthStep;
+		cur_dst_ptr0 += widthStep;
 	}
 	free(coord_x);
 }
