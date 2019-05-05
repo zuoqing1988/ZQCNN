@@ -4558,7 +4558,7 @@ bool ZQ_CNN_Forward_SSEUtils::_detection_output(const ZQ_CNN_Tensor4D& loc, cons
 		// Generate fake results per image.
 		for (int i = 0; i < num; ++i)
 		{
-			out_ptr[0] = i;
+			out_ptr[0] = -1;
 			out_ptr += output.GetSliceStep();
 		}
 	}
@@ -4759,7 +4759,7 @@ bool ZQ_CNN_Forward_SSEUtils::_detection_output_MXNET(const ZQ_CNN_Tensor4D& loc
 		// Generate fake results per image.
 		for (int i = 0; i < num; ++i)
 		{
-			out_ptr[0] = i;
+			out_ptr[0] = -1;
 			out_ptr += output.GetSliceStep();
 		}
 	}
