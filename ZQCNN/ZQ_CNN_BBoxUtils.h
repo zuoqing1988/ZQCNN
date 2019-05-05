@@ -173,11 +173,13 @@ namespace ZQ
 					h = y2 - y1 + 1;
 					if (square)
 					{
-						bboxSize = (h > w) ? h : w;
-						y1 = y1 + h*0.5 - bboxSize*0.5;
-						x1 = x1 + w*0.5 - bboxSize*0.5;
-						(*it).row2 = round(y1 + bboxSize - 1);
-						(*it).col2 = round(x1 + bboxSize - 1);
+						float scale_h = h*it->scale_y;
+						float scale_w = w*it->scale_x;
+						bboxSize = (scale_h > scale_w) ? scale_h : scale_w;
+						y1 = y1 + h*0.5 - bboxSize/it->scale_y*0.5;
+						x1 = x1 + w*0.5 - bboxSize/it->scale_x*0.5;
+						(*it).row2 = round(y1 + bboxSize / it->scale_y - 1);
+						(*it).col2 = round(x1 + bboxSize / it->scale_x - 1);
 						(*it).row1 = round(y1);
 						(*it).col1 = round(x1);
 					}
@@ -211,13 +213,13 @@ namespace ZQ
 				{
 					y1 = (*it).row1;
 					x1 = (*it).col1;
-					h = (*it).row2 - (*it).row1 + 1;
-					w = (*it).col2 - (*it).col1 + 1;
-					bboxSize = (h > w) ? h : w;
-					y1 = y1 + h*0.5 - bboxSize*0.5;
-					x1 = x1 + w*0.5 - bboxSize*0.5;
-					(*it).row2 = round(y1 + bboxSize - 1);
-					(*it).col2 = round(x1 + bboxSize - 1);
+					float scale_h = h*it->scale_y;
+					float scale_w = w*it->scale_x;
+					bboxSize = (scale_h > scale_w) ? scale_h : scale_w;
+					y1 = y1 + h*0.5 - bboxSize / it->scale_y*0.5;
+					x1 = x1 + w*0.5 - bboxSize / it->scale_x*0.5;
+					(*it).row2 = round(y1 + bboxSize / it->scale_y - 1);
+					(*it).col2 = round(x1 + bboxSize / it->scale_x - 1);
 					(*it).row1 = round(y1);
 					(*it).col1 = round(x1);
 

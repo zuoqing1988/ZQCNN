@@ -124,6 +124,11 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SampleMTCNN_NCHWC4", "Sampl
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "testImageProcessing", "SamplesZQCNN\testImageProcessing\testImageProcessing.vcxproj", "{55D527D9-B32E-42C3-A872-FF76070171B0}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SampleMTCNN_AspectRatio", "SamplesZQCNN\SampleMTCNN_AspectRatio\SampleMTCNN_AspectRatio.vcxproj", "{2A5994D0-DF41-444E-BC6A-A1B8D2D3439B}"
+	ProjectSection(ProjectDependencies) = postProject
+		{43AA2D6A-447E-4153-8A29-7AE8A8296DC7} = {43AA2D6A-447E-4153-8A29-7AE8A8296DC7}
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -380,6 +385,14 @@ Global
 		{55D527D9-B32E-42C3-A872-FF76070171B0}.Release|x64.Build.0 = Release|x64
 		{55D527D9-B32E-42C3-A872-FF76070171B0}.Release|x86.ActiveCfg = Release|Win32
 		{55D527D9-B32E-42C3-A872-FF76070171B0}.Release|x86.Build.0 = Release|Win32
+		{2A5994D0-DF41-444E-BC6A-A1B8D2D3439B}.Debug|x64.ActiveCfg = Debug|x64
+		{2A5994D0-DF41-444E-BC6A-A1B8D2D3439B}.Debug|x64.Build.0 = Debug|x64
+		{2A5994D0-DF41-444E-BC6A-A1B8D2D3439B}.Debug|x86.ActiveCfg = Debug|Win32
+		{2A5994D0-DF41-444E-BC6A-A1B8D2D3439B}.Debug|x86.Build.0 = Debug|Win32
+		{2A5994D0-DF41-444E-BC6A-A1B8D2D3439B}.Release|x64.ActiveCfg = Release|x64
+		{2A5994D0-DF41-444E-BC6A-A1B8D2D3439B}.Release|x64.Build.0 = Release|x64
+		{2A5994D0-DF41-444E-BC6A-A1B8D2D3439B}.Release|x86.ActiveCfg = Release|Win32
+		{2A5994D0-DF41-444E-BC6A-A1B8D2D3439B}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

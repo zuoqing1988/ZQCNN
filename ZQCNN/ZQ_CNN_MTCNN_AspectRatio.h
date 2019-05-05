@@ -1,38 +1,39 @@
-#ifndef _ZQ_CNN_MTCNN_H_
-#define _ZQ_CNN_MTCNN_H_
+#ifndef _ZQ_CNN_MTCNN_ASPECT_RATIO_H_
+#define _ZQ_CNN_MTCNN_ASPECT_RATIO_H_
 #pragma once
 #include "ZQ_CNN_Net.h"
 #include "ZQ_CNN_BBoxUtils.h"
 #include <omp.h>
 namespace ZQ
 {
-	class ZQ_CNN_MTCNN
+	class ZQ_CNN_MTCNN_AspectRatio
 	{
 	public:
 		using string = std::string;
-		ZQ_CNN_MTCNN()
+		ZQ_CNN_MTCNN_AspectRatio()
 		{
 			min_size = 60;
 			thresh[0] = 0.6;
 			thresh[1] = 0.7;
-			thresh[2] = 0.7;
-			nms_thresh[0] = 0.6;
-			nms_thresh[1] = 0.7;
-			nms_thresh[2] = 0.7;
+			thresh[2] = 0.8;
+			nms_thresh[0] = 0.4;
+			nms_thresh[1] = 0.5;
+			nms_thresh[2] = 0.5;
 			width = 0;
 			height = 0;
+			width_half = 0;
+			height_half = 0;
 			factor = 0.709;
-			pnet_overlap_thresh_count = 4;
-			pnet_size = 12;
-			pnet_stride = 2;
+			pnet_overlap_thresh_count = 3;
+			pnet_size = 20;
+			pnet_stride = 4;
 			special_handle_very_big_face = false;
 			force_run_pnet_multithread = false;
 			show_debug_info = false;
 			limit_r_num = 0;
 			limit_o_num = 0;
-			limit_l_num = 0;
 		}
-		~ZQ_CNN_MTCNN()
+		~ZQ_CNN_MTCNN_AspectRatio()
 		{
 
 		}
@@ -43,12 +44,12 @@ namespace ZQ
 #else
 		const int BATCH_SIZE = 64;
 #endif
-		std::vector<ZQ_CNN_Net> pnet, rnet, onet, lnet;
-		bool has_lnet;
+		std::vector<ZQ_CNN_Net> pnet, rnet, onet;
 		int thread_num;
 		float thresh[3], nms_thresh[3];
 		int min_size;
 		int width, height;
+		int width_half, height_half;
 		float factor;
 		int pnet_overlap_thresh_count;
 		int pnet_size;
@@ -57,30 +58,26 @@ namespace ZQ
 		int onet_size;
 		int lnet_size;
 		bool special_handle_very_big_face;
-		bool do_landmark;
-		float early_accept_thresh;
 		float nms_thresh_per_scale;
 		bool force_run_pnet_multithread;
-		std::vector<float> scales;
-		std::vector<ZQ_CNN_Tensor4D_NHW_C_Align128bit> pnet_images;
-		ZQ_CNN_Tensor4D_NHW_C_Align128bit input, rnet_image, onet_image;
+		std::vector<float> scales, scales_xhalf, scales_yhalf;
+		std::vector<ZQ_CNN_Tensor4D_NHW_C_Align128bit> pnet_images, pnet_images_xhalf, pnet_images_yhalf;
+		ZQ_CNN_Tensor4D_NHW_C_Align128bit input, input_xhalf, input_yhalf;
+		ZQ_CNN_Tensor4D_NHW_C_Align128bit rnet_image, onet_image;
 		bool show_debug_info;
 		int limit_r_num;
 		int limit_o_num;
-		int limit_l_num;
 	public:
 		void TurnOnShowDebugInfo() { show_debug_info = true; }
 		void TurnOffShowDebugInfo() { show_debug_info = false; }
-		void SetLimit(int limit_r = 0, int limit_o = 0, int limit_l = 0) 
+		void SetLimit(int limit_r = 0, int limit_o = 0)
 		{
 			limit_r_num = limit_r;
 			limit_o_num = limit_o;
-			limit_l_num = limit_l;
 		}
 
 		bool Init(const string& pnet_param, const string& pnet_model, const string& rnet_param, const string& rnet_model,
-			const string& onet_param, const string& onet_model, int thread_num = 1, 
-			bool has_lnet = false, const string& lnet_param = "", const std::string& lnet_model = "")
+			const string& onet_param, const string& onet_model, int thread_num = 1)
 		{
 			if (thread_num < 1)
 				force_run_pnet_multithread = true;
@@ -90,19 +87,12 @@ namespace ZQ
 			pnet.resize(thread_num);
 			rnet.resize(thread_num);
 			onet.resize(thread_num);
-			this->has_lnet = has_lnet;
-			if (has_lnet)
-			{
-				lnet.resize(thread_num);
-			}
 			bool ret = true;
 			for (int i = 0; i < thread_num; i++)
 			{
-				ret = pnet[i].LoadFrom(pnet_param, pnet_model,true,1e-9, true) 
+				ret = pnet[i].LoadFrom(pnet_param, pnet_model, true, 1e-9, true)
 					&& rnet[i].LoadFrom(rnet_param, rnet_model, true, 1e-9, true)
 					&& onet[i].LoadFrom(onet_param, onet_model, true, 1e-9, true);
-				if (has_lnet && ret)
-					ret = lnet[i].LoadFrom(lnet_param, lnet_model, true, 1e-9, true);
 				if (!ret)
 					break;
 			}
@@ -111,8 +101,6 @@ namespace ZQ
 				pnet.clear();
 				rnet.clear();
 				onet.clear();
-				if (has_lnet)
-					lnet.clear();
 				this->thread_num = 0;
 			}
 			else
@@ -121,19 +109,12 @@ namespace ZQ
 			{
 				printf("rnet = %.1f M, onet = %.1f M\n", rnet[0].GetNumOfMulAdd() / (1024.0*1024.0),
 					onet[0].GetNumOfMulAdd() / (1024.0*1024.0));
-				if (has_lnet)
-					printf("lnet = %.1f M\n", lnet[0].GetNumOfMulAdd() / (1024.0*1024.0));
 			}
 			int C, H, W;
 			rnet[0].GetInputDim(C, H, W);
 			rnet_size = H;
 			onet[0].GetInputDim(C, H, W);
 			onet_size = H;
-			if (has_lnet)
-			{
-				lnet[0].GetInputDim(C, H, W);
-				lnet_size = H;
-			}
 			return ret;
 		}
 
@@ -141,8 +122,7 @@ namespace ZQ
 			const char* pnet_param, __int64 pnet_param_len, const char* pnet_model, __int64 pnet_model_len,
 			const char* rnet_param, __int64 rnet_param_len, const char* rnet_model, __int64 rnet_model_len,
 			const char* onet_param, __int64 onet_param_len, const char* onet_model, __int64 onet_model_len,
-			int thread_num = 1, bool has_lnet = false, 
-			const char* lnet_param = 0, __int64 lnet_param_len = 0, const char* lnet_model = 0, __int64 lnet_model_len = 0)
+			int thread_num = 1)
 		{
 			if (thread_num < 1)
 				force_run_pnet_multithread = true;
@@ -152,17 +132,13 @@ namespace ZQ
 			pnet.resize(thread_num);
 			rnet.resize(thread_num);
 			onet.resize(thread_num);
-			this->has_lnet = has_lnet;
-			if(has_lnet)
-				lnet.resize(thread_num);
+			
 			bool ret = true;
 			for (int i = 0; i < thread_num; i++)
 			{
-				ret = pnet[i].LoadFromBuffer(pnet_param, pnet_param_len,pnet_model,pnet_model_len, true, 1e-9, true)
+				ret = pnet[i].LoadFromBuffer(pnet_param, pnet_param_len, pnet_model, pnet_model_len, true, 1e-9, true)
 					&& rnet[i].LoadFromBuffer(rnet_param, rnet_param_len, rnet_model, rnet_model_len, true, 1e-9, true)
 					&& onet[i].LoadFromBuffer(onet_param, onet_param_len, onet_model, onet_model_len, true, 1e-9, true);
-				if (has_lnet && ret)
-					ret = lnet[i].LoadFromBuffer(lnet_param, lnet_param_len, lnet_model, lnet_model_len, true, 1e-9, true);
 				if (!ret)
 					break;
 			}
@@ -171,8 +147,6 @@ namespace ZQ
 				pnet.clear();
 				rnet.clear();
 				onet.clear();
-				if (has_lnet)
-					lnet.clear();
 				this->thread_num = 0;
 			}
 			else
@@ -181,8 +155,6 @@ namespace ZQ
 			{
 				printf("rnet = %.1f M, onet = %.1f M\n", rnet[0].GetNumOfMulAdd() / (1024.0*1024.0),
 					onet[0].GetNumOfMulAdd() / (1024.0*1024.0));
-				if (has_lnet)
-					printf("lnet = %.1f M\n", lnet[0].GetNumOfMulAdd() / (1024.0*1024.0));
 			}
 			int C, H, W;
 			rnet[0].GetInputDim(C, H, W);
@@ -193,9 +165,8 @@ namespace ZQ
 		}
 
 		void SetPara(int w, int h, int min_face_size = 60, float pthresh = 0.6, float rthresh = 0.7, float othresh = 0.7,
-			float nms_pthresh = 0.6, float nms_rthresh = 0.7, float nms_othresh = 0.7, float scale_factor = 0.709, 
-			int pnet_overlap_thresh_count = 4, int pnet_size = 12, int pnet_stride = 2, bool special_handle_very_big_face = false, 
-			bool do_landmark = true, float early_accept_thresh = 1.00)
+			float nms_pthresh = 0.4, float nms_rthresh = 0.5, float nms_othresh = 0.5, float scale_factor = 0.709,
+			int pnet_overlap_thresh_count = 3, int pnet_size = 20, int pnet_stride = 4, bool special_handle_very_big_face = false)
 		{
 			min_size = __max(pnet_size, min_face_size);
 			thresh[0] = __max(0.1, pthresh); thresh[1] = __max(0.1, rthresh); thresh[2] = __max(0.1, othresh);
@@ -205,8 +176,6 @@ namespace ZQ
 			this->pnet_size = pnet_size;
 			this->pnet_stride = pnet_stride;
 			this->special_handle_very_big_face = special_handle_very_big_face;
-			this->do_landmark = do_landmark;
-			this->early_accept_thresh = early_accept_thresh;
 			if (pnet_size == 20 && pnet_stride == 4)
 				nms_thresh_per_scale = 0.45;
 			else
@@ -251,7 +220,7 @@ namespace ZQ
 							count++;
 						}
 					}
-					
+
 					scales.push_back((float)pnet_size / minside);
 					count++;
 				}
@@ -262,6 +231,112 @@ namespace ZQ
 				}
 
 				pnet_images.resize(count);
+			}
+
+			if (width_half != w/2)
+			{
+				scales_xhalf.clear();
+				pnet_images_xhalf.clear();
+
+				width_half = w / 2;
+				float minside = __min(width_half, height);
+				int MIN_DET_SIZE = pnet_size;
+				float m = (float)MIN_DET_SIZE / min_size;
+				minside *= m;
+				while (minside > MIN_DET_SIZE)
+				{
+					scales_xhalf.push_back(m);
+					minside *= factor;
+					m *= factor;
+				}
+				minside = __min(width_half, height);
+				int count = scales_xhalf.size();
+				for (int i = scales_xhalf.size() - 1; i >= 0; i--)
+				{
+					if (ceil(scales_xhalf[i] * minside) <= pnet_size)
+					{
+						count--;
+					}
+				}
+				if (special_handle_very_big_face)
+				{
+					if (count > 2)
+						count--;
+
+					scales_xhalf.resize(count);
+					if (count > 0)
+					{
+						float last_size = ceil(scales_xhalf[count - 1] * minside);
+						for (int tmp_size = last_size - 1; tmp_size >= pnet_size + 1; tmp_size -= 2)
+						{
+							scales_xhalf.push_back((float)tmp_size / minside);
+							count++;
+						}
+					}
+
+					scales_xhalf.push_back((float)pnet_size / minside);
+					count++;
+				}
+				else
+				{
+					scales_xhalf.push_back((float)pnet_size / minside);
+					count++;
+				}
+
+				pnet_images_xhalf.resize(count);
+			}
+
+			if (height_half != h / 2)
+			{
+				scales_yhalf.clear();
+				pnet_images_yhalf.clear();
+
+				height_half = h / 2;
+				float minside = __min(width, height_half);
+				int MIN_DET_SIZE = pnet_size;
+				float m = (float)MIN_DET_SIZE / min_size;
+				minside *= m;
+				while (minside > MIN_DET_SIZE)
+				{
+					scales_yhalf.push_back(m);
+					minside *= factor;
+					m *= factor;
+				}
+				minside = __min(width, height_half);
+				int count = scales_yhalf.size();
+				for (int i = scales_yhalf.size() - 1; i >= 0; i--)
+				{
+					if (ceil(scales_yhalf[i] * minside) <= pnet_size)
+					{
+						count--;
+					}
+				}
+				if (special_handle_very_big_face)
+				{
+					if (count > 2)
+						count--;
+
+					scales_yhalf.resize(count);
+					if (count > 0)
+					{
+						float last_size = ceil(scales_yhalf[count - 1] * minside);
+						for (int tmp_size = last_size - 1; tmp_size >= pnet_size + 1; tmp_size -= 2)
+						{
+							scales_yhalf.push_back((float)tmp_size / minside);
+							count++;
+						}
+					}
+
+					scales_yhalf.push_back((float)pnet_size / minside);
+					count++;
+				}
+				else
+				{
+					scales_yhalf.push_back((float)pnet_size / minside);
+					count++;
+				}
+
+				pnet_images_yhalf.resize(count);
 			}
 		}
 
@@ -281,108 +356,31 @@ namespace ZQ
 			double t2 = omp_get_wtime();
 			if (!_Rnet_stage(firstBbox, secondBbox))
 				return false;
-			//results = secondBbox;
-			//return true;
-
-			if (limit_o_num > 0)
-			{
-				_select(secondBbox, limit_o_num, _width, _height);
-			}
-
-			if (!has_lnet || !do_landmark)
-			{
-				double t3 = omp_get_wtime();
-				if (!_Onet_stage(secondBbox, results))
-					return false;
-
-				double t4 = omp_get_wtime();
-				if (show_debug_info)
-				{
-					printf("final found num: %d\n", (int)results.size());
-					printf("total cost: %.3f ms (P: %.3f ms, R: %.3f ms, O: %.3f ms)\n",
-						1000 * (t4 - t1), 1000 * (t2 - t1), 1000 * (t3 - t2), 1000 * (t4 - t3));
-				}
-			}
-			else
-			{
-				double t3 = omp_get_wtime();
-				if (!_Onet_stage(secondBbox, thirdBbox))
-					return false;
-
-				if (limit_l_num > 0)
-				{
-					_select(thirdBbox, limit_l_num, _width, _height);
-				}
-
-				double t4 = omp_get_wtime();
-
-				if (!_Lnet_stage(thirdBbox, results))
-					return false;
-
-				double t5 = omp_get_wtime();
-				if (show_debug_info)
-				{
-					printf("final found num: %d\n", (int)results.size());
-					printf("total cost: %.3f ms (P: %.3f ms, R: %.3f ms, O: %.3f ms, L: %.3f ms)\n",
-						1000 * (t5 - t1), 1000 * (t2 - t1), 1000 * (t3 - t2), 1000 * (t4 - t3), 1000 * (t5 - t4));
-				}
-			}
-			
+			results = secondBbox;
 			return true;
-		}
 
-		bool Find106(const unsigned char* bgr_img, int _width, int _height, int _widthStep, std::vector<ZQ_CNN_BBox106>& results)
-		{
-			double t1 = omp_get_wtime();
-			std::vector<ZQ_CNN_BBox> firstBbox, secondBbox, thirdBbox;
-			if (!_Pnet_stage(bgr_img, _width, _height, _widthStep, firstBbox))
-				return false;
-			//results = firstBbox;
-			//return true;
-			if (limit_r_num > 0)
-			{
-				_select(firstBbox, limit_r_num, _width, _height);
-			}
-			double t2 = omp_get_wtime();
-			if (!_Rnet_stage(firstBbox, secondBbox))
-				return false;
-			//results = secondBbox;
-			//return true;
 			if (limit_o_num > 0)
 			{
 				_select(secondBbox, limit_o_num, _width, _height);
 			}
-			if (!has_lnet || !do_landmark)
-			{
-				return false;
-			}
+
 			double t3 = omp_get_wtime();
-			if (!_Onet_stage(secondBbox, thirdBbox))
+			if (!_Onet_stage(secondBbox, results))
 				return false;
 
-			if (limit_l_num > 0)
-			{
-				_select(thirdBbox, limit_l_num, _width, _height);
-			}
 			double t4 = omp_get_wtime();
-
-			if (!_Lnet106_stage(thirdBbox, results))
-				return false;
-
-			double t5 = omp_get_wtime();
 			if (show_debug_info)
 			{
 				printf("final found num: %d\n", (int)results.size());
-				printf("total cost: %.3f ms (P: %.3f ms, R: %.3f ms, O: %.3f ms, L: %.3f ms)\n",
-					1000 * (t5 - t1), 1000 * (t2 - t1), 1000 * (t3 - t2), 1000 * (t4 - t3), 1000 * (t5 - t4));
+				printf("total cost: %.3f ms (P: %.3f ms, R: %.3f ms, O: %.3f ms)\n",
+					1000 * (t4 - t1), 1000 * (t2 - t1), 1000 * (t3 - t2), 1000 * (t4 - t3));
 			}
-			
 			return true;
 		}
 
 	private:
-		void _compute_Pnet_single_thread(std::vector<std::vector<float> >& maps, 
-			std::vector<int>& mapH, std::vector<int>& mapW)
+		void _compute_Pnet_single_thread(std::vector<std::vector<float> >& maps,
+			std::vector<int>& mapH, std::vector<int>& mapW, int& ori_num, int& xhalf_num, int& yhalf_num)
 		{
 			int scale_num = 0;
 			for (int i = 0; i < scales.size(); i++)
@@ -395,52 +393,158 @@ namespace ZQ
 				mapH.push_back((changedH - pnet_size) / pnet_stride + 1);
 				mapW.push_back((changedW - pnet_size) / pnet_stride + 1);
 			}
-			maps.resize(scale_num);
-			for (int i = 0; i < scale_num; i++)
+			ori_num = scale_num;
+			scale_num = 0;
+			for (int i = 0; i < scales_xhalf.size(); i++)
+			{
+				int changedH = (int)ceil(height*scales_xhalf[i]);
+				int changedW = (int)ceil(width_half*scales_xhalf[i]);
+				if (changedH < pnet_size || changedW < pnet_size)
+					continue;
+				scale_num++;
+				mapH.push_back((changedH - pnet_size) / pnet_stride + 1);
+				mapW.push_back((changedW - pnet_size) / pnet_stride + 1);
+			}
+			xhalf_num = scale_num;
+			scale_num = 0;
+			for (int i = 0; i < scales_yhalf.size(); i++)
+			{
+				int changedH = (int)ceil(height_half*scales_yhalf[i]);
+				int changedW = (int)ceil(width*scales_yhalf[i]);
+				if (changedH < pnet_size || changedW < pnet_size)
+					continue;
+				scale_num++;
+				mapH.push_back((changedH - pnet_size) / pnet_stride + 1);
+				mapW.push_back((changedW - pnet_size) / pnet_stride + 1);
+			}
+			yhalf_num = scale_num;
+			int total_scale_num = ori_num + xhalf_num + yhalf_num;
+			maps.resize(total_scale_num);
+			for (int i = 0; i < total_scale_num; i++)
 			{
 				maps[i].resize(mapH[i] * mapW[i]);
 			}
 
-			for (int i = 0; i < scale_num; i++)
+			for (int i = 0; i < total_scale_num; i++)
 			{
-				int changedH = (int)ceil(height*scales[i]);
-				int changedW = (int)ceil(width*scales[i]);
-				float cur_scale_x = (float)width / changedW;
-				float cur_scale_y = (float)height / changedH;
-				double t10 = omp_get_wtime();
-				if (scales[i] != 1)
+				if (i < ori_num)
 				{
-					input.ResizeBilinear(pnet_images[i], changedW, changedH, 0, 0);
-				}
-
-				double t11 = omp_get_wtime();
-				if (scales[i] != 1)
-					pnet[0].Forward(pnet_images[i]);
-				else
-					pnet[0].Forward(input);
-				double t12 = omp_get_wtime();
-				if (show_debug_info)
-					printf("Pnet [%d]: resolution [%dx%d], resize:%.3f ms, cost:%.3f ms\n",
-						i, changedW, changedH, 1000 * (t11 - t10), 1000 * (t12 - t11));
-				const ZQ_CNN_Tensor4D* score = pnet[0].GetBlobByName("prob1");
-				//score p
-				int scoreH = score->GetH();
-				int scoreW = score->GetW();
-				int scorePixStep = score->GetPixelStep();
-				const float *p = score->GetFirstPixelPtr() + 1;
-				for (int row = 0; row < scoreH; row++)
-				{
-					for (int col = 0; col < scoreW; col++)
+					int changedH = (int)ceil(height*scales[i]);
+					int changedW = (int)ceil(width*scales[i]);
+					float cur_scale_x = (float)width / changedW;
+					float cur_scale_y = (float)height / changedH;
+					double t10 = omp_get_wtime();
+					if (scales[i] != 1)
 					{
-						if(row < mapH[i] && col < mapW[i])
-							maps[i][row*mapW[i] + col] = *p;
-						p += scorePixStep;
+						input.ResizeBilinear(pnet_images[i], changedW, changedH, 0, 0);
+					}
+
+					double t11 = omp_get_wtime();
+					if (scales[i] != 1)
+						pnet[0].Forward(pnet_images[i]);
+					else
+						pnet[0].Forward(input);
+					double t12 = omp_get_wtime();
+					if (show_debug_info)
+						printf("Pnet [%d]: resolution [%dx%d], resize:%.3f ms, cost:%.3f ms\n",
+							i, changedW, changedH, 1000 * (t11 - t10), 1000 * (t12 - t11));
+					const ZQ_CNN_Tensor4D* score = pnet[0].GetBlobByName("prob1");
+					//score p
+					int scoreH = score->GetH();
+					int scoreW = score->GetW();
+					int scorePixStep = score->GetPixelStep();
+					const float *p = score->GetFirstPixelPtr() + 1;
+					for (int row = 0; row < scoreH; row++)
+					{
+						for (int col = 0; col < scoreW; col++)
+						{
+							if (row < mapH[i] && col < mapW[i])
+								maps[i][row*mapW[i] + col] = *p;
+							p += scorePixStep;
+						}
 					}
 				}
+				else if (i < ori_num + xhalf_num)
+				{
+					int j = i - ori_num;
+					int changedH = (int)ceil(height*scales_xhalf[j]);
+					int changedW = (int)ceil(width_half*scales_xhalf[j]);
+					float cur_scale_x = (float)width_half / changedW;
+					float cur_scale_y = (float)height / changedH;
+					double t10 = omp_get_wtime();
+					if (scales_xhalf[j] != 1)
+					{
+						input_xhalf.ResizeBilinear(pnet_images_xhalf[j], changedW, changedH, 0, 0);
+					}
+
+					double t11 = omp_get_wtime();
+					if (scales_xhalf[j] != 1)
+						pnet[0].Forward(pnet_images_xhalf[j]);
+					else
+						pnet[0].Forward(input_xhalf);
+					double t12 = omp_get_wtime();
+					if (show_debug_info)
+						printf("Pnet [%d]: resolution [%dx%d], resize:%.3f ms, cost:%.3f ms\n",
+							i, changedW, changedH, 1000 * (t11 - t10), 1000 * (t12 - t11));
+					const ZQ_CNN_Tensor4D* score = pnet[0].GetBlobByName("prob1");
+					//score p
+					int scoreH = score->GetH();
+					int scoreW = score->GetW();
+					int scorePixStep = score->GetPixelStep();
+					const float *p = score->GetFirstPixelPtr() + 1;
+					for (int row = 0; row < scoreH; row++)
+					{
+						for (int col = 0; col < scoreW; col++)
+						{
+							if (row < mapH[i] && col < mapW[i])
+								maps[i][row*mapW[i] + col] = *p;
+							p += scorePixStep;
+						}
+					}
+				}
+				else
+				{
+					int k = i - ori_num - xhalf_num;
+					int changedH = (int)ceil(height*scales_xhalf[k]);
+					int changedW = (int)ceil(width_half*scales_xhalf[k]);
+					float cur_scale_x = (float)width_half / changedW;
+					float cur_scale_y = (float)height / changedH;
+					double t10 = omp_get_wtime();
+					if (scales_yhalf[k] != 1)
+					{
+						input_yhalf.ResizeBilinear(pnet_images_yhalf[k], changedW, changedH, 0, 0);
+					}
+
+					double t11 = omp_get_wtime();
+					if (scales_yhalf[k] != 1)
+						pnet[0].Forward(pnet_images_yhalf[k]);
+					else
+						pnet[0].Forward(input_yhalf);
+					double t12 = omp_get_wtime();
+					if (show_debug_info)
+						printf("Pnet [%d]: resolution [%dx%d], resize:%.3f ms, cost:%.3f ms\n",
+							i, changedW, changedH, 1000 * (t11 - t10), 1000 * (t12 - t11));
+					const ZQ_CNN_Tensor4D* score = pnet[0].GetBlobByName("prob1");
+					//score p
+					int scoreH = score->GetH();
+					int scoreW = score->GetW();
+					int scorePixStep = score->GetPixelStep();
+					const float *p = score->GetFirstPixelPtr() + 1;
+					for (int row = 0; row < scoreH; row++)
+					{
+						for (int col = 0; col < scoreW; col++)
+						{
+							if (row < mapH[i] && col < mapW[i])
+								maps[i][row*mapW[i] + col] = *p;
+							p += scorePixStep;
+						}
+					}
+				}	
 			}
 		}
+
 		void _compute_Pnet_multi_thread(std::vector<std::vector<float> >& maps,
-			std::vector<int>& mapH, std::vector<int>& mapW)
+			std::vector<int>& mapH, std::vector<int>& mapW, int& ori_num, int& xhalf_num, int& yhalf_num)
 		{
 			if (thread_num <= 1)
 			{
@@ -455,19 +559,72 @@ namespace ZQ
 						input.ResizeBilinear(pnet_images[i], changedW, changedH, 0, 0);
 					}
 				}
+				for (int i = 0; i < scales_xhalf.size(); i++)
+				{
+					int changedH = (int)ceil(height*scales_xhalf[i]);
+					int changedW = (int)ceil(width_half*scales_xhalf[i]);
+					if (changedH < pnet_size || changedW < pnet_size)
+						continue;
+					if (scales_xhalf[i] != 1)
+					{
+						input_xhalf.ResizeBilinear(pnet_images_xhalf[i], changedW, changedH, 0, 0);
+					}
+				}
+				for (int i = 0; i < scales_yhalf.size(); i++)
+				{
+					int changedH = (int)ceil(height_half*scales_yhalf[i]);
+					int changedW = (int)ceil(width*scales_yhalf[i]);
+					if (changedH < pnet_size || changedW < pnet_size)
+						continue;
+					if (scales_yhalf[i] != 1)
+					{
+						input_yhalf.ResizeBilinear(pnet_images_yhalf[i], changedW, changedH, 0, 0);
+					}
+				}
 			}
 			else
 			{
+				ori_num = scales.size();
+				xhalf_num = scales_xhalf.size();
+				yhalf_num = scales_yhalf.size();
+				int total_scale_num = ori_num + xhalf_num + yhalf_num;
 #pragma omp parallel for num_threads(thread_num) schedule(dynamic, 1)
-				for (int i = 0; i < scales.size(); i++)
+				for (int i = 0; i < total_scale_num; i++)
 				{
-					int changedH = (int)ceil(height*scales[i]);
-					int changedW = (int)ceil(width*scales[i]);
-					if (changedH < pnet_size || changedW < pnet_size)
-						continue;
-					if (scales[i] != 1)
+					if (i < ori_num)
 					{
-						input.ResizeBilinear(pnet_images[i], changedW, changedH, 0, 0);
+						int changedH = (int)ceil(height*scales[i]);
+						int changedW = (int)ceil(width*scales[i]);
+						if (changedH < pnet_size || changedW < pnet_size)
+							continue;
+						if (scales[i] != 1)
+						{
+							input.ResizeBilinear(pnet_images[i], changedW, changedH, 0, 0);
+						}
+					}
+					else if (i < ori_num + xhalf_num)
+					{
+						int j = i - ori_num;
+						int changedH = (int)ceil(height*scales_xhalf[j]);
+						int changedW = (int)ceil(width_half*scales_xhalf[j]);
+						if (changedH < pnet_size || changedW < pnet_size)
+							continue;
+						if (scales_xhalf[j] != 1)
+						{
+							input_xhalf.ResizeBilinear(pnet_images_xhalf[j], changedW, changedH, 0, 0);
+						}
+					}
+					else
+					{
+						int k = i - ori_num - xhalf_num;
+						int changedH = (int)ceil(height_half*scales_yhalf[k]);
+						int changedW = (int)ceil(width*scales_yhalf[k]);
+						if (changedH < pnet_size || changedW < pnet_size)
+							continue;
+						if (scales_yhalf[k] != 1)
+						{
+							input_yhalf.ResizeBilinear(pnet_images_yhalf[k], changedW, changedH, 0, 0);
+						}
 					}
 				}
 			}
@@ -482,12 +639,38 @@ namespace ZQ
 				mapH.push_back((changedH - pnet_size) / pnet_stride + 1);
 				mapW.push_back((changedW - pnet_size) / pnet_stride + 1);
 			}
-			maps.resize(scale_num);
-			for (int i = 0; i < scale_num; i++)
+			ori_num = scale_num;
+			scale_num = 0;
+			for (int i = 0; i < scales_xhalf.size(); i++)
+			{
+				int changedH = (int)ceil(height*scales_xhalf[i]);
+				int changedW = (int)ceil(width_half*scales_xhalf[i]);
+				if (changedH < pnet_size || changedW < pnet_size)
+					continue;
+				scale_num++;
+				mapH.push_back((changedH - pnet_size) / pnet_stride + 1);
+				mapW.push_back((changedW - pnet_size) / pnet_stride + 1);
+			}
+			xhalf_num = scale_num;
+			scale_num = 0;
+			for (int i = 0; i < scales_yhalf.size(); i++)
+			{
+				int changedH = (int)ceil(height_half*scales_yhalf[i]);
+				int changedW = (int)ceil(width*scales_yhalf[i]);
+				if (changedH < pnet_size || changedW < pnet_size)
+					continue;
+				scale_num++;
+				mapH.push_back((changedH - pnet_size) / pnet_stride + 1);
+				mapW.push_back((changedW - pnet_size) / pnet_stride + 1);
+			}
+			yhalf_num = scale_num;
+			int total_scale_num = ori_num + xhalf_num + yhalf_num;
+			maps.resize(total_scale_num);
+			for (int i = 0; i < total_scale_num; i++)
 			{
 				maps[i].resize(mapH[i] * mapW[i]);
 			}
-			
+
 			std::vector<int> task_rect_off_x;
 			std::vector<int> task_rect_off_y;
 			std::vector<int> task_rect_width;
@@ -501,46 +684,139 @@ namespace ZQ
 			int border_size = cellsize - stride;
 			int overlap_border_size = cellsize / stride;
 			int jump_size = block_size - border_size;
-			for (int i = 0; i < scales.size(); i++)
+			for (int i = 0; i < total_scale_num; i++)
 			{
-				int changeH = (int)ceil(height*scales[i]);
-				int changeW = (int)ceil(width*scales[i]);
-				if (changeH < pnet_size || changeW < pnet_size)
-					continue;
-				int block_H_num = 0;
-				int block_W_num = 0;
-				int start = 0;
-				while (start < changeH)
+				if (i < ori_num)
 				{
-					block_H_num++;
-					if (start + block_size >= changeH)
-						break;
-					start += jump_size;
-				}
-				start = 0;
-				while (start < changeW)
-				{
-					block_W_num++;
-					if (start + block_size >= changeW)
-						break;
-					start += jump_size;
-				}
-				for (int s = 0; s < block_H_num; s++)
-				{
-					for (int t = 0; t < block_W_num; t++)
+					int changeH = (int)ceil(height*scales[i]);
+					int changeW = (int)ceil(width*scales[i]);
+					if (changeH < pnet_size || changeW < pnet_size)
+						continue;
+					int block_H_num = 0;
+					int block_W_num = 0;
+					int start = 0;
+					while (start < changeH)
 					{
-						int rect_off_x = t * jump_size;
-						int rect_off_y = s * jump_size;
-						int rect_width = __min(changeW, rect_off_x + block_size) - rect_off_x;
-						int rect_height = __min(changeH, rect_off_y + block_size) - rect_off_y;
-						if (rect_width >= cellsize && rect_height >= cellsize)
+						block_H_num++;
+						if (start + block_size >= changeH)
+							break;
+						start += jump_size;
+					}
+					start = 0;
+					while (start < changeW)
+					{
+						block_W_num++;
+						if (start + block_size >= changeW)
+							break;
+						start += jump_size;
+					}
+					for (int s = 0; s < block_H_num; s++)
+					{
+						for (int t = 0; t < block_W_num; t++)
 						{
-							task_rect_off_x.push_back(rect_off_x);
-							task_rect_off_y.push_back(rect_off_y);
-							task_rect_width.push_back(rect_width);
-							task_rect_height.push_back(rect_height);
-							task_scale.push_back(scales[i]);
-							task_scale_id.push_back(i);
+							int rect_off_x = t * jump_size;
+							int rect_off_y = s * jump_size;
+							int rect_width = __min(changeW, rect_off_x + block_size) - rect_off_x;
+							int rect_height = __min(changeH, rect_off_y + block_size) - rect_off_y;
+							if (rect_width >= cellsize && rect_height >= cellsize)
+							{
+								task_rect_off_x.push_back(rect_off_x);
+								task_rect_off_y.push_back(rect_off_y);
+								task_rect_width.push_back(rect_width);
+								task_rect_height.push_back(rect_height);
+								task_scale.push_back(scales[i]);
+								task_scale_id.push_back(i);
+							}
+						}
+					}
+				}
+				else if (i < ori_num + xhalf_num)
+				{
+					int j = i - ori_num;
+					int changeH = (int)ceil(height*scales_xhalf[j]);
+					int changeW = (int)ceil(width_half*scales_xhalf[j]);
+					if (changeH < pnet_size || changeW < pnet_size)
+						continue;
+					int block_H_num = 0;
+					int block_W_num = 0;
+					int start = 0;
+					while (start < changeH)
+					{
+						block_H_num++;
+						if (start + block_size >= changeH)
+							break;
+						start += jump_size;
+					}
+					start = 0;
+					while (start < changeW)
+					{
+						block_W_num++;
+						if (start + block_size >= changeW)
+							break;
+						start += jump_size;
+					}
+					for (int s = 0; s < block_H_num; s++)
+					{
+						for (int t = 0; t < block_W_num; t++)
+						{
+							int rect_off_x = t * jump_size;
+							int rect_off_y = s * jump_size;
+							int rect_width = __min(changeW, rect_off_x + block_size) - rect_off_x;
+							int rect_height = __min(changeH, rect_off_y + block_size) - rect_off_y;
+							if (rect_width >= cellsize && rect_height >= cellsize)
+							{
+								task_rect_off_x.push_back(rect_off_x);
+								task_rect_off_y.push_back(rect_off_y);
+								task_rect_width.push_back(rect_width);
+								task_rect_height.push_back(rect_height);
+								task_scale.push_back(scales_xhalf[j]);
+								task_scale_id.push_back(i);
+							}
+						}
+					}
+				}
+				else
+				{
+					int k = i - ori_num - xhalf_num;
+					int changeH = (int)ceil(height_half*scales_yhalf[k]);
+					int changeW = (int)ceil(width*scales_yhalf[k]);
+					if (changeH < pnet_size || changeW < pnet_size)
+						continue;
+					int block_H_num = 0;
+					int block_W_num = 0;
+					int start = 0;
+					while (start < changeH)
+					{
+						block_H_num++;
+						if (start + block_size >= changeH)
+							break;
+						start += jump_size;
+					}
+					start = 0;
+					while (start < changeW)
+					{
+						block_W_num++;
+						if (start + block_size >= changeW)
+							break;
+						start += jump_size;
+					}
+					for (int s = 0; s < block_H_num; s++)
+					{
+						for (int t = 0; t < block_W_num; t++)
+						{
+							int rect_off_x = t * jump_size;
+							int rect_off_y = s * jump_size;
+							int rect_width = __min(changeW, rect_off_x + block_size) - rect_off_x;
+							int rect_height = __min(changeH, rect_off_y + block_size) - rect_off_y;
+							if (rect_width >= cellsize && rect_height >= cellsize)
+							{
+								task_rect_off_x.push_back(rect_off_x);
+								task_rect_off_y.push_back(rect_off_y);
+								task_rect_width.push_back(rect_width);
+								task_rect_height.push_back(rect_height);
+								task_scale.push_back(scales_yhalf[k]);
+								task_scale_id.push_back(i);
+							}
 						}
 					}
 				}
@@ -561,17 +837,52 @@ namespace ZQ
 					int i_rect_off_y = task_rect_off_y[i];
 					int i_rect_width = task_rect_width[i];
 					int i_rect_height = task_rect_height[i];
-					if (scale_id == 0 && scales[0] == 1)
+					if (scale_id < ori_num)
 					{
-						if (!input.ROI(task_pnet_images[thread_id],
-							i_rect_off_x, i_rect_off_y, i_rect_width, i_rect_height, 0, 0))
-							continue;
+						if (scale_id == 0 && scales[0] == 1)
+						{
+							if (!input.ROI(task_pnet_images[thread_id],
+								i_rect_off_x, i_rect_off_y, i_rect_width, i_rect_height, 0, 0))
+								continue;
+						}
+						else
+						{
+							if (!pnet_images[scale_id].ROI(task_pnet_images[thread_id],
+								i_rect_off_x, i_rect_off_y, i_rect_width, i_rect_height, 0, 0))
+								continue;
+						}
+					}
+					else if (scale_id < ori_num + xhalf_num)
+					{
+						int j = scale_id - ori_num;
+						if (j == 0 && scales_xhalf[0] == 1)
+						{
+							if (!input_xhalf.ROI(task_pnet_images[thread_id],
+								i_rect_off_x, i_rect_off_y, i_rect_width, i_rect_height, 0, 0))
+								continue;
+						}
+						else
+						{
+							if (!pnet_images_xhalf[j].ROI(task_pnet_images[thread_id],
+								i_rect_off_x, i_rect_off_y, i_rect_width, i_rect_height, 0, 0))
+								continue;
+						}
 					}
 					else
 					{
-						if (!pnet_images[scale_id].ROI(task_pnet_images[thread_id],
-							i_rect_off_x, i_rect_off_y, i_rect_width, i_rect_height, 0, 0))
-							continue;
+						int k = scale_id - ori_num - xhalf_num;
+						if (k == 0 && scales_yhalf[0] == 1)
+						{
+							if (!input_yhalf.ROI(task_pnet_images[thread_id],
+								i_rect_off_x, i_rect_off_y, i_rect_width, i_rect_height, 0, 0))
+								continue;
+						}
+						else
+						{
+							if (!pnet_images_yhalf[k].ROI(task_pnet_images[thread_id],
+								i_rect_off_x, i_rect_off_y, i_rect_width, i_rect_height, 0, 0))
+								continue;
+						}
 					}
 
 					if (!pnet[thread_id].Forward(task_pnet_images[thread_id]))
@@ -612,17 +923,52 @@ namespace ZQ
 					int i_rect_off_y = task_rect_off_y[i];
 					int i_rect_width = task_rect_width[i];
 					int i_rect_height = task_rect_height[i];
-					if (scale_id == 0 && scales[0] == 1)
+					if (i < ori_num)
 					{
-						if (!input.ROI(task_pnet_images[thread_id],
-							i_rect_off_x, i_rect_off_y, i_rect_width, i_rect_height, 0, 0))
-							continue;
+						if (scale_id == 0 && scales[0] == 1)
+						{
+							if (!input.ROI(task_pnet_images[thread_id],
+								i_rect_off_x, i_rect_off_y, i_rect_width, i_rect_height, 0, 0))
+								continue;
+						}
+						else
+						{
+							if (!pnet_images[scale_id].ROI(task_pnet_images[thread_id],
+								i_rect_off_x, i_rect_off_y, i_rect_width, i_rect_height, 0, 0))
+								continue;
+						}
+					}
+					else if (i < ori_num + xhalf_num)
+					{
+						int j = i - ori_num;
+						if (j == 0 && scales_xhalf[0] == 1)
+						{
+							if (!input_xhalf.ROI(task_pnet_images[thread_id],
+								i_rect_off_x, i_rect_off_y, i_rect_width, i_rect_height, 0, 0))
+								continue;
+						}
+						else
+						{
+							if (!pnet_images_xhalf[j].ROI(task_pnet_images[thread_id],
+								i_rect_off_x, i_rect_off_y, i_rect_width, i_rect_height, 0, 0))
+								continue;
+						}
 					}
 					else
 					{
-						if (!pnet_images[scale_id].ROI(task_pnet_images[thread_id],
-							i_rect_off_x, i_rect_off_y, i_rect_width, i_rect_height, 0, 0))
-							continue;
+						int k = i - ori_num - xhalf_num;
+						if (k == 0 && scales_yhalf[0] == 1)
+						{
+							if (!input_yhalf.ROI(task_pnet_images[thread_id],
+								i_rect_off_x, i_rect_off_y, i_rect_width, i_rect_height, 0, 0))
+								continue;
+						}
+						else
+						{
+							if (!pnet_images_yhalf[k].ROI(task_pnet_images[thread_id],
+								i_rect_off_x, i_rect_off_y, i_rect_width, i_rect_height, 0, 0))
+								continue;
+						}
 					}
 
 					if (!pnet[thread_id].Forward(task_pnet_images[thread_id]))
@@ -664,6 +1010,21 @@ namespace ZQ
 				return false;
 			if (!input.ConvertFromBGR(bgr_img, width, height, _widthStep))
 				return false;
+			if (!input_yhalf.ConvertFromBGR(bgr_img, width, height / 2, _widthStep * 2))
+				return false;
+			std::vector<unsigned char> bgr_img_xhalf(width_half*_height * 3);
+			int widthStep_half = width_half * 3;
+			for (int i = 0; i < _height; i++)
+			{
+				for (int j = 0; j < width_half; j++)
+				{
+					bgr_img_xhalf[i*widthStep_half + j * 3 + 0] = bgr_img[i*_widthStep + j * 6 + 0];
+					bgr_img_xhalf[i*widthStep_half + j * 3 + 1] = bgr_img[i*_widthStep + j * 6 + 1];
+					bgr_img_xhalf[i*widthStep_half + j * 3 + 2] = bgr_img[i*_widthStep + j * 6 + 2];
+				}
+			}
+			if (!input_xhalf.ConvertFromBGR(&bgr_img_xhalf[0], width_half, height, widthStep_half))
+				return false;
 			double t2 = omp_get_wtime();
 			if (show_debug_info)
 				printf("convert cost: %.3f ms\n", 1000 * (t2 - t1));
@@ -671,34 +1032,53 @@ namespace ZQ
 			std::vector<std::vector<float> > maps;
 			std::vector<int> mapH;
 			std::vector<int> mapW;
+			int ori_num, xhalf_num, yhalf_num;
 			if (thread_num == 1 && !force_run_pnet_multithread)
 			{
 				pnet[0].TurnOffShowDebugInfo();
 				//pnet[0].TurnOnShowDebugInfo();
-				_compute_Pnet_single_thread(maps, mapH, mapW);
+				_compute_Pnet_single_thread(maps, mapH, mapW, ori_num, xhalf_num, yhalf_num);
 			}
 			else
 			{
-				_compute_Pnet_multi_thread(maps, mapH, mapW);
+				_compute_Pnet_multi_thread(maps, mapH, mapW, ori_num, xhalf_num, yhalf_num);
 			}
+			int total_scale_num = ori_num + xhalf_num + yhalf_num;
 			ZQ_CNN_OrderScore order;
-			std::vector<std::vector<ZQ_CNN_BBox> > bounding_boxes(scales.size());
-			std::vector<std::vector<ZQ_CNN_OrderScore> > bounding_scores(scales.size());
+			std::vector<std::vector<ZQ_CNN_BBox> > bounding_boxes(total_scale_num);
+			std::vector<std::vector<ZQ_CNN_OrderScore> > bounding_scores(total_scale_num);
 			const int block_size = 32;
 			int stride = pnet_stride;
 			int cellsize = pnet_size;
 			int border_size = cellsize / stride;
-			
-			for (int i = 0; i < maps.size(); i++)
+
+			for (int i = 0; i < total_scale_num; i++)
 			{
 				double t13 = omp_get_wtime();
-				int changedH = (int)ceil(height*scales[i]);
-				int changedW = (int)ceil(width*scales[i]);
+				int changedH, changedW;
+				if (i < ori_num)
+				{
+					changedH = (int)ceil(height*scales[i]);
+					changedW = (int)ceil(width*scales[i]);
+				}
+				else if (i < ori_num + xhalf_num)
+				{
+					int j = i - ori_num;
+					changedH = (int)ceil(height*scales_xhalf[j]);
+					changedW = (int)ceil(width_half*scales_xhalf[j]);
+				}
+				else
+				{
+					int k = i - ori_num - xhalf_num;
+					changedH = (int)ceil(height_half*scales_yhalf[k]);
+					changedW = (int)ceil(width*scales_yhalf[k]);
+				}
+				
 				if (changedH < pnet_size || changedW < pnet_size)
 					continue;
 				float cur_scale_x = (float)width / changedW;
 				float cur_scale_y = (float)height / changedH;
-				
+
 				int count = 0;
 				//score p
 				int scoreH = mapH[i];
@@ -706,7 +1086,7 @@ namespace ZQ
 				const float *p = &maps[i][0];
 				if (scoreW <= block_size && scoreH < block_size)
 				{
-				
+
 					ZQ_CNN_BBox bbox;
 					ZQ_CNN_OrderScore order;
 					for (int row = 0; row < scoreH; row++)
@@ -730,7 +1110,7 @@ namespace ZQ
 								bounding_scores[i].push_back(order);
 								count++;
 							}
-							p ++;
+							p++;
 						}
 					}
 					int before_count = bounding_boxes[i].size();
@@ -890,13 +1270,28 @@ namespace ZQ
 
 			std::vector<ZQ_CNN_OrderScore> firstOrderScore;
 			int count = 0;
-			for (int i = 0; i < scales.size(); i++)
+			for (int i = 0; i < total_scale_num; i++)
 			{
 				std::vector<ZQ_CNN_BBox>::iterator it = bounding_boxes[i].begin();
 				for (; it != bounding_boxes[i].end(); it++)
 				{
 					if ((*it).exist)
 					{
+						if (i < ori_num)
+						{
+							it->scale_x = 1;
+							it->scale_y = 1;
+						}
+						else if(i < ori_num + xhalf_num)
+						{
+							it->scale_x = 0.5;
+							it->scale_y = 1;
+						}
+						else
+						{
+							it->scale_x = 1;
+							it->scale_y = 0.5;
+						}
 						firstBbox.push_back(*it);
 						order.score = (*it).score;
 						order.oriOrder = count;
@@ -911,7 +1306,7 @@ namespace ZQ
 			if (count < 1) return false;
 			double t15 = omp_get_wtime();
 			ZQ_CNN_BBoxUtils::_nms(firstBbox, firstOrderScore, nms_thresh[0], "Union", 0, 1);
-			ZQ_CNN_BBoxUtils::_refine_and_square_bbox(firstBbox, width, height,true);
+			ZQ_CNN_BBoxUtils::_refine_and_square_bbox(firstBbox, width, height, true);
 			double t16 = omp_get_wtime();
 			if (show_debug_info)
 				printf("nms cost: %.3f ms\n", 1000 * (t16 - t15));
@@ -970,7 +1365,7 @@ namespace ZQ
 			std::vector<std::vector<int> > task_src_rect_w(need_thread_num);
 			std::vector<std::vector<int> > task_src_rect_h(need_thread_num);
 			std::vector<std::vector<ZQ_CNN_BBox> > task_secondBbox(need_thread_num);
-			
+
 
 			for (int i = 0; i < need_thread_num; i++)
 			{
@@ -1147,19 +1542,12 @@ namespace ZQ
 					}
 					else
 					{
-						if (!do_landmark && it->score > early_accept_thresh)
-						{
-							early_accept_thirdBbox.push_back(*it);
-						}
-						else
-						{
-							src_off_x.push_back(off_x);
-							src_off_y.push_back(off_y);
-							src_rect_w.push_back(rect_w);
-							src_rect_h.push_back(rect_h);
-							o_count++;
-							thirdBbox.push_back(*it);
-						}
+						src_off_x.push_back(off_x);
+						src_off_y.push_back(off_y);
+						src_rect_w.push_back(rect_w);
+						src_rect_h.push_back(rect_h);
+						o_count++;
+						thirdBbox.push_back(*it);
 					}
 				}
 			}
@@ -1378,357 +1766,6 @@ namespace ZQ
 		}
 
 
-		bool _Lnet_stage(std::vector<ZQ_CNN_BBox>& thirdBbox, std::vector<ZQ_CNN_BBox>& fourthBbox)
-		{
-			double t4 = omp_get_wtime();
-			fourthBbox.clear();
-			std::vector<ZQ_CNN_BBox>::iterator it = thirdBbox.begin();
-			std::vector<int> src_off_x, src_off_y, src_rect_w, src_rect_h;
-			int l_count = 0;
-			for (; it != thirdBbox.end(); it++)
-			{
-				if ((*it).exist)
-				{
-					int off_x = it->col1;
-					int off_y = it->row1;
-					int rect_w = it->col2 - off_x;
-					int rect_h = it->row2 - off_y;
-					if (/*off_x < 0 || off_x + rect_w > width || off_y < 0 || off_y + rect_h > height ||*/ rect_w <= 0.5*min_size || rect_h <= 0.5*min_size)
-					{
-						(*it).exist = false;
-						continue;
-					}
-					else
-					{
-						l_count++;
-						fourthBbox.push_back(*it);
-					}
-				}
-			}
-			std::vector<ZQ_CNN_BBox> copy_fourthBbox = fourthBbox;
-			ZQ_CNN_BBoxUtils::_square_bbox(copy_fourthBbox, width, height);
-			for (it = copy_fourthBbox.begin(); it != copy_fourthBbox.end(); ++it)
-			{
-				int off_x = it->col1;
-				int off_y = it->row1;
-				int rect_w = it->col2 - off_x;
-				int rect_h = it->row2 - off_y;
-				src_off_x.push_back(off_x);
-				src_off_y.push_back(off_y);
-				src_rect_w.push_back(rect_w);
-				src_rect_h.push_back(rect_h);
-			}
-
-			int batch_size = BATCH_SIZE;
-			int per_num = ceil((float)l_count / thread_num);
-			int need_thread_num = thread_num;
-			if (per_num > batch_size)
-			{
-				need_thread_num = ceil((float)l_count / batch_size);
-				per_num = batch_size;
-			}
-
-			std::vector<ZQ_CNN_Tensor4D_NHW_C_Align128bit> task_lnet_images(need_thread_num);
-			std::vector<std::vector<int> > task_src_off_x(need_thread_num);
-			std::vector<std::vector<int> > task_src_off_y(need_thread_num);
-			std::vector<std::vector<int> > task_src_rect_w(need_thread_num);
-			std::vector<std::vector<int> > task_src_rect_h(need_thread_num);
-			std::vector<std::vector<ZQ_CNN_BBox> > task_fourthBbox(need_thread_num);
-			
-			for (int i = 0; i < need_thread_num; i++)
-			{
-				int st_id = per_num*i;
-				int end_id = __min(l_count, per_num*(i + 1));
-				int cur_num = end_id - st_id;
-				if (cur_num > 0)
-				{
-					task_src_off_x[i].resize(cur_num);
-					task_src_off_y[i].resize(cur_num);
-					task_src_rect_w[i].resize(cur_num);
-					task_src_rect_h[i].resize(cur_num);
-					task_fourthBbox[i].resize(cur_num);
-					for (int j = 0; j < cur_num; j++)
-					{
-						task_src_off_x[i][j] = src_off_x[st_id + j];
-						task_src_off_y[i][j] = src_off_y[st_id + j];
-						task_src_rect_w[i][j] = src_rect_w[st_id + j];
-						task_src_rect_h[i][j] = src_rect_h[st_id + j];
-						task_fourthBbox[i][j] = copy_fourthBbox[st_id + j];
-					}
-				}
-			}
-
-			if (thread_num <= 1)
-			{
-				for (int pp = 0; pp < need_thread_num; pp++)
-				{
-					if (task_src_off_x.size() == 0)
-						continue;
-					if (!input.ResizeBilinearRect(task_lnet_images[pp], lnet_size, lnet_size, 0, 0,
-						task_src_off_x[pp], task_src_off_y[pp], task_src_rect_w[pp], task_src_rect_h[pp]))
-					{
-						continue;
-					}
-					double t31 = omp_get_wtime();
-					lnet[0].Forward(task_lnet_images[pp]);
-					double t32 = omp_get_wtime();
-					const ZQ_CNN_Tensor4D* keyPoint = lnet[0].GetBlobByName("conv6-3");
-					const float* keyPoint_ptr = keyPoint->GetFirstPixelPtr();
-					int keyPoint_sliceStep = keyPoint->GetSliceStep();
-					for (int i = 0; i < task_fourthBbox[pp].size(); i++)
-					{
-						for (int num = 0; num < 5; num++)
-						{
-							task_fourthBbox[pp][i].ppoint[num] = task_fourthBbox[pp][i].col1 +
-								(task_fourthBbox[pp][i].col2 - task_fourthBbox[pp][i].col1)*keyPoint_ptr[i*keyPoint_sliceStep + num];
-							task_fourthBbox[pp][i].ppoint[num + 5] = task_fourthBbox[pp][i].row1 +
-								(task_fourthBbox[pp][i].row2 - task_fourthBbox[pp][i].row1)*keyPoint_ptr[i*keyPoint_sliceStep + num + 5];
-						}
-					}
-				}
-			}
-			else
-			{
-#pragma omp parallel for num_threads(thread_num) schedule(dynamic,1)
-				for (int pp = 0; pp < need_thread_num; pp++)
-				{
-					int thread_id = omp_get_thread_num();
-					if (task_src_off_x.size() == 0)
-						continue;
-					if (!input.ResizeBilinearRect(task_lnet_images[pp], lnet_size, lnet_size, 0, 0,
-						task_src_off_x[pp], task_src_off_y[pp], task_src_rect_w[pp], task_src_rect_h[pp]))
-					{
-						continue;
-					}
-					double t31 = omp_get_wtime();
-					lnet[thread_id].Forward(task_lnet_images[pp]);
-					double t32 = omp_get_wtime();
-					const ZQ_CNN_Tensor4D* keyPoint = lnet[thread_id].GetBlobByName("conv6-3");
-					const float* keyPoint_ptr = keyPoint->GetFirstPixelPtr();
-					int keyPoint_sliceStep = keyPoint->GetSliceStep();
-					for (int i = 0; i < task_fourthBbox[pp].size(); i++)
-					{
-						for (int num = 0; num < 5; num++)
-						{
-							task_fourthBbox[pp][i].ppoint[num] = task_fourthBbox[pp][i].col1 +
-								(task_fourthBbox[pp][i].col2 - task_fourthBbox[pp][i].col1)*keyPoint_ptr[i*keyPoint_sliceStep + num];
-							task_fourthBbox[pp][i].ppoint[num + 5] = task_fourthBbox[pp][i].row1 +
-								(task_fourthBbox[pp][i].row2 - task_fourthBbox[pp][i].row1)*keyPoint_ptr[i*keyPoint_sliceStep + num + 5];
-						}
-					}
-				}
-			}
-
-			int count = 0;
-			for (int i = 0; i < need_thread_num; i++)
-			{
-				count += task_fourthBbox[i].size();
-			}
-			fourthBbox.resize(count);
-			int id = 0;
-			for (int i = 0; i < need_thread_num; i++)
-			{
-				for (int j = 0; j < task_fourthBbox[i].size(); j++)
-				{
-					memcpy(fourthBbox[id].ppoint, task_fourthBbox[i][j].ppoint, sizeof(float) * 10);
-					id++;
-				}
-			}
-			double t5 = omp_get_wtime();
-			if (show_debug_info)
-				printf("run Lnet [%d] times \n", l_count);
-			if (show_debug_info)
-				printf("stage 4: cost %.3f ms\n", 1000 * (t5 - t4));
-
-			return true;
-
-		}
-
-
-		bool _Lnet106_stage(std::vector<ZQ_CNN_BBox>& thirdBbox, std::vector<ZQ_CNN_BBox106>& resultBbox)
-		{
-			double t4 = omp_get_wtime();
-			std::vector<ZQ_CNN_BBox> fourthBbox;
-			std::vector<ZQ_CNN_BBox>::iterator it = thirdBbox.begin();
-			std::vector<int> src_off_x, src_off_y, src_rect_w, src_rect_h;
-			int l_count = 0;
-			for (; it != thirdBbox.end(); it++)
-			{
-				if ((*it).exist)
-				{
-					int off_x = it->col1;
-					int off_y = it->row1;
-					int rect_w = it->col2 - off_x;
-					int rect_h = it->row2 - off_y;
-					if (/*off_x < 0 || off_x + rect_w > width || off_y < 0 || off_y + rect_h > height ||*/ rect_w <= 0.5*min_size || rect_h <= 0.5*min_size)
-					{
-						(*it).exist = false;
-						continue;
-					}
-					else
-					{
-						l_count++;
-						fourthBbox.push_back(*it);
-					}
-				}
-			}
-			std::vector<ZQ_CNN_BBox> copy_fourthBbox = fourthBbox;
-			ZQ_CNN_BBoxUtils::_square_bbox(copy_fourthBbox, width, height);
-			for (it = copy_fourthBbox.begin(); it != copy_fourthBbox.end(); ++it)
-			{
-				int off_x = it->col1;
-				int off_y = it->row1;
-				int rect_w = it->col2 - off_x;
-				int rect_h = it->row2 - off_y;
-				src_off_x.push_back(off_x);
-				src_off_y.push_back(off_y);
-				src_rect_w.push_back(rect_w);
-				src_rect_h.push_back(rect_h);
-			}
-
-			int batch_size = BATCH_SIZE;
-			int per_num = ceil((float)l_count / thread_num);
-			int need_thread_num = thread_num;
-			if (per_num > batch_size)
-			{
-				need_thread_num = ceil((float)l_count / batch_size);
-				per_num = batch_size;
-			}
-
-			std::vector<ZQ_CNN_Tensor4D_NHW_C_Align128bit> task_lnet_images(need_thread_num);
-			std::vector<std::vector<int> > task_src_off_x(need_thread_num);
-			std::vector<std::vector<int> > task_src_off_y(need_thread_num);
-			std::vector<std::vector<int> > task_src_rect_w(need_thread_num);
-			std::vector<std::vector<int> > task_src_rect_h(need_thread_num);
-			std::vector<std::vector<ZQ_CNN_BBox106> > task_fourthBbox(need_thread_num);
-
-			for (int i = 0; i < need_thread_num; i++)
-			{
-				int st_id = per_num*i;
-				int end_id = __min(l_count, per_num*(i + 1));
-				int cur_num = end_id - st_id;
-				if (cur_num > 0)
-				{
-					task_src_off_x[i].resize(cur_num);
-					task_src_off_y[i].resize(cur_num);
-					task_src_rect_w[i].resize(cur_num);
-					task_src_rect_h[i].resize(cur_num);
-					task_fourthBbox[i].resize(cur_num);
-					for (int j = 0; j < cur_num; j++)
-					{
-						task_src_off_x[i][j] = src_off_x[st_id + j];
-						task_src_off_y[i][j] = src_off_y[st_id + j];
-						task_src_rect_w[i][j] = src_rect_w[st_id + j];
-						task_src_rect_h[i][j] = src_rect_h[st_id + j];
-						task_fourthBbox[i][j].col1 = copy_fourthBbox[st_id + j].col1;
-						task_fourthBbox[i][j].col2 = copy_fourthBbox[st_id + j].col2;
-						task_fourthBbox[i][j].row1 = copy_fourthBbox[st_id + j].row1;
-						task_fourthBbox[i][j].row2 = copy_fourthBbox[st_id + j].row2;
-						task_fourthBbox[i][j].area = copy_fourthBbox[st_id + j].area;
-						task_fourthBbox[i][j].score = copy_fourthBbox[st_id + j].score;
-						task_fourthBbox[i][j].exist = copy_fourthBbox[st_id + j].exist;
-					}
-				}
-			}
-
-			resultBbox.resize(l_count);
-			for (int i = 0; i < l_count; i++)
-			{
-				resultBbox[i].col1 = fourthBbox[i].col1;
-				resultBbox[i].col2 = fourthBbox[i].col2;
-				resultBbox[i].row1 = fourthBbox[i].row1;
-				resultBbox[i].row2 = fourthBbox[i].row2;
-				resultBbox[i].score = fourthBbox[i].score;
-				resultBbox[i].exist = fourthBbox[i].exist;
-				resultBbox[i].area = fourthBbox[i].area;
-			}
-
-			if (thread_num <= 1)
-			{
-				for (int pp = 0; pp < need_thread_num; pp++)
-				{
-					if (task_src_off_x[pp].size() == 0)
-						continue;
-					if (!input.ResizeBilinearRect(task_lnet_images[pp], lnet_size, lnet_size, 0, 0,
-						task_src_off_x[pp], task_src_off_y[pp], task_src_rect_w[pp], task_src_rect_h[pp]))
-					{
-						continue;
-					}
-					double t31 = omp_get_wtime();
-					lnet[0].Forward(task_lnet_images[pp]);
-					double t32 = omp_get_wtime();
-					const ZQ_CNN_Tensor4D* keyPoint = lnet[0].GetBlobByName("conv6-3");
-					const float* keyPoint_ptr = keyPoint->GetFirstPixelPtr();
-					int keypoint_num = keyPoint->GetC() / 2;
-					int keyPoint_sliceStep = keyPoint->GetSliceStep();
-					for (int i = 0; i < task_fourthBbox[pp].size(); i++)
-					{
-						for (int num = 0; num < keypoint_num; num++)
-						{
-							task_fourthBbox[pp][i].ppoint[num * 2] = task_fourthBbox[pp][i].col1 +
-								(task_fourthBbox[pp][i].col2 - task_fourthBbox[pp][i].col1)*keyPoint_ptr[i*keyPoint_sliceStep + num * 2];
-							task_fourthBbox[pp][i].ppoint[num * 2 + 1] = task_fourthBbox[pp][i].row1 +
-								(task_fourthBbox[pp][i].row2 - task_fourthBbox[pp][i].row1)*keyPoint_ptr[i*keyPoint_sliceStep + num * 2 + 1];
-						}
-					}
-				}
-			}
-			else
-			{
-#pragma omp parallel for num_threads(thread_num)
-				for (int pp = 0; pp < need_thread_num; pp++)
-				{
-					int thread_id = omp_get_thread_num();
-					if (task_src_off_x.size() == 0)
-						continue;
-					if (!input.ResizeBilinearRect(task_lnet_images[pp], lnet_size, lnet_size, 0, 0,
-						task_src_off_x[pp], task_src_off_y[pp], task_src_rect_w[pp], task_src_rect_h[pp]))
-					{
-						continue;
-					}
-					double t31 = omp_get_wtime();
-					lnet[thread_id].Forward(task_lnet_images[pp]);
-					double t32 = omp_get_wtime();
-					const ZQ_CNN_Tensor4D* keyPoint = lnet[thread_id].GetBlobByName("conv6-3");
-					const float* keyPoint_ptr = keyPoint->GetFirstPixelPtr();
-					int keypoint_num = keyPoint->GetC() / 2;
-					int keyPoint_sliceStep = keyPoint->GetSliceStep();
-					for (int i = 0; i < task_fourthBbox[pp].size(); i++)
-					{
-						for (int num = 0; num < keypoint_num; num++)
-						{
-							task_fourthBbox[pp][i].ppoint[num * 2] = task_fourthBbox[pp][i].col1 +
-								(task_fourthBbox[pp][i].col2 - task_fourthBbox[pp][i].col1)*keyPoint_ptr[i*keyPoint_sliceStep + num * 2];
-							task_fourthBbox[pp][i].ppoint[num * 2 + 1] = task_fourthBbox[pp][i].row1 +
-								(task_fourthBbox[pp][i].row2 - task_fourthBbox[pp][i].row1)*keyPoint_ptr[i*keyPoint_sliceStep + num * 2 + 1];
-						}
-					}
-				}
-			}
-			int count = 0;
-			for (int i = 0; i < need_thread_num; i++)
-			{
-				count += task_fourthBbox[i].size();
-			}
-			resultBbox.resize(count);
-			int id = 0;
-			for (int i = 0; i < need_thread_num; i++)
-			{
-				for (int j = 0; j < task_fourthBbox[i].size(); j++)
-				{
-					memcpy(resultBbox[id].ppoint, task_fourthBbox[i][j].ppoint, sizeof(float) * 212);
-					id++;
-				}
-			}
-			double t5 = omp_get_wtime();
-			if (show_debug_info)
-				printf("run Lnet [%d] times \n", l_count);
-			if (show_debug_info)
-				printf("stage 4: cost %.3f ms\n", 1000 * (t5 - t4));
-
-			return true;
-		}
-
 		void _select(std::vector<ZQ_CNN_BBox>& bbox, int limit_num, int width, int height)
 		{
 			int in_num = bbox.size();
@@ -1738,4 +1775,5 @@ namespace ZQ
 		}
 	};
 }
+
 #endif

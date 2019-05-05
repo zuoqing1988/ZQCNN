@@ -662,7 +662,7 @@ namespace ZQ
 			firstBbox.clear();
 			if (width != _width || height != _height)
 				return false;
-			if (!input.ConvertFromBGR(bgr_img, width, height, width * 3))
+			if (!input.ConvertFromBGR(bgr_img, width, height, _widthStep))
 				return false;
 			double t2 = omp_get_wtime();
 			if (show_debug_info)

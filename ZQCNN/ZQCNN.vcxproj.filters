@@ -401,5 +401,11 @@
     <ClInclude Include="ZQ_CNN_MTCNN_ncnn.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="ZQ_CNN_MTCNN_NCHWC.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="ZQ_CNN_MTCNN_AspectRatio.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

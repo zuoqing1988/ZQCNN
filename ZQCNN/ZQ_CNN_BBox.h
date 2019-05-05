@@ -45,10 +45,14 @@ namespace ZQ
 		bool need_check_overlap_count;
 		float ppoint[10];
 		float regreCoord[4];
+		float scale_x;
+		float scale_y;
 
 		ZQ_CNN_BBox()
 		{
 			memset(this, 0, sizeof(ZQ_CNN_BBox));
+			scale_x = 1;
+			scale_y = 1;
 		}
 
 		~ZQ_CNN_BBox() {}
