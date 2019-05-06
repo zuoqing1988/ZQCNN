@@ -356,6 +356,7 @@ namespace ZQ
 			double t2 = omp_get_wtime();
 			if (!_Rnet_stage(firstBbox, secondBbox))
 				return false;
+
 			//results = secondBbox;
 			//return true;
 
