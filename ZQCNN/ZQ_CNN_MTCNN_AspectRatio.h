@@ -356,8 +356,8 @@ namespace ZQ
 			double t2 = omp_get_wtime();
 			if (!_Rnet_stage(firstBbox, secondBbox))
 				return false;
-			results = secondBbox;
-			return true;
+			//results = secondBbox;
+			//return true;
 
 			if (limit_o_num > 0)
 			{
@@ -1504,8 +1504,29 @@ namespace ZQ
 				}
 			}
 
-			//ZQ_CNN_BBoxUtils::_nms(secondBbox, secondScore, nms_thresh[1], "Union");
-			ZQ_CNN_BBoxUtils::_nms(secondBbox, secondScore, nms_thresh[1], "Min");
+			ZQ_CNN_BBoxUtils::_nms(secondBbox, secondScore, nms_thresh[1], "Union");
+			//ZQ_CNN_BBoxUtils::_nms(secondBbox, secondScore, nms_thresh[1], "Min");
+			for (int i = 0; i < secondBbox.size(); i++)
+			{
+				float h = secondBbox[i].row2 - secondBbox[i].row1 + 1;
+				float w = secondBbox[i].col2 - secondBbox[i].col1 + 1;
+				float ratio = h / w;
+				if (ratio > 1.5)
+				{
+					secondBbox[i].scale_x = 1;
+					secondBbox[i].scale_y = 0.5;
+				}
+				else if (ratio < 1.0 / 1.5)
+				{
+					secondBbox[i].scale_x = 0.5;
+					secondBbox[i].scale_y = 1;
+				}
+				else
+				{
+					secondBbox[i].scale_x = 1;
+					secondBbox[i].scale_y = 1;
+				}
+			}
 			ZQ_CNN_BBoxUtils::_refine_and_square_bbox(secondBbox, width, height, true);
 			count = secondBbox.size();
 
@@ -1753,6 +1774,27 @@ namespace ZQ
 				order.oriOrder = count++;
 				thirdScore.push_back(order);
 				thirdBbox.push_back(early_accept_thirdBbox[i]);
+			}
+			for (int i = 0; i < secondBbox.size(); i++)
+			{
+				float h = secondBbox[i].row2 - secondBbox[i].row1 + 1;
+				float w = secondBbox[i].col2 - secondBbox[i].col1 + 1;
+				float ratio = h / w;
+				if (ratio > 1.5)
+				{
+					secondBbox[i].scale_x = 1;
+					secondBbox[i].scale_y = 0.5;
+				}
+				else if (ratio < 1.0 / 1.5)
+				{
+					secondBbox[i].scale_x = 0.5;
+					secondBbox[i].scale_y = 1;
+				}
+				else
+				{
+					secondBbox[i].scale_x = 1;
+					secondBbox[i].scale_y = 1;
+				}
 			}
 			ZQ_CNN_BBoxUtils::_refine_and_square_bbox(thirdBbox, width, height, false);
 			ZQ_CNN_BBoxUtils::_nms(thirdBbox, thirdScore, nms_thresh[2], "Min");

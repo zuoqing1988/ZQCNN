@@ -57,7 +57,7 @@ int main()
 	mkl_set_num_threads(num_threads);
 #endif
 #if defined(_WIN32)
-	Mat image0 = cv::imread("data/hand5.jpg", 1);
+	Mat image0 = cv::imread("data/hand6.jpg", 1);
 #else
 	Mat image0 = cv::imread("../../data/11.jpg", 1);
 #endif
@@ -74,7 +74,7 @@ int main()
 	ZQ_CNN_MTCNN_AspectRatio mtcnn;
 	std::string result_name;
 	mtcnn.TurnOnShowDebugInfo();
-	//mtcnn.SetLimit(300, 50, 20);
+	//mtcnn.SetLimit(30, 5);
 	int thread_num = 0;
 	bool special_handle_very_big_face = false;
 	result_name = "MTCNN-AspectRatio.jpg";
@@ -82,12 +82,12 @@ int main()
 #if defined(_WIN32)
 	if (!mtcnn.Init("model/handdet1-dw20-fast.zqparams", "model/handdet1-dw20-fast.nchwbin",
 		"model/handdet2-dw24-fast.zqparams", "model/handdet2-dw24-fast.nchwbin",
-		"model/det3-dw48-fast.zqparams", "model/det3-dw48-fast.nchwbin",
+		"model/handdet3-dw48-fast.zqparams", "model/handdet3-dw48-fast.nchwbin",
 		thread_num
 #else
 	if (!mtcnn.Init("../../model/handdet1-dw20-fast.zqparams", "../../model/handdet1-dw20-fast.nchwbin",
 		"../../model/handdet2-dw24-fast.zqparams", "../../model/handdet2-dw24-fast.nchwbin",
-		"../../model/det3-dw48-fast.zqparams", "../../model/det3-dw48-fast.nchwbin",
+		"../../model/handdet3-dw48-fast.zqparams", "../../model/handdet3-dw48-fast.nchwbin",
 		thread_num
 #endif
 	))
@@ -96,7 +96,7 @@ int main()
 		return EXIT_FAILURE;
 	}
 
-	mtcnn.SetPara(image0.cols, image0.rows, 80, 0.8, 0.8, 0.8, 0.4, 0.5, 0.5, 0.709, 3, 20, 4, special_handle_very_big_face);
+	mtcnn.SetPara(image0.cols, image0.rows, 20, 0.5, 0.6, 0.7, 0.5, 0.5, 0.5, 0.709, 3, 20, 4, special_handle_very_big_face);
 
 	mtcnn.TurnOffShowDebugInfo();
 	//mtcnn.TurnOnShowDebugInfo();

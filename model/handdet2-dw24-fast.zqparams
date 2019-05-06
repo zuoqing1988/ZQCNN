@@ -1,0 +1,22 @@
+Input            name=data C=3 H=24 W=24
+Convolution      name=conv1  bottom=data top=conv1 num_output=32 kernel_H=2 kernel_W=2 bias
+PReLU            name=prelu1  bottom=conv1 top=prelu1
+DepthwiseConvolution name=conv2_dw  bottom=prelu1 top=conv2_dw num_output=32 kernel_H=3 kernel_W=3 stride_H=2 stride_W=2 bias
+PReLU            name=prelu2_dw  bottom=conv2_dw top=prelu2_dw
+Convolution      name=conv2_sep  bottom=prelu2_dw top=conv2_sep num_output=32 kernel_H=1 kernel_W=1 bias
+PReLU            name=prelu2  bottom=conv2_sep top=prelu2
+DepthwiseConvolution name=conv3_dw  bottom=prelu2 top=conv3_dw num_output=32 kernel_H=3 kernel_W=3 stride_H=2 stride_W=2 bias
+PReLU            name=prelu3_dw  bottom=conv3_dw top=prelu3_dw
+Convolution      name=conv3_sep  bottom=prelu3_dw top=conv3_sep num_output=64 kernel_H=1 kernel_W=1 bias
+PReLU            name=prelu3  bottom=conv3_sep top=prelu3
+DepthwiseConvolution name=conv4_dw  bottom=prelu3 top=conv4_dw num_output=64 kernel_H=3 kernel_W=3 bias
+PReLU            name=prelu4_dw  bottom=conv4_dw top=prelu4_dw
+Convolution      name=conv4_sep  bottom=prelu4_dw top=conv4_sep num_output=128 kernel_H=1 kernel_W=1 bias
+PReLU            name=prelu4  bottom=conv4_sep top=prelu4
+DepthwiseConvolution name=conv5_dw  bottom=prelu4 top=conv5_dw num_output=128 kernel_H=3 kernel_W=3 bias
+PReLU            name=prelu5_dw  bottom=conv5_dw top=prelu5_dw
+InnerProduct     name=conv5_1  bottom=prelu5_dw top=conv5_1 num_output=2 bias
+BatchNormScale   name=bn5_1  bottom=conv5_1 top=bn5_1 bias
+Softmax          name=cls_prob  bottom=bn5_1 top=prob1
+InnerProduct     name=conv5_2  bottom=prelu5_dw top=conv5_2 num_output=4 bias
+BatchNormScale   name=bn5_2  bottom=conv5_2 top=conv5-2 bias
