@@ -15,6 +15,12 @@ void resize_nn_c2(const unsigned char* src, int srcw, int srch, int src_widthSte
 void resize_nn_c3(const unsigned char* src, int srcw, int srch, int src_widthStep,
 	unsigned char* dst, int w, int h, int widthStep);
 
+void bgr2bgra(const unsigned char* src, int srcw, int srch, int src_widthStep,
+	unsigned char* dst, int widthStep);
+
+void resize_nn_bgra2rgb(const unsigned char* src, int srcw, int srch, int src_widthStep,
+	unsigned char* dst, int w, int h, int widthStep);
+
 void transpose_c3(const unsigned char* src, int w, int h, int src_widthStep,
 	unsigned char* dst, int widthStep);
 
@@ -38,7 +44,7 @@ int main(int argc, const char** argv)
 	}
 
 	int dst_W = 640, dst_H = 360;
-	cv::Mat src_img, dst_img_cv, dst_img_my, trans_img_cv, trans_img_my;
+	cv::Mat src_img, dst_img_cv, dst_img_my, dst_img_my_rgb, trans_img_cv, trans_img_my, bgra_img;
 	src_img = cv::imread(argv[1]);
 	if (src_img.empty())
 	{
@@ -46,7 +52,10 @@ int main(int argc, const char** argv)
 		return 0;
 	}
 	cv::resize(src_img, dst_img_my, cv::Size(dst_W, dst_H));
+	cv::resize(src_img, dst_img_my_rgb, cv::Size(dst_W, dst_H));
 	cv::resize(src_img, trans_img_my, cv::Size(dst_H, dst_W));
+	bgra_img = cv::Mat(src_img.rows, src_img.cols, CV_8UC4);
+	bgr2bgra(src_img.data, src_img.cols, src_img.rows, src_img.step[0], bgra_img.data, bgra_img.step[0]);
 	int nOutIters = 5;
 	int nIters = 1000;
 	for (int i = 0; i < nOutIters; i++)
@@ -58,15 +67,21 @@ int main(int argc, const char** argv)
 		for (int i = 0; i < nIters; i++)
 			resize_nn_c3(src_img.data, src_img.cols, src_img.rows, src_img.step[0], dst_img_my.data, dst_W, dst_H, dst_img_my.step[0]);
 		clock_t t3 = clock();
+		for (int i = 0; i < nIters; i++)
+			resize_nn_bgra2rgb(bgra_img.data, bgra_img.cols, bgra_img.rows, bgra_img.step[0], dst_img_my_rgb.data, dst_W, dst_H, dst_img_my_rgb.step[0]);
+		clock_t t4 = clock();
 #if __ARM_NEON
 		for (int i = 0; i < nIters; i++)
 			resize_nn_c3_arm32(src_img.data, src_img.cols, src_img.rows, src_img.step[0], dst_img_my.data, dst_W, dst_H, dst_img_my.step[0]);
-		clock_t t4 = clock();
-		printf("cv      :%12.5f ms\n", (t2 - t1)*1e-3/nIters);
-		printf("my      :%12.5f ms\n", (t3 - t2)*1e-3/nIters);
-		printf("my_arm32:%12.5f ms\n", (t4 - t3)*1e-3/nIters);
+		clock_t t5 = clock();
+		printf("cv         :%12.5f ms\n", (t2 - t1)*1e-3 / nIters);
+		printf("my         :%12.5f ms\n", (t3 - t2)*1e-3 / nIters);
+		printf("my_arm32   :%12.5f ms\n", (t5 - t4)*1e-3 / nIters);
+		printf("my_bgra2rgb:%12.5f ms\n", (t4 - t3)*1e-3 / nIters);
 #else
-		printf("cv:%d\nmy:%d\n", t2 - t1, t3 - t2);
+		printf("cv         :%12.5f ms\n", (t2 - t1)*1e-3 / nIters);
+		printf("my         :%12.5f ms\n", (t3 - t2)*1e-3 / nIters);
+		printf("my_bgra2rgb:%12.5f ms\n", (t4 - t3)*1e-3 / nIters);
 #endif
 	}
 	printf("test transpose...\n");
@@ -94,8 +109,10 @@ int main(int argc, const char** argv)
 
 	cv::namedWindow("cv");
 	cv::namedWindow("my");
+	cv::namedWindow("my_rgb");
 	cv::imshow("cv", dst_img_cv);
 	cv::imshow("my", dst_img_my);
+	cv::imshow("my_rgb", dst_img_my_rgb);
 	cv::namedWindow("cv_trans");
 	cv::namedWindow("my_trans");
 	cv::imshow("cv_trans", trans_img_cv);
@@ -317,6 +334,275 @@ void resize_nn_c3(const unsigned char* src, int srcw, int srch, int src_widthSte
 				cur_pix_ptr[0] = cur_src_ptr[ix];
 				cur_pix_ptr[1] = cur_src_ptr[ix + 1];
 				cur_pix_ptr[2] = cur_src_ptr[ix + 2];
+				cur_pix_ptr += 3;
+			}
+			cur_dst_ptr += widthStep;
+		}
+	}
+	free(coord_x);
+}
+
+void bgr2bgra(const unsigned char* src, int srcw, int srch, int src_widthStep,
+	unsigned char* dst, int widthStep)
+{
+	const unsigned char* src_row_ptr, *src_pix_ptr;
+	unsigned char* dst_row_ptr, *dst_pix_ptr;
+	int i, j;
+	if (srcw % 8 == 0)
+	{
+		src_row_ptr = src;
+		dst_row_ptr = dst;
+		for (i = 0; i < srch; i++, src_row_ptr += src_widthStep, dst_row_ptr += widthStep)
+		{
+			j = 0;
+			src_pix_ptr = src_row_ptr;
+			dst_pix_ptr = dst_row_ptr;
+			for (; j < srcw; j += 8)
+			{
+				dst_pix_ptr[0] = src_pix_ptr[0];
+				dst_pix_ptr[1] = src_pix_ptr[1];
+				dst_pix_ptr[2] = src_pix_ptr[2];
+				dst_pix_ptr += 4;
+				src_pix_ptr += 3;
+				dst_pix_ptr[0] = src_pix_ptr[0];
+				dst_pix_ptr[1] = src_pix_ptr[1];
+				dst_pix_ptr[2] = src_pix_ptr[2];
+				dst_pix_ptr += 4;
+				src_pix_ptr += 3;
+				dst_pix_ptr[0] = src_pix_ptr[0];
+				dst_pix_ptr[1] = src_pix_ptr[1];
+				dst_pix_ptr[2] = src_pix_ptr[2];
+				dst_pix_ptr += 4;
+				src_pix_ptr += 3;
+				dst_pix_ptr[0] = src_pix_ptr[0];
+				dst_pix_ptr[1] = src_pix_ptr[1];
+				dst_pix_ptr[2] = src_pix_ptr[2];
+				dst_pix_ptr += 4;
+				src_pix_ptr += 3;
+				dst_pix_ptr[0] = src_pix_ptr[0];
+				dst_pix_ptr[1] = src_pix_ptr[1];
+				dst_pix_ptr[2] = src_pix_ptr[2];
+				dst_pix_ptr += 4;
+				src_pix_ptr += 3;
+				dst_pix_ptr[0] = src_pix_ptr[0];
+				dst_pix_ptr[1] = src_pix_ptr[1];
+				dst_pix_ptr[2] = src_pix_ptr[2];
+				dst_pix_ptr += 4;
+				src_pix_ptr += 3;
+				dst_pix_ptr[0] = src_pix_ptr[0];
+				dst_pix_ptr[1] = src_pix_ptr[1];
+				dst_pix_ptr[2] = src_pix_ptr[2];
+				dst_pix_ptr += 4;
+				src_pix_ptr += 3;
+				dst_pix_ptr[0] = src_pix_ptr[0];
+				dst_pix_ptr[1] = src_pix_ptr[1];
+				dst_pix_ptr[2] = src_pix_ptr[2];
+				dst_pix_ptr += 4;
+				src_pix_ptr += 3;
+			}
+		}
+	}
+	else
+	{
+		src_row_ptr = src;
+		dst_row_ptr = dst;
+		for (i = 0; i < srch; i++, src_row_ptr += src_widthStep, dst_row_ptr += widthStep)
+		{
+			j = 0;
+			src_pix_ptr = src_row_ptr;
+			dst_pix_ptr = dst_row_ptr;
+			for (; j < srcw - 7; j += 8)
+			{
+				dst_pix_ptr[0] = src_pix_ptr[0];
+				dst_pix_ptr[1] = src_pix_ptr[1];
+				dst_pix_ptr[2] = src_pix_ptr[2];
+				dst_pix_ptr += 4;
+				src_pix_ptr += 3;
+				dst_pix_ptr[0] = src_pix_ptr[0];
+				dst_pix_ptr[1] = src_pix_ptr[1];
+				dst_pix_ptr[2] = src_pix_ptr[2];
+				dst_pix_ptr += 4;
+				src_pix_ptr += 3;
+				dst_pix_ptr[0] = src_pix_ptr[0];
+				dst_pix_ptr[1] = src_pix_ptr[1];
+				dst_pix_ptr[2] = src_pix_ptr[2];
+				dst_pix_ptr += 4;
+				src_pix_ptr += 3;
+				dst_pix_ptr[0] = src_pix_ptr[0];
+				dst_pix_ptr[1] = src_pix_ptr[1];
+				dst_pix_ptr[2] = src_pix_ptr[2];
+				dst_pix_ptr += 4;
+				src_pix_ptr += 3;
+				dst_pix_ptr[0] = src_pix_ptr[0];
+				dst_pix_ptr[1] = src_pix_ptr[1];
+				dst_pix_ptr[2] = src_pix_ptr[2];
+				dst_pix_ptr += 4;
+				src_pix_ptr += 3;
+				dst_pix_ptr[0] = src_pix_ptr[0];
+				dst_pix_ptr[1] = src_pix_ptr[1];
+				dst_pix_ptr[2] = src_pix_ptr[2];
+				dst_pix_ptr += 4;
+				src_pix_ptr += 3;
+				dst_pix_ptr[0] = src_pix_ptr[0];
+				dst_pix_ptr[1] = src_pix_ptr[1];
+				dst_pix_ptr[2] = src_pix_ptr[2];
+				dst_pix_ptr += 4;
+				src_pix_ptr += 3;
+				dst_pix_ptr[0] = src_pix_ptr[0];
+				dst_pix_ptr[1] = src_pix_ptr[1];
+				dst_pix_ptr[2] = src_pix_ptr[2];
+				dst_pix_ptr += 4;
+				src_pix_ptr += 3;
+			}
+			for (; j < srcw; j ++)
+			{
+				dst_pix_ptr[0] = src_pix_ptr[0];
+				dst_pix_ptr[1] = src_pix_ptr[1];
+				dst_pix_ptr[2] = src_pix_ptr[2];
+				dst_pix_ptr += 4;
+				src_pix_ptr += 3;
+			}
+		}
+	}
+}
+
+void resize_nn_bgra2rgb(const unsigned char* src, int srcw, int srch, int src_widthStep,
+	unsigned char* dst, int w, int h, int widthStep)
+{
+	double scale_x = (double)srcw / w;
+	double scale_y = (double)srch / h;
+	int* coord_x = (int*)malloc(w * sizeof(int));
+	const unsigned char* cur_src_ptr;
+	unsigned char* cur_dst_ptr, *cur_pix_ptr;
+	register float fx, fy;
+	register int ix, iy, dx, dy;
+	for (dx = 0; dx < w; dx++)
+	{
+		fx = (float)((dx + 0.5f) * scale_x - 0.5f);
+		ix = fx + 0.5f;
+		ix = ix < 0 ? 0 : ix;
+		ix = ix >= srcw ? srcw - 1 : ix;
+		coord_x[dx] = ix * 4;
+	}
+
+	cur_dst_ptr = dst;
+	if (w % 8 == 0)
+	{
+		for (dy = 0; dy < h; dy++)
+		{
+			fy = (float)((dy + 0.5f) * scale_y - 0.5f);
+			iy = fy + 0.5f;
+			iy = iy < 0 ? 0 : iy;
+			iy = iy >= srch ? srch - 1 : iy;
+			cur_src_ptr = src + iy*src_widthStep;
+			cur_pix_ptr = cur_dst_ptr;
+			dx = 0;
+			for (; dx < w; dx += 8)
+			{
+				ix = coord_x[dx];
+				cur_pix_ptr[2] = cur_src_ptr[ix];
+				cur_pix_ptr[1] = cur_src_ptr[ix + 1];
+				cur_pix_ptr[0] = cur_src_ptr[ix + 2];
+				cur_pix_ptr += 3;
+				ix = coord_x[dx + 1];
+				cur_pix_ptr[2] = cur_src_ptr[ix];
+				cur_pix_ptr[1] = cur_src_ptr[ix + 1];
+				cur_pix_ptr[0] = cur_src_ptr[ix + 2];
+				cur_pix_ptr += 3;
+				ix = coord_x[dx + 2];
+				cur_pix_ptr[2] = cur_src_ptr[ix];
+				cur_pix_ptr[1] = cur_src_ptr[ix + 1];
+				cur_pix_ptr[0] = cur_src_ptr[ix + 2];
+				cur_pix_ptr += 3;
+				ix = coord_x[dx + 3];
+				cur_pix_ptr[2] = cur_src_ptr[ix];
+				cur_pix_ptr[1] = cur_src_ptr[ix + 1];
+				cur_pix_ptr[0] = cur_src_ptr[ix + 2];
+				cur_pix_ptr += 3;
+				ix = coord_x[dx + 4];
+				cur_pix_ptr[2] = cur_src_ptr[ix];
+				cur_pix_ptr[1] = cur_src_ptr[ix + 1];
+				cur_pix_ptr[0] = cur_src_ptr[ix + 2];
+				cur_pix_ptr += 3;
+				ix = coord_x[dx + 5];
+				cur_pix_ptr[2] = cur_src_ptr[ix];
+				cur_pix_ptr[1] = cur_src_ptr[ix + 1];
+				cur_pix_ptr[0] = cur_src_ptr[ix + 2];
+				cur_pix_ptr += 3;
+				ix = coord_x[dx + 6];
+				cur_pix_ptr[2] = cur_src_ptr[ix];
+				cur_pix_ptr[1] = cur_src_ptr[ix + 1];
+				cur_pix_ptr[0] = cur_src_ptr[ix + 2];
+				cur_pix_ptr += 3;
+				ix = coord_x[dx + 7];
+				cur_pix_ptr[2] = cur_src_ptr[ix];
+				cur_pix_ptr[1] = cur_src_ptr[ix + 1];
+				cur_pix_ptr[0] = cur_src_ptr[ix + 2];
+				cur_pix_ptr += 3;
+			}
+			cur_dst_ptr += widthStep;
+		}
+	}
+	else
+	{
+		for (dy = 0; dy < h; dy++)
+		{
+			fy = (float)((dy + 0.5f) * scale_y - 0.5f);
+			iy = fy + 0.5f;
+			iy = iy < 0 ? 0 : iy;
+			iy = iy >= srch ? srch - 1 : iy;
+			cur_src_ptr = src + iy*src_widthStep;
+			cur_pix_ptr = cur_dst_ptr;
+			dx = 0;
+			for (; dx < w - 7; dx += 8)
+			{
+				ix = coord_x[dx];
+				cur_pix_ptr[2] = cur_src_ptr[ix];
+				cur_pix_ptr[1] = cur_src_ptr[ix + 1];
+				cur_pix_ptr[0] = cur_src_ptr[ix + 2];
+				cur_pix_ptr += 3;
+				ix = coord_x[dx + 1];
+				cur_pix_ptr[2] = cur_src_ptr[ix];
+				cur_pix_ptr[1] = cur_src_ptr[ix + 1];
+				cur_pix_ptr[0] = cur_src_ptr[ix + 2];
+				cur_pix_ptr += 3;
+				ix = coord_x[dx + 2];
+				cur_pix_ptr[2] = cur_src_ptr[ix];
+				cur_pix_ptr[1] = cur_src_ptr[ix + 1];
+				cur_pix_ptr[0] = cur_src_ptr[ix + 2];
+				cur_pix_ptr += 3;
+				ix = coord_x[dx + 3];
+				cur_pix_ptr[2] = cur_src_ptr[ix];
+				cur_pix_ptr[1] = cur_src_ptr[ix + 1];
+				cur_pix_ptr[0] = cur_src_ptr[ix + 2];
+				cur_pix_ptr += 3;
+				ix = coord_x[dx + 4];
+				cur_pix_ptr[2] = cur_src_ptr[ix];
+				cur_pix_ptr[1] = cur_src_ptr[ix + 1];
+				cur_pix_ptr[0] = cur_src_ptr[ix + 2];
+				cur_pix_ptr += 3;
+				ix = coord_x[dx + 5];
+				cur_pix_ptr[2] = cur_src_ptr[ix];
+				cur_pix_ptr[1] = cur_src_ptr[ix + 1];
+				cur_pix_ptr[0] = cur_src_ptr[ix + 2];
+				cur_pix_ptr += 3;
+				ix = coord_x[dx + 6];
+				cur_pix_ptr[2] = cur_src_ptr[ix];
+				cur_pix_ptr[1] = cur_src_ptr[ix + 1];
+				cur_pix_ptr[0] = cur_src_ptr[ix + 2];
+				cur_pix_ptr += 3;
+				ix = coord_x[dx + 7];
+				cur_pix_ptr[2] = cur_src_ptr[ix];
+				cur_pix_ptr[1] = cur_src_ptr[ix + 1];
+				cur_pix_ptr[0] = cur_src_ptr[ix + 2];
+				cur_pix_ptr += 3;
+			}
+			for (; dx < w; dx++)
+			{
+				ix = coord_x[dx];
+				cur_pix_ptr[2] = cur_src_ptr[ix];
+				cur_pix_ptr[1] = cur_src_ptr[ix + 1];
+				cur_pix_ptr[0] = cur_src_ptr[ix + 2];
 				cur_pix_ptr += 3;
 			}
 			cur_dst_ptr += widthStep;
@@ -1190,3 +1476,5 @@ void resize_nn_c3_arm32(const unsigned char* src, int srcw, int srch, int src_wi
 }
 
 #endif
+
+
