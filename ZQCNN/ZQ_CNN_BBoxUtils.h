@@ -211,6 +211,8 @@ namespace ZQ
 			{
 				if ((*it).exist)
 				{
+					h = (*it).row2 - (*it).row1 + 1;
+					w = (*it).col2 - (*it).col1 + 1;
 					y1 = (*it).row1;
 					x1 = (*it).col1;
 					float scale_h = h*it->scale_y;
