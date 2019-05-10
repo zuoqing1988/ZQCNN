@@ -396,3 +396,16 @@ Convolution name=conv1 bottom=data top=conv1 num_output=10 kernel_size=3 stride=
 (13)[普通卷积、mobilenet卷积、全局平均池化的矩阵描述](https://zhuanlan.zhihu.com/p/45536594)
 
 (14)[ZQ_FastFaceDetector更快更准的人脸检测库](https://zhuanlan.zhihu.com/p/51561288)
+
+**Android编译说明**
+1. 修改build.sh中的ndk路径和opencv安卓sdk的路径
+2. 修改CMakeLists.txt
+   从原来的
+    #add_definitions(-march=native)
+    add_definitions(-mfpu=neon)
+    add_definitions(-mfloat-abi=hard)
+    改为
+    #add_definitions(-march=native)
+    add_definitions(-mfpu=neon)
+    add_definitions(-mfloat-abi=softfp)
+3. 这样应该可以编译两个库ZQ_GEMM和ZQCNN了.如果要编译SampleMTCNN可以按照错误提示修改不能编译的部分,主要是openmp和计时函数.
