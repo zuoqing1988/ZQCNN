@@ -119,10 +119,10 @@ namespace ZQ
 				this->thread_num = thread_num;
 			if (show_debug_info)
 			{
-				printf("rnet = %.1f M, onet = %.1f M\n", rnet[0].GetNumOfMulAdd() / (1024.0*1024.0),
+				printf("rnet = %.2f M, onet = %.2f M\n", rnet[0].GetNumOfMulAdd() / (1024.0*1024.0),
 					onet[0].GetNumOfMulAdd() / (1024.0*1024.0));
 				if (has_lnet)
-					printf("lnet = %.1f M\n", lnet[0].GetNumOfMulAdd() / (1024.0*1024.0));
+					printf("lnet = %.2f M\n", lnet[0].GetNumOfMulAdd() / (1024.0*1024.0));
 			}
 			int C, H, W;
 			rnet[0].GetInputDim(C, H, W);
@@ -1358,6 +1358,9 @@ namespace ZQ
 					id++;
 				}
 			}
+
+			ZQ_CNN_BBoxUtils::_refine_and_square_bbox(thirdBbox, width, height, false);
+
 			ZQ_CNN_OrderScore order;
 			for (int i = 0; i < early_accept_thirdBbox.size(); i++)
 			{
@@ -1366,7 +1369,7 @@ namespace ZQ
 				thirdScore.push_back(order);
 				thirdBbox.push_back(early_accept_thirdBbox[i]);
 			}
-			ZQ_CNN_BBoxUtils::_refine_and_square_bbox(thirdBbox, width, height, false);
+			
 			ZQ_CNN_BBoxUtils::_nms(thirdBbox, thirdScore, nms_thresh[2], "Min");
 			double t5 = omp_get_wtime();
 			if (show_debug_info)
