@@ -1207,7 +1207,7 @@ namespace ZQ
 			{
 				for (int pp = 0; pp < need_thread_num; pp++)
 				{
-					if (task_src_off_x.size() == 0)
+					if (task_src_off_x.size() == 0 || task_src_off_x[pp].size() == 0)
 						continue;
 					if (!input.ResizeBilinearRect(task_onet_images[pp], onet_size, onet_size, 0, 0,
 						task_src_off_x[pp], task_src_off_y[pp], task_src_rect_w[pp], task_src_rect_h[pp]))
@@ -1276,7 +1276,7 @@ namespace ZQ
 				for (int pp = 0; pp < need_thread_num; pp++)
 				{
 					int thread_id = omp_get_thread_num();
-					if (task_src_off_x.size() == 0)
+					if (task_src_off_x.size() == 0 || task_src_off_x[pp].size() == 0)
 						continue;
 					if (!input.ResizeBilinearRect(task_onet_images[pp], onet_size, onet_size, 0, 0,
 						task_src_off_x[pp], task_src_off_y[pp], task_src_rect_w[pp], task_src_rect_h[pp]))
