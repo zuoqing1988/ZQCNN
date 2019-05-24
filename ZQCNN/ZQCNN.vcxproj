@@ -278,6 +278,7 @@
     <ClInclude Include="math\zq_sse_mathfun.h" />
     <ClInclude Include="ZQ_CNN_BBox.h" />
     <ClInclude Include="ZQ_CNN_BBoxUtils.h" />
+    <ClInclude Include="ZQ_CNN_CascadeOnet.h" />
     <ClInclude Include="ZQ_CNN_CompileConfig.h" />
     <ClInclude Include="ZQ_CNN_DetectorInterface.h" />
     <ClInclude Include="ZQ_CNN_Forward_SSEUtils.h" />
