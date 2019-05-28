@@ -40,7 +40,7 @@ ZQCNN是ZuoQing参照mini-caffe写的forward库，ZQCNN性能远超mini-caffe、
 
 # 更新日志
 
-**2019-05-28日更新：开源一个准商业级106点模型**
+**2019-05-28日更新：开源一个准商用级106点模型**
 
 ZQCNN格式：在model文件夹det5-dw112
 
