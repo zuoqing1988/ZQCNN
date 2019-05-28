@@ -87,14 +87,22 @@ namespace ZQ
 			return ret;
 		}
 
-		bool Find(const unsigned char* bgr_img, int _width, int _height, int _widthStep, 
+		bool Find(const unsigned char* bgr_img, int _width, int _height, int _widthStep,
+			int xmin, int ymin, int xmax, int ymax,
+			std::vector<ZQ_CNN_BBox>& results, int nIters = 3)
+		{
+			if (!input.ConvertFromBGR(bgr_img, _width, _height, _widthStep))
+				return false;
+
+			return Find(input, xmin, ymin, xmax, ymax, results, nIters);
+		}
+
+		bool Find(const ZQ_CNN_Tensor4D_NHW_C_Align128bit& input, 
 			int xmin, int ymin, int xmax, int ymax,
 			std::vector<ZQ_CNN_BBox>& results, int nIters = 3)
 		{
 			results.clear();
-			if (!input.ConvertFromBGR(bgr_img, _width, _height, _widthStep))
-				return false;
-
+			
 			std::vector<int> onet_sizes;
 			onet_sizes.push_back(onet1_size);
 			onet_sizes.push_back(onet2_size);
@@ -123,7 +131,7 @@ namespace ZQ
 
 			for (int i = 0; i < nIters; i++)
 			{
-				ZQ_CNN_BBoxUtils::_square_bbox(box, _width, _height);
+				ZQ_CNN_BBoxUtils::_square_bbox(box, input.GetW(), input.GetH());
 				int rect_x = box[0].col1, rect_y = box[0].row1, rect_w = box[0].col2 - box[0].col1, rect_h = box[0].row2 - box[0].row1;
 				if (!input.ResizeBilinearRect(*(onet_images[i]), onet_sizes[i], onet_sizes[i], 0, 0,
 					rect_x, rect_y, rect_w, rect_h))
@@ -152,7 +160,7 @@ namespace ZQ
 				box[0].exist = true;
 				for (int j = 0; j < 4; j++)
 					box[0].regreCoord[j] = location_ptr[j];
-				ZQ_CNN_BBoxUtils::_refine_and_square_bbox(box, _width, _height, false);
+				ZQ_CNN_BBoxUtils::_refine_and_square_bbox(box, input.GetW(), input.GetH(), false);
 				results.push_back(box[0]);
 			}
 			return true;

@@ -298,6 +298,7 @@
     <ClInclude Include="ZQ_CNN_Tensor4D.h" />
     <ClInclude Include="ZQ_CNN_Tensor4D_NCHWC.h" />
     <ClInclude Include="ZQ_CNN_TextBoxes.h" />
+    <ClInclude Include="ZQ_CNN_VideoFaceDetection.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
