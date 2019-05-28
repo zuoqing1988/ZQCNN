@@ -1,0 +1,111 @@
+Input            name=data C=3 H=112 W=112
+Convolution      name=conv1_conv2d  bottom=data top=conv1_conv2d num_output=8 kernel_H=3 kernel_W=3 stride_H=2 stride_W=2 pad_H=1 pad_W=1
+BatchNormScale   name=conv1_batchnorm  bottom=conv1_conv2d top=conv1_batchnorm bias
+PReLU            name=conv1_relu  bottom=conv1_batchnorm top=conv1_relu
+Convolution      name=res2_block0_conv_sep_conv2d  bottom=conv1_relu top=res2_block0_conv_sep_conv2d num_output=8 kernel_H=1 kernel_W=1 stride_H=1 stride_W=1 pad_H=0 pad_W=0
+BatchNormScale   name=res2_block0_conv_sep_batchnorm  bottom=res2_block0_conv_sep_conv2d top=res2_block0_conv_sep_batchnorm bias
+PReLU            name=res2_block0_conv_sep_relu  bottom=res2_block0_conv_sep_batchnorm top=res2_block0_conv_sep_relu
+DepthwiseConvolution name=res2_block0_conv_dw_conv2d  bottom=res2_block0_conv_sep_relu top=res2_block0_conv_dw_conv2d num_output=8 kernel_H=3 kernel_W=3 stride_H=1 stride_W=1 pad_H=1 pad_W=1
+BatchNormScale   name=res2_block0_conv_dw_batchnorm  bottom=res2_block0_conv_dw_conv2d top=res2_block0_conv_dw_batchnorm bias
+PReLU            name=res2_block0_conv_dw_relu  bottom=res2_block0_conv_dw_batchnorm top=res2_block0_conv_dw_relu
+Convolution      name=res2_block0_conv_proj_conv2d  bottom=res2_block0_conv_dw_relu top=res2_block0_conv_proj_conv2d num_output=8 kernel_H=1 kernel_W=1 stride_H=1 stride_W=1 pad_H=0 pad_W=0
+BatchNormScale   name=res2_block0_conv_proj_batchnorm  bottom=res2_block0_conv_proj_conv2d top=res2_block0_conv_proj_batchnorm bias
+Eltwise operation=sum name=_plus0  bottom=res2_block0_conv_proj_batchnorm bottom=conv1_relu top=_plus0
+Convolution      name=dconv23_conv_sep_conv2d  bottom=_plus0 top=dconv23_conv_sep_conv2d num_output=16 kernel_H=1 kernel_W=1 stride_H=1 stride_W=1 pad_H=0 pad_W=0
+BatchNormScale   name=dconv23_conv_sep_batchnorm  bottom=dconv23_conv_sep_conv2d top=dconv23_conv_sep_batchnorm bias
+PReLU            name=dconv23_conv_sep_relu  bottom=dconv23_conv_sep_batchnorm top=dconv23_conv_sep_relu
+DepthwiseConvolution name=dconv23_conv_dw_conv2d  bottom=dconv23_conv_sep_relu top=dconv23_conv_dw_conv2d num_output=16 kernel_H=3 kernel_W=3 stride_H=2 stride_W=2 pad_H=1 pad_W=1
+BatchNormScale   name=dconv23_conv_dw_batchnorm  bottom=dconv23_conv_dw_conv2d top=dconv23_conv_dw_batchnorm bias
+PReLU            name=dconv23_conv_dw_relu  bottom=dconv23_conv_dw_batchnorm top=dconv23_conv_dw_relu
+Convolution      name=dconv23_conv_proj_conv2d  bottom=dconv23_conv_dw_relu top=dconv23_conv_proj_conv2d num_output=16 kernel_H=1 kernel_W=1 stride_H=1 stride_W=1 pad_H=0 pad_W=0
+BatchNormScale   name=dconv23_conv_proj_batchnorm  bottom=dconv23_conv_proj_conv2d top=dconv23_conv_proj_batchnorm bias
+Convolution      name=res3_block0_conv_sep_conv2d  bottom=dconv23_conv_proj_batchnorm top=res3_block0_conv_sep_conv2d num_output=16 kernel_H=1 kernel_W=1 stride_H=1 stride_W=1 pad_H=0 pad_W=0
+BatchNormScale   name=res3_block0_conv_sep_batchnorm  bottom=res3_block0_conv_sep_conv2d top=res3_block0_conv_sep_batchnorm bias
+PReLU            name=res3_block0_conv_sep_relu  bottom=res3_block0_conv_sep_batchnorm top=res3_block0_conv_sep_relu
+DepthwiseConvolution name=res3_block0_conv_dw_conv2d  bottom=res3_block0_conv_sep_relu top=res3_block0_conv_dw_conv2d num_output=16 kernel_H=3 kernel_W=3 stride_H=1 stride_W=1 pad_H=1 pad_W=1
+BatchNormScale   name=res3_block0_conv_dw_batchnorm  bottom=res3_block0_conv_dw_conv2d top=res3_block0_conv_dw_batchnorm bias
+PReLU            name=res3_block0_conv_dw_relu  bottom=res3_block0_conv_dw_batchnorm top=res3_block0_conv_dw_relu
+Convolution      name=res3_block0_conv_proj_conv2d  bottom=res3_block0_conv_dw_relu top=res3_block0_conv_proj_conv2d num_output=16 kernel_H=1 kernel_W=1 stride_H=1 stride_W=1 pad_H=0 pad_W=0
+BatchNormScale   name=res3_block0_conv_proj_batchnorm  bottom=res3_block0_conv_proj_conv2d top=res3_block0_conv_proj_batchnorm bias
+Eltwise operation=sum name=_plus1  bottom=res3_block0_conv_proj_batchnorm bottom=dconv23_conv_proj_batchnorm top=_plus1
+Convolution      name=res3_block1_conv_sep_conv2d  bottom=_plus1 top=res3_block1_conv_sep_conv2d num_output=16 kernel_H=1 kernel_W=1 stride_H=1 stride_W=1 pad_H=0 pad_W=0
+BatchNormScale   name=res3_block1_conv_sep_batchnorm  bottom=res3_block1_conv_sep_conv2d top=res3_block1_conv_sep_batchnorm bias
+PReLU            name=res3_block1_conv_sep_relu  bottom=res3_block1_conv_sep_batchnorm top=res3_block1_conv_sep_relu
+DepthwiseConvolution name=res3_block1_conv_dw_conv2d  bottom=res3_block1_conv_sep_relu top=res3_block1_conv_dw_conv2d num_output=16 kernel_H=3 kernel_W=3 stride_H=1 stride_W=1 pad_H=1 pad_W=1
+BatchNormScale   name=res3_block1_conv_dw_batchnorm  bottom=res3_block1_conv_dw_conv2d top=res3_block1_conv_dw_batchnorm bias
+PReLU            name=res3_block1_conv_dw_relu  bottom=res3_block1_conv_dw_batchnorm top=res3_block1_conv_dw_relu
+Convolution      name=res3_block1_conv_proj_conv2d  bottom=res3_block1_conv_dw_relu top=res3_block1_conv_proj_conv2d num_output=16 kernel_H=1 kernel_W=1 stride_H=1 stride_W=1 pad_H=0 pad_W=0
+BatchNormScale   name=res3_block1_conv_proj_batchnorm  bottom=res3_block1_conv_proj_conv2d top=res3_block1_conv_proj_batchnorm bias
+Eltwise operation=sum name=_plus2  bottom=res3_block1_conv_proj_batchnorm bottom=_plus1 top=_plus2
+Convolution      name=dconv34_conv_sep_conv2d  bottom=_plus2 top=dconv34_conv_sep_conv2d num_output=32 kernel_H=1 kernel_W=1 stride_H=1 stride_W=1 pad_H=0 pad_W=0
+BatchNormScale   name=dconv34_conv_sep_batchnorm  bottom=dconv34_conv_sep_conv2d top=dconv34_conv_sep_batchnorm bias
+PReLU            name=dconv34_conv_sep_relu  bottom=dconv34_conv_sep_batchnorm top=dconv34_conv_sep_relu
+DepthwiseConvolution name=dconv34_conv_dw_conv2d  bottom=dconv34_conv_sep_relu top=dconv34_conv_dw_conv2d num_output=32 kernel_H=3 kernel_W=3 stride_H=2 stride_W=2 pad_H=1 pad_W=1
+BatchNormScale   name=dconv34_conv_dw_batchnorm  bottom=dconv34_conv_dw_conv2d top=dconv34_conv_dw_batchnorm bias
+PReLU            name=dconv34_conv_dw_relu  bottom=dconv34_conv_dw_batchnorm top=dconv34_conv_dw_relu
+Convolution      name=dconv34_conv_proj_conv2d  bottom=dconv34_conv_dw_relu top=dconv34_conv_proj_conv2d num_output=32 kernel_H=1 kernel_W=1 stride_H=1 stride_W=1 pad_H=0 pad_W=0
+BatchNormScale   name=dconv34_conv_proj_batchnorm  bottom=dconv34_conv_proj_conv2d top=dconv34_conv_proj_batchnorm bias
+Convolution      name=res4_block0_conv_sep_conv2d  bottom=dconv34_conv_proj_batchnorm top=res4_block0_conv_sep_conv2d num_output=32 kernel_H=1 kernel_W=1 stride_H=1 stride_W=1 pad_H=0 pad_W=0
+BatchNormScale   name=res4_block0_conv_sep_batchnorm  bottom=res4_block0_conv_sep_conv2d top=res4_block0_conv_sep_batchnorm bias
+PReLU            name=res4_block0_conv_sep_relu  bottom=res4_block0_conv_sep_batchnorm top=res4_block0_conv_sep_relu
+DepthwiseConvolution name=res4_block0_conv_dw_conv2d  bottom=res4_block0_conv_sep_relu top=res4_block0_conv_dw_conv2d num_output=32 kernel_H=3 kernel_W=3 stride_H=1 stride_W=1 pad_H=1 pad_W=1
+BatchNormScale   name=res4_block0_conv_dw_batchnorm  bottom=res4_block0_conv_dw_conv2d top=res4_block0_conv_dw_batchnorm bias
+PReLU            name=res4_block0_conv_dw_relu  bottom=res4_block0_conv_dw_batchnorm top=res4_block0_conv_dw_relu
+Convolution      name=res4_block0_conv_proj_conv2d  bottom=res4_block0_conv_dw_relu top=res4_block0_conv_proj_conv2d num_output=32 kernel_H=1 kernel_W=1 stride_H=1 stride_W=1 pad_H=0 pad_W=0
+BatchNormScale   name=res4_block0_conv_proj_batchnorm  bottom=res4_block0_conv_proj_conv2d top=res4_block0_conv_proj_batchnorm bias
+Eltwise operation=sum name=_plus3  bottom=res4_block0_conv_proj_batchnorm bottom=dconv34_conv_proj_batchnorm top=_plus3
+Convolution      name=res4_block1_conv_sep_conv2d  bottom=_plus3 top=res4_block1_conv_sep_conv2d num_output=32 kernel_H=1 kernel_W=1 stride_H=1 stride_W=1 pad_H=0 pad_W=0
+BatchNormScale   name=res4_block1_conv_sep_batchnorm  bottom=res4_block1_conv_sep_conv2d top=res4_block1_conv_sep_batchnorm bias
+PReLU            name=res4_block1_conv_sep_relu  bottom=res4_block1_conv_sep_batchnorm top=res4_block1_conv_sep_relu
+DepthwiseConvolution name=res4_block1_conv_dw_conv2d  bottom=res4_block1_conv_sep_relu top=res4_block1_conv_dw_conv2d num_output=32 kernel_H=3 kernel_W=3 stride_H=1 stride_W=1 pad_H=1 pad_W=1
+BatchNormScale   name=res4_block1_conv_dw_batchnorm  bottom=res4_block1_conv_dw_conv2d top=res4_block1_conv_dw_batchnorm bias
+PReLU            name=res4_block1_conv_dw_relu  bottom=res4_block1_conv_dw_batchnorm top=res4_block1_conv_dw_relu
+Convolution      name=res4_block1_conv_proj_conv2d  bottom=res4_block1_conv_dw_relu top=res4_block1_conv_proj_conv2d num_output=32 kernel_H=1 kernel_W=1 stride_H=1 stride_W=1 pad_H=0 pad_W=0
+BatchNormScale   name=res4_block1_conv_proj_batchnorm  bottom=res4_block1_conv_proj_conv2d top=res4_block1_conv_proj_batchnorm bias
+Eltwise operation=sum name=_plus4  bottom=res4_block1_conv_proj_batchnorm bottom=_plus3 top=_plus4
+Convolution      name=res4_block2_conv_sep_conv2d  bottom=_plus4 top=res4_block2_conv_sep_conv2d num_output=32 kernel_H=1 kernel_W=1 stride_H=1 stride_W=1 pad_H=0 pad_W=0
+BatchNormScale   name=res4_block2_conv_sep_batchnorm  bottom=res4_block2_conv_sep_conv2d top=res4_block2_conv_sep_batchnorm bias
+PReLU            name=res4_block2_conv_sep_relu  bottom=res4_block2_conv_sep_batchnorm top=res4_block2_conv_sep_relu
+DepthwiseConvolution name=res4_block2_conv_dw_conv2d  bottom=res4_block2_conv_sep_relu top=res4_block2_conv_dw_conv2d num_output=32 kernel_H=3 kernel_W=3 stride_H=1 stride_W=1 pad_H=1 pad_W=1
+BatchNormScale   name=res4_block2_conv_dw_batchnorm  bottom=res4_block2_conv_dw_conv2d top=res4_block2_conv_dw_batchnorm bias
+PReLU            name=res4_block2_conv_dw_relu  bottom=res4_block2_conv_dw_batchnorm top=res4_block2_conv_dw_relu
+Convolution      name=res4_block2_conv_proj_conv2d  bottom=res4_block2_conv_dw_relu top=res4_block2_conv_proj_conv2d num_output=32 kernel_H=1 kernel_W=1 stride_H=1 stride_W=1 pad_H=0 pad_W=0
+BatchNormScale   name=res4_block2_conv_proj_batchnorm  bottom=res4_block2_conv_proj_conv2d top=res4_block2_conv_proj_batchnorm bias
+Eltwise operation=sum name=_plus5  bottom=res4_block2_conv_proj_batchnorm bottom=_plus4 top=_plus5
+Convolution      name=dconv45_conv_sep_conv2d  bottom=_plus5 top=dconv45_conv_sep_conv2d num_output=64 kernel_H=1 kernel_W=1 stride_H=1 stride_W=1 pad_H=0 pad_W=0
+BatchNormScale   name=dconv45_conv_sep_batchnorm  bottom=dconv45_conv_sep_conv2d top=dconv45_conv_sep_batchnorm bias
+PReLU            name=dconv45_conv_sep_relu  bottom=dconv45_conv_sep_batchnorm top=dconv45_conv_sep_relu
+DepthwiseConvolution name=dconv45_conv_dw_conv2d  bottom=dconv45_conv_sep_relu top=dconv45_conv_dw_conv2d num_output=64 kernel_H=3 kernel_W=3 stride_H=2 stride_W=2 pad_H=1 pad_W=1
+BatchNormScale   name=dconv45_conv_dw_batchnorm  bottom=dconv45_conv_dw_conv2d top=dconv45_conv_dw_batchnorm bias
+PReLU            name=dconv45_conv_dw_relu  bottom=dconv45_conv_dw_batchnorm top=dconv45_conv_dw_relu
+Convolution      name=dconv45_conv_proj_conv2d  bottom=dconv45_conv_dw_relu top=dconv45_conv_proj_conv2d num_output=64 kernel_H=1 kernel_W=1 stride_H=1 stride_W=1 pad_H=0 pad_W=0
+BatchNormScale   name=dconv45_conv_proj_batchnorm  bottom=dconv45_conv_proj_conv2d top=dconv45_conv_proj_batchnorm bias
+Convolution      name=res5_block0_conv_sep_conv2d  bottom=dconv45_conv_proj_batchnorm top=res5_block0_conv_sep_conv2d num_output=64 kernel_H=1 kernel_W=1 stride_H=1 stride_W=1 pad_H=0 pad_W=0
+BatchNormScale   name=res5_block0_conv_sep_batchnorm  bottom=res5_block0_conv_sep_conv2d top=res5_block0_conv_sep_batchnorm bias
+PReLU            name=res5_block0_conv_sep_relu  bottom=res5_block0_conv_sep_batchnorm top=res5_block0_conv_sep_relu
+DepthwiseConvolution name=res5_block0_conv_dw_conv2d  bottom=res5_block0_conv_sep_relu top=res5_block0_conv_dw_conv2d num_output=64 kernel_H=3 kernel_W=3 stride_H=1 stride_W=1 pad_H=1 pad_W=1
+BatchNormScale   name=res5_block0_conv_dw_batchnorm  bottom=res5_block0_conv_dw_conv2d top=res5_block0_conv_dw_batchnorm bias
+PReLU            name=res5_block0_conv_dw_relu  bottom=res5_block0_conv_dw_batchnorm top=res5_block0_conv_dw_relu
+Convolution      name=res5_block0_conv_proj_conv2d  bottom=res5_block0_conv_dw_relu top=res5_block0_conv_proj_conv2d num_output=64 kernel_H=1 kernel_W=1 stride_H=1 stride_W=1 pad_H=0 pad_W=0
+BatchNormScale   name=res5_block0_conv_proj_batchnorm  bottom=res5_block0_conv_proj_conv2d top=res5_block0_conv_proj_batchnorm bias
+Eltwise operation=sum name=_plus6  bottom=res5_block0_conv_proj_batchnorm bottom=dconv45_conv_proj_batchnorm top=_plus6
+Convolution      name=res5_block1_conv_sep_conv2d  bottom=_plus6 top=res5_block1_conv_sep_conv2d num_output=64 kernel_H=1 kernel_W=1 stride_H=1 stride_W=1 pad_H=0 pad_W=0
+BatchNormScale   name=res5_block1_conv_sep_batchnorm  bottom=res5_block1_conv_sep_conv2d top=res5_block1_conv_sep_batchnorm bias
+PReLU            name=res5_block1_conv_sep_relu  bottom=res5_block1_conv_sep_batchnorm top=res5_block1_conv_sep_relu
+DepthwiseConvolution name=res5_block1_conv_dw_conv2d  bottom=res5_block1_conv_sep_relu top=res5_block1_conv_dw_conv2d num_output=64 kernel_H=3 kernel_W=3 stride_H=1 stride_W=1 pad_H=1 pad_W=1
+BatchNormScale   name=res5_block1_conv_dw_batchnorm  bottom=res5_block1_conv_dw_conv2d top=res5_block1_conv_dw_batchnorm bias
+PReLU            name=res5_block1_conv_dw_relu  bottom=res5_block1_conv_dw_batchnorm top=res5_block1_conv_dw_relu
+Convolution      name=res5_block1_conv_proj_conv2d  bottom=res5_block1_conv_dw_relu top=res5_block1_conv_proj_conv2d num_output=64 kernel_H=1 kernel_W=1 stride_H=1 stride_W=1 pad_H=0 pad_W=0
+BatchNormScale   name=res5_block1_conv_proj_batchnorm  bottom=res5_block1_conv_proj_conv2d top=res5_block1_conv_proj_batchnorm bias
+Eltwise operation=sum name=_plus7  bottom=res5_block1_conv_proj_batchnorm bottom=_plus6 top=_plus7
+Convolution      name=conv6_conv2d  bottom=_plus7 top=conv6_conv2d num_output=64 kernel_H=7 kernel_W=7 stride_H=1 stride_W=1 pad_H=0 pad_W=0
+BatchNormScale   name=conv6_batchnorm  bottom=conv6_conv2d top=conv6_batchnorm bias
+PReLU            name=conv6_relu  bottom=conv6_batchnorm top=conv6_relu
+Convolution      name=fc1_conv2d  bottom=conv6_relu top=fc1_conv2d num_output=128 kernel_H=1 kernel_W=1 stride_H=1 stride_W=1 pad_H=0 pad_W=0
+BatchNormScale   name=fc1_batchnorm  bottom=fc1_conv2d top=fc1_batchnorm bias
+PReLU            name=fc1_relu  bottom=fc1_batchnorm top=fc1_relu
+Convolution      name=fc2_conv2d  bottom=fc1_relu top=fc2_conv2d num_output=256 kernel_H=1 kernel_W=1 stride_H=1 stride_W=1 pad_H=0 pad_W=0
+BatchNormScale   name=fc2_batchnorm  bottom=fc2_conv2d top=fc2_batchnorm bias
+PReLU            name=fc2_relu  bottom=fc2_batchnorm top=fc2_relu
+InnerProduct     name=conv6_3  bottom=fc2_relu top=conv6_3 num_output=212 bias
+BatchNormScale   name=bn6_3  bottom=conv6_3 top=conv6-3 bias
