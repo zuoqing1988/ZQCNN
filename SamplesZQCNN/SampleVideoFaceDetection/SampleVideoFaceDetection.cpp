@@ -71,8 +71,8 @@ int run_cam()
 #if defined(_WIN32)
 	if (!detector.Init(
 		"model/det1-dw20-plus.zqparams", "model/det1-dw20-plus.nchwbin",
-		"model/det2-dw24-plus.zqparams", "model/det2-dw24-plus.nchwbin",
-		"model/det3-dw48-plus.zqparams", "model/det3-dw48-plus.nchwbin",
+		"model/det2-dw24-p0.zqparams", "model/det2-dw24-p0.nchwbin",
+		"model/det3-dw48-p0.zqparams", "model/det3-dw48-p0.nchwbin",
 		thread_num, true,
 		"model/det5-dw112.zqparams", "model/det5-dw112.nchwbin"
 #else
@@ -89,6 +89,7 @@ int run_cam()
 		return EXIT_FAILURE;
 	}
 
+	detector.Message(ZQ_CNN_VideoFaceDetection::VFD_MSG_WEIGHT_DECAY, 0.5);
 	//cv::VideoCapture cap("video_20190518_172153_540P.mp4");
 	//cv::VideoCapture cap("video_20190528_093741.mp4"); 
 	cv::VideoCapture cap(0);
@@ -105,7 +106,7 @@ int run_cam()
 		//cv::GaussianBlur(image0, image0, cv::Size(3, 3), 2, 2);
 		//cv::GaussianBlur(image0, image0, cv::Size(3, 3), 2, 2);
 		if (!writer.isOpened())
-			writer.open("cam1.mp4", CV_FOURCC('X', 'V', 'I', 'D'), 25, cv::Size(image0.cols, image0.rows));
+			writer.open("cam-trace4.mp4", CV_FOURCC('X', 'V', 'I', 'D'), 25, cv::Size(image0.cols, image0.rows));
 		detector.SetPara(image0.cols, image0.rows, 120, 0.5, 0.6, 0.8, 0.4, 0.5, 0.5, 0.709, 3, 20, 4, 25);
 		
 		//mtcnn.TurnOnShowDebugInfo();

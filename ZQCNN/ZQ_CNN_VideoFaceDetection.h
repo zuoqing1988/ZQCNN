@@ -14,8 +14,16 @@ namespace ZQ
 	{
 		using string = std::string;
 	public:
+		enum VFD_MSG {
+			VFD_MSG_MAX_TRACE_NUM,
+			VFD_MSG_WEIGHT_DECAY,
+			VFD_MSG_FORCE_FIRST_FRAME
+		};
+
 		ZQ_CNN_VideoFaceDetection() 
 		{
+			max_trace_num = 4;
+			weight_decay = 0;
 			show_debug_info = false;
 			is_first_frame = true;
 			thread_num = 1;
@@ -25,6 +33,8 @@ namespace ZQ
 		~ZQ_CNN_VideoFaceDetection() {}
 
 	private:
+		int max_trace_num;
+		float weight_decay;
 		bool show_debug_info;
 		float othresh;
 		bool is_first_frame;
@@ -35,7 +45,7 @@ namespace ZQ
 		std::vector<ZQ_CNN_Net> lnets106;
 		int key_cooldown;
 		int cur_key_cooldown;
-		std::vector<ZQ_CNN_BBox106> last_results;
+		std::vector<std::vector<ZQ_CNN_BBox106> > trace;
 		ZQ_CNN_Tensor4D_NHW_C_Align128bit input, lnet106_image;
 		int lnet106_size;
 	public:
@@ -81,9 +91,20 @@ namespace ZQ
 			this->othresh = othresh;
 		}
 
-		void Message()
+		void Message(const VFD_MSG msg, double val)
 		{
-
+			switch (msg)
+			{
+			case VFD_MSG_FORCE_FIRST_FRAME:
+				is_first_frame = true;
+				break;
+			case VFD_MSG_MAX_TRACE_NUM:
+				max_trace_num = __max(0, val);
+				break;
+			case VFD_MSG_WEIGHT_DECAY:
+				weight_decay = val;
+				break;
+			}
 		}
 
 		bool Find(const unsigned char* bgr_img, int _width, int _height, int _widthStep, std::vector<ZQ_CNN_BBox106>& results)
@@ -98,20 +119,26 @@ namespace ZQ
 				if (!mtcnn.Find106(input, results))
 					return false;
 				_recompute_bbox(results);
-				last_results = results;
+				int cur_box_num = results.size();
+				trace.clear();
+				trace.resize(cur_box_num);
+				for (int i = 0; i < cur_box_num; i++)
+					trace[i].push_back(results[i]);
 				is_first_frame = results.size() == 0;
 				cur_key_cooldown = key_cooldown;
 			}
 			else
 			{
+				/**********   Stage 1: detect around the old positions         ************/
+
 				std::vector<ZQ_CNN_BBox> boxes;
-				std::vector<ZQ_CNN_BBox> last_boxes(last_results.size());
-				for (int i = 0; i < last_results.size(); i++)
+				std::vector<ZQ_CNN_BBox> last_boxes(trace.size());
+				for (int i = 0; i < trace.size(); i++)
 				{
-					last_boxes[i].col1 = last_results[i].col1;
-					last_boxes[i].col2 = last_results[i].col2;
-					last_boxes[i].row1 = last_results[i].row1;
-					last_boxes[i].row2 = last_results[i].row2;
+					last_boxes[i].col1 = trace[i][0].col1;
+					last_boxes[i].col2 = trace[i][0].col2;
+					last_boxes[i].row1 = trace[i][0].row1;
+					last_boxes[i].row2 = trace[i][0].row2;
 					last_boxes[i].exist = true;
 				}
 				ZQ_CNN_BBoxUtils::_square_bbox(last_boxes, input.GetW(), input.GetH());
@@ -136,6 +163,8 @@ namespace ZQ
 						orders.push_back(tmp_order);
 					}
 				}
+
+				/**********   Stage 2: detect globally         ************/
 				if (cur_key_cooldown <= 0)
 				{
 					std::vector<ZQ_CNN_BBox> tmp_boxes;
@@ -150,6 +179,8 @@ namespace ZQ
 						good_idx.push_back(-1);
 					}
 				}
+
+				/**********   Stage 3: nms         ************/
 				std::vector<int> keep_orders;
 				_nms(boxes, orders, keep_orders, 0.5, "Union");
 
@@ -162,21 +193,29 @@ namespace ZQ
 					good_idx.push_back(old_good_idx[keep_orders[i]]);
 					boxes.push_back(old_boxes[keep_orders[i]]);
 				}
+
+				/**********   Stage 4: get 106 landmark         ************/
 				_Lnet106_stage(boxes, results);
-				if (1)
+
+				/**********   Stage 5: filtering        ************/
+				int cur_box_num = results.size();
+				std::vector<std::vector<ZQ_CNN_BBox106> > old_trace(trace);
+				trace.clear();
+				trace.resize(cur_box_num);
+				for (int i = 0; i < cur_box_num; i++)
 				{
-					std::vector<ZQ_CNN_BBox106> old_last_results = last_results;
-					last_results = results;
-					_filtering(old_last_results, good_idx, results);
-					_recompute_bbox(results);
-					_recompute_bbox(last_results);
+					trace[i].push_back(results[i]);
+					if (good_idx[i] >= 0)
+					{
+						std::vector<ZQ_CNN_BBox106>& tmp_old_trace = old_trace[good_idx[i]];
+						for (int j = 0; j < tmp_old_trace.size() && j < max_trace_num; j++)
+							trace[i].push_back(tmp_old_trace[j]);
+					}
 				}
-				else
-				{
-					_filtering(last_results, good_idx, results);
-					_recompute_bbox(results);
-					last_results = results;
-				}
+				_filtering(trace, results);
+
+				/**********   Stage 6: update bbox        ************/
+				_recompute_bbox(results);
 				
 				if (results.size() == 0)
 					is_first_frame = true;
@@ -417,33 +456,46 @@ namespace ZQ
 			return true;
 		}
 
-		void _filtering(const std::vector<ZQ_CNN_BBox106>& last_results, std::vector<int>& good_idx, std::vector<ZQ_CNN_BBox106>& results)
+		void _filtering(const std::vector<std::vector<ZQ_CNN_BBox106> >& trace, std::vector<ZQ_CNN_BBox106>& results)
 		{
 			float reproj_coords[212];
 			for (int i = 0; i < results.size(); i++)
 			{
-				int cur_good_idx = good_idx[i];
-				if (cur_good_idx >= 0)
+				const std::vector<ZQ_CNN_BBox106>& cur_trace = trace[i];
+				results[i] = cur_trace[0];
+				const ZQ_CNN_BBox106& cur_box = trace[i][0];
+				const float reproj_thresh = 0.005f;
+				float real_thresh = reproj_thresh*(cur_box.col2 - cur_box.col1 + cur_box.row2 - cur_box.row1);
+				float sum_weight = 1.0f;
+				int cur_trace_len = cur_trace.size();
+				if (cur_trace_len <= 1)
+					continue;
+
+				for(int j = 1;j < cur_trace_len;j++)
 				{
 					double reproj_err = 0;
-					const float reproj_thresh = 0.005f;
-					const float last_weight = 0.5f;
-					ZQ_CNN_BBox106 last_box = last_results[cur_good_idx];
-					_compute_transform(last_box.ppoint, results[i].ppoint, reproj_err, reproj_coords);
-					float real_thresh = reproj_thresh*(results[i].col2 - results[i].col1 + results[i].row2 - results[i].row1);
+					float last_weight = exp(-weight_decay*j);
+					const ZQ_CNN_BBox106& last_box = trace[i][j];
+					_compute_transform(last_box.ppoint, cur_box.ppoint, reproj_err, reproj_coords);
+					
 					if (reproj_err < real_thresh)
 					{
-						printf("reproj_err = %f, real_thresh = %f\n", reproj_err, real_thresh);
+						//printf("reproj_err = %f, real_thresh = %f\n", reproj_err, real_thresh);
 						for (int j = 0; j < 212; j++)
 						{
-							results[i].ppoint[j] *= 1.0f - last_weight;
 							results[i].ppoint[j] += last_box.ppoint[j] * last_weight;
 						}
+						sum_weight += last_weight;
 					}
 					else
 					{
-						printf("reproj_err = %f\n", reproj_err);
+						//printf("reproj_err = %f\n", reproj_err);
 					}
+				}
+
+				for (int j = 0; j < 212; j++)
+				{
+					results[i].ppoint[j] /= sum_weight;
 				}
 			}
 		}
