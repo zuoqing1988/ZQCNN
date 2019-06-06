@@ -143,8 +143,8 @@ int main()
 		cout << "failed to get blob conv6-3\n";
 		return EXIT_FAILURE;
 	}
-	const float* landmark2_data = landmark1->GetFirstPixelPtr();
-	const float* landmark1_data = landmark2->GetFirstPixelPtr();
+	const float* landmark1_data = landmark1->GetFirstPixelPtr();
+	const float* landmark2_data = landmark2->GetFirstPixelPtr();
 	for (int i = 0; i < 106; i++)
 	{
 		char buf[10];
