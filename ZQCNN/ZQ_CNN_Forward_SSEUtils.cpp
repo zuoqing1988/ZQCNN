@@ -2089,7 +2089,8 @@ void ZQ_CNN_Forward_SSEUtils::_inner_product(int align_mode, const float* in_dat
 	}
 	else
 	{
-		if (in_pixStep * in_W == in_widthStep && in_widthStep*in_H == in_sliceStep
+		if (in_C == in_pixStep && in_C == filter_pixStep
+			&& in_pixStep * in_W == in_widthStep && in_widthStep*in_H == in_sliceStep
 			&& filter_pixStep*in_W == filter_widthStep && filter_widthStep*in_H == filter_sliceStep)
 		{
 			zq_cnn_innerproduct_32f_align0_noborder(in_data, in_N, in_H*in_W*in_C, filter_data, filter_N, out_data,out_sliceStep);
@@ -2165,7 +2166,8 @@ void ZQ_CNN_Forward_SSEUtils::_inner_product(int align_mode, const float* in_dat
 	}
 	else
 	{
-		if (in_pixStep * in_W == in_widthStep && in_widthStep*in_H == in_sliceStep
+		if (in_C == in_pixStep && in_C == filter_pixStep 
+			&& in_pixStep * in_W == in_widthStep && in_widthStep*in_H == in_sliceStep
 			&& filter_pixStep*in_W == filter_widthStep && filter_widthStep*in_H == filter_sliceStep)
 		{
 			zq_cnn_innerproduct_32f_align0_noborder(in_data, in_N, in_H*in_W*in_C, filter_data, filter_N, out_data, out_sliceStep);
