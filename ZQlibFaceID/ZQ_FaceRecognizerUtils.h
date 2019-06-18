@@ -326,6 +326,7 @@ namespace ZQ
 			printf("\n");
 			}*/
 
+			delete[]xyR;
 			const TmpType TreflectY[9] =
 			{
 				-1, 0,  0,
