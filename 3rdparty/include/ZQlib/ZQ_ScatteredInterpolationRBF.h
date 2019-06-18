@@ -54,6 +54,10 @@ namespace ZQ
 
 		double _kernel(double d, double radius);
 
+		double _kernelGaussian(double d, double radius);
+
+		double _kernelWendland(double d, double radius);
+
 		double _length(int dim, const T* v1, const T* v2);
 		double _length2(int dim, const T* v1, const T* v2);
 	};

@@ -107,6 +107,7 @@
     <ClInclude Include="ZQ_FindCorners.h" />
     <ClInclude Include="ZQ_FindLargestRectInHistgram.h" />
     <ClInclude Include="ZQ_FindLargestSubMatrix.h" />
+    <ClInclude Include="ZQ_FindSimilarityLandmark.h" />
     <ClInclude Include="ZQ_GaussianPyramid.h" />
     <ClInclude Include="ZQ_GaussianPyramid3D.h" />
     <ClInclude Include="ZQ_GLSLShader.h" />
