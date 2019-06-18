@@ -1119,7 +1119,7 @@ namespace ZQ
 		is_singular = false;
 		succ = false;
 		
-		if (_strcmpi(typeid(T).name(), "double") == 0)
+		if (strcmp(typeid(T).name(), "double") == 0)
 		{
 			double* U = (double*)malloc(sizeof(double)*row*row);
 			double* S = (double*)malloc(sizeof(double)*row*col);
@@ -1186,7 +1186,5 @@ namespace ZQ
 	}
 
 }
-
-
 
 #endif
