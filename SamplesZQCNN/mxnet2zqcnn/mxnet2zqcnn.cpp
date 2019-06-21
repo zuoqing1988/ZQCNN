@@ -1102,6 +1102,18 @@ int main(int argc, char** argv)
 		{
 			fprintf(pp, "%-16s", "Permute");
 		}
+		else if (n.op == "UpSampling")
+		{
+			std::string sample_type = n.attr("sample_type");
+			if (sample_type == "nearest")
+			{
+				fprintf(pp, "%-16s", "UpSampling type=nearest");
+			}
+			else if (sample_type == "bilinear")
+			{
+				fprintf(pp, "%-16s", "UpSampling type=bilinear");
+			}
+		}
 		else if (n.op == "tile")
 		{
 			fprintf(pp, "%--16s", "Tile");
@@ -1921,6 +1933,43 @@ int main(int argc, char** argv)
 				fprintf(pp, " order=%d order=%d order=2 order=3", axes[0], axes[1]);
 			}
 			
+		}
+		else if (n.op == "UpSampling")
+		{
+			int scale = n.attr("scale");
+			std::string sample_type = n.attr("sample_type");
+
+			if (sample_type == "nearest")
+			{
+				fprintf(pp, " scale_h=%f", (float)scale);
+				fprintf(pp, " scale_w=%f", (float)scale);
+			}
+			else if (sample_type == "bilinear")
+			{
+				printf("UpSampling bilinear not supported!\n");
+				//// DeconvolutionDepthWise
+				//int num_filter = n.attr("num_filter");
+
+				//std::vector<float> weight_data = n.weight(0);
+
+				//int kernel = scale * 2 - scale % 2;
+				//int stride = scale;
+				//int pad = (scale - 1) / 2;
+
+				//fprintf(pp, " 0=%d", num_filter);
+				//fprintf(pp, " 1=%d", kernel);
+				//fprintf(pp, " 2=1");
+				//fprintf(pp, " 3=%d", stride);
+				//fprintf(pp, " 4=%d", pad);
+				//fprintf(pp, " 5=0");
+				//fprintf(pp, " 6=%d", (int)weight_data.size());
+				//fprintf(pp, " 7=%d", num_filter);
+
+				//int quantize_tag = 0;
+				//fwrite(&quantize_tag, sizeof(int), 1, bp);
+
+				//fwrite(weight_data.data(), sizeof(float), weight_data.size(), bp);
+			}
 		}
 		else if (n.op == "tile")
 		{
