@@ -1,3 +1,216 @@
+void zq_cnn_resize_nn(
+	const zq_base_type* in_tensor4D_data,
+	int in_N,
+	int in_H,
+	int in_W,
+	int in_C,
+	int in_pixelStep,
+	int in_widthStep,
+	int in_sliceStep,
+	int in_off_x,
+	int in_off_y,
+	int in_rect_width,
+	int in_rect_height,
+	zq_base_type* out_tensor4D_data,
+	int out_H,
+	int out_W,
+	int out_pixelStep,
+	int out_widthStep,
+	int out_sliceStep
+)
+{
+	int* xx = (int*)malloc(sizeof(int)*(out_W));
+	zq_base_type src_H = in_rect_height;
+	zq_base_type src_W = in_rect_width;
+	zq_base_type w_step = 1.0f / (zq_base_type)out_W*src_W;
+	zq_base_type h_step = 1.0f / (zq_base_type)out_H*src_H;
+	zq_base_type coord_y_ini = 0.5f * h_step - 0.5f + (zq_base_type)in_off_y;
+	zq_base_type coord_x_ini = 0.5f*w_step - 0.5f + (zq_base_type)in_off_x;
+	int x_nn, y_nn;
+	zq_base_type coord_x, coord_y;
+	const zq_base_type* in_slice_ptr, *in_row_ptr;
+	zq_base_type* out_slice_ptr, *out_row_ptr, *out_pix_ptr;
+	int n, h, w, c, cur_xx;
+	zq_mm_type cur_val;
+
+	/*********** compute the map and weight begin ************/
+	// coord_x
+	coord_x = coord_x_ini;
+	for (w = 0; w < out_W; w++, coord_x += w_step)
+	{
+		x_nn = (int)(coord_x+0.5f);
+		xx[w] = __min(in_W - 1, __max(0, x_nn));
+		xx[w] *= in_pixelStep;
+	}
+
+	/*********** compute the map and weight end ************/
+
+
+
+	if (in_C <= zq_mm_align_size)
+	{
+		for (n = 0, in_slice_ptr = in_tensor4D_data, out_slice_ptr = out_tensor4D_data;
+			n < in_N;
+			n++, in_slice_ptr += in_sliceStep, out_slice_ptr += out_sliceStep)
+		{
+
+			coord_y = coord_y_ini;
+			for (h = 0, out_row_ptr = out_slice_ptr;
+				h < out_H;
+				h++, coord_y += h_step, out_row_ptr += out_widthStep)
+			{
+				y_nn = (int)(coord_y+0.5f);
+				y_nn = __min(in_H - 1, __max(0, y_nn));
+				in_row_ptr = in_slice_ptr + y_nn*in_widthStep;
+				
+				for (w = 0, out_pix_ptr = out_row_ptr; w < out_W; w++, out_pix_ptr += out_pixelStep)
+				{
+					cur_xx = xx[w];
+					cur_val = zq_mm_load_ps(in_row_ptr + cur_xx);
+					zq_mm_store_ps(out_pix_ptr, cur_val);
+				}
+			}
+		}
+	}
+	else if (in_C <= (zq_mm_align_size << 1)) //*2
+	{
+		for (n = 0, in_slice_ptr = in_tensor4D_data, out_slice_ptr = out_tensor4D_data;
+			n < in_N;
+			n++, in_slice_ptr += in_sliceStep, out_slice_ptr += out_sliceStep)
+		{
+
+			coord_y = coord_y_ini;
+			for (h = 0, out_row_ptr = out_slice_ptr;
+				h < out_H;
+				h++, coord_y += h_step, out_row_ptr += out_widthStep)
+			{
+				y_nn = (int)(coord_y + 0.5f);
+				y_nn = __min(in_H - 1, __max(0, y_nn));
+				in_row_ptr = in_slice_ptr + y_nn*in_widthStep;
+
+				for (w = 0, out_pix_ptr = out_row_ptr; w < out_W; w++, out_pix_ptr += out_pixelStep)
+				{
+					c = 0; cur_xx = xx[w];
+
+					cur_val = zq_mm_load_ps(in_row_ptr + cur_xx);
+					zq_mm_store_ps(out_pix_ptr, cur_val);
+
+					c += zq_mm_align_size; cur_xx += zq_mm_align_size;
+
+					cur_val = zq_mm_load_ps(in_row_ptr + cur_xx);
+					zq_mm_store_ps(out_pix_ptr + c, cur_val);
+				}
+			}
+		}
+	}
+	else if (in_C <= ((zq_mm_align_size << 1) + 1)) //*3
+	{
+		for (n = 0, in_slice_ptr = in_tensor4D_data, out_slice_ptr = out_tensor4D_data;
+			n < in_N;
+			n++, in_slice_ptr += in_sliceStep, out_slice_ptr += out_sliceStep)
+		{
+
+			coord_y = coord_y_ini;
+			for (h = 0, out_row_ptr = out_slice_ptr;
+				h < out_H;
+				h++, coord_y += h_step, out_row_ptr += out_widthStep)
+			{
+				y_nn = (int)(coord_y + 0.5f);
+				y_nn = __min(in_H - 1, __max(0, y_nn));
+				in_row_ptr = in_slice_ptr + y_nn*in_widthStep;
+
+				for (w = 0, out_pix_ptr = out_row_ptr; w < out_W; w++, out_pix_ptr += out_pixelStep)
+				{
+					c = 0; cur_xx = xx[w];
+
+					cur_val = zq_mm_load_ps(in_row_ptr + cur_xx);
+					zq_mm_store_ps(out_pix_ptr, cur_val);
+
+					c += zq_mm_align_size; cur_xx += zq_mm_align_size;
+
+					cur_val = zq_mm_load_ps(in_row_ptr + cur_xx);
+					zq_mm_store_ps(out_pix_ptr + c, cur_val);
+
+					c += zq_mm_align_size; cur_xx += zq_mm_align_size;
+
+					cur_val = zq_mm_load_ps(in_row_ptr + cur_xx);
+					zq_mm_store_ps(out_pix_ptr + c, cur_val);
+				}
+			}
+		}
+	}
+	else if (in_C <= (zq_mm_align_size << 2)) //*4
+	{
+		for (n = 0, in_slice_ptr = in_tensor4D_data, out_slice_ptr = out_tensor4D_data;
+			n < in_N;
+			n++, in_slice_ptr += in_sliceStep, out_slice_ptr += out_sliceStep)
+		{
+
+			coord_y = coord_y_ini;
+			for (h = 0, out_row_ptr = out_slice_ptr;
+				h < out_H;
+				h++, coord_y += h_step, out_row_ptr += out_widthStep)
+			{
+				y_nn = (int)(coord_y + 0.5f);
+				y_nn = __min(in_H - 1, __max(0, y_nn));
+				in_row_ptr = in_slice_ptr + y_nn*in_widthStep;
+
+				for (w = 0, out_pix_ptr = out_row_ptr; w < out_W; w++, out_pix_ptr += out_pixelStep)
+				{
+					c = 0; cur_xx = xx[w];
+
+					cur_val = zq_mm_load_ps(in_row_ptr + cur_xx);
+					zq_mm_store_ps(out_pix_ptr, cur_val);
+
+					c += zq_mm_align_size; cur_xx += zq_mm_align_size;
+
+					cur_val = zq_mm_load_ps(in_row_ptr + cur_xx);
+					zq_mm_store_ps(out_pix_ptr + c, cur_val);
+
+					c += zq_mm_align_size; cur_xx += zq_mm_align_size;
+
+					cur_val = zq_mm_load_ps(in_row_ptr + cur_xx);
+					zq_mm_store_ps(out_pix_ptr + c, cur_val);
+
+					c += zq_mm_align_size; cur_xx += zq_mm_align_size;
+
+					cur_val = zq_mm_load_ps(in_row_ptr + cur_xx);
+					zq_mm_store_ps(out_pix_ptr + c, cur_val);
+				}
+			}
+		}
+	}
+	else
+	{
+		for (n = 0, in_slice_ptr = in_tensor4D_data, out_slice_ptr = out_tensor4D_data;
+			n < in_N;
+			n++, in_slice_ptr += in_sliceStep, out_slice_ptr += out_sliceStep)
+		{
+
+			coord_y = coord_y_ini;
+			for (h = 0, out_row_ptr = out_slice_ptr;
+				h < out_H;
+				h++, coord_y += h_step, out_row_ptr += out_widthStep)
+			{
+				y_nn = (int)(coord_y + 0.5f);
+				y_nn = __min(in_H - 1, __max(0, y_nn));
+				in_row_ptr = in_slice_ptr + y_nn*in_widthStep;
+
+				for (w = 0, out_pix_ptr = out_row_ptr; w < out_W; w++, out_pix_ptr += out_pixelStep)
+				{
+					for (c = 0, cur_xx = xx[w]; c < in_C; c += zq_mm_align_size, cur_xx += zq_mm_align_size)
+					{
+						cur_val = zq_mm_load_ps(in_row_ptr + cur_xx);
+						zq_mm_store_ps(out_pix_ptr + c, cur_val);
+					}
+				}
+			}
+		}
+	}
+
+	free(xx);
+}
+
 void zq_cnn_resize_with_safeborder(
 	const zq_base_type* in_tensor4D_data,
 	int in_N,

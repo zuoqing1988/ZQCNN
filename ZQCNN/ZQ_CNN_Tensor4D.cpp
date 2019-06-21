@@ -199,8 +199,19 @@ bool ZQ_CNN_Tensor4D_NHW_C_Align0::ResizeBilinearRect(ZQ_CNN_Tensor4D& dst, int 
 	}
 	else
 	{
-		if (!dst.ChangeSize(N, dst_H, dst_W, C, dst_borderH, dst_borderW))
-			return false;
+		if (dst.GetN() != N || dst.GetH() != dst_H || dst.GetW() != dst_W || dst.GetC() != C)
+		{
+			if (!dst.ChangeSize(N, dst_H, dst_W, C, __max(0, dst_borderH), __max(0, dst_borderW)))
+				return false;
+		}
+		else
+		{
+			if (dst_borderH >= 0 || dst_borderW >= 0)
+			{
+				if (!dst.ChangeSize(N, dst_H, dst_W, C, dst_borderH, dst_borderW))
+					return false;
+			}
+		}
 
 		int widthStep = GetWidthStep();
 		int pixelStep = GetPixelStep();
@@ -286,8 +297,20 @@ bool ZQ_CNN_Tensor4D_NHW_C_Align0::ResizeBilinearRect(ZQ_CNN_Tensor4D& dst, int 
 			return false;
 	}
 	
-	if (!dst.ChangeSize(rect_num, dst_H, dst_W, C, dst_borderH, dst_borderW))
-		return false;
+	
+	if (dst.GetN() != rect_num || dst.GetH() != dst_H || dst.GetW() != dst_W || dst.GetC() != C)
+	{
+		if (!dst.ChangeSize(rect_num, dst_H, dst_W, C, __max(0, dst_borderH), __max(0, dst_borderW)))
+			return false;
+	}
+	else
+	{
+		if (dst_borderH >= 0 || dst_borderW >= 0)
+		{
+			if (!dst.ChangeSize(rect_num, dst_H, dst_W, C, dst_borderH, dst_borderW))
+				return false;
+		}
+	}
 
 	int widthStep = GetWidthStep();
 	int pixelStep = GetPixelStep();
@@ -365,6 +388,157 @@ bool ZQ_CNN_Tensor4D_NHW_C_Align0::ResizeBilinearRect(ZQ_CNN_Tensor4D& dst, int 
 		}
 	}
 	
+	return true;
+}
+
+bool ZQ_CNN_Tensor4D_NHW_C_Align0::ResizeNearestRect(ZQ_CNN_Tensor4D& dst, int dst_W, int dst_H, int dst_borderW, int dst_borderH,
+	int src_off_x, int src_off_y, int src_rect_w, int src_rect_h) const
+{
+	if (src_off_x < 0 || src_off_y < 0 || src_off_x + src_rect_w > W || src_off_y + src_rect_h > H)
+		return false;
+	if (dst_W == src_rect_w && dst_H == src_rect_h)
+	{
+		return ROI(dst, src_off_x, src_off_y, src_rect_w, src_rect_h, dst_borderH, dst_borderW);
+	}
+	else
+	{
+		if (dst.GetN() != N || dst.GetH() != dst_H || dst.GetW() != dst_W || dst.GetC() != C)
+		{
+			if (!dst.ChangeSize(N, dst_H, dst_W, C, __max(0, dst_borderH), __max(0, dst_borderW)))
+				return false;
+		}
+		else
+		{
+			if (dst_borderH >= 0 || dst_borderW >= 0)
+			{
+				if (!dst.ChangeSize(N, dst_H, dst_W, C, dst_borderH, dst_borderW))
+					return false;
+			}
+		}
+
+		int widthStep = GetWidthStep();
+		int pixelStep = GetPixelStep();
+		int dstWidthStep = dst.GetWidthStep();
+		int dstPixelStep = dst.GetPixelStep();
+		int dstSliceStep = dst.GetSliceStep();
+
+		int align_mode = __min(GetAlignType(), dst.GetAlignType());
+
+#if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_AVX
+		if (align_mode == ALIGN_256bit)
+			zq_cnn_resize_nn_32f_align256bit(firstPixelData, N, H, W, C, pixelStep, widthStep, sliceStep, src_off_x, src_off_y, src_rect_w, src_rect_h,
+				dst.GetFirstPixelPtr(), dst_H, dst_W, dstPixelStep, dstWidthStep, dstSliceStep);
+		else
+#endif
+#if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_SSE
+			if (align_mode == ALIGN_128bit)
+				zq_cnn_resize_nn_32f_align128bit(firstPixelData, N, H, W, C, pixelStep, widthStep, sliceStep, src_off_x, src_off_y, src_rect_w, src_rect_h,
+					dst.GetFirstPixelPtr(), dst_H, dst_W, dstPixelStep, dstWidthStep, dstSliceStep);
+			else
+#endif
+				zq_cnn_resize_nn_32f_align0(firstPixelData, N, H, W, C, pixelStep, widthStep, sliceStep, src_off_x, src_off_y, src_rect_w, src_rect_h,
+					dst.GetFirstPixelPtr(), dst_H, dst_W, dstPixelStep, dstWidthStep, dstSliceStep);
+
+		float* dst_slice_ptr = dst.GetFirstPixelPtr();
+		for (int n = 0; n < N; n++, dst_slice_ptr += dstSliceStep)
+		{
+
+			if (dst_borderH > 0)
+			{
+				memset(dst_slice_ptr - dstPixelStep*dst_borderW - dstWidthStep*dst_borderH, 0, sizeof(float)*dstWidthStep*dst_borderH);
+				memset(dst_slice_ptr - dstPixelStep*dst_borderW + dstWidthStep*dst_borderH, 0, sizeof(float)*dstWidthStep*dst_borderH);
+			}
+			if (dst_borderW > 0)
+			{
+				for (int h = 0; h < dst_borderH; h++)
+				{
+					memset(dst_slice_ptr - dstPixelStep*dst_borderW + dstWidthStep*h, 0, sizeof(float)*dstPixelStep*dst_borderW);
+					memset(dst_slice_ptr - dstPixelStep*(dst_borderW << 1) + dstWidthStep*(h + 1), 0, sizeof(float)*dstPixelStep*dst_borderW);
+				}
+			}
+		}
+	}
+	return true;
+}
+
+
+bool ZQ_CNN_Tensor4D_NHW_C_Align0::ResizeNearestRect(ZQ_CNN_Tensor4D& dst, int dst_W, int dst_H, int dst_borderW, int dst_borderH,
+	const std::vector<int>& src_off_x, const std::vector<int>& src_off_y, const std::vector<int>& src_rect_w, const std::vector<int>& src_rect_h) const
+{
+	int rect_num = src_off_x.size();
+	if (rect_num == 0 || rect_num != src_off_y.size() || rect_num != src_rect_w.size() || rect_num != src_rect_h.size())
+		return false;
+
+	for (int i = 0; i < rect_num; i++)
+	{
+		if (src_off_x[i] < 0 || src_off_y[i] < 0 || src_off_x[i] + src_rect_w[i] > W || src_off_y[i] + src_rect_h[i] > H)
+			return false;
+	}
+
+
+	if (dst.GetN() != rect_num || dst.GetH() != dst_H || dst.GetW() != dst_W || dst.GetC() != C)
+	{
+		if (!dst.ChangeSize(rect_num, dst_H, dst_W, C, __max(0, dst_borderH), __max(0, dst_borderW)))
+			return false;
+	}
+	else
+	{
+		if (dst_borderH >= 0 || dst_borderW >= 0)
+		{
+			if (!dst.ChangeSize(rect_num, dst_H, dst_W, C, dst_borderH, dst_borderW))
+				return false;
+		}
+	}
+
+	int widthStep = GetWidthStep();
+	int pixelStep = GetPixelStep();
+	int dstWidthStep = dst.GetWidthStep();
+	int dstPixelStep = dst.GetPixelStep();
+	int dstSliceStep = dst.GetSliceStep();
+
+	int align_mode = __min(GetAlignType(), dst.GetAlignType());
+
+	for (int i = 0; i < rect_num; i++)
+	{
+		float* dst_slice_ptr = dst.GetFirstPixelPtr() + dstSliceStep*i;
+
+#if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_AVX
+		if (align_mode == ALIGN_256bit)
+			zq_cnn_resize_nn_32f_align256bit(firstPixelData, 1, H, W, C, pixelStep, widthStep, sliceStep,
+				src_off_x[i], src_off_y[i], src_rect_w[i], src_rect_h[i],
+				dst_slice_ptr, dst_H, dst_W, dstPixelStep, dstWidthStep, dstSliceStep);
+		else
+#endif
+#if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_SSE
+			if (align_mode == ALIGN_128bit)
+				zq_cnn_resize_nn_32f_align128bit(firstPixelData, 1, H, W, C, pixelStep, widthStep, sliceStep,
+					src_off_x[i], src_off_y[i], src_rect_w[i], src_rect_h[i],
+					dst_slice_ptr, dst_H, dst_W, dstPixelStep, dstWidthStep, dstSliceStep);
+			else
+#endif
+				zq_cnn_resize_nn_32f_align0(firstPixelData, 1, H, W, C, pixelStep, widthStep, sliceStep,
+					src_off_x[i], src_off_y[i], src_rect_w[i], src_rect_h[i],
+					dst_slice_ptr, dst_H, dst_W, dstPixelStep, dstWidthStep, dstSliceStep);
+	}
+	float* dst_slice_ptr = dst.GetFirstPixelPtr();
+	for (int i = 0; i < rect_num; i++, dst_slice_ptr += dstSliceStep)
+	{
+
+		if (dst_borderH > 0)
+		{
+			memset(dst_slice_ptr - dstPixelStep*dst_borderW - dstWidthStep*dst_borderH, 0, sizeof(float)*dstWidthStep*dst_borderH);
+			memset(dst_slice_ptr - dstPixelStep*dst_borderW + dstWidthStep*dst_borderH, 0, sizeof(float)*dstWidthStep*dst_borderH);
+		}
+		if (dst_borderW > 0)
+		{
+			for (int h = 0; h < dst_borderH; h++)
+			{
+				memset(dst_slice_ptr - dstPixelStep*dst_borderW + dstWidthStep*h, 0, sizeof(float)*dstPixelStep*dst_borderW);
+				memset(dst_slice_ptr - dstPixelStep*(dst_borderW << 1) + dstWidthStep*(h + 1), 0, sizeof(float)*dstPixelStep*dst_borderW);
+			}
+		}
+	}
+
 	return true;
 }
 
@@ -554,8 +728,20 @@ bool ZQ_CNN_Tensor4D_NHW_C_Align128bit::ResizeBilinearRect(ZQ_CNN_Tensor4D& dst,
 	int align_mode;
 	if (src_off_x < 0 || src_off_y < 0 || src_off_x + src_rect_w > W || src_off_y + src_rect_h > H)
 	{
-		if (!dst.ChangeSize(N, dst_H, dst_W, C, dst_borderH, dst_borderW))
-			return false;
+		if (dst.GetN() != N || dst.GetH() != dst_H || dst.GetW() != dst_W || dst.GetC() != C)
+		{
+			if (!dst.ChangeSize(N, dst_H, dst_W, C, __max(0, dst_borderH), __max(0, dst_borderW)))
+				return false;
+		}
+		else
+		{
+			if (dst_borderH >= 0 || dst_borderW >= 0)
+			{
+				if (!dst.ChangeSize(N, dst_H, dst_W, C, dst_borderH, dst_borderW))
+					return false;
+			}
+		}
+
 		dstWidthStep = dst.GetWidthStep();
 		dstPixelStep = dst.GetPixelStep();
 		dstSliceStep = dst.GetSliceStep();
@@ -580,8 +766,19 @@ bool ZQ_CNN_Tensor4D_NHW_C_Align128bit::ResizeBilinearRect(ZQ_CNN_Tensor4D& dst,
 		if (dst_W == src_rect_w && dst_H == src_rect_h)
 			return ROI(dst, src_off_x, src_off_y, src_rect_w, src_rect_h, dst_borderH, dst_borderW);
 
-		if (!dst.ChangeSize(N, dst_H, dst_W, C, dst_borderH, dst_borderW))
-			return false;
+		if (dst.GetN() != N || dst.GetH() != dst_H || dst.GetW() != dst_W || dst.GetC() != C)
+		{
+			if (!dst.ChangeSize(N, dst_H, dst_W, C, __max(0, dst_borderH), __max(0, dst_borderW)))
+				return false;
+		}
+		else
+		{
+			if (dst_borderH >= 0 || dst_borderW >= 0)
+			{
+				if (!dst.ChangeSize(N, dst_H, dst_W, C, dst_borderH, dst_borderW))
+					return false;
+			}
+		}
 
 		dstWidthStep = dst.GetWidthStep();
 		dstPixelStep = dst.GetPixelStep();
@@ -658,8 +855,19 @@ bool ZQ_CNN_Tensor4D_NHW_C_Align128bit::ResizeBilinearRect(ZQ_CNN_Tensor4D& dst,
 	if (rect_num == 0 || rect_num != src_off_y.size() || rect_num != src_rect_w.size() || rect_num != src_rect_h.size())
 		return false;
 
-	if (!dst.ChangeSize(rect_num, dst_H, dst_W, C, dst_borderH, dst_borderW))
-		return false;
+	if (dst.GetN() != rect_num || dst.GetH() != dst_H || dst.GetW() != dst_W || dst.GetC() != C)
+	{
+		if (!dst.ChangeSize(rect_num, dst_H, dst_W, C, __max(0, dst_borderH), __max(0, dst_borderW)))
+			return false;
+	}
+	else
+	{
+		if (dst_borderH >= 0 || dst_borderW >= 0)
+		{
+			if (!dst.ChangeSize(rect_num, dst_H, dst_W, C, dst_borderH, dst_borderW))
+				return false;
+		}
+	}
 
 	int widthStep = GetWidthStep();
 	int pixelStep = GetPixelStep();
@@ -740,6 +948,182 @@ bool ZQ_CNN_Tensor4D_NHW_C_Align128bit::ResizeBilinearRect(ZQ_CNN_Tensor4D& dst,
 							dst_slice_ptr, dst_H, dst_W, dstPixelStep, dstWidthStep, dstSliceStep);
 			}
 		}
+	}
+	float* dst_slice_ptr = dst.GetFirstPixelPtr();
+	for (int i = 0; i < rect_num; i++, dst_slice_ptr += dstSliceStep)
+	{
+
+		if (dst_borderH > 0)
+		{
+			memset(dst_slice_ptr - dstPixelStep*dst_borderW - dstWidthStep*dst_borderH, 0, sizeof(float)*dstWidthStep*dst_borderH);
+			memset(dst_slice_ptr - dstPixelStep*dst_borderW + dstWidthStep*dst_borderH, 0, sizeof(float)*dstWidthStep*dst_borderH);
+		}
+		if (dst_borderW > 0)
+		{
+			for (int h = 0; h < dst_borderH; h++)
+			{
+				memset(dst_slice_ptr - dstPixelStep*dst_borderW + dstWidthStep*h, 0, sizeof(float)*dstPixelStep*dst_borderW);
+				memset(dst_slice_ptr - dstPixelStep*(dst_borderW << 1) + dstWidthStep*(h + 1), 0, sizeof(float)*dstPixelStep*dst_borderW);
+			}
+		}
+	}
+	return true;
+}
+
+
+bool ZQ_CNN_Tensor4D_NHW_C_Align128bit::ResizeNearestRect(ZQ_CNN_Tensor4D& dst, int dst_W, int dst_H, int dst_borderW, int dst_borderH,
+	int src_off_x, int src_off_y, int src_rect_w, int src_rect_h) const
+{
+	int dstWidthStep, dstPixelStep, dstSliceStep;
+	int align_mode;
+	if (src_off_x < 0 || src_off_y < 0 || src_off_x + src_rect_w > W || src_off_y + src_rect_h > H)
+	{
+		if (dst.GetN() != N || dst.GetH() != dst_H || dst.GetW() != dst_W || dst.GetC() != C)
+		{
+			if (!dst.ChangeSize(N, dst_H, dst_W, C, __max(0, dst_borderH), __max(0, dst_borderW)))
+				return false;
+		}
+		else
+		{
+			if (dst_borderH >= 0 || dst_borderW >= 0)
+			{
+				if (!dst.ChangeSize(N, dst_H, dst_W, C, dst_borderH, dst_borderW))
+					return false;
+			}
+		}
+
+		dstWidthStep = dst.GetWidthStep();
+		dstPixelStep = dst.GetPixelStep();
+		dstSliceStep = dst.GetSliceStep();
+		align_mode = __min(GetAlignType(), dst.GetAlignType());
+#if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_AVX
+		if (align_mode == ALIGN_256bit)
+			zq_cnn_resize_nn_32f_align256bit(firstPixelData, N, H, W, C, pixelStep, widthStep, sliceStep, src_off_x, src_off_y, src_rect_w, src_rect_h,
+				dst.GetFirstPixelPtr(), dst_H, dst_W, dstPixelStep, dstWidthStep, dstSliceStep);
+		else
+#endif
+#if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_SSE
+			if (align_mode == ALIGN_128bit)
+				zq_cnn_resize_nn_32f_align128bit(firstPixelData, N, H, W, C, pixelStep, widthStep, sliceStep, src_off_x, src_off_y, src_rect_w, src_rect_h,
+					dst.GetFirstPixelPtr(), dst_H, dst_W, dstPixelStep, dstWidthStep, dstSliceStep);
+			else
+#endif
+				zq_cnn_resize_nn_32f_align0(firstPixelData, N, H, W, C, pixelStep, widthStep, sliceStep, src_off_x, src_off_y, src_rect_w, src_rect_h,
+					dst.GetFirstPixelPtr(), dst_H, dst_W, dstPixelStep, dstWidthStep, dstSliceStep);
+	}
+	else
+	{
+		if (dst_W == src_rect_w && dst_H == src_rect_h)
+			return ROI(dst, src_off_x, src_off_y, src_rect_w, src_rect_h, dst_borderH, dst_borderW);
+
+		if (dst.GetN() != N || dst.GetH() != dst_H || dst.GetW() != dst_W || dst.GetC() != C)
+		{
+			if (!dst.ChangeSize(N, dst_H, dst_W, C, __max(0, dst_borderH), __max(0, dst_borderW)))
+				return false;
+		}
+		else
+		{
+			if (dst_borderH >= 0 || dst_borderW >= 0)
+			{
+				if (!dst.ChangeSize(N, dst_H, dst_W, C, dst_borderH, dst_borderW))
+					return false;
+			}
+		}
+
+		dstWidthStep = dst.GetWidthStep();
+		dstPixelStep = dst.GetPixelStep();
+		dstSliceStep = dst.GetSliceStep();
+
+		align_mode = __min(GetAlignType(), dst.GetAlignType());
+
+#if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_AVX
+		if (align_mode == ALIGN_256bit)
+			zq_cnn_resize_nn_32f_align256bit(firstPixelData, N, H, W, C, pixelStep, widthStep, sliceStep, src_off_x, src_off_y, src_rect_w, src_rect_h,
+				dst.GetFirstPixelPtr(), dst_H, dst_W, dstPixelStep, dstWidthStep, dstSliceStep);
+		else
+#endif
+#if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_SSE
+			if (align_mode == ALIGN_128bit)
+				zq_cnn_resize_nn_32f_align128bit(firstPixelData, N, H, W, C, pixelStep, widthStep, sliceStep, src_off_x, src_off_y, src_rect_w, src_rect_h,
+					dst.GetFirstPixelPtr(), dst_H, dst_W, dstPixelStep, dstWidthStep, dstSliceStep);
+			else
+#endif
+				zq_cnn_resize_nn_32f_align0(firstPixelData, N, H, W, C, pixelStep, widthStep, sliceStep, src_off_x, src_off_y, src_rect_w, src_rect_h,
+					dst.GetFirstPixelPtr(), dst_H, dst_W, dstPixelStep, dstWidthStep, dstSliceStep);
+
+	}
+
+	float* dst_slice_ptr = dst.GetFirstPixelPtr();
+	for (int n = 0; n < N; n++, dst_slice_ptr += dstSliceStep)
+	{
+
+		if (dst_borderH > 0)
+		{
+			memset(dst_slice_ptr - dstPixelStep*dst_borderW - dstWidthStep*dst_borderH, 0, sizeof(float)*dstWidthStep*dst_borderH);
+			memset(dst_slice_ptr - dstPixelStep*dst_borderW + dstWidthStep*dst_borderH, 0, sizeof(float)*dstWidthStep*dst_borderH);
+		}
+		if (dst_borderW > 0)
+		{
+			for (int h = 0; h < dst_borderH; h++)
+			{
+				memset(dst_slice_ptr - dstPixelStep*dst_borderW + dstWidthStep*h, 0, sizeof(float)*dstPixelStep*dst_borderW);
+				memset(dst_slice_ptr - dstPixelStep*(dst_borderW << 1) + dstWidthStep*(h + 1), 0, sizeof(float)*dstPixelStep*dst_borderW);
+			}
+		}
+	}
+	return true;
+}
+
+
+bool ZQ_CNN_Tensor4D_NHW_C_Align128bit::ResizeNearestRect(ZQ_CNN_Tensor4D& dst, int dst_W, int dst_H, int dst_borderW, int dst_borderH,
+	const std::vector<int>& src_off_x, const std::vector<int>& src_off_y, const std::vector<int>& src_rect_w, const std::vector<int>& src_rect_h) const
+{
+	int rect_num = src_off_x.size();
+	if (rect_num == 0 || rect_num != src_off_y.size() || rect_num != src_rect_w.size() || rect_num != src_rect_h.size())
+		return false;
+
+	if (dst.GetN() != rect_num || dst.GetH() != dst_H || dst.GetW() != dst_W || dst.GetC() != C)
+	{
+		if (!dst.ChangeSize(rect_num, dst_H, dst_W, C, __max(0, dst_borderH), __max(0, dst_borderW)))
+			return false;
+	}
+	else
+	{
+		if (dst_borderH >= 0 || dst_borderW >= 0)
+		{
+			if (!dst.ChangeSize(rect_num, dst_H, dst_W, C, dst_borderH, dst_borderW))
+				return false;
+		}
+	}
+
+	int widthStep = GetWidthStep();
+	int pixelStep = GetPixelStep();
+	int dstWidthStep = dst.GetWidthStep();
+	int dstPixelStep = dst.GetPixelStep();
+	int dstSliceStep = dst.GetSliceStep();
+
+	int align_mode = __min(GetAlignType(), dst.GetAlignType());
+
+	for (int i = 0; i < rect_num; i++)
+	{
+		float* dst_slice_ptr = dst.GetFirstPixelPtr() + dstSliceStep*i;
+#if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_AVX
+		if (align_mode == ALIGN_256bit)
+			zq_cnn_resize_nn_32f_align256bit(firstPixelData, 1, H, W, C, pixelStep, widthStep, sliceStep,
+				src_off_x[i], src_off_y[i], src_rect_w[i], src_rect_h[i],
+				dst_slice_ptr, dst_H, dst_W, dstPixelStep, dstWidthStep, dstSliceStep);
+		else
+#endif
+#if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_SSE
+			if (align_mode == ALIGN_128bit)
+				zq_cnn_resize_nn_32f_align128bit(firstPixelData, 1, H, W, C, pixelStep, widthStep, sliceStep,
+					src_off_x[i], src_off_y[i], src_rect_w[i], src_rect_h[i],
+					dst_slice_ptr, dst_H, dst_W, dstPixelStep, dstWidthStep, dstSliceStep);
+			else
+#endif
+				zq_cnn_resize_nn_32f_align0(firstPixelData, 1, H, W, C, pixelStep, widthStep, sliceStep,
+					src_off_x[i], src_off_y[i], src_rect_w[i], src_rect_h[i],
+					dst_slice_ptr, dst_H, dst_W, dstPixelStep, dstWidthStep, dstSliceStep);
 	}
 	float* dst_slice_ptr = dst.GetFirstPixelPtr();
 	for (int i = 0; i < rect_num; i++, dst_slice_ptr += dstSliceStep)
@@ -946,8 +1330,19 @@ bool ZQ_CNN_Tensor4D_NHW_C_Align256bit::ResizeBilinearRect(ZQ_CNN_Tensor4D& dst,
 	}
 	else
 	{
-		if (!dst.ChangeSize(N, dst_H, dst_W, C, dst_borderH, dst_borderW))
-			return false;
+		if (dst.GetN() != N || dst.GetH() != dst_H || dst.GetW() != dst_W || dst.GetC() != C)
+		{
+			if (!dst.ChangeSize(N, dst_H, dst_W, C, __max(0, dst_borderH), __max(0, dst_borderW)))
+				return false;
+		}
+		else
+		{
+			if (dst_borderH >= 0 || dst_borderW >= 0)
+			{
+				if (!dst.ChangeSize(N, dst_H, dst_W, C, dst_borderH, dst_borderW))
+					return false;
+			}
+		}
 
 		int widthStep = GetWidthStep();
 		int pixelStep = GetPixelStep();
@@ -1034,8 +1429,19 @@ bool ZQ_CNN_Tensor4D_NHW_C_Align256bit::ResizeBilinearRect(ZQ_CNN_Tensor4D& dst,
 			return false;
 	}
 
-	if (!dst.ChangeSize(rect_num, dst_H, dst_W, C, dst_borderH, dst_borderW))
-		return false;
+	if (dst.GetN() != rect_num || dst.GetH() != dst_H || dst.GetW() != dst_W || dst.GetC() != C)
+	{
+		if (!dst.ChangeSize(rect_num, dst_H, dst_W, C, __max(0, dst_borderH), __max(0, dst_borderW)))
+			return false;
+	}
+	else
+	{
+		if (dst_borderH >= 0 || dst_borderW >= 0)
+		{
+			if (!dst.ChangeSize(rect_num, dst_H, dst_W, C, dst_borderH, dst_borderW))
+				return false;
+		}
+	}
 
 	int widthStep = GetWidthStep();
 	int pixelStep = GetPixelStep();
@@ -1093,6 +1499,160 @@ bool ZQ_CNN_Tensor4D_NHW_C_Align256bit::ResizeBilinearRect(ZQ_CNN_Tensor4D& dst,
 					src_off_x[i], src_off_y[i], src_rect_w[i], src_rect_h[i],
 					dst_slice_ptr, dst_H, dst_W, dstPixelStep, dstWidthStep, dstSliceStep);
 		}
+	}
+	float* dst_slice_ptr = dst.GetFirstPixelPtr();
+	for (int i = 0; i < rect_num; i++, dst_slice_ptr += dstSliceStep)
+	{
+
+		if (dst_borderH > 0)
+		{
+			memset(dst_slice_ptr - dstPixelStep*dst_borderW - dstWidthStep*dst_borderH, 0, sizeof(float)*dstWidthStep*dst_borderH);
+			memset(dst_slice_ptr - dstPixelStep*dst_borderW + dstWidthStep*dst_borderH, 0, sizeof(float)*dstWidthStep*dst_borderH);
+		}
+		if (dst_borderW > 0)
+		{
+			for (int h = 0; h < dst_borderH; h++)
+			{
+				memset(dst_slice_ptr - dstPixelStep*dst_borderW + dstWidthStep*h, 0, sizeof(float)*dstPixelStep*dst_borderW);
+				memset(dst_slice_ptr - dstPixelStep*(dst_borderW << 1) + dstWidthStep*(h + 1), 0, sizeof(float)*dstPixelStep*dst_borderW);
+			}
+		}
+	}
+
+	return true;
+}
+
+
+bool ZQ_CNN_Tensor4D_NHW_C_Align256bit::ResizeNearestRect(ZQ_CNN_Tensor4D& dst, int dst_W, int dst_H, int dst_borderW, int dst_borderH,
+	int src_off_x, int src_off_y, int src_rect_w, int src_rect_h) const
+{
+	if (src_off_x < 0 || src_off_y < 0 || src_off_x + src_rect_w > W || src_off_y + src_rect_h > H)
+		return false;
+	if (dst_W == src_rect_w && dst_H == src_rect_h)
+	{
+		return ROI(dst, src_off_x, src_off_y, src_rect_w, src_rect_h, dst_borderH, dst_borderW);
+	}
+	else
+	{
+		if (dst.GetN() != N || dst.GetH() != dst_H || dst.GetW() != dst_W || dst.GetC() != C)
+		{
+			if (!dst.ChangeSize(N, dst_H, dst_W, C, __max(0, dst_borderH), __max(0, dst_borderW)))
+				return false;
+		}
+		else
+		{
+			if (dst_borderH >= 0 || dst_borderW >= 0)
+			{
+				if (!dst.ChangeSize(N, dst_H, dst_W, C, dst_borderH, dst_borderW))
+					return false;
+			}
+		}
+
+		int widthStep = GetWidthStep();
+		int pixelStep = GetPixelStep();
+		int dstWidthStep = dst.GetWidthStep();
+		int dstPixelStep = dst.GetPixelStep();
+		int dstSliceStep = dst.GetSliceStep();
+
+		int align_mode = __min(GetAlignType(), dst.GetAlignType());
+
+#if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_AVX
+		if (align_mode == ALIGN_256bit)
+			zq_cnn_resize_nn_32f_align256bit(firstPixelData, N, H, W, C, pixelStep, widthStep, sliceStep, src_off_x, src_off_y, src_rect_w, src_rect_h,
+				dst.GetFirstPixelPtr(), dst_H, dst_W, dstPixelStep, dstWidthStep, dstSliceStep);
+		else
+#endif
+#if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_SSE
+			if (align_mode == ALIGN_128bit)
+				zq_cnn_resize_nn_32f_align128bit(firstPixelData, N, H, W, C, pixelStep, widthStep, sliceStep, src_off_x, src_off_y, src_rect_w, src_rect_h,
+					dst.GetFirstPixelPtr(), dst_H, dst_W, dstPixelStep, dstWidthStep, dstSliceStep);
+			else
+#endif
+				zq_cnn_resize_nn_32f_align0(firstPixelData, N, H, W, C, pixelStep, widthStep, sliceStep, src_off_x, src_off_y, src_rect_w, src_rect_h,
+					dst.GetFirstPixelPtr(), dst_H, dst_W, dstPixelStep, dstWidthStep, dstSliceStep);
+
+
+		float* dst_slice_ptr = dst.GetFirstPixelPtr();
+		for (int n = 0; n < N; n++, dst_slice_ptr += dstSliceStep)
+		{
+
+			if (dst_borderH > 0)
+			{
+				memset(dst_slice_ptr - dstPixelStep*dst_borderW - dstWidthStep*dst_borderH, 0, sizeof(float)*dstWidthStep*dst_borderH);
+				memset(dst_slice_ptr - dstPixelStep*dst_borderW + dstWidthStep*dst_borderH, 0, sizeof(float)*dstWidthStep*dst_borderH);
+			}
+			if (dst_borderW > 0)
+			{
+				for (int h = 0; h < dst_borderH; h++)
+				{
+					memset(dst_slice_ptr - dstPixelStep*dst_borderW + dstWidthStep*h, 0, sizeof(float)*dstPixelStep*dst_borderW);
+					memset(dst_slice_ptr - dstPixelStep*(dst_borderW << 1) + dstWidthStep*(h + 1), 0, sizeof(float)*dstPixelStep*dst_borderW);
+				}
+			}
+		}
+	}
+	return true;
+}
+
+
+
+bool ZQ_CNN_Tensor4D_NHW_C_Align256bit::ResizeNearestRect(ZQ_CNN_Tensor4D& dst, int dst_W, int dst_H, int dst_borderW, int dst_borderH,
+	const std::vector<int>& src_off_x, const std::vector<int>& src_off_y, const std::vector<int>& src_rect_w, const std::vector<int>& src_rect_h) const
+{
+	int rect_num = src_off_x.size();
+	if (rect_num == 0 || rect_num != src_off_y.size() || rect_num != src_rect_w.size() || rect_num != src_rect_h.size())
+		return false;
+
+	for (int i = 0; i < rect_num; i++)
+	{
+		if (src_off_x[i] < 0 || src_off_y[i] < 0 || src_off_x[i] + src_rect_w[i] > W || src_off_y[i] + src_rect_h[i] > H)
+			return false;
+	}
+
+	if (dst.GetN() != rect_num || dst.GetH() != dst_H || dst.GetW() != dst_W || dst.GetC() != C)
+	{
+		if (!dst.ChangeSize(rect_num, dst_H, dst_W, C, __max(0, dst_borderH), __max(0, dst_borderW)))
+			return false;
+	}
+	else
+	{
+		if (dst_borderH >= 0 || dst_borderW >= 0)
+		{
+			if (!dst.ChangeSize(rect_num, dst_H, dst_W, C, dst_borderH, dst_borderW))
+				return false;
+		}
+	}
+
+	int widthStep = GetWidthStep();
+	int pixelStep = GetPixelStep();
+	int dstWidthStep = dst.GetWidthStep();
+	int dstPixelStep = dst.GetPixelStep();
+	int dstSliceStep = dst.GetSliceStep();
+
+	int align_mode = __min(GetAlignType(), dst.GetAlignType());
+
+	for (int i = 0; i < rect_num; i++)
+	{
+		float* dst_slice_ptr = dst.GetFirstPixelPtr() + dstSliceStep*i;
+
+#if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_AVX
+		if (align_mode == ALIGN_256bit)
+			zq_cnn_resize_nn_32f_align256bit(firstPixelData, 1, H, W, C, pixelStep, widthStep, sliceStep,
+				src_off_x[i], src_off_y[i], src_rect_w[i], src_rect_h[i],
+				dst_slice_ptr, dst_H, dst_W, dstPixelStep, dstWidthStep, dstSliceStep);
+		else
+#endif
+#if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_SSE
+			if (align_mode == ALIGN_128bit)
+				zq_cnn_resize_nn_32f_align128bit(firstPixelData, 1, H, W, C, pixelStep, widthStep, sliceStep,
+					src_off_x[i], src_off_y[i], src_rect_w[i], src_rect_h[i],
+					dst_slice_ptr, dst_H, dst_W, dstPixelStep, dstWidthStep, dstSliceStep);
+			else
+#endif
+				zq_cnn_resize_nn_32f_align0(firstPixelData, 1, H, W, C, pixelStep, widthStep, sliceStep,
+					src_off_x[i], src_off_y[i], src_rect_w[i], src_rect_h[i],
+					dst_slice_ptr, dst_H, dst_W, dstPixelStep, dstWidthStep, dstSliceStep);
+
 	}
 	float* dst_slice_ptr = dst.GetFirstPixelPtr();
 	for (int i = 0; i < rect_num; i++, dst_slice_ptr += dstSliceStep)

@@ -3466,6 +3466,222 @@ namespace ZQ
 		}
 	};
 
+	class ZQ_CNN_Layer_UpSampling : public ZQ_CNN_Layer
+	{
+	public:
+		ZQ_CNN_Layer_UpSampling(){}
+		~ZQ_CNN_Layer_UpSampling() {}
+
+		static const int SampleType_Nearest = 0;
+		static const int SampleType_Bilinear = 1;
+		int sample_type;//
+		float scale_h;
+		float scale_w;
+		//
+		int bottom_C;
+		int bottom_H;
+		int bottom_W;
+
+		virtual bool Forward(std::vector<ZQ_CNN_Tensor4D*>* bottoms, std::vector<ZQ_CNN_Tensor4D*>* tops)
+		{
+			if (bottoms == 0 || tops == 0 || bottoms->size() == 0 || tops->size() == 0 || (*bottoms)[0] == 0 || (*tops)[0] == 0)
+				return false;
+
+			bool ret = false;
+			double t1 = omp_get_wtime();
+			if (sample_type == SampleType_Nearest)
+			{
+				ret = ZQ_CNN_Forward_SSEUtils::UpSamplingNearest(*((*bottoms)[0]), scale_h,scale_w, *((*tops)[0]));
+			}
+			else
+			{
+				std::cout << "unknown UpSampling sample_type " << sample_type << " in Layer " << name << "\n";
+				return false;
+			}
+			double t2 = omp_get_wtime();
+			last_cost_time = t2 - t1;
+			if (show_debug_info)
+				printf("UpSampling layer: %s cost : %.3f ms\n", name.c_str(), 1000 * (t2 - t1));
+			return ret;
+		}
+
+		virtual bool ReadParam(const std::string& line)
+		{
+			bottom_names.clear();
+			top_names.clear();
+			std::vector<std::vector<std::string> > paras = split_line(line);
+			int num = paras.size();
+			bool has_sample_type = false; 
+			bool has_scale_h = false;
+			bool has_scale_w = false;
+			bool has_top = false, has_bottom = false, has_name = false;
+			for (int n = 0; n < num; n++)
+			{
+				if (paras[n].size() == 0)
+					continue;
+				if (_my_strcmpi("UpSampling", paras[n][0].c_str()) == 0)
+				{
+
+				}
+				else if (_my_strcmpi("type", paras[n][0].c_str()) == 0)
+				{
+					if (paras[n].size() >= 2)
+					{
+						has_sample_type = true;
+						const char* str = paras[n][1].c_str();
+
+						if (_my_strcmpi(str, "nearest") == 0)
+						{
+							sample_type = SampleType_Nearest;
+						}
+						else if (_my_strcmpi(str, "bilinear") == 0)
+						{
+							sample_type = SampleType_Bilinear;
+						}
+						else
+						{
+							sample_type = atoi(str);
+						}
+					}
+				}
+				else if (_my_strcmpi("top", paras[n][0].c_str()) == 0)
+				{
+					if (paras[n].size() >= 2)
+					{
+						has_top = true;
+						top_names.push_back(paras[n][1]);
+					}
+				}
+				else if (_my_strcmpi("bottom", paras[n][0].c_str()) == 0)
+				{
+					if (paras[n].size() >= 2)
+					{
+						has_bottom = true;
+						bottom_names.push_back(paras[n][1]);
+					}
+				}
+				else if (_my_strcmpi("name", paras[n][0].c_str()) == 0)
+				{
+					if (paras[n].size() >= 2)
+					{
+						has_name = true;
+						name = paras[n][1];
+					}
+				}
+				else if (_my_strcmpi("scale_h", paras[n][0].c_str()) == 0)
+				{
+					if (paras[n].size() >= 2)
+					{
+						has_scale_h = true;
+						scale_h = atof(paras[n][1].c_str());
+					}
+				}
+				else if (_my_strcmpi("scale_w", paras[n][0].c_str()) == 0)
+				{
+					if (paras[n].size() >= 2)
+					{
+						has_scale_w = true;
+						scale_w = atof(paras[n][1].c_str());
+					}
+				}
+				else
+				{
+					std::cout << "warning: unknown para " << paras[n][0] << " in Layer " << name << "\n";
+				}
+
+			}
+			bool ret = true;
+			if (!has_sample_type)
+			{
+				std::cout << "Layer " << name << " missing " << "sample_type\n";
+				ret = false;
+			}
+			if (!has_bottom)
+			{
+				std::cout << "Layer " << name << " missing " << "bottom\n";
+				ret = false;
+			}
+			if (!has_top)
+			{
+				std::cout << "Layer " << name << " missing " << "top\n";
+				ret = false;
+			}
+			if (has_sample_type && sample_type == SampleType_Nearest)
+			{
+				if (!has_scale_h)
+				{
+					std::cout << "Layer " << name << " missing " << "scale_h\n";
+					ret = false;
+				}
+				if (!has_scale_w)
+				{
+					std::cout << "Layer " << name << " missing " << "scale_w\n";
+					ret = false;
+				}
+			}
+
+			if (!has_name) 
+			{
+				std::cout << "Layer " << name << " missing " << "name\n";
+				std::cout << line << "\n";
+				ret = false;
+			}
+			return ret;
+		}
+
+		virtual bool LayerSetup(std::vector<ZQ_CNN_Tensor4D*>* bottoms, std::vector<ZQ_CNN_Tensor4D*>* tops)
+		{
+			if (bottoms == 0 || tops == 0 || bottoms->size() == 0 || (*bottoms)[0] == 0 || tops->size() == 0 || (*tops)[0] == 0)
+				return false;
+			int bottom_N, bottom_C, bottom_H, bottom_W;
+			(*bottoms)[0]->GetShape(bottom_N, bottom_C, bottom_H, bottom_W);
+			if (!SetBottomDim(bottom_C, bottom_H, bottom_W))
+				return false;
+			int top_C, top_H, top_W;
+			GetTopDim(top_C, top_H, top_W);
+			(*tops)[0]->SetShape(bottom_N, top_C, top_H, top_W);
+			return true;
+		}
+
+		//should called after ReadParam, allocate memory in this func
+		virtual bool SetBottomDim(int bottom_C, int bottom_H, int bottom_W)
+		{
+			this->bottom_C = bottom_C;
+			this->bottom_H = bottom_H;
+			this->bottom_W = bottom_W;
+			return true;
+		}
+
+		//should called after SetBottomDim
+		virtual void GetTopDim(int& top_C, int& top_H, int& top_W) const
+		{
+			top_C = bottom_C;
+			top_H = bottom_H*scale_h;
+			top_W = bottom_W*scale_w;
+		}
+
+		virtual bool SwapInputRGBandBGR() { return true; };
+
+		//should be called after ZQ_CNN_Net have allocated necessery data
+		virtual bool LoadBinary_NCHW(FILE* in) { return true; }
+
+		virtual bool SaveBinary_NCHW(FILE* out) const { return true; }
+
+		virtual bool LoadBinary_NCHW(const char* buffer, __int64 buffer_len, __int64& readed_length_in_bytes)
+		{
+			readed_length_in_bytes = 0;
+			return true;
+		}
+
+		virtual __int64 GetNumOfMulAdd() const
+		{
+			if (sample_type == SampleType_Nearest)
+				return bottom_C*bottom_H*bottom_W*scale_h*scale_w;
+			else
+				return 0;
+		}
+	};
+
 	class ZQ_CNN_Layer_Eltwise : public ZQ_CNN_Layer
 	{
 	public:

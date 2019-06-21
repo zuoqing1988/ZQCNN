@@ -15,6 +15,43 @@ namespace ZQ
 	class ZQ_CNN_Forward_SSEUtils
 	{
 	public:
+
+		static bool UpSamplingNearest(ZQ_CNN_Tensor4D& input, float scale_h, float scale_w, ZQ_CNN_Tensor4D& output)
+		{
+			double t1 = omp_get_wtime();
+			int in_N = input.GetN();
+			int in_H = input.GetH();
+			int in_W = input.GetW();
+			int in_C = input.GetC();
+			int out_N = output.GetN();
+			int out_H = output.GetH();
+			int out_W = output.GetW();
+			int out_C = output.GetC();
+			int need_H = in_H * scale_h;
+			int need_W = in_W * scale_w;
+			if (in_N <= 0 || in_H <= 0 || in_W <= 0 || in_C == 0
+				|| need_H < 0 || need_W < 0)
+			{
+				output.ChangeSize(0, 0, 0, 0, 0, 0);
+				return true;
+			}
+			
+			int need_N = in_N;
+
+			int need_C = in_C;
+			if (out_N != need_N || out_H != need_H || out_W != need_W || out_C != need_C)
+			{
+				output.ChangeSize(need_N, need_H, need_W, need_C, 0, 0);
+			}
+
+			if (!input.ResizeNearest(output, need_W, need_H, -1, -1))
+				return false;
+
+			double t2 = omp_get_wtime();
+			//printf("utils:conv: %.3f ms\n", (t2 - t1) * 1000);
+			return true;
+		}
+
 		static bool ConvolutionWithBias(ZQ_CNN_Tensor4D& input, const ZQ_CNN_Tensor4D& filters, const ZQ_CNN_Tensor4D& bias,
 			int strideH, int strideW, int dilation_H, int dilation_W, int padH, int padW, ZQ_CNN_Tensor4D& output,
 			void** buffer = 0, __int64* buffer_len = 0)

@@ -631,6 +631,25 @@ namespace ZQ
 					}
 					layer_type_names.push_back("Eltwise");
 				}
+				else if (ZQ_CNN_Layer::_my_strcmpi(&buf[0], "UpSampling") == 0)
+				{
+					if (layers.size() == 0)
+					{
+						std::cout << "Input layer must be the first!\n";
+						return false;
+					}
+					ZQ_CNN_Layer* cur_layer = new ZQ_CNN_Layer_UpSampling();
+					if (cur_layer == 0) {
+						std::cout << "failed to create a UpSampling layer!\n";
+						return false;
+					}
+					if (!_add_layer_and_blobs(cur_layer, line, false))
+					{
+						delete cur_layer;
+						return false;
+					}
+					layer_type_names.push_back("UpSampling");
+				}
 				else if (ZQ_CNN_Layer::_my_strcmpi(&buf[0], "ScalarOperation") == 0)
 				{
 					if (layers.size() == 0)
