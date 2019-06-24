@@ -2538,6 +2538,22 @@ namespace ZQ
 						kernel_W = atoi(paras[n][1].c_str());
 					}
 				}
+				else if (_my_strcmpi("kernel_H", paras[n][0].c_str()) == 0)
+				{
+					if (paras[n].size() >= 2)
+					{
+						has_kernelH = true;
+						kernel_H = atoi(paras[n][1].c_str());
+					}
+				}
+				else if (_my_strcmpi("kernel_W", paras[n][0].c_str()) == 0)
+				{
+					if (paras[n].size() >= 2)
+					{
+						has_kernelW = true;
+						kernel_W = atoi(paras[n][1].c_str());
+					}
+				}
 				else if (_my_strcmpi("stride", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
@@ -2548,11 +2564,41 @@ namespace ZQ
 						stride_W = atoi(paras[n][1].c_str());
 					}
 				}
+				else if (_my_strcmpi("stride_H", paras[n][0].c_str()) == 0)
+				{
+					if (paras[n].size() >= 2)
+					{
+						has_strideH = true;
+						stride_H = atoi(paras[n][1].c_str());
+					}
+				}
+				else if (_my_strcmpi("stride_W", paras[n][0].c_str()) == 0)
+				{
+					if (paras[n].size() >= 2)
+					{
+						has_strideW = true;
+						stride_W = atoi(paras[n][1].c_str());
+					}
+				}
 				else if (_my_strcmpi("pad", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
 						pad_H = atoi(paras[n][1].c_str());
+						pad_W = atoi(paras[n][1].c_str());
+					}
+				}
+				else if (_my_strcmpi("pad_H", paras[n][0].c_str()) == 0)
+				{
+					if (paras[n].size() >= 2)
+					{
+						pad_H = atoi(paras[n][1].c_str());
+					}
+				}
+				else if (_my_strcmpi("pad_W", paras[n][0].c_str()) == 0)
+				{
+					if (paras[n].size() >= 2)
+					{
 						pad_W = atoi(paras[n][1].c_str());
 					}
 				}
@@ -3523,7 +3569,7 @@ namespace ZQ
 				{
 
 				}
-				else if (_my_strcmpi("type", paras[n][0].c_str()) == 0)
+				else if (_my_strcmpi("sample_type", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{

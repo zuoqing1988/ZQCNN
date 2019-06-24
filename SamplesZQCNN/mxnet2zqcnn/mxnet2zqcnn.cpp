@@ -1107,11 +1107,11 @@ int main(int argc, char** argv)
 			std::string sample_type = n.attr("sample_type");
 			if (sample_type == "nearest")
 			{
-				fprintf(pp, "%-16s", "UpSampling type=nearest");
+				fprintf(pp, "%-16s", "UpSampling sample_type=nearest");
 			}
 			else if (sample_type == "bilinear")
 			{
-				fprintf(pp, "%-16s", "UpSampling type=bilinear");
+				fprintf(pp, "%-16s", "UpSampling sample_type=bilinear");
 			}
 		}
 		else if (n.op == "tile")
