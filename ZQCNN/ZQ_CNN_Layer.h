@@ -798,7 +798,7 @@ namespace ZQ
 					if (filters == 0 || bias == 0 || prelu_slope == 0)
 						return false;
 					double t1 = omp_get_wtime();
-					bool ret = ZQ_CNN_Forward_SSEUtils::DepthwiseConvolutionWithBiasPReLU(*((*bottoms)[0]), *filters, *bias, *prelu_slope, stride_H, stride_W, pad_H, pad_W, *((*tops)[0]));
+					bool ret = ZQ_CNN_Forward_SSEUtils::DepthwiseConvolutionWithBiasPReLU(*((*bottoms)[0]), *filters, *bias, *prelu_slope, stride_H, stride_W, dilate_H, dilate_W, pad_H, pad_W, *((*tops)[0]));
 					double t2 = omp_get_wtime();
 					last_cost_time = t2 - t1;
 					if (show_debug_info)
@@ -819,7 +819,7 @@ namespace ZQ
 					if (filters == 0 || bias == 0)
 						return false;
 					double t1 = omp_get_wtime();
-					bool ret = ZQ_CNN_Forward_SSEUtils::DepthwiseConvolutionWithBias(*((*bottoms)[0]), *filters, *bias, stride_H, stride_W, pad_H, pad_W, *((*tops)[0]));
+					bool ret = ZQ_CNN_Forward_SSEUtils::DepthwiseConvolutionWithBias(*((*bottoms)[0]), *filters, *bias, stride_H, stride_W, dilate_H, dilate_W, pad_H, pad_W, *((*tops)[0]));
 					double t2 = omp_get_wtime();
 					last_cost_time = t2 - t1;
 					if (show_debug_info)
@@ -841,7 +841,7 @@ namespace ZQ
 				if (filters == 0)
 					return false;
 				double t1 = omp_get_wtime();
-				bool ret = ZQ_CNN_Forward_SSEUtils::DepthwiseConvolution(*((*bottoms)[0]), *filters, stride_H, stride_W, pad_H, pad_W, *((*tops)[0]));
+				bool ret = ZQ_CNN_Forward_SSEUtils::DepthwiseConvolution(*((*bottoms)[0]), *filters, stride_H, stride_W, dilate_H, dilate_W, pad_H, pad_W, *((*tops)[0]));
 				double t2 = omp_get_wtime();
 				last_cost_time = t2 - t1;
 				if (show_debug_info)

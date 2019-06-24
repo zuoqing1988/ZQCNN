@@ -905,6 +905,8 @@ extern "C" {
 		int filter_sliceStep,
 		int stride_H,
 		int stride_W,
+		int dilation_H,
+		int dilation_W,
 		float* out_tensor4D_data,
 		int out_N,	// must be in_N
 		int out_H,	// must be (in_H - filter_H)/stride_H + 1
@@ -933,6 +935,8 @@ extern "C" {
 
 		int stride_H_mul_in_WidthStep = stride_H*in_widthStep;
 		int stride_W_mul_in_pixStep = stride_W*in_pixelStep;
+		int dilate_H_mul_in_widthStep = dilation_H*in_widthStep;
+		int dilate_W_mul_in_pixStep = dilation_W*in_pixelStep;
 		int out_n, out_h, out_w, out_c, kh, kw, kc;
 
 		for (out_n = 0, in_slice_ptr = in_tensor4D_data, out_slice_ptr = out_tensor4D_data;
@@ -953,11 +957,11 @@ extern "C" {
 
 					for (kh = 0, cur_in_row_ptr = in_pix_ptr, cur_filter_row_ptr = filters_data;
 						kh < filter_H;
-						kh++, cur_in_row_ptr += in_widthStep, cur_filter_row_ptr += filter_widthStep)
+						kh++, cur_in_row_ptr += dilate_H_mul_in_widthStep, cur_filter_row_ptr += filter_widthStep)
 					{
 						for (kw = 0, cur_in_pix_ptr = cur_in_row_ptr, cur_filter_pix_ptr = cur_filter_row_ptr;
 							kw < filter_W;
-							kw++, cur_in_pix_ptr += in_pixelStep, cur_filter_pix_ptr += filter_pixelStep)
+							kw++, cur_in_pix_ptr += dilate_W_mul_in_pixStep, cur_filter_pix_ptr += filter_pixelStep)
 						{
 							for (kc = 0, cur_in_c_ptr = cur_in_pix_ptr, cur_filter_c_ptr = cur_filter_pix_ptr, out_c_ptr = out_pix_ptr;
 								kc < in_C;
@@ -992,6 +996,8 @@ extern "C" {
 		int filter_sliceStep,
 		int stride_H,
 		int stride_W,
+		int dilation_H,
+		int dilation_W,
 		float* out_tensor4D_data,
 		int out_N,	// must be in_N
 		int out_H,	// must be (in_H - filter_H)/stride_H + 1
@@ -1021,6 +1027,8 @@ extern "C" {
 
 		int stride_H_mul_in_WidthStep = stride_H*in_widthStep;
 		int stride_W_mul_in_pixStep = stride_W*in_pixelStep;
+		int dilate_H_mul_in_widthStep = dilation_H*in_widthStep;
+		int dilate_W_mul_in_pixStep = dilation_W*in_pixelStep;
 		int out_n, out_h, out_w, out_c, kh, kw, kc;
 
 		for (out_n = 0, in_slice_ptr = in_tensor4D_data, out_slice_ptr = out_tensor4D_data;
@@ -1041,11 +1049,11 @@ extern "C" {
 
 					for (kh = 0, cur_in_row_ptr = in_pix_ptr, cur_filter_row_ptr = filters_data;
 						kh < filter_H;
-						kh++, cur_in_row_ptr += in_widthStep, cur_filter_row_ptr += filter_widthStep)
+						kh++, cur_in_row_ptr += dilate_H_mul_in_widthStep, cur_filter_row_ptr += filter_widthStep)
 					{
 						for (kw = 0, cur_in_pix_ptr = cur_in_row_ptr, cur_filter_pix_ptr = cur_filter_row_ptr;
 							kw < filter_W;
-							kw++, cur_in_pix_ptr += in_pixelStep, cur_filter_pix_ptr += filter_pixelStep)
+							kw++, cur_in_pix_ptr += dilate_W_mul_in_pixStep, cur_filter_pix_ptr += filter_pixelStep)
 						{
 							for (kc = 0, cur_in_c_ptr = cur_in_pix_ptr, cur_filter_c_ptr = cur_filter_pix_ptr, out_c_ptr = out_pix_ptr;
 								kc < in_C;
@@ -1080,6 +1088,8 @@ extern "C" {
 		int filter_sliceStep,
 		int stride_H,
 		int stride_W,
+		int dilation_H,
+		int dilation_W,
 		float* out_tensor4D_data,
 		int out_N,	// must be in_N
 		int out_H,	// must be (in_H - filter_H)/stride_H + 1
@@ -1110,6 +1120,8 @@ extern "C" {
 
 		int stride_H_mul_in_WidthStep = stride_H*in_widthStep;
 		int stride_W_mul_in_pixStep = stride_W*in_pixelStep;
+		int dilate_H_mul_in_widthStep = dilation_H*in_widthStep;
+		int dilate_W_mul_in_pixStep = dilation_W*in_pixelStep;
 		int out_n, out_h, out_w, out_c, kh, kw, kc;
 
 		for (out_n = 0, in_slice_ptr = in_tensor4D_data, out_slice_ptr = out_tensor4D_data;
@@ -1130,11 +1142,11 @@ extern "C" {
 
 					for (kh = 0, cur_in_row_ptr = in_pix_ptr, cur_filter_row_ptr = filters_data;
 						kh < filter_H;
-						kh++, cur_in_row_ptr += in_widthStep, cur_filter_row_ptr += filter_widthStep)
+						kh++, cur_in_row_ptr += dilate_H_mul_in_widthStep, cur_filter_row_ptr += filter_widthStep)
 					{
 						for (kw = 0, cur_in_pix_ptr = cur_in_row_ptr, cur_filter_pix_ptr = cur_filter_row_ptr;
 							kw < filter_W;
-							kw++, cur_in_pix_ptr += in_pixelStep, cur_filter_pix_ptr += filter_pixelStep)
+							kw++, cur_in_pix_ptr += dilate_W_mul_in_pixStep, cur_filter_pix_ptr += filter_pixelStep)
 						{
 							for (kc = 0, cur_in_c_ptr = cur_in_pix_ptr, cur_filter_c_ptr = cur_filter_pix_ptr, out_c_ptr = out_pix_ptr;
 								kc < in_C;
@@ -1173,6 +1185,8 @@ extern "C" {
 		int filter_sliceStep,
 		int stride_H,
 		int stride_W,
+		int dilation_H,
+		int dilation_W,
 		zq_base_type* out_tensor4D_data,
 		int out_N,	// must be in_N
 		int out_H,	// must be (in_H - filter_H)/stride_H + 1
@@ -1201,6 +1215,8 @@ extern "C" {
 
 		int stride_H_mul_in_WidthStep = stride_H*in_widthStep;
 		int stride_W_mul_in_pixStep = stride_W*in_pixelStep;
+		int dilate_H_mul_in_widthStep = dilation_H*in_widthStep;
+		int dilate_W_mul_in_pixStep = dilation_W*in_pixelStep;
 		int out_n, out_h, out_w, out_c, kh, kw, kc;
 
 		for (out_n = 0, in_slice_ptr = in_tensor4D_data, out_slice_ptr = out_tensor4D_data;
@@ -1221,11 +1237,11 @@ extern "C" {
 
 					for (kh = 0, cur_in_row_ptr = in_pix_ptr, cur_filter_row_ptr = filters_data;
 						kh < filter_H;
-						kh++, cur_in_row_ptr += in_widthStep, cur_filter_row_ptr += filter_widthStep)
+						kh++, cur_in_row_ptr += dilate_H_mul_in_widthStep, cur_filter_row_ptr += filter_widthStep)
 					{
 						for (kw = 0, cur_in_pix_ptr = cur_in_row_ptr, cur_filter_pix_ptr = cur_filter_row_ptr;
 							kw < filter_W;
-							kw++, cur_in_pix_ptr += in_pixelStep, cur_filter_pix_ptr += filter_pixelStep)
+							kw++, cur_in_pix_ptr += dilate_W_mul_in_pixStep, cur_filter_pix_ptr += filter_pixelStep)
 						{
 							for (kc = 0, cur_in_c_ptr = cur_in_pix_ptr, cur_filter_c_ptr = cur_filter_pix_ptr, out_c_ptr = out_pix_ptr;
 								kc < in_C;
@@ -1260,6 +1276,8 @@ extern "C" {
 		int filter_sliceStep,
 		int stride_H,
 		int stride_W,
+		int dilation_H,
+		int dilation_W,
 		zq_base_type* out_tensor4D_data,
 		int out_N,	// must be in_N
 		int out_H,	// must be (in_H - filter_H)/stride_H + 1
@@ -1289,6 +1307,8 @@ extern "C" {
 
 		int stride_H_mul_in_WidthStep = stride_H*in_widthStep;
 		int stride_W_mul_in_pixStep = stride_W*in_pixelStep;
+		int dilate_H_mul_in_widthStep = dilation_H*in_widthStep;
+		int dilate_W_mul_in_pixStep = dilation_W*in_pixelStep;
 		int out_n, out_h, out_w, out_c, kh, kw, kc;
 
 		for (out_n = 0, in_slice_ptr = in_tensor4D_data, out_slice_ptr = out_tensor4D_data;
@@ -1309,11 +1329,11 @@ extern "C" {
 
 					for (kh = 0, cur_in_row_ptr = in_pix_ptr, cur_filter_row_ptr = filters_data;
 						kh < filter_H;
-						kh++, cur_in_row_ptr += in_widthStep, cur_filter_row_ptr += filter_widthStep)
+						kh++, cur_in_row_ptr += dilate_H_mul_in_widthStep, cur_filter_row_ptr += filter_widthStep)
 					{
 						for (kw = 0, cur_in_pix_ptr = cur_in_row_ptr, cur_filter_pix_ptr = cur_filter_row_ptr;
 							kw < filter_W;
-							kw++, cur_in_pix_ptr += in_pixelStep, cur_filter_pix_ptr += filter_pixelStep)
+							kw++, cur_in_pix_ptr += dilate_W_mul_in_pixStep, cur_filter_pix_ptr += filter_pixelStep)
 						{
 							for (kc = 0, cur_in_c_ptr = cur_in_pix_ptr, cur_filter_c_ptr = cur_filter_pix_ptr, out_c_ptr = out_pix_ptr;
 								kc < in_C;
@@ -1348,6 +1368,8 @@ extern "C" {
 		int filter_sliceStep,
 		int stride_H,
 		int stride_W,
+		int dilation_H,
+		int dilation_W,
 		zq_base_type* out_tensor4D_data,
 		int out_N,	// must be in_N
 		int out_H,	// must be (in_H - filter_H)/stride_H + 1
@@ -1378,6 +1400,8 @@ extern "C" {
 
 		int stride_H_mul_in_WidthStep = stride_H*in_widthStep;
 		int stride_W_mul_in_pixStep = stride_W*in_pixelStep;
+		int dilate_H_mul_in_widthStep = dilation_H*in_widthStep;
+		int dilate_W_mul_in_pixStep = dilation_W*in_pixelStep;
 		int out_n, out_h, out_w, out_c, kh, kw, kc;
 
 		for (out_n = 0, in_slice_ptr = in_tensor4D_data, out_slice_ptr = out_tensor4D_data;
@@ -1398,11 +1422,11 @@ extern "C" {
 
 					for (kh = 0, cur_in_row_ptr = in_pix_ptr, cur_filter_row_ptr = filters_data;
 						kh < filter_H;
-						kh++, cur_in_row_ptr += in_widthStep, cur_filter_row_ptr += filter_widthStep)
+						kh++, cur_in_row_ptr += dilate_H_mul_in_widthStep, cur_filter_row_ptr += filter_widthStep)
 					{
 						for (kw = 0, cur_in_pix_ptr = cur_in_row_ptr, cur_filter_pix_ptr = cur_filter_row_ptr;
 							kw < filter_W;
-							kw++, cur_in_pix_ptr += in_pixelStep, cur_filter_pix_ptr += filter_pixelStep)
+							kw++, cur_in_pix_ptr += dilate_W_mul_in_pixStep, cur_filter_pix_ptr += filter_pixelStep)
 						{
 							for (kc = 0, cur_in_c_ptr = cur_in_pix_ptr, cur_filter_c_ptr = cur_filter_pix_ptr, out_c_ptr = out_pix_ptr;
 								kc < in_C;

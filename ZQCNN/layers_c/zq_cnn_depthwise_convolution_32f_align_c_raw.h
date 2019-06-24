@@ -187,6 +187,8 @@ void zq_cnn_depthwise_conv_no_padding_32f_general(
 	int filter_sliceStep,
 	int stride_H,
 	int stride_W,
+	int dilation_H,
+	int dilation_W,
 	zq_base_type* out_tensor4D_data,
 	int out_N,	// must be in_N
 	int out_H,	// must be (in_H - filter_H)/stride_H + 1
@@ -227,6 +229,8 @@ void zq_cnn_depthwise_conv_no_padding_32f_general(
 #endif
 	int stride_H_mul_in_WidthStep = stride_H*in_widthStep;
 	int stride_W_mul_in_pixStep = stride_W*in_pixelStep;
+	int dilate_H_mul_in_widthStep = dilation_H*in_widthStep;
+	int dilate_W_mul_in_pixStep = dilation_W*in_pixelStep;
 	int out_n, out_h, out_w, out_c, kh, kw, kc;
 
 	for (out_n = 0, in_slice_ptr = in_tensor4D_data, out_slice_ptr = out_tensor4D_data;
@@ -252,11 +256,11 @@ void zq_cnn_depthwise_conv_no_padding_32f_general(
 
 				for (kh = 0, cur_in_row_ptr = in_pix_ptr, cur_filter_row_ptr = filters_data;
 					kh < filter_H;
-					kh++, cur_in_row_ptr += in_widthStep, cur_filter_row_ptr += filter_widthStep)
+					kh++, cur_in_row_ptr += dilate_H_mul_in_widthStep, cur_filter_row_ptr += filter_widthStep)
 				{
 					for (kw = 0, cur_in_pix_ptr = cur_in_row_ptr, cur_filter_pix_ptr = cur_filter_row_ptr;
 						kw < filter_W;
-						kw++, cur_in_pix_ptr += in_pixelStep, cur_filter_pix_ptr += filter_pixelStep)
+						kw++, cur_in_pix_ptr += dilate_W_mul_in_pixStep, cur_filter_pix_ptr += filter_pixelStep)
 					{
 						for (kc = 0, cur_in_c_ptr = cur_in_pix_ptr, cur_filter_c_ptr = cur_filter_pix_ptr, out_c_ptr = out_pix_ptr;
 							kc < in_C;
@@ -299,6 +303,8 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel3x3(
 	int filter_sliceStep,
 	int stride_H,
 	int stride_W,
+	int dilation_H,
+	int dilation_W,
 	zq_base_type* out_tensor4D_data,
 	int out_N,	// must be in_N
 	int out_H,	// must be (in_H - filter_H)/stride_H + 1
@@ -340,6 +346,8 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel3x3(
 
 	int stride_H_mul_in_WidthStep = stride_H*in_widthStep;
 	int stride_W_mul_in_pixStep = stride_W*in_pixelStep;
+	int dilate_H_mul_in_widthStep = dilation_H*in_widthStep;
+	int dilate_W_mul_in_pixStep = dilation_W*in_pixelStep;
 	int out_n, out_h, out_w, out_c, kc;
 
 	for (out_n = 0, in_slice_ptr = in_tensor4D_data, out_slice_ptr = out_tensor4D_data;
@@ -371,7 +379,7 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel3x3(
 					zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
 				}
 
-				cur_in_pix_ptr += in_pixelStep; cur_filter_pix_ptr += filter_pixelStep;
+				cur_in_pix_ptr += dilate_W_mul_in_pixStep; cur_filter_pix_ptr += filter_pixelStep;
 				for (kc = 0, cur_in_c_ptr = cur_in_pix_ptr, cur_filter_c_ptr = cur_filter_pix_ptr, out_c_ptr = out_pix_ptr;
 					kc < in_C;
 					kc += zq_mm_align_size, cur_in_c_ptr += zq_mm_align_size, cur_filter_c_ptr += zq_mm_align_size, out_c_ptr += zq_mm_align_size)
@@ -379,7 +387,7 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel3x3(
 					zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
 				}
 
-				cur_in_pix_ptr += in_pixelStep; cur_filter_pix_ptr += filter_pixelStep;
+				cur_in_pix_ptr += dilate_W_mul_in_pixStep; cur_filter_pix_ptr += filter_pixelStep;
 				for (kc = 0, cur_in_c_ptr = cur_in_pix_ptr, cur_filter_c_ptr = cur_filter_pix_ptr, out_c_ptr = out_pix_ptr;
 					kc < in_C;
 					kc += zq_mm_align_size, cur_in_c_ptr += zq_mm_align_size, cur_filter_c_ptr += zq_mm_align_size, out_c_ptr += zq_mm_align_size)
@@ -387,7 +395,7 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel3x3(
 					zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
 				}
 
-				cur_in_row_ptr += in_widthStep; cur_filter_row_ptr += filter_widthStep;
+				cur_in_row_ptr += dilate_H_mul_in_widthStep; cur_filter_row_ptr += filter_widthStep;
 				cur_in_pix_ptr = cur_in_row_ptr; cur_filter_pix_ptr = cur_filter_row_ptr;
 				for (kc = 0, cur_in_c_ptr = cur_in_pix_ptr, cur_filter_c_ptr = cur_filter_pix_ptr, out_c_ptr = out_pix_ptr;
 					kc < in_C;
@@ -396,7 +404,7 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel3x3(
 					zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
 				}
 
-				cur_in_pix_ptr += in_pixelStep; cur_filter_pix_ptr += filter_pixelStep;
+				cur_in_pix_ptr += dilate_W_mul_in_pixStep; cur_filter_pix_ptr += filter_pixelStep;
 				for (kc = 0, cur_in_c_ptr = cur_in_pix_ptr, cur_filter_c_ptr = cur_filter_pix_ptr, out_c_ptr = out_pix_ptr;
 					kc < in_C;
 					kc += zq_mm_align_size, cur_in_c_ptr += zq_mm_align_size, cur_filter_c_ptr += zq_mm_align_size, out_c_ptr += zq_mm_align_size)
@@ -404,7 +412,7 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel3x3(
 					zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
 				}
 
-				cur_in_pix_ptr += in_pixelStep; cur_filter_pix_ptr += filter_pixelStep;
+				cur_in_pix_ptr += dilate_W_mul_in_pixStep; cur_filter_pix_ptr += filter_pixelStep;
 				for (kc = 0, cur_in_c_ptr = cur_in_pix_ptr, cur_filter_c_ptr = cur_filter_pix_ptr, out_c_ptr = out_pix_ptr;
 					kc < in_C;
 					kc += zq_mm_align_size, cur_in_c_ptr += zq_mm_align_size, cur_filter_c_ptr += zq_mm_align_size, out_c_ptr += zq_mm_align_size)
@@ -412,7 +420,7 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel3x3(
 					zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
 				}
 
-				cur_in_row_ptr += in_widthStep; cur_filter_row_ptr += filter_widthStep;
+				cur_in_row_ptr += dilate_H_mul_in_widthStep; cur_filter_row_ptr += filter_widthStep;
 				cur_in_pix_ptr = cur_in_row_ptr; cur_filter_pix_ptr = cur_filter_row_ptr;
 				for (kc = 0, cur_in_c_ptr = cur_in_pix_ptr, cur_filter_c_ptr = cur_filter_pix_ptr, out_c_ptr = out_pix_ptr;
 					kc < in_C;
@@ -421,7 +429,7 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel3x3(
 					zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
 				}
 
-				cur_in_pix_ptr += in_pixelStep; cur_filter_pix_ptr += filter_pixelStep;
+				cur_in_pix_ptr += dilate_W_mul_in_pixStep; cur_filter_pix_ptr += filter_pixelStep;
 				for (kc = 0, cur_in_c_ptr = cur_in_pix_ptr, cur_filter_c_ptr = cur_filter_pix_ptr, out_c_ptr = out_pix_ptr;
 					kc < in_C;
 					kc += zq_mm_align_size, cur_in_c_ptr += zq_mm_align_size, cur_filter_c_ptr += zq_mm_align_size, out_c_ptr += zq_mm_align_size)
@@ -429,7 +437,7 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel3x3(
 					zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
 				}
 
-				cur_in_pix_ptr += in_pixelStep; cur_filter_pix_ptr += filter_pixelStep;
+				cur_in_pix_ptr += dilate_W_mul_in_pixStep; cur_filter_pix_ptr += filter_pixelStep;
 				for (kc = 0, cur_in_c_ptr = cur_in_pix_ptr, cur_filter_c_ptr = cur_filter_pix_ptr, out_c_ptr = out_pix_ptr;
 					kc < in_C;
 					kc += zq_mm_align_size, cur_in_c_ptr += zq_mm_align_size, cur_filter_c_ptr += zq_mm_align_size, out_c_ptr += zq_mm_align_size)
@@ -471,6 +479,8 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel2x2(
 	int filter_sliceStep,
 	int stride_H,
 	int stride_W,
+	int dilation_H,
+	int dilation_W,
 	zq_base_type* out_tensor4D_data,
 	int out_N,	// must be in_N
 	int out_H,	// must be (in_H - filter_H)/stride_H + 1
@@ -512,6 +522,8 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel2x2(
 
 	int stride_H_mul_in_WidthStep = stride_H*in_widthStep;
 	int stride_W_mul_in_pixStep = stride_W*in_pixelStep;
+	int dilate_H_mul_in_widthStep = dilation_H*in_widthStep;
+	int dilate_W_mul_in_pixStep = dilation_W*in_pixelStep;
 	int out_n, out_h, out_w, out_c, kc;
 
 	for (out_n = 0, in_slice_ptr = in_tensor4D_data, out_slice_ptr = out_tensor4D_data;
@@ -544,7 +556,7 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel2x2(
 					zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
 				}
 
-				cur_in_pix_ptr += in_pixelStep; cur_filter_pix_ptr += filter_pixelStep;
+				cur_in_pix_ptr += dilate_W_mul_in_pixStep; cur_filter_pix_ptr += filter_pixelStep;
 				for (kc = 0, cur_in_c_ptr = cur_in_pix_ptr, cur_filter_c_ptr = cur_filter_pix_ptr, out_c_ptr = out_pix_ptr;
 					kc < in_C;
 					kc += zq_mm_align_size, cur_in_c_ptr += zq_mm_align_size, cur_filter_c_ptr += zq_mm_align_size, out_c_ptr += zq_mm_align_size)
@@ -553,7 +565,7 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel2x2(
 				}
 
 
-				cur_in_row_ptr += in_widthStep; cur_filter_row_ptr += filter_widthStep;
+				cur_in_row_ptr += dilate_H_mul_in_widthStep; cur_filter_row_ptr += filter_widthStep;
 				cur_in_pix_ptr = cur_in_row_ptr; cur_filter_pix_ptr = cur_filter_row_ptr;
 				for (kc = 0, cur_in_c_ptr = cur_in_pix_ptr, cur_filter_c_ptr = cur_filter_pix_ptr, out_c_ptr = out_pix_ptr;
 					kc < in_C;
@@ -562,7 +574,7 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel2x2(
 					zq_mm_store_ps(out_c_ptr, zq_mm_fmadd_ps(zq_mm_load_ps(cur_in_c_ptr), zq_mm_load_ps(cur_filter_c_ptr), zq_mm_load_ps(out_c_ptr)));
 				}
 
-				cur_in_pix_ptr += in_pixelStep; cur_filter_pix_ptr += filter_pixelStep;
+				cur_in_pix_ptr += dilate_W_mul_in_pixStep; cur_filter_pix_ptr += filter_pixelStep;
 				for (kc = 0, cur_in_c_ptr = cur_in_pix_ptr, cur_filter_c_ptr = cur_filter_pix_ptr, out_c_ptr = out_pix_ptr;
 					kc < in_C;
 					kc += zq_mm_align_size, cur_in_c_ptr += zq_mm_align_size, cur_filter_c_ptr += zq_mm_align_size, out_c_ptr += zq_mm_align_size)
@@ -604,6 +616,8 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_mul_1(
 	int filter_sliceStep,
 	int stride_H,
 	int stride_W,
+	int dilation_H,
+	int dilation_W,
 	zq_base_type* out_tensor4D_data,
 	int out_N,	// must be in_N
 	int out_H,	// must be (in_H - filter_H)/stride_H + 1
@@ -632,6 +646,8 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_mul_1(
 
 	int stride_H_mul_in_WidthStep = stride_H*in_widthStep;
 	int stride_W_mul_in_pixStep = stride_W*in_pixelStep;
+	int dilate_H_mul_in_widthStep = dilation_H*in_widthStep;
+	int dilate_W_mul_in_pixStep = dilation_W*in_pixelStep;
 	int out_n, out_h, out_w;
 	register zq_mm_type a11, a12, a13, a21, a22, a23, a31, a32, a33;
 	register zq_mm_type b11, b12, b13, b21, b22, b23, b31, b32, b33;
@@ -644,7 +660,7 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_mul_1(
 	register zq_mm_type zero_v = zq_mm_setzero_ps();
 	register zq_mm_type e, f;
 #endif
-	register int in_pixStep2 = in_pixelStep << 1;
+	register int dilate_W_mul_in_pixStep2 = dilate_W_mul_in_pixStep << 1;
 	for (out_n = 0, in_slice_ptr = in_tensor4D_data, out_slice_ptr = out_tensor4D_data;
 		out_n < out_N;
 		out_n++, in_slice_ptr += in_sliceStep, out_slice_ptr += out_sliceStep)
@@ -670,18 +686,18 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_mul_1(
 				out_w++, in_pix_ptr += stride_W_mul_in_pixStep, out_pix_ptr += out_pixelStep)
 			{
 				cur_in_pix_ptr1 = in_pix_ptr;
-				cur_in_pix_ptr2 = cur_in_pix_ptr1 + in_widthStep;
-				cur_in_pix_ptr3 = cur_in_pix_ptr2 + in_widthStep;
+				cur_in_pix_ptr2 = cur_in_pix_ptr1 + dilate_H_mul_in_widthStep;
+				cur_in_pix_ptr3 = cur_in_pix_ptr2 + dilate_H_mul_in_widthStep;
 
 				a11 = zq_mm_load_ps(cur_in_pix_ptr1);
-				a12 = zq_mm_load_ps(cur_in_pix_ptr1 + in_pixelStep);
-				a13 = zq_mm_load_ps(cur_in_pix_ptr1 + in_pixStep2);
+				a12 = zq_mm_load_ps(cur_in_pix_ptr1 + dilate_W_mul_in_pixStep);
+				a13 = zq_mm_load_ps(cur_in_pix_ptr1 + dilate_W_mul_in_pixStep2);
 				a21 = zq_mm_load_ps(cur_in_pix_ptr2);
-				a22 = zq_mm_load_ps(cur_in_pix_ptr2 + in_pixelStep);
-				a23 = zq_mm_load_ps(cur_in_pix_ptr2 + in_pixStep2);
+				a22 = zq_mm_load_ps(cur_in_pix_ptr2 + dilate_W_mul_in_pixStep);
+				a23 = zq_mm_load_ps(cur_in_pix_ptr2 + dilate_W_mul_in_pixStep2);
 				a31 = zq_mm_load_ps(cur_in_pix_ptr3);
-				a32 = zq_mm_load_ps(cur_in_pix_ptr3 + in_pixelStep);
-				a33 = zq_mm_load_ps(cur_in_pix_ptr3 + in_pixStep2);
+				a32 = zq_mm_load_ps(cur_in_pix_ptr3 + dilate_W_mul_in_pixStep);
+				a33 = zq_mm_load_ps(cur_in_pix_ptr3 + dilate_W_mul_in_pixStep2);
 #if WITH_BIAS
 				sum = zq_mm_fmadd_ps(a11, b11, c1);
 #else
@@ -727,6 +743,8 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel2x2_mul_1(
 	int filter_sliceStep,
 	int stride_H,
 	int stride_W,
+	int dilation_H,
+	int dilation_W,
 	zq_base_type* out_tensor4D_data,
 	int out_N,	// must be in_N
 	int out_H,	// must be (in_H - filter_H)/stride_H + 1
@@ -755,6 +773,8 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel2x2_mul_1(
 
 	int stride_H_mul_in_WidthStep = stride_H*in_widthStep;
 	int stride_W_mul_in_pixStep = stride_W*in_pixelStep;
+	int dilate_H_mul_in_widthStep = dilation_H*in_widthStep;
+	int dilate_W_mul_in_pixStep = dilation_W*in_pixelStep;
 	int out_n, out_h, out_w;
 	register zq_mm_type a11, a12, a21, a22;
 	register zq_mm_type b11, b12, b21, b22;
@@ -767,7 +787,7 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel2x2_mul_1(
 	register zq_mm_type zero_v = zq_mm_setzero_ps();
 	register zq_mm_type e, f;
 #endif
-	register int in_pixStep2 = in_pixelStep << 1;
+	register int dilate_W_mul_in_pixStep2 = dilate_W_mul_in_pixStep << 1;
 	for (out_n = 0, in_slice_ptr = in_tensor4D_data, out_slice_ptr = out_tensor4D_data;
 		out_n < out_N;
 		out_n++, in_slice_ptr += in_sliceStep, out_slice_ptr += out_sliceStep)
@@ -788,12 +808,12 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel2x2_mul_1(
 				out_w++, in_pix_ptr += stride_W_mul_in_pixStep, out_pix_ptr += out_pixelStep)
 			{
 				cur_in_pix_ptr1 = in_pix_ptr;
-				cur_in_pix_ptr2 = cur_in_pix_ptr1 + in_widthStep;
+				cur_in_pix_ptr2 = cur_in_pix_ptr1 + dilate_H_mul_in_widthStep;
 
 				a11 = zq_mm_load_ps(cur_in_pix_ptr1);
-				a12 = zq_mm_load_ps(cur_in_pix_ptr1 + in_pixelStep);
+				a12 = zq_mm_load_ps(cur_in_pix_ptr1 + dilate_W_mul_in_pixStep);
 				a21 = zq_mm_load_ps(cur_in_pix_ptr2);
-				a22 = zq_mm_load_ps(cur_in_pix_ptr2 + in_pixelStep);
+				a22 = zq_mm_load_ps(cur_in_pix_ptr2 + dilate_W_mul_in_pixStep);
 #if WITH_BIAS
 				sum = zq_mm_fmadd_ps(a11, b11, c1);
 #else
@@ -834,6 +854,8 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_mul_2(
 	int filter_sliceStep,
 	int stride_H,
 	int stride_W,
+	int dilation_H,
+	int dilation_W,
 	zq_base_type* out_tensor4D_data,
 	int out_N,	// must be in_N
 	int out_H,	// must be (in_H - filter_H)/stride_H + 1
@@ -862,6 +884,8 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_mul_2(
 
 	int stride_H_mul_in_WidthStep = stride_H*in_widthStep;
 	int stride_W_mul_in_pixStep = stride_W*in_pixelStep;
+	int dilate_H_mul_in_widthStep = dilation_H*in_widthStep;
+	int dilate_W_mul_in_pixStep = dilation_W*in_pixelStep;
 	int out_n, out_h, out_w;
 	register zq_mm_type a11, a12, a13, a21, a22, a23, a31, a32, a33;
 	register zq_mm_type b11_1, b12_1, b13_1, b21_1, b22_1, b23_1, b31_1, b32_1, b33_1;
@@ -877,7 +901,7 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_mul_2(
 	register zq_mm_type zero_v = zq_mm_setzero_ps();
 	register zq_mm_type e, f;
 #endif
-	register int in_pixStep2 = in_pixelStep << 1;
+	register int dilate_W_mul_in_pixStep2 = dilate_W_mul_in_pixStep << 1;
 	for (out_n = 0, in_slice_ptr = in_tensor4D_data, out_slice_ptr = out_tensor4D_data;
 		out_n < out_N;
 		out_n++, in_slice_ptr += in_sliceStep, out_slice_ptr += out_sliceStep)
@@ -916,18 +940,18 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_mul_2(
 				out_w++, in_pix_ptr += stride_W_mul_in_pixStep, out_pix_ptr += out_pixelStep)
 			{
 				cur_in_pix_ptr1 = in_pix_ptr;
-				cur_in_pix_ptr2 = cur_in_pix_ptr1 + in_widthStep;
-				cur_in_pix_ptr3 = cur_in_pix_ptr2 + in_widthStep;
+				cur_in_pix_ptr2 = cur_in_pix_ptr1 + dilate_H_mul_in_widthStep;
+				cur_in_pix_ptr3 = cur_in_pix_ptr2 + dilate_H_mul_in_widthStep;
 
 				a11 = zq_mm_load_ps(cur_in_pix_ptr1);
-				a12 = zq_mm_load_ps(cur_in_pix_ptr1 + in_pixelStep);
-				a13 = zq_mm_load_ps(cur_in_pix_ptr1 + in_pixStep2);
+				a12 = zq_mm_load_ps(cur_in_pix_ptr1 + dilate_W_mul_in_pixStep);
+				a13 = zq_mm_load_ps(cur_in_pix_ptr1 + dilate_W_mul_in_pixStep2);
 				a21 = zq_mm_load_ps(cur_in_pix_ptr2);
-				a22 = zq_mm_load_ps(cur_in_pix_ptr2 + in_pixelStep);
-				a23 = zq_mm_load_ps(cur_in_pix_ptr2 + in_pixStep2);
+				a22 = zq_mm_load_ps(cur_in_pix_ptr2 + dilate_W_mul_in_pixStep);
+				a23 = zq_mm_load_ps(cur_in_pix_ptr2 + dilate_W_mul_in_pixStep2);
 				a31 = zq_mm_load_ps(cur_in_pix_ptr3);
-				a32 = zq_mm_load_ps(cur_in_pix_ptr3 + in_pixelStep);
-				a33 = zq_mm_load_ps(cur_in_pix_ptr3 + in_pixStep2);
+				a32 = zq_mm_load_ps(cur_in_pix_ptr3 + dilate_W_mul_in_pixStep);
+				a33 = zq_mm_load_ps(cur_in_pix_ptr3 + dilate_W_mul_in_pixStep2);
 #if WITH_BIAS
 				sum = zq_mm_fmadd_ps(a11, b11_1,c1);
 #else
@@ -949,18 +973,18 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_mul_2(
 				zq_mm_store_ps(out_pix_ptr, sum);
 
 				cur_in_pix_ptr1 = in_pix_ptr + zq_mm_align_size;
-				cur_in_pix_ptr2 = cur_in_pix_ptr1 + in_widthStep;
-				cur_in_pix_ptr3 = cur_in_pix_ptr2 + in_widthStep;
+				cur_in_pix_ptr2 = cur_in_pix_ptr1 + dilate_H_mul_in_widthStep;
+				cur_in_pix_ptr3 = cur_in_pix_ptr2 + dilate_H_mul_in_widthStep;
 
 				a11 = zq_mm_load_ps(cur_in_pix_ptr1);
-				a12 = zq_mm_load_ps(cur_in_pix_ptr1 + in_pixelStep);
-				a13 = zq_mm_load_ps(cur_in_pix_ptr1 + in_pixStep2);
+				a12 = zq_mm_load_ps(cur_in_pix_ptr1 + dilate_W_mul_in_pixStep);
+				a13 = zq_mm_load_ps(cur_in_pix_ptr1 + dilate_W_mul_in_pixStep2);
 				a21 = zq_mm_load_ps(cur_in_pix_ptr2);
-				a22 = zq_mm_load_ps(cur_in_pix_ptr2 + in_pixelStep);
-				a23 = zq_mm_load_ps(cur_in_pix_ptr2 + in_pixStep2);
+				a22 = zq_mm_load_ps(cur_in_pix_ptr2 + dilate_W_mul_in_pixStep);
+				a23 = zq_mm_load_ps(cur_in_pix_ptr2 + dilate_W_mul_in_pixStep2);
 				a31 = zq_mm_load_ps(cur_in_pix_ptr3);
-				a32 = zq_mm_load_ps(cur_in_pix_ptr3 + in_pixelStep);
-				a33 = zq_mm_load_ps(cur_in_pix_ptr3 + in_pixStep2);
+				a32 = zq_mm_load_ps(cur_in_pix_ptr3 + dilate_W_mul_in_pixStep);
+				a33 = zq_mm_load_ps(cur_in_pix_ptr3 + dilate_W_mul_in_pixStep2);
 #if WITH_BIAS
 				sum = zq_mm_fmadd_ps(a11, b11_2, c2);
 #else
@@ -1004,6 +1028,8 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel2x2_mul_2(
 	int filter_sliceStep,
 	int stride_H,
 	int stride_W,
+	int dilation_H,
+	int dilation_W,
 	zq_base_type* out_tensor4D_data,
 	int out_N,	// must be in_N
 	int out_H,	// must be (in_H - filter_H)/stride_H + 1
@@ -1032,6 +1058,8 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel2x2_mul_2(
 
 	int stride_H_mul_in_WidthStep = stride_H*in_widthStep;
 	int stride_W_mul_in_pixStep = stride_W*in_pixelStep;
+	int dilate_H_mul_in_widthStep = dilation_H*in_widthStep;
+	int dilate_W_mul_in_pixStep = dilation_W*in_pixelStep;
 	int out_n, out_h, out_w;
 	register zq_mm_type a11, a12, a21, a22;
 	register zq_mm_type b11_1, b12_1, b21_1, b22_1;
@@ -1047,7 +1075,7 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel2x2_mul_2(
 	register zq_mm_type zero_v = zq_mm_setzero_ps();
 	register zq_mm_type e, f;
 #endif
-	register int in_pixStep2 = in_pixelStep << 1;
+	register int dilate_W_mul_in_pixStep2 = dilate_W_mul_in_pixStep << 1;
 	for (out_n = 0, in_slice_ptr = in_tensor4D_data, out_slice_ptr = out_tensor4D_data;
 		out_n < out_N;
 		out_n++, in_slice_ptr += in_sliceStep, out_slice_ptr += out_sliceStep)
@@ -1074,12 +1102,12 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel2x2_mul_2(
 				out_w++, in_pix_ptr += stride_W_mul_in_pixStep, out_pix_ptr += out_pixelStep)
 			{
 				cur_in_pix_ptr1 = in_pix_ptr;
-				cur_in_pix_ptr2 = cur_in_pix_ptr1 + in_widthStep;
+				cur_in_pix_ptr2 = cur_in_pix_ptr1 + dilate_H_mul_in_widthStep;
 
 				a11 = zq_mm_load_ps(cur_in_pix_ptr1);
-				a12 = zq_mm_load_ps(cur_in_pix_ptr1 + in_pixelStep);
+				a12 = zq_mm_load_ps(cur_in_pix_ptr1 + dilate_W_mul_in_pixStep);
 				a21 = zq_mm_load_ps(cur_in_pix_ptr2);
-				a22 = zq_mm_load_ps(cur_in_pix_ptr2 + in_pixelStep);
+				a22 = zq_mm_load_ps(cur_in_pix_ptr2 + dilate_W_mul_in_pixStep);
 #if WITH_BIAS
 				sum = zq_mm_fmadd_ps(a11, b11_1, c1);
 #else
@@ -1096,12 +1124,12 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel2x2_mul_2(
 				zq_mm_store_ps(out_pix_ptr, sum);
 
 				cur_in_pix_ptr1 = in_pix_ptr + zq_mm_align_size;
-				cur_in_pix_ptr2 = cur_in_pix_ptr1 + in_widthStep;
+				cur_in_pix_ptr2 = cur_in_pix_ptr1 + dilate_H_mul_in_widthStep;
 
 				a11 = zq_mm_load_ps(cur_in_pix_ptr1);
-				a12 = zq_mm_load_ps(cur_in_pix_ptr1 + in_pixelStep);
+				a12 = zq_mm_load_ps(cur_in_pix_ptr1 + dilate_W_mul_in_pixStep);
 				a21 = zq_mm_load_ps(cur_in_pix_ptr2);
-				a22 = zq_mm_load_ps(cur_in_pix_ptr2 + in_pixelStep);
+				a22 = zq_mm_load_ps(cur_in_pix_ptr2 + dilate_W_mul_in_pixStep);
 #if WITH_BIAS
 				sum = zq_mm_fmadd_ps(a11, b11_2, c2);
 #else
@@ -1140,6 +1168,8 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_mul_3(
 	int filter_sliceStep,
 	int stride_H,
 	int stride_W,
+	int dilation_H,
+	int dilation_W,
 	zq_base_type* out_tensor4D_data,
 	int out_N,	// must be in_N
 	int out_H,	// must be (in_H - filter_H)/stride_H + 1
@@ -1168,6 +1198,8 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_mul_3(
 
 	int stride_H_mul_in_WidthStep = stride_H*in_widthStep;
 	int stride_W_mul_in_pixStep = stride_W*in_pixelStep;
+	int dilate_H_mul_in_widthStep = dilation_H*in_widthStep;
+	int dilate_W_mul_in_pixStep = dilation_W*in_pixelStep;
 	int out_n, out_h, out_w;
 	register zq_mm_type a11, a12, a13, a21, a22, a23, a31, a32, a33;
 	register zq_mm_type b11_1, b12_1, b13_1, b21_1, b22_1, b23_1, b31_1, b32_1, b33_1;
@@ -1186,7 +1218,7 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_mul_3(
 	register zq_mm_type zero_v = zq_mm_setzero_ps();
 	register zq_mm_type e, f;
 #endif
-	register int in_pixStep2 = in_pixelStep << 1;
+	register int dilate_W_mul_in_pixStep2 = dilate_W_mul_in_pixStep << 1;
 	for (out_n = 0, in_slice_ptr = in_tensor4D_data, out_slice_ptr = out_tensor4D_data;
 		out_n < out_N;
 		out_n++, in_slice_ptr += in_sliceStep, out_slice_ptr += out_sliceStep)
@@ -1238,18 +1270,18 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_mul_3(
 				out_w++, in_pix_ptr += stride_W_mul_in_pixStep, out_pix_ptr += out_pixelStep)
 			{
 				cur_in_pix_ptr1 = in_pix_ptr;
-				cur_in_pix_ptr2 = cur_in_pix_ptr1 + in_widthStep;
-				cur_in_pix_ptr3 = cur_in_pix_ptr2 + in_widthStep;
+				cur_in_pix_ptr2 = cur_in_pix_ptr1 + dilate_H_mul_in_widthStep;
+				cur_in_pix_ptr3 = cur_in_pix_ptr2 + dilate_H_mul_in_widthStep;
 
 				a11 = zq_mm_load_ps(cur_in_pix_ptr1);
-				a12 = zq_mm_load_ps(cur_in_pix_ptr1 + in_pixelStep);
-				a13 = zq_mm_load_ps(cur_in_pix_ptr1 + in_pixStep2);
+				a12 = zq_mm_load_ps(cur_in_pix_ptr1 + dilate_W_mul_in_pixStep);
+				a13 = zq_mm_load_ps(cur_in_pix_ptr1 + dilate_W_mul_in_pixStep2);
 				a21 = zq_mm_load_ps(cur_in_pix_ptr2);
-				a22 = zq_mm_load_ps(cur_in_pix_ptr2 + in_pixelStep);
-				a23 = zq_mm_load_ps(cur_in_pix_ptr2 + in_pixStep2);
+				a22 = zq_mm_load_ps(cur_in_pix_ptr2 + dilate_W_mul_in_pixStep);
+				a23 = zq_mm_load_ps(cur_in_pix_ptr2 + dilate_W_mul_in_pixStep2);
 				a31 = zq_mm_load_ps(cur_in_pix_ptr3);
-				a32 = zq_mm_load_ps(cur_in_pix_ptr3 + in_pixelStep);
-				a33 = zq_mm_load_ps(cur_in_pix_ptr3 + in_pixStep2);
+				a32 = zq_mm_load_ps(cur_in_pix_ptr3 + dilate_W_mul_in_pixStep);
+				a33 = zq_mm_load_ps(cur_in_pix_ptr3 + dilate_W_mul_in_pixStep2);
 #if WITH_BIAS
 				sum = zq_mm_fmadd_ps(a11, b11_1, c1);
 #else
@@ -1271,18 +1303,18 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_mul_3(
 				zq_mm_store_ps(out_pix_ptr, sum);
 
 				cur_in_pix_ptr1 = in_pix_ptr + zq_mm_align_size;
-				cur_in_pix_ptr2 = cur_in_pix_ptr1 + in_widthStep;
-				cur_in_pix_ptr3 = cur_in_pix_ptr2 + in_widthStep;
+				cur_in_pix_ptr2 = cur_in_pix_ptr1 + dilate_H_mul_in_widthStep;
+				cur_in_pix_ptr3 = cur_in_pix_ptr2 + dilate_H_mul_in_widthStep;
 
 				a11 = zq_mm_load_ps(cur_in_pix_ptr1);
-				a12 = zq_mm_load_ps(cur_in_pix_ptr1 + in_pixelStep);
-				a13 = zq_mm_load_ps(cur_in_pix_ptr1 + in_pixStep2);
+				a12 = zq_mm_load_ps(cur_in_pix_ptr1 + dilate_W_mul_in_pixStep);
+				a13 = zq_mm_load_ps(cur_in_pix_ptr1 + dilate_W_mul_in_pixStep2);
 				a21 = zq_mm_load_ps(cur_in_pix_ptr2);
-				a22 = zq_mm_load_ps(cur_in_pix_ptr2 + in_pixelStep);
-				a23 = zq_mm_load_ps(cur_in_pix_ptr2 + in_pixStep2);
+				a22 = zq_mm_load_ps(cur_in_pix_ptr2 + dilate_W_mul_in_pixStep);
+				a23 = zq_mm_load_ps(cur_in_pix_ptr2 + dilate_W_mul_in_pixStep2);
 				a31 = zq_mm_load_ps(cur_in_pix_ptr3);
-				a32 = zq_mm_load_ps(cur_in_pix_ptr3 + in_pixelStep);
-				a33 = zq_mm_load_ps(cur_in_pix_ptr3 + in_pixStep2);
+				a32 = zq_mm_load_ps(cur_in_pix_ptr3 + dilate_W_mul_in_pixStep);
+				a33 = zq_mm_load_ps(cur_in_pix_ptr3 + dilate_W_mul_in_pixStep2);
 #if WITH_BIAS
 				sum = zq_mm_fmadd_ps(a11, b11_2, c2);
 #else
@@ -1304,18 +1336,18 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_mul_3(
 				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size, sum);
 
 				cur_in_pix_ptr1 = in_pix_ptr + zq_mm_align_size2;
-				cur_in_pix_ptr2 = cur_in_pix_ptr1 + in_widthStep;
-				cur_in_pix_ptr3 = cur_in_pix_ptr2 + in_widthStep;
+				cur_in_pix_ptr2 = cur_in_pix_ptr1 + dilate_H_mul_in_widthStep;
+				cur_in_pix_ptr3 = cur_in_pix_ptr2 + dilate_H_mul_in_widthStep;
 
 				a11 = zq_mm_load_ps(cur_in_pix_ptr1);
-				a12 = zq_mm_load_ps(cur_in_pix_ptr1 + in_pixelStep);
-				a13 = zq_mm_load_ps(cur_in_pix_ptr1 + in_pixStep2);
+				a12 = zq_mm_load_ps(cur_in_pix_ptr1 + dilate_W_mul_in_pixStep);
+				a13 = zq_mm_load_ps(cur_in_pix_ptr1 + dilate_W_mul_in_pixStep2);
 				a21 = zq_mm_load_ps(cur_in_pix_ptr2);
-				a22 = zq_mm_load_ps(cur_in_pix_ptr2 + in_pixelStep);
-				a23 = zq_mm_load_ps(cur_in_pix_ptr2 + in_pixStep2);
+				a22 = zq_mm_load_ps(cur_in_pix_ptr2 + dilate_W_mul_in_pixStep);
+				a23 = zq_mm_load_ps(cur_in_pix_ptr2 + dilate_W_mul_in_pixStep2);
 				a31 = zq_mm_load_ps(cur_in_pix_ptr3);
-				a32 = zq_mm_load_ps(cur_in_pix_ptr3 + in_pixelStep);
-				a33 = zq_mm_load_ps(cur_in_pix_ptr3 + in_pixStep2);
+				a32 = zq_mm_load_ps(cur_in_pix_ptr3 + dilate_W_mul_in_pixStep);
+				a33 = zq_mm_load_ps(cur_in_pix_ptr3 + dilate_W_mul_in_pixStep2);
 #if WITH_BIAS
 				sum = zq_mm_fmadd_ps(a11, b11_3, c3);
 #else
@@ -1359,6 +1391,8 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel2x2_mul_3(
 	int filter_sliceStep,
 	int stride_H,
 	int stride_W,
+	int dilation_H,
+	int dilation_W,
 	zq_base_type* out_tensor4D_data,
 	int out_N,	// must be in_N
 	int out_H,	// must be (in_H - filter_H)/stride_H + 1
@@ -1387,6 +1421,8 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel2x2_mul_3(
 
 	int stride_H_mul_in_WidthStep = stride_H*in_widthStep;
 	int stride_W_mul_in_pixStep = stride_W*in_pixelStep;
+	int dilate_H_mul_in_widthStep = dilation_H*in_widthStep;
+	int dilate_W_mul_in_pixStep = dilation_W*in_pixelStep;
 	int out_n, out_h, out_w;
 	register zq_mm_type a11, a12, a21, a22;
 	register zq_mm_type b11_1, b12_1, b21_1, b22_1;
@@ -1405,7 +1441,7 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel2x2_mul_3(
 	register zq_mm_type zero_v = zq_mm_setzero_ps();
 	register zq_mm_type e, f;
 #endif
-	register int in_pixStep2 = in_pixelStep << 1;
+	register int dilate_W_mul_in_pixStep2 = dilate_W_mul_in_pixStep << 1;
 	for (out_n = 0, in_slice_ptr = in_tensor4D_data, out_slice_ptr = out_tensor4D_data;
 		out_n < out_N;
 		out_n++, in_slice_ptr += in_sliceStep, out_slice_ptr += out_sliceStep)
@@ -1438,12 +1474,12 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel2x2_mul_3(
 				out_w++, in_pix_ptr += stride_W_mul_in_pixStep, out_pix_ptr += out_pixelStep)
 			{
 				cur_in_pix_ptr1 = in_pix_ptr;
-				cur_in_pix_ptr2 = cur_in_pix_ptr1 + in_widthStep;
+				cur_in_pix_ptr2 = cur_in_pix_ptr1 + dilate_H_mul_in_widthStep;
 
 				a11 = zq_mm_load_ps(cur_in_pix_ptr1);
-				a12 = zq_mm_load_ps(cur_in_pix_ptr1 + in_pixelStep);
+				a12 = zq_mm_load_ps(cur_in_pix_ptr1 + dilate_W_mul_in_pixStep);
 				a21 = zq_mm_load_ps(cur_in_pix_ptr2);
-				a22 = zq_mm_load_ps(cur_in_pix_ptr2 + in_pixelStep);
+				a22 = zq_mm_load_ps(cur_in_pix_ptr2 + dilate_W_mul_in_pixStep);
 #if WITH_BIAS
 				sum = zq_mm_fmadd_ps(a11, b11_1, c1);
 #else
@@ -1460,12 +1496,12 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel2x2_mul_3(
 				zq_mm_store_ps(out_pix_ptr, sum);
 
 				cur_in_pix_ptr1 = in_pix_ptr + zq_mm_align_size;
-				cur_in_pix_ptr2 = cur_in_pix_ptr1 + in_widthStep;
+				cur_in_pix_ptr2 = cur_in_pix_ptr1 + dilate_H_mul_in_widthStep;
 
 				a11 = zq_mm_load_ps(cur_in_pix_ptr1);
-				a12 = zq_mm_load_ps(cur_in_pix_ptr1 + in_pixelStep);
+				a12 = zq_mm_load_ps(cur_in_pix_ptr1 + dilate_W_mul_in_pixStep);
 				a21 = zq_mm_load_ps(cur_in_pix_ptr2);
-				a22 = zq_mm_load_ps(cur_in_pix_ptr2 + in_pixelStep);
+				a22 = zq_mm_load_ps(cur_in_pix_ptr2 + dilate_W_mul_in_pixStep);
 #if WITH_BIAS
 				sum = zq_mm_fmadd_ps(a11, b11_2, c2);
 #else
@@ -1482,12 +1518,12 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel2x2_mul_3(
 				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size, sum);
 
 				cur_in_pix_ptr1 = in_pix_ptr + zq_mm_align_size2;
-				cur_in_pix_ptr2 = cur_in_pix_ptr1 + in_widthStep;
+				cur_in_pix_ptr2 = cur_in_pix_ptr1 + dilate_H_mul_in_widthStep;
 
 				a11 = zq_mm_load_ps(cur_in_pix_ptr1);
-				a12 = zq_mm_load_ps(cur_in_pix_ptr1 + in_pixelStep);
+				a12 = zq_mm_load_ps(cur_in_pix_ptr1 + dilate_W_mul_in_pixStep);
 				a21 = zq_mm_load_ps(cur_in_pix_ptr2);
-				a22 = zq_mm_load_ps(cur_in_pix_ptr2 + in_pixelStep);
+				a22 = zq_mm_load_ps(cur_in_pix_ptr2 + dilate_W_mul_in_pixStep);
 #if WITH_BIAS
 				sum = zq_mm_fmadd_ps(a11, b11_3, c3);
 #else
@@ -1526,6 +1562,8 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_mul_6(
 	int filter_sliceStep,
 	int stride_H,
 	int stride_W,
+	int dilation_H,
+	int dilation_W,
 	zq_base_type* out_tensor4D_data,
 	int out_N,	// must be in_N
 	int out_H,	// must be (in_H - filter_H)/stride_H + 1
@@ -1554,6 +1592,8 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_mul_6(
 
 	int stride_H_mul_in_WidthStep = stride_H*in_widthStep;
 	int stride_W_mul_in_pixStep = stride_W*in_pixelStep;
+	int dilate_H_mul_in_widthStep = dilation_H*in_widthStep;
+	int dilate_W_mul_in_pixStep = dilation_W*in_pixelStep;
 	int out_n, out_h, out_w;
 	register zq_mm_type a11, a12, a13, a21, a22, a23, a31, a32, a33;
 	register zq_mm_type b11_1, b12_1, b13_1, b21_1, b22_1, b23_1, b31_1, b32_1, b33_1;
@@ -1581,7 +1621,7 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_mul_6(
 	register zq_mm_type zero_v = zq_mm_setzero_ps();
 	register zq_mm_type e, f;
 #endif
-	register int in_pixStep2 = in_pixelStep << 1;
+	register int dilate_W_mul_in_pixStep2 = dilate_W_mul_in_pixStep << 1;
 	for (out_n = 0, in_slice_ptr = in_tensor4D_data, out_slice_ptr = out_tensor4D_data;
 		out_n < out_N;
 		out_n++, in_slice_ptr += in_sliceStep, out_slice_ptr += out_sliceStep)
@@ -1668,18 +1708,18 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_mul_6(
 				out_w++, in_pix_ptr += stride_W_mul_in_pixStep, out_pix_ptr += out_pixelStep)
 			{
 				cur_in_pix_ptr1 = in_pix_ptr;
-				cur_in_pix_ptr2 = cur_in_pix_ptr1 + in_widthStep;
-				cur_in_pix_ptr3 = cur_in_pix_ptr2 + in_widthStep;
+				cur_in_pix_ptr2 = cur_in_pix_ptr1 + dilate_H_mul_in_widthStep;
+				cur_in_pix_ptr3 = cur_in_pix_ptr2 + dilate_H_mul_in_widthStep;
 
 				a11 = zq_mm_load_ps(cur_in_pix_ptr1);
-				a12 = zq_mm_load_ps(cur_in_pix_ptr1 + in_pixelStep);
-				a13 = zq_mm_load_ps(cur_in_pix_ptr1 + in_pixStep2);
+				a12 = zq_mm_load_ps(cur_in_pix_ptr1 + dilate_W_mul_in_pixStep);
+				a13 = zq_mm_load_ps(cur_in_pix_ptr1 + dilate_W_mul_in_pixStep2);
 				a21 = zq_mm_load_ps(cur_in_pix_ptr2);
-				a22 = zq_mm_load_ps(cur_in_pix_ptr2 + in_pixelStep);
-				a23 = zq_mm_load_ps(cur_in_pix_ptr2 + in_pixStep2);
+				a22 = zq_mm_load_ps(cur_in_pix_ptr2 + dilate_W_mul_in_pixStep);
+				a23 = zq_mm_load_ps(cur_in_pix_ptr2 + dilate_W_mul_in_pixStep2);
 				a31 = zq_mm_load_ps(cur_in_pix_ptr3);
-				a32 = zq_mm_load_ps(cur_in_pix_ptr3 + in_pixelStep);
-				a33 = zq_mm_load_ps(cur_in_pix_ptr3 + in_pixStep2);
+				a32 = zq_mm_load_ps(cur_in_pix_ptr3 + dilate_W_mul_in_pixStep);
+				a33 = zq_mm_load_ps(cur_in_pix_ptr3 + dilate_W_mul_in_pixStep2);
 #if WITH_BIAS
 				sum = zq_mm_fmadd_ps(a11, b11_1, c1);
 #else
@@ -1701,18 +1741,18 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_mul_6(
 				zq_mm_store_ps(out_pix_ptr, sum);
 
 				cur_in_pix_ptr1 = in_pix_ptr + zq_mm_align_size;
-				cur_in_pix_ptr2 = cur_in_pix_ptr1 + in_widthStep;
-				cur_in_pix_ptr3 = cur_in_pix_ptr2 + in_widthStep;
+				cur_in_pix_ptr2 = cur_in_pix_ptr1 + dilate_H_mul_in_widthStep;
+				cur_in_pix_ptr3 = cur_in_pix_ptr2 + dilate_H_mul_in_widthStep;
 
 				a11 = zq_mm_load_ps(cur_in_pix_ptr1);
-				a12 = zq_mm_load_ps(cur_in_pix_ptr1 + in_pixelStep);
-				a13 = zq_mm_load_ps(cur_in_pix_ptr1 + in_pixStep2);
+				a12 = zq_mm_load_ps(cur_in_pix_ptr1 + dilate_W_mul_in_pixStep);
+				a13 = zq_mm_load_ps(cur_in_pix_ptr1 + dilate_W_mul_in_pixStep2);
 				a21 = zq_mm_load_ps(cur_in_pix_ptr2);
-				a22 = zq_mm_load_ps(cur_in_pix_ptr2 + in_pixelStep);
-				a23 = zq_mm_load_ps(cur_in_pix_ptr2 + in_pixStep2);
+				a22 = zq_mm_load_ps(cur_in_pix_ptr2 + dilate_W_mul_in_pixStep);
+				a23 = zq_mm_load_ps(cur_in_pix_ptr2 + dilate_W_mul_in_pixStep2);
 				a31 = zq_mm_load_ps(cur_in_pix_ptr3);
-				a32 = zq_mm_load_ps(cur_in_pix_ptr3 + in_pixelStep);
-				a33 = zq_mm_load_ps(cur_in_pix_ptr3 + in_pixStep2);
+				a32 = zq_mm_load_ps(cur_in_pix_ptr3 + dilate_W_mul_in_pixStep);
+				a33 = zq_mm_load_ps(cur_in_pix_ptr3 + dilate_W_mul_in_pixStep2);
 #if WITH_BIAS
 				sum = zq_mm_fmadd_ps(a11, b11_2, c2);
 #else
@@ -1734,18 +1774,18 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_mul_6(
 				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size, sum);
 
 				cur_in_pix_ptr1 = in_pix_ptr + zq_mm_align_size2;
-				cur_in_pix_ptr2 = cur_in_pix_ptr1 + in_widthStep;
-				cur_in_pix_ptr3 = cur_in_pix_ptr2 + in_widthStep;
+				cur_in_pix_ptr2 = cur_in_pix_ptr1 + dilate_H_mul_in_widthStep;
+				cur_in_pix_ptr3 = cur_in_pix_ptr2 + dilate_H_mul_in_widthStep;
 
 				a11 = zq_mm_load_ps(cur_in_pix_ptr1);
-				a12 = zq_mm_load_ps(cur_in_pix_ptr1 + in_pixelStep);
-				a13 = zq_mm_load_ps(cur_in_pix_ptr1 + in_pixStep2);
+				a12 = zq_mm_load_ps(cur_in_pix_ptr1 + dilate_W_mul_in_pixStep);
+				a13 = zq_mm_load_ps(cur_in_pix_ptr1 + dilate_W_mul_in_pixStep2);
 				a21 = zq_mm_load_ps(cur_in_pix_ptr2);
-				a22 = zq_mm_load_ps(cur_in_pix_ptr2 + in_pixelStep);
-				a23 = zq_mm_load_ps(cur_in_pix_ptr2 + in_pixStep2);
+				a22 = zq_mm_load_ps(cur_in_pix_ptr2 + dilate_W_mul_in_pixStep);
+				a23 = zq_mm_load_ps(cur_in_pix_ptr2 + dilate_W_mul_in_pixStep2);
 				a31 = zq_mm_load_ps(cur_in_pix_ptr3);
-				a32 = zq_mm_load_ps(cur_in_pix_ptr3 + in_pixelStep);
-				a33 = zq_mm_load_ps(cur_in_pix_ptr3 + in_pixStep2);
+				a32 = zq_mm_load_ps(cur_in_pix_ptr3 + dilate_W_mul_in_pixStep);
+				a33 = zq_mm_load_ps(cur_in_pix_ptr3 + dilate_W_mul_in_pixStep2);
 #if WITH_BIAS
 				sum = zq_mm_fmadd_ps(a11, b11_3, c3);
 #else
@@ -1767,18 +1807,18 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_mul_6(
 				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size2, sum);
 
 				cur_in_pix_ptr1 = in_pix_ptr + zq_mm_align_size3;
-				cur_in_pix_ptr2 = cur_in_pix_ptr1 + in_widthStep;
-				cur_in_pix_ptr3 = cur_in_pix_ptr2 + in_widthStep;
+				cur_in_pix_ptr2 = cur_in_pix_ptr1 + dilate_H_mul_in_widthStep;
+				cur_in_pix_ptr3 = cur_in_pix_ptr2 + dilate_H_mul_in_widthStep;
 
 				a11 = zq_mm_load_ps(cur_in_pix_ptr1);
-				a12 = zq_mm_load_ps(cur_in_pix_ptr1 + in_pixelStep);
-				a13 = zq_mm_load_ps(cur_in_pix_ptr1 + in_pixStep2);
+				a12 = zq_mm_load_ps(cur_in_pix_ptr1 + dilate_W_mul_in_pixStep);
+				a13 = zq_mm_load_ps(cur_in_pix_ptr1 + dilate_W_mul_in_pixStep2);
 				a21 = zq_mm_load_ps(cur_in_pix_ptr2);
-				a22 = zq_mm_load_ps(cur_in_pix_ptr2 + in_pixelStep);
-				a23 = zq_mm_load_ps(cur_in_pix_ptr2 + in_pixStep2);
+				a22 = zq_mm_load_ps(cur_in_pix_ptr2 + dilate_W_mul_in_pixStep);
+				a23 = zq_mm_load_ps(cur_in_pix_ptr2 + dilate_W_mul_in_pixStep2);
 				a31 = zq_mm_load_ps(cur_in_pix_ptr3);
-				a32 = zq_mm_load_ps(cur_in_pix_ptr3 + in_pixelStep);
-				a33 = zq_mm_load_ps(cur_in_pix_ptr3 + in_pixStep2);
+				a32 = zq_mm_load_ps(cur_in_pix_ptr3 + dilate_W_mul_in_pixStep);
+				a33 = zq_mm_load_ps(cur_in_pix_ptr3 + dilate_W_mul_in_pixStep2);
 #if WITH_BIAS
 				sum = zq_mm_fmadd_ps(a11, b11_4, c4);
 #else
@@ -1800,18 +1840,18 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_mul_6(
 				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size3, sum);
 
 				cur_in_pix_ptr1 = in_pix_ptr + zq_mm_align_size4;
-				cur_in_pix_ptr2 = cur_in_pix_ptr1 + in_widthStep;
-				cur_in_pix_ptr3 = cur_in_pix_ptr2 + in_widthStep;
+				cur_in_pix_ptr2 = cur_in_pix_ptr1 + dilate_H_mul_in_widthStep;
+				cur_in_pix_ptr3 = cur_in_pix_ptr2 + dilate_H_mul_in_widthStep;
 
 				a11 = zq_mm_load_ps(cur_in_pix_ptr1);
-				a12 = zq_mm_load_ps(cur_in_pix_ptr1 + in_pixelStep);
-				a13 = zq_mm_load_ps(cur_in_pix_ptr1 + in_pixStep2);
+				a12 = zq_mm_load_ps(cur_in_pix_ptr1 + dilate_W_mul_in_pixStep);
+				a13 = zq_mm_load_ps(cur_in_pix_ptr1 + dilate_W_mul_in_pixStep2);
 				a21 = zq_mm_load_ps(cur_in_pix_ptr2);
-				a22 = zq_mm_load_ps(cur_in_pix_ptr2 + in_pixelStep);
-				a23 = zq_mm_load_ps(cur_in_pix_ptr2 + in_pixStep2);
+				a22 = zq_mm_load_ps(cur_in_pix_ptr2 + dilate_W_mul_in_pixStep);
+				a23 = zq_mm_load_ps(cur_in_pix_ptr2 + dilate_W_mul_in_pixStep2);
 				a31 = zq_mm_load_ps(cur_in_pix_ptr3);
-				a32 = zq_mm_load_ps(cur_in_pix_ptr3 + in_pixelStep);
-				a33 = zq_mm_load_ps(cur_in_pix_ptr3 + in_pixStep2);
+				a32 = zq_mm_load_ps(cur_in_pix_ptr3 + dilate_W_mul_in_pixStep);
+				a33 = zq_mm_load_ps(cur_in_pix_ptr3 + dilate_W_mul_in_pixStep2);
 #if WITH_BIAS
 				sum = zq_mm_fmadd_ps(a11, b11_5, c5);
 #else
@@ -1833,18 +1873,18 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_mul_6(
 				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size4, sum);
 
 				cur_in_pix_ptr1 = in_pix_ptr + zq_mm_align_size5;
-				cur_in_pix_ptr2 = cur_in_pix_ptr1 + in_widthStep;
-				cur_in_pix_ptr3 = cur_in_pix_ptr2 + in_widthStep;
+				cur_in_pix_ptr2 = cur_in_pix_ptr1 + dilate_H_mul_in_widthStep;
+				cur_in_pix_ptr3 = cur_in_pix_ptr2 + dilate_H_mul_in_widthStep;
 
 				a11 = zq_mm_load_ps(cur_in_pix_ptr1);
-				a12 = zq_mm_load_ps(cur_in_pix_ptr1 + in_pixelStep);
-				a13 = zq_mm_load_ps(cur_in_pix_ptr1 + in_pixStep2);
+				a12 = zq_mm_load_ps(cur_in_pix_ptr1 + dilate_W_mul_in_pixStep);
+				a13 = zq_mm_load_ps(cur_in_pix_ptr1 + dilate_W_mul_in_pixStep2);
 				a21 = zq_mm_load_ps(cur_in_pix_ptr2);
-				a22 = zq_mm_load_ps(cur_in_pix_ptr2 + in_pixelStep);
-				a23 = zq_mm_load_ps(cur_in_pix_ptr2 + in_pixStep2);
+				a22 = zq_mm_load_ps(cur_in_pix_ptr2 + dilate_W_mul_in_pixStep);
+				a23 = zq_mm_load_ps(cur_in_pix_ptr2 + dilate_W_mul_in_pixStep2);
 				a31 = zq_mm_load_ps(cur_in_pix_ptr3);
-				a32 = zq_mm_load_ps(cur_in_pix_ptr3 + in_pixelStep);
-				a33 = zq_mm_load_ps(cur_in_pix_ptr3 + in_pixStep2);
+				a32 = zq_mm_load_ps(cur_in_pix_ptr3 + dilate_W_mul_in_pixStep);
+				a33 = zq_mm_load_ps(cur_in_pix_ptr3 + dilate_W_mul_in_pixStep2);
 #if WITH_BIAS
 				sum = zq_mm_fmadd_ps(a11, b11_6, c6);
 #else
@@ -1888,6 +1928,8 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel2x2_mul_6(
 	int filter_sliceStep,
 	int stride_H,
 	int stride_W,
+	int dilation_H,
+	int dilation_W,
 	zq_base_type* out_tensor4D_data,
 	int out_N,	// must be in_N
 	int out_H,	// must be (in_H - filter_H)/stride_H + 1
@@ -1916,6 +1958,8 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel2x2_mul_6(
 
 	int stride_H_mul_in_WidthStep = stride_H*in_widthStep;
 	int stride_W_mul_in_pixStep = stride_W*in_pixelStep;
+	int dilate_H_mul_in_widthStep = dilation_H*in_widthStep;
+	int dilate_W_mul_in_pixStep = dilation_W*in_pixelStep;
 	int out_n, out_h, out_w;
 	register zq_mm_type a11, a12, a21, a22;
 	register zq_mm_type b11_1, b12_1, b21_1, b22_1;
@@ -1943,7 +1987,7 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel2x2_mul_6(
 	register zq_mm_type zero_v = zq_mm_setzero_ps();
 	register zq_mm_type e, f;
 #endif
-	register int in_pixStep2 = in_pixelStep << 1;
+	register int dilate_W_mul_in_pixStep2 = dilate_W_mul_in_pixStep << 1;
 	for (out_n = 0, in_slice_ptr = in_tensor4D_data, out_slice_ptr = out_tensor4D_data;
 		out_n < out_N;
 		out_n++, in_slice_ptr += in_sliceStep, out_slice_ptr += out_sliceStep)
@@ -1994,12 +2038,12 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel2x2_mul_6(
 				out_w++, in_pix_ptr += stride_W_mul_in_pixStep, out_pix_ptr += out_pixelStep)
 			{
 				cur_in_pix_ptr1 = in_pix_ptr;
-				cur_in_pix_ptr2 = cur_in_pix_ptr1 + in_widthStep;
+				cur_in_pix_ptr2 = cur_in_pix_ptr1 + dilate_H_mul_in_widthStep;
 
 				a11 = zq_mm_load_ps(cur_in_pix_ptr1);
-				a12 = zq_mm_load_ps(cur_in_pix_ptr1 + in_pixelStep);
+				a12 = zq_mm_load_ps(cur_in_pix_ptr1 + dilate_W_mul_in_pixStep);
 				a21 = zq_mm_load_ps(cur_in_pix_ptr2);
-				a22 = zq_mm_load_ps(cur_in_pix_ptr2 + in_pixelStep);
+				a22 = zq_mm_load_ps(cur_in_pix_ptr2 + dilate_W_mul_in_pixStep);
 #if WITH_BIAS
 				sum = zq_mm_fmadd_ps(a11, b11_1, c1);
 #else
@@ -2016,12 +2060,12 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel2x2_mul_6(
 				zq_mm_store_ps(out_pix_ptr, sum);
 
 				cur_in_pix_ptr1 = in_pix_ptr + zq_mm_align_size;
-				cur_in_pix_ptr2 = cur_in_pix_ptr1 + in_widthStep;
+				cur_in_pix_ptr2 = cur_in_pix_ptr1 + dilate_H_mul_in_widthStep;
 
 				a11 = zq_mm_load_ps(cur_in_pix_ptr1);
-				a12 = zq_mm_load_ps(cur_in_pix_ptr1 + in_pixelStep);
+				a12 = zq_mm_load_ps(cur_in_pix_ptr1 + dilate_W_mul_in_pixStep);
 				a21 = zq_mm_load_ps(cur_in_pix_ptr2);
-				a22 = zq_mm_load_ps(cur_in_pix_ptr2 + in_pixelStep);
+				a22 = zq_mm_load_ps(cur_in_pix_ptr2 + dilate_W_mul_in_pixStep);
 #if WITH_BIAS
 				sum = zq_mm_fmadd_ps(a11, b11_2, c2);
 #else
@@ -2038,12 +2082,12 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel2x2_mul_6(
 				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size, sum);
 
 				cur_in_pix_ptr1 = in_pix_ptr + zq_mm_align_size2;
-				cur_in_pix_ptr2 = cur_in_pix_ptr1 + in_widthStep;
+				cur_in_pix_ptr2 = cur_in_pix_ptr1 + dilate_H_mul_in_widthStep;
 
 				a11 = zq_mm_load_ps(cur_in_pix_ptr1);
-				a12 = zq_mm_load_ps(cur_in_pix_ptr1 + in_pixelStep);
+				a12 = zq_mm_load_ps(cur_in_pix_ptr1 + dilate_W_mul_in_pixStep);
 				a21 = zq_mm_load_ps(cur_in_pix_ptr2);
-				a22 = zq_mm_load_ps(cur_in_pix_ptr2 + in_pixelStep);
+				a22 = zq_mm_load_ps(cur_in_pix_ptr2 + dilate_W_mul_in_pixStep);
 #if WITH_BIAS
 				sum = zq_mm_fmadd_ps(a11, b11_3, c3);
 #else
@@ -2060,12 +2104,12 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel2x2_mul_6(
 				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size2, sum);
 
 				cur_in_pix_ptr1 = in_pix_ptr + zq_mm_align_size3;
-				cur_in_pix_ptr2 = cur_in_pix_ptr1 + in_widthStep;
+				cur_in_pix_ptr2 = cur_in_pix_ptr1 + dilate_H_mul_in_widthStep;
 
 				a11 = zq_mm_load_ps(cur_in_pix_ptr1);
-				a12 = zq_mm_load_ps(cur_in_pix_ptr1 + in_pixelStep);
+				a12 = zq_mm_load_ps(cur_in_pix_ptr1 + dilate_W_mul_in_pixStep);
 				a21 = zq_mm_load_ps(cur_in_pix_ptr2);
-				a22 = zq_mm_load_ps(cur_in_pix_ptr2 + in_pixelStep);
+				a22 = zq_mm_load_ps(cur_in_pix_ptr2 + dilate_W_mul_in_pixStep);
 #if WITH_BIAS
 				sum = zq_mm_fmadd_ps(a11, b11_4, c4);
 #else
@@ -2082,12 +2126,12 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel2x2_mul_6(
 				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size3, sum);
 
 				cur_in_pix_ptr1 = in_pix_ptr + zq_mm_align_size4;
-				cur_in_pix_ptr2 = cur_in_pix_ptr1 + in_widthStep;
+				cur_in_pix_ptr2 = cur_in_pix_ptr1 + dilate_H_mul_in_widthStep;
 
 				a11 = zq_mm_load_ps(cur_in_pix_ptr1);
-				a12 = zq_mm_load_ps(cur_in_pix_ptr1 + in_pixelStep);
+				a12 = zq_mm_load_ps(cur_in_pix_ptr1 + dilate_W_mul_in_pixStep);
 				a21 = zq_mm_load_ps(cur_in_pix_ptr2);
-				a22 = zq_mm_load_ps(cur_in_pix_ptr2 + in_pixelStep);
+				a22 = zq_mm_load_ps(cur_in_pix_ptr2 + dilate_W_mul_in_pixStep);
 #if WITH_BIAS
 				sum = zq_mm_fmadd_ps(a11, b11_5, c5);
 #else
@@ -2104,12 +2148,12 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel2x2_mul_6(
 				zq_mm_store_ps(out_pix_ptr + zq_mm_align_size4, sum);
 
 				cur_in_pix_ptr1 = in_pix_ptr + zq_mm_align_size5;
-				cur_in_pix_ptr2 = cur_in_pix_ptr1 + in_widthStep;
+				cur_in_pix_ptr2 = cur_in_pix_ptr1 + dilate_H_mul_in_widthStep;
 
 				a11 = zq_mm_load_ps(cur_in_pix_ptr1);
-				a12 = zq_mm_load_ps(cur_in_pix_ptr1 + in_pixelStep);
+				a12 = zq_mm_load_ps(cur_in_pix_ptr1 + dilate_W_mul_in_pixStep);
 				a21 = zq_mm_load_ps(cur_in_pix_ptr2);
-				a22 = zq_mm_load_ps(cur_in_pix_ptr2 + in_pixelStep);
+				a22 = zq_mm_load_ps(cur_in_pix_ptr2 + dilate_W_mul_in_pixStep);
 #if WITH_BIAS
 				sum = zq_mm_fmadd_ps(a11, b11_6, c6);
 #else
@@ -2149,6 +2193,8 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_mul_4(
 	int filter_sliceStep,
 	int stride_H,
 	int stride_W,
+	int dilation_H,
+	int dilation_W,
 	zq_base_type* out_tensor4D_data,
 	int out_N,	// must be in_N
 	int out_H,	// must be (in_H - filter_H)/stride_H + 1
@@ -2190,6 +2236,8 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_mul_4(
 
 	int stride_H_mul_in_WidthStep = stride_H*in_widthStep;
 	int stride_W_mul_in_pixStep = stride_W*in_pixelStep;
+	int dilate_H_mul_in_widthStep = dilation_H*in_widthStep;
+	int dilate_W_mul_in_pixStep = dilation_W*in_pixelStep;
 	int out_n, out_h, out_w;
 	register zq_mm_type a0, a1, a2, a3;
 	register zq_mm_type b0, b1, b2, b3;
@@ -2217,44 +2265,44 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_mul_4(
 #endif
 				op_0_4_first;
 
-				cur_in_pix_ptr += in_pixelStep; cur_filter_pix_ptr += filter_pixelStep;
+				cur_in_pix_ptr += dilate_W_mul_in_pixStep; cur_filter_pix_ptr += filter_pixelStep;
 				cur_in_c_ptr = cur_in_pix_ptr; cur_filter_c_ptr = cur_filter_pix_ptr;
 				out_c_ptr = out_pix_ptr;
 				op_0_4;
 
-				cur_in_pix_ptr += in_pixelStep; cur_filter_pix_ptr += filter_pixelStep;
+				cur_in_pix_ptr += dilate_W_mul_in_pixStep; cur_filter_pix_ptr += filter_pixelStep;
 				cur_in_c_ptr = cur_in_pix_ptr; cur_filter_c_ptr = cur_filter_pix_ptr;
 				out_c_ptr = out_pix_ptr;
 				op_0_4;
 
-				cur_in_row_ptr += in_widthStep; cur_filter_row_ptr += filter_widthStep;
+				cur_in_row_ptr += dilate_H_mul_in_widthStep; cur_filter_row_ptr += filter_widthStep;
 				cur_in_pix_ptr = cur_in_row_ptr; cur_filter_pix_ptr = cur_filter_row_ptr;
 				cur_in_c_ptr = cur_in_pix_ptr; cur_filter_c_ptr = cur_filter_pix_ptr;
 				out_c_ptr = out_pix_ptr;
 				op_0_4;
 
-				cur_in_pix_ptr += in_pixelStep; cur_filter_pix_ptr += filter_pixelStep;
+				cur_in_pix_ptr += dilate_W_mul_in_pixStep; cur_filter_pix_ptr += filter_pixelStep;
 				cur_in_c_ptr = cur_in_pix_ptr; cur_filter_c_ptr = cur_filter_pix_ptr;
 				out_c_ptr = out_pix_ptr;
 				op_0_4;
 
-				cur_in_pix_ptr += in_pixelStep; cur_filter_pix_ptr += filter_pixelStep;
+				cur_in_pix_ptr += dilate_W_mul_in_pixStep; cur_filter_pix_ptr += filter_pixelStep;
 				cur_in_c_ptr = cur_in_pix_ptr; cur_filter_c_ptr = cur_filter_pix_ptr;
 				out_c_ptr = out_pix_ptr;
 				op_0_4;
 
-				cur_in_row_ptr += in_widthStep; cur_filter_row_ptr += filter_widthStep;
+				cur_in_row_ptr += dilate_H_mul_in_widthStep; cur_filter_row_ptr += filter_widthStep;
 				cur_in_pix_ptr = cur_in_row_ptr; cur_filter_pix_ptr = cur_filter_row_ptr;
 				cur_in_c_ptr = cur_in_pix_ptr; cur_filter_c_ptr = cur_filter_pix_ptr;
 				out_c_ptr = out_pix_ptr;
 				op_0_4;
 
-				cur_in_pix_ptr += in_pixelStep; cur_filter_pix_ptr += filter_pixelStep;
+				cur_in_pix_ptr += dilate_W_mul_in_pixStep; cur_filter_pix_ptr += filter_pixelStep;
 				cur_in_c_ptr = cur_in_pix_ptr; cur_filter_c_ptr = cur_filter_pix_ptr;
 				out_c_ptr = out_pix_ptr;
 				op_0_4;
 
-				cur_in_pix_ptr += in_pixelStep; cur_filter_pix_ptr += filter_pixelStep;
+				cur_in_pix_ptr += dilate_W_mul_in_pixStep; cur_filter_pix_ptr += filter_pixelStep;
 				cur_in_c_ptr = cur_in_pix_ptr; cur_filter_c_ptr = cur_filter_pix_ptr;
 				out_c_ptr = out_pix_ptr;
 #if WITH_PRELU
@@ -2285,6 +2333,8 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel2x2_mul_4(
 	int filter_sliceStep,
 	int stride_H,
 	int stride_W,
+	int dilation_H,
+	int dilation_W,
 	zq_base_type* out_tensor4D_data,
 	int out_N,	// must be in_N
 	int out_H,	// must be (in_H - filter_H)/stride_H + 1
@@ -2326,6 +2376,8 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel2x2_mul_4(
 
 	int stride_H_mul_in_WidthStep = stride_H*in_widthStep;
 	int stride_W_mul_in_pixStep = stride_W*in_pixelStep;
+	int dilate_H_mul_in_widthStep = dilation_H*in_widthStep;
+	int dilate_W_mul_in_pixStep = dilation_W*in_pixelStep;
 	int out_n, out_h, out_w;
 	register zq_mm_type a0, a1, a2, a3;
 	register zq_mm_type b0, b1, b2, b3;
@@ -2353,18 +2405,18 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel2x2_mul_4(
 #endif
 				op_0_4_first;
 
-				cur_in_pix_ptr += in_pixelStep; cur_filter_pix_ptr += filter_pixelStep;
+				cur_in_pix_ptr += dilate_W_mul_in_pixStep; cur_filter_pix_ptr += filter_pixelStep;
 				cur_in_c_ptr = cur_in_pix_ptr; cur_filter_c_ptr = cur_filter_pix_ptr;
 				out_c_ptr = out_pix_ptr;
 				op_0_4;
 
-				cur_in_row_ptr += in_widthStep; cur_filter_row_ptr += filter_widthStep;
+				cur_in_row_ptr += dilate_H_mul_in_widthStep; cur_filter_row_ptr += filter_widthStep;
 				cur_in_pix_ptr = cur_in_row_ptr; cur_filter_pix_ptr = cur_filter_row_ptr;
 				cur_in_c_ptr = cur_in_pix_ptr; cur_filter_c_ptr = cur_filter_pix_ptr;
 				out_c_ptr = out_pix_ptr;
 				op_0_4;
 
-				cur_in_pix_ptr += in_pixelStep; cur_filter_pix_ptr += filter_pixelStep;
+				cur_in_pix_ptr += dilate_W_mul_in_pixStep; cur_filter_pix_ptr += filter_pixelStep;
 				cur_in_c_ptr = cur_in_pix_ptr; cur_filter_c_ptr = cur_filter_pix_ptr;
 				out_c_ptr = out_pix_ptr;
 #if WITH_PRELU
@@ -2396,6 +2448,8 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_mul_8(
 	int filter_sliceStep,
 	int stride_H,
 	int stride_W,
+	int dilation_H,
+	int dilation_W,
 	zq_base_type* out_tensor4D_data,
 	int out_N,	// must be in_N
 	int out_H,	// must be (in_H - filter_H)/stride_H + 1
@@ -2437,6 +2491,8 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_mul_8(
 
 	int stride_H_mul_in_WidthStep = stride_H*in_widthStep;
 	int stride_W_mul_in_pixStep = stride_W*in_pixelStep;
+	int dilate_H_mul_in_widthStep = dilation_H*in_widthStep;
+	int dilate_W_mul_in_pixStep = dilation_W*in_pixelStep;
 	int out_n, out_h, out_w;
 	register zq_mm_type a0, a1, a2, a3;
 	register zq_mm_type b0, b1, b2, b3;
@@ -2464,44 +2520,44 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_mul_8(
 #endif
 				op_0_8_first;
 
-				cur_in_pix_ptr += in_pixelStep; cur_filter_pix_ptr += filter_pixelStep;
+				cur_in_pix_ptr += dilate_W_mul_in_pixStep; cur_filter_pix_ptr += filter_pixelStep;
 				cur_in_c_ptr = cur_in_pix_ptr; cur_filter_c_ptr = cur_filter_pix_ptr;
 				out_c_ptr = out_pix_ptr;
 				op_0_8;
 
-				cur_in_pix_ptr += in_pixelStep; cur_filter_pix_ptr += filter_pixelStep;
+				cur_in_pix_ptr += dilate_W_mul_in_pixStep; cur_filter_pix_ptr += filter_pixelStep;
 				cur_in_c_ptr = cur_in_pix_ptr; cur_filter_c_ptr = cur_filter_pix_ptr;
 				out_c_ptr = out_pix_ptr;
 				op_0_8;
 
-				cur_in_row_ptr += in_widthStep; cur_filter_row_ptr += filter_widthStep;
+				cur_in_row_ptr += dilate_H_mul_in_widthStep; cur_filter_row_ptr += filter_widthStep;
 				cur_in_pix_ptr = cur_in_row_ptr; cur_filter_pix_ptr = cur_filter_row_ptr;
 				cur_in_c_ptr = cur_in_pix_ptr; cur_filter_c_ptr = cur_filter_pix_ptr;
 				out_c_ptr = out_pix_ptr;
 				op_0_8;
 
-				cur_in_pix_ptr += in_pixelStep; cur_filter_pix_ptr += filter_pixelStep;
+				cur_in_pix_ptr += dilate_W_mul_in_pixStep; cur_filter_pix_ptr += filter_pixelStep;
 				cur_in_c_ptr = cur_in_pix_ptr; cur_filter_c_ptr = cur_filter_pix_ptr;
 				out_c_ptr = out_pix_ptr;
 				op_0_8;
 
-				cur_in_pix_ptr += in_pixelStep; cur_filter_pix_ptr += filter_pixelStep;
+				cur_in_pix_ptr += dilate_W_mul_in_pixStep; cur_filter_pix_ptr += filter_pixelStep;
 				cur_in_c_ptr = cur_in_pix_ptr; cur_filter_c_ptr = cur_filter_pix_ptr;
 				out_c_ptr = out_pix_ptr;
 				op_0_8;
 
-				cur_in_row_ptr += in_widthStep; cur_filter_row_ptr += filter_widthStep;
+				cur_in_row_ptr += dilate_H_mul_in_widthStep; cur_filter_row_ptr += filter_widthStep;
 				cur_in_pix_ptr = cur_in_row_ptr; cur_filter_pix_ptr = cur_filter_row_ptr;
 				cur_in_c_ptr = cur_in_pix_ptr; cur_filter_c_ptr = cur_filter_pix_ptr;
 				out_c_ptr = out_pix_ptr;
 				op_0_8;
 
-				cur_in_pix_ptr += in_pixelStep; cur_filter_pix_ptr += filter_pixelStep;
+				cur_in_pix_ptr += dilate_W_mul_in_pixStep; cur_filter_pix_ptr += filter_pixelStep;
 				cur_in_c_ptr = cur_in_pix_ptr; cur_filter_c_ptr = cur_filter_pix_ptr;
 				out_c_ptr = out_pix_ptr;
 				op_0_8;
 
-				cur_in_pix_ptr += in_pixelStep; cur_filter_pix_ptr += filter_pixelStep;
+				cur_in_pix_ptr += dilate_W_mul_in_pixStep; cur_filter_pix_ptr += filter_pixelStep;
 				cur_in_c_ptr = cur_in_pix_ptr; cur_filter_c_ptr = cur_filter_pix_ptr;
 				out_c_ptr = out_pix_ptr;
 #if WITH_PRELU
@@ -2532,6 +2588,8 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel2x2_mul_8(
 	int filter_sliceStep,
 	int stride_H,
 	int stride_W,
+	int dilation_H,
+	int dilation_W,
 	zq_base_type* out_tensor4D_data,
 	int out_N,	// must be in_N
 	int out_H,	// must be (in_H - filter_H)/stride_H + 1
@@ -2573,6 +2631,8 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel2x2_mul_8(
 
 	int stride_H_mul_in_WidthStep = stride_H*in_widthStep;
 	int stride_W_mul_in_pixStep = stride_W*in_pixelStep;
+	int dilate_H_mul_in_widthStep = dilation_H*in_widthStep;
+	int dilate_W_mul_in_pixStep = dilation_W*in_pixelStep;
 	int out_n, out_h, out_w;
 	register zq_mm_type a0, a1, a2, a3;
 	register zq_mm_type b0, b1, b2, b3;
@@ -2600,19 +2660,19 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel2x2_mul_8(
 #endif
 				op_0_8_first;
 
-				cur_in_pix_ptr += in_pixelStep; cur_filter_pix_ptr += filter_pixelStep;
+				cur_in_pix_ptr += dilate_W_mul_in_pixStep; cur_filter_pix_ptr += filter_pixelStep;
 				cur_in_c_ptr = cur_in_pix_ptr; cur_filter_c_ptr = cur_filter_pix_ptr;
 				out_c_ptr = out_pix_ptr;
 				op_0_8;
 
 
-				cur_in_row_ptr += in_widthStep; cur_filter_row_ptr += filter_widthStep;
+				cur_in_row_ptr += dilate_H_mul_in_widthStep; cur_filter_row_ptr += filter_widthStep;
 				cur_in_pix_ptr = cur_in_row_ptr; cur_filter_pix_ptr = cur_filter_row_ptr;
 				cur_in_c_ptr = cur_in_pix_ptr; cur_filter_c_ptr = cur_filter_pix_ptr;
 				out_c_ptr = out_pix_ptr;
 				op_0_8;
 
-				cur_in_pix_ptr += in_pixelStep; cur_filter_pix_ptr += filter_pixelStep;
+				cur_in_pix_ptr += dilate_W_mul_in_pixStep; cur_filter_pix_ptr += filter_pixelStep;
 				cur_in_c_ptr = cur_in_pix_ptr; cur_filter_c_ptr = cur_filter_pix_ptr;
 				out_c_ptr = out_pix_ptr;
 #if WITH_PRELU
@@ -2643,6 +2703,8 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_div_8(
 	int filter_sliceStep,
 	int stride_H,
 	int stride_W,
+	int dilation_H,
+	int dilation_W,
 	zq_base_type* out_tensor4D_data,
 	int out_N,	// must be in_N
 	int out_H,	// must be (in_H - filter_H)/stride_H + 1
@@ -2683,6 +2745,8 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_div_8(
 #endif
 	int stride_H_mul_in_WidthStep = stride_H*in_widthStep;
 	int stride_W_mul_in_pixStep = stride_W*in_pixelStep;
+	int dilate_H_mul_in_widthStep = dilation_H*in_widthStep;
+	int dilate_W_mul_in_pixStep = dilation_W*in_pixelStep;
 	int out_n, out_h, out_w, out_c;
 	register zq_mm_type a0, a1, a2, a3;
 	register zq_mm_type b0, b1, b2, b3;
@@ -2719,7 +2783,7 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_div_8(
 				}
 
 
-				cur_in_pix_ptr += in_pixelStep; cur_filter_pix_ptr += filter_pixelStep;
+				cur_in_pix_ptr += dilate_W_mul_in_pixStep; cur_filter_pix_ptr += filter_pixelStep;
 				cur_in_c_ptr = cur_in_pix_ptr; cur_filter_c_ptr = cur_filter_pix_ptr;
 				out_c_ptr = out_pix_ptr;
 				for (out_c = 0; out_c < in_C; out_c += zq_mm_align_size8)
@@ -2727,7 +2791,7 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_div_8(
 					op_0_8;
 				}
 
-				cur_in_pix_ptr += in_pixelStep; cur_filter_pix_ptr += filter_pixelStep;
+				cur_in_pix_ptr += dilate_W_mul_in_pixStep; cur_filter_pix_ptr += filter_pixelStep;
 				cur_in_c_ptr = cur_in_pix_ptr; cur_filter_c_ptr = cur_filter_pix_ptr;
 				out_c_ptr = out_pix_ptr;
 				for (out_c = 0; out_c < in_C; out_c += zq_mm_align_size8)
@@ -2735,7 +2799,7 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_div_8(
 					op_0_8;
 				}
 
-				cur_in_row_ptr += in_widthStep; cur_filter_row_ptr += filter_widthStep;
+				cur_in_row_ptr += dilate_H_mul_in_widthStep; cur_filter_row_ptr += filter_widthStep;
 				cur_in_pix_ptr = cur_in_row_ptr; cur_filter_pix_ptr = cur_filter_row_ptr;
 				cur_in_c_ptr = cur_in_pix_ptr; cur_filter_c_ptr = cur_filter_pix_ptr;
 				out_c_ptr = out_pix_ptr;
@@ -2744,7 +2808,7 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_div_8(
 					op_0_8;
 				}
 
-				cur_in_pix_ptr += in_pixelStep; cur_filter_pix_ptr += filter_pixelStep;
+				cur_in_pix_ptr += dilate_W_mul_in_pixStep; cur_filter_pix_ptr += filter_pixelStep;
 				cur_in_c_ptr = cur_in_pix_ptr; cur_filter_c_ptr = cur_filter_pix_ptr;
 				out_c_ptr = out_pix_ptr;
 				for (out_c = 0; out_c < in_C; out_c += zq_mm_align_size8)
@@ -2752,7 +2816,7 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_div_8(
 					op_0_8;
 				}
 
-				cur_in_pix_ptr += in_pixelStep; cur_filter_pix_ptr += filter_pixelStep;
+				cur_in_pix_ptr += dilate_W_mul_in_pixStep; cur_filter_pix_ptr += filter_pixelStep;
 				cur_in_c_ptr = cur_in_pix_ptr; cur_filter_c_ptr = cur_filter_pix_ptr;
 				out_c_ptr = out_pix_ptr;
 				for (out_c = 0; out_c < in_C; out_c += zq_mm_align_size8)
@@ -2760,7 +2824,7 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_div_8(
 					op_0_8;
 				}
 
-				cur_in_row_ptr += in_widthStep; cur_filter_row_ptr += filter_widthStep;
+				cur_in_row_ptr += dilate_H_mul_in_widthStep; cur_filter_row_ptr += filter_widthStep;
 				cur_in_pix_ptr = cur_in_row_ptr; cur_filter_pix_ptr = cur_filter_row_ptr;
 				cur_in_c_ptr = cur_in_pix_ptr; cur_filter_c_ptr = cur_filter_pix_ptr;
 				out_c_ptr = out_pix_ptr;
@@ -2769,7 +2833,7 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_div_8(
 					op_0_8;
 				}
 
-				cur_in_pix_ptr += in_pixelStep; cur_filter_pix_ptr += filter_pixelStep;
+				cur_in_pix_ptr += dilate_W_mul_in_pixStep; cur_filter_pix_ptr += filter_pixelStep;
 				cur_in_c_ptr = cur_in_pix_ptr; cur_filter_c_ptr = cur_filter_pix_ptr;
 				out_c_ptr = out_pix_ptr;
 				for (out_c = 0; out_c < in_C; out_c += zq_mm_align_size8)
@@ -2777,7 +2841,7 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_div_8(
 					op_0_8;
 				}
 
-				cur_in_pix_ptr += in_pixelStep; cur_filter_pix_ptr += filter_pixelStep;
+				cur_in_pix_ptr += dilate_W_mul_in_pixStep; cur_filter_pix_ptr += filter_pixelStep;
 				cur_in_c_ptr = cur_in_pix_ptr; cur_filter_c_ptr = cur_filter_pix_ptr;
 				out_c_ptr = out_pix_ptr;
 #if WITH_PRELU
@@ -2811,6 +2875,8 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel2x2_div_8(
 	int filter_sliceStep,
 	int stride_H,
 	int stride_W,
+	int dilation_H,
+	int dilation_W,
 	zq_base_type* out_tensor4D_data,
 	int out_N,	// must be in_N
 	int out_H,	// must be (in_H - filter_H)/stride_H + 1
@@ -2852,6 +2918,8 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel2x2_div_8(
 
 	int stride_H_mul_in_WidthStep = stride_H*in_widthStep;
 	int stride_W_mul_in_pixStep = stride_W*in_pixelStep;
+	int dilate_H_mul_in_widthStep = dilation_H*in_widthStep;
+	int dilate_W_mul_in_pixStep = dilation_W*in_pixelStep;
 	int out_n, out_h, out_w, out_c;
 	register zq_mm_type a0, a1, a2, a3;
 	register zq_mm_type b0, b1, b2, b3;
@@ -2889,7 +2957,7 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel2x2_div_8(
 				}
 
 
-				cur_in_pix_ptr += in_pixelStep; cur_filter_pix_ptr += filter_pixelStep;
+				cur_in_pix_ptr += dilate_W_mul_in_pixStep; cur_filter_pix_ptr += filter_pixelStep;
 				cur_in_c_ptr = cur_in_pix_ptr; cur_filter_c_ptr = cur_filter_pix_ptr;
 				out_c_ptr = out_pix_ptr;
 				for (out_c = 0; out_c < in_C; out_c += zq_mm_align_size8)
@@ -2898,7 +2966,7 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel2x2_div_8(
 				}
 
 
-				cur_in_row_ptr += in_widthStep; cur_filter_row_ptr += filter_widthStep;
+				cur_in_row_ptr += dilate_H_mul_in_widthStep; cur_filter_row_ptr += filter_widthStep;
 				cur_in_pix_ptr = cur_in_row_ptr; cur_filter_pix_ptr = cur_filter_row_ptr;
 				cur_in_c_ptr = cur_in_pix_ptr; cur_filter_c_ptr = cur_filter_pix_ptr;
 				out_c_ptr = out_pix_ptr;
@@ -2907,7 +2975,7 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel2x2_div_8(
 					op_0_8;
 				}
 
-				cur_in_pix_ptr += in_pixelStep; cur_filter_pix_ptr += filter_pixelStep;
+				cur_in_pix_ptr += dilate_W_mul_in_pixStep; cur_filter_pix_ptr += filter_pixelStep;
 				cur_in_c_ptr = cur_in_pix_ptr; cur_filter_c_ptr = cur_filter_pix_ptr;
 				out_c_ptr = out_pix_ptr;
 #if WITH_PRELU
@@ -2941,6 +3009,8 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_mul_16(
 	int filter_sliceStep,
 	int stride_H,
 	int stride_W,
+	int dilation_H,
+	int dilation_W,
 	zq_base_type* out_tensor4D_data,
 	int out_N,	// must be in_N
 	int out_H,	// must be (in_H - filter_H)/stride_H + 1
@@ -2982,6 +3052,8 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_mul_16(
 
 	int stride_H_mul_in_WidthStep = stride_H*in_widthStep;
 	int stride_W_mul_in_pixStep = stride_W*in_pixelStep;
+	int dilate_H_mul_in_widthStep = dilation_H*in_widthStep;
+	int dilate_W_mul_in_pixStep = dilation_W*in_pixelStep;
 	int out_n, out_h, out_w;
 	register zq_mm_type a0, a1, a2, a3;
 	register zq_mm_type b0, b1, b2, b3;
@@ -3009,44 +3081,44 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_mul_16(
 #endif
 				op_0_16_first;
 
-				cur_in_pix_ptr += in_pixelStep; cur_filter_pix_ptr += filter_pixelStep;
+				cur_in_pix_ptr += dilate_W_mul_in_pixStep; cur_filter_pix_ptr += filter_pixelStep;
 				cur_in_c_ptr = cur_in_pix_ptr; cur_filter_c_ptr = cur_filter_pix_ptr;
 				out_c_ptr = out_pix_ptr;
 				op_0_16;
 
-				cur_in_pix_ptr += in_pixelStep; cur_filter_pix_ptr += filter_pixelStep;
+				cur_in_pix_ptr += dilate_W_mul_in_pixStep; cur_filter_pix_ptr += filter_pixelStep;
 				cur_in_c_ptr = cur_in_pix_ptr; cur_filter_c_ptr = cur_filter_pix_ptr;
 				out_c_ptr = out_pix_ptr;
 				op_0_16;
 
-				cur_in_row_ptr += in_widthStep; cur_filter_row_ptr += filter_widthStep;
+				cur_in_row_ptr += dilate_H_mul_in_widthStep; cur_filter_row_ptr += filter_widthStep;
 				cur_in_pix_ptr = cur_in_row_ptr; cur_filter_pix_ptr = cur_filter_row_ptr;
 				cur_in_c_ptr = cur_in_pix_ptr; cur_filter_c_ptr = cur_filter_pix_ptr;
 				out_c_ptr = out_pix_ptr;
 				op_0_16;
 
-				cur_in_pix_ptr += in_pixelStep; cur_filter_pix_ptr += filter_pixelStep;
+				cur_in_pix_ptr += dilate_W_mul_in_pixStep; cur_filter_pix_ptr += filter_pixelStep;
 				cur_in_c_ptr = cur_in_pix_ptr; cur_filter_c_ptr = cur_filter_pix_ptr;
 				out_c_ptr = out_pix_ptr;
 				op_0_16;
 
-				cur_in_pix_ptr += in_pixelStep; cur_filter_pix_ptr += filter_pixelStep;
+				cur_in_pix_ptr += dilate_W_mul_in_pixStep; cur_filter_pix_ptr += filter_pixelStep;
 				cur_in_c_ptr = cur_in_pix_ptr; cur_filter_c_ptr = cur_filter_pix_ptr;
 				out_c_ptr = out_pix_ptr;
 				op_0_16;
 
-				cur_in_row_ptr += in_widthStep; cur_filter_row_ptr += filter_widthStep;
+				cur_in_row_ptr += dilate_H_mul_in_widthStep; cur_filter_row_ptr += filter_widthStep;
 				cur_in_pix_ptr = cur_in_row_ptr; cur_filter_pix_ptr = cur_filter_row_ptr;
 				cur_in_c_ptr = cur_in_pix_ptr; cur_filter_c_ptr = cur_filter_pix_ptr;
 				out_c_ptr = out_pix_ptr;
 				op_0_16;
 
-				cur_in_pix_ptr += in_pixelStep; cur_filter_pix_ptr += filter_pixelStep;
+				cur_in_pix_ptr += dilate_W_mul_in_pixStep; cur_filter_pix_ptr += filter_pixelStep;
 				cur_in_c_ptr = cur_in_pix_ptr; cur_filter_c_ptr = cur_filter_pix_ptr;
 				out_c_ptr = out_pix_ptr;
 				op_0_16;
 
-				cur_in_pix_ptr += in_pixelStep; cur_filter_pix_ptr += filter_pixelStep;
+				cur_in_pix_ptr += dilate_W_mul_in_pixStep; cur_filter_pix_ptr += filter_pixelStep;
 				cur_in_c_ptr = cur_in_pix_ptr; cur_filter_c_ptr = cur_filter_pix_ptr;
 				out_c_ptr = out_pix_ptr;
 #if WITH_PRELU
@@ -3078,6 +3150,8 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel2x2_mul_16(
 	int filter_sliceStep,
 	int stride_H,
 	int stride_W,
+	int dilation_H,
+	int dilation_W,
 	zq_base_type* out_tensor4D_data,
 	int out_N,	// must be in_N
 	int out_H,	// must be (in_H - filter_H)/stride_H + 1
@@ -3119,6 +3193,8 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel2x2_mul_16(
 
 	int stride_H_mul_in_WidthStep = stride_H*in_widthStep;
 	int stride_W_mul_in_pixStep = stride_W*in_pixelStep;
+	int dilate_H_mul_in_widthStep = dilation_H*in_widthStep;
+	int dilate_W_mul_in_pixStep = dilation_W*in_pixelStep;
 	int out_n, out_h, out_w;
 	register zq_mm_type a0, a1, a2, a3;
 	register zq_mm_type b0, b1, b2, b3;
@@ -3146,19 +3222,19 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel2x2_mul_16(
 #endif
 				op_0_16_first;
 
-				cur_in_pix_ptr += in_pixelStep; cur_filter_pix_ptr += filter_pixelStep;
+				cur_in_pix_ptr += dilate_W_mul_in_pixStep; cur_filter_pix_ptr += filter_pixelStep;
 				cur_in_c_ptr = cur_in_pix_ptr; cur_filter_c_ptr = cur_filter_pix_ptr;
 				out_c_ptr = out_pix_ptr;
 				op_0_16;
 
 
-				cur_in_row_ptr += in_widthStep; cur_filter_row_ptr += filter_widthStep;
+				cur_in_row_ptr += dilate_H_mul_in_widthStep; cur_filter_row_ptr += filter_widthStep;
 				cur_in_pix_ptr = cur_in_row_ptr; cur_filter_pix_ptr = cur_filter_row_ptr;
 				cur_in_c_ptr = cur_in_pix_ptr; cur_filter_c_ptr = cur_filter_pix_ptr;
 				out_c_ptr = out_pix_ptr;
 				op_0_16;
 
-				cur_in_pix_ptr += in_pixelStep; cur_filter_pix_ptr += filter_pixelStep;
+				cur_in_pix_ptr += dilate_W_mul_in_pixStep; cur_filter_pix_ptr += filter_pixelStep;
 				cur_in_c_ptr = cur_in_pix_ptr; cur_filter_c_ptr = cur_filter_pix_ptr;
 				out_c_ptr = out_pix_ptr;
 #if WITH_PRELU
@@ -3191,6 +3267,8 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_mul_32(
 	int filter_sliceStep,
 	int stride_H,
 	int stride_W,
+	int dilation_H,
+	int dilation_W,
 	zq_base_type* out_tensor4D_data,
 	int out_N,	// must be in_N
 	int out_H,	// must be (in_H - filter_H)/stride_H + 1
@@ -3232,6 +3310,8 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_mul_32(
 
 	int stride_H_mul_in_WidthStep = stride_H*in_widthStep;
 	int stride_W_mul_in_pixStep = stride_W*in_pixelStep;
+	int dilate_H_mul_in_widthStep = dilation_H*in_widthStep;
+	int dilate_W_mul_in_pixStep = dilation_W*in_pixelStep;
 	int out_n, out_h, out_w;
 	register zq_mm_type a0, a1, a2, a3;
 	register zq_mm_type b0, b1, b2, b3;
@@ -3259,44 +3339,44 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_mul_32(
 #endif
 				op_0_32_first;
 
-				cur_in_pix_ptr += in_pixelStep; cur_filter_pix_ptr += filter_pixelStep;
+				cur_in_pix_ptr += dilate_W_mul_in_pixStep; cur_filter_pix_ptr += filter_pixelStep;
 				cur_in_c_ptr = cur_in_pix_ptr; cur_filter_c_ptr = cur_filter_pix_ptr;
 				out_c_ptr = out_pix_ptr;
 				op_0_32;
 
-				cur_in_pix_ptr += in_pixelStep; cur_filter_pix_ptr += filter_pixelStep;
+				cur_in_pix_ptr += dilate_W_mul_in_pixStep; cur_filter_pix_ptr += filter_pixelStep;
 				cur_in_c_ptr = cur_in_pix_ptr; cur_filter_c_ptr = cur_filter_pix_ptr;
 				out_c_ptr = out_pix_ptr;
 				op_0_32;
 
-				cur_in_row_ptr += in_widthStep; cur_filter_row_ptr += filter_widthStep;
+				cur_in_row_ptr += dilate_H_mul_in_widthStep; cur_filter_row_ptr += filter_widthStep;
 				cur_in_pix_ptr = cur_in_row_ptr; cur_filter_pix_ptr = cur_filter_row_ptr;
 				cur_in_c_ptr = cur_in_pix_ptr; cur_filter_c_ptr = cur_filter_pix_ptr;
 				out_c_ptr = out_pix_ptr;
 				op_0_32;
 
-				cur_in_pix_ptr += in_pixelStep; cur_filter_pix_ptr += filter_pixelStep;
+				cur_in_pix_ptr += dilate_W_mul_in_pixStep; cur_filter_pix_ptr += filter_pixelStep;
 				cur_in_c_ptr = cur_in_pix_ptr; cur_filter_c_ptr = cur_filter_pix_ptr;
 				out_c_ptr = out_pix_ptr;
 				op_0_32;
 
-				cur_in_pix_ptr += in_pixelStep; cur_filter_pix_ptr += filter_pixelStep;
+				cur_in_pix_ptr += dilate_W_mul_in_pixStep; cur_filter_pix_ptr += filter_pixelStep;
 				cur_in_c_ptr = cur_in_pix_ptr; cur_filter_c_ptr = cur_filter_pix_ptr;
 				out_c_ptr = out_pix_ptr;
 				op_0_32;
 
-				cur_in_row_ptr += in_widthStep; cur_filter_row_ptr += filter_widthStep;
+				cur_in_row_ptr += dilate_H_mul_in_widthStep; cur_filter_row_ptr += filter_widthStep;
 				cur_in_pix_ptr = cur_in_row_ptr; cur_filter_pix_ptr = cur_filter_row_ptr;
 				cur_in_c_ptr = cur_in_pix_ptr; cur_filter_c_ptr = cur_filter_pix_ptr;
 				out_c_ptr = out_pix_ptr;
 				op_0_32;
 
-				cur_in_pix_ptr += in_pixelStep; cur_filter_pix_ptr += filter_pixelStep;
+				cur_in_pix_ptr += dilate_W_mul_in_pixStep; cur_filter_pix_ptr += filter_pixelStep;
 				cur_in_c_ptr = cur_in_pix_ptr; cur_filter_c_ptr = cur_filter_pix_ptr;
 				out_c_ptr = out_pix_ptr;
 				op_0_32;
 
-				cur_in_pix_ptr += in_pixelStep; cur_filter_pix_ptr += filter_pixelStep;
+				cur_in_pix_ptr += dilate_W_mul_in_pixStep; cur_filter_pix_ptr += filter_pixelStep;
 				cur_in_c_ptr = cur_in_pix_ptr; cur_filter_c_ptr = cur_filter_pix_ptr;
 				out_c_ptr = out_pix_ptr;
 #if WITH_PRELU
@@ -3327,6 +3407,8 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel2x2_mul_32(
 	int filter_sliceStep,
 	int stride_H,
 	int stride_W,
+	int dilation_H,
+	int dilation_W,
 	zq_base_type* out_tensor4D_data,
 	int out_N,	// must be in_N
 	int out_H,	// must be (in_H - filter_H)/stride_H + 1
@@ -3368,6 +3450,8 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel2x2_mul_32(
 
 	int stride_H_mul_in_WidthStep = stride_H*in_widthStep;
 	int stride_W_mul_in_pixStep = stride_W*in_pixelStep;
+	int dilate_H_mul_in_widthStep = dilation_H*in_widthStep;
+	int dilate_W_mul_in_pixStep = dilation_W*in_pixelStep;
 	int out_n, out_h, out_w;
 	register zq_mm_type a0, a1, a2, a3;
 	register zq_mm_type b0, b1, b2, b3;
@@ -3395,19 +3479,19 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel2x2_mul_32(
 #endif
 				op_0_32_first;
 
-				cur_in_pix_ptr += in_pixelStep; cur_filter_pix_ptr += filter_pixelStep;
+				cur_in_pix_ptr += dilate_W_mul_in_pixStep; cur_filter_pix_ptr += filter_pixelStep;
 				cur_in_c_ptr = cur_in_pix_ptr; cur_filter_c_ptr = cur_filter_pix_ptr;
 				out_c_ptr = out_pix_ptr;
 				op_0_32;
 
 
-				cur_in_row_ptr += in_widthStep; cur_filter_row_ptr += filter_widthStep;
+				cur_in_row_ptr += dilate_H_mul_in_widthStep; cur_filter_row_ptr += filter_widthStep;
 				cur_in_pix_ptr = cur_in_row_ptr; cur_filter_pix_ptr = cur_filter_row_ptr;
 				cur_in_c_ptr = cur_in_pix_ptr; cur_filter_c_ptr = cur_filter_pix_ptr;
 				out_c_ptr = out_pix_ptr;
 				op_0_32;
 
-				cur_in_pix_ptr += in_pixelStep; cur_filter_pix_ptr += filter_pixelStep;
+				cur_in_pix_ptr += dilate_W_mul_in_pixStep; cur_filter_pix_ptr += filter_pixelStep;
 				cur_in_c_ptr = cur_in_pix_ptr; cur_filter_c_ptr = cur_filter_pix_ptr;
 				out_c_ptr = out_pix_ptr;
 #if WITH_PRELU
@@ -3438,6 +3522,8 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_mul_64(
 	int filter_sliceStep,
 	int stride_H,
 	int stride_W,
+	int dilation_H,
+	int dilation_W,
 	zq_base_type* out_tensor4D_data,
 	int out_N,	// must be in_N
 	int out_H,	// must be (in_H - filter_H)/stride_H + 1
@@ -3479,6 +3565,8 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_mul_64(
 
 	int stride_H_mul_in_WidthStep = stride_H*in_widthStep;
 	int stride_W_mul_in_pixStep = stride_W*in_pixelStep;
+	int dilate_H_mul_in_widthStep = dilation_H*in_widthStep;
+	int dilate_W_mul_in_pixStep = dilation_W*in_pixelStep;
 	int out_n, out_h, out_w;
 	register zq_mm_type a0, a1, a2, a3;
 	register zq_mm_type b0, b1, b2, b3;
@@ -3506,44 +3594,44 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel3x3_mul_64(
 #endif
 				op_0_64_first;
 
-				cur_in_pix_ptr += in_pixelStep; cur_filter_pix_ptr += filter_pixelStep;
+				cur_in_pix_ptr += dilate_W_mul_in_pixStep; cur_filter_pix_ptr += filter_pixelStep;
 				cur_in_c_ptr = cur_in_pix_ptr; cur_filter_c_ptr = cur_filter_pix_ptr;
 				out_c_ptr = out_pix_ptr;
 				op_0_64;
 
-				cur_in_pix_ptr += in_pixelStep; cur_filter_pix_ptr += filter_pixelStep;
+				cur_in_pix_ptr += dilate_W_mul_in_pixStep; cur_filter_pix_ptr += filter_pixelStep;
 				cur_in_c_ptr = cur_in_pix_ptr; cur_filter_c_ptr = cur_filter_pix_ptr;
 				out_c_ptr = out_pix_ptr;
 				op_0_64;
 
-				cur_in_row_ptr += in_widthStep; cur_filter_row_ptr += filter_widthStep;
+				cur_in_row_ptr += dilate_H_mul_in_widthStep; cur_filter_row_ptr += filter_widthStep;
 				cur_in_pix_ptr = cur_in_row_ptr; cur_filter_pix_ptr = cur_filter_row_ptr;
 				cur_in_c_ptr = cur_in_pix_ptr; cur_filter_c_ptr = cur_filter_pix_ptr;
 				out_c_ptr = out_pix_ptr;
 				op_0_64;
 
-				cur_in_pix_ptr += in_pixelStep; cur_filter_pix_ptr += filter_pixelStep;
+				cur_in_pix_ptr += dilate_W_mul_in_pixStep; cur_filter_pix_ptr += filter_pixelStep;
 				cur_in_c_ptr = cur_in_pix_ptr; cur_filter_c_ptr = cur_filter_pix_ptr;
 				out_c_ptr = out_pix_ptr;
 				op_0_64;
 
-				cur_in_pix_ptr += in_pixelStep; cur_filter_pix_ptr += filter_pixelStep;
+				cur_in_pix_ptr += dilate_W_mul_in_pixStep; cur_filter_pix_ptr += filter_pixelStep;
 				cur_in_c_ptr = cur_in_pix_ptr; cur_filter_c_ptr = cur_filter_pix_ptr;
 				out_c_ptr = out_pix_ptr;
 				op_0_64;
 
-				cur_in_row_ptr += in_widthStep; cur_filter_row_ptr += filter_widthStep;
+				cur_in_row_ptr += dilate_H_mul_in_widthStep; cur_filter_row_ptr += filter_widthStep;
 				cur_in_pix_ptr = cur_in_row_ptr; cur_filter_pix_ptr = cur_filter_row_ptr;
 				cur_in_c_ptr = cur_in_pix_ptr; cur_filter_c_ptr = cur_filter_pix_ptr;
 				out_c_ptr = out_pix_ptr;
 				op_0_64;
 
-				cur_in_pix_ptr += in_pixelStep; cur_filter_pix_ptr += filter_pixelStep;
+				cur_in_pix_ptr += dilate_W_mul_in_pixStep; cur_filter_pix_ptr += filter_pixelStep;
 				cur_in_c_ptr = cur_in_pix_ptr; cur_filter_c_ptr = cur_filter_pix_ptr;
 				out_c_ptr = out_pix_ptr;
 				op_0_64;
 
-				cur_in_pix_ptr += in_pixelStep; cur_filter_pix_ptr += filter_pixelStep;
+				cur_in_pix_ptr += dilate_W_mul_in_pixStep; cur_filter_pix_ptr += filter_pixelStep;
 				cur_in_c_ptr = cur_in_pix_ptr; cur_filter_c_ptr = cur_filter_pix_ptr;
 				out_c_ptr = out_pix_ptr;
 #if WITH_PRELU
@@ -3575,6 +3663,8 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel2x2_mul_64(
 	int filter_sliceStep,
 	int stride_H,
 	int stride_W,
+	int dilation_H,
+	int dilation_W,
 	zq_base_type* out_tensor4D_data,
 	int out_N,	// must be in_N
 	int out_H,	// must be (in_H - filter_H)/stride_H + 1
@@ -3616,6 +3706,8 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel2x2_mul_64(
 
 	int stride_H_mul_in_WidthStep = stride_H*in_widthStep;
 	int stride_W_mul_in_pixStep = stride_W*in_pixelStep;
+	int dilate_H_mul_in_widthStep = dilation_H*in_widthStep;
+	int dilate_W_mul_in_pixStep = dilation_W*in_pixelStep;
 	int out_n, out_h, out_w;
 	register zq_mm_type a0, a1, a2, a3;
 	register zq_mm_type b0, b1, b2, b3;
@@ -3643,19 +3735,19 @@ void zq_cnn_depthwise_conv_no_padding_32f_kernel2x2_mul_64(
 #endif
 				op_0_64_first;
 
-				cur_in_pix_ptr += in_pixelStep; cur_filter_pix_ptr += filter_pixelStep;
+				cur_in_pix_ptr += dilate_W_mul_in_pixStep; cur_filter_pix_ptr += filter_pixelStep;
 				cur_in_c_ptr = cur_in_pix_ptr; cur_filter_c_ptr = cur_filter_pix_ptr;
 				out_c_ptr = out_pix_ptr;
 				op_0_64;
 
 
-				cur_in_row_ptr += in_widthStep; cur_filter_row_ptr += filter_widthStep;
+				cur_in_row_ptr += dilate_H_mul_in_widthStep; cur_filter_row_ptr += filter_widthStep;
 				cur_in_pix_ptr = cur_in_row_ptr; cur_filter_pix_ptr = cur_filter_row_ptr;
 				cur_in_c_ptr = cur_in_pix_ptr; cur_filter_c_ptr = cur_filter_pix_ptr;
 				out_c_ptr = out_pix_ptr;
 				op_0_64;
 
-				cur_in_pix_ptr += in_pixelStep; cur_filter_pix_ptr += filter_pixelStep;
+				cur_in_pix_ptr += dilate_W_mul_in_pixStep; cur_filter_pix_ptr += filter_pixelStep;
 				cur_in_c_ptr = cur_in_pix_ptr; cur_filter_c_ptr = cur_filter_pix_ptr;
 				out_c_ptr = out_pix_ptr;
 #if WITH_PRELU
