@@ -178,40 +178,40 @@ void testF2233(int C, int H, int W, int nIters)
 	{
 #if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_AVX
 		if (C == 512)
-			zq_cnn_depthwise_conv_no_padding_32f_align256bit_kernel3x3_C512(in_data, 1, in_H, in_W, C, in_pixStep, in_widthStep, in_sliceStep, filter, 1, 3, 3, C, filter_pixStep, filter_widthStep, filter_sliceStep, 1, 1, out_data2, 1, out_H, out_W, C, out_pixStep, out_widthStep, out_sliceStep);
+			zq_cnn_depthwise_conv_no_padding_32f_align256bit_kernel3x3_C512(in_data, 1, in_H, in_W, C, in_pixStep, in_widthStep, in_sliceStep, filter, 1, 3, 3, C, filter_pixStep, filter_widthStep, filter_sliceStep, 1, 1, 1, 1, out_data2, 1, out_H, out_W, C, out_pixStep, out_widthStep, out_sliceStep);
 		else if (C == 256)
-			zq_cnn_depthwise_conv_no_padding_32f_align256bit_kernel3x3_C256(in_data, 1, in_H, in_W, C, in_pixStep, in_widthStep, in_sliceStep, filter, 1, 3, 3, C, filter_pixStep, filter_widthStep, filter_sliceStep, 1, 1, out_data2, 1, out_H, out_W, C, out_pixStep, out_widthStep, out_sliceStep);
+			zq_cnn_depthwise_conv_no_padding_32f_align256bit_kernel3x3_C256(in_data, 1, in_H, in_W, C, in_pixStep, in_widthStep, in_sliceStep, filter, 1, 3, 3, C, filter_pixStep, filter_widthStep, filter_sliceStep, 1, 1, 1, 1, out_data2, 1, out_H, out_W, C, out_pixStep, out_widthStep, out_sliceStep);
 		else if (C == 128)
-			zq_cnn_depthwise_conv_no_padding_32f_align256bit_kernel3x3_C128(in_data, 1, in_H, in_W, C, in_pixStep, in_widthStep, in_sliceStep, filter, 1, 3, 3, C, filter_pixStep, filter_widthStep, filter_sliceStep, 1, 1, out_data2, 1, out_H, out_W, C, out_pixStep, out_widthStep, out_sliceStep);
+			zq_cnn_depthwise_conv_no_padding_32f_align256bit_kernel3x3_C128(in_data, 1, in_H, in_W, C, in_pixStep, in_widthStep, in_sliceStep, filter, 1, 3, 3, C, filter_pixStep, filter_widthStep, filter_sliceStep, 1, 1, 1, 1, out_data2, 1, out_H, out_W, C, out_pixStep, out_widthStep, out_sliceStep);
 		else if (C == 64)
-			zq_cnn_depthwise_conv_no_padding_32f_align256bit_kernel3x3_C64(in_data, 1, in_H, in_W, C, in_pixStep, in_widthStep, in_sliceStep, filter, 1, 3, 3, C, filter_pixStep, filter_widthStep, filter_sliceStep, 1, 1, out_data2, 1, out_H, out_W, C, out_pixStep, out_widthStep, out_sliceStep);
+			zq_cnn_depthwise_conv_no_padding_32f_align256bit_kernel3x3_C64(in_data, 1, in_H, in_W, C, in_pixStep, in_widthStep, in_sliceStep, filter, 1, 3, 3, C, filter_pixStep, filter_widthStep, filter_sliceStep, 1, 1, 1, 1, out_data2, 1, out_H, out_W, C, out_pixStep, out_widthStep, out_sliceStep);
 		else if (C == 32)
-			zq_cnn_depthwise_conv_no_padding_32f_align256bit_kernel3x3_C32(in_data, 1, in_H, in_W, C, in_pixStep, in_widthStep, in_sliceStep, filter, 1, 3, 3, C, filter_pixStep, filter_widthStep, filter_sliceStep, 1, 1, out_data2, 1, out_H, out_W, C, out_pixStep, out_widthStep, out_sliceStep);
+			zq_cnn_depthwise_conv_no_padding_32f_align256bit_kernel3x3_C32(in_data, 1, in_H, in_W, C, in_pixStep, in_widthStep, in_sliceStep, filter, 1, 3, 3, C, filter_pixStep, filter_widthStep, filter_sliceStep, 1, 1, 1, 1, out_data2, 1, out_H, out_W, C, out_pixStep, out_widthStep, out_sliceStep);
 		else if (C == 24)
-			zq_cnn_depthwise_conv_no_padding_32f_align256bit_kernel3x3_C24(in_data, 1, in_H, in_W, C, in_pixStep, in_widthStep, in_sliceStep, filter, 1, 3, 3, C, filter_pixStep, filter_widthStep, filter_sliceStep, 1, 1, out_data2, 1, out_H, out_W, C, out_pixStep, out_widthStep, out_sliceStep);
+			zq_cnn_depthwise_conv_no_padding_32f_align256bit_kernel3x3_C24(in_data, 1, in_H, in_W, C, in_pixStep, in_widthStep, in_sliceStep, filter, 1, 3, 3, C, filter_pixStep, filter_widthStep, filter_sliceStep, 1, 1, 1, 1, out_data2, 1, out_H, out_W, C, out_pixStep, out_widthStep, out_sliceStep);
 		else if (C == 16)
-			zq_cnn_depthwise_conv_no_padding_32f_align256bit_kernel3x3_C16(in_data, 1, in_H, in_W, C, in_pixStep, in_widthStep, in_sliceStep, filter, 1, 3, 3, C, filter_pixStep, filter_widthStep, filter_sliceStep, 1, 1, out_data2, 1, out_H, out_W, C, out_pixStep, out_widthStep, out_sliceStep);
+			zq_cnn_depthwise_conv_no_padding_32f_align256bit_kernel3x3_C16(in_data, 1, in_H, in_W, C, in_pixStep, in_widthStep, in_sliceStep, filter, 1, 3, 3, C, filter_pixStep, filter_widthStep, filter_sliceStep, 1, 1, 1, 1, out_data2, 1, out_H, out_W, C, out_pixStep, out_widthStep, out_sliceStep);
 		else if (C == 8)
-			zq_cnn_depthwise_conv_no_padding_32f_align256bit_kernel3x3_C8(in_data, 1, in_H, in_W, C, in_pixStep, in_widthStep, in_sliceStep, filter, 1, 3, 3, C, filter_pixStep, filter_widthStep, filter_sliceStep, 1, 1, out_data2, 1, out_H, out_W, C, out_pixStep, out_widthStep, out_sliceStep);
+			zq_cnn_depthwise_conv_no_padding_32f_align256bit_kernel3x3_C8(in_data, 1, in_H, in_W, C, in_pixStep, in_widthStep, in_sliceStep, filter, 1, 3, 3, C, filter_pixStep, filter_widthStep, filter_sliceStep, 1, 1, 1, 1, out_data2, 1, out_H, out_W, C, out_pixStep, out_widthStep, out_sliceStep);
 		else 
-			zq_cnn_depthwise_conv_no_padding_32f_align256bit_kernel3x3(in_data, 1, in_H, in_W, C, in_pixStep, in_widthStep, in_sliceStep, filter, 1, 3, 3, C, filter_pixStep, filter_widthStep, filter_sliceStep, 1, 1, out_data2, 1, out_H, out_W, C, out_pixStep, out_widthStep, out_sliceStep);
+			zq_cnn_depthwise_conv_no_padding_32f_align256bit_kernel3x3(in_data, 1, in_H, in_W, C, in_pixStep, in_widthStep, in_sliceStep, filter, 1, 3, 3, C, filter_pixStep, filter_widthStep, filter_sliceStep, 1, 1, 1, 1, out_data2, 1, out_H, out_W, C, out_pixStep, out_widthStep, out_sliceStep);
 #else
 		if (C == 256)
-			zq_cnn_depthwise_conv_no_padding_32f_align128bit_kernel3x3_C256(in_data, 1, in_H, in_W, C, in_pixStep, in_widthStep, in_sliceStep, filter, 1, 3, 3, C, filter_pixStep, filter_widthStep, filter_sliceStep, 1, 1, out_data2, 1, out_H, out_W, C, out_pixStep, out_widthStep, out_sliceStep);
+			zq_cnn_depthwise_conv_no_padding_32f_align128bit_kernel3x3_C256(in_data, 1, in_H, in_W, C, in_pixStep, in_widthStep, in_sliceStep, filter, 1, 3, 3, C, filter_pixStep, filter_widthStep, filter_sliceStep, 1, 1, 1, 1, out_data2, 1, out_H, out_W, C, out_pixStep, out_widthStep, out_sliceStep);
 		else if (C == 128)
-			zq_cnn_depthwise_conv_no_padding_32f_align128bit_kernel3x3_C128(in_data, 1, in_H, in_W, C, in_pixStep, in_widthStep, in_sliceStep, filter, 1, 3, 3, C, filter_pixStep, filter_widthStep, filter_sliceStep, 1, 1, out_data2, 1, out_H, out_W, C, out_pixStep, out_widthStep, out_sliceStep);
+			zq_cnn_depthwise_conv_no_padding_32f_align128bit_kernel3x3_C128(in_data, 1, in_H, in_W, C, in_pixStep, in_widthStep, in_sliceStep, filter, 1, 3, 3, C, filter_pixStep, filter_widthStep, filter_sliceStep, 1, 1, 1, 1, out_data2, 1, out_H, out_W, C, out_pixStep, out_widthStep, out_sliceStep);
 		else if (C == 64)
-			zq_cnn_depthwise_conv_no_padding_32f_align128bit_kernel3x3_C64(in_data, 1, in_H, in_W, C, in_pixStep, in_widthStep, in_sliceStep, filter, 1, 3, 3, C, filter_pixStep, filter_widthStep, filter_sliceStep, 1, 1, out_data2, 1, out_H, out_W, C, out_pixStep, out_widthStep, out_sliceStep);
+			zq_cnn_depthwise_conv_no_padding_32f_align128bit_kernel3x3_C64(in_data, 1, in_H, in_W, C, in_pixStep, in_widthStep, in_sliceStep, filter, 1, 3, 3, C, filter_pixStep, filter_widthStep, filter_sliceStep, 1, 1, 1, 1, out_data2, 1, out_H, out_W, C, out_pixStep, out_widthStep, out_sliceStep);
 		else if (C == 32)
-			zq_cnn_depthwise_conv_no_padding_32f_align128bit_kernel3x3_C32(in_data, 1, in_H, in_W, C, in_pixStep, in_widthStep, in_sliceStep, filter, 1, 3, 3, C, filter_pixStep, filter_widthStep, filter_sliceStep, 1, 1, out_data2, 1, out_H, out_W, C, out_pixStep, out_widthStep, out_sliceStep);
+			zq_cnn_depthwise_conv_no_padding_32f_align128bit_kernel3x3_C32(in_data, 1, in_H, in_W, C, in_pixStep, in_widthStep, in_sliceStep, filter, 1, 3, 3, C, filter_pixStep, filter_widthStep, filter_sliceStep, 1, 1, 1, 1, out_data2, 1, out_H, out_W, C, out_pixStep, out_widthStep, out_sliceStep);
 		else if (C == 24)
-			zq_cnn_depthwise_conv_no_padding_32f_align128bit_kernel3x3_C24(in_data, 1, in_H, in_W, C, in_pixStep, in_widthStep, in_sliceStep, filter, 1, 3, 3, C, filter_pixStep, filter_widthStep, filter_sliceStep, 1, 1, out_data2, 1, out_H, out_W, C, out_pixStep, out_widthStep, out_sliceStep);
+			zq_cnn_depthwise_conv_no_padding_32f_align128bit_kernel3x3_C24(in_data, 1, in_H, in_W, C, in_pixStep, in_widthStep, in_sliceStep, filter, 1, 3, 3, C, filter_pixStep, filter_widthStep, filter_sliceStep, 1, 1, 1, 1, out_data2, 1, out_H, out_W, C, out_pixStep, out_widthStep, out_sliceStep);
 		else if (C == 16)
-			zq_cnn_depthwise_conv_no_padding_32f_align128bit_kernel3x3_C16(in_data, 1, in_H, in_W, C, in_pixStep, in_widthStep, in_sliceStep, filter, 1, 3, 3, C, filter_pixStep, filter_widthStep, filter_sliceStep, 1, 1, out_data2, 1, out_H, out_W, C, out_pixStep, out_widthStep, out_sliceStep);
+			zq_cnn_depthwise_conv_no_padding_32f_align128bit_kernel3x3_C16(in_data, 1, in_H, in_W, C, in_pixStep, in_widthStep, in_sliceStep, filter, 1, 3, 3, C, filter_pixStep, filter_widthStep, filter_sliceStep, 1, 1, 1, 1, out_data2, 1, out_H, out_W, C, out_pixStep, out_widthStep, out_sliceStep);
 		else if (C == 8)
-			zq_cnn_depthwise_conv_no_padding_32f_align128bit_kernel3x3_C8(in_data, 1, in_H, in_W, C, in_pixStep, in_widthStep, in_sliceStep, filter, 1, 3, 3, C, filter_pixStep, filter_widthStep, filter_sliceStep, 1, 1, out_data2, 1, out_H, out_W, C, out_pixStep, out_widthStep, out_sliceStep);
+			zq_cnn_depthwise_conv_no_padding_32f_align128bit_kernel3x3_C8(in_data, 1, in_H, in_W, C, in_pixStep, in_widthStep, in_sliceStep, filter, 1, 3, 3, C, filter_pixStep, filter_widthStep, filter_sliceStep, 1, 1, 1, 1, out_data2, 1, out_H, out_W, C, out_pixStep, out_widthStep, out_sliceStep);
 		else
-			zq_cnn_depthwise_conv_no_padding_32f_align128bit_kernel3x3(in_data, 1, in_H, in_W, C, in_pixStep, in_widthStep, in_sliceStep, filter, 1, 3, 3, C, filter_pixStep, filter_widthStep, filter_sliceStep, 1, 1, out_data2, 1, out_H, out_W, C, out_pixStep, out_widthStep, out_sliceStep);
+			zq_cnn_depthwise_conv_no_padding_32f_align128bit_kernel3x3(in_data, 1, in_H, in_W, C, in_pixStep, in_widthStep, in_sliceStep, filter, 1, 3, 3, C, filter_pixStep, filter_widthStep, filter_sliceStep, 1, 1, 1, 1, out_data2, 1, out_H, out_W, C, out_pixStep, out_widthStep, out_sliceStep);
 #endif
 	}
 	double t3 = omp_get_wtime();
@@ -265,40 +265,40 @@ void testF4433(int C, int H, int W, int nIters)
 	{
 #if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_AVX
 		if (C == 512)
-			zq_cnn_depthwise_conv_no_padding_32f_align256bit_kernel3x3_C512(in_data, 1, in_H, in_W, C, in_pixStep, in_widthStep, in_sliceStep, filter, 1, 3, 3, C, filter_pixStep, filter_widthStep, filter_sliceStep, 1, 1, out_data2, 1, out_H, out_W, C, out_pixStep, out_widthStep, out_sliceStep);
+			zq_cnn_depthwise_conv_no_padding_32f_align256bit_kernel3x3_C512(in_data, 1, in_H, in_W, C, in_pixStep, in_widthStep, in_sliceStep, filter, 1, 3, 3, C, filter_pixStep, filter_widthStep, filter_sliceStep, 1, 1, 1, 1, out_data2, 1, out_H, out_W, C, out_pixStep, out_widthStep, out_sliceStep);
 		else if (C == 256)
-			zq_cnn_depthwise_conv_no_padding_32f_align256bit_kernel3x3_C256(in_data, 1, in_H, in_W, C, in_pixStep, in_widthStep, in_sliceStep, filter, 1, 3, 3, C, filter_pixStep, filter_widthStep, filter_sliceStep, 1, 1, out_data2, 1, out_H, out_W, C, out_pixStep, out_widthStep, out_sliceStep);
+			zq_cnn_depthwise_conv_no_padding_32f_align256bit_kernel3x3_C256(in_data, 1, in_H, in_W, C, in_pixStep, in_widthStep, in_sliceStep, filter, 1, 3, 3, C, filter_pixStep, filter_widthStep, filter_sliceStep, 1, 1, 1, 1, out_data2, 1, out_H, out_W, C, out_pixStep, out_widthStep, out_sliceStep);
 		else if (C == 128)
-			zq_cnn_depthwise_conv_no_padding_32f_align256bit_kernel3x3_C128(in_data, 1, in_H, in_W, C, in_pixStep, in_widthStep, in_sliceStep, filter, 1, 3, 3, C, filter_pixStep, filter_widthStep, filter_sliceStep, 1, 1, out_data2, 1, out_H, out_W, C, out_pixStep, out_widthStep, out_sliceStep);
+			zq_cnn_depthwise_conv_no_padding_32f_align256bit_kernel3x3_C128(in_data, 1, in_H, in_W, C, in_pixStep, in_widthStep, in_sliceStep, filter, 1, 3, 3, C, filter_pixStep, filter_widthStep, filter_sliceStep, 1, 1, 1, 1, out_data2, 1, out_H, out_W, C, out_pixStep, out_widthStep, out_sliceStep);
 		else if (C == 64)
-			zq_cnn_depthwise_conv_no_padding_32f_align256bit_kernel3x3_C64(in_data, 1, in_H, in_W, C, in_pixStep, in_widthStep, in_sliceStep, filter, 1, 3, 3, C, filter_pixStep, filter_widthStep, filter_sliceStep, 1, 1, out_data2, 1, out_H, out_W, C, out_pixStep, out_widthStep, out_sliceStep);
+			zq_cnn_depthwise_conv_no_padding_32f_align256bit_kernel3x3_C64(in_data, 1, in_H, in_W, C, in_pixStep, in_widthStep, in_sliceStep, filter, 1, 3, 3, C, filter_pixStep, filter_widthStep, filter_sliceStep, 1, 1, 1, 1, out_data2, 1, out_H, out_W, C, out_pixStep, out_widthStep, out_sliceStep);
 		else if (C == 32)
-			zq_cnn_depthwise_conv_no_padding_32f_align256bit_kernel3x3_C32(in_data, 1, in_H, in_W, C, in_pixStep, in_widthStep, in_sliceStep, filter, 1, 3, 3, C, filter_pixStep, filter_widthStep, filter_sliceStep, 1, 1, out_data2, 1, out_H, out_W, C, out_pixStep, out_widthStep, out_sliceStep);
+			zq_cnn_depthwise_conv_no_padding_32f_align256bit_kernel3x3_C32(in_data, 1, in_H, in_W, C, in_pixStep, in_widthStep, in_sliceStep, filter, 1, 3, 3, C, filter_pixStep, filter_widthStep, filter_sliceStep, 1, 1, 1, 1, out_data2, 1, out_H, out_W, C, out_pixStep, out_widthStep, out_sliceStep);
 		else if (C == 24)
-			zq_cnn_depthwise_conv_no_padding_32f_align256bit_kernel3x3_C24(in_data, 1, in_H, in_W, C, in_pixStep, in_widthStep, in_sliceStep, filter, 1, 3, 3, C, filter_pixStep, filter_widthStep, filter_sliceStep, 1, 1, out_data2, 1, out_H, out_W, C, out_pixStep, out_widthStep, out_sliceStep);
+			zq_cnn_depthwise_conv_no_padding_32f_align256bit_kernel3x3_C24(in_data, 1, in_H, in_W, C, in_pixStep, in_widthStep, in_sliceStep, filter, 1, 3, 3, C, filter_pixStep, filter_widthStep, filter_sliceStep, 1, 1, 1, 1, out_data2, 1, out_H, out_W, C, out_pixStep, out_widthStep, out_sliceStep);
 		else if (C == 16)
-			zq_cnn_depthwise_conv_no_padding_32f_align256bit_kernel3x3_C16(in_data, 1, in_H, in_W, C, in_pixStep, in_widthStep, in_sliceStep, filter, 1, 3, 3, C, filter_pixStep, filter_widthStep, filter_sliceStep, 1, 1, out_data2, 1, out_H, out_W, C, out_pixStep, out_widthStep, out_sliceStep);
+			zq_cnn_depthwise_conv_no_padding_32f_align256bit_kernel3x3_C16(in_data, 1, in_H, in_W, C, in_pixStep, in_widthStep, in_sliceStep, filter, 1, 3, 3, C, filter_pixStep, filter_widthStep, filter_sliceStep, 1, 1, 1, 1, out_data2, 1, out_H, out_W, C, out_pixStep, out_widthStep, out_sliceStep);
 		else if (C == 8)
-			zq_cnn_depthwise_conv_no_padding_32f_align256bit_kernel3x3_C8(in_data, 1, in_H, in_W, C, in_pixStep, in_widthStep, in_sliceStep, filter, 1, 3, 3, C, filter_pixStep, filter_widthStep, filter_sliceStep, 1, 1, out_data2, 1, out_H, out_W, C, out_pixStep, out_widthStep, out_sliceStep);
+			zq_cnn_depthwise_conv_no_padding_32f_align256bit_kernel3x3_C8(in_data, 1, in_H, in_W, C, in_pixStep, in_widthStep, in_sliceStep, filter, 1, 3, 3, C, filter_pixStep, filter_widthStep, filter_sliceStep, 1, 1, 1, 1, out_data2, 1, out_H, out_W, C, out_pixStep, out_widthStep, out_sliceStep);
 		else
-			zq_cnn_depthwise_conv_no_padding_32f_align256bit_kernel3x3(in_data, 1, in_H, in_W, C, in_pixStep, in_widthStep, in_sliceStep, filter, 1, 3, 3, C, filter_pixStep, filter_widthStep, filter_sliceStep, 1, 1, out_data2, 1, out_H, out_W, C, out_pixStep, out_widthStep, out_sliceStep);
+			zq_cnn_depthwise_conv_no_padding_32f_align256bit_kernel3x3(in_data, 1, in_H, in_W, C, in_pixStep, in_widthStep, in_sliceStep, filter, 1, 3, 3, C, filter_pixStep, filter_widthStep, filter_sliceStep, 1, 1, 1, 1, out_data2, 1, out_H, out_W, C, out_pixStep, out_widthStep, out_sliceStep);
 #else
 		if (C == 256)
-			zq_cnn_depthwise_conv_no_padding_32f_align128bit_kernel3x3_C256(in_data, 1, in_H, in_W, C, in_pixStep, in_widthStep, in_sliceStep, filter, 1, 3, 3, C, filter_pixStep, filter_widthStep, filter_sliceStep, 1, 1, out_data2, 1, out_H, out_W, C, out_pixStep, out_widthStep, out_sliceStep);
+			zq_cnn_depthwise_conv_no_padding_32f_align128bit_kernel3x3_C256(in_data, 1, in_H, in_W, C, in_pixStep, in_widthStep, in_sliceStep, filter, 1, 3, 3, C, filter_pixStep, filter_widthStep, filter_sliceStep, 1, 1, 1, 1, out_data2, 1, out_H, out_W, C, out_pixStep, out_widthStep, out_sliceStep);
 		else if (C == 128)
-			zq_cnn_depthwise_conv_no_padding_32f_align128bit_kernel3x3_C128(in_data, 1, in_H, in_W, C, in_pixStep, in_widthStep, in_sliceStep, filter, 1, 3, 3, C, filter_pixStep, filter_widthStep, filter_sliceStep, 1, 1, out_data2, 1, out_H, out_W, C, out_pixStep, out_widthStep, out_sliceStep);
+			zq_cnn_depthwise_conv_no_padding_32f_align128bit_kernel3x3_C128(in_data, 1, in_H, in_W, C, in_pixStep, in_widthStep, in_sliceStep, filter, 1, 3, 3, C, filter_pixStep, filter_widthStep, filter_sliceStep, 1, 1, 1, 1, out_data2, 1, out_H, out_W, C, out_pixStep, out_widthStep, out_sliceStep);
 		else if (C == 64)
-			zq_cnn_depthwise_conv_no_padding_32f_align128bit_kernel3x3_C64(in_data, 1, in_H, in_W, C, in_pixStep, in_widthStep, in_sliceStep, filter, 1, 3, 3, C, filter_pixStep, filter_widthStep, filter_sliceStep, 1, 1, out_data2, 1, out_H, out_W, C, out_pixStep, out_widthStep, out_sliceStep);
+			zq_cnn_depthwise_conv_no_padding_32f_align128bit_kernel3x3_C64(in_data, 1, in_H, in_W, C, in_pixStep, in_widthStep, in_sliceStep, filter, 1, 3, 3, C, filter_pixStep, filter_widthStep, filter_sliceStep, 1, 1, 1, 1, out_data2, 1, out_H, out_W, C, out_pixStep, out_widthStep, out_sliceStep);
 		else if (C == 32)
-			zq_cnn_depthwise_conv_no_padding_32f_align128bit_kernel3x3_C32(in_data, 1, in_H, in_W, C, in_pixStep, in_widthStep, in_sliceStep, filter, 1, 3, 3, C, filter_pixStep, filter_widthStep, filter_sliceStep, 1, 1, out_data2, 1, out_H, out_W, C, out_pixStep, out_widthStep, out_sliceStep);
+			zq_cnn_depthwise_conv_no_padding_32f_align128bit_kernel3x3_C32(in_data, 1, in_H, in_W, C, in_pixStep, in_widthStep, in_sliceStep, filter, 1, 3, 3, C, filter_pixStep, filter_widthStep, filter_sliceStep, 1, 1, 1, 1, out_data2, 1, out_H, out_W, C, out_pixStep, out_widthStep, out_sliceStep);
 		else if (C == 24)
-			zq_cnn_depthwise_conv_no_padding_32f_align128bit_kernel3x3_C24(in_data, 1, in_H, in_W, C, in_pixStep, in_widthStep, in_sliceStep, filter, 1, 3, 3, C, filter_pixStep, filter_widthStep, filter_sliceStep, 1, 1, out_data2, 1, out_H, out_W, C, out_pixStep, out_widthStep, out_sliceStep);
+			zq_cnn_depthwise_conv_no_padding_32f_align128bit_kernel3x3_C24(in_data, 1, in_H, in_W, C, in_pixStep, in_widthStep, in_sliceStep, filter, 1, 3, 3, C, filter_pixStep, filter_widthStep, filter_sliceStep, 1, 1, 1, 1, out_data2, 1, out_H, out_W, C, out_pixStep, out_widthStep, out_sliceStep);
 		else if (C == 16)
-			zq_cnn_depthwise_conv_no_padding_32f_align128bit_kernel3x3_C16(in_data, 1, in_H, in_W, C, in_pixStep, in_widthStep, in_sliceStep, filter, 1, 3, 3, C, filter_pixStep, filter_widthStep, filter_sliceStep, 1, 1, out_data2, 1, out_H, out_W, C, out_pixStep, out_widthStep, out_sliceStep);
+			zq_cnn_depthwise_conv_no_padding_32f_align128bit_kernel3x3_C16(in_data, 1, in_H, in_W, C, in_pixStep, in_widthStep, in_sliceStep, filter, 1, 3, 3, C, filter_pixStep, filter_widthStep, filter_sliceStep, 1, 1, 1, 1, out_data2, 1, out_H, out_W, C, out_pixStep, out_widthStep, out_sliceStep);
 		else if (C == 8)
-			zq_cnn_depthwise_conv_no_padding_32f_align128bit_kernel3x3_C8(in_data, 1, in_H, in_W, C, in_pixStep, in_widthStep, in_sliceStep, filter, 1, 3, 3, C, filter_pixStep, filter_widthStep, filter_sliceStep, 1, 1, out_data2, 1, out_H, out_W, C, out_pixStep, out_widthStep, out_sliceStep);
+			zq_cnn_depthwise_conv_no_padding_32f_align128bit_kernel3x3_C8(in_data, 1, in_H, in_W, C, in_pixStep, in_widthStep, in_sliceStep, filter, 1, 3, 3, C, filter_pixStep, filter_widthStep, filter_sliceStep, 1, 1, 1, 1, out_data2, 1, out_H, out_W, C, out_pixStep, out_widthStep, out_sliceStep);
 		else
-			zq_cnn_depthwise_conv_no_padding_32f_align128bit_kernel3x3(in_data, 1, in_H, in_W, C, in_pixStep, in_widthStep, in_sliceStep, filter, 1, 3, 3, C, filter_pixStep, filter_widthStep, filter_sliceStep, 1, 1, out_data2, 1, out_H, out_W, C, out_pixStep, out_widthStep, out_sliceStep);
+			zq_cnn_depthwise_conv_no_padding_32f_align128bit_kernel3x3(in_data, 1, in_H, in_W, C, in_pixStep, in_widthStep, in_sliceStep, filter, 1, 3, 3, C, filter_pixStep, filter_widthStep, filter_sliceStep, 1, 1, 1, 1, out_data2, 1, out_H, out_W, C, out_pixStep, out_widthStep, out_sliceStep);
 #endif
 	}
 	double t3 = omp_get_wtime();
