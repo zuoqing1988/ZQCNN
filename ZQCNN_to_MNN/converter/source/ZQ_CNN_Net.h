@@ -72,7 +72,7 @@ namespace ZQ
 				return false;
 			}
 
-			_simplify_inplace();
+			//_simplify_inplace();
 
 			if (merge_bn)
 			{
