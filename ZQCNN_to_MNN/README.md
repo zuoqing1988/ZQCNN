@@ -7,6 +7,10 @@
 **3.转换命令为**
 
 	./ZQCNN_to_MNN in.zqparams in.nchwbin out.mnn
+	
+**4.示例代码**
+
+	./SampleOnet.out model.mnn input.jpg
 
 ## 还有很多BUG
 

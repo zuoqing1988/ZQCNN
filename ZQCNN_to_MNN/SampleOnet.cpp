@@ -1,10 +1,3 @@
-//
-//  pictureTest.cpp
-//  MNN
-//
-//  Created by MNN on 2018/05/14.
-//  Copyright © 2018, Alibaba Group Holding Limited
-//
 
 #include <stdio.h>
 #include "ImageProcess.hpp"
@@ -26,7 +19,7 @@ using namespace MNN::CV;
 
 int main(int argc, const char* argv[]) {
     if (argc < 3) {
-        MNN_PRINT("Usage: ./pictureTest.out model.mnn input.jpg [word.txt]\n");
+        MNN_PRINT("Usage: ./SampleOnet.out model.mnn input.jpg\n");
         return 0;
     }
     std::shared_ptr<Interpreter> net(Interpreter::createFromFile(argv[1]));
@@ -79,10 +72,8 @@ int main(int argc, const char* argv[]) {
         trans.setScale((float)(width-1) / (size_w-1), (float)(height-1) / (size_h-1));
         ImageProcess::Config config;
         config.filterType = BILINEAR;
-        float mean[3]     = {103.94f, 116.78f, 123.68f};
-        float normals[3] = {0.017f, 0.017f, 0.017f};
-        // float mean[3]     = {127.5f, 127.5f, 127.5f};
-        // float normals[3] = {0.00785f, 0.00785f, 0.00785f};
+        float mean[3]     = {127.5f, 127.5f, 127.5f};
+        float normals[3] = {0.00785f, 0.00785f, 0.00785f};
         ::memcpy(config.mean, mean, sizeof(mean));
         ::memcpy(config.normal, normals, sizeof(normals));
         config.sourceFormat = RGBA;
@@ -139,11 +130,8 @@ int main(int argc, const char* argv[]) {
                  tempValues2[i] = std::make_pair(i, values[i]);
              }
         }
-        // Find Max
-        //std::sort(tempValues.begin(), tempValues.end(),
-         //         [](std::pair<int, float> a, std::pair<int, float> b) { return a.second > b.second; });
-
-        int length = size;// > 10 ? 10 : size;
+        
+        int length = size;
         if (words.empty()) {
             for (int i = 0; i < length; ++i) {
                 MNN_PRINT("%d, %f\n", tempValues[i].first, tempValues[i].second);
