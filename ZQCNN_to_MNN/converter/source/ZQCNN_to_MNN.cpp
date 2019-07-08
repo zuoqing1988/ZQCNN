@@ -118,13 +118,12 @@ bool ZQCNN_to_MNNNet(ZQ_CNN_Net& zq_net, const std::string bizCode, std::unique_
 			convolution2D->weight = raw_filters;
 
 			ZQ_CNN_Tensor4D* bias = cur_layer->bias;
-			std::vector<float> raw_bias;
+			std::vector<float> raw_bias(outputCount,0.0f);
 			if (bias == 0)
 			{
 			}
 			else
 			{
-				raw_bias.resize(bias->GetC());
 				bias->ConvertToCompactNCHW(&raw_bias[0]);
 			}
 			convolution2D->bias = raw_bias;
@@ -169,13 +168,12 @@ bool ZQCNN_to_MNNNet(ZQ_CNN_Net& zq_net, const std::string bizCode, std::unique_
 			convolution2D->weight = raw_filters;
 
 			ZQ_CNN_Tensor4D* bias = cur_layer->bias;
-			std::vector<float> raw_bias;
+			std::vector<float> raw_bias(outputCount, 0.0f);
 			if (bias == 0)
 			{
 			}
 			else
 			{
-				raw_bias.resize(bias->GetC());
 				bias->ConvertToCompactNCHW(&raw_bias[0]);
 			}
 			convolution2D->bias = raw_bias;
@@ -296,10 +294,15 @@ bool ZQCNN_to_MNNNet(ZQ_CNN_Net& zq_net, const std::string bizCode, std::unique_
 
 			mean->ConvertToCompactNCHW(&bn->meanData[0]);
 			var->ConvertToCompactNCHW(&bn->varData[0]);
+			bn->biasData.resize(bn->channels);
 			if (bias)
 			{
-				bn->biasData.resize(bn->channels);
 				bias->ConvertToCompactNCHW(&bn->biasData[0]);
+			}
+			else
+			{
+				for (int i = 0;i < bn->channels;i++)
+					bn->biasData[i] = 0;
 			}
 			op->type = MNN::OpType::OpType_BatchNorm;
 			op->main.type = MNN::OpParameter::OpParameter_BatchNorm;
