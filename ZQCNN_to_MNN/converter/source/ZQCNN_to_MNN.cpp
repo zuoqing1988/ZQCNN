@@ -304,6 +304,44 @@ bool ZQCNN_to_MNNNet(ZQ_CNN_Net& zq_net, const std::string bizCode, std::unique_
 			op->type = MNN::OpType::OpType_BatchNorm;
 			op->main.type = MNN::OpParameter::OpParameter_BatchNorm;
 		}
+		else if (ZQ_CNN_Layer::_my_strcmpi(zq_net.layer_type_names[l].c_str(), "Eltwise") == 0)
+		{
+			auto elt = new MNN::EltwiseT;
+			op->main.value = elt;
+			ZQ_CNN_Layer_Eltwise* cur_layer = (ZQ_CNN_Layer_Eltwise*)zq_net.layers[l];
+			if (cur_layer->operation == ELTWISE_SUM)
+			{
+				elt->type = MNN::EltwiseType_SUM;
+			}
+			else if(cur_layer->operation == ELTWISE_MUL)
+			{
+				elt->type = MNN::EltwiseType_PROD;
+			}
+			else if(cur_layer->operation == ELTWISE_MAX)
+			{
+				elt->type = MNN::EltwiseType_MAXIMUM;
+			}
+			
+			const int coffSize = cur_layer->weight.size();
+			elt->coeff.resize(coffSize);
+			for (int i = 0; i < coffSize; ++i) 
+			{
+				elt->coeff[i] = cur_layer->weight[i];
+			}
+			
+			op->type = MNN::OpType::OpType_Eltwise;
+			op->main.type = MNN::OpParameter::OpParameter_Eltwise;
+		}
+		else if (ZQ_CNN_Layer::_my_strcmpi(zq_net.layer_type_names[l].c_str(), "Concat") == 0)
+		{
+			auto axisT        = new MNN::AxisT;
+			op->main.value = axisT;
+			ZQ_CNN_Layer_Concat* cur_layer = (ZQ_CNN_Layer_Concat*)zq_net.layers[l];
+			axisT->axis = cur_layer->axis;
+			
+			op->type = MNN::OpType::OpType_Concat;
+			op->main.type = MNN::OpParameter::OpParameter_Axis;
+		}
 		else
 		{
 			printf("unsupported layer type: %s\n", zq_net.layer_type_names[l].c_str());
