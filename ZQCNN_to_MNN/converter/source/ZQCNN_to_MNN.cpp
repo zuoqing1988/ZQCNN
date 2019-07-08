@@ -118,7 +118,7 @@ bool ZQCNN_to_MNNNet(ZQ_CNN_Net& zq_net, const std::string bizCode, std::unique_
 			convolution2D->weight = raw_filters;
 
 			ZQ_CNN_Tensor4D* bias = cur_layer->bias;
-			std::vector<float> raw_bias(outputCount,0.0f);
+			std::vector<float> raw_bias(filters->GetN(),0.0f);
 			if (bias == 0)
 			{
 			}
@@ -168,7 +168,7 @@ bool ZQCNN_to_MNNNet(ZQ_CNN_Net& zq_net, const std::string bizCode, std::unique_
 			convolution2D->weight = raw_filters;
 
 			ZQ_CNN_Tensor4D* bias = cur_layer->bias;
-			std::vector<float> raw_bias(outputCount, 0.0f);
+			std::vector<float> raw_bias(filters->GetC(), 0.0f);
 			if (bias == 0)
 			{
 			}
