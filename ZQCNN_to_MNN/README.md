@@ -11,8 +11,32 @@
 **4.示例代码**
 
 	./SampleOnet.out model.mnn input.jpg
+	
+## 目前支持的Layer
 
-## 还有很多BUG
+**BatchNormScale**
+
+**Concat**
+
+**Convolution**
+
+**DepthwiseConvolution**
+
+**Eltwise**
+
+**InnerProduct**
+
+**Pooling**
+
+**PReLU**
+
+**ReLU**
+
+**Softmax**
+
+
+
+# 还有很多BUG
 
 **比如：本目录里的det3-dw48-p0.mnn 有两个输出"cls_prob"和"conv6_2"，但是getSessionOutput的name,必须第一个填"cls_prob"、第二个填NULL，才能正确运行**
 
