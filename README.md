@@ -40,7 +40,7 @@ ZQCNN是ZuoQing参照mini-caffe写的forward库，ZQCNN性能远超mini-caffe、
 
 # 更新日志
 
-**2019-07-08日更新：ZQCNN模型转MNN模型脚本**
+**2019-07-08日更新：ZQCNN模型转MNN模型代码**
 
 [点此阅读](https://github.com/zuoqing1988/ZQCNN/tree/master/ZQCNN_to_MNN)
 
