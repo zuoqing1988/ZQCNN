@@ -306,6 +306,9 @@ bool ZQCNN_to_MNNNet(ZQ_CNN_Net& zq_net, const std::string bizCode, std::unique_
 		}
 		else if (ZQ_CNN_Layer::_my_strcmpi(zq_net.layer_type_names[l].c_str(), "Eltwise") == 0)
 		{
+			static const int ELTWISE_MUL = 0;
+			static const int ELTWISE_SUM = 1;
+			static const int ELTWISE_MAX = 2;
 			auto elt = new MNN::EltwiseT;
 			op->main.value = elt;
 			ZQ_CNN_Layer_Eltwise* cur_layer = (ZQ_CNN_Layer_Eltwise*)zq_net.layers[l];
