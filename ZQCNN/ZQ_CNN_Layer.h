@@ -1080,8 +1080,10 @@ namespace ZQ
 		virtual void GetTopDim(int& top_C, int& top_H, int& top_W) const
 		{
 			top_C = num_output;
-			top_H = __max(0, floor((float)(bottom_H + pad_H * 2 - kernel_H) / stride_H) + 1);
-			top_W = __max(0, floor((float)(bottom_W + pad_W * 2 - kernel_W) / stride_W) + 1);
+			int dilate_filter_H = dilate_H * (kernel_H - 1) + 1;
+			int dilate_filter_W = dilate_W * (kernel_W - 1) + 1;
+			top_H = __max(0, floor((float)(bottom_H + pad_H * 2 - dilate_filter_H) / stride_H) + 1);
+			top_W = __max(0, floor((float)(bottom_W + pad_W * 2 - dilate_filter_W) / stride_W) + 1);
 		}
 
 		virtual bool SwapInputRGBandBGR() { return true; };
