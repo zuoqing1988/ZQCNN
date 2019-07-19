@@ -10,6 +10,7 @@ namespace ZQ
 	class ZQ_FaceRecognizer
 	{
 	public:
+		virtual ~ZQ_FaceRecognizer() {}
 		virtual bool Init(const std::string model_name, 
 			const std::string prototxt_file = "", const std::string caffemodel_file = "",
 			const std::string out_blob_name = ""
