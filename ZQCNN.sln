@@ -91,6 +91,10 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "TrainMTCNNprocessor", "Samp
 	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SampleLnet", "SamplesZQCNN\SampleLnet\SampleLnet.vcxproj", "{7F7A4C3A-5D05-4821-BAE5-B013BE327C8C}"
+	ProjectSection(ProjectDependencies) = postProject
+		{43AA2D6A-447E-4153-8A29-7AE8A8296DC7} = {43AA2D6A-447E-4153-8A29-7AE8A8296DC7}
+		{68ED426A-4BD4-4703-8741-048A0A07CE9F} = {68ED426A-4BD4-4703-8741-048A0A07CE9F}
+	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "model2code", "SamplesZQCNN\model2code\model2code.vcxproj", "{8EA749F2-4DBA-4246-AB89-FDA9F7AF54BE}"
 EndProject
@@ -112,6 +116,10 @@ EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SampleMatMulNEON_FP16", "SamplesZQCNN\SampleMatMulNEON_FP16\SampleMatMulNEON_FP16.vcxproj", "{5EAAC698-6085-4CBA-83E7-0EBDDD7B9D14}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "testWinoF2233", "SamplesZQCNN\testWinoF2233\testWinoF2233.vcxproj", "{04D97EA9-2962-4963-873F-A2A3FC1F0BDE}"
+	ProjectSection(ProjectDependencies) = postProject
+		{43AA2D6A-447E-4153-8A29-7AE8A8296DC7} = {43AA2D6A-447E-4153-8A29-7AE8A8296DC7}
+		{68ED426A-4BD4-4703-8741-048A0A07CE9F} = {68ED426A-4BD4-4703-8741-048A0A07CE9F}
+	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SampleNCNNsgemm", "SamplesZQCNN\SampleNCNNsgemm\SampleNCNNsgemm.vcxproj", "{41674317-7076-432E-BFE3-5DCF0BAFAE0C}"
 EndProject
@@ -123,6 +131,10 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SampleMTCNN_NCHWC4", "Sampl
 	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "testImageProcessing", "SamplesZQCNN\testImageProcessing\testImageProcessing.vcxproj", "{55D527D9-B32E-42C3-A872-FF76070171B0}"
+	ProjectSection(ProjectDependencies) = postProject
+		{43AA2D6A-447E-4153-8A29-7AE8A8296DC7} = {43AA2D6A-447E-4153-8A29-7AE8A8296DC7}
+		{68ED426A-4BD4-4703-8741-048A0A07CE9F} = {68ED426A-4BD4-4703-8741-048A0A07CE9F}
+	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SampleMTCNN_AspectRatio", "SamplesZQCNN\SampleMTCNN_AspectRatio\SampleMTCNN_AspectRatio.vcxproj", "{2A5994D0-DF41-444E-BC6A-A1B8D2D3439B}"
 	ProjectSection(ProjectDependencies) = postProject
@@ -130,6 +142,10 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SampleMTCNN_AspectRatio", "
 	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SampleMTCNNGesture", "SamplesZQCNN\SampleMTCNNGesture\SampleMTCNNGesture.vcxproj", "{441CC3CD-17FB-4CDF-99E9-AD2B1B5911DF}"
+	ProjectSection(ProjectDependencies) = postProject
+		{43AA2D6A-447E-4153-8A29-7AE8A8296DC7} = {43AA2D6A-447E-4153-8A29-7AE8A8296DC7}
+		{68ED426A-4BD4-4703-8741-048A0A07CE9F} = {68ED426A-4BD4-4703-8741-048A0A07CE9F}
+	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SampleMTCNN_Video", "SamplesZQCNN\SampleMTCNN_Video\SampleMTCNN_Video.vcxproj", "{F6577C0E-6A70-4A30-A9AA-F4B0D7A78EAE}"
 EndProject
