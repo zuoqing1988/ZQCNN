@@ -2576,6 +2576,46 @@ void ZQ_CNN_Forward_SSEUtils::_relu(int align_mode, float* data, int N, int H, i
 #endif //__ARM_NEON
 
 #if __ARM_NEON
+void ZQ_CNN_Forward_SSEUtils::_relu6(int align_mode, float* data, int N, int H, int W, int C,
+	int pixelStep, int widthStep, int sliceStep, float slope)
+{
+	if (align_mode == ZQ_CNN_Tensor4D::ALIGN_128bit)
+	{
+		zq_cnn_relu6_32f_align128bit(data, N, H, W, C, pixelStep, widthStep, sliceStep);
+	}
+	else if (align_mode == ZQ_CNN_Tensor4D::ALIGN_256bit)
+	{
+	}
+	else
+	{
+		zq_cnn_relu6_32f_align0(data, N, H, W, C, pixelStep, widthStep, sliceStep);
+	}
+}
+
+#else
+void ZQ_CNN_Forward_SSEUtils::_relu6(int align_mode, float* data, int N, int H, int W, int C,
+	int pixelStep, int widthStep, int sliceStep)
+{
+	if (align_mode == ZQ_CNN_Tensor4D::ALIGN_128bit)
+	{
+#if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_SSE
+		zq_cnn_relu6_32f_align128bit(data, N, H, W, C, pixelStep, widthStep, sliceStep);
+#endif
+	}
+	else if (align_mode == ZQ_CNN_Tensor4D::ALIGN_256bit)
+	{
+#if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_AVX
+		zq_cnn_relu6_32f_align256bit(data, N, H, W, C, pixelStep, widthStep, sliceStep);
+#endif
+	}
+	else
+	{
+		zq_cnn_relu6_32f_align0(data, N, H, W, C, pixelStep, widthStep, sliceStep);
+	}
+}
+#endif //__ARM_NEON
+
+#if __ARM_NEON
 void ZQ_CNN_Forward_SSEUtils::_maxpooling(int align_mode, const float* in_data, int N, int in_H, int in_W, int C, 
 	int in_pixStep, int in_widthStep, int in_sliceStep,
 	int kernel_H, int kernel_W, int stride_H, int stride_W, float* out_data, int out_H, int out_W, int 

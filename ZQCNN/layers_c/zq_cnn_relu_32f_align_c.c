@@ -36,6 +36,7 @@ extern "C" {
 
 #if __ARM_NEON
 #define zq_cnn_relu_32f_align zq_cnn_relu_32f_align128bit
+#define zq_cnn_relu6_32f_align zq_cnn_relu6_32f_align128bit
 #define zq_mm_load_ps vld1q_f32
 #define zq_mm_store_ps vst1q_f32
 #define zq_mm_setzero_ps() vdupq_n_f32(0)
@@ -66,6 +67,7 @@ extern "C" {
 #include "zq_cnn_relu_32f_align_c_raw.h"
 
 #undef zq_cnn_relu_32f_align
+#undef zq_cnn_relu6_32f_align
 #undef zq_mm_load_ps
 #undef zq_mm_store_ps
 #undef zq_mm_setzero_ps
@@ -91,6 +93,7 @@ extern "C" {
 
 #if __ARM_NEON_FP16
 #define zq_cnn_relu_32f_align zq_cnn_relu_16f_align128bit
+#define zq_cnn_relu6_32f_align zq_cnn_relu6_16f_align128bit
 #define zq_mm_load_ps vld1q_f16
 #define zq_mm_store_ps vst1q_f16
 #define zq_mm_setzero_ps() vdupq_n_f16(0)
@@ -121,6 +124,7 @@ extern "C" {
 #include "zq_cnn_relu_32f_align_c_raw.h"
 
 #undef zq_cnn_relu_32f_align
+#undef zq_cnn_relu6_32f_align
 #undef zq_mm_load_ps
 #undef zq_mm_store_ps
 #undef zq_mm_setzero_ps
@@ -148,6 +152,7 @@ extern "C" {
 #else
 #if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_SSE
 #define zq_cnn_relu_32f_align zq_cnn_relu_32f_align128bit
+#define zq_cnn_relu6_32f_align zq_cnn_relu6_32f_align128bit
 #define zq_mm_load_ps _mm_load_ps
 #define zq_mm_store_ps _mm_store_ps
 #define zq_mm_setzero_ps _mm_setzero_ps
@@ -178,6 +183,7 @@ extern "C" {
 #include "zq_cnn_relu_32f_align_c_raw.h"
 
 #undef zq_cnn_relu_32f_align
+#undef zq_cnn_relu6_32f_align
 #undef zq_mm_load_ps
 #undef zq_mm_store_ps
 #undef zq_mm_setzero_ps
@@ -204,6 +210,7 @@ extern "C" {
 
 #if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_AVX
 #define zq_cnn_relu_32f_align zq_cnn_relu_32f_align256bit
+#define zq_cnn_relu6_32f_align zq_cnn_relu6_32f_align256bit
 #define zq_mm_load_ps _mm256_load_ps
 #define zq_mm_store_ps _mm256_store_ps
 #define zq_mm_setzero_ps _mm256_setzero_ps
@@ -234,6 +241,7 @@ extern "C" {
 #include "zq_cnn_relu_32f_align_c_raw.h"
 
 #undef zq_cnn_relu_32f_align
+#undef zq_cnn_relu6_32f_align
 #undef zq_mm_load_ps
 #undef zq_mm_store_ps
 #undef zq_mm_setzero_ps
@@ -312,6 +320,38 @@ extern "C" {
 		}
 	}
 
+	void zq_cnn_relu6_32f_align0(
+		float* in_tensor4D_data,	// in & out
+		int in_N,
+		int in_H,
+		int in_W,
+		int in_C,
+		int in_pixelStep,
+		int in_widthStep,
+		int in_sliceStep
+	)
+	{
+		float data_v;
+		int n, h, w, c;
+		float* slice_ptr, *row_ptr, *pix_ptr, *c_ptr;
+		for (n = 0, slice_ptr = in_tensor4D_data; n < in_N; n++, slice_ptr += in_sliceStep)
+		{
+			for (h = 0, row_ptr = slice_ptr; h < in_H; h++, row_ptr += in_widthStep)
+			{
+				for (w = 0, pix_ptr = row_ptr; w < in_W; w++, pix_ptr += in_pixelStep)
+				{
+					for (c = 0, c_ptr = pix_ptr; c < in_C; c++, c_ptr++)
+					{
+						data_v = *c_ptr;
+
+						*c_ptr = __min(6,__max(0, data_v));
+					}
+				}
+			}
+		}
+
+	}
+
 #if __ARM_NEON
 #if __ARM_NEON_FP16
 #define zq_base_type float16_t
@@ -362,6 +402,39 @@ extern "C" {
 							if (data_v < 0)
 								*c_ptr = data_v*slope;
 						}
+					}
+				}
+			}
+		}
+	}
+
+	void zq_cnn_relu6_16f_align0(
+		float16_t* in_tensor4D_data,	// in & out
+		int in_N,
+		int in_H,
+		int in_W,
+		int in_C,
+		int in_pixelStep,
+		int in_widthStep,
+		int in_sliceStep,
+		float16_t slope
+	)
+	{
+		float16_t data_v;
+		int n, h, w, c;
+		float16_t* slice_ptr, *row_ptr, *pix_ptr, *c_ptr;
+
+		for (n = 0, slice_ptr = in_tensor4D_data; n < in_N; n++, slice_ptr += in_sliceStep)
+		{
+			for (h = 0, row_ptr = slice_ptr; h < in_H; h++, row_ptr += in_widthStep)
+			{
+				for (w = 0, pix_ptr = row_ptr; w < in_W; w++, pix_ptr += in_pixelStep)
+				{
+					for (c = 0, c_ptr = pix_ptr; c < in_C; c++, c_ptr++)
+					{
+						data_v = *c_ptr;
+
+						*c_ptr = __min(6,__max(0, data_v));
 					}
 				}
 			}

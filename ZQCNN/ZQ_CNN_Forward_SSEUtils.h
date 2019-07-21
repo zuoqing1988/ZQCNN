@@ -27,8 +27,8 @@ namespace ZQ
 			int out_H = output.GetH();
 			int out_W = output.GetW();
 			int out_C = output.GetC();
-			int need_H = in_H * scale_h;
-			int need_W = in_W * scale_w;
+			int need_H = int(in_H * scale_h+0.5);
+			int need_W = int(in_W * scale_w+0.5);
 			if (in_N <= 0 || in_H <= 0 || in_W <= 0 || in_C == 0
 				|| need_H < 0 || need_W < 0)
 			{
@@ -52,8 +52,117 @@ namespace ZQ
 			return true;
 		}
 
+		static bool UpSamplingBilinear(ZQ_CNN_Tensor4D& input, float scale_h, float scale_w, ZQ_CNN_Tensor4D& output)
+		{
+			double t1 = omp_get_wtime();
+			int in_N = input.GetN();
+			int in_H = input.GetH();
+			int in_W = input.GetW();
+			int in_C = input.GetC();
+			int out_N = output.GetN();
+			int out_H = output.GetH();
+			int out_W = output.GetW();
+			int out_C = output.GetC();
+			int need_H = int(in_H * scale_h + 0.5);
+			int need_W = int(in_W * scale_w + 0.5);
+			if (in_N <= 0 || in_H <= 0 || in_W <= 0 || in_C == 0
+				|| need_H < 0 || need_W < 0)
+			{
+				output.ChangeSize(0, 0, 0, 0, 0, 0);
+				return true;
+			}
+
+			int need_N = in_N;
+
+			int need_C = in_C;
+			if (out_N != need_N || out_H != need_H || out_W != need_W || out_C != need_C)
+			{
+				output.ChangeSize(need_N, need_H, need_W, need_C, 0, 0);
+			}
+
+			if (!input.ResizeBilinear(output, need_W, need_H, -1, -1))
+				return false;
+
+			double t2 = omp_get_wtime();
+			//printf("utils:conv: %.3f ms\n", (t2 - t1) * 1000);
+			return true;
+		}
+
+		static bool UpSamplingNearest_TargetSize(ZQ_CNN_Tensor4D& input, int dst_h, int dst_w, ZQ_CNN_Tensor4D& output)
+		{
+			double t1 = omp_get_wtime();
+			int in_N = input.GetN();
+			int in_H = input.GetH();
+			int in_W = input.GetW();
+			int in_C = input.GetC();
+			int out_N = output.GetN();
+			int out_H = output.GetH();
+			int out_W = output.GetW();
+			int out_C = output.GetC();
+			int need_H = dst_h;
+			int need_W = dst_w;
+			if (in_N <= 0 || in_H <= 0 || in_W <= 0 || in_C == 0
+				|| need_H < 0 || need_W < 0)
+			{
+				output.ChangeSize(0, 0, 0, 0, 0, 0);
+				return true;
+			}
+
+			int need_N = in_N;
+
+			int need_C = in_C;
+			if (out_N != need_N || out_H != need_H || out_W != need_W || out_C != need_C)
+			{
+				output.ChangeSize(need_N, need_H, need_W, need_C, 0, 0);
+			}
+
+			if (!input.ResizeNearest(output, need_W, need_H, -1, -1))
+				return false;
+
+			double t2 = omp_get_wtime();
+			//printf("utils:conv: %.3f ms\n", (t2 - t1) * 1000);
+			return true;
+		}
+
+		static bool UpSamplingBilinear_TargetSize(ZQ_CNN_Tensor4D& input, int dst_h, int dst_w, ZQ_CNN_Tensor4D& output)
+		{
+			double t1 = omp_get_wtime();
+			int in_N = input.GetN();
+			int in_H = input.GetH();
+			int in_W = input.GetW();
+			int in_C = input.GetC();
+			int out_N = output.GetN();
+			int out_H = output.GetH();
+			int out_W = output.GetW();
+			int out_C = output.GetC();
+			int need_H = dst_h;
+			int need_W = dst_w;
+			if (in_N <= 0 || in_H <= 0 || in_W <= 0 || in_C == 0
+				|| need_H < 0 || need_W < 0)
+			{
+				output.ChangeSize(0, 0, 0, 0, 0, 0);
+				return true;
+			}
+
+			int need_N = in_N;
+
+			int need_C = in_C;
+			if (out_N != need_N || out_H != need_H || out_W != need_W || out_C != need_C)
+			{
+				output.ChangeSize(need_N, need_H, need_W, need_C, 0, 0);
+			}
+
+			if (!input.ResizeBilinear(output, need_W, need_H, -1, -1))
+				return false;
+
+			double t2 = omp_get_wtime();
+			//printf("utils:conv: %.3f ms\n", (t2 - t1) * 1000);
+			return true;
+		}
+
 		static bool ConvolutionWithBias(ZQ_CNN_Tensor4D& input, const ZQ_CNN_Tensor4D& filters, const ZQ_CNN_Tensor4D& bias,
-			int strideH, int strideW, int dilation_H, int dilation_W, int padH, int padW, ZQ_CNN_Tensor4D& output,
+			int strideH, int strideW, int dilation_H, int dilation_W, int padH_top, int padH_bottom, int padW_left, int padW_right, 
+			ZQ_CNN_Tensor4D& output,
 			void** buffer = 0, __int64* buffer_len = 0)
 		{
 			double t1 = omp_get_wtime();
@@ -70,8 +179,8 @@ namespace ZQ
 			int out_W = output.GetW();
 			int out_C = output.GetC();
 			int bias_C = bias.GetC();
-			int need_H = (in_H - (filter_H - 1)*dilation_H - 1 + (padH << 1)) / strideH + 1;
-			int need_W = (in_W - (filter_W - 1)*dilation_W - 1 + (padW << 1)) / strideW + 1;
+			int need_H = (in_H - (filter_H - 1)*dilation_H - 1 + (padH_top + padH_bottom)) / strideH + 1;
+			int need_W = (in_W - (filter_W - 1)*dilation_W - 1 + (padW_left + padW_right)) / strideW + 1;
 			if (in_N <= 0 || in_H <= 0 || in_W <= 0 || in_C == 0
 				|| need_H < 0  || need_W < 0)
 			{
@@ -89,9 +198,9 @@ namespace ZQ
 				output.ChangeSize(need_N, need_H, need_W, need_C, 0, 0);
 			}
 
-			if (padH != 0 || padW != 0)
+			if (padH_top != 0 || padH_bottom != 0 || padW_left != 0 || padW_right != 0)
 			{
-				if (!input.Padding(padW, padH, 0))
+				if (!input.Padding(padW_left, padW_right, padH_top, padH_bottom, 0))
 					return false;
 			}
 
@@ -104,7 +213,7 @@ namespace ZQ
 			int out_sliceStep = output.GetSliceStep();
 			int out_widthStep = output.GetWidthStep();
 			int out_pixStep = output.GetPixelStep();
-			float* in_firstPixelData = input.GetFirstPixelPtr() - padH*in_widthStep - padW*in_pixStep;
+			float* in_firstPixelData = input.GetFirstPixelPtr() - padH_top*in_widthStep - padW_left*in_pixStep;
 			const float* filter_firstPixelData = filters.GetFirstPixelPtr();
 			float* out_firstPixelData = output.GetFirstPixelPtr();
 			const float* bias_firstPixelData = bias.GetFirstPixelPtr();
@@ -132,7 +241,7 @@ namespace ZQ
 			//align_mode = ZQ_CNN_Tensor4D::ALIGN_0;
 			//output.Reset();
 
-			_convolution_nopadding(align_mode, in_firstPixelData, in_N, in_H + (padH << 1), in_W + (padW << 1), in_C, in_pixStep, in_widthStep, in_sliceStep,
+			_convolution_nopadding(align_mode, in_firstPixelData, in_N, in_H + (padH_top+padH_bottom), in_W + (padW_left+padW_right), in_C, in_pixStep, in_widthStep, in_sliceStep,
 				filter_firstPixelData, filter_N, filter_H, filter_W, filter_C, filter_pixStep, filter_widthStep, filter_sliceStep, strideH, strideW, dilation_H, dilation_W,
 				out_firstPixelData, need_N, need_H, need_W, need_C, out_pixStep, out_widthStep, out_sliceStep, buffer, buffer_len);
 			//printf("out_data = %f\n", out_firstPixelData[0]);
@@ -146,7 +255,8 @@ namespace ZQ
 		}
 
 		static bool ConvolutionWithBiasPReLU(ZQ_CNN_Tensor4D& input, const ZQ_CNN_Tensor4D& filters, const ZQ_CNN_Tensor4D& bias,
-			const ZQ_CNN_Tensor4D& slope, int strideH, int strideW, int dilation_H, int dilation_W, int padH, int padW, ZQ_CNN_Tensor4D& output,
+			const ZQ_CNN_Tensor4D& slope, int strideH, int strideW, int dilation_H, int dilation_W, 
+			int padH_top, int padH_bottom, int padW_left, int padW_right, ZQ_CNN_Tensor4D& output,
 			void** buffer = 0, __int64* buffer_len = 0)
 		{
 			double t1 = omp_get_wtime();
@@ -164,8 +274,8 @@ namespace ZQ
 			int out_C = output.GetC();
 			int bias_C = bias.GetC();
 			int slope_C = slope.GetC();
-			int need_H = (in_H - (filter_H - 1)*dilation_H - 1 + (padH << 1)) / strideH + 1;
-			int need_W = (in_W - (filter_W - 1)*dilation_W - 1 + (padW << 1)) / strideW + 1;
+			int need_H = (in_H - (filter_H - 1)*dilation_H - 1 + (padH_top+padH_bottom)) / strideH + 1;
+			int need_W = (in_W - (filter_W - 1)*dilation_W - 1 + (padW_left+padW_right)) / strideW + 1;
 			if (in_N <= 0 || in_H <= 0 || in_W <= 0 || in_C == 0
 				|| need_H < 0 || need_W < 0)
 			{
@@ -183,9 +293,9 @@ namespace ZQ
 				output.ChangeSize(need_N, need_H, need_W, need_C, 0, 0);
 			}
 
-			if (padH != 0 || padW != 0)
+			if (padH_top != 0 || padH_bottom != 0 || padW_left != 0 || padW_right != 0)
 			{
-				if (!input.Padding(padW, padH, 0))
+				if (!input.Padding(padW_left, padW_right, padH_top, padH_bottom, 0))
 					return false;
 			}
 
@@ -198,7 +308,7 @@ namespace ZQ
 			int out_sliceStep = output.GetSliceStep();
 			int out_widthStep = output.GetWidthStep();
 			int out_pixStep = output.GetPixelStep();
-			float* in_firstPixelData = input.GetFirstPixelPtr() - padH*in_widthStep - padW*in_pixStep;
+			float* in_firstPixelData = input.GetFirstPixelPtr() - padH_top*in_widthStep - padW_left*in_pixStep;
 			const float* filter_firstPixelData = filters.GetFirstPixelPtr();
 			float* out_firstPixelData = output.GetFirstPixelPtr();
 			const float* bias_firstPixelData = bias.GetFirstPixelPtr();
@@ -227,7 +337,7 @@ namespace ZQ
 			//align_mode = ZQ_CNN_Tensor4D::ALIGN_128bit;
 			//output.Reset();
 
-			_convolution_nopadding(align_mode, in_firstPixelData, in_N, in_H + (padH << 1), in_W + (padW << 1), in_C, in_pixStep, in_widthStep, in_sliceStep,
+			_convolution_nopadding(align_mode, in_firstPixelData, in_N, in_H + (padH_top+padH_bottom), in_W + (padW_left+padW_right), in_C, in_pixStep, in_widthStep, in_sliceStep,
 				filter_firstPixelData, filter_N, filter_H, filter_W, filter_C, filter_pixStep, filter_widthStep, filter_sliceStep, strideH, strideW, dilation_H, dilation_W,
 				out_firstPixelData, need_N, need_H, need_W, need_C, out_pixStep, out_widthStep, out_sliceStep, buffer, buffer_len);
 			//printf("out_data = %f\n", out_firstPixelData[0]);
@@ -241,7 +351,8 @@ namespace ZQ
 		}
 
 		static bool ConvolutionWithPReLU(ZQ_CNN_Tensor4D& input, const ZQ_CNN_Tensor4D& filters,
-			const ZQ_CNN_Tensor4D& slope, int strideH, int strideW, int dilation_H, int dilation_W, int padH, int padW, ZQ_CNN_Tensor4D& output,
+			const ZQ_CNN_Tensor4D& slope, int strideH, int strideW, int dilation_H, int dilation_W, 
+			int padH_top, int padH_bottom, int padW_left, int padW_right, ZQ_CNN_Tensor4D& output,
 			void** buffer = 0, __int64* buffer_len = 0)
 		{
 			double t1 = omp_get_wtime();
@@ -258,8 +369,8 @@ namespace ZQ
 			int out_W = output.GetW();
 			int out_C = output.GetC();
 			int slope_C = slope.GetC();
-			int need_H = (in_H - (filter_H - 1)*dilation_H - 1 + (padH << 1)) / strideH + 1;
-			int need_W = (in_W - (filter_W - 1)*dilation_W - 1 + (padW << 1)) / strideW + 1;
+			int need_H = (in_H - (filter_H - 1)*dilation_H - 1 + (padH_top+padH_bottom)) / strideH + 1;
+			int need_W = (in_W - (filter_W - 1)*dilation_W - 1 + (padW_left+padW_right)) / strideW + 1;
 			if (in_N <= 0 || in_H <= 0 || in_W <= 0 || in_C == 0
 				|| need_H < 0 || need_W < 0)
 			{
@@ -277,9 +388,9 @@ namespace ZQ
 				output.ChangeSize(need_N, need_H, need_W, need_C, 0, 0);
 			}
 
-			if (padH != 0 || padW != 0)
+			if (padH_top != 0 || padH_bottom != 0|| padW_left != 0 || padW_right != 0)
 			{
-				if (!input.Padding(padW, padH, 0))
+				if (!input.Padding(padW_left, padW_right, padH_top, padH_bottom, 0))
 					return false;
 			}
 
@@ -292,7 +403,7 @@ namespace ZQ
 			int out_sliceStep = output.GetSliceStep();
 			int out_widthStep = output.GetWidthStep();
 			int out_pixStep = output.GetPixelStep();
-			float* in_firstPixelData = input.GetFirstPixelPtr() - padH*in_widthStep - padW*in_pixStep;
+			float* in_firstPixelData = input.GetFirstPixelPtr() - padH_top*in_widthStep - padW_left*in_pixStep;
 			const float* filter_firstPixelData = filters.GetFirstPixelPtr();
 			float* out_firstPixelData = output.GetFirstPixelPtr();
 			const float* slope_firstPixelData = slope.GetFirstPixelPtr();
@@ -320,7 +431,7 @@ namespace ZQ
 			//align_mode = ZQ_CNN_Tensor4D::ALIGN_128bit;
 			//output.Reset();
 
-			_convolution_nopadding(align_mode, in_firstPixelData, in_N, in_H + (padH << 1), in_W + (padW << 1), in_C, in_pixStep, in_widthStep, in_sliceStep,
+			_convolution_nopadding(align_mode, in_firstPixelData, in_N, in_H + (padH_top+padH_bottom), in_W + (padW_left+padW_right), in_C, in_pixStep, in_widthStep, in_sliceStep,
 				filter_firstPixelData, filter_N, filter_H, filter_W, filter_C, filter_pixStep, filter_widthStep, filter_sliceStep, strideH, strideW, dilation_H, dilation_W,
 				out_firstPixelData, need_N, need_H, need_W, need_C, out_pixStep, out_widthStep, out_sliceStep, buffer, buffer_len);
 			//printf("out_data = %f\n", out_firstPixelData[0]);
@@ -333,7 +444,8 @@ namespace ZQ
 			return true;
 		}
 
-		static bool Convolution(ZQ_CNN_Tensor4D& input, const ZQ_CNN_Tensor4D& filters, int strideH, int strideW, int dilation_H, int dilation_W, int padH, int padW,
+		static bool Convolution(ZQ_CNN_Tensor4D& input, const ZQ_CNN_Tensor4D& filters, int strideH, int strideW, int dilation_H, int dilation_W, 
+			int padH_top, int padH_bottom, int padW_left, int padW_right,
 			ZQ_CNN_Tensor4D& output, void** buffer = 0, __int64* buffer_len = 0)
 		{
 			int in_N = input.GetN();
@@ -348,8 +460,8 @@ namespace ZQ
 			int out_H = output.GetH();
 			int out_W = output.GetW();
 			int out_C = output.GetC();
-			int need_H = (in_H - (filter_H - 1)*dilation_H - 1 + (padH << 1)) / strideH + 1;
-			int need_W = (in_W - (filter_W - 1)*dilation_W - 1 + (padW << 1)) / strideW + 1;
+			int need_H = (in_H - (filter_H - 1)*dilation_H - 1 + (padH_top+padH_bottom)) / strideH + 1;
+			int need_W = (in_W - (filter_W - 1)*dilation_W - 1 + (padW_left+padW_right)) / strideW + 1;
 			if (in_N <= 0 || in_H <= 0 || in_W <= 0 || in_C == 0
 				|| need_H < 0 || need_W < 0)
 			{
@@ -366,9 +478,9 @@ namespace ZQ
 				output.ChangeSize(need_N, need_H, need_W, need_C, 0, 0);
 			}
 
-			if (padH != 0 || padW != 0)
+			if (padH_top != 0 || padH_bottom != 0 || padW_left != 0 || padW_right != 0)
 			{
-				if (!input.Padding(padW, padH, 0))
+				if (!input.Padding(padW_left, padW_right, padH_top, padH_bottom, 0))
 					return false;
 			}
 			
@@ -381,7 +493,7 @@ namespace ZQ
 			int out_sliceStep = output.GetSliceStep();
 			int out_widthStep = output.GetWidthStep();
 			int out_pixStep = output.GetPixelStep();
-			float* in_firstPixelData = input.GetFirstPixelPtr() - padH*in_widthStep - padW*in_pixStep;
+			float* in_firstPixelData = input.GetFirstPixelPtr() - padH_top*in_widthStep - padW_left*in_pixStep;
 			const float* filter_firstPixelData = filters.GetFirstPixelPtr();
 			float* out_firstPixelData = output.GetFirstPixelPtr();
 
@@ -408,7 +520,7 @@ namespace ZQ
 			//align_mode = ZQ_CNN_Tensor4D::ALIGN_128bit;
 			//output.Reset();
 			
-			_convolution_nopadding(align_mode, in_firstPixelData, in_N, in_H + (padH << 1), in_W + (padW << 1), in_C, in_pixStep, in_widthStep, in_sliceStep,
+			_convolution_nopadding(align_mode, in_firstPixelData, in_N, in_H + (padH_top+padH_bottom), in_W + (padW_left+padW_right), in_C, in_pixStep, in_widthStep, in_sliceStep,
 				filter_firstPixelData, filter_N, filter_H, filter_W, filter_C, filter_pixStep, filter_widthStep, filter_sliceStep, strideH, strideW, dilation_H, dilation_W,
 				out_firstPixelData, need_N, need_H, need_W, need_C, out_pixStep, out_widthStep, out_sliceStep, buffer, buffer_len);
 
@@ -417,7 +529,7 @@ namespace ZQ
 		}
 
 		static bool DepthwiseConvolutionWithBias(ZQ_CNN_Tensor4D& input, const ZQ_CNN_Tensor4D& filters, const ZQ_CNN_Tensor4D& bias,
-			int strideH, int strideW, int dilate_H, int dilate_W, int padH, int padW, ZQ_CNN_Tensor4D& output)
+			int strideH, int strideW, int dilate_H, int dilate_W, int padH_top, int padH_bottom, int padW_left, int padW_right, ZQ_CNN_Tensor4D& output)
 		{
 			double t1 = omp_get_wtime();
 			int in_N = input.GetN();
@@ -436,7 +548,7 @@ namespace ZQ
 			int out_C = output.GetC();
 			float bias_C = bias.GetC();
 			if (in_N <= 0 || in_H <= 0 || in_W <= 0 || in_C == 0
-				|| (in_H - dilate_filter_H + (padH << 1)) < 0 || (in_W - dilate_filter_W + (padW << 1)) < 0)
+				|| (in_H - dilate_filter_H + (padH_top+padH_bottom)) < 0 || (in_W - dilate_filter_W + (padW_left+padW_right)) < 0)
 			{
 				output.ChangeSize(0, 0, 0, 0, 0, 0);
 				return true;
@@ -445,17 +557,17 @@ namespace ZQ
 				return false;
 
 			int need_N = in_N;
-			int need_H = (in_H - dilate_filter_H + (padH << 1)) / strideH + 1;
-			int need_W = (in_W - dilate_filter_W + (padW << 1)) / strideW + 1;
+			int need_H = (in_H - dilate_filter_H + (padH_top+padH_bottom)) / strideH + 1;
+			int need_W = (in_W - dilate_filter_W + (padW_left+padW_right)) / strideW + 1;
 			int need_C = in_C;
 			if (out_N != need_N || out_H != need_H || out_W != need_W || out_C != need_C)
 			{
 				output.ChangeSize(need_N, need_H, need_W, need_C, 0, 0);
 			}
 
-			if (padH != 0 || padW != 0)
+			if (padH_top != 0 || padH_bottom != 0 || padW_left != 0 || padW_right != 0)
 			{
-				if (!input.Padding(padW, padH, 0))
+				if (!input.Padding(padW_left, padW_right, padH_top, padH_bottom, 0))
 					return false;
 			}
 
@@ -468,7 +580,7 @@ namespace ZQ
 			int out_sliceStep = output.GetSliceStep();
 			int out_widthStep = output.GetWidthStep();
 			int out_pixStep = output.GetPixelStep();
-			float* in_firstPixelData = input.GetFirstPixelPtr() - padH*in_widthStep - padW*in_pixStep;
+			float* in_firstPixelData = input.GetFirstPixelPtr() - padH_top*in_widthStep - padW_left*in_pixStep;
 			const float* filter_firstPixelData = filters.GetFirstPixelPtr();
 			float* out_firstPixelData = output.GetFirstPixelPtr();
 			const float* bias_firstPixelData = bias.GetFirstPixelPtr();
@@ -493,7 +605,7 @@ namespace ZQ
 			align_mode = __min(align_mode, ZQ_CNN_Tensor4D::ALIGN_0);
 #endif
 #endif
-			_depthwise_convolution_nopadding(align_mode, in_firstPixelData, in_N, in_H + (padH << 1), in_W + (padW << 1), in_C, in_pixStep, in_widthStep, in_sliceStep,
+			_depthwise_convolution_nopadding(align_mode, in_firstPixelData, in_N, in_H + (padH_top+padH_bottom), in_W + (padW_left+padW_right), in_C, in_pixStep, in_widthStep, in_sliceStep,
 				filter_firstPixelData, filter_N, filter_H, filter_W, filter_C, filter_pixStep, filter_widthStep, filter_sliceStep, strideH, strideW,dilate_H,dilate_W,
 				out_firstPixelData, need_N, need_H, need_W, need_C, out_pixStep, out_widthStep, out_sliceStep, bias_firstPixelData, NULL);
 		
@@ -503,7 +615,8 @@ namespace ZQ
 		}
 
 		static bool DepthwiseConvolutionWithBiasPReLU(ZQ_CNN_Tensor4D& input, const ZQ_CNN_Tensor4D& filters, const ZQ_CNN_Tensor4D& bias,
-			const ZQ_CNN_Tensor4D& prelu_slope, int strideH, int strideW, int dilate_H, int dilate_W, int padH, int padW, ZQ_CNN_Tensor4D& output)
+			const ZQ_CNN_Tensor4D& prelu_slope, int strideH, int strideW, int dilate_H, int dilate_W, 
+			int padH_top, int padH_bottom, int padW_left, int padW_right, ZQ_CNN_Tensor4D& output)
 		{
 			double t1 = omp_get_wtime();
 			int in_N = input.GetN();
@@ -522,7 +635,7 @@ namespace ZQ
 			int out_C = output.GetC();
 			float bias_C = bias.GetC();
 			if (in_N <= 0 || in_H <= 0 || in_W <= 0 || in_C == 0
-				|| (in_H - dilate_filter_H + (padH << 1)) < 0 || (in_W - dilate_filter_W + (padW << 1)) < 0)
+				|| (in_H - dilate_filter_H + (padH_top+padH_bottom)) < 0 || (in_W - dilate_filter_W + (padW_left+padW_right)) < 0)
 			{
 				output.ChangeSize(0, 0, 0, 0, 0, 0);
 				return true;
@@ -531,17 +644,17 @@ namespace ZQ
 				return false;
 
 			int need_N = in_N;
-			int need_H = (in_H - dilate_filter_H + (padH << 1)) / strideH + 1;
-			int need_W = (in_W - dilate_filter_W + (padW << 1)) / strideW + 1;
+			int need_H = (in_H - dilate_filter_H + (padH_top+padH_bottom)) / strideH + 1;
+			int need_W = (in_W - dilate_filter_W + (padW_left+padW_right)) / strideW + 1;
 			int need_C = in_C;
 			if (out_N != need_N || out_H != need_H || out_W != need_W || out_C != need_C)
 			{
 				output.ChangeSize(need_N, need_H, need_W, need_C, 0, 0);
 			}
 
-			if (padH != 0 || padW != 0)
+			if (padH_top != 0 || padH_bottom != 0 || padW_left != 0 || padW_right != 0)
 			{
-				if (!input.Padding(padW, padH, 0))
+				if (!input.Padding(padW_left, padW_right, padH_top, padH_bottom, 0))
 					return false;
 			}
 
@@ -554,7 +667,7 @@ namespace ZQ
 			int out_sliceStep = output.GetSliceStep();
 			int out_widthStep = output.GetWidthStep();
 			int out_pixStep = output.GetPixelStep();
-			float* in_firstPixelData = input.GetFirstPixelPtr() - padH*in_widthStep - padW*in_pixStep;
+			float* in_firstPixelData = input.GetFirstPixelPtr() - padH_top*in_widthStep - padW_left*in_pixStep;
 			const float* filter_firstPixelData = filters.GetFirstPixelPtr();
 			float* out_firstPixelData = output.GetFirstPixelPtr();
 			const float* bias_firstPixelData = bias.GetFirstPixelPtr();
@@ -583,7 +696,7 @@ namespace ZQ
 			align_mode = __min(align_mode, ZQ_CNN_Tensor4D::ALIGN_0);
 #endif
 #endif
-			_depthwise_convolution_nopadding(align_mode, in_firstPixelData, in_N, in_H + (padH << 1), in_W + (padW << 1), in_C, in_pixStep, in_widthStep, in_sliceStep,
+			_depthwise_convolution_nopadding(align_mode, in_firstPixelData, in_N, in_H + (padH_top+padH_bottom), in_W + (padW_left+padW_right), in_C, in_pixStep, in_widthStep, in_sliceStep,
 				filter_firstPixelData, filter_N, filter_H, filter_W, filter_C, filter_pixStep, filter_widthStep, filter_sliceStep, strideH, strideW,dilate_H,dilate_W,
 				out_firstPixelData, need_N, need_H, need_W, need_C, out_pixStep, out_widthStep, out_sliceStep, bias_firstPixelData, slope_data);
 
@@ -593,7 +706,7 @@ namespace ZQ
 		}
 
 		static bool DepthwiseConvolution(ZQ_CNN_Tensor4D& input, const ZQ_CNN_Tensor4D& filters, int strideH, int strideW, int dilate_H, int dilate_W,
-			int padH, int padW, ZQ_CNN_Tensor4D& output)
+			int padH_top, int padH_bottom, int padW_left, int padW_right, ZQ_CNN_Tensor4D& output)
 		{
 			//num_threads = 1;
 			int in_N = input.GetN();
@@ -611,7 +724,7 @@ namespace ZQ
 			int out_W = output.GetW();
 			int out_C = output.GetC();
 			if (in_N <= 0 || in_H <= 0 || in_W <= 0 || in_C == 0
-				|| (in_H - dilate_filter_H + (padH << 1)) < 0 || (in_W - dilate_filter_W + (padW << 1)) < 0)
+				|| (in_H - dilate_filter_H + (padH_top+padH_bottom)) < 0 || (in_W - dilate_filter_W + (padW_left+padW_right)) < 0)
 			{
 				output.ChangeSize(0, 0, 0, 0, 0, 0);
 				return true;
@@ -620,17 +733,17 @@ namespace ZQ
 				return false;
 
 			int need_N = in_N;
-			int need_H = (in_H - dilate_filter_H + (padH << 1)) / strideH + 1;
-			int need_W = (in_W - dilate_filter_W + (padW << 1)) / strideW + 1;
+			int need_H = (in_H - dilate_filter_H + (padH_top+padH_bottom)) / strideH + 1;
+			int need_W = (in_W - dilate_filter_W + (padW_left+padW_right)) / strideW + 1;
 			int need_C = in_C;
 			if (out_N != need_N || out_H != need_H || out_W != need_W || out_C != need_C)
 			{
 				output.ChangeSize(need_N, need_H, need_W, need_C, 0, 0);
 			}
 
-			if (padH != 0 || padW != 0)
+			if (padH_top != 0 || padH_bottom != 0 || padW_left != 0 || padW_right != 0)
 			{
-				if (!input.Padding(padW, padH, 0))
+				if (!input.Padding(padW_left, padW_right, padH_top, padH_bottom, 0))
 					return false;
 			}
 
@@ -643,7 +756,7 @@ namespace ZQ
 			int out_sliceStep = output.GetSliceStep();
 			int out_widthStep = output.GetWidthStep();
 			int out_pixStep = output.GetPixelStep();
-			float* in_firstPixelData = input.GetFirstPixelPtr() - padH*in_widthStep - padW*in_pixStep;
+			float* in_firstPixelData = input.GetFirstPixelPtr() - padH_top*in_widthStep - padW_left*in_pixStep;
 			const float* filter_firstPixelData = filters.GetFirstPixelPtr();
 			float* out_firstPixelData = output.GetFirstPixelPtr();
 
@@ -669,7 +782,7 @@ namespace ZQ
 #endif
 			//align_mode = ZQ_CNN_Tensor4D::ALIGN_128bit;
 			//output.Reset();
-			_depthwise_convolution_nopadding(align_mode, in_firstPixelData, in_N, in_H + (padH << 1), in_W + (padW << 1), in_C, in_pixStep, in_widthStep, in_sliceStep,
+			_depthwise_convolution_nopadding(align_mode, in_firstPixelData, in_N, in_H + (padH_top+padH_bottom), in_W + (padW_left+padW_right), in_C, in_pixStep, in_widthStep, in_sliceStep,
 				filter_firstPixelData, filter_N, filter_H, filter_W, filter_C, filter_pixStep, filter_widthStep, filter_sliceStep, strideH, strideW, dilate_H, dilate_W,
 				out_firstPixelData, need_N, need_H, need_W, need_C, out_pixStep, out_widthStep, out_sliceStep, NULL, NULL);
 
@@ -829,8 +942,8 @@ namespace ZQ
 			return true;
 		}
 
-		static void MaxPooling(const ZQ_CNN_Tensor4D &input, ZQ_CNN_Tensor4D &output, int kernel_H, int kernel_W, 
-			int stride_H, int stride_W, bool global_pool)
+		static void MaxPooling(ZQ_CNN_Tensor4D &input, ZQ_CNN_Tensor4D &output, int kernel_H, int kernel_W, 
+			int stride_H, int stride_W, int pad_H_top, int pad_H_bottom, int pad_W_left, int pad_W_right, bool global_pool)
 		{
 			int in_N = input.GetN();
 			int in_H = input.GetH();
@@ -850,8 +963,8 @@ namespace ZQ
 			}
 			else
 			{
-				need_W = ceil((float)(in_W - kernel_W) / stride_W + 1);
-				need_H = ceil((float)(in_H - kernel_H) / stride_H + 1);
+				need_W = ceil((float)(in_W + pad_W_left + pad_W_right - kernel_W) / stride_W + 1);
+				need_H = ceil((float)(in_H + pad_H_top + pad_H_bottom - kernel_H) / stride_H + 1);
 			}
 			
 			if (need_W <= 0 || need_H <= 0)
@@ -860,7 +973,7 @@ namespace ZQ
 				return ;
 			}
 
-			bool suredivided = (in_H - kernel_H) % stride_H == 0 && (in_W - kernel_W) % stride_W == 0;
+			bool suredivided = (in_H + pad_H_top + pad_H_bottom - kernel_H) % stride_H == 0 && (in_W + pad_W_left + pad_W_right - kernel_W) % stride_W == 0;
 			if (output.GetN() != need_N || output.GetH() != need_H || output.GetW() != need_W || output.GetC() != need_C)
 				output.ChangeSize(need_N, need_H, need_W, need_C, 0, 0);
 
@@ -870,7 +983,6 @@ namespace ZQ
 			int out_sliceStep = output.GetSliceStep();
 			int out_widthStep = output.GetWidthStep();
 			int out_pixStep = output.GetPixelStep();
-			const float* in_data = input.GetFirstPixelPtr();
 			float* out_data = output.GetFirstPixelPtr();
 
 			int align_mode = __min(input.GetAlignType(), output.GetAlignType());
@@ -887,13 +999,36 @@ namespace ZQ
 			align_mode = __min(align_mode, ZQ_CNN_Tensor4D::ALIGN_0);
 #endif
 #endif
-			_maxpooling(align_mode, in_data, in_N, in_H, in_W, in_C, in_pixStep, in_widthStep, in_sliceStep, kernel_H, kernel_W, stride_H, stride_W,
-				out_data, need_H, need_W, out_pixStep, out_widthStep, out_sliceStep);
+
+			if (global_pool)
+			{
+				const float* in_data = input.GetFirstPixelPtr();
+
+				_maxpooling(align_mode, in_data, in_N, in_H, in_W, in_C, in_pixStep, in_widthStep, in_sliceStep, kernel_H, kernel_W, stride_H, stride_W,
+					out_data, need_H, need_W, out_pixStep, out_widthStep, out_sliceStep);
+			}
+			else
+			{
+				if (pad_H_top == 0 && pad_H_bottom == 0 && pad_W_left == 0 && pad_W_right == 0)
+				{
+					const float* in_data = input.GetFirstPixelPtr();
+
+					_maxpooling(align_mode, in_data, in_N, in_H, in_W, in_C, in_pixStep, in_widthStep, in_sliceStep, kernel_H, kernel_W, stride_H, stride_W,
+						out_data, need_H, need_W, out_pixStep, out_widthStep, out_sliceStep);
+				}
+				else
+				{
+					input.Padding(pad_W_left, pad_W_right, pad_H_top, pad_H_bottom, 0);
+					const float* in_data = input.GetFirstPixelPtr() - pad_H_top*in_widthStep - pad_W_left*in_pixStep;
+					_maxpooling(align_mode, in_data, in_N, in_H+pad_H_top+pad_H_bottom, in_W+pad_W_left+pad_W_right, in_C, in_pixStep, in_widthStep, in_sliceStep, kernel_H, kernel_W, stride_H, stride_W,
+						out_data, need_H, need_W, out_pixStep, out_widthStep, out_sliceStep);
+				}
+			}
 
 		}
 
-		static void AVGPooling(const ZQ_CNN_Tensor4D &input, ZQ_CNN_Tensor4D &output, int kernel_H, int kernel_W,
-			int stride_H, int stride_W, bool global_pool)
+		static void AVGPooling(ZQ_CNN_Tensor4D &input, ZQ_CNN_Tensor4D &output, int kernel_H, int kernel_W,
+			int stride_H, int stride_W, int pad_H_top, int pad_H_bottom, int pad_W_left, int pad_W_right, bool global_pool)
 		{
 			int in_N = input.GetN();
 			int in_H = input.GetH();
@@ -913,8 +1048,8 @@ namespace ZQ
 			}
 			else
 			{
-				need_W = ceil((float)(in_W - kernel_W) / stride_W + 1);
-				need_H = ceil((float)(in_H - kernel_H) / stride_H + 1);
+				need_W = ceil((float)(in_W + pad_W_left + pad_W_right - kernel_W) / stride_W + 1);
+				need_H = ceil((float)(in_H + pad_H_top + pad_H_bottom - kernel_H) / stride_H + 1);
 			}
 
 			if (need_W <= 0 || need_H <= 0)
@@ -923,7 +1058,7 @@ namespace ZQ
 				return;
 			}
 
-			bool suredivided = (in_H - kernel_H) % stride_H == 0 && (in_W - kernel_W) % stride_W == 0;
+			bool suredivided = (in_H + pad_H_top + pad_H_bottom - kernel_H) % stride_H == 0 && (in_W + pad_W_left + pad_W_right - kernel_W) % stride_W == 0;
 			if (output.GetN() != need_N || output.GetH() != need_H || output.GetW() != need_W || output.GetC() != need_C)
 				output.ChangeSize(need_N, need_H, need_W, need_C, 0, 0);
 
@@ -933,7 +1068,6 @@ namespace ZQ
 			int out_sliceStep = output.GetSliceStep();
 			int out_widthStep = output.GetWidthStep();
 			int out_pixStep = output.GetPixelStep();
-			const float* in_data = input.GetFirstPixelPtr();
 			float* out_data = output.GetFirstPixelPtr();
 
 			int align_mode = __min(input.GetAlignType(), output.GetAlignType());
@@ -950,8 +1084,32 @@ namespace ZQ
 			align_mode = __min(align_mode, ZQ_CNN_Tensor4D::ALIGN_0);
 #endif
 #endif
-			_avgpooling(align_mode, in_data, in_N, in_H, in_W, in_C, in_pixStep, in_widthStep, in_sliceStep, kernel_H, kernel_W, stride_H, stride_W,
-				out_data, need_H, need_W, out_pixStep, out_widthStep, out_sliceStep);
+
+			if (global_pool)
+			{
+				const float* in_data = input.GetFirstPixelPtr();
+
+				_avgpooling(align_mode, in_data, in_N, in_H, in_W, in_C, in_pixStep, in_widthStep, in_sliceStep, kernel_H, kernel_W, stride_H, stride_W,
+					out_data, need_H, need_W, out_pixStep, out_widthStep, out_sliceStep);
+			}
+			else
+			{
+				if (pad_H_top == 0 && pad_H_bottom == 0 && pad_W_left == 0 && pad_W_right == 0)
+				{
+					const float* in_data = input.GetFirstPixelPtr();
+
+					_avgpooling(align_mode, in_data, in_N, in_H, in_W, in_C, in_pixStep, in_widthStep, in_sliceStep, kernel_H, kernel_W, stride_H, stride_W,
+						out_data, need_H, need_W, out_pixStep, out_widthStep, out_sliceStep);
+				}
+				else
+				{
+					input.Padding(pad_W_left, pad_W_right, pad_H_top, pad_H_bottom, 0);
+					const float* in_data = input.GetFirstPixelPtr() - pad_H_top*in_widthStep - pad_W_left*in_pixStep;
+					_avgpooling(align_mode, in_data, in_N, in_H + pad_H_top + pad_H_bottom, in_W + pad_W_left + pad_W_right, in_C, in_pixStep, in_widthStep, in_sliceStep, kernel_H, kernel_W, stride_H, stride_W,
+						out_data, need_H, need_W, out_pixStep, out_widthStep, out_sliceStep);
+				}
+			}
+
 		}
 
 		static bool AddBiasPReLU(ZQ_CNN_Tensor4D &input, const ZQ_CNN_Tensor4D& bias, const ZQ_CNN_Tensor4D& slope)
@@ -1053,6 +1211,37 @@ namespace ZQ
 #endif
 #endif
 			_relu(align_mode, data, N, H, W, C, pixelStep, widthStep, sliceStep, slope);
+		}
+
+		static void ReLU6(ZQ_CNN_Tensor4D &input)
+		{
+			//num_threads = 2;
+			int N = input.GetN();
+			int H = input.GetH();
+			int W = input.GetW();
+			int C = input.GetC();
+			if (N <= 0 || H <= 0 || W <= 0 || C <= 0)
+				return;
+			float* data = input.GetFirstPixelPtr();
+			int pixelStep = input.GetPixelStep();
+			int widthStep = input.GetWidthStep();
+			int sliceStep = input.GetSliceStep();
+
+			int align_mode = input.GetAlignType();
+#if __ARM_NEON
+			align_mode = __min(align_mode, ZQ_CNN_Tensor4D::ALIGN_128bit);
+#else
+#if ZQ_CNN_USE_SSETYPE == ZQ_CNN_SSETYPE_AVX2
+			align_mode = __min(align_mode, ZQ_CNN_Tensor4D::ALIGN_256bit);
+#elif ZQ_CNN_USE_SSETYPE == ZQ_CNN_SSETYPE_AVX
+			align_mode = __min(align_mode, ZQ_CNN_Tensor4D::ALIGN_256bit);
+#elif ZQ_CNN_USE_SSETYPE == ZQ_CNN_SSETYPE_SSE
+			align_mode = __min(align_mode, ZQ_CNN_Tensor4D::ALIGN_128bit);
+#else
+			align_mode = __min(align_mode, ZQ_CNN_Tensor4D::ALIGN_0);
+#endif
+#endif
+			_relu6(align_mode, data, N, H, W, C, pixelStep, widthStep, sliceStep);
 		}
 
 		static void Dropout(ZQ_CNN_Tensor4D &input, float dropout_ratio, int num_threads = 1)
@@ -2361,6 +2550,8 @@ namespace ZQ
 		static void _prelu(int align_mode, float* data, int N, int H, int W, int C, int pixelStep, int widthStep, int sliceStep, const float* slope_Data);
 
 		static void _relu(int align_mode, float* data, int N, int H, int W, int C, int pixelStep, int widthStep, int sliceStep, float slope);
+
+		static void _relu6(int align_mode, float* data, int N, int H, int W, int C, int pixelStep, int widthStep, int sliceStep);
 
 		static void _maxpooling(int align_mode, const float* in_data, int N, int in_H, int in_W, int C, int in_pixStep, int in_widthStep, int in_sliceStep,
 			int kernel_H, int kernel_W, int stride_H, int stride_W,	float* out_data, int out_H, int out_W, int out_pixStep, int out_widthStep, int out_sliceStep);

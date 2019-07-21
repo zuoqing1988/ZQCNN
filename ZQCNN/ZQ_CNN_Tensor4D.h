@@ -56,6 +56,7 @@ namespace ZQ
 			const std::vector<int>& src_off_x, const std::vector<int>& src_off_y, const std::vector<int>& src_rect_w, const std::vector<int>& src_rect_h) const = 0;
 
 		virtual bool Padding(int padW, int padH, int mode) = 0;
+		virtual bool Padding(int padW_left, int padW_right, int padH_top, int padH_bottom, int mode) = 0;
 		virtual bool ChangeSize(int N, int H, int W, int C, int borderW, int borderH) = 0;
 		virtual void ShrinkToFit() = 0;
 		virtual bool IsBorderEnabled() const = 0;
@@ -659,6 +660,7 @@ namespace ZQ
 	public:
 		/*********************   Interface functions ********************/	
 		bool Padding(int padW, int padH, int mode);
+		bool Padding(int padW_left, int padW_right, int padH_top, int padH_bottom, int mode);
 		bool ChangeSize(int N, int H, int W, int C, int borderW, int borderH);
 		void ShrinkToFit() { ChangeSize(0, 0, 0, 0, 0, 0); }
 		
@@ -688,6 +690,7 @@ namespace ZQ
 	public:
 		/*********************   Interface functions ********************/
 		bool Padding(int padW, int padH, int mode);
+		bool Padding(int padW_left, int padW_right, int padH_top, int padH_bottom, int mode);
 		bool ChangeSize(int N, int H, int W, int C, int borderW, int borderH);
 		void ShrinkToFit() { ChangeSize(0, 0, 0, 0, 0, 0); }
 		bool IsBorderEnabled() const { return true; }
@@ -715,6 +718,7 @@ namespace ZQ
 	public:
 		/*********************   Interface functions ********************/
 		bool Padding(int padW, int padH, int mode);
+		bool Padding(int padW_left, int padW_right, int padH_top, int padH_bottom, int mode);
 		bool ChangeSize(int N, int H, int W, int C, int borderW, int borderH);
 		void ShrinkToFit() { ChangeSize(0, 0, 0, 0, 0, 0); }
 		bool IsBorderEnabled() const { return true; }

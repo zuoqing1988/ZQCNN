@@ -616,8 +616,8 @@ void zq_cnn_resize_without_safeborder(
 				y0 = (int)y0_f;
 				y1 = y0 + 1;
 				sy = coord_y - y0_f;
-				y0 = __min(in_H, __max(0, y0));
-				y1 = __min(in_H, __max(0, y1));
+				y0 = __min(in_H-1, __max(0, y0));
+				y1 = __min(in_H-1, __max(0, y1));
 
 				in_row0_ptr = in_slice_ptr + y0*in_widthStep;
 				in_row1_ptr = in_slice_ptr + y1*in_widthStep;
@@ -656,8 +656,8 @@ void zq_cnn_resize_without_safeborder(
 				y0 = (int)y0_f;
 				y1 = y0 + 1;
 				sy = coord_y - y0_f;
-				y0 = __min(in_H, __max(0, y0));
-				y1 = __min(in_H, __max(0, y1));
+				y0 = __min(in_H-1, __max(0, y0));
+				y1 = __min(in_H-1, __max(0, y1));
 
 				in_row0_ptr = in_slice_ptr + y0*in_widthStep;
 				in_row1_ptr = in_slice_ptr + y1*in_widthStep;
@@ -709,8 +709,8 @@ void zq_cnn_resize_without_safeborder(
 				y0 = (int)y0_f;
 				y1 = y0 + 1;
 				sy = coord_y - y0_f;
-				y0 = __min(in_H, __max(0, y0));
-				y1 = __min(in_H, __max(0, y1));
+				y0 = __min(in_H-1, __max(0, y0));
+				y1 = __min(in_H-1, __max(0, y1));
 
 				in_row0_ptr = in_slice_ptr + y0*in_widthStep;
 				in_row1_ptr = in_slice_ptr + y1*in_widthStep;
@@ -774,8 +774,8 @@ void zq_cnn_resize_without_safeborder(
 				y0 = (int)y0_f;
 				y1 = y0 + 1;
 				sy = coord_y - y0_f;
-				y0 = __min(in_H, __max(0, y0));
-				y1 = __min(in_H, __max(0, y1));
+				y0 = __min(in_H-1, __max(0, y0));
+				y1 = __min(in_H-1, __max(0, y1));
 
 				in_row0_ptr = in_slice_ptr + y0*in_widthStep;
 				in_row1_ptr = in_slice_ptr + y1*in_widthStep;
@@ -851,8 +851,8 @@ void zq_cnn_resize_without_safeborder(
 				y0 = (int)y0_f;
 				y1 = y0 + 1;
 				sy = coord_y - y0_f;
-				y0 = __min(in_H, __max(0, y0));
-				y1 = __min(in_H, __max(0, y1));
+				y0 = __min(in_H-1, __max(0, y0));
+				y1 = __min(in_H-1, __max(0, y1));
 
 				in_row0_ptr = in_slice_ptr + y0*in_widthStep;
 				in_row1_ptr = in_slice_ptr + y1*in_widthStep;

@@ -245,7 +245,8 @@ namespace ZQ
 	{
 	public:
 		ZQ_CNN_Layer_Convolution() :filters(0), bias(0), num_output(0), kernel_H(0), kernel_W(0),
-			stride_H(1), stride_W(1), dilate_H(1), dilate_W(1), pad_H(0), pad_W(), 
+			stride_H(1), stride_W(1), dilate_H(1), dilate_W(1), pad_type(TYPE_NONE),
+			pad_H_top(0), pad_H_bottom(0), pad_W_left(0), pad_W_right(0),
 			with_bias(false), with_prelu(false), prelu_slope(0), bottom_C(0) {}
 		~ZQ_CNN_Layer_Convolution() {
 			if (filters)delete filters;
@@ -262,8 +263,15 @@ namespace ZQ
 		int stride_W;
 		int dilate_H;
 		int dilate_W;
-		int pad_H;
-		int pad_W;
+
+		static const int TYPE_NONE = 0;
+		static const int TYPE_VALID = 1;
+		static const int TYPE_SAME = 2;
+		int pad_type;
+		int pad_H_top;
+		int pad_H_bottom;
+		int pad_W_left;
+		int pad_W_right;
 		bool with_bias;
 		bool with_prelu;
 
@@ -288,7 +296,7 @@ namespace ZQ
 					void** tmp_buffer = use_buffer ? buffer : 0;
 					__int64* tmp_buffer_len = use_buffer ? buffer_len : 0;
 					bool ret = ZQ_CNN_Forward_SSEUtils::ConvolutionWithBiasPReLU(*((*bottoms)[0]),
-						*filters, *bias, *prelu_slope, stride_H, stride_W, dilate_H, dilate_W, pad_H, pad_W, *((*tops)[0]),
+						*filters, *bias, *prelu_slope, stride_H, stride_W, dilate_H, dilate_W, pad_H_top, pad_H_bottom, pad_W_left, pad_W_right, *((*tops)[0]),
 						tmp_buffer, tmp_buffer_len);
 					double t2 = omp_get_wtime();
 					last_cost_time = t2 - t1;
@@ -311,7 +319,7 @@ namespace ZQ
 					void** tmp_buffer = use_buffer ? buffer : 0;
 					__int64* tmp_buffer_len = use_buffer ? buffer_len : 0;
 					bool ret = ZQ_CNN_Forward_SSEUtils::ConvolutionWithBias(*((*bottoms)[0]),
-						*filters, *bias, stride_H, stride_W, dilate_H, dilate_W, pad_H, pad_W, *((*tops)[0]),
+						*filters, *bias, stride_H, stride_W, dilate_H, dilate_W, pad_H_top, pad_H_bottom, pad_W_left, pad_W_right, *((*tops)[0]),
 						tmp_buffer, tmp_buffer_len);
 					double t2 = omp_get_wtime();
 					last_cost_time = t2 - t1;
@@ -336,7 +344,8 @@ namespace ZQ
 					double t1 = omp_get_wtime();
 					void** tmp_buffer = use_buffer ? buffer : 0;
 					__int64* tmp_buffer_len = use_buffer ? buffer_len : 0;
-					bool ret = ZQ_CNN_Forward_SSEUtils::ConvolutionWithPReLU(*((*bottoms)[0]), *filters, *prelu_slope, stride_H, stride_W, dilate_H, dilate_W, pad_H, pad_W, *((*tops)[0]),
+					bool ret = ZQ_CNN_Forward_SSEUtils::ConvolutionWithPReLU(*((*bottoms)[0]), *filters, *prelu_slope, stride_H, stride_W, 
+						dilate_H, dilate_W, pad_H_top, pad_H_bottom, pad_W_left, pad_W_right, *((*tops)[0]),
 						tmp_buffer, tmp_buffer_len);
 					double t2 = omp_get_wtime();
 					last_cost_time = t2 - t1;
@@ -358,7 +367,8 @@ namespace ZQ
 					double t1 = omp_get_wtime();
 					void** tmp_buffer = use_buffer ? buffer : 0;
 					__int64* tmp_buffer_len = use_buffer ? buffer_len : 0;
-					bool ret = ZQ_CNN_Forward_SSEUtils::Convolution(*((*bottoms)[0]), *filters, stride_H, stride_W, dilate_H, dilate_W, pad_H, pad_W, *((*tops)[0]),
+					bool ret = ZQ_CNN_Forward_SSEUtils::Convolution(*((*bottoms)[0]), *filters, stride_H, stride_W, dilate_H, dilate_W, 
+						pad_H_top, pad_H_bottom, pad_W_left, pad_W_right, *((*tops)[0]),
 						tmp_buffer, tmp_buffer_len);
 					double t2 = omp_get_wtime();
 					last_cost_time = t2 - t1;
@@ -448,26 +458,64 @@ namespace ZQ
 						dilate_W = atoi(paras[n][1].c_str());
 					}
 				}
+				else if (_my_strcmpi("pad_type", paras[n][0].c_str()) == 0)
+				{
+					if (paras[n].size() >= 2)
+					{
+						if (_strcmpi("SAME", paras[n][1].c_str()) == 0)
+							pad_type = TYPE_SAME;
+						else if (_strcmpi("VALID", paras[n][1].c_str()) == 0)
+							pad_type = TYPE_VALID;
+					}
+				}
 				else if (_my_strcmpi("pad", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
 						int pad_num = atoi(paras[n][1].c_str());
-						pad_H = pad_W = pad_num;
+						pad_H_top = pad_H_bottom = pad_W_left = pad_W_right = pad_num;
 					}
 				}
 				else if (_my_strcmpi("pad_H", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
-						pad_H = atoi(paras[n][1].c_str());
+						pad_H_top = pad_H_bottom = atoi(paras[n][1].c_str());
+					}
+				}
+				else if (_my_strcmpi("pad_H_top", paras[n][0].c_str()) == 0)
+				{
+					if (paras[n].size() >= 2)
+					{
+						pad_H_top = atoi(paras[n][1].c_str());
+					}
+				}
+				else if (_my_strcmpi("pad_H_bottom", paras[n][0].c_str()) == 0)
+				{
+					if (paras[n].size() >= 2)
+					{
+						pad_H_bottom = atoi(paras[n][1].c_str());
 					}
 				}
 				else if (_my_strcmpi("pad_W", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
-						pad_W = atoi(paras[n][1].c_str());
+						pad_W_left = pad_W_right = atoi(paras[n][1].c_str());
+					}
+				}
+				else if (_my_strcmpi("pad_W_left", paras[n][0].c_str()) == 0)
+				{
+					if (paras[n].size() >= 2)
+					{
+						pad_W_left = atoi(paras[n][1].c_str());
+					}
+				}
+				else if (_my_strcmpi("pad_W_right", paras[n][0].c_str()) == 0)
+				{
+					if (paras[n].size() >= 2)
+					{
+						pad_W_right = atoi(paras[n][1].c_str());
 					}
 				}
 				else if (_my_strcmpi("stride", paras[n][0].c_str()) == 0)
@@ -559,6 +607,7 @@ namespace ZQ
 			this->bottom_C = bottom_C;
 			this->bottom_H = bottom_H;
 			this->bottom_W = bottom_W;
+			
 			if (filters)
 			{
 				if (!filters->ChangeSize(num_output, kernel_H, kernel_W, bottom_C, 0, 0))
@@ -589,15 +638,42 @@ namespace ZQ
 						return false;
 				}
 			}
+
+			if (pad_type == TYPE_VALID)
+			{
+				int real_kernel_W = (kernel_W - 1)*dilate_W + 1;
+				int real_kernel_H = (kernel_H - 1)*dilate_H + 1;
+				int top_W = ceil((bottom_W - real_kernel_W + 1) / stride_W);
+				int top_H = ceil((bottom_H - real_kernel_H + 1) / stride_H);
+				int pad_W = __max((top_W - 1)*stride_W + real_kernel_W - bottom_W, 0);
+				int pad_H = __max((top_H - 1)*stride_H + real_kernel_H - bottom_H, 0);
+				pad_W_left = pad_W / 2;
+				pad_W_right = pad_W - pad_W_left;
+				pad_H_top = pad_H / 2;
+				pad_H_bottom = pad_H - pad_H_top;
+			}
+			else if (pad_type == TYPE_SAME)
+			{
+				int real_kernel_W = (kernel_W - 1)*dilate_W + 1;
+				int real_kernel_H = (kernel_H - 1)*dilate_H + 1;
+				int top_W = bottom_W / stride_W;
+				int top_H = bottom_H / stride_H;
+				int pad_W = __max((top_W - 1)*stride_W + real_kernel_W - bottom_W, 0);
+				int pad_H = __max((top_H - 1)*stride_H + real_kernel_H - bottom_H, 0);
+				pad_W_left = pad_W / 2;
+				pad_W_right = pad_W - pad_W_left;
+				pad_H_top = pad_H / 2;
+				pad_H_bottom = pad_H - pad_H_top;
+			}
 			return true;
 		}
 
 		//should called after SetBottomDim
 		virtual void GetTopDim(int& top_C, int& top_H, int& top_W) const 
 		{ 
-			top_C = num_output;  
-			top_H = __max(0, floor((float)(bottom_H + pad_H * 2 - (kernel_H-1)*dilate_H-1) / stride_H) + 1);
-			top_W = __max(0, floor((float)(bottom_W + pad_W * 2 - (kernel_W-1)*dilate_W-1) / stride_W) + 1);
+			top_C = num_output;
+			top_H = __max(0, floor((float)(bottom_H + pad_H_top + pad_H_bottom - (kernel_H - 1)*dilate_H - 1) / stride_H) + 1);
+			top_W = __max(0, floor((float)(bottom_W + pad_W_left + pad_W_right - (kernel_W - 1)*dilate_W - 1) / stride_W) + 1);
 		}
 
 		virtual bool SwapInputRGBandBGR()
@@ -758,8 +834,8 @@ namespace ZQ
 	{
 	public:
 		ZQ_CNN_Layer_DepthwiseConvolution() :filters(0), bias(0), num_output(0), kernel_H(0), kernel_W(0),
-			stride_H(1), stride_W(1),dilate_H(1),dilate_W(1), pad_H(0), pad_W(), with_bias(false), bottom_C(0), 
-			with_prelu(false), prelu_slope(0) {}
+			stride_H(1), stride_W(1),dilate_H(1),dilate_W(1), pad_type(TYPE_NONE), pad_H_top(0), pad_H_bottom(0), pad_W_left(0), pad_W_right(0),
+			with_bias(false), bottom_C(0), with_prelu(false), prelu_slope(0) {}
 		~ZQ_CNN_Layer_DepthwiseConvolution() {
 			if (filters)delete filters;
 			if (bias)delete bias;
@@ -775,8 +851,15 @@ namespace ZQ
 		int stride_W;
 		int dilate_H;
 		int dilate_W;
-		int pad_H;
-		int pad_W;
+
+		static const int TYPE_NONE = 0;
+		static const int TYPE_VALID = 1;
+		static const int TYPE_SAME = 2;
+		int pad_type;
+		int pad_H_top;
+		int pad_H_bottom;
+		int pad_W_left;
+		int pad_W_right;
 		bool with_bias;
 		bool with_prelu;
 
@@ -798,7 +881,8 @@ namespace ZQ
 					if (filters == 0 || bias == 0 || prelu_slope == 0)
 						return false;
 					double t1 = omp_get_wtime();
-					bool ret = ZQ_CNN_Forward_SSEUtils::DepthwiseConvolutionWithBiasPReLU(*((*bottoms)[0]), *filters, *bias, *prelu_slope, stride_H, stride_W, dilate_H, dilate_W, pad_H, pad_W, *((*tops)[0]));
+					bool ret = ZQ_CNN_Forward_SSEUtils::DepthwiseConvolutionWithBiasPReLU(*((*bottoms)[0]), *filters, *bias, *prelu_slope, 
+						stride_H, stride_W, dilate_H, dilate_W, pad_H_top, pad_H_bottom, pad_W_left, pad_W_right, *((*tops)[0]));
 					double t2 = omp_get_wtime();
 					last_cost_time = t2 - t1;
 					if (show_debug_info)
@@ -819,7 +903,8 @@ namespace ZQ
 					if (filters == 0 || bias == 0)
 						return false;
 					double t1 = omp_get_wtime();
-					bool ret = ZQ_CNN_Forward_SSEUtils::DepthwiseConvolutionWithBias(*((*bottoms)[0]), *filters, *bias, stride_H, stride_W, dilate_H, dilate_W, pad_H, pad_W, *((*tops)[0]));
+					bool ret = ZQ_CNN_Forward_SSEUtils::DepthwiseConvolutionWithBias(*((*bottoms)[0]), *filters, *bias, stride_H, stride_W, 
+						dilate_H, dilate_W, pad_H_top, pad_H_bottom, pad_W_left, pad_W_right, *((*tops)[0]));
 					double t2 = omp_get_wtime();
 					last_cost_time = t2 - t1;
 					if (show_debug_info)
@@ -841,7 +926,8 @@ namespace ZQ
 				if (filters == 0)
 					return false;
 				double t1 = omp_get_wtime();
-				bool ret = ZQ_CNN_Forward_SSEUtils::DepthwiseConvolution(*((*bottoms)[0]), *filters, stride_H, stride_W, dilate_H, dilate_W, pad_H, pad_W, *((*tops)[0]));
+				bool ret = ZQ_CNN_Forward_SSEUtils::DepthwiseConvolution(*((*bottoms)[0]), *filters, stride_H, stride_W, dilate_H, dilate_W, 
+					pad_H_top, pad_H_bottom, pad_W_left, pad_W_right, *((*tops)[0]));
 				double t2 = omp_get_wtime();
 				last_cost_time = t2 - t1;
 				if (show_debug_info)
@@ -929,26 +1015,64 @@ namespace ZQ
 						dilate_W = atoi(paras[n][1].c_str());
 					}
 				}
+				else if (_my_strcmpi("pad_type", paras[n][0].c_str()) == 0)
+				{
+					if (paras[n].size() >= 2)
+					{
+						if (_strcmpi("SAME", paras[n][1].c_str()) == 0)
+							pad_type = TYPE_SAME;
+						else if (_strcmpi("VALID", paras[n][1].c_str()) == 0)
+							pad_type = TYPE_VALID;
+					}
+				}
 				else if (_my_strcmpi("pad", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
 						int pad_num = atoi(paras[n][1].c_str());
-						pad_H = pad_W = pad_num;
+						pad_H_top = pad_H_bottom = pad_W_left = pad_W_right = pad_num;
 					}
 				}
 				else if (_my_strcmpi("pad_H", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
-						pad_H = atoi(paras[n][1].c_str());
+						pad_H_top = pad_H_bottom = atoi(paras[n][1].c_str());
+					}
+				}
+				else if (_my_strcmpi("pad_H_top", paras[n][0].c_str()) == 0)
+				{
+					if (paras[n].size() >= 2)
+					{
+						pad_H_top = atoi(paras[n][1].c_str());
+					}
+				}
+				else if (_my_strcmpi("pad_H_bottom", paras[n][0].c_str()) == 0)
+				{
+					if (paras[n].size() >= 2)
+					{
+						pad_H_bottom = atoi(paras[n][1].c_str());
 					}
 				}
 				else if (_my_strcmpi("pad_W", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
-						pad_W = atoi(paras[n][1].c_str());
+						pad_W_left = pad_W_right = atoi(paras[n][1].c_str());
+					}
+				}
+				else if (_my_strcmpi("pad_W_left", paras[n][0].c_str()) == 0)
+				{
+					if (paras[n].size() >= 2)
+					{
+						pad_W_left = atoi(paras[n][1].c_str());
+					}
+				}
+				else if (_my_strcmpi("pad_W_right", paras[n][0].c_str()) == 0)
+				{
+					if (paras[n].size() >= 2)
+					{
+						pad_W_right = atoi(paras[n][1].c_str());
 					}
 				}
 				else if (_my_strcmpi("stride", paras[n][0].c_str()) == 0)
@@ -1073,6 +1197,33 @@ namespace ZQ
 						return false;
 				}
 			}
+
+			if (pad_type == TYPE_VALID)
+			{
+				int real_kernel_W = (kernel_W - 1)*dilate_W + 1;
+				int real_kernel_H = (kernel_H - 1)*dilate_H + 1;
+				int top_W = ceil((bottom_W - real_kernel_W + 1) / stride_W);
+				int top_H = ceil((bottom_H - real_kernel_H + 1) / stride_H);
+				int pad_W = __max((top_W - 1)*stride_W + real_kernel_W - bottom_W, 0);
+				int pad_H = __max((top_H - 1)*stride_H + real_kernel_H - bottom_H, 0);
+				pad_W_left = pad_W / 2;
+				pad_W_right = pad_W - pad_W_left;
+				pad_H_top = pad_H / 2;
+				pad_H_bottom = pad_H - pad_H_top;
+			}
+			else if (pad_type == TYPE_SAME)
+			{
+				int real_kernel_W = (kernel_W - 1)*dilate_W + 1;
+				int real_kernel_H = (kernel_H - 1)*dilate_H + 1;
+				int top_W = bottom_W / stride_W;
+				int top_H = bottom_H / stride_H;
+				int pad_W = __max((top_W - 1)*stride_W + real_kernel_W - bottom_W, 0);
+				int pad_H = __max((top_H - 1)*stride_H + real_kernel_H - bottom_H, 0);
+				pad_W_left = pad_W / 2;
+				pad_W_right = pad_W - pad_W_left;
+				pad_H_top = pad_H / 2;
+				pad_H_bottom = pad_H - pad_H_top;
+			}
 			return true;
 		}
 
@@ -1082,8 +1233,8 @@ namespace ZQ
 			top_C = num_output;
 			int dilate_filter_H = dilate_H * (kernel_H - 1) + 1;
 			int dilate_filter_W = dilate_W * (kernel_W - 1) + 1;
-			top_H = __max(0, floor((float)(bottom_H + pad_H * 2 - dilate_filter_H) / stride_H) + 1);
-			top_W = __max(0, floor((float)(bottom_W + pad_W * 2 - dilate_filter_W) / stride_W) + 1);
+			top_H = __max(0, floor((float)(bottom_H + pad_H_top + pad_H_bottom - dilate_filter_H) / stride_H) + 1);
+			top_W = __max(0, floor((float)(bottom_W + pad_W_left + pad_W_right - dilate_filter_W) / stride_W) + 1);
 		}
 
 		virtual bool SwapInputRGBandBGR() { return true; };
@@ -2459,18 +2610,163 @@ namespace ZQ
 		}
 	};
 
+	class ZQ_CNN_Layer_ReLU6 : public ZQ_CNN_Layer
+	{
+	public:
+
+		float slope;
+		//
+		int bottom_C;
+		int bottom_H;
+		int bottom_W;
+
+		ZQ_CNN_Layer_ReLU6() :slope(0), bottom_C(0) {}
+		~ZQ_CNN_Layer_ReLU6() {}
+
+		virtual bool Forward(std::vector<ZQ_CNN_Tensor4D*>* bottoms, std::vector<ZQ_CNN_Tensor4D*>* tops)
+		{
+			if (bottoms == 0 || tops == 0 || bottoms->size() == 0 || tops->size() == 0 || (*bottoms)[0] == 0 || (*tops)[0] == 0)
+				return false;
+			if ((*tops)[0] != (*bottoms)[0])
+				(*tops)[0]->CopyData(*(*bottoms)[0]);
+
+			double t1 = omp_get_wtime();
+			ZQ_CNN_Forward_SSEUtils::ReLU6(*((*tops)[0]));
+			double t2 = omp_get_wtime();
+			last_cost_time = t2 - t1;
+			if (show_debug_info)
+				printf("ReLU6 layer: %s %.3f ms \n", name.c_str(), 1000 * (t2 - t1));
+			return true;
+		}
+
+
+		virtual bool ReadParam(const std::string& line)
+		{
+			bottom_names.clear();
+			top_names.clear();
+			std::vector<std::vector<std::string> > paras = split_line(line);
+			int num = paras.size();
+			bool has_top = false, has_bottom = false, has_name = false;
+			for (int n = 0; n < num; n++)
+			{
+				if (paras[n].size() == 0)
+					continue;
+				if (_my_strcmpi("ReLU6", paras[n][0].c_str()) == 0)
+				{
+
+				}
+				else if (_my_strcmpi("slope", paras[n][0].c_str()) == 0)
+				{
+					if (paras[n].size() >= 2)
+					{
+						slope = atof(paras[n][1].c_str());
+					}
+				}
+				else if (_my_strcmpi("top", paras[n][0].c_str()) == 0)
+				{
+					if (paras[n].size() >= 2)
+					{
+						has_top = true;
+						top_names.push_back(paras[n][1]);
+					}
+				}
+				else if (_my_strcmpi("bottom", paras[n][0].c_str()) == 0)
+				{
+					if (paras[n].size() >= 2)
+					{
+						has_bottom = true;
+						bottom_names.push_back(paras[n][1]);
+					}
+				}
+				else if (_my_strcmpi("name", paras[n][0].c_str()) == 0)
+				{
+					if (paras[n].size() >= 2)
+					{
+						has_name = true;
+						name = paras[n][1];
+					}
+				}
+				else
+				{
+					std::cout << "warning: unknown para " << paras[n][0] << " in Layer " << name << "\n";
+				}
+			}
+			if (!has_bottom)std::cout << "Layer " << name << " missing " << "bottom\n";
+			if (!has_top)std::cout << "Layer " << name << " missing " << "top\n";
+			if (!has_name) {
+				std::cout << "Layer " << name << " missing " << "name\n";
+				std::cout << line << "\n";
+			}
+			return has_bottom && has_top && has_name;
+		}
+		virtual bool LayerSetup(std::vector<ZQ_CNN_Tensor4D*>* bottoms, std::vector<ZQ_CNN_Tensor4D*>* tops)
+		{
+			if (bottoms == 0 || tops == 0 || bottoms->size() == 0 || (*bottoms)[0] == 0 || tops->size() == 0 || (*tops)[0] == 0)
+				return false;
+			int bottom_N, bottom_C, bottom_H, bottom_W;
+			(*bottoms)[0]->GetShape(bottom_N, bottom_C, bottom_H, bottom_W);
+			if (!SetBottomDim(bottom_C, bottom_H, bottom_W))
+				return false;
+			int top_C, top_H, top_W;
+			GetTopDim(top_C, top_H, top_W);
+			(*tops)[0]->SetShape(bottom_N, top_C, top_H, top_W);
+			return true;
+		}
+
+		//should called after ReadParam, allocate memory in this func
+		virtual bool SetBottomDim(int bottom_C, int bottom_H, int bottom_W)
+		{
+			this->bottom_C = bottom_C;
+			this->bottom_H = bottom_H;
+			this->bottom_W = bottom_W;
+			return true;
+		}
+
+		//should called after SetBottomDim
+		virtual void GetTopDim(int& top_C, int& top_H, int& top_W) const
+		{
+			top_C = bottom_C;
+			top_H = bottom_H;
+			top_W = bottom_W;
+		}
+
+		virtual bool SwapInputRGBandBGR() { return true; };
+
+		//should be called after ZQ_CNN_Net have allocated necessery data
+		virtual bool LoadBinary_NCHW(FILE* in) { return true; }
+
+		virtual bool SaveBinary_NCHW(FILE* out) const { return true; }
+
+		virtual bool LoadBinary_NCHW(const char* buffer, __int64 buffer_len, __int64& readed_length_in_bytes)
+		{
+			readed_length_in_bytes = 0;
+			return true;
+		}
+
+		virtual __int64 GetNumOfMulAdd() const
+		{
+			return bottom_W*bottom_H*bottom_C;
+		}
+	};
 	class ZQ_CNN_Layer_Pooling : public ZQ_CNN_Layer
 	{
 	public:
 		ZQ_CNN_Layer_Pooling() :kernel_H(3), kernel_W(3), stride_H(2), stride_W(2), 
-			pad_H(0), pad_W(0), global_pool(false), type(0) {}
+			pad_type(TYPE_NONE), pad_H_top(0), pad_H_bottom(0), pad_W_left(0), pad_W_right(0), global_pool(false), type(0) {}
 		~ZQ_CNN_Layer_Pooling() {}
 		int kernel_H;
 		int kernel_W;
 		int stride_H;
 		int stride_W;
-		int pad_H;
-		int pad_W;
+
+		static const int TYPE_NONE = 0;
+		static const int TYPE_VALID = 1;
+		static const int TYPE_SAME = 2;
+		int pad_type;
+		int pad_H_top;
+		int pad_H_bottom;
+		int pad_W_left;
+		int pad_W_right;
 		bool global_pool;
 		static const int TYPE_MAXPOOLING = 0;
 		static const int TYPE_AVGPOOLING = 1;
@@ -2488,7 +2784,8 @@ namespace ZQ
 			if (type == TYPE_MAXPOOLING)
 			{
 				double t1 = omp_get_wtime();
-				ZQ_CNN_Forward_SSEUtils::MaxPooling(*((*bottoms)[0]), *((*tops)[0]), kernel_H, kernel_W, stride_H, stride_W, global_pool);
+				ZQ_CNN_Forward_SSEUtils::MaxPooling(*((*bottoms)[0]), *((*tops)[0]), kernel_H, kernel_W, stride_H, stride_W, 
+					pad_H_top, pad_H_bottom, pad_W_left, pad_W_right, global_pool);
 				double t2 = omp_get_wtime();
 				last_cost_time = t2 - t1;
 				if (show_debug_info)
@@ -2498,7 +2795,8 @@ namespace ZQ
 			else if (type == TYPE_AVGPOOLING)
 			{
 				double t1 = omp_get_wtime();
-				ZQ_CNN_Forward_SSEUtils::AVGPooling(*((*bottoms)[0]), *((*tops)[0]), kernel_H, kernel_W, stride_H, stride_W, global_pool);
+				ZQ_CNN_Forward_SSEUtils::AVGPooling(*((*bottoms)[0]), *((*tops)[0]), kernel_H, kernel_W, stride_H, stride_W,
+					pad_H_top, pad_H_bottom, pad_W_left, pad_W_right, global_pool);
 				double t2 = omp_get_wtime();
 				last_cost_time = t2 - t1;
 				if (show_debug_info)
@@ -2582,26 +2880,63 @@ namespace ZQ
 						stride_W = atoi(paras[n][1].c_str());
 					}
 				}
+				else if (_my_strcmpi("pad_type", paras[n][0].c_str()) == 0)
+				{
+					if (paras[n].size() >= 2)
+					{
+						if (_strcmpi("SAME", paras[n][1].c_str()) == 0)
+							pad_type = TYPE_SAME;
+						else if (_strcmpi("VALID", paras[n][1].c_str()) == 0)
+							pad_type = TYPE_VALID;
+					}
+				}
 				else if (_my_strcmpi("pad", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
-						pad_H = atoi(paras[n][1].c_str());
-						pad_W = atoi(paras[n][1].c_str());
+						pad_H_top = pad_H_bottom = pad_W_left = pad_W_right = atoi(paras[n][1].c_str());
 					}
 				}
 				else if (_my_strcmpi("pad_H", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
-						pad_H = atoi(paras[n][1].c_str());
+						pad_H_top = pad_H_bottom = atoi(paras[n][1].c_str());
+					}
+				}
+				else if (_my_strcmpi("pad_H_top", paras[n][0].c_str()) == 0)
+				{
+					if (paras[n].size() >= 2)
+					{
+						pad_H_top = atoi(paras[n][1].c_str());
+					}
+				}
+				else if (_my_strcmpi("pad_H_bottom", paras[n][0].c_str()) == 0)
+				{
+					if (paras[n].size() >= 2)
+					{
+						pad_H_bottom = atoi(paras[n][1].c_str());
 					}
 				}
 				else if (_my_strcmpi("pad_W", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
-						pad_W = atoi(paras[n][1].c_str());
+						pad_W_left = pad_W_right = atoi(paras[n][1].c_str());
+					}
+				}
+				else if (_my_strcmpi("pad_W_left", paras[n][0].c_str()) == 0)
+				{
+					if (paras[n].size() >= 2)
+					{
+						pad_W_left = atoi(paras[n][1].c_str());
+					}
+				}
+				else if (_my_strcmpi("pad_W_right", paras[n][0].c_str()) == 0)
+				{
+					if (paras[n].size() >= 2)
+					{
+						pad_W_right = atoi(paras[n][1].c_str());
 					}
 				}
 				else if (_my_strcmpi("global_pool", paras[n][0].c_str()) == 0)
@@ -2694,6 +3029,29 @@ namespace ZQ
 			this->bottom_C = bottom_C; 
 			this->bottom_H = bottom_H;
 			this->bottom_W = bottom_W;
+
+			if (pad_type == TYPE_VALID)
+			{
+				int top_W = ceil((bottom_W - kernel_W + 1) / stride_W);
+				int top_H = ceil((bottom_H - kernel_H + 1) / stride_H);
+				int pad_W = __max((top_W - 1)*stride_W + kernel_W - bottom_W, 0);
+				int pad_H = __max((top_H - 1)*stride_H + kernel_H - bottom_H, 0);
+				pad_W_left = pad_W / 2;
+				pad_W_right = pad_W - pad_W_left;
+				pad_H_top = pad_H / 2;
+				pad_H_bottom = pad_H - pad_H_top;
+			}
+			else if (pad_type == TYPE_SAME)
+			{
+				int top_W = bottom_W / stride_W;
+				int top_H = bottom_H / stride_H;
+				int pad_W = __max((top_W - 1)*stride_W + kernel_W - bottom_W, 0);
+				int pad_H = __max((top_H - 1)*stride_H + kernel_H - bottom_H, 0);
+				pad_W_left = pad_W / 2;
+				pad_W_right = pad_W - pad_W_left;
+				pad_H_top = pad_H / 2;
+				pad_H_bottom = pad_H - pad_H_top;
+			}
 			return true; 
 		}
 
@@ -2709,8 +3067,8 @@ namespace ZQ
 			else
 			{
 				top_C = bottom_C;
-				top_H = __max(0, ceil((float)(bottom_H - kernel_H) / stride_H) + 1);
-				top_W = __max(0, ceil((float)(bottom_W - kernel_W) / stride_W) + 1);
+				top_H = __max(0, ceil((float)(bottom_H + pad_H_top + pad_H_bottom - kernel_H) / stride_H) + 1);
+				top_W = __max(0, ceil((float)(bottom_W + pad_W_left + pad_W_right - kernel_W) / stride_W) + 1);
 			}
 		}
 
@@ -3517,14 +3875,18 @@ namespace ZQ
 	class ZQ_CNN_Layer_UpSampling : public ZQ_CNN_Layer
 	{
 	public:
-		ZQ_CNN_Layer_UpSampling(){}
+		ZQ_CNN_Layer_UpSampling():has_scale(false),has_dst_size(false){}
 		~ZQ_CNN_Layer_UpSampling() {}
 
 		static const int SampleType_Nearest = 0;
 		static const int SampleType_Bilinear = 1;
 		int sample_type;//
+		bool has_scale;
+		bool has_dst_size;
 		float scale_h;
 		float scale_w;
+		int dst_h;
+		int dst_w;
 		//
 		int bottom_C;
 		int bottom_H;
@@ -3539,7 +3901,17 @@ namespace ZQ
 			double t1 = omp_get_wtime();
 			if (sample_type == SampleType_Nearest)
 			{
-				ret = ZQ_CNN_Forward_SSEUtils::UpSamplingNearest(*((*bottoms)[0]), scale_h,scale_w, *((*tops)[0]));
+				if(has_scale)
+					ret = ZQ_CNN_Forward_SSEUtils::UpSamplingNearest(*((*bottoms)[0]), scale_h, scale_w, *((*tops)[0]));
+				else 
+					ret = ZQ_CNN_Forward_SSEUtils::UpSamplingNearest_TargetSize(*((*bottoms)[0]), dst_h, dst_w, *((*tops)[0]));
+			}
+			else if (sample_type == SampleType_Bilinear)
+			{
+				if (has_scale)
+					ret = ZQ_CNN_Forward_SSEUtils::UpSamplingBilinear(*((*bottoms)[0]), scale_h, scale_w, *((*tops)[0]));
+				else
+					ret = ZQ_CNN_Forward_SSEUtils::UpSamplingBilinear_TargetSize(*((*bottoms)[0]), dst_h, dst_w, *((*tops)[0]));
 			}
 			else
 			{
@@ -3562,6 +3934,8 @@ namespace ZQ
 			bool has_sample_type = false; 
 			bool has_scale_h = false;
 			bool has_scale_w = false;
+			bool has_dst_h = false;
+			bool has_dst_w = false;
 			bool has_top = false, has_bottom = false, has_name = false;
 			for (int n = 0; n < num; n++)
 			{
@@ -3632,6 +4006,22 @@ namespace ZQ
 						scale_w = atof(paras[n][1].c_str());
 					}
 				}
+				else if (_my_strcmpi("dst_h", paras[n][0].c_str()) == 0)
+				{
+					if (paras[n].size() >= 2)
+					{
+						has_dst_h = true;
+						dst_h = atoi(paras[n][1].c_str());
+					}
+				}
+				else if (_my_strcmpi("dst_w", paras[n][0].c_str()) == 0)
+				{
+					if (paras[n].size() >= 2)
+					{
+						has_dst_w = true;
+						dst_w = atoi(paras[n][1].c_str());
+					}
+				}
 				else
 				{
 					std::cout << "warning: unknown para " << paras[n][0] << " in Layer " << name << "\n";
@@ -3654,18 +4044,20 @@ namespace ZQ
 				std::cout << "Layer " << name << " missing " << "top\n";
 				ret = false;
 			}
-			if (has_sample_type && sample_type == SampleType_Nearest)
+			has_scale = has_scale_h && has_scale_w;
+			has_dst_size = has_dst_h && has_dst_w;
+			if (has_sample_type)
 			{
-				if (!has_scale_h)
+				if (has_scale && has_dst_size)
 				{
-					std::cout << "Layer " << name << " missing " << "scale_h\n";
+					std::cout << "Layer " << name << " (scale_h,scale_w) and (dst_h,dst_w) should not be specified simultaneously!\n";
 					ret = false;
 				}
-				if (!has_scale_w)
+				else if(!has_scale && !has_dst_size)
 				{
-					std::cout << "Layer " << name << " missing " << "scale_w\n";
+					std::cout << "Layer " << name << " (scale_h,scale_w) or (dst_h,dst_w) should be specified!\n";
 					ret = false;
-				}
+				}	
 			}
 
 			if (!has_name) 
@@ -3703,9 +4095,18 @@ namespace ZQ
 		//should called after SetBottomDim
 		virtual void GetTopDim(int& top_C, int& top_H, int& top_W) const
 		{
-			top_C = bottom_C;
-			top_H = bottom_H*scale_h;
-			top_W = bottom_W*scale_w;
+			if (has_scale)
+			{
+				top_C = bottom_C;
+				top_H = bottom_H*scale_h;
+				top_W = bottom_W*scale_w;
+			}
+			else
+			{
+				top_C = bottom_C;
+				top_H = dst_h;
+				top_W = dst_w;
+			}
 		}
 
 		virtual bool SwapInputRGBandBGR() { return true; };

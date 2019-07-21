@@ -120,6 +120,57 @@ bool ZQ_CNN_Tensor4D_NHW_C_Align0::Padding(int padW, int padH, int mode)
 	return true;
 }
 
+bool ZQ_CNN_Tensor4D_NHW_C_Align0::Padding(int padW_left, int padW_right, int padH_top, int padH_bottom, int mode)
+{
+	if (padW_left > borderW || padW_right > borderW || padH_top > borderH || padH_bottom > borderH)
+	{
+		ZQ_CNN_Tensor4D_NHW_C_Align0 tmp;
+		if (!tmp.ChangeSize(N, H, W, C, __max(padW_left, padW_right), __max(padH_top,padH_bottom)))
+			return false;
+		//
+		float* tmp_slice_ptr = tmp.firstPixelData;
+		float* cur_slice_ptr = firstPixelData;
+		for (int n = 0; n < N; n++, tmp_slice_ptr += tmp.sliceStep, cur_slice_ptr += sliceStep)
+		{
+			for (int h = 0; h <tmp.borderH; h++)
+			{
+				memset(tmp_slice_ptr - (h + 1)*tmp.widthStep - tmp.borderW*tmp.pixelStep, 0, sizeof(float)*tmp.widthStep);
+				memset(tmp_slice_ptr + (H + h)*tmp.widthStep - tmp.borderW*tmp.pixelStep, 0, sizeof(float)*tmp.widthStep);
+			}
+
+			float* tmp_row_ptr = tmp_slice_ptr;
+			float* cur_row_ptr = cur_slice_ptr;
+			for (int h = 0; h < H; h++, tmp_row_ptr += tmp.widthStep, cur_row_ptr += widthStep)
+			{
+				memset(tmp_row_ptr - tmp.borderW*tmp.pixelStep, 0, sizeof(float)*tmp.borderW*tmp.pixelStep);
+				memset(tmp_row_ptr + tmp.W*pixelStep, 0, sizeof(float)*tmp.borderW*tmp.pixelStep);
+				memcpy(tmp_row_ptr, cur_row_ptr, sizeof(float)* W*pixelStep);
+			}
+		}
+		Swap(tmp);
+	}
+	else
+	{
+		float* slice_ptr = firstPixelData;
+		for (int n = 0; n < N; n++, slice_ptr += sliceStep)
+		{
+			for (int h = 0; h < borderH; h++)
+			{
+				memset(slice_ptr - (h + 1)*widthStep - borderW*pixelStep, 0, sizeof(float)*widthStep);
+				memset(slice_ptr + (H + h)*widthStep - borderW*pixelStep, 0, sizeof(float)*widthStep);
+			}
+
+			float* row_ptr = slice_ptr;
+			for (int h = 0; h < H; h++, row_ptr += widthStep)
+			{
+				memset(row_ptr - borderW*pixelStep, 0, sizeof(float)*borderW*pixelStep);
+				memset(row_ptr + W*pixelStep, 0, sizeof(float)*borderW*pixelStep);
+			}
+		}
+	}
+	return true;
+}
+
 bool ZQ_CNN_Tensor4D_NHW_C_Align0::ChangeSize(int dst_N, int dst_H, int dst_W, int dst_C, int dst_borderW, int dst_borderH)
 {
 	if (N == dst_N && H == dst_H && W == dst_W && C == dst_C && borderW == dst_borderW && borderH == dst_borderH)
@@ -653,6 +704,57 @@ bool ZQ_CNN_Tensor4D_NHW_C_Align128bit::Padding(int padW, int padH, int mode)
 	return true;
 }
 
+bool ZQ_CNN_Tensor4D_NHW_C_Align128bit::Padding(int padW_left, int padW_right, int padH_top, int padH_bottom, int mode)
+{
+	if (padW_left > borderW || padW_right > borderW || padH_top > borderH || padH_bottom > borderH)
+	{
+		ZQ_CNN_Tensor4D_NHW_C_Align128bit tmp;
+		if (!tmp.ChangeSize(N, H, W, C, __max(padW_left, padW_right), __max(padH_top, padH_bottom)))
+			return false;
+		//
+		float* tmp_slice_ptr = tmp.firstPixelData;
+		float* cur_slice_ptr = firstPixelData;
+		for (int n = 0; n < N; n++, tmp_slice_ptr += tmp.sliceStep, cur_slice_ptr += sliceStep)
+		{
+			for (int h = 0; h <tmp.borderH; h++)
+			{
+				memset(tmp_slice_ptr - (h + 1)*tmp.widthStep - tmp.borderW*tmp.pixelStep, 0, sizeof(float)*tmp.widthStep);
+				memset(tmp_slice_ptr + (H + h)*tmp.widthStep - tmp.borderW*tmp.pixelStep, 0, sizeof(float)*tmp.widthStep);
+			}
+
+			float* tmp_row_ptr = tmp_slice_ptr;
+			float* cur_row_ptr = cur_slice_ptr;
+			for (int h = 0; h < H; h++, tmp_row_ptr += tmp.widthStep, cur_row_ptr += widthStep)
+			{
+				memset(tmp_row_ptr - tmp.borderW*tmp.pixelStep, 0, sizeof(float)*tmp.borderW*tmp.pixelStep);
+				memset(tmp_row_ptr + tmp.W*pixelStep, 0, sizeof(float)*tmp.borderW*tmp.pixelStep);
+				memcpy(tmp_row_ptr, cur_row_ptr, sizeof(float)* W*pixelStep);
+			}
+		}
+		Swap(tmp);
+	}
+	else
+	{
+		float* slice_ptr = firstPixelData;
+		for (int n = 0; n < N; n++, slice_ptr += sliceStep)
+		{
+			for (int h = 0; h < borderH; h++)
+			{
+				memset(slice_ptr - (h + 1)*widthStep - borderW*pixelStep, 0, sizeof(float)*widthStep);
+				memset(slice_ptr + (H + h)*widthStep - borderW*pixelStep, 0, sizeof(float)*widthStep);
+			}
+
+			float* row_ptr = slice_ptr;
+			for (int h = 0; h < H; h++, row_ptr += widthStep)
+			{
+				memset(row_ptr - borderW*pixelStep, 0, sizeof(float)*borderW*pixelStep);
+				memset(row_ptr + W*pixelStep, 0, sizeof(float)*borderW*pixelStep);
+			}
+		}
+	}
+	return true;
+}
+
 bool ZQ_CNN_Tensor4D_NHW_C_Align128bit::ChangeSize(int dst_N, int dst_H, int dst_W, int dst_C, int dst_borderW, int dst_borderH)
 {
 	if (N == dst_N && H == dst_H && W == dst_W && C == dst_C && borderW == dst_borderW && borderH == dst_borderH)
@@ -694,6 +796,7 @@ bool ZQ_CNN_Tensor4D_NHW_C_Align128bit::ChangeSize(int dst_N, int dst_H, int dst
 			unsigned char* tmp_data = (unsigned char*)_aligned_malloc(needed_dst_raw_len, 16);
 			if (tmp_data == 0)
 				return false;
+			//memset(tmp_data, 0, needed_dst_raw_len);
 #if __ARM_NEON
 			memset(tmp_data, 0, needed_dst_raw_len);
 #endif
@@ -1254,6 +1357,58 @@ bool ZQ_CNN_Tensor4D_NHW_C_Align256bit::Padding(int padW, int padH, int mode)
 	}
 	return true;
 }
+
+bool ZQ_CNN_Tensor4D_NHW_C_Align256bit::Padding(int padW_left, int padW_right, int padH_top, int padH_bottom, int mode)
+{
+	if (padW_left > borderW || padW_right > borderW || padH_top > borderH || padH_bottom > borderH)
+	{
+		ZQ_CNN_Tensor4D_NHW_C_Align256bit tmp;
+		if (!tmp.ChangeSize(N, H, W, C, __max(padW_left, padW_right), __max(padH_top, padH_bottom)))
+			return false;
+		//
+		float* tmp_slice_ptr = tmp.firstPixelData;
+		float* cur_slice_ptr = firstPixelData;
+		for (int n = 0; n < N; n++, tmp_slice_ptr += tmp.sliceStep, cur_slice_ptr += sliceStep)
+		{
+			for (int h = 0; h <tmp.borderH; h++)
+			{
+				memset(tmp_slice_ptr - (h + 1)*tmp.widthStep - tmp.borderW*tmp.pixelStep, 0, sizeof(float)*tmp.widthStep);
+				memset(tmp_slice_ptr + (H + h)*tmp.widthStep - tmp.borderW*tmp.pixelStep, 0, sizeof(float)*tmp.widthStep);
+			}
+
+			float* tmp_row_ptr = tmp_slice_ptr;
+			float* cur_row_ptr = cur_slice_ptr;
+			for (int h = 0; h < H; h++, tmp_row_ptr += tmp.widthStep, cur_row_ptr += widthStep)
+			{
+				memset(tmp_row_ptr - tmp.borderW*tmp.pixelStep, 0, sizeof(float)*tmp.borderW*tmp.pixelStep);
+				memset(tmp_row_ptr + tmp.W*pixelStep, 0, sizeof(float)*tmp.borderW*tmp.pixelStep);
+				memcpy(tmp_row_ptr, cur_row_ptr, sizeof(float)* W*pixelStep);
+			}
+		}
+		Swap(tmp);
+	}
+	else
+	{
+		float* slice_ptr = firstPixelData;
+		for (int n = 0; n < N; n++, slice_ptr += sliceStep)
+		{
+			for (int h = 0; h < borderH; h++)
+			{
+				memset(slice_ptr - (h + 1)*widthStep - borderW*pixelStep, 0, sizeof(float)*widthStep);
+				memset(slice_ptr + (H + h)*widthStep - borderW*pixelStep, 0, sizeof(float)*widthStep);
+			}
+
+			float* row_ptr = slice_ptr;
+			for (int h = 0; h < H; h++, row_ptr += widthStep)
+			{
+				memset(row_ptr - borderW*pixelStep, 0, sizeof(float)*borderW*pixelStep);
+				memset(row_ptr + W*pixelStep, 0, sizeof(float)*borderW*pixelStep);
+			}
+		}
+	}
+	return true;
+}
+
 
 bool ZQ_CNN_Tensor4D_NHW_C_Align256bit::ChangeSize(int dst_N, int dst_H, int dst_W, int dst_C, int dst_borderW, int dst_borderH)
 {

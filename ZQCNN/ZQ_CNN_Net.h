@@ -199,7 +199,6 @@ namespace ZQ
 					top_ptrs.push_back(blobs[tops[i][j]]);
 				
 				layers[i]->show_debug_info = show_debug_info;
-				//printf("%d\n", i);
 				layers[i]->use_buffer = use_buffer;
 				layers[i]->buffer = &(_buffer.data);
 				layers[i]->buffer_len = &(_buffer.len);
@@ -514,6 +513,25 @@ namespace ZQ
 						return false;
 					}
 					layer_type_names.push_back("ReLU");
+				}
+				else if (ZQ_CNN_Layer::_my_strcmpi(&buf[0], "ReLU6") == 0)
+				{
+					if (layers.size() == 0)
+					{
+						std::cout << "Input layer must be the first!\n";
+						return false;
+					}
+					ZQ_CNN_Layer* cur_layer = new ZQ_CNN_Layer_ReLU6();
+					if (cur_layer == 0) {
+						std::cout << "failed to create a ReLU6 layer!\n";
+						return false;
+					}
+					if (!_add_layer_and_blobs(cur_layer, line, false))
+					{
+						delete cur_layer;
+						return false;
+					}
+					layer_type_names.push_back("ReLU6");
 				}
 				else if (ZQ_CNN_Layer::_my_strcmpi(&buf[0], "Softmax") == 0)
 				{

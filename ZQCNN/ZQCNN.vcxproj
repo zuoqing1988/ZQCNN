@@ -109,7 +109,7 @@
       <SDLCheck>true</SDLCheck>
       <AdditionalIncludeDirectories>$(SolutionDir)3rdparty\include;$(SolutionDir)ZQ_GEMM;$(SolutionDir)ZQCNN;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
-      <EnableEnhancedInstructionSet>AdvancedVectorExtensions</EnableEnhancedInstructionSet>
+      <EnableEnhancedInstructionSet>AdvancedVectorExtensions2</EnableEnhancedInstructionSet>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -294,6 +294,7 @@
     <ClInclude Include="ZQ_CNN_Net.h" />
     <ClInclude Include="ZQ_CNN_Net_NCHWC.h" />
     <ClInclude Include="ZQ_CNN_NSFW.h" />
+    <ClInclude Include="ZQ_CNN_PersonPose.h" />
     <ClInclude Include="ZQ_CNN_SSD.h" />
     <ClInclude Include="ZQ_CNN_Tensor4D.h" />
     <ClInclude Include="ZQ_CNN_Tensor4D_NCHWC.h" />
