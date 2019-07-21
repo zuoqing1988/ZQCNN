@@ -233,14 +233,14 @@ namespace ZQ
 					{
 						sum_x /= sum_weight;
 						sum_y /= sum_weight;
-						output[nn].points[c * 3 + 0] = (sum_x + 0.0) / hm_W*size - pad_w_left + col1;
-						output[nn].points[c * 3 + 1] = (sum_y + 0.0) / hm_H*size - pad_h_up + row1;
+						output[nn].points[c * 3 + 0] = (sum_x + 0.5) / hm_W*size - 0.5 - pad_w_left + col1;
+						output[nn].points[c * 3 + 1] = (sum_y + 0.5) / hm_H*size - 0.5 - pad_h_up + row1;
 						output[nn].points[c * 3 + 2] = 1;
 					}
 					/*if (max_weight > thresh)
 					{
-						output[nn].points[c * 3 + 0] = (max_w + 0.0) / hm_W*size - pad_w_left + col1;
-						output[nn].points[c * 3 + 1] = (max_h + 0.0) / hm_H*size - pad_h_up + row1;
+						output[nn].points[c * 3 + 0] = (max_w + 0.5) / hm_W*size - 0.5 - pad_w_left + col1;
+						output[nn].points[c * 3 + 1] = (max_h + 0.5) / hm_H*size - 0.5 - pad_h_up + row1;
 						output[nn].points[c * 3 + 2] = 1;
 					}*/
 
