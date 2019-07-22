@@ -63,7 +63,7 @@ int main(int argc, const char** argv)
 		return 1;
 	}
 	std::vector<ZQ_CNN_BBox106> box1,box2;
-	mtcnn.SetPara(img1.cols, img1.rows, 20, 0.5, 0.6, 0.8, 0.4, 0.5, 0.5, 0.709, 3, 20, 4, true, true, 1);
+	mtcnn.SetPara(img1.cols, img1.rows, 40, 0.5, 0.6, 0.8, 0.4, 0.5, 0.5, 0.709, 3, 20, 4, true, true, 1);
 	if (!mtcnn.Find106(img1.data, img1.cols, img1.rows, img1.step[0], box1) || box1.size() == 0)
 	{
 		printf("failed to detect face for image %s\n", img1_name);
@@ -223,8 +223,9 @@ void get_face_mask(const Mat& img, const ZQ_CNN_BBox106& box, Mat& mask)
 	
 	int kernel_size = (box.col2 - box.col1 + box.row2 - box.row1)*0.05;
 	kernel_size /= 2;
+	kernel_size = __max(1, kernel_size);
+	kernel_size *= 2;
 	kernel_size += 1;
-	
 	GaussianBlur(mask, mask, cv::Size(kernel_size, kernel_size), kernel_size*0.5, kernel_size*0.5);
 	for (int h = 0; h < mask.rows; h++)
 	{
@@ -292,6 +293,8 @@ void correct_colours(const Mat& img1, const Mat& img2, const ZQ_CNN_BBox106& box
 
 	int blur_amount = 0.6*dis;
 	blur_amount /= 2;
+	blur_amount = __max(blur_amount, 1);
+	blur_amount *= 2;
 	blur_amount += 1;
 
 	Mat im1_blur, im2_blur;

@@ -3,11 +3,11 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LocalDebuggerWorkingDirectory>$(SolutionDir)</LocalDebuggerWorkingDirectory>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
-    <LocalDebuggerCommandArguments>data/00005224.jpg data/keliamoniz1.jpg faceswap.jpg</LocalDebuggerCommandArguments>
+    <LocalDebuggerCommandArguments>data/person0.jpg data/person1.jpg faceswap.jpg</LocalDebuggerCommandArguments>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LocalDebuggerWorkingDirectory>$(SolutionDir)</LocalDebuggerWorkingDirectory>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
-    <LocalDebuggerCommandArguments>data/00005224.jpg data/keliamoniz1.jpg faceswap.jpg</LocalDebuggerCommandArguments>
+    <LocalDebuggerCommandArguments>data/person0.jpg data/person1.jpg faceswap.jpg</LocalDebuggerCommandArguments>
   </PropertyGroup>
 </Project>
