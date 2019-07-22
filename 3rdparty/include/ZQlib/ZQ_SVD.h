@@ -45,7 +45,7 @@ namespace ZQ
 		T* V_ptr = V.GetDataPtr();
 		T* S_ptr = SS.GetDataPtr();
 
-		if (_strcmpi(typeid(T).name(), "double") == 0)
+		if (strcmp(typeid(T).name(), "double") == 0)
 		{
 			return ZQ_MathBase::SVD_Decompose(A_ptr, m, n, U_ptr, S_ptr, V_ptr);
 		}

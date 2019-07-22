@@ -105,8 +105,8 @@ namespace ZQ
 				X.SetData(i, 1, xy[i * 2 + 1]);
 				X.SetData(i, 2, 1);
 				X.SetData(i, 3, 0);
-				X.SetData(i + nPts, 0, xy[i * 2 + 0]);
-				X.SetData(i + nPts, 1, xy[i * 2 + 0]);
+				X.SetData(i + nPts, 0, xy[i * 2 + 1]);
+				X.SetData(i + nPts, 1, -xy[i * 2 + 0]);
 				X.SetData(i + nPts, 2, 0);
 				X.SetData(i + nPts, 3, 1);
 				U.SetData(i, 0, uv[i * 2 + 0]);
