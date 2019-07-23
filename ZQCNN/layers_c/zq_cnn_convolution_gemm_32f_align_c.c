@@ -358,7 +358,7 @@ extern "C" {
 		float* matrix_A = 0;
 		float* matrix_Bt = 0;
 		const float* in_slice_ptr, *in_row_ptr, *in_pix_ptr, *cur_in_row_ptr,*cur_in_pix_ptr,*filter_slice_ptr,*filter_row_ptr,*filter_pix_ptr;
-		int out_n, out_h, out_w, kn, kh, kw;
+		int out_n, out_h, out_w, out_c, kn, kh, kw;
 		float* matrix_A_row_ptr, *matrix_A_col_ptr, *cp_dst_ptr;
 		float* out_slice_ptr, *out_row_ptr, *out_pix_ptr;
 		float* matrix_C = 0, *matrix_C_row_ptr;
@@ -450,6 +450,8 @@ extern "C" {
 					for (out_w = 0, out_pix_ptr = out_row_ptr; out_w < out_W; out_w++, out_pix_ptr += out_pixelStep)
 					{
 						memcpy(out_pix_ptr, matrix_C_row_ptr, sizeof(float)*matrix_B_cols);
+						for (out_c = matrix_B_cols; out_c < out_pixelStep; out_c++)
+							out_pix_ptr[out_c] = 0;
 						matrix_C_row_ptr += matrix_B_cols;
 					}
 				}

@@ -232,6 +232,8 @@ void zq_cnn_conv_no_padding_gemm_32f_align_same_pixstep_kernel1x1(
 	int matrix_A_rows = out_H*out_W;
 	int matrix_B_cols = filter_N;
 	int matrix_B_rows = filter_pixelStep;
+	int in_widthStep_mul_stride_H = in_widthStep*stride_H;
+	int in_pixelStep_mul_stride_W = in_pixelStep*stride_W;
 #if __ARM_NEON
 #if !__ARM_NEON_FP16
 	int padK = (matrix_A_cols + 3) >> 2 << 2;
@@ -245,7 +247,8 @@ void zq_cnn_conv_no_padding_gemm_32f_align_same_pixstep_kernel1x1(
 	int padK = matrix_A_cols;
 #endif
 #endif
-	if (matrix_A_cols == padK && in_sliceStep == in_H*in_W*in_pixelStep && out_sliceStep == out_H*out_W*out_pixelStep)
+	if (matrix_A_cols == padK && in_sliceStep == in_H*in_W*in_pixelStep && out_sliceStep == out_H*out_W*out_pixelStep
+		&& in_H == out_H && in_W == out_W)
 	{
 #if __ARM_NEON && ZQ_CNN_USE_ZQ_GEMM && ZQ_CNN_USE_BLAS_GEMM
 		if (0 == zq_gemm_32f_AnoTrans_Btrans_special(matrix_A_rows, matrix_B_cols, matrix_A_cols, in_tensor4D_data, matrix_A_cols,
@@ -316,9 +319,9 @@ void zq_cnn_conv_no_padding_gemm_32f_align_same_pixstep_kernel1x1(
 			t3 = omp_get_wtime();
 			matrix_A_row_ptr = matrix_A;
 
-			for (out_h = 0, in_row_ptr = in_slice_ptr; out_h < out_H; out_h++, in_row_ptr += in_widthStep)
+			for (out_h = 0, in_row_ptr = in_slice_ptr; out_h < out_H; out_h++, in_row_ptr += in_widthStep_mul_stride_H)
 			{
-				for (out_w = 0, in_pix_ptr = in_row_ptr; out_w < out_W; out_w++, in_pix_ptr += in_pixelStep)
+				for (out_w = 0, in_pix_ptr = in_row_ptr; out_w < out_W; out_w++, in_pix_ptr += in_pixelStep_mul_stride_W)
 				{
 					cur_in_row_ptr = in_pix_ptr;
 					matrix_A_col_ptr = matrix_A_row_ptr;
