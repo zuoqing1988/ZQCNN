@@ -25,6 +25,7 @@ namespace ZQ
 			max_trace_num = 4;
 			weight_decay = 0;
 			show_debug_info = false;
+			enable_iou_filter = false;
 			is_first_frame = true;
 			thread_num = 1;
 			has_lnet106 = false;
@@ -36,6 +37,7 @@ namespace ZQ
 		int max_trace_num;
 		float weight_decay;
 		bool show_debug_info;
+		bool enable_iou_filter;
 		float othresh;
 		bool is_first_frame;
 		int thread_num;
@@ -46,11 +48,14 @@ namespace ZQ
 		int key_cooldown;
 		int cur_key_cooldown;
 		std::vector<std::vector<ZQ_CNN_BBox106> > trace;
+		std::vector<ZQ_CNN_BBox106> backup_results;
 		ZQ_CNN_Tensor4D_NHW_C_Align128bit input, lnet106_image;
 		int lnet106_size;
 	public:
 		void TurnOnShowDebugInfo() { show_debug_info = true; }
 		void TurnOffShowDebugInfo() { show_debug_info = false; }
+		void TurnOnFilterIOU() { enable_iou_filter = true; }
+		void TurnOffFilterIOU() { enable_iou_filter = false; }
 
 		bool Init(const string& pnet_param, const string& pnet_model, const string& rnet_param, const string& rnet_model,
 			const string& onet_param, const string& onet_model, int thread_num = 1,
@@ -126,6 +131,7 @@ namespace ZQ
 					trace[i].push_back(results[i]);
 				is_first_frame = results.size() == 0;
 				cur_key_cooldown = key_cooldown;
+				backup_results = results;
 			}
 			else
 			{
@@ -214,11 +220,17 @@ namespace ZQ
 				}
 				_filtering(trace, results);
 
+				if (enable_iou_filter) 
+				{
+					_filtering_iou(results, good_idx, backup_results);
+				}
+
 				/**********   Stage 6: update bbox        ************/
 				_recompute_bbox(results);
 				
 				if (results.size() == 0)
 					is_first_frame = true;
+				backup_results = results;
 			}
 			cur_key_cooldown -- ;
 			return true;
@@ -424,10 +436,20 @@ namespace ZQ
 				{
 					for (int num = 0; num < keypoint_num; num++)
 					{
-						task_fourthBbox[pp][i].ppoint[num * 2] = task_fourthBbox[pp][i].col1 +
-							(task_fourthBbox[pp][i].col2 - task_fourthBbox[pp][i].col1)*keyPoint_ptr[i*keyPoint_sliceStep + num * 2];
-						task_fourthBbox[pp][i].ppoint[num * 2 + 1] = task_fourthBbox[pp][i].row1 +
-							(task_fourthBbox[pp][i].row2 - task_fourthBbox[pp][i].row1)*keyPoint_ptr[i*keyPoint_sliceStep + num * 2 + 1];
+						if ((num >= 33 && num < 43) || (num >= 64 && num < 72) || (num >= 84 && num < 104))
+						{
+							task_fourthBbox[pp][i].ppoint[num * 2] = task_fourthBbox[pp][i].col1 +
+								(task_fourthBbox[pp][i].col2 - task_fourthBbox[pp][i].col1)*keyPoint_ptr[i*keyPoint_sliceStep + num * 2]/**0.25*/;
+							task_fourthBbox[pp][i].ppoint[num * 2 + 1] = task_fourthBbox[pp][i].row1 +
+								(task_fourthBbox[pp][i].row2 - task_fourthBbox[pp][i].row1)*keyPoint_ptr[i*keyPoint_sliceStep + num * 2 + 1]/**0.25*/;
+						}
+						else
+						{
+							task_fourthBbox[pp][i].ppoint[num * 2] = task_fourthBbox[pp][i].col1 +
+								(task_fourthBbox[pp][i].col2 - task_fourthBbox[pp][i].col1)*keyPoint_ptr[i*keyPoint_sliceStep + num * 2];
+							task_fourthBbox[pp][i].ppoint[num * 2 + 1] = task_fourthBbox[pp][i].row1 +
+								(task_fourthBbox[pp][i].row2 - task_fourthBbox[pp][i].row1)*keyPoint_ptr[i*keyPoint_sliceStep + num * 2 + 1];
+						}
 					}
 				}
 			}
@@ -537,6 +559,30 @@ namespace ZQ
 					reproj_err += fabs(reproj_coords[i * 2 + 1] - cur_pts[i * 2 + 1]);
 				}
 				reproj_err /= 212.0;
+			}
+		}
+
+		void _filtering_iou(std::vector<ZQ_CNN_BBox106>& results, const std::vector<int>& good_idx, const std::vector<ZQ_CNN_BBox106>& backup_results)
+		{
+			const float thresh = 1.0f;
+			int last_num = backup_results.size();
+			for (int bb = 0; bb < results.size(); bb++)
+			{
+				int last_id = good_idx[bb];
+				if (last_id >= 0)
+				{
+					bool flag = true;
+					for (int k = 0; k < 212; k++)
+					{
+						if (fabs(results[bb].ppoint[k] - backup_results[last_id].ppoint[k]) > thresh)
+						{
+							flag = false;
+							break;
+						}
+					}
+					if (flag)
+						results[bb] = backup_results[last_id];
+				}
 			}
 		}
 
