@@ -486,23 +486,30 @@ namespace ZQ
 				const std::vector<ZQ_CNN_BBox106>& cur_trace = trace[i];
 				results[i] = cur_trace[0];
 				const ZQ_CNN_BBox106& cur_box = trace[i][0];
-				const float reproj_thresh = 0.005f;
-				float real_thresh = reproj_thresh*(cur_box.col2 - cur_box.col1 + cur_box.row2 - cur_box.row1);
+				const float reproj_thresh_L1 = 0.005f;
+				const float reproj_thresh_L2 = 0.005f;
+				const float reproj_thresh_Linf = 0.008f;
+				float real_thresh_L1 = reproj_thresh_L1*(cur_box.col2 - cur_box.col1 + cur_box.row2 - cur_box.row1);
+				float real_thresh_L2 = reproj_thresh_L2*(cur_box.col2 - cur_box.col1 + cur_box.row2 - cur_box.row1);
+				float real_thresh_Linf = reproj_thresh_Linf*(cur_box.col2 - cur_box.col1 + cur_box.row2 - cur_box.row1);
 				float sum_weight = 1.0f;
 				int cur_trace_len = cur_trace.size();
 				if (cur_trace_len <= 1)
 					continue;
-
+				
 				for(int j = 1;j < cur_trace_len;j++)
 				{
-					double reproj_err = 0;
+					double reproj_err_L2 = 0;
+					double reproj_err_L1 = 0;
+					double reproj_err_Linf = 0;
 					float last_weight = exp(-weight_decay*j);
 					const ZQ_CNN_BBox106& last_box = trace[i][j];
-					_compute_transform(last_box.ppoint, cur_box.ppoint, reproj_err, reproj_coords);
+					_compute_transform(last_box.ppoint, cur_box.ppoint, reproj_err_L2, reproj_err_L1, reproj_err_Linf, reproj_coords);
 					
-					if (reproj_err < real_thresh)
+					if (reproj_err_L2 < real_thresh_L2 && reproj_err_L1 < real_thresh_L1 && reproj_err_Linf < real_thresh_Linf)
 					{
-						//printf("reproj_err = %f, real_thresh = %f\n", reproj_err, real_thresh);
+						printf("[%d,%d]reproj_err_ratio = %5.2f,%5.2f,%5.2f\n",i,j, reproj_err_L2/ real_thresh_L2, 
+							reproj_err_L1/ real_thresh_L1, reproj_err_Linf/ real_thresh_Linf);
 						for (int j = 0; j < 212; j++)
 						{
 							results[i].ppoint[j] += last_box.ppoint[j] * last_weight;
@@ -522,7 +529,8 @@ namespace ZQ
 			}
 		}
 
-		void _compute_transform(const float last_pts[], const float cur_pts[], double& reproj_err, float reproj_coords[])
+		void _compute_transform(const float last_pts[], const float cur_pts[], double& reproj_err_L2, double& reproj_err_L1,
+			double& reproj_err_Linf, float reproj_coords[])
 		{
 			ZQ_Matrix<double> A(212, 6), b(212, 1), x(6,1);
 			for (int i = 0; i < 106; i++)
@@ -538,7 +546,9 @@ namespace ZQ
 			}
 			if (!ZQ_SVD::Solve(A, x, b))
 			{
-				reproj_err = FLT_MAX;
+				reproj_err_L2 = FLT_MAX;
+				reproj_err_L1 = FLT_MAX;
+				reproj_err_Linf = FLT_MAX;
 			}
 			else
 			{
@@ -550,15 +560,21 @@ namespace ZQ
 				R[3] = x.GetData(3, 0, flag);
 				T[0] = x.GetData(4, 0, flag);
 				T[1] = x.GetData(5, 0, flag);
-				reproj_err = 0;
+				reproj_err_L2 = 0;
+				reproj_err_L1 = 0;
+				reproj_err_Linf = 0;
 				for (int i = 0; i < 106; i++)
 				{
 					reproj_coords[i * 2 + 0] = last_pts[i * 2 + 0] * R[0] + last_pts[i * 2 + 1] * R[1] + T[0];
 					reproj_coords[i * 2 + 1] = last_pts[i * 2 + 0] * R[2] + last_pts[i * 2 + 1] * R[3] + T[1];
-					reproj_err += fabs(reproj_coords[i * 2 + 0] - cur_pts[i * 2 + 0]);
-					reproj_err += fabs(reproj_coords[i * 2 + 1] - cur_pts[i * 2 + 1]);
+					double dis_x = fabs(reproj_coords[i * 2 + 0] - cur_pts[i * 2 + 0]);
+					double dis_y = fabs(reproj_coords[i * 2 + 1] - cur_pts[i * 2 + 1]);
+					reproj_err_L1 += dis_x + dis_y;
+					reproj_err_L2 += dis_x*dis_x+dis_y*dis_y;
+					reproj_err_Linf = __max(reproj_err_Linf, __max(dis_x,dis_y));
 				}
-				reproj_err /= 212.0;
+				reproj_err_L1 /= 212.0;
+				reproj_err_L2 = sqrt(reproj_err_L2 / 212.0);
 			}
 		}
 
