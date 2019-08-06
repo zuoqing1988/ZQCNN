@@ -388,8 +388,8 @@ extern "C" {
 			x0[w] = (int)x0_f;
 			x1[w] = x0[w] + 1;
 			sx[w] = coord_x - x0_f;
-			x0[w] = __min(src_W - 1, __max(0, x0[w]));
-			x1[w] = __min(src_W - 1, __max(0, x1[w]));
+			x0[w] = __min(in_W - 1, __max(0, x0[w]));
+			x1[w] = __min(in_W - 1, __max(0, x1[w]));
 			x0[w] *= in_pixelStep;
 			x1[w] *= in_pixelStep;
 		}
@@ -410,8 +410,8 @@ extern "C" {
 				y0 = (int)y0_f;
 				y1 = y0 + 1;
 				sy = coord_y - y0_f;
-				y0 = __min(in_H, __max(0, y0));
-				y1 = __min(in_H, __max(0, y1));
+				y0 = __min(in_H-1, __max(0, y0));
+				y1 = __min(in_H-1, __max(0, y1));
 
 				in_row0_ptr = in_slice_ptr + y0*in_widthStep;
 				in_row1_ptr = in_slice_ptr + y1*in_widthStep;
@@ -676,8 +676,8 @@ extern "C" {
 			x0[w] = (int)x0_f;
 			x1[w] = x0[w] + 1;
 			sx[w] = coord_x - x0_f;
-			x0[w] = __min(src_W - 1, __max(0, x0[w]));
-			x1[w] = __min(src_W - 1, __max(0, x1[w]));
+			x0[w] = __min(in_W - 1, __max(0, x0[w]));
+			x1[w] = __min(in_W - 1, __max(0, x1[w]));
 			x0[w] *= in_pixelStep;
 			x1[w] *= in_pixelStep;
 		}
@@ -698,8 +698,8 @@ extern "C" {
 				y0 = (int)y0_f;
 				y1 = y0 + 1;
 				sy = coord_y - y0_f;
-				y0 = __min(in_H, __max(0, y0));
-				y1 = __min(in_H, __max(0, y1));
+				y0 = __min(in_H-1, __max(0, y0));
+				y1 = __min(in_H-1, __max(0, y1));
 
 				in_row0_ptr = in_slice_ptr + y0*in_widthStep;
 				in_row1_ptr = in_slice_ptr + y1*in_widthStep;

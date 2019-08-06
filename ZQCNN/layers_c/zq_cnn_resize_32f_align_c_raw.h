@@ -103,7 +103,7 @@ void zq_cnn_resize_nn(
 			}
 		}
 	}
-	else if (in_C <= ((zq_mm_align_size << 1) + 1)) //*3
+	else if (in_C <= zq_mm_align_size * 3) //*3
 	{
 		for (n = 0, in_slice_ptr = in_tensor4D_data, out_slice_ptr = out_tensor4D_data;
 			n < in_N;
@@ -357,7 +357,7 @@ void zq_cnn_resize_with_safeborder(
 			}
 		}
 	}
-	else if (in_C <= ((zq_mm_align_size << 1) + 1)) //*3
+	else if (in_C <= zq_mm_align_size * 3) //*3
 	{
 		for (n = 0, in_slice_ptr = in_tensor4D_data, out_slice_ptr = out_tensor4D_data;
 			n < in_N;
@@ -693,7 +693,7 @@ void zq_cnn_resize_without_safeborder(
 			}
 		}
 	}
-	else if (in_C <= ((zq_mm_align_size << 1) + 1)) //*3
+	else if (in_C <= zq_mm_align_size * 3) //*3
 	{
 		for (n = 0, in_slice_ptr = in_tensor4D_data, out_slice_ptr = out_tensor4D_data;
 			n < in_N;
