@@ -462,9 +462,9 @@ namespace ZQ
 				{
 					if (paras[n].size() >= 2)
 					{
-						if (_strcmpi("SAME", paras[n][1].c_str()) == 0)
+						if (_my_strcmpi("SAME", paras[n][1].c_str()) == 0)
 							pad_type = TYPE_SAME;
-						else if (_strcmpi("VALID", paras[n][1].c_str()) == 0)
+						else if (_my_strcmpi("VALID", paras[n][1].c_str()) == 0)
 							pad_type = TYPE_VALID;
 					}
 				}
@@ -1019,9 +1019,9 @@ namespace ZQ
 				{
 					if (paras[n].size() >= 2)
 					{
-						if (_strcmpi("SAME", paras[n][1].c_str()) == 0)
+						if (_my_strcmpi("SAME", paras[n][1].c_str()) == 0)
 							pad_type = TYPE_SAME;
-						else if (_strcmpi("VALID", paras[n][1].c_str()) == 0)
+						else if (_my_strcmpi("VALID", paras[n][1].c_str()) == 0)
 							pad_type = TYPE_VALID;
 					}
 				}
@@ -2884,9 +2884,9 @@ namespace ZQ
 				{
 					if (paras[n].size() >= 2)
 					{
-						if (_strcmpi("SAME", paras[n][1].c_str()) == 0)
+						if (_my_strcmpi("SAME", paras[n][1].c_str()) == 0)
 							pad_type = TYPE_SAME;
-						else if (_strcmpi("VALID", paras[n][1].c_str()) == 0)
+						else if (_my_strcmpi("VALID", paras[n][1].c_str()) == 0)
 							pad_type = TYPE_VALID;
 					}
 				}
