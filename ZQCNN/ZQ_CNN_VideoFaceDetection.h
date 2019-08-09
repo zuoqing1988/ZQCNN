@@ -486,12 +486,19 @@ namespace ZQ
 				const std::vector<ZQ_CNN_BBox106>& cur_trace = trace[i];
 				results[i] = cur_trace[0];
 				const ZQ_CNN_BBox106& cur_box = trace[i][0];
+				const float ori_thresh_L1 = 0.01f;
+				const float ori_thresh_L2 = 0.01f;
+				const float ori_thresh_Linf = 0.015f;
 				const float reproj_thresh_L1 = 0.005f;
 				const float reproj_thresh_L2 = 0.005f;
 				const float reproj_thresh_Linf = 0.008f;
-				float real_thresh_L1 = reproj_thresh_L1*(cur_box.col2 - cur_box.col1 + cur_box.row2 - cur_box.row1);
-				float real_thresh_L2 = reproj_thresh_L2*(cur_box.col2 - cur_box.col1 + cur_box.row2 - cur_box.row1);
-				float real_thresh_Linf = reproj_thresh_Linf*(cur_box.col2 - cur_box.col1 + cur_box.row2 - cur_box.row1);
+				float box_len_sum = cur_box.col2 - cur_box.col1 + cur_box.row2 - cur_box.row1;
+				float real_ori_thresh_L1 = ori_thresh_L1*box_len_sum;
+				float real_ori_thresh_L2 = ori_thresh_L2*box_len_sum;
+				float real_ori_thresh_Linf = ori_thresh_Linf*box_len_sum;
+				float real_thresh_L1 = reproj_thresh_L1*box_len_sum;
+				float real_thresh_L2 = reproj_thresh_L2*box_len_sum;
+				float real_thresh_Linf = reproj_thresh_Linf*box_len_sum;
 				float sum_weight = 1.0f;
 				int cur_trace_len = cur_trace.size();
 				if (cur_trace_len <= 1)
@@ -499,14 +506,20 @@ namespace ZQ
 				
 				for(int j = 1;j < cur_trace_len;j++)
 				{
+					double ori_dis_L2 = 0;
+					double ori_dis_L1 = 0;
+					double ori_dis_Linf = 0;
 					double reproj_err_L2 = 0;
 					double reproj_err_L1 = 0;
 					double reproj_err_Linf = 0;
 					float last_weight = exp(-weight_decay*j);
 					const ZQ_CNN_BBox106& last_box = trace[i][j];
-					_compute_transform(last_box.ppoint, cur_box.ppoint, reproj_err_L2, reproj_err_L1, reproj_err_Linf, reproj_coords);
+					_compute_transform(last_box.ppoint, cur_box.ppoint, 
+						ori_dis_L2, ori_dis_L1, ori_dis_Linf,
+						reproj_err_L2, reproj_err_L1, reproj_err_Linf, reproj_coords);
 					
-					if (reproj_err_L2 < real_thresh_L2 && reproj_err_L1 < real_thresh_L1 && reproj_err_Linf < real_thresh_Linf)
+					if (ori_dis_L2 < real_ori_thresh_L2 && ori_dis_L1 < real_ori_thresh_L1 && ori_dis_Linf < real_ori_thresh_Linf
+						&& reproj_err_L2 < real_thresh_L2 && reproj_err_L1 < real_thresh_L1 && reproj_err_Linf < real_thresh_Linf)
 					{
 						printf("[%d,%d]reproj_err_ratio = %5.2f,%5.2f,%5.2f\n",i,j, reproj_err_L2/ real_thresh_L2, 
 							reproj_err_L1/ real_thresh_L1, reproj_err_Linf/ real_thresh_Linf);
@@ -529,8 +542,9 @@ namespace ZQ
 			}
 		}
 
-		void _compute_transform(const float last_pts[], const float cur_pts[], double& reproj_err_L2, double& reproj_err_L1,
-			double& reproj_err_Linf, float reproj_coords[])
+		void _compute_transform(const float last_pts[], const float cur_pts[], 
+			double& ori_dis_L2, double& ori_dis_L1, double& ori_dis_Linf,
+			double& reproj_err_L2, double& reproj_err_L1, double& reproj_err_Linf, float reproj_coords[])
 		{
 			ZQ_Matrix<double> A(212, 6), b(212, 1), x(6,1);
 			for (int i = 0; i < 106; i++)
@@ -546,6 +560,9 @@ namespace ZQ
 			}
 			if (!ZQ_SVD::Solve(A, x, b))
 			{
+				ori_dis_L2 = FLT_MAX;
+				ori_dis_L1 = FLT_MAX;
+				ori_dis_Linf = FLT_MAX;
 				reproj_err_L2 = FLT_MAX;
 				reproj_err_L1 = FLT_MAX;
 				reproj_err_Linf = FLT_MAX;
@@ -560,6 +577,10 @@ namespace ZQ
 				R[3] = x.GetData(3, 0, flag);
 				T[0] = x.GetData(4, 0, flag);
 				T[1] = x.GetData(5, 0, flag);
+				
+				ori_dis_L2 = 0;
+				ori_dis_L1 = 0;
+				ori_dis_Linf = 0;
 				reproj_err_L2 = 0;
 				reproj_err_L1 = 0;
 				reproj_err_Linf = 0;
@@ -572,9 +593,16 @@ namespace ZQ
 					reproj_err_L1 += dis_x + dis_y;
 					reproj_err_L2 += dis_x*dis_x+dis_y*dis_y;
 					reproj_err_Linf = __max(reproj_err_Linf, __max(dis_x,dis_y));
+					double ori_dis_x = fabs(last_pts[i * 2 + 0] - cur_pts[i * 2 + 0]);
+					double ori_dis_y = fabs(last_pts[i * 2 + 1] - cur_pts[i * 2 + 1]);
+					ori_dis_L1 += ori_dis_x + ori_dis_y;
+					ori_dis_L2 += ori_dis_x*ori_dis_x + ori_dis_y*ori_dis_y;
+					ori_dis_Linf = __max(ori_dis_Linf, __max(ori_dis_x, ori_dis_y));
 				}
 				reproj_err_L1 /= 212.0;
 				reproj_err_L2 = sqrt(reproj_err_L2 / 212.0);
+				ori_dis_L1 /= 212.0;
+				ori_dis_L2 = sqrt(ori_dis_L2 / 212.0);
 			}
 		}
 
