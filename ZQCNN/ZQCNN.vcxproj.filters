@@ -22,6 +22,9 @@
     <Filter Include="layers_nchwc">
       <UniqueIdentifier>{b0047998-091d-4c62-9884-fc2258d18ca0}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Interface">
+      <UniqueIdentifier>{862b597f-48ec-4bd8-8e7d-8d8edcc845fa}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="layers_c\zq_cnn_addbias_32f_align_c.c">
@@ -415,6 +418,21 @@
     </ClInclude>
     <ClInclude Include="ZQ_CNN_PersonPose.h">
       <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="ZQ_CNN_Tensor4D_Interface.h">
+      <Filter>Interface</Filter>
+    </ClInclude>
+    <ClInclude Include="ZQ_CNN_MTCNN_Interface.h">
+      <Filter>Interface</Filter>
+    </ClInclude>
+    <ClInclude Include="ZQ_CNN_Net_Interface.h">
+      <Filter>Interface</Filter>
+    </ClInclude>
+    <ClInclude Include="ZQ_CNN_CascadeOnet_Interface.h">
+      <Filter>Interface</Filter>
+    </ClInclude>
+    <ClInclude Include="ZQ_CNN_VideoFaceDetection_Interface.h">
+      <Filter>Interface</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

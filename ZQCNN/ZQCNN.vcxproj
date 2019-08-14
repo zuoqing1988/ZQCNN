@@ -279,6 +279,7 @@
     <ClInclude Include="ZQ_CNN_BBox.h" />
     <ClInclude Include="ZQ_CNN_BBoxUtils.h" />
     <ClInclude Include="ZQ_CNN_CascadeOnet.h" />
+    <ClInclude Include="ZQ_CNN_CascadeOnet_Interface.h" />
     <ClInclude Include="ZQ_CNN_CompileConfig.h" />
     <ClInclude Include="ZQ_CNN_DetectorInterface.h" />
     <ClInclude Include="ZQ_CNN_Forward_SSEUtils.h" />
@@ -287,19 +288,23 @@
     <ClInclude Include="ZQ_CNN_Layer_NCHWC.h" />
     <ClInclude Include="ZQ_CNN_MouthDetector.h" />
     <ClInclude Include="ZQ_CNN_MTCNN_AspectRatio.h" />
+    <ClInclude Include="ZQ_CNN_MTCNN_Interface.h" />
     <ClInclude Include="ZQ_CNN_MTCNN_NCHWC.h" />
     <ClInclude Include="ZQ_CNN_MTCNN_ncnn.h" />
     <ClInclude Include="ZQ_CNN_MTCNN_old.h" />
     <ClInclude Include="ZQ_CNN_MTCNN.h" />
     <ClInclude Include="ZQ_CNN_Net.h" />
+    <ClInclude Include="ZQ_CNN_Net_Interface.h" />
     <ClInclude Include="ZQ_CNN_Net_NCHWC.h" />
     <ClInclude Include="ZQ_CNN_NSFW.h" />
     <ClInclude Include="ZQ_CNN_PersonPose.h" />
     <ClInclude Include="ZQ_CNN_SSD.h" />
     <ClInclude Include="ZQ_CNN_Tensor4D.h" />
+    <ClInclude Include="ZQ_CNN_Tensor4D_Interface.h" />
     <ClInclude Include="ZQ_CNN_Tensor4D_NCHWC.h" />
     <ClInclude Include="ZQ_CNN_TextBoxes.h" />
     <ClInclude Include="ZQ_CNN_VideoFaceDetection.h" />
+    <ClInclude Include="ZQ_CNN_VideoFaceDetection_Interface.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
