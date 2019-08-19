@@ -176,6 +176,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SampleCascadeOnet_Interface
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SampleVideoFaceDetection_Interface", "SamplesZQCNN\SampleVideoFaceDetection_Interface\SampleVideoFaceDetection_Interface.vcxproj", "{7E2B6DC6-EFA5-49D4-9704-858F4727134B}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SampleLnet240", "SamplesZQCNN\SampleLnet240\SampleLnet240.vcxproj", "{640A3461-76DE-47F7-B75F-3B0D73DC3ACD}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -520,6 +522,14 @@ Global
 		{7E2B6DC6-EFA5-49D4-9704-858F4727134B}.Release|x64.Build.0 = Release|x64
 		{7E2B6DC6-EFA5-49D4-9704-858F4727134B}.Release|x86.ActiveCfg = Release|Win32
 		{7E2B6DC6-EFA5-49D4-9704-858F4727134B}.Release|x86.Build.0 = Release|Win32
+		{640A3461-76DE-47F7-B75F-3B0D73DC3ACD}.Debug|x64.ActiveCfg = Debug|x64
+		{640A3461-76DE-47F7-B75F-3B0D73DC3ACD}.Debug|x64.Build.0 = Debug|x64
+		{640A3461-76DE-47F7-B75F-3B0D73DC3ACD}.Debug|x86.ActiveCfg = Debug|Win32
+		{640A3461-76DE-47F7-B75F-3B0D73DC3ACD}.Debug|x86.Build.0 = Debug|Win32
+		{640A3461-76DE-47F7-B75F-3B0D73DC3ACD}.Release|x64.ActiveCfg = Release|x64
+		{640A3461-76DE-47F7-B75F-3B0D73DC3ACD}.Release|x64.Build.0 = Release|x64
+		{640A3461-76DE-47F7-B75F-3B0D73DC3ACD}.Release|x86.ActiveCfg = Release|Win32
+		{640A3461-76DE-47F7-B75F-3B0D73DC3ACD}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

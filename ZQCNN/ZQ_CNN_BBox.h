@@ -108,6 +108,36 @@ namespace ZQ
 		}
 	};
 
+	class ZQ_CNN_BBox240
+	{
+	public:
+		ZQ_CNN_BBox106 box;
+		float left_brow_eye_ppoint[70];
+		float right_brow_eye_ppoint[70];
+		float mouth_ppoint[128];
+
+		ZQ_CNN_BBox240()
+		{
+			memset(this, 0, sizeof(ZQ_CNN_BBox240));
+		}
+
+		~ZQ_CNN_BBox240() {}
+
+		bool ReadFromBinary(FILE* in)
+		{
+			if (fread(this, sizeof(ZQ_CNN_BBox240), 1, in) != 1)
+				return false;
+			return true;
+		}
+
+		bool WriteBinary(FILE* out) const
+		{
+			if (fwrite(this, sizeof(ZQ_CNN_BBox240), 1, out) != 1)
+				return false;
+			return true;
+		}
+	};
+
 	class ZQ_CNN_OrderScore
 	{
 	public:
