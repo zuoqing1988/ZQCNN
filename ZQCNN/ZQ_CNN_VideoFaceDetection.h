@@ -699,7 +699,7 @@ namespace ZQ
 						//	reproj_err_L1 / real_thresh_L1, reproj_err_Linf / real_thresh_Linf);
 						for (int j = 0; j < 13*2; j++)
 						{
-							results[i].left_brow_eye_ppoint[j] += last_box.left_brow_eye_ppoint[j] * last_weight;
+							results[i].left_brow_eye_ppoint[j] += reproj_coords[j] * last_weight;
 						}
 						sum_weight += last_weight;
 					}
@@ -759,7 +759,7 @@ namespace ZQ
 						//	reproj_err_L1 / real_thresh_L1, reproj_err_Linf / real_thresh_Linf);
 						for (int j = 0; j < 22 * 2; j++)
 						{
-							results[i].left_brow_eye_ppoint[26+j] += last_box.left_brow_eye_ppoint[26+j] * last_weight;
+							results[i].left_brow_eye_ppoint[26+j] += reproj_coords[j] * last_weight;
 						}
 						sum_weight += last_weight;
 					}
@@ -819,7 +819,7 @@ namespace ZQ
 						//	reproj_err_L1 / real_thresh_L1, reproj_err_Linf / real_thresh_Linf);
 						for (int j = 0; j < 13 * 2; j++)
 						{
-							results[i].right_brow_eye_ppoint[j] += last_box.right_brow_eye_ppoint[j] * last_weight;
+							results[i].right_brow_eye_ppoint[j] += reproj_coords[j] * last_weight;
 						}
 						sum_weight += last_weight;
 					}
@@ -879,7 +879,7 @@ namespace ZQ
 						//	reproj_err_L1 / real_thresh_L1, reproj_err_Linf / real_thresh_Linf);
 						for (int j = 0; j < 22 * 2; j++)
 						{
-							results[i].right_brow_eye_ppoint[26 + j] += last_box.right_brow_eye_ppoint[26 + j] * last_weight;
+							results[i].right_brow_eye_ppoint[26 + j] += reproj_coords[j] * last_weight;
 						}
 						sum_weight += last_weight;
 					}
@@ -939,7 +939,7 @@ namespace ZQ
 						//	reproj_err_L1 / real_thresh_L1, reproj_err_Linf / real_thresh_Linf);
 						for (int j = 0; j < 64 * 2; j++)
 						{
-							results[i].mouth_ppoint[j] += last_box.mouth_ppoint[j] * last_weight;
+							results[i].mouth_ppoint[j] += reproj_coords[j] * last_weight;
 						}
 						sum_weight += last_weight;
 					}
