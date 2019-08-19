@@ -6,6 +6,7 @@
 #include "ZQ_CNN_BBoxUtils.h"
 #include "ZQ_CNN_MTCNN.h"
 #include "ZQ_CNN_CascadeOnet.h"
+#include "ZQ_CNN_Landmark240.h"
 #include "ZQlib/ZQ_SVD.h"
 #include <vector>
 namespace ZQ
@@ -45,12 +46,15 @@ namespace ZQ
 		std::vector<ZQ_CNN_CascadeOnet> cascade_Onets;
 		bool has_lnet106;
 		std::vector<ZQ_CNN_Net> lnets106;
+		bool has_lnet240;
+		std::vector<ZQ_CNN_Landmark240> landmark240_nets;
 		int key_cooldown;
 		int cur_key_cooldown;
-		std::vector<std::vector<ZQ_CNN_BBox106> > trace;
-		std::vector<ZQ_CNN_BBox106> backup_results;
+		std::vector<std::vector<ZQ_CNN_BBox240> > trace;
+		std::vector<ZQ_CNN_BBox240> backup_results;
 		ZQ_CNN_Tensor4D_NHW_C_Align128bit input, lnet106_image;
 		int lnet106_size;
+		
 	public:
 		void TurnOnShowDebugInfo() { show_debug_info = true; }
 		void TurnOffShowDebugInfo() { show_debug_info = false; }
@@ -59,7 +63,10 @@ namespace ZQ
 
 		bool Init(const string& pnet_param, const string& pnet_model, const string& rnet_param, const string& rnet_model,
 			const string& onet_param, const string& onet_model, int thread_num = 1,
-			bool has_lnet106 = false, const string& lnet106_param = "", const std::string& lnet106_model = "")
+			bool has_lnet106 = false, const string& lnet106_param = "", const string& lnet106_model = "",
+			bool has_lnet240 = false, const string& left_brow_eye_param = "", const string& left_brow_eye_model = "",
+			const string& right_brow_eye_param = "", const string& right_brow_eye_model = "", 
+			const string& mouth_param = "", const string& mouth_model = "")
 		{
 			if (!mtcnn.Init(pnet_param, pnet_model, rnet_param, rnet_model, onet_param, onet_model, thread_num, has_lnet106, lnet106_param, lnet106_model))
 				return false;
@@ -82,6 +89,19 @@ namespace ZQ
 				int C, H, W;
 				lnets106[0].GetInputDim(C, H, W);
 				lnet106_size = H;
+			}
+			this->has_lnet240 = has_lnet240;
+			if (has_lnet240)
+			{
+				landmark240_nets.resize(this->thread_num);
+				for (int i = 0; i < landmark240_nets.size(); i++)
+				{
+					if (!landmark240_nets[i].Init(left_brow_eye_param, left_brow_eye_model,
+						right_brow_eye_param, right_brow_eye_model, mouth_param, mouth_model))
+					{
+						return false;
+					}
+				}
 			}
 			return true;
 		}
@@ -112,7 +132,7 @@ namespace ZQ
 			}
 		}
 
-		bool Find(const unsigned char* bgr_img, int _width, int _height, int _widthStep, std::vector<ZQ_CNN_BBox106>& results)
+		bool Find(const unsigned char* bgr_img, int _width, int _height, int _widthStep, std::vector<ZQ_CNN_BBox240>& results)
 		{
 			if (!input.ConvertFromBGR(bgr_img, _width, _height, _widthStep))
 				return false;
@@ -121,9 +141,11 @@ namespace ZQ
 			
 			if (is_first_frame)
 			{
-				if (!mtcnn.Find106(input, results))
+				std::vector<ZQ_CNN_BBox106> results106;
+				if (!mtcnn.Find106(input, results106))
 					return false;
-				_recompute_bbox(results);
+				_compute_landmark240(results106, results);
+				_recompute_bbox(results);				
 				int cur_box_num = results.size();
 				trace.clear();
 				trace.resize(cur_box_num);
@@ -135,16 +157,17 @@ namespace ZQ
 			}
 			else
 			{
+				std::vector<ZQ_CNN_BBox106> results106;
 				/**********   Stage 1: detect around the old positions         ************/
 
 				std::vector<ZQ_CNN_BBox> boxes;
 				std::vector<ZQ_CNN_BBox> last_boxes(trace.size());
 				for (int i = 0; i < trace.size(); i++)
 				{
-					last_boxes[i].col1 = trace[i][0].col1;
-					last_boxes[i].col2 = trace[i][0].col2;
-					last_boxes[i].row1 = trace[i][0].row1;
-					last_boxes[i].row2 = trace[i][0].row2;
+					last_boxes[i].col1 = trace[i][0].box.col1;
+					last_boxes[i].col2 = trace[i][0].box.col2;
+					last_boxes[i].row1 = trace[i][0].box.row1;
+					last_boxes[i].row2 = trace[i][0].box.row2;
 					last_boxes[i].exist = true;
 				}
 				ZQ_CNN_BBoxUtils::_square_bbox(last_boxes, input.GetW(), input.GetH());
@@ -200,12 +223,14 @@ namespace ZQ
 					boxes.push_back(old_boxes[keep_orders[i]]);
 				}
 
-				/**********   Stage 4: get 106 landmark         ************/
-				_Lnet106_stage(boxes, results);
+				/**********   Stage 4: get 106 & 240 landmark         ************/
+				_Lnet106_stage(boxes, results106);
 
+				_compute_landmark240(results106, results);
+				
 				/**********   Stage 5: filtering        ************/
 				int cur_box_num = results.size();
-				std::vector<std::vector<ZQ_CNN_BBox106> > old_trace(trace);
+				std::vector<std::vector<ZQ_CNN_BBox240> > old_trace(trace);
 				trace.clear();
 				trace.resize(cur_box_num);
 				for (int i = 0; i < cur_box_num; i++)
@@ -213,7 +238,7 @@ namespace ZQ
 					trace[i].push_back(results[i]);
 					if (good_idx[i] >= 0)
 					{
-						std::vector<ZQ_CNN_BBox106>& tmp_old_trace = old_trace[good_idx[i]];
+						std::vector<ZQ_CNN_BBox240>& tmp_old_trace = old_trace[good_idx[i]];
 						for (int j = 0; j < tmp_old_trace.size() && j < max_trace_num; j++)
 							trace[i].push_back(tmp_old_trace[j]);
 					}
@@ -222,7 +247,7 @@ namespace ZQ
 
 				if (enable_iou_filter) 
 				{
-					_filtering_iou(results, good_idx, backup_results);
+					//_filtering_iou(results, good_idx, backup_results);
 				}
 
 				/**********   Stage 6: update bbox        ************/
@@ -478,6 +503,26 @@ namespace ZQ
 			return true;
 		}
 
+
+		bool _compute_landmark240(std::vector<ZQ_CNN_BBox106>& bbox106, std::vector<ZQ_CNN_BBox240>& bbox240)
+		{
+			bbox240.resize(bbox106.size());
+			for (int i = 0; i < bbox240.size(); i++)
+			{
+				if (has_lnet240)
+				{
+					if (!landmark240_nets[0].Find(input, bbox106[i], bbox240[i]))
+						return false;
+				}
+				else
+				{
+					bbox240[i].box = bbox106[i];
+				}
+			}
+
+			return true;
+		}
+
 		void _filtering(const std::vector<std::vector<ZQ_CNN_BBox106> >& trace, std::vector<ZQ_CNN_BBox106>& results)
 		{
 			float reproj_coords[212];
@@ -514,7 +559,7 @@ namespace ZQ
 					double reproj_err_Linf = 0;
 					float last_weight = exp(-weight_decay*j);
 					const ZQ_CNN_BBox106& last_box = trace[i][j];
-					_compute_transform(last_box.ppoint, cur_box.ppoint, 
+					_compute_transform(106, last_box.ppoint, cur_box.ppoint, 
 						ori_dis_L2, ori_dis_L1, ori_dis_Linf,
 						reproj_err_L2, reproj_err_L1, reproj_err_Linf, reproj_coords);
 					
@@ -542,12 +587,381 @@ namespace ZQ
 			}
 		}
 
-		void _compute_transform(const float last_pts[], const float cur_pts[], 
+		void _filtering(const std::vector<std::vector<ZQ_CNN_BBox240> >& trace, std::vector<ZQ_CNN_BBox240>& results)
+		{
+			float reproj_coords[212];
+
+			//filtering 106
+			for (int i = 0; i < results.size(); i++)
+			{
+				const std::vector<ZQ_CNN_BBox240>& cur_trace = trace[i];
+				results[i] = cur_trace[0];
+				const ZQ_CNN_BBox106& cur_box = trace[i][0].box;
+				const float ori_thresh_L1 = 0.01f;
+				const float ori_thresh_L2 = 0.01f;
+				const float ori_thresh_Linf = 0.015f;
+				const float reproj_thresh_L1 = 0.005f;
+				const float reproj_thresh_L2 = 0.005f;
+				const float reproj_thresh_Linf = 0.008f;
+				float box_len_sum = cur_box.col2 - cur_box.col1 + cur_box.row2 - cur_box.row1;
+				float real_ori_thresh_L1 = ori_thresh_L1*box_len_sum;
+				float real_ori_thresh_L2 = ori_thresh_L2*box_len_sum;
+				float real_ori_thresh_Linf = ori_thresh_Linf*box_len_sum;
+				float real_thresh_L1 = reproj_thresh_L1*box_len_sum;
+				float real_thresh_L2 = reproj_thresh_L2*box_len_sum;
+				float real_thresh_Linf = reproj_thresh_Linf*box_len_sum;
+				float sum_weight = 1.0f;
+				int cur_trace_len = cur_trace.size();
+				if (cur_trace_len <= 1)
+					continue;
+
+				for (int j = 1; j < cur_trace_len; j++)
+				{
+					double ori_dis_L2 = 0;
+					double ori_dis_L1 = 0;
+					double ori_dis_Linf = 0;
+					double reproj_err_L2 = 0;
+					double reproj_err_L1 = 0;
+					double reproj_err_Linf = 0;
+					float last_weight = exp(-weight_decay*j);
+					const ZQ_CNN_BBox106& last_box = trace[i][j].box;
+					_compute_transform(106, last_box.ppoint, cur_box.ppoint,
+						ori_dis_L2, ori_dis_L1, ori_dis_Linf,
+						reproj_err_L2, reproj_err_L1, reproj_err_Linf, reproj_coords);
+
+					if (ori_dis_L2 < real_ori_thresh_L2 && ori_dis_L1 < real_ori_thresh_L1 && ori_dis_Linf < real_ori_thresh_Linf
+						&& reproj_err_L2 < real_thresh_L2 && reproj_err_L1 < real_thresh_L1 && reproj_err_Linf < real_thresh_Linf)
+					{
+						printf("[%d,%d]reproj_err_ratio = %5.2f,%5.2f,%5.2f\n", i, j, reproj_err_L2 / real_thresh_L2,
+							reproj_err_L1 / real_thresh_L1, reproj_err_Linf / real_thresh_Linf);
+						for (int j = 0; j < 212; j++)
+						{
+							results[i].box.ppoint[j] += last_box.ppoint[j] * last_weight;
+						}
+						sum_weight += last_weight;
+					}
+					else
+					{
+						//printf("reproj_err = %f\n", reproj_err);
+					}
+				}
+
+				for (int j = 0; j < 212; j++)
+				{
+					results[i].box.ppoint[j] /= sum_weight;
+				}
+			}
+
+			if (!has_lnet240)
+				return;
+
+			//left brow
+			for (int i = 0; i < results.size(); i++)
+			{
+				const std::vector<ZQ_CNN_BBox240>& cur_trace = trace[i];
+				const ZQ_CNN_BBox240& cur_box = trace[i][0];
+				const float ori_thresh_L1 = 0.01f;
+				const float ori_thresh_L2 = 0.01f;
+				const float ori_thresh_Linf = 0.015f;
+				const float reproj_thresh_L1 = 0.005f;
+				const float reproj_thresh_L2 = 0.005f;
+				const float reproj_thresh_Linf = 0.008f;
+				float box_len_sum = cur_box.box.col2 - cur_box.box.col1 + cur_box.box.row2 - cur_box.box.row1;
+				float real_ori_thresh_L1 = ori_thresh_L1*box_len_sum;
+				float real_ori_thresh_L2 = ori_thresh_L2*box_len_sum;
+				float real_ori_thresh_Linf = ori_thresh_Linf*box_len_sum;
+				float real_thresh_L1 = reproj_thresh_L1*box_len_sum;
+				float real_thresh_L2 = reproj_thresh_L2*box_len_sum;
+				float real_thresh_Linf = reproj_thresh_Linf*box_len_sum;
+				float sum_weight = 1.0f;
+				int cur_trace_len = cur_trace.size();
+				if (cur_trace_len <= 1)
+					continue;
+
+				for (int j = 1; j < cur_trace_len; j++)
+				{
+					double ori_dis_L2 = 0;
+					double ori_dis_L1 = 0;
+					double ori_dis_Linf = 0;
+					double reproj_err_L2 = 0;
+					double reproj_err_L1 = 0;
+					double reproj_err_Linf = 0;
+					float last_weight = exp(-weight_decay*j);
+					const ZQ_CNN_BBox240& last_box = trace[i][j];
+					_compute_transform(13, last_box.left_brow_eye_ppoint, cur_box.left_brow_eye_ppoint,
+						ori_dis_L2, ori_dis_L1, ori_dis_Linf,
+						reproj_err_L2, reproj_err_L1, reproj_err_Linf, reproj_coords);
+
+					if (ori_dis_L2 < real_ori_thresh_L2 && ori_dis_L1 < real_ori_thresh_L1 && ori_dis_Linf < real_ori_thresh_Linf
+						&& reproj_err_L2 < real_thresh_L2 && reproj_err_L1 < real_thresh_L1 && reproj_err_Linf < real_thresh_Linf)
+					{
+						//printf("[%d,%d]reproj_err_ratio = %5.2f,%5.2f,%5.2f\n", i, j, reproj_err_L2 / real_thresh_L2,
+						//	reproj_err_L1 / real_thresh_L1, reproj_err_Linf / real_thresh_Linf);
+						for (int j = 0; j < 13*2; j++)
+						{
+							results[i].left_brow_eye_ppoint[j] += last_box.left_brow_eye_ppoint[j] * last_weight;
+						}
+						sum_weight += last_weight;
+					}
+					else
+					{
+						//printf("reproj_err = %f\n", reproj_err);
+					}
+				}
+
+				for (int j = 0; j < 13*2; j++)
+				{
+					results[i].left_brow_eye_ppoint[j] /= sum_weight;
+				}
+			}
+
+			//left eye
+			for (int i = 0; i < results.size(); i++)
+			{
+				const std::vector<ZQ_CNN_BBox240>& cur_trace = trace[i];
+				const ZQ_CNN_BBox240& cur_box = trace[i][0];
+				const float ori_thresh_L1 = 0.01f;
+				const float ori_thresh_L2 = 0.01f;
+				const float ori_thresh_Linf = 0.015f;
+				const float reproj_thresh_L1 = 0.005f;
+				const float reproj_thresh_L2 = 0.005f;
+				const float reproj_thresh_Linf = 0.008f;
+				float box_len_sum = cur_box.box.col2 - cur_box.box.col1 + cur_box.box.row2 - cur_box.box.row1;
+				float real_ori_thresh_L1 = ori_thresh_L1*box_len_sum;
+				float real_ori_thresh_L2 = ori_thresh_L2*box_len_sum;
+				float real_ori_thresh_Linf = ori_thresh_Linf*box_len_sum;
+				float real_thresh_L1 = reproj_thresh_L1*box_len_sum;
+				float real_thresh_L2 = reproj_thresh_L2*box_len_sum;
+				float real_thresh_Linf = reproj_thresh_Linf*box_len_sum;
+				float sum_weight = 1.0f;
+				int cur_trace_len = cur_trace.size();
+				if (cur_trace_len <= 1)
+					continue;
+
+				for (int j = 1; j < cur_trace_len; j++)
+				{
+					double ori_dis_L2 = 0;
+					double ori_dis_L1 = 0;
+					double ori_dis_Linf = 0;
+					double reproj_err_L2 = 0;
+					double reproj_err_L1 = 0;
+					double reproj_err_Linf = 0;
+					float last_weight = exp(-weight_decay*j);
+					const ZQ_CNN_BBox240& last_box = trace[i][j];
+					_compute_transform(22, last_box.left_brow_eye_ppoint+26, cur_box.left_brow_eye_ppoint+26,
+						ori_dis_L2, ori_dis_L1, ori_dis_Linf,
+						reproj_err_L2, reproj_err_L1, reproj_err_Linf, reproj_coords);
+
+					if (ori_dis_L2 < real_ori_thresh_L2 && ori_dis_L1 < real_ori_thresh_L1 && ori_dis_Linf < real_ori_thresh_Linf
+						&& reproj_err_L2 < real_thresh_L2 && reproj_err_L1 < real_thresh_L1 && reproj_err_Linf < real_thresh_Linf)
+					{
+						//printf("[%d,%d]reproj_err_ratio = %5.2f,%5.2f,%5.2f\n", i, j, reproj_err_L2 / real_thresh_L2,
+						//	reproj_err_L1 / real_thresh_L1, reproj_err_Linf / real_thresh_Linf);
+						for (int j = 0; j < 22 * 2; j++)
+						{
+							results[i].left_brow_eye_ppoint[26+j] += last_box.left_brow_eye_ppoint[26+j] * last_weight;
+						}
+						sum_weight += last_weight;
+					}
+					else
+					{
+						//printf("reproj_err = %f\n", reproj_err);
+					}
+				}
+
+				for (int j = 0; j < 22 * 2; j++)
+				{
+					results[i].left_brow_eye_ppoint[26+j] /= sum_weight;
+				}
+			}
+
+			//right brow
+			for (int i = 0; i < results.size(); i++)
+			{
+				const std::vector<ZQ_CNN_BBox240>& cur_trace = trace[i];
+				const ZQ_CNN_BBox240& cur_box = trace[i][0];
+				const float ori_thresh_L1 = 0.01f;
+				const float ori_thresh_L2 = 0.01f;
+				const float ori_thresh_Linf = 0.015f;
+				const float reproj_thresh_L1 = 0.005f;
+				const float reproj_thresh_L2 = 0.005f;
+				const float reproj_thresh_Linf = 0.008f;
+				float box_len_sum = cur_box.box.col2 - cur_box.box.col1 + cur_box.box.row2 - cur_box.box.row1;
+				float real_ori_thresh_L1 = ori_thresh_L1*box_len_sum;
+				float real_ori_thresh_L2 = ori_thresh_L2*box_len_sum;
+				float real_ori_thresh_Linf = ori_thresh_Linf*box_len_sum;
+				float real_thresh_L1 = reproj_thresh_L1*box_len_sum;
+				float real_thresh_L2 = reproj_thresh_L2*box_len_sum;
+				float real_thresh_Linf = reproj_thresh_Linf*box_len_sum;
+				float sum_weight = 1.0f;
+				int cur_trace_len = cur_trace.size();
+				if (cur_trace_len <= 1)
+					continue;
+
+				for (int j = 1; j < cur_trace_len; j++)
+				{
+					double ori_dis_L2 = 0;
+					double ori_dis_L1 = 0;
+					double ori_dis_Linf = 0;
+					double reproj_err_L2 = 0;
+					double reproj_err_L1 = 0;
+					double reproj_err_Linf = 0;
+					float last_weight = exp(-weight_decay*j);
+					const ZQ_CNN_BBox240& last_box = trace[i][j];
+					_compute_transform(13, last_box.right_brow_eye_ppoint, cur_box.right_brow_eye_ppoint,
+						ori_dis_L2, ori_dis_L1, ori_dis_Linf,
+						reproj_err_L2, reproj_err_L1, reproj_err_Linf, reproj_coords);
+
+					if (ori_dis_L2 < real_ori_thresh_L2 && ori_dis_L1 < real_ori_thresh_L1 && ori_dis_Linf < real_ori_thresh_Linf
+						&& reproj_err_L2 < real_thresh_L2 && reproj_err_L1 < real_thresh_L1 && reproj_err_Linf < real_thresh_Linf)
+					{
+						//printf("[%d,%d]reproj_err_ratio = %5.2f,%5.2f,%5.2f\n", i, j, reproj_err_L2 / real_thresh_L2,
+						//	reproj_err_L1 / real_thresh_L1, reproj_err_Linf / real_thresh_Linf);
+						for (int j = 0; j < 13 * 2; j++)
+						{
+							results[i].right_brow_eye_ppoint[j] += last_box.right_brow_eye_ppoint[j] * last_weight;
+						}
+						sum_weight += last_weight;
+					}
+					else
+					{
+						//printf("reproj_err = %f\n", reproj_err);
+					}
+				}
+
+				for (int j = 0; j < 13 * 2; j++)
+				{
+					results[i].right_brow_eye_ppoint[j] /= sum_weight;
+				}
+			}
+
+			//right eye
+			for (int i = 0; i < results.size(); i++)
+			{
+				const std::vector<ZQ_CNN_BBox240>& cur_trace = trace[i];
+				const ZQ_CNN_BBox240& cur_box = trace[i][0];
+				const float ori_thresh_L1 = 0.01f;
+				const float ori_thresh_L2 = 0.01f;
+				const float ori_thresh_Linf = 0.015f;
+				const float reproj_thresh_L1 = 0.005f;
+				const float reproj_thresh_L2 = 0.005f;
+				const float reproj_thresh_Linf = 0.008f;
+				float box_len_sum = cur_box.box.col2 - cur_box.box.col1 + cur_box.box.row2 - cur_box.box.row1;
+				float real_ori_thresh_L1 = ori_thresh_L1*box_len_sum;
+				float real_ori_thresh_L2 = ori_thresh_L2*box_len_sum;
+				float real_ori_thresh_Linf = ori_thresh_Linf*box_len_sum;
+				float real_thresh_L1 = reproj_thresh_L1*box_len_sum;
+				float real_thresh_L2 = reproj_thresh_L2*box_len_sum;
+				float real_thresh_Linf = reproj_thresh_Linf*box_len_sum;
+				float sum_weight = 1.0f;
+				int cur_trace_len = cur_trace.size();
+				if (cur_trace_len <= 1)
+					continue;
+
+				for (int j = 1; j < cur_trace_len; j++)
+				{
+					double ori_dis_L2 = 0;
+					double ori_dis_L1 = 0;
+					double ori_dis_Linf = 0;
+					double reproj_err_L2 = 0;
+					double reproj_err_L1 = 0;
+					double reproj_err_Linf = 0;
+					float last_weight = exp(-weight_decay*j);
+					const ZQ_CNN_BBox240& last_box = trace[i][j];
+					_compute_transform(22, last_box.right_brow_eye_ppoint+26, cur_box.right_brow_eye_ppoint+26,
+						ori_dis_L2, ori_dis_L1, ori_dis_Linf,
+						reproj_err_L2, reproj_err_L1, reproj_err_Linf, reproj_coords);
+
+					if (ori_dis_L2 < real_ori_thresh_L2 && ori_dis_L1 < real_ori_thresh_L1 && ori_dis_Linf < real_ori_thresh_Linf
+						&& reproj_err_L2 < real_thresh_L2 && reproj_err_L1 < real_thresh_L1 && reproj_err_Linf < real_thresh_Linf)
+					{
+						//printf("[%d,%d]reproj_err_ratio = %5.2f,%5.2f,%5.2f\n", i, j, reproj_err_L2 / real_thresh_L2,
+						//	reproj_err_L1 / real_thresh_L1, reproj_err_Linf / real_thresh_Linf);
+						for (int j = 0; j < 22 * 2; j++)
+						{
+							results[i].right_brow_eye_ppoint[26 + j] += last_box.right_brow_eye_ppoint[26 + j] * last_weight;
+						}
+						sum_weight += last_weight;
+					}
+					else
+					{
+						//printf("reproj_err = %f\n", reproj_err);
+					}
+				}
+
+				for (int j = 0; j < 22 * 2; j++)
+				{
+					results[i].right_brow_eye_ppoint[26 + j] /= sum_weight;
+				}
+			}
+
+			//mouth
+			for (int i = 0; i < results.size(); i++)
+			{
+				const std::vector<ZQ_CNN_BBox240>& cur_trace = trace[i];
+				const ZQ_CNN_BBox240& cur_box = trace[i][0];
+				const float ori_thresh_L1 = 0.01f;
+				const float ori_thresh_L2 = 0.01f;
+				const float ori_thresh_Linf = 0.015f;
+				const float reproj_thresh_L1 = 0.005f;
+				const float reproj_thresh_L2 = 0.005f;
+				const float reproj_thresh_Linf = 0.008f;
+				float box_len_sum = cur_box.box.col2 - cur_box.box.col1 + cur_box.box.row2 - cur_box.box.row1;
+				float real_ori_thresh_L1 = ori_thresh_L1*box_len_sum;
+				float real_ori_thresh_L2 = ori_thresh_L2*box_len_sum;
+				float real_ori_thresh_Linf = ori_thresh_Linf*box_len_sum;
+				float real_thresh_L1 = reproj_thresh_L1*box_len_sum;
+				float real_thresh_L2 = reproj_thresh_L2*box_len_sum;
+				float real_thresh_Linf = reproj_thresh_Linf*box_len_sum;
+				float sum_weight = 1.0f;
+				int cur_trace_len = cur_trace.size();
+				if (cur_trace_len <= 1)
+					continue;
+
+				for (int j = 1; j < cur_trace_len; j++)
+				{
+					double ori_dis_L2 = 0;
+					double ori_dis_L1 = 0;
+					double ori_dis_Linf = 0;
+					double reproj_err_L2 = 0;
+					double reproj_err_L1 = 0;
+					double reproj_err_Linf = 0;
+					float last_weight = exp(-weight_decay*j);
+					const ZQ_CNN_BBox240& last_box = trace[i][j];
+					_compute_transform(64, last_box.mouth_ppoint, cur_box.mouth_ppoint,
+						ori_dis_L2, ori_dis_L1, ori_dis_Linf,
+						reproj_err_L2, reproj_err_L1, reproj_err_Linf, reproj_coords);
+
+					if (ori_dis_L2 < real_ori_thresh_L2 && ori_dis_L1 < real_ori_thresh_L1 && ori_dis_Linf < real_ori_thresh_Linf
+						&& reproj_err_L2 < real_thresh_L2 && reproj_err_L1 < real_thresh_L1 && reproj_err_Linf < real_thresh_Linf)
+					{
+						//printf("[%d,%d]reproj_err_ratio = %5.2f,%5.2f,%5.2f\n", i, j, reproj_err_L2 / real_thresh_L2,
+						//	reproj_err_L1 / real_thresh_L1, reproj_err_Linf / real_thresh_Linf);
+						for (int j = 0; j < 64 * 2; j++)
+						{
+							results[i].mouth_ppoint[j] += last_box.mouth_ppoint[j] * last_weight;
+						}
+						sum_weight += last_weight;
+					}
+					else
+					{
+						//printf("reproj_err = %f\n", reproj_err);
+					}
+				}
+
+				for (int j = 0; j < 64 * 2; j++)
+				{
+					results[i].mouth_ppoint[j] /= sum_weight;
+				}
+			}
+		}
+
+		void _compute_transform(int nPts, const float last_pts[], const float cur_pts[], 
 			double& ori_dis_L2, double& ori_dis_L1, double& ori_dis_Linf,
 			double& reproj_err_L2, double& reproj_err_L1, double& reproj_err_Linf, float reproj_coords[])
 		{
-			ZQ_Matrix<double> A(212, 6), b(212, 1), x(6,1);
-			for (int i = 0; i < 106; i++)
+			ZQ_Matrix<double> A(nPts*2, 6), b(nPts * 2, 1), x(6,1);
+			for (int i = 0; i < nPts; i++)
 			{
 				A.SetData(i * 2, 0, last_pts[i * 2]);
 				A.SetData(i * 2, 1, last_pts[i * 2 + 1]);
@@ -584,7 +998,7 @@ namespace ZQ
 				reproj_err_L2 = 0;
 				reproj_err_L1 = 0;
 				reproj_err_Linf = 0;
-				for (int i = 0; i < 106; i++)
+				for (int i = 0; i < nPts; i++)
 				{
 					reproj_coords[i * 2 + 0] = last_pts[i * 2 + 0] * R[0] + last_pts[i * 2 + 1] * R[1] + T[0];
 					reproj_coords[i * 2 + 1] = last_pts[i * 2 + 0] * R[2] + last_pts[i * 2 + 1] * R[3] + T[1];
@@ -599,10 +1013,10 @@ namespace ZQ
 					ori_dis_L2 += ori_dis_x*ori_dis_x + ori_dis_y*ori_dis_y;
 					ori_dis_Linf = __max(ori_dis_Linf, __max(ori_dis_x, ori_dis_y));
 				}
-				reproj_err_L1 /= 212.0;
-				reproj_err_L2 = sqrt(reproj_err_L2 / 212.0);
-				ori_dis_L1 /= 212.0;
-				ori_dis_L2 = sqrt(ori_dis_L2 / 212.0);
+				reproj_err_L1 /= (nPts * 2.0);
+				reproj_err_L2 = sqrt(reproj_err_L2 / (nPts * 2.0));
+				ori_dis_L1 /= nPts * 2.0;
+				ori_dis_L2 = sqrt(ori_dis_L2 / (nPts * 2.0));
 			}
 		}
 
@@ -659,6 +1073,38 @@ namespace ZQ
 				boxes[i].row1 = ymin;
 				boxes[i].row2 = ymax;
 				boxes[i].area = (xmax - xmin)*(ymax - ymin);
+			}
+		}
+
+		void _recompute_bbox(std::vector<ZQ_CNN_BBox240>& boxes)
+		{
+			for (int i = 0; i < boxes.size(); i++)
+			{
+				float xmin = FLT_MAX;
+				float ymin = FLT_MAX;
+				float xmax = -FLT_MAX;
+				float ymax = -FLT_MAX;
+				float cx, cy, max_side;
+				for (int j = 0; j < 106; j++)
+				{
+					float* coords = boxes[i].box.ppoint;
+					xmin = __min(xmin, coords[j * 2]);
+					xmax = __max(xmax, coords[j * 2]);
+					ymin = __min(ymin, coords[j * 2 + 1]);
+					ymax = __max(ymax, coords[j * 2 + 1]);
+				}
+				cx = 0.5*(xmin + xmax);
+				cy = 0.5*(ymin + ymax);
+				max_side = __max((xmax - xmin), (ymax - ymin));
+				xmin = round(cx - 0.5*max_side);
+				xmax = round(cx + 0.5*max_side);
+				ymin = round(cy - 0.5*max_side);
+				ymax = round(cy + 0.5*max_side);
+				boxes[i].box.col1 = xmin;
+				boxes[i].box.col2 = xmax;
+				boxes[i].box.row1 = ymin;
+				boxes[i].box.row2 = ymax;
+				boxes[i].box.area = (xmax - xmin)*(ymax - ymin);
 			}
 		}
 	};
