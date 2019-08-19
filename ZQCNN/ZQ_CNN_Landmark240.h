@@ -174,35 +174,41 @@ namespace ZQ
 			float left_brow_eye_height = left_brow_eye_ymax - left_brow_eye_ymin;
 			float left_brow_eye_cx = 0.5*(left_brow_eye_xmin + left_brow_eye_xmax);
 			float left_brow_eye_cy = 0.5*(left_brow_eye_ymin + left_brow_eye_ymax);
-			int left_brow_eye_expanded_size = __max(left_brow_eye_width, left_brow_eye_height) * 1.5;
+			//int left_brow_eye_expanded_size = __max(left_brow_eye_width, left_brow_eye_height) * 1.5;
+			int left_brow_eye_expanded_width = left_brow_eye_width * 1.5;
+			int left_brow_eye_expanded_height = left_brow_eye_height * 1.5;
 			
 			float right_brow_eye_width = right_brow_eye_xmax - right_brow_eye_xmin;
 			float right_brow_eye_height = right_brow_eye_ymax - right_brow_eye_ymin;
 			float right_brow_eye_cx = 0.5*(right_brow_eye_xmin + right_brow_eye_xmax);
 			float right_brow_eye_cy = 0.5*(right_brow_eye_ymin + right_brow_eye_ymax);
-			int right_brow_eye_expanded_size = __max(right_brow_eye_width, right_brow_eye_height) * 1.5;
+			//int right_brow_eye_expanded_size = __max(right_brow_eye_width, right_brow_eye_height) * 1.5;
+			int right_brow_eye_expanded_width = right_brow_eye_width * 1.5;
+			int right_brow_eye_expanded_height = right_brow_eye_height * 1.5;
 
 			float mouth_width = mouth_xmax - mouth_xmin;
 			float mouth_height = mouth_ymax - mouth_ymin;
 			float mouth_cx = 0.5*(mouth_xmin + mouth_xmax);
 			float mouth_cy = 0.5*(mouth_ymin + mouth_ymax);
-			int mouth_expanded_size = __max(mouth_width, mouth_height) * 1.5;
+			//int mouth_expanded_size = __max(mouth_width, mouth_height) * 1.5;
+			int mouth_expanded_width = mouth_width * 1.5;
+			int mouth_expanded_height = mouth_height * 1.5;
 
 			// resize 
-			int left_brow_eye_off_x = left_brow_eye_cx - 0.5*right_brow_eye_expanded_size;
-			int left_brow_eye_off_y = left_brow_eye_cy - 0.5*right_brow_eye_expanded_size;
+			int left_brow_eye_off_x = left_brow_eye_cx - 0.5*right_brow_eye_expanded_width;
+			int left_brow_eye_off_y = left_brow_eye_cy - 0.5*right_brow_eye_expanded_height;
 			input.ResizeBilinearRect(left_brow_eye_image, left_brow_eye_net_size, left_brow_eye_net_size, -1, -1, 
-				left_brow_eye_off_x, left_brow_eye_off_y, left_brow_eye_expanded_size, left_brow_eye_expanded_size);
+				left_brow_eye_off_x, left_brow_eye_off_y, left_brow_eye_expanded_width, left_brow_eye_expanded_height);
 
-			float right_brow_eye_off_x = right_brow_eye_cx - 0.5*right_brow_eye_expanded_size;
-			float right_brow_eye_off_y = right_brow_eye_cy - 0.5*right_brow_eye_expanded_size;
+			float right_brow_eye_off_x = right_brow_eye_cx - 0.5*right_brow_eye_expanded_width;
+			float right_brow_eye_off_y = right_brow_eye_cy - 0.5*right_brow_eye_expanded_height;
 			input.ResizeBilinearRect(right_brow_eye_image, right_brow_eye_net_size, right_brow_eye_net_size, -1, -1,
-				right_brow_eye_off_x, right_brow_eye_off_y, right_brow_eye_expanded_size, right_brow_eye_expanded_size);
+				right_brow_eye_off_x, right_brow_eye_off_y, right_brow_eye_expanded_width, right_brow_eye_expanded_height);
 
-			float mouth_off_x = mouth_cx - 0.5*mouth_expanded_size;
-			float mouth_off_y = mouth_cy - 0.5*mouth_expanded_size;
+			float mouth_off_x = mouth_cx - 0.5*mouth_expanded_width;
+			float mouth_off_y = mouth_cy - 0.5*mouth_expanded_height;
 			input.ResizeBilinearRect(mouth_image, mouth_net_size, mouth_net_size, -1, -1,
-				mouth_off_x, mouth_off_y, mouth_expanded_size, mouth_expanded_size);
+				mouth_off_x, mouth_off_y, mouth_expanded_width, mouth_expanded_height);
 
 
 			//forward
@@ -222,18 +228,18 @@ namespace ZQ
 			const float* mouth_data = mouth_output->GetFirstPixelPtr();
 			for (int i = 0; i < 35; i++)
 			{
-				out_box.left_brow_eye_ppoint[i * 2 + 0] = left_brow_eye_off_x + left_data[i * 2 + 0] * left_brow_eye_expanded_size;
-				out_box.left_brow_eye_ppoint[i * 2 + 1] = left_brow_eye_off_y + left_data[i * 2 + 1] * left_brow_eye_expanded_size;
+				out_box.left_brow_eye_ppoint[i * 2 + 0] = left_brow_eye_off_x + left_data[i * 2 + 0] * left_brow_eye_expanded_width;
+				out_box.left_brow_eye_ppoint[i * 2 + 1] = left_brow_eye_off_y + left_data[i * 2 + 1] * left_brow_eye_expanded_height;
 			}
 			for (int i = 0; i < 35; i++)
 			{
-				out_box.right_brow_eye_ppoint[i * 2 + 0] = right_brow_eye_off_x + right_data[i * 2 + 0] * right_brow_eye_expanded_size;
-				out_box.right_brow_eye_ppoint[i * 2 + 1] = right_brow_eye_off_y + right_data[i * 2 + 1] * right_brow_eye_expanded_size;
+				out_box.right_brow_eye_ppoint[i * 2 + 0] = right_brow_eye_off_x + right_data[i * 2 + 0] * right_brow_eye_expanded_width;
+				out_box.right_brow_eye_ppoint[i * 2 + 1] = right_brow_eye_off_y + right_data[i * 2 + 1] * right_brow_eye_expanded_height;
 			}
 			for (int i = 0; i < 64; i++)
 			{
-				out_box.mouth_ppoint[i * 2 + 0] = mouth_off_x + mouth_data[i * 2 + 0] * mouth_expanded_size;
-				out_box.mouth_ppoint[i * 2 + 1] = mouth_off_y + mouth_data[i * 2 + 1] * mouth_expanded_size;
+				out_box.mouth_ppoint[i * 2 + 0] = mouth_off_x + mouth_data[i * 2 + 0] * mouth_expanded_width;
+				out_box.mouth_ppoint[i * 2 + 1] = mouth_off_y + mouth_data[i * 2 + 1] * mouth_expanded_height;
 			}
 			out_box.box = in_box;
 			return true;
