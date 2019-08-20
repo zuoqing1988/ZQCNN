@@ -1,0 +1,120 @@
+Input name=data H=300 W=300 C=3
+Convolution				name=conv0 			bottom=data 		top=conv0 		num_output=32 kernel_size=3 stride=2 pad=1 bias
+ReLU 					name=conv0/relu		bottom=conv0 		top=conv0
+DepthwiseConvolution	name=conv1/dw		bottom=conv0 		top=conv1/dw 	num_output=32 kernel_size=3 pad=1 bias
+ReLU 					name=conv1/dw/relu	bottom=conv1/dw 	top=conv1/dw
+Convolution				name=conv1 			bottom=conv1/dw 	top=conv1 		num_output=64 kernel_size=1 bias
+ReLU 					name=conv1/relu		bottom=conv1 		top=conv1
+DepthwiseConvolution	name=conv2/dw		bottom=conv1 		top=conv2/dw 	num_output=64 kernel_size=3 stride=2 pad=1 bias
+ReLU 					name=conv2/dw/relu	bottom=conv2/dw 	top=conv2/dw
+Convolution				name=conv2 			bottom=conv2/dw 	top=conv2 		num_output=128 kernel_size=1 bias
+ReLU 					name=conv2/relu		bottom=conv2 		top=conv2
+DepthwiseConvolution	name=conv3/dw		bottom=conv2 		top=conv3/dw 	num_output=128 kernel_size=3 pad=1 bias
+ReLU 					name=conv3/dw/relu	bottom=conv3/dw 	top=conv3/dw
+Convolution				name=conv3 			bottom=conv3/dw 	top=conv3 		num_output=128 kernel_size=1 bias
+ReLU 					name=conv3/relu		bottom=conv3 		top=conv3
+DepthwiseConvolution	name=conv4/dw		bottom=conv3 		top=conv4/dw 	num_output=128 kernel_size=3 stride=2 pad=1 bias
+ReLU 					name=conv4/dw/relu	bottom=conv4/dw 	top=conv4/dw
+Convolution				name=conv4 			bottom=conv4/dw 	top=conv4 		num_output=256 kernel_size=1 bias
+ReLU 					name=conv4/relu		bottom=conv4 		top=conv4
+DepthwiseConvolution	name=conv5/dw		bottom=conv4 		top=conv5/dw 	num_output=256 kernel_size=3 pad=1 bias
+ReLU 					name=conv5/dw/relu	bottom=conv5/dw 	top=conv5/dw
+Convolution				name=conv5 			bottom=conv5/dw 	top=conv5 		num_output=256 kernel_size=1 bias
+ReLU 					name=conv5/relu		bottom=conv5 		top=conv5
+DepthwiseConvolution	name=conv6/dw		bottom=conv5 		top=conv6/dw 	num_output=256 kernel_size=3 stride=2 pad=1 bias
+ReLU 					name=conv6/dw/relu	bottom=conv6/dw 	top=conv6/dw
+Convolution				name=conv6 			bottom=conv6/dw 	top=conv6 		num_output=512 kernel_size=1 bias
+ReLU 					name=conv6/relu		bottom=conv6 		top=conv6
+DepthwiseConvolution	name=conv7/dw		bottom=conv6 		top=conv7/dw 	num_output=512 kernel_size=3 pad=1 bias
+ReLU 					name=conv7/dw/relu	bottom=conv7/dw 	top=conv7/dw
+Convolution				name=conv7 			bottom=conv7/dw 	top=conv7 		num_output=512 kernel_size=1 bias
+ReLU 					name=conv7/relu		bottom=conv7 		top=conv7
+DepthwiseConvolution	name=conv8/dw		bottom=conv7 		top=conv8/dw 	num_output=512 kernel_size=3 pad=1 bias
+ReLU 					name=conv8/dw/relu	bottom=conv8/dw 	top=conv8/dw
+Convolution				name=conv8 			bottom=conv8/dw 	top=conv8 		num_output=512 kernel_size=1 bias
+ReLU 					name=conv8/relu		bottom=conv8 		top=conv8
+DepthwiseConvolution	name=conv9/dw		bottom=conv8 		top=conv9/dw 	num_output=512 kernel_size=3 pad=1 bias
+ReLU 					name=conv9/dw/relu	bottom=conv9/dw 	top=conv9/dw
+Convolution				name=conv9 			bottom=conv9/dw 	top=conv9 		num_output=512 kernel_size=1 bias
+ReLU 					name=conv9/relu		bottom=conv9 		top=conv9
+DepthwiseConvolution	name=conv10/dw		bottom=conv9 		top=conv10/dw 	num_output=512 kernel_size=3 pad=1 bias
+ReLU 					name=conv10/dw/relu	bottom=conv10/dw 	top=conv10/dw
+Convolution				name=conv10 		bottom=conv10/dw 	top=conv10 		num_output=512 kernel_size=1 bias
+ReLU 					name=conv10/relu	bottom=conv10 		top=conv10
+DepthwiseConvolution	name=conv11/dw		bottom=conv10 		top=conv11/dw 	num_output=512 kernel_size=3 pad=1 bias
+ReLU 					name=conv11/dw/relu	bottom=conv11/dw 	top=conv11/dw
+Convolution				name=conv11 		bottom=conv11/dw 	top=conv11 		num_output=512 kernel_size=1 bias
+ReLU 					name=conv11/relu	bottom=conv11 		top=conv11
+DepthwiseConvolution	name=conv12/dw		bottom=conv11 		top=conv12/dw 	num_output=512 kernel_size=3 stride=2 pad=1 bias
+ReLU 					name=conv12/dw/relu	bottom=conv12/dw 	top=conv12/dw
+Convolution				name=conv12 		bottom=conv12/dw 	top=conv12 		num_output=1024 kernel_size=1 bias
+ReLU 					name=conv12/relu	bottom=conv12 		top=conv12
+DepthwiseConvolution	name=conv13/dw		bottom=conv12 		top=conv13/dw 	num_output=1024 kernel_size=3 pad=1 bias
+ReLU 					name=conv13/dw/relu	bottom=conv13/dw 	top=conv13/dw
+Convolution				name=conv13 		bottom=conv13/dw 	top=conv13 		num_output=1024 kernel_size=1 bias
+ReLU 					name=conv13/relu	bottom=conv13 		top=conv13
+Convolution				name=conv14_1 		bottom=conv13 		top=conv14_1	num_output=256 kernel_size=1 bias
+ReLU 					name=conv14_1/relu	bottom=conv14_1 	top=conv14_1
+Convolution				name=conv14_2 		bottom=conv14_1 	top=conv14_2	num_output=512 kernel_size=3 stride=2 pad=1 bias
+ReLU 					name=conv14_2/relu	bottom=conv14_2 	top=conv14_2
+Convolution				name=conv15_1 		bottom=conv14_2 	top=conv15_1	num_output=128 kernel_size=1 bias
+ReLU 					name=conv15_1/relu	bottom=conv15_1 	top=conv15_1
+Convolution				name=conv15_2 		bottom=conv15_1 	top=conv15_2	num_output=256 kernel_size=3 stride=2 pad=1 bias
+ReLU 					name=conv15_2/relu	bottom=conv15_2 	top=conv15_2
+Convolution				name=conv16_1 		bottom=conv15_2 	top=conv16_1	num_output=128 kernel_size=1 bias
+ReLU 					name=conv16_1/relu	bottom=conv16_1 	top=conv16_1
+Convolution				name=conv16_2 		bottom=conv16_1 	top=conv16_2	num_output=256 kernel_size=3 stride=2 pad=1 bias
+ReLU 					name=conv16_2/relu	bottom=conv16_2 	top=conv16_2
+Convolution				name=conv17_1 		bottom=conv16_2 	top=conv17_1	num_output=64 kernel_size=1 bias
+ReLU 					name=conv17_1/relu	bottom=conv17_1 	top=conv17_1
+Convolution				name=conv17_2 		bottom=conv17_1 	top=conv17_2	num_output=128 kernel_size=3 stride=2 pad=1 bias
+ReLU 					name=conv17_2/relu	bottom=conv17_2 	top=conv17_2
+Convolution			name=conv11_mbox_loc 		bottom=conv11 					top=conv11_mbox_loc	num_output=12 kernel_size=1 bias
+Permute				name=conv11_mbox_loc_perm 	bottom=conv11_mbox_loc 			top=conv11_mbox_loc_perm order=0 order=2 order=3 order=1
+Flatten				name=conv11_mbox_loc_flat	bottom=conv11_mbox_loc_perm		top=conv11_mbox_loc_flat axis=1
+Convolution			name=conv11_mbox_conf		bottom=conv11					top=conv11_mbox_conf	num_output=63 kernel_size=1 bias
+Permute				name=conv11_mbox_conf_perm 	bottom=conv11_mbox_conf 		top=conv11_mbox_conf_perm order=0 order=2 order=3 order=1
+Flatten				name=conv11_mbox_conf_flat	bottom=conv11_mbox_conf_perm	top=conv11_mbox_conf_flat axis=1
+PriorBox			name=conv11_mbox_priorbox	bottom=conv11	bottom=data		top=conv11_mbox_priorbox min_size=60.0 aspect_ratio=2.0 flip=1 clip=0 variance=0.1 variance=0.1 variance=0.2 variance=0.2 offset=0.5
+Convolution			name=conv13_mbox_loc 		bottom=conv13 					top=conv13_mbox_loc	num_output=24 kernel_size=1 bias
+Permute				name=conv13_mbox_loc_perm 	bottom=conv13_mbox_loc 			top=conv13_mbox_loc_perm order=0 order=2 order=3 order=1
+Flatten				name=conv13_mbox_loc_flat	bottom=conv13_mbox_loc_perm		top=conv13_mbox_loc_flat axis=1
+Convolution			name=conv13_mbox_conf		bottom=conv13					top=conv13_mbox_conf	num_output=126 kernel_size=1 bias
+Permute				name=conv13_mbox_conf_perm 	bottom=conv13_mbox_conf 		top=conv13_mbox_conf_perm order=0 order=2 order=3 order=1
+Flatten				name=conv13_mbox_conf_flat	bottom=conv13_mbox_conf_perm	top=conv13_mbox_conf_flat axis=1
+PriorBox			name=conv13_mbox_priorbox	bottom=conv13	bottom=data		top=conv13_mbox_priorbox min_size=105.0 max_size=150.0 aspect_ratio=2.0 aspect_ratio=3.0 flip=1 clip=0 variance=0.1 variance=0.1 variance=0.2 variance=0.2 offset=0.5
+Convolution			name=conv14_2_mbox_loc 			bottom=conv14_2 				top=conv14_2_mbox_loc	num_output=24 kernel_size=1 bias
+Permute				name=conv14_2_mbox_loc_perm 	bottom=conv14_2_mbox_loc 		top=conv14_2_mbox_loc_perm order=0 order=2 order=3 order=1
+Flatten				name=conv14_2_mbox_loc_flat		bottom=conv14_2_mbox_loc_perm	top=conv14_2_mbox_loc_flat axis=1
+Convolution			name=conv14_2_mbox_conf			bottom=conv14_2					top=conv14_2_mbox_conf	num_output=126 kernel_size=1 bias
+Permute				name=conv14_2_mbox_conf_perm 	bottom=conv14_2_mbox_conf 		top=conv14_2_mbox_conf_perm order=0 order=2 order=3 order=1
+Flatten				name=conv14_2_mbox_conf_flat	bottom=conv14_2_mbox_conf_perm	top=conv14_2_mbox_conf_flat axis=1
+PriorBox			name=conv14_2_mbox_priorbox		bottom=conv14_2	bottom=data		top=conv14_2_mbox_priorbox min_size=150.0 max_size=195.0 aspect_ratio=2.0 aspect_ratio=3.0 flip=1 clip=0 variance=0.1 variance=0.1 variance=0.2 variance=0.2 offset=0.5
+Convolution			name=conv15_2_mbox_loc 			bottom=conv15_2 				top=conv15_2_mbox_loc	num_output=24 kernel_size=1 bias
+Permute				name=conv15_2_mbox_loc_perm 	bottom=conv15_2_mbox_loc 		top=conv15_2_mbox_loc_perm order=0 order=2 order=3 order=1
+Flatten				name=conv15_2_mbox_loc_flat		bottom=conv15_2_mbox_loc_perm	top=conv15_2_mbox_loc_flat axis=1
+Convolution			name=conv15_2_mbox_conf			bottom=conv15_2					top=conv15_2_mbox_conf	num_output=126 kernel_size=1 bias
+Permute				name=conv15_2_mbox_conf_perm 	bottom=conv15_2_mbox_conf 		top=conv15_2_mbox_conf_perm order=0 order=2 order=3 order=1
+Flatten				name=conv15_2_mbox_conf_flat	bottom=conv15_2_mbox_conf_perm	top=conv15_2_mbox_conf_flat axis=1
+PriorBox			name=conv15_2_mbox_priorbox		bottom=conv15_2	bottom=data		top=conv15_2_mbox_priorbox min_size=195.0 max_size=240.0 aspect_ratio=2.0 aspect_ratio=3.0 flip=1 clip=0 variance=0.1 variance=0.1 variance=0.2 variance=0.2 offset=0.5
+Convolution			name=conv16_2_mbox_loc 			bottom=conv16_2 				top=conv16_2_mbox_loc	num_output=24 kernel_size=1 bias
+Permute				name=conv16_2_mbox_loc_perm 	bottom=conv16_2_mbox_loc 		top=conv16_2_mbox_loc_perm order=0 order=2 order=3 order=1
+Flatten				name=conv16_2_mbox_loc_flat		bottom=conv16_2_mbox_loc_perm	top=conv16_2_mbox_loc_flat axis=1
+Convolution			name=conv16_2_mbox_conf			bottom=conv16_2					top=conv16_2_mbox_conf	num_output=126 kernel_size=1 bias
+Permute				name=conv16_2_mbox_conf_perm 	bottom=conv16_2_mbox_conf 		top=conv16_2_mbox_conf_perm order=0 order=2 order=3 order=1
+Flatten				name=conv16_2_mbox_conf_flat	bottom=conv16_2_mbox_conf_perm	top=conv16_2_mbox_conf_flat axis=1
+PriorBox			name=conv16_2_mbox_priorbox		bottom=conv16_2	bottom=data		top=conv16_2_mbox_priorbox min_size=240.0 max_size=285.0 aspect_ratio=2.0 aspect_ratio=3.0 flip=1 clip=0 variance=0.1 variance=0.1 variance=0.2 variance=0.2 offset=0.5
+Convolution			name=conv17_2_mbox_loc 			bottom=conv17_2 				top=conv17_2_mbox_loc	num_output=24 kernel_size=1 bias
+Permute				name=conv17_2_mbox_loc_perm 	bottom=conv17_2_mbox_loc 		top=conv17_2_mbox_loc_perm order=0 order=2 order=3 order=1
+Flatten				name=conv17_2_mbox_loc_flat		bottom=conv17_2_mbox_loc_perm	top=conv17_2_mbox_loc_flat axis=1
+Convolution			name=conv17_2_mbox_conf			bottom=conv17_2					top=conv17_2_mbox_conf	num_output=126 kernel_size=1 bias
+Permute				name=conv17_2_mbox_conf_perm 	bottom=conv17_2_mbox_conf 		top=conv17_2_mbox_conf_perm order=0 order=2 order=3 order=1
+Flatten				name=conv17_2_mbox_conf_flat	bottom=conv17_2_mbox_conf_perm	top=conv17_2_mbox_conf_flat axis=1
+PriorBox			name=conv17_2_mbox_priorbox		bottom=conv17_2	bottom=data		top=conv17_2_mbox_priorbox min_size=285.0 max_size=300.0 aspect_ratio=2.0 aspect_ratio=3.0 flip=1 clip=0 variance=0.1 variance=0.1 variance=0.2 variance=0.2 offset=0.5
+Concat				name=mbox_loc	bottom=conv11_mbox_loc_flat bottom=conv13_mbox_loc_flat bottom=conv14_2_mbox_loc_flat bottom=conv15_2_mbox_loc_flat bottom=conv16_2_mbox_loc_flat bottom=conv17_2_mbox_loc_flat top=mbox_loc axis=1
+Concat				name=mbox_conf	bottom=conv11_mbox_conf_flat bottom=conv13_mbox_conf_flat bottom=conv14_2_mbox_conf_flat bottom=conv15_2_mbox_conf_flat bottom=conv16_2_mbox_conf_flat bottom=conv17_2_mbox_conf_flat top=mbox_conf axis=1
+Concat				name=mbox_priorbox	bottom=conv11_mbox_priorbox bottom=conv13_mbox_priorbox bottom=conv14_2_mbox_priorbox bottom=conv15_2_mbox_priorbox bottom=conv16_2_mbox_priorbox bottom=conv17_2_mbox_priorbox top=mbox_priorbox axis=2
+Reshape				name=mbox_conf_reshape	bottom=mbox_conf top=mbox_conf_reshape dim=0 dim=-1 dim=21
+Softmax				name=mbox_conf_softmax	bottom=mbox_conf_reshape top=mbox_conf_softmax axis=2
+Flatten				name=mbox_conf_flatten	bottom=mbox_conf_softmax top=mbox_conf_flatten axis=1
+DetectionOutput		name=detection_out	bottom=mbox_loc bottom=mbox_conf_flatten bottom=mbox_priorbox top=detection_out num_classes=21 share_location=1 background_label_id=0 nms_threshold=0.45 nms_top_k=100 code_type=CENTER_SIZE keep_top_k=100 confidence_threshold=0.25
