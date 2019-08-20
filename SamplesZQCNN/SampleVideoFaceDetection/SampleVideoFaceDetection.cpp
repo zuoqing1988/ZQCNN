@@ -80,7 +80,7 @@ int run_cam()
 	detector.TurnOffFilterIOU();
 	//mtcnn.SetLimit(300, 50, 20);
 	int thread_num = 0;
-	
+
 #if defined(_WIN32)
 	if (!detector.Init(
 		"model/det1-dw20-plus.zqparams", "model/det1-dw20-plus.nchwbin",
@@ -114,40 +114,59 @@ int run_cam()
 	detector.Message(ZQ_CNN_VideoFaceDetection::VFD_MSG_MAX_TRACE_NUM, 6);
 	detector.Message(ZQ_CNN_VideoFaceDetection::VFD_MSG_WEIGHT_DECAY, 0.2);
 	//cv::VideoCapture cap("video_20190518_172153_540P.mp4");
-	//cv::VideoCapture cap("video_20190528_093741.mp4"); 
-	cv::VideoCapture cap(0);
+	//cv::VideoCapture cap("video_20190612_094223.mp4"); 
+	//cv::VideoCapture cap("video_20190702_083029.mp4");
+	//cv::VideoCapture cap("V90715-124118.mp4");
+	//cv::VideoCapture cap("video_20190528_093054_540P.mp4");
+	//cv::VideoCapture cap("video_20190806_190129.mp4");
+	cv::VideoCapture cap("video_20190809_094755.mp4");
+	//cv::VideoCapture cap(0);
 	cv::VideoWriter writer;
-	cv::Mat image0;
+	cv::Mat image0, ori_im;
 	cv::namedWindow("show");
 	while (true)
 	{
 		cap >> image0;
+
 		if (image0.empty())
 			break;
-
+		//printf("w x h = %d x %d\n", image0.cols, image0.rows);
+		//cv::flip(image0, image0, 1);
+		image0 = image0(cv::Rect(656, 0, 607, 1080));
 		//cv::resize(image0, image0, cv::Size(), 0.5, 0.5);
-		//cv::GaussianBlur(image0, image0, cv::Size(3, 3), 2, 2);
-		//cv::GaussianBlur(image0, image0, cv::Size(3, 3), 2, 2);
+		image0.copyTo(ori_im);
+		cv::GaussianBlur(image0, image0, cv::Size(3, 3), 2, 2);
+		cv::GaussianBlur(image0, image0, cv::Size(3, 3), 2, 2);
+		cv::GaussianBlur(image0, image0, cv::Size(3, 3), 2, 2);
+		cv::GaussianBlur(image0, image0, cv::Size(3, 3), 2, 2);
+		cv::GaussianBlur(image0, image0, cv::Size(3, 3), 2, 2);
+		/*cv::GaussianBlur(image0, image0, cv::Size(3, 3), 2, 2);
+		cv::GaussianBlur(image0, image0, cv::Size(3, 3), 2, 2);
+		cv::GaussianBlur(image0, image0, cv::Size(3, 3), 2, 2);*/
+
 		if (!writer.isOpened())
-			writer.open("cam-trace6.mp4", CV_FOURCC('X', 'V', 'I', 'D'), 25, cv::Size(image0.cols, image0.rows));
+			writer.open("cam-trace6-18000-5-v-7.mp4", CV_FOURCC('X', 'V', 'I', 'D'), 25, cv::Size(image0.cols, image0.rows));
 		detector.SetPara(image0.cols, image0.rows, 120, 0.5, 0.6, 0.8, 0.4, 0.5, 0.5, 0.709, 3, 20, 4, 25);
-		
+
 		//mtcnn.TurnOnShowDebugInfo();
 		static int fr_id = 0;
 		if (!detector.Find(image0.data, image0.cols, image0.rows, image0.step[0], Bbox240))
 		{
 			printf("%d\n", fr_id);
 		}
-		
-		fr_id++;
-		
+
 		Draw(ori_im, Bbox240, has_lnet240);
-		
-		imshow("show", image0);
-		writer << image0;
+
+		imshow("show", ori_im);
+		char buf[200];
+		sprintf_s(buf, 20, "out5-old\\%d.png", fr_id);
+		//cv::imwrite(buf, ori_im);
+		writer << ori_im;
 		int key = cv::waitKey(20);
 		if (key == 27)
 			break;
+
+		fr_id++;
 	}
 
 	return EXIT_SUCCESS;
