@@ -4,6 +4,7 @@
 
 #include "ZQ_CNN_BBox.h"
 #include "ZQ_PixelFormat.h"
+#include <string>
 #include <vector>
 namespace ZQ
 {
