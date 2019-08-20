@@ -79,10 +79,10 @@ int main()
 
 #if defined(_WIN32)
 	if (!detector.Init("model/MobileNetSSD_deploy.zqparams", "model/MobileNetSSD_deploy.nchwbin", "detection_out", 15,
-		"model/Pose-cpm.zqparams", "model/Pose-cpm.nchwbin", "CPM/stage_5_out"))
+		"model/Pose-zq.zqparams", "model/Pose-zq.nchwbin", "Convolutional_Pose_Machine/stage_5_out"))
 #else
 	if (!detector.Init("../../model/MobileNetSSD_deploy.zqparams", "../../model/MobileNetSSD_deploy.nchwbin", "detection_out", 15,
-		"../../model/Pose-cpm.zqparams", "../../model/Pose-cpm.nchwbin", "CPM/stage_5_out"))
+		"../../model/Pose-zq.zqparams", "../../model/Pose-zq.nchwbin", "Convolutional_Pose_Machine/stage_5_out"))
 #endif
 	{
 		cout << "failed to init!\n";
@@ -90,9 +90,9 @@ int main()
 	}
 
 #if defined(_WIN32)
-	Mat img = imread("data/pose.jpg", 1);
+	Mat img = imread("data/pose_4.jpg", 1);
 #else
-	Mat img = imread("../../data/1.jpg", 1);
+	Mat img = imread("../../data/pose_4.jpg", 1);
 #endif
 	if (img.empty())
 	{
