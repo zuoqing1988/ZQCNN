@@ -25,28 +25,39 @@ using namespace std;
 using namespace cv;
 
 
-static void Draw(cv::Mat &image, const std::vector<ZQ_CNN_BBox106>& thirdBbox)
+static void Draw(cv::Mat &image, const std::vector<ZQ_CNN_BBox240>& Bbox240, bool has_lnet240 = false)
 {
-	std::vector<ZQ_CNN_BBox106>::const_iterator it = thirdBbox.begin();
-	for (; it != thirdBbox.end(); it++)
+	std::vector<ZQ_CNN_BBox240>::const_iterator it = Bbox240.begin();
+	for (; it != Bbox240.end(); it++)
 	{
-		if ((*it).exist)
+		const ZQ_CNN_BBox106& box106 = it->box;
+		if (box106.exist)
 		{
-			if (it->score > 0.7)
+			if (box106.score > 0.7)
 			{
-				cv::rectangle(image, cv::Point((*it).col1, (*it).row1), cv::Point((*it).col2, (*it).row2), cv::Scalar(0, 0, 255), 2, 8, 0);
+				cv::rectangle(image, cv::Point(box106.col1, box106.row1), cv::Point(box106.col2, box106.row2), cv::Scalar(0, 0, 255), 2, 8, 0);
 			}
 			else
 			{
-				cv::rectangle(image, cv::Point((*it).col1, (*it).row1), cv::Point((*it).col2, (*it).row2), cv::Scalar(0, 255, 0), 2, 8, 0);
+				cv::rectangle(image, cv::Point(box106.col1, box106.row1), cv::Point(box106.col2, box106.row2), cv::Scalar(0, 255, 0), 2, 8, 0);
 			}
 
 			for (int num = 0; num < 106; num++)
-				circle(image, cv::Point(*(it->ppoint + num * 2) + 0.5f, *(it->ppoint + num * 2 + 1) + 0.5f), 2, cv::Scalar(0, 255, 0), -1);
+				circle(image, cv::Point(*(box106.ppoint + num * 2) + 0.5f, *(box106.ppoint + num * 2 + 1) + 0.5f), 2, cv::Scalar(0, 255, 0), -1);
 		}
 		else
 		{
 			printf("not exist!\n");
+		}
+
+		if (has_lnet240)
+		{
+			for (int num = 0; num < 35; num++)
+				circle(image, cv::Point(*(it->left_brow_eye_ppoint + num * 2) + 0.5f, *(it->left_brow_eye_ppoint + num * 2 + 1) + 0.5f), 2, cv::Scalar(0, 0, 250), -1);
+			for (int num = 0; num < 35; num++)
+				circle(image, cv::Point(*(it->right_brow_eye_ppoint + num * 2) + 0.5f, *(it->right_brow_eye_ppoint + num * 2 + 1) + 0.5f), 2, cv::Scalar(0, 0, 250), -1);
+			for (int num = 0; num < 64; num++)
+				circle(image, cv::Point(*(it->mouth_ppoint + num * 2) + 0.5f, *(it->mouth_ppoint + num * 2 + 1) + 0.5f), 2, cv::Scalar(0, 0, 250), -1);
 		}
 	}
 }
@@ -61,10 +72,12 @@ int run_cam()
 	mkl_set_num_threads(num_threads);
 #endif
 
-	std::vector<ZQ_CNN_BBox106> thirdBbox106;
+	int has_lnet240 = true;
+	std::vector<ZQ_CNN_BBox240> Bbox240;
 	ZQ_CNN_VideoFaceDetection detector;
 	std::string result_name;
 	detector.TurnOffShowDebugInfo();
+	detector.TurnOffFilterIOU();
 	//mtcnn.SetLimit(300, 50, 20);
 	int thread_num = 0;
 	
@@ -74,14 +87,23 @@ int run_cam()
 		"model/det2-dw24-p0.zqparams", "model/det2-dw24-p0.nchwbin",
 		"model/det3-dw48-p0.zqparams", "model/det3-dw48-p0.nchwbin",
 		thread_num, true,
-		"model/det5-dw112.zqparams", "model/det5-dw112.nchwbin"
+		"model/det5-dw112.zqparams", "model/det5-dw112-18000.nchwbin",
+		has_lnet240,
+		"model/det6-dw64-left.zqparams", "model/det6-dw64-left.nchwbin",
+		"model/det6-dw64-right.zqparams", "model/det6-dw64-right.nchwbin",
+		"model/det6-dw48-mouth.zqparams", "model/det6-dw48-mouth.nchwbin"
+
 #else
 	if (!detector.Init(
 		"../../model/det1-dw20-plus.zqparams", "../../model/det1-dw20-plus.nchwbin",
 		"../../model/det2-dw24-plus.zqparams", "../../model/det2-dw24-plus.nchwbin",
 		"../../model/det3-dw48-plus.zqparams", "../../model/det3-dw48-plus.nchwbin",
 		thread_num, true,
-		"../../model/det5-dw112.zqparams", "../../model/det5-dw112.nchwbin"
+		"../../model/det5-dw112.zqparams", "../../model/det5-dw112.nchwbin",
+		has_lnet240,
+		"../../model/det6-dw64-left.zqparams", "../../model/det6-dw64-left.nchwbin",
+		"../../model/det6-dw64-right.zqparams", "../../model/det6-dw64-right.nchwbin",
+		"../../model/det6-dw48-mouth.zqparams", "../../model/det6-dw48-mouth.nchwbin"
 #endif
 	))
 	{
@@ -89,7 +111,8 @@ int run_cam()
 		return EXIT_FAILURE;
 	}
 
-	detector.Message(ZQ_CNN_VideoFaceDetection::VFD_MSG_WEIGHT_DECAY, 0.5);
+	detector.Message(ZQ_CNN_VideoFaceDetection::VFD_MSG_MAX_TRACE_NUM, 6);
+	detector.Message(ZQ_CNN_VideoFaceDetection::VFD_MSG_WEIGHT_DECAY, 0.2);
 	//cv::VideoCapture cap("video_20190518_172153_540P.mp4");
 	//cv::VideoCapture cap("video_20190528_093741.mp4"); 
 	cv::VideoCapture cap(0);
@@ -106,7 +129,7 @@ int run_cam()
 		//cv::GaussianBlur(image0, image0, cv::Size(3, 3), 2, 2);
 		//cv::GaussianBlur(image0, image0, cv::Size(3, 3), 2, 2);
 		if (!writer.isOpened())
-			writer.open("cam-trace4.mp4", CV_FOURCC('X', 'V', 'I', 'D'), 25, cv::Size(image0.cols, image0.rows));
+			writer.open("cam-trace6.mp4", CV_FOURCC('X', 'V', 'I', 'D'), 25, cv::Size(image0.cols, image0.rows));
 		detector.SetPara(image0.cols, image0.rows, 120, 0.5, 0.6, 0.8, 0.4, 0.5, 0.5, 0.709, 3, 20, 4, 25);
 		
 		//mtcnn.TurnOnShowDebugInfo();
@@ -118,7 +141,7 @@ int run_cam()
 		
 		fr_id++;
 		
-		Draw(image0, thirdBbox106);
+		Draw(ori_im, Bbox240, has_lnet240);
 		
 		imshow("show", image0);
 		writer << image0;
