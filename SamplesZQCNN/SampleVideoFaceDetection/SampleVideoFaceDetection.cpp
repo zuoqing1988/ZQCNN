@@ -134,7 +134,7 @@ int run_cam()
 		
 		//mtcnn.TurnOnShowDebugInfo();
 		static int fr_id = 0;
-		if (!detector.Find(image0.data, image0.cols, image0.rows, image0.step[0], thirdBbox106))
+		if (!detector.Find(image0.data, image0.cols, image0.rows, image0.step[0], Bbox240))
 		{
 			printf("%d\n", fr_id);
 		}
