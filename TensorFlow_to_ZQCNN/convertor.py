@@ -378,6 +378,21 @@ with tf.Session() as sess:
                     line = line + ' bottom=%s'%node_input[j]
                 line = line + ' top=%s'%n.name + ' kernel_H=%d kernel_W=%d stride_H=%d stride_W=%d pad_type=%s'%(kernel_H,kernel_W,stride_H,stride_W,padding)
                 line = line + '\n'
+            elif n.op == 'AvgPool':
+                kernel = n.attr["ksize"].list
+                kernel_H = int(kernel.i[1])
+                kernel_W = int(kernel.i[2])
+                stride = n.attr["strides"].list
+                stride_H = int(stride.i[1])
+                stride_W = int(stride.i[2])
+                padding = str(n.attr["padding"].s,'utf-8')
+                line = 'Pooling pool=AVG name=' + n.name
+                node_input = n.input
+                in_num = len(node_input)
+                for j in range(in_num):
+                    line = line + ' bottom=%s'%node_input[j]
+                line = line + ' top=%s'%n.name + ' kernel_H=%d kernel_W=%d stride_H=%d stride_W=%d pad_type=%s'%(kernel_H,kernel_W,stride_H,stride_W,padding)
+                line = line + '\n'
             elif n.op == 'ConcatV2':
                 axis_name = n.name+'/axis'
                 axis_node = search_node(all_node,axis_name)
