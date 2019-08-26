@@ -30,6 +30,8 @@ namespace ZQ
 			is_first_frame = true;
 			thread_num = 1;
 			has_lnet106 = false;
+			refine_lnet106 = false;
+			has_lnet240 = false;
 			key_cooldown = 50;
 		}
 		~ZQ_CNN_VideoFaceDetection() {}
@@ -46,6 +48,8 @@ namespace ZQ
 		std::vector<ZQ_CNN_CascadeOnet> cascade_Onets;
 		bool has_lnet106;
 		std::vector<ZQ_CNN_Net> lnets106;
+		bool refine_lnet106;
+		std::vector<ZQ_CNN_Net> refine_lnets106;
 		bool has_lnet240;
 		std::vector<ZQ_CNN_Landmark240> landmark240_nets;
 		int key_cooldown;
@@ -54,6 +58,7 @@ namespace ZQ
 		std::vector<ZQ_CNN_BBox240> backup_results;
 		ZQ_CNN_Tensor4D_NHW_C_Align128bit input, lnet106_image;
 		int lnet106_size;
+		int refine_lnet106_size;
 		
 	public:
 		void TurnOnShowDebugInfo() { show_debug_info = true; }
@@ -64,6 +69,7 @@ namespace ZQ
 		bool Init(const string& pnet_param, const string& pnet_model, const string& rnet_param, const string& rnet_model,
 			const string& onet_param, const string& onet_model, int thread_num = 1,
 			bool has_lnet106 = false, const string& lnet106_param = "", const string& lnet106_model = "",
+			bool refine_lnet106 = false, const string& refine_lnet106_param = "", const string& refine_lnet106_model = "",
 			bool has_lnet240 = false, const string& left_brow_eye_param = "", const string& left_brow_eye_model = "",
 			const string& right_brow_eye_param = "", const string& right_brow_eye_model = "", 
 			const string& mouth_param = "", const string& mouth_model = "")
@@ -89,6 +95,19 @@ namespace ZQ
 				int C, H, W;
 				lnets106[0].GetInputDim(C, H, W);
 				lnet106_size = H;
+			}
+			this->refine_lnet106 = refine_lnet106;
+			if (refine_lnet106)
+			{
+				refine_lnets106.resize(this->thread_num);
+				for (int i = 0; i < refine_lnets106.size(); i++)
+				{
+					if (!refine_lnets106[i].LoadFrom(refine_lnet106_param, refine_lnet106_model, true, 1e-9, true))
+						return false;
+				}
+				int C, H, W;
+				refine_lnets106[0].GetInputDim(C, H, W);
+				refine_lnet106_size = H;
 			}
 			this->has_lnet240 = has_lnet240;
 			if (has_lnet240)
@@ -144,6 +163,7 @@ namespace ZQ
 				std::vector<ZQ_CNN_BBox106> results106;
 				if (!mtcnn.Find106(input, results106))
 					return false;
+				_refine_landmark106(results106);
 				_compute_landmark240(results106, results);
 				_recompute_bbox(results);				
 				int cur_box_num = results.size();
@@ -225,7 +245,7 @@ namespace ZQ
 
 				/**********   Stage 4: get 106 & 240 landmark         ************/
 				_Lnet106_stage(boxes, results106);
-
+				_refine_landmark106(results106);
 				_compute_landmark240(results106, results);
 				
 				/**********   Stage 5: filtering        ************/
@@ -503,6 +523,55 @@ namespace ZQ
 			return true;
 		}
 
+		bool _refine_landmark106(std::vector<ZQ_CNN_BBox106>& resultBbox)
+		{
+			if (!refine_lnet106)
+				return true;
+			double t1 = omp_get_wtime();
+			std::vector<ZQ_CNN_Tensor4D_NHW_C_Align128bit> task_lnet_images(thread_num);
+			for(int pp = 0;pp < resultBbox.size();pp++)
+			{
+				float min_x = FLT_MAX, max_x = -FLT_MAX;
+				float min_y = FLT_MAX, max_y = -FLT_MAX;
+				for (int i = 0; i < 106; i++)
+				{
+					min_x = __min(min_x, resultBbox[pp].ppoint[i * 2]);
+					max_x = __max(max_x, resultBbox[pp].ppoint[i * 2]);
+					min_y = __min(min_y, resultBbox[pp].ppoint[i * 2 + 1]);
+					max_y = __max(max_y, resultBbox[pp].ppoint[i * 2 + 1]);
+				}
+				float cx = 0.5*(min_x + max_x);
+				float cy = 0.5*(min_y + max_y);
+				float cur_w = max_x - min_x;
+				float cur_h = max_y - min_y;
+				float cur_size = 1.1*__max(cur_w, cur_h);
+				float half_size = ceil(0.5*cur_size);
+				float off_x = cx - half_size;
+				float off_y = cy - half_size;
+				if (!input.ResizeBilinearRect(task_lnet_images[0], refine_lnet106_size, refine_lnet106_size, 0, 0,
+					off_x, off_y, cur_size, cur_size))
+				{
+					continue;
+				}
+				
+				refine_lnets106[0].Forward(task_lnet_images[0]);
+				const ZQ_CNN_Tensor4D* keyPoint = refine_lnets106[0].GetBlobByName("conv6-3");
+				const float* keyPoint_ptr = keyPoint->GetFirstPixelPtr();
+				int keypoint_num = keyPoint->GetC() / 2;
+				int keyPoint_sliceStep = keyPoint->GetSliceStep();
+				for (int num = 0; num < keypoint_num; num++)
+				{
+					resultBbox[pp].ppoint[num * 2] = off_x + cur_size * keyPoint_ptr[num * 2];
+					resultBbox[pp].ppoint[num * 2 + 1] = off_y + cur_size * keyPoint_ptr[num * 2 + 1];
+				}
+			}
+
+			double t2 = omp_get_wtime();
+			if (show_debug_info)
+				printf("run refine_Lnet [%d] times, cost %.3f ms\n", resultBbox.size(), 1000*(t2-t1));
+
+			return true;
+		}
 
 		bool _compute_landmark240(std::vector<ZQ_CNN_BBox106>& bbox106, std::vector<ZQ_CNN_BBox240>& bbox240)
 		{
