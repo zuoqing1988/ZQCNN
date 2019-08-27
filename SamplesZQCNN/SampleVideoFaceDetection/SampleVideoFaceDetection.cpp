@@ -148,7 +148,7 @@ int run_cam()
 
 		if (!writer.isOpened())
 			writer.open("cam-trace6-18000-5-v-7.mp4", CV_FOURCC('X', 'V', 'I', 'D'), 25, cv::Size(image0.cols, image0.rows));
-		detector.SetPara(image0.cols, image0.rows, 120, 0.5, 0.6, 0.8, 0.4, 0.5, 0.5, 0.709, 3, 20, 4, 25);
+		detector.SetPara(image0.cols, image0.rows, 120, 0.5, 0.6, 0.8, 0.4, 0.4, 0.4, 0.709, 3, 20, 4, 25);
 
 		//mtcnn.TurnOnShowDebugInfo();
 		static int fr_id = 0;

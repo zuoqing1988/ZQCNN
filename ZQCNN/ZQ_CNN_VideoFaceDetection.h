@@ -231,7 +231,7 @@ namespace ZQ
 
 				/**********   Stage 3: nms         ************/
 				std::vector<int> keep_orders;
-				_nms(boxes, orders, keep_orders, 0.5, "Union");
+				_nms(boxes, orders, keep_orders, 0.3, "Min");
 
 				std::vector<int> old_good_idx = good_idx;
 				std::vector<ZQ_CNN_BBox> old_boxes = boxes;
