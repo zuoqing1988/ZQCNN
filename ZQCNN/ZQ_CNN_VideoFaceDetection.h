@@ -523,10 +523,23 @@ namespace ZQ
 			return true;
 		}
 
+		float _get_rot_of_landmark106_migu(const float* pp, double m_pi)
+		{
+			float eye_cx = 0.25*(pp[52 * 2 + 0] + pp[55 * 2 + 0] + pp[58 * 2 + 0] + pp[61 * 2 + 0]);
+			float eye_cy = 0.25*(pp[52 * 2 + 1] + pp[55 * 2 + 1] + pp[58 * 2 + 1] + pp[61 * 2 + 1]);
+			float mouth_cx = 0.25*(pp[84 * 2 + 0] + pp[96 * 2 + 0] + pp[100 * 2 + 0] + pp[90 * 2 + 0]);
+			float mouth_cy = 0.25*(pp[84 * 2 + 1] + pp[96 * 2 + 1] + pp[100 * 2 + 1] + pp[90 * 2 + 1]);
+			float dir_x = mouth_cx - eye_cx;
+			float dir_y = mouth_cy - eye_cy;
+			float init_rot = 0.5*m_pi - atan2(dir_y, dir_x);
+			return init_rot;
+		}
+
 		bool _refine_landmark106(std::vector<ZQ_CNN_BBox106>& resultBbox)
 		{
 			if (!refine_lnet106)
 				return true;
+			const double m_pi = atan(1.0) * 4;
 			double t1 = omp_get_wtime();
 			std::vector<ZQ_CNN_Tensor4D_NHW_C_Align128bit> task_lnet_images(thread_num);
 			for(int pp = 0;pp < resultBbox.size();pp++)
@@ -548,8 +561,27 @@ namespace ZQ
 				float half_size = ceil(0.5*cur_size);
 				float off_x = cx - half_size;
 				float off_y = cy - half_size;
-				if (!input.ResizeBilinearRect(task_lnet_images[0], refine_lnet106_size, refine_lnet106_size, 0, 0,
-					off_x, off_y, cur_size, cur_size))
+
+				//get rot of migu 106 landmark
+				float cur_rot = _get_rot_of_landmark106_migu(resultBbox[pp].ppoint, m_pi);
+				
+				// compute map
+				std::vector<float> map_x(refine_lnet106_size*refine_lnet106_size);
+				std::vector<float> map_y(refine_lnet106_size*refine_lnet106_size);
+				float half_net_size = (refine_lnet106_size - 1) / 2.0;
+				float sin_rot = sin(cur_rot);
+				float cos_rot = cos(cur_rot);
+				float step = cur_size / refine_lnet106_size;
+				for (int h = 0; h < refine_lnet106_size; h++)
+				{
+					for (int w = 0; w < refine_lnet106_size; w++)
+					{
+						map_x[h*refine_lnet106_size + w] = cx + (w - half_net_size)*step*cos_rot + (h - half_net_size)*step*sin_rot;
+						map_y[h*refine_lnet106_size + w] = cy - (w - half_net_size)*step*sin_rot + (h - half_net_size)*step*cos_rot;
+					}
+				}
+
+				if (!input.Remap(task_lnet_images[0], refine_lnet106_size, refine_lnet106_size, 0, 0, map_x, map_y))
 				{
 					continue;
 				}
@@ -561,8 +593,10 @@ namespace ZQ
 				int keyPoint_sliceStep = keyPoint->GetSliceStep();
 				for (int num = 0; num < keypoint_num; num++)
 				{
-					resultBbox[pp].ppoint[num * 2] = off_x + cur_size * keyPoint_ptr[num * 2];
-					resultBbox[pp].ppoint[num * 2 + 1] = off_y + cur_size * keyPoint_ptr[num * 2 + 1];
+					float tmp_w = cur_size * (keyPoint_ptr[num * 2] - 0.5);
+					float tmp_h = cur_size * (keyPoint_ptr[num * 2 + 1] - 0.5);
+					resultBbox[pp].ppoint[num * 2] = cx + tmp_w*cos_rot + tmp_h*sin_rot;
+					resultBbox[pp].ppoint[num * 2 + 1] = cy - tmp_w*sin_rot + tmp_h*cos_rot;
 				}
 			}
 
