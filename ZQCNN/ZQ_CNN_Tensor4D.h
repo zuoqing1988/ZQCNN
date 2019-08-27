@@ -55,6 +55,9 @@ namespace ZQ
 		virtual bool ResizeBilinearRect(ZQ_CNN_Tensor4D& dst, int dst_W, int dst_H, int dst_borderW, int dst_borderH,
 			const std::vector<int>& src_off_x, const std::vector<int>& src_off_y, const std::vector<int>& src_rect_w, const std::vector<int>& src_rect_h) const = 0;
 
+		virtual bool Remap(ZQ_CNN_Tensor4D& dst, int dst_W, int dst_H, int dst_borderW, int dst_borderH,
+			const std::vector<float>& map_x, const std::vector<float>& map_y) const = 0;
+
 		virtual bool Padding(int padW, int padH, int mode) = 0;
 		virtual bool Padding(int padW_left, int padW_right, int padH_top, int padH_bottom, int mode) = 0;
 		virtual bool ChangeSize(int N, int H, int W, int C, int borderW, int borderH) = 0;
@@ -682,6 +685,9 @@ namespace ZQ
 
 		virtual bool ResizeBilinearRect(ZQ_CNN_Tensor4D& dst, int dst_W, int dst_H, int dst_borderW, int dst_borderH,
 			const std::vector<int>& src_off_x, const std::vector<int>& src_off_y, const std::vector<int>& src_rect_w, const std::vector<int>& src_rect_h) const;
+
+		virtual bool Remap(ZQ_CNN_Tensor4D& dst, int dst_W, int dst_H, int dst_borderW, int dst_borderH,
+			const std::vector<float>& map_x, const std::vector<float>& map_y) const;
 	};
 
 
@@ -711,6 +717,9 @@ namespace ZQ
 
 		virtual bool ResizeBilinearRect(ZQ_CNN_Tensor4D& dst, int dst_W, int dst_H, int dst_borderW, int dst_borderH,
 			const std::vector<int>& src_off_x, const std::vector<int>& src_off_y, const std::vector<int>& src_rect_w, const std::vector<int>& src_rect_h) const;
+
+		virtual bool Remap(ZQ_CNN_Tensor4D& dst, int dst_W, int dst_H, int dst_borderW, int dst_borderH,
+			const std::vector<float>& map_x, const std::vector<float>& map_y) const;
 	};
 
 	class ZQ_CNN_Tensor4D_NHW_C_Align256bit : public ZQ_CNN_Tensor4D
@@ -739,6 +748,9 @@ namespace ZQ
 
 		virtual bool ResizeBilinearRect(ZQ_CNN_Tensor4D& dst, int dst_W, int dst_H, int dst_borderW, int dst_borderH,
 			const std::vector<int>& src_off_x, const std::vector<int>& src_off_y, const std::vector<int>& src_rect_w, const std::vector<int>& src_rect_h) const;
+
+		virtual bool Remap(ZQ_CNN_Tensor4D& dst, int dst_W, int dst_H, int dst_borderW, int dst_borderH,
+			const std::vector<float>& map_x, const std::vector<float>& map_y) const;
 	};
 }
 

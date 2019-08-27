@@ -593,6 +593,76 @@ bool ZQ_CNN_Tensor4D_NHW_C_Align0::ResizeNearestRect(ZQ_CNN_Tensor4D& dst, int d
 	return true;
 }
 
+
+bool ZQ_CNN_Tensor4D_NHW_C_Align0::Remap(ZQ_CNN_Tensor4D& dst, int dst_W, int dst_H, int dst_borderW, int dst_borderH,
+	const std::vector<float>& map_x, const std::vector<float>& map_y) const
+{
+	int nPixels = dst_W * dst_H;
+	if (map_x.size() != nPixels || map_y.size() != nPixels)
+		return false;
+
+	if (dst.GetN() != N || dst.GetH() != dst_H || dst.GetW() != dst_W || dst.GetC() != C)
+	{
+		if (!dst.ChangeSize(N, dst_H, dst_W, C, __max(0, dst_borderH), __max(0, dst_borderW)))
+			return false;
+	}
+	else
+	{
+		if (dst_borderH >= 0 || dst_borderW >= 0)
+		{
+			if (!dst.ChangeSize(N, dst_H, dst_W, C, dst_borderH, dst_borderW))
+				return false;
+		}
+	}
+
+	int widthStep = GetWidthStep();
+	int pixelStep = GetPixelStep();
+	int dstWidthStep = dst.GetWidthStep();
+	int dstPixelStep = dst.GetPixelStep();
+	int dstSliceStep = dst.GetSliceStep();
+
+	int align_mode = __min(GetAlignType(), dst.GetAlignType());
+	const float* map_x_ptr = &map_x[0];
+	const float* map_y_ptr = &map_y[0];
+
+#if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_AVX
+	if (align_mode == ALIGN_256bit)
+		zq_cnn_remap_without_safeborder_32f_align256bit(firstPixelData, N, H, W, C, pixelStep, widthStep, sliceStep, map_x_ptr, map_y_ptr,
+			dst.GetFirstPixelPtr(), dst_H, dst_W, dstPixelStep, dstWidthStep, dstSliceStep);
+	else
+#endif
+#if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_SSE
+		if (align_mode == ALIGN_128bit)
+			zq_cnn_remap_without_safeborder_32f_align128bit(firstPixelData, N, H, W, C, pixelStep, widthStep, sliceStep, map_x_ptr, map_y_ptr,
+				dst.GetFirstPixelPtr(), dst_H, dst_W, dstPixelStep, dstWidthStep, dstSliceStep);
+		else
+#endif
+			zq_cnn_remap_without_safeborder_32f_align0(firstPixelData, N, H, W, C, pixelStep, widthStep, sliceStep, map_x_ptr, map_y_ptr,
+				dst.GetFirstPixelPtr(), dst_H, dst_W, dstPixelStep, dstWidthStep, dstSliceStep);
+
+
+	float* dst_slice_ptr = dst.GetFirstPixelPtr();
+	for (int n = 0; n < N; n++, dst_slice_ptr += dstSliceStep)
+	{
+
+		if (dst_borderH > 0)
+		{
+			memset(dst_slice_ptr - dstPixelStep*dst_borderW - dstWidthStep*dst_borderH, 0, sizeof(float)*dstWidthStep*dst_borderH);
+			memset(dst_slice_ptr - dstPixelStep*dst_borderW + dstWidthStep*dst_borderH, 0, sizeof(float)*dstWidthStep*dst_borderH);
+		}
+		if (dst_borderW > 0)
+		{
+			for (int h = 0; h < dst_borderH; h++)
+			{
+				memset(dst_slice_ptr - dstPixelStep*dst_borderW + dstWidthStep*h, 0, sizeof(float)*dstPixelStep*dst_borderW);
+				memset(dst_slice_ptr - dstPixelStep*(dst_borderW << 1) + dstWidthStep*(h + 1), 0, sizeof(float)*dstPixelStep*dst_borderW);
+			}
+		}
+	}
+
+	return true;
+}
+
 ZQ_CNN_Tensor4D_NHW_C_Align128bit::ZQ_CNN_Tensor4D_NHW_C_Align128bit()
 {
 	shape_nchw[0] = 0;
@@ -1249,6 +1319,75 @@ bool ZQ_CNN_Tensor4D_NHW_C_Align128bit::ResizeNearestRect(ZQ_CNN_Tensor4D& dst, 
 	return true;
 }
 
+bool ZQ_CNN_Tensor4D_NHW_C_Align128bit::Remap(ZQ_CNN_Tensor4D& dst, int dst_W, int dst_H, int dst_borderW, int dst_borderH,
+	const std::vector<float>& map_x, const std::vector<float>& map_y) const
+{
+	int nPixels = dst_W * dst_H;
+	if (map_x.size() != nPixels || map_y.size() != nPixels)
+		return false;
+
+	if (dst.GetN() != N || dst.GetH() != dst_H || dst.GetW() != dst_W || dst.GetC() != C)
+	{
+		if (!dst.ChangeSize(N, dst_H, dst_W, C, __max(0, dst_borderH), __max(0, dst_borderW)))
+			return false;
+	}
+	else
+	{
+		if (dst_borderH >= 0 || dst_borderW >= 0)
+		{
+			if (!dst.ChangeSize(N, dst_H, dst_W, C, dst_borderH, dst_borderW))
+				return false;
+		}
+	}
+
+	int widthStep = GetWidthStep();
+	int pixelStep = GetPixelStep();
+	int dstWidthStep = dst.GetWidthStep();
+	int dstPixelStep = dst.GetPixelStep();
+	int dstSliceStep = dst.GetSliceStep();
+
+	int align_mode = __min(GetAlignType(), dst.GetAlignType());
+	const float* map_x_ptr = &map_x[0];
+	const float* map_y_ptr = &map_y[0];
+
+#if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_AVX
+	if (align_mode == ALIGN_256bit)
+		zq_cnn_remap_without_safeborder_32f_align256bit(firstPixelData, N, H, W, C, pixelStep, widthStep, sliceStep, map_x_ptr, map_y_ptr,
+			dst.GetFirstPixelPtr(), dst_H, dst_W, dstPixelStep, dstWidthStep, dstSliceStep);
+	else
+#endif
+#if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_SSE
+		if (align_mode == ALIGN_128bit)
+			zq_cnn_remap_without_safeborder_32f_align128bit(firstPixelData, N, H, W, C, pixelStep, widthStep, sliceStep, map_x_ptr, map_y_ptr,
+				dst.GetFirstPixelPtr(), dst_H, dst_W, dstPixelStep, dstWidthStep, dstSliceStep);
+		else
+#endif
+			zq_cnn_remap_without_safeborder_32f_align0(firstPixelData, N, H, W, C, pixelStep, widthStep, sliceStep, map_x_ptr, map_y_ptr,
+				dst.GetFirstPixelPtr(), dst_H, dst_W, dstPixelStep, dstWidthStep, dstSliceStep);
+
+
+	float* dst_slice_ptr = dst.GetFirstPixelPtr();
+	for (int n = 0; n < N; n++, dst_slice_ptr += dstSliceStep)
+	{
+
+		if (dst_borderH > 0)
+		{
+			memset(dst_slice_ptr - dstPixelStep*dst_borderW - dstWidthStep*dst_borderH, 0, sizeof(float)*dstWidthStep*dst_borderH);
+			memset(dst_slice_ptr - dstPixelStep*dst_borderW + dstWidthStep*dst_borderH, 0, sizeof(float)*dstWidthStep*dst_borderH);
+		}
+		if (dst_borderW > 0)
+		{
+			for (int h = 0; h < dst_borderH; h++)
+			{
+				memset(dst_slice_ptr - dstPixelStep*dst_borderW + dstWidthStep*h, 0, sizeof(float)*dstPixelStep*dst_borderW);
+				memset(dst_slice_ptr - dstPixelStep*(dst_borderW << 1) + dstWidthStep*(h + 1), 0, sizeof(float)*dstPixelStep*dst_borderW);
+			}
+		}
+	}
+
+	return true;
+}
+
 ZQ_CNN_Tensor4D_NHW_C_Align256bit::ZQ_CNN_Tensor4D_NHW_C_Align256bit()
 {
 	shape_nchw[0] = 0;
@@ -1811,6 +1950,76 @@ bool ZQ_CNN_Tensor4D_NHW_C_Align256bit::ResizeNearestRect(ZQ_CNN_Tensor4D& dst, 
 	}
 	float* dst_slice_ptr = dst.GetFirstPixelPtr();
 	for (int i = 0; i < rect_num; i++, dst_slice_ptr += dstSliceStep)
+	{
+
+		if (dst_borderH > 0)
+		{
+			memset(dst_slice_ptr - dstPixelStep*dst_borderW - dstWidthStep*dst_borderH, 0, sizeof(float)*dstWidthStep*dst_borderH);
+			memset(dst_slice_ptr - dstPixelStep*dst_borderW + dstWidthStep*dst_borderH, 0, sizeof(float)*dstWidthStep*dst_borderH);
+		}
+		if (dst_borderW > 0)
+		{
+			for (int h = 0; h < dst_borderH; h++)
+			{
+				memset(dst_slice_ptr - dstPixelStep*dst_borderW + dstWidthStep*h, 0, sizeof(float)*dstPixelStep*dst_borderW);
+				memset(dst_slice_ptr - dstPixelStep*(dst_borderW << 1) + dstWidthStep*(h + 1), 0, sizeof(float)*dstPixelStep*dst_borderW);
+			}
+		}
+	}
+
+	return true;
+}
+
+
+bool ZQ_CNN_Tensor4D_NHW_C_Align256bit::Remap(ZQ_CNN_Tensor4D& dst, int dst_W, int dst_H, int dst_borderW, int dst_borderH,
+	const std::vector<float>& map_x, const std::vector<float>& map_y) const
+{
+	int nPixels = dst_W * dst_H;
+	if (map_x.size() != nPixels || map_y.size() != nPixels)
+		return false;
+
+	if (dst.GetN() != N || dst.GetH() != dst_H || dst.GetW() != dst_W || dst.GetC() != C)
+	{
+		if (!dst.ChangeSize(N, dst_H, dst_W, C, __max(0, dst_borderH), __max(0, dst_borderW)))
+			return false;
+	}
+	else
+	{
+		if (dst_borderH >= 0 || dst_borderW >= 0)
+		{
+			if (!dst.ChangeSize(N, dst_H, dst_W, C, dst_borderH, dst_borderW))
+				return false;
+		}
+	}
+
+	int widthStep = GetWidthStep();
+	int pixelStep = GetPixelStep();
+	int dstWidthStep = dst.GetWidthStep();
+	int dstPixelStep = dst.GetPixelStep();
+	int dstSliceStep = dst.GetSliceStep();
+
+	int align_mode = __min(GetAlignType(), dst.GetAlignType());
+	const float* map_x_ptr = &map_x[0];
+	const float* map_y_ptr = &map_y[0];
+
+#if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_AVX
+	if (align_mode == ALIGN_256bit)
+		zq_cnn_remap_without_safeborder_32f_align256bit(firstPixelData, N, H, W, C, pixelStep, widthStep, sliceStep, map_x_ptr, map_y_ptr,
+			dst.GetFirstPixelPtr(), dst_H, dst_W, dstPixelStep, dstWidthStep, dstSliceStep);
+	else
+#endif
+#if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_SSE
+		if (align_mode == ALIGN_128bit)
+			zq_cnn_remap_without_safeborder_32f_align128bit(firstPixelData, N, H, W, C, pixelStep, widthStep, sliceStep, map_x_ptr, map_y_ptr,
+				dst.GetFirstPixelPtr(), dst_H, dst_W, dstPixelStep, dstWidthStep, dstSliceStep);
+		else
+#endif
+			zq_cnn_remap_without_safeborder_32f_align0(firstPixelData, N, H, W, C, pixelStep, widthStep, sliceStep, map_x_ptr, map_y_ptr,
+				dst.GetFirstPixelPtr(), dst_H, dst_W, dstPixelStep, dstWidthStep, dstSliceStep);
+
+
+	float* dst_slice_ptr = dst.GetFirstPixelPtr();
+	for (int n = 0; n < N; n++, dst_slice_ptr += dstSliceStep)
 	{
 
 		if (dst_borderH > 0)
