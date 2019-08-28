@@ -72,7 +72,7 @@ int run_cam()
 	mkl_set_num_threads(num_threads);
 #endif
 
-	int has_lnet240 = true;
+	int has_lnet240 = false;
 	std::vector<ZQ_CNN_BBox240> Bbox240;
 	ZQ_CNN_VideoFaceDetection detector;
 	std::string result_name;
@@ -87,8 +87,8 @@ int run_cam()
 		"model/det2-dw24-p0.zqparams", "model/det2-dw24-p0.nchwbin",
 		"model/det3-dw48-p0.zqparams", "model/det3-dw48-p0.nchwbin",
 		thread_num, 
-		true, "model/det5-dw112.zqparams", "model/det5-dw112-18000.nchwbin",
-		true, "model/det5-dw112.zqparams", "model/det5-dw112-20820.nchwbin",
+		true, "model/det5-dw112.zqparams", "model/det5-dw112-11000.nchwbin",
+		true, "model/det5-dw112.zqparams", "model/det5-dw112-21200.nchwbin",
 		has_lnet240,
 		"model/det6-dw64-left.zqparams", "model/det6-dw64-left.nchwbin",
 		"model/det6-dw64-right.zqparams", "model/det6-dw64-right.nchwbin",
@@ -100,8 +100,8 @@ int run_cam()
 		"../../model/det2-dw24-plus.zqparams", "../../model/det2-dw24-plus.nchwbin",
 		"../../model/det3-dw48-plus.zqparams", "../../model/det3-dw48-plus.nchwbin",
 		thread_num, 
-		true, "../../model/det5-dw112.zqparams", "../../model/det5-dw112-18000.nchwbin",
-		true, "../../model/det5-dw112.zqparams", "../../model/det5-dw112-20820.nchwbin",
+		true, "../../model/det5-dw112.zqparams", "../../model/det5-dw112-11000.nchwbin",
+		true, "../../model/det5-dw112.zqparams", "../../model/det5-dw112-21200.nchwbin",
 		has_lnet240,
 		"../../model/det6-dw64-left.zqparams", "../../model/det6-dw64-left.nchwbin",
 		"../../model/det6-dw64-right.zqparams", "../../model/det6-dw64-right.nchwbin",
@@ -113,7 +113,7 @@ int run_cam()
 		return EXIT_FAILURE;
 	}
 
-	detector.Message(ZQ_CNN_VideoFaceDetection::VFD_MSG_MAX_TRACE_NUM, 6);
+	detector.Message(ZQ_CNN_VideoFaceDetection::VFD_MSG_MAX_TRACE_NUM, 2);
 	detector.Message(ZQ_CNN_VideoFaceDetection::VFD_MSG_WEIGHT_DECAY, 0.2);
 	//cv::VideoCapture cap("video_20190518_172153_540P.mp4");
 	//cv::VideoCapture cap("video_20190612_094223.mp4"); 
@@ -121,7 +121,8 @@ int run_cam()
 	//cv::VideoCapture cap("V90715-124118.mp4");
 	//cv::VideoCapture cap("video_20190528_093054_540P.mp4");
 	//cv::VideoCapture cap("video_20190806_190129.mp4");
-	cv::VideoCapture cap("video_20190809_094755.mp4");
+	//cv::VideoCapture cap("video_20190809_094755.mp4");
+	cv::VideoCapture cap("video_20190827_133806.mp4");
 	//cv::VideoCapture cap(0);
 	cv::VideoWriter writer;
 	cv::Mat image0, ori_im;
@@ -147,12 +148,12 @@ int run_cam()
 		cv::GaussianBlur(image0, image0, cv::Size(3, 3), 2, 2);*/
 
 		if (!writer.isOpened())
-			writer.open("cam-trace6-18000-5-v-7.mp4", CV_FOURCC('X', 'V', 'I', 'D'), 25, cv::Size(image0.cols, image0.rows));
+			writer.open("cam-trace2-11000-21200-5-v-8-find2.mp4", CV_FOURCC('X', 'V', 'I', 'D'), 25, cv::Size(image0.cols, image0.rows));
 		detector.SetPara(image0.cols, image0.rows, 120, 0.5, 0.6, 0.8, 0.4, 0.4, 0.4, 0.709, 3, 20, 4, 25);
 
 		//mtcnn.TurnOnShowDebugInfo();
 		static int fr_id = 0;
-		if (!detector.Find(image0.data, image0.cols, image0.rows, image0.step[0], Bbox240))
+		if (!detector.Find2(image0.data, image0.cols, image0.rows, image0.step[0], Bbox240))
 		{
 			printf("%d\n", fr_id);
 		}
