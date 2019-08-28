@@ -46,6 +46,7 @@ namespace ZQ
 		int thread_num;
 		ZQ_CNN_MTCNN mtcnn;
 		std::vector<ZQ_CNN_CascadeOnet> cascade_Onets;
+		std::vector<ZQ_CNN_Net> onets;
 		bool has_lnet106;
 		std::vector<ZQ_CNN_Net> lnets106;
 		bool refine_lnet106;
@@ -57,6 +58,7 @@ namespace ZQ
 		std::vector<std::vector<ZQ_CNN_BBox240> > trace;
 		std::vector<ZQ_CNN_BBox240> backup_results;
 		ZQ_CNN_Tensor4D_NHW_C_Align128bit input, lnet106_image;
+		int onet_size;
 		int lnet106_size;
 		int refine_lnet106_size;
 		
@@ -78,11 +80,24 @@ namespace ZQ
 				return false;
 			this->thread_num = __max(1,thread_num);
 			cascade_Onets.resize(this->thread_num);
+			onets.resize(this->thread_num);
 			for (int i = 0; i < cascade_Onets.size(); i++)
 			{
 				if (!cascade_Onets[i].Init(onet_param, onet_model, onet_param, onet_model, onet_param, onet_model))
 					return false;
 			}
+			if(true)
+			{
+				for (int i = 0; i < onets.size(); i++)
+				{
+					if (!onets[i].LoadFrom(onet_param, onet_model, true, 1e-9, true))
+						return false;
+				}
+				int C, H, W;
+				onets[0].GetInputDim(C, H, W);
+				onet_size = H;
+			}
+			
 			this->has_lnet106 = has_lnet106;
 			if (has_lnet106)
 			{
@@ -278,6 +293,196 @@ namespace ZQ
 				backup_results = results;
 			}
 			cur_key_cooldown -- ;
+			return true;
+		}
+
+		bool Find2(const unsigned char* bgr_img, int _width, int _height, int _widthStep, std::vector<ZQ_CNN_BBox240>& results)
+		{
+			if (!input.ConvertFromBGR(bgr_img, _width, _height, _widthStep))
+				return false;
+
+			results.clear();
+
+			if (is_first_frame)
+			{
+				std::vector<ZQ_CNN_BBox106> results106;
+				if (!mtcnn.Find106(input, results106))
+					return false;
+				_refine_landmark106(results106);
+				_compute_landmark240(results106, results);
+				_recompute_bbox(results);
+				int cur_box_num = results.size();
+				trace.clear();
+				trace.resize(cur_box_num);
+				for (int i = 0; i < cur_box_num; i++)
+					trace[i].push_back(results[i]);
+				is_first_frame = results.size() == 0;
+				cur_key_cooldown = key_cooldown;
+				backup_results = results;
+			}
+			else
+			{
+				std::vector<ZQ_CNN_BBox106> results106_part1, results106_part2;
+				std::vector<int> good_idx;
+				std::vector<ZQ_CNN_OrderScore> orders;
+				std::vector<ZQ_CNN_BBox> tmp_boxes;
+				ZQ_CNN_OrderScore tmp_order;
+				int ori_count = 0;
+
+				/**********   Stage 1: detect around the old positions         ************/
+				const double m_pi = 4 * atan(1.0);
+				std::vector<ZQ_CNN_BBox> boxes;
+				std::vector<ZQ_CNN_BBox> last_boxes(trace.size());
+				std::vector<ZQ_CNN_Tensor4D_NHW_C_Align128bit> task_images(trace.size());
+				for (int i = 0; i < trace.size(); i++)
+				{
+					/**************** First: L106 ******************/
+
+					float last_rot = _get_rot_of_landmark106_migu(trace[i][0].box.ppoint, m_pi);
+					float cx, cy, min_x, max_x, min_y, max_y;
+					_get_landmark106_info(trace[i][0].box.ppoint, cx, cy, min_x, max_x, min_y, max_y);
+					float cur_w = max_x - min_x;
+					float cur_h = max_y - min_y;
+					float cur_size = 1.2*__max(cur_w, cur_h);
+
+					std::vector<float> map_x, map_y;
+					_compute_map(cx, cy, last_rot, cur_size, cur_size, lnet106_size, lnet106_size, map_x, map_y);
+					
+					input.Remap(task_images[0], lnet106_size, lnet106_size, 0, 0, map_x, map_y);
+
+					lnets106[0].Forward(task_images[0]);
+
+					ZQ_CNN_BBox106 tmp_box106;
+					
+					const ZQ_CNN_Tensor4D* keyPoint = lnets106[0].GetBlobByName("conv6-3");
+					const float* keyPoint_ptr = keyPoint->GetFirstPixelPtr();
+					int keypoint_num = keyPoint->GetC() / 2;
+					int keyPoint_sliceStep = keyPoint->GetSliceStep();
+					float cos_rot = cos(last_rot);
+					float sin_rot = sin(last_rot);
+					for (int num = 0; num < keypoint_num; num++)
+					{
+						float tmp_w = cur_size * (keyPoint_ptr[num * 2] - 0.5);
+						float tmp_h = cur_size * (keyPoint_ptr[num * 2 + 1] - 0.5);
+						tmp_box106.ppoint[num * 2] = cx + tmp_w*cos_rot + tmp_h*sin_rot;
+						tmp_box106.ppoint[num * 2 + 1] = cy - tmp_w*sin_rot + tmp_h*cos_rot;
+					}
+
+					/**************** Second: Onet ******************/
+					float rot1 = _get_rot_of_landmark106_migu(tmp_box106.ppoint, m_pi);
+					_get_landmark106_info(tmp_box106.ppoint, cx, cy, min_x, max_x, min_y, max_y);
+					cur_w = max_x - min_x;
+					cur_h = max_y - min_y;
+					cur_size = 1.1*__max(cur_w, cur_h);
+
+					_compute_map(cx, cy, rot1, cur_size, cur_size, onet_size, onet_size, map_x, map_y);
+
+					input.Remap(task_images[0], onet_size, onet_size, 0, 0, map_x, map_y);
+
+					onets[0].Forward(task_images[0]);
+
+					const ZQ_CNN_Tensor4D* prob = onets[0].GetBlobByName("prob1");
+					const float* prob_ptr = prob->GetFirstPixelPtr();
+					
+					
+					if (prob_ptr[1] < othresh)
+						continue;
+
+					ZQ_CNN_BBox tmp_box;
+					_get_landmark106_info(tmp_box106.ppoint, cx, cy, min_x, max_x, min_y, max_y);
+					cur_w = 1.1*(max_x - min_x);
+					cur_h = 1.1*(max_y - min_y);
+					tmp_box.col1 = cx - 0.5*cur_w;
+					tmp_box.col2 = cx + 0.5*cur_w;
+					tmp_box.row1 = cy - 0.5*cur_h;
+					tmp_box.row2 = cy + 0.5*cur_h;
+					tmp_box.score = 2.0;
+					tmp_box.exist = true;
+					tmp_box106.col1 = tmp_box.col1;
+					tmp_box106.col2 = tmp_box.col2;
+					tmp_box106.row1 = tmp_box.row1;
+					tmp_box106.row2 = tmp_box.row2;
+					tmp_box106.score = tmp_box.score;
+					tmp_box106.exist = tmp_box.exist;
+					good_idx.push_back(i);
+					tmp_order.score = 2.0;
+					tmp_order.oriOrder = ori_count++;
+					boxes.push_back(tmp_box);
+					orders.push_back(tmp_order);
+					results106_part1.push_back(tmp_box106);
+				}
+
+				
+				/**********   Stage 2: detect globally         ************/
+				if (cur_key_cooldown <= 0)
+				{
+					std::vector<ZQ_CNN_BBox> tmp_boxes;
+					cur_key_cooldown = key_cooldown;
+					mtcnn.Find(input, tmp_boxes);
+					for (int j = 0; j < tmp_boxes.size(); j++)
+					{
+						tmp_order.oriOrder = ori_count++;
+						tmp_order.score = tmp_boxes[j].score;
+						boxes.push_back(tmp_boxes[j]);
+						orders.push_back(tmp_order);
+						good_idx.push_back(-1);
+					}
+				}
+
+				/**********   Stage 3: nms         ************/
+				std::vector<int> keep_orders;
+				_nms(boxes, orders, keep_orders, 0.3, "Min");
+
+				std::vector<int> old_good_idx = good_idx;
+				std::vector<ZQ_CNN_BBox> old_boxes = boxes;
+				good_idx.clear();
+				boxes.clear();
+				for (int i = 0; i < keep_orders.size(); i++)
+				{
+					good_idx.push_back(old_good_idx[keep_orders[i]]);
+					if(keep_orders[i] >= results106_part1.size())
+						boxes.push_back(old_boxes[keep_orders[i]]);
+				}
+
+				/**********   Stage 4: get 106 & 240 landmark         ************/
+				_Lnet106_stage(boxes, results106_part2);
+
+				results106_part1.insert(results106_part1.end(), results106_part2.begin(), results106_part2.end());
+
+				_refine_landmark106(results106_part2);
+
+				_compute_landmark240(results106_part1, results);
+
+				/**********   Stage 5: filtering        ************/
+				int cur_box_num = results.size();
+				std::vector<std::vector<ZQ_CNN_BBox240> > old_trace(trace);
+				trace.clear();
+				trace.resize(cur_box_num);
+				for (int i = 0; i < cur_box_num; i++)
+				{
+					trace[i].push_back(results[i]);
+					if (good_idx[i] >= 0)
+					{
+						std::vector<ZQ_CNN_BBox240>& tmp_old_trace = old_trace[good_idx[i]];
+						for (int j = 0; j < tmp_old_trace.size() && j < max_trace_num; j++)
+							trace[i].push_back(tmp_old_trace[j]);
+					}
+				}
+				_filtering(trace, results);
+
+				if (enable_iou_filter)
+				{
+					//_filtering_iou(results, good_idx, backup_results);
+				}
+
+				/**********   Stage 6: update bbox        ************/
+				_recompute_bbox(results);
+
+				if (results.size() == 0)
+					is_first_frame = true;
+				backup_results = results;
+			}
+			cur_key_cooldown--;
 			return true;
 		}
 
@@ -523,7 +728,24 @@ namespace ZQ
 			return true;
 		}
 
-		float _get_rot_of_landmark106_migu(const float* pp, double m_pi)
+		static void _get_landmark106_info(const float* pp, float& cx, float& cy, float& min_x, float& max_x, float& min_y, float& max_y)
+		{
+			min_x = FLT_MAX;
+			min_y = FLT_MAX;
+			max_x = -FLT_MAX;
+			max_y = -FLT_MAX;
+			for (int i = 0; i < 106; i++)
+			{
+				min_x = __min(min_x, pp[i * 2]);
+				max_x = __max(max_x, pp[i * 2]);
+				min_y = __min(min_y, pp[i * 2 + 1]);
+				max_y = __max(max_y, pp[i * 2 + 1]);
+			}
+			cx = 0.5*(min_x + max_x);
+			cy = 0.5*(min_y + max_y);
+		}
+
+		static float _get_rot_of_landmark106_migu(const float* pp, double m_pi)
 		{
 			float eye_cx = 0.25*(pp[52 * 2 + 0] + pp[55 * 2 + 0] + pp[58 * 2 + 0] + pp[61 * 2 + 0]);
 			float eye_cy = 0.25*(pp[52 * 2 + 1] + pp[55 * 2 + 1] + pp[58 * 2 + 1] + pp[61 * 2 + 1]);
@@ -535,6 +757,27 @@ namespace ZQ
 			return init_rot;
 		}
 
+		static void _compute_map(float cx, float cy, float rot, float cur_size_w, float cur_size_h,
+			int dst_W, int dst_H, std::vector<float>& map_x, std::vector<float>& map_y)
+		{
+			map_x.resize(dst_H*dst_W);
+			map_y.resize(dst_H*dst_W);
+			float half_net_size_W = (dst_W - 1) / 2.0;
+			float half_net_size_H = (dst_H - 1) / 2.0;
+			float sin_rot = sin(rot);
+			float cos_rot = cos(rot);
+			float step_w = cur_size_w / dst_W;
+			float step_h = cur_size_h / dst_H;
+			for (int h = 0; h < dst_H; h++)
+			{
+				for (int w = 0; w < dst_W; w++)
+				{
+					map_x[h*dst_W + w] = cx + (w - half_net_size_W)*step_w*cos_rot + (h - half_net_size_H)*step_h*sin_rot;
+					map_y[h*dst_W + w] = cy - (w - half_net_size_W)*step_w*sin_rot + (h - half_net_size_H)*step_h*cos_rot;
+				}
+			}
+		}
+
 		bool _refine_landmark106(std::vector<ZQ_CNN_BBox106>& resultBbox)
 		{
 			if (!refine_lnet106)
@@ -544,17 +787,8 @@ namespace ZQ
 			std::vector<ZQ_CNN_Tensor4D_NHW_C_Align128bit> task_lnet_images(thread_num);
 			for(int pp = 0;pp < resultBbox.size();pp++)
 			{
-				float min_x = FLT_MAX, max_x = -FLT_MAX;
-				float min_y = FLT_MAX, max_y = -FLT_MAX;
-				for (int i = 0; i < 106; i++)
-				{
-					min_x = __min(min_x, resultBbox[pp].ppoint[i * 2]);
-					max_x = __max(max_x, resultBbox[pp].ppoint[i * 2]);
-					min_y = __min(min_y, resultBbox[pp].ppoint[i * 2 + 1]);
-					max_y = __max(max_y, resultBbox[pp].ppoint[i * 2 + 1]);
-				}
-				float cx = 0.5*(min_x + max_x);
-				float cy = 0.5*(min_y + max_y);
+				float min_x, max_x, min_y, max_y, cx, cy;
+				_get_landmark106_info(resultBbox[pp].ppoint, cx, cy, min_x, max_x, min_y, max_y);
 				float cur_w = max_x - min_x;
 				float cur_h = max_y - min_y;
 				float cur_size = 1.1*__max(cur_w, cur_h);
@@ -566,21 +800,10 @@ namespace ZQ
 				float cur_rot = _get_rot_of_landmark106_migu(resultBbox[pp].ppoint, m_pi);
 				
 				// compute map
-				std::vector<float> map_x(refine_lnet106_size*refine_lnet106_size);
-				std::vector<float> map_y(refine_lnet106_size*refine_lnet106_size);
-				float half_net_size = (refine_lnet106_size - 1) / 2.0;
-				float sin_rot = sin(cur_rot);
-				float cos_rot = cos(cur_rot);
-				float step = cur_size / refine_lnet106_size;
-				for (int h = 0; h < refine_lnet106_size; h++)
-				{
-					for (int w = 0; w < refine_lnet106_size; w++)
-					{
-						map_x[h*refine_lnet106_size + w] = cx + (w - half_net_size)*step*cos_rot + (h - half_net_size)*step*sin_rot;
-						map_y[h*refine_lnet106_size + w] = cy - (w - half_net_size)*step*sin_rot + (h - half_net_size)*step*cos_rot;
-					}
-				}
-
+				std::vector<float> map_x, map_y;
+				_compute_map(cx, cy, cur_rot, cur_size, cur_size, refine_lnet106_size, refine_lnet106_size, map_x, map_y);
+				
+				
 				if (!input.Remap(task_lnet_images[0], refine_lnet106_size, refine_lnet106_size, 0, 0, map_x, map_y))
 				{
 					continue;
@@ -591,6 +814,9 @@ namespace ZQ
 				const float* keyPoint_ptr = keyPoint->GetFirstPixelPtr();
 				int keypoint_num = keyPoint->GetC() / 2;
 				int keyPoint_sliceStep = keyPoint->GetSliceStep();
+
+				float cos_rot = cos(cur_rot);
+				float sin_rot = sin(cur_rot);
 				for (int num = 0; num < keypoint_num; num++)
 				{
 					float tmp_w = cur_size * (keyPoint_ptr[num * 2] - 0.5);
