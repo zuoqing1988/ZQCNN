@@ -343,7 +343,7 @@ namespace ZQ
 					_get_landmark106_info(trace[i][0].box.ppoint, cx, cy, min_x, max_x, min_y, max_y);
 					float cur_w = max_x - min_x;
 					float cur_h = max_y - min_y;
-					float cur_size = 1.2*__max(cur_w, cur_h);
+					float cur_size = 1.15*__max(cur_w, cur_h);
 
 					std::vector<float> map_x, map_y;
 					_compute_map(cx, cy, last_rot, cur_size, cur_size, lnet106_size, lnet106_size, map_x, map_y);
@@ -791,7 +791,7 @@ namespace ZQ
 				_get_landmark106_info(resultBbox[pp].ppoint, cx, cy, min_x, max_x, min_y, max_y);
 				float cur_w = max_x - min_x;
 				float cur_h = max_y - min_y;
-				float cur_size = 1.1*__max(cur_w, cur_h);
+				float cur_size = 1.15*__max(cur_w, cur_h);
 				float half_size = ceil(0.5*cur_size);
 				float off_x = cx - half_size;
 				float off_y = cy - half_size;
