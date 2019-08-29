@@ -449,7 +449,7 @@ namespace ZQ
 
 				results106_part1.insert(results106_part1.end(), results106_part2.begin(), results106_part2.end());
 
-				_refine_landmark106(results106_part2);
+				_refine_landmark106(results106_part1);
 
 				_compute_landmark240(results106_part1, results);
 
@@ -793,9 +793,7 @@ namespace ZQ
 				float cur_h = max_y - min_y;
 				float cur_size = 1.15*__max(cur_w, cur_h);
 				float half_size = ceil(0.5*cur_size);
-				float off_x = cx - half_size;
-				float off_y = cy - half_size;
-
+				
 				//get rot of migu 106 landmark
 				float cur_rot = _get_rot_of_landmark106_migu(resultBbox[pp].ppoint, m_pi);
 				
