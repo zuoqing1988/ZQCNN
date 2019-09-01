@@ -86,6 +86,7 @@ int run_cam()
 		"model/det1-dw20-plus.zqparams", "model/det1-dw20-plus.nchwbin",
 		"model/det2-dw24-p0.zqparams", "model/det2-dw24-p0.nchwbin",
 		"model/det3-dw48-p0.zqparams", "model/det3-dw48-p0.nchwbin",
+		"model/det3-dw48-p0.zqparams", "model/det3-dw48-p0.nchwbin",
 		thread_num, 
 		true, "model/det5-dw112.zqparams", "model/det5-dw112-11000.nchwbin",
 		true, "model/det5-dw112.zqparams", "model/det5-dw112-21200.nchwbin",
@@ -98,6 +99,7 @@ int run_cam()
 	if (!detector.Init(
 		"../../model/det1-dw20-plus.zqparams", "../../model/det1-dw20-plus.nchwbin",
 		"../../model/det2-dw24-plus.zqparams", "../../model/det2-dw24-plus.nchwbin",
+		"../../model/det3-dw48-plus.zqparams", "../../model/det3-dw48-plus.nchwbin",
 		"../../model/det3-dw48-plus.zqparams", "../../model/det3-dw48-plus.nchwbin",
 		thread_num, 
 		true, "../../model/det5-dw112.zqparams", "../../model/det5-dw112-11000.nchwbin",

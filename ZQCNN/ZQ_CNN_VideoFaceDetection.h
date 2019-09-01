@@ -69,7 +69,8 @@ namespace ZQ
 		void TurnOffFilterIOU() { enable_iou_filter = false; }
 
 		bool Init(const string& pnet_param, const string& pnet_model, const string& rnet_param, const string& rnet_model,
-			const string& onet_param, const string& onet_model, int thread_num = 1,
+			const string& onet_param, const string& onet_model,
+			const string& tracking_onet_param, const string& tracking_onet_model, int thread_num = 1,
 			bool has_lnet106 = false, const string& lnet106_param = "", const string& lnet106_model = "",
 			bool refine_lnet106 = false, const string& refine_lnet106_param = "", const string& refine_lnet106_model = "",
 			bool has_lnet240 = false, const string& left_brow_eye_param = "", const string& left_brow_eye_model = "",
@@ -83,14 +84,14 @@ namespace ZQ
 			onets.resize(this->thread_num);
 			for (int i = 0; i < cascade_Onets.size(); i++)
 			{
-				if (!cascade_Onets[i].Init(onet_param, onet_model, onet_param, onet_model, onet_param, onet_model))
+				if (!cascade_Onets[i].Init(tracking_onet_param, tracking_onet_model, tracking_onet_param, tracking_onet_model, tracking_onet_param, tracking_onet_model))
 					return false;
 			}
 			if(true)
 			{
 				for (int i = 0; i < onets.size(); i++)
 				{
-					if (!onets[i].LoadFrom(onet_param, onet_model, true, 1e-9, true))
+					if (!onets[i].LoadFrom(tracking_onet_param, tracking_onet_model, true, 1e-9, true))
 						return false;
 				}
 				int C, H, W;
@@ -178,7 +179,10 @@ namespace ZQ
 				std::vector<ZQ_CNN_BBox106> results106;
 				if (!mtcnn.Find106(input, results106))
 					return false;
-				_refine_landmark106(results106);
+				if (refine_lnet106)
+					_refine_landmark106(results106, true, refine_lnets106);
+				else
+					_refine_landmark106(results106, true, lnets106);
 				_compute_landmark240(results106, results);
 				_recompute_bbox(results);				
 				int cur_box_num = results.size();
@@ -260,7 +264,7 @@ namespace ZQ
 
 				/**********   Stage 4: get 106 & 240 landmark         ************/
 				_Lnet106_stage(boxes, results106);
-				_refine_landmark106(results106);
+				_refine_landmark106(results106, refine_lnet106, refine_lnets106);
 				_compute_landmark240(results106, results);
 				
 				/**********   Stage 5: filtering        ************/
@@ -308,7 +312,24 @@ namespace ZQ
 				std::vector<ZQ_CNN_BBox106> results106;
 				if (!mtcnn.Find106(input, results106))
 					return false;
-				_refine_landmark106(results106);
+				for (int j = results106.size()-1; j >= 0; j--)
+				{
+					ZQ_CNN_BBox106& cur_box = results106[j];
+					float ori_area = (cur_box.col2 - cur_box.col1) * (cur_box.row2 - cur_box.row1);
+					float valid_col1 = __max(0, cur_box.col1);
+					float valid_col2 = __min(_width - 1, cur_box.col2);
+					float valid_row1 = __max(0, cur_box.row1);
+					float valid_row2 = __min(_height - 1, cur_box.row2);
+					float valid_area = (valid_col2 - valid_col1) * (valid_row2 - valid_row1);
+					if (valid_area < ori_area*0.9)
+					{
+						results106.erase(results106.begin() + j);
+					}
+				}
+				if(refine_lnet106)
+					_refine_landmark106(results106, true, refine_lnets106);
+				else
+					_refine_landmark106(results106, true, lnets106);
 				_compute_landmark240(results106, results);
 				_recompute_bbox(results);
 				int cur_box_num = results.size();
@@ -328,7 +349,8 @@ namespace ZQ
 				std::vector<ZQ_CNN_BBox> tmp_boxes;
 				ZQ_CNN_OrderScore tmp_order;
 				int ori_count = 0;
-
+				//static int fr_id = 0;
+				//fr_id++;
 				/**********   Stage 1: detect around the old positions         ************/
 				const double m_pi = 4 * atan(1.0);
 				std::vector<ZQ_CNN_BBox> boxes;
@@ -385,8 +407,11 @@ namespace ZQ
 					const float* prob_ptr = prob->GetFirstPixelPtr();
 					
 					
-					if (prob_ptr[1] < othresh)
+					if (prob_ptr[1] < __max(0.1, othresh - 0.3))
+					{
+						//printf("here:%d\n",fr_id);
 						continue;
+					}
 
 					ZQ_CNN_BBox tmp_box;
 					_get_landmark106_info(tmp_box106.ppoint, cx, cy, min_x, max_x, min_y, max_y);
@@ -421,6 +446,19 @@ namespace ZQ
 					mtcnn.Find(input, tmp_boxes);
 					for (int j = 0; j < tmp_boxes.size(); j++)
 					{
+						ZQ_CNN_BBox& cur_box = tmp_boxes[j];
+						float ori_area = (cur_box.col2 - cur_box.col1) * (cur_box.row2 - cur_box.row1);
+						float valid_col1 = __max(0, cur_box.col1);
+						float valid_col2 = __min(_width-1, cur_box.col2);
+						float valid_row1 = __max(0, cur_box.row1);
+						float valid_row2 = __min(_height-1, cur_box.row2);
+						float valid_area = (valid_col2 - valid_col1) * (valid_row2 - valid_row1);
+						if (valid_area < ori_area*0.9)
+						{
+							//printf("here\n");
+							continue;
+						}
+						//printf("global_here:%d\n", fr_id);
 						tmp_order.oriOrder = ori_count++;
 						tmp_order.score = tmp_boxes[j].score;
 						boxes.push_back(tmp_boxes[j]);
@@ -432,7 +470,6 @@ namespace ZQ
 				/**********   Stage 3: nms         ************/
 				std::vector<int> keep_orders;
 				_nms(boxes, orders, keep_orders, 0.3, "Min");
-
 				std::vector<int> old_good_idx = good_idx;
 				std::vector<ZQ_CNN_BBox> old_boxes = boxes;
 				good_idx.clear();
@@ -446,11 +483,18 @@ namespace ZQ
 
 				/**********   Stage 4: get 106 & 240 landmark         ************/
 				_Lnet106_stage(boxes, results106_part2);
+				if (refine_lnet106)
+				{
+					results106_part1.insert(results106_part1.end(), results106_part2.begin(), results106_part2.end());
 
-				results106_part1.insert(results106_part1.end(), results106_part2.begin(), results106_part2.end());
-
-				_refine_landmark106(results106_part1);
-
+					_refine_landmark106(results106_part1, true, refine_lnets106);
+				}
+				else
+				{
+					_refine_landmark106(results106_part2, true, lnets106);
+					results106_part1.insert(results106_part1.end(), results106_part2.begin(), results106_part2.end());
+				}
+				
 				_compute_landmark240(results106_part1, results);
 
 				/**********   Stage 5: filtering        ************/
@@ -778,12 +822,15 @@ namespace ZQ
 			}
 		}
 
-		bool _refine_landmark106(std::vector<ZQ_CNN_BBox106>& resultBbox)
+		bool _refine_landmark106(std::vector<ZQ_CNN_BBox106>& resultBbox, bool refine_lnet106, std::vector<ZQ_CNN_Net>& refine_lnets106)
 		{
 			if (!refine_lnet106)
 				return true;
 			const double m_pi = atan(1.0) * 4;
 			double t1 = omp_get_wtime();
+			int C, H, W;
+			refine_lnets106[0].GetInputDim(C, H, W);
+			int refine_lnet106_size = H;
 			std::vector<ZQ_CNN_Tensor4D_NHW_C_Align128bit> task_lnet_images(thread_num);
 			for(int pp = 0;pp < resultBbox.size();pp++)
 			{
