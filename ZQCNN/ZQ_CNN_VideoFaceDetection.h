@@ -370,7 +370,7 @@ namespace ZQ
 					std::vector<float> map_x, map_y;
 					_compute_map(cx, cy, last_rot, cur_size, cur_size, lnet106_size, lnet106_size, map_x, map_y);
 					
-					input.Remap(task_images[0], lnet106_size, lnet106_size, 0, 0, map_x, map_y, false, -1);
+					input.Remap(task_images[0], lnet106_size, lnet106_size, 0, 0, map_x, map_y, true, 0);
 
 					lnets106[0].Forward(task_images[0]);
 
@@ -399,7 +399,7 @@ namespace ZQ
 
 					_compute_map(cx, cy, rot1, cur_size, cur_size, onet_size, onet_size, map_x, map_y);
 
-					input.Remap(task_images[0], onet_size, onet_size, 0, 0, map_x, map_y, true, -1);
+					input.Remap(task_images[0], onet_size, onet_size, 0, 0, map_x, map_y, true, 0);
 
 					onets[0].Forward(task_images[0]);
 
@@ -849,7 +849,7 @@ namespace ZQ
 				_compute_map(cx, cy, cur_rot, cur_size, cur_size, refine_lnet106_size, refine_lnet106_size, map_x, map_y);
 				
 				
-				if (!input.Remap(task_lnet_images[0], refine_lnet106_size, refine_lnet106_size, 0, 0, map_x, map_y, true, -1))
+				if (!input.Remap(task_lnet_images[0], refine_lnet106_size, refine_lnet106_size, 0, 0, map_x, map_y, true, 0))
 				{
 					continue;
 				}
