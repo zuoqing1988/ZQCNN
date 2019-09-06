@@ -458,7 +458,7 @@ namespace ZQ
 							//printf("here\n");
 							continue;
 						}
-						printf("here:global\n");
+						//printf("here:global\n");
 						tmp_order.oriOrder = ori_count++;
 						tmp_order.score = tmp_boxes[j].score;
 						boxes.push_back(tmp_boxes[j]);
