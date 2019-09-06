@@ -960,3 +960,92 @@ void zq_cnn_remap_without_safeborder(
 		}
 	}
 }
+
+void zq_cnn_remap_without_safeborder_fillval(
+	const zq_base_type* in_tensor4D_data,
+	int in_N,
+	int in_H,
+	int in_W,
+	int in_C,
+	int in_pixelStep,
+	int in_widthStep,
+	int in_sliceStep,
+	const zq_base_type* map_x_ptr,
+	const zq_base_type* map_y_ptr,
+	zq_base_type* out_tensor4D_data,
+	int out_H,
+	int out_W,
+	int out_pixelStep,
+	int out_widthStep,
+	int out_sliceStep,
+	zq_base_type fill_val
+)
+{
+	zq_base_type x0_f, y0_f;
+	int x0, x1, y0, y1;
+	zq_base_type sx, sy;
+	zq_base_type coord_x, coord_y;
+	const zq_base_type* in_slice_ptr, *in_row0_ptr, *in_row1_ptr;
+	zq_base_type* out_slice_ptr, *out_row_ptr, *out_pix_ptr;
+	int n, h, w, c, cur_x0, cur_x1;
+	zq_mm_type v00, dx0, result0, v10, dx1, result1, dy, sum;
+
+
+	/*********** compute the map and weight end ************/
+
+	for (n = 0, in_slice_ptr = in_tensor4D_data, out_slice_ptr = out_tensor4D_data;
+		n < in_N;
+		n++, in_slice_ptr += in_sliceStep, out_slice_ptr += out_sliceStep)
+	{
+		for (h = 0, out_row_ptr = out_slice_ptr;
+			h < out_H;
+			h++, out_row_ptr += out_widthStep)
+		{
+			for (w = 0, out_pix_ptr = out_row_ptr; w < out_W; w++, out_pix_ptr += out_pixelStep)
+			{
+				coord_y = map_y_ptr[h*out_W + w];
+				coord_x = map_x_ptr[h*out_W + w];
+
+				y0_f = floor(coord_y);
+				y0 = (int)y0_f;
+				y1 = y0 + 1;
+				sy = coord_y - y0_f;
+				y0 = __min(in_H - 1, __max(0, y0));
+				y1 = __min(in_H - 1, __max(0, y1));
+
+				x0_f = floor(coord_x);
+				x0 = (int)x0_f;
+				x1 = x0 + 1;
+				sx = coord_x - x0_f;
+				x0 = __min(in_W - 1, __max(0, x0));
+				x1 = __min(in_W - 1, __max(0, x1));
+
+				in_row0_ptr = in_slice_ptr + y0*in_widthStep;
+				in_row1_ptr = in_slice_ptr + y1*in_widthStep;
+				
+				if (coord_y >= 0 && coord_y <= in_H - 1 && coord_x >= 0 && coord_x <= in_W - 1)
+				{
+					for (c = 0, cur_x0 = x0*in_pixelStep, cur_x1 = x1*in_pixelStep; c < in_C; c += zq_mm_align_size, cur_x0 += zq_mm_align_size, cur_x1 += zq_mm_align_size)
+					{
+						v00 = zq_mm_load_ps(in_row0_ptr + cur_x0);
+						dx0 = zq_mm_sub_ps(zq_mm_load_ps(in_row0_ptr + cur_x1), v00);
+						result0 = zq_mm_add_ps(v00, zq_mm_mul_ps(dx0, zq_mm_set1_ps(sy)));
+						v10 = zq_mm_load_ps(in_row1_ptr + cur_x0);
+						dx1 = zq_mm_sub_ps(zq_mm_load_ps(in_row1_ptr + cur_x1), v10);
+						result1 = zq_mm_add_ps(v10, zq_mm_mul_ps(dx1, zq_mm_set1_ps(sy)));
+						dy = zq_mm_sub_ps(result1, result0);
+						sum = zq_mm_add_ps(result0, zq_mm_mul_ps(dy, zq_mm_set1_ps(sy)));
+						zq_mm_store_ps(out_pix_ptr + c, sum);
+					}
+				}
+				else
+				{
+					for (c = 0; c < in_C; c++)
+					{
+						out_pix_ptr[c] = fill_val;
+					}
+				}
+			}
+		}
+	}
+}

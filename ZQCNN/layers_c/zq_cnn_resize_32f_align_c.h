@@ -203,6 +203,26 @@ extern "C" {
 		int out_sliceStep
 	);
 
+	void zq_cnn_remap_without_safeborder_fillval_32f_align128bit(
+		const float* in_tensor4D_data,
+		int in_N,
+		int in_H,
+		int in_W,
+		int in_C,
+		int in_pixelStep,
+		int in_widthStep,
+		int in_sliceStep,
+		const float* map_x_ptr,
+		const float* map_y_ptr,
+		float* out_tensor4D_data,
+		int out_H,
+		int out_W,
+		int out_pixelStep,
+		int out_widthStep,
+		int out_sliceStep,
+		float fillval
+	);
+
 #if __ARM_NEON_FP16
 
 	void zq_cnn_resize_nn_16f_align0(
@@ -302,6 +322,26 @@ extern "C" {
 		int out_sliceStep
 	);
 
+	void zq_cnn_remap_without_safeborder_fillval_16f_align0(
+		const float16_t* in_tensor4D_data,
+		int in_N,
+		int in_H,
+		int in_W,
+		int in_C,
+		int in_pixelStep,
+		int in_widthStep,
+		int in_sliceStep,
+		const float16_t* map_x_ptr,
+		const float16_t* map_y_ptr,
+		float16_t* out_tensor4D_data,
+		int out_H,
+		int out_W,
+		int out_pixelStep,
+		int out_widthStep,
+		int out_sliceStep,
+		float16_t fillval
+	);
+
 	void zq_cnn_resize_nn_16f_align128bit(
 		const float* in_tensor4D_data,
 		int in_N,
@@ -397,6 +437,26 @@ extern "C" {
 		int out_pixelStep,
 		int out_widthStep,
 		int out_sliceStep
+	);
+
+	void zq_cnn_remap_without_safeborder_fillval_16f_align128bit(
+		const float16_t* in_tensor4D_data,
+		int in_N,
+		int in_H,
+		int in_W,
+		int in_C,
+		int in_pixelStep,
+		int in_widthStep,
+		int in_sliceStep,
+		const float16_t* map_x_ptr,
+		const float16_t* map_y_ptr,
+		float16_t* out_tensor4D_data,
+		int out_H,
+		int out_W,
+		int out_pixelStep,
+		int out_widthStep,
+		int out_sliceStep,
+		float16_t fill_val
 	);
 
 #endif//__ARM_NEON_FP16
@@ -500,6 +560,26 @@ extern "C" {
 		int out_sliceStep
 	);
 
+	void zq_cnn_remap_without_safeborder_fillval_32f_align0(
+		const float* in_tensor4D_data,
+		int in_N,
+		int in_H,
+		int in_W,
+		int in_C,
+		int in_pixelStep,
+		int in_widthStep,
+		int in_sliceStep,
+		const float* map_x_ptr,
+		const float* map_y_ptr,
+		float* out_tensor4D_data,
+		int out_H,
+		int out_W,
+		int out_pixelStep,
+		int out_widthStep,
+		int out_sliceStep,
+		float fill_val
+	);
+
 #if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_SSE
 
 	void zq_cnn_resize_nn_32f_align128bit(
@@ -597,6 +677,26 @@ extern "C" {
 		int out_pixelStep,
 		int out_widthStep,
 		int out_sliceStep
+	);
+
+	void zq_cnn_remap_without_safeborder_fillval_32f_align128bit(
+		const float* in_tensor4D_data,
+		int in_N,
+		int in_H,
+		int in_W,
+		int in_C,
+		int in_pixelStep,
+		int in_widthStep,
+		int in_sliceStep,
+		const float* map_x_ptr,
+		const float* map_y_ptr,
+		float* out_tensor4D_data,
+		int out_H,
+		int out_W,
+		int out_pixelStep,
+		int out_widthStep,
+		int out_sliceStep,
+		float fill_val
 	);
 
 #endif
@@ -698,6 +798,27 @@ extern "C" {
 		int out_pixelStep,
 		int out_widthStep,
 		int out_sliceStep
+	);
+
+	
+	void zq_cnn_remap_without_safeborder_fillval_32f_align256bit(
+		const float* in_tensor4D_data,
+		int in_N,
+		int in_H,
+		int in_W,
+		int in_C,
+		int in_pixelStep,
+		int in_widthStep,
+		int in_sliceStep,
+		const float* map_x_ptr,
+		const float* map_y_ptr,
+		float* out_tensor4D_data,
+		int out_H,
+		int out_W,
+		int out_pixelStep,
+		int out_widthStep,
+		int out_sliceStep,
+		float fill_val
 	);
 
 #endif
