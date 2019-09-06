@@ -595,7 +595,7 @@ bool ZQ_CNN_Tensor4D_NHW_C_Align0::ResizeNearestRect(ZQ_CNN_Tensor4D& dst, int d
 
 
 bool ZQ_CNN_Tensor4D_NHW_C_Align0::Remap(ZQ_CNN_Tensor4D& dst, int dst_W, int dst_H, int dst_borderW, int dst_borderH,
-	const std::vector<float>& map_x, const std::vector<float>& map_y) const
+	const std::vector<float>& map_x, const std::vector<float>& map_y, bool use_fill_val, float fill_val) const
 {
 	int nPixels = dst_W * dst_H;
 	if (map_x.size() != nPixels || map_y.size() != nPixels)
@@ -625,22 +625,41 @@ bool ZQ_CNN_Tensor4D_NHW_C_Align0::Remap(ZQ_CNN_Tensor4D& dst, int dst_W, int ds
 	const float* map_x_ptr = &map_x[0];
 	const float* map_y_ptr = &map_y[0];
 
+	if (use_fill_val)
+	{
 #if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_AVX
-	if (align_mode == ALIGN_256bit)
-		zq_cnn_remap_without_safeborder_32f_align256bit(firstPixelData, N, H, W, C, pixelStep, widthStep, sliceStep, map_x_ptr, map_y_ptr,
-			dst.GetFirstPixelPtr(), dst_H, dst_W, dstPixelStep, dstWidthStep, dstSliceStep);
-	else
+		if (align_mode == ALIGN_256bit)
+			zq_cnn_remap_without_safeborder_fillval_32f_align256bit(firstPixelData, N, H, W, C, pixelStep, widthStep, sliceStep, map_x_ptr, map_y_ptr,
+				dst.GetFirstPixelPtr(), dst_H, dst_W, dstPixelStep, dstWidthStep, dstSliceStep, fill_val);
+		else
 #endif
 #if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_SSE
-		if (align_mode == ALIGN_128bit)
-			zq_cnn_remap_without_safeborder_32f_align128bit(firstPixelData, N, H, W, C, pixelStep, widthStep, sliceStep, map_x_ptr, map_y_ptr,
+			if (align_mode == ALIGN_128bit)
+				zq_cnn_remap_without_safeborder_fillval_32f_align128bit(firstPixelData, N, H, W, C, pixelStep, widthStep, sliceStep, map_x_ptr, map_y_ptr,
+					dst.GetFirstPixelPtr(), dst_H, dst_W, dstPixelStep, dstWidthStep, dstSliceStep, fill_val);
+			else
+#endif
+				zq_cnn_remap_without_safeborder_fillval_32f_align0(firstPixelData, N, H, W, C, pixelStep, widthStep, sliceStep, map_x_ptr, map_y_ptr,
+					dst.GetFirstPixelPtr(), dst_H, dst_W, dstPixelStep, dstWidthStep, dstSliceStep, fill_val);
+	}
+	else
+	{
+#if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_AVX
+		if (align_mode == ALIGN_256bit)
+			zq_cnn_remap_without_safeborder_32f_align256bit(firstPixelData, N, H, W, C, pixelStep, widthStep, sliceStep, map_x_ptr, map_y_ptr,
 				dst.GetFirstPixelPtr(), dst_H, dst_W, dstPixelStep, dstWidthStep, dstSliceStep);
 		else
 #endif
-			zq_cnn_remap_without_safeborder_32f_align0(firstPixelData, N, H, W, C, pixelStep, widthStep, sliceStep, map_x_ptr, map_y_ptr,
-				dst.GetFirstPixelPtr(), dst_H, dst_W, dstPixelStep, dstWidthStep, dstSliceStep);
+#if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_SSE
+			if (align_mode == ALIGN_128bit)
+				zq_cnn_remap_without_safeborder_32f_align128bit(firstPixelData, N, H, W, C, pixelStep, widthStep, sliceStep, map_x_ptr, map_y_ptr,
+					dst.GetFirstPixelPtr(), dst_H, dst_W, dstPixelStep, dstWidthStep, dstSliceStep);
+			else
+#endif
+				zq_cnn_remap_without_safeborder_32f_align0(firstPixelData, N, H, W, C, pixelStep, widthStep, sliceStep, map_x_ptr, map_y_ptr,
+					dst.GetFirstPixelPtr(), dst_H, dst_W, dstPixelStep, dstWidthStep, dstSliceStep);
 
-
+	}
 	float* dst_slice_ptr = dst.GetFirstPixelPtr();
 	for (int n = 0; n < N; n++, dst_slice_ptr += dstSliceStep)
 	{
@@ -1320,7 +1339,7 @@ bool ZQ_CNN_Tensor4D_NHW_C_Align128bit::ResizeNearestRect(ZQ_CNN_Tensor4D& dst, 
 }
 
 bool ZQ_CNN_Tensor4D_NHW_C_Align128bit::Remap(ZQ_CNN_Tensor4D& dst, int dst_W, int dst_H, int dst_borderW, int dst_borderH,
-	const std::vector<float>& map_x, const std::vector<float>& map_y) const
+	const std::vector<float>& map_x, const std::vector<float>& map_y, bool use_fill_val, float fill_val) const
 {
 	int nPixels = dst_W * dst_H;
 	if (map_x.size() != nPixels || map_y.size() != nPixels)
@@ -1350,22 +1369,41 @@ bool ZQ_CNN_Tensor4D_NHW_C_Align128bit::Remap(ZQ_CNN_Tensor4D& dst, int dst_W, i
 	const float* map_x_ptr = &map_x[0];
 	const float* map_y_ptr = &map_y[0];
 
+	if (use_fill_val)
+	{
 #if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_AVX
-	if (align_mode == ALIGN_256bit)
-		zq_cnn_remap_without_safeborder_32f_align256bit(firstPixelData, N, H, W, C, pixelStep, widthStep, sliceStep, map_x_ptr, map_y_ptr,
-			dst.GetFirstPixelPtr(), dst_H, dst_W, dstPixelStep, dstWidthStep, dstSliceStep);
-	else
+		if (align_mode == ALIGN_256bit)
+			zq_cnn_remap_without_safeborder_fillval_32f_align256bit(firstPixelData, N, H, W, C, pixelStep, widthStep, sliceStep, map_x_ptr, map_y_ptr,
+				dst.GetFirstPixelPtr(), dst_H, dst_W, dstPixelStep, dstWidthStep, dstSliceStep,fill_val);
+		else
 #endif
 #if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_SSE
-		if (align_mode == ALIGN_128bit)
-			zq_cnn_remap_without_safeborder_32f_align128bit(firstPixelData, N, H, W, C, pixelStep, widthStep, sliceStep, map_x_ptr, map_y_ptr,
+			if (align_mode == ALIGN_128bit)
+				zq_cnn_remap_without_safeborder_fillval_32f_align128bit(firstPixelData, N, H, W, C, pixelStep, widthStep, sliceStep, map_x_ptr, map_y_ptr,
+					dst.GetFirstPixelPtr(), dst_H, dst_W, dstPixelStep, dstWidthStep, dstSliceStep, fill_val);
+			else
+#endif
+				zq_cnn_remap_without_safeborder_fillval_32f_align0(firstPixelData, N, H, W, C, pixelStep, widthStep, sliceStep, map_x_ptr, map_y_ptr,
+					dst.GetFirstPixelPtr(), dst_H, dst_W, dstPixelStep, dstWidthStep, dstSliceStep,fill_val);
+	}
+	else
+	{
+#if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_AVX
+		if (align_mode == ALIGN_256bit)
+			zq_cnn_remap_without_safeborder_32f_align256bit(firstPixelData, N, H, W, C, pixelStep, widthStep, sliceStep, map_x_ptr, map_y_ptr,
 				dst.GetFirstPixelPtr(), dst_H, dst_W, dstPixelStep, dstWidthStep, dstSliceStep);
 		else
 #endif
-			zq_cnn_remap_without_safeborder_32f_align0(firstPixelData, N, H, W, C, pixelStep, widthStep, sliceStep, map_x_ptr, map_y_ptr,
-				dst.GetFirstPixelPtr(), dst_H, dst_W, dstPixelStep, dstWidthStep, dstSliceStep);
+#if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_SSE
+			if (align_mode == ALIGN_128bit)
+				zq_cnn_remap_without_safeborder_32f_align128bit(firstPixelData, N, H, W, C, pixelStep, widthStep, sliceStep, map_x_ptr, map_y_ptr,
+					dst.GetFirstPixelPtr(), dst_H, dst_W, dstPixelStep, dstWidthStep, dstSliceStep);
+			else
+#endif
+				zq_cnn_remap_without_safeborder_32f_align0(firstPixelData, N, H, W, C, pixelStep, widthStep, sliceStep, map_x_ptr, map_y_ptr,
+					dst.GetFirstPixelPtr(), dst_H, dst_W, dstPixelStep, dstWidthStep, dstSliceStep);
 
-
+	}
 	float* dst_slice_ptr = dst.GetFirstPixelPtr();
 	for (int n = 0; n < N; n++, dst_slice_ptr += dstSliceStep)
 	{
@@ -1972,7 +2010,7 @@ bool ZQ_CNN_Tensor4D_NHW_C_Align256bit::ResizeNearestRect(ZQ_CNN_Tensor4D& dst, 
 
 
 bool ZQ_CNN_Tensor4D_NHW_C_Align256bit::Remap(ZQ_CNN_Tensor4D& dst, int dst_W, int dst_H, int dst_borderW, int dst_borderH,
-	const std::vector<float>& map_x, const std::vector<float>& map_y) const
+	const std::vector<float>& map_x, const std::vector<float>& map_y, bool use_fill_val, float fill_val) const
 {
 	int nPixels = dst_W * dst_H;
 	if (map_x.size() != nPixels || map_y.size() != nPixels)
@@ -2002,21 +2040,40 @@ bool ZQ_CNN_Tensor4D_NHW_C_Align256bit::Remap(ZQ_CNN_Tensor4D& dst, int dst_W, i
 	const float* map_x_ptr = &map_x[0];
 	const float* map_y_ptr = &map_y[0];
 
+	if (use_fill_val)
+	{
 #if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_AVX
-	if (align_mode == ALIGN_256bit)
-		zq_cnn_remap_without_safeborder_32f_align256bit(firstPixelData, N, H, W, C, pixelStep, widthStep, sliceStep, map_x_ptr, map_y_ptr,
-			dst.GetFirstPixelPtr(), dst_H, dst_W, dstPixelStep, dstWidthStep, dstSliceStep);
-	else
+		if (align_mode == ALIGN_256bit)
+			zq_cnn_remap_without_safeborder_fillval_32f_align256bit(firstPixelData, N, H, W, C, pixelStep, widthStep, sliceStep, map_x_ptr, map_y_ptr,
+				dst.GetFirstPixelPtr(), dst_H, dst_W, dstPixelStep, dstWidthStep, dstSliceStep, fill_val);
+		else
 #endif
 #if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_SSE
-		if (align_mode == ALIGN_128bit)
-			zq_cnn_remap_without_safeborder_32f_align128bit(firstPixelData, N, H, W, C, pixelStep, widthStep, sliceStep, map_x_ptr, map_y_ptr,
+			if (align_mode == ALIGN_128bit)
+				zq_cnn_remap_without_safeborder_fillval_32f_align128bit(firstPixelData, N, H, W, C, pixelStep, widthStep, sliceStep, map_x_ptr, map_y_ptr,
+					dst.GetFirstPixelPtr(), dst_H, dst_W, dstPixelStep, dstWidthStep, dstSliceStep, fill_val);
+			else
+#endif
+				zq_cnn_remap_without_safeborder_fillval_32f_align0(firstPixelData, N, H, W, C, pixelStep, widthStep, sliceStep, map_x_ptr, map_y_ptr,
+					dst.GetFirstPixelPtr(), dst_H, dst_W, dstPixelStep, dstWidthStep, dstSliceStep, fill_val);
+	}
+	else
+	{
+#if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_AVX
+		if (align_mode == ALIGN_256bit)
+			zq_cnn_remap_without_safeborder_32f_align256bit(firstPixelData, N, H, W, C, pixelStep, widthStep, sliceStep, map_x_ptr, map_y_ptr,
 				dst.GetFirstPixelPtr(), dst_H, dst_W, dstPixelStep, dstWidthStep, dstSliceStep);
 		else
 #endif
-			zq_cnn_remap_without_safeborder_32f_align0(firstPixelData, N, H, W, C, pixelStep, widthStep, sliceStep, map_x_ptr, map_y_ptr,
-				dst.GetFirstPixelPtr(), dst_H, dst_W, dstPixelStep, dstWidthStep, dstSliceStep);
-
+#if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_SSE
+			if (align_mode == ALIGN_128bit)
+				zq_cnn_remap_without_safeborder_32f_align128bit(firstPixelData, N, H, W, C, pixelStep, widthStep, sliceStep, map_x_ptr, map_y_ptr,
+					dst.GetFirstPixelPtr(), dst_H, dst_W, dstPixelStep, dstWidthStep, dstSliceStep);
+			else
+#endif
+				zq_cnn_remap_without_safeborder_32f_align0(firstPixelData, N, H, W, C, pixelStep, widthStep, sliceStep, map_x_ptr, map_y_ptr,
+					dst.GetFirstPixelPtr(), dst_H, dst_W, dstPixelStep, dstWidthStep, dstSliceStep);
+	}
 
 	float* dst_slice_ptr = dst.GetFirstPixelPtr();
 	for (int n = 0; n < N; n++, dst_slice_ptr += dstSliceStep)

@@ -370,7 +370,7 @@ namespace ZQ
 					std::vector<float> map_x, map_y;
 					_compute_map(cx, cy, last_rot, cur_size, cur_size, lnet106_size, lnet106_size, map_x, map_y);
 					
-					input.Remap(task_images[0], lnet106_size, lnet106_size, 0, 0, map_x, map_y);
+					input.Remap(task_images[0], lnet106_size, lnet106_size, 0, 0, map_x, map_y, false, -1);
 
 					lnets106[0].Forward(task_images[0]);
 
@@ -399,7 +399,7 @@ namespace ZQ
 
 					_compute_map(cx, cy, rot1, cur_size, cur_size, onet_size, onet_size, map_x, map_y);
 
-					input.Remap(task_images[0], onet_size, onet_size, 0, 0, map_x, map_y);
+					input.Remap(task_images[0], onet_size, onet_size, 0, 0, map_x, map_y, true, -1);
 
 					onets[0].Forward(task_images[0]);
 
@@ -407,9 +407,9 @@ namespace ZQ
 					const float* prob_ptr = prob->GetFirstPixelPtr();
 					
 					
-					if (prob_ptr[1] < __max(0.1, othresh - 0.3))
+					if (prob_ptr[1] < __max(0.2, othresh - 0.3))
 					{
-						//printf("here:%d\n",fr_id);
+						printf("here:lost %f\n",prob_ptr[1]);
 						continue;
 					}
 
@@ -439,7 +439,7 @@ namespace ZQ
 
 				
 				/**********   Stage 2: detect globally         ************/
-				if (cur_key_cooldown <= 0)
+				if (cur_key_cooldown <= 0 || results106_part1.size() == 0)
 				{
 					std::vector<ZQ_CNN_BBox> tmp_boxes;
 					cur_key_cooldown = key_cooldown;
@@ -453,12 +453,12 @@ namespace ZQ
 						float valid_row1 = __max(0, cur_box.row1);
 						float valid_row2 = __min(_height-1, cur_box.row2);
 						float valid_area = (valid_col2 - valid_col1) * (valid_row2 - valid_row1);
-						if (valid_area < ori_area*0.9)
+						if (valid_area < ori_area*0.95)
 						{
 							//printf("here\n");
 							continue;
 						}
-						//printf("global_here:%d\n", fr_id);
+						printf("here:global\n");
 						tmp_order.oriOrder = ori_count++;
 						tmp_order.score = tmp_boxes[j].score;
 						boxes.push_back(tmp_boxes[j]);
@@ -849,7 +849,7 @@ namespace ZQ
 				_compute_map(cx, cy, cur_rot, cur_size, cur_size, refine_lnet106_size, refine_lnet106_size, map_x, map_y);
 				
 				
-				if (!input.Remap(task_lnet_images[0], refine_lnet106_size, refine_lnet106_size, 0, 0, map_x, map_y))
+				if (!input.Remap(task_lnet_images[0], refine_lnet106_size, refine_lnet106_size, 0, 0, map_x, map_y, true, -1))
 				{
 					continue;
 				}
