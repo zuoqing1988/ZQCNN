@@ -1,5 +1,6 @@
 #include "ZQ_CNN_Net.h"
 #include "ZQ_CNN_Net_NCHWC.h"
+#include "ZQ_HeadPoseEstimation.h"
 #if defined(_WIN32)
 #include "ZQlib/ZQ_PutTextCN.h"
 #endif
@@ -49,11 +50,11 @@ int main()
 #endif
 	
 #if defined(_WIN32)
-	if (!net1.LoadFrom("model/det5-dw96-v2s.zqparams", "model/det5-dw96-v2s.nchwbin",true,1e-9,true)
+	if (!net1.LoadFrom("model/det5-dw112.zqparams", "model/det5-dw112.nchwbin",true,1e-9,true)
 		//|| !net2.LoadFrom("model/det3.zqparams", "model/det3_bgr.nchwbin", true, 1e-9))
 		|| !net2.LoadFrom("model/det5-dw96-v2s.zqparams", "model/det5-dw96-v2s.nchwbin", true, 1e-9, true))
 #else
-	if (!net1.LoadFrom("../../model/det5-dw96-v2s.zqparams", "../../model/det5-dw96-v2s.nchwbin", true, 1e-9, true)
+	if (!net1.LoadFrom("../../model/det5-dw112.zqparams", "../../model/det5-dw112.nchwbin", true, 1e-9, true)
 		//|| !net2.LoadFrom("../../model/det3.zqparams", "../../model/det3_bgr.nchwbin", true, 1e-9))
 		|| !net2.LoadFrom("../../model/det5-dw96-v2s.zqparams", "../../model/det5-dw96-v2s.nchwbin", true, 1e-9, true))
 #endif
@@ -163,6 +164,11 @@ int main()
 	{
 		cv::circle(draw_img, cv::Point(show_W * landmark2_data[i], show_H * landmark2_data[i + 5]), 2, cv::Scalar(0, 120 + 30 * i, 0), 2);
 	}*/
+
+	const double m_pi = atan(1.0) * 4;
+	float yaw, pitch, roll;
+	ZQ_HeadPoseEstimation::ComputeYawPicthRoll(net1_W, net1_H, 10000, landmark1_data, yaw, pitch, roll);
+	printf("yaw = %f, pitch = %f, roll = %f\n", yaw / m_pi * 180, pitch / m_pi * 180, roll / m_pi * 180);
 
 	namedWindow("landmark");
 
