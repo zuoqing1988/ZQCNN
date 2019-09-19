@@ -4,6 +4,9 @@
 #include "opencv2/opencv.hpp"
 #include "ZQ_CNN_CompileConfig.h"
 #include "ZQ_CNN_PersonPose.h"
+#if defined(_WIN32)
+#include "ZQlib/ZQ_PutTextCN.h"
+#endif
 #if ZQ_CNN_USE_BLAS_GEMM
 #if __ARM_NEON
 #include <openblas/cblas.h>
@@ -32,16 +35,16 @@ void Draw(cv::Mat& img, const std::vector<ZQ_CNN_PersonPose::BBox>& output)
 		
 		static const int skeleton[26] = {
 			0,1,
-			1,2,
+			2,5,
+			2,8,
+			5,11,
+			8,11,
 			2,3,
 			3,4,
-			1,5,
 			5,6,
 			6,7,
-			1,8,
 			8,9,
 			9,10,
-			1,11,
 			11,12,
 			12,13
 		};
@@ -56,10 +59,23 @@ void Draw(cv::Mat& img, const std::vector<ZQ_CNN_PersonPose::BBox>& output)
 				cv::line(img, pt1, pt2, cv::Scalar(255, 0, 0), 2);
 			}
 		}
+
+		char buf[10];
+
 		for (int i = 0; i < 14; i++)
 		{
+			cv::Point pt = cv::Point(bbox.points[i * 3], bbox.points[i * 3 + 1]);
 			if (bbox.points[i * 3 + 2] > 0)
-				cv::circle(img, cv::Point(bbox.points[i * 3], bbox.points[i * 3 + 1]), 2, cv::Scalar(0, 0, 255), 2);
+				cv::circle(img, pt, 2, cv::Scalar(0, 0, 250), 2);
+
+#if defined(_WIN32)
+			sprintf_s(buf, 10, "%d", i);
+#else
+			sprintf(buf, "%d", i);
+#endif
+#if defined(_WIN32)
+			ZQ_PutTextCN::PutTextCN(img, buf, pt, cv::Scalar(100, 0, 0), 12);
+#endif
 		}
 	}
 }
@@ -79,10 +95,10 @@ int main()
 
 #if defined(_WIN32)
 	if (!detector.Init("model/MobileNetSSD_deploy.zqparams", "model/MobileNetSSD_deploy.nchwbin", "detection_out", 15,
-		"model/Pose-zq.zqparams", "model/Pose-zq.nchwbin", "Convolutional_Pose_Machine/stage_5_out"))
+		"model/Pose-cpm.zqparams", "model/Pose-cpm.nchwbin", "Convolutional_Pose_Machine/stage_5_out"))
 #else
 	if (!detector.Init("../../model/MobileNetSSD_deploy.zqparams", "../../model/MobileNetSSD_deploy.nchwbin", "detection_out", 15,
-		"../../model/Pose-zq.zqparams", "../../model/Pose-zq.nchwbin", "Convolutional_Pose_Machine/stage_5_out"))
+		"../../model/det17-dw112.zqparams", "../../model/det17-dw112-5340.nchwbin", "conv6-3"))
 #endif
 	{
 		cout << "failed to init!\n";
@@ -90,9 +106,9 @@ int main()
 	}
 
 #if defined(_WIN32)
-	Mat img = imread("data/pose_4.jpg", 1);
+	Mat img = imread("data/pose-0911-15.jpg", 1);
 #else
-	Mat img = imread("../../data/pose_4.jpg", 1);
+	Mat img = imread("../../data/1.jpg", 1);
 #endif
 	if (img.empty())
 	{
