@@ -201,6 +201,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SampleLnetMouth", "SamplesZ
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SampleLnet106_vis", "SamplesZQCNN\SampleLnet106_vis\SampleLnet106_vis.vcxproj", "{EA8BF3F1-5578-44A1-9E38-ED33C5802FEF}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SamplePersonPoseVideo", "SamplesZQCNN\SamplePersonPoseVideo\SamplePersonPoseVideo.vcxproj", "{B5EC11C2-9B10-488F-AB2B-1A8FB99CA48C}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -569,6 +571,14 @@ Global
 		{EA8BF3F1-5578-44A1-9E38-ED33C5802FEF}.Release|x64.Build.0 = Release|x64
 		{EA8BF3F1-5578-44A1-9E38-ED33C5802FEF}.Release|x86.ActiveCfg = Release|Win32
 		{EA8BF3F1-5578-44A1-9E38-ED33C5802FEF}.Release|x86.Build.0 = Release|Win32
+		{B5EC11C2-9B10-488F-AB2B-1A8FB99CA48C}.Debug|x64.ActiveCfg = Debug|x64
+		{B5EC11C2-9B10-488F-AB2B-1A8FB99CA48C}.Debug|x64.Build.0 = Debug|x64
+		{B5EC11C2-9B10-488F-AB2B-1A8FB99CA48C}.Debug|x86.ActiveCfg = Debug|Win32
+		{B5EC11C2-9B10-488F-AB2B-1A8FB99CA48C}.Debug|x86.Build.0 = Debug|Win32
+		{B5EC11C2-9B10-488F-AB2B-1A8FB99CA48C}.Release|x64.ActiveCfg = Release|x64
+		{B5EC11C2-9B10-488F-AB2B-1A8FB99CA48C}.Release|x64.Build.0 = Release|x64
+		{B5EC11C2-9B10-488F-AB2B-1A8FB99CA48C}.Release|x86.ActiveCfg = Release|Win32
+		{B5EC11C2-9B10-488F-AB2B-1A8FB99CA48C}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
