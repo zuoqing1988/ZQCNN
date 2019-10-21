@@ -199,9 +199,9 @@ namespace ZQ
 			if (!use_levmar)
 			{
 				//// Final optimization(minimize the reprojection error in pixel) : through Gradient Descent :
-				ZQ_DImage<float> x_im_mat(nPts * 2, 1);
+				ZQ_DImage<float> xn_im_mat(nPts * 2, 1);
 				ZQ_DImage<float> dxdrT_im_mat(2 * nPts, 6);
-				float*& x = x_im_mat.data();
+				float*& xn = xn_im_mat.data();
 				float*& dxdrT = dxdrT_im_mat.data();
 
 				ZQ_Matrix<double> JJmat(2 * nPts, 6);
@@ -213,8 +213,8 @@ namespace ZQ
 				int iter = 0;
 				for (int it = 0; it < max_iter; it++)
 				{
-					if (!project_points_fun(nPts, X3, rT, fc, cc, x, zAxis_in)
-						|| !project_points_jac(nPts, X3, rT, fc, cc, dxdrT, zAxis_in))
+					if (!project_points_fun(nPts, X3, rT, xn, zAxis_in)
+						|| !project_points_jac(nPts, X3, rT, dxdrT, zAxis_in))
 					{
 						return false;
 					}
@@ -227,7 +227,7 @@ namespace ZQ
 						JJ_ptr[i * 6 + 3] = dxdrT[i * 6 + 3];
 						JJ_ptr[i * 6 + 4] = dxdrT[i * 6 + 4];
 						JJ_ptr[i * 6 + 5] = dxdrT[i * 6 + 5];
-						exmat_ptr[i] = X2[i] - x[i];
+						exmat_ptr[i] = Xn[i] - xn[i];
 					}
 
 					if (!ZQ_SVD::Solve(JJmat, para, exmat))
@@ -255,8 +255,8 @@ namespace ZQ
 					X3_data[i * 3 + 0] = X3[i * 3 + 0];
 					X3_data[i * 3 + 1] = X3[i * 3 + 1];
 					X3_data[i * 3 + 2] = X3[i * 3 + 2];
-					fx[i * 2 + 0] = X2[i * 2 + 0];
-					fx[i * 2 + 1] = X2[i * 2 + 1];
+					fx[i * 2 + 0] = Xn[i * 2 + 0];
+					fx[i * 2 + 1] = Xn[i * 2 + 1];
 				}
 				double fc_data[2] = { fc[0], fc[1] };
 				double cc_data[2] = { cc[0],cc[1] };
@@ -265,8 +265,6 @@ namespace ZQ
 				_levmar_data data;
 				int m = 6, n = 2 * nPts;
 				data.X3 = X3_data;
-				data.cc = cc_data;
-				data.fc = fc_data;
 				data.nPts = nPts;
 				data.zAxis_in = zAxis_in;
 				opts.init_mu = 0.01;
@@ -297,8 +295,6 @@ namespace ZQ
 			const _levmar_data* arg = (const _levmar_data*)data;
 			int nPts = arg->nPts;
 			const double* X3 = arg->X3;
-			const double* fc = arg->fc;
-			const double* cc = arg->cc;
 			double R[9];
 			ZQ_Rodrigues::ZQ_Rodrigues_r2R(rT, R);
 
@@ -322,16 +318,8 @@ namespace ZQ
 
 				double x2[2] = { Y[0] * inv_Z, Y[1] * inv_Z };
 
-
-				// Pixel coordinates :
-				double xxp[2] =
-				{
-					x2[0] * fc[0] + cc[0],
-					x2[1] * fc[1] + cc[1]
-				};
-
 				///////////
-				memcpy(fx + pp * 2, xxp, sizeof(double) * 2);
+				memcpy(fx + pp * 2, x2, sizeof(double) * 2);
 			}
 			return true;
 		}
@@ -389,9 +377,7 @@ namespace ZQ
 			const _levmar_data* arg = (const _levmar_data*)data;
 			int nPts = arg->nPts;
 			const double* X3 = arg->X3;
-			const double* fc = arg->fc;
-			const double* cc = arg->cc;
-
+			
 			double R[9], dRdr[27];
 			ZQ_Rodrigues::ZQ_Rodrigues_r2R(rT, R, dRdr);
 
@@ -454,29 +440,14 @@ namespace ZQ
 				}
 
 
-
-				// Pixel coordinates :
-				double xxp[2] =
-				{
-					x2[0] * fc[0] + cc[0],
-					x2[1] * fc[1] + cc[1]
-				};
-				double dxxpdx[4] =
-				{
-					fc[0], 0,
-					0, fc[1]
-				};
-				double dxxpdrT[12] = { 0 };
-				ZQ_MathBase::MatrixMul(dxxpdx, dxdrT, 2, 2, 6, dxxpdrT);
-
 				///////////
-				memcpy(jx + pp * 12, dxxpdrT, sizeof(double) * 12);
+				memcpy(jx + pp * 12, dxdrT, sizeof(double) * 12);
 			}
 
 			return true;
 		}
 
-		static bool project_points_fun(int nPts, const float* X, const float* rT, const float* f, const float* c, float* xp, bool zAxis_in)
+		static bool project_points_fun(int nPts, const float* X, const float* rT, float* xp, bool zAxis_in)
 		{
 			float R[9];
 			ZQ_Rodrigues::ZQ_Rodrigues_r2R(rT, R);
@@ -502,20 +473,13 @@ namespace ZQ
 				float x[2] = { Y[0] * inv_Z, Y[1] * inv_Z };
 
 
-				// Pixel coordinates :
-				float xxp[2] =
-				{
-					x[0] * f[0] + c[0],
-					x[1] * f[1] + c[1]
-				};
-
 				///////////
-				memcpy(xp + pp * 2, xxp, sizeof(float) * 2);
+				memcpy(xp + pp * 2, x, sizeof(float) * 2);
 			}
 			return true;
 		}
 
-		static bool project_points_jac(int nPts, const float* X, const float* rT, const float* f, const float* c, float* dxpdrT, bool zAxis_in)
+		static bool project_points_jac(int nPts, const float* X, const float* rT, float* dxpdrT, bool zAxis_in)
 		{
 			/*
 			%
@@ -623,26 +587,10 @@ namespace ZQ
 						}
 					}
 				}
-
-
-
-				// Pixel coordinates :
-				float xxp[2] =
-				{
-					x[0] * f[0] + c[0],
-					x[1] * f[1] + c[1]
-				};
-				float dxxpdx[4] =
-				{
-					f[0], 0,
-					0, f[1]
-				};
-				float dxxpdrT[12] = { 0 };
-				ZQ_MathBase::MatrixMul(dxxpdx, dxdrT, 2, 2, 6, dxxpdrT);
-
+				
 				///////////
 				if (dxpdrT != 0)
-					memcpy(dxpdrT + pp * 12, dxxpdrT, sizeof(float) * 12);
+					memcpy(dxpdrT + pp * 12, dxdrT, sizeof(float) * 12);
 			}
 
 			return true;
