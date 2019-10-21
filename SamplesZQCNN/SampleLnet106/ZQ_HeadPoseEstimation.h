@@ -5,6 +5,7 @@
 #include "ZQlib/ZQ_DoubleImage.h"
 #include "ZQlib/ZQ_MathBase.h"
 #include "ZQlib/ZQ_Rodrigues.h"
+#include "ZQlib/ZQ_LevMar.h"
 #include <string.h>
 
 namespace ZQ
@@ -12,7 +13,8 @@ namespace ZQ
 	class ZQ_HeadPoseEstimation
 	{
 	public:
-		static void ComputeYawPicthRoll(int width, int height, float focal, const float* landmarks, float& yaw, float& pitch, float &roll)
+		static void ComputeYawPicthRoll(int width, int height, float focal, const float* landmarks, float& yaw, float& pitch, float &roll,
+			int max_iter = 3, bool use_levmar = false)
 		{
 			float X3[14 * 3] =
 			{
@@ -53,14 +55,14 @@ namespace ZQ
 			float fc[2] = { focal, focal };
 			float cc[2] = { 0.5*width, 0.5*height };
 			float rT[6];
-			HeadPoseEstimation(14, X2, X3, fc, cc, rT, true, 3);
+			HeadPoseEstimation(14, X2, X3, fc, cc, rT, true, max_iter, use_levmar);
 			float R[9];
 			ZQ_Rodrigues::ZQ_Rodrigues_r2R(rT, R);
 			EulerAngleFromRotationMatrix(R, yaw, pitch, roll);
 		}
 
 		static bool HeadPoseEstimation(int nPts, const float* X2, const float* X3, const float fc[2], const float cc[2],
-			float rT[6], bool zAxis_in, int max_iter /* = 20*/)
+			float rT[6], bool zAxis_in, int max_iter /* = 20*/, bool use_levmar = false)
 		{
 			const double eps = 1e-16;
 			// Computes an initial guess for extrinsic parameters(works for general 3d structure, not planar!!!) :
@@ -193,48 +195,284 @@ namespace ZQ
 				rT[i] = rrr[i];
 			rT[3] = rT[4] = 0;
 
-			//// Final optimization(minimize the reprojection error in pixel) : through Gradient Descent :
-			ZQ_DImage<float> x_im_mat(nPts * 2, 1);
-			ZQ_DImage<float> dxdrT_im_mat(2 * nPts, 6);
-			float*& x = x_im_mat.data();
-			float*& dxdrT = dxdrT_im_mat.data();
 
-			ZQ_Matrix<double> JJmat(2 * nPts, 6);
-			ZQ_Matrix<double> exmat(2 * nPts, 1);
-			ZQ_Matrix<double> para(6, 1);
-			double* JJ_ptr = JJmat.GetDataPtr();
-			double* exmat_ptr = exmat.GetDataPtr();
-			double* para_ptr = para.GetDataPtr();
-			int iter = 0;
-			for (int it = 0; it < max_iter; it++)
+			if (!use_levmar)
 			{
-				if (!project_points_fun(nPts, X3, rT, fc, cc, x, zAxis_in)
-					|| !project_points_jac(nPts, X3, rT, fc, cc, dxdrT, zAxis_in))
-				{
-					return false;
-				}
+				//// Final optimization(minimize the reprojection error in pixel) : through Gradient Descent :
+				ZQ_DImage<float> x_im_mat(nPts * 2, 1);
+				ZQ_DImage<float> dxdrT_im_mat(2 * nPts, 6);
+				float*& x = x_im_mat.data();
+				float*& dxdrT = dxdrT_im_mat.data();
 
-				for (int i = 0; i < nPts * 2; i++)
+				ZQ_Matrix<double> JJmat(2 * nPts, 6);
+				ZQ_Matrix<double> exmat(2 * nPts, 1);
+				ZQ_Matrix<double> para(6, 1);
+				double* JJ_ptr = JJmat.GetDataPtr();
+				double* exmat_ptr = exmat.GetDataPtr();
+				double* para_ptr = para.GetDataPtr();
+				int iter = 0;
+				for (int it = 0; it < max_iter; it++)
 				{
-					JJ_ptr[i * 6 + 0] = dxdrT[i * 6 + 0];
-					JJ_ptr[i * 6 + 1] = dxdrT[i * 6 + 1];
-					JJ_ptr[i * 6 + 2] = dxdrT[i * 6 + 2];
-					JJ_ptr[i * 6 + 3] = dxdrT[i * 6 + 3];
-					JJ_ptr[i * 6 + 4] = dxdrT[i * 6 + 4];
-					JJ_ptr[i * 6 + 5] = dxdrT[i * 6 + 5];
-					exmat_ptr[i] = X2[i] - x[i];
-				}
+					if (!project_points_fun(nPts, X3, rT, fc, cc, x, zAxis_in)
+						|| !project_points_jac(nPts, X3, rT, fc, cc, dxdrT, zAxis_in))
+					{
+						return false;
+					}
 
-				if (!ZQ_SVD::Solve(JJmat, para, exmat))
-				{
-					return false;
-				}
+					for (int i = 0; i < nPts * 2; i++)
+					{
+						JJ_ptr[i * 6 + 0] = dxdrT[i * 6 + 0];
+						JJ_ptr[i * 6 + 1] = dxdrT[i * 6 + 1];
+						JJ_ptr[i * 6 + 2] = dxdrT[i * 6 + 2];
+						JJ_ptr[i * 6 + 3] = dxdrT[i * 6 + 3];
+						JJ_ptr[i * 6 + 4] = dxdrT[i * 6 + 4];
+						JJ_ptr[i * 6 + 5] = dxdrT[i * 6 + 5];
+						exmat_ptr[i] = X2[i] - x[i];
+					}
 
-				for (int i = 0; i < 6; i++)
-				{
-					rT[i] += para_ptr[i];
+					if (!ZQ_SVD::Solve(JJmat, para, exmat))
+					{
+						return false;
+					}
+
+					for (int i = 0; i < 6; i++)
+					{
+						rT[i] += para_ptr[i];
+					}
 				}
 			}
+			else
+			{
+				//// Final optimization(minimize the reprojection error in pixel) : through LevMar :
+				
+				double x[6] = { rT[0],rT[1],rT[2],rT[3],rT[4],rT[5] };
+				ZQ_DImage<double> X3_im(3 * nPts, 1);
+				ZQ_DImage<double> fx_im(2 * nPts,1);
+				double*& fx = fx_im.data();
+				double*& X3_data = X3_im.data();
+				for (int i = 0; i < nPts; i++)
+				{
+					X3_data[i * 3 + 0] = X3[i * 3 + 0];
+					X3_data[i * 3 + 1] = X3[i * 3 + 1];
+					X3_data[i * 3 + 2] = X3[i * 3 + 2];
+					fx[i * 2 + 0] = X2[i * 2 + 0];
+					fx[i * 2 + 1] = X2[i * 2 + 1];
+				}
+				double fc_data[2] = { fc[0], fc[1] };
+				double cc_data[2] = { cc[0],cc[1] };
+				ZQ_LevMarOptions opts;
+				ZQ_LevMarReturnInfos info;
+				_levmar_data data;
+				int m = 6, n = 2 * nPts;
+				data.X3 = X3_data;
+				data.cc = cc_data;
+				data.fc = fc_data;
+				data.nPts = nPts;
+				data.zAxis_in = zAxis_in;
+				opts.init_mu = 0.01;
+				if (!ZQ_LevMar::ZQ_LevMar_Der(levmar_fun, levmar_jac, x, fx, m, n, max_iter, opts, info, (void*)(&data), false))
+				{
+					return false;
+				}
+				
+				for (int i = 0; i < 6; i++)
+					rT[i] = x[i];
+			}
+			return true;
+		}
+
+		class _levmar_data
+		{
+		public:
+			const double* X3;
+			const double* fc;
+			const double* cc;
+			int nPts;
+			bool zAxis_in;
+		};
+
+		static bool levmar_fun(const double* x, double* fx, int m, int n, const void* data)
+		{
+			const double* rT = x;
+			const _levmar_data* arg = (const _levmar_data*)data;
+			int nPts = arg->nPts;
+			const double* X3 = arg->X3;
+			const double* fc = arg->fc;
+			const double* cc = arg->cc;
+			double R[9];
+			ZQ_Rodrigues::ZQ_Rodrigues_r2R(rT, R);
+
+			for (int pp = 0; pp < nPts; pp++)
+			{
+				const double* XX = X3 + pp * 3;
+				const double* ttt = rT + 3;
+				float Y[3] =
+				{
+					R[0] * XX[0] + R[1] * XX[1] + R[2] * XX[2] + ttt[0],
+					R[3] * XX[0] + R[4] * XX[1] + R[5] * XX[2] + ttt[1],
+					R[6] * XX[0] + R[7] * XX[1] + R[8] * XX[2] + ttt[2]
+				};
+
+				if (Y[2] == 0)
+					return false;
+
+				double inv_Z = 1.0 / Y[2];
+				if (!arg->zAxis_in)
+					inv_Z = -inv_Z;
+
+				double x2[2] = { Y[0] * inv_Z, Y[1] * inv_Z };
+
+
+				// Pixel coordinates :
+				double xxp[2] =
+				{
+					x2[0] * fc[0] + cc[0],
+					x2[1] * fc[1] + cc[1]
+				};
+
+				///////////
+				memcpy(fx + pp * 2, xxp, sizeof(double) * 2);
+			}
+			return true;
+		}
+
+		static bool levmar_jac(const double* x, double* jx, int m, int n, const void* data)
+		{
+			/*
+			%
+			%	[xp,dxpdom,dxpdT,dxpdf,dxpdc,dxpdk, dxpdalpha] = project_points2(X,om,T,f,c,k,alpha)
+			%
+			%	Projects a 3D structure onto the image plane.
+			%
+			%	INPUT:
+			%		X: 3D structure in the world coordinate frame (3xN matrix for N points)
+			%		(r,T): Rigid motion parameters between world coordinate frame and camera reference frame
+			%             r: rotation vector (3x1 vector); T: translation vector (3x1 vector)
+			%       f: camera focal length in units of horizontal and vertical pixel units (2x1 vector)
+			%       c: principal point location in pixel units (2x1 vector)
+			%       k: Distortion coefficients (radial and tangential) (5x1 vector)
+			%       alpha: Skew coefficient between x and y pixel (alpha = 0 <=> square pixels)
+			%
+			%	OUTPUT:
+			%		xp: Projected pixel coordinates (2xN matrix for N points)
+			%       dxpdrT: Derivative of xp with respect to rT ((2N)x6 matrix)
+			%       dxpdf: Derivative of xp with respect to f ((2N)x2 matrix if f is 2x1)
+			%       dxpdc: Derivative of xp with respect to c ((2N)x2 matrix)
+			%       dxpdk: Derivative of xp with respect to k ((2N)x5 matrix)
+			%		dxpdalpha: Derivative of xp with respect to alpha ((2N)x1 matrix)
+			%
+			%	Definitions:
+			%		Let P be a point in 3D of coordinates X in the world reference frame (stored in the matrix X)
+			%		The coordinate vector of P in the camera reference frame is: Xc = R*X + T
+			%		where R is the rotation matrix corresponding to the rotation vector r: R = rodrigues(r);
+			%		call x, y and z the 3 coordinates of Xc: x = Xc(1); y = Xc(2); z = Xc(3);
+			%		The pinehole projection coordinates of P is [a;b] where a=x/z and b=y/z.
+			%		call r^2 = a^2 + b^2.
+			%		The distorted point coordinates are: xd = [xx;yy] where:
+			%
+			%		xx = a * (1 + kc(1)*r^2 + kc(2)*r^4 + kc(5)*r^6)      +      2*kc(3)*a*b + kc(4)*(r^2 + 2*a^2);
+			%		yy = b * (1 + kc(1)*r^2 + kc(2)*r^4 + kc(5)*r^6)      +      kc(3)*(r^2 + 2*b^2) + 2*kc(4)*a*b;
+			%
+			%	The left terms correspond to radial distortion (6th degree), the right terms correspond to tangential distortion
+			%
+			%	Finally, convertion into pixel coordinates: The final pixel coordinates vector xp=[xxp;yyp] where:
+			%
+			%	xxp = f(1)*(xx + alpha*yy) + c(1)
+			%	yyp = f(2)*yy + c(2)
+			%
+			%
+			%	NOTE: About 90 percent of the code takes care fo computing the Jacobian matrices
+			*/
+
+
+			const double* rT = x;
+			const _levmar_data* arg = (const _levmar_data*)data;
+			int nPts = arg->nPts;
+			const double* X3 = arg->X3;
+			const double* fc = arg->fc;
+			const double* cc = arg->cc;
+
+			double R[9], dRdr[27];
+			ZQ_Rodrigues::ZQ_Rodrigues_r2R(rT, R, dRdr);
+
+			for (int pp = 0; pp < nPts; pp++)
+			{
+				const double* XX = X3 + pp * 3;
+				const double* ttt = rT + 3;
+				double Y[3] =
+				{
+					R[0] * XX[0] + R[1] * XX[1] + R[2] * XX[2] + ttt[0],
+					R[3] * XX[0] + R[4] * XX[1] + R[5] * XX[2] + ttt[1],
+					R[6] * XX[0] + R[7] * XX[1] + R[8] * XX[2] + ttt[2]
+				};
+
+				if (Y[2] == 0)
+					return false;
+
+				double dYdR[27] =
+				{
+					XX[0], XX[1], XX[2], 0, 0, 0, 0, 0, 0,
+					0, 0, 0, XX[0], XX[1], XX[2], 0, 0, 0,
+					0, 0, 0, 0, 0, 0, XX[0], XX[1], XX[2]
+				};
+				double dYdr[9] = { 0 };
+				ZQ_MathBase::MatrixMul(dYdR, dRdr, 3, 9, 3, dYdr);
+				double dYdT[9] =
+				{
+					1, 0, 0,
+					0, 1, 0,
+					0, 0, 1
+				};
+				double inv_Z = 1.0 / Y[2];
+				if (!arg->zAxis_in)
+					inv_Z = -inv_Z;
+				double x2[2] = { Y[0] * inv_Z, Y[1] * inv_Z };
+
+				double dxdY[6] =
+				{
+					inv_Z, 0, -x2[0] * inv_Z,
+					0, inv_Z, -x2[1] * inv_Z
+				};
+				if (!arg->zAxis_in)
+				{
+					dxdY[2] = -dxdY[2];
+					dxdY[5] = -dxdY[5];
+				}
+
+
+				double dxdrT[12] = { 0 };
+				for (int i = 0; i < 2; i++)
+				{
+					for (int j = 0; j < 3; j++)
+					{
+						for (int k = 0; k < 3; k++)
+						{
+							dxdrT[i * 6 + j] += dxdY[i * 3 + k] * dYdr[k * 3 + j];
+							dxdrT[i * 6 + j + 3] += dxdY[i * 3 + k] * dYdT[k * 3 + j];
+						}
+					}
+				}
+
+
+
+				// Pixel coordinates :
+				double xxp[2] =
+				{
+					x2[0] * fc[0] + cc[0],
+					x2[1] * fc[1] + cc[1]
+				};
+				double dxxpdx[4] =
+				{
+					fc[0], 0,
+					0, fc[1]
+				};
+				double dxxpdrT[12] = { 0 };
+				ZQ_MathBase::MatrixMul(dxxpdx, dxdrT, 2, 2, 6, dxxpdrT);
+
+				///////////
+				memcpy(jx + pp * 12, dxxpdrT, sizeof(double) * 12);
+			}
+
 			return true;
 		}
 
