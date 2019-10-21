@@ -81,27 +81,35 @@ namespace ZQ
 
 			ZQ_DImage<double> J_mat(2 * nPts, 12);
 			double*& J = J_mat.data();
-
+			double axis_flag = zAxis_in ? -1 : 1;
 			for (int i = 0; i < nPts; i++)
 			{
-				double xX[3] = { Xn[i * 2 + 0] * X3[i * 3 + 0], Xn[i * 2 + 0] * X3[i * 3 + 1], Xn[i * 2 + 0] * X3[i * 3 + 2] };
-				double yX[3] = { Xn[i * 2 + 1] * X3[i * 3 + 0], Xn[i * 2 + 1] * X3[i * 3 + 1], Xn[i * 2 + 1] * X3[i * 3 + 2] };
-				J[(i * 2 + 0) * 12 + 0] = -X3[i * 3 + 0];
-				J[(i * 2 + 0) * 12 + 3] = -X3[i * 3 + 1];
-				J[(i * 2 + 0) * 12 + 6] = -X3[i * 3 + 2];
-				J[(i * 2 + 1) * 12 + 1] = X3[i * 3 + 0];
-				J[(i * 2 + 1) * 12 + 4] = X3[i * 3 + 1];
-				J[(i * 2 + 1) * 12 + 7] = X3[i * 3 + 2];
-				J[(i * 2 + 0) * 12 + 2] = xX[0];
-				J[(i * 2 + 0) * 12 + 5] = xX[1];
-				J[(i * 2 + 0) * 12 + 8] = xX[2];
-				J[(i * 2 + 1) * 12 + 2] = -yX[0];
-				J[(i * 2 + 1) * 12 + 5] = -yX[1];
-				J[(i * 2 + 1) * 12 + 8] = -yX[2];
-				J[(i * 2 + 0) * 12 + 11] = Xn[i * 2 + 0];
-				J[(i * 2 + 1) * 12 + 11] = -Xn[i * 2 + 1];
-				J[(i * 2 + 0) * 12 + 9] = -1;
-				J[(i * 2 + 1) * 12 + 10] = 1;
+				double xX[4] = { Xn[i * 2 + 0] * X3[i * 3 + 0], Xn[i * 2 + 0] * X3[i * 3 + 1], Xn[i * 2 + 0] * X3[i * 3 + 2], Xn[i * 2 + 0] };
+				double yX[4] = { Xn[i * 2 + 1] * X3[i * 3 + 0], Xn[i * 2 + 1] * X3[i * 3 + 1], Xn[i * 2 + 1] * X3[i * 3 + 2],Xn[i * 2 + 1] };
+				J[(i * 2 + 0) * 12 + 0] = X3[i * 3 + 0];
+				J[(i * 2 + 0) * 12 + 1] = X3[i * 3 + 1];
+				J[(i * 2 + 0) * 12 + 2] = X3[i * 3 + 2];
+				J[(i * 2 + 0) * 12 + 3] = 1;
+				J[(i * 2 + 0) * 12 + 4] = 0;
+				J[(i * 2 + 0) * 12 + 5] = 0;
+				J[(i * 2 + 0) * 12 + 6] = 0;
+				J[(i * 2 + 0) * 12 + 7] = 0;
+				J[(i * 2 + 0) * 12 + 8] = xX[0] * axis_flag;
+				J[(i * 2 + 0) * 12 + 9] = xX[1] * axis_flag;
+				J[(i * 2 + 0) * 12 + 10] = xX[2] * axis_flag;
+				J[(i * 2 + 0) * 12 + 11] = xX[3] * axis_flag;
+				J[(i * 2 + 1) * 12 + 0] = 0;
+				J[(i * 2 + 1) * 12 + 1] = 0;
+				J[(i * 2 + 1) * 12 + 2] = 0;
+				J[(i * 2 + 1) * 12 + 3] = 0;
+				J[(i * 2 + 1) * 12 + 4] = X3[i * 3 + 0];
+				J[(i * 2 + 1) * 12 + 5] = X3[i * 3 + 1];
+				J[(i * 2 + 1) * 12 + 6] = X3[i * 3 + 2];
+				J[(i * 2 + 1) * 12 + 7] = 1;
+				J[(i * 2 + 1) * 12 + 8] = yX[0] * axis_flag;
+				J[(i * 2 + 1) * 12 + 9] = yX[1] * axis_flag;
+				J[(i * 2 + 1) * 12 + 10] = yX[2] * axis_flag;
+				J[(i * 2 + 1) * 12 + 11] = yX[3] * axis_flag;
 			}
 
 			ZQ_DImage<double> JJ_mat(12, 12);
@@ -125,18 +133,24 @@ namespace ZQ
 				return false;
 			}
 
+			double RRt[12];
+			//memcpy(RRt, V + 11 * 2, sizeof(double) * 12);
+			for (int i = 0; i < 12; i++)
+			{
+				RRt[i] = V[i * 12 + 11];
+			}
 			double RR[9] =
 			{
-				V[0 * 12 + 11], V[3 * 12 + 11], V[6 * 12 + 11],
-				V[1 * 12 + 11], V[4 * 12 + 11], V[7 * 12 + 11],
-				V[2 * 12 + 11], V[5 * 12 + 11], V[8 * 12 + 11]
+				RRt[0],RRt[1],RRt[2],
+				RRt[4],RRt[5],RRt[6],
+				RRt[8],RRt[9],RRt[10]
 			};
 
 			//if (ZQ_MathBase::Det(3, RR) < 0)
-			if (V[11 * 12 + 11] < 0)
+			if(RRt[11] < 0)
 			{
 				for (int i = 0; i < 12; i++)
-					V[i * 12 + 11] = -V[i * 12 + 11];
+					RRt[i] = -RRt[i];
 				for (int i = 0; i < 9; i++)
 					RR[i] = -RR[i];
 			}
@@ -160,8 +174,10 @@ namespace ZQ
 			}
 
 			double len_v = 0;
-			for (int i = 0; i < 9; i++)
-				len_v += V[i * 12 + 11] * V[i * 12 + 11];
+			for (int i = 0; i < 3; i++)
+			{
+				len_v += RRt[i * 4 + 0] * RRt[i * 4 + 0] + RRt[i * 4 + 1] * RRt[i * 4 + 1] + RRt[i * 4 + 2] * RRt[i * 4 + 2];
+			}
 			len_v = sqrt(len_v);
 			double len_rckk = 0;
 			for (int i = 0; i < 9; i++)
@@ -172,7 +188,7 @@ namespace ZQ
 			double inv_sc = (sc == 0) ? (1.0 / (eps*eps)) : (1.0 / sc);
 			for (int i = 0; i < 3; i++)
 			{
-				rT[i + 3] = V[(i + 9) * 12 + 11] * inv_sc;
+				rT[i + 3] = RRt[i*4+3] * inv_sc;
 			}
 
 			if (!zAxis_in)
@@ -193,7 +209,7 @@ namespace ZQ
 
 			for (int i = 0; i < 3; i++)
 				rT[i] = rrr[i];
-			rT[3] = rT[4] = 0;
+			//rT[3] = rT[4] = 0;
 
 
 			if (!use_levmar)
@@ -267,7 +283,7 @@ namespace ZQ
 				data.X3 = X3_data;
 				data.nPts = nPts;
 				data.zAxis_in = zAxis_in;
-				opts.init_mu = 0.01;
+				opts.init_mu = 0.001;
 				if (!ZQ_LevMar::ZQ_LevMar_Der(levmar_fun, levmar_jac, x, fx, m, n, max_iter, opts, info, (void*)(&data), false))
 				{
 					return false;
