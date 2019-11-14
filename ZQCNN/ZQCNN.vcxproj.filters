@@ -413,9 +413,6 @@
     <ClInclude Include="ZQ_CNN_CascadeOnet.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="ZQ_CNN_VideoFaceDetection.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
     <ClInclude Include="ZQ_CNN_PersonPose.h">
       <Filter>头文件</Filter>
     </ClInclude>
@@ -433,9 +430,6 @@
     </ClInclude>
     <ClInclude Include="ZQ_CNN_VideoFaceDetection_Interface.h">
       <Filter>Interface</Filter>
-    </ClInclude>
-    <ClInclude Include="ZQ_CNN_Landmark240.h">
-      <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
