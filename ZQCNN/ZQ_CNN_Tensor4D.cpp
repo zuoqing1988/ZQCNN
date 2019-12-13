@@ -212,7 +212,7 @@ bool ZQ_CNN_Tensor4D_NHW_C_Align0::ChangeSize(int dst_N, int dst_H, int dst_W, i
 			unsigned char* tmp_data = (unsigned char*)malloc(needed_dst_raw_len);
 			if (tmp_data == 0)
 				return false;
-			//memset(tmp_data, 0, needed_dst_raw_len);
+			memset(tmp_data, 0, needed_dst_raw_len);
 			if(rawData)	
 				free(rawData);
 			rawData = tmp_data;
@@ -886,9 +886,9 @@ bool ZQ_CNN_Tensor4D_NHW_C_Align128bit::ChangeSize(int dst_N, int dst_H, int dst
 			if (tmp_data == 0)
 				return false;
 			//memset(tmp_data, 0, needed_dst_raw_len);
-#if __ARM_NEON
+//#if __ARM_NEON
 			memset(tmp_data, 0, needed_dst_raw_len);
-#endif
+//#endif
 			_aligned_free(rawData);
 			rawData = tmp_data;
 		}
@@ -1628,7 +1628,7 @@ bool ZQ_CNN_Tensor4D_NHW_C_Align256bit::ChangeSize(int dst_N, int dst_H, int dst
 			unsigned char* tmp_data = (unsigned char*)_aligned_malloc(needed_dst_raw_len, 32);
 			if (tmp_data == 0)
 				return false;
-			//memset(tmp_data, 0, needed_dst_raw_len);
+			memset(tmp_data, 0, needed_dst_raw_len);
 			_aligned_free(rawData);
 			rawData = tmp_data;
 		}
