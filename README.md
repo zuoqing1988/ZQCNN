@@ -89,7 +89,7 @@ mxnet格式：链接：https://pan.baidu.com/s/19DTG3rmkct8AiEu0l3DYjw 提取码
 
 hollywoodheads数据训练的，效果一般，凑合用吧
 
-人头检测mtcnn-head[mxnet-v0](https://pan.baidu.com/s/1eqzgeoszon_6bNgS1psa7w)&[zqcnn-v0](https://pan.baidu.com/s/1Xh27qm_LmuV6ZIDLBUXfPQ)
+人头检测mtcnn-head[mxnet-v0](https://pan.baidu.com/s/11I-ZnW3AAijlijtroyxClQ)&[zqcnn-v0](https://pan.baidu.com/s/1Xh27qm_LmuV6ZIDLBUXfPQ)
 
 
 
