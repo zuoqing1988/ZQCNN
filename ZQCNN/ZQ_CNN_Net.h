@@ -118,7 +118,7 @@ namespace ZQ
 				return false;
 			}
 
-			_simplify_inplace();
+			//_simplify_inplace();
 
 			if (merge_bn)
 			{
@@ -195,9 +195,9 @@ namespace ZQ
 				std::vector<ZQ_CNN_Tensor4D*> bottom_ptrs, top_ptrs;
 				for (int j = 0; j < bottoms[i].size(); j++)
 					bottom_ptrs.push_back(blobs[bottoms[i][j]]);
-				for (int j = 0; j < tops[i].size(); j++)	
+				for (int j = 0; j < tops[i].size(); j++)
 					top_ptrs.push_back(blobs[tops[i][j]]);
-				
+
 				layers[i]->show_debug_info = show_debug_info;
 				layers[i]->use_buffer = use_buffer;
 				layers[i]->buffer = &(_buffer.data);
@@ -209,6 +209,11 @@ namespace ZQ
 					printf("failed to run layer: %s\n", layers[i]->name.c_str());
 					return false;
 				}
+				/*printf("%d\n", i);
+				if (i == 69)
+				{
+					printf("here\n");
+				}*/
 //				char buf[100];
 //#if defined(_WIN32)
 //				sprintf_s(buf, "NHWC_%d.txt", i);
@@ -400,6 +405,25 @@ namespace ZQ
 					}
 					layer_type_names.push_back("Convolution");
 				}
+				else if(ZQ_CNN_Layer::_my_strcmpi(&buf[0], "DeConvolution") == 0)
+				{
+					if (layers.size() == 0)
+					{
+						std::cout << "Input layer must be the first!\n";
+						return false;
+					}
+					ZQ_CNN_Layer* cur_layer = new ZQ_CNN_Layer_DeConvolution();
+					if (cur_layer == 0) {
+						std::cout << "failed to create a DeConvolution layer!\n";
+						return false;
+					}
+					if (!_add_layer_and_blobs(cur_layer, line, false))
+					{
+						delete cur_layer;
+						return false;
+					}
+					layer_type_names.push_back("DeConvolution");
+				}
 				else if (ZQ_CNN_Layer::_my_strcmpi(&buf[0], "DepthwiseConvolution") == 0)
 				{
 					if (layers.size() == 0)
@@ -475,6 +499,25 @@ namespace ZQ
 						return false;
 					}
 					layer_type_names.push_back("Scale");
+				}
+				else if (ZQ_CNN_Layer::_my_strcmpi(&buf[0], "AddBias") == 0)
+				{
+					if (layers.size() == 0)
+					{
+						std::cout << "Input layer must be the first!\n";
+						return false;
+					}
+					ZQ_CNN_Layer* cur_layer = new ZQ_CNN_Layer_AddBias();
+					if (cur_layer == 0) {
+						std::cout << "failed to create a AddBias layer!\n";
+						return false;
+					}
+					if (!_add_layer_and_blobs(cur_layer, line, false))
+					{
+						delete cur_layer;
+						return false;
+					}
+					layer_type_names.push_back("AddBias");
 				}
 				else if (ZQ_CNN_Layer::_my_strcmpi(&buf[0], "PReLU") == 0)
 				{

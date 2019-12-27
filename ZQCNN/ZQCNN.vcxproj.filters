@@ -138,6 +138,9 @@
     <ClCompile Include="layers_nchwc\zq_cnn_innerproduct_gemm_nchwc.c">
       <Filter>layers_nchwc</Filter>
     </ClCompile>
+    <ClCompile Include="layers_c\zq_cnn_deconvolution_32f_align_c.c">
+      <Filter>layers_c</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="layers_c\zq_cnn_addbias_32f_align_c.h">
@@ -430,6 +433,12 @@
     </ClInclude>
     <ClInclude Include="ZQ_CNN_VideoFaceDetection_Interface.h">
       <Filter>Interface</Filter>
+    </ClInclude>
+    <ClInclude Include="layers_c\zq_cnn_deconvolution_32f_align_c_raw.h">
+      <Filter>layers_c</Filter>
+    </ClInclude>
+    <ClInclude Include="layers_c\zq_cnn_deconvolution_32f_align_c.h">
+      <Filter>layers_c</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

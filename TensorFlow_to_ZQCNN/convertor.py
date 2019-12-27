@@ -4,6 +4,7 @@ import tensorflow as tf
 from tensorflow.python.platform import gfile
 from tensorflow.python.framework import tensor_util
 import struct
+import os
 
 def search_node(all_node, name):
     for i,n in enumerate(all_node):
@@ -45,7 +46,7 @@ def get_NCHW(n):
         C = tensor_shape_dim[0].size
     return [N,C,H,W]
 	
-def put_node_binaray_to_file(fout2, n, need_add_eps = False, eps = 0.001):
+def put_node_binaray_to_file(fout2, n, conv2d_transpose = False, need_add_eps = False, eps = 0.001):
     tensor = n.attr["value"]
     #print(type(tensor))
     #print(dir(tensor))
@@ -109,7 +110,10 @@ def put_node_binaray_to_file(fout2, n, need_add_eps = False, eps = 0.001):
                 for k in range(num_float):
                     float_weights0 = float_weights0 + (float_weights[k]+eps,)
                 float_weights = float_weights0
-            float_weights1 = HWCN_to_NCHW(float_weights,N,C,H,W)
+            if conv2d_transpose:
+                float_weights1 = _H_WNC_to_NCHW(float_weights,N,C,H,W)
+            else:
+                float_weights1 = HWCN_to_NCHW(float_weights,N,C,H,W)
             #print(float_weights)
             #print(float_weights1)
             #fout2.write(struct.pack('%dB'%num_bytes, *tensor_content))
@@ -127,10 +131,24 @@ def HWCN_to_NCHW(in_data, N, C, H, W):
                 for w in range(W):
                     out_data.append(in_data[h*WCN+w*CN+c*N+n])
     return out_data
+	
+def _H_WNC_to_NCHW(in_data, N, C, H, W):
+    out_data = list()
+    num_float = N*C*H*W
+    WNC = W*N*C
+    NC = N*C
+        
+    for n in range(N):
+        for c in range(C):
+            for h in range(H):
+                for w in range(W):
+                    out_data.append(in_data[(H-1-h)*WNC+(W-1-w)*NC+n*C+c])
+    return out_data
 
-GRAPH_PB_PATH = 'models/model.pb' #path to your .pb file
-fout = open("Pose.zqparams","w")
-fout2 = open("Pose.nchwbin","wb")
+os.environ['CUDA_VISIBLE_DEVICES'] = '1'
+GRAPH_PB_PATH = 'models/zq100-model-70000.pb' #path to your .pb file
+fout = open("Hand-zq100.zqparams","w")
+fout2 = open("Hand-zq100.nchwbin","wb")
 with tf.Session() as sess:
     #print("load graph")
     with gfile.FastGFile(GRAPH_PB_PATH,'rb') as f:
@@ -139,7 +157,7 @@ with tf.Session() as sess:
         #text_format.Merge(f.read(), graph_def)
         graph_def.ParseFromString(f.read())
         tf.import_graph_def(graph_def, name='')
-        #print(graph_def)
+        print(graph_def)
         all_node = graph_def.node;
         #print(type(all_node))
         #print(dir(all_node))
@@ -237,6 +255,61 @@ with tf.Session() as sess:
                     line = line + ' bias'				
                 line = line + '\n'
 				
+            elif n.op == 'Conv2DBackpropInput':
+                # write .nchwbin file 
+                conv_name = n.name.replace('/conv2d_transpose','')
+                stack_name = conv_name+'/stack'
+                weight_name = conv_name+'/weights'
+                weight_read_name = weight_name + '/read'
+                weight_node = search_node(all_node,weight_name)
+                put_node_binaray_to_file(fout2, weight_node, True)
+                	
+                # write .zqparams file
+                [N,C,H,W] = get_NCHW(weight_node)
+                dilation = n.attr["dilations"].list
+                #print(dilation)
+                #print(type(dilation))
+                #print(dir(dilation))
+                dilation_H = int(dilation.i[1])
+                dilation_W = int(dilation.i[2])
+                stride = n.attr["strides"].list
+                stride_H = int(stride.i[1])
+                stride_W = int(stride.i[2])
+                padding = str(n.attr["padding"].s,'utf-8')
+                #print(type(padding))
+                #print(dir(padding))
+                #print(padding)
+                line = 'DeConvolution name=' + n.name
+                node_input = n.input
+                in_num = len(node_input)
+                for j in range(in_num):
+                    if node_input[j] == weight_read_name or node_input[j] == stack_name:
+                        pass
+                    else:
+                        line = line + ' bottom=%s'%node_input[j]
+                line = line + ' top=%s'%n.name + ' num_output=%d kernel_H=%d kernel_W=%d dilate_H=%d dilate_W=%d stride_H=%d stride_W=%d pad_type=%s'%(N,H,W,dilation_H,dilation_W,stride_H,stride_W,padding)
+                line = line + '\n'
+				
+            elif n.op == 'BiasAdd':
+                # write .nchwbin file 
+                BiasAdd_name = n.name.replace('/BiasAdd','')
+                bias_name = conv_name+'/biases'
+                bias_read_name = bias_name+'/read'
+                bias_node = search_node(all_node,bias_name)
+                put_node_binaray_to_file(fout2, bias_node)
+					
+                # write .zqparams file
+                
+                line = 'AddBias name=' + n.name
+                node_input = n.input
+                in_num = len(node_input)
+                for j in range(in_num):
+                    if node_input[j] == bias_read_name:
+                        pass
+                    else:
+                        line = line + ' bottom=%s'%node_input[j]
+                line = line + ' top=%s'%n.name
+                line = line + '\n'
 				
             elif n.op == 'FusedBatchNorm':
                 # write .nchwbin file 
@@ -260,7 +333,7 @@ with tf.Session() as sess:
                 mean_node = search_node(all_node,mean_name)
                 variance_node = search_node(all_node,variance_name)
                 put_node_binaray_to_file(fout2, mean_node)
-                put_node_binaray_to_file(fout2, variance_node, True, eps)
+                put_node_binaray_to_file(fout2, variance_node, False, True, eps)
                 if scale_const_node == None:
                     pass
                 else:

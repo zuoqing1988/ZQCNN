@@ -172,6 +172,7 @@
     <ClCompile Include="layers_c\zq_cnn_batchnormscale_32f_align_c.c" />
     <ClCompile Include="layers_c\zq_cnn_convolution_32f_align_c.c" />
     <ClCompile Include="layers_c\zq_cnn_convolution_gemm_32f_align_c.c" />
+    <ClCompile Include="layers_c\zq_cnn_deconvolution_32f_align_c.c" />
     <ClCompile Include="layers_c\zq_cnn_depthwise_convolution_32f_align_c.c" />
     <ClCompile Include="layers_c\zq_cnn_dropout_32f_align_c.c" />
     <ClCompile Include="layers_c\zq_cnn_eltwise_32f_align_c.c" />
@@ -215,6 +216,8 @@
     <ClInclude Include="layers_c\zq_cnn_convolution_32f_align_c_raw.h" />
     <ClInclude Include="layers_c\zq_cnn_convolution_gemm_32f_align_c.h" />
     <ClInclude Include="layers_c\zq_cnn_convolution_gemm_32f_align_c_raw.h" />
+    <ClInclude Include="layers_c\zq_cnn_deconvolution_32f_align_c_raw.h" />
+    <ClInclude Include="layers_c\zq_cnn_deconvolution_32f_align_c.h" />
     <ClInclude Include="layers_c\zq_cnn_depthwise_convolution_32f_align_c.h" />
     <ClInclude Include="layers_c\zq_cnn_depthwise_convolution_32f_align_c_raw.h" />
     <ClInclude Include="layers_c\zq_cnn_dropout_32f_align_c.h" />
@@ -284,6 +287,7 @@
     <ClInclude Include="ZQ_CNN_DetectorInterface.h" />
     <ClInclude Include="ZQ_CNN_Forward_SSEUtils.h" />
     <ClInclude Include="ZQ_CNN_Forward_SSEUtils_NCHWC.h" />
+    <ClInclude Include="ZQ_CNN_Landmark240.h" />
     <ClInclude Include="ZQ_CNN_Layer.h" />
     <ClInclude Include="ZQ_CNN_Layer_NCHWC.h" />
     <ClInclude Include="ZQ_CNN_MouthDetector.h" />
@@ -303,6 +307,7 @@
     <ClInclude Include="ZQ_CNN_Tensor4D_Interface.h" />
     <ClInclude Include="ZQ_CNN_Tensor4D_NCHWC.h" />
     <ClInclude Include="ZQ_CNN_TextBoxes.h" />
+    <ClInclude Include="ZQ_CNN_VideoFaceDetection.h" />
     <ClInclude Include="ZQ_CNN_VideoFaceDetection_Interface.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
