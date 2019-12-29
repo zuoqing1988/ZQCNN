@@ -198,6 +198,102 @@ extern "C" {
 		const float* slope
 	);
 
+	void zq_cnn_depthwise_conv_no_padding_32f_align128bit_kernel5x5(
+		const float* in_tensor4D_data,
+		int in_N,
+		int in_H,
+		int in_W,
+		int in_C,
+		int in_pixelStep,
+		int in_widthStep,
+		int in_sliceStep,
+		const float* filters_data,
+		int filter_N, // must be 1
+		int filter_H, // must be 5
+		int filter_W, // must be 5
+		int filter_C, // must be in_C
+		int filter_pixelStep,
+		int filter_widthStep,
+		int filter_sliceStep,
+		int stride_H,
+		int stride_W,
+		int dilation_H,
+		int dilation_W,
+		float* out_tensor4D_data,
+		int out_N,	// must be in_N
+		int out_H,	// must be (in_H - filter_H)/stride_H + 1
+		int out_W,	// must be (in_W - filter_W)/stride_W + 1
+		int out_C,	// must be in_C
+		int out_pixelStep,
+		int out_widthStep,
+		int out_sliceStep
+	);
+
+	void zq_cnn_depthwise_conv_no_padding_32f_align128bit_kernel5x5_with_bias(
+		const float* in_tensor4D_data,
+		int in_N,
+		int in_H,
+		int in_W,
+		int in_C,
+		int in_pixelStep,
+		int in_widthStep,
+		int in_sliceStep,
+		const float* filters_data,
+		int filter_N, // must be 1
+		int filter_H, // must be 5
+		int filter_W, // must be 5
+		int filter_C, // must be in_C
+		int filter_pixelStep,
+		int filter_widthStep,
+		int filter_sliceStep,
+		int stride_H,
+		int stride_W,
+		int dilation_H,
+		int dilation_W,
+		float* out_tensor4D_data,
+		int out_N,	// must be in_N
+		int out_H,	// must be (in_H - filter_H)/stride_H + 1
+		int out_W,	// must be (in_W - filter_W)/stride_W + 1
+		int out_C,	// must be in_C
+		int out_pixelStep,
+		int out_widthStep,
+		int out_sliceStep,
+		const float* bias
+	);
+
+	void zq_cnn_depthwise_conv_no_padding_32f_align128bit_kernel5x5_with_bias_prelu(
+		const float* in_tensor4D_data,
+		int in_N,
+		int in_H,
+		int in_W,
+		int in_C,
+		int in_pixelStep,
+		int in_widthStep,
+		int in_sliceStep,
+		const float* filters_data,
+		int filter_N, // must be 1
+		int filter_H, // must be 5
+		int filter_W, // must be 5
+		int filter_C, // must be in_C
+		int filter_pixelStep,
+		int filter_widthStep,
+		int filter_sliceStep,
+		int stride_H,
+		int stride_W,
+		int dilation_H,
+		int dilation_W,
+		float* out_tensor4D_data,
+		int out_N,	// must be in_N
+		int out_H,	// must be (in_H - filter_H)/stride_H + 1
+		int out_W,	// must be (in_W - filter_W)/stride_W + 1
+		int out_C,	// must be in_C
+		int out_pixelStep,
+		int out_widthStep,
+		int out_sliceStep,
+		const float* bias,
+		const float* slope
+	);
+
 	void zq_cnn_depthwise_conv_no_padding_32f_align128bit_kernel3x3(
 		const float* in_tensor4D_data,
 		int in_N,
@@ -1381,6 +1477,204 @@ extern "C" {
 		const float* slope
 	);
 
+	/*if C is not 16x , the padded channels of filters must be zero*/
+	void zq_cnn_depthwise_conv_no_padding_32f_align128bit_kernel5x5_Cdiv16(
+		const float* in_tensor4D_data,
+		int in_N,
+		int in_H,
+		int in_W,
+		int in_C,
+		int in_pixelStep,
+		int in_widthStep,
+		int in_sliceStep,
+		const float* filters_data,
+		int filter_N, //must be 1
+		int filter_H, // must be 5
+		int filter_W, // must be 5
+		int filter_C,
+		int filter_pixelStep,
+		int filter_widthStep,
+		int filter_sliceStep,
+		int stride_H,
+		int stride_W,
+		int dilation_H,
+		int dilation_W,
+		float* out_tensor4D_data,
+		int out_N,	// must be in_N
+		int out_H,	// must be (in_H - filter_H)/stride_H + 1
+		int out_W,	// must be (in_W - filter_W)/stride_W + 1
+		int out_C,	// must be filter_N
+		int out_pixelStep,
+		int out_widthStep,
+		int out_sliceStep
+	);
+
+	/*if C is not 16x , the padded channels of filters must be zero*/
+	void zq_cnn_depthwise_conv_no_padding_32f_align128bit_kernel5x5_Cdiv16_with_bias(
+		const float* in_tensor4D_data,
+		int in_N,
+		int in_H,
+		int in_W,
+		int in_C,
+		int in_pixelStep,
+		int in_widthStep,
+		int in_sliceStep,
+		const float* filters_data,
+		int filter_N, //must be 1
+		int filter_H, // must be 5
+		int filter_W, // must be 5
+		int filter_C,
+		int filter_pixelStep,
+		int filter_widthStep,
+		int filter_sliceStep,
+		int stride_H,
+		int stride_W,
+		int dilation_H,
+		int dilation_W,
+		float* out_tensor4D_data,
+		int out_N,	// must be in_N
+		int out_H,	// must be (in_H - filter_H)/stride_H + 1
+		int out_W,	// must be (in_W - filter_W)/stride_W + 1
+		int out_C,	// must be filter_N
+		int out_pixelStep,
+		int out_widthStep,
+		int out_sliceStep,
+		const float* bias
+	);
+
+	/*if C is not 16x , the padded channels of filters must be zero*/
+	void zq_cnn_depthwise_conv_no_padding_32f_align128bit_kernel5x5_Cdiv16_with_bias_prelu(
+		const float* in_tensor4D_data,
+		int in_N,
+		int in_H,
+		int in_W,
+		int in_C,
+		int in_pixelStep,
+		int in_widthStep,
+		int in_sliceStep,
+		const float* filters_data,
+		int filter_N, //must be 1
+		int filter_H, // must be 5
+		int filter_W, // must be 5
+		int filter_C,
+		int filter_pixelStep,
+		int filter_widthStep,
+		int filter_sliceStep,
+		int stride_H,
+		int stride_W,
+		int dilation_H,
+		int dilation_W,
+		float* out_tensor4D_data,
+		int out_N,	// must be in_N
+		int out_H,	// must be (in_H - filter_H)/stride_H + 1
+		int out_W,	// must be (in_W - filter_W)/stride_W + 1
+		int out_C,	// must be filter_N
+		int out_pixelStep,
+		int out_widthStep,
+		int out_sliceStep,
+		const float* bias,
+		const float* prelu
+	);
+
+	/*if C is not 32x , the padded channels of filters must be zero*/
+	void zq_cnn_depthwise_conv_no_padding_32f_align128bit_kernel5x5_Cdiv32(
+		const float* in_tensor4D_data,
+		int in_N,
+		int in_H,
+		int in_W,
+		int in_C,
+		int in_pixelStep,
+		int in_widthStep,
+		int in_sliceStep,
+		const float* filters_data,
+		int filter_N, //must be 1
+		int filter_H, // must be 5
+		int filter_W, // must be 5
+		int filter_C,
+		int filter_pixelStep,
+		int filter_widthStep,
+		int filter_sliceStep,
+		int stride_H,
+		int stride_W,
+		int dilation_H,
+		int dilation_W,
+		float* out_tensor4D_data,
+		int out_N,	// must be in_N
+		int out_H,	// must be (in_H - filter_H)/stride_H + 1
+		int out_W,	// must be (in_W - filter_W)/stride_W + 1
+		int out_C,	// must be filter_N
+		int out_pixelStep,
+		int out_widthStep,
+		int out_sliceStep
+	);
+
+	/*if C is not 32x , the padded channels of filters must be zero*/
+	void zq_cnn_depthwise_conv_no_padding_32f_align128bit_kernel5x5_Cdiv32_with_bias(
+		const float* in_tensor4D_data,
+		int in_N,
+		int in_H,
+		int in_W,
+		int in_C,
+		int in_pixelStep,
+		int in_widthStep,
+		int in_sliceStep,
+		const float* filters_data,
+		int filter_N, //must be 1
+		int filter_H, // must be 5
+		int filter_W, // must be 5
+		int filter_C,
+		int filter_pixelStep,
+		int filter_widthStep,
+		int filter_sliceStep,
+		int stride_H,
+		int stride_W,
+		int dilation_H,
+		int dilation_W,
+		float* out_tensor4D_data,
+		int out_N,	// must be in_N
+		int out_H,	// must be (in_H - filter_H)/stride_H + 1
+		int out_W,	// must be (in_W - filter_W)/stride_W + 1
+		int out_C,	// must be filter_N
+		int out_pixelStep,
+		int out_widthStep,
+		int out_sliceStep,
+		const float* bias
+	);
+
+	/*if C is not 32x , the padded channels of filters must be zero*/
+	void zq_cnn_depthwise_conv_no_padding_32f_align128bit_kernel5x5_Cdiv32_with_bias_prelu(
+		const float* in_tensor4D_data,
+		int in_N,
+		int in_H,
+		int in_W,
+		int in_C,
+		int in_pixelStep,
+		int in_widthStep,
+		int in_sliceStep,
+		const float* filters_data,
+		int filter_N, //must be 1
+		int filter_H, // must be 5
+		int filter_W, // must be 5
+		int filter_C,
+		int filter_pixelStep,
+		int filter_widthStep,
+		int filter_sliceStep,
+		int stride_H,
+		int stride_W,
+		int dilation_H,
+		int dilation_W,
+		float* out_tensor4D_data,
+		int out_N,	// must be in_N
+		int out_H,	// must be (in_H - filter_H)/stride_H + 1
+		int out_W,	// must be (in_W - filter_W)/stride_W + 1
+		int out_C,	// must be filter_N
+		int out_pixelStep,
+		int out_widthStep,
+		int out_sliceStep,
+		const float* bias,
+		const float* prelu
+	);
+
 	/*if C is not 32x , the padded channels of filters must be zero*/
 	void zq_cnn_depthwise_conv_no_padding_32f_align128bit_kernel3x3_Cdiv32(
 		const float* in_tensor4D_data,
@@ -2369,6 +2663,103 @@ extern "C" {
 		const float16_t* bias,
 		const float16_t* slope
 	);
+
+	void zq_cnn_depthwise_conv_no_padding_16f_align128bit_kernel5x5(
+		const float16_t* in_tensor4D_data,
+		int in_N,
+		int in_H,
+		int in_W,
+		int in_C,
+		int in_pixelStep,
+		int in_widthStep,
+		int in_sliceStep,
+		const float16_t* filters_data,
+		int filter_N, // must be 1
+		int filter_H, // must be 5
+		int filter_W, // must be 5
+		int filter_C, // must be in_C
+		int filter_pixelStep,
+		int filter_widthStep,
+		int filter_sliceStep,
+		int stride_H,
+		int stride_W,
+		int dilation_H,
+		int dilation_W,
+		float16_t* out_tensor4D_data,
+		int out_N,	// must be in_N
+		int out_H,	// must be (in_H - filter_H)/stride_H + 1
+		int out_W,	// must be (in_W - filter_W)/stride_W + 1
+		int out_C,	// must be in_C
+		int out_pixelStep,
+		int out_widthStep,
+		int out_sliceStep
+	);
+
+	void zq_cnn_depthwise_conv_no_padding_16f_align128bit_kernel5x5_with_bias(
+		const float16_t* in_tensor4D_data,
+		int in_N,
+		int in_H,
+		int in_W,
+		int in_C,
+		int in_pixelStep,
+		int in_widthStep,
+		int in_sliceStep,
+		const float16_t* filters_data,
+		int filter_N, // must be 1
+		int filter_H, // must be 5
+		int filter_W, // must be 5
+		int filter_C, // must be in_C
+		int filter_pixelStep,
+		int filter_widthStep,
+		int filter_sliceStep,
+		int stride_H,
+		int stride_W,
+		int dilation_H,
+		int dilation_W,
+		float16_t* out_tensor4D_data,
+		int out_N,	// must be in_N
+		int out_H,	// must be (in_H - filter_H)/stride_H + 1
+		int out_W,	// must be (in_W - filter_W)/stride_W + 1
+		int out_C,	// must be in_C
+		int out_pixelStep,
+		int out_widthStep,
+		int out_sliceStep,
+		const float16_t* bias
+	);
+
+	void zq_cnn_depthwise_conv_no_padding_16f_align128bit_kernel5x5_with_bias_prelu(
+		const float16_t* in_tensor4D_data,
+		int in_N,
+		int in_H,
+		int in_W,
+		int in_C,
+		int in_pixelStep,
+		int in_widthStep,
+		int in_sliceStep,
+		const float16_t* filters_data,
+		int filter_N, // must be 1
+		int filter_H, // must be 5
+		int filter_W, // must be 5
+		int filter_C, // must be in_C
+		int filter_pixelStep,
+		int filter_widthStep,
+		int filter_sliceStep,
+		int stride_H,
+		int stride_W,
+		int dilation_H,
+		int dilation_W,
+		float16_t* out_tensor4D_data,
+		int out_N,	// must be in_N
+		int out_H,	// must be (in_H - filter_H)/stride_H + 1
+		int out_W,	// must be (in_W - filter_W)/stride_W + 1
+		int out_C,	// must be in_C
+		int out_pixelStep,
+		int out_widthStep,
+		int out_sliceStep,
+		const float16_t* bias,
+		const float16_t* slope
+	);
+
 
 	void zq_cnn_depthwise_conv_no_padding_16f_align128bit_kernel3x3(
 		const float16_t* in_tensor4D_data,
@@ -3555,6 +3946,204 @@ extern "C" {
 		const float16_t* slope
 	);
 
+	/*if C is not 32x , the padded channels of filters must be zero*/
+	void zq_cnn_depthwise_conv_no_padding_16f_align128bit_kernel5x5_Cdiv32(
+		const float16_t* in_tensor4D_data,
+		int in_N,
+		int in_H,
+		int in_W,
+		int in_C,
+		int in_pixelStep,
+		int in_widthStep,
+		int in_sliceStep,
+		const float16_t* filters_data,
+		int filter_N, //must be 1
+		int filter_H, // must be 5
+		int filter_W, // must be 5
+		int filter_C,
+		int filter_pixelStep,
+		int filter_widthStep,
+		int filter_sliceStep,
+		int stride_H,
+		int stride_W,
+		int dilation_H,
+		int dilation_W,
+		float16_t* out_tensor4D_data,
+		int out_N,	// must be in_N
+		int out_H,	// must be (in_H - filter_H)/stride_H + 1
+		int out_W,	// must be (in_W - filter_W)/stride_W + 1
+		int out_C,	// must be filter_N
+		int out_pixelStep,
+		int out_widthStep,
+		int out_sliceStep
+	);
+
+	/*if C is not 32x , the padded channels of filters must be zero*/
+	void zq_cnn_depthwise_conv_no_padding_16f_align128bit_kernel5x5_Cdiv32_with_bias(
+		const float16_t* in_tensor4D_data,
+		int in_N,
+		int in_H,
+		int in_W,
+		int in_C,
+		int in_pixelStep,
+		int in_widthStep,
+		int in_sliceStep,
+		const float16_t* filters_data,
+		int filter_N, //must be 1
+		int filter_H, // must be 5
+		int filter_W, // must be 5
+		int filter_C,
+		int filter_pixelStep,
+		int filter_widthStep,
+		int filter_sliceStep,
+		int stride_H,
+		int stride_W,
+		int dilation_H,
+		int dilation_W,
+		float16_t* out_tensor4D_data,
+		int out_N,	// must be in_N
+		int out_H,	// must be (in_H - filter_H)/stride_H + 1
+		int out_W,	// must be (in_W - filter_W)/stride_W + 1
+		int out_C,	// must be filter_N
+		int out_pixelStep,
+		int out_widthStep,
+		int out_sliceStep,
+		const float16_t* bias
+	);
+
+	/*if C is not 32x , the padded channels of filters must be zero*/
+	void zq_cnn_depthwise_conv_no_padding_16f_align128bit_kernel5x5_Cdiv32_with_bias_prelu(
+		const float16_t* in_tensor4D_data,
+		int in_N,
+		int in_H,
+		int in_W,
+		int in_C,
+		int in_pixelStep,
+		int in_widthStep,
+		int in_sliceStep,
+		const float16_t* filters_data,
+		int filter_N, //must be 1
+		int filter_H, // must be 5
+		int filter_W, // must be 5
+		int filter_C,
+		int filter_pixelStep,
+		int filter_widthStep,
+		int filter_sliceStep,
+		int stride_H,
+		int stride_W,
+		int dilation_H,
+		int dilation_W,
+		float16_t* out_tensor4D_data,
+		int out_N,	// must be in_N
+		int out_H,	// must be (in_H - filter_H)/stride_H + 1
+		int out_W,	// must be (in_W - filter_W)/stride_W + 1
+		int out_C,	// must be filter_N
+		int out_pixelStep,
+		int out_widthStep,
+		int out_sliceStep,
+		const float16_t* bias,
+		const float16_t* slope
+	);
+
+	/*if C is not 64x , the padded channels of filters must be zero*/
+	void zq_cnn_depthwise_conv_no_padding_16f_align128bit_kernel5x5_Cdiv64(
+		const float16_t* in_tensor4D_data,
+		int in_N,
+		int in_H,
+		int in_W,
+		int in_C,
+		int in_pixelStep,
+		int in_widthStep,
+		int in_sliceStep,
+		const float16_t* filters_data,
+		int filter_N, //must be 1
+		int filter_H, // must be 5
+		int filter_W, // must be 5
+		int filter_C,
+		int filter_pixelStep,
+		int filter_widthStep,
+		int filter_sliceStep,
+		int stride_H,
+		int stride_W,
+		int dilation_H,
+		int dilation_W,
+		float16_t* out_tensor4D_data,
+		int out_N,	// must be in_N
+		int out_H,	// must be (in_H - filter_H)/stride_H + 1
+		int out_W,	// must be (in_W - filter_W)/stride_W + 1
+		int out_C,	// must be filter_N
+		int out_pixelStep,
+		int out_widthStep,
+		int out_sliceStep
+	);
+
+	/*if C is not 64x , the padded channels of filters must be zero*/
+	void zq_cnn_depthwise_conv_no_padding_16f_align128bit_kernel5x5_Cdiv64_with_bias(
+		const float16_t* in_tensor4D_data,
+		int in_N,
+		int in_H,
+		int in_W,
+		int in_C,
+		int in_pixelStep,
+		int in_widthStep,
+		int in_sliceStep,
+		const float16_t* filters_data,
+		int filter_N, //must be 1
+		int filter_H, // must be 5
+		int filter_W, // must be 5
+		int filter_C,
+		int filter_pixelStep,
+		int filter_widthStep,
+		int filter_sliceStep,
+		int stride_H,
+		int stride_W,
+		int dilation_H,
+		int dilation_W,
+		float16_t* out_tensor4D_data,
+		int out_N,	// must be in_N
+		int out_H,	// must be (in_H - filter_H)/stride_H + 1
+		int out_W,	// must be (in_W - filter_W)/stride_W + 1
+		int out_C,	// must be filter_N
+		int out_pixelStep,
+		int out_widthStep,
+		int out_sliceStep,
+		const float16_t* bias
+	);
+
+	/*if C is not 64x , the padded channels of filters must be zero*/
+	void zq_cnn_depthwise_conv_no_padding_16f_align128bit_kernel5x5_Cdiv64_with_bias_prelu(
+		const float16_t* in_tensor4D_data,
+		int in_N,
+		int in_H,
+		int in_W,
+		int in_C,
+		int in_pixelStep,
+		int in_widthStep,
+		int in_sliceStep,
+		const float16_t* filters_data,
+		int filter_N, //must be 1
+		int filter_H, // must be 5
+		int filter_W, // must be 5
+		int filter_C,
+		int filter_pixelStep,
+		int filter_widthStep,
+		int filter_sliceStep,
+		int stride_H,
+		int stride_W,
+		int dilation_H,
+		int dilation_W,
+		float16_t* out_tensor4D_data,
+		int out_N,	// must be in_N
+		int out_H,	// must be (in_H - filter_H)/stride_H + 1
+		int out_W,	// must be (in_W - filter_W)/stride_W + 1
+		int out_C,	// must be filter_N
+		int out_pixelStep,
+		int out_widthStep,
+		int out_sliceStep,
+		const float16_t* bias,
+		const float16_t* slope
+	);
+
 	/*if C is not 64x , the padded channels of filters must be zero*/
 	void zq_cnn_depthwise_conv_no_padding_16f_align128bit_kernel3x3_Cdiv64(
 		const float16_t* in_tensor4D_data,
@@ -4441,6 +5030,102 @@ extern "C" {
 		int out_H,	// must be (in_H - filter_H)/stride_H + 1
 		int out_W,	// must be (in_W - filter_W)/stride_W + 1
 		int out_C,	// must be in_C
+		int out_pixelStep,
+		int out_widthStep,
+		int out_sliceStep,
+		const float* bias,
+		const float* slope
+	);
+
+	void zq_cnn_depthwise_conv_no_padding_32f_align256bit_kernel5x5(
+		const float* in_tensor4D_data,
+		int in_N,
+		int in_H,
+		int in_W,
+		int in_C,
+		int in_pixelStep,
+		int in_widthStep,
+		int in_sliceStep,
+		const float* filters_data,
+		int filter_N, // must be 1
+		int filter_H, // must be 5
+		int filter_W, // must be 5
+		int filter_C, // must be in_C
+		int filter_pixelStep,
+		int filter_widthStep,
+		int filter_sliceStep,
+		int stride_H,
+		int stride_W,
+		int dilation_H,
+		int dilation_W,
+		float* out_tensor4D_data,
+		int out_N,	// must be in_N
+		int out_H,	// must be (in_H - filter_H)/stride_H + 1
+		int out_W,	// must be (in_W - filter_W)/stride_W + 1
+		int out_C,	// must be filter_N
+		int out_pixelStep,
+		int out_widthStep,
+		int out_sliceStep
+	);
+
+	void zq_cnn_depthwise_conv_no_padding_32f_align256bit_kernel5x5_with_bias(
+		const float* in_tensor4D_data,
+		int in_N,
+		int in_H,
+		int in_W,
+		int in_C,
+		int in_pixelStep,
+		int in_widthStep,
+		int in_sliceStep,
+		const float* filters_data,
+		int filter_N, // must be 1
+		int filter_H, // must be 5
+		int filter_W, // must be 5
+		int filter_C, // must be in_C
+		int filter_pixelStep,
+		int filter_widthStep,
+		int filter_sliceStep,
+		int stride_H,
+		int stride_W,
+		int dilation_H,
+		int dilation_W,
+		float* out_tensor4D_data,
+		int out_N,	// must be in_N
+		int out_H,	// must be (in_H - filter_H)/stride_H + 1
+		int out_W,	// must be (in_W - filter_W)/stride_W + 1
+		int out_C,	// must be filter_N
+		int out_pixelStep,
+		int out_widthStep,
+		int out_sliceStep,
+		const float* bias
+	);
+
+	void zq_cnn_depthwise_conv_no_padding_32f_align256bit_kernel5x5_with_bias_prelu(
+		const float* in_tensor4D_data,
+		int in_N,
+		int in_H,
+		int in_W,
+		int in_C,
+		int in_pixelStep,
+		int in_widthStep,
+		int in_sliceStep,
+		const float* filters_data,
+		int filter_N, // must be 1
+		int filter_H, // must be 5
+		int filter_W, // must be 5
+		int filter_C, // must be in_C
+		int filter_pixelStep,
+		int filter_widthStep,
+		int filter_sliceStep,
+		int stride_H,
+		int stride_W,
+		int dilation_H,
+		int dilation_W,
+		float* out_tensor4D_data,
+		int out_N,	// must be in_N
+		int out_H,	// must be (in_H - filter_H)/stride_H + 1
+		int out_W,	// must be (in_W - filter_W)/stride_W + 1
+		int out_C,	// must be filter_N
 		int out_pixelStep,
 		int out_widthStep,
 		int out_sliceStep,
@@ -5514,6 +6199,204 @@ extern "C" {
 		int filter_H, // must be 3
 		int filter_W, // must be 3
 		int filter_C,	//must be 57,58,59,60,61,62,63,64
+		int filter_pixelStep,
+		int filter_widthStep,
+		int filter_sliceStep,
+		int stride_H,
+		int stride_W,
+		int dilation_H,
+		int dilation_W,
+		float* out_tensor4D_data,
+		int out_N,	// must be in_N
+		int out_H,	// must be (in_H - filter_H)/stride_H + 1
+		int out_W,	// must be (in_W - filter_W)/stride_W + 1
+		int out_C,	// must be filter_N
+		int out_pixelStep,
+		int out_widthStep,
+		int out_sliceStep,
+		const float* bias,
+		const float* slope
+	);
+
+	/*if C is not 32x , the padded channels of filters must be zero*/
+	void zq_cnn_depthwise_conv_no_padding_32f_align256bit_kernel5x5_Cdiv32(
+		const float* in_tensor4D_data,
+		int in_N,
+		int in_H,
+		int in_W,
+		int in_C,
+		int in_pixelStep,
+		int in_widthStep,
+		int in_sliceStep,
+		const float* filters_data,
+		int filter_N, //must be 1
+		int filter_H, // must be 3
+		int filter_W, // must be 3
+		int filter_C,
+		int filter_pixelStep,
+		int filter_widthStep,
+		int filter_sliceStep,
+		int stride_H,
+		int stride_W,
+		int dilation_H,
+		int dilation_W,
+		float* out_tensor4D_data,
+		int out_N,	// must be in_N
+		int out_H,	// must be (in_H - filter_H)/stride_H + 1
+		int out_W,	// must be (in_W - filter_W)/stride_W + 1
+		int out_C,	// must be filter_N
+		int out_pixelStep,
+		int out_widthStep,
+		int out_sliceStep
+	);
+
+	/*if C is not 32x , the padded channels of filters must be zero*/
+	void zq_cnn_depthwise_conv_no_padding_32f_align256bit_kernel5x5_Cdiv32_with_bias(
+		const float* in_tensor4D_data,
+		int in_N,
+		int in_H,
+		int in_W,
+		int in_C,
+		int in_pixelStep,
+		int in_widthStep,
+		int in_sliceStep,
+		const float* filters_data,
+		int filter_N, //must be 1
+		int filter_H, // must be 5
+		int filter_W, // must be 5
+		int filter_C,
+		int filter_pixelStep,
+		int filter_widthStep,
+		int filter_sliceStep,
+		int stride_H,
+		int stride_W,
+		int dilation_H,
+		int dilation_W,
+		float* out_tensor4D_data,
+		int out_N,	// must be in_N
+		int out_H,	// must be (in_H - filter_H)/stride_H + 1
+		int out_W,	// must be (in_W - filter_W)/stride_W + 1
+		int out_C,	// must be filter_N
+		int out_pixelStep,
+		int out_widthStep,
+		int out_sliceStep,
+		const float* bias
+	);
+
+	/*if C is not 32x , the padded channels of filters must be zero*/
+	void zq_cnn_depthwise_conv_no_padding_32f_align256bit_kernel5x5_Cdiv32_with_bias_prelu(
+		const float* in_tensor4D_data,
+		int in_N,
+		int in_H,
+		int in_W,
+		int in_C,
+		int in_pixelStep,
+		int in_widthStep,
+		int in_sliceStep,
+		const float* filters_data,
+		int filter_N, //must be 1
+		int filter_H, // must be 5
+		int filter_W, // must be 5
+		int filter_C,
+		int filter_pixelStep,
+		int filter_widthStep,
+		int filter_sliceStep,
+		int stride_H,
+		int stride_W,
+		int dilation_H,
+		int dilation_W,
+		float* out_tensor4D_data,
+		int out_N,	// must be in_N
+		int out_H,	// must be (in_H - filter_H)/stride_H + 1
+		int out_W,	// must be (in_W - filter_W)/stride_W + 1
+		int out_C,	// must be filter_N
+		int out_pixelStep,
+		int out_widthStep,
+		int out_sliceStep,
+		const float* bias,
+		const float* slope
+	);
+
+	/*if C is not 64x , the padded channels of filters must be zero*/
+	void zq_cnn_depthwise_conv_no_padding_32f_align256bit_kernel5x5_Cdiv64(
+		const float* in_tensor4D_data,
+		int in_N,
+		int in_H,
+		int in_W,
+		int in_C,
+		int in_pixelStep,
+		int in_widthStep,
+		int in_sliceStep,
+		const float* filters_data,
+		int filter_N, //must be 1
+		int filter_H, // must be 3
+		int filter_W, // must be 3
+		int filter_C,
+		int filter_pixelStep,
+		int filter_widthStep,
+		int filter_sliceStep,
+		int stride_H,
+		int stride_W,
+		int dilation_H,
+		int dilation_W,
+		float* out_tensor4D_data,
+		int out_N,	// must be in_N
+		int out_H,	// must be (in_H - filter_H)/stride_H + 1
+		int out_W,	// must be (in_W - filter_W)/stride_W + 1
+		int out_C,	// must be filter_N
+		int out_pixelStep,
+		int out_widthStep,
+		int out_sliceStep
+	);
+
+	/*if C is not 64x , the padded channels of filters must be zero*/
+	void zq_cnn_depthwise_conv_no_padding_32f_align256bit_kernel5x5_Cdiv64_with_bias(
+		const float* in_tensor4D_data,
+		int in_N,
+		int in_H,
+		int in_W,
+		int in_C,
+		int in_pixelStep,
+		int in_widthStep,
+		int in_sliceStep,
+		const float* filters_data,
+		int filter_N, //must be 1
+		int filter_H, // must be 5
+		int filter_W, // must be 5
+		int filter_C,
+		int filter_pixelStep,
+		int filter_widthStep,
+		int filter_sliceStep,
+		int stride_H,
+		int stride_W,
+		int dilation_H,
+		int dilation_W,
+		float* out_tensor4D_data,
+		int out_N,	// must be in_N
+		int out_H,	// must be (in_H - filter_H)/stride_H + 1
+		int out_W,	// must be (in_W - filter_W)/stride_W + 1
+		int out_C,	// must be filter_N
+		int out_pixelStep,
+		int out_widthStep,
+		int out_sliceStep,
+		const float* bias
+	);
+
+	/*if C is not 64x , the padded channels of filters must be zero*/
+	void zq_cnn_depthwise_conv_no_padding_32f_align256bit_kernel5x5_Cdiv64_with_bias_prelu(
+		const float* in_tensor4D_data,
+		int in_N,
+		int in_H,
+		int in_W,
+		int in_C,
+		int in_pixelStep,
+		int in_widthStep,
+		int in_sliceStep,
+		const float* filters_data,
+		int filter_N, //must be 1
+		int filter_H, // must be 5
+		int filter_W, // must be 5
+		int filter_C,
 		int filter_pixelStep,
 		int filter_widthStep,
 		int filter_sliceStep,
