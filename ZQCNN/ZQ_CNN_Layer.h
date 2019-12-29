@@ -2901,7 +2901,7 @@ namespace ZQ
 			double t2 = omp_get_wtime();
 			last_cost_time = t2 - t1;
 			if (show_debug_info)
-				printf("Scale layer: %s cost : %.3f ms\n", name.c_str(), 1000 * (t2 - t1));
+				printf("AddBias layer: %s cost : %.3f ms\n", name.c_str(), 1000 * (t2 - t1));
 			return ret;	
 		}
 
