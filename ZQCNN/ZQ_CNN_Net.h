@@ -1341,7 +1341,8 @@ namespace ZQ
 					|| ZQ_CNN_Layer::_my_strcmpi(layer_type_names[i].c_str(), "PReLU") == 0
 					|| ZQ_CNN_Layer::_my_strcmpi(layer_type_names[i].c_str(), "BatchNormScale") == 0
 					|| ZQ_CNN_Layer::_my_strcmpi(layer_type_names[i].c_str(), "BatchNorm") == 0
-					|| ZQ_CNN_Layer::_my_strcmpi(layer_type_names[i].c_str(), "Scale") == 0)
+					|| ZQ_CNN_Layer::_my_strcmpi(layer_type_names[i].c_str(), "Scale") == 0
+					|| ZQ_CNN_Layer::_my_strcmpi(layer_type_names[i].c_str(), "AddBias") == 0)
 				{
 					bool later_refer = false;
 					for (int j = i + 1; j < layers.size(); j++)
