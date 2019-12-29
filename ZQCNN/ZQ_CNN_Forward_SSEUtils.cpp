@@ -1030,10 +1030,20 @@ void ZQ_CNN_Forward_SSEUtils::_deconvolution_with_padding(int align_mode, const 
 	{
 		if (align_mode == ZQ_CNN_Tensor4D::ALIGN_128bit)
 		{
-			zq_cnn_deconv_with_padding_32f_align128bit_general(in_data, in_N, in_H, in_W, in_C, in_pixStep, in_widthStep, in_sliceStep,
-				filter_data, filter_N, filter_H, filter_W, filter_C, filter_pixStep, filter_widthStep, filter_sliceStep, strideH, strideW,
-				dilation_H, dilation_W, out_data, out_N, out_H, out_W, out_C, out_pixStep, out_widthStep, out_sliceStep,
-				pad_top, pad_bottom, pad_left, pad_right);
+			if (filter_H == 2 && filter_W == 2 && strideH == 2 && strideW == 2)
+			{
+				zq_cnn_deconv_with_padding_32f_align128bit_k2s2(in_data, in_N, in_H, in_W, in_C, in_pixStep, in_widthStep, in_sliceStep,
+					filter_data, filter_N, filter_H, filter_W, filter_C, filter_pixStep, filter_widthStep, filter_sliceStep, strideH, strideW,
+					dilation_H, dilation_W, out_data, out_N, out_H, out_W, out_C, out_pixStep, out_widthStep, out_sliceStep,
+					pad_top, pad_bottom, pad_left, pad_right);
+			}
+			else
+			{
+				zq_cnn_deconv_with_padding_32f_align128bit_general(in_data, in_N, in_H, in_W, in_C, in_pixStep, in_widthStep, in_sliceStep,
+					filter_data, filter_N, filter_H, filter_W, filter_C, filter_pixStep, filter_widthStep, filter_sliceStep, strideH, strideW,
+					dilation_H, dilation_W, out_data, out_N, out_H, out_W, out_C, out_pixStep, out_widthStep, out_sliceStep,
+					pad_top, pad_bottom, pad_left, pad_right);
+			}
 		}
 		
 		else
@@ -1068,20 +1078,39 @@ void ZQ_CNN_Forward_SSEUtils::_deconvolution_with_padding(int align_mode, const 
 		if (align_mode == ZQ_CNN_Tensor4D::ALIGN_128bit)
 		{
 #if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_SSE
-			zq_cnn_deconv_with_padding_32f_align128bit_general(in_data, in_N, in_H, in_W, in_C, in_pixStep, in_widthStep, in_sliceStep,
-				filter_data, filter_N, filter_H, filter_W, filter_C, filter_pixStep, filter_widthStep, filter_sliceStep, strideH, strideW,
-				dilation_H, dilation_W, out_data, out_N, out_H, out_W, out_C, out_pixStep, out_widthStep, out_sliceStep,
-				pad_top, pad_bottom, pad_left, pad_right);
+			if (filter_H == 2 && filter_W == 2 && strideH == 2 && strideW == 2)
+			{
+				zq_cnn_deconv_with_padding_32f_align128bit_k2s2(in_data, in_N, in_H, in_W, in_C, in_pixStep, in_widthStep, in_sliceStep,
+					filter_data, filter_N, filter_H, filter_W, filter_C, filter_pixStep, filter_widthStep, filter_sliceStep, strideH, strideW,
+					dilation_H, dilation_W, out_data, out_N, out_H, out_W, out_C, out_pixStep, out_widthStep, out_sliceStep,
+					pad_top, pad_bottom, pad_left, pad_right);
+			}
+			else
+			{
+				zq_cnn_deconv_with_padding_32f_align128bit_general(in_data, in_N, in_H, in_W, in_C, in_pixStep, in_widthStep, in_sliceStep,
+					filter_data, filter_N, filter_H, filter_W, filter_C, filter_pixStep, filter_widthStep, filter_sliceStep, strideH, strideW,
+					dilation_H, dilation_W, out_data, out_N, out_H, out_W, out_C, out_pixStep, out_widthStep, out_sliceStep,
+					pad_top, pad_bottom, pad_left, pad_right);
+			}
 #endif
 		}
 		else if (align_mode == ZQ_CNN_Tensor4D::ALIGN_256bit)
 		{
 #if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_AVX
-			zq_cnn_deconv_with_padding_32f_align256bit_general(in_data, in_N, in_H, in_W, in_C, in_pixStep, in_widthStep, in_sliceStep,
-				filter_data, filter_N, filter_H, filter_W, filter_C, filter_pixStep, filter_widthStep, filter_sliceStep, strideH, strideW,
-				dilation_H, dilation_W, out_data, out_N, out_H, out_W, out_C, out_pixStep, out_widthStep, out_sliceStep,
-				pad_top, pad_bottom, pad_left, pad_right);
-
+			if (filter_H == 2 && filter_W == 2 && strideH == 2 && strideW == 2)
+			{
+				zq_cnn_deconv_with_padding_32f_align256bit_k2s2(in_data, in_N, in_H, in_W, in_C, in_pixStep, in_widthStep, in_sliceStep,
+					filter_data, filter_N, filter_H, filter_W, filter_C, filter_pixStep, filter_widthStep, filter_sliceStep, strideH, strideW,
+					dilation_H, dilation_W, out_data, out_N, out_H, out_W, out_C, out_pixStep, out_widthStep, out_sliceStep,
+					pad_top, pad_bottom, pad_left, pad_right);
+			}
+			else
+			{
+				zq_cnn_deconv_with_padding_32f_align256bit_general(in_data, in_N, in_H, in_W, in_C, in_pixStep, in_widthStep, in_sliceStep,
+					filter_data, filter_N, filter_H, filter_W, filter_C, filter_pixStep, filter_widthStep, filter_sliceStep, strideH, strideW,
+					dilation_H, dilation_W, out_data, out_N, out_H, out_W, out_C, out_pixStep, out_widthStep, out_sliceStep,
+					pad_top, pad_bottom, pad_left, pad_right);
+			}
 #endif
 		}
 		else
