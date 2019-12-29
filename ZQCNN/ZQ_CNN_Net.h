@@ -1337,6 +1337,7 @@ namespace ZQ
 			for (int i = 0; i < layers.size(); i++)
 			{
 				if (ZQ_CNN_Layer::_my_strcmpi(layer_type_names[i].c_str(), "ReLU") == 0
+					|| ZQ_CNN_Layer::_my_strcmpi(layer_type_names[i].c_str(), "ReLU6") == 0
 					|| ZQ_CNN_Layer::_my_strcmpi(layer_type_names[i].c_str(), "PReLU") == 0
 					|| ZQ_CNN_Layer::_my_strcmpi(layer_type_names[i].c_str(), "BatchNormScale") == 0
 					|| ZQ_CNN_Layer::_my_strcmpi(layer_type_names[i].c_str(), "BatchNorm") == 0
