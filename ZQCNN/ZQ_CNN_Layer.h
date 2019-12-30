@@ -1955,7 +1955,7 @@ namespace ZQ
 		{
 			int top_C, top_H, top_W;
 			GetTopDim(top_C, top_H, top_W);
-			__int64 total_num = (__int64)top_H*top_W*filters->GetN()*filters->GetH()*filters->GetW()*filters->GetC();
+			__int64 total_num = (__int64)bottom_H*bottom_W*filters->GetN()*filters->GetH()*filters->GetW()*filters->GetC();
 			if (with_bias)
 				total_num += (__int64)top_H*top_W*top_C;
 			if (with_prelu)
