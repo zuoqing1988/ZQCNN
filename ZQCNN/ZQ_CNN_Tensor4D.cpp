@@ -179,8 +179,8 @@ bool ZQ_CNN_Tensor4D_NHW_C_Align0::ChangeSize(int dst_N, int dst_H, int dst_W, i
 	shape_nchw[1] = dst_C;
 	shape_nchw[2] = dst_H;
 	shape_nchw[3] = dst_W;
-	int dst_realW = dst_W + (dst_borderW << 1);
-	int dst_realH = dst_H + (dst_borderH << 1);
+	int dst_realW = dst_W + (__max(0,dst_borderW) << 1);
+	int dst_realH = dst_H + (__max(0,dst_borderH) << 1);
 	int dst_pixelStep = dst_C;
 	int dst_widthStep = dst_pixelStep*dst_realW;
 	int dst_sliceStep = dst_widthStep*dst_realH;
@@ -218,7 +218,7 @@ bool ZQ_CNN_Tensor4D_NHW_C_Align0::ChangeSize(int dst_N, int dst_H, int dst_W, i
 			rawData = tmp_data;
 		}
 
-		firstPixelData = (float*)rawData + dst_borderH*dst_widthStep + dst_borderW*dst_pixelStep;
+		firstPixelData = (float*)rawData + __max(0,dst_borderH)*dst_widthStep + __max(0,dst_borderW)*dst_pixelStep;
 		rawDataLen = needed_dst_raw_len;
 
 
@@ -852,8 +852,8 @@ bool ZQ_CNN_Tensor4D_NHW_C_Align128bit::ChangeSize(int dst_N, int dst_H, int dst
 	shape_nchw[1] = dst_C;
 	shape_nchw[2] = dst_H;
 	shape_nchw[3] = dst_W;
-	int dst_realW = dst_W + (dst_borderW << 1);
-	int dst_realH = dst_H + (dst_borderH << 1);
+	int dst_realW = dst_W + (__max(0,dst_borderW) << 1);
+	int dst_realH = dst_H + (__max(0,dst_borderH) << 1);
 	int dst_pixelStep = (dst_C + 3) >> 2 << 2;
 	int dst_widthStep = dst_pixelStep*dst_realW;
 	int dst_sliceStep = dst_widthStep*dst_realH;
@@ -893,7 +893,7 @@ bool ZQ_CNN_Tensor4D_NHW_C_Align128bit::ChangeSize(int dst_N, int dst_H, int dst
 			rawData = tmp_data;
 		}
 
-		firstPixelData = (float*)rawData + dst_borderH*dst_widthStep + dst_borderW*dst_pixelStep;
+		firstPixelData = (float*)rawData + __max(0,dst_borderH)*dst_widthStep + __max(0,dst_borderW)*dst_pixelStep;
 		rawDataLen = needed_dst_raw_len;
 
 		N = dst_N;
@@ -1595,8 +1595,8 @@ bool ZQ_CNN_Tensor4D_NHW_C_Align256bit::ChangeSize(int dst_N, int dst_H, int dst
 	shape_nchw[1] = dst_C;
 	shape_nchw[2] = dst_H;
 	shape_nchw[3] = dst_W;
-	int dst_realW = dst_W + (dst_borderW << 1);
-	int dst_realH = dst_H + (dst_borderH << 1);
+	int dst_realW = dst_W + (__max(0,dst_borderW) << 1);
+	int dst_realH = dst_H + (__max(0,dst_borderH) << 1);
 	int dst_pixelStep = (dst_C + 7) >> 3 << 3;
 	int dst_widthStep = dst_pixelStep*dst_realW;
 	int dst_sliceStep = dst_widthStep*dst_realH;
@@ -1632,7 +1632,7 @@ bool ZQ_CNN_Tensor4D_NHW_C_Align256bit::ChangeSize(int dst_N, int dst_H, int dst
 			_aligned_free(rawData);
 			rawData = tmp_data;
 		}
-		firstPixelData = (float*)rawData + dst_borderH*dst_widthStep + dst_borderW*dst_pixelStep;
+		firstPixelData = (float*)rawData + __max(0,dst_borderH)*dst_widthStep + __max(0,dst_borderW)*dst_pixelStep;
 		rawDataLen = needed_dst_raw_len;
 
 		N = dst_N;
