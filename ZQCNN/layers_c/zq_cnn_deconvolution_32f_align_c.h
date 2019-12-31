@@ -38,10 +38,10 @@ extern "C" {
 		int out_pixelStep,
 		int out_widthStep,
 		int out_sliceStep,
-		int pad_top,
-		int pad_bottom,
-		int pad_left,
-		int pad_right
+		int pad_top, // must be <= 1
+		int pad_bottom, // must be <= 1
+		int pad_left, // must be <= 1
+		int pad_right // must be <= 1
 	);
 
 	
@@ -75,10 +75,10 @@ extern "C" {
 		int out_pixelStep,
 		int out_widthStep,
 		int out_sliceStep,
-		int pad_top,
-		int pad_bottom,
-		int pad_left,
-		int pad_right
+		int pad_top, // must be <= 1
+		int pad_bottom, // must be <= 1
+		int pad_left, // must be <= 1
+		int pad_right // must be <= 1
 	);
 
 	void zq_cnn_deconv_with_padding_32f_align128bit_k2s2(
@@ -110,10 +110,10 @@ extern "C" {
 		int out_pixelStep,
 		int out_widthStep,
 		int out_sliceStep,
-		int pad_top,
-		int pad_bottom,
-		int pad_left,
-		int pad_right
+		int pad_top, // must be <= 1
+		int pad_bottom, // must be <= 1
+		int pad_left, // must be <= 1
+		int pad_right // must be <= 1
 	);
 
 #if __ARM_NEON_FP16
@@ -147,10 +147,10 @@ extern "C" {
 		int out_pixelStep,
 		int out_widthStep,
 		int out_sliceStep,
-		int pad_top,
-		int pad_bottom,
-		int pad_left,
-		int pad_right
+		int pad_top, // must be <= 1
+		int pad_bottom, // must be <= 1
+		int pad_left, // must be <= 1
+		int pad_right // must be <= 1
 	);
 
 	void zq_cnn_deconv_with_padding_16f_align128bit_k2s2(
@@ -182,10 +182,10 @@ extern "C" {
 		int out_pixelStep,
 		int out_widthStep,
 		int out_sliceStep,
-		int pad_top,
-		int pad_bottom,
-		int pad_left,
-		int pad_right
+		int pad_top, // must be <= 1
+		int pad_bottom, // must be <= 1
+		int pad_left, // must be <= 1
+		int pad_right // must be <= 1
 	);
 
 #endif //__ARM_NEON_FP16
@@ -293,10 +293,10 @@ extern "C" {
 		int out_pixelStep,
 		int out_widthStep,
 		int out_sliceStep,
-		int pad_top,
-		int pad_bottom,
-		int pad_left,
-		int pad_right
+		int pad_top, // must be <= 1
+		int pad_bottom, // must be <= 1
+		int pad_left, // must be <= 1
+		int pad_right // must be <= 1
 	);
 
 #endif
@@ -367,10 +367,10 @@ extern "C" {
 		int out_pixelStep,
 		int out_widthStep,
 		int out_sliceStep,
-		int pad_top,
-		int pad_bottom,
-		int pad_left,
-		int pad_right
+		int pad_top, // must be <= 1
+		int pad_bottom, // must be <= 1
+		int pad_left, // must be <= 1
+		int pad_right // must be <= 1
 	);
 
 #endif

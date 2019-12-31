@@ -1,4 +1,5 @@
 #include "layers_c/zq_cnn_deconvolution_32f_align_c.h"
+#include "layers_c/zq_cnn_deconvolution_gemm_32f_align_c.h"
 #include "layers_c/zq_cnn_convolution_32f_align_c.h"
 #include "layers_c/zq_cnn_depthwise_convolution_32f_align_c.h"
 #include "layers_c/zq_cnn_convolution_gemm_32f_align_c.h"
@@ -1025,12 +1026,33 @@ void ZQ_CNN_Forward_SSEUtils::_deconvolution_with_padding(int align_mode, const 
 	int filter_HWC = filter_H*filter_W*filter_C;
 	int batch_need_size = out_NHW*filter_HWC + filter_N*filter_HWC;
 
+#if (ZQ_CNN_USE_BLAS_GEMM || ZQ_CNN_USE_MKL_GEMM || ZQ_CNN_USE_ZQ_GEMM)
+	//gemm
+	if (!has_handled)
+	{
+		if (filter_H == 2 && filter_W == 2 && strideH == 2 && strideW == 2)
+		{
+			if (align_mode == ZQ_CNN_Tensor4D::ALIGN_128bit)
+			{
+				zq_cnn_deconv_with_padding_gemm_32f_align128bit_k2s2(in_data, in_N, in_H, in_W, in_C, in_pixStep, in_widthStep, in_sliceStep,
+					filter_data, filter_N, filter_H, filter_W, filter_C, filter_pixStep, filter_widthStep, filter_sliceStep, strideH, strideW,
+					dilation_H, dilation_W, out_data, out_N, out_H, out_W, out_C, out_pixStep, out_widthStep, out_sliceStep,
+					pad_top, pad_bottom, pad_left, pad_right,buffer,buffer_len);
+				has_handled = true;
+			}
+			else if (align_mode == ZQ_CNN_Tensor4D::ALIGN_256bit)
+			{
+			}
+		}
+	}
+#endif
+
 	//backup method
 	if (!has_handled)
 	{
 		if (align_mode == ZQ_CNN_Tensor4D::ALIGN_128bit)
 		{
-			if (filter_H == 2 && filter_W == 2 && strideH == 2 && strideW == 2)
+			if (filter_H == 2 && filter_W == 2 && strideH == 2 && strideW == 2 && pad_top <= 1 && pad_left <= 1 && pad_bottom <= 1 && pad_right <= 1)
 			{
 				zq_cnn_deconv_with_padding_32f_align128bit_k2s2(in_data, in_N, in_H, in_W, in_C, in_pixStep, in_widthStep, in_sliceStep,
 					filter_data, filter_N, filter_H, filter_W, filter_C, filter_pixStep, filter_widthStep, filter_sliceStep, strideH, strideW,
@@ -1072,13 +1094,46 @@ void ZQ_CNN_Forward_SSEUtils::_deconvolution_with_padding(int align_mode, const 
 	int batch_need_size = out_NHW*filter_HWC + filter_N*filter_HWC;
 
 
+#if (ZQ_CNN_USE_BLAS_GEMM || ZQ_CNN_USE_MKL_GEMM || ZQ_CNN_USE_ZQ_GEMM)
+	//gemm
+	if (!has_handled)
+	{
+		if (filter_H == 2 && filter_W == 2 && strideH == 2 && strideW == 2)
+		{
+
+			if (align_mode == ZQ_CNN_Tensor4D::ALIGN_128bit)
+			{
+#if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_SSE
+				zq_cnn_deconv_with_padding_gemm_32f_align128bit_k2s2(in_data, in_N, in_H, in_W, in_C, in_pixStep, in_widthStep, in_sliceStep,
+					filter_data, filter_N, filter_H, filter_W, filter_C, filter_pixStep, filter_widthStep, filter_sliceStep, strideH, strideW,
+					dilation_H, dilation_W, out_data, out_N, out_H, out_W, out_C, out_pixStep, out_widthStep, out_sliceStep,
+					pad_top, pad_bottom, pad_left, pad_right, buffer, buffer_len);
+				has_handled = true;
+#endif
+			}
+			else if (align_mode == ZQ_CNN_Tensor4D::ALIGN_256bit)
+			{
+#if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_AVX
+				zq_cnn_deconv_with_padding_gemm_32f_align256bit_k2s2(in_data, in_N, in_H, in_W, in_C, in_pixStep, in_widthStep, in_sliceStep,
+					filter_data, filter_N, filter_H, filter_W, filter_C, filter_pixStep, filter_widthStep, filter_sliceStep, strideH, strideW,
+					dilation_H, dilation_W, out_data, out_N, out_H, out_W, out_C, out_pixStep, out_widthStep, out_sliceStep,
+					pad_top, pad_bottom, pad_left, pad_right, buffer, buffer_len);
+				has_handled = true;
+#endif
+			}
+		}
+	}
+#endif
+
+
+
 	//backup method
 	if (!has_handled)
 	{
 		if (align_mode == ZQ_CNN_Tensor4D::ALIGN_128bit)
 		{
 #if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_SSE
-			if (filter_H == 2 && filter_W == 2 && strideH == 2 && strideW == 2)
+			if (filter_H == 2 && filter_W == 2 && strideH == 2 && strideW == 2 && pad_top <= 1 && pad_left <= 1 && pad_bottom <= 1 && pad_right <= 1)
 			{
 				zq_cnn_deconv_with_padding_32f_align128bit_k2s2(in_data, in_N, in_H, in_W, in_C, in_pixStep, in_widthStep, in_sliceStep,
 					filter_data, filter_N, filter_H, filter_W, filter_C, filter_pixStep, filter_widthStep, filter_sliceStep, strideH, strideW,
@@ -1097,7 +1152,7 @@ void ZQ_CNN_Forward_SSEUtils::_deconvolution_with_padding(int align_mode, const 
 		else if (align_mode == ZQ_CNN_Tensor4D::ALIGN_256bit)
 		{
 #if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_AVX
-			if (filter_H == 2 && filter_W == 2 && strideH == 2 && strideW == 2)
+			if (filter_H == 2 && filter_W == 2 && strideH == 2 && strideW == 2 && pad_top <= 1 && pad_left <= 1 && pad_bottom <= 1 && pad_right <= 1)
 			{
 				zq_cnn_deconv_with_padding_32f_align256bit_k2s2(in_data, in_N, in_H, in_W, in_C, in_pixStep, in_widthStep, in_sliceStep,
 					filter_data, filter_N, filter_H, filter_W, filter_C, filter_pixStep, filter_widthStep, filter_sliceStep, strideH, strideW,
