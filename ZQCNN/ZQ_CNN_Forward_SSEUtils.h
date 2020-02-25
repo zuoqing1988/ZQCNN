@@ -16,7 +16,7 @@ namespace ZQ
 	{
 	public:
 
-		static bool UpSamplingNearest(ZQ_CNN_Tensor4D& input, float scale_h, float scale_w, ZQ_CNN_Tensor4D& output)
+		static bool UpSamplingNearest(ZQ_CNN_Tensor4D& input, float scale_h, float scale_w, ZQ_CNN_Tensor4D& output, int align_type)
 		{
 			double t1 = omp_get_wtime();
 			int in_N = input.GetN();
@@ -44,7 +44,7 @@ namespace ZQ
 				output.ChangeSize(need_N, need_H, need_W, need_C, 0, 0);
 			}
 
-			if (!input.ResizeNearest(output, need_W, need_H, -1, -1))
+			if (!input.ResizeNearest(output, need_W, need_H, -1, -1, (ZQ_CNN_Tensor4D::SAMPLE_ALIGN_TYPE)align_type))
 				return false;
 
 			double t2 = omp_get_wtime();
@@ -52,7 +52,7 @@ namespace ZQ
 			return true;
 		}
 
-		static bool UpSamplingBilinear(ZQ_CNN_Tensor4D& input, float scale_h, float scale_w, ZQ_CNN_Tensor4D& output)
+		static bool UpSamplingBilinear(ZQ_CNN_Tensor4D& input, float scale_h, float scale_w, ZQ_CNN_Tensor4D& output, int align_type)
 		{
 			double t1 = omp_get_wtime();
 			int in_N = input.GetN();
@@ -80,7 +80,7 @@ namespace ZQ
 				output.ChangeSize(need_N, need_H, need_W, need_C, 0, 0);
 			}
 
-			if (!input.ResizeBilinear(output, need_W, need_H, -1, -1))
+			if (!input.ResizeBilinear(output, need_W, need_H, -1, -1, (ZQ_CNN_Tensor4D::SAMPLE_ALIGN_TYPE)align_type))
 				return false;
 
 			double t2 = omp_get_wtime();
@@ -88,7 +88,7 @@ namespace ZQ
 			return true;
 		}
 
-		static bool UpSamplingNearest_TargetSize(ZQ_CNN_Tensor4D& input, int dst_h, int dst_w, ZQ_CNN_Tensor4D& output)
+		static bool UpSamplingNearest_TargetSize(ZQ_CNN_Tensor4D& input, int dst_h, int dst_w, ZQ_CNN_Tensor4D& output, int align_type)
 		{
 			double t1 = omp_get_wtime();
 			int in_N = input.GetN();
@@ -116,7 +116,7 @@ namespace ZQ
 				output.ChangeSize(need_N, need_H, need_W, need_C, 0, 0);
 			}
 
-			if (!input.ResizeNearest(output, need_W, need_H, -1, -1))
+			if (!input.ResizeNearest(output, need_W, need_H, -1, -1, (ZQ_CNN_Tensor4D::SAMPLE_ALIGN_TYPE)align_type))
 				return false;
 
 			double t2 = omp_get_wtime();
@@ -124,7 +124,7 @@ namespace ZQ
 			return true;
 		}
 
-		static bool UpSamplingBilinear_TargetSize(ZQ_CNN_Tensor4D& input, int dst_h, int dst_w, ZQ_CNN_Tensor4D& output)
+		static bool UpSamplingBilinear_TargetSize(ZQ_CNN_Tensor4D& input, int dst_h, int dst_w, ZQ_CNN_Tensor4D& output, int align_type)
 		{
 			double t1 = omp_get_wtime();
 			int in_N = input.GetN();
@@ -152,7 +152,7 @@ namespace ZQ
 				output.ChangeSize(need_N, need_H, need_W, need_C, 0, 0);
 			}
 
-			if (!input.ResizeBilinear(output, need_W, need_H, -1, -1))
+			if (!input.ResizeBilinear(output, need_W, need_H, -1, -1, (ZQ_CNN_Tensor4D::SAMPLE_ALIGN_TYPE)align_type))
 				return false;
 
 			double t2 = omp_get_wtime();

@@ -4674,12 +4674,15 @@ namespace ZQ
 	class ZQ_CNN_Layer_UpSampling : public ZQ_CNN_Layer
 	{
 	public:
-		ZQ_CNN_Layer_UpSampling():has_scale(false),has_dst_size(false){}
+		ZQ_CNN_Layer_UpSampling():has_scale(false),has_dst_size(false),align_type(1){}
 		~ZQ_CNN_Layer_UpSampling() {}
 
 		static const int SampleType_Nearest = 0;
 		static const int SampleType_Bilinear = 1;
+		static const int AlignType_Center = 0;
+		static const int AlignType_Corner = 1;
 		int sample_type;//
+		int align_type;
 		bool has_scale;
 		bool has_dst_size;
 		float scale_h;
@@ -4701,16 +4704,16 @@ namespace ZQ
 			if (sample_type == SampleType_Nearest)
 			{
 				if(has_scale)
-					ret = ZQ_CNN_Forward_SSEUtils::UpSamplingNearest(*((*bottoms)[0]), scale_h, scale_w, *((*tops)[0]));
+					ret = ZQ_CNN_Forward_SSEUtils::UpSamplingNearest(*((*bottoms)[0]), scale_h, scale_w, *((*tops)[0]), align_type);
 				else 
-					ret = ZQ_CNN_Forward_SSEUtils::UpSamplingNearest_TargetSize(*((*bottoms)[0]), dst_h, dst_w, *((*tops)[0]));
+					ret = ZQ_CNN_Forward_SSEUtils::UpSamplingNearest_TargetSize(*((*bottoms)[0]), dst_h, dst_w, *((*tops)[0]), align_type);
 			}
 			else if (sample_type == SampleType_Bilinear)
 			{
 				if (has_scale)
-					ret = ZQ_CNN_Forward_SSEUtils::UpSamplingBilinear(*((*bottoms)[0]), scale_h, scale_w, *((*tops)[0]));
+					ret = ZQ_CNN_Forward_SSEUtils::UpSamplingBilinear(*((*bottoms)[0]), scale_h, scale_w, *((*tops)[0]), align_type);
 				else
-					ret = ZQ_CNN_Forward_SSEUtils::UpSamplingBilinear_TargetSize(*((*bottoms)[0]), dst_h, dst_w, *((*tops)[0]));
+					ret = ZQ_CNN_Forward_SSEUtils::UpSamplingBilinear_TargetSize(*((*bottoms)[0]), dst_h, dst_w, *((*tops)[0]), align_type);
 			}
 			else
 			{
@@ -4762,6 +4765,26 @@ namespace ZQ
 						else
 						{
 							sample_type = atoi(str);
+						}
+					}
+				}
+				else if (_my_strcmpi("align_type", paras[n][0].c_str()) == 0)
+				{
+					if (paras[n].size() >= 2)
+					{
+						const char* str = paras[n][1].c_str();
+
+						if (_my_strcmpi(str, "center") == 0)
+						{
+							align_type = AlignType_Center;
+						}
+						else if (_my_strcmpi(str, "corner") == 0)
+						{
+							align_type = AlignType_Corner;
+						}
+						else
+						{
+							align_type = atoi(str);
 						}
 					}
 				}

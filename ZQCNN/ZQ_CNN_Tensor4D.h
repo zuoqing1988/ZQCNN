@@ -16,6 +16,10 @@ namespace ZQ
 			ALIGN_128bit = ALIGN_0 + 1,
 			ALIGN_256bit = ALIGN_128bit + 1
 		};
+		enum SAMPLE_ALIGN_TYPE {
+			SAMPLE_ALIGN_CENTER = 0,
+			SAMPLE_ALIGN_CORNER = 1
+		};
 
 	public:
 		virtual ~ZQ_CNN_Tensor4D() {}
@@ -34,26 +38,26 @@ namespace ZQ
 		const int GetSliceStep() const { return sliceStep; }
 		ALIGN_TYPE GetAlignType() const { return align_type; }
 
-		inline bool ResizeNearest(ZQ_CNN_Tensor4D& dst, int dst_W, int dst_H, int dst_borderW, int dst_borderH) const
+		inline bool ResizeNearest(ZQ_CNN_Tensor4D& dst, int dst_W, int dst_H, int dst_borderW, int dst_borderH, SAMPLE_ALIGN_TYPE sample_align_type = SAMPLE_ALIGN_CENTER) const
 		{
-			return ResizeNearestRect(dst, dst_W, dst_H, dst_borderW, dst_borderH, 0, 0, W, H);
+			return ResizeNearestRect(dst, dst_W, dst_H, dst_borderW, dst_borderH, 0, 0, W, H, sample_align_type);
 		}
 		virtual bool ResizeNearestRect(ZQ_CNN_Tensor4D& dst, int dst_W, int dst_H, int dst_borderW, int dst_borderH,
-			int src_off_x, int src_off_y, int src_rect_w, int src_rect_h) const = 0;
+			int src_off_x, int src_off_y, int src_rect_w, int src_rect_h, SAMPLE_ALIGN_TYPE sample_align_type = SAMPLE_ALIGN_CENTER) const = 0;
 
 		virtual bool ResizeNearestRect(ZQ_CNN_Tensor4D& dst, int dst_W, int dst_H, int dst_borderW, int dst_borderH,
-			const std::vector<int>& src_off_x, const std::vector<int>& src_off_y, const std::vector<int>& src_rect_w, const std::vector<int>& src_rect_h) const = 0;
+			const std::vector<int>& src_off_x, const std::vector<int>& src_off_y, const std::vector<int>& src_rect_w, const std::vector<int>& src_rect_h, SAMPLE_ALIGN_TYPE sample_align_type = SAMPLE_ALIGN_CENTER) const = 0;
 
 
-		inline bool ResizeBilinear(ZQ_CNN_Tensor4D& dst, int dst_W, int dst_H, int dst_borderW, int dst_borderH) const
+		inline bool ResizeBilinear(ZQ_CNN_Tensor4D& dst, int dst_W, int dst_H, int dst_borderW, int dst_borderH, SAMPLE_ALIGN_TYPE sample_align_type = SAMPLE_ALIGN_CENTER) const
 		{
-			return ResizeBilinearRect(dst, dst_W, dst_H, dst_borderW, dst_borderH, 0, 0, W, H);
+			return ResizeBilinearRect(dst, dst_W, dst_H, dst_borderW, dst_borderH, 0, 0, W, H, sample_align_type);
 		}
 		virtual bool ResizeBilinearRect(ZQ_CNN_Tensor4D& dst, int dst_W, int dst_H, int dst_borderW, int dst_borderH,
-			int src_off_x, int src_off_y, int src_rect_w, int src_rect_h) const = 0;
+			int src_off_x, int src_off_y, int src_rect_w, int src_rect_h, SAMPLE_ALIGN_TYPE sample_align_type = SAMPLE_ALIGN_CENTER) const = 0;
 
 		virtual bool ResizeBilinearRect(ZQ_CNN_Tensor4D& dst, int dst_W, int dst_H, int dst_borderW, int dst_borderH,
-			const std::vector<int>& src_off_x, const std::vector<int>& src_off_y, const std::vector<int>& src_rect_w, const std::vector<int>& src_rect_h) const = 0;
+			const std::vector<int>& src_off_x, const std::vector<int>& src_off_y, const std::vector<int>& src_rect_w, const std::vector<int>& src_rect_h, SAMPLE_ALIGN_TYPE sample_align_type = SAMPLE_ALIGN_CENTER) const = 0;
 
 		virtual bool Remap(ZQ_CNN_Tensor4D& dst, int dst_W, int dst_H, int dst_borderW, int dst_borderH,
 			const std::vector<float>& map_x, const std::vector<float>& map_y, bool use_fill_val = false, float fill_val = 0) const = 0;
@@ -675,16 +679,16 @@ namespace ZQ
 		void Swap(ZQ_CNN_Tensor4D_NHW_C_Align0& other);
 
 		bool ResizeNearestRect(ZQ_CNN_Tensor4D& dst, int dst_W, int dst_H, int dst_borderW, int dst_borderH,
-			int src_off_x, int src_off_y, int src_rect_w, int src_rect_h) const;
+			int src_off_x, int src_off_y, int src_rect_w, int src_rect_h, SAMPLE_ALIGN_TYPE sample_align_type = SAMPLE_ALIGN_CENTER) const;
 
 		virtual bool ResizeNearestRect(ZQ_CNN_Tensor4D& dst, int dst_W, int dst_H, int dst_borderW, int dst_borderH,
-			const std::vector<int>& src_off_x, const std::vector<int>& src_off_y, const std::vector<int>& src_rect_w, const std::vector<int>& src_rect_h) const;
+			const std::vector<int>& src_off_x, const std::vector<int>& src_off_y, const std::vector<int>& src_rect_w, const std::vector<int>& src_rect_h, SAMPLE_ALIGN_TYPE sample_align_type = SAMPLE_ALIGN_CENTER) const;
 
 		bool ResizeBilinearRect(ZQ_CNN_Tensor4D& dst, int dst_W, int dst_H, int dst_borderW, int dst_borderH,
-			int src_off_x, int src_off_y, int src_rect_w, int src_rect_h) const;
+			int src_off_x, int src_off_y, int src_rect_w, int src_rect_h, SAMPLE_ALIGN_TYPE sample_align_type = SAMPLE_ALIGN_CENTER) const;
 
 		virtual bool ResizeBilinearRect(ZQ_CNN_Tensor4D& dst, int dst_W, int dst_H, int dst_borderW, int dst_borderH,
-			const std::vector<int>& src_off_x, const std::vector<int>& src_off_y, const std::vector<int>& src_rect_w, const std::vector<int>& src_rect_h) const;
+			const std::vector<int>& src_off_x, const std::vector<int>& src_off_y, const std::vector<int>& src_rect_w, const std::vector<int>& src_rect_h, SAMPLE_ALIGN_TYPE sample_align_type = SAMPLE_ALIGN_CENTER) const;
 
 		virtual bool Remap(ZQ_CNN_Tensor4D& dst, int dst_W, int dst_H, int dst_borderW, int dst_borderH,
 			const std::vector<float>& map_x, const std::vector<float>& map_y, bool use_fill_val = false, float fill_val = 0) const;
@@ -707,16 +711,16 @@ namespace ZQ
 		void Swap(ZQ_CNN_Tensor4D_NHW_C_Align128bit& other);
 
 		bool ResizeNearestRect(ZQ_CNN_Tensor4D& dst, int dst_W, int dst_H, int dst_borderW, int dst_borderH,
-			int src_off_x, int src_off_y, int src_rect_w, int src_rect_h) const;
+			int src_off_x, int src_off_y, int src_rect_w, int src_rect_h, SAMPLE_ALIGN_TYPE sample_align_type = SAMPLE_ALIGN_CENTER) const;
 
 		virtual bool ResizeNearestRect(ZQ_CNN_Tensor4D& dst, int dst_W, int dst_H, int dst_borderW, int dst_borderH,
-			const std::vector<int>& src_off_x, const std::vector<int>& src_off_y, const std::vector<int>& src_rect_w, const std::vector<int>& src_rect_h) const;
+			const std::vector<int>& src_off_x, const std::vector<int>& src_off_y, const std::vector<int>& src_rect_w, const std::vector<int>& src_rect_h, SAMPLE_ALIGN_TYPE sample_align_type = SAMPLE_ALIGN_CENTER) const;
 
 		bool ResizeBilinearRect(ZQ_CNN_Tensor4D& dst, int dst_W, int dst_H, int dst_borderW, int dst_borderH,
-			int src_off_x, int src_off_y, int src_rect_w, int src_rect_h) const;
+			int src_off_x, int src_off_y, int src_rect_w, int src_rect_h, SAMPLE_ALIGN_TYPE sample_align_type = SAMPLE_ALIGN_CENTER) const;
 
 		virtual bool ResizeBilinearRect(ZQ_CNN_Tensor4D& dst, int dst_W, int dst_H, int dst_borderW, int dst_borderH,
-			const std::vector<int>& src_off_x, const std::vector<int>& src_off_y, const std::vector<int>& src_rect_w, const std::vector<int>& src_rect_h) const;
+			const std::vector<int>& src_off_x, const std::vector<int>& src_off_y, const std::vector<int>& src_rect_w, const std::vector<int>& src_rect_h, SAMPLE_ALIGN_TYPE sample_align_type = SAMPLE_ALIGN_CENTER) const;
 
 		virtual bool Remap(ZQ_CNN_Tensor4D& dst, int dst_W, int dst_H, int dst_borderW, int dst_borderH,
 			const std::vector<float>& map_x, const std::vector<float>& map_y, bool use_fill_val = false, float fill_val = 0) const;
@@ -738,16 +742,16 @@ namespace ZQ
 		void Swap(ZQ_CNN_Tensor4D_NHW_C_Align256bit& other);
 
 		bool ResizeNearestRect(ZQ_CNN_Tensor4D& dst, int dst_W, int dst_H, int dst_borderW, int dst_borderH,
-			int src_off_x, int src_off_y, int src_rect_w, int src_rect_h) const;
+			int src_off_x, int src_off_y, int src_rect_w, int src_rect_h, SAMPLE_ALIGN_TYPE sample_align_type = SAMPLE_ALIGN_CENTER) const;
 
 		virtual bool ResizeNearestRect(ZQ_CNN_Tensor4D& dst, int dst_W, int dst_H, int dst_borderW, int dst_borderH,
-			const std::vector<int>& src_off_x, const std::vector<int>& src_off_y, const std::vector<int>& src_rect_w, const std::vector<int>& src_rect_h) const;
+			const std::vector<int>& src_off_x, const std::vector<int>& src_off_y, const std::vector<int>& src_rect_w, const std::vector<int>& src_rect_h, SAMPLE_ALIGN_TYPE sample_align_type = SAMPLE_ALIGN_CENTER) const;
 
 		bool ResizeBilinearRect(ZQ_CNN_Tensor4D& dst, int dst_W, int dst_H, int dst_borderW, int dst_borderH,
-			int src_off_x, int src_off_y, int src_rect_w, int src_rect_h) const;
+			int src_off_x, int src_off_y, int src_rect_w, int src_rect_h, SAMPLE_ALIGN_TYPE sample_align_type = SAMPLE_ALIGN_CENTER) const;
 
 		virtual bool ResizeBilinearRect(ZQ_CNN_Tensor4D& dst, int dst_W, int dst_H, int dst_borderW, int dst_borderH,
-			const std::vector<int>& src_off_x, const std::vector<int>& src_off_y, const std::vector<int>& src_rect_w, const std::vector<int>& src_rect_h) const;
+			const std::vector<int>& src_off_x, const std::vector<int>& src_off_y, const std::vector<int>& src_rect_w, const std::vector<int>& src_rect_h, SAMPLE_ALIGN_TYPE sample_align_type = SAMPLE_ALIGN_CENTER) const;
 
 		virtual bool Remap(ZQ_CNN_Tensor4D& dst, int dst_W, int dst_H, int dst_borderW, int dst_borderH,
 			const std::vector<float>& map_x, const std::vector<float>& map_y, bool use_fill_val = false, float fill_val = 0) const;

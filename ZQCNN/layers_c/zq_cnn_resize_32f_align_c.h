@@ -27,7 +27,8 @@ extern "C" {
 		int out_W,
 		int out_pixelStep,
 		int out_widthStep,
-		int out_sliceStep
+		int out_sliceStep,
+		int sample_align_type
 	);
 
 	/*WARNING: when scaling to larger images, it may visit the coordinate input[-1][?] or input[?][-1].
@@ -57,7 +58,8 @@ extern "C" {
 		int out_W,
 		int out_pixelStep,
 		int out_widthStep,
-		int out_sliceStep
+		int out_sliceStep,
+		int sample_align_type
 	);
 
 	/*WARNING: when scaling to larger images, it may visit the coordinate input[-1][?] or input[?][-1], or input[H][?], input[?][W].
@@ -81,7 +83,8 @@ extern "C" {
 		int out_W,
 		int out_pixelStep,
 		int out_widthStep,
-		int out_sliceStep
+		int out_sliceStep,
+		int sample_align_type
 	);
 
 	/*WARNING: when scaling to larger images, it may visit the coordinate input[-1][?] or input[?][-1], or input[H][?], input[?][W].
@@ -124,7 +127,8 @@ extern "C" {
 		int out_W,
 		int out_pixelStep,
 		int out_widthStep,
-		int out_sliceStep
+		int out_sliceStep,
+		int sample_align_type
 	);
 
 	/*WARNING: when scaling to larger images, it may visit the coordinate input[-1][?] or input[?][-1].
@@ -154,7 +158,8 @@ extern "C" {
 		int out_W,
 		int out_pixelStep,
 		int out_widthStep,
-		int out_sliceStep
+		int out_sliceStep,
+		int sample_align_type
 	);
 
 	/*WARNING: when scaling to larger images, it may visit the coordinate input[-1][?] or input[?][-1], or input[H][?], input[?][W].
@@ -178,7 +183,8 @@ extern "C" {
 		int out_W,
 		int out_pixelStep,
 		int out_widthStep,
-		int out_sliceStep
+		int out_sliceStep,
+		int sample_align_type
 	);
 
 	/*WARNING: when scaling to larger images, it may visit the coordinate input[-1][?] or input[?][-1], or input[H][?], input[?][W].
@@ -243,7 +249,8 @@ extern "C" {
 		int out_W,
 		int out_pixelStep,
 		int out_widthStep,
-		int out_sliceStep
+		int out_sliceStep,
+		int sample_align_type
 	);
 
 	/*WARNING: when scaling to larger images, it may visit the coordinate input[-1][?] or input[?][-1].
@@ -273,7 +280,8 @@ extern "C" {
 		int out_W,
 		int out_pixelStep,
 		int out_widthStep,
-		int out_sliceStep
+		int out_sliceStep,
+		int sample_align_type
 	);
 
 	/*WARNING: when scaling to larger images, it may visit the coordinate input[-1][?] or input[?][-1], or input[H][?], input[?][W].
@@ -297,7 +305,8 @@ extern "C" {
 		int out_W,
 		int out_pixelStep,
 		int out_widthStep,
-		int out_sliceStep
+		int out_sliceStep,
+		int sample_align_type
 	);
 
 	/*WARNING: when scaling to larger images, it may visit the coordinate input[-1][?] or input[?][-1], or input[H][?], input[?][W].
@@ -360,7 +369,8 @@ extern "C" {
 		int out_W,
 		int out_pixelStep,
 		int out_widthStep,
-		int out_sliceStep
+		int out_sliceStep,
+		int sample_align_type
 	);
 
 	/*WARNING: when scaling to larger images, it may visit the coordinate input[-1][?] or input[?][-1].
@@ -390,7 +400,8 @@ extern "C" {
 		int out_W,
 		int out_pixelStep,
 		int out_widthStep,
-		int out_sliceStep
+		int out_sliceStep,
+		int sample_align_type
 	);
 
 	/*WARNING: when scaling to larger images, it may visit the coordinate input[-1][?] or input[?][-1], or input[H][?], input[?][W].
@@ -414,7 +425,8 @@ extern "C" {
 		int out_W,
 		int out_pixelStep,
 		int out_widthStep,
-		int out_sliceStep
+		int out_sliceStep,
+		int sample_align_type
 	);
 
 	/*WARNING: when scaling to larger images, it may visit the coordinate input[-1][?] or input[?][-1], or input[H][?], input[?][W].
@@ -481,7 +493,8 @@ extern "C" {
 		int out_W,
 		int out_pixelStep,
 		int out_widthStep,
-		int out_sliceStep
+		int out_sliceStep,
+		int sample_align_type
 	);
 
 	/*WARNING: when scaling to larger images, it may visit the coordinate input[-1][?] or input[?][-1].
@@ -511,7 +524,8 @@ extern "C" {
 		int out_W,
 		int out_pixelStep,
 		int out_widthStep,
-		int out_sliceStep
+		int out_sliceStep,
+		int sample_align_type
 	);
 
 	/*WARNING: when scaling to larger images, it may visit the coordinate input[-1][?] or input[?][-1], or input[H][?], input[?][W].
@@ -535,7 +549,8 @@ extern "C" {
 		int out_W,
 		int out_pixelStep,
 		int out_widthStep,
-		int out_sliceStep
+		int out_sliceStep,
+		int sample_align_type
 	);
 
 	/*WARNING: when scaling to larger images, it may visit the coordinate input[-1][?] or input[?][-1], or input[H][?], input[?][W].
@@ -600,7 +615,8 @@ extern "C" {
 		int out_W,
 		int out_pixelStep,
 		int out_widthStep,
-		int out_sliceStep
+		int out_sliceStep,
+		int sample_align_type
 	);
 
 	/*WARNING: when scaling to larger images, it may visit the coordinate input[-1][?] or input[?][-1].
@@ -630,7 +646,8 @@ extern "C" {
 		int out_W,
 		int out_pixelStep,
 		int out_widthStep,
-		int out_sliceStep
+		int out_sliceStep,
+		int sample_align_type
 	);
 
 	/*WARNING: when scaling to larger images, it may visit the coordinate input[-1][?] or input[?][-1], or input[H][?], input[?][W].
@@ -654,7 +671,8 @@ extern "C" {
 		int out_W,
 		int out_pixelStep,
 		int out_widthStep,
-		int out_sliceStep
+		int out_sliceStep,
+		int sample_align_type
 	);
 
 	/*WARNING: when scaling to larger images, it may visit the coordinate input[-1][?] or input[?][-1], or input[H][?], input[?][W].
@@ -721,7 +739,8 @@ extern "C" {
 		int out_W,
 		int out_pixelStep,
 		int out_widthStep,
-		int out_sliceStep
+		int out_sliceStep,
+		int sample_align_type
 	);
 
 	/*WARNING: when scaling to larger images, it may visit the coordinate input[-1][?] or input[?][-1].
@@ -751,7 +770,8 @@ extern "C" {
 		int out_W,
 		int out_pixelStep,
 		int out_widthStep,
-		int out_sliceStep
+		int out_sliceStep,
+		int sample_align_type
 	);
 
 	/*WARNING: when scaling to larger images, it may visit the coordinate input[-1][?] or input[?][-1], or input[H][?], input[?][W].
@@ -775,7 +795,8 @@ extern "C" {
 		int out_W,
 		int out_pixelStep,
 		int out_widthStep,
-		int out_sliceStep
+		int out_sliceStep,
+		int sample_align_type
 	);
 
 	/*WARNING: when scaling to larger images, it may visit the coordinate input[-1][?] or input[?][-1], or input[H][?], input[?][W].

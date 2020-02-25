@@ -191,7 +191,8 @@ extern "C" {
 		int out_W,
 		int out_pixelStep,
 		int out_widthStep,
-		int out_sliceStep
+		int out_sliceStep,
+		int sample_align_type
 	)
 	{
 
@@ -200,8 +201,8 @@ extern "C" {
 		float src_W = in_rect_width;
 		float w_step = 1.0f / (float)out_W*src_W;
 		float h_step = 1.0f / (float)out_H*src_H;
-		float coord_y_ini = 0.5f * h_step - 0.5f + (float)in_off_y;
-		float coord_x_ini = 0.5f*w_step - 0.5f + (float)in_off_x;
+		float coord_y_ini = sample_align_type == 1 ? (float)in_off_y : 0.5f*h_step - 0.5f + (float)in_off_y;
+		float coord_x_ini = sample_align_type == 1 ? (float)in_off_x : 0.5f*w_step - 0.5f + (float)in_off_x;
 		int x_nn, y_nn;
 		float coord_x, coord_y;
 		const float* in_slice_ptr, *in_row_ptr;
@@ -274,7 +275,8 @@ extern "C" {
 		int out_W,
 		int out_pixelStep,
 		int out_widthStep,
-		int out_sliceStep
+		int out_sliceStep,
+		int sample_align_type
 	)
 	{
 
@@ -285,8 +287,8 @@ extern "C" {
 		float src_W = in_rect_width;
 		float w_step = 1.0f / (float)out_W*src_W;
 		float h_step = 1.0f / (float)out_H*src_H;
-		float coord_y_ini = 0.5f * h_step - 0.5f + (float)in_off_y;
-		float coord_x_ini = 0.5f*w_step - 0.5f + (float)in_off_x;
+		float coord_y_ini = sample_align_type == 1 ? (float)in_off_y : 0.5f*h_step - 0.5f + (float)in_off_y;
+		float coord_x_ini = sample_align_type == 1 ? (float)in_off_x : 0.5f*w_step - 0.5f + (float)in_off_x;
 		float x0_f, y0_f;
 		int y0, y1;
 		float sy;
@@ -374,7 +376,8 @@ extern "C" {
 		int out_W,
 		int out_pixelStep,
 		int out_widthStep,
-		int out_sliceStep
+		int out_sliceStep,
+		int sample_align_type
 	)
 	{
 		int* x0 = (int*)malloc(sizeof(int)*(out_W));
@@ -384,8 +387,8 @@ extern "C" {
 		float src_W = in_rect_width;
 		float w_step = 1.0f / (float)out_W*src_W;
 		float h_step = 1.0f / (float)out_H*src_H;
-		float coord_y_ini = 0.5f * h_step - 0.5f + (float)in_off_y;
-		float coord_x_ini = 0.5f*w_step - 0.5f + (float)in_off_x;
+		float coord_y_ini = sample_align_type == 1 ? (float)in_off_y : 0.5f*h_step - 0.5f + (float)in_off_y;
+		float coord_x_ini = sample_align_type == 1 ? (float)in_off_x : 0.5f*w_step - 0.5f + (float)in_off_x;
 		float x0_f, y0_f;
 		int y0, y1;
 		float sy;
@@ -650,7 +653,8 @@ extern "C" {
 		int out_W,
 		int out_pixelStep,
 		int out_widthStep,
-		int out_sliceStep
+		int out_sliceStep,
+		int sample_align_type
 	)
 	{
 
@@ -659,8 +663,8 @@ extern "C" {
 		float src_W = in_rect_width;
 		float w_step = 1.0f / (float)out_W*src_W;
 		float h_step = 1.0f / (float)out_H*src_H;
-		float coord_y_ini = 0.5f * h_step - 0.5f + (float)in_off_y;
-		float coord_x_ini = 0.5f*w_step - 0.5f + (float)in_off_x;
+		float coord_y_ini = sample_align_type == 1 ? (float)in_off_y : 0.5f*h_step - 0.5f + (float)in_off_y;
+		float coord_x_ini = sample_align_type == 1 ? (float)in_off_x : 0.5f*w_step - 0.5f + (float)in_off_x;
 		int x_nn, y_nn;
 		float coord_x, coord_y;
 		const zq_base_type* in_slice_ptr, *in_row_ptr;
@@ -733,7 +737,8 @@ extern "C" {
 		int out_W,
 		int out_pixelStep,
 		int out_widthStep,
-		int out_sliceStep
+		int out_sliceStep,
+		int sample_align_type
 	)
 	{
 
@@ -744,8 +749,8 @@ extern "C" {
 		float src_W = in_rect_width;
 		float w_step = 1.0f / (zq_base_type)out_W*src_W;
 		float h_step = 1.0f / (zq_base_type)out_H*src_H;
-		float coord_y_ini = 0.5f * h_step - 0.5f + (zq_base_type)in_off_y;
-		float coord_x_ini = 0.5f*w_step - 0.5f + (zq_base_type)in_off_x;
+		float coord_y_ini = sample_align_type == 1 ? (zq_base_type)in_off_y : 0.5f*h_step - 0.5f + (zq_base_type)in_off_y;
+		float coord_x_ini = sample_align_type == 1 ? (zq_base_type)in_off_x : 0.5f*w_step - 0.5f + (zq_base_type)in_off_x;
 		float x0_f, y0_f;
 		int y0, y1;
 		float sy;
@@ -833,7 +838,8 @@ extern "C" {
 		int out_W,
 		int out_pixelStep,
 		int out_widthStep,
-		int out_sliceStep
+		int out_sliceStep,
+		int sample_align_type
 	)
 	{
 		int* x0 = (int*)malloc(sizeof(int)*(out_W));
@@ -843,8 +849,8 @@ extern "C" {
 		zq_base_type src_W = in_rect_width;
 		zq_base_type w_step = 1.0f / (zq_base_type)out_W*src_W;
 		zq_base_type h_step = 1.0f / (zq_base_type)out_H*src_H;
-		zq_base_type coord_y_ini = 0.5f * h_step - 0.5f + (zq_base_type)in_off_y;
-		zq_base_type coord_x_ini = 0.5f*w_step - 0.5f + (zq_base_type)in_off_x;
+		zq_base_type coord_y_ini = sample_align_type == 1 ? (zq_base_type)in_off_y : 0.5f*h_step - 0.5f + (zq_base_type)in_off_y;
+		zq_base_type coord_x_ini = sample_align_type == 1 ? (zq_base_type)in_off_x : 0.5f*w_step - 0.5f + (zq_base_type)in_off_x;
 		zq_base_type x0_f, y0_f;
 		int y0, y1;
 		zq_base_type sy;
