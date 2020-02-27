@@ -26,7 +26,7 @@ using namespace std;
 using namespace cv;
 
 
-void Draw(cv::Mat& img, const std::vector<ZQ_CNN_PersonPose::BBox>& output)
+void Draw14(cv::Mat& img, const std::vector<ZQ_CNN_PersonPose::BBox>& output)
 {
 	for (int nn = 0; nn < output.size(); nn++)
 	{
@@ -81,6 +81,57 @@ void Draw(cv::Mat& img, const std::vector<ZQ_CNN_PersonPose::BBox>& output)
 }
 
 
+void Draw10(cv::Mat& img, const std::vector<ZQ_CNN_PersonPose::BBox>& output)
+{
+	for (int nn = 0; nn < output.size(); nn++)
+	{
+		const ZQ_CNN_PersonPose::BBox& bbox = output[nn];
+		cv::rectangle(img, cv::Point(bbox.col1, bbox.row1), cv::Point(bbox.col2, bbox.row2), cv::Scalar(0, 255, 0));
+
+		static const int skeleton[18] = {
+			0,1,
+			2,5,
+			2,8,
+			5,9,
+			8,9,
+			2,3,
+			3,4,
+			5,6,
+			6,7
+		};
+		for (int i = 0; i < 10; i++)
+		{
+			int id1 = skeleton[i * 2 + 0];
+			int id2 = skeleton[i * 2 + 1];
+			if (bbox.points[id1 * 3 + 2] > 0 && bbox.points[id2 * 3 + 2] > 0)
+			{
+				cv::Point pt1(bbox.points[id1 * 3 + 0], bbox.points[id1 * 3 + 1]);
+				cv::Point pt2(bbox.points[id2 * 3 + 0], bbox.points[id2 * 3 + 1]);
+				cv::line(img, pt1, pt2, cv::Scalar(255, 0, 0), 2);
+			}
+		}
+
+		char buf[10];
+
+		for (int i = 0; i < 10; i++)
+		{
+			cv::Point pt = cv::Point(bbox.points[i * 3], bbox.points[i * 3 + 1]);
+			if (bbox.points[i * 3 + 2] > 0)
+				cv::circle(img, pt, 2, cv::Scalar(0, 0, 250), 2);
+
+#if defined(_WIN32)
+			sprintf_s(buf, 10, "%d", i);
+#else
+			sprintf(buf, "%d", i);
+#endif
+#if defined(_WIN32)
+			ZQ_PutTextCN::PutTextCN(img, buf, pt, cv::Scalar(100, 0, 0), 12);
+#endif
+		}
+	}
+}
+
+
 int main()
 {
 	int num_threads = 1;
@@ -95,7 +146,7 @@ int main()
 
 #if defined(_WIN32)
 	if (!detector.Init("model/MobileNetSSD_deploy.zqparams", "model/MobileNetSSD_deploy.nchwbin", "detection_out", 15,
-		"model/Pose-cpm.zqparams", "model/Pose-cpm.nchwbin", "Convolutional_Pose_Machine/stage_5_out"))
+		"model/Pose-zq117.zqparams", "model/Pose-zq117.nchwbin", "CPM/stage_0_out"))
 #else
 	if (!detector.Init("../../model/MobileNetSSD_deploy.zqparams", "../../model/MobileNetSSD_deploy.nchwbin", "detection_out", 15,
 		"../../model/det17-dw112.zqparams", "../../model/det17-dw112-5340.nchwbin", "conv6-3"))
@@ -106,7 +157,7 @@ int main()
 	}
 
 #if defined(_WIN32)
-	Mat img = imread("data/pose-0911-15.jpg", 1);
+	Mat img = imread("data/000092.jpg", 1);
 #else
 	Mat img = imread("../../data/1.jpg", 1);
 #endif
@@ -121,7 +172,10 @@ int main()
 	std::vector<ZQ_CNN_PersonPose::BBox> output;
 	detector.Detect(output, img.data, img.cols, img.rows, img.step[0], 0.5, false);
 
-	Draw(img, output);
+	if (output.size() > 0 && output[0].num_points == 14)
+		Draw14(img, output);
+	else
+		Draw10(img, output);
 	namedWindow("PersonPose");
 
 	imshow("PersonPose", img);
