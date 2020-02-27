@@ -21,6 +21,7 @@ namespace ZQ
 			{
 				score = 0;
 				col1 = row1 = col2 = row2 = 0;
+				num_points = 0;
 				memset(points, 0, sizeof(float) * 51);
 			}
 		};
