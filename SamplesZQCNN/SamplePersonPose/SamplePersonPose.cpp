@@ -99,7 +99,7 @@ void Draw10(cv::Mat& img, const std::vector<ZQ_CNN_PersonPose::BBox>& output)
 			5,6,
 			6,7
 		};
-		for (int i = 0; i < 10; i++)
+		for (int i = 0; i < 9; i++)
 		{
 			int id1 = skeleton[i * 2 + 0];
 			int id2 = skeleton[i * 2 + 1];
