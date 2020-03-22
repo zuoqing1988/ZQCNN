@@ -40,6 +40,20 @@ ZQCNN是ZuoQing参照mini-caffe写的forward库，ZQCNN性能远超mini-caffe、
 
 # 更新日志
 
+**2020-03-22日更新: 提供一组可以检测到带口罩的人脸的MTCNN模型**
+
+	model\det1-dw20-plus.zqparams
+	
+	model\det1-dw20-plus.nchwbin
+	
+	model\det2-dw24-p0.zqparams
+	
+	model\det2-dw24-p0.nchwbin
+	
+	model\det3-dw48-p0.zqparams
+	
+	model\det3-dw48-p0.nchwbin
+
 **2019-07-08日更新：ZQCNN模型转MNN模型代码**
 
 [点此阅读](https://github.com/zuoqing1988/ZQCNN/tree/master/ZQCNN_to_MNN)
