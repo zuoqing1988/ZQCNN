@@ -1,0 +1,57 @@
+Input            name=data C=3 H=48 W=48
+Convolution      name=conv1  bottom=data top=conv1 num_output=8 kernel_H=2 kernel_W=2 bias
+BatchNormScale   name=bn1  bottom=conv1 top=bn1 bias
+PReLU            name=relu1  bottom=bn1 top=relu1
+DepthwiseConvolution name=conv2_dw  bottom=relu1 top=conv2_dw num_output=8 kernel_H=3 kernel_W=3 stride_H=2 stride_W=2 bias
+BatchNormScale   name=bn2_dw  bottom=conv2_dw top=bn2_dw bias
+PReLU            name=relu2_dw  bottom=bn2_dw top=relu2_dw
+Convolution      name=conv2_sep  bottom=relu2_dw top=conv2_sep num_output=16 kernel_H=1 kernel_W=1 bias
+BatchNormScale   name=bn2_sep  bottom=conv2_sep top=bn2_sep bias
+PReLU            name=relu2  bottom=bn2_sep top=relu2
+DepthwiseConvolution name=conv3_dw  bottom=relu2 top=conv3_dw num_output=16 kernel_H=3 kernel_W=3 stride_H=2 stride_W=2 bias
+BatchNormScale   name=bn3_dw  bottom=conv3_dw top=bn3_dw bias
+PReLU            name=relu3_dw  bottom=bn3_dw top=relu3_dw
+Convolution      name=conv3_sep  bottom=relu3_dw top=conv3_sep num_output=32 kernel_H=1 kernel_W=1 bias
+BatchNormScale   name=bn3_sep  bottom=conv3_sep top=bn3_sep bias
+PReLU            name=relu3  bottom=bn3_sep top=relu3
+DepthwiseConvolution name=conv4_dw  bottom=relu3 top=conv4_dw num_output=32 kernel_H=3 kernel_W=3 stride_H=2 stride_W=2 bias
+BatchNormScale   name=bn4_dw  bottom=conv4_dw top=bn4_dw bias
+PReLU            name=relu4_dw  bottom=bn4_dw top=relu4_dw
+Convolution      name=conv4_sep  bottom=relu4_dw top=conv4_sep num_output=32 kernel_H=1 kernel_W=1 bias
+BatchNormScale   name=bn4_sep  bottom=conv4_sep top=bn4_sep bias
+PReLU            name=relu4  bottom=bn4_sep top=relu4
+DepthwiseConvolution name=conv5_dw  bottom=relu4 top=conv5_dw num_output=32 kernel_H=3 kernel_W=3 bias
+BatchNormScale   name=bn5_dw  bottom=conv5_dw top=bn5_dw bias
+PReLU            name=relu5_dw  bottom=bn5_dw top=relu5_dw
+Convolution      name=conv5_sep  bottom=relu5_dw top=conv5_sep num_output=64 kernel_H=1 kernel_W=1 bias
+BatchNormScale   name=bn5_sep  bottom=conv5_sep top=bn5_sep bias
+PReLU            name=relu5  bottom=bn5_sep top=relu5
+DepthwiseConvolution name=conv6_dw  bottom=relu5 top=conv6_dw num_output=64 kernel_H=3 kernel_W=3 bias
+BatchNormScale   name=bn6_dw  bottom=conv6_dw top=bn6_dw bias
+PReLU            name=relu6_dw  bottom=bn6_dw top=relu6_dw
+Convolution      name=fc1  bottom=relu6_dw top=fc1 num_output=128 kernel_H=1 kernel_W=1 bias
+BatchNormScale   name=fc1_bn  bottom=fc1 top=fc1_bn bias
+PReLU            name=fc1_relu  bottom=fc1_bn top=fc1_relu
+Convolution      name=fc2  bottom=fc1_relu top=fc2 num_output=128 kernel_H=1 kernel_W=1 bias
+BatchNormScale   name=fc2_bn  bottom=fc2 top=fc2_bn bias
+PReLU            name=fc2_relu  bottom=fc2_bn top=fc2_relu
+InnerProduct     name=conv6_1  bottom=fc2_relu top=conv6_1 num_output=2 bias
+BatchNormScale   name=bn6_1  bottom=conv6_1 top=bn6_1 bias
+Softmax          name=cls_prob  bottom=bn6_1 top=prob1
+DepthwiseConvolution name=conv5_bb_dw  bottom=relu4 top=conv5_bb_dw num_output=32 kernel_H=3 kernel_W=3 bias
+BatchNormScale   name=bn5_bb_dw  bottom=conv5_bb_dw top=bn5_bb_dw bias
+PReLU            name=relu5_bb_dw  bottom=bn5_bb_dw top=relu5_bb_dw
+Convolution      name=conv5_bb_sep  bottom=relu5_bb_dw top=conv5_bb_sep num_output=64 kernel_H=1 kernel_W=1 bias
+BatchNormScale   name=bn5_bb_sep  bottom=conv5_bb_sep top=bn5_bb_sep bias
+PReLU            name=relu5_bb  bottom=bn5_bb_sep top=relu5_bb
+DepthwiseConvolution name=conv6_bb_dw  bottom=relu5_bb top=conv6_bb_dw num_output=64 kernel_H=3 kernel_W=3 bias
+BatchNormScale   name=bn6_bb_dw  bottom=conv6_bb_dw top=bn6_bb_dw bias
+PReLU            name=relu6_bb_dw  bottom=bn6_bb_dw top=relu6_bb_dw
+Convolution      name=fc1_bb  bottom=relu6_bb_dw top=fc1_bb num_output=128 kernel_H=1 kernel_W=1 bias
+BatchNormScale   name=fc1_bn_bb  bottom=fc1_bb top=fc1_bn_bb bias
+PReLU            name=fc1_relu_bb  bottom=fc1_bn_bb top=fc1_relu_bb
+Convolution      name=fc2_bb  bottom=fc1_relu_bb top=fc2_bb num_output=128 kernel_H=1 kernel_W=1 bias
+BatchNormScale   name=fc2_bn_bb  bottom=fc2_bb top=fc2_bn_bb bias
+PReLU            name=fc2_relu_bb  bottom=fc2_bn_bb top=fc2_relu_bb
+InnerProduct     name=conv6_2  bottom=fc2_relu_bb top=conv6-2 num_output=4 bias
+BatchNormScale   name=bn6_2  bottom=conv6-2 top=conv6-2 bias
