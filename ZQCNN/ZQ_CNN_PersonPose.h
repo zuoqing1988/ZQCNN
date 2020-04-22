@@ -348,22 +348,81 @@ namespace ZQ
 						if (output[nn].points[0 * 3 + 2] > 0 && output[nn].points[1 * 3 + 2] > 0
 							&& output[nn].points[2 * 3 + 2] > 0 && output[nn].points[5 * 3 + 2] > 0)
 						{
-							float top_x = output[nn].points[0 * 3 + 0];
-							float top_y = output[nn].points[0 * 3 + 1];
-							float neck_x = output[nn].points[1 * 3 + 0];
-							float neck_y = output[nn].points[1 * 3 + 1];
-							float dir_x = top_x - neck_x;
-							float dir_y = top_y - neck_y;
-							float head_len = sqrt(dir_x*dir_x + dir_y*dir_y);
+							float dir_x0 = output[nn].points[0 * 3 + 0] - output[nn].points[1 * 3 + 0];
+							float dir_y0 = output[nn].points[0 * 3 + 1] - output[nn].points[1 * 3 + 1];
+							float dir_x1 = output[nn].points[2 * 3 + 0] - output[nn].points[5 * 3 + 0];
+							float dir_y1 = output[nn].points[2 * 3 + 1] - output[nn].points[5 * 3 + 1];
+							float head_len = sqrt(dir_x0*dir_x0 + dir_y0*dir_y0);
+							float shoulder_len = sqrt(dir_x1*dir_x1 + dir_y1*dir_y1);
+							float standard_len = __max(head_len, shoulder_len*0.6);
 							if (output[nn].points[8 * 3 + 2] == 0 && output[nn].points[9 * 3 + 2] == 0)
 							{
 								
-								output[nn].row2 = neck_y + head_len * 2;
+								output[nn].row2 = output[nn].points[1 * 3 + 1] + standard_len * 2;
 							}
 							else
 								output[nn].row2 = cy + size_y*0.5;
-							output[nn].col1 = __min(output[nn].col1, __min(output[nn].points[2 * 3 + 0], output[nn].points[5 * 3 + 0]) - head_len*0.6);
-							output[nn].col2 = __max(output[nn].col2, __max(output[nn].points[2 * 3 + 0], output[nn].points[5 * 3 + 0]) + head_len*0.6);
+							output[nn].row1 = __min(output[nn].row1, output[nn].points[0 * 3 + 1] - standard_len*0.2);
+							output[nn].col1 = __min(output[nn].col1, 0.5*(output[nn].points[2 * 3 + 0] + output[nn].points[5 * 3 + 0]) - standard_len*1.5);
+							output[nn].col2 = __max(output[nn].col2, 0.5*(output[nn].points[2 * 3 + 0] + output[nn].points[5 * 3 + 0]) + standard_len*1.5);
+						}
+						else if(output[nn].points[2 * 3 + 2] > 0 && output[nn].points[5 * 3 + 2] > 0)
+						{
+							float dir_x1 = output[nn].points[2 * 3 + 0] - output[nn].points[5 * 3 + 0];
+							float dir_y1 = output[nn].points[2 * 3 + 1] - output[nn].points[5 * 3 + 1];
+							float shoulder_len = sqrt(dir_x1*dir_x1 + dir_y1*dir_y1);
+							float standard_len = shoulder_len*0.6;
+							if (output[nn].points[8 * 3 + 2] == 0 && output[nn].points[9 * 3 + 2] == 0)
+							{
+
+								output[nn].row2 = 0.5*(output[nn].points[2 * 3 + 1] + output[nn].points[5 * 3 + 1]) + standard_len * 2.0;
+							}
+							else
+								output[nn].row2 = cy + size_y*0.5;
+							output[nn].row1 = __min(output[nn].row1, 0.5*(output[nn].points[2 * 3 + 1] + output[nn].points[5 * 3 + 1]) - standard_len*1.0);
+							output[nn].col1 = __min(output[nn].col1, 0.5*(output[nn].points[2 * 3 + 0] + output[nn].points[5 * 3 + 0]) - standard_len*1.5);
+							output[nn].col2 = __max(output[nn].col2, 0.5*(output[nn].points[2 * 3 + 0] + output[nn].points[5 * 3 + 0]) + standard_len*1.5);
+						}
+					}
+					else if (npts == 14)
+					{
+						if (output[nn].points[0 * 3 + 2] > 0 && output[nn].points[1 * 3 + 2] > 0
+							&& output[nn].points[2 * 3 + 2] > 0 && output[nn].points[5 * 3 + 2] > 0)
+						{
+							float dir_x0 = output[nn].points[0 * 3 + 0] - output[nn].points[1 * 3 + 0];
+							float dir_y0 = output[nn].points[0 * 3 + 1] - output[nn].points[1 * 3 + 1];
+							float dir_x1 = output[nn].points[2 * 3 + 0] - output[nn].points[5 * 3 + 0];
+							float dir_y1 = output[nn].points[2 * 3 + 1] - output[nn].points[5 * 3 + 1];
+							float head_len = sqrt(dir_x0*dir_x0 + dir_y0*dir_y0);
+							float shoulder_len = sqrt(dir_x1*dir_x1 + dir_y1*dir_y1);
+							float standard_len = __max(head_len, shoulder_len*0.6);
+							if (output[nn].points[9 * 3 + 2] == 0 && output[nn].points[12 * 3 + 2] == 0)
+							{
+
+								output[nn].row2 = output[nn].points[1 * 3 + 1] + standard_len * 3.5;
+							}
+							else
+								output[nn].row2 = cy + size_y*0.5;
+							output[nn].row1 = __min(output[nn].row1, output[nn].points[0 * 3 + 1] - standard_len*0.2);
+							output[nn].col1 = __min(output[nn].col1, 0.5*(output[nn].points[2 * 3 + 0] + output[nn].points[5 * 3 + 0]) - standard_len*2.0);
+							output[nn].col2 = __max(output[nn].col2, 0.5*(output[nn].points[2 * 3 + 0] + output[nn].points[5 * 3 + 0]) + standard_len*2.0);
+						}
+						else if (output[nn].points[2 * 3 + 2] > 0 && output[nn].points[5 * 3 + 2] > 0)
+						{
+							float dir_x1 = output[nn].points[2 * 3 + 0] - output[nn].points[5 * 3 + 0];
+							float dir_y1 = output[nn].points[2 * 3 + 1] - output[nn].points[5 * 3 + 1];
+							float shoulder_len = sqrt(dir_x1*dir_x1 + dir_y1*dir_y1);
+							float standard_len = shoulder_len*0.6;
+							if (output[nn].points[9 * 3 + 2] == 0 && output[nn].points[12 * 3 + 2] == 0)
+							{
+
+								output[nn].row2 = 0.5*(output[nn].points[2 * 3 + 1] + output[nn].points[5 * 3 + 1]) + standard_len * 3.5;
+							}
+							else
+								output[nn].row2 = cy + size_y*0.5;
+							output[nn].row1 = __min(output[nn].row1, 0.5*(output[nn].points[2 * 3 + 1] + output[nn].points[5 * 3 + 1]) - standard_len*1.2);
+							output[nn].col1 = __min(output[nn].col1, 0.5*(output[nn].points[2 * 3 + 0] + output[nn].points[5 * 3 + 0]) - standard_len*2.0);
+							output[nn].col2 = __max(output[nn].col2, 0.5*(output[nn].points[2 * 3 + 0] + output[nn].points[5 * 3 + 0]) + standard_len*2.0);
 						}
 					}
 					else
