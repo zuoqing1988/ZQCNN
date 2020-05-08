@@ -40,6 +40,14 @@ ZQCNN是ZuoQing参照mini-caffe写的forward库，ZQCNN性能远超mini-caffe、
 
 # 更新日志
 
+**2020-05-08日更新: 添加文字识别示例SampleOCR**
+
+	咱们还没有文字检测能力，需要输入的图是裁剪好的
+	
+	模型下载地址
+	
+	链接：https://pan.baidu.com/s/1O75LRBjXWwPXqAshLMJV3w 提取码：f2q8
+	
 **2020-03-22日更新: 提供一组可以检测到带口罩的人脸的MTCNN模型**
 
 	model\det1-dw20-plus.zqparams
