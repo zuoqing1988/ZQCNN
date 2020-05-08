@@ -42,7 +42,7 @@ ZQCNN是ZuoQing参照mini-caffe写的forward库，ZQCNN性能远超mini-caffe、
 
 **2020-05-08日更新: 添加文字识别示例SampleOCR**
 
-	咱们还没有文字检测能力，需要输入的图是裁剪好的
+	暂时还没有文字检测能力，需要输入的图是裁剪好的
 	
 	模型下载地址
 	
