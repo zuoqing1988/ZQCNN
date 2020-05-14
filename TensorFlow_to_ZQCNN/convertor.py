@@ -5,6 +5,7 @@ from tensorflow.python.platform import gfile
 from tensorflow.python.framework import tensor_util
 import struct
 import os
+import numpy as np
 
 def search_node(all_node, name):
     for i,n in enumerate(all_node):
@@ -41,10 +42,210 @@ def get_NCHW(n):
         W = tensor_shape_dim[1].size
         C = tensor_shape_dim[2].size
     elif dim_num == 2:
-        pass
+        C = tensor_shape_dim[0].size
+        N = tensor_shape_dim[1].size
     elif dim_num == 1:
         C = tensor_shape_dim[0].size
     return [N,C,H,W]
+	
+def put_rnn_node_binaray_to_file_split(fout2, fw_kernel_node, fw_bias_node, bw_kernel_node, bw_bias_node):
+    # fw_kernel
+    tensor = fw_kernel_node.attr["value"]
+    tensor_tensor = tensor.tensor
+    tensor_shape = tensor_tensor.tensor_shape
+    tensor_shape_dim = tensor_shape.dim
+    tensor_content = tensor_tensor.tensor_content
+    num_bytes = len(tensor_content)
+    num_float = int(num_bytes/4)
+    fw_N = tensor_shape_dim[1].size
+    fw_C = tensor_shape_dim[0].size
+    fw_hidden_dim = fw_N // 4
+    fw_input_dim = fw_C - fw_hidden_dim
+    fw_float_weights_ori = struct.unpack('<%df'%num_float, struct.pack('%dB'%num_bytes, *tensor_content))
+    fw_float_weights = HWCN_to_NCHW(fw_float_weights_ori,fw_N,fw_C,1,1)
+
+    #fw_bias    
+    tensor = fw_bias_node.attr["value"]
+    tensor_tensor = tensor.tensor
+    tensor_shape = tensor_tensor.tensor_shape
+    tensor_shape_dim = tensor_shape.dim
+    tensor_content = tensor_tensor.tensor_content
+    num_bytes = len(tensor_content)
+    num_float = int(num_bytes/4)
+    fw_float_bias = struct.unpack('<%df'%num_float, struct.pack('%dB'%num_bytes, *tensor_content))
+
+    #bw_kernel
+    tensor = bw_kernel_node.attr["value"]
+    tensor_tensor = tensor.tensor
+    tensor_shape = tensor_tensor.tensor_shape
+    tensor_shape_dim = tensor_shape.dim
+    tensor_content = tensor_tensor.tensor_content
+    num_bytes = len(tensor_content)
+    num_float = int(num_bytes/4)
+    bw_N = tensor_shape_dim[1].size
+    bw_C = tensor_shape_dim[0].size
+    bw_hidden_dim = bw_N // 4
+    bw_input_dim = bw_C - bw_hidden_dim
+    bw_float_weights_ori = struct.unpack('<%df'%num_float, struct.pack('%dB'%num_bytes, *tensor_content))
+    bw_float_weights = HWCN_to_NCHW(bw_float_weights_ori,bw_N,bw_C,1,1)
+    
+    #bw_bias    
+    tensor = bw_bias_node.attr["value"]
+    tensor_tensor = tensor.tensor
+    tensor_shape = tensor_tensor.tensor_shape
+    tensor_shape_dim = tensor_shape.dim
+    tensor_content = tensor_tensor.tensor_content
+    num_bytes = len(tensor_content)
+    num_float = int(num_bytes/4)
+    bw_float_bias = struct.unpack('<%df'%num_float, struct.pack('%dB'%num_bytes, *tensor_content))
+
+    assert(fw_N == bw_N and fw_C == bw_C)
+
+
+	
+    xc_I = list()
+    xc_F = list()
+    xc_O = list()
+    xc_G = list()
+    bias_I = list()
+    bias_F = list()
+    bias_O = list()
+    bias_G = list()
+    hc_I = list()
+    hc_F = list()
+    hc_O = list()
+    hc_G = list()
+    hidden_dim = fw_hidden_dim
+    input_dim = fw_input_dim
+    C = fw_C
+    for nn in range(hidden_dim):
+        nn0 = nn
+        nn1 = nn + hidden_dim
+        nn2 = nn + hidden_dim*2
+        nn3 = nn + hidden_dim*3
+        for cc in range(input_dim):
+            xc_I.append(fw_float_weights[nn0*C+cc])
+            xc_F.append(fw_float_weights[nn1*C+cc])
+            xc_G.append(fw_float_weights[nn2*C+cc])
+            xc_O.append(fw_float_weights[nn3*C+cc])
+        for cc in range(hidden_dim):
+            hc_I.append(fw_float_weights[nn0*C+cc+input_dim])
+            hc_F.append(fw_float_weights[nn1*C+cc+input_dim])
+            hc_G.append(fw_float_weights[nn2*C+cc+input_dim])
+            hc_O.append(fw_float_weights[nn3*C+cc+input_dim])
+        bias_I.append(fw_float_bias[nn0])
+        bias_F.append(fw_float_bias[nn1])
+        bias_G.append(fw_float_bias[nn2])
+        bias_O.append(fw_float_bias[nn3])
+    
+    xc = xc_I + xc_F + xc_O + xc_G
+    bias = bias_I + bias_F + bias_O + bias_G
+    hc = hc_I + hc_F + hc_O + hc_G
+
+    xc_I = list()
+    xc_F = list()
+    xc_O = list()
+    xc_G = list()
+    bias_I = list()
+    bias_F = list()
+    bias_O = list()
+    bias_G = list()
+    hc_I = list()
+    hc_F = list()
+    hc_O = list()
+    hc_G = list()
+    hidden_dim = bw_hidden_dim
+    input_dim = bw_input_dim
+    C = bw_C
+    for nn in range(hidden_dim):
+        nn0 = nn
+        nn1 = nn + hidden_dim
+        nn2 = nn + hidden_dim*2
+        nn3 = nn + hidden_dim*3
+        for cc in range(input_dim):
+            xc_I.append(bw_float_weights[nn0*C+cc])
+            xc_F.append(bw_float_weights[nn1*C+cc])
+            xc_G.append(bw_float_weights[nn2*C+cc])
+            xc_O.append(bw_float_weights[nn3*C+cc])
+        for cc in range(hidden_dim):
+            hc_I.append(bw_float_weights[nn0*C+cc+input_dim])
+            hc_F.append(bw_float_weights[nn1*C+cc+input_dim])
+            hc_G.append(bw_float_weights[nn2*C+cc+input_dim])
+            hc_O.append(bw_float_weights[nn3*C+cc+input_dim])
+        bias_I.append(bw_float_bias[nn0])
+        bias_F.append(bw_float_bias[nn1])
+        bias_G.append(bw_float_bias[nn2])
+        bias_O.append(bw_float_bias[nn3])
+
+    xc = xc + xc_I + xc_F + xc_O + xc_G
+    bias = bias + bias_I + bias_F + bias_O + bias_G
+    hc = hc + hc_I + hc_F + hc_O + hc_G
+
+    fout2.write(struct.pack('%df'%(len(xc)), *xc))
+    fout2.write(struct.pack('%df'%(len(bias)), *bias))
+    fout2.write(struct.pack('%df'%(len(hc)), *hc))
+    return hidden_dim
+	
+def put_rnn_node_binaray_to_file(fout2, fw_kernel_node, fw_bias_node, bw_kernel_node, bw_bias_node):
+    # fw_kernel
+    tensor = fw_kernel_node.attr["value"]
+    tensor_tensor = tensor.tensor
+    tensor_shape = tensor_tensor.tensor_shape
+    tensor_shape_dim = tensor_shape.dim
+    tensor_content = tensor_tensor.tensor_content
+    num_bytes = len(tensor_content)
+    num_float = int(num_bytes/4)
+    fw_N = tensor_shape_dim[1].size
+    fw_C = tensor_shape_dim[0].size
+    fw_hidden_dim = fw_N // 4
+    fw_input_dim = fw_C - fw_hidden_dim
+    fw_float_weights_ori = struct.unpack('<%df'%num_float, struct.pack('%dB'%num_bytes, *tensor_content))
+    fw_float_weights = HWCN_to_NCHW(fw_float_weights_ori,fw_N,fw_C,1,1)
+
+    #fw_bias    
+    tensor = fw_bias_node.attr["value"]
+    tensor_tensor = tensor.tensor
+    tensor_shape = tensor_tensor.tensor_shape
+    tensor_shape_dim = tensor_shape.dim
+    tensor_content = tensor_tensor.tensor_content
+    num_bytes = len(tensor_content)
+    num_float = int(num_bytes/4)
+    fw_float_bias = struct.unpack('<%df'%num_float, struct.pack('%dB'%num_bytes, *tensor_content))
+
+    #bw_kernel
+    tensor = bw_kernel_node.attr["value"]
+    tensor_tensor = tensor.tensor
+    tensor_shape = tensor_tensor.tensor_shape
+    tensor_shape_dim = tensor_shape.dim
+    tensor_content = tensor_tensor.tensor_content
+    num_bytes = len(tensor_content)
+    num_float = int(num_bytes/4)
+    bw_N = tensor_shape_dim[1].size
+    bw_C = tensor_shape_dim[0].size
+    bw_hidden_dim = bw_N // 4
+    bw_input_dim = bw_C - bw_hidden_dim
+    bw_float_weights_ori = struct.unpack('<%df'%num_float, struct.pack('%dB'%num_bytes, *tensor_content))
+    bw_float_weights = HWCN_to_NCHW(bw_float_weights_ori,bw_N,bw_C,1,1)
+    
+    #bw_bias    
+    tensor = bw_bias_node.attr["value"]
+    tensor_tensor = tensor.tensor
+    tensor_shape = tensor_tensor.tensor_shape
+    tensor_shape_dim = tensor_shape.dim
+    tensor_content = tensor_tensor.tensor_content
+    num_bytes = len(tensor_content)
+    num_float = int(num_bytes/4)
+    bw_float_bias = struct.unpack('<%df'%num_float, struct.pack('%dB'%num_bytes, *tensor_content))
+
+    assert(fw_N == bw_N and fw_C == bw_C)
+
+    fout2.write(struct.pack('%df'%(fw_C*fw_N), *fw_float_weights))
+    fout2.write(struct.pack('%df'%(fw_N), *fw_float_bias))
+    fout2.write(struct.pack('%df'%(bw_C*bw_N), *bw_float_weights))
+    fout2.write(struct.pack('%df'%(bw_N), *bw_float_bias))
+    
+    return fw_hidden_dim
+	
 	
 def put_node_binaray_to_file(fout2, n, conv2d_transpose = False, need_add_eps = False, eps = 0.001):
     tensor = n.attr["value"]
@@ -75,7 +276,8 @@ def put_node_binaray_to_file(fout2, n, conv2d_transpose = False, need_add_eps = 
         W = tensor_shape_dim[1].size
         C = tensor_shape_dim[2].size
     elif dim_num == 2:
-        pass
+        C = tensor_shape_dim[0].size
+        N = tensor_shape_dim[1].size
     elif dim_num == 1:
         C = tensor_shape_dim[0].size
     
@@ -145,10 +347,10 @@ def _H_WNC_to_NCHW(in_data, N, C, H, W):
                     out_data.append(in_data[(H-1-h)*WNC+(W-1-w)*NC+n*C+c])
     return out_data
 
-os.environ['CUDA_VISIBLE_DEVICES'] = '1'
-GRAPH_PB_PATH = 'models/zq100-model-70000.pb' #path to your .pb file
-fout = open("Hand-zq100.zqparams","w")
-fout2 = open("Hand-zq100.nchwbin","wb")
+os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
+GRAPH_PB_PATH = './model_vin2.pb' #path to your .pb file
+fout = open("model_vin2.zqparams","w")
+fout2 = open("model_vin2.nchwbin","wb")
 with tf.Session() as sess:
     #print("load graph")
     with gfile.FastGFile(GRAPH_PB_PATH,'rb') as f:
@@ -157,16 +359,87 @@ with tf.Session() as sess:
         #text_format.Merge(f.read(), graph_def)
         graph_def.ParseFromString(f.read())
         tf.import_graph_def(graph_def, name='')
-        print(graph_def)
+        #print(graph_def)
         all_node = graph_def.node;
         #print(type(all_node))
         #print(dir(all_node))
+        node_num = len(all_node)
+		
+        all_visited_node_names = []
+        visited_rnn_cell_name = []
         for i,n in enumerate(all_node):
             #print("Name of the node - %s" % n.name)
        
-            line = ''
-            
-				
+            rnn_key_name = 'stack_bidirectional_rnn'
+            if(rnn_key_name in n.name):
+                tmp_splits = n.name.split(rnn_key_name) 
+                prefix_name = tmp_splits[0]
+                cell_name = tmp_splits[1].split('/')[1]
+                has_visited = False
+                for j,nn in enumerate(visited_rnn_cell_name):
+                    if cell_name == nn:
+                        has_visited = True
+                        break
+                if has_visited:
+                    continue
+                #print(cell_name)
+                #for jj,vv in enumerate( all_visited_node_names):
+                #    print('%3d:%s'%(jj,vv))
+                cell_nodes_ids = list()
+                for j,nn in enumerate(all_node):
+                    if rnn_key_name in nn.name:
+                        j_tmp_splits = nn.name.split(rnn_key_name) 
+                        j_prefix_name = j_tmp_splits[0]
+                        j_cell_name = j_tmp_splits[1].split('/')[1]
+                        if prefix_name == j_prefix_name and cell_name == j_cell_name:
+                            cell_nodes_ids.append(j)
+                #for jj,vv in enumerate( cell_nodes_ids):
+                #    print('%3d:%s'%(jj,all_node[vv].name))
+                visited_node_num = len(all_visited_node_names)
+                has_found_input_name = False
+                input_name = None
+                for j in range(len(cell_nodes_ids)):
+                    nn = all_node[cell_nodes_ids[j]]
+                    node_input = nn.input
+                    input_num = len(node_input)
+                    for ii in range(input_num):
+                        for jj in range(visited_node_num):
+                            if node_input[ii] == all_visited_node_names[jj]:
+                                has_found_input_name = True
+                                input_name = node_input[ii]
+                                break
+                        if has_found_input_name:
+                            break
+                    if has_found_input_name:
+                        break
+
+                output_name = all_node[cell_nodes_ids[-1]].name
+                visited_rnn_cell_name.append(cell_name)
+                all_visited_node_names.append(output_name)
+                					
+                
+                #print(cell_name)
+                fw_kernel_name = prefix_name + rnn_key_name + '/' + cell_name + '/bidirectional_rnn/fw/basic_lstm_cell/kernel'
+                fw_bias_name = prefix_name + rnn_key_name + '/' + cell_name + '/bidirectional_rnn/fw/basic_lstm_cell/bias'
+                bw_kernel_name = prefix_name + rnn_key_name + '/' + cell_name + '/bidirectional_rnn/bw/basic_lstm_cell/kernel'
+                bw_bias_name = prefix_name + rnn_key_name + '/' + cell_name + '/bidirectional_rnn/bw/basic_lstm_cell/bias'
+                #print(fw_kernel_name)
+                #print(fw_bias_name)
+                #print(bw_kernel_name)
+                #print(bw_bias_name)
+                fw_kernel_node = search_node(all_node,fw_kernel_name)
+                fw_bias_node = search_node(all_node,fw_bias_name)
+                bw_kernel_node = search_node(all_node,bw_kernel_name)
+                bw_bias_node = search_node(all_node,bw_bias_name)
+                hidden_dim = put_rnn_node_binaray_to_file(fout2, fw_kernel_node, fw_bias_node, bw_kernel_node, bw_bias_node)
+                
+                line = 'LSTM_TF name=' + prefix_name + cell_name + ' bottom=%s top=%s type=2 hidden_dim=%d\n'%(input_name, output_name, hidden_dim)
+                fout.write(line)
+                continue
+			
+			
+            all_visited_node_names.append(n.name)
+            line = ''	
             if n.op == 'Conv2D':
                 # write .nchwbin file 
                 conv_name = n.name.replace('/Conv2D','')
@@ -176,8 +449,10 @@ with tf.Session() as sess:
                 bias_read_name = bias_name+'/read'
                 weight_node = search_node(all_node,weight_name)
                 bias_node = search_node(all_node,bias_name)
+                #print(weight_node)
+                #print(bias_node)
                 put_node_binaray_to_file(fout2, weight_node)
-                if bias_node == None:
+                if bias_node is None:
                     pass
                 else:
                     put_node_binaray_to_file(fout2, bias_node)
@@ -206,7 +481,7 @@ with tf.Session() as sess:
                     else:
                         line = line + ' bottom=%s'%node_input[j]
                 line = line + ' top=%s'%n.name + ' num_output=%d kernel_H=%d kernel_W=%d dilate_H=%d dilate_W=%d stride_H=%d stride_W=%d pad_type=%s'%(N,H,W,dilation_H,dilation_W,stride_H,stride_W,padding)
-                if bias_node == None:
+                if bias_node is None:
                     pass
                 else:
                     line = line + ' bias'				
@@ -223,7 +498,7 @@ with tf.Session() as sess:
                 weight_node = search_node(all_node,weight_name)
                 bias_node = search_node(all_node,bias_name)
                 put_node_binaray_to_file(fout2, weight_node)
-                if bias_node == None:
+                if bias_node is None:
                     pass
                 else:
                     put_node_binaray_to_file(fout2, bias_node)
@@ -249,7 +524,7 @@ with tf.Session() as sess:
                     else:
                         line = line + ' bottom=%s'%node_input[j]
                 line = line + ' top=%s'%n.name + ' num_output=%d kernel_H=%d kernel_W=%d dilate_H=%d dilate_W=%d stride_H=%d stride_W=%d pad_type=%s'%(C,H,W,dilation_H,dilation_W,stride_H,stride_W,padding)
-                if bias_node == None:
+                if bias_node is None:
                     pass
                 else:
                     line = line + ' bias'				
@@ -287,7 +562,7 @@ with tf.Session() as sess:
                         pass
                     else:
                         line = line + ' bottom=%s'%node_input[j]
-                line = line + ' top=%s'%n.name + ' num_output=%d kernel_H=%d kernel_W=%d dilate_H=%d dilate_W=%d stride_H=%d stride_W=%d pad_type=%s'%(N,H,W,dilation_H,dilation_W,stride_H,stride_W,padding)
+                line = line + ' top=%s'%n.name + ' num_output=%d kernel_H=%d kernel_W=%d dilate_H=%d dilate_W=%d stride_H=%d stride_W=%d pad_type=%s'%(C,H,W,dilation_H,dilation_W,stride_H,stride_W,padding)
                 line = line + '\n'
 				
             elif n.op == 'BiasAdd':
@@ -334,15 +609,15 @@ with tf.Session() as sess:
                 variance_node = search_node(all_node,variance_name)
                 put_node_binaray_to_file(fout2, mean_node)
                 put_node_binaray_to_file(fout2, variance_node, False, True, eps)
-                if scale_const_node == None:
+                if scale_const_node is None:
                     pass
                 else:
                     put_node_binaray_to_file(fout2, scale_const_node)
-                if scale_node == None:
+                if scale_node is None:
                     pass
                 else:
                     put_node_binaray_to_file(fout2, scale_node)
-                if bias_node == None:
+                if bias_node is None:
                     pass
                 else:
                     put_node_binaray_to_file(fout2, bias_node)
@@ -357,7 +632,7 @@ with tf.Session() as sess:
                     else:
                         line = line + ' bottom=%s'%node_input[j]
                 line = line + ' top=%s'%n.name
-                if bias_node == None:
+                if bias_node is None:
                     pass
                 else:
                     line = line + ' bias'				
@@ -471,7 +746,7 @@ with tf.Session() as sess:
                 axis_node = search_node(all_node,axis_name)
                 axis = 1
                 map_nhwc_to_nchw = [0,2,3,1]
-                if axis_node == None:
+                if axis_node is None:
                     pass
                 else:
                     axis = axis_node.attr["value"].tensor.int_val[0]
@@ -556,11 +831,76 @@ with tf.Session() as sess:
                     print(float_weights)
                 #print(tensor)
                 print('\n\n')
+            elif n.op == 'Reshape':
+                shape_name = n.name+'/shape'
+                shape_node = search_node(all_node,shape_name)
+                tensor = shape_node.attr["value"]
+                tensor_tensor = tensor.tensor
+                #tensor_shape = tensor_tensor.tensor_shape
+                tensor_content = tensor_tensor.tensor_content
+                num_bytes = len(tensor_content)
+                num_int = int(num_bytes/4)
+                print('num_int=%d'%num_int)
+                int_vals = struct.unpack('<%di'%num_int, struct.pack('%dB'%num_bytes, *tensor_content))
+                print(int_vals)
+                N,C,H,W = [1,1,1,1]
+                if num_int == 1:
+                    C = int_vals[0]
+                elif num_int == 2:
+                    W = int_vals[0]
+                    C = int_vals[1]
+                elif num_int == 3:
+                    N = int_vals[0]
+                    W = int_vals[1]
+                    C = int_vals[2]
+                elif num_int == 4:
+                    N = int_vals[0]
+                    H = int_vals[1]
+                    W = int_vals[2]
+                    C = int_vals[3]
+
+                line = 'Reshape name=' + n.name
+                node_input = n.input
+                in_num = len(node_input)
+                for j in range(in_num):
+                    if node_input[j] == shape_name:
+                        pass
+                    else:
+                        line = line + ' bottom=%s'%node_input[j]
+                line = line + ' top=%s'%n.name + ' dim=%d dim=%d dim=%d dim=%d'%(N,C,H,W)
+                line = line + '\n'
+            elif n.op == 'MatMul':
+                node_input = n.input
+                input_name0 = node_input[0]
+                input_name1 = node_input[1]
+                if input_name1.split('/')[-1] == 'read':
+                    input_name1 = input_name1[:-5]
+                    weight_node = search_node(all_node,input_name1)
+                    put_node_binaray_to_file(fout2, weight_node)
+                    N,C,H,W = get_NCHW(weight_node)
+                    line = 'Convolution name=' + n.name
+                    node_input = n.input
+                    line = line + ' bottom=%s'%input_name0
+                    line = line + ' top=%s'%n.name + ' num_output=%d kernel_H=1 kernel_W=1 pad=0'%(N)
+                    line = line + '\n'
+            elif n.op == 'Squeeze':
+                node_input = n.input
+                dims = n.attr['squeeze_dims'].list.i
+                print(dir(dims))
+                print(type(dims))
+                map_nhwc_to_nchw = [0,2,3,1]
+                len_dim = len(dims)
+                line = 'Squeeze name=' + n.name + ' bottom=%s'%node_input[0] + ' top=' + n.name
+                for j in range(len_dim):
+                    line = line + ' dim=%d'%(map_nhwc_to_nchw[dims[j]])
+                line = line + '\n'
             else:
                 print('unknown op: %s '%(n.op))
 				
-            
-            fout.write(line)
-			
+            if line == '':
+                pass
+            else:
+                fout.write(line)
+
 fout.close()
 fout2.close()
