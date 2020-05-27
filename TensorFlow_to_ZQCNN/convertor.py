@@ -4,7 +4,7 @@ import tensorflow as tf
 from tensorflow.python.platform import gfile
 from tensorflow.python.framework import tensor_util
 import struct
-import os
+import os,sys
 import numpy as np
 
 def search_node(all_node, name):
@@ -125,17 +125,17 @@ def put_rnn_node_binaray_to_file_split(fout2, fw_kernel_node, fw_bias_node, bw_k
         nn3 = nn + hidden_dim*3
         for cc in range(input_dim):
             xc_I.append(fw_float_weights[nn0*C+cc])
-            xc_F.append(fw_float_weights[nn1*C+cc])
-            xc_G.append(fw_float_weights[nn2*C+cc])
+            xc_G.append(fw_float_weights[nn1*C+cc])
+            xc_F.append(fw_float_weights[nn2*C+cc])
             xc_O.append(fw_float_weights[nn3*C+cc])
         for cc in range(hidden_dim):
             hc_I.append(fw_float_weights[nn0*C+cc+input_dim])
-            hc_F.append(fw_float_weights[nn1*C+cc+input_dim])
-            hc_G.append(fw_float_weights[nn2*C+cc+input_dim])
+            hc_G.append(fw_float_weights[nn1*C+cc+input_dim])
+            hc_F.append(fw_float_weights[nn2*C+cc+input_dim])
             hc_O.append(fw_float_weights[nn3*C+cc+input_dim])
         bias_I.append(fw_float_bias[nn0])
-        bias_F.append(fw_float_bias[nn1])
-        bias_G.append(fw_float_bias[nn2])
+        bias_G.append(fw_float_bias[nn1])
+        bias_F.append(fw_float_bias[nn2])
         bias_O.append(fw_float_bias[nn3])
     
     xc = xc_I + xc_F + xc_O + xc_G
@@ -164,17 +164,17 @@ def put_rnn_node_binaray_to_file_split(fout2, fw_kernel_node, fw_bias_node, bw_k
         nn3 = nn + hidden_dim*3
         for cc in range(input_dim):
             xc_I.append(bw_float_weights[nn0*C+cc])
-            xc_F.append(bw_float_weights[nn1*C+cc])
-            xc_G.append(bw_float_weights[nn2*C+cc])
+            xc_G.append(bw_float_weights[nn1*C+cc])
+            xc_F.append(bw_float_weights[nn2*C+cc])
             xc_O.append(bw_float_weights[nn3*C+cc])
         for cc in range(hidden_dim):
             hc_I.append(bw_float_weights[nn0*C+cc+input_dim])
-            hc_F.append(bw_float_weights[nn1*C+cc+input_dim])
-            hc_G.append(bw_float_weights[nn2*C+cc+input_dim])
+            hc_G.append(bw_float_weights[nn1*C+cc+input_dim])
+            hc_F.append(bw_float_weights[nn2*C+cc+input_dim])
             hc_O.append(bw_float_weights[nn3*C+cc+input_dim])
         bias_I.append(bw_float_bias[nn0])
-        bias_F.append(bw_float_bias[nn1])
-        bias_G.append(bw_float_bias[nn2])
+        bias_G.append(bw_float_bias[nn1])
+        bias_F.append(bw_float_bias[nn2])
         bias_O.append(bw_float_bias[nn3])
 
     xc = xc + xc_I + xc_F + xc_O + xc_G
@@ -201,6 +201,7 @@ def put_rnn_node_binaray_to_file(fout2, fw_kernel_node, fw_bias_node, bw_kernel_
     fw_input_dim = fw_C - fw_hidden_dim
     fw_float_weights_ori = struct.unpack('<%df'%num_float, struct.pack('%dB'%num_bytes, *tensor_content))
     fw_float_weights = HWCN_to_NCHW(fw_float_weights_ori,fw_N,fw_C,1,1)
+    #fw_float_weights = fw_float_weights_ori
 
     #fw_bias    
     tensor = fw_bias_node.attr["value"]
@@ -226,6 +227,7 @@ def put_rnn_node_binaray_to_file(fout2, fw_kernel_node, fw_bias_node, bw_kernel_
     bw_input_dim = bw_C - bw_hidden_dim
     bw_float_weights_ori = struct.unpack('<%df'%num_float, struct.pack('%dB'%num_bytes, *tensor_content))
     bw_float_weights = HWCN_to_NCHW(bw_float_weights_ori,bw_N,bw_C,1,1)
+    #bw_float_weights = bw_float_weights_ori
     
     #bw_bias    
     tensor = bw_bias_node.attr["value"]
@@ -348,9 +350,9 @@ def _H_WNC_to_NCHW(in_data, N, C, H, W):
     return out_data
 
 os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
-GRAPH_PB_PATH = './model_vin2.pb' #path to your .pb file
-fout = open("model_vin2.zqparams","w")
-fout2 = open("model_vin2.nchwbin","wb")
+GRAPH_PB_PATH = './model_chn3.pb' #path to your .pb file
+fout = open("model_chn3.zqparams","w")
+fout2 = open("model_chn3.nchwbin","wb")
 with tf.Session() as sess:
     #print("load graph")
     with gfile.FastGFile(GRAPH_PB_PATH,'rb') as f:
@@ -431,7 +433,7 @@ with tf.Session() as sess:
                 fw_bias_node = search_node(all_node,fw_bias_name)
                 bw_kernel_node = search_node(all_node,bw_kernel_name)
                 bw_bias_node = search_node(all_node,bw_bias_name)
-                hidden_dim = put_rnn_node_binaray_to_file(fout2, fw_kernel_node, fw_bias_node, bw_kernel_node, bw_bias_node)
+                hidden_dim = put_rnn_node_binaray_to_file_split(fout2, fw_kernel_node, fw_bias_node, bw_kernel_node, bw_bias_node)
                 
                 line = 'LSTM_TF name=' + prefix_name + cell_name + ' bottom=%s top=%s type=2 hidden_dim=%d\n'%(input_name, output_name, hidden_dim)
                 fout.write(line)
@@ -607,8 +609,18 @@ with tf.Session() as sess:
                 bias_node = search_node(all_node,bias_name)
                 mean_node = search_node(all_node,mean_name)
                 variance_node = search_node(all_node,variance_name)
-                put_node_binaray_to_file(fout2, mean_node)
-                put_node_binaray_to_file(fout2, variance_node, False, True, eps)
+                if mean_node is None:
+                    print('Error: mean_node is None in FusedBatchNorm Layer name: %s'%(n.name))
+                    print('Maybe you forget to set training=False')
+                    sys.exit(0)
+                else:
+                    put_node_binaray_to_file(fout2, mean_node)
+                if variance_node is None:
+                    print('Error: mean_node is None in FusedBatchNorm Layer name: %s'%(n.name))
+                    print('Maybe you forget to set training=False')
+                    sys.exit(0)
+                else:
+                    put_node_binaray_to_file(fout2, variance_node, False, True, eps)
                 if scale_const_node is None:
                     pass
                 else:
