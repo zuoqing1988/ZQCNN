@@ -38,6 +38,7 @@ namespace ZQ
 		int ssd_C, ssd_H, ssd_W;
 		ZQ_CNN_Tensor4D_NHW_C_Align128bit pose_input;
 		int pose_C, pose_H, pose_W;
+		int pose_npts;
 	public:
 
 		bool Init(const std::string& ssd_proto_file, const std::string& ssd_model_file, const std::string& ssd_out_blob_name, int person_class_id,
@@ -70,7 +71,9 @@ namespace ZQ
 				printf("maybe the output blob name (%s) is incorrect\n", pose_out_blob_name.c_str());
 				return false;
 			}
-
+			int N, H, W;
+			pose_ptr->GetShape(N,pose_npts,H,W);
+			printf("npts = %d\n", pose_npts);
 			ssd_net.GetInputDim(ssd_C, ssd_H, ssd_W);
 			pose_net.GetInputDim(pose_C, pose_H, pose_W);
 			if (ssd_C != 3 || pose_C != 3)
@@ -487,6 +490,13 @@ namespace ZQ
 						bbox.col2 = result_data[5] * scale_X;
 						bbox.row2 = result_data[6] * scale_Y;
 						bbox.score = result_data[2];
+						if (pose_npts == 10)
+						{
+							int rect_w = bbox.col2 - bbox.col1;
+							int rect_h = bbox.row2 - bbox.row1;
+							rect_h = __min(rect_h, __max(rect_h*0.5, rect_w));
+							bbox.row2 = bbox.row1 + rect_h;
+						}
 						if (bbox.col2 - bbox.col1 >= 32 && bbox.row2 - bbox.row1 >= 32)
 						{
 							output.push_back(bbox);
