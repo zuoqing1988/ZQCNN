@@ -180,6 +180,7 @@
     <ClCompile Include="layers_c\zq_cnn_innerproduct_32f_align_c.c" />
     <ClCompile Include="layers_c\zq_cnn_innerproduct_gemm_32f_align_c.c" />
     <ClCompile Include="layers_c\zq_cnn_lrn_32f_align_c.c" />
+    <ClCompile Include="layers_c\zq_cnn_lstm_32f_align_c.c" />
     <ClCompile Include="layers_c\zq_cnn_normalize_32f_align_c.c" />
     <ClCompile Include="layers_c\zq_cnn_pooling_32f_align_c.c" />
     <ClCompile Include="layers_c\zq_cnn_prelu_32f_align_c.c" />
@@ -233,6 +234,8 @@
     <ClInclude Include="layers_c\zq_cnn_innerproduct_gemm_32f_align_c_raw.h" />
     <ClInclude Include="layers_c\zq_cnn_lrn_32f_align_c.h" />
     <ClInclude Include="layers_c\zq_cnn_lrn_32f_align_c_raw.h" />
+    <ClInclude Include="layers_c\zq_cnn_lstm_32f_align_c.h" />
+    <ClInclude Include="layers_c\zq_cnn_lstm_32f_align_c_raw.h" />
     <ClInclude Include="layers_c\zq_cnn_normalize_32f_align_c.h" />
     <ClInclude Include="layers_c\zq_cnn_normalize_32f_align_c_raw.h" />
     <ClInclude Include="layers_c\zq_cnn_pooling_32f_align_c.h" />

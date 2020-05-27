@@ -190,6 +190,7 @@ namespace ZQ
 			}
 			blobs[0] = &input;
 			
+			double sum_cost = 0;
 			for (int i = 0; i < layers.size(); i++)
 			{
 				std::vector<ZQ_CNN_Tensor4D*> bottom_ptrs, top_ptrs;
@@ -202,6 +203,7 @@ namespace ZQ
 				layers[i]->use_buffer = use_buffer;
 				layers[i]->buffer = &(_buffer.data);
 				layers[i]->buffer_len = &(_buffer.len);
+				double t1 = omp_get_wtime();
 				if (!layers[i]->Forward(&bottom_ptrs, &top_ptrs))
 				{
 					blobs[0] = 0;
@@ -209,6 +211,9 @@ namespace ZQ
 					printf("failed to run layer: %s\n", layers[i]->name.c_str());
 					return false;
 				}
+				double t2 = omp_get_wtime();
+				sum_cost += 1000 * (t2 - t1);
+				//printf("%.3f\n", 1000 * (t2 - t1));
 				/*printf("%d\n", i);
 				if (i == 69)
 				{
@@ -222,7 +227,7 @@ namespace ZQ
 //#endif
 //				top_ptrs[0]->SaveToFile(buf);
 			}
-			
+			//printf("sum=%.3f\n", sum_cost);
 			blobs[0] = 0;
 			tops[0][0] = 0;
 			return true;
@@ -673,6 +678,26 @@ namespace ZQ
 					}
 					layer_type_names.push_back("InnerProduct");
 				}
+				else if (ZQ_CNN_Layer::_my_strcmpi(&buf[0], "LSTM_TF") == 0)
+				{
+					if (layers.size() == 0)
+					{
+						std::cout << "Input layer must be the first!\n";
+						return false;
+					}
+
+					ZQ_CNN_Layer* cur_layer = new ZQ_CNN_Layer_LSTM_TF();
+					if (cur_layer == 0) {
+						std::cout << "failed to create a LSTM_TF layer!\n";
+						return false;
+					}
+					if (!_add_layer_and_blobs(cur_layer, line, false))
+					{
+						delete cur_layer;
+						return false;
+					}
+					layer_type_names.push_back("LSTM_TF");
+				}
 				else if (ZQ_CNN_Layer::_my_strcmpi(&buf[0], "Eltwise") == 0)
 				{
 					if (layers.size() == 0)
@@ -900,6 +925,25 @@ namespace ZQ
 						return false;
 					}
 					layer_type_names.push_back("Reshape");
+				}
+				else if (ZQ_CNN_Layer::_my_strcmpi(&buf[0], "Squeeze") == 0)
+				{
+					if (layers.size() == 0)
+					{
+						std::cout << "Input layer must be the first!\n";
+						return false;
+					}
+					ZQ_CNN_Layer* cur_layer = new ZQ_CNN_Layer_Squeeze();
+					if (cur_layer == 0) {
+						std::cout << "failed to create a Squeeze layer!\n";
+						return false;
+					}
+					if (!_add_layer_and_blobs(cur_layer, line, false))
+					{
+						delete cur_layer;
+						return false;
+					}
+					layer_type_names.push_back("Squeeze");
 				}
 				else if (ZQ_CNN_Layer::_my_strcmpi(&buf[0], "PriorBox") == 0)
 				{

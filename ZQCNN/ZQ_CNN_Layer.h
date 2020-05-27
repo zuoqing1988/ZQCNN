@@ -4264,6 +4264,1824 @@ namespace ZQ
 
 	};
 
+	class ZQ_CNN_Layer_LSTM_TF : public ZQ_CNN_Layer
+	{
+	public:
+
+		ZQ_CNN_Tensor4D* fw_xc_I, *fw_xc_F, *fw_xc_O, *fw_xc_G;
+		ZQ_CNN_Tensor4D* fw_hc_I, *fw_hc_F, *fw_hc_O, *fw_hc_G;
+		ZQ_CNN_Tensor4D* fw_b_I, *fw_b_F, *fw_b_O, *fw_b_G;
+		ZQ_CNN_Tensor4D* bw_xc_I, *bw_xc_F, *bw_xc_O, *bw_xc_G;
+		ZQ_CNN_Tensor4D* bw_hc_I, *bw_hc_F, *bw_hc_O, *bw_hc_G;
+		ZQ_CNN_Tensor4D* bw_b_I, *bw_b_F, *bw_b_O, *bw_b_G;
+		int hidden_dim;
+		int type; // 0: fw, 1: bw, 2: bidir 
+		bool fw_dir, bw_dir;
+		float forget_bias;
+		float cell_clip;
+		//
+		int bottom_C;
+		int bottom_H;
+		int bottom_W;
+
+		ZQ_CNN_Layer_LSTM_TF() :fw_xc_I(0), fw_xc_F(0), fw_xc_O(0), fw_xc_G(0),
+			fw_hc_I(0), fw_hc_F(0), fw_hc_O(0), fw_hc_G(0),
+			fw_b_I(0), fw_b_F(0),fw_b_O(0),fw_b_G(0),
+			bw_xc_I(0), bw_xc_F(0), bw_xc_O(0), bw_xc_G(0),
+			bw_hc_I(0), bw_hc_F(0), bw_hc_O(0), bw_hc_G(0),
+			bw_b_I(0), bw_b_F(0), bw_b_O(0), bw_b_G(0),
+			forget_bias(1.0), cell_clip(3.0)
+			{}
+		~ZQ_CNN_Layer_LSTM_TF()
+		{
+			if (fw_xc_I) delete fw_xc_I;
+			if (fw_xc_F) delete fw_xc_F;
+			if (fw_xc_O) delete fw_xc_O;
+			if (fw_xc_G) delete fw_xc_G;
+			if (fw_hc_I) delete fw_hc_I;
+			if (fw_hc_F) delete fw_hc_F;
+			if (fw_hc_O) delete fw_hc_O;
+			if (fw_hc_G) delete fw_hc_G;
+			if (fw_b_I) delete fw_b_I;
+			if (fw_b_F) delete fw_b_F;
+			if (fw_b_O) delete fw_b_O;
+			if (fw_b_G) delete fw_b_G;
+			if (bw_xc_I) delete bw_xc_I;
+			if (bw_xc_F) delete bw_xc_F;
+			if (bw_xc_O) delete bw_xc_O;
+			if (bw_xc_G) delete bw_xc_G;
+			if (bw_hc_I) delete bw_hc_I;
+			if (bw_hc_F) delete bw_hc_F;
+			if (bw_hc_O) delete bw_hc_O;
+			if (bw_hc_G) delete bw_hc_G;
+			if (bw_b_I) delete bw_b_I;
+			if (bw_b_F) delete bw_b_F;
+			if (bw_b_O) delete bw_b_O;
+			if (bw_b_G) delete bw_b_G;
+		}
+		virtual bool Forward(std::vector<ZQ_CNN_Tensor4D*>* bottoms, std::vector<ZQ_CNN_Tensor4D*>* tops)
+		{
+			if (bottoms == 0 || tops == 0 || bottoms->size() == 0 || tops->size() == 0 || (*bottoms)[0] == 0 || (*tops)[0] == 0)
+				return false;
+
+			if (fw_xc_I == 0 || fw_xc_F == 0 || fw_xc_O == 0 || fw_xc_G == 0
+				|| fw_hc_I == 0 || fw_hc_F == 0 || fw_hc_O == 0 || fw_hc_G == 0
+				|| fw_b_I == 0 || fw_b_F == 0 || fw_b_O == 0 || fw_b_G == 0
+				|| bw_xc_I == 0 || bw_xc_F == 0 || bw_xc_O == 0 || bw_xc_G == 0
+				|| bw_hc_I == 0 || bw_hc_F == 0 || bw_hc_O == 0 || bw_hc_G == 0
+				|| bw_b_I == 0 || bw_b_F == 0 || bw_b_O == 0 || bw_b_G == 0)
+				return false;
+			double t1 = omp_get_wtime();
+			void** tmp_buffer = use_buffer ? buffer : 0;
+			__int64* tmp_buffer_len = use_buffer ? buffer_len : 0;
+			bool ret = ZQ_CNN_Forward_SSEUtils::LSTM_TF(*((*bottoms)[0]),
+				*fw_xc_I, *fw_xc_F, *fw_xc_O, *fw_xc_G,
+				*fw_hc_I, *fw_hc_F, *fw_hc_O, *fw_hc_G,
+				*fw_b_I, *fw_b_F, *fw_b_O, *fw_b_G,
+				*bw_xc_I, *bw_xc_F, *bw_xc_O, *bw_xc_G,
+				*bw_hc_I, *bw_hc_F, *bw_hc_O, *bw_hc_G,
+				*bw_b_I, *bw_b_F, *bw_b_O, *bw_b_G,
+				*((*tops)[0]), fw_dir, bw_dir, forget_bias, cell_clip, tmp_buffer, tmp_buffer_len);
+			double t2 = omp_get_wtime();
+			last_cost_time = t2 - t1;
+			double mop = GetNumOfMulAdd();
+			mop /= 1024 * 1024;
+			if (show_debug_info)
+			{
+				double time = __max(1000 * (t2 - t1), 1e-9);
+				printf("LSTM layer: %.3f ms NWC %dx%dx%d hidden:%d MUL=%.3f M, GFLOPS=%.3f\n",
+					1000 * (t2 - t1), (*tops)[0]->GetN(), (*tops)[0]->GetW(), (*tops)[0]->GetC(), hidden_dim, mop, mop / time);
+			}
+			return ret;
+
+
+		}
+
+		virtual bool ReadParam(const std::string& line)
+		{
+			bottom_names.clear();
+			top_names.clear();
+			std::vector<std::vector<std::string> > paras = split_line(line);
+			int num = paras.size();
+			bool has_hidden_dim = false, has_type = false;
+			bool has_top = false, has_bottom = false, has_name = false;
+			for (int n = 0; n < num; n++)
+			{
+				if (paras[n].size() == 0)
+					continue;
+				if (_my_strcmpi("LSTM_TF", paras[n][0].c_str()) == 0)
+				{
+
+				}
+				else if (_my_strcmpi("hidden_dim", paras[n][0].c_str()) == 0)
+				{
+					if (paras[n].size() >= 2)
+					{
+						has_hidden_dim = true;
+						hidden_dim = atoi(paras[n][1].c_str());
+					}
+				}
+				else if (_my_strcmpi("type", paras[n][0].c_str()) == 0)
+				{
+					if (paras[n].size() >= 2)
+					{
+						has_type = true;
+						type = atoi(paras[n][1].c_str());
+						if (type == 0)
+						{
+							fw_dir = true;
+							bw_dir = false;
+						}
+						else if (type == 1)
+						{
+							fw_dir = false;
+							bw_dir = true;
+						}
+						else
+						{
+							fw_dir = true;
+							bw_dir = true;
+						}
+					}
+				}
+				else if (_my_strcmpi("forget_bias", paras[n][0].c_str()) == 0)
+				{
+					if (paras[n].size() >= 2)
+					{
+						forget_bias = atof(paras[n][1].c_str());
+					}
+				}
+				else if (_my_strcmpi("cell_clip", paras[n][0].c_str()) == 0)
+				{
+					if (paras[n].size() >= 2)
+					{
+						cell_clip = atof(paras[n][1].c_str());
+					}
+				}
+				else if (_my_strcmpi("top", paras[n][0].c_str()) == 0)
+				{
+					if (paras[n].size() >= 2)
+					{
+						has_top = true;
+						top_names.push_back(paras[n][1]);
+					}
+				}
+				else if (_my_strcmpi("bottom", paras[n][0].c_str()) == 0)
+				{
+					if (paras[n].size() >= 2)
+					{
+						has_bottom = true;
+						bottom_names.push_back(paras[n][1]);
+					}
+				}
+				else if (_my_strcmpi("name", paras[n][0].c_str()) == 0)
+				{
+					if (paras[n].size() >= 2)
+					{
+						has_name = true;
+						name = paras[n][1];
+					}
+				}
+				else
+				{
+					std::cout << "warning: unknown para " << paras[n][0] << " in Layer " << name << "\n";
+				}
+			}
+			if (!has_hidden_dim)std::cout << "Layer " << name << " missing " << "hidden_dim\n";
+			if (!has_type)std::cout << "Layer " << name << " missing " << "type\n";
+			if (!has_bottom)std::cout << "Layer " << name << " missing " << "bottom\n";
+			if (!has_top)std::cout << "Layer " << name << " missing " << "top\n";
+			if (!has_name) {
+				std::cout << "Layer " << name << " missing " << "name\n";
+				std::cout << line << "\n";
+			}
+			return has_hidden_dim && has_type && has_bottom && has_top && has_name;
+		}
+
+		virtual bool LayerSetup(std::vector<ZQ_CNN_Tensor4D*>* bottoms, std::vector<ZQ_CNN_Tensor4D*>* tops)
+		{
+			if (bottoms == 0 || tops == 0 || bottoms->size() == 0 || (*bottoms)[0] == 0 || tops->size() == 0 || (*tops)[0] == 0)
+				return false;
+			int bottom_N, bottom_C, bottom_H, bottom_W;
+			(*bottoms)[0]->GetShape(bottom_N, bottom_C, bottom_H, bottom_W);
+			if (!SetBottomDim(bottom_C, bottom_H, bottom_W))
+				return false;
+			int top_C, top_H, top_W;
+			GetTopDim(top_C, top_H, top_W);
+			(*tops)[0]->SetShape(bottom_N, top_C, top_H, top_W);
+			return true;
+		}
+
+		//should called after ReadParam, allocate memory in this func
+		virtual bool SetBottomDim(int bottom_C, int bottom_H, int bottom_W)
+		{
+			this->bottom_C = bottom_C;
+			this->bottom_H = bottom_H;
+			this->bottom_W = bottom_W;
+			if (fw_xc_I)
+			{
+				if (fw_dir)
+				{
+					if (fw_xc_I->ChangeSize(hidden_dim, 1, 1, bottom_C, 0, 0))
+						return false;
+				}
+			}
+			else
+			{
+				fw_xc_I = new ZQ_CNN_Tensor4D_NHW_C_Align256bit();
+				if (fw_xc_I == 0) return false;
+				if (fw_dir)
+				{
+					if (!fw_xc_I->ChangeSize(hidden_dim, 1, 1, bottom_C, 0, 0))
+						return false;
+				}
+			}
+			if (fw_xc_F)
+			{
+				if (fw_dir)
+				{
+					if (fw_xc_F->ChangeSize(hidden_dim, 1, 1, bottom_C, 0, 0))
+						return false;
+				}
+			}
+			else
+			{
+				fw_xc_F = new ZQ_CNN_Tensor4D_NHW_C_Align256bit();
+				if (fw_xc_F == 0) return false;
+				if (fw_dir)
+				{
+					if (!fw_xc_F->ChangeSize(hidden_dim, 1, 1, bottom_C, 0, 0))
+						return false;
+				}
+			}
+			
+			if (fw_xc_O)
+			{
+				if (fw_dir)
+				{
+					if (fw_xc_O->ChangeSize(hidden_dim, 1, 1, bottom_C, 0, 0))
+						return false;
+				}
+			}
+			else
+			{
+				fw_xc_O = new ZQ_CNN_Tensor4D_NHW_C_Align256bit();
+				if (fw_xc_O == 0) return false;
+				if (fw_dir)
+				{
+					if (!fw_xc_O->ChangeSize(hidden_dim, 1, 1, bottom_C, 0, 0))
+						return false;
+				}
+			}
+
+			if (fw_xc_G)
+			{
+				if (fw_dir)
+				{
+					if (fw_xc_G->ChangeSize(hidden_dim, 1, 1, bottom_C, 0, 0))
+						return false;
+				}
+			}
+			else
+			{
+				fw_xc_G = new ZQ_CNN_Tensor4D_NHW_C_Align256bit();
+				if (fw_xc_G == 0) return false;
+				if (fw_dir)
+				{
+					if (!fw_xc_G->ChangeSize(hidden_dim, 1, 1, bottom_C, 0, 0))
+						return false;
+				}
+			}
+
+			if (fw_hc_I)
+			{
+				if (fw_dir)
+				{
+					if (fw_hc_I->ChangeSize(hidden_dim, 1, 1, hidden_dim, 0, 0))
+						return false;
+				}
+			}
+			else
+			{
+				fw_hc_I = new ZQ_CNN_Tensor4D_NHW_C_Align256bit();
+				if (fw_hc_I == 0) return false;
+				if (fw_dir)
+				{
+					if (!fw_hc_I->ChangeSize(hidden_dim, 1, 1, hidden_dim, 0, 0))
+						return false;
+				}
+			}
+
+			if (fw_hc_F)
+			{
+				if (fw_dir)
+				{
+					if (fw_hc_F->ChangeSize(hidden_dim, 1, 1, hidden_dim, 0, 0))
+						return false;
+				}
+			}
+			else
+			{
+				fw_hc_F = new ZQ_CNN_Tensor4D_NHW_C_Align256bit();
+				if (fw_hc_F == 0) return false;
+				if (fw_dir)
+				{
+					if (!fw_hc_F->ChangeSize(hidden_dim, 1, 1, hidden_dim, 0, 0))
+						return false;
+				}
+			}
+
+			if (fw_hc_O)
+			{
+				if (fw_dir)
+				{
+					if (fw_hc_O->ChangeSize(hidden_dim, 1, 1, hidden_dim, 0, 0))
+						return false;
+				}
+			}
+			else
+			{
+				fw_hc_O = new ZQ_CNN_Tensor4D_NHW_C_Align256bit();
+				if (fw_hc_O == 0) return false;
+				if (fw_dir)
+				{
+					if (!fw_hc_O->ChangeSize(hidden_dim, 1, 1, hidden_dim, 0, 0))
+						return false;
+				}
+			}
+
+			if (fw_hc_G)
+			{
+				if (fw_dir)
+				{
+					if (fw_hc_G->ChangeSize(hidden_dim, 1, 1, hidden_dim, 0, 0))
+						return false;
+				}
+			}
+			else
+			{
+				fw_hc_G = new ZQ_CNN_Tensor4D_NHW_C_Align256bit();
+				if (fw_hc_G == 0) return false;
+				if (fw_dir)
+				{
+					if (!fw_hc_G->ChangeSize(hidden_dim, 1, 1, hidden_dim, 0, 0))
+						return false;
+				}
+			}
+
+			if (fw_b_I)
+			{
+				if (fw_dir)
+				{
+					if (fw_b_I->ChangeSize(1, 1, 1, hidden_dim, 0, 0))
+						return false;
+				}
+			}
+			else
+			{
+				fw_b_I = new ZQ_CNN_Tensor4D_NHW_C_Align256bit();
+				if (fw_b_I == 0) return false;
+				if (fw_dir)
+				{
+					if (!fw_b_I->ChangeSize(1, 1, 1, hidden_dim, 0, 0))
+						return false;
+				}
+			}
+
+			if (fw_b_F)
+			{
+				if (fw_dir)
+				{
+					if (fw_b_F->ChangeSize(1, 1, 1, hidden_dim, 0, 0))
+						return false;
+				}
+			}
+			else
+			{
+				fw_b_F = new ZQ_CNN_Tensor4D_NHW_C_Align256bit();
+				if (fw_b_F == 0) return false;
+				if (fw_dir)
+				{
+					if (!fw_b_F->ChangeSize(1, 1, 1, hidden_dim, 0, 0))
+						return false;
+				}
+			}
+
+			if (fw_b_O)
+			{
+				if (fw_dir)
+				{
+					if (fw_b_O->ChangeSize(1, 1, 1, hidden_dim, 0, 0))
+						return false;
+				}
+			}
+			else
+			{
+				fw_b_O = new ZQ_CNN_Tensor4D_NHW_C_Align256bit();
+				if (fw_b_O == 0) return false;
+				if (fw_dir)
+				{
+					if (!fw_b_O->ChangeSize(1, 1, 1, hidden_dim, 0, 0))
+						return false;
+				}
+			}
+
+			if (fw_b_G)
+			{
+				if (fw_dir)
+				{
+					if (fw_b_G->ChangeSize(1, 1, 1, hidden_dim, 0, 0))
+						return false;
+				}
+			}
+			else
+			{
+				fw_b_G = new ZQ_CNN_Tensor4D_NHW_C_Align256bit();
+				if (fw_b_G == 0) return false;
+				if (fw_dir)
+				{
+					if (!fw_b_G->ChangeSize(1, 1, 1, hidden_dim, 0, 0))
+						return false;
+				}
+			}
+
+			if (bw_xc_I)
+			{
+				if (bw_dir)
+				{
+					if (bw_xc_I->ChangeSize(hidden_dim, 1, 1, bottom_C, 0, 0))
+						return false;
+				}
+			}
+			else
+			{
+				bw_xc_I = new ZQ_CNN_Tensor4D_NHW_C_Align256bit();
+				if (bw_xc_I == 0) return false;
+				if (bw_dir)
+				{
+					if (!bw_xc_I->ChangeSize(hidden_dim, 1, 1, bottom_C, 0, 0))
+						return false;
+				}
+			}
+			if (bw_xc_F)
+			{
+				if (bw_dir)
+				{
+					if (bw_xc_F->ChangeSize(hidden_dim, 1, 1, bottom_C, 0, 0))
+						return false;
+				}
+			}
+			else
+			{
+				bw_xc_F = new ZQ_CNN_Tensor4D_NHW_C_Align256bit();
+				if (bw_xc_F == 0) return false;
+				if (bw_dir)
+				{
+					if (!bw_xc_F->ChangeSize(hidden_dim, 1, 1, bottom_C, 0, 0))
+						return false;
+				}
+			}
+
+			if (bw_xc_O)
+			{
+				if (bw_dir)
+				{
+					if (bw_xc_O->ChangeSize(hidden_dim, 1, 1, bottom_C, 0, 0))
+						return false;
+				}
+			}
+			else
+			{
+				bw_xc_O = new ZQ_CNN_Tensor4D_NHW_C_Align256bit();
+				if (bw_xc_O == 0) return false;
+				if (bw_dir)
+				{
+					if (!bw_xc_O->ChangeSize(hidden_dim, 1, 1, bottom_C, 0, 0))
+						return false;
+				}
+			}
+
+			if (bw_xc_G)
+			{
+				if (bw_dir)
+				{
+					if (bw_xc_G->ChangeSize(hidden_dim, 1, 1, bottom_C, 0, 0))
+						return false;
+				}
+			}
+			else
+			{
+				bw_xc_G = new ZQ_CNN_Tensor4D_NHW_C_Align256bit();
+				if (bw_xc_G == 0) return false;
+				if (bw_dir)
+				{
+					if (!bw_xc_G->ChangeSize(hidden_dim, 1, 1, bottom_C, 0, 0))
+						return false;
+				}
+			}
+
+			if (bw_hc_I)
+			{
+				if (bw_dir)
+				{
+					if (bw_hc_I->ChangeSize(hidden_dim, 1, 1, hidden_dim, 0, 0))
+						return false;
+				}
+			}
+			else
+			{
+				bw_hc_I = new ZQ_CNN_Tensor4D_NHW_C_Align256bit();
+				if (bw_hc_I == 0) return false;
+				if (bw_dir)
+				{
+					if (!bw_hc_I->ChangeSize(hidden_dim, 1, 1, hidden_dim, 0, 0))
+						return false;
+				}
+			}
+
+			if (bw_hc_F)
+			{
+				if (bw_dir)
+				{
+					if (bw_hc_F->ChangeSize(hidden_dim, 1, 1, hidden_dim, 0, 0))
+						return false;
+				}
+			}
+			else
+			{
+				bw_hc_F = new ZQ_CNN_Tensor4D_NHW_C_Align256bit();
+				if (bw_hc_F == 0) return false;
+				if (bw_dir)
+				{
+					if (!bw_hc_F->ChangeSize(hidden_dim, 1, 1, hidden_dim, 0, 0))
+						return false;
+				}
+			}
+
+			if (bw_hc_O)
+			{
+				if (bw_dir)
+				{
+					if (bw_hc_O->ChangeSize(hidden_dim, 1, 1, hidden_dim, 0, 0))
+						return false;
+				}
+			}
+			else
+			{
+				bw_hc_O = new ZQ_CNN_Tensor4D_NHW_C_Align256bit();
+				if (bw_hc_O == 0) return false;
+				if (bw_dir)
+				{
+					if (!bw_hc_O->ChangeSize(hidden_dim, 1, 1, hidden_dim, 0, 0))
+						return false;
+				}
+			}
+
+			if (bw_hc_G)
+			{
+				if (bw_dir)
+				{
+					if (bw_hc_G->ChangeSize(hidden_dim, 1, 1, hidden_dim, 0, 0))
+						return false;
+				}
+			}
+			else
+			{
+				bw_hc_G = new ZQ_CNN_Tensor4D_NHW_C_Align256bit();
+				if (bw_hc_G == 0) return false;
+				if (bw_dir)
+				{
+					if (!bw_hc_G->ChangeSize(hidden_dim, 1, 1, hidden_dim, 0, 0))
+						return false;
+				}
+			}
+
+			if (bw_b_I)
+			{
+				if (bw_dir)
+				{
+					if (bw_b_I->ChangeSize(1, 1, 1, hidden_dim, 0, 0))
+						return false;
+				}
+			}
+			else
+			{
+				bw_b_I = new ZQ_CNN_Tensor4D_NHW_C_Align256bit();
+				if (bw_b_I == 0) return false;
+				if (bw_dir)
+				{
+					if (!bw_b_I->ChangeSize(1, 1, 1, hidden_dim, 0, 0))
+						return false;
+				}
+			}
+
+			if (bw_b_F)
+			{
+				if (bw_dir)
+				{
+					if (bw_b_F->ChangeSize(1, 1, 1, hidden_dim, 0, 0))
+						return false;
+				}
+			}
+			else
+			{
+				bw_b_F = new ZQ_CNN_Tensor4D_NHW_C_Align256bit();
+				if (bw_b_F == 0) return false;
+				if (bw_dir)
+				{
+					if (!bw_b_F->ChangeSize(1, 1, 1, hidden_dim, 0, 0))
+						return false;
+				}
+			}
+
+			if (bw_b_O)
+			{
+				if (bw_dir)
+				{
+					if (bw_b_O->ChangeSize(1, 1, 1, hidden_dim, 0, 0))
+						return false;
+				}
+			}
+			else
+			{
+				bw_b_O = new ZQ_CNN_Tensor4D_NHW_C_Align256bit();
+				if (bw_b_O == 0) return false;
+				if (bw_dir)
+				{
+					if (!bw_b_O->ChangeSize(1, 1, 1, hidden_dim, 0, 0))
+						return false;
+				}
+			}
+
+			if (bw_b_G)
+			{
+				if (bw_dir)
+				{
+					if (bw_b_G->ChangeSize(1, 1, 1, hidden_dim, 0, 0))
+						return false;
+				}
+			}
+			else
+			{
+				bw_b_G = new ZQ_CNN_Tensor4D_NHW_C_Align256bit();
+				if (bw_b_G == 0) return false;
+				if (bw_dir)
+				{
+					if (!bw_b_G->ChangeSize(1, 1, 1, hidden_dim, 0, 0))
+						return false;
+				}
+			}
+
+			return true;
+		}
+
+		//should called after SetBottomDim
+		virtual void GetTopDim(int& top_C, int& top_H, int& top_W) const
+		{
+			top_C = 0;
+			if (fw_dir) top_C += hidden_dim;
+			if (bw_dir) top_C += hidden_dim;
+			top_H = 1;
+			top_W = bottom_W;
+		}
+
+		virtual bool SwapInputRGBandBGR()
+		{
+			return true;
+		};
+
+		//should be called after ZQ_CNN_Net have allocated necessery data
+		virtual bool LoadBinary_NCHW(FILE* in)
+		{
+			if (fw_dir)
+			{
+				int dst_len = fw_xc_I->GetN() * fw_xc_I->GetH() * fw_xc_I->GetW() * fw_xc_I->GetC();
+				if (dst_len <= 0)
+					return false;
+				std::vector<float> nchw_raw(dst_len);
+				int readed_len = fread_s(&nchw_raw[0], dst_len * sizeof(float), sizeof(float), dst_len, in);
+				if (dst_len != readed_len)
+					return false;
+				if (ignore_small_value != 0)
+				{
+					for (int i = 0; i < dst_len; i++)
+					{
+						if (fabs(nchw_raw[i]) < ignore_small_value)
+							nchw_raw[i] = 0;
+					}
+				}
+				fw_xc_I->ConvertFromCompactNCHW(&nchw_raw[0], fw_xc_I->GetN(), fw_xc_I->GetC(), fw_xc_I->GetH(), fw_xc_I->GetW());
+				
+				dst_len = fw_xc_F->GetN() * fw_xc_F->GetH() * fw_xc_F->GetW() * fw_xc_F->GetC();
+				if (dst_len <= 0)
+					return false;
+				nchw_raw.resize(dst_len);
+				readed_len = fread_s(&nchw_raw[0], dst_len * sizeof(float), sizeof(float), dst_len, in);
+				if (dst_len != readed_len)
+					return false;
+				if (ignore_small_value != 0)
+				{
+					for (int i = 0; i < dst_len; i++)
+					{
+						if (fabs(nchw_raw[i]) < ignore_small_value)
+							nchw_raw[i] = 0;
+					}
+				}
+				fw_xc_F->ConvertFromCompactNCHW(&nchw_raw[0], fw_xc_F->GetN(), fw_xc_F->GetC(), fw_xc_F->GetH(), fw_xc_F->GetW());
+
+				dst_len = fw_xc_O->GetN() * fw_xc_O->GetH() * fw_xc_O->GetW() * fw_xc_O->GetC();
+				if (dst_len <= 0)
+					return false;
+				nchw_raw.resize(dst_len);
+				readed_len = fread_s(&nchw_raw[0], dst_len * sizeof(float), sizeof(float), dst_len, in);
+				if (dst_len != readed_len)
+					return false;
+				if (ignore_small_value != 0)
+				{
+					for (int i = 0; i < dst_len; i++)
+					{
+						if (fabs(nchw_raw[i]) < ignore_small_value)
+							nchw_raw[i] = 0;
+					}
+				}
+				fw_xc_O->ConvertFromCompactNCHW(&nchw_raw[0], fw_xc_O->GetN(), fw_xc_O->GetC(), fw_xc_O->GetH(), fw_xc_O->GetW());
+
+				dst_len = fw_xc_G->GetN() * fw_xc_G->GetH() * fw_xc_G->GetW() * fw_xc_G->GetC();
+				if (dst_len <= 0)
+					return false;
+				nchw_raw.resize(dst_len);
+				readed_len = fread_s(&nchw_raw[0], dst_len * sizeof(float), sizeof(float), dst_len, in);
+				if (dst_len != readed_len)
+					return false;
+				if (ignore_small_value != 0)
+				{
+					for (int i = 0; i < dst_len; i++)
+					{
+						if (fabs(nchw_raw[i]) < ignore_small_value)
+							nchw_raw[i] = 0;
+					}
+				}
+				fw_xc_G->ConvertFromCompactNCHW(&nchw_raw[0], fw_xc_G->GetN(), fw_xc_G->GetC(), fw_xc_G->GetH(), fw_xc_G->GetW());
+			}
+
+			if (bw_dir)
+			{
+				int dst_len = bw_xc_I->GetN() * bw_xc_I->GetH() * bw_xc_I->GetW() * bw_xc_I->GetC();
+				if (dst_len <= 0)
+					return false;
+				std::vector<float> nchw_raw(dst_len);
+				int readed_len = fread_s(&nchw_raw[0], dst_len * sizeof(float), sizeof(float), dst_len, in);
+				if (dst_len != readed_len)
+					return false;
+				if (ignore_small_value != 0)
+				{
+					for (int i = 0; i < dst_len; i++)
+					{
+						if (fabs(nchw_raw[i]) < ignore_small_value)
+							nchw_raw[i] = 0;
+					}
+				}
+				bw_xc_I->ConvertFromCompactNCHW(&nchw_raw[0], bw_xc_I->GetN(), bw_xc_I->GetC(), bw_xc_I->GetH(), bw_xc_I->GetW());
+
+				dst_len = bw_xc_F->GetN() * bw_xc_F->GetH() * bw_xc_F->GetW() * bw_xc_F->GetC();
+				if (dst_len <= 0)
+					return false;
+				nchw_raw.resize(dst_len);
+				readed_len = fread_s(&nchw_raw[0], dst_len * sizeof(float), sizeof(float), dst_len, in);
+				if (dst_len != readed_len)
+					return false;
+				if (ignore_small_value != 0)
+				{
+					for (int i = 0; i < dst_len; i++)
+					{
+						if (fabs(nchw_raw[i]) < ignore_small_value)
+							nchw_raw[i] = 0;
+					}
+				}
+				bw_xc_F->ConvertFromCompactNCHW(&nchw_raw[0], bw_xc_F->GetN(), bw_xc_F->GetC(), bw_xc_F->GetH(), bw_xc_F->GetW());
+
+				dst_len = bw_xc_O->GetN() * bw_xc_O->GetH() * bw_xc_O->GetW() * bw_xc_O->GetC();
+				if (dst_len <= 0)
+					return false;
+				nchw_raw.resize(dst_len);
+				readed_len = fread_s(&nchw_raw[0], dst_len * sizeof(float), sizeof(float), dst_len, in);
+				if (dst_len != readed_len)
+					return false;
+				if (ignore_small_value != 0)
+				{
+					for (int i = 0; i < dst_len; i++)
+					{
+						if (fabs(nchw_raw[i]) < ignore_small_value)
+							nchw_raw[i] = 0;
+					}
+				}
+				bw_xc_O->ConvertFromCompactNCHW(&nchw_raw[0], bw_xc_O->GetN(), bw_xc_O->GetC(), bw_xc_O->GetH(), bw_xc_O->GetW());
+
+				dst_len = bw_xc_G->GetN() * bw_xc_G->GetH() * bw_xc_G->GetW() * bw_xc_G->GetC();
+				if (dst_len <= 0)
+					return false;
+				nchw_raw.resize(dst_len);
+				readed_len = fread_s(&nchw_raw[0], dst_len * sizeof(float), sizeof(float), dst_len, in);
+				if (dst_len != readed_len)
+					return false;
+				if (ignore_small_value != 0)
+				{
+					for (int i = 0; i < dst_len; i++)
+					{
+						if (fabs(nchw_raw[i]) < ignore_small_value)
+							nchw_raw[i] = 0;
+					}
+				}
+				bw_xc_G->ConvertFromCompactNCHW(&nchw_raw[0], bw_xc_G->GetN(), bw_xc_G->GetC(), bw_xc_G->GetH(), bw_xc_G->GetW());
+			}
+
+			if (fw_dir)
+			{
+				int dst_len = fw_b_I->GetN() * fw_b_I->GetH() * fw_b_I->GetW() * fw_b_I->GetC();
+				if (dst_len <= 0)
+					return false;
+				std::vector<float> nchw_raw(dst_len);
+				int readed_len = fread_s(&nchw_raw[0], dst_len * sizeof(float), sizeof(float), dst_len, in);
+				if (dst_len != readed_len)
+					return false;
+				if (ignore_small_value != 0)
+				{
+					for (int i = 0; i < dst_len; i++)
+					{
+						if (fabs(nchw_raw[i]) < ignore_small_value)
+							nchw_raw[i] = 0;
+					}
+				}
+				fw_b_I->ConvertFromCompactNCHW(&nchw_raw[0], fw_b_I->GetN(), fw_b_I->GetC(), fw_b_I->GetH(), fw_b_I->GetW());
+
+				dst_len = fw_b_F->GetN() * fw_b_F->GetH() * fw_b_F->GetW() * fw_b_F->GetC();
+				if (dst_len <= 0)
+					return false;
+				nchw_raw.resize(dst_len);
+				readed_len = fread_s(&nchw_raw[0], dst_len * sizeof(float), sizeof(float), dst_len, in);
+				if (dst_len != readed_len)
+					return false;
+				if (ignore_small_value != 0)
+				{
+					for (int i = 0; i < dst_len; i++)
+					{
+						if (fabs(nchw_raw[i]) < ignore_small_value)
+							nchw_raw[i] = 0;
+					}
+				}
+				fw_b_F->ConvertFromCompactNCHW(&nchw_raw[0], fw_b_F->GetN(), fw_b_F->GetC(), fw_b_F->GetH(), fw_b_F->GetW());
+
+				dst_len = fw_b_O->GetN() * fw_b_O->GetH() * fw_b_O->GetW() * fw_b_O->GetC();
+				if (dst_len <= 0)
+					return false;
+				nchw_raw.resize(dst_len);
+				readed_len = fread_s(&nchw_raw[0], dst_len * sizeof(float), sizeof(float), dst_len, in);
+				if (dst_len != readed_len)
+					return false;
+				if (ignore_small_value != 0)
+				{
+					for (int i = 0; i < dst_len; i++)
+					{
+						if (fabs(nchw_raw[i]) < ignore_small_value)
+							nchw_raw[i] = 0;
+					}
+				}
+				fw_b_O->ConvertFromCompactNCHW(&nchw_raw[0], fw_b_O->GetN(), fw_b_O->GetC(), fw_b_O->GetH(), fw_b_O->GetW());
+
+				dst_len = fw_b_G->GetN() * fw_b_G->GetH() * fw_b_G->GetW() * fw_b_G->GetC();
+				if (dst_len <= 0)
+					return false;
+				nchw_raw.resize(dst_len);
+				readed_len = fread_s(&nchw_raw[0], dst_len * sizeof(float), sizeof(float), dst_len, in);
+				if (dst_len != readed_len)
+					return false;
+				if (ignore_small_value != 0)
+				{
+					for (int i = 0; i < dst_len; i++)
+					{
+						if (fabs(nchw_raw[i]) < ignore_small_value)
+							nchw_raw[i] = 0;
+					}
+				}
+				fw_b_G->ConvertFromCompactNCHW(&nchw_raw[0], fw_b_G->GetN(), fw_b_G->GetC(), fw_b_G->GetH(), fw_b_G->GetW());
+			}
+
+			if (bw_dir)
+			{
+				int dst_len = bw_b_I->GetN() * bw_b_I->GetH() * bw_b_I->GetW() * bw_b_I->GetC();
+				if (dst_len <= 0)
+					return false;
+				std::vector<float> nchw_raw(dst_len);
+				int readed_len = fread_s(&nchw_raw[0], dst_len * sizeof(float), sizeof(float), dst_len, in);
+				if (dst_len != readed_len)
+					return false;
+				if (ignore_small_value != 0)
+				{
+					for (int i = 0; i < dst_len; i++)
+					{
+						if (fabs(nchw_raw[i]) < ignore_small_value)
+							nchw_raw[i] = 0;
+					}
+				}
+				bw_b_I->ConvertFromCompactNCHW(&nchw_raw[0], bw_b_I->GetN(), bw_b_I->GetC(), bw_b_I->GetH(), bw_b_I->GetW());
+
+				dst_len = bw_b_F->GetN() * bw_b_F->GetH() * bw_b_F->GetW() * bw_b_F->GetC();
+				if (dst_len <= 0)
+					return false;
+				nchw_raw.resize(dst_len);
+				readed_len = fread_s(&nchw_raw[0], dst_len * sizeof(float), sizeof(float), dst_len, in);
+				if (dst_len != readed_len)
+					return false;
+				if (ignore_small_value != 0)
+				{
+					for (int i = 0; i < dst_len; i++)
+					{
+						if (fabs(nchw_raw[i]) < ignore_small_value)
+							nchw_raw[i] = 0;
+					}
+				}
+				bw_b_F->ConvertFromCompactNCHW(&nchw_raw[0], bw_b_F->GetN(), bw_b_F->GetC(), bw_b_F->GetH(), bw_b_F->GetW());
+
+				dst_len = bw_b_O->GetN() * bw_b_O->GetH() * bw_b_O->GetW() * bw_b_O->GetC();
+				if (dst_len <= 0)
+					return false;
+				nchw_raw.resize(dst_len);
+				readed_len = fread_s(&nchw_raw[0], dst_len * sizeof(float), sizeof(float), dst_len, in);
+				if (dst_len != readed_len)
+					return false;
+				if (ignore_small_value != 0)
+				{
+					for (int i = 0; i < dst_len; i++)
+					{
+						if (fabs(nchw_raw[i]) < ignore_small_value)
+							nchw_raw[i] = 0;
+					}
+				}
+				bw_b_O->ConvertFromCompactNCHW(&nchw_raw[0], bw_b_O->GetN(), bw_b_O->GetC(), bw_b_O->GetH(), bw_b_O->GetW());
+
+				dst_len = bw_b_G->GetN() * bw_b_G->GetH() * bw_b_G->GetW() * bw_b_G->GetC();
+				if (dst_len <= 0)
+					return false;
+				nchw_raw.resize(dst_len);
+				readed_len = fread_s(&nchw_raw[0], dst_len * sizeof(float), sizeof(float), dst_len, in);
+				if (dst_len != readed_len)
+					return false;
+				if (ignore_small_value != 0)
+				{
+					for (int i = 0; i < dst_len; i++)
+					{
+						if (fabs(nchw_raw[i]) < ignore_small_value)
+							nchw_raw[i] = 0;
+					}
+				}
+				bw_b_G->ConvertFromCompactNCHW(&nchw_raw[0], bw_b_G->GetN(), bw_b_G->GetC(), bw_b_G->GetH(), bw_b_G->GetW());
+			}
+
+			if (fw_dir)
+			{
+				int dst_len = fw_hc_I->GetN() * fw_hc_I->GetH() * fw_hc_I->GetW() * fw_hc_I->GetC();
+				if (dst_len <= 0)
+					return false;
+				std::vector<float> nchw_raw(dst_len);
+				int readed_len = fread_s(&nchw_raw[0], dst_len * sizeof(float), sizeof(float), dst_len, in);
+				if (dst_len != readed_len)
+					return false;
+				if (ignore_small_value != 0)
+				{
+					for (int i = 0; i < dst_len; i++)
+					{
+						if (fabs(nchw_raw[i]) < ignore_small_value)
+							nchw_raw[i] = 0;
+					}
+				}
+				fw_hc_I->ConvertFromCompactNCHW(&nchw_raw[0], fw_hc_I->GetN(), fw_hc_I->GetC(), fw_hc_I->GetH(), fw_hc_I->GetW());
+
+				dst_len = fw_hc_F->GetN() * fw_hc_F->GetH() * fw_hc_F->GetW() * fw_hc_F->GetC();
+				if (dst_len <= 0)
+					return false;
+				nchw_raw.resize(dst_len);
+				readed_len = fread_s(&nchw_raw[0], dst_len * sizeof(float), sizeof(float), dst_len, in);
+				if (dst_len != readed_len)
+					return false;
+				if (ignore_small_value != 0)
+				{
+					for (int i = 0; i < dst_len; i++)
+					{
+						if (fabs(nchw_raw[i]) < ignore_small_value)
+							nchw_raw[i] = 0;
+					}
+				}
+				fw_hc_F->ConvertFromCompactNCHW(&nchw_raw[0], fw_hc_F->GetN(), fw_hc_F->GetC(), fw_hc_F->GetH(), fw_hc_F->GetW());
+
+				dst_len = fw_hc_O->GetN() * fw_hc_O->GetH() * fw_hc_O->GetW() * fw_hc_O->GetC();
+				if (dst_len <= 0)
+					return false;
+				nchw_raw.resize(dst_len);
+				readed_len = fread_s(&nchw_raw[0], dst_len * sizeof(float), sizeof(float), dst_len, in);
+				if (dst_len != readed_len)
+					return false;
+				if (ignore_small_value != 0)
+				{
+					for (int i = 0; i < dst_len; i++)
+					{
+						if (fabs(nchw_raw[i]) < ignore_small_value)
+							nchw_raw[i] = 0;
+					}
+				}
+				fw_hc_O->ConvertFromCompactNCHW(&nchw_raw[0], fw_hc_O->GetN(), fw_hc_O->GetC(), fw_hc_O->GetH(), fw_hc_O->GetW());
+
+				dst_len = fw_hc_G->GetN() * fw_hc_G->GetH() * fw_hc_G->GetW() * fw_hc_G->GetC();
+				if (dst_len <= 0)
+					return false;
+				nchw_raw.resize(dst_len);
+				readed_len = fread_s(&nchw_raw[0], dst_len * sizeof(float), sizeof(float), dst_len, in);
+				if (dst_len != readed_len)
+					return false;
+				if (ignore_small_value != 0)
+				{
+					for (int i = 0; i < dst_len; i++)
+					{
+						if (fabs(nchw_raw[i]) < ignore_small_value)
+							nchw_raw[i] = 0;
+					}
+				}
+				fw_hc_G->ConvertFromCompactNCHW(&nchw_raw[0], fw_hc_G->GetN(), fw_hc_G->GetC(), fw_hc_G->GetH(), fw_hc_G->GetW());
+			}
+
+			if (bw_dir)
+			{
+				int dst_len = bw_hc_I->GetN() * bw_hc_I->GetH() * bw_hc_I->GetW() * bw_hc_I->GetC();
+				if (dst_len <= 0)
+					return false;
+				std::vector<float> nchw_raw(dst_len);
+				int readed_len = fread_s(&nchw_raw[0], dst_len * sizeof(float), sizeof(float), dst_len, in);
+				if (dst_len != readed_len)
+					return false;
+				if (ignore_small_value != 0)
+				{
+					for (int i = 0; i < dst_len; i++)
+					{
+						if (fabs(nchw_raw[i]) < ignore_small_value)
+							nchw_raw[i] = 0;
+					}
+				}
+				bw_hc_I->ConvertFromCompactNCHW(&nchw_raw[0], bw_hc_I->GetN(), bw_hc_I->GetC(), bw_hc_I->GetH(), bw_hc_I->GetW());
+
+				dst_len = bw_hc_F->GetN() * bw_hc_F->GetH() * bw_hc_F->GetW() * bw_hc_F->GetC();
+				if (dst_len <= 0)
+					return false;
+				nchw_raw.resize(dst_len);
+				readed_len = fread_s(&nchw_raw[0], dst_len * sizeof(float), sizeof(float), dst_len, in);
+				if (dst_len != readed_len)
+					return false;
+				if (ignore_small_value != 0)
+				{
+					for (int i = 0; i < dst_len; i++)
+					{
+						if (fabs(nchw_raw[i]) < ignore_small_value)
+							nchw_raw[i] = 0;
+					}
+				}
+				bw_hc_F->ConvertFromCompactNCHW(&nchw_raw[0], bw_hc_F->GetN(), bw_hc_F->GetC(), bw_hc_F->GetH(), bw_hc_F->GetW());
+
+				dst_len = bw_hc_O->GetN() * bw_hc_O->GetH() * bw_hc_O->GetW() * bw_hc_O->GetC();
+				if (dst_len <= 0)
+					return false;
+				nchw_raw.resize(dst_len);
+				readed_len = fread_s(&nchw_raw[0], dst_len * sizeof(float), sizeof(float), dst_len, in);
+				if (dst_len != readed_len)
+					return false;
+				if (ignore_small_value != 0)
+				{
+					for (int i = 0; i < dst_len; i++)
+					{
+						if (fabs(nchw_raw[i]) < ignore_small_value)
+							nchw_raw[i] = 0;
+					}
+				}
+				bw_hc_O->ConvertFromCompactNCHW(&nchw_raw[0], bw_hc_O->GetN(), bw_hc_O->GetC(), bw_hc_O->GetH(), bw_hc_O->GetW());
+
+				dst_len = bw_hc_G->GetN() * bw_hc_G->GetH() * bw_hc_G->GetW() * bw_hc_G->GetC();
+				if (dst_len <= 0)
+					return false;
+				nchw_raw.resize(dst_len);
+				readed_len = fread_s(&nchw_raw[0], dst_len * sizeof(float), sizeof(float), dst_len, in);
+				if (dst_len != readed_len)
+					return false;
+				if (ignore_small_value != 0)
+				{
+					for (int i = 0; i < dst_len; i++)
+					{
+						if (fabs(nchw_raw[i]) < ignore_small_value)
+							nchw_raw[i] = 0;
+					}
+				}
+				bw_hc_G->ConvertFromCompactNCHW(&nchw_raw[0], bw_hc_G->GetN(), bw_hc_G->GetC(), bw_hc_G->GetH(), bw_hc_G->GetW());
+			}
+			
+			return true;
+		}
+
+		virtual bool SaveBinary_NCHW(FILE* out) const
+		{
+			if (fw_xc_I == 0 || fw_xc_F == 0 || fw_xc_O == 0 || fw_xc_G == 0 
+				|| fw_hc_I == 0 || fw_hc_F == 0 || fw_hc_O == 0 || fw_hc_G == 0
+				|| fw_b_I == 0 || fw_b_F == 0 || fw_b_O == 0 || fw_b_G == 0
+				|| bw_xc_I == 0 || bw_xc_F == 0 || bw_xc_O == 0 || bw_xc_G == 0
+				|| bw_hc_I == 0 || bw_hc_F == 0 || bw_hc_O == 0 || bw_hc_G == 0
+				|| bw_b_I == 0 || bw_b_F == 0 || bw_b_O == 0 || bw_b_G == 0
+				)
+				return false;
+			if (fw_dir)
+			{
+				int dst_len = fw_xc_I->GetN() * fw_xc_I->GetH() * fw_xc_I->GetW() * fw_xc_I->GetC();
+				if (dst_len <= 0)
+					return false;
+				std::vector<float> nchw_raw(dst_len);
+				fw_xc_I->ConvertToCompactNCHW(&nchw_raw[0]);
+				if (dst_len != fwrite(&nchw_raw[0], sizeof(float), dst_len, out))
+					return false;
+
+				dst_len = fw_xc_F->GetN() * fw_xc_F->GetH() * fw_xc_F->GetW() * fw_xc_F->GetC();
+				if (dst_len <= 0)
+					return false;
+				nchw_raw.resize(dst_len);
+				fw_xc_F->ConvertToCompactNCHW(&nchw_raw[0]);
+				if (dst_len != fwrite(&nchw_raw[0], sizeof(float), dst_len, out))
+					return false;
+
+				dst_len = fw_xc_O->GetN() * fw_xc_O->GetH() * fw_xc_O->GetW() * fw_xc_O->GetC();
+				if (dst_len <= 0)
+					return false;
+				nchw_raw.resize(dst_len);
+				fw_xc_O->ConvertToCompactNCHW(&nchw_raw[0]);
+				if (dst_len != fwrite(&nchw_raw[0], sizeof(float), dst_len, out))
+					return false;
+
+				dst_len = fw_xc_G->GetN() * fw_xc_G->GetH() * fw_xc_G->GetW() * fw_xc_G->GetC();
+				if (dst_len <= 0)
+					return false;
+				nchw_raw.resize(dst_len);
+				fw_xc_G->ConvertToCompactNCHW(&nchw_raw[0]);
+				if (dst_len != fwrite(&nchw_raw[0], sizeof(float), dst_len, out))
+					return false;
+			}
+
+			if (bw_dir)
+			{
+				int dst_len = bw_xc_I->GetN() * bw_xc_I->GetH() * bw_xc_I->GetW() * bw_xc_I->GetC();
+				if (dst_len <= 0)
+					return false;
+				std::vector<float> nchw_raw(dst_len);
+				bw_xc_I->ConvertToCompactNCHW(&nchw_raw[0]);
+				if (dst_len != fwrite(&nchw_raw[0], sizeof(float), dst_len, out))
+					return false;
+
+				dst_len = bw_xc_F->GetN() * bw_xc_F->GetH() * bw_xc_F->GetW() * bw_xc_F->GetC();
+				if (dst_len <= 0)
+					return false;
+				nchw_raw.resize(dst_len);
+				bw_xc_F->ConvertToCompactNCHW(&nchw_raw[0]);
+				if (dst_len != fwrite(&nchw_raw[0], sizeof(float), dst_len, out))
+					return false;
+
+				dst_len = bw_xc_O->GetN() * bw_xc_O->GetH() * bw_xc_O->GetW() * bw_xc_O->GetC();
+				if (dst_len <= 0)
+					return false;
+				nchw_raw.resize(dst_len);
+				bw_xc_O->ConvertToCompactNCHW(&nchw_raw[0]);
+				if (dst_len != fwrite(&nchw_raw[0], sizeof(float), dst_len, out))
+					return false;
+
+				dst_len = bw_xc_G->GetN() * bw_xc_G->GetH() * bw_xc_G->GetW() * bw_xc_G->GetC();
+				if (dst_len <= 0)
+					return false;
+				nchw_raw.resize(dst_len);
+				bw_xc_G->ConvertToCompactNCHW(&nchw_raw[0]);
+				if (dst_len != fwrite(&nchw_raw[0], sizeof(float), dst_len, out))
+					return false;
+			}
+			
+			if (fw_dir)
+			{
+				int dst_len = fw_b_I->GetN() * fw_b_I->GetH() * fw_b_I->GetW() * fw_b_I->GetC();
+				if (dst_len <= 0)
+					return false;
+				std::vector<float> nchw_raw(dst_len);
+				fw_b_I->ConvertToCompactNCHW(&nchw_raw[0]);
+				if (dst_len != fwrite(&nchw_raw[0], sizeof(float), dst_len, out))
+					return false;
+
+				dst_len = fw_b_F->GetN() * fw_b_F->GetH() * fw_b_F->GetW() * fw_b_F->GetC();
+				if (dst_len <= 0)
+					return false;
+				nchw_raw.resize(dst_len);
+				fw_b_F->ConvertToCompactNCHW(&nchw_raw[0]);
+				if (dst_len != fwrite(&nchw_raw[0], sizeof(float), dst_len, out))
+					return false;
+
+				dst_len = fw_b_O->GetN() * fw_b_O->GetH() * fw_b_O->GetW() * fw_b_O->GetC();
+				if (dst_len <= 0)
+					return false;
+				nchw_raw.resize(dst_len);
+				fw_b_O->ConvertToCompactNCHW(&nchw_raw[0]);
+				if (dst_len != fwrite(&nchw_raw[0], sizeof(float), dst_len, out))
+					return false;
+
+				dst_len = fw_b_G->GetN() * fw_b_G->GetH() * fw_b_G->GetW() * fw_b_G->GetC();
+				if (dst_len <= 0)
+					return false;
+				nchw_raw.resize(dst_len);
+				fw_b_G->ConvertToCompactNCHW(&nchw_raw[0]);
+				if (dst_len != fwrite(&nchw_raw[0], sizeof(float), dst_len, out))
+					return false;
+			}
+
+			if (bw_dir)
+			{
+				int dst_len = bw_b_I->GetN() * bw_b_I->GetH() * bw_b_I->GetW() * bw_b_I->GetC();
+				if (dst_len <= 0)
+					return false;
+				std::vector<float> nchw_raw(dst_len);
+				bw_b_I->ConvertToCompactNCHW(&nchw_raw[0]);
+				if (dst_len != fwrite(&nchw_raw[0], sizeof(float), dst_len, out))
+					return false;
+
+				dst_len = bw_b_F->GetN() * bw_b_F->GetH() * bw_b_F->GetW() * bw_b_F->GetC();
+				if (dst_len <= 0)
+					return false;
+				nchw_raw.resize(dst_len);
+				bw_b_F->ConvertToCompactNCHW(&nchw_raw[0]);
+				if (dst_len != fwrite(&nchw_raw[0], sizeof(float), dst_len, out))
+					return false;
+
+				dst_len = bw_b_O->GetN() * bw_b_O->GetH() * bw_b_O->GetW() * bw_b_O->GetC();
+				if (dst_len <= 0)
+					return false;
+				nchw_raw.resize(dst_len);
+				bw_b_O->ConvertToCompactNCHW(&nchw_raw[0]);
+				if (dst_len != fwrite(&nchw_raw[0], sizeof(float), dst_len, out))
+					return false;
+
+				dst_len = bw_b_G->GetN() * bw_b_G->GetH() * bw_b_G->GetW() * bw_b_G->GetC();
+				if (dst_len <= 0)
+					return false;
+				nchw_raw.resize(dst_len);
+				bw_b_G->ConvertToCompactNCHW(&nchw_raw[0]);
+				if (dst_len != fwrite(&nchw_raw[0], sizeof(float), dst_len, out))
+					return false;
+			}
+
+			if (fw_dir)
+			{
+				int dst_len = fw_hc_I->GetN() * fw_hc_I->GetH() * fw_hc_I->GetW() * fw_hc_I->GetC();
+				if (dst_len <= 0)
+					return false;
+				std::vector<float> nchw_raw(dst_len);
+				fw_hc_I->ConvertToCompactNCHW(&nchw_raw[0]);
+				if (dst_len != fwrite(&nchw_raw[0], sizeof(float), dst_len, out))
+					return false;
+
+				dst_len = fw_hc_F->GetN() * fw_hc_F->GetH() * fw_hc_F->GetW() * fw_hc_F->GetC();
+				if (dst_len <= 0)
+					return false;
+				nchw_raw.resize(dst_len);
+				fw_hc_F->ConvertToCompactNCHW(&nchw_raw[0]);
+				if (dst_len != fwrite(&nchw_raw[0], sizeof(float), dst_len, out))
+					return false;
+
+				dst_len = fw_hc_O->GetN() * fw_hc_O->GetH() * fw_hc_O->GetW() * fw_hc_O->GetC();
+				if (dst_len <= 0)
+					return false;
+				nchw_raw.resize(dst_len);
+				fw_hc_O->ConvertToCompactNCHW(&nchw_raw[0]);
+				if (dst_len != fwrite(&nchw_raw[0], sizeof(float), dst_len, out))
+					return false;
+
+				dst_len = fw_hc_G->GetN() * fw_hc_G->GetH() * fw_hc_G->GetW() * fw_hc_G->GetC();
+				if (dst_len <= 0)
+					return false;
+				nchw_raw.resize(dst_len);
+				fw_hc_G->ConvertToCompactNCHW(&nchw_raw[0]);
+				if (dst_len != fwrite(&nchw_raw[0], sizeof(float), dst_len, out))
+					return false;
+			}
+
+			if (bw_dir)
+			{
+				int dst_len = bw_hc_I->GetN() * bw_hc_I->GetH() * bw_hc_I->GetW() * bw_hc_I->GetC();
+				if (dst_len <= 0)
+					return false;
+				std::vector<float> nchw_raw(dst_len);
+				bw_hc_I->ConvertToCompactNCHW(&nchw_raw[0]);
+				if (dst_len != fwrite(&nchw_raw[0], sizeof(float), dst_len, out))
+					return false;
+
+				dst_len = bw_hc_F->GetN() * bw_hc_F->GetH() * bw_hc_F->GetW() * bw_hc_F->GetC();
+				if (dst_len <= 0)
+					return false;
+				nchw_raw.resize(dst_len);
+				bw_hc_F->ConvertToCompactNCHW(&nchw_raw[0]);
+				if (dst_len != fwrite(&nchw_raw[0], sizeof(float), dst_len, out))
+					return false;
+
+				dst_len = bw_hc_O->GetN() * bw_hc_O->GetH() * bw_hc_O->GetW() * bw_hc_O->GetC();
+				if (dst_len <= 0)
+					return false;
+				nchw_raw.resize(dst_len);
+				bw_hc_O->ConvertToCompactNCHW(&nchw_raw[0]);
+				if (dst_len != fwrite(&nchw_raw[0], sizeof(float), dst_len, out))
+					return false;
+
+				dst_len = bw_hc_G->GetN() * bw_hc_G->GetH() * bw_hc_G->GetW() * bw_hc_G->GetC();
+				if (dst_len <= 0)
+					return false;
+				nchw_raw.resize(dst_len);
+				bw_hc_G->ConvertToCompactNCHW(&nchw_raw[0]);
+				if (dst_len != fwrite(&nchw_raw[0], sizeof(float), dst_len, out))
+					return false;
+			}
+			
+			return true;
+		}
+
+		virtual bool LoadBinary_NCHW(const char* buffer, __int64 buffer_len, __int64& readed_length_in_bytes)
+		{
+			readed_length_in_bytes = 0;
+			
+			if (fw_dir)
+			{
+				int dst_len = fw_xc_I->GetN() * fw_xc_I->GetH() * fw_xc_I->GetW() * fw_xc_I->GetC();
+				if (dst_len <= 0)
+					return false;
+				int dst_len_in_bytes = dst_len * sizeof(float);
+				if (dst_len_in_bytes > buffer_len)
+					return false;
+				std::vector<float> nchw_raw(dst_len);
+				memcpy(&nchw_raw[0], buffer, dst_len_in_bytes);
+				for (int i = 0; i < dst_len; i++)
+				{
+					if (fabs(nchw_raw[i]) < ignore_small_value)
+						nchw_raw[i] = 0;
+				}
+				fw_xc_I->ConvertFromCompactNCHW(&nchw_raw[0], fw_xc_I->GetN(), fw_xc_I->GetC(), fw_xc_I->GetH(), fw_xc_I->GetW());
+				buffer += dst_len_in_bytes;
+				buffer_len -= dst_len_in_bytes;
+				readed_length_in_bytes += dst_len_in_bytes;
+
+				dst_len = fw_xc_F->GetN() * fw_xc_F->GetH() * fw_xc_F->GetW() * fw_xc_F->GetC();
+				if (dst_len <= 0)
+					return false;
+				dst_len_in_bytes = dst_len * sizeof(float);
+				if (dst_len_in_bytes > buffer_len)
+					return false;
+				nchw_raw.resize(dst_len);
+				memcpy(&nchw_raw[0], buffer, dst_len_in_bytes);
+				for (int i = 0; i < dst_len; i++)
+				{
+					if (fabs(nchw_raw[i]) < ignore_small_value)
+						nchw_raw[i] = 0;
+				}
+				fw_xc_F->ConvertFromCompactNCHW(&nchw_raw[0], fw_xc_F->GetN(), fw_xc_F->GetC(), fw_xc_F->GetH(), fw_xc_F->GetW());
+				buffer += dst_len_in_bytes;
+				buffer_len -= dst_len_in_bytes;
+				readed_length_in_bytes += dst_len_in_bytes;
+
+				dst_len = fw_xc_O->GetN() * fw_xc_O->GetH() * fw_xc_O->GetW() * fw_xc_O->GetC();
+				if (dst_len <= 0)
+					return false;
+				dst_len_in_bytes = dst_len * sizeof(float);
+				if (dst_len_in_bytes > buffer_len)
+					return false;
+				nchw_raw.resize(dst_len);
+				memcpy(&nchw_raw[0], buffer, dst_len_in_bytes);
+				for (int i = 0; i < dst_len; i++)
+				{
+					if (fabs(nchw_raw[i]) < ignore_small_value)
+						nchw_raw[i] = 0;
+				}
+				fw_xc_O->ConvertFromCompactNCHW(&nchw_raw[0], fw_xc_O->GetN(), fw_xc_O->GetC(), fw_xc_O->GetH(), fw_xc_O->GetW());
+				buffer += dst_len_in_bytes;
+				buffer_len -= dst_len_in_bytes;
+				readed_length_in_bytes += dst_len_in_bytes;
+
+				dst_len = fw_xc_G->GetN() * fw_xc_G->GetH() * fw_xc_G->GetW() * fw_xc_G->GetC();
+				if (dst_len <= 0)
+					return false;
+				dst_len_in_bytes = dst_len * sizeof(float);
+				if (dst_len_in_bytes > buffer_len)
+					return false;
+				nchw_raw.resize(dst_len);
+				memcpy(&nchw_raw[0], buffer, dst_len_in_bytes);
+				for (int i = 0; i < dst_len; i++)
+				{
+					if (fabs(nchw_raw[i]) < ignore_small_value)
+						nchw_raw[i] = 0;
+				}
+				fw_xc_G->ConvertFromCompactNCHW(&nchw_raw[0], fw_xc_G->GetN(), fw_xc_G->GetC(), fw_xc_G->GetH(), fw_xc_G->GetW());
+				buffer += dst_len_in_bytes;
+				buffer_len -= dst_len_in_bytes;
+				readed_length_in_bytes += dst_len_in_bytes;
+				
+			}
+
+			if (bw_dir)
+			{
+				int dst_len = bw_xc_I->GetN() * bw_xc_I->GetH() * bw_xc_I->GetW() * bw_xc_I->GetC();
+				if (dst_len <= 0)
+					return false;
+				int dst_len_in_bytes = dst_len * sizeof(float);
+				if (dst_len_in_bytes > buffer_len)
+					return false;
+				std::vector<float> nchw_raw(dst_len);
+				memcpy(&nchw_raw[0], buffer, dst_len_in_bytes);
+				for (int i = 0; i < dst_len; i++)
+				{
+					if (fabs(nchw_raw[i]) < ignore_small_value)
+						nchw_raw[i] = 0;
+				}
+				bw_xc_I->ConvertFromCompactNCHW(&nchw_raw[0], bw_xc_I->GetN(), bw_xc_I->GetC(), bw_xc_I->GetH(), bw_xc_I->GetW());
+				buffer += dst_len_in_bytes;
+				buffer_len -= dst_len_in_bytes;
+				readed_length_in_bytes += dst_len_in_bytes;
+
+				dst_len = bw_xc_F->GetN() * bw_xc_F->GetH() * bw_xc_F->GetW() * bw_xc_F->GetC();
+				if (dst_len <= 0)
+					return false;
+				dst_len_in_bytes = dst_len * sizeof(float);
+				if (dst_len_in_bytes > buffer_len)
+					return false;
+				nchw_raw.resize(dst_len);
+				memcpy(&nchw_raw[0], buffer, dst_len_in_bytes);
+				for (int i = 0; i < dst_len; i++)
+				{
+					if (fabs(nchw_raw[i]) < ignore_small_value)
+						nchw_raw[i] = 0;
+				}
+				bw_xc_F->ConvertFromCompactNCHW(&nchw_raw[0], bw_xc_F->GetN(), bw_xc_F->GetC(), bw_xc_F->GetH(), bw_xc_F->GetW());
+				buffer += dst_len_in_bytes;
+				buffer_len -= dst_len_in_bytes;
+				readed_length_in_bytes += dst_len_in_bytes;
+
+				dst_len = bw_xc_O->GetN() * bw_xc_O->GetH() * bw_xc_O->GetW() * bw_xc_O->GetC();
+				if (dst_len <= 0)
+					return false;
+				dst_len_in_bytes = dst_len * sizeof(float);
+				if (dst_len_in_bytes > buffer_len)
+					return false;
+				nchw_raw.resize(dst_len);
+				memcpy(&nchw_raw[0], buffer, dst_len_in_bytes);
+				for (int i = 0; i < dst_len; i++)
+				{
+					if (fabs(nchw_raw[i]) < ignore_small_value)
+						nchw_raw[i] = 0;
+				}
+				bw_xc_O->ConvertFromCompactNCHW(&nchw_raw[0], bw_xc_O->GetN(), bw_xc_O->GetC(), bw_xc_O->GetH(), bw_xc_O->GetW());
+				buffer += dst_len_in_bytes;
+				buffer_len -= dst_len_in_bytes;
+				readed_length_in_bytes += dst_len_in_bytes;
+
+				dst_len = bw_xc_G->GetN() * bw_xc_G->GetH() * bw_xc_G->GetW() * bw_xc_G->GetC();
+				if (dst_len <= 0)
+					return false;
+				dst_len_in_bytes = dst_len * sizeof(float);
+				if (dst_len_in_bytes > buffer_len)
+					return false;
+				nchw_raw.resize(dst_len);
+				memcpy(&nchw_raw[0], buffer, dst_len_in_bytes);
+				for (int i = 0; i < dst_len; i++)
+				{
+					if (fabs(nchw_raw[i]) < ignore_small_value)
+						nchw_raw[i] = 0;
+				}
+				bw_xc_G->ConvertFromCompactNCHW(&nchw_raw[0], bw_xc_G->GetN(), bw_xc_G->GetC(), bw_xc_G->GetH(), bw_xc_G->GetW());
+				buffer += dst_len_in_bytes;
+				buffer_len -= dst_len_in_bytes;
+				readed_length_in_bytes += dst_len_in_bytes;
+
+			}
+
+
+			if (fw_dir)
+			{
+				int dst_len = fw_b_I->GetN() * fw_b_I->GetH() * fw_b_I->GetW() * fw_b_I->GetC();
+				if (dst_len <= 0)
+					return false;
+				int dst_len_in_bytes = dst_len * sizeof(float);
+				if (dst_len_in_bytes > buffer_len)
+					return false;
+				std::vector<float> nchw_raw(dst_len);
+				memcpy(&nchw_raw[0], buffer, dst_len_in_bytes);
+				for (int i = 0; i < dst_len; i++)
+				{
+					if (fabs(nchw_raw[i]) < ignore_small_value)
+						nchw_raw[i] = 0;
+				}
+				fw_b_I->ConvertFromCompactNCHW(&nchw_raw[0], fw_b_I->GetN(), fw_b_I->GetC(), fw_b_I->GetH(), fw_b_I->GetW());
+				buffer += dst_len_in_bytes;
+				buffer_len -= dst_len_in_bytes;
+				readed_length_in_bytes += dst_len_in_bytes;
+
+				dst_len = fw_b_F->GetN() * fw_b_F->GetH() * fw_b_F->GetW() * fw_b_F->GetC();
+				if (dst_len <= 0)
+					return false;
+				dst_len_in_bytes = dst_len * sizeof(float);
+				if (dst_len_in_bytes > buffer_len)
+					return false;
+				nchw_raw.resize(dst_len);
+				memcpy(&nchw_raw[0], buffer, dst_len_in_bytes);
+				for (int i = 0; i < dst_len; i++)
+				{
+					if (fabs(nchw_raw[i]) < ignore_small_value)
+						nchw_raw[i] = 0;
+				}
+				fw_b_F->ConvertFromCompactNCHW(&nchw_raw[0], fw_b_F->GetN(), fw_b_F->GetC(), fw_b_F->GetH(), fw_b_F->GetW());
+				buffer += dst_len_in_bytes;
+				buffer_len -= dst_len_in_bytes;
+				readed_length_in_bytes += dst_len_in_bytes;
+
+				dst_len = fw_b_O->GetN() * fw_b_O->GetH() * fw_b_O->GetW() * fw_b_O->GetC();
+				if (dst_len <= 0)
+					return false;
+				dst_len_in_bytes = dst_len * sizeof(float);
+				if (dst_len_in_bytes > buffer_len)
+					return false;
+				nchw_raw.resize(dst_len);
+				memcpy(&nchw_raw[0], buffer, dst_len_in_bytes);
+				for (int i = 0; i < dst_len; i++)
+				{
+					if (fabs(nchw_raw[i]) < ignore_small_value)
+						nchw_raw[i] = 0;
+				}
+				fw_b_O->ConvertFromCompactNCHW(&nchw_raw[0], fw_b_O->GetN(), fw_b_O->GetC(), fw_b_O->GetH(), fw_b_O->GetW());
+				buffer += dst_len_in_bytes;
+				buffer_len -= dst_len_in_bytes;
+				readed_length_in_bytes += dst_len_in_bytes;
+
+				dst_len = fw_b_G->GetN() * fw_b_G->GetH() * fw_b_G->GetW() * fw_b_G->GetC();
+				if (dst_len <= 0)
+					return false;
+				dst_len_in_bytes = dst_len * sizeof(float);
+				if (dst_len_in_bytes > buffer_len)
+					return false;
+				nchw_raw.resize(dst_len);
+				memcpy(&nchw_raw[0], buffer, dst_len_in_bytes);
+				for (int i = 0; i < dst_len; i++)
+				{
+					if (fabs(nchw_raw[i]) < ignore_small_value)
+						nchw_raw[i] = 0;
+				}
+				fw_b_G->ConvertFromCompactNCHW(&nchw_raw[0], fw_b_G->GetN(), fw_b_G->GetC(), fw_b_G->GetH(), fw_b_G->GetW());
+				buffer += dst_len_in_bytes;
+				buffer_len -= dst_len_in_bytes;
+				readed_length_in_bytes += dst_len_in_bytes;
+
+			}
+
+			if (bw_dir)
+			{
+				int dst_len = bw_b_I->GetN() * bw_b_I->GetH() * bw_b_I->GetW() * bw_b_I->GetC();
+				if (dst_len <= 0)
+					return false;
+				int dst_len_in_bytes = dst_len * sizeof(float);
+				if (dst_len_in_bytes > buffer_len)
+					return false;
+				std::vector<float> nchw_raw(dst_len);
+				memcpy(&nchw_raw[0], buffer, dst_len_in_bytes);
+				for (int i = 0; i < dst_len; i++)
+				{
+					if (fabs(nchw_raw[i]) < ignore_small_value)
+						nchw_raw[i] = 0;
+				}
+				bw_b_I->ConvertFromCompactNCHW(&nchw_raw[0], bw_b_I->GetN(), bw_b_I->GetC(), bw_b_I->GetH(), bw_b_I->GetW());
+				buffer += dst_len_in_bytes;
+				buffer_len -= dst_len_in_bytes;
+				readed_length_in_bytes += dst_len_in_bytes;
+
+				dst_len = bw_b_F->GetN() * bw_b_F->GetH() * bw_b_F->GetW() * bw_b_F->GetC();
+				if (dst_len <= 0)
+					return false;
+				dst_len_in_bytes = dst_len * sizeof(float);
+				if (dst_len_in_bytes > buffer_len)
+					return false;
+				nchw_raw.resize(dst_len);
+				memcpy(&nchw_raw[0], buffer, dst_len_in_bytes);
+				for (int i = 0; i < dst_len; i++)
+				{
+					if (fabs(nchw_raw[i]) < ignore_small_value)
+						nchw_raw[i] = 0;
+				}
+				bw_b_F->ConvertFromCompactNCHW(&nchw_raw[0], bw_b_F->GetN(), bw_b_F->GetC(), bw_b_F->GetH(), bw_b_F->GetW());
+				buffer += dst_len_in_bytes;
+				buffer_len -= dst_len_in_bytes;
+				readed_length_in_bytes += dst_len_in_bytes;
+
+				dst_len = bw_b_O->GetN() * bw_b_O->GetH() * bw_b_O->GetW() * bw_b_O->GetC();
+				if (dst_len <= 0)
+					return false;
+				dst_len_in_bytes = dst_len * sizeof(float);
+				if (dst_len_in_bytes > buffer_len)
+					return false;
+				nchw_raw.resize(dst_len);
+				memcpy(&nchw_raw[0], buffer, dst_len_in_bytes);
+				for (int i = 0; i < dst_len; i++)
+				{
+					if (fabs(nchw_raw[i]) < ignore_small_value)
+						nchw_raw[i] = 0;
+				}
+				bw_b_O->ConvertFromCompactNCHW(&nchw_raw[0], bw_b_O->GetN(), bw_b_O->GetC(), bw_b_O->GetH(), bw_b_O->GetW());
+				buffer += dst_len_in_bytes;
+				buffer_len -= dst_len_in_bytes;
+				readed_length_in_bytes += dst_len_in_bytes;
+
+				dst_len = bw_b_G->GetN() * bw_b_G->GetH() * bw_b_G->GetW() * bw_b_G->GetC();
+				if (dst_len <= 0)
+					return false;
+				dst_len_in_bytes = dst_len * sizeof(float);
+				if (dst_len_in_bytes > buffer_len)
+					return false;
+				nchw_raw.resize(dst_len);
+				memcpy(&nchw_raw[0], buffer, dst_len_in_bytes);
+				for (int i = 0; i < dst_len; i++)
+				{
+					if (fabs(nchw_raw[i]) < ignore_small_value)
+						nchw_raw[i] = 0;
+				}
+				bw_b_G->ConvertFromCompactNCHW(&nchw_raw[0], bw_b_G->GetN(), bw_b_G->GetC(), bw_b_G->GetH(), bw_b_G->GetW());
+				buffer += dst_len_in_bytes;
+				buffer_len -= dst_len_in_bytes;
+				readed_length_in_bytes += dst_len_in_bytes;
+
+			}
+
+			if (fw_dir)
+			{
+				int dst_len = fw_hc_I->GetN() * fw_hc_I->GetH() * fw_hc_I->GetW() * fw_hc_I->GetC();
+				if (dst_len <= 0)
+					return false;
+				int dst_len_in_bytes = dst_len * sizeof(float);
+				if (dst_len_in_bytes > buffer_len)
+					return false;
+				std::vector<float> nchw_raw(dst_len);
+				memcpy(&nchw_raw[0], buffer, dst_len_in_bytes);
+				for (int i = 0; i < dst_len; i++)
+				{
+					if (fabs(nchw_raw[i]) < ignore_small_value)
+						nchw_raw[i] = 0;
+				}
+				fw_hc_I->ConvertFromCompactNCHW(&nchw_raw[0], fw_hc_I->GetN(), fw_hc_I->GetC(), fw_hc_I->GetH(), fw_hc_I->GetW());
+				buffer += dst_len_in_bytes;
+				buffer_len -= dst_len_in_bytes;
+				readed_length_in_bytes += dst_len_in_bytes;
+
+				dst_len = fw_hc_F->GetN() * fw_hc_F->GetH() * fw_hc_F->GetW() * fw_hc_F->GetC();
+				if (dst_len <= 0)
+					return false;
+				dst_len_in_bytes = dst_len * sizeof(float);
+				if (dst_len_in_bytes > buffer_len)
+					return false;
+				nchw_raw.resize(dst_len);
+				memcpy(&nchw_raw[0], buffer, dst_len_in_bytes);
+				for (int i = 0; i < dst_len; i++)
+				{
+					if (fabs(nchw_raw[i]) < ignore_small_value)
+						nchw_raw[i] = 0;
+				}
+				fw_hc_F->ConvertFromCompactNCHW(&nchw_raw[0], fw_hc_F->GetN(), fw_hc_F->GetC(), fw_hc_F->GetH(), fw_hc_F->GetW());
+				buffer += dst_len_in_bytes;
+				buffer_len -= dst_len_in_bytes;
+				readed_length_in_bytes += dst_len_in_bytes;
+
+				dst_len = fw_hc_O->GetN() * fw_hc_O->GetH() * fw_hc_O->GetW() * fw_hc_O->GetC();
+				if (dst_len <= 0)
+					return false;
+				dst_len_in_bytes = dst_len * sizeof(float);
+				if (dst_len_in_bytes > buffer_len)
+					return false;
+				nchw_raw.resize(dst_len);
+				memcpy(&nchw_raw[0], buffer, dst_len_in_bytes);
+				for (int i = 0; i < dst_len; i++)
+				{
+					if (fabs(nchw_raw[i]) < ignore_small_value)
+						nchw_raw[i] = 0;
+				}
+				fw_hc_O->ConvertFromCompactNCHW(&nchw_raw[0], fw_hc_O->GetN(), fw_hc_O->GetC(), fw_hc_O->GetH(), fw_hc_O->GetW());
+				buffer += dst_len_in_bytes;
+				buffer_len -= dst_len_in_bytes;
+				readed_length_in_bytes += dst_len_in_bytes;
+
+				dst_len = fw_hc_G->GetN() * fw_hc_G->GetH() * fw_hc_G->GetW() * fw_hc_G->GetC();
+				if (dst_len <= 0)
+					return false;
+				dst_len_in_bytes = dst_len * sizeof(float);
+				if (dst_len_in_bytes > buffer_len)
+					return false;
+				nchw_raw.resize(dst_len);
+				memcpy(&nchw_raw[0], buffer, dst_len_in_bytes);
+				for (int i = 0; i < dst_len; i++)
+				{
+					if (fabs(nchw_raw[i]) < ignore_small_value)
+						nchw_raw[i] = 0;
+				}
+				fw_hc_G->ConvertFromCompactNCHW(&nchw_raw[0], fw_hc_G->GetN(), fw_hc_G->GetC(), fw_hc_G->GetH(), fw_hc_G->GetW());
+				buffer += dst_len_in_bytes;
+				buffer_len -= dst_len_in_bytes;
+				readed_length_in_bytes += dst_len_in_bytes;
+
+			}
+
+			if (bw_dir)
+			{
+				int dst_len = bw_hc_I->GetN() * bw_hc_I->GetH() * bw_hc_I->GetW() * bw_hc_I->GetC();
+				if (dst_len <= 0)
+					return false;
+				int dst_len_in_bytes = dst_len * sizeof(float);
+				if (dst_len_in_bytes > buffer_len)
+					return false;
+				std::vector<float> nchw_raw(dst_len);
+				memcpy(&nchw_raw[0], buffer, dst_len_in_bytes);
+				for (int i = 0; i < dst_len; i++)
+				{
+					if (fabs(nchw_raw[i]) < ignore_small_value)
+						nchw_raw[i] = 0;
+				}
+				bw_hc_I->ConvertFromCompactNCHW(&nchw_raw[0], bw_hc_I->GetN(), bw_hc_I->GetC(), bw_hc_I->GetH(), bw_hc_I->GetW());
+				buffer += dst_len_in_bytes;
+				buffer_len -= dst_len_in_bytes;
+				readed_length_in_bytes += dst_len_in_bytes;
+
+				dst_len = bw_hc_F->GetN() * bw_hc_F->GetH() * bw_hc_F->GetW() * bw_hc_F->GetC();
+				if (dst_len <= 0)
+					return false;
+				dst_len_in_bytes = dst_len * sizeof(float);
+				if (dst_len_in_bytes > buffer_len)
+					return false;
+				nchw_raw.resize(dst_len);
+				memcpy(&nchw_raw[0], buffer, dst_len_in_bytes);
+				for (int i = 0; i < dst_len; i++)
+				{
+					if (fabs(nchw_raw[i]) < ignore_small_value)
+						nchw_raw[i] = 0;
+				}
+				bw_hc_F->ConvertFromCompactNCHW(&nchw_raw[0], bw_hc_F->GetN(), bw_hc_F->GetC(), bw_hc_F->GetH(), bw_hc_F->GetW());
+				buffer += dst_len_in_bytes;
+				buffer_len -= dst_len_in_bytes;
+				readed_length_in_bytes += dst_len_in_bytes;
+
+				dst_len = bw_hc_O->GetN() * bw_hc_O->GetH() * bw_hc_O->GetW() * bw_hc_O->GetC();
+				if (dst_len <= 0)
+					return false;
+				dst_len_in_bytes = dst_len * sizeof(float);
+				if (dst_len_in_bytes > buffer_len)
+					return false;
+				nchw_raw.resize(dst_len);
+				memcpy(&nchw_raw[0], buffer, dst_len_in_bytes);
+				for (int i = 0; i < dst_len; i++)
+				{
+					if (fabs(nchw_raw[i]) < ignore_small_value)
+						nchw_raw[i] = 0;
+				}
+				bw_hc_O->ConvertFromCompactNCHW(&nchw_raw[0], bw_hc_O->GetN(), bw_hc_O->GetC(), bw_hc_O->GetH(), bw_hc_O->GetW());
+				buffer += dst_len_in_bytes;
+				buffer_len -= dst_len_in_bytes;
+				readed_length_in_bytes += dst_len_in_bytes;
+
+				dst_len = bw_hc_G->GetN() * bw_hc_G->GetH() * bw_hc_G->GetW() * bw_hc_G->GetC();
+				if (dst_len <= 0)
+					return false;
+				dst_len_in_bytes = dst_len * sizeof(float);
+				if (dst_len_in_bytes > buffer_len)
+					return false;
+				nchw_raw.resize(dst_len);
+				memcpy(&nchw_raw[0], buffer, dst_len_in_bytes);
+				for (int i = 0; i < dst_len; i++)
+				{
+					if (fabs(nchw_raw[i]) < ignore_small_value)
+						nchw_raw[i] = 0;
+				}
+				bw_hc_G->ConvertFromCompactNCHW(&nchw_raw[0], bw_hc_G->GetN(), bw_hc_G->GetC(), bw_hc_G->GetH(), bw_hc_G->GetW());
+				buffer += dst_len_in_bytes;
+				buffer_len -= dst_len_in_bytes;
+				readed_length_in_bytes += dst_len_in_bytes;
+
+			}
+
+			
+			return true;
+		}
+
+		virtual __int64 GetNumOfMulAdd() const
+		{
+			int top_C, top_H, top_W;
+			GetTopDim(top_C, top_H, top_W);
+			__int64 sum = 0;
+			if (fw_dir) sum += top_W*(hidden_dim + bottom_C)*hidden_dim * 4;
+			if (bw_dir) sum += top_W*(hidden_dim + bottom_C)*hidden_dim * 4;
+			return sum;
+		}
+
+	};
+
 	class ZQ_CNN_Layer_Softmax : public ZQ_CNN_Layer
 	{
 	public:
@@ -4946,10 +6764,20 @@ namespace ZQ
 
 		virtual __int64 GetNumOfMulAdd() const
 		{
-			if (sample_type == SampleType_Nearest)
-				return bottom_C*bottom_H*bottom_W*scale_h*scale_w;
+			if (has_scale)
+			{
+				if (sample_type == SampleType_Nearest)
+					return bottom_C*bottom_H*bottom_W*scale_h*scale_w;
+				else
+					return bottom_C*bottom_H*bottom_W*scale_h*scale_w * 6;
+			}
 			else
-				return 0;
+			{
+				if (sample_type == SampleType_Nearest)
+					return bottom_C*dst_h*dst_w;
+				else
+					return bottom_C*dst_h*dst_w * 10;
+			}
 		}
 	};
 
@@ -6570,6 +8398,145 @@ namespace ZQ
 			top_C = new_dim[1];
 			top_H = new_dim[2];
 			top_W = new_dim[3];
+		}
+
+
+		virtual bool SwapInputRGBandBGR() { return true; };
+
+
+		//should be called after ZQ_CNN_Net have allocated necessery data
+		virtual bool LoadBinary_NCHW(FILE* in) { return true; }
+
+		virtual bool SaveBinary_NCHW(FILE* out) const { return true; }
+
+		virtual bool LoadBinary_NCHW(const char* buffer, __int64 buffer_len, __int64& readed_length_in_bytes)
+		{
+			readed_length_in_bytes = 0;
+			return true;
+		}
+
+		virtual __int64 GetNumOfMulAdd() const
+		{
+			return 0;
+		}
+	};
+
+	class ZQ_CNN_Layer_Squeeze : public ZQ_CNN_Layer
+	{
+	public:
+		ZQ_CNN_Layer_Squeeze() { }
+		~ZQ_CNN_Layer_Squeeze() {}
+
+		std::vector<int> dim;
+		//
+		int bottom_C;
+		int bottom_H;
+		int bottom_W;
+
+		virtual bool Forward(std::vector<ZQ_CNN_Tensor4D*>* bottoms, std::vector<ZQ_CNN_Tensor4D*>* tops)
+		{
+			if (bottoms == 0 || tops == 0 || bottoms->size() == 0 || tops->size() == 0 || (*bottoms)[0] == 0 || (*tops)[0] == 0)
+				return false;
+
+			
+			double t1 = omp_get_wtime();
+			if ((*tops)[0] != (*bottoms)[0])
+				(*tops)[0]->CopyData(*(*bottoms)[0]);
+			double t2 = omp_get_wtime();
+			last_cost_time = t2 - t1;
+			if (show_debug_info)
+				printf("Squeeze layer: %s cost : %.3f ms\n", name.c_str(), 1000 * (t2 - t1));
+			return true;
+		}
+
+		virtual bool ReadParam(const std::string& line)
+		{
+			bottom_names.clear();
+			top_names.clear();
+			std::vector<std::vector<std::string> > paras = split_line(line);
+			int num = paras.size();
+			bool has_top = false, has_bottom = false, has_name = false;
+
+			for (int n = 0; n < num; n++)
+			{
+				if (paras[n].size() == 0)
+					continue;
+				if (_my_strcmpi("Squeeze", paras[n][0].c_str()) == 0)
+				{
+
+				}
+				else if (_my_strcmpi("top", paras[n][0].c_str()) == 0)
+				{
+					if (paras[n].size() >= 2)
+					{
+						has_top = true;
+						top_names.push_back(paras[n][1]);
+					}
+				}
+				else if (_my_strcmpi("bottom", paras[n][0].c_str()) == 0)
+				{
+					if (paras[n].size() >= 2)
+					{
+						has_bottom = true;
+						bottom_names.push_back(paras[n][1]);
+					}
+				}
+				else if (_my_strcmpi("name", paras[n][0].c_str()) == 0)
+				{
+					if (paras[n].size() >= 2)
+					{
+						has_name = true;
+						name = paras[n][1];
+					}
+				}
+				else if (_my_strcmpi("dim", paras[n][0].c_str()) == 0)
+				{
+					if (paras[n].size() >= 2)
+					{
+						dim.push_back(atoi(paras[n][1].c_str()));
+					}
+				}
+			}
+
+			
+			if (!has_bottom)std::cout << "Layer " << name << " missing " << "bottom\n";
+			if (!has_top)std::cout << "Layer " << name << " missing " << "top\n";
+			if (!has_name) {
+				std::cout << "Layer " << name << " missing " << "name\n";
+				std::cout << line << "\n";
+			}
+			return has_bottom && has_top && has_name;
+		}
+
+		virtual bool LayerSetup(std::vector<ZQ_CNN_Tensor4D*>* bottoms, std::vector<ZQ_CNN_Tensor4D*>* tops)
+		{
+			if (bottoms == 0 || tops == 0 || bottoms->size() == 0 || (*bottoms)[0] == 0 || tops->size() == 0 || (*tops)[0] == 0)
+				return false;
+			int bottom_N, bottom_C, bottom_H, bottom_W;
+			(*bottoms)[0]->GetShape(bottom_N, bottom_C, bottom_H, bottom_W);
+			if (!SetBottomDim(bottom_C, bottom_H, bottom_W))
+				return false;
+			int top_C, top_H, top_W;
+			GetTopDim(top_C, top_H, top_W);
+			(*tops)[0]->SetShape(bottom_N, top_C, top_H, top_W);
+			return true;
+		}
+
+		//should called after ReadParam, allocate memory in this func
+		virtual bool SetBottomDim(int bottom_C, int bottom_H, int bottom_W)
+		{
+			this->bottom_C = bottom_C;
+			this->bottom_H = bottom_H;
+			this->bottom_W = bottom_W;
+			return true;
+		}
+
+		//should called after SetBottomDim
+		virtual void GetTopDim(int& top_C, int& top_H, int& top_W) const
+		{
+			top_C = bottom_C;
+			top_H = bottom_H;
+			top_W = bottom_W;
 		}
 
 

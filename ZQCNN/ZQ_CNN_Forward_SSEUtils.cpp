@@ -3,6 +3,7 @@
 #include "layers_c/zq_cnn_convolution_32f_align_c.h"
 #include "layers_c/zq_cnn_depthwise_convolution_32f_align_c.h"
 #include "layers_c/zq_cnn_convolution_gemm_32f_align_c.h"
+#include "layers_c/zq_cnn_lstm_32f_align_c.h"
 #include "layers_c/zq_cnn_innerproduct_32f_align_c.h"
 #include "layers_c/zq_cnn_innerproduct_gemm_32f_align_c.h"
 #include "layers_c/zq_cnn_addbias_32f_align_c.h"
@@ -2508,6 +2509,114 @@ void ZQ_CNN_Forward_SSEUtils::_inner_product(int align_mode, const float* in_dat
 }
 
 #endif //__ARM_NEON
+
+#if __ARM_NEON
+void ZQ_CNN_Forward_SSEUtils::_lstm_TF(int align_mode, const float* in_data, int in_N, int in_W, int in_C, int in_pixelStep, int in_sliceStep,
+	const float* xc_I_data, int xc_I_pixelStep, int xc_I_sliceStep,
+	const float* xc_F_data, int xc_F_pixelStep, int xc_F_sliceStep,
+	const float* xc_O_data, int xc_O_pixelStep, int xc_O_sliceStep,
+	const float* xc_G_data, int xc_G_pixelStep, int xc_G_sliceStep,
+	const float* hc_I_data, int hc_I_pixelStep, int hc_I_sliceStep,
+	const float* hc_F_data, int hc_F_pixelStep, int hc_F_sliceStep,
+	const float* hc_O_data, int hc_O_pixelStep, int hc_O_sliceStep,
+	const float* hc_G_data, int hc_G_pixelStep, int hc_G_sliceStep,
+	const float* b_I_data, const float* b_F_data, const float* b_O_data, const float* b_G_data,
+	float* out_data, int out_pixelStep, int out_sliceStep, int hidden_dim, bool is_fw,
+	float forget_bias, float cell_clip, void** buffer, __int64* buffer_len)
+{
+	if (align_mode == ZQ_CNN_Tensor4D::ALIGN_128bit)
+	{
+		zq_cnn_lstm_TF_32f_align128bit(in_data, in_N, in_W, in_C, in_pixelStep, in_sliceStep,
+			xc_I_data, xc_I_pixelStep, xc_I_sliceStep,
+			xc_F_data, xc_F_pixelStep, xc_F_sliceStep,
+			xc_O_data, xc_O_pixelStep, xc_O_sliceStep,
+			xc_G_data, xc_G_pixelStep, xc_G_sliceStep,
+			hc_I_data, hc_I_pixelStep, hc_I_sliceStep,
+			hc_F_data, hc_F_pixelStep, hc_F_sliceStep,
+			hc_O_data, hc_O_pixelStep, hc_O_sliceStep,
+			hc_G_data, hc_G_pixelStep, hc_G_sliceStep,
+			b_I_data, b_F_data, b_O_data, b_G_data,
+			out_data, out_pixelStep, out_sliceStep, hidden_dim, is_fw, forget_bias, cell_clip, buffer, buffer_len);
+	}
+	else
+	{
+		zq_cnn_lstm_TF_32f_align0_general(in_data, in_N, in_W, in_C, in_pixelStep, in_sliceStep,
+			xc_I_data, xc_I_pixelStep, xc_I_sliceStep,
+			xc_F_data, xc_F_pixelStep, xc_F_sliceStep,
+			xc_O_data, xc_O_pixelStep, xc_O_sliceStep,
+			xc_G_data, xc_G_pixelStep, xc_G_sliceStep,
+			hc_I_data, hc_I_pixelStep, hc_I_sliceStep,
+			hc_F_data, hc_F_pixelStep, hc_F_sliceStep,
+			hc_O_data, hc_O_pixelStep, hc_O_sliceStep,
+			hc_G_data, hc_G_pixelStep, hc_G_sliceStep,
+			b_I_data, b_F_data, b_O_data, b_G_data,
+			out_data, out_pixelStep, out_sliceStep, hidden_dim, is_fw, forget_bias, cell_clip, buffer, buffer_len);
+	}
+}
+#else
+
+void ZQ_CNN_Forward_SSEUtils::_lstm_TF(int align_mode, const float* in_data, int in_N, int in_W, int in_C, int in_pixelStep, int in_sliceStep,
+	const float* xc_I_data, int xc_I_pixelStep, int xc_I_sliceStep,
+	const float* xc_F_data, int xc_F_pixelStep, int xc_F_sliceStep,
+	const float* xc_O_data, int xc_O_pixelStep, int xc_O_sliceStep,
+	const float* xc_G_data, int xc_G_pixelStep, int xc_G_sliceStep,
+	const float* hc_I_data, int hc_I_pixelStep, int hc_I_sliceStep,
+	const float* hc_F_data, int hc_F_pixelStep, int hc_F_sliceStep,
+	const float* hc_O_data, int hc_O_pixelStep, int hc_O_sliceStep,
+	const float* hc_G_data, int hc_G_pixelStep, int hc_G_sliceStep,
+	const float* b_I_data, const float* b_F_data, const float* b_O_data, const float* b_G_data,
+	float* out_data, int out_pixelStep, int out_sliceStep, int hidden_dim, bool is_fw, 
+	float forget_bias, float cell_clip, void** buffer, __int64* buffer_len)
+{
+	if (align_mode == ZQ_CNN_Tensor4D::ALIGN_128bit)
+	{
+#if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_SSE
+		zq_cnn_lstm_TF_32f_align128bit(in_data, in_N, in_W, in_C, in_pixelStep, in_sliceStep,
+			xc_I_data, xc_I_pixelStep, xc_I_sliceStep,
+			xc_F_data, xc_F_pixelStep, xc_F_sliceStep,
+			xc_O_data, xc_O_pixelStep, xc_O_sliceStep,
+			xc_G_data, xc_G_pixelStep, xc_G_sliceStep,
+			hc_I_data, hc_I_pixelStep, hc_I_sliceStep,
+			hc_F_data, hc_F_pixelStep, hc_F_sliceStep,
+			hc_O_data, hc_O_pixelStep, hc_O_sliceStep,
+			hc_G_data, hc_G_pixelStep, hc_G_sliceStep,
+			b_I_data, b_F_data, b_O_data, b_G_data,
+			out_data, out_pixelStep, out_sliceStep, hidden_dim, is_fw, forget_bias, cell_clip, buffer, buffer_len);
+#endif
+	}
+	else if (align_mode == ZQ_CNN_Tensor4D::ALIGN_256bit)
+	{
+#if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_AVX
+		zq_cnn_lstm_TF_32f_align256bit(in_data, in_N, in_W, in_C, in_pixelStep, in_sliceStep,
+			xc_I_data, xc_I_pixelStep, xc_I_sliceStep,
+			xc_F_data, xc_F_pixelStep, xc_F_sliceStep,
+			xc_O_data, xc_O_pixelStep, xc_O_sliceStep,
+			xc_G_data, xc_G_pixelStep, xc_G_sliceStep,
+			hc_I_data, hc_I_pixelStep, hc_I_sliceStep,
+			hc_F_data, hc_F_pixelStep, hc_F_sliceStep,
+			hc_O_data, hc_O_pixelStep, hc_O_sliceStep,
+			hc_G_data, hc_G_pixelStep, hc_G_sliceStep,
+			b_I_data, b_F_data, b_O_data, b_G_data,
+			out_data, out_pixelStep, out_sliceStep, hidden_dim, is_fw, forget_bias, cell_clip, buffer, buffer_len);
+#endif
+	}
+	else
+	{
+		zq_cnn_lstm_TF_32f_align0_general(in_data, in_N, in_W, in_C, in_pixelStep, in_sliceStep,
+			xc_I_data, xc_I_pixelStep, xc_I_sliceStep,
+			xc_F_data, xc_F_pixelStep, xc_F_sliceStep,
+			xc_O_data, xc_O_pixelStep, xc_O_sliceStep,
+			xc_G_data, xc_G_pixelStep, xc_G_sliceStep,
+			hc_I_data, hc_I_pixelStep, hc_I_sliceStep,
+			hc_F_data, hc_F_pixelStep, hc_F_sliceStep,
+			hc_O_data, hc_O_pixelStep, hc_O_sliceStep,
+			hc_G_data, hc_G_pixelStep, hc_G_sliceStep,
+			b_I_data, b_F_data, b_O_data, b_G_data,
+			out_data, out_pixelStep, out_sliceStep, hidden_dim, is_fw, forget_bias, cell_clip, buffer, buffer_len);
+	}
+}
+#endif //__ARM_NEON
+
 
 #if __ARM_NEON
 void  ZQ_CNN_Forward_SSEUtils::_addbias(int align_mode, float* data, int N, int H, int W, int C, 

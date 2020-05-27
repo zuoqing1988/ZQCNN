@@ -144,6 +144,9 @@
     <ClCompile Include="layers_c\zq_cnn_deconvolution_gemm_32f_align_c.c">
       <Filter>layers_c</Filter>
     </ClCompile>
+    <ClCompile Include="layers_c\zq_cnn_lstm_32f_align_c.c">
+      <Filter>layers_c</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="layers_c\zq_cnn_addbias_32f_align_c.h">
@@ -453,6 +456,12 @@
       <Filter>layers_c</Filter>
     </ClInclude>
     <ClInclude Include="layers_c\zq_cnn_deconvolution_gemm_32f_align_c_raw.h">
+      <Filter>layers_c</Filter>
+    </ClInclude>
+    <ClInclude Include="layers_c\zq_cnn_lstm_32f_align_c.h">
+      <Filter>layers_c</Filter>
+    </ClInclude>
+    <ClInclude Include="layers_c\zq_cnn_lstm_32f_align_c_raw.h">
       <Filter>layers_c</Filter>
     </ClInclude>
   </ItemGroup>

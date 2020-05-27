@@ -1293,6 +1293,204 @@ namespace ZQ
 			return true;
 		}
 
+		static bool LSTM_TF(ZQ_CNN_Tensor4D& input, 
+			const ZQ_CNN_Tensor4D& fw_xc_I, const ZQ_CNN_Tensor4D& fw_xc_F, const ZQ_CNN_Tensor4D& fw_xc_O, const ZQ_CNN_Tensor4D& fw_xc_G, 
+			const ZQ_CNN_Tensor4D& fw_hc_I, const ZQ_CNN_Tensor4D& fw_hc_F, const ZQ_CNN_Tensor4D& fw_hc_O, const ZQ_CNN_Tensor4D& fw_hc_G,
+			const ZQ_CNN_Tensor4D& fw_b_I, const ZQ_CNN_Tensor4D& fw_b_F, const ZQ_CNN_Tensor4D& fw_b_O, const ZQ_CNN_Tensor4D& fw_b_G,
+			const ZQ_CNN_Tensor4D& bw_xc_I, const ZQ_CNN_Tensor4D& bw_xc_F, const ZQ_CNN_Tensor4D& bw_xc_O, const ZQ_CNN_Tensor4D& bw_xc_G,
+			const ZQ_CNN_Tensor4D& bw_hc_I, const ZQ_CNN_Tensor4D& bw_hc_F, const ZQ_CNN_Tensor4D& bw_hc_O, const ZQ_CNN_Tensor4D& bw_hc_G,
+			const ZQ_CNN_Tensor4D& bw_b_I, const ZQ_CNN_Tensor4D& bw_b_F, const ZQ_CNN_Tensor4D& bw_b_O, const ZQ_CNN_Tensor4D& bw_b_G,
+			ZQ_CNN_Tensor4D& output, bool fw_dir, bool bw_dir, float forget_bias, float cell_clip, void** buffer = 0, __int64* buffer_len = 0)
+		{
+			int in_N = input.GetN();
+			int in_H = input.GetH();
+			int in_W = input.GetW();
+			int in_C = input.GetC();
+			
+			if (in_N <= 0 || in_H <= 0 || in_W <= 0 || in_C == 0)
+			{
+				output.ChangeSize(0, 0, 0, 0, 0, 0);
+				return true;
+			}
+
+			int fw_hidden_dim = 0;
+			int bw_hidden_dim = 0;
+			int input_dim = in_C;
+			if (fw_dir)
+			{
+				int fw_xc_I_N = fw_xc_I.GetN();
+				fw_hidden_dim = fw_xc_I_N;
+				if (fw_xc_I_N != fw_xc_F.GetN() || fw_xc_I_N != fw_xc_O.GetN() || fw_xc_I_N != fw_xc_G.GetN())
+					return false;
+				if (fw_xc_I.GetC() != input_dim || fw_xc_F.GetC() != input_dim || fw_xc_O.GetC() != input_dim || fw_xc_G.GetC() != input_dim)
+					return false;
+				if (fw_hc_I.GetN() != fw_hidden_dim || fw_hc_F.GetN() != fw_hidden_dim || fw_hc_O.GetN() != fw_hidden_dim || fw_hc_G.GetN() != fw_hidden_dim
+					|| fw_hc_I.GetC() != fw_hidden_dim || fw_hc_F.GetC() != fw_hidden_dim || fw_hc_O.GetC() != fw_hidden_dim || fw_hc_G.GetC() != fw_hidden_dim)
+					return false;
+			}
+			if (bw_dir)
+			{
+				int bw_xc_I_N = bw_xc_I.GetN();
+				bw_hidden_dim = bw_xc_I_N;
+				if (bw_xc_I_N != bw_xc_F.GetN() || bw_xc_I_N != bw_xc_O.GetN() || bw_xc_I_N != bw_xc_G.GetN())
+					return false;
+				if (bw_xc_I.GetC() != input_dim || bw_xc_F.GetC() != input_dim || bw_xc_O.GetC() != input_dim || bw_xc_G.GetC() != input_dim)
+					return false;
+				if (bw_hc_I.GetN() != bw_hidden_dim || bw_hc_F.GetN() != bw_hidden_dim || bw_hc_O.GetN() != bw_hidden_dim || bw_hc_G.GetN() != bw_hidden_dim
+					|| bw_hc_I.GetC() != bw_hidden_dim || bw_hc_F.GetC() != bw_hidden_dim || bw_hc_O.GetC() != bw_hidden_dim || bw_hc_G.GetC() != bw_hidden_dim)
+					return false;
+			}
+			int need_N = in_N;
+			int need_H = 1;
+			int need_W = in_W;
+			int need_C = fw_hidden_dim + bw_hidden_dim;
+
+			if (output.GetN() != need_N || output.GetH() != need_H || output.GetW() != need_W || output.GetC() != need_C)
+				output.ChangeSize(need_N, need_H, need_W, need_C, 0, 0);
+				
+			float* out_data = output.GetFirstPixelPtr();
+			int out_pixelStep = output.GetPixelStep();
+			int out_sliceStep = output.GetSliceStep();
+
+			const float* in_data = input.GetFirstPixelPtr();
+			int in_pixelStep = input.GetPixelStep();
+			int in_sliceStep = input.GetSliceStep();
+
+
+			if (fw_dir)
+			{
+				int align_mode = __min((int)input.GetAlignType(), (int)fw_xc_I.GetAlignType());
+				align_mode = __min(align_mode, (int)fw_xc_F.GetAlignType());
+				align_mode = __min(align_mode, (int)fw_xc_O.GetAlignType());
+				align_mode = __min(align_mode, (int)fw_xc_G.GetAlignType());
+				align_mode = __min(align_mode, (int)fw_hc_I.GetAlignType());
+				align_mode = __min(align_mode, (int)fw_hc_F.GetAlignType());
+				align_mode = __min(align_mode, (int)fw_hc_O.GetAlignType());
+				align_mode = __min(align_mode, (int)fw_hc_G.GetAlignType());
+
+#if __ARM_NEON
+				align_mode = __min(align_mode, ZQ_CNN_Tensor4D::ALIGN_128bit);
+#else
+#if ZQ_CNN_USE_SSETYPE == ZQ_CNN_SSETYPE_AVX2
+				align_mode = __min(align_mode, ZQ_CNN_Tensor4D::ALIGN_256bit);
+#elif ZQ_CNN_USE_SSETYPE == ZQ_CNN_SSETYPE_AVX
+				align_mode = __min(align_mode, ZQ_CNN_Tensor4D::ALIGN_256bit);
+#elif ZQ_CNN_USE_SSETYPE == ZQ_CNN_SSETYPE_SSE
+				align_mode = __min(align_mode, ZQ_CNN_Tensor4D::ALIGN_128bit);
+#else
+				align_mode = __min(align_mode, ZQ_CNN_Tensor4D::ALIGN_0);
+#endif
+#endif
+
+				const float* fw_xc_I_data = fw_xc_I.GetFirstPixelPtr();
+				int fw_xc_I_pixelStep = fw_xc_I.GetPixelStep();
+				int fw_xc_I_sliceStep = fw_xc_I.GetSliceStep();
+				const float* fw_xc_F_data = fw_xc_F.GetFirstPixelPtr();
+				int fw_xc_F_pixelStep = fw_xc_F.GetPixelStep();
+				int fw_xc_F_sliceStep = fw_xc_F.GetSliceStep();
+				const float* fw_xc_O_data = fw_xc_O.GetFirstPixelPtr();
+				int fw_xc_O_pixelStep = fw_xc_O.GetPixelStep();
+				int fw_xc_O_sliceStep = fw_xc_O.GetSliceStep();
+				const float* fw_xc_G_data = fw_xc_G.GetFirstPixelPtr();
+				int fw_xc_G_pixelStep = fw_xc_G.GetPixelStep();
+				int fw_xc_G_sliceStep = fw_xc_G.GetSliceStep();
+				const float* fw_hc_I_data = fw_hc_I.GetFirstPixelPtr();
+				int fw_hc_I_pixelStep = fw_hc_I.GetPixelStep();
+				int fw_hc_I_sliceStep = fw_hc_I.GetSliceStep();
+				const float* fw_hc_F_data = fw_hc_F.GetFirstPixelPtr();
+				int fw_hc_F_pixelStep = fw_hc_F.GetPixelStep();
+				int fw_hc_F_sliceStep = fw_hc_F.GetSliceStep();
+				const float* fw_hc_O_data = fw_hc_O.GetFirstPixelPtr();
+				int fw_hc_O_pixelStep = fw_hc_O.GetPixelStep();
+				int fw_hc_O_sliceStep = fw_hc_O.GetSliceStep();
+				const float* fw_hc_G_data = fw_hc_G.GetFirstPixelPtr();
+				int fw_hc_G_pixelStep = fw_hc_G.GetPixelStep();
+				int fw_hc_G_sliceStep = fw_hc_G.GetSliceStep();
+				const float* fw_b_I_data = fw_b_I.GetFirstPixelPtr();
+				const float* fw_b_F_data = fw_b_F.GetFirstPixelPtr();
+				const float* fw_b_O_data = fw_b_O.GetFirstPixelPtr();
+				const float* fw_b_G_data = fw_b_G.GetFirstPixelPtr();
+				_lstm_TF(align_mode, in_data, in_N, in_W, in_C, in_pixelStep, in_sliceStep,
+					fw_xc_I_data, fw_xc_I_pixelStep, fw_xc_I_sliceStep, 
+					fw_xc_F_data, fw_xc_F_pixelStep, fw_xc_F_sliceStep,
+					fw_xc_O_data, fw_xc_O_pixelStep, fw_xc_O_sliceStep,
+					fw_xc_G_data, fw_xc_G_pixelStep, fw_xc_G_sliceStep,
+					fw_hc_I_data, fw_hc_I_pixelStep, fw_hc_I_sliceStep,
+					fw_hc_F_data, fw_hc_F_pixelStep, fw_hc_F_sliceStep,
+					fw_hc_O_data, fw_hc_O_pixelStep, fw_hc_O_sliceStep,
+					fw_hc_G_data, fw_hc_G_pixelStep, fw_hc_G_sliceStep,
+					fw_b_I_data, fw_b_F_data, fw_b_O_data, fw_b_G_data,
+					out_data, out_pixelStep, out_sliceStep, fw_hidden_dim, true, forget_bias, cell_clip, buffer, buffer_len);
+
+			}
+			if(bw_dir)
+			{
+				int align_mode = __min((int)input.GetAlignType(), (int)bw_xc_I.GetAlignType());
+				align_mode = __min(align_mode, (int)bw_xc_F.GetAlignType());
+				align_mode = __min(align_mode, (int)bw_xc_O.GetAlignType());
+				align_mode = __min(align_mode, (int)bw_xc_G.GetAlignType());
+				align_mode = __min(align_mode, (int)bw_hc_I.GetAlignType());
+				align_mode = __min(align_mode, (int)bw_hc_F.GetAlignType());
+				align_mode = __min(align_mode, (int)bw_hc_O.GetAlignType());
+				align_mode = __min(align_mode, (int)bw_hc_G.GetAlignType());
+#if __ARM_NEON
+				align_mode = __min(align_mode, ZQ_CNN_Tensor4D::ALIGN_128bit);
+#else
+#if ZQ_CNN_USE_SSETYPE == ZQ_CNN_SSETYPE_AVX2
+				align_mode = __min(align_mode, ZQ_CNN_Tensor4D::ALIGN_256bit);
+#elif ZQ_CNN_USE_SSETYPE == ZQ_CNN_SSETYPE_AVX
+				align_mode = __min(align_mode, ZQ_CNN_Tensor4D::ALIGN_256bit);
+#elif ZQ_CNN_USE_SSETYPE == ZQ_CNN_SSETYPE_SSE
+				align_mode = __min(align_mode, ZQ_CNN_Tensor4D::ALIGN_128bit);
+#else
+				align_mode = __min(align_mode, ZQ_CNN_Tensor4D::ALIGN_0);
+#endif
+#endif
+
+				const float* bw_xc_I_data = bw_xc_I.GetFirstPixelPtr();
+				int bw_xc_I_pixelStep = bw_xc_I.GetPixelStep();
+				int bw_xc_I_sliceStep = bw_xc_I.GetSliceStep();
+				const float* bw_xc_F_data = bw_xc_F.GetFirstPixelPtr();
+				int bw_xc_F_pixelStep = bw_xc_F.GetPixelStep();
+				int bw_xc_F_sliceStep = bw_xc_F.GetSliceStep();
+				const float* bw_xc_O_data = bw_xc_O.GetFirstPixelPtr();
+				int bw_xc_O_pixelStep = bw_xc_O.GetPixelStep();
+				int bw_xc_O_sliceStep = bw_xc_O.GetSliceStep();
+				const float* bw_xc_G_data = bw_xc_G.GetFirstPixelPtr();
+				int bw_xc_G_pixelStep = bw_xc_G.GetPixelStep();
+				int bw_xc_G_sliceStep = bw_xc_G.GetSliceStep();
+				const float* bw_hc_I_data = bw_hc_I.GetFirstPixelPtr();
+				int bw_hc_I_pixelStep = bw_hc_I.GetPixelStep();
+				int bw_hc_I_sliceStep = bw_hc_I.GetSliceStep();
+				const float* bw_hc_F_data = bw_hc_F.GetFirstPixelPtr();
+				int bw_hc_F_pixelStep = bw_hc_F.GetPixelStep();
+				int bw_hc_F_sliceStep = bw_hc_F.GetSliceStep();
+				const float* bw_hc_O_data = bw_hc_O.GetFirstPixelPtr();
+				int bw_hc_O_pixelStep = bw_hc_O.GetPixelStep();
+				int bw_hc_O_sliceStep = bw_hc_O.GetSliceStep();
+				const float* bw_hc_G_data = bw_hc_G.GetFirstPixelPtr();
+				int bw_hc_G_pixelStep = bw_hc_G.GetPixelStep();
+				int bw_hc_G_sliceStep = bw_hc_G.GetSliceStep();
+				const float* bw_b_I_data = bw_b_I.GetFirstPixelPtr();
+				const float* bw_b_F_data = bw_b_F.GetFirstPixelPtr();
+				const float* bw_b_O_data = bw_b_O.GetFirstPixelPtr();
+				const float* bw_b_G_data = bw_b_G.GetFirstPixelPtr();
+				_lstm_TF(align_mode, in_data, in_N, in_W, in_C, in_pixelStep, in_sliceStep,
+					bw_xc_I_data, bw_xc_I_pixelStep, bw_xc_I_sliceStep,
+					bw_xc_F_data, bw_xc_F_pixelStep, bw_xc_F_sliceStep,
+					bw_xc_O_data, bw_xc_O_pixelStep, bw_xc_O_sliceStep,
+					bw_xc_G_data, bw_xc_G_pixelStep, bw_xc_G_sliceStep,
+					bw_hc_I_data, bw_hc_I_pixelStep, bw_hc_I_sliceStep,
+					bw_hc_F_data, bw_hc_F_pixelStep, bw_hc_F_sliceStep,
+					bw_hc_O_data, bw_hc_O_pixelStep, bw_hc_O_sliceStep,
+					bw_hc_G_data, bw_hc_G_pixelStep, bw_hc_G_sliceStep,
+					bw_b_I_data, bw_b_F_data, bw_b_O_data, bw_b_G_data, 
+					out_data + fw_hidden_dim, out_pixelStep, out_sliceStep, bw_hidden_dim, false, forget_bias, cell_clip, buffer, buffer_len);
+			}
+
+			return true;
+		}
+
 		static void MaxPooling(ZQ_CNN_Tensor4D &input, ZQ_CNN_Tensor4D &output, int kernel_H, int kernel_W, 
 			int stride_H, int stride_W, int pad_H_top, int pad_H_bottom, int pad_W_left, int pad_W_right, bool global_pool)
 		{
@@ -2925,6 +3123,18 @@ namespace ZQ
 		static void _inner_product(int align_mode, const float* in_data, int in_N, int in_H, int in_W, int in_C, int in_pixStep, int in_widthStep, int in_sliceStep,
 			const float* filter_data, int filter_N, int filter_pixStep, int filter_widthStep, int filter_sliceStep,
 			float* out_data, int out_N, int out_sliceStep, void** buffer, __int64* buffer_len);
+
+		static void _lstm_TF(int align_mode, const float* in_data, int in_N, int in_W, int in_C, int in_pixelStep, int in_sliceStep,
+			const float* xc_I_data, int xc_I_pixelStep, int xc_I_sliceStep, 
+			const float* xc_F_data, int xc_F_pixelStep, int xc_F_sliceStep,
+			const float* xc_O_data, int xc_O_pixelStep, int xc_O_sliceStep,
+			const float* xc_G_data, int xc_G_pixelStep, int xc_G_sliceStep,
+			const float* hc_I_data, int hc_I_pixelStep, int hc_I_sliceStep,
+			const float* hc_F_data, int hc_F_pixelStep, int hc_F_sliceStep,
+			const float* hc_O_data, int hc_O_pixelStep, int hc_O_sliceStep,
+			const float* hc_G_data, int hc_G_pixelStep, int hc_G_sliceStep,
+			const float* b_I_data, const float* b_F_data, const float* b_O_data, const float* b_G_data,
+			float* out_data, int out_pixelStep, int out_sliceStep, int hidden_dim, bool is_fw, float forget_bias, float cell_clip, void** buffer, __int64* buffer_len);
 
 		static void _addbias(int align_mode, float* data, int N, int H, int W, int C, int pixelStep, int widthStep, int sliceStep, 
 			const float* bias_Data);
