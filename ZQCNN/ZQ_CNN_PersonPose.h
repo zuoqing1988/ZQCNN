@@ -524,7 +524,12 @@ namespace ZQ
 				col1 = col1 - max_side_W*0.1;
 				col2 = col2 + max_side_W*0.1;
 				row1 = row1 - max_side_H*0.1;
-				row2 = row2 + max_side_H*0.1;
+				if (pose_npts == 10)
+				{
+					row2 = __max(row2,__min(row2 + max_side_H*0.1, height+max_side_H*0.05));
+				}
+				else
+					row2 = row2 + max_side_H*0.1;
 				rect_w = col2 - col1;
 				rect_h = row2 - row1;
 				int cx = (col1 + col2) / 2;
@@ -623,10 +628,22 @@ namespace ZQ
 						}
 						else
 						{
-							output[nn].points[c * 3 + 0] += (max_w + 0.5) / hm_W*size_W - 0.5 - pad_w_left + start_w;
-							output[nn].points[c * 3 + 1] += (max_h + 0.5) / hm_H*size_H - 0.5 - pad_h_up + start_h;
-							output[nn].points[c * 3 + 0] /= 2;
-							output[nn].points[c * 3 + 1] /= 2;
+							float cur_x = (max_w + 0.5) / hm_W*size_W - 0.5 - pad_w_left + start_w;
+							float cur_y = (max_h + 0.5) / hm_H*size_H - 0.5 - pad_h_up + start_h;
+							float last_x = output[nn].points[c * 3 + 0];
+							float last_y = output[nn].points[c * 3 + 1];
+							float thresh = __min(max_side_H, max_side_W)*0.03;
+							float thresh2 = thresh*thresh;
+							if ((cur_x - last_x)*(cur_x - last_x) + (cur_y - last_y)*(cur_y - last_y) <= thresh2)
+							{
+								output[nn].points[c * 3 + 0] = last_x;
+								output[nn].points[c * 3 + 1] = last_y;
+							}
+							else
+							{
+								output[nn].points[c * 3 + 0] = last_x*0.66 + cur_x*0.34;
+								output[nn].points[c * 3 + 1] = last_y*0.66 + cur_y*0.34;
+							}
 						}
 						
 						output[nn].points[c * 3 + 2] = max_weight;
