@@ -185,6 +185,51 @@ namespace ZQ
 			return true;
 		}
 
+		virtual void FlipX()
+		{
+			if (C > 0)
+			{
+				float* buffer = new float[pixelStep];
+				for (int n = 0; n < N; n++)
+				{
+					for (int h = 0; h < H; h++)
+					{
+						float* row_ptr = firstPixelData + n*sliceStep + h*widthStep;
+						for (int w = 0; w < W/2; w++)
+						{
+							memcpy(buffer, row_ptr + w*pixelStep, sizeof(float)*pixelStep);
+							memcpy(row_ptr + w*pixelStep, row_ptr + (W - 1 - w)*pixelStep, sizeof(float)*pixelStep);
+							memcpy(row_ptr + (W - 1 - w)*pixelStep, buffer, sizeof(float)*pixelStep);
+						}
+					}
+				}
+				delete []buffer;
+			}
+		}
+
+		virtual void FlipY()
+		{
+			if (C > 0)
+			{
+				float* buffer = new float[pixelStep];
+				for (int n = 0; n < N; n++)
+				{
+					for (int w = 0; w < W; w++)
+					{
+						float* pix_ptr = firstPixelData + n*sliceStep + w*pixelStep;
+
+						for (int h = 0; h < H/2; h++)
+						{
+							memcpy(buffer, pix_ptr + h*widthStep, sizeof(float)*pixelStep);
+							memcpy(pix_ptr + h*widthStep, pix_ptr + (H - 1 - h)*widthStep, sizeof(float)*pixelStep);
+							memcpy(pix_ptr + (H - 1 - h)*widthStep, buffer, sizeof(float)*pixelStep);
+						}
+					}
+				}
+				delete[]buffer;
+			}
+		}
+
 		virtual bool Tile(ZQ_CNN_Tensor4D& out, int tile_n, int tile_h, int tile_w, int tile_c) const
 		{
 			int out_N = N*tile_n;
