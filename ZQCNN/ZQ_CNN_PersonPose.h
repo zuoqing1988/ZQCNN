@@ -524,9 +524,23 @@ namespace ZQ
 				col1 = col1 - max_side_W*0.1;
 				col2 = col2 + max_side_W*0.1;
 				row1 = row1 - max_side_H*0.1;
+				std::vector<float> filter_weights(pose_npts, 0.5f);
 				if (pose_npts == 10)
 				{
-					row2 = __max(row2,__min(row2 + max_side_H*0.1, height+max_side_H*0.05));
+					filter_weights[4] = 0.7f;
+					filter_weights[6] = 0.7f;
+					filter_weights[8] = 0.8f;
+					filter_weights[9] = 0.8f;
+				}
+				else if (pose_npts == 14)
+				{
+					filter_weights[8] = 0.7f;
+					filter_weights[11] = 0.7f;
+				}
+
+				if (pose_npts == 10)
+				{
+					row2 = __max(row2,__min(row2 + max_side_H*0.1, height+max_side_H*0.05));	
 				}
 				else
 					row2 = row2 + max_side_H*0.1;
@@ -641,8 +655,8 @@ namespace ZQ
 							}
 							else
 							{
-								output[nn].points[c * 3 + 0] = last_x*0.66 + cur_x*0.34;
-								output[nn].points[c * 3 + 1] = last_y*0.66 + cur_y*0.34;
+								output[nn].points[c * 3 + 0] = last_x*filter_weights[c] + cur_x*(1.0f - filter_weights[c]);
+								output[nn].points[c * 3 + 1] = last_y*filter_weights[c] + cur_y*(1.0f - filter_weights[c]);
 							}
 						}
 						
