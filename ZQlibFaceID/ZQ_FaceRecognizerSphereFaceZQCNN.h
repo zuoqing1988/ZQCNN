@@ -67,7 +67,7 @@ namespace ZQ
 				nchwbin_file = caffemodel_file;
 				output_blob_name = out_blob_name;
 
-				if (!net.LoadFrom(zqparam_file, nchwbin_file))
+				if (!net.LoadFrom(zqparam_file, nchwbin_file,false,0,false))
 				{
 					feat_dim = 0;
 					return false;
