@@ -69,7 +69,12 @@ namespace ZQ
 				break;
 			}
 			
-			if (GetCropHeight() == 160 && GetCropWidth() == 160)
+			if (GetCropHeight() == 256 && GetCropWidth() == 256)
+			{
+				if (!ZQ_FaceRecognizerUtils::CropImage_256x256_dot85<float>(input, face5point, crop))
+					return false;
+			}
+			else if (GetCropHeight() == 160 && GetCropWidth() == 160)
 			{
 				if (!ZQ_FaceRecognizerUtils::CropImage_160x160<float>(input, face5point, crop))
 					return false;
