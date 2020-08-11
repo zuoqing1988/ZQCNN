@@ -61,6 +61,36 @@ namespace ZQ
 		}
 
 		template<class BaseType>
+		static bool CropImage_256x256_dot85(const cv::Mat& img, const BaseType* facial5point, cv::Mat& crop)
+		{
+			cv::Size designed_size(256, 256);
+			double v_scale = 218.0 / 112.0;
+			double v_add = 19.0;
+			BaseType coord5point[10] =
+			{
+				30.2946 + 8, 51.6963,
+				65.5318 + 8, 51.5014,
+				48.0252 + 8, 71.7366,
+				33.5493 + 8, 92.3655,
+				62.7299 + 8, 92.2041
+			};
+			for (int i = 0; i < 5; i++)
+			{
+				coord5point[i * 2 + 0] = coord5point[i * 2 + 0] * v_scale + v_add;
+				coord5point[i * 2 + 1] = coord5point[i * 2 + 1] * v_scale + v_add;
+			}
+
+			cv::Mat transform;
+			clock_t t1 = clock();
+			_findSimilarity(5, facial5point, coord5point, transform);
+			clock_t t2 = clock();
+			cv::warpAffine(img, crop, transform, designed_size);
+			clock_t t3 = clock();
+			//printf("findtrans:%.3f, warp:%.3f\n", 0.001*(t2 - t1), 0.001*(t3 - t2));
+			return true;
+		}
+
+		template<class BaseType>
 		static bool CropImage_160x160(const cv::Mat& img, const BaseType* facial5point, cv::Mat& crop)
 		{
 			cv::Size designed_size(160, 160);
@@ -326,7 +356,6 @@ namespace ZQ
 			printf("\n");
 			}*/
 
-			delete[]xyR;
 			const TmpType TreflectY[9] =
 			{
 				-1, 0,  0,
