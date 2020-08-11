@@ -291,6 +291,9 @@ namespace ZQ
 			return true;
 		}
 
+		/*
+		filter_type: 0 none, 1 linear, 2 complex
+		*/
 		bool DetectVideoSinglePerson(std::vector<BBox>& output, const unsigned char* bgr_img, int width, int height, int widthStep, float confidence_thresh,
 			bool show_debug_info = false, int filter_type = 2)
 		{
