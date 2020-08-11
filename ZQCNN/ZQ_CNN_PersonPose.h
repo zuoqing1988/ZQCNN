@@ -292,7 +292,7 @@ namespace ZQ
 		}
 
 		bool DetectVideoSinglePerson(std::vector<BBox>& output, const unsigned char* bgr_img, int width, int height, int widthStep, float confidence_thresh,
-			bool show_debug_info = false)
+			bool show_debug_info = false, int filter_type = 2)
 		{
 			bool need_ssd = false;
 			if (output.size() == 0)
@@ -635,32 +635,60 @@ namespace ZQ
 					}*/
 					if (max_weight > thresh)
 					{
-						if (need_ssd || output[nn].points[c * 3 + 2] < 0.5)
+						if (filter_type == 2)
 						{
-							output[nn].points[c * 3 + 0] = (max_w + 0.5) / hm_W*size_W - 0.5 - pad_w_left + start_w;
-							output[nn].points[c * 3 + 1] = (max_h + 0.5) / hm_H*size_H - 0.5 - pad_h_up + start_h;
-						}
-						else
-						{
-							float cur_x = (max_w + 0.5) / hm_W*size_W - 0.5 - pad_w_left + start_w;
-							float cur_y = (max_h + 0.5) / hm_H*size_H - 0.5 - pad_h_up + start_h;
-							float last_x = output[nn].points[c * 3 + 0];
-							float last_y = output[nn].points[c * 3 + 1];
-							float thresh = __min(max_side_H, max_side_W)*0.03;
-							float thresh2 = thresh*thresh;
-							if ((cur_x - last_x)*(cur_x - last_x) + (cur_y - last_y)*(cur_y - last_y) <= thresh2)
+							if (need_ssd || output[nn].points[c * 3 + 2] < 0.5)
 							{
-								output[nn].points[c * 3 + 0] = last_x;
-								output[nn].points[c * 3 + 1] = last_y;
+								output[nn].points[c * 3 + 0] = (max_w + 0.5) / hm_W*size_W - 0.5 - pad_w_left + start_w;
+								output[nn].points[c * 3 + 1] = (max_h + 0.5) / hm_H*size_H - 0.5 - pad_h_up + start_h;
 							}
 							else
 							{
+								float cur_x = (max_w + 0.5) / hm_W*size_W - 0.5 - pad_w_left + start_w;
+								float cur_y = (max_h + 0.5) / hm_H*size_H - 0.5 - pad_h_up + start_h;
+								float last_x = output[nn].points[c * 3 + 0];
+								float last_y = output[nn].points[c * 3 + 1];
+								float thresh = __min(max_side_H, max_side_W)*0.03;
+								float thresh2 = thresh*thresh;
+								if ((cur_x - last_x)*(cur_x - last_x) + (cur_y - last_y)*(cur_y - last_y) <= thresh2)
+								{
+									output[nn].points[c * 3 + 0] = last_x;
+									output[nn].points[c * 3 + 1] = last_y;
+								}
+								else
+								{
+									output[nn].points[c * 3 + 0] = last_x*filter_weights[c] + cur_x*(1.0f - filter_weights[c]);
+									output[nn].points[c * 3 + 1] = last_y*filter_weights[c] + cur_y*(1.0f - filter_weights[c]);
+								}
+							}
+
+							output[nn].points[c * 3 + 2] = max_weight;
+						}
+						else if (filter_type == 1)
+						{
+							if (need_ssd || output[nn].points[c * 3 + 2] < 0.5)
+							{
+								output[nn].points[c * 3 + 0] = (max_w + 0.5) / hm_W*size_W - 0.5 - pad_w_left + start_w;
+								output[nn].points[c * 3 + 1] = (max_h + 0.5) / hm_H*size_H - 0.5 - pad_h_up + start_h;
+							}
+							else
+							{
+								float cur_x = (max_w + 0.5) / hm_W*size_W - 0.5 - pad_w_left + start_w;
+								float cur_y = (max_h + 0.5) / hm_H*size_H - 0.5 - pad_h_up + start_h;
+								float last_x = output[nn].points[c * 3 + 0];
+								float last_y = output[nn].points[c * 3 + 1];
 								output[nn].points[c * 3 + 0] = last_x*filter_weights[c] + cur_x*(1.0f - filter_weights[c]);
 								output[nn].points[c * 3 + 1] = last_y*filter_weights[c] + cur_y*(1.0f - filter_weights[c]);
 							}
+
+							output[nn].points[c * 3 + 2] = max_weight;
 						}
-						
-						output[nn].points[c * 3 + 2] = max_weight;
+						else
+						{
+							output[nn].points[c * 3 + 0] = (max_w + 0.5) / hm_W*size_W - 0.5 - pad_w_left + start_w;
+							output[nn].points[c * 3 + 1] = (max_h + 0.5) / hm_H*size_H - 0.5 - pad_h_up + start_h;
+							output[nn].points[c * 3 + 2] = max_weight;
+						}
 					}
 					else
 					{
