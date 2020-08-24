@@ -337,7 +337,7 @@ namespace ZQ
 							valid_num += 1;
 						}
 					}
-					if (valid_num < npts*0.6 || total_weight < valid_num*0.5)
+					if (valid_num < npts*0.3 || total_weight < valid_num*0.5)
 					{
 						output.erase(output.begin() + nn);
 						continue;
