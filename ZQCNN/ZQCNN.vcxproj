@@ -293,7 +293,6 @@
     <ClInclude Include="ZQ_CNN_DetectorInterface.h" />
     <ClInclude Include="ZQ_CNN_Forward_SSEUtils.h" />
     <ClInclude Include="ZQ_CNN_Forward_SSEUtils_NCHWC.h" />
-    <ClInclude Include="ZQ_CNN_Landmark240.h" />
     <ClInclude Include="ZQ_CNN_Layer.h" />
     <ClInclude Include="ZQ_CNN_Layer_NCHWC.h" />
     <ClInclude Include="ZQ_CNN_MouthDetector.h" />
