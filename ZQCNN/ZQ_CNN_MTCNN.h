@@ -582,7 +582,7 @@ namespace ZQ
 			{
 				for (int i = 0; i < task_num; i++)
 				{
-					int thread_id = omp_get_thread_num();
+					int thread_id = 0;// omp_get_thread_num();
 					int scale_id = task_scale_id[i];
 					float cur_scale = task_scale[i];
 					int i_rect_off_x = task_rect_off_x[i];
@@ -1688,10 +1688,20 @@ namespace ZQ
 					{
 						for (int num = 0; num < keypoint_num; num++)
 						{
-							task_fourthBbox[pp][i].ppoint[num * 2] = task_fourthBbox[pp][i].col1 +
-								(task_fourthBbox[pp][i].col2 - task_fourthBbox[pp][i].col1)*keyPoint_ptr[i*keyPoint_sliceStep + num * 2];
-							task_fourthBbox[pp][i].ppoint[num * 2 + 1] = task_fourthBbox[pp][i].row1 +
-								(task_fourthBbox[pp][i].row2 - task_fourthBbox[pp][i].row1)*keyPoint_ptr[i*keyPoint_sliceStep + num * 2 + 1];
+							if ((num >= 33 && num < 43) || (num >= 64 && num < 72) || (num >= 84 && num < 104))
+							{
+								task_fourthBbox[pp][i].ppoint[num * 2] = task_fourthBbox[pp][i].col1 +
+									(task_fourthBbox[pp][i].col2 - task_fourthBbox[pp][i].col1)*keyPoint_ptr[i*keyPoint_sliceStep + num * 2]/**0.25*/;
+								task_fourthBbox[pp][i].ppoint[num * 2 + 1] = task_fourthBbox[pp][i].row1 +
+									(task_fourthBbox[pp][i].row2 - task_fourthBbox[pp][i].row1)*keyPoint_ptr[i*keyPoint_sliceStep + num * 2 + 1]/**0.25*/;
+							}
+							else
+							{
+								task_fourthBbox[pp][i].ppoint[num * 2] = task_fourthBbox[pp][i].col1 +
+									(task_fourthBbox[pp][i].col2 - task_fourthBbox[pp][i].col1)*keyPoint_ptr[i*keyPoint_sliceStep + num * 2];
+								task_fourthBbox[pp][i].ppoint[num * 2 + 1] = task_fourthBbox[pp][i].row1 +
+									(task_fourthBbox[pp][i].row2 - task_fourthBbox[pp][i].row1)*keyPoint_ptr[i*keyPoint_sliceStep + num * 2 + 1];
+							}
 						}
 					}
 				}
@@ -1720,10 +1730,20 @@ namespace ZQ
 					{
 						for (int num = 0; num < keypoint_num; num++)
 						{
-							task_fourthBbox[pp][i].ppoint[num * 2] = task_fourthBbox[pp][i].col1 +
-								(task_fourthBbox[pp][i].col2 - task_fourthBbox[pp][i].col1)*keyPoint_ptr[i*keyPoint_sliceStep + num * 2];
-							task_fourthBbox[pp][i].ppoint[num * 2 + 1] = task_fourthBbox[pp][i].row1 +
-								(task_fourthBbox[pp][i].row2 - task_fourthBbox[pp][i].row1)*keyPoint_ptr[i*keyPoint_sliceStep + num * 2 + 1];
+							if ((num >= 33 && num < 43) || (num >= 64 && num < 72) || (num >= 84 && num < 104))
+							{
+								task_fourthBbox[pp][i].ppoint[num * 2] = task_fourthBbox[pp][i].col1 +
+									(task_fourthBbox[pp][i].col2 - task_fourthBbox[pp][i].col1)*keyPoint_ptr[i*keyPoint_sliceStep + num * 2]*0.5;
+								task_fourthBbox[pp][i].ppoint[num * 2 + 1] = task_fourthBbox[pp][i].row1 +
+									(task_fourthBbox[pp][i].row2 - task_fourthBbox[pp][i].row1)*keyPoint_ptr[i*keyPoint_sliceStep + num * 2 + 1]*0.5;
+							}
+							else
+							{
+								task_fourthBbox[pp][i].ppoint[num * 2] = task_fourthBbox[pp][i].col1 +
+									(task_fourthBbox[pp][i].col2 - task_fourthBbox[pp][i].col1)*keyPoint_ptr[i*keyPoint_sliceStep + num * 2];
+								task_fourthBbox[pp][i].ppoint[num * 2 + 1] = task_fourthBbox[pp][i].row1 +
+									(task_fourthBbox[pp][i].row2 - task_fourthBbox[pp][i].row1)*keyPoint_ptr[i*keyPoint_sliceStep + num * 2 + 1];
+							}
 						}
 					}
 				}
