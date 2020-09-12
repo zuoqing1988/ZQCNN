@@ -187,8 +187,16 @@ EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SampleLnet106_vis", "SamplesZQCNN\SampleLnet106_vis\SampleLnet106_vis.vcxproj", "{EA8BF3F1-5578-44A1-9E38-ED33C5802FEF}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SamplePersonPoseVideo", "SamplesZQCNN\SamplePersonPoseVideo\SamplePersonPoseVideo.vcxproj", "{B5EC11C2-9B10-488F-AB2B-1A8FB99CA48C}"
+	ProjectSection(ProjectDependencies) = postProject
+		{43AA2D6A-447E-4153-8A29-7AE8A8296DC7} = {43AA2D6A-447E-4153-8A29-7AE8A8296DC7}
+	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SampleOCR", "SamplesZQCNN\SampleOCR\SampleOCR.vcxproj", "{63FE5E03-CD0A-4E83-8A76-F2A3EFE7D22E}"
+	ProjectSection(ProjectDependencies) = postProject
+		{43AA2D6A-447E-4153-8A29-7AE8A8296DC7} = {43AA2D6A-447E-4153-8A29-7AE8A8296DC7}
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SamplePersonPose2Video", "SamplesZQCNN\SamplePersonPose2Video\SamplePersonPose2Video.vcxproj", "{0305321F-5386-4A0B-A073-E664E6561CF9}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -550,6 +558,14 @@ Global
 		{63FE5E03-CD0A-4E83-8A76-F2A3EFE7D22E}.Release|x64.Build.0 = Release|x64
 		{63FE5E03-CD0A-4E83-8A76-F2A3EFE7D22E}.Release|x86.ActiveCfg = Release|Win32
 		{63FE5E03-CD0A-4E83-8A76-F2A3EFE7D22E}.Release|x86.Build.0 = Release|Win32
+		{0305321F-5386-4A0B-A073-E664E6561CF9}.Debug|x64.ActiveCfg = Debug|x64
+		{0305321F-5386-4A0B-A073-E664E6561CF9}.Debug|x64.Build.0 = Debug|x64
+		{0305321F-5386-4A0B-A073-E664E6561CF9}.Debug|x86.ActiveCfg = Debug|Win32
+		{0305321F-5386-4A0B-A073-E664E6561CF9}.Debug|x86.Build.0 = Debug|Win32
+		{0305321F-5386-4A0B-A073-E664E6561CF9}.Release|x64.ActiveCfg = Release|x64
+		{0305321F-5386-4A0B-A073-E664E6561CF9}.Release|x64.Build.0 = Release|x64
+		{0305321F-5386-4A0B-A073-E664E6561CF9}.Release|x86.ActiveCfg = Release|Win32
+		{0305321F-5386-4A0B-A073-E664E6561CF9}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -307,6 +307,7 @@
     <ClInclude Include="ZQ_CNN_Net_NCHWC.h" />
     <ClInclude Include="ZQ_CNN_NSFW.h" />
     <ClInclude Include="ZQ_CNN_PersonPose.h" />
+    <ClInclude Include="ZQ_CNN_PersonPose2.h" />
     <ClInclude Include="ZQ_CNN_SSD.h" />
     <ClInclude Include="ZQ_CNN_Tensor4D.h" />
     <ClInclude Include="ZQ_CNN_Tensor4D_Interface.h" />
