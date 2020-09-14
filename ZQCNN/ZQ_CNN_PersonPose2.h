@@ -223,7 +223,7 @@ namespace ZQ
 					{
 						float rect_h = output[nn].row2 - output[nn].row1;
 						if ((output[nn].points[8 * 3 + 2] > 0 && output[nn].points[9 * 3 + 2] > 0)
-							&& (output[nn].points[8 * 3 + 1] < height - rect_h*0.3 && output[nn].points[9 * 3 + 1] < height - rect_h*0.3))
+							&& (output[nn].points[8 * 3 + 1] < height - rect_h*0.5 && output[nn].points[9 * 3 + 1] < height - rect_h*0.5))
 						{
 							BBox old_bbox = output[nn];
 							old_bbox.MapToFull(output[nn]);
@@ -442,6 +442,8 @@ namespace ZQ
 					col2 = col2 + max_side_W*0.1;
 					row1 = row1 - max_side_H*0.1;
 					row2 = row2 + max_side_H*0.1;
+					filter_weights[4] = 0.7f;
+					filter_weights[6] = 0.7f;
 					filter_weights[8] = 0.7f;
 					filter_weights[11] = 0.7f;
 				}
