@@ -558,8 +558,17 @@ namespace ZQ
 				col2 = __min(col2, col1 + size_W);
 				int box_col1 = cx - size_W / 2;
 				int box_col2 = box_col1 + size_W;
-				int box_row1 = cy - size_H / 2;
-				int box_row2 = box_row1 + size_H;
+				int box_row1, box_row2;
+				if (pose_npts == 10)
+				{
+					box_row2 = row2;
+					box_row1 = box_row2 - size_H;
+				}
+				else
+				{
+					box_row1 = cy - size_H / 2;
+					box_row2 = box_row1 + size_H;
+				}
 				int start_w = __max(0, col1);
 				int end_w = __min(width, col2);
 				int start_h = __max(0, row1);

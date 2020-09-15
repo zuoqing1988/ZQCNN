@@ -227,17 +227,31 @@ namespace ZQ
 						{
 							BBox old_bbox = output[nn];
 							old_bbox.MapToFull(output[nn]);
-							output[nn].row2 = __min(height, output[nn].row2 + rect_h*0.5);
+							row2 = __min(height, output[nn].row2 + rect_h*0.5);
+							cy = (row1 + row2) / 2;
+							size_y = row2 - row1;
+							output[nn].row2 = row2;
 						}
 					}
 					else
 					{
 						float rect_h = output[nn].row2 - output[nn].row1;
 						if ((output[nn].points[8 * 3 + 2] == 0 && output[nn].points[9 * 3 + 2] == 0)
-							|| (output[nn].points[8 * 3 + 1] > height - rect_h*0.3 && output[nn].points[9 * 3 + 1] > height - rect_h*0.3))
+							|| (output[nn].points[8 * 3 + 1] > height - rect_h*0.15 && output[nn].points[9 * 3 + 1] > height - rect_h*0.15))
 						{
 							BBox old_bbox = output[nn];
 							old_bbox.MapToHalf(output[nn]);
+							row2 = 0;
+							for (int i = 0; i < 10; i++)
+							{
+								if (output[nn].points[i * 3 + 2] > 0)
+								{
+									row2 = __max(row2, output[nn].points[i * 3 + 1]);
+								}
+							}
+							cy = (row1 + row2) / 2;
+							size_y = row2 - row1;
+							output[nn].row2 = row2;
 						}
 					}
 
@@ -258,7 +272,7 @@ namespace ZQ
 							if (output[nn].points[8 * 3 + 2] == 0 && output[nn].points[9 * 3 + 2] == 0)
 							{
 
-								output[nn].row2 = output[nn].points[1 * 3 + 1] + standard_len * 2;
+								output[nn].row2 = output[nn].points[1 * 3 + 1] + standard_len * 2.5;
 							}
 							else
 								output[nn].row2 = cy + size_y*0.5;
@@ -275,10 +289,10 @@ namespace ZQ
 							if (output[nn].points[8 * 3 + 2] == 0 && output[nn].points[9 * 3 + 2] == 0)
 							{
 
-								output[nn].row2 = 0.5*(output[nn].points[2 * 3 + 1] + output[nn].points[5 * 3 + 1]) + standard_len * 2.0;
+								output[nn].row2 = 0.5*(output[nn].points[2 * 3 + 1] + output[nn].points[5 * 3 + 1]) + standard_len * 2.5;
 							}
 							else
-								output[nn].row2 = cy + size_y*0.5;
+								output[nn].row2 = cy + size_y*0.6;
 							output[nn].row1 = __min(output[nn].row1, 0.5*(output[nn].points[2 * 3 + 1] + output[nn].points[5 * 3 + 1]) - standard_len*1.0);
 							output[nn].col1 = __min(output[nn].col1, 0.5*(output[nn].points[2 * 3 + 0] + output[nn].points[5 * 3 + 0]) - standard_len*1.5);
 							output[nn].col2 = __max(output[nn].col2, 0.5*(output[nn].points[2 * 3 + 0] + output[nn].points[5 * 3 + 0]) + standard_len*1.5);
@@ -302,7 +316,7 @@ namespace ZQ
 								output[nn].row2 = output[nn].points[1 * 3 + 1] + standard_len * 3.5;
 							}
 							else
-								output[nn].row2 = cy + size_y*0.5;
+								output[nn].row2 = cy + size_y*0.6;
 							output[nn].row1 = __min(output[nn].row1, output[nn].points[0 * 3 + 1] - standard_len*0.2);
 							output[nn].col1 = __min(output[nn].col1, 0.5*(output[nn].points[2 * 3 + 0] + output[nn].points[5 * 3 + 0]) - standard_len*2.0);
 							output[nn].col2 = __max(output[nn].col2, 0.5*(output[nn].points[2 * 3 + 0] + output[nn].points[5 * 3 + 0]) + standard_len*2.0);
@@ -319,7 +333,7 @@ namespace ZQ
 								output[nn].row2 = 0.5*(output[nn].points[2 * 3 + 1] + output[nn].points[5 * 3 + 1]) + standard_len * 3.5;
 							}
 							else
-								output[nn].row2 = cy + size_y*0.5;
+								output[nn].row2 = cy + size_y*0.6;
 							output[nn].row1 = __min(output[nn].row1, 0.5*(output[nn].points[2 * 3 + 1] + output[nn].points[5 * 3 + 1]) - standard_len*1.2);
 							output[nn].col1 = __min(output[nn].col1, 0.5*(output[nn].points[2 * 3 + 0] + output[nn].points[5 * 3 + 0]) - standard_len*2.0);
 							output[nn].col2 = __max(output[nn].col2, 0.5*(output[nn].points[2 * 3 + 0] + output[nn].points[5 * 3 + 0]) + standard_len*2.0);
@@ -472,8 +486,17 @@ namespace ZQ
 				col2 = __min(col2, col1 + size_W);
 				int box_col1 = cx - size_W / 2;
 				int box_col2 = box_col1 + size_W;
-				int box_row1 = cy - size_H / 2;
-				int box_row2 = box_row1 + size_H;
+				int box_row1, box_row2;
+				if (half_mode)
+				{
+					box_row2 = row2;
+					box_row1 = box_row2 - size_H;
+				}
+				else
+				{
+					box_row1 = cy - size_H / 2;
+					box_row2 = box_row1 + size_H;
+				}
 				int start_w = __max(0, col1);
 				int end_w = __min(width, col2);
 				int start_h = __max(0, row1);
