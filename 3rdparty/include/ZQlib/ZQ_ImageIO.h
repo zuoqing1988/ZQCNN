@@ -53,34 +53,30 @@ namespace ZQ
 			const T*& im_data = im.data();
 			if (nChannels == 1)
 			{
-				IplImage* show_img = cvCreateImage(cvSize(width, height), IPL_DEPTH_8U, 1);
+				cv::Mat show_img = cv::Mat(height, width, CV_MAKETYPE(8, 1), cv::Scalar(0, 0, 0));
 				for (int h = 0; h < height; h++)
 				{
 					for (int w = 0; w < width; w++)
 					{
-						cvSetReal2D(show_img, h, w, im_data[h*width + w] * 255);
+						show_img.ptr<uchar>(h)[w] = im_data[h*width + w] * 255;
 					}
 				}
-				cvNamedWindow(winName);
-				cvShowImage(winName, show_img);
-				cvReleaseImage(&show_img);				
+				cv::namedWindow(winName);
+				cv::imshow(winName, show_img);
 			}
 			else if (nChannels <= 4)
 			{
-				IplImage* show_img = cvCreateImage(cvSize(width, height), IPL_DEPTH_8U, 4);
+				cv::Mat show_img = cv::Mat(height, width, CV_MAKETYPE(8, 4), cv::Scalar(0, 0, 0));
 				for (int h = 0; h < height; h++)
 				{
 					for (int w = 0; w < width; w++)
 					{
-						CvScalar sca;
 						for (int c = 0; c < nChannels; c++)
-							sca.val[c] = im_data[(h*width + w)*nChannels + c] * 255;
-						cvSet2D(show_img, h, w, sca);
+							show_img.ptr<uchar>(h)[w*4+c] = im_data[(h*width + w)*nChannels+c] * 255;
 					}
 				}
-				cvNamedWindow(winName);
-				cvShowImage(winName, show_img);
-				cvReleaseImage(&show_img);
+				cv::namedWindow(winName);
+				cv::imshow(winName, show_img);
 			}
 		}
 
@@ -179,34 +175,32 @@ namespace ZQ
 			if(0 != fopen_s(&in, filename, "r"))
 				return false;
 			fclose(in);
-			IplImage* img = cvLoadImage(filename, iscolor);
-			if (img == NULL)
+			
+			cv::Mat img = cv::imread(filename, iscolor);
+			if (img.empty())
 				return false;
 
-			int width = img->width;
-			int height = img->height;
-			int nChannels = img->nChannels;
+			int width = img.cols;
+			int height = img.rows;
+			int nChannels = img.channels();
 
-			if (img->nChannels != 3 && img->nChannels != 1)
+			if (nChannels != 3 && nChannels != 1)
 			{
 				printf("channels should be 1 or 3 -- funtion ZQ_ImageIO::LoadImage()\n");
-				cvReleaseImage(&img);
 				return false;
 			}
 
 			im.allocate(width, height, nChannels);
 
 			T*& im_Data = im.data();
-
 			if (_strcmpi(typeid(T).name(), "float") == 0 || _strcmpi(typeid(T).name(), "double") == 0)
 			{
 				for (int i = 0; i < height; i++)
 				{
 					for (int j = 0; j < width; j++)
 					{
-						CvScalar scalar = cvGet2D(img, i, j);
 						for (int c = 0; c < nChannels; c++)
-							im_Data[(i*width + j)*nChannels + c] = scalar.val[c] / 255.0;
+							im_Data[(i*width + j)*nChannels + c] = img.ptr<uchar>(i)[j * nChannels + c] / 255.0;
 					}
 				}
 			}
@@ -216,15 +210,11 @@ namespace ZQ
 				{
 					for (int j = 0; j < width; j++)
 					{
-						CvScalar scalar = cvGet2D(img, i, j);
 						for (int c = 0; c < nChannels; c++)
-							im_Data[(i*width + j)*nChannels + c] = scalar.val[c];
+							im_Data[(i*width + j)*nChannels + c] = img.ptr<uchar>(i)[j * nChannels + c];
 					}
 				}
 			}
-			
-
-			cvReleaseImage(&img);
 			return true;
 		}
 
@@ -239,36 +229,38 @@ namespace ZQ
 			int width = im.width();
 			int height = im.height();
 			int nChannels = im.nchannels();
+			const T*& im_Data = im.data();
 
-			IplImage* img = 0;
+			cv::Mat img;
 			switch (nChannels)
 			{
 			case 1:
-				img = cvCreateImage(cvSize(width, height), IPL_DEPTH_8U, 1);
+				img = cv::Mat(height, width, CV_MAKETYPE(8, 1), cv::Scalar(0, 0, 0));
+				for (int i = 0; i < height; i++)
+				{
+					for (int j = 0; j < width; j++)
+					{
+						img.ptr<uchar>(i)[j * 3 + 0] = __min(255,__max(0,im_Data[(i*width + j)]*255));
+					}
+				}
 				break;
 			case 3:
-				img = cvCreateImage(cvSize(width, height), IPL_DEPTH_8U, 3);
+				img = cv::Mat(height, width, CV_MAKETYPE(8, 3), cv::Scalar(0, 0, 0));
+				for (int i = 0; i < height; i++)
+				{
+					for (int j = 0; j < width; j++)
+					{
+						img.ptr<uchar>(i)[j * 3 + 0] = __min(255,__max(0, im_Data[(i*width + j) * 3 + 0]*255));
+						img.ptr<uchar>(i)[j * 3 + 1] = __min(255,__max(0, im_Data[(i*width + j) * 3 + 1]*255));
+						img.ptr<uchar>(i)[j * 3 + 2] = __min(255,__max(0, im_Data[(i*width + j) * 3 + 2]*255));
+					}
+				}
 				break;
 			default:
 				return false;
 			}
 
-			const T*& im_Data = im.data();
-
-			for (int i = 0; i < height; i++)
-			{
-				for (int j = 0; j < width; j++)
-				{
-					CvScalar scalar;
-					for (int c = 0; c < nChannels; c++)
-						scalar.val[c] = im_Data[(i*width + j)*nChannels + c] * 255.0;
-
-					cvSet2D(img, i, j, scalar);
-				}
-			}
-
-			cvSaveImage(filename, img);
-			cvReleaseImage(&img);
+			cv::imwrite(filename, img);
 			return true;
 		}
 
