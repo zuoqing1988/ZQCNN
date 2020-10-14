@@ -1,4 +1,4 @@
-#include "ZQ_CNN_Tensor4D_NCHWC.h"
+﻿#include "ZQ_CNN_Tensor4D_NCHWC.h"
 #include <malloc.h>
 #include <string.h>
 #include <stdlib.h>
@@ -282,7 +282,7 @@ bool ZQ_CNN_Tensor4D_NCHWC1::ResizeBilinearRect(ZQ_CNN_Tensor4D_NCHWC1& dst, int
 	const std::vector<int>& src_off_x, const std::vector<int>& src_off_y, const std::vector<int>& src_rect_w, const std::vector<int>& src_rect_h) const
 {
 	int align_size = GetAlignSize();
-	int rect_num = src_off_x.size();
+	int rect_num = (int)src_off_x.size();
 	if (rect_num == 0 || rect_num != src_off_y.size() || rect_num != src_rect_w.size() || rect_num != src_rect_h.size())
 		return false;
 
@@ -736,7 +736,7 @@ bool ZQ_CNN_Tensor4D_NCHWC4::ResizeBilinearRect(ZQ_CNN_Tensor4D_NCHWC4& dst, int
 	const std::vector<int>& src_off_x, const std::vector<int>& src_off_y, const std::vector<int>& src_rect_w, const std::vector<int>& src_rect_h) const
 {
 	int align_size = GetAlignSize();
-	int rect_num = src_off_x.size();
+	int rect_num = (int)src_off_x.size();
 	if (rect_num == 0 || rect_num != src_off_y.size() || rect_num != src_rect_w.size() || rect_num != src_rect_h.size())
 		return false;
 
@@ -1191,7 +1191,7 @@ bool ZQ_CNN_Tensor4D_NCHWC8::ResizeBilinearRect(ZQ_CNN_Tensor4D_NCHWC8& dst, int
 	const std::vector<int>& src_off_x, const std::vector<int>& src_off_y, const std::vector<int>& src_rect_w, const std::vector<int>& src_rect_h) const
 {
 	int align_size = GetAlignSize();
-	int rect_num = src_off_x.size();
+	int rect_num = (int)src_off_x.size();
 	if (rect_num == 0 || rect_num != src_off_y.size() || rect_num != src_rect_w.size() || rect_num != src_rect_h.size())
 		return false;
 

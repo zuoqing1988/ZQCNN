@@ -1,4 +1,4 @@
-#ifndef _ZQ_CNN_BBOX_UTILS_H_
+﻿#ifndef _ZQ_CNN_BBOX_UTILS_H_
 #define _ZQ_CNN_BBOX_UTILS_H_
 #pragma once
 
@@ -51,7 +51,7 @@ namespace ZQ
 				heros.push_back(order);
 				int cur_overlap = 0;
 				boundingBox[order].exist = false;//delete it
-				int box_num = boundingBox.size();
+				int box_num = (int)boundingBox.size();
 				if (thread_num == 1)
 				{
 					for (int num = 0; num < box_num; num++)
@@ -59,10 +59,10 @@ namespace ZQ
 						if (boundingBox[num].exist)
 						{
 							//the iou
-							maxY = __max(boundingBox[num].row1, boundingBox[order].row1);
-							maxX = __max(boundingBox[num].col1, boundingBox[order].col1);
-							minY = __min(boundingBox[num].row2, boundingBox[order].row2);
-							minX = __min(boundingBox[num].col2, boundingBox[order].col2);
+							maxY = (float)__max(boundingBox[num].row1, boundingBox[order].row1);
+							maxX = (float)__max(boundingBox[num].col1, boundingBox[order].col1);
+							minY = (float)__min(boundingBox[num].row2, boundingBox[order].row2);
+							minX = (float)__min(boundingBox[num].col2, boundingBox[order].col2);
 							//maxX1 and maxY1 reuse 
 							maxX = __max(minX - maxX + 1, 0);
 							maxY = __max(minY - maxY + 1, 0);
@@ -94,17 +94,17 @@ namespace ZQ
 				}
 				else
 				{
-					int chunk_size = ceil(box_num / thread_num);
+					int chunk_size = (int)ceil(box_num / thread_num);
 #pragma omp parallel for schedule(static, chunk_size) num_threads(thread_num)
 					for (int num = 0; num < box_num; num++)
 					{
 						if (boundingBox.at(num).exist)
 						{
 							//the iou
-							maxY = __max(boundingBox[num].row1, boundingBox[order].row1);
-							maxX = __max(boundingBox[num].col1, boundingBox[order].col1);
-							minY = __min(boundingBox[num].row2, boundingBox[order].row2);
-							minX = __min(boundingBox[num].col2, boundingBox[order].col2);
+							maxY = (float)__max(boundingBox[num].row1, boundingBox[order].row1);
+							maxX = (float)__max(boundingBox[num].col1, boundingBox[order].col1);
+							minY = (float)__min(boundingBox[num].row2, boundingBox[order].row2);
+							minX = (float)__min(boundingBox[num].col2, boundingBox[order].col2);
 							//maxX1 and maxY1 reuse 
 							maxX = __max(minX - maxX + 1, 0);
 							maxY = __max(minY - maxY + 1, 0);
@@ -136,14 +136,14 @@ namespace ZQ
 				}
 				overlap_num.push_back(cur_overlap);
 			}
-			for (int i = 0; i < heros.size(); i++)
+			for (int i = 0; i < (int)heros.size(); i++)
 			{
 				if(!boundingBox[heros[i]].need_check_overlap_count 
 					|| overlap_num[i] >= overlap_count_thresh)
 					boundingBox[heros[i]].exist = true;
 			}
 			//clear exist= false;
-			for (int i = boundingBox.size() - 1; i >= 0; i--)
+			for (int i = (int)(boundingBox.size() - 1); i >= 0; i--)
 			{
 				if (!boundingBox[i].exist)
 				{
@@ -162,8 +162,8 @@ namespace ZQ
 			{
 				if ((*it).exist)
 				{
-					bbh = (*it).row2 - (*it).row1 + 1;
-					bbw = (*it).col2 - (*it).col1 + 1;
+					bbh = (float)((*it).row2 - (*it).row1 + 1);
+					bbw = (float)((*it).col2 - (*it).col1 + 1);
 					y1 = (*it).row1 + (*it).regreCoord[1] * bbh;
 					x1 = (*it).col1 + (*it).regreCoord[0] * bbw;
 					y2 = (*it).row2 + (*it).regreCoord[3] * bbh;
@@ -176,19 +176,19 @@ namespace ZQ
 						float scale_h = h*it->scale_y;
 						float scale_w = w*it->scale_x;
 						bboxSize = (scale_h > scale_w) ? scale_h : scale_w;
-						y1 = y1 + h*0.5 - bboxSize/it->scale_y*0.5;
-						x1 = x1 + w*0.5 - bboxSize/it->scale_x*0.5;
-						(*it).row2 = round(y1 + bboxSize / it->scale_y - 1);
-						(*it).col2 = round(x1 + bboxSize / it->scale_x - 1);
-						(*it).row1 = round(y1);
-						(*it).col1 = round(x1);
+						y1 = y1 + h*0.5f - bboxSize/it->scale_y*0.5f;
+						x1 = x1 + w*0.5f - bboxSize/it->scale_x*0.5f;
+						(*it).row2 = (int)round(y1 + bboxSize / it->scale_y - 1);
+						(*it).col2 = (int)round(x1 + bboxSize / it->scale_x - 1);
+						(*it).row1 = (int)round(y1);
+						(*it).col1 = (int)round(x1);
 					}
 					else
 					{
-						(*it).row2 = round(y1 + h - 1);
-						(*it).col2 = round(x1 + w - 1);
-						(*it).row1 = round(y1);
-						(*it).col1 = round(x1);
+						(*it).row2 = (int)round(y1 + h - 1);
+						(*it).col2 = (int)round(x1 + w - 1);
+						(*it).row1 = (int)round(y1);
+						(*it).col1 = (int)round(x1);
 					}
 
 					//boundary check
@@ -197,7 +197,7 @@ namespace ZQ
 					if ((*it).row2 > height)(*it).row2 = height - 1;
 					if ((*it).col2 > width)(*it).col2 = width - 1;*/
 
-					it->area = (it->row2 - it->row1)*(it->col2 - it->col1);
+					it->area = (float)(it->row2 - it->row1)*(it->col2 - it->col1);
 				}
 			}
 		}
@@ -211,19 +211,19 @@ namespace ZQ
 			{
 				if ((*it).exist)
 				{
-					h = (*it).row2 - (*it).row1 + 1;
-					w = (*it).col2 - (*it).col1 + 1;
-					y1 = (*it).row1;
-					x1 = (*it).col1;
+					h = (float)((*it).row2 - (*it).row1 + 1);
+					w = (float)((*it).col2 - (*it).col1 + 1);
+					y1 = (float)(*it).row1;
+					x1 = (float)(*it).col1;
 					float scale_h = h*it->scale_y;
 					float scale_w = w*it->scale_x;
 					bboxSize = (scale_h > scale_w) ? scale_h : scale_w;
-					y1 = y1 + h*0.5 - bboxSize / it->scale_y*0.5;
-					x1 = x1 + w*0.5 - bboxSize / it->scale_x*0.5;
-					(*it).row2 = round(y1 + bboxSize / it->scale_y - 1);
-					(*it).col2 = round(x1 + bboxSize / it->scale_x - 1);
-					(*it).row1 = round(y1);
-					(*it).col1 = round(x1);
+					y1 = y1 + h*0.5f - bboxSize / it->scale_y*0.5f;
+					x1 = x1 + w*0.5f - bboxSize / it->scale_x*0.5f;
+					(*it).row2 = (int)round(y1 + bboxSize / it->scale_y - 1);
+					(*it).col2 = (int)round(x1 + bboxSize / it->scale_x - 1);
+					(*it).row1 = (int)round(y1);
+					(*it).col1 = (int)round(x1);
 
 					//boundary check
 					/*if ((*it).row1 < 0)(*it).row1 = 0;
@@ -231,7 +231,7 @@ namespace ZQ
 					if ((*it).row2 > height)(*it).row2 = height - 1;
 					if ((*it).col2 > width)(*it).col2 = width - 1;*/
 
-					it->area = (it->row2 - it->row1)*(it->col2 - it->col1);
+					it->area = (float)(it->row2 - it->row1)*(it->col2 - it->col1);
 				}
 			}
 		}
@@ -284,7 +284,7 @@ namespace ZQ
 				return false;
 			if (prior_bboxes.size() != bboxes.size())
 				return false;
-			int num_bboxes = prior_bboxes.size();
+			int num_bboxes = (int)prior_bboxes.size();
 			if (num_bboxes >= 1) 
 			{
 				if (prior_variances[0].size() != 4)
@@ -342,8 +342,8 @@ namespace ZQ
 					//return false;
 					printf("y = [%f , %f]\n", prior_bbox.row1, prior_bbox.row2);
 				}
-				float prior_center_x = (prior_bbox.col1 + prior_bbox.col2) / 2.;
-				float prior_center_y = (prior_bbox.row1 + prior_bbox.row2) / 2.;
+				float prior_center_x = (prior_bbox.col1 + prior_bbox.col2) / 2.f;
+				float prior_center_y = (prior_bbox.row1 + prior_bbox.row2) / 2.f;
 
 				float decode_bbox_center_x, decode_bbox_center_y;
 				float decode_bbox_width, decode_bbox_height;
@@ -365,10 +365,10 @@ namespace ZQ
 					decode_bbox_height = exp(prior_variance[3] * bbox.row2) * prior_height;
 				}
 
-				decode_bbox->col1 = decode_bbox_center_x - decode_bbox_width / 2.;
-				decode_bbox->row1 = decode_bbox_center_y - decode_bbox_height / 2.;
-				decode_bbox->col2 = decode_bbox_center_x + decode_bbox_width / 2.;
-				decode_bbox->row2 = decode_bbox_center_y + decode_bbox_height / 2.;
+				decode_bbox->col1 = decode_bbox_center_x - decode_bbox_width / 2.f;
+				decode_bbox->row1 = decode_bbox_center_y - decode_bbox_height / 2.f;
+				decode_bbox->col2 = decode_bbox_center_x + decode_bbox_width / 2.f;
+				decode_bbox->row2 = decode_bbox_center_y + decode_bbox_height / 2.f;
 			}
 			else if (code_type == PriorBoxCodeType_CORNER_SIZE) 
 			{

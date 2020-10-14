@@ -1,4 +1,4 @@
-#include <stdlib.h>
+﻿#include <stdlib.h>
 #include <math.h>
 #include <float.h>
 #include "../ZQ_CNN_CompileConfig.h"
@@ -147,7 +147,7 @@ void zq_cnn_softmax_32f_align0_C(
 				sum_val = 0;
 				for (c = 0, c_ptr = pix_ptr; c < in_C; c++, c_ptr++)
 				{
-					tmp_val = exp((*c_ptr) - max_val);
+					tmp_val = (float)exp((*c_ptr) - max_val);
 					sum_val += tmp_val;
 					*c_ptr = tmp_val;
 				}
@@ -195,7 +195,7 @@ void zq_cnn_softmax_32f_align0_H(
 				sum_val = 0;
 				for (h = 0, row_ptr = pix_ptr; h < in_H; h++, row_ptr+=in_widthStep)
 				{
-					tmp_val = exp((*row_ptr) - max_val);
+					tmp_val = (float)exp((*row_ptr) - max_val);
 					sum_val += tmp_val;
 					*row_ptr = tmp_val;
 				}
@@ -244,7 +244,7 @@ void zq_cnn_softmax_32f_align0_W(
 				sum_val = 0;
 				for (w = 0, pix_ptr = c_ptr; w < in_W; w++, pix_ptr+=in_alignPixelStep)
 				{
-					tmp_val = exp((*pix_ptr) - max_val);
+					tmp_val = (float)exp((*pix_ptr) - max_val);
 					sum_val += tmp_val;
 					*pix_ptr = tmp_val;
 				}

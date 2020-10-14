@@ -1,4 +1,4 @@
-#define op_sum_0_4 \
+﻿#define op_sum_0_4 \
 	a0 = zq_mm_load_ps(c_ptr);\
 	a1 = zq_mm_load_ps(c_ptr+zq_mm_align_size);\
 	a2 = zq_mm_load_ps(c_ptr+zq_mm_align_size_mul_2);\
@@ -130,7 +130,7 @@ void zq_cnn_normalize_not_across_spatial_32f_align(
 						op_sum_0_32;
 					}
 					zq_mm_store_ps(q, sum_v);
-					sum = 1.0f / sqrt(zq_final_sum_q + eps);
+					sum = 1.0f / (float)sqrt(zq_final_sum_q + eps);
 
 					if (channel_shared)
 					{
@@ -166,7 +166,7 @@ void zq_cnn_normalize_not_across_spatial_32f_align(
 						op_sum_0_16;
 					}
 					zq_mm_store_ps(q, sum_v);
-					sum = 1.0f / sqrt(zq_final_sum_q+eps);
+					sum = 1.0f / (float)sqrt(zq_final_sum_q+eps);
 
 					if (channel_shared)
 					{
@@ -204,7 +204,7 @@ void zq_cnn_normalize_not_across_spatial_32f_align(
 						op_sum_0_8;
 					}
 					zq_mm_store_ps(q, sum_v);
-					sum = 1.0f / sqrt(zq_final_sum_q+eps);
+					sum = 1.0f / (float)sqrt(zq_final_sum_q+eps);
 
 					if (channel_shared)
 					{
@@ -240,7 +240,7 @@ void zq_cnn_normalize_not_across_spatial_32f_align(
 						sum_v = zq_mm_fmadd_ps(zq_mm_load_ps(c_ptr + c), zq_mm_load_ps(c_ptr + c), sum_v);
 					}
 					zq_mm_store_ps(q, sum_v);
-					sum = 1.0f / sqrt(zq_final_sum_q+eps);
+					sum = 1.0f / (float)sqrt(zq_final_sum_q+eps);
 
 					if (channel_shared)
 					{
@@ -304,7 +304,7 @@ void zq_cnn_normalize_across_spatial_32f_align(
 				}
 			}
 			zq_mm_store_ps(q, sum_v);
-			sum = 1.0f / sqrt(zq_final_sum_q+eps);
+			sum = 1.0f / (float)sqrt(zq_final_sum_q+eps);
 
 			if (channel_shared)
 			{
@@ -352,7 +352,7 @@ void zq_cnn_normalize_across_spatial_32f_align(
 				}
 			}
 			zq_mm_store_ps(q, sum_v);
-			sum = 1.0f / sqrt(zq_final_sum_q+eps);
+			sum = 1.0f / (float)sqrt(zq_final_sum_q+eps);
 
 			if (channel_shared)
 			{
@@ -402,7 +402,7 @@ void zq_cnn_normalize_across_spatial_32f_align(
 				}
 			}
 			zq_mm_store_ps(q, sum_v);
-			sum = 1.0f / sqrt(zq_final_sum_q+eps);
+			sum = 1.0f / (float)sqrt(zq_final_sum_q+eps);
 
 			if (channel_shared)
 			{
@@ -450,7 +450,7 @@ void zq_cnn_normalize_across_spatial_32f_align(
 				}
 			}
 			zq_mm_store_ps(q, sum_v);
-			sum = 1.0f / sqrt(zq_final_sum_q+eps);
+			sum = 1.0f / (float)sqrt(zq_final_sum_q+eps);
 
 			if (channel_shared)
 			{

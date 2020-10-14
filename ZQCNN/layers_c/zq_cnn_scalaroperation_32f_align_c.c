@@ -1,4 +1,4 @@
-#include <stdio.h>
+﻿#include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
 #include "../ZQ_CNN_CompileConfig.h"
@@ -672,7 +672,7 @@ extern "C" {
 					w++, in_pix_ptr += in_pixelStep, out_pix_ptr += out_pixelStep)
 				{
 					for (c = 0; c < in_C; c++)
-						out_pix_ptr[c] = pow(in_pix_ptr[c], scalar);
+						out_pix_ptr[c] = (float)pow(in_pix_ptr[c], scalar);
 				}
 			}
 		}
@@ -699,7 +699,7 @@ extern "C" {
 				for (w = 0, pix_ptr = row_ptr; w < W; w++, pix_ptr += pixelStep)
 				{
 					for (c = 0; c < C; c++)
-						pix_ptr[c] = pow(pix_ptr[c], scalar);
+						pix_ptr[c] = (float)pow(pix_ptr[c], scalar);
 				}
 			}
 		}

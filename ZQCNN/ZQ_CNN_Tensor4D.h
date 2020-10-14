@@ -1,4 +1,4 @@
-#ifndef _ZQ_CNN_TENSOR_4D_H_
+﻿#ifndef _ZQ_CNN_TENSOR_4D_H_
 #define _ZQ_CNN_TENSOR_4D_H_
 #pragma once
 #include "ZQ_CNN_CompileConfig.h"
@@ -538,7 +538,7 @@ namespace ZQ
 		{
 			if (in_N <= 0 || in_C <= 0 || in_H <= 0 || in_W <= 0)
 				return false;
-			int shape_dim = shape.size();
+			int shape_dim = (int)shape.size();
 			if (shape_dim > 4)
 				return false;
 			int old_dim[4] = { in_N, in_C, in_H, in_W };

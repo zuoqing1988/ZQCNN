@@ -1,4 +1,4 @@
-#include <stdio.h>
+﻿#include <stdio.h>
 #include <omp.h>
 #include <math.h>
 #include "../ZQ_CNN_CompileConfig.h"
@@ -213,7 +213,7 @@ extern "C" {
 					for (c = 0, in_c_ptr = in_pix_ptr, out_c_ptr = out_pix_ptr; c < C; c++, in_c_ptr++, out_c_ptr++)
 					{
 						local_sum_square = accumulate_buf[c + local_size] - accumulate_buf[c];
-						pow_val = pow(k + alpha_div_local_size*local_sum_square, -beta);
+						pow_val = (float)pow(k + alpha_div_local_size*local_sum_square, -beta);
 						*out_c_ptr = *in_c_ptr * pow_val;
 					}
 				}

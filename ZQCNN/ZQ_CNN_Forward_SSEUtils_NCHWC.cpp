@@ -1,4 +1,4 @@
-#include "layers_nchwc/zq_cnn_convolution_gemm_nchwc.h"
+﻿#include "layers_nchwc/zq_cnn_convolution_gemm_nchwc.h"
 #include "layers_nchwc/zq_cnn_depthwise_convolution_nchwc.h"
 #include "layers_nchwc/zq_cnn_innerproduct_gemm_nchwc.h"
 #include "layers_nchwc/zq_cnn_addbias_nchwc.h"
@@ -811,7 +811,7 @@ bool ZQ_CNN_Forward_SSEUtils_NCHWC::DepthwiseConvolutionWithBias(ZQ_CNN_Tensor4D
 	int out_H = output.GetH();
 	int out_W = output.GetW();
 	int out_C = output.GetC();
-	float bias_C = bias.GetC();
+	float bias_C = (float)bias.GetC();
 	if (in_N <= 0 || in_H <= 0 || in_W <= 0 || in_C == 0
 		|| (in_H - filter_H + (padH << 1)) < 0 || (in_W - filter_W + (padW << 1)) < 0)
 	{
@@ -922,8 +922,8 @@ bool ZQ_CNN_Forward_SSEUtils_NCHWC::DepthwiseConvolutionWithBiasPReLU(ZQ_CNN_Ten
 	int out_H = output.GetH();
 	int out_W = output.GetW();
 	int out_C = output.GetC();
-	float bias_C = bias.GetC();
-	float slope_C = prelu_slope.GetC();
+	float bias_C = (float)bias.GetC();
+	float slope_C = (float)prelu_slope.GetC();
 	if (in_N <= 0 || in_H <= 0 || in_W <= 0 || in_C == 0
 		|| (in_H - filter_H + (padH << 1)) < 0 || (in_W - filter_W + (padW << 1)) < 0)
 	{
@@ -1148,8 +1148,8 @@ void ZQ_CNN_Forward_SSEUtils_NCHWC::MaxPooling(const ZQ_CNN_Tensor4D_NCHWC1 &inp
 	}
 	else
 	{
-		need_W = ceil((float)(in_W - kernel_W) / stride_W + 1);
-		need_H = ceil((float)(in_H - kernel_H) / stride_H + 1);
+		need_W = (int)ceil((float)(in_W - kernel_W) / stride_W + 1);
+		need_H = (int)ceil((float)(in_H - kernel_H) / stride_H + 1);
 	}
 
 	if (need_W <= 0 || need_H <= 0)
@@ -1221,8 +1221,8 @@ void ZQ_CNN_Forward_SSEUtils_NCHWC::AVGPooling(const ZQ_CNN_Tensor4D_NCHWC1 &inp
 	}
 	else
 	{
-		need_W = ceil((float)(in_W - kernel_W) / stride_W + 1);
-		need_H = ceil((float)(in_H - kernel_H) / stride_H + 1);
+		need_W = (int)ceil((float)(in_W - kernel_W) / stride_W + 1);
+		need_H = (int)ceil((float)(in_H - kernel_H) / stride_H + 1);
 	}
 
 	if (need_W <= 0 || need_H <= 0)
@@ -1409,7 +1409,7 @@ bool ZQ_CNN_Forward_SSEUtils_NCHWC::BatchNorm_b_a(ZQ_CNN_Tensor4D_NCHWC1 &input,
 
 bool ZQ_CNN_Forward_SSEUtils_NCHWC::Eltwise_Sum(const std::vector<const ZQ_CNN_Tensor4D_NCHWC1*>& input, ZQ_CNN_Tensor4D_NCHWC1& output)
 {
-	int in_num = input.size();
+	int in_num = (int)input.size();
 	if (in_num < 2)
 		return false;
 	for (int i = 0; i < in_num; i++)
@@ -1450,7 +1450,7 @@ bool ZQ_CNN_Forward_SSEUtils_NCHWC::Eltwise_Sum(const std::vector<const ZQ_CNN_T
 bool ZQ_CNN_Forward_SSEUtils_NCHWC::Eltwise_SumWithWeight(const std::vector<const ZQ_CNN_Tensor4D_NCHWC1*>& input, const std::vector<float>& weight,
 	ZQ_CNN_Tensor4D_NCHWC1& output)
 {
-	int in_num = input.size();
+	int in_num = (int)input.size();
 	if (in_num < 2 || in_num != weight.size())
 		return false;
 	for (int i = 0; i < in_num; i++)
@@ -1490,7 +1490,7 @@ bool ZQ_CNN_Forward_SSEUtils_NCHWC::Eltwise_SumWithWeight(const std::vector<cons
 
 bool ZQ_CNN_Forward_SSEUtils_NCHWC::Eltwise_Mul(const std::vector<const ZQ_CNN_Tensor4D_NCHWC1*>& input, ZQ_CNN_Tensor4D_NCHWC1& output)
 {
-	int in_num = input.size();
+	int in_num = (int)input.size();
 	if (in_num < 2)
 		return false;
 	for (int i = 0; i < in_num; i++)
@@ -1529,7 +1529,7 @@ bool ZQ_CNN_Forward_SSEUtils_NCHWC::Eltwise_Mul(const std::vector<const ZQ_CNN_T
 
 bool ZQ_CNN_Forward_SSEUtils_NCHWC::Eltwise_Max(const std::vector<const ZQ_CNN_Tensor4D_NCHWC1*>& input, ZQ_CNN_Tensor4D_NCHWC1& output)
 {
-	int in_num = input.size();
+	int in_num = (int)input.size();
 	if (in_num < 2)
 		return false;
 	for (int i = 0; i < in_num; i++)
@@ -3015,7 +3015,7 @@ bool ZQ_CNN_Forward_SSEUtils_NCHWC::DepthwiseConvolutionWithBias(ZQ_CNN_Tensor4D
 	int out_H = output.GetH();
 	int out_W = output.GetW();
 	int out_C = output.GetC();
-	float bias_C = bias.GetC();
+	float bias_C = (float)bias.GetC();
 	if (in_N <= 0 || in_H <= 0 || in_W <= 0 || in_C == 0
 		|| (in_H - filter_H + (padH << 1)) < 0 || (in_W - filter_W + (padW << 1)) < 0)
 	{
@@ -3126,8 +3126,8 @@ bool ZQ_CNN_Forward_SSEUtils_NCHWC::DepthwiseConvolutionWithBiasPReLU(ZQ_CNN_Ten
 	int out_H = output.GetH();
 	int out_W = output.GetW();
 	int out_C = output.GetC();
-	float bias_C = bias.GetC();
-	float slope_C = prelu_slope.GetC();
+	float bias_C = (float)bias.GetC();
+	float slope_C = (float)prelu_slope.GetC();
 	if (in_N <= 0 || in_H <= 0 || in_W <= 0 || in_C == 0
 		|| (in_H - filter_H + (padH << 1)) < 0 || (in_W - filter_W + (padW << 1)) < 0)
 	{
@@ -3352,8 +3352,8 @@ void ZQ_CNN_Forward_SSEUtils_NCHWC::MaxPooling(const ZQ_CNN_Tensor4D_NCHWC4 &inp
 	}
 	else
 	{
-		need_W = ceil((float)(in_W - kernel_W) / stride_W + 1);
-		need_H = ceil((float)(in_H - kernel_H) / stride_H + 1);
+		need_W = (int)ceil((float)(in_W - kernel_W) / stride_W + 1);
+		need_H = (int)ceil((float)(in_H - kernel_H) / stride_H + 1);
 	}
 
 	if (need_W <= 0 || need_H <= 0)
@@ -3425,8 +3425,8 @@ void ZQ_CNN_Forward_SSEUtils_NCHWC::AVGPooling(const ZQ_CNN_Tensor4D_NCHWC4 &inp
 	}
 	else
 	{
-		need_W = ceil((float)(in_W - kernel_W) / stride_W + 1);
-		need_H = ceil((float)(in_H - kernel_H) / stride_H + 1);
+		need_W = (int)ceil((float)(in_W - kernel_W) / stride_W + 1);
+		need_H = (int)ceil((float)(in_H - kernel_H) / stride_H + 1);
 	}
 
 	if (need_W <= 0 || need_H <= 0)
@@ -3613,7 +3613,7 @@ bool ZQ_CNN_Forward_SSEUtils_NCHWC::BatchNorm_b_a(ZQ_CNN_Tensor4D_NCHWC4 &input,
 
 bool ZQ_CNN_Forward_SSEUtils_NCHWC::Eltwise_Sum(const std::vector<const ZQ_CNN_Tensor4D_NCHWC4*>& input, ZQ_CNN_Tensor4D_NCHWC4& output)
 {
-	int in_num = input.size();
+	int in_num = (int)input.size();
 	if (in_num < 2)
 		return false;
 	for (int i = 0; i < in_num; i++)
@@ -3654,7 +3654,7 @@ bool ZQ_CNN_Forward_SSEUtils_NCHWC::Eltwise_Sum(const std::vector<const ZQ_CNN_T
 bool ZQ_CNN_Forward_SSEUtils_NCHWC::Eltwise_SumWithWeight(const std::vector<const ZQ_CNN_Tensor4D_NCHWC4*>& input, const std::vector<float>& weight,
 	ZQ_CNN_Tensor4D_NCHWC4& output)
 {
-	int in_num = input.size();
+	int in_num = (int)input.size();
 	if (in_num < 2 || in_num != weight.size())
 		return false;
 	for (int i = 0; i < in_num; i++)
@@ -3694,7 +3694,7 @@ bool ZQ_CNN_Forward_SSEUtils_NCHWC::Eltwise_SumWithWeight(const std::vector<cons
 
 bool ZQ_CNN_Forward_SSEUtils_NCHWC::Eltwise_Mul(const std::vector<const ZQ_CNN_Tensor4D_NCHWC4*>& input, ZQ_CNN_Tensor4D_NCHWC4& output)
 {
-	int in_num = input.size();
+	int in_num = (int)input.size();
 	if (in_num < 2)
 		return false;
 	for (int i = 0; i < in_num; i++)
@@ -3733,7 +3733,7 @@ bool ZQ_CNN_Forward_SSEUtils_NCHWC::Eltwise_Mul(const std::vector<const ZQ_CNN_T
 
 bool ZQ_CNN_Forward_SSEUtils_NCHWC::Eltwise_Max(const std::vector<const ZQ_CNN_Tensor4D_NCHWC4*>& input, ZQ_CNN_Tensor4D_NCHWC4& output)
 {
-	int in_num = input.size();
+	int in_num = (int)input.size();
 	if (in_num < 2)
 		return false;
 	for (int i = 0; i < in_num; i++)
@@ -4572,7 +4572,7 @@ bool ZQ_CNN_Forward_SSEUtils_NCHWC::DepthwiseConvolutionWithBias(ZQ_CNN_Tensor4D
 	int out_H = output.GetH();
 	int out_W = output.GetW();
 	int out_C = output.GetC();
-	float bias_C = bias.GetC();
+	float bias_C = (float)bias.GetC();
 	if (in_N <= 0 || in_H <= 0 || in_W <= 0 || in_C == 0
 		|| (in_H - filter_H + (padH << 1)) < 0 || (in_W - filter_W + (padW << 1)) < 0)
 	{
@@ -4683,8 +4683,8 @@ bool ZQ_CNN_Forward_SSEUtils_NCHWC::DepthwiseConvolutionWithBiasPReLU(ZQ_CNN_Ten
 	int out_H = output.GetH();
 	int out_W = output.GetW();
 	int out_C = output.GetC();
-	float bias_C = bias.GetC();
-	float slope_C = prelu_slope.GetC();
+	float bias_C = (float)bias.GetC();
+	float slope_C = (float)prelu_slope.GetC();
 	if (in_N <= 0 || in_H <= 0 || in_W <= 0 || in_C == 0
 		|| (in_H - filter_H + (padH << 1)) < 0 || (in_W - filter_W + (padW << 1)) < 0)
 	{
@@ -4909,8 +4909,8 @@ void ZQ_CNN_Forward_SSEUtils_NCHWC::MaxPooling(const ZQ_CNN_Tensor4D_NCHWC8 &inp
 	}
 	else
 	{
-		need_W = ceil((float)(in_W - kernel_W) / stride_W + 1);
-		need_H = ceil((float)(in_H - kernel_H) / stride_H + 1);
+		need_W = (int)ceil((float)(in_W - kernel_W) / stride_W + 1);
+		need_H = (int)ceil((float)(in_H - kernel_H) / stride_H + 1);
 	}
 
 	if (need_W <= 0 || need_H <= 0)
@@ -4982,8 +4982,8 @@ void ZQ_CNN_Forward_SSEUtils_NCHWC::AVGPooling(const ZQ_CNN_Tensor4D_NCHWC8 &inp
 	}
 	else
 	{
-		need_W = ceil((float)(in_W - kernel_W) / stride_W + 1);
-		need_H = ceil((float)(in_H - kernel_H) / stride_H + 1);
+		need_W = (int)ceil((float)(in_W - kernel_W) / stride_W + 1);
+		need_H = (int)ceil((float)(in_H - kernel_H) / stride_H + 1);
 	}
 
 	if (need_W <= 0 || need_H <= 0)
@@ -5170,7 +5170,7 @@ bool ZQ_CNN_Forward_SSEUtils_NCHWC::BatchNorm_b_a(ZQ_CNN_Tensor4D_NCHWC8 &input,
 
 bool ZQ_CNN_Forward_SSEUtils_NCHWC::Eltwise_Sum(const std::vector<const ZQ_CNN_Tensor4D_NCHWC8*>& input, ZQ_CNN_Tensor4D_NCHWC8& output)
 {
-	int in_num = input.size();
+	int in_num = (int)input.size();
 	if (in_num < 2)
 		return false;
 	for (int i = 0; i < in_num; i++)
@@ -5211,7 +5211,7 @@ bool ZQ_CNN_Forward_SSEUtils_NCHWC::Eltwise_Sum(const std::vector<const ZQ_CNN_T
 bool ZQ_CNN_Forward_SSEUtils_NCHWC::Eltwise_SumWithWeight(const std::vector<const ZQ_CNN_Tensor4D_NCHWC8*>& input, const std::vector<float>& weight,
 	ZQ_CNN_Tensor4D_NCHWC8& output)
 {
-	int in_num = input.size();
+	int in_num = (int)input.size();
 	if (in_num < 2 || in_num != weight.size())
 		return false;
 	for (int i = 0; i < in_num; i++)
@@ -5251,7 +5251,7 @@ bool ZQ_CNN_Forward_SSEUtils_NCHWC::Eltwise_SumWithWeight(const std::vector<cons
 
 bool ZQ_CNN_Forward_SSEUtils_NCHWC::Eltwise_Mul(const std::vector<const ZQ_CNN_Tensor4D_NCHWC8*>& input, ZQ_CNN_Tensor4D_NCHWC8& output)
 {
-	int in_num = input.size();
+	int in_num = (int)input.size();
 	if (in_num < 2)
 		return false;
 	for (int i = 0; i < in_num; i++)
@@ -5290,7 +5290,7 @@ bool ZQ_CNN_Forward_SSEUtils_NCHWC::Eltwise_Mul(const std::vector<const ZQ_CNN_T
 
 bool ZQ_CNN_Forward_SSEUtils_NCHWC::Eltwise_Max(const std::vector<const ZQ_CNN_Tensor4D_NCHWC8*>& input, ZQ_CNN_Tensor4D_NCHWC8& output)
 {
-	int in_num = input.size();
+	int in_num = (int)input.size();
 	if (in_num < 2)
 		return false;
 	for (int i = 0; i < in_num; i++)

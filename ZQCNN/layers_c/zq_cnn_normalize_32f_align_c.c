@@ -1,4 +1,4 @@
-#include <stdio.h>
+﻿#include <stdio.h>
 #include <math.h>
 #include "../ZQ_CNN_CompileConfig.h"
 #if __ARM_NEON
@@ -286,7 +286,7 @@ extern "C" {
 							sum_v += pix_ptr[c] * pix_ptr[c];
 					}
 				}
-				sum_v = 1.0f / sqrt(sum_v+eps);
+				sum_v = 1.0f / (float)sqrt(sum_v+eps);
 				for (h = 0, row_ptr = slice_ptr; h < in_H; h++, row_ptr += in_widthStep)
 				{
 					for (w = 0, pix_ptr = row_ptr; w < in_W; w++, pix_ptr += in_pixelStep)
@@ -316,7 +316,7 @@ extern "C" {
 						sum_v = 0;
 						for (c = 0; c < in_C; c++)
 							sum_v += pix_ptr[c] * pix_ptr[c];
-						sum_v = 1.0f / sqrt(sum_v);
+						sum_v = 1.0f / (float)sqrt(sum_v);
 						if (channel_shared)
 						{
 							for (c = 0; c < in_C; c++)

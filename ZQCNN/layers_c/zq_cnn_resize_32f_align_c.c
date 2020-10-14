@@ -1,4 +1,4 @@
-#include <malloc.h>
+﻿#include <malloc.h>
 #include <stdlib.h>
 #include <math.h>
 #include <float.h>
@@ -197,8 +197,8 @@ extern "C" {
 	{
 
 		int* xx = (int*)malloc(sizeof(int)*(out_W));
-		float src_H = in_rect_height;
-		float src_W = in_rect_width;
+		float src_H = (float)in_rect_height;
+		float src_W = (float)in_rect_width;
 		float w_step = 1.0f / (float)out_W*src_W;
 		float h_step = 1.0f / (float)out_H*src_H;
 		float coord_y_ini = sample_align_type == 1 ? (float)in_off_y : 0.5f*h_step - 0.5f + (float)in_off_y;
@@ -283,8 +283,8 @@ extern "C" {
 		int* x0 = (int*)malloc(sizeof(int)*(out_W));
 		int* x1 = (int*)malloc(sizeof(int)*(out_W));
 		float* sx = (float*)malloc(sizeof(float)*(out_W));
-		float src_H = in_rect_height;
-		float src_W = in_rect_width;
+		float src_H = (float)in_rect_height;
+		float src_W = (float)in_rect_width;
 		float w_step = 1.0f / (float)out_W*src_W;
 		float h_step = 1.0f / (float)out_H*src_H;
 		float coord_y_ini = sample_align_type == 1 ? (float)in_off_y : 0.5f*h_step - 0.5f + (float)in_off_y;
@@ -303,7 +303,7 @@ extern "C" {
 		coord_x = coord_x_ini;
 		for (w = 0; w < out_W; w++, coord_x += w_step)
 		{
-			x0_f = floor(coord_x);
+			x0_f = (float)floor(coord_x);
 			x0[w] = (int)x0_f;
 			x1[w] = x0[w] + 1;
 			sx[w] = coord_x - x0_f;
@@ -323,7 +323,7 @@ extern "C" {
 				h < out_H;
 				h++, coord_y += h_step, out_row_ptr += out_widthStep)
 			{
-				y0_f = floor(coord_y);
+				y0_f = (float)floor(coord_y);
 				y0 = (int)y0_f;
 				y1 = y0 + 1;
 				sy = coord_y - y0_f;
@@ -383,8 +383,8 @@ extern "C" {
 		int* x0 = (int*)malloc(sizeof(int)*(out_W));
 		int* x1 = (int*)malloc(sizeof(int)*(out_W));
 		float* sx = (float*)malloc(sizeof(float)*(out_W));
-		float src_H = in_rect_height;
-		float src_W = in_rect_width;
+		float src_H = (float)in_rect_height;
+		float src_W = (float)in_rect_width;
 		float w_step = 1.0f / (float)out_W*src_W;
 		float h_step = 1.0f / (float)out_H*src_H;
 		float coord_y_ini = sample_align_type == 1 ? (float)in_off_y : 0.5f*h_step - 0.5f + (float)in_off_y;
@@ -403,7 +403,7 @@ extern "C" {
 		coord_x = coord_x_ini;
 		for (w = 0; w < out_W; w++, coord_x += w_step)
 		{
-			x0_f = floor(coord_x);
+			x0_f = (float)floor(coord_x);
 			x0[w] = (int)x0_f;
 			x1[w] = x0[w] + 1;
 			sx[w] = coord_x - x0_f;
@@ -425,7 +425,7 @@ extern "C" {
 				h < out_H;
 				h++, coord_y += h_step, out_row_ptr += out_widthStep)
 			{
-				y0_f = floor(coord_y);
+				y0_f = (float)floor(coord_y);
 				y0 = (int)y0_f;
 				y1 = y0 + 1;
 				sy = coord_y - y0_f;
@@ -507,7 +507,7 @@ extern "C" {
 					coord_y = map_y_ptr[h*out_W + w];
 					coord_x = map_x_ptr[h*out_W + w];
 
-					y0_f = floor(coord_y);
+					y0_f = (float)floor(coord_y);
 					y0 = (int)y0_f;
 					y1 = y0 + 1;
 					sy = coord_y - y0_f;
@@ -517,7 +517,7 @@ extern "C" {
 					in_row0_ptr = in_slice_ptr + y0*in_widthStep;
 					in_row1_ptr = in_slice_ptr + y1*in_widthStep;
 
-					x0_f = floor(coord_x);
+					x0_f = (float)floor(coord_x);
 					x0 = (int)x0_f;
 					x1 = x0 + 1;
 					sx = coord_x - x0_f;
@@ -587,7 +587,7 @@ extern "C" {
 					coord_y = map_y_ptr[h*out_W + w];
 					coord_x = map_x_ptr[h*out_W + w];
 
-					y0_f = floor(coord_y);
+					y0_f = (float)floor(coord_y);
 					y0 = (int)y0_f;
 					y1 = y0 + 1;
 					sy = coord_y - y0_f;
@@ -597,7 +597,7 @@ extern "C" {
 					in_row0_ptr = in_slice_ptr + y0*in_widthStep;
 					in_row1_ptr = in_slice_ptr + y1*in_widthStep;
 
-					x0_f = floor(coord_x);
+					x0_f = (float)floor(coord_x);
 					x0 = (int)x0_f;
 					x1 = x0 + 1;
 					sx = coord_x - x0_f;

@@ -1,4 +1,4 @@
-#include "ZQ_CNN_Tensor4D.h"
+﻿#include "ZQ_CNN_Tensor4D.h"
 #include <malloc.h>
 #include <string.h>
 #include <stdlib.h>
@@ -338,7 +338,7 @@ bool ZQ_CNN_Tensor4D_NHW_C_Align0::ResizeBilinearRect(ZQ_CNN_Tensor4D& dst, int 
 bool ZQ_CNN_Tensor4D_NHW_C_Align0::ResizeBilinearRect(ZQ_CNN_Tensor4D& dst, int dst_W, int dst_H, int dst_borderW, int dst_borderH,
 	const std::vector<int>& src_off_x, const std::vector<int>& src_off_y, const std::vector<int>& src_rect_w, const std::vector<int>& src_rect_h, SAMPLE_ALIGN_TYPE sample_align_type) const
 {
-	int rect_num = src_off_x.size();
+	int rect_num = (int)src_off_x.size();
 	if (rect_num == 0 || rect_num != src_off_y.size() || rect_num != src_rect_w.size() || rect_num != src_rect_h.size())
 		return false;
 
@@ -516,7 +516,7 @@ bool ZQ_CNN_Tensor4D_NHW_C_Align0::ResizeNearestRect(ZQ_CNN_Tensor4D& dst, int d
 bool ZQ_CNN_Tensor4D_NHW_C_Align0::ResizeNearestRect(ZQ_CNN_Tensor4D& dst, int dst_W, int dst_H, int dst_borderW, int dst_borderH,
 	const std::vector<int>& src_off_x, const std::vector<int>& src_off_y, const std::vector<int>& src_rect_w, const std::vector<int>& src_rect_h, SAMPLE_ALIGN_TYPE sample_align_type) const
 {
-	int rect_num = src_off_x.size();
+	int rect_num = (int)src_off_x.size();
 	if (rect_num == 0 || rect_num != src_off_y.size() || rect_num != src_rect_w.size() || rect_num != src_rect_h.size())
 		return false;
 
@@ -1043,7 +1043,7 @@ bool ZQ_CNN_Tensor4D_NHW_C_Align128bit::ResizeBilinearRect(ZQ_CNN_Tensor4D& dst,
 bool ZQ_CNN_Tensor4D_NHW_C_Align128bit::ResizeBilinearRect(ZQ_CNN_Tensor4D& dst, int dst_W, int dst_H, int dst_borderW, int dst_borderH,
 	const std::vector<int>& src_off_x, const std::vector<int>& src_off_y, const std::vector<int>& src_rect_w, const std::vector<int>& src_rect_h, SAMPLE_ALIGN_TYPE sample_align_type) const
 {
-	int rect_num = src_off_x.size();
+	int rect_num = (int)src_off_x.size();
 	if (rect_num == 0 || rect_num != src_off_y.size() || rect_num != src_rect_w.size() || rect_num != src_rect_h.size())
 		return false;
 
@@ -1270,7 +1270,7 @@ bool ZQ_CNN_Tensor4D_NHW_C_Align128bit::ResizeNearestRect(ZQ_CNN_Tensor4D& dst, 
 bool ZQ_CNN_Tensor4D_NHW_C_Align128bit::ResizeNearestRect(ZQ_CNN_Tensor4D& dst, int dst_W, int dst_H, int dst_borderW, int dst_borderH,
 	const std::vector<int>& src_off_x, const std::vector<int>& src_off_y, const std::vector<int>& src_rect_w, const std::vector<int>& src_rect_h, SAMPLE_ALIGN_TYPE sample_align_type) const
 {
-	int rect_num = src_off_x.size();
+	int rect_num = (int)src_off_x.size();
 	if (rect_num == 0 || rect_num != src_off_y.size() || rect_num != src_rect_w.size() || rect_num != src_rect_h.size())
 		return false;
 
@@ -1751,7 +1751,7 @@ bool ZQ_CNN_Tensor4D_NHW_C_Align256bit::ResizeBilinearRect(ZQ_CNN_Tensor4D& dst,
 bool ZQ_CNN_Tensor4D_NHW_C_Align256bit::ResizeBilinearRect(ZQ_CNN_Tensor4D& dst, int dst_W, int dst_H, int dst_borderW, int dst_borderH,
 	const std::vector<int>& src_off_x, const std::vector<int>& src_off_y, const std::vector<int>& src_rect_w, const std::vector<int>& src_rect_h, SAMPLE_ALIGN_TYPE sample_align_type) const
 {
-	int rect_num = src_off_x.size();
+	int rect_num = (int)src_off_x.size();
 	if (rect_num == 0 || rect_num != src_off_y.size() || rect_num != src_rect_w.size() || rect_num != src_rect_h.size())
 		return false;
 
@@ -1931,7 +1931,7 @@ bool ZQ_CNN_Tensor4D_NHW_C_Align256bit::ResizeNearestRect(ZQ_CNN_Tensor4D& dst, 
 bool ZQ_CNN_Tensor4D_NHW_C_Align256bit::ResizeNearestRect(ZQ_CNN_Tensor4D& dst, int dst_W, int dst_H, int dst_borderW, int dst_borderH,
 	const std::vector<int>& src_off_x, const std::vector<int>& src_off_y, const std::vector<int>& src_rect_w, const std::vector<int>& src_rect_h, SAMPLE_ALIGN_TYPE sample_align_type) const
 {
-	int rect_num = src_off_x.size();
+	int rect_num = (int)src_off_x.size();
 	if (rect_num == 0 || rect_num != src_off_y.size() || rect_num != src_rect_w.size() || rect_num != src_rect_h.size())
 		return false;
 

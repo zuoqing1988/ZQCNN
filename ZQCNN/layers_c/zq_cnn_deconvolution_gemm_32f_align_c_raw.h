@@ -1,4 +1,4 @@
-
+﻿
 void zq_cnn_deconv_with_padding_gemm_32f_k2s2(
 	const zq_base_type* in_tensor4D_data,
 	int in_N,
@@ -138,7 +138,7 @@ void zq_cnn_deconv_with_padding_gemm_32f_k2s2(
 			}
 		}
 		else
-			matrix_A = in_slice_ptr;
+			matrix_A = (float*)in_slice_ptr;
 
 		/*gemm*/
 #if __ARM_NEON && ZQ_CNN_USE_ZQ_GEMM && ZQ_CNN_USE_BLAS_GEMM

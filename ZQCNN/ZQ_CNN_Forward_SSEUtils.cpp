@@ -1,4 +1,4 @@
-#include "layers_c/zq_cnn_deconvolution_32f_align_c.h"
+﻿#include "layers_c/zq_cnn_deconvolution_32f_align_c.h"
 #include "layers_c/zq_cnn_deconvolution_gemm_32f_align_c.h"
 #include "layers_c/zq_cnn_convolution_32f_align_c.h"
 #include "layers_c/zq_cnn_depthwise_convolution_32f_align_c.h"
@@ -4371,40 +4371,40 @@ bool ZQ_CNN_Forward_SSEUtils::_prior_box(const ZQ_CNN_Tensor4D& input, const ZQ_
 				float box_width, box_height;
 				for (int s = 0; s < min_sizes.size(); s++)
 				{
-					int cur_min_size = min_sizes[s];
+					int cur_min_size = (int)min_sizes[s];
 					// first prior: aspect_ratio = 1, size = min_size
-					box_width = box_height = cur_min_size;
+					box_width = box_height = (float)cur_min_size;
 					// xmin
-					*cur_ptr = (center_x - box_width / 2.) / img_width;
+					*cur_ptr = (center_x - box_width / 2.f) / img_width;
 					cur_ptr += pixStep;
 					// ymin
-					*cur_ptr = (center_y - box_height / 2.) / img_height;
+					*cur_ptr = (center_y - box_height / 2.f) / img_height;
 					cur_ptr += pixStep;
 					// xmax
-					*cur_ptr = (center_x + box_width / 2.) / img_width;
+					*cur_ptr = (center_x + box_width / 2.f) / img_width;
 					cur_ptr += pixStep;
 					// ymax
-					*cur_ptr = (center_y + box_height / 2.) / img_height;
+					*cur_ptr = (center_y + box_height / 2.f) / img_height;
 					cur_ptr += pixStep;
 
 					if (max_sizes.size() > 0)
 					{
 						if (min_sizes.size() != max_sizes.size())
 							return false;
-						int cur_max_size = max_sizes[s];
+						int cur_max_size = (int)max_sizes[s];
 						// second prior: aspect_ratio = 1, size = sqrt(min_size * max_size)
-						box_width = box_height = sqrt(cur_min_size * cur_max_size);
+						box_width = box_height = (float)sqrt(cur_min_size * cur_max_size);
 						// xmin
-						*cur_ptr = (center_x - box_width / 2.) / img_width;
+						*cur_ptr = (center_x - box_width / 2.f) / img_width;
 						cur_ptr += pixStep;
 						// ymin
-						*cur_ptr = (center_y - box_height / 2.) / img_height;
+						*cur_ptr = (center_y - box_height / 2.f) / img_height;
 						cur_ptr += pixStep;
 						// xmax
-						*cur_ptr = (center_x + box_width / 2.) / img_width;
+						*cur_ptr = (center_x + box_width / 2.f) / img_width;
 						cur_ptr += pixStep;
 						// ymax
-						*cur_ptr = (center_y + box_height / 2.) / img_height;
+						*cur_ptr = (center_y + box_height / 2.f) / img_height;
 						cur_ptr += pixStep;
 					}
 
@@ -4412,21 +4412,21 @@ bool ZQ_CNN_Forward_SSEUtils::_prior_box(const ZQ_CNN_Tensor4D& input, const ZQ_
 					for (int r = 0; r < aspect_ratios.size(); r++)
 					{
 						float ar = aspect_ratios[r];
-						if (fabs(ar - 1.0f) < 1e-6)
+						if (fabs(ar - 1.0f) < 1e-6f)
 							continue;
 						box_width = cur_min_size * sqrt(ar);
 						box_height = cur_min_size / sqrt(ar);
 						// xmin
-						*cur_ptr = (center_x - box_width / 2.) / img_width;
+						*cur_ptr = (center_x - box_width / 2.f) / img_width;
 						cur_ptr += pixStep;
 						// ymin
-						*cur_ptr = (center_y - box_height / 2.) / img_height;
+						*cur_ptr = (center_y - box_height / 2.f) / img_height;
 						cur_ptr += pixStep;
 						// xmax
-						*cur_ptr = (center_x + box_width / 2.) / img_width;
+						*cur_ptr = (center_x + box_width / 2.f) / img_width;
 						cur_ptr += pixStep;
 						// ymax
-						*cur_ptr = (center_y + box_height / 2.) / img_height;
+						*cur_ptr = (center_y + box_height / 2.f) / img_height;
 						cur_ptr += pixStep;
 					}
 				}
@@ -4505,8 +4505,8 @@ bool ZQ_CNN_Forward_SSEUtils::_prior_box_MXNET(const ZQ_CNN_Tensor4D& input,
 	if (output.GetC() != out_C || output.GetH() != out_H || output.GetW() != out_W)
 		output.ChangeSize(1, out_H, out_W, out_C, 0, 0);
 
-	int num_sizes = sizes.size();
-	int num_ratios = aspect_ratios.size();
+	int num_sizes = (int)sizes.size();
+	int num_ratios = (int)aspect_ratios.size();
 	int pixStep = output.GetPixelStep();
 	float* out_ptr = output.GetFirstPixelPtr();
 	float* cur_ptr = out_ptr;
@@ -4517,7 +4517,7 @@ bool ZQ_CNN_Forward_SSEUtils::_prior_box_MXNET(const ZQ_CNN_Tensor4D& input,
 		{
 			float center_x = (w + offset) * step_width;
 			float center_y = (h + offset) * step_height;
-			float box_width, box_height;
+			//float box_width, box_height; //FIXME: not used
 
 			// ratio = 1, various sizes
 			for (int i = 0; i < num_sizes; ++i)
@@ -4610,15 +4610,15 @@ bool ZQ_CNN_Forward_SSEUtils::_prior_box_text(const ZQ_CNN_Tensor4D& input, cons
 		{
 			for (int w = 0; w < layer_width; w++)
 			{
-				float center_x = (w + 0.5) * step_width;
-				float center_y = (h + 0.5) * step_height;
-				float center_y_offset_1 = (h + 1.0) * step_height;
+				float center_x = (w + 0.5f) * step_width;
+				float center_y = (h + 0.5f) * step_height;
+				float center_y_offset_1 = (h + 1.0f) * step_height;
 				float box_width, box_height;
 				for (int s = 0; s < min_sizes.size(); s++)
 				{
-					int cur_min_size = min_sizes[s];
+					int cur_min_size = (int)min_sizes[s];
 					// first prior: aspect_ratio = 1, size = min_size
-					box_width = box_height = cur_min_size;
+					box_width = box_height = (float)cur_min_size;
 					// xmin
 					*cur_ptr = (center_x - box_width / 2.0f) / img_width;
 					cur_ptr += pixStep;
@@ -4653,9 +4653,9 @@ bool ZQ_CNN_Forward_SSEUtils::_prior_box_text(const ZQ_CNN_Tensor4D& input, cons
 					{
 						if (min_sizes.size() != max_sizes.size())
 							return false;
-						int cur_max_size = max_sizes[s];
+						int cur_max_size = (int)max_sizes[s];
 						// second prior: aspect_ratio = 1, size = sqrt(min_size * max_size)
-						box_width = box_height = sqrt(cur_min_size * cur_max_size);
+						box_width = box_height = (float)sqrt(cur_min_size * cur_max_size);
 						// xmin
 						*cur_ptr = (center_x - box_width / 2.0f) / img_width;
 						cur_ptr += pixStep;
@@ -4767,7 +4767,7 @@ bool ZQ_CNN_Forward_SSEUtils::_concat_NCHW_get_size(const std::vector<ZQ_CNN_Ten
 {
 	if (axis < 0 || axis >= 4)
 		return false;
-	int in_num = inputs.size();
+	int in_num = (int)inputs.size();
 	std::vector<ZQ_CNN_Tensor4D*> valid_inputs;
 	for (int i = 0; i < inputs.size(); i++)
 	{
@@ -4839,7 +4839,7 @@ bool ZQ_CNN_Forward_SSEUtils::_concat_NCHW(const std::vector<ZQ_CNN_Tensor4D*>& 
 
 	if (axis < 0 || axis >= 4)
 		return false;
-	int in_num = valid_inputs.size();
+	int in_num = (int)valid_inputs.size();
 	if (valid_inputs.size() == 0)
 	{
 		return output.ChangeSize(0, 0, 0, 0, 0, 0);
@@ -4977,7 +4977,7 @@ bool ZQ_CNN_Forward_SSEUtils::_detection_output(const ZQ_CNN_Tensor4D& loc, cons
 			}
 			const std::vector<ZQ_CNN_NormalizedBBox>& bboxes = decode_bboxes.find(label)->second;
 			ZQ_CNN_BBoxUtils::ApplyNMSFast(bboxes, scores, confidence_thresh, nms_thresh, nms_eta, nms_top_k, &(indices[c]));
-			num_det += indices[c].size();
+			num_det += (int)indices[c].size();
 		}
 		if (keep_top_k > -1 && num_det > keep_top_k)
 		{
@@ -5076,8 +5076,8 @@ bool ZQ_CNN_Forward_SSEUtils::_detection_output(const ZQ_CNN_Tensor4D& loc, cons
 			for (int j = 0; j < indices.size(); ++j)
 			{
 				int idx = indices[j];
-				out_ptr[count*sliceStep] = i;
-				out_ptr[count * sliceStep + 1] = label;
+				out_ptr[count*sliceStep] = (float)i;
+				out_ptr[count * sliceStep + 1] = (float)label;
 				out_ptr[count * sliceStep + 2] = scores[idx];
 				const ZQ_CNN_NormalizedBBox& bbox = bboxes[idx];
 				out_ptr[count * sliceStep + 3] = bbox.col1;
@@ -5181,7 +5181,7 @@ bool ZQ_CNN_Forward_SSEUtils::_detection_output_MXNET(const ZQ_CNN_Tensor4D& loc
 			if (bboxes.find(c) != bboxes.end())
 			{
 				ZQ_CNN_BBoxUtils::ApplyNMSFast(bboxes[c], scores[c], confidence_thresh, nms_thresh, 1, nms_top_k, &(indices[c]));
-				num_det += indices[c].size();
+				num_det += (int)indices[c].size();
 			}
 		}
 
@@ -5276,8 +5276,8 @@ bool ZQ_CNN_Forward_SSEUtils::_detection_output_MXNET(const ZQ_CNN_Tensor4D& loc
 			for (int j = 0; j < indices.size(); ++j)
 			{
 				int idx = indices[j];
-				out_ptr[count*sliceStep] = i;
-				out_ptr[count * sliceStep + 1] = label;
+				out_ptr[count*sliceStep] = (float)i;
+				out_ptr[count * sliceStep + 1] = (float)label;
 				out_ptr[count * sliceStep + 2] = scores[idx];
 				const ZQ_CNN_NormalizedBBox& bbox = bboxes[idx];
 				out_ptr[count * sliceStep + 3] = bbox.col1;

@@ -1,4 +1,4 @@
-/* SIMD (SSE1+MMX or SSE2) implementation of sin, cos, exp and log
+﻿/* SIMD (SSE1+MMX or SSE2) implementation of sin, cos, exp and log
 Inspired by Intel Approximate Math library, and based on the
 corresponding algorithms of the cephes math library
 The default is to use the SSE1 version. If you define USE_SSE2 the
