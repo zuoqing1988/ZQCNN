@@ -197,6 +197,9 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SampleOCR", "SamplesZQCNN\S
 	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SamplePersonPose2Video", "SamplesZQCNN\SamplePersonPose2Video\SamplePersonPose2Video.vcxproj", "{0305321F-5386-4A0B-A073-E664E6561CF9}"
+	ProjectSection(ProjectDependencies) = postProject
+		{43AA2D6A-447E-4153-8A29-7AE8A8296DC7} = {43AA2D6A-447E-4153-8A29-7AE8A8296DC7}
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
