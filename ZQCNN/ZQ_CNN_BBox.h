@@ -1,4 +1,4 @@
-#ifndef _ZQ_CNN_BBOX_H_
+﻿#ifndef _ZQ_CNN_BBOX_H_
 #define _ZQ_CNN_BBOX_H_
 #pragma once
 #include <string.h>

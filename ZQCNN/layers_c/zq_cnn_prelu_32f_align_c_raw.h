@@ -1,4 +1,4 @@
-#if WITH_BIAS
+﻿#if WITH_BIAS
 
 #define op_0_4 \
 	a0 = zq_mm_load_ps(c_ptr);\

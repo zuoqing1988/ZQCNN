@@ -1,4 +1,4 @@
-void zq_cnn_depthwise_conv_no_padding_nchwc_general(
+﻿void zq_cnn_depthwise_conv_no_padding_nchwc_general(
 	const zq_base_type* in_tensor4D_data,
 	int in_N,
 	int in_H,

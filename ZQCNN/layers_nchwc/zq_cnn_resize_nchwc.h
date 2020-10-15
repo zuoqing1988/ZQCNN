@@ -1,4 +1,4 @@
-#ifndef _ZQ_CNN_RESIZE_NCHWC_H_
+﻿#ifndef _ZQ_CNN_RESIZE_NCHWC_H_
 #define _ZQ_CNN_RESIZE_NCHWC_H_
 #include "../ZQ_CNN_CompileConfig.h"
 #if defined(__cplusplus) || defined(c_plusplus) 

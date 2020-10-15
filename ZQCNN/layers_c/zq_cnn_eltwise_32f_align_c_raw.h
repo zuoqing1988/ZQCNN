@@ -1,4 +1,4 @@
-#define op_sum_0_4_first \
+﻿#define op_sum_0_4_first \
 	a0 = zq_mm_load_ps(in_c_ptr);\
 	b0 = zq_mm_load_ps(in1_c_ptr);\
 	a1 = zq_mm_load_ps(in_c_ptr+zq_mm_align_size);\

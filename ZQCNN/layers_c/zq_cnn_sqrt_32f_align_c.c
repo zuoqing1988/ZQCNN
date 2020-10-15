@@ -1,4 +1,4 @@
-#include <stdio.h>
+﻿#include <stdio.h>
 #include <math.h>
 #include "../ZQ_CNN_CompileConfig.h"
 
@@ -31,7 +31,7 @@ extern "C" {
 						if (c_ptr[0] < 0)
 							c_ptr[0] = 0;
 						else
-							c_ptr[0] = sqrt(c_ptr[0]);
+							c_ptr[0] = (float)sqrt(c_ptr[0]);
 					}
 				}
 			}

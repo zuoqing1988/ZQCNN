@@ -1,4 +1,4 @@
-/* it is safe to use out_tensor4D_data = in_tensor4D_data */
+﻿/* it is safe to use out_tensor4D_data = in_tensor4D_data */
 void zq_cnn_lrn_across_channels_32f_align(
 	int local_size,
 	float alpha,

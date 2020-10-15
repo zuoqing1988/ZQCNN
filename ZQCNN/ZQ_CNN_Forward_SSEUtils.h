@@ -1,4 +1,4 @@
-#ifndef _ZQ_CNN_FORWARD_SSE_UTILS_H_
+﻿#ifndef _ZQ_CNN_FORWARD_SSE_UTILS_H_
 #define _ZQ_CNN_FORWARD_SSE_UTILS_H_
 #pragma once
 #include "ZQ_CNN_Tensor4D.h"
@@ -897,7 +897,7 @@ namespace ZQ
 			int out_H = output.GetH();
 			int out_W = output.GetW();
 			int out_C = output.GetC();
-			float bias_C = bias.GetC();
+			float bias_C = (float)bias.GetC();
 			if (in_N <= 0 || in_H <= 0 || in_W <= 0 || in_C == 0
 				|| (in_H - dilate_filter_H + (padH_top+padH_bottom)) < 0 || (in_W - dilate_filter_W + (padW_left+padW_right)) < 0)
 			{
@@ -984,7 +984,7 @@ namespace ZQ
 			int out_H = output.GetH();
 			int out_W = output.GetW();
 			int out_C = output.GetC();
-			float bias_C = bias.GetC();
+			float bias_C = (float)bias.GetC();
 			if (in_N <= 0 || in_H <= 0 || in_W <= 0 || in_C == 0
 				|| (in_H - dilate_filter_H + (padH_top+padH_bottom)) < 0 || (in_W - dilate_filter_W + (padW_left+padW_right)) < 0)
 			{
@@ -1156,7 +1156,7 @@ namespace ZQ
 			int out_H = output.GetH();
 			int out_W = output.GetW();
 			int out_C = output.GetC();
-			float bias_C = bias.GetC();
+			float bias_C = (float)bias.GetC();
 			if (in_N <= 0 || in_H <= 0 || in_W <= 0 || in_C == 0)
 			{
 				output.ChangeSize(0, 0, 0, 0, 0, 0);
@@ -1512,8 +1512,8 @@ namespace ZQ
 			}
 			else
 			{
-				need_W = ceil((float)(in_W + pad_W_left + pad_W_right - kernel_W) / stride_W + 1);
-				need_H = ceil((float)(in_H + pad_H_top + pad_H_bottom - kernel_H) / stride_H + 1);
+				need_W = (int)ceil((float)(in_W + pad_W_left + pad_W_right - kernel_W) / stride_W + 1);
+				need_H = (int)ceil((float)(in_H + pad_H_top + pad_H_bottom - kernel_H) / stride_H + 1);
 			}
 			
 			if (need_W <= 0 || need_H <= 0)
@@ -1597,8 +1597,8 @@ namespace ZQ
 			}
 			else
 			{
-				need_W = ceil((float)(in_W + pad_W_left + pad_W_right - kernel_W) / stride_W + 1);
-				need_H = ceil((float)(in_H + pad_H_top + pad_H_bottom - kernel_H) / stride_H + 1);
+				need_W = (int)ceil((float)(in_W + pad_W_left + pad_W_right - kernel_W) / stride_W + 1);
+				need_H = (int)ceil((float)(in_H + pad_H_top + pad_H_bottom - kernel_H) / stride_H + 1);
 			}
 
 			if (need_W <= 0 || need_H <= 0)
@@ -1969,7 +1969,7 @@ namespace ZQ
 			const float* bias_data = bias.GetFirstPixelPtr();
 			for (int c = 0; c < C; c++)
 			{
-				b_data[c] = scale_data[c] / sqrt(__max(var_data[c]+eps,1e-32));
+				b_data[c] = scale_data[c] / sqrt(__max(var_data[c]+eps,1e-32f));
 				a_data[c] = bias_data[c] - mean_data[c] * b_data[c];
 			}
 			return true;
@@ -1997,7 +1997,7 @@ namespace ZQ
 			const float* scale_data = scale.GetFirstPixelPtr();
 			for (int c = 0; c < C; c++)
 			{
-				b_data[c] = scale_data[c] / sqrt(__max(var_data[c]+eps, 1e-32));
+				b_data[c] = scale_data[c] / sqrt(__max(var_data[c]+eps, 1e-32f));
 				a_data[c] =  - mean_data[c] * b_data[c];
 			}
 			return true;
@@ -2024,7 +2024,7 @@ namespace ZQ
 			const float* var_data = var.GetFirstPixelPtr();
 			for (int c = 0; c < C; c++)
 			{
-				b_data[c] = 1.0f / sqrt(__max(var_data[c]+eps,1e-32));
+				b_data[c] = 1.0f / sqrt(__max(var_data[c]+eps,1e-32f));
 				a_data[c] = -mean_data[c] * b_data[c];
 			}
 			return true;
@@ -2171,7 +2171,7 @@ namespace ZQ
 
 		static bool Eltwise_Sum(const std::vector<const ZQ_CNN_Tensor4D*>& input, ZQ_CNN_Tensor4D& output)
 		{
-			int in_num = input.size();
+			int in_num = (int)input.size();
 			if (in_num < 2)
 				return false;
 			for (int i = 0; i < in_num; i++)
@@ -2227,7 +2227,7 @@ namespace ZQ
 		static bool Eltwise_SumWithWeight(const std::vector<const ZQ_CNN_Tensor4D*>& input, const std::vector<float>& weight, 
 			ZQ_CNN_Tensor4D& output)
 		{
-			int in_num = input.size();
+			int in_num = (int)input.size();
 			if (in_num < 2 || in_num != weight.size())
 				return false;
 			for (int i = 0; i < in_num; i++)
@@ -2281,7 +2281,7 @@ namespace ZQ
 
 		static bool Eltwise_Mul(const std::vector<const ZQ_CNN_Tensor4D*>& input, ZQ_CNN_Tensor4D& output)
 		{
-			int in_num = input.size();
+			int in_num = (int)input.size();
 			if (in_num < 2)
 				return false;
 			for (int i = 0; i < in_num; i++)
@@ -2335,7 +2335,7 @@ namespace ZQ
 
 		static bool Eltwise_Max(const std::vector<const ZQ_CNN_Tensor4D*>& input, ZQ_CNN_Tensor4D& output)
 		{
-			int in_num = input.size();
+			int in_num = (int)input.size();
 			if (in_num < 2)
 				return false;
 			for (int i = 0; i < in_num; i++)

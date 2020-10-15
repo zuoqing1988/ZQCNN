@@ -1,4 +1,4 @@
-void zq_cnn_innerproduct_32f_align(
+﻿void zq_cnn_innerproduct_32f_align(
 	const zq_base_type* in_tensor4D_data,
 	int in_N,
 	int in_H,

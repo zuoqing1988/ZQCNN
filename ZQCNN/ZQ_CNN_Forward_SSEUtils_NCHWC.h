@@ -1,4 +1,4 @@
-#ifndef _ZQ_CNN_FORWARD_SSE_UTILS_NCHWC_H_
+﻿#ifndef _ZQ_CNN_FORWARD_SSE_UTILS_NCHWC_H_
 #define _ZQ_CNN_FORWARD_SSE_UTILS_NCHWC_H_
 #pragma once
 #include "ZQ_CNN_Tensor4D_NCHWC.h"
@@ -39,7 +39,7 @@ namespace ZQ
 			const float* bias_data = bias.GetFirstPixelPtr();
 			for (int c = 0; c < C; c++)
 			{
-				b_data[c] = scale_data[c] / sqrt(__max(var_data[c] + eps, 1e-32));
+				b_data[c] = scale_data[c] / sqrt(__max(var_data[c] + eps, 1e-32f));
 				a_data[c] = bias_data[c] - mean_data[c] * b_data[c];
 			}
 			return true;
@@ -68,7 +68,7 @@ namespace ZQ
 			const float* scale_data = scale.GetFirstPixelPtr();
 			for (int c = 0; c < C; c++)
 			{
-				b_data[c] = scale_data[c] / sqrt(__max(var_data[c] + eps, 1e-32));
+				b_data[c] = scale_data[c] / sqrt(__max(var_data[c] + eps, 1e-32f));
 				a_data[c] = -mean_data[c] * b_data[c];
 			}
 			return true;

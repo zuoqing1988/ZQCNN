@@ -1,4 +1,4 @@
-#ifndef _ZQ_CNN_CASCADE_ONET_INTERFACE_H_
+﻿#ifndef _ZQ_CNN_CASCADE_ONET_INTERFACE_H_
 #define _ZQ_CNN_CASCADE_ONET_INTERFACE_H_
 #pragma once
 #include "ZQ_CNN_Net_Interface.h"

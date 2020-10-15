@@ -1,4 +1,4 @@
-#ifndef _ZQ_CNN_SOFTMAX_32F_ALIGN_C_H_
+Ôªø#ifndef _ZQ_CNN_SOFTMAX_32F_ALIGN_C_H_
 #define _ZQ_CNN_SOFTMAX_32F_ALIGN_C_H_
 #include "../ZQ_CNN_CompileConfig.h"
 #if defined(__cplusplus) || defined(c_plusplus) 
@@ -141,7 +141,7 @@ extern "C" {
 
 #endif //__ARM_NEON
 
-#if defined(__cplusplus) || defined(c_plusplus) //øÁ∆ΩÃ®∂®“Â∑Ω∑®
+#if defined(__cplusplus) || defined(c_plusplus) //Ë∑®Âπ≥Âè∞ÂÆö‰πâÊñπÊ≥ï
 }
 #endif
 #endif

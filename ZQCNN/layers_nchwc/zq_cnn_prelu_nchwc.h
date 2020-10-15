@@ -1,4 +1,4 @@
-#ifndef _ZQ_CNN_PRELU_NCHWC_H_
+ï»¿#ifndef _ZQ_CNN_PRELU_NCHWC_H_
 #define _ZQ_CNN_PRELU_NCHWC_H_
 #include "../ZQ_CNN_CompileConfig.h"
 #if defined(__cplusplus) || defined(c_plusplus) 
@@ -193,7 +193,7 @@ extern "C" {
 #endif//ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_AVX
 
 
-#if defined(__cplusplus) || defined(c_plusplus) //¿çÆ½Ì¨¶¨Òå·½·¨
+#if defined(__cplusplus) || defined(c_plusplus) //è·¨å¹³å°å®šä¹‰æ–¹æ³•
 }
 #endif
 #endif

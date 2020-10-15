@@ -1,4 +1,4 @@
-#ifndef _ZQ_CNN_COMPILE_CONFIG_H_
+﻿#ifndef _ZQ_CNN_COMPILE_CONFIG_H_
 #define _ZQ_CNN_COMPILE_CONFIG_H_
 #include <stdlib.h>
 #include <stdio.h>

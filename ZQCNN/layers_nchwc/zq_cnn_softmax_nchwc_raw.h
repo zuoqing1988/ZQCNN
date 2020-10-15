@@ -1,4 +1,4 @@
-
+﻿
 void zq_cnn_softmax_nchwc_C(
 	zq_base_type* in_tensor4D_data,	// in & out
 	int in_N,
@@ -41,14 +41,14 @@ void zq_cnn_softmax_nchwc_C(
 				{
 					for (i = 0; i < zq_mm_align_size; i++)
 					{
-						tmp_val = exp(slice_ptr[i] - max_val);
+						tmp_val = (float)exp(slice_ptr[i] - max_val);
 						sum_val += tmp_val;
 						slice_ptr[i] = tmp_val;
 					}
 				}
 				for (; c < in_C; c++, slice_ptr++)
 				{
-					tmp_val = exp(*slice_ptr - max_val);
+					tmp_val = (float)exp(*slice_ptr - max_val);
 					sum_val += tmp_val;
 					*slice_ptr = tmp_val;
 				}

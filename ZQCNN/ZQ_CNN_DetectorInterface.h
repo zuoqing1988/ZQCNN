@@ -1,4 +1,4 @@
-#ifndef _ZQ_CNN_DETECTOR_INTERFACE_H_
+﻿#ifndef _ZQ_CNN_DETECTOR_INTERFACE_H_
 #define _ZQ_CNN_DETECTOR_INTERFACE_H_
 #pragma once
 

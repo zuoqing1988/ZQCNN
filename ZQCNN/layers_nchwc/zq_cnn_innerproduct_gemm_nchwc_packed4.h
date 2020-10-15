@@ -1,4 +1,4 @@
-#define op4x4_1_first \
+﻿#define op4x4_1_first \
 a0 = zq_mm_load_ps(src_ptr0);\
 a1 = zq_mm_load_ps(src_ptr0 + zq_mm_align_size);\
 a2 = zq_mm_load_ps(src_ptr0 + zq_mm_align_size2);\

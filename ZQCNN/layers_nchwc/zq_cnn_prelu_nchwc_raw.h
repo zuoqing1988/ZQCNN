@@ -1,4 +1,4 @@
-/*
+﻿/*
 y = max(0,x)+a*min(0,x)
 */
 void zq_cnn_prelu_nchwc(

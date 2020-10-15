@@ -1,4 +1,4 @@
-void zq_cnn_resize_with_safeborder(
+﻿void zq_cnn_resize_with_safeborder(
 	const zq_base_type* in_tensor4D_data,
 	int in_N,
 	int in_H,
@@ -22,8 +22,8 @@ void zq_cnn_resize_with_safeborder(
 	int* x0 = (int*)malloc(sizeof(int)*(out_W));
 	int* x1 = (int*)malloc(sizeof(int)*(out_W));
 	zq_base_type* sx = (zq_base_type*)malloc(sizeof(zq_base_type)*(out_W));
-	zq_base_type src_H = in_rect_height;
-	zq_base_type src_W = in_rect_width;
+	zq_base_type src_H = (float)in_rect_height;
+	zq_base_type src_W = (float)in_rect_width;
 	zq_base_type w_step = 1.0f / (zq_base_type)out_W*src_W;
 	zq_base_type h_step = 1.0f / (zq_base_type)out_H*src_H;
 	zq_base_type coord_y_ini = 0.5f * h_step - 0.5f + (zq_base_type)in_off_y;
@@ -43,7 +43,7 @@ void zq_cnn_resize_with_safeborder(
 	coord_x = coord_x_ini;
 	for (w = 0; w < out_W; w++, coord_x += w_step)
 	{
-		x0_f = floor(coord_x);
+		x0_f = (float)floor(coord_x);
 		x0[w] = (int)x0_f;
 		x1[w] = x0[w] + 1;
 		sx[w] = coord_x - x0_f;
@@ -66,7 +66,7 @@ void zq_cnn_resize_with_safeborder(
 				h < out_H;
 				h++, coord_y += h_step, out_row_ptr += out_widthStep)
 			{
-				y0_f = floor(coord_y);
+				y0_f = (float)floor(coord_y);
 				y0 = (int)y0_f;
 				y1 = y0 + 1;
 				sy = coord_y - y0_f;
@@ -123,8 +123,8 @@ void zq_cnn_resize_without_safeborder(
 	int* x0 = (int*)malloc(sizeof(int)*(out_W));
 	int* x1 = (int*)malloc(sizeof(int)*(out_W));
 	zq_base_type* sx = (zq_base_type*)malloc(sizeof(zq_base_type)*(out_W));
-	zq_base_type src_H = in_rect_height;
-	zq_base_type src_W = in_rect_width;
+	zq_base_type src_H = (float)in_rect_height;
+	zq_base_type src_W = (float)in_rect_width;
 	zq_base_type w_step = 1.0f / (zq_base_type)out_W*src_W;
 	zq_base_type h_step = 1.0f / (zq_base_type)out_H*src_H;
 	zq_base_type coord_y_ini = 0.5f * h_step - 0.5f + (zq_base_type)in_off_y;
@@ -144,7 +144,7 @@ void zq_cnn_resize_without_safeborder(
 	coord_x = coord_x_ini;
 	for (w = 0; w < out_W; w++, coord_x += w_step)
 	{
-		x0_f = floor(coord_x);
+		x0_f = (float)floor(coord_x);
 		x0[w] = (int)x0_f;
 		x1[w] = x0[w] + 1;
 		sx[w] = coord_x - x0_f;
@@ -169,7 +169,7 @@ void zq_cnn_resize_without_safeborder(
 				h < out_H;
 				h++, coord_y += h_step, out_row_ptr += out_widthStep)
 			{
-				y0_f = floor(coord_y);
+				y0_f = (float)floor(coord_y);
 				y0 = (int)y0_f;
 				y1 = y0 + 1;
 				sy = coord_y - y0_f;

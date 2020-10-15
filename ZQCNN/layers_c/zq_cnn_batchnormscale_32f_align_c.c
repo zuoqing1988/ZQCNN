@@ -1,4 +1,4 @@
-#include <stdlib.h>
+﻿#include <stdlib.h>
 #include <math.h>
 #include <malloc.h>
 #include "../ZQ_CNN_CompileConfig.h"
@@ -267,7 +267,7 @@ extern "C" {
 		b = (float*)malloc(in_C*sizeof(float));
 		for (c = 0; c < in_C; c++)
 		{
-			b[c] = scale_data[c] / sqrt(__max(var_data[c]+eps, FLOAT_EPS_FOR_DIV));
+			b[c] = scale_data[c] / (float)sqrt(__max(var_data[c]+eps, FLOAT_EPS_FOR_DIV));
 			a[c] = bias_data[c] - mean_data[c] * b[c];
 		}
 
@@ -301,7 +301,7 @@ extern "C" {
 		b = (float*)malloc(in_C*sizeof(float));
 		for (c = 0; c < in_C; c++)
 		{
-			b[c] = 1.0f / sqrt(__max(var_data[c]+eps,FLOAT_EPS_FOR_DIV));
+			b[c] = 1.0f / (float)sqrt(__max(var_data[c]+eps,FLOAT_EPS_FOR_DIV));
 			a[c] = - mean_data[c] * b[c];
 		}
 

@@ -1,4 +1,4 @@
-void zq_cnn_maxpooling_nopadding_suredivided_kernel2x2(
+﻿void zq_cnn_maxpooling_nopadding_suredivided_kernel2x2(
 	const zq_base_type* in_tensor4D_data,
 	int in_N,
 	int in_H,

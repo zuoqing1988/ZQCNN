@@ -1,4 +1,4 @@
-#if WITH_BIAS
+﻿#if WITH_BIAS
 bias_v = zq_mm_load_ps(bias + out_c);
 a0 = zq_mm_add_ps(bias_v, zq_mm_load_ps(dst_ptr0));
 a1 = zq_mm_add_ps(bias_v, zq_mm_load_ps(dst_ptr1));

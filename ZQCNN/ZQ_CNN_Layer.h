@@ -1,4 +1,4 @@
-#ifndef _ZQ_CNN_LAYER_H_
+﻿#ifndef _ZQ_CNN_LAYER_H_
 #define _ZQ_CNN_LAYER_H_
 #pragma once
 #include <string>
@@ -50,7 +50,7 @@ namespace ZQ
 		static std::vector<std::vector<std::string> > split_line(const std::string& line)
 		{
 			std::vector<std::string> first_splits = _split_blank(line.c_str());
-			int num = first_splits.size();
+			int num = (int)first_splits.size();
 			std::vector<std::vector<std::string> > second_splits(num);
 			for (int n = 0; n < num; n++)
 			{
@@ -70,7 +70,7 @@ namespace ZQ
 		static std::vector<std::string>  _split_blank(const char* str)
 		{
 			std::vector<std::string> out;
-			int len = strlen(str);
+			int len = (int)strlen(str);
 			std::vector<char> buf(len + 1);
 			int i = 0, j = 0;
 			while (1)
@@ -96,7 +96,7 @@ namespace ZQ
 		static std::vector<std::string>  _split_separater(const char* str)
 		{
 			std::vector<std::string> out;
-			int len = strlen(str);
+			int len = (int)strlen(str);
 			std::vector<char> buf(len + 1);
 			int i = 0, j = 0;
 			while (1)
@@ -157,7 +157,7 @@ namespace ZQ
 			bottom_names.clear();
 			top_names.clear();
 			std::vector<std::vector<std::string> > paras = split_line(line);
-			int num = paras.size();
+			int num = (int)paras.size();
 			bool has_C = false, has_name = false;
 			for (int n = 0; n < num; n++)
 			{
@@ -299,7 +299,7 @@ namespace ZQ
 						*filters, *bias, *prelu_slope, stride_H, stride_W, dilate_H, dilate_W, pad_H_top, pad_H_bottom, pad_W_left, pad_W_right, *((*tops)[0]),
 						tmp_buffer, tmp_buffer_len);
 					double t2 = omp_get_wtime();
-					last_cost_time = t2 - t1;
+					last_cost_time = (float)(t2 - t1);
 					if (show_debug_info)
 					{
 						double time = __max(1000 * (t2 - t1), 1e-9);
@@ -322,7 +322,7 @@ namespace ZQ
 						*filters, *bias, stride_H, stride_W, dilate_H, dilate_W, pad_H_top, pad_H_bottom, pad_W_left, pad_W_right, *((*tops)[0]),
 						tmp_buffer, tmp_buffer_len);
 					double t2 = omp_get_wtime();
-					last_cost_time = t2 - t1;
+					last_cost_time = (float)(t2 - t1);
 					if (show_debug_info)
 					{
 						double time = __max(1000 * (t2 - t1), 1e-9);
@@ -348,7 +348,7 @@ namespace ZQ
 						dilate_H, dilate_W, pad_H_top, pad_H_bottom, pad_W_left, pad_W_right, *((*tops)[0]),
 						tmp_buffer, tmp_buffer_len);
 					double t2 = omp_get_wtime();
-					last_cost_time = t2 - t1;
+					last_cost_time = (float)(t2 - t1);
 					if (show_debug_info)
 					{
 						double time = __max(1000 * (t2 - t1), 1e-9);
@@ -371,7 +371,7 @@ namespace ZQ
 						pad_H_top, pad_H_bottom, pad_W_left, pad_W_right, *((*tops)[0]),
 						tmp_buffer, tmp_buffer_len);
 					double t2 = omp_get_wtime();
-					last_cost_time = t2 - t1;
+					last_cost_time = (float)(t2 - t1);
 					if (show_debug_info)
 					{
 						double time = __max(1000 * (t2 - t1), 1e-9);
@@ -391,7 +391,7 @@ namespace ZQ
 			bottom_names.clear();
 			top_names.clear();
 			std::vector<std::vector<std::string> > paras = split_line(line);
-			int num = paras.size();
+			int num = (int)paras.size();
 			bool has_num_output = false, has_kernelH = false, has_kernelW = false;
 			bool has_top = false, has_bottom = false, has_name = false;
 			for (int n = 0; n < num; n++)
@@ -643,8 +643,8 @@ namespace ZQ
 			{
 				int real_kernel_W = (kernel_W - 1)*dilate_W + 1;
 				int real_kernel_H = (kernel_H - 1)*dilate_H + 1;
-				int top_W = ceil((bottom_W - real_kernel_W + 1) / stride_W);
-				int top_H = ceil((bottom_H - real_kernel_H + 1) / stride_H);
+				int top_W = (int)ceil((bottom_W - real_kernel_W + 1) / stride_W);
+				int top_H = (int)ceil((bottom_H - real_kernel_H + 1) / stride_H);
 				int pad_W = __max((top_W - 1)*stride_W + real_kernel_W - bottom_W, 0);
 				int pad_H = __max((top_H - 1)*stride_H + real_kernel_H - bottom_H, 0);
 				pad_W_left = pad_W / 2;
@@ -672,8 +672,8 @@ namespace ZQ
 		virtual void GetTopDim(int& top_C, int& top_H, int& top_W) const 
 		{ 
 			top_C = num_output;
-			top_H = __max(0, floor((float)(bottom_H + pad_H_top + pad_H_bottom - (kernel_H - 1)*dilate_H - 1) / stride_H) + 1);
-			top_W = __max(0, floor((float)(bottom_W + pad_W_left + pad_W_right - (kernel_W - 1)*dilate_W - 1) / stride_W) + 1);
+			top_H = (int)__max(0, floor((float)(bottom_H + pad_H_top + pad_H_bottom - (kernel_H - 1)*dilate_H - 1) / stride_H) + 1);
+			top_W = (int)__max(0, floor((float)(bottom_W + pad_W_left + pad_W_right - (kernel_W - 1)*dilate_W - 1) / stride_W) + 1);
 		}
 
 		virtual bool SwapInputRGBandBGR()
@@ -884,7 +884,7 @@ namespace ZQ
 					bool ret = ZQ_CNN_Forward_SSEUtils::DepthwiseConvolutionWithBiasPReLU(*((*bottoms)[0]), *filters, *bias, *prelu_slope, 
 						stride_H, stride_W, dilate_H, dilate_W, pad_H_top, pad_H_bottom, pad_W_left, pad_W_right, *((*tops)[0]));
 					double t2 = omp_get_wtime();
-					last_cost_time = t2 - t1;
+					last_cost_time = (float)(t2 - t1);
 					if (show_debug_info)
 					{
 						double time = __max(1000 * (t2 - t1), 1e-9);
@@ -906,7 +906,7 @@ namespace ZQ
 					bool ret = ZQ_CNN_Forward_SSEUtils::DepthwiseConvolutionWithBias(*((*bottoms)[0]), *filters, *bias, stride_H, stride_W, 
 						dilate_H, dilate_W, pad_H_top, pad_H_bottom, pad_W_left, pad_W_right, *((*tops)[0]));
 					double t2 = omp_get_wtime();
-					last_cost_time = t2 - t1;
+					last_cost_time = (float)(t2 - t1);
 					if (show_debug_info)
 					{
 						double time = __max(1000 * (t2 - t1), 1e-9);
@@ -929,7 +929,7 @@ namespace ZQ
 				bool ret = ZQ_CNN_Forward_SSEUtils::DepthwiseConvolution(*((*bottoms)[0]), *filters, stride_H, stride_W, dilate_H, dilate_W, 
 					pad_H_top, pad_H_bottom, pad_W_left, pad_W_right, *((*tops)[0]));
 				double t2 = omp_get_wtime();
-				last_cost_time = t2 - t1;
+				last_cost_time = (float)(t2 - t1);
 				if (show_debug_info)
 				{
 					double time = __max(1000 * (t2 - t1), 1e-9);
@@ -948,7 +948,7 @@ namespace ZQ
 			bottom_names.clear();
 			top_names.clear();
 			std::vector<std::vector<std::string> > paras = split_line(line);
-			int num = paras.size();
+			int num = (int)paras.size();
 			bool has_num_output = false, has_kernelH = false, has_kernelW = false;
 			bool has_top = false, has_bottom = false, has_name = false;
 			for (int n = 0; n < num; n++)
@@ -1202,8 +1202,8 @@ namespace ZQ
 			{
 				int real_kernel_W = (kernel_W - 1)*dilate_W + 1;
 				int real_kernel_H = (kernel_H - 1)*dilate_H + 1;
-				int top_W = ceil((bottom_W - real_kernel_W + 1) / stride_W);
-				int top_H = ceil((bottom_H - real_kernel_H + 1) / stride_H);
+				int top_W = (int)ceil((bottom_W - real_kernel_W + 1) / stride_W);
+				int top_H = (int)ceil((bottom_H - real_kernel_H + 1) / stride_H);
 				int pad_W = __max((top_W - 1)*stride_W + real_kernel_W - bottom_W, 0);
 				int pad_H = __max((top_H - 1)*stride_H + real_kernel_H - bottom_H, 0);
 				pad_W_left = pad_W / 2;
@@ -1233,8 +1233,8 @@ namespace ZQ
 			top_C = num_output;
 			int dilate_filter_H = dilate_H * (kernel_H - 1) + 1;
 			int dilate_filter_W = dilate_W * (kernel_W - 1) + 1;
-			top_H = __max(0, floor((float)(bottom_H + pad_H_top + pad_H_bottom - dilate_filter_H) / stride_H) + 1);
-			top_W = __max(0, floor((float)(bottom_W + pad_W_left + pad_W_right - dilate_filter_W) / stride_W) + 1);
+			top_H = (int)__max(0, floor((float)(bottom_H + pad_H_top + pad_H_bottom - dilate_filter_H) / stride_H) + 1);
+			top_W = (int)__max(0, floor((float)(bottom_W + pad_W_left + pad_W_right - dilate_filter_W) / stride_W) + 1);
 		}
 
 		virtual bool SwapInputRGBandBGR() { return true; };
@@ -1424,7 +1424,7 @@ namespace ZQ
 						*filters, *bias, *prelu_slope, stride_H, stride_W, dilate_H, dilate_W, pad_H_top, pad_H_bottom, pad_W_left, pad_W_right, *((*tops)[0]),
 						tmp_buffer, tmp_buffer_len);
 					double t2 = omp_get_wtime();
-					last_cost_time = t2 - t1;
+					last_cost_time = (float)(t2 - t1);
 					if (show_debug_info)
 					{
 						double time = __max(1000 * (t2 - t1), 1e-9);
@@ -1447,7 +1447,7 @@ namespace ZQ
 						*filters, *bias, stride_H, stride_W, dilate_H, dilate_W, pad_H_top, pad_H_bottom, pad_W_left, pad_W_right, *((*tops)[0]),
 						tmp_buffer, tmp_buffer_len);
 					double t2 = omp_get_wtime();
-					last_cost_time = t2 - t1;
+					last_cost_time = (float)(t2 - t1);
 					if (show_debug_info)
 					{
 						double time = __max(1000 * (t2 - t1), 1e-9);
@@ -1473,7 +1473,7 @@ namespace ZQ
 						dilate_H, dilate_W, pad_H_top, pad_H_bottom, pad_W_left, pad_W_right, *((*tops)[0]),
 						tmp_buffer, tmp_buffer_len);
 					double t2 = omp_get_wtime();
-					last_cost_time = t2 - t1;
+					last_cost_time = (float)(t2 - t1);
 					if (show_debug_info)
 					{
 						double time = __max(1000 * (t2 - t1), 1e-9);
@@ -1496,7 +1496,7 @@ namespace ZQ
 						pad_H_top, pad_H_bottom, pad_W_left, pad_W_right, *((*tops)[0]),
 						tmp_buffer, tmp_buffer_len);
 					double t2 = omp_get_wtime();
-					last_cost_time = t2 - t1;
+					last_cost_time = (float)(t2 - t1);
 					if (show_debug_info)
 					{
 						double time = __max(1000 * (t2 - t1), 1e-9);
@@ -1516,7 +1516,7 @@ namespace ZQ
 			bottom_names.clear();
 			top_names.clear();
 			std::vector<std::vector<std::string> > paras = split_line(line);
-			int num = paras.size();
+			int num = (int)paras.size();
 			bool has_num_output = false, has_kernelH = false, has_kernelW = false;
 			bool has_top = false, has_bottom = false, has_name = false;
 			for (int n = 0; n < num; n++)
@@ -1792,9 +1792,9 @@ namespace ZQ
 				int bottom_H_padded = top_H - 1 + real_kernel_H;
 				int pad_W = bottom_W_padded - (bottom_W - 1)*stride_W - 1;
 				int pad_H = bottom_H_padded - (bottom_H - 1)*stride_H - 1;
-				pad_W_left = ceil(pad_W / 2.0);
+				pad_W_left = (int)ceil(pad_W / 2.0);
 				pad_W_right = pad_W - pad_W_left;
-				pad_H_top = ceil(pad_H / 2.0);
+				pad_H_top = (int)ceil(pad_H / 2.0);
 				pad_H_bottom = pad_H - pad_H_top;
 			}
 			
@@ -2008,7 +2008,7 @@ namespace ZQ
 			double t1 = omp_get_wtime();
 			bool ret = ZQ_CNN_Forward_SSEUtils::BatchNorm_b_a(*((*tops)[0]), *b, *a);
 			double t2 = omp_get_wtime();
-			last_cost_time = t2 - t1;
+			last_cost_time = (float)(t2 - t1);
 			if (show_debug_info)
 				printf("BatchNorm layer: %s cost : %.3f ms\n", name.c_str(), 1000 * (t2 - t1));
 			return ret;
@@ -2020,7 +2020,7 @@ namespace ZQ
 			bottom_names.clear();
 			top_names.clear();
 			std::vector<std::vector<std::string> > paras = split_line(line);
-			int num = paras.size();
+			int num = (int)paras.size();
 			bool has_top = false, has_bottom = false, has_name = false;
 			for (int n = 0; n < num; n++)
 			{
@@ -2034,7 +2034,7 @@ namespace ZQ
 				{
 					if (paras[n].size() >= 2)
 					{
-						eps = atof(paras[n][1].c_str());
+						eps = (float)atof(paras[n][1].c_str());
 					}
 				}
 				else if (_my_strcmpi("top", paras[n][0].c_str()) == 0)
@@ -2281,7 +2281,7 @@ namespace ZQ
 			if (with_bias)
 			{
 				std::vector<float> nchw_raw(dst_len * 4);
-				if (dst_len * 4 * sizeof(float) > buffer_len)
+				if (dst_len * 4 * (int)sizeof(float) > buffer_len)
 					return false;
 				memcpy(&nchw_raw[0], buffer, dst_len * 4 * sizeof(float));
 				readed_length_in_bytes += dst_len * 4 * sizeof(float);
@@ -2299,7 +2299,7 @@ namespace ZQ
 			else
 			{
 				std::vector<float> nchw_raw(dst_len * 3);
-				if (dst_len * 3 * sizeof(float) > buffer_len)
+				if (dst_len * 3 * (int)sizeof(float) > buffer_len)
 					return false;
 				memcpy(&nchw_raw[0], buffer, dst_len * 3 * sizeof(float));
 				readed_length_in_bytes += dst_len * 3 * sizeof(float);
@@ -2362,7 +2362,7 @@ namespace ZQ
 			double t1 = omp_get_wtime();
 			bool ret = ZQ_CNN_Forward_SSEUtils::BatchNorm_b_a(*((*tops)[0]), *b, *a);
 			double t2 = omp_get_wtime();
-			last_cost_time = t2 - t1;
+			last_cost_time = (float)(t2 - t1);
 			if (show_debug_info)
 				printf("BatchNorm layer: %s cost : %.3f ms\n", name.c_str(), 1000 * (t2 - t1));
 			return ret;
@@ -2374,7 +2374,7 @@ namespace ZQ
 			bottom_names.clear();
 			top_names.clear();
 			std::vector<std::vector<std::string> > paras = split_line(line);
-			int num = paras.size();
+			int num = (int)paras.size();
 			bool has_top = false, has_bottom = false, has_name = false;
 			for (int n = 0; n < num; n++)
 			{
@@ -2388,7 +2388,7 @@ namespace ZQ
 				{
 					if (paras[n].size() >= 2)
 					{
-						eps = atof(paras[n][1].c_str());
+						eps = (float)atof(paras[n][1].c_str());
 					}
 				}
 				else if (_my_strcmpi("top", paras[n][0].c_str()) == 0)
@@ -2563,7 +2563,7 @@ namespace ZQ
 			if (dst_len <= 0)
 				return false;
 			std::vector<float> nchw_raw(dst_len * 2);
-			if (dst_len * 2 * sizeof(float) > buffer_len)
+			if (dst_len * 2 * (int)sizeof(float) > buffer_len)
 				return false;
 
 			memcpy(&nchw_raw[0], buffer, dst_len * 2 * sizeof(float));
@@ -2615,7 +2615,7 @@ namespace ZQ
 				double t1 = omp_get_wtime();
 				bool ret = ZQ_CNN_Forward_SSEUtils::ScaleWithBias(*((*tops)[0]), *scale, *bias);
 				double t2 = omp_get_wtime();
-				last_cost_time = t2 - t1;
+				last_cost_time = (float)(t2 - t1);
 				if (show_debug_info)
 					printf("Scale layer: %s cost : %.3f ms\n", name.c_str(), 1000 * (t2 - t1));
 				return ret;
@@ -2627,7 +2627,7 @@ namespace ZQ
 				double t1 = omp_get_wtime();
 				bool ret = ZQ_CNN_Forward_SSEUtils::Scale(*((*tops)[0]), *scale);
 				double t2 = omp_get_wtime();
-				last_cost_time = t2 - t1;
+				last_cost_time = (float)(t2 - t1);
 				if (show_debug_info)
 					printf("Scale layer: %s cost : %.3f ms\n", name.c_str(), 1000 * (t2 - t1));
 				return ret;
@@ -2640,7 +2640,7 @@ namespace ZQ
 			bottom_names.clear();
 			top_names.clear();
 			std::vector<std::vector<std::string> > paras = split_line(line);
-			int num = paras.size();
+			int num = (int)paras.size();
 			bool has_top = false, has_bottom = false, has_name = false;
 			for (int n = 0; n < num; n++)
 			{
@@ -2899,7 +2899,7 @@ namespace ZQ
 			double t1 = omp_get_wtime();
 			bool ret = ZQ_CNN_Forward_SSEUtils::AddBias(*((*tops)[0]), *bias);
 			double t2 = omp_get_wtime();
-			last_cost_time = t2 - t1;
+			last_cost_time = (float)(t2 - t1);
 			if (show_debug_info)
 				printf("AddBias layer: %s cost : %.3f ms\n", name.c_str(), 1000 * (t2 - t1));
 			return ret;	
@@ -2911,7 +2911,7 @@ namespace ZQ
 			bottom_names.clear();
 			top_names.clear();
 			std::vector<std::vector<std::string> > paras = split_line(line);
-			int num = paras.size();
+			int num = (int)paras.size();
 			bool has_top = false, has_bottom = false, has_name = false;
 			for (int n = 0; n < num; n++)
 			{
@@ -3097,7 +3097,7 @@ namespace ZQ
 			double t1 = omp_get_wtime();
 			bool ret = ZQ_CNN_Forward_SSEUtils::PReLU(*((*tops)[0]), *slope);
 			double t2 = omp_get_wtime();
-			last_cost_time = t2 - t1;
+			last_cost_time = (float)(t2 - t1);
 			if (show_debug_info)
 				printf("PReLU layer: %s %.3f ms \n", name.c_str(), 1000 * (t2 - t1));
 			return ret;
@@ -3109,7 +3109,7 @@ namespace ZQ
 			bottom_names.clear();
 			top_names.clear();
 			std::vector<std::vector<std::string> > paras = split_line(line);
-			int num = paras.size();
+			int num = (int)paras.size();
 			bool has_top = false, has_bottom = false, has_name = false;
 			for (int n = 0; n < num; n++)
 			{
@@ -3292,7 +3292,7 @@ namespace ZQ
 			double t1 = omp_get_wtime();
 			ZQ_CNN_Forward_SSEUtils::ReLU(*((*tops)[0]), slope);
 			double t2 = omp_get_wtime();
-			last_cost_time = t2 - t1;
+			last_cost_time = (float)(t2 - t1);
 			if (show_debug_info)
 				printf("ReLU layer: %s %.3f ms \n", name.c_str(), 1000 * (t2 - t1));
 			return true;
@@ -3304,7 +3304,7 @@ namespace ZQ
 			bottom_names.clear();
 			top_names.clear();
 			std::vector<std::vector<std::string> > paras = split_line(line);
-			int num = paras.size();
+			int num = (int)paras.size();
 			bool has_top = false, has_bottom = false, has_name = false;
 			for (int n = 0; n < num; n++)
 			{
@@ -3318,7 +3318,7 @@ namespace ZQ
 				{
 					if (paras[n].size() >= 2)
 					{
-						slope = atof(paras[n][1].c_str());
+						slope = (float)atof(paras[n][1].c_str());
 					}
 				}
 				else if (_my_strcmpi("top", paras[n][0].c_str()) == 0)
@@ -3432,7 +3432,7 @@ namespace ZQ
 			double t1 = omp_get_wtime();
 			ZQ_CNN_Forward_SSEUtils::ReLU6(*((*tops)[0]));
 			double t2 = omp_get_wtime();
-			last_cost_time = t2 - t1;
+			last_cost_time = (float)(t2 - t1);
 			if (show_debug_info)
 				printf("ReLU6 layer: %s %.3f ms \n", name.c_str(), 1000 * (t2 - t1));
 			return true;
@@ -3444,7 +3444,7 @@ namespace ZQ
 			bottom_names.clear();
 			top_names.clear();
 			std::vector<std::vector<std::string> > paras = split_line(line);
-			int num = paras.size();
+			int num = (int)paras.size();
 			bool has_top = false, has_bottom = false, has_name = false;
 			for (int n = 0; n < num; n++)
 			{
@@ -3458,7 +3458,7 @@ namespace ZQ
 				{
 					if (paras[n].size() >= 2)
 					{
-						slope = atof(paras[n][1].c_str());
+						slope = (float)atof(paras[n][1].c_str());
 					}
 				}
 				else if (_my_strcmpi("top", paras[n][0].c_str()) == 0)
@@ -3586,7 +3586,7 @@ namespace ZQ
 				ZQ_CNN_Forward_SSEUtils::MaxPooling(*((*bottoms)[0]), *((*tops)[0]), kernel_H, kernel_W, stride_H, stride_W, 
 					pad_H_top, pad_H_bottom, pad_W_left, pad_W_right, global_pool);
 				double t2 = omp_get_wtime();
-				last_cost_time = t2 - t1;
+				last_cost_time = (float)(t2 - t1);
 				if (show_debug_info)
 					printf("Pooling layer: %s cost : %.3f ms\n", name.c_str(), 1000 * (t2 - t1));
 				return true;
@@ -3597,7 +3597,7 @@ namespace ZQ
 				ZQ_CNN_Forward_SSEUtils::AVGPooling(*((*bottoms)[0]), *((*tops)[0]), kernel_H, kernel_W, stride_H, stride_W,
 					pad_H_top, pad_H_bottom, pad_W_left, pad_W_right, global_pool);
 				double t2 = omp_get_wtime();
-				last_cost_time = t2 - t1;
+				last_cost_time = (float)(t2 - t1);
 				if (show_debug_info)
 					printf("Pooling layer: %s cost : %.3f ms\n", name.c_str(), 1000 * (t2 - t1));
 				return true;
@@ -3615,7 +3615,7 @@ namespace ZQ
 			bottom_names.clear();
 			top_names.clear();
 			std::vector<std::vector<std::string> > paras = split_line(line);
-			int num = paras.size();
+			int num = (int)paras.size();
 			bool has_kernelH = false, has_kernelW = false;
 			bool has_strideH = false, has_strideW = false;
 			bool has_top = false, has_bottom = false, has_name = false;
@@ -3831,8 +3831,8 @@ namespace ZQ
 
 			if (pad_type == TYPE_VALID)
 			{
-				int top_W = ceil((bottom_W - kernel_W + 1) / stride_W);
-				int top_H = ceil((bottom_H - kernel_H + 1) / stride_H);
+				int top_W = (int)ceil((bottom_W - kernel_W + 1) / stride_W);
+				int top_H = (int)ceil((bottom_H - kernel_H + 1) / stride_H);
 				int pad_W = __max((top_W - 1)*stride_W + kernel_W - bottom_W, 0);
 				int pad_H = __max((top_H - 1)*stride_H + kernel_H - bottom_H, 0);
 				pad_W_left = pad_W / 2;
@@ -3866,8 +3866,8 @@ namespace ZQ
 			else
 			{
 				top_C = bottom_C;
-				top_H = __max(0, ceil((float)(bottom_H + pad_H_top + pad_H_bottom - kernel_H) / stride_H) + 1);
-				top_W = __max(0, ceil((float)(bottom_W + pad_W_left + pad_W_right - kernel_W) / stride_W) + 1);
+				top_H = (int)__max(0, ceil((float)(bottom_H + pad_H_top + pad_H_bottom - kernel_H) / stride_H) + 1);
+				top_W = (int)__max(0, ceil((float)(bottom_W + pad_W_left + pad_W_right - kernel_W) / stride_W) + 1);
 			}
 		}
 
@@ -3929,7 +3929,7 @@ namespace ZQ
 				bool ret = ZQ_CNN_Forward_SSEUtils::InnerProductWithBias(*((*bottoms)[0]), 
 					*filters, *bias, *((*tops)[0]), tmp_buffer, tmp_buffer_len);
 				double t2 = omp_get_wtime();
-				last_cost_time = t2 - t1;
+				last_cost_time = (float)(t2 - t1);
 				if (show_debug_info)
 					printf("Innerproduct layer: %.3f ms NHW %dx%dx%d filter: NHWC %d x %d x %d x %d\n", 
 						1000 * (t2 - t1), (*tops)[0]->GetN(), (*tops)[0]->GetH(), (*tops)[0]->GetW(), 
@@ -3946,7 +3946,7 @@ namespace ZQ
 				bool ret = ZQ_CNN_Forward_SSEUtils::InnerProduct(*((*bottoms)[0]), *filters, *((*tops)[0]),
 					tmp_buffer,tmp_buffer_len);
 				double t2 = omp_get_wtime();
-				last_cost_time = t2 - t1;
+				last_cost_time = (float)(t2 - t1);
 				if (show_debug_info)
 					printf("Innerproduct layer: %s cost : %.3f ms\n", name.c_str(), 1000 * (t2 - t1));
 				return ret;
@@ -3959,7 +3959,7 @@ namespace ZQ
 			bottom_names.clear();
 			top_names.clear();
 			std::vector<std::vector<std::string> > paras = split_line(line);
-			int num = paras.size();
+			int num = (int)paras.size();
 			bool has_num_output = false/*, has_kernelH = false, has_kernelW = false*/;
 			bool has_top = false, has_bottom = false, has_name = false;
 			for (int n = 0; n < num; n++)
@@ -4150,7 +4150,7 @@ namespace ZQ
 			if (dst_len <= 0)
 				return false;
 			std::vector<float> nchw_raw(dst_len);
-			int readed_len = fread_s(&nchw_raw[0], dst_len * sizeof(float), sizeof(float), dst_len, in);
+			int readed_len = (int)fread_s(&nchw_raw[0], dst_len * sizeof(float), sizeof(float), dst_len, in);
 			if (dst_len != readed_len)
 				return false;
 			if (ignore_small_value != 0)
@@ -4169,7 +4169,7 @@ namespace ZQ
 					return false;
 				nchw_raw.resize(dst_len);
 				//int pos = ftell(in);
-				readed_len = fread_s(&nchw_raw[0], dst_len * sizeof(float), sizeof(float), dst_len, in);
+				readed_len = (int)fread_s(&nchw_raw[0], dst_len * sizeof(float), sizeof(float), dst_len, in);
 				if (dst_len != readed_len)
 					return false;
 				if (ignore_small_value != 0)
@@ -4343,8 +4343,8 @@ namespace ZQ
 				*bw_b_I, *bw_b_F, *bw_b_O, *bw_b_G,
 				*((*tops)[0]), fw_dir, bw_dir, forget_bias, cell_clip, tmp_buffer, tmp_buffer_len);
 			double t2 = omp_get_wtime();
-			last_cost_time = t2 - t1;
-			double mop = GetNumOfMulAdd();
+			last_cost_time = (float)(t2 - t1);
+			double mop = (double)GetNumOfMulAdd();
 			mop /= 1024 * 1024;
 			if (show_debug_info)
 			{
@@ -4362,7 +4362,7 @@ namespace ZQ
 			bottom_names.clear();
 			top_names.clear();
 			std::vector<std::vector<std::string> > paras = split_line(line);
-			int num = paras.size();
+			int num = (int)paras.size();
 			bool has_hidden_dim = false, has_type = false;
 			bool has_top = false, has_bottom = false, has_name = false;
 			for (int n = 0; n < num; n++)
@@ -4408,14 +4408,14 @@ namespace ZQ
 				{
 					if (paras[n].size() >= 2)
 					{
-						forget_bias = atof(paras[n][1].c_str());
+						forget_bias = (float)atof(paras[n][1].c_str());
 					}
 				}
 				else if (_my_strcmpi("cell_clip", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
 					{
-						cell_clip = atof(paras[n][1].c_str());
+						cell_clip = (float)atof(paras[n][1].c_str());
 					}
 				}
 				else if (_my_strcmpi("top", paras[n][0].c_str()) == 0)
@@ -4959,7 +4959,7 @@ namespace ZQ
 				if (dst_len <= 0)
 					return false;
 				std::vector<float> nchw_raw(dst_len);
-				int readed_len = fread_s(&nchw_raw[0], dst_len * sizeof(float), sizeof(float), dst_len, in);
+				int readed_len = (int)fread_s(&nchw_raw[0], dst_len * sizeof(float), sizeof(float), dst_len, in);
 				if (dst_len != readed_len)
 					return false;
 				if (ignore_small_value != 0)
@@ -4976,7 +4976,7 @@ namespace ZQ
 				if (dst_len <= 0)
 					return false;
 				nchw_raw.resize(dst_len);
-				readed_len = fread_s(&nchw_raw[0], dst_len * sizeof(float), sizeof(float), dst_len, in);
+				readed_len = (int)fread_s(&nchw_raw[0], dst_len * sizeof(float), sizeof(float), dst_len, in);
 				if (dst_len != readed_len)
 					return false;
 				if (ignore_small_value != 0)
@@ -4993,7 +4993,7 @@ namespace ZQ
 				if (dst_len <= 0)
 					return false;
 				nchw_raw.resize(dst_len);
-				readed_len = fread_s(&nchw_raw[0], dst_len * sizeof(float), sizeof(float), dst_len, in);
+				readed_len = (int)fread_s(&nchw_raw[0], dst_len * sizeof(float), sizeof(float), dst_len, in);
 				if (dst_len != readed_len)
 					return false;
 				if (ignore_small_value != 0)
@@ -5010,7 +5010,7 @@ namespace ZQ
 				if (dst_len <= 0)
 					return false;
 				nchw_raw.resize(dst_len);
-				readed_len = fread_s(&nchw_raw[0], dst_len * sizeof(float), sizeof(float), dst_len, in);
+				readed_len = (int)fread_s(&nchw_raw[0], dst_len * sizeof(float), sizeof(float), dst_len, in);
 				if (dst_len != readed_len)
 					return false;
 				if (ignore_small_value != 0)
@@ -5030,7 +5030,7 @@ namespace ZQ
 				if (dst_len <= 0)
 					return false;
 				std::vector<float> nchw_raw(dst_len);
-				int readed_len = fread_s(&nchw_raw[0], dst_len * sizeof(float), sizeof(float), dst_len, in);
+				int readed_len = (int)fread_s(&nchw_raw[0], dst_len * sizeof(float), sizeof(float), dst_len, in);
 				if (dst_len != readed_len)
 					return false;
 				if (ignore_small_value != 0)
@@ -5047,7 +5047,7 @@ namespace ZQ
 				if (dst_len <= 0)
 					return false;
 				nchw_raw.resize(dst_len);
-				readed_len = fread_s(&nchw_raw[0], dst_len * sizeof(float), sizeof(float), dst_len, in);
+				readed_len = (int)fread_s(&nchw_raw[0], dst_len * sizeof(float), sizeof(float), dst_len, in);
 				if (dst_len != readed_len)
 					return false;
 				if (ignore_small_value != 0)
@@ -5064,7 +5064,7 @@ namespace ZQ
 				if (dst_len <= 0)
 					return false;
 				nchw_raw.resize(dst_len);
-				readed_len = fread_s(&nchw_raw[0], dst_len * sizeof(float), sizeof(float), dst_len, in);
+				readed_len = (int)fread_s(&nchw_raw[0], dst_len * sizeof(float), sizeof(float), dst_len, in);
 				if (dst_len != readed_len)
 					return false;
 				if (ignore_small_value != 0)
@@ -5081,7 +5081,7 @@ namespace ZQ
 				if (dst_len <= 0)
 					return false;
 				nchw_raw.resize(dst_len);
-				readed_len = fread_s(&nchw_raw[0], dst_len * sizeof(float), sizeof(float), dst_len, in);
+				readed_len = (int)fread_s(&nchw_raw[0], dst_len * sizeof(float), sizeof(float), dst_len, in);
 				if (dst_len != readed_len)
 					return false;
 				if (ignore_small_value != 0)
@@ -5101,7 +5101,7 @@ namespace ZQ
 				if (dst_len <= 0)
 					return false;
 				std::vector<float> nchw_raw(dst_len);
-				int readed_len = fread_s(&nchw_raw[0], dst_len * sizeof(float), sizeof(float), dst_len, in);
+				int readed_len = (int)fread_s(&nchw_raw[0], dst_len * sizeof(float), sizeof(float), dst_len, in);
 				if (dst_len != readed_len)
 					return false;
 				if (ignore_small_value != 0)
@@ -5118,7 +5118,7 @@ namespace ZQ
 				if (dst_len <= 0)
 					return false;
 				nchw_raw.resize(dst_len);
-				readed_len = fread_s(&nchw_raw[0], dst_len * sizeof(float), sizeof(float), dst_len, in);
+				readed_len = (int)fread_s(&nchw_raw[0], dst_len * sizeof(float), sizeof(float), dst_len, in);
 				if (dst_len != readed_len)
 					return false;
 				if (ignore_small_value != 0)
@@ -5135,7 +5135,7 @@ namespace ZQ
 				if (dst_len <= 0)
 					return false;
 				nchw_raw.resize(dst_len);
-				readed_len = fread_s(&nchw_raw[0], dst_len * sizeof(float), sizeof(float), dst_len, in);
+				readed_len = (int)fread_s(&nchw_raw[0], dst_len * sizeof(float), sizeof(float), dst_len, in);
 				if (dst_len != readed_len)
 					return false;
 				if (ignore_small_value != 0)
@@ -5152,7 +5152,7 @@ namespace ZQ
 				if (dst_len <= 0)
 					return false;
 				nchw_raw.resize(dst_len);
-				readed_len = fread_s(&nchw_raw[0], dst_len * sizeof(float), sizeof(float), dst_len, in);
+				readed_len = (int)fread_s(&nchw_raw[0], dst_len * sizeof(float), sizeof(float), dst_len, in);
 				if (dst_len != readed_len)
 					return false;
 				if (ignore_small_value != 0)
@@ -5172,7 +5172,7 @@ namespace ZQ
 				if (dst_len <= 0)
 					return false;
 				std::vector<float> nchw_raw(dst_len);
-				int readed_len = fread_s(&nchw_raw[0], dst_len * sizeof(float), sizeof(float), dst_len, in);
+				int readed_len = (int)fread_s(&nchw_raw[0], dst_len * sizeof(float), sizeof(float), dst_len, in);
 				if (dst_len != readed_len)
 					return false;
 				if (ignore_small_value != 0)
@@ -5189,7 +5189,7 @@ namespace ZQ
 				if (dst_len <= 0)
 					return false;
 				nchw_raw.resize(dst_len);
-				readed_len = fread_s(&nchw_raw[0], dst_len * sizeof(float), sizeof(float), dst_len, in);
+				readed_len = (int)fread_s(&nchw_raw[0], dst_len * sizeof(float), sizeof(float), dst_len, in);
 				if (dst_len != readed_len)
 					return false;
 				if (ignore_small_value != 0)
@@ -5206,7 +5206,7 @@ namespace ZQ
 				if (dst_len <= 0)
 					return false;
 				nchw_raw.resize(dst_len);
-				readed_len = fread_s(&nchw_raw[0], dst_len * sizeof(float), sizeof(float), dst_len, in);
+				readed_len = (int)fread_s(&nchw_raw[0], dst_len * sizeof(float), sizeof(float), dst_len, in);
 				if (dst_len != readed_len)
 					return false;
 				if (ignore_small_value != 0)
@@ -5223,7 +5223,7 @@ namespace ZQ
 				if (dst_len <= 0)
 					return false;
 				nchw_raw.resize(dst_len);
-				readed_len = fread_s(&nchw_raw[0], dst_len * sizeof(float), sizeof(float), dst_len, in);
+				readed_len = (int)fread_s(&nchw_raw[0], dst_len * sizeof(float), sizeof(float), dst_len, in);
 				if (dst_len != readed_len)
 					return false;
 				if (ignore_small_value != 0)
@@ -5243,7 +5243,7 @@ namespace ZQ
 				if (dst_len <= 0)
 					return false;
 				std::vector<float> nchw_raw(dst_len);
-				int readed_len = fread_s(&nchw_raw[0], dst_len * sizeof(float), sizeof(float), dst_len, in);
+				int readed_len = (int)fread_s(&nchw_raw[0], dst_len * sizeof(float), sizeof(float), dst_len, in);
 				if (dst_len != readed_len)
 					return false;
 				if (ignore_small_value != 0)
@@ -5260,7 +5260,7 @@ namespace ZQ
 				if (dst_len <= 0)
 					return false;
 				nchw_raw.resize(dst_len);
-				readed_len = fread_s(&nchw_raw[0], dst_len * sizeof(float), sizeof(float), dst_len, in);
+				readed_len = (int)fread_s(&nchw_raw[0], dst_len * sizeof(float), sizeof(float), dst_len, in);
 				if (dst_len != readed_len)
 					return false;
 				if (ignore_small_value != 0)
@@ -5277,7 +5277,7 @@ namespace ZQ
 				if (dst_len <= 0)
 					return false;
 				nchw_raw.resize(dst_len);
-				readed_len = fread_s(&nchw_raw[0], dst_len * sizeof(float), sizeof(float), dst_len, in);
+				readed_len = (int)fread_s(&nchw_raw[0], dst_len * sizeof(float), sizeof(float), dst_len, in);
 				if (dst_len != readed_len)
 					return false;
 				if (ignore_small_value != 0)
@@ -5294,7 +5294,7 @@ namespace ZQ
 				if (dst_len <= 0)
 					return false;
 				nchw_raw.resize(dst_len);
-				readed_len = fread_s(&nchw_raw[0], dst_len * sizeof(float), sizeof(float), dst_len, in);
+				readed_len = (int)fread_s(&nchw_raw[0], dst_len * sizeof(float), sizeof(float), dst_len, in);
 				if (dst_len != readed_len)
 					return false;
 				if (ignore_small_value != 0)
@@ -5314,7 +5314,7 @@ namespace ZQ
 				if (dst_len <= 0)
 					return false;
 				std::vector<float> nchw_raw(dst_len);
-				int readed_len = fread_s(&nchw_raw[0], dst_len * sizeof(float), sizeof(float), dst_len, in);
+				int readed_len = (int)fread_s(&nchw_raw[0], dst_len * sizeof(float), sizeof(float), dst_len, in);
 				if (dst_len != readed_len)
 					return false;
 				if (ignore_small_value != 0)
@@ -5331,7 +5331,7 @@ namespace ZQ
 				if (dst_len <= 0)
 					return false;
 				nchw_raw.resize(dst_len);
-				readed_len = fread_s(&nchw_raw[0], dst_len * sizeof(float), sizeof(float), dst_len, in);
+				readed_len = (int)fread_s(&nchw_raw[0], dst_len * sizeof(float), sizeof(float), dst_len, in);
 				if (dst_len != readed_len)
 					return false;
 				if (ignore_small_value != 0)
@@ -5348,7 +5348,7 @@ namespace ZQ
 				if (dst_len <= 0)
 					return false;
 				nchw_raw.resize(dst_len);
-				readed_len = fread_s(&nchw_raw[0], dst_len * sizeof(float), sizeof(float), dst_len, in);
+				readed_len = (int)fread_s(&nchw_raw[0], dst_len * sizeof(float), sizeof(float), dst_len, in);
 				if (dst_len != readed_len)
 					return false;
 				if (ignore_small_value != 0)
@@ -5365,7 +5365,7 @@ namespace ZQ
 				if (dst_len <= 0)
 					return false;
 				nchw_raw.resize(dst_len);
-				readed_len = fread_s(&nchw_raw[0], dst_len * sizeof(float), sizeof(float), dst_len, in);
+				readed_len = (int)fread_s(&nchw_raw[0], dst_len * sizeof(float), sizeof(float), dst_len, in);
 				if (dst_len != readed_len)
 					return false;
 				if (ignore_small_value != 0)
@@ -6104,7 +6104,7 @@ namespace ZQ
 			double t1 = omp_get_wtime();
 			ZQ_CNN_Forward_SSEUtils::Softmax(*((*tops)[0]), axis);
 			double t2 = omp_get_wtime();
-			last_cost_time = t2 - t1;
+			last_cost_time = (float)(t2 - t1);
 			if (show_debug_info)
 				printf("Softmax layer: %s cost : %.3f ms\n", name.c_str(), 1000 * (t2 - t1));
 			return true;
@@ -6115,7 +6115,7 @@ namespace ZQ
 			bottom_names.clear();
 			top_names.clear();
 			std::vector<std::vector<std::string> > paras = split_line(line);
-			int num = paras.size();
+			int num = (int)paras.size();
 			bool has_top = false, has_bottom = false, has_name = false;
 			for (int n = 0; n < num; n++)
 			{
@@ -6244,7 +6244,7 @@ namespace ZQ
 			/*dropout ratio is not used in test phase*/
 			//ZQ_CNN_Forward_SSEUtils::Dropout(*((*tops)[0]), dropout_ratio);
 			double t2 = omp_get_wtime();
-			last_cost_time = t2 - t1;
+			last_cost_time = (float)(t2 - t1);
 			if (show_debug_info)
 				printf("Dropout layer: %s cost : %.3f ms\n", name.c_str(), 1000 * (t2 - t1));
 			return true;
@@ -6255,7 +6255,7 @@ namespace ZQ
 			bottom_names.clear();
 			top_names.clear();
 			std::vector<std::vector<std::string> > paras = split_line(line);
-			int num = paras.size();
+			int num = (int)paras.size();
 			bool has_top = false, has_bottom = false, has_name = false;
 			for (int n = 0; n < num; n++)
 			{
@@ -6269,7 +6269,7 @@ namespace ZQ
 				{
 					if (paras[n].size() >= 2)
 					{
-						dropout_ratio = atof(paras[n][1].c_str());
+						dropout_ratio = (float)atof(paras[n][1].c_str());
 					}
 				}
 				else if (_my_strcmpi("top", paras[n][0].c_str()) == 0)
@@ -6380,7 +6380,7 @@ namespace ZQ
 			if ((*tops)[0] != (*bottoms)[0])
 				(*tops)[0]->CopyData(*(*bottoms)[0]);
 			double t2 = omp_get_wtime();
-			last_cost_time = t2 - t1;
+			last_cost_time = (float)(t2 - t1);
 			if (show_debug_info)
 				printf("Copy layer: %s cost : %.3f ms\n", name.c_str(), 1000 * (t2 - t1));
 			return true;
@@ -6391,7 +6391,7 @@ namespace ZQ
 			bottom_names.clear();
 			top_names.clear();
 			std::vector<std::vector<std::string> > paras = split_line(line);
-			int num = paras.size();
+			int num = (int)paras.size();
 			bool has_top = false, has_bottom = false, has_name = false;
 			for (int n = 0; n < num; n++)
 			{
@@ -6539,7 +6539,7 @@ namespace ZQ
 				return false;
 			}
 			double t2 = omp_get_wtime();
-			last_cost_time = t2 - t1;
+			last_cost_time = (float)(t2 - t1);
 			if (show_debug_info)
 				printf("UpSampling layer: %s cost : %.3f ms\n", name.c_str(), 1000 * (t2 - t1));
 			return ret;
@@ -6550,7 +6550,7 @@ namespace ZQ
 			bottom_names.clear();
 			top_names.clear();
 			std::vector<std::vector<std::string> > paras = split_line(line);
-			int num = paras.size();
+			int num = (int)paras.size();
 			bool has_sample_type = false; 
 			bool has_scale_h = false;
 			bool has_scale_w = false;
@@ -6635,7 +6635,7 @@ namespace ZQ
 					if (paras[n].size() >= 2)
 					{
 						has_scale_h = true;
-						scale_h = atof(paras[n][1].c_str());
+						scale_h = (float)atof(paras[n][1].c_str());
 					}
 				}
 				else if (_my_strcmpi("scale_w", paras[n][0].c_str()) == 0)
@@ -6643,7 +6643,7 @@ namespace ZQ
 					if (paras[n].size() >= 2)
 					{
 						has_scale_w = true;
-						scale_w = atof(paras[n][1].c_str());
+						scale_w = (float)atof(paras[n][1].c_str());
 					}
 				}
 				else if (_my_strcmpi("dst_h", paras[n][0].c_str()) == 0)
@@ -6738,8 +6738,8 @@ namespace ZQ
 			if (has_scale)
 			{
 				top_C = bottom_C;
-				top_H = bottom_H*scale_h;
-				top_W = bottom_W*scale_w;
+				top_H = (int)bottom_H*scale_h;
+				top_W = (int)bottom_W*scale_w;
 			}
 			else
 			{
@@ -6767,9 +6767,9 @@ namespace ZQ
 			if (has_scale)
 			{
 				if (sample_type == SampleType_Nearest)
-					return bottom_C*bottom_H*bottom_W*scale_h*scale_w;
+					return (__int64)bottom_C*bottom_H*bottom_W*scale_h*scale_w;
 				else
-					return bottom_C*bottom_H*bottom_W*scale_h*scale_w * 6;
+					return (__int64)bottom_C*bottom_H*bottom_W*scale_h*scale_w * 6;
 			}
 			else
 			{
@@ -6830,7 +6830,7 @@ namespace ZQ
 				return false;
 			}
 			double t2 = omp_get_wtime();
-			last_cost_time = t2 - t1;
+			last_cost_time = (float)(t2 - t1);
 			if (show_debug_info)
 				printf("Eltwise layer: %s cost : %.3f ms\n", name.c_str(), 1000 * (t2 - t1));
 			return ret;
@@ -6842,7 +6842,7 @@ namespace ZQ
 			top_names.clear();
 			weight.clear();
 			std::vector<std::vector<std::string> > paras = split_line(line);
-			int num = paras.size();
+			int num = (int)paras.size();
 			bool has_operation = false;
 			bool has_top = false, has_bottom = false, has_name = false;
 			with_weight = false;
@@ -6908,7 +6908,7 @@ namespace ZQ
 					if (paras[n].size() >= 2)
 					{
 						with_weight = true;
-						weight.push_back(atof(paras[n][1].c_str()));
+						weight.push_back((float)atof(paras[n][1].c_str()));
 					}
 				}
 				else
@@ -7019,9 +7019,9 @@ namespace ZQ
 			else if (operation == SCALAR_DIV)
 			{
 				if ((*bottoms)[0] == (*tops)[0])
-					return ZQ_CNN_Forward_SSEUtils::ScalarOperation_Mul(*(*bottoms)[0], 1.0/scalar);
+					return ZQ_CNN_Forward_SSEUtils::ScalarOperation_Mul(*(*bottoms)[0], 1.0f/scalar);
 				else
-					return ZQ_CNN_Forward_SSEUtils::ScalarOperation_Mul(*(*bottoms)[0], 1.0/scalar, *((*tops)[0]));
+					return ZQ_CNN_Forward_SSEUtils::ScalarOperation_Mul(*(*bottoms)[0], 1.0f/scalar, *((*tops)[0]));
 			}
 			else if (operation == SCALAR_ADD)
 			{
@@ -7078,7 +7078,7 @@ namespace ZQ
 				return false;
 			}
 			double t2 = omp_get_wtime();
-			last_cost_time = t2 - t1;
+			last_cost_time = (float)(t2 - t1);
 			if (show_debug_info)
 				printf("ScalarOperation layer: %s cost : %.3f ms\n", name.c_str(), 1000 * (t2 - t1));
 			return true;
@@ -7089,7 +7089,7 @@ namespace ZQ
 			bottom_names.clear();
 			top_names.clear();
 			std::vector<std::vector<std::string> > paras = split_line(line);
-			int num = paras.size();
+			int num = (int)paras.size();
 			bool has_operation = false;
 			bool has_top = false, has_bottom = false, has_name = false;
 			bool has_scalar = false;
@@ -7179,7 +7179,7 @@ namespace ZQ
 					if (paras[n].size() >= 2)
 					{
 						has_scalar = true;
-						scalar = atof(paras[n][1].c_str());
+						scalar = (float)atof(paras[n][1].c_str());
 					}
 				}
 				else
@@ -7289,9 +7289,9 @@ namespace ZQ
 			else if (operation == UNARY_DIV)
 			{
 				if ((*bottoms)[1] == (*tops)[0])
-					return ZQ_CNN_Forward_SSEUtils::ScalarOperation_Mul(*(*bottoms)[1], 1.0 / scalar);
+					return ZQ_CNN_Forward_SSEUtils::ScalarOperation_Mul(*(*bottoms)[1], 1.0f / scalar);
 				else
-					return ZQ_CNN_Forward_SSEUtils::ScalarOperation_Mul(*(*bottoms)[1], 1.0 / scalar , *((*tops)[0]));
+					return ZQ_CNN_Forward_SSEUtils::ScalarOperation_Mul(*(*bottoms)[1], 1.0f / scalar , *((*tops)[0]));
 			}
 			else if (operation == UNARY_ADD)
 			{
@@ -7348,7 +7348,7 @@ namespace ZQ
 				return false;
 			}
 			double t2 = omp_get_wtime();
-			last_cost_time = t2 - t1;
+			last_cost_time = (float)(t2 - t1);
 			if (show_debug_info)
 				printf("UnaryOperation layer: %s cost : %.3f ms\n", name.c_str(), 1000 * (t2 - t1));
 			return true;
@@ -7359,7 +7359,7 @@ namespace ZQ
 			bottom_names.clear();
 			top_names.clear();
 			std::vector<std::vector<std::string> > paras = split_line(line);
-			int num = paras.size();
+			int num = (int)paras.size();
 			bool has_operation = false;
 			bool has_top = false, has_bottom = false, has_name = false;
 			for (int n = 0; n < num; n++)
@@ -7451,7 +7451,7 @@ namespace ZQ
 			}
 			if (!has_operation)std::cout << "Layer " << name << " missing " << "operation\n";
 			if (!has_bottom)std::cout << "Layer " << name << " missing " << "bottom\n";
-			int bottom_num = bottom_names.size();
+			int bottom_num = (int)bottom_names.size();
 			if (bottom_num != 2) std::cout << "Layer " << name << " need 2 bottoms\n";
 			if (!has_top)std::cout << "Layer " << name << " missing " << "top\n";
 			if (!has_name) {
@@ -7538,7 +7538,7 @@ namespace ZQ
 				double t1 = omp_get_wtime();
 				bool ret = ZQ_CNN_Forward_SSEUtils::LRN_across_channels(*(*(std::vector<const ZQ_CNN_Tensor4D*>*)bottoms)[0],local_size,alpha,beta,k, *((*tops)[0]));
 				double t2 = omp_get_wtime();
-				last_cost_time = t2 - t1;
+				last_cost_time = (float)(t2 - t1);
 				if (show_debug_info)
 					printf("LRN layer: %s cost : %.3f ms\n", name.c_str(), 1000 * (t2 - t1));
 				return ret;
@@ -7557,7 +7557,7 @@ namespace ZQ
 			bottom_names.clear();
 			top_names.clear();
 			std::vector<std::vector<std::string> > paras = split_line(line);
-			int num = paras.size();
+			int num = (int)paras.size();
 			bool has_operation = false;
 			bool has_top = false, has_bottom = false, has_name = false;
 			bool has_local_size = false, has_alpha = false, has_beta = false;
@@ -7614,7 +7614,7 @@ namespace ZQ
 				{
 					if (paras[n].size() >= 2)
 					{
-						alpha = atof(paras[n][1].c_str());
+						alpha = (float)atof(paras[n][1].c_str());
 						has_alpha = true;
 					}
 				}
@@ -7622,7 +7622,7 @@ namespace ZQ
 				{
 					if (paras[n].size() >= 2)
 					{
-						beta = atof(paras[n][1].c_str());
+						beta = (float)atof(paras[n][1].c_str());
 						has_beta = true;
 					}
 				}
@@ -7630,7 +7630,7 @@ namespace ZQ
 				{
 					if (paras[n].size() >= 2)
 					{
-						k = atof(paras[n][1].c_str());
+						k = (float)atof(paras[n][1].c_str());
 					}
 				}
 
@@ -7702,7 +7702,7 @@ namespace ZQ
 	class ZQ_CNN_Layer_Normalize : public ZQ_CNN_Layer
 	{
 	public:
-		ZQ_CNN_Layer_Normalize():across_spatial(false),channel_shared(false), eps(1e-10),scale(0){}
+		ZQ_CNN_Layer_Normalize():across_spatial(false),channel_shared(false), eps(1e-10f),scale(0){}
 		~ZQ_CNN_Layer_Normalize(){
 			if (scale) delete scale;
 		}
@@ -7737,7 +7737,7 @@ namespace ZQ
 			bottom_names.clear();
 			top_names.clear();
 			std::vector<std::vector<std::string> > paras = split_line(line);
-			int num = paras.size();
+			int num = (int)paras.size();
 			bool has_top = false, has_bottom = false, has_name = false;
 			
 			for (int n = 0; n < num; n++)
@@ -7760,7 +7760,7 @@ namespace ZQ
 				{
 					if (paras[n].size() >= 2)
 					{
-						eps = atof(paras[n][1].c_str());
+						eps = (float)atof(paras[n][1].c_str());
 					}
 				}
 				else if (_my_strcmpi("top", paras[n][0].c_str()) == 0)
@@ -7914,7 +7914,7 @@ namespace ZQ
 			bool ret = ZQ_CNN_Forward_SSEUtils::Permute(*(*(std::vector<const ZQ_CNN_Tensor4D*>*)bottoms)[0], order, *((*tops)[0]));
 			int C = (*bottoms)[0]->GetC();
 			double t2 = omp_get_wtime();
-			last_cost_time = t2 - t1;
+			last_cost_time = (float)(t2 - t1);
 			if (show_debug_info)
 				printf("Permute layer: %s cost : %.3f ms\n", name.c_str(), 1000 * (t2 - t1));
 			return ret;
@@ -7925,7 +7925,7 @@ namespace ZQ
 			bottom_names.clear();
 			top_names.clear();
 			std::vector<std::vector<std::string> > paras = split_line(line);
-			int num = paras.size();
+			int num = (int)paras.size();
 			int order_num = 0;
 			bool has_order_flag[4] = { false };
 			bool has_top = false, has_bottom = false, has_name = false;
@@ -8080,7 +8080,7 @@ namespace ZQ
 			double t1 = omp_get_wtime();
 			bool ret = ZQ_CNN_Forward_SSEUtils::Flatten(*(*(std::vector<const ZQ_CNN_Tensor4D*>*)bottoms)[0], axis, end_axis, *((*tops)[0]));
 			double t2 = omp_get_wtime();
-			last_cost_time = t2 - t1;
+			last_cost_time = (float)(t2 - t1);
 			if (show_debug_info)
 				printf("Flatten layer: %s cost : %.3f ms\n", name.c_str(), 1000 * (t2 - t1));
 			return ret;
@@ -8091,7 +8091,7 @@ namespace ZQ
 			bottom_names.clear();
 			top_names.clear();
 			std::vector<std::vector<std::string> > paras = split_line(line);
-			int num = paras.size();
+			int num = (int)paras.size();
 			bool has_top = false, has_bottom = false, has_name = false;
 
 			for (int n = 0; n < num; n++)
@@ -8248,7 +8248,7 @@ namespace ZQ
 			bool ret = ZQ_CNN_Forward_SSEUtils::Reshape(*(*(std::vector<const ZQ_CNN_Tensor4D*>*)bottoms)[0], shape, *((*tops)[0]));
 			const float* ptr = (*bottoms)[0]->GetFirstPixelPtr();
 			double t2 = omp_get_wtime();
-			last_cost_time = t2 - t1;
+			last_cost_time = (float)(t2 - t1);
 			if (show_debug_info)
 				printf("Reshape layer: %s cost : %.3f ms\n", name.c_str(), 1000 * (t2 - t1));
 			return ret;
@@ -8259,7 +8259,7 @@ namespace ZQ
 			bottom_names.clear();
 			top_names.clear();
 			std::vector<std::vector<std::string> > paras = split_line(line);
-			int num = paras.size();
+			int num = (int)paras.size();
 			bool has_top = false, has_bottom = false, has_name = false;
 
 			for (int n = 0; n < num; n++)
@@ -8379,7 +8379,7 @@ namespace ZQ
 				}
 			}
 			
-			int i = shape.size();
+			int i = (int)shape.size();
 			while (i < 4)
 			{
 				shape.push_back(old_dim[i]);
@@ -8443,7 +8443,7 @@ namespace ZQ
 			if ((*tops)[0] != (*bottoms)[0])
 				(*tops)[0]->CopyData(*(*bottoms)[0]);
 			double t2 = omp_get_wtime();
-			last_cost_time = t2 - t1;
+			last_cost_time = (float)(t2 - t1);
 			if (show_debug_info)
 				printf("Squeeze layer: %s cost : %.3f ms\n", name.c_str(), 1000 * (t2 - t1));
 			return true;
@@ -8454,7 +8454,7 @@ namespace ZQ
 			bottom_names.clear();
 			top_names.clear();
 			std::vector<std::vector<std::string> > paras = split_line(line);
-			int num = paras.size();
+			int num = (int)paras.size();
 			bool has_top = false, has_bottom = false, has_name = false;
 
 			for (int n = 0; n < num; n++)
@@ -8613,7 +8613,7 @@ namespace ZQ
 			bool ret = ZQ_CNN_Forward_SSEUtils::PriorBox(*(*(std::vector<const ZQ_CNN_Tensor4D*>*)bottoms)[0], *(*(std::vector<const ZQ_CNN_Tensor4D*>*)bottoms)[1],
 				min_sizes, max_sizes, aspect_ratios, variance, flip, num_priors, clip, img_w, img_h, step_w, step_h, offset, *((*tops)[0]));
 			double t2 = omp_get_wtime();
-			last_cost_time = t2 - t1;
+			last_cost_time = (float)(t2 - t1);
 			if (show_debug_info)
 				printf("PriorBox layer: %s cost : %.3f ms\n", name.c_str(), 1000 * (t2 - t1));
 			return ret;
@@ -8624,7 +8624,7 @@ namespace ZQ
 			bottom_names.clear();
 			top_names.clear();
 			std::vector<std::vector<std::string> > paras = split_line(line);
-			int num = paras.size();
+			int num = (int)paras.size();
 			bool has_top = false, has_bottom = false, has_name = false;
 			bool has_img_h = false, has_img_w = false, has_step_h = false, has_step_w = false;
 			for (int n = 0; n < num; n++)
@@ -8663,7 +8663,7 @@ namespace ZQ
 				{
 					if (paras[n].size() >= 2)
 					{
-						min_sizes.push_back(atof(paras[n][1].c_str()));
+						min_sizes.push_back((float)atof(paras[n][1].c_str()));
 					}
 				}
 				else if (_my_strcmpi("max_size", paras[n][0].c_str()) == 0)

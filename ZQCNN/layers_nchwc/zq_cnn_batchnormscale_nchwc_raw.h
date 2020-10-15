@@ -1,4 +1,4 @@
-/*
+﻿/*
 a = bias - slope * mean / sqrt(var+eps)
 b = slope / sqrt(var+eps)
 value = b * value + a
@@ -26,7 +26,7 @@ void zq_cnn_batchnormscale_mean_var_scale_bias_nchwc(
 	b = (zq_base_type*)_aligned_malloc(ceil_C * sizeof(zq_base_type), (zq_mm_align_size << 2));
 	for (c = 0; c < ceil_C; c++)
 	{
-		b[c] = slope_data[c] / sqrt(__max(var_data[c] + eps, FLOAT_EPS_FOR_DIV));
+		b[c] = slope_data[c] / (float)sqrt(__max(var_data[c] + eps, FLOAT_EPS_FOR_DIV));
 		a[c] = bias_data[c] - mean_data[c] * b[c];
 	}
 
@@ -64,7 +64,7 @@ void zq_cnn_batchnorm_mean_var_nchwc(
 	b = (zq_base_type*)_aligned_malloc(ceil_C * sizeof(zq_base_type), (zq_mm_align_size << 2));
 	for (c = 0; c < ceil_C; c++)
 	{
-		b[c] = 1.0f / sqrt(__max(var_data[c] + eps, FLOAT_EPS_FOR_DIV));
+		b[c] = 1.0f / (float)sqrt(__max(var_data[c] + eps, FLOAT_EPS_FOR_DIV));
 		a[c] = -mean_data[c] * b[c];
 	}
 

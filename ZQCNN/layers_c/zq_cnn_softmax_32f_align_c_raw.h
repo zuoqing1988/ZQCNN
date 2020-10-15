@@ -1,4 +1,4 @@
-
+﻿
 void zq_cnn_softmax_32f_align_C(
 	zq_base_type* in_tensor4D_data,	// in & out
 	int in_N,
@@ -54,7 +54,7 @@ void zq_cnn_softmax_32f_align_C(
 				sum_val = 0;
 				for (c = 0, c_ptr = pix_ptr; c < in_C; c++, c_ptr++)
 				{
-					tmp_val = exp(*c_ptr - max_val);
+					tmp_val = (float)exp(*c_ptr - max_val);
 					sum_val += tmp_val;
 					*c_ptr = tmp_val;
 				}

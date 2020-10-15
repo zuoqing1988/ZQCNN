@@ -1,4 +1,4 @@
-#ifndef _ZQ_CNN_MOUTH_DETECTOR_H_
+﻿#ifndef _ZQ_CNN_MOUTH_DETECTOR_H_
 #define _ZQ_CNN_MOUTH_DETECTOR_H_
 #pragma once
 

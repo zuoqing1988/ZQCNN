@@ -1,4 +1,4 @@
-#ifndef _ZQ_CNN_NET_INTERFACE_H_
+﻿#ifndef _ZQ_CNN_NET_INTERFACE_H_
 #define _ZQ_CNN_NET_INTERFACE_H_
 #pragma once
 #include "ZQ_CNN_Tensor4D_Interface.h"

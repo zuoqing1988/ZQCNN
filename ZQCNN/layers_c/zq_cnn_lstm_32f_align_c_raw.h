@@ -1,4 +1,4 @@
-void zq_cnn_lstm_TF_32f_align(
+锘縱oid zq_cnn_lstm_TF_32f_align(
 	const zq_base_type* in_data,
 	int in_N,
 	int in_W,
@@ -159,7 +159,7 @@ void zq_cnn_lstm_TF_32f_align(
 			}
 
 			////https://github.com/tensorflow/tensorflow/blob/r1.9/tensorflow/contrib/rnn/ops/lstm_ops.cc
-			////注意权重顺序：应该是i, ci, f, o，来源于以下链接
+			////娉ㄦ剰鏉冮噸椤哄簭锛氬簲璇ユ槸i, ci, f, o锛屾潵婧愪簬浠ヤ笅閾炬帴
 			////https://github.com/tensorflow/tensorflow/blob/722b96b22926dbc05881c35cb63fd342c6843112/tensorflow/core/kernels/rnn/lstm_ops_gpu.cu.cc
 			/*python
 			xh = [x, h_prev]
@@ -182,13 +182,13 @@ void zq_cnn_lstm_TF_32f_align(
 			for (q = 0; q < hidden_dim; q++)
 			{
 				cs_prev[q] = cell[q];
-				I[q] = 1.f / (1.f + exp(-I[q]));				// i = sigmoid(cs_prev * wci + i)
-				F[q] = 1.f / (1.f + exp(-F[q]));				// f = sigmoid(cs_prev * wcf + f)
-				ci[q] = tanh(ci[q]);							// ci = tanh(ci)
+				I[q] = 1.f / (1.f + (float)exp(-I[q]));				// i = sigmoid(cs_prev * wci + i)
+				F[q] = 1.f / (1.f + (float)exp(-F[q]));				// f = sigmoid(cs_prev * wcf + f)
+				ci[q] = (float)tanh(ci[q]);							// ci = tanh(ci)
 				cs[q] = ci[q] * I[q] + cs_prev[q] * F[q];			// cs = ci.*i + cs_prev.*f	
 				cs[q] = __min(cell_clip, __max(-cell_clip, cs[q]));				//cs = clip(cs, cell_clip)
-				o[q] = 1.f / (1.f + exp(-o[q]));				// o = sigmoid(cs * wco + o)
-				co[q] = tanh(cs[q]);							// co = tanh(cs)
+				o[q] = 1.f / (1.f + (float)exp(-o[q]));				// o = sigmoid(cs * wco + o)
+				co[q] = (float)tanh(cs[q]);							// co = tanh(cs)
 				h[q] = co[q] * o[q];								// h = co.*o
 
 				cell[q] = cs[q];

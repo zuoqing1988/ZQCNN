@@ -1,4 +1,4 @@
-if (matrix_B_rows%zq_mm_align_size == 0)
+﻿if (matrix_B_rows%zq_mm_align_size == 0)
 {
 #if EXPAND_CHANNEL == 0
 	matrix_C_row_ptr = matrix_C;

@@ -1,4 +1,4 @@
-/*
+﻿/*
 AVX implementation of sin, cos, sincos, exp and log
 
 Based on "sse_mathfun.h", by Julien Pommier
