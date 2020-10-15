@@ -18,7 +18,7 @@
 #define ZQ_DECLSPEC_ALIGN16 __declspec(align(16))
 
 // your settings
-#define ZQ_CNN_USE_SSETYPE ZQ_CNN_SSETYPE_AVX
+#define ZQ_CNN_USE_SSETYPE ZQ_CNN_SSETYPE_AVX2
 #define ZQ_CNN_USE_BLAS_GEMM 0 // if you want to use openblas, set to 1
 #if ZQ_CNN_USE_BLAS_GEMM == 0
 #define ZQ_CNN_USE_MKL_GEMM 1
