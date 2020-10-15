@@ -1,4 +1,4 @@
-
+﻿
 void zq_cnn_deconv_with_padding_32f_general(
 	const zq_base_type* in_tensor4D_data,
 	int in_N,

@@ -1,4 +1,4 @@
-void zq_cnn_dropout_32f_align(
+﻿void zq_cnn_dropout_32f_align(
 	zq_base_type* in_tensor4D_data,	// in & out
 	int in_N,
 	int in_H,

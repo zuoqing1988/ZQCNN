@@ -1,4 +1,4 @@
-/*
+﻿/*
 y = slope*min(0, x) + max(0, x)
 */
 void zq_cnn_relu_nchwc(

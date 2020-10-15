@@ -1,4 +1,4 @@
-#include <stdio.h>
+﻿#include <stdio.h>
 #include <omp.h>
 #include "../ZQ_CNN_CompileConfig.h"
 #include "zq_cnn_depthwise_convolution_nchwc.h"

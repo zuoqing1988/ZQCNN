@@ -1,4 +1,4 @@
-#include <stdlib.h>
+﻿#include <stdlib.h>
 #include "../ZQ_CNN_CompileConfig.h"
 #if __ARM_NEON
 #include <arm_neon.h>

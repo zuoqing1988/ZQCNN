@@ -1,4 +1,4 @@
-/*zq_mm_align_size must be 4*/
+﻿/*zq_mm_align_size must be 4*/
 void zq_cnn_innerproduct_gemm_nchwc_prepack4(
 	const zq_base_type* filters_data,
 	int N,

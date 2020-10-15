@@ -1,4 +1,4 @@
-if (matrix_B_rows%zq_mm_align_size == 0)
+﻿if (matrix_B_rows%zq_mm_align_size == 0)
 {
 	if (out_C % zq_mm_align_size8 == 0)
 	{

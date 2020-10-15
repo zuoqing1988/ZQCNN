@@ -1,4 +1,4 @@
-#ifndef _ZQ_CNN_LRN_32F_ALIGN_C_H_
+﻿#ifndef _ZQ_CNN_LRN_32F_ALIGN_C_H_
 #define _ZQ_CNN_LRN_32F_ALIGN_C_H_
 #include "../ZQ_CNN_CompileConfig.h"
 #if defined(__cplusplus) || defined(c_plusplus) 

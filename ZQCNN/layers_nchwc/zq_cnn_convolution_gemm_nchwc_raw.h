@@ -1,4 +1,4 @@
-/*in_pixStep can be different with filter_pixStep,
+﻿/*in_pixStep can be different with filter_pixStep,
 and the aligned channels should be set to zero*/
 void zq_cnn_conv_no_padding_gemm_nchwc_general(
 	const zq_base_type* in_tensor4D_data,

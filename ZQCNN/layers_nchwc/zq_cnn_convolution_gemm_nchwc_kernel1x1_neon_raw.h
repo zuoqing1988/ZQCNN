@@ -1,4 +1,4 @@
-#define __ARMV8 1
+﻿#define __ARMV8 1
 static void conv1x1s1_sgemm_transform_kernel_neon(const Mat& _kernel, Mat& kernel_tm, int inch, int outch)
 {
 	const float* kernel = _kernel;
