@@ -189,6 +189,10 @@ namespace ZQ
 			rnet_size = H;
 			onet[0].GetInputDim(C, H, W);
 			onet_size = H;
+			if (has_lnet) {
+				lnet [0].GetInputDim (C, H, W);
+				lnet_size = H;
+			}
 			return ret;
 		}
 
