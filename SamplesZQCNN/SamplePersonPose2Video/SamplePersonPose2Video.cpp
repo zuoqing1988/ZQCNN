@@ -216,7 +216,12 @@ int main()
 
 		imshow("show", ori_im);
 		char buf[200];
-		sprintf_s(buf, 20, "pose-11\\%d.jpg", fr_id);
+#if defined(_WIN32)
+		sprintf_s(buf, 200, "pose-11\\%d.jpg", fr_id);
+#else
+		sprintf(buf, "pose-11\\%d.jpg", fr_id);
+#endif
+		
 		/*fprintf(out, "%d.jpg %d ", fr_id, output.size());
 		for (int nn = 0; nn < output.size(); nn++)
 		{
