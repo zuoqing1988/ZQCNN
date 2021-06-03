@@ -196,7 +196,13 @@ int main()
 
 		imshow("show", ori_im);
 		char buf[200];
-		sprintf_s(buf, 20, "out-pose\\%d.png", fr_id);
+#if defined(_WIN32)
+			sprintf_s(buf, 200, "out-pose\\%d.png", fr_id);
+#else
+			sprintf(buf, "out-pose\\%d.png", fr_id);
+#endif
+#if defined(_WIN32)
+
 		//cv::imwrite(buf, ori_im);
 		writer << ori_im;
 		int key = cv::waitKey(10);
