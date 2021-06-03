@@ -90,6 +90,7 @@ int main()
 
 #else
 
+#include <stdio.h>
 int main()
 {
 	printf("not support in linux\n");
