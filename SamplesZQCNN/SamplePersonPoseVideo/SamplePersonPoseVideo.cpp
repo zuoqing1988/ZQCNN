@@ -201,7 +201,6 @@ int main()
 #else
 			sprintf(buf, "out-pose\\%d.png", fr_id);
 #endif
-#if defined(_WIN32)
 
 		//cv::imwrite(buf, ori_im);
 		writer << ori_im;
