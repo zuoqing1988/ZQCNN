@@ -1,3 +1,4 @@
+#if defined(_WIN32)
 #include "ZQ_CNN_CascadeOnet_Interface.h"
 #include "ZQ_CNN_Net.h"
 #include "ZQ_CNN_Tensor4D.h"
@@ -86,3 +87,12 @@ int main()
 	waitKey(0);
 	return EXIT_SUCCESS;
 }
+
+#else
+
+int main()
+{
+	printf("not support in linux\n");
+	return 0;
+}
+#endif
