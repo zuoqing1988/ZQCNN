@@ -7,6 +7,7 @@
 #include "ZQ_CNN_MTCNN_Interface.h"
 #include "ZQ_CNN_CascadeOnet_Interface.h"
 #include "ZQlib/ZQ_SVD.h"
+#include <float.h>
 #include <vector>
 namespace ZQ
 {

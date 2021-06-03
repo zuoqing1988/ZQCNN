@@ -140,7 +140,11 @@ int run_cam()
 
 		imshow("show", ori_im);
 		char buf[200];
-		sprintf_s(buf, 20, "out5-old\\%d.png", fr_id);
+#if defined(_WIN32)
+		sprintf_s(buf, 200, "out5-old\\%d.png", fr_id);
+#else
+		sprintf(buf, "out5-old\\%d.png", fr_id);
+#endif
 		//cv::imwrite(buf, ori_im);
 		writer << ori_im;
 		int key = cv::waitKey(20);
