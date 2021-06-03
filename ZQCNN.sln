@@ -201,6 +201,11 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SamplePersonPose2Video", "S
 		{43AA2D6A-447E-4153-8A29-7AE8A8296DC7} = {43AA2D6A-447E-4153-8A29-7AE8A8296DC7}
 	EndProjectSection
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SampleMTCNNfromlist", "SamplesZQCNN\SampleMTCNNfromlist\SampleMTCNNfromlist.vcxproj", "{D2141FAD-E6C9-4A3F-A11A-B3C482D650FE}"
+	ProjectSection(ProjectDependencies) = postProject
+		{43AA2D6A-447E-4153-8A29-7AE8A8296DC7} = {43AA2D6A-447E-4153-8A29-7AE8A8296DC7}
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -569,6 +574,14 @@ Global
 		{0305321F-5386-4A0B-A073-E664E6561CF9}.Release|x64.Build.0 = Release|x64
 		{0305321F-5386-4A0B-A073-E664E6561CF9}.Release|x86.ActiveCfg = Release|Win32
 		{0305321F-5386-4A0B-A073-E664E6561CF9}.Release|x86.Build.0 = Release|Win32
+		{D2141FAD-E6C9-4A3F-A11A-B3C482D650FE}.Debug|x64.ActiveCfg = Debug|x64
+		{D2141FAD-E6C9-4A3F-A11A-B3C482D650FE}.Debug|x64.Build.0 = Debug|x64
+		{D2141FAD-E6C9-4A3F-A11A-B3C482D650FE}.Debug|x86.ActiveCfg = Debug|Win32
+		{D2141FAD-E6C9-4A3F-A11A-B3C482D650FE}.Debug|x86.Build.0 = Debug|Win32
+		{D2141FAD-E6C9-4A3F-A11A-B3C482D650FE}.Release|x64.ActiveCfg = Release|x64
+		{D2141FAD-E6C9-4A3F-A11A-B3C482D650FE}.Release|x64.Build.0 = Release|x64
+		{D2141FAD-E6C9-4A3F-A11A-B3C482D650FE}.Release|x86.ActiveCfg = Release|Win32
+		{D2141FAD-E6C9-4A3F-A11A-B3C482D650FE}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
