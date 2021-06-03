@@ -1,3 +1,4 @@
+#if defined(_WIN32)
 #include <malloc.h>
 #include <stdlib.h>
 #include <omp.h>
@@ -960,3 +961,15 @@ double _test_gemm(int M, int N, int K, int iters, float thresh, bool show)
 
 	return __min(time1, time2) / iters;
 }
+
+#else
+
+#include <stdio.h>
+int main()
+{
+	printf("not supported in linux\n");
+	return 0;
+}
+
+
+#endif
