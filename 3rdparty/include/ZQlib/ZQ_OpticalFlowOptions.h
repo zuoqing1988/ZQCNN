@@ -157,7 +157,11 @@ namespace ZQ
 		{
 			for(int i = 0;i < argc;i++)
 			{
+#if defined(_WIN32)
 				if(_strcmpi(argv[i],"methodtype") == 0)
+#else
+				if (strcmp(argv[i], "methodtype") == 0)
+#endif
 				{
 					i++;
 					if(i >= argc)
@@ -165,6 +169,7 @@ namespace ZQ
 						printf("the value of %s ?\n",argv[i-1]);
 						return false;
 					}
+#if defined(_WIN32)
 					if(_strcmpi(argv[i],"HS_L2") == 0)
 						methodType = METHOD_HS_L2;
 					else if(_strcmpi(argv[i],"HS_L2_OCCUPY") == 0)
@@ -199,13 +204,53 @@ namespace ZQ
 						methodType = METHOD_TWODIR_DEC_L2_OCCUPY;
 					else if(_strcmpi(argv[i],"TWODIR_DEC_DL1") == 0)
 						methodType = METHOD_TWODIR_DEC_DL1;
+#else
+					if (strcmp(argv[i], "HS_L2") == 0)
+						methodType = METHOD_HS_L2;
+					else if (strcmp(argv[i], "HS_L2_OCCUPY") == 0)
+						methodType = METHOD_HS_L2_OCCUPY;
+					else if (strcmp(argv[i], "HS_DL1") == 0)
+						methodType = METHOD_HS_DL1;
+					else if (strcmp(argv[i], "HS_L1") == 0)
+						methodType = METHOD_HS_L1;
+					else if (strcmp(argv[i], "ADMM_L2") == 0)
+						methodType = METHOD_ADMM_L2;
+					else if (strcmp(argv[i], "ADMM_L2_OCCUPY") == 0)
+						methodType = METHOD_ADMM_L2_OCCUPY;
+					else if (strcmp(argv[i], "ADMM_DL1") == 0)
+						methodType = METHOD_ADMM_DL1;
+					else if (strcmp(argv[i], "ONEDIR_INC_L2") == 0)
+						methodType = METHOD_ONEDIR_INC_L2;
+					else if (strcmp(argv[i], "ONEDIR_INC_DL1") == 0)
+						methodType = METHOD_ONEDIR_INC_DL1;
+					else if (strcmp(argv[i], "ONEDIR_DEC_L2") == 0)
+						methodType = METHOD_ONEDIR_DEC_L2;
+					else if (strcmp(argv[i], "ONEDIR_DEC_DL1") == 0)
+						methodType = METHOD_ONEDIR_DEC_DL1;
+					else if (strcmp(argv[i], "TWODIR_INC_L2") == 0)
+						methodType = METHOD_TWODIR_INC_L2;
+					else if (strcmp(argv[i], "TWODIR_INC_L2_OCCUPY") == 0)
+						methodType = METHOD_TWODIR_INC_L2_OCCUPY;
+					else if (strcmp(argv[i], "TWODIR_INC_DL1") == 0)
+						methodType = METHOD_TWODIR_INC_DL1;
+					else if (strcmp(argv[i], "TWODIR_DEC_L2") == 0)
+						methodType = METHOD_TWODIR_DEC_L2;
+					else if (strcmp(argv[i], "TWODIR_DEC_L2_OCCUPY") == 0)
+						methodType = METHOD_TWODIR_DEC_L2_OCCUPY;
+					else if (strcmp(argv[i], "TWODIR_DEC_DL1") == 0)
+						methodType = METHOD_TWODIR_DEC_DL1;
+#endif
 					else
 					{
 						printf("unknown methodType: %s\n",argv[i]);
 						return false;
 					}
 				}
+#if defined(_WIN32)
 				else if(_strcmpi(argv[i],"featuretype") == 0)
+#else
+				else if (strcmp(argv[i], "featuretype") == 0)
+#endif
 				{
 					i++;
 					if(i >= argc)
@@ -213,12 +258,21 @@ namespace ZQ
 						printf("the value of %s ?\n",argv[i-1]);
 						return false;
 					}
+#if defined(_WIN32)
 					if(_strcmpi(argv[i],"GRADIENT") == 0)
 						featureType = FEATURE_GRADIENT;
 					else if(_strcmpi(argv[i],"FORWARD_NEIGHBOR") == 0)
 						featureType = FEATURE_FORWARD_NEIGHBOR;
 					else if(_strcmpi(argv[i],"BIDIRECTIONAL_NEIGHBOR") == 0)
 						featureType = FEATURE_BIDIRECTIONAL_NEIGHBOR;
+#else
+					if (strcmp(argv[i], "GRADIENT") == 0)
+						featureType = FEATURE_GRADIENT;
+					else if (strcmp(argv[i], "FORWARD_NEIGHBOR") == 0)
+						featureType = FEATURE_FORWARD_NEIGHBOR;
+					else if (strcmp(argv[i], "BIDIRECTIONAL_NEIGHBOR") == 0)
+						featureType = FEATURE_BIDIRECTIONAL_NEIGHBOR;
+#endif
 					else
 					{
 						printf("unknown methodType: %s\n",argv[i]);
@@ -226,7 +280,11 @@ namespace ZQ
 					}
 
 				}
+#if defined(_WIN32)
 				else if (_strcmpi(argv[i], "gradWeight") == 0)
+#else
+				else if (strcmp(argv[i], "gradWeight") == 0)
+#endif
 				{
 					i++;
 					if (i >= argc)
@@ -236,7 +294,11 @@ namespace ZQ
 					}
 					gradWeight = atof(argv[i]);
 				}
+#if defined(_WIN32)
 				else if(_strcmpi(argv[i],"nAltIter") == 0)
+#else
+				else if (strcmp(argv[i], "nAltIter") == 0)
+#endif
 				{
 					i++;
 					if(i >= argc)
@@ -247,7 +309,11 @@ namespace ZQ
 
 					nAlterations = atoi(argv[i]);
 				}
+#if defined(_WIN32)
 				else if(_strcmpi(argv[i],"nAdmmIter") == 0)
+#else
+				else if (strcmp(argv[i], "nAdmmIter") == 0)
+#endif
 				{
 					i++;
 					if(i >= argc)
@@ -257,7 +323,11 @@ namespace ZQ
 					}
 					nADMMIterations = atoi(argv[i]);
 				}
+#if defined(_WIN32)
 				else if(_strcmpi(argv[i],"nOuterIter") == 0)
+#else
+				else if (strcmp(argv[i], "nOuterIter") == 0)
+#endif
 				{
 					i++;
 					if(i >= argc)
@@ -267,7 +337,11 @@ namespace ZQ
 					}
 					nOuterFixedPointIterations = atoi(argv[i]);
 				}
+#if defined(_WIN32)
 				else if(_strcmpi(argv[i],"nInnerIter") == 0)
+#else
+				else if (strcmp(argv[i], "nInnerIter") == 0)
+#endif
 				{
 					i++;
 					if(i >= argc)
@@ -277,7 +351,11 @@ namespace ZQ
 					}
 					nInnerFixedPointIterations = atoi(argv[i]);
 				}
+#if defined(_WIN32)
 				else if(_strcmpi(argv[i],"nPoissonIter") == 0)
+#else
+				else if (strcmp(argv[i], "nPoissonIter") == 0)
+#endif
 				{
 					i++;
 					if(i >= argc)
@@ -287,7 +365,11 @@ namespace ZQ
 					}
 					nPoissonIterations = atoi(argv[i]);
 				}
+#if defined(_WIN32)
 				else if(_strcmpi(argv[i],"nSORIter") == 0)
+#else
+				else if (strcmp(argv[i], "nSORIter") == 0)
+#endif
 				{
 					i++;
 					if(i >= argc)
@@ -297,7 +379,11 @@ namespace ZQ
 					}
 					nSORIterations = atoi(argv[i]);
 				}
+#if defined(_WIN32)
 				else if(_strcmpi(argv[i],"nAdvectIter") == 0)
+#else
+				else if (strcmp(argv[i], "nAdvectIter") == 0)
+#endif
 				{
 					i++;
 					if(i >= argc)
@@ -307,7 +393,11 @@ namespace ZQ
 					}
 					nAdvectFixedPointIterations = atoi(argv[i]);
 				}
+#if defined(_WIN32)
 				else if(_strcmpi(argv[i],"alpha") == 0)
+#else
+				else if (strcmp(argv[i], "alpha") == 0)
+#endif
 				{
 					i++;
 					if(i >= argc)
@@ -317,7 +407,11 @@ namespace ZQ
 					}
 					alpha = atof(argv[i]);
 				}
+#if defined(_WIN32)
 				else if(_strcmpi(argv[i],"beta") == 0)
+#else
+				else if (strcmp(argv[i], "beta") == 0)
+#endif
 				{
 					i++;
 					if(i >= argc)
@@ -327,7 +421,11 @@ namespace ZQ
 					}
 					beta = atof(argv[i]);
 				}
+#if defined(_WIN32)
 				else if(_strcmpi(argv[i],"gamma") == 0)
+#else
+				else if (strcmp(argv[i], "gamma") == 0)
+#endif
 				{
 					i++;
 					if(i >= argc)
@@ -337,7 +435,11 @@ namespace ZQ
 					}
 					gamma = atof(argv[i]);
 				}
+#if defined(_WIN32)
 				else if(_strcmpi(argv[i],"lambda") == 0)
+#else
+				else if (strcmp(argv[i], "lambda") == 0)
+#endif
 				{
 					i++;
 					if(i >= argc)
@@ -347,7 +449,11 @@ namespace ZQ
 					}
 					lambda = atof(argv[i]);
 				}
+#if defined(_WIN32)
 				else if(_strcmpi(argv[i],"omega") == 0)
+#else
+				else if (strcmp(argv[i], "omega") == 0)
+#endif
 				{
 					i++;
 					if(i >= argc)
@@ -357,7 +463,11 @@ namespace ZQ
 					}
 					omegaForSOR = atof(argv[i]);
 				}
+#if defined(_WIN32)
 				else if(_strcmpi(argv[i],"ratio") == 0)
+#else
+				else if (strcmp(argv[i], "ratio") == 0)
+#endif
 				{
 					i++;
 					if(i >= argc)
@@ -367,7 +477,11 @@ namespace ZQ
 					}
 					ratioForPyramid = atof(argv[i]);
 				}
+#if defined(_WIN32)
 				else if(_strcmpi(argv[i],"minWidth") == 0)
+#else
+				else if (strcmp(argv[i], "minWidth") == 0)
+#endif
 				{
 					i++;
 					if(i >= argc)
@@ -377,7 +491,11 @@ namespace ZQ
 					}
 					minWidthForPyramid = atoi(argv[i]);
 				}
+#if defined(_WIN32)
 				else if(_strcmpi(argv[i],"maxRad") == 0)
+#else
+				else if (strcmp(argv[i], "maxRad") == 0)
+#endif
 				{
 					i++;
 					if(i >= argc)
@@ -387,15 +505,27 @@ namespace ZQ
 					}
 					maxRad = atof(argv[i]);
 				}
+#if defined(_WIN32)
 				else if(_strcmpi(argv[i],"cubic") == 0)
+#else
+				else if (strcmp(argv[i], "cubic") == 0)
+#endif
 				{
 					useCubicWarping = true;
 				}
+#if defined(_WIN32)
 				else if(_strcmpi(argv[i],"display") == 0)
+#else
+				else if (strcmp(argv[i], "display") == 0)
+#endif
 				{
 					displayRunningInfo = true;
 				}
+#if defined(_WIN32)
 				else if(_strcmpi(argv[i],"maskFile") == 0)
+#else
+				else if (strcmp(argv[i], "maskFile") == 0)
+#endif
 				{
 					i++;
 					if(i >= argc)
@@ -405,15 +535,27 @@ namespace ZQ
 					}
 					strcpy_s(maskFile, FILE_BUFF_LEN, argv[i]);
 				}
+#if defined(_WIN32)
 				else if (_strcmpi(argv[i], "hasMaxUpdateLimit") == 0)
+#else
+				else if (strcmp(argv[i], "hasMaxUpdateLimit") == 0)
+#endif
 				{
 					hasMaxUpdateLimit = true;
 				}
+#if defined(_WIN32)
 				else if(_strcmpi(argv[i],"reflect") == 0)
+#else
+				else if (strcmp(argv[i], "reflect") == 0)
+#endif
 				{
 					isReflect = true;
 				}
+#if defined(_WIN32)
 				else if(_strcmpi(argv[i],"initType") == 0)
+#else
+				else if (strcmp(argv[i], "initType") == 0)
+#endif
 				{
 					i++;
 					if(i >= argc)
@@ -421,19 +563,32 @@ namespace ZQ
 						printf("the value of %s ?\n",argv[i-1]);
 						return false;
 					}
+#if defined(_WIN32)
 					if(_strcmpi(argv[i],"NONE_AS_INIT") == 0)
 						initType = NONE_AS_INIT;
 					else if(_strcmpi(argv[i],"L2_AS_INIT") == 0)
 						initType = L2_AS_INIT;
 					else if(_strcmpi(argv[i],"ADMM_AS_INIT") == 0)
 						initType = ADMM_AS_INIT;
+#else
+					if (strcmp(argv[i], "NONE_AS_INIT") == 0)
+						initType = NONE_AS_INIT;
+					else if (strcmp(argv[i], "L2_AS_INIT") == 0)
+						initType = L2_AS_INIT;
+					else if (strcmp(argv[i], "ADMM_AS_INIT") == 0)
+						initType = ADMM_AS_INIT;
+#endif
 					else
 					{
 						printf("unknown initType: %s\n",argv[i]);
 						return false;
 					}
 				}
+#if defined(_WIN32)
 				else if(_strcmpi(argv[i],"CUDADeviceID") == 0)
+#else
+				else if (strcmp(argv[i], "CUDADeviceID") == 0)
+#endif
 				{
 					i++;
 					if(i >= argc)
@@ -443,11 +598,19 @@ namespace ZQ
 					}
 					cudaDeviceID = atoi(argv[i]);
 				}
+#if defined(_WIN32)
 				else if(_strcmpi(argv[i],"OutOfCore") == 0)
+#else
+				else if (strcmp(argv[i], "OutOfCore") == 0)
+#endif
 				{
 					OutOfCore = true;
 				}
+#if defined(_WIN32)
 				else if (_strcmpi(argv[i], "useOMP") == 0)
+#else
+				else if (strcmp(argv[i], "useOMP") == 0)
+#endif
 				{
 					use_omp = true;
 				}

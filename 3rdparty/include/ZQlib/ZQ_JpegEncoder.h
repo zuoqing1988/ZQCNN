@@ -158,9 +158,14 @@ namespace ZQ
 			ZQ_JpegCodecColorType::ColorTypeInput type, const char* filename, int quality = 90)
 		{
 			FILE* out = 0;
-			
+#if defined(_WIN32)
 			if (0 != fopen_s(&out,filename, "wb"))
 				return false;
+#else
+			out = fopen(filename, "wb");
+			if (out == 0)
+				return false;
+#endif
 
 			unsigned char* pDst = 0;
 			unsigned long dstLen = 0;

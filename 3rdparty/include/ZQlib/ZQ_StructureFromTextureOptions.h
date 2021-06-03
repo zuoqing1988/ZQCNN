@@ -62,7 +62,11 @@ namespace ZQ
 		{
 			for(int i = 0;i < argc;i++)
 			{
+#if defined(_WIN32)
 				if(_strcmpi(argv[i],"methodtype") == 0)
+#else
+				if (strcmp(argv[i], "methodtype") == 0)
+#endif
 				{
 					i++;
 					if(i >= argc)
@@ -70,6 +74,7 @@ namespace ZQ
 						printf("the value of %s ?\n",argv[i-1]);
 						return false;
 					}
+#if defined(_WIN32)
 					if(_strcmpi(argv[i],"RTVL1_OLD") == 0)
 						type = TYPE_RTVL1_OLD;
 					else if(_strcmpi(argv[i],"RTVL1") == 0)
@@ -82,6 +87,20 @@ namespace ZQ
 						type = TYPE_TVL2;
 					else if(_strcmpi(argv[i],"PENALTY_GRADIENT_WEIGHT") == 0)
 						type = TYPE_PENALTY_GRADIENT_WEIGHT;
+#else
+					if (strcmp(argv[i], "RTVL1_OLD") == 0)
+						type = TYPE_RTVL1_OLD;
+					else if (strcmp(argv[i], "RTVL1") == 0)
+						type = TYPE_RTVL1;
+					else if (strcmp(argv[i], "RTVL2") == 0)
+						type = TYPE_RTVL2;
+					else if (strcmp(argv[i], "TVL1") == 0)
+						type = TYPE_TVL1;
+					else if (strcmp(argv[i], "TVL2") == 0)
+						type = TYPE_TVL2;
+					else if (strcmp(argv[i], "PENALTY_GRADIENT_WEIGHT") == 0)
+						type = TYPE_PENALTY_GRADIENT_WEIGHT;
+#endif
 					else
 					{
 						printf("unknown methodType: %s\n",argv[i]);
@@ -89,7 +108,11 @@ namespace ZQ
 					}
 
 				}
+#if defined(_WIN32)
 				else if(_strcmpi(argv[i],"penaltyWeightType") == 0)
+#else
+				else if (strcmp(argv[i], "penaltyWeightType") == 0)
+#endif
 				{
 					i++;
 					if(i >= argc)
@@ -97,6 +120,7 @@ namespace ZQ
 						printf("the value of %s ?\n",argv[i-1]);
 						return false;
 					}
+#if defined(_WIN32)
 					if(_strcmpi(argv[i],"WEIGHT_RTV") == 0)
 						penaltyWeightType = WEIGHT_RTV;
 					else if(_strcmpi(argv[i],"WEIGHT_RTV_MIX") == 0)
@@ -105,13 +129,27 @@ namespace ZQ
 						penaltyWeightType = WEIGHT_WLS;
 					else if(_strcmpi(argv[i],"WEIGHT_WLS_MIX") == 0)
 						penaltyWeightType = WEIGHT_WLS_MIX;
+#else
+					if (strcmp(argv[i], "WEIGHT_RTV") == 0)
+						penaltyWeightType = WEIGHT_RTV;
+					else if (strcmp(argv[i], "WEIGHT_RTV_MIX") == 0)
+						penaltyWeightType = WEIGHT_RTV_MIX;
+					else if (strcmp(argv[i], "WEIGHT_WLS") == 0)
+						penaltyWeightType = WEIGHT_WLS;
+					else if (strcmp(argv[i], "WEIGHT_WLS_MIX") == 0)
+						penaltyWeightType = WEIGHT_WLS_MIX;
+#endif
 					else
 					{
 						printf("unknown penaltyWeightType: %s\n",argv[i]);
 						return false;
 					}
 				}
+#if defined(_WIN32)
 				else if(_strcmpi(argv[i],"epsilon") == 0)
+#else
+				else if (strcmp(argv[i], "epsilon") == 0)
+#endif
 				{
 					i++;
 					if(i >= argc)
@@ -121,7 +159,11 @@ namespace ZQ
 					}
 					epsilon = atof(argv[i]);
 				}
+#if defined(_WIN32)
 				else if(_strcmpi(argv[i],"epsilon_s") == 0)
+#else
+				else if (strcmp(argv[i], "epsilon_s") == 0)
+#endif
 				{
 					i++;
 					if(i >= argc)
@@ -131,7 +173,11 @@ namespace ZQ
 					}
 					epsilon_for_s = atof(argv[i]);
 				}
+#if defined(_WIN32)
 				else if(_strcmpi(argv[i],"epsilon_d") == 0)
+#else
+				else if (strcmp(argv[i], "epsilon_d") == 0)
+#endif
 				{
 					i++;
 					if(i >= argc)
@@ -141,7 +187,11 @@ namespace ZQ
 					}
 					epsilon_for_d = atof(argv[i]);
 				}
+#if defined(_WIN32)
 				else if(_strcmpi(argv[i],"sigma") == 0)
+#else
+				else if (strcmp(argv[i], "sigma") == 0)
+#endif
 				{
 					i++;
 					if(i >= argc)
@@ -151,7 +201,11 @@ namespace ZQ
 					}
 					sigma_for_filter = atof(argv[i]);
 				}
+#if defined(_WIN32)
 				else if(_strcmpi(argv[i],"fsize") == 0)
+#else
+				else if (strcmp(argv[i], "fsize") == 0)
+#endif
 				{
 					i++;
 					if(i >= argc)
@@ -161,7 +215,11 @@ namespace ZQ
 					}
 					fsize_for_filter = atof(argv[i]);
 				}
+#if defined(_WIN32)
 				else if(_strcmpi(argv[i],"weight") == 0)
+#else
+				else if (strcmp(argv[i], "weight") == 0)
+#endif
 				{
 					i++;
 					if(i >= argc)
@@ -171,7 +229,11 @@ namespace ZQ
 					}
 					weight = atof(argv[i]);
 				}
+#if defined(_WIN32)
 				else if(_strcmpi(argv[i],"norm_for_dataterm") == 0)
+#else
+				else if (strcmp(argv[i], "norm_for_dataterm") == 0)
+#endif
 				{
 					i++;
 					if(i >= argc)
@@ -182,7 +244,11 @@ namespace ZQ
 					norm_for_dataterm = atof(argv[i]);
 
 				}
+#if defined(_WIN32)
 				else if(_strcmpi(argv[i],"norm_for_wls") == 0)
+#else
+				else if (strcmp(argv[i], "norm_for_wls") == 0)
+#endif
 				{
 					i++;
 					if(i >= argc)
@@ -192,7 +258,11 @@ namespace ZQ
 					}
 					norm_for_wls = atof(argv[i]);
 				}
+#if defined(_WIN32)
 				else if(_strcmpi(argv[i],"norm_for_rtv") == 0)
+#else
+				else if (strcmp(argv[i], "norm_for_rtv") == 0)
+#endif
 				{
 					i++;
 					if(i >= argc)
@@ -202,7 +272,11 @@ namespace ZQ
 					}
 					norm_for_rtv = atof(argv[i]);
 				}
+#if defined(_WIN32)
 				else if(_strcmpi(argv[i],"nOuterIteration") == 0)
+#else
+				else if (strcmp(argv[i], "nOuterIteration") == 0)
+#endif
 				{
 					i++;
 					if(i >= argc)
@@ -213,7 +287,11 @@ namespace ZQ
 
 					nOuterIteration = atoi(argv[i]);
 				}
+#if defined(_WIN32)
 				else if(_strcmpi(argv[i],"nSolverIteration") == 0)
+#else
+				else if (strcmp(argv[i], "nSolverIteration") == 0)
+#endif
 				{
 					i++;
 					if(i >= argc)

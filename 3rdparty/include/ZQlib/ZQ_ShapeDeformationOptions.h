@@ -42,7 +42,11 @@ namespace ZQ
 		{
 			for(int k = 0;k < argc;k++)
 			{
+#if defined(_WIN32)
 				if(_strcmpi(argv[k],"methodtype") == 0)
+#else
+				if (strcmp(argv[k], "methodtype") == 0)
+#endif
 				{
 					k++;
 					if(k >= argc)
@@ -50,20 +54,32 @@ namespace ZQ
 						printf("the value of %s ?\n",argv[k-1]);
 						return false;
 					}
-
+#if defined(_WIN32)
 					if(_strcmpi(argv[k],"LAPLACIAN") == 0)
 						methodType = METHOD_LAPLACIAN;
 					else if(_strcmpi(argv[k],"ARAP_VERT") == 0)
 						methodType = METHOD_ARAP_VERT_AS_CENTER;
 					else if(_strcmpi(argv[k],"ARAP_TRIANGLE") == 0)
 						methodType = METHOD_ARAP_TRIANGLE_AS_CENTER;
+#else
+					if (strcmp(argv[k], "LAPLACIAN") == 0)
+						methodType = METHOD_LAPLACIAN;
+					else if (strcmp(argv[k], "ARAP_VERT") == 0)
+						methodType = METHOD_ARAP_VERT_AS_CENTER;
+					else if (strcmp(argv[k], "ARAP_TRIANGLE") == 0)
+						methodType = METHOD_ARAP_TRIANGLE_AS_CENTER;
+#endif
 					else
 					{
 						printf("unknown para %s\n",argv[k]);
 						return false;
 					}
 				}
+#if defined(_WIN32)
 				else if(_strcmpi(argv[k],"FPIteration") == 0)
+#else
+				else if (strcmp(argv[k], "FPIteration") == 0)
+#endif
 				{
 					k++;
 					if(k >= argc)
@@ -73,7 +89,11 @@ namespace ZQ
 					}
 					FPIteration = atoi(argv[k]);
 				}
+#if defined(_WIN32)
 				else if(_strcmpi(argv[k],"Iteration") == 0)
+#else
+				else if (strcmp(argv[k], "Iteration") == 0)
+#endif
 				{
 					k++;
 					if(k >= argc)

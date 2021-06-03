@@ -35,7 +35,11 @@ namespace ZQ
 		{
 			for (int k = 0; k < argc; k++)
 			{
+#if defined(_WIN32)
 				if (_strcmpi(argv[k], "lamda_for_E2") == 0)
+#else
+				if (strcmp(argv[k], "lamda_for_E2") == 0)
+#endif
 				{
 					k++;
 					if (k >= argc)
@@ -45,7 +49,11 @@ namespace ZQ
 					}
 					lambda_for_E2 = atof(argv[k]);
 				}
+#if defined(_WIN32)
 				else if (_strcmpi(argv[k], "color_scale_for_E2") == 0)
+#else
+				else if (strcmp(argv[k], "color_scale_for_E2") == 0)
+#endif
 				{
 					k++;
 					if (k >= argc)
@@ -55,7 +63,11 @@ namespace ZQ
 					}
 					color_scale_for_E2 = atof(argv[k]);
 				}
+#if defined(_WIN32)
 				else if (_strcmpi(argv[k], "lambda_for_E3") == 0)
+#else
+				else if (strcmp(argv[k], "lambda_for_E3") == 0)
+#endif
 				{
 					k++;
 					if (k >= argc)
@@ -65,7 +77,11 @@ namespace ZQ
 					}
 					lambda_for_E3 = atof(argv[k]);
 				}
+#if defined(_WIN32)
 				else if (_strcmpi(argv[k], "sigma_for_E3") == 0)
+#else
+				else if (strcmp(argv[k], "sigma_for_E3") == 0)
+#endif
 				{
 					k++;
 					if (k >= argc)
@@ -75,7 +91,11 @@ namespace ZQ
 					}
 					sigma_for_E3 = atof(argv[k]);
 				}
+#if defined(_WIN32)
 				else if (_strcmpi(argv[k], "dilate_erode_size") == 0)
+#else
+				else if (strcmp(argv[k], "dilate_erode_size") == 0)
+#endif
 				{
 					k++;
 					if (k >= argc)
@@ -85,7 +105,11 @@ namespace ZQ
 					}
 					dilate_erode_size = atoi(argv[k]);
 				}
+#if defined(_WIN32)
 				else if (_strcmpi(argv[k], "area_thresh") == 0)
+#else
+				else if (strcmp(argv[k], "area_thresh") == 0)
+#endif
 				{
 					k++;
 					if (k >= argc)

@@ -56,7 +56,11 @@ namespace ZQ
 		{
 			for(int i = 0;i < argc;i++)
 			{
+#if defined(_WIN32)
 				if(_strcmpi(argv[i],"methodtype") == 0)
+#else
+				if (strcmp(argv[i], "methodtype") == 0)
+#endif
 				{
 					i++;
 					if(i >= argc)
@@ -64,10 +68,17 @@ namespace ZQ
 						printf("the value of %s ?\n",argv[i-1]);
 						return false;
 					}
+#if defined(_WIN32)
 					if(_strcmpi(argv[i],"PDE") == 0)
 						type = METHOD_PDE_THIRD_ORDER;
 					else if(_strcmpi(argv[i],"TextureSynthesis") == 0)
 						type = METHOD_PYRAMID_TEXTURE_SYNTHESIS;
+#else
+					if (strcmp(argv[i], "PDE") == 0)
+						type = METHOD_PDE_THIRD_ORDER;
+					else if (strcmp(argv[i], "TextureSynthesis") == 0)
+						type = METHOD_PYRAMID_TEXTURE_SYNTHESIS;
+#endif
 					else
 					{
 						printf("unknown methodType: %s\n",argv[i]);
@@ -75,7 +86,11 @@ namespace ZQ
 					}
 
 				}
+#if defined(_WIN32)
 				else if(_strcmpi(argv[i],"nOuterIteration") == 0)
+#else
+				else if (strcmp(argv[i], "nOuterIteration") == 0)
+#endif
 				{
 					i++;
 					if(i >= argc)
@@ -85,7 +100,11 @@ namespace ZQ
 					}
 					nOuterIteration = atoi(argv[i]);
 				}
+#if defined(_WIN32)
 				else if(_strcmpi(argv[i],"nSORIteration") == 0)
+#else
+				else if (strcmp(argv[i], "nSORIteration") == 0)
+#endif
 				{
 					i++;
 					if(i >= argc)
@@ -95,7 +114,11 @@ namespace ZQ
 					}
 					nSORIteration = atoi(argv[i]);
 				}
+#if defined(_WIN32)
 				else if(_strcmpi(argv[i],"lambda") == 0)
+#else
+				else if (strcmp(argv[i], "lambda") == 0)
+#endif
 				{
 					i++;
 					if(i >= argc)
@@ -105,7 +128,11 @@ namespace ZQ
 					}
 					lambda = atof(argv[i]);
 				}
+#if defined(_WIN32)
 				else if(_strcmpi(argv[i],"ratio") == 0)
+#else
+				else if (strcmp(argv[i], "ratio") == 0)
+#endif
 				{
 					i++;
 					if(i >= argc)
@@ -115,7 +142,11 @@ namespace ZQ
 					}
 					ratio = atof(argv[i]);
 				}
+#if defined(_WIN32)
 				else if(_strcmpi(argv[i],"minWidth") == 0)
+#else
+				else if (strcmp(argv[i], "minWidth") == 0)
+#endif
 				{
 					i++;
 					if(i >= argc)
@@ -125,7 +156,11 @@ namespace ZQ
 					}
 					minWidth = atoi(argv[i]);
 				}
+#if defined(_WIN32)
 				else if(_strcmpi(argv[i],"winWidth") == 0)
+#else
+				else if (strcmp(argv[i], "winWidth") == 0)
+#endif
 				{
 					i++;
 					if(i >= argc)
@@ -135,7 +170,11 @@ namespace ZQ
 					}
 					winWidth = atoi(argv[i]);
 				}
+#if defined(_WIN32)
 				else if(_strcmpi(argv[i],"winHeight") == 0)
+#else
+				else if (strcmp(argv[i], "winHeight") == 0)
+#endif
 				{
 					i++;
 					if(i >= argc)
@@ -146,7 +185,11 @@ namespace ZQ
 					winHeight = atoi(argv[i]);
 
 				}
+#if defined(_WIN32)
 				else if(_strcmpi(argv[i],"gradWeight") == 0)
+#else
+				else if (strcmp(argv[i], "gradWeight") == 0)
+#endif
 				{
 					i++;
 					if(i >= argc)
@@ -157,7 +200,11 @@ namespace ZQ
 					gradWeight = atof(argv[i]);
 
 				}
+#if defined(_WIN32)
 				else if(_strcmpi(argv[i],"probe") == 0)
+#else
+				else if (strcmp(argv[i], "probe") == 0)
+#endif
 				{
 					i++;
 					if(i >= argc)
@@ -167,7 +214,11 @@ namespace ZQ
 					}
 					probe = atof(argv[i]);
 				}
+#if defined(_WIN32)
 				else if(_strcmpi(argv[i],"display") == 0)
+#else
+				else if (strcmp(argv[i], "display") == 0)
+#endif
 				{
 					display = true;
 				}

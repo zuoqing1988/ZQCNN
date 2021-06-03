@@ -32,7 +32,11 @@ namespace ZQ
 		{
 			for(int i = 0;i < argc;i++)
 			{
+#if defined(_WIN32)
 				if(_strcmpi(argv[i],"methodtype") == 0)
+#else
+				if (strcmp(argv[i], "methodtype") == 0)
+#endif
 				{
 					i++;
 					if(i >= argc)
@@ -40,7 +44,11 @@ namespace ZQ
 						printf("the value of %s ?\n",argv[i-1]);
 						return false;
 					}
+#if defined(_WIN32)
 					if(_strcmpi(argv[i],"naive") == 0)
+#else
+					if (strcmp(argv[i], "naive") == 0)
+#endif
 						type = METHOD_NAIVE;
 					else
 					{
@@ -49,7 +57,11 @@ namespace ZQ
 					}
 
 				}
+#if defined(_WIN32)
 				else if(_strcmpi(argv[i],"nSORIteration") == 0)
+#else
+				else if (strcmp(argv[i], "nSORIteration") == 0)
+#endif
 				{
 					i++;
 					if(i >= argc)
@@ -59,7 +71,11 @@ namespace ZQ
 					}
 					nSORIteration = atoi(argv[i]);
 				}
+#if defined(_WIN32)
 				else if(_strcmpi(argv[i],"grad_scale") == 0)
+#else
+				else if (strcmp(argv[i], "grad_scale") == 0)
+#endif
 				{
 					i++;
 					if(i >= argc)
@@ -69,7 +85,11 @@ namespace ZQ
 					}
 					grad_scale = atof(argv[i]);
 				}
+#if defined(_WIN32)
 				else if(_strcmpi(argv[i],"display") == 0)
+#else
+				else if (strcmp(argv[i], "display") == 0)
+#endif
 				{
 					display = true;
 				}

@@ -758,7 +758,11 @@ namespace ZQ
 		static T db5_data[10] = {0.0033357252850015, -0.0125807519990155, -0.0062414902130117, 0.077571493840065, -0.03224486958502951, -0.2422948870661901,
 			0.1384281459011034, 0.72430852843857438, 0.6038292697974729,  0.160102397974125023};
 		//low pass decomposition filter
+#if defined(_WIN32)
 		if(_strcmpi(wavename, "haar") == 0 || _strcmpi(wavename,"db1") == 0)
+#else
+		if (strcmp(wavename, "haar") == 0 || strcmp(wavename, "db1") == 0)
+#endif
 		{
 			filterlen = 2;		
 			de_filter = new T[filterlen]; 
@@ -767,7 +771,11 @@ namespace ZQ
 				de_filter[i] = haar_data[i];
 			}
 		}	
+#if defined(_WIN32)
 		else if(_strcmpi(wavename, "db2") == 0)
+#else
+		else if (strcmp(wavename, "db2") == 0)
+#endif
 		{
 			filterlen = 4;
 			de_filter = new T[filterlen]; 
@@ -776,7 +784,11 @@ namespace ZQ
 				de_filter[i] = db2_data[i];
 			}
 		}
+#if defined(_WIN32)
 		else if(_strcmpi(wavename, "db3") == 0)
+#else
+		else if (strcmp(wavename, "db3") == 0)
+#endif
 		{
 			filterlen = 6;
 			de_filter = new T[filterlen]; 
@@ -785,7 +797,11 @@ namespace ZQ
 				de_filter[i] = db3_data[i];
 			}
 		}
+#if defined(_WIN32)
 		else if(_strcmpi(wavename, "db4") == 0)
+#else
+		else if (strcmp(wavename, "db4") == 0)
+#endif
 		{
 			filterlen = 8;
 			de_filter = new T[filterlen]; 
@@ -794,7 +810,11 @@ namespace ZQ
 				de_filter[i] = db4_data[i];
 			}
 		}
+#if defined(_WIN32)
 		else if(_strcmpi(wavename, "db5") == 0)
+#else
+		else if (strcmp(wavename, "db5") == 0)
+#endif
 		{
 			filterlen = 10;
 			de_filter = new T[filterlen]; 

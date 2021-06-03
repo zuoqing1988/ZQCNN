@@ -356,9 +356,9 @@ namespace ZQ
 		{
 			ZQ_TaucsBase::ZQ_taucs_ccs_free(jx); jx = 0;
 		}
-		if (_strcmpi(typeid(T).name(), "float") == 0)
+		if (strcmp(typeid(T).name(), "float") == 0)
 			jx = sp_jx_mat.ExportCCS(TAUCS_SINGLE);
-		else if (_strcmpi(typeid(T).name(), "double") == 0)
+		else if (strcmp(typeid(T).name(), "double") == 0)
 			jx = sp_jx_mat.ExportCCS(TAUCS_DOUBLE);
 		else
 			return false;
@@ -1640,9 +1640,9 @@ namespace ZQ
 		{
 			ZQ_TaucsBase::ZQ_taucs_ccs_free(jx); jx = 0;
 		}
-		if (_strcmpi(typeid(T).name(), "float") == 0)
+		if (strcmp(typeid(T).name(), "float") == 0)
 			jx = sp_jx_mat.ExportCCS(TAUCS_SINGLE);
-		else if (_strcmpi(typeid(T).name(), "double") == 0)
+		else if (strcmp(typeid(T).name(), "double") == 0)
 			jx = sp_jx_mat.ExportCCS(TAUCS_DOUBLE);
 		else
 			return false;

@@ -367,8 +367,14 @@ namespace ZQ
 		int max_mem_size_in_KB)
 	{
 		FILE* in = 0;
+#if defined(_WIN32)
 		if (0 != fopen_s(&in, src_val_file, "rb"))
 			return false;
+#else
+		in = fopen(src_val_file, "rb");
+		if (in == 0)
+			return false;
+#endif
 
 		__int64 val_size = sizeof(T);
 		_fseeki64(in, 0, SEEK_END);
@@ -405,7 +411,12 @@ namespace ZQ
 		};
 		FILE* tmp_file[2] = { 0 };
 		
+#if defined(_WIN32)
 		if (0 != fopen_s(&tmp_file[0], tmp_filename[0], "wb+"))
+#else
+		tmp_file[0] = fopen(tmp_filename[0], "wb+");
+		if (tmp_file[0] == 0)
+#endif
 		{
 			fclose(in);
 			printf("failed to create file %s\n", tmp_filename[0]);
@@ -423,7 +434,12 @@ namespace ZQ
 
 		if (rest_iter > 0)
 		{
+#if defined(_WIN32)
 			if (0 != fopen_s(&tmp_file[1], tmp_filename[1], "wb+"))
+#else
+			tmp_file[1] = fopen(tmp_filename[1], "wb+");
+			if (tmp_file[1] == 0)
+#endif
 			{
 				fclose(in);
 				fclose(tmp_file[0]);
@@ -467,8 +483,14 @@ namespace ZQ
 		int max_mem_size_in_KB)
 	{
 		FILE* in = 0, *in_data = 0;
+#if defined(_WIN32)
 		if (0 != fopen_s(&in, src_val_file, "rb"))
 			return false;
+#else
+		in = fopen(src_data_file, "rb");
+		if (in == 0)
+			return false;
+#endif
 
 		__int64 val_size = sizeof(T);
 		_fseeki64(in, 0, SEEK_END);
@@ -482,8 +504,14 @@ namespace ZQ
 		__int64 num = total_len / val_size;
 		_fseeki64(in, 0, SEEK_SET);
 
+#if defined(_WIN32)
 		if (0 != fopen_s(&in_data, src_data_file, "rb"))
 			return false;
+#else
+		in_data = fopen(src_data_file, "rb");
+		if (in_data == 0)
+			return false;
+#endif
 
 		_fseeki64(in_data, 0, SEEK_END);
 		if (num*data_elt_size != _ftelli64(in_data))
@@ -522,7 +550,12 @@ namespace ZQ
 		FILE* tmp_file[2] = { 0 };
 		FILE* tmp_data_file[2] = { 0 };
 
+#if defined(_WIN32)
 		if (0 != fopen_s(&tmp_file[0], tmp_filename[0], "wb+"))
+#else
+		tmp_file[0] = fopen(tmp_filename[0], "wb+");
+		if (tmp_file[0] == 0)
+#endif
 		{
 			fclose(in);
 			printf("failed to create file %s\n", tmp_filename[0]);
@@ -538,7 +571,12 @@ namespace ZQ
 		}
 		_fseeki64(tmp_file[0], 0, SEEK_SET);
 
+#if defined(_WIN32)
 		if (0 != fopen_s(&tmp_data_file[0], tmp_data_filename[0], "wb+"))
+#else
+		tmp_data_file[0] = fopen(tmp_data_filename[0], "wb+");
+		if (tmp_data_file[0] == 0)
+#endif
 		{
 			fclose(in);
 			fclose(tmp_file[0]);
@@ -558,7 +596,12 @@ namespace ZQ
 
 		if (rest_iter > 0)
 		{
+#if defined(_WIN32)
 			if (0 != fopen_s(&tmp_file[1], tmp_filename[1], "wb+"))
+#else
+			tmp_file[1] = fopen(tmp_filename[1], "wb+");
+			if (tmp_file[1] == 0)
+#endif
 			{
 				fclose(in);
 				fclose(tmp_file[0]);
@@ -578,7 +621,12 @@ namespace ZQ
 			}
 			_fseeki64(tmp_file[1], 0, SEEK_SET);
 
+#if defined(_WIN32)
 			if (0 != fopen_s(&tmp_data_file[1], tmp_data_filename[1], "wb+"))
+#else
+			tmp_data_file[1] = fopen(tmp_data_filename[1], "wb+");
+			if (tmp_data_file[1] == 0)
+#endif
 			{
 				fclose(in);
 				fclose(tmp_file[0]);

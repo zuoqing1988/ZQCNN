@@ -88,8 +88,14 @@ namespace ZQ
 			mMyAlloc = false;
 
 			FILE* in = 0;
+#if defined(_WIN32)
 			if (0 != fopen_s(&in, fname, "r"))
 				return false;
+#else
+			in = fopen(fname, "r");
+			if (in == 0)
+				return false;
+#endif
 
 
 			fseek(in, 0L, SEEK_END);
@@ -730,7 +736,7 @@ namespace ZQ
 			}
 			strncpy_s(buf, argv + i, len);
 			buf[len] = '\0';
-			sscanf_s(buf, "%d", v_id);
+			sscanf(buf, "%d", v_id);
 
 			if (argv[j] == '\0')
 			{
@@ -753,7 +759,7 @@ namespace ZQ
 				}
 				else
 				{
-					sscanf_s(argv + i, "%d", vt_id);
+					sscanf(argv + i, "%d", vt_id);
 					has_vt_id = true;
 					has_vn_id = false;
 					return;
@@ -768,7 +774,7 @@ namespace ZQ
 			{
 				strncpy_s(buf, argv + i, len);
 				buf[len] = 0;
-				sscanf_s(buf, "%d", vt_id);
+				sscanf(buf, "%d", vt_id);
 				has_vt_id = true;
 			}
 
@@ -777,7 +783,7 @@ namespace ZQ
 			if (argv[j] != '\0')
 			{
 				has_vn_id = true;
-				sscanf_s(argv + i, "%d", vn_id);
+				sscanf(argv + i, "%d", vn_id);
 			}
 			else
 			{
@@ -912,7 +918,12 @@ namespace ZQ
 		{
 			_clear();
 			FILE* in = 0;
+#if defined(_WIN32)
 			if(0 != fopen_s(&in, fname, "rb"))
+#else
+			in = fopen(fname, "rb");
+			if (in == 0)
+#endif
 			{
 				return false;
 			}
@@ -979,7 +990,12 @@ namespace ZQ
 
 
 			FILE* out = 0;
+#if defined(_WIN32)
 			if(0 != fopen_s(&out, fname, "wb"))
+#else
+			out = fopen(fname, "wb");
+			if (out == 0)
+#endif
 			{
 				return false;
 			}

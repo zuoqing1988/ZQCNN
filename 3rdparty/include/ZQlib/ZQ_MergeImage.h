@@ -568,8 +568,13 @@ namespace ZQ
 			int filename_len = strlen(file);
 			if (filename_len >= suffix_di2_len)
 			{
+#if defined(_WIN32)
 				if (_strcmpi(file + filename_len - suffix_di2_len, suffix_di2) == 0)
 					return img.loadImage(file);
+#else
+				if (strcmp(file + filename_len - suffix_di2_len, suffix_di2) == 0)
+					return img.loadImage(file);
+#endif
 			}
 
 			return ZQ_ImageIO::loadImage(img, file, isColor);
@@ -583,8 +588,13 @@ namespace ZQ
 			int filename_len = strlen(file);
 			if (filename_len >= suffix_di2_len)
 			{
+#if defined(_WIN32)
 				if (_strcmpi(file + filename_len - suffix_di2_len, suffix_di2) == 0)
 					return img.saveImage(file);
+#else
+				if (strcmp(file + filename_len - suffix_di2_len, suffix_di2) == 0)
+					return img.saveImage(file);
+#endif
 			}
 
 			return ZQ_ImageIO::saveImage(img, file);

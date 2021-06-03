@@ -30,7 +30,11 @@ namespace ZQ
 		{
 			for(int i = 0;i < argc;i++)
 			{
+#if defined(_WIN32)
 				if(_strcmpi(argv[i],"fsize") == 0)
+#else
+				if (strcmp(argv[i], "fsize") == 0)
+#endif
 				{
 					i++;
 					if(i >= argc)
@@ -40,7 +44,11 @@ namespace ZQ
 					}
 					fsize = atof(argv[i]);
 				}
+#if defined(_WIN32)
 				else if(_strcmpi(argv[i],"sigma_s") == 0)
+#else
+				else if (strcmp(argv[i], "sigma_s") == 0)
+#endif
 				{
 					i++;
 					if(i >= argc)
@@ -50,7 +58,11 @@ namespace ZQ
 					}
 					sigma_for_space = atof(argv[i]);
 				}
+#if defined(_WIN32)
 				else if(_strcmpi(argv[i],"sigma_v") == 0)
+#else
+				else if (strcmp(argv[i], "sigma_v") == 0)
+#endif
 				{
 					i++;
 					if(i >= argc)

@@ -44,7 +44,11 @@ namespace ZQ
 		{
 			for(int i = 0;i < argc;i++)
 			{
+#if defined(_WIN32)
 				if(_strcmpi(argv[i],"methodtype") == 0)
+#else
+				if (strcmp(argv[i], "methodtype") == 0)
+#endif
 				{
 					i++;
 					if(i >= argc)
@@ -52,6 +56,7 @@ namespace ZQ
 						printf("the value of %s ?\n",argv[i-1]);
 						return false;
 					}
+#if defined(_WIN32)
 					if(_strcmpi(argv[i],"naive") == 0)
 						type = METHOD_NAIVE;
 					else if(_strcmpi(argv[i],"mixgradient") == 0)
@@ -60,6 +65,16 @@ namespace ZQ
 						type = METHOD_MAXGRADIENT;
 					else if(_strcmpi(argv[i],"anisotropic") == 0)
 						type = METHOD_ANISOTROPIC;
+#else
+					if (strcmp(argv[i], "naive") == 0)
+						type = METHOD_NAIVE;
+					else if (strcmp(argv[i], "mixgradient") == 0)
+						type = METHOD_MIXGRADIENT;
+					else if (strcmp(argv[i], "maxgradient") == 0)
+						type = METHOD_MAXGRADIENT;
+					else if (strcmp(argv[i], "anisotropic") == 0)
+						type = METHOD_ANISOTROPIC;
+#endif
 					else
 					{
 						printf("unknown methodType: %s\n",argv[i]);
@@ -67,7 +82,11 @@ namespace ZQ
 					}
 
 				}
+#if defined(_WIN32)
 				else if(_strcmpi(argv[i],"nSORIteration") == 0)
+#else
+				else if (strcmp(argv[i], "nSORIteration") == 0)
+#endif
 				{
 					i++;
 					if(i >= argc)
@@ -77,7 +96,11 @@ namespace ZQ
 					}
 					nSORIteration = atoi(argv[i]);
 				}
+#if defined(_WIN32)
 				else if(_strcmpi(argv[i],"weight1") == 0)
+#else
+				else if (strcmp(argv[i], "weight1") == 0)
+#endif
 				{
 					i++;
 					if(i >= argc)
@@ -87,7 +110,11 @@ namespace ZQ
 					}
 					weight1 = atof(argv[i]);
 				}
+#if defined(_WIN32)
 				else if(_strcmpi(argv[i],"grad_scale") == 0)
+#else
+				else if (strcmp(argv[i], "grad_scale") == 0)
+#endif
 				{
 					i++;
 					if(i >= argc)
@@ -97,7 +124,11 @@ namespace ZQ
 					}
 					grad_scale = atof(argv[i]);
 				}
+#if defined(_WIN32)
 				else if(_strcmpi(argv[i],"anisotropic_ratio") == 0)
+#else
+				else if (strcmp(argv[i], "anisotropic_ratio") == 0)
+#endif
 				{
 					i++;
 					if(i >= argc)
@@ -107,7 +138,11 @@ namespace ZQ
 					}
 					anisotropic_ratio = atof(argv[i]);
 				}
+#if defined(_WIN32)
 				else if(_strcmpi(argv[i],"display") == 0)
+#else
+				else if (strcmp(argv[i], "display") == 0)
+#endif
 				{
 					display = true;
 				}

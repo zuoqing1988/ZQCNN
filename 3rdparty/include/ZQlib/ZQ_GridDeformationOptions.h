@@ -60,7 +60,11 @@ namespace ZQ
 		{
 			for(int k = 0;k < argc;k++)
 			{
+#if defined(_WIN32)
 				if(_strcmpi(argv[k],"methodtype") == 0)
+#else
+				if (strcmp(argv[k], "methodtype") == 0)
+#endif
 				{
 					k++;
 					if(k >= argc)
@@ -68,31 +72,59 @@ namespace ZQ
 						printf("the value of methodtype ?\n");
 						return false;
 					}
+#if defined(_WIN32)
 					if(_strcmpi(argv[k],"line_angle") == 0)
+#else
+					if (strcmp(argv[k], "line_angle") == 0)
+#endif
 					{
 						methodType = METHOD_LINE_ANGLE_ENERGY;
 					}
+#if defined(_WIN32)
 					else if(_strcmpi(argv[k],"line_angle_scaling") == 0)
+#else
+					else if (strcmp(argv[k], "line_angle_scaling") == 0)
+#endif
 					{
 						methodType = METHOD_LINE_ANGLE_ENERGY_SCALING;
 					}
+#if defined(_WIN32)
 					else if(_strcmpi(argv[k],"line_angle_distance") == 0)
+#else
+					else if (strcmp(argv[k], "line_angle_distance") == 0)
+#endif
 					{
 						methodType = METHOD_LINE_ANGLE_DISTANCE_ENERGY;
 					}
+#if defined(_WIN32)
 					else if(_strcmpi(argv[k],"line_angle_xloop") == 0)
+#else
+					else if (strcmp(argv[k], "line_angle_xloop") == 0)
+#endif
 					{
 						methodType = METHOD_LINE_ANGLE_ENERGY_XLOOP;
 					}
+#if defined(_WIN32)
 					else if(_strcmpi(argv[k],"line_angle_distance_xloop") == 0)
+#else
+					else if (strcmp(argv[k], "line_angle_distance_xloop") == 0)
+#endif
 					{
 						methodType = METHOD_LINE_ANGLE_DISTANCE_ENERGY_XLOOP;
 					}
+#if defined(_WIN32)
 					else if(_strcmpi(argv[k],"arap_vert") == 0)
+#else
+					else if (strcmp(argv[k], "arap_vert") == 0)
+#endif
 					{
 						methodType = METHOD_ARAP_VERT_AS_CENTER;
 					}
+#if defined(_WIN32)
 					else if(_strcmpi(argv[k],"arap_vert_xloop") == 0)
+#else
+					else if (strcmp(argv[k], "arap_vert_xloop") == 0)
+#endif
 					{
 						methodType = METHOD_ARAP_VERT_AS_CENTER_XLOOP;
 					}
@@ -102,7 +134,11 @@ namespace ZQ
 						return false;
 					}
 				}
+#if defined(_WIN32)
 				else if(_strcmpi(argv[k],"neighbortype") == 0)
+#else
+				else if (strcmp(argv[k], "neighbortype") == 0)
+#endif
 				{
 					k++;
 					if(k >= argc)
@@ -110,15 +146,15 @@ namespace ZQ
 						printf("the value of neighbortype ?\n");
 						return false;
 					}
-					if(_strcmpi(argv[k],"4") == 0)
+					if(strcmp(argv[k],"4") == 0)
 					{
 						neighborType = NEIGHBOR_4;
 					}
-					else if(_strcmpi(argv[k],"8") == 0)
+					else if(strcmp(argv[k],"8") == 0)
 					{
 						neighborType = NEIGHBOR_8;
 					}
-					else if(_strcmpi(argv[k],"12") == 0)
+					else if(strcmp(argv[k],"12") == 0)
 					{
 						neighborType = NEIGHBOR_12;
 					}
@@ -128,7 +164,11 @@ namespace ZQ
 						return false;
 					}
 				}
+#if defined(_WIN32)
 				else if(_strcmpi(argv[k],"line_weight") == 0)
+#else
+				else if (strcmp(argv[k], "line_weight") == 0)
+#endif
 				{
 					k++;
 					if(k >= argc)
@@ -138,7 +178,11 @@ namespace ZQ
 					}
 					line_weight = atof(argv[k]);
 				}
+#if defined(_WIN32)
 				else if(_strcmpi(argv[k],"angle_weight") == 0)
+#else
+				else if (strcmp(argv[k], "angle_weight") == 0)
+#endif
 				{
 					k++;
 					if(k >= argc)
@@ -148,7 +192,11 @@ namespace ZQ
 					}
 					angle_weight = atof(argv[k]);
 				}
+#if defined(_WIN32)
 				else if(_strcmpi(argv[k],"distance_weight") == 0)
+#else
+				else if (strcmp(argv[k], "distance_weight") == 0)
+#endif
 				{
 					k++;
 					if(k >= argc)
@@ -158,7 +206,11 @@ namespace ZQ
 					}
 					distance_weight = atof(argv[k]);
 				}
+#if defined(_WIN32)
 				else if(_strcmpi(argv[k],"distance") == 0)
+#else
+				else if (strcmp(argv[k], "distance") == 0)
+#endif
 				{
 					k++;
 					if(k >= argc)
@@ -168,7 +220,11 @@ namespace ZQ
 					}
 					distance = atof(argv[k]);
 				}
+#if defined(_WIN32)
 				else if(_strcmpi(argv[k],"fpiteration") == 0)
+#else
+				else if (strcmp(argv[k], "fpiteration") == 0)
+#endif
 				{
 					k++;
 					if(k >= argc)
@@ -178,7 +234,11 @@ namespace ZQ
 					}
 					FPIteration = atoi(argv[k]);
 				}
+#if defined(_WIN32)
 				else if(_strcmpi(argv[k],"iteration") == 0)
+#else
+				else if (strcmp(argv[k], "iteration") == 0)
+#endif
 				{
 					k++;
 					if(k >= argc)

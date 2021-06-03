@@ -107,7 +107,11 @@ namespace ZQ
 					buffer.erase(buffer.begin() + len - 1, buffer.end());
 			}
 			
+#if defined(_WIN32)
 			if (_strcmpi(buffer.c_str(), "NVM_V3") != 0)
+#else
+			if (strcmp(buffer.c_str(), "NVM_V3") != 0)
+#endif
 			{
 				return false;
 			}

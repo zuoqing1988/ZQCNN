@@ -172,8 +172,14 @@ namespace ZQ
 		static bool loadImage(ZQ_DImage<T>& im, const char* filename, int iscolor = 0)
 		{
 			FILE* in = 0;
+#if defined(_WIN32)
 			if(0 != fopen_s(&in, filename, "r"))
 				return false;
+#else
+			in = fopen(filename, "r");
+			if (in == 0)
+				return false;
+#endif
 			fclose(in);
 			
 			cv::Mat img = cv::imread(filename, iscolor);
@@ -193,7 +199,7 @@ namespace ZQ
 			im.allocate(width, height, nChannels);
 
 			T*& im_Data = im.data();
-			if (_strcmpi(typeid(T).name(), "float") == 0 || _strcmpi(typeid(T).name(), "double") == 0)
+			if (strcmp(typeid(T).name(), "float") == 0 || strcmp(typeid(T).name(), "double") == 0)
 			{
 				for (int i = 0; i < height; i++)
 				{
@@ -222,8 +228,14 @@ namespace ZQ
 		static bool saveImage(const ZQ_DImage<T>& im, const char* filename)
 		{
 			FILE* out = 0;
+#if defined(_WIN32)
 			if(0 != fopen_s(&out, filename, "w"))
 				return false;
+#else
+			out = fopen(filename, "w");
+			if (out == 0)
+				return false;
+#endif
 			fclose(out);
 
 			int width = im.width();

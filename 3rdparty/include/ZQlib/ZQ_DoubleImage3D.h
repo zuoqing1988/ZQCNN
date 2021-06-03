@@ -858,11 +858,17 @@ namespace ZQ
 	bool ZQ_DImage3D<T>::saveImage(const char *filename) const
 	{
 		FILE* out = 0;
+#if defined(_WIN32)
 		if(0 != fopen_s(&out, filename, "wb"))
 			return false;
+#else
+		out = fopen(filename, "wb");
+		if (out == 0)
+			return false;
+#endif
 
 		char type[16];
-		sprintf_s(type,"%s",typeid(T).name());
+		sprintf(type,"%s",typeid(T).name());
 		fwrite(type,sizeof(char),16,out);
 		fwrite(&imWidth,sizeof(int),1,out);
 		fwrite(&imHeight,sizeof(int),1,out);
@@ -882,8 +888,14 @@ namespace ZQ
 	bool ZQ_DImage3D<T>::loadImage(const char* filename)
 	{
 		FILE* in = 0;
+#if defined(_WIN32)
 		if(0 != fopen_s(&in,filename, "rb"))
 			return false;
+#else
+		in = fopen(filename, "rb");
+		if (in == 0)
+			return false;
+#endif
 
 		char type[16];
 		fread(type,sizeof(char),16,in);
@@ -900,7 +912,7 @@ namespace ZQ
 		if(!matchDimension(width,height,depth,nchannels))
 			allocate(width,height,depth,nchannels);
 
-		if(_strcmpi(type,typeid(double).name()) == 0)
+		if(strcmp(type,typeid(double).name()) == 0)
 		{
 			if(strcmp(typeid(T).name(), "double") == 0)
 			{
@@ -936,7 +948,7 @@ namespace ZQ
 				}
 			}
 		}
-		else if(_strcmpi(type,typeid(float).name()) == 0)
+		else if(strcmp(type,typeid(float).name()) == 0)
 		{
 			if(strcmp(typeid(T).name(), "float") == 0)
 			{

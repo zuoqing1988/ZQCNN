@@ -34,7 +34,11 @@ namespace ZQ
 		{
 			for (int i = 0; i < argc; i++)
 			{
+#if defined(_WIN32)
 				if (_strcmpi(argv[i], "half_patch_size") == 0)
+#else
+				if (strcmp(argv[i], "half_patch_size") == 0)
+#endif
 				{
 					i++;
 					if (i >= argc)
@@ -44,7 +48,11 @@ namespace ZQ
 					}
 					half_patch_size = atoi(argv[i]);
 				}
+#if defined(_WIN32)
 				else if (_strcmpi(argv[i], "sigma_alpha") == 0)
+#else
+				else if (strcmp(argv[i], "sigma_alpha") == 0)
+#endif
 				{
 					i++;
 					if (i >= argc)
@@ -54,7 +62,11 @@ namespace ZQ
 					}
 					sigma_for_alpha = atof(argv[i]);
 				}
+#if defined(_WIN32)
 				else if (_strcmpi(argv[i], "fsize") == 0)
+#else
+				else if (strcmp(argv[i], "fsize") == 0)
+#endif
 				{
 					i++;
 					if (i >= argc)
@@ -64,7 +76,11 @@ namespace ZQ
 					}
 					fsize = atoi(argv[i]);
 				}
+#if defined(_WIN32)
 				else if (_strcmpi(argv[i], "sigma_s") == 0)
+#else
+				else if (strcmp(argv[i], "sigma_s") == 0)
+#endif
 				{
 					i++;
 					if (i >= argc)
@@ -74,7 +90,11 @@ namespace ZQ
 					}
 					sigma_for_space = atof(argv[i]);
 				}
+#if defined(_WIN32)
 				else if (_strcmpi(argv[i], "sigma_v") == 0)
+#else
+				else if (strcmp(argv[i], "sigma_v") == 0)
+#endif
 				{
 					i++;
 					if (i >= argc)

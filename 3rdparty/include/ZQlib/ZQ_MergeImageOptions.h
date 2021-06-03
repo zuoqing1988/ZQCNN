@@ -92,7 +92,11 @@ namespace ZQ
 		{
 			for(int i = 0;i < argc;i++)
 			{
+#if defined(_WIN32)
 				if(_strcmpi(argv[i],"methodtype") == 0)
+#else
+				if (strcmp(argv[i], "methodtype") == 0)
+#endif
 				{
 					i++;
 					if(i >= argc)
@@ -100,6 +104,7 @@ namespace ZQ
 						printf("the value of %s ?\n",argv[i-1]);
 						return false;
 					}
+#if defined(_WIN32)
 					if(_strcmpi(argv[i],"MERGE_DIRECTLY") == 0)
 						methodType = METHOD_MERGE_DIRECTLY;
 					else if(_strcmpi(argv[i],"MERGE_DENSITY") == 0)
@@ -110,13 +115,29 @@ namespace ZQ
 						methodType = METHOD_IMAGE_BLUR;
 					else if(_strcmpi(argv[i],"MERGE_LOW_HIGH") == 0)
 						methodType = METHOD_MERGE_LOW_HIGH;
+#else
+					if (strcmp(argv[i], "MERGE_DIRECTLY") == 0)
+						methodType = METHOD_MERGE_DIRECTLY;
+					else if (strcmp(argv[i], "MERGE_DENSITY") == 0)
+						methodType = METHOD_MERGE_DENSITY;
+					else if (strcmp(argv[i], "MERGE_SOURCE_PATCH") == 0)
+						methodType = METHOD_MERGE_SOURCE_PATCH;
+					else if (strcmp(argv[i], "IMAGE_BLUR") == 0)
+						methodType = METHOD_IMAGE_BLUR;
+					else if (strcmp(argv[i], "MERGE_LOW_HIGH") == 0)
+						methodType = METHOD_MERGE_LOW_HIGH;
+#endif
 					else
 					{
 						printf("unknown methodType: %s\n",argv[i]);
 						return false;
 					}
 				}
+#if defined(_WIN32)
 				else if(_strcmpi(argv[i],"MergeSource") == 0)
+#else
+				else if (strcmp(argv[i], "MergeSource") == 0)
+#endif
 				{
 					MergeSource src;
 
@@ -170,7 +191,11 @@ namespace ZQ
 
 					mergeSources.push_back(src);
 				}
+#if defined(_WIN32)
 				else if(_strcmpi(argv[i],"DirectSource") == 0)
+#else
+				else if (strcmp(argv[i], "DirectSource") == 0)
+#endif
 				{
 					DirectSource src;
 
@@ -183,7 +208,11 @@ namespace ZQ
 					strcpy(src.file,argv[i]);
 					directSources.push_back(src);
 				}
+#if defined(_WIN32)
 				else if(_strcmpi(argv[i],"BackgroundSize") == 0)
+#else
+				else if (strcmp(argv[i], "BackgroundSize") == 0)
+#endif
 				{
 					i++;
 					if(i >= argc)
@@ -203,7 +232,11 @@ namespace ZQ
 
 					has_background_size = true;
 				}
+#if defined(_WIN32)
 				else if(_strcmpi(argv[i],"SourceFile") == 0)
+#else
+				else if (strcmp(argv[i], "SourceFile") == 0)
+#endif
 				{
 					i++;
 					if(i >= argc)
@@ -214,7 +247,11 @@ namespace ZQ
 					strcpy(sourceFile,argv[i]);
 					has_source_file = true;
 				}
+#if defined(_WIN32)
 				else if(_strcmpi(argv[i],"PatchFile") == 0)
+#else
+				else if (strcmp(argv[i], "PatchFile") == 0)
+#endif
 				{
 					i++;
 					if(i >= argc)
@@ -225,7 +262,11 @@ namespace ZQ
 					strcpy(patchFile,argv[i]);
 					has_patch_file = true;
 				}
+#if defined(_WIN32)
 				else if(_strcmpi(argv[i],"MaskFile") == 0)
+#else
+				else if (strcmp(argv[i], "MaskFile") == 0)
+#endif
 				{
 					i++;
 					if(i >= argc)
@@ -236,7 +277,11 @@ namespace ZQ
 					strcpy(maskFile,argv[i]);
 					has_mask_file = true;
 				}
+#if defined(_WIN32)
 				else if(_strcmpi(argv[i],"OutputFile") == 0)
+#else
+				else if (strcmp(argv[i], "OutputFile") == 0)
+#endif
 				{
 					i++;
 					if(i >= argc)
@@ -247,7 +292,11 @@ namespace ZQ
 					strcpy(outputFile,argv[i]);
 					has_output_file = true;
 				}
+#if defined(_WIN32)
 				else if(_strcmpi(argv[i],"HighPartFile") == 0)
+#else
+				else if (strcmp(argv[i], "HighPartFile") == 0)
+#endif
 				{
 					i++;
 					if(i >= argc)
@@ -258,11 +307,19 @@ namespace ZQ
 					strcpy(highPartFile,argv[i]);
 					has_high_part_file = true;
 				}
+#if defined(_WIN32)
 				else if(_strcmpi(argv[i],"MergeModeBlend") == 0)
 					merge_mode_blend = true;
 				else if(_strcmpi(argv[i],"Display") == 0)
 					display_running_info = true;	
 				else if(_strcmpi(argv[i],"sigma") == 0)
+#else
+				else if (strcmp(argv[i], "MergeModeBlend") == 0)
+					merge_mode_blend = true;
+				else if (strcmp(argv[i], "Display") == 0)
+					display_running_info = true;
+				else if (strcmp(argv[i], "sigma") == 0)
+#endif
 				{
 					i++;
 					if(i >= argc)
@@ -272,7 +329,11 @@ namespace ZQ
 					}
 					blur_sigma = atof(argv[i]);
 				}
+#if defined(_WIN32)
 				else if(_strcmpi(argv[i],"fsize") == 0)
+#else
+				else if (strcmp(argv[i], "fsize") == 0)
+#endif
 				{
 					i++;
 					if(i >= argc)
@@ -282,11 +343,19 @@ namespace ZQ
 					}
 					blur_fsize = atoi(argv[i]);
 				}
+#if defined(_WIN32)
 				else if(_strcmpi(argv[i],"AxisUp") == 0)
+#else
+				else if (strcmp(argv[i], "AxisUp") == 0)
+#endif
 				{
 					yAxisUp = true;
 				}
+#if defined(_WIN32)
 				else if(_strcmpi(argv[i],"AxisDown") == 0)
+#else
+				else if (strcmp(argv[i], "AxisDown") == 0)
+#endif
 				{
 					yAxisUp = false;
 				}

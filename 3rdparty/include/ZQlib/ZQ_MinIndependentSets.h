@@ -200,7 +200,12 @@ namespace ZQ
 			else
 			{
 				FILE* out = 0;
+#if defined(_WIN32)
 				if (0 != fopen_s(&out, name, "w"))
+#else
+				out = fopen(name, "w");
+				if (ou == 0)
+#endif
 				{
 					printf("failed to open file %s\n", name);
 					return false;

@@ -45,7 +45,11 @@ namespace ZQ
 		{
 			for (int k = 0; k < argc; k++)
 			{
+#if defined(_WIN32)
 				if (_strcmpi(argv[k], "win_size") == 0)
+#else
+				if (strcmp(argv[k], "win_size") == 0)
+#endif
 				{
 					k++;
 					if (k >= argc)
@@ -57,7 +61,11 @@ namespace ZQ
 					win_size = win_size > 2 ? 2 : win_size;
 					win_size = win_size < 1 ? 1 : win_size;
 				}
+#if defined(_WIN32)
 				else if (_strcmpi(argv[k], "epsilon") == 0)
+#else
+				else if (strcmp(argv[k], "epsilon") == 0)
+#endif
 				{
 					k++;
 					if (k >= argc)
@@ -67,7 +75,11 @@ namespace ZQ
 					}
 					epsilon = atof(argv[k]);
 				}
+#if defined(_WIN32)
 				else if (_strcmpi(argv[k], "max_level") == 0)
+#else
+				else if (strcmp(argv[k], "max_level") == 0)
+#endif
 				{
 					k++;
 					if (k >= argc)
@@ -77,7 +89,11 @@ namespace ZQ
 					}
 					max_level_for_c2f = atoi(argv[k]);
 				}
+#if defined(_WIN32)
 				else if (_strcmpi(argv[k], "consts_thresh") == 0)
+#else
+				else if (strcmp(argv[k], "consts_thresh") == 0)
+#endif
 				{
 					k++;
 					if (k >= argc)
@@ -87,11 +103,19 @@ namespace ZQ
 					}
 					consts_thresh_for_c2f = atoi(argv[k]);
 				}
+#if defined(_WIN32)
 				else if (_strcmpi(argv[k], "display") == 0)
+#else
+				else if (strcmp(argv[k], "display") == 0)
+#endif
 				{
 					display = true;
 				}
+#if defined(_WIN32)
 				else if (_strcmpi(argv[k], "max_iter_for_solve_fb") == 0)
+#else
+				else if (strcmp(argv[k], "max_iter_for_solve_fb") == 0)
+#endif
 				{
 					k++;
 					if (k >= argc)
@@ -101,7 +125,11 @@ namespace ZQ
 					}
 					max_iter_for_solve_fb = atoi(argv[k]);
 				}
+#if defined(_WIN32)
 				else if (_strcmpi(argv[k], "solve_fb_mode") == 0)
+#else
+				else if (strcmp(argv[k], "solve_fb_mode") == 0)
+#endif
 				{
 					k++;
 					if (k >= argc)
@@ -109,12 +137,21 @@ namespace ZQ
 						printf("the value of %s\n", argv[k - 1]);
 						return false;
 					}
+#if defined(_WIN32)
 					if (_strcmpi(argv[k], "4dir") == 0)
 						solve_fb_mode = SOLVE_FORE_BACK_4DIR;
 					else if (_strcmpi(argv[k], "2dir") == 0)
 						solve_fb_mode = SOLVE_FORE_BACK_2DIR;
 					else if (_strcmpi(argv[k], "ori_paper") == 0)
 						solve_fb_mode = SOLVE_FORE_BACK_ORI_PAPER;
+#else
+					if (strcmp(argv[k], "4dir") == 0)
+						solve_fb_mode = SOLVE_FORE_BACK_4DIR;
+					else if (strcmp(argv[k], "2dir") == 0)
+						solve_fb_mode = SOLVE_FORE_BACK_2DIR;
+					else if (strcmp(argv[k], "ori_paper") == 0)
+						solve_fb_mode = SOLVE_FORE_BACK_ORI_PAPER;
+#endif
 					else
 					{
 						printf("unknown parameters %s\n", argv[k]);
