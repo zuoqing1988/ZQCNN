@@ -313,7 +313,6 @@
     <ClInclude Include="ZQ_CNN_Tensor4D_Interface.h" />
     <ClInclude Include="ZQ_CNN_Tensor4D_NCHWC.h" />
     <ClInclude Include="ZQ_CNN_TextBoxes.h" />
-    <ClInclude Include="ZQ_CNN_VideoFaceDetection.h" />
     <ClInclude Include="ZQ_CNN_VideoFaceDetection_Interface.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
