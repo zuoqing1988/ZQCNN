@@ -464,7 +464,13 @@ int compute_similarity_all_pairs(int argc, char**argv, bool compact)
 	}
 
 	FILE* out = 0;
-	if (!fopen_s(&out, out_info_file.c_str(), "w"))
+	/*if (!fopen_s(&out, out_info_file.c_str(), "w"))
+	{
+	printf("failed to create file %s\n", out_info_file.c_str());
+	return EXIT_FAILURE;
+	}*/
+	out = fopen(out_info_file.c_str(), "w");
+	if (out == 0)
 	{
 		printf("failed to create file %s\n", out_info_file.c_str());
 		return EXIT_FAILURE;

@@ -138,6 +138,7 @@
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
       <AdditionalIncludeDirectories>$(SolutionDir)ZQlibFaceID;$(SolutionDir)3rdparty\opencv\build\include;$(SolutionDir)ZQCNN;$(SolutionDir)3rdparty\include\ZQlib;$(SolutionDir)3rdparty\include</AdditionalIncludeDirectories>
+      <OpenMPSupport>true</OpenMPSupport>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
