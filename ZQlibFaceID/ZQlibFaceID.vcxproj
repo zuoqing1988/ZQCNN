@@ -81,7 +81,7 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>$(SolutionDir)ZQCNN;$(SolutionDir)3rdparty\include\ZQlib;$(SolutionDir)3rdparty\opencv\build\include;$(SolutionDir)3rdparty\include\libfacedetection;$(SolutionDir)3rdparty\include\mini-caffe;$(SolutionDir)3rdparty\include\SeetaFaceEngine\FaceIdentification\include;$(IncludePath)</IncludePath>
+    <IncludePath>$(SolutionDir)ZQCNN;$(SolutionDir)3rdparty\include;$(SolutionDir)3rdparty\include\ZQlib;$(SolutionDir)3rdparty\opencv\build\include;$(SolutionDir)3rdparty\include\libfacedetection;$(SolutionDir)3rdparty\include\mini-caffe;$(SolutionDir)3rdparty\include\SeetaFaceEngine\FaceIdentification\include;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -162,12 +162,14 @@
     <ClInclude Include="ZQ_FaceGroup.h" />
     <ClInclude Include="ZQ_FaceIDPrecisionEvaluation.h" />
     <ClInclude Include="ZQ_FaceRecognizer.h" />
+    <ClInclude Include="ZQ_FaceRecognizerArcFaceGrayNCNN.h" />
     <ClInclude Include="ZQ_FaceRecognizerArcFaceMiniCaffe.h" />
     <ClInclude Include="ZQ_FaceRecognizerArcFaceOpenCV.h" />
     <ClInclude Include="ZQ_FaceRecognizerArcFaceZQCNN.h" />
     <ClInclude Include="ZQ_FaceRecognizerSeetaFace.h" />
     <ClInclude Include="ZQ_FaceRecognizerSphereFace.h" />
     <ClInclude Include="ZQ_FaceRecognizerSphereFaceMiniCaffe.h" />
+    <ClInclude Include="ZQ_FaceRecognizerSphereFaceGrayNCNN.h" />
     <ClInclude Include="ZQ_FaceRecognizerSphereFaceOpenCV.h" />
     <ClInclude Include="ZQ_FaceRecognizerUtils.h" />
     <ClInclude Include="ZQ_FaceRecognizerSphereFaceZQCNN.h" />
