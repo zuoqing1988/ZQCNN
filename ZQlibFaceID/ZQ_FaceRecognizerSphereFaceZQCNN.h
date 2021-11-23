@@ -109,7 +109,7 @@ namespace ZQ
 					for (int w = 0; w < crop_width; w++)
 					{
 						const unsigned char* ori_pix_ptr = img + h*widthStep + w;
-						unsigned char* cur_pix_ptr = &bgr_buffer[0] + (h*crop_width + w) * 3;
+						unsigned char* cur_pix_ptr = &bgr_buffer[0] + h*crop_width + w*3;
 						cur_pix_ptr[0] = ori_pix_ptr[0];
 						cur_pix_ptr[1] = ori_pix_ptr[0];
 						cur_pix_ptr[2] = ori_pix_ptr[0];
@@ -125,8 +125,8 @@ namespace ZQ
 				{
 					for (int w = 0; w < crop_width; w++)
 					{
-						const unsigned char* ori_pix_ptr = img + h*widthStep + w * 3;
-						unsigned char* cur_pix_ptr = &bgr_buffer[0] + (h*crop_width + w) * 3;
+						const unsigned char* ori_pix_ptr = img + h*widthStep + w*3;
+						unsigned char* cur_pix_ptr = &bgr_buffer[0] + h*crop_width + w*3;
 						cur_pix_ptr[0] = ori_pix_ptr[2];
 						cur_pix_ptr[1] = ori_pix_ptr[1];
 						cur_pix_ptr[2] = ori_pix_ptr[0];
@@ -139,8 +139,8 @@ namespace ZQ
 				{
 					for (int w = 0; w < crop_width; w++)
 					{
-						const unsigned char* ori_pix_ptr = img + h*widthStep + w * 4;
-						unsigned char* cur_pix_ptr = &bgr_buffer[0] + (h*crop_width + w) * 3;
+						const unsigned char* ori_pix_ptr = img + h*widthStep + w*4;
+						unsigned char* cur_pix_ptr = &bgr_buffer[0] + h*crop_width + w*3;
 						cur_pix_ptr[0] = ori_pix_ptr[0];
 						cur_pix_ptr[1] = ori_pix_ptr[1];
 						cur_pix_ptr[2] = ori_pix_ptr[2];
@@ -153,8 +153,8 @@ namespace ZQ
 				{
 					for (int w = 0; w < crop_width; w++)
 					{
-						const unsigned char* ori_pix_ptr = img + h*widthStep + w * 4;
-						unsigned char* cur_pix_ptr = &bgr_buffer[0] + (h*crop_width + w) * 3;
+						const unsigned char* ori_pix_ptr = img + h*widthStep + w*4;
+						unsigned char* cur_pix_ptr = &bgr_buffer[0] + h*crop_width + w*3;
 						cur_pix_ptr[0] = ori_pix_ptr[2];
 						cur_pix_ptr[1] = ori_pix_ptr[1];
 						cur_pix_ptr[2] = ori_pix_ptr[0];
@@ -167,8 +167,8 @@ namespace ZQ
 				{
 					for (int w = 0; w < crop_width; w++)
 					{
-						const unsigned char* ori_pix_ptr = img + h*widthStep + w * 4;
-						unsigned char* cur_pix_ptr = &bgr_buffer[0] + (h*crop_width + w) * 3;
+						const unsigned char* ori_pix_ptr = img + h*widthStep + w*4;
+						unsigned char* cur_pix_ptr = &bgr_buffer[0] + h*crop_width + w*3;
 						cur_pix_ptr[0] = ori_pix_ptr[1];
 						cur_pix_ptr[1] = ori_pix_ptr[2];
 						cur_pix_ptr[2] = ori_pix_ptr[3];
@@ -181,8 +181,8 @@ namespace ZQ
 				{
 					for (int w = 0; w < crop_width; w++)
 					{
-						const unsigned char* ori_pix_ptr = img + h*widthStep + w * 4;
-						unsigned char* cur_pix_ptr = &bgr_buffer[0] + (h*crop_width + w) * 3;
+						const unsigned char* ori_pix_ptr = img + h*widthStep + w*4;
+						unsigned char* cur_pix_ptr = &bgr_buffer[0] + h*crop_width + w*3;
 						cur_pix_ptr[0] = ori_pix_ptr[3];
 						cur_pix_ptr[1] = ori_pix_ptr[2];
 						cur_pix_ptr[2] = ori_pix_ptr[1];
