@@ -164,12 +164,14 @@
     <ClInclude Include="ZQ_FaceRecognizer.h" />
     <ClInclude Include="ZQ_FaceRecognizerArcFaceGrayNCNN.h" />
     <ClInclude Include="ZQ_FaceRecognizerArcFaceMiniCaffe.h" />
+    <ClInclude Include="ZQ_FaceRecognizerArcFaceNCNN.h" />
     <ClInclude Include="ZQ_FaceRecognizerArcFaceOpenCV.h" />
     <ClInclude Include="ZQ_FaceRecognizerArcFaceZQCNN.h" />
     <ClInclude Include="ZQ_FaceRecognizerSeetaFace.h" />
     <ClInclude Include="ZQ_FaceRecognizerSphereFace.h" />
     <ClInclude Include="ZQ_FaceRecognizerSphereFaceMiniCaffe.h" />
     <ClInclude Include="ZQ_FaceRecognizerSphereFaceGrayNCNN.h" />
+    <ClInclude Include="ZQ_FaceRecognizerSphereFaceNCNN.h" />
     <ClInclude Include="ZQ_FaceRecognizerSphereFaceOpenCV.h" />
     <ClInclude Include="ZQ_FaceRecognizerUtils.h" />
     <ClInclude Include="ZQ_FaceRecognizerSphereFaceZQCNN.h" />
