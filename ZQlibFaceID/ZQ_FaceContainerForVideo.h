@@ -31,8 +31,14 @@ namespace ZQ
 		bool SaveToFile(const std::string& file) const
 		{
 			FILE* out = 0;
+#if defined(_WIN32)
 			if (0 != fopen_s(&out, file.c_str(), "wb"))
 				return false;
+#else
+			out = fopen(file.c_str(), "wb");
+			if (out == NULL)
+				return false;
+#endif
 			fwrite(&skip, sizeof(int), 1, out);
 			int key_num = frames.size();
 			fwrite(&key_num, sizeof(int), 1, out);
@@ -49,8 +55,14 @@ namespace ZQ
 		{
 			Clear();
 			FILE* in = 0;
+#if defined(_WIN32)
 			if (0 != fopen_s(&in, file.c_str(), "rb"))
 				return false;
+#else
+			in = fopen(file.c_str(), "rb");
+			if (in == NULL)
+				return false;
+#endif
 			if (fread(&skip, sizeof(int), 1, in) != 1)
 			{
 				fclose(in);

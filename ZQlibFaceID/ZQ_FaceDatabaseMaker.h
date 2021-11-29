@@ -3,7 +3,9 @@
 #pragma once
 #include <sstream>
 #include <direct.h>
+#if defined(_WIN32)
 #include <windows.h>
+#endif
 #include <io.h>
 #include <omp.h>
 #include <opencv2\opencv.hpp>
@@ -775,8 +777,15 @@ namespace ZQ
 		{
 			std::string feat_file = imgfile + ".imgfeat";
 			FILE* in = 0;
+#if defined(_WIN32)
 			if( 0 != fopen_s(&in, feat_file.c_str(), "rb"))
 				return false;
+#else
+			in = fopen(feat_file.c_str(), "rb");
+			if(in == NULL)
+				return false;
+#endif
+
 			int feat_dim = 0;
 			fread(&feat_dim, sizeof(int), 1, in);
 			feat.ChangeSize(feat_dim);
@@ -789,8 +798,14 @@ namespace ZQ
 		{
 			std::string feat_file = imgfile + ".imgfeat";
 			FILE* out = 0;
+#if defined(_WIN32)
 			if (0 != fopen_s(&out, feat_file.c_str(), "wb"))
 				return false;
+#else
+			out = fopen(feat_file.c_str(), "wb");
+			if (out == NULL)
+				return false;
+#endif
 			int feat_dim = feat.length;
 			fwrite(&feat_dim, sizeof(int), 1, out);
 			fwrite(feat.pData, sizeof(float), feat_dim, out);
@@ -801,8 +816,14 @@ namespace ZQ
 		static bool _write_error_messages(const std::string& file, const std::vector<ErrorCode>& ErrorCodes, const std::vector<std::string>& error_messages)
 		{
 			FILE* out = 0;
+#if defined(_WIN32)
 			if(0 != fopen_s(&out, file.c_str(), "w"))
 				return false;
+#else
+			out = fopen(file.c_str(), "w");
+			if (out == NULL)
+				return false;
+#endif
 			int num = ErrorCodes.size();
 			if (num != error_messages.size())
 				return false;
@@ -866,11 +887,18 @@ namespace ZQ
 		{
 			int num = filenames.size();
 			FILE* out = 0;
+#if defined(_WIN32)
 			if(0 != fopen_s(&out, data_base_file.c_str(), "w"))
 			{
 				return false;
 			}
-
+#else
+			out = fopen(&out, data_base_file.c_str(), "w");
+			if (out == NULL)
+			{
+				return false;
+			}
+#endif
 			fprintf(out, "%d\n", num);
 			for (int i = 0; i < num; i++)
 			{
@@ -1123,11 +1151,20 @@ namespace ZQ
 			ZQ_MergeSort::MergeSort(&person_min_scores[0], &sort_indices[0], person_num, true);
 
 			FILE* out = 0;
+#if defined(_WIN32)
 			if (0 != fopen_s(&out,out_file.c_str(), "w"))
 			{
 				printf("failed to create file %s\n", out_file.c_str());
 				return false;
 			}
+#else
+			out = fopen(out_file.c_str(), "w");
+			if (out == NULL)
+			{
+				printf("failed to create file %s\n", out_file.c_str());
+				return false;
+			}
+#endif
 
 			for (int i = 0; i < person_num; i++)
 			{

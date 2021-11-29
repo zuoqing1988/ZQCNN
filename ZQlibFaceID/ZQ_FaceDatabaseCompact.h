@@ -104,10 +104,16 @@ namespace ZQ
 		bool _load_feats(const char* file)
 		{
 			FILE* in = 0;
+#if defined(_WIN32)
 			if (0 != fopen_s(&in, file, "rb"))
 			{
 				return false;
 			}
+#else
+			in = fopen(file, "rb");
+			if (in == NULL)
+				return false;
+#endif
 
 			if (1 != fread(&dim, sizeof(int), 1, in) || dim <= 0)
 			{
@@ -164,8 +170,14 @@ namespace ZQ
 		bool _load_names(const char* file)
 		{
 			FILE* in = 0;
+#if defined(_WIN32)
 			if (0 != fopen_s(&in, file, "r"))
 				return false;
+#else
+			in = fopen(file, "r");
+			if (in == NULL)
+				return false;
+#endif
 			char line[200] = { 0 };
 			while (true)
 			{
@@ -387,19 +399,38 @@ namespace ZQ
 			__int64& all_pair_num, __int64& same_pair_num, __int64& notsame_pair_num, int max_thread_num, bool quantization) const
 		{
 			FILE* out1 = 0;
+#if defined(_WIN32)
 			if (0 != fopen_s(&out1, out_score_file.c_str(), "wb"))
 			{
 				printf("failed to create file %s\n", out_score_file.c_str());
 				return false;
 			}
+#else
+			out1 = fopen(out_score_file.c_str(), "wb");
+			if (out1 == NULL)
+			{
+				printf("failed to create file %s\n", out_score_file.c_str());
+				return false;
+			}
+#endif
 
 			FILE* out2 = 0;
+#if defined(_WIN32)
 			if (0 != fopen_s(&out2, out_flag_file.c_str(), "wb"))
 			{
 				printf("failed to create file %s\n", out_flag_file.c_str());
 				fclose(out1);
 				return false;
 			}
+#else
+			out2 = fopen(out_flag_file.c_str(), "wb");
+			if (out2 == NULL)
+			{
+				printf("failed to create file %s\n", out_flag_file.c_str());
+				fclose(out1);
+				return false;
+			}
+#endif
 			
 			all_pair_num = total_face_num *(total_face_num - 1) / 2;
 			same_pair_num = 0;
@@ -550,10 +581,18 @@ namespace ZQ
 			}
 
 			FILE* out = 0;
+#if defined(_WIN32)
 			if (0 != fopen_s(&out, out_file.c_str(), "w"))
 			{
 				return false;
 			}
+#else
+			out = fopen(out_file.c_str(), "w");
+			if (out == NULL)
+			{
+				return false;
+			}
+#endif
 			for (__int64 i = 0; i < num; i++)
 			{
 				fprintf(out, "%.3f %s %s\n", scores[i], names[repeat_pairs[i].first].c_str(), names[repeat_pairs[i].second].c_str());

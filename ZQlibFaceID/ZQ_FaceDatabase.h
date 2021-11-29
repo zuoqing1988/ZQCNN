@@ -165,9 +165,14 @@ namespace ZQ
 		bool _write_feats_binary(const std::string& file)
 		{
 			FILE* out = 0;
+#if defined(_WIN32)
 			if (0 != fopen_s(&out, file.c_str(), "wb"))
 				return false;
-
+#else
+			out = fopen(file.c_str(), "wb");
+			if (out == NULL)
+				return false;
+#endif
 			int person_num = persons.size();
 			int feat_dim = persons[0].features[0].length;
 			
@@ -226,8 +231,14 @@ namespace ZQ
 		bool _write_feats_binary_compact(const std::string& file)
 		{
 			FILE* out = 0;
+#if defined(_WIN32)
 			if (0 != fopen_s(&out, file.c_str(), "wb"))
 				return false;
+#else
+			out = fopen(file.c_str(), "wb");
+			if (out == NULL)
+				return false;
+#endif
 
 			int person_num = persons.size();
 			int feat_dim = persons[0].features[0].length;
@@ -270,8 +281,14 @@ namespace ZQ
 		bool _load_feats_binary(const std::string& file)
 		{
 			FILE* in = 0;
+#if defined(_WIN32)
 			if (0 != fopen_s(&in, file.c_str(), "rb"))
 				return false;
+#else
+			in = fopen(file.c_str(), "rb");
+			if (in == NULL)
+				return false;
+#endif
 
 			int person_num = 0;
 			int feat_dim = 0;
@@ -342,8 +359,14 @@ namespace ZQ
 		bool _write_names(const std::string& file)
 		{
 			FILE* out = 0;
+#if defined(WIN32)
 			if (0 != fopen_s(&out, file.c_str(), "w"))
 				return false;
+#else
+			out = fopen(file.c_str(), "w");
+			if (out == NULL)
+				return false;
+#endif
 			int person_num = names.size();
 			for (int i = 0; i < person_num; i++)
 			{
@@ -356,8 +379,14 @@ namespace ZQ
 		bool _load_names(const std::string& file)
 		{
 			FILE* in = 0;
+#if defined(_WIN32)
 			if (0 != fopen_s(&in, file.c_str(), "r"))
 				return false;
+#else
+			in = fopen(file.c_str(), "r");
+			if (in == NULL)
+				return false;
+#endif
 			char line[200] = { 0 };
 			while (true)
 			{
@@ -465,19 +494,38 @@ namespace ZQ
 			__int64& all_pair_num, __int64& same_pair_num, __int64& notsame_pair_num, int max_thread_num, bool quantization) const
 		{
 			FILE* out1 = 0;
+#if defined(_WIN32)
 			if (0 != fopen_s(&out1, out_score_file.c_str(), "wb"))
 			{
 				printf("failed to create file %s\n", out_score_file.c_str());
 				return false;
 			}
+#else
+			out1 = fopen(out_score_file.c_str(), "wb");
+			if (out1 == NULL)
+			{
+				printf("failed to create file %s\n", out_score_file.c_str());
+				return false;
+			}
+#endif
 
 			FILE* out2 = 0;
+#if defined(_WIN32)
 			if (0 != fopen_s(&out2, out_flag_file.c_str(), "wb"))
 			{
 				printf("failed to create file %s\n", out_flag_file.c_str());
 				fclose(out1);
 				return false;
 			}
+#else
+			out2 = fopen(out_flag_file.c_str(), "wb");
+			if (out2 == NULL)
+			{
+				printf("failed to create file %s\n", out_flag_file.c_str());
+				fclose(out1);
+				return false;
+			}
+#endif
 
 			int dim = persons[0].features[0].length;
 			__int64 person_num = persons.size();
@@ -632,10 +680,18 @@ namespace ZQ
 				return false;
 			}
 			FILE* out = 0;
+#if defined(_WIN32)
 			if (0 != fopen_s(&out, out_file.c_str(), "w"))
 			{
 				return false;
 			}
+#else
+			out = fopen(out_file.c_str(), "w");
+			if (out == NULL)
+			{
+				return false;
+			}
+#endif
 
 			std::vector<int> select_ids;
 			int person_num = person_ids.size();
@@ -701,10 +757,18 @@ namespace ZQ
 				return false;
 			}
 			FILE* out = 0;
+#if defined(_WIN32)
 			if (0 != fopen_s(&out, out_file.c_str(), "w"))
 			{
 				return false;
 			}
+#else
+			out = fopen(out_file.c_str(), "w");
+			if (out == NULL)
+			{
+				return false;
+			}
+#endif
 
 			for (int i = 0; i < person_ids.size(); i++)
 			{
@@ -859,10 +923,18 @@ namespace ZQ
 			}
 
 			FILE* out = 0;
+#if defined(_WIN32)
 			if (0 != fopen_s(&out, out_file.c_str(), "w"))
 			{
 				return false;
 			}
+#else
+			out = fopen(out_file.c_str(), "w");
+			if (out == NULL)
+			{
+				return false;
+			}
+#endif
 			for (int i = 0; i < num; i++)
 			{
 				fprintf(out, "%.3f %s %s\n", scores[i], names[repeat_pairs[i].first].c_str(), names[repeat_pairs[i].second].c_str());
@@ -1017,10 +1089,18 @@ namespace ZQ
 			}
 
 			FILE* out = 0;
+#if defined(_WIN32)
 			if (0 != fopen_s(&out, out_file.c_str(), "w"))
 			{
 				return false;
 			}
+#else
+			out = fopen(out_file.c_str(), "w");
+			if (out == NULL)
+			{
+				return false;
+			}
+#endif
 
 			for (__int64 i = 0; i < num; i++)
 			{

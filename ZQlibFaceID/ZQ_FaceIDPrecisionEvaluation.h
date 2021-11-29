@@ -358,8 +358,14 @@ namespace ZQ
 		static bool _parse_lfw_list(const std::string& list_file, const std::string& folder, std::vector<std::vector<EvaluationPair> >& pairs)
 		{
 			FILE* in = 0;
+#if defined(_WIN32)
 			if(0 != fopen_s(&in, list_file.c_str(), "r"))
 				return false;
+#else
+			in = fopen(list_file.c_str(), "r");
+			if (in == NULL)
+				return false;
+#endif
 
 			int part_num, half_pair_num;
 			const static int BUF_LEN = 200;
