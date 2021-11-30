@@ -40,55 +40,55 @@ int main(int argc, char** argv)
 		printf("%s evaluate_tar_far [args]\n", argv[0]);
 		return EXIT_FAILURE;
 	}
-	if (_strcmpi(argv[1], "make112X112") == 0)
+	if (strcmp(argv[1], "make112X112") == 0)
 	{
 		return make_database(argc, argv, false, mode_size_112X112);
 	}
-	else if (_strcmpi(argv[1], "make112X96") == 0)
+	else if (strcmp(argv[1], "make112X96") == 0)
 	{
 		return make_database(argc, argv, false, mode_size_112X96);
 	}
-	else if (_strcmpi(argv[1], "make112X112_compact") == 0)
+	else if (strcmp(argv[1], "make112X112_compact") == 0)
 	{
 		return make_database(argc, argv, true, mode_size_112X112);
 	}
-	else if (_strcmpi(argv[1], "make112X96_compact") == 0)
+	else if (strcmp(argv[1], "make112X96_compact") == 0)
 	{
 		return make_database(argc, argv, true, mode_size_112X96);
 	}
-	else if (_strcmpi(argv[1], "select_subset") == 0)
+	else if (strcmp(argv[1], "select_subset") == 0)
 	{
 		return select_subset(argc, argv);
 	}
-	else if (_strcmpi(argv[1], "select_subset_desired_num") == 0)
+	else if (strcmp(argv[1], "select_subset_desired_num") == 0)
 	{
 		return select_subset_desired_num(argc, argv);
 	}
-	else if (_strcmpi(argv[1], "copy_subset_to_fold") == 0)
+	else if (strcmp(argv[1], "copy_subset_to_fold") == 0)
 	{
 		return copy_subset_to_fold(argc, argv);
 	}
-	else if (_strcmpi(argv[1], "compute_similarity") == 0)
+	else if (strcmp(argv[1], "compute_similarity") == 0)
 	{
 		return compute_similarity_all_pairs(argc, argv, false);
 	}
-	else if (_strcmpi(argv[1], "compute_similarity_compact") == 0)
+	else if (strcmp(argv[1], "compute_similarity_compact") == 0)
 	{
 		return compute_similarity_all_pairs(argc, argv, true);
 	}
-	else if (_strcmpi(argv[1], "detect_repeat") == 0)
+	else if (strcmp(argv[1], "detect_repeat") == 0)
 	{
 		return detect_repeat_person(argc, argv, false);
 	}
-	else if (_strcmpi(argv[1], "detect_repeat_compact") == 0)
+	else if (strcmp(argv[1], "detect_repeat_compact") == 0)
 	{
 		return detect_repeat_person(argc, argv, true);
 	}
-	else if (_strcmpi(argv[1], "detect_lowest_pair") == 0)
+	else if (strcmp(argv[1], "detect_lowest_pair") == 0)
 	{
 		return detect_lowest_pair(argc, argv);
 	}
-	else if (_strcmpi(argv[1], "evaluate_tar_far") == 0)
+	else if (strcmp(argv[1], "evaluate_tar_far") == 0)
 	{
 		return evaluate_tar_far(argc, argv);
 	}
@@ -388,7 +388,11 @@ int copy_subset_to_fold(int argc, char** argv)
 		}
 		if (found2)
 		{
+#if defined(_WIN32)
 			strncpy_s(person_name, BUF_LEN - 1, buf + j2 + 1, j1 - j2 - 1);
+#else
+			strncpy(person_name, buf + j2 + 1, j1 - j2 - 1);
+#endif
 			person_name[j1 - j2 - 1] = '\0';
 			oss.str("");
 #if defined(_WIN32)
@@ -397,7 +401,11 @@ int copy_subset_to_fold(int argc, char** argv)
 			oss << dst_fold << "/" << std::string(person_name);
 #endif
 			std::string dst_person_fold = oss.str();
+#if defined(_WIN32)
 			if (0 != _access(dst_person_fold.c_str(), 0))
+#else
+			if (0 != access(dst_person_fold.c_str(), 0))
+#endif
 			{
 				oss.str("");
 				oss << "mkdir " << dst_person_fold;
