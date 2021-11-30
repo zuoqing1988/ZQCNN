@@ -395,10 +395,11 @@ namespace ZQ
 		__int64 val_size = sizeof(T);
 #if defined(_WIN32)
 		_fseeki64(in, 0, SEEK_END);
+		__int64 total_len = _ftelli64(in);
 #else
 		fseek(in, 0, SEEK_END);
+		__int64 total_len = ftell(in);
 #endif
-		__int64 total_len = _ftelli64(in);
 		if (total_len % val_size != 0 || total_len == 0)
 		{
 			fclose(in);
@@ -537,10 +538,11 @@ namespace ZQ
 		__int64 val_size = sizeof(T);
 #if defined(_WIN32)
 		_fseeki64(in, 0, SEEK_END);
+		__int64 total_len = _ftelli64(in);
 #else
 		fseek(in, 0, SEEK_END);
+		__int64 total_len = ftell(in);
 #endif
-		__int64 total_len = _ftelli64(in);
 		if (total_len % val_size != 0 || total_len == 0)
 		{
 			fclose(in);
@@ -564,10 +566,11 @@ namespace ZQ
 #endif
 #if defined(_WIN32)
 		_fseeki64(in_data, 0, SEEK_END);
+		if (num*data_elt_size != _ftelli64(in_data))
 #else
 		fseek(in_data, 0, SEEK_END);
+		if (num*data_elt_size != ftell(in_data))
 #endif
-		if (num*data_elt_size != _ftelli64(in_data))
 		{
 			fclose(in);
 			fclose(in_data);
