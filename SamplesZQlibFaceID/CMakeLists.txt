@@ -60,7 +60,7 @@ else() #NOT WIN32
   link_directories(${ZQCNN_LIBRARY_DIR})
 
   #set(thirdparty_libs caffe libfacedetect-x64)
-  set(thirdparty_libs ncnn)
+  set(thirdparty_libs ncnn pthread)
 
   SUBDIRLIST(SAMPLE_SUBDIRS ${CMAKE_CURRENT_LIST_DIR})
   foreach(SAMPLE_SUBDIR ${SAMPLE_SUBDIRS})
