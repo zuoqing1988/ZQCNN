@@ -933,7 +933,7 @@ namespace ZQ
 					{
 						std::string str(ent->d_name);
 						person_names.push_back(str);
-						printf("всд©б╪:%s\n", ent->d_name);
+						printf("subdir:%s\n", ent->d_name);
 					}
 				}
 				else if (ent->d_reclen == 16)
