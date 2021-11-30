@@ -961,7 +961,7 @@ namespace ZQ
 							int namelen = strlen(ent->d_name);
 							if (namelen < 5)
 								continue;
-							if (strcmp(ent->_dname + namelen - 4, ".jpg") == 0)
+							if (strcmp(ent->d_name + namelen - 4, ".jpg") == 0)
 							{
 								std::string str(ent->d_name);
 								filenames[i].push_back(str);
