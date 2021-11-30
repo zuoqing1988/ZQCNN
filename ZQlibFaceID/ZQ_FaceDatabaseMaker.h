@@ -7,6 +7,8 @@
 #include <io.h>
 #else
 #include <sys/io.h>
+#include <sys/stat.h>
+#include <sys/types.h>
 #endif
 #include <omp.h>
 #include <opencv2/opencv.hpp>
@@ -469,15 +471,21 @@ namespace ZQ
 			_auto_detect_database(src_root, person_names, filenames);
 
 			int person_num = person_names.size();
+#if defined(_WIN32)
 			_mkdir(dst_root.c_str());
+#else
+			mkdir(dst_root.c_str(),0777);
+#endif
 			for (int i = 0; i < person_num; i++)
 			{
 #if defined(_WIN32)
 				std::string path = dst_root + "\\" + person_names[i];
+				_mkdir(path.c_str());
 #else
 				std::string path = dst_root + "/" + person_names[i];
+				mkdir(path.c_str(),0777);
 #endif
-				_mkdir(path.c_str());
+				
 			}
 
 			clock_t start_time = clock();
