@@ -972,7 +972,7 @@ namespace ZQ
 							if (strcmp(ent->d_name + namelen - 4, ".jpg") == 0)
 							{
 								std::string str(ent->d_name);
-								filenames[i].push_back(str);
+								filenames[i].push_back(dir + "/" + str);
 								//printf("file:%s\n", ent->d_name);
 							}
 						}
