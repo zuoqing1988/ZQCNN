@@ -927,13 +927,16 @@ namespace ZQ
 				{
 					if (ent->d_type == 8) // file
 					{
-						//printf("文件:%s\n", ent->d_name);
+						//printf("file:%s\n", ent->d_name);
 					}
 					else if (ent->d_type == 4) // subdir
 					{
 						std::string str(ent->d_name);
-						person_names.push_back(str);
-						printf("subdir:%s\n", ent->d_name);
+						if (str != "." && str != "..")
+						{
+							person_names.push_back(str);
+							printf("subdir:%s\n", ent->d_name);
+						}
 					}
 				}
 				else if (ent->d_reclen == 16)
@@ -966,14 +969,14 @@ namespace ZQ
 							{
 								std::string str(ent->d_name);
 								filenames[i].push_back(str);
-								//printf("文件:%s\n", ent->d_name);
+								//printf("file:%s\n", ent->d_name);
 							}
 						}
 						else if (ent->d_type == 4) // subdir
 						{
 							//std::string str(ent->d_name);
 							//person_names.push_back(str);
-							//printf("子目录:%s\n", ent->d_name);
+							//printf("subdir:%s\n", ent->d_name);
 						}
 					}
 					else if (ent->d_reclen == 16)
