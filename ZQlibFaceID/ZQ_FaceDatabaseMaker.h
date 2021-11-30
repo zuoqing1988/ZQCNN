@@ -921,9 +921,11 @@ namespace ZQ
 			std::string dir(root_path);
 			struct dirent* ent = NULL;
 			DIR* pDir = opendir(dir.c_str());
+			if (pDir == NULL)
+				return false;
 			while (NULL != (ent = readdir(pDir)))
 			{
-				if (ent->d_reclen == 24)
+				if (ent->d_reclen == 48)
 				{
 					if (ent->d_type == 8) // file
 					{
@@ -956,9 +958,11 @@ namespace ZQ
 				dir = root_path + "/" + person_names[i];
 				ent = NULL;
 				pDir = opendir(dir.c_str());
+				if (pDir == NULL)
+					continue;
 				while (NULL != (ent = readdir(pDir)))
 				{
-					if (ent->d_reclen == 24)
+					if (ent->d_reclen == 48)
 					{
 						if (ent->d_type == 8) // file
 						{
