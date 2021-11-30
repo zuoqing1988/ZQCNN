@@ -32,7 +32,9 @@ if(WIN32)
     add_executable(${SAMPLE_SUBDIR} ${sample_src})
     target_link_libraries(${SAMPLE_SUBDIR} ZQCNN ${OpenCV_LIBS} ${thirdparty_libs})
   endforeach()
-else()
+
+else() #NOT WIN32
+
   MACRO(SUBDIRLIST result curdir)
   FILE(GLOB children RELATIVE ${curdir} ${curdir}/*)
   SET(dirlist "")
@@ -51,12 +53,14 @@ else()
   endif()
   include_directories(${ZQCNN_INCLUDE_DIRS})
   include_directories(${CMAKE_CURRENT_LIST_DIR}/../ZQlibFaceID
+                    ${CMAKE_CURRENT_LIST_DIR}/../3rdparty/include
                     ${CMAKE_CURRENT_LIST_DIR}/../3rdparty/include/ZQlib
                     ${CMAKE_CURRENT_LIST_DIR}/../3rdparty/include/mini-caffe
                     ${CMAKE_CURRENT_LIST_DIR}/../3rdparty/include/libfacedetection)
   link_directories(${ZQCNN_LIBRARY_DIR})
 
   #set(thirdparty_libs caffe libfacedetect-x64)
+  set(thirdparty_libs ncnn)
 
   SUBDIRLIST(SAMPLE_SUBDIRS ${CMAKE_CURRENT_LIST_DIR})
   foreach(SAMPLE_SUBDIR ${SAMPLE_SUBDIRS})
