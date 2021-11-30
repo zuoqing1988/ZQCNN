@@ -530,7 +530,7 @@ namespace ZQ
 		if (0 != fopen_s(&in, src_val_file, "rb"))
 			return false;
 #else
-		in = fopen(src_data_file, "rb");
+		in = fopen(src_val_file, "rb");
 		if (in == 0)
 			return false;
 #endif
