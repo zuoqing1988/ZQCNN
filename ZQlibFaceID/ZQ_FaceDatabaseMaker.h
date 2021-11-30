@@ -9,6 +9,7 @@
 #include <sys/io.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+#include <dirent.h>
 #endif
 #include <omp.h>
 #include <opencv2/opencv.hpp>
@@ -46,7 +47,7 @@ namespace ZQ
 			for (int i = 0; i < recognizers.size(); i++)
 				if (recognizers[i] == 0)
 					return false;
-			return _make_database(detectors, recognizers, database_root, database_featsfile, database_namesfile, type, show_face, 
+			return _make_database(detectors, recognizers, database_root, database_featsfile, database_namesfile, type, show_face,
 				max_thread_num, false);
 		}
 
@@ -87,7 +88,7 @@ namespace ZQ
 		}
 
 		static bool CropImagesForDatabase(const std::vector<ZQ_FaceDetector*>& detectors, const std::vector<ZQ_FaceRecognizer*>& recognizers,
-			const std::string& src_root, const std::string& dst_root, int max_thread_num = 4, bool strict_check = true, 
+			const std::string& src_root, const std::string& dst_root, int max_thread_num = 4, bool strict_check = true,
 			std::string err_logfile = "err_log.txt", bool only_for_high_quality = false)
 		{
 			return _crop_images_for_database(detectors, recognizers, src_root, dst_root, max_thread_num, strict_check, err_logfile, only_for_high_quality);
@@ -99,16 +100,16 @@ namespace ZQ
 		{
 			return _detect_outliers_in_database(recognizers, src_root, max_thread_num, out_file);
 		}
-		
+
 	private:
-	
+
 		static bool _make_database(std::vector<ZQ_FaceDetector*>& detectors, std::vector<ZQ_FaceRecognizer*> recognizers,
 			const std::string& database_root, const std::string& database_featsfile, const std::string& database_namesfile,
 			MakeDatabaseType type = ONLY_MERGE_FEATS, bool show_face = false, int max_thread_num = 1, bool compact = false)
 		{
 			if (type != ONLY_MERGE_FEATS && type != UPDATE_WHO_NOT_HAVE_FEATS && type != FORCE_UPDATE_ALL)
 			{
-				printf("type must be : ONLY_MERGE_FEATS(%d), UPDATE_WHO_NOT_HAVE_FEATS(%d), FORCE_UPDATE_ALL(%d)\n", 
+				printf("type must be : ONLY_MERGE_FEATS(%d), UPDATE_WHO_NOT_HAVE_FEATS(%d), FORCE_UPDATE_ALL(%d)\n",
 					ONLY_MERGE_FEATS, UPDATE_WHO_NOT_HAVE_FEATS, FORCE_UPDATE_ALL);
 				return false;
 			}
@@ -132,7 +133,7 @@ namespace ZQ
 			std::vector<std::vector<bool> > fail_flag;
 
 			_auto_detect_database(database_root, person_names, filenames);
-			
+
 			int num_cores = omp_get_num_procs() - 1;
 
 			int real_thread_num = __min(max_thread_num, __min(num_cores, __min(num_detectors, num_recognizers)));
@@ -474,7 +475,7 @@ namespace ZQ
 #if defined(_WIN32)
 			_mkdir(dst_root.c_str());
 #else
-			mkdir(dst_root.c_str(),0777);
+			mkdir(dst_root.c_str(), 0777);
 #endif
 			for (int i = 0; i < person_num; i++)
 			{
@@ -483,9 +484,9 @@ namespace ZQ
 				_mkdir(path.c_str());
 #else
 				std::string path = dst_root + "/" + person_names[i];
-				mkdir(path.c_str(),0777);
+				mkdir(path.c_str(), 0777);
 #endif
-				
+
 			}
 
 			clock_t start_time = clock();
@@ -681,7 +682,7 @@ namespace ZQ
 			}
 
 
-			
+
 
 			clock_t end = clock();
 			printf("time: %f\n", 0.001*(end - start));
@@ -725,14 +726,14 @@ namespace ZQ
 			return true;
 		}
 
-		static bool _extract_feature_from_cropped_image(ZQ_FaceRecognizer& recognizer, const std::string& imgfile, const cv::Mat& image, 
+		static bool _extract_feature_from_cropped_image(ZQ_FaceRecognizer& recognizer, const std::string& imgfile, const cv::Mat& image,
 			ZQ_FaceFeature& feat, ErrorCode& err_code, std::string& err_msg)
 		{
 			int nChannels = image.channels();
 			ZQ_PixelFormat pixFmt = (nChannels == 1) ? ZQ_PIXEL_FMT_GRAY : ZQ_PIXEL_FMT_BGR;
 			int width = recognizer.GetCropWidth();
 			int height = recognizer.GetCropHeight();
-			
+
 			int feat_dim = recognizer.GetFeatDim();
 			std::ostringstream oss;
 			feat.ChangeSize(feat_dim);
@@ -805,11 +806,11 @@ namespace ZQ
 			std::string feat_file = imgfile + ".imgfeat";
 			FILE* in = 0;
 #if defined(_WIN32)
-			if( 0 != fopen_s(&in, feat_file.c_str(), "rb"))
+			if (0 != fopen_s(&in, feat_file.c_str(), "rb"))
 				return false;
 #else
 			in = fopen(feat_file.c_str(), "rb");
-			if(in == NULL)
+			if (in == NULL)
 				return false;
 #endif
 
@@ -844,7 +845,7 @@ namespace ZQ
 		{
 			FILE* out = 0;
 #if defined(_WIN32)
-			if(0 != fopen_s(&out, file.c_str(), "w"))
+			if (0 != fopen_s(&out, file.c_str(), "w"))
 				return false;
 #else
 			out = fopen(file.c_str(), "w");
@@ -862,14 +863,11 @@ namespace ZQ
 			return true;
 		}
 
+#if defined(_WIN32)
 		static bool _auto_detect_database(const std::string& root_path, std::vector<std::string>& person_names, std::vector<std::vector<std::string> >& filenames)
 		{
 			std::string dir(root_path);
-#if defined(_WIN32)
 			dir.append("\\*.*");
-#else
-			dir.append("/*.*");
-#endif
 			_finddata_t fileDir;
 			intptr_t lfDir;
 
@@ -897,11 +895,7 @@ namespace ZQ
 			filenames.resize(person_num);
 			for (int i = 0; i < person_num; i++)
 			{
-#if defined(_WIN32)
 				dir = root_path + "\\" + person_names[i] + "\\*.jpg";
-#else
-				dir = root_path + "/" + person_names[i] + "/*.jpg";
-#endif
 				if ((lfDir = _findfirst(dir.c_str(), &fileDir)) == -1l)
 				{
 					//printf("No file is found\n");
@@ -910,17 +904,90 @@ namespace ZQ
 				{
 					do {
 						std::string str(fileDir.name);
-#if defined(_WIN32)
 						filenames[i].push_back(root_path + "\\" + person_names[i] + "\\" + str);
-#else
-						filenames[i].push_back(root_path + "/" + person_names[i] + "/" + str);
-#endif
 					} while (_findnext(lfDir, &fileDir) == 0);
 				}
 				_findclose(lfDir);
 			}
 			return true;
 		}
+#else
+		static bool _auto_detect_database(const std::string& root_path, std::vector<std::string>& person_names, std::vector<std::vector<std::string> >& filenames)
+		{
+			person_names.clear();
+			filenames.clear();
+
+			std::string dir(root_path);
+			struct dirent* ent = NULL;
+			DIR* pDir = opendir(dir.c_str());
+			while (NULL != (ent = readdir(pDir)))
+			{
+				if (ent->d_reclen == 24)
+				{
+					if (ent->d_type == 8) // file
+					{
+						//printf("文件:%s\n", ent->d_name);
+					}
+					else if (ent->d_type == 4) // subdir
+					{
+						std::string str(ent->d_name);
+						person_names.push_back(str);
+						printf("子目录:%s\n", ent->d_name);
+					}
+				}
+				else if (ent->d_reclen == 16)
+				{
+					//printf("[.]开头的目录或者隐藏文件:%s\n",ent->d_name);
+				}
+				else
+				{
+				}
+			}
+			closedir(pDir);
+
+			int person_num = person_names.size();
+			filenames.resize(person_num);
+			for (int i = 0; i < person_num; i++)
+			{
+				dir = root_path + "/" + person_names[i];
+				ent = NULL;
+				pDir = opendir(dir.c_str());
+				while (NULL != (ent = readdir(pDir)))
+				{
+					if (ent->d_reclen == 24)
+					{
+						if (ent->d_type == 8) // file
+						{
+							int namelen = strlen(ent->d_name);
+							if (namelen < 5)
+								continue;
+							if (strcmp(ent->_dname + namelen - 4, ".jpg") == 0)
+							{
+								std::string str(ent->d_name);
+								filenames[i].push_back(str);
+								//printf("文件:%s\n", ent->d_name);
+							}
+						}
+						else if (ent->d_type == 4) // subdir
+						{
+							//std::string str(ent->d_name);
+							//person_names.push_back(str);
+							//printf("子目录:%s\n", ent->d_name);
+						}
+					}
+					else if (ent->d_reclen == 16)
+					{
+						//printf("[.]开头的目录或者隐藏文件:%s\n",ent->d_name);
+					}
+					else
+					{
+					}
+				}
+				closedir(pDir);
+			}
+			return true;
+		}
+#endif
 
 		static bool _write_database_txt(const std::string& data_base_file, const std::vector<std::vector<std::string> >& filenames)
 		{
