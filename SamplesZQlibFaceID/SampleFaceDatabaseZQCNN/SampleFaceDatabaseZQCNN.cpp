@@ -299,21 +299,31 @@ int select_subset_desired_num(int argc, char** argv)
 	return EXIT_SUCCESS;
 }
 
-bool zq_copy_file(const char *src, const char *dst, char* buf, int buf_size) 
+bool zq_copy_file(const char *src, const char *dst, char* buf, int buf_size)
 {
 	FILE* in = 0, *out = 0;
+#if defined(_WIN32)
 	if (0 != fopen_s(&in, src, "rb"))
+#else
+	in = fopen(src, "rb");
+	if (in == NULL)
+#endif
 	{
 		printf("failed to open %s\n", src);
 		return false;
 	}
+#if defined(_WIN32)
 	if (0 != fopen_s(&out, dst, "wb"))
+#else
+	out = fopen(dst, "wb");
+	if (out == NULL)
+#endif
 	{
 		printf("failed to create %s\n", dst);
 		fclose(in);
 		return false;
 	}
-	
+
 	int read_count = 0;
 	while ((read_count = fread(buf, 1, buf_size, in)) > 0)
 		fwrite(buf, 1, read_count, out);
@@ -332,7 +342,12 @@ int copy_subset_to_fold(int argc, char** argv)
 	const std::string list_file = argv[2];
 	const std::string dst_fold = argv[3];
 	FILE* in = 0;
+#if defined(_WIN32)
 	if (0 != fopen_s(&in, list_file.c_str(), "r"))
+#else
+	in = fopen(list_file.c_str(), "r");
+	if (in == NULL)
+#endif
 	{
 		printf("failed to open %s\n", list_file.c_str());
 		return EXIT_FAILURE;
@@ -370,7 +385,7 @@ int copy_subset_to_fold(int argc, char** argv)
 		int j1, j2;
 		for (j1 = len - 1; j1 >= 0; j1--)
 		{
-			if (buf[j1] == '\\')
+			if (buf[j1] == '\\' || buf[j1] == '/')
 			{
 				found1 = true;
 				break;
@@ -380,7 +395,7 @@ int copy_subset_to_fold(int argc, char** argv)
 		{
 			for (j2 = j1 - 1; j2 >= 0; j2--)
 			{
-				if (buf[j2] == '\\')
+				if (buf[j2] == '\\' || buf[j2] == '/')
 				{
 					found2 = true;
 					break;
@@ -396,7 +411,11 @@ int copy_subset_to_fold(int argc, char** argv)
 			strncpy_s(person_name, BUF_LEN - 1, buf + j2 + 1, j1 - j2 - 1);
 			person_name[j1 - j2 - 1] = '\0';
 			oss.str("");
+#if defined(_WIN32)
 			oss << dst_fold << "\\" << std::string(person_name);
+#else
+			oss << dst_fold << "/" << std::string(person_name);
+#endif
 			std::string dst_person_fold = oss.str();
 			if (0 != _access(dst_person_fold.c_str(), 0))
 			{
@@ -404,7 +423,11 @@ int copy_subset_to_fold(int argc, char** argv)
 				oss << "mkdir " << dst_person_fold;
 				system(oss.str().c_str());
 			}
+#if defined(_WIN32)
 			dst_person_fold.append("\\");
+#else
+			dst_person_fold.append("/");
+#endif
 			dst_person_fold.append(buf + j1 + 1);
 			copy_done = zq_copy_file(buf, dst_person_fold.c_str(), &buffer_for_copy[0], buffer_for_copy_size);
 		}
@@ -601,18 +624,29 @@ int evaluate_tar_far(int argc, char** argv)
 
 	std::string dst_score_file = score_file + ".sort";
 	std::string dst_flag_file = flag_file + ".sort";
-	
+
 	__int64 all_pair_num = 0, same_pair_num = 0, notsame_pair_num = 0;
 	FILE* in = 0;
+#if defined(_WIN32)
 	if (0 != fopen_s(&in, info_file.c_str(), "r"))
+#else
+	in = fopen(info_file.c_str(), "r");
+	if (in == NULL)
+#endif
 	{
 		printf("failed to open %s\n", info_file.c_str());
 		return EXIT_FAILURE;
 	}
 
-	if (1 != fscanf_s(in, "%lld",&all_pair_num)
+#if defined(_WIN32)
+	if (1 != fscanf_s(in, "%lld", &all_pair_num)
 		|| 1 != fscanf_s(in, "%lld", &same_pair_num)
 		|| 1 != fscanf_s(in, "%lld", &notsame_pair_num))
+#else
+	if (1 != fscanf(in, "%lld", &all_pair_num)
+		|| 1 != fscanf(in, "%lld", &same_pair_num)
+		|| 1 != fscanf(in, "%lld", &notsame_pair_num))
+#endif
 	{
 		printf("failed to read info from %s\n", info_file.c_str());
 		return EXIT_FAILURE;
@@ -641,12 +675,22 @@ int evaluate_tar_far(int argc, char** argv)
 	}
 
 	FILE* in1 = 0, *in2 = 0;
+#if defined(_WIN32)
 	if (0 != fopen_s(&in1, dst_score_file.c_str(), "rb"))
+#else
+	in1 = fopen(dst_score_file.c_str(), "rb");
+	if (in1 == NULL)
+#endif
 	{
 		printf("failed to open %s\n", dst_score_file.c_str());
 		return EXIT_FAILURE;
 	}
+#if defined(_WIN32)
 	if (0 != fopen_s(&in2, dst_flag_file.c_str(), "rb"))
+#else
+	in2 = fopen(dst_flag_file.c_str(), "rb");
+	if (in2 == NULL)
+#endif
 	{
 		printf("failed to open %s\n", dst_flag_file.c_str());
 		fclose(in1);
@@ -654,14 +698,15 @@ int evaluate_tar_far(int argc, char** argv)
 	}
 	/**************/
 
+
 	int cur_stage = 0;
-	double stage_far_thresh[] = 
+	double stage_far_thresh[] =
 	{
-		1e-8, 2*1e-8, 5*1e-8, 
-		1e-7, 2*1e-7, 5*1e-7,
-		1e-6, 2*1e-6, 5*1e-6,
-		1e-5, 2*1e-5, 5*1e-5,
-		1e-4, 2*1e-4, 5*1e-4,
+		1e-8, 2 * 1e-8, 5 * 1e-8,
+		1e-7, 2 * 1e-7, 5 * 1e-7,
+		1e-6, 2 * 1e-6, 5 * 1e-6,
+		1e-5, 2 * 1e-5, 5 * 1e-5,
+		1e-4, 2 * 1e-4, 5 * 1e-4,
 		1e-3
 	};
 	int stage_num = sizeof(stage_far_thresh) / sizeof(double);
@@ -684,7 +729,7 @@ int evaluate_tar_far(int argc, char** argv)
 	__int64 rest_count = all_pair_num;
 	while (rest_count > 0)
 	{
-		if(quantization)
+		if (quantization)
 			read_count1 = fread(&short_score_buffer[0], sizeof(short), buffer_size, in1);
 		else
 			read_count1 = fread(&score_buffer[0], sizeof(float), buffer_size, in1);
@@ -703,7 +748,7 @@ int evaluate_tar_far(int argc, char** argv)
 			fclose(in2);
 			return EXIT_FAILURE;
 		}
-		if(read_count1 != read_count2
+		if (read_count1 != read_count2
 			|| (read_count1 != buffer_size && read_count1 != rest_count))
 		{
 			printf("score_file flag_file info_file not match\n");
@@ -718,9 +763,9 @@ int evaluate_tar_far(int argc, char** argv)
 				break;
 			if (cur_far_num > stage_num_thresh[cur_stage])
 			{
-				printf("thresh = %8.5f, far = %12e, tar = %.5f\n", 
-					quantization ? ((float)short_score_buffer[i]/SHRT_MAX): score_buffer[i], 
-					(double)cur_far_num/notsame_pair_num,
+				printf("thresh = %8.5f, far = %12e, tar = %.5f\n",
+					quantization ? ((float)short_score_buffer[i] / SHRT_MAX) : score_buffer[i],
+					(double)cur_far_num / notsame_pair_num,
 					(double)cur_tar_num / same_pair_num);
 				cur_stage++;
 			}

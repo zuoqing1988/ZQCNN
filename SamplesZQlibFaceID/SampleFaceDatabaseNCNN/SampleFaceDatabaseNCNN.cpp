@@ -282,12 +282,22 @@ int select_subset_desired_num(int argc, char** argv)
 bool zq_copy_file(const char *src, const char *dst, char* buf, int buf_size)
 {
 	FILE* in = 0, *out = 0;
+#if defined(_WIN32)
 	if (0 != fopen_s(&in, src, "rb"))
+#else
+	in = fopen(src, "rb");
+	if (in == NULL)
+#endif
 	{
 		printf("failed to open %s\n", src);
 		return false;
 	}
+#if defined(_WIN32)
 	if (0 != fopen_s(&out, dst, "wb"))
+#else
+	out = fopen(dst, "wb");
+	if (out == NULL)
+#endif
 	{
 		printf("failed to create %s\n", dst);
 		fclose(in);
@@ -312,7 +322,12 @@ int copy_subset_to_fold(int argc, char** argv)
 	const std::string list_file = argv[2];
 	const std::string dst_fold = argv[3];
 	FILE* in = 0;
+#if defined(_WIN32)
 	if (0 != fopen_s(&in, list_file.c_str(), "r"))
+#else
+	in = fopen(list_file.c_str(), "r");
+	if (in == NULL)
+#endif
 	{
 		printf("failed to open %s\n", list_file.c_str());
 		return EXIT_FAILURE;
@@ -350,7 +365,7 @@ int copy_subset_to_fold(int argc, char** argv)
 		int j1, j2;
 		for (j1 = len - 1; j1 >= 0; j1--)
 		{
-			if (buf[j1] == '\\')
+			if (buf[j1] == '\\' || buf[j1] == '/')
 			{
 				found1 = true;
 				break;
@@ -360,7 +375,7 @@ int copy_subset_to_fold(int argc, char** argv)
 		{
 			for (j2 = j1 - 1; j2 >= 0; j2--)
 			{
-				if (buf[j2] == '\\')
+				if (buf[j2] == '\\' || buf[j2] == '/')
 				{
 					found2 = true;
 					break;
@@ -376,7 +391,11 @@ int copy_subset_to_fold(int argc, char** argv)
 			strncpy_s(person_name, BUF_LEN - 1, buf + j2 + 1, j1 - j2 - 1);
 			person_name[j1 - j2 - 1] = '\0';
 			oss.str("");
+#if defined(_WIN32)
 			oss << dst_fold << "\\" << std::string(person_name);
+#else
+			oss << dst_fold << "/" << std::string(person_name);
+#endif
 			std::string dst_person_fold = oss.str();
 			if (0 != _access(dst_person_fold.c_str(), 0))
 			{
@@ -384,7 +403,11 @@ int copy_subset_to_fold(int argc, char** argv)
 				oss << "mkdir " << dst_person_fold;
 				system(oss.str().c_str());
 			}
+#if defined(_WIN32)
 			dst_person_fold.append("\\");
+#else
+			dst_person_fold.append("/");
+#endif
 			dst_person_fold.append(buf + j1 + 1);
 			copy_done = zq_copy_file(buf, dst_person_fold.c_str(), &buffer_for_copy[0], buffer_for_copy_size);
 		}
@@ -588,15 +611,26 @@ int evaluate_tar_far(int argc, char** argv)
 
 	__int64 all_pair_num = 0, same_pair_num = 0, notsame_pair_num = 0;
 	FILE* in = 0;
+#if defined(_WIN32)
 	if (0 != fopen_s(&in, info_file.c_str(), "r"))
+#else
+	in = fopen(info_file.c_str(), "r");
+	if (in == NULL)
+#endif
 	{
 		printf("failed to open %s\n", info_file.c_str());
 		return EXIT_FAILURE;
 	}
 
+#if defined(_WIN32)
 	if (1 != fscanf_s(in, "%lld", &all_pair_num)
 		|| 1 != fscanf_s(in, "%lld", &same_pair_num)
 		|| 1 != fscanf_s(in, "%lld", &notsame_pair_num))
+#else
+	if (1 != fscanf(in, "%lld", &all_pair_num)
+		|| 1 != fscanf(in, "%lld", &same_pair_num)
+		|| 1 != fscanf(in, "%lld", &notsame_pair_num))
+#endif
 	{
 		printf("failed to read info from %s\n", info_file.c_str());
 		return EXIT_FAILURE;
@@ -625,12 +659,22 @@ int evaluate_tar_far(int argc, char** argv)
 	}
 
 	FILE* in1 = 0, *in2 = 0;
+#if defined(_WIN32)
 	if (0 != fopen_s(&in1, dst_score_file.c_str(), "rb"))
+#else
+	in1 = fopen(dst_score_file.c_str(), "rb");
+	if (in1 == NULL)
+#endif
 	{
 		printf("failed to open %s\n", dst_score_file.c_str());
 		return EXIT_FAILURE;
 	}
+#if defined(_WIN32)
 	if (0 != fopen_s(&in2, dst_flag_file.c_str(), "rb"))
+#else
+	in2 = fopen(dst_flag_file.c_str(), "rb");
+	if (in2 == NULL)
+#endif
 	{
 		printf("failed to open %s\n", dst_flag_file.c_str());
 		fclose(in1);
