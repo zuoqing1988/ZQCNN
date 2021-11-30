@@ -493,7 +493,12 @@ int compute_similarity_all_pairs(int argc, char**argv, bool compact)
 	}
 
 	FILE* out = 0;
-	if (!fopen_s(&out, out_info_file.c_str(), "w"))
+#if defined(_WIN32)
+	if (0 != fopen_s(&out, out_info_file.c_str(), "w"))
+#else
+	out = fopen(out_info_file.c_str(), "w");
+	if (out == NULL)
+#endif
 	{
 		printf("failed to create file %s\n", out_info_file.c_str());
 		return EXIT_FAILURE;
