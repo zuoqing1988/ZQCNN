@@ -925,28 +925,18 @@ namespace ZQ
 				return false;
 			while (NULL != (ent = readdir(pDir)))
 			{
-				if (ent->d_reclen == 48)
+				if (ent->d_type == DT_REG) // file
 				{
-					if (ent->d_type == 8) // file
-					{
-						//printf("file:%s\n", ent->d_name);
-					}
-					else if (ent->d_type == 4) // subdir
-					{
-						std::string str(ent->d_name);
-						if (str != "." && str != "..")
-						{
-							person_names.push_back(str);
-							printf("subdir:%s\n", ent->d_name);
-						}
-					}
+					//printf("file:%s\n", ent->d_name);
 				}
-				else if (ent->d_reclen == 16)
+				else if (ent->d_type == DT_DIR) // subdir
 				{
-					//printf("[.]开头的目录或者隐藏文件:%s\n",ent->d_name);
-				}
-				else
-				{
+					std::string str(ent->d_name);
+					if (str != "." && str != "..")
+					{
+						person_names.push_back(str);
+						printf("subdir:%s\n", ent->d_name);
+					}
 				}
 			}
 			closedir(pDir);
@@ -962,33 +952,23 @@ namespace ZQ
 					continue;
 				while (NULL != (ent = readdir(pDir)))
 				{
-					if (ent->d_reclen == 48)
+					if (ent->d_type == DT_REG) // file
 					{
-						if (ent->d_type == 8) // file
+						int namelen = strlen(ent->d_name);
+						if (namelen < 5)
+							continue;
+						if (strcmp(ent->d_name + namelen - 4, ".jpg") == 0)
 						{
-							int namelen = strlen(ent->d_name);
-							if (namelen < 5)
-								continue;
-							if (strcmp(ent->d_name + namelen - 4, ".jpg") == 0)
-							{
-								std::string str(ent->d_name);
-								filenames[i].push_back(dir + "/" + str);
-								//printf("file:%s\n", ent->d_name);
-							}
-						}
-						else if (ent->d_type == 4) // subdir
-						{
-							//std::string str(ent->d_name);
-							//person_names.push_back(str);
-							//printf("subdir:%s\n", ent->d_name);
+							std::string str(ent->d_name);
+							filenames[i].push_back(dir + "/" + str);
+							//printf("file:%s\n", ent->d_name);
 						}
 					}
-					else if (ent->d_reclen == 16)
+					else if (ent->d_type == DT_DIR) // subdir
 					{
-						//printf("[.]开头的目录或者隐藏文件:%s\n",ent->d_name);
-					}
-					else
-					{
+						//std::string str(ent->d_name);
+						//person_names.push_back(str);
+						//printf("subdir:%s\n", ent->d_name);
 					}
 				}
 				closedir(pDir);
