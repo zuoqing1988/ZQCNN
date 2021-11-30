@@ -22,7 +22,7 @@ int main(int argc, const char** argv)
 {
 	if (argc != 4)
 	{
-		printf("%s img1 img2 out\n");
+		printf("%s img1 img2 out\n", argv[0]);
 		return 1;
 	}
 	ZQ_CNN_MTCNN mtcnn;
