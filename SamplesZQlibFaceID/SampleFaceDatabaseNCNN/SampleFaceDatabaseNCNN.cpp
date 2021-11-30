@@ -1,10 +1,8 @@
-#if defined(_WIN32)
 #include "ZQ_FaceDatabaseMaker.h"
 #include "ZQ_FaceRecognizerArcFaceNCNN.h"
 #include "ZQ_FaceRecognizerSphereFaceNCNN.h"
 #include "ZQ_MergeSort.h"
 #include <stdio.h>
-#include <io.h>
 using namespace ZQ;
 
 const int mode_size_112X112 = 0;
@@ -743,12 +741,3 @@ int load_database_compact(ZQ_FaceDatabaseCompact& database, const std::string& f
 	else
 		return EXIT_FAILURE;
 }
-
-#else
-#include <stdio.h>
-int main(int argc, const char** argv)
-{
-	printf("%s only support windows\n", argv[0]);
-	return 0;
-}
-#endif

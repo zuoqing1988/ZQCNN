@@ -2,13 +2,14 @@
 #define _ZQ_FACE_DATABASE_MAKER_H_
 #pragma once
 #include <sstream>
-#include <direct.h>
 #if defined(_WIN32)
-#include <windows.h>
-#endif
+#include <direct.h>
 #include <io.h>
+#else
+#include <sys/io.h>
+#endif
 #include <omp.h>
-#include <opencv2\opencv.hpp>
+#include <opencv2/opencv.hpp>
 #include "ZQ_FaceDetector.h"
 #include "ZQ_FaceRecognizer.h"
 #include "ZQ_FaceDatabase.h"
@@ -471,7 +472,11 @@ namespace ZQ
 			_mkdir(dst_root.c_str());
 			for (int i = 0; i < person_num; i++)
 			{
+#if defined(_WIN32)
 				std::string path = dst_root + "\\" + person_names[i];
+#else
+				std::string path = dst_root + "/" + person_names[i];
+#endif
 				_mkdir(path.c_str());
 			}
 
@@ -555,12 +560,19 @@ namespace ZQ
 						}
 						continue;
 					}
-
+#if defined(_WIN32)
 					size_t pos = filenames[i][j].find_last_of('\\');
+#else
+					size_t pos = filenames[i][j].find_last_of('/');
+#endif
 					if (pos != std::string::npos)
 					{
 						std::string real_name(filenames[i][j].c_str() + pos + 1);
+#if defined(_WIN32)
 						std::string fullname = dst_root + "\\" + person_names[i] + "\\" + real_name;
+#else
+						std::string fullname = dst_root + "/" + person_names[i] + "/" + real_name;
+#endif
 						cv::imwrite(fullname, crop);
 #pragma omp critical
 						{
@@ -638,12 +650,19 @@ namespace ZQ
 						}
 						continue;
 					}
-
+#if defined(_WIN32)
 					size_t pos = filenames[i][j].find_last_of('\\');
+#else
+					size_t pos = filenames[i][j].find_last_of('/');
+#endif
 					if (pos != std::string::npos)
 					{
 						std::string real_name(filenames[i][j].c_str() + pos + 1);
+#if defined(_WIN32)
 						std::string fullname = dst_root + "\\" + person_names[i] + "\\" + real_name;
+#else
+						std::string fullname = dst_root + "/" + person_names[i] + "/" + real_name;
+#endif
 						cv::imwrite(fullname, crop);
 #pragma omp critical
 						{
@@ -838,7 +857,11 @@ namespace ZQ
 		static bool _auto_detect_database(const std::string& root_path, std::vector<std::string>& person_names, std::vector<std::vector<std::string> >& filenames)
 		{
 			std::string dir(root_path);
+#if defined(_WIN32)
 			dir.append("\\*.*");
+#else
+			dir.append("/*.*");
+#endif
 			_finddata_t fileDir;
 			intptr_t lfDir;
 
@@ -866,7 +889,11 @@ namespace ZQ
 			filenames.resize(person_num);
 			for (int i = 0; i < person_num; i++)
 			{
+#if defined(_WIN32)
 				dir = root_path + "\\" + person_names[i] + "\\*.jpg";
+#else
+				dir = root_path + "/" + person_names[i] + "/*.jpg";
+#endif
 				if ((lfDir = _findfirst(dir.c_str(), &fileDir)) == -1l)
 				{
 					//printf("No file is found\n");
@@ -875,7 +902,11 @@ namespace ZQ
 				{
 					do {
 						std::string str(fileDir.name);
+#if defined(_WIN32)
 						filenames[i].push_back(root_path + "\\" + person_names[i] + "\\" + str);
+#else
+						filenames[i].push_back(root_path + "/" + person_names[i] + "/" + str);
+#endif
 					} while (_findnext(lfDir, &fileDir) == 0);
 				}
 				_findclose(lfDir);

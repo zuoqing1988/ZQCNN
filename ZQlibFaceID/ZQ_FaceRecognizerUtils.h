@@ -192,7 +192,7 @@ namespace ZQ
 			*/
 
 			int type = CV_32FC1;
-			if (_strcmpi(typeid(BaseType).name(), "double") == 0)
+			if (strcmp(typeid(BaseType).name(), "double") == 0)
 				type = CV_64FC1;
 			//int type = CV_64FC1;
 			//using TmpType = double;
@@ -320,7 +320,7 @@ namespace ZQ
 			*/
 
 			int type = CV_32FC1;
-			if (_strcmpi(typeid(BaseType).name(), "double") == 0)
+			if (strcmp(typeid(BaseType).name(), "double") == 0)
 				type = CV_64FC1;
 
 			//int type = CV_64FC1;

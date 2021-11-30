@@ -1,11 +1,10 @@
-#if defined(_WIN32)
 #include "ZQ_FaceDatabaseMaker.h"
 #include "ZQ_FaceRecognizerArcFaceZQCNN.h"
 #include "ZQ_FaceRecognizerSphereFaceZQCNN.h"
 #include "ZQ_MergeSort.h"
 #include <stdio.h>
-#include <io.h>
 #include "ZQ_CNN_CompileConfig.h"
+#if defined(_WIN32)
 #if ZQ_CNN_USE_BLAS_GEMM
 #include <openblas\cblas.h>
 #pragma comment(lib,"libopenblas.lib")
@@ -14,6 +13,14 @@
 #pragma comment(lib,"mklml.lib")
 #else
 #pragma comment(lib,"ZQ_GEMM.lib")
+#endif
+#else //not win32
+#if ZQ_CNN_USE_BLAS_GEMM
+#include <openblas\cblas.h>
+#elif ZQ_CNN_USE_MKL_GEMM
+#include <mkl\mkl.h>
+#else
+#endif
 #endif
 using namespace ZQ;
 
@@ -750,12 +757,3 @@ int load_database_compact(ZQ_FaceDatabaseCompact& database, const std::string& f
 		return EXIT_FAILURE;
 }
 
-
-#else
-#include <stdio.h>
-int main(int argc, const char** argv)
-{
-	printf("%s only support windows\n", argv[0]);
-	return 0;
-}
-#endif

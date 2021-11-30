@@ -46,7 +46,11 @@ namespace ZQ
 
 			bool operator < (const EvaluationSingle& v2) const
 			{
+#if defined(_WIN32)
 				int cmp_v = _strcmpi(name.c_str(), v2.name.c_str());
+#else
+				int cmp_v = strcmp(name.c_str(), v2.name.c_str());
+#endif
 				if (cmp_v < 0)
 					return true;
 				else if (cmp_v > 0)
@@ -59,7 +63,11 @@ namespace ZQ
 
 			bool operator > (const EvaluationSingle& v2) const
 			{
+#if defined(_WIN32)
 				int cmp_v = _strcmpi(name.c_str(), v2.name.c_str());
+#else
+				int cmp_v = strcmp(name.c_str(), v2.name.c_str());
+#endif
 				if (cmp_v > 0)
 					return true;
 				else if (cmp_v < 0)
@@ -72,13 +80,21 @@ namespace ZQ
 
 			bool operator == ( const EvaluationSingle& v2) const
 			{
+#if defined(_WIN32)
 				int cmp_v = _strcmpi(name.c_str(), v2.name.c_str());
+#else
+				int cmp_v = strcmp(name.c_str(), v2.name.c_str());
+#endif
 				return cmp_v == 0 && id == v2.id;
 			}
 
 			bool SameName(const EvaluationSingle& v2) const
 			{
+#if defined(_WIN32)
 				int cmp_v = _strcmpi(name.c_str(), v2.name.c_str());
+#else
+				int cmp_v = strcmp(name.c_str(), v2.name.c_str());
+#endif
 				return cmp_v == 0;
 			}
 		};
@@ -393,10 +409,17 @@ namespace ZQ
 						cur_pair.idL = atoi(strings[1].c_str());
 						cur_pair.idR = atoi(strings[2].c_str());
 						char num2str[BUF_LEN];
+#if defined(_WIN32)
 						sprintf_s(num2str, BUF_LEN, "_%04i.jpg", atoi(strings[1].c_str()));
 						cur_pair.fileL = folder + "\\" + strings[0] + "\\" + strings[0] + std::string(num2str);
 						sprintf_s(num2str, BUF_LEN, "_%04i.jpg", atoi(strings[2].c_str()));
 						cur_pair.fileR = folder + "\\" + strings[0] + "\\" + strings[0] + std::string(num2str);
+#else
+						sprintf(num2str, "_%04i.jpg", atoi(strings[1].c_str()));
+						cur_pair.fileL = folder + "/" + strings[0] + "/" + strings[0] + std::string(num2str);
+						sprintf(num2str, "_%04i.jpg", atoi(strings[2].c_str()));
+						cur_pair.fileR = folder + "/" + strings[0] + "/" + strings[0] + std::string(num2str);
+#endif
 						cur_pair.flag = 1;
 						pairs[i].push_back(cur_pair);
 					}
@@ -408,10 +431,17 @@ namespace ZQ
 						cur_pair.idL = atoi(strings[1].c_str());
 						cur_pair.idR = atoi(strings[3].c_str());
 						char num2str[BUF_LEN];
+#if defined(_WIN32)
 						sprintf_s(num2str, BUF_LEN, "_%04i.jpg", atoi(strings[1].c_str()));
 						cur_pair.fileL = folder + "\\" + strings[0] + "\\" + strings[0] + std::string(num2str);
 						sprintf_s(num2str, BUF_LEN, "_%04i.jpg", atoi(strings[3].c_str()));
 						cur_pair.fileR = folder + "\\" + strings[2] + "\\" + strings[2] + std::string(num2str);
+#else
+						sprintf(num2str, "_%04i.jpg", atoi(strings[1].c_str()));
+						cur_pair.fileL = folder + "/" + strings[0] + "/" + strings[0] + std::string(num2str);
+						sprintf(num2str, "_%04i.jpg", atoi(strings[3].c_str()));
+						cur_pair.fileR = folder + "/" + strings[2] + "/" + strings[2] + std::string(num2str);
+#endif
 						cur_pair.flag = -1;
 						pairs[i].push_back(cur_pair);
 					}

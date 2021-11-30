@@ -359,7 +359,7 @@ namespace ZQ
 		bool _write_names(const std::string& file)
 		{
 			FILE* out = 0;
-#if defined(WIN32)
+#if defined(_WIN32)
 			if (0 != fopen_s(&out, file.c_str(), "w"))
 				return false;
 #else
