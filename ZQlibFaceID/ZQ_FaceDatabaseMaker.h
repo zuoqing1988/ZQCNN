@@ -6,6 +6,7 @@
 #include <direct.h>
 #include <io.h>
 #else
+#include <unistd.h>
 #include <sys/io.h>
 #include <sys/stat.h>
 #include <sys/types.h>
