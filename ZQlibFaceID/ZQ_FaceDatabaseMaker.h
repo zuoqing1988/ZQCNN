@@ -932,7 +932,7 @@ namespace ZQ
 				return false;
 			}
 #else
-			out = fopen(&out, data_base_file.c_str(), "w");
+			out = fopen(data_base_file.c_str(), "w");
 			if (out == NULL)
 			{
 				return false;
