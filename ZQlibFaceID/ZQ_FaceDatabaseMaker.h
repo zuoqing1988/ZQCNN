@@ -40,7 +40,7 @@ namespace ZQ
 	public:
 		static bool MakeDatabase(std::vector<ZQ_FaceDetector*>& detectors, std::vector<ZQ_FaceRecognizer*> recognizers,
 			const std::string& database_root, const std::string& database_featsfile, const std::string& database_namesfile,
-			MakeDatabaseType type = ONLY_MERGE_FEATS, bool show_face = false, int max_thread_num = 1)
+			MakeDatabaseType type = ONLY_MERGE_FEATS, bool show_face = false, int max_thread_num = 1, bool use_gray = false)
 		{
 			for (int i = 0; i < detectors.size(); i++)
 				if (detectors[i] == 0)
@@ -49,23 +49,23 @@ namespace ZQ
 				if (recognizers[i] == 0)
 					return false;
 			return _make_database(detectors, recognizers, database_root, database_featsfile, database_namesfile, type, show_face,
-				max_thread_num, false);
+				max_thread_num, false, use_gray);
 		}
 
 		static bool MakeDatabaseAlreadyCropped(std::vector<ZQ_FaceRecognizer*> recognizers,
 			const std::string& database_root, const std::string& database_featsfile, const std::string& database_namesfile,
-			MakeDatabaseType type = ONLY_MERGE_FEATS, bool show_face = false, int max_thread_num = 1)
+			MakeDatabaseType type = ONLY_MERGE_FEATS, bool show_face = false, int max_thread_num = 1, bool use_gray = false)
 		{
 			for (int i = 0; i < recognizers.size(); i++)
 				if (recognizers[i] == 0)
 					return false;
 			return _make_database_already_cropped(recognizers, database_root, database_featsfile, database_namesfile, type, show_face,
-				max_thread_num, false);
+				max_thread_num, false, use_gray);
 		}
 
 		static bool MakeDatabaseCompact(std::vector<ZQ_FaceDetector*>& detectors, std::vector<ZQ_FaceRecognizer*> recognizers,
 			const std::string& database_root, const std::string& database_featsfile, const std::string& database_namesfile,
-			MakeDatabaseType type = ONLY_MERGE_FEATS, bool show_face = false, int max_thread_num = 1)
+			MakeDatabaseType type = ONLY_MERGE_FEATS, bool show_face = false, int max_thread_num = 1, bool use_gray = false)
 		{
 			for (int i = 0; i < detectors.size(); i++)
 				if (detectors[i] == 0)
@@ -74,18 +74,18 @@ namespace ZQ
 				if (recognizers[i] == 0)
 					return false;
 			return _make_database(detectors, recognizers, database_root, database_featsfile, database_namesfile, type, show_face,
-				max_thread_num, true);
+				max_thread_num, true, use_gray);
 		}
 
 		static bool MakeDatabaseCompactAlreadyCropped(std::vector<ZQ_FaceRecognizer*> recognizers,
 			const std::string& database_root, const std::string& database_featsfile, const std::string& database_namesfile,
-			MakeDatabaseType type = ONLY_MERGE_FEATS, bool show_face = false, int max_thread_num = 1)
+			MakeDatabaseType type = ONLY_MERGE_FEATS, bool show_face = false, int max_thread_num = 1, bool use_gray = false)
 		{
 			for (int i = 0; i < recognizers.size(); i++)
 				if (recognizers[i] == 0)
 					return false;
 			return _make_database_already_cropped(recognizers, database_root, database_featsfile, database_namesfile, type, show_face,
-				max_thread_num, true);
+				max_thread_num, true, use_gray);
 		}
 
 		static bool CropImagesForDatabase(const std::vector<ZQ_FaceDetector*>& detectors, const std::vector<ZQ_FaceRecognizer*>& recognizers,
@@ -106,7 +106,7 @@ namespace ZQ
 
 		static bool _make_database(std::vector<ZQ_FaceDetector*>& detectors, std::vector<ZQ_FaceRecognizer*> recognizers,
 			const std::string& database_root, const std::string& database_featsfile, const std::string& database_namesfile,
-			MakeDatabaseType type = ONLY_MERGE_FEATS, bool show_face = false, int max_thread_num = 1, bool compact = false)
+			MakeDatabaseType type = ONLY_MERGE_FEATS, bool show_face = false, int max_thread_num = 1, bool compact = false, bool use_gray = false)
 		{
 			if (type != ONLY_MERGE_FEATS && type != UPDATE_WHO_NOT_HAVE_FEATS && type != FORCE_UPDATE_ALL)
 			{
@@ -199,7 +199,7 @@ namespace ZQ
 				bool ret = true;
 				if (need_detect)
 				{
-					if (!_extract_feature_from_img(*detectors[id], *recognizers[id], filenames[i][j], feat, crop, err_code, err_msg, false))
+					if (!_extract_feature_from_img(*detectors[id], *recognizers[id], filenames[i][j], feat, crop, err_code, err_msg, false, use_gray))
 					{
 #pragma omp critical
 						{
@@ -280,7 +280,7 @@ namespace ZQ
 
 		static bool _make_database_already_cropped(std::vector<ZQ_FaceRecognizer*> recognizers,
 			const std::string& database_root, const std::string& database_featsfile, const std::string& database_namesfile,
-			MakeDatabaseType type = ONLY_MERGE_FEATS, bool show_face = false, int max_thread_num = 1, bool compact = false)
+			MakeDatabaseType type = ONLY_MERGE_FEATS, bool show_face = false, int max_thread_num = 1, bool compact = false, bool use_gray = false)
 		{
 			if (type != ONLY_MERGE_FEATS && type != UPDATE_WHO_NOT_HAVE_FEATS && type != FORCE_UPDATE_ALL)
 			{
@@ -372,7 +372,7 @@ namespace ZQ
 				bool ret = true;
 				if (need_detect)
 				{
-					if (!_extract_feature_from_cropped_image(*recognizers[id], filenames[i][j], feat, crop, err_code, err_msg))
+					if (!_extract_feature_from_cropped_image(*recognizers[id], filenames[i][j], feat, crop, err_code, err_msg, use_gray))
 					{
 #pragma omp critical
 						{
@@ -753,10 +753,10 @@ namespace ZQ
 
 		static bool _extract_feature_from_img(ZQ_FaceDetector& detector, ZQ_FaceRecognizer& recognizer,
 			const std::string& imgfile, ZQ_FaceFeature& feat, cv::Mat& crop, ErrorCode& err_code, std::string& err_msg,
-			bool only_for_high_quality)
+			bool only_for_high_quality, bool use_gray)
 		{
 			std::ostringstream oss;
-			cv::Mat image = cv::imread(imgfile);
+			cv::Mat image = cv::imread(imgfile,use_gray ? 0 : 1);
 			if (image.empty())
 			{
 				printf("failed to read image: %s\n", imgfile.c_str());
@@ -780,10 +780,10 @@ namespace ZQ
 		}
 
 		static bool _extract_feature_from_cropped_image(ZQ_FaceRecognizer& recognizer,
-			const std::string& imgfile, ZQ_FaceFeature& feat, cv::Mat& crop, ErrorCode& err_code, std::string& err_msg)
+			const std::string& imgfile, ZQ_FaceFeature& feat, cv::Mat& crop, ErrorCode& err_code, std::string& err_msg, bool use_gray)
 		{
 			std::ostringstream oss;
-			cv::Mat image = cv::imread(imgfile);
+			cv::Mat image = cv::imread(imgfile, use_gray ? 0 : 1);
 			if (image.empty())
 			{
 				printf("failed to read image: %s\n", imgfile.c_str());

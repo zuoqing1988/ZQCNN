@@ -156,14 +156,14 @@ int make_database(int argc, char** argv, bool compact, int mode_size)
 
 		if (compact)
 		{
-			if (!ZQ_FaceDatabaseMaker::MakeDatabaseCompactAlreadyCropped(recognizers, database_root, feats_file, names_file, type, show, max_thread_num))
+			if (!ZQ_FaceDatabaseMaker::MakeDatabaseCompactAlreadyCropped(recognizers, database_root, feats_file, names_file, type, show, max_thread_num, true))
 			{
 				return EXIT_FAILURE;
 			}
 		}
 		else
 		{
-			if (!ZQ_FaceDatabaseMaker::MakeDatabaseAlreadyCropped(recognizers, database_root, feats_file, names_file, type, show, max_thread_num))
+			if (!ZQ_FaceDatabaseMaker::MakeDatabaseAlreadyCropped(recognizers, database_root, feats_file, names_file, type, show, max_thread_num, true))
 			{
 				return EXIT_FAILURE;
 			}
@@ -185,7 +185,7 @@ int make_database(int argc, char** argv, bool compact, int mode_size)
 		}
 		if (compact)
 		{
-			if (!ZQ_FaceDatabaseMaker::MakeDatabaseCompactAlreadyCropped(recognizers, database_root, feats_file, names_file, type, show, max_thread_num))
+			if (!ZQ_FaceDatabaseMaker::MakeDatabaseCompactAlreadyCropped(recognizers, database_root, feats_file, names_file, type, show, max_thread_num, true))
 			{
 				return EXIT_FAILURE;
 			}
@@ -193,7 +193,7 @@ int make_database(int argc, char** argv, bool compact, int mode_size)
 		}
 		else
 		{
-			if (!ZQ_FaceDatabaseMaker::MakeDatabaseAlreadyCropped(recognizers, database_root, feats_file, names_file, type, show, max_thread_num))
+			if (!ZQ_FaceDatabaseMaker::MakeDatabaseAlreadyCropped(recognizers, database_root, feats_file, names_file, type, show, max_thread_num, true))
 			{
 				return EXIT_FAILURE;
 			}
