@@ -261,7 +261,7 @@ namespace ZQ
 				if (!database.SaveToFileBinaryCompact(database_featsfile, database_namesfile))
 				{
 					printf("failed to save database\n");
-					return EXIT_FAILURE;
+					return false;
 				}
 			}
 			else
@@ -269,13 +269,13 @@ namespace ZQ
 				if (!database.SaveToFileBinary(database_featsfile, database_namesfile))
 				{
 					printf("failed to save database\n");
-					return EXIT_FAILURE;
+					return false;
 				}
 			}
 
 			printf("all done\n");
 			_write_error_messages(err_logfile, ErrorCodes, error_messages);
-			return EXIT_SUCCESS;
+			return true;
 		}
 
 		static bool _make_database_already_cropped(std::vector<ZQ_FaceRecognizer*> recognizers,
@@ -434,7 +434,7 @@ namespace ZQ
 				if (!database.SaveToFileBinaryCompact(database_featsfile, database_namesfile))
 				{
 					printf("failed to save database\n");
-					return EXIT_FAILURE;
+					return false;
 				}
 			}
 			else
@@ -442,13 +442,13 @@ namespace ZQ
 				if (!database.SaveToFileBinary(database_featsfile, database_namesfile))
 				{
 					printf("failed to save database\n");
-					return EXIT_FAILURE;
+					return false;
 				}
 			}
 
 			printf("all done\n");
 			_write_error_messages(err_logfile, ErrorCodes, error_messages);
-			return EXIT_SUCCESS;
+			return true;
 		}
 
 		static bool _crop_images_for_database(const std::vector<ZQ_FaceDetector*>& detectors, const std::vector<ZQ_FaceRecognizer*>& recognizers,
