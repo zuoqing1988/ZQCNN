@@ -14,7 +14,7 @@ namespace ZQ
 		ZQ_FaceRecognizerSphereFaceNCNN()
 		{
 			feat_dim = 0;
-			bgr_buffer.resize(GetCropHeight()*GetCropWidth());
+			bgr_buffer.resize(GetCropHeight()*GetCropWidth()*4,0);
 			opt.lightmode = true;
 			opt.num_threads = 1;
 			opt.blob_allocator = &g_blob_pool_allocator;
@@ -93,7 +93,7 @@ namespace ZQ
 					for (int w = 0; w < crop_width; w++)
 					{
 						const unsigned char* ori_pix_ptr = img + h*widthStep + w * 3;
-						unsigned char* cur_pix_ptr = &bgr_buffer[0] + h*crop_width + w * 3;
+						unsigned char* cur_pix_ptr = &bgr_buffer[0] + h*crop_width*3 + w * 3;
 						*cur_pix_ptr = ori_pix_ptr[0];
 						cur_pix_ptr++;
 						*cur_pix_ptr = ori_pix_ptr[1];
@@ -110,7 +110,7 @@ namespace ZQ
 					for (int w = 0; w < crop_width; w++)
 					{
 						const unsigned char* ori_pix_ptr = img + h*widthStep + w * 3;
-						unsigned char* cur_pix_ptr = &bgr_buffer[0] + h*crop_width + w * 3;
+						unsigned char* cur_pix_ptr = &bgr_buffer[0] + h*crop_width*3 + w * 3;
 						*cur_pix_ptr = ori_pix_ptr[0];
 						cur_pix_ptr++;
 						*cur_pix_ptr = ori_pix_ptr[1];
