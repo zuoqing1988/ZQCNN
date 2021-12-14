@@ -84,7 +84,7 @@ namespace ZQ
 						cur_pix_ptr[0] = ori_pix_ptr[0];
 					}
 				}
-				input = ncnn::Mat::from_pixels_resize(img, ncnn::Mat::PIXEL_GRAY, crop_width, crop_height, crop_width, crop_height);
+				input = ncnn::Mat::from_pixels_resize(bgr_buffer.data(), ncnn::Mat::PIXEL_GRAY, crop_width, crop_height, crop_width, crop_height);
 				//input.substract_mean_normalize(mean_vals, norm_vals);
 				break;
 			case ZQ_PIXEL_FMT_BGR:
@@ -101,7 +101,7 @@ namespace ZQ
 						*cur_pix_ptr = ori_pix_ptr[2];
 					}
 				}
-				input = ncnn::Mat::from_pixels_resize(img, ncnn::Mat::PIXEL_BGR2GRAY, crop_width, crop_height, crop_width, crop_height);
+				input = ncnn::Mat::from_pixels_resize(bgr_buffer.data(), ncnn::Mat::PIXEL_BGR2GRAY, crop_width, crop_height, crop_width, crop_height);
 				//input.substract_mean_normalize(mean_vals, norm_vals);
 				break;
 			default:
