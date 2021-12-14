@@ -14,7 +14,11 @@ namespace ZQ
 		ZQ_FaceRecognizerSphereFaceGrayNCNN()
 		{
 			feat_dim = 0;
-			bgr_buffer.resize(GetCropHeight()*GetCropWidth());
+			bgr_buffer.resize(GetCropHeight()*GetCropWidth()*3);
+			opt.lightmode = true;
+			opt.num_threads = 1;
+			opt.blob_allocator = &g_blob_pool_allocator;
+			opt.workspace_allocator = &g_workspace_pool_allocator;
 		}
 		~ZQ_FaceRecognizerSphereFaceGrayNCNN()
 		{
@@ -41,6 +45,7 @@ namespace ZQ
 				feat_dim = 0;
 				return false;
 			}
+			net.opt = opt;
 			this->feat_dim = feat_dim;
 			
 			ncnn::Mat out;
@@ -80,7 +85,7 @@ namespace ZQ
 					}
 				}
 				input = ncnn::Mat::from_pixels_resize(img, ncnn::Mat::PIXEL_GRAY, crop_width, crop_height, crop_width, crop_height);
-				input.substract_mean_normalize(mean_vals, norm_vals);
+				//input.substract_mean_normalize(mean_vals, norm_vals);
 				break;
 			case ZQ_PIXEL_FMT_BGR:
 				for (int h = 0; h < crop_height; h++)
@@ -97,7 +102,7 @@ namespace ZQ
 					}
 				}
 				input = ncnn::Mat::from_pixels_resize(img, ncnn::Mat::PIXEL_BGR2GRAY, crop_width, crop_height, crop_width, crop_height);
-				input.substract_mean_normalize(mean_vals, norm_vals);
+				//input.substract_mean_normalize(mean_vals, norm_vals);
 				break;
 			default:
 				return false;
@@ -119,6 +124,9 @@ namespace ZQ
 	private:
 
 		ncnn::Mat input;
+		ncnn::UnlockedPoolAllocator g_blob_pool_allocator;
+		ncnn::PoolAllocator g_workspace_pool_allocator;
+		ncnn::Option opt;
 		std::vector<unsigned char> bgr_buffer;
 		ncnn::Net net;
 		int feat_dim;
