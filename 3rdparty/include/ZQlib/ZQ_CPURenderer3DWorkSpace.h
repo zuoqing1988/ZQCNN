@@ -24,7 +24,8 @@ namespace ZQ
 			opt.height = h;
 			opt.cx = w*0.5;
 			opt.cy = h*0.5;
-			opt.focal_len = h;
+			opt.focal_len_x = h;
+			opt.focal_len_y = h;
 			memset(view_matrix, 0, sizeof(float)* 16);
 			view_matrix[0] = view_matrix[5] = view_matrix[10] = view_matrix[15] = 1;
 			memset(world_matrix, 0, sizeof(float)* 16);
@@ -69,7 +70,7 @@ namespace ZQ
 			float depth_clip_far;
 			int width, height;
 			float cx, cy;
-			float focal_len;
+			float focal_len_x, focal_len_y;
 			const ZQ_TextureSampler<float>* sampler;
 		};
 		enum ClipMode{
@@ -127,11 +128,19 @@ namespace ZQ
 			_far = opt.depth_clip_far;
 		}
 
-		void SetIntrinsicPara(const float _cx, const float _cy, const float _focal_len)
+		void SetIntrinsicPara(const float _cx, const float _cy, const float _fx, const float _fy = -1)
 		{
 			opt.cx = _cx;
 			opt.cy = _cy;
-			opt.focal_len = _focal_len;
+			opt.focal_len_x = _fx;
+			if (_fy < 0)
+			{
+				opt.focal_len_y = _fx;
+			}
+			else
+			{
+				opt.focal_len_y = _fy;
+			}
 		}
 
 		void SetWorldMatrix(const float* world_mat)
@@ -317,8 +326,8 @@ namespace ZQ
 			ZQ_Vec2D tmp_2d[max_tri_num_after_clip_depth];
 			for (int i = 0; i < len1; i++)
 			{
-				tmp_2d[i].x = tmp_vertices1[i][0] / tmp_vertices1[i][2] * opt.focal_len + opt.cx;
-				tmp_2d[i].y = tmp_vertices1[i][1] / tmp_vertices1[i][2] * opt.focal_len + opt.cy;
+				tmp_2d[i].x = tmp_vertices1[i][0] / tmp_vertices1[i][2] * opt.focal_len_x + opt.cx;
+				tmp_2d[i].y = tmp_vertices1[i][1] / tmp_vertices1[i][2] * opt.focal_len_y + opt.cy;
 			}
 
 			for (int i = 0; i < len1 - 2; i++)
