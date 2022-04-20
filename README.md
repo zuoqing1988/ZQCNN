@@ -29,6 +29,8 @@ ZQCNN是ZuoQing参照mini-caffe写的forward库，ZQCNN性能远超mini-caffe、
 
 ## 训练相关
 
+  pytorch训练SSD: https://github.com/zuoqing1988/pytorch-ssd-for-ZQCNN
+
   训练性别年龄：https://github.com/zuoqing1988/train-GenderAge
 	
   训练MTCNN：https://github.com/zuoqing1988/train-mtcnn
@@ -39,6 +41,8 @@ ZQCNN是ZuoQing参照mini-caffe写的forward库，ZQCNN性能远超mini-caffe、
 
 
 # 更新日志
+
+**2022-04-20日更新: 支持pytorch-ssd-for-ZQCNN训练的SSD模型**
 
 **2020-05-08日更新: 添加文字识别示例SampleOCR**
 
