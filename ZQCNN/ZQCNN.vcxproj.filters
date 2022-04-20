@@ -147,6 +147,12 @@
     <ClCompile Include="layers_c\zq_cnn_lstm_32f_align_c.c">
       <Filter>layers_c</Filter>
     </ClCompile>
+    <ClCompile Include="ZQ_CNN_SSDDetectorPytorch.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="ZQ_CNN_LoadConfigUtils.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="layers_c\zq_cnn_addbias_32f_align_c.h">
@@ -459,6 +465,15 @@
       <Filter>layers_c</Filter>
     </ClInclude>
     <ClInclude Include="ZQ_CNN_PersonPose2.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="ZQ_CNN_SSDDetectorPytorch.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="ZQ_CNN_SSDDetectorUtils.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="ZQ_CNN_LoadConfigUtils.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>

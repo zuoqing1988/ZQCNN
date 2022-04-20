@@ -1,0 +1,128 @@
+Input name=data C=1 H=192 W=256
+Convolution name=225 bottom=data top=225 num_output=8 kernel_H=3 kernel_W=3 dilate_H=1 dilate_W=1 stride_H=2 stride_W=2 pad_H_top=1 pad_H_bottom=1 pad_W_left=1 pad_W_right=1 bias
+ReLU name=227 bottom=225 top=227
+DepthwiseConvolution name=228 bottom=227 top=228 num_output=8 kernel_H=3 kernel_W=3 dilate_H=1 dilate_W=1 stride_H=1 stride_W=1 pad_H_top=1 pad_H_bottom=1 pad_W_left=1 pad_W_right=1 bias
+ReLU name=230 bottom=228 top=230
+Convolution name=231 bottom=230 top=231 num_output=16 kernel_H=1 kernel_W=1 dilate_H=1 dilate_W=1 stride_H=1 stride_W=1 pad_H_top=0 pad_H_bottom=0 pad_W_left=0 pad_W_right=0 bias
+ReLU name=233 bottom=231 top=233
+DepthwiseConvolution name=234 bottom=233 top=234 num_output=16 kernel_H=3 kernel_W=3 dilate_H=1 dilate_W=1 stride_H=2 stride_W=2 pad_H_top=1 pad_H_bottom=1 pad_W_left=1 pad_W_right=1 bias
+ReLU name=236 bottom=234 top=236
+Convolution name=237 bottom=236 top=237 num_output=32 kernel_H=1 kernel_W=1 dilate_H=1 dilate_W=1 stride_H=1 stride_W=1 pad_H_top=0 pad_H_bottom=0 pad_W_left=0 pad_W_right=0 bias
+ReLU name=239 bottom=237 top=239
+DepthwiseConvolution name=240 bottom=239 top=240 num_output=32 kernel_H=3 kernel_W=3 dilate_H=1 dilate_W=1 stride_H=1 stride_W=1 pad_H_top=1 pad_H_bottom=1 pad_W_left=1 pad_W_right=1 bias
+ReLU name=242 bottom=240 top=242
+Convolution name=243 bottom=242 top=243 num_output=32 kernel_H=1 kernel_W=1 dilate_H=1 dilate_W=1 stride_H=1 stride_W=1 pad_H_top=0 pad_H_bottom=0 pad_W_left=0 pad_W_right=0 bias
+ReLU name=245 bottom=243 top=245
+DepthwiseConvolution name=246 bottom=245 top=246 num_output=32 kernel_H=3 kernel_W=3 dilate_H=1 dilate_W=1 stride_H=2 stride_W=2 pad_H_top=1 pad_H_bottom=1 pad_W_left=1 pad_W_right=1 bias
+ReLU name=248 bottom=246 top=248
+Convolution name=249 bottom=248 top=249 num_output=64 kernel_H=1 kernel_W=1 dilate_H=1 dilate_W=1 stride_H=1 stride_W=1 pad_H_top=0 pad_H_bottom=0 pad_W_left=0 pad_W_right=0 bias
+ReLU name=251 bottom=249 top=251
+DepthwiseConvolution name=252 bottom=251 top=252 num_output=64 kernel_H=3 kernel_W=3 dilate_H=1 dilate_W=1 stride_H=1 stride_W=1 pad_H_top=1 pad_H_bottom=1 pad_W_left=1 pad_W_right=1 bias
+ReLU name=254 bottom=252 top=254
+Convolution name=255 bottom=254 top=255 num_output=64 kernel_H=1 kernel_W=1 dilate_H=1 dilate_W=1 stride_H=1 stride_W=1 pad_H_top=0 pad_H_bottom=0 pad_W_left=0 pad_W_right=0 bias
+ReLU name=257 bottom=255 top=257
+DepthwiseConvolution name=258 bottom=257 top=258 num_output=64 kernel_H=3 kernel_W=3 dilate_H=1 dilate_W=1 stride_H=1 stride_W=1 pad_H_top=1 pad_H_bottom=1 pad_W_left=1 pad_W_right=1 bias
+ReLU name=260 bottom=258 top=260
+Convolution name=261 bottom=260 top=261 num_output=64 kernel_H=1 kernel_W=1 dilate_H=1 dilate_W=1 stride_H=1 stride_W=1 pad_H_top=0 pad_H_bottom=0 pad_W_left=0 pad_W_right=0 bias
+ReLU name=263 bottom=261 top=263
+DepthwiseConvolution name=264 bottom=263 top=264 num_output=64 kernel_H=3 kernel_W=3 dilate_H=1 dilate_W=1 stride_H=1 stride_W=1 pad_H_top=1 pad_H_bottom=1 pad_W_left=1 pad_W_right=1 bias
+ReLU name=266 bottom=264 top=266
+Convolution name=267 bottom=266 top=267 num_output=64 kernel_H=1 kernel_W=1 dilate_H=1 dilate_W=1 stride_H=1 stride_W=1 pad_H_top=0 pad_H_bottom=0 pad_W_left=0 pad_W_right=0 bias
+ReLU name=269 bottom=267 top=269
+DepthwiseConvolution name=270 bottom=269 top=270 num_output=64 kernel_H=3 kernel_W=3 dilate_H=1 dilate_W=1 stride_H=1 stride_W=1 pad_H_top=1 pad_H_bottom=1 pad_W_left=1 pad_W_right=1 bias
+ReLU name=271 bottom=270 top=271
+Convolution name=272 bottom=271 top=272 num_output=8 kernel_H=1 kernel_W=1 dilate_H=1 dilate_W=1 stride_H=1 stride_W=1 pad_H_top=0 pad_H_bottom=0 pad_W_left=0 pad_W_right=0 bias
+Permute name=273 bottom=272 top=273 order=0 order=2 order=3 order=1
+Reshape name=283 bottom=273 top=283 dim=1 dim=-1 dim=2 dim=1
+DepthwiseConvolution name=284 bottom=269 top=284 num_output=64 kernel_H=3 kernel_W=3 dilate_H=1 dilate_W=1 stride_H=1 stride_W=1 pad_H_top=1 pad_H_bottom=1 pad_W_left=1 pad_W_right=1 bias
+ReLU name=285 bottom=284 top=285
+Convolution name=286 bottom=285 top=286 num_output=16 kernel_H=1 kernel_W=1 dilate_H=1 dilate_W=1 stride_H=1 stride_W=1 pad_H_top=0 pad_H_bottom=0 pad_W_left=0 pad_W_right=0 bias
+Permute name=287 bottom=286 top=287 order=0 order=2 order=3 order=1
+Reshape name=297 bottom=287 top=297 dim=1 dim=-1 dim=4 dim=1
+DepthwiseConvolution name=298 bottom=269 top=298 num_output=64 kernel_H=3 kernel_W=3 dilate_H=1 dilate_W=1 stride_H=2 stride_W=2 pad_H_top=1 pad_H_bottom=1 pad_W_left=1 pad_W_right=1 bias
+ReLU name=300 bottom=298 top=300
+Convolution name=301 bottom=300 top=301 num_output=128 kernel_H=1 kernel_W=1 dilate_H=1 dilate_W=1 stride_H=1 stride_W=1 pad_H_top=0 pad_H_bottom=0 pad_W_left=0 pad_W_right=0 bias
+ReLU name=303 bottom=301 top=303
+DepthwiseConvolution name=304 bottom=303 top=304 num_output=128 kernel_H=3 kernel_W=3 dilate_H=1 dilate_W=1 stride_H=1 stride_W=1 pad_H_top=1 pad_H_bottom=1 pad_W_left=1 pad_W_right=1 bias
+ReLU name=306 bottom=304 top=306
+Convolution name=307 bottom=306 top=307 num_output=128 kernel_H=1 kernel_W=1 dilate_H=1 dilate_W=1 stride_H=1 stride_W=1 pad_H_top=0 pad_H_bottom=0 pad_W_left=0 pad_W_right=0 bias
+ReLU name=309 bottom=307 top=309
+DepthwiseConvolution name=310 bottom=309 top=310 num_output=128 kernel_H=3 kernel_W=3 dilate_H=1 dilate_W=1 stride_H=1 stride_W=1 pad_H_top=1 pad_H_bottom=1 pad_W_left=1 pad_W_right=1 bias
+ReLU name=312 bottom=310 top=312
+Convolution name=313 bottom=312 top=313 num_output=128 kernel_H=1 kernel_W=1 dilate_H=1 dilate_W=1 stride_H=1 stride_W=1 pad_H_top=0 pad_H_bottom=0 pad_W_left=0 pad_W_right=0 bias
+ReLU name=315 bottom=313 top=315
+DepthwiseConvolution name=316 bottom=315 top=316 num_output=128 kernel_H=3 kernel_W=3 dilate_H=1 dilate_W=1 stride_H=1 stride_W=1 pad_H_top=1 pad_H_bottom=1 pad_W_left=1 pad_W_right=1 bias
+ReLU name=318 bottom=316 top=318
+Convolution name=319 bottom=318 top=319 num_output=128 kernel_H=1 kernel_W=1 dilate_H=1 dilate_W=1 stride_H=1 stride_W=1 pad_H_top=0 pad_H_bottom=0 pad_W_left=0 pad_W_right=0 bias
+ReLU name=321 bottom=319 top=321
+DepthwiseConvolution name=322 bottom=321 top=322 num_output=128 kernel_H=3 kernel_W=3 dilate_H=1 dilate_W=1 stride_H=1 stride_W=1 pad_H_top=1 pad_H_bottom=1 pad_W_left=1 pad_W_right=1 bias
+ReLU name=323 bottom=322 top=323
+Convolution name=324 bottom=323 top=324 num_output=8 kernel_H=1 kernel_W=1 dilate_H=1 dilate_W=1 stride_H=1 stride_W=1 pad_H_top=0 pad_H_bottom=0 pad_W_left=0 pad_W_right=0 bias
+Permute name=325 bottom=324 top=325 order=0 order=2 order=3 order=1
+Reshape name=335 bottom=325 top=335 dim=1 dim=-1 dim=2 dim=1
+DepthwiseConvolution name=336 bottom=321 top=336 num_output=128 kernel_H=3 kernel_W=3 dilate_H=1 dilate_W=1 stride_H=1 stride_W=1 pad_H_top=1 pad_H_bottom=1 pad_W_left=1 pad_W_right=1 bias
+ReLU name=337 bottom=336 top=337
+Convolution name=338 bottom=337 top=338 num_output=16 kernel_H=1 kernel_W=1 dilate_H=1 dilate_W=1 stride_H=1 stride_W=1 pad_H_top=0 pad_H_bottom=0 pad_W_left=0 pad_W_right=0 bias
+Permute name=339 bottom=338 top=339 order=0 order=2 order=3 order=1
+Reshape name=349 bottom=339 top=349 dim=1 dim=-1 dim=4 dim=1
+DepthwiseConvolution name=350 bottom=321 top=350 num_output=128 kernel_H=3 kernel_W=3 dilate_H=1 dilate_W=1 stride_H=2 stride_W=2 pad_H_top=1 pad_H_bottom=1 pad_W_left=1 pad_W_right=1 bias
+ReLU name=352 bottom=350 top=352
+Convolution name=353 bottom=352 top=353 num_output=256 kernel_H=1 kernel_W=1 dilate_H=1 dilate_W=1 stride_H=1 stride_W=1 pad_H_top=0 pad_H_bottom=0 pad_W_left=0 pad_W_right=0 bias
+ReLU name=355 bottom=353 top=355
+DepthwiseConvolution name=356 bottom=355 top=356 num_output=256 kernel_H=3 kernel_W=3 dilate_H=1 dilate_W=1 stride_H=1 stride_W=1 pad_H_top=1 pad_H_bottom=1 pad_W_left=1 pad_W_right=1 bias
+ReLU name=358 bottom=356 top=358
+Convolution name=359 bottom=358 top=359 num_output=256 kernel_H=1 kernel_W=1 dilate_H=1 dilate_W=1 stride_H=1 stride_W=1 pad_H_top=0 pad_H_bottom=0 pad_W_left=0 pad_W_right=0 bias
+ReLU name=361 bottom=359 top=361
+DepthwiseConvolution name=362 bottom=361 top=362 num_output=256 kernel_H=3 kernel_W=3 dilate_H=1 dilate_W=1 stride_H=1 stride_W=1 pad_H_top=1 pad_H_bottom=1 pad_W_left=1 pad_W_right=1 bias
+ReLU name=363 bottom=362 top=363
+Convolution name=364 bottom=363 top=364 num_output=8 kernel_H=1 kernel_W=1 dilate_H=1 dilate_W=1 stride_H=1 stride_W=1 pad_H_top=0 pad_H_bottom=0 pad_W_left=0 pad_W_right=0 bias
+Permute name=365 bottom=364 top=365 order=0 order=2 order=3 order=1
+Reshape name=375 bottom=365 top=375 dim=1 dim=-1 dim=2 dim=1
+DepthwiseConvolution name=376 bottom=361 top=376 num_output=256 kernel_H=3 kernel_W=3 dilate_H=1 dilate_W=1 stride_H=1 stride_W=1 pad_H_top=1 pad_H_bottom=1 pad_W_left=1 pad_W_right=1 bias
+ReLU name=377 bottom=376 top=377
+Convolution name=378 bottom=377 top=378 num_output=16 kernel_H=1 kernel_W=1 dilate_H=1 dilate_W=1 stride_H=1 stride_W=1 pad_H_top=0 pad_H_bottom=0 pad_W_left=0 pad_W_right=0 bias
+Permute name=379 bottom=378 top=379 order=0 order=2 order=3 order=1
+Reshape name=389 bottom=379 top=389 dim=1 dim=-1 dim=4 dim=1
+Convolution name=390 bottom=361 top=390 num_output=64 kernel_H=1 kernel_W=1 dilate_H=1 dilate_W=1 stride_H=1 stride_W=1 pad_H_top=0 pad_H_bottom=0 pad_W_left=0 pad_W_right=0 bias
+ReLU name=391 bottom=390 top=391
+DepthwiseConvolution name=392 bottom=391 top=392 num_output=64 kernel_H=3 kernel_W=3 dilate_H=1 dilate_W=1 stride_H=2 stride_W=2 pad_H_top=1 pad_H_bottom=1 pad_W_left=1 pad_W_right=1 bias
+ReLU name=393 bottom=392 top=393
+Convolution name=394 bottom=393 top=394 num_output=128 kernel_H=1 kernel_W=1 dilate_H=1 dilate_W=1 stride_H=1 stride_W=1 pad_H_top=0 pad_H_bottom=0 pad_W_left=0 pad_W_right=0 bias
+DepthwiseConvolution name=395 bottom=394 top=395 num_output=128 kernel_H=3 kernel_W=3 dilate_H=1 dilate_W=1 stride_H=1 stride_W=1 pad_H_top=1 pad_H_bottom=1 pad_W_left=1 pad_W_right=1 bias
+ReLU name=396 bottom=395 top=396
+Convolution name=397 bottom=396 top=397 num_output=8 kernel_H=1 kernel_W=1 dilate_H=1 dilate_W=1 stride_H=1 stride_W=1 pad_H_top=0 pad_H_bottom=0 pad_W_left=0 pad_W_right=0 bias
+Permute name=398 bottom=397 top=398 order=0 order=2 order=3 order=1
+Reshape name=408 bottom=398 top=408 dim=1 dim=-1 dim=2 dim=1
+DepthwiseConvolution name=409 bottom=394 top=409 num_output=128 kernel_H=3 kernel_W=3 dilate_H=1 dilate_W=1 stride_H=1 stride_W=1 pad_H_top=1 pad_H_bottom=1 pad_W_left=1 pad_W_right=1 bias
+ReLU name=410 bottom=409 top=410
+Convolution name=411 bottom=410 top=411 num_output=16 kernel_H=1 kernel_W=1 dilate_H=1 dilate_W=1 stride_H=1 stride_W=1 pad_H_top=0 pad_H_bottom=0 pad_W_left=0 pad_W_right=0 bias
+Permute name=412 bottom=411 top=412 order=0 order=2 order=3 order=1
+Reshape name=422 bottom=412 top=422 dim=1 dim=-1 dim=4 dim=1
+Convolution name=423 bottom=394 top=423 num_output=32 kernel_H=1 kernel_W=1 dilate_H=1 dilate_W=1 stride_H=1 stride_W=1 pad_H_top=0 pad_H_bottom=0 pad_W_left=0 pad_W_right=0 bias
+ReLU name=424 bottom=423 top=424
+DepthwiseConvolution name=425 bottom=424 top=425 num_output=32 kernel_H=3 kernel_W=3 dilate_H=1 dilate_W=1 stride_H=2 stride_W=2 pad_H_top=1 pad_H_bottom=1 pad_W_left=1 pad_W_right=1 bias
+ReLU name=426 bottom=425 top=426
+Convolution name=427 bottom=426 top=427 num_output=64 kernel_H=1 kernel_W=1 dilate_H=1 dilate_W=1 stride_H=1 stride_W=1 pad_H_top=0 pad_H_bottom=0 pad_W_left=0 pad_W_right=0 bias
+DepthwiseConvolution name=428 bottom=427 top=428 num_output=64 kernel_H=3 kernel_W=3 dilate_H=1 dilate_W=1 stride_H=1 stride_W=1 pad_H_top=1 pad_H_bottom=1 pad_W_left=1 pad_W_right=1 bias
+ReLU name=429 bottom=428 top=429
+Convolution name=430 bottom=429 top=430 num_output=8 kernel_H=1 kernel_W=1 dilate_H=1 dilate_W=1 stride_H=1 stride_W=1 pad_H_top=0 pad_H_bottom=0 pad_W_left=0 pad_W_right=0 bias
+Permute name=431 bottom=430 top=431 order=0 order=2 order=3 order=1
+Reshape name=441 bottom=431 top=441 dim=1 dim=-1 dim=2 dim=1
+DepthwiseConvolution name=442 bottom=427 top=442 num_output=64 kernel_H=3 kernel_W=3 dilate_H=1 dilate_W=1 stride_H=1 stride_W=1 pad_H_top=1 pad_H_bottom=1 pad_W_left=1 pad_W_right=1 bias
+ReLU name=443 bottom=442 top=443
+Convolution name=444 bottom=443 top=444 num_output=16 kernel_H=1 kernel_W=1 dilate_H=1 dilate_W=1 stride_H=1 stride_W=1 pad_H_top=0 pad_H_bottom=0 pad_W_left=0 pad_W_right=0 bias
+Permute name=445 bottom=444 top=445 order=0 order=2 order=3 order=1
+Reshape name=455 bottom=445 top=455 dim=1 dim=-1 dim=4 dim=1
+Convolution name=456 bottom=427 top=456 num_output=32 kernel_H=1 kernel_W=1 dilate_H=1 dilate_W=1 stride_H=1 stride_W=1 pad_H_top=0 pad_H_bottom=0 pad_W_left=0 pad_W_right=0 bias
+ReLU name=457 bottom=456 top=457
+DepthwiseConvolution name=458 bottom=457 top=458 num_output=32 kernel_H=3 kernel_W=3 dilate_H=1 dilate_W=1 stride_H=2 stride_W=2 pad_H_top=1 pad_H_bottom=1 pad_W_left=1 pad_W_right=1 bias
+ReLU name=459 bottom=458 top=459
+Convolution name=460 bottom=459 top=460 num_output=64 kernel_H=1 kernel_W=1 dilate_H=1 dilate_W=1 stride_H=1 stride_W=1 pad_H_top=0 pad_H_bottom=0 pad_W_left=0 pad_W_right=0 bias
+Convolution name=461 bottom=460 top=461 num_output=8 kernel_H=1 kernel_W=1 dilate_H=1 dilate_W=1 stride_H=1 stride_W=1 pad_H_top=0 pad_H_bottom=0 pad_W_left=0 pad_W_right=0 bias
+Permute name=462 bottom=461 top=462 order=0 order=2 order=3 order=1
+Reshape name=472 bottom=462 top=472 dim=1 dim=-1 dim=2 dim=1
+Convolution name=473 bottom=460 top=473 num_output=16 kernel_H=1 kernel_W=1 dilate_H=1 dilate_W=1 stride_H=1 stride_W=1 pad_H_top=0 pad_H_bottom=0 pad_W_left=0 pad_W_right=0 bias
+Permute name=474 bottom=473 top=474 order=0 order=2 order=3 order=1
+Reshape name=484 bottom=474 top=484 dim=1 dim=-1 dim=4 dim=1
+Concat name=cls bottom=283 bottom=335 bottom=375 bottom=408 bottom=441 bottom=472 top=cls axis=1
+Concat name=loc bottom=297 bottom=349 bottom=389 bottom=422 bottom=455 bottom=484 top=loc axis=1

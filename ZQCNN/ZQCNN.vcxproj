@@ -205,7 +205,9 @@
     <ClCompile Include="math\zq_sse_mathfun.c" />
     <ClCompile Include="ZQ_CNN_Forward_SSEUtils.cpp" />
     <ClCompile Include="ZQ_CNN_Forward_SSEUtils_NCHWC.cpp" />
+    <ClCompile Include="ZQ_CNN_LoadConfigUtils.cpp" />
     <ClCompile Include="ZQ_CNN_Net_NCHWC.cpp" />
+    <ClCompile Include="ZQ_CNN_SSDDetectorPytorch.cpp" />
     <ClCompile Include="ZQ_CNN_Tensor4D.cpp" />
     <ClCompile Include="ZQ_CNN_Tensor4D_NCHWC.cpp" />
   </ItemGroup>
@@ -295,6 +297,7 @@
     <ClInclude Include="ZQ_CNN_Forward_SSEUtils_NCHWC.h" />
     <ClInclude Include="ZQ_CNN_Layer.h" />
     <ClInclude Include="ZQ_CNN_Layer_NCHWC.h" />
+    <ClInclude Include="ZQ_CNN_LoadConfigUtils.h" />
     <ClInclude Include="ZQ_CNN_MouthDetector.h" />
     <ClInclude Include="ZQ_CNN_MTCNN_AspectRatio.h" />
     <ClInclude Include="ZQ_CNN_MTCNN_Interface.h" />
@@ -309,6 +312,8 @@
     <ClInclude Include="ZQ_CNN_PersonPose.h" />
     <ClInclude Include="ZQ_CNN_PersonPose2.h" />
     <ClInclude Include="ZQ_CNN_SSD.h" />
+    <ClInclude Include="ZQ_CNN_SSDDetectorUtils.h" />
+    <ClInclude Include="ZQ_CNN_SSDDetectorPytorch.h" />
     <ClInclude Include="ZQ_CNN_Tensor4D.h" />
     <ClInclude Include="ZQ_CNN_Tensor4D_Interface.h" />
     <ClInclude Include="ZQ_CNN_Tensor4D_NCHWC.h" />
