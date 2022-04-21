@@ -103,24 +103,152 @@ bool ZQ_CNN_SSDDetectorPytorch::Detect(const unsigned char* im_data, int im_widt
 		{
 			return false;
 		}
-		if (!runner.Forward(input1))
-		{
+		if (!_detect(input1, output))
 			return false;
-		}
 	}
 	else
 	{
-		if (!runner.Forward(input0))
-		{
+		if (!_detect(input0, output))
 			return false;
+	}
+
+	for (int i = 0; i < output.size(); i++)
+	{
+		output[i].xmin *= im_width;
+		output[i].ymin *= im_height;
+		output[i].xmax *= im_width;
+		output[i].ymax *= im_height;
+	}
+	return true;
+}
+
+bool ZQ_CNN_SSDDetectorPytorch::DetectMultiScale(const unsigned char* im_data, int im_width, int im_height, int widthStep, int min_size,
+	std::vector<ZQ_CNN_SSDDetectorUtils::BBox>& output)
+{
+	int min_ssd_det_size = GetMinSize();
+	if (min_ssd_det_size <= 0)
+		return false;
+	int in_c, in_w, in_h;
+	GetInputSize(in_h, in_w, in_c);
+
+	float scale = (float)min_ssd_det_size / min_size;
+	int scaled_width = im_width*scale;
+	int scaled_height = im_height*scale;
+	if (scaled_width <= in_w || scaled_height <= in_h)
+		return Detect(im_data, im_width, im_height, widthStep, output);
+
+	ZQ_CNN_Tensor4D_NHW_C_Align128bit input0, input1;
+	if (use_gray)
+	{
+		if (!input0.ConvertFromGray(im_data, im_width, im_height, widthStep, 0, 1))
+			return false;
+	}
+	else
+	{
+		if (!input0.ConvertFromBGR(im_data, im_width, im_height, widthStep, 0, 1))
+			return false;
+	}
+
+	int last_w = scaled_width;
+	int last_h = scaled_height;
+	int idx = 0;
+	std::vector<int> scaled_widths = { last_w };
+	std::vector<int> scaled_heights = { last_h };
+	while (last_w > in_w && last_h > in_h)
+	{
+		int need_w = last_w / 2;
+		int need_h = last_h / 2;
+		if (need_w < in_w || need_h < in_h)
+		{
+			idx++;
+			scaled_widths.push_back(in_w);
+			scaled_heights.push_back(in_h);
+			break;
 		}
+		else
+		{
+			idx++;
+			last_w = need_w;
+			last_h = need_h;
+			scaled_widths.push_back(need_w);
+			scaled_heights.push_back(need_h);
+		}
+	}
+	int count = idx;
+	std::vector<ZQ_CNN_Tensor4D_NHW_C_Align128bit> scaled_imgs(idx);
+	for (int i = 0; i < count; i++)
+	{
+		if (i == 0)
+		{
+			input0.ResizeBilinear(scaled_imgs[i], scaled_widths[i], scaled_heights[i], 0, 0);
+		}
+		else
+		{
+			scaled_imgs[i-1].ResizeBilinear(scaled_imgs[i], scaled_widths[i], scaled_heights[i], 0, 0);
+		}
+	}
+	
+	int overlap_size = __min(in_w*0.5, min_ssd_det_size * 1.5);
+	std::vector<ZQ_CNN_SSDDetectorUtils::BBox> all_bboxes;
+	
+	for (int i = 0; i < count; i++)
+	{
+		int cur_w = scaled_widths[i];
+		int cur_h = scaled_heights[i];
+		float scale_x = (float)im_width / cur_w;
+		float scale_y = (float)im_height / cur_h;
+		int block_w = ceil((float)(cur_w - in_w) / (in_w - overlap_size) + 1);
+		int block_h = ceil((float)(cur_h - in_h) / (in_h - overlap_size) + 1);
+		for (int bh = 0; bh < block_h; bh++)
+		{
+			for (int bw = 0; bw < block_w; bw++)
+			{
+				int rect_x = 0, rect_y = 0, rect_w = 0, rect_h = 0;
+				if (bw == block_w - 1)
+					rect_x = cur_w - in_w;
+				else
+					rect_x = bw * (in_w - overlap_size);
+				if (bh == block_h - 1)
+					rect_y = cur_h - in_h;
+				else
+					rect_y = bh * (in_h - overlap_size);
+				rect_w = in_w;
+				rect_h = in_h;
+				scaled_imgs[i].ROI(input1, rect_x, rect_y, rect_w, rect_h, 0, 0);
+				std::vector<ZQ_CNN_SSDDetectorUtils::BBox> cur_bboxes;
+				if (!_detect(input1, cur_bboxes))
+				{
+					printf("failed");
+					continue;
+				}
+				for (int k = 0; k < cur_bboxes.size(); k++)
+				{
+					cur_bboxes[k].xmin = (cur_bboxes[k].xmin*in_w + rect_x) * scale_x;
+					cur_bboxes[k].xmax = (cur_bboxes[k].xmax*in_w + rect_x) * scale_x;
+					cur_bboxes[k].ymin = (cur_bboxes[k].ymin*in_h + rect_y) * scale_y;
+					cur_bboxes[k].ymax = (cur_bboxes[k].ymax*in_h + rect_y) * scale_y;
+				}
+				all_bboxes.insert(all_bboxes.end(), cur_bboxes.begin(), cur_bboxes.end());
+			}
+		}
+	}
+	//printf("num_all_bboxes = %d\n", all_bboxes.size());
+	_hard_nms(all_bboxes, output, 0.5, -1, 10000);
+	return true;
+}
+
+bool ZQ_CNN_SSDDetectorPytorch::_detect(ZQ_CNN_Tensor4D& input, std::vector<ZQ_CNN_SSDDetectorUtils::BBox>& output)
+{
+	if (!runner.Forward(input))
+	{
+		return false;
 	}
 
 	const ZQ_CNN_Tensor4D* cls = runner.GetBlobByName("cls");
 	const ZQ_CNN_Tensor4D* loc = runner.GetBlobByName("loc");
 	if (cls == 0 || loc == 0)
 		return false;
-	
+
 	int cls_H = cls->GetH();
 	int cls_W = cls->GetW();
 	int cls_C = cls->GetC();
@@ -131,7 +259,7 @@ bool ZQ_CNN_SSDDetectorPytorch::Detect(const unsigned char* im_data, int im_widt
 	cls->ConvertToCompactNCHW(cls_data.data());
 	loc->ConvertToCompactNCHW(loc_data.data());
 
-	
+
 	if (show_debug_info)
 	{
 		printf("cls HxWxC= %d x %d x %d\n", cls_H, cls_W, cls_C);
@@ -149,17 +277,11 @@ bool ZQ_CNN_SSDDetectorPytorch::Detect(const unsigned char* im_data, int im_widt
 		return false;
 	}
 
+
 	ZQ_CNN_SSDDetectorPytorch::_post_process(loc_data.data(), cls_data.data(), prior_boxes.data(),
 		N, num_classes, center_variance, size_variance);
 	ZQ_CNN_SSDDetectorPytorch::_detection(loc_data.data(), cls_data.data(), N, num_classes, output, prob_thresh,
 		0.5f, iou_thresh, top_k, 0.5f, 200);
-	for (int i = 0; i < output.size(); i++)
-	{
-		output[i].xmin *= im_width;
-		output[i].ymin *= im_height;
-		output[i].xmax *= im_width;
-		output[i].ymax *= im_height;
-	}
 	return true;
 }
 

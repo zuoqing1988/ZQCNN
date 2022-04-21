@@ -24,8 +24,8 @@ int main(int argc, const char** argv)
 	}
 
 	ZQ_CNN_SSDDetectorPytorch ssd;
-	ssd.SetParam(0.5);
-	ssd.SetShowDebugInfo(true);
+	ssd.SetParam(0.8);
+	ssd.SetShowDebugInfo(false);
 	if (!ssd.LoadModel("model/model-face.zqparams", "model/model-face.nchwbin", "model/model-face.cfg"))
 	{
 		printf("failed to load model!\n");
@@ -46,7 +46,8 @@ int main(int argc, const char** argv)
 	}
 	
 	std::vector<ZQ_CNN_SSDDetectorUtils::BBox> output;
-	ssd.Detect(input_image.data, input_image.cols, input_image.rows, input_image.step[0], output);
+	//ssd.Detect(input_image.data, input_image.cols, input_image.rows, input_image.step[0], output);
+	ssd.DetectMultiScale(input_image.data, input_image.cols, input_image.rows, input_image.step[0], 20, output);
 
 	cv::Mat show_img;
 	if (image.channels() == 3)
@@ -55,7 +56,7 @@ int main(int argc, const char** argv)
 	{
 		cv::cvtColor(image, show_img, cv::COLOR_GRAY2BGR);
 	}
-
+	printf("%d faces found\n", output.size());
 	draw_objects(show_img, output);
 	cv::namedWindow("ssd output");
 	cv::imshow("ssd output", show_img);
@@ -77,8 +78,7 @@ void draw_objects(cv::Mat& image, const std::vector<ZQ_CNN_SSDDetectorUtils::BBo
 		int y1 = obj.ymin + 0.5;
 		int x2 = obj.xmax + 0.5;
 		int y2 = obj.ymax + 0.5;
-		fprintf(stderr, "%d = %.5f at (%d, %d) (%d, %d)\n", obj.class_id, obj.prob,
-			x1, y1, x2, y2);
+		//fprintf(stderr, "%d = %.5f at (%d, %d) (%d, %d)\n", obj.class_id, obj.prob, x1, y1, x2, y2);
 
 		cv::rectangle(image, cv::Point(x1, y1), cv::Point(x2, y2), cv::Scalar(255, 0, 0));
 

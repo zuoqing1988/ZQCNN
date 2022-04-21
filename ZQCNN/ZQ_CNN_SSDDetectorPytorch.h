@@ -19,6 +19,9 @@ namespace ZQ
 		bool Detect(const unsigned char* im_data, int im_width, int im_height, int widthStep,
 			std::vector<ZQ_CNN_SSDDetectorUtils::BBox>& output);
 
+		bool DetectMultiScale(const unsigned char* im_data, int im_width, int im_height, int widthStep, int min_size,
+			std::vector<ZQ_CNN_SSDDetectorUtils::BBox>& output);
+
 		void SetParam(float prob_thresh = 0.3f, float iou_thresh = 0.5f, int top_k = -1);
 
 		bool UseGray() const;
@@ -49,6 +52,8 @@ namespace ZQ
 
 	private:
 
+		bool _detect(ZQ_CNN_Tensor4D& input, std::vector<ZQ_CNN_SSDDetectorUtils::BBox>& output);
+		
 		bool _load_cfg(const char* cfg_file);
 
 		bool _load_cfg_from_buffer(const char* buffer, __int64 buffer_len);
