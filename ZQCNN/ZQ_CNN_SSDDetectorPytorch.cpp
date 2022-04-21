@@ -151,7 +151,7 @@ bool ZQ_CNN_SSDDetectorPytorch::DetectMultiScale(const unsigned char* im_data, i
 
 	int last_w = scaled_width;
 	int last_h = scaled_height;
-	int idx = 0;
+	int count = 1;
 	std::vector<int> scaled_widths = { last_w };
 	std::vector<int> scaled_heights = { last_h };
 	while (last_w > in_w && last_h > in_h)
@@ -160,22 +160,21 @@ bool ZQ_CNN_SSDDetectorPytorch::DetectMultiScale(const unsigned char* im_data, i
 		int need_h = last_h / 2;
 		if (need_w < in_w || need_h < in_h)
 		{
-			idx++;
+			count++;
 			scaled_widths.push_back(in_w);
 			scaled_heights.push_back(in_h);
 			break;
 		}
 		else
 		{
-			idx++;
+			count++;
 			last_w = need_w;
 			last_h = need_h;
 			scaled_widths.push_back(need_w);
 			scaled_heights.push_back(need_h);
 		}
 	}
-	int count = idx;
-	std::vector<ZQ_CNN_Tensor4D_NHW_C_Align128bit> scaled_imgs(idx);
+	std::vector<ZQ_CNN_Tensor4D_NHW_C_Align128bit> scaled_imgs(count);
 	for (int i = 0; i < count; i++)
 	{
 		if (i == 0)
@@ -195,6 +194,7 @@ bool ZQ_CNN_SSDDetectorPytorch::DetectMultiScale(const unsigned char* im_data, i
 	{
 		int cur_w = scaled_widths[i];
 		int cur_h = scaled_heights[i];
+		printf("cur_size(WXH) = %d x %d\n", cur_w, cur_h);
 		float scale_x = (float)im_width / cur_w;
 		float scale_y = (float)im_height / cur_h;
 		int block_w = ceil((float)(cur_w - in_w) / (in_w - overlap_size) + 1);
