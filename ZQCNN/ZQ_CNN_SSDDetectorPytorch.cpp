@@ -194,7 +194,7 @@ bool ZQ_CNN_SSDDetectorPytorch::DetectMultiScale(const unsigned char* im_data, i
 	{
 		int cur_w = scaled_widths[i];
 		int cur_h = scaled_heights[i];
-		printf("cur_size(WXH) = %d x %d\n", cur_w, cur_h);
+		//printf("cur_size(WXH) = %d x %d\n", cur_w, cur_h);
 		float scale_x = (float)im_width / cur_w;
 		float scale_y = (float)im_height / cur_h;
 		int block_w = ceil((float)(cur_w - in_w) / (in_w - overlap_size) + 1);
