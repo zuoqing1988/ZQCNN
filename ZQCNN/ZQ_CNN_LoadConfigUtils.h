@@ -5,6 +5,7 @@
 #include <string>
 #include <vector>
 #include <fstream>
+#include "ZQ_CNN_CompileConfig.h"
 
 namespace ZQ
 {
