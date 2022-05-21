@@ -783,7 +783,7 @@ namespace ZQ
 			int pp = p-1;
 			int iter = 0;
 			//double eps = pow( 2.0, -52.0 );
-			T eps = pow(2.0, -52.0);
+			T eps = pow(2.0, -30.0);
 
 			while( p > 0 )
 			{
