@@ -218,7 +218,7 @@ bool ZQ_CNN_SSDDetectorPytorch::DetectMultiScale(const unsigned char* im_data, i
 				std::vector<ZQ_CNN_SSDDetectorUtils::BBox> cur_bboxes;
 				if (!_detect(input1, cur_bboxes))
 				{
-					printf("failed");
+					printf("failed\n");
 					continue;
 				}
 				for (int k = 0; k < cur_bboxes.size(); k++)
