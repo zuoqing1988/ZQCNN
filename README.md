@@ -44,6 +44,10 @@ ZQCNN是一款推理框架，可以在windows, linux 和 arm-linux下运行。�
 
 **2022-08-18日更新: 优化了视频模式下人脸106点pipeline，新加入了一个头部姿态视线模型**
 
+demo程序在SampleVideoFaceDetection_Interface.cpp
+
+原始106点pb模型和头部姿态视线pb模型在TensorFlow_to_ZQCNN里
+
 **2022-04-20日更新: 支持pytorch-ssd-for-ZQCNN训练的SSD模型**
 
 **2020-05-08日更新: 添加文字识别示例SampleOCR**
