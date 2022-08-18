@@ -442,6 +442,7 @@ bool ZQ_CNN_Tensor4D_NHW_C_Align0::ResizeBilinearRect(ZQ_CNN_Tensor4D& dst, int 
 	return true;
 }
 
+
 bool ZQ_CNN_Tensor4D_NHW_C_Align0::ResizeNearestRect(ZQ_CNN_Tensor4D& dst, int dst_W, int dst_H, int dst_borderW, int dst_borderH,
 	int src_off_x, int src_off_y, int src_rect_w, int src_rect_h, SAMPLE_ALIGN_TYPE sample_align_type) const
 {

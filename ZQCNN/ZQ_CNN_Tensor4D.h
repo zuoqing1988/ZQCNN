@@ -350,6 +350,144 @@ namespace ZQ
 			return true;
 		}
 
+		virtual bool ConvertFromBGR2GRAY(const unsigned char* BGR_img, int _width, int _height, int _widthStep, const float mean_val = 127.5f, const float scale = 0.0078125f)
+		{
+			if (!ChangeSize(1, _height, _width, 1, 1, 1))
+				return false;
+
+			//static const float mean_val = 127.5f;
+			//static const float scale = 0.0078125f;
+			float* cur_row = firstPixelData;
+			const unsigned char* bgr_row = BGR_img;
+			for (int h = 0; h < H; h++, cur_row += widthStep, bgr_row += _widthStep)
+			{
+				float* cur_pix = cur_row;
+				const unsigned char* bgr_pix = bgr_row;
+				for (int w = 0; w < W; w++, cur_pix += pixelStep, bgr_pix += 3)
+				{
+					float gray_pix = bgr_pix[0] * 0.114f + bgr_pix[1] * 0.587f + bgr_pix[2] * 0.299f;
+					cur_pix[0] = (gray_pix - mean_val)*scale;
+				}
+			}
+
+
+			if (borderH > 0)
+			{
+				memset(firstPixelData - pixelStep*borderW - widthStep*borderH, 0, sizeof(float)*widthStep*borderH);
+				memset(firstPixelData - pixelStep*borderW + widthStep*H, 0, sizeof(float)*widthStep*borderH);
+			}
+			if (borderW > 0)
+			{
+				for (int h = 0; h < H; h++)
+				{
+					memset(firstPixelData - pixelStep*borderW + widthStep*h, 0, sizeof(float)*pixelStep*borderW);
+					memset(firstPixelData - pixelStep*(borderW << 1) + widthStep*(h + 1), 0, sizeof(float)*pixelStep*borderW);
+				}
+			}
+			return true;
+		}
+
+		virtual bool ConvertColor_BGR2GRAY(ZQ_CNN_Tensor4D& dst, int dst_borderW, int dst_borderH) const
+		{
+			if (C != 3)
+				return false;
+			if (dst.GetN() != N || dst.GetH() != H || dst.GetW() != W || dst.GetC() != 1)
+			{
+				if (!dst.ChangeSize(N, H, W, 1, __max(0, dst_borderH), __max(0, dst_borderW)))
+					return false;
+			}
+			else
+			{
+				if (dst_borderH >= 0 || dst_borderW >= 0)
+				{
+					if (!dst.ChangeSize(N, H, W, 1, dst_borderH, dst_borderW))
+						return false;
+				}
+			}
+			//printf("C = %d\n", dst.GetC());
+
+			int widthStep = GetWidthStep();
+			int pixelStep = GetPixelStep();
+			int dstWidthStep = dst.GetWidthStep();
+			int dstPixelStep = dst.GetPixelStep();
+			int dstSliceStep = dst.GetSliceStep();
+
+
+			float* dst_slice_ptr = dst.GetFirstPixelPtr();
+			const float* src_slice_ptr = GetFirstPixelPtr();
+			for (int n = 0; n < N; n++, dst_slice_ptr += dstSliceStep, src_slice_ptr += sliceStep)
+			{
+				float* dst_row_ptr = dst_slice_ptr;
+				const float* src_row_ptr = src_slice_ptr;
+				for (int h = 0; h < H; h++, dst_row_ptr += dstWidthStep, src_row_ptr += widthStep)
+				{
+					float* dst_pix_ptr = dst_row_ptr;
+					const float* src_pix_ptr = src_row_ptr;
+					for (int w = 0; w < W; w++, dst_pix_ptr += dstPixelStep, src_pix_ptr += pixelStep)
+					{
+						dst_pix_ptr[0] = src_pix_ptr[0] * 0.114f + src_pix_ptr[1] * 0.587f + src_pix_ptr[2] * 0.299f;
+					}
+				}
+
+				if (dst_borderH > 0)
+				{
+					memset(dst_slice_ptr - dstPixelStep*dst_borderW - dstWidthStep*dst_borderH, 0, sizeof(float)*dstWidthStep*dst_borderH);
+					memset(dst_slice_ptr - dstPixelStep*dst_borderW + dstWidthStep*dst_borderH, 0, sizeof(float)*dstWidthStep*dst_borderH);
+				}
+				if (dst_borderW > 0)
+				{
+					for (int h = 0; h < dst_borderH; h++)
+					{
+						memset(dst_slice_ptr - dstPixelStep*dst_borderW + dstWidthStep*h, 0, sizeof(float)*dstPixelStep*dst_borderW);
+						memset(dst_slice_ptr - dstPixelStep*(dst_borderW << 1) + dstWidthStep*(h + 1), 0, sizeof(float)*dstPixelStep*dst_borderW);
+					}
+				}
+			}
+			return true;
+		}
+
+		virtual bool MulScalar(float scalar) 
+		{
+			float* src_slice_ptr = GetFirstPixelPtr();
+			for (int n = 0; n < N; n++, src_slice_ptr += sliceStep)
+			{
+				float* src_row_ptr = src_slice_ptr;
+				for (int h = 0; h < H; h++, src_row_ptr += widthStep)
+				{
+					float* src_pix_ptr = src_row_ptr;
+					for (int w = 0; w < W; w++, src_pix_ptr += pixelStep)
+					{
+						for (int c = 0; c < C; c++)
+						{
+							src_pix_ptr[c] *= scalar;
+						}
+					}
+				}
+			}
+			return true;
+		}
+
+		virtual bool AddScalar(float scalar)
+		{
+			float* src_slice_ptr = GetFirstPixelPtr();
+			for (int n = 0; n < N; n++, src_slice_ptr += sliceStep)
+			{
+				float* src_row_ptr = src_slice_ptr;
+				for (int h = 0; h < H; h++, src_row_ptr += widthStep)
+				{
+					float* src_pix_ptr = src_row_ptr;
+					for (int w = 0; w < W; w++, src_pix_ptr += pixelStep)
+					{
+						for (int c = 0; c < C; c++)
+						{
+							src_pix_ptr[c] += scalar;
+						}
+					}
+				}
+			}
+			return true;
+		}
+
 		virtual bool ConvertFromGray(const unsigned char* gray_img, int _width, int _height, int _widthStep, const float mean_val = 127.5f, const float scale = 0.0078125f)
 		{
 			if (!ChangeSize(1, _height, _width, 1, 1, 1))
@@ -723,6 +861,7 @@ namespace ZQ
 		~ZQ_CNN_Tensor4D_NHW_C_Align0();
 		void Swap(ZQ_CNN_Tensor4D_NHW_C_Align0& other);
 
+		
 		bool ResizeNearestRect(ZQ_CNN_Tensor4D& dst, int dst_W, int dst_H, int dst_borderW, int dst_borderH,
 			int src_off_x, int src_off_y, int src_rect_w, int src_rect_h, SAMPLE_ALIGN_TYPE sample_align_type = SAMPLE_ALIGN_CENTER) const;
 

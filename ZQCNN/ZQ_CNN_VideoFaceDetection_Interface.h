@@ -6,6 +6,7 @@
 #include "ZQ_CNN_BBoxUtils.h"
 #include "ZQ_CNN_MTCNN_Interface.h"
 #include "ZQ_CNN_CascadeOnet_Interface.h"
+#include "ZQ_CNN_FaceCropUtils.h"
 #include "ZQlib/ZQ_SVD.h"
 #include <float.h>
 #include <vector>
@@ -45,14 +46,18 @@ namespace ZQ
 		int thread_num;
 		ZQ_CNN_MTCNN_Interface<ZQ_CNN_Net_Interface, ZQ_CNN_Tensor4D_Interface, ZQ_CNN_Tensor4D_Interface_Base> mtcnn;
 		std::vector<ZQ_CNN_CascadeOnet_Interface<ZQ_CNN_Net_Interface, ZQ_CNN_Tensor4D_Interface, ZQ_CNN_Tensor4D_Interface_Base>> cascade_Onets;
+		std::vector<ZQ_CNN_Net_Interface> onets;
 		bool has_lnet106;
 		std::vector<ZQ_CNN_Net_Interface> lnets106;
+		bool has_headposegaze;
+		std::vector<ZQ_CNN_Net_Interface> headposegaze_nets;
 		int key_cooldown;
 		int cur_key_cooldown;
 		std::vector<std::vector<ZQ_CNN_BBox106> > trace;
 		std::vector<ZQ_CNN_BBox106> backup_results;
 		ZQ_CNN_Tensor4D_Interface input, lnet106_image;
 		int lnet106_size;
+		int onet_size;
 	public:
 		void TurnOnShowDebugInfo() { show_debug_info = true; }
 		void TurnOffShowDebugInfo() { show_debug_info = false; }
@@ -61,7 +66,8 @@ namespace ZQ
 
 		bool Init(const string& pnet_param, const string& pnet_model, const string& rnet_param, const string& rnet_model,
 			const string& onet_param, const string& onet_model, int thread_num = 1,
-			bool has_lnet106 = false, const string& lnet106_param = "", const std::string& lnet106_model = "")
+			bool has_lnet106 = false, const string& lnet106_param = "", const std::string& lnet106_model = "",
+			bool has_headposegaze = false, const string& headposegaze_param = "", const std::string& headposegaze_model = "")
 		{
 			if (!mtcnn.Init(pnet_param, pnet_model, rnet_param, rnet_model, onet_param, onet_model, thread_num, has_lnet106, lnet106_param, lnet106_model))
 				return false;
@@ -72,6 +78,16 @@ namespace ZQ
 				if (!cascade_Onets[i].Init(onet_param, onet_model, onet_param, onet_model, onet_param, onet_model))
 					return false;
 			}
+			onets.resize(this->thread_num);
+			for (int i = 0; i < onets.size(); i++)
+			{
+				if (!onets[i].LoadFrom(onet_param, onet_model, true, 1e-9, true))
+					return false;
+			}
+			int C, H, W;
+			onets[0].GetInputDim(C, H, W);
+			onet_size = H;
+			
 			this->has_lnet106 = has_lnet106;
 			if (has_lnet106)
 			{
@@ -85,6 +101,17 @@ namespace ZQ
 				lnets106[0].GetInputDim(C, H, W);
 				lnet106_size = H;
 			}
+
+			this->has_headposegaze = has_headposegaze;
+			if (has_headposegaze)
+			{
+				headposegaze_nets.resize(this->thread_num);
+				for (int i = 0; i < headposegaze_nets.size(); i++)
+				{
+					if (!headposegaze_nets[i].LoadFrom(headposegaze_param, headposegaze_model, true, 1e-9, true))
+						return false;
+				}
+			}
 			return true;
 		}
 
@@ -94,7 +121,7 @@ namespace ZQ
 		{
 			this->key_cooldown = key_cooldown;
 			mtcnn.SetPara(w, h, min_face_size, pthresh, rthresh, othresh, nms_pthresh, nms_rthresh, nms_othresh,
-				scale_factor, pnet_overlap_thresh_count, pnet_size, pnet_stride, true, true, 1.0);
+				scale_factor, pnet_overlap_thresh_count, pnet_size, pnet_stride, true, 1.0);
 			this->othresh = othresh;
 		}
 
@@ -123,8 +150,10 @@ namespace ZQ
 
 			if (is_first_frame)
 			{
+				mtcnn.EnableLnet(true);
 				if (!mtcnn.Find106(input, results))
 					return false;
+				_refine_landmark106(results, true);
 				_recompute_bbox(results);
 				int cur_box_num = results.size();
 				trace.clear();
@@ -137,49 +166,124 @@ namespace ZQ
 			}
 			else
 			{
-				/**********   Stage 1: detect around the old positions         ************/
-
-				std::vector<ZQ_CNN_BBox> boxes;
-				std::vector<ZQ_CNN_BBox> last_boxes(trace.size());
-				for (int i = 0; i < trace.size(); i++)
-				{
-					last_boxes[i].col1 = trace[i][0].col1;
-					last_boxes[i].col2 = trace[i][0].col2;
-					last_boxes[i].row1 = trace[i][0].row1;
-					last_boxes[i].row2 = trace[i][0].row2;
-					last_boxes[i].exist = true;
-				}
-				ZQ_CNN_BBoxUtils::_square_bbox(last_boxes, input.GetW(), input.GetH());
+				std::vector<ZQ_CNN_BBox106> results106_part1, results106_part2;
 				std::vector<int> good_idx;
 				std::vector<ZQ_CNN_OrderScore> orders;
-				std::vector<ZQ_CNN_BBox> tmp_boxes;
+				std::vector<ZQ_CNN_BBox106> tmp_boxes;
 				ZQ_CNN_OrderScore tmp_order;
 				int ori_count = 0;
-				for (int i = 0; i < last_boxes.size(); i++)
+				//static int fr_id = 0;
+				//fr_id++;
+				/**********   Stage 1: detect around the old positions         ************/
+				const double m_pi = 4 * atan(1.0);
+				std::vector<ZQ_CNN_BBox106> boxes;
+				std::vector<ZQ_CNN_BBox106> last_boxes(trace.size());
+				std::vector<ZQ_CNN_Tensor4D_Interface> task_images(trace.size());
+				std::vector<ZQ_CNN_Tensor4D_Interface> task_images_gray(trace.size());
+				for (int i = 0; i < trace.size(); i++)
 				{
-					int nIters = 3;
-					if (!cascade_Onets[0].Find(input, last_boxes[i].col1, last_boxes[i].row1, last_boxes[i].col2, last_boxes[i].row2, tmp_boxes, nIters))
-						return false;
-					if (tmp_boxes[nIters - 1].score >= othresh)
+					/**************** First: L106 ******************/
+
+					float last_rot = _get_rot_of_landmark106(trace[i][0].ppoint, m_pi);
+					float cx, cy, min_x, max_x, min_y, max_y;
+					_get_landmark106_info(trace[i][0].ppoint, cx, cy, min_x, max_x, min_y, max_y);
+					float cur_w = max_x - min_x;
+					float cur_h = max_y - min_y;
+					float cur_size = 1.15*__max(cur_w, cur_h);
+
+					std::vector<float> map_x, map_y;
+					_compute_map(cx, cy, last_rot, cur_size, cur_size, lnet106_size, lnet106_size, map_x, map_y);
+
+					input.Remap(task_images[0], lnet106_size, lnet106_size, 0, 0, map_x, map_y, true, 0);
+
+					task_images[0].ConvertColor_BGR2GRAY(task_images_gray[0], 1, 1);
+					lnets106[0].Forward(task_images_gray[0]);
+
+					ZQ_CNN_BBox106 tmp_box106;
+					//const ZQ_CNN_Tensor4D_Interface_Base* keyPoint = lnets106[0].GetBlobByName("conv6-3");
+					const ZQ_CNN_Tensor4D_Interface_Base* keyPoint = lnets106[0].GetBlobByName("landmark_fc2/BiasAdd");
+					const float* keyPoint_ptr = keyPoint->GetFirstPixelPtr();
+					int keypoint_num = keyPoint->GetC() / 2;
+					int keyPoint_sliceStep = keyPoint->GetSliceStep();
+					float cos_rot = cos(last_rot);
+					float sin_rot = sin(last_rot);
+					for (int num = 0; num < keypoint_num; num++)
 					{
-						good_idx.push_back(i);
-						tmp_boxes[nIters - 1].exist = true;
-						tmp_boxes[nIters - 1].score = 2.0;
-						tmp_order.score = 2.0;
-						tmp_order.oriOrder = ori_count++;
-						boxes.push_back(tmp_boxes[nIters - 1]);
-						orders.push_back(tmp_order);
+						float tmp_w = cur_size * (keyPoint_ptr[num * 2] - 0.5);
+						float tmp_h = cur_size * (keyPoint_ptr[num * 2 + 1] - 0.5);
+						tmp_box106.ppoint[num * 2] = cx + tmp_w*cos_rot + tmp_h*sin_rot;
+						tmp_box106.ppoint[num * 2 + 1] = cy - tmp_w*sin_rot + tmp_h*cos_rot;
 					}
+
+					/**************** Second: Onet ******************/
+					float rot1 = _get_rot_of_landmark106(tmp_box106.ppoint, m_pi);
+					_get_landmark106_info(tmp_box106.ppoint, cx, cy, min_x, max_x, min_y, max_y);
+					cur_w = max_x - min_x;
+					cur_h = max_y - min_y;
+					cur_size = 1.1*__max(cur_w, cur_h);
+
+					_compute_map(cx, cy, rot1, cur_size, cur_size, onet_size, onet_size, map_x, map_y);
+
+					input.Remap(task_images[0], onet_size, onet_size, 0, 0, map_x, map_y, true, 0);
+
+					onets[0].Forward(task_images[0]);
+
+					const ZQ_CNN_Tensor4D_Interface_Base* prob = onets[0].GetBlobByName("prob1");
+					const float* prob_ptr = prob->GetFirstPixelPtr();
+
+
+					if (prob_ptr[1] < __max(0.2, othresh - 0.3))
+					{
+						printf("here:lost %f\n", prob_ptr[1]);
+						continue;
+					}
+
+					ZQ_CNN_BBox106 tmp_box;
+					_get_landmark106_info(tmp_box106.ppoint, cx, cy, min_x, max_x, min_y, max_y);
+					cur_w = 1.1*(max_x - min_x);
+					cur_h = 1.1*(max_y - min_y);
+					tmp_box.col1 = cx - 0.5*cur_w;
+					tmp_box.col2 = cx + 0.5*cur_w;
+					tmp_box.row1 = cy - 0.5*cur_h;
+					tmp_box.row2 = cy + 0.5*cur_h;
+					tmp_box.score = 2.0;
+					tmp_box.exist = true;
+					tmp_box106.col1 = tmp_box.col1;
+					tmp_box106.col2 = tmp_box.col2;
+					tmp_box106.row1 = tmp_box.row1;
+					tmp_box106.row2 = tmp_box.row2;
+					tmp_box106.score = tmp_box.score;
+					tmp_box106.exist = tmp_box.exist;
+					good_idx.push_back(i);
+					tmp_order.score = 2.0;
+					tmp_order.oriOrder = ori_count++;
+					boxes.push_back(tmp_box);
+					orders.push_back(tmp_order);
+					results106_part1.push_back(tmp_box106);
 				}
 
+
 				/**********   Stage 2: detect globally         ************/
-				if (cur_key_cooldown <= 0)
+				if (cur_key_cooldown <= 0 || results106_part1.size() == 0)
 				{
-					std::vector<ZQ_CNN_BBox> tmp_boxes;
+					std::vector<ZQ_CNN_BBox106> tmp_boxes;
 					cur_key_cooldown = key_cooldown;
-					mtcnn.Find(input, tmp_boxes);
+					mtcnn.Find106(input, tmp_boxes);
 					for (int j = 0; j < tmp_boxes.size(); j++)
 					{
+						ZQ_CNN_BBox106& cur_box = tmp_boxes[j];
+						float ori_area = (cur_box.col2 - cur_box.col1) * (cur_box.row2 - cur_box.row1);
+						float valid_col1 = __max(0, cur_box.col1);
+						float valid_col2 = __min(_width - 1, cur_box.col2);
+						float valid_row1 = __max(0, cur_box.row1);
+						float valid_row2 = __min(_height - 1, cur_box.row2);
+						float valid_area = (valid_col2 - valid_col1) * (valid_row2 - valid_row1);
+						if (valid_area < ori_area*0.95)
+						{
+							//printf("here\n");
+							continue;
+						}
+						//printf("here:global\n");
 						tmp_order.oriOrder = ori_count++;
 						tmp_order.score = tmp_boxes[j].score;
 						boxes.push_back(tmp_boxes[j]);
@@ -190,20 +294,34 @@ namespace ZQ
 
 				/**********   Stage 3: nms         ************/
 				std::vector<int> keep_orders;
-				_nms(boxes, orders, keep_orders, 0.5, "Union");
-
+				_nms(boxes, orders, keep_orders, 0.3, "Min");
 				std::vector<int> old_good_idx = good_idx;
-				std::vector<ZQ_CNN_BBox> old_boxes = boxes;
+				std::vector<ZQ_CNN_BBox106> old_boxes = boxes;
 				good_idx.clear();
 				boxes.clear();
 				for (int i = 0; i < keep_orders.size(); i++)
 				{
 					good_idx.push_back(old_good_idx[keep_orders[i]]);
-					boxes.push_back(old_boxes[keep_orders[i]]);
+					if (keep_orders[i] >= results106_part1.size())
+						boxes.push_back(old_boxes[keep_orders[i]]);
 				}
 
-				/**********   Stage 4: get 106 landmark         ************/
-				_Lnet106_stage(boxes, results);
+				/**********   Stage 4: get 106 & 240 landmark         ************/
+				_Lnet106_stage(boxes, results106_part2);
+				if (true)
+				{
+					results106_part1.insert(results106_part1.end(), results106_part2.begin(), results106_part2.end());
+
+					_refine_landmark106(results106_part1, true);
+				}
+				else
+				{
+					_refine_landmark106(results106_part2, true);
+					results106_part1.insert(results106_part1.end(), results106_part2.begin(), results106_part2.end());
+				}
+
+				results.swap(results106_part1);
+
 
 				/**********   Stage 5: filtering        ************/
 				int cur_box_num = results.size();
@@ -224,11 +342,14 @@ namespace ZQ
 
 				if (enable_iou_filter)
 				{
-					_filtering_iou(results, good_idx, backup_results);
+					//_filtering_iou(results, good_idx, backup_results);
 				}
 
 				/**********   Stage 6: update bbox        ************/
 				_recompute_bbox(results);
+
+				/**********   Stage 7: compute headposegaze     ************/
+				_headposegaze_stage(results, has_headposegaze);
 
 				if (results.size() == 0)
 					is_first_frame = true;
@@ -245,10 +366,10 @@ namespace ZQ
 			return lsh.score < rsh.score;
 		}
 
-		static void _nms(const std::vector<ZQ_CNN_BBox> &ori_boundingBox, const std::vector<ZQ_CNN_OrderScore> &orderScore, std::vector<int>& keep_orders,
+		static void _nms(const std::vector<ZQ_CNN_BBox106> &ori_boundingBox, const std::vector<ZQ_CNN_OrderScore> &orderScore, std::vector<int>& keep_orders,
 			const float overlap_threshold, const std::string& modelname = "Union")
 		{
-			std::vector<ZQ_CNN_BBox> boundingBox = ori_boundingBox;
+			std::vector<ZQ_CNN_BBox106> boundingBox = ori_boundingBox;
 			std::vector<ZQ_CNN_OrderScore> bboxScore = orderScore;
 			if (boundingBox.empty() || overlap_threshold >= 1.0)
 			{
@@ -327,11 +448,11 @@ namespace ZQ
 			keep_orders = heros;
 		}
 
-		bool _Lnet106_stage(std::vector<ZQ_CNN_BBox>& thirdBbox, std::vector<ZQ_CNN_BBox106>& resultBbox)
+		bool _Lnet106_stage(std::vector<ZQ_CNN_BBox106>& thirdBbox, std::vector<ZQ_CNN_BBox106>& resultBbox)
 		{
 			double t4 = omp_get_wtime();
-			std::vector<ZQ_CNN_BBox> fourthBbox;
-			std::vector<ZQ_CNN_BBox>::iterator it = thirdBbox.begin();
+			std::vector<ZQ_CNN_BBox106> fourthBbox;
+			std::vector<ZQ_CNN_BBox106>::iterator it = thirdBbox.begin();
 			std::vector<int> src_off_x, src_off_y, src_rect_w, src_rect_h;
 			int l_count = 0;
 			for (; it != thirdBbox.end(); it++)
@@ -347,7 +468,7 @@ namespace ZQ
 					fourthBbox.push_back(*it);
 				}
 			}
-			std::vector<ZQ_CNN_BBox> copy_fourthBbox = fourthBbox;
+			std::vector<ZQ_CNN_BBox106> copy_fourthBbox = fourthBbox;
 			ZQ_CNN_BBoxUtils::_square_bbox(copy_fourthBbox, input.GetW(), input.GetH());
 			for (it = copy_fourthBbox.begin(); it != copy_fourthBbox.end(); ++it)
 			{
@@ -371,6 +492,7 @@ namespace ZQ
 			}
 
 			std::vector<ZQ_CNN_Tensor4D_Interface> task_lnet_images(need_thread_num);
+			std::vector<ZQ_CNN_Tensor4D_Interface> task_lnet_images_gray(need_thread_num);
 			std::vector<std::vector<int> > task_src_off_x(need_thread_num);
 			std::vector<std::vector<int> > task_src_off_y(need_thread_num);
 			std::vector<std::vector<int> > task_src_rect_w(need_thread_num);
@@ -427,10 +549,17 @@ namespace ZQ
 				{
 					continue;
 				}
+				if (!task_lnet_images[pp].ConvertColor_BGR2GRAY(task_lnet_images_gray[pp], 1, 1))
+				{
+					continue;
+				}
+				task_lnet_images_gray[pp].MulScalar(128.0f);
+				task_lnet_images_gray[pp].AddScalar(127.5f);
 				double t31 = omp_get_wtime();
-				lnets106[0].Forward(task_lnet_images[pp]);
+				lnets106[0].Forward(task_lnet_images_gray[pp]);
 				double t32 = omp_get_wtime();
-				const ZQ_CNN_Tensor4D_Interface_Base* keyPoint = lnets106[0].GetBlobByName("conv6-3");
+				//const ZQ_CNN_Tensor4D_Interface_Base* keyPoint = lnets106[0].GetBlobByName("conv6-3");
+				const ZQ_CNN_Tensor4D_Interface_Base* keyPoint = lnets106[0].GetBlobByName("landmark_fc2/BiasAdd");
 				const float* keyPoint_ptr = keyPoint->GetFirstPixelPtr();
 				int keypoint_num = keyPoint->GetC() / 2;
 				int keyPoint_sliceStep = keyPoint->GetSliceStep();
@@ -480,6 +609,122 @@ namespace ZQ
 			return true;
 		}
 
+		bool _refine_landmark106(std::vector<ZQ_CNN_BBox106>& resultBbox, bool refine_lnet106)
+		{
+			if (!refine_lnet106)
+				return true;
+			const double m_pi = atan(1.0) * 4;
+			double t1 = omp_get_wtime();
+			std::vector<ZQ_CNN_Tensor4D_Interface> task_lnet_images(thread_num);
+			std::vector<ZQ_CNN_Tensor4D_Interface> task_lnet_images_gray(thread_num);
+			for (int pp = 0; pp < resultBbox.size(); pp++)
+			{
+				float min_x, max_x, min_y, max_y, cx, cy;
+				_get_landmark106_info(resultBbox[pp].ppoint, cx, cy, min_x, max_x, min_y, max_y);
+				float cur_w = max_x - min_x;
+				float cur_h = max_y - min_y;
+				float cur_size = 1.2*__max(cur_w, cur_h);
+				float half_size = ceil(0.5*cur_size);
+
+				//get rot of 106 landmark
+				float cur_rot = _get_rot_of_landmark106(resultBbox[pp].ppoint, m_pi);
+
+				// compute map
+				std::vector<float> map_x, map_y;
+				_compute_map(cx, cy, cur_rot, cur_size, cur_size, lnet106_size, lnet106_size, map_x, map_y);
+
+				if (!input.Remap(task_lnet_images[0], lnet106_size, lnet106_size, 0, 0, map_x, map_y, true, 0))
+				{
+					continue;
+				}
+				task_lnet_images[0].ConvertColor_BGR2GRAY(task_lnet_images_gray[0], 1, 1);
+				task_lnet_images_gray[0].MulScalar(128.0f);
+				task_lnet_images_gray[0].AddScalar(127.5f);
+				lnets106[0].Forward(task_lnet_images_gray[0]);
+				//const ZQ_CNN_Tensor4D* keyPoint = lnets106[0].GetBlobByName("conv6-3");
+				const ZQ_CNN_Tensor4D_Interface_Base* keyPoint = lnets106[0].GetBlobByName("landmark_fc2/BiasAdd");
+				const float* keyPoint_ptr = keyPoint->GetFirstPixelPtr();
+				int keypoint_num = keyPoint->GetC() / 2;
+				int keyPoint_sliceStep = keyPoint->GetSliceStep();
+
+				float cos_rot = cos(cur_rot);
+				float sin_rot = sin(cur_rot);
+				for (int num = 0; num < keypoint_num; num++)
+				{
+					float tmp_w = cur_size * (keyPoint_ptr[num * 2] - 0.5);
+					float tmp_h = cur_size * (keyPoint_ptr[num * 2 + 1] - 0.5);
+					resultBbox[pp].ppoint[num * 2] = cx + tmp_w*cos_rot + tmp_h*sin_rot;
+					resultBbox[pp].ppoint[num * 2 + 1] = cy - tmp_w*sin_rot + tmp_h*cos_rot;
+				}
+			}
+
+			double t2 = omp_get_wtime();
+			if (show_debug_info)
+				printf("run refine_Lnet [%d] times, cost %.3f ms\n", resultBbox.size(), 1000 * (t2 - t1));
+
+			return true;
+		}
+
+		bool _headposegaze_stage(std::vector<ZQ_CNN_BBox106>& resultBbox, bool enable_headposegaze)
+		{
+			if (!enable_headposegaze)
+			{
+				for (int i = 0; i < resultBbox.size(); i++)
+					resultBbox[i].has_headposegaze = false;
+				return true;
+			}
+			double t1 = omp_get_wtime();
+			std::vector<ZQ_CNN_Tensor4D_Interface> task_hpg_images(thread_num);
+			std::vector<ZQ_CNN_Tensor4D_Interface> task_hpg_images_gray(thread_num);
+			for (int pp = 0; pp < resultBbox.size(); pp++)
+			{
+				const float* cur_pts = resultBbox[pp].ppoint;
+				//5 points
+				float face5pts[10] =
+				{
+					0.5f*(cur_pts[72 * 2 + 0] + cur_pts[73 * 2 + 0]), //left eye cx (left of image)
+					0.5f*(cur_pts[72 * 2 + 1] + cur_pts[73 * 2 + 1]), //left eye cy (left of image)
+					0.5f*(cur_pts[75 * 2 + 0] + cur_pts[76 * 2 + 0]), //right eye cx (right of image)
+					0.5f*(cur_pts[75 * 2 + 1] + cur_pts[76 * 2 + 1]), //right eye cy (right of image)
+					cur_pts[46 * 2 + 0],		//nose x
+					cur_pts[46 * 2 + 1],		//nose y
+					cur_pts[84 * 2 + 0],	//left mouth corner x (left of image)
+					cur_pts[84 * 2 + 1],	//left mouth corner y (left of image)
+					cur_pts[90 * 2 + 0],	//right mouth corner x (right of image)
+					cur_pts[90 * 2 + 1]		//right mouth corner y (right of image)
+				};
+				float transform[6];
+				
+				ZQ_CNN_FaceCropUtils::CropImage_112x112_translate_scale_roll(input, face5pts, task_hpg_images[pp], transform, -1);
+
+				float sc = transform[0];
+				float ss = transform[1];
+				float tx = transform[2];
+				float ty = transform[5];
+				float rot = atan2(ss, sc);
+				resultBbox[pp].center_and_rot[0] = tx;
+				resultBbox[pp].center_and_rot[1] = ty;
+				resultBbox[pp].center_and_rot[2] = rot;
+
+				task_hpg_images[pp].ConvertColor_BGR2GRAY(task_hpg_images_gray[pp],1,1);
+				task_hpg_images_gray[pp].MulScalar(128.0f);
+				task_hpg_images_gray[pp].AddScalar(127.5f);
+				
+				headposegaze_nets[0].Forward(task_hpg_images_gray[0]);
+				const ZQ_CNN_Tensor4D_Interface_Base* hpg = headposegaze_nets[0].GetBlobByName("headposegaze_fc3/BiasAdd");
+				const float* hpg_ptr = hpg->GetFirstPixelPtr();
+				memcpy(resultBbox[pp].headposegaze, hpg_ptr, sizeof(float) * 9);
+				resultBbox[pp].has_headposegaze = true;
+
+			}
+
+			double t2 = omp_get_wtime();
+			if (show_debug_info)
+				printf("run headposegaze_stage [%d] times, cost %.3f ms\n", resultBbox.size(), 1000 * (t2 - t1));
+
+			return true;
+		}
+
 		void _filtering(const std::vector<std::vector<ZQ_CNN_BBox106> >& trace, std::vector<ZQ_CNN_BBox106>& results)
 		{
 			float reproj_coords[212];
@@ -523,8 +768,8 @@ namespace ZQ
 					if (ori_dis_L2 < real_ori_thresh_L2 && ori_dis_L1 < real_ori_thresh_L1 && ori_dis_Linf < real_ori_thresh_Linf
 						&& reproj_err_L2 < real_thresh_L2 && reproj_err_L1 < real_thresh_L1 && reproj_err_Linf < real_thresh_Linf)
 					{
-						printf("[%d,%d]reproj_err_ratio = %5.2f,%5.2f,%5.2f\n", i, j, reproj_err_L2 / real_thresh_L2,
-							reproj_err_L1 / real_thresh_L1, reproj_err_Linf / real_thresh_Linf);
+						//printf("[%d,%d]reproj_err_ratio = %5.2f,%5.2f,%5.2f\n", i, j, reproj_err_L2 / real_thresh_L2,
+						//	reproj_err_L1 / real_thresh_L1, reproj_err_Linf / real_thresh_Linf);
 						for (int j = 0; j < 212; j++)
 						{
 							results[i].ppoint[j] += last_box.ppoint[j] * last_weight;
@@ -661,6 +906,56 @@ namespace ZQ
 				boxes[i].row1 = ymin;
 				boxes[i].row2 = ymax;
 				boxes[i].area = (xmax - xmin)*(ymax - ymin);
+			}
+		}
+
+		static float _get_rot_of_landmark106(const float* pp, double m_pi)
+		{
+			float eye_cx = 0.25*(pp[52 * 2 + 0] + pp[55 * 2 + 0] + pp[58 * 2 + 0] + pp[61 * 2 + 0]);
+			float eye_cy = 0.25*(pp[52 * 2 + 1] + pp[55 * 2 + 1] + pp[58 * 2 + 1] + pp[61 * 2 + 1]);
+			float mouth_cx = 0.25*(pp[84 * 2 + 0] + pp[96 * 2 + 0] + pp[100 * 2 + 0] + pp[90 * 2 + 0]);
+			float mouth_cy = 0.25*(pp[84 * 2 + 1] + pp[96 * 2 + 1] + pp[100 * 2 + 1] + pp[90 * 2 + 1]);
+			float dir_x = mouth_cx - eye_cx;
+			float dir_y = mouth_cy - eye_cy;
+			float init_rot = 0.5*m_pi - atan2(dir_y, dir_x);
+			return init_rot;
+		}
+
+		static void _get_landmark106_info(const float* pp, float& cx, float& cy, float& min_x, float& max_x, float& min_y, float& max_y)
+		{
+			min_x = FLT_MAX;
+			min_y = FLT_MAX;
+			max_x = -FLT_MAX;
+			max_y = -FLT_MAX;
+			for (int i = 0; i < 106; i++)
+			{
+				min_x = __min(min_x, pp[i * 2]);
+				max_x = __max(max_x, pp[i * 2]);
+				min_y = __min(min_y, pp[i * 2 + 1]);
+				max_y = __max(max_y, pp[i * 2 + 1]);
+			}
+			cx = 0.5*(min_x + max_x);
+			cy = 0.5*(min_y + max_y);
+		}
+
+		static void _compute_map(float cx, float cy, float rot, float cur_size_w, float cur_size_h,
+			int dst_W, int dst_H, std::vector<float>& map_x, std::vector<float>& map_y)
+		{
+			map_x.resize(dst_H*dst_W);
+			map_y.resize(dst_H*dst_W);
+			float half_net_size_W = (dst_W - 1) / 2.0;
+			float half_net_size_H = (dst_H - 1) / 2.0;
+			float sin_rot = sin(rot);
+			float cos_rot = cos(rot);
+			float step_w = cur_size_w / dst_W;
+			float step_h = cur_size_h / dst_H;
+			for (int h = 0; h < dst_H; h++)
+			{
+				for (int w = 0; w < dst_W; w++)
+				{
+					map_x[h*dst_W + w] = cx + (w - half_net_size_W)*step_w*cos_rot + (h - half_net_size_H)*step_h*sin_rot;
+					map_y[h*dst_W + w] = cy - (w - half_net_size_W)*step_w*sin_rot + (h - half_net_size_H)*step_h*cos_rot;
+				}
 			}
 		}
 	};

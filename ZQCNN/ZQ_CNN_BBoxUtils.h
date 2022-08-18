@@ -236,6 +236,40 @@ namespace ZQ
 			}
 		}
 
+		static void _square_bbox(std::vector<ZQ_CNN_BBox106> &vecBbox, const int width, const int height)
+		{
+			float bbw = 0, bbh = 0, bboxSize = 0;
+			float h = 0, w = 0;
+			float x1 = 0, y1 = 0, x2 = 0, y2 = 0;
+			for (std::vector<ZQ_CNN_BBox106>::iterator it = vecBbox.begin(); it != vecBbox.end(); it++)
+			{
+				if ((*it).exist)
+				{
+					h = (float)((*it).row2 - (*it).row1 + 1);
+					w = (float)((*it).col2 - (*it).col1 + 1);
+					y1 = (float)(*it).row1;
+					x1 = (float)(*it).col1;
+					float scale_h = h*it->scale_y;
+					float scale_w = w*it->scale_x;
+					bboxSize = (scale_h > scale_w) ? scale_h : scale_w;
+					y1 = y1 + h*0.5f - bboxSize / it->scale_y*0.5f;
+					x1 = x1 + w*0.5f - bboxSize / it->scale_x*0.5f;
+					(*it).row2 = (int)round(y1 + bboxSize / it->scale_y - 1);
+					(*it).col2 = (int)round(x1 + bboxSize / it->scale_x - 1);
+					(*it).row1 = (int)round(y1);
+					(*it).col1 = (int)round(x1);
+
+					//boundary check
+					/*if ((*it).row1 < 0)(*it).row1 = 0;
+					if ((*it).col1 < 0)(*it).col1 = 0;
+					if ((*it).row2 > height)(*it).row2 = height - 1;
+					if ((*it).col2 > width)(*it).col2 = width - 1;*/
+
+					it->area = (float)(it->row2 - it->row1)*(it->col2 - it->col1);
+				}
+			}
+		}
+
 		static bool DecodeBBoxesAll(const std::vector<ZQ_CNN_LabelBBox>& all_loc_preds,
 			const std::vector<ZQ_CNN_NormalizedBBox>& prior_bboxes,
 			const std::vector<std::vector<float> >& prior_variances,

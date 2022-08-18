@@ -1,0 +1,126 @@
+Input name=image C=1 H=112 W=112
+Convolution name=Conv2d_0/conv/Conv2D bottom=image top=Conv2d_0/conv/Conv2D num_output=8 kernel_H=3 kernel_W=3 dilate_H=1 dilate_W=1 stride_H=2 stride_W=2 pad_type=SAME
+BatchNormScale name=Conv2d_0/conv/BatchNorm/FusedBatchNormV3 bottom=Conv2d_0/conv/Conv2D top=Conv2d_0/conv/BatchNorm/FusedBatchNormV3 bias
+ReLU6 name=Conv2d_0/conv/Relu6 bottom=Conv2d_0/conv/BatchNorm/FusedBatchNormV3 top=Conv2d_0/conv/Relu6
+Convolution name=part0/part0_1/proj/Conv2D bottom=Conv2d_0/conv/Relu6 top=part0/part0_1/proj/Conv2D num_output=8 kernel_H=1 kernel_W=1 dilate_H=1 dilate_W=1 stride_H=1 stride_W=1 pad_type=SAME
+BatchNormScale name=part0/part0_1/proj/BatchNorm/FusedBatchNormV3 bottom=part0/part0_1/proj/Conv2D top=part0/part0_1/proj/BatchNorm/FusedBatchNormV3 bias
+ReLU6 name=part0/part0_1/proj/BatchNorm/Relu6 bottom=part0/part0_1/proj/BatchNorm/FusedBatchNormV3 top=part0/part0_1/proj/BatchNorm/Relu6
+DepthwiseConvolution name=part0/part0_1/dw/depthwise bottom=part0/part0_1/proj/BatchNorm/Relu6 top=part0/part0_1/dw/depthwise num_output=8 kernel_H=3 kernel_W=3 dilate_H=1 dilate_W=1 stride_H=1 stride_W=1 pad_type=SAME
+BatchNormScale name=part0/part0_1/dw/BatchNorm/FusedBatchNormV3 bottom=part0/part0_1/dw/depthwise top=part0/part0_1/dw/BatchNorm/FusedBatchNormV3 bias
+ReLU6 name=part0/part0_1/dw/BatchNorm/Relu6 bottom=part0/part0_1/dw/BatchNorm/FusedBatchNormV3 top=part0/part0_1/dw/BatchNorm/Relu6
+Convolution name=part0/part0_1/sep/Conv2D bottom=part0/part0_1/dw/BatchNorm/Relu6 top=part0/part0_1/sep/Conv2D num_output=16 kernel_H=1 kernel_W=1 dilate_H=1 dilate_W=1 stride_H=1 stride_W=1 pad_type=SAME
+BatchNormScale name=part0/part0_1/sep/BatchNorm/FusedBatchNormV3 bottom=part0/part0_1/sep/Conv2D top=part0/part0_1/sep/BatchNorm/FusedBatchNormV3 bias
+ReLU6 name=part0/part0_1/sep/BatchNorm/Relu6 bottom=part0/part0_1/sep/BatchNorm/FusedBatchNormV3 top=part0/part0_1/sep/BatchNorm/Relu6
+Convolution name=part1/part1_1/proj/Conv2D bottom=part0/part0_1/sep/BatchNorm/Relu6 top=part1/part1_1/proj/Conv2D num_output=16 kernel_H=1 kernel_W=1 dilate_H=1 dilate_W=1 stride_H=1 stride_W=1 pad_type=SAME
+BatchNormScale name=part1/part1_1/proj/BatchNorm/FusedBatchNormV3 bottom=part1/part1_1/proj/Conv2D top=part1/part1_1/proj/BatchNorm/FusedBatchNormV3 bias
+ReLU6 name=part1/part1_1/proj/BatchNorm/Relu6 bottom=part1/part1_1/proj/BatchNorm/FusedBatchNormV3 top=part1/part1_1/proj/BatchNorm/Relu6
+DepthwiseConvolution name=part1/part1_1/dw/depthwise bottom=part1/part1_1/proj/BatchNorm/Relu6 top=part1/part1_1/dw/depthwise num_output=16 kernel_H=3 kernel_W=3 dilate_H=1 dilate_W=1 stride_H=2 stride_W=2 pad_type=SAME
+BatchNormScale name=part1/part1_1/dw/BatchNorm/FusedBatchNormV3 bottom=part1/part1_1/dw/depthwise top=part1/part1_1/dw/BatchNorm/FusedBatchNormV3 bias
+ReLU6 name=part1/part1_1/dw/BatchNorm/Relu6 bottom=part1/part1_1/dw/BatchNorm/FusedBatchNormV3 top=part1/part1_1/dw/BatchNorm/Relu6
+Convolution name=part1/part1_1/sep/Conv2D bottom=part1/part1_1/dw/BatchNorm/Relu6 top=part1/part1_1/sep/Conv2D num_output=16 kernel_H=1 kernel_W=1 dilate_H=1 dilate_W=1 stride_H=1 stride_W=1 pad_type=SAME
+BatchNormScale name=part1/part1_1/sep/BatchNorm/FusedBatchNormV3 bottom=part1/part1_1/sep/Conv2D top=part1/part1_1/sep/BatchNorm/FusedBatchNormV3 bias
+ReLU6 name=part1/part1_1/sep/BatchNorm/Relu6 bottom=part1/part1_1/sep/BatchNorm/FusedBatchNormV3 top=part1/part1_1/sep/BatchNorm/Relu6
+Convolution name=part1/part1_2/proj/Conv2D bottom=part1/part1_1/sep/BatchNorm/Relu6 top=part1/part1_2/proj/Conv2D num_output=16 kernel_H=1 kernel_W=1 dilate_H=1 dilate_W=1 stride_H=1 stride_W=1 pad_type=SAME
+BatchNormScale name=part1/part1_2/proj/BatchNorm/FusedBatchNormV3 bottom=part1/part1_2/proj/Conv2D top=part1/part1_2/proj/BatchNorm/FusedBatchNormV3 bias
+ReLU6 name=part1/part1_2/proj/BatchNorm/Relu6 bottom=part1/part1_2/proj/BatchNorm/FusedBatchNormV3 top=part1/part1_2/proj/BatchNorm/Relu6
+DepthwiseConvolution name=part1/part1_2/dw/depthwise bottom=part1/part1_2/proj/BatchNorm/Relu6 top=part1/part1_2/dw/depthwise num_output=16 kernel_H=3 kernel_W=3 dilate_H=1 dilate_W=1 stride_H=1 stride_W=1 pad_type=SAME
+BatchNormScale name=part1/part1_2/dw/BatchNorm/FusedBatchNormV3 bottom=part1/part1_2/dw/depthwise top=part1/part1_2/dw/BatchNorm/FusedBatchNormV3 bias
+ReLU6 name=part1/part1_2/dw/BatchNorm/Relu6 bottom=part1/part1_2/dw/BatchNorm/FusedBatchNormV3 top=part1/part1_2/dw/BatchNorm/Relu6
+Convolution name=part1/part1_2/sep/Conv2D bottom=part1/part1_2/dw/BatchNorm/Relu6 top=part1/part1_2/sep/Conv2D num_output=16 kernel_H=1 kernel_W=1 dilate_H=1 dilate_W=1 stride_H=1 stride_W=1 pad_type=SAME
+BatchNormScale name=part1/part1_2/sep/BatchNorm/FusedBatchNormV3 bottom=part1/part1_2/sep/Conv2D top=part1/part1_2/sep/BatchNorm/FusedBatchNormV3 bias
+ReLU6 name=part1/part1_2/sep/BatchNorm/Relu6 bottom=part1/part1_2/sep/BatchNorm/FusedBatchNormV3 top=part1/part1_2/sep/BatchNorm/Relu6
+Eltwise operation=SUM name=part1/part1_2/Add bottom=part1/part1_1/sep/BatchNorm/Relu6 bottom=part1/part1_2/sep/BatchNorm/Relu6 top=part1/part1_2/Add
+Convolution name=part2/part2_1/proj/Conv2D bottom=part1/part1_2/Add top=part2/part2_1/proj/Conv2D num_output=16 kernel_H=1 kernel_W=1 dilate_H=1 dilate_W=1 stride_H=1 stride_W=1 pad_type=SAME
+BatchNormScale name=part2/part2_1/proj/BatchNorm/FusedBatchNormV3 bottom=part2/part2_1/proj/Conv2D top=part2/part2_1/proj/BatchNorm/FusedBatchNormV3 bias
+ReLU6 name=part2/part2_1/proj/BatchNorm/Relu6 bottom=part2/part2_1/proj/BatchNorm/FusedBatchNormV3 top=part2/part2_1/proj/BatchNorm/Relu6
+DepthwiseConvolution name=part2/part2_1/dw/depthwise bottom=part2/part2_1/proj/BatchNorm/Relu6 top=part2/part2_1/dw/depthwise num_output=16 kernel_H=3 kernel_W=3 dilate_H=1 dilate_W=1 stride_H=2 stride_W=2 pad_type=SAME
+BatchNormScale name=part2/part2_1/dw/BatchNorm/FusedBatchNormV3 bottom=part2/part2_1/dw/depthwise top=part2/part2_1/dw/BatchNorm/FusedBatchNormV3 bias
+ReLU6 name=part2/part2_1/dw/BatchNorm/Relu6 bottom=part2/part2_1/dw/BatchNorm/FusedBatchNormV3 top=part2/part2_1/dw/BatchNorm/Relu6
+Convolution name=part2/part2_1/sep/Conv2D bottom=part2/part2_1/dw/BatchNorm/Relu6 top=part2/part2_1/sep/Conv2D num_output=32 kernel_H=1 kernel_W=1 dilate_H=1 dilate_W=1 stride_H=1 stride_W=1 pad_type=SAME
+BatchNormScale name=part2/part2_1/sep/BatchNorm/FusedBatchNormV3 bottom=part2/part2_1/sep/Conv2D top=part2/part2_1/sep/BatchNorm/FusedBatchNormV3 bias
+ReLU6 name=part2/part2_1/sep/BatchNorm/Relu6 bottom=part2/part2_1/sep/BatchNorm/FusedBatchNormV3 top=part2/part2_1/sep/BatchNorm/Relu6
+Convolution name=part2/part2_2/proj/Conv2D bottom=part2/part2_1/sep/BatchNorm/Relu6 top=part2/part2_2/proj/Conv2D num_output=32 kernel_H=1 kernel_W=1 dilate_H=1 dilate_W=1 stride_H=1 stride_W=1 pad_type=SAME
+BatchNormScale name=part2/part2_2/proj/BatchNorm/FusedBatchNormV3 bottom=part2/part2_2/proj/Conv2D top=part2/part2_2/proj/BatchNorm/FusedBatchNormV3 bias
+ReLU6 name=part2/part2_2/proj/BatchNorm/Relu6 bottom=part2/part2_2/proj/BatchNorm/FusedBatchNormV3 top=part2/part2_2/proj/BatchNorm/Relu6
+DepthwiseConvolution name=part2/part2_2/dw/depthwise bottom=part2/part2_2/proj/BatchNorm/Relu6 top=part2/part2_2/dw/depthwise num_output=32 kernel_H=3 kernel_W=3 dilate_H=1 dilate_W=1 stride_H=1 stride_W=1 pad_type=SAME
+BatchNormScale name=part2/part2_2/dw/BatchNorm/FusedBatchNormV3 bottom=part2/part2_2/dw/depthwise top=part2/part2_2/dw/BatchNorm/FusedBatchNormV3 bias
+ReLU6 name=part2/part2_2/dw/BatchNorm/Relu6 bottom=part2/part2_2/dw/BatchNorm/FusedBatchNormV3 top=part2/part2_2/dw/BatchNorm/Relu6
+Convolution name=part2/part2_2/sep/Conv2D bottom=part2/part2_2/dw/BatchNorm/Relu6 top=part2/part2_2/sep/Conv2D num_output=32 kernel_H=1 kernel_W=1 dilate_H=1 dilate_W=1 stride_H=1 stride_W=1 pad_type=SAME
+BatchNormScale name=part2/part2_2/sep/BatchNorm/FusedBatchNormV3 bottom=part2/part2_2/sep/Conv2D top=part2/part2_2/sep/BatchNorm/FusedBatchNormV3 bias
+ReLU6 name=part2/part2_2/sep/BatchNorm/Relu6 bottom=part2/part2_2/sep/BatchNorm/FusedBatchNormV3 top=part2/part2_2/sep/BatchNorm/Relu6
+Eltwise operation=SUM name=part2/part2_2/Add bottom=part2/part2_1/sep/BatchNorm/Relu6 bottom=part2/part2_2/sep/BatchNorm/Relu6 top=part2/part2_2/Add
+Convolution name=part2/part2_3/proj/Conv2D bottom=part2/part2_2/Add top=part2/part2_3/proj/Conv2D num_output=32 kernel_H=1 kernel_W=1 dilate_H=1 dilate_W=1 stride_H=1 stride_W=1 pad_type=SAME
+BatchNormScale name=part2/part2_3/proj/BatchNorm/FusedBatchNormV3 bottom=part2/part2_3/proj/Conv2D top=part2/part2_3/proj/BatchNorm/FusedBatchNormV3 bias
+ReLU6 name=part2/part2_3/proj/BatchNorm/Relu6 bottom=part2/part2_3/proj/BatchNorm/FusedBatchNormV3 top=part2/part2_3/proj/BatchNorm/Relu6
+DepthwiseConvolution name=part2/part2_3/dw/depthwise bottom=part2/part2_3/proj/BatchNorm/Relu6 top=part2/part2_3/dw/depthwise num_output=32 kernel_H=3 kernel_W=3 dilate_H=1 dilate_W=1 stride_H=1 stride_W=1 pad_type=SAME
+BatchNormScale name=part2/part2_3/dw/BatchNorm/FusedBatchNormV3 bottom=part2/part2_3/dw/depthwise top=part2/part2_3/dw/BatchNorm/FusedBatchNormV3 bias
+ReLU6 name=part2/part2_3/dw/BatchNorm/Relu6 bottom=part2/part2_3/dw/BatchNorm/FusedBatchNormV3 top=part2/part2_3/dw/BatchNorm/Relu6
+Convolution name=part2/part2_3/sep/Conv2D bottom=part2/part2_3/dw/BatchNorm/Relu6 top=part2/part2_3/sep/Conv2D num_output=32 kernel_H=1 kernel_W=1 dilate_H=1 dilate_W=1 stride_H=1 stride_W=1 pad_type=SAME
+BatchNormScale name=part2/part2_3/sep/BatchNorm/FusedBatchNormV3 bottom=part2/part2_3/sep/Conv2D top=part2/part2_3/sep/BatchNorm/FusedBatchNormV3 bias
+ReLU6 name=part2/part2_3/sep/BatchNorm/Relu6 bottom=part2/part2_3/sep/BatchNorm/FusedBatchNormV3 top=part2/part2_3/sep/BatchNorm/Relu6
+Eltwise operation=SUM name=part2/part2_3/Add bottom=part2/part2_2/Add bottom=part2/part2_3/sep/BatchNorm/Relu6 top=part2/part2_3/Add
+Convolution name=part2/part2_4/proj/Conv2D bottom=part2/part2_3/Add top=part2/part2_4/proj/Conv2D num_output=32 kernel_H=1 kernel_W=1 dilate_H=1 dilate_W=1 stride_H=1 stride_W=1 pad_type=SAME
+BatchNormScale name=part2/part2_4/proj/BatchNorm/FusedBatchNormV3 bottom=part2/part2_4/proj/Conv2D top=part2/part2_4/proj/BatchNorm/FusedBatchNormV3 bias
+ReLU6 name=part2/part2_4/proj/BatchNorm/Relu6 bottom=part2/part2_4/proj/BatchNorm/FusedBatchNormV3 top=part2/part2_4/proj/BatchNorm/Relu6
+DepthwiseConvolution name=part2/part2_4/dw/depthwise bottom=part2/part2_4/proj/BatchNorm/Relu6 top=part2/part2_4/dw/depthwise num_output=32 kernel_H=3 kernel_W=3 dilate_H=1 dilate_W=1 stride_H=1 stride_W=1 pad_type=SAME
+BatchNormScale name=part2/part2_4/dw/BatchNorm/FusedBatchNormV3 bottom=part2/part2_4/dw/depthwise top=part2/part2_4/dw/BatchNorm/FusedBatchNormV3 bias
+ReLU6 name=part2/part2_4/dw/BatchNorm/Relu6 bottom=part2/part2_4/dw/BatchNorm/FusedBatchNormV3 top=part2/part2_4/dw/BatchNorm/Relu6
+Convolution name=part2/part2_4/sep/Conv2D bottom=part2/part2_4/dw/BatchNorm/Relu6 top=part2/part2_4/sep/Conv2D num_output=32 kernel_H=1 kernel_W=1 dilate_H=1 dilate_W=1 stride_H=1 stride_W=1 pad_type=SAME
+BatchNormScale name=part2/part2_4/sep/BatchNorm/FusedBatchNormV3 bottom=part2/part2_4/sep/Conv2D top=part2/part2_4/sep/BatchNorm/FusedBatchNormV3 bias
+ReLU6 name=part2/part2_4/sep/BatchNorm/Relu6 bottom=part2/part2_4/sep/BatchNorm/FusedBatchNormV3 top=part2/part2_4/sep/BatchNorm/Relu6
+Eltwise operation=SUM name=part2/part2_4/Add bottom=part2/part2_3/Add bottom=part2/part2_4/sep/BatchNorm/Relu6 top=part2/part2_4/Add
+Convolution name=part3/part3_1/proj/Conv2D bottom=part2/part2_4/Add top=part3/part3_1/proj/Conv2D num_output=32 kernel_H=1 kernel_W=1 dilate_H=1 dilate_W=1 stride_H=1 stride_W=1 pad_type=SAME
+BatchNormScale name=part3/part3_1/proj/BatchNorm/FusedBatchNormV3 bottom=part3/part3_1/proj/Conv2D top=part3/part3_1/proj/BatchNorm/FusedBatchNormV3 bias
+ReLU6 name=part3/part3_1/proj/BatchNorm/Relu6 bottom=part3/part3_1/proj/BatchNorm/FusedBatchNormV3 top=part3/part3_1/proj/BatchNorm/Relu6
+DepthwiseConvolution name=part3/part3_1/dw/depthwise bottom=part3/part3_1/proj/BatchNorm/Relu6 top=part3/part3_1/dw/depthwise num_output=32 kernel_H=3 kernel_W=3 dilate_H=1 dilate_W=1 stride_H=2 stride_W=2 pad_type=SAME
+BatchNormScale name=part3/part3_1/dw/BatchNorm/FusedBatchNormV3 bottom=part3/part3_1/dw/depthwise top=part3/part3_1/dw/BatchNorm/FusedBatchNormV3 bias
+ReLU6 name=part3/part3_1/dw/BatchNorm/Relu6 bottom=part3/part3_1/dw/BatchNorm/FusedBatchNormV3 top=part3/part3_1/dw/BatchNorm/Relu6
+Convolution name=part3/part3_1/sep/Conv2D bottom=part3/part3_1/dw/BatchNorm/Relu6 top=part3/part3_1/sep/Conv2D num_output=64 kernel_H=1 kernel_W=1 dilate_H=1 dilate_W=1 stride_H=1 stride_W=1 pad_type=SAME
+BatchNormScale name=part3/part3_1/sep/BatchNorm/FusedBatchNormV3 bottom=part3/part3_1/sep/Conv2D top=part3/part3_1/sep/BatchNorm/FusedBatchNormV3 bias
+ReLU6 name=part3/part3_1/sep/BatchNorm/Relu6 bottom=part3/part3_1/sep/BatchNorm/FusedBatchNormV3 top=part3/part3_1/sep/BatchNorm/Relu6
+Convolution name=part3/part3_2/proj/Conv2D bottom=part3/part3_1/sep/BatchNorm/Relu6 top=part3/part3_2/proj/Conv2D num_output=64 kernel_H=1 kernel_W=1 dilate_H=1 dilate_W=1 stride_H=1 stride_W=1 pad_type=SAME
+BatchNormScale name=part3/part3_2/proj/BatchNorm/FusedBatchNormV3 bottom=part3/part3_2/proj/Conv2D top=part3/part3_2/proj/BatchNorm/FusedBatchNormV3 bias
+ReLU6 name=part3/part3_2/proj/BatchNorm/Relu6 bottom=part3/part3_2/proj/BatchNorm/FusedBatchNormV3 top=part3/part3_2/proj/BatchNorm/Relu6
+DepthwiseConvolution name=part3/part3_2/dw/depthwise bottom=part3/part3_2/proj/BatchNorm/Relu6 top=part3/part3_2/dw/depthwise num_output=64 kernel_H=3 kernel_W=3 dilate_H=1 dilate_W=1 stride_H=1 stride_W=1 pad_type=SAME
+BatchNormScale name=part3/part3_2/dw/BatchNorm/FusedBatchNormV3 bottom=part3/part3_2/dw/depthwise top=part3/part3_2/dw/BatchNorm/FusedBatchNormV3 bias
+ReLU6 name=part3/part3_2/dw/BatchNorm/Relu6 bottom=part3/part3_2/dw/BatchNorm/FusedBatchNormV3 top=part3/part3_2/dw/BatchNorm/Relu6
+Convolution name=part3/part3_2/sep/Conv2D bottom=part3/part3_2/dw/BatchNorm/Relu6 top=part3/part3_2/sep/Conv2D num_output=64 kernel_H=1 kernel_W=1 dilate_H=1 dilate_W=1 stride_H=1 stride_W=1 pad_type=SAME
+BatchNormScale name=part3/part3_2/sep/BatchNorm/FusedBatchNormV3 bottom=part3/part3_2/sep/Conv2D top=part3/part3_2/sep/BatchNorm/FusedBatchNormV3 bias
+ReLU6 name=part3/part3_2/sep/BatchNorm/Relu6 bottom=part3/part3_2/sep/BatchNorm/FusedBatchNormV3 top=part3/part3_2/sep/BatchNorm/Relu6
+Eltwise operation=SUM name=part3/part3_2/Add bottom=part3/part3_1/sep/BatchNorm/Relu6 bottom=part3/part3_2/sep/BatchNorm/Relu6 top=part3/part3_2/Add
+Convolution name=part3/part3_3/proj/Conv2D bottom=part3/part3_2/Add top=part3/part3_3/proj/Conv2D num_output=64 kernel_H=1 kernel_W=1 dilate_H=1 dilate_W=1 stride_H=1 stride_W=1 pad_type=SAME
+BatchNormScale name=part3/part3_3/proj/BatchNorm/FusedBatchNormV3 bottom=part3/part3_3/proj/Conv2D top=part3/part3_3/proj/BatchNorm/FusedBatchNormV3 bias
+ReLU6 name=part3/part3_3/proj/BatchNorm/Relu6 bottom=part3/part3_3/proj/BatchNorm/FusedBatchNormV3 top=part3/part3_3/proj/BatchNorm/Relu6
+DepthwiseConvolution name=part3/part3_3/dw/depthwise bottom=part3/part3_3/proj/BatchNorm/Relu6 top=part3/part3_3/dw/depthwise num_output=64 kernel_H=3 kernel_W=3 dilate_H=1 dilate_W=1 stride_H=1 stride_W=1 pad_type=SAME
+BatchNormScale name=part3/part3_3/dw/BatchNorm/FusedBatchNormV3 bottom=part3/part3_3/dw/depthwise top=part3/part3_3/dw/BatchNorm/FusedBatchNormV3 bias
+ReLU6 name=part3/part3_3/dw/BatchNorm/Relu6 bottom=part3/part3_3/dw/BatchNorm/FusedBatchNormV3 top=part3/part3_3/dw/BatchNorm/Relu6
+Convolution name=part3/part3_3/sep/Conv2D bottom=part3/part3_3/dw/BatchNorm/Relu6 top=part3/part3_3/sep/Conv2D num_output=64 kernel_H=1 kernel_W=1 dilate_H=1 dilate_W=1 stride_H=1 stride_W=1 pad_type=SAME
+BatchNormScale name=part3/part3_3/sep/BatchNorm/FusedBatchNormV3 bottom=part3/part3_3/sep/Conv2D top=part3/part3_3/sep/BatchNorm/FusedBatchNormV3 bias
+ReLU6 name=part3/part3_3/sep/BatchNorm/Relu6 bottom=part3/part3_3/sep/BatchNorm/FusedBatchNormV3 top=part3/part3_3/sep/BatchNorm/Relu6
+Eltwise operation=SUM name=part3/part3_3/Add bottom=part3/part3_2/Add bottom=part3/part3_3/sep/BatchNorm/Relu6 top=part3/part3_3/Add
+DepthwiseConvolution name=Conv2d_1_dw/dw/depthwise bottom=part3/part3_3/Add top=Conv2d_1_dw/dw/depthwise num_output=64 kernel_H=3 kernel_W=3 dilate_H=1 dilate_W=1 stride_H=1 stride_W=1 pad_type=VALID
+BatchNormScale name=Conv2d_1_dw/dw/BatchNorm/FusedBatchNormV3 bottom=Conv2d_1_dw/dw/depthwise top=Conv2d_1_dw/dw/BatchNorm/FusedBatchNormV3 bias
+ReLU6 name=Conv2d_1_dw/dw/Relu6 bottom=Conv2d_1_dw/dw/BatchNorm/FusedBatchNormV3 top=Conv2d_1_dw/dw/Relu6
+Convolution name=Conv2d_1_sep/conv/Conv2D bottom=Conv2d_1_dw/dw/Relu6 top=Conv2d_1_sep/conv/Conv2D num_output=128 kernel_H=1 kernel_W=1 dilate_H=1 dilate_W=1 stride_H=1 stride_W=1 pad_type=SAME
+BatchNormScale name=Conv2d_1_sep/conv/BatchNorm/FusedBatchNormV3 bottom=Conv2d_1_sep/conv/Conv2D top=Conv2d_1_sep/conv/BatchNorm/FusedBatchNormV3 bias
+ReLU6 name=Conv2d_1_sep/conv/Relu6 bottom=Conv2d_1_sep/conv/BatchNorm/FusedBatchNormV3 top=Conv2d_1_sep/conv/Relu6
+DepthwiseConvolution name=Conv2d_2_dw/dw/depthwise bottom=Conv2d_1_sep/conv/Relu6 top=Conv2d_2_dw/dw/depthwise num_output=128 kernel_H=3 kernel_W=3 dilate_H=1 dilate_W=1 stride_H=1 stride_W=1 pad_type=VALID
+BatchNormScale name=Conv2d_2_dw/dw/BatchNorm/FusedBatchNormV3 bottom=Conv2d_2_dw/dw/depthwise top=Conv2d_2_dw/dw/BatchNorm/FusedBatchNormV3 bias
+ReLU6 name=Conv2d_2_dw/dw/Relu6 bottom=Conv2d_2_dw/dw/BatchNorm/FusedBatchNormV3 top=Conv2d_2_dw/dw/Relu6
+Convolution name=Conv2d_2_sep/conv/Conv2D bottom=Conv2d_2_dw/dw/Relu6 top=Conv2d_2_sep/conv/Conv2D num_output=256 kernel_H=1 kernel_W=1 dilate_H=1 dilate_W=1 stride_H=1 stride_W=1 pad_type=SAME
+BatchNormScale name=Conv2d_2_sep/conv/BatchNorm/FusedBatchNormV3 bottom=Conv2d_2_sep/conv/Conv2D top=Conv2d_2_sep/conv/BatchNorm/FusedBatchNormV3 bias
+ReLU6 name=Conv2d_2_sep/conv/Relu6 bottom=Conv2d_2_sep/conv/BatchNorm/FusedBatchNormV3 top=Conv2d_2_sep/conv/Relu6
+DepthwiseConvolution name=Conv2d_3_dw/dw/depthwise bottom=Conv2d_2_sep/conv/Relu6 top=Conv2d_3_dw/dw/depthwise num_output=256 kernel_H=3 kernel_W=3 dilate_H=1 dilate_W=1 stride_H=1 stride_W=1 pad_type=VALID
+BatchNormScale name=Conv2d_3_dw/dw/BatchNorm/FusedBatchNormV3 bottom=Conv2d_3_dw/dw/depthwise top=Conv2d_3_dw/dw/BatchNorm/FusedBatchNormV3 bias
+ReLU6 name=Conv2d_3_dw/dw/Relu6 bottom=Conv2d_3_dw/dw/BatchNorm/FusedBatchNormV3 top=Conv2d_3_dw/dw/Relu6
+Convolution name=fc1/conv/Conv2D bottom=Conv2d_3_dw/dw/Relu6 top=fc1/conv/Conv2D num_output=256 kernel_H=1 kernel_W=1 dilate_H=1 dilate_W=1 stride_H=1 stride_W=1 pad_type=SAME
+BatchNormScale name=fc1/conv/BatchNorm/FusedBatchNormV3 bottom=fc1/conv/Conv2D top=fc1/conv/BatchNorm/FusedBatchNormV3 bias
+ReLU6 name=fc1/conv/Relu6 bottom=fc1/conv/BatchNorm/FusedBatchNormV3 top=fc1/conv/Relu6
+Pooling pool=AVG name=AvgPool2D/AvgPool bottom=Conv2d_2_sep/conv/Relu6 top=AvgPool2D/AvgPool kernel_H=3 kernel_W=3 stride_H=1 stride_W=1 pad_type=VALID
+Pooling pool=AVG name=AvgPool2D_1/AvgPool bottom=part3/part3_3/Add top=AvgPool2D_1/AvgPool kernel_H=7 kernel_W=7 stride_H=1 stride_W=1 pad_type=VALID
+Concat name=concat bottom=fc1/conv/Relu6 bottom=AvgPool2D/AvgPool bottom=AvgPool2D_1/AvgPool top=concat axis=1
+Convolution name=landmark_fc1/conv/Conv2D bottom=concat top=landmark_fc1/conv/Conv2D num_output=256 kernel_H=1 kernel_W=1 dilate_H=1 dilate_W=1 stride_H=1 stride_W=1 pad_type=SAME
+BatchNormScale name=landmark_fc1/conv/BatchNorm/FusedBatchNormV3 bottom=landmark_fc1/conv/Conv2D top=landmark_fc1/conv/BatchNorm/FusedBatchNormV3 bias
+ReLU6 name=landmark_fc1/conv/Relu6 bottom=landmark_fc1/conv/BatchNorm/FusedBatchNormV3 top=landmark_fc1/conv/Relu6
+Convolution name=landmark_fc2/Conv2D bottom=landmark_fc1/conv/Relu6 top=landmark_fc2/Conv2D num_output=212 kernel_H=1 kernel_W=1 dilate_H=1 dilate_W=1 stride_H=1 stride_W=1 pad_type=SAME
+AddBias name=landmark_fc2/BiasAdd bottom=landmark_fc2/Conv2D top=landmark_fc2/BiasAdd

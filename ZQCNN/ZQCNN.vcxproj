@@ -293,6 +293,7 @@
     <ClInclude Include="ZQ_CNN_CascadeOnet_Interface.h" />
     <ClInclude Include="ZQ_CNN_CompileConfig.h" />
     <ClInclude Include="ZQ_CNN_DetectorInterface.h" />
+    <ClInclude Include="ZQ_CNN_FaceCropUtils.h" />
     <ClInclude Include="ZQ_CNN_Forward_SSEUtils.h" />
     <ClInclude Include="ZQ_CNN_Forward_SSEUtils_NCHWC.h" />
     <ClInclude Include="ZQ_CNN_Layer.h" />

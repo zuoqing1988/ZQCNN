@@ -476,5 +476,8 @@
     <ClInclude Include="ZQ_CNN_LoadConfigUtils.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="ZQ_CNN_FaceCropUtils.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

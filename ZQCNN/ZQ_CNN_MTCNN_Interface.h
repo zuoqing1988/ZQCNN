@@ -27,6 +27,8 @@ namespace ZQ
 			pnet_overlap_thresh_count = 4;
 			pnet_size = 12;
 			pnet_stride = 2;
+			has_lnet = false;
+			lnet_enabled = true;
 			special_handle_very_big_face = false;
 			force_run_pnet_multithread = false;
 			show_debug_info = false;
@@ -47,6 +49,7 @@ namespace ZQ
 #endif
 		std::vector<ZQ_CNN_Net_Interface> pnet, rnet, onet, lnet;
 		bool has_lnet;
+		bool lnet_enabled;
 		int thread_num;
 		float thresh[3], nms_thresh[3];
 		int min_size;
@@ -59,7 +62,6 @@ namespace ZQ
 		int onet_size;
 		int lnet_size;
 		bool special_handle_very_big_face;
-		bool do_landmark;
 		float early_accept_thresh;
 		float nms_thresh_per_scale;
 		bool force_run_pnet_multithread;
@@ -78,6 +80,11 @@ namespace ZQ
 			limit_r_num = limit_r;
 			limit_o_num = limit_o;
 			limit_l_num = limit_l;
+		}
+
+		void EnableLnet(bool b)
+		{
+			lnet_enabled = b;
 		}
 
 		bool Init(const string& pnet_param, const string& pnet_model, const string& rnet_param, const string& rnet_model,
@@ -143,7 +150,7 @@ namespace ZQ
 		void SetPara(int w, int h, int min_face_size = 60, float pthresh = 0.6, float rthresh = 0.7, float othresh = 0.7,
 			float nms_pthresh = 0.6, float nms_rthresh = 0.7, float nms_othresh = 0.7, float scale_factor = 0.709,
 			int pnet_overlap_thresh_count = 4, int pnet_size = 12, int pnet_stride = 2, bool special_handle_very_big_face = false,
-			bool do_landmark = true, float early_accept_thresh = 1.00)
+			float early_accept_thresh = 1.00)
 		{
 			min_size = __max(pnet_size, min_face_size);
 			thresh[0] = __max(0.1, pthresh); thresh[1] = __max(0.1, rthresh); thresh[2] = __max(0.1, othresh);
@@ -153,7 +160,6 @@ namespace ZQ
 			this->pnet_size = pnet_size;
 			this->pnet_stride = pnet_stride;
 			this->special_handle_very_big_face = special_handle_very_big_face;
-			this->do_landmark = do_landmark;
 			this->early_accept_thresh = early_accept_thresh;
 			if (pnet_size == 20 && pnet_stride == 4)
 				nms_thresh_per_scale = 0.45;
@@ -265,7 +271,7 @@ namespace ZQ
 				_select(secondBbox, limit_o_num, input.GetW(), input.GetH());
 			}
 
-			if (!has_lnet || !do_landmark)
+			if (!has_lnet || !lnet_enabled)
 			{
 				double t3 = omp_get_wtime();
 				if (!_Onet_stage(input, secondBbox, results))
@@ -328,7 +334,7 @@ namespace ZQ
 			{
 				_select(secondBbox, limit_o_num, input.GetW(), input.GetH());
 			}
-			if (!has_lnet || !do_landmark)
+			if (!has_lnet || !lnet_enabled)
 			{
 				return false;
 			}
@@ -1115,7 +1121,7 @@ namespace ZQ
 					}
 					else
 					{
-						if (!do_landmark && it->score > early_accept_thresh)
+						if (!lnet_enabled && it->score > early_accept_thresh)
 						{
 							early_accept_thirdBbox.push_back(*it);
 						}
@@ -1567,6 +1573,7 @@ namespace ZQ
 			}
 
 			std::vector<ZQ_CNN_Tensor4D_NHW_C_Align128bit> task_lnet_images(need_thread_num);
+			std::vector<ZQ_CNN_Tensor4D_NHW_C_Align128bit> task_lnet_images_gray(need_thread_num);
 			std::vector<std::vector<int> > task_src_off_x(need_thread_num);
 			std::vector<std::vector<int> > task_src_off_y(need_thread_num);
 			std::vector<std::vector<int> > task_src_rect_w(need_thread_num);
@@ -1625,10 +1632,18 @@ namespace ZQ
 					{
 						continue;
 					}
+					int tmp_N = task_lnet_images[pp].GetN();
+					int tmp_H = task_lnet_images[pp].GetH();
+					int tmp_W = task_lnet_images[pp].GetW();
+					int tmp_C = task_lnet_images[pp].GetC();
+					task_lnet_images[pp].ConvertColor_BGR2GRAY(task_lnet_images_gray[pp], 1, 1);
+					task_lnet_images_gray[pp].MulScalar(128.0f);
+					task_lnet_images_gray[pp].AddScalar(127.5f);
 					double t31 = omp_get_wtime();
-					lnet[0].Forward(task_lnet_images[pp]);
+					lnet[0].Forward(task_lnet_images_gray[pp]);
 					double t32 = omp_get_wtime();
-					const ZQ_CNN_Tensor4D_Interface_Base* keyPoint = lnet[0].GetBlobByName("conv6-3");
+					//const ZQ_CNN_Tensor4D_Interface_Base* keyPoint = lnet[0].GetBlobByName("conv6-3");
+					const ZQ_CNN_Tensor4D_Interface_Base* keyPoint = lnet[0].GetBlobByName("landmark_fc2/BiasAdd");
 					const float* keyPoint_ptr = keyPoint->GetFirstPixelPtr();
 					int keypoint_num = keyPoint->GetC() / 2;
 					int keyPoint_sliceStep = keyPoint->GetSliceStep();
@@ -1667,10 +1682,14 @@ namespace ZQ
 					{
 						continue;
 					}
+					task_lnet_images[pp].ConvertColor_BGR2GRAY(task_lnet_images_gray[pp], 1, 1);
+					task_lnet_images_gray[pp].MulScalar(128.0f);
+					task_lnet_images_gray[pp].AddScalar(127.5f);
 					double t31 = omp_get_wtime();
-					lnet[thread_id].Forward(task_lnet_images[pp]);
+					lnet[thread_id].Forward(task_lnet_images_gray[pp]);
 					double t32 = omp_get_wtime();
-					const ZQ_CNN_Tensor4D_Interface_Base* keyPoint = lnet[thread_id].GetBlobByName("conv6-3");
+					//const ZQ_CNN_Tensor4D_Interface_Base* keyPoint = lnet[thread_id].GetBlobByName("conv6-3");
+					const ZQ_CNN_Tensor4D_Interface_Base* keyPoint = lnet[0].GetBlobByName("landmark_fc2/BiasAdd");
 					const float* keyPoint_ptr = keyPoint->GetFirstPixelPtr();
 					int keypoint_num = keyPoint->GetC() / 2;
 					int keyPoint_sliceStep = keyPoint->GetSliceStep();

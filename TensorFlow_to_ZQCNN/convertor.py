@@ -1,6 +1,9 @@
 from tensorflow.python.framework import tensor_util
 from google.protobuf import text_format
-import tensorflow as tf
+#import tensorflow as tf
+#import tensorflow as tf
+import tensorflow.compat.v1 as tf
+tf.disable_v2_behavior()
 from tensorflow.python.platform import gfile
 from tensorflow.python.framework import tensor_util
 import struct
@@ -350,9 +353,9 @@ def _H_WNC_to_NCHW(in_data, N, C, H, W):
     return out_data
 
 os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
-GRAPH_PB_PATH = './model_chn3.pb' #path to your .pb file
-fout = open("model_chn3.zqparams","w")
-fout2 = open("model_chn3.nchwbin","wb")
+GRAPH_PB_PATH = './model-zq8-gray-660000.pb' #path to your .pb file
+fout = open("headposegaze-112-gray.zqparams","w")
+fout2 = open("headposegaze-112-gray.nchwbin","wb")
 with tf.Session() as sess:
     #print("load graph")
     with gfile.FastGFile(GRAPH_PB_PATH,'rb') as f:
@@ -649,6 +652,68 @@ with tf.Session() as sess:
                 else:
                     line = line + ' bias'				
                 line = line + '\n'
+                
+            elif n.op == 'FusedBatchNormV3':
+                # write .nchwbin file 
+                eps = n.attr["epsilon"].f
+                #print(type(eps))
+                #print(dir(eps))
+                #print(eps)
+                bn_name = n.name.replace('/FusedBatchNormV3','')
+                scale_const_name = bn_name+'/Const'
+                scale_name = bn_name+'/scale'
+                scale_read_name = scale_name+'/read'
+                bias_name = bn_name+'/beta'
+                bias_read_name = bias_name + '/read'
+                mean_name = bn_name+'/moving_mean'
+                mean_read_name = mean_name+'/read'
+                variance_name = bn_name+'/moving_variance'
+                variance_read_name = variance_name+'/read'
+                scale_const_node = search_node(all_node,scale_const_name)
+                scale_node = search_node(all_node,scale_name)
+                bias_node = search_node(all_node,bias_name)
+                mean_node = search_node(all_node,mean_name)
+                variance_node = search_node(all_node,variance_name)
+                if mean_node is None:
+                    print('Error: mean_node is None in FusedBatchNorm Layer name: %s'%(n.name))
+                    print('Maybe you forget to set training=False')
+                    sys.exit(0)
+                else:
+                    put_node_binaray_to_file(fout2, mean_node)
+                if variance_node is None:
+                    print('Error: mean_node is None in FusedBatchNorm Layer name: %s'%(n.name))
+                    print('Maybe you forget to set training=False')
+                    sys.exit(0)
+                else:
+                    put_node_binaray_to_file(fout2, variance_node, False, True, eps)
+                if scale_const_node is None:
+                    pass
+                else:
+                    put_node_binaray_to_file(fout2, scale_const_node)
+                if scale_node is None:
+                    pass
+                else:
+                    put_node_binaray_to_file(fout2, scale_node)
+                if bias_node is None:
+                    pass
+                else:
+                    put_node_binaray_to_file(fout2, bias_node)
+                
+                # write .zqparams file
+                line = 'BatchNormScale name=' + n.name
+                node_input = n.input
+                in_num = len(node_input)
+                for j in range(in_num):
+                    if node_input[j] == scale_const_name or node_input[j] == scale_read_name or node_input[j] == bias_read_name or node_input[j] == mean_read_name or node_input[j] == variance_read_name:
+                        pass
+                    else:
+                        line = line + ' bottom=%s'%node_input[j]
+                line = line + ' top=%s'%n.name
+                if bias_node is None:
+                    pass
+                else:
+                    line = line + ' bias'				
+                line = line + '\n'
 				
 				
             elif n.op == 'Relu6':
@@ -668,6 +733,14 @@ with tf.Session() as sess:
                 line = line + ' top=%s'%n.name
                 line = line + '\n'
             elif n.op == 'Add':
+                line = 'Eltwise operation=SUM name=' + n.name
+                node_input = n.input
+                in_num = len(node_input)
+                for j in range(in_num):
+                    line = line + ' bottom=%s'%node_input[j]
+                line = line + ' top=%s'%n.name
+                line = line + '\n'
+            elif n.op == 'AddV2':
                 line = 'Eltwise operation=SUM name=' + n.name
                 node_input = n.input
                 in_num = len(node_input)

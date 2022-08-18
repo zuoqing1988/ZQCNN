@@ -85,10 +85,18 @@ namespace ZQ
 		bool need_check_overlap_count;
 		float ppoint[212];
 		float regreCoord[4];
+		float scale_x;
+		float scale_y;
+		bool has_headposegaze;
+		float headposegaze[9];
+		float center_and_rot[3];
 
 		ZQ_CNN_BBox106()
 		{
 			memset(this, 0, sizeof(ZQ_CNN_BBox106));
+			scale_x = 1;
+			scale_y = 1;
+			has_headposegaze = false;
 		}
 
 		~ZQ_CNN_BBox106() {}

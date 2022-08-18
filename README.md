@@ -1,6 +1,6 @@
 # 简介
 
-ZQCNN是ZuoQing参照mini-caffe写的forward库，ZQCNN性能远超mini-caffe、opencv。
+ZQCNN是一款推理框架，可以在windows, linux 和 arm-linux下运行。同时有一些人脸检测、识别相关的demo。
 
 ## 主开发环境 ：[VS2015 with Update 3](https://pan.baidu.com/s/1zoREccOxVsggV-iI2z4HTg)
 
@@ -41,6 +41,8 @@ ZQCNN是ZuoQing参照mini-caffe写的forward库，ZQCNN性能远超mini-caffe、
 
 
 # 更新日志
+
+**2022-08-18日更新: 优化了视频模式下人脸106点pipeline，新加入了一个头部姿态视线模型**
 
 **2022-04-20日更新: 支持pytorch-ssd-for-ZQCNN训练的SSD模型**
 
