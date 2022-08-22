@@ -379,11 +379,102 @@ def convertToZQCNN(graph, param_file, bin_file):
                 put_node_binaray_to_file(fout2, bias_weight, False, False, 0.001)
                 line = line + ' bias'
             #print(line)
+        elif op_type == 'Gemm':
+            #print(node_name, node.inputs, node.outputs, node.attrs)
+            #print(type(node.inputs))
+            
+            input_name = str(node.inputs[0])
+            output_name = str(node.outputs[0])
+            weight_name = node.inputs[1]
+            if weight_name in node.input_tensors:
+                weight = node.input_tensors[weight_name]
+            else:
+                print('failed to convert this node:', node_name, inputs, outputs)
+                exit(0)
+            has_bias = len(node.inputs) >= 3
+            if has_bias:
+                bias_name = node.inputs[2]
+                if bias_name in node.input_tensors:
+                    bias_weight = node.input_tensors[bias_name]
+                else:
+                    print('failed to convert this node:', node_name, inputs, outputs)
+                    exit(0)
+            
+            [N,C,H,W] = get_NCHW(weight)
+            line = 'Convolution name=' + node_name.replace(':','_')
+            line = line + ' bottom=' + input_name.replace(':','_') + ' top=' + output_name.replace(':','_')
+            line = line + ' num_output=%d kernel_H=1 kernel_W=1 dilate_H=1 dilate_W=1 stride_H=1 stride_W=1'%(N)
+            line = line + ' pad_H_top=0 pad_H_bottom=0 pad_W_left=0 pad_W_right=0'
+            put_node_binaray_to_file(fout2, weight, False, False, 0.001)
+            if has_bias:
+                put_node_binaray_to_file(fout2, bias_weight, False, False, 0.001)
+                line = line + ' bias'
+            #print(line)
         elif op_type == 'Relu':
             #print(node_name, node.inputs, node.outputs, node.attrs)
             input_name = str(node.inputs[0])
             output_name = str(node.outputs[0])
             line = 'ReLU name=' + node_name.replace(':','_') + ' bottom=' + input_name.replace(':','_') + ' top=' + output_name.replace(':','_')
+            #print(line)
+        elif op_type == 'PRelu':
+            #print(node_name, node.inputs, node.outputs, node.attrs)
+            input_name = str(node.inputs[0])
+            output_name = str(node.outputs[0])
+            weight_name = node.inputs[1]
+            if weight_name in node.input_tensors:
+                weight = node.input_tensors[weight_name]
+            else:
+                print('failed to convert this node:', node_name, inputs, outputs)
+                exit(0)
+            [N,C,H,W] = get_NCHW(weight)
+            #print('N=%d,C=%d,H=%d,W=%d'%(N,C,H,W))
+            line = 'PReLU name=' + node_name.replace(':','_') + ' bottom=' + input_name.replace(':','_') + ' top=' + output_name.replace(':','_')
+            put_node_binaray_to_file(fout2, weight, False, False, 0.001)
+            #print(line)
+        elif op_type == 'BatchNormalization':
+            #print(node_name, node.inputs, node.outputs, node.attrs)
+            input_name = str(node.inputs[0])
+            output_name = str(node.outputs[0])
+            epsilon = node.attrs['epsilon']
+            scale_name = node.inputs[1]
+            has_bias = len(node.inputs) >= 5
+            if has_bias:
+                bias_name = node.inputs[2]
+                mean_name = node.inputs[3]
+                var_name = node.inputs[4]
+            else:
+                mean_name = node.inputs[2]
+                var_name = node.inputs[3]
+            if scale_name in node.input_tensors:
+                scale = node.input_tensors[scale_name]
+            else:
+                print('failed to convert this node:', node_name, inputs, outputs)
+                exit(0)
+            if has_bias:
+                if bias_name in node.input_tensors:
+                    bias = node.input_tensors[bias_name]
+                else:
+                    print('failed to convert this node:', node_name, inputs, outputs)
+                    exit(0)
+            if mean_name in node.input_tensors:
+                mean = node.input_tensors[mean_name]
+            else:
+                print('failed to convert this node:', node_name, inputs, outputs)
+                exit(0)
+            if var_name in node.input_tensors:
+                var = node.input_tensors[var_name]
+            else:
+                print('failed to convert this node:', node_name, inputs, outputs)
+                exit(0)
+            line = 'BatchNormScale name=' + node_name.replace(':','_') + ' bottom=' + input_name.replace(':','_') + ' top=' + output_name.replace(':','_') 
+            line = line + ' eps=%f'%(epsilon)
+            if has_bias:
+                line = line + ' bias'
+            put_node_binaray_to_file(fout2, mean, False, False, 0.001)
+            put_node_binaray_to_file(fout2, var, False, False, 0.001)
+            put_node_binaray_to_file(fout2, scale, False, False, 0.001)
+            if has_bias:
+                put_node_binaray_to_file(fout2, bias, False, False, 0.001)
             #print(line)
         elif op_type == 'Upsample':
             #print(node_name, node.inputs, node.outputs, node.attrs)
@@ -413,6 +504,15 @@ def convertToZQCNN(graph, param_file, bin_file):
                 line = line + ' bottom=' + node.inputs[j].replace(':','_')
             line = line + ' top=' + node.outputs[0].replace(':','_') + ' axis=%d'%axis
             #print(line)
+        elif op_type == 'Add':
+            #print(node_name, node.inputs, node.outputs, node.attrs)
+            output_name = str(node.outputs[0])
+            line = 'Eltwise operation=sum name=' + node_name
+            in_num = len(node.inputs)
+            for j in range(in_num):
+                line = line + ' bottom=' + node.inputs[j].replace(':','_')
+            line = line + ' top=' + node.outputs[0].replace(':','_')
+            #print(line)
         elif op_type == 'Transpose':
             #print(node_name, node.inputs, node.outputs, node.attrs)
             order = node.attrs['perm']
@@ -420,7 +520,15 @@ def convertToZQCNN(graph, param_file, bin_file):
             output_name = node.outputs[0]
             line = 'Permute name=' + node_name.replace(':','_') + ' bottom=' + input_name.replace(':','_') + ' top=' + output_name.replace(':','_')
             line = line + ' order=%d order=%d order=%d order=%d'%(order[0],order[1],order[2],order[3])
-            #print(line)            
+            #print(line)
+        elif op_type == 'Flatten':
+            #print(node_name, node.inputs, node.outputs, node.attrs)
+            axis = node.attrs['axis']
+            input_name = node.inputs[0]
+            output_name = node.outputs[0]
+            line = 'Flatten name=' + node_name.replace(':','_') + ' bottom=' + input_name.replace(':','_') + ' top=' + output_name.replace(':','_')
+            line = line + ' axis=%d'%(axis)
+            #print(line)                
         elif op_type == 'Reshape':
             #print(node_name, node.inputs, node.outputs, node.attrs)
             weight_name = node.inputs[1]
@@ -452,7 +560,7 @@ def convertToZQCNN(graph, param_file, bin_file):
     print('done')
     
 if __name__ == "__main__":
-    os.environ
+    #os.environ
     graph = getGraph('model-face.onnx')
     convertToZQCNN(graph, 'model-face.zqparams','model-face.nchwbin')
     
