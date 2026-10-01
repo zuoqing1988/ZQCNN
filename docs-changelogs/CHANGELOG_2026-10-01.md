@@ -997,3 +997,51 @@ BLIS 的宏内核会**按 L2 大小分块并把 A、B 面板都常驻**，打包
 
 ### AGENTS.md 新增第 9 条
 微基准的基线必须和生产版本同源，否则得到的倍数没有信息量。
+
+## 新增：ZQCNN 上层优化手段汇总文档
+
+`reports/ZQCNN_上层优化手段汇总.md`，覆盖 GEMM 之外的优化手段：
+图优化（in-place 重定向 / BN·PReLU 折叠）、NCHW 与 NCHWC 数据布局、
+内存与分配、算子与 SIMD 内核、并行策略。
+
+### 关键结论
+
+**1. 图优化在 MTCNN 上实测没有端到端收益。**
+临时加 `ZQCNN_NO_GRAPH_OPT=1` 关掉 `merge_bn`/`merge_prelu`，SampleMTCNN
+连测 3 轮：23.908/25.753/23.160 vs 24.086/25.851/22.670 ms —— 差异完全在噪声内。
+原因：MTCNN 三个模型里 `det1-dw20-fast` 只有 **1 个** BatchNormScale、
+`det3` **一个都没有**，PReLU 5~6 个。融合省的是"单独一趟读+写特征图"，
+而这部分被并进卷积/激活已有的内存遍历里，对小特征图来说省的不是瓶颈。
+**"少了一层 = 快"是想当然**，要拿到性能得换 BN 密集的模型（如 ResNet）重测。
+（临时开关已回退，未留在代码里。）
+
+**2. `ChangeSize` 不是"长度够就复用"，而是精确等长才复用。**
+`ZQ_CNN_Tensor4D.cpp:211` 是 `if (rawDataLen != needed_dst_raw_len)`，
+新张量大一丁点就 free+malloc+**整块 memset**。这是现成的优化空间，
+但改它会破坏"新分配区域一定是零"这个隐含契约，而 `ZQ_CNN_NCHWC_ALLOC_SLACK`
+那条投机读余量正依赖它 —— 要动必须连带重新验证越界。本轮没实施。
+
+**3. 算子层完全单线程。** `layers_c/`、`layers_nchwc/`、
+`ZQ_CNN_Forward_SSEUtils*`、`ZQ_CNN_Tensor4D*` 里一个 `#pragma omp parallel`
+都没有。`#pragma omp` 只出现在 NMS、MTCNN 流水线、NEON 专用 1x1 卷积三处。
+
+**4. 明确的空白点**（查完确认不存在，写进文档以免重复查）：
+- 全仓**零条预取指令**（`_mm_prefetch` / `__builtin_prefetch` / `prfch` 全无命中）
+- **没有任何针对 L1/L2 的显式 cache 分块**
+- 算子级（relu/eltwise/bn/resize/pooling）**没有 A/B 实测**
+- `ConvertFromBGR` / `ConvertColor_BGR2GRAY` 仍是纯标量循环，没 SIMD 化
+- NCHW 侧没有权重预打包（NCHWC 侧有 `_prepack()`，加载时做一次）
+
+### 顺带澄清一处表象
+`zq_cnn_depthwise_convolution_32f_align_c.c:64-90` 的
+`kernel3x3_C16/C24/C32/C64/C128/C256`、`Cdiv16/Cdiv32` 全是 `#define` 别名，
+指向 `..._mul_4` / `..._mul_8` / `..._mul_16` 三个不同展开度的实现
+（`:75/79/85`），不是同一份代码。看符号名会误以为"每个 C 值一份特化内核"。
+另：`ZQ_CNN_Forward_SSEUtils.cpp:300/489/534` 的 AVX 2x2 maxpool 特化是被
+**注释掉**的（`/*seems slow*/`），作者实测过更慢，不是写错。
+
+### 核实过程
+后台代理给出一份 21 条的清单，我对其中最关键/最反直觉的 4 条逐条回查源码：
+ChangeSize 的比较方式、depthwise 别名、预取指令全仓计数、pooling 的 `&& 0`。
+其中"depthwise 别名全部指向同样 4 个函数"这一条**不成立**（指向的是三个
+不同的 `mul_4/8/16`），文档里只写了亲自验证过的部分。
