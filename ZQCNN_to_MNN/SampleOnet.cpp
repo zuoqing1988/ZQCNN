@@ -158,7 +158,7 @@ int main(int argc, const char* argv[]) {
             }
         } else {
             for (int i = 0; i < length; ++i) {
-                if (tempValues[i].first < (int)words.size()) {
+                if (tempValues[i].first >= 0 && tempValues[i].first < (int)words.size()) {
                     MNN_PRINT("%s: %f\n", words[tempValues[i].first].c_str(), tempValues[i].second);
                 } else {
                     MNN_PRINT("%d, %f\n", tempValues[i].first, tempValues[i].second);

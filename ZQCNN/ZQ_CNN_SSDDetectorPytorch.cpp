@@ -270,7 +270,7 @@ bool ZQ_CNN_SSDDetectorPytorch::_detect(ZQ_CNN_Tensor4D& input, std::vector<ZQ_C
 		}
 		return false;
 	}
-	if (loc_H * loc_W * loc_C < cls_C * 4)
+	if ((long long)loc_H * loc_W * loc_C < (long long)cls_C * 4)
 	{
 		if (show_debug_info)
 		{

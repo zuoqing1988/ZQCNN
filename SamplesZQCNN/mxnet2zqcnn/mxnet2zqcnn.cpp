@@ -780,8 +780,11 @@ int main(int argc, char** argv)
 	std::vector<MXNetNode> nodes;
 	std::vector<MXNetParam> params;
 
-	read_mxnet_json(jsonpath, nodes);
-	read_mxnet_param(parampath, params);
+	if (!read_mxnet_json(jsonpath, nodes) || !read_mxnet_param(parampath, params))
+	{
+		fprintf(stderr, "failed to read mxnet json/param\n");
+		return -1;
+	}
 
 	FILE* pp = fopen(zqcnn_prototxt, "w");
 	if (!pp)

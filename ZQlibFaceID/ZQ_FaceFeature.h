@@ -41,12 +41,25 @@ namespace ZQ
 
 		void CopyData(const ZQ_FaceFeature& other)
 		{
+			if (length < 0)
+			{
+				length = 0;
+				if (pData != 0)
+					free(pData);
+				pData = 0;
+				return;
+			}
 			if (length != other.length)
 			{
 				length = other.length;
 				if (pData != 0)
 					free(pData);
 				pData = (float*)malloc(sizeof(float)*length);
+				if (pData == 0)
+				{
+					length = 0;
+					return;
+				}
 			}
 			if (length > 0)
 				memcpy(pData, other.pData, sizeof(float)*length);

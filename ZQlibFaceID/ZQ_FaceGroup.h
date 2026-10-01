@@ -38,7 +38,7 @@ namespace ZQ
 					printf("feat_dim = %d\n", feat_dim);
 				}
 			}
-			int num;
+			int num = 0;
 			if (flag)
 			{
 				flag = (1 == fread(&num, sizeof(int), 1, in));
@@ -50,7 +50,7 @@ namespace ZQ
 				{
 					face_feats.resize(num);
 				}
-				for (int i = 0; i < num; i++)
+				for (int i = 0; i < num && flag; i++)
 				{
 					face_feats[i].ChangeSize(feat_dim);
 					flag = (feat_dim == fread(face_feats[i].pData, sizeof(float), feat_dim, in));

@@ -334,6 +334,12 @@ namespace ZQ
 						return false;
 					}
 
+					if (len < 0 || len > 65536)
+					{
+						fclose(in);
+						return false;
+					}
+
 					if (len > 0)
 					{
 						buf.resize(len);

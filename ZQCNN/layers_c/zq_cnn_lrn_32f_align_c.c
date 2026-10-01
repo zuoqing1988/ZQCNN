@@ -226,6 +226,8 @@ extern "C" {
 				}
 			}
 		}
+		free(square_buf);
+		free(accumulate_buf);
 	}
 
 #if __ARM_NEON
@@ -307,6 +309,8 @@ extern "C" {
 				}
 			}
 		}
+		free(square_buf);
+		free(accumulate_buf);
 	}
 #undef zq_base_type
 #endif//__ARM_NEON_FP16

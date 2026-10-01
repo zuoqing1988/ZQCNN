@@ -1,4 +1,4 @@
-﻿#include "layers_c/zq_cnn_deconvolution_32f_align_c.h"
+#include "layers_c/zq_cnn_deconvolution_32f_align_c.h"
 #include "layers_c/zq_cnn_deconvolution_gemm_32f_align_c.h"
 #include "layers_c/zq_cnn_convolution_32f_align_c.h"
 #include "layers_c/zq_cnn_depthwise_convolution_32f_align_c.h"
@@ -1914,7 +1914,7 @@ void ZQ_CNN_Forward_SSEUtils::_depthwise_convolution_nopadding(int align_mode, c
 					zq_cnn_depthwise_conv_no_padding_32f_align128bit_kernel2x2_Cdiv32(in_data, in_N, in_H, in_W, in_C, in_pixStep, in_widthStep, in_sliceStep,
 						filter_data, filter_N, filter_H, filter_W, filter_C, filter_pixStep, filter_widthStep, filter_sliceStep, strideH, strideW, dilate_H, dilate_W,
 						out_data, out_N, out_H, out_W, out_C, out_pixStep, out_widthStep, out_sliceStep);
-				else if(slope = NULL)
+				else if(slope == NULL)
 					zq_cnn_depthwise_conv_no_padding_32f_align128bit_kernel2x2_Cdiv32_with_bias(in_data, in_N, in_H, in_W, in_C, in_pixStep, in_widthStep, in_sliceStep,
 						filter_data, filter_N, filter_H, filter_W, filter_C, filter_pixStep, filter_widthStep, filter_sliceStep, strideH, strideW, dilate_H, dilate_W,
 						out_data, out_N, out_H, out_W, out_C, out_pixStep, out_widthStep, out_sliceStep, bias);
@@ -4355,7 +4355,7 @@ bool ZQ_CNN_Forward_SSEUtils::_prior_box(const ZQ_CNN_Tensor4D& input, const ZQ_
 	if (num_priors <= 0 || min_sizes.size() == 0)
 	{
 		output.ChangeSize(0, 0, 0, 0, 0, 0);
-		return true;
+		return false;
 	}
 	{
 		const int num_min = (int)min_sizes.size();
@@ -4390,7 +4390,10 @@ bool ZQ_CNN_Forward_SSEUtils::_prior_box(const ZQ_CNN_Tensor4D& input, const ZQ_
 	int out_H = dim;
 	int out_W = 1;
 	if (output.GetN() != out_N || output.GetC() != out_C || output.GetH() != out_H || output.GetW() != out_W)
-		output.ChangeSize(out_N, out_H, out_W, out_C, 0, 0);
+	{
+		if (!output.ChangeSize(out_N, out_H, out_W, out_C, 0, 0))
+			return false;
+	}
 
 	int pixStep = output.GetPixelStep();
 	for (int n = 0; n < out_N; n++)
@@ -4657,7 +4660,7 @@ bool ZQ_CNN_Forward_SSEUtils::_prior_box_text(const ZQ_CNN_Tensor4D& input, cons
 	if (num_priors <= 0 || min_sizes.size() == 0)
 	{
 		output.ChangeSize(0, 0, 0, 0, 0, 0);
-		return true;
+		return false;
 	}
 	{
 		const int num_min = (int)min_sizes.size();
@@ -4689,7 +4692,10 @@ bool ZQ_CNN_Forward_SSEUtils::_prior_box_text(const ZQ_CNN_Tensor4D& input, cons
 	int out_H = dim;
 	int out_W = 1;
 	if (output.GetN() != out_N || output.GetC() != out_C || output.GetH() != out_H || output.GetW() != out_W)
-		output.ChangeSize(out_N, out_H, out_W, out_C, 0, 0);
+	{
+		if (!output.ChangeSize(out_N, out_H, out_W, out_C, 0, 0))
+			return false;
+	}
 
 	int pixStep = output.GetPixelStep();
 	for (int n = 0; n < out_N; n++)

@@ -27,7 +27,10 @@ namespace ZQ
 			for (int i = 0; i < num; i++)
 			{
 				if (!targets[i].WriteToFile(out))
+				{
+					fclose(out);
 					return false;
+				}
 			}
 			fclose(out);
 			return true;
