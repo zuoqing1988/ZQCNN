@@ -45,10 +45,39 @@ python tools/check_line_endings.py      # multi-CR / lone-CR / CRLF+LF 混用
 python tools/check_text_encoding.py     # UTF-8 有损解码残留（U+FFFD）
 ```
 
-改了 `3rdparty/include/ZQlib/` 下的头还要跑这个（主工程的 sample 回归验不到那里）：
+改了 `3rdparty/include/ZQlib/` 下的头还要跑这两个（主工程的 sample 回归验不到那里）：
 
 ```bash
 python tools/probe_zqlib_headers.py     # 143 个头哪些能独立编译（决定能不能验证）
-python tools/run_zqlib_checks.py        # 4 个 ZQlib 独立回归测试，ASan + LSan
+python tools/run_zqlib_checks.py        # 7 个 ZQlib 独立回归测试，ASan + LSan
 ```
+
+## 第三方头库这一轮的结论（2026-10-02）
+
+原来的审计结论是「`3rdparty/include/ZQlib/` 是第三方头、无法在本仓库编译验证，
+改动风险大，所以不修」。**这个前提不成立**，后来被逐条推翻：
+
+| | 数字 |
+|---|---|
+| ZQlib 头总数 | 143 |
+| **能独立编译**（所以**能**验证） | **85** |
+| 确实需要 `windows.h` / MFC / OpenCV（本机测不了） | 6 |
+| 缺兄弟头或依赖（taucs 等） | 52 |
+
+在能独立编译的那批上写了 7 个 ASan + LeakSanitizer 回归测试
+（`tools/zq_*_check.cpp`），**翻出 13 条真缺陷并全部修复**，详见
+`audit_k3_20261001.md` 附录 W~AE。其中影响最实际的三条：
+
+- `ZQ_ImageProcessing.h` 的 **3×3 中值滤波结果完全不对**（`Sort_decend_3elements`
+  的中间一步照抄了第一步、从未排过第 3 个元素；`MedianFilter33_1channel` 的第二列
+  写进了 `col[0]`，`col[1]` **从未被赋值**，读的是未初始化的栈内存）。
+  它有活的调用方 `ZQ_FindCorners.h:1562-1563`。
+- `ZQ_KDTree.h` 的 `_recursive_ann_fix_radius_search` 叶节点循环**没有上限检查**，
+  半径内点数超过 `k` 就写穿调用方缓冲 —— **用全合法的入参就能触发**。
+- `ZQ_MergeSort.h` / `ZQ_Kmeans.h` 只靠 MSVC 的传递 include 才能编过，
+  libstdc++ 下直接失败（前者缺 `<vector>`、后者缺 `<math.h>`）。
+
+**一条比任何单条缺陷都重要的元发现**：「无法验证」是会自我实现的结论 ——
+因为没法验证所以不改，不改就继续没法验证。以后再遇到「第三方头 / 死代码 /
+跑不通所以不修」的说法，先花五分钟确认它到底能不能单独编译。
 
