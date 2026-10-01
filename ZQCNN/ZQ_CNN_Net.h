@@ -1286,6 +1286,22 @@ namespace ZQ
 			return true;
 		}
 
+		// 逐元素、可以安全地 bottom/top 同名的层。Convolution/Pooling/Reshape
+		// 这些会改形状的层不在名单里 —— 它们的 LayerSetup 会把 tops[0] 重排成
+		// 输出形状，一旦 tops[0] 就是 bottoms[0]，等于把自己的输入就地毁掉。
+		// 名单与 _simplify_inplace() 保持一致，改一处必须改两处。
+		bool _is_inplace_safe(int i) const
+		{
+			const char* t = layer_type_names[i].c_str();
+			return ZQ_CNN_Layer::_my_strcmpi(t, "ReLU") == 0
+				|| ZQ_CNN_Layer::_my_strcmpi(t, "ReLU6") == 0
+				|| ZQ_CNN_Layer::_my_strcmpi(t, "PReLU") == 0
+				|| ZQ_CNN_Layer::_my_strcmpi(t, "BatchNormScale") == 0
+				|| ZQ_CNN_Layer::_my_strcmpi(t, "BatchNorm") == 0
+				|| ZQ_CNN_Layer::_my_strcmpi(t, "Scale") == 0
+				|| ZQ_CNN_Layer::_my_strcmpi(t, "AddBias") == 0;
+		}
+
 		bool _check_connect()
 		{
 			int blob_num = blobs.size();
@@ -1345,6 +1361,22 @@ namespace ZQ
 					}*/
 				}
 				std::vector<std::string>& top_names = layers[i]->top_names;
+				// 会改形状的层不能把 top 声明成自己的 bottom: LayerSetup 里
+				// (*tops)[0]->SetShape(...) 会在 bottoms[0] 上就地重排, Forward
+				// 再拿这个对象当输入读, 读到的是按输出步长解释的旧数据。
+				if (!_is_inplace_safe(i))
+				{
+					for (int j = 0; j < top_names.size() && j < bottoms[i].size(); j++)
+					{
+						if (tops[i][j] == bottoms[i][j])
+						{
+							std::cout << "Layer " << layers[i]->name << " (" << layer_type_names[i]
+								<< ") changes shape but declares top == bottom ("
+								<< top_names[j] << "); that destroys its own input\n";
+							return false;
+						}
+					}
+				}
 				for (int j = 0; j < top_names.size(); j++)
 				{
 					std::map<std::string, int>::iterator name_it = map_name_to_blob_idx.find(top_names[j]);
@@ -1400,13 +1432,7 @@ namespace ZQ
 		{
 			for (int i = 0; i < layers.size(); i++)
 			{
-				if (ZQ_CNN_Layer::_my_strcmpi(layer_type_names[i].c_str(), "ReLU") == 0
-					|| ZQ_CNN_Layer::_my_strcmpi(layer_type_names[i].c_str(), "ReLU6") == 0
-					|| ZQ_CNN_Layer::_my_strcmpi(layer_type_names[i].c_str(), "PReLU") == 0
-					|| ZQ_CNN_Layer::_my_strcmpi(layer_type_names[i].c_str(), "BatchNormScale") == 0
-					|| ZQ_CNN_Layer::_my_strcmpi(layer_type_names[i].c_str(), "BatchNorm") == 0
-					|| ZQ_CNN_Layer::_my_strcmpi(layer_type_names[i].c_str(), "Scale") == 0
-					|| ZQ_CNN_Layer::_my_strcmpi(layer_type_names[i].c_str(), "AddBias") == 0)
+				if (_is_inplace_safe(i))
 				{
 					bool later_refer = false;
 					for (int j = i + 1; j < layers.size(); j++)

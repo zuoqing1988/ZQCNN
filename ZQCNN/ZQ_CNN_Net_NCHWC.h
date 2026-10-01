@@ -794,6 +794,21 @@ namespace ZQ
 					}
 				}
 				std::vector<std::string>& top_names = layers[i]->top_names;
+				// 会改形状的层不能把 top 声明成自己的 bottom，理由同
+				// ZQ_CNN_Net.h 里同名检查的注释。
+				if (!_is_inplace_safe(i))
+				{
+					for (int j = 0; j < top_names.size() && j < bottoms[i].size(); j++)
+					{
+						if (tops[i][j] == bottoms[i][j])
+						{
+							std::cout << "Layer " << layers[i]->name << " (" << layer_type_names[i]
+								<< ") changes shape but declares top == bottom ("
+								<< top_names[j] << "); that destroys its own input\n";
+							return false;
+						}
+					}
+				}
 				for (int j = 0; j < top_names.size(); j++)
 				{
 					std::map<std::string, int>::iterator name_it = map_name_to_blob_idx.find(top_names[j]);
@@ -840,14 +855,20 @@ namespace ZQ
 			return true;
 		}
 
+		// 逐元素、可以安全地 bottom/top 同名的层；名单与 _simplify_inplace() 一致。
+		bool _is_inplace_safe(int i) const
+		{
+			const char* t = layer_type_names[i].c_str();
+			return My_CNN_Layer::_my_strcmpi(t, "ReLU") == 0
+				|| My_CNN_Layer::_my_strcmpi(t, "PReLU") == 0
+				|| My_CNN_Layer::_my_strcmpi(t, "BatchNormScale") == 0;
+		}
+
 		void _simplify_inplace()
 		{
 			for (int i = 0; i < layers.size(); i++)
 			{
-				if (My_CNN_Layer::_my_strcmpi(layer_type_names[i].c_str(), "ReLU") == 0
-					|| My_CNN_Layer::_my_strcmpi(layer_type_names[i].c_str(), "PReLU") == 0
-					|| My_CNN_Layer::_my_strcmpi(layer_type_names[i].c_str(), "BatchNormScale") == 0
-					)
+				if (_is_inplace_safe(i))
 				{
 					bool later_refer = false;
 					for (int j = i + 1; j < layers.size(); j++)
