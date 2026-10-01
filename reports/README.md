@@ -45,3 +45,10 @@ python tools/check_line_endings.py      # multi-CR / lone-CR / CRLF+LF 混用
 python tools/check_text_encoding.py     # UTF-8 有损解码残留（U+FFFD）
 ```
 
+改了 `3rdparty/include/ZQlib/` 下的头还要跑这个（主工程的 sample 回归验不到那里）：
+
+```bash
+python tools/probe_zqlib_headers.py     # 143 个头哪些能独立编译（决定能不能验证）
+python tools/run_zqlib_checks.py        # 4 个 ZQlib 独立回归测试，ASan + LSan
+```
+
