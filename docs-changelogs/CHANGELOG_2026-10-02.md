@@ -1069,3 +1069,48 @@ ZQ_RBFKernel：紧支撑核与全局核各几个分支，重点是支撑半径�
 ### 验证
 
 `tools/run_zqlib_checks.py` 8/8 PASS。
+
+## 新增/变更：把 ZQlib 可编译性探测变成回归门禁（--check-baseline / --save-baseline）
+
+### 变更文件
+- `tools/probe_zqlib_headers.py`：新增 `--save-baseline` / `--check-baseline`
+- `tools/zqlib_probe_baseline.txt`（新增）：逐头分类基线（143 行）
+- `AGENTS.md` 构建一节新增第 7 条
+- `reports/README.md`：复现命令一节补上门禁用法
+- `audit_k3_20261001.md`：新增**附录 AL**
+
+### 门禁做什么
+
+    # 任何一个头从 OK 变成非 OK 就退出 1
+    python tools/probe_zqlib_headers.py --check-baseline tools/zqlib_probe_baseline.txt
+    # 修好或新增头之后更新基线
+    python tools/probe_zqlib_headers.py --save-baseline tools/zqlib_probe_baseline.txt
+
+基线当前：OK 118 / NEEDS_LIB 8 / MSVC_ONLY 1 / BROKEN 16。
+比对分别报 REGRESSION / IMPROVED / NEW / REMOVED。
+
+往 ZQlib 里加新头、或改现有头改到编不过，这一步会立刻抓到 ——
+而附录 AG~AJ 里那二十来条缺陷**全都是这一类**。
+
+### 验证门禁时抓出了探测工具自己的 bug
+
+做法是故意把一个 OK 的头（ZQ_Ray2D.h）改坏再跑门禁。第一次跑出来是：
+
+    NEW — 基线里没有的新头:
+       ZQ_Ray2D                                 BROKEN
+    REMOVED — 基线里有、现在目录里没有了:
+       ZQ_Advection.h
+       ...（其余 140 个）
+
+**报的是「新增」而不是「回退」** —— 门禁形同虚设。原因是脚本自己一处参数错位：
+
+    "echo 'R|%s|OK|'; else echo \"R|%s|ERR|...\"; fi" % (stem, stem, h, stem, stem)
+                                                          ^^^ ERR 分支打的是 stem（不带 .h）
+
+OK 分支打 `h`（带 .h）、ERR 分支打 `stem`（不带），于是**任何编不过的头在比对时
+都对不上基线里的键**，永远只会被当成「新增」。已修（两个分支都打 h）。
+修完再跑同一条命令得到 `ZQ_Ray2D.h OK -> BROKEN` + 退出码 1；还原后退出码 0。
+
+> 这一条值得记：`--check-baseline` 是刚写的，按惯例做「故意弄坏再跑一遍」的验证，
+> 结果第一个抓到的 bug 在**工具自己**身上而不在被测代码上。
+> **新写的检查工具必须先证明自己会失败**，否则只是加了一个永远返回「没问题」的脚本。

@@ -93,7 +93,19 @@ def main():
         sys.stdout.reconfigure(encoding='utf-8', errors='replace')
     except AttributeError:
         pass
-    flt = sys.argv[1] if len(sys.argv) > 1 else ''
+    argv = [a for a in sys.argv[1:]]
+    save_to = None
+    check_against = None
+    if '--save-baseline' in argv:
+        i = argv.index('--save-baseline')
+        save_to = argv[i + 1]
+        del argv[i:i + 2]
+    if '--check-baseline' in argv:
+        i = argv.index('--check-baseline')
+        check_against = argv[i + 1]
+        del argv[i:i + 2]
+    argv = [a for a in argv if not a.startswith('--')]
+    flt = argv[0] if argv else ''
     headers = sorted(h for h in os.listdir(INC) if h.endswith('.h') and flt in h)
     if not headers:
         print('no header matches %r' % flt)
@@ -105,11 +117,14 @@ def main():
         lines.append("cat > %s.cpp <<'PROBE_EOF'\n%s\n#include \"%s\"\n"
                      "int main(){return 0;}\nPROBE_EOF" % (stem, SHIM, h))
         # 成功打 OK, 失败把第一条 error: 打出来 (同一行, 便于解析)
+        # 注意两个分支**都必须打 h 而不是 stem**: 早先 ERR 分支写的是 stem
+        # (不带 .h), 于是「本来 OK、现在编不过」的头会被 --check-baseline
+        # 判成「新增」而不是「回退」, 门禁就失效了。2026-10-02 实测踩到。
         lines.append(
             "if g++ -fsyntax-only -std=c++11 -I/mnt/d/ZQCNN/3rdparty/include/ZQlib "
             "%s.cpp 2> %s.err; then echo 'R|%s|OK|'; else "
             "echo \"R|%s|ERR|$(grep -m1 error: %s.err | tr -d '\\r')\"; fi"
-            % (stem, stem, h, stem, stem))
+            % (stem, stem, h, h, stem))
     lines.append('echo R|__END__|OK|')
     out = run_wsl('\n'.join(lines))
 
@@ -142,6 +157,83 @@ def main():
         print('\n%s: %d' % (c, len(items)))
         for name, d in items:
             print('   %-40s %s' % (name, d))
+
+    # 逐头分类表：name<TAB>CATEGORY<TAB>detail
+    table = {}
+    for c in ('OK', 'NEEDS_LIB', 'MSVC_ONLY', 'BROKEN'):
+        for name, d in buckets[c]:
+            table[name] = (c, d)
+
+    if save_to:
+        lines = ['# ZQlib 头独立编译分类基线（tools/probe_zqlib_headers.py --save-baseline 生成）',
+                 '# 格式: <头名>\\t<CATEGORY>\\t<detail>',
+                 '# CATEGORY 取值: OK / NEEDS_LIB / MSVC_ONLY / BROKEN',
+                 '#',
+                 '# 用途: --check-baseline 会在「OK 变成非 OK」时报失败。',
+                 '# 也就是: 将来往 ZQlib 里加了新头、或改了现有头导致某个头编不过了，',
+                 '# 这一步能立刻抓到 —— 附录 AG~AJ 里那 20 来条缺陷全是这一类，',
+                 '# 而它们之所以长期没被发现，正是因为「编不过」没人看得见。',
+                 '#',
+                 '# OK 的个数就是「可以被单独验证（因而可以写 ASan 测试）」的个数。']
+        for name in sorted(table):
+            c, d = table[name]
+            lines.append('%s\t%s\t%s' % (name, c, d))
+        with open(save_to, 'w', encoding='utf-8', newline='\n') as f:
+            f.write('\n'.join(lines) + '\n')
+        print('\nbaseline written to %s (%d headers)' % (save_to, len(table)))
+
+    if check_against:
+        base = {}
+        try:
+            with open(check_against, encoding='utf-8') as f:
+                for line in f:
+                    if line.startswith('#') or not line.strip():
+                        continue
+                    parts = line.rstrip('\n').split('\t')
+                    if len(parts) >= 2:
+                        base[parts[0]] = parts[1]
+        except IOError as e:
+            print('\nERROR: 读不到基线 %s: %s' % (check_against, e))
+            return 1
+        if not base:
+            print('\nERROR: 基线 %s 是空的' % check_against)
+            return 1
+
+        regress, improved, added, gone = [], [], [], []
+        for name, (c, _d) in table.items():
+            if name not in base:
+                added.append((name, c))
+            elif base[name] == 'OK' and c != 'OK':
+                regress.append((name, base[name], c))
+            elif base[name] != 'OK' and c == 'OK':
+                improved.append(name)
+        for name in base:
+            if name not in table:
+                gone.append(name)
+
+        print('\n=== 与基线 %s 比对 ===' % check_against)
+        print('OK: %d -> %d' % (sum(1 for v in base.values() if v == 'OK'),
+                                sum(1 for c, _ in table.values() if c == 'OK')))
+        if regress:
+            print('\nREGRESSION — 这些头本来能编, 现在编不过了:')
+            for name, was, now in regress:
+                print('   %-40s %s -> %s' % (name, was, now))
+        if improved:
+            print('\nIMPROVED — 变可验证了 (记得跑 --save-baseline 更新基线):')
+            for name in improved:
+                print('   %s' % name)
+        if added:
+            print('\nNEW — 基线里没有的新头 (记得决定它的分类并更新基线):')
+            for name, c in added:
+                print('   %-40s %s' % (name, c))
+        if gone:
+            print('\nREMOVED — 基线里有、现在目录里没有了:')
+            for name in gone:
+                print('   %s' % name)
+        if not regress and not added and not gone:
+            print('无回退、无新增。')
+        return 1 if regress or added or gone else 0
+
     return 0
 
 

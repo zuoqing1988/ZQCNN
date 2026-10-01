@@ -34,8 +34,20 @@
 6. **第三方头库有独立回归入口**：`python tools/run_zqlib_checks.py`
    会自动发现 `tools/zq_*_check.cpp`，用 `gcc -O1 -g -fsanitize=address
    -I3rdparty/include/ZQlib` 逐个编译并运行，任何一个非 0 退出就整体失败。
-   现在覆盖 `ZQ_BitonicSort` / `ZQ_Kmeans` / `ZQ_MergeSort` / `ZQ_QuickSort`。
+   现在覆盖 `ZQ_BitonicSort` / `ZQ_ImageProcessing` / `ZQ_Kmeans` /
+   `ZQ_MergeSort` / `ZQ_QuickSort` / `ZQ_Quaternion` / `ZQ_RBFKernel`
+   以及 KDTree+WeightedMedian+CubicInterpolation+FindLargestSubMatrix、
+   Matrix+ScanLinePolygonFill 两个组合。
    **动了 `3rdparty/include/ZQlib/` 下的头就要跑它**（主工程的 sample 回归验不到那里）。
+7. **改完 ZQlib 头还要跑可编译性门禁**：
+   `python tools/probe_zqlib_headers.py --check-baseline tools/zqlib_probe_baseline.txt`
+   把每个头的独立编译结果与基线逐头比对，**任何一个头从 OK 变成非 OK 就退出 1**。
+   修好或新增头之后用 `--save-baseline tools/zqlib_probe_baseline.txt` 更新基线。
+   这一步抓到的是「自己源码就编不过」那一族缺陷（缺 `typename`、缺 include、
+   未声明的变量、调用不存在的成员、命名空间少 `ZQ_` 前缀）—— 它们编不过，
+   所以这些头**从来没被编译过**，也从来没被发现。2026-10-02 靠它把可验证的
+   ZQlib 头从 81 个提到 118 个（57% → 82%）。它要编译 143 个翻译单元，
+   比 `run_zqlib_checks.py` 慢（约 2 分钟），所以单独跑、不进前者。
 7. **改完要抓基线再对照**：每次改动前先跑一遍关键 sample 并把输出存成基线
    （`tools/run_sample_regression.sh` + 手工滤掉耗时行），改完逐字节 diff。
    本项目已经有过 3 次"方向判断反了、改完功能反而坏掉"，其中

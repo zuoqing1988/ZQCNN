@@ -1,0 +1,153 @@
+# ZQlib 头独立编译分类基线（tools/probe_zqlib_headers.py --save-baseline 生成）
+# 格式: <头名>\t<CATEGORY>\t<detail>
+# CATEGORY 取值: OK / NEEDS_LIB / MSVC_ONLY / BROKEN
+#
+# 用途: --check-baseline 会在「OK 变成非 OK」时报失败。
+# 也就是: 将来往 ZQlib 里加了新头、或改了现有头导致某个头编不过了，
+# 这一步能立刻抓到 —— 附录 AG~AJ 里那 20 来条缺陷全是这一类，
+# 而它们之所以长期没被发现，正是因为「编不过」没人看得见。
+#
+# OK 的个数就是「可以被单独验证（因而可以写 ASan 测试）」的个数。
+ZQ_Advection.h	OK	
+ZQ_Advection3D.h	OK	
+ZQ_BilateralFilter.h	OK	
+ZQ_BilateralFilterOptions.h	OK	
+ZQ_BilateralTextureFilter.h	OK	
+ZQ_BilateralTextureFilterOptions.h	OK	
+ZQ_BinaryImageContour.h	OK	
+ZQ_BinaryImageProcessing.h	OK	
+ZQ_BitStream.h	OK	
+ZQ_BitonicSort.h	OK	
+ZQ_BlendTwoImages.h	OK	
+ZQ_BlendTwoImages3D.h	OK	
+ZQ_CPURayCasting.h	OK	
+ZQ_CPURenderer2DWorkspace.h	OK	
+ZQ_CPURenderer3DWorkSpace.h	OK	
+ZQ_Calibration.h	BROKEN	/mnt/d/ZQCNN/3rdparty/include/ZQlib/ZQ_Calibration.h:1851:22: error: ‘
+ZQ_CameraCalibration.h	OK	
+ZQ_CameraCalibrationBino.h	OK	
+ZQ_CameraCalibrationMono.h	OK	
+ZQ_CameraCalibrationMulti.h	BROKEN	/mnt/d/ZQCNN/3rdparty/include/ZQlib/ZQ_CameraCalibrationMulti.h:429:15
+ZQ_CameraPoseEstimation.h	OK	
+ZQ_CameraProjection.h	OK	
+ZQ_ClosedFormImageMatting.h	OK	
+ZQ_ClosedFormImageMattingOptions.h	OK	
+ZQ_CompressedImage.h	OK	
+ZQ_CompressedImageRaw.h	OK	
+ZQ_ConstrainedDelaunayTriangulation.h	OK	
+ZQ_CubicInterpolation.h	OK	
+ZQ_CvCapture_FFMPEG.h	OK	
+ZQ_DoubleImage.h	OK	
+ZQ_DoubleImage3D.h	OK	
+ZQ_FindCorners.h	OK	
+ZQ_FindLargestRectInHistgram.h	OK	
+ZQ_FindLargestSubMatrix.h	OK	
+ZQ_FindSimilarityLandmark.h	OK	
+ZQ_GLSLShader.h	BROKEN	/mnt/d/ZQCNN/3rdparty/include/ZQlib/ZQ_GLSLShader.h:5:10: fatal error:
+ZQ_GaussianPyramid.h	OK	
+ZQ_GaussianPyramid3D.h	OK	
+ZQ_GraphCut.h	OK	
+ZQ_GraphCutForTexture.h	OK	
+ZQ_GridDeformation.h	OK	
+ZQ_GridDeformation3D.h	OK	
+ZQ_GridDeformation3DOptions.h	OK	
+ZQ_GridDeformationOptions.h	OK	
+ZQ_HeadPoseEstimation.h	OK	
+ZQ_Huffman.h	OK	
+ZQ_ICP.h	OK	
+ZQ_ImageIO.h	OK	
+ZQ_ImageMattingGUI.h	NEEDS_LIB	opencv2/
+ZQ_ImageProcessing.h	OK	
+ZQ_ImageProcessing3D.h	OK	
+ZQ_Inpainting.h	OK	
+ZQ_InpaintingOptions.h	OK	
+ZQ_JpegCodecDefines.h	OK	
+ZQ_JpegDecoder.h	OK	
+ZQ_JpegEncoder.h	OK	
+ZQ_KDTree.h	OK	
+ZQ_Kahansum.h	OK	
+ZQ_Kmeans.h	OK	
+ZQ_LSD.h	OK	
+ZQ_LSQRSolver.h	OK	
+ZQ_LSQRUtils.h	OK	
+ZQ_LazySnapping.h	OK	
+ZQ_LazySnappingGUI.h	NEEDS_LIB	opencv2/
+ZQ_LazySnappingOptions.h	OK	
+ZQ_LevMar.h	OK	
+ZQ_Link_OpenCV_Lib.h	OK	
+ZQ_Logger.h	NEEDS_LIB	windows.h
+ZQ_MFC_Utils.h	NEEDS_LIB	afx
+ZQ_MGMRESSolver.h	BROKEN	/mnt/d/ZQCNN/3rdparty/include/ZQlib/ZQ_MGMRESSolver.h:1204:15: error: 
+ZQ_MarchingCube.h	OK	
+ZQ_MathBase.h	OK	
+ZQ_Matrix.h	OK	
+ZQ_MergeImage.h	OK	
+ZQ_MergeImageOptions.h	OK	
+ZQ_MergeSort.h	OK	
+ZQ_MinIndependentSets.h	OK	
+ZQ_MultiCamCalibration.h	BROKEN	/mnt/d/ZQCNN/3rdparty/include/ZQlib/ZQ_MultiCamCalibration.h:433:156: 
+ZQ_NVMLoader.h	OK	
+ZQ_ObjLoader.h	MSVC_ONLY	strcpy_s
+ZQ_OpticalFlow.h	BROKEN	/mnt/d/ZQCNN/3rdparty/include/ZQlib/ZQ_OpticalFlow.h:3024:7: error: re
+ZQ_OpticalFlow3D.h	OK	
+ZQ_OpticalFlowOptions.h	OK	
+ZQ_PCGSolver.h	OK	
+ZQ_PIVMovingObject.h	OK	
+ZQ_PIVMovingObject3D.h	OK	
+ZQ_PIVSimulator.h	OK	
+ZQ_PIVSimulator3D.h	OK	
+ZQ_PoissonEditing.h	OK	
+ZQ_PoissonEditing3D.h	OK	
+ZQ_PoissonEditing3DOptions.h	OK	
+ZQ_PoissonEditingOptions.h	OK	
+ZQ_PoissonSolver.h	OK	
+ZQ_PoissonSolver3D.h	OK	
+ZQ_PoseEstimation.h	OK	
+ZQ_ProtectedData.h	NEEDS_LIB	windows.h
+ZQ_PutTextCN.h	NEEDS_LIB	windows.h
+ZQ_Quaternion.h	OK	
+ZQ_QuaternionSpline.h	OK	
+ZQ_QuickSort.h	OK	
+ZQ_RBFKernel.h	BROKEN	/mnt/d/ZQCNN/3rdparty/include/ZQlib/ZQ_RBFKernel.h:32:15: error: ‘fabs
+ZQ_Ray2D.h	OK	
+ZQ_Ray3D.h	OK	
+ZQ_RectifyCard.h	OK	
+ZQ_Rodrigues.h	OK	
+ZQ_SVD.h	OK	
+ZQ_ScanLinePolygonFill.h	OK	
+ZQ_ScatteredInterpolationRBF.h	OK	
+ZQ_SemaphoreEx.h	NEEDS_LIB	windows.h
+ZQ_ShapeDeformation.h	OK	
+ZQ_ShapeDeformationOptions.h	OK	
+ZQ_ShapeInterpolation.h	OK	
+ZQ_SparseLevMar.h	OK	
+ZQ_SparseMatrix.h	OK	
+ZQ_Spline.h	OK	
+ZQ_SplinePCHIP.h	BROKEN	/mnt/d/ZQCNN/3rdparty/include/ZQlib/ZQ_SplinePCHIP.h:120:26: error: ‘f
+ZQ_StereoCalibration.h	OK	
+ZQ_StereoDisparity_CV2.h	NEEDS_LIB	opencv2/
+ZQ_StereoMatching.h	OK	
+ZQ_StereoRectify.h	BROKEN	/mnt/d/ZQCNN/3rdparty/include/ZQlib/ZQ_OpticalFlow.h:3024:7: error: re
+ZQ_StructureFromTexture.h	OK	
+ZQ_StructureFromTextureOptions.h	OK	
+ZQ_TaucsBase.h	OK	
+ZQ_TextureOptimization.h	OK	
+ZQ_TextureSampler.h	OK	
+ZQ_TextureSampler3D.h	OK	
+ZQ_TextureSynthesisProbe.h	OK	
+ZQ_TriangleMeshMedialAxis.h	OK	
+ZQ_UmfpackSolver.h	OK	
+ZQ_Vec2D.h	OK	
+ZQ_Vec3D.h	OK	
+ZQ_Warping.h	OK	
+ZQ_Wavelet.h	OK	
+ZQ_WaveletRawHead.h	OK	
+ZQ_WeightedMedian.h	OK	
+ZQ_WinSock.h	BROKEN	/mnt/d/ZQCNN/3rdparty/include/ZQlib/ZQ_WinSockBase.h:5:10: fatal error
+ZQ_WinSockBase.h	BROKEN	/mnt/d/ZQCNN/3rdparty/include/ZQlib/ZQ_WinSockBase.h:5:10: fatal error
+ZQ_WinSockClientImpl.h	BROKEN	/mnt/d/ZQCNN/3rdparty/include/ZQlib/ZQ_WinSockBase.h:5:10: fatal error
+ZQ_WinSockClientSimple.h	BROKEN	/mnt/d/ZQCNN/3rdparty/include/ZQlib/ZQ_WinSockBase.h:5:10: fatal error
+ZQ_WinSockIOPoolSimple.h	BROKEN	/mnt/d/ZQCNN/3rdparty/include/ZQlib/ZQ_WinSockBase.h:5:10: fatal error
+ZQ_WinSockServerImpl.h	BROKEN	/mnt/d/ZQCNN/3rdparty/include/ZQlib/ZQ_WinSockBase.h:5:10: fatal error
+ZQ_WinSockServerSimple.h	BROKEN	/mnt/d/ZQCNN/3rdparty/include/ZQlib/ZQ_WinSockBase.h:5:10: fatal error
+ZQ_taucs.h	OK	

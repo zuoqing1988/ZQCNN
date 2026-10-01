@@ -48,8 +48,12 @@ python tools/check_text_encoding.py     # UTF-8 有损解码残留（U+FFFD）
 改了 `3rdparty/include/ZQlib/` 下的头还要跑这两个（主工程的 sample 回归验不到那里）：
 
 ```bash
-python tools/probe_zqlib_headers.py     # 143 个头哪些能独立编译（决定能不能验证）
-python tools/run_zqlib_checks.py        # 7 个 ZQlib 独立回归测试，ASan + LSan
+python tools/run_zqlib_checks.py        # 8 个 ZQlib 独立回归测试，ASan + LSan
+
+# 可编译性门禁（慢，约 2 分钟，编译 143 个翻译单元）：
+# 任何一个头从 OK 变成编不过就退出 1。修好/新增头之后更新基线。
+python tools/probe_zqlib_headers.py --check-baseline tools/zqlib_probe_baseline.txt
+python tools/probe_zqlib_headers.py --save-baseline tools/zqlib_probe_baseline.txt
 ```
 
 ## 第三方头库这一轮的结论（2026-10-02）
@@ -69,7 +73,7 @@ python tools/run_zqlib_checks.py        # 7 个 ZQlib 独立回归测试，ASan 
 （缺 `typename`、缺 include、未声明的变量、调用不存在的成员、命名空间少 `ZQ_` 前缀）——
 这类问题编不过就意味着这些头**从来没被编译过**，于是也从来没被发现。
 
-在能独立编译的那批上写了 7 个 ASan + LeakSanitizer 回归测试
+在能独立编译的那批上写了 8 个 ASan + LeakSanitizer 回归测试
 （`tools/zq_*_check.cpp`），**翻出 13 条真缺陷并全部修复**，详见
 `audit_k3_20261001.md` 附录 W~AJ。其中影响最实际的三条：
 
