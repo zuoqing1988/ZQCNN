@@ -20,3 +20,8 @@ probe_*.c
 gemm-a/
 gemm-b/
 zqgemmab-*/
+
+# Python 字节码。2026-10-02 用 importlib 调试 tools/probe_zqlib_headers.py 时
+# 把 tools/__pycache__/*.pyc 提交进仓库了 —— .gitignore 之前没有这一条。
+__pycache__/
+*.py[cod]
