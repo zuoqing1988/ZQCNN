@@ -471,3 +471,22 @@ SIGSEGV code=128 (SI_KERNEL) si_addr=(nil)
 1. 前两轮把 `3rdparty/include` 当成"只看接口不看实现"的黑盒，漏掉了 `ZQ_JpegDecoder.h`——它同时有整数溢出、未判空、资源泄漏、致命错误处理缺失四个问题，且挂在人脸视频聚类的不可信文件读取路径上，是本项目唯一一条完整的"恶意文件 → 内存破坏"链路。第三轮起第三方头文件里**被实际调用到的函数体**也纳入审计范围。
 2. `ZQ_CNN_MTCNN_ncnn.h` 的多处缺陷仍未修，但它**从不参与任何构建**（全仓没有一处 `#include` 它，CMake 只 glob `*.cpp`），属潜伏代码。
 3. 仍未修的两项已记入报告：`ZQ_JpegDecoder` 未装 `setjmp`（损坏 JPEG 会让 libjpeg 直接 `exit()` 带走宿主进程）、`ZQ_CNN_BBoxUtils.h` 的 OpenMP 数据竞争（当前所有调用都传 `thread_num=1`，多线程分支是死路径）。
+
+## 新增/变更：NMS 多线程竞争 + GEMM 暂存缓冲失败处理
+
+### 变更文件
+
+| 文件 | 问题 | 修复 |
+|---|---|---|
+| `ZQCNN/ZQ_CNN_BBoxUtils.h`（`_nms`） | `IOU/maxX/maxY/minX/minY` 声明在**函数作用域**却被 `parallel for` 里所有线程共用，IOU 会被撕裂 → NMS 抑制结果不确定；`cur_overlap++` 多线程自增丢失；`thread_num <= 0` 整数除零、`(box_num/thread_num)` 整除为 0 时 `schedule(static, 0)` 本身是未定义行为 | 变量下沉为循环内局部；`cur_overlap++` 加 `#pragma omp atomic`；`thread_num <= 1` 一律走单线程分支，`chunk_size` 保底 1 |
+| `ZQCNN/layers_c/zq_cnn_convolution_gemm_32f_align_c.c`（4 处） | ① 调用方自带 buffer 时，`_aligned_malloc` 失败**仍然**把 `*buffer_len` 更新成新长度——下次调用 `*buffer_len < need` 不成立，会跳过重新分配直接拿 NULL 去 im2col；② 调用方传 `buffer==0` 时三个 `_aligned_malloc` 全部不判空 | 失败即释放已分配块并 `return`，只在成功后更新 `*buffer_len` |
+
+### 实测结果
+
+- **Windows**：全量构建 **0 error**；SampleMTCNN 20.3ms、SampleMTCNN_NCHWC4 8.2ms、SampleSSD、SampleFaceDetectorMTCNN 全部 exit=0，数值与改动前一致
+- **Linux**：全量构建 **0 error**；SampleMTCNN、SampleSSD exit=0
+
+### 注意事项
+
+1. NMS 的多线程分支目前仍是"死路径"（全仓调用都传 `thread_num=1`），本次修复是按对外 API 的正确性做的，不影响现有行为。
+2. GEMM 暂存缓冲的 4 处覆盖 fp32/fp16 × 通用/batch 两条路径；`layers_nchwc` 侧的同类模式在前一轮已经修过。
