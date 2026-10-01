@@ -6,7 +6,7 @@
   ③ Intel MKL（`cblas_sgemm`，单线程）
 - 硬件：AMD Ryzen 9 5900HX（Zen 3，**无 AVX-512**）
 - 平台：Windows（VS2022 / MSVC / MASM）与 Linux（gcc 9.4 / 内联汇编）各测一遍
-- 形状集：64 个（`SamplesZQBLAS/SampleGEMMCompare.cpp`），覆盖尾部退化 / 小中大方阵 /
+- 形状集：64 个（`../SamplesZQBLAS/SampleGEMMCompare.cpp`），覆盖尾部退化 / 小中大方阵 /
   行列极端比例 / K 很小 / K 很大 / 真实网络形状 / 刻意不对齐 SIMD 宽度
 - 线程：MKL 固定 `MKL_THREADING_LAYER=SEQUENTIAL`，三方都是单线程
 
@@ -111,7 +111,7 @@ K ≥ 1024 时汇编版相对 intrinsic 提升最大（Linux **1.88×**）：
 `Cc[i*ldc+j] += a*Bb[j*ldb+k]` 补加，对 C 做了"清零 + 读改写"三趟访存。
 而这一族形状的瓶颈本来就在 C 的访存上。
 
-**这一族也试过两条路，都没成**（详见 `audit_k3_20261001.md` 附录 P）：
+**这一族也试过两条路，都没成**（详见 `../audit_k3_20261001.md` 附录 P）：
 1. 沿 N 方向向量化 —— **结果错误**。`Bt` 是 N×K 行主序，`Bt[j][k] = Bt[j*ldb+k]`，
    相邻两列在内存里差 `ldb` 个 float 而不是相邻，8 个结果里 7 个是错的，
    而且不崩溃。
@@ -160,7 +160,7 @@ Windows 侧 MSVC 固定 AVX2+FMA3，两边都用同一条指令路径，差距�
 3. **FMA 开关对齐**：改成"编译器允许发 `vfmadd` 就发"，消除了原先两端不一致。
 4. **兜底**：非 x86-64 或未开 AVX 时自动回落到 intrinsic 入口。
 
-踩过的坑与已否决的方案都记在 `audit_k3_20261001.md` 附录 P / R 和 `AGENTS.md` 里。
+踩过的坑与已否决的方案都记在 `../audit_k3_20261001.md` 附录 P / R 和 `AGENTS.md` 里。
 
 ---
 
@@ -179,7 +179,7 @@ Windows 侧 MSVC 固定 AVX2+FMA3，两边都用同一条指令路径，差距�
   - **真实的汇编/MKL 落在两者之间**：Linux 87%~95%，Windows 93%~94%。
 - 早期版本用"先把 A 跑完再跑 B"，中间的睿频/温度漂移会**系统性偏袒后跑的**，
   曾据此报出"2048³ 快 22%"的**错误结论**。改成交替跑后该数字落在噪声内。
-  复现工具：`tools/bench_gemm_ab.py`（已内置交替、取最大、中位数对照、8% 阈值）。
+  复现工具：`../tools/bench_gemm_ab.py`（已内置交替、取最大、中位数对照、8% 阈值）。
 
 本机 WSL 里没有 `perf`、也没有锁频权限，所以无法用绑核/锁频把噪声进一步压下去。
 这是当前数字可信度的上限。
@@ -205,7 +205,7 @@ Windows 侧 MSVC 固定 AVX2+FMA3，两边都用同一条指令路径，差距�
   （MSVC 19.4x，Release），从仓库根运行
 - 两边各跑 5 轮，每轮 64 个形状；本报告所有数字由这 10 轮（Linux + Windows）
   汇总得出
-- 逐形状明细见本文表格；汇总脚本 `tools/bench_gemm_ab.py`
+- 逐形状明细见本文表格；汇总脚本 `../tools/bench_gemm_ab.py`
 
 ---
 

@@ -842,7 +842,7 @@ A 更快 6 个，A 更慢 0 个，58 个在 ±8% 噪声内
 
 ## 新增：ZQ_GEMM 汇编内核性能对比文档
 
-新增 `docs/ZQ_GEMM_汇编内核性能对比.md`，用 10 轮实测（Linux 5 轮 + Windows 5 轮，
+新增 `reports/ZQ_GEMM_汇编内核性能对比.md`，用 10 轮实测（Linux 5 轮 + Windows 5 轮，
 每轮 64 个形状）汇总三方对比：
 
 | 对比 | 结果 |
