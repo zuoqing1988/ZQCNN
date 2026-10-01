@@ -42,6 +42,10 @@ CFLAGS = '-O3 -mavx2 -mfma -fopenmp'
 
 
 def sh(cmd, **kw):
+    # 显式指定 utf-8: text=True 会用系统 locale(本机是 GBK),
+    # 读 C++ 源码里的中文注释会直接 UnicodeDecodeError。
+    kw.setdefault('encoding', 'utf-8')
+    kw.setdefault('errors', 'replace')
     return subprocess.run(cmd, shell=True, capture_output=True, text=True, **kw)
 
 
@@ -53,7 +57,8 @@ def wsl(script, check=True):
     """
     p = subprocess.run(
         'wsl -d %s -- bash -s' % WSL_DIST,
-        shell=True, input=script, capture_output=True, text=True)
+        shell=True, input=script, capture_output=True, text=True,
+        encoding='utf-8', errors='replace')
     if check and p.returncode != 0:
         sys.stderr.write(p.stdout + p.stderr)
         raise SystemExit('wsl failed')
@@ -161,7 +166,7 @@ def main():
         if p.returncode != 0:
             raise SystemExit(p.stderr)
         tmp_ref = tempfile.NamedTemporaryFile(suffix='.c', delete=False)
-        tmp_ref.write(p.stdout.encode('latin-1'))
+        tmp_ref.write(p.stdout.encode('utf-8'))
         tmp_ref.close()
         b_src = tmp_ref.name
 
