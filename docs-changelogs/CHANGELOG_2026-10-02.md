@@ -1816,3 +1816,116 @@ SampleMTCNNLoadFromCode.txt
     python tools/check_text_encoding.py               629 files, no U+FFFD
     wsl make -j8                                      rc=0
     A/B 输出对比（注释版 vs 原版）                     7 个 sample 逐字节相同
+
+## 新增/变更：附录 AX —— `zq_cnn_lrn` 的堆越界写（ASan 坐实）+ 附录 AW.6 的数据竞争
+
+### 变更文件
+
+**内核（真缺陷）**
+
+- `ZQCNN/layers_c/zq_cnn_lrn_32f_align_c_raw.h`：
+  ① `pad_size` 向下取整导致 `local_size==1 && C%align!=0` 时**堆写越界**（最多 7 个 float）
+  ② `local_sum_buf` 只给 `C` 个 float，而 `zq_mm_load_ps` 以 `align` 为步长读
+  → **堆读越界**
+
+**并发（真缺陷）**
+
+- `ZQCNN/ZQ_CNN_MTCNN.h`：P-net 的 `#pragma omp parallel for` 缺
+  `reduction(+:before_count, after_count)`，两个**诊断计数器**在多线程里无锁 `+=`
+  → 数据竞争（UB），表现为 printf 出来的 pre-NMS 候选框数每次运行都不同
+
+**测试 / 工具**
+
+- `tools/zq_lrn_check.cpp`（新增）：第 11 个回归测试，直接调 LRN 内核，
+  C 取 1..17 全部余数类 × local_size 取 1/3/5/7/9，与标量参考对拍
+- `tools/run_zqlib_checks.py`：新增 `EXTRA_SOURCES`/`EXTRA_LINK`/`EXTRA_INC`/
+  `EXTRA_CXXFLAGS` 四张按测试名的表（测内核的测试要额外编两个 math `.c`，
+  且主 TU 也必须带 `-mavx2 -mfma`）
+- `tools/msvc_analyze.bat`：扩到 14 个 TU（加了 `math/` 与几个 `layers_c/` 内核）
+- `tools/probe_nondeterminism.sh`（新增）：把全部 nms 计数抓出来跨多次运行比对
+- `audit_k3_20261001.md`：新增**附录 AX**
+
+### 缺陷本体
+
+```c
+pad_size = local_size / 2 + zq_mm_align_size - 1;
+pad_size = pad_size - pad_size%zq_mm_align_size;     // 向下取整
+len = C + (pad_size << 1);
+square_buf = _aligned_malloc(sizeof(float)*len, ...);
+for (c = 0, square_ptr = square_buf + pad_size; c < C; c += zq_mm_align_size, ...)
+    zq_mm_store_ps(square_ptr, ...);                  // 一次写 align 个 float
+```
+
+最后一下写到 `pad_size + ceil(C/align)*align - 1`，而缓冲区只有 `len` 个。
+`local_size == 1` 时 `pad_size` 被向下取整成 **0**，于是 `C % align != 0` 就必然越界。
+
+**可达性**：`LRN_across_channels` 只校验 `local_size % 2 != 1`，
+`local_size == 1` 通过；`local_size` 与 `C` 都来自模型文件（`.zqparams`），
+按本报告的威胁模型是**不可信输入**。
+
+### ASan 实测（默认构建是 AVX2，align=8）
+
+    ==114945==ERROR: AddressSanitizer: heap-buffer-overflow
+    WRITE of size 32 at 0x605000000020
+        #1 zq_cnn_lrn_across_channels_32f_align256bit  zq_cnn_lrn_32f_align_c_raw.h:64
+    0x605000000024 is located 0 bytes to the right of 4-byte region
+
+修完第一处再跑，ASan 立刻指出第二处（`:102` 读越界）。
+两处都修完：**69 个用例全过，无越界，数值与标量参考一致（相对误差 ≤ 4.1e-6）**。
+
+### 修法（两处都是零数值变化）
+
+```c
+if (pad_size < zq_mm_align_size) pad_size = zq_mm_align_size;   // 新增
+local_sum_buf = _aligned_malloc(sizeof(float)*(C + zq_mm_align_size), ...);
+```
+
+多出来的 pad 元素被初始化循环填 0，累加窗口随 `pad_size` 整体平移，
+覆盖的**相对区间**没变 —— 对拍验证了这一点。
+
+### 顺带：AW.6 那条非确定性，根因找到了
+
+同一二进制、同一输入，pre-NMS 候选框数每次不同（6007/6067/6068/6098 四种），
+而 post-NMS 那个数恒定。原因是：
+
+```cpp
+int before_count = 0, after_count = 0;                 // 声明在 parallel 区域**外面**
+#pragma omp parallel for schedule(dynamic, chunk_size) num_threads(thread_num)
+    for (int bb = 0; bb < block_num; bb++) {
+        ...
+        before_count += tmp_before_count;               // 多线程无锁 +=，没有 reduction
+        after_count  += tmp_after_count;
+    }
+...
+after_count = bounding_boxes[i].size();                 // 被整个覆盖，所以第二个数恒定
+printf("nms cost: %.3f ms, (%d-->%d)\n", ..., before_count, after_count);
+```
+
+**货真价实的数据竞争（UB）**。但**检测结果不受影响**：
+`bounding_boxes[i]` / `bounding_scores[i]` 按 `bb` 下标分，每个线程只碰自己那几个；
+这两个计数器除了 printf 没有任何消费者。属于"诊断数字不准"，不是"算法结果错"。
+
+已加 `reduction(+:before_count, after_count)`。**计算结果一字不变**，
+数字变稳定且正确。
+
+> 诚实说明：竞争窗口很窄 —— 修之前连跑 8 次也没复现、修之后连跑 10 次全恒定，
+> 所以**拿不出一个确定性的 A/B 证据**。判定依据是三条独立事实：
+> ① OpenMP 语义上「共享变量在并行区里无 reduction 无 atomic 地 `+=`」本身就是 UB；
+> ② 观测到的现象（第一个数变、第二个不变）与"第二个在 915 行被覆盖"的代码结构
+>    **精确吻合**；③ 加上 reduction 之后竞争从定义上消失。
+
+### 注意事项
+
+1. **MSVC `/analyze` 指错了行，但没白跑。** 它报的是 `:68`（安全，只是零余量）
+   和 `:73`（安全，卡在边界），真正越界的 `:64` 它**没报**。是它让我去读了那个文件，
+   而那个文件里确实有 bug。**静态分析器是筛子，动态实测才是判据。**
+2. **这一类不是通用模式。** `pad_size - pad_size%align` 这种向下取整在整个
+   `layers_c` / `layers_nchwc` 的 `*_raw.h` 里**只有 LRN 这一处**；
+   其它内核按 `C % align32 == 0 / % align16 == 0 / ...` 分派，不存在同类问题。
+3. **`.c` 必须用 gcc 编**（g++ 会把 `zq_avx_mathfun.c` 的
+   `_PS256_CONST_TYPE(sign_mask, int, 0x80000000)` 判成 narrowing 直接失败）；
+   测内核的测试主 TU 也要带 `-mavx2 -mfma`，否则 `_mm256_set1_ps` 报
+   `target specific option mismatch`。
+4. **我的第一版 LRN 测试把对齐宽度写成 4（实际是 8）**，
+   于是像素地址 16 字节步进而 `_mm256_load_ps` 要求 32 字节对齐 → SIGSEGV，
+   **而且 ASan 报出来的故障地址是 0x000000000000**，第一反应会误判成空指针。

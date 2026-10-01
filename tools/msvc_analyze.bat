@@ -19,14 +19,15 @@ setlocal
 call "C:\Program Files\Microsoft Visual Studio\2022\Community\VC\Auxiliary\Build\vcvars64.bat" >nul 2>&1
 cd /d "%~dp0.."
 
-if "%~1"=="" set FILES=ZQCNN\ZQ_CNN_Forward_SSEUtils.cpp ZQCNN\ZQ_CNN_Forward_SSEUtils_NCHWC.cpp ZQCNN\ZQ_CNN_LoadConfigUtils.cpp ZQCNN\ZQ_CNN_Net_NCHWC.cpp ZQCNN\ZQ_CNN_SSDDetectorPytorch.cpp ZQCNN\ZQ_CNN_Tensor4D.cpp ZQCNN\ZQ_CNN_Tensor4D_NCHWC.cpp
-if not "%~1"=="" set FILES=%~1
+if "%~1"=="" set FILES=ZQCNN\ZQ_CNN_Forward_SSEUtils.cpp ZQCNN\ZQ_CNN_Forward_SSEUtils_NCHWC.cpp ZQCNN\ZQ_CNN_LoadConfigUtils.cpp ZQCNN\ZQ_CNN_Net_NCHWC.cpp ZQCNN\ZQ_CNN_SSDDetectorPytorch.cpp ZQCNN\ZQ_CNN_Tensor4D.cpp ZQCNN\ZQ_CNN_Tensor4D_NCHWC.cpp ZQCNN\math\zq_avx_mathfun.c ZQCNN\math\zq_libm_compat.c ZQCNN\layers_c\zq_cnn_softmax_32f_align_c.c ZQCNN\layers_c\zq_cnn_lrn_32f_align_c.c ZQCNN\layers_c\zq_cnn_addbias_32f_align_c.c ZQCNN\layers_c\zq_cnn_dropout_32f_align_c.c ZQCNN\layers_c\zq_cnn_sqrt_32f_align_c.c
+if not "%~1"=="" set FILES=%*
 
 set FAILED=0
 set TOTAL=0
 for %%F in (%FILES%) do (
   set /a TOTAL+=1
-  cl /nologo /c /EHsc /std:c++14 /O2 /utf-8 /analyze /external:W0 /wd4996 ^
+  if /i "%%~xF"==".c" (set STD=/TC) else (set STD=/std:c++14)
+  cl /nologo /c /EHsc %STD% /O2 /utf-8 /analyze /external:W0 /wd4996 ^
      /I ZQCNN /I ZQ_GEMM /I 3rdparty\include ^
      "%%F" /Fo:%TEMP%\zan_%%~nF.obj /Fd:%TEMP%\zan.pdb > "%TEMP%\zan_%%~nF.log" 2>&1
   set /a RC=!ERRORLEVEL!

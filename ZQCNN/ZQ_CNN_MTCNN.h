@@ -855,7 +855,22 @@ namespace ZQ
 					}
 					else
 					{
-#pragma omp parallel for schedule(dynamic, chunk_size) num_threads(thread_num)
+					// 审计修复 2026-10-02（audit_k3_20261001.md 附录 AW.6）
+					// before_count / after_count 声明在这个 parallel 区域**外面**
+					// （795 行），却在循环体里用 `+=` 累加，而且**没有 reduction
+					// 子句**、也没有 atomic —— 这是货真价实的数据竞争（UB）。
+					//
+					// 后果：printf 出来的 **pre-NMS 候选框数每次运行都不一样**。
+					// 实测同一二进制、同一输入抓到 6007 / 6067 / 6068 / 6098 四种值；
+					// 而 post-NMS 那个数恒定 —— 因为它在 915 行被
+					// `after_count = bounding_boxes[i].size();` 整个覆盖掉了。
+					//
+					// **检测结果本身不受影响**：bounding_boxes[i] / bounding_scores[i]
+					// 是按 bb 下标分的，每个线程只碰自己那几个 bb；这两个计数器
+					// 除了 printf 之外没有任何消费者（915 行之后 after_count 被重新赋值）。
+					// 所以这是「诊断数字不准」，不是「算法结果错」。
+					// 加 reduction 之后数字变稳定且正确，**计算结果一字不变**。
+#pragma omp parallel for schedule(dynamic, chunk_size) num_threads(thread_num) reduction(+:before_count, after_count)
 						for (int bb = 0; bb < block_num; bb++)
 						{
 							ZQ_CNN_BBox bbox;

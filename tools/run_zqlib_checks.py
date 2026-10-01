@@ -46,6 +46,25 @@ def run_wsl(script):
             + (p.stderr or b'').decode('utf-8', 'replace'))
 
 
+# 少数测试不是"纯 ZQlib 头"，还要编主工程的内核 .c。
+# 一律用 **gcc** 编 .c（用 g++ 会把 C 的 braced-init 判成 narrowing 直接报错，
+# 见附录 AU.2 踩过的坑），链接时再加 -mavx2 -mfma。
+EXTRA_SOURCES = {
+    'zq_lrn': [
+        'gcc -O1 -g -mavx2 -mfma -c -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include '
+        '$R/ZQCNN/math/zq_sse_mathfun.c -o $WDIR/zq_lrn_sse.o',
+        'gcc -O1 -g -mavx2 -mfma -c -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include '
+        '$R/ZQCNN/math/zq_avx_mathfun.c -o $WDIR/zq_lrn_avx.o',
+    ],
+}
+EXTRA_LINK = {'zq_lrn': ' $WDIR/zq_lrn_sse.o $WDIR/zq_lrn_avx.o'}
+EXTRA_INC = {'zq_lrn': ' -I$R/ZQCNN -I$R/ZQ_GEMM'}
+# 测内核的测试自己也 include 了那个 .c，所以**主 TU 也要带 -mavx2 -mfma**，
+# 否则 _mm256_set1_ps 这些 always_inline 内建会报
+# "target specific option mismatch"（2026-10-02 实测）。
+EXTRA_CXXFLAGS = {'zq_lrn': ' -mavx2 -mfma'}
+
+
 def main():
     try:
         sys.stdout.reconfigure(encoding='utf-8', errors='replace')
@@ -79,16 +98,24 @@ def main():
     if args.list:
         return 0
 
-    lines = ['set +e', 'cd /tmp && rm -rf zqchecks && mkdir zqchecks && cd zqchecks']
+    lines = ['set +e',
+             'R=/mnt/d/ZQCNN',
+             'WDIR=/tmp/zqchecks',
+             'cd $WDIR && rm -rf * && mkdir -p $WDIR']
     for s in srcs:
         fname = os.path.basename(s)              # zq_xxx_check.cpp
         stem = fname[:-4]                        # zq_xxx_check
         tag = stem[:-6] if stem.endswith('_check') else stem
+        for extra in EXTRA_SOURCES.get(tag, []):
+            lines.append(extra)
         lines.append(
-            "if g++ -O1 -g %s -I%s /mnt/d/ZQCNN/tools/%s -o %s "
+            "if g++ -O1 -g %s%s -I%s%s /mnt/d/ZQCNN/tools/%s%s -o %s "
             "2> %s.build.log; then echo 'B|%s|OK|'; else "
             "echo \"B|%s|BUILD_FAIL|$(grep -m1 -i error: %s.build.log | tr -d '\\r')\"; fi"
-            % (san, INC, fname, tag, tag, tag, tag, tag))
+            % ('' if args.no_asan else san,
+               EXTRA_CXXFLAGS.get(tag, ''),
+               INC, EXTRA_INC.get(tag, ''), fname, EXTRA_LINK.get(tag, ''), tag,
+               tag, tag, tag, tag))
         # 两套 sanitizer 的失败口径不同，分开写：
         #   ASan  -> 断言自己打的 "FAIL" 行数 + 进程非 0（越界/释放后使用会直接 abort）
         #   UBSan -> "runtime error:" 行数。**不要指望 rc**：不加

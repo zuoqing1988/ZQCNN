@@ -1,4 +1,4 @@
-﻿/* it is safe to use out_tensor4D_data = in_tensor4D_data */
+/* it is safe to use out_tensor4D_data = in_tensor4D_data */
 void zq_cnn_lrn_across_channels_32f_align(
 	int local_size,
 	float alpha,
@@ -28,12 +28,43 @@ void zq_cnn_lrn_across_channels_32f_align(
 	register zq_mm_type alpha_div_local_size_v = zq_mm_set1_ps(alpha_div_local_size);
 	register zq_mm_type k_v = zq_mm_set1_ps(k);
 
+	// 审计修复 2026-10-02（audit_k3_20261001.md 附录 AX.2）
+	// -------------------------------------------------------
+	// 原来第二行是**向下**取整到 align 的倍数。当 local_size == 1 时
+	// p0 = 0/2 + align - 1 = align-1 < align，于是 pad_size 变成 **0**，
+	// len == C，而下面那个「c += align、每次 zq_mm_store_ps 写 align 个 float」
+	// 的循环最后一下会写到 square_buf[ceil(C/align)*align - 1] ——
+	// C % align != 0 时这**越过 len**。
+	//
+	// ASan 实测（tools/zq_lrn_check.cpp，默认构建是 AVX2、align=8）：
+	//   C=1, local_size=1 -> square_buf 只有 4 字节，_mm256_store_ps 写 32 字节
+	//   ERROR: AddressSanitizer: heap-buffer-overflow
+	//          WRITE of size 32 at ... zq_cnn_lrn_32f_align_c_raw.h:64
+	//
+	// 可达性：ZQ_CNN_Forward_SSEUtils::LRN_across_channels 只校验
+	// `local_size % 2 != 1`，local_size == 1 通过；local_size 来自模型文件
+	// （.zqparams）里不可信的 `local_size=` 那一行。
+	//
+	// 修法：pad_size 至少取一个 align。这样 `ceil(C/align)*align <= C + pad_size`
+	// 在 align=4/8/16 下都恒成立，而且**数值结果完全不变** —— 多出来的那些
+	// pad 元素被下面的初始化循环填 0，而窗口 [pad-L/2, pad+L/2] 是随 pad
+	// 整体平移的，累加的相对区间没变。
 	pad_size = local_size / 2 + zq_mm_align_size - 1;
 	pad_size = pad_size - pad_size%zq_mm_align_size;
+	if (pad_size < zq_mm_align_size)
+		pad_size = zq_mm_align_size;
 	len = C + (pad_size << 1);
 	square_buf = (float*)_aligned_malloc(sizeof(float)*len,zq_mm_align_size*sizeof(float));
 	accumulate_buf = (float*)_aligned_malloc(sizeof(float)*(len + 1),zq_mm_align_size*sizeof(float));
-	local_sum_buf = (float*)_aligned_malloc(sizeof(float)*C, zq_mm_align_size * sizeof(float));
+	// 审计修复 2026-10-02（附录 AX.2）：local_sum_buf 原来只给 C 个 float，
+	// 但下面 `zq_mm_load_ps(local_ptr)` / `zq_mm_store_ps(out_c_ptr)` 都以
+	// **zq_mm_align_size** 为步长、每次读/写 align 个 float，C % align != 0 时
+	// 最后一下会越过 C-1。ASan 实测：
+	//   ERROR: AddressSanitizer: heap-buffer-overflow
+	//          READ of size 32 at ... zq_cnn_lrn_32f_align_c_raw.h:102
+	// 多给 align 个 float 就够（多出来的部分读到什么算什么，写出去的是
+	// local_sum_buf 的补零值，落在 out 像素的对齐空隙里，与标量结果一致）。
+	local_sum_buf = (float*)_aligned_malloc(sizeof(float)*(C + zq_mm_align_size), zq_mm_align_size * sizeof(float));
 
 	accumulate_buf[0] = 0;
 	for (c = 0; c < pad_size; c++)
