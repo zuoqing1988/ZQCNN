@@ -95,7 +95,9 @@ if((CMAKE_CXX_COMPILER_ID MATCHES "GNU") OR (CMAKE_CXX_COMPILER_ID MATCHES "Clan
 elseif(CMAKE_CXX_COMPILER_ID MATCHES "Intel")
     add_compile_options(/QxAVX2)
 elseif(CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
-    add_compile_options(/arch:AVX2)
+    # 源码里含中文注释，不加 /utf-8 时 MSVC 会按系统 ANSI 代码页解码，
+    # 多字节序列可能被误判成引号/反斜杠导致莫名其妙的语法错误
+    add_compile_options(/utf-8 /arch:AVX2)
 endif()
 
 set(ZQCNN_INCLUDE_DIRS ${CMAKE_CURRENT_LIST_DIR}/ZQ_GEMM
