@@ -53,6 +53,10 @@
       却报出「29 个形状变快」。
    **动手用 `tools/bench_gemm_ab.py`**（已内置交替跑、取最好值、
    8% 默认阈值），不要手写 shell 管道。
+10. **微基准的 A 版必须是"完整"的**：K 循环、归约、写 C 一个都不能省。
+   2026-10-01 又踩了一次：为了验证 6x8 外积内核，把生产 `m2n4` 的汇编抄进微基准，
+   却只跑 1 个 K 块就计时（没有 K 循环 / 19 条归约 / 写 C），而候选版跑完整 K + 写 C。
+   两侧口径不同，测出来的倍数没有意义。**要抄就连抄完整。**
 
 ## 提交规则
 
@@ -71,6 +75,19 @@
 1. **MSVC x64 不支持函数体内联汇编**：`__asm { }` 和 `__declspec(naked)` 在 x64 目标上都会编译失败（2026-10-01 实测 MSVC 14.35 报 C2143/C4235）。Windows 侧的手写汇编必须走独立 `.asm` 文件（CMake 里 `enable_language(ASM_MASM)` + `.asm`），GCC/Clang 侧才用 `__asm__ volatile` 内联汇编。写跨平台低层代码前先想清楚这两条路径。
 2. `3rdparty/lib/libncnn.a` 是 clang 编译的，引用 `__exp_finite`/`__log_finite` 等 compiler-rt 符号，用 gcc 链接时由 `ZQCNN/math/zq_libm_compat.c` 补齐，不要删。
 3. 基准测试程序里 MKL / OpenBLAS 一律**运行时动态加载**（`LoadLibrary`/`dlopen`），不引入链接期依赖；MKL 运行时放在 `3rdparty/mkl_runtime/`（已 gitignore），Linux 下 `libmkl_rt.so.2`、Windows 下 `mkl_rt.3.dll`。
+4. **GCC 的内联汇编不接受 `"r8"(x)` 这种寄存器名约束**（gcc 9.4 实测）：只认
+   `rax/rcx/rdx/rbx/rsp/rbp/rsi/rdi` 这 8 个，`"r8"`..`"r15"` 会被当成 `"r"` 加一个
+   非法修饰符，报 `matching constraint references invalid operand number`。
+   照抄生产代码的写法：**入参全用 `"m"`，进来后自己 `movq`/`movl` 到目标寄存器，
+   寄存器名写进 clobber 列表**（见 `zq_gemm_32f_align_c_asm.c` 的 `ZQA_MOV64`/`ZQA_MOV32`）。
+5. `vextractf128` 的目标必须写 `%%xmm8`，不能写 `%%ymm8`（后者报
+   `operand size mismatch`，紧跟的 `vaddps` 也会报 `register type mismatch`）。
+   AT&T 模板里每个寄存器名都要写两个 `%`（`%%ymm0`），写一个会被 GCC 当成操作数引用。
+6. **Zen 3（Ryzen 9 5900HX 实测）上 `vbroadcastss ymm, xmm`（寄存器源）比
+   `vbroadcastss ymm, m32`（内存源）慢约三个数量级**，而指令数只多 6 条 `movss`。
+   写"先把标量读进 xmm 再广播"的优化前先在这台机器上 A/B 一下：
+   同一个 6x8 外积内核，内存源 91.2 ns/次（67.4 GF/s），寄存器源慢到跑不完 2000 万次。
+   内存源本身就是 1 条 load-port uop，并没有多占端口。
 
 ## 行尾与跨平台编译规则
 
@@ -80,6 +97,7 @@
 4. **改完代码跑一次 `python tools/check_line_endings.py`**。它查三类问题：multi-CR（`\r\r\n`，会让 `\r` 并进 `#include`/`#ifndef` 的预处理符 token，是 UB）、lone-CR、以及**同一文件里 CRLF 与裸 LF 混用**。`--fix` 可以自动规范化。纯 LF 文件（`*_raw.h`）不会被误判。
 5. **用 Python 批量改写源码时必须自己保证行尾**：`open(p,'rb').read().split(b'\n')` 再 `b'\n'.join(...)` 这种写法，**新插入的行不带 `\r`**，工作区立刻变成 CRLF/LF 混用。正确做法是插入时补 `b'\r'`，或改完立刻跑 `--fix`。2026-10-01 批量修 MTCNN 时就是这么踩到的。
 6. **不要凭"以前的修复报告写了什么"来判断覆盖面**。第四/五轮声称边框清零已覆盖 `ROI`，实际只改了 `Resize*`；`NCHWC1/4/8` 整个系列一处没改。收口一类缺陷时要**全仓枚举同类站点**（`grep` 出所有出现位置逐个核对），而不是只信上一轮的清单。
+7. **改中文注释/文档时不要走有损解码，改完必须跑 `python tools/check_text_encoding.py`**。`core.autocrlf=true` 下用脚本批量改写时，只要有一环用了 `errors='replace'` 再写回，原字节就被永久换成 `EF BF BD`，而且**不报错** —— 只有读那一行时才看到几个黑方块。2026-10-01 在 `reports/ZQ_GEMM_多内核自动选路_设计提案.md`、`docs-changelogs/CHANGELOG_2026-10-01.md` 和 `zq_gemm_32f_align_c_asm_msvc.asm` 各抓到一处（提交前就在仓库里）。该工具还会报严格 UTF-8 解不开的文件，其中 4 个是上游带来的 **GBK 文件**（`ZQ_MFC_Utils.h`、`ZQ_PutTextCN.h`、`ZQ_CNN_FaceCropUtils.h`、`mxnet2caffe.bat`），已在白名单里，不要去"修"它们。
 
 ## 配置宏的唯一真相
 

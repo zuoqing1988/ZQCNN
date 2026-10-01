@@ -6,7 +6,7 @@
 ; 为什么需要这个文件: MSVC **x64 目标根本不支持函数体内联汇编**, 对 __asm {}
 ; 会直接报 C4235 (non-standard extension: '__asm' keyword is not supported in
 ; this context)。x86 32 位才支持 __asm, x64 只能用独立的 .asm 文件走 ml64。
-; 所以 Windows 下这三个微内核用 MASM 写在��里, 由 zq_gemm_32f_align_c_asm.c
+; 所以 Windows 下这三个微内核用 MASM åå¨è¿ä¸ªæä»¶é, 由 zq_gemm_32f_align_c_asm.c
 ; 声明并调用; GCC/Clang 那边仍然用函数体内 __asm__ volatile (AT&T)。
 ; 指令序列两边完全一致。
 ;
