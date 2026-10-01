@@ -2,10 +2,16 @@
 # -*- coding: utf-8 -*-
 """ZQCNN 审计这一轮加出来的全部检查，一个入口跑完（**在 Windows 侧跑**）。
 
-    python tools/run_audit_checks.py
-    python tools/run_audit_checks.py --quick      # 跳过慢的可编译性门禁
+    python tools/run_audit_checks.py                # 检查组（下面 A/B/C）
+    python tools/run_audit_checks.py --quick        # 跳过慢的可编译性门禁
+    python tools/run_audit_checks.py --with-build   # 再加上双平台全量构建 + sample 回归
 
-分三组：
+分组：
+
+D 主工程双平台回归（只在 --with-build 时跑）
+    Windows  cmake --build build_x64 --config Release
+    Linux    wsl 里的 /tmp/zqb2 make
+    两边各跑一遍关键 sample（tools/run_sample_regression.sh 与等价的 exe 调用）
 
 A 文本卫生（秒级）
     tools/check_line_endings.py    multi-CR / lone-CR / CRLF+LF 混用
@@ -22,9 +28,6 @@ B 和 C 里的两个工具本身是「Windows 侧 Python → 通过 `wsl ... bas
 在 WSL 里编译」。把它们放进一个 WSL 里的 shell 脚本去调用，会在 WSL 里再起一个
 Python，然后那个 Python 想调 `wsl` —— 没有 `subprocess` 模块（那是 Windows 的
 标准库）。2026-10-02 实测踩过：`AttributeError: 'module' object has no attribute 'run'`。
-
-**主工程（ZQCNN / ZQ_GEMM）的验证不在这里** —— 那是双平台 cmake 全量构建 +
-`tools/run_sample_regression.sh` 的事，Windows 侧要单独跑。
 """
 
 from __future__ import print_function
@@ -49,6 +52,50 @@ GROUPS = [
 ]
 
 
+WIN_BUILD = ['cmake', '--build', 'build_x64', '--config', 'Release']
+LINUX_SAMPLES = ('cd /mnt/d/ZQCNN && bash tools/run_sample_regression.sh')
+
+# 关键 sample：两个平台都要过（rc 必须为 0）。
+# SampleGEMMAsmCompare 是汇编 vs intrinsic 的对拍，PASS 才算过；
+# 其余是推理链路（MTCNN / SSD / CascadeOnet）。
+WIN_SAMPLES = ['SampleGEMMAsmCompare.exe', 'SampleMTCNN.exe', 'SampleMTCNN_NCHWC4.exe',
+               'SampleSSD.exe', 'SampleCascadeOnet.exe', 'SampleFaceDetectorMTCNN.exe']
+WIN_BIN = os.path.join(ROOT, 'cmake-out-win32-x64', 'release', 'Release')
+
+
+def run_group(name, cmd, cwd=None, shell=False):
+    print('=' * 74)
+    print('### %s' % name)
+    # 子进程直接写同一个 fd, 不 flush 的话它的输出会排在父进程缓冲的 print 之前,
+    # 读起来是乱的（2026-10-02 实测）
+    sys.stdout.flush()
+    p = subprocess.run(cmd, cwd=cwd, shell=shell)
+    sys.stdout.flush()
+    ok = (p.returncode == 0)
+    print('--- %s: %s' % (name, 'OK' if ok else 'FAILED (rc=%d)' % p.returncode))
+    return ok
+
+
+def run_build_group():
+    ok = True
+    ok &= run_group('D1 Windows 全量构建 (VS2022/cmake)',
+                    WIN_BUILD, cwd=ROOT)
+    ok &= run_group('D2 Linux 全量构建 (gcc/wsl)',
+                    'wsl -d Ubuntu-20.04 -- bash -c "cd /tmp/zqb2 && make -j8"')
+    ok &= run_group('D3 Linux sample 回归',
+                    'wsl -d Ubuntu-20.04 -- bash -c "%s"' % LINUX_SAMPLES)
+    for exe in WIN_SAMPLES:
+        path = os.path.join(WIN_BIN, exe)
+        if not os.path.isfile(path):
+            print('--- Windows sample %s: MISSING (%s)' % (exe, path))
+            ok = False
+            continue
+        # 注意: sample 必须在**产物目录**里跑（CMake 把 model/ 和 data/ 联接到了那里），
+        # 从仓库根跑只会打一行 empty image，看着像跑过了其实什么都没验。
+        ok &= run_group('D4 Windows sample %s' % exe, [path], cwd=WIN_BIN)
+    return ok
+
+
 def main():
     try:
         sys.stdout.reconfigure(encoding='utf-8', errors='replace')
@@ -57,27 +104,23 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('--quick', action='store_true',
                     help='跳过慢的可编译性门禁（约 2 分钟）')
-    ap.add_argument('--verbose', action='store_true')
+    ap.add_argument('--with-build', action='store_true',
+                    help='额外跑双平台全量构建 + sample 回归（很慢，几分钟）')
     args = ap.parse_args()
 
     failed = []
+    if args.with_build:
+        if not run_build_group():
+            failed.append('D 双平台构建 + sample 回归')
+
     for name, argv, slow in GROUPS:
         if slow and args.quick:
             print('=' * 74)
             print('### %s：--quick 跳过' % name)
             continue
-        print('=' * 74)
-        print('### %s' % name)
-        # 子进程直接写同一个 fd, 不 flush 的话它的输出会排在父进程缓冲的 print
-        # 之前, 读起来是乱的
-        sys.stdout.flush()
-        p = subprocess.run([sys.executable, os.path.join(HERE, argv[0])] + argv[1:],
-                           cwd=ROOT)
-        sys.stdout.flush()
-        if p.returncode == 0:
-            print('--- %s: OK' % name)
-        else:
-            print('--- %s: FAILED (rc=%d)' % (name, p.returncode))
+        ok = run_group(name, [sys.executable, os.path.join(HERE, argv[0])] + argv[1:],
+                       cwd=ROOT)
+        if not ok:
             failed.append(name)
 
     print('=' * 74)

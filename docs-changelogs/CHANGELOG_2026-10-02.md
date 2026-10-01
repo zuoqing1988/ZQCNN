@@ -1217,3 +1217,40 @@ tools/run_zqlib_checks.py 9/9 PASS。
 ### 验证
 
 全跑：4 组全 OK，退出码 0。--quick：3 组 OK + 门禁跳过，退出码 0。
+
+## 新增/变更：把「双平台跑通」也接进统一入口（--with-build）
+
+### 变更文件
+- `tools/run_audit_checks.py`：新增 `--with-build`（D 组）
+- `AGENTS.md` 构建一节第 6 条补上 --with-build 的说明
+- `reports/README.md` 复现命令一节补上
+- `audit_k3_20261001.md`：新增**附录 AO**
+
+### D 组内容
+
+| 组 | 内容 |
+|---|---|
+| D1 | Windows 全量构建（cmake --build build_x64 --config Release） |
+| D2 | Linux 全量构建（WSL 里 cd /tmp/zqb2 && make -j8） |
+| D3 | Linux sample 回归（tools/run_sample_regression.sh，8 个） |
+| D4 | Windows 关键 sample 6 个（SampleGEMMAsmCompare / MTCNN / NCHWC4 / SSD / CascadeOnet / FaceDetectorMTCNN） |
+
+### 修掉一处「看着跑过了其实没跑」
+
+D4 里 Windows 的 sample 必须把 cwd 设成**产物目录**
+cmake-out-win32-x64/release/Release，因为 CMake 把 model/ 和 data/ 联接到了那里。
+从仓库根跑，sample 只会打一行 `empty image` 然后返回 0。
+
+**看着像跑过了，其实什么都没验。** 2026-10-02 写 capture 脚本时踩过一次，
+这次写 D4 又踩一次，所以在代码里留了注释。
+
+### 「Windows 和 Linux 都能完全跑通」现在有了可重复执行的形式
+
+    python tools/run_audit_checks.py --with-build
+
+一次跑完：双平台构建 + 双平台 sample + 文本卫生 + 9 组 ZQlib 测试 + 可编译性门禁。
+任何一组失败就退出 1。
+
+### 验证
+
+--with-build --quick：13 个子组全 OK，退出码 0。

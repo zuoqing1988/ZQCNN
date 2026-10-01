@@ -31,9 +31,12 @@
    > `python tools/probe_zqlib_headers.py` 会把 143 个 ZQlib 头逐个单独编译一遍 ——
    > **83 个能独立编译**，真正需要 Windows/MFC/OpenCV 的只有 6 个。
    > 写新的第三方头测试时先跑一遍这个探测器，别凭印象判断。
-6. **审计这一轮加的检查有一个统一入口**：`python tools/run_audit_checks.py`
-   （`--quick` 跳过慢的可编译性门禁，约 20 秒跑完）。
-   它按顺序跑 A 文本卫生、B 第三方头库的 9 组 ASan 测试、C ZQlib 可编译性门禁，
+6. **全部检查有一个统一入口**：`python tools/run_audit_checks.py`
+   - 默认：文本卫生 + 第三方头库的 9 组 ASan 测试 + ZQlib 可编译性门禁（约 2.5 分钟）
+   - `--quick`：跳过可编译性门禁（约 20 秒）
+   - `--with-build`：再加上**双平台全量构建 + 关键 sample 回归**（Windows cmake
+     与 WSL gcc 各一遍，两边各跑 6 个 sample；sample 必须在**产物目录**里跑，
+     从仓库根跑只会打一行 `empty image`，看着像跑过了其实什么都没验）
    任何一组失败就退出 1。**改完东西先跑它**，比逐个记命令可靠。
 
 7. **第三方头库有独立回归入口**：`python tools/run_zqlib_checks.py`
