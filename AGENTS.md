@@ -58,6 +58,38 @@
 2. `LoadFrom/LoadFromFile` 失败后对象可能处于半更新状态；重复调用 `Init()` 的安全性要看具体实现，别假设。
 3. 报告"修之前先确认方向"：本项目里"看起来是 bug"的地方有一半是 API 约定与直觉相反（见上面两条，以及 `zq_cnn_eltwise_*` 里"增量加到 `*_im_ptr` 还是 `*_slice_ptr`"这类必须逐元素推演的地方）。
 
+## 三个张量变体对"越界 rect"的策略是互相冲突的（Align128bit 的那个是 MTCNN 赖以工作的）
+
+`ZQ_CNN_Tensor4D_NHW_C_Align0` / `_Align128bit` / `_Align256bit` 的
+`ResizeBilinearRect` / `ResizeNearestRect`，越界检查写在三个不同位置：
+
+| 变体 | `if (越界)` 的分支体 |
+|---|---|
+| Align0 | `return false;` |
+| Align256bit | `return false;` |
+| **Align128bit** | **`<正常 resize, 不报错>`** —— 也就是说越界 rect **被接受**并照常做 resize |
+
+而 `Align128bit::ResizeBilinearRect` 那个"正常 resize"分支**不含**
+`can_call_safeborder` 优化，也不走 ROI 快捷路径；不含它的 `else` 分支才含。
+
+**这不是笔误能直接改掉的**：全部 5 个 MTCNN 变体的 `Find()` 入参都是
+`ZQ_CNN_Tensor4D_NHW_C_Align128bit& input`，并且它们**故意**传入越界 rect ——
+`ZQ_CNN_MTCNN*.h` 里 16 处
+
+```cpp
+if (/*off_x < 0 || off_x + rect_w > width || off_y < 0 || off_y + rect_h > height ||*/ ...)
+```
+
+的边界检查是被**注释掉的**（检测框不做图像边界裁剪，靠 resize 内核自己去读
+border）。把 Align128bit 的守卫改成 `return false` 之后，
+`SampleCascadeOnet` / `SampleCascadeOnet_Interface` 立刻 `Find()` 返回 false
+（一张脸都检不出），实测确认过。
+
+2026-10-01 的处理：只把 **`ResizeNearestRect`**（标量版，全仓零调用方）
+的守卫对齐成 `return false`；**`ResizeBilinearRect` 保持原样**，并在
+`audit_k3_20261001.md` 附录 N 记为"已知的不一致，改它必须先修 MTCNN 的 rect
+越界"。**不要单独改 `Align128bit::ResizeBilinearRect` 的守卫。**
+
 ## ZQ_GEMM 的数据布局（写内核前必须先确认，否则结果全错且不崩）
 
 `zq_gemm_32f_AnoTrans_Btrans_*` 的语义是：
