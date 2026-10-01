@@ -490,3 +490,32 @@ SIGSEGV code=128 (SI_KERNEL) si_addr=(nil)
 
 1. NMS 的多线程分支目前仍是"死路径"（全仓调用都传 `thread_num=1`），本次修复是按对外 API 的正确性做的，不影响现有行为。
 2. GEMM 暂存缓冲的 4 处覆盖 fp32/fp16 × 通用/batch 两条路径；`layers_nchwc` 侧的同类模式在前一轮已经修过。
+
+## 新增/变更：第四轮审计（构建配置面 / 数值算法 / 资源生命周期 / 示例参数解析）
+
+对应 `audit_k3_20261001.md` 附录 H。
+
+### 变更文件
+
+| 文件 | 问题 | 修复 |
+|---|---|---|
+| `ZQCNN/layers_c/zq_cnn_convolution_gemm_32f_align_c_raw.h` | **高·静默算错**：1x1 卷积核 im2col 按 `padK` 写行，sgemm 收到的 `lda` 仍是未补齐的 `matrix_A_cols(=in_pixelStep)`。`padK` 由全局 `ZQ_CNN_USE_SSETYPE` 选，与该 TU 自己的 `zq_mm_align_size` 无关；`in_C % 8 != 0` 且快速路径不成立时，lda 与真实行距不符，**每一行都从错位置读**——不崩溃只出错数 | 该核不做 K 补齐（两侧行长本来就都是 `in_pixelStep`）。仓库内模型通道数都是 8 的倍数，所以此前一直没暴露 |
+| 同上 | 7 处"内部自行分配"不判 `_aligned_malloc` 的 NULL，紧接着就 `zq_mm_store_ps` 写进去 | 判空 + 释放已分配块 + `return` |
+| 同上 | 7 处"调用方自带 buffer"分配失败**仍然**更新 `*buffer_len`——与上一轮已在 `.c` 侧修好的同款，两边不一致 | 失败即 `return` 且不更新 `*buffer_len` |
+| `CMakeLists.txt` | ① `BLAS_TYPE` 的分支嵌在 `if(SIMD_ARCH_TYPE MATCHES "arm…")` 里，x86 上 `-DBLAS_TYPE` **完全无效**；② 用 `MATCHES` 做子串匹配——默认的 `ZQ_GEMM` 匹配不到 `"zq_gemm"`，`openblas_zq_gemm` 被 `"openblas"` 抢先，`ZQ_CNN_USE_BOTH_BLAS_ZQ_GEMM` 永远不可达 | 分支移出 SIMD 判断；改成 `string(TOLOWER)` + `STREQUAL` 精确比较，顺序 `openblas_zq_gemm` → `openblas` → `zq_gemm` |
+| `SamplesZQlibFaceID/SampleFaceDatabase{,,N,OpenCV,GrayN}CNN/*.cpp`（4 个） | `select_subset()` 里 `max_thread_num = atoi(argv[5])`，但按 usage 线程数是**第 7 个**参数 → 用户设的线程数被静默忽略、开满全部核（同文件的 `select_subset_desired_num` 写的是 `argv[9]`，可见是复制时漏改） | 4 处改为 `argv[7]` |
+| `CMakeLists.txt` | 干净 checkout 时 `data/` 联接会退化成 `copy_directory`——多配置生成器的 `$(Configuration)` 子目录在首次 configure 时还不存在，`mklink /J` 直接失败，之后仓库里新增的测试图片不会再反映到产物目录 | 联接前先 `file(MAKE_DIRECTORY)` 建出各配置子目录 |
+| `.gitignore` + 仓库 | 误提交了 8 个 MSVC 目标文件（约 3MB）、`tmp_*.cpp`、`build_verify_*.log` | 清理并加忽略规则（`*.obj` / `*.log` / `tmp_*`） |
+| `AGENTS.md` | —— | 新增「配置宏的唯一真相」一节：CMake 与 `ZQ_CNN_CompileConfig.h` 两侧同名宏必须同步；`BLAS_TYPE` 用精确比较且不放进 SIMD 分支 |
+
+### 实测结果
+
+- **Windows**：全量构建 **0 error**；SampleMTCNN 20.5ms、SampleMTCNN_NCHWC4 8.5ms、SampleSSD、SampleFaceDetectorMTCNN 全部 exit=0，数值与改动前一致
+- **Linux**：全量构建 **0 error**；SampleMTCNN、SampleMTCNN_NCHWC4、SampleSSD exit=0
+- **干净 checkout 验证**：删掉整个 `cmake-out-win32-x64` 后重新 configure + 全量构建，0 error，`data`/`model` 都是 `<JUNCTION>` 而非拷贝，4 个示例 exit=0
+
+### 注意事项
+
+1. 1x1 卷积那个 bug 属于"静默算错"：不崩溃、不越界，只是结果不对。仓库自带的模型通道数都是 8 的倍数，所以现有示例全对；**如果用户换成 C 通道不是 8 倍数的模型（1x1 卷积接在 3 通道输入之后），修复前会算错**。
+2. `ZQ_CNN_USE_BLAS_GEMM` 等宏在 CMake 与头文件各有一份且没有 `#ifndef` 保护，命令行 `-D` 会被头文件覆盖——本轮只把规则写进 AGENTS.md，没有改行为（改了会让"链了 MKL 却仍用 ZQ_GEMM 算"变成另一种静默行为）。
+3. 本轮另有 6 项中低危已评估为"暂不修"并记入报告附录 H（`ChangeSize` 半更新、resize 边框清零不对称、`SSETYPE_NONE` 缺标量分支、`model/CMakeLists.txt` 死文件、deconvolution 同款 padK 死代码、`similarity_thresh` 不夹取）。
