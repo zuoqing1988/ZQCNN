@@ -418,7 +418,7 @@ namespace ZQ
 						return false;
 					}
 					int len = strlen(line);
-					if (line[len - 1] == '\n')
+					while (len > 0 && (line[len - 1] == '\n' || line[len - 1] == '\r'))
 						line[--len] = '\0';
 					std::string input = line;
 					_split_string(input, std::string("\t"), strings);

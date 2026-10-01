@@ -395,7 +395,7 @@ namespace ZQ
 				if (line[0] == '\0')
 					break;
 				int len = strlen(line);
-				if (line[len - 1] == '\n')
+				while (len > 0 && (line[len - 1] == '\n' || line[len - 1] == '\r'))
 					line[--len] = '\0';
 				names.push_back(std::string(line));
 			}
