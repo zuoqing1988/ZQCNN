@@ -45,7 +45,12 @@ namespace ZQ
 			for (int i = 0; i < key_num; i++)
 			{
 				if (!frames[i].WriteToFile(out))
+				{
+					// 原来直接 return false, out 没关 —— 文件句柄泄漏,
+					// 而且此时 out 里还写着一份写了一半的容器。
+					fclose(out);
 					return false;
+				}
 			}
 			fclose(out);
 			return true;

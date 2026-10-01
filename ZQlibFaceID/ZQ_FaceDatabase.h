@@ -439,24 +439,21 @@ namespace ZQ
 						{
 							tmp_score = ZQ_FaceRecognizerSphereFace::CalSimilarity(feat[k].length, feat[k].pData, database.persons[i].features[j].pData);
 						}
-
-						if (max_id < 0)
-						{
-							max_id = 0;
-							max_score = tmp_score;
-						}
-						else
-						{
-							if (max_score < tmp_score)
-							{
-								max_id = j;
-								max_score = tmp_score;
-							}
-						}
 					}
-					
+					// 维度对不上就整对跳过。原来的 "if (max_id < 0)" 首元素判断
+					// 写在 k 循环**里面**: 不匹配时 tmp_score 恒为 -FLT_MAX, 第一个
+					// k 命中该分支把 max_id 钉死成 0, 之后 -FLT_MAX < -FLT_MAX 恒假
+					// 于是永不更新 —— 拿 512 维去查 128 维的库时, Search 会返回
+					// true 并给出一整份 person_j 全是 0 的"结果"。
+					if (tmp_score == -FLT_MAX)
+						continue;
+					if (max_id < 0 || max_score < tmp_score)
+					{
+						max_id = j;
+						max_score = tmp_score;
+					}
 				}
-				person_j[i] = max_id;
+				person_j[i] = max_id;    // 一个都没匹配上时保持 -1
 				scores[i] = max_score;
 			}
 
@@ -488,7 +485,13 @@ namespace ZQ
 				out_ids.push_back(ids[i]);
 				out_scores.push_back(scores[i]);
 				out_names.push_back(database.names[ids[i]]);
-				out_filenames.push_back(database.persons[ids[i]].filenames[person_j[ids[i]]]);
+				// person_j 为 -1 表示这个人与查询特征维度对不上 (见上面的 continue),
+				// 拿它去索引 filenames 就是 filenames[-1]。维度不匹配的排在
+				// 分数最低的一端, 只有匹配的人不足 max_num 时才会落到这里。
+				int pj = person_j[ids[i]];
+				if (pj < 0 || pj >= (int)database.persons[ids[i]].filenames.size())
+					continue;
+				out_filenames.push_back(database.persons[ids[i]].filenames[pj]);
 			}
 
 			double t3 = omp_get_wtime();
@@ -1131,7 +1134,9 @@ namespace ZQ
 				{
 					int num = persons[p].features.size();
 					float out_min_score = FLT_MAX;
-					int out_i, out_j;
+					// 特征数 < 2 时下面的内层循环一次都不跑, out_i/out_j 会是栈上
+					// 未定义值, 再拿 filenames[out_i] 索引就是越界读。
+					int out_i = 0, out_j = 0;
 					for (int i = 0; i < num; i++)
 					{
 						for (int j = i + 1; j < num; j++)
@@ -1161,7 +1166,9 @@ namespace ZQ
 				{
 					int num = persons[p].features.size();
 					float out_min_score = FLT_MAX;
-					int out_i, out_j;
+					// 特征数 < 2 时下面的内层循环一次都不跑, out_i/out_j 会是栈上
+					// 未定义值, 再拿 filenames[out_i] 索引就是越界读。
+					int out_i = 0, out_j = 0;
 					for (int i = 0; i < num; i++)
 					{
 						for (int j = i + 1; j < num; j++)

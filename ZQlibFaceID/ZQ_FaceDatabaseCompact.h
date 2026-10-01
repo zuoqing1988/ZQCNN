@@ -27,7 +27,20 @@ namespace ZQ
 			person_face_offset = 0;
 			all_face_feats = 0;
 		}
-		~ZQ_FaceDatabaseCompact() {}
+		// 原来这里是空析构。三个堆指针 (person_face_num / person_face_offset /
+		// all_face_feats) 的释放逻辑全在 _clear() 里, 而 _clear() 只在
+		// LoadFromFile / GenerateRandomDatabase 里被调 —— 析构一次都没调。
+		// 于是任何"加载过数据库再出作用域"的用法都必然全量泄漏
+		// (10 万张脸 x 512 维就是 ~800MB), 而且是正常路径 100% 触发。
+		~ZQ_FaceDatabaseCompact() { _clear(); }
+
+		// 声明了析构函数并不会抑制隐式拷贝构造的生成, 默认版本是逐位复制这三个
+		// 指针 —— 两个对象析构时会对同一块内存 free 两次。只补析构等于把
+		// "泄漏"升级成"double free", 所以拷贝语义一并禁掉。
+		// 全仓用法都是 `ZQ_FaceDatabaseCompact&` 形参与栈上局部对象 (8 处),
+		// 没有任何按值传递/赋值, 删掉不影响现有代码。
+		ZQ_FaceDatabaseCompact(const ZQ_FaceDatabaseCompact&) = delete;
+		ZQ_FaceDatabaseCompact& operator=(const ZQ_FaceDatabaseCompact&) = delete;
 
 		bool LoadFromFile(const char* feats_file, const char* names_file)
 		{

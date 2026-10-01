@@ -135,7 +135,9 @@ namespace ZQ
 
 			_auto_detect_database(database_root, person_names, filenames);
 
-			int num_cores = omp_get_num_procs() - 1;
+			// 单核容器里 omp_get_num_procs()-1 == 0, num_threads(0) 按 OpenMP 规范
+			// 是未定义行为。同仓库另外 5 处都用 __max(1, ...) 兜底, 这里漏了。
+			int num_cores = __max(1, omp_get_num_procs() - 1);
 
 			int real_thread_num = __min(max_thread_num, __min(num_cores, __min(num_detectors, num_recognizers)));
 			printf("real_thread_num = %d\n", real_thread_num);
@@ -308,7 +310,9 @@ namespace ZQ
 
 			_auto_detect_database(database_root, person_names, filenames);
 
-			int num_cores = omp_get_num_procs() - 1;
+			// 单核容器里 omp_get_num_procs()-1 == 0, num_threads(0) 按 OpenMP 规范
+			// 是未定义行为。同仓库另外 5 处都用 __max(1, ...) 兜底, 这里漏了。
+			int num_cores = __max(1, omp_get_num_procs() - 1);
 
 			int real_thread_num = __min(max_thread_num, __min(num_cores, num_recognizers));
 			printf("real_thread_num = %d\n", real_thread_num);
