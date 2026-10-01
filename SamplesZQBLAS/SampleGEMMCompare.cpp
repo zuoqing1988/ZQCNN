@@ -7,17 +7,22 @@
  *   3) Intel MKL           cblas_sgemm(RowMajor, NoTrans, Trans)
  *   4) OpenBLAS            cblas_sgemm(RowMajor, NoTrans, Trans)
  *
- * MKL / OpenBLAS 全部用运行时动态加载（LoadLibrary/dlopen + GetProcAddress），
- * 本机没装就直接跳过对应条目，不影响其它路径，也不需要在链接期绑死某个 BLAS。
+ * MKL / OpenBLAS 全部用运行时动态加载（LoadLibrary/dlopen + GetProcAddress/dlsym），
+ * 本机没装就跳过对应条目，不在链接期绑死某个 BLAS。
  *
  * 语义与 ZQ_GEMM 一致：
  *   C[i][j] = sum_k A[i*lda+k] * Bt[j*ldb+k]
  *   A: M x K, Bt: N x K, C: M x N, 全部行主序, C 被覆盖写入
  * 对应 CBLAS 行主序就是 C = A * Bt^T，即 transB = CblasTrans。
  *
+ * 对齐约定：ZQ_GEMM 的 intrinsic 内核用对齐访存（vmovaps），与 ZQCNN 内部一致——
+ * 缓冲区 32 字节对齐，lda/ldb/ldc 为 8 的倍数，K 方向 padding 必须补 0。
+ * 汇编版用非对齐访存，要求更松，但基准按 intrinsic 的契约分配，保证公平。
+ *
  * 用法：
- *   SampleGEMMCompare                     默认尺寸组
- *   SampleGEMMCompare [mkl_lib路径] [openblas_lib路径]
+ *   SampleGEMMCompare                       默认尺寸组，自动探测 MKL / OpenBLAS
+ *   SampleGEMMCompare --no-mkl              跳过 MKL
+ *   SampleGEMMCompare <mkl_lib> [ob_lib]    指定动态库路径
  * 环境变量 ZQCNN_MKL_LIB / ZQCNN_OPENBLAS_LIB 优先级最高。
  */
 
@@ -29,23 +34,22 @@
 #include <vector>
 #include <chrono>
 
-#include "zq_gemm_32f_align_c.h"
-#include "zq_gemm_32f_auto.h"
-#include "zq_gemm_32f_align_c_asm.h"
-
 #if defined(_WIN32)
 #  include <windows.h>
+#  include <malloc.h>
    typedef void* lib_handle_t;
    static lib_handle_t lib_open(const char* p) { return (lib_handle_t)LoadLibraryA(p); }
    static void* lib_sym(lib_handle_t h, const char* n) { return (void*)GetProcAddress((HMODULE)h, n); }
-   static const char* kLibExt = ".dll";
 #else
 #  include <dlfcn.h>
+#  include <unistd.h>
    typedef void* lib_handle_t;
    static lib_handle_t lib_open(const char* p) { return dlopen(p, RTLD_NOW | RTLD_LOCAL); }
    static void* lib_sym(lib_handle_t h, const char* n) { return dlsym(h, n); }
-   static const char* kLibExt = ".so";
 #endif
+
+#include "zq_gemm_32f_align_c.h"
+#include "zq_gemm_32f_align_c_asm.h"
 
 typedef void (*cblas_sgemm_fn)(int Order, int TransA, int TransB,
 	int M, int N, int K, float alpha, const float* A, int lda,
@@ -58,17 +62,28 @@ struct BlasLib
 	cblas_sgemm_fn sgemm;
 	void (*set_threads)(int);
 	std::string name;
-	bool multi_thread_capable;
+	bool is_mkl;
+	BlasLib() : sgemm(NULL), set_threads(NULL), is_mkl(false) {}
 };
 
-static bool load_blas(BlasLib& out, const char* candidates[], int num_candidates,
-	void* (*open_fn)(const char*), void* (*sym_fn)(void*, const char*), const char* sym_name)
+static void force_mkl_sequential()
+{
+#if defined(_WIN32)
+	_putenv_s("MKL_THREADING_LAYER", "SEQUENTIAL");
+#else
+	setenv("MKL_THREADING_LAYER", "SEQUENTIAL", 1);
+#endif
+}
+
+static bool load_blas(BlasLib& out, const char* const* candidates, int num_candidates,
+	lib_handle_t (*open_fn)(const char*), void* (*sym_fn)(lib_handle_t, const char*),
+	const char* sym_name, bool is_mkl)
 {
 	for (int i = 0; i < num_candidates; i++)
 	{
 		if (candidates[i] == NULL || candidates[i][0] == '\0')
 			continue;
-		void* h = open_fn(candidates[i]);
+		lib_handle_t h = open_fn(candidates[i]);
 		if (h == NULL)
 			continue;
 		void* s = sym_fn(h, sym_name);
@@ -79,14 +94,47 @@ static bool load_blas(BlasLib& out, const char* candidates[], int num_candidates
 		}
 		out.sgemm = (cblas_sgemm_fn)s;
 		out.name = candidates[i];
-		void* t = sym_fn(h, out.multi_thread_capable ? "mkl_set_num_threads" : "openblas_set_num_threads");
-		out.set_threads = (void(*)(int))t;
+		out.is_mkl = is_mkl;
+		out.set_threads = (void(*)(int))sym_fn(h, is_mkl ? "mkl_set_num_threads" : "openblas_set_num_threads");
+		// 立刻做一次 4x4 自检，确认这个库在本机真的能算（AVX512 机器上旧 MKL 偶尔会崩）
+		static float sa[16] = { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 };
+		static float sb[16] = { 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2 };
+		static float sc[16] = { 0 };
+		out.sgemm(CblasRowMajor, CblasNoTrans, CblasTrans, 4, 4, 4, 1.0f, sa, 4, sb, 4, 0.0f, sc, 4);
+		if (fabs(sc[0] - 8.0f) > 1e-3f)
+		{
+			printf("  [%s] 自检结果异常 (%.3f, 期望 8.0)，跳过\n", candidates[i], sc[0]);
+			continue;
+		}
 		return true;
 	}
 	return false;
 }
 
 struct Shape { int M, N, K; };
+
+static int align8(int x) { return (x + 7) / 8 * 8; }
+
+static float* alloc_aligned(size_t n)
+{
+	void* p = NULL;
+#if defined(_WIN32)
+	p = _aligned_malloc(n * sizeof(float), 32);
+#else
+	if (posix_memalign(&p, 32, n * sizeof(float)) != 0)
+		p = NULL;
+#endif
+	return (float*)p;
+}
+
+static void free_aligned(float* p)
+{
+#if defined(_WIN32)
+	_aligned_free(p);
+#else
+	free(p);
+#endif
+}
 
 static double now_sec()
 {
@@ -103,39 +151,38 @@ static void fill_random(std::vector<float>& v, unsigned seed)
 	}
 }
 
-static double max_abs_diff(const std::vector<float>& a, const std::vector<float>& b)
+static double diff_at(const float* a, const float* b, int M, int N, int ldc)
 {
 	double m = 0;
-	size_t n = a.size() < b.size() ? a.size() : b.size();
-	for (size_t i = 0; i < n; i++)
-	{
-		double d = (double)a[i] - (double)b[i];
-		if (d < 0) d = -d;
-		if (d > m) m = d;
-	}
+	for (int i = 0; i < M; i++)
+		for (int j = 0; j < N; j++)
+		{
+			double d = (double)a[(size_t)i * ldc + j] - (double)b[(size_t)i * ldc + j];
+			if (d < 0) d = -d;
+			if (d > m) m = d;
+		}
 	return m;
 }
 
 static double time_gemm(void (*fn)(int, int, int, const float*, int, const float*, int, float*, int),
-	int M, int N, int K, const std::vector<float>& A, const std::vector<float>& Bt, std::vector<float>& C,
-	int lda, int ldb, int ldc, int iters)
+	int M, int N, int K, const float* A, const float* Bt, float* C, int lda, int ldb, int ldc, int iters)
 {
-	fn(M, N, K, &A[0], lda, &Bt[0], ldb, &C[0], ldc); // warmup
+	fn(M, N, K, A, lda, Bt, ldb, C, ldc); // warmup
 	double t0 = now_sec();
 	for (int i = 0; i < iters; i++)
-		fn(M, N, K, &A[0], lda, &Bt[0], ldb, &C[0], ldc);
+		fn(M, N, K, A, lda, Bt, ldb, C, ldc);
 	double t1 = now_sec();
 	double sec = (t1 - t0) / iters;
-	return 2.0 * (double)M * (double)N * (double)K / sec / 1e9; // GFLOP/s
+	return 2.0 * (double)M * (double)N * (double)K / sec / 1e9;
 }
 
-static double time_blas(cblas_sgemm_fn fn, int M, int N, int K, const std::vector<float>& A,
-	const std::vector<float>& Bt, std::vector<float>& C, int lda, int ldb, int ldc, int iters)
+static double time_blas(cblas_sgemm_fn fn, int M, int N, int K, const float* A, const float* Bt,
+	float* C, int lda, int ldb, int ldc, int iters)
 {
-	fn(CblasRowMajor, CblasNoTrans, CblasTrans, M, N, K, 1.0f, &A[0], lda, &Bt[0], ldb, 0.0f, &C[0], ldc);
+	fn(CblasRowMajor, CblasNoTrans, CblasTrans, M, N, K, 1.0f, A, lda, Bt, ldb, 0.0f, C, ldc);
 	double t0 = now_sec();
 	for (int i = 0; i < iters; i++)
-		fn(CblasRowMajor, CblasNoTrans, CblasTrans, M, N, K, 1.0f, &A[0], lda, &Bt[0], ldb, 0.0f, &C[0], ldc);
+		fn(CblasRowMajor, CblasNoTrans, CblasTrans, M, N, K, 1.0f, A, lda, Bt, ldb, 0.0f, C, ldc);
 	double t1 = now_sec();
 	double sec = (t1 - t0) / iters;
 	return 2.0 * (double)M * (double)N * (double)K / sec / 1e9;
@@ -150,24 +197,30 @@ int main(int argc, char* argv[])
 	const char* kMklCandidates[] = { "3rdparty/mkl_runtime/linux/libmkl_rt.so.2", "3rdparty/mkl_runtime/linux/libmkl_rt.so", "libmkl_rt.so.2", "libmkl_rt.so" };
 	const char* kObCandidates[] = { "3rdparty/lib/libopenblas.so", "libopenblas.so" };
 #endif
+	bool no_mkl = false;
 	const char* mkl_path = getenv("ZQCNN_MKL_LIB");
 	const char* ob_path = getenv("ZQCNN_OPENBLAS_LIB");
-	if (argc > 1) mkl_path = argv[1];
-	if (argc > 2) ob_path = argv[2];
-
-	BlasLib mkl; mkl.sgemm = NULL; mkl.set_threads = NULL; mkl.multi_thread_capable = true;
-	BlasLib ob; ob.sgemm = NULL; ob.set_threads = NULL; ob.multi_thread_capable = false;
+	for (int i = 1; i < argc; i++)
+	{
+		if (strcmp(argv[i], "--no-mkl") == 0)
+			no_mkl = true;
+		else if (mkl_path == NULL)
+			mkl_path = argv[i];
+		else if (ob_path == NULL)
+			ob_path = argv[i];
+	}
 	if (mkl_path != NULL) kMklCandidates[0] = mkl_path;
 	if (ob_path != NULL) kObCandidates[0] = ob_path;
+	if (no_mkl) mkl_path = "<<disabled>>";
 
-	bool has_mkl = load_blas(mkl, kMklCandidates, 5, lib_open, lib_sym, "cblas_sgemm");
-	bool has_ob = load_blas(ob, kObCandidates, 2, lib_open, lib_sym, "cblas_sgemm");
-	printf("MKL    : %s\n", has_mkl ? mkl.name.c_str() : "(未找到，已跳过)");
+	force_mkl_sequential();
+	BlasLib mkl, ob;
+	bool has_mkl = !no_mkl && load_blas(mkl, kMklCandidates, 5, lib_open, lib_sym, "cblas_sgemm", true);
+	bool has_ob = load_blas(ob, kObCandidates, 2, lib_open, lib_sym, "cblas_sgemm", false);
+	printf("MKL     : %s\n", has_mkl ? mkl.name.c_str() : "(未找到，已跳过)");
 	printf("OpenBLAS: %s\n", has_ob ? ob.name.c_str() : "(未找到，已跳过)");
-
-	// 单线程对齐比较：ZQ_GEMM 是单线程实现，BLAS 也压到 1 线程
-	if (has_mkl && mkl.set_threads) mkl.set_threads(1);
 	if (has_ob && ob.set_threads) ob.set_threads(1);
+	fflush(stdout);
 
 	Shape shapes[] = {
 		{ 16, 16, 16 }, { 32, 32, 32 }, { 64, 64, 64 }, { 128, 128, 128 },
@@ -180,59 +233,61 @@ int main(int argc, char* argv[])
 	};
 	const int num_shapes = (int)(sizeof(shapes) / sizeof(shapes[0]));
 
-	printf("\n%-22s %10s %10s %10s %10s   %8s %8s\n",
-		"MxNxK", "intrinsic", "asm", "MKL(1T)", "OpenBLAS", "asm/MKL", "asm/intr");
+	printf("\n%-18s %9s %9s %9s %9s %8s %8s  %s\n",
+		"MxNxK", "intrinsic", "asm", "MKL(1T)", "OpenBLAS", "asm/MKL", "asm/intr", "err(asm)");
 	for (int s = 0; s < num_shapes; s++)
 	{
 		const int M = shapes[s].M, N = shapes[s].N, K = shapes[s].K;
-		const int lda = K, ldb = K, ldc = N;
-		std::vector<float> A((size_t)M * K), Bt((size_t)N * K), C((size_t)M * N);
-		fill_random(A, 12345u + (unsigned)s);
-		fill_random(Bt, 67890u + (unsigned)s);
+		const int lda = align8(K), ldb = align8(K), ldc = align8(N);
+
+		float* pa = alloc_aligned((size_t)lda * M);
+		float* pb = alloc_aligned((size_t)ldb * N);
+		float* pc = alloc_aligned((size_t)ldc * M);
+		float* pr = alloc_aligned((size_t)ldc * M);
+		if (!pa || !pb || !pc || !pr) { printf("alloc failed\n"); return 1; }
+
+		std::vector<float> Avec((size_t)lda * M, 0.0f), Bvec((size_t)ldb * N, 0.0f);
+		fill_random(Avec, 12345u + (unsigned)s);
+		fill_random(Bvec, 67890u + (unsigned)s);
+		for (int i = 0; i < M; i++) for (int k = K; k < lda; k++) Avec[(size_t)i * lda + k] = 0;
+		for (int j = 0; j < N; j++) for (int k = K; k < ldb; k++) Bvec[(size_t)j * ldb + k] = 0;
+		memcpy(pa, &Avec[0], Avec.size() * sizeof(float));
+		memcpy(pb, &Bvec[0], Bvec.size() * sizeof(float));
+		memset(pc, 0, (size_t)ldc * M * sizeof(float));
+		memset(pr, 0, (size_t)ldc * M * sizeof(float));
 
 		double work = 2.0 * M * N * K;
 		int iters = work > 2e8 ? 3 : (work > 2e7 ? 10 : 50);
 
-		std::vector<float> C_int(C), C_asm(C);
-		zq_gemm_32f_AnoTrans_Btrans_auto(M, N, K, &A[0], lda, &Bt[0], ldb, &C_int[0], ldc);
-		zq_gemm_32f_AnoTrans_Btrans_auto_asm(M, N, K, &A[0], lda, &Bt[0], ldb, &C_asm[0], ldc);
-		double err_asm = max_abs_diff(C_int, C_asm);
+		zq_gemm_32f_AnoTrans_Btrans_auto(M, N, K, pa, lda, pb, ldb, pc, ldc);
+		zq_gemm_32f_AnoTrans_Btrans_auto_asm(M, N, K, pa, lda, pb, ldb, pr, ldc);
+		double err_asm = diff_at(pc, pr, M, N, ldc);
 
-		double g_intr = time_gemm(zq_gemm_32f_AnoTrans_Btrans_auto, M, N, K, A, Bt, C, lda, ldb, ldc, iters);
-		double g_asm = time_gemm(zq_gemm_32f_AnoTrans_Btrans_auto_asm, M, N, K, A, Bt, C, lda, ldb, ldc, iters);
-
+		double g_intr = time_gemm(zq_gemm_32f_AnoTrans_Btrans_auto, M, N, K, pa, pb, pc, lda, ldb, ldc, iters);
+		double g_asm = time_gemm(zq_gemm_32f_AnoTrans_Btrans_auto_asm, M, N, K, pa, pb, pr, lda, ldb, ldc, iters);
 		double g_mkl = 0, g_ob = 0, err_mkl = 0, err_ob = 0;
-		std::vector<float> C_ref(C);
 		if (has_mkl)
 		{
-			g_mkl = time_blas(mkl.sgemm, M, N, K, A, Bt, C_ref, lda, ldb, ldc, iters);
-			err_mkl = max_abs_diff(C_int, C_ref);
+			g_mkl = time_blas(mkl.sgemm, M, N, K, pa, pb, pr, lda, ldb, ldc, iters);
+			err_mkl = diff_at(pc, pr, M, N, ldc);
 		}
 		if (has_ob)
 		{
-			g_ob = time_blas(ob.sgemm, M, N, K, A, Bt, C_ref, lda, ldb, ldc, iters);
-			err_ob = max_abs_diff(C_int, C_ref);
+			g_ob = time_blas(ob.sgemm, M, N, K, pa, pb, pr, lda, ldb, ldc, iters);
+			err_ob = diff_at(pc, pr, M, N, ldc);
 		}
 
-		char name[32];
+		char name[32], ratio[16];
 		sprintf(name, "%dx%dx%d", M, N, K);
-		printf("%-22s %10.2f %10.2f %10.2f %10.2f   %8s %8.2f   err(asm)=%.2e err(mkl)=%.2e err(ob)=%.2e\n",
-			name, g_intr, g_asm, g_mkl, g_ob,
-			(has_mkl && g_mkl > 0) ? (sprintf(name, "%.0f%%", 100.0 * g_asm / g_mkl), name) : "-",
-			(g_intr > 0 ? g_asm / g_intr : 0), err_asm, err_mkl, err_ob);
+		if (has_mkl && g_mkl > 0) { sprintf(ratio, "%.0f%%", 100.0 * g_asm / g_mkl); }
+		else strcpy(ratio, "-");
+		printf("%-18s %9.2f %9.2f %9.2f %9.2f %8s %8.2f  %.1e%s\n",
+			name, g_intr, g_asm, g_mkl, g_ob, ratio,
+			(g_intr > 0 ? g_asm / g_intr : 0), err_asm,
+			has_mkl ? "" : "");
 		fflush(stdout);
-	}
 
-	if (has_mkl)
-	{
-		printf("\n-- MKL 多线程（全核）参考 --\n");
-		if (mkl.set_threads) mkl.set_threads(0);
-		Shape s = { 1024, 1024, 1024 };
-		std::vector<float> A((size_t)s.M * s.K), Bt((size_t)s.N * s.K), C((size_t)s.M * s.N);
-		fill_random(A, 1); fill_random(Bt, 2);
-		double g_mkl_mt = time_blas(mkl.sgemm, s.M, s.N, s.K, A, Bt, C, s.K, s.K, s.N, 3);
-		double g_asm = time_gemm(zq_gemm_32f_AnoTrans_Btrans_auto_asm, s.M, s.N, s.K, A, Bt, C, s.K, s.K, s.N, 3);
-		printf("1024^3: asm(单线程) %.2f GFLOP/s, MKL(全核) %.2f GFLOP/s\n", g_asm, g_mkl_mt);
+		free_aligned(pa); free_aligned(pb); free_aligned(pc); free_aligned(pr);
 	}
 	return 0;
 }
