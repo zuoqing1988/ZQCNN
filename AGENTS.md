@@ -77,6 +77,11 @@
 1. 阶段性成果就 commit（构建修复、审计修复、文档、报告各自成次）。
 2. **不要 push**，推送由用户自己决定。
 3. 一个 commit 只做一件事，提交信息用中文写清楚改了什么、为什么。
+4. **中文 commit message 用 `Write` 落盘再 `git commit -F <文件>`**，
+   不要用 `git commit -m "$(cat <<'EOF' … EOF)"`。走 heredoc 时多字节字符会被
+   弄坏（本机 2026-10-02 至少两次：提交信息里冒出 U+FFFD，源码批量替换也失配）。
+   同 AGENTS.md 行尾一节第 6 条：凡是经过 Bash heredoc 的中文，先验一遍再往下走。
+   提交前可以扫一眼：`git log -1 --format=%B | python -c "import sys; print(sys.stdin.buffer.read().count(b'\xef\xbf\xbd'))"`，应为 0。
 
 ## 示例程序规则
 
