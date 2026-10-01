@@ -63,3 +63,37 @@
 3. H6 的容量校验用 `sizeof(SSDSpec::aspect_ratios)/sizeof(float)` 表达，若日后调整数组大小，校验会自动跟随。
 4. `_detection_output_MXNET` 新增的锚点一致性校验会拒绝 loc/prior/conf 三者维度不匹配的组合；这类模型原本会在推理中越界读。
 5. 本轮未触及 ARM/FP16、NEON、AVX 专用代码路径的**运行时**验证（Windows 构建不编译这些分支），H14/H15/H16 及 ARM 路径修复的正确性依据是代码审查与 Windows 侧编译通过，需在 WSL/ARM 目标上补运行时验证。
+
+## 新增/变更：移除过时 VS 工程文件 + Linux 首个真实编译错误修复 + AGENTS.md 补充规则
+
+对应 `audit_k3_20261001.md` 第六章「遗留工作清单」第 7 项，并启动第 8 项（Linux 构建验证）。
+
+### 变更文件
+
+**删除（208 个文件）**
+
+- `ZQCNN.sln`、`ZQlibFaceID.sln`
+- `ZQCNN/*.vcxproj*`、`ZQ_GEMM/*.vcxproj*`、`ZQlibFaceID/*.vcxproj*`
+- `SamplesZQCNN/*/*.vcxproj*`、`SamplesZQlibFaceID/*/*.vcxproj*`
+- 保留 `3rdparty/` 下的第三方工程文件不动
+
+**修改**
+
+| 文件 | 变更 |
+|---|---|
+| `ZQCNN/ZQ_CNN_SSDDetectorPytorch.cpp` | 补 `#include <cfloat>`（gcc 9 下 `FLT_MAX` 未声明，Linux 构建首个真实编译错误） |
+| `README.md` / `README_en.md` | 3 处「打开 XXX.sln」的历史描述改为「用 CMake 构建 / 示例在 SamplesXXX 目录下」 |
+| `build-with-cmake.md` | 开头声明 CMake 为唯一构建入口；Windows 示例从 VS2015(`Visual Studio 14 Win64`) 更新为 VS2022(`Visual Studio 17 2022 -A x64`)；补充产物目录与 OpenCV 回退说明 |
+| `AGENTS.md` | 新增「构建规则 / 提交规则 / 示例程序规则」三节：CMake 唯一入口、双平台必须都编译、不得依赖 MSVC 传递包含、file(GLOB) 需重新 configure、阶段性 commit 且不 push、Sample 中 namedWindow/imshow/waitKey 一律注释 |
+
+### 实测结果
+
+- 提交 `74ce619`（删除 + 文档）、本节修复待随下一次构建验证一并提交。
+- **Windows**：VS2022 + cmake Release/x64 全量构建 **0 error**，产物 65+ exe（第二批安全修复后已复验）。
+- **Linux（WSL Ubuntu-20.04, gcc 9.4, cmake 3.16）**：`cmake /mnt/d/ZQCNN` 配置 **成功**（意外发现该环境存在可用的 OpenCV，故 samples 全部进入构建，未走「跳过 samples」回退路径）；首次 `make` 在 5% 处因 `FLT_MAX` 失败，补 `<cfloat>` 后继续构建中，其余目标 0 错误。
+
+### 注意事项
+
+1. 删除 `.vcxproj` 后，Windows 用户不能再双击 sln 打开工程，必须用 `cmake -S . -B build_x64 -G"Visual Studio 17 2022" -A x64` 生成 IDE 工程（Visual Studio 会把该目录作为解决方案打开）。这是用户明确授权的取舍。
+2. WSL 下 OpenCV 存在但 `pkg-config`/`/usr/include/opencv4` 查不到（可能装在非标准前缀或来自自定义 `OpenCVConfig.cmake`），后续若要长期维护 Linux 构建，建议记录其来源。
+3. `ZQ_CNN_SSDDetectorPytorch.cpp` 的 `FLT_MAX` 是既有代码而非本轮引入，只是新加的 `_softmax` 路径在 Windows 下不暴露该问题——典型的「MSVC 通过 ≠ gcc 通过」案例，已写入 AGENTS.md 规则。

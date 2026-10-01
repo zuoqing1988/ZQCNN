@@ -2,6 +2,7 @@
 #include "ZQ_CNN_SSDDetectorPytorch.h"
 #include "ZQ_CNN_LoadConfigUtils.h"
 #include <algorithm>
+#include <cfloat>
 
 
 using namespace ZQ;
