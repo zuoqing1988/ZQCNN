@@ -327,9 +327,15 @@ void zq_gemm_32f_asm_core_m6n8(const float* ap, const float* bp,
 
 #if ZQA_HAVE_FMA
 #define ZQA_FMA(d, a, b) "vfmadd231ps %%" #b ", %%" #a ", %%" #d "\n\t"
+#define ZQA_FMA7(d, a, b) "vfmadd231ps %%" #b ", %%" #a ", %%" #d "\n\t"
 #else
 #define ZQA_FMA(d, a, b) "vmulps %%" #b ", %%" #a ", %%ymm15\n\tvaddps %%ymm15, %%" #d ", %%" #d "\n\t"
+#define ZQA_FMA7(d, a, b) "vmulps %%" #b ", %%" #a ", %%ymm7\n\tvaddps %%ymm7, %%" #d ", %%" #d "\n\t"
 #endif
+/* 为什么要单独一个 ZQA_FMA7: 无 FMA 时 ZQA_FMA 拿 ymm15 当 vmulps 的暂存,
+   而 **m6n8 把 B 向量放在 ymm15** —— 用 ZQA_FMA 会把它冲掉, 后 5 条 FMA 全错。
+   2026-10-01 实测: Linux 上不加 -mfma 编译时, K<=32 的形状误差 6~7 (不是不崩,
+   是静默算错)。m6n8 里 ymm0-5 是累加器、ymm8-13 是广播, ymm7 是空的, 给它用。 */
 
 /* ====================================================================== *
  * 三个微内核的循环体 (MASM 版与内联汇编版共用同一套结构)
@@ -706,12 +712,12 @@ static ZQA_NOINLINE void zq_gemm_32f_asm_core_m6n8(const float* ap, const float*
 		ZQA_BC(ymm11, "12(%%rsi)")
 		ZQA_BC(ymm12, "16(%%rsi)")
 		ZQA_BC(ymm13, "20(%%rsi)")
-		ZQA_FMA(ymm0, ymm8, ymm15)
-		ZQA_FMA(ymm1, ymm9, ymm15)
-		ZQA_FMA(ymm2, ymm10, ymm15)
-		ZQA_FMA(ymm3, ymm11, ymm15)
-		ZQA_FMA(ymm4, ymm12, ymm15)
-		ZQA_FMA(ymm5, ymm13, ymm15)
+		ZQA_FMA7(ymm0, ymm8, ymm15)
+		ZQA_FMA7(ymm1, ymm9, ymm15)
+		ZQA_FMA7(ymm2, ymm10, ymm15)
+		ZQA_FMA7(ymm3, ymm11, ymm15)
+		ZQA_FMA7(ymm4, ymm12, ymm15)
+		ZQA_FMA7(ymm5, ymm13, ymm15)
 		"addq $24, %%rsi\n\t"
 		"addq $32, %%rdx\n\t"
 		"decl %%ecx\n\t"                                 /* 注意不能用 ZQA_DECEAX */
@@ -730,7 +736,7 @@ static ZQA_NOINLINE void zq_gemm_32f_asm_core_m6n8(const float* ap, const float*
 		  [ldc4]"m"(ldc4), [ldc5]"m"(ldc5)
 		: "cc", "memory", "rax", "rcx", "rdx", "rdi", "rsi",
 		  "r8", "r9", "r10", "r11",
-		  "xmm0", "xmm1", "xmm2", "xmm3", "xmm4", "xmm5",
+		  "xmm0", "xmm1", "xmm2", "xmm3", "xmm4", "xmm5", "xmm7",
 		  "xmm8", "xmm9", "xmm10", "xmm11", "xmm12", "xmm13", "xmm15"
 	);
 }
