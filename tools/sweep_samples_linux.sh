@@ -1,6 +1,6 @@
 # Linux 侧全量 sample 扫描（Windows 版见 tools/sweep_samples_win.py）。
 # 逐个运行，记录真实退出码；只报"既不是 0 也不是 1"的。
-# 2026-10-21 首次全量扫描：无崩溃（4 个 rc=2 是输出 jpg 被 exec 过滤器误收，已修）。
+# 2026-10-01 首次全量扫描：无崩溃（4 个 rc=2 是输出 jpg 被 exec 过滤器误收，已修）。
 cd /mnt/d/ZQCNN/cmake-out-unix-x64/Release || exit 1
 ok=0; fail=0; to=0
 for e in *; do
