@@ -1,4 +1,5 @@
 include_directories(${ZQCNN_INCLUDE_DIRS})
+include_directories(${CMAKE_CURRENT_LIST_DIR}/../ZQ_GEMM/math)
 link_directories(${ZQCNN_LIBRARY_DIR})
 
 file(GLOB sample_src ${CMAKE_CURRENT_LIST_DIR}/*.cpp ${CMAKE_CURRENT_LIST_DIR}/*.c)
@@ -6,4 +7,6 @@ add_executable(SampleGEMMCompare ${sample_src})
 target_link_libraries(SampleGEMMCompare ZQ_GEMM)
 if(WIN32)
     target_link_libraries(SampleGEMMCompare libiomp5md)
+else()
+    target_link_libraries(SampleGEMMCompare ${CMAKE_DL_LIBS})
 endif()

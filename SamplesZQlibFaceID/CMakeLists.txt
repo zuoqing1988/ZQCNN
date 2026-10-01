@@ -107,6 +107,8 @@ else() #NOT WIN32
     file(GLOB sample_src ${CMAKE_CURRENT_LIST_DIR}/${SAMPLE_SUBDIR}/*.cpp
                         ${CMAKE_CURRENT_LIST_DIR}/${SAMPLE_SUBDIR}/*.c)
     add_executable(${SAMPLE_SUBDIR} ${sample_src})
-    target_link_libraries(${SAMPLE_SUBDIR} ZQCNN ${OpenCV_LIBS} ${thirdparty_libs})
+    # ZQCNN 再写一遍：libncnn.a 引用的 __*_finite 由 ZQCNN/math/zq_libm_compat.c 提供，
+    # 静态库必须放在引用方之后再被链接器重扫一次，否则取不到符号
+    target_link_libraries(${SAMPLE_SUBDIR} ZQCNN ${OpenCV_LIBS} ${thirdparty_libs} ZQCNN)
   endforeach()
 endif()
