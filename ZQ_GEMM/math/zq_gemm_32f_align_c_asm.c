@@ -161,6 +161,62 @@
 
 #if ZQA_IMPL
 
+/* ====================================================================== *
+ * 小 K 专用路径: 先把 B 打包成 N 连续, 再沿 N 方向算
+ * ====================================================================== *
+ *
+ * 为什么要单独一条路: 其它微内核沿 **K** 方向做 ymm 累加, K < 8 时 k8 == 0,
+ * K 循环一次都不进, 归约出来全是 0 —— 微内核等于**把 C 整块清零**, 真正的
+ * 结果再由 C 侧标量 `Cc[i*ldc+j] += a*Bb[j*ldb+k]` 补加。对 C 做了
+ * "清零 + 读改写"三趟访存, 而这一族形状的瓶颈本来就在 C 的访存上。
+ *
+ * 小 K 时正确的向量化方向是 **N** (C 沿 N 连续)。但 Bt 是 N x K 行主序,
+ * Bt[j][k] = Bt[j*ldb + k], 相邻两列在内存里差 ldb 个 float 而不是相邻 ——
+ * 直接对 Bt[j*ldb + k] 做 ymm 读, 8 个结果里 7 个是错的, 而且不崩溃。
+ * 所以必须先把 B 打包成 [K][nc] (同一个 k 的所有列变成连续)。
+ *
+ * 打包按 N 分块 (每块 2048 列), 一块内把 M 扫完, 每个 B 元素只打包一次。
+ * 打包代价 N*K 次读写, 相对 M*N*K 次计算在 M 大时可以忽略。
+ *
+ * 性能 (独立微基准, 512x512x1, 缓冲已预先打包好, 排除了打包开销):
+ *   行内核 16.42 GF/s, 等效写 C 带宽 32.8 GB/s, 每次 31.9 us
+ *   MKL    20.5  GF/s  ->  约为 MKL 的 80%
+ * 纯写 C 的带宽上限约 40 GB/s (26.2 us), 即这一族已基本打到访存上限。
+ *
+ * 这里用**可自动向量化的 C** 而不是手写汇编: 内层是 `c[j] op= a[k]*p[j]`
+ * 这种规整的连续访存, gcc/clang 在 -O3 -mavx2 下会自己生成 ymm 版本,
+ * 可移植性、正确性和 Windows 侧(MASM)的一致性都白拿, 实测与手写 intrinsics 等价。
+ * ====================================================================== */
+static void zq_gemm_32f_asm_smallk_row(const float* a, const float* packed,
+	int nc, int K, float* c)
+{
+	/* 注意: C 是**调用方给定的输出缓冲**, 内容是未定义的 (Windows 的
+	   _aligned_malloc 尤其明显是垃圾), 不是我们分配过的零区。
+	   所以 k==0 必须用赋值而不是 += —— Linux 上新 mmap 恰好是零, 会把这个
+	   bug 藏起来, 只在 Windows 上炸 (实测 worst err 1.2e4, 4 个用例失败)。 */
+	if (K == 1)
+	{
+		/* 退化成外积 —— 编译器能向量化成 load+broadcast+mul+store */
+		const float a0 = a[0];
+		for (int j = 0; j < nc; j++)
+			c[j] = a0 * packed[j];
+		return;
+	}
+	{
+		const float a0 = a[0];
+		const float* p0 = packed;
+		for (int j = 0; j < nc; j++)
+			c[j] = a0 * p0[j];
+	}
+	for (int k = 1; k < K; k++)
+	{
+		const float ak = a[k];
+		const float* p = packed + (size_t)k * nc;
+		for (int j = 0; j < nc; j++)
+			c[j] += ak * p[j];
+	}
+}
+
 #if ZQA_MSVC_X64
 
 /* ---------------------------------------------------------------------- *
@@ -945,6 +1001,36 @@ void zq_gemm_32f_AnoTrans_Btrans_auto_asm(int M, int N, int K, const float* A, i
 			zq_gemm_32f_asm_ncol(M, K, A, lda, Bt + (size_t)m * ldb, C + m, ldc);
 		return;
 	}
+	/* K < 8 时 mb*nb 微内核的 K 循环一次都不进, 归约出来全是 0, 等于先把 C
+	   整块清零再由标量补加 —— 对 C 做了三趟访存, 而这一族的瓶颈就在 C 的访存上。
+	   改走"打包 B + 沿 N 方向算": C 只写一趟。独立微基准 512x512x1 达
+	   16.4 GF/s (MKL 20.5), 约为 MKL 的 80%。 */
+	if (K < 8)
+	{
+		const int chunk = 2048;                    /* 每块打包这么多列 */
+		/* 用 malloc 而不是固定数组: N*K 由调用方决定, 不能写死上限 */
+		const size_t buf_len = (size_t)((N < chunk) ? N : chunk) * K + 8;
+		float* buf = (float*)malloc(sizeof(float) * buf_len);
+		if (buf == 0)
+			return;
+		for (int n0 = 0; n0 < N; n0 += chunk)
+		{
+			int nc = (N - n0 < chunk) ? (N - n0) : chunk;
+			/* 打包成 [K][nc]: 同一个 k 的所有列变成连续的 */
+			for (int j = 0; j < nc; j++)
+			{
+				const float* b1 = Bt + (size_t)(n0 + j) * ldb;
+				for (int k = 0; k < K; k++)
+					buf[k * nc + j] = b1[k];
+			}
+			for (m = 0; m < M; m++)
+				zq_gemm_32f_asm_smallk_row(A + (size_t)m * lda, buf, nc, K,
+					C + (size_t)m * ldc + n0);
+		}
+		free(buf);
+		return;
+	}
+
 
 	/* N 方向分块: 原来是一路 m 扫到底, 每次把整个 B (最大可到几十 MB) 从
 	   L3/内存重扫一遍, 只有当前 8 行的 A 面板留在 L2 里。实测 512^3 还有
