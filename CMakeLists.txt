@@ -37,6 +37,12 @@ set(ZQCNN_DLL_OUTPUT_DIRS ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})
 if(CMAKE_CONFIGURATION_TYPES)
     list(APPEND ZQCNN_DLL_OUTPUT_DIRS ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/Debug ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/Release)
 endif()
+# 多配置生成器的 $(Configuration) 子目录要在这里就建出来: 否则首次 configure 时
+# mklink /J 会因为目标目录不存在而失败, 回退成 copy_directory, 之后仓库里新增的
+# 测试图片就不会出现在产物目录里了(而且再也刷不回联接)
+foreach(_dll_dir ${ZQCNN_DLL_OUTPUT_DIRS})
+    file(MAKE_DIRECTORY ${_dll_dir})
+endforeach()
 
 if(WIN32)
     # MKLINK is a cmd builtin (no MKLINK.exe exists) and directory junctions do not
