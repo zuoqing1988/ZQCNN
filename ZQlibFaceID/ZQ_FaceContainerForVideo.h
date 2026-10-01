@@ -76,6 +76,30 @@ namespace ZQ
 				Clear();
 				return false;
 			}
+			// key_num 来自不可信文件, 只挡负数不够: 0x7FFFFFFF 会让 frames.resize() 直接 OOM
+			// (未捕获的 bad_alloc -> terminate)。用剩余文件长度做上界交叉校验:
+			// 每个 frame 至少要能装下自己的长度字段(4 字节)
+			__int64 rest_len = 0;
+			{
+				long cur = ftell(in);
+				fseek(in, 0, SEEK_END);
+				long end = ftell(in);
+				if (cur >= 0 && end >= cur) rest_len = (__int64)end - cur;
+				fseek(in, cur, SEEK_SET);
+			}
+			if (rest_len > 0 && (__int64)key_num * 4 > rest_len)
+			{
+				fclose(in);
+				Clear();
+				return false;
+			}
+			if (rest_len > 0 && (__int64)key_num * 4 > rest_len)
+			{
+				// 至少每个 frame 要能装下一个长度字段, 否则数量与文件大小对不上
+				fclose(in);
+				Clear();
+				return false;
+			}
 			frames.resize(key_num);
 			for (int i = 0; i < key_num; i++)
 			{
