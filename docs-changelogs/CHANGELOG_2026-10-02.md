@@ -1163,3 +1163,57 @@ OK 分支打 `h`（带 .h）、ERR 分支打 `stem`（不带），于是**任何
 ### 验证
 
 tools/run_zqlib_checks.py 9/9 PASS。
+
+## 新增/变更：把审计这一轮加的检查收成一个入口 tools/run_audit_checks.py
+
+### 变更文件
+- `tools/run_audit_checks.py`（新增）
+- `AGENTS.md` 构建一节新增第 6 条（后面两条顺延）
+- `reports/README.md` 复现命令一节补上统一入口
+- `audit_k3_20261001.md`：新增**附录 AN**
+
+### 为什么需要
+
+前面二十五轮陆续加了五样东西：两个文本卫生检查、9 组第三方头库的 ASan 测试、
+一个 ZQlib 可编译性门禁。**五个命令要人记住，迟早会有人只跑其中三个** ——
+而且不会有人发现漏了哪个。
+
+    python tools/run_audit_checks.py            # 全跑（含门禁，约 2.5 分钟）
+    python tools/run_audit_checks.py --quick    # 跳过门禁，约 20 秒
+
+| 组 | 内容 | 耗时 |
+|---|---|---|
+| A1 | check_line_endings.py —— multi-CR / lone-CR / CRLF+LF 混用 | 秒级 |
+| A2 | check_text_encoding.py —— UTF-8 有损解码残留（U+FFFD） | 秒级 |
+| B | run_zqlib_checks.py —— 9 组 ZQlib 独立测试（ASan + LSan） | ~20 秒 |
+| C | probe_zqlib_headers.py --check-baseline —— 可编译性门禁 | ~2 分钟 |
+
+任何一组失败就整体退出 1。改完东西先跑它，比逐个记命令可靠。
+
+### 为什么是 Python 而不是 .sh
+
+第一版写的是 tools/run_audit_checks.sh，想放进 WSL 里跑。跑不通：
+
+    AttributeError: 'module' object has no attribute 'run'
+
+因为 B、C 两组里的工具本身是「Windows 侧 Python -> wsl ... bash -s 喂脚本 ->
+在 WSL 里编译」。放进一个 WSL 里的 shell 脚本去调用，会在 WSL 里再起一个 Python，
+然后那个 Python 想调 wsl —— 而 subprocess 是 **Windows 的**标准库，WSL 里没有。
+
+所以编排脚本必须待在 Windows 侧，由它去调各个工具（那些工具再自己去叫 WSL）。
+第一版 shell 脚本已删除。
+
+### 踩的两个坑
+
+1. **基线路径解析错**：子进程以仓库根为 cwd，我传相对路径 zqlib_probe_baseline.txt，
+   解析成 <仓库根>/zqlib_probe_baseline.txt，而文件在 tools/ 下 -> 报「读不到基线」。
+   改成传绝对路径。
+2. **输出顺序是乱的**：父进程的 print 走 Python 缓冲，子进程直接写同一个 fd，
+   于是所有子进程输出排在父进程所有 print 之前，读日志像是门禁先跑了再去跑 A1。
+   加 sys.stdout.flush() 才对。
+
+第二个不是功能问题，但会让日志读起来是错的（看起来像执行顺序不对），排查时非常误导。
+
+### 验证
+
+全跑：4 组全 OK，退出码 0。--quick：3 组 OK + 门禁跳过，退出码 0。

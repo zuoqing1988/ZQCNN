@@ -41,6 +41,10 @@ python tools/bench_gemm_ab.py A.c B.c --replace zq_gemm_32f_align_c_asm.c
 改完汇编/GEMM 代码后跑这两个回归：
 
 ```bash
+python tools/run_audit_checks.py        # 上面这几项 + 下面那两项，一个入口跑完
+python tools/run_audit_checks.py --quick   # 跳过慢的可编译性门禁
+
+# 单独跑其中某一项时：
 python tools/check_line_endings.py      # multi-CR / lone-CR / CRLF+LF 混用
 python tools/check_text_encoding.py     # UTF-8 有损解码残留（U+FFFD）
 ```

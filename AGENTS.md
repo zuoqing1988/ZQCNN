@@ -31,7 +31,12 @@
    > `python tools/probe_zqlib_headers.py` 会把 143 个 ZQlib 头逐个单独编译一遍 ——
    > **83 个能独立编译**，真正需要 Windows/MFC/OpenCV 的只有 6 个。
    > 写新的第三方头测试时先跑一遍这个探测器，别凭印象判断。
-6. **第三方头库有独立回归入口**：`python tools/run_zqlib_checks.py`
+6. **审计这一轮加的检查有一个统一入口**：`python tools/run_audit_checks.py`
+   （`--quick` 跳过慢的可编译性门禁，约 20 秒跑完）。
+   它按顺序跑 A 文本卫生、B 第三方头库的 9 组 ASan 测试、C ZQlib 可编译性门禁，
+   任何一组失败就退出 1。**改完东西先跑它**，比逐个记命令可靠。
+
+7. **第三方头库有独立回归入口**：`python tools/run_zqlib_checks.py`
    会自动发现 `tools/zq_*_check.cpp`，用 `gcc -O1 -g -fsanitize=address
    -I3rdparty/include/ZQlib` 逐个编译并运行，任何一个非 0 退出就整体失败。
    现在覆盖 9 组：`ZQ_BitonicSort` / `ZQ_ImageProcessing` / `ZQ_Kmeans` /
@@ -39,7 +44,7 @@
    以及 KDTree+WeightedMedian+CubicInterpolation+FindLargestSubMatrix、
    Matrix+ScanLinePolygonFill 两个组合。
    **动了 `3rdparty/include/ZQlib/` 下的头就要跑它**（主工程的 sample 回归验不到那里）。
-7. **改完 ZQlib 头还要跑可编译性门禁**：
+8. **改完 ZQlib 头还要跑可编译性门禁**：
    `python tools/probe_zqlib_headers.py --check-baseline tools/zqlib_probe_baseline.txt`
    把每个头的独立编译结果与基线逐头比对，**任何一个头从 OK 变成非 OK 就退出 1**。
    修好或新增头之后用 `--save-baseline tools/zqlib_probe_baseline.txt` 更新基线。
