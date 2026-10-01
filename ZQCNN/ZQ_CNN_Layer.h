@@ -22,7 +22,14 @@ namespace ZQ
 		float ignore_small_value;
 		float last_cost_time;
 
-		ZQ_CNN_Layer() :show_debug_info(false),use_buffer(false),ignore_small_value(0),last_cost_time(0) {}
+		// 审计（2026-10-02，附录 AU.3）：buffer / buffer_len 原来**不在初始化列表里**，
+		// 是构造到"ZQ_CNN_Net 在调 Forward 之前赋 `layers[i]->buffer = &_buffer.data`"
+		// 之间的一段未初始化窗口。实测那段窗口里没有任何地方读它（`->buffer` 全仓
+		// 只有 ZQ_CNN_Net.h / ZQ_CNN_Net_NCHWC.h 那 4 处赋值，`use_buffer ? buffer : 0`
+		// 全在 Forward 内部），所以**今天不是活 bug**。补 =0 是零风险的防御性修复：
+		// 将来若有人在 LoadParam 里读它，拿到的是 0 而不是栈上的垃圾。
+		ZQ_CNN_Layer() :buffer(0), buffer_len(0),
+			use_buffer(false),show_debug_info(false),ignore_small_value(0),last_cost_time(0) {}
 		virtual ~ZQ_CNN_Layer() {}
 		virtual bool Forward(std::vector<ZQ_CNN_Tensor4D*>* bottoms, std::vector<ZQ_CNN_Tensor4D*>* tops) = 0;
 
@@ -244,10 +251,15 @@ namespace ZQ
 	class ZQ_CNN_Layer_Convolution : public ZQ_CNN_Layer
 	{
 	public:
-		ZQ_CNN_Layer_Convolution() :filters(0), bias(0), num_output(0), kernel_H(0), kernel_W(0),
+		// 初始化列表按**声明顺序**排（审计 2026-10-02，附录 AU.2）：原来把
+		// prelu_slope 写在 with_prelu 之后，而 prelu_slope 声明在第 3 位。
+		// 实际初始化永远按声明顺序走，所以今天的数值不受影响（全是非 0 常量），
+		// 但一旦有人把某个初值改成**依赖前面成员**的表达式，原来的写法就会
+		// 读到还没初始化的值 —— 这类 bug 只在改动之后才显形，非常难查。
+		ZQ_CNN_Layer_Convolution() :filters(0), bias(0), prelu_slope(0), num_output(0), kernel_H(0), kernel_W(0),
 			stride_H(1), stride_W(1), dilate_H(1), dilate_W(1), pad_type(TYPE_NONE),
 			pad_H_top(0), pad_H_bottom(0), pad_W_left(0), pad_W_right(0),
-			with_bias(false), with_prelu(false), prelu_slope(0), bottom_C(0) {}
+			with_bias(false), with_prelu(false), bottom_C(0) {}
 		~ZQ_CNN_Layer_Convolution() {
 			if (filters)delete filters;
 			if (bias)delete bias;
@@ -833,9 +845,9 @@ namespace ZQ
 	class ZQ_CNN_Layer_DepthwiseConvolution : public ZQ_CNN_Layer
 	{
 	public:
-		ZQ_CNN_Layer_DepthwiseConvolution() :filters(0), bias(0), num_output(0), kernel_H(0), kernel_W(0),
+		ZQ_CNN_Layer_DepthwiseConvolution() :filters(0), bias(0), prelu_slope(0), num_output(0), kernel_H(0), kernel_W(0),
 			stride_H(1), stride_W(1),dilate_H(1),dilate_W(1), pad_type(TYPE_NONE), pad_H_top(0), pad_H_bottom(0), pad_W_left(0), pad_W_right(0),
-			with_bias(false), bottom_C(0), with_prelu(false), prelu_slope(0) {}
+			with_bias(false), with_prelu(false), bottom_C(0) {}
 		~ZQ_CNN_Layer_DepthwiseConvolution() {
 			if (filters)delete filters;
 			if (bias)delete bias;
@@ -1366,11 +1378,11 @@ namespace ZQ
 	class ZQ_CNN_Layer_DeConvolution : public ZQ_CNN_Layer
 	{
 	public:
-		ZQ_CNN_Layer_DeConvolution() :filters(0), bias(0), num_output(0), kernel_H(0), kernel_W(0),
-			stride_H(1), stride_W(1), dilate_H(1), dilate_W(1), pad_type(TYPE_NONE),
-			output_H(0),output_W(0),
+		ZQ_CNN_Layer_DeConvolution() :filters(0), bias(0), prelu_slope(0), num_output(0), kernel_H(0), kernel_W(0),
+			stride_H(1), stride_W(1), dilate_H(1), dilate_W(1),
+			output_H(0),output_W(0), pad_type(TYPE_NONE),
 			pad_H_top(0), pad_H_bottom(0), pad_W_left(0), pad_W_right(0),
-			with_bias(false), with_prelu(false), prelu_slope(0), bottom_C(0) {}
+			with_bias(false), with_prelu(false), bottom_C(0) {}
 		~ZQ_CNN_Layer_DeConvolution() {
 			if (filters)delete filters;
 			if (bias)delete bias;
@@ -6492,7 +6504,11 @@ namespace ZQ
 	class ZQ_CNN_Layer_UpSampling : public ZQ_CNN_Layer
 	{
 	public:
-		ZQ_CNN_Layer_UpSampling():has_scale(false),has_dst_size(false),align_type(1){}
+		// 声明顺序是 sample_type / align_type / has_scale / has_dst_size ...
+		// 原来写成 has_scale, has_dst_size, align_type，而且 **sample_type 根本没
+		// 初始化**（审计 2026-10-02，附录 AU.2/AU.3：sample_type 的赋值只出现在
+		// ReadParam 里，构造函数完全不碰它 —— 补 sample_type(0) 是零风险防御）。
+		ZQ_CNN_Layer_UpSampling():sample_type(0),align_type(1),has_scale(false),has_dst_size(false){}
 		~ZQ_CNN_Layer_UpSampling() {}
 
 		static const int SampleType_Nearest = 0;
@@ -6985,7 +7001,7 @@ namespace ZQ
 	class ZQ_CNN_Layer_ScalarOperation : public ZQ_CNN_Layer
 	{
 	public:
-		ZQ_CNN_Layer_ScalarOperation():scalar(1),operation(0){}
+		ZQ_CNN_Layer_ScalarOperation():operation(0),scalar(1){}
 		~ZQ_CNN_Layer_ScalarOperation(){}
 
 		static const int SCALAR_MUL = 0;
@@ -7704,7 +7720,7 @@ namespace ZQ
 	class ZQ_CNN_Layer_Normalize : public ZQ_CNN_Layer
 	{
 	public:
-		ZQ_CNN_Layer_Normalize():across_spatial(false),channel_shared(false), eps(1e-10f),scale(0){}
+		ZQ_CNN_Layer_Normalize():across_spatial(false),channel_shared(false),scale(0),eps(1e-10f){}
 		~ZQ_CNN_Layer_Normalize(){
 			if (scale) delete scale;
 		}

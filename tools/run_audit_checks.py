@@ -55,6 +55,10 @@ GROUPS = [
      ['check_alloc_delete.py', '--selftest'], False),
     ('A4 malloc/delete 错配扫描 (全仓 706 个源文件)',
      ['check_alloc_delete.py'], False),
+    ('A5 未初始化类成员扫描自测 (check_uninit_members --selftest)',
+     ['check_uninit_members.py', '--selftest'], False),
+    ('A6 未初始化类成员扫描 (ZQCNN/*.h)',
+     ['check_uninit_members.py', '--all'], False),
     ('B  ZQlib 独立回归测试 x10 (ASan+LSan)', ['run_zqlib_checks.py'], False),
     # 基线路径给**绝对路径**：子进程以 ROOT 为 cwd 运行，而基线文件在 tools/ 下，
     # 相对路径会解析成 <ROOT>/zqlib_probe_baseline.txt 而找不到（2026-10-02 实测）。
@@ -128,6 +132,8 @@ def main():
                          '有符号溢出/移位越界等，见附录 AS.2）')
     ap.add_argument('--warn-sweep', action='store_true',
                     help='额外跑 gcc -Wall -Wextra 的 HIGH 桶门禁（较慢，约 2 分钟，见附录 AT）')
+    ap.add_argument('--src-sweep', action='store_true',
+                    help='额外扫**主工程** ZQCNN/ 的 43 个 TU 的 HIGH 桶（约 1 分钟，见附录 AU）')
     args = ap.parse_args()
 
     failed = []
@@ -165,6 +171,14 @@ def main():
                           os.path.join(HERE, 'zqlib_warn_baseline.txt')],
                          cwd=ROOT):
             failed.append('C3 gcc -Wall/-Wextra HIGH 桶门禁')
+
+    if args.src_sweep:
+        if not run_group('C4 主工程 ZQCNN/ 的 HIGH 桶门禁',
+                         [sys.executable, os.path.join(HERE, 'warn_sweep_src.py'),
+                          '--check-baseline',
+                          os.path.join(HERE, 'zqcnn_warn_baseline.txt')],
+                         cwd=ROOT):
+            failed.append('C4 主工程 ZQCNN/ 的 HIGH 桶门禁')
 
     if args.msvc_asan:
         if not run_group('B2 ZQlib 独立回归测试 x10 (MSVC /fsanitize=address)',

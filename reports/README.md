@@ -47,12 +47,15 @@ python tools/run_audit_checks.py --with-build  # 再加双平台全量构建 + �
 python tools/run_audit_checks.py --ubsan       # B 组换成 UBSan 口径
 python tools/run_audit_checks.py --msvc-asan   # 加 Windows 侧 MSVC ASan
 python tools/run_audit_checks.py --warn-sweep  # 加 gcc -Wall -Wextra 的 HIGH 桶门禁
+python tools/run_audit_checks.py --src-sweep   # 加主工程 ZQCNN/ 的 HIGH 桶门禁
 
 # 单独跑其中某一项时：
 python tools/check_line_endings.py      # multi-CR / lone-CR / CRLF+LF 混用
 python tools/check_text_encoding.py     # UTF-8 有损解码残留（U+FFFD）/ 罕见汉字清单
 python tools/check_alloc_delete.py      # malloc 配 delete[] / new 配 free（全仓 706 文件）
 python tools/check_alloc_delete.py --selftest   # 上面这个工具自己的自测（改它之后必跑）
+python tools/check_uninit_members.py    # 类成员没在构造函数初始化列表里（ZQCNN/*.h）
+python tools/check_uninit_members.py --selftest # 同上
 ```
 
 改了 `3rdparty/include/ZQlib/` 下的头还要跑这三个（主工程的 sample 回归验不到那里）：
@@ -72,6 +75,10 @@ python tools/warn_sweep_zqlib.py --check-baseline tools/zqlib_warn_baseline.txt
 python tools/warn_sweep_zqlib.py --save-baseline tools/zqlib_warn_baseline.txt
 python tools/warn_sweep_zqlib.py --all          # 连 LOW 桶（699 条噪声）一起看
 python tools/warn_sweep_zqlib.py --bucket MED   # 只看 MED 桶
+
+# 主工程同样两根轴（43 个 TU，gcc/g++ 按扩展名分，宏与 -m 开关与 CMake 一致）：
+python tools/warn_sweep_src.py --check-baseline tools/zqcnn_warn_baseline.txt
+python tools/warn_sweep_src.py --bucket MED
 ```
 
 ## 第三方头库这一轮的结论（2026-10-02）

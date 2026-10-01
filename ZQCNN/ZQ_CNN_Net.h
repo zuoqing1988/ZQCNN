@@ -24,8 +24,13 @@ namespace ZQ
 		};
 
 	public:
+		// 初始化列表按**声明顺序**排（审计 2026-10-02，附录 AU.2）：原来把
+		// has_innerproduct_layer 写在 ignore_small_value 之前，而它声明在
+		// _buffer 之后、ignore_small_value 之后。实际初始化按声明顺序走，
+		// 今天的数值不受影响（全是非 0 常量）。
 		ZQ_CNN_Net() :has_input_layer(false),show_debug_info(false),use_buffer(true),
-			has_innerproduct_layer(false), ignore_small_value(0) {}
+			ignore_small_value(0),has_innerproduct_layer(false),
+			input_C(0),input_H(0),input_W(0) {}
 		~ZQ_CNN_Net() { _clear(); };
 
 	private:
@@ -44,6 +49,10 @@ namespace ZQ
 		float ignore_small_value;
 		Buffer _buffer;
 		bool has_innerproduct_layer;
+		// 审计 2026-10-02（附录 AU.3）：input_C/H/W 原来既不在初始化列表里、
+		// 也只在 LoadModel 里的 `cur_layer->GetTopDim(input_C, input_H, input_W)`
+		// 才被赋值 —— 构造到那之间是未初始化窗口。GetInputDim() 在那之前调用
+		// 会返回栈上的垃圾。补 =0 零风险（LoadModel 一定会覆盖）。
 		int input_C, input_H, input_W;
 	public:
 		void TurnOnShowDebugInfo() { show_debug_info = true; }

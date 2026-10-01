@@ -26,8 +26,11 @@ namespace ZQ
 		};
 
 	public:
+		// 同 ZQ_CNN_Net.h：初始化列表按声明顺序排，并补上 input_C/H/W 的初值
+		// （它们只在 LoadModel 的 GetTopDim 那一处被赋值，详见附录 AU.3）。
 		ZQ_CNN_Net_NCHWC() :has_input_layer(false), show_debug_info(false), use_buffer(true),
-			has_innerproduct_layer(false), ignore_small_value(0) {}
+			ignore_small_value(0), has_innerproduct_layer(false),
+			input_C(0), input_H(0), input_W(0) {}
 		~ZQ_CNN_Net_NCHWC() { _clear(); };
 
 	private:

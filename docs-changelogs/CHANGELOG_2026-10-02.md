@@ -1591,3 +1591,106 @@ in-tree 影响面：`ZQ_CameraCalibration.h:889/1036/1809`、
     python tools/check_alloc_delete.py                     # 全仓无命中
     python tools/warn_sweep_zqlib.py --check-baseline tools/zqlib_warn_baseline.txt
     python tools/check_text_encoding.py                    # 623 文件 OK
+
+## 新增/变更：把 `-Wall -Wextra` 这根轴搬到主工程（附录 AU）
+
+### 问题
+
+附录 AT 在 143 个**第三方**头上挖出 5 条真缺陷。主工程 `ZQCNN/` 已经被人工精读
+十三轮，边际收益理应更低 —— **但没人算过**，而「没人算过」正是报告开头那条
+元发现（「无法验证」是会自我实现的结论）的另一种写法。
+
+### 变更文件
+
+生产代码（**全部零行为变化**）：
+
+- `ZQCNN/ZQ_CNN_Layer.h`：8 个构造函数的初始化列表按**声明顺序**重排；
+  `buffer`/`buffer_len` 补 `= 0`
+- `ZQCNN/ZQ_CNN_Layer_NCHWC.h`：同上
+- `ZQCNN/ZQ_CNN_Net.h`：构造函数重排 + `input_C/H/W` 补 `= 0`
+- `ZQCNN/ZQ_CNN_Net_NCHWC.h`：同上
+- `ZQCNN/ZQ_CNN_Tensor4D.h` / `ZQ_CNN_Tensor4D_NCHWC.h`：
+  19 处无意义的 `const int GetX() const` 去掉返回类型上的 `const`；
+  `float* const GetFirstPixelPtr()` 同理
+- `ZQCNN/ZQ_CNN_Tensor4D.cpp` / `ZQ_CNN_Tensor4D_NCHWC.cpp`：
+  14 处 `&&` 混在 `||` 里补括号（**语义本来就对**，只是消歧义）
+
+工具：
+
+- `tools/warn_sweep_src.py`（新增）：同一套 HIGH/MED/LOW 分桶扫主工程 43 个 TU
+- `tools/zqcnn_warn_baseline.txt`（新增）：主工程 HIGH 桶基线（**当前为空**）
+- `tools/check_uninit_members.py`（新增）：扫「类成员没在构造函数初始化列表里」，
+  **带内建自测**
+- `tools/run_audit_checks.py`：新增 A5/A6 组、`--src-sweep`
+- `audit_k3_20261001.md`：新增**附录 AU / AV**
+
+### 实测结果
+
+```
+43 个 TU / 311 行警告：HIGH 42  MED 72  LOW 197
+修完后：              HIGH  0  MED 12  LOW 197  （12 是跨头重复计数，唯一 5 处）
+```
+
+| 类别 | 条数 | 判定 |
+|---|---|---|
+| `-Wreorder` | 26（8 个构造函数） | 隐患，当前无数值影响，已按声明顺序重排 |
+| `-Wparentheses` | 14 | **不是缺陷**（`&&` 优先级本就高于 `||`），补括号 |
+| `-Wignored-qualifiers` | 19 | 返回类型上的 `const` 对内建类型无意义，已去 |
+| `-Wclass-memaccess` | 1 | **不是缺陷**，但 `memset(this,...)`/`fread(this,...)` 是隐患，记录不改 |
+| `-Wdiscarded-qualifiers` | 4 | `free()` 收到 const 指针，形式 UB 实践无害，在手写内核头里，记录不改 |
+
+### gcc 抓不到的那一类：未初始化类成员
+
+`-Wmissing-field-initializers` 只管聚合初始化，不管构造函数；clang 有
+`-Weffc++`，gcc 没有对应物。所以另写了 `tools/check_uninit_members.py`。
+
+判定为**真隐患**并已修的 5 处：
+
+| 位置 | 说明 |
+|---|---|
+| `ZQ_CNN_Layer::buffer` / `buffer_len` | 构造到 `ZQ_CNN_Net` 赋 `layers[i]->buffer` 之间是未初始化窗口。实测那段窗口无人读它（`->buffer` 全仓只有 4 处赋值、都在 `Forward` 之前；`use_buffer ? buffer : 0` 全在 `Forward` 内），**今天不是活 bug**，形状与附录 AT.4 的 `&ot == NULL` 一致 |
+| `ZQ_CNN_Layer_NCHWC::buffer` / `buffer_len` | 同上 |
+| `ZQ_CNN_Layer_UpSampling::sample_type` | 构造函数**完全不碰**它，唯一赋值点在 `ReadParam` |
+| `ZQ_CNN_Net::input_C/input_H/input_W` | 只在 `LoadModel` 的 `GetTopDim` 那一处被赋值；`GetInputDim()` 在那之前调用会返回栈垃圾 |
+| `ZQ_CNN_Net_NCHWC` 同上 | 同上 |
+
+判定为**不是缺陷**的：`ZQ_CNN_Tensor4D::firstPixelData/rawData` 等 4 个 ——
+6 个派生类的构造函数（Align0/128bit/256bit、NCHWC1/4/8）**全都**赋了值。
+这正是本工具的已知局限（只看单文件、不看继承链），但换成"整个类体里有没有
+被赋过值"这个判据之后，这类假阳性自动消失了。
+
+### 工具自己踩的坑
+
+第一版 `warn_sweep_src.py` 让 **6 个 TU 报 error**：
+
+1. `.c` 用了 `g++` → `zq_avx_mathfun.c` 报 `narrowing conversion of '2147483648'`
+   （C++11 braced-init 的检查，**在 C 里完全合法**）。按这条 error 去"修"生产代码
+   就是为了迎合一个错误的编译器模式去改没问题的文件。
+2. 少了 `-DZQ_CNN_USE_ZQ_GEMM=1`（`CMakeLists.txt:15` 默认值）→
+   `zq_lstm_32f_align_c` `invalid conversion`
+3. 少了 `-mavx2 -mfma`（`CMakeLists.txt:113`）
+
+而「编不过」在按 `-W` 分桶的视角下看起来是「这个文件 0 条高信号警告」，
+也就是**最干净的那一类**。这就是两个 sweep 工具都单独报告
+「N 个目标编不过、告警没被扫到」的原因。
+
+### 注意事项
+
+- `ZQ_CNN_BBox240` 的 `memset(this, 0, sizeof(...))` + `fread(this, ...)`
+  **不调用**子对象 `ZQ_CNN_BBox106` 的构造函数（标准上 UB）。今天所有成员都是
+  平凡标量，行为无差异；但这套写法隐含「这个类永远只有平凡标量成员」的前提，
+  加一个指针成员就会出事。要改得连 `fread` 一起改成逐字段反序列化 ——
+  格式层面的重构，**本轮明确不改**。
+- `zq_cnn_convolution_gemm_32f_align_c_raw.h` 里 4 处 `free(const*)` 同理：
+  零行为变化，但要动的是**手写内核头**（AGENTS.md 对它有一整节规矩），记录不改。
+
+### 验证
+
+```
+python tools/run_audit_checks.py --with-build                  D1~D4 全 OK
+python tools/run_audit_checks.py --warn-sweep --src-sweep --msvc-asan
+                                                              ALL CHECKS PASSED, exit 0
+```
+
+Windows 全量构建 0 error；Linux 全量构建 rc=0；Linux sample 回归 8 个全 rc=0；
+Windows 侧 6 个关键 sample（含 `SampleGEMMAsmCompare` 对拍）全 rc=0。

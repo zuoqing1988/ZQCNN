@@ -125,22 +125,41 @@
    要转成 `/mnt/d/ZQCNN/...`（`tools/warn_sweep_zqlib.py` 里的 `to_wsl_path`）。
    同理，扫描器要**单独报告"有几个文件根本编不过"**，否则编不过的头在
    "按 -W 分类"的桶里显示为 0 条 —— 那是假绿。
+5. **共享一份内容时，先确认消费方式也一致。** 2026-10-02 踩过：为了消除
+   两份 MSVC 垫片，把它们改成「一份真实定义 + 一个转发头」，而两个探测工具
+   都是把垫片**文本内联**进自己生成的翻译单元 —— 转发头里那句 `#include`
+   于是变成真包含、路径在 /tmp 下找不到，**26 个头同时 OK -> BROKEN**，
+   而且每条都带完整的 error 行，看着像"改坏了 26 个头"。
+   消除重复的两种做法（合并成一份 / 加一层间接）在"内容被内联"这种用法下
+   **只有前者是对的**。现在 `zqlib_msvc_shim.h` 是唯一真实定义，
+   `warn_sweep_zqlib.py` 里还有一道前置断言禁止垫片含本地 `#include`。
 
 ## 「能编过」不等于「没毛病」
 
 1. 前三十几轮找缺陷靠的是"编不过"这一根轴（`probe_zqlib_headers.py` 问的是
    能不能独立编译）。118 个头都能编过，意味着**编译器早就看见了问题、
    只是默认一声不吭**。要开 `-Wall -Wextra` 才说话：
-   `python tools/warn_sweep_zqlib.py`。143 个头 4892 行警告，HIGH 桶里挖出
-   5 条真缺陷（审计报告附录 AT）。
+   `python tools/warn_sweep_zqlib.py`（第三方）/ `warn_sweep_src.py`（主工程）。
+   ZQlib 143 个头 4892 行警告，HIGH 桶挖出 5 条真缺陷；主工程 43 个 TU
+   HIGH 桶 42 条，挖出 5 处未初始化成员隐患（附录 AT / AU）。
 2. **基线只记 HIGH 桶**（`-Wparentheses/-Waddress/-Wnarrowing/-Wreorder/-Wformat=`）。
    MED/LOW 不进基线 —— 一个天天报 3000 条的门禁等于没有门禁。
-3. **HIGH 桶也不是判官。** 43 条 HIGH 里有 3 条是误报
-   （`ZQ_BinaryImageProcessing.h` 的 `&&` 混在 `||` 里，优先级本来就对）。
+3. **HIGH 桶也不是判官。** ZQlib 43 条 HIGH 里有 3 条是误报
+   （`ZQ_BinaryImageProcessing.h` 的 `&&` 混在 `||` 里，优先级本来就对）；
+   主工程 14 处 `-Wparentheses` 同样全是误报。
 4. **"-Wmisleading-indentation 把人引到某段代码跟前"本身就有价值** ——
    附录 AT 里最严重的一条（`Cond_by_double_svd` 读错行距、条件数是未初始化
    堆内存）根本不是任何工具报出来的，是追查一条"看着像 bug"的警告时
    顺手把 API 契约读了一遍才发现的。**别因为一条警告被判为误报就跳过它。**
+5. **扫主工程时，编译器和宏必须与真实构建一致**，否则会得到一堆假 error：
+   `.c` 用 **gcc**、`.cpp` 用 **g++**（`zq_avx_mathfun.c` 的
+   `_PS256_CONST_TYPE(sign_mask, int, 0x80000000)` 在 C++11 braced-init 下报
+   narrowing，在 C 里完全合法）；加上 `-DZQ_CNN_USE_ZQ_GEMM=1 -mavx2 -mfma -fPIC`。
+6. **gcc 不检查"类成员没在构造函数初始化列表里"**
+   （`-Wmissing-field-initializers` 只管聚合初始化）。这一类用
+   `python tools/check_uninit_members.py` 扫。主工程里查出 5 处真隐患
+   （`ZQ_CNN_Layer::buffer` / `sample_type` / `ZQ_CNN_Net::input_C/H/W` …），
+   都不是活 bug，但形状和"靠另一个开关撑着的未初始化指针"一样，值得补 `= 0`。
 
 ## 提交规则
 

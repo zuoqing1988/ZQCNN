@@ -24,19 +24,19 @@ namespace ZQ
 
 	public:
 		virtual ~ZQ_CNN_Tensor4D() {}
-		float* const GetFirstPixelPtr() { return firstPixelData; }
+		float* GetFirstPixelPtr() { return firstPixelData; }
 		const float* GetFirstPixelPtr() const { return firstPixelData; }
 		void SetShape(int in_N, int in_C, int in_H, int in_W) { shape_nchw[0] = in_N; shape_nchw[1] = in_C; shape_nchw[2] = in_H; shape_nchw[3] = in_W; }
 		void GetShape(int& out_N, int& out_C, int& out_H, int& out_W) const { out_N = shape_nchw[0]; out_C = shape_nchw[1]; out_H = shape_nchw[2]; out_W = shape_nchw[3]; }
-		const int GetN() const { return N; }
-		const int GetH() const { return H; }
-		const int GetW() const { return W; }
-		const int GetC() const { return C; }
-		const int GetBorderH() const { return borderH; }
-		const int GetBorderW() const { return borderW; }
-		const int GetPixelStep() const { return pixelStep; }
-		const int GetWidthStep() const { return widthStep; }
-		const int GetSliceStep() const { return sliceStep; }
+		int GetN() const { return N; }
+		int GetH() const { return H; }
+		int GetW() const { return W; }
+		int GetC() const { return C; }
+		int GetBorderH() const { return borderH; }
+		int GetBorderW() const { return borderW; }
+		int GetPixelStep() const { return pixelStep; }
+		int GetWidthStep() const { return widthStep; }
+		int GetSliceStep() const { return sliceStep; }
 		ALIGN_TYPE GetAlignType() const { return align_type; }
 
 		inline bool ResizeNearest(ZQ_CNN_Tensor4D& dst, int dst_W, int dst_H, int dst_borderW, int dst_borderH, SAMPLE_ALIGN_TYPE sample_align_type = SAMPLE_ALIGN_CENTER) const

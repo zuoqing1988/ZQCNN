@@ -23,7 +23,10 @@ namespace ZQ
 		float ignore_small_value;
 		float last_cost_time;
 
-		ZQ_CNN_Layer_NCHWC() :show_debug_info(false), use_buffer(false), ignore_small_value(0), last_cost_time(0) {}
+		// 同 ZQ_CNN_Layer.h：buffer / buffer_len 原来不在初始化列表里。
+		// 详见 audit_k3_20261001.md 附录 AU.3（今天不是活 bug，零风险防御）。
+		ZQ_CNN_Layer_NCHWC() :buffer(0), buffer_len(0),
+			show_debug_info(false), use_buffer(false), ignore_small_value(0), last_cost_time(0) {}
 		virtual ~ZQ_CNN_Layer_NCHWC() {}
 		virtual bool Forward(std::vector<Tensor4D*>* bottoms, std::vector<Tensor4D*>* tops) = 0;
 

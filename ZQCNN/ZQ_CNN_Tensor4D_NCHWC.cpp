@@ -237,8 +237,8 @@ bool ZQ_CNN_Tensor4D_NCHWC1::ResizeBilinearRect(ZQ_CNN_Tensor4D_NCHWC1& dst, int
 
 		bool can_call_safeborder = true;
 
-		if (dst_W > src_rect_w && (src_off_x == 0 || src_off_x + src_rect_w == W)
-			|| dst_H > src_rect_h && (src_off_y == 0 || src_off_y + src_rect_h == H))
+		if ((dst_W > src_rect_w && (src_off_x == 0 || src_off_x + src_rect_w == W))
+			|| (dst_H > src_rect_h && (src_off_y == 0 || src_off_y + src_rect_h == H)))
 			can_call_safeborder = false;
 
 		int align_mode = __min(GetAlignType(), dst.GetAlignType());
@@ -324,8 +324,8 @@ bool ZQ_CNN_Tensor4D_NCHWC1::ResizeBilinearRect(ZQ_CNN_Tensor4D_NCHWC1& dst, int
 		float* dst_im_ptr = dst.GetFirstPixelPtr() + dstImageStep*i;
 		bool can_call_safeborder = true;
 
-		if (dst_W > src_rect_w[i] && (src_off_x[i] == 0 || src_off_x[i] + src_rect_w[i] == W)
-			|| dst_H > src_rect_h[i] && (src_off_y[i] == 0 || src_off_y[i] + src_rect_h[i] == H))
+		if ((dst_W > src_rect_w[i] && (src_off_x[i] == 0 || src_off_x[i] + src_rect_w[i] == W))
+			|| (dst_H > src_rect_h[i] && (src_off_y[i] == 0 || src_off_y[i] + src_rect_h[i] == H)))
 			can_call_safeborder = false;
 
 		int align_mode = __min(GetAlignType(), dst.GetAlignType());
@@ -696,8 +696,8 @@ bool ZQ_CNN_Tensor4D_NCHWC4::ResizeBilinearRect(ZQ_CNN_Tensor4D_NCHWC4& dst, int
 
 		bool can_call_safeborder = true;
 
-		if (dst_W > src_rect_w && (src_off_x == 0 || src_off_x + src_rect_w == W)
-			|| dst_H > src_rect_h && (src_off_y == 0 || src_off_y + src_rect_h == H))
+		if ((dst_W > src_rect_w && (src_off_x == 0 || src_off_x + src_rect_w == W))
+			|| (dst_H > src_rect_h && (src_off_y == 0 || src_off_y + src_rect_h == H)))
 			can_call_safeborder = false;
 
 		int align_mode = __min(GetAlignType(), dst.GetAlignType());
@@ -783,8 +783,8 @@ bool ZQ_CNN_Tensor4D_NCHWC4::ResizeBilinearRect(ZQ_CNN_Tensor4D_NCHWC4& dst, int
 		float* dst_im_ptr = dst.GetFirstPixelPtr() + dstImageStep*i;
 		bool can_call_safeborder = true;
 
-		if (dst_W > src_rect_w[i] && (src_off_x[i] == 0 || src_off_x[i] + src_rect_w[i] == W)
-			|| dst_H > src_rect_h[i] && (src_off_y[i] == 0 || src_off_y[i] + src_rect_h[i] == H))
+		if ((dst_W > src_rect_w[i] && (src_off_x[i] == 0 || src_off_x[i] + src_rect_w[i] == W))
+			|| (dst_H > src_rect_h[i] && (src_off_y[i] == 0 || src_off_y[i] + src_rect_h[i] == H)))
 			can_call_safeborder = false;
 
 		int align_mode = __min(GetAlignType(), dst.GetAlignType());
@@ -1157,8 +1157,8 @@ bool ZQ_CNN_Tensor4D_NCHWC8::ResizeBilinearRect(ZQ_CNN_Tensor4D_NCHWC8& dst, int
 
 		bool can_call_safeborder = true;
 
-		if (dst_W > src_rect_w && (src_off_x == 0 || src_off_x + src_rect_w == W)
-			|| dst_H > src_rect_h && (src_off_y == 0 || src_off_y + src_rect_h == H))
+		if ((dst_W > src_rect_w && (src_off_x == 0 || src_off_x + src_rect_w == W))
+			|| (dst_H > src_rect_h && (src_off_y == 0 || src_off_y + src_rect_h == H)))
 			can_call_safeborder = false;
 
 		if (can_call_safeborder)
@@ -1243,8 +1243,8 @@ bool ZQ_CNN_Tensor4D_NCHWC8::ResizeBilinearRect(ZQ_CNN_Tensor4D_NCHWC8& dst, int
 		float* dst_im_ptr = dst.GetFirstPixelPtr() + dstImageStep*i;
 		bool can_call_safeborder = true;
 
-		if (dst_W > src_rect_w[i] && (src_off_x[i] == 0 || src_off_x[i] + src_rect_w[i] == W)
-			|| dst_H > src_rect_h[i] && (src_off_y[i] == 0 || src_off_y[i] + src_rect_h[i] == H))
+		if ((dst_W > src_rect_w[i] && (src_off_x[i] == 0 || src_off_x[i] + src_rect_w[i] == W))
+			|| (dst_H > src_rect_h[i] && (src_off_y[i] == 0 || src_off_y[i] + src_rect_h[i] == H)))
 			can_call_safeborder = false;
 
 		int align_mode = __min(GetAlignType(), dst.GetAlignType());
