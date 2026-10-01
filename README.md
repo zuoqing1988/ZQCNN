@@ -171,7 +171,7 @@ SampleLnet106有计时，单线程约0.6~0.7ms (E5-1650V4, 3.6GHz)
 
 **2018-12-03日更新：将模型编译到代码里面**
 
-ZQCNN.sln里 model2code 可以将模型编译成代码
+SamplesZQCNN/model2code 可以将模型编译成代码（用 CMake 构建，见 build-with-cmake.md）
 
 	model2code.exe param_file model_file code_file prefix
 	
@@ -263,7 +263,7 @@ MTCNN支持多线程，大图找小脸而且脸多的情况下，8线程可以�
 
 下面Model Zoo 有我转好的模型，比自动转出来的应该略快。
 
-打开ZQCNN.sln运行SampleGenderAge查看效果。我E5-1650V4的CPU，单线程时间波动很大，均值约1900-2000ms，四线程400多ms。
+用 CMake 构建后运行 SampleGenderAge 查看效果。我E5-1650V4的CPU，单线程时间波动很大，均值约1900-2000ms，四线程400多ms。
 
 **2018-08-09日更新**
 
@@ -279,7 +279,7 @@ Convolution name=conv1 bottom=data top=conv1 num_output=10 kernel_size=3 stride=
 
 **2018-08-06日更新**
 
-增加人脸识别在LFW数据库的精度测试。打开ZQlibFaceID.sln可以看到相关Project。
+增加人脸识别在LFW数据库的精度测试。相关示例都在 SamplesZQlibFaceID 目录下。
 
 由于C++代码的计算精度与matlab略有差距，统计出的精度也有一些差别，但是相差在0.1%以内。
 

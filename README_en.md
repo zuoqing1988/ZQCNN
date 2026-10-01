@@ -170,7 +170,7 @@ SampleLnet106 has timing, single-thread takes about 0.6~0.7ms (E5-1650V4, 3.6GHz
 
 **Update on Dec 3, 2018: Compile models into code**
 
-model2code in ZQCNN.sln can compile models into code
+model2code in SamplesZQCNN can compile models into code (build it with CMake, see build-with-cmake.md)
 
 	model2code.exe param_file model_file code_file prefix
 	
@@ -262,7 +262,7 @@ See [mxnet2zqcnn](https://github.com/zuoqing1988/ZQCNN-v0.0/wiki/mxnet2zqcnn)
 
 The Model Zoo below has models I converted, which should be slightly faster than automatically converted ones.
 
-Open ZQCNN.sln and run SampleGenderAge to see the effect. On my E5-1650V4 CPU, single-thread time fluctuates greatly, average is about 1900-2000ms, four threads is over 400ms.
+Build with CMake and run SampleGenderAge to see the effect. On my E5-1650V4 CPU, single-thread time fluctuates greatly, average is about 1900-2000ms, four threads is over 400ms.
 
 **Update on Aug 9, 2018**
 
@@ -278,7 +278,7 @@ Convolution name=conv1 bottom=data top=conv1 num_output=10 kernel_size=3 stride=
 
 **Update on Aug 6, 2018**
 
-Added face recognition accuracy testing on LFW database. Open ZQlibFaceID.sln to see related projects.
+Added face recognition accuracy testing on LFW database. The related samples are in the SamplesZQlibFaceID directory.
 
 Since the calculation accuracy of C++ code is slightly different from matlab, the calculated accuracy also has some differences, but the difference is within 0.1%.
 

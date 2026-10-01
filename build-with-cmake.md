@@ -1,13 +1,19 @@
 # build with cmake
 
+CMake 是本项目唯一的构建入口（仓库中不再保留 Visual Studio 的 .sln/.vcxproj，
+那些文件停留在 VS2015/v140 且文件列表早已与源码脱节）。
+
 ## windows
 
-Take Vsiual Studio 2015 as example:
+Take Visual Studio 2022 as example:
 
 ```shell
-mkdir build_x64 && cd build_x64
-cmake .. -G"Visual Studio 14 Win64"
+cmake -S . -B build_x64 -G"Visual Studio 17 2022" -A x64
+cmake --build build_x64 --config Release -j8
 ```
+
+产物在 `cmake-out-win32-x64/release/Release/`，其中 `data/` 与 `model/` 为指向仓库根目录的目录联接（junction）。
+如果本机没有可用的 OpenCV，CMake 会自动回退到 `3rdparty/opencv` 里的预编译库。
 
 ## linux
 
