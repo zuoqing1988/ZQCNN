@@ -3,6 +3,8 @@
 #pragma once 
 
 #include "ZQ_ImageProcessing3D.h"
+#include <ctime>
+			// 下面用了 clock()，本文件原来没 include
 #include <vector>
 
 namespace ZQ

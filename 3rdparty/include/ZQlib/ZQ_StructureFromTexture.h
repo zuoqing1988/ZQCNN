@@ -2,6 +2,8 @@
 #define _ZQ_STRUCTURE_FROM_TEXTURE_H_
 
 #include "ZQ_DoubleImage.h"
+#include "ZQ_TaucsBase.h"
+			// 下面用了 ZQ_TaucsBase::ZQ_taucs_ccs_matrixTranspose，本文件原来没 include 它。
 #include "ZQ_SparseMatrix.h"
 #include "ZQ_PCGSolver.h"
 #include "ZQ_StructureFromTextureOptions.h"
@@ -319,7 +321,9 @@ namespace ZQ
 
 		int dim = width*height;
 
-		ZQ_SparseMatrix Iden(dim,dim);
+		// ZQ_SparseMatrix 是 template<class T> 类，这里原来漏了模板实参。
+		// 紧接着的 ExportCCS(TAUCS_DOUBLE) 也吃 T，说明这里原本就是 float。
+		ZQ_SparseMatrix<float> Iden(dim,dim);
 		for(int pp = 0;pp < dim;pp++)
 			Iden.SetValue(pp,pp,1);
 
@@ -332,7 +336,7 @@ namespace ZQ
 
 
 		/*** calculate derivative operator Begin ****/
-		ZQ_SparseMatrix Cx(dim,dim),Cy(dim,dim);
+		ZQ_SparseMatrix<float> Cx(dim,dim),Cy(dim,dim);
 		for(int h = 0;h < height;h++)
 		{
 			for(int w = 0;w < width-1;w++)
@@ -353,8 +357,8 @@ namespace ZQ
 
 		Cx_mat = Cx.ExportCCS(TAUCS_DOUBLE);
 		Cy_mat = Cy.ExportCCS(TAUCS_DOUBLE);
-		CxT_mat = TaucsBase::ZQ_taucs_ccs_matrixTranspose(Cx_mat);
-		CyT_mat = TaucsBase::ZQ_taucs_ccs_matrixTranspose(Cy_mat);
+		CxT_mat = ZQ_TaucsBase::ZQ_taucs_ccs_matrixTranspose(Cx_mat);
+		CyT_mat = ZQ_TaucsBase::ZQ_taucs_ccs_matrixTranspose(Cy_mat);
 
 
 		/*** calculate derivative operator End ****/
@@ -412,7 +416,7 @@ namespace ZQ
 
 
 				//caculate UxWx, UyWy
-				ZQ_SparseMatrix UxWx(dim,dim),UyWy(dim,dim);
+				ZQ_SparseMatrix<float> UxWx(dim,dim),UyWy(dim,dim);
 				for(int pp = 0;pp < height*width;pp++)
 				{
 					UxWx.SetValue(pp,pp,ux_data[pp]*wx_data[pp]);
@@ -428,27 +432,27 @@ namespace ZQ
 
 				clock_t t3 = clock();
 				
-				taucs_ccs_matrix* CxtUxWx_mat = TaucsBase::ZQ_taucs_ccs_mul2NonSymmetricMatrices(CxT_mat,UxWx_mat);
-				taucs_ccs_matrix* CxtUxWxCx_mat = TaucsBase::ZQ_taucs_ccs_mul2NonSymmetricMatrices(CxtUxWx_mat,Cx_mat);
-				taucs_ccs_matrix* CytUyWy_mat = TaucsBase::ZQ_taucs_ccs_mul2NonSymmetricMatrices(CyT_mat,UyWy_mat);
-				taucs_ccs_matrix* CytUyWyCy_mat = TaucsBase::ZQ_taucs_ccs_mul2NonSymmetricMatrices(CytUyWy_mat,Cy_mat);
+				taucs_ccs_matrix* CxtUxWx_mat = ZQ_TaucsBase::ZQ_taucs_ccs_mul2NonSymmetricMatrices(CxT_mat,UxWx_mat);
+				taucs_ccs_matrix* CxtUxWxCx_mat = ZQ_TaucsBase::ZQ_taucs_ccs_mul2NonSymmetricMatrices(CxtUxWx_mat,Cx_mat);
+				taucs_ccs_matrix* CytUyWy_mat = ZQ_TaucsBase::ZQ_taucs_ccs_mul2NonSymmetricMatrices(CyT_mat,UyWy_mat);
+				taucs_ccs_matrix* CytUyWyCy_mat = ZQ_TaucsBase::ZQ_taucs_ccs_mul2NonSymmetricMatrices(CytUyWy_mat,Cy_mat);
 				clock_t t4 = clock();
 				clock_t t5 = clock();
-				taucs_ccs_matrix* tmp_L_mat = TaucsBase::ZQ_taucs_ccs_add2NonSymmetricMatrices(CxtUxWxCx_mat,CytUyWyCy_mat);
-				taucs_ccs_matrix* L_mat = TaucsBase::ZQ_taucs_ccs_scaleMatrix(tmp_L_mat,opt.weight);
+				taucs_ccs_matrix* tmp_L_mat = ZQ_TaucsBase::ZQ_taucs_ccs_add2NonSymmetricMatrices(CxtUxWxCx_mat,CytUyWyCy_mat);
+				taucs_ccs_matrix* L_mat = ZQ_TaucsBase::ZQ_taucs_ccs_scaleMatrix(tmp_L_mat,opt.weight);
 				
-				taucs_ccs_matrix* A_mat = TaucsBase::ZQ_taucs_ccs_add2NonSymmetricMatrices(Iden_mat,L_mat);
+				taucs_ccs_matrix* A_mat = ZQ_TaucsBase::ZQ_taucs_ccs_add2NonSymmetricMatrices(Iden_mat,L_mat);
 
 				clock_t t6 = clock();
 
-				TaucsBase::ZQ_taucs_ccs_free(UxWx_mat);
-				TaucsBase::ZQ_taucs_ccs_free(UyWy_mat);
-				TaucsBase::ZQ_taucs_ccs_free(CxtUxWx_mat);
-				TaucsBase::ZQ_taucs_ccs_free(CytUyWy_mat);
-				TaucsBase::ZQ_taucs_ccs_free(CxtUxWxCx_mat);
-				TaucsBase::ZQ_taucs_ccs_free(CytUyWyCy_mat);
-				TaucsBase::ZQ_taucs_ccs_free(tmp_L_mat);
-				TaucsBase::ZQ_taucs_ccs_free(L_mat);
+				ZQ_TaucsBase::ZQ_taucs_ccs_free(UxWx_mat);
+				ZQ_TaucsBase::ZQ_taucs_ccs_free(UyWy_mat);
+				ZQ_TaucsBase::ZQ_taucs_ccs_free(CxtUxWx_mat);
+				ZQ_TaucsBase::ZQ_taucs_ccs_free(CytUyWy_mat);
+				ZQ_TaucsBase::ZQ_taucs_ccs_free(CxtUxWxCx_mat);
+				ZQ_TaucsBase::ZQ_taucs_ccs_free(CytUyWyCy_mat);
+				ZQ_TaucsBase::ZQ_taucs_ccs_free(tmp_L_mat);
+				ZQ_TaucsBase::ZQ_taucs_ccs_free(L_mat);
 
 				
 
@@ -472,7 +476,7 @@ namespace ZQ
 				delete []x0;
 				delete []x;
 
-				TaucsBase::ZQ_taucs_ccs_free(A_mat);
+				ZQ_TaucsBase::ZQ_taucs_ccs_free(A_mat);
 
 				clock_t t8 = clock();
 
@@ -488,11 +492,11 @@ namespace ZQ
 			delete []b;
 		}
 
-		TaucsBase::ZQ_taucs_ccs_free(Iden_mat);
-		TaucsBase::ZQ_taucs_ccs_free(Cx_mat);
-		TaucsBase::ZQ_taucs_ccs_free(Cy_mat);
-		TaucsBase::ZQ_taucs_ccs_free(CxT_mat);
-		TaucsBase::ZQ_taucs_ccs_free(CyT_mat);
+		ZQ_TaucsBase::ZQ_taucs_ccs_free(Iden_mat);
+		ZQ_TaucsBase::ZQ_taucs_ccs_free(Cx_mat);
+		ZQ_TaucsBase::ZQ_taucs_ccs_free(Cy_mat);
+		ZQ_TaucsBase::ZQ_taucs_ccs_free(CxT_mat);
+		ZQ_TaucsBase::ZQ_taucs_ccs_free(CyT_mat);
 
 		return true;
 

@@ -1550,7 +1550,9 @@ private:
 				delete []V;
 				return false;
 			}
-			if(!ZQ_Rodrigues::ZQ_Rodrigues_R2r_fun(rec_R,rT+cc*6))
+			// ZQ_Rodrigues 里只有 ZQ_Rodrigues_R2r（没有 _fun 后缀），
+			// 而且它是 template<class T> 的静态成员，调用要带模板实参。
+			if(!ZQ_Rodrigues::ZQ_Rodrigues_R2r<T>(rec_R,rT+cc*6))
 			{
 				delete []H;
 				delete []M;

@@ -934,3 +934,71 @@ probe OK 列表 103 -> 106；run_zqlib_checks.py 7/7 PASS；两套检查工具�
 
 Windows Release 0 error；Linux 0 error；sample 回归全 rc=0；
 probe OK 列表 106 -> 114；run_zqlib_checks.py 7/7 PASS；两套检查工具均 OK。
+
+## 新增/变更：清掉最后一批单头缺陷（可验证头 114 -> 118）+ 一条决定不修的 API 漂移
+
+### 变更文件
+- `3rdparty/include/ZQlib/ZQ_BlendTwoImages3D.h`：补 `#include <ctime>`（用了 clock()）
+- `3rdparty/include/ZQlib/ZQ_GridDeformation3D.h`：补 `ZQ_DoubleImage3D.h`
+- `3rdparty/include/ZQlib/ZQ_ShapeDeformation.h`：5 处 `std::map<int,T>::iterator`
+  补 `typename`
+- `3rdparty/include/ZQlib/ZQ_StructureFromTexture.h`
+  - 3 处 `ZQ_SparseMatrix` 补模板实参 `<float>`
+  - 补 `#include "ZQ_TaucsBase.h"`
+  - 21 处 `TaucsBase::` 补命名空间限定 -> `ZQ_TaucsBase::`
+- `3rdparty/include/ZQlib/ZQ_Calibration.h`：一处 `ZQ_Rodrigues_R2r_fun` ->
+  `ZQ_Rodrigues_R2r<T>`（**只改这一处**，理由见下）
+- `audit_k3_20261001.md`：新增**附录 AJ**
+
+### 决定不修：ZQ_Calibration.h 引用了四个不存在的 ZQ_Rodrigues 成员
+
+ZQ_Rodrigues.h 里实际只有：
+
+    static void ZQ_Rodrigues_r2R(const T* r, T* R, T* dRdr = 0);   // 返回 void
+    static bool ZQ_Rodrigues_R2r(const T* R, T* r, T* drdR = 0);   // 返回 bool
+
+而 ZQ_Calibration.h 调的是：
+
+    ZQ_Rodrigues_r2R_fun(...)     不存在（8 处）
+    ZQ_Rodrigues_R2r_fun(...)     不存在（9 处）
+    ZQ_Rodrigues_r2R_jac(...)     不存在（7 处）—— 要的是**雅可比**，完全没有对应物
+    ZQ_Rodrigues_autoscale(...)   不存在（4 处）
+
+只把最机械的一处 R2r_fun 改名改了。其余刻意不改：
+1. `r2R` 返回 void，而调用点写的是 `if(!..._r2R_fun(...))` —— 返回类型就不对，
+   改名仍然编不过；
+2. `r2R_jac`（雅可比）和 `autoscale` 根本没有对应实现，补它们等于**重写
+   Rodrigues 参数化的数值微分**，是新功能不是修 bug；
+3. 没有可对照的 ground truth（零调用点，也没有原始实现可查）。
+
+**所以 ZQ_Calibration.h 保持 BROKEN，记为已知待办：它需要重写一批数值函数，
+不是三行改动。不要把它当成「一个拼写错误」来处理。**
+
+### 效果
+
+| | 附录 AI 后 | 现在 |
+|---|---|---|
+| **OK（能独立编译 => 可验证）** | 114 | **118** |
+| NEEDS_LIB | 8 | 8 |
+| MSVC_ONLY | 1 | 1 |
+| BROKEN | 20 | **16** |
+
+从附录 AF 开始算：**81 -> 118**，可验证覆盖率 **57% -> 82%**。
+
+### 剩下 16 个 BROKEN 已经全是「真的要外部依赖或要重写」
+
+- 7 个 ZQ_WinSock* 要 winsock2.h（Windows-only）
+- 1 个 GLSLShader 要 GL/glew.h
+- 1 个 ZQ_Calibration.h（AJ.2 的 Rodrigues API 漂移）
+- 1 个 ZQ_LazySnappingGUI.h：`opencv\cv.h` 是 OpenCV 1.x 的 C API，文件里还有
+  CvMemStorage / CvMat / cvLoadImage 在新版里不存在；路径已改成 opencv2/opencv.h
+  让报错指向真正原因，但要修等于重写整个 GUI 层
+- 其余是 taucs / 更深的依赖链
+
+**能靠「补一个 include / 加一个 typename / 改一个名字」救回来的已经救完了。**
+剩下的每一处都需要装依赖或重写代码。
+
+### 验证
+
+Windows Release 0 error；Linux 0 error；sample 回归全 rc=0；
+probe OK 列表 114 -> 118；run_zqlib_checks.py 7/7 PASS；两套检查工具均 OK。

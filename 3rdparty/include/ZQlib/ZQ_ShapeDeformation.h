@@ -214,7 +214,9 @@ namespace ZQ
 			neighbor_weight[pp] = 1.0/oneloop_neighbor[pp].size();
 		}
 
-		std::map<int,T>::iterator map_it;
+				// T 是模板参数 -> std::map<int,T> 是依赖类型，迭代器要写 typename。
+		// MSVC 放行、gcc 报 "need typename ... dependent scope"。全文 5 处。
+		typename std::map<int,T>::iterator map_it;
 		for(int pp = 0;pp < point_num;pp++)
 		{
 			float cur_x = start_pos[pp*2+0];
@@ -482,7 +484,7 @@ namespace ZQ
 			oneloop_neighbor[id2][id1] += 0.5*cot0;
 		}
 
-		std::map<int,T>::iterator map_it;
+		typename std::map<int,T>::iterator map_it;
 		for(int pp = 0;pp < point_num;pp++)
 		{
 			T sum_weight = 0;
@@ -513,7 +515,7 @@ namespace ZQ
 		ZQ_SparseMatrix<T> Hmat(unknown_num*2,unknown_num*2);
 		ZQ_SparseMatrix<T> Gmat(unknown_num*2,fixed_num*2);
 
-		std::map<int,T>::iterator map_it;
+		typename std::map<int,T>::iterator map_it;
 		for(int pp = 0;pp < point_num;pp++)
 		{
 			for(map_it = oneloop_neighbor[pp].begin(); map_it != oneloop_neighbor[pp].end(); ++map_it)
@@ -745,7 +747,7 @@ namespace ZQ
 	{
 		Rmats.clear();
 		Rmats.resize(point_num);
-		std::map<int,T>::iterator map_it;
+		typename std::map<int,T>::iterator map_it;
 		for(int pp = 0;pp < point_num;pp++)
 		{
 			T S[4] = {0,0,0,0};
@@ -859,7 +861,7 @@ namespace ZQ
 
 		ZQ_TaucsBase::ZQ_taucs_ccs_matrix_time_vec(G,fixed_val,f);
 
-		std::map<int,T>::iterator map_it;
+		typename std::map<int,T>::iterator map_it;
 		for(int pp = 0;pp < point_num;pp++)
 		{
 			T old_x = start_pos[pp*2+0];

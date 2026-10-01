@@ -3,6 +3,8 @@
 #pragma once
 
 #include "ZQ_GridDeformation3DOptions.h"
+#include "ZQ_DoubleImage3D.h"
+			// 下面用了 ZQ_DImage3D<T>，本文件原来没 include 它
 #include "ZQ_SparseMatrix.h"
 #include "ZQ_PCGSolver.h"
 #include "ZQ_Matrix.h"
