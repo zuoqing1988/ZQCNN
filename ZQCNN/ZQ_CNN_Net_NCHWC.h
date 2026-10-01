@@ -341,11 +341,13 @@ namespace ZQ
 
 				if (j == i)
 					return false;
-				__int64 cur_len = j - i;
 				line.clear();
-				line.append(buffer + i, cur_len);
-				buffer += cur_len;
-				buffer_len -= cur_len;
+				line.append(buffer + i, j - i);
+				// 指针要推到行尾符所在位置，而不是只推进 (j - i)；
+				// 否则每读一行就会多产出一行 1 个字符的垃圾（上一行正文的末字符）。
+				// 详见 ZQ_CNN_Net.h 里 _getline 的同名函数。
+				buffer += j;
+				buffer_len -= j;
 				return true;
 			}
 		}
@@ -375,13 +377,18 @@ namespace ZQ
 			while (_getline(fin, buffer, buffer_len, line))
 			{
 				buf[0] = '\0';
+				// sscanf 对空行返回 EOF(-1) 而不是 0，必须判 != 1；
+				// 只判 == 0 的话空行会一路穿到层类型分发里去。
 #if defined(_WIN32)
-				if (sscanf_s(line.c_str(), "%s", &buf[0], buf_len) == 0)
+				if (sscanf_s(line.c_str(), "%s", &buf[0], buf_len) != 1)
 					continue;
 #else
-				if (sscanf(line.c_str(), "%2000s", &buf[0]) == 0)
+				if (sscanf(line.c_str(), "%2000s", &buf[0]) != 1)
 					continue;
 #endif
+				// zqparams 里用 '#' 注释掉整层，必须在层类型分发之前判掉。
+				if (buf[0] == '#')
+					continue;
 				if (My_CNN_Layer::_my_strcmpi(&buf[0], "Convolution") == 0)
 				{
 					if (layers.size() == 0)

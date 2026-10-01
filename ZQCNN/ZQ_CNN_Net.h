@@ -350,11 +350,15 @@ namespace ZQ
 
 				if (j == i)
 					return false;
-				__int64 cur_len = j - i;
 				line.clear();
-				line.append(buffer + i, cur_len);
-				buffer += cur_len;
-				buffer_len -= cur_len;
+				line.append(buffer + i, j - i);
+				// 指针要推到行尾符所在位置（下一轮开头那个跳过 \n\r 的循环会吃掉它），
+				// 而不是只推进 (j - i)。原来推进 cur_len 会少推进开头被跳过的那些
+				// 行尾符，于是 buffer 停在**上一行正文最后一个字符**上，下一轮
+				// 把它当成一行读出来 —— 每读一行就多产出一行 1 个字符的垃圾。
+				// 以前层类型分发链没有 else 兜底，这些垃圾行被静默丢掉，所以看不出来。
+				buffer += j;
+				buffer_len -= j;
 				return true;
 			}
 		}
@@ -384,13 +388,20 @@ namespace ZQ
 			while (_getline(fin, buffer, buffer_len, line))
 			{
 				buf[0] = '\0';
+				// sscanf 对空行返回 EOF(-1) 而不是 0，所以这里必须判 != 1；
+				// 只判 == 0 的话空行会一路穿到下面的层类型分发里去。
 #if defined(_WIN32)
-				if (sscanf_s(line.c_str(), "%s", &buf[0], buf_len) == 0)
+				if (sscanf_s(line.c_str(), "%s", &buf[0], buf_len) != 1)
 					continue;
 #else
-				if (sscanf(line.c_str(), "%2000s", &buf[0]) == 0)
+				if (sscanf(line.c_str(), "%2000s", &buf[0]) != 1)
 					continue;
 #endif
+				// zqparams 里用 '#' 注释掉整层（仓库自带的几份权重都这么用）。
+				// 这行必须在下面那条"未知层类型就报错"的兜底之前判掉，否则
+				// 每一个被注释掉的层都会让整个模型加载失败。
+				if (buf[0] == '#')
+					continue;
 				if (ZQ_CNN_Layer::_my_strcmpi(&buf[0], "Convolution") == 0)
 				{
 					if (layers.size() == 0)
@@ -1079,6 +1090,15 @@ namespace ZQ
 					}
 					cur_layer->GetTopDim(input_C, input_H, input_W);
 					layer_type_names.push_back("Input");
+				}
+				else
+				{
+					// 链上最后一个分支是 Input, 之前没有 else 兜底: 任何不认识的
+					// 首 token 整行被静默丢弃, 后面只会在 _check_connect 报一句
+					// 误导性的 "unknown blob", 甚至整网少几层也不报错。
+					printf("unknown layer type: %s\n", &buf[0]);
+					printf("  in line: %s\n", line.c_str());
+					return false;
 				}
 				line = "";
 				

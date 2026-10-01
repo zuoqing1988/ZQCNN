@@ -999,7 +999,8 @@ int main(int argc, char** argv)
 		}
 		else if (n.op == "abs")
 		{
-			fprintf(pp, "%-16s", "UnaryOp");
+			fprintf(stderr, "mxnet2zqcnn: op 'abs' (node %s) has no ZQCNN equivalent; it would emit layer type 'UnaryOp', which the loader does not know. Aborting.\n", n.name.c_str());
+			return -1;
 		}
 		else if (n.op == "Activation")
 		{
@@ -1010,24 +1011,37 @@ int main(int argc, char** argv)
 			}
 			else if (type == "sigmoid")
 			{
-				fprintf(pp, "%-16s", "Sigmoid");
+				fprintf(stderr, "mxnet2zqcnn: op 'Activation' (node %s) has no ZQCNN equivalent; it would emit layer type 'Sigmoid', which the loader does not know. Aborting.\n", n.name.c_str());
+				return -1;
 			}
 			else if (type == "tanh")
 			{
-				fprintf(pp, "%-16s", "TanH");
+				fprintf(stderr, "mxnet2zqcnn: op 'Activation' (node %s) has no ZQCNN equivalent; it would emit layer type 'TanH', which the loader does not know. Aborting.\n", n.name.c_str());
+				return -1;
+			}
+			else
+			{
+				// 原来这里没有 else: 未知的 act_type 一个字都不写, 产物那一行
+				// 直接缺了层类型, 加载时才报一句莫名其妙的 unknown layer type。
+				fprintf(stderr, "mxnet2zqcnn: act_type '%s' (node %s) not supported. Aborting.\n",
+					type.c_str(), n.name.c_str());
+				return -1;
 			}
 		}
 		else if (n.op == "arccos")
 		{
-			fprintf(pp, "%-16s", "UnaryOp");
+			fprintf(stderr, "mxnet2zqcnn: op 'arccos' (node %s) has no ZQCNN equivalent; it would emit layer type 'UnaryOp', which the loader does not know. Aborting.\n", n.name.c_str());
+			return -1;
 		}
 		else if (n.op == "arcsin")
 		{
-			fprintf(pp, "%-16s", "UnaryOp");
+			fprintf(stderr, "mxnet2zqcnn: op 'arcsin' (node %s) has no ZQCNN equivalent; it would emit layer type 'UnaryOp', which the loader does not know. Aborting.\n", n.name.c_str());
+			return -1;
 		}
 		else if (n.op == "arctan")
 		{
-			fprintf(pp, "%-16s", "UnaryOp");
+			fprintf(stderr, "mxnet2zqcnn: op 'arctan' (node %s) has no ZQCNN equivalent; it would emit layer type 'UnaryOp', which the loader does not know. Aborting.\n", n.name.c_str());
+			return -1;
 		}
 		else if (n.op == "BatchNorm")
 		{
@@ -1052,11 +1066,13 @@ int main(int argc, char** argv)
 		}
 		else if (n.op == "ceil")
 		{
-			fprintf(pp, "%-16s", "UnaryOp");
+			fprintf(stderr, "mxnet2zqcnn: op 'ceil' (node %s) has no ZQCNN equivalent; it would emit layer type 'UnaryOp', which the loader does not know. Aborting.\n", n.name.c_str());
+			return -1;
 		}
 		else if (n.op == "clip")
 		{
-			fprintf(pp, "%-16s", "Clip");
+			fprintf(stderr, "mxnet2zqcnn: op 'clip' (node %s) has no ZQCNN equivalent; it would emit layer type 'Clip', which the loader does not know. Aborting.\n", n.name.c_str());
+			return -1;
 		}
 		else if (n.op == "Concat")
 		{
@@ -1079,7 +1095,8 @@ int main(int argc, char** argv)
 		}
 		else if (n.op == "cos")
 		{
-			fprintf(pp, "%-16s", "UnaryOp");
+			fprintf(stderr, "mxnet2zqcnn: op 'cos' (node %s) has no ZQCNN equivalent; it would emit layer type 'UnaryOp', which the loader does not know. Aborting.\n", n.name.c_str());
+			return -1;
 		}
 		else if (n.op == "Deconvolution")
 		{
@@ -1117,7 +1134,8 @@ int main(int argc, char** argv)
 		}
 		else if (n.op == "exp")
 		{
-			fprintf(pp, "%-16s", "UnaryOp");
+			fprintf(stderr, "mxnet2zqcnn: op 'exp' (node %s) has no ZQCNN equivalent; it would emit layer type 'UnaryOp', which the loader does not know. Aborting.\n", n.name.c_str());
+			return -1;
 		}
 		else if (n.op == "expand_dims")
 		{
@@ -1129,7 +1147,8 @@ int main(int argc, char** argv)
 		}
 		else if (n.op == "floor")
 		{
-			fprintf(pp, "%-16s", "UnaryOp");
+			fprintf(stderr, "mxnet2zqcnn: op 'floor' (node %s) has no ZQCNN equivalent; it would emit layer type 'UnaryOp', which the loader does not know. Aborting.\n", n.name.c_str());
+			return -1;
 		}
 		else if (n.op == "FullyConnected")
 		{
@@ -1148,7 +1167,8 @@ int main(int argc, char** argv)
 			std::string type = n.attr("act_type");
 			if (type == "elu")
 			{
-				fprintf(pp, "%-16s", "ELU");
+				fprintf(stderr, "mxnet2zqcnn: op 'LeakyReLU' (node %s) has no ZQCNN equivalent; it would emit layer type 'ELU', which the loader does not know. Aborting.\n", n.name.c_str());
+				return -1;
 			}
 			else if (type == "leaky")
 			{
@@ -1161,19 +1181,23 @@ int main(int argc, char** argv)
 		}
 		else if (n.op == "log")
 		{
-			fprintf(pp, "%-16s", "UnaryOp");
+			fprintf(stderr, "mxnet2zqcnn: op 'log' (node %s) has no ZQCNN equivalent; it would emit layer type 'UnaryOp', which the loader does not know. Aborting.\n", n.name.c_str());
+			return -1;
 		}
 		else if (n.op == "LogisticRegressionOutput")
 		{
-			fprintf(pp, "%-16s", "Sigmoid");
+			fprintf(stderr, "mxnet2zqcnn: op 'LogisticRegressionOutput' (node %s) has no ZQCNN equivalent; it would emit layer type 'Sigmoid', which the loader does not know. Aborting.\n", n.name.c_str());
+			return -1;
 		}
 		else if (n.op == "max")
 		{
-			fprintf(pp, "%-16s", "Reduction");
+			fprintf(stderr, "mxnet2zqcnn: op 'max' (node %s) has no ZQCNN equivalent; it would emit layer type 'Reduction', which the loader does not know. Aborting.\n", n.name.c_str());
+			return -1;
 		}
 		else if (n.op == "maximum")
 		{
-			fprintf(pp, "%-16s", "BinaryOp");
+			fprintf(stderr, "mxnet2zqcnn: op 'maximum' (node %s) has no ZQCNN equivalent; it would emit layer type 'BinaryOp', which the loader does not know. Aborting.\n", n.name.c_str());
+			return -1;
 		}
 		else if (n.op == "mean")
 		{
@@ -1181,15 +1205,18 @@ int main(int argc, char** argv)
 		}
 		else if (n.op == "min")
 		{
-			fprintf(pp, "%-16s", "Reduction");
+			fprintf(stderr, "mxnet2zqcnn: op 'min' (node %s) has no ZQCNN equivalent; it would emit layer type 'Reduction', which the loader does not know. Aborting.\n", n.name.c_str());
+			return -1;
 		}
 		else if (n.op == "minimum")
 		{
-			fprintf(pp, "%-16s", "BinaryOp");
+			fprintf(stderr, "mxnet2zqcnn: op 'minimum' (node %s) has no ZQCNN equivalent; it would emit layer type 'BinaryOp', which the loader does not know. Aborting.\n", n.name.c_str());
+			return -1;
 		}
 		else if (n.op == "negative")
 		{
-			fprintf(pp, "%-16s", "UnaryOp");
+			fprintf(stderr, "mxnet2zqcnn: op 'negative' (node %s) has no ZQCNN equivalent; it would emit layer type 'UnaryOp', which the loader does not know. Aborting.\n", n.name.c_str());
+			return -1;
 		}
 		else if (n.op == "Pooling")
 		{
@@ -1197,11 +1224,13 @@ int main(int argc, char** argv)
 		}
 		else if (n.op == "prod")
 		{
-			fprintf(pp, "%-16s", "Reduction");
+			fprintf(stderr, "mxnet2zqcnn: op 'prod' (node %s) has no ZQCNN equivalent; it would emit layer type 'Reduction', which the loader does not know. Aborting.\n", n.name.c_str());
+			return -1;
 		}
 		else if (n.op == "reciprocal")
 		{
-			fprintf(pp, "%-16s", "UnaryOp");
+			fprintf(stderr, "mxnet2zqcnn: op 'reciprocal' (node %s) has no ZQCNN equivalent; it would emit layer type 'UnaryOp', which the loader does not know. Aborting.\n", n.name.c_str());
+			return -1;
 		}
 		else if (n.op == "relu")
 		{
@@ -1213,11 +1242,13 @@ int main(int argc, char** argv)
 		}
 		else if (n.op == "sigmoid")
 		{
-			fprintf(pp, "%-16s", "Sigmoid");
+			fprintf(stderr, "mxnet2zqcnn: op 'sigmoid' (node %s) has no ZQCNN equivalent; it would emit layer type 'Sigmoid', which the loader does not know. Aborting.\n", n.name.c_str());
+			return -1;
 		}
 		else if (n.op == "sin")
 		{
-			fprintf(pp, "%-16s", "UnaryOp");
+			fprintf(stderr, "mxnet2zqcnn: op 'sin' (node %s) has no ZQCNN equivalent; it would emit layer type 'UnaryOp', which the loader does not know. Aborting.\n", n.name.c_str());
+			return -1;
 		}
 		else if (n.op == "SliceChannel")
 		{
@@ -1238,7 +1269,8 @@ int main(int argc, char** argv)
 		}
 		else if (n.op == "square")
 		{
-			fprintf(pp, "%-16s", "UnaryOp");
+			fprintf(stderr, "mxnet2zqcnn: op 'square' (node %s) has no ZQCNN equivalent; it would emit layer type 'UnaryOp', which the loader does not know. Aborting.\n", n.name.c_str());
+			return -1;
 		}
 		else if (n.op == "sum")
 		{
@@ -1246,11 +1278,13 @@ int main(int argc, char** argv)
 		}
 		else if (n.op == "tan")
 		{
-			fprintf(pp, "%-16s", "UnaryOp");
+			fprintf(stderr, "mxnet2zqcnn: op 'tan' (node %s) has no ZQCNN equivalent; it would emit layer type 'UnaryOp', which the loader does not know. Aborting.\n", n.name.c_str());
+			return -1;
 		}
 		else if (n.op == "tanh")
 		{
-			fprintf(pp, "%-16s", "TanH");
+			fprintf(stderr, "mxnet2zqcnn: op 'tanh' (node %s) has no ZQCNN equivalent; it would emit layer type 'TanH', which the loader does not know. Aborting.\n", n.name.c_str());
+			return -1;
 		}
 		else if (n.op == "Transpose" || n.op == "transpose")
 		{
@@ -1282,8 +1316,9 @@ int main(int argc, char** argv)
 		}
 		else
 		{
-			fprintf(stderr, "%s not supported yet!\n", n.op.c_str());
-			fprintf(pp, "%-16s", n.op.c_str());
+			fprintf(stderr, "mxnet2zqcnn: op '%s' not supported yet. Aborting.\n",
+				n.op.c_str());
+			return -1;
 		}
 
 		int input_size = n.inputs.size();

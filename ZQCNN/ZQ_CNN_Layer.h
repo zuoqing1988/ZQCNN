@@ -9907,7 +9907,12 @@ namespace ZQ
 						}
 						else
 						{
-							operation = atoi(str);
+							// 本层只实现了 SUM/MEAN。原先这里 atoi(str) 一把梭,
+							// "max"/"min"/"prod" 会被解析成 0 = REDUCTION_SUM,
+							// 求 max 静默变成求和。未知名字一律判非法。
+							std::cout << "unsupported Reduction operation '" << str
+								<< "' in Layer " << name << " (only sum/mean supported)\n";
+							has_operation = false;
 						}
 					}
 				}
