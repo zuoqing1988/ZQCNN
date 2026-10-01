@@ -137,11 +137,11 @@ int main()
 	}
 	
 	
-	namedWindow("landmark106_vis");
+	// namedWindow("landmark106_vis");
 
-	imshow("landmark106_vis", draw_img);
+	// imshow("landmark106_vis", draw_img);
 	cv::imwrite("landmark106vis.jpg", draw_img);
-	waitKey(0);
+	// waitKey(0);
 	return EXIT_SUCCESS;
 }
 

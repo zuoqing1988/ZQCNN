@@ -77,10 +77,10 @@ int main()
 		rectangle(draw_img, rect, cv::Scalar(0, results[i].score*255, 0), i+1);
 	}
 	
-	namedWindow("box");
+	// namedWindow("box");
 
-	imshow("box", draw_img);
+	// imshow("box", draw_img);
 	imwrite("box.jpg", draw_img);
-	waitKey(0);
+	// waitKey(0);
 	return EXIT_SUCCESS;
 }

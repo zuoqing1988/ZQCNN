@@ -112,10 +112,10 @@ int main()
 		cv::circle(draw_img, pt, 2, cv::Scalar(0, 0, 250), 2);
 	}
 	
-	namedWindow("landmark_mouth");
+	// namedWindow("landmark_mouth");
 
-	imshow("landmark_mouth", draw_img);
+	// imshow("landmark_mouth", draw_img);
 	cv::imwrite("landmark_mouth.jpg", draw_img);
-	waitKey(0);
+	// waitKey(0);
 	return EXIT_SUCCESS;
 }

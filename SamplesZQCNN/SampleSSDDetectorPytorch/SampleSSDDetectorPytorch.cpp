@@ -63,9 +63,9 @@ int main(int argc, const char** argv)
 	}
 	printf("%d faces found\n", output.size());
 	draw_objects(show_img, output);
-	cv::namedWindow("ssd output");
-	cv::imshow("ssd output", show_img);
-	cv::waitKey(0);
+	// cv::namedWindow("ssd output");
+	// cv::imshow("ssd output", show_img);
+	// cv::waitKey(0);
 	return EXIT_SUCCESS;
 }
 

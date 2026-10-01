@@ -154,12 +154,12 @@ int run_fig()
 	double t2 = omp_get_wtime();
 	printf("total %.3f s / %d = %.3f ms\n", t2 - t1, iters, 1000 * (t2 - t1) / iters);
 
-	namedWindow("result");
+	// namedWindow("result");
 	Draw(image0, thirdBbox);
 	imwrite(result_name, image0);
-	imshow("result", image0);
+	// imshow("result", image0);
 
-	waitKey(0);
+	// waitKey(0);
 	return EXIT_SUCCESS;
 }
 
@@ -207,7 +207,7 @@ int run_cam()
 	cv::VideoCapture cap(0);
 	cv::VideoWriter writer;
 	cv::Mat image0;
-	cv::namedWindow("show");
+	// cv::namedWindow("show");
 	while (true)
 	{
 		cap >> image0;
@@ -234,11 +234,11 @@ int run_cam()
 		Draw(image0, thirdBbox);
 
 		thirdBbox_last = thirdBbox;
-		imshow("show", image0);
+		// imshow("show", image0);
 		writer << image0;
-		int key = cv::waitKey(10);
-		if (key == 27)
-			break;
+		// int key = cv::waitKey(10);
+		// if (key == 27)
+			// break;
 	}
 	
 	return EXIT_SUCCESS;

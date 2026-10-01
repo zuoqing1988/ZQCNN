@@ -161,7 +161,7 @@ int main()
 	cv::Mat image0, ori_im;
 	std::vector<ZQ_CNN_PersonPose::BBox> output;
 
-	cv::namedWindow("show");
+	// cv::namedWindow("show");
 	while (true)
 	{
 		cap >> image0;
@@ -194,7 +194,7 @@ int main()
 		else
 			Draw10(ori_im, output);
 
-		imshow("show", ori_im);
+		// imshow("show", ori_im);
 		char buf[200];
 #if defined(_WIN32)
 			sprintf_s(buf, 200, "out-pose\\%d.png", fr_id);
@@ -204,9 +204,9 @@ int main()
 
 		//cv::imwrite(buf, ori_im);
 		writer << ori_im;
-		int key = cv::waitKey(10);
-		if (key == 27)
-			break;
+		// int key = cv::waitKey(10);
+		// if (key == 27)
+			// break;
 
 		fr_id++;
 	}

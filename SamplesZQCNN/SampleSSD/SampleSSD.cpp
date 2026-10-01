@@ -107,8 +107,8 @@ int main()
 	}
 
 	cv::imwrite("./ssd-result.jpg", img1);
-	cv::imshow("ZQCNN-SSD", img1);
-	cv::waitKey(0);
+	// cv::imshow("ZQCNN-SSD", img1);
+	// cv::waitKey(0);
 
 	return EXIT_SUCCESS;
 }

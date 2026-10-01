@@ -131,13 +131,13 @@ int main()
 		}
 		char buf_name[100];
 		sprintf(buf_name, "heatmap_%d", c);
-		namedWindow(buf_name);
+		// namedWindow(buf_name);
 
-		imshow(buf_name, temp_img);
+		// imshow(buf_name, temp_img);
 		sprintf(buf_name, "heatmap_%d.jpg", c);
 		cv::imwrite(buf_name, temp_img);
 	}
 	
-	waitKey(0);
+	// waitKey(0);
 	return EXIT_SUCCESS;
 }

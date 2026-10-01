@@ -176,10 +176,10 @@ int main()
 		Draw14(img, output);
 	else
 		Draw10(img, output);
-	namedWindow("PersonPose");
+	// namedWindow("PersonPose");
 
-	imshow("PersonPose", img);
+	// imshow("PersonPose", img);
 	cv::imwrite("PersonPose.jpg", img);
-	waitKey(0);
+	// waitKey(0);
 	return EXIT_SUCCESS;
 }

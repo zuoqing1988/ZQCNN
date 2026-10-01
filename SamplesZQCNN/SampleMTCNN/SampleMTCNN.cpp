@@ -245,14 +245,14 @@ int main()
 	double t2 = omp_get_wtime();
 	printf("total %.3f s / %d = %.3f ms\n", t2 - t1, iters, 1000 * (t2 - t1) / iters);
 
-	namedWindow("result");
+	// namedWindow("result");
 	if (landmark106 && use_pnet20)
 		Draw(image0, thirdBbox106);
 	else
 		Draw(image0, thirdBbox);
 	imwrite(result_name, image0);
-	imshow("result", image0);
+	// imshow("result", image0);
 
-	waitKey(0);
+	// waitKey(0);
 	return EXIT_SUCCESS;
 }

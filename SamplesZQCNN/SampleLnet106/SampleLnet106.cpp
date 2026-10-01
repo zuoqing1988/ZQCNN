@@ -175,10 +175,10 @@ int main()
 	ZQ_HeadPoseEstimation::ComputeYawPicthRoll(net1_W, net1_H, 10000, landmark1_data, yaw, pitch, roll);
 	printf("yaw = %f, pitch = %f, roll = %f\n", yaw / m_pi * 180, pitch / m_pi * 180, roll / m_pi * 180);
 
-	namedWindow("landmark");
+	// namedWindow("landmark");
 
-	imshow("landmark", draw_img);
+	// imshow("landmark", draw_img);
 	cv::imwrite("landmark.jpg", draw_img);
-	waitKey(0);
+	// waitKey(0);
 	return EXIT_SUCCESS;
 }

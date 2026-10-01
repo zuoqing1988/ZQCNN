@@ -173,7 +173,7 @@ int main()
 	cv::Mat image0, ori_im, last_im;
 	std::vector<ZQ_CNN_PersonPose2::BBox> output;
 	//FILE* out = fopen("11-2dinfo.txt", "w");
-	cv::namedWindow("show");
+	// cv::namedWindow("show");
 
 	while (true)
 	{
@@ -214,7 +214,7 @@ int main()
 		else
 			Draw10(ori_im, output);
 
-		imshow("show", ori_im);
+		// imshow("show", ori_im);
 		char buf[200];
 #if defined(_WIN32)
 		sprintf_s(buf, 200, "pose-11\\%d.jpg", fr_id);
@@ -234,9 +234,9 @@ int main()
 		fprintf(out, "\n");*/
 		//cv::imwrite(buf, ori_im);
 		writer << ori_im;
-		int key = cv::waitKey(10);
-		if (key == 27)
-			break;
+		// int key = cv::waitKey(10);
+		// if (key == 27)
+			// break;
 
 		fr_id++;
 

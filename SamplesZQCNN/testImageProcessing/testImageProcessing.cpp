@@ -107,17 +107,17 @@ int main(int argc, const char** argv)
 		printf("my_h8w8 :%12.5f ms\n", (t5 - t4)*1e-3 / nIters);
 	}
 
-	cv::namedWindow("cv");
-	cv::namedWindow("my");
-	cv::namedWindow("my_rgb");
-	cv::imshow("cv", dst_img_cv);
-	cv::imshow("my", dst_img_my);
-	cv::imshow("my_rgb", dst_img_my_rgb);
-	cv::namedWindow("cv_trans");
-	cv::namedWindow("my_trans");
-	cv::imshow("cv_trans", trans_img_cv);
-	cv::imshow("my_trans", trans_img_my);
-	cv::waitKey(0);
+	// cv::namedWindow("cv");
+	// cv::namedWindow("my");
+	// cv::namedWindow("my_rgb");
+	// cv::imshow("cv", dst_img_cv);
+	// cv::imshow("my", dst_img_my);
+	// cv::imshow("my_rgb", dst_img_my_rgb);
+	// cv::namedWindow("cv_trans");
+	// cv::namedWindow("my_trans");
+	// cv::imshow("cv_trans", trans_img_cv);
+	// cv::imshow("my_trans", trans_img_my);
+	// cv::waitKey(0);
 	cv::destroyAllWindows();
 	return 0;
 }

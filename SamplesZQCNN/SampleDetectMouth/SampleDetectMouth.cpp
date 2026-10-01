@@ -119,8 +119,8 @@ int SampleDetectMouth_fig(int argc, const char** argv)
 			}
 		}
 
-		cv::imshow("show", copy);
-		cv::waitKey(0);
+		// cv::imshow("show", copy);
+		// cv::waitKey(0);
 	}
 	else
 	{

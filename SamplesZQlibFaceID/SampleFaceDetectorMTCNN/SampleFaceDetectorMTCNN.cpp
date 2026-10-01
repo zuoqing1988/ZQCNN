@@ -81,9 +81,9 @@ int main()
 	Mat draw_mtcnn;
 	img.copyTo(draw_mtcnn);
 	Draw(draw_mtcnn, result_mtcnn);
-	namedWindow("MTCNN");
-	imshow("MTCNN", draw_mtcnn);
-	waitKey(0);
+	// namedWindow("MTCNN");
+	// imshow("MTCNN", draw_mtcnn);
+	// waitKey(0);
 	delete mtcnn;
 	return EXIT_SUCCESS;
 }

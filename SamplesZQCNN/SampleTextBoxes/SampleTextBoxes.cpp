@@ -87,8 +87,8 @@ int main()
 	}
 
 	cv::imwrite("./textboxes-result.jpg", img0);
-	cv::imshow("ZQCNN-TextBoxes", img0);
-	cv::waitKey(0);
+	// cv::imshow("ZQCNN-TextBoxes", img0);
+	// cv::waitKey(0);
 
 	return EXIT_SUCCESS;
 }

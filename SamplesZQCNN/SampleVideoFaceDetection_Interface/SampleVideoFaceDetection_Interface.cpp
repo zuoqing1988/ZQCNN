@@ -86,7 +86,7 @@ int run_cam()
 	cv::VideoCapture cap(0);
 	cv::VideoWriter writer;
 	cv::Mat image0, ori_im;
-	cv::namedWindow("show");
+	// cv::namedWindow("show");
 	while (true)
 	{
 		cap >> image0;
@@ -122,7 +122,7 @@ int run_cam()
 
 		Draw(ori_im, thirdBbox106);
 
-		imshow("show", ori_im);
+		// imshow("show", ori_im);
 		char buf[200];
 #if defined(_WIN32)
 		sprintf_s(buf, 200, "out5-old\\%d.png", fr_id);
@@ -131,9 +131,9 @@ int run_cam()
 #endif
 		//cv::imwrite(buf, ori_im);
 		writer << ori_im;
-		int key = cv::waitKey(20);
-		if (key == 27)
-			break;
+		// int key = cv::waitKey(20);
+		// if (key == 27)
+			// break;
 
 		fr_id++;
 	}

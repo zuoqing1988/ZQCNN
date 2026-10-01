@@ -115,9 +115,9 @@ int main(int argc, const char** argv)
 			combine_mask.ptr<float>(h)[w] = __max(mask1.ptr<float>(h)[w], warped_mask2.ptr<float>(h)[w]);
 		}
 	}
-	/*namedWindow("combine_mask");
-	imshow("combine_mask", combine_mask);
-	waitKey(0);*/
+	// /*namedWindow("combine_mask");
+	// imshow("combine_mask", combine_mask);
+	// waitKey(0);*/
 	Mat out_im;
 	img1.copyTo(out_im);
 	int C = img1.channels();
@@ -137,13 +137,13 @@ int main(int argc, const char** argv)
 	imwrite(out_name, out_im);
 	printf("done!\n");
 
-	namedWindow("ori1");
-	namedWindow("ori2");
-	namedWindow("out");
-	imshow("ori1", img1);
-	imshow("ori2", img2);
-	imshow("out", out_im);
-	waitKey(0);
+	// namedWindow("ori1");
+	// namedWindow("ori2");
+	// namedWindow("out");
+	// imshow("ori1", img1);
+	// imshow("ori2", img2);
+	// imshow("out", out_im);
+	// waitKey(0);
 	return 0;
 }
 

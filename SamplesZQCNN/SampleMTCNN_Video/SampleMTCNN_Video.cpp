@@ -220,7 +220,7 @@ int run_cam()
 	//cv::VideoCapture cap(0);
 	cv::VideoWriter writer;
 	cv::Mat image0;
-	cv::namedWindow("show");
+	// cv::namedWindow("show");
 	while (true)
 	{
 		cap >> image0;
@@ -276,11 +276,11 @@ int run_cam()
 			Draw(image0, thirdBbox);
 			thirdBbox_last = thirdBbox;
 		}
-		imshow("show", image0);
+		// imshow("show", image0);
 		writer << image0;
-		int key = cv::waitKey(20);
-		if (key == 27)
-			break;
+		// int key = cv::waitKey(20);
+		// if (key == 27)
+			// break;
 	}
 
 	return EXIT_SUCCESS;

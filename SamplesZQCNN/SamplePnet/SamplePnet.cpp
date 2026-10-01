@@ -119,10 +119,10 @@ int main()
 		}
 	}
 
-	namedWindow("prob");
+	// namedWindow("prob");
 	while (draw_img.cols > 1920 || draw_img.rows > 1080)
 		cv::resize(draw_img, draw_img, cv::Size(), 0.5, 0.5);
-	imshow("prob", draw_img);
-	waitKey(0);
+	// imshow("prob", draw_img);
+	// waitKey(0);
 	return EXIT_SUCCESS;
 }

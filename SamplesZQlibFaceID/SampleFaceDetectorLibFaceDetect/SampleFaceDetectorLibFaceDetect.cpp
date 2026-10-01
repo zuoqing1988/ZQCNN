@@ -62,9 +62,9 @@ int main()
 	img.copyTo(draw_libfacedetect);
 	Draw(draw_libfacedetect, result_libfacedetect);
 	imwrite("libfacedetect.jpg", draw_libfacedetect);
-	namedWindow("LibFaceDetect");
-	imshow("LibFaceDetect", draw_libfacedetect);
-	waitKey(0);	
+	// namedWindow("LibFaceDetect");
+	// imshow("LibFaceDetect", draw_libfacedetect);
+	// waitKey(0);	
 	delete libfacedetect;
 	return EXIT_SUCCESS;
 }

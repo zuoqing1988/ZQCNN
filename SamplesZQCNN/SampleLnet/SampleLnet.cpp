@@ -81,10 +81,10 @@ int main()
 		cv::circle(draw_img, cv::Point(480 * landmark2_data[i], 480 * landmark2_data[i + 5]), 2, cv::Scalar(0, 120+30*i, 0), 2);
 	}
 
-	namedWindow("landmark");
+	// namedWindow("landmark");
 	
-	imshow("landmark", draw_img);
+	// imshow("landmark", draw_img);
 	cv::imwrite("landmark.jpg", draw_img);
-	waitKey(0);
+	// waitKey(0);
 	return EXIT_SUCCESS;
 }
