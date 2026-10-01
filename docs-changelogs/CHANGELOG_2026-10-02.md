@@ -446,14 +446,24 @@ Sort_decend_3elements(col[1]);              // 排的是从来没被赋值的 co
 像素**（左边缘那一列），且错的值正是上一次循环的残值 —— 这正是「col[1] 未赋值」
 的特征，也说明只有读多个尺寸才能把它和「算法整体写错」区分开。
 
-### 3. `ZQ_Quaternion::operator+=` 是自引用
+### 3. `ZQ_Quaternion::operator+=` 的 `w.z`
 
 ```cpp
 w += w.z;      // <-- 应该是 w += v.w;
 ```
 
-把自己的 z 加到自己的 w 上。`3rdparty/include/ZQlib` 内零调用点，是**公开 API**
-层面的缺陷。已修。
+`w` 是 `double`，`w.z` 是在 double 上取成员：
+
+```
+error: request for member 'z' in ... which is of non-class type 'double'
+```
+
+**任何编译器都过不去** —— 与第 1、2 条（`ou`、`radius_distortion`）属同一族
+「自己源码就编不过」。
+
+> **更正**：本条最初被描述成「自引用，只是算错」，那是错的 —— 它不是静默算错，
+> 是根本编不过。拿修复前的头重编 `tools/zq_quaternion_check.cpp` 会在编译期直接失败，
+> 这个测试有牙齿。已修。
 
 ### 4. `ZQ_MinIndependentSets.h` 在非 Windows 下编不过
 
@@ -1002,3 +1012,60 @@ ZQ_Rodrigues.h 里实际只有：
 
 Windows Release 0 error；Linux 0 error；sample 回归全 rc=0；
 probe OK 列表 114 -> 118；run_zqlib_checks.py 7/7 PASS；两套检查工具均 OK。
+
+## 新增/变更：给 ZQ_Quaternion / ZQ_RBFKernel 补测试，并更正一处描述
+
+### 变更文件
+- `tools/zq_quaternion_check.cpp`（新增）：ZQ_Quaternion + ZQ_RBFKernel 的独立测试
+- `audit_k3_20261001.md`：新增**附录 AK**；更正附录 AB.3 对 `w += w.z` 的描述
+- `docs-changelogs/CHANGELOG_2026-10-02.md`：同处更正
+
+### 新增测试的覆盖点
+
+`tools/run_zqlib_checks.py` 现在有 **8 个**测试。
+
+ZQ_Quaternion：
+- `operator+` / `operator-` / `operator*` / `Dot` / `Length` 逐个对照手算值
+- **`operator+=`**（附录 AB 修的那处）
+- `Quat2Rot` -> `Rot2Quat` 往返：6 个用例（4 个绕单轴 + 2 个任意四元数，
+  **先归一化**）；断言 `R` 正交（`R*R^T == I`，最大偏差 < 1e-12）与往返点积
+  绝对值 == 1
+
+ZQ_RBFKernel：紧支撑核与全局核各几个分支，重点是支撑半径边界与 `flag` 的真实语义。
+
+### 更正：`w += w.z` 不是「算错」，是**编不过**
+
+附录 AB 把它描述成「自引用，只是把 z 加错了地方」。错的：`w` 是 `double`，
+`w.z` 是在 double 上取成员，gcc 直接报
+
+    error: request for member 'z' in ... which is of non-class type 'double'
+
+所以它和 `ou`、`radius_distortion` 属同一族「自己源码就编不过」，**不是**会静默
+算错的 bug。已在附录 AB 与本文件里更正。
+
+怎么发现的：拿修复前的头（`git show 013ef94^:...ZQ_Quaternion.h`）重编同一个测试，
+**在编译期就失败了** —— 这正好也证明了测试有牙齿。
+
+### 写测试时自己踩的三个坑
+
+1. **喂了非单位四元数**给 `Quat2Rot` -> 算出不正交的 R，两条假 FAIL。
+   该函数假定输入已归一化，测试要先归一化。
+2. **误解了 `flag` 的语义**：`_compact_kernel` / `_global_kernel` 的 `flag` 表示
+   「RBF_TYPE 这个分支被识别了」，**不是**「参数在有效范围内」——每个 case 里
+   都是无条件 `flag = true`。按后者断言又测出两条假 FAIL。
+3. 与附录 Z.5 完全一样：**写完一条断言先问「它在正确实现下会不会通过」**。
+   这一次三条里错了两条。
+
+### 顺带记下一个不改的观察
+
+`_global_kernel` / `_compact_kernel` 都没对 `sigma` / `radius` 做下界检查：
+`x = fabs(distance/sigma)` 在 sigma==0 时得到 inf 或 NaN，GLOBAL_TPS 于是返回 inf。
+测试里把这个行为打印出来但不作为断言。
+
+不崩、不越界，属于「契约型风险」：调用方传了非法的 sigma，得到 inf 会污染下游
+计算但不会立即暴露。本轮不改 —— 要改得先确定这个库对非法参数的约定是
+「返回 NaN/inf」还是「返回 false」，而没有可对照的 ground truth。
+
+### 验证
+
+`tools/run_zqlib_checks.py` 8/8 PASS。
