@@ -35,6 +35,12 @@ namespace ZQ
 			limit_r_num = 0;
 			limit_o_num = 0;
 			limit_l_num = 0;
+			thread_num = 0;
+			rnet_size = 0;
+			onet_size = 0;
+			lnet_size = 0;
+			early_accept_thresh = 1.f;
+			nms_thresh_per_scale = 0.495f;
 		}
 		~ZQ_CNN_MTCNN_Interface()
 		{

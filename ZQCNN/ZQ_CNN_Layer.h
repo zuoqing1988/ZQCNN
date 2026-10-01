@@ -6927,7 +6927,9 @@ namespace ZQ
 				std::cout << line << "\n";
 			}
 			return has_operation && has_bottom && bottom_names.size() >= 2 && has_top && has_name
-				&& (!with_weight || (with_weight && weight.size() != bottom_names.size()));
+				// 原来这里写的是 != : weight 数量**正确**时表达式为 false, 整个模型直接加载失败;
+				// 数量**不匹配**时反而放行, 后面按 bottom 下标读 weight 会越界
+				&& (!with_weight || weight.size() == bottom_names.size());
 		}
 
 		virtual bool LayerSetup(std::vector<ZQ_CNN_Tensor4D*>* bottoms, std::vector<ZQ_CNN_Tensor4D*>* tops)
