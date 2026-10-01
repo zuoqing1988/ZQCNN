@@ -186,10 +186,6 @@ bool ZQ_CNN_Tensor4D_NHW_C_Align0::ChangeSize(int dst_N, int dst_H, int dst_W, i
 	if (dst_realW > 0x7FFFFFFF || dst_realH > 0x7FFFFFFF || dst_widthStep > 0x7FFFFFFF
 		|| dst_sliceStep > 0x7FFFFFFF || dst_tensor_raw_size > 0x7FFFFFFF)
 		return false;
-	shape_nchw[0] = dst_N;
-	shape_nchw[1] = dst_C;
-	shape_nchw[2] = dst_H;
-	shape_nchw[3] = dst_W;
 	int needed_dst_raw_len = (int)dst_tensor_raw_size;
 	if (dst_tensor_raw_size == 0)
 	{
@@ -224,6 +220,12 @@ bool ZQ_CNN_Tensor4D_NHW_C_Align0::ChangeSize(int dst_N, int dst_H, int dst_W, i
 		}
 
 		firstPixelData = (float*)rawData + __max(0,dst_borderH)*(int)dst_widthStep + __max(0,dst_borderW)*(int)dst_pixelStep;
+		// 分配成功之后再更新形状: 原来在 malloc 之前就写, 分配失败 return false 时会留下
+		// "形状是新的、指针和长度是旧的" 半更新状态
+		shape_nchw[0] = dst_N;
+		shape_nchw[1] = dst_C;
+		shape_nchw[2] = dst_H;
+		shape_nchw[3] = dst_W;
 		rawDataLen = needed_dst_raw_len;
 
 
@@ -323,15 +325,23 @@ bool ZQ_CNN_Tensor4D_NHW_C_Align0::ResizeBilinearRect(ZQ_CNN_Tensor4D& dst, int 
 
 			if (dst_borderH > 0)
 			{
-				memset(dst_slice_ptr - dstPixelStep*dst_borderW - dstWidthStep*dst_borderH, 0, sizeof(float)*dstWidthStep*dst_borderH);
-				memset(dst_slice_ptr - dstPixelStep*dst_borderW + dstWidthStep*dst_borderH, 0, sizeof(float)*dstWidthStep*dst_borderH);
+				/* 上边框行 [0, borderH), 下边框行 [H, H+borderH)。
+				   原来下边框写成 + widthStep*borderH 一次性清 [borderH, 2*borderH),
+				   真下边框没被清到; 同尺寸复用 buffer 时会留着上一轮的数据被带 padding 的卷积读到。
+				   写法与本类 Padding() 保持一致。 */
+				for (int h = 0; h < dst_borderH; h++)
+				{
+					memset(dst_slice_ptr - (h + 1)*dstWidthStep - dstPixelStep*dst_borderW, 0, sizeof(float)*dstWidthStep);
+					memset(dst_slice_ptr + (dst_H + h)*dstWidthStep - dstPixelStep*dst_borderW, 0, sizeof(float)*dstWidthStep);
+				}
 			}
 			if (dst_borderW > 0)
 			{
-				for (int h = 0; h < dst_borderH; h++)
+				/* 左右两列要覆盖全部 H 行, 原来只清前 borderH 行 */
+				for (int h = 0; h < dst_H; h++)
 				{
 					memset(dst_slice_ptr - dstPixelStep*dst_borderW + dstWidthStep*h, 0, sizeof(float)*dstPixelStep*dst_borderW);
-					memset(dst_slice_ptr - dstPixelStep*(dst_borderW << 1) + dstWidthStep*(h + 1), 0, sizeof(float)*dstPixelStep*dst_borderW);
+					memset(dst_slice_ptr + (h + 1)*dstWidthStep - dstPixelStep*dst_borderW, 0, sizeof(float)*dstPixelStep*dst_borderW);
 				}
 			}
 		}
@@ -502,15 +512,23 @@ bool ZQ_CNN_Tensor4D_NHW_C_Align0::ResizeNearestRect(ZQ_CNN_Tensor4D& dst, int d
 
 			if (dst_borderH > 0)
 			{
-				memset(dst_slice_ptr - dstPixelStep*dst_borderW - dstWidthStep*dst_borderH, 0, sizeof(float)*dstWidthStep*dst_borderH);
-				memset(dst_slice_ptr - dstPixelStep*dst_borderW + dstWidthStep*dst_borderH, 0, sizeof(float)*dstWidthStep*dst_borderH);
+				/* 上边框行 [0, borderH), 下边框行 [H, H+borderH)。
+				   原来下边框写成 + widthStep*borderH 一次性清 [borderH, 2*borderH),
+				   真下边框没被清到; 同尺寸复用 buffer 时会留着上一轮的数据被带 padding 的卷积读到。
+				   写法与本类 Padding() 保持一致。 */
+				for (int h = 0; h < dst_borderH; h++)
+				{
+					memset(dst_slice_ptr - (h + 1)*dstWidthStep - dstPixelStep*dst_borderW, 0, sizeof(float)*dstWidthStep);
+					memset(dst_slice_ptr + (dst_H + h)*dstWidthStep - dstPixelStep*dst_borderW, 0, sizeof(float)*dstWidthStep);
+				}
 			}
 			if (dst_borderW > 0)
 			{
-				for (int h = 0; h < dst_borderH; h++)
+				/* 左右两列要覆盖全部 H 行, 原来只清前 borderH 行 */
+				for (int h = 0; h < dst_H; h++)
 				{
 					memset(dst_slice_ptr - dstPixelStep*dst_borderW + dstWidthStep*h, 0, sizeof(float)*dstPixelStep*dst_borderW);
-					memset(dst_slice_ptr - dstPixelStep*(dst_borderW << 1) + dstWidthStep*(h + 1), 0, sizeof(float)*dstPixelStep*dst_borderW);
+					memset(dst_slice_ptr + (h + 1)*dstWidthStep - dstPixelStep*dst_borderW, 0, sizeof(float)*dstPixelStep*dst_borderW);
 				}
 			}
 		}
@@ -865,10 +883,6 @@ bool ZQ_CNN_Tensor4D_NHW_C_Align128bit::ChangeSize(int dst_N, int dst_H, int dst
 	if (dst_realW > 0x7FFFFFFF || dst_realH > 0x7FFFFFFF || dst_pixelStep > 0x7FFFFFFF
 		|| dst_widthStep > 0x7FFFFFFF || dst_sliceStep > 0x7FFFFFFF || dst_tensor_raw_size > 0x7FFFFFFF)
 		return false;
-	shape_nchw[0] = dst_N;
-	shape_nchw[1] = dst_C;
-	shape_nchw[2] = dst_H;
-	shape_nchw[3] = dst_W;
 	int needed_dst_raw_len = (int)dst_tensor_raw_size;
 	if (dst_tensor_raw_size == 0)
 	{
@@ -905,6 +919,12 @@ bool ZQ_CNN_Tensor4D_NHW_C_Align128bit::ChangeSize(int dst_N, int dst_H, int dst
 		}
 
 		firstPixelData = (float*)rawData + __max(0,dst_borderH)*(int)dst_widthStep + __max(0,dst_borderW)*(int)dst_pixelStep;
+		// 分配成功之后再更新形状: 原来在 malloc 之前就写, 分配失败 return false 时会留下
+		// "形状是新的、指针和长度是旧的" 半更新状态
+		shape_nchw[0] = dst_N;
+		shape_nchw[1] = dst_C;
+		shape_nchw[2] = dst_H;
+		shape_nchw[3] = dst_W;
 		rawDataLen = needed_dst_raw_len;
 
 		N = dst_N;
@@ -1613,10 +1633,6 @@ bool ZQ_CNN_Tensor4D_NHW_C_Align256bit::ChangeSize(int dst_N, int dst_H, int dst
 	if (dst_realW > 0x7FFFFFFF || dst_realH > 0x7FFFFFFF || dst_pixelStep > 0x7FFFFFFF
 		|| dst_widthStep > 0x7FFFFFFF || dst_sliceStep > 0x7FFFFFFF || dst_tensor_raw_size > 0x7FFFFFFF)
 		return false;
-	shape_nchw[0] = dst_N;
-	shape_nchw[1] = dst_C;
-	shape_nchw[2] = dst_H;
-	shape_nchw[3] = dst_W;
 	int needed_dst_raw_len = (int)dst_tensor_raw_size;
 	if (dst_tensor_raw_size == 0)
 	{
@@ -1649,6 +1665,12 @@ bool ZQ_CNN_Tensor4D_NHW_C_Align256bit::ChangeSize(int dst_N, int dst_H, int dst
 			rawData = tmp_data;
 		}
 		firstPixelData = (float*)rawData + __max(0,dst_borderH)*(int)dst_widthStep + __max(0,dst_borderW)*(int)dst_pixelStep;
+		// 分配成功之后再更新形状: 原来在 malloc 之前就写, 分配失败 return false 时会留下
+		// "形状是新的、指针和长度是旧的" 半更新状态
+		shape_nchw[0] = dst_N;
+		shape_nchw[1] = dst_C;
+		shape_nchw[2] = dst_H;
+		shape_nchw[3] = dst_W;
 		rawDataLen = needed_dst_raw_len;
 
 		N = dst_N;
@@ -1746,15 +1768,23 @@ bool ZQ_CNN_Tensor4D_NHW_C_Align256bit::ResizeBilinearRect(ZQ_CNN_Tensor4D& dst,
 
 			if (dst_borderH > 0)
 			{
-				memset(dst_slice_ptr - dstPixelStep*dst_borderW - dstWidthStep*dst_borderH, 0, sizeof(float)*dstWidthStep*dst_borderH);
-				memset(dst_slice_ptr - dstPixelStep*dst_borderW + dstWidthStep*dst_borderH, 0, sizeof(float)*dstWidthStep*dst_borderH);
+				/* 上边框行 [0, borderH), 下边框行 [H, H+borderH)。
+				   原来下边框写成 + widthStep*borderH 一次性清 [borderH, 2*borderH),
+				   真下边框没被清到; 同尺寸复用 buffer 时会留着上一轮的数据被带 padding 的卷积读到。
+				   写法与本类 Padding() 保持一致。 */
+				for (int h = 0; h < dst_borderH; h++)
+				{
+					memset(dst_slice_ptr - (h + 1)*dstWidthStep - dstPixelStep*dst_borderW, 0, sizeof(float)*dstWidthStep);
+					memset(dst_slice_ptr + (dst_H + h)*dstWidthStep - dstPixelStep*dst_borderW, 0, sizeof(float)*dstWidthStep);
+				}
 			}
 			if (dst_borderW > 0)
 			{
-				for (int h = 0; h < dst_borderH; h++)
+				/* 左右两列要覆盖全部 H 行, 原来只清前 borderH 行 */
+				for (int h = 0; h < dst_H; h++)
 				{
 					memset(dst_slice_ptr - dstPixelStep*dst_borderW + dstWidthStep*h, 0, sizeof(float)*dstPixelStep*dst_borderW);
-					memset(dst_slice_ptr - dstPixelStep*(dst_borderW << 1) + dstWidthStep*(h + 1), 0, sizeof(float)*dstPixelStep*dst_borderW);
+					memset(dst_slice_ptr + (h + 1)*dstWidthStep - dstPixelStep*dst_borderW, 0, sizeof(float)*dstPixelStep*dst_borderW);
 				}
 			}
 		}
@@ -1926,15 +1956,23 @@ bool ZQ_CNN_Tensor4D_NHW_C_Align256bit::ResizeNearestRect(ZQ_CNN_Tensor4D& dst, 
 
 			if (dst_borderH > 0)
 			{
-				memset(dst_slice_ptr - dstPixelStep*dst_borderW - dstWidthStep*dst_borderH, 0, sizeof(float)*dstWidthStep*dst_borderH);
-				memset(dst_slice_ptr - dstPixelStep*dst_borderW + dstWidthStep*dst_borderH, 0, sizeof(float)*dstWidthStep*dst_borderH);
+				/* 上边框行 [0, borderH), 下边框行 [H, H+borderH)。
+				   原来下边框写成 + widthStep*borderH 一次性清 [borderH, 2*borderH),
+				   真下边框没被清到; 同尺寸复用 buffer 时会留着上一轮的数据被带 padding 的卷积读到。
+				   写法与本类 Padding() 保持一致。 */
+				for (int h = 0; h < dst_borderH; h++)
+				{
+					memset(dst_slice_ptr - (h + 1)*dstWidthStep - dstPixelStep*dst_borderW, 0, sizeof(float)*dstWidthStep);
+					memset(dst_slice_ptr + (dst_H + h)*dstWidthStep - dstPixelStep*dst_borderW, 0, sizeof(float)*dstWidthStep);
+				}
 			}
 			if (dst_borderW > 0)
 			{
-				for (int h = 0; h < dst_borderH; h++)
+				/* 左右两列要覆盖全部 H 行, 原来只清前 borderH 行 */
+				for (int h = 0; h < dst_H; h++)
 				{
 					memset(dst_slice_ptr - dstPixelStep*dst_borderW + dstWidthStep*h, 0, sizeof(float)*dstPixelStep*dst_borderW);
-					memset(dst_slice_ptr - dstPixelStep*(dst_borderW << 1) + dstWidthStep*(h + 1), 0, sizeof(float)*dstPixelStep*dst_borderW);
+					memset(dst_slice_ptr + (h + 1)*dstWidthStep - dstPixelStep*dst_borderW, 0, sizeof(float)*dstPixelStep*dst_borderW);
 				}
 			}
 		}
