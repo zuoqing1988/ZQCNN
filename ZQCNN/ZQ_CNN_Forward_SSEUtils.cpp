@@ -4322,7 +4322,8 @@ bool ZQ_CNN_Forward_SSEUtils::_prior_box(const ZQ_CNN_Tensor4D& input, const ZQ_
 	const int layer_height = input.GetH();
 	if (layer_width <= 0 || layer_height <= 0)
 	{
-		output.ChangeSize(0, 0, 0, 0, 0, 0);
+		if (!output.ChangeSize(0, 0, 0, 0, 0, 0))
+	return false;
 		return true;
 	}
 	int img_width, img_height;
@@ -4354,7 +4355,8 @@ bool ZQ_CNN_Forward_SSEUtils::_prior_box(const ZQ_CNN_Tensor4D& input, const ZQ_
 	// walks past the end of the tensor, so enforce consistency up front.
 	if (num_priors <= 0 || min_sizes.size() == 0)
 	{
-		output.ChangeSize(0, 0, 0, 0, 0, 0);
+		if (!output.ChangeSize(0, 0, 0, 0, 0, 0))
+	return false;
 		return false;
 	}
 	{
@@ -4521,7 +4523,8 @@ bool ZQ_CNN_Forward_SSEUtils::_prior_box_MXNET(const ZQ_CNN_Tensor4D& input,
 	const int layer_height = input.GetH();
 	if (layer_width <= 0 || layer_height <= 0)
 	{
-		output.ChangeSize(0, 0, 0, 0, 0, 0);
+		if (!output.ChangeSize(0, 0, 0, 0, 0, 0))
+	return false;
 		return true;
 	}
 
@@ -4543,7 +4546,8 @@ bool ZQ_CNN_Forward_SSEUtils::_prior_box_MXNET(const ZQ_CNN_Tensor4D& input,
 	const long long dim64 = (long long)layer_height * (long long)layer_width * (long long)num_priors;
 	if (num_priors <= 0 || sizes.size() == 0)
 	{
-		output.ChangeSize(0, 0, 0, 0, 0, 0);
+		if (!output.ChangeSize(0, 0, 0, 0, 0, 0))
+	return false;
 		return true;
 	}
 	{
@@ -4564,7 +4568,8 @@ bool ZQ_CNN_Forward_SSEUtils::_prior_box_MXNET(const ZQ_CNN_Tensor4D& input,
 	int out_H = dim;
 	int out_W = 4;
 	if (output.GetC() != out_C || output.GetH() != out_H || output.GetW() != out_W)
-		output.ChangeSize(1, out_H, out_W, out_C, 0, 0);
+		if (!output.ChangeSize(1, out_H, out_W, out_C, 0, 0))
+	return false;
 
 	int num_sizes = (int)sizes.size();
 	int num_ratios = (int)aspect_ratios.size();
@@ -4627,7 +4632,8 @@ bool ZQ_CNN_Forward_SSEUtils::_prior_box_text(const ZQ_CNN_Tensor4D& input, cons
 	const int layer_height = input.GetH();
 	if (layer_width <= 0 || layer_height <= 0)
 	{
-		output.ChangeSize(0, 0, 0, 0, 0, 0);
+		if (!output.ChangeSize(0, 0, 0, 0, 0, 0))
+	return false;
 		return true;
 	}
 	int img_width, img_height;
@@ -4659,7 +4665,8 @@ bool ZQ_CNN_Forward_SSEUtils::_prior_box_text(const ZQ_CNN_Tensor4D& input, cons
 	// one at center_y_offset_1), so the expected count is doubled.
 	if (num_priors <= 0 || min_sizes.size() == 0)
 	{
-		output.ChangeSize(0, 0, 0, 0, 0, 0);
+		if (!output.ChangeSize(0, 0, 0, 0, 0, 0))
+	return false;
 		return false;
 	}
 	{
@@ -5128,7 +5135,8 @@ bool ZQ_CNN_Forward_SSEUtils::_detection_output(const ZQ_CNN_Tensor4D& loc, cons
 	if (num_kept == 0)
 	{
 		//printf("Couldn't find any detections\n");
-		output.ChangeSize(num, 1, 1, 7, 0, 0);
+		if (!output.ChangeSize(num, 1, 1, 7, 0, 0))
+	return false;
 		out_ptr = output.GetFirstPixelPtr();
 		// Generate fake results per image.
 		for (int i = 0; i < num; ++i)
@@ -5139,7 +5147,8 @@ bool ZQ_CNN_Forward_SSEUtils::_detection_output(const ZQ_CNN_Tensor4D& loc, cons
 	}
 	else
 	{
-		output.ChangeSize(num_kept, 1, 1, 7, 0, 0);
+		if (!output.ChangeSize(num_kept, 1, 1, 7, 0, 0))
+	return false;
 	}
 
 	out_ptr = output.GetFirstPixelPtr();
@@ -5342,7 +5351,8 @@ bool ZQ_CNN_Forward_SSEUtils::_detection_output_MXNET(const ZQ_CNN_Tensor4D& loc
 	if (num_kept == 0)
 	{
 		//printf("Couldn't find any detections\n");
-		output.ChangeSize(num, 1, 1, 7, 0, 0);
+		if (!output.ChangeSize(num, 1, 1, 7, 0, 0))
+	return false;
 		out_ptr = output.GetFirstPixelPtr();
 		// Generate fake results per image.
 		for (int i = 0; i < num; ++i)
@@ -5353,7 +5363,8 @@ bool ZQ_CNN_Forward_SSEUtils::_detection_output_MXNET(const ZQ_CNN_Tensor4D& loc
 	}
 	else
 	{
-		output.ChangeSize(num_kept, 1, 1, 7, 0, 0);
+		if (!output.ChangeSize(num_kept, 1, 1, 7, 0, 0))
+	return false;
 	}
 
 	out_ptr = output.GetFirstPixelPtr();

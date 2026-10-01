@@ -32,7 +32,8 @@ namespace ZQ
 			if (in_N <= 0 || in_H <= 0 || in_W <= 0 || in_C == 0
 				|| need_H < 0 || need_W < 0)
 			{
-				output.ChangeSize(0, 0, 0, 0, 0, 0);
+				if (!output.ChangeSize(0, 0, 0, 0, 0, 0))
+	return false;
 				return true;
 			}
 			
@@ -41,7 +42,8 @@ namespace ZQ
 			int need_C = in_C;
 			if (out_N != need_N || out_H != need_H || out_W != need_W || out_C != need_C)
 			{
-				output.ChangeSize(need_N, need_H, need_W, need_C, 0, 0);
+				if (!output.ChangeSize(need_N, need_H, need_W, need_C, 0, 0))
+	return false;
 			}
 
 			if (!input.ResizeNearest(output, need_W, need_H, -1, -1, (ZQ_CNN_Tensor4D::SAMPLE_ALIGN_TYPE)align_type))
@@ -68,7 +70,8 @@ namespace ZQ
 			if (in_N <= 0 || in_H <= 0 || in_W <= 0 || in_C == 0
 				|| need_H < 0 || need_W < 0)
 			{
-				output.ChangeSize(0, 0, 0, 0, 0, 0);
+				if (!output.ChangeSize(0, 0, 0, 0, 0, 0))
+	return false;
 				return true;
 			}
 
@@ -77,7 +80,8 @@ namespace ZQ
 			int need_C = in_C;
 			if (out_N != need_N || out_H != need_H || out_W != need_W || out_C != need_C)
 			{
-				output.ChangeSize(need_N, need_H, need_W, need_C, 0, 0);
+				if (!output.ChangeSize(need_N, need_H, need_W, need_C, 0, 0))
+	return false;
 			}
 
 			if (!input.ResizeBilinear(output, need_W, need_H, -1, -1, (ZQ_CNN_Tensor4D::SAMPLE_ALIGN_TYPE)align_type))
@@ -104,7 +108,8 @@ namespace ZQ
 			if (in_N <= 0 || in_H <= 0 || in_W <= 0 || in_C == 0
 				|| need_H < 0 || need_W < 0)
 			{
-				output.ChangeSize(0, 0, 0, 0, 0, 0);
+				if (!output.ChangeSize(0, 0, 0, 0, 0, 0))
+	return false;
 				return true;
 			}
 
@@ -113,7 +118,8 @@ namespace ZQ
 			int need_C = in_C;
 			if (out_N != need_N || out_H != need_H || out_W != need_W || out_C != need_C)
 			{
-				output.ChangeSize(need_N, need_H, need_W, need_C, 0, 0);
+				if (!output.ChangeSize(need_N, need_H, need_W, need_C, 0, 0))
+	return false;
 			}
 
 			if (!input.ResizeNearest(output, need_W, need_H, -1, -1, (ZQ_CNN_Tensor4D::SAMPLE_ALIGN_TYPE)align_type))
@@ -140,7 +146,8 @@ namespace ZQ
 			if (in_N <= 0 || in_H <= 0 || in_W <= 0 || in_C == 0
 				|| need_H < 0 || need_W < 0)
 			{
-				output.ChangeSize(0, 0, 0, 0, 0, 0);
+				if (!output.ChangeSize(0, 0, 0, 0, 0, 0))
+	return false;
 				return true;
 			}
 
@@ -149,7 +156,8 @@ namespace ZQ
 			int need_C = in_C;
 			if (out_N != need_N || out_H != need_H || out_W != need_W || out_C != need_C)
 			{
-				output.ChangeSize(need_N, need_H, need_W, need_C, 0, 0);
+				if (!output.ChangeSize(need_N, need_H, need_W, need_C, 0, 0))
+	return false;
 			}
 
 			if (!input.ResizeBilinear(output, need_W, need_H, -1, -1, (ZQ_CNN_Tensor4D::SAMPLE_ALIGN_TYPE)align_type))
@@ -184,7 +192,8 @@ namespace ZQ
 			if (in_N <= 0 || in_H <= 0 || in_W <= 0 || in_C == 0
 				|| need_H < 0 || need_W < 0)
 			{
-				output.ChangeSize(0, 0, 0, 0, 0, 0);
+				if (!output.ChangeSize(0, 0, 0, 0, 0, 0))
+	return false;
 				return true;
 			}
 			if (filter_C != in_C || filter_N != bias_C)
@@ -195,7 +204,8 @@ namespace ZQ
 			int need_C = filter_N;
 			if (out_N != need_N || out_H != need_H || out_W != need_W || out_C != need_C)
 			{
-				output.ChangeSize(need_N, need_H, need_W, need_C, 0, 0);
+				if (!output.ChangeSize(need_N, need_H, need_W, need_C, 0, 0))
+	return false;
 			}
 
 
@@ -275,7 +285,8 @@ namespace ZQ
 			if (in_N <= 0 || in_H <= 0 || in_W <= 0 || in_C == 0
 				|| need_H < 0 || need_W < 0)
 			{
-				output.ChangeSize(0, 0, 0, 0, 0, 0);
+				if (!output.ChangeSize(0, 0, 0, 0, 0, 0))
+	return false;
 				return true;
 			}
 			if (filter_C != in_C || filter_N != bias_C || filter_N != slope_C)
@@ -286,7 +297,8 @@ namespace ZQ
 			int need_C = filter_N;
 			if (out_N != need_N || out_H != need_H || out_W != need_W || out_C != need_C)
 			{
-				output.ChangeSize(need_N, need_H, need_W, need_C, 0, 0);
+				if (!output.ChangeSize(need_N, need_H, need_W, need_C, 0, 0))
+	return false;
 			}
 
 
@@ -366,7 +378,8 @@ namespace ZQ
 			if (in_N <= 0 || in_H <= 0 || in_W <= 0 || in_C == 0
 				|| need_H < 0 || need_W < 0)
 			{
-				output.ChangeSize(0, 0, 0, 0, 0, 0);
+				if (!output.ChangeSize(0, 0, 0, 0, 0, 0))
+	return false;
 				return true;
 			}
 			if (filter_C != in_C || filter_N != slope_C)
@@ -377,7 +390,8 @@ namespace ZQ
 			int need_C = filter_N;
 			if (out_N != need_N || out_H != need_H || out_W != need_W || out_C != need_C)
 			{
-				output.ChangeSize(need_N, need_H, need_W, need_C, 0, 0);
+				if (!output.ChangeSize(need_N, need_H, need_W, need_C, 0, 0))
+	return false;
 			}
 
 			int in_sliceStep = input.GetSliceStep();
@@ -452,7 +466,8 @@ namespace ZQ
 			if (in_N <= 0 || in_H <= 0 || in_W <= 0 || in_C == 0
 				|| need_H < 0 || need_W < 0)
 			{
-				output.ChangeSize(0, 0, 0, 0, 0, 0);
+				if (!output.ChangeSize(0, 0, 0, 0, 0, 0))
+	return false;
 				return true;
 			}
 			if (filter_C != in_C)
@@ -462,7 +477,8 @@ namespace ZQ
 			int need_C = filter_N;
 			if (out_N != need_N || out_H != need_H || out_W != need_W || out_C != need_C)
 			{
-				output.ChangeSize(need_N, need_H, need_W, need_C, 0, 0);
+				if (!output.ChangeSize(need_N, need_H, need_W, need_C, 0, 0))
+	return false;
 			}
 
 			
@@ -535,7 +551,8 @@ namespace ZQ
 			if (in_N <= 0 || in_H <= 0 || in_W <= 0 || in_C == 0
 				|| need_H < 0  || need_W < 0)
 			{
-				output.ChangeSize(0, 0, 0, 0, 0, 0);
+				if (!output.ChangeSize(0, 0, 0, 0, 0, 0))
+	return false;
 				return true;
 			}
 			if (filter_C != in_C || filter_N != bias_C)
@@ -546,7 +563,8 @@ namespace ZQ
 			int need_C = filter_N;
 			if (out_N != need_N || out_H != need_H || out_W != need_W || out_C != need_C)
 			{
-				output.ChangeSize(need_N, need_H, need_W, need_C, 0, 0);
+				if (!output.ChangeSize(need_N, need_H, need_W, need_C, 0, 0))
+	return false;
 			}
 
 			if (padH_top != 0 || padH_bottom != 0 || padW_left != 0 || padW_right != 0)
@@ -630,7 +648,8 @@ namespace ZQ
 			if (in_N <= 0 || in_H <= 0 || in_W <= 0 || in_C == 0
 				|| need_H < 0 || need_W < 0)
 			{
-				output.ChangeSize(0, 0, 0, 0, 0, 0);
+				if (!output.ChangeSize(0, 0, 0, 0, 0, 0))
+	return false;
 				return true;
 			}
 			if (filter_C != in_C || filter_N != bias_C || filter_N != slope_C)
@@ -641,7 +660,8 @@ namespace ZQ
 			int need_C = filter_N;
 			if (out_N != need_N || out_H != need_H || out_W != need_W || out_C != need_C)
 			{
-				output.ChangeSize(need_N, need_H, need_W, need_C, 0, 0);
+				if (!output.ChangeSize(need_N, need_H, need_W, need_C, 0, 0))
+	return false;
 			}
 
 			if (padH_top != 0 || padH_bottom != 0 || padW_left != 0 || padW_right != 0)
@@ -725,7 +745,8 @@ namespace ZQ
 			if (in_N <= 0 || in_H <= 0 || in_W <= 0 || in_C == 0
 				|| need_H < 0 || need_W < 0)
 			{
-				output.ChangeSize(0, 0, 0, 0, 0, 0);
+				if (!output.ChangeSize(0, 0, 0, 0, 0, 0))
+	return false;
 				return true;
 			}
 			if (filter_C != in_C || filter_N != slope_C)
@@ -736,7 +757,8 @@ namespace ZQ
 			int need_C = filter_N;
 			if (out_N != need_N || out_H != need_H || out_W != need_W || out_C != need_C)
 			{
-				output.ChangeSize(need_N, need_H, need_W, need_C, 0, 0);
+				if (!output.ChangeSize(need_N, need_H, need_W, need_C, 0, 0))
+	return false;
 			}
 
 			if (padH_top != 0 || padH_bottom != 0|| padW_left != 0 || padW_right != 0)
@@ -816,7 +838,8 @@ namespace ZQ
 			if (in_N <= 0 || in_H <= 0 || in_W <= 0 || in_C == 0
 				|| need_H < 0 || need_W < 0)
 			{
-				output.ChangeSize(0, 0, 0, 0, 0, 0);
+				if (!output.ChangeSize(0, 0, 0, 0, 0, 0))
+	return false;
 				return true;
 			}
 			if (filter_C != in_C)
@@ -826,7 +849,8 @@ namespace ZQ
 			int need_C = filter_N;
 			if (out_N != need_N || out_H != need_H || out_W != need_W || out_C != need_C)
 			{
-				output.ChangeSize(need_N, need_H, need_W, need_C, 0, 0);
+				if (!output.ChangeSize(need_N, need_H, need_W, need_C, 0, 0))
+	return false;
 			}
 
 			if (padH_top != 0 || padH_bottom != 0 || padW_left != 0 || padW_right != 0)
@@ -901,7 +925,8 @@ namespace ZQ
 			if (in_N <= 0 || in_H <= 0 || in_W <= 0 || in_C == 0
 				|| (in_H - dilate_filter_H + (padH_top+padH_bottom)) < 0 || (in_W - dilate_filter_W + (padW_left+padW_right)) < 0)
 			{
-				output.ChangeSize(0, 0, 0, 0, 0, 0);
+				if (!output.ChangeSize(0, 0, 0, 0, 0, 0))
+	return false;
 				return true;
 			}
 			if (filter_C != in_C || filter_N != 1)
@@ -913,7 +938,8 @@ namespace ZQ
 			int need_C = in_C;
 			if (out_N != need_N || out_H != need_H || out_W != need_W || out_C != need_C)
 			{
-				output.ChangeSize(need_N, need_H, need_W, need_C, 0, 0);
+				if (!output.ChangeSize(need_N, need_H, need_W, need_C, 0, 0))
+	return false;
 			}
 
 			if (padH_top != 0 || padH_bottom != 0 || padW_left != 0 || padW_right != 0)
@@ -988,7 +1014,8 @@ namespace ZQ
 			if (in_N <= 0 || in_H <= 0 || in_W <= 0 || in_C == 0
 				|| (in_H - dilate_filter_H + (padH_top+padH_bottom)) < 0 || (in_W - dilate_filter_W + (padW_left+padW_right)) < 0)
 			{
-				output.ChangeSize(0, 0, 0, 0, 0, 0);
+				if (!output.ChangeSize(0, 0, 0, 0, 0, 0))
+	return false;
 				return true;
 			}
 			if (filter_C != in_C || filter_N != 1)
@@ -1000,7 +1027,8 @@ namespace ZQ
 			int need_C = in_C;
 			if (out_N != need_N || out_H != need_H || out_W != need_W || out_C != need_C)
 			{
-				output.ChangeSize(need_N, need_H, need_W, need_C, 0, 0);
+				if (!output.ChangeSize(need_N, need_H, need_W, need_C, 0, 0))
+	return false;
 			}
 
 			if (padH_top != 0 || padH_bottom != 0 || padW_left != 0 || padW_right != 0)
@@ -1077,7 +1105,8 @@ namespace ZQ
 			if (in_N <= 0 || in_H <= 0 || in_W <= 0 || in_C == 0
 				|| (in_H - dilate_filter_H + (padH_top+padH_bottom)) < 0 || (in_W - dilate_filter_W + (padW_left+padW_right)) < 0)
 			{
-				output.ChangeSize(0, 0, 0, 0, 0, 0);
+				if (!output.ChangeSize(0, 0, 0, 0, 0, 0))
+	return false;
 				return true;
 			}
 			if (filter_C != in_C || filter_N != 1)
@@ -1089,7 +1118,8 @@ namespace ZQ
 			int need_C = in_C;
 			if (out_N != need_N || out_H != need_H || out_W != need_W || out_C != need_C)
 			{
-				output.ChangeSize(need_N, need_H, need_W, need_C, 0, 0);
+				if (!output.ChangeSize(need_N, need_H, need_W, need_C, 0, 0))
+	return false;
 			}
 
 			if (padH_top != 0 || padH_bottom != 0 || padW_left != 0 || padW_right != 0)
@@ -1159,7 +1189,8 @@ namespace ZQ
 			float bias_C = (float)bias.GetC();
 			if (in_N <= 0 || in_H <= 0 || in_W <= 0 || in_C == 0)
 			{
-				output.ChangeSize(0, 0, 0, 0, 0, 0);
+				if (!output.ChangeSize(0, 0, 0, 0, 0, 0))
+	return false;
 				return true;
 			}
 			if (filter_H != in_H || filter_W != in_W || filter_C != in_C || filter_N != bias_C)
@@ -1171,7 +1202,8 @@ namespace ZQ
 			int need_C = filter_N;
 			if (out_N != need_N || out_H != need_H || out_W != need_W || out_C != need_C)
 			{
-				output.ChangeSize(need_N, need_H, need_W, need_C, 0, 0);
+				if (!output.ChangeSize(need_N, need_H, need_W, need_C, 0, 0))
+	return false;
 			}
 
 			int in_sliceStep = input.GetSliceStep();
@@ -1237,7 +1269,8 @@ namespace ZQ
 			int out_C = output.GetC();
 			if (in_N <= 0 || in_H <= 0 || in_W <= 0 || in_C == 0)
 			{
-				output.ChangeSize(0, 0, 0, 0, 0, 0);
+				if (!output.ChangeSize(0, 0, 0, 0, 0, 0))
+	return false;
 				return true;
 			}
 			if (filter_H != in_H || filter_W != in_W || filter_C != in_C)
@@ -1249,7 +1282,8 @@ namespace ZQ
 			int need_C = filter_N;
 			if (out_N != need_N || out_H != need_H || out_W != need_W || out_C != need_C)
 			{
-				output.ChangeSize(need_N, need_H, need_W, need_C, 0, 0);
+				if (!output.ChangeSize(need_N, need_H, need_W, need_C, 0, 0))
+	return false;
 			}
 
 			int in_sliceStep = input.GetSliceStep();
@@ -1309,7 +1343,8 @@ namespace ZQ
 			
 			if (in_N <= 0 || in_H <= 0 || in_W <= 0 || in_C == 0)
 			{
-				output.ChangeSize(0, 0, 0, 0, 0, 0);
+				if (!output.ChangeSize(0, 0, 0, 0, 0, 0))
+	return false;
 				return true;
 			}
 
@@ -1346,7 +1381,8 @@ namespace ZQ
 			int need_C = fw_hidden_dim + bw_hidden_dim;
 
 			if (output.GetN() != need_N || output.GetH() != need_H || output.GetW() != need_W || output.GetC() != need_C)
-				output.ChangeSize(need_N, need_H, need_W, need_C, 0, 0);
+				if (!output.ChangeSize(need_N, need_H, need_W, need_C, 0, 0))
+	return false;
 				
 			float* out_data = output.GetFirstPixelPtr();
 			int out_pixelStep = output.GetPixelStep();
@@ -1518,13 +1554,15 @@ namespace ZQ
 			
 			if (need_W <= 0 || need_H <= 0)
 			{
-				output.ChangeSize(0, 0, 0, 0, 0, 0);
+				if (!output.ChangeSize(0, 0, 0, 0, 0, 0))
+	return;
 				return ;
 			}
 
 			bool suredivided = (in_H + pad_H_top + pad_H_bottom - kernel_H) % stride_H == 0 && (in_W + pad_W_left + pad_W_right - kernel_W) % stride_W == 0;
 			if (output.GetN() != need_N || output.GetH() != need_H || output.GetW() != need_W || output.GetC() != need_C)
-				output.ChangeSize(need_N, need_H, need_W, need_C, 0, 0);
+				if (!output.ChangeSize(need_N, need_H, need_W, need_C, 0, 0))
+	return;
 
 			int in_sliceStep = input.GetSliceStep();
 			int in_widthStep = input.GetWidthStep();
@@ -1603,13 +1641,15 @@ namespace ZQ
 
 			if (need_W <= 0 || need_H <= 0)
 			{
-				output.ChangeSize(0, 0, 0, 0, 0, 0);
+				if (!output.ChangeSize(0, 0, 0, 0, 0, 0))
+	return;
 				return;
 			}
 
 			bool suredivided = (in_H + pad_H_top + pad_H_bottom - kernel_H) % stride_H == 0 && (in_W + pad_W_left + pad_W_right - kernel_W) % stride_W == 0;
 			if (output.GetN() != need_N || output.GetH() != need_H || output.GetW() != need_W || output.GetC() != need_C)
-				output.ChangeSize(need_N, need_H, need_W, need_C, 0, 0);
+				if (!output.ChangeSize(need_N, need_H, need_W, need_C, 0, 0))
+	return;
 
 			int in_sliceStep = input.GetSliceStep();
 			int in_widthStep = input.GetWidthStep();
@@ -2188,7 +2228,8 @@ namespace ZQ
 					return false;
 			}
 			if (output.GetN() != N || output.GetH() != H || output.GetW() != W || output.GetC() != C)
-				output.ChangeSize(N, H, W, C, 0, 0);
+				if (!output.ChangeSize(N, H, W, C, 0, 0))
+	return false;
 			if (N <= 0 || H <= 0 || W <= 0 || C <= 0)
 				return true;
 			std::vector<const float*> in_tensor_data(in_num);
@@ -2244,7 +2285,8 @@ namespace ZQ
 					return false;
 			}
 			if (output.GetN() != N || output.GetH() != H || output.GetW() != W || output.GetC() != C)
-				output.ChangeSize(N, H, W, C, 0, 0);
+				if (!output.ChangeSize(N, H, W, C, 0, 0))
+	return false;
 			if (N <= 0 || H <= 0 || W <= 0 || C <= 0)
 				return true;
 			std::vector<const float*> in_tensor_data(in_num);
@@ -2298,7 +2340,8 @@ namespace ZQ
 					return false;
 			}
 			if (output.GetN() != N || output.GetH() != H || output.GetW() != W || output.GetC() != C)
-				output.ChangeSize(N, H, W, C, 0, 0);
+				if (!output.ChangeSize(N, H, W, C, 0, 0))
+	return false;
 			if (N <= 0 || H <= 0 || W <= 0 || C <= 0)
 				return true;
 			std::vector<const float*> in_tensor_data(in_num);
@@ -2352,7 +2395,8 @@ namespace ZQ
 					return false;
 			}
 			if (output.GetN() != N || output.GetH() != H || output.GetW() != W || output.GetC() != C)
-				output.ChangeSize(N, H, W, C, 0, 0);
+				if (!output.ChangeSize(N, H, W, C, 0, 0))
+	return false;
 			if (N <= 0 || H <= 0 || W <= 0 || C <= 0)
 				return true;
 			std::vector<const float*> in_tensor_data(in_num);
@@ -2413,7 +2457,8 @@ namespace ZQ
 
 			if (output.GetN() != out_dims[0] || output.GetH() != out_dims[2] 
 				|| output.GetW() != out_dims[3] || output.GetC() != out_dims[1])
-				output.ChangeSize(out_dims[0],out_dims[2],out_dims[3],out_dims[1], 0, 0);
+				if (!output.ChangeSize(out_dims[0],out_dims[2],out_dims[3],out_dims[1], 0, 0))
+	return false;
 			
 			const float* in_data = input.GetFirstPixelPtr();
 			float* out_data = output.GetFirstPixelPtr();
@@ -2464,7 +2509,8 @@ namespace ZQ
 
 			if (output.GetN() != out_dims[0] || output.GetH() != out_dims[2]
 				|| output.GetW() != out_dims[3] || output.GetC() != out_dims[1])
-				output.ChangeSize(out_dims[0], out_dims[2], out_dims[3], out_dims[1], 0, 0);
+				if (!output.ChangeSize(out_dims[0], out_dims[2], out_dims[3], out_dims[1], 0, 0))
+	return false;
 
 			const float* in_data = input.GetFirstPixelPtr();
 			float* out_data = output.GetFirstPixelPtr();
@@ -2525,7 +2571,8 @@ namespace ZQ
 			int W = input.GetW();
 			int C = input.GetC();
 			if (output.GetN() != N || output.GetH() != H || output.GetW() != W || output.GetC() != C)
-				output.ChangeSize(N, H, W, C, 0, 0);
+				if (!output.ChangeSize(N, H, W, C, 0, 0))
+	return false;
 			if (N <= 0 || H <= 0 || W <= 0 || C <= 0)
 				return true;
 			int in_pixStep = input.GetPixelStep(), in_widthStep = input.GetWidthStep(), in_sliceStep = input.GetSliceStep();
@@ -2586,7 +2633,8 @@ namespace ZQ
 			int W = input.GetW();
 			int C = input.GetC();
 			if (output.GetN() != N || output.GetH() != H || output.GetW() != W || output.GetC() != C)
-				output.ChangeSize(N, H, W, C, 0, 0);
+				if (!output.ChangeSize(N, H, W, C, 0, 0))
+	return false;
 			if (N <= 0 || H <= 0 || W <= 0 || C <= 0)
 				return true;
 			int in_pixStep = input.GetPixelStep(), in_widthStep = input.GetWidthStep(), in_sliceStep = input.GetSliceStep();
@@ -2647,7 +2695,8 @@ namespace ZQ
 			int W = input.GetW();
 			int C = input.GetC();
 			if (output.GetN() != N || output.GetH() != H || output.GetW() != W || output.GetC() != C)
-				output.ChangeSize(N, H, W, C, 0, 0);
+				if (!output.ChangeSize(N, H, W, C, 0, 0))
+	return false;
 			if (N <= 0 || H <= 0 || W <= 0 || C <= 0)
 				return true;
 			int in_pixStep = input.GetPixelStep(), in_widthStep = input.GetWidthStep(), in_sliceStep = input.GetSliceStep();
@@ -2708,7 +2757,8 @@ namespace ZQ
 			int W = input.GetW();
 			int C = input.GetC();
 			if (output.GetN() != N || output.GetH() != H || output.GetW() != W || output.GetC() != C)
-				output.ChangeSize(N, H, W, C, 0, 0);
+				if (!output.ChangeSize(N, H, W, C, 0, 0))
+	return false;
 			if (N <= 0 || H <= 0 || W <= 0 || C <= 0)
 				return true;
 			int in_pixStep = input.GetPixelStep(), in_widthStep = input.GetWidthStep(), in_sliceStep = input.GetSliceStep();
@@ -2769,7 +2819,8 @@ namespace ZQ
 			int W = input.GetW();
 			int C = input.GetC();
 			if (output.GetN() != N || output.GetH() != H || output.GetW() != W || output.GetC() != C)
-				output.ChangeSize(N, H, W, C, 0, 0);
+				if (!output.ChangeSize(N, H, W, C, 0, 0))
+	return false;
 			if (N <= 0 || H <= 0 || W <= 0 || C <= 0)
 				return true;
 			int in_pixStep = input.GetPixelStep(), in_widthStep = input.GetWidthStep(), in_sliceStep = input.GetSliceStep();
@@ -2830,7 +2881,8 @@ namespace ZQ
 			int W = input.GetW();
 			int C = input.GetC();
 			if (output.GetN() != N || output.GetH() != H || output.GetW() != W || output.GetC() != C)
-				output.ChangeSize(N, H, W, C, 0, 0);
+				if (!output.ChangeSize(N, H, W, C, 0, 0))
+	return false;
 			if (N <= 0 || H <= 0 || W <= 0 || C <= 0)
 				return true;
 			int in_pixStep = input.GetPixelStep(), in_widthStep = input.GetWidthStep(), in_sliceStep = input.GetSliceStep();
@@ -2891,7 +2943,8 @@ namespace ZQ
 			int W = input.GetW();
 			int C = input.GetC();
 			if (output.GetN() != N || output.GetH() != H || output.GetW() != W || output.GetC() != C)
-				output.ChangeSize(N, H, W, C, 0, 0);
+				if (!output.ChangeSize(N, H, W, C, 0, 0))
+	return false;
 			if (N <= 0 || H <= 0 || W <= 0 || C <= 0)
 				return true;
 			int in_pixStep = input.GetPixelStep(), in_widthStep = input.GetWidthStep(), in_sliceStep = input.GetSliceStep();
@@ -2963,7 +3016,8 @@ namespace ZQ
 				return true;
 			if (output.GetN() != N || output.GetH() != H || output.GetW() != W || output.GetC() != C)
 			{
-				output.ChangeSize(N, H, W, C, 0, 0);
+				if (!output.ChangeSize(N, H, W, C, 0, 0))
+	return false;
 			}
 
 			int in_pixStep = input.GetPixelStep();
