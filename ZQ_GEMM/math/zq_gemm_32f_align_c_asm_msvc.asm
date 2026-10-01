@@ -158,6 +158,9 @@ L_m2n4_done:
         vaddps  xmm2, xmm2, xmm8
         vhaddps xmm2, xmm2, xmm2
         vshufps xmm0, xmm0, xmm2, 44h
+        ; 注意保持 vmovups: xmm 寄存器是 128 位 = 16 字节, 正好 4 个 float。
+        ; 拆成 vmovlps + vmovhps 只会凭空多一条指令 —— 2026-10-01 误以为这里
+        ; 会越界并"修"过一次, 已回退, 详见 zq_gemm_32f_align_c_asm.c 的 ZQA_ST。
         vmovups [r9], xmm0
         vhaddps ymm4, ymm4, ymm5
         vhaddps ymm6, ymm6, ymm7
@@ -295,6 +298,7 @@ L_m1n4_done:
         vaddps  xmm2, xmm2, xmm8
         vhaddps xmm2, xmm2, xmm2
         vshufps xmm0, xmm0, xmm2, 44h
+        ; 同上: 一条 vmovups 正好 16 字节 = 4 个 float, 不拆
         vmovups [rcx], xmm0
         vzeroupper
         ZQA_EPILOGUE

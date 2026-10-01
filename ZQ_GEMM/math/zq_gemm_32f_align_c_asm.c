@@ -267,6 +267,12 @@ void zq_gemm_32f_asm_core_m6n8(const float* ap, const float* bp,
 #define ZQA_XOR(r)        "vxorps %%" #r ", %%" #r ", %%" #r "\n\t"
 #define ZQA_LD(r, m)      "vmovups " m ", %%" #r "\n\t"
 #define ZQA_ST(m, r)      "vmovups %%" #r ", " m "\n\t"   /* AT&T 存储: 寄存器在前 */
+/* !! 别把 4 个 float 的写回拆成 vmovlps + vmovhps !!
+   2026-10-01 误以为 "vmovups 写 16 字节 = 4 个 float, 会多写 12 字节越界",
+   改成了两条 8 字节存储 —— 这是错的: **xmm 寄存器是 128 位 = 16 字节**, 4 个 float
+   正好 16 字节, vmovups 一条不多写。(vshufps 0x44 的高 4 个 lane 虽然是重复值,
+   但 vmovups 作用在 xmm 上只写低 128 位, 根本碰不到那 4 个 lane。)
+   拆分只会凭空多一条指令。已回退, 留这段注释防止下次再"修"一遍。 */
 #define ZQA_BC(r, m)      "vbroadcastss " m ", %%" #r "\n\t"  /* 必须是**内存源**, 见 m6n8 */
 #define ZQA_STSS(m, r)    "vmovss %%" #r ", " m "\n\t"    /* 只写 1 个 float, N=1 用 */
 #define ZQA_LEA(d, m)     "leaq " m ", %%" #d "\n\t"
@@ -1108,7 +1114,9 @@ static inline void zq_gemm_32f_asm_mblocks(int M, int N, int K, const float* A, 
      K=32   57% -> 同上
      K=64   已经在噪声内, 打包的多一趟读写抵掉不了多少, 保守留在原路
    想复现就把这个值调大再跑 tools/bench_two_binaries.py 对一遍。 */
+#ifndef ZQA_NDIR_MAX_K
 #define ZQA_NDIR_MAX_K 32
+#endif
 
 static int zq_gemm_32f_asm_ndir(int M, int N, int K, const float* A, int lda,
 	const float* Bt, int ldb, float* C, int ldc)
