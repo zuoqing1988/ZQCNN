@@ -18,7 +18,8 @@ A 文本卫生（秒级）
     tools/check_text_encoding.py   UTF-8 有损解码残留（U+FFFD）
 
 B 第三方头库的独立回归测试（ASan + LeakSanitizer，9 组，每组几秒）
-    tools/run_zqlib_checks.py
+    tools/run_zqlib_checks.py        (gcc / WSL)
+    tools/run_zqlib_checks_msvc.bat  (MSVC /fsanitize=address / Windows，--msvc-asan 时跑)
 
 C ZQlib 可编译性门禁（慢，约 2 分钟，编译 143 个翻译单元）
     tools/probe_zqlib_headers.py --check-baseline tools/zqlib_probe_baseline.txt
@@ -108,6 +109,9 @@ def main():
                     help='额外跑双平台全量构建 + sample 回归（很慢，几分钟）')
     ap.add_argument('--msvc-probe', action='store_true',
                     help='额外用 MSVC 探一遍 ZQlib 头（Windows 侧覆盖，见附录 AR）')
+    ap.add_argument('--msvc-asan', action='store_true',
+                    help='额外用 MSVC /fsanitize=address 把 9 个 ZQlib 测试在 Windows 上真跑一遍'
+                         '（gcc 那套只在 WSL 里跑，见附录 AS）')
     args = ap.parse_args()
 
     failed = []
@@ -137,6 +141,12 @@ def main():
                       % (len(rows), len(rows) - len(bad), len(bad)))
             except IOError:
                 pass
+
+    if args.msvc_asan:
+        if not run_group('B2 ZQlib 独立回归测试 x9 (MSVC /fsanitize=address)',
+                         ['cmd', '/c', os.path.join(HERE, 'run_zqlib_checks_msvc.bat')],
+                         cwd=ROOT):
+            failed.append('B2 ZQlib 独立回归测试 x9 (MSVC ASan)')
 
     for name, argv, slow in GROUPS:
         if slow and args.quick:
