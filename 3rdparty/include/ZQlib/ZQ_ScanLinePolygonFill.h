@@ -56,11 +56,15 @@ namespace ZQ
 
 			int ymin = 0;
 			int ymax = 0;
-			_getPolygonMinMax(polygon_pts, ymin, ymax);
+			// 下面三处原来用的都是 **polygon_pts**（原始多边形），等于把
+			// ClipPolygon 算出来的 out_poly 丢掉了 —— 这个「WithClip」其实一点
+			// 都没裁剪。实测 (tools/zq_batch6_check.cpp): 一个明显越界的三角形
+			// 返回 72 个像素，其中 40 个落在 width x height 之外。这里改用 out_poly。
+			_getPolygonMinMax(out_poly, ymin, ymax);
 
 			std::vector<std::vector<ScanLineEdge>> slNet(ymax - ymin + 1);
 
-			_initScanLineNewEdgeTable(polygon_pts, ymin, ymax, slNet);
+			_initScanLineNewEdgeTable(out_poly, ymin, ymax, slNet);
 
 			_processScanLineFill(slNet, ymin, ymax, pixels);
 

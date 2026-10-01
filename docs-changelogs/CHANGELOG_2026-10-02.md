@@ -628,3 +628,56 @@ cur_k++;
 - Linux sample 回归 8 个全 rc=0
 - `tools/run_zqlib_checks.py`：6/6 PASS
 - `check_line_endings.py` / `check_text_encoding.py` 均 OK
+
+## 新增/变更：第 6 批 —— ZQ_Matrix 自赋值、ScanLinePolygonFill「裁了但不用」
+
+### 变更文件
+- `3rdparty/include/ZQlib/ZQ_Matrix.h`：`operator=` 加自赋值保护
+- `3rdparty/include/ZQlib/ZQ_ScanLinePolygonFill.h`：`ScanLinePolygonFillWithClip`
+  里三处 `polygon_pts` 改成 `out_poly`
+- `tools/zq_batch6_check.cpp`（新增）：两条的独立回归测试
+- `audit_k3_20261001.md`：新增**附录 AE**
+
+### 1. `ZQ_Matrix::operator=` 缺自赋值保护
+
+```cpp
+if (data) free(data);              // 先释放自己的
+data = (T*)malloc(...);
+memcpy(data, other.data, ...);     // a = a 时 other.data 就是刚 free 掉的那块
+```
+
+实测：自赋值之后 3×2 的 6 个元素**全部**变成垃圾值。已修
+（开头加 `if (this == &other) return;`）。拷贝构造没有这个问题 ——
+它读 other 时还不拥有 data，不需要额外处理。
+
+### 2. `ScanLinePolygonFillWithClip` 把裁剪结果丢掉了
+
+只有「out_poly.size() < 3 就返回」那一步用了裁剪结果，**后面三处
+（取 minmax / 建边表 / 扫描填充）全用原始的 polygon_pts** ——
+这个「WithClip」根本没有做任何裁剪。
+
+实测：顶点 `(-5,4) / (12,4) / (4,-5)` 的三角形在 8×8 的图上
+
+| | 返回像素数 | 落在 8×8 之外的 |
+|---|---|---|
+| 修复前 | 72 | **40** |
+| 修复后 | 28 | **0** |
+
+唯一调用方 `FillOneStrokeWithClip` 传 width/height 进来本意就是想限制笔画范围，
+修复前这个约定不成立。已修。
+
+### 可达性
+
+两条的头全仓零 includers，属「外部使用者会踩到」的形态，不是本仓库运行时的洞。
+
+这两条补完了并行扫描代理 15 条候选里最后的两条**已确认**项。剩下那条
+`ZQ_MinIndependentSets.h` 析构不判空属调用方契约（同文件里的兄弟析构反而判了，
+是不一致而非漏洞），不改。
+
+至此，探测器 OK 列表里那 85 个能独立编译的 ZQlib 头已被系统性过了一遍。
+
+### 验证
+- Windows Release 全量构建 0 error；Linux 全量构建 0 error
+- Linux sample 回归 8 个全 rc=0
+- `tools/run_zqlib_checks.py`：7/7 PASS（新增 zq_batch6）
+- `check_line_endings.py` / `check_text_encoding.py` 均 OK

@@ -99,6 +99,12 @@ namespace ZQ
 	template<class T>
 	void ZQ_Matrix<T>::operator = (const ZQ_Matrix& other)
 	{
+		// 自赋值保护: `a = a;` 时 other.data 就是下面 free 掉的那块,
+		// memcpy 会从已释放内存读 —— 实测 (tools/zq_batch6_check.cpp):
+		// 自赋值之后 6 个元素全部变成垃圾值。
+		if (this == &other)
+			return;
+
 		if(data)
 			free(data);
 
