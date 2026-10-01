@@ -386,3 +386,101 @@ include 了 `ZQ_TaucsBase.h`，而它在附录 X 的探测里属于 BROKEN（缺
 验证：Windows Release 0 error；Linux 0 error；
 quicksort / bitonicsort / kmeans / mergesort 四个独立测试均 PASS；
 两套检查工具均 OK。
+
+## 新增/变更：第 3 批 —— 3x3 中值滤波两条真缺陷（活的调用方）+ 2 个公开 API 缺陷 + 1 处编译错误
+
+### 变更文件
+- `3rdparty/include/ZQlib/ZQ_ImageProcessing.h`
+  - `Sort_decend_3elements`：中间那步改成换 1/2（原来照抄第一步换 0/1）
+  - `MedianFilter33_1channel`：第二列写 `col[1]`（原来写成 `col[0]`），**两份拷贝都改**
+    （`ZQLIB_USE_OPENMP` 那条虽然是死代码，但它同样坏，保持一致）
+- `3rdparty/include/ZQlib/ZQ_Quaternion.h`：`operator+=` 里 `w += w.z;` → `w += v.w;`
+- `3rdparty/include/ZQlib/ZQ_MinIndependentSets.h`：`if (ou == 0)` → `if (out == 0)`
+- `tools/zqlib_msvc_shim.h`（新增）：MSVC→gcc 兼容垫片，多个测试共用
+- `tools/zq_imageprocessing_check.cpp`（新增）：中值滤波的独立回归测试
+- `audit_k3_20261001.md`：新增**附录 AB**；头部统计换成「截至第十三轮」口径
+
+### 1. `Sort_decend_3elements` 从来没排过第 3 个元素
+
+```cpp
+if (values[0] < values[1]) { swap(0,1) }          // 第一步
+if (values[1] < values[2]) { swap(0,1) }          // <-- 照抄了第一步！应该是 swap(1,2)
+if (values[0] < values[1]) { swap(0,1) }
+```
+
+三步都在换 0/1，`values[2]` 从头到尾没参与过任何交换。
+实测 `{0,1,2}` 的结果是 `{1,0,2}` —— 既不是降序，`values[0]` 也不是最大值。
+
+### 2. `MedianFilter33_1channel` 的第二列写错了槽位
+
+```cpp
+col[0][0] = tmpImg[h*padding_width + 1];    // <-- 应该是 col[1][0]
+col[0][1] = ...;
+col[0][2] = ...;
+Sort_decend_3elements(col[1]);              // 排的是从来没被赋值的 col[1]
+```
+
+于是 `col[1]` 在第一次迭代读的是**未初始化的栈内存**，之后是上一轮的残值，
+再被 `__min(col[0][0], __min(col[1][0], col[2][0]))` 读走。
+
+**两条叠在一起 = 3×3 中值滤波的结果完全不对**，而它有活的调用方：
+`ZQ_FindCorners.h:1562-1563` 各调一次。
+
+### 实测（tools/zq_imageprocessing_check.cpp，ASan + LSan）
+
+修复前：
+
+```
+  FAIL: Sort_decend_3elements({0,1,2}) 应得降序, 实得 {1,0,2}
+  FAIL: Sort_decend_3elements({0,2,1}) 应得降序, 实得 {2,0,1}
+  ... 共 6/9 组失败
+  FAIL: MedianFilter33_1channel(3x3)   有 1/9   个像素与暴力中值不符 (首个 (0,1): 期望 100 实得 10)
+  FAIL: MedianFilter33_1channel(5x4)   有 1/20  个像素与暴力中值不符 (首个 (0,1): 期望 100 实得 10)
+  FAIL: MedianFilter33_1channel(7x6)   有 1/42  个像素与暴力中值不符
+  FAIL: MedianFilter33_1channel(16x16) 有 1/256 个像素与暴力中值不符
+```
+
+参考实现是「把 9 个像素（含 padding 的边缘复制）排序取中间那个」，不依赖被测代码。
+
+修复后：全部 PASS，ASan + LSan 无报告。值得注意的是修复前**每种尺寸都恰好错 1 个
+像素**（左边缘那一列），且错的值正是上一次循环的残值 —— 这正是「col[1] 未赋值」
+的特征，也说明只有读多个尺寸才能把它和「算法整体写错」区分开。
+
+### 3. `ZQ_Quaternion::operator+=` 是自引用
+
+```cpp
+w += w.z;      // <-- 应该是 w += v.w;
+```
+
+把自己的 z 加到自己的 w 上。`3rdparty/include/ZQlib` 内零调用点，是**公开 API**
+层面的缺陷。已修。
+
+### 4. `ZQ_MinIndependentSets.h` 在非 Windows 下编不过
+
+```cpp
+out = fopen(name, "w");
+if (ou == 0)        // <-- ou 未声明
+```
+
+一个字母的笔误，`ZQ_RawSets::Print` 在 gcc 下是硬编译错误。
+这正是它落在探测器的 BROKEN 桶里、拿不到独立测试的原因。
+修掉之后它进入 OK 列表 —— **可独立编译的头从 83 涨到 84**。
+
+### 验证
+- Windows Release 全量构建 0 error；Linux 全量构建 0 error
+- Linux sample 回归 8 个全 rc=0
+- `tools/run_zqlib_checks.py`：5/5 PASS（新增 zq_imageprocessing）
+- `tools/probe_zqlib_headers.py`：OK 列表 83 → **84**
+- `check_line_endings.py` / `check_text_encoding.py` 均 OK
+
+### 注意事项
+1. `ZQ_ImageProcessing.h` 也需要 MSVC 垫片（用了 `__min`/`__max`），
+   垫片抽成了 `tools/zqlib_msvc_shim.h`，各测试在 include 目标头**之前**包含它。
+2. `ZQLIB_USE_OPENMP` 全仓从未定义（只有 `#ifdef`，没有 `#define` 也没有 `-D`），
+   所以 `MedianFilter33_1channel` 里那份拷贝是死代码 —— 但它同样坏，本次一并修，
+   免得将来有人打开 OpenMP 时又踩一遍。
+3. 本批的缺陷来自一次并行扫描代理，**每一条都由我逐条回读源码确认过**才动手；
+   代理报告里另有 5 条「中等置信度」项（`ZQ_KDTree.h` 的 `k<=0` / `npts==0`、
+   `ZQ_WeightedMedian.h` 的 `num<=0`、`ZQ_CubicInterpolation.h` 的无界递归、
+   `ZQ_FindLargestSubMatrix.h` 的无符号乘法溢出、`ZQ_Matrix.h` 的自赋值），
+   本轮未处理，已记入附录 AB 待下一批。

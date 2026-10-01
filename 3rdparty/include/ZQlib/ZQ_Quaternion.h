@@ -183,7 +183,9 @@ namespace ZQ
 			x += v.x;
 			y += v.y;
 			z += v.z;
-			w += w.z;
+			// 原来是 `w += w.z;` —— 自引用（把自己的 z 加到自己的 w 上）。
+			// 3rdparty/include/ZQlib 内零调用点, 所以是公开 API 层面的缺陷。
+			w += v.w;
 		}
 
 

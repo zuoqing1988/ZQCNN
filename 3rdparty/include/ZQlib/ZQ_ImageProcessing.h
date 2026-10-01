@@ -119,9 +119,12 @@ namespace ZQ
 				T tmp = values[0]; values[0] = values[1]; values[1] = tmp;
 			}
 
+			// 中间这步原来**照抄了第一步**（同样换 0/1），于是 values[2] 从头到尾
+			// 没参与过任何交换。实测 {0,1,2} 会得到 {1,0,2}。
+			// 应该是换 1/2 —— 配合首尾两步构成标准的三元素降序比较网络。
 			if (values[1] < values[2])
 			{
-				T tmp = values[0]; values[0] = values[1]; values[1] = tmp;
+				T tmp = values[1]; values[1] = values[2]; values[2] = tmp;
 			}
 
 			if (values[0] < values[1])
@@ -1343,9 +1346,14 @@ namespace ZQ
 					col[0][1] = tmpImg[(h + 1)*padding_width + 0];
 					col[0][2] = tmpImg[(h + 2)*padding_width + 0];
 					Sort_decend_3elements(col[0]);
-					col[0][0] = tmpImg[h*padding_width + 1];
-					col[0][1] = tmpImg[(h + 1)*padding_width + 1];
-					col[0][2] = tmpImg[(h + 2)*padding_width + 1];
+					// 这一列写的是 col[1] 而不是 col[0]（原来三行全是 col[0]）：
+					// 写错的结果是 col[1] 从未被赋值 —— 第一行读的是**未初始化的栈内存**，
+					// 之后是上一轮的残值，再被下面的 __min/Median_value/__max 读走。
+					// 实测 (tools/zq_imageprocessing_check.cpp)：修之前每种尺寸都恰好
+					// 错 1 个像素（左边缘那列），取到的是上一次循环留下的值。
+					col[1][0] = tmpImg[h*padding_width + 1];
+					col[1][1] = tmpImg[(h + 1)*padding_width + 1];
+					col[1][2] = tmpImg[(h + 2)*padding_width + 1];
 					Sort_decend_3elements(col[1]);
 					int k = 2;
 
@@ -1375,9 +1383,14 @@ namespace ZQ
 					col[0][1] = tmpImg[(h + 1)*padding_width + 0];
 					col[0][2] = tmpImg[(h + 2)*padding_width + 0];
 					Sort_decend_3elements(col[0]);
-					col[0][0] = tmpImg[h*padding_width + 1];
-					col[0][1] = tmpImg[(h + 1)*padding_width + 1];
-					col[0][2] = tmpImg[(h + 2)*padding_width + 1];
+					// 这一列写的是 col[1] 而不是 col[0]（原来三行全是 col[0]）：
+					// 写错的结果是 col[1] 从未被赋值 —— 第一行读的是**未初始化的栈内存**，
+					// 之后是上一轮的残值，再被下面的 __min/Median_value/__max 读走。
+					// 实测 (tools/zq_imageprocessing_check.cpp)：修之前每种尺寸都恰好
+					// 错 1 个像素（左边缘那列），取到的是上一次循环留下的值。
+					col[1][0] = tmpImg[h*padding_width + 1];
+					col[1][1] = tmpImg[(h + 1)*padding_width + 1];
+					col[1][2] = tmpImg[(h + 2)*padding_width + 1];
 					Sort_decend_3elements(col[1]);
 					int k = 2;
 

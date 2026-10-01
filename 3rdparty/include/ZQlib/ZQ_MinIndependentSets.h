@@ -204,7 +204,7 @@ namespace ZQ
 				if (0 != fopen_s(&out, name, "w"))
 #else
 				out = fopen(name, "w");
-				if (ou == 0)
+				if (out == 0)      /* 原来是 `ou` —— 未声明, 非 Windows 分支直接编不过 */
 #endif
 				{
 					printf("failed to open file %s\n", name);
