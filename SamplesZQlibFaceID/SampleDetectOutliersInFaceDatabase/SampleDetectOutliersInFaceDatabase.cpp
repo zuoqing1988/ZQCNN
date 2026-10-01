@@ -59,8 +59,12 @@ int main(int argc, const char** argv)
 				recognizers[i] = new ZQ_FaceRecognizerArcFaceZQCNN();
 				if (!recognizers[i]->Init("", proto_file, model_file, out_blob_name))
 				{
+					printf("failed to init recognizer\n");
+					delete recognizers[i];
+					recognizers[i] = NULL;
 					for (int j = 0; j < i; j++)
 						delete recognizers[j];
+					return EXIT_FAILURE;
 				}
 			}
 		}
@@ -71,8 +75,12 @@ int main(int argc, const char** argv)
 				recognizers[i] = new ZQ_FaceRecognizerSphereFaceZQCNN();
 				if (!recognizers[i]->Init("", proto_file, model_file, out_blob_name))
 				{
+					printf("failed to init recognizer\n");
+					delete recognizers[i];
+					recognizers[i] = NULL;
 					for (int j = 0; j < i; j++)
 						delete recognizers[j];
+					return EXIT_FAILURE;
 				}
 			}
 		}

@@ -1,4 +1,4 @@
-﻿#ifndef _ZQ_CNN_PERSON_POSE_H_
+#ifndef _ZQ_CNN_PERSON_POSE_H_
 #define _ZQ_CNN_PERSON_POSE_H_
 #pragma once
 
@@ -134,6 +134,11 @@ namespace ZQ
 			const float* result_data = ssd_ptr->GetFirstPixelPtr();
 			int sliceStep = ssd_ptr->GetSliceStep();
 			int N = ssd_ptr->GetN();
+			if (sliceStep < 7)
+			{
+				printf("the output blob (%s) has slice step (%d) less than 7\n", ssd_out_blob_name.c_str(), sliceStep);
+				return false;
+			}
 			output.clear();
 			float scale_X = width;
 			float scale_Y = height;
@@ -225,8 +230,8 @@ namespace ZQ
 				int hm_widthStep = pose_ptr->GetWidthStep();
 				int hm_pixStep = pose_ptr->GetPixelStep();
 				float thresh = 0.3f;
-				output[nn].num_points = hm_C;
-				for (int c = 0; c < hm_C; c++)
+				output[nn].num_points = __min(18, hm_C);
+				for (int c = 0; c < output[nn].num_points; c++)
 				{
 					float sum_weight = 0;
 					float sum_x = 0;
@@ -479,6 +484,11 @@ namespace ZQ
 				const float* result_data = ssd_ptr->GetFirstPixelPtr();
 				int sliceStep = ssd_ptr->GetSliceStep();
 				int N = ssd_ptr->GetN();
+				if (sliceStep < 7)
+				{
+					printf("the output blob (%s) has slice step (%d) less than 7\n", ssd_out_blob_name.c_str(), sliceStep);
+					return false;
+				}
 				output.clear();
 				float scale_X = width;
 				float scale_Y = height;
@@ -609,8 +619,8 @@ namespace ZQ
 				int hm_widthStep = pose_ptr->GetWidthStep();
 				int hm_pixStep = pose_ptr->GetPixelStep();
 				float thresh = 0.3f;
-				output[nn].num_points = hm_C;
-				for (int c = 0; c < hm_C; c++)
+				output[nn].num_points = __min(18, __min(hm_C, pose_npts));
+				for (int c = 0; c < output[nn].num_points; c++)
 				{
 					float sum_weight = 0;
 					float sum_x = 0;

@@ -44,6 +44,11 @@ int main()
 
 	//Mat img = imread("data/4.jpg");
 	Mat img = imread("data/test2.jpg");
+	if (img.empty())
+	{
+		cout << "failed to load image data/test2.jpg\n";
+		return EXIT_FAILURE;
+	}
 	vector<ZQ_CNN_BBox> result_libfacedetect;
 	
 	if (!libfacedetect->FindFaceROI(img.data, img.cols, img.rows, img.step[0], ZQ_PIXEL_FMT_BGR, 

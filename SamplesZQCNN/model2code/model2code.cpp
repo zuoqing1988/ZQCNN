@@ -59,7 +59,24 @@ int main(int argc, const char** argv)
 	char* buffer = (char*)malloc(param_len);
 	fseek(in1, 0, SEEK_SET);
 #endif
-	fread(buffer, 1, param_len, in1);
+	if (param_len <= 0 || buffer == 0)
+	{
+		printf("failed to read file %s\n", param_file);
+		free(buffer);
+		fclose(in1);
+		fclose(in2);
+		fclose(out);
+		return EXIT_FAILURE;
+	}
+	if (fread(buffer, 1, param_len, in1) != (size_t)param_len)
+	{
+		printf("failed to read file %s\n", param_file);
+		free(buffer);
+		fclose(in1);
+		fclose(in2);
+		fclose(out);
+		return EXIT_FAILURE;
+	}
 	fclose(in1);
 	fprintf(out, "__int64 %s_param_len = %lld;\n", prefix, param_len);
 	fprintf(out, "char %s_param[%lld] = {\n", prefix, param_len);
@@ -91,7 +108,22 @@ int main(int argc, const char** argv)
 	buffer = (char*)malloc(model_len);
 	fseek(in2, 0, SEEK_SET);
 #endif
-	fread(buffer, 1, model_len, in2);
+	if (model_len <= 0 || buffer == 0)
+	{
+		printf("failed to read file %s\n", model_file);
+		free(buffer);
+		fclose(in2);
+		fclose(out);
+		return EXIT_FAILURE;
+	}
+	if (fread(buffer, 1, model_len, in2) != (size_t)model_len)
+	{
+		printf("failed to read file %s\n", model_file);
+		free(buffer);
+		fclose(in2);
+		fclose(out);
+		return EXIT_FAILURE;
+	}
 	fclose(in2);
 	fprintf(out, "__int64 %s_model_len = %lld;\n", prefix, model_len);
 	fprintf(out, "char %s_model[%lld] = {\n", prefix, model_len);

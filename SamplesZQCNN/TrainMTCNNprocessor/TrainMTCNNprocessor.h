@@ -151,13 +151,17 @@ namespace ZQ
 			char part_save_dir[BUF_LEN] = { 0 };
 			char neg_save_dir[BUF_LEN] = { 0 };
 			int len = strlen(root);
-			
+
 			if (root[len - 1] == '/' || root[len - 1] == '\\')
 			{
 #if defined(_WIN32)
 				sprintf_s(save_dir, BUF_LEN - 1, "%sprepare_data/%d", root, size);
 #else
-				sprintf(save_dir, "%sprepare_data/%d", root, size);
+				if (snprintf(save_dir, BUF_LEN, "%sprepare_data/%d", root, size) >= BUF_LEN)
+				{
+					printf("path too long: %s\n", root);
+					return false;
+				}
 #endif
 			}
 			else
@@ -165,7 +169,11 @@ namespace ZQ
 #if defined(_WIN32)
 				sprintf_s(save_dir, BUF_LEN - 1, "%s/prepare_data/%d", root, size);
 #else
-				sprintf(save_dir, "%s/prepare_data/%d", root, size);
+				if (snprintf(save_dir, BUF_LEN, "%s/prepare_data/%d", root, size) >= BUF_LEN)
+				{
+					printf("path too long: %s\n", root);
+					return false;
+				}
 #endif
 			}
 #if defined(_WIN32)
@@ -173,9 +181,13 @@ namespace ZQ
 			sprintf_s(part_save_dir, BUF_LEN - 1, "%s/part", save_dir);
 			sprintf_s(neg_save_dir, BUF_LEN - 1, "%s/negative", save_dir);
 #else
-			sprintf(pos_save_dir, "%s/positive", save_dir);
-			sprintf(part_save_dir, "%s/part", save_dir);
-			sprintf(neg_save_dir, "%s/negative", save_dir);
+			if (snprintf(pos_save_dir, BUF_LEN, "%s/positive", save_dir) >= BUF_LEN
+				|| snprintf(part_save_dir, BUF_LEN, "%s/part", save_dir) >= BUF_LEN
+				|| snprintf(neg_save_dir, BUF_LEN, "%s/negative", save_dir) >= BUF_LEN)
+			{
+				printf("path too long: %s\n", save_dir);
+				return false;
+			}
 #endif
 
 			std::string pos_file = std::string(save_dir) + "/pos.txt";
@@ -280,7 +292,11 @@ namespace ZQ
 #if defined(_WIN32)
 			strcpy_s(save_dir, BUF_LEN - 1, celeba_img_fold);
 #else
-			strcpy(save_dir, celeba_img_fold);
+			if (snprintf(save_dir, BUF_LEN, "%s", celeba_img_fold) >= BUF_LEN)
+			{
+				printf("path too long: %s\n", celeba_img_fold);
+				return false;
+			}
 #endif
 			int len = strlen(save_dir);
 
@@ -294,7 +310,11 @@ namespace ZQ
 #if defined(_WIN32)
 				sprintf_s(save_dir, BUF_LEN - 1, "%sprepare_data/%d", root, size);
 #else
-				sprintf(save_dir, "%sprepare_data/%d", root, size);
+				if (snprintf(save_dir, BUF_LEN, "%sprepare_data/%d", root, size) >= BUF_LEN)
+				{
+					printf("path too long: %s\n", root);
+					return false;
+				}
 #endif
 			}
 			else
@@ -302,13 +322,21 @@ namespace ZQ
 #if defined(_WIN32)
 				sprintf_s(save_dir, BUF_LEN - 1, "%s/prepare_data/%d", root, size);
 #else
-				sprintf(save_dir, "%s/prepare_data/%d", root, size);
+				if (snprintf(save_dir, BUF_LEN, "%s/prepare_data/%d", root, size) >= BUF_LEN)
+				{
+					printf("path too long: %s\n", root);
+					return false;
+				}
 #endif
 			}
 #if defined(_WIN32)
 			sprintf_s(landmark_save_dir, BUF_LEN - 1, "%s/landmark", save_dir);
 #else
-			sprintf(landmark_save_dir, "%s/landmark", save_dir);
+			if (snprintf(landmark_save_dir, BUF_LEN, "%s/landmark", save_dir) >= BUF_LEN)
+			{
+				printf("path too long: %s\n", save_dir);
+				return false;
+			}
 #endif
 			
 			std::string landmark_file = std::string(save_dir) + "/landmark.txt";

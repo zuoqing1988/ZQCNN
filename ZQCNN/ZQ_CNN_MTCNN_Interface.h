@@ -1,4 +1,4 @@
-﻿#ifndef _ZQ_CNN_MTCNN_INTERFACE_H_
+#ifndef _ZQ_CNN_MTCNN_INTERFACE_H_
 #define _ZQ_CNN_MTCNN_INTERFACE_H_
 #pragma once
 #include "ZQ_CNN_Net_Interface.h"
@@ -1645,7 +1645,7 @@ namespace ZQ
 					//const ZQ_CNN_Tensor4D_Interface_Base* keyPoint = lnet[0].GetBlobByName("conv6-3");
 					const ZQ_CNN_Tensor4D_Interface_Base* keyPoint = lnet[0].GetBlobByName("landmark_fc2/BiasAdd");
 					const float* keyPoint_ptr = keyPoint->GetFirstPixelPtr();
-					int keypoint_num = keyPoint->GetC() / 2;
+					int keypoint_num = __min(106, keyPoint->GetC() / 2);
 					int keyPoint_sliceStep = keyPoint->GetSliceStep();
 					for (int i = 0; i < task_fourthBbox[pp].size(); i++)
 					{
@@ -1691,7 +1691,7 @@ namespace ZQ
 					//const ZQ_CNN_Tensor4D_Interface_Base* keyPoint = lnet[thread_id].GetBlobByName("conv6-3");
 					const ZQ_CNN_Tensor4D_Interface_Base* keyPoint = lnet[0].GetBlobByName("landmark_fc2/BiasAdd");
 					const float* keyPoint_ptr = keyPoint->GetFirstPixelPtr();
-					int keypoint_num = keyPoint->GetC() / 2;
+					int keypoint_num = __min(106, keyPoint->GetC() / 2);
 					int keyPoint_sliceStep = keyPoint->GetSliceStep();
 					for (int i = 0; i < task_fourthBbox[pp].size(); i++)
 					{

@@ -1,4 +1,4 @@
-﻿#ifndef _ZQ_CNN_VIDEO_FACE_DETECTION_INTERFACE_H_
+#ifndef _ZQ_CNN_VIDEO_FACE_DETECTION_INTERFACE_H_
 #define _ZQ_CNN_VIDEO_FACE_DETECTION_INTERFACE_H_
 #pragma once
 
@@ -203,7 +203,7 @@ namespace ZQ
 					//const ZQ_CNN_Tensor4D_Interface_Base* keyPoint = lnets106[0].GetBlobByName("conv6-3");
 					const ZQ_CNN_Tensor4D_Interface_Base* keyPoint = lnets106[0].GetBlobByName("landmark_fc2/BiasAdd");
 					const float* keyPoint_ptr = keyPoint->GetFirstPixelPtr();
-					int keypoint_num = keyPoint->GetC() / 2;
+					int keypoint_num = __min(106, keyPoint->GetC() / 2);
 					int keyPoint_sliceStep = keyPoint->GetSliceStep();
 					float cos_rot = cos(last_rot);
 					float sin_rot = sin(last_rot);
@@ -328,7 +328,7 @@ namespace ZQ
 				std::vector<std::vector<ZQ_CNN_BBox106> > old_trace(trace);
 				trace.clear();
 				trace.resize(cur_box_num);
-				for (int i = 0; i < cur_box_num; i++)
+				for (int i = 0; i < cur_box_num && i < good_idx.size(); i++)
 				{
 					trace[i].push_back(results[i]);
 					if (good_idx[i] >= 0)
@@ -561,7 +561,7 @@ namespace ZQ
 				//const ZQ_CNN_Tensor4D_Interface_Base* keyPoint = lnets106[0].GetBlobByName("conv6-3");
 				const ZQ_CNN_Tensor4D_Interface_Base* keyPoint = lnets106[0].GetBlobByName("landmark_fc2/BiasAdd");
 				const float* keyPoint_ptr = keyPoint->GetFirstPixelPtr();
-				int keypoint_num = keyPoint->GetC() / 2;
+				int keypoint_num = __min(106, keyPoint->GetC() / 2);
 				int keyPoint_sliceStep = keyPoint->GetSliceStep();
 				for (int i = 0; i < task_fourthBbox[pp].size(); i++)
 				{
@@ -644,7 +644,7 @@ namespace ZQ
 				//const ZQ_CNN_Tensor4D* keyPoint = lnets106[0].GetBlobByName("conv6-3");
 				const ZQ_CNN_Tensor4D_Interface_Base* keyPoint = lnets106[0].GetBlobByName("landmark_fc2/BiasAdd");
 				const float* keyPoint_ptr = keyPoint->GetFirstPixelPtr();
-				int keypoint_num = keyPoint->GetC() / 2;
+				int keypoint_num = __min(106, keyPoint->GetC() / 2);
 				int keyPoint_sliceStep = keyPoint->GetSliceStep();
 
 				float cos_rot = cos(cur_rot);
@@ -712,6 +712,8 @@ namespace ZQ
 				
 				headposegaze_nets[0].Forward(task_hpg_images_gray[0]);
 				const ZQ_CNN_Tensor4D_Interface_Base* hpg = headposegaze_nets[0].GetBlobByName("headposegaze_fc3/BiasAdd");
+				if (hpg == 0 || hpg->GetN()*hpg->GetC()*hpg->GetH()*hpg->GetW() < 9)
+					continue;
 				const float* hpg_ptr = hpg->GetFirstPixelPtr();
 				memcpy(resultBbox[pp].headposegaze, hpg_ptr, sizeof(float) * 9);
 				resultBbox[pp].has_headposegaze = true;

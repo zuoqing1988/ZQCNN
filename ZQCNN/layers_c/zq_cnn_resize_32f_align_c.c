@@ -1,4 +1,4 @@
-﻿#include <malloc.h>
+#include <malloc.h>
 #include <stdlib.h>
 #include <math.h>
 #include <float.h>
@@ -208,6 +208,9 @@ extern "C" {
 		const float* in_slice_ptr, *in_row_ptr;
 		float* out_slice_ptr, *out_row_ptr, *out_pix_ptr;
 		int n, h, w, c, cur_xx;
+
+		if (xx == NULL)
+			return;
 		
 		/*********** compute the map and weight begin ************/
 		// coord_x
@@ -297,6 +300,14 @@ extern "C" {
 		float* out_slice_ptr, *out_row_ptr, *out_pix_ptr;
 		int n, h, w, c, cur_x0, cur_x1;
 		float cur_sx, v00, dx0, result0, v10, dx1, result1, dy, sum;
+
+		if (x0 == NULL || x1 == NULL || sx == NULL)
+		{
+			free(x0);
+			free(x1);
+			free(sx);
+			return;
+		}
 
 		/*********** compute the map and weight begin ************/
 		// coord_x
@@ -397,6 +408,14 @@ extern "C" {
 		float* out_slice_ptr, *out_row_ptr, *out_pix_ptr;
 		int n, h, w, c, cur_x0, cur_x1;
 		float cur_sx, v00, dx0, result0, v10, dx1, result1, dy, sum;
+
+		if (x0 == NULL || x1 == NULL || sx == NULL)
+		{
+			free(x0);
+			free(x1);
+			free(sx);
+			return;
+		}
 
 		/*********** compute the map and weight begin ************/
 		// coord_x
@@ -670,6 +689,9 @@ extern "C" {
 		const zq_base_type* in_slice_ptr, *in_row_ptr;
 		zq_base_type* out_slice_ptr, *out_row_ptr, *out_pix_ptr;
 		int n, h, w, c, cur_xx;
+
+		if (xx == NULL)
+			return;
 		
 		/*********** compute the map and weight begin ************/
 		// coord_x
@@ -744,7 +766,7 @@ extern "C" {
 
 		int* x0 = (int*)malloc(sizeof(int)*(out_W));
 		int* x1 = (int*)malloc(sizeof(int)*(out_W));
-		float* sx = (zq_base_type*)malloc(sizeof(zq_base_type)*(out_W));
+		zq_base_type* sx = (zq_base_type*)malloc(sizeof(zq_base_type)*(out_W));
 		float src_H = in_rect_height;
 		float src_W = in_rect_width;
 		float w_step = 1.0f / (zq_base_type)out_W*src_W;
@@ -759,6 +781,14 @@ extern "C" {
 		zq_base_type* out_slice_ptr, *out_row_ptr, *out_pix_ptr;
 		int n, h, w, c, cur_x0, cur_x1;
 		float cur_sx, v00, dx0, result0, v10, dx1, result1, dy, sum;
+
+		if (x0 == NULL || x1 == NULL || sx == NULL)
+		{
+			free(x0);
+			free(x1);
+			free(sx);
+			return;
+		}
 
 		/*********** compute the map and weight begin ************/
 		// coord_x
@@ -859,6 +889,14 @@ extern "C" {
 		zq_base_type* out_slice_ptr, *out_row_ptr, *out_pix_ptr;
 		int n, h, w, c, cur_x0, cur_x1;
 		zq_base_type cur_sx, v00, dx0, result0, v10, dx1, result1, dy, sum;
+
+		if (x0 == NULL || x1 == NULL || sx == NULL)
+		{
+			free(x0);
+			free(x1);
+			free(sx);
+			return;
+		}
 
 		/*********** compute the map and weight begin ************/
 		// coord_x

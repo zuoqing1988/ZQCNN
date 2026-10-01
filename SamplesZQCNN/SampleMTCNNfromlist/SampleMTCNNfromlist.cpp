@@ -131,8 +131,19 @@ int main(int argc, const char** argv)
 		fgets(buf, 512, in);
 		if (buf[0] == '\0')
 			break;
-		sscanf(buf, "%s", filename);
-		sprintf(buf, "%s\\%s", argv[3], filename);
+		if (sscanf(buf, "%511s", filename) != 1)
+			continue;
+		if (strlen(argv[3]) + strlen(filename) + 2 > sizeof(buf))
+		{
+			printf("skip too long path: %s\\%s\n", argv[3], filename);
+			fprintf(out, "%s 0\n", filename);
+			continue;
+		}
+#if defined(_WIN32)
+		sprintf_s(buf, sizeof(buf), "%s\\%s", argv[3], filename);
+#else
+		snprintf(buf, sizeof(buf), "%s\\%s", argv[3], filename);
+#endif
 		im_id++;
 		if (im_id % 100 == 0)
 		{
@@ -188,7 +199,7 @@ int main(int argc, const char** argv)
 		}
 
 		fprintf(out, "%s", filename);
-		fprintf(out, " %d", thirdBbox.size());
+		fprintf(out, " %d", (int)thirdBbox.size());
 		for (int j = 0; j < thirdBbox.size(); j++)
 		{
 			ZQ_CNN_BBox& cur_box = thirdBbox[j];

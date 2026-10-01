@@ -23,17 +23,37 @@ int main(int argc, const char* argv[]) {
         return 0;
     }
     std::shared_ptr<Interpreter> net(Interpreter::createFromFile(argv[1]));
+    if (nullptr == net) {
+        MNN_ERROR("failed to load model %s\n", argv[1]);
+        return 0;
+    }
     ScheduleConfig config;
     config.type  = MNN_FORWARD_AUTO;
     auto session = net->createSession(config);
+    if (nullptr == session) {
+        MNN_ERROR("failed to create session\n");
+        return 0;
+    }
 
     auto input = net->getSessionInput(session, NULL);
+    if (nullptr == input) {
+        MNN_ERROR("failed to get session input\n");
+        return 0;
+    }
     auto shape = input->shape();
+    if (shape.empty()) {
+        MNN_ERROR("invalid input shape\n");
+        return 0;
+    }
     shape[0]   = 1;
     net->resizeTensor(input, shape);
     net->resizeSession(session);
     auto output = net->getSessionOutput(session, "cls_prob");
     auto output2 = net->getSessionOutput(session, NULL);
+    if (nullptr == output || nullptr == output2) {
+        MNN_ERROR("failed to get session output\n");
+        return 0;
+    }
     std::vector<std::string> words;
     if (argc >= 4) {
         std::ifstream inputOs(argv[3]);
@@ -138,7 +158,11 @@ int main(int argc, const char* argv[]) {
             }
         } else {
             for (int i = 0; i < length; ++i) {
-                MNN_PRINT("%s: %f\n", words[tempValues[i].first].c_str(), tempValues[i].second);
+                if (tempValues[i].first < (int)words.size()) {
+                    MNN_PRINT("%s: %f\n", words[tempValues[i].first].c_str(), tempValues[i].second);
+                } else {
+                    MNN_PRINT("%d, %f\n", tempValues[i].first, tempValues[i].second);
+                }
             }
         }
         int length2 = size2;//

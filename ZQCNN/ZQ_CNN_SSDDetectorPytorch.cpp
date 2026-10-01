@@ -255,6 +255,28 @@ bool ZQ_CNN_SSDDetectorPytorch::_detect(ZQ_CNN_Tensor4D& input, std::vector<ZQ_C
 	int loc_H = loc->GetH();
 	int loc_W = loc->GetW();
 	int loc_C = loc->GetC();
+	// The loc blob is read as flat NCHW data and indexed with the same N as the cls blob
+	// (see _post_process / _detection below), so a loc blob that is smaller than 4*N
+	// would be read out of bounds. Validate the shapes before copying anything.
+	if (cls_H <= 0 || cls_W <= 0 || cls_C <= 0
+		|| loc_H <= 0 || loc_W <= 0 || loc_C <= 0
+		|| (long long)cls_H * cls_W * cls_C > 0x7fffffffLL
+		|| (long long)loc_H * loc_W * loc_C > 0x7fffffffLL)
+	{
+		if (show_debug_info)
+		{
+			printf("invalid cls/loc blob shape\n");
+		}
+		return false;
+	}
+	if (loc_H * loc_W * loc_C < cls_C * 4)
+	{
+		if (show_debug_info)
+		{
+			printf("loc blob (%d x %d x %d) is too small for %d locations\n", loc_H, loc_W, loc_C, cls_C);
+		}
+		return false;
+	}
 	std::vector<float> cls_data(cls_H*cls_W*cls_C), loc_data(loc_H*loc_W*loc_C);
 	cls->ConvertToCompactNCHW(cls_data.data());
 	loc->ConvertToCompactNCHW(loc_data.data());
@@ -561,6 +583,19 @@ bool ZQ_CNN_SSDDetectorPytorch::_load_cfg_from_file_or_buffer(std::fstream& fin,
 
 	specs.resize(valid_spec_num);
 	int aspect_ratio_num = aspect_ratios.size();
+	// spec_vals[i].aspect_ratios is a fixed-size array (see ZQ_CNN_SSDDetectorUtils::SSDSpec),
+	// so the ratio count coming from the untrusted cfg file must be bounded before copying.
+	if (aspect_ratio_num < 0
+		|| aspect_ratio_num > (int)(sizeof(ZQ_CNN_SSDDetectorUtils::SSDSpec::aspect_ratios) / sizeof(float)))
+	{
+		if (show_debug_info)
+		{
+			printf("too many aspect_ratios (%d), the maximum allowed is %d\n", aspect_ratio_num,
+				(int)(sizeof(ZQ_CNN_SSDDetectorUtils::SSDSpec::aspect_ratios) / sizeof(float)));
+		}
+		specs.clear();
+		return false;
+	}
 	for (int i = 0; i < valid_spec_num; i++)
 	{
 		spec_vals[i].aspect_ratio_num = aspect_ratio_num;

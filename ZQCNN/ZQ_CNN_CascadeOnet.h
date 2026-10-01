@@ -1,4 +1,4 @@
-﻿#ifndef _ZQ_CNN_CASCADE_ONET_H_
+#ifndef _ZQ_CNN_CASCADE_ONET_H_
 #define _ZQ_CNN_CASCADE_ONET_H_
 #pragma once
 #include "ZQ_CNN_Net.h"
@@ -147,6 +147,16 @@ namespace ZQ
 				if (location == 0)
 				{
 					std::cout << "failed to get blob conv6-2\n";
+					return false;
+				}
+				if (prob->GetC() < 2)
+				{
+					std::cout << "the channel of blob prob1 should be at least 2\n";
+					return false;
+				}
+				if (location->GetC() < 4)
+				{
+					std::cout << "the channel of blob conv6-2 should be at least 4\n";
 					return false;
 				}
 				const float* prob_ptr = prob->GetFirstPixelPtr();

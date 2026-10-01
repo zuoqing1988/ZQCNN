@@ -19,11 +19,15 @@ void zq_cnn_convolution_gemm_nchwc_prepack4_kernel1x1(
 	__int64 need_buffer_size = (__int64)packed_B_step*div4_size * sizeof(zq_base_type);
 	zq_base_type* B_buffer,*dst_ptr;
 	const zq_base_type* src_ptr0, *src_ptr1, *src_ptr2, *src_ptr3;
+	if (N <= 0)
+		return;
 	if (*buffer_len < need_buffer_size)
 	{
 		if(*buffer != 0)
 			_aligned_free(*buffer);
 		*buffer = _aligned_malloc(need_buffer_size,32);
+		if (*buffer == 0)
+			return;
 		*buffer_len = need_buffer_size;
 	}
 	B_buffer = (zq_base_type*)(*buffer);
@@ -97,6 +101,8 @@ void zq_cnn_convolution_gemm_nchwc_prepack8_other_kernel1x1(
 		if (*buffer != 0)
 			_aligned_free(*buffer);
 		*buffer = _aligned_malloc(need_buffer_size, 32);
+		if (*buffer == 0)
+			return;
 		*buffer_len = need_buffer_size;
 	}
 	B_buffer = (zq_base_type*)(*buffer);
@@ -206,11 +212,15 @@ void zq_cnn_convolution_gemm_nchwc_prepack4_kernel3x3_C3C4(
 	zq_base_type* B_buffer, *dst_ptr;
 	const zq_base_type* row_ptr0, *row_ptr1, *row_ptr2, *row_ptr3;
 	const zq_base_type* pix_ptr0, *pix_ptr1, *pix_ptr2, *pix_ptr3;
+	if (N <= 0)
+		return;
 	if (*buffer_len < need_buffer_size)
 	{
 		if (*buffer != 0)
 			_aligned_free(*buffer);
 		*buffer = _aligned_malloc(need_buffer_size, 32);
+		if (*buffer == 0)
+			return;
 		*buffer_len = need_buffer_size;
 	}
 	B_buffer = (zq_base_type*)(*buffer);
@@ -300,6 +310,8 @@ void zq_cnn_convolution_gemm_nchwc_prepack8_other_kernel3x3_C3(
 		if (*buffer != 0)
 			_aligned_free(*buffer);
 		*buffer = _aligned_malloc(need_buffer_size, 32);
+		if (*buffer == 0)
+			return;
 		*buffer_len = need_buffer_size;
 	}
 	B_buffer = (zq_base_type*)(*buffer);

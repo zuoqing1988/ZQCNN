@@ -1,4 +1,4 @@
-﻿void zq_cnn_lstm_TF_32f_align(
+void zq_cnn_lstm_TF_32f_align(
 	const zq_base_type* in_data,
 	int in_N,
 	int in_W,
@@ -205,6 +205,7 @@
 		_aligned_free(cs);
 		_aligned_free(I);
 		_aligned_free(F);
+		_aligned_free(cs_prev);
 		_aligned_free(ci);
 		_aligned_free(co);
 		_aligned_free(o);

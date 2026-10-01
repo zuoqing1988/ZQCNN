@@ -1,4 +1,4 @@
-﻿#include <stdlib.h>
+#include <stdlib.h>
 #include <float.h>
 #include <stdio.h>
 #include "../ZQ_CNN_CompileConfig.h"
@@ -254,6 +254,8 @@ void zq_cnn_maxpooling_nopadding_32f_align0_general(
 	int in_pixelStep_mul_strideW = stride_W*in_alignPixelStep;
 	int out_n, out_h, out_w, out_c, kh, kw, final_kH, final_kW;
 
+	if (stride_H <= 0 || stride_W <= 0)
+		return;
 	if ((in_W - kernel_W) % stride_W == 0 && (in_H - kernel_H) % stride_H == 0)
 	{
 		for (out_n = 0, in_slice_ptr = in_tensor4D_data, out_slice_ptr = out_tensor4D_data;
@@ -404,6 +406,8 @@ void zq_cnn_avgpooling_nopadding_32f_align0_general(
 	int in_pixelStep_mul_strideW = stride_W*in_alignPixelStep;
 	int out_n, out_h, out_w, out_c, kh, kw, final_kH, final_kW;
 	float scale = 1.0f / (kernel_H*kernel_W);
+	if (stride_H <= 0 || stride_W <= 0)
+		return;
 	if ((in_W - kernel_W) % stride_W == 0 && (in_H - kernel_H) % stride_H == 0)
 	{
 		for (out_n = 0, in_slice_ptr = in_tensor4D_data, out_slice_ptr = out_tensor4D_data;
@@ -557,6 +561,8 @@ void zq_cnn_maxpooling_nopadding_16f_align0_general(
 	int in_pixelStep_mul_strideW = stride_W*in_alignPixelStep;
 	int out_n, out_h, out_w, out_c, kh, kw, final_kH, final_kW;
 
+	if (stride_H <= 0 || stride_W <= 0)
+		return;
 	if ((in_W - kernel_W) % stride_W == 0 && (in_H - kernel_H) % stride_H == 0)
 	{
 		for (out_n = 0, in_slice_ptr = in_tensor4D_data, out_slice_ptr = out_tensor4D_data;
@@ -707,6 +713,8 @@ void zq_cnn_avgpooling_nopadding_16f_align0_general(
 	int in_pixelStep_mul_strideW = stride_W*in_alignPixelStep;
 	int out_n, out_h, out_w, out_c, kh, kw, final_kH, final_kW;
 	zq_base_type scale = 1.0f / (kernel_H*kernel_W);
+	if (stride_H <= 0 || stride_W <= 0)
+		return;
 	if ((in_W - kernel_W) % stride_W == 0 && (in_H - kernel_H) % stride_H == 0)
 	{
 		for (out_n = 0, in_slice_ptr = in_tensor4D_data, out_slice_ptr = out_tensor4D_data;

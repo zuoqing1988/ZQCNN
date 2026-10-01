@@ -112,7 +112,7 @@ void zq_cnn_eltwise_sum_nchwc(
 
 			for (tensor_id = 2; tensor_id < in_tensor_num; tensor_id++)
 			{
-				for (n = 0, in_im_ptr = in_tensor4D_data[tensor_id], out_slice_ptr = out_tensor4D_data;
+				for (n = 0, in_im_ptr = in_tensor4D_data[tensor_id], out_im_ptr = out_tensor4D_data;
 					n < N;
 					n++, in_im_ptr += in_imStep[tensor_id], out_im_ptr += out_imStep)
 				{
@@ -140,7 +140,7 @@ void zq_cnn_eltwise_sum_nchwc(
 
 			for (tensor_id = 2; tensor_id < in_tensor_num; tensor_id++)
 			{
-				for (n = 0, in_im_ptr = in_tensor4D_data[tensor_id], out_slice_ptr = out_tensor4D_data;
+				for (n = 0, in_im_ptr = in_tensor4D_data[tensor_id], out_im_ptr = out_tensor4D_data;
 					n < N;
 					n++, in_im_ptr += in_imStep[tensor_id], out_im_ptr += out_imStep)
 				{
@@ -168,7 +168,7 @@ void zq_cnn_eltwise_sum_nchwc(
 
 			for (tensor_id = 2; tensor_id < in_tensor_num; tensor_id++)
 			{
-				for (n = 0, in_im_ptr = in_tensor4D_data[tensor_id], out_slice_ptr = out_tensor4D_data;
+				for (n = 0, in_im_ptr = in_tensor4D_data[tensor_id], out_im_ptr = out_tensor4D_data;
 					n < N;
 					n++, in_im_ptr += in_imStep[tensor_id], out_im_ptr += out_imStep)
 				{
@@ -196,7 +196,7 @@ void zq_cnn_eltwise_sum_nchwc(
 
 			for (tensor_id = 2; tensor_id < in_tensor_num; tensor_id++)
 			{
-				for (n = 0, in_im_ptr = in_tensor4D_data[tensor_id], out_slice_ptr = out_tensor4D_data;
+				for (n = 0, in_im_ptr = in_tensor4D_data[tensor_id], out_im_ptr = out_tensor4D_data;
 					n < N;
 					n++, in_im_ptr += in_imStep[tensor_id], out_im_ptr += out_imStep)
 				{
@@ -224,7 +224,7 @@ void zq_cnn_eltwise_sum_nchwc(
 
 			for (tensor_id = 2; tensor_id < in_tensor_num; tensor_id++)
 			{
-				for (n = 0, in_im_ptr = in_tensor4D_data[tensor_id], out_slice_ptr = out_tensor4D_data;
+				for (n = 0, in_im_ptr = in_tensor4D_data[tensor_id], out_im_ptr = out_tensor4D_data;
 					n < N;
 					n++, in_im_ptr += in_imStep[tensor_id], out_im_ptr += out_imStep)
 				{
@@ -276,7 +276,7 @@ void zq_cnn_eltwise_sum_nchwc(
 			}
 			for (tensor_id = 2; tensor_id < in_tensor_num; tensor_id++)
 			{
-				for (n = 0, in_im_ptr = in_tensor4D_data[tensor_id], out_slice_ptr = out_tensor4D_data;
+				for (n = 0, in_im_ptr = in_tensor4D_data[tensor_id], out_im_ptr = out_tensor4D_data;
 					n < N;
 					n++, in_im_ptr += in_imStep[tensor_id], out_im_ptr += out_imStep)
 				{
@@ -349,7 +349,7 @@ void zq_cnn_eltwise_sum_nchwc(
 			}
 			for (tensor_id = 2; tensor_id < in_tensor_num; tensor_id++)
 			{
-				for (n = 0, in_im_ptr = in_tensor4D_data[tensor_id], out_slice_ptr = out_tensor4D_data;
+				for (n = 0, in_im_ptr = in_tensor4D_data[tensor_id], out_im_ptr = out_tensor4D_data;
 					n < N;
 					n++, in_im_ptr += in_imStep[tensor_id], out_im_ptr += out_imStep)
 				{
@@ -428,7 +428,7 @@ void zq_cnn_eltwise_sum_nchwc(
 			}
 			for (tensor_id = 2; tensor_id < in_tensor_num; tensor_id++)
 			{
-				for (n = 0, in_im_ptr = in_tensor4D_data[tensor_id], out_slice_ptr = out_tensor4D_data;
+				for (n = 0, in_im_ptr = in_tensor4D_data[tensor_id], out_im_ptr = out_tensor4D_data;
 					n < N;
 					n++, in_im_ptr += in_imStep[tensor_id], out_im_ptr += out_imStep)
 				{
@@ -513,7 +513,7 @@ void zq_cnn_eltwise_sum_nchwc(
 			}
 			for (tensor_id = 2; tensor_id < in_tensor_num; tensor_id++)
 			{
-				for (n = 0, in_im_ptr = in_tensor4D_data[tensor_id], out_slice_ptr = out_tensor4D_data;
+				for (n = 0, in_im_ptr = in_tensor4D_data[tensor_id], out_im_ptr = out_tensor4D_data;
 					n < N;
 					n++, in_im_ptr += in_imStep[tensor_id], out_im_ptr += out_imStep)
 				{
@@ -585,7 +585,7 @@ void zq_cnn_eltwise_sum_with_weight_nchwc(
 
 	for (n = 0, in_im_ptr = in_tensor4D_data[0], in1_im_ptr = in_tensor4D_data[1], out_im_ptr = out_tensor4D_data;
 		n < N;
-		n++, in_im_ptr += in_imStep[0], in1_slice_ptr += in_imStep[1], out_slice_ptr += out_imStep)
+		n++, in_im_ptr += in_imStep[0], in1_im_ptr += in_imStep[1], out_im_ptr += out_imStep)
 	{
 		for (c = 0, in_slice_ptr = in_im_ptr, in1_slice_ptr = in1_im_ptr, out_slice_ptr = out_im_ptr;
 			c < C;
@@ -665,7 +665,7 @@ void zq_cnn_eltwise_mul_nchwc(
 	{
 		for (c = 0, in_slice_ptr = in_im_ptr, in1_slice_ptr = in1_im_ptr, out_slice_ptr = out_im_ptr;
 			c < C;
-			c += zq_mm_align_size, in_im_ptr += in_imStep[0], in1_im_ptr += in_imStep[1], out_im_ptr += out_imStep)
+			c += zq_mm_align_size, in_slice_ptr += in_sliceStep[0], in1_slice_ptr += in_sliceStep[1], out_slice_ptr += out_sliceStep)
 		{
 			for (h = 0, in_row_ptr = in_slice_ptr, in1_row_ptr = in1_slice_ptr, out_row_ptr = out_slice_ptr;
 				h < H;

@@ -528,21 +528,36 @@ static bool read_mxnet_param(const char* parampath, std::vector<MXNetParam>& par
 
 	uint64_t header;
 	uint64_t reserved;
-	fread(&header, 1, sizeof(uint64_t), fp);
-	fread(&reserved, 1, sizeof(uint64_t), fp);
+	if (fread(&header, 1, sizeof(uint64_t), fp) != sizeof(uint64_t)
+		|| fread(&reserved, 1, sizeof(uint64_t), fp) != sizeof(uint64_t))
+	{
+		fprintf(stderr, "read %s failed\n", parampath);
+		fclose(fp);
+		return false;
+	}
 
 	// NDArray vec
 
 	// each data
 	uint64_t data_count;
-	fread(&data_count, 1, sizeof(uint64_t), fp);
+	if (fread(&data_count, 1, sizeof(uint64_t), fp) != sizeof(uint64_t))
+	{
+		fprintf(stderr, "read %s failed\n", parampath);
+		fclose(fp);
+		return false;
+	}
 
 	//     fprintf(stderr, "data count = %d\n", (int)data_count);
 
 	for (int i = 0; i < (int)data_count; i++)
 	{
 		uint32_t magic;// 0xF993FAC9
-		fread(&magic, 1, sizeof(uint32_t), fp);
+		if (fread(&magic, 1, sizeof(uint32_t), fp) != sizeof(uint32_t))
+		{
+			fprintf(stderr, "read %s failed\n", parampath);
+			fclose(fp);
+			return false;
+		}
 
 		// shape
 		uint32_t ndim;
@@ -551,29 +566,77 @@ static bool read_mxnet_param(const char* parampath, std::vector<MXNetParam>& par
 		if (magic == 0xF993FAC9)
 		{
 			int32_t stype;
-			fread(&stype, 1, sizeof(int32_t), fp);
+			if (fread(&stype, 1, sizeof(int32_t), fp) != sizeof(int32_t))
+			{
+				fprintf(stderr, "read %s failed\n", parampath);
+				fclose(fp);
+				return false;
+			}
 
-			fread(&ndim, 1, sizeof(uint32_t), fp);
+			if (fread(&ndim, 1, sizeof(uint32_t), fp) != sizeof(uint32_t))
+			{
+				fprintf(stderr, "read %s failed\n", parampath);
+				fclose(fp);
+				return false;
+			}
+			if (ndim > 4)
+			{
+				fprintf(stderr, "invalid ndim %u in %s\n", ndim, parampath);
+				fclose(fp);
+				return false;
+			}
 
 			shape.resize(ndim);
-			fread(&shape[0], 1, ndim * sizeof(int64_t), fp);
+			if (ndim > 0 && fread(&shape[0], 1, ndim * sizeof(int64_t), fp) != ndim * sizeof(int64_t))
+			{
+				fprintf(stderr, "read %s failed\n", parampath);
+				fclose(fp);
+				return false;
+			}
 		}
 		else if (magic == 0xF993FAC8)
 		{
-			fread(&ndim, 1, sizeof(uint32_t), fp);
+			if (fread(&ndim, 1, sizeof(uint32_t), fp) != sizeof(uint32_t))
+			{
+				fprintf(stderr, "read %s failed\n", parampath);
+				fclose(fp);
+				return false;
+			}
+			if (ndim > 4)
+			{
+				fprintf(stderr, "invalid ndim %u in %s\n", ndim, parampath);
+				fclose(fp);
+				return false;
+			}
 
 			shape.resize(ndim);
-			fread(&shape[0], 1, ndim * sizeof(int64_t), fp);
+			if (ndim > 0 && fread(&shape[0], 1, ndim * sizeof(int64_t), fp) != ndim * sizeof(int64_t))
+			{
+				fprintf(stderr, "read %s failed\n", parampath);
+				fclose(fp);
+				return false;
+			}
 		}
 		else
 		{
 			ndim = magic;
+			if (ndim > 4)
+			{
+				fprintf(stderr, "invalid ndim %u in %s\n", ndim, parampath);
+				fclose(fp);
+				return false;
+			}
 
 			shape.resize(ndim);
 
 			std::vector<uint32_t> shape32;
 			shape32.resize(ndim);
-			fread(&shape32[0], 1, ndim * sizeof(uint32_t), fp);
+			if (ndim > 0 && fread(&shape32[0], 1, ndim * sizeof(uint32_t), fp) != ndim * sizeof(uint32_t))
+			{
+				fprintf(stderr, "read %s failed\n", parampath);
+				fclose(fp);
+				return false;
+			}
 
 			for (int j = 0; j<(int)ndim; j++)
 			{
@@ -581,14 +644,34 @@ static bool read_mxnet_param(const char* parampath, std::vector<MXNetParam>& par
 			}
 		}
 
+		for (int j = 0; j<(int)shape.size(); j++)
+		{
+			if (shape[j] < 0)
+			{
+				fprintf(stderr, "invalid shape in %s\n", parampath);
+				fclose(fp);
+				return false;
+			}
+		}
+
 		// context
 		int32_t dev_type;
 		int32_t dev_id;
-		fread(&dev_type, 1, sizeof(int32_t), fp);
-		fread(&dev_id, 1, sizeof(int32_t), fp);
+		if (fread(&dev_type, 1, sizeof(int32_t), fp) != sizeof(int32_t)
+			|| fread(&dev_id, 1, sizeof(int32_t), fp) != sizeof(int32_t))
+		{
+			fprintf(stderr, "read %s failed\n", parampath);
+			fclose(fp);
+			return false;
+		}
 
 		int32_t type_flag;
-		fread(&type_flag, 1, sizeof(int32_t), fp);
+		if (fread(&type_flag, 1, sizeof(int32_t), fp) != sizeof(int32_t))
+		{
+			fprintf(stderr, "read %s failed\n", parampath);
+			fclose(fp);
+			return false;
+		}
 
 		// data
 		size_t len = 0;
@@ -597,10 +680,22 @@ static bool read_mxnet_param(const char* parampath, std::vector<MXNetParam>& par
 		if (shape.size() == 3) len = shape[0] * shape[1] * shape[2];
 		if (shape.size() == 4) len = shape[0] * shape[1] * shape[2] * shape[3];
 
+		if (len > 0x7fffffff)
+		{
+			fprintf(stderr, "invalid param len in %s\n", parampath);
+			fclose(fp);
+			return false;
+		}
+
 		MXNetParam p;
 
 		p.data.resize(len);
-		fread(&p.data[0], 1, len * sizeof(float), fp);
+		if (len > 0 && fread(&p.data[0], 1, len * sizeof(float), fp) != len * sizeof(float))
+		{
+			fprintf(stderr, "read %s failed\n", parampath);
+			fclose(fp);
+			return false;
+		}
 
 		params.push_back(p);
 
@@ -609,19 +704,47 @@ static bool read_mxnet_param(const char* parampath, std::vector<MXNetParam>& par
 
 	// each name
 	uint64_t name_count;
-	fread(&name_count, 1, sizeof(uint64_t), fp);
+	if (fread(&name_count, 1, sizeof(uint64_t), fp) != sizeof(uint64_t))
+	{
+		fprintf(stderr, "read %s failed\n", parampath);
+		fclose(fp);
+		return false;
+	}
+
+	if (name_count > params.size())
+	{
+		fprintf(stderr, "invalid name count %d in %s\n", (int)name_count, parampath);
+		fclose(fp);
+		return false;
+	}
 
 	//     fprintf(stderr, "name count = %d\n", (int)name_count);
 
 	for (int i = 0; i < (int)name_count; i++)
 	{
 		uint64_t len;
-		fread(&len, 1, sizeof(uint64_t), fp);
+		if (fread(&len, 1, sizeof(uint64_t), fp) != sizeof(uint64_t))
+		{
+			fprintf(stderr, "read %s failed\n", parampath);
+			fclose(fp);
+			return false;
+		}
+		if (len > 1024)
+		{
+			fprintf(stderr, "invalid name len %d in %s\n", (int)len, parampath);
+			fclose(fp);
+			return false;
+		}
 
 		MXNetParam& p = params[i];
 
 		p.name.resize(len);
-		fread((char*)p.name.data(), 1, len, fp);
+		if (len > 0 && fread((char*)p.name.data(), 1, len, fp) != len)
+		{
+			fprintf(stderr, "read %s failed\n", parampath);
+			fclose(fp);
+			return false;
+		}
 
 		// cut leading arg:
 		if (memcmp(p.name.c_str(), "arg:", 4) == 0)
@@ -643,6 +766,12 @@ static bool read_mxnet_param(const char* parampath, std::vector<MXNetParam>& par
 
 int main(int argc, char** argv)
 {
+	if (argc < 3)
+	{
+		fprintf(stderr, "Usage: %s [mxnet json] [mxnet param] [zqcnn prototxt] [zqcnn modelbin]\n", argv[0]);
+		return -1;
+	}
+
 	const char* jsonpath = argv[1];
 	const char* parampath = argv[2];
 	const char* zqcnn_prototxt = argc >= 5 ? argv[3] : "ZQCNN.zqparams";
@@ -655,7 +784,18 @@ int main(int argc, char** argv)
 	read_mxnet_param(parampath, params);
 
 	FILE* pp = fopen(zqcnn_prototxt, "w");
+	if (!pp)
+	{
+		fprintf(stderr, "fopen %s failed\n", zqcnn_prototxt);
+		return -1;
+	}
 	FILE* bp = fopen(zqcnn_modelbin, "wb");
+	if (!bp)
+	{
+		fprintf(stderr, "fopen %s failed\n", zqcnn_modelbin);
+		fclose(pp);
+		return -1;
+	}
 
 	// magic
 	//fprintf(pp, "7767517\n");
@@ -718,6 +858,11 @@ int main(int argc, char** argv)
 		for (int j = 0; j<(int)n.inputs.size(); j++)
 		{
 			int input_index = n.inputs[j];
+			if (input_index < 0 || input_index >= (int)nodes.size())
+			{
+				fprintf(stderr, "invalid input index %d of node %s\n", input_index, n.name.c_str());
+				return -1;
+			}
 			if (nodes[input_index].is_weight())
 			{
 				weights.push_back(input_index);
@@ -734,6 +879,12 @@ int main(int argc, char** argv)
 		{
 			int input_index = n.inputs[j];
 			int subinput_index = n.subinputs[j];
+
+			if (input_index < 0 || input_index >= (int)nodes.size())
+			{
+				fprintf(stderr, "invalid input index %d of node %s\n", input_index, n.name.c_str());
+				return -1;
+			}
 
 			std::string input_name = nodes[input_index].name;
 			 //            fprintf(stderr, "input = %s\n", input_name.c_str());
@@ -1136,6 +1287,11 @@ int main(int argc, char** argv)
 		for (int j = 0; j<(int)n.inputs.size(); j++)
 		{
 			int input_index = n.inputs[j];
+			if (input_index < 0 || input_index >= (int)nodes.size())
+			{
+				fprintf(stderr, "invalid input index %d of node %s\n", input_index, n.name.c_str());
+				return -1;
+			}
 			if (nodes[input_index].is_weight())
 			{
 				input_size--;
@@ -1155,6 +1311,11 @@ int main(int argc, char** argv)
 		{
 			int input_index = n.inputs[j];
 			int subinput_index = n.subinputs[j];
+			if (input_index < 0 || input_index >= (int)nodes.size())
+			{
+				fprintf(stderr, "invalid input index %d of node %s\n", input_index, n.name.c_str());
+				return -1;
+			}
 			if (nodes[input_index].is_weight())
 			{
 				continue;

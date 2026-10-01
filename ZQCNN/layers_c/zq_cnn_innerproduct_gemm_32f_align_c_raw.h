@@ -1,4 +1,4 @@
-﻿/*in_pixStep must be equal to filter_pixStep,
+/*in_pixStep must be equal to filter_pixStep,
 and the aligned channels should be set to zero*/
 void zq_cnn_innerproduct_gemm_32f_align_same_pixstep(
 	const zq_base_type* in_tensor4D_data,
@@ -247,7 +247,8 @@ void zq_cnn_innerproduct_gemm_32f_align_same_pixstep_batch(
 	if (buffer == 0)
 	{
 		_aligned_free(matrix_A);
-		_aligned_free(matrix_C);
+		if (need_allocate_tmp_out)
+			_aligned_free(matrix_C);
 	}
 	t5 = omp_get_wtime();
 

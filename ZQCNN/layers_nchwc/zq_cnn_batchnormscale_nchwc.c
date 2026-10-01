@@ -114,7 +114,7 @@ extern "C" {
 #if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_AVX
 
 #define zq_cnn_batchnormscale_mean_var_scale_bias_nchwc zq_cnn_batchnormscale_mean_var_scale_bias_nchwc8
-#define zq_cnn_batchnorm_mean_var_nchwc zq_cnn_batchnorm_32f_mean_var_nchwc8
+#define zq_cnn_batchnorm_mean_var_nchwc zq_cnn_batchnorm_mean_var_nchwc8
 #define zq_cnn_scale_nchwc zq_cnn_scale_nchwc8
 #define zq_cnn_batchnorm_b_a_nchwc zq_cnn_batchnorm_b_a_nchwc8
 #define zq_mm_load_ps _mm256_load_ps

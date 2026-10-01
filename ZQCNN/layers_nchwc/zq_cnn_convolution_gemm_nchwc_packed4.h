@@ -2078,6 +2078,8 @@ void zq_cnn_convolution_gemm_nchwc_packedM6N4_kernel1x1(
 		if(*buffer != 0)
 			_aligned_free(*buffer);
 		*buffer = _aligned_malloc(need_buffer_size,32);
+		if (*buffer == 0)
+			return;
 		*buffer_len = need_buffer_size;
 	}
 	A_buffer = (zq_base_type*)(*buffer);
@@ -2754,6 +2756,8 @@ void zq_cnn_convolution_gemm_nchwc_packedM4N4_kernel1x1(
 		if (*buffer != 0)
 			_aligned_free(*buffer);
 		*buffer = _aligned_malloc(need_buffer_size, 32);
+		if (*buffer == 0)
+			return;
 		*buffer_len = need_buffer_size;
 	}
 	A_buffer = (zq_base_type*)(*buffer);
@@ -3187,6 +3191,8 @@ void zq_cnn_convolution_gemm_nchwc_packedM4N8_other_kernel1x1(
 		if (*buffer != 0)
 			_aligned_free(*buffer);
 		*buffer = _aligned_malloc(need_buffer_size, 32);
+		if (*buffer == 0)
+			return;
 		*buffer_len = need_buffer_size;
 	}
 	A_buffer = (zq_base_type*)(*buffer);
@@ -3795,6 +3801,8 @@ void zq_cnn_convolution_gemm_nchwc_packedM8N8_other_kernel1x1(
 		if (*buffer != 0)
 			_aligned_free(*buffer);
 		*buffer = _aligned_malloc(need_buffer_size, 32);
+		if (*buffer == 0)
+			return;
 		*buffer_len = need_buffer_size;
 	}
 	A_buffer = (zq_base_type*)(*buffer);
@@ -5041,6 +5049,8 @@ void zq_cnn_convolution_gemm_nchwc_packed4_kernel3x3_C3C4(
 		if (*buffer != 0)
 			_aligned_free(*buffer);
 		*buffer = _aligned_malloc(need_buffer_size, 32);
+		if (*buffer == 0)
+			return;
 		*buffer_len = need_buffer_size;
 	}
 	A_buffer = (zq_base_type*)(*buffer);
@@ -5254,6 +5264,8 @@ void zq_cnn_convolution_gemm_nchwc_packedM4N8_other_kernel3x3_C3(
 		if (*buffer != 0)
 			_aligned_free(*buffer);
 		*buffer = _aligned_malloc(need_buffer_size, 32);
+		if (*buffer == 0)
+			return;
 		*buffer_len = need_buffer_size;
 	}
 	A_buffer = (zq_base_type*)(*buffer);
@@ -5602,6 +5614,8 @@ void zq_cnn_convolution_gemm_nchwc_packedM8N8_other_kernel3x3_C3(
 		if (*buffer != 0)
 			_aligned_free(*buffer);
 		*buffer = _aligned_malloc(need_buffer_size, 32);
+		if (*buffer == 0)
+			return;
 		*buffer_len = need_buffer_size;
 	}
 	A_buffer = (zq_base_type*)(*buffer);

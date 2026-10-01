@@ -1,4 +1,4 @@
-﻿#include <stdlib.h>
+#include <stdlib.h>
 #include <math.h>
 #include <malloc.h>
 #include "../ZQ_CNN_CompileConfig.h"
@@ -328,23 +328,7 @@ extern "C" {
 		float* slice_ptr, *row_ptr, *pix_ptr, *c_ptr;
 		if (bias_data != NULL)
 		{
-			for (n = 0, slice_ptr = in_data; n < in_C; n++, slice_ptr += in_sliceStep)
-			{
-				for (h = 0, row_ptr = slice_ptr; h < in_H; h++, row_ptr += in_widthStep)
-				{
-					for (w = 0, pix_ptr = row_ptr; w < in_W; w++, pix_ptr += in_pixStep)
-					{
-						for (c = 0, c_ptr = pix_ptr; c < in_C; c++, c_ptr++)
-						{
-							*c_ptr *= scale_data[c];
-						}
-					}
-				}
-			}
-		}
-		else
-		{
-			for (n = 0, slice_ptr = in_data; n < in_C; n++, slice_ptr += in_sliceStep)
+			for (n = 0, slice_ptr = in_data; n < in_N; n++, slice_ptr += in_sliceStep)
 			{
 				for (h = 0, row_ptr = slice_ptr; h < in_H; h++, row_ptr += in_widthStep)
 				{
@@ -354,6 +338,22 @@ extern "C" {
 						{
 							*c_ptr *= scale_data[c];
 							*c_ptr += bias_data[c];
+						}
+					}
+				}
+			}
+		}
+		else
+		{
+			for (n = 0, slice_ptr = in_data; n < in_N; n++, slice_ptr += in_sliceStep)
+			{
+				for (h = 0, row_ptr = slice_ptr; h < in_H; h++, row_ptr += in_widthStep)
+				{
+					for (w = 0, pix_ptr = row_ptr; w < in_W; w++, pix_ptr += in_pixStep)
+					{
+						for (c = 0, c_ptr = pix_ptr; c < in_C; c++, c_ptr++)
+						{
+							*c_ptr *= scale_data[c];
 						}
 					}
 				}
@@ -492,23 +492,7 @@ extern "C" {
 		zq_base_type* slice_ptr, *row_ptr, *pix_ptr, *c_ptr;
 		if (bias_data != NULL)
 		{
-			for (n = 0, slice_ptr = in_data; n < in_C; n++, slice_ptr += in_sliceStep)
-			{
-				for (h = 0, row_ptr = slice_ptr; h < in_H; h++, row_ptr += in_widthStep)
-				{
-					for (w = 0, pix_ptr = row_ptr; w < in_W; w++, pix_ptr += in_pixStep)
-					{
-						for (c = 0, c_ptr = pix_ptr; c < in_C; c++, c_ptr++)
-						{
-							*c_ptr *= scale_data[c];
-						}
-					}
-				}
-			}
-		}
-		else
-		{
-			for (n = 0, slice_ptr = in_data; n < in_C; n++, slice_ptr += in_sliceStep)
+			for (n = 0, slice_ptr = in_data; n < in_N; n++, slice_ptr += in_sliceStep)
 			{
 				for (h = 0, row_ptr = slice_ptr; h < in_H; h++, row_ptr += in_widthStep)
 				{
@@ -518,6 +502,22 @@ extern "C" {
 						{
 							*c_ptr *= scale_data[c];
 							*c_ptr += bias_data[c];
+						}
+					}
+				}
+			}
+		}
+		else
+		{
+			for (n = 0, slice_ptr = in_data; n < in_N; n++, slice_ptr += in_sliceStep)
+			{
+				for (h = 0, row_ptr = slice_ptr; h < in_H; h++, row_ptr += in_widthStep)
+				{
+					for (w = 0, pix_ptr = row_ptr; w < in_W; w++, pix_ptr += in_pixStep)
+					{
+						for (c = 0, c_ptr = pix_ptr; c < in_C; c++, c_ptr++)
+						{
+							*c_ptr *= scale_data[c];
 						}
 					}
 				}

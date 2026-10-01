@@ -58,6 +58,11 @@ int main()
 	}
 	
 	Mat img = imread("data/4.jpg");
+	if (img.empty())
+	{
+		cout << "failed to load image data/4.jpg\n";
+		return EXIT_FAILURE;
+	}
 	vector<ZQ_CNN_BBox> result_mtcnn;
 	int iters = 1000;
 	double t1 = omp_get_wtime();

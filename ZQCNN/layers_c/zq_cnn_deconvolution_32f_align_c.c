@@ -1,4 +1,4 @@
-﻿#include <stdio.h>
+#include <stdio.h>
 #include <omp.h>
 #include "../ZQ_CNN_CompileConfig.h"
 #if __ARM_NEON
@@ -303,6 +303,9 @@ extern "C" {
 		int out_n, out_h, out_w, out_c, kh, kw, kc;
 		int need_in_h_idx, need_in_w_idx, real_in_h_idx, real_in_w_idx;
 		int begin_kh, end_kh, begin_kw, end_kw;
+
+		if (stride_H <= 0 || stride_W <= 0)
+			return;
 
 		for (out_n = 0, in_slice_ptr = in_tensor4D_data, out_slice_ptr = out_tensor4D_data;
 			out_n < out_N;

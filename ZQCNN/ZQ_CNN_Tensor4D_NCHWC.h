@@ -1,4 +1,4 @@
-﻿#ifndef _ZQ_CNN_TENSOR_4D_NCHWC_H_
+#ifndef _ZQ_CNN_TENSOR_4D_NCHWC_H_
 #define _ZQ_CNN_TENSOR_4D_NCHWC_H_
 #pragma once
 #include "ZQ_CNN_CompileConfig.h"
@@ -508,7 +508,8 @@ namespace ZQ
 			int out_N, out_C, out_H, out_W;
 			if (!Reshape_NCHW_get_size(shape, N, C, H, W, out_N, out_C, out_H, out_W))
 				return false;
-			output.ChangeSize(out_N, out_H, out_W, out_C, 0, 0);
+			if (!output.ChangeSize(out_N, out_H, out_W, out_C, 0, 0))
+				return false;
 			int in_HW = H*W;
 			int in_CHW = C*in_HW;
 			int count = in_CHW*N;

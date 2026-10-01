@@ -1,4 +1,4 @@
-﻿#ifndef _ZQ_CNN_SSD_H_
+#ifndef _ZQ_CNN_SSD_H_
 #define _ZQ_CNN_SSD_H_
 #pragma once
 
@@ -112,6 +112,11 @@ namespace ZQ
 			const float* result_data = ptr->GetFirstPixelPtr();
 			int sliceStep = ptr->GetSliceStep();
 			int N = ptr->GetN();
+			if (sliceStep < 7)
+			{
+				printf("the output blob (%s) has slice step (%d) less than 7\n", out_blob_name.c_str(), sliceStep);
+				return false;
+			}
 			output.clear();
 			float scale_X = width;
 			float scale_Y = height;

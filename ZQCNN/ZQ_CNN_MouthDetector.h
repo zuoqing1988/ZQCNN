@@ -1,4 +1,4 @@
-﻿#ifndef _ZQ_CNN_MOUTH_DETECTOR_H_
+#ifndef _ZQ_CNN_MOUTH_DETECTOR_H_
 #define _ZQ_CNN_MOUTH_DETECTOR_H_
 #pragma once
 
@@ -176,6 +176,8 @@ namespace ZQ
 
 				for (int j = 0; j < result_vec.size(); j++)
 				{
+					if (result_vec[j].label < 0 || result_vec[j].label >= mouth_objnames.size())
+						continue;
 					if (mouth_objnames[result_vec[j].label] == "mouth")
 					{
 						SimpleFaceInfo info;
@@ -451,6 +453,8 @@ namespace ZQ
 
 			for (int i = 0; i < vecs.size(); i++)
 			{
+				if (vecs[i].label < 0)
+					continue;
 				int const offset = vecs[i].label * 123457 % 6;
 				int const color_scale = 150 + (vecs[i].label * 123457) % 100;
 				cv::Scalar color(colors[offset][0], colors[offset][1], colors[offset][2]);

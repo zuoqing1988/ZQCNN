@@ -1,4 +1,4 @@
-﻿#include <stdio.h>
+#include <stdio.h>
 #include <omp.h>
 #include<math.h>
 #include "../ZQ_CNN_CompileConfig.h"
@@ -308,6 +308,20 @@ extern "C" {
 		float* ci = (float*)malloc(hidden_dim * sizeof(float));
 		float* co = (float*)malloc(hidden_dim * sizeof(float));
 		float* o = (float*)malloc(hidden_dim * sizeof(float));
+		if (h == NULL || cell == NULL || cs == NULL || I == NULL || F == NULL
+			|| cs_prev == NULL || ci == NULL || co == NULL || o == NULL)
+		{
+			free(h);
+			free(cell);
+			free(cs);
+			free(I);
+			free(F);
+			free(cs_prev);
+			free(ci);
+			free(co);
+			free(o);
+			return;
+		}
 		for (out_n = 0, in_slice_ptr = in_data, out_slice_ptr = out_data;
 			out_n < in_N;
 			out_n++, in_slice_ptr += in_sliceStep, out_slice_ptr += out_sliceStep)
@@ -394,6 +408,7 @@ extern "C" {
 		free(cs);
 		free(I);
 		free(F);
+		free(cs_prev);
 		free(ci);
 		free(co);
 		free(o);

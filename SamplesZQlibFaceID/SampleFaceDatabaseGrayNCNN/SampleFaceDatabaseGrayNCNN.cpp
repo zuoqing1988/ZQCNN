@@ -3,6 +3,11 @@
 #include "ZQ_FaceRecognizerSphereFaceGrayNCNN.h"
 #include "ZQ_MergeSort.h"
 #include <stdio.h>
+#if defined(_WIN32)
+#include <direct.h>
+#else
+#include <sys/stat.h>
+#endif
 using namespace ZQ;
 
 const int mode_size_112X112 = 0;
@@ -334,11 +339,11 @@ int copy_subset_to_fold(int argc, char** argv)
 	}
 
 	std::ostringstream oss;
-	oss << "@echo off";
-	system(oss.str().c_str());
-	oss.str("");
-	oss << "mkdir " << dst_fold;
-	system(oss.str().c_str());
+#if defined(_WIN32)
+	_mkdir(dst_fold.c_str());
+#else
+	mkdir(dst_fold.c_str(), 0755);
+#endif
 
 	const int BUF_LEN = 1024;
 	char buf[BUF_LEN] = { 0 };
@@ -407,9 +412,11 @@ int copy_subset_to_fold(int argc, char** argv)
 			if (0 != access(dst_person_fold.c_str(), 0))
 #endif
 			{
-				oss.str("");
-				oss << "mkdir " << dst_person_fold;
-				system(oss.str().c_str());
+#if defined(_WIN32)
+				_mkdir(dst_person_fold.c_str());
+#else
+				mkdir(dst_person_fold.c_str(), 0755);
+#endif
 			}
 #if defined(_WIN32)
 			dst_person_fold.append("\\");

@@ -1,9 +1,10 @@
-﻿#ifndef _ZQ_CNN_TENSOR_4D_H_
+#ifndef _ZQ_CNN_TENSOR_4D_H_
 #define _ZQ_CNN_TENSOR_4D_H_
 #pragma once
 #include "ZQ_CNN_CompileConfig.h"
 #include <string.h>
 #include <stdlib.h>
+#include <new>
 #include <vector>
 namespace ZQ
 {
@@ -185,11 +186,13 @@ namespace ZQ
 			return true;
 		}
 
-		virtual void FlipX()
+		virtual bool FlipX()
 		{
 			if (C > 0)
 			{
-				float* buffer = new float[pixelStep];
+				float* buffer = new(std::nothrow) float[pixelStep];
+				if (buffer == 0)
+					return false;
 				for (int n = 0; n < N; n++)
 				{
 					for (int h = 0; h < H; h++)
@@ -205,13 +208,16 @@ namespace ZQ
 				}
 				delete []buffer;
 			}
+			return true;
 		}
 
-		virtual void FlipY()
+		virtual bool FlipY()
 		{
 			if (C > 0)
 			{
-				float* buffer = new float[pixelStep];
+				float* buffer = new(std::nothrow) float[pixelStep];
+				if (buffer == 0)
+					return false;
 				for (int n = 0; n < N; n++)
 				{
 					for (int w = 0; w < W; w++)
@@ -228,6 +234,7 @@ namespace ZQ
 				}
 				delete[]buffer;
 			}
+			return true;
 		}
 
 		virtual bool Tile(ZQ_CNN_Tensor4D& out, int tile_n, int tile_h, int tile_w, int tile_c) const
@@ -239,7 +246,10 @@ namespace ZQ
 			if (out_N <= 0 || out_H <= 0 || out_W <= 0 || out_C <= 0)
 				return false;
 			if (out.N != out_N || out.H != out_H || out.W != out_W || out.C != out_C)
-				out.ChangeSize(out_N, out_H, out_W, out_C, 0, 0);
+			{
+				if (!out.ChangeSize(out_N, out_H, out_W, out_C, 0, 0))
+					return false;
+			}
 			const float* in_slice_ptr, *in_row_ptr, *in_pix_ptr, *in_c_ptr;
 			float* out_slice_ptr, *out_row_ptr, *out_pix_ptr, *out_c_ptr;
 			int n, h, w;
@@ -741,7 +751,8 @@ namespace ZQ
 			int out_N, out_C, out_H, out_W;
 			if (!Reshape_NCHW_get_size(shape, N, C, H, W, out_N, out_C, out_H, out_W))
 				return false;
-			output.ChangeSize(out_N, out_H, out_W, out_C, 0, 0);
+			if (!output.ChangeSize(out_N, out_H, out_W, out_C, 0, 0))
+				return false;
 			int in_HW = H*W;
 			int in_CHW = C*in_HW;
 			int out_HW = out_H*out_W;

@@ -1,4 +1,4 @@
-﻿#ifndef _ZQ_CNN_MTCNN_NCHWC_H_
+#ifndef _ZQ_CNN_MTCNN_NCHWC_H_
 #define _ZQ_CNN_MTCNN_NCHWC_H_
 #pragma once
 #include "ZQ_CNN_Net_NCHWC.h"
@@ -1661,7 +1661,7 @@ namespace ZQ
 					double t32 = omp_get_wtime();
 					const ZQ_CNN_Tensor4D_NCHWC4* keyPoint = lnet[0].GetBlobByName("conv6-3");
 					const float* keyPoint_ptr = keyPoint->GetFirstPixelPtr();
-					int keypoint_num = keyPoint->GetC() / 2;
+					int keypoint_num = __min(106, keyPoint->GetC() / 2);
 					int keyPoint_sliceStep = keyPoint->GetSliceStep();
 					for (int i = 0; i < task_fourthBbox[pp].size(); i++)
 					{
@@ -1693,7 +1693,7 @@ namespace ZQ
 					double t32 = omp_get_wtime();
 					const ZQ_CNN_Tensor4D_NCHWC4* keyPoint = lnet[thread_id].GetBlobByName("conv6-3");
 					const float* keyPoint_ptr = keyPoint->GetFirstPixelPtr();
-					int keypoint_num = keyPoint->GetC() / 2;
+					int keypoint_num = __min(106, keyPoint->GetC() / 2);
 					int keyPoint_sliceStep = keyPoint->GetSliceStep();
 					for (int i = 0; i < task_fourthBbox[pp].size(); i++)
 					{

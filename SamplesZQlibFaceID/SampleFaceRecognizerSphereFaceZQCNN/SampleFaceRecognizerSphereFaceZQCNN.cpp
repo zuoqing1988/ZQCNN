@@ -48,6 +48,11 @@ int main()
 
 	Mat img0 = imread("data/00.jpg");
 	Mat img1 = imread("data/01.jpg");
+	if (img0.empty() || img1.empty())
+	{
+		cout << "failed to load image\n";
+		return EXIT_FAILURE;
+	}
 
 	for (int it = 0; it < 10; it++)
 	{

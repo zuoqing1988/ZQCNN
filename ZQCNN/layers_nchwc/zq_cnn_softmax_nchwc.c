@@ -176,7 +176,7 @@ extern "C" {
 					//compute sum
 
 					sum_val = 0;
-					for (c = 0, slice_ptr = pix_ptr; c < in_C; c++, slice_ptr++)
+					for (c = 0, slice_ptr = pix_ptr; c < in_C; c++, slice_ptr += in_sliceStep)
 					{
 						tmp_val = (float)exp((*slice_ptr) - max_val);
 						sum_val += tmp_val;
@@ -186,7 +186,7 @@ extern "C" {
 
 					//divide
 					sum_val = 1.0f / sum_val;
-					for (c = 0, slice_ptr = pix_ptr; c < in_C; c++, slice_ptr++)
+					for (c = 0, slice_ptr = pix_ptr; c < in_C; c++, slice_ptr += in_sliceStep)
 						*slice_ptr *= sum_val;
 				}
 			}
@@ -212,7 +212,7 @@ extern "C" {
 		float* slice_ptr, *row_ptr, *pix_ptr, *im_ptr;
 		for (n = 0, im_ptr = in_tensor4D_data; n < in_N; n++, im_ptr += in_imStep)
 		{
-			for (c = 0, slice_ptr = im_ptr; c < in_C; c++, slice_ptr++)
+			for (c = 0, slice_ptr = im_ptr; c < in_C; c++, slice_ptr += in_sliceStep)
 			{
 				for (w = 0, pix_ptr = slice_ptr; w < in_W; w++, pix_ptr ++)
 				{
@@ -274,7 +274,7 @@ extern "C" {
 					//compute sum
 
 					sum_val = 0;
-					for (w = 0, pix_ptr = row_ptr; w < in_W; w++, pix_ptr += in_widthStep)
+					for (w = 0, pix_ptr = row_ptr; w < in_W; w++, pix_ptr++)
 					{
 						tmp_val = (float)exp((*pix_ptr) - max_val);
 						sum_val += tmp_val;
@@ -284,7 +284,7 @@ extern "C" {
 
 					//divide
 					sum_val = 1.0f / sum_val;
-					for (w = 0, pix_ptr = row_ptr; w < in_W; w++, pix_ptr += in_widthStep)
+					for (w = 0, pix_ptr = row_ptr; w < in_W; w++, pix_ptr++)
 						*pix_ptr *= sum_val;
 				}
 			}

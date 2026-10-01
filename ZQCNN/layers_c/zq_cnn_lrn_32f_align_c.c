@@ -1,4 +1,4 @@
-﻿#include <stdio.h>
+#include <stdio.h>
 #include <omp.h>
 #include <math.h>
 #include "../ZQ_CNN_CompileConfig.h"
@@ -180,6 +180,13 @@ extern "C" {
 		float* accumulate_buf = (float*)malloc(sizeof(float)*(len+1));
 		float alpha_div_local_size = alpha / (float)local_size;
 
+		if (square_buf == NULL || accumulate_buf == NULL)
+		{
+			free(square_buf);
+			free(accumulate_buf);
+			return;
+		}
+
 		accumulate_buf[0] = 0;
 		for (c = 0; c < pad_size; c++)
 		{
@@ -253,6 +260,13 @@ extern "C" {
 		zq_base_type* square_buf = (zq_base_type*)malloc(sizeof(zq_base_type)*len);
 		zq_base_type* accumulate_buf = (zq_base_type*)malloc(sizeof(zq_base_type)*(len + 1));
 		zq_base_type alpha_div_local_size = alpha / (zq_base_type)local_size;
+
+		if (square_buf == NULL || accumulate_buf == NULL)
+		{
+			free(square_buf);
+			free(accumulate_buf);
+			return;
+		}
 
 		accumulate_buf[0] = 0;
 		for (c = 0; c < pad_size; c++)

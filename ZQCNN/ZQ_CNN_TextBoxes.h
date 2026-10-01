@@ -1,4 +1,4 @@
-﻿#ifndef _ZQ_CNN_TEXT_BOXES_H_
+#ifndef _ZQ_CNN_TEXT_BOXES_H_
 #define _ZQ_CNN_TEXT_BOXES_H_
 #pragma once
 
@@ -120,6 +120,11 @@ namespace ZQ
 				const float* result_data = ptr->GetFirstPixelPtr();
 				int sliceStep = ptr->GetSliceStep();
 				int N = ptr->GetN();
+				if (sliceStep < 7)
+				{
+					printf("the output blob (%s) has slice step (%d) less than 7\n", out_blob_name.c_str(), sliceStep);
+					return false;
+				}
 				output.clear();
 				for (int k = 0; k < N; k++)
 				{

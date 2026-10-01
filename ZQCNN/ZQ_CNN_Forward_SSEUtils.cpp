@@ -1513,7 +1513,7 @@ void ZQ_CNN_Forward_SSEUtils::_depthwise_convolution_nopadding(int align_mode, c
 					zq_cnn_depthwise_conv_no_padding_32f_align128bit_kernel2x2_Cdiv32(in_data, in_N, in_H, in_W, in_C, in_pixStep, in_widthStep, in_sliceStep,
 						filter_data, filter_N, filter_H, filter_W, filter_C, filter_pixStep, filter_widthStep, filter_sliceStep, strideH, strideW, dilate_H, dilate_W,
 						out_data, out_N, out_H, out_W, out_C, out_pixStep, out_widthStep, out_sliceStep);
-				else if (slope = NULL)
+				else if (slope == NULL)
 					zq_cnn_depthwise_conv_no_padding_32f_align128bit_kernel2x2_Cdiv32_with_bias(in_data, in_N, in_H, in_W, in_C, in_pixStep, in_widthStep, in_sliceStep,
 						filter_data, filter_N, filter_H, filter_W, filter_C, filter_pixStep, filter_widthStep, filter_sliceStep, strideH, strideW, dilate_H, dilate_W,
 						out_data, out_N, out_H, out_W, out_C, out_pixStep, out_widthStep, out_sliceStep, bias);
@@ -4348,6 +4348,42 @@ bool ZQ_CNN_Forward_SSEUtils::_prior_box(const ZQ_CNN_Tensor4D& input, const ZQ_
 		step_height = step_h;
 	}
 
+	// The output tensor is sized from num_priors (which comes from the untrusted
+	// .zqparams file), but the write loop below runs once per min_size / max_size /
+	// aspect_ratio actually present in the parsed vectors. If those disagree the loop
+	// walks past the end of the tensor, so enforce consistency up front.
+	if (num_priors <= 0 || min_sizes.size() == 0)
+	{
+		output.ChangeSize(0, 0, 0, 0, 0, 0);
+		return true;
+	}
+	{
+		const int num_min = (int)min_sizes.size();
+		const int num_max = (int)max_sizes.size();
+		int num_valid_ratios = 0;
+		for (int r = 0; r < (int)aspect_ratios.size(); r++)
+		{
+			if (fabs(aspect_ratios[r] - 1.0f) >= 1e-6f)
+				num_valid_ratios++;
+		}
+		const int priors_per_cell = num_min * (1 + (num_max > 0 ? 1 : 0) + num_valid_ratios);
+		if (num_max > 0 && num_min != num_max)
+		{
+			// min_sizes and max_sizes must be paired 1:1, otherwise the max_size
+			// branch below indexes max_sizes out of range.
+			return false;
+		}
+		if (priors_per_cell != num_priors)
+		{
+			return false;
+		}
+		// Guard the dim computation itself against int overflow.
+		const long long dim64 = (long long)layer_height * (long long)layer_width * (long long)num_priors * 4LL;
+		if (dim64 <= 0 || dim64 > 0x7fffffffLL)
+		{
+			return false;
+		}
+	}
 	int dim = layer_height * layer_width * num_priors * 4;
 	int out_N = data.GetN();
 	int out_C = 2;
@@ -4498,7 +4534,29 @@ bool ZQ_CNN_Forward_SSEUtils::_prior_box_MXNET(const ZQ_CNN_Tensor4D& input,
 		step_height = step_h;
 	}
 
-	int dim = layer_height * layer_width * num_priors;
+	// Same consistency guard as the other prior_box variants. Here the loop writes
+	// num_sizes boxes (ratio = 1) plus (num_ratios - 1) boxes, and sizes[0] is read
+	// unconditionally, so an empty sizes vector must be rejected too.
+	const long long dim64 = (long long)layer_height * (long long)layer_width * (long long)num_priors;
+	if (num_priors <= 0 || sizes.size() == 0)
+	{
+		output.ChangeSize(0, 0, 0, 0, 0, 0);
+		return true;
+	}
+	{
+		const int num_sizes_check = (int)sizes.size();
+		const int num_ratios_check = (int)aspect_ratios.size();
+		const int priors_per_cell = num_sizes_check + (num_ratios_check > 0 ? num_ratios_check - 1 : 0);
+		if (priors_per_cell != num_priors)
+		{
+			return false;
+		}
+		if (dim64 <= 0 || dim64 > 0x7fffffffLL)
+		{
+			return false;
+		}
+	}
+	int dim = (int)dim64;
 	int out_C = 1;
 	int out_H = dim;
 	int out_W = 4;
@@ -4592,6 +4650,39 @@ bool ZQ_CNN_Forward_SSEUtils::_prior_box_text(const ZQ_CNN_Tensor4D& input, cons
 		step_height = step_h;
 	}
 
+	// Same consistency guard as _prior_box: the output is sized from num_priors
+	// (untrusted .zqparams) while the loop below walks min_sizes / max_sizes /
+	// aspect_ratios. This variant emits two boxes per min_size (one at center_y,
+	// one at center_y_offset_1), so the expected count is doubled.
+	if (num_priors <= 0 || min_sizes.size() == 0)
+	{
+		output.ChangeSize(0, 0, 0, 0, 0, 0);
+		return true;
+	}
+	{
+		const int num_min = (int)min_sizes.size();
+		const int num_max = (int)max_sizes.size();
+		int num_valid_ratios = 0;
+		for (int r = 0; r < (int)aspect_ratios.size(); r++)
+		{
+			if (fabs(aspect_ratios[r] - 1.0f) >= 1e-6f)
+				num_valid_ratios++;
+		}
+		const int priors_per_cell = 2 * num_min * (1 + (num_max > 0 ? 1 : 0) + num_valid_ratios);
+		if (num_max > 0 && num_min != num_max)
+		{
+			return false;
+		}
+		if (priors_per_cell != num_priors)
+		{
+			return false;
+		}
+		const long long dim64 = (long long)layer_height * (long long)layer_width * (long long)num_priors * 4LL;
+		if (dim64 <= 0 || dim64 > 0x7fffffffLL)
+		{
+			return false;
+		}
+	}
 	int dim = layer_height * layer_width * num_priors * 4;
 	int out_N = data.GetN();
 	int out_C = 2;
@@ -5118,6 +5209,19 @@ bool ZQ_CNN_Forward_SSEUtils::_detection_output_MXNET(const ZQ_CNN_Tensor4D& loc
 
 	int num_anchors = conf.GetH();
 	int num_classes = conf.GetC();
+	// The per-anchor loop below reads loc_data[i*4 .. i*4+3] and prior_data[i*4 .. i*4+3].
+	// num_anchors comes from the conf blob while the priors come from the prior blob, so
+	// a model whose prior/loc tensors are smaller than num_anchors*4 reads out of bounds.
+	{
+		const long long needed = (long long)num_anchors * 4LL;
+		if (num_anchors <= 0 || num_classes <= 0
+			|| (long long)loc_len < needed || (long long)prior_len < needed
+			|| (long long)conf_len < (long long)num_anchors * num_classes)
+		{
+			printf("loc/prior/conf blob sizes do not match the number of anchors\n");
+			return false;
+		}
+	}
 	int conf_sliceStep = conf.GetSliceStep();
 	int conf_pixStep = conf.GetPixelStep();
 	int loc_sliceStep = loc.GetSliceStep();
