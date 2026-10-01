@@ -92,18 +92,21 @@ ZQA_EPILOGUE MACRO
 
 ;-----------------------------------------------------------------------------
 ; 2 行 x 4 列
-;   rcx = a0, rdx = a1, r8 = b0, r9d = k8
+;   rcx = a0 (第 0 行), rdx = b0, r8d = k8, r9d = s0 = lda*4  (第 1 行 = [r10+rcx])
 ;   [rsp+ZQA_ARG5] = s1 (ldb*4 字节), [rsp+ZQA_ARG6] = s3 (3*ldb*4 字节)
 ;   [rsp+ZQA_ARG7] = c0, [rsp+ZQA_ARG8] = c1
 ;   ymm0-ymm3 : C 第 0 行的 4 列   ymm4-ymm7 : C 第 1 行的 4 列
 ;   ymm8/ymm9 : A 两行             ymm10-13  : Bt 的 4 行
+;   K 循环**没有**做 2 路展开: 每个块 6 次 load + 8 条 FMA, 在 Zen 3 上
+;   8 条 FMA 4 周期、6 次 load 3 周期、19 条 uop 发射 3.2 周期 —— 本来就是
+;   FMA 吞吐瓶颈, 展开只能省下 dec/jnz 那一条, 实测无收益。
 ;-----------------------------------------------------------------------------
 zq_gemm_32f_asm_core_m2n4 PROC
         ZQA_PROLOGUE
-        mov     eax, r9d
+        mov     eax, r8d
         mov     r10, rcx
-        mov     r11, rdx
-        mov     r9, r8
+        mov     ecx, r9d                      ; s0 = lda*4, 顺带清掉 rcx 高 32 位
+        mov     r9, rdx                       ; b0 (必须在取走 r9d 之后再覆盖)
         mov     r8d, DWORD PTR [rsp+ZQA_ARG5]
         mov     edx, DWORD PTR [rsp+ZQA_ARG6]
         vxorps  ymm0, ymm0, ymm0
@@ -118,7 +121,7 @@ zq_gemm_32f_asm_core_m2n4 PROC
         jz      L_m2n4_done
 L_m2n4_loop:
         vmovups ymm8,  [r10]
-        vmovups ymm9,  [r11]
+        vmovups ymm9,  [r10+rcx]
         vmovups ymm10, [r9]
         vmovups ymm11, [r9+r8]
         vmovups ymm12, [r9+r8*2]
@@ -132,57 +135,40 @@ L_m2n4_loop:
         vfmadd231ps ymm6, ymm9, ymm12
         vfmadd231ps ymm7, ymm9, ymm13
         add     r10, 32
-        add     r11, 32
         add     r9, 32
         dec     eax
         jnz     L_m2n4_loop
 L_m2n4_done:
         mov     r9, QWORD PTR [rsp+ZQA_ARG7]
         mov     r10, QWORD PTR [rsp+ZQA_ARG8]
-        vextractf128 xmm14, ymm0, 1
-        vaddps  xmm0, xmm0, xmm14
+        ; 4 个累加器 -> 4 个连续 float: vhaddps 两级树, 比逐累加器
+        ; vextract+vaddps+vhaddps x2 少一半指令, 依赖链也短一半。
+        ; vhaddps 只能配对处理, 所以 (ymm0,ymm1) 一组、(ymm2,ymm3) 一组。
+        vhaddps ymm0, ymm0, ymm1
+        vhaddps ymm2, ymm2, ymm3
+        vextractf128 xmm8, ymm0, 1
+        vaddps  xmm0, xmm0, xmm8
         vhaddps xmm0, xmm0, xmm0
-        vhaddps xmm0, xmm0, xmm0
-        vextractf128 xmm14, ymm1, 1
-        vaddps  xmm1, xmm1, xmm14
-        vhaddps xmm1, xmm1, xmm1
-        vhaddps xmm1, xmm1, xmm1
-        vextractf128 xmm14, ymm2, 1
-        vaddps  xmm2, xmm2, xmm14
+        vextractf128 xmm8, ymm2, 1
+        vaddps  xmm2, xmm2, xmm8
         vhaddps xmm2, xmm2, xmm2
-        vhaddps xmm2, xmm2, xmm2
-        vextractf128 xmm14, ymm3, 1
-        vaddps  xmm3, xmm3, xmm14
-        vhaddps xmm3, xmm3, xmm3
-        vhaddps xmm3, xmm3, xmm3
-        vinsertps xmm0, xmm0, xmm1, 10h
-        vinsertps xmm0, xmm0, xmm2, 20h
-        vinsertps xmm0, xmm0, xmm3, 30h
+        vshufps xmm0, xmm0, xmm2, 44h
         vmovups [r9], xmm0
-        vextractf128 xmm14, ymm4, 1
-        vaddps  xmm4, xmm4, xmm14
+        vhaddps ymm4, ymm4, ymm5
+        vhaddps ymm6, ymm6, ymm7
+        vextractf128 xmm8, ymm4, 1
+        vaddps  xmm4, xmm4, xmm8
         vhaddps xmm4, xmm4, xmm4
-        vhaddps xmm4, xmm4, xmm4
-        vextractf128 xmm14, ymm5, 1
-        vaddps  xmm5, xmm5, xmm14
-        vhaddps xmm5, xmm5, xmm5
-        vhaddps xmm5, xmm5, xmm5
-        vextractf128 xmm14, ymm6, 1
-        vaddps  xmm6, xmm6, xmm14
+        vextractf128 xmm8, ymm6, 1
+        vaddps  xmm6, xmm6, xmm8
         vhaddps xmm6, xmm6, xmm6
-        vhaddps xmm6, xmm6, xmm6
-        vextractf128 xmm14, ymm7, 1
-        vaddps  xmm7, xmm7, xmm14
-        vhaddps xmm7, xmm7, xmm7
-        vhaddps xmm7, xmm7, xmm7
-        vinsertps xmm4, xmm4, xmm5, 10h
-        vinsertps xmm4, xmm4, xmm6, 20h
-        vinsertps xmm4, xmm4, xmm7, 30h
+        vshufps xmm4, xmm4, xmm6, 44h
         vmovups [r10], xmm4
         vzeroupper
         ZQA_EPILOGUE
         ret
 zq_gemm_32f_asm_core_m2n4 ENDP
+
 
 ;-----------------------------------------------------------------------------
 ; 1 行 x 8 列 (B 分两批加载)
@@ -234,47 +220,26 @@ L_m1n8_loop:
         jnz     L_m1n8_loop
 L_m1n8_done:
         lea     r10, [rcx+16]
-        vextractf128 xmm14, ymm0, 1
-        vaddps  xmm0, xmm0, xmm14
+        vhaddps ymm0, ymm0, ymm1
+        vhaddps ymm2, ymm2, ymm3
+        vextractf128 xmm8, ymm0, 1
+        vaddps  xmm0, xmm0, xmm8
         vhaddps xmm0, xmm0, xmm0
-        vhaddps xmm0, xmm0, xmm0
-        vextractf128 xmm14, ymm1, 1
-        vaddps  xmm1, xmm1, xmm14
-        vhaddps xmm1, xmm1, xmm1
-        vhaddps xmm1, xmm1, xmm1
-        vextractf128 xmm14, ymm2, 1
-        vaddps  xmm2, xmm2, xmm14
+        vextractf128 xmm8, ymm2, 1
+        vaddps  xmm2, xmm2, xmm8
         vhaddps xmm2, xmm2, xmm2
-        vhaddps xmm2, xmm2, xmm2
-        vextractf128 xmm14, ymm3, 1
-        vaddps  xmm3, xmm3, xmm14
-        vhaddps xmm3, xmm3, xmm3
-        vhaddps xmm3, xmm3, xmm3
-        vinsertps xmm0, xmm0, xmm1, 10h
-        vinsertps xmm0, xmm0, xmm2, 20h
-        vinsertps xmm0, xmm0, xmm3, 30h
+        vshufps xmm0, xmm0, xmm2, 44h
         vmovups [rcx], xmm0
-        vextractf128 xmm14, ymm4, 1
-        vaddps  xmm4, xmm4, xmm14
+        vhaddps ymm4, ymm4, ymm5
+        vhaddps ymm6, ymm6, ymm7
+        vextractf128 xmm8, ymm4, 1
+        vaddps  xmm4, xmm4, xmm8
         vhaddps xmm4, xmm4, xmm4
-        vhaddps xmm4, xmm4, xmm4
-        vextractf128 xmm14, ymm5, 1
-        vaddps  xmm5, xmm5, xmm14
-        vhaddps xmm5, xmm5, xmm5
-        vhaddps xmm5, xmm5, xmm5
-        vextractf128 xmm14, ymm6, 1
-        vaddps  xmm6, xmm6, xmm14
+        vextractf128 xmm8, ymm6, 1
+        vaddps  xmm6, xmm6, xmm8
         vhaddps xmm6, xmm6, xmm6
-        vhaddps xmm6, xmm6, xmm6
-        vextractf128 xmm14, ymm7, 1
-        vaddps  xmm7, xmm7, xmm14
-        vhaddps xmm7, xmm7, xmm7
-        vhaddps xmm7, xmm7, xmm7
-        vinsertps xmm4, xmm4, xmm5, 10h
-        vinsertps xmm4, xmm4, xmm6, 20h
-        vinsertps xmm4, xmm4, xmm7, 30h
-        vmovups [rcx+16], xmm4        ; c0 + 列 4..7（原来错写成 [r10]，r10 是 A 行指针，
-                                     ; 会把结果写进调用方的 A 缓冲区造成堆破坏）
+        vshufps xmm4, xmm4, xmm6, 44h
+        vmovups [rcx+16], xmm4
         vzeroupper
         ZQA_EPILOGUE
         ret
@@ -316,30 +281,112 @@ L_m1n4_loop:
         dec     eax
         jnz     L_m1n4_loop
 L_m1n4_done:
-        vextractf128 xmm14, ymm0, 1
-        vaddps  xmm0, xmm0, xmm14
+        vhaddps ymm0, ymm0, ymm1
+        vhaddps ymm2, ymm2, ymm3
+        vextractf128 xmm8, ymm0, 1
+        vaddps  xmm0, xmm0, xmm8
         vhaddps xmm0, xmm0, xmm0
-        vhaddps xmm0, xmm0, xmm0
-        vextractf128 xmm14, ymm1, 1
-        vaddps  xmm1, xmm1, xmm14
-        vhaddps xmm1, xmm1, xmm1
-        vhaddps xmm1, xmm1, xmm1
-        vextractf128 xmm14, ymm2, 1
-        vaddps  xmm2, xmm2, xmm14
+        vextractf128 xmm8, ymm2, 1
+        vaddps  xmm2, xmm2, xmm8
         vhaddps xmm2, xmm2, xmm2
-        vhaddps xmm2, xmm2, xmm2
-        vextractf128 xmm14, ymm3, 1
-        vaddps  xmm3, xmm3, xmm14
-        vhaddps xmm3, xmm3, xmm3
-        vhaddps xmm3, xmm3, xmm3
-        vinsertps xmm0, xmm0, xmm1, 10h
-        vinsertps xmm0, xmm0, xmm2, 20h
-        vinsertps xmm0, xmm0, xmm3, 30h
+        vshufps xmm0, xmm0, xmm2, 44h
         vmovups [rcx], xmm0
         vzeroupper
         ZQA_EPILOGUE
         ret
 zq_gemm_32f_asm_core_m1n4 ENDP
+
+;-----------------------------------------------------------------------------
+; 4 行 x 1 列 (N=1 专用) —— 沿 K 方向 ymm 累加, b 向量只加载一次、复用给 4 行 A
+;   rcx = a0 (指向块内第 0 行), rdx = b0, r8d = k8, r9d = s1 = lda*4
+;   [rsp+ZQA_ARG5] = s3 = 3*lda*4
+;   [rsp+ZQA_ARG6] = c0 (指向块内第 0 行)
+;   [rsp+ZQA_ARG7] = ldc4 = ldc*4, [rsp+ZQA_ARG8] = ldc12 = 3*ldc*4
+;   ymm0-ymm3 : 4 行的累加器, ymm8 = b 当前 K 块, ymm9 = A 当前 K 块
+;-----------------------------------------------------------------------------
+zq_gemm_32f_asm_core_m4n1 PROC
+        ZQA_PROLOGUE
+        mov     eax, r8d                      ; k8 (ml64 不允许 64 位目的 <- 32 位源)
+        mov     r11d, r9d                     ; s1 = lda*4, 顺带清掉 r11 高 32 位
+        mov     r9, rdx                       ; b0
+        mov     r10, rcx                      ; a0 = 块内第 0 行
+        mov     edx, DWORD PTR [rsp+ZQA_ARG5] ; s3 = 3*lda*4
+        vxorps  ymm0, ymm0, ymm0
+        vxorps  ymm1, ymm1, ymm1
+        vxorps  ymm2, ymm2, ymm2
+        vxorps  ymm3, ymm3, ymm3
+        test    rax, rax
+        jz      L_m4n1_done
+L_m4n1_loop:
+        vmovups ymm8, [r9]
+        vmovups ymm9, [r10]
+        vfmadd231ps ymm0, ymm9, ymm8
+        vmovups ymm9, [r10+r11]
+        vfmadd231ps ymm1, ymm9, ymm8
+        vmovups ymm9, [r10+r11*2]
+        vfmadd231ps ymm2, ymm9, ymm8
+        vmovups ymm9, [r10+rdx]
+        vfmadd231ps ymm3, ymm9, ymm8
+        add     r10, 32
+        add     r9, 32
+        dec     rax
+        jnz     L_m4n1_loop
+L_m4n1_done:
+        mov     rcx, QWORD PTR [rsp+ZQA_ARG6]
+        mov     r8d, DWORD PTR [rsp+ZQA_ARG7]
+        mov     edx, DWORD PTR [rsp+ZQA_ARG8]
+        ; 4 行各自是独立标量, 归约结果留在 lane 0, 4 条 vmovss 散写
+        vhaddps ymm0, ymm0, ymm1
+        vhaddps ymm2, ymm2, ymm3
+        vextractf128 xmm8, ymm0, 1
+        vaddps  xmm0, xmm0, xmm8
+        vhaddps xmm0, xmm0, xmm0
+        vextractf128 xmm8, ymm2, 1
+        vaddps  xmm2, xmm2, xmm8
+        vhaddps xmm2, xmm2, xmm2
+        ; 4 个结果散写到 4 行, lane 1 用 vshufps 0x55 复制出来
+        vshufps xmm1, xmm0, xmm0, 55h
+        vshufps xmm3, xmm2, xmm2, 55h
+        vmovss  DWORD PTR [rcx],      xmm0
+        vmovss  DWORD PTR [rcx+r8],   xmm1
+        vmovss  DWORD PTR [rcx+r8*2], xmm2
+        vmovss  DWORD PTR [rcx+rdx],  xmm3
+        vzeroupper
+        ZQA_EPILOGUE
+        ret
+zq_gemm_32f_asm_core_m4n1 ENDP
+
+;-----------------------------------------------------------------------------
+; 1 行 x 1 列 (M 尾部 1~3 行 / M<4)
+;   rcx = a0, rdx = b0, r8d = k8, r9 = c0   (4 个参数全走寄存器, 没有栈上传参)
+;-----------------------------------------------------------------------------
+zq_gemm_32f_asm_core_m1n1 PROC
+        ZQA_PROLOGUE
+        mov     eax, r8d                      ; k8
+        mov     r10, rcx                      ; a0
+        mov     rcx, r9                       ; c0
+        mov     r9, rdx                       ; b0
+        vxorps  ymm0, ymm0, ymm0
+        test    rax, rax
+        jz      L_m1n1_done
+L_m1n1_loop:
+        vmovups ymm8, [r9]
+        vmovups ymm9, [r10]
+        vfmadd231ps ymm0, ymm9, ymm8
+        add     r10, 32
+        add     r9, 32
+        dec     rax
+        jnz     L_m1n1_loop
+L_m1n1_done:
+        vextractf128 xmm8, ymm0, 1
+        vaddps  xmm0, xmm0, xmm8
+        vhaddps xmm0, xmm0, xmm0
+        vhaddps xmm0, xmm0, xmm0
+        vmovss  DWORD PTR [rcx], xmm0
+        vzeroupper
+        ZQA_EPILOGUE
+        ret
+zq_gemm_32f_asm_core_m1n1 ENDP
 
 _TEXT ENDS
 END

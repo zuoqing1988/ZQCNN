@@ -28,10 +28,12 @@
  *   所以整个 asm 块里不需要 push/pop, 也不碰 callee-saved 的 GPR。
  *     eax  = K 迭代次数 (K/8)
  *     r10  = A 第 0 行指针  (每次 +32)      循环结束后作废, 复用为写回指针
- *     r11  = A 第 1 行指针  (每次 +32)
+ *     rcx  = lda * 4 (字节)                 A 第 1 行 = [r10+rcx]
  *     r9   = Bt 第 0 行指针 (每次 +32)      循环结束后作废, 复用为写回指针
  *     r8d  = ldb * 4 (字节)                 Bt 相对行偏移
  *     edx  = ldb * 12 (字节) = 3 * ldb * 4
+ *   A 的 2 行: [r10] / [r10+rcx]   (A 两行只差一个固定偏移, 所以行内只推进
+ *   r10 一个指针, 每个 K 块比"两个 A 指针各推进"少一条 add)
  *   Bt 的 4 个行地址: [r9] / [r9+r8] / [r9+r8*2] / [r9+rdx]
  *   (第 3 个用预乘的 3*ldb, 因为 x86 寻址只支持 base+index*scale, 表达不了 r9+r8+rdx)
  *
@@ -50,17 +52,28 @@
  *   ymm0..ymm3 : 4 个累加器, ymm8 = A, ymm9..ymm12 = B
  *   eax = 迭代次数, r10 = A, r9 = Bt, r8d/edx = ldb 偏移, rcx = C
  *
- * 水平归约 (每个累加器):
- *   vextractf128 $1 -> vaddps -> vhaddps x2, 得到 4 个 lane 相同的 xmm,
- *   一次 vmovups 写 4 个 float。写入范围严格落在 n..n+3 <= N-1 内。
+ * 4) M4 x N1  (4 行 x 1 列) —— N=1 专用
+ *
+ *   N=1 时 4 列内核一块都用不上, 整列方向会退化成标量点积; 而 N=1 的
+ *   形状 (例如 1024x1x1024) 恰恰是 GEMM 里最常见的瘦长型之一。这里沿 K
+ *   方向做 ymm 累加, **一个 b 向量只加载一次、复用给 4 行 A**:
+ *     ymm0..ymm3 : 4 行的累加器, ymm8 = b 当前 K 块, ymm9 = A 当前 K 块
+ *     r10 = A 第 0 行 (每次 +32), rcx = lda*4, r11 = 3*lda*4,
+ *     r9 = b (每次 +32), rax = 迭代次数
+ *     A 的 4 行: [r10] / [r10+rcx] / [r10+rcx*2] / [r10+r11]
+ *   每个 K 块 5 次 load + 4 条 FMA (相对 2 条/周期的 FMA 上限约 2.5~3 周期)。
+ *
+ * 5) M1 x N1  (1 行 x 1 列) —— M 尾部 1~3 行 / M<4
+ *
+ * 水平归约: 4 个累加器 -> 4 个连续 float 用 ZQA_RED4 (vhaddps 两级树,
+ *   8 条指令 + 1 条 store, 依赖链 10 周期); 只有 N=1 的单累加器内核还用
+ *   逐累加器的 ZQA_HSUM。写入范围严格落在 n..n+3 <= N-1 内。
  *
  * K 维处理: SIMD 只做 [0, K & ~7), 剩下 1~7 个元素由 C 标量循环补加。
  * 因此不依赖 A/Bt 行尾补零 (intrinsic 版依赖, 两边都能用)。
  *
- * FMA: 由 ZQ_CNN_USE_FMADD256 决定 —— 与 intrinsic 版用同一个宏,
- * 保证 A/B 对比时两边走同一条指令路径:
- *   1 -> vfmadd231ps        0 -> vmulps + vaddps
- * 宏在 C 层分派, 不在 __asm {} 块里写 #if。
+ * FMA: 宏在 C 层分派, 不在 __asm {} 块里写 #if; 判定条件见下面的
+ *   ZQA_HAVE_FMA 注释 (编译器允许发 vfmadd 就发, 与 MASM 侧一致)。
  *
  * GCC 侧输入传递: 全部输入用 "m" 约束。
  *   原因: 固定寄存器的 asm 里, 如果输入用 "r" 约束, 编译器可能把后读的
@@ -117,8 +130,23 @@
 #define ZQA_IMPL 0
 #endif
 
-/* 与 intrinsic 版共用同一个 FMA 开关, 保证 A/B 对比公平 */
-#if defined(ZQ_CNN_USE_FMADD256) && ZQ_CNN_USE_FMADD256
+/* FMA 开关: 编译单元启用了 FMA (gcc/clang 的 -mfma, 即 __FMA__) 就走
+ * vfmadd231ps, 否则退回 vmulps + vaddps。
+ *
+ * 为什么不再只看 ZQ_CNN_USE_FMADD256: 那个宏在 Linux 侧由 ZQ_CNN_USE_SSETYPE
+ * 推导, 而 ZQCNN/ZQ_CNN_CompileConfig.h 的 Linux 分支写死成 AVX (不是 AVX2),
+ * 于是同一个内核在 Linux 上是 vmulps+vaddps (每个 FMA 两条指令, 8 个累加器
+ * 就要 16 条, 内层循环直接慢一倍), 在 Windows 上却是 vfmadd231ps —— 两端
+ * 行为不一致, 也正好解释了为什么 Linux 侧 asm/MKL 系统性低 10~20 个百分点
+ * (MKL 本身就带 FMA)。
+ * 现在改成"编译器允许发 vfmadd 就发", 与 MASM 侧对齐。项目里 Linux 的
+ * CMake 构建 (add_compile_options(-mavx2)) 和 build_check_gemm.sh
+ * (gcc -mavx2 -mfma) 都是 AVX2 及以上, 而 FMA3 与 AVX2 一同随 Haswell 上市,
+ * 不存在"有 AVX2 没 FMA3"的 CPU, 所以不会缩小实际可运行的 CPU 范围;
+ * 真要跑在纯 AVX 的机器上, 不加 -mfma 就自动退回 vmulps+vaddps, 语义不变。
+ * 注意: 这样一来 Linux 上 asm 与 intrinsic 的 A/B 对比里 asm 独占 FMA,
+ * asm/intr 这一列不再代表同一条指令路径 (asm/MKL 才是目标指标)。 */
+#if (defined(ZQ_CNN_USE_FMADD256) && ZQ_CNN_USE_FMADD256) || defined(__FMA__)
 #define ZQA_HAVE_FMA 1
 #else
 #define ZQA_HAVE_FMA 0
@@ -144,12 +172,16 @@
  * ---------------------------------------------------------------------- */
 #define ZQA_NOINLINE __declspec(noinline)
 
-void zq_gemm_32f_asm_core_m2n4(const float* a0, const float* a1, const float* b0,
-	int k8, int s1, int s3, float* c0, float* c1);
+void zq_gemm_32f_asm_core_m2n4(const float* a0, const float* b0,
+	int k8, int s0, int s1, int s3, float* c0, float* c1);
 void zq_gemm_32f_asm_core_m1n8(const float* a0, const float* b0, const float* b4,
 	int k8, int s1, int s3, float* c0);
 void zq_gemm_32f_asm_core_m1n4(const float* a0, const float* b0,
 	int k8, int s1, int s3, float* c0);
+void zq_gemm_32f_asm_core_m4n1(const float* a0, const float* b0,
+	int k8, int s1, int s3, float* c0, int ldc4, int ldc12);
+void zq_gemm_32f_asm_core_m1n1(const float* a0, const float* b0,
+	int k8, float* c0);
 
 
 #else /* ZQA_GNU_X64, AT&T 语法: 函数体内 __asm__ volatile */
@@ -168,9 +200,11 @@ void zq_gemm_32f_asm_core_m1n4(const float* a0, const float* b0,
    报 "invalid 'asm': operand number missing after %-letter"。 */
 #define ZQA_MOV32(d, s)   "movl %[" #s "], %%" #d "\n\t"
 #define ZQA_MOV64(d, s)   "movq %[" #s "], %%" #d "\n\t"
+#define ZQA_MOV32L(d, s)  "movslq %[" #s "], %%" #d "\n\t"
 #define ZQA_XOR(r)        "vxorps %%" #r ", %%" #r ", %%" #r "\n\t"
 #define ZQA_LD(r, m)      "vmovups " m ", %%" #r "\n\t"
 #define ZQA_ST(m, r)      "vmovups %%" #r ", " m "\n\t"   /* AT&T 存储: 寄存器在前 */
+#define ZQA_STSS(m, r)    "vmovss %%" #r ", " m "\n\t"    /* 只写 1 个 float, N=1 用 */
 #define ZQA_LEA(d, m)     "leaq " m ", %%" #d "\n\t"
 #define ZQA_ADD32(d)      "addq $32, %%" #d "\n\t"
 #define ZQA_DECEAX        "decl %%eax\n\t"
@@ -180,13 +214,46 @@ void zq_gemm_32f_asm_core_m1n4(const float* a0, const float* b0,
 #define ZQA_M2(b, i, s)   "(%%" #b ",%%" #i "," #s ")"
 #define ZQA_MI(b, o)      #o "(%%" #b ")"
 #define ZQA_VZ            "vzeroupper\n\t"
+/* 4 个累加器 -> 4 个连续 float 的归约见下面的 ZQA_RED4P / ZQA_RED4 / ZQA_RED4SS。
+   ZQA_HSUM 只剩 N=1 的单累加器内核还在用。 */
 #define ZQA_HSUM(r, rl) \
 	"vextractf128 $1, %%" #r ", %%xmm14\n\t" \
 	"vaddps %%xmm14, %%" #rl ", %%" #rl "\n\t" \
 	"vhaddps %%" #rl ", %%" #rl ", %%" #rl "\n\t" \
 	"vhaddps %%" #rl ", %%" #rl ", %%" #rl "\n\t"
-#define ZQA_INS(d, s, i)  "vinsertps $" #i ", %%" #s ", %%" #d ", %%" #d "\n\t"
-#define ZQA_PACK4(a, b, c, d) ZQA_INS(a, b, 0x10) ZQA_INS(a, c, 0x20) ZQA_INS(a, d, 0x30)
+
+/* ---- 4 个累加器 -> 4 个连续 float 的归约 --------------------------------
+ *
+ * 逐累加器做 (vextractf128 + vaddps + vhaddps x2) 要 4 条指令/累加器, 外加
+ * 3 条 vinsertps 拼包, 一行 4 列就是 19 条, 依赖链 12+9=21 周期。K 很小
+ * (例如 32, k8=4) 时这已经是整个微内核调用里最大的一块固定开销。
+ *
+ * 改用 vhaddps 的 2 级树, 一次处理两个累加器:
+ *   vhaddps ymm_a, ymm_a, ymm_b  ->  低 128 位 = [A,B,C,D], A+B = 第 a 列之和,
+ *                                          C+D = 第 b 列之和; 高 128 位同理
+ *   vextractf128 + vaddps       ->  把 256 的高/低 128 位加起来
+ *   vhaddps xmm, xmm, xmm       ->  [a, b, a, b] (两个标量已在 lane 0/1)
+ *   vshufps 0x44                ->  [a, b, c, d] 可以一次 vmovups 写出
+ * 8 条指令 + 1 条 store, 依赖链 3+3+3+1 = 10 周期。
+ * 注意收尾的立即数是 0x44 (取 SRC1[0],SRC1[1],SRC2[0],SRC2[1]) 而不是
+ * 常见的 0x88 —— 后者取的是 lane 0/2, 而归约后 lane 0 和 lane 2 装的是同一个标量。
+ */
+#define ZQA_RED4P(ya, yb, yc, yd, xa, xc, t) \
+	"vhaddps %%" #yb ", %%" #ya ", %%" #ya "\n\t" \
+	"vhaddps %%" #yd ", %%" #yc ", %%" #yc "\n\t" \
+	"vextractf128 $1, %%" #ya ", %%" #t "\n\t" \
+	"vaddps %%" #t ", %%" #xa ", %%" #xa "\n\t" \
+	"vhaddps %%" #xa ", %%" #xa ", %%" #xa "\n\t" \
+	"vextractf128 $1, %%" #yc ", %%" #t "\n\t" \
+	"vaddps %%" #t ", %%" #xc ", %%" #xc "\n\t" \
+	"vhaddps %%" #xc ", %%" #xc ", %%" #xc "\n\t"
+/* 收尾: a = [n0,n1,n0,n1], c = [n2,n3,n2,n3] -> a = [n0,n1,n2,n3] */
+#define ZQA_RED4(ya, yb, yc, yd, xa, xc, t) ZQA_RED4P(ya, yb, yc, yd, xa, xc, t) \
+	"vshufps $0x44, %%" #xc ", %%" #xa ", %%" #xa "\n\t"
+/* 4 行 x 1 列: 4 个结果要散写, 所以多两条 vshufps 把 lane 1 复制出来 */
+#define ZQA_RED4SS(ya, yb, yc, yd, xa, xb, xc, xd, t) ZQA_RED4P(ya, yb, yc, yd, xa, xc, t) \
+	"vshufps $0x55, %%" #xa ", %%" #xa ", %%" #xb "\n\t" \
+	"vshufps $0x55, %%" #xc ", %%" #xc ", %%" #xd "\n\t"
 
 #if ZQA_HAVE_FMA
 #define ZQA_FMA(d, a, b) "vfmadd231ps %%" #b ", %%" #a ", %%" #d "\n\t"
@@ -198,14 +265,21 @@ void zq_gemm_32f_asm_core_m1n4(const float* a0, const float* b0,
  * 三个微内核的循环体 (MASM 版与内联汇编版共用同一套结构)
  * ====================================================================== */
 
-/* 2 行 x 4 列, 8 个累加器 */
-#define ZQA_BODY_M2N4 \
-	ZQA_LD(ymm8,  ZQA_M0(r10)) \
-	ZQA_LD(ymm9,  ZQA_M0(r11)) \
-	ZQA_LD(ymm10, ZQA_M0(r9)) \
-	ZQA_LD(ymm11, ZQA_M1(r9, r8)) \
-	ZQA_LD(ymm12, ZQA_M2(r9, r8, 2)) \
-	ZQA_LD(ymm13, ZQA_M1(r9, rdx)) \
+/* 2 行 x 4 列, 8 个累加器
+   A 的两行只差一个固定的 lda*4 偏移, 所以只推进 r10 一个指针, 第二行用
+   [r10 + rcx] 取 —— 每个 K 块少一条 add。B 的 4 行同理, 固定偏移 r8/s3。
+   OA/OB 是字节位移, 2 路展开时第二路要带 32。 */
+#define ZQA_STR(x)     #x
+#define ZQA_M0O(b, o)  ZQA_STR(o) "(%%" #b ")"
+#define ZQA_M1O(b, i, o) ZQA_STR(o) "(%%" #b ",%%" #i ",1)"
+#define ZQA_M2O(b, i, s, o) ZQA_STR(o) "(%%" #b ",%%" #i "," #s ")"
+#define ZQA_BODY_M2N4_O(oa, ob) \
+	ZQA_LD(ymm8,  ZQA_M0O(r10, oa)) \
+	ZQA_LD(ymm9,  ZQA_M1O(r10, rcx, oa)) \
+	ZQA_LD(ymm10, ZQA_M0O(r9, ob)) \
+	ZQA_LD(ymm11, ZQA_M1O(r9, r8, ob)) \
+	ZQA_LD(ymm12, ZQA_M2O(r9, r8, 2, ob)) \
+	ZQA_LD(ymm13, ZQA_M1O(r9, rdx, ob)) \
 	ZQA_FMA(ymm0, ymm8, ymm10) \
 	ZQA_FMA(ymm1, ymm8, ymm11) \
 	ZQA_FMA(ymm2, ymm8, ymm12) \
@@ -214,6 +288,19 @@ void zq_gemm_32f_asm_core_m1n4(const float* a0, const float* b0,
 	ZQA_FMA(ymm5, ymm9, ymm11) \
 	ZQA_FMA(ymm6, ymm9, ymm12) \
 	ZQA_FMA(ymm7, ymm9, ymm13)
+#define ZQA_BODY_M2N4 ZQA_BODY_M2N4_O(0, 0)
+/* 注: K 循环**没有**做 2 路展开 (所以只需要 OA=OB=0 这一路)。
+   m2n4 每个 K 块是 6 次 load + 8 条 FMA, 在 Zen 3 上 8 条 FMA 只要 4 个周期
+   (2 条/周期), 而 6 次 load 只要 3 个 (2 次/周期), 18 条 uop 除以 6 宽发射也
+   只要 3 个周期 —— 这一段本来就是 FMA 吞吐瓶颈而不是发射瓶颈, 展开只能省下
+   dec/jnz 那一条。实测确实无收益 (见 m2n4 的 2 路展开版本), 故保持单路。 */
+#define ZQA_KLOOP_L \
+	"0:\n\t" \
+	ZQA_BODY_M2N4 \
+	ZQA_ADD32(r10) ZQA_ADD32(r9) \
+	ZQA_DECEAX \
+	"jnz 0b\n\t" \
+	"1:\n\t"
 
 /* 1 行 x 8 列, B 分两批加载 */
 #define ZQA_BODY_M1N8 \
@@ -247,6 +334,19 @@ void zq_gemm_32f_asm_core_m1n4(const float* a0, const float* b0,
 	ZQA_FMA(ymm2, ymm8, ymm11) \
 	ZQA_FMA(ymm3, ymm8, ymm12)
 
+/* 4 行 x 1 列: b 向量只加载一次, 复用给 4 行 A。
+   r10 = 块内最后一行 A, r11 = lda*4, rdx = 3*lda*4, r9 = b。 */
+#define ZQA_BODY_M4N1 \
+	ZQA_LD(ymm8, ZQA_M0(r9)) \
+	ZQA_LD(ymm9, ZQA_M0(r10)) \
+	ZQA_FMA(ymm0, ymm9, ymm8) \
+	ZQA_LD(ymm9, ZQA_M1(r10, r11)) \
+	ZQA_FMA(ymm1, ymm9, ymm8) \
+	ZQA_LD(ymm9, ZQA_M2(r10, r11, 2)) \
+	ZQA_FMA(ymm2, ymm9, ymm8) \
+	ZQA_LD(ymm9, ZQA_M1(r10, rdx)) \
+	ZQA_FMA(ymm3, ymm9, ymm8)
+
 /* ====================================================================== *
  * 微内核 1: 2 行 x 4 列
  *
@@ -255,40 +355,31 @@ void zq_gemm_32f_asm_core_m1n4(const float* a0, const float* b0,
  * "先覆盖写入再补加 K 尾部" 的行为一致。
  * ====================================================================== */
 
-static ZQA_NOINLINE void zq_gemm_32f_asm_core_m2n4(const float* a0, const float* a1, const float* b0,
-	int k8, int s1, int s3, float* c0, float* c1)
+static ZQA_NOINLINE void zq_gemm_32f_asm_core_m2n4(const float* a0, const float* b0,
+	int k8, int s0, int s1, int s3, float* c0, float* c1)
 {
 	__asm__ volatile (
 		ZQA_MOV32(eax, k8)
 		ZQA_MOV64(r10, a0)
-		ZQA_MOV64(r11, a1)
 		ZQA_MOV64(r9, b0)
+		ZQA_MOV32(ecx, s0)     /* = lda*4, 恒为正, movl 顺带清掉 rcx 高 32 位 */
 		ZQA_MOV32(r8d, s1)
 		ZQA_MOV32(edx, s3)
 		ZQA_XOR(ymm0) ZQA_XOR(ymm1) ZQA_XOR(ymm2) ZQA_XOR(ymm3)
 		ZQA_XOR(ymm4) ZQA_XOR(ymm5) ZQA_XOR(ymm6) ZQA_XOR(ymm7)
 		ZQA_TSTEAX
 		"jz 1f\n\t"
-		"0:\n\t"
-		ZQA_BODY_M2N4
-		ZQA_ADD32(r10)
-		ZQA_ADD32(r11)
-		ZQA_ADD32(r9)
-		ZQA_DECEAX
-		"jnz 0b\n\t"
-		"1:\n\t"
+		ZQA_KLOOP_L
 		ZQA_MOV64(r9, c0)
 		ZQA_MOV64(r10, c1)
-		ZQA_HSUM(ymm0, xmm0) ZQA_HSUM(ymm1, xmm1) ZQA_HSUM(ymm2, xmm2) ZQA_HSUM(ymm3, xmm3)
-		ZQA_PACK4(xmm0, xmm1, xmm2, xmm3)
+		ZQA_RED4(ymm0, ymm1, ymm2, ymm3, xmm0, xmm2, xmm8)
 		ZQA_ST(ZQA_M0(r9), xmm0)
-		ZQA_HSUM(ymm4, xmm4) ZQA_HSUM(ymm5, xmm5) ZQA_HSUM(ymm6, xmm6) ZQA_HSUM(ymm7, xmm7)
-		ZQA_PACK4(xmm4, xmm5, xmm6, xmm7)
+		ZQA_RED4(ymm4, ymm5, ymm6, ymm7, xmm4, xmm6, xmm8)
 		ZQA_ST(ZQA_M0(r10), xmm4)
 		ZQA_VZ
 		:
-		: [k8]"m"(k8), [a0]"m"(a0), [a1]"m"(a1), [b0]"m"(b0),
-		  [s1]"m"(s1), [s3]"m"(s3), [c0]"m"(c0), [c1]"m"(c1)
+		: [k8]"m"(k8), [a0]"m"(a0), [b0]"m"(b0),
+		  [s0]"m"(s0), [s1]"m"(s1), [s3]"m"(s3), [c0]"m"(c0), [c1]"m"(c1)
 		: "cc", "memory", "rax", "rcx", "rdx", "r8", "r9", "r10", "r11",
 		  "xmm0", "xmm1", "xmm2", "xmm3", "xmm4", "xmm5", "xmm6", "xmm7",
 		  "xmm8", "xmm9", "xmm10", "xmm11", "xmm12", "xmm13", "xmm14", "xmm15"
@@ -296,7 +387,26 @@ static ZQA_NOINLINE void zq_gemm_32f_asm_core_m2n4(const float* a0, const float*
 }
 
 /* ====================================================================== *
- * 微内核 2: 1 行 x 8 列
+ * 微内核 2: 4 行 x 4 列 —— M 维"批量"主内核
+ *
+ * 16 个累加器放不下 (还要 4 个 B + 2 个 A, 一共 20 > 16), 所以一次调用里
+ * 跑**两遍** K 循环: 第一遍算第 0、1 行, 第二遍算第 2、3 行, 中间共用同
+ * 一份入参装载和同一次 prologue/epilogue。相比两次 m2n4 调用省下的是:
+ *   - 1 次函数调用 (约 5 条 uop)
+ *   - 1 份入参装载 (6 条)
+ *   - Windows 侧 20 条 xmm6-xmm15 保存/恢复 + 1 条 vzeroupper
+ *   - 代价是第二遍要把被冲掉的 eax/r10/r9 重新装回来 (3~6 条)
+ * 净省 17 条 (Linux) / 40 条 (Windows) uop 每 4 行。K 越小占比越高:
+ * K=32 (k8=4) 时固定开销从 ~34% 降到 ~23%, K=128 时从 ~10% 降到 ~9%。
+ *
+ * 寄存器: rax=k8, r10=A 第 0(第二遍第 2)行的 K 指针, rcx=s0=lda*4,
+ *         r9=B 第 0 行的 K 指针, r8d=s1=ldb*4, edx=s3=3*ldb*4。
+ *         A 的两行 = [r10] / [r10+rcx]; C 的 4 行按 ldc*4 / 2*ldc*4 /
+ *         3*ldc*4 散写 (r9 装 c0, r10 装 ldc*4, edx 装 3*ldc*4)。
+ * ====================================================================== */
+
+/* ====================================================================== *
+ * 微内核 3: 1 行 x 8 列
  * b0 指向 8 列块的第 0 行, b4 指向第 4 行 (两者都随 K 维 +32 推进)
  * ====================================================================== */
 
@@ -324,11 +434,9 @@ static ZQA_NOINLINE void zq_gemm_32f_asm_core_m1n8(const float* a0, const float*
 		"jnz 0b\n\t"
 		"1:\n\t"
 		ZQA_LEA(r10, ZQA_MI(rcx, 16))
-		ZQA_HSUM(ymm0, xmm0) ZQA_HSUM(ymm1, xmm1) ZQA_HSUM(ymm2, xmm2) ZQA_HSUM(ymm3, xmm3)
-		ZQA_PACK4(xmm0, xmm1, xmm2, xmm3)
+		ZQA_RED4(ymm0, ymm1, ymm2, ymm3, xmm0, xmm2, xmm8)
 		ZQA_ST(ZQA_M0(rcx), xmm0)
-		ZQA_HSUM(ymm4, xmm4) ZQA_HSUM(ymm5, xmm5) ZQA_HSUM(ymm6, xmm6) ZQA_HSUM(ymm7, xmm7)
-		ZQA_PACK4(xmm4, xmm5, xmm6, xmm7)
+		ZQA_RED4(ymm4, ymm5, ymm6, ymm7, xmm4, xmm6, xmm8)
 		ZQA_ST(ZQA_M0(r10), xmm4)
 		ZQA_VZ
 		:
@@ -364,13 +472,97 @@ static ZQA_NOINLINE void zq_gemm_32f_asm_core_m1n4(const float* a0, const float*
 		ZQA_DECEAX
 		"jnz 0b\n\t"
 		"1:\n\t"
-		ZQA_HSUM(ymm0, xmm0) ZQA_HSUM(ymm1, xmm1) ZQA_HSUM(ymm2, xmm2) ZQA_HSUM(ymm3, xmm3)
-		ZQA_PACK4(xmm0, xmm1, xmm2, xmm3)
+		ZQA_RED4(ymm0, ymm1, ymm2, ymm3, xmm0, xmm2, xmm8)
 		ZQA_ST(ZQA_M0(rcx), xmm0)
 		ZQA_VZ
 		:
 		: [k8]"m"(k8), [a0]"m"(a0), [b0]"m"(b0),
 		  [s1]"m"(s1), [s3]"m"(s3), [c0]"m"(c0)
+		: "cc", "memory", "rax", "rcx", "rdx", "r8", "r9", "r10", "r11",
+		  "xmm0", "xmm1", "xmm2", "xmm3", "xmm4", "xmm5", "xmm6", "xmm7",
+		  "xmm8", "xmm9", "xmm10", "xmm11", "xmm12", "xmm13", "xmm14", "xmm15"
+	);
+}
+
+/* ====================================================================== *
+ * 微内核 4: 4 行 x 1 列 —— N=1 专用
+ *
+ * N=1 时 M2xN4 那套 4 列内核完全用不上 (N 尾部会退回整列标量), 而
+ * 1x1024x1024 那种"单行"路径反而很快 (146% MKL), 慢的纯粹是"单列"。
+ * 这里沿 K 方向做 ymm 累加, 一个 b 向量只加载一次、复用给 4 行 A:
+ * 每 8 个 K 元素 5 次 load + 4 条 vfmadd231ps, 相对 FMA 上限约 2.5~3 周期。
+ *
+ * a0 指向块内第 0 行, 其余 3 行用 +lda*4 / +2*lda*4 / +3*lda*4 取, 行内推进
+ * 只需要一个寄存器 (r10), 另两个寄存器留给固定偏移。
+ * c0 指向块内第 0 行, 其余 3 行按 ldc*4 / 2*ldc*4 / 3*ldc*4 写。
+ * ====================================================================== */
+
+static ZQA_NOINLINE void zq_gemm_32f_asm_core_m4n1(const float* a0, const float* b0,
+	int k8, int s1, int s3, float* c0, int ldc4, int ldc12)
+{
+	__asm__ volatile (
+		ZQA_MOV32(eax, k8)
+		ZQA_MOV64(r10, a0)
+		ZQA_MOV64(r9, b0)
+		ZQA_MOV32L(r11, s1)
+		ZQA_MOV32(edx, s3)
+		ZQA_XOR(ymm0) ZQA_XOR(ymm1) ZQA_XOR(ymm2) ZQA_XOR(ymm3)
+		ZQA_TSTEAX
+		"jz 1f\n\t"
+		"0:\n\t"
+		ZQA_BODY_M4N1
+		ZQA_ADD32(r10)
+		ZQA_ADD32(r9)
+		ZQA_DECEAX
+		"jnz 0b\n\t"
+		"1:\n\t"
+		ZQA_MOV64(rcx, c0)
+		ZQA_MOV32(r8d, ldc4)
+		ZQA_MOV32(edx, ldc12)
+		ZQA_RED4SS(ymm0, ymm1, ymm2, ymm3, xmm0, xmm1, xmm2, xmm3, xmm8)
+		ZQA_STSS(ZQA_M0(rcx), xmm0)
+		ZQA_STSS(ZQA_M1(rcx, r8), xmm1)
+		ZQA_STSS(ZQA_M2(rcx, r8, 2), xmm2)
+		ZQA_STSS(ZQA_M1(rcx, rdx), xmm3)
+		ZQA_VZ
+		:
+		: [k8]"m"(k8), [a0]"m"(a0), [b0]"m"(b0), [s1]"m"(s1), [s3]"m"(s3),
+		  [c0]"m"(c0), [ldc4]"m"(ldc4), [ldc12]"m"(ldc12)
+		: "cc", "memory", "rax", "rcx", "rdx", "r8", "r9", "r10", "r11",
+		  "xmm0", "xmm1", "xmm2", "xmm3", "xmm4", "xmm5", "xmm6", "xmm7",
+		  "xmm8", "xmm9", "xmm10", "xmm11", "xmm12", "xmm13", "xmm14", "xmm15"
+	);
+}
+
+/* ====================================================================== *
+ * 微内核 5: 1 行 x 1 列 —— M 尾部 1~3 行 / M<4
+ * ====================================================================== */
+
+static ZQA_NOINLINE void zq_gemm_32f_asm_core_m1n1(const float* a0, const float* b0,
+	int k8, float* c0)
+{
+	__asm__ volatile (
+		ZQA_MOV32(eax, k8)
+		ZQA_MOV64(r10, a0)
+		ZQA_MOV64(r9, b0)
+		ZQA_XOR(ymm0)
+		ZQA_TSTEAX
+		"jz 1f\n\t"
+		"0:\n\t"
+		ZQA_LD(ymm8, ZQA_M0(r9))
+		ZQA_LD(ymm9, ZQA_M0(r10))
+		ZQA_FMA(ymm0, ymm9, ymm8)
+		ZQA_ADD32(r10)
+		ZQA_ADD32(r9)
+		ZQA_DECEAX
+		"jnz 0b\n\t"
+		"1:\n\t"
+		ZQA_MOV64(rcx, c0)
+		ZQA_HSUM(ymm0, xmm0)
+		ZQA_STSS(ZQA_M0(rcx), xmm0)
+		ZQA_VZ
+		:
+		: [k8]"m"(k8), [a0]"m"(a0), [b0]"m"(b0), [c0]"m"(c0)
 		: "cc", "memory", "rax", "rcx", "rdx", "r8", "r9", "r10", "r11",
 		  "xmm0", "xmm1", "xmm2", "xmm3", "xmm4", "xmm5", "xmm6", "xmm7",
 		  "xmm8", "xmm9", "xmm10", "xmm11", "xmm12", "xmm13", "xmm14", "xmm15"
@@ -396,6 +588,7 @@ static void FNAME(int M, int N, int K, const float* A, int lda, const float* Bt,
 	int m, n, k, i, j; \
 	int k8 = K >> 3; \
 	int kstart = k8 << 3; \
+	int s0 = lda << 2; \
 	int s1 = ldb << 2; \
 	int s3 = s1 * 3; \
 	const int mb = MB, nb = NB; \
@@ -427,8 +620,8 @@ static void FNAME(int M, int N, int K, const float* A, int lda, const float* Bt,
 				{ \
 					for (j = 0; j < npair; j++) \
 					{ \
-						zq_gemm_32f_asm_core_m2n4(Ab + i * lda, Ab + (i + 1) * lda, \
-							Bb + j * 4 * ldb, k8, s1, s3, \
+						zq_gemm_32f_asm_core_m2n4(Ab + i * lda, Bb + j * 4 * ldb, \
+							k8, s0, s1, s3, \
 							Cc + i * ldc + j * 4, Cc + (i + 1) * ldc + j * 4); \
 					} \
 				} \
@@ -497,6 +690,39 @@ ZQA_DEFINE_KERNEL(zq_gemm_32f_asm_k2n8, 2, 8)
 ZQA_DEFINE_KERNEL(zq_gemm_32f_asm_k4n4, 4, 4)
 ZQA_DEFINE_KERNEL(zq_gemm_32f_asm_k4n8, 4, 8)
 ZQA_DEFINE_KERNEL(zq_gemm_32f_asm_k8n4, 8, 4)
+
+/* ====================================================================== *
+ * N < 4 的专用驱动 (整列方向只剩 1~3 列, 4 列微内核全部用不上)
+ * 一次处理 1 列: M 行沿 K 方向 ymm 累加, K 尾部再由标量补上。
+ * 语义与主驱动一致: 微内核覆盖写入 C, K 尾在其上累加。
+ * ====================================================================== */
+static void zq_gemm_32f_asm_ncol(int M, int K, const float* A, int lda, const float* b0,
+	float* C, int ldc)
+{
+	int m, k;
+	int k8 = K >> 3;
+	int kstart = k8 << 3;
+	int s1 = (int)(lda * 4);
+	int s3 = (int)(lda * 12);
+	int ldc4 = (int)(ldc * 4);
+	int ldc12 = (int)(ldc * 12);
+
+	for (m = 0; m + 4 <= M; m += 4)
+		zq_gemm_32f_asm_core_m4n1(A + (size_t)m * lda, b0, k8, s1, s3,
+			C + (size_t)m * ldc, ldc4, ldc12);
+	for (; m < M; m++)
+		zq_gemm_32f_asm_core_m1n1(A + (size_t)m * lda, b0, k8, C + (size_t)m * ldc);
+
+	for (m = 0; m < M; m++)
+	{
+		const float* a1 = A + (size_t)m * lda;
+		float* c1 = C + (size_t)m * ldc;
+		float sum = *c1;
+		for (k = kstart; k < K; k++)
+			sum += a1[k] * b0[k];
+		*c1 = sum;
+	}
+}
 
 #else /* ZQA_IMPL == 0 : 没有汇编内核时的占位, 保证符号存在 */
 
@@ -579,6 +805,15 @@ void zq_gemm_32f_AnoTrans_Btrans_auto_asm(int M, int N, int K, const float* A, i
 
 	if (M <= 0 || N <= 0)
 		return;
+
+	/* N < 4 时 4 列微内核一块都用不上, 整列方向退化成标量点积 —— 实测
+	   1024x1x1024 只有 MKL 的 12%。这里换 N=1 专用内核 (沿 K 方向 ymm 累加)。 */
+	if (N < 4)
+	{
+		for (m = 0; m < N; m++)
+			zq_gemm_32f_asm_ncol(M, K, A, lda, Bt + (size_t)m * ldb, C + m, ldc);
+		return;
+	}
 
 	/* 每次只让子内核处理它自己那一块 (MB 行), 指针相应下移;
 	   不能传 M - m, 否则第 m 块之后的行会被反复重算。 */
