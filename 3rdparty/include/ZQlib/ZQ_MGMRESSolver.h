@@ -6,6 +6,7 @@
 #include <string.h>
 #include <malloc.h>
 #include <stdio.h>
+#include <iostream>				// cerr 本来眉不能编过
 
 namespace ZQ
 {

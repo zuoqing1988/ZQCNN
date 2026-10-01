@@ -5,6 +5,7 @@
 #include "ZQ_DoubleImage.h"
 #include <stdio.h>
 #include <stdint.h>
+#include <climits>						// INT_MAX 本来眉不能编过
 #include <smmintrin.h>
 #include <tmmintrin.h>
 

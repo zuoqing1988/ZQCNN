@@ -73,7 +73,10 @@ namespace ZQ
 			raw.height = image_height;
 			raw.nLevels = levels;
 
-			ZQ_Wavelet<T>::PaddingMode pad_mod = ZQ_Wavelet<T>::PADDING_ZPD;
+			// ZQ_Wavelet<T> 是依赖类型，其嵌套枚举 PaddingMode 需要 typename。
+			// MSVC 放行、gcc 报 "dependent scope"，于是这个头一直进不了探测器的
+			// OK 列表。全文 4 处（:76/:169/:312/:427）都已补。
+			typename ZQ_Wavelet<T>::PaddingMode pad_mod = ZQ_Wavelet<T>::PADDING_ZPD;
 			ZQ_Wavelet<T> m_wave;
 
 			ZQ_DImage<T> image_each_channel(padding_width,padding_height,1);
@@ -166,7 +169,7 @@ namespace ZQ
 
 			int width = raw.width;
 			int height = raw.height;
-			ZQ_Wavelet<T>::PaddingMode pad_mode = ZQ_Wavelet<T>::PADDING_ZPD;
+			typename ZQ_Wavelet<T>::PaddingMode pad_mode = ZQ_Wavelet<T>::PADDING_ZPD;
 			int levels = raw.nLevels;
 
 			int wave_resolution = 4;
@@ -309,7 +312,7 @@ namespace ZQ
 			raw.depth = image_depth;
 			raw.nLevels = levels;
 
-			ZQ_Wavelet<T>::PaddingMode pad_mod = ZQ_Wavelet<T>::PADDING_ZPD;
+			typename ZQ_Wavelet<T>::PaddingMode pad_mod = ZQ_Wavelet<T>::PADDING_ZPD;
 
 			T* coeffs = new T[padding_width*padding_height*image_depth];
 			int slice_size = padding_width*padding_height;
@@ -424,7 +427,7 @@ namespace ZQ
 			int width = raw.width;
 			int height = raw.height;
 			int depth = raw.depth;
-			ZQ_Wavelet<T>::PaddingMode pad_mode = ZQ_Wavelet<T>::PADDING_ZPD;
+			typename ZQ_Wavelet<T>::PaddingMode pad_mode = ZQ_Wavelet<T>::PADDING_ZPD;
 			int levels = raw.nLevels;
 
 			int wave_resolution = 4;

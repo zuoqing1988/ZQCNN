@@ -44,7 +44,9 @@ namespace ZQ
 
 
 			// copy cols into matC
-			std::map<int,T>::const_iterator rit;
+			// T 是模板参数，std::map<int,T> 是依赖类型，模板两阶段名字查找需要 typename。MSVC 放行、gcc 报 need typename。
+			// 修好之后这 20 个依赖它的头能自由编译。
+			typename std::map<int,T>::const_iterator rit;
 			int rowptrC = 0;
 
 			if (flags & TAUCS_DOUBLE)

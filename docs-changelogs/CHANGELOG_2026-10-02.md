@@ -740,3 +740,64 @@ memcpy(data, other.data, ...);     // a = a 时 other.data 就是刚 free 掉的
 - `tools/probe_zqlib_headers.py`：OK 列表 85 -> **88**
 - `tools/run_zqlib_checks.py`：7/7 PASS
 - `check_line_endings.py` / `check_text_encoding.py` 均 OK
+
+## 新增/变更：修 5 处「自己源码就编不过」的 ZQlib 头 —— 可验证的头 88 -> 103
+
+### 变更文件
+- `3rdparty/include/ZQlib/ZQ_TaucsBase.h`：第 47 行 `std::map<int,T>::const_iterator`
+  补 `typename`
+- `3rdparty/include/ZQlib/ZQ_LazySnapping.h`：补 `#include <ctime>`
+- `3rdparty/include/ZQlib/ZQ_CompressedImageRaw.h`：4 处 `ZQ_Wavelet<T>::PaddingMode`
+  补 `typename`
+- `3rdparty/include/ZQlib/ZQ_MGMRESSolver.h`：补 `#include <iostream>`
+- `3rdparty/include/ZQlib/ZQ_StereoMatching.h`：补 `#include <climits>`
+- `audit_k3_20261001.md`：新增**附录 AG**
+
+### 五处
+
+1. `ZQ_TaucsBase.h:47` `std::map<int,T>::const_iterator rit;` 缺 `typename` ——
+   T 是模板参数，`std::map<int,T>` 是依赖类型，两阶段查找要求写 typename。
+   MSVC 放行、gcc 报 `need 'typename' ... dependent scope`。**这一个修好解锁 13 个头**。
+2. `ZQ_LazySnapping.h` 用了 clock()/clock_t 却没 include <ctime>
+3. `ZQ_CompressedImageRaw.h` 的 `ZQ_Wavelet<T>::PaddingMode` 是依赖类型，
+   4 处（:76/:169/:312/:427）都缺 typename
+4. `ZQ_MGMRESSolver.h` 用了 cerr 却没 include <iostream>
+5. `ZQ_StereoMatching.h` 用了 INT_MAX 却没 include <climits>
+
+全部是「编译期就能发现」的问题：头编不过 → 永远没人 include → 永远没人发现。
+MSVC 对其中三类（缺 typename、模板参数遮蔽）都放行，说明上游多半在 MSVC 上写的，
+而这些头在 MSVC 上也从没被编译过（零 includers）。
+
+### 效果
+
+| | 附录 AF 前 | 现在 |
+|---|---|---|
+| **OK（能独立编译 ⇒ 能验证）** | 81 | **103** |
+| NEEDS_LIB | 6 | 6 |
+| MSVC_ONLY | 1 | 1 |
+| BROKEN | 55 | **33** |
+
+可验证覆盖率从 57% 提到 72%。
+
+### 剩下 33 个 BROKEN 缺什么
+
+- `GL/glew.h`（GLSLShader）
+- `ZQ_ImageIO.h:8` 的 `opencv2\opencv.hpp` —— 注意是**反斜杠**路径（Windows 风格），
+  Linux 下 `\o` 会被当转义序列。本机有 OpenCV，给足 include 路径也许能过
+- `winsock2.h`（7 个 WinSock 系，Windows-only）
+- `ZQ_Calibration.h:1553` 调 `ZQ_Rodrigues_R2r_fun`，实际成员叫 `ZQ_Rodrigues_R2r`
+  —— 本轮没改（要确认调用点的 T 怎么传），记为待办
+
+### 元观察
+
+前十八轮审计主要花在读业务逻辑上，而这一族（编译期就能发现的死代码）验证成本
+几乎为零：一条 `python tools/probe_zqlib_headers.py` 就把 143 个头的可编译性摆成
+一张表，然后「自己源码有错」的那十几个一个一个冒出来，产出密度高得多。
+
+教训可推广：**先花五分钟确认「这个东西到底能不能被自动检查」，再决定要不要投入
+人工精读。**
+
+### 验证
+
+Windows Release 0 error；Linux 0 error；sample 回归 8 个全 rc=0；
+probe OK 列表 88 -> 103；run_zqlib_checks.py 7/7 PASS；两套检查工具均 OK。
