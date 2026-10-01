@@ -1127,3 +1127,59 @@ Linux 上 `ZQ_CNN_USE_SSETYPE` 固定为 AVX(=2)，所以 `ZQ_CNN_USE_FMADD256` 
 4. 现在 Linux 上 `asm/MKL` 低于 60% 的只剩 4 个形状，且全部集中在 K∈[8,32)：
    `1024x1024x16` 49%、`1024x1024x32` 57%、`1024x1x1` 58%、`313x32x28` 25%。
    下一个要攻的就是这一族。
+
+## 新增/变更：小 K 的 6x8 N 方向外积微内核（K∈[8,32] 这一族从 25~57%% 提到 103~115%% of MKL）
+
+### 变更文件
+- `ZQ_GEMM/math/zq_gemm_32f_align_c_asm.c`
+  - 新增 `zq_gemm_32f_asm_core_m6n8`（GCC/Clang 内联汇编，AT&T）
+  - 新增 `zq_gemm_32f_asm_ndir` 驱动：打包 A/B + BLIS 式三段循环 + 尾部落回原路
+  - 新增 `ZQA_BC` 宏；`ZQA_NDIR_MR/NR/PANEL_BYTES/MAX_K`
+  - 分发里在 `K >= 8` 之后加一条 `K <= ZQA_NDIR_MAX_K` 的短路
+- `ZQ_GEMM/math/zq_gemm_32f_align_c_asm_msvc.asm`：对应的 MASM 版本 + 注释
+
+### 为什么需要
+前 5 个微内核都沿 **K** 方向做 ymm 点积：一个 K 块 6 次 load + 8 条 FMA，
+结束时再做一次水平归约（m2n4 是 19 条指令）。K=16 时 K 循环只跑 2 轮，
+19 条归约摊到 8 个输出上就吃掉一半；K=8 时 K 循环一次都不进，归约出来全是 0。
+
+这一族正确的向量化方向是 **N**（C 沿 N 连续）。但 Bt 是 N x K 行主序，
+相邻两列在内存里差 ldb 个 float —— 直接读 `Bt[j*ldb+k]` 的 8 个 float 会拿到
+同一列的 8 个 K 元素，**不崩溃、只是结果全错**。所以必须先打包。
+
+打包后 `ap[k*6+i]` / `bp[k*8+j]` 同一个 k 的 6 个 A 标量和 8 个 B 分量都连续，
+于是每个 k 只要 6 次 `vbroadcastss ymm, m32` + 1 次 `vmovups` 就能喂满 6 条 FMA；
+累加器 ymm0-ymm5 每行一个（装满 8 列），K 循环结束后直接 6 次 32B store 写回 ——
+**完全没有水平归约**。这是它比 m2n4 快的根本原因。
+
+### 实测结果
+`SampleGEMMAsmCompare`（asm 对拍 intrinsic）：
+- Linux：`PASS (0 case(s) failed)`，worst |intr - asm| = 3.8e-06
+- Windows：`PASS (0 case(s) failed)`，worst |intr - asm| = 1.9e-06
+
+`SampleGEMMCompare` 的 asm/MKL：
+- Windows（补完 MASM 之后）：64 形状**中位 98%**，max err 1.5e-05
+  `1024x1024x16` 115%、`1024x1024x32` 103%、`313x32x28` 105%、`2048x2048x8` 328%
+- Linux：64 形状**中位 100%**，max err 7.6e-05
+
+交替 A/B（新旧两个二进制各 5 轮取中位，越过 8% 噪声下限的）：
+`2048x2048x8` 3.04x、`313x32x28` 2.99x、`1024x1024x16` 2.58x、
+`1024x1024x32` 1.83x。其余 51 个形状在噪声内（它们本来就不走这条路径）。
+
+### 踩到的两个坑
+1. **B 面板必须打成一块块 [K][8]，不能打成 [K][ncn]**。后者每个 k 的步长是 ncn
+   而不是 8，微内核里 `Bp + c*8*K` 会指错位置 —— **只有 ncn 恰好等于 8 时两种
+   排布才碰巧一致**，所以 `16x8x32` 通过而 `32x32x32` 误差 9.07。
+   这种「小形状对了、大形状错了」的组合一定要靠多尺寸对拍才能发现。
+2. **MASM 里不能用 rsi / rdi**。它们在 x64 Windows 是 callee-saved；Linux 的
+   System V 下是 caller-saved，所以第一版在 Linux 上跑得好好的、Windows 直接
+   段错误。x64 Windows 只有 rax rcx rdx r8 r9 r10 r11 这 7 个 caller-saved GPR，
+   而这个函数光指针+计数器就占 4 个，塞不下 5 个行偏移 —— 改成**循环里只用
+   4 个（ap/bp/K/c），5 个行偏移全部在循环之后从栈上的第 5 个参数重算**。
+
+### 注意事项
+- `ZQA_NDIR_MAX_K = 32` 是**实测**出来的：K=16/32 打包后明显更快，K=64 已经在
+  噪声内（打包多的一趟读写抵不掉）。想调就用 `tools/bench_two_binaries.py`
+  交替跑两个二进制对一遍，不要只看单次读数。
+- `ZQ_GEMM_ISA=off` 仍然强制回落 intrinsic：新路径在 `#if ZQA_IMPL` 里，
+  ISA 不可用时压根不会被调用。

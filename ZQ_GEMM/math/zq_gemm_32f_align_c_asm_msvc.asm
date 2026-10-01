@@ -10,12 +10,17 @@
 ; 声明并调用; GCC/Clang 那边仍然用函数体内 __asm__ volatile (AT&T)。
 ; 指令序列两边完全一致。
 ;
-; 三个微内核 (与 C 侧的静态内联汇编版一一对应):
+; 六个微内核 (与 C 侧的静态内联汇编版一一对应):
 ;   zq_gemm_32f_asm_core_m2n4 : 2 行 x 4 列, 8 个 ymm 累加器
 ;   zq_gemm_32f_asm_core_m1n8 : 1 行 x 8 列, B 分两批加载
 ;   zq_gemm_32f_asm_core_m1n4 : 1 行 x 4 列
-; 每个微内核只处理 K 维的前 k8*8 个元素 (k8 = K/8), 结果**覆盖写入** C 的 4
+;   zq_gemm_32f_asm_core_m4n1 : 4 行 x 1 列 (N=1 专用)
+;   zq_gemm_32f_asm_core_m1n1 : 1 行 x 1 列
+;   zq_gemm_32f_asm_core_m6n8 : 6 行 x 8 列, 小 K 专用的 N 方向外积内核
+; 前五个只处理 K 维的前 k8*8 个元素 (k8 = K/8), 结果**覆盖写入** C 的 4
 ; (或 8) 个 float, K 尾部由 C 侧用标量累加补上; k8 == 0 时写出全 0。
+; m6n8 不同: 它吃的是**打包过的面板**, 处理完整的 K, 不需要 K 尾部补加,
+; 也不需要水平归约 (见该函数上面的注释)。
 ;
 ; 调用约定 (x64 Windows): 前 4 个整型/指针参数在 rcx/rdx/r8/r9, 其余在栈上
 ; (第 5 个参数在 [rsp+28h], 调用者已预留 32 字节 shadow space)。
@@ -387,6 +392,85 @@ L_m1n1_done:
         ZQA_EPILOGUE
         ret
 zq_gemm_32f_asm_core_m1n1 ENDP
+
+;-----------------------------------------------------------------------------
+; 6 行 x 8 列 —— 小 K 专用, 沿 N 方向做 ymm 累加 (外积式, 无水平归约)
+;   rcx = ap, rdx = bp, r8d = K, r9 = c, [rsp+ZQA_ARG5] = ldc
+;   ap / bp 不是原始的 A / Bt, 而是驱动 zq_gemm_32f_asm_ndir 打包好的面板:
+;       ap[k*6 + i] = A 的第 i 行第 k 个元素      (i = 0..5)
+;       bp[k*8 + j] = Bt 的第 j 列第 k 个元素    (j = 0..7)
+;   每个 k 的 6 个 A 标量与 8 个 B 分量都连续, 所以 6 次 vbroadcastss + 1 次
+;   vmovups 就能喂满 6 条 FMA; 累加器 ymm0-ymm5 每行一个 (装满 8 列), K 循环
+;   结束后直接 6 次 32B store 写回 C —— **完全没有水平归约**。
+;
+;   寄存器: r10 = ap, r11 = bp, rcx = K 计数, r9 = c (全程保留)
+;           循环里只需要这 4 个; 5 个行偏移 ldc*4/8/12/16/20 全部在循环**之后**
+;           从栈上的第 5 个参数重算出来 —— 因为 x64 Windows 只有
+;           rax rcx rdx r8 r9 r10 r11 这 7 个 caller-saved GPR, 而这个函数
+;           光指针+计数器就占掉 4 个, 塞不下 5 个偏移。
+;   ymm0-ymm5 = 6 行累加器, ymm8-ymm13 = 6 个广播, ymm15 = B 向量
+;
+;   !! rsi / rdi / rbx / rbp / r12-r15 在 x64 Windows 是 callee-saved !!
+;   用到就必须 push/pop。用 rsi/rdi 写过一版, Linux(System V 下它们是
+;   caller-saved)跑得好好的, Windows 直接段错误 —— 2026-10-01 实测。
+;
+;   广播必须用**内存源** vbroadcastss: 寄存器源 (movss 进 xmm 再广播) 在
+;   Zen 3 上慢约三个数量级, 见 AGENTS.md「汇编/低层代码规则」第 6 条。
+;-----------------------------------------------------------------------------
+zq_gemm_32f_asm_core_m6n8 PROC
+        ZQA_PROLOGUE
+        mov     r10, rcx                      ; ap
+        mov     r11, rdx                      ; bp
+        mov     ecx, r8d                      ; K (ml64 不允许 64 位目的 <- 32 位源)
+        ; r9 已经是 c, 循环里不用, 保留到出口
+        vxorps  ymm0, ymm0, ymm0
+        vxorps  ymm1, ymm1, ymm1
+        vxorps  ymm2, ymm2, ymm2
+        vxorps  ymm3, ymm3, ymm3
+        vxorps  ymm4, ymm4, ymm4
+        vxorps  ymm5, ymm5, ymm5
+        test    ecx, ecx
+        jz      L_m6n8_done
+L_m6n8_loop:
+        vmovups ymm15, [r11]
+        vbroadcastss ymm8,  DWORD PTR [r10]
+        vbroadcastss ymm9,  DWORD PTR [r10+4]
+        vbroadcastss ymm10, DWORD PTR [r10+8]
+        vbroadcastss ymm11, DWORD PTR [r10+12]
+        vbroadcastss ymm12, DWORD PTR [r10+16]
+        vbroadcastss ymm13, DWORD PTR [r10+20]
+        vfmadd231ps ymm0, ymm8,  ymm15
+        vfmadd231ps ymm1, ymm9,  ymm15
+        vfmadd231ps ymm2, ymm10, ymm15
+        vfmadd231ps ymm3, ymm11, ymm15
+        vfmadd231ps ymm4, ymm12, ymm15
+        vfmadd231ps ymm5, ymm13, ymm15
+        add     r10, 24
+        add     r11, 32
+        dec     ecx
+        jnz     L_m6n8_loop
+L_m6n8_done:
+        mov     eax, DWORD PTR [rsp+ZQA_ARG5] ; ldc
+        mov     edx, eax
+        shl     edx, 2                        ; ldc*4
+        mov     r8d, edx
+        shl     r8d, 1                        ; ldc*8
+        mov     r10d, eax
+        imul    r10d, r10d, 12                ; ldc*12
+        mov     r11d, eax
+        shl     r11d, 4                       ; ldc*16
+        shl     eax, 1
+        imul    ecx, eax, 10                  ; ldc*20 (循环结束后 rcx 空出来了)
+        vmovups [r9], ymm0
+        vmovups [r9+rdx], ymm1
+        vmovups [r9+r8], ymm2
+        vmovups [r9+r10], ymm3
+        vmovups [r9+r11], ymm4
+        vmovups [r9+rcx], ymm5
+        vzeroupper
+        ZQA_EPILOGUE
+        ret
+zq_gemm_32f_asm_core_m6n8 ENDP
 
 _TEXT ENDS
 END

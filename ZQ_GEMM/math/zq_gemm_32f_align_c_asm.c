@@ -241,6 +241,10 @@ void zq_gemm_32f_asm_core_m4n1(const float* a0, const float* b0,
 	int k8, int s1, int s3, float* c0, int ldc4, int ldc12);
 void zq_gemm_32f_asm_core_m1n1(const float* a0, const float* b0,
 	int k8, float* c0);
+/* 6 行 x 8 列, 小 K 专用的 N 方向外积内核 (ap/bp 是驱动打包好的面板,
+   不是原始的 A / Bt —— 见 zq_gemm_32f_asm_ndir) */
+void zq_gemm_32f_asm_core_m6n8(const float* ap, const float* bp,
+	int K, float* c, int ldc);
 
 
 #else /* ZQA_GNU_X64, AT&T 语法: 函数体内 __asm__ volatile */
@@ -263,6 +267,7 @@ void zq_gemm_32f_asm_core_m1n1(const float* a0, const float* b0,
 #define ZQA_XOR(r)        "vxorps %%" #r ", %%" #r ", %%" #r "\n\t"
 #define ZQA_LD(r, m)      "vmovups " m ", %%" #r "\n\t"
 #define ZQA_ST(m, r)      "vmovups %%" #r ", " m "\n\t"   /* AT&T 存储: 寄存器在前 */
+#define ZQA_BC(r, m)      "vbroadcastss " m ", %%" #r "\n\t"  /* 必须是**内存源**, 见 m6n8 */
 #define ZQA_STSS(m, r)    "vmovss %%" #r ", " m "\n\t"    /* 只写 1 个 float, N=1 用 */
 #define ZQA_LEA(d, m)     "leaq " m ", %%" #d "\n\t"
 #define ZQA_ADD32(d)      "addq $32, %%" #d "\n\t"
@@ -628,6 +633,102 @@ static ZQA_NOINLINE void zq_gemm_32f_asm_core_m1n1(const float* a0, const float*
 	);
 }
 
+/* ====================================================================== *
+ * 微内核 6: 6 行 x 8 列 —— 小 K 专用, 沿 N 方向做 ymm 累加（外积式）
+ * ====================================================================== *
+ *
+ * 前 5 个微内核都沿 **K** 方向做 ymm 点积: 一个 K 块 (8 个 float) 一次
+ * vmovups 读进 ymm, 做 8 条 FMA, 最后再做一次水平归约。这个形状在小 K 下
+ * 会被归约吃光:
+ *   m2n4 每个 K 块是 6 次 load + 8 条 FMA + 结束时 19 条归约 + 2 次 store。
+ *   K=16 (k8=2) 时归约占了整个调用的一半以上指令, K=8 时一条 K 循环都不进,
+ *   归约出来全是 0。实测 313x32x28 只有 MKL 的 25%、1024x1024x16 只有 49%。
+ *
+ * 这一族正确的向量化方向是 **N**（C 沿 N 连续, AGENTS.md 里那张布局表）。
+ * 但 Bt 是 N x K 行主序, 相邻两列在内存里差 ldb 个 float 而不是相邻 ——
+ * 直接读 Bt[j*ldb + k] 的 8 个 float 会拿到同一列的 8 个 K 元素, **不崩溃、
+ * 只是结果全错**。所以必须先打包。
+ *
+ * 打包后的布局（都由驱动 zq_gemm_32f_asm_ndir 完成）:
+ *   ap[k*6 + i] = A 的第 i 行、第 k 个元素        (i = 0..5)
+ *   bp[k*8 + j] = Bt 的第 j 列、第 k 个元素      (j = 0..7)
+ * 于是每个 k 的 6 个 A 标量和 8 个 B 分量都是**连续**的:
+ *   6 次 vbroadcastss ymm, m32  +  1 次 vmovups ymm (B)  ->  6 条 FMA
+ * 累加器是 6 个 ymm, 每个装满一行的 8 列; K 循环结束后直接一次 32B store
+ * 写回 C 的那一行 —— **完全没有水平归约**, 这是它比 m2n4 快的根本原因。
+ *
+ * 每 k 的 uop: 6 广播(都是 1 条 load-port uop) + 1 次 B 向量读 = 7 次取数,
+ * 6 条 FMA。Zen 3 上 6 条 FMA 要 3 个周期、7 次 load 要 3.5 个周期 ——
+ * 两边几乎正好平衡, 理论接近 FMA 峰值。
+ *
+ * !! 广播必须用**内存源** vbroadcastss ymm, m32 !!
+ * 寄存器源（movss 进 xmm 再 vbroadcastss ymm, xmm）在本机 Zen 3 上慢约三个
+ * 数量级, 见 AGENTS.md「汇编/低层代码规则」第 6 条。
+ *
+ * 寄存器: rsi = ap, rdx = bp, rdi = c, ecx = K 计数;
+ *         r8/r9/r10/r11/rax = ldc*4/8/12/16/20（C 里第 1..5 行的字节偏移）
+ *         ymm0-ymm5 = 6 行累加器, ymm8-ymm13 = 6 个广播, ymm15 = B 向量
+ *
+ * 入参一律用 "m" 约束 + 自己 mov 到寄存器: gcc 9 不接受 "r8"(x) 这种
+ * 寄存器名约束, 见 AGENTS.md「汇编/低层代码规则」第 4 条。
+ */
+static ZQA_NOINLINE void zq_gemm_32f_asm_core_m6n8(const float* ap, const float* bp,
+	int K, float* c, int ldc)
+{
+	/* C 里第 i 行的字节偏移; x86 地址 scale 只能是 1/2/4/8, 3 倍和 5 倍单独算 */
+	const int ldc1 = ldc << 2, ldc2 = ldc << 3, ldc3 = ldc * 12,
+	          ldc4 = ldc << 4, ldc5 = ldc * 20;
+	__asm__ volatile (
+		ZQA_XOR(ymm0) ZQA_XOR(ymm1) ZQA_XOR(ymm2)
+		ZQA_XOR(ymm3) ZQA_XOR(ymm4) ZQA_XOR(ymm5)
+		ZQA_MOV64(rsi, ap)
+		ZQA_MOV64(rdx, bp)
+		ZQA_MOV64(rdi, c)
+		ZQA_MOV32(r8d, ldc1)
+		ZQA_MOV32(r9d, ldc2)
+		ZQA_MOV32(r10d, ldc3)
+		ZQA_MOV32(r11d, ldc4)
+		ZQA_MOV32(eax, ldc5)
+		ZQA_MOV32(ecx, K)
+		"testl %%ecx, %%ecx\n\t"
+		"jz 2f\n\t"
+		"3:\n\t"
+		ZQA_LD(ymm15, ZQA_M0(rdx))                      /* B: 8 个列标量 */
+		ZQA_BC(ymm8,  "(%%rsi)")
+		ZQA_BC(ymm9,  "4(%%rsi)")
+		ZQA_BC(ymm10, "8(%%rsi)")
+		ZQA_BC(ymm11, "12(%%rsi)")
+		ZQA_BC(ymm12, "16(%%rsi)")
+		ZQA_BC(ymm13, "20(%%rsi)")
+		ZQA_FMA(ymm0, ymm8, ymm15)
+		ZQA_FMA(ymm1, ymm9, ymm15)
+		ZQA_FMA(ymm2, ymm10, ymm15)
+		ZQA_FMA(ymm3, ymm11, ymm15)
+		ZQA_FMA(ymm4, ymm12, ymm15)
+		ZQA_FMA(ymm5, ymm13, ymm15)
+		"addq $24, %%rsi\n\t"
+		"addq $32, %%rdx\n\t"
+		"decl %%ecx\n\t"                                 /* 注意不能用 ZQA_DECEAX */
+		"jnz 3b\n\t"                                     /* eax 存着 ldc5 */
+		"2:\n\t"
+		ZQA_ST(ZQA_M0(rdi), ymm0)
+		ZQA_ST("(%%rdi,%%r8,1)", ymm1)
+		ZQA_ST("(%%rdi,%%r9,1)", ymm2)
+		ZQA_ST("(%%rdi,%%r10,1)", ymm3)
+		ZQA_ST("(%%rdi,%%r11,1)", ymm4)
+		ZQA_ST("(%%rdi,%%rax,1)", ymm5)
+		ZQA_VZ
+		:
+		: [ap]"m"(ap), [bp]"m"(bp), [K]"m"(K), [c]"m"(c),
+		  [ldc1]"m"(ldc1), [ldc2]"m"(ldc2), [ldc3]"m"(ldc3),
+		  [ldc4]"m"(ldc4), [ldc5]"m"(ldc5)
+		: "cc", "memory", "rax", "rcx", "rdx", "rdi", "rsi",
+		  "r8", "r9", "r10", "r11",
+		  "xmm0", "xmm1", "xmm2", "xmm3", "xmm4", "xmm5",
+		  "xmm8", "xmm9", "xmm10", "xmm11", "xmm12", "xmm13", "xmm15"
+	);
+}
+
 #endif /* ZQA_GNU_X64 : GCC/Clang 内联汇编实现结束 */
 
 /* ====================================================================== *
@@ -976,6 +1077,125 @@ static inline void zq_gemm_32f_asm_mblocks(int M, int N, int K, const float* A, 
 	}
 }
 
+/* ====================================================================== *
+ * 小 K 路径: 打包 A / B 后沿 N 方向算 (6x8 外积内核)
+ * ====================================================================== *
+ *
+ * 返回 1 表示这一族形状已经算完; 返回 0 表示不适合 (N/M 太碎或分配失败),
+ * 调用方要继续走原来的 K 方向路径。
+ *
+ * 循环结构照 BLIS 的三段式:
+ *   外层 B 面板 (一次打包 nc 列) -> 中层 A 微面板 (一次打包 mc 行)
+ *   -> 内层 (6 行 x 8 列) 微内核
+ * A 微面板放在中层而不是每次重打包, 是为了让打包开销在 N 上摊开:
+ * 打包代价 ~M*K, 计算量 M*N*K, 只要 nc >= 8 就摊薄到 1/8 以下。
+ *
+ * 尾部 (N 不是 8 的倍数 / M 不是 6 的倍数) 交回 zq_gemm_32f_asm_mblocks,
+ * 它调的是公开的 M*_N*_asm 包装函数, 不会再回到这里, 所以不会递归。
+ *
+ * 面板大小: 一个 B 面板和一个 A 微面板各控制在 256KB 上下 (留在 L2),
+ * 和 N 方向分块用的是同一个量级。
+ */
+#define ZQA_NDIR_MR 6
+#define ZQA_NDIR_NR 8
+#define ZQA_NDIR_PANEL_BYTES (256 * 1024)
+/* 走 N 方向打包路径的 K 上限。实测 (WSL + Ryzen 9 5900HX, asm/MKL):
+     K=16   49% -> 打包后 6x8 内核明显更快
+     K=32   57% -> 同上
+     K=64   已经在噪声内, 打包的多一趟读写抵掉不了多少, 保守留在原路
+   想复现就把这个值调大再跑 tools/bench_two_binaries.py 对一遍。 */
+#define ZQA_NDIR_MAX_K 32
+
+static int zq_gemm_32f_asm_ndir(int M, int N, int K, const float* A, int lda,
+	const float* Bt, int ldb, float* C, int ldc)
+{
+	const int nr = N & ~(ZQA_NDIR_NR - 1);        /* 8 的倍数列数 */
+	const int mr = M - M % ZQA_NDIR_MR;           /* 6 的倍数行数 */
+	long long want;
+	int nc, mc, n0;
+	float* Bp;
+	float* Ap;
+
+	if (nr < ZQA_NDIR_NR || mr < ZQA_NDIR_MR || K <= 0)
+		return 0;
+
+	/* 一个面板装多少个元素: K 很小的时候别切得太碎, 一个 8 列块起步 */
+	want = (long long)ZQA_NDIR_PANEL_BYTES / ((long long)K * 4);
+	nc = (int)(want < ZQA_NDIR_NR ? ZQA_NDIR_NR : (want > nr ? nr : (int)want));
+	nc &= ~(ZQA_NDIR_NR - 1);
+	mc = (int)(want < ZQA_NDIR_MR * ZQA_NDIR_NR ? ZQA_NDIR_MR * ZQA_NDIR_NR
+	                                          : (want > mr ? mr : (int)want));
+	mc -= mc % ZQA_NDIR_MR;
+	if (nc <= 0 || mc <= 0)
+		return 0;
+
+	/* 分配失败就老老实实回落到原路径, 不能让 GEMM 直接不做 */
+	Bp = (float*)malloc(sizeof(float) * (size_t)nc * (size_t)K);
+	Ap = (float*)malloc(sizeof(float) * (size_t)mc * (size_t)K);
+	if (Bp == NULL || Ap == NULL)
+	{
+		free(Bp);
+		free(Ap);
+		return 0;
+	}
+
+	for (n0 = 0; n0 < nr; n0 += nc)
+	{
+		const int ncn = (nr - n0 < nc) ? (nr - n0) : nc;
+		const int nb = ncn / ZQA_NDIR_NR;
+		int m0;
+		/* 打包 B: Bt 是 N x K 行主序, 打包成**一块块 [K][8] 的小面板**。
+		   注意不能打成 [K][ncn] 再按 c*8*K 取块 —— 那样每 k 的步长是 ncn 而不是 8,
+		   微内核里 `Bp + c*8*K` 会指错位置。只有 ncn 恰好等于 8 时两种排布才碰巧一致,
+		   于是 16x8x32 能过、32x32x32 算出 9.07 的误差 (2026-10-01 实测)。 */
+		for (int c = 0; c < nb; c++)
+		{
+			float* p = Bp + (size_t)c * ZQA_NDIR_NR * K;
+			for (int j = 0; j < ZQA_NDIR_NR; j++)
+			{
+				const float* b1 = Bt + (size_t)(n0 + c * ZQA_NDIR_NR + j) * ldb;
+				float* pj = p + j;
+				for (int k = 0; k < K; k++)
+					pj[(size_t)k * ZQA_NDIR_NR] = b1[k];
+			}
+		}
+		for (m0 = 0; m0 < mr; m0 += mc)
+		{
+			const int mcn = (mr - m0 < mc) ? (mr - m0) : mc;
+			const int mb = mcn / ZQA_NDIR_MR;
+			/* 打包 A: [6][K] 的行主序转成 [K][6] */
+			for (int b = 0; b < mb; b++)
+			{
+				const float* a1 = A + (size_t)(m0 + b * ZQA_NDIR_MR) * lda;
+				float* p = Ap + (size_t)b * ZQA_NDIR_MR * K;
+				for (int k = 0; k < K; k++)
+					for (int i = 0; i < ZQA_NDIR_MR; i++)
+						p[(size_t)k * ZQA_NDIR_MR + i] = a1[(size_t)i * lda + k];
+			}
+			for (int b = 0; b < mb; b++)
+				for (int c = 0; c < nb; c++)
+					zq_gemm_32f_asm_core_m6n8(
+						Ap + (size_t)b * ZQA_NDIR_MR * K,
+						Bp + (size_t)c * ZQA_NDIR_NR * K,
+						K,
+						C + (size_t)(m0 + b * ZQA_NDIR_MR) * ldc + n0 + c * ZQA_NDIR_NR,
+						ldc);
+		}
+	}
+	free(Bp);
+	free(Ap);
+	n0 = nr;      /* 循环退出时 n0 应当正好等于 nr, 但别让下面两条尾巴语句依赖这个巧合 */
+
+	/* 尾部: 先补 N 的余数列 (整行 M), 再补 M 的余数行 (只补已算的列) */
+	if (n0 < N)
+		zq_gemm_32f_asm_mblocks(M, N - n0, K, A, lda,
+			Bt + (size_t)n0 * ldb, ldb, C + n0, ldc);
+	if (mr < M)
+		zq_gemm_32f_asm_mblocks(M - mr, n0, K, A + (size_t)mr * lda, lda,
+			Bt, ldb, C + (size_t)mr * ldc, ldc);
+	return 1;
+}
+
 void zq_gemm_32f_AnoTrans_Btrans_auto_asm(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
 {
 #if ZQA_IMPL
@@ -1030,6 +1250,16 @@ void zq_gemm_32f_AnoTrans_Btrans_auto_asm(int M, int N, int K, const float* A, i
 		free(buf);
 		return;
 	}
+
+	/* 8 <= K <= ZQA_NDIR_MAX_K: 打包 A/B 后走 6x8 的 N 方向外积内核。
+	   这一族沿 K 方向做点积时, 水平归约的固定开销盖过计算本身:
+	   313x32x28 只有 MKL 的 25%、1024x1024x16 只有 49%、1024x1024x32 只有 57%
+	   (2026-10-01 补 -mfma 之后的读数)。K 再大时归约被 K 循环摊薄,
+	   m2n4 的访存模式反而更省 —— 所以这个阈值是实测出来的, 不是拍的。
+	   zq_gemm_32f_asm_ndir 内部会检查形状是否合适 (M>=6 / N>=8),
+	   不合适时返回 0, 这里继续走原来的路。 */
+	if (K <= ZQA_NDIR_MAX_K && zq_gemm_32f_asm_ndir(M, N, K, A, lda, Bt, ldb, C, ldc))
+		return;
 
 
 	/* N 方向分块: 原来是一路 m 扫到底, 每次把整个 B (最大可到几十 MB) 从
