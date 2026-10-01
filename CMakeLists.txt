@@ -108,4 +108,6 @@ add_subdirectory(ZQ_GEMM)
 add_subdirectory(ZQCNN)
 add_subdirectory(SamplesZQCNN)
 add_subdirectory(SamplesZQlibFaceID)
+add_subdirectory(SamplesZQGEMM)
+add_subdirectory(SamplesZQBLAS)
 
