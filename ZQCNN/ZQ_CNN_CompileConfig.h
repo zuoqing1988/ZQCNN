@@ -1,4 +1,4 @@
-﻿#ifndef _ZQ_CNN_COMPILE_CONFIG_H_
+#ifndef _ZQ_CNN_COMPILE_CONFIG_H_
 #define _ZQ_CNN_COMPILE_CONFIG_H_
 #include <stdlib.h>
 #include <stdio.h>
@@ -21,7 +21,10 @@
 #define ZQ_CNN_USE_SSETYPE ZQ_CNN_SSETYPE_AVX2
 #define ZQ_CNN_USE_BLAS_GEMM 0 // if you want to use openblas, set to 1
 #if ZQ_CNN_USE_BLAS_GEMM == 0
-#define ZQ_CNN_USE_MKL_GEMM 1
+// 默认 0：ZQCNN 内部并不调用 cblas_*，开着它只会让示例程序链上 mklml.lib，
+// 于是没装 MKL 运行库的机器上所有 exe 都起不来（error while loading shared libraries: mklml.dll）。
+// 想用 MKL 就把它改成 1（此时需要自行提供 mklml.lib 与运行库）。
+#define ZQ_CNN_USE_MKL_GEMM 0
 #endif
 #if (ZQ_CNN_USE_BLAS_GEMM == 0 && ZQ_CNN_USE_MKL_GEMM == 0)
 #define ZQ_CNN_USE_ZQ_GEMM 1

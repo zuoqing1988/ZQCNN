@@ -11,6 +11,16 @@ if(WIN32)
   ENDMACRO()
 
   find_package(OpenCV QUIET)
+  # OpenCV 是动态库时, 把运行时 dll 拷到产物目录, 否则 exe 起来就报
+  # "error while loading shared libraries: opencv_world342.dll"
+  if(WIN32 AND OpenCV_DIR)
+    file(GLOB OpenCV_RUNTIME_DLLS "${OpenCV_DIR}/x64/vc14/bin/*.dll" "${OpenCV_DIR}/x64/vc15/bin/*.dll" "${OpenCV_DIR}/../bin/*.dll")
+    if(OpenCV_RUNTIME_DLLS)
+      foreach(_dll_dir ${ZQCNN_DLL_OUTPUT_DIRS})
+        execute_process(COMMAND ${CMAKE_COMMAND} -E copy_if_different ${OpenCV_RUNTIME_DLLS} ${_dll_dir})
+      endforeach()
+    endif()
+  endif()
   if(NOT OpenCV_FOUND)
     # Fallback to the bundled Windows binaries
     if(WIN32 AND EXISTS ${CMAKE_CURRENT_LIST_DIR}/../3rdparty/opencv/build/x64/vc14/lib/opencv_world342.lib)

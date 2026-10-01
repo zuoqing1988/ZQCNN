@@ -391,6 +391,8 @@ static void FNAME(int M, int N, int K, const float* A, int lda, const float* Bt,
 	const int mb = MB, nb = NB; \
 	const int npair = NB >> 2; \
  \
+	{ extern int printf(const char*, ...); static int zqa_dbg = 0; if (zqa_dbg < 25) { zqa_dbg++; printf("[K %s M=%d N=%d K=%d k8=%d s1=%d s3=%d A=%p Bt=%p C=%p lda=%d ldb=%d ldc=%d]\n", #FNAME, M, N, K, k8, s1, s3, (void*)A, (void*)Bt, (void*)C, lda, ldb, ldc); } } \
+ \
 	if (M <= 0 || N <= 0) \
 		return; \
  \
