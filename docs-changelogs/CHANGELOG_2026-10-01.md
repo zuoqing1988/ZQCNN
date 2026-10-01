@@ -609,3 +609,43 @@ NCHW 里 `sliceStep` 是**一张图**的步长（不是通道），`(n,c,h,w)` �
 本机有可验证路径（`SampleCascadeOnet` / `SampleCascadeOnet_Interface` / `SampleMTCNNLoadFromCode` 都走 `LoadFromBuffer`），启用后回归结果与改动前一致：SampleCascadeOnet 1.64M、SampleCascadeOnet_Interface 0.65M、SampleMTCNNLoadFromCode 136ms、SampleMTCNN 19.0ms、SampleSSD 10.2ms，全部 exit=0。
 
 至此 `audit_k3_20261001.md` 附录 L 的 7 项待办全部闭环。
+
+## 新增/变更：第六轮审计（换角度：调用契约与边界条件）
+
+第六轮不再看单文件内部，而是横向核对**调用方与被调方的契约**、**边界输入**、
+**未被前五轮覆盖的目录**。本条记录前半部分（行尾 + 边框 + 关键点），
+后半部分（加载器校验、SetPara、PriorBox 等）待后续提交补。
+
+### 变更文件
+
+| 文件 | 问题 | 修复 |
+|---|---|---|
+| `SamplesZQCNN/CompareWithOpenBLAS/CompareWithOpenBLAS.cpp` 等 7 个 | 多重 CR 行尾（`\r\r\n` / `\r\r\r\n`），CR 会并进 `#include` / `#ifndef` 的预处理符 token（UB） | 统一为纯 CRLF；非空行内容零差异 |
+| `tools/check_line_endings.py`（新增） | 缺 mixed-EOL 检测 | 增加 CRLF/裸 LF 混用检测与 `--fix` |
+| `tools/run_sample_regression.sh`（新增） | 双平台回归靠手敲 | 一键跑 8 个关键 sample |
+| `ZQCNN/ZQ_CNN_Tensor4D.h` | `ROI` 左右边框只清前 `dst_borderH` 行；`ConvertColor_BGR2GRAY` 除此以外下边框位置也写成了 `+ dstWidthStep*dst_borderH`（清的是数据区而不是真下边框） | 分别改为 `h < height` / `+ dstWidthStep*H` |
+| `ZQCNN/ZQ_CNN_Tensor4D_NCHWC.cpp` | **NCHWC1/4/8 整个系列 15 处**同型缺陷（6 处下边框位置 + 9 处左右列循环上界） | 与 NCHW 侧写法对齐（`dst_H` / `height`） |
+| `ZQCNN_to_MNN/converter/source/ZQ_CNN_Tensor4D.h` | 转换器里的独立副本同型 | 同上 |
+| `ZQCNN/ZQ_CNN_MTCNN*.h`（5 个文件） | Lnet/Onet 取 `conv6-3` 后**不判空**直接解引用；5 点循环上界写死 5，不看实际通道数 | 21 处（5 点 15 + 106 点 6）统一改为判空取指针 + `__min(N, GetC()/2)` 限幅 |
+
+### 实测结果
+
+- Windows：`cmake --build build_x64 --config Release -j8` → 0 error，69 exe
+- Linux：`make -j8` → 0 error
+- 双平台 8 个 sample 全部 rc=0
+- 关键点改动前后 `SampleMTCNN` / `SampleMTCNN_NCHWC4` 的
+  rnet/onet/lnet 参数量、候选数、检出数**逐字节一致**（改前已抓基线）
+- 边框改动前后同样逐字节一致（MTCNN 的 Resize 调用 border 多数为 0，
+  属潜伏缺陷而非现网错误）
+- `tools/check_line_endings.py` 全仓扫描：line endings OK
+
+### 注意事项
+
+1. **第四/五轮声称"边框清零已覆盖 ROI"是不成立的**——实际只改了 NCHW 的
+   `Resize*`，`ROI`、`ConvertColor_BGR2GRAY` 以及整个 NCHWC 系列一处没动。
+   收口一类缺陷必须全仓枚举同类站点逐个核对，不能只信上一轮的清单。
+   这条已写进 AGENTS.md。
+2. 本机 `core.autocrlf=true`，git 提交时会把工作区 CRLF 归一成 LF 存进仓库，
+   所以**"git diff 干净"不代表工作区行尾干净**，而工作区才是编译器读的东西。
+3. 用 Python 批量改写源码时 `split(b'\n')` / `join(b'\n')` 会让新插入的行
+   丢失 `\r`，造成工作区 CRLF/LF 混用。这条也已写进 AGENTS.md 第 5 条。
