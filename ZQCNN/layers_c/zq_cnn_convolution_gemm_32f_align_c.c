@@ -384,13 +384,26 @@ extern "C" {
 			matrix_Bt = (float*)_aligned_malloc(need_B_buffer_len_align32, 32);
 			if (need_allocate_tmp_out)
 				matrix_C = (float*)_aligned_malloc(need_C_buffer_len_align32, 32);
+			if (matrix_A == 0 || matrix_Bt == 0 || (need_allocate_tmp_out && matrix_C == 0))
+			{
+				if (matrix_A) _aligned_free(matrix_A);
+				if (matrix_Bt) _aligned_free(matrix_Bt);
+				if (matrix_C) _aligned_free(matrix_C);
+				return;
+			}
 		}
 		else
 		{
 			if (*buffer_len < total_need_buffer_len)
 			{
 				_aligned_free(*buffer);
+				*buffer = 0;
 				*buffer = _aligned_malloc(total_need_buffer_len, 32);
+				if (*buffer == 0)
+				{
+					// 原来失败也把 *buffer_len 更新成新长度, 下次调用会跳过重新分配直接拿 NULL 去 im2col
+					return;
+				}
 				*buffer_len = total_need_buffer_len;
 			}
 			matrix_A = *buffer;
@@ -551,13 +564,26 @@ extern "C" {
 			matrix_Bt = (float*)_aligned_malloc(need_B_buffer_len_align32, 32);
 			if (need_allocate_tmp_out)
 				matrix_C = (float*)_aligned_malloc(need_C_buffer_len_align32, 32);
+			if (matrix_A == 0 || matrix_Bt == 0 || (need_allocate_tmp_out && matrix_C == 0))
+			{
+				if (matrix_A) _aligned_free(matrix_A);
+				if (matrix_Bt) _aligned_free(matrix_Bt);
+				if (matrix_C) _aligned_free(matrix_C);
+				return;
+			}
 		}
 		else
 		{
 			if (*buffer_len < total_need_buffer_len)
 			{
 				_aligned_free(*buffer);
+				*buffer = 0;
 				*buffer = _aligned_malloc(total_need_buffer_len, 32);
+				if (*buffer == 0)
+				{
+					// 原来失败也把 *buffer_len 更新成新长度, 下次调用会跳过重新分配直接拿 NULL 去 im2col
+					return;
+				}
 				*buffer_len = total_need_buffer_len;
 			}
 			matrix_A = *buffer;
@@ -725,13 +751,26 @@ extern "C" {
 			matrix_Bt = (zq_base_type*)_aligned_malloc(need_B_buffer_len_align32, 32);
 			if (need_allocate_tmp_out)
 				matrix_C = (zq_base_type*)_aligned_malloc(need_C_buffer_len_align32, 32);
+			if (matrix_A == 0 || matrix_Bt == 0 || (need_allocate_tmp_out && matrix_C == 0))
+			{
+				if (matrix_A) _aligned_free(matrix_A);
+				if (matrix_Bt) _aligned_free(matrix_Bt);
+				if (matrix_C) _aligned_free(matrix_C);
+				return;
+			}
 		}
 		else
 		{
 			if (*buffer_len < total_need_buffer_len)
 			{
 				_aligned_free(*buffer);
+				*buffer = 0;
 				*buffer = _aligned_malloc(total_need_buffer_len, 32);
+				if (*buffer == 0)
+				{
+					// 原来失败也把 *buffer_len 更新成新长度, 下次调用会跳过重新分配直接拿 NULL 去 im2col
+					return;
+				}
 				*buffer_len = total_need_buffer_len;
 			}
 			matrix_A = *buffer;
@@ -890,13 +929,26 @@ extern "C" {
 			matrix_Bt = (zq_base_type*)_aligned_malloc(need_B_buffer_len_align32, 32);
 			if (need_allocate_tmp_out)
 				matrix_C = (zq_base_type*)_aligned_malloc(need_C_buffer_len_align32, 32);
+			if (matrix_A == 0 || matrix_Bt == 0 || (need_allocate_tmp_out && matrix_C == 0))
+			{
+				if (matrix_A) _aligned_free(matrix_A);
+				if (matrix_Bt) _aligned_free(matrix_Bt);
+				if (matrix_C) _aligned_free(matrix_C);
+				return;
+			}
 		}
 		else
 		{
 			if (*buffer_len < total_need_buffer_len)
 			{
 				_aligned_free(*buffer);
+				*buffer = 0;
 				*buffer = _aligned_malloc(total_need_buffer_len, 32);
+				if (*buffer == 0)
+				{
+					// 原来失败也把 *buffer_len 更新成新长度, 下次调用会跳过重新分配直接拿 NULL 去 im2col
+					return;
+				}
 				*buffer_len = total_need_buffer_len;
 			}
 			matrix_A = *buffer;
