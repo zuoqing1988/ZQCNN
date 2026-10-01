@@ -69,3 +69,53 @@ CascadeOnet / CascadeOnet_Interface / FaceDetectorMTCNN / MTCNNLoadFromCode
    `vfmadd231ps`，不受影响。
 2. 已写进 `AGENTS.md` 汇编一节第 9 条：**编译期分支都要有人走过**。默认构建永远
    只走「有 FMA」那条，去掉 `-mfma` 是唯一能触发另一条的办法。
+
+## 新增/变更：给 ZQ_MergeSort 补一个独立测试（推翻「无法验证」这个前提）
+
+### 变更文件
+- `tools/zq_mergesort_check.cpp`（新增）：`ZQ_MergeSort` 的脱离 ZQlibFaceID 的
+  独立回归测试（正确性 + ASan/LSan + OOM 探针）
+- `audit_k3_20261001.md`：附录 O 的「不修」结论按新证据修订
+
+### 为什么做这件事
+
+附录 O 把 `ZQ_MergeSort::_mergeSort_OOC` 的若干问题记为**不修**，理由是
+「这是 3rdparty 第三方头，改动面大且**无法在无数据库的机器上端到端验证**」。
+
+但 `ZQ_MergeSort.h` 只 include 了 4 个标准头（`stdlib.h` / `string.h` /
+`stdio.h` / `iostream`），模板成员全是 static，**完全能脱离 ZQlibFaceID 单独
+编译**。补上 MSVC 的 `__int64` / `__max` / `__min` 之后 gcc 9.4 直接编过。
+**「无法验证」这个前提本身就不成立。**
+
+### 实测结果
+
+- 正确性：`MergeSort_OOC<float>` 14 种规模（0/1/2/3/7/8/9/15/16/17/100/1000/
+  4096/5000）× 4 种 `max_mem_size_in_KB`（1/4/16/1024）× 升/降序，
+  逐个与 `std::sort` 的结果**逐元素相等**；
+  `MergeSortWithData_OOC<float>` 14 种规模 × 2 个方向，**载荷与键保持对应**
+  （用每个 id 的原始分数反查）。
+- **ASan + LeakSanitizer 全程无报告**：无泄漏、无越界、无 use-after-free。
+  这同时推翻了附录 O 里「~20 条错误返回路径全泄漏 4 块缓冲」的说法 ——
+  那些路径在本测试覆盖到的成功路径上没有出现泄漏。
+- 空输入（n=0）两个入口都返回 false，是合理的契约，测试已按此断言。
+- OOM 探针：用 `ulimit -v` 把地址空间卡到 256MB，让 `val_size*block_size*2`
+  （256MB）分配失败，**没有崩溃，返回 false**。
+
+### 仍然遗留（**未取得端到端证据**，不声称已修）
+
+`ZQ_MergeSort.h` 里一共 8 处 `malloc` **全部不判空**：
+`val_block_buffer` / `data_block_buffer` / `out_val_buffer` / `out_data_buffer`
+（都在 `_mergeSort_OOC` 里）以及 `_mergeSortWithData` 的
+`tmp_data_left` / `tmp_data_right`。分配失败时返回值直接拿去 `memcpy` /
+`fread`。
+
+我的 OOM 探针没有复现出崩溃，所以**按「按构造正确 + 现有调用点（`sort_score_file`
+的 8 处）在内存充足时不会失败」记录**，不改代码。要复现崩溃需要更精确地卡住
+某一次分配，而这一步没做成。
+
+### 注意事项
+1. `ZQ_MergeSort.h` 里还留着调试输出：每次归并轮次都 `printf` 形如
+   `1/3 1024` 的进度行（跑本测试时刷了 90 多行）。这是上游代码的行为，
+   本轮不改，但它会污染任何调用它的程序的 stdout。
+2. 头文件在 gcc 下需要 `__int64` / `__min` / `__max`；测试文件里在
+   `#include` **之前**补了 typedef/macro，顺序反了就编不过。
