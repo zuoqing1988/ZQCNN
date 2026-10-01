@@ -798,25 +798,20 @@ void zq_gemm_32f_align256bit_AnoTrans_Btrans_M8_N4_asm(int M, int N, int K, cons
 #endif
 }
 
-void zq_gemm_32f_AnoTrans_Btrans_auto_asm(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+/* M 方向的分块调度 (N 方向的分块由调用方切好, 这里只管 M)。
+   每次只让子内核处理它自己那一块 (MB 行), 指针相应下移;
+   不能传 M - m, 否则第 m 块之后的行会被反复重算。 */
+/* always_inline: B 装得下 L2 时走的就是这个函数, 多一次函数调用在
+   5x7x3 这种 2.5 GF/s 的小尺寸上是 7% 的纯开销。 */
+#if defined(__GNUC__) || defined(__clang__)
+__attribute__((always_inline))
+#else
+__forceinline
+#endif
+static inline void zq_gemm_32f_asm_mblocks(int M, int N, int K, const float* A, int lda,
+	const float* Bt, int ldb, float* C, int ldc)
 {
-#if ZQA_IMPL
 	int m = 0;
-
-	if (M <= 0 || N <= 0)
-		return;
-
-	/* N < 4 时 4 列微内核一块都用不上, 整列方向退化成标量点积 —— 实测
-	   1024x1x1024 只有 MKL 的 12%。这里换 N=1 专用内核 (沿 K 方向 ymm 累加)。 */
-	if (N < 4)
-	{
-		for (m = 0; m < N; m++)
-			zq_gemm_32f_asm_ncol(M, K, A, lda, Bt + (size_t)m * ldb, C + m, ldc);
-		return;
-	}
-
-	/* 每次只让子内核处理它自己那一块 (MB 行), 指针相应下移;
-	   不能传 M - m, 否则第 m 块之后的行会被反复重算。 */
 	while (m + 8 <= M)
 	{
 		zq_gemm_32f_align256bit_AnoTrans_Btrans_M8_N4_asm(8, N, K, A + (size_t)m * lda, lda, Bt, ldb, C + (size_t)m * ldc, ldc);
@@ -835,6 +830,58 @@ void zq_gemm_32f_AnoTrans_Btrans_auto_asm(int M, int N, int K, const float* A, i
 	if (m < M)
 	{
 		zq_gemm_32f_align256bit_AnoTrans_Btrans_M1_N8_asm(1, N, K, A + (size_t)m * lda, lda, Bt, ldb, C + (size_t)m * ldc, ldc);
+	}
+}
+
+void zq_gemm_32f_AnoTrans_Btrans_auto_asm(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
+{
+#if ZQA_IMPL
+	int m = 0;
+
+	if (M <= 0 || N <= 0)
+		return;
+
+	/* N < 4 时 4 列微内核一块都用不上, 整列方向退化成标量点积 —— 实测
+	   1024x1x1024 只有 MKL 的 12%。这里换 N=1 专用内核 (沿 K 方向 ymm 累加)。 */
+	if (N < 4)
+	{
+		for (m = 0; m < N; m++)
+			zq_gemm_32f_asm_ncol(M, K, A, lda, Bt + (size_t)m * ldb, C + m, ldc);
+		return;
+	}
+
+	/* N 方向分块: 原来是一路 m 扫到底, 每次把整个 B (最大可到几十 MB) 从
+	   L3/内存重扫一遍, 只有当前 8 行的 A 面板留在 L2 里。实测 512^3 还有
+	   MKL 的 94%, 到 2048^3 就掉到 67% —— 分水岭正好在 B 装不进 L2 的地方。
+	   改成先把 B 切成能进 L2 的面板, 一个面板内把 M 扫完, 再换下一个面板。
+	   64 形状对拍（每档取 3 次最好值, 抵消 boost 抖动）:
+	     512x8192x512   37.9 -> 70.6 GF/s  (+86%)
+	     1536^3          51.2 -> 61.5        (+20%)
+	     2048^3          47.2 -> 55.9        (+18%)
+	     1024^3          59.7 -> 63.5        (+6%)
+	     512^3           70.5 -> 74.0        (+5%) */
+	{
+		/* B 本来就装得下 (或者 N 小到没法再切) 时不要分块:
+		   多一层循环和一次函数调用, 对 5x7x3 这种 2.5 GF/s 的小尺寸
+		   反而是 15% 的纯开销。 */
+		const long long bbytes = (long long)N * K * 4;
+		if (bbytes <= 256 * 1024 || N < 64)
+		{
+			zq_gemm_32f_asm_mblocks(M, N, K, A, lda, Bt, ldb, C, ldc);
+			return;
+		}
+		/* 目标: 一个 B 面板 (nt 列 x K) 控制在 ~256KB, 留在 L2 里。 */
+		long long want = 256 * 1024 / ((long long)K * 4);
+		int nt = (want < 64) ? 64 : ((want > N) ? N : (int)want);
+		nt &= ~3;                       /* 4 列微内核的整除 */
+		if (nt <= 0)
+			nt = 4;
+		for (int n0 = 0; n0 < N; n0 += nt)
+		{
+			int nc = (N - n0 < nt) ? (N - n0) : nt;
+			zq_gemm_32f_asm_mblocks(M, nc, K, A, lda,
+				Bt + (size_t)n0 * ldb, ldb, C + n0, ldc);
+		}
 	}
 #else
 	zq_gemm_32f_AnoTrans_Btrans_auto(M, N, K, A, lda, Bt, ldb, C, ldc);
