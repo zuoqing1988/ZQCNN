@@ -118,10 +118,10 @@ void zq_cnn_scale_32f_align(
 			{
 				for (w = 0, pix_ptr = row_ptr; w < in_W; w++, pix_ptr += in_pixStep)
 				{
-					for (c = 0, c_ptr = pix_ptr; c < in_C; c += zq_mm_align_size, c_ptr += zq_mm_align_size)
+					/* in_C 不是 4/8 的倍数: 整向量读会越过 scale_data 的分配, 改走标量 */
+					for (c = 0; c < in_C; c++)
 					{
-						scale_vec = zq_mm_load_ps(scale_data + c);
-						zq_mm_store_ps(c_ptr, zq_mm_mul_ps(zq_mm_load_ps(c_ptr), scale_vec));
+						pix_ptr[c] = pix_ptr[c] * scale_data[c];
 					}
 				}
 			}
@@ -287,15 +287,11 @@ void zq_cnn_batchnorm_32f_b_a_align(
 			{
 				for (w = 0, pix_ptr = row_ptr; w < in_W; w++, pix_ptr += in_pixStep)
 				{
-					for (c = 0, a_ptr = a_data, b_ptr = b_data, c_ptr = pix_ptr;
-						c < in_C;
-						c += zq_mm_align_size, c_ptr += zq_mm_align_size, a_ptr += zq_mm_align_size, b_ptr += zq_mm_align_size)
+					/* in_C 不是 4/8 的倍数: 整向量读会越过 a/b 的分配(_aligned_malloc(2*4)),
+					   这里改走标量, 只处理真实的 in_C 个元素 */
+					for (c = 0; c < in_C; c++)
 					{
-						a_vec0 = zq_mm_load_ps(a_ptr);
-						b_vec0 = zq_mm_load_ps(b_ptr);
-						c_vec0 = zq_mm_load_ps(c_ptr);
-						c_vec0 = zq_mm_fmadd_ps(c_vec0, b_vec0, a_vec0);
-						zq_mm_store_ps(c_ptr, c_vec0);
+						pix_ptr[c] = pix_ptr[c] * b_data[c] + a_data[c];
 					}
 				}
 			}
