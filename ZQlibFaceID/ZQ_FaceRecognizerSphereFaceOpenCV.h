@@ -29,21 +29,36 @@ namespace ZQ
 			this->caffemodel_file = caffemodel_file;
 			this->output_layer_name = out_layer_name;
 
-			/* Load the network. */
-			net = cv::dnn::readNetFromCaffe(prototxt_file, caffemodel_file);
+			/* OpenCV 的 dnn 模块用 CV_Error 报错, 默认错误处理是 terminate(),
+			   不是抛 C++ 异常 —— 本文件若不接住, 一个"模型文件不存在"就会让整个
+			   进程以 0xC0000409 崩掉, 调用方的 if (!Init(...)) 根本来不及执行。
+			   实测: 删掉 model/mobilefacenet-res2-6-10-2-dim512-opencv.prototxt 后
+			   SampleFaceRecognizerArcFaceOpenCV 直接 terminate。
+			   下面统一 try/catch(cv::Exception) 转成 return false, 恢复 bool 契约。 */
 
-			if (net.empty())
+			try
 			{
-				printf("failed to load prototxt_file %s, model_file %s\n", prototxt_file.c_str(), caffemodel_file.c_str());
+				/* Load the network. */
+				net = cv::dnn::readNetFromCaffe(prototxt_file, caffemodel_file);
+
+				if (net.empty())
+				{
+					printf("failed to load prototxt_file %s, model_file %s\n", prototxt_file.c_str(), caffemodel_file.c_str());
+					return false;
+				}
+				cv::Mat img(H, W, CV_MAKE_TYPE(8, 3));
+				cv::Mat inputBlob = cv::dnn::blobFromImage(img, std_val, cv::Size(W, H), cv::Scalar(mean_val, mean_val, mean_val), true, false);
+				net.setInput(inputBlob, "data");
+				cv::Mat prob = net.forward(output_layer_name);
+				feat_dim = prob.cols;
+				bgr_buffer = img;
+			}
+			catch (const cv::Exception& e)
+			{
+				printf("Init failed for %s / %s: %s\n", prototxt_file.c_str(), caffemodel_file.c_str(), e.what());
+				feat_dim = 0;
 				return false;
 			}
-		
-			cv::Mat img(H, W, CV_MAKE_TYPE(8, 3));
-			cv::Mat inputBlob = cv::dnn::blobFromImage(img, std_val, cv::Size(W, H), cv::Scalar(mean_val, mean_val, mean_val), true, false);
-			net.setInput(inputBlob, "data");        
-			cv::Mat prob = net.forward(output_layer_name);     
-			feat_dim = prob.cols;
-			bgr_buffer = img;
 			return true;
 		}
 
@@ -162,13 +177,26 @@ namespace ZQ
 				break;
 			}
 
-			cv::Mat inputBlob = cv::dnn::blobFromImage(bgr_buffer, std_val, cv::Size(crop_width, crop_height), 
-				cv::Scalar(mean_val, mean_val, mean_val), true, false);
+			try
+			{
+				cv::Mat inputBlob = cv::dnn::blobFromImage(bgr_buffer, std_val, cv::Size(crop_width, crop_height), 
+					cv::Scalar(mean_val, mean_val, mean_val), true, false);
 
-			net.setInput(inputBlob, "data");        
-			cv::Mat prob = net.forward(output_layer_name); 
-			float* prob_data = prob.ptr<float>();
-			memcpy(feat, prob_data, sizeof(float)*feat_dim);
+				net.setInput(inputBlob, "data");
+				cv::Mat prob = net.forward(output_layer_name);
+				if (prob.empty() || prob.cols != feat_dim)
+				{
+					printf("unexpected forward output: cols=%d, expect %d\n", prob.cols, feat_dim);
+					return false;
+				}
+				float* prob_data = prob.ptr<float>();
+				memcpy(feat, prob_data, sizeof(float)*feat_dim);
+			}
+			catch (const cv::Exception& e)
+			{
+				printf("ExtractFeature failed: %s\n", e.what());
+				return false;
+			}
 			if (normalize)
 				ZQ_MathBase::Normalize(feat_dim, feat);
 			return true;
