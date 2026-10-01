@@ -23,6 +23,17 @@ void zq_cnn_batchnormscale_32f_mean_var_scale_bias_align(
 	int c;
 	a = (zq_base_type*)_aligned_malloc(in_C*sizeof(zq_base_type), (zq_mm_align_size << 2));
 	b = (zq_base_type*)_aligned_malloc(in_C*sizeof(zq_base_type), (zq_mm_align_size << 2));
+	if (a == NULL || b == NULL)
+	{
+		/* 审计 2026-10-02（附录 AY）：_aligned_malloc 失败时原来直接解引用，
+		   而 in_C / ceil_C 来自模型文件（不可信输入）—— 一个巨大的通道数
+		   就能让分配失败。MSVC /analyze 的 C6011「取消对 NULL 指针 a/b 的引用」
+		   报的正是这 4 对（共 24 处，去重后 8 个分配点）。
+		   函数返回 void，失败时只能释放兄弟再返回；正常路径行为一字不变。 */
+		if (a) _aligned_free(a);
+		if (b) _aligned_free(b);
+		return;
+	}
 	for (c = 0; c < in_C; c++)
 	{
 		b[c] = (float)(slope_data[c] / sqrt(__max(var_data[c]+eps,FLOAT_EPS_FOR_DIV)));
@@ -60,6 +71,17 @@ void zq_cnn_batchnorm_32f_mean_var_align(
 	int c;
 	a = (zq_base_type*)_aligned_malloc(in_C * sizeof(zq_base_type), (zq_mm_align_size << 2));
 	b = (zq_base_type*)_aligned_malloc(in_C * sizeof(zq_base_type), (zq_mm_align_size << 2));
+	if (a == NULL || b == NULL)
+	{
+		/* 审计 2026-10-02（附录 AY）：_aligned_malloc 失败时原来直接解引用，
+		   而 in_C / ceil_C 来自模型文件（不可信输入）—— 一个巨大的通道数
+		   就能让分配失败。MSVC /analyze 的 C6011「取消对 NULL 指针 a/b 的引用」
+		   报的正是这 4 对（共 24 处，去重后 8 个分配点）。
+		   函数返回 void，失败时只能释放兄弟再返回；正常路径行为一字不变。 */
+		if (a) _aligned_free(a);
+		if (b) _aligned_free(b);
+		return;
+	}
 	for (c = 0; c < in_C; c++)
 	{
 		b[c] = 1.0f / (float)sqrt(__max(var_data[c]+eps, FLOAT_EPS_FOR_DIV));

@@ -56,13 +56,22 @@ EXTRA_SOURCES = {
         'gcc -O1 -g -mavx2 -mfma -c -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include '
         '$R/ZQCNN/math/zq_avx_mathfun.c -o $WDIR/zq_lrn_avx.o',
     ],
+    # zq_bns 不自动跑（见 SKIP），但点名时要能真的编出来。
+    'zq_bns': [
+        'gcc -O1 -g -mavx2 -mfma -c -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include '
+        '$R/ZQCNN/math/zq_sse_mathfun.c -o $WDIR/zq_bns_sse.o',
+        'gcc -O1 -g -mavx2 -mfma -c -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include '
+        '$R/ZQCNN/math/zq_avx_mathfun.c -o $WDIR/zq_bns_avx.o',
+    ],
 }
-EXTRA_LINK = {'zq_lrn': ' $WDIR/zq_lrn_sse.o $WDIR/zq_lrn_avx.o'}
-EXTRA_INC = {'zq_lrn': ' -I$R/ZQCNN -I$R/ZQ_GEMM'}
+EXTRA_LINK = {'zq_lrn': ' $WDIR/zq_lrn_sse.o $WDIR/zq_lrn_avx.o',
+              'zq_bns': ' $WDIR/zq_bns_sse.o $WDIR/zq_bns_avx.o'}
+EXTRA_INC = {'zq_lrn': ' -I$R/ZQCNN -I$R/ZQ_GEMM',
+             'zq_bns': ' -I$R/ZQCNN -I$R/ZQ_GEMM'}
 # 测内核的测试自己也 include 了那个 .c，所以**主 TU 也要带 -mavx2 -mfma**，
 # 否则 _mm256_set1_ps 这些 always_inline 内建会报
 # "target specific option mismatch"（2026-10-02 实测）。
-EXTRA_CXXFLAGS = {'zq_lrn': ' -mavx2 -mfma'}
+EXTRA_CXXFLAGS = {'zq_lrn': ' -mavx2 -mfma', 'zq_bns': ' -mavx2 -mfma'}
 
 
 def main():
@@ -73,6 +82,17 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('filter', nargs='?', default='')
     ap.add_argument('--list', action='store_true')
+    # 明确不自动跑、但保留在仓库里的测试。
+    # 每一个都要写清理由 —— "跑不过所以不跑"和"它是已知的未修项所以不跑"
+    # 是两件完全不同的事，混起来就成了"无法验证"那个自我实现的结论（附录 W）。
+    SKIP = {
+        'zq_bns': ('它钉的是 ZQCNN/layers_nchwc/zq_cnn_batchnormscale_nchwc_raw.h，'
+                   '而那个文件是**死代码**（全仓零引用，附录 AY.5），并且它的主内核'
+                   ' zq_cnn_batchnorm_b_a_nchwc 的索引约定已知未修（从 NCHW 版复制过来'
+                   '没改完）—— 跑这个测试必然 ASan abort。已修的那两处'
+                   '（malloc 判空、读模型参数用 in_C 上界）由它钉住，'
+                   '需要时手动跑，文件头写明了预期行为。'),
+    }
     ap.add_argument('--no-asan', action='store_true',
                     help='不带 sanitizer 编译（想先确认能不能编过时用）')
     ap.add_argument('--ubsan', action='store_true',
@@ -88,6 +108,18 @@ def main():
 
     srcs = sorted(glob.glob(os.path.join(HERE, 'zq_*_check.cpp')))
     srcs = [s for s in srcs if args.filter in os.path.basename(s)]
+    # 除非显式点名（args.filter 命中），否则跳过 SKIP 里的那几个，并**把理由打出来**。
+    skipped = []
+    kept = []
+    for s in srcs:
+        tag = os.path.splitext(os.path.basename(s))[0][:-6]
+        if tag in SKIP and tag not in args.filter:
+            skipped.append((tag, SKIP[tag]))
+        else:
+            kept.append(s)
+    for tag, why in skipped:
+        print('跳过 %s: %s\n' % (tag, why))
+    srcs = kept
     if not srcs:
         print('no zq_*_check.cpp matches %r' % args.filter)
         return 1

@@ -1929,3 +1929,90 @@ printf("nms cost: %.3f ms, (%d-->%d)\n", ..., before_count, after_count);
 4. **我的第一版 LRN 测试把对齐宽度写成 4（实际是 8）**，
    于是像素地址 16 字节步进而 `_mm256_load_ps` 要求 32 字节对齐 → SIGSEGV，
    **而且 ASan 报出来的故障地址是 0x000000000000**，第一反应会误判成空指针。
+
+## 新增/变更：附录 AY —— `/analyze` 铺到全部 43 个 TU，查出 2 处真缺陷 + 1 段死代码
+
+### 变更文件
+
+- `ZQCNN/layers_c/zq_cnn_batchnormscale_32f_align_c_raw.h`：
+  2 对 `_aligned_malloc` 补 NULL 守卫
+- `ZQCNN/layers_nchwc/zq_cnn_batchnormscale_nchwc_raw.h`：
+  同上 2 对；另把读模型参数的循环上界从 `ceil_C` 改成 `in_C`，
+  `[in_C, ceil_C)` 改为清零
+- `tools/run_msvc_analyze.py`（新增）：枚举 43 个 TU 并驱动 `/analyze`，
+  按 **gbk** 解析 cl 的输出
+- `tools/msvc_analyze.bat`：删掉坏掉的 `goto`/label 扫描逻辑，改成"收一串文件参数"
+- `tools/zq_bns_check.cpp`（新增）：钉住上面两处修复
+- `audit_k3_20261001.md`：新增**附录 AY**
+
+### 全量总账（43 个 TU）
+
+    C6386  58  缓冲区溢出（写）        C6011  24  解引用 NULL 指针   <-- 真缺陷
+    C6385  43  缓冲区溢出（读）        C6326  18  可能的算术溢出
+    C6246  33  变量遮蔽               C4090   8  switch 漏枚举
+                                      C6387   4  指针可能为 0
+                                      C6235   2  恒真条件（AW 的两个 1 ||）
+
+8 个 TU 有发现，其余 35 个干净。
+
+### 真缺陷 ①：`_aligned_malloc` 没判 NULL（4 对 8 个分配点）
+
+`in_C` / `ceil_C` 来自模型文件（不可信输入），一个巨大的通道数就能让分配失败，
+而代码紧接着就解引用。函数返回 `void`，失败时释放兄弟再返回；
+**正常路径行为一字不变**。
+
+### 真缺陷 ②：读模型参数时用了 `ceil_C` 上界
+
+`a`/`b` 这两个补零向量要按 `ceil_C` 填满（主内核整宽读），
+但 `slope_data` / `var_data` / `mean_data` / `bias_data` 是**每通道一个 float**
+的模型参数、长度只有 `in_C`。`ceil_C > in_C` 时四个数组各被多读 `align-1` 个。
+
+ASan 实测（`tools/zq_bns_check.cpp`）：
+
+    ERROR: AddressSanitizer: heap-buffer-overflow READ of size 4
+        #1 zq_cnn_batchnormscale_mean_var_scale_bias_nchwc4  ..._raw.h:40
+    0x... is located 0 bytes to the right of 20-byte region   <- 5 个 float 的模型数组
+
+### 死代码：那个文件根本没有调用方
+
+查第三件事（主内核索引约定不对）时顺藤摸瓜发现：
+
+    $ grep -rn "zq_cnn_batchnormscale_mean_var_scale_bias_nchwc" --include=*.h --include=*.c --include=*.cpp .
+    （除本测试外，零引用）
+
+真正在跑的 NCHWC 路径是 `ZQ_CNN_Forward_SSEUtils_NCHWC.h:23` 的
+`BatchNormScaleBias_Compute_b_a`，它**自己有一份标量 C++ 实现**，
+循环上界就是 `C`、**没有越界**。
+
+文件本身仍被 CMake 的 `file(GLOB .../layers_nchwc/*.c)` 编进库 ——
+这份死代码每次构建都会编一遍，只是没人调。而它那个"不对"的索引约定
+（`c` 循环用**整张图**的步长跨过去，是 **NCHW** 布局的约定）
+也就说得通了：从 NCHW 版复制过来**没改完**。
+
+**处置**：①②已修；**索引约定不修** —— 修它等于按 NCHWC 布局把这个文件整个重写，
+而它没有调用方。正确做法是删掉它，但删一个被 CMake glob 进来的文件属于结构性改动，
+本轮明确不做，记在附录里由所有者决定。
+
+`tools/zq_bns_check.cpp` 保留，用来把已修的 ①②钉住；文件头写明
+「③ 仍会触发并 abort，这是**已知未修项，不是回归**」。
+
+### 工具：批处理的"扫描全部"逻辑坏掉了
+
+`msvc_analyze.bat` 原来用 `goto` + label + `EnableDelayedExpansion` 枚举文件，
+结果 **cmd 开始把 `rem` 注释的片段当命令执行**（`'ses' 不是内部或外部命令`、
+`'1.md' 不是…`）。枚举挪到 Python 侧，bat 只负责"收一串文件参数，逐个编"。
+
+顺带修掉一个**假绿**：`cl` 的输出是**本地代码页**（本机 GBK），
+按 utf-8 读会得到一堆 U+FFFD，而要匹配的 `warning C6386` 恰好是 ASCII ——
+统计会显示"0 条"，看起来像"全部干净"。现在固定按 gbk 读。
+
+### 注意事项
+
+- **C6xxx 不是一律不可信。** 附录 AX 里 C6386 的行号不准（它没报真正越界那行），
+  而这里 C6011 的行号是准的。更准确的表述：**缓冲区/NULL 类（C6011/C6385/C6386/C6387）
+  值得逐条查；C6386 里"路径推断型"的那部分要靠动态实测确认。**
+- **LRN 修完之后，那 7 条 C6386 + 6 条 C6385 依然在报**，而 ASan 证明那里干净 ——
+  因为缓冲区大小依赖一个 MSVC 证不出来的不变式。这条留作"静态分析器是筛子"的又一例。
+- C6246（33 处）、C4090（8 处）、C6387（4 处）本轮判定为不改，理由见附录 AY.6。
+- **C6326 算术溢出 18 处（`zq_cnn_convolution_gemm_nchwc_raw.h`）本轮未查**，
+  如实记为待办。

@@ -161,6 +161,49 @@
    （`ZQ_CNN_Layer::buffer` / `sample_type` / `ZQ_CNN_Net::input_C/H/W` …），
    都不是活 bug，但形状和"靠另一个开关撑着的未初始化指针"一样，值得补 `= 0`。
 
+## 写内核 / 写并行代码的新增规则（2026-10-02 补）
+
+1. **向量化循环的缓冲区必须给"最后一次整宽写"留够余量**。典型写法
+   `for (c = 0; c < C; c += align) zq_mm_store_ps(p, v);` 一次写 `align` 个
+   float，最后一下写到 `ceil(C/align)*align - 1`；缓冲区若只有 `C` 个，
+   `C % align != 0` 就越界。`ZQCNN/layers_c/zq_cnn_lrn_32f_align_c_raw.h` 就是
+   这样被 `local_size == 1` 触发的（附录 AX）。
+2. **OpenMP 里累加到 parallel 区域**外面**声明的变量，必须写
+   `reduction(+:...)`**。`ZQ_CNN_MTCNN.h` 的 P-net 漏了，于是两个诊断计数器
+   无锁 `+=`，printf 出来的 pre-NMS 候选框数每次运行都不同（附录 AW.6）。
+   注意这条的排查顺序：**先看"哪个数字在变、哪个不变"** ——
+   不变的那多半在打印前被重新赋值过，变的那才是竞争对象。
+3. **测内核的回归测试不能只 `-I3rdparty/include/ZQlib`**：还要
+   `-I ZQCNN -I ZQ_GEMM`，而且**主 TU 也要带 `-mavx2 -mfma`**
+   （include 了那个 .c，里面的 `_mm256_set1_ps` 是 `always_inline`，
+   缺 `-mavx2` 会报 `target specific option mismatch`）；
+   `.c` 辅助文件要用 **gcc** 编（g++ 会把 `zq_avx_mathfun.c` 的
+   `_PS256_CONST_TYPE(sign_mask, int, 0x80000000)` 判成 narrowing 直接失败）。
+   见 `tools/run_zqlib_checks.py` 里的 `EXTRA_*` 四张表。
+4. **对齐类崩溃的 ASan 报告里，故障地址可能是 0x000000000000**。
+   我的第一版 LRN 测试把 `zq_mm_align_size` 写成 4（实际被测内核是 8），
+   于是像素地址 16 字节步进、`_mm256_load_ps` 要求 32 字节对齐 → SIGSEGV，
+   报出来的却是 NULL。**看到 0 地址先查对齐，再查空指针。**
+5. **cl 的输出是本地代码页（本机 GBK）**。按 utf-8 读会得到一堆 U+FFFD，
+   而要匹配的 `warning C6386` 恰好是 ASCII —— 于是统计显示"0 条"，
+   看起来像"全部干净"。`tools/run_msvc_analyze.py` 里固定按 gbk 读。
+6. **批处理里不要用 `goto` + label 写"扫描全部"的逻辑**
+   （`goto`/label 配 `EnableDelayedExpansion` 时 cmd 会开始把 `rem` 注释的
+   **片段**当命令执行：2026-10-02 实测报了一串 `'ses' 不是内部或外部命令`）。
+   枚举挪到 Python 侧，bat 只负责"给一串文件，逐个编"。
+
+## 静态分析器是筛子，动态实测才是判据
+
+1. **MSVC `/analyze` 的行号不能照单全收。** 附录 AX 那次：它报 `:68`（安全，
+   只是零余量）和 `:73`（安全，卡在边界），真正越界的 `:64` 它**没报**；
+   修完之后同样的 7 条 C6386 + 6 条 C6385 **依然在报**，而 ASan 证明那里干净。
+   —— **判据是"ASan/MSan 跑不跑得出来"，不是"分析器报没报"。**
+2. **但它非常适合当"让人去读某段代码"的指路器。** 附录 AX 的堆越界就是
+   `/analyze` 把我引到那个文件才查出来的，只是它指错了具体哪一行。
+3. gcc 与 MSVC 的检查**覆盖面不同、必须都走**（附录 AR/AT/AU/AW）：
+   `-Waddress` 只在 gcc 有，`/analyze` 只在 MSVC 有，恒真条件两边都能报但
+   措辞完全不同。
+
 ## 提交规则
 
 1. 阶段性成果就 commit（构建修复、审计修复、文档、报告各自成次）。
