@@ -273,8 +273,12 @@ namespace ZQ
 			}
 		}
 
+		// 下面这行原来缺 typename: SparseMatrixElement 是**当前模板的嵌套类型**，
+		// 所以 std::vector<SparseMatrixElement>::const_iterator 是依赖类型，
+		// 模板两阶段名字查找要求写 typename。MSVC 放行、gcc 报 "need typename"，
+		// 于是这个头一直进不了探测器的 OK 列表（连带 3 个依赖它的头也进不去）。
 		// copy cols into matC
-		std::vector<SparseMatrixElement>::const_iterator rit;
+		typename std::vector<SparseMatrixElement>::const_iterator rit;
 		int rowptrC = 0;
 		if(flag == TAUCS_DOUBLE)
 		{
@@ -311,7 +315,7 @@ namespace ZQ
 	{
 		ZQ_SparseMatrix* sparse = new ZQ_SparseMatrix(this->col,this->row);
 
-		std::vector<SparseMatrixElement>::const_iterator rit;
+		typename std::vector<SparseMatrixElement>::const_iterator rit;
 		for(int i = 0;i < col;i++)
 		{
 			int cur_row = i;
@@ -334,7 +338,7 @@ namespace ZQ
 			return false;
 
 		fprintf(out, "%d %d %d\n", row, col, GetNNZ());
-		std::vector<SparseMatrixElement>::const_iterator rit;
+		typename std::vector<SparseMatrixElement>::const_iterator rit;
 		for (int i = 0; i < col; i++)
 		{
 			for (rit = mat[i].begin(); rit != mat[i].end(); ++rit)

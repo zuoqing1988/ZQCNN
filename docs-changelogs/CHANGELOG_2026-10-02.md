@@ -681,3 +681,62 @@ memcpy(data, other.data, ...);     // a = a 时 other.data 就是刚 free 掉的
 - Linux sample 回归 8 个全 rc=0
 - `tools/run_zqlib_checks.py`：7/7 PASS（新增 zq_batch6）
 - `check_line_endings.py` / `check_text_encoding.py` 均 OK
+
+## 新增/变更：把 BROKEN 桶分类，顺手修掉两类「自己就编不过」的 ZQlib 头
+
+### 变更文件
+- `3rdparty/include/ZQlib/ZQ_CameraProjection.h`：`undistort_points` 里
+  `radius_distortion` → `radial_distortion`（少了一个 `ad`）
+- `3rdparty/include/ZQlib/ZQ_SparseMatrix.h`：3 处依赖类型补 `typename`
+- `audit_k3_20261001.md`：新增**附录 AF**
+
+### 先分类：50 个 BROKEN 不是同一种东西
+
+| 缺什么 | 头数 | 能不能救 |
+|---|---|---|
+| `ZQ_TaucsBase.h` 需要 taucs 本体 | 20 | 要先装 taucs，本轮不做 |
+| `ZQ_WinSockBase.h` 需要 `winsock2.h` | 7 | Windows-only，本机测不了 |
+| `ZQ_ImageIO.h` 需要 `opencv2/` | 4 | 本机有 OpenCV，但要加 include 路径与链接 |
+| **自己源码里就有错** | ~15 | 能救，而且就是真缺陷 |
+| 其余（依赖链更深） | ~4 | 先不动 |
+
+### 1. ZQ_CameraProjection::undistort_points 的 radius_distortion
+
+    double radial_distortion = 1.0 + k*radius_2;              // 声明的是 radial_
+    x_out[i * 2 + 0] = x_in[i * 2 + 0] / radius_distortion;   // 用的是 radius_
+
+`error: 'radius_distortion' was not declared in this scope; did you mean
+'radial_distortion'?` —— **任何编译器都过不去**，MSVC 也一样。说明这个函数从来没
+被编译过（整条路径是死的，因为它零 includers）。已修。
+
+连带效果：5 个头依赖它，OK 列表 85 -> 87。
+
+### 2. ZQ_SparseMatrix.h 的依赖类型缺 typename
+
+    std::vector<SparseMatrixElement>::const_iterator rit;   // 3 处都缺
+
+`SparseMatrixElement` 是当前模板的嵌套类型，所以这是依赖类型，模板两阶段名字查找
+要求 `typename`。MSVC 放行、gcc 报 `need 'typename' ... dependent scope`。已修。
+
+连带效果：OK 列表 87 -> 88。
+
+### 这一族的四个实例
+
+| 位置 | 笔误 | 表现 |
+|---|---|---|
+| ZQ_MinIndependentSets.h:207 | `ou` → `out` | 未声明标识符 |
+| ZQ_KDTree.h:15 | 嵌套类重复 `template<class T>` | shadows template parameter |
+| ZQ_CameraProjection.h:635 | `radius_distortion` → `radial_distortion` | 未声明标识符 |
+| ZQ_SparseMatrix.h:277/314/337 | 缺 `typename` | dependent scope |
+
+共同点：**都是编译期就能发现的死代码** —— 编不过所以永远没人调，于是也永远没人
+发现。MSVC 放行了其中两个，说明上游多半在 MSVC 上写的，而这几个头从没在 MSVC 上
+被编译过（零 includers，MSVC 也编不到）。
+
+检测成本几乎为零：probe_zqlib_headers.py 跑一遍就全出来了。
+
+### 验证
+- Windows Release 全量构建 0 error；Linux 全量构建 0 error
+- `tools/probe_zqlib_headers.py`：OK 列表 85 -> **88**
+- `tools/run_zqlib_checks.py`：7/7 PASS
+- `check_line_endings.py` / `check_text_encoding.py` 均 OK
