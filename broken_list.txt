@@ -1,0 +1,28 @@
+   ZQ_BlendTwoImages3D                      /mnt/d/ZQCNN/3rdparty/include/ZQlib/ZQ_BlendTwoImages3D.h:374:20: erro
+   ZQ_Calibration                           /mnt/d/ZQCNN/3rdparty/include/ZQlib/ZQ_Calibration.h:1553:22: error: ‘
+   ZQ_CameraCalibration                     /mnt/d/ZQCNN/3rdparty/include/ZQlib/ZQ_CameraCalibration.h:785:41: err
+   ZQ_CameraCalibrationBino                 /mnt/d/ZQCNN/3rdparty/include/ZQlib/ZQ_CameraPoseEstimation.h:93:3: er
+   ZQ_CameraCalibrationMono                 /mnt/d/ZQCNN/3rdparty/include/ZQlib/ZQ_CameraPoseEstimation.h:93:3: er
+   ZQ_CameraCalibrationMulti                /mnt/d/ZQCNN/3rdparty/include/ZQlib/ZQ_CameraPoseEstimation.h:93:3: er
+   ZQ_CameraPoseEstimation                  /mnt/d/ZQCNN/3rdparty/include/ZQlib/ZQ_CameraPoseEstimation.h:93:3: er
+   ZQ_GLSLShader                            /mnt/d/ZQCNN/3rdparty/include/ZQlib/ZQ_GLSLShader.h:5:10: fatal error:
+   ZQ_GridDeformation3D                     /mnt/d/ZQCNN/3rdparty/include/ZQlib/ZQ_GridDeformation3D.h:298:6: erro
+   ZQ_MGMRESSolver                          /mnt/d/ZQCNN/3rdparty/include/ZQlib/ZQ_MGMRESSolver.h:1204:15: error:
+   ZQ_MultiCamCalibration                   /mnt/d/ZQCNN/3rdparty/include/ZQlib/ZQ_CameraCalibration.h:785:41: err
+   ZQ_OpticalFlow                           /mnt/d/ZQCNN/3rdparty/include/ZQlib/ZQ_PoissonSolver.h:451:12: error:
+   ZQ_PIVSimulator                          /mnt/d/ZQCNN/3rdparty/include/ZQlib/ZQ_PoissonSolver.h:451:12: error:
+   ZQ_PoissonSolver                         /mnt/d/ZQCNN/3rdparty/include/ZQlib/ZQ_PoissonSolver.h:451:12: error:
+   ZQ_PoseEstimation                        /mnt/d/ZQCNN/3rdparty/include/ZQlib/ZQ_CameraCalibration.h:785:41: err
+   ZQ_RBFKernel                             /mnt/d/ZQCNN/3rdparty/include/ZQlib/ZQ_RBFKernel.h:32:15: error: ‘fabs
+   ZQ_ShapeDeformation                      /mnt/d/ZQCNN/3rdparty/include/ZQlib/ZQ_ShapeDeformation.h:217:3: error
+   ZQ_SplinePCHIP                           /mnt/d/ZQCNN/3rdparty/include/ZQlib/ZQ_SplinePCHIP.h:120:26: error: ‘f
+   ZQ_StereoCalibration                     /mnt/d/ZQCNN/3rdparty/include/ZQlib/ZQ_CameraCalibration.h:785:41: err
+   ZQ_StereoRectify                         /mnt/d/ZQCNN/3rdparty/include/ZQlib/ZQ_CameraCalibration.h:785:41: err
+   ZQ_StructureFromTexture                  /mnt/d/ZQCNN/3rdparty/include/ZQlib/ZQ_StructureFromTexture.h:322:19:
+   ZQ_WinSock                               /mnt/d/ZQCNN/3rdparty/include/ZQlib/ZQ_WinSockBase.h:5:10: fatal error
+   ZQ_WinSockBase                           /mnt/d/ZQCNN/3rdparty/include/ZQlib/ZQ_WinSockBase.h:5:10: fatal error
+   ZQ_WinSockClientImpl                     /mnt/d/ZQCNN/3rdparty/include/ZQlib/ZQ_WinSockBase.h:5:10: fatal error
+   ZQ_WinSockClientSimple                   /mnt/d/ZQCNN/3rdparty/include/ZQlib/ZQ_WinSockBase.h:5:10: fatal error
+   ZQ_WinSockIOPoolSimple                   /mnt/d/ZQCNN/3rdparty/include/ZQlib/ZQ_WinSockBase.h:5:10: fatal error
+   ZQ_WinSockServerImpl                     /mnt/d/ZQCNN/3rdparty/include/ZQlib/ZQ_WinSockBase.h:5:10: fatal error
+   ZQ_WinSockServerSimple                   /mnt/d/ZQCNN/3rdparty/include/ZQlib/ZQ_WinSockBase.h:5:10: fatal error

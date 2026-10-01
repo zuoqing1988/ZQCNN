@@ -448,7 +448,7 @@ namespace ZQ
 			else if(strcmp(typeid(T).name(),"double") == 0)
 				flag = TAUCS_DOUBLE;
 			else
-				return 0;
+				return;    // 这个函数返回 void（见上面的签名），原来的 return 0 任何编译器都过不去
 
 			T* mac_u = new T[(width+1)*height];
 			T* mac_v = new T[width*(height+1)];
@@ -1527,13 +1527,13 @@ namespace ZQ
 		T* curl_u = new T[(width + 1)*height];
 		T* curl_v = new T[width*(height + 1)];
 
-		RegularGridtoMAC(width, height, u, v, mac_u, mac_v, datatype);
+		RegularGridtoMAC(width, height, u, v, mac_u, mac_v);
 
-		GetVorticityofMAC(width, height, mac_u, mac_v, vorticity, datatype, display);
+		GetVorticityofMAC(width, height, mac_u, mac_v, vorticity, display);
 
-		ReconstructCurlField(width, height, vorticity, curl_u, curl_v, maxiter, datatype, display);
+		ReconstructCurlField(width, height, vorticity, curl_u, curl_v, maxiter, display);
 
-		MACtoRegularGrid(width, height, curl_u, curl_v, h_u, h_v, datatype);
+		MACtoRegularGrid(width, height, curl_u, curl_v, h_u, h_v);
 
 		for (int i = 0; i < width*height; i++)
 		{
@@ -1568,8 +1568,8 @@ namespace ZQ
 	void ZQ_PoissonSolver::FlowFieldDecomposeMAC(int width, int height, const T* mac_u, const T* mac_v, T* vorticity, T* curl_u, T* curl_v, T* l_u, T* l_v, 
 		int maxiter, bool display)
 	{
-		GetVorticityofMAC(width, height, mac_u, mac_v, vorticity, datatype, display);
-		ReconstructCurlField(width, height, vorticity, curl_u, curl_v, maxiter, datatype, display);
+		GetVorticityofMAC(width, height, mac_u, mac_v, vorticity, display);
+		ReconstructCurlField(width, height, vorticity, curl_u, curl_v, maxiter, display);
 
 		for (int i = 0; i < height*(width + 1); i++)
 			l_u[i] = mac_u[i] - curl_u[i];

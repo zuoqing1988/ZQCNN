@@ -2,7 +2,10 @@
 #define _ZQ_CAMERA_POSE_ESTIMATION_H_
 #pragma once
 
+#include <vector>						// ä¸é¢ç¨å° std::vector，æ¬æä»¶åæ¥æ²¡ include
 #include "ZQ_CameraProjection.h"
+#include "ZQ_DoubleImage.h"
+			// 下面用了 ZQ_DImage<T>，本文件原来根本没 include 它。
 #include "ZQ_SVD.h"
 #include "ZQ_LevMar.h"
 

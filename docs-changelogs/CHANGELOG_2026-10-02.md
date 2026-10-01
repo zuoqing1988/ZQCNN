@@ -870,3 +870,67 @@ BROKEN，但其实只是缺 OpenCV，而本机明明有 `/usr/local/include/open
 
 Windows Release 0 error；Linux 0 error；sample 回归 8 个全 rc=0；
 probe OK 列表 103 -> 106；run_zqlib_checks.py 7/7 PASS；两套检查工具均 OK。
+
+## 新增/变更：清掉三簇「参数签名改过、调用点没跟着改」（可验证头 106 -> 114）
+
+### 变更文件
+- `ZQ_GEMM/../3rdparty/include/ZQlib/ZQ_CameraCalibration.h`：`radius_distortion`
+  的第二个副本改正（连带 5 个头）
+- `3rdparty/include/ZQlib/ZQ_CameraPoseEstimation.h`：补 `ZQ_DoubleImage.h` 与
+  `<vector>`（连带 4 个头）
+- `3rdparty/include/ZQlib/ZQ_PoissonSolver.h`
+  - `void SolveOpenPoisson` 里的 `return 0;` -> `return;`
+  - 6 处多余的 `datatype` 实参去掉（连带 3 个头）
+- `audit_k3_20261001.md`：新增**附录 AI**
+
+### 三簇
+
+1. **`ZQ_CameraCalibration.h:785-786`** 是 `radius_distortion` 笔误的**第二份副本**
+   （附录 AF 修的是 `ZQ_CameraProjection.h:635`）。两个头各自维护了一份几乎相同的
+   `undistort_points` —— 这份代码是复制粘贴出来的。
+
+   这一条本身值得记：我第一次只按文件名找到 CameraProjection 修掉就以为完事了，
+   是后来跑簇扫描才发现 CameraCalibration 里还有一份。
+
+2. **`ZQ_CameraPoseEstimation.h`** 用了 `ZQ_DImage<T>` 和 `std::vector`，
+   而这个文件**一个都没 include**。
+
+3. **`ZQ_PoissonSolver.h` 的 `datatype` 是一个已不存在的变量** ——
+   `RegularGridtoMAC` 等函数的签名后来多了一个 `bool use_period_coord`，
+   调用点还在传 `datatype`，于是每个调用点同时报「未声明」和「实参个数不对」。
+   顺带修同文件 `:451` 的 `return 0;`（那个函数返回 void）。
+
+### 效果
+
+| | 附录 AH 后 | 现在 |
+|---|---|---|
+| **OK（能独立编译 => 能验证）** | 106 | **114** |
+| NEEDS_LIB | 8 | 8 |
+| MSVC_ONLY | 1 | 1 |
+| BROKEN | 28 | **20** |
+
+从附录 AF 开始算：**81 -> 114**，可验证覆盖率从 **57% 提到 80%**。
+
+### 怎么搜的教训
+
+`radius_distortion` 在两个文件里各有一份，只按「我知道的文件」逐个看就会漏。
+
+**审计同类缺陷必须按「错误特征」全局搜，不能按「文件」逐个看** —— 复制粘贴出来的
+代码会带着同一个错误散落在多个文件里，而每个文件内部看都是自洽的。
+这与 AGENTS.md 行尾一节第 6 条（不要凭上一轮清单判断覆盖面，要全仓枚举同类站点）
+是同一条纪律的两个面。
+
+### 剩下 20 个 BROKEN
+
+- 7 个 ZQ_WinSock* 要 winsock2.h（Windows-only）
+- 1 个 GLSLShader 要 GL/glew.h
+- `ZQ_Calibration.h` 的 `ZQ_Rodrigues_R2r_fun`（实际成员是 `ZQ_Rodrigues_R2r`，
+  且是模板静态成员）—— 本轮仍未改，记为待办
+- 单头无连带的一批：BlendTwoImages3D 缺 <ctime>、GridDeformation3D 的 ZQ_DImage3D
+  未声明、ShapeDeformation 缺 typename、StructureFromTexture 缺模板实参、
+  RBFKernel/SplinePCHIP 缺 <cmath> —— 下一轮批量清
+
+### 验证
+
+Windows Release 0 error；Linux 0 error；sample 回归全 rc=0；
+probe OK 列表 106 -> 114；run_zqlib_checks.py 7/7 PASS；两套检查工具均 OK。

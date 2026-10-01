@@ -1,0 +1,153 @@
+==========================================================================
+ZQlib header standalone-compile probe (gcc, -std=c++11, Linux)  total=143
+==========================================================================
+OK (independently verifiable): 106
+   ZQ_Advection.h
+   ZQ_Advection3D.h
+   ZQ_BilateralFilter.h
+   ZQ_BilateralFilterOptions.h
+   ZQ_BilateralTextureFilter.h
+   ZQ_BilateralTextureFilterOptions.h
+   ZQ_BinaryImageContour.h
+   ZQ_BinaryImageProcessing.h
+   ZQ_BitStream.h
+   ZQ_BitonicSort.h
+   ZQ_BlendTwoImages.h
+   ZQ_CPURayCasting.h
+   ZQ_CPURenderer2DWorkspace.h
+   ZQ_CPURenderer3DWorkSpace.h
+   ZQ_CameraProjection.h
+   ZQ_ClosedFormImageMatting.h
+   ZQ_ClosedFormImageMattingOptions.h
+   ZQ_CompressedImage.h
+   ZQ_CompressedImageRaw.h
+   ZQ_ConstrainedDelaunayTriangulation.h
+   ZQ_CubicInterpolation.h
+   ZQ_CvCapture_FFMPEG.h
+   ZQ_DoubleImage.h
+   ZQ_DoubleImage3D.h
+   ZQ_FindCorners.h
+   ZQ_FindLargestRectInHistgram.h
+   ZQ_FindLargestSubMatrix.h
+   ZQ_FindSimilarityLandmark.h
+   ZQ_GaussianPyramid.h
+   ZQ_GaussianPyramid3D.h
+   ZQ_GraphCut.h
+   ZQ_GraphCutForTexture.h
+   ZQ_GridDeformation.h
+   ZQ_GridDeformation3DOptions.h
+   ZQ_GridDeformationOptions.h
+   ZQ_HeadPoseEstimation.h
+   ZQ_Huffman.h
+   ZQ_ICP.h
+   ZQ_ImageIO.h
+   ZQ_ImageProcessing.h
+   ZQ_ImageProcessing3D.h
+   ZQ_Inpainting.h
+   ZQ_InpaintingOptions.h
+   ZQ_JpegCodecDefines.h
+   ZQ_JpegDecoder.h
+   ZQ_JpegEncoder.h
+   ZQ_KDTree.h
+   ZQ_Kahansum.h
+   ZQ_Kmeans.h
+   ZQ_LSD.h
+   ZQ_LSQRSolver.h
+   ZQ_LSQRUtils.h
+   ZQ_LazySnapping.h
+   ZQ_LazySnappingOptions.h
+   ZQ_LevMar.h
+   ZQ_Link_OpenCV_Lib.h
+   ZQ_MarchingCube.h
+   ZQ_MathBase.h
+   ZQ_Matrix.h
+   ZQ_MergeImage.h
+   ZQ_MergeImageOptions.h
+   ZQ_MergeSort.h
+   ZQ_MinIndependentSets.h
+   ZQ_NVMLoader.h
+   ZQ_OpticalFlow3D.h
+   ZQ_OpticalFlowOptions.h
+   ZQ_PCGSolver.h
+   ZQ_PIVMovingObject.h
+   ZQ_PIVMovingObject3D.h
+   ZQ_PIVSimulator3D.h
+   ZQ_PoissonEditing.h
+   ZQ_PoissonEditing3D.h
+   ZQ_PoissonEditing3DOptions.h
+   ZQ_PoissonEditingOptions.h
+   ZQ_PoissonSolver3D.h
+   ZQ_Quaternion.h
+   ZQ_QuaternionSpline.h
+   ZQ_QuickSort.h
+   ZQ_Ray2D.h
+   ZQ_Ray3D.h
+   ZQ_RectifyCard.h
+   ZQ_Rodrigues.h
+   ZQ_SVD.h
+   ZQ_ScanLinePolygonFill.h
+   ZQ_ScatteredInterpolationRBF.h
+   ZQ_ShapeDeformationOptions.h
+   ZQ_ShapeInterpolation.h
+   ZQ_SparseLevMar.h
+   ZQ_SparseMatrix.h
+   ZQ_Spline.h
+   ZQ_StereoMatching.h
+   ZQ_StructureFromTextureOptions.h
+   ZQ_TaucsBase.h
+   ZQ_TextureOptimization.h
+   ZQ_TextureSampler.h
+   ZQ_TextureSampler3D.h
+   ZQ_TextureSynthesisProbe.h
+   ZQ_TriangleMeshMedialAxis.h
+   ZQ_UmfpackSolver.h
+   ZQ_Vec2D.h
+   ZQ_Vec3D.h
+   ZQ_Warping.h
+   ZQ_Wavelet.h
+   ZQ_WaveletRawHead.h
+   ZQ_WeightedMedian.h
+   ZQ_taucs.h
+
+NEEDS_LIB: 8
+   ZQ_ImageMattingGUI                       opencv2/
+   ZQ_LazySnappingGUI                       opencv2/
+   ZQ_Logger                                windows.h
+   ZQ_MFC_Utils                             afx
+   ZQ_ProtectedData                         windows.h
+   ZQ_PutTextCN                             windows.h
+   ZQ_SemaphoreEx                           windows.h
+   ZQ_StereoDisparity_CV2                   opencv2/
+
+MSVC_ONLY: 1
+   ZQ_ObjLoader                             strcpy_s
+
+BROKEN: 28
+   ZQ_BlendTwoImages3D                      /mnt/d/ZQCNN/3rdparty/include/ZQlib/ZQ_BlendTwoImages3D.h:374:20: erro
+   ZQ_Calibration                           /mnt/d/ZQCNN/3rdparty/include/ZQlib/ZQ_Calibration.h:1553:22: error: ‘
+   ZQ_CameraCalibration                     /mnt/d/ZQCNN/3rdparty/include/ZQlib/ZQ_CameraCalibration.h:785:41: err
+   ZQ_CameraCalibrationBino                 /mnt/d/ZQCNN/3rdparty/include/ZQlib/ZQ_CameraPoseEstimation.h:93:3: er
+   ZQ_CameraCalibrationMono                 /mnt/d/ZQCNN/3rdparty/include/ZQlib/ZQ_CameraPoseEstimation.h:93:3: er
+   ZQ_CameraCalibrationMulti                /mnt/d/ZQCNN/3rdparty/include/ZQlib/ZQ_CameraPoseEstimation.h:93:3: er
+   ZQ_CameraPoseEstimation                  /mnt/d/ZQCNN/3rdparty/include/ZQlib/ZQ_CameraPoseEstimation.h:93:3: er
+   ZQ_GLSLShader                            /mnt/d/ZQCNN/3rdparty/include/ZQlib/ZQ_GLSLShader.h:5:10: fatal error:
+   ZQ_GridDeformation3D                     /mnt/d/ZQCNN/3rdparty/include/ZQlib/ZQ_GridDeformation3D.h:298:6: erro
+   ZQ_MGMRESSolver                          /mnt/d/ZQCNN/3rdparty/include/ZQlib/ZQ_MGMRESSolver.h:1204:15: error: 
+   ZQ_MultiCamCalibration                   /mnt/d/ZQCNN/3rdparty/include/ZQlib/ZQ_CameraCalibration.h:785:41: err
+   ZQ_OpticalFlow                           /mnt/d/ZQCNN/3rdparty/include/ZQlib/ZQ_PoissonSolver.h:451:12: error: 
+   ZQ_PIVSimulator                          /mnt/d/ZQCNN/3rdparty/include/ZQlib/ZQ_PoissonSolver.h:451:12: error: 
+   ZQ_PoissonSolver                         /mnt/d/ZQCNN/3rdparty/include/ZQlib/ZQ_PoissonSolver.h:451:12: error: 
+   ZQ_PoseEstimation                        /mnt/d/ZQCNN/3rdparty/include/ZQlib/ZQ_CameraCalibration.h:785:41: err
+   ZQ_RBFKernel                             /mnt/d/ZQCNN/3rdparty/include/ZQlib/ZQ_RBFKernel.h:32:15: error: ‘fabs
+   ZQ_ShapeDeformation                      /mnt/d/ZQCNN/3rdparty/include/ZQlib/ZQ_ShapeDeformation.h:217:3: error
+   ZQ_SplinePCHIP                           /mnt/d/ZQCNN/3rdparty/include/ZQlib/ZQ_SplinePCHIP.h:120:26: error: ‘f
+   ZQ_StereoCalibration                     /mnt/d/ZQCNN/3rdparty/include/ZQlib/ZQ_CameraCalibration.h:785:41: err
+   ZQ_StereoRectify                         /mnt/d/ZQCNN/3rdparty/include/ZQlib/ZQ_CameraCalibration.h:785:41: err
+   ZQ_StructureFromTexture                  /mnt/d/ZQCNN/3rdparty/include/ZQlib/ZQ_StructureFromTexture.h:322:19: 
+   ZQ_WinSock                               /mnt/d/ZQCNN/3rdparty/include/ZQlib/ZQ_WinSockBase.h:5:10: fatal error
+   ZQ_WinSockBase                           /mnt/d/ZQCNN/3rdparty/include/ZQlib/ZQ_WinSockBase.h:5:10: fatal error
+   ZQ_WinSockClientImpl                     /mnt/d/ZQCNN/3rdparty/include/ZQlib/ZQ_WinSockBase.h:5:10: fatal error
+   ZQ_WinSockClientSimple                   /mnt/d/ZQCNN/3rdparty/include/ZQlib/ZQ_WinSockBase.h:5:10: fatal error
+   ZQ_WinSockIOPoolSimple                   /mnt/d/ZQCNN/3rdparty/include/ZQlib/ZQ_WinSockBase.h:5:10: fatal error
+   ZQ_WinSockServerImpl                     /mnt/d/ZQCNN/3rdparty/include/ZQlib/ZQ_WinSockBase.h:5:10: fatal error
+   ZQ_WinSockServerSimple                   /mnt/d/ZQCNN/3rdparty/include/ZQlib/ZQ_WinSockBase.h:5:10: fatal error

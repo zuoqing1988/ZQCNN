@@ -782,8 +782,8 @@ namespace ZQ
 			double radial_distortion = 1.0 + k*radius_2;
 			double radius_2_comp = radius_2 / radial_distortion;
 			radial_distortion = 1.0 + k*radius_2_comp;
-			x_out[i * 2 + 0] = x_in[i * 2 + 0] / radius_distortion;
-			x_out[i * 2 + 1] = x_in[i * 2 + 1] / radius_distortion;
+			x_out[i * 2 + 0] = x_in[i * 2 + 0] / radial_distortion;
+			x_out[i * 2 + 1] = x_in[i * 2 + 1] / radial_distortion;
 		}
 	}
 
