@@ -3,8 +3,20 @@ cmake-build*/
 build*/
 cmake-out*/
 3rdparty/mkl_runtime/
-# 构建/排查过程产生的垃圾文件*.obj*.logtmp_*.cpptmp_*.shtmp_*.pyprobe.exe# build/debug leftovers
-# tools/bench_gemm_ab.py 的构建目录（wslpath 失败时可能落在仓库根）
+
+# 排查/构建过程产生的临时文件
+*.obj
+*.log
+tmp_*.cpp
+tmp_*.sh
+tmp_*.py
+tmp_*.txt
+probe.exe
+probe_*.c
+*.d
+
+# tools/bench_gemm_ab.py 的构建目录
+# （历史上 wslpath 翻译失败时会落在仓库根，已误提交过一次）
 gemm-a/
 gemm-b/
 zqgemmab-*/
