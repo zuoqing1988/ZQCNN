@@ -320,14 +320,33 @@ namespace ZQ
 			}
 			for (int i = 0; i < union_num; i++)
 			{
+				// 一个成员都没分到的 union，pivot_pt_ids[i] 还是 -1：
+				// points_ptr + (-1)*dim 会读到缓冲前面，pts_fr_id[-1]/pts_box_id[-1]
+				// 更靠前。当前 Clustering 保证全覆盖，这里只是兜底。
+				if (pivot_pt_ids[i] < 0)
+					continue;
 				face_clusters[i].ChangeSize(dim);
+				if (face_clusters[i].pData == 0)
+					return false;
 				memcpy(face_clusters[i].pData, points_ptr + pivot_pt_ids[i]*dim, sizeof(float)*dim);
 			}
 
 			for(int i = 0;i < union_num;i++)
 			{
-				pivot_frame_ids[i] = pts_fr_id[pivot_pt_ids[i]];
-				ZQ_CNN_BBox cur_box = container.frames[pts_fr_id[pivot_pt_ids[i]]].face_boxes[pts_box_id[pivot_pt_ids[i]]];
+				int pivot_id = pivot_pt_ids[i];
+				if (pivot_id < 0)
+					continue;
+				int fr_id = pts_fr_id[pivot_id];
+				int box_id = pts_box_id[pivot_id];
+				// box_id 是按 face_feats 的下标记的。容器文件里某一帧的
+				// with_box 标志被写成 0 时 face_boxes 是空的而 face_feats 非空，
+				// 这里就是空 vector 下标。
+				if (fr_id < 0 || fr_id >= (int)container.frames.size())
+					return false;
+				if (box_id < 0 || box_id >= (int)container.frames[fr_id].face_boxes.size())
+					return false;
+				pivot_frame_ids[i] = fr_id;
+				ZQ_CNN_BBox cur_box = container.frames[fr_id].face_boxes[box_id];
 				pivot_rects[i].col1 = cur_box.col1;
 				pivot_rects[i].row1 = cur_box.row1;
 				pivot_rects[i].col2 = cur_box.col2;

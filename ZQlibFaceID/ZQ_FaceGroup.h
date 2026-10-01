@@ -118,11 +118,21 @@ namespace ZQ
 				}
 				if (flag && with_box)
 				{
-					for (int i = 0; i < num; i++)
+					// num 是 face_feats 的数量；ZQ_FaceGroupWithBox 允许 feats
+					// 与 boxes 数量不等（ZQ_FaceExtractor.h 就是这么填的），
+					// 写之前必须确认 boxes 够长。
+					if (face_boxes.size() < num)
 					{
-						flag = (1 == fwrite(&face_boxes[0]+i, sizeof(ZQ_CNN_BBox), 1, out));
-						if (!flag)
-							break;
+						flag = false;
+					}
+					else
+					{
+						for (int i = 0; i < num; i++)
+						{
+							flag = (1 == fwrite(&face_boxes[0]+i, sizeof(ZQ_CNN_BBox), 1, out));
+							if (!flag)
+								break;
+						}
 					}
 				}
 			}

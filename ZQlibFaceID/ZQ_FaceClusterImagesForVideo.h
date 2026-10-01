@@ -84,10 +84,12 @@ namespace ZQ
 			offset.resize(image_num);
 			length.resize(image_num);
 
-			int _off = 0;
+			// 几十张高分辨率图累加起来 int 就能溢出成负，malloc((size_t)负数)
+			// 会变成天文数字。这里用 __int64，与同文件 LoadFromFile 一致。
+			__int64 _off = 0;
 			for (int i = 0; i < image_num; i++)
 			{
-				offset[i] = _off;
+				offset[i] = (int)_off;
 				length[i] = compressed_length[i];
 				_off += length[i];
 			}

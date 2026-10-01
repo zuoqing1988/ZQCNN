@@ -5069,7 +5069,10 @@ bool ZQ_CNN_Forward_SSEUtils::_detection_output(const ZQ_CNN_Tensor4D& loc, cons
 			{
 				// Something bad happened if there are no predictions for current label.
 				printf("Could not find confidence predictions for label %d\n", c);
-				//return false;
+				// 这里原来把 return false 注释掉了，下一行直接
+				// conf_scores.find(c)->second 解引用 map::end()。与下面
+				// decode_bboxes 的处理保持一致：跳过这一类。
+				continue;
 			}
 			const std::vector<float>& scores = conf_scores.find(c)->second;
 			int label = share_location ? -1 : c;
@@ -5110,7 +5113,10 @@ bool ZQ_CNN_Forward_SSEUtils::_detection_output(const ZQ_CNN_Tensor4D& loc, cons
 			// Keep top k results per image.
 			std::sort(score_index_pairs.begin(), score_index_pairs.end(),
 				ZQ_CNN_BBoxUtils::SortScorePairDescend<std::pair<int, int> >);
-			score_index_pairs.resize(keep_top_k);
+			// 只能截断不能"增长"：若 size() < keep_top_k，resize 会用默认构造的
+			// pair{0.0f,{0,0}} 补齐，凭空造出 label=0, idx=0 的检测框。
+			if ((int)score_index_pairs.size() > keep_top_k)
+				score_index_pairs.resize(keep_top_k);
 			// Store the new indices.
 			std::map<int, std::vector<int> > new_indices;
 			for (int j = 0; j < score_index_pairs.size(); ++j)
@@ -5120,7 +5126,7 @@ bool ZQ_CNN_Forward_SSEUtils::_detection_output(const ZQ_CNN_Tensor4D& loc, cons
 				new_indices[label].push_back(idx);
 			}
 			all_indices.push_back(new_indices);
-			num_kept += keep_top_k;
+			num_kept += (int)score_index_pairs.size();
 		}
 		else {
 			all_indices.push_back(indices);
@@ -5325,7 +5331,10 @@ bool ZQ_CNN_Forward_SSEUtils::_detection_output_MXNET(const ZQ_CNN_Tensor4D& loc
 			// Keep top k results per image.
 			std::sort(score_index_pairs.begin(), score_index_pairs.end(),
 				ZQ_CNN_BBoxUtils::SortScorePairDescend<std::pair<int, int> >);
-			score_index_pairs.resize(keep_top_k);
+			// 只能截断不能"增长"：若 size() < keep_top_k，resize 会用默认构造的
+			// pair{0.0f,{0,0}} 补齐，凭空造出 label=0, idx=0 的检测框。
+			if ((int)score_index_pairs.size() > keep_top_k)
+				score_index_pairs.resize(keep_top_k);
 			// Store the new indices.
 			std::map<int, std::vector<int> > new_indices;
 			for (int j = 0; j < score_index_pairs.size(); ++j)
@@ -5335,7 +5344,7 @@ bool ZQ_CNN_Forward_SSEUtils::_detection_output_MXNET(const ZQ_CNN_Tensor4D& loc
 				new_indices[label].push_back(idx);
 			}
 			all_indices[n] = new_indices;
-			num_kept += keep_top_k;
+			num_kept += (int)score_index_pairs.size();
 		}
 		else 
 		{

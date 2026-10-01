@@ -80,6 +80,18 @@ namespace ZQ
 					feat_dim = 0;
 					return false;
 				}
+				// 预置路径原来直接 return true，既不检查 output_blob_name 这个
+				// blob 存不存在（自定义路径有 if (out == NULL) return false），
+				// 也不检查通道数是否等于硬编码的 feat_dim。而 ExtractFeature
+				// 结尾是 memcpy(feat, blob->GetFirstPixelPtr(),
+				// sizeof(float)*feat_dim) —— zqparams 与 nchwbin 配错时要么
+				// 越过 blob 尾部读，要么静默截断特征，人脸库全错且不报错。
+				const ZQ_CNN_Tensor4D* out = net.GetBlobByName(output_blob_name);
+				if (out == NULL || out->GetC() != feat_dim)
+				{
+					feat_dim = 0;
+					return false;
+				}
 				return true;
 			}
 			else

@@ -85,7 +85,10 @@ namespace ZQ
 				if (dst_len > 0)
 				{
 					pData = (float*)malloc(sizeof(float)*dst_len);
-					length = dst_len;
+					// malloc 失败时必须把 length 也清 0：同文件的 CopyData()
+					// 已经是这么做的。不清的话会留下 pData==0 && length==dst_len
+					// 的状态，调用方紧接着解引用 pData 就是空指针写。
+					length = (pData != 0) ? dst_len : 0;
 				}
 				else
 				{

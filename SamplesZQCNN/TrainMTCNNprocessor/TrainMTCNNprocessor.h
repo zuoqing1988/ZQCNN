@@ -524,11 +524,15 @@ namespace ZQ
 				fgets(buf2, BUF_LEN - 1, in2);
 				if (buf[0] == '\0')
 					break;
-				int len = strlen(buf);
-				if (buf[len - 1] == '\n')
+				// len 可能为 0（fgets 什么都没读到 / 文件提前结束），
+				// buf[len-1] 就是读缓冲区前面那个字节。buf2 更容易出问题：
+				// 循环条件只检查 buf[0]，某个 prob/landmark 文件比 anno/bbox
+				// 少行时，最后一行就会走越界。同型问题 ZQ_FaceDatabase.h:398 修过。
+				int len = (int)strlen(buf);
+				if (len > 0 && buf[len - 1] == '\n')
 					buf[--len] = '\0';
-				int len2 = strlen(buf2);
-				if (buf2[len2 - 1] == '\n')
+				int len2 = (int)strlen(buf2);
+				if (len2 > 0 && buf2[len2 - 1] == '\n')
 					buf2[--len2] = '\0';
 				std::vector<std::string> splits = _split_blank(buf);
 				std::vector<std::string> splits2 = _split_blank(buf2);
@@ -651,11 +655,15 @@ namespace ZQ
 					break;
 				line_id++;
 				
-				int len = strlen(buf);
-				if (buf[len - 1] == '\n')
+				// len 可能为 0（fgets 什么都没读到 / 文件提前结束），
+				// buf[len-1] 就是读缓冲区前面那个字节。buf2 更容易出问题：
+				// 循环条件只检查 buf[0]，某个 prob/landmark 文件比 anno/bbox
+				// 少行时，最后一行就会走越界。同型问题 ZQ_FaceDatabase.h:398 修过。
+				int len = (int)strlen(buf);
+				if (len > 0 && buf[len - 1] == '\n')
 					buf[--len] = '\0';
-				int len2 = strlen(buf2);
-				if (buf2[len2 - 1] == '\n')
+				int len2 = (int)strlen(buf2);
+				if (len2 > 0 && buf2[len2 - 1] == '\n')
 					buf2[--len2] = '\0';
 				std::vector<std::string> splits = _split_blank(buf);
 				std::vector<std::string> splits2 = _split_blank(buf2);
