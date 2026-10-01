@@ -58,6 +58,35 @@
 2. `LoadFrom/LoadFromFile` 失败后对象可能处于半更新状态；重复调用 `Init()` 的安全性要看具体实现，别假设。
 3. 报告"修之前先确认方向"：本项目里"看起来是 bug"的地方有一半是 API 约定与直觉相反（见上面两条，以及 `zq_cnn_eltwise_*` 里"增量加到 `*_im_ptr` 还是 `*_slice_ptr`"这类必须逐元素推演的地方）。
 
+## ZQ_GEMM 的数据布局（写内核前必须先确认，否则结果全错且不崩）
+
+`zq_gemm_32f_AnoTrans_Btrans_*` 的语义是：
+
+```
+C[i][j] = sum_k A[i*lda + k] * Bt[j*ldb + k]
+A  : M x K 行主序      Bt : N x K 行主序（注意是 N x K！）      C : M x N 行主序
+```
+
+**唯一在 A 和 Bt 里都连续的维度是 K。** C 沿 N 连续，但 `Bt[j][k] = Bt[j*ldb + k]`
+意味着相邻两列在内存里差 `ldb` 个 float，**不是相邻的**。
+
+所以"沿 N 方向一次取 8 列、乘上 A 的一个标量、写出 8 个 float"这种写法
+（`vbroadcastss (A[k])` + `vfmadd231ps (Bt + n*ldb)` + 一次 32B store）**是错的**：
+那条 `vfmadd231ps` 的内存操作数读的是 `Bt[n*ldb + 0 .. n*ldb + 7]`，即同一列的
+K 元素加上后面几列的头部，8 个结果里有 7 个是错的。
+
+这正是 2026-10-01 我给 `K < 8` 写小 K 行内核时踩的：数值明显不对但**不崩溃**，
+所以只靠"跑通了没"发现不了，必须逐个尺寸对比 intrinsic 的结果。
+要用 N 方向向量化只有两条路：
+① 把 B 打包成 N 方向的连续面板（packing，多一趟 N*K 的读写）；
+② 用 `vgatherdps` 按 ldb 跨步收集。
+K 方向向量化（现有 m2n4 / m1n8 / m1n1 微内核走的路）在任何 K 下都成立，
+只是 K 很小时水平归约的固定开销占比过大。
+
+改完 GEMM 内核**必须**用 `SamplesZQGEMM/SampleGEMMAsmCompare` 和
+`SamplesZQBLAS/SampleGEMMCompare` 逐尺寸核对，它会把 |intrinsic - asm| 打出来；
+`SampleGEMMCompare` 还会把 `asm/MKL` 比例打出来。
+
 ## NCHW 与 NCHWC 的步长语义（最容易搞反的一处）
 
 `ZQ_CNN_Tensor4D`(NCHW) 里：
