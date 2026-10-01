@@ -690,3 +690,42 @@ NCHW 里 `sliceStep` 是**一张图**的步长（不是通道），`(n,c,h,w)` �
 3. `PriorBox` 的百分比路径（`min_size` 为负）本机没有模型覆盖，
    尝试写独立探针程序复现但未跑通，**未取得端到端证据**，
    按"按构造正确 + 现有模型等价"记录，不声称已复现。
+
+## 新增/变更：第七轮（张量变体一致性 + 裸指针生命周期）
+
+### 变更文件
+
+| 文件 | 问题 | 修复 |
+|---|---|---|
+| `ZQCNN/ZQ_CNN_Tensor4D.cpp` | `Align128bit::ResizeBilinearRect`（标量+向量）把越界 rect 原样交给 resize 内核。实测（临时探针）`SampleCascadeOnet_Interface` 有 1 次 rect 纵向超出 34 像素，而源张量只有 1 像素 border → **堆越界读** | 进 resize 前把 rect 夹到 `[-border, 尺寸-1+border]`；向量版入参是 `const&`，夹到本地副本 |
+| 同上 | `Align128bit::ResizeNearestRect`（标量）越界守卫分支体写成了"正常 resize" | 对齐成 `return false`（`ResizeNearest` 全仓零调用方，无行为风险） |
+| `ZQlibFaceID/ZQ_FaceDatabaseCompact.h` | **空析构**：三个堆指针的释放逻辑全在 `_clear()` 里，析构一次都没调 → 加载过数据库就出作用域必然全量泄漏，正常路径 100% 触发 | 析构调 `_clear()`；同时 `= delete` 拷贝构造/赋值（只补析构会把泄漏变成 double free） |
+| `ZQlibFaceID/ZQ_FaceDatabase.h` | `Search` 的"首元素"判断写在 k 循环内部：维度不匹配时 `max_id` 被钉死为 0，**返回 true 并给出一整份伪结果** | 维度不匹配整对 `continue`；`filenames[person_j[...]]` 补边界守卫 |
+| 同上 | `_detect_lowest_pair` 的 `out_i/out_j` 未初始化（2 处） | 补初值 |
+| `ZQlibFaceID/ZQ_FaceDatabaseMaker.h` | `omp_get_num_procs()-1` 单核时为 0，`num_threads(0)` 是 OpenMP 未定义行为（2 处） | `__max(1, ...)` |
+| `ZQlibFaceID/ZQ_FaceContainerForVideo.h` | `SaveToFile` 失败路径漏 `fclose(out)` | 补 `fclose` |
+| `AGENTS.md` | — | 新增「三个张量变体对越界 rect 的策略互相冲突」+「不要改无法编译验证的第三方头」+「改完先抓基线」三条 |
+| `audit_k3_20261001.md` | — | 新增**附录 N**（变体一致性）与**附录 O**（ownership / 第三方头） |
+
+### 实测结果
+
+- 越界幅度探针（跑完即删）：CascadeOnet 3 次调用 0 次超 border；
+  **CascadeOnet_Interface 10 次调用 1 次超 border，最大纵向 34 px**；
+  MTCNN 700 次 / FaceDetectorMTCNN 8815 次 / LoadFromCode 1192 次全部 0
+- Windows 重建 0 error；SampleMTCNN / NCHWC4 输出与基线逐字节一致；sample 全部 rc=0
+- Linux `make -j8` → 0 error；8 个 sample 全部 rc=0
+
+### 注意事项
+
+1. **又一次"方向判断反了"**：`Align128bit::ResizeBilinearRect` 看起来就是守卫写反
+   （另两个变体都是 `if (越界) return false;`），改成 `return false` 之后
+   `SampleCascadeOnet` / `_Interface` 直接 `Find()` 返回 false，一张脸都检不出。
+   分两步定位：① 保留原分支只加守卫 → 仍失败；② 只改 ResizeNearestRect → 全通过。
+   根因是 MTCNN 全家**故意**传越界 rect（`ZQ_CNN_MTCNN*.h` 里 16 处边界检查
+   被注释掉了），所以最终选了"夹取"而不是"拒绝"。
+2. 审计代理报告的 21 条里，复核后采纳 5 条、明确记下不修的 8 条（附理由），
+   另有 13 条它自己已确认干净。**死代码链要单独标出来**：
+   `ZQ_FaceClustersForVideo.h` / `ZQ_FaceContainerForVideo.h` /
+   `ZQ_FaceClusterImagesForVideo.h` 全仓零 `#include` 引用点。
+3. `ZQ_FaceDatabaseCompact::_load_feats` 失败路径"不释放"看起来像泄漏，
+   实际是安全的（已写进成员，调用方 `_clear()` 兜住）—— 这类极易误判。

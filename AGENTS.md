@@ -17,6 +17,18 @@
 2. **双平台必须都编译通过**：改动 C/C++ 后要分别验证 Windows（`cmake --build build_x64 --config Release`）与 Linux（`wsl -d Ubuntu-20.04` + gcc 9，`/tmp/zqb` 下 cmake + make）。MSVC 能过不代表 gcc 能过。
 3. **不要依赖 MSVC 的传递包含**：MSVC 会顺带引入 `<cfloat>` `<cmath>` 等，gcc 不会。新写的代码要显式 `#include` 用到的标准头（已踩坑：FLT_MAX 在 gcc 下报未声明）。
 4. `ZQ_GEMM/CMakeLists.txt`、`ZQCNN/CMakeLists.txt`、`SamplesZQCNN/CMakeLists.txt` 都用 `file(GLOB ...)`，**新增 .c/.cpp 文件无需改 CMake，但需要重新 configure 才生效**。
+5. **不要改无法在本仓库编译验证的第三方头**。`3rdparty/include/ZQlib/ZQ_JpegDecoder.h` /
+   `ZQ_JpegEncoder.h` 既缺 `jpeglib.h` 也缺 `jpeg.lib`，全仓零 `#include` 引用点。
+   2026-10-01 第三轮给它套 `setjmp/longjmp` 时把 `Decode_with_allocated` 里指向
+   **调用方缓冲区**的 `pDst` 换成了内部变量 `dst_buf`（该函数语义就是不分配缓冲区，
+   `dst_buf` 恒为 0），下一行 `memcpy(point, ...)` 首行即崩，longjmp 分支还会把
+   调用方的指针清零 —— **一次加固反而造出了一个新 bug，而且编译不出来**。
+   这类头要动，先补一个最小编译验证（哪怕 stub 一个 `jpeglib.h`）。
+6. **改完要抓基线再对照**：每次改动前先跑一遍关键 sample 并把输出存成基线
+   （`tools/run_sample_regression.sh` + 手工滤掉耗时行），改完逐字节 diff。
+   本项目已经有过 3 次"方向判断反了、改完功能反而坏掉"，其中
+   `Align128bit::ResizeBilinearRect` 那次只有跑 sample 才能发现
+   （见下面「三个张量变体」一节）。**只看编译通过是不够的。**
 
 ## 提交规则
 
