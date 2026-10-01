@@ -360,3 +360,46 @@ Linux 侧同样：SampleMTCNN 19.2ms、SampleSSD 8.4ms 正常；`SampleGenderAge
 1. **仓库自带的 `model/` 只含 MTCNN/SSD 系列的权重**。SphereFace/ArcFace/PersonPose/NSFW/TextBoxes 等示例的权重在 Model Zoo（README 里的百度网盘链接），`data/` 里也只有 58 张测试图的一部分，个别示例引用的图（如 `data/hand6.jpg`、`data/0113.jpg`、`data/4.jpg`）并不在仓库里。这些失败与本次改动无关。
 2. 想让某个示例跑起来，先把对应权重/图片放到 `model/`、`data/`，或改成仓库里已有的文件名。
 3. `SampleMTCNN_NCHWC4` 在 Windows 上正常（8.2ms、检出 4 张脸），Linux 上仍有段错误，已单独立项排查（不是这次改动引入的：ASan 报出的两处——depthwise SIMD 投机读越界、`ChangeSize` 忽略返回值——都已修，仍崩说明还有第三个根因）。
+
+## 新增/变更：Linux NCHWC4 段错误的真正根因（行尾）+ 双平台复验
+
+### 根因
+
+`ZQCNN/layers_nchwc/zq_cnn_eltwise_nchwc_raw.h` 与 `ZQCNN/ZQ_CNN_Tensor4D_NCHWC.cpp` 在仓库里被存成了 **`<反斜杠> + CR CR LF`**：
+
+- MSVC 容忍这种行尾，所以 Windows 一直编得过；
+- **gcc 的行拼接只认 `\`+换行**，中间的裸 `\r` 会被当成空白字符，于是**每个跨行宏都在第一行就结束**，宏体被当成文件作用域代码解析（`'in_pix_ptr' undeclared here (not in a function)` 一类报错）；
+- 更隐蔽的后果是：增量构建里这两个文件编译失败，**却沿用了旧的目标文件**，于是 Linux 上跑起来的 `SampleMTCNN_NCHWC4` 是一个早于前面两处修复（SIMD 投机读余量、106 处 `ChangeSize` 检查）的旧二进制 —— 崩溃只是"旧二进制"的最后一次表现。
+
+用 `LD_PRELOAD` 装 SIGSEGV handler（WSL 里没有 gdb）抓到的现场：
+
+```
+SIGSEGV code=128 (SI_KERNEL) si_addr=(nil)
+  vmovaps -0xc0(%r10),%ymm3        r10 = 0x…54d9f0   (0x54d9f0 & 0x1f = 0x10)
+  zq_gemm_32f_align256bit_AnoTrans_Btrans_M4_caseNdiv2_Kdiv64
+  ← zq_gemm_32f_align256bit_AnoTrans_Btrans_M4_N2 ← zq_gemm_32f_AnoTrans_Btrans_auto
+  ← zq_cnn_conv_no_padding_gemm_nchwc4_kernel1x1_with_bias_prelu
+  ← ConvolutionWithBiasPReLU ← ZQ_CNN_MTCNN_NCHWC::_Rnet_stage
+```
+
+`vmovaps` 在 16 字节（而非 32 字节）对齐的地址上执行会触发 #GP，表现为 `si_addr=nil`——正是 `filters_data` 走 `zq_mm_load_ps`（对齐 load）遇到 malloc 只保证 16 字节对齐的场景；改成 `_aligned_malloc(..., 32)` + 64 字节余量的修复本身是对的，只是**从来没在 Linux 上被编译过**。
+
+### 变更文件
+
+| 文件 | 变更 |
+|---|---|
+| `ZQCNN/layers_nchwc/zq_cnn_eltwise_nchwc_raw.h` | CRCRLF → LF（787 行，**这就是修复本身**），内容逐字节等价（忽略 CR） |
+| `ZQCNN/ZQ_CNN_Tensor4D_NCHWC.cpp` | CRCRLF → LF（1387 行），同类隐患，一并修掉 |
+| `.gitattributes`（新增） | `ZQCNN/layers_nchwc/*_raw.h`、`ZQCNN/layers_c/*_raw.h`、`ZQ_GEMM/math/*_raw.h` 固定 `eol=lf`；`.asm` 固定 `eol=crlf`。本机 `core.autocrlf=true` 且原先没有 `.gitattributes`，这是坑的来源 |
+| `AGENTS.md` | 新增「行尾与跨平台编译规则」 |
+
+### 实测结果
+
+- **Linux**（`/tmp/zqbclean` 全新 cmake + 全量 make）：`build_rc=0`，`SampleMTCNN_NCHWC4` → `stage 3: cost 1.131 ms`、`final found num: 4`、`run_rc=0`
+- **Windows**（全量构建）：`build_rc=0`，`SampleMTCNN_NCHWC4` → `final found num: 4`、`run_rc=0`
+- 两平台结果一致；对全部 sgemm 调用点插桩断言 `matrix_A`/`filters_data`/`matrix_C` 均 32 字节对齐，**零违例**（插桩已撤）
+
+### 注意事项
+
+1. **教训**：改完内核头文件后，Linux 侧要确认目标文件真的重新编译（看 `make` 输出里有没有对应那行 `Building C object`），不能只看 `make` 的返回码——本例中宏被截断导致的编译失败没有让构建整体失败，旧目标文件被沿用。
+2. 该问题只在 Linux 暴露，Windows 全程正常，属于典型的"一个平台绿、另一个平台悄悄用旧二进制"的坑。
