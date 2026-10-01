@@ -341,3 +341,22 @@ MxNxK            intrinsic       asm   MKL(1T)  asm/MKL asm/intr  err(asm)
    了 xmm0-xmm15，两套 ABI 都正确；但这条路径本机没有实测环境。
 4. `.c` 里那行调试 `printf` 之前被误提交进仓库（会往 stdout 刷
    `[K zq_gemm_32f_asm_k8n4 M=8 N=16 ...]`），本次一并删掉。
+
+## 新增/变更：全示例回归扫描（Windows）与"哪些示例能直接跑"的清单
+
+### 实测结果
+
+Windows 产物目录逐个跑主要示例（每个都有 300s 超时，示例里的 `imshow`/`waitKey` 早已全部注释，不会阻塞）：
+
+| 状态 | 示例 |
+|---|---|
+| ✅ exit=0 正常出结果 | SampleMTCNN（20.1ms）、SampleMTCNN_NCHWC4（8.2ms）、SampleCascadeOnet、SampleCascadeOnet_Interface、SampleLnet106、SampleSSD（15.4ms）、SampleMTCNNLoadFromCode |
+| ⚠️ exit=1，但原因是**模型/图片不在仓库里**（Model Zoo 与数据集需另行下载） | SampleSphereFaceNet、SampleMobileFaceNet、SampleFacialNet、SamplePnet、SampleLnet、SampleHeatMap、SamplePersonPose、SampleNSFW、SampleMTCNN_Interface、SampleMTCNN_AspectRatio（`data/hand6.jpg`）、SampleTextBoxes（`data/0113.jpg`）、SampleDetectMouth、SampleSwapFace（需要命令行参数） |
+
+Linux 侧同样：SampleMTCNN 19.2ms、SampleSSD 8.4ms 正常；`SampleGenderAge`/`SampleMobileFaceNet` 报 `failed to load net`（同样缺 `model/GA112.zqparams` 等文件）。
+
+### 注意事项
+
+1. **仓库自带的 `model/` 只含 MTCNN/SSD 系列的权重**。SphereFace/ArcFace/PersonPose/NSFW/TextBoxes 等示例的权重在 Model Zoo（README 里的百度网盘链接），`data/` 里也只有 58 张测试图的一部分，个别示例引用的图（如 `data/hand6.jpg`、`data/0113.jpg`、`data/4.jpg`）并不在仓库里。这些失败与本次改动无关。
+2. 想让某个示例跑起来，先把对应权重/图片放到 `model/`、`data/`，或改成仓库里已有的文件名。
+3. `SampleMTCNN_NCHWC4` 在 Windows 上正常（8.2ms、检出 4 张脸），Linux 上仍有段错误，已单独立项排查（不是这次改动引入的：ASan 报出的两处——depthwise SIMD 投机读越界、`ChangeSize` 忽略返回值——都已修，仍崩说明还有第三个根因）。
