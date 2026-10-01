@@ -598,3 +598,14 @@ NCHW 里 `sliceStep` 是**一张图**的步长（不是通道），`(n,c,h,w)` �
 **双平台复验**：Windows 全量构建 0 error（SampleMTCNN 18.6ms / SampleSSD 10.0ms / SampleFaceDetectorMTCNN 9.7ms），Linux 全量构建 0 error（SampleMTCNN / SampleMTCNN_NCHWC4 / SampleSSD 全部 exit=0）。
 
 **仍未修**：`LoadFromBuffer` 未调用 `_simplify_inplace()`（会改变 buffer 加载路径的行为，仓库里没有可用模型可验证，按"改动前先能验证"的原则暂留待办）。
+
+## 新增/变更：LoadFromBuffer 启用 `_simplify_inplace()`（附录 L 最后一项）
+
+`ZQ_CNN_Net::LoadFromBuffer` 里的 `//_simplify_inplace();` 被注释掉，导致两条加载入口行为不一致：
+
+- `GetBlobByName(top_name)` 对 in-place 层（ReLU/ReLU6/PReLU/BatchNormScale/BatchNorm/Scale/AddBias）返回的是 **bottom 张量**而不是 top；
+- 对用**不同名**声明 in-place 的模型（如 `det3-dw48-p0` 的 `PReLU bottom=bn1 top=relu1`）会多分配一整份 blob。
+
+本机有可验证路径（`SampleCascadeOnet` / `SampleCascadeOnet_Interface` / `SampleMTCNNLoadFromCode` 都走 `LoadFromBuffer`），启用后回归结果与改动前一致：SampleCascadeOnet 1.64M、SampleCascadeOnet_Interface 0.65M、SampleMTCNNLoadFromCode 136ms、SampleMTCNN 19.0ms、SampleSSD 10.2ms，全部 exit=0。
+
+至此 `audit_k3_20261001.md` 附录 L 的 7 项待办全部闭环。
