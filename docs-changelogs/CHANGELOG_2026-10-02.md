@@ -1694,3 +1694,125 @@ python tools/run_audit_checks.py --warn-sweep --src-sweep --msvc-asan
 
 Windows 全量构建 0 error；Linux 全量构建 rc=0；Linux sample 回归 8 个全 rc=0；
 Windows 侧 6 个关键 sample（含 `SampleGEMMAsmCompare` 对拍）全 rc=0。
+
+## 新增/变更：MSVC `/analyze` 查出两个六年前的 `if (1 || ...)`（附录 AW）
+
+### 变更文件
+
+- `ZQCNN/ZQ_CNN_Forward_SSEUtils.cpp`：两处恒真条件各加一段注释（**零行为变化**）
+- `tools/msvc_analyze.bat`（新增）：`/analyze` 扫主工程 7 个 TU
+- `tools/capture_sample_outputs.sh`（新增）：跑 sample 并把**计时噪声归一化**后存
+- `tools/ab_diff_sample_outputs.sh`（新增）
+- `tools/ab_time_two_binaries.sh`（新增）：两个二进制**交替**跑比中位耗时
+- `audit_k3_20261001.md`：新增**附录 AW**
+
+### 问题
+
+附录 AT/AU 用的是 gcc `-Wall -Wextra`。MSVC 侧到这一轮为止只做过
+"能不能编过"的检查（附录 AR 的 `cl /Zs`）。`/analyze` 覆盖的是
+**gcc 根本没有对应警告**的一类：C6001（解引用 NULL）、C6385/C6386（缓冲区溢出）、
+C4701（可能未初始化的局部变量）、**C6235（恒真/恒假条件）**、C6246（变量遮蔽），
+而且它在单个 TU 内是过程间分析。
+
+### 实测结果
+
+7 个 TU / 约 46 秒：
+
+| TU | /analyze |
+|---|---|
+| `ZQ_CNN_Forward_SSEUtils.cpp` | **6 条**（2×C6235 + 4×C6246） |
+| `ZQ_CNN_SSDDetectorPytorch.cpp` | 20 条（全 C6246，来自 ZQ_CNN_Layer.h） |
+| 其余 5 个 TU | 0 |
+
+**没有 C6001 / C6385 / C6386 / C4701** —— 前三轮高危缺陷里那些
+"解析层不做范围校验"的路径，Code Analysis 一个都没额外捞出来。
+
+### 缺陷本体
+
+```cpp
+if (1 || (out_HW >= 16 && filter_HWC >= 32 && filter_N >= 4)
+    || ((out_HW >= 16 && filter_H == 1 && filter_W == 1 && filter_C >= 8 && filter_N >= 4)))
+```
+
+`1 ||` 让整个条件恒为真。`git log -L` 查出来是 2019-02-25 的 `75d4af2`
+（"尝试支持arm_neon"）引入的，**六年了**。后果：
+
+1. 那个形状守卫是**死代码**；
+2. 它下面约 **470 行**手写标量卷积核（`kernel1x1_C4` / `kernel3x3` / `kernel5x5` /
+   `general` 以及 Align0 / Align256bit 的对应版本）在默认构建
+   （`ZQ_CNN_USE_ZQ_GEMM=1`）下**完全不可达**。
+
+### 三个实验证明它今天不做任何事
+
+**① 带探针跑 sample**，看守卫会挡掉哪些形状：
+
+| sample | 会被挡掉的卷积次数 | 典型形状 |
+|---|---|---|
+| `SampleMTCNN` | 900 | `out 3x5 C=24 N=1 / filt 1x1x16 N=24`（out_HW=15, filter_HWC=16） |
+| `SampleMTCNNLoadFromCode` | **10600** | `out 60x60 C=2 N=1 / filt 1x1x24 N=2`（filter_HWC=24 < 32） |
+| `SampleCascadeOnet` | 18 | `out 1x1 C=128 / filt 1x1x128`（out_HW=1） |
+| `SampleSSD` | **0** | — |
+| `SampleFaceDetectorMTCNN` | **0** | — |
+
+**② 去掉 `1 ||`，比输出**（编两个只差这两行的二进制）：
+7 个 sample 去掉计时噪声后**逐字节相同**。两条路径对这些形状结果完全一致。
+
+**③ 交替跑比性能**（`tools/ab_time_two_binaries.sh`，ABABAB）：
+
+```
+SampleMTCNN             n=15  A 8.674 ms  B 8.774 ms  B/A = 1.012
+SampleMTCNNLoadFromCode  n=7  A 40.484 ms B 41.367 ms B/A = 1.022
+```
+
+**都在本机 7% 的噪声下限之内。**
+
+### 处置：保留 `1 ||`，加注释，**不擅自恢复守卫**
+
+`1 ||` 不是正确性缺陷，但它是"一个六年没人碰过的、让 470 行代码变成死代码的开关"。
+
+**保留** `1 ||` 并在两处加注释写清来龙去脉与实测数据。
+**不恢复守卫** —— 恢复它等于让 470 行**从未在当前配置下跑过**的标量核重新上线，
+那是**增加**风险而不是减少风险；尤其 `SampleSSD` 与 `SampleFaceDetectorMTCNN`
+对那条路径的覆盖是 **0 次**。
+
+后续由所有者二选一：① 删掉不可达的 backup method；② 逐形状验证那些标量核之后
+再恢复守卫。**本轮不替这个决定背书。**
+
+### 注意事项
+
+1. **这类恒真条件 gcc 完全看不见**（`-Wall -Wextra` 没有对应项；Clang 有
+   `-Wconstant-logical-operand` 但只在 `-Weverything` 里）。这是
+   "双平台各走各的检查"又一个具体收益。
+2. **C6246 的 24 条不修**。`ZQ_CNN_Layer.h` 里 `dst_len` 被 20 个 `LoadParam`
+   重载各自遮蔽，读的**就是**被遮蔽的那个参数，行为完全正确；参数名与成员名
+   同名在这里是有意的写法。改名会牵动 20 个函数，收益为负。
+3. **做输出对比前必须先归一化计时**。第一版直接 diff sample stdout，
+   得到 33 行差异而**全是噪声**（同一份二进制连跑两次，`stage 1: cost`
+   在 1.481~1.510 ms 之间跳、GF/s 差 20% 以上）。
+   `tools/capture_sample_outputs.sh` 在存之前把时间/吞吐数字替换成占位符，
+   保留 `nms cost: <T>ms, (159-->24)` 里的**检测框数量** —— 那才是要比的。
+
+### 顺带查出一条已存在的非确定性
+
+归一化之后仍有一处两次运行不同：
+
+```
+SampleMTCNNLoadFromCode.txt
+< nms cost: <T>ms, (6067-->649)
+> nms cost: <T>ms, (6098-->649)
+```
+
+**同一二进制、同一输入，NMS 之前的候选框数量每次都不同**（实测 6007/6068/6098），
+**NMS 之后恒为 649**。
+
+不是本轮引入的（两个变体都出现）。CNN 前向在单线程、确定性输入下给出不同的
+原始候选数，通常意味着并行归约的求和顺序不固定（`ZQ_CNN_Net` 用 OpenMP）或
+某处读了未初始化内存。**本轮没有定位到根因**，如实记录。实际影响被 NMS 吸收掉了，
+但"前向结果随运行变化"在需要严格可复现的场合是不能接受的。
+
+### 验证
+
+    python tools/check_line_endings.py                line endings OK
+    python tools/check_text_encoding.py               629 files, no U+FFFD
+    wsl make -j8                                      rc=0
+    A/B 输出对比（注释版 vs 原版）                     7 个 sample 逐字节相同

@@ -365,6 +365,29 @@ void _convolution_nopadding_case_N_equal_one(int align_mode, const float* in_dat
 	//gemm method
 	if (!has_handled)
 	{
+		// 审计 2026-10-02（audit_k3_20261001.md 附录 AW.1）
+		// ------------------------------------------------------
+		// 下面两处 `if (1 || <形状守卫>)` 里的 `1 ||` 是 2019-02 的 commit 75d4af2
+		// （"尝试支持arm_neon"）留下的，**整个条件恒为真**：
+		// MSVC 的 C6235（"(<非零常量> || <表达式>) 始终为非零常量"）会直接指出来。
+		// 后果是那个形状守卫是**死代码**，而它下面 470~700 行的 "backup method"
+		// （手写标量卷积核）在默认构建（ZQ_CNN_USE_ZQ_GEMM=1）下**完全不可达**。
+		//
+		// 实测（附录 AW.2~AW.4）：
+		//   带探针跑一遍 sample，会被这个守卫挡掉的卷积有
+		//     SampleMTCNN 900 次 / SampleMTCNNLoadFromCode 10600 次 /
+		//     SampleCascadeOnet 18 次 / SampleSSD 与 SampleFaceDetectorMTCNN 0 次
+		//     典型形状：`filt 1x1x24 N=2`（filter_HWC=24 < 32）、`out 1x1`（out_HW=1）
+		//   把 `1 ||` 去掉（守卫恢复）之后，7 个 sample 的输出**逐字节相同**
+		//   （去掉计时噪声之后，见 tools/capture_sample_outputs.sh）
+		//   性能上中位 1.01~1.02×，**落在本机 7% 的噪声下限之内**
+		//
+		// 也就是说：那个守卫当年想做的事，今天由 GEMM 全量接管了，结果一致、
+		// 速度一样。**这里刻意保留 `1 ||`**：恢复守卫等于让 470 行从未在当前
+		// 配置下跑过的标量内核重新上线，那是**增加**风险而不是减少风险
+		// （本轮没有逐形状验证过那些内核）。
+		// 真正该做的后续决定是二选一：① 删掉下面那段不可达的 backup method；
+		// ② 逐形状验证那些标量内核之后再恢复守卫。**这是所有者的决定，不是本轮该替你做的。**
 		if (in_pixStep == filter_pixStep)
 		{
 			if (1 || (out_HW >= 16 && filter_HWC >= 32 && filter_N >= 4)
@@ -422,6 +445,7 @@ void _convolution_nopadding_case_N_equal_one(int align_mode, const float* in_dat
 		}
 		else
 		{
+			// 同上：这里也是恒真的 `1 ||`，见本函数开头那段注释（附录 AW.1）。
 			if (1 || (out_HW >= 16 && filter_HWC >= 32 && filter_N >= 4)
 				|| ((out_HW >= 16 && filter_H == 1 && filter_W == 1 && filter_C >= 8 && filter_N >= 4)))
 			{
