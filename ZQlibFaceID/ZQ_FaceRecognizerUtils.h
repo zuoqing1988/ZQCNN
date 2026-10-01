@@ -346,6 +346,7 @@ namespace ZQ
 			}
 			clock_t t3 = clock();
 			_findNonreflectiveSimilarity(nPts, uv, xyR, transform2R);
+			delete[] xyR;
 			clock_t t4 = clock();
 			/*for (int i = 0; i < 3; i++)
 			{

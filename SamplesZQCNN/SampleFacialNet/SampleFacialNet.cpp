@@ -62,6 +62,11 @@ int main()
 		printf("[%d] times cost %.3f s, 1 iter cost %.3f ms\n", iters, t2 - t1, 1000 * (t2 - t1) / iters);
 
 		const ZQ_CNN_Tensor4D* ptr = net.GetBlobByName("prob");
+		if (ptr == 0)
+		{
+			cout << "The blob prob does not exist!\n";
+			return EXIT_FAILURE;
+		}
 		int dim = ptr->GetC();
 		std::vector<float> feat0(dim);
 		memcpy(&feat0[0], ptr->GetFirstPixelPtr(), sizeof(float)*dim);

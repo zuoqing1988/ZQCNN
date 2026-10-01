@@ -318,7 +318,11 @@ namespace ZQ
 				xyR[i * 2 + 1] = xy[i * 2 + 1];
 			}
 			if (!_findNonreflectiveSimilarity(nPts, uv, xyR, transform2R))
+			{
+				delete[] xyR;
 				return false;
+			}
+			delete[] xyR;
 
 			const float TreflectY[9] =
 			{

@@ -67,6 +67,12 @@ int main()
 		cout << "failed to get blob conv6-3\n";
 		return EXIT_FAILURE;
 	}
+	if (landmark1->GetN()*landmark1->GetC()*landmark1->GetH()*landmark1->GetW() < 5 * 2
+		|| landmark2->GetN()*landmark2->GetC()*landmark2->GetH()*landmark2->GetW() < 5 * 2)
+	{
+		cout << "blob conv6-3 does not have enough elements\n";
+		return EXIT_FAILURE;
+	}
 	const float* landmark1_data = landmark1->GetFirstPixelPtr();
 	const float* landmark2_data = landmark2->GetFirstPixelPtr();
 	for (int i = 0; i < 5; i++)

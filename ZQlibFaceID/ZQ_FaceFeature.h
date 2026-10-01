@@ -33,7 +33,7 @@ namespace ZQ
 		~ZQ_FaceFeature()
 		{
 			if (pData)
-				delete[]pData;
+				free(pData);
 			pData = 0;
 			length = 0;
 		}
@@ -45,7 +45,7 @@ namespace ZQ
 			{
 				length = other.length;
 				if (pData != 0)
-					delete[]pData;
+					free(pData);
 				pData = (float*)malloc(sizeof(float)*length);
 			}
 			if (length > 0)

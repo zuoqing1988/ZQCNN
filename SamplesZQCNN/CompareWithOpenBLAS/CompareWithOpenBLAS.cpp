@@ -560,7 +560,12 @@ int main(int argc, const char** argv)
 	{
 		cpu_set_t mask;
 		CPU_ZERO(&mask);
-		CPU_SET(atoi(argv[1]), &mask);
+		int cpu_idx = atoi(argv[1]);
+		if (cpu_idx < 0)
+			cpu_idx = 0;
+		if (cpu_idx >= CPU_SETSIZE)
+			cpu_idx = CPU_SETSIZE - 1;
+		CPU_SET(cpu_idx, &mask);
 		if (sched_setaffinity(0, sizeof(mask), &mask) < 0) {
 			perror("sched_setaffinity");
 		}

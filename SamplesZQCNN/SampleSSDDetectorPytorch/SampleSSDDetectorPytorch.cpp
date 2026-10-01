@@ -33,6 +33,11 @@ int main(int argc, const char** argv)
 	}
 
 	cv::Mat image = cv::imread(argv[1], 1);
+	if (image.empty())
+	{
+		printf("failed to load image %s\n", argv[1]);
+		return EXIT_FAILURE;
+	}
 	cv::Mat input_image = image;
 	if (ssd.UseGray())
 	{
@@ -83,7 +88,14 @@ void draw_objects(cv::Mat& image, const std::vector<ZQ_CNN_SSDDetectorUtils::BBo
 		cv::rectangle(image, cv::Point(x1, y1), cv::Point(x2, y2), cv::Scalar(255, 0, 0));
 
 		char text[256];
-		sprintf(text, "%s %.1f%%", class_names[obj.class_id], obj.prob * 100);
+		const char* class_name = "unknown";
+		if (obj.class_id >= 0 && obj.class_id < (int)(sizeof(class_names) / sizeof(class_names[0])))
+			class_name = class_names[obj.class_id];
+#if defined(_WIN32)
+		sprintf_s(text, 256, "%s %.1f%%", class_name, obj.prob * 100);
+#else
+		snprintf(text, 256, "%s %.1f%%", class_name, obj.prob * 100);
+#endif
 
 		int baseLine = 0;
 		cv::Size label_size = cv::getTextSize(text, cv::FONT_HERSHEY_SIMPLEX, 0.5, 1, &baseLine);

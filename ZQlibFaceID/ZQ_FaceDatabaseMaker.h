@@ -816,9 +816,27 @@ namespace ZQ
 #endif
 
 			int feat_dim = 0;
-			fread(&feat_dim, sizeof(int), 1, in);
+			if (1 != fread(&feat_dim, sizeof(int), 1, in))
+			{
+				fclose(in);
+				return false;
+			}
+			if (feat_dim < 1 || feat_dim > 4096)
+			{
+				fclose(in);
+				return false;
+			}
 			feat.ChangeSize(feat_dim);
-			fread(feat.pData, sizeof(float), feat_dim, in);
+			if (feat.pData == 0)
+			{
+				fclose(in);
+				return false;
+			}
+			if (feat_dim != (int)fread(feat.pData, sizeof(float), feat_dim, in))
+			{
+				fclose(in);
+				return false;
+			}
 			fclose(in);
 			return true;
 		}

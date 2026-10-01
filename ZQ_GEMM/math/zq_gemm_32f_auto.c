@@ -6,7 +6,7 @@ extern "C" {
 
 #if __ARM_NEON 
 #define SWAP_A_Bt \
-	if (M*N < 0.1*(M*N*K) && M + 8 < N) \
+	if ((long long)M*N < 0.1*((long long)M*N*K) && M + 8 < N) \
 	{ \
 		swap = 1; \
 		A = oldB; \
@@ -16,7 +16,18 @@ extern "C" {
 		M = old_N; \
 		N = old_M; \
 		ldc = N; \
-		C = _aligned_malloc(M*N * sizeof(float), 32); \
+		C = _aligned_malloc((size_t)M*N * sizeof(float), 32); \
+		if (C == 0) \
+		{ \
+			swap = 0; \
+			A = oldA; \
+			Bt = oldB; \
+			lda = old_lda; \
+			ldb = old_ldb; \
+			M = old_M; \
+			N = old_N; \
+			ldc = old_ldc; \
+		} \
 	}
 
 #define SWAP_C \
@@ -426,7 +437,7 @@ extern "C" {
 		int old_lda = lda, old_ldb = ldb, old_ldc = ldc, old_M = M, old_N = N;
 		int m, n;
 		int swap = 0;
-		if (M*N < 0.1*(M*N*K) && M + 8 < N)
+		if ((long long)M*N < 0.1*((long long)M*N*K) && M + 8 < N)
 		{
 			swap = 1;
 			A = oldB;
@@ -436,7 +447,18 @@ extern "C" {
 			M = old_N;
 			N = old_M;
 			ldc = N;
-			C = _aligned_malloc(M*N * sizeof(float), 32);
+			C = _aligned_malloc((size_t)M*N * sizeof(float), 32);
+			if (C == 0)
+			{
+				swap = 0;
+				A = oldA;
+				Bt = oldB;
+				lda = old_lda;
+				ldb = old_ldb;
+				M = old_M;
+				N = old_N;
+				ldc = old_ldc;
+			}
 		}
 		int handled = 0;
 

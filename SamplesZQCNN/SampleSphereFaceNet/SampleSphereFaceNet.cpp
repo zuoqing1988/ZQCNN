@@ -30,7 +30,12 @@ int main(int argc, const char** argv)
 	{
 		cpu_set_t mask;
 		CPU_ZERO(&mask);
-		CPU_SET(atoi(argv[1]), &mask);
+		int cpu_idx = atoi(argv[1]);
+		if (cpu_idx < 0)
+			cpu_idx = 0;
+		if (cpu_idx >= CPU_SETSIZE)
+			cpu_idx = CPU_SETSIZE - 1;
+		CPU_SET(cpu_idx, &mask);
 		if (sched_setaffinity(0, sizeof(mask), &mask) < 0) {
 			perror("sched_setaffinity");
 		}
@@ -250,6 +255,11 @@ int main(int argc, const char** argv)
 		
 
 		ptr = net.GetBlobByName(out_blob_name);
+		if (ptr == 0)
+		{
+			cout << "The blob " << out_blob_name << " does not exist!\n";
+			return EXIT_FAILURE;
+		}
 		int dim = ptr->GetC();
 		std::vector<float> feat0(dim);
 		memcpy(&feat0[0], ptr->GetFirstPixelPtr(), sizeof(float)*dim);
@@ -268,6 +278,11 @@ int main(int argc, const char** argv)
 		printf("[%d] times cost %.3f s, 1 iter cost %.3f ms\n", iters, t4 - t3, 1000 * (t4 - t3) / iters);
 		
 		ptr = net.GetBlobByName(out_blob_name);
+		if (ptr == 0)
+		{
+			cout << "The blob " << out_blob_name << " does not exist!\n";
+			return EXIT_FAILURE;
+		}
 		std::vector<float> feat1(dim);
 		memcpy(&feat1[0], ptr->GetFirstPixelPtr(), sizeof(float)*dim);
 
@@ -300,6 +315,11 @@ int main(int argc, const char** argv)
 			1000 * net_nchwc.GetLastTimeOfLayerType("Eltwise")
 		);
 		ptr2 = net_nchwc.GetBlobByName(out_blob_name);
+		if (ptr2 == 0)
+		{
+			cout << "The blob " << out_blob_name << " does not exist!\n";
+			return EXIT_FAILURE;
+		}
 		std::vector<float> feat2(dim);
 		memcpy(&feat2[0], ptr2->GetFirstPixelPtr(), sizeof(float)*dim);
 		float score = 0;

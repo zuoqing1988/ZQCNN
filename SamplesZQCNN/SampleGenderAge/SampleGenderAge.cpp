@@ -62,7 +62,17 @@ int main()
 	printf("[%d] times cost %.3f s, 1 iter cost %.3f ms\n", iters, t2 - t1, 1000 * (t2 - t1) / iters);
 
 	const ZQ_CNN_Tensor4D* ptr = net.GetBlobByName(out_blob_name);
+	if (ptr == 0)
+	{
+		cout << "The blob " << out_blob_name << " does not exist!\n";
+		return EXIT_FAILURE;
+	}
 	int dim = ptr->GetC();
+	if (dim < 2)
+	{
+		cout << "The dim of blob " << out_blob_name << " is less than 2!\n";
+		return EXIT_FAILURE;
+	}
 	std::vector<float> data(dim);
 	memcpy(&data[0], ptr->GetFirstPixelPtr(), sizeof(float)*dim);
 	/*for (int w = 0; w < dim; w += 2)
@@ -75,7 +85,7 @@ int main()
 	float range = log(confidence/(1-confidence));
 	int age_min = 0;
 	int age_max = 0;
-	for (int w = 2; w < dim; w += 2)
+	for (int w = 2; w + 1 < dim; w += 2)
 	{
 		age += (data[w] - data[w + 1]) > 0 ? 1 : 0;
 		age_min += (data[w] - data[w + 1] - range) > 0 ? 1 : 0;

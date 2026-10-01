@@ -36,18 +36,35 @@ bool load_to_buffer(const std::string& param_file, const std::string& model_file
 #if defined(_WIN32)
 	_fseeki64(in, 0, SEEK_END);
 	__int64 param_buffer_len = _ftelli64(in);
+	if (param_buffer_len < 0)
+	{
+		cout << "failed to get file size " << param_file << "\n";
+		fclose(in);
+		return false;
+	}
 	param_buffer.resize(param_buffer_len);
 	_fseeki64(in, 0, SEEK_SET);
 #else
 	fseek(in, 0, SEEK_END);
 	__int64 param_buffer_len = ftell(in);
+	if (param_buffer_len < 0)
+	{
+		cout << "failed to get file size " << param_file << "\n";
+		fclose(in);
+		return false;
+	}
 	param_buffer.resize(param_buffer_len);
 	fseek(in, 0, SEEK_SET);
 #endif
 
 	if (param_buffer_len > 0)
 	{
-		fread_s(&param_buffer[0], param_buffer_len, 1, param_buffer_len, in);
+		if (0 != fread_s(&param_buffer[0], param_buffer_len, 1, param_buffer_len, in))
+		{
+			cout << "failed to read " << param_file << "\n";
+			fclose(in);
+			return false;
+		}
 	}
 	else
 	{
@@ -63,11 +80,22 @@ bool load_to_buffer(const std::string& param_file, const std::string& model_file
 	}
 	_fseeki64(in, 0, SEEK_END);
 	__int64 model_buffer_len = _ftelli64(in);
+	if (model_buffer_len < 0)
+	{
+		cout << "failed to get file size " << model_file << "\n";
+		fclose(in);
+		return false;
+	}
 	model_buffer.resize(model_buffer_len);
 	_fseeki64(in, 0, SEEK_SET);
 	if (model_buffer_len > 0)
 	{
-		fread_s(&model_buffer[0], model_buffer_len, 1, model_buffer_len, in);
+		if (0 != fread_s(&model_buffer[0], model_buffer_len, 1, model_buffer_len, in))
+		{
+			cout << "failed to read " << model_file << "\n";
+			fclose(in);
+			return false;
+		}
 	}
 	else
 	{
@@ -82,11 +110,22 @@ bool load_to_buffer(const std::string& param_file, const std::string& model_file
 	}
 	fseek(in, 0, SEEK_END);
 	__int64 model_buffer_len = ftell(in);
+	if (model_buffer_len < 0)
+	{
+		cout << "failed to get file size " << model_file << "\n";
+		fclose(in);
+		return false;
+	}
 	model_buffer.resize(model_buffer_len);
 	fseek(in, 0, SEEK_SET);
 	if (model_buffer_len > 0)
 	{
-		fread(&model_buffer[0], 1, model_buffer_len, in);
+		if (model_buffer_len != (__int64)fread(&model_buffer[0], 1, model_buffer_len, in))
+		{
+			cout << "failed to read " << model_file << "\n";
+			fclose(in);
+			return false;
+		}
 	}
 	else
 	{
@@ -208,6 +247,11 @@ int main()
 		printf("[%d] times cost %.3f s, 1 iter cost %.3f ms\n", iters, t2 - t1, 1000 * (t2 - t1) / iters);
 
 		ptr = net.GetBlobByName(out_blob_name);
+		if (ptr == 0)
+		{
+			cout << "The blob " << out_blob_name << " does not exist!\n";
+			return EXIT_FAILURE;
+		}
 		int dim = ptr->GetC();
 		std::vector<float> feat0(dim);
 		memcpy(&feat0[0], ptr->GetFirstPixelPtr(), sizeof(float)*dim);
@@ -226,6 +270,11 @@ int main()
 		printf("[%d] times cost %.3f s, 1 iter cost %.3f ms\n", iters, t4 - t3, 1000 * (t4 - t3) / iters);
 
 		ptr = net.GetBlobByName(out_blob_name);
+		if (ptr == 0)
+		{
+			cout << "The blob " << out_blob_name << " does not exist!\n";
+			return EXIT_FAILURE;
+		}
 		std::vector<float> feat1(dim);
 		memcpy(&feat1[0], ptr->GetFirstPixelPtr(), sizeof(float)*dim);
 		float score = 0;

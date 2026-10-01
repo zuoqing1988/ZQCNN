@@ -1,4 +1,4 @@
-﻿#ifndef _ZQ_CNN_NET_NCHWC_H_
+#ifndef _ZQ_CNN_NET_NCHWC_H_
 #define _ZQ_CNN_NET_NCHWC_H_
 #pragma once
 #include "ZQ_CNN_Layer_NCHWC.h"
@@ -379,7 +379,7 @@ namespace ZQ
 				if (sscanf_s(line.c_str(), "%s", &buf[0], buf_len) == 0)
 					continue;
 #else
-				if (sscanf(line.c_str(), "%s", &buf[0]) == 0)
+				if (sscanf(line.c_str(), "%2000s", &buf[0]) == 0)
 					continue;
 #endif
 				if (My_CNN_Layer::_my_strcmpi(&buf[0], "Convolution") == 0)
@@ -950,6 +950,7 @@ namespace ZQ
 								return false;
 
 							delete bns_layer; bns_layer = 0;
+							layers[i + 1] = NULL;
 							tmp_layers.push_back(conv_layer);
 							tmp_layer_type_names.push_back(layer_type_names[i]);
 							tmp_bottoms.push_back(bottoms[i]);
@@ -986,6 +987,7 @@ namespace ZQ
 								return false;
 
 							delete bns_layer; bns_layer = 0;
+							layers[i + 1] = NULL;
 							tmp_layers.push_back(dwconv_layer);
 							tmp_layer_type_names.push_back(layer_type_names[i]);
 							tmp_bottoms.push_back(bottoms[i]);
@@ -1044,6 +1046,7 @@ namespace ZQ
 								return false;
 
 							delete prelu_layer; prelu_layer = 0;
+							layers[i + 1] = NULL;
 							tmp_layers.push_back(conv_layer);
 							tmp_layer_type_names.push_back(layer_type_names[i]);
 							tmp_bottoms.push_back(bottoms[i]);
@@ -1080,6 +1083,7 @@ namespace ZQ
 								return false;
 
 							delete prelu_layer; prelu_layer = 0;
+							layers[i + 1] = NULL;
 							tmp_layers.push_back(dwconv_layer);
 							tmp_layer_type_names.push_back(layer_type_names[i]);
 							tmp_bottoms.push_back(bottoms[i]);
@@ -1118,6 +1122,8 @@ namespace ZQ
 			int kH = filters->GetH();
 			int kW = filters->GetW();
 			int kC = filters->GetC();
+			if (b->GetC() != N || a->GetC() != N)
+				return false;
 			int filterImageStep = filters->GetImageStep();
 			int filterSliceStep = filters->GetSliceStep();
 			int filterWithStep = filters->GetWidthStep();
@@ -1181,6 +1187,8 @@ namespace ZQ
 			int kH = filters->GetH();
 			int kW = filters->GetW();
 			int kC = filters->GetC();
+			if (b->GetC() != N || a->GetC() != N)
+				return false;
 			int filterImageStep = filters->GetImageStep();
 			int filterSliceStep = filters->GetSliceStep();
 			int filterWithStep = filters->GetWidthStep();
@@ -1252,6 +1260,8 @@ namespace ZQ
 			int kH = filters->GetH();
 			int kW = filters->GetW();
 			int kC = filters->GetC();
+			if (b->GetC() != kC || a->GetC() != kC)
+				return false;
 			int filterSliceStep = filters->GetSliceStep();
 			int filterWidthStep = filters->GetWidthStep();
 			int align_size = filters->GetAlignSize();

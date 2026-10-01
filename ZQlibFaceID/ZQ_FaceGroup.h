@@ -42,7 +42,7 @@ namespace ZQ
 			if (flag)
 			{
 				flag = (1 == fread(&num, sizeof(int), 1, in));
-				flag = flag && num >= 0;
+				flag = flag && num >= 0 && num < 1000000;
 				if (!flag) {
 					printf("feat_dim = %d\n", feat_dim);
 				}
@@ -94,7 +94,7 @@ namespace ZQ
 #ifdef _WIN64
 			long long pos = _ftelli64(out);
 #else
-			long pos = ftell(in);
+			long pos = ftell(out);
 #endif
 			bool flag = true;
 

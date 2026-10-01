@@ -73,6 +73,11 @@ int main()
 	printf("[%d] times cost %.3f s, 1 iter cost %.3f ms\n", iters, t2 - t1, 1000 * (t2 - t1) / iters);
 
 	const ZQ_CNN_Tensor4D* ptr = net.GetBlobByName(out_blob_name);
+	if (ptr == 0)
+	{
+		cout << "The blob " << out_blob_name << " does not exist!\n";
+		return EXIT_FAILURE;
+	}
 	int dim = ptr->GetC();
 	std::vector<float> feat0(dim);
 	memcpy(&feat0[0], ptr->GetFirstPixelPtr(), sizeof(float)*dim);
@@ -91,6 +96,11 @@ int main()
 	printf("[%d] times cost %.3f s, 1 iter cost %.3f ms\n", iters, t4 - t3, 1000 * (t4 - t3) / iters);
 
 	ptr = net.GetBlobByName(out_blob_name);
+	if (ptr == 0)
+	{
+		cout << "The blob " << out_blob_name << " does not exist!\n";
+		return EXIT_FAILURE;
+	}
 	std::vector<float> feat1(dim);
 	memcpy(&feat1[0], ptr->GetFirstPixelPtr(), sizeof(float)*dim);
 	float score = 0;

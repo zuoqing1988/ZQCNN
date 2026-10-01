@@ -94,7 +94,7 @@ namespace ZQ
 				|| rect_off_x + rect_width > width || rect_off_y + rect_height>height)
 				return false;
 
-			unsigned char* bgr_img = (unsigned char*)malloc(rect_width*rect_height * 3);
+			unsigned char* bgr_img = (unsigned char*)malloc((size_t)rect_width*rect_height * 3);
 			if (bgr_img == 0)
 				return false;
 			switch (pixFmt)

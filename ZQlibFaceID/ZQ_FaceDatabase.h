@@ -303,7 +303,7 @@ namespace ZQ
 				fclose(in);
 				return false;
 			}
-			if (person_num <= 0 || feat_dim <= 0)
+			if (person_num <= 0 || person_num > 10000000 || feat_dim <= 0 || feat_dim > 4096)
 			{
 				fclose(in);
 				return false;
@@ -318,7 +318,7 @@ namespace ZQ
 					fclose(in);
 					return false;
 				}
-				if (feat_num <= 0)
+				if (feat_num <= 0 || feat_num > 10000000)
 				{
 					fclose(in);
 					return false;
@@ -333,10 +333,10 @@ namespace ZQ
 						fclose(in);
 						return false;
 					}
-					buf.resize(len);
-					
+
 					if (len > 0)
 					{
+						buf.resize(len);
 						if (len != fread(&buf[0], 1, len, in) || buf[len-1] != '\0')
 						{
 							fclose(in);

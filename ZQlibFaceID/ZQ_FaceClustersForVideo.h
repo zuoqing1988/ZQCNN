@@ -110,7 +110,7 @@ namespace ZQ
 				return false;
 			}
 			int cluster_num;
-			if (fread(&cluster_num, sizeof(int), 1, in) != 1 || cluster_num < 0)
+			if (fread(&cluster_num, sizeof(int), 1, in) != 1 || cluster_num < 0 || cluster_num > 1000000)
 			{
 				fclose(in);
 				Clear();
@@ -123,7 +123,7 @@ namespace ZQ
 			for (int i = 0; i < cluster_num; i++)
 			{
 				int feat_dim;
-				if (fread(&feat_dim, sizeof(int), 1, in) != 1 || feat_dim < 0)
+				if (fread(&feat_dim, sizeof(int), 1, in) != 1 || feat_dim < 0 || feat_dim > 4096)
 				{
 					fclose(in);
 					Clear();
@@ -156,7 +156,7 @@ namespace ZQ
 			for (int i = 0; i < cluster_num; i++)
 			{
 				int fr_num;
-				if (fread(&fr_num, sizeof(int), 1, in) != 1 || fr_num < 0)
+				if (fread(&fr_num, sizeof(int), 1, in) != 1 || fr_num < 0 || fr_num > 10000000)
 				{
 					fclose(in);
 					Clear();

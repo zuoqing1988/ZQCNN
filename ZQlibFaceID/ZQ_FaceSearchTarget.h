@@ -41,13 +41,13 @@ namespace ZQ
 			if (0 != fopen_s(&in, file.c_str(), "rb"))
 				return false;
 #else
-			in = fopen(file.c_str(), "wb");
+			in = fopen(file.c_str(), "rb");
 			if (in == NULL)
 				return false;
 #endif
 
 			int num;
-			if (fread(&num, sizeof(int), 1, in) != 1 || num < 0)
+			if (fread(&num, sizeof(int), 1, in) != 1 || num < 0 || num > 1000000)
 			{
 				fclose(in);
 				return false;

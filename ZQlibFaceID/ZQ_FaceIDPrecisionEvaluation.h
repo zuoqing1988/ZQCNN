@@ -383,11 +383,28 @@ namespace ZQ
 				return false;
 #endif
 
-			int part_num, half_pair_num;
+			int part_num = 0, half_pair_num = 0;
 			const static int BUF_LEN = 200;
 			char line[BUF_LEN];
-			fgets(line, BUF_LEN, in);
-			sscanf_s(line, "%d%d", &part_num, &half_pair_num);
+			if (NULL == fgets(line, BUF_LEN, in))
+			{
+				fclose(in);
+				return false;
+			}
+#if defined(_WIN32)
+			if (2 != sscanf_s(line, "%d%d", &part_num, &half_pair_num))
+#else
+			if (2 != sscanf(line, "%d%d", &part_num, &half_pair_num))
+#endif
+			{
+				fclose(in);
+				return false;
+			}
+			if (part_num <= 0 || half_pair_num <= 0)
+			{
+				fclose(in);
+				return false;
+			}
 			pairs.resize(part_num);
 
 			std::vector<std::string> strings;
@@ -395,7 +412,11 @@ namespace ZQ
 			{
 				for (int j = 0; j < 2 * half_pair_num; j++)
 				{
-					fgets(line, 199, in);
+					if (NULL == fgets(line, 199, in))
+					{
+						fclose(in);
+						return false;
+					}
 					int len = strlen(line);
 					if (line[len - 1] == '\n')
 						line[--len] = '\0';
@@ -592,7 +613,7 @@ namespace ZQ
 			int image_num = singles.size();
 			printf("%d removed, remain %d\n", removed_num, image_num);
 
-			int all_num = image_num*(image_num - 1)/2;
+			int all_num = (int)((long long)image_num*(image_num - 1)/2);
 			std::vector<float> all_scores(all_num);
 			std::vector<int> all_idx_i(all_num), all_idx_j(all_num);
 			std::vector<bool> all_flag(all_num);

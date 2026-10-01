@@ -54,6 +54,11 @@ int main()
 		return EXIT_FAILURE;
 	}
 	const ZQ_CNN_Tensor4D* ptr = net.GetBlobByName("11_107");
+	if (ptr == 0)
+	{
+		cout << "The blob 11_107 does not exist!\n";
+		return EXIT_FAILURE;
+	}
 	int N = ptr->GetN();
 	int H = ptr->GetH();
 	int W = ptr->GetW();

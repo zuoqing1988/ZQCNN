@@ -1,4 +1,4 @@
-﻿#ifndef _ZQ_CNN_NET_H_
+#ifndef _ZQ_CNN_NET_H_
 #define _ZQ_CNN_NET_H_
 #pragma once
 #include "ZQ_CNN_Layer.h"
@@ -388,7 +388,7 @@ namespace ZQ
 				if (sscanf_s(line.c_str(), "%s", &buf[0], buf_len) == 0)
 					continue;
 #else
-				if (sscanf(line.c_str(), "%s", &buf[0]) == 0)
+				if (sscanf(line.c_str(), "%2000s", &buf[0]) == 0)
 					continue;
 #endif
 				if (ZQ_CNN_Layer::_my_strcmpi(&buf[0], "Convolution") == 0)
@@ -1496,6 +1496,7 @@ namespace ZQ
 								return false;
 
 							delete bns_layer; bns_layer = 0;
+							layers[i + 1] = NULL;
 							tmp_layers.push_back(conv_layer);
 							tmp_layer_type_names.push_back(layer_type_names[i]);
 							tmp_bottoms.push_back(bottoms[i]);
@@ -1532,6 +1533,7 @@ namespace ZQ
 								return false;
 
 							delete bns_layer; bns_layer = 0;
+							layers[i + 1] = NULL;
 							tmp_layers.push_back(dwconv_layer);
 							tmp_layer_type_names.push_back(layer_type_names[i]);
 							tmp_bottoms.push_back(bottoms[i]);
@@ -1590,6 +1592,7 @@ namespace ZQ
 								return false;
 
 							delete prelu_layer; prelu_layer = 0;
+							layers[i + 1] = NULL;
 							tmp_layers.push_back(conv_layer);
 							tmp_layer_type_names.push_back(layer_type_names[i]);
 							tmp_bottoms.push_back(bottoms[i]);
@@ -1626,6 +1629,7 @@ namespace ZQ
 								return false;
 
 							delete prelu_layer; prelu_layer = 0;
+							layers[i + 1] = NULL;
 							tmp_layers.push_back(dwconv_layer);
 							tmp_layer_type_names.push_back(layer_type_names[i]);
 							tmp_bottoms.push_back(bottoms[i]);
@@ -1658,6 +1662,8 @@ namespace ZQ
 			int kH = filters->GetH();
 			int kW = filters->GetW();
 			int kC = filters->GetC();
+			if (b->GetC() != N || a->GetC() != N)
+				return false;
 			for (int n = 0; n < N; n++)
 			{
 				float b_v = (b->GetFirstPixelPtr())[n];
@@ -1713,6 +1719,8 @@ namespace ZQ
 			int kH = filters->GetH();
 			int kW = filters->GetW();
 			int kC = filters->GetC();
+			if (b->GetC() != N || a->GetC() != N)
+				return false;
 			for (int n = 0; n < N; n++)
 			{
 				float b_v = (b->GetFirstPixelPtr())[n];
@@ -1775,6 +1783,8 @@ namespace ZQ
 			int kH = filters->GetH();
 			int kW = filters->GetW();
 			int kC = filters->GetC();
+			if (b->GetC() != kC || a->GetC() != kC)
+				return false;
 			for (int c = 0; c < kC; c++)
 			{
 				float b_v = (b->GetFirstPixelPtr())[c];
