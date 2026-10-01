@@ -217,3 +217,127 @@ MKL 2024.2.2 顺序层；20 组尺寸；误差列为 asm 与 intrinsic 的最大
 1. `ZQ_CNN_USE_MKL_GEMM` 默认关掉是**行为变更**：以前所有示例默认链 MKL，现在默认链项目自带的 ZQ_GEMM。ZQCNN 源码里没有任何 `cblas_*` 调用，数值结果不受影响，只是 GEMM 走的实现不同（可自行对比）。
 2. `ChangeSize` 补返回值检查是**行为收紧**：以前分配失败会静默继续（可能算出错误结果或崩溃），现在会明确返回 false。
 3. MSVC x64 不支持函数体内联汇编（`__asm{}` 报 C4235），汇编内核在 Windows 侧只能走独立 `.asm`（MASM），这条已写进 AGENTS.md。
+
+---
+
+## 修复：Windows 端 ZQ_GEMM 汇编内核踩坏调用方的 xmm6-xmm15（Linux 一直是对的）
+
+### 根因
+
+`ZQ_GEMM/math/zq_gemm_32f_align_c_asm_msvc.asm` 的三个微内核用到 `ymm0-ymm14`
+（8 个累加器 + 6 个操作数 + 归约临时），但**没有保存/恢复**。
+
+这是两套 x86-64 ABI 的差别：
+
+| ABI | xmm 寄存器 |
+|---|---|
+| System V AMD64（Linux/macOS/gcc-clang 内联汇编路径） | x87 与**全部** xmm0-xmm31 都是 caller-saved，随便用 |
+| **Windows x64（MASM 路径）** | 只有 xmm0-xmm5 是 volatile，**xmm6-xmm15 是 callee-saved**，调用方会把值留在里面跨越调用 |
+
+所以 Windows 上每次微内核返回，调用方 MSVC 编译代码留在 xmm6-xmm15 里的
+double 局部变量/中间值就变成了累加器残值。Linux 侧因为 XMM 全是
+caller-saved，从来没有暴露过这个 bug。
+
+原文件头注释里"只用 caller-saved 的 ymm0-ymm15"的说法是错的，是这个 bug 的
+直接来源。
+
+### 症状（为什么看起来像"内存破坏"而不是"寄存器被踩"）
+
+- 局部 `double` 变成 `-1.7e30` / `1.404e+306` 之类的乱码
+- `time_gemm` 里 `t1 - t0` 由垃圾值算出，耗时打印成 `0.00` / `inf` / `-inf`，
+  进一步让 `err` 列和 `g_asm/g_intr` 一起变成垃圾
+- MSVC 把哪个变量放在 xmm6-xmm15 完全取决于当时怎么分配寄存器，所以症状
+  **随代码改动而变**：加一个 canary 数组、换一个优化级别、甚至换个尺寸表，
+  "能测出问题"的用例集合就完全不一样，小栈帧的独立小程序往往测不出来
+- `g_pad_*` 哨兵变脏是因为哨兵检查读的是 `main` 帧里被污染后重新算出来的
+  状态；A/B/C 缓冲本身其实**没有**越界（用 4096 float 冗余 + 0xA5 图案扫描
+  验证过，maxdiff 全为 0）
+
+### 定位手段（都排除了什么）
+
+1. `dumpbin /disasm` MASM 目标文件：指令序列与栈上参数偏移
+   （第 5 个参数 `[rsp+28h]`，调用者在 `call` 前写 `[rsp+20h]`，中间差一个
+   返回地址）**全部正确**
+2. `dumpbin /disasm` C 驱动目标文件：7 个静态 kernel 里的 21 个调用点，
+   rcx/rdx/r8/r9 + `[rsp+20h..38h]` 的传参顺序**全部正确**
+3. MSVC `/fsanitize=address` 重建整个 ZQ_GEMM 再跑：**没有任何报告** →
+   不是 C 层的越界读写
+4. 守护页（`VirtualAlloc` + `PAGE_GUARD`）与 0xA5 图案扫描：三个缓冲都没有越界写
+5. 把三个微内核改成入口立刻 `ret`（nop 版）重新跑 `SampleGEMMCompare`：
+   **OOB 全部消失、耗时全部恢复正常** → 定位到微内核本身
+6. 在 MSVC 生成的 `zq_gemm_32f_asm_k1n8` 里看到
+   `vmovaps [rsp+0F0h], xmm6` / `vmovaps xmm6, [rsp+0F0h]` 一对
+   保存/恢复 —— **MSVC 自己就遵守 Windows x64 的这条规则**，反证微内核违反
+
+### 变更文件
+
+| 文件 | 改法 |
+|---|---|
+| `ZQ_GEMM/math/zq_gemm_32f_align_c_asm_msvc.asm` | 新增 `ZQA_FRAME EQU 0A8h`（168 = 10×16 保存区 + 8 字节补齐，168 ≡ 8 mod 16，保证减栈后保存区 16 字节对齐且出口对齐不变）、`ZQA_PROLOGUE` / `ZQA_EPILOGUE` 两个宏（`vmovups` 保存/恢复 xmm6-xmm15 + `sub/add rsp`），三个微内核 `PROC` 首尾各插一条；栈上传参偏移改用 `ZQA_ARG5..ZQA_ARG8`（= 原偏移 + `ZQA_FRAME`）而不是裸数字；文件头补上两套 ABI 的差异说明 |
+| `ZQ_GEMM/math/zq_gemm_32f_align_c_asm.c` | 纯注释：订正"caller-saved 的 ymm0-ymm15"这个错误说法，新增「XMM 寄存器与 ABI」小节说明 MSVC 路径由 MASM 宏负责、gcc 路径靠 clobber 列表（原本就写全了 xmm0-xmm15，System V 下是 no-op，对 MinGW-w64 同样正确）。**删掉一行误提交进仓库的调试 `printf`（`[K %s M=%d ...]`）** |
+
+没有动 CMake 编译选项，也没有动 ZQ_GEMM 以外的任何库代码。
+
+### 实测结果
+
+**Windows（VS2022 17.5 / x64 / Release / `cmake --build build_x64 --config Release`）**
+
+`SamplesZQBLAS/SampleGEMMCompare.exe`（19 个尺寸，修复前后对比）：
+
+```
+                                修复前                                  修复后
+MxNxK            intrinsic  asm   err(asm)          intrinsic  asm   err(asm)
+16x16x16          0.00    0.00   5.1e-06  OOB!       12.60    8.48   4.8e-07
+32x32x32   1.16e+30  -0.00   1.6e+35  OOB!  FAIL   24.29   14.52   4.8e-07
+64x64x64   4.26e+33  -0.00   2.1e+73  OOB!  FAIL   30.79   22.37   9.5e-07
+1024x1024x1024 6.05e+95 -0.00   9.3e+215 OOB!  FAIL  44.16   49.31   3.8e-06
+1024x1x1024     23.34    2.14   0.0e+00  OOB!       20.65    2.11   4.0e-05
+128x128x4096   垃圾double 0.00  -2.2e+307 OOB!      33.14   51.25   7.6e-06
+7x5x13       垃圾double 0.00  -2.2e+307 OOB!       4.64    2.51   4.8e-07
+33x17x65     垃圾double 0.00  -2.2e+307 OOB!      18.08   17.00   1.1e-06
+```
+
+- 全部尺寸 `err(asm) ≤ 4.0e-05`（判据 1e-3），**OOB 标记全部消失**
+- 耗时恢复成合理值，`asm/intr` 比值 0.10~1.55
+
+`SamplesZQGEMM/SampleGEMMAsmCompare.exe`（17 个用例，含大量非对齐尾部）：
+
+```
+   32   32   32 |    4.768e-07    5.135e-07 | intr    34.60 GF/s   asm   19.62 GF/s
+  128  128  256 |    1.907e-06    3.378e-06 | intr    61.11 GF/s   asm   46.54 GF/s
+  313   32   28 |    1.192e-06    9.227e-07 | intr    18.86 GF/s   asm    9.46 GF/s
+--------------------------------------------------------------
+worst |intrinsic - asm| over all cases = 1.907349e-06
+result: PASS (0 case(s) failed)
+```
+
+（修复前：`worst = 1.404448e+306`，`FAIL (6 case(s) failed)`）
+
+**Linux（WSL Ubuntu-20.04 / gcc 9.4 / `-O3 -mavx2 -mfma`）—— 未受任何影响**
+
+`build_check_gemm.sh` + `/tmp/zbchk/zbench`：
+
+```
+MxNxK            intrinsic       asm   MKL(1T)  asm/MKL asm/intr  err(asm)
+16x16x16             24.63     16.46     15.78     104%     0.67  4.8e-07
+1024x1024x1024       50.50     56.48     72.11      78%     1.12  9.5e-06
+1024x1x1024          25.29      2.14     17.06      13%     0.08  4.0e-05
+128x128x4096         30.40     59.69     62.45      96%     1.96  2.3e-05
+33x17x65             25.12     22.27     35.52      63%     0.89  1.1e-06
+```
+
+`SampleGEMMAsmCompare`（gcc 内联汇编路径）：`worst = 3.814697e-06`，`PASS (0 failed)`
+
+### 注意事项 / 残留风险
+
+1. **性能代价**：每次微内核调用多 20 条 `vmovups` + 一次 `sub/add rsp`。
+   K=1024（k8=128）时约 1% 开销，K=8（k8=1）时相对开销明显。实测大尺寸
+   `asm/intr` 比值与修复前在同一量级，没有出现数量级退化。
+2. **同类风险仍在别处**：任何手写 x64 Windows 汇编（`__declspec(naked)`、
+   MASM 文件）只要用到 xmm6-xmm15 / rbx rbp rsi rdi r12-r15 又不保存，
+   都会踩同一个坑。`ZQ_CNN_Forward_SSEUtils_NCHWC.cpp` 等 C/C++ 代码由编译器
+   负责，天然安全。
+3. **MinGW-w64 / clang-cl**：走的是 gcc 内联汇编分支，clobber 列表本来就写全
+   了 xmm0-xmm15，两套 ABI 都正确；但这条路径本机没有实测环境。
+4. `.c` 里那行调试 `printf` 之前被误提交进仓库（会往 stdout 刷
+   `[K zq_gemm_32f_asm_k8n4 M=8 N=16 ...]`），本次一并删掉。
