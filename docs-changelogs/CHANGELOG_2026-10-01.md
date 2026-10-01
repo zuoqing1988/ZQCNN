@@ -538,3 +538,16 @@ SIGSEGV code=128 (SI_KERNEL) si_addr=(nil)
 
 1. 这两处都是"平时看不出来"的问题：只有当**同一个 tensor 对象被复用来做不同尺寸的 resize**（`ChangeSize` 走复用分支）时才会读到脏数据。现有的示例都是一次性分配，因此数值没有变化。
 2. 第四轮其余"已评估暂不修"的 8 项已在 `audit_k3_20261001.md` 附录 I 逐条写明理由，其中 `zq_cnn_convolution_gemm` 的 deconvolution 同款 `padK` 失配属于**全仓无调用点的死代码**。
+
+## 新增/变更：第五轮自查（并发 / 数据流 / 平台语义）—— 三处"看着危险、核对后安全"
+
+本轮没有代码改动，全部是**先核对再动手**的结论，记录下来避免以后重复走弯路：
+
+1. **MTCNN 多线程 Pnet/Rnet/Onet/Lnet 的并行区**（`ZQ_CNN_MTCNN.h` 6 处 `#pragma omp parallel for`）：一度被判成"多线程并发改写同一个 `input` 张量"的高危数据竞争。核对 `ResizeBilinear/ResizeBilinearRect/ROI` 的签名后确认它们都是 **const 成员函数，调用者是源、形参是目的地**（`input.ResizeBilinear(dst, ...)`），而 `pnet_images` / `task_*_images` 是 `vector<vector<Tensor>>` 或按 `thread_num` 下标分配，各写各的 → **线程安全**。曾按错误结论改过一次，会把缩放结果写进没人用的临时张量，已回退。
+2. **Concat 的数据流**（`ZQ_CNN_Forward_SSEUtils.cpp:_concat_NCHW`）：拷贝循环对每个输入分别取自己的 `in_pixStep/in_widthStep/in_sliceStep`、对输出取 `out_*`，异构输入混拼是安全的；`valid_inputs.size()==1` 走 `CopyData`，`==0` 走 `ChangeSize(0,...)`，边界都有处理。
+3. **BatchNormScale 的 `eps`**：从不可信 `.zqparams` 里 `atof` 读、解析处零校验，看着像"eps=0 + var=0 → 除零 → inf 污染全网"。内核里已有 `__max(var_data[c]+eps, FLOAT_EPS_FOR_DIV)` 兜底，零/负/垃圾值都被挡住 → 不改。
+
+### 注意事项
+
+1. 第 1 条已经写进 AGENTS.md 的「ZQCNN 里容易看反的 API 约定」：`Resize*/ROI/Padding` 的接收者是**源**。这类方向性误判在本项目里很容易发生（本轮连着误判了 eltwise 增量目标、`handled` 初值、ResizeBilinear 参数方向三次），动代码前必须先逐元素/逐参数推演。
+2. 第五轮的方向二（真实模型的层→kernel 步长推演）、方向三（LLP64/算术右移/`-ffast-math` 下的 NaN 检查）、方向四（`Init` 失败后重复调用）仍在审计中，结论待补。
