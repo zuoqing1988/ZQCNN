@@ -3,3 +3,4 @@ cmake-build*/
 build*/
 cmake-out*/
 3rdparty/mkl_runtime/
+# 构建/排查过程产生的垃圾文件*.obj*.logtmp_*.cpptmp_*.shtmp_*.pyprobe.exe# build/debug leftovers

@@ -234,19 +234,11 @@ void zq_cnn_conv_no_padding_gemm_32f_align_same_pixstep_kernel1x1(
 	int matrix_B_rows = filter_pixelStep;
 	int in_widthStep_mul_stride_H = in_widthStep*stride_H;
 	int in_pixelStep_mul_stride_W = in_pixelStep*stride_W;
-#if __ARM_NEON
-#if !__ARM_NEON_FP16
-	int padK = (matrix_A_cols + 3) >> 2 << 2;
-#endif
-#else
-#if ZQ_CNN_USE_SSETYPE > ZQ_CNN_SSETYPE_AVX
-	int padK = (matrix_A_cols + 7) >> 3 << 3;
-#elif ZQ_CNN_USE_SSETYPE > ZQ_CNN_SSETYPE_SSE
-	int padK = (matrix_A_cols + 3) >> 2 << 2;
-#else
+	/* 这里不做 K 方向补齐: 补齐后 im2col 的行步长是 padK, 而 sgemm 收到的 lda 仍是
+	   matrix_A_cols(=in_pixelStep), lda 与真实行距不符会让每一行都从错位置读,
+	   不崩溃只出错误结果(in_C 不是 8 的倍数时才会触发, 所以一直没暴露)。
+	   两侧行长本来就都是 in_pixelStep, 直接不补齐即可。 */
 	int padK = matrix_A_cols;
-#endif
-#endif
 	if (matrix_A_cols == padK && in_sliceStep == in_H*in_W*in_pixelStep && out_sliceStep == out_H*out_W*out_pixelStep
 		&& in_H == out_H && in_W == out_W)
 	{
