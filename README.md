@@ -4,6 +4,26 @@
 
 ZQCNN是一款推理框架，可以在windows, linux 和 arm-linux下运行。同时有一些人脸检测、识别相关的demo。
 
+## 构建与运行（2026-10 起）
+
+构建入口统一为 CMake（仓库不再保留 VS 的 .sln/.vcxproj）：
+
+```shell
+# Windows (VS2022)
+cmake -S . -B build_x64 -G"Visual Studio 17 2022" -A x64
+cmake --build build_x64 --config Release -j8
+cd cmake-out-win32-x64/release/Release
+
+# Linux
+mkdir -p build && cd build && cmake .. && make -j8
+```
+
+* 可执行文件目录里会自动准备好 `data/`、`model/` 联接与第三方 dll，直接在该目录里运行示例即可。
+* **默认不再依赖 MKL**：ZQCNN 内部没有 `cblas_*` 调用，默认走自带的 ZQ_GEMM，所以没装 MKL 运行库也能跑。想改用 MKL 就编辑 `ZQCNN/ZQ_CNN_CompileConfig.h` 里的 `ZQ_CNN_USE_MKL_GEMM`。
+* 示例里的 `imshow`/`waitKey` 已全部注释，不会阻塞。
+* 仓库 `model/` 只带 MTCNN/SSD 系列的权重，SphereFace/ArcFace/PersonPose/NSFW/TextBoxes 等示例需要从 [Model Zoo](#model-zoo) 另下权重，部分示例还需要额外的数据图片。
+* `SamplesZQGEMM` 是手写汇编 GEMM 内核与 intrinsic 版的对比程序；`SamplesZQBLAS/SampleGEMMCompare` 会动态加载 MKL / OpenBLAS（放在 `3rdparty/mkl_runtime/`）给出四路吞吐对比。
+
 ## 主开发环境 ：[VS2015 with Update 3](https://pan.baidu.com/s/1zoREccOxVsggV-iI2z4HTg)
 
   MKL下载地址:[此处下载](https://pan.baidu.com/s/1d75IIf6fgTZ5oeumd0vtTw)
