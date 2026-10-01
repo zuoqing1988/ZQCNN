@@ -106,12 +106,37 @@ def main():
                     help='跳过慢的可编译性门禁（约 2 分钟）')
     ap.add_argument('--with-build', action='store_true',
                     help='额外跑双平台全量构建 + sample 回归（很慢，几分钟）')
+    ap.add_argument('--msvc-probe', action='store_true',
+                    help='额外用 MSVC 探一遍 ZQlib 头（Windows 侧覆盖，见附录 AR）')
     args = ap.parse_args()
 
     failed = []
     if args.with_build:
         if not run_build_group():
             failed.append('D 双平台构建 + sample 回归')
+
+    if args.msvc_probe:
+        bat = os.path.join(os.environ.get('TEMP', '.'), 'zqprobe_msvc.bat')
+        with open(bat, 'w') as f:
+            f.write('@echo off\r\n'
+                    'call "C:\\Program Files\\Microsoft Visual Studio\\2022\\Community'
+                    '\\VC\\Auxiliary\\Build\\vcvars64.bat" >nul 2>&1\r\n'
+                    'cd /d %s\r\n'
+                    'python tools\\probe_zqlib_headers_msvc.py > "%%TEMP%%\\zqprobe_msvc_out.txt" 2>&1\r\n'
+                    % ROOT)
+        if not run_group('C2 MSVC 侧 ZQlib 头探测', ['cmd', '/c', bat], cwd=ROOT):
+            failed.append('C2 MSVC 侧 ZQlib 头探测')
+        out = os.path.join(os.environ.get('TEMP', '.'), 'zqprobe_msvc_out.txt')
+        if os.path.isfile(out):
+            try:
+                sys.stdout.write(open(out, encoding='utf-8', errors='replace').read())
+                rows = [l for l in open(out, encoding='utf-8', errors='replace')
+                        if l.startswith(('OK', 'BROKEN'))]
+                bad = [l for l in rows if l.startswith('BROKEN')]
+                print('MSVC: %d 个头, OK %d, BROKEN %d'
+                      % (len(rows), len(rows) - len(bad), len(bad)))
+            except IOError:
+                pass
 
     for name, argv, slow in GROUPS:
         if slow and args.quick:

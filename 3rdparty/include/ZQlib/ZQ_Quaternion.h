@@ -183,8 +183,10 @@ namespace ZQ
 			x += v.x;
 			y += v.y;
 			z += v.z;
-			// 原来是 `w += w.z;` —— 自引用（把自己的 z 加到自己的 w 上）。
-			// 3rdparty/include/ZQlib 内零调用点, 所以是公开 API 层面的缺陷。
+			// 原来是 `w += w.z;` —— w 是 double，`w.z` 是在 double 上取成员，
+			// gcc 报 "request for member 'z' in ... which is of non-class type
+			// 'double'"。所以这是**根本编不过**，不是静默算错（我第一版把它
+			// 描述成「自引用，只是算错」，是错的，见 audit 附录 AK.2）。
 			w += v.w;
 		}
 

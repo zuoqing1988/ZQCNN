@@ -2,7 +2,7 @@
 #define _ZQ_LAZY_SNAPPING_H_
 #pragma once
 
-#include <ctime>							// clock()/clock_t 本来眉不能编过
+#include <ctime>							// clock()/clock_t 本来不能编过
 #include "ZQ_LazySnappingOptions.h"
 #include "ZQ_DoubleImage.h"
 #include "ZQ_Vec2D.h"

@@ -1358,3 +1358,83 @@ ZQ_QuickSort 的 idx[i]、ZQ_Quaternion 的 w.z **逐个用「修复前的头重
 
 **如果当时只是「改了 + 跑一遍 sample 看没崩」，这三条改动会全部静默通过** ——
 因为能跑的那些 sample 根本不经过这些代码路径。
+
+## 新增/变更：Windows 侧从来没被验证过的那一半 —— 新增 MSVC 侧探测，查出 3 件事
+
+### 变更文件
+- `3rdparty/include/ZQlib/ZQ_Logger.h`：`wcslen(msg)` -> `_tcslen(msg)`（两处）
+- `3rdparty/include/ZQlib/ZQ_LazySnapping.h`：修掉我自己的一个乱码字（`眉` -> `不`）
+- `3rdparty/include/ZQlib/ZQ_Quaternion.h`：注释与已更正的结论对齐
+- `tools/probe_zqlib_headers_msvc.py`（新增）：用 `cl /Zs` 在 Windows 本地逐头语法检查
+- `tools/check_text_encoding.py`：新增**第三类检查**（罕见汉字清单，供人工核对）
+- `tools/run_audit_checks.py`：新增 `--msvc-probe`
+- `audit_k3_20261001.md`：新增**附录 AR**
+
+### 缺口
+
+前面二十几轮，ZQlib 的改动**只在 gcc 下验证过** —— probe_zqlib_headers.py 是
+Windows 侧脚本但把编译外包给了 WSL。而这一轮改的 26 个头里有 5 个**真的链接进了
+Windows 侧 sample**（附录 AP）。也就是说那些改动在 Windows 上一次都没被编译过。
+
+### 查出来的三件事
+
+**① 一条只在 MSVC 才看得见的真 bug（连带 8 个头）**
+
+    WriteConsole(GetStdHandle(STD_OUTPUT_HANDLE), msg, wcslen(msg), NULL, NULL);
+
+C 的 wcslen 是 `wcslen(const wchar_t*, size_t)`，**要两个参数**；MSVC 这里只能
+找到 C++ 的 `std::wcslen(const wchar_t*)`，签名对不上：
+
+    error C2664: 'size_t wcslen(const wchar_t *)': no matching overloaded function found
+
+连带 ZQ_Logger.h 自己和 7 个 WinSock 系的头在 MSVC 下都编不过（ZQ_SemaphoreEx.h
+也经由 ZQ_Logger.h 中招）。该文件本来就 include 了 `<tchar.h>`，改成 `_tcslen(msg)`
+才对（ANSI 构建下 TCHAR=char，_tcslen 自动走 strlen）。两处都改了。
+
+**这条是纯 MSVC 侧问题** —— gcc 那边压根没有 wcslen/windows.h，gcc 探测永远看不到它。
+这就是「只在一侧验证」的具体代价。
+
+**② 一个我自己的编码错误，check_text_encoding.py 查不出来**
+
+    // clock()/clock_t 本来眉不能编过          <-- 「眉」应为「不」
+
+**这是合法的 UTF-8，只是有一个字错了**。来源是在 python 里手写 `hex 转义` 的 UTF-8
+字节时写错了一位。已修，并给该工具加了第三类检查：把全仓汉字按出现次数排序、
+列出罕见字供人眼扫一眼（1130 个不同汉字 -> 221 个低频的）。它是**筛子不是判官** ——
+用得对的生僻字也会在里面，作用只是把「不可能人工核对」变成「几秒」。
+默认 `--rarity 3`，`--no-rare` 可关掉。
+
+顺带：工具输出中文时必须把 stdout 改成 utf-8（本机控制台 GBK），否则罕见字清单
+自己就是乱码 —— 恰恰在最需要人眼核对的时候看不清。
+
+**③ 一条与已更正结论矛盾的注释**
+
+ZQ_Quaternion.h 的注释还写着「自引用，只是把 z 加错了地方」，但附录 AK.2 已更正：
+`w.z` 是在 double 上取成员，**根本编不过**。注释已改成与结论一致。
+
+### MSVC 全量结果
+
+    143 个头：OK 129，自身编译错 0
+    剩下 14 个全是 fatal error C1083（找不到 opencv2/ jpeglib.h GL/glew.h libav* stdafx.h）
+
+那 14 个是**探测器的局限**：本机只装了 OpenCV 的源码树，没有预编译的 include
+目录；主工程里那些路径是有的（SampleLnet106 就直接 include 了 opencv2/opencv.hpp）。
+判断「自身编译错」时要把 C1083 排除掉再看。
+
+    gcc  : 118 OK / 25 BROKEN（9 外部依赖 + 16 需重写）
+    MSVC : 129 OK / 0 自身编译错 / 14 外部依赖
+
+MSVC 通过的更多，是因为它对「缺 typename」「嵌套模板参数遮蔽」这类错误是放行的 ——
+而那正是前面几轮修掉的一批。
+
+### 两条教训
+
+1. **只在一侧验证等于没验证**。wcslen 那条只在 MSVC 出现；反过来，缺 typename
+   那一批只在 gcc 出现。两个方向都要走。
+2. **「自动检查查不出」要主动想一遍**。U+FFFD / 非法 UTF-8 / 罕见字是三类不同的
+   失败模式，工具只能覆盖前两类 —— 第三类必须靠人眼，所以工具的职责是
+   **把要人眼看的量收敛到能看完**。
+
+### 验证
+
+`python tools/run_audit_checks.py --quick --msvc-probe`：4 组全 OK，退出码 0。

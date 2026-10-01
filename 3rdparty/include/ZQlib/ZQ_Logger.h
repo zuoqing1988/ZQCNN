@@ -145,7 +145,14 @@ namespace ZQ
 			switch (m_logMode)
 			{
 			case LOG_MODE_CONSOLE:
-				WriteConsole(GetStdHandle(STD_OUTPUT_HANDLE), msg, wcslen(msg), NULL, NULL);
+				// 原来写的是 wcslen(msg) —— C 的 wcslen 要**两个**参数
+				// (wcslen(const wchar_t*, size_t))，MSVC 只能找到 C++ 的
+				// std::wcslen(const wchar_t*)，签名对不上就报
+				//   error C2664: 'size_t wcslen(const wchar_t *)': no matching overloaded function
+				// 而且这个文件本来就有 <tchar.h>，用 _tcslen 才是对的
+				// （ANSI 构建下 TCHAR = char，_tcslen 会走 strlen）。
+				// 这一处连带 7 个 WinSock 系的头在 MSVC 下都编不过。
+				WriteConsole(GetStdHandle(STD_OUTPUT_HANDLE), msg, _tcslen(msg), NULL, NULL);
 				break;
 			case LOG_MODE_OSTREAM:
 
@@ -165,7 +172,7 @@ namespace ZQ
 			switch (m_logMode)
 			{
 			case LOG_MODE_CONSOLE:
-				WriteConsole(GetStdHandle(STD_OUTPUT_HANDLE), msg, wcslen(msg), NULL, NULL);
+				WriteConsole(GetStdHandle(STD_OUTPUT_HANDLE), msg, _tcslen(msg), NULL, NULL);
 				break;
 			case LOG_MODE_OSTREAM:
 			{
