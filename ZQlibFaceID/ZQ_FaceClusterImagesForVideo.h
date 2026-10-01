@@ -74,6 +74,8 @@ namespace ZQ
 						free(compressed_buffers[j]);
 						compressed_buffers[j] = 0;
 					}
+					// 原来漏了 return, 会把空指针压进容器
+					return false;
 				}
 				compressed_buffers.push_back(pDst);
 				compressed_length.push_back(dstLen);
@@ -182,7 +184,8 @@ namespace ZQ
 			{
 				fclose(in);
 				Clear();
-				return true;
+				// 数量不符说明文件被截断, 返回 true 会让调用方拿到"加载成功但内容已清空"的容器
+				return false;
 			}
 
 			// length 可以是恶意文件里的负数, 累加会污染 _off 并让后面的分配/读取越界

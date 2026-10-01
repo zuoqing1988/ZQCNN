@@ -455,8 +455,9 @@ namespace ZQ
 			{
 				if (vecs[i].label < 0)
 					continue;
-				int const offset = vecs[i].label * 123457 % 6;
-				int const color_scale = 150 + (vecs[i].label * 123457) % 100;
+				// label*123457 在 int 下会溢出成负(label>=17387), % 6 得到负 offset -> colors 负下标
+				int const offset = (int)(((long long)vecs[i].label * 123457) % 6 + 6) % 6;
+				int const color_scale = 150 + (int)(((long long)vecs[i].label * 123457) % 100);
 				cv::Scalar color(colors[offset][0], colors[offset][1], colors[offset][2]);
 				color *= color_scale;
 				cv::rectangle(mat_img, cv::Point2f(vecs[i].col1, vecs[i].row1), cv::Point2f(vecs[i].col2, vecs[i].row2), color, 4);

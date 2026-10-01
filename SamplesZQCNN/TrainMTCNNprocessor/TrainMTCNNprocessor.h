@@ -48,6 +48,11 @@ namespace ZQ
 
 			const int BUF_LEN = 1024 * 1024;
 			char* buf = (char*)malloc(BUF_LEN);
+			if (buf == 0)
+			{
+				printf("malloc failed");
+				return false;
+			}
 			memset(buf, 0, BUF_LEN);
 
 			int handled = 0;
@@ -500,6 +505,14 @@ namespace ZQ
 			const int BUF_LEN = 1024 * 1024;
 			char* buf = (char*)malloc(BUF_LEN);
 			char* buf2 = (char*)malloc(BUF_LEN);
+			if (buf == 0 || buf2 == 0)
+			{
+				printf("malloc failed");
+				if (buf) free(buf);
+				if (buf2) free(buf2);
+				fclose(in);
+				return false;
+			}
 			memset(buf, 0, BUF_LEN);
 			memset(buf2, 0, BUF_LEN);
 			int handled[1] = { 0 };
@@ -599,6 +612,14 @@ namespace ZQ
 			const int BUF_LEN = 1024 * 1024;
 			char* buf = (char*)malloc(BUF_LEN);
 			char* buf2 = (char*)malloc(BUF_LEN);
+			if (buf == 0 || buf2 == 0)
+			{
+				printf("malloc failed");
+				if (buf) free(buf);
+				if (buf2) free(buf2);
+				fclose(in);
+				return false;
+			}
 			memset(buf, 0, BUF_LEN);
 			memset(buf2, 0, BUF_LEN);
 			int handled[1] = { 0 };

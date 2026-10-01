@@ -36,7 +36,12 @@ namespace ZQ
 
 			cinfo.out_color_space = out_jcs_type;
 			if (!jpeg_start_decompress(&cinfo))
+			{
+				// 原来直接 return false，cinfo 与 JPOOL 全部泄漏
+				jpeg_abort_decompress(&cinfo);
+				jpeg_destroy_decompress(&cinfo);
 				return false;
+			}
 
 			width = cinfo.output_width;
 			height = cinfo.output_height;
@@ -46,8 +51,21 @@ namespace ZQ
 			else
 				widthStep = width*nChannels;
 
-			pDst = (unsigned char*)malloc(widthStep * height);
-			memset(pDst, 0, sizeof(unsigned char)* widthStep * height);
+			// widthStep * height 是 int*int, 一张超大 JPEG(3*30000*24000) 就能溢出成负,
+			// 随后 memset 用 size_t 提升后的"真实大尺寸"去清一个"被截断的小 buffer" -> 确定性堆溢出
+			unsigned long long total_size = (unsigned long long)widthStep * (unsigned)height;
+			if (total_size == 0 || total_size > 0x7FFFFFFFULL)
+			{
+				jpeg_destroy_decompress(&cinfo);
+				return false;
+			}
+			pDst = (unsigned char*)malloc((size_t)total_size);
+			if (pDst == 0)
+			{
+				jpeg_destroy_decompress(&cinfo);
+				return false;
+			}
+			memset(pDst, 0, (size_t)total_size);
 
 			JSAMPARRAY buffer;
 			buffer = (*cinfo.mem->alloc_sarray)((j_common_ptr)&cinfo, JPOOL_IMAGE, width*nChannels, 1);
