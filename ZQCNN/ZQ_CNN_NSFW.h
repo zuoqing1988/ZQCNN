@@ -54,7 +54,10 @@ namespace ZQ
 				W = width;
 			}
 			ZQ_CNN_Tensor4D_NHW_C_Align128bit input;
-			std::vector<float> buffer(width*height * 3);
+			const __int64 buffer_size = (__int64)width * height * 3;
+			if (buffer_size <= 0 || buffer_size > 0x7FFFFFFF)
+				return false;
+			std::vector<float> buffer((size_t)buffer_size);
 			int HW = width*height;
 			int HW2 = HW * 2;
 			for (int h = 0; h < height; h++)

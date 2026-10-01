@@ -129,7 +129,10 @@ namespace ZQ
 			double t1 = omp_get_wtime();
 			if (width != _width || height != _height)
 				return false;
-			std::vector<unsigned char> buffer_bgr(width* height * 3);
+			const __int64 buffer_bgr_size = (__int64)width * height * 3;
+			if (buffer_bgr_size <= 0 || buffer_bgr_size > 0x7FFFFFFF)
+				return false;
+			std::vector<unsigned char> buffer_bgr((size_t)buffer_bgr_size);
 			for (int h = 0; h < height; h++)
 			{
 				const unsigned char* bgr_row = bgr_img + h*_widthStep;

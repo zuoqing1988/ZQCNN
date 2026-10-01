@@ -89,7 +89,7 @@ namespace ZQ
 				length[i] = compressed_length[i];
 				_off += length[i];
 			}
-			buffer = (unsigned char*)malloc(sizeof(unsigned char)*_off);
+			buffer = (unsigned char*)malloc((size_t)_off);
 			if (buffer)
 			{
 				for (int i = 0; i < image_num; i++)
@@ -185,16 +185,23 @@ namespace ZQ
 				return true;
 			}
 
-			int _off = 0;
+			// length 可以是恶意文件里的负数, 累加会污染 _off 并让后面的分配/读取越界
+			__int64 _off = 0;
 			for (int i = 0; i < num; i++)
 			{
-				if (_off != offset[i])
+				if (length[i] <= 0 || offset[i] < 0 || (__int64)offset[i] != _off)
 				{
 					fclose(in);
 					Clear();
 					return false;
 				}
 				_off += length[i];
+				if (_off > 0x7FFFFFFF)
+				{
+					fclose(in);
+					Clear();
+					return false;
+				}
 			}
 			buffer = (unsigned char*)malloc(sizeof(unsigned char)*_off);
 			if (buffer == 0)

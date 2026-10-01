@@ -1013,7 +1013,10 @@ namespace ZQ
 				return false;
 			if (!input_yhalf.ConvertFromBGR(bgr_img, width, height / 2, _widthStep * 2))
 				return false;
-			std::vector<unsigned char> bgr_img_xhalf(width_half*_height * 3);
+			const __int64 xhalf_size = (__int64)width_half * _height * 3;
+			if (xhalf_size <= 0 || xhalf_size > 0x7FFFFFFF)
+				return false;
+			std::vector<unsigned char> bgr_img_xhalf((size_t)xhalf_size);
 			int widthStep_half = width_half * 3;
 			for (int i = 0; i < _height; i++)
 			{
