@@ -101,7 +101,16 @@ if((CMAKE_CXX_COMPILER_ID MATCHES "GNU") OR (CMAKE_CXX_COMPILER_ID MATCHES "Clan
             add_definitions(-mfloat-abi=softfp)
         endif()
     else()
-        add_compile_options(-mavx2)
+        # -mfma 不能省: ZQA_HAVE_FMA 的判定是
+        #   (ZQ_CNN_USE_FMADD256 && ...) || defined(__FMA__)
+        # 而 __FMA__ **只有** -mfma / -march=haswell 及以上才会定义 —— gcc 的
+        # -mavx2 **不隐含** FMA3。只给 -mavx2 时, zq_gemm_32f_align_c_asm.c 里
+        # 每一处 vfmadd231ps 都会退化成 ZQA_FMA 的 vmulps + vaddps 两条指令
+        # (再加一条 mov 到 ymm15 暂存), 内层循环的发射量翻倍。
+        # 实测 gcc 9.4: -mavx2 -> __FMA__=0; -mavx2 -mfma -> __FMA__=1。
+        # 安全性: 运行时的 ISA 守卫 (zq_gemm_32f_asm_isa_usable) 判的就是
+        # "AVX2 **且** FMA", 两者一致; 而且这条分支本来就要求 AVX2。
+        add_compile_options(-mavx2 -mfma)
     endif()
 elseif(CMAKE_CXX_COMPILER_ID MATCHES "Intel")
     add_compile_options(/QxAVX2)

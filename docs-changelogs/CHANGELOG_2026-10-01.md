@@ -1075,3 +1075,55 @@ ChangeSize 的比较方式、depthwise 别名、预取指令全仓计数、pooli
 2. AGENTS.md 行尾一节第 5 条已经记了「Python 批量改写会丢 CR」，这次是同一条链上
    的另一个坑：**丢 CR 会被 `check_line_endings.py` 抓到，丢编码不会**，
    所以必须两套工具都跑。
+
+## 新增/变更：Linux 构建补 -mfma（汇编 GEMM 的 FMA 之前整条路径都没生效）
+
+### 变更文件
+- `CMakeLists.txt`：GNU/Clang 非 ARM 分支 `add_compile_options(-mavx2)` -> `(-mavx2 -mfma)`
+- `tools/bench_two_binaries.py`（新增）：交替跑两个现成二进制、逐尺寸取中位数
+- `tools/bench_gemm_ab.py`：CFLAGS 改成与生产构建逐字一致
+- `AGENTS.md`：第 8 条补「同一个坑第二次咬人」；汇编一节补 vbroadcastss 那条
+
+### 问题
+`ZQA_HAVE_FMA` 的判定是
+```
+#if (defined(ZQ_CNN_USE_FMADD256) && ZQ_CNN_USE_FMADD256) || defined(__FMA__)
+```
+Linux 上 `ZQ_CNN_USE_SSETYPE` 固定为 AVX(=2)，所以 `ZQ_CNN_USE_FMADD256` 是 0；
+而 `__FMA__` **只有** `-mfma` / `-march=haswell` 及以上才定义 —— gcc 的 `-mavx2`
+**不隐含** FMA3。而 CMake 的 x86 GNU/Clang 分支当时只给了 `-mavx2`。
+
+结果：Linux 上 `zq_gemm_32f_align_c_asm.c` 里每一处 `vfmadd231ps` 走的都是
+`ZQA_FMA` 的 `vmulps` + `vaddps` 两条指令（再加一条把结果搬到 ymm15 暂存），
+内层循环的发射量翻倍。实测 gcc 9.4：`-mavx2` -> `__FMA__=0`，
+`-mavx2 -mfma` -> `__FMA__=1`。
+
+### 实测结果（WSL Ubuntu-20.04 + gcc 9.4 + Ryzen 9 5900HX，64 形状）
+用 `tools/bench_two_binaries.py` **交替**跑两个二进制各 5 轮，逐形状取中位数：
+
+    64 形状  中位 1.11x   B(-mfma) 更快 37   A(无 -mfma) 更快 3   噪声内 24
+
+最大的几档：`16x16x16` 1.78x、`384x128x384` 1.59x、`96x96x96` 1.44x、
+`48x48x48` 1.43x、`8x8x8` 1.40x、`1x65x65` 1.39x、`64x64x64` 1.38x。
+变慢的 3 个：`1x1x1` 0.60x、`1x1x1024` 0.72x、`1024x1024x4` 0.89x（都是
+工作量小到几乎只有固定开销的形状）。
+
+加 `-mfma` 后 `SampleGEMMCompare` 的 `asm/MKL` **中位 96%**（min 25% / max 275%），
+`err(asm)` 最大 7.6e-05，与加之前的量级一致，数值正确性没有变化。
+
+### 注意事项
+1. **第一版结论是反的，原因是又犯了 AGENTS.md 第 8 条**：先把无 fma 的跑完 3 轮、
+   再跑有 fma 的 3 轮，得出「加 -mfma 慢 23%（中位 0.77×）」。交替跑之后结论
+   完全反过来。**这是同一个坑第二次咬人**（第一次是 2026-10-01 的 N 方向分块）。
+   已把这段写进 AGENTS.md 第 8 条，并新增 `tools/bench_two_binaries.py`。
+2. **`tools/bench_gemm_ab.py` 的 CFLAGS 之前与生产不一致**（多了 `-fopenmp`、
+   少了 `-Ofast -ffast-math -DNDEBUG -fPIC`），而且当时的 `-mfma` 是它有、生产没有 ——
+   等于同一份源码在基准里走 `vfmadd231ps`、在生产里走 `vmulps+vaddps`，
+   「汇编 vs intrinsic」那一列不代表同一条指令路径。这正是 AGENTS.md 第 9 条
+   （基线必须与生产同源）说的「同源」不只包括源码，也包括编译参数。已改齐。
+3. 安全性：`-mfma` 不会让二进制跑在没有 FMA 的机器上崩得更难看 —— 运行时的
+   ISA 守卫 `zq_gemm_32f_asm_isa_usable()` 判的就是「AVX2 **且** FMA」，
+   两者条件一致；而且这条编译分支本来就要求 AVX2。
+4. 现在 Linux 上 `asm/MKL` 低于 60% 的只剩 4 个形状，且全部集中在 K∈[8,32)：
+   `1024x1024x16` 49%、`1024x1024x32` 57%、`1024x1x1` 58%、`313x32x28` 25%。
+   下一个要攻的就是这一族。

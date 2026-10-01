@@ -38,7 +38,15 @@ ROOT = os.path.dirname(HERE)
 GEMM_DIR = os.path.join(ROOT, 'ZQ_GEMM', 'math')
 BENCH_SRC = os.path.join(ROOT, 'SamplesZQBLAS', 'SampleGEMMCompare.cpp')
 WSL_DIST = 'Ubuntu-20.04'
-CFLAGS = '-O3 -mavx2 -mfma -fopenmp'
+# 必须与生产构建的命令行**逐字一致**，否则测的不是同一个二进制。
+# 取自 /tmp/zqb2/ZQ_GEMM/CMakeFiles/ZQ_GEMM.dir/flags.make 的 C_FLAGS：
+#   C_FLAGS = -O3 -DNDEBUG -fPIC -Ofast -ffast-math -mavx2 -mfma
+# 踩过的坑：这行原来是 '-O3 -mavx2 -mfma -fopenmp'，而当时的 CMake **只给了
+# -mavx2、没给 -mfma**，于是 __FMA__ 未定义、生产二进制走的是 vmulps+vaddps，
+# 而基准工具测的是 vfmadd231ps —— 同一份源码两个指令路径，"汇编 vs intrinsic"
+# 这一列从此不代表同一条路径（AGENTS.md 第 9 条：基线必须与生产同源，编译参数
+# 也算源码的一部分）。
+CFLAGS = '-O3 -DNDEBUG -fPIC -Ofast -ffast-math -mavx2 -mfma'
 
 
 def sh(cmd, **kw):
