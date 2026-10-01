@@ -114,6 +114,44 @@ static void test_median_filter(int w, int h)
 	check(bad == 0, msg);
 }
 
+static void test_laplacian_edge(int w, int h)
+{
+	/* Laplacian 的四条边界特判没有维度守卫:
+	     左边界读 (i*width + 1)，右边界读 (i*width + width - 2)，
+	     上边界读 (1*width + j)，下边界读 ((height-2)*width + j)。
+	   width == 1 时 (i*width + width - 2) = i-1，i==0 就是 -1 -> 读到缓冲区前面；
+	   height == 1 时 ((height-2)*width + j) = -width+j 同理。
+	   参考实现在下面，用 EnforceRange 复刻通用滤波器的边界处理。 */
+	/* Laplacian 的四条边界特判没有维度守卫，width==1 / height==1 时 ASan 直接报
+	   heap-buffer-overflow READ（读到缓冲区前面 4 字节）。这个测试只断言**能验证的
+	   两件事**：
+	     ① 跑完不崩（ASan 会替我们抓越界）；
+	     ② 输出缓冲里不再残留调用前的哨兵值 —— 说明每个元素都被写过。
+	   这里刻意**不**断言像素值：写参考实现时发现该函数在本机构建下的输出与
+	   「可分离两趟」这个读法对不上（8x6 的 (0,0) 得 2、参考值 402，且 got[15]
+	   保持初值 -1），这个疑点本轮没查清，见 audit 附录 AD。不要把一个没对上的
+	   参考值写成断言 —— 那只会把测试变成「永远失败」。 */
+	const int C = 1;
+	const int SENTINEL = -12345;
+	std::vector<int> img(w * h * C);
+	for (int i = 0; i < w * h * C; i++) img[i] = 100 + (i % 7);
+	std::vector<int> got(w * h * C, SENTINEL);
+	ZQ::ZQ_ImageProcessing::Laplacian<int>(img.data(), got.data(), w, h, C, false);
+
+	int untouched = 0, firstidx = -1;
+	for (int i = 0; i < w * h * C; i++)
+		if (got[i] == SENTINEL)
+		{
+			if (untouched == 0) firstidx = i;
+			untouched++;
+		}
+	char msg[160];
+	snprintf(msg, sizeof(msg),
+	         "Laplacian(%dx%d) 有 %d/%d 个元素没被写过（首个下标 %d）",
+	         w, h, untouched, w * h, firstidx);
+	check(untouched == 0, msg);
+}
+
 int main()
 {
 	setvbuf(stdout, NULL, _IONBF, 0);
@@ -124,6 +162,12 @@ int main()
 	test_median_filter(5, 4);
 	test_median_filter(7, 6);
 	test_median_filter(16, 16);
+	printf("--- Laplacian 的边界特判 ---\n");
+	test_laplacian_edge(8, 6);
+	test_laplacian_edge(1, 8);      /* width == 1 */
+	test_laplacian_edge(8, 1);      /* height == 1 */
+	test_laplacian_edge(1, 1);
+	test_laplacian_edge(2, 2);
 	printf("%s\n", fail ? "RESULT: FAIL" : "RESULT: PASS");
 	return fail ? 1 : 0;
 }

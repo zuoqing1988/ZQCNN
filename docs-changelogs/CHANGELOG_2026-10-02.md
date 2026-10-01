@@ -585,3 +585,46 @@ cur_k++;
 代理报告把 `ZQ_KDTree.h` 归在「可独立编译」一类（它自己也标注了这个推断是
 按 `#include` 图猜的、没能跑探测器）。**实际上它连编译都过不去** —— 又一次
 「先自己回读、再动手」拦下了一个会写进报告的错误结论。
+
+## 新增/变更：第 5 批 —— Laplacian 边界越界（已修）+ 一个据实记录的未决疑点
+
+### 变更文件
+- `3rdparty/include/ZQlib/ZQ_ImageProcessing.h`：`Laplacian` 两趟的边界特判
+  各自套上 `if (width >= 2)` / `if (height >= 2)`（**只改活的两处**）
+- `tools/zq_imageprocessing_check.cpp`：加 Laplacian 的越界回归用例
+- `audit_k3_20261001.md`：新增**附录 AD**
+
+### 已修：四条边界特判没有维度守卫
+
+左边界读 `src[i*width+1]`、右边界读 `src[i*width+width-2]`、上边界读 `src[1*width+j]`、
+下边界读 `src[(height-2)*width+j]` —— 通用路径 `ImageFilter2D` 每个 tap 都过
+`EnforceRange`，这四条没有。`width==1` 时右边界变成 `i-1`，`i==0` 就是 **-1**。
+
+**ASan 实测**（修复前）：`heap-buffer-overflow READ`，`ZQ_ImageProcessing.h:1023`，
+"0 bytes to the left of" 缓冲区。
+
+修复后 ASan 不再报，且输出缓冲里没有未被写过的元素（哨兵值验证）。
+
+### 据实记录：输出语义本轮没查清
+
+写参考实现时发现 8x6 的 `dst[0]` 实得 2，而按「可分离两趟、两趟都读 pSrcImage」
+推出来应该是 402。已排除越界残留、部分元素未写、`#ifdef` 漏编译三种可能。
+**因此本轮刻意没有写像素值断言**，只断言「不崩」+「每个元素都被写过」——
+把一个对不上的参考值写成断言只会得到永远失败的测试。
+
+**`Laplacian` 的输出语义目前是未验证状态**；全仓零调用点，本仓库没有 ground truth
+可对照。该函数本来就是死代码性质，但没有证据就不下结论。
+
+### 只改活的两处
+
+`ZQLIB_USE_OPENMP` 全仓从未定义，Laplacian 里有 4 份几乎一样的代码，
+本轮**只改了非 OpenMP 的两处**，死代码留在原样并在注释里说明。
+理由见附录 AD.3：跨行改写脚本在这种「多份拷贝、只有一份是活的」代码上
+连续两次改错位置（一次只包住两条边界特判里的第一条，一次因两份的 `for (int c...)`
+写法不同只匹配到一处），最后逐个 Edit 手改活代码才收敛。
+
+### 验证
+- Windows Release 全量构建 0 error；Linux 全量构建 0 error
+- Linux sample 回归 8 个全 rc=0
+- `tools/run_zqlib_checks.py`：6/6 PASS
+- `check_line_endings.py` / `check_text_encoding.py` 均 OK

@@ -1017,10 +1017,21 @@ namespace ZQ
 						for (int c = 0; c < nChannels; c++)
 							pDstImage[(i*width + j)*nChannels + c] += pSrcImage[(i*width + j + 1)*nChannels + c] + pSrcImage[(i*width + j - 1)*nChannels + c];
 					}
-					for (int c = 0; c < nChannels; c++)
-						pDstImage[(i*width + 0)*nChannels + c] += pSrcImage[(i*width + 0)*nChannels + c] + pSrcImage[(i*width + 1)*nChannels + c];
-					for (int c = 0; c < nChannels; c++)
-						pDstImage[(i*width + width - 1)*nChannels + c] += pSrcImage[(i*width + width - 2)*nChannels + c] + pSrcImage[(i*width + width - 1)*nChannels + c];
+					// width<2 时这两条边界特判会取到本行之外：
+					//   src[i*width + 1]        width==1 时越过行尾
+					//   src[i*width + width-2]  width==1 时 = i-1，i==0 就是 -1
+					// ASan 实测（tools/zq_imageprocessing_check.cpp）：
+					// heap-buffer-overflow READ，"4 bytes to the left of" 缓冲区。
+					// 通用路径 ImageFilter2D 每个 tap 都过 EnforceRange，这里没过。
+					// 内部循环 `for (j = 1; j < width-1; j++)` 在 width<2 时本来就不进，
+					// 所以边界特判跟着一起跳过即可（该方向的一半贡献为 0）。
+					if (width >= 2)
+					{
+						for (int c = 0; c < nChannels; c++)
+							pDstImage[(i*width + 0)*nChannels + c] += pSrcImage[(i*width + 0)*nChannels + c] + pSrcImage[(i*width + 1)*nChannels + c];
+						for (int c = 0; c < nChannels; c++)
+							pDstImage[(i*width + width - 1)*nChannels + c] += pSrcImage[(i*width + width - 2)*nChannels + c] + pSrcImage[(i*width + width - 1)*nChannels + c];
+					}
 				}
 #ifdef ZQLIB_USE_OPENMP
 			}
@@ -1052,10 +1063,17 @@ namespace ZQ
 						for (int c = 0; c < nChannels; c++)
 							pDstImage[(i*width + j)*nChannels + c] += pSrcImage[((i + 1)*width + j)*nChannels + c] + pSrcImage[((i - 1)*width + j)*nChannels + c];
 					}
-					for(int c = 0;c < nChannels;c++)
-						pDstImage[(0 * width + j)*nChannels + c] += pSrcImage[(0 * width + j)*nChannels + c] + pSrcImage[(1 * width + j)*nChannels + c];
-					for (int c = 0; c < nChannels; c++)
-						pDstImage[((height - 1)*width + j)*nChannels + c] += pSrcImage[((height - 2)*width + j)*nChannels + c] + pSrcImage[((height - 1)*width + j)*nChannels + c];
+					// height<2 时这两条边界特判会取到本图之外：
+					//   src[1*width + j]           height==1 时越过图末
+					//   src[(height-2)*width + j]  height==1 时 = -width+j
+					// 与横向那两条同理（ASan 实测同样是 heap-buffer-overflow READ）。
+					if (height >= 2)
+					{
+						for(int c = 0;c < nChannels;c++)
+							pDstImage[(0 * width + j)*nChannels + c] += pSrcImage[(0 * width + j)*nChannels + c] + pSrcImage[(1 * width + j)*nChannels + c];
+						for (int c = 0; c < nChannels; c++)
+							pDstImage[((height - 1)*width + j)*nChannels + c] += pSrcImage[((height - 2)*width + j)*nChannels + c] + pSrcImage[((height - 1)*width + j)*nChannels + c];
+					}
 				}
 #ifdef ZQLIB_USE_OPENMP
 			}
