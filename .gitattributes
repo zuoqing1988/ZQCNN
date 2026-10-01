@@ -1,0 +1,7 @@
+# 生成式内核头文件里全是跨行宏（行尾 \ 续行），必须保证仓库里是纯 LF。
+# 历史上这两个文件被提交成 \ + CRCRLF：MSVC 能容忍，gcc 的行拼接会失效，
+# 宏在第一行就被截断，Linux 侧会静默沿用旧的目标文件。
+ZQCNN/layers_nchwc/*_raw.h text eol=lf
+ZQCNN/layers_c/*_raw.h text eol=lf
+ZQ_GEMM/math/*_raw.h text eol=lf
+ZQ_GEMM/math/*.asm text eol=crlf
