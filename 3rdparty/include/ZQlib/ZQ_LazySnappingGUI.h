@@ -2,7 +2,12 @@
 #define _ZQ_LAZY_SNAPPING_GUI_H_
 #pragma once
 
-#include <opencv\cv.h>
+// 原来是 <opencv\cv.h>：① 反斜杠只对 MSVC 有效；② 更要紧的是 `cv.h` 是
+// **OpenCV 1.x 的 C API 头**，OpenCV 2/3/4 早就没有了（对应的是
+// `opencv2/opencv.h`）。改成 2.x 的路径至少让错误信息指向真正的原因
+// （下面那 5 处 CvMemStorage / CvMat / cvLoadImage 调用在新版里不存在），
+// 而不是一句让人误以为「缺文件」的 No such file or directory。
+#include <opencv2/opencv.h>
 #include <vector>
 #include "ZQ_DoubleImage.h"
 #include "ZQ_LazySnapping.h"

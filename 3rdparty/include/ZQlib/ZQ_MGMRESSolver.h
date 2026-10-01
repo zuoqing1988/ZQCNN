@@ -6,7 +6,7 @@
 #include <string.h>
 #include <malloc.h>
 #include <stdio.h>
-#include <iostream>				// cerr 本来眉不能编过
+#include <iostream>
 
 namespace ZQ
 {
@@ -780,11 +780,11 @@ namespace ZQ
 			{
 				if (display)
 				{
-					cerr << "\n";
-					cerr << "MGMRES_ST - Fatal error!\n";
-					cerr << "  N < MR.\n";
-					cerr << "  N = " << n << "\n";
-					cerr << "  MR = " << mr << "\n";
+					std::cerr << "\n";
+					std::cerr << "MGMRES_ST - Fatal error!\n";
+					std::cerr << "  N < MR.\n";
+					std::cerr << "  N = " << n << "\n";
+					std::cerr << "  MR = " << mr << "\n";
 
 				}
 				return false;
@@ -825,7 +825,7 @@ namespace ZQ
 
 				if (display)
 				{
-					cout << "  ITR = " << itr << "  Residual = " << rho << "\n";
+					std::cout << "  ITR = " << itr << "  Residual = " << rho << "\n";
 				}
 
 				if (itr == 1)
@@ -922,7 +922,7 @@ namespace ZQ
 
 					if (display)
 					{
-						cout << "  K =   " << k << "  Residual = " << rho << "\n";
+						std::cout << "  K =   " << k << "  Residual = " << rho << "\n";
 					}
 
 					if (rho <= rho_tol && rho <= tol_abs)
@@ -960,10 +960,10 @@ namespace ZQ
 
 			if (display)
 			{
-				cout << "\n";
-				cout << "MGMRES_ST\n";
-				cout << "  Number of iterations = " << itr_used << "\n";
-				cout << "  Final residual = " << rho << "\n";
+				std::cout << "\n";
+				std::cout << "MGMRES_ST\n";
+				std::cout << "  Number of iterations = " << itr_used << "\n";
+				std::cout << "  Final residual = " << rho << "\n";
 			}
 			//
 			//  Free memory.
@@ -1480,6 +1480,10 @@ namespace ZQ
 			if (out == 0)
 				return false;
 
+			// 原来循环里的 `k = seed / 127773;` 没有对应声明 —— 从 John Burkardt 的
+			// r8vec_uniform_01 移植到 C++ 模板时把 `long int k;` 这个局部声明丢了，
+			// 于是 gcc 报 "‘k’ was not declared in this scope"。MSVC 同样过不去。
+			long k;
 			for (int i = 0; i < n; i++)
 			{
 				k = seed / 127773;
@@ -1491,7 +1495,9 @@ namespace ZQ
 					seed = seed + 2147483647;
 				}
 
-				r[i] = (double)(seed)* 4.656612875E-10;
+				// 原来是 `r[i] = ...` —— Burkardt 原版里输出数组就叫 r，移植成模板时
+				// 参数改名成 out 了，这一行漏改，于是 gcc 报「r 未声明」。
+				out[i] = (double)(seed)* 4.656612875E-10;
 			}
 
 			return true;

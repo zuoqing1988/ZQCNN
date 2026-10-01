@@ -801,3 +801,72 @@ MSVC 对其中三类（缺 typename、模板参数遮蔽）都放行，说明上
 
 Windows Release 0 error；Linux 0 error；sample 回归 8 个全 rc=0；
 probe OK 列表 88 -> 103；run_zqlib_checks.py 7/7 PASS；两套检查工具均 OK。
+
+## 新增/变更：打开 OpenCV 那条线之后又冒出 5 处真缺陷（可验证头 103 -> 106）
+
+### 变更文件
+- `3rdparty/include/ZQlib/ZQ_ImageIO.h`
+  - `#include "opencv2\opencv.hpp"` 的反斜杠改正斜杠
+  - `cv::Mat` 返回值函数里的 `return 0;` -> `return cv::Mat();`
+- `3rdparty/include/ZQlib/ZQ_MGMRESSolver.h`
+  - `cerr` / `cout` 8 处补 `std::` 限定
+  - 补 `#include <iostream>`
+  - `r8vec_uniform_01` 里补回丢失的局部声明 `long k;`
+  - `r[i] = ...` 改成 `out[i] = ...`
+- `3rdparty/include/ZQlib/ZQ_LazySnappingGUI.h`：`opencv\cv.h` -> `opencv2/opencv.h`
+- `audit_k3_20261001.md`：新增**附录 AH**
+
+### 为什么单独跑一遍「带 OpenCV 头」的对照
+
+附录 AG 之后还剩 33 个 BROKEN，其中 4 个报的是
+`fatal error: opencv2\opencv.hpp: No such file or directory` —— 分类器把它们归到
+BROKEN，但其实只是缺 OpenCV，而本机明明有 `/usr/local/include/opencv2/opencv.hpp`。
+
+单独跑 `-I/usr/local/include` 的对照后发现 **5 处真缺陷**：
+
+1. `ZQ_ImageIO.h:8` 反斜杠 —— gcc 在 `\o` 处把它当转义序列起始，报「No such file」
+   看起来像缺文件，其实是路径分隔符问题。正斜杠在两边都能用。
+2. `ZQ_ImageIO.h:339` `cv::Mat` 返回值函数里写 `return 0;` ——
+   `could not convert '0' from 'int' to 'cv::Mat'`。改成 `return cv::Mat();`。
+3. `ZQ_MGMRESSolver.h` 的 `cerr` / `cout` 在全局命名空间裸用，8 处要补 `std::`。
+4. `ZQ_MGMRESSolver.h:1485` `k = seed / 127773;` 的 `k` **没有声明** ——
+   从 Burkardt 的 `r8vec_uniform_01` 移植成 C++ 模板时把 `long int k;` 丢了。
+5. `ZQ_MGMRESSolver.h:1498` `r[i] = ...` 的 `r` **没有声明** —— 同一处移植把输出
+   参数从 `r` 改名成 `out`，这一行漏改。
+
+4 和 5 是同一个函数里连着的两处移植遗漏，说明这段从 C 翻成 C++ 时没有逐行对过；
+而正因为编不过，**它从来没被编译过**。
+
+### 顺带：ZQ_LazySnappingGUI.h 引用的是 OpenCV 1.x
+
+`<opencv\cv.h>` 是 OpenCV 1.x 的 C API 头，2/3/4 都没有（对应 `opencv2/opencv.h`），
+文件里还有 5 处 `CvMemStorage` / `CvMat` / `cvLoadImage` 在新版里不存在。
+**这个头不是路径问题，是整个基于一个已消失的 API。** 把路径改成
+`opencv2/opencv.h` 只是让错误信息指向真正的原因（符号不存在）而不是误导人的
+「No such file or directory」。本轮不修（要修等于重写整个 GUI 层），记为待办。
+
+### 效果
+
+| | 附录 AG 后 | 现在 |
+|---|---|---|
+| **OK（能独立编译 => 能验证）** | 103 | **106** |
+| NEEDS_LIB | 6 | 8 |
+| MSVC_ONLY | 1 | 1 |
+| BROKEN | 33 | **28** |
+
+3 个头从 BROKEN 挪到 NEEDS_LIB（现在能正确报告「需要 OpenCV」而不是含混的
+「文件不存在」），另外 3 个从 BROKEN 变成 OK。
+
+### 方法论
+
+**探测器的分类结论本身也要复核。** 它把 4 个头报成 BROKEN，理由是
+「找不到 opencv2\opencv.hpp」；但那条错误信息里有个**反斜杠**，说明它根本不是
+「缺文件」。如果直接采信，这 4 个头会一直留在 BROKEN 桶里，而它们后面还藏着
+第 2、3、4、5 条真缺陷。
+
+**自动分类给出的错误信息要读一遍再采信** —— 尤其当错误信息本身就长得可疑。
+
+### 验证
+
+Windows Release 0 error；Linux 0 error；sample 回归 8 个全 rc=0；
+probe OK 列表 103 -> 106；run_zqlib_checks.py 7/7 PASS；两套检查工具均 OK。

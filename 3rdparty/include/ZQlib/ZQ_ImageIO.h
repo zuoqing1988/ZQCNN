@@ -5,7 +5,10 @@
 #include <stdio.h>
 #include "ZQ_DoubleImage.h"
 #include <typeinfo>
-#include "opencv2\opencv.hpp"
+// 原来是 "opencv2\opencv.hpp"（反斜杠）。正斜杠在 Windows 与 Linux 上都能用，
+// 反斜杠只对 MSVC 有效 —— gcc 会在 `\o` 处把它当成转义序列起始，报的是
+// 「opencv2\opencv.hpp: No such file or directory」，看起来像缺文件而不是路径分隔符问题。
+#include "opencv2/opencv.hpp"
 
 namespace ZQ
 {
@@ -333,7 +336,7 @@ namespace ZQ
 			int height2 = v2.height();
 
 			if (height1 != height2)
-				return 0;
+				return cv::Mat();      // 原来是 return 0; —— 见下面那段说明
 
 			int width = width1 + width2;
 			int height = height1;
