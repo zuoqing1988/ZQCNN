@@ -1777,6 +1777,9 @@ namespace ZQ
 			{
 				for (int j = 0; j < task_fourthBbox[i].size(); j++)
 				{
+					// ppoint 是定长 212, 但 keypoint_num 可能小于 106, 尾部是没填过的未初始化内存;
+					// 先清零再整块拷贝, 避免把未初始化数据带出去(可能被序列化/展示)
+					memset(resultBbox[id].ppoint, 0, sizeof(resultBbox[id].ppoint));
 					memcpy(resultBbox[id].ppoint, task_fourthBbox[i][j].ppoint, sizeof(float) * 212);
 					id++;
 				}

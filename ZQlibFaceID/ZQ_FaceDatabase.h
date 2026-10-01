@@ -565,7 +565,6 @@ namespace ZQ
 							cur_j_feat = persons[pp].features[j].pData;
 							scores[idx] = ZQ_MathBase::DotProduct(dim, cur_i_feat, cur_j_feat);
 							flags[idx] = 1;
-							same_pair_num++;
 							idx++;
 						}
 						for (__int64 qq = pp + 1; qq < person_num; qq++)
@@ -575,7 +574,6 @@ namespace ZQ
 								cur_j_feat = persons[qq].features[j].pData;
 								scores[idx] = ZQ_MathBase::DotProduct(dim, cur_i_feat, cur_j_feat);
 								flags[idx] = 0;
-								notsame_pair_num++;
 								idx++;
 							}
 						}
@@ -622,7 +620,6 @@ namespace ZQ
 							cur_j_feat = persons[pp].features[j].pData;
 							scores[idx] = ZQ::ZQ_MathBase::DotProduct(dim, cur_i_feat, cur_j_feat);
 							flags[idx] = 1;
-							same_pair_num++;
 							idx++;
 						}
 						for (__int64 qq = pp + 1; qq < person_num; qq++)
@@ -632,7 +629,6 @@ namespace ZQ
 								cur_j_feat = persons[qq].features[j].pData;
 								scores[idx] = ZQ::ZQ_MathBase::DotProduct(dim, cur_i_feat, cur_j_feat);
 								flags[idx] = 0;
-								notsame_pair_num++;
 								idx++;
 							}
 						}
@@ -665,6 +661,7 @@ namespace ZQ
 						printf("%d/%d\n", *handled, person_num);
 					}
 				}
+				// 并行区里的自增已删(非原子的共享写, 且结果本来就会被这里整体覆盖)
 				same_pair_num = tmp_same_pair_num[0];
 				notsame_pair_num = all_pair_num - same_pair_num;
 			}
