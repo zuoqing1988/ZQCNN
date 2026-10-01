@@ -1256,7 +1256,8 @@ namespace ZQ
 								task_thirdBbox[pp][i].regreCoord[j] = location_ptr[i*location_sliceStep + j];
 							if (keyPoint != 0)
 							{
-								for (int num = 0; num < 5; num++)
+								int kp_num = __min(5, keyPoint->GetC() / 2);
+								for (int num = 0; num < kp_num; num++)
 								{
 									task_thirdBbox[pp][i].ppoint[num] = task_thirdBbox[pp][i].col1 +
 										(task_thirdBbox[pp][i].col2 - task_thirdBbox[pp][i].col1)*keyPoint_ptr[i*keyPoint_sliceStep + num];
@@ -1325,7 +1326,8 @@ namespace ZQ
 								task_thirdBbox[pp][i].regreCoord[j] = location_ptr[i*location_sliceStep + j];
 							if (keyPoint != 0)
 							{
-								for (int num = 0; num < 5; num++)
+								int kp_num = __min(5, keyPoint->GetC() / 2);
+								for (int num = 0; num < kp_num; num++)
 								{
 									task_thirdBbox[pp][i].ppoint[num] = task_thirdBbox[pp][i].col1 +
 										(task_thirdBbox[pp][i].col2 - task_thirdBbox[pp][i].col1)*keyPoint_ptr[i*keyPoint_sliceStep + num];
@@ -1489,11 +1491,18 @@ namespace ZQ
 					lnet[0].Forward(task_lnet_images[pp]);
 					double t32 = omp_get_wtime();
 					const ZQ_CNN_Tensor4D_NCHWC4* keyPoint = lnet[0].GetBlobByName("conv6-3");
-					const float* keyPoint_ptr = keyPoint->GetFirstPixelPtr();
-					int keyPoint_sliceStep = keyPoint->GetSliceStep();
+					const float* keyPoint_ptr = 0;
+					int keyPoint_sliceStep = 0;
+					int kp_num = 0;
+					if (keyPoint != 0)
+					{
+						keyPoint_ptr = keyPoint->GetFirstPixelPtr();
+						keyPoint_sliceStep = keyPoint->GetSliceStep();
+						kp_num = __min(5, keyPoint->GetC() / 2);
+					}
 					for (int i = 0; i < task_fourthBbox[pp].size(); i++)
 					{
-						for (int num = 0; num < 5; num++)
+						for (int num = 0; num < kp_num; num++)
 						{
 							task_fourthBbox[pp][i].ppoint[num] = task_fourthBbox[pp][i].col1 +
 								(task_fourthBbox[pp][i].col2 - task_fourthBbox[pp][i].col1)*keyPoint_ptr[i*keyPoint_sliceStep + num];
@@ -1520,11 +1529,18 @@ namespace ZQ
 					lnet[thread_id].Forward(task_lnet_images[pp]);
 					double t32 = omp_get_wtime();
 					const ZQ_CNN_Tensor4D_NCHWC4* keyPoint = lnet[thread_id].GetBlobByName("conv6-3");
-					const float* keyPoint_ptr = keyPoint->GetFirstPixelPtr();
-					int keyPoint_sliceStep = keyPoint->GetSliceStep();
+					const float* keyPoint_ptr = 0;
+					int keyPoint_sliceStep = 0;
+					int kp_num = 0;
+					if (keyPoint != 0)
+					{
+						keyPoint_ptr = keyPoint->GetFirstPixelPtr();
+						keyPoint_sliceStep = keyPoint->GetSliceStep();
+						kp_num = __min(5, keyPoint->GetC() / 2);
+					}
 					for (int i = 0; i < task_fourthBbox[pp].size(); i++)
 					{
-						for (int num = 0; num < 5; num++)
+						for (int num = 0; num < kp_num; num++)
 						{
 							task_fourthBbox[pp][i].ppoint[num] = task_fourthBbox[pp][i].col1 +
 								(task_fourthBbox[pp][i].col2 - task_fourthBbox[pp][i].col1)*keyPoint_ptr[i*keyPoint_sliceStep + num];
@@ -1674,9 +1690,15 @@ namespace ZQ
 					lnet[0].Forward(task_lnet_images[pp]);
 					double t32 = omp_get_wtime();
 					const ZQ_CNN_Tensor4D_NCHWC4* keyPoint = lnet[0].GetBlobByName("conv6-3");
-					const float* keyPoint_ptr = keyPoint->GetFirstPixelPtr();
-					int keypoint_num = __min(106, keyPoint->GetC() / 2);
-					int keyPoint_sliceStep = keyPoint->GetSliceStep();
+					const float* keyPoint_ptr = 0;
+					int keypoint_num = 0;
+					int keyPoint_sliceStep = 0;
+					if (keyPoint != 0)
+					{
+						keyPoint_ptr = keyPoint->GetFirstPixelPtr();
+						keypoint_num = __min(106, keyPoint->GetC() / 2);
+						keyPoint_sliceStep = keyPoint->GetSliceStep();
+					}
 					for (int i = 0; i < task_fourthBbox[pp].size(); i++)
 					{
 						for (int num = 0; num < keypoint_num; num++)
@@ -1706,9 +1728,15 @@ namespace ZQ
 					lnet[thread_id].Forward(task_lnet_images[pp]);
 					double t32 = omp_get_wtime();
 					const ZQ_CNN_Tensor4D_NCHWC4* keyPoint = lnet[thread_id].GetBlobByName("conv6-3");
-					const float* keyPoint_ptr = keyPoint->GetFirstPixelPtr();
-					int keypoint_num = __min(106, keyPoint->GetC() / 2);
-					int keyPoint_sliceStep = keyPoint->GetSliceStep();
+					const float* keyPoint_ptr = 0;
+					int keypoint_num = 0;
+					int keyPoint_sliceStep = 0;
+					if (keyPoint != 0)
+					{
+						keyPoint_ptr = keyPoint->GetFirstPixelPtr();
+						keypoint_num = __min(106, keyPoint->GetC() / 2);
+						keyPoint_sliceStep = keyPoint->GetSliceStep();
+					}
 					for (int i = 0; i < task_fourthBbox[pp].size(); i++)
 					{
 						for (int num = 0; num < keypoint_num; num++)

@@ -1,4 +1,4 @@
-﻿#ifndef _ZQ_CNN_MTCNN_OLD_H_
+#ifndef _ZQ_CNN_MTCNN_OLD_H_
 #define _ZQ_CNN_MTCNN_OLD_H_
 #pragma once
 #include "ZQ_CNN_Net.h"
@@ -503,17 +503,24 @@ namespace ZQ
 			const ZQ_CNN_Tensor4D* keyPoint = onet.GetBlobByName("conv6-3");
 			score_ptr = score->GetFirstPixelPtr();
 			location_ptr = location->GetFirstPixelPtr();
-			const float* keyPoint_ptr = keyPoint->GetFirstPixelPtr();
+			const float* keyPoint_ptr = 0;
 			score_sliceStep = score->GetSliceStep();
 			location_sliceStep = location->GetSliceStep();
-			int keyPoint_sliceStep = keyPoint->GetSliceStep();
+			int keyPoint_sliceStep = 0;
+			int kp_num = 0;
+			if (keyPoint != 0)
+			{
+				keyPoint_ptr = keyPoint->GetFirstPixelPtr();
+				keyPoint_sliceStep = keyPoint->GetSliceStep();
+				kp_num = __min(5, keyPoint->GetC() / 2);
+			}
 			for (int i = 0; i < o_count; i++)
 			{
 				if (score_ptr[i*score_sliceStep + 1] > thresh[2])
 				{
 					for (int j = 0; j < 4; j++)
 						thirdBbox[i].regreCoord[j] = location_ptr[i*location_sliceStep + j];
-					for (int num = 0; num < 5; num++)
+					for (int num = 0; num < kp_num; num++)
 					{
 						thirdBbox[i].ppoint[num] = thirdBbox[i].col1 + (thirdBbox[i].col2 - thirdBbox[i].col1)*keyPoint_ptr[i*keyPoint_sliceStep + num];
 						thirdBbox[i].ppoint[num+5] = thirdBbox[i].row1 + (thirdBbox[i].row2 - thirdBbox[i].row1)*keyPoint_ptr[i*keyPoint_sliceStep + num + 5];

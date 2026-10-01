@@ -1664,7 +1664,8 @@ namespace ZQ
 								task_thirdBbox[pp][i].regreCoord[j] = location_ptr[i*location_sliceStep + j];
 							if (keyPoint != 0)
 							{
-								for (int num = 0; num < 5; num++)
+								int kp_num = __min(5, keyPoint->GetC() / 2);
+								for (int num = 0; num < kp_num; num++)
 								{
 									task_thirdBbox[pp][i].ppoint[num] = task_thirdBbox[pp][i].col1 +
 										(task_thirdBbox[pp][i].col2 - task_thirdBbox[pp][i].col1)*keyPoint_ptr[i*keyPoint_sliceStep + num];
@@ -1733,7 +1734,8 @@ namespace ZQ
 								task_thirdBbox[pp][i].regreCoord[j] = location_ptr[i*location_sliceStep + j];
 							if (keyPoint != 0)
 							{
-								for (int num = 0; num < 5; num++)
+								int kp_num = __min(5, keyPoint->GetC() / 2);
+								for (int num = 0; num < kp_num; num++)
 								{
 									task_thirdBbox[pp][i].ppoint[num] = task_thirdBbox[pp][i].col1 +
 										(task_thirdBbox[pp][i].col2 - task_thirdBbox[pp][i].col1)*keyPoint_ptr[i*keyPoint_sliceStep + num];
