@@ -551,3 +551,35 @@ SIGSEGV code=128 (SI_KERNEL) si_addr=(nil)
 
 1. 第 1 条已经写进 AGENTS.md 的「ZQCNN 里容易看反的 API 约定」：`Resize*/ROI/Padding` 的接收者是**源**。这类方向性误判在本项目里很容易发生（本轮连着误判了 eltwise 增量目标、`handled` 初值、ResizeBilinear 参数方向三次），动代码前必须先逐元素/逐参数推演。
 2. 第五轮的方向二（真实模型的层→kernel 步长推演）、方向三（LLP64/算术右移/`-ffast-math` 下的 NaN 检查）、方向四（`Init` 失败后重复调用）仍在审计中，结论待补。
+
+## 新增/变更：第五轮审计修复（Init 失败路径 + 边框清零 12 处收口）
+
+对应 `audit_k3_20261001.md` 附录 L。
+
+### 变更文件
+
+| 文件 | 问题 | 修复 |
+|---|---|---|
+| `ZQCNN/ZQ_CNN_MTCNN.h`、`_Interface.h`、`_NCHWC.h`、`_AspectRatio.h`（7 处） | `Init`/`InitFromBuffer` 在 `ret==false` 时把 `pnet/rnet/onet/lnet` 全部 `clear()` 并 `thread_num=0`，但紧接着的调试打印和**无条件**的 `rnet[0].GetInputDim(C,H,W)` / `onet[0]` / `lnet[0]` 仍在解引用空 vector 的下标 0（`return ret(false)` 排在崩溃之后） | 在 `else this->thread_num = thread_num;` 之后补 `if (!ret) return false;` |
+| `ZQCNN/ZQ_CNN_Tensor4D.cpp`（11 处）、`ZQ_CNN_Tensor4D.h` 的 `ROI`（1 处） | 上一轮只改了 12 处中的 4 处边框清零，其余沿用旧写法：下边框一次性清行 `[borderH, 2*borderH)`，**真下边框 `[H, H+borderH)` 从未清到**；左右两列只清 `h ∈ [0, borderH)`。`ChangeSize` 长度够就复用 buffer（不重新分配也不重新 memset），于是同尺寸复用时会读到上一轮残留；`NSFW`/`PersonPose` 走的 `Align128bit::ResizeBilinearRect` 在 `borderH=1` 时会把缩放结果的**第 1 行整行清零** | 全部改为与同类 `Padding()` 一致的逐行写法：上边框 `[0,borderH)`、下边框 `[H, H+borderH)`，左右两列覆盖全部 H 行 |
+
+### 一条被否掉的审计结论（重要）
+
+第五轮把 `Reshape_NCHW` 的 `i_c`（步长 1）与 `out_c_ptr++` 判成"高危静默算错"，理由是"c 维步长应为 sliceStep"。按此修改后 **`SampleSSD` 在模型加载阶段直接段错误**，回退后恢复。核对 `ZQ_CNN_Tensor4D::ChangeSize`：
+
+```
+dst_pixelStep = dst_C;              dst_widthStep = dst_pixelStep*dst_realW;
+dst_sliceStep = dst_widthStep*dst_realH;   dst_tensor_raw_size = dst_sliceStep*dst_N;
+```
+
+NCHW 里 `sliceStep` 是**一张图**的步长（不是通道），`(n,c,h,w)` 的偏移是 `n*sliceStep + c*1 + h*widthStep + w*pixelStep`——原实现是对的。有 `imStep`（一张图）与通道 `sliceStep` 之分的是 NCHWC 那一侧。已把这条写进 AGENTS.md。
+
+### 实测结果
+
+- **Windows**：全量构建 **0 error**；SampleSSD（10.2ms）、SampleMTCNN（18.2ms）、SampleMTCNN_NCHWC4（7.8ms）、SampleFaceDetectorMTCNN 全部 exit=0
+- **Linux**：全量构建 **0 error**；SampleMTCNN、SampleMTCNN_NCHWC4、SampleSSD 全部 exit=0
+
+### 注意事项
+
+1. 附录 L 里还列了 7 项中低危待办（batchnorm 末分支整向量读写、Eltwise `ReadParam` 条件写反、`LoadFromBuffer` 未做 `_simplify_inplace`、MTCNN 构造函数未初始化若干成员、两处 omp 非原子调试计数、`_Lnet106_stage` 无条件 memcpy 212 float、`-ffast-math` 只在 GCC/Clang 侧开导致跨平台浮点结合序不同），均不影响现有示例，尚未修。
+2. 本轮再次印证 AGENTS.md 里那条"先确认 API/步长方向再动手"：连续三次方向性误判（`ResizeBilinear` 接收者、`eltwise` 增量目标、NCHW 的 sliceStep 含义）都曾导致"修复"反而破坏功能。
