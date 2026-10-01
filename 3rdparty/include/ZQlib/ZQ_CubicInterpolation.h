@@ -72,13 +72,18 @@ namespace ZQ
 	template<class T>
 	T ZQ_nCubicInterpolate(int n, const T* p, const float* coordinates)
 	{
-		if (n == 1) 
+		if (n <= 0 || p == 0 || coordinates == 0)
+			return T(0);   // n<=0 原来会无限递归（只有 n==1 终止, n==0 还会做一次 1 << -2 的 UB 移位）
+		if (n == 1)
 		{
 			return ZQ_CubicInterpolate(p, coordinates[0]);
 		}
-		else 
+		else
 		{
 			T arr[4];
+			// n>=16 时 (n-1)*2 >= 30, 1<<30 起是 UB; 这里按最大支持的 n 收口
+			if (n > 8)
+				return T(0);
 			int skip = 1 << ((n - 1) * 2);
 			arr[0] = ZQ_nCubicInterpolate(n-1, p, coordinates);
 			arr[1] = ZQ_nCubicInterpolate(n-1, p+skip, coordinates);

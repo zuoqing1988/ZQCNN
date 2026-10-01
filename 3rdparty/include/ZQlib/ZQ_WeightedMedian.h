@@ -12,8 +12,12 @@ namespace ZQ
 		template<class T>
 		static bool FindMedian(const T* vals, const T* weights, int num, T& output)
 		{
-			if (vals == 0 || weights == 0)
+			if (vals == 0 || weights == 0 || num <= 0)
 				return false;
+			// num<=0 原来没判: num==0 时两个循环都不进, inf_num 保持 0,
+			// 于是 output = sort_vals[num - inf_num] = sort_vals[0] 读零长数组
+			// (ASan: heap-buffer-overflow READ, ZQ_WeightedMedian.h:46,
+			//  分配点 :22); num<0 时 new T[-1] 抛未捕获的 bad_array_new_length。
 
 			for (int i = 0; i < num;i++)
 			if (weights[i] <= 0)

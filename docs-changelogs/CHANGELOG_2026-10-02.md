@@ -484,3 +484,104 @@ if (ou == 0)        // <-- ou 未声明
    `ZQ_WeightedMedian.h` 的 `num<=0`、`ZQ_CubicInterpolation.h` 的无界递归、
    `ZQ_FindLargestSubMatrix.h` 的无符号乘法溢出、`ZQ_Matrix.h` 的自赋值），
    本轮未处理，已记入附录 AB 待下一批。
+
+## 新增/变更：第 4 批 —— KDTree / WeightedMedian / CubicInterpolation / FindLargestSubMatrix 六条
+
+### 变更文件
+- `3rdparty/include/ZQlib/ZQ_KDTree.h`
+  - 去掉嵌套类上重复的 `template<class T>`（gcc 报 "shadows template parameter"，MSVC 放行）
+  - 34 处 `ZQ_KDTree_Node<T>` 改成 `ZQ_KDTree_Node`（嵌套类不再是模板）
+  - `BuildKDTree` 守卫 `npts < 0` -> `npts <= 0`
+  - 四个搜索入口（BruteForceSearch / AnnSearch / AnnSearchWithInitalRadius /
+    AnnFixRadiusSearch）补 `k <= 0`
+  - `_recursive_ann_fix_radius_search` 的叶节点循环补 `cur_k >= k` 上限
+- `3rdparty/include/ZQlib/ZQ_WeightedMedian.h`：`FindMedian` 补 `num <= 0`
+- `3rdparty/include/ZQlib/ZQ_CubicInterpolation.h`：`ZQ_nCubicInterpolate` 补
+  `n <= 0` 与 `n > 8` 的上界（原来只有 `n == 1` 终止，且 `1 << ((n-1)*2)` 会溢出）
+- `3rdparty/include/ZQlib/ZQ_FindLargestSubMatrix.h`：补 `in_width/in_height == 0`，
+  乘积改成 `(size_t)` 相乘
+- `tools/zq_batch4_check.cpp`（新增）：六条的独立回归测试
+- `audit_k3_20261001.md`：新增**附录 AC**
+
+### 这批是怎么来的
+
+上一批（附录 AB）用一次并行扫描代理扫出了 10 条候选，我只处理了「已确认」的 4 条，
+把 5 条「中等置信度」留到了这一批。**这批的每一条我都先回读源码确认，再动手**，
+其中两条的实际情况比代理描述的还严重一点。
+
+### 1. `ZQ_KDTree.h` 在 gcc 下根本编不过（先修这个才谈得上测）
+
+```cpp
+template<class T>
+class ZQ_KDTree {
+    template<class T>          // <-- 嵌套类里重复声明与外层同名的模板参数
+    class ZQ_KDTree_Node { ... };
+```
+gcc 报 `declaration of template parameter 'T' shadows template parameter`，
+MSVC 放行。所以它在探测器的 BROKEN 桶里 —— **这正是它一直拿不到独立测试的原因**。
+去掉重复声明后，34 处 `ZQ_KDTree_Node<T>` 要同步改成 `ZQ_KDTree_Node`。
+修完它才进 OK 列表，测试才编得过。
+
+### 2. `BuildKDTree` 接受 `npts == 0`
+
+守卫只有 `npts < 0`。`npts == 0` 通过后 `pts_idx = new int[0]`，
+而 `_find_min_max`（:114）无条件读 `pts[pts_idx[0]][d]` —— **零长数组越界读**。
+
+### 3. 四个搜索入口只判 `tree->npts < k`，没判 `k <= 0`
+
+与 `ZQ_Kmeans` 完全同一形状。`k == 0` 时 `_update_search_result` 走 `cur_k == k`
+分支读 `out_dis2[k-1]` = `out_dis2[-1]`。
+**ASan 实测**（修复前）：`stack-buffer-overflow READ`，`ZQ_KDTree.h:383`。
+
+### 4. `_recursive_ann_fix_radius_search` 写穿调用方缓冲（这条最严重）
+
+叶节点循环里
+
+```cpp
+out_idx[cur_k] = cur_idx;
+out_dis2[cur_k] = cur_dis2;
+cur_k++;
+```
+
+**没有任何 `cur_k < k` 检查** —— 半径内的点数超过 `k` 时直接写穿。
+这条**与 `k` 的取值无关**：用 12 个点、`k = 3`、半径覆盖全部 12 个点就能触发，
+不需要任何非法入参。兄弟函数 `_recursive_ann_search` /
+`_recursive_ann_search_with_initial_radius` 都以 `k` 为容量上限，这里漏了。
+
+### 5. `ZQ_WeightedMedian::FindMedian` 的 `num` 从不判
+
+`num == 0` 时两个循环都不进、`inf_num` 保持 0，
+`output = sort_vals[num - inf_num]` = `sort_vals[0]` **读零长数组**；
+`num < 0` 时 `new T[-1]` 抛未捕获异常。
+**ASan 实测**（修复前）：`heap-buffer-overflow READ`，`ZQ_WeightedMedian.h:46`，
+分配点 `:22`。
+
+### 6. `ZQ_nCubicInterpolate` 无界递归
+
+只有 `n == 1` 会终止。`n == 0` 先做一次 `1 << -2`（UB）再递归进 `n = -1, -2, ...`
+直到爆栈；`n >= 16` 时 `(n-1)*2 >= 30`，`1 << 30` 起也是 UB。已补 `n <= 0` 与 `n > 8`。
+
+### 7. `FindLargestSubMatrix` 的整数溢出
+
+`new unsigned int[in_height*in_width]` 是 unsigned × unsigned，乘积在 2^32 处回绕
+**之后**才拓宽到 size_t —— 65536×65536 会 new 出长度 0 的数组再写 2^32 个元素；
+另外 `in_height == 0` 时 `(in_height - 1)*in_width + w` 也回绕成巨大下标。
+两处都判掉，乘积改成 `(size_t)` 相乘。
+
+### 实测（tools/zq_batch4_check.cpp，ASan + LSan）
+
+修复前逐条被 ASan 抓到（KDTree 的 `out_dis2[-1]`、WeightedMedian 的
+`sort_vals[0]` 两处都是精确到行号的报告）。修复后 **6/6 全 PASS**，无报告。
+
+`tools/run_zqlib_checks.py` 现有 6 个测试全部通过。
+
+### 验证
+- Windows Release 全量构建 0 error；Linux 全量构建 0 error
+- Linux sample 回归 8 个全 rc=0
+- `tools/probe_zqlib_headers.py`：OK 列表 84 -> **85**（KDTree 进 OK）
+- `check_line_endings.py` / `check_text_encoding.py` 均 OK
+
+### 一条方法论记录
+代理报告把 `ZQ_KDTree.h` 归在「可独立编译」一类（它自己也标注了这个推断是
+按 `#include` 图猜的、没能跑探测器）。**实际上它连编译都过不去** —— 又一次
+「先自己回读、再动手」拦下了一个会写进报告的错误结论。

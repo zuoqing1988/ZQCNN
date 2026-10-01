@@ -12,7 +12,9 @@ namespace ZQ
 	template<class T>
 	class ZQ_KDTree
 	{
-		template<class T>
+		// 原来这里又写了一遍 `template<class T>` —— 嵌套类里重复声明与外层同名
+		// 的模板参数, gcc 直接报 "declaration of template parameter 'T' shadows
+		// template parameter", MSVC 则放行。外层的 T 已经在作用域里, 去掉即可。
 		class ZQ_KDTree_Node
 		{
 		public:
@@ -51,7 +53,7 @@ namespace ZQ
 		T** pts;
 		int* pts_idx;
 	
-		ZQ_KDTree_Node<T>* tree;
+		ZQ_KDTree_Node* tree;
 
 	private:
 		static void _swap(int& x, int& y){int tmp = x; x = y; y = tmp;}
@@ -59,16 +61,16 @@ namespace ZQ
 		static void _find_min_max(int npts, const int* pts_idx, const T** pts, int d, T& min, T& max);
 		static int _find_max_spread_dim(int npts, const int* pts_dix, const T** pts, int ndim);
 		static void _median_split(int npts, int* pts_idx, const T** pts, int d, T& cv, int n_low);
-		static void _recursive_subdivided(ZQ_KDTree_Node<T>* root, int max_leaf_npts);
-		static void _recursive_free(ZQ_KDTree_Node<T>* root);
+		static void _recursive_subdivided(ZQ_KDTree_Node* root, int max_leaf_npts);
+		static void _recursive_free(ZQ_KDTree_Node* root);
 		static void _update_search_result(int* out_idx, T* out_dis2, int& cur_k, int k, int cur_idx, T cur_dis2, bool& updated);
 		static T _distance2(const T* pt1, const T* pt2, int ndim);
-		static void _recursive_ann_search(const ZQ_KDTree_Node<T>* root, const T* pt, int& cur_k, int k, int* out_idx, T* out_dis2, double eps_plus_1_square);
-		static void _recursive_ann_search_with_initial_radius(const ZQ_KDTree_Node<T>* root, const T* pt, int& cur_k, int k, int* out_idx, T* out_dis2, double eps_plus_1_square, double radius2);
-		static void _recursive_ann_fix_radius_search_count(const ZQ_KDTree_Node<T>* root, const T* pt, int& k, double radius2);
-		static void _recursive_ann_fix_radius_search(const ZQ_KDTree_Node<T>* root, const T* pt, int& cur_k, int k, int* out_idx, T* out_dis2, double radius2);
-		static bool _recursive_check_box(const ZQ_KDTree_Node<T>* root);
-		static bool _check_box(const ZQ_KDTree_Node<T>* root);
+		static void _recursive_ann_search(const ZQ_KDTree_Node* root, const T* pt, int& cur_k, int k, int* out_idx, T* out_dis2, double eps_plus_1_square);
+		static void _recursive_ann_search_with_initial_radius(const ZQ_KDTree_Node* root, const T* pt, int& cur_k, int k, int* out_idx, T* out_dis2, double eps_plus_1_square, double radius2);
+		static void _recursive_ann_fix_radius_search_count(const ZQ_KDTree_Node* root, const T* pt, int& k, double radius2);
+		static void _recursive_ann_fix_radius_search(const ZQ_KDTree_Node* root, const T* pt, int& cur_k, int k, int* out_idx, T* out_dis2, double radius2);
+		static bool _recursive_check_box(const ZQ_KDTree_Node* root);
+		static bool _check_box(const ZQ_KDTree_Node* root);
 		void _clear();
 
 	public:
@@ -202,7 +204,7 @@ namespace ZQ
 	}
 
 	template<class T>
-	void ZQ_KDTree<T>::_recursive_subdivided(ZQ_KDTree_Node<T>* root, int max_leaf_npts)
+	void ZQ_KDTree<T>::_recursive_subdivided(ZQ_KDTree_Node* root, int max_leaf_npts)
 	{
 		if(root == 0)
 			return;
@@ -229,8 +231,8 @@ namespace ZQ
 		int n_low = root->npts/2;
 		T cv;
 		_median_split(root->npts, root->pts_idx, (const T**)root->pts, k,  cv, n_low);
-		ZQ_KDTree_Node<T>* left_child = new ZQ_KDTree_Node<T>(ndim);
-		ZQ_KDTree_Node<T>* right_child = new ZQ_KDTree_Node<T>(ndim);
+		ZQ_KDTree_Node* left_child = new ZQ_KDTree_Node(ndim);
+		ZQ_KDTree_Node* right_child = new ZQ_KDTree_Node(ndim);
 		root->low_child = left_child;
 		root->high_child = right_child;
 
@@ -258,12 +260,12 @@ namespace ZQ
 	}
 
 	template<class T>
-	void ZQ_KDTree<T>::_recursive_free(ZQ_KDTree_Node<T>* root)
+	void ZQ_KDTree<T>::_recursive_free(ZQ_KDTree_Node* root)
 	{
 		if(root != 0)
 		{
-			ZQ_KDTree_Node<T>* left_child = root->low_child;
-			ZQ_KDTree_Node<T>* right_child = root->high_child;
+			ZQ_KDTree_Node* left_child = root->low_child;
+			ZQ_KDTree_Node* right_child = root->high_child;
 			root->low_child = 0;
 			root->high_child = 0;
 			delete root;
@@ -343,7 +345,7 @@ namespace ZQ
 	}
 
 	template<class T>
-	void ZQ_KDTree<T>::_recursive_ann_search(const ZQ_KDTree_Node<T>* root, const T* pt, int& cur_k, int k, int* out_idx, T* out_dis2, double eps_plus_1_square)
+	void ZQ_KDTree<T>::_recursive_ann_search(const ZQ_KDTree_Node* root, const T* pt, int& cur_k, int k, int* out_idx, T* out_dis2, double eps_plus_1_square)
 	{
 		if(root->is_leaf)
 		{
@@ -357,15 +359,15 @@ namespace ZQ
 		}
 		else
 		{
-			const ZQ_KDTree_Node<T>* low_child = root->low_child;
-			const ZQ_KDTree_Node<T>* high_child = root->high_child;
+			const ZQ_KDTree_Node* low_child = root->low_child;
+			const ZQ_KDTree_Node* high_child = root->high_child;
 
 			const double tol_eps = 1.0+1e-6;
 			if(low_child != 0 && high_child != 0)
 			{
 				T box_dis2_low = _box_distance_square(pt,low_child->box_min,low_child->box_max,root->ndim);
 				T box_dis2_high = _box_distance_square(pt,high_child->box_min,high_child->box_max,root->ndim);
-				const ZQ_KDTree_Node<T>* order[2];
+				const ZQ_KDTree_Node* order[2];
 				T order_box_dis2[2];
 				if(box_dis2_low < box_dis2_high)
 				{
@@ -399,7 +401,7 @@ namespace ZQ
 	}
 
 	template<class T>
-	void ZQ_KDTree<T>::_recursive_ann_search_with_initial_radius(const ZQ_KDTree_Node<T>* root, const T* pt, int& cur_k, int k, int* out_idx, T* out_dis2, double eps_plus_1_square, double radius2)
+	void ZQ_KDTree<T>::_recursive_ann_search_with_initial_radius(const ZQ_KDTree_Node* root, const T* pt, int& cur_k, int k, int* out_idx, T* out_dis2, double eps_plus_1_square, double radius2)
 	{
 		if (root->is_leaf)
 		{
@@ -415,15 +417,15 @@ namespace ZQ
 		}
 		else
 		{
-			const ZQ_KDTree_Node<T>* low_child = root->low_child;
-			const ZQ_KDTree_Node<T>* high_child = root->high_child;
+			const ZQ_KDTree_Node* low_child = root->low_child;
+			const ZQ_KDTree_Node* high_child = root->high_child;
 
 			const double tol_eps = 1.0 + 1e-6;
 			if (low_child != 0 && high_child != 0)
 			{
 				T box_dis2_low = _box_distance_square(pt, low_child->box_min, low_child->box_max, root->ndim);
 				T box_dis2_high = _box_distance_square(pt, high_child->box_min, high_child->box_max, root->ndim);
-				const ZQ_KDTree_Node<T>* order[2];
+				const ZQ_KDTree_Node* order[2];
 				T order_box_dis2[2];
 				if (box_dis2_low < box_dis2_high)
 				{
@@ -457,7 +459,7 @@ namespace ZQ
 	}
 
 	template<class T>
-	void ZQ_KDTree<T>::_recursive_ann_fix_radius_search_count(const ZQ_KDTree_Node<T>* root, const T* pt, int& k, double radius2)
+	void ZQ_KDTree<T>::_recursive_ann_fix_radius_search_count(const ZQ_KDTree_Node* root, const T* pt, int& k, double radius2)
 	{
 		if(root->is_leaf)
 		{
@@ -471,8 +473,8 @@ namespace ZQ
 		}
 		else
 		{
-			const ZQ_KDTree_Node<T>* low_child = root->low_child;
-			const ZQ_KDTree_Node<T>* high_child = root->high_child;
+			const ZQ_KDTree_Node* low_child = root->low_child;
+			const ZQ_KDTree_Node* high_child = root->high_child;
 
 			const double tol_eps = 1.0+1e-6;
 			
@@ -492,12 +494,19 @@ namespace ZQ
 	}
 
 	template<class T>
-	void ZQ_KDTree<T>::_recursive_ann_fix_radius_search(const ZQ_KDTree_Node<T>* root, const T* pt, int& cur_k, int k, int* out_idx, T* out_dis2, double radius2)
+	void ZQ_KDTree<T>::_recursive_ann_fix_radius_search(const ZQ_KDTree_Node* root, const T* pt, int& cur_k, int k, int* out_idx, T* out_dis2, double radius2)
 	{
 		if(root->is_leaf)
 		{
 			for(int i = 0;i < root->npts;i++)
 			{
+				// 原来这个循环里没有 `cur_k < k` 检查: 半径内的点数超过 k 时
+				// out_idx / out_dis2 会被写穿 —— 与 k 的取值无关, 一个合法的
+				// 小 k (比如 3) 加上覆盖全部点的半径就能触发。兄弟函数
+				// _recursive_ann_search / _recursive_ann_search_with_initial_radius
+				// 都以 k 为容量上限, 这里对齐。
+				if (cur_k >= k)
+					return;
 				int cur_idx = root->pts_idx[i];
 				T cur_dis2 = _distance2(pt,root->pts[cur_idx],root->ndim);
 				if(cur_dis2 <= radius2)
@@ -510,8 +519,8 @@ namespace ZQ
 		}
 		else
 		{
-			const ZQ_KDTree_Node<T>* low_child = root->low_child;
-			const ZQ_KDTree_Node<T>* high_child = root->high_child;
+			const ZQ_KDTree_Node* low_child = root->low_child;
+			const ZQ_KDTree_Node* high_child = root->high_child;
 
 			const double tol_eps = 1.0+1e-6;
 			if(low_child != 0)
@@ -530,7 +539,7 @@ namespace ZQ
 	}
 
 	template<class T>
-	bool ZQ_KDTree<T>::_recursive_check_box(const ZQ_KDTree_Node<T>* root)
+	bool ZQ_KDTree<T>::_recursive_check_box(const ZQ_KDTree_Node* root)
 	{
 		if(!_check_box(root))
 			return false;
@@ -542,7 +551,7 @@ namespace ZQ
 	}
 
 	template<class T>
-	bool ZQ_KDTree<T>::_check_box(const ZQ_KDTree_Node<T>* root)
+	bool ZQ_KDTree<T>::_check_box(const ZQ_KDTree_Node* root)
 	{
 		for(int i = 0;i < root->npts;i++)
 		{
@@ -581,8 +590,11 @@ namespace ZQ
 	template<class T>
 	bool ZQ_KDTree<T>::BuildKDTree(const T* data, int npts, int ndim, int max_leaf_npts /*= 3*/)
 	{
-		if(data == 0 || npts < 0 || ndim < 1 || max_leaf_npts < 1)
+		if(data == 0 || npts <= 0 || ndim < 1 || max_leaf_npts < 1)
 			return false;
+		// 原来只判 `npts < 0`: npts==0 会通过, 接着 pts_idx = new int[0],
+		// 而 _find_min_max(:114) 无条件读 pts[pts_idx[0]][d] -> 零长数组越界读。
+		// 实测 (tools/zq_batch4_check.cpp, ASan): heap-buffer-overflow READ。
 		
 		_clear();
 
@@ -596,7 +608,7 @@ namespace ZQ
 			pts_idx[i] = i;
 
 		//
-		tree = new ZQ_KDTree_Node<T>(ndim);
+		tree = new ZQ_KDTree_Node(ndim);
 		tree->npts = npts;
 		tree->pts_idx = pts_idx;
 		tree->pts = pts;
@@ -622,7 +634,10 @@ namespace ZQ
 	template<class T>
 	bool ZQ_KDTree<T>::BruteForceSearch(const T* pt, int k, int* out_idx, T* out_dis2) const
 	{
-		if(pts == 0 || tree == 0 || tree->npts < k || pt == 0 || out_idx == 0 || out_dis2 == 0)
+		// k<=0 原来没判: k==0 时 _update_search_result 走 cur_k==k 分支读
+		// out_dis2[k-1] = out_dis2[-1]（ASan: stack-buffer-overflow,
+		// ZQ_KDTree.h:383）; k<0 时调用方给的输出缓冲尺寸本身就非法。
+		if(pts == 0 || tree == 0 || k <= 0 || tree->npts < k || pt == 0 || out_idx == 0 || out_dis2 == 0)
 			return false;
 
 		int cur_k = 0;
@@ -638,7 +653,10 @@ namespace ZQ
 	template<class T>
 	bool ZQ_KDTree<T>::AnnSearch(const T* pt, int k, int* out_idx, T* out_dis2, double eps /* = 0.0 */) const
 	{
-		if(pts == 0 || tree == 0 || tree->npts < k || pt == 0 || out_idx == 0 || out_dis2 == 0)
+		// k<=0 原来没判: k==0 时 _update_search_result 走 cur_k==k 分支读
+		// out_dis2[k-1] = out_dis2[-1]（ASan: stack-buffer-overflow,
+		// ZQ_KDTree.h:383）; k<0 时调用方给的输出缓冲尺寸本身就非法。
+		if(pts == 0 || tree == 0 || k <= 0 || tree->npts < k || pt == 0 || out_idx == 0 || out_dis2 == 0)
 			return false;
 
 		int cur_k = 0;
@@ -649,7 +667,10 @@ namespace ZQ
 	template<class T>
 	bool ZQ_KDTree<T>::AnnSearchWithInitalRadius(const T* pt, int k, int* out_idx, T* out_dis2, double radius, int& out_k, double eps /*= 0.0*/) const
 	{
-		if (pts == 0 || tree == 0 || tree->npts < k || pt == 0 || out_idx == 0 || out_dis2 == 0)
+		// k<=0 原来没判: k==0 时 _update_search_result 走 cur_k==k 分支读
+		// out_dis2[k-1] = out_dis2[-1]（ASan: stack-buffer-overflow,
+		// ZQ_KDTree.h:383）; k<0 时调用方给的输出缓冲尺寸本身就非法。
+		if (pts == 0 || tree == 0 || k <= 0 || tree->npts < k || pt == 0 || out_idx == 0 || out_dis2 == 0)
 			return false;
 
 		int cur_k = 0;
@@ -661,7 +682,10 @@ namespace ZQ
 	template<class T>
 	bool ZQ_KDTree<T>::AnnFixRadiusSearch(const T* pt, double radius, int k, int* out_idx, T* out_dis2) const
 	{
-		if(pts == 0 || tree == 0 || tree->npts < k || pt == 0 || out_idx == 0 || out_dis2 == 0)
+		// k<=0 原来没判: k==0 时 _update_search_result 走 cur_k==k 分支读
+		// out_dis2[k-1] = out_dis2[-1]（ASan: stack-buffer-overflow,
+		// ZQ_KDTree.h:383）; k<0 时调用方给的输出缓冲尺寸本身就非法。
+		if(pts == 0 || tree == 0 || k <= 0 || tree->npts < k || pt == 0 || out_idx == 0 || out_dis2 == 0)
 			return false;
 
 		int cur_k = 0;

@@ -11,9 +11,19 @@ namespace ZQ
 	public:
 		static void FindLargestSubMatrix(const bool* flag, unsigned int in_width, unsigned int in_height, int& off_x, int& off_y, int& width, int& height)
 		{
-			unsigned int* hist = new unsigned int[in_height*in_width];
+			// 原来直接 `new unsigned int[in_height*in_width]`: 这是 unsigned x unsigned,
+			// 乘积在 2^32 处就回绕, 之后才拓宽到 size_t —— 65536x65536 会 new 出
+			// 长度 0 的数组再写 2^32 个元素。另外 in_height == 0 时下面
+			// (in_height - 1)*in_width + w 也回绕成巨大下标。两处都判掉。
+			if (flag == 0 || in_width == 0 || in_height == 0)
+			{
+				off_x = off_y = width = height = 0;
+				return;
+			}
+			const size_t total = (size_t)in_height * (size_t)in_width;
+			unsigned int* hist = new unsigned int[total];
 
-			for (int w = 0; w < in_width; w++)
+			for (int w = 0; w < (int)in_width; w++)
 			{
 				hist[(in_height - 1)*in_width + w] = flag[(in_height - 1)*in_width + w];
 			}
