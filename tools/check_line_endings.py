@@ -14,7 +14,12 @@
    行尾 ``\\`` 后接 ``\\r\\r\\n`` 时，反斜杠转义掉的是那个 CR 而不是换行，
    宏在第一行就被截断（详见 .gitattributes 里 *_raw.h 的说明）。
 
-3) **字符串字面量与字符宽度**。
+3) **同一个文件里 CRLF 和裸 LF 混用。**
+   纯 LF 是合法的（``*_raw.h`` 就是纯 LF），但"一半 CRLF 一半 LF"几乎
+   都来自脚本化改写时新插入的行漏掉了 ``\\r``。这类文件在 Linux 上编译
+   没问题，在 Windows 上可能出现诡异的行拼接差异。
+
+4) **字符串字面量与字符宽度**。
    源码里的 ``"..."\\r\\r\\n`` 字面量是按实际字节编译的，跨平台读到的
    字符串长度不一致。
 
@@ -47,6 +52,7 @@ SKIP_DIRS = {".git", "build_x64", "cmake-out-unix-x64", "cmake-out-win32-x64",
 # \r(?!\n)  : 不紧跟 LF 的孤立 CR（老 Mac 换行，或行中杂散 CR）
 RE_MULTI_CR = re.compile(rb"\r{2,}\n")
 RE_LONE_CR = re.compile(rb"\r(?!\n)")
+RE_LONE_LF = re.compile(rb"\n(?!\Z)")
 
 
 def must_be_lf(relpath: str) -> bool:
@@ -74,12 +80,16 @@ def iter_tracked():
 
 
 def scan(data: bytes):
-    """返回 (问题类型列表)。"""
+    """返回问题类型列表。"""
     problems = []
     if RE_MULTI_CR.search(data):
         problems.append("multi-CR")
     if RE_LONE_CR.search(data):
         problems.append("lone-CR")
+    crlf = data.count(b"\r\n")
+    lone_lf = data.count(b"\n") - crlf
+    if crlf and lone_lf:
+        problems.append("mixed-EOL(%d CRLF/%d LF)" % (crlf, lone_lf))
     return problems
 
 
@@ -87,8 +97,8 @@ def normalize(data: bytes, want_lf: bool) -> bytes:
     data = RE_MULTI_CR.sub(b"\n" if want_lf else b"\r\n", data)
     data = RE_LONE_CR.sub(b"\n" if want_lf else b"\r\n", data)
     if want_lf:
-        data = data.replace(b"\r\n", b"\n")
-    return data
+        return data.replace(b"\r\n", b"\n")
+    return data.replace(b"\r\n", b"\n").replace(b"\n", b"\r\n")
 
 
 def main() -> int:
@@ -119,7 +129,7 @@ def main() -> int:
             fixed += 1
 
     for rel, why in bad:
-        print("%-12s %s" % (why, rel))
+        print("%-30s %s" % (why, rel))
     if bad:
         print("\n%d file(s) with broken line endings%s."
               % (len(bad), " (fixed)" if args.fix else ""))
