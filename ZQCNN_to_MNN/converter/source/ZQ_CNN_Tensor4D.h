@@ -699,11 +699,17 @@ namespace ZQ
 			shape_nchw[3] = dst_W;
 			int dst_realW = dst_W + (dst_borderW << 1);
 			int dst_realH = dst_H + (dst_borderH << 1);
-			int dst_pixelStep = dst_C;
-			int dst_widthStep = dst_pixelStep*dst_realW;
-			int dst_sliceStep = dst_widthStep*dst_realH;
-			int dst_tensor_raw_size = dst_sliceStep*dst_N * sizeof(float);
-			int needed_dst_raw_len = dst_tensor_raw_size;
+			/* 尺寸来自不可信的模型文件, 全程 int 会溢出成小块 malloc 再大规模越界写。
+			   与主库 ZQ_CNN_Tensor4D.cpp 保持一致。 */
+			__int64 dst_pixelStep = dst_C;
+			__int64 dst_widthStep = dst_pixelStep*dst_realW;
+			__int64 dst_sliceStep = dst_widthStep*dst_realH;
+			__int64 dst_tensor_raw_size = dst_sliceStep*dst_N * sizeof(float);
+			if (dst_realW > 0x7FFFFFFF || dst_realH > 0x7FFFFFFF
+				|| dst_widthStep > 0x7FFFFFFF || dst_sliceStep > 0x7FFFFFFF
+				|| dst_tensor_raw_size > 0x7FFFFFFF)
+				return false;
+			int needed_dst_raw_len = (int)dst_tensor_raw_size;
 			if (dst_tensor_raw_size == 0)
 			{
 				free(rawData);

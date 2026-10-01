@@ -280,7 +280,8 @@ namespace ZQ
 				if (sscanf_s(line.c_str(), "%s", &buf[0], buf_len) == 0)
 					continue;
 #else
-				if (sscanf(line.c_str(), "%s", &buf[0]) == 0)
+				/* 宽度必须限制: .zqparams 是不可信输入, 超长 token 会写穿 buf */
+				if (sscanf(line.c_str(), "%2000s", &buf[0]) == 0)
 					continue;
 #endif
 				if (ZQ_CNN_Layer::_my_strcmpi(&buf[0], "Convolution") == 0)
