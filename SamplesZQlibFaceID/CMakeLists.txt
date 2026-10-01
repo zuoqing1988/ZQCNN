@@ -101,7 +101,10 @@ else() #NOT WIN32
 
   SUBDIRLIST(SAMPLE_SUBDIRS ${CMAKE_CURRENT_LIST_DIR})
   # Linux 下没有 mini-caffe / SeetaFace / libfacedetection 的预编译库，跳过依赖它们的示例
-  list(FILTER SAMPLE_SUBDIRS EXCLUDE REGEX "MiniCaffe|SeetaFace|LibFaceDetect|CropImagesFor(ArcFace|SphereFace)Fast")
+  list(FILTER SAMPLE_SUBDIRS EXCLUDE REGEX "MiniCaffe|SeetaFace|LibFaceDetect|CropImagesFor(ArcFace|SphereFace)Fast|NCNN")
+  # 3rdparty/lib/libncnn.a 是 clang + OpenMP 编的，它的 SIMD 区引用了 clang 专有的
+  # __*_finite 向量化体（_ZGVbN2v_...），gcc 无法生成同名符号，链不上；
+  # 等价功能由 SamplesZQCNN/SampleMTCNN_NCHWC4（ZQCNN 自己的 NCHWC 路径）覆盖
   foreach(SAMPLE_SUBDIR ${SAMPLE_SUBDIRS})
     message(STATUS "add sample ${SAMPLE_SUBDIR}")
     file(GLOB sample_src ${CMAKE_CURRENT_LIST_DIR}/${SAMPLE_SUBDIR}/*.cpp

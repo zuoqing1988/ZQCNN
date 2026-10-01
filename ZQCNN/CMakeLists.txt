@@ -7,6 +7,12 @@ file(GLOB ZQCNN_SRC ${CMAKE_CURRENT_LIST_DIR}/*.cpp
                     ${CMAKE_CURRENT_LIST_DIR}/layers_c/*.c
                     ${CMAKE_CURRENT_LIST_DIR}/layers_nchwc/*.c)
 
+# libncnn.a 里的 OpenMP SIMD 调用需要 __*_finite 的向量化体，必须带 -fopenmp 编
+if(CMAKE_C_COMPILER_ID MATCHES "GNU|Clang")
+    set_source_files_properties(${CMAKE_CURRENT_LIST_DIR}/math/zq_libm_compat.c
+        PROPERTIES COMPILE_FLAGS "-fopenmp" COMPILE_OPTIONS "-fopenmp")
+endif()
+
 add_library(ZQCNN ${ZQCNN_SRC})
 
 find_package(OpenMP)
