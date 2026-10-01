@@ -1438,3 +1438,156 @@ MSVC 通过的更多，是因为它对「缺 typename」「嵌套模板参数遮
 ### 验证
 
 `python tools/run_audit_checks.py --quick --msvc-probe`：4 组全 OK，退出码 0。
+
+## 新增/变更：把 9 个 ASan 测试搬到 Windows 上真跑一遍（附录 AS）
+
+### 变更文件
+- `tools/run_zqlib_checks_msvc.bat`（新增，**必须纯 ASCII**）
+- `tools/run_audit_checks.py`：新增 `--msvc-asan`
+
+### 缺口
+
+附录 AR 补的是**编译**侧（MSVC `cl /Zs`），运行侧仍然是单边的：
+`run_zqlib_checks.py` 把编译外包给 WSL，所以那 9 个回归测试本质是 gcc/Linux 的结果。
+而附录 AP 算过：本轮改过的 26 个头里有 5 个**真的链接进了 Windows 侧 sample**，
+也就是说那些改动在 Windows 上**一次都没被运行过**。sample 又因为缺人脸库跑不起来。
+
+### 实测结果
+
+    cl /nologo /EHsc /std:c++14 /O1 /Zi /utf-8 /fsanitize=address ^
+       /I3rdparty\include\ZQlib /Itools tools\%%T_check.cpp
+
+    zq_batch4 PASS / zq_batch6 PASS / zq_bitonicsort PASS / zq_imageprocessing PASS
+    zq_kmeans PASS / zq_matrix PASS / zq_mergesort PASS / zq_quaternion PASS
+    zq_quicksort PASS
+    9 tests, 0 failed
+
+### 三个坑
+
+1. `/utf-8` 必加 —— 不加时 MSVC 按 GBK 读源码，中文注释直接 C2001/C2143
+2. `.bat` 本身必须纯 ASCII —— cmd 用 OEM 代码页读批处理，注释里的中文会把解析器搞坏
+3. `cd /d "%~dp0.."` 而不是写死 `D:\ZQCNN`；`/Fo` `/Fd` 指到 `%TEMP%`，
+   否则 cl 在仓库根留下 `vc140.pdb`（这次清掉了）
+
+### 顺带：换一个 sanitizer
+
+给 `run_zqlib_checks.py` 加 `--ubsan`，同一批 9 个测试用
+`-fsanitize=undefined` 再跑一遍（抓 ASan 看不见的有符号溢出/移位越界等）。
+结果 **9/9 全干净**。
+
+> **一个必须记的坑**：UBSan 默认只打一行 `runtime error:` 然后**继续跑**，
+> `rc` 恒为 0。我最初就是按 `rc == 0` 判通过的 —— 那一栏永远是 0，等于什么都没查。
+> 正确做法是数 `runtime error:` 的行数。
+
+---
+
+## 新增/变更：开一条新审计轴 —— gcc `-Wall -Wextra`（附录 AT）
+
+### 问题
+
+前面三十几轮找缺陷靠的是「**编不过**」这一根轴。118 个头都能编过 ——
+也就是说，**能编过的那些头里编译器早就看见了问题，只是默认一声不吭**。
+
+### 变更文件
+
+源码：
+
+- `3rdparty/include/ZQlib/ZQ_ConstrainedDelaunayTriangulation.h`（AT.4，死掉的空指针守卫 + 构造后丢掉的异常）
+- `3rdparty/include/ZQlib/ZQ_MathBase.h`（AT.5 条件数读错行距 + AT.8 malloc/delete[] 错配）
+- `3rdparty/include/ZQlib/ZQ_ObjLoader.h`（AT.8 三处 + AT.9 四处 ignored-qualifiers）
+- `3rdparty/include/ZQlib/ZQ_TaucsBase.h`（AT.8 四处）
+- `3rdparty/include/ZQlib/ZQ_MinIndependentSets.h`（AT.8 一处）
+- `3rdparty/include/ZQlib/ZQ_Huffman.h`（AT.10 `%d` 配 `unsigned long`）
+- `3rdparty/include/ZQlib/ZQ_StereoMatching.h`（AT.10 `%I64d` 是 MSVC 专有 + `(int64_t)` 被 sizeof 吃掉；外加一个罕见字 `眉`）
+- `3rdparty/include/ZQlib/ZQ_MarchingCube.h`（AT.11 初始化列表顺序）
+- `3rdparty/include/ZQlib/ZQ_CPURayCasting.h`（AT.11 braced-init 收窄）
+- `3rdparty/include/ZQlib/ZQ_BinaryImageProcessing.h`（AT.11 补括号，语义未变）
+
+工具：
+
+- `tools/warn_sweep_zqlib.py`（新增）：`-Wall -Wextra` 扫 143 个头，HIGH/MED/LOW 分桶
+- `tools/check_alloc_delete.py`（新增）：malloc/new 与 delete[]/free 错配扫描，**带内建自测**
+- `tools/zq_mathbase_check.cpp`（新增）：第 10 个回归测试
+- `tools/zqlib_probe_shim.h`（新增）：转发到 `zqlib_msvc_shim.h`
+- `tools/probe_zqlib_headers.py`：改为共用 `zqlib_msvc_shim.h`，不再内联一份
+- `tools/zqlib_warn_baseline.txt`（新增）：HIGH 桶基线（**当前为空**）
+- `tools/run_audit_checks.py`：新增 A3/A4 组、`--warn-sweep`、`--ubsan`
+- `audit_k3_20261001.md`：新增**附录 AS / AT**
+
+### 实测结果
+
+    143 个头 / 4892 行警告：HIGH 43, MED 108, LOW 699
+    修完后 HIGH = 0，基线为空
+
+HIGH 桶逐条判定：
+
+| # | 位置 | 判定 |
+|---|---|---|
+| 1-2 | `ZQ_ConstrainedDelaunayTriangulation.h:1985,2101` `-Waddress` | **真缺陷** |
+| 3 | `ZQ_Huffman.h:426` `-Wformat=` | **真缺陷** |
+| 4 | `ZQ_StereoMatching.h` 6 处 `-Wformat=` | **真缺陷** |
+| 5 | `ZQ_MarchingCube.h:105` `-Wreorder` | 隐患，当前无数值影响 |
+| 6 | `ZQ_CPURayCasting.h:282-284` `-Wnarrowing` | 隐患（MSVC /W4 报 C4248） |
+| 7 | `ZQ_BinaryImageProcessing.h` 3 处 `-Wparentheses` | **不是缺陷**（优先级本来就对） |
+
+### 最有价值的两条
+
+**① `&ot == NULL` 是一个永远不会触发的守卫**
+
+    Triangle& ot = t->NeighborAcross(p);   // 内部已经 *neighbors_[k] 解引用
+    Point&  op = *ot.OppositePoint(*t, p); // 而且这里已经用上了
+    if (&ot == NULL) { assert(0); }        // 守卫写在用完之后
+
+`neighbors_` 初始化为 NULL。真为 NULL 的话 `*neighbors_[k]` 早就是 UB、
+程序在 `NeighborAcross` 里就崩了，走不到这个 `if`。
+修法：拆出不解引用的 `Triangle* NeighborAcrossPtr(Point&)`，两个调用点先判空再解引用。
+另外 `EdgeEvent` 里两处 `std::runtime_error("...")` 是**构造一个临时异常然后丢掉**，
+加上 `assert(0)` 在 Release 下被编掉 —— 那个「不可能发生」的分支在正式构建里
+静悄悄 return 出去，返回一个没被旋转过的 triangle。已改成真 `throw`。
+
+**② `Cond_by_double_svd` 的条件数在「高矩阵」上是垃圾**
+
+`Smat` 是 `sdim x sdim`、行距 `sdim`，但代码写的是 `S[(N-1)*col + (N-1)]`。
+`col == N` 时碰巧相等（所以一直没人发现）；`row < col` 时读到了
+`memset(sdim*sdim)` 区域之外的**未初始化堆内存**：
+
+    高矩阵 3x4   cond = -1.74492e+07   <- 修前（负数，纯垃圾）
+    高矩阵 3x4   cond =  70.2337      <- 修后
+    宽矩阵 4x3   cond =  82.257       <- 修前修后一致（本来就对）
+
+in-tree 影响面：`ZQ_CameraCalibration.h:889/1036/1809`、
+`ZQ_CameraCalibrationMono.h:125/272/1046` 调 `Cond_by_double_svd(JJ, 2*nPts, 6, ...)`，
+`nPts <= 2` 时正好落进高矩阵分支。
+
+### 关于 `malloc` 配 `delete[]`
+
+`Cond_by_double_svd` 的测试在 ASan 下报出
+
+    ERROR: AddressSanitizer: alloc-dealloc-mismatch (malloc vs operator delete [])
+
+于是做了 `tools/check_alloc_delete.py`。**全仓 706 个源文件，命中 5 处**（全在 ZQlib），
+已全部修掉。工具带**内建自测**并作为 A3 组常驻 —— 一个「什么都查不出来」的检查工具
+比没有这个工具更危险，它会让人以为这块已经审过了。
+
+写自测时抓到工具自己两个 bug（同一类：正则用 `search` 只看一行的第一个匹配，
+于是「一行里两次 malloc」时第二个变量不登记）。已改成 `finditer`。
+
+### 注意事项
+
+1. **HIGH 桶也不是判官。** 43 条 HIGH 里 `ZQ_BinaryImageProcessing.h` 那 3 处
+   `-Wparentheses` 就是误报：`&&` 优先级本来就高于 `||`，代码是对的。
+2. **假绿要专门防。** 一个编不过的头，它的告警文件里全是 `error:` 没有 `warning:`，
+   于是它在 HIGH 桶里显示「0 条」—— 看着最干净其实根本没被扫。
+   工具因此单独报告「几个头编不过」（本机 9 个）。
+3. **基线只记 HIGH。** 一个天天报 3000 条的门禁等于没有门禁。
+4. **垫片只有一份。** MSVC→gcc 兼容垫片历史上散落过三份，会悄悄漂移；
+   现在 `zqlib_msvc_shim.h` 是唯一真实定义，`zqlib_probe_shim.h` 是转发头。
+
+### 验证
+
+    python tools/run_audit_checks.py --quick --msvc-asan   # 6 组全 OK
+    python tools/run_zqlib_checks.py --ubsan               # 9/9 全干净
+    python tools/check_alloc_delete.py --selftest          # 3 命中 0 误报
+    python tools/check_alloc_delete.py                     # 全仓无命中
+    python tools/warn_sweep_zqlib.py --check-baseline tools/zqlib_warn_baseline.txt
+    python tools/check_text_encoding.py                    # 623 文件 OK

@@ -2,6 +2,13 @@
 #define _ZQ_RBF_KERNEL_H_
 #pragma once
 
+// 审计修复（2026-10-02，附录 AV.2）：这个头原来**一个 include 都没有**，
+// 却用了 fabs / exp / log / sqrt。它能编过只是因为每个包含它的人
+// （ZQ_Quaternion.h、ZQ_LSQRSolver.h …）都已经把 <cmath> 拉进来了 ——
+// 靠传递包含编过，正是附录 AG 那一批"自己源码就编不过"的同类。
+// 显式补上，单独编译即可通过（tools/probe_zqlib_headers.py）。
+#include <cmath>
+
 namespace ZQ
 {
 	class ZQ_RBFKernel

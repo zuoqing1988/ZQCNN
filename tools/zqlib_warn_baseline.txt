@@ -1,0 +1,8 @@
+# ZQlib gcc -Wall/-Wextra HIGH 桶基线（tools/warn_sweep_zqlib.py --save-baseline 生成）
+# 格式: <头名>\t<-W标志>\t<文件:行:列>
+#
+# 只记 HIGH 桶。MED/LOW 不进基线 —— 一个天天报 3000 条的门禁等于没有门禁。
+# HIGH 的定义见 tools/warn_sweep_zqlib.py 顶部的 HIGH_FLAGS。
+#
+# 基线应当是**空的**：HIGH 桶里的每一条在 2026-10-02 那轮都已修掉。
+# 将来 nonempty 说明有人引入了新的高信号警告。

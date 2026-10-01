@@ -1138,20 +1138,28 @@ namespace ZQ
 			succ = true;
 
 			int N = __min(row, col);
-			if (S[(N-1)*col + (N-1)] == 0)
+			// 审计修复（2026-10-02，附录 AT.5）：Smat 是 **sdim x sdim、行距 sdim**
+			// （见上面 1054-1056 行），所以最小奇异值在 S[(N-1)*N + (N-1)]。
+			// 原来写的是 S[(N-1)*col + (N-1)]，行距用了 col。
+			//   col == N（宽矩阵/方阵）时两者相等，所以一直没人发现；
+			//   row <  col（高矩阵）时读的是 memset(sdim*sdim) 之外的**未初始化堆内存**，
+			//   于是条件数变成垃圾（实测 -1.74e+07）、is_singular 变成掷硬币。
+			// 相机标定的调用点是 Cond_by_double_svd(JJ, 2*nPts, 6)，nPts<=2 时
+			// 正好落进高矩阵分支。
+			if (S[(N-1)*N + (N-1)] == 0)
 			{
 				is_singular = true;
 				free(S); S = 0;
 				return 1e32;
 			}
 			is_singular = false;
-			double result = S[0] / S[(N-1)*col + (N-1)];
+			double result = S[0] / S[(N-1)*N + (N-1)];
 			free(S); S = 0;
 			return result;
 		}
 		else
 		{
-			
+
 			double* val = (double*)malloc(sizeof(double)*row*col);
 			for (int i = 0; i < row*col; i++)
 				val[i] = mat[i];
@@ -1163,7 +1171,11 @@ namespace ZQ
 
 			free(U); U = 0;
 			free(V); V = 0;
-			delete[]val; val = 0;
+			// 审计修复（2026-10-02，附录 AT.8）：val 是 malloc 出来的，这里却用
+			// delete[] 释放 —— malloc/free 与 new/delete[] 配对是未定义行为。
+			// ASan 直接报 alloc-dealloc-mismatch 并 abort；glibc 下则可能悄悄
+			// 破坏堆。上面 1159-1161 那三个 malloc 的 U/V 用的就是 free，改成一致。
+			free(val); val = 0;
 			if (!svd_flag)
 			{
 				free(S); S = 0;
@@ -1172,14 +1184,15 @@ namespace ZQ
 			succ = true;
 
 			int N = __min(row, col);
-			if (S[(N-1)*col + (N-1)] == 0)
+			// 同上：行距是 N == sdim，不是 col（附录 AT.5）
+			if (S[(N-1)*N + (N-1)] == 0)
 			{
 				is_singular = true;
 				free(S); S = 0;
 				return 1e32;
 			}
 			is_singular = false;
-			double result = S[0] / S[(N-1)*col + (N-1)];
+			double result = S[0] / S[(N-1)*N + (N-1)];
 			free(S); S = 0;
 			return result;
 		}

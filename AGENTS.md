@@ -32,8 +32,12 @@
    > **83 个能独立编译**，真正需要 Windows/MFC/OpenCV 的只有 6 个。
    > 写新的第三方头测试时先跑一遍这个探测器，别凭印象判断。
 6. **全部检查有一个统一入口**：`python tools/run_audit_checks.py`
-   - 默认：文本卫生 + 第三方头库的 9 组 ASan 测试 + ZQlib 可编译性门禁（约 2.5 分钟）
-   - `--quick`：跳过可编译性门禁（约 20 秒）
+   - 默认：文本卫生（A1/A2/A3/A4）+ 第三方头库的 10 组 ASan 测试 + ZQlib 可编译性门禁（约 2.5 分钟）
+   - `--quick`：跳过可编译性门禁（约 40 秒）
+   - `--ubsan`：B 组换成 `-fsanitize=undefined` 口径
+   - `--msvc-asan`：加上 Windows 侧 MSVC ASan 那 10 组
+   - `--msvc-probe`：加上 MSVC `cl /Zs` 逐头语法检查
+   - `--warn-sweep`：加上 gcc `-Wall -Wextra` 的 HIGH 桶门禁（慢，约 2 分钟）
    - `--with-build`：再加上**双平台全量构建 + 关键 sample 回归**（Windows cmake
      与 WSL gcc 各一遍，两边各跑 6 个 sample；sample 必须在**产物目录**里跑，
      从仓库根跑只会打一行 `empty image`，看着像跑过了其实什么都没验）
@@ -42,11 +46,18 @@
 7. **第三方头库有独立回归入口**：`python tools/run_zqlib_checks.py`
    会自动发现 `tools/zq_*_check.cpp`，用 `gcc -O1 -g -fsanitize=address
    -I3rdparty/include/ZQlib` 逐个编译并运行，任何一个非 0 退出就整体失败。
-   现在覆盖 9 组：`ZQ_BitonicSort` / `ZQ_ImageProcessing` / `ZQ_Kmeans` /
-   `ZQ_MergeSort` / `ZQ_QuickSort` / `ZQ_Quaternion`+RBFKernel / `ZQ_Matrix`+Kahansum，
+   现在覆盖 **10** 组：`ZQ_BitonicSort` / `ZQ_ImageProcessing` / `ZQ_Kmeans` /
+   `ZQ_MergeSort` / `ZQ_QuickSort` / `ZQ_Quaternion`+RBFKernel / `ZQ_Matrix`+Kahansum /
+   `ZQ_MathBase`（SVD_Decompose + Cond_by_double_svd），
    以及 KDTree+WeightedMedian+CubicInterpolation+FindLargestSubMatrix、
    Matrix+ScanLinePolygonFill 两个组合。
    **动了 `3rdparty/include/ZQlib/` 下的头就要跑它**（主工程的 sample 回归验不到那里）。
+   - `--ubsan` 换成 `-fsanitize=undefined` 再跑一遍（见「sanitizer 的两个坑」一节）。
+   - Windows 侧对应物是 `python tools/run_audit_checks.py --msvc-asan`
+     （`tools/run_zqlib_checks_msvc.bat`，MSVC + `/fsanitize=address`）。
+     **只在一侧跑不算跑过**：`run_zqlib_checks.py` 把编译外包给了 WSL，
+     所以它本质是 gcc/Linux 的结果，而本轮改过的头里有 5 个真的链接进了
+     Windows 侧 sample（审计报告附录 AP/AS）。
 8. **改完 ZQlib 头还要跑可编译性门禁**：
    `python tools/probe_zqlib_headers.py --check-baseline tools/zqlib_probe_baseline.txt`
    把每个头的独立编译结果与基线逐头比对，**任何一个头从 OK 变成非 OK 就退出 1**。
@@ -91,6 +102,45 @@
    2026-10-01 又踩了一次：为了验证 6x8 外积内核，把生产 `m2n4` 的汇编抄进微基准，
    却只跑 1 个 K 块就计时（没有 K 循环 / 19 条归约 / 写 C），而候选版跑完整 K + 写 C。
    两侧口径不同，测出来的倍数没有意义。**要抄就连抄完整。**
+
+## sanitizer 与检查工具的四个坑（2026-10-02 新增）
+
+1. **UBSan 的 `rc` 恒为 0，不能拿它判通过。** UBSan 默认只打一行
+   `runtime error:` 然后**继续执行**，所以进程照样返回 0。判据必须是
+   `grep -c 'runtime error:'` 的行数。我最初按 `rc == 0` 写，那一栏永远是 0，
+   等于什么都没查 —— 而且**看起来全绿**。（ASan 不同：越界/UAF 会直接 abort。）
+2. **"一条都没报"的检查工具必须自带自测。** 一个匹配逻辑坏掉的扫描器返回
+   "没有命中"，比没有这个工具更危险：它会让人以为这块已经审过了。
+   `tools/check_alloc_delete.py --selftest` 有一份内建样本（3 条应命中 + 2 条
+   必须不命中），并作为 `run_audit_checks.py` 的 A3 组常驻。
+   **改这类工具的匹配逻辑之后必须先跑自测。**
+3. **写"按行扫描"的工具时，正则一律用 `finditer` 不用 `search`。**
+   `search` 只取一行的第一个匹配，于是「一行里两次 `malloc`」时第二个变量
+   根本不登记，它后面的 `delete[]` 永远查不出来 —— 我自己写这个工具时
+   在分配和释放两侧各犯了一次。
+4. **不要把 Windows 路径丢给 WSL 的 bash。** `D:/ZQCNN/tools/x.h` 会被 bash
+   当成一个**相对文件名**：命令照样返回 0，生成的文件里就是那串字面串，
+   编译器于是报 "No such file or directory"。如果解析器只 `grep 'warning:'`
+   （不看 `error:`），结果就是**整轮扫描一片全绿、实际一条没扫**。
+   要转成 `/mnt/d/ZQCNN/...`（`tools/warn_sweep_zqlib.py` 里的 `to_wsl_path`）。
+   同理，扫描器要**单独报告"有几个文件根本编不过"**，否则编不过的头在
+   "按 -W 分类"的桶里显示为 0 条 —— 那是假绿。
+
+## 「能编过」不等于「没毛病」
+
+1. 前三十几轮找缺陷靠的是"编不过"这一根轴（`probe_zqlib_headers.py` 问的是
+   能不能独立编译）。118 个头都能编过，意味着**编译器早就看见了问题、
+   只是默认一声不吭**。要开 `-Wall -Wextra` 才说话：
+   `python tools/warn_sweep_zqlib.py`。143 个头 4892 行警告，HIGH 桶里挖出
+   5 条真缺陷（审计报告附录 AT）。
+2. **基线只记 HIGH 桶**（`-Wparentheses/-Waddress/-Wnarrowing/-Wreorder/-Wformat=`）。
+   MED/LOW 不进基线 —— 一个天天报 3000 条的门禁等于没有门禁。
+3. **HIGH 桶也不是判官。** 43 条 HIGH 里有 3 条是误报
+   （`ZQ_BinaryImageProcessing.h` 的 `&&` 混在 `||` 里，优先级本来就对）。
+4. **"-Wmisleading-indentation 把人引到某段代码跟前"本身就有价值** ——
+   附录 AT 里最严重的一条（`Cond_by_double_svd` 读错行距、条件数是未初始化
+   堆内存）根本不是任何工具报出来的，是追查一条"看着像 bug"的警告时
+   顺手把 API 契约读了一遍才发现的。**别因为一条警告被判为误报就跳过它。**
 
 ## 提交规则
 

@@ -38,28 +38,19 @@ INC = os.path.join(ROOT, '3rdparty', 'include', 'ZQlib')
 WSL_DIST = 'Ubuntu-20.04'
 
 # 补在 #include 之前的兼容层：MSVC 的类型与内建函数，gcc 下没有。
-# 注意 _fseeki64 只能给**一种**定义（函数式），给两个会 redefinition 报错。
-SHIM = r'''
-#include <cstdint>
-#include <cstdio>
-#include <cstring>
-#include <cstdlib>
-#include <algorithm>
-typedef long long __int64;
-typedef unsigned long long __uint64;
-#ifndef __min
-#define __min(a, b) (((a) < (b)) ? (a) : (b))
-#endif
-#ifndef __max
-#define __max(a, b) (((a) > (b)) ? (a) : (b))
-#endif
-#define _fseeki64(f, o, w) fseeko64((f), (o), (w))
-#define _ftelli64(f)       ftello64(f)
-#define fopen_s(p, a, m)   (((*(p)) = fopen((a), (m))) == 0 ? 0 : -1)
-#define strcpy_s(d, n, s)  strncpy((d), (s), (n))
-#define sprintf_s          snprintf
-#define _snprintf          snprintf
-'''
+#
+# **只从 zqlib_msvc_shim.h 这一份读**（2026-10-02 教训，见下面那段长注释）。
+# 历史上这份垫片散落过三份，其中一份是「转发头」，而本工具是把垫片**文本内联**
+# 进探测翻译单元的 —— 于是转发头里那句 #include "zqlib_msvc_shim.h" 变成了
+# 一条真的 #include，路径在 /tmp/zqprobe 下不存在，于是 26 个头同时
+# 「OK -> BROKEN」。更糟的是它**报得很像真的**（每条都带一条 error 行）。
+SHIM_FILE = os.path.join(HERE, 'zqlib_msvc_shim.h')
+
+try:
+    with open(SHIM_FILE, encoding='utf-8') as _f:
+        SHIM = _f.read()
+except IOError as e:
+    raise SystemExit('读不到 shim %s: %s' % (SHIM_FILE, e))
 
 
 def run_wsl(script):

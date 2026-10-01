@@ -7,6 +7,7 @@
 #include <malloc.h>
 #include <stdio.h>
 #include <iostream>
+#include <cmath>
 
 namespace ZQ
 {

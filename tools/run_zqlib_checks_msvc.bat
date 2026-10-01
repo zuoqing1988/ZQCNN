@@ -20,7 +20,7 @@ rem repo can be cloned anywhere. cd /d first because %~dp0 is an absolute path.
 cd /d "%~dp0.."
 set ROOT=%CD%
 
-set TESTS=zq_batch4 zq_batch6 zq_bitonicsort zq_imageprocessing zq_kmeans zq_matrix zq_mergesort zq_quaternion zq_quicksort
+set TESTS=zq_batch4 zq_batch6 zq_bitonicsort zq_imageprocessing zq_kmeans zq_mathbase zq_matrix zq_mergesort zq_quaternion zq_quicksort
 set FAILED=0
 set TOTAL=0
 

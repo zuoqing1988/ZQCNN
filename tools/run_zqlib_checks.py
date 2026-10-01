@@ -56,7 +56,16 @@ def main():
     ap.add_argument('--list', action='store_true')
     ap.add_argument('--no-asan', action='store_true',
                     help='不带 sanitizer 编译（想先确认能不能编过时用）')
+    ap.add_argument('--ubsan', action='store_true',
+                    help='用 -fsanitize=undefined 代替 address：抓有符号溢出 / 移位越界 / '
+                         '空指针解引用 / 未对齐访问等 ASan 看不见的行为（见附录 AS.2）')
     args = ap.parse_args()
+
+    if args.ubsan and args.no_asan:
+        print('--ubsan 和 --no-asan 不能同时给')
+        return 1
+    san = '' if args.no_asan else ('-fsanitize=undefined' if args.ubsan
+                                   else '-fsanitize=address')
 
     srcs = sorted(glob.glob(os.path.join(HERE, 'zq_*_check.cpp')))
     srcs = [s for s in srcs if args.filter in os.path.basename(s)]
@@ -79,11 +88,23 @@ def main():
             "if g++ -O1 -g %s -I%s /mnt/d/ZQCNN/tools/%s -o %s "
             "2> %s.build.log; then echo 'B|%s|OK|'; else "
             "echo \"B|%s|BUILD_FAIL|$(grep -m1 -i error: %s.build.log | tr -d '\\r')\"; fi"
-            % ('' if args.no_asan else '-fsanitize=address',
-               INC, fname, tag, tag, tag, tag, tag))
-        lines.append(
-            "if [ -x ./%s ]; then ASAN_OPTIONS=detect_leaks=1 ./%s > %s.out 2>&1; "
-            "echo \"R|%s|$?|$(grep -cE 'FAIL' %s.out)\"; fi" % (tag, tag, tag, tag, tag))
+            % (san, INC, fname, tag, tag, tag, tag, tag))
+        # 两套 sanitizer 的失败口径不同，分开写：
+        #   ASan  -> 断言自己打的 "FAIL" 行数 + 进程非 0（越界/释放后使用会直接 abort）
+        #   UBSan -> "runtime error:" 行数。**不要指望 rc**：不加
+        #            -fno-sanitize-recover=all 的话 UBSan 只打一行就继续跑，rc 恒为 0，
+        #            那一栏永远是 0 等于没查（2026-10-02 实测）。
+        if args.ubsan:
+            lines.append(
+                "if [ -x ./%s ]; then UBSAN_OPTIONS=print_stacktrace=1 ./%s > %s.out 2>&1; "
+                "echo \"R|%s|$?|$(grep -c 'runtime error:' %s.out)|"
+                "$(grep -cE 'FAIL' %s.out)\"; fi"
+                % (tag, tag, tag, tag, tag, tag))
+        else:
+            lines.append(
+                "if [ -x ./%s ]; then ASAN_OPTIONS=detect_leaks=1 ./%s > %s.out 2>&1; "
+                "echo \"R|%s|$?|$(grep -cE 'FAIL' %s.out)|0\"; fi"
+                % (tag, tag, tag, tag, tag))
     lines.append('echo R|__END__|0|0')
     out = run_wsl('\n'.join(lines))
 
@@ -95,17 +116,23 @@ def main():
                 build_fail.append((name, msg.strip()))
         elif line.startswith('R|') and '__END__' not in line:
             parts = line.split('|')
-            if len(parts) >= 4:
-                results.append((parts[1], parts[2], parts[3]))
+            if len(parts) >= 5:
+                results.append((parts[1], parts[2], parts[3], parts[4]))
 
     print()
     nfail = 0
-    for name, rc, nfail_assert in results:
-        ok = (rc == '0' and nfail_assert == '0')
+    for name, rc, nsan, nassert in results:
+        ok = (rc == '0' and nsan == '0' and nassert == '0')
         if not ok:
             nfail += 1
-        print('%-34s %s' % (name, 'PASS' if ok else
-                            'FAIL (rc=%s, %s 条断言失败)' % (rc, nfail_assert)))
+        why = []
+        if rc != '0':
+            why.append('rc=%s' % rc)
+        if nsan != '0':
+            why.append('%s 条 sanitizer 报错' % nsan)
+        if nassert != '0':
+            why.append('%s 条断言失败' % nassert)
+        print('%-34s %s' % (name, 'PASS' if ok else 'FAIL (%s)' % ', '.join(why)))
     for name, msg in build_fail:
         nfail += 1
         print('%-34s BUILD FAIL: %s' % (name, msg))
@@ -113,10 +140,11 @@ def main():
     print('\n%d/%d 通过' % (len(results) + len(build_fail) - nfail,
                            len(results) + len(build_fail)))
     if nfail:
-        # 把失败的输出打出来，否则只知道失败不知道失败在哪
-        for name, rc, _n in results:
-            if rc != '0' or _n != '0':
-                detail = run_wsl("cat /tmp/zqchecks/%s.out 2>/dev/null | tail -30" % name)
+        # 把失败的输出打出来，否则只知道失败不知道失败在哪。
+        # UBSan 的栈可能落在最后 30 行之外（前面一堆正常运行日志），所以给到 80 行。
+        for name, rc, nsan, nassert in results:
+            if rc != '0' or nsan != '0' or nassert != '0':
+                detail = run_wsl("cat /tmp/zqchecks/%s.out 2>/dev/null | tail -80" % name)
                 print('\n===== %s =====\n%s' % (name, detail))
     return 1 if nfail else 0
 

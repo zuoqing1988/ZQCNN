@@ -139,7 +139,7 @@ namespace ZQ
 
 		static bool BWlabel_naive(const bool* input, int width, int height, int* label, std::vector<int>& area_size, int connect_N = 8)
 		{
-			if (connect_N != 4 && connect_N != 8 || input == 0 || label == 0)
+			if ((connect_N != 4 && connect_N != 8) || input == 0 || label == 0)
 				return false;
 
 			int connect_dir[8][2] = 
@@ -217,7 +217,7 @@ namespace ZQ
 
 		static bool BWlabel(const bool* input, int width, int height, int* label, std::vector<int>& area_size, int connect_N = 8)
 		{
-			if (connect_N != 4 && connect_N != 8 || input == 0 || label == 0)
+			if ((connect_N != 4 && connect_N != 8) || input == 0 || label == 0)
 				return false;
 
 			std::vector<int> start_row, end_row, start_col, label_for_each_run;
@@ -327,7 +327,7 @@ namespace ZQ
 
 		static bool ComputeDistance(const bool* flag, int width, int height, int* distance, int connect_N = 8)
 		{
-			if (connect_N != 4 && connect_N != 8 || flag == 0 || distance == 0)
+			if ((connect_N != 4 && connect_N != 8) || flag == 0 || distance == 0)
 			{
 				return false;
 			}

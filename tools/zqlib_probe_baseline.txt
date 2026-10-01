@@ -77,7 +77,7 @@ ZQ_LevMar.h	OK
 ZQ_Link_OpenCV_Lib.h	OK	
 ZQ_Logger.h	NEEDS_LIB	windows.h
 ZQ_MFC_Utils.h	NEEDS_LIB	afx
-ZQ_MGMRESSolver.h	BROKEN	/mnt/d/ZQCNN/3rdparty/include/ZQlib/ZQ_MGMRESSolver.h:1204:15: error: 
+ZQ_MGMRESSolver.h	OK	
 ZQ_MarchingCube.h	OK	
 ZQ_MathBase.h	OK	
 ZQ_Matrix.h	OK	
@@ -108,7 +108,7 @@ ZQ_PutTextCN.h	NEEDS_LIB	windows.h
 ZQ_Quaternion.h	OK	
 ZQ_QuaternionSpline.h	OK	
 ZQ_QuickSort.h	OK	
-ZQ_RBFKernel.h	BROKEN	/mnt/d/ZQCNN/3rdparty/include/ZQlib/ZQ_RBFKernel.h:32:15: error: ‘fabs
+ZQ_RBFKernel.h	OK	
 ZQ_Ray2D.h	OK	
 ZQ_Ray3D.h	OK	
 ZQ_RectifyCard.h	OK	
@@ -123,7 +123,7 @@ ZQ_ShapeInterpolation.h	OK
 ZQ_SparseLevMar.h	OK	
 ZQ_SparseMatrix.h	OK	
 ZQ_Spline.h	OK	
-ZQ_SplinePCHIP.h	BROKEN	/mnt/d/ZQCNN/3rdparty/include/ZQlib/ZQ_SplinePCHIP.h:120:26: error: ‘f
+ZQ_SplinePCHIP.h	OK	
 ZQ_StereoCalibration.h	OK	
 ZQ_StereoDisparity_CV2.h	NEEDS_LIB	opencv2/
 ZQ_StereoMatching.h	OK	

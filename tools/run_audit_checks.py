@@ -5,6 +5,7 @@
     python tools/run_audit_checks.py                # 检查组（下面 A/B/C）
     python tools/run_audit_checks.py --quick        # 跳过慢的可编译性门禁
     python tools/run_audit_checks.py --with-build   # 再加上双平台全量构建 + sample 回归
+    python tools/run_audit_checks.py --ubsan        # B 组换成 UBSan 再跑一遍
 
 分组：
 
@@ -13,16 +14,19 @@ D 主工程双平台回归（只在 --with-build 时跑）
     Linux    wsl 里的 /tmp/zqb2 make
     两边各跑一遍关键 sample（tools/run_sample_regression.sh 与等价的 exe 调用）
 
-A 文本卫生（秒级）
+A 文本与配对卫生（秒级）
     tools/check_line_endings.py    multi-CR / lone-CR / CRLF+LF 混用
     tools/check_text_encoding.py   UTF-8 有损解码残留（U+FFFD）
+    tools/check_alloc_delete.py    malloc 配 delete[] / new 配 free（--selftest 先自测）
 
-B 第三方头库的独立回归测试（ASan + LeakSanitizer，9 组，每组几秒）
-    tools/run_zqlib_checks.py        (gcc / WSL)
+B 第三方头库的独立回归测试（10 组，每组几秒）
+    tools/run_zqlib_checks.py        (gcc / WSL，ASan+LSan 或 UBSan)
     tools/run_zqlib_checks_msvc.bat  (MSVC /fsanitize=address / Windows，--msvc-asan 时跑)
 
-C ZQlib 可编译性门禁（慢，约 2 分钟，编译 143 个翻译单元）
-    tools/probe_zqlib_headers.py --check-baseline tools/zqlib_probe_baseline.txt
+C ZQlib 可编译性与警告门禁（慢，各约 2 分钟）
+    C   tools/probe_zqlib_headers.py --check-baseline tools/zqlib_probe_baseline.txt
+    C2  MSVC 侧头探测                       (--msvc-probe)
+    C3  gcc -Wall -Wextra 的 HIGH 桶基线    (--warn-sweep)
 
 **为什么这个脚本必须是 Python 而不是 .sh**
 B 和 C 里的两个工具本身是「Windows 侧 Python → 通过 `wsl ... bash -s` 喂脚本 →
@@ -44,7 +48,14 @@ ROOT = os.path.dirname(HERE)
 GROUPS = [
     ('A1 行尾卫生 (check_line_endings)', ['check_line_endings.py'], False),
     ('A2 编码卫生 (check_text_encoding)', ['check_text_encoding.py'], False),
-    ('B  ZQlib 独立回归测试 x9 (ASan+LSan)', ['run_zqlib_checks.py'], False),
+    # A3 只有 5 秒，但它挡掉的是**整个工具自己变成哑巴**这件事：
+    # 改 check_alloc_delete.py 的匹配逻辑之后忘了跑自测，那它返回的「没有命中」
+    # 就毫无意义（附录 AT.8 的教训）。
+    ('A3 分配/释放配对扫描自测 (check_alloc_delete --selftest)',
+     ['check_alloc_delete.py', '--selftest'], False),
+    ('A4 malloc/delete 错配扫描 (全仓 706 个源文件)',
+     ['check_alloc_delete.py'], False),
+    ('B  ZQlib 独立回归测试 x10 (ASan+LSan)', ['run_zqlib_checks.py'], False),
     # 基线路径给**绝对路径**：子进程以 ROOT 为 cwd 运行，而基线文件在 tools/ 下，
     # 相对路径会解析成 <ROOT>/zqlib_probe_baseline.txt 而找不到（2026-10-02 实测）。
     ('C  ZQlib 可编译性门禁',
@@ -112,6 +123,11 @@ def main():
     ap.add_argument('--msvc-asan', action='store_true',
                     help='额外用 MSVC /fsanitize=address 把 9 个 ZQlib 测试在 Windows 上真跑一遍'
                          '（gcc 那套只在 WSL 里跑，见附录 AS）')
+    ap.add_argument('--ubsan', action='store_true',
+                    help='把 B 组换成 -fsanitize=undefined 再跑一遍（抓 ASan 看不见的'
+                         '有符号溢出/移位越界等，见附录 AS.2）')
+    ap.add_argument('--warn-sweep', action='store_true',
+                    help='额外跑 gcc -Wall -Wextra 的 HIGH 桶门禁（较慢，约 2 分钟，见附录 AT）')
     args = ap.parse_args()
 
     failed = []
@@ -142,19 +158,29 @@ def main():
             except IOError:
                 pass
 
+    if args.warn_sweep:
+        if not run_group('C3 gcc -Wall/-Wextra HIGH 桶门禁',
+                         [sys.executable, os.path.join(HERE, 'warn_sweep_zqlib.py'),
+                          '--check-baseline',
+                          os.path.join(HERE, 'zqlib_warn_baseline.txt')],
+                         cwd=ROOT):
+            failed.append('C3 gcc -Wall/-Wextra HIGH 桶门禁')
+
     if args.msvc_asan:
-        if not run_group('B2 ZQlib 独立回归测试 x9 (MSVC /fsanitize=address)',
+        if not run_group('B2 ZQlib 独立回归测试 x10 (MSVC /fsanitize=address)',
                          ['cmd', '/c', os.path.join(HERE, 'run_zqlib_checks_msvc.bat')],
                          cwd=ROOT):
-            failed.append('B2 ZQlib 独立回归测试 x9 (MSVC ASan)')
+            failed.append('B2 ZQlib 独立回归测试 x10 (MSVC ASan)')
 
     for name, argv, slow in GROUPS:
         if slow and args.quick:
             print('=' * 74)
             print('### %s：--quick 跳过' % name)
             continue
-        ok = run_group(name, [sys.executable, os.path.join(HERE, argv[0])] + argv[1:],
-                       cwd=ROOT)
+        cmd = [sys.executable, os.path.join(HERE, argv[0])] + argv[1:]
+        if name.startswith('B ') and args.ubsan:
+            cmd.append('--ubsan')
+        ok = run_group(name, cmd, cwd=ROOT)
         if not ok:
             failed.append(name)
 

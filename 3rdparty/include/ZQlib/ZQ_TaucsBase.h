@@ -617,8 +617,12 @@ namespace ZQ
 					if(indexs[i])
 						delete []indexs[i];
 				}
-				delete []values;
-				delete []indexs;
+				// 审计修复（2026-10-02，附录 AT.8）：values / indexs 这两个**外层数组**
+				// 是 malloc 出来的（见上面 561-562 行），必须配 free；
+				// 上面那个循环里的 values[i] / indexs[i] 才是 new[] 出来的，
+				// 那两个 delete[] 保持不变。
+				free(values);
+				free(indexs);
 				delete []tmpvalue;
 				delete []tmprowind;
 				return AtA;
@@ -687,8 +691,12 @@ namespace ZQ
 					if(indexs[i])
 						delete []indexs[i];
 				}
-				delete []values;
-				delete []indexs;
+				// 审计修复（2026-10-02，附录 AT.8）：values / indexs 这两个**外层数组**
+				// 是 malloc 出来的（见上面 561-562 行），必须配 free；
+				// 上面那个循环里的 values[i] / indexs[i] 才是 new[] 出来的，
+				// 那两个 delete[] 保持不变。
+				free(values);
+				free(indexs);
 				delete []tmpvalue;
 				delete []tmprowind;
 				return AtA;

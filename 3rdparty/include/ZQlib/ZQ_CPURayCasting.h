@@ -277,11 +277,17 @@ namespace ZQ
 			float opacity = 0;
 			for (int istep = 0; istep < maxSteps; istep++)
 			{
+				// 审计修复（2026-10-02，附录 AT）：这三个坐标原来在 double 里算完，
+				// 靠数组初始化列表**隐式**收窄成 float，gcc 报 -Wnarrowing（C++11 标准
+				// 里 braced-init 的收窄转换是 ill-formed，gcc 默认只警告，MSVC /W4
+				// 报 C4248）。加一个显式 (float) 强转即可 —— 数值与原版**逐位相同**
+				//（仍然是 double 算完再转一次），且下游 TrilinearInterpolate 的参数
+				// 本来就是 float。
 				float m_coord[3] =
 				{
-					(pos.x - boundingBoxMin.x) / boxSize.x*xsize - 0.5,
-					(pos.y - boundingBoxMin.y) / boxSize.y*ysize - 0.5,
-					(pos.z - boundingBoxMin.z) / boxSize.z*zsize - 0.5
+					(float)((pos.x - boundingBoxMin.x) / boxSize.x*xsize - 0.5),
+					(float)((pos.y - boundingBoxMin.y) / boxSize.y*ysize - 0.5),
+					(float)((pos.z - boundingBoxMin.z) / boxSize.z*zsize - 0.5)
 				};
 
 

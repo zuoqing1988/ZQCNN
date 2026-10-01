@@ -6,7 +6,8 @@
  * 编得过、在 Linux 编不过。
  *
  * 每个 zq_*_check.cpp 都在 `#include` 目标 ZQlib 头**之前**包含本文件（顺序不能
- * 反）。tools/probe_zqlib_headers.py 用的是脚本内联的一份等价 shim，两边保持同步。
+ * 反）。tools/zqlib_probe_shim.h 转发到本文件，供 tools/probe_zqlib_headers.py
+ * 与 tools/warn_sweep_zqlib.py 使用 —— **本文件是唯一一份真实定义**，改垫片只改这里。
  *
  * 补上垫片之后能被单独编译的 ZQlib 头从 81 涨到 83（ZQ_MergeSort.h 缺 <vector>、
  * ZQ_Kmeans.h 缺 <math.h>，那两处是直接改头本身修的）。

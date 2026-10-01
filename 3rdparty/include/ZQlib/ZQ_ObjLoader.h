@@ -37,7 +37,10 @@ namespace ZQ
 	
 	private:
 		bool   mMyAlloc; // whether or not *I* allocated the buffer and am responsible for deleting it.
-		char  *mData;  // ascii data to parse.
+		char  *mData;  // ascii data to parse. 自己 malloc 的（mMyAlloc==true），
+		              // 所以释放一律用 free —— 审计修复（2026-10-02，附录 AT.8）：
+		              // 原来这里写的是 delete[]，malloc 配 delete[] 是未定义行为，
+		              // 三处（析构 / SetFile 重入 / fread 失败）都一样。
 		int    mLen;   // length of data
 		SeparatorType  mHard[256];
 		char   mHardString[256*2];
@@ -53,7 +56,7 @@ namespace ZQ
 
 			if (mMyAlloc)
 			{
-				if (mData) delete[]mData;
+				if (mData) free(mData);
 			}
 		}
 
@@ -80,7 +83,7 @@ namespace ZQ
 		{
 			if (mMyAlloc)
 			{
-				if (mData) delete[]mData;
+				if (mData) free(mData);
 			}
 
 			mData = 0;
@@ -107,7 +110,7 @@ namespace ZQ
 				int ok = int(fread(mData, 1, mLen, in));
 				if (!ok)
 				{
-					delete[]mData;
+					free(mData);
 					mData = 0;
 				}
 				else
@@ -826,10 +829,13 @@ namespace ZQ
 			_clear();
 		}
 
-		const int GetVertexNum() const {return mVertexCount;}
-		const int GetTriangleNum() const {return mTriCount;}
-		const bool HasNormal() const {return hasNormal;}
-		const bool HasTexCoord() const {return hasTexCoord;}
+		// 审计修复（2026-10-02，附录 AT.9）：返回类型上的 const 对 int/bool 这类
+		// **内建类型**毫无意义（函数类型的返回类型不带限定符），gcc -Wignored-qualifiers
+		// 会报。函数尾部的 `const` 才是「不修改成员」的那个，保留。
+		int GetVertexNum() const {return mVertexCount;}
+		int GetTriangleNum() const {return mTriCount;}
+		bool HasNormal() const {return hasNormal;}
+		bool HasTexCoord() const {return hasTexCoord;}
 
 		const float* GetVerticesPtr() const {return mVertices;}
 		const unsigned int* GetTriangleIndicesPtr() const {return mIndices;}

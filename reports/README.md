@@ -44,21 +44,34 @@ python tools/bench_gemm_ab.py A.c B.c --replace zq_gemm_32f_align_c_asm.c
 python tools/run_audit_checks.py             # 下面这几项，一个入口跑完
 python tools/run_audit_checks.py --quick     # 跳过慢的可编译性门禁
 python tools/run_audit_checks.py --with-build  # 再加双平台全量构建 + 关键 sample 回归
+python tools/run_audit_checks.py --ubsan       # B 组换成 UBSan 口径
+python tools/run_audit_checks.py --msvc-asan   # 加 Windows 侧 MSVC ASan
+python tools/run_audit_checks.py --warn-sweep  # 加 gcc -Wall -Wextra 的 HIGH 桶门禁
 
 # 单独跑其中某一项时：
 python tools/check_line_endings.py      # multi-CR / lone-CR / CRLF+LF 混用
-python tools/check_text_encoding.py     # UTF-8 有损解码残留（U+FFFD）
+python tools/check_text_encoding.py     # UTF-8 有损解码残留（U+FFFD）/ 罕见汉字清单
+python tools/check_alloc_delete.py      # malloc 配 delete[] / new 配 free（全仓 706 文件）
+python tools/check_alloc_delete.py --selftest   # 上面这个工具自己的自测（改它之后必跑）
 ```
 
-改了 `3rdparty/include/ZQlib/` 下的头还要跑这两个（主工程的 sample 回归验不到那里）：
+改了 `3rdparty/include/ZQlib/` 下的头还要跑这三个（主工程的 sample 回归验不到那里）：
 
 ```bash
-python tools/run_zqlib_checks.py        # 9 个 ZQlib 独立回归测试，ASan + LSan
+python tools/run_zqlib_checks.py        # 10 个 ZQlib 独立回归测试，ASan + LSan
+python tools/run_zqlib_checks.py --ubsan  # 同一批换 UBSan（注意：UBSan 的 rc 恒为 0）
 
 # 可编译性门禁（慢，约 2 分钟，编译 143 个翻译单元）：
 # 任何一个头从 OK 变成编不过就退出 1。修好/新增头之后更新基线。
 python tools/probe_zqlib_headers.py --check-baseline tools/zqlib_probe_baseline.txt
 python tools/probe_zqlib_headers.py --save-baseline tools/zqlib_probe_baseline.txt
+
+# 警告门禁（同样慢，约 2 分钟）：-Wall -Wextra 的 HIGH 桶，
+# 基线当前为空（43 条 HIGH 已在附录 AT 全部处理完）
+python tools/warn_sweep_zqlib.py --check-baseline tools/zqlib_warn_baseline.txt
+python tools/warn_sweep_zqlib.py --save-baseline tools/zqlib_warn_baseline.txt
+python tools/warn_sweep_zqlib.py --all          # 连 LOW 桶（699 条噪声）一起看
+python tools/warn_sweep_zqlib.py --bucket MED   # 只看 MED 桶
 ```
 
 ## 第三方头库这一轮的结论（2026-10-02）

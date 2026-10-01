@@ -423,7 +423,11 @@ namespace ZQ
 			{
 				if (hist[i] != 0)
 				{
-					printf("%4d\t%10d\n", i, hist[i]);
+					// 审计修复（2026-10-02，附录 AT）：hist 是 `unsigned long hist[256]`，
+					// 原来用 %d 打印。x86-64 上 unsigned long 是 64 位，%d 只读低 32 位 ——
+					// 词频超过 2^31 时打印成负数（实测 3000000000 -> -1294967296），
+					// 严格讲也是未定义行为。
+					printf("%4d\t%10lu\n", i, hist[i]);
 				}
 			}
 		}

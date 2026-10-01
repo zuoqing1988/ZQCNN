@@ -89,7 +89,12 @@ namespace ZQ
 		/*   data size = [X,Y,Z], data(i,j,k) = data[k*Y*X+j*X+i];   */
 
 	public:
-		ZQ_MarchingCube():data(0), xsize(0), ysize(0), zsize(0), targetValue(0.0){}
+		// 审计修复（2026-10-02，附录 AT）：初始化列表的顺序原来和**声明顺序**不一致
+		// （声明是 data, targetValue, xsize, ysize, zsize，这里写成了 data, xsize, ...），
+		// gcc -Wreorder 会报。实际初始化永远按声明顺序走；这里全是常量 0/0.0，
+		// 所以改顺序不改变任何行为，纯粹是把隐患消掉 —— 一旦以后有人把 targetValue
+		// 改成依赖 xsize 的表达式，原来的写法就会读到还没初始化的值。
+		ZQ_MarchingCube():data(0), targetValue(0.0), xsize(0), ysize(0), zsize(0){}
 		~ZQ_MarchingCube()
 		{
 			_clearData();

@@ -173,7 +173,11 @@ namespace ZQ
 						delete[](elements[i]);
 					}
 				}
-				delete[]elements;
+				// 审计修复（2026-10-02，附录 AT.8）：elements 这个**外层数组**是
+				// malloc 出来的（见 303 行 `(*sets)->elements = (int**)malloc(...)`），
+				// 必须配 free；上面循环里的 elements[i] 才是 new int[] 出来的，
+				// 那句 delete[] 保持不变。
+				free(elements);
 				elements = 0;
 			}
 		}

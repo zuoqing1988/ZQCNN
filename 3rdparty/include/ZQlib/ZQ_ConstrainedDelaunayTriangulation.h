@@ -857,15 +857,25 @@ namespace ZQ
 			}
 
 
-			Triangle& NeighborAcross(Point& opoint)
+			// 审计修复（2026-10-02，附录 AT）：原版只有一个 NeighborAcross()，它**无条件解引用**
+			// neighbors_[k]。调用方于是想写 `if (&ot == NULL)` 来兜底 —— 但那是在解引用
+			// **之后**才检查，编译器还会报 -Waddress（引用取址永远非空），也就是说这个守卫
+			// 既不会触发、位置也错了。拆出一个不解引用的版本，让调用方能在取到指针后、
+			// 解引用前判断。
+			Triangle* NeighborAcrossPtr(Point& opoint)
 			{
 				if (&opoint == points_[0]) {
-					return *neighbors_[0];
+					return neighbors_[0];
 				}
 				else if (&opoint == points_[1]) {
-					return *neighbors_[1];
+					return neighbors_[1];
 				}
-				return *neighbors_[2];
+				return neighbors_[2];
+			}
+
+			Triangle& NeighborAcross(Point& opoint)
+			{
+				return *NeighborAcrossPtr(opoint);
 			}
 
 			void DebugPrint()
@@ -1288,8 +1298,16 @@ namespace ZQ
 						EdgeEvent(tcx, ep, *p1, triangle, *p1);
 					}
 					else {
-						std::runtime_error("EdgeEvent - collinear points not supported");
-						assert(0);
+						// 审计修复（2026-10-02，附录 AT）：原来这行是
+						//     std::runtime_error("EdgeEvent - collinear points not supported");
+						// —— **构造**一个临时异常然后丢掉，等于什么都没写；接着的 assert(0)
+						// 在 NDEBUG（也就是 Release）下又被编掉，于是这个"不可能发生"的分支
+						// 在正式构建里**静悄悄 return 出去**，返回一个没被旋转过的 triangle。
+						// 改成真 throw：不改 Debug 行为（都是当场中止），把 Release 从
+						// "静默给错答案"变成"立刻报出来"。
+						// 本头未被 ZQCNN 主工程任何地方引用（tools/zqlib_reachability.py），
+						// 所以对现有构建零影响。
+						throw std::runtime_error("EdgeEvent - collinear points not supported");
 					}
 					return;
 				}
@@ -1306,8 +1324,8 @@ namespace ZQ
 						EdgeEvent(tcx, ep, *p2, triangle, *p2);
 					}
 					else {
-						std::runtime_error("EdgeEvent - collinear points not supported");
-						assert(0);
+						// 同上：原来也是构造完就丢 + assert(0)，Release 下静默通过。
+						throw std::runtime_error("EdgeEvent - collinear points not supported");
 					}
 					return;
 				}
@@ -1979,15 +1997,16 @@ namespace ZQ
 
 			void FlipEdgeEvent(SweepContext& tcx, Point& ep, Point& eq, Triangle* t, Point& p)
 			{
-				Triangle& ot = t->NeighborAcross(p);
-				Point& op = *ot.OppositePoint(*t, p);
-
-				if (&ot == NULL) {
+				// 审计修复（2026-10-02，附录 AT）：先判空再解引用。原版先 `Triangle& ot =
+				// t->NeighborAcross(p)`（内部已解引用）再写 `if (&ot == NULL)`，守卫既死又晚。
+				Triangle* ot_ptr = t->NeighborAcrossPtr(p);
+				if (ot_ptr == NULL) {
 					// If we want to integrate the fillEdgeEvent do it here
 					// With current implementation we should never get here
-					//throw new RuntimeException( "[BUG:FIXME] FLIP failed due to missing triangle");
-					assert(0);
+					throw std::runtime_error("[BUG:FIXME] FLIP failed due to missing triangle");
 				}
+				Triangle& ot = *ot_ptr;
+				Point& op = *ot.OppositePoint(*t, p);
 
 				if (InScanArea(p, *t->PointCCW(p), *t->PointCW(p), op)) {
 					// Lets rotate shared edge one vertex CW
@@ -2095,15 +2114,14 @@ namespace ZQ
 			*/
 			void FlipScanEdgeEvent(SweepContext& tcx, Point& ep, Point& eq, Triangle& flip_triangle, Triangle& t, Point& p)
 			{
-				Triangle& ot = t.NeighborAcross(p);
-				Point& op = *ot.OppositePoint(t, p);
-
-				if (&t.NeighborAcross(p) == NULL) {
-					// If we want to integrate the fillEdgeEvent do it here
-					// With current implementation we should never get here
-					//throw new RuntimeException( "[BUG:FIXME] FLIP failed due to missing triangle");
-					assert(0);
+				// 审计修复（2026-10-02，附录 AT）：同 FlipEdgeEvent。这里原来还多调了一次
+				// t.NeighborAcross(p) 只为了取地址判空，既重复解引用又判不出东西。
+				Triangle* ot_ptr = t.NeighborAcrossPtr(p);
+				if (ot_ptr == NULL) {
+					throw std::runtime_error("[BUG:FIXME] FLIP failed due to missing triangle");
 				}
+				Triangle& ot = *ot_ptr;
+				Point& op = *ot.OppositePoint(t, p);
 
 				if (InScanArea(eq, *flip_triangle.PointCCW(eq), *flip_triangle.PointCW(eq), op)) {
 					// flip with new edge op->eq

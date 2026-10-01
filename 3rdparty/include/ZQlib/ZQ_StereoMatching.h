@@ -5,7 +5,7 @@
 #include "ZQ_DoubleImage.h"
 #include <stdio.h>
 #include <stdint.h>
-#include <climits>						// INT_MAX 本来眉不能编过
+#include <climits>						// INT_MAX 本来就不能编过
 #include <smmintrin.h>
 #include <tmmintrin.h>
 
@@ -2884,9 +2884,17 @@ namespace ZQ
 			const char* file_cost = "fulldp_ooc_1234567890_cost.tmp";
 			const char* file_sumL_left = "fulldp_ooc_1234567890_sumL_left.tmp";
 			const char* file_sumL_right = "fulldp_ooc_1234567890_sumL_right.tmp";
-			printf("warning: need %I64d bytes for file \"%s\"\n", (int64_t)height*W*D*sizeof(int), file_cost);
-			printf("         need %I64d bytes for file \"%s\"\n", (int64_t)height*width1*D*sizeof(int), file_sumL_left);
-			printf("         need %I64d bytes for file \"%s\"\n", (int64_t)height*width2*D*sizeof(int), file_sumL_right);
+			// 审计修复（2026-10-02，附录 AT）：两个毛病。
+			// ① %I64d 是 **MSVC 专有**的格式符。glibc 不认：实测它把 I 当成
+			//    "用本地备用数字集输出" 的标志、把 64 当成字段宽度，于是 Linux 上
+			//    打出的是一行 44 个前导空格 + 数字，和 Windows 的输出完全不同。
+			// ② 表达式写的是 (int64_t)height*W*D*sizeof(int) —— 那个 int64_t 转换
+			//    被后面的 sizeof(int)（size_t == unsigned long）整个吃掉，乘法在
+			//    无符号 64 位里做，负的 height 会绕成巨大的正数。
+			// 改成全程 long long + %lld，两个平台一致。
+			printf("warning: need %lld bytes for file \"%s\"\n", (long long)height * W * D * (long long)sizeof(int), file_cost);
+			printf("         need %lld bytes for file \"%s\"\n", (long long)height * width1 * D * (long long)sizeof(int), file_sumL_left);
+			printf("         need %lld bytes for file \"%s\"\n", (long long)height * width2 * D * (long long)sizeof(int), file_sumL_right);
 			FILE* fid_cost = fopen(file_cost, "wb+");
 			if (fid_cost == 0)
 			{
@@ -3254,9 +3262,9 @@ namespace ZQ
 			const char* file_cost = "fulldp_ooc_1234567890_cost.tmp";
 			const char* file_sumL_left = "fulldp_ooc_1234567890_sumL_left.tmp";
 			const char* file_sumL_right = "fulldp_ooc_1234567890_sumL_right.tmp";
-			printf("warning: need %I64d bytes for file \"%s\"\n", (int64_t)height*W*D*sizeof(float), file_cost);
-			printf("         need %I64d bytes for file \"%s\"\n", (int64_t)height*width1*D*sizeof(float), file_sumL_left);
-			printf("         need %I64d bytes for file \"%s\"\n", (int64_t)height*width2*D*sizeof(float), file_sumL_right);
+			printf("warning: need %lld bytes for file \"%s\"\n", (long long)height * W * D * (long long)sizeof(float), file_cost);
+			printf("         need %lld bytes for file \"%s\"\n", (long long)height * width1 * D * (long long)sizeof(float), file_sumL_left);
+			printf("         need %lld bytes for file \"%s\"\n", (long long)height * width2 * D * (long long)sizeof(float), file_sumL_right);
 			FILE* fid_cost = fopen(file_cost, "wb+");
 			if (fid_cost == 0)
 			{
