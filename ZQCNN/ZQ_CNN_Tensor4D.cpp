@@ -958,6 +958,28 @@ bool ZQ_CNN_Tensor4D_NHW_C_Align128bit::ResizeBilinearRect(ZQ_CNN_Tensor4D& dst,
 {
 	int dstWidthStep, dstPixelStep, dstSliceStep;
 	int align_mode;
+	/* NMS 出来的检测框不做图像边界裁剪 —— ZQ_CNN_MTCNN*.h 里那 16 处
+	   "off_x < 0 || off_x + rect_w > width || ..." 是被注释掉的, 所以这个
+	   函数会真的拿到越界 rect, 而原实现把 rect 原样交给 resize 内核。
+	   源张量由 ConvertFromBGR 用 ChangeSize(1,H,W,3,1,1) 建, 四周只有 1 像素
+	   border; 实测 (临时探针) SampleCascadeOnet_Interface 一次 resize 的 rect
+	   纵向超出 34 像素, 是货真价实的堆越界读。
+	   这里把 rect 夹到 [-border, 尺寸+border-1] 这个一定分配到的范围内;
+	   对本来就不越界的 rect 是恒等映射。 */
+	{
+		const int hi_x = W - 1 + borderW, hi_y = H - 1 + borderH;
+		if (src_off_x < -borderW) src_off_x = -borderW;
+		if (src_off_y < -borderH) src_off_y = -borderH;
+		if (src_off_x > hi_x || src_off_y > hi_y)
+			return false;
+		if (src_off_x + src_rect_w - 1 > hi_x) src_rect_w = hi_x - src_off_x + 1;
+		if (src_off_y + src_rect_h - 1 > hi_y) src_rect_h = hi_y - src_off_y + 1;
+		if (src_rect_w <= 0 || src_rect_h <= 0)
+			return false;
+	}
+	/* 越界 rect 会真的从张量分配之外读 (实测 SampleCascadeOnet_Interface
+	   最多超出 34 像素)。逐个夹到源张量一定分配到的范围内, 详见
+	   Align128bit::ResizeBilinearRect 标量版里那段注释。 */
 	if (src_off_x < 0 || src_off_y < 0 || src_off_x + src_rect_w > W || src_off_y + src_rect_h > H)
 	{
 		if (dst.GetN() != N || dst.GetH() != dst_H || dst.GetW() != dst_W || dst.GetC() != C)
@@ -1089,6 +1111,27 @@ bool ZQ_CNN_Tensor4D_NHW_C_Align128bit::ResizeBilinearRect(ZQ_CNN_Tensor4D& dst,
 	int rect_num = (int)src_off_x.size();
 	if (rect_num == 0 || rect_num != src_off_y.size() || rect_num != src_rect_w.size() || rect_num != src_rect_h.size())
 		return false;
+	/* 越界 rect 会真的从张量分配之外读 (实测 SampleCascadeOnet_Interface
+	   最多超出 34 像素)。逐个夹到源张量一定分配到的范围内, 详见
+	   Align128bit::ResizeBilinearRect 标量版里那段注释。 */
+
+	/* 参数是 const&, 只能夹到本地副本上; 之后用这四份。 */
+	std::vector<int> c_off_x(src_off_x), c_off_y(src_off_y);
+	std::vector<int> c_rect_w(src_rect_w), c_rect_h(src_rect_h);
+	{
+		const int hi_x = W - 1 + borderW, hi_y = H - 1 + borderH;
+		for (int i = 0; i < rect_num; i++)
+		{
+			if (c_off_x[i] < -borderW) c_off_x[i] = -borderW;
+			if (c_off_y[i] < -borderH) c_off_y[i] = -borderH;
+			if (c_off_x[i] > hi_x || c_off_y[i] > hi_y)
+				return false;
+			if (c_off_x[i] + c_rect_w[i] - 1 > hi_x) c_rect_w[i] = hi_x - c_off_x[i] + 1;
+			if (c_off_y[i] + c_rect_h[i] - 1 > hi_y) c_rect_h[i] = hi_y - c_off_y[i] + 1;
+			if (c_rect_w[i] <= 0 || c_rect_h[i] <= 0)
+				return false;
+		}
+	}
 
 	if (dst.GetN() != rect_num || dst.GetH() != dst_H || dst.GetW() != dst_W || dst.GetC() != C)
 	{
@@ -1139,7 +1182,7 @@ bool ZQ_CNN_Tensor4D_NHW_C_Align128bit::ResizeBilinearRect(ZQ_CNN_Tensor4D& dst,
 		{
 			bool can_call_safeborder = true;
 			if (dst_W > src_rect_w[i] && (src_off_x[i] == 0 || src_off_x[i] + src_rect_w[i] == W)
-				|| dst_H > src_rect_h[i] && (src_off_y[i] == 0 || src_off_y[i] + src_rect_h[i] == H))
+				|| dst_H > c_rect_h[i] && (c_off_y[i] == 0 || c_off_y[i] + c_rect_h[i] == H))
 				can_call_safeborder = false;
 
 			if (can_call_safeborder)
