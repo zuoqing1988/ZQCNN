@@ -753,3 +753,40 @@ K 循环一次都不进，等于把 C 整块清零再由标量补加，对 C 做
 ### 本次新增的文档
 - `audit_k3_20261001.md` 附录 P
 - `AGENTS.md` 第 7 条构建规则
+
+## 新增/变更：审计报告主表状态复核 + GEMM A/B 基准工具
+
+### 复核结果
+第一轮写的「一、高危漏洞明细」表里有 18 条标着"待核实/未修复"，但那些
+其实在后续几轮里已经修完，表没同步。逐条打开当前代码核实后**全部落定**：
+
+  H3/H4  ChangeSize 整数溢出   → 6 处 __int64 + 0x7FFFFFFF 守卫
+  H5     _prior_box 尺寸不一致 → priors_per_cell != num_priors 前置校验
+  H6     SSDSpec::aspect_ratios → 写入前查 sizeof 上界
+  H7-H9  keypoint 写 ppoint[212] → __min(106, GetC()/2)
+  H10    VideoFaceDetection    → 已有限幅
+  H11    num_points 固定 18 点  → __min(18, hm_C)
+  H12/13 batchnormscale 整向量 → c 循环已改标量
+  H14    FP16 resize 2× 溢出    → 按 sizeof(zq_base_type) 分配
+  H15    eltwise_mul_nchwc 增量 → 已加到 *_slice_ptr
+  H16    eltwise_sum_nchwc 重置 → n 循环里重初始化 out_im_ptr
+  H22    name_count/len 越界   → 双校验
+  H23    input_index 越界      → 4 处范围检查
+  H24    sprintf 栈溢出        → %511s + 长度检查
+  H25    buf2[-1] 越界读       → len2 > 0 守卫
+
+主表现在 **0 条** H 项还带"待核实/未修复"，头部统计与结论段落同步更新。
+
+### 新增 tools/bench_gemm_ab.py，并查出一个影响所有历史 GEMM 数字的问题
+**同一个文件跟它自己比，64 个形状里有 20 个出现 >3% 的"差异"，最大的 10%，
+而且方向一致。** 原因是"先把 A 跑完再跑 B"，中间睿频/温度漂移系统性偏袒
+后跑的那个。改成**交替跑**（A,B,A,B,…）后降到 7 个 >3%、最大 7.3%、
+49/64 在 ±3% 内 —— 这个 ~7% 就是本机 GEMM 测量的噪声下限，
+默认阈值已设成 8%。
+
+这条对附录 P 里小 K 家族的"无收益"结论是**加强**而不是削弱：
+那次测到的 −7% 正好在噪声边缘，所以"没有明显收益"这个判断依然成立，
+但"−7% 是变慢"这种说法应当收回为"在噪声内"。
+
+同时用该工具复测了 N 方向分块（`be6eeea`）的真实收益，
+结果见下一个提交。

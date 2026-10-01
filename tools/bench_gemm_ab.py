@@ -155,7 +155,9 @@ def main():
     b_src = args.b
     tmp_ref = None
     if args.from_git:
-        p = sh('git show %s:%s' % (args.b, replace))
+        # 变体文件在仓库里的相对路径（用于 git show），不是构建目录里的名字
+        rel = os.path.join('ZQ_GEMM', 'math', replace).replace('\\', '/')
+        p = sh('git show %s:%s' % (args.b, rel))
         if p.returncode != 0:
             raise SystemExit(p.stderr)
         tmp_ref = tempfile.NamedTemporaryFile(suffix='.c', delete=False)
