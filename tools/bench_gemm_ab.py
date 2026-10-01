@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""ZQ_GEMM 内核的 A/B 基准：编两个版本、交替各跑 N 次、逐尺寸取最好值对比。
+"""ZQ_GEMM 内核的 A/B 基准：编两个版本、**交替**各跑 N 次、逐尺寸取**中位数**对比。
 
 为什么需要这个工具
 ------------------
@@ -124,12 +124,25 @@ def run_one(binary, out):
 
 
 def best_of(runs):
-    """把多轮读数合并成 {shape: 最好的一次}。"""
-    best = {}
+    """把多轮读数合并成 {shape: 逐轮中位数}。
+
+    **不要用"取最大"**。GF/s 读数噪声大（本机约 7%），取最大会系统性地
+    挑中"那一轮恰好顺风"的样本：同一个文件跟自己比，取最大会报出
+    101% 这种数字，看起来像"全面超越"。中位数是无偏的。
+    2026-10-01 就是靠这个发现"中位数 95%"其实是 86%。
+    """
+    import statistics
+    per = {}
     for r in runs:
         for k, v in r.items():
-            best[k] = max(best.get(k, 0.0), v)
-    return best
+            per.setdefault(k, []).append(v)
+    out = {}
+    for k, vs in per.items():
+        if len(vs) >= 2:
+            out[k] = statistics.median(vs)
+        else:
+            out[k] = vs[0]
+    return out
 
 
 def main():
@@ -137,13 +150,13 @@ def main():
     ap.add_argument('a')
     ap.add_argument('b')
     ap.add_argument('-n', '--runs', type=int, default=5,
-                    help='每个版本各跑几轮取最好值（默认 5；**必须交替跑**）')
+                    help='每个版本交替跑几轮，逐形状取**中位数**（默认 5，至少要 3）')
     ap.add_argument('--replace', help='变体文件替换 GEMM_DIR 下的哪个文件'
                                         '（变体文件名与原名相同时可省略）')
     ap.add_argument('--from-git', action='store_true',
                     help='把 B 当作 git ref 取出（配合 A=当前工作区）')
     ap.add_argument('--threshold', type=float, default=8.0,
-                    help='超过这个百分比才算有意义的差异（默认 8；用同一个文件自比测出来的噪声下限约 10%%（不分轮次交替时））')
+                    help='超过这个百分比才算有意义的差异（默认 8；空对照测出的噪声下限）')
     args = ap.parse_args()
 
     if not os.path.exists(BENCH_SRC):
