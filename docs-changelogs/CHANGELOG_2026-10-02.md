@@ -196,3 +196,72 @@ bash: line 56: syntax error: unexpected end of file
    `ZQ_WinSockBase.h` 缺 winsock）。要真审这批得先把依赖装齐，不在本轮范围。
 2. 附录 O 里还有几条以「第三方头 / 死代码」为由的「不修」，现在有工具可以逐条
    复核 —— 下一轮按 `probe_zqlib_headers.py` 的 OK 列表逐个重判。
+
+## 新增/变更：按附录 X 的探测结果重判「不修」项 —— ZQ_Kmeans 的 k<=0 已修
+
+### 变更文件
+- `3rdparty/include/ZQlib/ZQ_Kmeans.h`：4 个入口补 `k <= 0` 守卫；
+  `_select_init_center` 补完整入参守卫
+- `tools/zq_kmeans_check.cpp`（新增）：`ZQ_Kmeans` 的独立回归测试
+- `audit_k3_20261001.md`：附录 O 那条「不修」按新证据修订
+
+### 起因
+
+附录 X 证明 143 个 ZQlib 头里 83 个能独立编译，于是附录 O 里
+「`ZQ_Kmeans.h` 的 `k == 0` 往零长数组写 — 不修：仅经死代码链引用」
+这条的**第二个理由**（没法验证）也不成立了，可以直接测。
+
+### 实测：bug 确实存在，ASan 精确定位
+
+`tools/zq_kmeans_check.cpp`（ASan + LeakSanitizer）跑 `k = 0`：
+
+```
+ERROR: AddressSanitizer: heap-buffer-overflow ... READ of size 4
+    #0 ZQ::ZQ_Kmeans<float>::Kmeans_with_init  ZQ_Kmeans.h:54
+0x... is located 0 bytes to the right of 1-byte region
+allocated by thread T0 here:
+    #1 operator new[](unsigned long)
+    #2 ZQ::ZQ_Kmeans<float>::Kmeans_with_init  ZQ_Kmeans.h:28
+```
+
+机理：守卫只判了 `k > nPts`、**没判 `k <= 0`**。`k == 0` 时 `new int[0]`
+返回的是一个 1 字节的合法指针，而 `min_kid` 初始化为 0、`j` 循环不执行，
+于是每个点的 `idx[i]` 都是 0，紧接着 `sum_kid[kid]++` 就是**零长数组越界写**。
+`k < 0` 更糟：`new int[-1]` 抛 `std::bad_array_new_length`，没人接 → 进程终止。
+
+### 修法
+
+4 个公开入口（`Kmeans_with_init` / `KmeansNormVec_with_init` / `Kmeans` /
+`KmeansNormVec`）的守卫统一加上 `k <= 0`。
+
+顺带修 `_select_init_center`：它是 **public**（头里 `//private:` 被注释掉了），
+里面 `rand() % (nPts - i)` 在 `k > nPts` 时 **i 取到 nPts 就除以 0**。
+内部两个入口调它之前已经判过，但外部可以直接调，所以自己也要判。
+
+### 实测结果
+
+| | 修复前 | 修复后 |
+|---|---|---|
+| `k=0`（四个入口） | **ASan heap-buffer-overflow** | 返回 false，无报告 |
+| `k=-1/-2`（四个入口） | 未捕获异常 → terminate | 返回 false，无报告 |
+| `_select_init_center(k=nPts+1)` | 除以 0 | 返回 false |
+| `_select_init_center(k=0)` | — | 返回 false |
+| 正常路径 k=1/2/3 | — | PASS（每点都被分到最近中心） |
+| 其它入参守卫（nPts/dim/k>nPts/3 个 NULL） | — | PASS |
+| LeakSanitizer | — | 无报告 |
+
+### 可达性（说清楚，不夸大）
+
+本仓库里 `ZQ_Kmeans` 的**唯一**使用者是 `ZQ_LazySnapping.h` 的 4 处调用，
+而它自己用 `if (ifore_k > 0)` / `if (iback_k > 0)` 包着，**不会传 k==0**；
+`ZQ_LazySnapping.h` 又全仓零 includers。所以这条 bug 在**本仓库内不可达**，
+属于「库头里的潜伏缺陷」。
+
+修它的理由不是「本仓库有洞」，而是：现在它**可验证**了，改一行守卫就能让
+一个潜在的堆越界写变成干净的 `return false`，成本几乎为零。
+
+### 验证
+- Windows Release 全量构建 0 error，`SampleGEMMAsmCompare` PASS（1.9e-06）
+- Linux 全量构建 0 error，sample 回归 8 个全 rc=0
+- `tools/zq_kmeans_check.cpp`：ASan + LSan 全程无报告，RESULT: PASS
+- `tools/check_line_endings.py` / `tools/check_text_encoding.py` 均 OK

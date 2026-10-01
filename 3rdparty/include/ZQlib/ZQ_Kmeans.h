@@ -17,7 +17,12 @@ namespace ZQ
 	public:
 		static bool Kmeans_with_init(int nPts, int dim, int k, const T* pts, const T* init_centers, int* idx, T* out_centers, double thresh = 1e-9)
 		{
-			if (nPts <= 0 || dim <= 0 || k > nPts || pts == 0 || idx == 0 || out_centers == 0)
+			// k <= 0 原来**没有**判: k==0 时 new int[0] 给的是 1 字节的合法指针,
+			// 随后的 sum_kid[kid]++ (kid 恒为 0) 就是零长数组越界写;
+			// k<0 时 new int[-1] 抛 std::bad_array_new_length, 没人接 -> 进程终止。
+			// 实测 (tools/zq_kmeans_check.cpp, ASan):
+			//   ZQ_Kmeans.h:54 heap-buffer-overflow, 分配点 ZQ_Kmeans.h:28 (new int[0])
+			if (nPts <= 0 || dim <= 0 || k <= 0 || k > nPts || pts == 0 || idx == 0 || out_centers == 0)
 				return false;
 
 			double thresh2 = thresh*thresh;
@@ -78,7 +83,7 @@ namespace ZQ
 
 		static bool KmeansNormVec_with_init(int nPts, int dim, int k, const T* pts, const T* init_centers, int* idx, T* out_centers, double thresh = 1e-9)
 		{
-			if (nPts <= 0 || dim <= 0 || k > nPts || pts == 0 || idx == 0 || out_centers == 0)
+			if (nPts <= 0 || dim <= 0 || k <= 0 || k > nPts || pts == 0 || idx == 0 || out_centers == 0)
 				return false;
 
 			thresh = fabs(thresh);
@@ -135,7 +140,7 @@ namespace ZQ
 		
 		static bool Kmeans(int nPts, int dim, int k, const T* pts, int* idx, T* out_centers, T* init_centers = 0, double thresh = 1e-9)
 		{
-			if (nPts <= 0 || dim <= 0 || k > nPts || pts == 0 || idx == 0 || out_centers == 0)
+			if (nPts <= 0 || dim <= 0 || k <= 0 || k > nPts || pts == 0 || idx == 0 || out_centers == 0)
 				return false;
 
 			T* tmp_init_centers = 0;
@@ -164,7 +169,7 @@ namespace ZQ
 
 		static bool KmeansNormVec(int nPts, int dim, int k, const T* pts, int* idx, T* out_centers, T* init_centers = 0, double thresh = 1e-9)
 		{
-			if (nPts <= 0 || dim <= 0 || k > nPts || pts == 0 || idx == 0 || out_centers == 0)
+			if (nPts <= 0 || dim <= 0 || k <= 0 || k > nPts || pts == 0 || idx == 0 || out_centers == 0)
 				return false;
 
 			T* tmp_init_centers = 0;
@@ -195,6 +200,11 @@ namespace ZQ
 	public:
 		static bool _select_init_center(int nPts, int dim, int k, const T* pts, T* init_centers)
 		{
+			// 下面 `rand() % (nPts - i)` 在 k > nPts 时 i 取到 nPts 就**除以 0**。
+			// 内部两个入口在调进来之前已经判过, 但这个函数是 public（头里
+			// //private: 被注释掉了), 外部可以直接调 —— 所以自己也要判。
+			if (nPts <= 0 || dim <= 0 || k <= 0 || k > nPts || pts == 0 || init_centers == 0)
+				return false;
 			int* idx = new int[nPts];
 			int* init_idx = new int[k];
 			for (int i = 0; i < nPts; i++)
