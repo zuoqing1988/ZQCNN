@@ -10,10 +10,19 @@ if(WIN32)
   SET(${result} ${dirlist})
   ENDMACRO()
 
-  find_package(OpenCV REQUIRED)
-  if(NOT OPENCV_FOUND)
-    include_directories(${CMAKE_CURRENT_LIST_DIR}/../3rdparty/opencv/build/include)
-    set(OpenCV_LIBS ${CMAKE_CURRENT_LIST_DIR}/../3rdparty/opencv/build/x64/vc14/lib/opencv_world342.lib)
+  find_package(OpenCV QUIET)
+  if(NOT OpenCV_FOUND)
+    # Fallback to the bundled Windows binaries
+    if(WIN32 AND EXISTS ${CMAKE_CURRENT_LIST_DIR}/../3rdparty/opencv/build/x64/vc14/lib/opencv_world342.lib)
+      include_directories(${CMAKE_CURRENT_LIST_DIR}/../3rdparty/opencv/build/include)
+      set(OpenCV_LIBS ${CMAKE_CURRENT_LIST_DIR}/../3rdparty/opencv/build/x64/vc14/lib/opencv_world342.lib)
+      set(OpenCV_FOUND TRUE)
+      message(STATUS "OpenCV not found by find_package, using bundled 3rdparty/opencv")
+    endif()
+  endif()
+  if(NOT OpenCV_FOUND)
+    message(WARNING "OpenCV not found: skipping SamplesZQlibFaceID (core ZQCNN library is unaffected)")
+    return()
   endif()
   
   find_package(OpenMP REQUIRED)
@@ -28,10 +37,11 @@ if(WIN32)
   include_directories(${CMAKE_CURRENT_LIST_DIR}/../ZQlibFaceID
                     ${CMAKE_CURRENT_LIST_DIR}/../3rdparty/include/ZQlib
                     ${CMAKE_CURRENT_LIST_DIR}/../3rdparty/include/mini-caffe
-                    ${CMAKE_CURRENT_LIST_DIR}/../3rdparty/include/libfacedetection)
+                    ${CMAKE_CURRENT_LIST_DIR}/../3rdparty/include/libfacedetection
+                    ${CMAKE_CURRENT_LIST_DIR}/../3rdparty/include/SeetaFaceEngine/FaceIdentification/include)
   link_directories(${ZQCNN_LIBRARY_DIR})
 
-  set(thirdparty_libs caffe libfacedetect-x64)
+  set(thirdparty_libs caffe libfacedetect-x64 SeetaFaceEngine_FaceIdentification ncnn)
 
   SUBDIRLIST(SAMPLE_SUBDIRS ${CMAKE_CURRENT_LIST_DIR})
   foreach(SAMPLE_SUBDIR ${SAMPLE_SUBDIRS})
@@ -55,10 +65,19 @@ else() #NOT WIN32
   SET(${result} ${dirlist})
   ENDMACRO()
 
-  find_package(OpenCV REQUIRED)
-  if(NOT OPENCV_FOUND)
-    include_directories(${CMAKE_CURRENT_LIST_DIR}/../3rdparty/opencv/build/include)
-    set(OpenCV_LIBS ${CMAKE_CURRENT_LIST_DIR}/../3rdparty/opencv/build/x64/vc14/lib/opencv_world342.lib)
+  find_package(OpenCV QUIET)
+  if(NOT OpenCV_FOUND)
+    # Fallback to the bundled Windows binaries
+    if(WIN32 AND EXISTS ${CMAKE_CURRENT_LIST_DIR}/../3rdparty/opencv/build/x64/vc14/lib/opencv_world342.lib)
+      include_directories(${CMAKE_CURRENT_LIST_DIR}/../3rdparty/opencv/build/include)
+      set(OpenCV_LIBS ${CMAKE_CURRENT_LIST_DIR}/../3rdparty/opencv/build/x64/vc14/lib/opencv_world342.lib)
+      set(OpenCV_FOUND TRUE)
+      message(STATUS "OpenCV not found by find_package, using bundled 3rdparty/opencv")
+    endif()
+  endif()
+  if(NOT OpenCV_FOUND)
+    message(WARNING "OpenCV not found: skipping SamplesZQlibFaceID (core ZQCNN library is unaffected)")
+    return()
   endif()
   
   find_package(OpenMP REQUIRED)
@@ -81,6 +100,8 @@ else() #NOT WIN32
   set(thirdparty_libs ncnn pthread)
 
   SUBDIRLIST(SAMPLE_SUBDIRS ${CMAKE_CURRENT_LIST_DIR})
+  # Linux 下没有 mini-caffe / SeetaFace / libfacedetection 的预编译库，跳过依赖它们的示例
+  list(FILTER SAMPLE_SUBDIRS EXCLUDE REGEX "MiniCaffe|SeetaFace|LibFaceDetect|CropImagesFor(ArcFace|SphereFace)Fast")
   foreach(SAMPLE_SUBDIR ${SAMPLE_SUBDIRS})
     message(STATUS "add sample ${SAMPLE_SUBDIR}")
     file(GLOB sample_src ${CMAKE_CURRENT_LIST_DIR}/${SAMPLE_SUBDIR}/*.cpp
