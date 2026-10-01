@@ -97,3 +97,54 @@
 1. 删除 `.vcxproj` 后，Windows 用户不能再双击 sln 打开工程，必须用 `cmake -S . -B build_x64 -G"Visual Studio 17 2022" -A x64` 生成 IDE 工程（Visual Studio 会把该目录作为解决方案打开）。这是用户明确授权的取舍。
 2. WSL 下 OpenCV 存在但 `pkg-config`/`/usr/include/opencv4` 查不到（可能装在非标准前缀或来自自定义 `OpenCVConfig.cmake`），后续若要长期维护 Linux 构建，建议记录其来源。
 3. `ZQ_CNN_SSDDetectorPytorch.cpp` 的 `FLT_MAX` 是既有代码而非本轮引入，只是新加的 `_softmax` 路径在 Windows 下不暴露该问题——典型的「MSVC 通过 ≠ gcc 通过」案例，已写入 AGENTS.md 规则。
+
+## 新增/变更：第二轮跨平台修复 + 修复自身复核 + MKL 对比基准
+
+对应 `audit_k3_20261001.md` 附录 A/B/C。对应提交：`c2d362e`、`c9a340a`、`64f1545`。
+
+### 变更文件
+
+**跨平台"跑不通"级修复**
+
+| 文件 | 问题 | 修复 |
+|---|---|---|
+| `ZQCNN/ZQ_CNN_Layer.h`、`ZQ_CNN_Layer_NCHWC.h`、`ZQCNN_to_MNN/converter/source/ZQ_CNN_Layer.h`、`SamplesZQCNN/TrainMTCNNprocessor/TrainMTCNNprocessor.h` | `.zqparams` 是 CRLF，Linux 文本模式不转换行尾，`_is_blank_c` 不认 `\r` → 每行最后一个 token（`bias`）解析失败、模型静默不带 bias、SampleMTCNN 在 Linux 上 segfault | `_is_blank_c` 把 `\r` 也当空白 |
+| `ZQCNN/CMakeLists.txt` | Windows 无条件链 `mklml`，默认 BLAS_TYPE=ZQ_GEMM 时根本不需要 → 没装 MKL 运行库的机器所有 exe 起不来 | 仅 `BLAS_TYPE=openblas` 时链接 mklml |
+| `CMakeLists.txt` | `3rdparty/bin/*.dll` 不在产物目录，依赖 caffe/libfacedetect/SeetaFace 的示例找不到 dll | configure 时拷到 `CMAKE_RUNTIME_OUTPUT_DIRECTORY` |
+| `ZQCNN/math/zq_libm_compat.c`（新增） | `3rdparty/lib/libncnn.a` 由 clang 编译，引用 `__exp_finite` 等 compiler-rt 符号，gcc 链接失败 | 补齐 40 余个 `__*_finite` 符号 |
+| `ZQlibFaceID/ZQ_FaceDatabase.h`、`ZQ_FaceDatabaseCompact.h`、`ZQ_FaceIDPrecisionEvaluation.h` | 只剥 `\n` 不剥 `\r`，Linux 上人脸库文件名带 `\r` 匹配全失败；`strlen==0` 时读 `line[-1]` | 同时剥 `\n`/`\r`，消除越界读 |
+
+**修复自身复核后追加的修复**
+
+| 文件 | 问题 |
+|---|---|
+| `ZQlibFaceID/ZQ_FaceGroup.h` | `int num` 未初始化 + 读取循环不在 `if (flag)` 内 → fread 失败时堆越界写（上轮新加的 `num<1000000` 反而保证循环执行） |
+| `ZQCNN/layers_c/zq_cnn_lrn_32f_align_c.c` | 正常路径从不 `free(square_buf/accumulate_buf)`，每次 Forward 泄漏（fp32 + fp16 两处） |
+| `ZQCNN/ZQ_CNN_Forward_SSEUtils.cpp` | 第二处 `slope = NULL` 赋值误用（1917 行）；`_prior_box*` 早退分支返回 true（应为 false）；`output.ChangeSize()` 返回值未检查 |
+| `ZQCNN/ZQ_CNN_SSDDetectorPytorch.cpp` | `cls_C * 4` int 乘法溢出可绕过 loc 长度校验 |
+| `SamplesZQCNN/mxnet2zqcnn/mxnet2zqcnn.cpp` | `read_mxnet_json/read_mxnet_param` 的 bool 返回值被丢弃，解析失败仍写出静默损坏的模型 |
+| `ZQlibFaceID/ZQ_FaceFeature.h` | `CopyData` 负 length / malloc 失败未处理 |
+| `ZQlibFaceID/ZQ_FaceSearchTarget.h` | `SaveToFile` 失败路径漏 `fclose` |
+| `ZQlibFaceID/ZQ_FaceDatabase.h` | 文件名字段 `len` 无上界，恶意库文件可触发未捕获 bad_alloc |
+| `ZQCNN_to_MNN/SampleOnet.cpp` | 标签索引只判上界 |
+
+**新增性能对标设施**
+
+| 文件 | 说明 |
+|---|---|
+| `SamplesZQBLAS/SampleGEMMCompare.cpp` + `CMakeLists.txt`（新增） | 同一组 20 个尺寸（含 1×N、N×1、瘦长、K 主导、CNN 真实形状、含非对齐尾部）上对比 ZQ_GEMM intrinsic / ZQ_GEMM 汇编版 / MKL / OpenBLAS，校验最大绝对误差并打印 GFLOP/s 与相对 MKL 的百分比。MKL 与 OpenBLAS 走运行时动态加载（Windows `LoadLibrary`/Linux `dlopen`），本机没装就跳过，不绑死链接期依赖 |
+| `.gitignore` | 忽略 `3rdparty/mkl_runtime/`（MKL 运行时体积大，不入库） |
+
+### 实测结果
+
+- **Windows**：VS2022 + cmake Release/x64 全量构建 0 error。
+- **Linux（WSL Ubuntu-20.04, gcc 9.4）**：`cmake` 配置成功、**samples 全部进入构建**（该环境存在可用的 OpenCV）；首轮 `make` 暴露并修复 `FLT_MAX` 编译错误，修复后推进到 66%、59 个可执行文件产出，随后在 `SampleFaceDatabaseNCNN` 链接处被 ncnn 的 `__*_finite` 符号卡住（已修，待复跑确认 0 error）。
+- **Linux 运行时**：修复前 `SampleMTCNN` 因 bias 解析失败 segfault；修复后需重新构建复验（进行中）。
+- **MKL 运行时**：Windows（MKL 2026.1.0）与 Linux（MKL 2024.2.2）均已从 PyPI wheel 提取到 `3rdparty/mkl_runtime/`，供 `SampleGEMMCompare` 动态加载。
+
+### 注意事项
+
+1. `_is_blank_c` 的改动是**行为修复**：此前在 Linux 上所有带 bias 的层都被当成无 bias，推理结果是错的但不会报错。修复后 Linux 与 Windows 的数值结果才真正一致。
+2. `ZQCNN/CMakeLists.txt` 取消默认链接 mklml 后，若有人在 Windows 上用 `-DBLAS_TYPE=openblas` 构建，需要自备 MKL 运行库（mklml.dll 系列）。
+3. `_prior_box*` 的早退分支由 `return true` 改为 `return false`：正常模型走不到该分支（`_setup` 保证 `num_priors >= 1`），但如果历史上有畸形模型依赖"返回成功+空张量"的行为，升级后会显式失败——这是预期的安全收紧。
+4. `SamplesZQBLAS` 与 `SamplesZQGEMM` 都不依赖 OpenCV，两个平台都能构建。
