@@ -8596,24 +8596,35 @@ namespace ZQ
 
 		virtual bool Forward(std::vector<ZQ_CNN_Tensor4D*>* bottoms, std::vector<ZQ_CNN_Tensor4D*>* tops)
 		{
-			if (bottoms == 0 || tops == 0 || bottoms->size() == 0 || tops->size() == 0 || (*bottoms)[0] == 0 || (*tops)[0] == 0)
+			// 本层要用 (*bottoms)[1] 拿图像尺寸, 守卫只判 size()==0 的话, 直接
+			// 构造层对象并只传 1 个 bottom 就是越界读。走 ZQ_CNN_Net 时 ReadParam
+			// 强制了 bottom_names.size()==2, 这里只是兜底。
+			if (bottoms == 0 || tops == 0 || bottoms->size() < 2 || tops->size() == 0
+				|| (*bottoms)[0] == 0 || (*bottoms)[1] == 0 || (*tops)[0] == 0)
 				return false;
 
 			double t1 = omp_get_wtime();
 			img_w = (*bottoms)[1]->GetW();
 			img_h = (*bottoms)[1]->GetH();
-			for (int i = 0; i < min_sizes.size(); i++)
+			// 负数表示"图宽的百分比"（ZQCNN 的约定）。换算必须放在局部副本里：
+			// 原来就地改写成员，第一次 Forward 之后 min_sizes/max_sizes 就从
+			// 百分比变成了绝对像素，第二次 Forward（换一张宽度不同的图）时
+			// 已经不 < 0，条件不再成立，prior 框会按上一次的像素尺寸算。
+			// 同一个 ZQ_CNN_Net 先后跑不同尺寸的图是 SSD 的常规用法。
+			std::vector<float> cur_min_sizes = min_sizes;
+			std::vector<float> cur_max_sizes = max_sizes;
+			for (int i = 0; i < cur_min_sizes.size(); i++)
 			{
-				if (min_sizes[i] < 0)
-					min_sizes[i] = (-min_sizes[i])*img_w;
+				if (cur_min_sizes[i] < 0)
+					cur_min_sizes[i] = (-cur_min_sizes[i])*img_w;
 			}
-			for (int i = 0; i < max_sizes.size(); i++)
+			for (int i = 0; i < cur_max_sizes.size(); i++)
 			{
-				if (max_sizes[i] < 0)
-					max_sizes[i] = (-max_sizes[i])*img_w;
+				if (cur_max_sizes[i] < 0)
+					cur_max_sizes[i] = (-cur_max_sizes[i])*img_w;
 			}
 			bool ret = ZQ_CNN_Forward_SSEUtils::PriorBox(*(*(std::vector<const ZQ_CNN_Tensor4D*>*)bottoms)[0], *(*(std::vector<const ZQ_CNN_Tensor4D*>*)bottoms)[1],
-				min_sizes, max_sizes, aspect_ratios, variance, flip, num_priors, clip, img_w, img_h, step_w, step_h, offset, *((*tops)[0]));
+				cur_min_sizes, cur_max_sizes, aspect_ratios, variance, flip, num_priors, clip, img_w, img_h, step_w, step_h, offset, *((*tops)[0]));
 			double t2 = omp_get_wtime();
 			last_cost_time = (float)(t2 - t1);
 			if (show_debug_info)
@@ -8707,8 +8718,9 @@ namespace ZQ
 				{
 					if (paras[n].size() >= 2)
 					{
-						img_h = atoi(paras[n][1].c_str());
-						img_w = img_w;
+						// 原来这里是 img_w = img_w 自赋值, 宽/高其实没被解析;
+						// img_size/step 都是标量参数, h 和 w 取同一个值。
+						img_h = img_w = atoi(paras[n][1].c_str());
 						has_img_h = true;
 						has_img_w = true;
 					}
@@ -8733,8 +8745,8 @@ namespace ZQ
 				{
 					if (paras[n].size() >= 2)
 					{
-						step_h = atoi(paras[n][1].c_str());
-						step_w = step_w;
+						// 同上, 原来是 step_w = step_w 自赋值。
+						step_h = step_w = (float)atoi(paras[n][1].c_str());
 						has_step_h = true;
 						has_step_w = true;
 					}
@@ -9072,13 +9084,15 @@ namespace ZQ
 				return false;
 
 			double t1 = omp_get_wtime();
-			for (int i = 0; i < sizes.size(); i++)
+			// 同样不写回成员：Forward 不该改变自己的配置。
+			std::vector<float> cur_sizes = sizes;
+			for (int i = 0; i < cur_sizes.size(); i++)
 			{
-				if (sizes[i] < 0)
-					sizes[i] = (-sizes[i]);
+				if (cur_sizes[i] < 0)
+					cur_sizes[i] = (-cur_sizes[i]);
 			}
-			bool ret = ZQ_CNN_Forward_SSEUtils::PriorBox_MXNET(*(*(std::vector<const ZQ_CNN_Tensor4D*>*)bottoms)[0], 
-				sizes, aspect_ratios, variances, num_priors, clip, step_w, step_h, offset, *((*tops)[0]));
+			bool ret = ZQ_CNN_Forward_SSEUtils::PriorBox_MXNET(*(*(std::vector<const ZQ_CNN_Tensor4D*>*)bottoms)[0],
+				cur_sizes, aspect_ratios, variances, num_priors, clip, step_w, step_h, offset, *((*tops)[0]));
 			double t2 = omp_get_wtime();
 			last_cost_time = t2 - t1;
 			if (show_debug_info)
@@ -9158,8 +9172,8 @@ namespace ZQ
 				{
 					if (paras[n].size() >= 2)
 					{
-						step_h = atoi(paras[n][1].c_str());
-						step_w = step_w;
+						// 同上, 原来是 step_w = step_w 自赋值。
+						step_h = step_w = (float)atoi(paras[n][1].c_str());
 						has_step_h = true;
 						has_step_w = true;
 					}
