@@ -8,7 +8,8 @@
 - 平台：Windows（VS2022 / MSVC / MASM）与 Linux（gcc 9.4 / 内联汇编）各测一遍
 - 形状集：64 个（`../SamplesZQBLAS/SampleGEMMCompare.cpp`），覆盖尾部退化 / 小中大方阵 /
   行列极端比例 / K 很小 / K 很大 / 真实网络形状 / 刻意不对齐 SIMD 宽度
-- 线程：MKL 固定 `MKL_THREADING_LAYER=SEQUENTIAL`，三方都是单线程
+- 线程：**本文所有数字都是单核**。MKL 固定 `MKL_THREADING_LAYER=SEQUENTIAL`，
+  汇编内核与 intrinsic 版都没有 OpenMP。多核单独在第 1.5 节讨论。
 
 ---
 
@@ -22,6 +23,33 @@
 
 **与 MKL 的差距集中在两个形状族**：小 K（K ≤ 8）和方阵。行列比例悬殊的形状
 反而是汇编版占优 —— 这也是 intrinsic 版拿不到的部分。
+
+---
+
+## 1.5 单核与多核分开说明
+
+### 单核（本文主体，全部实测）
+
+- MKL 固定 `MKL_THREADING_LAYER=SEQUENTIAL`
+- 汇编内核与仓库原有 intrinsic 版都是**单线程**（两者都没有 OpenMP）
+- 第二~六节的所有表格都是这一档的数字
+
+### 多核（本机无法实测，只有定性说明）
+
+**本机跑不了多线程 MKL**：`mkl_intel_thread.3.dll` 依赖 `libiomp5md.dll`，
+而该文件不在 `3rdparty/mkl_runtime/win/` 下，多线程模式下进程直接起不来
+（`SampleGEMMCompare --mt` 返回 127，进程未启动）。
+所以本文**不提供**多核数字。补上 `libiomp5md.dll` 即可测量
+（`SampleGEMMCompare` 已加 `--mt` 开关）。
+
+可以确定的是差距的量级：MKL 多线程会摊到全部核心，而本 GEMM 内核是单线程的，
+差距大致等于核心数倍率。**这一档按当前约定可以接受。**
+
+需要注意的是：**ZQCNN 的多核并行不在这个 GEMM 里**，而是在层一级
+（MTCNN 的 `_compute_Pnet_multi_thread`、SSD 的 im2col + 外层 OpenMP 等）。
+`ZQ_CNN_USE_MKL_GEMM` 默认为 0，也就是说项目当前**根本没有把 MKL 接进
+推理链路**，`3rdparty/mkl_runtime/` 里的 MKL 只被基准程序用来对标。
+所以"推理时的多核性能"与本文件讨论的"GEMM 内核单核性能"是两个问题。
 
 ---
 
@@ -193,6 +221,8 @@ Windows 侧 MSVC 固定 AVX2+FMA3，两边都用同一条指令路径，差距�
 | K ≤ 8 那一族 | 汇编版比 intrinsic 还慢 20%、比 MKL 慢一半。两条方案已试过（附录 P）。要继续攻，先解决可观测性（绑核 + 锁频）再动手 |
 | 大方阵的剩余 7%~35% 差距 | 需要 8x8 及以上的寄存器分块 + 更细的 packing，本次只做到 N 方向分块 |
 | OpenBLAS 对比 | `3rdparty/lib/` 下没有 Windows 版 OpenBLAS 运行时，两平台都跳过了这一列 |
+| **多核数字** | 本机跑不了多线程 MKL（`libiomp5md.dll` 缺失），只��定性说明。补上该 DLL 后用 `SampleGEMMCompare --mt` 可测 |
+| GEMM 内核本身的多线程化 | 当前是单线程内核，多核靠 ZQCNN 的层一级 OpenMP。若要让 GEMM 自身吃满多核，需要另行设计（线程级分块 + packing 共享） |
 | 数字的绝对精度 | 受 7% 噪声限制；若要给出 ±2% 以内的结论，需要 `taskset` 绑核 + 禁用睿频（需 root） |
 
 ---
