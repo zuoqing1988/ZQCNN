@@ -196,9 +196,9 @@ namespace ZQ
 				int end_h = __min(height, row2);
 				int pad_w_left = __max(0,start_w - box_col1);
                 int pad_h_up = __max(0,start_h - box_row1);
-				const __int64 buffer_size = (__int64)size_H * size_W * 3;
-				if (buffer_size <= 0 || buffer_size > 0x7FFFFFFF)
-					return false;
+				const __int64 buffer_size = (__int64)size_H * size_W * 3;
+				if (buffer_size <= 0 || buffer_size > 0x7FFFFFFF)
+					return false;
 				std::vector<unsigned char> buffer((size_t)buffer_size, 0);
 				
 				for (int hh = start_h; hh < end_h; hh++)
@@ -588,9 +588,9 @@ namespace ZQ
 				int end_h = __min(height, row2);
 				int pad_w_left = __max(0, start_w - box_col1);
 				int pad_h_up = __max(0, start_h - box_row1);
-				const __int64 buffer_size = (__int64)size_H * size_W * 3;
-				if (buffer_size <= 0 || buffer_size > 0x7FFFFFFF)
-					return false;
+				const __int64 buffer_size = (__int64)size_H * size_W * 3;
+				if (buffer_size <= 0 || buffer_size > 0x7FFFFFFF)
+					return false;
 				std::vector<unsigned char> buffer((size_t)buffer_size, 0);
 
 				for (int hh = start_h; hh < end_h; hh++)

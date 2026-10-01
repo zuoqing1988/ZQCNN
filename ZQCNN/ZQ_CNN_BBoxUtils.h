@@ -49,8 +49,8 @@ namespace ZQ
 				int cur_overlap = 0;
 				boundingBox[order].exist = false;//delete it
 				int box_num = (int)boundingBox.size();
-				// thread_num <= 0 时下面会整数除零, 而 (box_num / thread_num) 整除后为 0 时
-				// schedule(static, 0) 本身是未定义行为, 所以一并挡在单线程分支外
+				// thread_num <= 0 时下面会整数除零, 而 (box_num / thread_num) 整除后为 0 时
+				// schedule(static, 0) 本身是未定义行为, 所以一并挡在单线程分支外
 				if (thread_num <= 1)
 				{
 					for (int num = 0; num < box_num; num++)
@@ -92,7 +92,7 @@ namespace ZQ
 				}
 				else
 				{
-					int chunk_size = (int)ceil((double)box_num / (double)thread_num);
+					int chunk_size = (int)ceil((double)box_num / (double)thread_num);
 					if (chunk_size < 1) chunk_size = 1;
 #pragma omp parallel for schedule(static, chunk_size) num_threads(thread_num)
 					for (int num = 0; num < box_num; num++)
