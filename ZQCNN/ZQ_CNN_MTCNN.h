@@ -215,13 +215,16 @@ namespace ZQ
 			int pnet_overlap_thresh_count = 4, int pnet_size = 12, int pnet_stride = 2, bool special_handle_very_big_face = false, 
 			bool do_landmark = true, float early_accept_thresh = 1.00)
 		{
-			min_size = __max(pnet_size, min_face_size);
+			min_size = __max(__max(1, pnet_size), min_face_size);
 			thresh[0] = __max(0.1, pthresh); thresh[1] = __max(0.1, rthresh); thresh[2] = __max(0.1, othresh);
 			nms_thresh[0] = __max(0.1, nms_pthresh); nms_thresh[1] = __max(0.1, nms_rthresh); nms_thresh[2] = __max(0.1, nms_othresh);
 			scale_factor = __max(0.5, __min(0.97, scale_factor));
 			this->pnet_overlap_thresh_count = __max(0, pnet_overlap_thresh_count);
-			this->pnet_size = pnet_size;
-			this->pnet_stride = pnet_stride;
+			/* pnet_size/pnet_stride 分别是 while 的终止条件与整数除法的除数，
+			   不校验的话 stride=0 直接整数除零 SIGFPE，size<0 时 minside 衰减到 0
+			   仍满足 while 条件，scales 无限增长直到 OOM。夹到 1。 */
+			this->pnet_size = __max(1, pnet_size);
+			this->pnet_stride = __max(1, pnet_stride);
 			this->special_handle_very_big_face = special_handle_very_big_face;
 			this->do_landmark = do_landmark;
 			this->early_accept_thresh = early_accept_thresh;
