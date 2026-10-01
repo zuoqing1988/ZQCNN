@@ -519,3 +519,22 @@ SIGSEGV code=128 (SI_KERNEL) si_addr=(nil)
 1. 1x1 卷积那个 bug 属于"静默算错"：不崩溃、不越界，只是结果不对。仓库自带的模型通道数都是 8 的倍数，所以现有示例全对；**如果用户换成 C 通道不是 8 倍数的模型（1x1 卷积接在 3 通道输入之后），修复前会算错**。
 2. `ZQ_CNN_USE_BLAS_GEMM` 等宏在 CMake 与头文件各有一份且没有 `#ifndef` 保护，命令行 `-D` 会被头文件覆盖——本轮只把规则写进 AGENTS.md，没有改行为（改了会让"链了 MKL 却仍用 ZQ_GEMM 算"变成另一种静默行为）。
 3. 本轮另有 6 项中低危已评估为"暂不修"并记入报告附录 H（`ChangeSize` 半更新、resize 边框清零不对称、`SSETYPE_NONE` 缺标量分支、`model/CMakeLists.txt` 死文件、deconvolution 同款 padK 死代码、`similarity_thresh` 不夹取）。
+
+## 新增/变更：Tensor4D 的边框清零与 ChangeSize 半更新
+
+### 变更文件
+
+| 文件 | 问题 | 修复 |
+|---|---|---|
+| `ZQCNN/ZQ_CNN_Tensor4D.cpp`（`ResizeBilinearRect`/`ResizeNearestRect`，4 个派生类各一处） | 下边框写成一次性 `memset(dst_slice_ptr + dstWidthStep*dst_borderH, ..., dstWidthStep*dst_borderH)`，清的是行 `[borderH, 2*borderH)`——**真正的下边框 `[H, H+borderH)` 根本没清到**；左右两列也只清 `h ∈ [0, borderH)` 而不是全部 H 行。`ChangeSize` 发现长度够就复用 buffer（不重新分配也不重新 memset），于是上一轮的残留数据会被后续带 padding 的卷积读到 | 改成与同类 `Padding()` 一致的逐行写法：上边框行 `[0,borderH)`、下边框行 `[H, H+borderH)`，左右两列覆盖全部 H 行 |
+| 同上（`ChangeSize`，3 处） | `shape_nchw[0..3]` 在 `_aligned_malloc` **之前**就写；分配失败 `return false` 时对象处于"形状是新的、指针/长度/步长是旧的"半更新状态 | 推迟到分配成功之后再写形状 |
+
+### 实测结果
+
+- **Windows**：全量构建 **0 error**；SampleMTCNN 19.3ms、SampleMTCNN_NCHWC4 9.0ms、SampleSSD、SampleFaceDetectorMTCNN、SampleCascadeOnet、SampleLnet106 全部 exit=0，数值与改动前一致
+- **Linux**：全量构建 **0 error**；SampleMTCNN、SampleSSD exit=0
+
+### 注意事项
+
+1. 这两处都是"平时看不出来"的问题：只有当**同一个 tensor 对象被复用来做不同尺寸的 resize**（`ChangeSize` 走复用分支）时才会读到脏数据。现有的示例都是一次性分配，因此数值没有变化。
+2. 第四轮其余"已评估暂不修"的 8 项已在 `audit_k3_20261001.md` 附录 I 逐条写明理由，其中 `zq_cnn_convolution_gemm` 的 deconvolution 同款 `padK` 失配属于**全仓无调用点的死代码**。
