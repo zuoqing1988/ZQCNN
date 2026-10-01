@@ -24,6 +24,13 @@
  * 用法：
  *   SampleGEMMCompare                       默认尺寸组，自动探测 MKL / OpenBLAS
  *   SampleGEMMCompare --no-mkl              跳过 MKL
+ *   SampleGEMMCompare --mt                  不强制 MKL 单线程 (默认是
+ *                                             MKL_THREADING_LAYER=SEQUENTIAL)
+ *
+ * 注意: 本程序里 intrinsic 版与汇编内核**都是单线程**的, 没有 OpenMP;
+ * ZQCNN 的多核并行是在**层一级**(MTCNN/SSD 等), 不在这个 GEMM 里。
+ * 所以 --mt 测出来的是"本 GEMM 单线程 vs MKL 全线程"的跨档对比,
+ * 用来量化多核差距, 不能当作同档比较。
  *   SampleGEMMCompare <mkl_lib> [ob_lib]    指定动态库路径
  * 环境变量 ZQCNN_MKL_LIB / ZQCNN_OPENBLAS_LIB 优先级最高。
  */
@@ -230,12 +237,15 @@ int main(int argc, char* argv[])
 	const char* kObCandidates[] = { "3rdparty/lib/libopenblas.so", "libopenblas.so" };
 #endif
 	bool no_mkl = false;
+	bool use_mt = false;
 	const char* mkl_path = getenv("ZQCNN_MKL_LIB");
 	const char* ob_path = getenv("ZQCNN_OPENBLAS_LIB");
 	for (int i = 1; i < argc; i++)
 	{
 		if (strcmp(argv[i], "--no-mkl") == 0)
 			no_mkl = true;
+		else if (strcmp(argv[i], "--mt") == 0)
+			use_mt = true;
 		else if (mkl_path == NULL)
 			mkl_path = argv[i];
 		else if (ob_path == NULL)
@@ -244,7 +254,8 @@ int main(int argc, char* argv[])
 	if (mkl_path != NULL) kMklCandidates[0] = mkl_path;
 	if (ob_path != NULL) kObCandidates[0] = ob_path;
 
-	force_mkl_sequential();
+	if (!use_mt)
+		force_mkl_sequential();
 	BlasLib mkl, ob;
 	bool has_mkl = !no_mkl && load_blas(mkl, kMklCandidates, 5, lib_open, lib_sym);
 	bool has_ob = load_blas(ob, kObCandidates, 2, lib_open, lib_sym);

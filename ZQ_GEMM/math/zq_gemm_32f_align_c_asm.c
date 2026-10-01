@@ -812,6 +812,10 @@ static inline void zq_gemm_32f_asm_mblocks(int M, int N, int K, const float* A, 
 	const float* Bt, int ldb, float* C, int ldc)
 {
 	int m = 0;
+	/* 8 列微内核只有在 N 至少 8 时才划算: NB=8 而 N 只有 4~7 时, 一个整块
+	   都凑不齐, 全部落到标量尾部, 比 NB=4 还慢。原分发只看 M, N < 8 时
+	   白白用 M4_N8 / M1_N8 (N=5、N=7 这类形状)。 */
+	const int wide_n = (N >= 8);
 	while (m + 8 <= M)
 	{
 		zq_gemm_32f_align256bit_AnoTrans_Btrans_M8_N4_asm(8, N, K, A + (size_t)m * lda, lda, Bt, ldb, C + (size_t)m * ldc, ldc);
@@ -819,17 +823,26 @@ static inline void zq_gemm_32f_asm_mblocks(int M, int N, int K, const float* A, 
 	}
 	if (m + 4 <= M)
 	{
-		zq_gemm_32f_align256bit_AnoTrans_Btrans_M4_N8_asm(4, N, K, A + (size_t)m * lda, lda, Bt, ldb, C + (size_t)m * ldc, ldc);
+		if (wide_n)
+			zq_gemm_32f_align256bit_AnoTrans_Btrans_M4_N8_asm(4, N, K, A + (size_t)m * lda, lda, Bt, ldb, C + (size_t)m * ldc, ldc);
+		else
+			zq_gemm_32f_align256bit_AnoTrans_Btrans_M4_N4_asm(4, N, K, A + (size_t)m * lda, lda, Bt, ldb, C + (size_t)m * ldc, ldc);
 		m += 4;
 	}
 	while (m + 2 <= M)
 	{
-		zq_gemm_32f_align256bit_AnoTrans_Btrans_M2_N4_asm(2, N, K, A + (size_t)m * lda, lda, Bt, ldb, C + (size_t)m * ldc, ldc);
+		if (wide_n)
+			zq_gemm_32f_align256bit_AnoTrans_Btrans_M2_N8_asm(2, N, K, A + (size_t)m * lda, lda, Bt, ldb, C + (size_t)m * ldc, ldc);
+		else
+			zq_gemm_32f_align256bit_AnoTrans_Btrans_M2_N4_asm(2, N, K, A + (size_t)m * lda, lda, Bt, ldb, C + (size_t)m * ldc, ldc);
 		m += 2;
 	}
 	if (m < M)
 	{
-		zq_gemm_32f_align256bit_AnoTrans_Btrans_M1_N8_asm(1, N, K, A + (size_t)m * lda, lda, Bt, ldb, C + (size_t)m * ldc, ldc);
+		if (wide_n)
+			zq_gemm_32f_align256bit_AnoTrans_Btrans_M1_N8_asm(1, N, K, A + (size_t)m * lda, lda, Bt, ldb, C + (size_t)m * ldc, ldc);
+		else
+			zq_gemm_32f_align256bit_AnoTrans_Btrans_M1_N4_asm(1, N, K, A + (size_t)m * lda, lda, Bt, ldb, C + (size_t)m * ldc, ldc);
 	}
 }
 
