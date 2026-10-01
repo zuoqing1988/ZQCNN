@@ -123,13 +123,17 @@ def run_one(binary, out):
     out.append(got)
 
 
-def best_of(runs):
-    """把多轮读数合并成 {shape: 逐轮中位数}。
+def aggregate(runs):
+    """把多轮读数合并成 {shape: (逐轮最大, 逐轮中位数)}。
 
-    **不要用"取最大"**。GF/s 读数噪声大（本机约 7%），取最大会系统性地
-    挑中"那一轮恰好顺风"的样本：同一个文件跟自己比，取最大会报出
-    101% 这种数字，看起来像"全面超越"。中位数是无偏的。
-    2026-10-01 就是靠这个发现"中位数 95%"其实是 86%。
+    **用"最大"做判定，不用中位数。** 本机 GEMM 读数的噪声是**单边**的：
+    一次慢的轮次（频率/温度/同机其它负载）会把整轮都拖慢，但不会让某轮
+    异常变快。交替跑（A,B,A,B,…）已经消掉了"谁总在后跑"这一项系统性偏差，
+    剩下的就是这种单边噪声 —— 取最大恰好把它剔掉。
+    实测（空对照，同一文件跟自己比，交替 5 轮）：
+        取最大   -> 7/64 个形状超 3%，最大偏差 7.3%
+        取中位数 -> 50/64 个形状超 3%，最大偏差 18.1%
+    中位数把"整轮偏慢"原样留着，所以更差。两个数都打出来供对照。
     """
     import statistics
     per = {}
@@ -138,10 +142,7 @@ def best_of(runs):
             per.setdefault(k, []).append(v)
     out = {}
     for k, vs in per.items():
-        if len(vs) >= 2:
-            out[k] = statistics.median(vs)
-        else:
-            out[k] = vs[0]
+        out[k] = (max(vs), statistics.median(vs) if len(vs) >= 2 else vs[0])
     return out
 
 
@@ -198,7 +199,7 @@ def main():
         for i in range(args.runs):
             run_one(bin_a, ra_runs)
             run_one(bin_b, rb_runs)
-        ra, rb = best_of(ra_runs), best_of(rb_runs)
+        ra, rb = aggregate(ra_runs), aggregate(rb_runs)
     finally:
         wsl('rm -rf %s' % root, check=False)
         if tmp_ref:
@@ -212,16 +213,20 @@ def main():
         return (int(k.split('x')[0]) * int(k.split('x')[1]), int(k.split('x')[2]))
 
     keys.sort(key=kdim)
-    print('%-18s %11s %11s %9s' % ('MxNxK', 'A asm', 'B asm', 'delta'))
+    print('%-18s %11s %11s %9s   %-20s' % ('MxNxK', 'A asm(max)', 'B asm(max)', 'delta', '中位数对照'))
     worse = better = 0
     for k in keys:
-        d = 100.0 * (ra[k] - rb[k]) / rb[k] if rb[k] else 0.0
+        av, am = ra[k]
+        bv, bm = rb[k]
+        d = 100.0 * (av - bv) / bv if bv else 0.0
+        dm = 100.0 * (am - bm) / bm if bm else 0.0
         flag = ''
         if d > args.threshold:
             flag, better = '  <== A 更快', better + 1
         elif d < -args.threshold:
             flag, worse = '  <== A 更慢', worse + 1
-        print('%-18s %11.2f %11.2f %+8.1f%%%s' % (k, ra[k], rb[k], d, flag))
+        print('%-18s %11.2f %11.2f %+8.1f%%%s   %6.2f vs %6.2f %+6.1f%%'
+              % (k, av, bv, d, flag, am, bm, dm))
     print('\n%d 个形状里：A 更快 %d，A 更慢 %d，其余在 ±%g%% 噪声内（共 %d）'
           % (len(keys), better, worse, args.threshold, len(keys) - better - worse))
     return 0
