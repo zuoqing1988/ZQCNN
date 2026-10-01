@@ -38,11 +38,8 @@ namespace ZQ
 			sort(bboxScore.begin(), bboxScore.end(), _cmp_score);
 
 			int order = 0;
-			float IOU = 0;
-			float maxX = 0;
-			float maxY = 0;
-			float minX = 0;
-			float minY = 0;
+			// IOU/maxX/maxY/minX/minY 原来声明在函数作用域, 却被下面的 parallel for 多线程共用
+			// (IOU 会被撕裂, 抑制结果不确定), 现已全部下沉为循环内的局部变量
 			while (bboxScore.size() > 0)
 			{
 				order = bboxScore.back().oriOrder;
@@ -52,22 +49,22 @@ namespace ZQ
 				int cur_overlap = 0;
 				boundingBox[order].exist = false;//delete it
 				int box_num = (int)boundingBox.size();
-				if (thread_num == 1)
+				// thread_num <= 0 时下面会整数除零, 而 (box_num / thread_num) 整除后为 0 时
+				// schedule(static, 0) 本身是未定义行为, 所以一并挡在单线程分支外
+				if (thread_num <= 1)
 				{
 					for (int num = 0; num < box_num; num++)
 					{
 						if (boundingBox[num].exist)
 						{
 							//the iou
-							maxY = (float)__max(boundingBox[num].row1, boundingBox[order].row1);
-							maxX = (float)__max(boundingBox[num].col1, boundingBox[order].col1);
-							minY = (float)__min(boundingBox[num].row2, boundingBox[order].row2);
-							minX = (float)__min(boundingBox[num].col2, boundingBox[order].col2);
-							//maxX1 and maxY1 reuse 
-							maxX = __max(minX - maxX + 1, 0);
-							maxY = __max(minY - maxY + 1, 0);
-							//IOU reuse for the area of two bbox
-							IOU = maxX * maxY;
+							float maxX = (float)__max(boundingBox[num].col1, boundingBox[order].col1);
+							float maxY = (float)__max(boundingBox[num].row1, boundingBox[order].row1);
+							float minX = (float)__min(boundingBox[num].col2, boundingBox[order].col2);
+							float minY = (float)__min(boundingBox[num].row2, boundingBox[order].row2);
+							float w = __max(minX - maxX + 1, 0);
+							float h = __max(minY - maxY + 1, 0);
+							float IOU = w * h;
 							float area1 = boundingBox[num].area;
 							float area2 = boundingBox[order].area;
 							if (!modelname.compare("Union"))
@@ -78,6 +75,7 @@ namespace ZQ
 							}
 							if (IOU > overlap_threshold)
 							{
+								#pragma omp atomic
 								cur_overlap++;
 								boundingBox[num].exist = false;
 								for (std::vector<ZQ_CNN_OrderScore>::iterator it = bboxScore.begin(); it != bboxScore.end(); it++)
@@ -94,22 +92,21 @@ namespace ZQ
 				}
 				else
 				{
-					int chunk_size = (int)ceil(box_num / thread_num);
+					int chunk_size = (int)ceil((double)box_num / (double)thread_num);
+					if (chunk_size < 1) chunk_size = 1;
 #pragma omp parallel for schedule(static, chunk_size) num_threads(thread_num)
 					for (int num = 0; num < box_num; num++)
 					{
 						if (boundingBox.at(num).exist)
 						{
-							//the iou
-							maxY = (float)__max(boundingBox[num].row1, boundingBox[order].row1);
-							maxX = (float)__max(boundingBox[num].col1, boundingBox[order].col1);
-							minY = (float)__min(boundingBox[num].row2, boundingBox[order].row2);
-							minX = (float)__min(boundingBox[num].col2, boundingBox[order].col2);
-							//maxX1 and maxY1 reuse 
-							maxX = __max(minX - maxX + 1, 0);
-							maxY = __max(minY - maxY + 1, 0);
-							//IOU reuse for the area of two bbox
-							IOU = maxX * maxY;
+							//the iou —— 原来这几个是函数级变量, 并行区里所有线程共用同一份, IOU 会被撕裂
+							float maxX = (float)__max(boundingBox[num].col1, boundingBox[order].col1);
+							float maxY = (float)__max(boundingBox[num].row1, boundingBox[order].row1);
+							float minX = (float)__min(boundingBox[num].col2, boundingBox[order].col2);
+							float minY = (float)__min(boundingBox[num].row2, boundingBox[order].row2);
+							float w = __max(minX - maxX + 1, 0);
+							float h = __max(minY - maxY + 1, 0);
+							float IOU = w * h;
 							float area1 = boundingBox[num].area;
 							float area2 = boundingBox[order].area;
 							if (!modelname.compare("Union"))
@@ -120,6 +117,7 @@ namespace ZQ
 							}
 							if (IOU > overlap_threshold)
 							{
+								#pragma omp atomic
 								cur_overlap++;
 								boundingBox.at(num).exist = false;
 								for (std::vector<ZQ_CNN_OrderScore>::iterator it = bboxScore.begin(); it != bboxScore.end(); it++)
