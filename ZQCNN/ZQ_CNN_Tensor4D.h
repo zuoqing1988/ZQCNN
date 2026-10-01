@@ -114,7 +114,7 @@ namespace ZQ
 				}
 				if (dst_borderW > 0)
 				{
-					for (int h = 0; h < dst_borderH; h++)
+					for (int h = 0; h < height; h++)
 					{
 						memset(dst_slice_ptr - dstPixelStep*dst_borderW + dstWidthStep*h, 0, sizeof(float)*dstPixelStep*dst_borderW);
 						memset(dst_slice_ptr - dstPixelStep*(dst_borderW << 1) + dstWidthStep*(h + 1), 0, sizeof(float)*dstPixelStep*dst_borderW);
@@ -442,11 +442,11 @@ namespace ZQ
 				if (dst_borderH > 0)
 				{
 					memset(dst_slice_ptr - dstPixelStep*dst_borderW - dstWidthStep*dst_borderH, 0, sizeof(float)*dstWidthStep*dst_borderH);
-					memset(dst_slice_ptr - dstPixelStep*dst_borderW + dstWidthStep*dst_borderH, 0, sizeof(float)*dstWidthStep*dst_borderH);
+					memset(dst_slice_ptr - dstPixelStep*dst_borderW + dstWidthStep*H, 0, sizeof(float)*dstWidthStep*dst_borderH);
 				}
 				if (dst_borderW > 0)
 				{
-					for (int h = 0; h < dst_borderH; h++)
+					for (int h = 0; h < H; h++)
 					{
 						memset(dst_slice_ptr - dstPixelStep*dst_borderW + dstWidthStep*h, 0, sizeof(float)*dstPixelStep*dst_borderW);
 						memset(dst_slice_ptr - dstPixelStep*(dst_borderW << 1) + dstWidthStep*(h + 1), 0, sizeof(float)*dstPixelStep*dst_borderW);

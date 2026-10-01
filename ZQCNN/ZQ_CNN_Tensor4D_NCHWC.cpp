@@ -262,7 +262,7 @@ bool ZQ_CNN_Tensor4D_NCHWC1::ResizeBilinearRect(ZQ_CNN_Tensor4D_NCHWC1& dst, int
 				for (int c = 0; c < C; c += align_size, dst_slice_ptr += dstSliceStep)
 				{
 					memset(dst_slice_ptr - align_size*dst_borderW - dstWidthStep*dst_borderH, 0, sizeof(float)*dstWidthStep*dst_borderH);
-					memset(dst_slice_ptr - align_size*dst_borderW + dstWidthStep*dst_borderH, 0, sizeof(float)*dstWidthStep*dst_borderH);
+					memset(dst_slice_ptr - align_size*dst_borderW + dstWidthStep*dst_H, 0, sizeof(float)*dstWidthStep*dst_borderH);
 				}
 			}
 		}
@@ -274,7 +274,7 @@ bool ZQ_CNN_Tensor4D_NCHWC1::ResizeBilinearRect(ZQ_CNN_Tensor4D_NCHWC1& dst, int
 				float* dst_slice_ptr = dst_im_ptr;
 				for (int c = 0; c < C; c += align_size, dst_slice_ptr += dstSliceStep)
 				{
-					for (int h = 0; h < dst_borderH; h++)
+					for (int h = 0; h < dst_H; h++)
 					{
 						memset(dst_slice_ptr - align_size*dst_borderW + dstWidthStep*h, 0, sizeof(float)*align_size*dst_borderW);
 						memset(dst_slice_ptr - align_size*(dst_borderW << 1) + dstWidthStep*(h + 1), 0, sizeof(float)*align_size*dst_borderW);
@@ -346,7 +346,7 @@ bool ZQ_CNN_Tensor4D_NCHWC1::ResizeBilinearRect(ZQ_CNN_Tensor4D_NCHWC1& dst, int
 			for (int c = 0; c < C; c += align_size, dst_slice_ptr += dstSliceStep)
 			{
 				memset(dst_slice_ptr - align_size*dst_borderW - dstWidthStep*dst_borderH, 0, sizeof(float)*dstWidthStep*dst_borderH);
-				memset(dst_slice_ptr - align_size*dst_borderW + dstWidthStep*dst_borderH, 0, sizeof(float)*dstWidthStep*dst_borderH);
+				memset(dst_slice_ptr - align_size*dst_borderW + dstWidthStep*dst_H, 0, sizeof(float)*dstWidthStep*dst_borderH);
 			}
 		}
 		if (dst_borderW > 0)
@@ -354,7 +354,7 @@ bool ZQ_CNN_Tensor4D_NCHWC1::ResizeBilinearRect(ZQ_CNN_Tensor4D_NCHWC1& dst, int
 			float* dst_slice_ptr = dst_im_ptr;
 			for (int c = 0; c < C; c += align_size, dst_slice_ptr += dstSliceStep)
 			{
-				for (int h = 0; h < dst_borderH; h++)
+				for (int h = 0; h < dst_H; h++)
 				{
 					memset(dst_slice_ptr - align_size*dst_borderW + dstWidthStep*h, 0, sizeof(float)*align_size*dst_borderW);
 					memset(dst_slice_ptr - align_size*(dst_borderW << 1) + dstWidthStep*(h + 1), 0, sizeof(float)*align_size*dst_borderW);
@@ -424,7 +424,7 @@ bool ZQ_CNN_Tensor4D_NCHWC1::ROI(ZQ_CNN_Tensor4D_NCHWC1& dst, int off_x, int off
 			dst_slice_ptr = dst_im_ptr;
 			for (int c = 0; c < C; c += align_size, dst_slice_ptr += dstSliceStep)
 			{
-				for (int h = 0; h < dst_borderH; h++)
+				for (int h = 0; h < height; h++)
 				{
 					memset(dst_slice_ptr - align_size*dst_borderW + dstWidthStep*h, 0, sizeof(float)*align_size*dst_borderW);
 					memset(dst_slice_ptr - align_size*(dst_borderW << 1) + dstWidthStep*(h + 1), 0, sizeof(float)*align_size*dst_borderW);
@@ -721,7 +721,7 @@ bool ZQ_CNN_Tensor4D_NCHWC4::ResizeBilinearRect(ZQ_CNN_Tensor4D_NCHWC4& dst, int
 				for (int c = 0; c < C; c += align_size, dst_slice_ptr += dstSliceStep)
 				{
 					memset(dst_slice_ptr - align_size*dst_borderW - dstWidthStep*dst_borderH, 0, sizeof(float)*dstWidthStep*dst_borderH);
-					memset(dst_slice_ptr - align_size*dst_borderW + dstWidthStep*dst_borderH, 0, sizeof(float)*dstWidthStep*dst_borderH);
+					memset(dst_slice_ptr - align_size*dst_borderW + dstWidthStep*dst_H, 0, sizeof(float)*dstWidthStep*dst_borderH);
 				}
 			}
 		}
@@ -733,7 +733,7 @@ bool ZQ_CNN_Tensor4D_NCHWC4::ResizeBilinearRect(ZQ_CNN_Tensor4D_NCHWC4& dst, int
 				float* dst_slice_ptr = dst_im_ptr;
 				for (int c = 0; c < C; c += align_size, dst_slice_ptr += dstSliceStep)
 				{
-					for (int h = 0; h < dst_borderH; h++)
+					for (int h = 0; h < dst_H; h++)
 					{
 						memset(dst_slice_ptr - align_size*dst_borderW + dstWidthStep*h, 0, sizeof(float)*align_size*dst_borderW);
 						memset(dst_slice_ptr - align_size*(dst_borderW << 1) + dstWidthStep*(h + 1), 0, sizeof(float)*align_size*dst_borderW);
@@ -805,7 +805,7 @@ bool ZQ_CNN_Tensor4D_NCHWC4::ResizeBilinearRect(ZQ_CNN_Tensor4D_NCHWC4& dst, int
 			for (int c = 0; c < C; c += align_size, dst_slice_ptr += dstSliceStep)
 			{
 				memset(dst_slice_ptr - align_size*dst_borderW - dstWidthStep*dst_borderH, 0, sizeof(float)*dstWidthStep*dst_borderH);
-				memset(dst_slice_ptr - align_size*dst_borderW + dstWidthStep*dst_borderH, 0, sizeof(float)*dstWidthStep*dst_borderH);
+				memset(dst_slice_ptr - align_size*dst_borderW + dstWidthStep*dst_H, 0, sizeof(float)*dstWidthStep*dst_borderH);
 			}
 		}
 		if (dst_borderW > 0)
@@ -813,7 +813,7 @@ bool ZQ_CNN_Tensor4D_NCHWC4::ResizeBilinearRect(ZQ_CNN_Tensor4D_NCHWC4& dst, int
 			float* dst_slice_ptr = dst_im_ptr;
 			for (int c = 0; c < C; c += align_size, dst_slice_ptr += dstSliceStep)
 			{
-				for (int h = 0; h < dst_borderH; h++)
+				for (int h = 0; h < dst_H; h++)
 				{
 					memset(dst_slice_ptr - align_size*dst_borderW + dstWidthStep*h, 0, sizeof(float)*align_size*dst_borderW);
 					memset(dst_slice_ptr - align_size*(dst_borderW << 1) + dstWidthStep*(h + 1), 0, sizeof(float)*align_size*dst_borderW);
@@ -883,7 +883,7 @@ bool ZQ_CNN_Tensor4D_NCHWC4::ROI(ZQ_CNN_Tensor4D_NCHWC4& dst, int off_x, int off
 			dst_slice_ptr = dst_im_ptr;
 			for (int c = 0; c < C; c += align_size, dst_slice_ptr += dstSliceStep)
 			{
-				for (int h = 0; h < dst_borderH; h++)
+				for (int h = 0; h < height; h++)
 				{
 					memset(dst_slice_ptr - align_size*dst_borderW + dstWidthStep*h, 0, sizeof(float)*align_size*dst_borderW);
 					memset(dst_slice_ptr - align_size*(dst_borderW << 1) + dstWidthStep*(h + 1), 0, sizeof(float)*align_size*dst_borderW);
@@ -1181,7 +1181,7 @@ bool ZQ_CNN_Tensor4D_NCHWC8::ResizeBilinearRect(ZQ_CNN_Tensor4D_NCHWC8& dst, int
 				for (int c = 0; c < C; c += align_size, dst_slice_ptr += dstSliceStep)
 				{
 					memset(dst_slice_ptr - align_size*dst_borderW - dstWidthStep*dst_borderH, 0, sizeof(float)*dstWidthStep*dst_borderH);
-					memset(dst_slice_ptr - align_size*dst_borderW + dstWidthStep*dst_borderH, 0, sizeof(float)*dstWidthStep*dst_borderH);
+					memset(dst_slice_ptr - align_size*dst_borderW + dstWidthStep*dst_H, 0, sizeof(float)*dstWidthStep*dst_borderH);
 				}
 			}
 		}
@@ -1193,7 +1193,7 @@ bool ZQ_CNN_Tensor4D_NCHWC8::ResizeBilinearRect(ZQ_CNN_Tensor4D_NCHWC8& dst, int
 				float* dst_slice_ptr = dst_im_ptr;
 				for (int c = 0; c < C; c += align_size, dst_slice_ptr += dstSliceStep)
 				{
-					for (int h = 0; h < dst_borderH; h++)
+					for (int h = 0; h < dst_H; h++)
 					{
 						memset(dst_slice_ptr - align_size*dst_borderW + dstWidthStep*h, 0, sizeof(float)*align_size*dst_borderW);
 						memset(dst_slice_ptr - align_size*(dst_borderW << 1) + dstWidthStep*(h + 1), 0, sizeof(float)*align_size*dst_borderW);
@@ -1265,7 +1265,7 @@ bool ZQ_CNN_Tensor4D_NCHWC8::ResizeBilinearRect(ZQ_CNN_Tensor4D_NCHWC8& dst, int
 			for (int c = 0; c < C; c += align_size, dst_slice_ptr += dstSliceStep)
 			{
 				memset(dst_slice_ptr - align_size*dst_borderW - dstWidthStep*dst_borderH, 0, sizeof(float)*dstWidthStep*dst_borderH);
-				memset(dst_slice_ptr - align_size*dst_borderW + dstWidthStep*dst_borderH, 0, sizeof(float)*dstWidthStep*dst_borderH);
+				memset(dst_slice_ptr - align_size*dst_borderW + dstWidthStep*dst_H, 0, sizeof(float)*dstWidthStep*dst_borderH);
 			}
 		}
 		if (dst_borderW > 0)
@@ -1273,7 +1273,7 @@ bool ZQ_CNN_Tensor4D_NCHWC8::ResizeBilinearRect(ZQ_CNN_Tensor4D_NCHWC8& dst, int
 			float* dst_slice_ptr = dst_im_ptr;
 			for (int c = 0; c < C; c += align_size, dst_slice_ptr += dstSliceStep)
 			{
-				for (int h = 0; h < dst_borderH; h++)
+				for (int h = 0; h < dst_H; h++)
 				{
 					memset(dst_slice_ptr - align_size*dst_borderW + dstWidthStep*h, 0, sizeof(float)*align_size*dst_borderW);
 					memset(dst_slice_ptr - align_size*(dst_borderW << 1) + dstWidthStep*(h + 1), 0, sizeof(float)*align_size*dst_borderW);
@@ -1343,7 +1343,7 @@ bool ZQ_CNN_Tensor4D_NCHWC8::ROI(ZQ_CNN_Tensor4D_NCHWC8& dst, int off_x, int off
 			dst_slice_ptr = dst_im_ptr;
 			for (int c = 0; c < C; c += align_size, dst_slice_ptr += dstSliceStep)
 			{
-				for (int h = 0; h < dst_borderH; h++)
+				for (int h = 0; h < height; h++)
 				{
 					memset(dst_slice_ptr - align_size*dst_borderW + dstWidthStep*h, 0, sizeof(float)*align_size*dst_borderW);
 					memset(dst_slice_ptr - align_size*(dst_borderW << 1) + dstWidthStep*(h + 1), 0, sizeof(float)*align_size*dst_borderW);

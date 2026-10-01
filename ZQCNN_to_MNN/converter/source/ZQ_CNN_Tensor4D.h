@@ -85,7 +85,7 @@ namespace ZQ
 				}
 				if (dst_borderW > 0)
 				{
-					for (int h = 0; h < dst_borderH; h++)
+					for (int h = 0; h < height; h++)
 					{
 						memset(dst_slice_ptr - dstPixelStep*dst_borderW + dstWidthStep*h, 0, sizeof(float)*dstPixelStep*dst_borderW);
 						memset(dst_slice_ptr - dstPixelStep*(dst_borderW << 1) + dstWidthStep*(h + 1), 0, sizeof(float)*dstPixelStep*dst_borderW);
