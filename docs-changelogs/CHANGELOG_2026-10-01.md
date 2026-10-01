@@ -583,3 +583,18 @@ NCHW 里 `sliceStep` 是**一张图**的步长（不是通道），`(n,c,h,w)` �
 
 1. 附录 L 里还列了 7 项中低危待办（batchnorm 末分支整向量读写、Eltwise `ReadParam` 条件写反、`LoadFromBuffer` 未做 `_simplify_inplace`、MTCNN 构造函数未初始化若干成员、两处 omp 非原子调试计数、`_Lnet106_stage` 无条件 memcpy 212 float、`-ffast-math` 只在 GCC/Clang 侧开导致跨平台浮点结合序不同），均不影响现有示例，尚未修。
 2. 本轮再次印证 AGENTS.md 里那条"先确认 API/步长方向再动手"：连续三次方向性误判（`ResizeBilinear` 接收者、`eltwise` 增量目标、NCHW 的 sliceStep 含义）都曾导致"修复"反而破坏功能。
+
+## 新增/变更：附录 L 待办清零（第 5、6 项）
+
+| 文件 | 问题 | 修复 |
+|---|---|---|
+| `ZQCNN/ZQ_CNN_Layer.h` | Eltwise `ReadParam` 收尾条件写反（`!=`）：weight 数量**正确**时整个模型加载失败，数量**不匹配**反而放行 | 改为 `==` |
+| `ZQCNN/ZQ_CNN_MTCNN*.h`（4 个变体构造函数） | `has_lnet/thread_num/rnet_size/onet_size/lnet_size/do_landmark/early_accept_thresh/nms_thresh_per_scale` 未初始化 | 补初值（各变按自身成员裁剪） |
+| `ZQCNN/ZQ_CNN_MTCNN.h` | `_Lnet106_stage` 整块 memcpy 212 个 float，`keypoint_num < 106` 时尾部是未初始化内存 | 拷贝前 memset 清零 |
+| `ZQlibFaceID/ZQ_FaceDatabase.h` | 并行区里 `same_pair_num++/notsame_pair_num++` 非原子共享写（UB），且结果本来就被整体覆盖 → 死写 | 删除 |
+| `ZQCNN/layers_c/zq_cnn_batchnormscale_32f_align_c_raw.h` | `in_C` 非 4/8 倍数的两条回退分支仍按整向量读写，`a`/`b`/`scale` 是 `_aligned_malloc(2*4)` 之类的小分配 → 过界读 8 字节 | 两条回退分支改标量 |
+| `ZQlibFaceID/ZQ_FaceContainerForVideo.h` | `key_num` 只挡负数，`0x7FFFFFFF` 直接 OOM（未捕获 bad_alloc → terminate） | 用剩余文件长度交叉校验帧数上界 |
+
+**双平台复验**：Windows 全量构建 0 error（SampleMTCNN 18.6ms / SampleSSD 10.0ms / SampleFaceDetectorMTCNN 9.7ms），Linux 全量构建 0 error（SampleMTCNN / SampleMTCNN_NCHWC4 / SampleSSD 全部 exit=0）。
+
+**仍未修**：`LoadFromBuffer` 未调用 `_simplify_inplace()`（会改变 buffer 加载路径的行为，仓库里没有可用模型可验证，按"改动前先能验证"的原则暂留待办）。
