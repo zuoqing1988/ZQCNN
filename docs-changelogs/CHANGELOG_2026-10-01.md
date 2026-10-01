@@ -649,3 +649,44 @@ NCHW 里 `sliceStep` 是**一张图**的步长（不是通道），`(n,c,h,w)` �
    所以**"git diff 干净"不代表工作区行尾干净**，而工作区才是编译器读的东西。
 3. 用 Python 批量改写源码时 `split(b'\n')` / `join(b'\n')` 会让新插入的行
    丢失 `\r`，造成工作区 CRLF/LF 混用。这条也已写进 AGENTS.md 第 5 条。
+
+## 新增/变更：第六轮后半段（模型加载器 / Net 契约 / PriorBox / 低危项收口）
+
+| 文件 | 问题 | 修复 |
+|---|---|---|
+| `ZQCNN/ZQ_CNN_Net.h` | 未知层类型被**静默丢弃**：if/else 链以 `Input` 结束、无 else 兜底 | 打印层名与整行后 `return false` |
+| `ZQCNN/ZQ_CNN_Net.h`、`ZQ_CNN_Net_NCHWC.h` | **`_getline` 行指针错位**：`buffer += cur_len` 而 `cur_len = j - i`，少推进开头跳过的行尾符，导致每读一行有效层定义就多产出一行 1 字符的垃圾行 | `buffer += j`（推到行尾符位置） |
+| 同上 | `sscanf(...) == 0` 只挡"无匹配"，**空行返回 EOF(-1)** 会穿过去；且缺 `#` 注释行跳过 | 改判 `!= 1`；补 `if (buf[0] == '#') continue;` |
+| `ZQCNN/ZQ_CNN_Layer.h` | `Reduction::ReadParam` 只实现 SUM/MEAN，未知名字 `atoi(str)` → `"max"` 静默变成求和 | 判非法并报错 |
+| `SamplesZQCNN/mxnet2zqcnn/mxnet2zqcnn.cpp` | 26 处写出加载器不认的层类型名 + 末尾兜底把 mxnet op 名当层类型；`Activation` 分支缺 else | 全部改为转换阶段明确报错 `return -1` |
+| `ZQCNN/ZQ_CNN_Net.h`、`_NCHWC.h` | 会改形状的层把 `top` 声明成自己的 `bottom` 会毁掉输入 | `_check_connect` 拦截；in-place 白名单抽成 `_is_inplace_safe(i)` 与 `_simplify_inplace()` 共用 |
+| `ZQCNN/ZQ_CNN_Layer.h` PriorBox | `Forward` 就地把百分比换算成像素写回成员 → 第二次 Forward 不重算；守卫漏判 `bottoms->size()==1` | 局部副本换算；守卫补 `< 2` 与 `(*bottoms)[1]` |
+| 同上 `ReadParam` | `img_w = img_w;` / `step_w = step_w;` 三处自赋值，宽/步宽根本没被解析 | 补成 `img_h = img_w = atoi(...)` / `step_h = step_w = ...` |
+| `ZQCNN/ZQ_CNN_Forward_SSEUtils.cpp` | `//return false;` 注释掉后紧接着解引用 `map::end()`；`resize(keep_top_k)` 增长语义补出假检测框、`num_kept` 虚计（各 2 处） | `continue`；只截断不增长 + 按实际条数计 |
+| `SamplesZQCNN/TrainMTCNNprocessor/TrainMTCNNprocessor.h` | `buf2[-1]` 越界读（2 处） | `len > 0 && ...` |
+| `ZQlibFaceID/ZQ_FaceFeature.h` | `ChangeSize` malloc 失败仍写 `length` | 一并清 0 |
+| `ZQlibFaceID/ZQ_FaceClustersForVideo.h` | `pivot_pt_ids[i]` 为 -1 未防御；`face_boxes[box_id]` 不校验 | 两处加守卫 |
+| `ZQlibFaceID/ZQ_FaceGroup.h` | `WriteToFile` 不校验 `face_boxes.size() >= num` | 写前校验 |
+| `ZQlibFaceID/ZQ_FaceClusterImagesForVideo.h` | `int _off` 累加 JPEG 长度可溢出成负 | 改 `__int64` |
+| `ZQlibFaceID/ZQ_FaceRecognizerSphereFaceZQCNN.h` | 预置路径不校验 blob 存在性与通道数，`ExtractFeature` 结尾 `memcpy` 越界读/静默截断 | 补 `out != NULL && out->GetC() == feat_dim` |
+| `audit_k3_20261001.md` | — | 新增**附录 M**（含 M.5 记录一条"评估后否决"的修复） |
+
+### 实测结果
+
+- Windows：重建 0 error；SampleSSD 9.9~10.5 ms/iter（改动前同区间）；
+  SampleMTCNN / SampleMTCNN_NCHWC4 输出与本轮改动前的基线**逐字节一致**；
+  8 个 sample 全部 rc=0；TrainMTCNNprocessor / mxnet2zqcnn 正常启动
+- Linux：`make -j8` → 0 error；8 个 sample 全部 rc=0
+
+### 注意事项
+
+1. **审计建议里有一条是错的，照做会直接让仓库自带的 mobilefacenet 模型加载失败。**
+   "两个层写同一个 top 就报错"会命中 77 处合法用法（残差块复用上一个 block
+   的 blob 名当输出）。已写脚本全仓扫描验证：A(重复 top)=77、B(top==bottom)=0，
+   只采纳 B。详见报告 M.5。
+2. **本轮最值得记的一条**：给加载器加"未知层类型就报错"的兜底之后，
+   立刻炸出 `_getline` 的行指针错位——而后者之所以长期没暴露，
+   正是因为前者把垃圾行静默吃掉了。两个 bug 互相掩盖。
+3. `PriorBox` 的百分比路径（`min_size` 为负）本机没有模型覆盖，
+   尝试写独立探针程序复现但未跑通，**未取得端到端证据**，
+   按"按构造正确 + 现有模型等价"记录，不声称已复现。
