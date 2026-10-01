@@ -1254,3 +1254,107 @@ cmake-out-win32-x64/release/Release，因为 CMake 把 model/ 和 data/ 联接�
 ### 验证
 
 --with-build --quick：13 个子组全 OK，退出码 0。
+
+## 新增/变更：改 ZQlib 之前本该先算的一张表（可达性）
+
+### 变更文件
+- `tools/zqlib_reachability.py`（新增）
+- `audit_k3_20261001.md`：新增**附录 AP**
+
+### 问题
+
+这一轮改了 `3rdparty/include/ZQlib/` 下 **26 个头**。改之前有个必须先回答的问题：
+**它们真的进过产物吗？**
+
+直觉会说「第三方库、主工程用不到」—— 但**直觉在这里是部分错的**，而且错得最有
+欺骗性：直接 grep「谁 include 了它」很容易得出「没人用」（因为 include 链是传递的），
+而实际上主工程里有一批 sample 确实用到了我改过的 5 个头。
+
+### 工具
+
+从主工程所有 .h/.cpp/.c（ZQCNN / ZQlibFaceID / SamplesZQ* / model，262 个）出发，
+按 C 的 #include "..." 语义走**传递闭包**：
+
+    主工程源码文件: 262 个
+    ZQlib 头总数  : 143
+    可达          : 16
+    不可达        : 127   <- 改了不会进任何产物
+
+### 本轮改过的 26 个头里，可达 5 个
+
+| 头 | 改动 | 影响哪些 sample |
+|---|---|---|
+| ZQ_MergeSort.h | 补 #include <vector> | **15 个**（人脸库 / LFW 评估那一大片，经 ZQ_FaceDatabaseMaker.h 的 sort_score_file） |
+| ZQ_Matrix.h | operator= 自赋值保护 | 4 个 |
+| ZQ_QuickSort.h | idx[i] 笔误 | SampleLnet106 |
+| ZQ_ImageProcessing.h | 中值滤波两条 + Laplacian 边界 | SampleLnet106 |
+| ZQ_Kmeans.h | 补 <math.h> + k<=0 守卫 | 传递可达 |
+
+其余 21 个头完全不可达 —— 改错了 sample 也发现不了，**只能靠 ASan 测试验**
+（这就是 tools/run_zqlib_checks.py 存在的原因）。
+
+### 为什么这条有操作意义
+
+1. **风险分级有了依据**：可达的 5 个必须跑双平台 sample 回归；不可达的 21 个只能靠
+   独立测试。把两者混为一谈，要么白花时间跑回归，要么漏掉真正会崩的路径。
+2. **ZQ_MergeSort.h 那处改动其实是行为中性的**：它只是补 #include <vector>，
+   而这些 sample 之前在 Linux 上能编过，说明它们的 includer 恰好先带进了 <vector>
+   （正是 AGENTS.md 行尾一节第 6 条那一类「靠运气」）。补上之后就不再依赖那个运气。
+3. **中值滤波那条只影响 ZQ_FindCorners.h 的调用点**，而 ZQ_FindCorners.h 本身不在
+   可达集里 —— 所以那个「活的调用方」在**产物层面**其实也是死的。附录 AB 的可达性
+   说明仍然成立（它是那个头的调用方），但影响面要按可达性表来划，不能只看调用图。
+
+### 结论
+
+改 ZQlib 头之前先跑 `python tools/zqlib_reachability.py`，它会直接告诉你
+「你改的东西会不会进产物」：不可达的头 = 只能靠独立测试验；可达的头 = 双平台
+sample 回归兜底。
+
+## 新增/变更：可达 ≠ 可跑 —— 附录 AP 的下半集
+
+### 变更文件
+- `audit_k3_20261001.md`：新增**附录 AQ**
+
+### 现象
+
+按附录 AP 的可达性表，把那批「链接了我改过的头」的 sample 在两个平台各跑一遍：
+
+    Windows: SampleSwapFace rc=1、SampleCropImagesForArcFace rc=1、
+             SampleFaceDatabaseNCNN rc=1、SampleEvaluationOnLFWArcFaceMiniCaffe rc=53 ...
+    Linux  : 同样一批 rc=1；另有 8 个 MISSING
+
+第一眼像「我的改动弄坏了 19 个 sample」。
+
+### 查下来全是「缺命令行参数」
+
+    ===== SampleSwapFace =====
+    SampleSwapFace.exe img1 img2 out
+    ===== SampleCropImagesForArcFace =====
+    Use: SampleCropImagesForArcFace.exe src_root dst_root [max_thread_num] ...
+
+这些是 **usage 消息**，不是崩溃。它们要人脸库目录、模型文件、输出路径，仓库里没有。
+
+而且这正是 tools/sweep_samples_win.py 早就知道的：
+
+    if rc not in ('0', '1', 'TIMEOUT'):
+        ... '<<< 需要看'
+
+`rc == 1`（usage）与 TIMEOUT 一直被当作可接受，附录 T 的口径就是这条。
+所以附录 T 没说错，是我这次的临时脚本用「rc 必须为 0」当判据才误报。
+
+### 结论
+
+附录 AP 说「可达的 5 个头要靠双平台 sample 回归兜底」—— 这句话在本机站不住：
+
+| | 链接了那 5 个头 | 本机能否真正跑起来验 |
+|---|---|---|
+| sample 数 | ~19 | 基本不能（缺人脸库/模型/输出目录） |
+| 可用信号 | 只有 usage 与超时 | 没有 |
+
+于是这 5 个头的验证**只能靠 run_zqlib_checks.py 里那 9 组 ASan 测试**；
+也正因为如此「测试必须有牙齿」在这里格外重要 —— 我为 ZQ_Matrix 的自赋值、
+ZQ_QuickSort 的 idx[i]、ZQ_Quaternion 的 w.z **逐个用「修复前的头重编同一个测试」
+验过**（附录 AM / AK 记了过程）。
+
+**如果当时只是「改了 + 跑一遍 sample 看没崩」，这三条改动会全部静默通过** ——
+因为能跑的那些 sample 根本不经过这些代码路径。
