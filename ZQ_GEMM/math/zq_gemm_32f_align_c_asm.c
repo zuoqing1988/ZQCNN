@@ -1099,6 +1099,10 @@ static inline void zq_gemm_32f_asm_mblocks(int M, int N, int K, const float* A, 
 #define ZQA_NDIR_MR 6
 #define ZQA_NDIR_NR 8
 #define ZQA_NDIR_PANEL_BYTES (256 * 1024)
+/* 面板小于这个量就直接用栈上数组, 不 malloc。小形状上 malloc 的开销是
+   压倒性的: 8x8x8 一共才 512 次乘加, 两次 malloc 就把它拖到 asm/intr 的
+   0.22 倍 (2026-10-01 Windows 实测)。4096 个 float = 16KB, 两边默认栈都放得下。 */
+#define ZQA_NDIR_STACK_FLOATS 4096
 /* 走 N 方向打包路径的 K 上限。实测 (WSL + Ryzen 9 5900HX, asm/MKL):
      K=16   49% -> 打包后 6x8 内核明显更快
      K=32   57% -> 同上
@@ -1115,6 +1119,8 @@ static int zq_gemm_32f_asm_ndir(int M, int N, int K, const float* A, int lda,
 	int nc, mc, n0;
 	float* Bp;
 	float* Ap;
+	float stackbuf[ZQA_NDIR_STACK_FLOATS];
+	int on_stack;
 
 	if (nr < ZQA_NDIR_NR || mr < ZQA_NDIR_MR || K <= 0)
 		return 0;
@@ -1130,13 +1136,23 @@ static int zq_gemm_32f_asm_ndir(int M, int N, int K, const float* A, int lda,
 		return 0;
 
 	/* 分配失败就老老实实回落到原路径, 不能让 GEMM 直接不做 */
-	Bp = (float*)malloc(sizeof(float) * (size_t)nc * (size_t)K);
-	Ap = (float*)malloc(sizeof(float) * (size_t)mc * (size_t)K);
-	if (Bp == NULL || Ap == NULL)
+	on_stack = ((size_t)nc * (size_t)K + (size_t)mc * (size_t)K
+	            <= ZQA_NDIR_STACK_FLOATS);
+	if (on_stack)
 	{
-		free(Bp);
-		free(Ap);
-		return 0;
+		Bp = stackbuf;
+		Ap = stackbuf + (size_t)nc * (size_t)K;
+	}
+	else
+	{
+		Bp = (float*)malloc(sizeof(float) * (size_t)nc * (size_t)K);
+		Ap = (float*)malloc(sizeof(float) * (size_t)mc * (size_t)K);
+		if (Bp == NULL || Ap == NULL)
+		{
+			free(Bp);
+			free(Ap);
+			return 0;
+		}
 	}
 
 	for (n0 = 0; n0 < nr; n0 += nc)
@@ -1182,10 +1198,12 @@ static int zq_gemm_32f_asm_ndir(int M, int N, int K, const float* A, int lda,
 						ldc);
 		}
 	}
-	free(Bp);
-	free(Ap);
+	if (!on_stack)
+	{
+		free(Bp);
+		free(Ap);
+	}
 	n0 = nr;      /* 循环退出时 n0 应当正好等于 nr, 但别让下面两条尾巴语句依赖这个巧合 */
-
 	/* 尾部: 先补 N 的余数列 (整行 M), 再补 M 的余数行 (只补已算的列) */
 	if (n0 < N)
 		zq_gemm_32f_asm_mblocks(M, N - n0, K, A, lda,

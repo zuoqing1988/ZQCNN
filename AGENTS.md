@@ -93,6 +93,17 @@
    写"先把标量读进 xmm 再广播"的优化前先在这台机器上 A/B 一下：
    同一个 6x8 外积内核，内存源 91.2 ns/次（67.4 GF/s），寄存器源慢到跑不完 2000 万次。
    内存源本身就是 1 条 load-port uop，并没有多占端口。
+7. **MASM 微内核里绝对不能出现 `rsi` / `rdi` / `rbx` / `rbp` / `r12`-`r15`，
+   除非显式 push/pop**。这些在 x64 Windows 是 callee-saved，在 System V (Linux)
+   却是 caller-saved —— 用错的后果是 **Linux 全对、Windows 段错误**，
+   编译和静态检查都发现不了。2026-10-01 写 `m6n8` 时用了 rsi/rdi，
+   Linux 侧 `SampleGEMMAsmCompare` 全过、Windows 侧跑到 `13x11x7` 之后 exit 139。
+   可用的只有 `rax rcx rdx r8 r9 r10 r11` 这 7 个；塞不下时优先**把偏移挪到循环
+   之后从栈参数重算**（`m6n8` 就是这么做的：循环里只留 ap/bp/K/c 四个）。
+8. **打包成"微内核一次吃掉一块"的面板，不要打成"整面板"再按块偏移取**。
+   写成 `[K][ncn]` 却按 `Bp + c*8*K` 取块时，只有 `ncn == 8` 才碰巧对 ——
+   `16x8x32` 通过而 `32x32x32` 误差 9.07。**这类错误只靠多尺寸对拍能发现**，
+   任何新增/改动打包路径都必须过 `SampleGEMMAsmCompare` 的全部尺寸。
 
 ## 行尾与跨平台编译规则
 
