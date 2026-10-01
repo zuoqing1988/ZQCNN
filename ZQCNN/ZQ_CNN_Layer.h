@@ -1,4 +1,4 @@
-﻿#ifndef _ZQ_CNN_LAYER_H_
+#ifndef _ZQ_CNN_LAYER_H_
 #define _ZQ_CNN_LAYER_H_
 #pragma once
 #include <string>
@@ -61,7 +61,7 @@ namespace ZQ
 	private:
 		static bool _is_blank_c(char c)
 		{
-			return c == ' ' || c == '\t' || c == '\n';
+			return c == ' ' || c == '\t' || c == '\n' || c == '\r';
 		}
 		static bool _is_separator_c(char c)
 		{

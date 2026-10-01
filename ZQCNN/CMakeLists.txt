@@ -22,7 +22,12 @@ if(NOT TARGET OpenMP::OpenMP_CXX)
 endif()
 
 if(WIN32)
-    target_link_libraries(ZQCNN ZQ_GEMM mklml)
+    target_link_libraries(ZQCNN ZQ_GEMM)
+    # MKL 只在使用 BLAS 时才需要（ZQ_CNN_USE_BLAS_GEMM），否则所有 exe 都会在运行时
+    # 依赖 mklml.dll，没有装 MKL 运行库的机器直接起不来
+    if(BLAS_TYPE MATCHES "openblas")
+        target_link_libraries(ZQCNN mklml)
+    endif()
 elseif(UNIX)
     target_link_libraries(ZQCNN ZQ_GEMM gomp)
 endif()

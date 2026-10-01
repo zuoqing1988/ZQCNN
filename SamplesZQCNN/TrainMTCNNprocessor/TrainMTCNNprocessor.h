@@ -400,7 +400,7 @@ namespace ZQ
 	public:
 		static bool _is_blank_c(char c)
 		{
-			return c == ' ' || c == '\t' || c == '\n';
+			return c == ' ' || c == '\t' || c == '\n' || c == '\r';
 		}
 
 		static std::vector<std::string>  _split_blank(const char* str)
