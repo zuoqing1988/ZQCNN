@@ -441,15 +441,18 @@ bool ZQ_CNN_Tensor4D_NHW_C_Align0::ResizeBilinearRect(ZQ_CNN_Tensor4D& dst, int 
 
 		if (dst_borderH > 0)
 		{
-			memset(dst_slice_ptr - dstPixelStep*dst_borderW - dstWidthStep*dst_borderH, 0, sizeof(float)*dstWidthStep*dst_borderH);
-			memset(dst_slice_ptr - dstPixelStep*dst_borderW + dstWidthStep*dst_borderH, 0, sizeof(float)*dstWidthStep*dst_borderH);
+			for (int h = 0; h < dst_borderH; h++)
+			{
+				memset(dst_slice_ptr - (h + 1)*dstWidthStep - dstPixelStep*dst_borderW, 0, sizeof(float)*dstWidthStep);
+				memset(dst_slice_ptr + (dst_H + h)*dstWidthStep - dstPixelStep*dst_borderW, 0, sizeof(float)*dstWidthStep);
+			}
 		}
 		if (dst_borderW > 0)
 		{
-			for (int h = 0; h < dst_borderH; h++)
+			for (int h = 0; h < dst_H; h++)
 			{
 				memset(dst_slice_ptr - dstPixelStep*dst_borderW + dstWidthStep*h, 0, sizeof(float)*dstPixelStep*dst_borderW);
-				memset(dst_slice_ptr - dstPixelStep*(dst_borderW << 1) + dstWidthStep*(h + 1), 0, sizeof(float)*dstPixelStep*dst_borderW);
+				memset(dst_slice_ptr + (h + 1)*dstWidthStep - dstPixelStep*dst_borderW, 0, sizeof(float)*dstPixelStep*dst_borderW);
 			}
 		}
 	}
@@ -601,15 +604,18 @@ bool ZQ_CNN_Tensor4D_NHW_C_Align0::ResizeNearestRect(ZQ_CNN_Tensor4D& dst, int d
 
 		if (dst_borderH > 0)
 		{
-			memset(dst_slice_ptr - dstPixelStep*dst_borderW - dstWidthStep*dst_borderH, 0, sizeof(float)*dstWidthStep*dst_borderH);
-			memset(dst_slice_ptr - dstPixelStep*dst_borderW + dstWidthStep*dst_borderH, 0, sizeof(float)*dstWidthStep*dst_borderH);
+			for (int h = 0; h < dst_borderH; h++)
+			{
+				memset(dst_slice_ptr - (h + 1)*dstWidthStep - dstPixelStep*dst_borderW, 0, sizeof(float)*dstWidthStep);
+				memset(dst_slice_ptr + (dst_H + h)*dstWidthStep - dstPixelStep*dst_borderW, 0, sizeof(float)*dstWidthStep);
+			}
 		}
 		if (dst_borderW > 0)
 		{
-			for (int h = 0; h < dst_borderH; h++)
+			for (int h = 0; h < dst_H; h++)
 			{
 				memset(dst_slice_ptr - dstPixelStep*dst_borderW + dstWidthStep*h, 0, sizeof(float)*dstPixelStep*dst_borderW);
-				memset(dst_slice_ptr - dstPixelStep*(dst_borderW << 1) + dstWidthStep*(h + 1), 0, sizeof(float)*dstPixelStep*dst_borderW);
+				memset(dst_slice_ptr + (h + 1)*dstWidthStep - dstPixelStep*dst_borderW, 0, sizeof(float)*dstPixelStep*dst_borderW);
 			}
 		}
 	}
@@ -690,15 +696,18 @@ bool ZQ_CNN_Tensor4D_NHW_C_Align0::Remap(ZQ_CNN_Tensor4D& dst, int dst_W, int ds
 
 		if (dst_borderH > 0)
 		{
-			memset(dst_slice_ptr - dstPixelStep*dst_borderW - dstWidthStep*dst_borderH, 0, sizeof(float)*dstWidthStep*dst_borderH);
-			memset(dst_slice_ptr - dstPixelStep*dst_borderW + dstWidthStep*dst_borderH, 0, sizeof(float)*dstWidthStep*dst_borderH);
+			for (int h = 0; h < dst_borderH; h++)
+			{
+				memset(dst_slice_ptr - (h + 1)*dstWidthStep - dstPixelStep*dst_borderW, 0, sizeof(float)*dstWidthStep);
+				memset(dst_slice_ptr + (dst_H + h)*dstWidthStep - dstPixelStep*dst_borderW, 0, sizeof(float)*dstWidthStep);
+			}
 		}
 		if (dst_borderW > 0)
 		{
-			for (int h = 0; h < dst_borderH; h++)
+			for (int h = 0; h < dst_H; h++)
 			{
 				memset(dst_slice_ptr - dstPixelStep*dst_borderW + dstWidthStep*h, 0, sizeof(float)*dstPixelStep*dst_borderW);
-				memset(dst_slice_ptr - dstPixelStep*(dst_borderW << 1) + dstWidthStep*(h + 1), 0, sizeof(float)*dstPixelStep*dst_borderW);
+				memset(dst_slice_ptr + (h + 1)*dstWidthStep - dstPixelStep*dst_borderW, 0, sizeof(float)*dstPixelStep*dst_borderW);
 			}
 		}
 	}
@@ -1055,15 +1064,18 @@ bool ZQ_CNN_Tensor4D_NHW_C_Align128bit::ResizeBilinearRect(ZQ_CNN_Tensor4D& dst,
 
 		if (dst_borderH > 0)
 		{
-			memset(dst_slice_ptr - dstPixelStep*dst_borderW - dstWidthStep*dst_borderH, 0, sizeof(float)*dstWidthStep*dst_borderH);
-			memset(dst_slice_ptr - dstPixelStep*dst_borderW + dstWidthStep*dst_borderH, 0, sizeof(float)*dstWidthStep*dst_borderH);
+			for (int h = 0; h < dst_borderH; h++)
+			{
+				memset(dst_slice_ptr - (h + 1)*dstWidthStep - dstPixelStep*dst_borderW, 0, sizeof(float)*dstWidthStep);
+				memset(dst_slice_ptr + (dst_H + h)*dstWidthStep - dstPixelStep*dst_borderW, 0, sizeof(float)*dstWidthStep);
+			}
 		}
 		if (dst_borderW > 0)
 		{
-			for (int h = 0; h < dst_borderH; h++)
+			for (int h = 0; h < dst_H; h++)
 			{
 				memset(dst_slice_ptr - dstPixelStep*dst_borderW + dstWidthStep*h, 0, sizeof(float)*dstPixelStep*dst_borderW);
-				memset(dst_slice_ptr - dstPixelStep*(dst_borderW << 1) + dstWidthStep*(h + 1), 0, sizeof(float)*dstPixelStep*dst_borderW);
+				memset(dst_slice_ptr + (h + 1)*dstWidthStep - dstPixelStep*dst_borderW, 0, sizeof(float)*dstPixelStep*dst_borderW);
 			}
 		}
 	}
@@ -1178,15 +1190,18 @@ bool ZQ_CNN_Tensor4D_NHW_C_Align128bit::ResizeBilinearRect(ZQ_CNN_Tensor4D& dst,
 
 		if (dst_borderH > 0)
 		{
-			memset(dst_slice_ptr - dstPixelStep*dst_borderW - dstWidthStep*dst_borderH, 0, sizeof(float)*dstWidthStep*dst_borderH);
-			memset(dst_slice_ptr - dstPixelStep*dst_borderW + dstWidthStep*dst_borderH, 0, sizeof(float)*dstWidthStep*dst_borderH);
+			for (int h = 0; h < dst_borderH; h++)
+			{
+				memset(dst_slice_ptr - (h + 1)*dstWidthStep - dstPixelStep*dst_borderW, 0, sizeof(float)*dstWidthStep);
+				memset(dst_slice_ptr + (dst_H + h)*dstWidthStep - dstPixelStep*dst_borderW, 0, sizeof(float)*dstWidthStep);
+			}
 		}
 		if (dst_borderW > 0)
 		{
-			for (int h = 0; h < dst_borderH; h++)
+			for (int h = 0; h < dst_H; h++)
 			{
 				memset(dst_slice_ptr - dstPixelStep*dst_borderW + dstWidthStep*h, 0, sizeof(float)*dstPixelStep*dst_borderW);
-				memset(dst_slice_ptr - dstPixelStep*(dst_borderW << 1) + dstWidthStep*(h + 1), 0, sizeof(float)*dstPixelStep*dst_borderW);
+				memset(dst_slice_ptr + (h + 1)*dstWidthStep - dstPixelStep*dst_borderW, 0, sizeof(float)*dstPixelStep*dst_borderW);
 			}
 		}
 	}
@@ -1282,15 +1297,18 @@ bool ZQ_CNN_Tensor4D_NHW_C_Align128bit::ResizeNearestRect(ZQ_CNN_Tensor4D& dst, 
 
 		if (dst_borderH > 0)
 		{
-			memset(dst_slice_ptr - dstPixelStep*dst_borderW - dstWidthStep*dst_borderH, 0, sizeof(float)*dstWidthStep*dst_borderH);
-			memset(dst_slice_ptr - dstPixelStep*dst_borderW + dstWidthStep*dst_borderH, 0, sizeof(float)*dstWidthStep*dst_borderH);
+			for (int h = 0; h < dst_borderH; h++)
+			{
+				memset(dst_slice_ptr - (h + 1)*dstWidthStep - dstPixelStep*dst_borderW, 0, sizeof(float)*dstWidthStep);
+				memset(dst_slice_ptr + (dst_H + h)*dstWidthStep - dstPixelStep*dst_borderW, 0, sizeof(float)*dstWidthStep);
+			}
 		}
 		if (dst_borderW > 0)
 		{
-			for (int h = 0; h < dst_borderH; h++)
+			for (int h = 0; h < dst_H; h++)
 			{
 				memset(dst_slice_ptr - dstPixelStep*dst_borderW + dstWidthStep*h, 0, sizeof(float)*dstPixelStep*dst_borderW);
-				memset(dst_slice_ptr - dstPixelStep*(dst_borderW << 1) + dstWidthStep*(h + 1), 0, sizeof(float)*dstPixelStep*dst_borderW);
+				memset(dst_slice_ptr + (h + 1)*dstWidthStep - dstPixelStep*dst_borderW, 0, sizeof(float)*dstPixelStep*dst_borderW);
 			}
 		}
 	}
@@ -1354,15 +1372,18 @@ bool ZQ_CNN_Tensor4D_NHW_C_Align128bit::ResizeNearestRect(ZQ_CNN_Tensor4D& dst, 
 
 		if (dst_borderH > 0)
 		{
-			memset(dst_slice_ptr - dstPixelStep*dst_borderW - dstWidthStep*dst_borderH, 0, sizeof(float)*dstWidthStep*dst_borderH);
-			memset(dst_slice_ptr - dstPixelStep*dst_borderW + dstWidthStep*dst_borderH, 0, sizeof(float)*dstWidthStep*dst_borderH);
+			for (int h = 0; h < dst_borderH; h++)
+			{
+				memset(dst_slice_ptr - (h + 1)*dstWidthStep - dstPixelStep*dst_borderW, 0, sizeof(float)*dstWidthStep);
+				memset(dst_slice_ptr + (dst_H + h)*dstWidthStep - dstPixelStep*dst_borderW, 0, sizeof(float)*dstWidthStep);
+			}
 		}
 		if (dst_borderW > 0)
 		{
-			for (int h = 0; h < dst_borderH; h++)
+			for (int h = 0; h < dst_H; h++)
 			{
 				memset(dst_slice_ptr - dstPixelStep*dst_borderW + dstWidthStep*h, 0, sizeof(float)*dstPixelStep*dst_borderW);
-				memset(dst_slice_ptr - dstPixelStep*(dst_borderW << 1) + dstWidthStep*(h + 1), 0, sizeof(float)*dstPixelStep*dst_borderW);
+				memset(dst_slice_ptr + (h + 1)*dstWidthStep - dstPixelStep*dst_borderW, 0, sizeof(float)*dstPixelStep*dst_borderW);
 			}
 		}
 	}
@@ -1441,15 +1462,18 @@ bool ZQ_CNN_Tensor4D_NHW_C_Align128bit::Remap(ZQ_CNN_Tensor4D& dst, int dst_W, i
 
 		if (dst_borderH > 0)
 		{
-			memset(dst_slice_ptr - dstPixelStep*dst_borderW - dstWidthStep*dst_borderH, 0, sizeof(float)*dstWidthStep*dst_borderH);
-			memset(dst_slice_ptr - dstPixelStep*dst_borderW + dstWidthStep*dst_borderH, 0, sizeof(float)*dstWidthStep*dst_borderH);
+			for (int h = 0; h < dst_borderH; h++)
+			{
+				memset(dst_slice_ptr - (h + 1)*dstWidthStep - dstPixelStep*dst_borderW, 0, sizeof(float)*dstWidthStep);
+				memset(dst_slice_ptr + (dst_H + h)*dstWidthStep - dstPixelStep*dst_borderW, 0, sizeof(float)*dstWidthStep);
+			}
 		}
 		if (dst_borderW > 0)
 		{
-			for (int h = 0; h < dst_borderH; h++)
+			for (int h = 0; h < dst_H; h++)
 			{
 				memset(dst_slice_ptr - dstPixelStep*dst_borderW + dstWidthStep*h, 0, sizeof(float)*dstPixelStep*dst_borderW);
-				memset(dst_slice_ptr - dstPixelStep*(dst_borderW << 1) + dstWidthStep*(h + 1), 0, sizeof(float)*dstPixelStep*dst_borderW);
+				memset(dst_slice_ptr + (h + 1)*dstWidthStep - dstPixelStep*dst_borderW, 0, sizeof(float)*dstPixelStep*dst_borderW);
 			}
 		}
 	}
@@ -1884,15 +1908,18 @@ bool ZQ_CNN_Tensor4D_NHW_C_Align256bit::ResizeBilinearRect(ZQ_CNN_Tensor4D& dst,
 
 		if (dst_borderH > 0)
 		{
-			memset(dst_slice_ptr - dstPixelStep*dst_borderW - dstWidthStep*dst_borderH, 0, sizeof(float)*dstWidthStep*dst_borderH);
-			memset(dst_slice_ptr - dstPixelStep*dst_borderW + dstWidthStep*dst_borderH, 0, sizeof(float)*dstWidthStep*dst_borderH);
+			for (int h = 0; h < dst_borderH; h++)
+			{
+				memset(dst_slice_ptr - (h + 1)*dstWidthStep - dstPixelStep*dst_borderW, 0, sizeof(float)*dstWidthStep);
+				memset(dst_slice_ptr + (dst_H + h)*dstWidthStep - dstPixelStep*dst_borderW, 0, sizeof(float)*dstWidthStep);
+			}
 		}
 		if (dst_borderW > 0)
 		{
-			for (int h = 0; h < dst_borderH; h++)
+			for (int h = 0; h < dst_H; h++)
 			{
 				memset(dst_slice_ptr - dstPixelStep*dst_borderW + dstWidthStep*h, 0, sizeof(float)*dstPixelStep*dst_borderW);
-				memset(dst_slice_ptr - dstPixelStep*(dst_borderW << 1) + dstWidthStep*(h + 1), 0, sizeof(float)*dstPixelStep*dst_borderW);
+				memset(dst_slice_ptr + (h + 1)*dstWidthStep - dstPixelStep*dst_borderW, 0, sizeof(float)*dstPixelStep*dst_borderW);
 			}
 		}
 	}
@@ -2046,15 +2073,18 @@ bool ZQ_CNN_Tensor4D_NHW_C_Align256bit::ResizeNearestRect(ZQ_CNN_Tensor4D& dst, 
 
 		if (dst_borderH > 0)
 		{
-			memset(dst_slice_ptr - dstPixelStep*dst_borderW - dstWidthStep*dst_borderH, 0, sizeof(float)*dstWidthStep*dst_borderH);
-			memset(dst_slice_ptr - dstPixelStep*dst_borderW + dstWidthStep*dst_borderH, 0, sizeof(float)*dstWidthStep*dst_borderH);
+			for (int h = 0; h < dst_borderH; h++)
+			{
+				memset(dst_slice_ptr - (h + 1)*dstWidthStep - dstPixelStep*dst_borderW, 0, sizeof(float)*dstWidthStep);
+				memset(dst_slice_ptr + (dst_H + h)*dstWidthStep - dstPixelStep*dst_borderW, 0, sizeof(float)*dstWidthStep);
+			}
 		}
 		if (dst_borderW > 0)
 		{
-			for (int h = 0; h < dst_borderH; h++)
+			for (int h = 0; h < dst_H; h++)
 			{
 				memset(dst_slice_ptr - dstPixelStep*dst_borderW + dstWidthStep*h, 0, sizeof(float)*dstPixelStep*dst_borderW);
-				memset(dst_slice_ptr - dstPixelStep*(dst_borderW << 1) + dstWidthStep*(h + 1), 0, sizeof(float)*dstPixelStep*dst_borderW);
+				memset(dst_slice_ptr + (h + 1)*dstWidthStep - dstPixelStep*dst_borderW, 0, sizeof(float)*dstPixelStep*dst_borderW);
 			}
 		}
 	}
@@ -2135,15 +2165,18 @@ bool ZQ_CNN_Tensor4D_NHW_C_Align256bit::Remap(ZQ_CNN_Tensor4D& dst, int dst_W, i
 
 		if (dst_borderH > 0)
 		{
-			memset(dst_slice_ptr - dstPixelStep*dst_borderW - dstWidthStep*dst_borderH, 0, sizeof(float)*dstWidthStep*dst_borderH);
-			memset(dst_slice_ptr - dstPixelStep*dst_borderW + dstWidthStep*dst_borderH, 0, sizeof(float)*dstWidthStep*dst_borderH);
+			for (int h = 0; h < dst_borderH; h++)
+			{
+				memset(dst_slice_ptr - (h + 1)*dstWidthStep - dstPixelStep*dst_borderW, 0, sizeof(float)*dstWidthStep);
+				memset(dst_slice_ptr + (dst_H + h)*dstWidthStep - dstPixelStep*dst_borderW, 0, sizeof(float)*dstWidthStep);
+			}
 		}
 		if (dst_borderW > 0)
 		{
-			for (int h = 0; h < dst_borderH; h++)
+			for (int h = 0; h < dst_H; h++)
 			{
 				memset(dst_slice_ptr - dstPixelStep*dst_borderW + dstWidthStep*h, 0, sizeof(float)*dstPixelStep*dst_borderW);
-				memset(dst_slice_ptr - dstPixelStep*(dst_borderW << 1) + dstWidthStep*(h + 1), 0, sizeof(float)*dstPixelStep*dst_borderW);
+				memset(dst_slice_ptr + (h + 1)*dstWidthStep - dstPixelStep*dst_borderW, 0, sizeof(float)*dstPixelStep*dst_borderW);
 			}
 		}
 	}

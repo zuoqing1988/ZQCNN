@@ -126,6 +126,9 @@ namespace ZQ
 			}
 			else
 				this->thread_num = thread_num;
+
+			if (!ret)
+				return false;
 			if (show_debug_info)
 			{
 				printf("rnet = %.2f M, onet = %.2f M\n", rnet[0].GetNumOfMulAdd() / (1024.0*1024.0),
