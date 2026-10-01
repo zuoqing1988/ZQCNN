@@ -265,3 +265,71 @@ allocated by thread T0 here:
 - Linux 全量构建 0 error，sample 回归 8 个全 rc=0
 - `tools/zq_kmeans_check.cpp`：ASan + LSan 全程无报告，RESULT: PASS
 - `tools/check_line_endings.py` / `tools/check_text_encoding.py` 均 OK
+
+## 新增/变更：ZQ_QuickSort 的 FindKthMax(vals, idx, ...) 静默破坏调用方数组
+
+### 变更文件
+- `3rdparty/include/ZQlib/ZQ_QuickSort.h`：`_findKthMax(T*, int*, ...)` 出口一行
+- `tools/zq_quicksort_check.cpp`（新增）：`ZQ_QuickSort` 的独立回归测试
+- `audit_k3_20261001.md`：新增**附录 Z**
+
+### 问题
+
+`ZQ_QuickSort.h:247`（`_findKthMax` 带 idx 的那个重载）：
+
+```cpp
+vals[i] = tmp_val;
+vals[i] = tmp_idx;      // <-- 应该是 idx[i] = tmp_idx;
+```
+
+复制粘贴时漏改了左值。同文件里的 `_quickSort(vals, idx, ...)` 写法是对的
+（`vals[i] = tmp_val; idx[i] = tmp_idx;`），所以这是一处孤立的错。
+
+后果两条：
+1. `vals[i]` 刚写进去的枢轴值被「下标」覆盖 —— 调用方拿到的数组**不再是原数组
+   的一个排列**，元素被凭空替换掉了；
+2. `idx[i]` 从头到尾没被写过 —— 下标数组是错的。
+
+**为什么返回值一直是对的**：`output`/`out_idx` 取自局部变量 `tmp_val`/`tmp_idx`，
+而唯一被写坏的槽位 `i` 恰好**不在**两边递归区间里（`[start, i-1]` 与
+`[i+1, end]`）。所以只测返回值的测试永远发现不了 —— 必须测**数组状态**。
+
+### 实测（tools/zq_quicksort_check.cpp，ASan + LSan）
+
+新增的断言「就地重排后 vals 仍是原数组的一个排列」在 n=1,2,3,5,8,17,64,1000
+**全部失败**；单看返回值（output 是第 k 大、out_idx 指向对应元素）则全部通过 ——
+正是上面说的「返回值对、数组坏」。
+
+修完：
+
+| | 修复前 | 修复后 |
+|---|---|---|
+| 排列性（n=1..1000） | 全部 FAIL | PASS |
+| `QuickSort` 两个重载 vs `std::sort` | — | PASS |
+| `FindKthMax` 单数组版 output = 第 k 大 | — | PASS |
+| `FindKthMax` 带 idx 版 output / out_idx | — | PASS |
+| ASan / LeakSanitizer | — | 无报告 |
+
+**测试有牙齿**：用 `git show HEAD:...ZQ_QuickSort.h` 取修复前的头重编同一个测试，
+n=1 起就 FAIL；换回修复后的头立刻 PASS。
+
+### 可达性（如实记录）
+
+仓库里 `FindKthMax` 的**全部**调用点（`ZQ_ImageProcessing.h` 6 处、
+`ZQ_CameraCalibrationBino.h` 2 处）都走**单数组**重载，那条路走的是
+`_findKthMax(vals, start, end, k, output)`，出口只有 `vals[i] = tmp_val;`，
+**没有这个 bug**。带 idx 的重载全仓零调用点。
+
+也就是说：仓库内不可达，但它是一个 **public API**（头里没有 `//private:`），
+任何用这个库的外部代码调 6 参数版本就会静默拿到一个被改坏的数组。现在它可验证了，
+改一个字符就能修好。
+
+### 顺带记一笔测试本身踩的两个坑
+
+1. 第一版测试数据用 `(rand>>8) % 100000 / 100.0f`，值必然重复，于是
+   「排完之后下标该怎么排」本来就不唯一（`std::sort` 不稳定、快排也不稳定）——
+   拿它当期望值是在测一个没有定义的东西，一上来报了假的 FAIL。
+   改成先造互异值再打乱。
+2. 排列性断言第一版写成 `sort(after) == v`，拿**排序后的结果**去比**没排序的
+   原数组**，于是修完代码仍然 FAIL。两次都是测试自己的错，不是被测代码的错 ——
+   写完先问一句「这个断言在正确实现下会不会通过」。

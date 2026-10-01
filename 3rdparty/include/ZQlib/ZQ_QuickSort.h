@@ -244,7 +244,13 @@ namespace ZQ
 			j--;
 		}
 		vals[i] = tmp_val;
-		vals[i] = tmp_idx;
+		// 原来这里是 `vals[i] = tmp_idx;` —— 复制粘贴时漏改了左值。
+		// 后果: ① vals[i] 刚写进去的枢轴值被「下标」覆盖, 调用方拿到的数组
+		//           不再是原数组的一个排列; ② idx[i] 从头到尾没被写过。
+		// 因为返回值走的是局部变量 tmp_val/tmp_idx, 而被写坏的槽位 i 又正好
+		// 不在两边的递归区间里, 所以 output / out_idx 一直是对的 —— 只查返回值
+		// 发现不了。实测 (tools/zq_quicksort_check.cpp): n=1..1000 全部失败。
+		idx[i] = tmp_idx;
 
 		if (i == k)
 		{
