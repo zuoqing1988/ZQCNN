@@ -228,7 +228,7 @@ int select_subset(int argc, char** argv)
 	float similarity_thresh = atof(argv[6]);
 
 	if (argc > 7)
-		max_thread_num = atoi(argv[5]);
+		max_thread_num = atoi(argv[7]);
 
 	max_thread_num = __max(1, __min(max_thread_num, omp_get_num_procs() - 1));
 	ZQ_FaceDatabase database;

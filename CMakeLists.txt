@@ -100,22 +100,25 @@ if((CMAKE_CXX_COMPILER_ID MATCHES "GNU") OR (CMAKE_CXX_COMPILER_ID MATCHES "Clan
             add_definitions(-mfpu=neon)
             add_definitions(-mfloat-abi=softfp)
         endif()
-        if(BLAS_TYPE MATCHES "zq_gemm")
-            add_definitions(-DZQ_CNN_USE_ZQ_GEMM=1)
-        elseif(BLAS_TYPE MATCHES "openblas")
-            add_definitions(-DZQ_CNN_USE_BLAS_GEMM=1)
-        elseif(BLAS_TYPE MATCHES "openblas_zq_gemm")
-            add_definitions(-DZQ_CNN_USE_BOTH_BLAS_ZQ_GEMM)
-        endif()
     else()
         add_compile_options(-mavx2)
     endif()
 elseif(CMAKE_CXX_COMPILER_ID MATCHES "Intel")
     add_compile_options(/QxAVX2)
 elseif(CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
-    # 源码里含中文注释，不加 /utf-8 时 MSVC 会按系统 ANSI 代码页解码，
-    # 多字节序列可能被误判成引号/反斜杠导致莫名其妙的语法错误
     add_compile_options(/utf-8 /arch:AVX2)
+endif()
+
+# BLAS_TYPE 与 SIMD_ARCH_TYPE 无关, 之前这段嵌在 ARM 分支里, x86 上 -DBLAS_TYPE 完全无效;
+# 而且 MATCHES 是子串匹配: 默认的 ZQ_GEMM 匹配不到 "zq_gemm", openblas_zq_gemm 又会被
+# "openblas" 抢先命中。这里改成显式分支 + 精确比较。
+string(TOLOWER "${BLAS_TYPE}" ZQCNN_BLAS_TYPE_LOWER)
+if(ZQCNN_BLAS_TYPE_LOWER STREQUAL "openblas_zq_gemm")
+    add_definitions(-DZQ_CNN_USE_BOTH_BLAS_ZQ_GEMM=1)
+elseif(ZQCNN_BLAS_TYPE_LOWER STREQUAL "openblas")
+    add_definitions(-DZQ_CNN_USE_BLAS_GEMM=1)
+elseif(ZQCNN_BLAS_TYPE_LOWER STREQUAL "zq_gemm")
+    add_definitions(-DZQ_CNN_USE_ZQ_GEMM=1)
 endif()
 
 set(ZQCNN_INCLUDE_DIRS ${CMAKE_CURRENT_LIST_DIR}/ZQ_GEMM

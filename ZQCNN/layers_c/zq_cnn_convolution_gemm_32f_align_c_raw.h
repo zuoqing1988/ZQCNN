@@ -75,6 +75,13 @@ void zq_cnn_conv_no_padding_gemm_32f_align_same_pixstep(
 		matrix_A = (zq_base_type*)_aligned_malloc(need_A_buffer_len_align32, 32);
 		if (need_allocate_tmp_out)
 			matrix_C = (zq_base_type*)_aligned_malloc(need_C_buffer_len_align32, 32);
+		if (matrix_A == 0 || matrix_Bt == 0 || (need_allocate_tmp_out && matrix_C == 0))
+		{
+			if (matrix_A) _aligned_free(matrix_A);
+			if (matrix_Bt) _aligned_free(matrix_Bt);
+			if (matrix_C) _aligned_free(matrix_C);
+			return;
+		}
 	}
 	else
 	{
@@ -82,6 +89,11 @@ void zq_cnn_conv_no_padding_gemm_32f_align_same_pixstep(
 		{
 			_aligned_free(*buffer);
 			*buffer = _aligned_malloc(total_need_buffer_len, 32);
+			if (*buffer == 0)
+			{
+				// 原来失败也更新 *buffer_len, 下次调用会跳过重新分配直接拿 NULL 去 im2col
+				return;
+			}
 			*buffer_len = total_need_buffer_len;
 		}
 		matrix_A = (zq_base_type*)(*buffer);
@@ -288,6 +300,13 @@ void zq_cnn_conv_no_padding_gemm_32f_align_same_pixstep_kernel1x1(
 			matrix_A = (zq_base_type*)_aligned_malloc(need_A_buffer_len_align32, 32);
 			if (need_allocate_tmp_out)
 				matrix_C = (zq_base_type*)_aligned_malloc(need_C_buffer_len_align32, 32);
+			if (matrix_A == 0 || matrix_Bt == 0 || (need_allocate_tmp_out && matrix_C == 0))
+			{
+				if (matrix_A) _aligned_free(matrix_A);
+				if (matrix_Bt) _aligned_free(matrix_Bt);
+				if (matrix_C) _aligned_free(matrix_C);
+				return;
+			}
 		}
 		else
 		{
@@ -295,6 +314,11 @@ void zq_cnn_conv_no_padding_gemm_32f_align_same_pixstep_kernel1x1(
 			{
 				_aligned_free(*buffer);
 				*buffer = _aligned_malloc(total_need_buffer_len, 32);
+				if (*buffer == 0)
+				{
+					// 原来失败也更新 *buffer_len, 下次调用会跳过重新分配直接拿 NULL 去 im2col
+					return;
+				}
 				*buffer_len = total_need_buffer_len;
 			}
 			matrix_A = (zq_base_type*)(*buffer);
@@ -457,6 +481,13 @@ void zq_cnn_conv_no_padding_gemm_32f_align_same_pixstep_C4(
 		matrix_A = (zq_base_type*)_aligned_malloc(need_A_buffer_len_align32, 32);
 		if (need_allocate_tmp_out)
 			matrix_C = (zq_base_type*)_aligned_malloc(need_C_buffer_len_align32, 32);
+		if (matrix_A == 0 || matrix_Bt == 0 || (need_allocate_tmp_out && matrix_C == 0))
+		{
+			if (matrix_A) _aligned_free(matrix_A);
+			if (matrix_Bt) _aligned_free(matrix_Bt);
+			if (matrix_C) _aligned_free(matrix_C);
+			return;
+		}
 	}
 	else
 	{
@@ -464,6 +495,11 @@ void zq_cnn_conv_no_padding_gemm_32f_align_same_pixstep_C4(
 		{
 			_aligned_free(*buffer);
 			*buffer = _aligned_malloc(total_need_buffer_len, 32);
+			if (*buffer == 0)
+			{
+				// 原来失败也更新 *buffer_len, 下次调用会跳过重新分配直接拿 NULL 去 im2col
+				return;
+			}
 			*buffer_len = total_need_buffer_len;
 		}
 		matrix_A = (zq_base_type*)(*buffer);
@@ -651,6 +687,13 @@ void zq_cnn_conv_no_padding_gemm_32f_align_same_pixstep_batch(
 		matrix_A = (zq_base_type*)_aligned_malloc(need_A_buffer_len_align32, 32);
 		if (need_allocate_tmp_out)
 			matrix_C = (zq_base_type*)_aligned_malloc(need_C_buffer_len_align32, 32);
+		if (matrix_A == 0 || matrix_Bt == 0 || (need_allocate_tmp_out && matrix_C == 0))
+		{
+			if (matrix_A) _aligned_free(matrix_A);
+			if (matrix_Bt) _aligned_free(matrix_Bt);
+			if (matrix_C) _aligned_free(matrix_C);
+			return;
+		}
 	}
 	else
 	{
@@ -658,6 +701,11 @@ void zq_cnn_conv_no_padding_gemm_32f_align_same_pixstep_batch(
 		{
 			_aligned_free(*buffer);
 			*buffer = _aligned_malloc(total_need_buffer_len, 32);
+			if (*buffer == 0)
+			{
+				// 原来失败也更新 *buffer_len, 下次调用会跳过重新分配直接拿 NULL 去 im2col
+				return;
+			}
 			*buffer_len = total_need_buffer_len;
 		}
 		matrix_A = (zq_base_type*)(*buffer);
@@ -861,6 +909,13 @@ void zq_cnn_conv_no_padding_gemm_32f_align_same_or_notsame_pixstep(
 	if (buffer == 0)
 	{
 		matrix_A = (zq_base_type*)_aligned_malloc(need_A_buffer_len_align32, 32);
+		if (matrix_A == 0 || matrix_Bt == 0 || (need_allocate_tmp_out && matrix_C == 0))
+		{
+			if (matrix_A) _aligned_free(matrix_A);
+			if (matrix_Bt) _aligned_free(matrix_Bt);
+			if (matrix_C) _aligned_free(matrix_C);
+			return;
+		}
 		if (need_allocate_matrix_Bt)
 			matrix_Bt = (zq_base_type*)_aligned_malloc(need_B_buffer_len_align32, 32);
 		if (need_allocate_tmp_out)
@@ -872,6 +927,11 @@ void zq_cnn_conv_no_padding_gemm_32f_align_same_or_notsame_pixstep(
 		{
 			_aligned_free(*buffer);
 			*buffer = _aligned_malloc(total_need_buffer_len, 32);
+			if (*buffer == 0)
+			{
+				// 原来失败也更新 *buffer_len, 下次调用会跳过重新分配直接拿 NULL 去 im2col
+				return;
+			}
 			*buffer_len = total_need_buffer_len;
 		}
 		matrix_A = *buffer;
@@ -1076,6 +1136,13 @@ void zq_cnn_conv_no_padding_gemm_32f_align_same_or_notsame_pixstep_C3(
 		matrix_Bt = (zq_base_type*)_aligned_malloc(need_B_buffer_len_align32, 32);
 		if (need_allocate_tmp_out)
 			matrix_C = (zq_base_type*)_aligned_malloc(need_C_buffer_len_align32, 32);
+		if (matrix_A == 0 || matrix_Bt == 0 || (need_allocate_tmp_out && matrix_C == 0))
+		{
+			if (matrix_A) _aligned_free(matrix_A);
+			if (matrix_Bt) _aligned_free(matrix_Bt);
+			if (matrix_C) _aligned_free(matrix_C);
+			return;
+		}
 	}
 	else
 	{
@@ -1083,6 +1150,11 @@ void zq_cnn_conv_no_padding_gemm_32f_align_same_or_notsame_pixstep_C3(
 		{
 			_aligned_free(*buffer);
 			*buffer = _aligned_malloc(total_need_buffer_len, 32);
+			if (*buffer == 0)
+			{
+				// 原来失败也更新 *buffer_len, 下次调用会跳过重新分配直接拿 NULL 去 im2col
+				return;
+			}
 			*buffer_len = total_need_buffer_len;
 		}
 		matrix_A = *buffer;
@@ -1273,6 +1345,13 @@ void zq_cnn_conv_no_padding_gemm_32f_align_same_or_notsame_pixstep_batch(
 	if (buffer == 0)
 	{
 		matrix_A = (zq_base_type*)_aligned_malloc(need_A_buffer_len_align32, 32);
+		if (matrix_A == 0 || matrix_Bt == 0 || (need_allocate_tmp_out && matrix_C == 0))
+		{
+			if (matrix_A) _aligned_free(matrix_A);
+			if (matrix_Bt) _aligned_free(matrix_Bt);
+			if (matrix_C) _aligned_free(matrix_C);
+			return;
+		}
 		if (need_allocate_matrix_Bt)
 			matrix_Bt = (zq_base_type*)_aligned_malloc(need_B_buffer_len_align32, 32);
 		if (need_allocate_tmp_out)
@@ -1284,6 +1363,11 @@ void zq_cnn_conv_no_padding_gemm_32f_align_same_or_notsame_pixstep_batch(
 		{
 			_aligned_free(*buffer);
 			*buffer = _aligned_malloc(total_need_buffer_len, 32);
+			if (*buffer == 0)
+			{
+				// 原来失败也更新 *buffer_len, 下次调用会跳过重新分配直接拿 NULL 去 im2col
+				return;
+			}
 			*buffer_len = total_need_buffer_len;
 		}
 		matrix_A = *buffer;
