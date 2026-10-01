@@ -25,7 +25,7 @@
  *   ymm15                       : 无 FMA 时 vmulps 的临时
  *
  *   通用寄存器: 全部只用 caller-saved (rax rcx rdx r8 r9 r10 r11),
- *   所以整个 asm 块里不需要 push/pop, 也不碰 callee-saved 寄存器。
+ *   所以整个 asm 块里不需要 push/pop, 也不碰 callee-saved 的 GPR。
  *     eax  = K 迭代次数 (K/8)
  *     r10  = A 第 0 行指针  (每次 +32)      循环结束后作废, 复用为写回指针
  *     r11  = A 第 1 行指针  (每次 +32)
@@ -67,6 +67,16 @@
  *   输入分配到先写的寄存器上, 读到的就是被破坏的值; 用 "m" 约束后每个
  *   输入都在栈上有一份独立的拷贝, 什么时候读都安全, 因此可以把 C 写回
  *   指针留到循环之后再读 (对应 MSVC 的 __asm{} 直接读 C 变量的行为)。
+ *
+ * ============================ XMM 寄存器与 ABI ============================
+ * 微内核要用到 xmm0-xmm14。这在 Linux (System V AMD64) 上无所谓 —— 那套 ABI
+ * 里所有 xmm 都是 caller-saved, clobber 列表里写全即可 (下面已经写全)。
+ * 但 **Windows x64 ABI 只有 xmm0-xmm5 是 volatile, xmm6-xmm15 是 callee-saved**,
+ * 调用方会把值留在这些寄存器里跨越调用。所以:
+ *   - MSVC 路径: 由 zq_gemm_32f_align_c_asm_msvc.asm 的 ZQA_PROLOGUE /
+ *     ZQA_EPILOGUE 保存/恢复 xmm6-xmm15。
+ *   - GCC/Clang 路径: clobber 列表里必须包含 xmm6-xmm15, 否则同样的问题会
+ *     在 MinGW-w64 上重演。System V 下这一项是 no-op, 不产生任何代码。
  *
  * ============================ 平台 ============================
  *   MSVC x64        : 函数体内 __asm { } (Intel 语法)
@@ -390,8 +400,6 @@ static void FNAME(int M, int N, int K, const float* A, int lda, const float* Bt,
 	int s3 = s1 * 3; \
 	const int mb = MB, nb = NB; \
 	const int npair = NB >> 2; \
- \
-	{ extern int printf(const char*, ...); static int zqa_dbg = 0; if (zqa_dbg < 25) { zqa_dbg++; printf("[K %s M=%d N=%d K=%d k8=%d s1=%d s3=%d A=%p Bt=%p C=%p lda=%d ldb=%d ldc=%d]\n", #FNAME, M, N, K, k8, s1, s3, (void*)A, (void*)Bt, (void*)C, lda, ldb, ldc); } } \
  \
 	if (M <= 0 || N <= 0) \
 		return; \

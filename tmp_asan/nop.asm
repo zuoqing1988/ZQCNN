@@ -19,72 +19,15 @@
 ;
 ; 调用约定 (x64 Windows): 前 4 个整型/指针参数在 rcx/rdx/r8/r9, 其余在栈上
 ; (第 5 个参数在 [rsp+28h], 调用者已预留 32 字节 shadow space)。
-;
-; !! callee-saved 浮点寄存器 !!
-; Windows x64 ABI 与 System V AMD64 **不一样**:
-;   - System V AMD64 (Linux/macOS): x87 与全部 xmm0-xmm31 都是 caller-saved,
-;     随便用。
-;   - Windows x64: 只有 xmm0-xmm5 是 volatile, **xmm6-xmm15 是非易失的
-;     (callee-saved)**, 调用方会把值留在里面跨越调用。
-; 本文件的微内核要用到 ymm0-ymm14 (8 个累加器 + 6 个操作数 + 1 个归约临时),
-; 必然踩到 xmm6-xmm14。如果不保存/恢复, 返回后调用方的 xmm6-xmm15 就成了
-; 垃圾 —— 表现为"调用者的 double 局部变量变成 -1.7e30 之类的乱码、耗时算出来是
-; 1e30 / inf", 而且随 MSVC 怎么分配寄存器而变, 很难复现。
-; (这正是 2026-10-01 Windows 端内存被破坏的根因; Linux 端因为 XMM 全是
-;  caller-saved 所以一直没暴露。)
-; 因此三个微内核统一用 ZQA_PROLOGUE / ZQA_EPILOGUE 保存/恢复 xmm6-xmm15。
-;
-; 通用寄存器只用 caller-saved 的 rax rcx rdx r8 r9 r10 r11, 不碰 callee-saved
-; 的 rbx rbp rsi rdi r12-r15, 所以 GPR 侧不需要额外保存。
-;
-; 栈: 入口 rsp ≡ 8 (mod 16) (调用者的 call 压了 8 字节返回地址)。
-; ZQA_FRAME = 0A8h = 168 = 10*16 (xmm6-xmm15) + 8 字节补齐, 且 168 ≡ 8 (mod 16),
-; 所以 sub rsp, ZQA_FRAME 之后 rsp ≡ 0 (mod 16), 保存区天然 16 字节对齐;
-; add rsp, ZQA_FRAME 之后 rsp 回到入口值, 出口 16 字节对齐不变。
-; 减 rsp 之后, 栈上传参的偏移整体要加 ZQA_FRAME, 见 ZQA_ARG5..ZQA_ARG8。
+; 本文件只用 caller-saved 寄存器 (rax rcx rdx r8 r9 r10 r11) 与 caller-saved 的
+; ymm0-ymm15, 不碰 callee-saved 寄存器, 也不调整 rsp, 所以不需要保存/恢复任何
+; 寄存器, 栈在函数入口/出口都保持 16 字节对齐。
 ;
 ; FMA: Windows 侧 ZQ_CNN_USE_SSETYPE 固定为 AVX2 (含 FMA3), 且 /arch:AVX2,
 ; 这里直接用 vfmadd231ps。
 ;-----------------------------------------------------------------------------
 
 _TEXT SEGMENT
-
-; xmm6-xmm15 保存区大小 (见上面的对齐推导)
-ZQA_FRAME      EQU     0A8h
-; 减 rsp, ZQA_FRAME 之后的栈上传参偏移
-ZQA_ARG5       EQU     0D0h        ; = 28h + ZQA_FRAME
-ZQA_ARG6       EQU     0D8h        ; = 30h + ZQA_FRAME
-ZQA_ARG7       EQU     0E0h        ; = 38h + ZQA_FRAME
-ZQA_ARG8       EQU     0E8h        ; = 40h + ZQA_FRAME
-
-; 保存 / 恢复 xmm6-xmm15 (Windows x64 callee-saved)
-ZQA_PROLOGUE MACRO
-        sub     rsp, ZQA_FRAME
-        vmovups xmmword ptr [rsp+00h], xmm6
-        vmovups xmmword ptr [rsp+10h], xmm7
-        vmovups xmmword ptr [rsp+20h], xmm8
-        vmovups xmmword ptr [rsp+30h], xmm9
-        vmovups xmmword ptr [rsp+40h], xmm10
-        vmovups xmmword ptr [rsp+50h], xmm11
-        vmovups xmmword ptr [rsp+60h], xmm12
-        vmovups xmmword ptr [rsp+70h], xmm13
-        vmovups xmmword ptr [rsp+80h], xmm14
-        vmovups xmmword ptr [rsp+90h], xmm15
-        ENDM
-
-ZQA_EPILOGUE MACRO
-        vmovups xmm6,  xmmword ptr [rsp+00h]
-        vmovups xmm7,  xmmword ptr [rsp+10h]
-        vmovups xmm8,  xmmword ptr [rsp+20h]
-        vmovups xmm9,  xmmword ptr [rsp+30h]
-        vmovups xmm10, xmmword ptr [rsp+40h]
-        vmovups xmm11, xmmword ptr [rsp+50h]
-        vmovups xmm12, xmmword ptr [rsp+60h]
-        vmovups xmm13, xmmword ptr [rsp+70h]
-        vmovups xmm14, xmmword ptr [rsp+80h]
-        vmovups xmm15, xmmword ptr [rsp+90h]
-        add     rsp, ZQA_FRAME
-        ENDM
 
 
 
@@ -93,19 +36,19 @@ ZQA_EPILOGUE MACRO
 ;-----------------------------------------------------------------------------
 ; 2 行 x 4 列
 ;   rcx = a0, rdx = a1, r8 = b0, r9d = k8
-;   [rsp+ZQA_ARG5] = s1 (ldb*4 字节), [rsp+ZQA_ARG6] = s3 (3*ldb*4 字节)
-;   [rsp+ZQA_ARG7] = c0, [rsp+ZQA_ARG8] = c1
+;   [rsp+28h] = s1 (ldb*4 字节), [rsp+30h] = s3 (3*ldb*4 字节)
+;   [rsp+38h] = c0, [rsp+40h] = c1
 ;   ymm0-ymm3 : C 第 0 行的 4 列   ymm4-ymm7 : C 第 1 行的 4 列
 ;   ymm8/ymm9 : A 两行             ymm10-13  : Bt 的 4 行
 ;-----------------------------------------------------------------------------
 zq_gemm_32f_asm_core_m2n4 PROC
-        ZQA_PROLOGUE
+        ret
         mov     eax, r9d
         mov     r10, rcx
         mov     r11, rdx
         mov     r9, r8
-        mov     r8d, DWORD PTR [rsp+ZQA_ARG5]
-        mov     edx, DWORD PTR [rsp+ZQA_ARG6]
+        mov     r8d, DWORD PTR [rsp+28h]
+        mov     edx, DWORD PTR [rsp+30h]
         vxorps  ymm0, ymm0, ymm0
         vxorps  ymm1, ymm1, ymm1
         vxorps  ymm2, ymm2, ymm2
@@ -137,8 +80,8 @@ L_m2n4_loop:
         dec     eax
         jnz     L_m2n4_loop
 L_m2n4_done:
-        mov     r9, QWORD PTR [rsp+ZQA_ARG7]
-        mov     r10, QWORD PTR [rsp+ZQA_ARG8]
+        mov     r9, QWORD PTR [rsp+38h]
+        mov     r10, QWORD PTR [rsp+40h]
         vextractf128 xmm14, ymm0, 1
         vaddps  xmm0, xmm0, xmm14
         vhaddps xmm0, xmm0, xmm0
@@ -180,25 +123,24 @@ L_m2n4_done:
         vinsertps xmm4, xmm4, xmm7, 30h
         vmovups [r10], xmm4
         vzeroupper
-        ZQA_EPILOGUE
         ret
 zq_gemm_32f_asm_core_m2n4 ENDP
 
 ;-----------------------------------------------------------------------------
 ; 1 行 x 8 列 (B 分两批加载)
 ;   rcx = a0, rdx = b0 (第 0 列行), r8 = b4 (第 4 列行), r9d = k8
-;   [rsp+ZQA_ARG5] = s1, [rsp+ZQA_ARG6] = s3, [rsp+ZQA_ARG7] = c0
+;   [rsp+28h] = s1, [rsp+30h] = s3, [rsp+38h] = c0
 ;   ymm0-ymm3 : 列 0..3 的累加器   ymm4-ymm7 : 列 4..7 的累加器
 ;-----------------------------------------------------------------------------
 zq_gemm_32f_asm_core_m1n8 PROC
-        ZQA_PROLOGUE
+        ret
         mov     eax, r9d
         mov     r10, rcx
         mov     r9, rdx
         mov     r11, r8
-        mov     r8d, DWORD PTR [rsp+ZQA_ARG5]
-        mov     edx, DWORD PTR [rsp+ZQA_ARG6]
-        mov     rcx, QWORD PTR [rsp+ZQA_ARG7]
+        mov     r8d, DWORD PTR [rsp+28h]
+        mov     edx, DWORD PTR [rsp+30h]
+        mov     rcx, QWORD PTR [rsp+38h]
         vxorps  ymm0, ymm0, ymm0
         vxorps  ymm1, ymm1, ymm1
         vxorps  ymm2, ymm2, ymm2
@@ -276,25 +218,23 @@ L_m1n8_done:
         vmovups [rcx+16], xmm4        ; c0 + 列 4..7（原来错写成 [r10]，r10 是 A 行指针，
                                      ; 会把结果写进调用方的 A 缓冲区造成堆破坏）
         vzeroupper
-        ZQA_EPILOGUE
         ret
 zq_gemm_32f_asm_core_m1n8 ENDP
 
 ;-----------------------------------------------------------------------------
 ; 1 行 x 4 列
 ;   rcx = a0, rdx = b0, r8d = k8, r9d = s1
-;   [rsp+ZQA_ARG5] = s3, [rsp+ZQA_ARG6] = c0
-;   (x64 Windows ABI: 前 4 个整型/指针参数走 rcx/rdx/r8/r9, 第 5 个起才上栈;
-;    偏移已含 ZQA_FRAME, 见文件头的说明)
+;   [rsp+28h] = s3, [rsp+30h] = c0
+;   (x64 Windows ABI: 前 4 个整型/指针参数走 rcx/rdx/r8/r9, 第 5 个起才上栈)
 ;-----------------------------------------------------------------------------
 zq_gemm_32f_asm_core_m1n4 PROC
-        ZQA_PROLOGUE
+        ret
         mov     eax, r8d
         mov     r8d, r9d                      ; s1 必须在 r9 被 b0 覆盖之前取走
         mov     r10, rcx
         mov     r9, rdx
-        mov     edx, DWORD PTR [rsp+ZQA_ARG5]
-        mov     rcx, QWORD PTR [rsp+ZQA_ARG6]
+        mov     edx, DWORD PTR [rsp+28h]
+        mov     rcx, QWORD PTR [rsp+30h]
         vxorps  ymm0, ymm0, ymm0
         vxorps  ymm1, ymm1, ymm1
         vxorps  ymm2, ymm2, ymm2
@@ -337,7 +277,6 @@ L_m1n4_done:
         vinsertps xmm0, xmm0, xmm3, 30h
         vmovups [rcx], xmm0
         vzeroupper
-        ZQA_EPILOGUE
         ret
 zq_gemm_32f_asm_core_m1n4 ENDP
 

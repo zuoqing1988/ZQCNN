@@ -38,7 +38,9 @@ bool ZQ_CNN_Forward_SSEUtils_NCHWC::InnerProductWithBias(ZQ_CNN_Tensor4D_NCHWC1&
 	if (in_N <= 0 || in_H <= 0 || in_W <= 0 || in_C == 0
 		|| need_H < 0 || need_W < 0)
 	{
-		output.ChangeSize(0, 0, 0, 0, 0, 0);
+		if (!output.ChangeSize(0, 0, 0, 0, 0, 0))
+		
+return false;
 		return true;
 	}
 	if (filter_C != in_C || filter_N != bias_C)
@@ -49,7 +51,9 @@ bool ZQ_CNN_Forward_SSEUtils_NCHWC::InnerProductWithBias(ZQ_CNN_Tensor4D_NCHWC1&
 	int need_C = filter_N;
 	if (out_N != need_N || out_H != need_H || out_W != need_W || out_C != need_C)
 	{
-		output.ChangeSize(need_N, need_H, need_W, need_C, 0, 0);
+		if (!output.ChangeSize(need_N, need_H, need_W, need_C, 0, 0))
+		
+return false;
 	}
 
 	int in_sliceStep = input.GetSliceStep();
@@ -123,7 +127,9 @@ bool ZQ_CNN_Forward_SSEUtils_NCHWC::InnerProductWithBiasPReLU(ZQ_CNN_Tensor4D_NC
 	if (in_N <= 0 || in_H <= 0 || in_W <= 0 || in_C == 0
 		|| need_H < 0 || need_W < 0)
 	{
-		output.ChangeSize(0, 0, 0, 0, 0, 0);
+		if (!output.ChangeSize(0, 0, 0, 0, 0, 0))
+		
+return false;
 		return true;
 	}
 	if (filter_C != in_C || filter_N != bias_C || filter_N != slope_C)
@@ -134,7 +140,9 @@ bool ZQ_CNN_Forward_SSEUtils_NCHWC::InnerProductWithBiasPReLU(ZQ_CNN_Tensor4D_NC
 	int need_C = filter_N;
 	if (out_N != need_N || out_H != need_H || out_W != need_W || out_C != need_C)
 	{
-		output.ChangeSize(need_N, need_H, need_W, need_C, 0, 0);
+		if (!output.ChangeSize(need_N, need_H, need_W, need_C, 0, 0))
+		
+return false;
 	}
 
 	int in_sliceStep = input.GetSliceStep();
@@ -209,7 +217,9 @@ bool ZQ_CNN_Forward_SSEUtils_NCHWC::InnerProductWithPReLU(ZQ_CNN_Tensor4D_NCHWC1
 	if (in_N <= 0 || in_H <= 0 || in_W <= 0 || in_C == 0
 		|| need_H < 0 || need_W < 0)
 	{
-		output.ChangeSize(0, 0, 0, 0, 0, 0);
+		if (!output.ChangeSize(0, 0, 0, 0, 0, 0))
+		
+return false;
 		return true;
 	}
 	if (filter_C != in_C || filter_N != slope_C)
@@ -220,7 +230,9 @@ bool ZQ_CNN_Forward_SSEUtils_NCHWC::InnerProductWithPReLU(ZQ_CNN_Tensor4D_NCHWC1
 	int need_C = filter_N;
 	if (out_N != need_N || out_H != need_H || out_W != need_W || out_C != need_C)
 	{
-		output.ChangeSize(need_N, need_H, need_W, need_C, 0, 0);
+		if (!output.ChangeSize(need_N, need_H, need_W, need_C, 0, 0))
+		
+return false;
 	}
 
 	int in_sliceStep = input.GetSliceStep();
@@ -292,7 +304,9 @@ bool ZQ_CNN_Forward_SSEUtils_NCHWC::InnerProduct(ZQ_CNN_Tensor4D_NCHWC1& input, 
 	if (in_N <= 0 || in_H <= 0 || in_W <= 0 || in_C == 0
 		|| need_H < 0 || need_W < 0)
 	{
-		output.ChangeSize(0, 0, 0, 0, 0, 0);
+		if (!output.ChangeSize(0, 0, 0, 0, 0, 0))
+		
+return false;
 		return true;
 	}
 	if (filter_C != in_C)
@@ -302,7 +316,9 @@ bool ZQ_CNN_Forward_SSEUtils_NCHWC::InnerProduct(ZQ_CNN_Tensor4D_NCHWC1& input, 
 	int need_C = filter_N;
 	if (out_N != need_N || out_H != need_H || out_W != need_W || out_C != need_C)
 	{
-		output.ChangeSize(need_N, need_H, need_W, need_C, 0, 0);
+		if (!output.ChangeSize(need_N, need_H, need_W, need_C, 0, 0))
+		
+return false;
 	}
 
 	int in_sliceStep = input.GetSliceStep();
@@ -373,7 +389,9 @@ bool ZQ_CNN_Forward_SSEUtils_NCHWC::ConvolutionWithBias(ZQ_CNN_Tensor4D_NCHWC1& 
 	if (in_N <= 0 || in_H <= 0 || in_W <= 0 || in_C == 0
 		|| need_H < 0 || need_W < 0)
 	{
-		output.ChangeSize(0, 0, 0, 0, 0, 0);
+		if (!output.ChangeSize(0, 0, 0, 0, 0, 0))
+		
+return false;
 		return true;
 	}
 	if (filter_C != in_C || filter_N != bias_C)
@@ -384,7 +402,9 @@ bool ZQ_CNN_Forward_SSEUtils_NCHWC::ConvolutionWithBias(ZQ_CNN_Tensor4D_NCHWC1& 
 	int need_C = filter_N;
 	if (out_N != need_N || out_H != need_H || out_W != need_W || out_C != need_C)
 	{
-		output.ChangeSize(need_N, need_H, need_W, need_C, 0, 0);
+		if (!output.ChangeSize(need_N, need_H, need_W, need_C, 0, 0))
+		
+return false;
 	}
 
 	if (padH != 0 || padW != 0)
@@ -486,7 +506,9 @@ bool ZQ_CNN_Forward_SSEUtils_NCHWC::ConvolutionWithBiasPReLU(ZQ_CNN_Tensor4D_NCH
 	if (in_N <= 0 || in_H <= 0 || in_W <= 0 || in_C == 0
 		|| need_H < 0 || need_W < 0)
 	{
-		output.ChangeSize(0, 0, 0, 0, 0, 0);
+		if (!output.ChangeSize(0, 0, 0, 0, 0, 0))
+		
+return false;
 		return true;
 	}
 	if (filter_C != in_C || filter_N != bias_C || filter_N != slope_C)
@@ -497,7 +519,9 @@ bool ZQ_CNN_Forward_SSEUtils_NCHWC::ConvolutionWithBiasPReLU(ZQ_CNN_Tensor4D_NCH
 	int need_C = filter_N;
 	if (out_N != need_N || out_H != need_H || out_W != need_W || out_C != need_C)
 	{
-		output.ChangeSize(need_N, need_H, need_W, need_C, 0, 0);
+		if (!output.ChangeSize(need_N, need_H, need_W, need_C, 0, 0))
+		
+return false;
 	}
 
 	if (padH != 0 || padW != 0)
@@ -598,7 +622,9 @@ bool ZQ_CNN_Forward_SSEUtils_NCHWC::ConvolutionWithPReLU(ZQ_CNN_Tensor4D_NCHWC1&
 	if (in_N <= 0 || in_H <= 0 || in_W <= 0 || in_C == 0
 		|| need_H < 0 || need_W < 0)
 	{
-		output.ChangeSize(0, 0, 0, 0, 0, 0);
+		if (!output.ChangeSize(0, 0, 0, 0, 0, 0))
+		
+return false;
 		return true;
 	}
 	if (filter_C != in_C || filter_N != slope_C)
@@ -609,7 +635,9 @@ bool ZQ_CNN_Forward_SSEUtils_NCHWC::ConvolutionWithPReLU(ZQ_CNN_Tensor4D_NCHWC1&
 	int need_C = filter_N;
 	if (out_N != need_N || out_H != need_H || out_W != need_W || out_C != need_C)
 	{
-		output.ChangeSize(need_N, need_H, need_W, need_C, 0, 0);
+		if (!output.ChangeSize(need_N, need_H, need_W, need_C, 0, 0))
+		
+return false;
 	}
 
 	if (padH != 0 || padW != 0)
@@ -710,7 +738,9 @@ bool ZQ_CNN_Forward_SSEUtils_NCHWC::Convolution(ZQ_CNN_Tensor4D_NCHWC1& input, c
 	if (in_N <= 0 || in_H <= 0 || in_W <= 0 || in_C == 0
 		|| need_H < 0 || need_W < 0)
 	{
-		output.ChangeSize(0, 0, 0, 0, 0, 0);
+		if (!output.ChangeSize(0, 0, 0, 0, 0, 0))
+		
+return false;
 		return true;
 	}
 	if (filter_C != in_C)
@@ -720,7 +750,9 @@ bool ZQ_CNN_Forward_SSEUtils_NCHWC::Convolution(ZQ_CNN_Tensor4D_NCHWC1& input, c
 	int need_C = filter_N;
 	if (out_N != need_N || out_H != need_H || out_W != need_W || out_C != need_C)
 	{
-		output.ChangeSize(need_N, need_H, need_W, need_C, 0, 0);
+		if (!output.ChangeSize(need_N, need_H, need_W, need_C, 0, 0))
+		
+return false;
 	}
 
 	if (padH != 0 || padW != 0)
@@ -815,7 +847,9 @@ bool ZQ_CNN_Forward_SSEUtils_NCHWC::DepthwiseConvolutionWithBias(ZQ_CNN_Tensor4D
 	if (in_N <= 0 || in_H <= 0 || in_W <= 0 || in_C == 0
 		|| (in_H - filter_H + (padH << 1)) < 0 || (in_W - filter_W + (padW << 1)) < 0)
 	{
-		output.ChangeSize(0, 0, 0, 0, 0, 0);
+		if (!output.ChangeSize(0, 0, 0, 0, 0, 0))
+		
+return false;
 		return true;
 	}
 	if (filter_C != in_C || filter_N != 1)
@@ -827,7 +861,9 @@ bool ZQ_CNN_Forward_SSEUtils_NCHWC::DepthwiseConvolutionWithBias(ZQ_CNN_Tensor4D
 	int need_C = in_C;
 	if (out_N != need_N || out_H != need_H || out_W != need_W || out_C != need_C)
 	{
-		output.ChangeSize(need_N, need_H, need_W, need_C, 0, 0);
+		if (!output.ChangeSize(need_N, need_H, need_W, need_C, 0, 0))
+		
+return false;
 	}
 
 	if (padH != 0 || padW != 0)
@@ -927,7 +963,9 @@ bool ZQ_CNN_Forward_SSEUtils_NCHWC::DepthwiseConvolutionWithBiasPReLU(ZQ_CNN_Ten
 	if (in_N <= 0 || in_H <= 0 || in_W <= 0 || in_C == 0
 		|| (in_H - filter_H + (padH << 1)) < 0 || (in_W - filter_W + (padW << 1)) < 0)
 	{
-		output.ChangeSize(0, 0, 0, 0, 0, 0);
+		if (!output.ChangeSize(0, 0, 0, 0, 0, 0))
+		
+return false;
 		return true;
 	}
 	if (filter_C != in_C || filter_N != 1)
@@ -939,7 +977,9 @@ bool ZQ_CNN_Forward_SSEUtils_NCHWC::DepthwiseConvolutionWithBiasPReLU(ZQ_CNN_Ten
 	int need_C = in_C;
 	if (out_N != need_N || out_H != need_H || out_W != need_W || out_C != need_C)
 	{
-		output.ChangeSize(need_N, need_H, need_W, need_C, 0, 0);
+		if (!output.ChangeSize(need_N, need_H, need_W, need_C, 0, 0))
+		
+return false;
 	}
 
 	if (padH != 0 || padW != 0)
@@ -1038,7 +1078,9 @@ bool ZQ_CNN_Forward_SSEUtils_NCHWC::DepthwiseConvolution(ZQ_CNN_Tensor4D_NCHWC1&
 	if (in_N <= 0 || in_H <= 0 || in_W <= 0 || in_C == 0
 		|| (in_H - filter_H + (padH << 1)) < 0 || (in_W - filter_W + (padW << 1)) < 0)
 	{
-		output.ChangeSize(0, 0, 0, 0, 0, 0);
+		if (!output.ChangeSize(0, 0, 0, 0, 0, 0))
+		
+return false;
 		return true;
 	}
 	if (filter_C != in_C || filter_N != 1)
@@ -1050,7 +1092,9 @@ bool ZQ_CNN_Forward_SSEUtils_NCHWC::DepthwiseConvolution(ZQ_CNN_Tensor4D_NCHWC1&
 	int need_C = in_C;
 	if (out_N != need_N || out_H != need_H || out_W != need_W || out_C != need_C)
 	{
-		output.ChangeSize(need_N, need_H, need_W, need_C, 0, 0);
+		if (!output.ChangeSize(need_N, need_H, need_W, need_C, 0, 0))
+		
+return false;
 	}
 
 	if (padH != 0 || padW != 0)
@@ -1154,14 +1198,16 @@ void ZQ_CNN_Forward_SSEUtils_NCHWC::MaxPooling(const ZQ_CNN_Tensor4D_NCHWC1 &inp
 
 	if (need_W <= 0 || need_H <= 0)
 	{
-		output.ChangeSize(0, 0, 0, 0, 0, 0);
+		if (!output.ChangeSize(0, 0, 0, 0, 0, 0))
+		
 		return;
 	}
 
 	bool suredivided = (in_H - kernel_H) % stride_H == 0 && (in_W - kernel_W) % stride_W == 0;
 	if (output.GetN() != need_N || output.GetH() != need_H || output.GetW() != need_W || output.GetC() != need_C)
-		output.ChangeSize(need_N, need_H, need_W, need_C, 0, 0);
-
+		if (!output.ChangeSize(need_N, need_H, need_W, need_C, 0, 0))
+		
+		return;
 	int in_sliceStep = input.GetSliceStep();
 	int in_widthStep = input.GetWidthStep();
 	int in_imStep = input.GetImageStep();
@@ -1227,14 +1273,16 @@ void ZQ_CNN_Forward_SSEUtils_NCHWC::AVGPooling(const ZQ_CNN_Tensor4D_NCHWC1 &inp
 
 	if (need_W <= 0 || need_H <= 0)
 	{
-		output.ChangeSize(0, 0, 0, 0, 0, 0);
+		if (!output.ChangeSize(0, 0, 0, 0, 0, 0))
+		
 		return;
 	}
 
 	bool suredivided = (in_H - kernel_H) % stride_H == 0 && (in_W - kernel_W) % stride_W == 0;
 	if (output.GetN() != need_N || output.GetH() != need_H || output.GetW() != need_W || output.GetC() != need_C)
-		output.ChangeSize(need_N, need_H, need_W, need_C, 0, 0);
-
+		if (!output.ChangeSize(need_N, need_H, need_W, need_C, 0, 0))
+		
+		return;
 	int in_sliceStep = input.GetSliceStep();
 	int in_widthStep = input.GetWidthStep();
 	int in_imStep = input.GetImageStep();
@@ -1426,7 +1474,9 @@ bool ZQ_CNN_Forward_SSEUtils_NCHWC::Eltwise_Sum(const std::vector<const ZQ_CNN_T
 			return false;
 	}
 	if (output.GetN() != N || output.GetH() != H || output.GetW() != W || output.GetC() != C)
-		output.ChangeSize(N, H, W, C, 0, 0);
+		if (!output.ChangeSize(N, H, W, C, 0, 0))
+		
+return false;
 	if (N <= 0 || H <= 0 || W <= 0 || C <= 0)
 		return true;
 	std::vector<const float*> in_tensor_data(in_num);
@@ -1467,7 +1517,9 @@ bool ZQ_CNN_Forward_SSEUtils_NCHWC::Eltwise_SumWithWeight(const std::vector<cons
 			return false;
 	}
 	if (output.GetN() != N || output.GetH() != H || output.GetW() != W || output.GetC() != C)
-		output.ChangeSize(N, H, W, C, 0, 0);
+		if (!output.ChangeSize(N, H, W, C, 0, 0))
+		
+return false;
 	if (N <= 0 || H <= 0 || W <= 0 || C <= 0)
 		return true;
 	std::vector<const float*> in_tensor_data(in_num);
@@ -1507,7 +1559,9 @@ bool ZQ_CNN_Forward_SSEUtils_NCHWC::Eltwise_Mul(const std::vector<const ZQ_CNN_T
 			return false;
 	}
 	if (output.GetN() != N || output.GetH() != H || output.GetW() != W || output.GetC() != C)
-		output.ChangeSize(N, H, W, C, 0, 0);
+		if (!output.ChangeSize(N, H, W, C, 0, 0))
+		
+return false;
 	if (N <= 0 || H <= 0 || W <= 0 || C <= 0)
 		return true;
 	std::vector<const float*> in_tensor_data(in_num);
@@ -1546,7 +1600,9 @@ bool ZQ_CNN_Forward_SSEUtils_NCHWC::Eltwise_Max(const std::vector<const ZQ_CNN_T
 			return false;
 	}
 	if (output.GetN() != N || output.GetH() != H || output.GetW() != W || output.GetC() != C)
-		output.ChangeSize(N, H, W, C, 0, 0);
+		if (!output.ChangeSize(N, H, W, C, 0, 0))
+		
+return false;
 	if (N <= 0 || H <= 0 || W <= 0 || C <= 0)
 		return true;
 	std::vector<const float*> in_tensor_data(in_num);
@@ -1652,7 +1708,9 @@ bool ZQ_CNN_Forward_SSEUtils_NCHWC::InnerProductWithBias(ZQ_CNN_Tensor4D_NCHWC4&
 	if (in_N <= 0 || in_H <= 0 || in_W <= 0 || in_C == 0
 		|| need_H < 0 || need_W < 0)
 	{
-		output.ChangeSize(0, 0, 0, 0, 0, 0);
+		if (!output.ChangeSize(0, 0, 0, 0, 0, 0))
+		
+return false;
 		return true;
 	}
 
@@ -1661,7 +1719,9 @@ bool ZQ_CNN_Forward_SSEUtils_NCHWC::InnerProductWithBias(ZQ_CNN_Tensor4D_NCHWC4&
 	int need_C = filter_N;
 	if (out_N != need_N || out_H != need_H || out_W != need_W || out_C != need_C)
 	{
-		output.ChangeSize(need_N, need_H, need_W, need_C, 0, 0);
+		if (!output.ChangeSize(need_N, need_H, need_W, need_C, 0, 0))
+		
+return false;
 	}
 
 	int in_sliceStep = input.GetSliceStep();
@@ -1708,7 +1768,9 @@ bool ZQ_CNN_Forward_SSEUtils_NCHWC::InnerProductWithBiasPReLU(ZQ_CNN_Tensor4D_NC
 	if (in_N <= 0 || in_H <= 0 || in_W <= 0 || in_C == 0
 		|| need_H < 0 || need_W < 0)
 	{
-		output.ChangeSize(0, 0, 0, 0, 0, 0);
+		if (!output.ChangeSize(0, 0, 0, 0, 0, 0))
+		
+return false;
 		return true;
 	}
 
@@ -1717,7 +1779,9 @@ bool ZQ_CNN_Forward_SSEUtils_NCHWC::InnerProductWithBiasPReLU(ZQ_CNN_Tensor4D_NC
 	int need_C = filter_N;
 	if (out_N != need_N || out_H != need_H || out_W != need_W || out_C != need_C)
 	{
-		output.ChangeSize(need_N, need_H, need_W, need_C, 0, 0);
+		if (!output.ChangeSize(need_N, need_H, need_W, need_C, 0, 0))
+		
+return false;
 	}
 
 	int in_sliceStep = input.GetSliceStep();
@@ -1763,7 +1827,9 @@ bool ZQ_CNN_Forward_SSEUtils_NCHWC::InnerProductWithPReLU(ZQ_CNN_Tensor4D_NCHWC4
 	if (in_N <= 0 || in_H <= 0 || in_W <= 0 || in_C == 0
 		|| need_H < 0 || need_W < 0)
 	{
-		output.ChangeSize(0, 0, 0, 0, 0, 0);
+		if (!output.ChangeSize(0, 0, 0, 0, 0, 0))
+		
+return false;
 		return true;
 	}
 
@@ -1772,7 +1838,9 @@ bool ZQ_CNN_Forward_SSEUtils_NCHWC::InnerProductWithPReLU(ZQ_CNN_Tensor4D_NCHWC4
 	int need_C = filter_N;
 	if (out_N != need_N || out_H != need_H || out_W != need_W || out_C != need_C)
 	{
-		output.ChangeSize(need_N, need_H, need_W, need_C, 0, 0);
+		if (!output.ChangeSize(need_N, need_H, need_W, need_C, 0, 0))
+		
+return false;
 	}
 
 	int in_sliceStep = input.GetSliceStep();
@@ -1817,7 +1885,9 @@ bool ZQ_CNN_Forward_SSEUtils_NCHWC::InnerProduct(ZQ_CNN_Tensor4D_NCHWC4& input,
 	if (in_N <= 0 || in_H <= 0 || in_W <= 0 || in_C == 0
 		|| need_H < 0 || need_W < 0)
 	{
-		output.ChangeSize(0, 0, 0, 0, 0, 0);
+		if (!output.ChangeSize(0, 0, 0, 0, 0, 0))
+		
+return false;
 		return true;
 	}
 
@@ -1826,7 +1896,9 @@ bool ZQ_CNN_Forward_SSEUtils_NCHWC::InnerProduct(ZQ_CNN_Tensor4D_NCHWC4& input,
 	int need_C = filter_N;
 	if (out_N != need_N || out_H != need_H || out_W != need_W || out_C != need_C)
 	{
-		output.ChangeSize(need_N, need_H, need_W, need_C, 0, 0);
+		if (!output.ChangeSize(need_N, need_H, need_W, need_C, 0, 0))
+		
+return false;
 	}
 
 	int in_sliceStep = input.GetSliceStep();
@@ -1874,7 +1946,9 @@ bool ZQ_CNN_Forward_SSEUtils_NCHWC::ConvolutionWithBias(ZQ_CNN_Tensor4D_NCHWC4& 
 	if (in_N <= 0 || in_H <= 0 || in_W <= 0 || in_C == 0
 		|| need_H < 0 || need_W < 0)
 	{
-		output.ChangeSize(0, 0, 0, 0, 0, 0);
+		if (!output.ChangeSize(0, 0, 0, 0, 0, 0))
+		
+return false;
 		return true;
 	}
 	
@@ -1883,7 +1957,9 @@ bool ZQ_CNN_Forward_SSEUtils_NCHWC::ConvolutionWithBias(ZQ_CNN_Tensor4D_NCHWC4& 
 	int need_C = filter_N;
 	if (out_N != need_N || out_H != need_H || out_W != need_W || out_C != need_C)
 	{
-		output.ChangeSize(need_N, need_H, need_W, need_C, 0, 0);
+		if (!output.ChangeSize(need_N, need_H, need_W, need_C, 0, 0))
+		
+return false;
 	}
 
 	if (padH != 0 || padW != 0)
@@ -1967,7 +2043,9 @@ bool ZQ_CNN_Forward_SSEUtils_NCHWC::ConvolutionWithBiasPReLU(ZQ_CNN_Tensor4D_NCH
 	if (in_N <= 0 || in_H <= 0 || in_W <= 0 || in_C == 0
 		|| need_H < 0 || need_W < 0)
 	{
-		output.ChangeSize(0, 0, 0, 0, 0, 0);
+		if (!output.ChangeSize(0, 0, 0, 0, 0, 0))
+		
+return false;
 		return true;
 	}
 
@@ -1976,7 +2054,9 @@ bool ZQ_CNN_Forward_SSEUtils_NCHWC::ConvolutionWithBiasPReLU(ZQ_CNN_Tensor4D_NCH
 	int need_C = filter_N;
 	if (out_N != need_N || out_H != need_H || out_W != need_W || out_C != need_C)
 	{
-		output.ChangeSize(need_N, need_H, need_W, need_C, 0, 0);
+		if (!output.ChangeSize(need_N, need_H, need_W, need_C, 0, 0))
+		
+return false;
 	}
 
 	if (padH != 0 || padW != 0)
@@ -2058,7 +2138,9 @@ bool ZQ_CNN_Forward_SSEUtils_NCHWC::ConvolutionWithPReLU(ZQ_CNN_Tensor4D_NCHWC4&
 	if (in_N <= 0 || in_H <= 0 || in_W <= 0 || in_C == 0
 		|| need_H < 0 || need_W < 0)
 	{
-		output.ChangeSize(0, 0, 0, 0, 0, 0);
+		if (!output.ChangeSize(0, 0, 0, 0, 0, 0))
+		
+return false;
 		return true;
 	}
 
@@ -2067,7 +2149,9 @@ bool ZQ_CNN_Forward_SSEUtils_NCHWC::ConvolutionWithPReLU(ZQ_CNN_Tensor4D_NCHWC4&
 	int need_C = filter_N;
 	if (out_N != need_N || out_H != need_H || out_W != need_W || out_C != need_C)
 	{
-		output.ChangeSize(need_N, need_H, need_W, need_C, 0, 0);
+		if (!output.ChangeSize(need_N, need_H, need_W, need_C, 0, 0))
+		
+return false;
 	}
 
 	if (padH != 0 || padW != 0)
@@ -2150,7 +2234,9 @@ bool ZQ_CNN_Forward_SSEUtils_NCHWC::Convolution(ZQ_CNN_Tensor4D_NCHWC4& input,
 	if (in_N <= 0 || in_H <= 0 || in_W <= 0 || in_C == 0
 		|| need_H < 0 || need_W < 0)
 	{
-		output.ChangeSize(0, 0, 0, 0, 0, 0);
+		if (!output.ChangeSize(0, 0, 0, 0, 0, 0))
+		
+return false;
 		return true;
 	}
 
@@ -2159,7 +2245,9 @@ bool ZQ_CNN_Forward_SSEUtils_NCHWC::Convolution(ZQ_CNN_Tensor4D_NCHWC4& input,
 	int need_C = filter_N;
 	if (out_N != need_N || out_H != need_H || out_W != need_W || out_C != need_C)
 	{
-		output.ChangeSize(need_N, need_H, need_W, need_C, 0, 0);
+		if (!output.ChangeSize(need_N, need_H, need_W, need_C, 0, 0))
+		
+return false;
 	}
 
 	if (padH != 0 || padW != 0)
@@ -2242,7 +2330,9 @@ bool ZQ_CNN_Forward_SSEUtils_NCHWC::InnerProductWithBias(ZQ_CNN_Tensor4D_NCHWC4&
 	if (in_N <= 0 || in_H <= 0 || in_W <= 0 || in_C == 0
 		|| need_H < 0 || need_W < 0)
 	{
-		output.ChangeSize(0, 0, 0, 0, 0, 0);
+		if (!output.ChangeSize(0, 0, 0, 0, 0, 0))
+		
+return false;
 		return true;
 	}
 	if (filter_C != in_C || filter_N != bias_C)
@@ -2253,7 +2343,9 @@ bool ZQ_CNN_Forward_SSEUtils_NCHWC::InnerProductWithBias(ZQ_CNN_Tensor4D_NCHWC4&
 	int need_C = filter_N;
 	if (out_N != need_N || out_H != need_H || out_W != need_W || out_C != need_C)
 	{
-		output.ChangeSize(need_N, need_H, need_W, need_C, 0, 0);
+		if (!output.ChangeSize(need_N, need_H, need_W, need_C, 0, 0))
+		
+return false;
 	}
 
 	int in_sliceStep = input.GetSliceStep();
@@ -2328,7 +2420,9 @@ bool ZQ_CNN_Forward_SSEUtils_NCHWC::InnerProductWithBiasPReLU(ZQ_CNN_Tensor4D_NC
 	if (in_N <= 0 || in_H <= 0 || in_W <= 0 || in_C == 0
 		|| need_H < 0 || need_W < 0)
 	{
-		output.ChangeSize(0, 0, 0, 0, 0, 0);
+		if (!output.ChangeSize(0, 0, 0, 0, 0, 0))
+		
+return false;
 		return true;
 	}
 	if (filter_C != in_C || filter_N != bias_C || filter_N != slope_C)
@@ -2339,7 +2433,9 @@ bool ZQ_CNN_Forward_SSEUtils_NCHWC::InnerProductWithBiasPReLU(ZQ_CNN_Tensor4D_NC
 	int need_C = filter_N;
 	if (out_N != need_N || out_H != need_H || out_W != need_W || out_C != need_C)
 	{
-		output.ChangeSize(need_N, need_H, need_W, need_C, 0, 0);
+		if (!output.ChangeSize(need_N, need_H, need_W, need_C, 0, 0))
+		
+return false;
 	}
 
 	int in_sliceStep = input.GetSliceStep();
@@ -2413,7 +2509,9 @@ bool ZQ_CNN_Forward_SSEUtils_NCHWC::InnerProductWithPReLU(ZQ_CNN_Tensor4D_NCHWC4
 	if (in_N <= 0 || in_H <= 0 || in_W <= 0 || in_C == 0
 		|| need_H < 0 || need_W < 0)
 	{
-		output.ChangeSize(0, 0, 0, 0, 0, 0);
+		if (!output.ChangeSize(0, 0, 0, 0, 0, 0))
+		
+return false;
 		return true;
 	}
 	if (filter_C != in_C || filter_N != slope_C)
@@ -2424,7 +2522,9 @@ bool ZQ_CNN_Forward_SSEUtils_NCHWC::InnerProductWithPReLU(ZQ_CNN_Tensor4D_NCHWC4
 	int need_C = filter_N;
 	if (out_N != need_N || out_H != need_H || out_W != need_W || out_C != need_C)
 	{
-		output.ChangeSize(need_N, need_H, need_W, need_C, 0, 0);
+		if (!output.ChangeSize(need_N, need_H, need_W, need_C, 0, 0))
+		
+return false;
 	}
 
 	int in_sliceStep = input.GetSliceStep();
@@ -2496,7 +2596,9 @@ bool ZQ_CNN_Forward_SSEUtils_NCHWC::InnerProduct(ZQ_CNN_Tensor4D_NCHWC4& input, 
 	if (in_N <= 0 || in_H <= 0 || in_W <= 0 || in_C == 0
 		|| need_H < 0 || need_W < 0)
 	{
-		output.ChangeSize(0, 0, 0, 0, 0, 0);
+		if (!output.ChangeSize(0, 0, 0, 0, 0, 0))
+		
+return false;
 		return true;
 	}
 	if (filter_C != in_C)
@@ -2506,7 +2608,9 @@ bool ZQ_CNN_Forward_SSEUtils_NCHWC::InnerProduct(ZQ_CNN_Tensor4D_NCHWC4& input, 
 	int need_C = filter_N;
 	if (out_N != need_N || out_H != need_H || out_W != need_W || out_C != need_C)
 	{
-		output.ChangeSize(need_N, need_H, need_W, need_C, 0, 0);
+		if (!output.ChangeSize(need_N, need_H, need_W, need_C, 0, 0))
+		
+return false;
 	}
 
 	int in_sliceStep = input.GetSliceStep();
@@ -2577,7 +2681,9 @@ bool ZQ_CNN_Forward_SSEUtils_NCHWC::ConvolutionWithBias(ZQ_CNN_Tensor4D_NCHWC4& 
 	if (in_N <= 0 || in_H <= 0 || in_W <= 0 || in_C == 0
 		|| need_H < 0 || need_W < 0)
 	{
-		output.ChangeSize(0, 0, 0, 0, 0, 0);
+		if (!output.ChangeSize(0, 0, 0, 0, 0, 0))
+		
+return false;
 		return true;
 	}
 	if (filter_C != in_C || filter_N != bias_C)
@@ -2588,7 +2694,9 @@ bool ZQ_CNN_Forward_SSEUtils_NCHWC::ConvolutionWithBias(ZQ_CNN_Tensor4D_NCHWC4& 
 	int need_C = filter_N;
 	if (out_N != need_N || out_H != need_H || out_W != need_W || out_C != need_C)
 	{
-		output.ChangeSize(need_N, need_H, need_W, need_C, 0, 0);
+		if (!output.ChangeSize(need_N, need_H, need_W, need_C, 0, 0))
+		
+return false;
 	}
 
 	if (padH != 0 || padW != 0)
@@ -2690,7 +2798,9 @@ bool ZQ_CNN_Forward_SSEUtils_NCHWC::ConvolutionWithBiasPReLU(ZQ_CNN_Tensor4D_NCH
 	if (in_N <= 0 || in_H <= 0 || in_W <= 0 || in_C == 0
 		|| need_H < 0 || need_W < 0)
 	{
-		output.ChangeSize(0, 0, 0, 0, 0, 0);
+		if (!output.ChangeSize(0, 0, 0, 0, 0, 0))
+		
+return false;
 		return true;
 	}
 	if (filter_C != in_C || filter_N != bias_C || filter_N != slope_C)
@@ -2701,7 +2811,9 @@ bool ZQ_CNN_Forward_SSEUtils_NCHWC::ConvolutionWithBiasPReLU(ZQ_CNN_Tensor4D_NCH
 	int need_C = filter_N;
 	if (out_N != need_N || out_H != need_H || out_W != need_W || out_C != need_C)
 	{
-		output.ChangeSize(need_N, need_H, need_W, need_C, 0, 0);
+		if (!output.ChangeSize(need_N, need_H, need_W, need_C, 0, 0))
+		
+return false;
 	}
 
 	if (padH != 0 || padW != 0)
@@ -2802,7 +2914,9 @@ bool ZQ_CNN_Forward_SSEUtils_NCHWC::ConvolutionWithPReLU(ZQ_CNN_Tensor4D_NCHWC4&
 	if (in_N <= 0 || in_H <= 0 || in_W <= 0 || in_C == 0
 		|| need_H < 0 || need_W < 0)
 	{
-		output.ChangeSize(0, 0, 0, 0, 0, 0);
+		if (!output.ChangeSize(0, 0, 0, 0, 0, 0))
+		
+return false;
 		return true;
 	}
 	if (filter_C != in_C || filter_N != slope_C)
@@ -2813,7 +2927,9 @@ bool ZQ_CNN_Forward_SSEUtils_NCHWC::ConvolutionWithPReLU(ZQ_CNN_Tensor4D_NCHWC4&
 	int need_C = filter_N;
 	if (out_N != need_N || out_H != need_H || out_W != need_W || out_C != need_C)
 	{
-		output.ChangeSize(need_N, need_H, need_W, need_C, 0, 0);
+		if (!output.ChangeSize(need_N, need_H, need_W, need_C, 0, 0))
+		
+return false;
 	}
 
 	if (padH != 0 || padW != 0)
@@ -2914,7 +3030,9 @@ bool ZQ_CNN_Forward_SSEUtils_NCHWC::Convolution(ZQ_CNN_Tensor4D_NCHWC4& input, c
 	if (in_N <= 0 || in_H <= 0 || in_W <= 0 || in_C == 0
 		|| need_H < 0 || need_W < 0)
 	{
-		output.ChangeSize(0, 0, 0, 0, 0, 0);
+		if (!output.ChangeSize(0, 0, 0, 0, 0, 0))
+		
+return false;
 		return true;
 	}
 	if (filter_C != in_C)
@@ -2924,7 +3042,9 @@ bool ZQ_CNN_Forward_SSEUtils_NCHWC::Convolution(ZQ_CNN_Tensor4D_NCHWC4& input, c
 	int need_C = filter_N;
 	if (out_N != need_N || out_H != need_H || out_W != need_W || out_C != need_C)
 	{
-		output.ChangeSize(need_N, need_H, need_W, need_C, 0, 0);
+		if (!output.ChangeSize(need_N, need_H, need_W, need_C, 0, 0))
+		
+return false;
 	}
 
 	if (padH != 0 || padW != 0)
@@ -3019,7 +3139,9 @@ bool ZQ_CNN_Forward_SSEUtils_NCHWC::DepthwiseConvolutionWithBias(ZQ_CNN_Tensor4D
 	if (in_N <= 0 || in_H <= 0 || in_W <= 0 || in_C == 0
 		|| (in_H - filter_H + (padH << 1)) < 0 || (in_W - filter_W + (padW << 1)) < 0)
 	{
-		output.ChangeSize(0, 0, 0, 0, 0, 0);
+		if (!output.ChangeSize(0, 0, 0, 0, 0, 0))
+		
+return false;
 		return true;
 	}
 	if (filter_C != in_C || filter_N != 1)
@@ -3031,7 +3153,9 @@ bool ZQ_CNN_Forward_SSEUtils_NCHWC::DepthwiseConvolutionWithBias(ZQ_CNN_Tensor4D
 	int need_C = in_C;
 	if (out_N != need_N || out_H != need_H || out_W != need_W || out_C != need_C)
 	{
-		output.ChangeSize(need_N, need_H, need_W, need_C, 0, 0);
+		if (!output.ChangeSize(need_N, need_H, need_W, need_C, 0, 0))
+		
+return false;
 	}
 
 	if (padH != 0 || padW != 0)
@@ -3131,7 +3255,9 @@ bool ZQ_CNN_Forward_SSEUtils_NCHWC::DepthwiseConvolutionWithBiasPReLU(ZQ_CNN_Ten
 	if (in_N <= 0 || in_H <= 0 || in_W <= 0 || in_C == 0
 		|| (in_H - filter_H + (padH << 1)) < 0 || (in_W - filter_W + (padW << 1)) < 0)
 	{
-		output.ChangeSize(0, 0, 0, 0, 0, 0);
+		if (!output.ChangeSize(0, 0, 0, 0, 0, 0))
+		
+return false;
 		return true;
 	}
 	if (filter_C != in_C || filter_N != 1)
@@ -3143,7 +3269,9 @@ bool ZQ_CNN_Forward_SSEUtils_NCHWC::DepthwiseConvolutionWithBiasPReLU(ZQ_CNN_Ten
 	int need_C = in_C;
 	if (out_N != need_N || out_H != need_H || out_W != need_W || out_C != need_C)
 	{
-		output.ChangeSize(need_N, need_H, need_W, need_C, 0, 0);
+		if (!output.ChangeSize(need_N, need_H, need_W, need_C, 0, 0))
+		
+return false;
 	}
 
 	if (padH != 0 || padW != 0)
@@ -3242,7 +3370,9 @@ bool ZQ_CNN_Forward_SSEUtils_NCHWC::DepthwiseConvolution(ZQ_CNN_Tensor4D_NCHWC4&
 	if (in_N <= 0 || in_H <= 0 || in_W <= 0 || in_C == 0
 		|| (in_H - filter_H + (padH << 1)) < 0 || (in_W - filter_W + (padW << 1)) < 0)
 	{
-		output.ChangeSize(0, 0, 0, 0, 0, 0);
+		if (!output.ChangeSize(0, 0, 0, 0, 0, 0))
+		
+return false;
 		return true;
 	}
 	if (filter_C != in_C || filter_N != 1)
@@ -3254,7 +3384,9 @@ bool ZQ_CNN_Forward_SSEUtils_NCHWC::DepthwiseConvolution(ZQ_CNN_Tensor4D_NCHWC4&
 	int need_C = in_C;
 	if (out_N != need_N || out_H != need_H || out_W != need_W || out_C != need_C)
 	{
-		output.ChangeSize(need_N, need_H, need_W, need_C, 0, 0);
+		if (!output.ChangeSize(need_N, need_H, need_W, need_C, 0, 0))
+		
+return false;
 	}
 
 	if (padH != 0 || padW != 0)
@@ -3358,14 +3490,16 @@ void ZQ_CNN_Forward_SSEUtils_NCHWC::MaxPooling(const ZQ_CNN_Tensor4D_NCHWC4 &inp
 
 	if (need_W <= 0 || need_H <= 0)
 	{
-		output.ChangeSize(0, 0, 0, 0, 0, 0);
+		if (!output.ChangeSize(0, 0, 0, 0, 0, 0))
+		
 		return;
 	}
 
 	bool suredivided = (in_H - kernel_H) % stride_H == 0 && (in_W - kernel_W) % stride_W == 0;
 	if (output.GetN() != need_N || output.GetH() != need_H || output.GetW() != need_W || output.GetC() != need_C)
-		output.ChangeSize(need_N, need_H, need_W, need_C, 0, 0);
-
+		if (!output.ChangeSize(need_N, need_H, need_W, need_C, 0, 0))
+		
+		return;
 	int in_sliceStep = input.GetSliceStep();
 	int in_widthStep = input.GetWidthStep();
 	int in_imStep = input.GetImageStep();
@@ -3431,14 +3565,16 @@ void ZQ_CNN_Forward_SSEUtils_NCHWC::AVGPooling(const ZQ_CNN_Tensor4D_NCHWC4 &inp
 
 	if (need_W <= 0 || need_H <= 0)
 	{
-		output.ChangeSize(0, 0, 0, 0, 0, 0);
+		if (!output.ChangeSize(0, 0, 0, 0, 0, 0))
+		
 		return;
 	}
 
 	bool suredivided = (in_H - kernel_H) % stride_H == 0 && (in_W - kernel_W) % stride_W == 0;
 	if (output.GetN() != need_N || output.GetH() != need_H || output.GetW() != need_W || output.GetC() != need_C)
-		output.ChangeSize(need_N, need_H, need_W, need_C, 0, 0);
-
+		if (!output.ChangeSize(need_N, need_H, need_W, need_C, 0, 0))
+		
+		return;
 	int in_sliceStep = input.GetSliceStep();
 	int in_widthStep = input.GetWidthStep();
 	int in_imStep = input.GetImageStep();
@@ -3630,7 +3766,9 @@ bool ZQ_CNN_Forward_SSEUtils_NCHWC::Eltwise_Sum(const std::vector<const ZQ_CNN_T
 			return false;
 	}
 	if (output.GetN() != N || output.GetH() != H || output.GetW() != W || output.GetC() != C)
-		output.ChangeSize(N, H, W, C, 0, 0);
+		if (!output.ChangeSize(N, H, W, C, 0, 0))
+		
+return false;
 	if (N <= 0 || H <= 0 || W <= 0 || C <= 0)
 		return true;
 	std::vector<const float*> in_tensor_data(in_num);
@@ -3671,7 +3809,9 @@ bool ZQ_CNN_Forward_SSEUtils_NCHWC::Eltwise_SumWithWeight(const std::vector<cons
 			return false;
 	}
 	if (output.GetN() != N || output.GetH() != H || output.GetW() != W || output.GetC() != C)
-		output.ChangeSize(N, H, W, C, 0, 0);
+		if (!output.ChangeSize(N, H, W, C, 0, 0))
+		
+return false;
 	if (N <= 0 || H <= 0 || W <= 0 || C <= 0)
 		return true;
 	std::vector<const float*> in_tensor_data(in_num);
@@ -3711,7 +3851,9 @@ bool ZQ_CNN_Forward_SSEUtils_NCHWC::Eltwise_Mul(const std::vector<const ZQ_CNN_T
 			return false;
 	}
 	if (output.GetN() != N || output.GetH() != H || output.GetW() != W || output.GetC() != C)
-		output.ChangeSize(N, H, W, C, 0, 0);
+		if (!output.ChangeSize(N, H, W, C, 0, 0))
+		
+return false;
 	if (N <= 0 || H <= 0 || W <= 0 || C <= 0)
 		return true;
 	std::vector<const float*> in_tensor_data(in_num);
@@ -3750,7 +3892,9 @@ bool ZQ_CNN_Forward_SSEUtils_NCHWC::Eltwise_Max(const std::vector<const ZQ_CNN_T
 			return false;
 	}
 	if (output.GetN() != N || output.GetH() != H || output.GetW() != W || output.GetC() != C)
-		output.ChangeSize(N, H, W, C, 0, 0);
+		if (!output.ChangeSize(N, H, W, C, 0, 0))
+		
+return false;
 	if (N <= 0 || H <= 0 || W <= 0 || C <= 0)
 		return true;
 	std::vector<const float*> in_tensor_data(in_num);
@@ -3799,7 +3943,9 @@ bool ZQ_CNN_Forward_SSEUtils_NCHWC::InnerProductWithBias(ZQ_CNN_Tensor4D_NCHWC8&
 	if (in_N <= 0 || in_H <= 0 || in_W <= 0 || in_C == 0
 		|| need_H < 0 || need_W < 0)
 	{
-		output.ChangeSize(0, 0, 0, 0, 0, 0);
+		if (!output.ChangeSize(0, 0, 0, 0, 0, 0))
+		
+return false;
 		return true;
 	}
 	if (filter_C != in_C || filter_N != bias_C)
@@ -3810,7 +3956,9 @@ bool ZQ_CNN_Forward_SSEUtils_NCHWC::InnerProductWithBias(ZQ_CNN_Tensor4D_NCHWC8&
 	int need_C = filter_N;
 	if (out_N != need_N || out_H != need_H || out_W != need_W || out_C != need_C)
 	{
-		output.ChangeSize(need_N, need_H, need_W, need_C, 0, 0);
+		if (!output.ChangeSize(need_N, need_H, need_W, need_C, 0, 0))
+		
+return false;
 	}
 
 	int in_sliceStep = input.GetSliceStep();
@@ -3885,7 +4033,9 @@ bool ZQ_CNN_Forward_SSEUtils_NCHWC::InnerProductWithBiasPReLU(ZQ_CNN_Tensor4D_NC
 	if (in_N <= 0 || in_H <= 0 || in_W <= 0 || in_C == 0
 		|| need_H < 0 || need_W < 0)
 	{
-		output.ChangeSize(0, 0, 0, 0, 0, 0);
+		if (!output.ChangeSize(0, 0, 0, 0, 0, 0))
+		
+return false;
 		return true;
 	}
 	if (filter_C != in_C || filter_N != bias_C || filter_N != slope_C)
@@ -3896,7 +4046,9 @@ bool ZQ_CNN_Forward_SSEUtils_NCHWC::InnerProductWithBiasPReLU(ZQ_CNN_Tensor4D_NC
 	int need_C = filter_N;
 	if (out_N != need_N || out_H != need_H || out_W != need_W || out_C != need_C)
 	{
-		output.ChangeSize(need_N, need_H, need_W, need_C, 0, 0);
+		if (!output.ChangeSize(need_N, need_H, need_W, need_C, 0, 0))
+		
+return false;
 	}
 
 	int in_sliceStep = input.GetSliceStep();
@@ -3970,7 +4122,9 @@ bool ZQ_CNN_Forward_SSEUtils_NCHWC::InnerProductWithPReLU(ZQ_CNN_Tensor4D_NCHWC8
 	if (in_N <= 0 || in_H <= 0 || in_W <= 0 || in_C == 0
 		|| need_H < 0 || need_W < 0)
 	{
-		output.ChangeSize(0, 0, 0, 0, 0, 0);
+		if (!output.ChangeSize(0, 0, 0, 0, 0, 0))
+		
+return false;
 		return true;
 	}
 	if (filter_C != in_C || filter_N != slope_C)
@@ -3981,7 +4135,9 @@ bool ZQ_CNN_Forward_SSEUtils_NCHWC::InnerProductWithPReLU(ZQ_CNN_Tensor4D_NCHWC8
 	int need_C = filter_N;
 	if (out_N != need_N || out_H != need_H || out_W != need_W || out_C != need_C)
 	{
-		output.ChangeSize(need_N, need_H, need_W, need_C, 0, 0);
+		if (!output.ChangeSize(need_N, need_H, need_W, need_C, 0, 0))
+		
+return false;
 	}
 
 	int in_sliceStep = input.GetSliceStep();
@@ -4053,7 +4209,9 @@ bool ZQ_CNN_Forward_SSEUtils_NCHWC::InnerProduct(ZQ_CNN_Tensor4D_NCHWC8& input, 
 	if (in_N <= 0 || in_H <= 0 || in_W <= 0 || in_C == 0
 		|| need_H < 0 || need_W < 0)
 	{
-		output.ChangeSize(0, 0, 0, 0, 0, 0);
+		if (!output.ChangeSize(0, 0, 0, 0, 0, 0))
+		
+return false;
 		return true;
 	}
 	if (filter_C != in_C)
@@ -4063,7 +4221,9 @@ bool ZQ_CNN_Forward_SSEUtils_NCHWC::InnerProduct(ZQ_CNN_Tensor4D_NCHWC8& input, 
 	int need_C = filter_N;
 	if (out_N != need_N || out_H != need_H || out_W != need_W || out_C != need_C)
 	{
-		output.ChangeSize(need_N, need_H, need_W, need_C, 0, 0);
+		if (!output.ChangeSize(need_N, need_H, need_W, need_C, 0, 0))
+		
+return false;
 	}
 
 	int in_sliceStep = input.GetSliceStep();
@@ -4134,7 +4294,9 @@ bool ZQ_CNN_Forward_SSEUtils_NCHWC::ConvolutionWithBias(ZQ_CNN_Tensor4D_NCHWC8& 
 	if (in_N <= 0 || in_H <= 0 || in_W <= 0 || in_C == 0
 		|| need_H < 0 || need_W < 0)
 	{
-		output.ChangeSize(0, 0, 0, 0, 0, 0);
+		if (!output.ChangeSize(0, 0, 0, 0, 0, 0))
+		
+return false;
 		return true;
 	}
 	if (filter_C != in_C || filter_N != bias_C)
@@ -4145,7 +4307,9 @@ bool ZQ_CNN_Forward_SSEUtils_NCHWC::ConvolutionWithBias(ZQ_CNN_Tensor4D_NCHWC8& 
 	int need_C = filter_N;
 	if (out_N != need_N || out_H != need_H || out_W != need_W || out_C != need_C)
 	{
-		output.ChangeSize(need_N, need_H, need_W, need_C, 0, 0);
+		if (!output.ChangeSize(need_N, need_H, need_W, need_C, 0, 0))
+		
+return false;
 	}
 
 	if (padH != 0 || padW != 0)
@@ -4247,7 +4411,9 @@ bool ZQ_CNN_Forward_SSEUtils_NCHWC::ConvolutionWithBiasPReLU(ZQ_CNN_Tensor4D_NCH
 	if (in_N <= 0 || in_H <= 0 || in_W <= 0 || in_C == 0
 		|| need_H < 0 || need_W < 0)
 	{
-		output.ChangeSize(0, 0, 0, 0, 0, 0);
+		if (!output.ChangeSize(0, 0, 0, 0, 0, 0))
+		
+return false;
 		return true;
 	}
 	if (filter_C != in_C || filter_N != bias_C || filter_N != slope_C)
@@ -4258,7 +4424,9 @@ bool ZQ_CNN_Forward_SSEUtils_NCHWC::ConvolutionWithBiasPReLU(ZQ_CNN_Tensor4D_NCH
 	int need_C = filter_N;
 	if (out_N != need_N || out_H != need_H || out_W != need_W || out_C != need_C)
 	{
-		output.ChangeSize(need_N, need_H, need_W, need_C, 0, 0);
+		if (!output.ChangeSize(need_N, need_H, need_W, need_C, 0, 0))
+		
+return false;
 	}
 
 	if (padH != 0 || padW != 0)
@@ -4359,7 +4527,9 @@ bool ZQ_CNN_Forward_SSEUtils_NCHWC::ConvolutionWithPReLU(ZQ_CNN_Tensor4D_NCHWC8&
 	if (in_N <= 0 || in_H <= 0 || in_W <= 0 || in_C == 0
 		|| need_H < 0 || need_W < 0)
 	{
-		output.ChangeSize(0, 0, 0, 0, 0, 0);
+		if (!output.ChangeSize(0, 0, 0, 0, 0, 0))
+		
+return false;
 		return true;
 	}
 	if (filter_C != in_C || filter_N != slope_C)
@@ -4370,7 +4540,9 @@ bool ZQ_CNN_Forward_SSEUtils_NCHWC::ConvolutionWithPReLU(ZQ_CNN_Tensor4D_NCHWC8&
 	int need_C = filter_N;
 	if (out_N != need_N || out_H != need_H || out_W != need_W || out_C != need_C)
 	{
-		output.ChangeSize(need_N, need_H, need_W, need_C, 0, 0);
+		if (!output.ChangeSize(need_N, need_H, need_W, need_C, 0, 0))
+		
+return false;
 	}
 
 	if (padH != 0 || padW != 0)
@@ -4471,7 +4643,9 @@ bool ZQ_CNN_Forward_SSEUtils_NCHWC::Convolution(ZQ_CNN_Tensor4D_NCHWC8& input, c
 	if (in_N <= 0 || in_H <= 0 || in_W <= 0 || in_C == 0
 		|| need_H < 0 || need_W < 0)
 	{
-		output.ChangeSize(0, 0, 0, 0, 0, 0);
+		if (!output.ChangeSize(0, 0, 0, 0, 0, 0))
+		
+return false;
 		return true;
 	}
 	if (filter_C != in_C)
@@ -4481,7 +4655,9 @@ bool ZQ_CNN_Forward_SSEUtils_NCHWC::Convolution(ZQ_CNN_Tensor4D_NCHWC8& input, c
 	int need_C = filter_N;
 	if (out_N != need_N || out_H != need_H || out_W != need_W || out_C != need_C)
 	{
-		output.ChangeSize(need_N, need_H, need_W, need_C, 0, 0);
+		if (!output.ChangeSize(need_N, need_H, need_W, need_C, 0, 0))
+		
+return false;
 	}
 
 	if (padH != 0 || padW != 0)
@@ -4576,7 +4752,9 @@ bool ZQ_CNN_Forward_SSEUtils_NCHWC::DepthwiseConvolutionWithBias(ZQ_CNN_Tensor4D
 	if (in_N <= 0 || in_H <= 0 || in_W <= 0 || in_C == 0
 		|| (in_H - filter_H + (padH << 1)) < 0 || (in_W - filter_W + (padW << 1)) < 0)
 	{
-		output.ChangeSize(0, 0, 0, 0, 0, 0);
+		if (!output.ChangeSize(0, 0, 0, 0, 0, 0))
+		
+return false;
 		return true;
 	}
 	if (filter_C != in_C || filter_N != 1)
@@ -4588,7 +4766,9 @@ bool ZQ_CNN_Forward_SSEUtils_NCHWC::DepthwiseConvolutionWithBias(ZQ_CNN_Tensor4D
 	int need_C = in_C;
 	if (out_N != need_N || out_H != need_H || out_W != need_W || out_C != need_C)
 	{
-		output.ChangeSize(need_N, need_H, need_W, need_C, 0, 0);
+		if (!output.ChangeSize(need_N, need_H, need_W, need_C, 0, 0))
+		
+return false;
 	}
 
 	if (padH != 0 || padW != 0)
@@ -4688,7 +4868,9 @@ bool ZQ_CNN_Forward_SSEUtils_NCHWC::DepthwiseConvolutionWithBiasPReLU(ZQ_CNN_Ten
 	if (in_N <= 0 || in_H <= 0 || in_W <= 0 || in_C == 0
 		|| (in_H - filter_H + (padH << 1)) < 0 || (in_W - filter_W + (padW << 1)) < 0)
 	{
-		output.ChangeSize(0, 0, 0, 0, 0, 0);
+		if (!output.ChangeSize(0, 0, 0, 0, 0, 0))
+		
+return false;
 		return true;
 	}
 	if (filter_C != in_C || filter_N != 1)
@@ -4700,7 +4882,9 @@ bool ZQ_CNN_Forward_SSEUtils_NCHWC::DepthwiseConvolutionWithBiasPReLU(ZQ_CNN_Ten
 	int need_C = in_C;
 	if (out_N != need_N || out_H != need_H || out_W != need_W || out_C != need_C)
 	{
-		output.ChangeSize(need_N, need_H, need_W, need_C, 0, 0);
+		if (!output.ChangeSize(need_N, need_H, need_W, need_C, 0, 0))
+		
+return false;
 	}
 
 	if (padH != 0 || padW != 0)
@@ -4799,7 +4983,9 @@ bool ZQ_CNN_Forward_SSEUtils_NCHWC::DepthwiseConvolution(ZQ_CNN_Tensor4D_NCHWC8&
 	if (in_N <= 0 || in_H <= 0 || in_W <= 0 || in_C == 0
 		|| (in_H - filter_H + (padH << 1)) < 0 || (in_W - filter_W + (padW << 1)) < 0)
 	{
-		output.ChangeSize(0, 0, 0, 0, 0, 0);
+		if (!output.ChangeSize(0, 0, 0, 0, 0, 0))
+		
+return false;
 		return true;
 	}
 	if (filter_C != in_C || filter_N != 1)
@@ -4811,7 +4997,9 @@ bool ZQ_CNN_Forward_SSEUtils_NCHWC::DepthwiseConvolution(ZQ_CNN_Tensor4D_NCHWC8&
 	int need_C = in_C;
 	if (out_N != need_N || out_H != need_H || out_W != need_W || out_C != need_C)
 	{
-		output.ChangeSize(need_N, need_H, need_W, need_C, 0, 0);
+		if (!output.ChangeSize(need_N, need_H, need_W, need_C, 0, 0))
+		
+return false;
 	}
 
 	if (padH != 0 || padW != 0)
@@ -4915,14 +5103,16 @@ void ZQ_CNN_Forward_SSEUtils_NCHWC::MaxPooling(const ZQ_CNN_Tensor4D_NCHWC8 &inp
 
 	if (need_W <= 0 || need_H <= 0)
 	{
-		output.ChangeSize(0, 0, 0, 0, 0, 0);
+		if (!output.ChangeSize(0, 0, 0, 0, 0, 0))
+		
 		return;
 	}
 
 	bool suredivided = (in_H - kernel_H) % stride_H == 0 && (in_W - kernel_W) % stride_W == 0;
 	if (output.GetN() != need_N || output.GetH() != need_H || output.GetW() != need_W || output.GetC() != need_C)
-		output.ChangeSize(need_N, need_H, need_W, need_C, 0, 0);
-
+		if (!output.ChangeSize(need_N, need_H, need_W, need_C, 0, 0))
+		
+		return;
 	int in_sliceStep = input.GetSliceStep();
 	int in_widthStep = input.GetWidthStep();
 	int in_imStep = input.GetImageStep();
@@ -4988,14 +5178,16 @@ void ZQ_CNN_Forward_SSEUtils_NCHWC::AVGPooling(const ZQ_CNN_Tensor4D_NCHWC8 &inp
 
 	if (need_W <= 0 || need_H <= 0)
 	{
-		output.ChangeSize(0, 0, 0, 0, 0, 0);
+		if (!output.ChangeSize(0, 0, 0, 0, 0, 0))
+		
 		return;
 	}
 
 	bool suredivided = (in_H - kernel_H) % stride_H == 0 && (in_W - kernel_W) % stride_W == 0;
 	if (output.GetN() != need_N || output.GetH() != need_H || output.GetW() != need_W || output.GetC() != need_C)
-		output.ChangeSize(need_N, need_H, need_W, need_C, 0, 0);
-
+		if (!output.ChangeSize(need_N, need_H, need_W, need_C, 0, 0))
+		
+		return;
 	int in_sliceStep = input.GetSliceStep();
 	int in_widthStep = input.GetWidthStep();
 	int in_imStep = input.GetImageStep();
@@ -5187,7 +5379,9 @@ bool ZQ_CNN_Forward_SSEUtils_NCHWC::Eltwise_Sum(const std::vector<const ZQ_CNN_T
 			return false;
 	}
 	if (output.GetN() != N || output.GetH() != H || output.GetW() != W || output.GetC() != C)
-		output.ChangeSize(N, H, W, C, 0, 0);
+		if (!output.ChangeSize(N, H, W, C, 0, 0))
+		
+return false;
 	if (N <= 0 || H <= 0 || W <= 0 || C <= 0)
 		return true;
 	std::vector<const float*> in_tensor_data(in_num);
@@ -5228,7 +5422,9 @@ bool ZQ_CNN_Forward_SSEUtils_NCHWC::Eltwise_SumWithWeight(const std::vector<cons
 			return false;
 	}
 	if (output.GetN() != N || output.GetH() != H || output.GetW() != W || output.GetC() != C)
-		output.ChangeSize(N, H, W, C, 0, 0);
+		if (!output.ChangeSize(N, H, W, C, 0, 0))
+		
+return false;
 	if (N <= 0 || H <= 0 || W <= 0 || C <= 0)
 		return true;
 	std::vector<const float*> in_tensor_data(in_num);
@@ -5268,7 +5464,9 @@ bool ZQ_CNN_Forward_SSEUtils_NCHWC::Eltwise_Mul(const std::vector<const ZQ_CNN_T
 			return false;
 	}
 	if (output.GetN() != N || output.GetH() != H || output.GetW() != W || output.GetC() != C)
-		output.ChangeSize(N, H, W, C, 0, 0);
+		if (!output.ChangeSize(N, H, W, C, 0, 0))
+		
+return false;
 	if (N <= 0 || H <= 0 || W <= 0 || C <= 0)
 		return true;
 	std::vector<const float*> in_tensor_data(in_num);
@@ -5307,7 +5505,9 @@ bool ZQ_CNN_Forward_SSEUtils_NCHWC::Eltwise_Max(const std::vector<const ZQ_CNN_T
 			return false;
 	}
 	if (output.GetN() != N || output.GetH() != H || output.GetW() != W || output.GetC() != C)
-		output.ChangeSize(N, H, W, C, 0, 0);
+		if (!output.ChangeSize(N, H, W, C, 0, 0))
+		
+return false;
 	if (N <= 0 || H <= 0 || W <= 0 || C <= 0)
 		return true;
 	std::vector<const float*> in_tensor_data(in_num);
