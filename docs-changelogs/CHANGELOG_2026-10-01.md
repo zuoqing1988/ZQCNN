@@ -180,3 +180,40 @@ MKL 2024.2.2 顺序层；20 组尺寸；误差列为 asm 与 intrinsic 的最大
 1. **MKL 动态加载必须先设 `MKL_THREADING_LAYER=SEQUENTIAL`**：默认走 OpenMP/TBB 层，`libmkl_intel_thread.so` 找不到 `omp_get_num_procs` 会直接段错误（在没链 libgomp 的程序里表现为 dlopen 成功、首次调用崩）。顺带这也保证了与单线程 ZQ_GEMM 的公平对比。
 2. **ZQ_GEMM intrinsic 的调用契约**：缓冲区 32 字节对齐，`lda/ldb/ldc` 为 8 的倍数，K 方向 padding 必须补 0（用 `calloc` 等 16 字节对齐的分配器 + K 不是 8 的倍数会直接段错误，调试时很容易踩）。汇编版用非对齐访存，要求更松。
 3. `SampleGEMMCompare` 在加载 BLAS 后会立刻做一次 4x4 自检（结果必须是 8.0），避免"库能 dlopen 但一调用就崩"的情况浪费一轮调试时间。
+
+## 新增/变更：Windows 端到端跑通 + NCHWC 两处内存问题修复
+
+### 变更文件
+
+| 文件 | 问题 | 修复 |
+|---|---|---|
+| `ZQCNN/ZQ_CNN_CompileConfig.h` | 默认 `ZQ_CNN_USE_MKL_GEMM 1`，示例按 `#elif` 分支链上 `mklml.lib`，**没装 MKL 运行库的机器上所有 exe 都起不来**（`error while loading shared libraries: mklml.dll`）。实测 ZQCNN 内部根本没有 `cblas_*` 调用，这个开关纯属多余依赖 | 默认改 0（走自带的 ZQ_GEMM），需要 MKL 的人自行打开 |
+| `SamplesZQCNN/CompareWithOpenBLAS/CompareWithOpenBLAS.cpp` | 主库关掉 MKL 后，这个"与厂商 BLAS 对比"的示例就没有 cblas 声明了，编不过 | 该文件自己显式 include `mkl/mkl.h` 并声明链接，不再跟随主库开关 |
+| `CMakeLists.txt`、`SamplesZQCNN/CMakeLists.txt`、`SamplesZQlibFaceID/CMakeLists.txt` | dll 与 data/model 联接只放在 `cmake-out-*/release/`，而 Visual Studio 的可执行文件在 `release/Release/` 子目录里 → 产物目录里跑示例报 `empty image` / 缺 `opencv_world342.dll` | 新增 `ZQCNN_DLL_OUTPUT_DIRS`（含多配置的 `Debug`/`Release` 子目录），第三方 dll、OpenCV dll、data/model 联接全部按这份列表投放 |
+| `ZQCNN/ZQ_CNN_Tensor4D_NCHWC.cpp` | ASan 实测 `zq_cnn_depthwise_conv_no_padding_nchwc4_kernel3x3_s2d1` 在最后一个输出像素上做投机读，正好落在缓冲区末尾之外 16 字节 → heap-buffer-overflow（Linux 上 SampleMTCNN_NCHWC4 段错误的第一个根因） | 分配时多给 64 字节余量并整块清零（原来 memset 被注释掉，未初始化数据会进推理结果） |
+| `ZQCNN/ZQ_CNN_Forward_SSEUtils_NCHWC.cpp` | 106 处 `output/input/filters.ChangeSize(...)` **忽略返回值**，分配失败后仍按新维度访问 → 空指针崩溃（Linux 上 NCHWC4 路径的第二个根因） | 全部包成 `if (!xxx.ChangeSize(...)) return false;`（void 返回的 MaxPooling/AVGPooling 用 `return;`） |
+
+### 实测结果
+
+**Windows（VS2022 / cmake Release / x64）**
+- 全量构建 **0 error**，产物 69 个 exe
+- 产物目录直接运行：
+
+| 示例 | 结果 |
+|---|---|
+| SampleMTCNN | ✅ 18.6 ms/次 |
+| SampleMTCNN_NCHWC4 | ✅ 9.3 ms/次 |
+| SampleSSD | ✅ 10.4 ms/次 |
+| SampleFaceDetectorMTCNN | ✅ 10.6 ms/次 |
+
+- 加了 `/utf-8` 后 MSVC 不再把中文注释按 ANSI 代码页误解码（之前会报莫名其妙的 C2143/C4235）
+
+**Linux（WSL Ubuntu-20.04 / gcc 9.4）**
+- 全量构建 **0 error**（100%），SampleMTCNN 19.2 ms、SampleSSD 8.4 ms 正常
+- ASan（Debug + `-fsanitize=address`）定位到 NCHWC4 的两处问题，修复后正在复验
+
+### 注意事项
+
+1. `ZQ_CNN_USE_MKL_GEMM` 默认关掉是**行为变更**：以前所有示例默认链 MKL，现在默认链项目自带的 ZQ_GEMM。ZQCNN 源码里没有任何 `cblas_*` 调用，数值结果不受影响，只是 GEMM 走的实现不同（可自行对比）。
+2. `ChangeSize` 补返回值检查是**行为收紧**：以前分配失败会静默继续（可能算出错误结果或崩溃），现在会明确返回 false。
+3. MSVC x64 不支持函数体内联汇编（`__asm{}` 报 C4235），汇编内核在 Windows 侧只能走独立 `.asm`（MASM），这条已写进 AGENTS.md。
