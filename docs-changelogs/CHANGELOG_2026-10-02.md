@@ -119,3 +119,80 @@ CascadeOnet / CascadeOnet_Interface / FaceDetectorMTCNN / MTCNNLoadFromCode
    本轮不改，但它会污染任何调用它的程序的 stdout。
 2. 头文件在 gcc 下需要 `__int64` / `__min` / `__max`；测试文件里在
    `#include` **之前**补了 typedef/macro，顺序反了就编不过。
+
+## 新增/变更：把「第三方头无法验证」变成一张表 —— 143 个 ZQlib 头里 81 个能独立编译
+
+### 变更文件
+- `tools/probe_zqlib_headers.py`（新增）：逐个生成最小翻译单元探测 ZQlib 头能否独立编译
+- `3rdparty/include/ZQlib/ZQ_MergeSort.h`：补 `#include <vector>`
+- `3rdparty/include/ZQlib/ZQ_Kmeans.h`：补 `#include <math.h>`
+- `tools/bench_gemm_ab.py`：修 WSL 喂脚本时的 CRLF 问题（见下）
+- `audit_k3_20261001.md`：新增**附录 X**
+
+### 起因
+
+ZQ_MergeSort 那条「不修」被推翻之后（附录 W），剩下的疑问是：
+**还有多少「这是第三方头、无法验证所以不修」其实同样站不住？**
+不逐个量一下就永远不知道。143 个头，人工翻不动 —— 所以写了个探测器。
+
+### 工具做法
+
+给每个头生成一个只 `#include` 它的最小翻译单元，前面垫一层
+MSVC 兼容 shim（`__int64` / `__min` / `__max` / `_fseeki64` / `_ftelli64` /
+`fopen_s` / `strcpy_s` / `sprintf_s`），用 gcc `-fsyntax-only -std=c++11` 编，
+按第一条 error 分类成 OK / NEEDS_LIB / MSVC_ONLY / BROKEN。
+
+### 实测结果（gcc, Linux, 143 个头）
+
+| 分类 | 修复前 | 修复后 |
+|---|---|---|
+| **OK（可以单独验证）** | **81** | **83** |
+| NEEDS_LIB（确实要 Windows/MFC/OpenCV） | 6 | 6 |
+| MSVC_ONLY（补个 shim 就能救） | 1 | 1 |
+| BROKEN（缺兄弟头或真有问题） | 55 | 53 |
+
+真正无法验证的只有 6 个：`ZQ_Logger` / `ZQ_ProtectedData` / `ZQ_PutTextCN` /
+`ZQ_SemaphoreEx`（要 `windows.h`）、`ZQ_MFC_Utils`（要 MFC `afx`）、
+`ZQ_StereoDisparity_CV2`（要 `opencv2/`）。其余 137 个都可以端到端测。
+
+### 顺带修掉两个「头不自足」的真缺陷
+
+两个头都**只靠 MSVC 的传递 include 才能编过**，libstdc++ 下直接失败：
+
+- `ZQ_MergeSort.h`：`_mergeSort_OOC` 里用了 `std::vector<char>`，但只 include 了
+  `<iostream>`。MSVC 的 `<iostream>` 会顺带带进 `<vector>`，libstdc++ 不会。
+  实测报错：`ZQ_MergeSort.h:928:9: error: 'vector' is not a member of 'std'`。
+  **任何恰好先 include 了 `<vector>` 的调用方都会把这个坑掩盖掉** ——
+  我自己手写的第一版测试就是这样蒙混过去的。
+- `ZQ_Kmeans.h`：用了 `fabs()` 却没 include `<math.h>`。
+
+补上之后两个头都进 OK 列表。补完重新跑 `tools/zq_mergesort_check.cpp`：仍 PASS。
+
+### 顺带修掉 tools/bench_gemm_ab.py 的一个真 bug
+
+它的 `wsl(script)` 用 `subprocess.run(text=True, input=script)` 把脚本喂给
+`bash -s`。**Windows 上文本模式会把 `
+` 翻译成 `
+`**，WSL 里的 bash 于是看到：
+
+```
+bash: line 1: set: +: invalid option
+bash: line 2: cd: $'zqprobe2
+': No such file or directory
+bash: line 56: syntax error: unexpected end of file
+```
+
+一行都没跑。改成 `input=script.encode('utf-8')` 后正常。修完用**空对照**
+（同一个文件跟自己比）验证工具本身可用：64 个形状里 61 个在 8% 噪声内、
+1 个 A 快、2 个 B 快。
+
+**无法断言此前用这个工具报出的数字是否受影响**（它当时也可能是在别的调用方式下
+正常跑的）。本轮所有新数字都来自 `tools/bench_two_binaries.py` 与
+`tools/gemm_mkl_ratio.py`，两者都走 `wsl bash -c`，不走这条 stdin 路径。
+
+### 注意事项
+1. 剩下 53 个 BROKEN 里绝大多数不是「头有问题」，而是**缺兄弟头 / 缺 OpenCV**
+   （例如 `ZQ_TaucsBase.h` 缺 taucs、`ZQ_ImageIO.h` 缺 `opencv2/`、
+   `ZQ_WinSockBase.h` 缺 winsock）。要真审这批得先把依赖装齐，不在本轮范围。
+2. 附录 O 里还有几条以「第三方头 / 死代码」为由的「不修」，现在有工具可以逐条
+   复核 —— 下一轮按 `probe_zqlib_headers.py` 的 OK 列表逐个重判。

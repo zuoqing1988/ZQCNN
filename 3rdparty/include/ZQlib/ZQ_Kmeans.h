@@ -4,6 +4,10 @@
 
 #include <stdlib.h>
 #include <string.h>
+// fabs() 在这里, 不 include <math.h> 就依赖调用方恰好先带进来。
+// MSVC 会经由其它头传递引入 <math.h>, libstdc++ 不会 —— 同样是
+// tools/probe_zqlib_headers.py 抓到的「头不自足」。
+#include <math.h>
 
 namespace ZQ
 {

@@ -5,6 +5,12 @@
 #include <string.h>
 #include <stdio.h>
 #include <iostream>
+// <vector> 是**必须**的: _mergeSort_OOC 里用了 std::vector<char>。
+// 原来只靠 <iostream> 传递引入 —— MSVC 的 STL 会顺带带进 <vector>，
+// libstdc++ 不会, 于是这个头在 gcc 下**不能独立编译**
+// (tools/probe_zqlib_headers.py 实测: ZQ_MergeSort.h:928 error: 'vector' is not a
+// member of 'std'; 任何恰好先 include 了 <vector> 的调用方都会把这个坑掩盖掉)。
+#include <vector>
 
 namespace ZQ
 {

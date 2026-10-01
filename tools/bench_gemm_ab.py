@@ -62,11 +62,19 @@ def wsl(script, check=True):
 
     不要用 `wsl ... bash -lc "<script>"`：脚本里的 $f / $(...) / *.c 会被
     **外层** shell 先展开一遍。走 stdin 就绕开了这一层引号地狱。
+
+    必须以**字节**喂，不能用 `text=True, input=str`：Windows 上文本模式会把 \n
+    翻译成 \r\n，WSL 里的 bash 于是看到 `set +\r`、`cd dir\r`，直接
+    `invalid option` + `syntax error: unexpected end of file`，一行都没跑。
+    2026-10-02 在 tools/probe_zqlib_headers.py 上实测踩到；同一个坑对这里一样成立。
     """
     p = subprocess.run(
         'wsl -d %s -- bash -s' % WSL_DIST,
-        shell=True, input=script, capture_output=True, text=True,
-        encoding='utf-8', errors='replace')
+        shell=True, input=script.encode('utf-8'), capture_output=True)
+    p = subprocess.CompletedProcess(
+        p.args, p.returncode,
+        (p.stdout or b'').decode('utf-8', 'replace'),
+        (p.stderr or b'').decode('utf-8', 'replace'))
     if check and p.returncode != 0:
         sys.stderr.write(p.stdout + p.stderr)
         raise SystemExit('wsl failed')
