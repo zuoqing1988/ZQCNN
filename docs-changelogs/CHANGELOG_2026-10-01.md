@@ -899,3 +899,48 @@ A/B 实测（交替 5 轮，阈值 8%）：**1 快 2 慢 61 平 —— 在噪声
 该文件不在 `3rdparty/mkl_runtime/win/` 下，`SampleGEMMCompare --mt`
 进程直接起不来（rc=127）。所以多核一栏只有定性说明、没有数字；
 补上 `libiomp5md.dll` 即可测量。
+
+## 新增：GEMM 运行时 ISA 守卫（对齐 MKL 的分发思路，堵住"换机器就崩"）
+
+### 动机
+汇编内核是用 AVX2+FMA **编译期**钉死的（`#if ZQA_IMPL`，来源
+`ZQ_CNN_USE_SSETYPE`）。把这个二进制放到不支持 AVX2 的机器上会直接
+**SIGILL 崩掉**，而不是"慢一点但算对"。
+
+Intel MKL 在这点上比我们安全：`mkl_rt` 是**分发器**，CPUID 查完再动态加载
+对应内核库（`3rdparty/mkl_runtime/win/` 里的 `mkl_avx2.3.dll` /
+`mkl_avx512.3.dll` / `mkl_sequential.3.dll` / `mkl_intel_thread.3.dll`
+就是这套），并提供 `MKL_ENABLE_INSTRUCTIONS` / `mkl_enable_instructions()`
+强制指定路径。
+
+**但要分清 MKL 做到和没做到的**：它做的是 **ISA 分发**，不是微架构调优。
+寄存器分块是按 ISA 固定的，在参考硬件上调好后原样分发。本机实测佐证——
+`mkl_verbose=1` 在这台 **AMD** Ryzen 上打出的是
+`Intel(R) Architecture processors, Win | 3.18GHz lp64 | sequential`，
+**它没认出这是 AMD**，走的是通用 Intel 架构路径。
+
+### 本次实现
+"一个库带多套内核"我们做不了（MSVC 没有 per-function target 属性，得按 ISA
+编成多个 .obj/DLL，那正是 MKL 的做法），但可以补上**最要紧的那一半**：
+运行前查一次 CPU，不支持就安全回落到 intrinsic 路径，把"崩溃"变成
+"慢但正确"。
+
+- `zq_gemm_32f_asm_cpu_has_avx2_fma()`
+  - MSVC：`__cpuid` + **`_xgetbv(0)` 查 OSXSAVE/AVX 的 YMM 状态**
+    （少了这一步，在某些 hypervisor / 容器里会拿到"支持 AVX"但一执行就 #UD）
+  - GCC/Clang：`__builtin_cpu_init()` + `__builtin_cpu_supports`
+- 结果缓存进一个 `int`，热路径只多一次取数
+- 环境变量 `ZQ_GEMM_ISA`（对应 `MKL_ENABLE_INSTRUCTIONS`）：
+  `auto`(默认) / `avx2` / `sse` / `off`；`off`、`sse` 强制走回落路径
+
+### 实测
+- Windows：auto 路径 worst 误差 1.9e-6（走汇编）；`ZQ_GEMM_ISA=off`
+  误差 **0.000000e+00**（确实回落到了 intrinsic）——两种都 PASS
+- Linux：auto 3.8e-6 / off 0.0，两种都 PASS
+- 性能无变化（3 轮抽查大形状都在 7% 噪声带内）
+- 双平台全量构建 0 error，8 个 sample 全部 rc=0
+
+### 没做的
+"一个二进制带多套 ISA 内核 + 按 CPUID 选"（MKL 那一套）需要把每个 ISA
+编成独立的目标文件并自己做 dlopen/LoadLibrary 分发，工程量大得多；
+当前这版只保证**不会崩、结果正确**。

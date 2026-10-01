@@ -98,6 +98,9 @@
  *                      zq_gemm_32f_AnoTrans_Btrans_auto (intrinsic 版)
  */
 
+#include <stdlib.h>
+#include <string.h>
+
 #include "zq_gemm_32f_align_c_asm.h"
 #include "zq_gemm_32f_align_c.h"
 
@@ -798,6 +801,77 @@ void zq_gemm_32f_align256bit_AnoTrans_Btrans_M8_N4_asm(int M, int N, int K, cons
 #endif
 }
 
+/* ====================================================================== *
+ * 运行时 ISA 守卫
+ *
+ * 为什么需要: 汇编内核是用 AVX2(+FMA) 指令**编译期**钉死的
+ * (#if ZQA_IMPL, 来源是 ZQ_CNN_USE_SSETYPE)。把这个二进制放到一台不支持
+ * AVX2 的机器上, 会直接 SIGILL 崩掉, 而不是"慢一点但算对"。
+ *
+ * Intel MKL 靠 mkl_rt 这个分发器 + CPUID 做到同一件事: 一个库里带着
+ * SSE/AVX2/AVX-512 多套内核, 运行时查 CPUID 再挑, 并且能用
+ * MKL_ENABLE_INSTRUCTIONS 强制指定。我们做不了"一个库带多套" (MSVC 没有
+ * per-function target 属性, 得按 ISA 编成多个 .obj/DLL, 那正是 MKL 的做法),
+ * 但可以补上**最要紧的那一半**: 运行前查一次 CPU, 不支持就安全回落到
+ * intrinsic 路径。这把"崩溃"变成"慢但正确"。
+ *
+ * 环境变量 ZQ_GEMM_ISA 用来覆盖自动检测, 对应 MKL_ENABLE_INSTRUCTIONS:
+ *   auto(默认) / avx2 / sse / off
+ * 设 off 或 sse 都会强制走 intrinsic 路径 (可以拿来验证回落是否正确)。
+ * ====================================================================== */
+/* 简单的 ASCII 大小写无关比较 (只用于解析环境变量, 不追求完备) */
+static int zqa_stricmp(const char* a, const char* b)
+{
+	while (*a && *b) {
+		int ca = (*a >= 'A' && *a <= 'Z') ? *a + 32 : *a;
+		int cb = (*b >= 'A' && *b <= 'Z') ? *b + 32 : *b;
+		if (ca != cb) return ca - cb;
+		a++; b++;
+	}
+	return (unsigned char)*a - (unsigned char)*b;
+}
+
+static int zq_gemm_32f_asm_isa_state = -1;   /* -1 未查, 0 不可用, 1 可用 */
+
+static int zq_gemm_32f_asm_cpu_has_avx2_fma(void)
+{
+#if defined(_MSC_VER) && (defined(_M_X64) || defined(_M_AMD64))
+	int regs[4];
+	__cpuid(regs, 0);
+	if (regs[0] < 1) return 0;
+	__cpuidex(regs, 1, 0);
+	const int osxsave = (regs[2] & (1 << 27)) != 0;
+	const int avx     = (regs[2] & (1 << 28)) != 0;
+	const int fma     = (regs[2] & (1 << 12)) != 0;
+	if (!osxsave || !avx || !fma) return 0;
+	/* XGETBV: bit1=OSXSAVE 状态, bit2=AVX 的 YMM 状态是否被操作系统打开。
+	   少了这一步, 在某些 hypervisor / 容器里会拿到"支持 AVX"但一执行就 #UD。 */
+	unsigned long long xcr0 = _xgetbv(0);
+	return ((xcr0 & 0x6) == 0x6) ? 1 : 0;
+#elif defined(__GNUC__) || defined(__clang__)
+	__builtin_cpu_init();
+	return __builtin_cpu_supports("avx2") && __builtin_cpu_supports("fma");
+#else
+	return 1;   /* 其它编译器: 无法探测, 维持原行为 */
+#endif
+}
+
+static int zq_gemm_32f_asm_isa_usable(void)
+{
+	if (zq_gemm_32f_asm_isa_state >= 0)
+		return zq_gemm_32f_asm_isa_state;
+	const char* env = getenv("ZQ_GEMM_ISA");
+	int ok;
+	if (env == 0 || zqa_stricmp(env, "auto") == 0)
+		ok = zq_gemm_32f_asm_cpu_has_avx2_fma();
+	else if (zqa_stricmp(env, "off") == 0 || zqa_stricmp(env, "sse") == 0)
+		ok = 0;
+	else
+		ok = zq_gemm_32f_asm_cpu_has_avx2_fma();   /* 写了不认识的值: 仍按自动 */
+	zq_gemm_32f_asm_isa_state = ok;
+	return ok;
+}
+
 /* M 方向的分块调度 (N 方向的分块由调用方切好, 这里只管 M)。
    每次只让子内核处理它自己那一块 (MB 行), 指针相应下移;
    不能传 M - m, 否则第 m 块之后的行会被反复重算。 */
@@ -853,6 +927,15 @@ void zq_gemm_32f_AnoTrans_Btrans_auto_asm(int M, int N, int K, const float* A, i
 
 	if (M <= 0 || N <= 0)
 		return;
+
+	/* 运行前确认这台机器真的有 AVX2+FMA。没有就回落 intrinsic:
+	   这个二进制是拿 -mavx2 -mfma 编出来的, 直接执行会 SIGILL。
+	   ZQ_GEMM_ISA=off / sse 可以强制走回落, 用来验证这条路径。 */
+	if (!zq_gemm_32f_asm_isa_usable())
+	{
+		zq_gemm_32f_AnoTrans_Btrans_auto(M, N, K, A, lda, Bt, ldb, C, ldc);
+		return;
+	}
 
 	/* N < 4 时 4 列微内核一块都用不上, 整列方向退化成标量点积 —— 实测
 	   1024x1x1024 只有 MKL 的 12%。这里换 N=1 专用内核 (沿 K 方向 ymm 累加)。 */
