@@ -403,3 +403,43 @@ SIGSEGV code=128 (SI_KERNEL) si_addr=(nil)
 
 1. **教训**：改完内核头文件后，Linux 侧要确认目标文件真的重新编译（看 `make` 输出里有没有对应那行 `Building C object`），不能只看 `make` 的返回码——本例中宏被截断导致的编译失败没有让构建整体失败，旧目标文件被沿用。
 2. 该问题只在 Linux 暴露，Windows 全程正常，属于典型的"一个平台绿、另一个平台悄悄用旧二进制"的坑。
+
+## 新增/变更：手写汇编 GEMM 内核与 MKL 对标完成
+
+### 变更文件
+
+| 文件 | 说明 |
+|---|---|
+| `ZQ_GEMM/math/zq_gemm_32f_align_c_asm.c` | GCC/Clang 内联汇编版微内核 + 驱动：新增 `m4n1`/`m1n1`（N<4 专用），归约改两级 `vhaddps` 树，`ZQA_HAVE_FMA` 认 `__FMA__`，`m2n4` 改 2 指针寻址 |
+| `ZQ_GEMM/math/zq_gemm_32f_align_c_asm_msvc.asm` | Windows 侧同构实现（MASM），同步上面四项 |
+| `SamplesZQBLAS/SampleGEMMCompare.cpp` | 工作区从 4M 元素放宽到 17M，覆盖 `4096x4x4096` / `4x4096x4096` |
+
+### 实测结果（单线程，MKL 顺序层）
+
+| 尺寸 | Linux asm/MKL | Windows asm/MKL |
+|---|---|---|
+| 16³ | 185% | 152% |
+| 32³ | 68% | 78% |
+| 64³ | 75% | 80% |
+| 128³ | 93% | 93% |
+| 256³ | 87% | 100% |
+| 512³ | 92% | 90% |
+| 1024³ | 89% | 81% |
+| 1x1024x1024 | 130% | 182% |
+| 1024x1x1024 | **177%**（优化前 13%） | **206%**（优化前 14%） |
+| 4096x4x4096 | — | 266% |
+| 8x2048x2048 | 184% | 220% |
+| 2048x8x2048 | 181% | 297% |
+| 128x128x4096 | 88% | 89% |
+| 1152x256x1152 | 79% | 89% |
+| 512x512x2048 | 77% | 78% |
+| 7x5x13 | 144% | 120% |
+
+`asm/intr` 多数形状 0.97–1.40（汇编版已反超项目自带 intrinsic 版），最大绝对误差 ≤1.5e-05。`SampleGEMMAsmCompare` 双平台 18/18 PASS。
+
+### 注意事项
+
+1. **Linux 侧此前一直没走 FMA**：`ZQ_CNN_CompileConfig.h` 里 `ZQ_CNN_USE_SSETYPE` 是 AVX（不是 AVX2），GCC 版发的是 `vmulps`+`vaddps`，而 Windows MASL 一直发 `vfmadd231ps`，MKL 也用 FMA —— 之前 Linux/Windows 的性能差距主要来自这里。现在内核只要编译器允许就用 FMA，纯 AVX 目标仍能退回 mul+add。
+2. 归约改 `vhaddps` 树后，收尾 shuffle 的立即数**必须是 `0x44`**（树归约后 lane 0 与 lane 2 相同，`0x88` 会静默打包重复值）。这个坑在两个平台同时表现为"结果算错但不崩"。
+3. 汇编版只在 x86/x86-64 提供；ARM/NEON 自动回落到 intrinsic 版。
+4. 仍未达到 100% 的形状集中在"小块 + 中等 K"（32³ 68%、512x512x2048 77%）：此时每次微内核调用的固定开销占比过高，需要多 tile 融合的汇编例程才能进一步摊薄。
