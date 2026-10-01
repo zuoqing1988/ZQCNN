@@ -34,8 +34,8 @@
 6. **第三方头库有独立回归入口**：`python tools/run_zqlib_checks.py`
    会自动发现 `tools/zq_*_check.cpp`，用 `gcc -O1 -g -fsanitize=address
    -I3rdparty/include/ZQlib` 逐个编译并运行，任何一个非 0 退出就整体失败。
-   现在覆盖 `ZQ_BitonicSort` / `ZQ_ImageProcessing` / `ZQ_Kmeans` /
-   `ZQ_MergeSort` / `ZQ_QuickSort` / `ZQ_Quaternion` / `ZQ_RBFKernel`
+   现在覆盖 9 组：`ZQ_BitonicSort` / `ZQ_ImageProcessing` / `ZQ_Kmeans` /
+   `ZQ_MergeSort` / `ZQ_QuickSort` / `ZQ_Quaternion`+RBFKernel / `ZQ_Matrix`+Kahansum，
    以及 KDTree+WeightedMedian+CubicInterpolation+FindLargestSubMatrix、
    Matrix+ScanLinePolygonFill 两个组合。
    **动了 `3rdparty/include/ZQlib/` 下的头就要跑它**（主工程的 sample 回归验不到那里）。
