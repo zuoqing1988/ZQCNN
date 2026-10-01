@@ -333,3 +333,56 @@ n=1 起就 FAIL；换回修复后的头立刻 PASS。
 2. 排列性断言第一版写成 `sort(after) == v`，拿**排序后的结果**去比**没排序的
    原数组**，于是修完代码仍然 FAIL。两次都是测试自己的错，不是被测代码的错 ——
    写完先问一句「这个断言在正确实现下会不会通过」。
+
+## 新增/变更：重判「不修」项第 2 批（BitonicSort / BitStream / Huffman / LSQRSolver）
+
+### 变更文件
+- `tools/zq_bitonicsort_check.cpp`（新增）：`ZQ_BitonicSort` 的独立回归测试
+- `audit_k3_20261001.md`：新增**附录 AA**
+
+### 结论：四个候选里三个干净，一个本机确实测不了
+
+| 头 | 结论 |
+|---|---|
+| `ZQ_BitonicSort` | **干净**，新增测试全部 PASS |
+| `ZQ_BitStream` | 无可达越界；`malloc` 不判空（潜伏，未复现） |
+| `ZQ_Huffman` | 看着像洞的那处其实是**写对了的防御代码**；两条遗留未复现 |
+| `ZQ_LSQRSolver` | 依赖 taucs，本机无法编译验证 |
+
+### ZQ_BitonicSort 的测试（新增）
+
+`Sort` 两个重载 len = 1,2,4,…,4096 × 升降序与 `std::sort` 逐元素相等；
+带 idx 重载的值序列 + 下标序列；非 2 的幂（3,5,6,7,9,10,12,100,1000）必须返回
+false；len = -2/-1/0/1 的边界；`Sort_Recursive(n, start_idx)` 只把
+`[start, start+n)` 排好。**一条 FAIL 都没有**，ASan + LSan 无报告。
+
+另外手工复核了两处：
+- `len` 不是 2 的幂时 `cur_len` 一路折半、每步判 `%2 != 0` 就返回 false，
+  所以不会硬跑；实测确认。
+- `_merge` 里 `sort_block_size/2`、`merge_block_size/2` 不会除以 0，
+  因为外层 `merge_lvl` 从 `sort_lvl` 递减到 1，恒 `>= 1`。
+
+### ZQ_Huffman：我一开始怀疑的那处其实是对的
+
+`ImportFromBitStream` 从**输入位流**读 `index` 直接当 `code[]` 的下标，
+而 `code` 是固定 256 个指针 —— 看着像「不可信输入驱动下标」的经典洞。
+
+复核下来不是：`index` 声明成 `unsigned char`，必然 0..255，正好落在 `code[256]` 内。
+条目数那儿的 `if (N > 256) return false;` 看起来多余（n 是 unsigned char），
+但配合 `N = bv ? n+256 : n` 把整个区间卡死了。**这是写得对的防御代码。**
+
+遗留两条，都需要构造输入/卡内存才能复现，本轮**未取得端到端证据，不改**：
+1. `malloc` 不判空 → OOM 时 `memset(NULL, ...)`；
+2. 同一个 `index` 在一条流里出现两次时，第一次的 `malloc` 被覆盖而泄漏。
+
+### ZQ_LSQRSolver
+include 了 `ZQ_TaucsBase.h`，而它在附录 X 的探测里属于 BROKEN（缺 taucs 本体）。
+**要装齐 taucs 才能测**，本轮不做。
+
+### 注意事项
+负结果同样写进报告：不然下一轮会把 `ZQ_BitonicSort` 再翻一遍，
+或者更糟 —— 默认「没人报过 = 没人看过」。
+
+验证：Windows Release 0 error；Linux 0 error；
+quicksort / bitonicsort / kmeans / mergesort 四个独立测试均 PASS；
+两套检查工具均 OK。
