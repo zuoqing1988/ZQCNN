@@ -443,3 +443,31 @@ SIGSEGV code=128 (SI_KERNEL) si_addr=(nil)
 2. 归约改 `vhaddps` 树后，收尾 shuffle 的立即数**必须是 `0x44`**（树归约后 lane 0 与 lane 2 相同，`0x88` 会静默打包重复值）。这个坑在两个平台同时表现为"结果算错但不崩"。
 3. 汇编版只在 x86/x86-64 提供；ARM/NEON 自动回落到 intrinsic 版。
 4. 仍未达到 100% 的形状集中在"小块 + 中等 K"（32³ 68%、512x512x2048 77%）：此时每次微内核调用的固定开销占比过高，需要多 tile 融合的汇编例程才能进一步摊薄。
+
+## 新增/变更：第三轮审计修复（第三方头文件层 + 人脸库层 + 特征提取正确性）
+
+对应 `audit_k3_20261001.md` 附录 F。
+
+### 变更文件
+
+| 文件 | 问题 | 修复 |
+|---|---|---|
+| `3rdparty/include/ZQlib/ZQ_JpegDecoder.h` | `malloc(widthStep * height)` 是 int×int 乘法，恶意超大 JPEG（3×30000×24000）能让乘积溢出成负；紧接着 `memset` 因 `sizeof` 提升到 size_t 而用**真实大尺寸**去清**被截断的小 buffer** → 确定性堆溢出。`malloc` 未判空。调用链真实存在：`ZQ_FaceClusterImagesForVideo` 解码来自不可信容器文件的 JPEG | 64 位计算 + `0x7FFFFFFF` 守卫 + 判空 + 失败路径 `jpeg_destroy_decompress` |
+| 同上 | `jpeg_start_decompress` 失败直接 `return false`，cinfo 与 JPOOL 全部泄漏 | 补 `jpeg_abort_decompress` + `jpeg_destroy_decompress` |
+| `ZQlibFaceID/ZQ_FaceRecognizerSphereFaceZQCNN.h` | 6 个像素格式分支的裁剪行跨度写成 `h*crop_width + w*3`，BGR 每像素 3 通道应再乘 3。`ZQ_FaceDatabaseMaker` 在 `image.channels()==1` 时走 GRAY 分支 → **喂灰度图时特征一直是错的** | 6 处统一为 `h*crop_width*3 + w*3` |
+| `ZQlibFaceID/ZQ_FaceRecognizerSphereFaceOpenCV.h` | 同一处错误的 5 个副本 | 同上 |
+| `ZQlibFaceID/ZQ_FaceClusterImagesForVideo.h` | ① fread 数量不符时 `return true`（调用方拿到"加载成功但内容已清空"的容器）；② JPEG 编码失败释放了 buffer 却漏 `return false`，把空指针压进容器 | ①改 `return false` ②补 `return false`；另加 `length[i] > 0` / `offset[i] >= 0` / offset 连续性 / 64 位累计四重校验 |
+| `ZQCNN/ZQ_CNN_MouthDetector.h` | `label*123457` 的 int 乘法在 label≥17387 时溢出成负，`% 6` 得负 offset → `colors[offset]` 负下标 | 改 64 位并对取模结果归一化 |
+| `SamplesZQCNN/TrainMTCNNprocessor/TrainMTCNNprocessor.h` | 三处 1MB `malloc` 未判空，紧跟 `memset` | 判空 + 释放另一块 + `return false` |
+| `ZQCNN/ZQ_CNN_TextBoxes.h`、`ZQ_CNN_NSFW.h`、`ZQ_CNN_MTCNN_old.h`、`ZQ_CNN_MTCNN_AspectRatio.h`、`ZQ_CNN_PersonPose.h`（两处） | `vector<uchar> buffer(w*h*3)` 的 int 乘法溢出 → 分配过小后越界写 | 64 位计算 + 范围守卫 |
+
+### 实测结果
+
+- **Windows**：全量构建 **0 error**；SampleMTCNN 18.7ms、SampleMTCNN_NCHWC4 7.5ms、SampleSSD、SampleFaceDetectorMTCNN 全部 exit=0，数值与改动前一致
+- **Linux**：全量构建 **0 error**；SampleMTCNN、SampleMTCNN_NCHWC4（7.0ms）exit=0
+
+### 注意事项
+
+1. 前两轮把 `3rdparty/include` 当成"只看接口不看实现"的黑盒，漏掉了 `ZQ_JpegDecoder.h`——它同时有整数溢出、未判空、资源泄漏、致命错误处理缺失四个问题，且挂在人脸视频聚类的不可信文件读取路径上，是本项目唯一一条完整的"恶意文件 → 内存破坏"链路。第三轮起第三方头文件里**被实际调用到的函数体**也纳入审计范围。
+2. `ZQ_CNN_MTCNN_ncnn.h` 的多处缺陷仍未修，但它**从不参与任何构建**（全仓没有一处 `#include` 它，CMake 只 glob `*.cpp`），属潜伏代码。
+3. 仍未修的两项已记入报告：`ZQ_JpegDecoder` 未装 `setjmp`（损坏 JPEG 会让 libjpeg 直接 `exit()` 带走宿主进程）、`ZQ_CNN_BBoxUtils.h` 的 OpenMP 数据竞争（当前所有调用都传 `thread_num=1`，多线程分支是死路径）。
