@@ -4,3 +4,7 @@ build*/
 cmake-out*/
 3rdparty/mkl_runtime/
 # 构建/排查过程产生的垃圾文件*.obj*.logtmp_*.cpptmp_*.shtmp_*.pyprobe.exe# build/debug leftovers
+# tools/bench_gemm_ab.py 的构建目录（wslpath 失败时可能落在仓库根）
+gemm-a/
+gemm-b/
+zqgemmab-*/
