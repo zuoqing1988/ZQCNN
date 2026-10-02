@@ -43,7 +43,17 @@
 #include "ZQCNN/ZQ_CNN_Tensor4D_NCHWC.h"
 #include "ZQCNN/layers_nchwc/zq_cnn_convolution_gemm_nchwc.h"
 
-static int g_fail = 0, g_crash = 0, g_wrong = 0;
+static int g_fail = 0, g_crash = 0, g_wrong = 0, nbad = 0, ninfo = 0;
+
+// 附录 BW：故意往**输入张量的补齐通道**里填非 0 值，看结果会不会变。
+// kernel2x2_C3 的 im2col 把 3 个通道**复制**进第 4 个槽位，所以按 BV.4 那条
+// 线索，只有输入侧第 4 通道恰好为 0 时才无害。g_poison != 0 时就把那些
+// 补齐通道填成 g_poison。
+// （NCHWC4 的 (n,h,w,k) 偏移与输出同一个式子：k=3 -> (3/4)*sliceStep + 3%4。）
+static float g_poison = 0.0f;
+
+// 子进程把「输出签名 + 后向误差」写到这里，父进程 waitpid 之后读（附录 BW）
+#define CHK_FILE "/tmp/zq_conv_chk.txt"
 
 // kernel 种类
 enum { K_GEN = 0, K_1x1, K_2x2, K_2x2_C3, K_3x3, K_3x3_C3 };
@@ -85,6 +95,16 @@ static int run_case(const Shape& s, int variant, bool use_buffer)
     if (!tout.ChangeSize(N, oH, oW, K, 0, 0)) return 2;
     if (!tin.ConvertFromCompactNCHW(&in_nchw[0], N, C, H, W)) return 2;
     if (!tflt.ConvertFromCompactNCHW(&flt_nchw[0], K, C, FS, FS)) return 2;
+
+    // 往输入的**补齐通道**（k >= C）填非 0 值（附录 BW）
+    if (g_poison != 0.0f) {
+        const int iWS = tin.GetWidthStep(), iSS = tin.GetSliceStep(), iIS = tin.GetImageStep();
+        for (int n = 0; n < N; n++)
+            for (int h = 0; h < H; h++)
+                for (int w = 0; w < W; w++)
+                    for (int k = C; k < 4; k++)      // align=4，C=3 -> 只有 k=3 是补齐的
+                        tin.GetFirstPixelPtr()[n * iIS + (k / 4) * iSS + h * iWS + w * 4 + (k % 4)] = g_poison;
+    }
     memset(tbias.GetFirstPixelPtr(), 0, sizeof(float) * (size_t)K);
     memset(tslope.GetFirstPixelPtr(), 0, sizeof(float) * (size_t)K);
     for (int k = 0; k < K; k++) {
@@ -161,10 +181,13 @@ static int run_case(const Shape& s, int variant, bool use_buffer)
 
     // ---- 参考：最朴素的卷积 ----
     double max_rel = 0.0;
+    // 输出签名：用来判断"输入的补齐通道到底参不参与计算"（附录 BW）
+    double chk = 0.0;
     for (int n = 0; n < N; n++)
         for (int oh = 0; oh < oH; oh++)
             for (int ow = 0; ow < oW; ow++)
                 for (int k = 0; k < K; k++) {
+                    chk += fabs(op[OUT_IDX(n, oh, ow, k)]);
                     double sum = 0, sc = 0;
                     for (int c = 0; c < C; c++)
                         for (int fh = 0; fh < FS; fh++)
@@ -182,6 +205,11 @@ static int run_case(const Shape& s, int variant, bool use_buffer)
                     if (den < 1e-30) den = 1.0;
                     if (d / den > max_rel) max_rel = d / den;
                 }
+    // 把签名写出去，父进程 waitpid 之后读（附录 BW）
+    {
+        FILE* f = fopen(CHK_FILE, "w");
+        if (f) { fprintf(f, "%.10e %.10e\n", chk, max_rel); fclose(f); }
+    }
     return max_rel > 1e-5 ? 1 : 0;        // 后向误差
 #undef OUT_IDX
 }
@@ -192,13 +220,14 @@ int main()
     printf("NCHWC no_padding 卷积：各分支的 filter_N %% 4 契约图（附录 BT）\n");
     printf("每个用例 fork 一个子进程，崩溃只算该用例失败（附录 BO.5 / BN.5）\n\n");
     printf("（每格两列 = 内部 malloc / 复用 buffer；三段 = plain / with_bias / with_bias_prelu）\n");
-    printf("%-12s %-6s %-9s%-26s|%-26s|\n", "kernel", "K%4", "", "plain", "with_bias", "with_bias_prelu");
+    printf("%-12s %-6s %-9s%-26s|%-26s|\n", "kernel", "K%4", "(门禁/只报告)", "plain", "with_bias|with_bias_prelu|", "");
 
     // 每支两个 K：4 的倍数（8/12/16）与非倍数（6/10/14）。
     // C=3 的两支额外用 C=3 的形状。
     static const int KS_OK[]   = { 8, 12, 16 };
     static const int KS_BAD[]  = { 6, 10, 14 };
     int ncase = 0, ncrash = 0, nwrong = 0, nbad = 0, ninfo = 0;
+    double last_chk = 0, last_rel = 0;
     for (int kk = 0; kk <= K_3x3_C3; kk++) {
         int C = (kk == K_2x2_C3 || kk == K_3x3_C3) ? 3 : 8;
         for (int which = 0; which < 2; which++) {
@@ -233,6 +262,10 @@ int main()
                     else if (WEXITSTATUS(st) == 3) { ncrash++; tag = "SETUP"; }
                     if (tag[0] != 'o' && informational) { ninfo++; tag = "info:WRONG"; }
                     else if (tag[0] != 'o') { nbad++; }
+                    { FILE* f = fopen(CHK_FILE, "r");
+                      double c = 0, r2 = 0;
+                      if (f) { if (fscanf(f, "%lf %lf", &c, &r2) != 2) { c = r2 = 0; } fclose(f); }
+                      last_chk = c; last_rel = r2; }
                     printf("%-12s", tag);
                 }
                 printf("| ");
@@ -240,6 +273,64 @@ int main()
             printf("\n");
         }
     }
+    // ---- 附录 BW：输入补齐通道填非 0 值，看结果到底变不变 ----
+    {
+        Shape s; s.N = 1; s.H = 20; s.W = 20; s.C = 3; s.K = 8; s.stride = 1;
+        s.kernel = K_2x2_C3;
+        printf("\n--- 附录 BW：kernel2x2_C3, C=3, K=8，比较输入的第 4 个（补齐）通道 ---\n");
+        double chk_zero = 0, rel_zero = 0, chk_p = 0, rel_p = 0;
+        for (int vi = 0; vi < 2; vi++) {
+            g_poison = (vi == 0) ? 0.0f : 7.0f;
+            fflush(stdout);
+            pid_t pid = fork();
+            if (pid == 0) {
+                FILE* dn = freopen("/dev/null", "w", stderr); (void)dn;
+                remove(CHK_FILE);
+                int r = run_case(s, 1, false);
+                _exit(r == 2 ? 3 : r);
+            }
+            int st = 0; waitpid(pid, &st, 0);
+            double c = 0, r2 = 0;
+            FILE* f = fopen(CHK_FILE, "r");
+            if (f) { if (fscanf(f, "%lf %lf", &c, &r2) != 2) { c = r2 = 0; } fclose(f); }
+            if (vi == 0) { chk_zero = c; rel_zero = r2; } else { chk_p = c; rel_p = r2; }
+            printf("  补齐通道=%-5s 输出签名=%.8g  后向误差=%.3e  %s\n",
+                   vi == 0 ? "0" : "7.0", c, r2, (r2 > 1e-5) ? "错" : "对");
+        }
+        g_poison = 0.0f;
+        double d = fabs(chk_p - chk_zero);
+        double den = (fabs(chk_zero) > 1e-12) ? fabs(chk_zero) : 1.0;
+        printf("  两个签名的相对差 = %.3e  ->  %s\n", d / den,
+               (d / den > 1e-9)
+               ? "**输入的补齐通道参与了计算**（BV.4 那条耦合成立）"
+               : "补齐通道**没**参与计算 -> BV.4 那条耦合被排除");
+        (void)rel_zero; (void)rel_p;
+    }
+
+    // ---- 附录 BW.2：kernel2x2（**对照支**，C=8 时是对的）强行喂 C=3 ----
+    // 如果它也错，那问题就不在 _C3 后缀上，而在"2x2 + C=3"这件事本身
+    // （比如 C 维的对齐/补齐处理）；如果它对，才说明确实是 _C3 那一支的问题。
+    {
+        printf("\n--- 附录 BW.2：kernel2x2（对照支）用 C=8 vs C=3 ---\n");
+        Shape s; s.N = 1; s.H = 20; s.W = 20; s.K = 8; s.stride = 1; s.kernel = K_2x2;
+        for (int ci = 0; ci < 2; ci++) {
+            s.C = (ci == 0) ? 8 : 3;
+            fflush(stdout);
+            pid_t pid = fork();
+            if (pid == 0) {
+                FILE* dn = freopen("/dev/null", "w", stderr); (void)dn;
+                remove(CHK_FILE);
+                int r = run_case(s, 1, false);
+                _exit(r == 2 ? 3 : r);
+            }
+            int st = 0; waitpid(pid, &st, 0);
+            double c = 0, r2 = 0;
+            FILE* f = fopen(CHK_FILE, "r");
+            if (f) { if (fscanf(f, "%lf %lf", &c, &r2) != 2) { c = r2 = 0; } fclose(f); }
+            printf("  kernel2x2  C=%d  后向误差=%.3e  %s\n", s.C, r2, (r2 > 1e-5) ? "错" : "对");
+        }
+    }
+
     printf("\n共 %d 个用例：崩溃 %d，应对但仍错 %d，只报告（故意违约的形状）%d\n",
            ncase, ncrash, nbad, ninfo);
     printf("（BS 已经把 filter_N%%4 这条契约钉死了；这张表是为了确认 1x1 / 2x2 /\n");
