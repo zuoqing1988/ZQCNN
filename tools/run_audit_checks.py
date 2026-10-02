@@ -89,6 +89,14 @@ GROUPS = [
      ['check_c3_guards.py', '--selfcheck'], False),
     ('A14 "NCHWC _C3 调用点的 C==3 守卫" 普查 (check_c3_guards)',
      ['check_c3_guards.py'], False),
+    # A15/A16 是附录 CM 的门禁：附录 CL 那处**越界读**就是这个形状 ——
+    # 同一个函数里 x0 = __min(in_W - 1, …) 而 y0 = __min(in_H, …)，
+    # 少减一个 -1 就读到最后一行之后。NCHW 的对应实现写的是 in_H - 1，
+    # 同仓 A/B 一次就定性为笔误。现在它是一条常驻门禁。
+    ('A15 "同函数内各轴钳位上界一致" 自测 (check_clamp_asymmetry --selfcheck)',
+     ['check_clamp_asymmetry.py', '--selfcheck'], False),
+    ('A16 "同函数内各轴钳位上界一致" 普查 (check_clamp_asymmetry)',
+     ['check_clamp_asymmetry.py'], False),
     ('B  ZQlib 独立回归测试 x10 (ASan+LSan)', ['run_zqlib_checks.py'], False),
     # 基线路径给**绝对路径**：子进程以 ROOT 为 cwd 运行，而基线文件在 tools/ 下，
     # 相对路径会解析成 <ROOT>/zqlib_probe_baseline.txt 而找不到（2026-10-02 实测）。
