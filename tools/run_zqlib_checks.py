@@ -86,12 +86,16 @@ def main():
     # 每一个都要写清理由 —— "跑不过所以不跑"和"它是已知的未修项所以不跑"
     # 是两件完全不同的事，混起来就成了"无法验证"那个自我实现的结论（附录 W）。
     SKIP = {
-        'zq_bns': ('它钉的是 ZQCNN/layers_nchwc/zq_cnn_batchnormscale_nchwc_raw.h，'
-                   '而那个文件是**死代码**（全仓零引用，附录 AY.5），并且它的主内核'
-                   ' zq_cnn_batchnorm_b_a_nchwc 的索引约定已知未修（从 NCHW 版复制过来'
-                   '没改完）—— 跑这个测试必然 ASan abort。已修的那两处'
-                   '（malloc 判空、读模型参数用 in_C 上界）由它钉住，'
-                   '需要时手动跑，文件头写明了预期行为。'),
+        'zq_bns': ('它钉的是 ZQCNN/layers_nchwc/zq_cnn_batchnormscale_nchwc_raw.h。'
+                   '那个文件是**半死**的：9 个包装函数零引用，但主内核 '
+                   'zq_cnn_batchnorm_b_a_nchwc1/4/8 **是活的**'
+                   '（ZQ_CNN_Forward_SSEUtils_NCHWC.cpp:1454/3746/5359 经 '
+                   'ZQ_CNN_Layer_NCHWC_BatchNormScale::Forward 调用）。'
+                   '它的三个内层步长写的是 NCHW 约定，而 NCHWC 里 C 在最内层 —— '
+                   '**已知未决**（附录 AY.5：连张量自己 widthStep/sliceStep 的定义'
+                   '都还没核实，所以本轮明确不碰）。跑这个测试会对拍失败并 abort，'
+                   '这是**预期行为**：把一条未决缺陷变成一条每次都有人说"它在红"的记录。'
+                   '已修的那两处（malloc 判空、读模型参数用 in_C 上界）由它钉住。'),
     }
     ap.add_argument('--no-asan', action='store_true',
                     help='不带 sanitizer 编译（想先确认能不能编过时用）')

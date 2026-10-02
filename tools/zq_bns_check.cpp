@@ -67,7 +67,11 @@ static void run_variant(const char* name, F fn, int align, int N, int H, int W, 
     std::vector<float> im(need, 0.f);
     for (size_t i = 0; i < im.size(); i++)
         im[i] = (float)((i * 29) % 97) * 0.01f - 0.5f;
-    std::vector<float> out(need, 0.f);
+    // 内核是**就地修改**（第一个参数是非 const 指针，结果写回 in_data 本身），
+    // 所以参考实现要用**调用前**的副本。第一版拿 out（全 0）去比、或者拿
+    // 已经被改过的 im 去比，都会得到"相对误差 1.00"—— 看着像内核算错，
+    // 其实是测试比错了对象。
+    std::vector<float> im0 = im;
 
     const float eps = 1e-5f;
     if (getenv("ZQBNS_VERBOSE"))
@@ -75,8 +79,6 @@ static void run_variant(const char* name, F fn, int align, int N, int H, int W, 
                "sliceStep=%d imStep=%d need=%d(%.0fB) model=%d(%.0fB)\n",
                name, align, N, H, W, C, Cpad, widthStep, sliceStep, imStep,
                (int)need, need * 4.0, C, C * 4.0);
-    fprintf(stderr, "CASE %s align=%d C=%d need=%d model=%d\n",
-            name, align, C, (int)need, C);
     fn(&im[0], N, H, W, C, widthStep, sliceStep, imStep,
        &mean[0], &var[0], &scale[0], &bias[0], eps);
 
@@ -90,8 +92,8 @@ static void run_variant(const char* name, F fn, int align, int N, int H, int W, 
                                + (size_t)w * widthStep + c;
                     float b = scale[c] / sqrtf(var[c] + eps);
                     float a = bias[c] - mean[c] * b;
-                    double ref = b * im[off] + a;
-                    double d = fabs(out[off] - ref) / (fabs(ref) + 1e-6);
+                    double ref = b * im0[off] + a;
+                    double d = fabs(im[off] - ref) / (fabs(ref) + 1e-6);
                     if (d > worst) worst = d;
                 }
     bool ok = worst < 1e-5;
