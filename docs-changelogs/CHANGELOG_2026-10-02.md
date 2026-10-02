@@ -2477,3 +2477,89 @@ innerproduct / lstm，`layers_nchwc/` 的 convolution / innerproduct）：
 是否 prepack、是否 nchwc）**从来不体现在参数上** —— 调用方无法从参数签名
 看出"这个变体会不会把 `*buffer` 换掉"（实际上它们**都会**）。
 这一族将来要重构，第一件事就是把上面那段契约变成**一个**地方，而不是 16 个。
+
+
+## 新增/变更：附录 BK —— 人脸库解析路径的回归测试（写测试的过程查出 3 条真缺陷）
+
+### 为什么挑它
+
+本报告的威胁模型把**人脸库文件**（.feat / .names）明确列为**不可信输入**，
+而 `ZQ_FaceDatabaseCompact::LoadFromFile` 就是它的解析入口 —— **此前零测试覆盖**。
+整个 `ZQlibFaceID/` 的 29 个头都在这个状态。
+
+写测试的第一步是"让这个头能独立编译"，而这一撞就撞出了三条。
+
+### 缺陷 ①：ZQ_FaceRecognizerUtils.h 用 std::cout 却没 include <iostream>
+
+    ZQlibFaceID/ZQ_FaceRecognizerUtils.h:219:10: error: 'cout' is not a member of 'std'
+      219 |     std::cout << "failed to solve
+";
+
+它只 include 了 opencv2 的三个头 + time.h + omp.h，`std::cout` 完全是
+**靠 OpenCV 的头传递带进来**的。换个 OpenCV 版本或 include 顺序就直接编不过。
+与附录 AG 修的那批 ZQlib「头不自足」同一类。已补。
+
+### 缺陷 ②③：GenerateRandomDatabase 里的两个问题
+
+    int* tmp_person_face_num = (int*)malloc(sizeof(int)*num_person);   // 不判 NULL
+    for (int i = 0; i < num_person; i++) tmp_person_face_num[i] = ...;  // 直接写
+    __int64* tmp_person_face_offset = (__int64*)malloc(...);            // 同上
+    ...
+    __int64 num_all_feats = num_person * num_feat_per_person;            // 两个 int 相乘！
+
+**②** 两个 malloc 都不判 NULL，紧接着就写。旁边的 `tmp_all_feats` 反而判了 ——
+同一段代码里两种写法。
+
+**③** 那个 `__int64` 是**装饰性的**：乘积在两个 int 相乘时就已经回绕，事后加宽没用。
+同一文件的 `_load_feats` 用的 `total_face_num` 才是真的 `__int64` 累加 ——
+**同一个类里的两处，一处对一处错**。
+
+后果不是越界（`needed_bytes` 和后面两个写入循环按同一个回绕值走，自洽），
+而是**静默申请到错误大小的库**：请求 1e10 个特征会拿到 1.4e9 个。
+
+### 顺带：三处 printf/sprintf 的格式符与实参宽度不匹配
+
+| 行 | 原写法 | 实参类型 |
+|---|---|---|
+| 79 | `sprintf(buf, "%d", i)` | `__int64` |
+| 123 | `printf("need %d MB 
+", needed_bytes/1024/1024)` | `__int64` |
+| 126 | `printf("...need %ld bytes
+", needed_bytes)` | `__int64` |
+
+x86-64 上 varargs 传 64 位、`%d` 只读低 32 位 —— 数值"恰好对"，但属于未定义行为。
+与附录 AT.10 的 ZQ_Huffman.h 同一类。已改成 `%lld` + 显式强转。
+
+### 结论：**加载路径本身是干净的**
+
+13 个用例（2 正常 + 11 畸形）全过，无 ASan 报错、无泄漏：
+空文件 / 文件不存在 / dim=0 / dim=-5 / person_num=0 / person_num=-1 /
+某人脸数为 0 / 为负 / 特征区被截断 / names 人数不一致 / 人脸数累加 int 回绕，
+全部**干净返回 false**。
+
+也就是说 `_load_feats` 里的 `__int64` 用法是**对的**（对比 BK.3③ 的
+`GenerateRandomDatabase` 是错的）。**要修的是生成库的那条路，不是解析库的那条路** ——
+这个区别只看代码看不出来，得两个都测。
+
+### 我自己的测试也挂过一次
+
+最后一个用例（回绕）第一版直接复用了 `make_feats`，于是它自己要去
+`std::vector` 里塞 `8 维 x 0x7FFFFFFE` 个 float（约 17 GB）—— **挂的是测试**。
+改成只写头部 + 16 个 float 之后正常。
+
+以及：`dim/person_num/total_face_num` 都是 private、没有公开取值接口，
+只能断言 `LoadFromFile` 的**返回值**。想更严就得加 getter，**本轮不加**
+（那是 API 变更，不是审计）。
+
+### 接入
+
+归到 `--with-slow`（要 OpenCV 头，ASan 下编一次约 3 分钟），
+OpenCV 路径从 `build_x64/CMakeCache.txt` 取，取不到就整体跳过并说明原因
+（与 probe_zqlib_headers_msvc.py 对那 14 个 C1083 的处理同一思路）。
+日常回归仍是 14 组 ASan 测试（~90 秒）。
+
+### 顺带记一个编译器提醒
+
+`ZQ_FaceDatabaseCompact.h:287` 的 `fgets(line, 199, in)` 忽略返回值
+（`-Wunused-result`）。判断用的是下一行的 `line[0] == ' '`，**功能上是对的**，
+但 ferror 时会误判成 EOF。本轮未改（改动会引入新分支），记在这里。

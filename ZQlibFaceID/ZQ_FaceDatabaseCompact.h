@@ -76,27 +76,59 @@ namespace ZQ
 			for (__int64 i = 0; i < num_person; i++)
 			{
 				char buf[200];
-				sprintf(buf, "%d", i);
+				// 审计修复 2026-10-02（附录 BK.4）：i 是 __int64，%d 只取低 32 位。
+				sprintf(buf, "%lld", (long long)i);
 				tmp_names.push_back(std::string(buf));
 			}
+			// 审计修复 2026-10-02（附录 BK.1）：这两个 malloc 原来**不判 NULL**，
+			// 紧接着就写进去。num_person 一大就崩在空指针上。
 			int* tmp_person_face_num = (int*)malloc(sizeof(int)*num_person);
+			__int64* tmp_person_face_offset = (__int64*)malloc(sizeof(__int64)*num_person);
+			if (tmp_person_face_num == 0 || tmp_person_face_offset == 0)
+			{
+				printf("failed to alloc %d persons\n", num_person);
+				if (tmp_person_face_num) free(tmp_person_face_num);
+				if (tmp_person_face_offset) free(tmp_person_face_offset);
+				return false;
+			}
 			for (int i = 0; i < num_person; i++)
 				tmp_person_face_num[i] = num_feat_per_person;
 
-			__int64* tmp_person_face_offset = (__int64*)malloc(sizeof(__int64)*num_person);
 			for (__int64 i = 0; i < num_person; i++)
 			{
 				tmp_person_face_offset[i] = i * num_feat_per_person;
 			}
 
-			__int64 num_all_feats = num_person * num_feat_per_person;
+			// 审计修复 2026-10-02（附录 BK.2）：原来是
+			//     __int64 num_all_feats = num_person * num_feat_per_person;
+			// —— **两个 int 相乘，乘积在 int 里就已经回绕了**，
+			// 那个 __int64 只是事后加宽，是个装饰。同一文件里的 _load()
+			// （第 200 行附近）用的 total_face_num 才是真的 __int64 累加。
+			// 后果不是越界（needed_bytes 和下面两个写入循环都按同一个回绕值走，
+			// 自洽），而是**申请到了错误大小的库**：请求 1e10 个特征会拿到 1.4e9 个，
+			// 静默地少掉一大半。
+			// 改成先转 __int64 再乘，并加上界。
+			__int64 num_all_feats = (__int64)num_person * num_feat_per_person;
+			if (num_person < 0 || num_feat_per_person < 0
+				|| num_all_feats <= 0 || num_all_feats > (__int64)0x7FFFFFFF)
+			{
+				printf("invalid size: %d persons x %d feats\n",
+					num_person, num_feat_per_person);
+				free(tmp_person_face_num);
+				free(tmp_person_face_offset);
+				return false;
+			}
 			__int64 needed_bytes = num_all_feats * dim * sizeof(float);
 			float* tmp_all_feats = (float*)_aligned_malloc(needed_bytes, FEAT_ALIGNED_SIZE);
 			
-			printf("need %d MB \n", needed_bytes / 1024 / 1024);
+			// 审计修复 2026-10-02（附录 BK.4）：下面三处 printf/sprintf 的实参
+			// 是 __int64 / size_t，格式符却是 %d / %ld。x86-64 上 varargs 传的是
+			// 64 位，%d 只读低 32 位 —— 数值"恰好对"，但这属于未定义行为，
+			// 与附录 AT.10 修的 ZQ_Huffman.h 同一类。
+			printf("need %lld MB \n", (long long)(needed_bytes / 1024 / 1024));
 			if (tmp_all_feats == 0)
 			{
-				printf("failed to alloc memory, need %ld bytes\n", needed_bytes);
+				printf("failed to alloc memory, need %lld bytes\n", (long long)needed_bytes);
 				return false;
 			}
 			for (__int64 i = 0; i < num_all_feats*dim; i++)

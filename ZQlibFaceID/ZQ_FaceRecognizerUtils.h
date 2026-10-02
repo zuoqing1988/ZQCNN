@@ -7,6 +7,14 @@
 #include <opencv2/imgproc/imgproc.hpp>
 #include <time.h>
 #include <omp.h>
+// 审计修复 2026-10-02（附录 BK.3）：下面第 219 行的
+//     std::cout << "failed to solve\n";
+// 用到 std::cout，而这个头**没有** include <iostream> —— 它只是恰好被
+// OpenCV 的头传递带进来。换个 OpenCV 版本/编译顺序就会直接编不过
+// （2026-10-02 写 zq_facedb_check 时真实撞到了：
+//   error: 'cout' is not a member of 'std'）。
+// 与附录 AG 修的那批 ZQlib「头不自足」是同一类。
+#include <iostream>
 
 namespace ZQ
 {
