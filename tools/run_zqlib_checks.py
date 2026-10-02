@@ -63,6 +63,9 @@ EXTRA_SOURCES = {
         'gcc -O1 -g -mavx2 -mfma -c -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include '
         '$R/ZQCNN/math/zq_avx_mathfun.c -o $WDIR/zq_eltwise_avx.o',
     ],
+    # zq_pool：只 include 了内核的 .c，不含 math/zq_*_mathfun.c，所以 EXTRA_SOURCES
+    # 是空的 —— 留个空表项是为了"以后要加时知道该加哪儿"。
+    'zq_pool': [],
     # zq_bns 不自动跑（见 SKIP），但点名时要能真的编出来。
     'zq_bns': [
         'gcc -O1 -g -mavx2 -mfma -c -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include '
@@ -72,15 +75,18 @@ EXTRA_SOURCES = {
     ],
 }
 EXTRA_LINK = {'zq_lrn': ' $WDIR/zq_lrn_sse.o $WDIR/zq_lrn_avx.o',
+              'zq_pool': '',
               'zq_bns': ' $WDIR/zq_bns_sse.o $WDIR/zq_bns_avx.o',
               'zq_eltwise': ' $WDIR/zq_eltwise_sse.o $WDIR/zq_eltwise_avx.o'}
 EXTRA_INC = {'zq_lrn': ' -I$R/ZQCNN -I$R/ZQ_GEMM',
+             'zq_pool': ' -I$R/ZQCNN -I$R/ZQ_GEMM',
              'zq_bns': ' -I$R/ZQCNN -I$R/ZQ_GEMM',
              'zq_eltwise': ' -I$R/ZQCNN -I$R/ZQ_GEMM'}
 # 测内核的测试自己也 include 了那个 .c，所以**主 TU 也要带 -mavx2 -mfma**，
 # 否则 _mm256_set1_ps 这些 always_inline 内建会报
 # "target specific option mismatch"（2026-10-02 实测）。
-EXTRA_CXXFLAGS = {'zq_lrn': ' -mavx2 -mfma', 'zq_bns': ' -mavx2 -mfma',
+EXTRA_CXXFLAGS = {'zq_lrn': ' -mavx2 -mfma',
+                   'zq_pool': ' -mavx2 -mfma', 'zq_bns': ' -mavx2 -mfma',
                    'zq_eltwise': ' -mavx2 -mfma'}
 
 
