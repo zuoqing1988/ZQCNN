@@ -240,15 +240,11 @@ def main():
             '修法要按 2 行重写展开并**重定该支的 K 维定义**'
             '（matrix_A_cols / matrix_B_rows / B 缓冲区 / col2im 的 K 步进要一起改），'
             '而这一支没有第二个实现可对照 —— 收益为零、风险不为零，本轮不改。'
-            '**另有一条 align=8 的（附录 BZ.2）**：NCHWC8 的 with_bias / '
-            'with_bias_prelu **六支全错**，错法是 **bias 根本没被加上**'
-            '（实测 (got-exp)/bias = -1.0000 精确成立，即 got = dot）。'
-            'plain 变体在 align=8 全对，所以坏的只有 bias 这一步。'
-            '生产影响：`SampleLnet106` / `SampleSphereFaceNet` 是 NCHWC8 的，'
-            '它们的特征在 x86 上少 bias —— 而**这两个 sample 不在 '
-            'run_sample_regression.sh 的清单里**，所以回归看不见'
-            '（与附录 BR 同型：只跑 rc=0、不比对结果）。根因**未定位**，BZ.5 只是线索。'
-            '本轮不改：align=4 那一支现在是**对的**，而 align=8 与它共用同一段 col2im。'),
+            '**注意**：附录 BZ 曾报过一条「align=8 的 with_bias/prelu 全错、'
+            'bias 根本没被加上」，已在**附录 CA 里撤回** —— 两个与本门禁**没有一行'
+            '共用代码**的独立复现（align=8 与 align=4 各一个）都给出'
+            '「8 个输出通道 x 400 个格子全部与参考值一致」。也就是说那一条错的是'
+            '门禁本身，不是库。**align=8 那一族至今没测过。**'),
     }
     ap.add_argument('--with-slow', action='store_true',
                     help='连那些编译特别慢的测试一起跑（zq_innerproduct 要链 ZQ_GEMM 的'
