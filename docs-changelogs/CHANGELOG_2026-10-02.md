@@ -2018,3 +2018,70 @@ ASan 实测（`tools/zq_bns_check.cpp`）：
   `if (zq_mm_align_size >= 4)`，而 `zq_mm_align_size` 是每个变体的**编译期常量**
   （nchwc1=1 / nchwc4=4 / nchwc8=8），两处（1287 / 1407）**都有 else 分支**
   （1352 / 1491），nchwc1 走标量路径。属刻意的 SIMD 宽度分派。
+
+
+## 新增/变更：附录 BD —— pooling 的 stride=0 是**模型可控的除零**（已修）
+
+### 变更文件
+- `ZQCNN/ZQ_CNN_Layer.h`：`ZQ_CNN_Layer_Pooling::ReadParam` 增加
+  `kernel_H/kernel_W/stride_H/stride_W <= 0` 的值域校验
+- `audit_k3_20261001.md`：新增**附录 BD**
+
+### 问题
+
+`ReadParam` 只校验参数**在不在**（`has_kernelH` 之类），**不校验值**：
+
+    else if (_my_strcmpi("stride_H", paras[n][0].c_str()) == 0) {
+        if (paras[n].size() >= 2) { has_strideH = true; stride_H = atoi(paras[n][1].c_str()); }
+    }
+    ...
+    if (!global_pool)
+        return has_kernelH && has_kernelW && has_strideH && has_strideW && has_bottom && has_top && has_name;
+
+于是模型文件里写 `stride: 0` 会一路走到
+
+    need_H = (int)ceil((float)(in_H + pad_H_top + pad_H_bottom - kernel_H) / stride_H + 1);
+
+**浮点除以 0** -> ±inf，而 **`(int)ceil(inf)` 是未定义行为**（x86 上
+cvttss2si 给 INT_MIN，恰好被后面的 `need_H <= 0` 挡掉 —— **那是巧合不是保证**；
+主工程还开着 `-Ofast -ffast-math`，编译器有理由假设这种转换不会发生）。
+
+`kernel_size: 0` 不崩，但池化循环一次都不执行，**输出整片变成 -FLT_MAX（max）/ 0（avg）**。
+
+`stride_H < 0` 会让 need_H 变成很大的正数，那条路已被附录 H3/H4 的
+`0x7FFFFFFF` 上界校验挡住。
+
+这正是本报告开头那条首要漏洞画像 ——「模型/配置文件的解析层几乎不做
+范围与一致性校验」—— 只是这一次落在**除零**上而不是缓冲区上。
+
+### 修法
+
+`ReadParam` 返回 `bool`、调用方会中止模型加载，所以在它返回前加：
+
+    if (!global_pool
+        && (kernel_H <= 0 || kernel_W <= 0 || stride_H <= 0 || stride_W <= 0))
+    {
+        std::cout << "Layer " << name << " invalid pooling params: kernel "
+                  << kernel_H << "x" << kernel_W
+                  << " stride " << stride_H << "x" << stride_W
+                  << " (must all be > 0)
+";
+        return false;
+    }
+
+**零行为变化**：所有合法模型的 kernel/stride 本来就都 > 0。
+
+### 顺带答了附录 BB.5 留下的待办
+
+BB 说「内核要求 `out_H = ceil((in_H - kernel_H)/stride_H) + 1`，
+契约被破坏时的行为不在覆盖范围内，那属于调用方的校验责任」。
+查了 `ZQ_CNN_Forward_SSEUtils::MaxPooling`（1530 行）之后确认：
+**没有任何外部调用方能传错** —— `need_H/need_W` 是 wrapper 自己
+从 `in_H/in_W/kernel/stride/pad` **现算**的，一路到内核中间没有别的层。
+`nopadding_*` 那族也只在 `pad_*` 全 0 时被调用，与语义一致。
+**这条契约由 `MaxPooling` 自己保证，BB 的测试按公式传参是对的。**
+
+### 验证
+
+    wsl make -j8                     100% Built，无 error
+    run_sample_regression.sh          8 个 sample 全 rc=0

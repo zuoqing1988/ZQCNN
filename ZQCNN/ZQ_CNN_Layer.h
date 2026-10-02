@@ -3812,6 +3812,26 @@ namespace ZQ
 				std::cout << "Layer " << name << " missing " << "name\n";
 				std::cout << line << "\n";
 			}
+			// 审计修复 2026-10-02（附录 BD.2）：下面原来只校验**参数在不在**
+			// （has_xxx），不校验**值**。于是模型文件里写
+			//     stride: 0
+			// 会一路走到 ZQ_CNN_Forward_SSEUtils::MaxPooling 的
+			//     need_H = (int)ceil((float)(...) / stride_H + 1);
+			// —— **浮点除以 0**，结果是 ±inf，而 `(int)ceil(inf)` 是未定义行为
+			// （x86 上 cvttss2si 给 INT_MIN，恰好被后面的 `need_H <= 0` 挡掉，
+			//   但那是巧合，不是保证；-Ofast 下编译器还有理由假设它不会发生）。
+			// 而 `kernel_size: 0` 会让池化循环一次都不执行，
+			// 输出整片变成 -FLT_MAX（max）/ 0（avg）。
+			// 这些值全部来自**不可信的模型文件**，所以在这里挡住。
+			if (!global_pool
+				&& (kernel_H <= 0 || kernel_W <= 0 || stride_H <= 0 || stride_W <= 0))
+			{
+				std::cout << "Layer " << name << " invalid pooling params: kernel "
+					<< kernel_H << "x" << kernel_W
+					<< " stride " << stride_H << "x" << stride_W
+					<< " (must all be > 0)\n";
+				return false;
+			}
 			if(!global_pool)
 				return has_kernelH && has_kernelW && has_strideH && has_strideW && has_bottom && has_top && has_name;
 			else
