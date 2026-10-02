@@ -3296,3 +3296,92 @@ A 与 B 只差 K；B 与 C 的 K 相同、只把 oW 的余数从 2 换成 1。�
 本轮只加了测试与文档，没有动库代码。
   python tools/run_audit_checks.py --quick   ->  ALL CHECKS PASSED
   python tools/run_zqlib_checks.py --with-slow zq_nchwc_conv
+
+## 新增/变更：附录 BT —— NCHWC no_padding 卷积的 filter_N%4 契约图（并更正 BS 的一条结论）
+
+### 变更文件
+- `tools/zq_nchwc_conv_check.cpp`：从「只测 3x3 两支」扩成**六支 × 3 个激活动作**
+  的契约图；每个用例 fork 一个子进程，崩溃只算该用例失败
+- `audit_k3_20261001.md`：新增**附录 BT**
+
+### 为什么要画这张表
+
+BS 只测了 3x3。**守卫该加在哪一层，取决于 1x1 / 2x2 / general 那三支是不是
+同样要求 `filter_N` 是 4 的倍数** —— 没测就加守卫，等于拿"看起来修好了"
+换"其实只堵了一个门"。四个分支的**参数列表完全相同**，所以一张表铺得开。
+
+### 表（C=8；C3 两支用 C=3，H=W=20，stride=1）
+
+```
+kernel       K%4    plain(无bias)     with_bias        with_bias_prelu
+general      0      ok    ok           ok    ok        ok    ok
+general      2      WRONG WRONG        ok    ok        ok    ok
+kernel1x1    0      ok    ok           ok    ok        ok    ok
+kernel1x1    2      WRONG WRONG        ok    ok        ok    ok
+kernel2x2    0      ok    ok           ok    ok        ok    ok
+kernel2x2    2      WRONG WRONG        ok    ok        ok    ok
+kernel2x2_C3 0      WRONG WRONG        WRONG WRONG     WRONG WRONG
+kernel2x2_C3 2      WRONG WRONG        WRONG WRONG     WRONG WRONG
+kernel3x3    0      ok    ok           ok    ok        ok    ok
+kernel3x3    2      WRONG WRONG        ok    ok        ok    ok
+kernel3x3_C3 0      ok    ok           ok    ok        ok    ok
+kernel3x3_C3 2      WRONG WRONG        ok    ok        ok    ok
+
+共 72 个用例：崩溃 0，结果错 22
+```
+
+### 结论一：六支契约**统一** —— 都要 filter_N % 4 == 0（并更正 BS 一条结论）
+
+BS 说 `filter_N%4 != 0` 会**越界**（ASan 报 SEGV）。
+这张表里同样是 `K%4 != 0`，六支有五支是**结果错、不是崩**。
+崩的那次（BS 的 B/C 两组）用的是 **C=3**，而这张表里 C3 两支用 C=3 + **K%4==0**，
+反而不崩。
+
+也就是说：**"越界(崩)"与"结果错"是两个不同的触发条件，BS 把它们混成了一条。**
+K%4 != 0 -> 越界多处理 2~3 个 -> 多出来的写到 out_C 之外，于是真正该被写的
+那几个 channel 可能根本没被写（还留着哨兵 -12345），表现为"结果错"；
+只有当越界写同时跨到**未映射的页**时才会 SEGV。BS 看到 SEGV 只是因为那次的
+缓冲区布局让越界恰好跨页。
+
+**不变的核心结论仍然成立**：filter_N % 4 != 0 就不对，而 wrapper 从不校验。
+
+### 结论二：kernel2x2_C3 在**所有**配置下都错 —— 本轮不下结论
+
+三种可能分不清：(1) 它真有 bug；(2) 它还有一条我没满足的前置条件（dilation？
+某种 filter 打包？）也就是**我违约了**；(3) 它在生产里根本不可达。
+按 BC/BI 的规矩，**分不清就不下结论**。这是下一片的第一件事。
+（`kernel3x3_C3` 在 K%4==0 下是 ok 的，所以"C3 后缀"本身不等于坏。）
+
+### 守卫该加在哪一层 —— 形状清楚了，但修法待定
+
+K%4!=0 的要求六支统一，所以守卫应该加在
+`ZQ_CNN_Forward_SSEUtils_NCHWC::Convolution*`（它现在只查
+`filter_C == in_C` 与 `filter_N == bias_C`），而不是逐个内核去补 col2im 的尾巴。
+
+**但本轮仍不落地**，两个理由：
+1. kernel2x2_C3 那条还没定性；如果它是"生产不可达"，守卫该不该覆盖 2x2 另说。
+2. 补 col2im 的尾巴是更彻底的修法（让内核对任意 out_C 都对），守卫只是
+   "把不合法挡在门外"。两者取舍需要先知道"到底有多少模型会用非 4 倍数的
+   filter_N" —— 而 shipped 的 SphereFace / ArcFace / MTCNN **全都是 4 的倍数**，
+   所以**改 col2im 的收益目前为零、风险不为零**。
+
+**定位完成、形状清楚、修法待定 —— 这比加一个半截守卫诚实。**
+
+### 测试本身又踩了两个已知的坑（都当场抓到）
+
+1. **子进程里把 run_case 跑了两遍**：
+   `_exit(run_case(...) == 2 ? 3 : run_case(...))` 两个分支各调一次，
+   等于内核跑两遍、只看第二遍的结果。已改成先取返回值。
+2. **子进程 stderr 没接 /dev/null**，ASan 报告会把父进程 stdout 上那一格
+   拦腰截断（BN.5 第一次踩的就是这个）。
+
+这次**没有**再犯 BS.3 那个错：输出索引用 OUT_IDX
+（n*imStep + (k/4)*sliceStep + oh*widthStep + ow*4 + k%4），不是 NCHW 的简化式。
+
+### 补充：门禁里的分类与 SKIP 登记
+
+K%4 != 0 那一档在测试里被标成「**只报告**、不判失败」：门禁要 pin 住的是
+**「合法形状必须算对」**，不是「非法形状必须算错」—— 后者会在有人把 col2im 的
+尾巴补好之后把门禁变红。唯一让本测试为红的是 kernel2x2_C3 在 K%4==0 那一档，
+所以 `zq_nchwc_conv` 登记在 `run_zqlib_checks.py` 的 SKIP 里，理由写明
+「已知未修 / 未定性」，定性之后才谈得上移出。
