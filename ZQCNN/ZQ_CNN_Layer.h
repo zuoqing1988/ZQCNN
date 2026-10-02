@@ -1865,7 +1865,7 @@ namespace ZQ
 			int real_kernel_H = (kernel_H - 1)*dilate_H + 1;
 			top_C = num_output;
 			top_H = __max(0,(bottom_H - 1)*stride_H + 1 - real_kernel_H + (pad_H_top + pad_H_bottom) + 1);
-			top_W = __max(0,(bottom_W - 1)*stride_W + 1 - real_kernel_H + (pad_W_left + pad_W_right) + 1);
+			top_W = __max(0,(bottom_W - 1)*stride_W + 1 - real_kernel_W + (pad_W_left + pad_W_right) + 1);
 		}
 
 		virtual bool SwapInputRGBandBGR()
