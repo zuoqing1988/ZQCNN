@@ -4091,3 +4091,84 @@ Windows 侧 MSVC 与 gcc 的检查覆盖面不同。
 （`zq_cnn_conv_no_padding_gemm_nchwc*_*_with_bias_prelu` 里的
 `zq_mm_fmadd_ps(slope_v, min(0,x), max(0,x))` 就是它），
 所以它一旦错，CB 修好的那些路径会一起错 —— 只是目前没有独立的门禁盯它。
+## 新增/变更：附录 CG —— NCHWC 激活层门禁（15 个入口，75 个用例全对）+ 变异测试抓出我自己门禁里的一个 bug
+
+### 变更文件
+
+* `tools/zq_nchwc_act_check.cpp`（新增）—— NCHWC 激活层门禁
+* `tools/run_zqlib_checks.py` —— 登记 `zq_nchwc_act`（`EXTRA_SOURCES` / `EXTRA_LINK` /
+  `EXTRA_INC` / `EXTRA_CXXFLAGS` 四处；**不进 SLOW**，编一次约 8 秒）
+* `audit_k3_20261001.md` —— 新增附录 CG
+* `docs-changelogs/CHANGELOG_2026-10-02.md` —— 本节
+
+**没有改动任何生产代码。**
+
+### 背景
+
+CF 收尾时点名 `addbias_prelu` 是下一个空白：NCHWC 卷积的 `with_bias_prelu`
+三个变体内部**直接调 prelu**（`zq_mm_fmadd_ps(slope_v, min(0,x), max(0,x))`），
+它一旦错，CB 修好的那十几个卷积入口会一起错，而没有独立的门禁盯它。
+
+### 覆盖面
+
+头里那两个宏别名（`zq_cnn_prelu_nchwc` / `..._sure_slope_lessthan1`）只是
+`zq_cnn_prelu_nchwc.c` 在 include 时的重命名，**真实定义**是 15 个符号（已用 `nm` 核实）：
+
+  addbias              zq_cnn_addbias_nchwc{1,4,8}                                  bias
+  prelu                zq_cnn_prelu_nchwc{1,4,8}                                    slope
+  prelu_sure           zq_cnn_prelu_nchwc{1,4,8}_sure_slope_lessthan1               slope
+  addbias_prelu        zq_cnn_addbias_prelu_nchwc{1,4,8}                            bias, slope
+  addbias_prelu_sure   zq_cnn_addbias_prelu_nchwc{1,4,8}_sure_slope_lessthan1       bias, slope
+
+每个 5 组形状：`W ∈ {12,13,14,15}`（覆盖内核自己的 `in_W%4==0/1/2/3` 四条分派）
++ `N=2, C=align`。`C = align+2` 的那四组**故意用不是 align 倍数的通道数**。
+判据用**逐元素**后向误差（`max(|y|,1)` 归一），阈值 1e-6 ——
+这里没有任何归约，所以可以比卷积那套严得多。
+
+结果：**共 75 个用例：全对 75，有错 0，崩溃 0**。
+
+### 重点：变异测试抓出**我自己门禁里的一个 bug**
+
+首跑全绿后，把门禁**自己**参考实现里的 slope 偏 0.001（只改门禁、不碰被测代码）再跑：
+
+  第一次：全对 65，有错 10     <- 只抓到 10/75，太少
+  修门禁后：全对 17，有错 58    <- 剩下的 17 个是变异本就不影响的 addbias
+
+根因在门禁里：
+
+    std::vector<float> bv(A), sl(A);        // 按 align 开 —— 错
+    for (int k = 0; k < A; k++) { ... }
+
+而用例里 `C = align + 2 > A`，于是**通道 `align` 与 `align+1` 的 slope 是 0**。
+内核那边 `slope_v = zq_mm_load_ps(slope + c)` 每次读 `align` 个 float，
+`c` 走到最后一个不满的组时**读过界**；而我的参考值也用 `sl[align] = 0`，
+两边"**恰好一致**"，所以门禁全绿 —— **那 4 组用例根本没在测 prelu 的斜率**。
+改成按补齐后的通道数开（`paddedC = (C + A - 1) / A * A`）之后，
+未变异版本仍是 75/75 全绿，变异版本抓到 58/75。
+
+> 一个从不报错的检查工具，和一个坏掉的检查工具，在输出上长得一模一样。
+> 唯一能区分它们的方法是**故意把它弄坏，看它会不会叫** ——
+> 而且"叫了多少"本身就是信号：只抓到 10/75 的时候，正确的结论不是"库还行"，
+> 而是"我的工具还有 20 组是空的"。
+>
+> 这是本会话第七次栽在"自己的检查工具给出可信的错误答案"上
+> （B 最差格 / CA align=8 段 / CC 守卫正则 / CD 三层核实 / CE diff_pixstep /
+>  CF 参考下标 / CG slope 数组长度）。
+
+### 顺带记一条
+
+`zq_cnn_addbias_nchwc.h` 里 `zq_cnn_addbias_nchwc1` 被**声明了两次**。
+C++ 下重复声明合法、不会报错，但说明这份头是手工维护的 ——
+**"声明存在"不等于"只有一处声明"**，写门禁时别用声明条数当符号个数，要用 `nm`。
+
+### 剩下的空白
+
+| 层 | 状态 |
+|---|---|
+| NCHWC 卷积（raw 族） | zq_nchwc_conv / zq_nchwc_conv8（CB） |
+| NCHWC depthwise | zq_nchwc_depthwise（CF） |
+| NCHWC 激活层 | 本附录 |
+| NCHW 卷积 | zq_nchw_conv（CE） |
+| NCHW pooling / eltwise / lrn | 已有门禁 |
+| NCHWC pooling / relu / softmax / batchnormscale / resize | **仍无门禁** |
+| NCHWC packing 那几支 | x86 上不可达（CD） |
