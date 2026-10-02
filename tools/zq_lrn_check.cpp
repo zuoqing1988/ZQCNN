@@ -58,14 +58,48 @@
 
 static int g_fail = 0;
 
+// ---- 入口表（附录 DC）----------------------------------------------
+// 三个 32f 入口都是**活的**（`ZQ_CNN_Forward_SSEUtils.h` 的 LRN_across_channels
+// 包装器会按 align_mode 路由到其中之一）。
+// **这道门禁原来只测 align256 那一个** —— align0 与 align128bit 两条入口
+// 零覆盖，而 LRN 又是"没有任何 shipped 模型会跑到"的那一类（附录 DB.2），
+// 于是那两个符号实际上**只被编译、不被执行、更没有被比对过**。
+//
+// 名字全部写全、走函数指针表，不做字符串拼接（附录 CA.3）。
+typedef void (*F_LRN)(
+    int local_size, float alpha, float beta, float k,
+    const float* in_tensor4D_data,
+    int N, int H, int W, int C,
+    int in_pixelStep, int in_widthStep, int in_sliceStep,
+    float* out_tensor4D_data,
+    int out_pixStep, int out_widthStep, int out_sliceStep);
+
+enum { K_A0 = 0, K_A128 = 1, K_A256 = 2 };
+struct Entry { F_LRN fn; int align; const char* name; };
+static const Entry g_entries[] = {
+  { zq_cnn_lrn_across_channels_32f_align0,     1, "align0"     },
+  { zq_cnn_lrn_across_channels_32f_align128bit,4, "align128bit"},
+  { zq_cnn_lrn_across_channels_32f_align256bit,8, "align256bit"},
+};
+static const int N_ENTRY = 3;
+static int g_entry = K_A256;   // main 里按入口逐个跑
+
 static void run_case(int N, int H, int W, int C, int local_size,
                      float alpha, float beta, float k)
 {
-    // zq_mm_align_size 必须与被测内核一致：下面直接调的是 **256bit** 版本，
-    // 它的对齐宽度是 8 个 float（32 字节）。第一版这里写 4，
-    // 于是 &_in[0] 之后的像素地址是 16 字节步进，_mm256_load_ps 要求 32 字节
-    // 对齐 -> 直接 SEGV（而且报出来的故障地址是 0，很有迷惑性）。
-    const int align = 8;   // = zq_mm_align_size（256bit）
+    // zq_mm_align_size：**按入口取**（align0 -> 1 / align128 -> 4 / align256 -> 8）。
+    // 第一版这里写死 8，于是只测了 align256 一个入口。
+    //
+    // **但要说清楚：这个宽度实测下来并不是"承重"的。** 变异测试把三个入口
+    // 全部按 8 补齐，门禁**依然全绿** —— 因为 align0 的标量循环只按 C 走，
+    // 补齐区被完全忽略；而两个 SIMD 入口的向量化内层循环上界也是 C、尾巴走标量。
+    // 所以按入口取宽度是**卫生**（让喂进去的布局符合该入口的约定），
+    // 不是**正确性**所系。
+    //
+    // 反过来说，这道门禁**不能**验证"align0 入口会不会误读补齐区" ——
+    // 因为参考实现用的是同一个 pixStep，两者一起错就一起对。
+    // 记在附录 DC.3，别把这次变异测试的"没红"当成"宽度无关紧要"的证据。
+    const int align = g_entries[g_entry].align;
     int in_pixStep = ((C + align - 1) / align) * align;
     int in_widthStep = in_pixStep * W;
     int in_sliceStep = in_widthStep * H;
@@ -82,7 +116,7 @@ static void run_case(int N, int H, int W, int C, int local_size,
     for (size_t i = 0; i < nin; i++)
         in[i] = (float)((i * 37) % 101) * 0.01f - 0.5f;   // 确定性的伪随机
 
-    zq_cnn_lrn_across_channels_32f_align256bit(
+    g_entries[g_entry].fn(
         local_size, alpha, beta, k,
         in, N, H, W, C, in_pixStep, in_widthStep, in_sliceStep,
         out, out_pixStep, out_widthStep, out_sliceStep);
@@ -121,20 +155,25 @@ static void run_case(int N, int H, int W, int C, int local_size,
 
 int main()
 {
-    printf("zq_cnn_lrn_across_channels_32f_align 越界回归（附录 AX）\n");
+    printf("zq_cnn_lrn_across_channels_32f_align 回归（附录 AX + DC）\n");
     printf("ASan 会在越界时直接 abort —— 下面能跑完就说明没越界\n");
-    printf("对齐宽度 zq_mm_align_size = 4\n\n");
+    printf("**三个 32f 入口都测**（原来只测 align256，align0/align128bit 零覆盖）\n\n");
 
-    // 重点：local_size == 1 且 C % 4 != 0
-    for (int C = 1; C <= 17; C++)
-        run_case(1, 2, 2, C, 1, 1e-4f, 0.75f, 1.0f);
-
-    // 正常形状也要过
-    for (int ls = 3; ls <= 9; ls += 2)
+    for (g_entry = 0; g_entry < N_ENTRY; g_entry++) {
+        const int c0 = g_fail;
+        printf("== %s（zq_mm_align_size = %d）==\n",
+               g_entries[g_entry].name, g_entries[g_entry].align);
+        // 重点：local_size == 1 且 C 不是对齐宽度的倍数
         for (int C = 1; C <= 17; C++)
-            run_case(1, 2, 3, C, ls, 1e-4f, 0.75f, 1.0f);
+            run_case(1, 2, 2, C, 1, 1e-4f, 0.75f, 1.0f);
+        // 正常形状也要过
+        for (int ls = 3; ls <= 9; ls += 2)
+            for (int C = 1; C <= 17; C++)
+                run_case(1, 2, 3, C, ls, 1e-4f, 0.75f, 1.0f);
+        printf("   -> %s\n\n", g_fail == c0 ? "全部通过" : "有失败");
+    }
 
     if (g_fail) { printf("\n%d 条对拍失败\n", g_fail); return 1; }
-    printf("\n全部通过（无越界、数值与标量参考一致）\n");
+    printf("\n三个入口全部通过（无越界、数值与标量参考一致）\n");
     return 0;
 }
