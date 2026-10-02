@@ -451,3 +451,53 @@ buffer     = sliceStep * N
 所以元素 `(n, c, h, w)` 的偏移是 `n*sliceStep + c*1 + h*widthStep + w*pixelStep`——**c 维的步长是 1，不是 sliceStep**。`Reshape_NCHW` 里 `out_c_ptr++` / `i_c` 这么写是对的；我曾按"slice = 通道"的直觉改成 `*sliceStep`，结果 `SampleSSD` 在模型加载阶段直接段错误，已回退。
 
 而 `ZQ_CNN_Tensor4D_NCHWC` 是另一套：那边 `imStep` 才是一张图，`sliceStep` 是通道步长。同样的变量名在两套布局里含义相反，改任一侧前务必先看 `ChangeSize` 里 `dst_tensor_raw_size` 是怎么算的。
+
+### 2026-10-02 补：`[N,1,1,K]` 这种 out 张量上，`sliceStep` 与 `imStep` 差 K 倍
+
+innerproduct 的输出是 `[N,1,1,K]`，于是 NCHWC1 张量上
+
+```
+widthStep = 1*align      sliceStep = widthStep*realH = align      imStep = ceil(K/align)*sliceStep
+```
+
+**跳到下一张图必须用 `imStep`。** 附录 BN.2 里 12 个 `noborders` 调用点全部传了
+`sliceStep`，于是 `N>1` 时相邻两张图的 K 个结果**互相覆盖**、缓冲区尾部根本没被写。
+
+**这个坑最阴的地方：`out_N == 1` 时 `n*sliceStep + k` 恰好就是唯一那张图，
+所以所有 sample 回归全绿。** 只有 batch > 1 才暴露。写这类内核时，
+自检里一定要有 `N >= 2` 的用例 —— 光有 `N == 1` 等于没测。
+
+参数名要跟着改（`out_sliceStep` -> `out_imStep`）：名字写着 sliceStep 而实际要
+imStep，本身就是这个缺陷的成因。注意 `general` 那族的同名参数**确实是** slice
+步长，不能一起改。
+
+## 崩溃类测试的三条硬规矩（2026-10-02 补，全是写 `zq_gemm_shape_check` 时踩出来的）
+
+1. **一个用例一个子进程。** ASan 碰到 SEGV 直接 abort 掉整个进程，
+   一崩就停的测试只能告诉你"有一个坏了"，没法告诉你"哪些是好的" ——
+   而后者恰恰是判断缺陷边界的关键。第一版 304 个用例只跑到第 12 个。
+   `fork()` 一次 + 父进程 `waitpid()` 判 `WIFSIGNALED`，崩溃只算该用例失败。
+2. **ASan 默认是 `exit(1)` 不是 abort。** 所以"崩溃"和"算错"在 `waitpid` 看来
+   都是 exit code 1，分不开（第一版把两种混在一起报了"134 个 FAIL"）。
+   要靠这个函数才能分开 ——
+   ```cpp
+   extern "C" const char* __asan_default_options() { return "abort_on_error=1"; }
+   ```
+   它在 ASan 初始化**之前**被调用，所以设在这里才有效。
+3. **子进程的 stderr 要接 `/dev/null`。** ASan 的报告走 stderr，会把父进程
+   stdout 上那一行结果拦腰截断（第一版的网格就是这样变成"每行只有一个 X"的）。
+
+配套：崩溃类测试**每个用例打一行到 stdout**（`setvbuf(_IONBF)`），
+这样崩溃前最后一行就是"挂在哪一组"。见附录 BL.8 同一个坑（那时是块缓冲把
+全部 ok 行都吞了）。
+
+## 照抄生产代码的分支条件，要连**前面的系数**一起抄（2026-10-02 补）
+
+附录 BN.4：`noborders` 快速路径的生产条件在三种对齐下是**不一样**的 ——
+```
+align=1:  in_W == in_widthStep  &&  in_W  == filter_widthStep  &&  out_W  == out_widthStep
+align=4: 4*in_W == in_widthStep && 4*in_W == filter_widthStep && 4*out_W == out_widthStep
+```
+我第一版照抄时把 filter 那一项写成了 `W == filter_widthStep`（漏了 `align*`），
+于是 align=4/8 的条件检查假红 —— 差点被我当成"又一条真缺陷"报上去。
+**照抄条件就是照抄条件，别顺手"化简"掉前面的系数。**

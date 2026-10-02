@@ -121,7 +121,9 @@ extern "C" {
 		const float* filters_data,
 		int filter_N,
 		float* out_tensor4D_data,
-		int out_sliceStep
+		// 审计修复 2026-10-02（附录 BN.1）：这个参数原来叫 out_sliceStep，
+		// 传进来的也是 slice 步长 —— 那是**错的**。见 raw 头里的定义。
+		int out_imStep
 	);
 
 	void zq_cnn_innerproduct_nchwc1_noborder_with_bias(
@@ -131,7 +133,8 @@ extern "C" {
 		const float* filters_data,
 		int filter_N,
 		float* out_tensor4D_data,
-		int out_sliceStep,
+				// 审计修复 2026-10-02（附录 BN.1）：这个参数原来叫 out_sliceStep，		// 传进来的也是 slice 步长 —— 那是**错的**。理由见 raw 头里的定义。
+		int out_imStep,
 		const float* bias
 	);
 
@@ -142,7 +145,8 @@ extern "C" {
 		const float* filters_data,
 		int filter_N,
 		float* out_tensor4D_data,
-		int out_sliceStep,
+				// 审计修复 2026-10-02（附录 BN.1）：这个参数原来叫 out_sliceStep，		// 传进来的也是 slice 步长 —— 那是**错的**。理由见 raw 头里的定义。
+		int out_imStep,
 		const float* bias,
 		const float* slope
 	);
@@ -408,7 +412,9 @@ extern "C" {
 		const float* filters_data,
 		int filter_N,
 		float* out_tensor4D_data,
-		int out_sliceStep
+		// 审计修复 2026-10-02（附录 BN.1）：这个参数原来叫 out_sliceStep，
+		// 传进来的也是 slice 步长 —— 那是**错的**。见 raw 头里的定义。
+		int out_imStep
 	);
 
 	void zq_cnn_innerproduct_nchwc4_noborder_with_bias(
@@ -418,7 +424,8 @@ extern "C" {
 		const float* filters_data,
 		int filter_N,
 		float* out_tensor4D_data,
-		int out_sliceStep,
+				// 审计修复 2026-10-02（附录 BN.1）：这个参数原来叫 out_sliceStep，		// 传进来的也是 slice 步长 —— 那是**错的**。理由见 raw 头里的定义。
+		int out_imStep,
 		const float* bias
 	);
 
@@ -429,7 +436,8 @@ extern "C" {
 		const float* filters_data,
 		int filter_N,
 		float* out_tensor4D_data,
-		int out_sliceStep,
+				// 审计修复 2026-10-02（附录 BN.1）：这个参数原来叫 out_sliceStep，		// 传进来的也是 slice 步长 —— 那是**错的**。理由见 raw 头里的定义。
+		int out_imStep,
 		const float* bias,
 		const float* slope
 	);
@@ -529,7 +537,9 @@ extern "C" {
 		const float* filters_data,
 		int filter_N,
 		float* out_tensor4D_data,
-		int out_sliceStep
+		// 审计修复 2026-10-02（附录 BN.1）：这个参数原来叫 out_sliceStep，
+		// 传进来的也是 slice 步长 —— 那是**错的**。见 raw 头里的定义。
+		int out_imStep
 	);
 
 	void zq_cnn_innerproduct_nchwc8_noborder_with_bias(
@@ -539,7 +549,8 @@ extern "C" {
 		const float* filters_data,
 		int filter_N,
 		float* out_tensor4D_data,
-		int out_sliceStep,
+				// 审计修复 2026-10-02（附录 BN.1）：这个参数原来叫 out_sliceStep，		// 传进来的也是 slice 步长 —— 那是**错的**。理由见 raw 头里的定义。
+		int out_imStep,
 		const float* bias
 	);
 
@@ -550,7 +561,8 @@ extern "C" {
 		const float* filters_data,
 		int filter_N,
 		float* out_tensor4D_data,
-		int out_sliceStep,
+				// 审计修复 2026-10-02（附录 BN.1）：这个参数原来叫 out_sliceStep，		// 传进来的也是 slice 步长 —— 那是**错的**。理由见 raw 头里的定义。
+		int out_imStep,
 		const float* bias,
 		const float* slope
 	);

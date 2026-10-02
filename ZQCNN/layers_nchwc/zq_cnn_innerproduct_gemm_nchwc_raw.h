@@ -194,7 +194,16 @@ void zq_cnn_innerproduct_nchwc_noborder(
 	const zq_base_type* filters_data,
 	int filter_N,
 	zq_base_type* out_tensor4D_data,
-	int out_sliceStep
+	// 审计修复 2026-10-02（附录 BN.1）：原来叫 out_sliceStep、也按 slice 步长
+	// 跳下一张图。但 out 是 [N,1,1,K] 的 NCHWC 张量，于是
+	//     widthStep = 1*align,  sliceStep = widthStep*realH = align,
+	//     imStep    = ceil(K/align)*sliceStep
+	// N>1 时相邻两张图的 K 个结果被写到相隔 align 个 float 的地方 ——
+	// 互相覆盖，且缓冲区尾部根本没被写。general（im2col+GEMM）那条路用的
+	// 是 imStep（ldc=filter_N），是对的。实测两条路在同一份数据上给出不同
+	// 结果（N=2,C=8,K=4）：general 完全正确；noborders 的 [0] 段 k=1..3
+	// 被 [1] 段的 k=0..2 覆盖，[1] 的 k=1..3 保持初值。
+	int out_imStep
 #if WITH_BIAS
 	,const zq_base_type* bias
 #endif
@@ -213,7 +222,7 @@ void zq_cnn_innerproduct_nchwc_noborder(
 	const zq_base_type* cur_in_c_ptr;
 
 	for (out_n = 0, in_slice_ptr = in_tensor4D_data, out_slice_ptr = out_tensor4D_data;
-		out_n < in_N; out_n++, in_slice_ptr += in_HWC, out_slice_ptr += out_sliceStep)
+		out_n < in_N; out_n++, in_slice_ptr += in_HWC, out_slice_ptr += out_imStep)
 	{
 		for (out_c = 0, out_c_ptr = out_slice_ptr, filter_slice_ptr = filters_data;
 			out_c < filter_N;

@@ -1,4 +1,4 @@
-﻿#include "layers_nchwc/zq_cnn_convolution_gemm_nchwc.h"
+#include "layers_nchwc/zq_cnn_convolution_gemm_nchwc.h"
 #include "layers_nchwc/zq_cnn_depthwise_convolution_nchwc.h"
 #include "layers_nchwc/zq_cnn_innerproduct_gemm_nchwc.h"
 #include "layers_nchwc/zq_cnn_addbias_nchwc.h"
@@ -86,8 +86,10 @@ return false;
 			&& in_W == filter_widthStep && filter_widthStep*in_H == filter_sliceStep
 			&& out_W == out_widthStep && out_widthStep * out_H == out_sliceStep)
 		{
-			zq_cnn_innerproduct_nchwc1_noborder_with_bias(in_firstPixelData, in_N, in_H*in_W*in_C, filter_firstPixelData, filter_N, 
-				out_firstPixelData, out_sliceStep, bias_firstPixelData);
+			zq_cnn_innerproduct_nchwc1_noborder_with_bias(in_firstPixelData, in_N, in_H*in_W*in_C, filter_firstPixelData, filter_N,
+				// 审计修复 2026-10-02（附录 BN.1）：传 out_sliceStep 时，N>1 的结果会
+				// 互相覆盖（out 是 [N,1,1,K]，sliceStep 与 imStep 差 K 倍）。
+				out_firstPixelData, out_imStep, bias_firstPixelData);
 		}
 		else
 		{
@@ -178,7 +180,9 @@ return false;
 			&& out_W == out_widthStep && out_widthStep * out_H == out_sliceStep)
 		{
 			zq_cnn_innerproduct_nchwc1_noborder_with_bias_prelu(in_firstPixelData, in_N, in_H*in_W*in_C, filter_firstPixelData, filter_N,
-				out_firstPixelData, out_sliceStep, bias_firstPixelData, slope_firstPixelData);
+				// 审计修复 2026-10-02（附录 BN.1）：传 out_sliceStep 时，N>1 的结果会
+				// 互相覆盖（out 是 [N,1,1,K]，sliceStep 与 imStep 差 K 倍）。
+				out_firstPixelData, out_imStep, bias_firstPixelData, slope_firstPixelData);
 		}
 		else
 		{
@@ -267,7 +271,9 @@ return false;
 			&& out_W == out_widthStep && out_widthStep * out_H == out_sliceStep)
 		{
 			zq_cnn_innerproduct_nchwc1_noborder(in_firstPixelData, in_N, in_H*in_W*in_C, filter_firstPixelData, filter_N,
-				out_firstPixelData, out_sliceStep);
+				// 审计修复 2026-10-02（附录 BN.1）：传 out_sliceStep 时，N>1 的结果会
+				// 互相覆盖（out 是 [N,1,1,K]，sliceStep 与 imStep 差 K 倍）。
+				out_firstPixelData, out_imStep);
 		}
 		else
 		{
@@ -352,7 +358,9 @@ return false;
 			&& out_W == out_widthStep && out_widthStep * out_H == out_sliceStep)
 		{
 			zq_cnn_innerproduct_nchwc1_noborder(in_firstPixelData, in_N, in_H*in_W*in_C, filter_firstPixelData, filter_N,
-				out_firstPixelData, out_sliceStep);
+				// 审计修复 2026-10-02（附录 BN.1）：传 out_sliceStep 时，N>1 的结果会
+				// 互相覆盖（out 是 [N,1,1,K]，sliceStep 与 imStep 差 K 倍）。
+				out_firstPixelData, out_imStep);
 		}
 		else
 		{
@@ -2446,7 +2454,9 @@ return false;
 			&& 4 * out_W == out_widthStep && out_widthStep * out_H == out_sliceStep)
 		{
 			zq_cnn_innerproduct_nchwc4_noborder_with_bias(in_firstPixelData, in_N, in_H*in_W*in_C, filter_firstPixelData, filter_N,
-				out_firstPixelData, out_sliceStep, bias_firstPixelData);
+				// 审计修复 2026-10-02（附录 BN.1）：传 out_sliceStep 时，N>1 的结果会
+				// 互相覆盖（out 是 [N,1,1,K]，sliceStep 与 imStep 差 K 倍）。
+				out_firstPixelData, out_imStep, bias_firstPixelData);
 		}
 		else
 		{
@@ -2537,7 +2547,9 @@ return false;
 			&& 4 * out_W == out_widthStep && out_widthStep * out_H == out_sliceStep)
 		{
 			zq_cnn_innerproduct_nchwc4_noborder_with_bias_prelu(in_firstPixelData, in_N, in_H*in_W*in_C, filter_firstPixelData, filter_N,
-				out_firstPixelData, out_sliceStep, bias_firstPixelData, slope_firstPixelData);
+				// 审计修复 2026-10-02（附录 BN.1）：传 out_sliceStep 时，N>1 的结果会
+				// 互相覆盖（out 是 [N,1,1,K]，sliceStep 与 imStep 差 K 倍）。
+				out_firstPixelData, out_imStep, bias_firstPixelData, slope_firstPixelData);
 		}
 		else
 		{
@@ -2625,7 +2637,9 @@ return false;
 			&& 4 * out_W == out_widthStep && out_widthStep * out_H == out_sliceStep)
 		{
 			zq_cnn_innerproduct_nchwc4_noborder(in_firstPixelData, in_N, in_H*in_W*in_C, filter_firstPixelData, filter_N,
-				out_firstPixelData, out_sliceStep);
+				// 审计修复 2026-10-02（附录 BN.1）：传 out_sliceStep 时，N>1 的结果会
+				// 互相覆盖（out 是 [N,1,1,K]，sliceStep 与 imStep 差 K 倍）。
+				out_firstPixelData, out_imStep);
 		}
 		else
 		{
@@ -2710,7 +2724,9 @@ return false;
 			&& 4 * out_W == out_widthStep && out_widthStep * out_H == out_sliceStep)
 		{
 			zq_cnn_innerproduct_nchwc4_noborder(in_firstPixelData, in_N, in_H*in_W*in_C, filter_firstPixelData, filter_N,
-				out_firstPixelData, out_sliceStep);
+				// 审计修复 2026-10-02（附录 BN.1）：传 out_sliceStep 时，N>1 的结果会
+				// 互相覆盖（out 是 [N,1,1,K]，sliceStep 与 imStep 差 K 倍）。
+				out_firstPixelData, out_imStep);
 		}
 		else
 		{
@@ -4102,7 +4118,9 @@ return false;
 			&& 8 * out_W == out_widthStep && out_widthStep * out_H == out_sliceStep)
 		{
 			zq_cnn_innerproduct_nchwc8_noborder_with_bias(in_firstPixelData, in_N, in_H*in_W*in_C, filter_firstPixelData, filter_N,
-				out_firstPixelData, out_sliceStep, bias_firstPixelData);
+				// 审计修复 2026-10-02（附录 BN.1）：传 out_sliceStep 时，N>1 的结果会
+				// 互相覆盖（out 是 [N,1,1,K]，sliceStep 与 imStep 差 K 倍）。
+				out_firstPixelData, out_imStep, bias_firstPixelData);
 		}
 		else
 		{
@@ -4192,7 +4210,9 @@ return false;
 			&& 8 * out_W == out_widthStep && out_widthStep * out_H == out_sliceStep)
 		{
 			zq_cnn_innerproduct_nchwc8_noborder_with_bias_prelu(in_firstPixelData, in_N, in_H*in_W*in_C, filter_firstPixelData, filter_N,
-				out_firstPixelData, out_sliceStep, bias_firstPixelData, slope_firstPixelData);
+				// 审计修复 2026-10-02（附录 BN.1）：传 out_sliceStep 时，N>1 的结果会
+				// 互相覆盖（out 是 [N,1,1,K]，sliceStep 与 imStep 差 K 倍）。
+				out_firstPixelData, out_imStep, bias_firstPixelData, slope_firstPixelData);
 		}
 		else
 		{
@@ -4280,7 +4300,9 @@ return false;
 			&& 8 * out_W == out_widthStep && out_widthStep * out_H == out_sliceStep)
 		{
 			zq_cnn_innerproduct_nchwc8_noborder(in_firstPixelData, in_N, in_H*in_W*in_C, filter_firstPixelData, filter_N,
-				out_firstPixelData, out_sliceStep);
+				// 审计修复 2026-10-02（附录 BN.1）：传 out_sliceStep 时，N>1 的结果会
+				// 互相覆盖（out 是 [N,1,1,K]，sliceStep 与 imStep 差 K 倍）。
+				out_firstPixelData, out_imStep);
 		}
 		else
 		{
@@ -4365,7 +4387,9 @@ return false;
 			&& 8 * out_W == out_widthStep && out_widthStep * out_H == out_sliceStep)
 		{
 			zq_cnn_innerproduct_nchwc8_noborder(in_firstPixelData, in_N, in_H*in_W*in_C, filter_firstPixelData, filter_N,
-				out_firstPixelData, out_sliceStep);
+				// 审计修复 2026-10-02（附录 BN.1）：传 out_sliceStep 时，N>1 的结果会
+				// 互相覆盖（out 是 [N,1,1,K]，sliceStep 与 imStep 差 K 倍）。
+				out_firstPixelData, out_imStep);
 		}
 		else
 		{

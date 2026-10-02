@@ -2752,3 +2752,105 @@ A12 check_uncked_cv_return: OK
 一句 grep 就能确认：
 `^\s*cv::(invert|solve|gemm)\s*\(` 整个仓库只命中 `ZQ_FaceRecognizerUtils.h`
 的 407 / 409 两行。所以这一条是"形状很典型、量很少"，修完顺手做成门禁就够。
+
+## 新增/变更：附录 BN —— NCHWC innerproduct 整族（21 个变体）首次覆盖：1 条静默错算 + 1 条 dispatcher 崩溃
+
+### 变更文件
+- `ZQCNN/layers_nchwc/zq_cnn_innerproduct_gemm_nchwc_raw.h`
+  - noborders 的形参 `out_sliceStep` -> `out_imStep`（**BN.2**）
+- `ZQCNN/layers_nchwc/zq_cnn_innerproduct_gemm_nchwc.h`
+  - 9 个 noborders 声明的最后一个参数改名
+- `ZQCNN/ZQ_CNN_Forward_SSEUtils_NCHWC.cpp`
+  - 12 个 noborders 调用点改传 `out_imStep`（**BN.2**）
+- `tools/zq_nchwc_ip_check.cpp`：新测试，21 个内核变体 x 14 组形状 x 2 种 buffer 模式
+- `tools/zq_gemm_shape_check.cpp`：新测试，dispatcher 的 (M,N,K) 形状表
+- `tools/run_zqlib_checks.py`：两个测试登记在 SKIP 里，理由逐条写明
+- `audit_k3_20261001.md`：新增**附录 BN**
+
+### BN.2【已修】noborders 用 slice 步长当 image 步长 -> N>1 时结果互相覆盖
+
+`zq_cnn_innerproduct_nchwc{1,4,8}_noborder*` 用 `out_sliceStep` 跳下一张图，
+但 out 是 `[N,1,1,K]` 的 NCHWC 张量：
+
+```
+widthStep = 1*align,  sliceStep = widthStep*realH = align,  imStep = ceil(K/align)*sliceStep
+```
+
+N>1 时相邻两张图的 K 个结果被写到相隔 `align` 个 float 的地方，**互相覆盖，
+且缓冲区尾部根本没被写**。同文件 `general`（im2col+GEMM）那条路用的是
+`imStep`（ldc=filter_N），是对的。12 个调用点**全部**传错。
+
+实测（N=2, C=8, K=4, align=1）：
+
+```
+参考:      0.455   0.201  -0.512   0.352  -0.930  -0.446   0.474  -0.094
+general:   完全正确
+noborders: 0.455  -0.930  -0.446   0.474  -0.930  -0.446   0.474  -0.094
+```
+
+`[0]` 段的 k=1..3 被 `[1]` 段的 k=0..2 覆盖；`[1]` 的 k=1..3 保持初值。
+
+**为什么 sample 回归一直绿**：所有 sample 都一次一张图（`out_N == 1`），
+此时 `n*1 + k` 恰好就是唯一那张图。**batch > 1 就会踩到。**
+
+修法：12 个调用点改传 `out_imStep`；同时把 9 个声明 + raw 头里的形参**改名**
+（`general` 的同名参数不能改，它确实是 slice 步长）。改名不是为了好看 ——
+参数名写着 sliceStep 而实际要 imStep，就是这次缺陷的成因。
+
+### BN.3【未修】dispatcher 在 K=27 / K=108 且 M>=2 时崩溃
+
+新测试跑到第 61 个用例（`align=1 general, N=2 H=3 W=3 C=12 K=7`
+-> sgemm 的 M=2, N=7, K=108）就 SEGV。把参数直接喂给
+`zq_gemm_32f_AnoTrans_Btrans_auto` 整张表：
+
+```
+K=27  : M=1 全过；M=2..8 基本全崩
+K=108 : M=1 全过；M=2..8 基本全崩
+K=512 : M=1..8 x N=1..9 全过
+K=3136: 全过
+M,N >= 16（生产条件那一侧）: 0/16 通过
+共 304 个用例; 崩溃 134, 结果错 0
+```
+
+**既有测试为什么没抓到**：`zq_innerproduct_check.cpp` 直接调
+`zq_cnn_innerproduct_gemm_32f_align128bit_same_pixstep_batch`，
+**根本不经过 auto dispatcher**；而 NCHW 生产路径有 `out_N >= 16 && filter_N >= 16`
+守卫（附录 BC 查出来的）。两者叠加 = dispatcher 在 M<16 / N<16 一次没测过，
+连 M,N>=16 那区也只在直接调具体内核时测过。
+
+**波及面**：dispatcher 是这 16 个调用点共用的入口 ——
+NCHW conv(4) / deconv(4) / innerproduct(4) + NCHWC conv(4) / innerproduct(4)。
+**K=27 就是 3x3x3，即每个 CNN 的 RGB 首层** => **batch>1 的 3x3x3 卷积就崩**。
+sample 全绿是因为它们都 out_N == 1。
+
+**这一轮不修**：要动 `zq_gemm_32f_align_c_raw.h`（1.6 万行）里 **~20 个内核族**
+的 M 尾处理（`M2_N4_Kgeneral` 的主循环是 `for (m = 0; m < M - 1; m += 2)`
+**根本没有 M 尾循环**）。这是本仓库最吃性能的一段代码，而用户明确要求 GEMM
+性能对标 MKL —— 没有配套性能回归就改它，风险远大于收益。
+下一片单独做：先加 dispatcher 入口的**保守**守卫（不支持的形状挡在选内核之前，
+走正确的标量兜底），再谈逐族补尾处理。
+
+**不假装已修**：两个测试都进 `run_zqlib_checks.py` 的 SKIP，理由写明
+「已定位未修 / 部分已修」，并写"修好之后把这一条删掉即可"。
+
+### 我的测试错了两次（都记下来）
+
+1. **`uses_bias` 表写错**。三个 prelu 变体真名是 `**_with_bias_prelu`**，
+   它们**要** bias。我把 prelu 单列成一个变体漏了 bias，于是
+   `general+prelu N=1 C=8 K=1` 一上来就红。判清楚靠一个 **N=1 最小探针**：
+   `general`（im2col+GEMM）与 `noborder`（逐元素 FMA）**两个完全不同的实现
+   同时算对**，才说明是我这边错 —— 附录 BI 的教训用上了。
+2. **noborders 生产条件抄错**。align=1/4/8 三处条件**不一样**，
+   filter 那一项是 `align*in_W == filter_widthStep`，我第一版漏了 `align*`。
+   **照抄的时候要连前面的系数一起抄。**
+
+### 两条工具教训
+
+* **崩溃会吃掉整张表**：ASan 碰到 SEGV 直接 abort，304 个用例只跑到第 12 个。
+  改成**每个用例 fork 一个子进程** + 父进程 `waitpid` 判信号，
+  才拿到完整边界图。一崩就停的测试只能告诉你有一个坏了。
+* **ASan 默认是 `exit(1)` 不是 abort** —— "崩溃"与"算错"在 waitpid 看来都是
+  exit code 1，第一版混在一起报了"134 个 FAIL"。要靠
+  `__asan_default_options(){ return "abort_on_error=1"; }`（在 ASan 初始化
+  **之前**被调用）才能分开。另外子进程 stderr 要接 `/dev/null`，否则 ASan
+  的报告会把父进程 stdout 上的网格拦腰截断。

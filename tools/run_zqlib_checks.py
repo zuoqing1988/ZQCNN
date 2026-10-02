@@ -104,6 +104,40 @@ EXTRA_SOURCES = {
         'gcc -O1 -g -mavx2 -mfma -fopenmp -c -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include '
         '$R/ZQ_GEMM/math/zq_gemm_32f_auto.c -o $WDIR/zq_gemm_auto.o',
     ],
+    # zq_gemm_shape（附录 BN.2）只需要 ZQ_GEMM 那三个 TU —— 测试直接调
+    # zq_gemm_32f_AnoTrans_Btrans_auto，不经过任何 ZQCNN 的层。
+    # 它是 SKIP 的（已知未修），登记在这里是为了"点名时能真的编出来跑一遍"。
+    'zq_gemm_shape': [
+        'gcc -O1 -g -mavx2 -mfma -fopenmp -c -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include '
+        '$R/ZQ_GEMM/math/zq_gemm_32f_align_c.c -o $WDIR/zq_shape_gemm_align.o',
+        'gcc -O1 -g -mavx2 -mfma -fopenmp -c -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include '
+        '$R/ZQ_GEMM/math/zq_gemm_32f_align_c_asm.c -o $WDIR/zq_shape_gemm_asm.o',
+        'gcc -O1 -g -mavx2 -mfma -fopenmp -c -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include '
+        '$R/ZQ_GEMM/math/zq_gemm_32f_auto.c -o $WDIR/zq_shape_gemm_auto.o',
+    ],
+    # zq_nchwc_ip（附录 BN）与 zq_innerproduct 共用 ZQ_GEMM 那四个 TU
+    # （含编 5 分钟以上的 zq_gemm_32f_align_c.c），所以同样默认不跑。
+    # 额外要编两个 layers_nchwc 的 .c + 一个 ZQ_CNN_Tensor4D_NCHWC.cpp：
+    #   * ZQ_CNN_Tensor4D_NCHWC.cpp 用到 layers_nchwc/zq_cnn_resize_nchwc.h 里的
+    #     6 个 ResizeBilinear 内核，不编它就是 6 个 undefined reference
+    #   * 测试**用真实的 ZQ_CNN_Tensor4D_NCHWC1/4/8 类**分配与填充张量，
+    #     这样"我以为的 NCHWC 布局"这个变量根本不存在（见 BN 的说明）
+    'zq_nchwc_ip': [
+        'gcc -O1 -g -mavx2 -mfma -fopenmp -c -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include '
+        '$R/ZQCNN/layers_nchwc/zq_cnn_innerproduct_gemm_nchwc.c -o $WDIR/zq_nchwc_ip.o',        'gcc -O1 -g -mavx2 -mfma -fopenmp -c -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include '
+        '$R/ZQCNN/layers_nchwc/zq_cnn_resize_nchwc.c -o $WDIR/zq_nchwc_resize.o',
+        'gcc -O1 -g -mavx2 -mfma -fopenmp -c -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include '
+        '$R/ZQCNN/layers_c/zq_cnn_innerproduct_gemm_32f_align_c.c -o $WDIR/zq_nchwcip_kernel.o',
+        'gcc -O1 -g -mavx2 -mfma -fopenmp -c -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include '
+        '$R/ZQ_GEMM/math/zq_gemm_32f_align_c.c -o $WDIR/zq_nchwcip_gemm_align.o',
+        'gcc -O1 -g -mavx2 -mfma -fopenmp -c -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include '
+        '$R/ZQ_GEMM/math/zq_gemm_32f_align_c_asm.c -o $WDIR/zq_nchwcip_gemm_asm.o',
+        'gcc -O1 -g -mavx2 -mfma -fopenmp -c -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include '
+        '$R/ZQ_GEMM/math/zq_gemm_32f_auto.c -o $WDIR/zq_nchwcip_gemm_auto.o',
+        # ZQ_CNN_Tensor4D_NCHWC.cpp 是 C++，必须用 g++ 编
+        'g++ -O1 -g -mavx2 -mfma -fopenmp -c -I$R -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include '
+        '$R/ZQCNN/ZQ_CNN_Tensor4D_NCHWC.cpp -o $WDIR/zq_nchwcip_tensor.o',
+    ],
     # zq_bns 不自动跑（见 SKIP），但点名时要能真的编出来。
     'zq_bns': [
         'gcc -O1 -g -mavx2 -mfma -c -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include '
@@ -113,6 +147,12 @@ EXTRA_SOURCES = {
     ],
 }
 EXTRA_LINK = {'zq_innerproduct': ' $WDIR/zq_ipgemm.o $WDIR/zq_gemm_align.o $WDIR/zq_gemm_asm.o $WDIR/zq_gemm_auto.o',
+              'zq_gemm_shape': (' $WDIR/zq_shape_gemm_align.o $WDIR/zq_shape_gemm_asm.o '
+                                '$WDIR/zq_shape_gemm_auto.o'),
+              'zq_nchwc_ip': (' $WDIR/zq_nchwc_ip.o $WDIR/zq_nchwc_resize.o '
+                              '$WDIR/zq_nchwcip_kernel.o $WDIR/zq_nchwcip_gemm_align.o '
+                              '$WDIR/zq_nchwcip_gemm_asm.o $WDIR/zq_nchwcip_gemm_auto.o '
+                              '$WDIR/zq_nchwcip_tensor.o'),
               'zq_lrn': ' $WDIR/zq_lrn_sse.o $WDIR/zq_lrn_avx.o',
               'zq_pool': '',
               'zq_bns': ' $WDIR/zq_bns_sse.o $WDIR/zq_bns_avx.o',
@@ -120,6 +160,8 @@ EXTRA_LINK = {'zq_innerproduct': ' $WDIR/zq_ipgemm.o $WDIR/zq_gemm_align.o $WDIR
 EXTRA_INC = {'zq_facedb': ' -I$R -I$R/ZQCNN -I$R/ZQCNN/3rdparty/include/ZQlib',
              'zq_facedb2': ' -I$R -I$R/ZQCNN -I$R/ZQCNN/3rdparty/include/ZQlib',
              'zq_innerproduct': ' -I$R/ZQCNN -I$R/ZQ_GEMM',
+             'zq_gemm_shape': ' -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include',
+             'zq_nchwc_ip': ' -I$R -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include',
              'zq_lrn': ' -I$R/ZQCNN -I$R/ZQ_GEMM',
              'zq_pool': ' -I$R/ZQCNN -I$R/ZQ_GEMM',
              'zq_bns': ' -I$R/ZQCNN -I$R/ZQ_GEMM',
@@ -130,6 +172,8 @@ EXTRA_INC = {'zq_facedb': ' -I$R -I$R/ZQCNN -I$R/ZQCNN/3rdparty/include/ZQlib',
 EXTRA_CXXFLAGS = {'zq_facedb': ' -mavx2 -mfma -fopenmp',
                   'zq_facedb2': ' -mavx2 -mfma -fopenmp',
                   'zq_innerproduct': ' -mavx2 -mfma -fopenmp',
+                  'zq_gemm_shape': ' -mavx2 -mfma -fopenmp',
+                  'zq_nchwc_ip': ' -mavx2 -mfma -fopenmp',
                   'zq_lrn': ' -mavx2 -mfma',
                   'zq_pool': ' -mavx2 -mfma', 'zq_bns': ' -mavx2 -mfma',
                   'zq_eltwise': ' -mavx2 -mfma'}
@@ -150,7 +194,28 @@ def main():
     # 核实之后那个理由不成立：NCHWC 的布局是 [n][c片][h][w][align]，
     # 三个内层步长（imStep / sliceStep / widthStep / align）**全对**。
     # 现在 99 个用例逐位精确（相对误差 0.00e+00），它回到正常回归里。
-    SKIP = {}
+    #
+    # 2026-10-02 追加的两个（附录 BN）。**这两个是「已定位、未修」的项**，
+    # 不是「跑不过所以不跑」—— 区别必须写清楚，否则就成了"无法验证"那个
+    # 自我实现的结论（附录 W）。
+    SKIP = {
+        'zq_gemm_shape': (
+            '**已知未修**（附录 BN.2）：zq_gemm_32f_AnoTrans_Btrans_auto 在 K=27 / K=108 '
+            '且 M>=2 时**崩溃**（304 个用例里 134 个崩，含 M,N>=16 那一区）。'
+            '这是 NCHW conv/deconv/innerproduct + NCHWC conv/innerproduct 16 个调用点'
+            '共用的入口，也就是说 batch>1 的 3x3x3 卷积就会踩到。'
+            '**没修**是因为修它要动 ~20 个内核族的 M 尾处理，那是本仓库最吃性能的一段'
+            '代码，必须配一轮性能对标（对 MKL）才敢动 —— 留给下一片单独做。'
+            '实测数据见 audit_k3_20261001.md 附录 BN.2 的网格。'
+            '修好之后把这一条删掉即可。'),
+        'zq_nchwc_ip': (
+            '**部分已修**（附录 BN.1 / BN.2）：NCHWC innerproduct 的 21 个内核变体。'
+            'BN.1（noborders 用 slice 步长当 image 步长，N>1 时结果互相覆盖）'
+            '**已修并验证**：修完之后 60 个用例全过（含 N=2/3/5 的 noborders）。'
+            '但第 61 个用例（align=1 general, N=2 H=3 W=3 C=12 K=7）会踩到 BN.2 那个'
+            'dispatcher 缺陷而 SEGV，所以整个测试仍然是红的。'
+            'BN.2 修好之后这一条也删掉。'),
+    }
     ap.add_argument('--with-slow', action='store_true',
                     help='连那些编译特别慢的测试一起跑（zq_innerproduct 要链 ZQ_GEMM 的'
                          '三个 TU，其中 zq_gemm_32f_align_c.c 单个 >5 分钟）')
@@ -172,7 +237,9 @@ def main():
     # 除非显式点名（args.filter 命中），否则跳过 SKIP 里的那几个，并**把理由打出来**。
     skipped = []
     kept = []
-    SLOW = {'zq_facedb': '要 OpenCV 头 + OpenCV 路径探测，ASan 下编一次约 3 分钟',
+    SLOW = {'zq_gemm_shape': '要链 ZQ_GEMM 的三个 TU（zq_gemm_32f_align_c.c 单个 >5 分钟）',
+            'zq_nchwc_ip': '要链 ZQ_GEMM 的四个 TU（含编 5 分钟以上的 zq_gemm_32f_align_c.c）',
+            'zq_facedb': '要 OpenCV 头 + OpenCV 路径探测，ASan 下编一次约 3 分钟',
             'zq_facedb2': '同上（同一套 OpenCV 头探测）；另外用例 5 要跑 8 轮 x 8 线程',
             'zq_innerproduct': '要链 ZQ_GEMM 的三个 TU，编译 >5 分钟；'
                                '用 --with-slow 才跑'}
