@@ -53,6 +53,7 @@
 // 把 .c 整个 include 进来（内核在它的 extern "C" 里）。
 // 内核自己用 `#include "../ZQ_CNN_CompileConfig.h"` 这种相对路径，
 // 所以必须**按它在树里的位置**引用，include 路径给 -I ZQCNN。
+#include "zq_check_alloc.h"
 #include "layers_c/zq_cnn_lrn_32f_align_c.c"
 
 static int g_fail = 0;
@@ -71,15 +72,20 @@ static void run_case(int N, int H, int W, int C, int local_size,
     int out_pixStep = in_pixStep, out_widthStep = in_widthStep,
         out_sliceStep = in_sliceStep;
 
-    std::vector<float> in((size_t)in_sliceStep * N, 0.f);
-    std::vector<float> out((size_t)out_sliceStep * N, 0.f);
-    for (size_t i = 0; i < in.size(); i++)
+    // **32 字节对齐**（附录 CY.1）：这里直接调 align256 入口，内部是
+    // _mm256_store_ps，std::vector<float> 只给 16 字节 —— ASan 看不见，
+    // UBSan 报 "requires 32 byte alignment"。
+    const size_t nin = (size_t)in_sliceStep * N, nout = (size_t)out_sliceStep * N;
+    float* in = zq_alloc_f32(nin);
+    float* out = zq_alloc_f32(nout);
+    if (!in || !out) { printf("  分配失败\n"); if (in) zq_free_f32(in); if (out) zq_free_f32(out); return; }
+    for (size_t i = 0; i < nin; i++)
         in[i] = (float)((i * 37) % 101) * 0.01f - 0.5f;   // 确定性的伪随机
 
     zq_cnn_lrn_across_channels_32f_align256bit(
         local_size, alpha, beta, k,
-        &in[0], N, H, W, C, in_pixStep, in_widthStep, in_sliceStep,
-        &out[0], out_pixStep, out_widthStep, out_sliceStep);
+        in, N, H, W, C, in_pixStep, in_widthStep, in_sliceStep,
+        out, out_pixStep, out_widthStep, out_sliceStep);
 
     // 与标量参考对拍
     double worst = 0;
@@ -89,10 +95,10 @@ static void run_case(int N, int H, int W, int C, int local_size,
     for (int n = 0; n < N; n++)
         for (int h = 0; h < H; h++)
             for (int w = 0; w < W; w++) {
-                const float* px = &in[(size_t)n * in_sliceStep
-                                      + (size_t)h * in_widthStep + (size_t)w * in_pixStep];
-                float* opx = &out[(size_t)n * out_sliceStep
-                                  + (size_t)h * out_widthStep + (size_t)w * out_pixStep];
+                const float* px = in + (size_t)n * in_sliceStep
+                                      + (size_t)h * in_widthStep + (size_t)w * in_pixStep;
+                float* opx = out + (size_t)n * out_sliceStep
+                                  + (size_t)h * out_widthStep + (size_t)w * out_pixStep;
                 for (int c = 0; c < len; c++) sq[c] = 0.f;
                 for (int c = 0; c < C; c++) sq[pad + c] = px[c] * px[c];
                 acc[0] = 0.f;
@@ -106,6 +112,8 @@ static void run_case(int N, int H, int W, int C, int local_size,
                 }
             }
     bool ok = worst < 1e-3;
+    zq_free_f32(in); zq_free_f32(out);
+
     if (!ok) g_fail++;
     printf("  N=%d H=%d W=%2d C=%2d local_size=%d  相对误差 %.2e  %s\n",
            N, H, W, C, local_size, worst, ok ? "ok" : "FAIL");

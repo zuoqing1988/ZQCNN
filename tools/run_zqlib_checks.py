@@ -524,8 +524,18 @@ def main():
     if args.ubsan and args.no_asan:
         print('--ubsan 和 --no-asan 不能同时给')
         return 1
-    san = '' if args.no_asan else ('-fsanitize=undefined' if args.ubsan
-                                   else '-fsanitize=address')
+    # UBSan 默认是**可恢复**的：打一行 "runtime error:" 之后继续跑，进程照样 rc=0。
+    # 那意味着一个门禁里出了 20 处 UB 也只会报 1 条，而且"跑完了"与"干净"长得一样。
+    # 加 -fno-sanitize-recover=all 让**第一处 UB 直接终止进程**，
+    # 于是"结果文件读不出来 = 失败"那条守卫（附录 CJ.4）就能真正生效，
+    # 定位也只需看第一条 stderr。2026-10-02 之前这条轴没加，等于没查。
+    #
+    # alignment 检查**保持开启**：这一族内核全是手写 SIMD（_mm_load_ps 等），
+    # 未对齐访问是 ASan 看不见、而 UBSan 看得见的一类 —— 值可能算对，但那是
+    # "在 x86 上碰巧能跑"，换个平台或开 -march 更高的目标就可能变慢或崩。
+    san = '' if args.no_asan else (
+        '-fsanitize=undefined -fno-sanitize-recover=all'
+        if args.ubsan else '-fsanitize=address')
 
     srcs = sorted(glob.glob(os.path.join(HERE, 'zq_*_check.cpp')))
     srcs = [s for s in srcs if args.filter in os.path.basename(s)]
@@ -605,7 +615,7 @@ def main():
         #            那一栏永远是 0 等于没查（2026-10-02 实测）。
         if args.ubsan:
             lines.append(
-                "if [ -x ./%s ]; then UBSAN_OPTIONS=print_stacktrace=1 ./%s > %s.out 2>&1; "
+                "if [ -x ./%s ]; then UBSAN_OPTIONS=print_stacktrace=1:halt_on_error=1 ./%s > %s.out 2>&1; "
                 "echo \"R|%s|$?|$(grep -c 'runtime error:' %s.out)|"
                 "$(grep -cE 'FAIL' %s.out)\"; fi"
                 % (tag, tag, tag, tag, tag, tag))

@@ -33,6 +33,7 @@
 #include <cmath>
 #include <vector>
 
+#include "zq_check_alloc.h"
 #include "layers_c/zq_cnn_pooling_32f_align_c.c"
 
 static int g_fail = 0;
@@ -55,16 +56,19 @@ static void run(const char* tag, F fn, int align, bool is_max,
                    + (size_t)(W - 1) * in_pixStep + Cpad;
     size_t out_need = (size_t)(N - 1) * out_sliceStep + (size_t)(out_H - 1) * out_widthStep
                     + (size_t)(out_W - 1) * out_pixStep + Cpad;
-    std::vector<float> in(in_need, 0.f);
+    // **32 字节对齐**（附录 CY.1）：align256 入口内部是 _mm256_load_ps。
+    float* in = zq_alloc_f32(in_need);
+    float* out = zq_alloc_f32(out_need);
+    if (!in || !out) { printf("  分配失败\n"); if (in) zq_free_f32(in); if (out) zq_free_f32(out); return; }
     for (size_t i = 0; i < in_need; i++) {
         int v = (int)((i * 37) % 61) - 30;      // 注意：必须先转 int 再减
         in[i] = (float)v * 0.01f;               // 否则 size_t 下溢成 1.8e17
     }
-    std::vector<float> out(out_need, -12345.f);
+    for (size_t i = 0; i < out_need; i++) out[i] = -12345.f;
 
-    fn(&in[0], N, H, W, C, in_pixStep, in_widthStep, in_sliceStep,
+    fn(in, N, H, W, C, in_pixStep, in_widthStep, in_sliceStep,
        kernel_H, kernel_W, stride_H, stride_W,
-       &out[0], N, out_H, out_W, C, out_pixStep, out_widthStep, out_sliceStep);
+       out, N, out_H, out_W, C, out_pixStep, out_widthStep, out_sliceStep);
 
     // 朴素参考，带同样的截短规则
     double worst = 0;
@@ -102,6 +106,8 @@ static void run(const char* tag, F fn, int align, bool is_max,
                 }
             }
         }
+    zq_free_f32(in); zq_free_f32(out);
+
     bool ok = worst < 1e-5;
     if (!ok) g_fail++;
     printf("  %-5s %-10s align=%d C=%2d %dx%d k=%dx%d s=%dx%d  相对误差 %.2e  %s\n",

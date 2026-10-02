@@ -28,8 +28,10 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cmath>
+#include <cstring>
 #include <vector>
 
+#include "zq_check_alloc.h"
 #include "layers_nchwc/zq_cnn_batchnormscale_nchwc.c"
 
 static int g_fail = 0;
@@ -69,14 +71,21 @@ static void run_variant(const char* name, F fn, int align, int N, int H, int W, 
         scale[c] = 1.0f + 0.05f * c;
         bias[c] = -0.2f * c;
     }
-    std::vector<float> im(need, 0.f);
-    for (size_t i = 0; i < im.size(); i++)
+    // **32 字节对齐**（附录 CY.1）：nchwc8 入口内部是 _mm256_load_ps。
+    // imStep / sliceStep / widthStep 都是 align(=8) 的倍数，所以只要**基址**
+    // 32 字节对齐，沿这两个方向走就始终 32 字节对齐 —— 少这一条，UBSan 会报
+    // "load of misaligned address ... requires 32 byte alignment"（x86 上值照样对）。
+    float* im = zq_alloc_f32(need);
+    if (!im) { printf("  分配失败\n"); return; }
+    for (size_t i = 0; i < need; i++)
         im[i] = (float)((i * 29) % 97) * 0.01f - 0.5f;
     // 内核是**就地修改**（第一个参数是非 const 指针，结果写回 in_data 本身），
     // 所以参考实现要用**调用前**的副本。第一版拿 out（全 0）去比、或者拿
     // 已经被改过的 im 去比，都会得到"相对误差 1.00"—— 看着像内核算错，
     // 其实是测试比错了对象。
-    std::vector<float> im0 = im;
+    float* im0 = zq_alloc_f32(need);
+    if (!im0) { printf("  分配失败\n"); zq_free_f32(im); return; }
+    memcpy(im0, im, need * sizeof(float));
 
     const float eps = 1e-5f;
     if (getenv("ZQBNS_VERBOSE"))
@@ -84,7 +93,7 @@ static void run_variant(const char* name, F fn, int align, int N, int H, int W, 
                "sliceStep=%d imStep=%d need=%d(%.0fB) model=%d(%.0fB)\n",
                name, align, N, H, W, C, Cpad, widthStep, sliceStep, imStep,
                (int)need, need * 4.0, C, C * 4.0);
-    fn(&im[0], N, H, W, C, widthStep, sliceStep, imStep,
+    fn(im, N, H, W, C, widthStep, sliceStep, imStep,
        &mean[0], &var[0], &scale[0], &bias[0], eps);
 
     // 标量参考：value = b*value + a,  b = scale/sqrt(var+eps), a = bias-mean*b
@@ -107,6 +116,8 @@ static void run_variant(const char* name, F fn, int align, int N, int H, int W, 
                     double d = fabs(im[off] - ref) / (fabs(ref) + 1e-6);
                     if (d > worst) worst = d;
                 }
+    zq_free_f32(im); zq_free_f32(im0);
+
     bool ok = worst < 1e-5;
     if (!ok) g_fail++;
     printf("  %-10s align=%d C=%2d  相对误差 %.2e  %s\n",

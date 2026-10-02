@@ -5817,3 +5817,86 @@ CU.8.1 记过一次"门禁根本没测到那件事"（传 `&buf` 而非 `0`）�
 判据是"越界即被抓"时，**分配器请求的字节数就是判据的一部分** ——
 凡是用 ASan 抓越界的门禁都必须精确分配，且实现 TU 必须带 sanitizer 编译。
 这两条已写进 `run_zqlib_checks.py` 的注释。
+
+## 新增/变更：附录 CY —— 把 UBSan 轴真正跑起来，首跑抓出 5 道门禁用 16 字节对齐喂 align256
+
+### 变更文件
+
+* `tools/zq_check_alloc.h`（新增）—— 32 字节对齐的 `zq_alloc_f32` / `zq_free_f32`
+* `tools/run_zqlib_checks.py` —— `--ubsan` 改成**不可恢复**（`-fno-sanitize-recover=all`）
+  + `UBSAN_OPTIONS=halt_on_error=1`
+* `tools/run_audit_checks.py` —— 新增 `--ubsan-sweep`（C6 组，约 3 分钟）
+* 5 道门禁改用 32 字节对齐的缓冲：
+  `tools/zq_bns_check.cpp` / `zq_eltwise_check.cpp` / `zq_lrn_check.cpp` /
+  `zq_pool_check.cpp` / `zq_nchw_resize_check.cpp`
+* `audit_k3_20261001.md` 新增附录 CY
+
+**`ZQCNN/` 下没有改动任何生产代码。**
+
+### 为什么说这条轴之前"从来没查过任何东西"
+
+UBSan 默认是**可恢复**的：打一行 `runtime error:` 之后继续跑，进程照样 `rc=0`。
+门禁自带的注释其实已经记了这件事（"那一栏永远是 0 等于没查"），
+但**修法一直没落地**。现在加 `-fno-sanitize-recover=all`，
+第一处 UB 直接终止进程，附录 CJ.4 那条"结果文件读不出来 = 失败"的守卫才真正生效。
+alignment 检查**保持开启**（没加 `-fno-sanitize=alignment`）——
+这一族内核全是手写 SIMD，未对齐访问是 ASan 看不见、UBSan 看得见的一类。
+
+### 首跑：30 个门禁里 5 个报红，全是同一类
+
+```
+25/30 通过
+  zq_bns / zq_eltwise / zq_lrn / zq_pool   FAIL (rc=1, 1 条 sanitizer 报错)
+  zq_nchw_resize                          FAIL (rc=1)
+
+avxintrin.h:874:21: runtime error: load of misaligned address 0x... for type
+  '__m256', which requires 32 byte alignment
+  00 00 00 00  99 99 99 be 29 5c 8f 3d  ...      ← 16 字节对齐，不是 32
+    #1 zq_cnn_batchnorm_b_a_nchwc8      layers_nchwc/zq_cnn_batchnormscale_nchwc_raw.h:222
+    #1 zq_cnn_eltwise_sum_32f_align256bit       layers_c/zq_cnn_eltwise_32f_align_c_raw.h:301
+    #1 zq_cnn_lrn_across_channels_32f_align256bit layers_c/zq_cnn_lrn_32f_align_c_raw.h:115
+    #1 zq_cnn_maxpooling_nopadding_nodivided_32f_align256bit_general
+                                                 layers_c/zq_cnn_pooling_32f_align_c_raw.h:729
+```
+
+**根因**：`std::vector<float>` 只保证 **16 字节**对齐（`operator new` 的实现决定），
+而 align256 入口内部全是 `_mm256_*`。
+
+**归因由实验坐实，不靠断言**：新增 `tools/zq_check_alloc.h`，
+把这 5 道门禁的缓冲全换成 32 字节对齐，重跑 UBSan ——
+**未对齐告警全部消失，30/30 通过**。若仍有残留才说明是生产代码的问题。
+生产侧不是缺陷的原因：`ZQ_CNN_Tensor4D_NHW_C_Align256bit` 自己按 32 字节分配，
+且 nchwc 那条的 `imStep / sliceStep / widthStep` 全是 `align`(=8) 的倍数 ——
+**只要基址 32 字节对齐，沿那两个方向走就始终对齐**，门禁缺的正是"基址"这一条。
+
+### 重要：那 5 道门禁之前的"绿"是带水分的
+
+它们一直在让内核执行未对齐 SIMD 访问。在 x86 上值照样算对、ASan 完全看不见，
+所以 ASan 下它们一直是 PASS —— 绿，但绿的原因不对。
+
+### 顺带记一个"让人查不出来"的坑
+
+`zq_nchw_resize` 报的是 `FAIL (rc=1)` 而不是"1 条 sanitizer 报错"：
+这道门禁 **fork 子进程**并把子进程 stderr 接到 `/dev/null`
+（为的是不让 ASan 报告把父进程 stdout 拦腰截断，附录 BN.5），
+于是 **UBSan 的消息被一起吞了**。另外四道是进程内跑的，消息才进得了 `.out`。
+
+> 判据仍然是对的（没读到结果文件 = 失败，附录 CJ.4 起了作用），
+> 但"知道它失败了、不知道它为什么失败"。
+> 已记在 CY.7 待办：让子进程把 sanitizer 输出写进独立的 per-case 文件。
+
+### 一句必须说清的话
+
+本轮 30/30 跑绿，**只说明**在这些形状、这些对齐正确的缓冲下，
+被跑到的代码路径没有 UBSan 能检出的 UB。
+**没覆盖到的**：未跑到的形状、没被任何门禁调用的入口，
+以及**只有真实调用方传了不对齐的缓冲才会出现的那一类** ——
+生产里不会发生（张量自己按对齐宽度分配），
+但**任何绕过 `ZQ_CNN_Tensor4D` 直接调 `zq_cnn_*_align256bit*` 的外部代码会踩到**。
+这条已写进 `tools/zq_check_alloc.h` 的文件头。
+
+### 待办（如实记下，本轮没做）
+
+1. 子进程 sanitizer 输出落到独立的 per-case 文件，父进程在失败时把前几行打出来。
+2. 把"门禁不得用 `std::vector<float>` 喂 align256 入口"做成一条常驻检查
+   （现在靠 UBSan 轴被动发现；一个没被 UBSan 覆盖到的 align256 门禁仍可能带这个缺陷）。

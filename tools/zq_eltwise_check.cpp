@@ -24,6 +24,7 @@
 #include <cmath>
 #include <vector>
 
+#include "zq_check_alloc.h"
 #include "layers_c/zq_cnn_eltwise_32f_align_c.c"
 
 static int g_fail = 0;
@@ -45,12 +46,16 @@ static void run(const char* variant, F fn, int align, int op,
     int widthStep = Cpad * W;
     int sliceStep = widthStep * H;
 
-    std::vector<std::vector<float> > bufs(tensors);
+    // **32 字节对齐**（附录 CY.1）：align256 入口内部全是 _mm256_load_ps，
+    // std::vector<float> 只给 16 字节对齐 —— 在 x86 上值照样算对（只是慢），
+    // ASan 看不见，UBSan 会报 "requires 32 byte alignment"。
+    std::vector<float*> bufs(tensors, (float*)0);
     std::vector<const float*> ptrs(tensors);
     for (int t = 0; t < tensors; t++) {
         size_t need = (size_t)(N - 1) * sliceStep + (size_t)(H - 1) * widthStep
                     + (size_t)(W - 1) * Cpad + Cpad;
-        bufs[t].assign(need, 0.f);
+        bufs[t] = zq_alloc_f32(need);
+        if (!bufs[t]) { printf("  %-9s %-4s align=%d 分配失败\n", kOpName[op], variant, align); g_fail++; return; }
         for (size_t i = 0; i < need; i++) {
             // 注意这个 -30 必须在 **int** 里做：第一版写成
             //   (float)(((i * 37 + t * 11) % 61) - 30) * 0.01f
@@ -60,17 +65,19 @@ static void run(const char* variant, F fn, int align, int op,
             int v = (int)((i * 37 + (size_t)(t * 11)) % 61) - 30;
             bufs[t][i] = (float)v * 0.01f;
         }
-        ptrs[t] = &bufs[t][0];
+        ptrs[t] = bufs[t];
     }
     // 输入刻意不按 Cpad 补零的余数处理：只保证前 C 个是有效数据，
     // 其余是确定的 0 —— 标量参考也只算前 C 个。
     size_t oneed = (size_t)(N - 1) * sliceStep + (size_t)(H - 1) * widthStep
                 + (size_t)(W - 1) * Cpad + Cpad;
-    std::vector<float> out(oneed, -12345.f);
+    float* out = zq_alloc_f32(oneed);
+    if (!out) { for (int t = 0; t < tensors; t++) zq_free_f32(bufs[t]); printf("  分配失败\n"); g_fail++; return; }
+    for (size_t i = 0; i < oneed; i++) out[i] = -12345.f;
 
     std::vector<int> pix(tensors, Cpad), wid(tensors, widthStep), sli(tensors, sliceStep);
     fn(tensors, &ptrs[0], N, H, W, C, &pix[0], &wid[0], &sli[0],
-       &out[0], Cpad, widthStep, sliceStep);
+       out, Cpad, widthStep, sliceStep);
 
     double worst = 0;
     for (int n = 0; n < N; n++)
@@ -97,6 +104,9 @@ static void run(const char* variant, F fn, int align, int op,
                     if (d > worst) worst = d;
                 }
             }
+    for (int t = 0; t < tensors; t++) zq_free_f32(bufs[t]);
+    zq_free_f32(out);
+
     bool ok = worst < 1e-5;
     if (!ok) g_fail++;
     printf("  %-9s %-4s align=%d tensors=%d C=%2d  相对误差 %.2e  %s\n",

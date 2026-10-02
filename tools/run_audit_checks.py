@@ -172,6 +172,12 @@ def main():
                     help='额外跑 gcc -Wall -Wextra 的 HIGH 桶门禁（较慢，约 2 分钟，见附录 AT）')
     ap.add_argument('--src-sweep', action='store_true',
                     help='额外扫**主工程** ZQCNN/ 的 43 个 TU 的 HIGH 桶（约 1 分钟，见附录 AU）')
+    ap.add_argument('--ubsan-sweep', action='store_true',
+                    help='把 A 组门禁用 **UBSan** 再跑一遍（约 3 分钟，见附录 CY）。'
+                         'ASan 看不见未对齐 SIMD 访问、有符号溢出、移位越界这类 UB；'
+                         '这一轴 2026-10-02 第一次真正跑起来（之前 UBSan 是可恢复的，'
+                         'rc 恒为 0，等于没查），首跑就抓出 5 道门禁在用只 16 字节'
+                         '对齐的缓冲喂 align256 入口。')
     ap.add_argument('--bounds-sweep', action='store_true',
                     help='额外跑 **-O2 -c** 的优化期告警 HIGH 桶门禁（约 2.5 分钟，见附录 CU）。'
                          '与 --src-sweep 的差别只有一处但是决定性的：--src-sweep 用 '
@@ -222,6 +228,12 @@ def main():
                           os.path.join(HERE, 'zqcnn_warn_baseline.txt')],
                          cwd=ROOT):
             failed.append('C4 主工程 ZQCNN/ 的 HIGH 桶门禁')
+
+    if args.ubsan_sweep:
+        if not run_group('C6 ZQCNN 门禁 UBSan 回归',
+                         [sys.executable, os.path.join(HERE, 'run_zqlib_checks.py'),
+                          '--ubsan'], cwd=ROOT):
+            failed.append('C6 ZQCNN 门禁 UBSan 回归')
 
     if args.bounds_sweep:
         if not run_group('C5 主工程 -O2 -c 优化期告警 HIGH 桶门禁',

@@ -39,6 +39,7 @@
 #include <unistd.h>
 #include <sys/wait.h>
 #include "ZQCNN/ZQ_CNN_Tensor4D.h"
+#include "zq_check_alloc.h"
 #include "ZQCNN/layers_c/zq_cnn_resize_32f_align_c.h"
 
 // resize 三个变体：19 个参数，末尾是 sample_align_type
@@ -118,14 +119,24 @@ static void run_one(const Case& c)
     const int oH = 8, oW = 8;
 
     // ---- 紧凑数据 (n,c,h,w) ----
-    std::vector<float> in((size_t)N * C * H * W);
-    for (size_t i = 0; i < in.size(); i++) in[i] = val(1, (int)i);
+    const size_t nin = (size_t)N * C * H * W;
+    float* in = zq_alloc_f32(nin);
+    if (!in) return;
+    for (size_t i = 0; i < nin; i++) in[i] = val(1, (int)i);
 
     // NCHW 张量：pixelStep = C（这里 C 恰是 align 的倍数，不额外补齐）
     const int in_pixelStep = C, in_widthStep = in_pixelStep * W, in_sliceStep = in_widthStep * H;
     const int out_pixelStep = C, out_widthStep = out_pixelStep * oW, out_sliceStep = out_widthStep * oH;
-    std::vector<float> out((size_t)N * out_sliceStep, -12345.0f);
-    std::vector<float> mapx((size_t)oH * oW), mapy((size_t)oH * oW);
+    float* out = zq_alloc_f32((size_t)N * out_sliceStep);
+    float* mapx = zq_alloc_f32((size_t)oH * oW);
+    float* mapy = zq_alloc_f32((size_t)oH * oW);
+    if (!out || !mapx || !mapy) {
+        if (in) zq_free_f32(in); if (out) zq_free_f32(out);
+        if (mapx) zq_free_f32(mapx); if (mapy) zq_free_f32(mapy);
+        return;
+    }
+    for (size_t i = 0; i < (size_t)N * out_sliceStep; i++) out[i] = -12345.0f;
+    for (size_t i = 0; i < (size_t)oH * oW; i++) { mapx[i] = 0.f; mapy[i] = 0.f; }
 
     const bool is_remap = (e.kind == K_REMAP || e.kind == K_REMAP_FILL);
     // 三个 resize 变体用的矩形；with_safeborder 不钳位，所以给一个图内的矩形
@@ -148,16 +159,16 @@ static void run_one(const Case& c)
 
     if (is_remap) {
         if (e.kind == K_REMAP_FILL)
-            ((FN_REMAP_FILL)e.fn)(&in[0], N, H, W, C, in_pixelStep, in_widthStep, in_sliceStep,
-                                 &mapx[0], &mapy[0], &out[0], oH, oW,
+            ((FN_REMAP_FILL)e.fn)(in, N, H, W, C, in_pixelStep, in_widthStep, in_sliceStep,
+                                 mapx, mapy, out, oH, oW,
                                  out_pixelStep, out_widthStep, out_sliceStep, FILLVAL);
         else
-            ((FN_REMAP)e.fn)(&in[0], N, H, W, C, in_pixelStep, in_widthStep, in_sliceStep,
-                            &mapx[0], &mapy[0], &out[0], oH, oW,
+            ((FN_REMAP)e.fn)(in, N, H, W, C, in_pixelStep, in_widthStep, in_sliceStep,
+                            mapx, mapy, out, oH, oW,
                             out_pixelStep, out_widthStep, out_sliceStep);
     } else {
-        ((FN_RESIZE)e.fn)(&in[0], N, H, W, C, in_pixelStep, in_widthStep, in_sliceStep,
-                          offX, offY, rectW, rectH, &out[0], oH, oW,
+        ((FN_RESIZE)e.fn)(in, N, H, W, C, in_pixelStep, in_widthStep, in_sliceStep,
+                          offX, offY, rectW, rectH, out, oH, oW,
                           out_pixelStep, out_widthStep, out_sliceStep,
                           /* sample_align_type */ (c.cfg == 1) ? 1 : 0);
     }
@@ -181,10 +192,10 @@ static void run_one(const Case& c)
                 x0 = cl(x0, W - 1); x1 = cl(x1, W - 1);
                 y0 = cl(y0, H - 1); y1 = cl(y1, H - 1);
                 for (int cc = 0; cc < C; cc++) {
-                    double v00 = at(&in[0], 0, in_widthStep, in_pixelStep, y0, x0, cc);
-                    double v01 = at(&in[0], 0, in_widthStep, in_pixelStep, y0, x1, cc);
-                    double v10 = at(&in[0], 0, in_widthStep, in_pixelStep, y1, x0, cc);
-                    double v11 = at(&in[0], 0, in_widthStep, in_pixelStep, y1, x1, cc);
+                    double v00 = at(in, 0, in_widthStep, in_pixelStep, y0, x0, cc);
+                    double v01 = at(in, 0, in_widthStep, in_pixelStep, y0, x1, cc);
+                    double v10 = at(in, 0, in_widthStep, in_pixelStep, y1, x0, cc);
+                    double v11 = at(in, 0, in_widthStep, in_pixelStep, y1, x1, cc);
                     double r0 = v00 + (v01 - v00) * sx, r1 = v10 + (v11 - v10) * sx;
                     exp[cc] = r0 + (r1 - r0) * sy;
                 }
@@ -195,7 +206,7 @@ static void run_one(const Case& c)
                        cy = 0.5f * h_step - 0.5f + offY + h * h_step; }
                 if (e.kind == K_NN) {
                     int xn = cl((int)(cx + 0.5f), W - 1), yn = cl((int)(cy + 0.5f), H - 1);
-                    for (int cc = 0; cc < C; cc++) exp[cc] = at(&in[0], 0, in_widthStep, in_pixelStep, yn, xn, cc);
+                    for (int cc = 0; cc < C; cc++) exp[cc] = at(in, 0, in_widthStep, in_pixelStep, yn, xn, cc);
                 } else {
                     int x0 = (int)floorf(cx), y0 = (int)floorf(cy);
                     float sx = cx - floorf(cx), sy = cy - floorf(cy);
@@ -205,10 +216,10 @@ static void run_one(const Case& c)
                         y0 = cl(y0, H - 1); y1 = cl(y1, H - 1);
                     }
                     for (int cc = 0; cc < C; cc++) {
-                        double v00 = at(&in[0], 0, in_widthStep, in_pixelStep, y0, x0, cc);
-                        double v01 = at(&in[0], 0, in_widthStep, in_pixelStep, y0, x1, cc);
-                        double v10 = at(&in[0], 0, in_widthStep, in_pixelStep, y1, x0, cc);
-                        double v11 = at(&in[0], 0, in_widthStep, in_pixelStep, y1, x1, cc);
+                        double v00 = at(in, 0, in_widthStep, in_pixelStep, y0, x0, cc);
+                        double v01 = at(in, 0, in_widthStep, in_pixelStep, y0, x1, cc);
+                        double v10 = at(in, 0, in_widthStep, in_pixelStep, y1, x0, cc);
+                        double v11 = at(in, 0, in_widthStep, in_pixelStep, y1, x1, cc);
                         double r0 = v00 + (v01 - v00) * sx, r1 = v10 + (v11 - v10) * sx;
                         exp[cc] = r0 + (r1 - r0) * sy;
                     }
@@ -226,6 +237,7 @@ static void run_one(const Case& c)
         }
     FILE* f = fopen(RES_FILE, "w");
     if (f) { fprintf(f, "%ld %ld %.6e\n", n_ok, n_bad, worst); fclose(f); }
+    zq_free_f32(in); zq_free_f32(out); zq_free_f32(mapx); zq_free_f32(mapy);
 }
 
 static bool is_remap_kind(int k) { return (k == K_REMAP || k == K_REMAP_FILL); }
