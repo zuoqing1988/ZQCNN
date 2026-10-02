@@ -5039,3 +5039,87 @@ NCHW 的 ALIGN_0 变体走的正是这条。
 
 deconvolution 只有分派器引用、shipped 模型一次都没用到，优先级排在最后；
 scalaroperation 是下一块。
+## 新增/变更：附录 CQ —— NCHW scalaroperation 门禁（38 个 32f 入口 / 152 用例），首跑全绿且变异测试钉住「反向运算」
+
+### 变更文件
+
+* `tools/zq_nchw_scalop_check.cpp`（新增）—— NCHW scalaroperation 门禁
+* `tools/run_zqlib_checks.py` —— 登记 `zq_nchw_scalop`（四处）
+* `audit_k3_20261001.md` —— 新增附录 CQ
+* `docs-changelogs/CHANGELOG_2026-10-02.md` —— 本节
+
+**`ZQCNN/` 下没有改动任何生产代码。**
+
+### 覆盖面
+
+`zq_cnn_scalaroperation_32f_align_c.c` 里 **38 个 32f 真实符号**
+（7 运算 × 2 形式 × 3 对齐，`pow` 只有 align0 一份），全是逐元素二元运算，
+此前零覆盖。TU 里另有 26 个 16f 符号在 `#if __ARM_NEON_FP16` 里，
+x86 不可运行，本门禁不覆盖也不宣称覆盖。
+
+### 七个运算的真实算式（逐个抄 .c 里那七个 `#define zq_mm_operation_ps`）
+
+调用是 `zq_mm_operation_ps(a_i, scalar_v)`，即 **x = 输入、y = 标量**：
+
+  add     vaddq_f32(x, y)      out = in + s
+  mul     vmulq_f32(x, y)      out = in * s
+  max     vmaxq_f32(x, y)      out = max(in, s)
+  min     vminq_f32(x, y)      out = min(in, s)
+  rminus  vsubq_f32(y, x)      out = s - in      <- **反向**
+  rdiv    vdivq_f32(y, x)      out = s / in      <- **反向**
+  pow     (align0 手写标量)      out = pow(in, s)
+
+**`r` 前缀是 "reverse"。** 按名字推（rminus = in - s）会整个搞反，
+而数值上只差一个符号、不崩溃、越界也没有任何提示。
+
+> 这是本会话**第五次**「参数名不是语义」（`b_a` 的 b/a、C3 的 `*3`、
+> addbias 的 `weight` 粒度、depthwise 的 `filter_pixelStep`、rminus/rdiv 的 `r`）。
+
+### 首跑结果
+
+  共 152 个用例：全对 152，有错 0，崩溃/搭建失败 0
+
+（`grep -c "FAIL|没跑完|CRASH"` = 0）
+
+### 变异测试：48/152 变红，正好是那两个反向运算
+
+    - case 4: return y - x;      // rminus = s - in
+    + case 4: return x - y;      /* MUTANT */
+    - case 5: return y / x;      // rdiv = s / in
+    + case 5: return x / y;      /* MUTANT */
+
+    共 152 个用例：全对 104，有错 48，崩溃/搭建失败 0
+
+**48 = 2 运算 × 2 形式 × 3 对齐 × 4 组合**，其余 104 个
+（add / mul / max / min / pow）保持绿 —— **该红的全红、该绿的绿**，
+而且红的正好是"只有搞反才会错"的那两个。
+
+### 门禁怎么保证能抓到
+
+1. **标量取两个值：`0.375` 与 `-0.5`。** 六个 SIMD 运算里只有 max/min 对符号敏感，
+   而 rminus / rdiv **必须**有负数（或负的分母）才能暴露"反向"写反
+2. **C 取 align 与 2*align 两种** —— 覆盖补齐尾组
+3. 缓冲区一律 **32 字节对齐**（附录 CJ.4 / CP.5 各记过一次）
+4. `rdiv` 的判据分母用 `max(|y|, 1)`，因为 `s/in` 的量级由 `in` 决定 ——
+   这一条与 rdiv 的反向语义一起构成它与 `div` 的区别
+
+### 可达性
+
+由 ZQ_CNN_Forward_SSEUtils.cpp:3751 起的 `_scalaroperation_add` / `_scalaroperation_mul` / …
+在 align_mode 匹配时调用 —— NCHW 主分派器，**x86 主生产路径**。
+
+### 剩下的空白
+
+  NCHW 激活与归一化（39）        CO
+  NCHW depthwise（147）           CP
+  NCHW scalaroperation（38）      本附录
+  NCHW resize / remap（15）       CN
+  NCHW 卷积（16）                 CE
+  NCHW pooling / eltwise / lrn   已有门禁
+  NCHWC 全族                      CB / CF / CG / CH / CI / CJ / CK / CL
+  NCHW lstm / normalize / deconvolution(+_gemm) / reduction / sqrt   仍无门禁
+
+deconvolution 只有分派器引用、shipped 模型一次都没用到，优先级排在最后；
+lstm 与 normalize 是接下来两块（各自只有 2~6 个符号，规模小）。
+
+未 push。
