@@ -138,7 +138,14 @@ static void run_one(const Case& c)
     if (oH <= 0 || oW <= 0) return;
 
     std::vector<float> in((size_t)N * C * H * W), flt((size_t)1 * fH * fW * C);
-    std::vector<float> bv(A), sl(A);
+    // bias / slope **必须 32 字节对齐**：align=8 那一族用 `zq_mm_load_ps` = `_mm256_load_ps`，
+    // 它要求 32 字节对齐，而 `std::vector<float>` 只给 16。
+    // 第一版没管这件事，**189 个用例里有 70 个一进去就 SEGV**；
+    // 又因为门禁把"结果文件缺失"当成通过，那 70 个一直被记成"全对"（附录 CJ.4）。
+    // 手法：多分配 8 个 float，把首地址推到 32 的倍数上。
+    std::vector<float> bv_m(A + 8), sl_m(A + 8);
+    float* bv = (float*)(((size_t)bv_m.data() + 31) / 32 * 32);
+    float* sl = (float*)(((size_t)sl_m.data() + 31) / 32 * 32);
     for (size_t i = 0; i < in.size(); i++) in[i] = val(1, (int)i);
     for (size_t i = 0; i < flt.size(); i++) flt[i] = val(2, (int)i);
     for (int k = 0; k < A; k++) { bv[k] = val(3, k) * 0.5f; sl[k] = 0.1f + 0.01f * (k % 7); }
@@ -172,12 +179,12 @@ static void run_one(const Case& c)
         e.bias(ip, N, H, W, C, tin.GetWidthStep(), tin.GetSliceStep(), tin.GetImageStep(),
                fp, 1, fH, fW, C, tflt.GetWidthStep(), tflt.GetSliceStep(), tflt.GetImageStep(),
                S, S, D, D,
-               op, N, oH, oW, C, oWS, oSS, oIS, &bv[0]);
+               op, N, oH, oW, C, oWS, oSS, oIS, bv);
     else
         e.prelu(ip, N, H, W, C, tin.GetWidthStep(), tin.GetSliceStep(), tin.GetImageStep(),
                 fp, 1, fH, fW, C, tflt.GetWidthStep(), tflt.GetSliceStep(), tflt.GetImageStep(),
                 S, S, D, D,
-                op, N, oH, oW, C, oWS, oSS, oIS, &bv[0], &sl[0]);
+                op, N, oH, oW, C, oWS, oSS, oIS, bv, sl);
 
     // ---- 逐格统计（depthwise：每个通道一个 filter，不跨通道混合）----
     long n_ok = 0, n_bad = 0; double worst = 0.0;
@@ -219,13 +226,19 @@ static void one(const Case& c, RUNNER r)
     }
     int st = 0; waitpid(pid, &st, 0);
     long ok = 0, bad = 0; int oh = 0, ow = 0; double worst = 0;
+    int have = 0;
     FILE* f = fopen(RES_FILE, "r");
-    if (f) { if (fscanf(f, "%d %d %ld %ld %lf", &oh, &ow, &ok, &bad, &worst) != 5) ok = bad = 0; fclose(f); }
+    if (f) { have = (fscanf(f, "%d %d %ld %ld %lf", &oh, &ow, &ok, &bad, &worst) == 5); fclose(f); }
     char nm[96];
     snprintf(nm, sizeof(nm), "nchwc%d %s %s", c.align, g_base_name[c.base],
              c.variant == 0 ? "plain" : (c.variant == 1 ? "with_bias" : "with_bias_prelu"));
     char tag[96];
     snprintf(tag, sizeof(tag), "N=%d %dx%d C=%d f=%dx%d s=%d d=%d", c.N, c.H, c.W, c.C, c.fH, c.fW, c.S, c.D);
+    // **结果文件缺失 / 读不出来 = 这个用例没跑完，必须判失败。**
+    // ASan 撞上 SEGV 时默认走 Die() -> _exit(1)，**不发信号**，
+    // 于是 WIFSIGNALED 为假、退出码也不是 3 —— 缺了这道判断就会把
+    // 一个段错误当成"通过"。附录 CJ.4 抓出来的，四个门禁统一补上。
+    if (!have) { g_crash++; printf("  没跑完（子进程没写结果文件，退出码 %d）\n", WEXITSTATUS(st)); return; }
     if (WIFSIGNALED(st)) { g_crash++; printf("  %-44s %s  CRASH\n", nm, tag); return; }
     if (bad > 0) { g_bad++; printf("  %-44s %s  FAIL %ld/%ld 格错, 最差 %.3e\n", nm, tag, bad, ok + bad, worst); }
     else { g_ok++; }

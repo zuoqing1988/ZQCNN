@@ -243,6 +243,18 @@ EXTRA_SOURCES = {
         'g++ -O1 -g -mavx2 -mfma -fopenmp -c -I$R -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include '
         '$R/ZQCNN/ZQ_CNN_Tensor4D_NCHWC.cpp -o $WDIR/zq_pool8_tensor.o',
     ],
+    # zq_nchwc_bn（附录 CJ）：NCHWC batchnormscale 的 12 个入口
+    # （scale / batchnorm_b_a / batchnorm_mean_var / mean_var_scale_bias × NCHWC1/4/8）。
+    # 这一族的**参数名与直觉相反**（batchnorm_b_a 的第一个参数是乘数、第二个是加数），
+    # 所以参考实现是逐条从源码抄下来的，不是按名字推的。
+    'zq_nchwc_bn': [
+        'gcc -O1 -g -mavx2 -mfma -fopenmp -c -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include '
+        '$R/ZQCNN/layers_nchwc/zq_cnn_batchnormscale_nchwc.c -o $WDIR/zq_bn.o',
+        'gcc -O1 -g -mavx2 -mfma -fopenmp -c -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include '
+        '$R/ZQCNN/layers_nchwc/zq_cnn_resize_nchwc.c -o $WDIR/zq_bn_resize.o',
+        'g++ -O1 -g -mavx2 -mfma -fopenmp -c -I$R -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include '
+        '$R/ZQCNN/ZQ_CNN_Tensor4D_NCHWC.cpp -o $WDIR/zq_bn_tensor.o',
+    ],
     # zq_bns 登记在这里是为了让 EXTRA_SOURCES 覆盖到它；它已在正常回归里。
     'zq_bns': [
         'gcc -O1 -g -mavx2 -mfma -c -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include '
@@ -266,6 +278,7 @@ EXTRA_LINK = {'zq_innerproduct': ' $WDIR/zq_ipgemm.o $WDIR/zq_gemm_align.o $WDIR
               'zq_nchwc_elt_relu': (' $WDIR/zq_er_relu.o $WDIR/zq_er_elt.o '
                                     '$WDIR/zq_er_resize.o $WDIR/zq_er_tensor.o'),
               'zq_nchwc_pool': (' $WDIR/zq_pool8.o $WDIR/zq_pool8_resize.o $WDIR/zq_pool8_tensor.o'),
+              'zq_nchwc_bn': (' $WDIR/zq_bn.o $WDIR/zq_bn_resize.o $WDIR/zq_bn_tensor.o'),
               'zq_gemm_shape': (' $WDIR/zq_shape_gemm_align.o $WDIR/zq_shape_gemm_asm.o '
                                 '$WDIR/zq_shape_gemm_auto.o'),
               'zq_nchwc_ip': (' $WDIR/zq_nchwc_ip.o $WDIR/zq_nchwc_resize.o '
@@ -288,6 +301,7 @@ EXTRA_INC = {'zq_facedb': ' -I$R -I$R/ZQCNN -I$R/ZQCNN/3rdparty/include/ZQlib',
              'zq_nchwc_act': ' -I$R -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include',
              'zq_nchwc_elt_relu': ' -I$R -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include',
              'zq_nchwc_pool': ' -I$R -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include',
+             'zq_nchwc_bn': ' -I$R -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include',
              'zq_lrn': ' -I$R/ZQCNN -I$R/ZQ_GEMM',
              'zq_pool': ' -I$R/ZQCNN -I$R/ZQ_GEMM',
              'zq_bns': ' -I$R/ZQCNN -I$R/ZQ_GEMM',
@@ -307,6 +321,7 @@ EXTRA_CXXFLAGS = {'zq_facedb': ' -mavx2 -mfma -fopenmp',
                   'zq_nchwc_act': ' -mavx2 -mfma -fopenmp',
                   'zq_nchwc_elt_relu': ' -mavx2 -mfma -fopenmp',
                   'zq_nchwc_pool': ' -mavx2 -mfma -fopenmp',
+                  'zq_nchwc_bn': ' -mavx2 -mfma -fopenmp',
                   'zq_lrn': ' -mavx2 -mfma',
                   'zq_pool': ' -mavx2 -mfma', 'zq_bns': ' -mavx2 -mfma',
                   'zq_eltwise': ' -mavx2 -mfma'}

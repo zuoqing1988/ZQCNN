@@ -103,7 +103,12 @@ static void run_one(const Case& c)
     // （第一版按 A 开，于是通道 align/align+1 的 slope 是 0，
     //   参考值和内核"恰好一致"，门禁看起来全绿 —— 变异测试抓出来的。）
     const int paddedC = (C + A - 1) / A * A;
-    std::vector<float> bv(paddedC), sl(paddedC);
+    // 长度按补齐后的通道数（CG.4），并且**必须 32 字节对齐**：
+    // align=8 那一族用 `zq_mm_load_ps` = `_mm256_load_ps`，要求 32 字节对齐，
+    // `std::vector<float>` 只给 16（附录 CJ.4）。
+    std::vector<float> bv_m(paddedC + 8), sl_m(paddedC + 8);
+    float* bv = (float*)(((size_t)bv_m.data() + 31) / 32 * 32);
+    float* sl = (float*)(((size_t)sl_m.data() + 31) / 32 * 32);
     for (size_t i = 0; i < in.size(); i++) in[i] = val(1, (int)i);
     for (int k = 0; k < paddedC; k++) {
         bv[k] = (k < C) ? val(3, k) * 0.5f : 0.0f;
@@ -118,9 +123,9 @@ static void run_one(const Case& c)
 
     const Entry& e2 = g_entries[c.entry];
     if (e2.fn9)
-        ((FN9)e2.fn9)(p, N, H, W, C, ws, ss, is, has_bias ? &bv[0] : &sl[0]);
+        ((FN9)e2.fn9)(p, N, H, W, C, ws, ss, is, has_bias ? bv : sl);
     else
-        ((FN10)e2.fn10)(p, N, H, W, C, ws, ss, is, &bv[0], &sl[0]);
+        ((FN10)e2.fn10)(p, N, H, W, C, ws, ss, is, bv, sl);
 
     // ---- 逐格统计 ----
     long n_ok = 0, n_bad = 0; double worst = 0.0;
@@ -155,11 +160,17 @@ static void one(const Case& c, RUNNER r)
     }
     int st = 0; waitpid(pid, &st, 0);
     long ok = 0, bad = 0; int tot = 0; double worst = 0;
+    int have = 0;
     FILE* f = fopen(RES_FILE, "r");
-    if (f) { if (fscanf(f, "%d %ld %ld %lf", &tot, &ok, &bad, &worst) != 4) ok = bad = 0; fclose(f); }
+    if (f) { have = (fscanf(f, "%d %ld %ld %lf", &tot, &ok, &bad, &worst) == 4); fclose(f); }
     char nm[64], tag[64];
     snprintf(nm, sizeof(nm), "nchwc%d %s", g_entries[c.entry].align, g_kind_name[g_entries[c.entry].kind]);
     snprintf(tag, sizeof(tag), "N=%d %dx%d C=%d", c.N, c.H, c.W, c.C);
+    // **结果文件缺失 / 读不出来 = 这个用例没跑完，必须判失败。**
+    // ASan 撞上 SEGV 时默认走 Die() -> _exit(1)，**不发信号**，
+    // 于是 WIFSIGNALED 为假、退出码也不是 3 —— 缺了这道判断就会把
+    // 一个段错误当成"通过"。附录 CJ.4 抓出来的，四个门禁统一补上。
+    if (!have) { g_crash++; printf("  没跑完（子进程没写结果文件，退出码 %d）\n", WEXITSTATUS(st)); return; }
     if (WIFSIGNALED(st)) { g_crash++; printf("  %-28s %s  CRASH\n", nm, tag); return; }
     if (bad > 0) { g_bad++; printf("  %-28s %s  FAIL %ld/%ld 格错, 最差 %.3e\n", nm, tag, bad, ok + bad, worst); }
     else { g_ok++; }

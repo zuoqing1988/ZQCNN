@@ -4341,3 +4341,105 @@ max pooling 不做除法，所以两者的区别**只在边界处理**。
 `batchnorm_b_a_nchwc` 的参数名叫 `b_data, a_data`，而代码是
 `fmadd(x, b_vec, a_vec)` = `x*b + a`，也就是 **b 乘、a 加**，与名字的直觉相反。
 写它之前必须先把四段的实际算式逐条抄下来。
+## 新增/变更：附录 CJ —— NCHWC batchnormscale 门禁（12 入口 / 30 用例）+ 顺带查出五道门禁共有的一个假绿来源
+
+### 变更文件
+
+* `tools/zq_nchwc_bn_check.cpp`（新增）—— NCHWC batchnormscale 门禁
+* `tools/zq_nchwc_depthwise_check.cpp` / `zq_nchwc_act_check.cpp` / `zq_nchwc_elt_relu_check.cpp` / `zq_nchwc_pool_check.cpp`
+  —— 全部补上「结果文件缺失 = 判失败」的守卫；depthwise 与 act 的逐通道数组改成 32 字节对齐
+* `tools/run_zqlib_checks.py` —— 登记 `zq_nchwc_bn`（四处；**不进 SLOW**）
+* `audit_k3_20261001.md` —— 新增附录 CJ；**并给附录 CF.4 加了"本节的'全对'是假的"的更正**
+* `AGENTS.md` —— 「写检查类工具」那节补三条（没读到=失败 / 逐通道数组两个坑 / 参数名不是语义）
+* `docs-changelogs/CHANGELOG_2026-10-02.md` —— 本节
+
+`ZQCNN/` 下**没有改动任何生产代码**。
+
+### 覆盖面与结果
+
+12 个入口：`scale` / `batchnorm_b_a` / `batchnorm_mean_var` /
+`batchnormscale_mean_var_scale_bias` 各 × NCHWC1/4/8。
+`scale` 的 `bias == NULL` 与 `bias != NULL` 两个分支都测。
+
+  共 30 个用例：全对 30，有错 0，崩溃/搭建失败 0
+
+### 这一族的参数名与直觉相反
+
+| 内核 | 算式 |
+|---|---|
+| `scale_nchwc(data,…,scale,bias)` | `bias != NULL` → `x*scale[c]+bias[c]`；`bias == NULL` → `x*scale[c]` |
+| `batchnorm_b_a_nchwc(data,…,b_data,a_data)` | `x*b_data[c] + a_data[c]` |
+| `batchnorm_mean_var_nchwc(data,…,mean,var,eps)` | `b=1/sqrt(max(var+eps,1e-32))`，`a=-mean*b`，`out=x*b+a` |
+| `batchnormscale_mean_var_scale_bias_nchwc(…)` | `b=scale/sqrt(max(var+eps,1e-32))`，`a=bias-mean*b`，`out=x*b+a` |
+
+**`batchnorm_b_a` 的第一个参数是乘数、第二个是加数**（代码是 `fmadd(x, b_vec, a_vec)`）。
+按名字写成"x*a+b"会得到一个**看起来在跑、全错**的门禁。
+
+另外 `batchnorm_mean_var` 算完 a/b 之后**直接调 `batchnorm_b_a_nchwc`**
+（raw.h:123），所以 b_a 的问题会在两处一起出现。
+
+### 重点：变异测试抓出**两个**问题，第二个是通用的
+
+MUTANT1 把 b/a 顺序反了、MUTANT2 漏掉 scale 因子，
+第一次跑只有 **11/30** 变红（预期 12）—— `nchwc8 batchnorm_b_a N=2 C=8` 没红。
+
+**（一）我的门禁违反了 AGENTS.md 里已有的对齐契约。** 直连探针一跑就现形：
+
+    AddressSanitizer: SEGV on unknown address 0x000000000000
+        #0 _mm256_load_ps
+        #1 zq_cnn_batchnorm_b_a_nchwc8  zq_cnn_batchnormscale_nchwc_raw.h:216
+
+`zq_mm_load_ps` 在 align=8 下是 `_mm256_load_ps`，**要求 32 字节对齐**，
+而 `std::vector<float>` 只给 16。AGENTS.md「ZQ_GEMM 的调用方契约」第 2 条
+早就写着这条，是我的门禁没照做。
+
+**（二）"结果文件缺失 = 通过"—— 五道门禁共有的洞。** 原来的判定：
+
+    if (f) { if (fscanf(...) != N) ok = bad = 0; fclose(f); }
+    if (WIFSIGNALED(st)) { g_crash++; …; return; }
+    if (bad > 0) { g_bad++; …; } else { g_ok++; }        // <-- 洞
+
+**ASan 撞上 SEGV 时默认走 `Die()` → `_exit(1)`，不发信号。**
+于是 `WIFSIGNALED` 为假、退出码也不对、`bad` 保持 0
+→ **一个段错误被记成了"通过"**。
+补上 `if (!have) { g_crash++; …; return; }`。
+
+### 补上之后，附录 CF 的"189 个全对"被推翻
+
+守卫一加，`zq_nchwc_depthwise` 立刻变红：
+
+    共 189 个用例：全对 119，有错 0，崩溃/搭建失败 70
+
+**70 个用例从未运行过**（`with_bias`/`with_bias_prelu` 要传 per-channel 数组，
+align=8 下一样撞 16 字节对齐），而 CF.4 把它们全记成了"全对"。
+按同样手法修好 depthwise 与 act 的数组之后：
+
+| 门禁 | 修正前 | 修正后 |
+|---|---|---|
+| zq_nchwc_depthwise | 189 个里 70 个从未运行 | 189/189 全对 |
+| zq_nchwc_act | 同类问题 | 75/75 全对 |
+| zq_nchwc_bn | 新写，已含对齐处理 | 30/30 全对 |
+| zq_nchwc_elt_relu / zq_nchwc_pool | 不传 per-channel 数组，本来就不受影响 | 57 / 114 全对 |
+
+**depthwise 这一族的结论没有变**（它确实是对的），
+**但 CF 当时那份证据不成立** —— 已在 CF.4 就地标注更正。
+
+### 修正之后三道门禁的变异测试
+
+| 门禁 | 变异 | 检出 | 该保持绿的 |
+|---|---|---|---|
+| zq_nchwc_depthwise | 参考的 filter 下标写错 | 189/189（126 算错 + 63 变异自身越界被 ASan 拦下） | 0 |
+| zq_nchwc_act | 参考的 slope 偏 0.001 | 60/75 | 15（全是 addbias 入口，变异不影响） |
+| zq_nchwc_bn | b/a 顺序反 + 漏掉 scale | 12/30 | 18（scale 与 batchnorm_mean_var 入口） |
+
+三道门禁现在都做到"**该红的全红、该绿的绿**"。
+
+### 教训（已进 AGENTS.md）
+
+* **「子进程写文件 + 父进程读文件」的门禁，必须显式判「没读到」= 失败。**
+  通则：**判据里必须区分「读到了但内容不对」和「根本没读到」**，
+  前者是失败，后者**更**是失败 —— 而默认写法会把后者算成通过
+* **逐通道数组两个坑一起防**：长度按 `ceil(C/align)*align` 开（CG）、
+  对齐按 32 字节开（CJ）。两个坑在**同一个数组**上
+* **参数名不是语义**：已踩三次（b_a 的 b/a、`weight` 的粒度、`nodivided` 的含义）。
+  照抄参数名之前先去看 `fmadd`/`store` 那两行

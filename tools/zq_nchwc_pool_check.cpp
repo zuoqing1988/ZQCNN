@@ -180,13 +180,19 @@ static void one(const Case& c, RUNNER r)
     }
     int st = 0; waitpid(pid, &st, 0);
     long ok = 0, bad = 0; int oh = 0, ow = 0; double worst = 0;
+    int have = 0;
     FILE* f = fopen(RES_FILE, "r");
-    if (f) { if (fscanf(f, "%d %d %ld %ld %lf", &oh, &ow, &ok, &bad, &worst) != 5) ok = bad = 0; fclose(f); }
+    if (f) { have = (fscanf(f, "%d %d %ld %ld %lf", &oh, &ow, &ok, &bad, &worst) == 5); fclose(f); }
     char nm[80], tag[80];
     snprintf(nm, sizeof(nm), "nchwc%d %s %s%s", g_entries[c.entry].align, g_pool_name[g_entries[c.entry].pool],
              g_entries[c.entry].divided ? "suredivided" : "nodivided",
              g_entries[c.entry].fixk ? (g_entries[c.entry].fixk == 2 ? "/k2x2" : "/k3x3") : "/general");
     snprintf(tag, sizeof(tag), "N=%d %dx%d C=%d k=%dx%d s=%d -> %dx%d", c.N, c.H, c.W, c.C, c.kH, c.kW, c.S, oh, ow);
+    // **结果文件缺失 / 读不出来 = 这个用例没跑完，必须判失败。**
+    // ASan 撞上 SEGV 时默认走 Die() -> _exit(1)，**不发信号**，
+    // 于是 WIFSIGNALED 为假、退出码也不是 3 —— 缺了这道判断就会把
+    // 一个段错误当成"通过"。附录 CJ.4 抓出来的，四个门禁统一补上。
+    if (!have) { g_crash++; printf("  没跑完（子进程没写结果文件，退出码 %d）\n", WEXITSTATUS(st)); return; }
     if (WIFSIGNALED(st)) { g_crash++; printf("  %-38s %s  CRASH\n", nm, tag); return; }
     if (bad > 0) { g_bad++; printf("  %-38s %s  FAIL %ld/%ld 格错, 最差 %.3e\n", nm, tag, bad, ok + bad, worst); }
     else { g_ok++; }
