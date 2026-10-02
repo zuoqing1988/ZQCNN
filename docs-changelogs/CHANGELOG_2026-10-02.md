@@ -4922,3 +4922,112 @@ zq_cnn_depthwise_convolution（234 个符号，NCHW 版）、zq_cnn_lstm / zq_cn
 zq_cnn_deconvolution 等若干小家族。
 
 未 push。
+## 新增/变更：附录 CP —— NCHW depthwise 门禁（147 入口 / 402 用例），查出 prelu 被施加 9 次
+
+### 变更文件
+
+* `ZQCNN/layers_c/zq_cnn_depthwise_convolution_32f_align_c.c`
+  —— **修掉两处生产缺陷**（32f 与 ARM FP16 的 16f 各一处）：
+  prelu 被写在**累加循环内部**，改为在累加完成后单独做一次
+* `tools/zq_nchw_depthwise_check.cpp`（新增）—— NCHW depthwise 门禁（147 个公开入口）
+* `tools/run_zqlib_checks.py` —— 登记 `zq_nchw_depthwise`（四处）
+* `audit_k3_20261001.md` —— 新增附录 CP
+* `docs-changelogs/CHANGELOG_2026-10-02.md` —— 本节
+
+### 背景
+
+CQ 的结构扫描把 `layers_c/` 里 18 个「手写标量 + SIMD 模板」双实现家族列出来之后，
+补上其中最大的一个：`zq_cnn_depthwise_convolution_32f_align_c.c`
+（159 个真实符号 / 33 个基础名），此前零覆盖。
+
+### 缺陷
+
+`zq_cnn_depthwise_conv_no_padding_32f_align0_general_with_bias_prelu`：
+
+    for (kh ...)  for (kw ...)            // filter 的行、列
+        for (kc ...)                      // 通道
+        {
+            *out_c_ptr += in * filter;    // 累加
+            if (*out_c_ptr < 0)           // <-- 在累加循环**内部**
+                *out_c_ptr *= slope[kc];
+        }
+
+prelu 必须在**累加完之后**做一次。align128bit / align256bit 那两版
+（在 _raw.h 里）都是在 kh/kw 循环**之后**单独一个循环做的。
+
+**同一个功能的三份实现，两份对、一份错** —— 与 CN / CO 同一个形状，
+只是这次**错的是手写标量那份、对的是模板那份**（前两次都是反过来）。
+
+为什么只有它错：align0_general（无 bias 无 prelu）与 align0_general_with_bias
+（无 prelu）都通过，只有**同时带 bias 和 prelu** 的那一个红 ——
+因为缺陷只在 prelu 分支里。
+
+危害：3x3 时 prelu 被施加 9 次。只要 slope != 1 且中间值为负，结果就全错，
+而且越往后偏差越大（x 被反复压向 0）。
+
+### 生产可达性
+
+由 ZQ_CNN_Forward_SSEUtils.cpp:1609 那份 `_depthwise_convolution_nopadding`
+（x86 版；另有一份在 `#if __ARM_NEON` 里，行 1209）在
+`align_mode == ALIGN_0` 且 `slope != NULL` 时调用。
+NCHW 的 ALIGN_0 变体走的正是这条。
+
+16f 那份（行 1507）是同一个复制粘贴，在 `#if __ARM_NEON_FP16` 里，
+**本机无法运行**（无 ARM 工具链，见附录 CD.6）——按同样的理由一并修了，
+但**只对 32f 那版宣称验证过**。
+
+### 门的结构
+
+| | |
+|---|---|
+| 符号总数（nm） | 159 |
+| 公开头里声明的 | **147** <- 门禁覆盖这批 |
+| 只有定义没有声明 | 12（`_C12` / `_C48`，外部调不到，不覆盖） |
+| 特化契约 | `_C<n>` 要求 padded_C == n；`_Cdiv<n>` 要求 padded_C % n == 0 |
+| 签名 | 159 个符号**共享同一套 28 / 29 / 30 参数签名** |
+
+门禁的核心价值是让**特化版本与通用版本互相校验**：若 `kernel3x3_C64` 与
+`kernel3x3` 对同一组输入给出不同结果，不论参考写得对不对，其中至少有一个是错的。
+
+顺带两条：① `kernel5x5_Cdiv32` 在分派器里**被注释掉了**，x86 上是死代码（与 CD 同类）；
+② 12 个"只有定义没有声明"的符号是另一条同类观察。
+
+修完：**402/402 全对**。
+
+### 我自己在这道门上栽了五次，五次都是「假红」或「崩溃」
+
+722 个用例一度**全部"没跑完"**（退出码 1 = ASan 拦下 SEGV），中间一度 38 个假红。
+
+1. **只对齐了 out/bias/slope，漏了 in/flt** —— align256bit 用 `_mm256_load_ps`
+   （要 32 字节），`std::vector<float>` 只给 16。漏掉的两个正好是**内核读得最多的**那两个
+2. **filter 布局按参数名推的**：`filter_pixelStep` 只用于**列**步进，
+   **通道步进是写死的 `zq_mm_align_size`**，`filter_sliceStep` 一次都没用
+3. **多留了一个 `k*fss`**：`filter_N == 1`，内核的 filter 基址永远是 `filters_data`
+   （`k` 恒为 0），只有通道那一维 —— 越界读 4 字节
+4. **特化解析没剥激活后缀**：`kernel2x2_C4_with_bias` 以 `_with_bias` 结尾，
+   `_C(\d+)$` 匹配不上，于是 32 个「只支持 C=4」的入口全被喂了 C=8/16
+5. **ASan 对 SEGV 是 `_exit(1)` 不是发信号**，722 个段错误全被门禁报成"没跑完"
+
+> 第 2、4 条是同一根因的两次 manifestation：**按参数名 / 按函数名去猜语义**。
+> 这已是本会话第四次（`b_a` 的 b/a、C3 的 `*3`、addbias 的 weight 粒度、
+> 这次 depthwise 的 `filter_pixelStep`）。
+>
+> **全红或全崩的形状本身就是"门禁错了"的信号**，不该先去怀疑 147 个内核。
+
+### 变异测试
+
+**这一轮因上下文用尽未做，如实记为未完成。** 门禁已就位且 402/402 全绿，
+下一步就是补变异测试 —— 把参考实现的通道索引改错，看它是不是 402 个里都会响。
+
+### 剩下的空白
+
+  NCHW 激活与归一化（39）        CO
+  NCHW depthwise（147）           本附录
+  NCHW resize / remap（15）       CN
+  NCHW 卷积（16）                 CE
+  NCHW pooling / eltwise / lrn   已有门禁
+  NCHWC 全族                      CB / CF / CG / CH / CI / CJ / CK / CL
+  NCHW scalaroperation（36 符号）、lstm、normalize、deconvolution、reduction   仍无门禁
+
+deconvolution 只有分派器引用、shipped 模型一次都没用到，优先级排在最后；
+scalaroperation 是下一块。

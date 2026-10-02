@@ -1223,12 +1223,16 @@ extern "C" {
 								kc++, cur_in_c_ptr++, cur_filter_c_ptr++, out_c_ptr++)
 							{
 								*out_c_ptr += (*cur_in_c_ptr)*(*cur_filter_c_ptr);
-								if (*out_c_ptr < 0)
-									*out_c_ptr *= slope[kc];
 							}
 						}
 					}
-
+					// prelu 必须在**累加完之后**做一次。
+					// 原来它写在 kc 循环体内，于是每个 filter tap 都会做一次 prelu
+					//（3x3 就是 9 次）—— 与 align128bit / align256bit 那两版
+					//（在 kh/kw 循环之后单独一个循环）不一致，结果全错。附录 CP。
+					for (kc = 0, out_c_ptr = out_pix_ptr; kc < in_C; kc++, out_c_ptr++)
+						if (*out_c_ptr < 0)
+							*out_c_ptr *= slope[kc];
 				}
 			}
 		}
@@ -1503,12 +1507,16 @@ extern "C" {
 								kc++, cur_in_c_ptr++, cur_filter_c_ptr++, out_c_ptr++)
 							{
 								*out_c_ptr += (*cur_in_c_ptr)*(*cur_filter_c_ptr);
-								if (*out_c_ptr < 0)
-									*out_c_ptr *= slope[kc];
 							}
 						}
 					}
-
+					// prelu 必须在**累加完之后**做一次。
+					// 原来它写在 kc 循环体内，于是每个 filter tap 都会做一次 prelu
+					//（3x3 就是 9 次）—— 与 align128bit / align256bit 那两版
+					//（在 kh/kw 循环之后单独一个循环）不一致，结果全错。附录 CP。
+					for (kc = 0, out_c_ptr = out_pix_ptr; kc < in_C; kc++, out_c_ptr++)
+						if (*out_c_ptr < 0)
+							*out_c_ptr *= slope[kc];
 				}
 			}
 		}
