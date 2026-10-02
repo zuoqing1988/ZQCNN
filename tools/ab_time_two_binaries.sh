@@ -19,16 +19,22 @@ for i in $(seq 1 $N); do
   "$A" 2>&1 | grep -E "$KEY" | sed -E 's/.*[= ]([0-9]+\.[0-9]+) ?ms.*/\1/' | tail -1 >> /tmp/abtimes_A.txt
   "$B" 2>&1 | grep -E "$KEY" | sed -E 's/.*[= ]([0-9]+\.[0-9]+) ?ms.*/\1/' | tail -1 >> /tmp/abtimes_B.txt
 done
-python3 - <<'PY'
+# 标签**不要**写死成"某某改动开/关"：这个脚本被复用过多轮，写死的标签
+# 会让人把 A/B 读反（附录 BQ.3 就中过一次）。下面直接把两个二进制路径打出来。
+python3 - "$A" "$B" <<'PY'
 import statistics
+import sys
 a = [float(x) for x in open('/tmp/abtimes_A.txt') if x.strip()]
 b = [float(x) for x in open('/tmp/abtimes_B.txt') if x.strip()]
 if not a or not b:
     print('没取到样本: A=%d B=%d' % (len(a), len(b))); raise SystemExit(1)
+a_path, b_path = sys.argv[1], sys.argv[2]
 ma, mb = statistics.median(a), statistics.median(b)
-print('A (1 || 全走 GEMM) : n=%d  median=%.3f ms  min=%.3f  all=%s'
+print('A = %s' % a_path)
+print('  n=%d  median=%.3f ms  min=%.3f  all=%s'
       % (len(a), ma, min(a), ' '.join('%.1f' % x for x in a)))
-print('B (守卫恢复)       : n=%d  median=%.3f ms  min=%.3f  all=%s'
+print('B = %s' % b_path)
+print('  n=%d  median=%.3f ms  min=%.3f  all=%s'
       % (len(b), mb, min(b), ' '.join('%.1f' % x for x in b)))
 print('B/A 中位 = %.3f  (>1 表示 B 更慢；噪声下限约 7%%)'
       % (mb / ma if ma else float('nan')))
