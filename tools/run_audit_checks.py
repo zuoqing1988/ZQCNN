@@ -66,6 +66,12 @@ GROUPS = [
      ['check_param_domain.py', '--selfcheck'], False),
     ('A8 ReadParam 值域校验基线比对 (check_param_domain)',
      ['check_param_domain.py', '--check-baseline'], False),
+    # A9/A10 是 BE 的"同一类收口"门禁：BE 修了 NCHW 那 7 处 `/ strideH`，
+    # 忘了 NCHWC 那 25 处，是 BG 的工具抓出来的。这两个组保证以后不会再漏。
+    ('A9 "除以模型参数" 守卫普查自测 (check_div_guard --selfcheck)',
+     ['check_div_guard.py', '--selfcheck'], False),
+    ('A10 "除以模型参数" 守卫普查 (check_div_guard)',
+     ['check_div_guard.py'], False),
     ('B  ZQlib 独立回归测试 x10 (ASan+LSan)', ['run_zqlib_checks.py'], False),
     # 基线路径给**绝对路径**：子进程以 ROOT 为 cwd 运行，而基线文件在 tools/ 下，
     # 相对路径会解析成 <ROOT>/zqlib_probe_baseline.txt 而找不到（2026-10-02 实测）。

@@ -1,0 +1,12 @@
+# tools/check_div_guard.py 的人工白名单
+# 格式: <文件路径(相对仓库)>	<参数名>	<为什么它安全>
+#
+# 只放"守卫在**别的**函数里、而且已经人工核实过"的情况。
+# 本工具只看得到除法所在函数体内上方的 8 行，看不到 InitFromBuffer 那种。
+# 没有理由的行不要加 —— 半年后没人知道为什么放行。
+ZQCNN/ZQ_CNN_MTCNN.h	stride	InitFromBuffer 里 this->pnet_stride = __max(1, pnet_stride) 已保证 >=1（ZQ_CNN_MTCNN.h:223 还有注释说明）
+ZQCNN/ZQ_CNN_MTCNN_NCHWC.h	stride	InitFromBuffer 里 this->pnet_stride = __max(1, pnet_stride) 已保证 >=1（ZQ_CNN_MTCNN.h:223 还有注释说明）
+ZQCNN/ZQ_CNN_MTCNN_Interface.h	stride	InitFromBuffer 里 this->pnet_stride = __max(1, pnet_stride) 已保证 >=1（ZQ_CNN_MTCNN.h:223 还有注释说明）
+ZQCNN/ZQ_CNN_MTCNN_AspectRatio.h	stride	InitFromBuffer 里 this->pnet_stride = __max(1, pnet_stride) 已保证 >=1（ZQ_CNN_MTCNN.h:223 还有注释说明）
+ZQCNN/ZQ_CNN_MTCNN_ncnn.h	stride	InitFromBuffer 里 this->pnet_stride = __max(1, pnet_stride) 已保证 >=1（ZQ_CNN_MTCNN.h:223 还有注释说明）
+ZQCNN/ZQ_CNN_MTCNN_old.h	stride	InitFromBuffer 里 this->pnet_stride = __max(1, pnet_stride) 已保证 >=1（ZQ_CNN_MTCNN.h:223 还有注释说明）
