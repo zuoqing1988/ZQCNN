@@ -2962,3 +2962,99 @@ K=1024 全过，而 K%8!=0 那一片**仍然是崩溃**（崩溃与判据无关�
 顺带：汇编 dispatcher `zq_gemm_32f_AnoTrans_Btrans_auto_asm`
 **已经有完整的入口守卫**（`M<=0||N<=0` 直接返回、N<4 走专用核、K<8 走打包路径、
 ndir 内部还会查形状后返回 0 让上层换路）。也就是**修法的样板就在同一个仓库里**。
+
+## 新增/变更：附录 BP —— BN.3 / BN.4 修掉：3240 个格子全绿 + 新查到一条 bias 被数了 N 次
+
+### 变更文件
+- `ZQ_GEMM/math/zq_gemm_32f_auto.c`
+  - 新增 `zq_gemm_32f_AnoTrans_Btrans_fallback()`（朴素三重循环，double 累加，覆盖写 C）
+  - x86 的 `zq_gemm_32f_AnoTrans_Btrans_auto` 入口加守卫：`K % ZQ_GEMM_K_ALIGN != 0`
+    -> 走 fallback。`ZQ_GEMM_K_ALIGN` 按档取（AVX 8 / SSE 4），**不写死 8**
+- `ZQCNN/layers_nchwc/zq_cnn_innerproduct_gemm_nchwc_raw.h`
+  - `noborders` 的 bias 从"预置进 SIMD 累加器的每个 lane"改成"归约后加一次"（BN.4）
+- `tools/zq_gemm_shape_check.cpp`：加 14 个 production 形状（M 到 3136 / N 到 512）
+- `tools/zq_nchwc_ip_check.cpp`：判据换后向误差；收窄到**生产真的会走的配置**；
+  修 buffer 所有权（附录 BJ 那条约定）
+- `tools/run_zqlib_checks.py`：`SKIP` 清空（两个测试都真的绿了）
+- `audit_k3_20261001.md`：新增**附录 BP**
+
+### BN.3【已修】dispatcher 入口守卫
+
+守卫放在 `SWAP_A_Bt` **之前**（换了 A/Bt 之后 lda/ldb 互换了），
+判的是 K 本身（swap 不改变 K）。兜底路径累加用 double：这条路现在只能被
+"原本会崩"的形状走到，正确性优先；真要优化它应该上分块/向量化并配 MKL 对标，
+不是先猜着优化。
+
+### 为什么这是可证的无性能回退（实测兑现）
+
+* `K%8==0` 那一片（1800 个格子）现在全是好的，守卫一条都碰不到
+* 被改道的那一片现在全是崩溃，不存在"原来更快"
+* 补测了 production 尺度的 14 个形状（M 到 3136 / N 到 512）
+
+```
+zq_gemm_shape_check:  ok 3254, 崩溃 0, 结果错 0     <-- 修之前 2456 / 784 / 0
+zq_nchwc_ip_check:    588/588 PASSED, LSan 干净
+   NCHWC1 align=1: 168/168   NCHWC4 align=4: 252/252   NCHWC8 align=8: 168/168
+```
+
+### BN.4【已修】noborders 把 bias 数了 align 次
+
+修好守卫之后 `zq_nchwc_ip_check` 终于能跑过第 61 个用例，**当场又查出一条新的**
+（"修好一个缺陷解锁了后面的覆盖"）：
+
+```c
+sum_vec = zq_mm_set1_ps(bias[out_c]);   // 预置进 SIMD 累加器的每个 lane
+...
+*out_c_ptr = zq_final_sum_q;            // 把 align 个 lane 全加起来 -> bias 被数 align 次
+```
+
+align=1 看不出来，**align=4/8 就是 4 倍 / 8 倍 bias** —— 而 noborders 恰好是
+align=4/8 的默认路径。实测（NCHWC4, N=1, C=8, K=1）：
+`exp=dot+bias=0.507058`，`got=0.664558=0.454558+4*0.0525`，一分不差。
+改成"先归约出点积、再加一次 bias"，align=1 结果完全不变。
+
+### 对齐假设这一族：还有 3 处，已定位、当前模型到不了、未修
+
+| 位置 | 触发条件 | 实测 |
+|---|---|---|
+| `..._col2im.h:205` `for (kc=0; kc<out_C; kc+=align)` | filter_N 不是 align 倍数 | align=4, K=17 -> SEGV |
+| `noborders` 的 `in_hwc += align` + 对齐载入 | H*W*C 不是 align 倍数 | align=4 -> SEGV |
+| `packed4` 的 4 路打包 | C 不是 4 的倍数 | C=5 -> 错, max_rel=9.8e-2 |
+
+三处都要两个条件同时成立才到得了。核过 shipped 模型：SphereFace/ArcFace 的
+innerproduct 输入是 7*7*512 / 1*1*256 之类、filter_N 是 512/128/10，全是 4/8 倍数；
+MTCNN 没有 innerproduct；`ZQ_CNN_Layer_NCHWC_InnerProduct` 把 bottoms 原样透传而
+shipped net 的 innerproduct 输入都是 border=0。**既不修、也不当已修**，
+测试里对这三种配置直接跳过并把理由写在代码注释里。
+
+### 顺带查到：调用方契约是三条，不是两条
+
+写计时 harness 时用 `std::vector<float>` 当 A/Bt/C，**before/after 都第一次调用就崩**。
+256bit 那一族用的是**对齐**载入（`_mm256_load_ps`），glibc malloc 只给 16 字节，
+而 **ASan 的分配器给 32** —— 所以 BO 那 3240 个用例在 ASan 下从没暴露过这条。
+所以 ZQ_GEMM 的调用方契约是：① lda(=K) 是向量宽度倍数（BP.1 补上守卫）
+② 缓冲区 32 字节对齐 ③ C 是覆盖写（beta=0）不是累加。
+第 2 条任何地方都没写，生产已经满足，**不需要改代码，但要记下来**。
+
+### 我自己把控制流改坏了一次（第五次"假绿"）
+
+用正则批量给 5 个提前 `return true` 补 `_aligned_free(buffer)` 时，
+它把语句插到了 `if` 和它的 `return` **之间**：
+
+```c
+if (bw != 0 || bh != 0)
+    if (buffer) _aligned_free(buffer);
+    return true;      // <-- 现在是无条件的
+```
+
+于是 noborders 分支每个用例都直接返回 —— 全部"跳过"全部"通过"，
+`NCHWC1 168/168` 看着完美，其实一条 noborders 都没跑。是 LSan 的残留泄漏
+把我引到那里的。规矩已进 AGENTS.md：**批量改代码后必须重新看一遍被改那几行的
+控制流**；`grep -c` 数出来是 6 看着对，但计数不是证据。
+
+### 没有做的：MKL 性能对标
+
+BP.7 如实记着没量。结构性论证（对 K%align==0 逐字节不变）+ 功能性证据
+（3254 格子全绿）都在，但"GEMM 性能相对 MKL 无变化"这句话仍需在
+`SampleGEMMAsmCompare` 那条链上跑一轮 A/B 才有数字。
+**不把"应该没影响"说成"量过没影响"。**

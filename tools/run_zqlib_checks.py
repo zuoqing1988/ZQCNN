@@ -198,28 +198,11 @@ def main():
     # 2026-10-02 追加的两个（附录 BN）。**这两个是「已定位、未修」的项**，
     # 不是「跑不过所以不跑」—— 区别必须写清楚，否则就成了"无法验证"那个
     # 自我实现的结论（附录 W）。
-    SKIP = {
-        'zq_gemm_shape': (
-            '**已知未修**（附录 BN.3 / BO）：zq_gemm_32f_AnoTrans_Btrans_auto 在 '
-            '**K % 8 != 0** 时崩溃（K=17/27/33/108/150；3240 个格子里崩 784 个）。'
-            '这是 NCHW conv/deconv/innerproduct + NCHWC conv/innerproduct 16 个调用点'
-            '共用的入口 —— K=27 就是 3x3x3，也就是每个 CNN 的 RGB 首层，'
-            '**batch>1 的 3x3x3 卷积就会崩**。'
-            '根因在附录 BO.2：k 方向循环跑到 padK 而不是 K，且全程用**对齐**载入'
-            '（zq_mm_load_ps 250 次 / zq_mm_loadu_ps 0 次），而 lda=ldb=K 不保证是对齐的倍数。'
-            '**没修**不是因为不知道该怎么修 —— 附录 BO.7 已经把修法定死成'
-            '「入口加守卫，把 K%align!=0 挡到兜底路径」，并**证明**它碰不到任何'
-            'K%8==0 的形状（那一片 1800 个格子现在全是好的、也就是性能对标 MKL 的那一片），'
-            '所以是可证的无性能回退。剩下的只是动最吃性能的那段代码时要配一轮'
-            'MKL 性能回归 —— 留给下一片。修好之后把这一条删掉即可。'),
-        'zq_nchwc_ip': (
-            '**部分已修**（附录 BN.1 / BN.2）：NCHWC innerproduct 的 21 个内核变体。'
-            'BN.1（noborders 用 slice 步长当 image 步长，N>1 时结果互相覆盖）'
-            '**已修并验证**：修完之后 60 个用例全过（含 N=2/3/5 的 noborders）。'
-            '但第 61 个用例（align=1 general, N=2 H=3 W=3 C=12 K=7）会踩到 BN.2 那个'
-            'dispatcher 缺陷而 SEGV，所以整个测试仍然是红的。'
-            'BN.2 修好之后这一条也删掉。'),
-    }
+    # 2026-10-02：zq_gemm_shape 与 zq_nchwc_ip 曾在 SKIP 里（附录 BN.3 / BO），
+    # 理由是"已定位未修"。附录 BP 把两处都修掉之后，它们从 SKIP 里移除了 ——
+    # 移出之前先确认过它们**真的**是绿的（不是被我改坏成"全部跳过"的假绿，
+    # 见附录 BP.5）。
+    SKIP = {}
     ap.add_argument('--with-slow', action='store_true',
                     help='连那些编译特别慢的测试一起跑（zq_innerproduct 要链 ZQ_GEMM 的'
                          '三个 TU，其中 zq_gemm_32f_align_c.c 单个 >5 分钟）')

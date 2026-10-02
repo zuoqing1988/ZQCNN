@@ -1,4 +1,4 @@
-﻿/*in_pixStep can be different with filter_pixStep,
+/*in_pixStep can be different with filter_pixStep,
 and the aligned channels should be set to zero*/
 void zq_cnn_innerproduct_gemm_nchwc_general(
 	const zq_base_type* in_tensor4D_data,
@@ -228,11 +228,18 @@ void zq_cnn_innerproduct_nchwc_noborder(
 			out_c < filter_N;
 			out_c++, out_c_ptr++, filter_slice_ptr += in_HWC)
 		{
-#if WITH_BIAS
-			sum_vec = zq_mm_set1_ps(bias[out_c]);
-#else
+			// 审计修复 2026-10-02（附录 BN.4）：原来这里
+			//     sum_vec = zq_mm_set1_ps(bias[out_c]);
+			// 把 bias **预置进 SIMD 累加器的每一个 lane**，然后
+			//     *out_c_ptr = zq_final_sum_q;   // 把 align 个 lane 全加起来
+			// 于是 bias 被数了 align 次。align=1 时看不出来（NCHWC1 就一个 lane），
+			// align=4/8 时就是 **4 倍 / 8 倍 bias** —— 而 noborders 恰好是
+			// align=4/8 的**默认路径**（生产条件恒成立）。
+			// 实测（NCHWC4, N=1, C=8, K=1）：exp=dot+bias=0.507058，
+			// got=0.664558=0.454558+4*0.0525，一分不差。
+			// 改成"先归约出点积、再加一次 bias"：align=1 时结果完全不变
+			// （只有一个 lane，set1 与归约后加等价），所以这条对 NCHWC1 是零影响。
 			sum_vec = zq_mm_setzero_ps();
-#endif
 			for (in_hwc = 0, cur_in_c_ptr = in_slice_ptr, filter_c_ptr = filter_slice_ptr;
 				in_hwc < in_HWC;
 				in_hwc += zq_mm_align_size, cur_in_c_ptr += zq_mm_align_size, filter_c_ptr += zq_mm_align_size)
@@ -242,6 +249,9 @@ void zq_cnn_innerproduct_nchwc_noborder(
 
 			zq_mm_store_ps(q, sum_vec);
 			*out_c_ptr = zq_final_sum_q;
+#if WITH_BIAS
+			*out_c_ptr += bias[out_c];
+#endif
 #if WITH_PRELU
 			if(*out_c_ptr < 0)
 				*out_c_ptr *= slope[out_c];

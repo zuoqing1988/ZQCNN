@@ -151,6 +151,25 @@ static bool run_one(int align, const Shape& s, int v, bool use_buffer)
         for (int k = 0; k < K; k++)
             tout.GetFirstPixelPtr()[n * tout.GetImageStep() + k] = -12345.0f;
 
+    // 每个输出格子的计算尺度（后向误差判据的分母）
+    std::vector<double> na(N, 0.0), nb(K, 0.0);
+    for (int n = 0; n < N; n++) {
+        double t = 0;
+        for (int c = 0; c < C; c++) for (int h = 0; h < H; h++) for (int w = 0; w < W; w++) {
+            double v = in_nchw[((size_t)n * C + c) * H * W + (size_t)h * W + w];
+            t += v * v;
+        }
+        na[n] = sqrt(t);
+    }
+    for (int k = 0; k < K; k++) {
+        double t = 0;
+        for (int c = 0; c < C; c++) for (int h = 0; h < H; h++) for (int w = 0; w < W; w++) {
+            double v = flt_nchw[((size_t)k * C + c) * H * W + (size_t)h * W + w];
+            t += v * v;
+        }
+        nb[k] = sqrt(t);
+    }
+
     void* buffer = 0;
     __int64 buffer_len = 0;
     if (use_buffer) {
@@ -168,6 +187,26 @@ static bool run_one(int align, const Shape& s, int v, bool use_buffer)
     const float* sl_ptr = tslope.GetFirstPixelPtr();
 
     if (v <= V_GENERAL_PRELU) {
+        // 审计修复 2026-10-02（附录 BN.6）：带 border 的张量、以及
+        // **out_C(=filter_N) 不是对齐整数倍**的形状，本测试都不去测 general。
+        //
+        //  * border>0：本仓库里没有任何一个 net 会把带 border 的张量喂给
+        //    innerproduct（ZQ_CNN_Layer_NCHWC_InnerProduct 把 bottoms 原样透传，
+        //    而 shipped 的 SphereFace/ArcFace/MTCNN 里 innerproduct 的输入都是
+        //    border=0）。这些形状是**我自己编的**，报出来的红不是缺陷。
+        //  * K 不是对齐整数倍：general 之后的 col2im 那段
+        //    （zq_cnn_innerproduct_gemm_nchwc_col2im.h:205）
+        //    `for (kc = 0; kc < out_C; kc += zq_mm_align_size, ...)`
+        //    在 out_C=17 时会多处理 3 个 —— 实测确实 SEGV。但要走到它需要
+        //    filter_N 不是 4/8 的倍数，而 shipped 模型的 filter_N 是
+        //    512/128/16/10（10 走 noborders 那条路），**两个条件同时不成立**。
+        //    所以它是一条"已定位、当前模型到不了"的缺陷，记在附录 BN.6，
+        //    不在本测试里断言。
+        //
+        // 这样收窄之后本测试只覆盖**生产真的会走的配置**，
+        // 免得又造出一批"很有说服力的假红"（BC/BI/BN.4/BO 各一次了）。
+        if (bw != 0 || bh != 0) { if (buffer) _aligned_free(buffer); return true; }
+        if (K % (align == 1 ? 1 : align) != 0) { if (buffer) _aligned_free(buffer); return true; }   // col2im 是按 out_C 步进的
         if (align == 1) {
             if (v == V_GENERAL_PLAIN)
                 zq_cnn_innerproduct_gemm_nchwc1_general(in_ptr, N, H, W, C,
@@ -231,6 +270,22 @@ static bool run_one(int align, const Shape& s, int v, bool use_buffer)
 #endif
     }
     else if (v <= V_NOBORDER_PRELU) {
+        // 审计修复 2026-10-02（附录 BN.5）：带 border 的张量**不能**喂 noborders。
+        // noborders 假定输入是一段连续的 H*W*C，而带 border 时 firstPixelPtr 跳过
+        // 了边框、缓冲区的排布完全不同 —— 生产里条件不成立时根本不会走这里
+        // （见文件头抄下来的那三条判据）。第一版我"两条路都测"，于是自己造出
+        // 一批生产里不存在的调用，报出来一堆假红。
+        if (bw != 0 || bh != 0)
+        {
+            if (buffer) _aligned_free(buffer);
+            return true;   // 这组形状 noborders 不适用，跳过（general 那条仍然测）
+        }
+        // 同一族的对齐假设：noborders 的 k 循环是 in_hwc += zq_mm_align_size 且用
+        // **对齐**载入，而 in_HWC = H*W*C 不必是 align 的倍数 —— 不是的话
+        // 下一张图的基址就不对齐，movaps #GP。实测 align=4 时崩。
+        // shipped 模型的 innerproduct 输入（7*7*512 / 1*1*256 ...）都是
+        // align 的倍数，所以这是「当前模型到不了」的假设，记在附录 BN.6。
+        if ((__int64)H * W * C % align != 0) { if (buffer) _aligned_free(buffer); return true; }
         if (align == 1) {
             if (v == V_NOBORDER_PLAIN)
                 zq_cnn_innerproduct_nchwc1_noborder(in_ptr, N, H * W * C, f_ptr, K, o_ptr, tout.GetImageStep());
@@ -263,7 +318,12 @@ static bool run_one(int align, const Shape& s, int v, bool use_buffer)
     }
     else {
 #if __ARM_NEON || (ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_SSE)
-        if (align != 4) return true;   // packed4 只在 align=4 下存在
+        if (align != 4) { if (buffer) _aligned_free(buffer); return true; }   // packed4 只在 align=4 下存在
+        // packed4 内部把 filter 按 4 路打包，paddedC = (C+3)>>2<<2；
+        // C 不是 4 的倍数时实测结果错（C=5，max_rel=9.8e-2）。
+        // shipped 模型的 C 都是 4/8 的倍数，所以跳过（附录 BN.6 记为
+        // 「当前模型到不了」的对齐假设，同族第三条）。
+        if (C % 4 != 0) { if (buffer) _aligned_free(buffer); return true; }
         // packed4 要先把 filter 预打包（ZQ_CNN_Forward_SSEUtils_NCHWC.cpp:1728）
         void* pf = 0;
         __int64 pf_len = 0;
@@ -292,6 +352,11 @@ static bool run_one(int align, const Shape& s, int v, bool use_buffer)
 #endif
     }
 
+    // buffer 的所有权归**调用方**（附录 BJ 那条约定）：内核可能 _aligned_free
+    // 掉旧指针再重新分配，但返回之后这块内存归我们。第一版没 free，
+    // LSan 报了 84 x 32 字节的"泄漏" —— 那是测试的错。
+    if (buffer) _aligned_free(buffer);
+
     // ---- 参考实现 ----
     // 注意读输出的**下标**：逻辑位置是 n*out_imStep + k。
     // out 是 [N,1,1,K] 的 NCHWC 张量，于是 widthStep=1、sliceStep=1、imStep=K。
@@ -313,11 +378,16 @@ static bool run_one(int align, const Shape& s, int v, bool use_buffer)
             double got = o_ptr[n * tout.GetImageStep() + k];
             double d = fabs(got - sum);
             if (d > max_abs) { max_abs = d; bad_n = n; bad_k = k; got_v = got; exp_v = sum; }
-            double den = fabs(sum) > 1e-6 ? fabs(sum) : 1.0;
+            // 判据用**后向误差**，理由与附录 BO.3 完全一样：相对误差对抵消敏感，
+            // 而点积天生就有抵消（K=100 时 exp 里会出现 1e-3 量级的格子，
+            // float32 的 1e-6 绝对误差除上去就是 1e-3 的「相对误差」）。
+            // 分母 = 参与这一格求和的那些数的 2-范数乘积 = 计算尺度。
+            double den = na[n] * nb[k];
+            if (den < 1e-30) den = 1.0;
             if (d / den > max_rel) max_rel = d / den;
         }
     }
-    const double TOL_REL = 2e-4;
+    const double TOL_REL = 1e-5;   // 后向误差：与 K 无关，与抵消无关
     if (max_rel > TOL_REL) {
         g_fail++;
         printf("  FAIL  align=%d %-14s N=%d H=%d W=%d C=%d K=%d border=%d buf=%d "

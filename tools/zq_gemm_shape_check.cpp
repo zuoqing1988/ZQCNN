@@ -151,8 +151,40 @@ int main()
         }
         printf("\n");
     }
-    printf("总计: ok %d, 崩溃 %d, 结果错 %d  (%d 个用例)\n",
-           g_ok, g_crash, g_wrong, NM * NN * NK);
+    // ---- production 形状：M = out_N*out_H*out_W。上面的表只到 M=32，
+    // 而真实卷积的 M 是上千。**BO.7 那条"守卫碰不到快路径"的证明就靠这一段**
+    // —— 如果 K%8==0 在大 M 上也是坏的，那条证明就不成立，守卫就可能有性能代价。
+    printf("=== production 形状（M = out_N*out_H*out_W，上千）===\n");
+    {
+        struct P { int M, N, K; };
+        static const P prods[] = {
+            { 1024,  64,  144 },   // 3x3, C=16
+            { 1024,  64,  288 },   // 3x3, C=32
+            {  784, 128,  144 },   // 56x56 的 3x3
+            {  784, 256,  288 },
+            {  196, 512,  576 },   // 14x14 的 3x3, C=64
+            { 1024,  16,  512 },   // 1x1
+            { 1024,  64, 1024 },   // 1x1
+            { 3136,  64,  144 },   // 56x56 的 1x1
+            { 3136, 256,  288 },
+            { 2500,  32, 3136 },   // ArcFace 那种 7x7x512
+            {  512,  10,   32 },   // MTCNN R-net 首层那个量级
+            // K 不是 8 的倍数的那一片（现在会崩，修完应当通过）
+            {  512,  10,   27 },   // 3x3x3
+            { 3136,  32,    9 },   // 3x3, C=1
+            { 1024,  64,  108 },
+        };
+        for (size_t i = 0; i < sizeof(prods) / sizeof(prods[0]); i++) {
+            char c = one(prods[i].M, prods[i].N, prods[i].K);
+            if (c == '.') g_ok++;
+            else if (c == 'X') g_crash++;
+            else g_wrong++;
+            printf("  M=%-5d N=%-4d K=%-5d %c\n", prods[i].M, prods[i].N, prods[i].K, c);
+        }
+        printf("\n");
+    }
+    printf("总计: ok %d, 崩溃 %d, 结果错 %d  (%d 个网格用例 + %d 个 production 形状)\n",
+           g_ok, g_crash, g_wrong, NM * NN * NK, 14);
     // 注意：崩溃/结果错的形状**现在就是坏的**，所以这个测试当前应当是红的。
     // 门禁里它是 SKIP（理由见 run_zqlib_checks.py 的 SKIP['zq_gemm_shape']），
     // 修好之后把 SKIP 那一条删掉即可。
