@@ -3126,3 +3126,84 @@ A 其实是 after、B 是 before，照着标签读会把方向整个读反。
 BP.7 那句"没量"现在可以划掉，但**只限于"守卫有没有引入回退"这一件事**。
 "GEMM 相对 MKL 的整体性能"是另一件事，仍以
 `reports/ZQ_GEMM_汇编内核性能对比.md` 里那份测量为准，本轮没有重测它。
+
+## 新增/变更：附录 BR —— 「8 个 sample 全绿」其实是 6 个真跑了 + 2 个平台桩
+
+### 变更文件
+- `tools/run_sample_regression.sh`：输出不再丢进 /dev/null，改为报告**状态**
+- `audit_k3_20261001.md`：新增**附录 BR**
+
+### 怎么发现的
+
+本来是去看 NCHWC 卷积那一族（BO 之后剩下的最大一片未覆盖面），
+路上读到 `ZQ_CNN_Forward_SSEUtils_NCHWC.cpp` 的 3x3 分派在 x86 上是
+`return false`，于是想验证「SampleMTCNN_NCHWC4 在 Linux 上到底跑不跑得起来」。
+去看回归脚本，发现它把输出全丢、**只看退出码**。
+
+### 缺陷：Linux 回归 8 个里有 2 个是「平台桩」
+
+```
+=== SampleFaceDetectorMTCNN     rc=0   ./SampleFaceDetectorMTCNN only support windows
+=== SampleCascadeOnet_Interface rc=0   not support in linux
+```
+
+两个都 `rc=0`。所以历次「Linux sample 8/8 全绿」里，有 2 个在 Linux 上
+只是打印了一句话就退出了。**桩本身不是缺陷**（Windows-only 的 sample 在
+Linux 上说一声"不支持"是正常行为），缺陷在**回归把桩也记成了通过** ——
+它让「双平台都跑通了」这个结论比证据支持的更强。
+
+不是个别现象：全仓扫「平台桩」措辞命中一串
+（SampleMatMulNEON / SampleCropImagesForArcFace / SampleEvaluationOnLFW* 等）。
+
+### 修法：报告状态，不只报退出码
+
+```
+OK    跑完了、有输出、rc=0          不判失败
+STUB  自己说了"这个平台不支持"        不判失败，但**报出来**（并打上那半句）
+NOUT  一行输出都没有                判失败
+FAIL  rc != 0                      判失败
+```
+
+有 NOUT / FAIL 就退出非 0，所以 run_audit_checks.py 的 D3 组会真的红。
+
+修之后：
+
+```
+SampleMTCNN              OK    21 行输出
+SampleMTCNN_NCHWC4       OK    29 行输出
+SampleSSD                OK    10 行输出
+SampleFaceDetectorMTCNN  STUB  [./SampleFaceDetectorMTCNN only support windows]
+SampleCascadeOnet        OK     2 行输出
+SampleCascadeOnet_Interface STUB [not support in linux]
+SampleMTCNNLoadFromCode  OK    23 行输出
+SampleGEMMAsmCompare     OK    39 行输出
+---- 真跑了的 6 个；本平台不支持的桩 2 个；问题 0 个 ----
+```
+
+### Windows 侧顺手也查了：6 个都是真跑的
+
+D4 组同样只看退出码。实测 6 个 exe 全是真跑：
+
+| sample | rc | 输出 |
+|---|---|---|
+| SampleGEMMAsmCompare | 0 | 39 行 |
+| SampleMTCNN | 0 | 21 行 |
+| SampleMTCNN_NCHWC4 | 0 | 29 行 |
+| SampleSSD | 0 | 10 行 |
+| SampleCascadeOnet | 0 | 2 行（只打三个模型大小） |
+| SampleFaceDetectorMTCNN | 0 | `1000 iters cost 10.385 secs` —— 真跑了一个测速循环 |
+
+所以两个平台的样本清单本来就不一样，现在知道为什么：Linux 那 8 个里混了
+两个 Windows-only 的桩。**两边都没有真缺陷** —— 这一条是关于**证据强度**的：
+「双平台都跑通了」此前只在 6 个 sample 上有证据，却按 8 个报。
+
+### 顺带记一条更弱的观察（不作为缺陷）
+
+`SampleCascadeOnet` 在两个平台上都只打印三行模型大小，**没有任何检测结果输出**，
+所以它的 rc=0 只能证明"模型加载了"。本轮没查它是真跑了检测还是提前返回 ——
+**没有证据，不记成缺陷**。
+
+### 状态
+
+`run_sample_regression.sh` 已改。Windows 侧（D4）**仍然只看退出码** ——
+本轮查过 6 个都是真跑的所以没改；要改是同一套做法。
