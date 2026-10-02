@@ -3385,3 +3385,27 @@ K%4 != 0 那一档在测试里被标成「**只报告**、不判失败」：门�
 尾巴补好之后把门禁变红。唯一让本测试为红的是 kernel2x2_C3 在 K%4==0 那一档，
 所以 `zq_nchwc_conv` 登记在 `run_zqlib_checks.py` 的 SKIP 里，理由写明
 「已知未修 / 未定性」，定性之后才谈得上移出。
+
+### 补充：kernel2x2_C3 已定性（附录 BU）
+
+BT.4 留的三个可能收敛成两个：它的 `matrix_B_rows` 里硬编码了
+`filter_H*filter_W*3`（`zq_cnn_convolution_gemm_nchwc_raw.h:1015`），
+即**要求 filter 张量按 3x3 形状存放**，而 wrapper 是按模型文件里的 kernel_size
+建张量的（2x2 就是 2x2），于是 matrix_B_rows 与实际布局对不上 -> 结果错。
+
+**生产不可达，已证实**：扫全仓 model/*.zqparams，kernel_size 分布
+{1:68, 3:69, 2:9, 7:1}，其中真正的 **2x2 Convolution**（排除 Pooling）只有两处：
+  det2:conv3  bottom=pool2  上一层 conv2 -> in_C=16   -> 走 kernel2x2（非 C3）
+  det3:conv4  bottom=pool3  上一层 conv3 -> in_C=64   -> 走 kernel2x2（非 C3）
+两个的 in_C 都不是 3，所以 shipped 模型里没有任何一层走 `_C3`。
+
+**本轮不改行为**：修法两条都不纯赚 —— 在 wrapper 里对
+`filter_C==3 && filter_H==2` 直接 return false，会关掉一个"按 3x3 存放 filter"
+的用户可能正在用的功能；去补 matrix_B_rows 支持真正的 2x2 存放，是给一条
+没有模型在用的路径加功能，而改的是 im2col 行数计算这种核心算式。
+该做的是把前置条件写在 raw 头 `filter_C` 注释旁（现在只有 `// must be in_C`），
+但那要先确认"3x3 存放"确实是当初的意图而不是笔误 —— 要读改动历史，
+超出本轮范围。
+
+SKIP 理由相应改写：不是"未定性"，而是"生产不可达 / 前置条件未文档化"，
+并且**保持红** —— 哪天有人按那个前提去修了它，这个测试会提醒重新评估。
