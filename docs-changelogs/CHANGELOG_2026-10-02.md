@@ -5224,3 +5224,94 @@ deconvolution 只有分派器引用、shipped 模型一次都没用到，优先�
 lstm 是宏式声明、6 处引用，是下一块。
 
 未 push。
+## 新增/变更：附录 CS —— NCHW sqrt / normalize 门禁，并把 CR 修的那一行纳入覆盖
+
+### 变更文件
+
+* `tools/zq_nchw_sqrtnrm_check.cpp`（新增）—— NCHW sqrt + normalize 门禁
+* `tools/run_zqlib_checks.py` 登记 `zq_nchw_sqrtnrm`（四处）
+* `audit_k3_20261001.md` 新增附录 CS
+
+**`ZQCNN/` 下没有改动任何生产代码。**
+
+### 覆盖面
+
+7 行门禁（6 个不同的 32f 入口，其中 `zq_cnn_normalize_32f_align0` 注册两次）：
+
+| 门禁行 | 语义 |
+|---|---|
+| `zq_cnn_sqrt_32f_align0` | 就地；`out = sqrt(x)` |
+| `zq_cnn_normalize_32f_align0[across_spatial=1]` | 每张图一个尺度：`s = 1/sqrt(Σ_{h,w,c} x² + eps)` |
+| `zq_cnn_normalize_32f_align0[across_spatial=0]` | 每个像素一个尺度：`s = 1/sqrt(Σ_c x² + eps)` ← **附录 CR 修的就是这一支** |
+| `..._across_spatial_32f_align{128,256}bit` | 同 across |
+| `..._not_across_spatial_32f_align{128,256}bit` | 同 not-across |
+
+然后 `out[c] = x[c] * s * scale[c]`；`channel_shared` 时用 `scale[0]`。
+**这是 L2 归一化、不减均值**（CR 读源码时确认过，`sum_v` 里只有 `x*x`）。
+
+每个入口 4 个用例：`{普通, 全零} × {C=align, C=2*align}`，共 **28 个用例**。
+
+### 首跑结果
+
+  共 28 个用例：全对 28，有错 0，崩溃/搭建失败 0
+
+### 验证：把 CR 的修复在**库里回退掉**
+
+比"变异门禁自己的参考"更强 —— 它验证的是**门禁对这段真实代码的鉴别力**：
+
+```
+  zq_cnn_normalize_not_across_spatial_32f_align128bit   4 个用例：对 4，错 0
+  zq_cnn_normalize_not_across_spatial_32f_align256bit   4 个用例：对 4，错 0
+  zq_cnn_normalize_32f_align0[across_spatial=1]         4 个用例：对 4，错 0
+  zq_cnn_normalize_32f_align0[across_spatial=0]  C=1 普通  FAIL  70/70  最差 1.685e-01
+                                             C=2 普通  FAIL 140/140  最差 8.569e-02
+                                             C=1 全零  FAIL  70/70  最差 1.000e+00
+                                             C=2 全零  FAIL 140/140  最差 1.000e+00
+
+共 28 个用例：全对 24，有错 4，崩溃/搭建失败 0
+```
+
+**恰好只有 `[across_spatial=0]` 这一项 4/4 全红，其余 24 个保持绿。**
+这是本会话所有门禁里**鉴别力最精确的一次**：
+
+* 红的位置**精确到 CR 改的那一行**，不是"某个 normalize 入口坏了"这种粗粒度
+* 其余保持绿，是因为 `_not_across_spatial_32f_align{128,256}bit` 与
+  `[across_spatial=1]` **本来就没被回退**（它们在 `_raw.h` 与 32f 的另一条分支里，
+  本来就带 `+eps`）—— 门禁能区分"改了哪一份"
+* 普通数据那两组也红了（最差 1.7e-01 / 8.6e-02），说明 `not_across_spatial` 下
+  eps 对**接近全零的像素**本来就有可测影响
+
+### 上一轮为什么没写成，这轮怎么改的
+
+CR.5 记的是：起草时**我自己参考实现的下标边界有问题**（把三个分支的索引混着用），
+于是没有提交。病根是**跨分支复用索引**。
+
+这一版把两个 normalize 分支写成**两段完全独立的代码** —— 各自一个显式的
+`for nn { for h { for w { for k` 三重循环算自己的 Σ，再各自一遍写回，
+**不共享任何中间量**。看起来啰嗦，但"啰嗦"在这里正是可靠性。
+
+### 一条设计上的决定：为什么刻意喂"全零输入"
+
+`eps` 在两种情况下才有可测影响：① `Σ` 恰好为 0；② `Σ` 小到 `eps` 占可观比例。
+
+`across_spatial` 的 `Σ_{h,w,c} x²` 在普通数据上很大，`eps` 相对它可以忽略 ——
+**没有全零那一组，across 分支的 eps 缺失在普通数据上根本测不出来**。
+加了它才有鉴别力。这与 CL.6「无效的测试用例」是同一条规律的正面用法。
+
+### 剩下的空白
+
+| 层 | 门禁 |
+|---|---|
+| NCHW 激活与归一化（39） | CO |
+| NCHW depthwise（147） | CP |
+| NCHW scalaroperation（38） | CQ |
+| **NCHW sqrt + normalize（6 入口 / 7 行）** | **本附录** |
+| NCHW resize / remap（15） | CN |
+| NCHW 卷积（16） | CE |
+| NCHW pooling / eltwise / lrn | 已有门禁 |
+| NCHWC 全族 | CB / CF / CG / CH / CI / CJ / CK / CL |
+| **`reduction`(2)** | 仍无门禁（语义已在 CR.6 读清） |
+| NCHW `lstm` / `deconvolution`(+`_gemm`) | 仍无门禁 |
+
+`deconvolution` 只有分派器引用、shipped 模型一次都没用到，优先级排在最后；
+`lstm` 是宏式声明、6 处引用，是下一块。

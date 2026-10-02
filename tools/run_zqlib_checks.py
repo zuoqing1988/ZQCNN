@@ -323,6 +323,15 @@ EXTRA_SOURCES = {
         'gcc -O1 -g -mavx2 -mfma -fopenmp -c -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include '
         '$R/ZQCNN/layers_c/zq_cnn_scalaroperation_32f_align_c.c -o $WDIR/zq_scalop.o',
     ],
+    # zq_nchw_sqrtnrm（附录 CS）：NCHW 的 sqrt(1) + normalize(5) 共 6 个 32f 入口。
+    # normalize 是 **L2 归一化、不减均值**；每个入口都跑一次**全零输入** ——
+    # 那正是附录 CR 修掉的 eps 缺失会算出 NaN 的场景。
+    'zq_nchw_sqrtnrm': [
+        'gcc -O1 -g -mavx2 -mfma -fopenmp -c -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include '
+        '$R/ZQCNN/layers_c/zq_cnn_sqrt_32f_align_c.c -o $WDIR/zq_sn_sqrt.o',
+        'gcc -O1 -g -mavx2 -mfma -fopenmp -c -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include '
+        '$R/ZQCNN/layers_c/zq_cnn_normalize_32f_align_c.c -o $WDIR/zq_sn_nrm.o',
+    ],
     # zq_bns 登记在这里是为了让 EXTRA_SOURCES 覆盖到它；它已在正常回归里。
     'zq_bns': [
         'gcc -O1 -g -mavx2 -mfma -c -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include '
@@ -350,6 +359,7 @@ EXTRA_LINK = {'zq_innerproduct': ' $WDIR/zq_ipgemm.o $WDIR/zq_gemm_align.o $WDIR
               'zq_nchwc_softmax': (' $WDIR/zq_sm.o $WDIR/zq_sm_resize.o $WDIR/zq_sm_tensor.o'),
               'zq_nchwc_resize': (' $WDIR/zq_rz.o $WDIR/zq_rz_tensor.o'),
               'zq_nchw_resize': (' $WDIR/zq_rzn.o $WDIR/zq_rzn_tensor.o'),
+              'zq_nchw_sqrtnrm': ' $WDIR/zq_sn_sqrt.o $WDIR/zq_sn_nrm.o',
               'zq_nchw_scalop': ' $WDIR/zq_scalop.o',
               'zq_nchw_depthwise': ' $WDIR/zq_dwnchw.o',
               'zq_nchw_act': (' $WDIR/zq_nact_relu.o $WDIR/zq_nact_prelu.o '
@@ -381,6 +391,7 @@ EXTRA_INC = {'zq_facedb': ' -I$R -I$R/ZQCNN -I$R/ZQCNN/3rdparty/include/ZQlib',
              'zq_nchwc_softmax': ' -I$R -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include',
              'zq_nchwc_resize': ' -I$R -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include',
              'zq_nchw_resize': ' -I$R -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include',
+             'zq_nchw_sqrtnrm': ' -I$R -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include',
              'zq_nchw_scalop': ' -I$R -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include',
              'zq_nchw_depthwise': ' -I$R -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include',
              'zq_nchw_act': ' -I$R -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include',
@@ -407,6 +418,7 @@ EXTRA_CXXFLAGS = {'zq_facedb': ' -mavx2 -mfma -fopenmp',
                   'zq_nchwc_softmax': ' -mavx2 -mfma -fopenmp',
                   'zq_nchwc_resize': ' -mavx2 -mfma -fopenmp',
                   'zq_nchw_resize': ' -mavx2 -mfma -fopenmp',
+                  'zq_nchw_sqrtnrm': ' -mavx2 -mfma -fopenmp',
                   'zq_nchw_scalop': ' -mavx2 -mfma -fopenmp',
                   'zq_nchw_depthwise': ' -mavx2 -mfma -fopenmp',
                   'zq_nchw_act': ' -mavx2 -mfma -fopenmp',
