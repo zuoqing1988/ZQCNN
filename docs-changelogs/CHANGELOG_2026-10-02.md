@@ -4242,3 +4242,102 @@ C++ 下重复声明合法、不会报错，但说明这份头是手工维护的 
 `pooling` 是剩下最大的一块（24 个入口），而且头里有**重复声明**
 （`zq_cnn_avgpooling_nopadding_nodivided_nchwc4_general` 出现两次），
 写门禁时要用 `nm` 取真实符号表，别用声明条数（CG.5 已经吃过一次亏）。
+## 新增/变更：附录 CI —— NCHWC pooling 门禁（24 个入口 / 114 个用例全对，变异测试精准命中边界分支）
+
+### 变更文件
+
+* `tools/zq_nchwc_pool_check.cpp`（新增）—— NCHWC pooling 门禁
+* `tools/run_zqlib_checks.py` —— 登记 `zq_nchwc_pool`
+  （`EXTRA_SOURCES` / `EXTRA_LINK` / `EXTRA_INC` / `EXTRA_CXXFLAGS` 四处；**不进 SLOW**）
+* `audit_k3_20261001.md` —— 新增附录 CI
+* `docs-changelogs/CHANGELOG_2026-10-02.md` —— 本节
+
+**没有改动任何生产代码。**
+
+### 覆盖面与结果
+
+24 个入口（`nm` 核实，**不是**按头里的声明数 —— 头里有重复声明，
+`zq_cnn_avgpooling_nopadding_nodivided_nchwc4_general` 出现两次）：
+avg/max × nodivided/suredivided × nchwc1/4/8。
+
+  nodivided_general     每个入口 9 个用例   <- 6 个 (in-k)%s==0 + 3 个刻意不整除
+  suredivided_general   每个入口 6 个用例
+  suredivided_k2x2/k3x3 每个入口 2 个用例
+
+  共 114 个用例：全对 114，有错 0，崩溃/搭建失败 0
+
+### 这一族的名字有歧义，代码没有
+
+```c
+int final_kH = __min(kernel_H, in_H - (out_H - 1)*stride_H);
+int final_kW = __min(kernel_W, in_W - (out_W - 1)*stride_W);
+```
+
+| | 边界分支 | 除数 |
+|---|---|---|
+| `nodivided_general` | **有**四条（末列 / 末行 / 角上各一条） | 内部 `kH*kW`；末列 `kH*final_kW`；末行 `final_kH*kW`；角上 `final_kH*final_kW` |
+| `suredivided_*` | **没有**，只有一个循环 | 一律 `kH*kW` |
+
+**`nodivided` 才是"按实际窗口收窄"的那一个**，`suredivided` 反而不管边界、一律除满。
+
+`suredivided` 的**契约**：每个窗口都必须放得下，即
+`(in_H - kernel_H) % stride_H == 0` 且 `out_H = (in_H-kernel_H)/stride_H + 1`。
+分派器用 `suredivided = (in_H+pad-kernel_H)%stride_H==0 && (…)` 保证
+（`ZQ_CNN_Forward_SSEUtils.h:1604`）。**不满足就会越界读** —— 库不做任何校验。
+
+max pooling 不做除法，所以两者的区别**只在边界处理**。
+
+### 另一个契约：kernel2x2 / kernel3x3 把窗口写死了
+
+它们**完全忽略 `kernel_H`/`kernel_W`**（每行固定 2 次/3 次 load、行数也固定），
+却仍用 `1/(kernel_H*kernel_W)` 做除数 —— 传 3×3 给 kernel2x2 会算出
+"2×2 的和 ÷ 9"，**静默出错**。
+
+**分派器有守卫**（`ZQ_CNN_Forward_SSEUtils_NCHWC.cpp:3638`）：
+`if (kernel_H==2 && kernel_W==2) … else if (3&&3) … else general`。
+与附录 CC.5 的 `same_pixstep_kernel1x1` 完全同一形态 ——
+契约在调用侧强制，内核内部不重复校验。所以门禁也必须按契约喂。
+
+顺带：头里的契约注释写的是 `out_H must be ceil((in_H - filter_H)/stride_H) + 1`，
+**参数名写的是 `filter_H`，实际叫 `kernel_H`**，又是一条过时注释。
+
+### 门禁自己踩的坑
+
+第一版给所有入口都喂 `(in - k) % s == 0` 的形状（因为 `suredivided` 的契约要求这样），
+但**对 `nodivided` 来说这恰好让 `final_kH` 恒等于 `kernel_H`，
+边界分支一次都执行不到**。补了 3 个刻意让 `(in-k) % s != 0` 的用例，
+`nodivided` 每入口从 6 组增到 9 组，总数 96 → 114。
+
+### 变异测试：6/6 精准命中
+
+注入一处专门针对边界分支的变异（门禁自己的参考不再用收窄后的 `fh*fw` 做除数）：
+
+    - else y = sum / (double)(e.divided ? (kH * kW) : (fh * fw));
+    + else y = sum / (double)(kH * kW);      /* MUTANT */
+
+  共 114 个用例：全对 108，有错 6，崩溃/搭建失败 0
+
+6 个红的是 3 个 `avg nodivided` 入口各 2 个**真正发生裁剪**的用例；
+我加的第 3 组 `s == 1` 那一组 `(in-k) % 1` **恒为 0**、根本不会裁剪，
+**本来就不该红** —— 事实如此，它确实保持绿了。
+
+> 这是第四次做变异测试（CF / CG / CH / CI），也是第二次**抓到数量与预期完全对上**。
+> 它同时证明了两件事：① 门禁**能**测出边界分支上的差别；
+> ② 门禁**没有**在那些"其实没差别"的地方制造假信号。
+
+### 剩下的空白
+
+  NCHWC 卷积（raw 族）              zq_nchwc_conv / zq_nchwc_conv8（CB）
+  NCHWC depthwise                   zq_nchwc_depthwise（CF）
+  NCHWC 激活层                      zq_nchwc_act（CG）
+  NCHWC relu / eltwise              zq_nchwc_elt_relu（CH）
+  NCHWC pooling                     本附录
+  NCHW 卷积                         zq_nchw_conv（CE）
+  NCHW pooling / eltwise / lrn      已有门禁
+  NCHWC batchnormscale(12) / softmax(5) / resize(6)   仍无门禁
+  NCHWC packing 那几支              x86 上不可达（CD）
+
+`batchnormscale` 是下一块，它的参考实现最容易写错 ——
+`batchnorm_b_a_nchwc` 的参数名叫 `b_data, a_data`，而代码是
+`fmadd(x, b_vec, a_vec)` = `x*b + a`，也就是 **b 乘、a 加**，与名字的直觉相反。
+写它之前必须先把四段的实际算式逐条抄下来。
