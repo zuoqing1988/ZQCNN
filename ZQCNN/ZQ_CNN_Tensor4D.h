@@ -71,7 +71,24 @@ namespace ZQ
 
 		virtual bool ROI(ZQ_CNN_Tensor4D& dst, int off_x, int off_y, int width, int height, int dst_borderH, int dst_borderW) const 
 		{
-			if (off_x < 0 || off_y < 0 || off_x + width > W || off_y + height > H)
+			// **审计修复 2026-10-03（附录 DX.2）**：原来写的是
+			//     if (off_x < 0 || off_y < 0 || off_x + width > W || off_y + height > H)
+			// `off_x + width` 是 **int 加法**。off_x 来自 MTCNN 的 P-net 检测框输出
+			// （ZQ_CNN_MTCNN.h:615 / 621 等处），**是数据/模型可控的**；
+			// off_x 足够大时这个加法**回绕成负数**，于是 `> W` 不成立、
+			// **边界检查被整条绕过**，紧接着
+			//     src_slice_ptr = GetFirstPixelPtr() + off_y*widthStep + off_x*pixelStep;
+			// 就是一次**越界读**。
+			// UBSan 坐实：ZQ_CNN_Tensor4D.h:74:40: runtime error: signed integer overflow:
+			//     2147483645 + 8 cannot be represented in type 'int'
+			// 改法：**先各自比、再用减法比**，全程不产生可能溢出的加法；
+			// 顺带把 `width < 0` / `height < 0` 也拒掉
+			//（原来负的 width/height 会让 `off_x + width` 变小而漏过检查）。
+			if (off_x < 0 || off_y < 0 || width < 0 || height < 0)
+				return false;
+			if (off_x > W || off_y > H)
+				return false;
+			if (width > W - off_x || height > H - off_y)
 				return false;
 
 			if (!dst.ChangeSize(N, height, width, C, dst_borderH, dst_borderW))
