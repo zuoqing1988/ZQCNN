@@ -2563,3 +2563,103 @@ OpenCV 路径从 `build_x64/CMakeCache.txt` 取，取不到就整体跳过并说
 `ZQ_FaceDatabaseCompact.h:287` 的 `fgets(line, 199, in)` 忽略返回值
 （`-Wunused-result`）。判断用的是下一行的 `line[0] == ' '`，**功能上是对的**，
 但 ferror 时会误判成 EOF。本轮未改（改动会引入新分支），记在这里。
+
+## 新增/变更：附录 BL —— 人脸库**分析路径**查出 4 条真缺陷（含 1 条堆越界写）
+
+### 变更文件
+- `ZQlibFaceID/ZQ_FaceDatabase.h`
+  - 新增 `_check_analyzable()`：四个分析入口统一走它（BL.1）
+  - 新增 `_check_pivot_square_size()`：算 `cur_num*cur_num` **之前**查（BL.2）
+  - 新增 `_fseek64()`：offset 是 `__int64`，Windows 的 `fseek` 只收 32 位（BL.3）
+  - `_export_similarity_for_all_pairs`：校验提到两个 `fopen` 之前；单线程分支
+    补上 `same_pair_num` / `notsame_pair_num`；并行分支改成"先算每人各占多少字节，
+    各自 fseek 到自己那一段写"（BL.1 / BL.3 / BL.5）
+  - `_select_subset` / `_detect_lowest_pair` / `_detect_repeat_person`：
+    并行分支从 `omp critical` + `push_back` 改成"按 p/i 分槽位"（BL.2 / BL.3）
+  - `_find_the_best_matches`：四路输出要么一起推要么一起不推（BL.4）
+- `ZQlibFaceID/ZQ_FaceDatabaseCompact.h`
+  - 同样的 `_fseek64()` / `_check_pivot_square_size()`，两处 `cur_num^2` 矩阵
+  - `_export_similarity_for_all_pairs` / `_detect_repeat_person`：
+    同样的确定性写出；补 `person_num<=0 || dim<=0` 检查（BL.2 / BL.3 / BL.7）
+  - `GenerateRandomDatabase`：`_aligned_malloc` 失败那条 `return` 补上两个 `free`（BL.7）
+- `tools/zq_facedb2_check.cpp`：新测试，6 个用例（ASan + LeakSanitizer）
+- `tools/run_zqlib_checks.py`：登记 `zq_facedb2`（`--with-slow`）
+- `audit_k3_20261001.md`：新增**附录 BL**
+
+### 4 条真缺陷
+
+| 编号 | 缺陷 | 严重度 | 证据 |
+|---|---|---|---|
+| BL.1 | 空库上直接 `persons[0].features[0].length` | SEGV / heap-use-after-free | ASan |
+| BL.2 | `cur_num*cur_num` int 回绕，65536 时回绕成 0 | **堆越界写** | ASan |
+| BL.3 | 并行分支用 `critical` 收集，产物逐次不同 | 不可复现 | 8 线程 x 8 次逐字节比对 |
+| BL.4 | `Search` 四路输出长度可以不等 | 调用方越界 | 长度断言 |
+| BL.5 | 单线程分支不写 `same/notsame_pair_num` | 调用方拿到初值 | 计数断言 |
+
+BL.2 的实测（修之前）：
+
+```
+==153549==ERROR: AddressSanitizer: SEGV on unknown address 0x000000000000
+WRITE memory access
+    #0 ZQ::ZQ_FaceDatabase::_select_subset(...) ZQ_FaceDatabase.h:815
+    #1 ZQ::ZQ_FaceDatabase::SelectSubset(...) ZQ_FaceDatabase.h:45
+```
+
+815 行就是 `scores[i*cur_num + i] = 1;` —— 加载器允许单人最多 1e7 个特征，
+`65536*65536` 在 int 里正好回绕成 0，`vector<float>(0)` 分配"成功"，紧接着这一行
+就是 4 字节越界写。
+
+### BL.5 是测试算出来的，不是读代码看出来的
+
+我第一版把同人对写成 `4*6+3*3+5*10+2*1+6*15 = 175`（真值 `C(4,2)+C(3,2)+C(5,2)+C(2,2)+C(6,2) = 35`），
+断言失败后差点去改库。**是同一条测试里"4 线程与单线程一致"那一行过了**才让我
+判清楚：库给的是 35，两边一致，所以是**我算错了**。
+（`all_pair_num` 我也写错过一次：20 张脸是 C(20,2)=190，我写成了 78。）
+
+### 我的测试自己挂过两次，都记下来
+
+1. **生成器写错了布局**。`make_feats_plain` 第一版把所有人的 `feat_num` 全写在
+   前面再写所有特征 —— 那是 **compact** 的布局；非 compact 是"每个人的 `feat_num`
+   紧跟在他自己的特征前面"。结果用例 1/5 全挂，而**用例 2（畸形输入）全绿** ——
+   看着全绿的测试比没有测试更危险，它验的是"随便什么文件都被拒绝"。
+   修法：用例 2 开头加一条**基线断言**（同一生成器的干净文件必须能加载）。
+2. **人数太少导致假绿**。第一版确定性用例只有 40 个人，而
+   `DetectLowestPair` / `ExportSimilarityForAllPairs` 的 `chunk_size` 是 100
+   —— 40 个人只有一个 chunk，`parallel for` 把整个 chunk 交给同一个线程，
+   顺序当然是确定的。**"人数少时看着正常，人数一多就不可复现"**，
+   这比"一直不确定"更难发现。改成 300 个人后两个入口才真的红。
+
+### 工具教训
+
+* **ASan abort 时 stdout 是块缓冲的，崩溃前的输出全丢**。第一版探针崩溃后
+  只看到一段 ASan 报告，前面所有 `ok` 行都不见了 —— 而那些行正是要看的证据。
+  现在 `main` 开头加 `setvbuf(stdout, NULL, _IONBF, 0)`。
+* **同名模式的两份拷贝要一起测**。`ZQ_FaceDatabaseCompact` 里那个
+  `cur_num*cur_num` 我第一版只改了 `only_pivot=false` 那条分支，
+  是新加的用例 6 抓到 `only_pivot=true`（**默认值**）那条还没改。
+  与附录 BG 栽的跟头同型（NCHW 修了 NCHWC 忘了）。
+
+### 接入
+
+`zq_facedb2` 归到 `--with-slow`（与 `zq_facedb` 同一套 OpenCV 头探测，
+ASan 下编一次约 3 分钟）。日常回归仍是 14 组 ASan 测试（~90 秒）。
+
+注意用例 4 里**故意不验** `ExportSimilarityForAllPairs`：它不建 `cur_num^2` 矩阵
+所以确实不受 BL.2 影响，但它是 O(N^2) —— 65536 张脸就是 2.1e9 次点积，
+ASan 下要跑好几分钟，不适合进门禁；那条路在用例 1 里已经验过了。
+
+### 实测结果
+
+```
+[case 1] 正常库 15 项（含 4 线程 flag 文件与单线程逐字节相同、save/load 往返）  全 ok
+[case 2] 畸形文件 9 条 + 基线断言 1 条                                          全 ok
+[case 3] 空库 4 入口 x 2（默认构造 / Clear 之后）                              全 ok
+[case 4] 65536 x 1 维：非 compact 2 入口 + compact 1 入口                      全 ok
+[case 5] 300 人：8 线程 x 8 次 x 5 份产物 + 8 线程 vs 单线程                    全 ok
+        all=404550 same=900 notsame=403650
+[case 6] compact 库：BL.2 + BL.3 + BL.7                                         全 ok
+PASSED
+```
+
+编译告警只有一条**既有**的：`ZQ_FaceDatabase.h:447` / `ZQ_FaceDatabaseCompact.h:293`
+的 `fgets` 忽略返回值（`-Wunused-result`，附录 BK.8 已记，本轮未改）。

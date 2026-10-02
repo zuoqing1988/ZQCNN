@@ -78,6 +78,19 @@ EXTRA_SOURCES = {
         '      $WDIR/probe_$m.cpp 2>/dev/null || echo "NOOPENCV" > $WDIR/zq_facedb.skip; '
         'done; fi',
     ],
+    # zq_facedb2（附录 BL）要**同样**那套 OpenCV 头 —— ZQ_FaceDatabase.h 通过
+    # ZQ_FaceRecognizerSphereFace.h -> ZQ_FaceRecognizer.h 间接用到 cv::Mat。
+    # 所以直接复用 zq_facedb 那段探测，不重写一遍（两处探测一旦漂移，
+    # 就会出现"facedb 能跑、facedb2 编不过"而没人知道为什么）。
+    'zq_facedb2': [
+        'OCV=$(sed -n "s/^OpenCV_DIR:PATH=//p" $R/build_x64/CMakeCache.txt 2>/dev/null)',
+        'if [ -z "$OCV" ]; then echo "NOOPENCV" > $WDIR/zq_facedb2.skip; '
+        '  else for m in core imgproc imgcodecs highgui; do '
+        '  printf "#include <%s.h>\n" $m > $WDIR/probe2_$m.cpp; '
+        '  g++ -fsyntax-only -I$OCV/include -I$OCV/../../modules/$m/include '
+        '      $WDIR/probe2_$m.cpp 2>/dev/null || echo "NOOPENCV" > $WDIR/zq_facedb2.skip; '
+        'done; fi',
+    ],
     # zq_innerproduct 要链上 ZQ_GEMM 的三个 TU，其中 zq_gemm_32f_align_c.c
     # 单独一个就要编 5 分钟以上。默认不跑（--with-slow 才跑），理由写在这里。
     'zq_innerproduct': [
@@ -105,6 +118,7 @@ EXTRA_LINK = {'zq_innerproduct': ' $WDIR/zq_ipgemm.o $WDIR/zq_gemm_align.o $WDIR
               'zq_bns': ' $WDIR/zq_bns_sse.o $WDIR/zq_bns_avx.o',
               'zq_eltwise': ' $WDIR/zq_eltwise_sse.o $WDIR/zq_eltwise_avx.o'}
 EXTRA_INC = {'zq_facedb': ' -I$R -I$R/ZQCNN -I$R/ZQCNN/3rdparty/include/ZQlib',
+             'zq_facedb2': ' -I$R -I$R/ZQCNN -I$R/ZQCNN/3rdparty/include/ZQlib',
              'zq_innerproduct': ' -I$R/ZQCNN -I$R/ZQ_GEMM',
              'zq_lrn': ' -I$R/ZQCNN -I$R/ZQ_GEMM',
              'zq_pool': ' -I$R/ZQCNN -I$R/ZQ_GEMM',
@@ -114,10 +128,11 @@ EXTRA_INC = {'zq_facedb': ' -I$R -I$R/ZQCNN -I$R/ZQCNN/3rdparty/include/ZQlib',
 # 否则 _mm256_set1_ps 这些 always_inline 内建会报
 # "target specific option mismatch"（2026-10-02 实测）。
 EXTRA_CXXFLAGS = {'zq_facedb': ' -mavx2 -mfma -fopenmp',
-                   'zq_innerproduct': ' -mavx2 -mfma -fopenmp',
-                   'zq_lrn': ' -mavx2 -mfma',
-                   'zq_pool': ' -mavx2 -mfma', 'zq_bns': ' -mavx2 -mfma',
-                   'zq_eltwise': ' -mavx2 -mfma'}
+                  'zq_facedb2': ' -mavx2 -mfma -fopenmp',
+                  'zq_innerproduct': ' -mavx2 -mfma -fopenmp',
+                  'zq_lrn': ' -mavx2 -mfma',
+                  'zq_pool': ' -mavx2 -mfma', 'zq_bns': ' -mavx2 -mfma',
+                  'zq_eltwise': ' -mavx2 -mfma'}
 
 
 def main():
@@ -158,6 +173,7 @@ def main():
     skipped = []
     kept = []
     SLOW = {'zq_facedb': '要 OpenCV 头 + OpenCV 路径探测，ASan 下编一次约 3 分钟',
+            'zq_facedb2': '同上（同一套 OpenCV 头探测）；另外用例 5 要跑 8 轮 x 8 线程',
             'zq_innerproduct': '要链 ZQ_GEMM 的三个 TU，编译 >5 分钟；'
                                '用 --with-slow 才跑'}
     if not args.with_slow:

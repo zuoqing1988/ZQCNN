@@ -132,6 +132,53 @@ namespace ZQ
 		}
 
 	private:
+		// 审计修复 2026-10-02（附录 BL.3）：offset 用 __int64, Windows 的 fseek
+		// 收的是 32 位 long, 超过 2 GB 的库会定位到错的地方。LP64 的 Linux 上
+		// long 本来就是 64 位, 直接 fseek 即可 —— 与 ZQ_FaceGroup::LoadFromFile
+		// 里 _ftelli64 / fseek 那个 #ifdef 是同一套做法。
+		static bool _fseek64(FILE* f, __int64 pos)
+		{
+#if defined(_WIN32)
+			return 0 == _fseeki64(f, pos, SEEK_SET);
+#else
+			return 0 == fseek(f, (long)pos, SEEK_SET);
+#endif
+		}
+
+		// 审计修复 2026-10-02（附录 BL.1）：空库 / 零特征 / 零维一律干净返回 false。
+		// 四个分析入口（SelectSubset / DetectLowestPair / DetectRepeatPerson /
+		// ExportSimilarityForAllPairs）原来各自写了一份 person_num==0 的检查，
+		// 只有 ExportSimilarityForAllPairs 漏了, 现在统一走这一个。
+		// _check_valid() 里本来就有 feat_dim 一致性检查，但只有保存路径调它。
+		static bool _check_analyzable(const std::vector<Person>& persons, int& out_dim)
+		{
+			if (persons.size() == 0 || persons[0].features.size() == 0)
+				return false;
+			int dim = persons[0].features[0].length;
+			if (dim <= 0)
+				return false;
+			out_dim = dim;
+			return true;
+		}
+
+		// 审计修复 2026-10-02（附录 BL.2）：下面 4 处都是
+		//     std::vector<float> scores(cur_num*cur_num);
+		// 而 cur_num 是 **int**。加载器允许单人最多 1e7 个特征
+		// （_load_feats_binary 的 feat_num 上界），于是：
+		//   * cur_num >= 46341 时 cur_num*cur_num 在 int 里回绕成负数
+		//     -> vector<float>(负) 先抛 length_error
+		//   * cur_num == 65536 时正好回绕成 **0**
+		//     -> vector<float>(0) 分配"成功"，紧接着 scores[i*cur_num+i] = 1
+		//        就是 4 字节**堆越界写**（ASan 抓到的是 SEGV on address 0）
+		// 必须在**算乘法之前**查，所以这里查的是 cur_num 本身而不是它的平方。
+		// 上限 16384 = 1 GB / sizeof(float)：一个人不可能有 16384 张脸，
+		// 真有这么多的话该换算法，而不是先吃 1 GB 内存。
+		static bool _check_pivot_square_size(__int64 cur_num)
+		{
+			const __int64 max_root = 16384;
+			return cur_num >= 0 && cur_num <= max_root;
+		}
+
 		bool _check_valid()
 		{
 			int person_num = persons.size();
@@ -489,8 +536,17 @@ namespace ZQ
 				// 拿它去索引 filenames 就是 filenames[-1]。维度不匹配的排在
 				// 分数最低的一端, 只有匹配的人不足 max_num 时才会落到这里。
 				int pj = person_j[ids[i]];
+				// 审计修复 2026-10-02（附录 BL.4）：四路输出必须**一起**推或一起
+				// 不推。原来只 continue 掉 filenames, 于是 ids/scores/names 有 3 个
+				// 而 filenames 只有 0 个 —— 调用方按 ids 的下标去取 filenames[i]
+				// 就是越界。上一轮修"维度不匹配就跳过"只修了一半, 这里补齐。
 				if (pj < 0 || pj >= (int)database.persons[ids[i]].filenames.size())
+				{
+					out_ids.pop_back();
+					out_scores.pop_back();
+					out_names.pop_back();
 					continue;
+				}
 				out_filenames.push_back(database.persons[ids[i]].filenames[pj]);
 			}
 
@@ -499,9 +555,20 @@ namespace ZQ
 			return true;
 		}
 
-		bool _export_similarity_for_all_pairs(const std::string& out_score_file, const std::string& out_flag_file, 
+		bool _export_similarity_for_all_pairs(const std::string& out_score_file, const std::string& out_flag_file,
 			__int64& all_pair_num, __int64& same_pair_num, __int64& notsame_pair_num, int max_thread_num, bool quantization) const
 		{
+			// 审计修复 2026-10-02（附录 BL.1）：校验提到**开文件之前**。
+			// 原来 persons[0].features[0].length 在两个 fopen 之后才取，
+			// 于是空库上不但越界，还顺手留下两个 0 字节的产物文件。
+			int dim = 0;
+			if (!_check_analyzable(persons, dim))
+			{
+				printf("not a valid database\n");
+				return false;
+			}
+			int person_num = persons.size();
+
 			FILE* out1 = 0;
 #if defined(_WIN32)
 			if (0 != fopen_s(&out1, out_score_file.c_str(), "wb"))
@@ -536,8 +603,6 @@ namespace ZQ
 			}
 #endif
 
-			int dim = persons[0].features[0].length;
-			__int64 person_num = persons.size();
 			__int64 total_face_num = 0;
 			std::vector<__int64> cur_face_offset(person_num);
 			for (int pp = 0; pp < person_num; pp++)
@@ -546,12 +611,49 @@ namespace ZQ
 				__int64 cur_face_num = persons[pp].features.size();
 				total_face_num += cur_face_num;
 			}
-			
+
 			all_pair_num = total_face_num *(total_face_num - 1) / 2;
-			
+
+			// 审计修复 2026-10-02（附录 BL.3）：为了让并行分支的产物与单线程分支
+			// **逐字节一致**（原来 fwrite 全在 omp critical 里，落到文件里的顺序
+			// 由线程调度决定），先算出每个人在两个文件里各占多少字节：
+			//   第 pp 个人对第 i 张脸产生的记录条数 = (cur_face_num-1-i) + F
+			//   其中 F = pp 之后所有人的脸数
+			//   rec_num[pp]       = cur*(cur-1)/2 + cur*F
+			//   score_begin[pp]   = 前面所有人的记录数 * 单条字节数
+			//   flag_begin[pp]    = 前面所有人的记录数
+			// 之后并行时各自 fseek 到自己那一段写，于是：
+			//   * 字节布局与单线程分支完全相同（与线程数、调度策略都无关）
+			//   * critical 里只剩"定位 + 写"，点积仍然全并行
+			const __int64 score_elem = quantization ? (__int64)sizeof(short) : (__int64)sizeof(float);
+			std::vector<__int64> rec_num(person_num, 0);
+			{
+				__int64 faces_after = 0;
+				for (int pp = person_num - 1; pp >= 0; pp--)
+				{
+					__int64 cur = persons[pp].features.size();
+					rec_num[pp] = cur * (cur - 1) / 2 + cur * faces_after;
+					faces_after += cur;
+				}
+			}
+			std::vector<__int64> score_begin(person_num, 0), flag_begin(person_num, 0);
+			{
+				__int64 s = 0, f = 0;
+				for (int pp = 0; pp < person_num; pp++)
+				{
+					score_begin[pp] = s;  s += rec_num[pp] * score_elem;
+					flag_begin[pp] = f;   f += rec_num[pp];
+				}
+			}
+
 			int real_thread_num = __max(1, __min(max_thread_num, omp_get_num_procs() - 1));
 			if (real_thread_num == 1)
 			{
+				// 审计修复 2026-10-02（附录 BL.5）：原来**只有并行分支**会去写
+				// same_pair_num / notsame_pair_num, 单线程分支压根不管 ——
+				// 调用方（SamplesZQlibFaceID/SampleFaceDatabase*.cpp）拿到的是
+				// 自己传进去的初值。compact 版的单线程分支里是有的, 两边不对称。
+				__int64 tmp_same_pair_num = 0;
 				for (int pp = 0; pp < person_num; pp++)
 				{
 					__int64 cur_face_num = persons[pp].features.size();
@@ -568,6 +670,7 @@ namespace ZQ
 							cur_j_feat = persons[pp].features[j].pData;
 							scores[idx] = ZQ_MathBase::DotProduct(dim, cur_i_feat, cur_j_feat);
 							flags[idx] = 1;
+							tmp_same_pair_num++;
 							idx++;
 						}
 						for (__int64 qq = pp + 1; qq < person_num; qq++)
@@ -599,17 +702,21 @@ namespace ZQ
 					}
 					printf("%d/%d handled\n", pp + 1, person_num);
 				}
+				same_pair_num = tmp_same_pair_num;
+				notsame_pair_num = all_pair_num - same_pair_num;
 			}
 			else
 			{
 				int chunk_size = 100;
 				int handled[1] = { 0 };
 				__int64 tmp_same_pair_num[1] = { 0 };
+				int write_failed[1] = { 0 };
 				printf("real_thread_num = %d\n", real_thread_num);
-#pragma omp parallel for schedule(dynamic,chunk_size) num_threads(real_thread_num) shared(handled)
+#pragma omp parallel for schedule(dynamic,chunk_size) num_threads(real_thread_num) shared(handled, tmp_same_pair_num, write_failed)
 				for (int pp = 0; pp < person_num; pp++)
 				{
 					__int64 cur_face_num = persons[pp].features.size();
+					__int64 faces_after = total_face_num - cur_face_offset[pp] - cur_face_num;
 					__int64 max_pair_num = (total_face_num - cur_face_offset[pp] - 1);
 					std::vector<float> scores(max_pair_num);
 					std::vector<char> flags(max_pair_num);
@@ -618,11 +725,13 @@ namespace ZQ
 						float* cur_i_feat = persons[pp].features[i].pData;
 						float* cur_j_feat;
 						int idx = 0;
-						for (__int64 j = i + 1; j < cur_face_num; j++)
+						__int64 same_cnt = 0;
+						for (__int64 j = i+1; j < cur_face_num; j++)
 						{
 							cur_j_feat = persons[pp].features[j].pData;
 							scores[idx] = ZQ::ZQ_MathBase::DotProduct(dim, cur_i_feat, cur_j_feat);
 							flags[idx] = 1;
+							same_cnt++;
 							idx++;
 						}
 						for (__int64 qq = pp + 1; qq < person_num; qq++)
@@ -635,26 +744,37 @@ namespace ZQ
 								idx++;
 							}
 						}
-#pragma omp critical
+						if (idx > 0)
 						{
-							if (idx > 0)
+							// 第 i 张脸之前已经写掉的记录数（上面 rec_num 的闭式解）
+							__int64 rec_before = i * (cur_face_num - 1 + faces_after) - i * (i - 1) / 2;
+							// 点积在上面就全算完了, critical 里只有"定位 + 写"。
+							// fseek 与 fwrite 必须**一起**在 critical 里: glibc 的
+							// fseek 会先把写缓冲刷出去, 与别的线程的 fwrite 并发
+							// 会把对方的数据写到错的位置。
+#pragma omp critical
 							{
-								for (int kk = 0; kk < idx; kk++)
+								if (!_fseek64(out1, score_begin[pp] + rec_before * score_elem)
+									|| !_fseek64(out2, flag_begin[pp] + rec_before))
 								{
-									(*tmp_same_pair_num) += flags[kk];
-								}
-								if (quantization)
-								{
-									std::vector<short> short_scores(idx);
-									for (int j = 0; j < idx; j++)
-										short_scores[j] = __min(SHRT_MAX, __max(-SHRT_MAX, scores[j] * SHRT_MAX));
-									fwrite(&short_scores[0], sizeof(short), idx, out1);
+									(*write_failed) = 1;
 								}
 								else
 								{
-									fwrite(&scores[0], sizeof(float), idx, out1);
+									if (quantization)
+									{
+										std::vector<short> short_scores(idx);
+										for (int j = 0; j < idx; j++)
+											short_scores[j] = __min(SHRT_MAX, __max(-SHRT_MAX, scores[j] * SHRT_MAX));
+										fwrite(&short_scores[0], sizeof(short), idx, out1);
+									}
+									else
+									{
+										fwrite(&scores[0], sizeof(float), idx, out1);
+									}
+									fwrite(&flags[0], 1, idx, out2);
+									(*tmp_same_pair_num) += same_cnt;
 								}
-								fwrite(&flags[0], 1, idx, out2);
 							}
 						}
 					}
@@ -663,6 +783,12 @@ namespace ZQ
 						(*handled)++;
 						printf("%d/%d\n", *handled, person_num);
 					}
+				}
+				if ((*write_failed) != 0)
+				{
+					fclose(out1);
+					fclose(out2);
+					return false;
 				}
 				// 并行区里的自增已删(非原子的共享写, 且结果本来就会被这里整体覆盖)
 				same_pair_num = tmp_same_pair_num[0];
@@ -792,13 +918,24 @@ namespace ZQ
 		bool _select_subset(std::vector<int>& person_ids, std::vector<int>& pivot_ids, std::vector<std::vector<int> >& other_good_ids,
 			int max_thread_num, float similarity_thresh, int num_image_thresh) const
 		{
+			int dim = 0;
+			if (!_check_analyzable(persons, dim))
+				return false;
 			int person_num = persons.size();
-			if (person_num == 0 || persons[0].features.size() == 0)
-				return false;
-			int dim = persons[0].features[0].length;
-			if (dim == 0)
-				return false;
-			
+			// 审计修复 2026-10-02（附录 BL.2）：cur_num*cur_num 是在下面四个地方
+			// 各算一遍的 int 乘法，单人的脸数一旦 >= 46341 就回绕。查放在**并行区
+			// 之外**的串行一遍里，于是并行分支里可以放心地 return/continue，
+			// 代价只是 person_num 次整数比较。
+			for (int p = 0; p < person_num; p++)
+			{
+				if (!_check_pivot_square_size(persons[p].features.size()))
+				{
+					printf("person %d has too many features (%d) for the pivot search\n",
+						p, (int)persons[p].features.size());
+					return false;
+				}
+			}
+
 			person_ids.clear();
 			pivot_ids.clear();
 			other_good_ids.clear();
@@ -856,6 +993,15 @@ namespace ZQ
 			}
 			else
 			{
+				// 审计修复 2026-10-02（附录 BL.3）：原来这里用 omp critical 往三个
+				// 共享 vector 里 push_back，输出顺序由线程调度决定 —— 同一个库、
+				// 同一个线程数，两次跑出来的 SelectSubset 文件内容不同，而单线程
+				// 分支是**按 p 升序**的。改成"每个人一个自己的槽位，并行填，
+				// 串行按 p 升序收"：索引互不相同，天然无竞争，连 critical 都
+				// 不需要，同时让输出与线程数彻底无关。
+				std::vector<int> sel_flag(person_num, 0);
+				std::vector<int> sel_pivot(person_num, 0);
+				std::vector<std::vector<int> > sel_good(person_num);
 				int chunk_size = (person_num + max_thread_num - 1) / max_thread_num;
 #pragma omp parallel for schedule(static,chunk_size) num_threads(max_thread_num)
 				for (int p = 0; p < person_num; p++)
@@ -901,13 +1047,18 @@ namespace ZQ
 					int id_num = ids.size();
 					if (id_num + 1 >= num_image_thresh)
 					{
-#pragma omp critical
-						{
-							person_ids.push_back(p);
-							pivot_ids.push_back(pivot_id);
-							other_good_ids.push_back(ids);
-						}
+						sel_flag[p] = 1;
+						sel_pivot[p] = pivot_id;
+						sel_good[p] = ids;
 					}
+				}
+				for (int p = 0; p < person_num; p++)
+				{
+					if (sel_flag[p] == 0)
+						continue;
+					person_ids.push_back(p);
+					pivot_ids.push_back(sel_pivot[p]);
+					other_good_ids.push_back(sel_good[p]);
 				}
 			}
 			return true;
@@ -952,13 +1103,22 @@ namespace ZQ
 		bool _detect_repeat_person(std::vector<std::pair<int,int> >& repeat_pairs, std::vector<float>& repeat_scores,
 			int max_thread_num, float similarity_thresh) const
 		{
+			int dim = 0;
+			if (!_check_analyzable(persons, dim))
+				return false;
 			int person_num = persons.size();
-			if (person_num == 0 || persons[0].features.size() == 0)
-				return false;
-			int dim = persons[0].features[0].length;
-			if (dim == 0)
-				return false;
-			
+			// 审计修复 2026-10-02（附录 BL.2）：同 _select_subset, 串行一遍拦住
+			// cur_num*cur_num 的 int 回绕（65536 时回绕成 0 -> 堆越界写）。
+			for (int p = 0; p < person_num; p++)
+			{
+				if (!_check_pivot_square_size(persons[p].features.size()))
+				{
+					printf("person %d has too many features (%d) for the pivot search\n",
+						p, (int)persons[p].features.size());
+					return false;
+				}
+			}
+
 			repeat_pairs.clear();
 			repeat_scores.clear();
 
@@ -1054,6 +1214,13 @@ namespace ZQ
 					pivot_ids[p] = pivot_id;
 				}
 
+				// 审计修复 2026-10-02（附录 BL.3）：原来第二个 parallel for 用
+				// omp critical 往共享 vector push_back，收集顺序由线程调度决定。
+				// 上层虽然会按分数 MergeSort 一遍，但**分数完全相同**的对之间
+				// 顺序仍然是任意的，产物逐字节不可复现。改成"按 i 分槽位，
+				// 并行填，串行按 i 升序收"：索引互不相同，不需要 critical。
+				std::vector<std::vector<std::pair<int, int> > > per_i_pair(person_num);
+				std::vector<std::vector<float> > per_i_score(person_num);
 #pragma omp parallel for schedule(static,chunk_size) num_threads(max_thread_num)
 				for (int i = 0; i < person_num; i++)
 				{
@@ -1064,12 +1231,17 @@ namespace ZQ
 						float tmp_score = ZQ_MathBase::DotProduct(dim, cur_i_feat, cur_j_feat);
 						if (tmp_score >= similarity_thresh)
 						{
-#pragma omp critical
-							{
-								repeat_pairs.push_back(std::make_pair(i, j));
-								repeat_scores.push_back(tmp_score);
-							}
+							per_i_pair[i].push_back(std::make_pair(i, j));
+							per_i_score[i].push_back(tmp_score);
 						}
+					}
+				}
+				for (int i = 0; i < person_num; i++)
+				{
+					for (size_t k = 0; k < per_i_pair[i].size(); k++)
+					{
+						repeat_pairs.push_back(per_i_pair[i][k]);
+						repeat_scores.push_back(per_i_score[i][k]);
 					}
 				}
 			}
@@ -1122,10 +1294,10 @@ namespace ZQ
 		{
 			scores.clear();
 			pairs.clear();
-			int person_num = persons.size();
-			if (person_num == 0 || persons[0].features.size() == 0)
+			int dim = 0;
+			if (!_check_analyzable(persons, dim))
 				return false;
-			int dim = persons[0].features[0].length;
+			int person_num = persons.size();
 
 			if (max_thread_num <= 1)
 			{
@@ -1160,6 +1332,14 @@ namespace ZQ
 			}
 			else
 			{
+				// 审计修复 2026-10-02（附录 BL.3）：原来用 omp critical 往两个共享
+				// vector 里 push_back，收集顺序由线程调度决定。chunk_size=100，
+				// 所以人少于 100 时**碰巧**只有一个 chunk、一个线程在干活，输出是
+				// 确定的 —— 也就是说"人数少时看着正常，人数一多就不可复现"。
+				// 改成按 p 分槽位：并行填，串行按 p 升序收，不需要 critical。
+				std::vector<float> sel_score(person_num, 0.f);
+				std::vector<char> sel_flag(person_num, 0);
+				std::vector<std::pair<std::string, std::string> > sel_pair(person_num);
 				int chunk_size = 100;
 #pragma omp parallel for schedule(dynamic, chunk_size) num_threads(max_thread_num)
 				for (int p = 0; p < person_num; p++)
@@ -1185,12 +1365,17 @@ namespace ZQ
 					}
 					if (out_min_score <= similarity_thresh)
 					{
-#pragma omp critical
-						{
-							scores.push_back(out_min_score);
-							pairs.push_back(std::make_pair(persons[p].filenames[out_i], persons[p].filenames[out_j]));
-						}
+						sel_flag[p] = 1;
+						sel_score[p] = out_min_score;
+						sel_pair[p] = std::make_pair(persons[p].filenames[out_i], persons[p].filenames[out_j]);
 					}
+				}
+				for (int p = 0; p < person_num; p++)
+				{
+					if (sel_flag[p] == 0)
+						continue;
+					scores.push_back(sel_score[p]);
+					pairs.push_back(sel_pair[p]);
 				}
 			}
 			return true;
