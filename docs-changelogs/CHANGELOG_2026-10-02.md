@@ -4014,3 +4014,80 @@ Windows 侧 MSVC 与 gcc 的检查覆盖面不同。
 5. **顺带记一个工具坑**：`Edit` 工具会抹掉文件头的 UTF-8 BOM。
    改 `zq_cnn_convolution_gemm_32f_align_c.c` 时它在 `git diff` 里表现为
    "第一行被改了一行内容"，混在两处真正的改动里。已还原并记进 AGENTS.md
+## 新增/变更：附录 CF —— NCHWC depthwise 门禁，284 个生产层第一次有覆盖（首跑全绿，且验证过门禁有牙齿）
+
+### 变更文件
+
+* `tools/zq_nchwc_depthwise_check.cpp`（新增）—— 63 个入口的数值门禁
+* `tools/run_zqlib_checks.py` —— 登记 `zq_nchwc_depthwise`
+  （`EXTRA_SOURCES` / `EXTRA_LINK` / `EXTRA_INC` / `EXTRA_CXXFLAGS` 四处；**不进 SLOW**，
+  编一次约 17 秒，所以默认回归里就会跑到）
+* `audit_k3_20261001.md` —— 新增附录 CF
+* `docs-changelogs/CHANGELOG_2026-10-02.md` —— 本节
+
+**没有改动任何生产代码。**
+
+### 背景
+
+`model/` 下的 shipped 模型里有 **284 个 `DepthwiseConvolution` 层**
+（MobileNetSSD / Pose / det1-dw\* / det2-dw\* / det3-dw\* …），
+而 22 个 `zq_*_check.cpp` **一个都没覆盖它**。
+
+这一族与普通卷积是**两套完全不同的代码**：不走 gemm，是手写的
+「每个通道一个 filter」SIMD 展开（`filter_N == 1`、`filter_C == in_C`、`out_C == in_C`），
+所以附录 CB / CE 修的那些问题对它一概无效。附录 CE 刚在 NCHW 卷积里查出一条
+100% 算错的生产可达缺陷 —— 同一层里"另一个变体没测过"的教训在这里直接适用。
+
+### 覆盖面与结果
+
+7 个基础变体（`general` / `kernel3x3` / `kernel5x5_s1d1` / `kernel3x3_s1d1` /
+`kernel3x3_s2d1` / `kernel2x2` / `kernel2x2_s1d1`）
+× 3 种对齐（NCHWC1/4/8）× 3 个激活动作 = **63 个入口**，
+每个入口 3 组形状（`C=align`、`C=2*align` 跨两个对齐组、`N=2`），合计 **189 个用例**。
+
+```
+共 189 个用例：全对 189，有错 0，崩溃/搭建失败 0
+```
+
+门禁做法沿用 CB / CE 已验证过的部分：内核名写全走函数指针表（不拼接）、
+后向误差 + 逐格统计、每用例 fork 一个子进程、
+**用真实的 `ZQ_CNN_Tensor4D_NCHWC1/4/8` 类**分配与填充张量、
+输出缓冲区预填 `-12345.0f`（内核没写就会看到哨兵值而不是"恰好通过"）。
+
+### 首跑就绿，怎么知道它不是"什么都没测"
+
+做了两件事：
+
+1. **确认 63 个入口真是 63 个不同符号**：
+   `nm zq_dw.o | grep " T .*depthwise.*nchwc" | sort -u | wc -l` → **63**
+   （其中 21 个是不带 `_with_bias` 的 plain 变体 = 7 基础 × 3 对齐，与预期一致）
+2. **变异测试**：把门禁**自己**参考实现里的 filter 下标改错
+   （`flt[ch*fH*fW + fh*fW + fw]` → `flt[fw*fH*fW + fh*fW + ch]`），
+   **只改门禁、不碰被测代码**，重跑：
+   ```
+   共 189 个用例：全对 123，有错 66，崩溃/搭建失败 0
+   ```
+   **66 个用例立刻变红。** 绿不是因为判据松，而是因为库真的算对了。变异体已删除
+
+> **一个从不报错的检查工具，和一个坏掉的检查工具，在输出上长得一模一样。**
+> 唯一能区分它们的方法是**故意把它弄坏，看它会不会叫** ——
+> 这是 CB 那几轮"假绿"教训的直接应用。
+
+### 这条门禁**没有**覆盖到什么（如实记下来）
+
+* **形状**：只有 `H=W=17`、`N∈{1,2}`、`C∈{align, 2*align}`。
+  没测 `C` **不是** align 倍数的情形
+* **dilation > 1 完全没测** —— 而 `kernel5x5_s1d1` / `kernel3x3_s1d1` /
+  `kernel2x2_s1d1` 这些名字里的 `s1d1` 正是在强调"dilation 被硬编码成 1"，
+  也就是说**这些变体不支持 dilation != 1**，但**没有任何地方拦住**调用方传一个进来
+* **契约之外**：与 CB 的 `kernel2x2_C3` 一样，这些内核不对非法形状做校验
+* **ARM**：三种对齐在 x86 上都编了、都跑了；NCHWC 在 ARM 上还有 NEON 专用路径，
+  本机无法验证（见附录 CD.6）
+
+### 下一个明确的空白
+
+`addbias_prelu` / `addbias_prelu_sure_slope_lessthan1` 仍然**没有门禁**。
+它被 NCHWC 那一族的 `with_bias_prelu` 三个变体直接调用
+（`zq_cnn_conv_no_padding_gemm_nchwc*_*_with_bias_prelu` 里的
+`zq_mm_fmadd_ps(slope_v, min(0,x), max(0,x))` 就是它），
+所以它一旦错，CB 修好的那些路径会一起错 —— 只是目前没有独立的门禁盯它。
