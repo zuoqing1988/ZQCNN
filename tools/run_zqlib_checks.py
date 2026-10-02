@@ -353,6 +353,20 @@ EXTRA_SOURCES = {
         'gcc -O1 -g $SAN -mavx2 -mfma -fopenmp -c -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include '
         '$R/ZQCNN/layers_c/zq_cnn_deconvolution_32f_align_c.c -o $WDIR/zq_dec.o',
     ],
+    # zq_tile（附录 DD）：ZQ_CNN_Tensor4D::Tile。
+    # **必须编 ZQ_CNN_Tensor4D.cpp**（Tile 是基类里的虚函数，绕不开真实张量对象），
+    # 但那个 TU 带 ASan 编一次只要约 3 秒（实测），所以能进每次回归。
+    'zq_tile': [
+        'gcc -O1 -g $SAN -mavx2 -mfma -fopenmp -c -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include '
+        '$R/ZQCNN/ZQ_CNN_Tensor4D.cpp -o $WDIR/zq_t4d.o',
+        # ZQ_CNN_Tensor4D.cpp 里的 ResizeNearest / Remap 方法要调 resize/remap 内核，
+        # 链接期就得带上（哪怕这道门禁一个 resize 都没跑）。
+        # remap 那几个符号在**同一个** zq_cnn_resize_32f_align_c.c 里 ——
+        # 第一版按名字猜成两个文件，第二个直接不存在，链接报
+        # "zq_tile_rm.o: No such file or directory"。
+        'gcc -O1 -g $SAN -mavx2 -mfma -fopenmp -c -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include '
+        '$R/ZQCNN/layers_c/zq_cnn_resize_32f_align_c.c -o $WDIR/zq_tile_rz.o',
+    ],
     # zq_nchw_lstm（附录 CW）：NCHW 的 LSTM。3 个 32f 入口
     # （align0_general 在 .c 里，align128/256 在 _raw.h 里，宏式声明）。
     'zq_nchw_lstm': [
@@ -396,6 +410,7 @@ EXTRA_LINK = {'zq_innerproduct': ' $WDIR/zq_ipgemm.o $WDIR/zq_gemm_align.o $WDIR
               'zq_nchw_sqrtnrm': ' $WDIR/zq_sn_sqrt.o $WDIR/zq_sn_nrm.o',
               'zq_nchw_reduction': ' $WDIR/zq_red.o',
               'zq_nchw_lstm': ' $WDIR/zq_lstm.o',
+              'zq_tile': ' $WDIR/zq_t4d.o $WDIR/zq_tile_rz.o',
               'zq_nchw_deconv': ' $WDIR/zq_dec.o',
               # -ldl 必须**放在源文件之后**：Ubuntu 20.04 默认 --as-needed，
               # 放在前面会被当成"当时没人需要 libdl"而丢掉（门禁里 dlsym(RTLD_NEXT) 用到）。
@@ -434,6 +449,7 @@ EXTRA_INC = {'zq_facedb': ' -I$R -I$R/ZQCNN -I$R/ZQCNN/3rdparty/include/ZQlib',
              'zq_nchw_sqrtnrm': ' -I$R -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include',
              'zq_nchw_reduction': ' -I$R -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include',
              'zq_nchw_lstm': ' -I$R -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include',
+             'zq_tile': ' -I$R -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include',
              'zq_nchw_deconv': ' -I$R -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include',
              'zq_nchw_conv_free': ' -I$R -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include',
              'zq_nchw_scalop': ' -I$R -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include',
@@ -465,6 +481,7 @@ EXTRA_CXXFLAGS = {'zq_facedb': ' -mavx2 -mfma -fopenmp',
                   'zq_nchw_sqrtnrm': ' -mavx2 -mfma -fopenmp',
                   'zq_nchw_reduction': ' -mavx2 -mfma -fopenmp',
                   'zq_nchw_lstm': ' -mavx2 -mfma -fopenmp',
+                  'zq_tile': ' -mavx2 -mfma -fopenmp',
                   'zq_nchw_deconv': ' -mavx2 -mfma -fopenmp',
                   # **-fno-sanitize=address 必须排在 harness 加的 -fsanitize=address 之后**
                   # （EXTRA_CXXFLAGS 正是接在 san 后面拼的）。这道门禁要用 free 拦截器

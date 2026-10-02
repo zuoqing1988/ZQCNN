@@ -306,10 +306,21 @@ namespace ZQ
 				}
 			}
 
-			//Tile W
-			for (n = 0, out_slice_ptr = out.firstPixelData; n < tile_n; n++,out_slice_ptr += out.sliceStep)
+			// 审计修复 2026-10-03（附录 DD.3）：三个扩展循环的**外层上界与步长都写错了**。
+			// 正确的分工是：每一步只复制**输入**范围，剩下的扩展由后面的循环接手。
+			// 原来三个循环都用 tile_n / tile_h 作为外层上界（应当是 N / H），
+			// 且 Tile N 的目标步长是 out.sliceStep*N（应当是 tile_n*out.sliceStep）。
+			//
+			// 触发条件：只要 **tile_w > 1 且 H > tile_h**（或 N > tile_n）就会错。
+			// 实测：N=1,C=3,H=4,W=5, tile=1x1x2x1 -> 45 格错，第一个错在 h=1。
+			// 而 tile_h==1 时恰好只复制第 0 行（那时就是错的），H==1 时又恰好覆盖全部：
+			// 两种情况都不错。所以以前的测试覆盖一直是漏的。
+			// 附录 BF 修的回绕那一段没动过，两个缺陷叠在同一个函数里。
+
+			//Tile W：每个**输入行**里的 W 个像素块，复制 tile_w 次
+			for (n = 0, out_slice_ptr = out.firstPixelData; n < N; n++, out_slice_ptr += out.sliceStep)
 			{
-				for (h = 0, out_row_ptr = out_slice_ptr; h < tile_h; h++, out_row_ptr += out.widthStep)
+				for (h = 0, out_row_ptr = out_slice_ptr; h < H; h++, out_row_ptr += out.widthStep)
 				{
 					int elt_num = out.pixelStep*W;
 					in_pix_ptr = out_row_ptr;
@@ -321,25 +332,33 @@ namespace ZQ
 				}
 			}
 
-			//Tile H
-			for (n = 0, out_slice_ptr = out.firstPixelData; n < tile_n; n++, out_slice_ptr += out.sliceStep)
+			//Tile H：每个**输入行**，复制 tile_h 次。
+			// 步长必须是 H*out.widthStep（即一个输入行的高度）：
+			// 输入第 h 行映射到输出的 h, h+H, h+2H, ... 那几行；
+			// 写成 hh*out.widthStep（步长 1）会与上一个 h 的输出区重叠并覆盖它们。
+			for (n = 0, out_slice_ptr = out.firstPixelData; n < N; n++, out_slice_ptr += out.sliceStep)
 			{
-				int elt_num = out.widthStep*H;
-				in_row_ptr = out_slice_ptr;
-				out_row_ptr = out_slice_ptr;
-				for (h = 1; h < tile_h; h++)
+				for (h = 0, out_row_ptr = out_slice_ptr; h < H; h++, out_row_ptr += out.widthStep)
 				{
-					memcpy(out_row_ptr+h*elt_num, in_row_ptr, sizeof(float)*elt_num);
+					for (int hh = 1; hh < tile_h; hh++)
+					{
+						memcpy(out_row_ptr+hh*H*out.widthStep, out_row_ptr, sizeof(float)*out.widthStep);
+					}
 				}
 			}
 
-			//Tile N
-			int elt_num = out.sliceStep*N;
+			//Tile N：每个**输入 slice**，复制 tile_n 次。
+			// **与 H / W 保持一致的取模语义**：out[r] <- in[r % N]，
+			// 所以源 slice 逐个向后步进 n 个，目标下标是 n + nn*N。
+			// 原来写成 `out.sliceStep*N`（一个步长）时 N=2/tile_n=2 会把第一个 slice
+			// 写到**第三个** slice 位置，第二个反而永远不被写。
 			out_slice_ptr = out.firstPixelData;
-			in_slice_ptr = out_slice_ptr;
-			for (n = 1; n < tile_n; n++)
+			for (n = 0; n < N; n++, out_slice_ptr += out.sliceStep)
 			{
-				memcpy(out_slice_ptr+n*elt_num, in_slice_ptr, sizeof(float)*elt_num);
+				for (int nn = 1; nn < tile_n; nn++)
+				{
+					memcpy(out_slice_ptr+nn*N*out.sliceStep, out_slice_ptr, sizeof(float)*out.sliceStep);
+				}
 			}
 			return true;
 		}
