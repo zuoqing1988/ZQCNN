@@ -5315,3 +5315,153 @@ CR.5 记的是：起草时**我自己参考实现的下标边界有问题**（�
 
 `deconvolution` 只有分派器引用、shipped 模型一次都没用到，优先级排在最后；
 `lstm` 是宏式声明、6 处引用，是下一块。
+
+## 新增/变更：附录 CT —— NCHW `reduction` 门禁，并修掉一处 ASan 坐实的栈越界写
+
+### 变更文件
+
+* `tools/zq_nchw_reduction_check.cpp`（新增）—— NCHW reduction 门禁
+* `tools/run_zqlib_checks.py` 登记 `zq_nchw_reduction`（四处）
+* `ZQCNN/ZQ_CNN_Forward_SSEUtils.h` **两行** —— `axis > 4` 改成 `axis >= 4`
+* `audit_k3_20261001.md` 新增附录 CT
+
+### 覆盖面
+
+2 个 32f 真实符号（nm 核实）：
+
+| 入口 | 行 |
+|---|---|
+| `zq_cnn_reduction_sum_32f_align0` | `keepdims==0` + `axis=0..3`，共 5 行 |
+| `zq_cnn_reduction_mean_32f_align0` | 同上 |
+
+每行 3 种形状 × 2 种数据 = **60 个用例**。
+
+**更正附录 CR.6 的一处笔记**：`axis` 索引的是 `(N, C, H, W)`，
+**不是** `for n { for h { for w { for c }` 的书写顺序。判据是
+`ZQ_CNN_Forward_SSEUtils.h` 里的 `int out_dims[4] = { N,C,H,W }; out_dims[axis] = 1;`。
+
+**门禁的参考实现不抄内核的循环**，改成从输出维度按 `ZQ_CNN_Tensor4D` 的
+步长规则反推（`pixelStep=oc`、`widthStep=ow*oc`、`sliceStep=oh*ow*oc`），
+两边**不共享任何一处索引** —— CR.6 那次"把几个分支的索引混着用"的病根
+就是跨分支复用。
+
+**形状集合与数据集合都是挑过的，不是随便取的：**
+
+| 形状 (N,C,H,W) | 挑它的理由 |
+|---|---|
+| `(2,5,3,4)` | 四维都 > 1 |
+| `(3,2,1,5)` | H=1 → `axis=2` 退化成恒等 |
+| `(1,3,4,1)` | N=1 且 W=1 —— 变异测试证明这一档是**灵敏度来源**（见下） |
+
+| 数据 | 杀伤力 |
+|---|---|
+| 普通 `[-0.5,0.5]` | 基线 |
+| **全 0.25 常数** | `mean` 必须恒等于 0.25、`sum` 必须恒等于 `0.25*count`；**约数算错整行全红**，普通数据上分母错 2 倍只差一点点 |
+
+判据 `atol=1e-3 && rtol=1e-5`。**atol 不能省**：内核顺序 float 累加 vs
+参考 double 累加，120 个元素时误差上界约 2e-4，纯相对判据会误报；
+而真正的索引错误是 O(1) 量级，差三个数量级。输出缓冲尾部另放 8 个哨兵抓越界写。
+
+### 首跑结果：60/60 全对
+
+```
+    zq_cnn_reduction_sum_32f_align0[keepdims=0]   6 个用例：对 6，错 0，崩 0
+    zq_cnn_reduction_sum_32f_align0[axis=0]       6 个用例：对 6，错 0，崩 0
+    zq_cnn_reduction_sum_32f_align0[axis=1]       6 个用例：对 6，错 0，崩 0
+    zq_cnn_reduction_sum_32f_align0[axis=2]       6 个用例：对 6，错 0，崩 0
+    zq_cnn_reduction_sum_32f_align0[axis=3]       6 个用例：对 6，错 0，崩 0
+    zq_cnn_reduction_mean_32f_align0[keepdims=0]  6 个用例：对 6，错 0，崩 0
+    zq_cnn_reduction_mean_32f_align0[axis=0]      6 个用例：对 6，错 0，崩 0
+    zq_cnn_reduction_mean_32f_align0[axis=1]      6 个用例：对 6，错 0，崩 0
+    zq_cnn_reduction_mean_32f_align0[axis=2]      6 个用例：对 6，错 0，崩 0
+    zq_cnn_reduction_mean_32f_align0[axis=3]      6 个用例：对 6，错 0，崩 0
+共 60 个用例：全对 60，有错 0，崩溃/搭建失败 0
+```
+
+### 生产缺陷：`axis > 4` 让 `axis==4` 写越界一个 `int`（已修）
+
+`ZQCNN/ZQ_CNN_Forward_SSEUtils.h` 的 `ReductionSum` / `ReductionMean`：
+
+```cpp
+if (axis < 0 || axis > 4)   // 上界多放了一个
+    return false;
+...
+int out_dims[4] = { N,C,H,W };
+if (keepdims) out_dims[axis] = 1;   // axis==4 时越界
+```
+
+**两个独立证据源：**
+
+1. **编译期** gcc `-O2 -Wall -Wextra`：
+   `ZQ_CNN_Forward_SSEUtils.h:2490: warning: array subscript 4 is above array bounds of 'int [4]' [-Warray-bounds]`
+2. **运行期** ASan（链真实 `libZQCNN.a`）：
+   `AddressSanitizer: stack-buffer-overflow ... WRITE of size 4`，
+   帧内 `[32,48) 'out_dims' <== Memory access at offset 48 overflows this variable`。
+   16 字节的 `int[4]`，写到第 5 个元素。
+
+改完复测：`axis=4 -> 0, axis=-1 -> 0, axis=3(合法) -> 1`，无 ASan 报错，
+`-Warray-bounds` 告警同时消失。
+
+**同仓 A/B 对照**（判定"笔误还是设计取舍"最快的一招）：
+
+```
+ZQCNN/ZQ_CNN_Forward_SSEUtils.cpp:4896/4968            axis < 0 || axis >= 4
+ZQCNN/ZQ_CNN_Forward_SSEUtils.h:1917                    axis < 0 || axis >= 4
+ZQCNN/ZQ_CNN_Forward_SSEUtils_NCHWC.cpp:1467/3833/5496  axis < 0 || axis >= 4
+ZQCNN/ZQ_CNN_Forward_SSEUtils.h:2478/2530               axis < 0 || axis > 4   ← 笔误
+```
+
+**9 处 `>= 4`，只有这 2 处 `> 4`**，而且就夹在两个正确写法的邻居中间。
+
+**可达性（如实记录，不夸大）**：仓内唯一调用者
+`ZQ_CNN_Layer_Reduction::Forward` 的上游 `ReadParam` 已校验 `axis` 属于 0..3
+并在非法时 `return false`，**shipped 模型走不到**。但
+`ZQ_CNN_Forward_SSEUtils` 是公开静态 API，外部使用者直接传 `axis=4` 就会踩中。
+定性为 **"公开 API 的潜伏缺陷"**，不是生产可达漏洞。
+
+### 顺带查出的工具缺口：现有 `-Wall -Wextra` 扫描用的是 `-fsyntax-only`
+
+`tools/warn_sweep_src.py:116` 用的是 `-fsyntax-only` —— 只做语义分析，
+**不出代码、不做优化**。而 `-Warray-bounds` 依赖优化器的值域传播
+（"axis 经过前面的范围检查所以只能是 0..4"），没有优化它永远不响。
+
+**即：CT.4 这类缺陷（守卫上界写错一个字符）在现有 warning 扫描轴上
+是结构性不可见的** —— 不是"扫过了没报"，是那条轴根本看不到这类东西。
+这是本次审计里第三次出现"自己的工具也是被审计对象"。
+
+### 变异测试：两次都只红该红的那一行
+
+| 变异 | 结果 |
+|---|---|
+| `sum` 的 `axis==0` 改成 `n < 1`（只加第一个 slice） | **只有 `sum[axis=0]` 红**，其余 9 行全绿；且 6 个用例里**有 2 个仍绿** —— 正是 `(1,3,4,1)` 那档（N=1 时 `n<1` 与 `n<N` 等价） |
+| `mean` 的 `axis==1` 除数从 C 换成 H | **只有 `mean[axis=1]` 6/6 全红**，其余 54 个全对 |
+
+第一次变异里"仍有 2 个用例是绿的"这件事比"全红"更有价值：
+它精确说明了**为什么形状集合里必须有 N=1 的那一档**。
+只放 N>1 的形状，门禁灵敏度会掉一格。
+
+### 首跑红的 6 个用例全是我自己门禁的 bug
+
+首跑 `54/60`，红的正好是 `mean[keepdims=0]` 全部 6 个。按 CA.3 先怀疑自己，
+果然是两处参考实现写错：(1) 除数写成 `(1/N)*C*H*W`，应为 `1/(N*C*H*W)`；
+(2) `keepdims==0` 时仍把 `axis=-1` 传给内核，标签因此显示成看不懂的 `axis=-2`。
+两条都是门禁自己的错，改完 60/60。**这正是先怀疑自己的价值** ——
+若当时直接认定"内核的 mean 有问题"，就会为 3 行门禁代码去动一段六年前没人碰过的生产代码。
+
+### 剩下的空白
+
+| 层 | 门禁 |
+|---|---|
+| NCHW `reduction`（2 入口 / 10 行 / 60 用例） | **本附录** |
+| NCHW sqrt / normalize（6 入口 / 24 用例） | CS |
+| NCHW 激活与归一化（39 入口） | CO |
+| NCHW depthwise（147 入口） | CP |
+| NCHW scalaroperation（38 入口） | CQ |
+| NCHW 卷积（16 入口） | CE |
+| NCHW resize / remap（15 入口） | CN |
+| NCHWC 全族 | CB / CF / CG / CH / CI / CJ / CK / CL |
+| **NCHW `lstm`**（宏式声明，6 处引用） | 仍无门禁 |
+| NCHW `deconvolution`(+`_gemm`)（6 个符号） | 仍无门禁；shipped 模型一次都没用到，优先级最低 |
+
+**下一块先不开 lstm**，先补 CT.5 说的那条 `-O2` 扫描轴：它刚用一个字符的
+差异产出了一条真缺陷，而且这类缺陷不靠人读代码、只靠编译器就能继续挖。

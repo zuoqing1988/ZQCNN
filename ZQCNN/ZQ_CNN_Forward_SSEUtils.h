@@ -2475,7 +2475,10 @@ namespace ZQ
 
 		static bool ReductionSum(const ZQ_CNN_Tensor4D& input, int axis, bool keepdims, ZQ_CNN_Tensor4D& output)
 		{
-			if (axis < 0 || axis > 4)
+			// axis 索引的是 out_dims[4] = { N, C, H, W }，所以上界是 3 不是 4。
+			// 原来的 `axis > 4` 放 axis==4 过去，紧接着 out_dims[axis] = 1 就
+			// 写越界一个 int（ASan 坐实，见附录 CT.4）。
+			if (axis < 0 || axis >= 4)
 				return false;
 			int N = input.GetN();
 			int H = input.GetH();
@@ -2527,7 +2530,8 @@ namespace ZQ
 
 		static bool ReductionMean(const ZQ_CNN_Tensor4D& input, int axis, bool keepdims, ZQ_CNN_Tensor4D& output)
 		{
-			if (axis < 0 || axis > 4)
+			// 同 ReductionSum：out_dims[4]，上界是 3。见附录 CT.4。
+			if (axis < 0 || axis >= 4)
 				return false;
 			int N = input.GetN();
 			int H = input.GetH();
