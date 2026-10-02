@@ -316,7 +316,11 @@ extern "C" {
 						sum_v = 0;
 						for (c = 0; c < in_C; c++)
 							sum_v += pix_ptr[c] * pix_ptr[c];
-						sum_v = 1.0f / (float)sqrt(sum_v);
+						// 原来这里是 sqrt(sum_v)、**漏了 +eps** ——
+						// 同函数里 across_spatial 那条、以及 _raw.h 里 8 处 SIMD 版本
+						// 全都是 sqrt(sum + eps)。只有这条不是，于是
+						// 全零像素会算出 1/0 = inf，0*inf = NaN。附录 CR。
+						sum_v = 1.0f / (float)sqrt(sum_v + eps);
 						if (channel_shared)
 						{
 							for (c = 0; c < in_C; c++)
@@ -398,7 +402,10 @@ extern "C" {
 						sum_v = 0;
 						for (c = 0; c < in_C; c++)
 							sum_v += pix_ptr[c] * pix_ptr[c];
-						sum_v = 1.0f / sqrt(sum_v);
+						// 同 32f 那份（line 323）：这里原本也漏了 +eps。
+						// 本处在 #if __ARM_NEON && __ARM_NEON_FP16 里，**本机无法运行**，
+						// 按同样理由一并修，但不宣称验证过。附录 CR。
+						sum_v = 1.0f / sqrt(sum_v + eps);
 						if (channel_shared)
 						{
 							for (c = 0; c < in_C; c++)

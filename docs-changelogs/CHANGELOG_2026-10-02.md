@@ -5123,3 +5123,104 @@ deconvolution 只有分派器引用、shipped 模型一次都没用到，优先�
 lstm 与 normalize 是接下来两块（各自只有 2~6 个符号，规模小）。
 
 未 push。
+## 新增/变更：附录 CR —— NCHW normalize 的 eps 缺失（同仓 A/B 读出来的，不是门禁报的）
+
+### 变更文件
+
+* `ZQCNN/layers_c/zq_cnn_normalize_32f_align_c.c`
+  —— **修掉两处**（32f 与 ARM FP16 的 16f 各一处）：`sqrt(sum_v)` → `sqrt(sum_v + eps)`，
+     生产 diff **2 行**（加 7 行注释）
+* `audit_k3_20261001.md` —— 新增附录 CR
+* `docs-changelogs/CHANGELOG_2026-10-02.md` —— 本节
+
+**本轮没有新增门禁**（见"注意事项"）。
+
+### 缺陷
+
+`zq_cnn_normalize_32f_align0`：
+
+    if (across_spatial) {
+        for (h) for (w) for (c) sum_v += x²;        // 按 n 约 h,w,c
+        sum_v = 1.0f / (float)sqrt(sum_v + eps);    // <-- 有 +eps
+    } else {
+        for (h) for (w) { for (c) sum_v += x²;       // 按 (n,h,w) 约 c
+            sum_v = 1.0f / (float)sqrt(sum_v);       // <-- **漏了 +eps**
+        }
+    }
+
+**同仓 A/B（三方对照，结论是硬的）**：
+
+| 位置 | 式子 | 有 eps？ |
+|---|---|---|
+| 同函数 `if (across_spatial)` 分支 | `1/sqrt(sum_v + eps)` | 有 |
+| 同函数 `else` 分支（32f） | `1/sqrt(sum_v)` | **没有** |
+| 同函数 `else` 分支（16f，ARM FP16 拷贝） | `1/sqrt(sum_v)` | **没有** |
+| `_raw.h` 里 8 处 SIMD 版本 | `1/sqrt(zq_final_sum_q + eps)` | **8/8 都有** |
+
+8 处 SIMD 全带 eps、只有手写标量的两条不带 —— 这不是设计取舍，是复制粘贴漏了。
+
+### 危害
+
+`not_across_spatial` 是**逐像素**的 L2 归一化（不带减均值）：
+`out[c] = x[c] / sqrt(Σ_c x[c]² + eps) * scale[c]`
+
+* **全零像素**：`Σ = 0` -> `1/0 = inf` -> `0 * inf = **NaN**`，
+  而加了 eps 的那条会得到有限的 `1/sqrt(eps)`
+* 接近全零的像素：分母没有 eps 兜底，量级可以差好几个数量级
+* **静默**：不崩溃、不越界，NaN 顺着网络往下传
+
+**触发条件**：`align_mode` 既不是 ALIGN_128bit 也不是 ALIGN_256bit
+（即 NCHW 的 Align0 变体）**且** `across_spatial == 0`。两者都是合法配置。
+
+### 生产可达性
+
+`zq_cnn_normalize_32f_align0` 在 x86 分派器里被调用两次
+（ZQ_CNN_Forward_SSEUtils.cpp:4305 与 :4334），都是 align128bit / align256bit
+两个分支都**不匹配**时的回退路径 —— 也就是 `Align0` 张量走的正是这条。
+
+16f 那份在 `#if __ARM_NEON && __ARM_NEON_FP16` 里，**本机无法运行**，
+按同样理由一并修了，但**不宣称验证过**。
+
+### 方法与它的边界
+
+这次的发现**不是门禁报出来的**，而是按 CL 总结的规矩做的纯静态对照：
+
+> 同仓的两份实现互为对照 —— 同一个功能被抄两遍时，
+> 抄错的那份几乎一定能被另一份对照出来。
+
+具体做法：把 `normalize` 的两条分支与 `_raw.h` 的 8 处**逐条列出各自的算式**，
+一眼看到 `+eps` 只在一处缺席。**没有跑任何代码。**
+
+这也是它与 CB/CL 的区别：那两处是门禁首跑变红才定位的，这次是纯静态对照 ——
+快得多，但**覆盖不到"两边都写错"的情况**。
+
+### 注意事项：门禁这一轮没有写成
+
+**如实记为未完成。** 起草 8 个入口（`sqrt` 1 / `normalize` 5 / `reduction` 2）的门禁时，
+我发现了自己参考实现的下标边界有问题（正是 CP.5 记的那一类"门禁自己错"），
+于是**没有把没验证过的门禁提交**。
+这 8 个入口**仍然零覆盖**。
+
+`reduction` 的语义这一轮已经读清、留给下一轮的门禁用：
+
+    keepdims == 0 : out[0] = Σ 全部；mean 再 / (N*H*W*C)
+    axis == 0     : out[n][c] = Σ_{h,w} x      （输出形状 [N, C]）
+    axis == 1     : out[n][h][w] = Σ_c x       （输出形状 [N, H, W]）
+    axis == 2     : out[n][w][c] = Σ_h x       （输出形状 [N, W, C]）
+
+### 剩下的空白
+
+  NCHW 激活与归一化（39）        CO
+  NCHW depthwise（147）           CP
+  NCHW scalaroperation（38）      CQ
+  NCHW resize / remap（15）       CN
+  NCHW 卷积（16）                 CE
+  NCHW pooling / eltwise / lrn   已有门禁
+  NCHWC 全族                      CB / CF / CG / CH / CI / CJ / CK / CL
+  sqrt(1) / normalize(5) / reduction(2)      仍无门禁（本附录 CR.5 已说明）
+  NCHW lstm / deconvolution(+_gemm)         仍无门禁
+
+deconvolution 只有分派器引用、shipped 模型一次都没用到，优先级排在最后；
+lstm 是宏式声明、6 处引用，是下一块。
+
+未 push。
