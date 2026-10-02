@@ -33,6 +33,7 @@
  * 每用例 fork 子进程、用真实的 ZQ_CNN_Tensor4D_NCHWC{1,4,8}。
  * **逐通道数组一律按 paddedC = ceil(C/align)*align 开**（CG.4 的教训）。
  */
+#include "zq_check_child.h"
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
@@ -179,7 +180,7 @@ static void one(const Case& c, RUNNER r)
     remove(RES_FILE);
     pid_t pid = fork();
     if (pid == 0) {
-        FILE* dn = freopen("/dev/null", "w", stderr); (void)dn;
+        zq_child_silence_stderr();
         r(c);
         _exit(0);
     }

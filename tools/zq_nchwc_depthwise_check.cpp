@@ -25,6 +25,7 @@
  *    这样"我以为的 NCHWC 布局"这个变量根本不存在
  *  · `extern "C"` 声明照抄头文件连参数名一起抄（C 链接不检查 arity）
  */
+#include "zq_check_child.h"
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
@@ -220,7 +221,7 @@ static void one(const Case& c, RUNNER r)
     remove(RES_FILE);
     pid_t pid = fork();
     if (pid == 0) {
-        FILE* dn = freopen("/dev/null", "w", stderr); (void)dn;
+        zq_child_silence_stderr();
         r(c);
         _exit(0);
     }

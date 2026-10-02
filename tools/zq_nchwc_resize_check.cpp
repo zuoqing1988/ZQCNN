@@ -28,6 +28,7 @@
  * 每用例 fork 子进程并**显式判"没读到结果文件"= 失败**（CJ.4）、
  * 用真实的 ZQ_CNN_Tensor4D_NCHWC{1,4,8}。
  */
+#include "zq_check_child.h"
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
@@ -153,7 +154,7 @@ static void one(const Case& c, RUNNER r)
     remove(RES_FILE);
     pid_t pid = fork();
     if (pid == 0) {
-        FILE* dn = freopen("/dev/null", "w", stderr); (void)dn;
+        zq_child_silence_stderr();
         r(c);
         _exit(0);
     }

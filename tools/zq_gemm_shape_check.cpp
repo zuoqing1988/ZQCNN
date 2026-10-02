@@ -17,12 +17,15 @@
 //    "有一个坏了"，没法告诉你"哪些是好的" —— 而后者恰恰是写守卫的前提。
 // 2) ASan 默认是 exit(1) 不是 abort，于是"崩溃"和"算错"在 waitpid 看来都是
 //    exit code 1。必须用 __asan_default_options 设 abort_on_error=1 才分得开。
-// 3) 子进程的 stderr 要接 /dev/null，否则 ASan 的报告会拦腰截断网格那一行。
+// 3) 子进程的 stderr 重定向走 zq_check_child.h（附录 CZ）：
+//    不接 /dev/null 是因为那样连 sanitizer 的报告本身都看不见了；
+//    仍然要重定向是因为不重定向的话 ASan 的报告会拦腰截断网格那一行。
 //
 // 输出：每个 K 一张 M x N 的网格，'.'  ok / 'X' 崩溃 / 'x' 结果错
 //
 // 参考实现：最朴素的三重循环。C[m][n] = sum_k A[m][k] * Bt[n][k]
 // （调用点是 CblasTrans，Bt 按行存，每行 K 个，所以 ldb 才是"每行 K 个"）
+#include "zq_check_child.h"
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
@@ -55,7 +58,7 @@ static float rv(int seed, int i)
 // 在**子进程**里跑。返回 0=通过 1=结果错。崩溃由父进程从信号判定。
 static int run_case(int M, int N, int K)
 {
-    FILE* dn = freopen("/dev/null", "w", stderr);
+    zq_child_silence_stderr();
     (void)dn;
     std::vector<float> A((size_t)M * K), Bt((size_t)N * K), ref((size_t)M * N), got((size_t)M * N);
     for (size_t i = 0; i < A.size(); i++) A[i] = rv(1, (int)i);

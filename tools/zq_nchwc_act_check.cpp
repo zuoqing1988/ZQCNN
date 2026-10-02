@@ -25,6 +25,7 @@
  *  · 每用例 fork 一个子进程，子进程 stderr 接 /dev/null、只写结果文件
  *  · 用真实的 ZQ_CNN_Tensor4D_NCHWC1/4/8 类分配与填充
  */
+#include "zq_check_child.h"
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
@@ -154,7 +155,7 @@ static void one(const Case& c, RUNNER r)
     remove(RES_FILE);
     pid_t pid = fork();
     if (pid == 0) {
-        FILE* dn = freopen("/dev/null", "w", stderr); (void)dn;
+        zq_child_silence_stderr();
         r(c);
         _exit(0);
     }

@@ -42,6 +42,7 @@
  * 沿用 CB~CW：名字写全走函数指针表、每用例 fork 子进程并
  * **显式判"没读到结果文件" = 失败**（CJ.4）、缓冲按对齐要求分配。
  */
+#include "zq_check_child.h"
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
@@ -164,7 +165,7 @@ static void one(const Case& c)
     remove(RES_FILE);
     pid_t pid = fork();
     if (pid == 0) {
-        FILE* dn = freopen("/dev/null", "w", stderr); (void)dn;
+        zq_child_silence_stderr();
         run_one(c);
         _exit(0);
     }

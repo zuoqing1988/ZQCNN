@@ -21,6 +21,7 @@
 // 每个用例 fork 一个子进程（附录 BO.5 / BN.5：崩溃会吃掉整张表），
 // 且子进程**只把结果写进文件**，不写 stdout（CA.3：子进程写 stdout 会截断网格）。
 
+#include "zq_check_child.h"
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
@@ -205,7 +206,7 @@ static void one(const Shape& s)
     remove(RES_FILE);
     pid_t pid = fork();
     if (pid == 0) {
-        FILE* dn = freopen("/dev/null", "w", stderr); (void)dn;   // 子进程不碰 stdout
+        zq_child_silence_stderr();   // 子进程不碰 stdout
         int r = run_case(s);
         _exit(r == 2 ? 3 : 0);
     }

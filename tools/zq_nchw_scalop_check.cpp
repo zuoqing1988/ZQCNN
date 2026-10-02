@@ -28,6 +28,7 @@
  * **pixelStep 就是 C**（附录 CO.5 记过我在这里栽过三次）。
  * 缓冲区一律 32 字节对齐（附录 CJ.4 / CP.5）。
  */
+#include "zq_check_child.h"
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
@@ -198,7 +199,7 @@ static void one(const Case& c)
     remove(RES_FILE);
     pid_t pid = fork();
     if (pid == 0) {
-        FILE* dn = freopen("/dev/null", "w", stderr); (void)dn;
+        zq_child_silence_stderr();
         run_one(c);
         _exit(0);
     }

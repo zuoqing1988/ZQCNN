@@ -28,6 +28,7 @@ tools/check_text_encoding.py。
 import argparse
 import glob
 import os
+import re
 import subprocess
 import sys
 
@@ -613,17 +614,24 @@ def main():
         #   UBSan -> "runtime error:" 行数。**不要指望 rc**：不加
         #            -fno-sanitize-recover=all 的话 UBSan 只打一行就继续跑，rc 恒为 0，
         #            那一栏永远是 0 等于没查（2026-10-02 实测）。
+        # **ZQ_CHILD_ERR**（附录 CZ）：fork 型门禁的子进程把 stderr 重定向到
+        # 这个文件，而不是 /dev/null —— 否则 sanitizer 的报告会被**一起吞掉**，
+        # 现象是"知道门禁失败了、不知道它为什么失败"（附录 CY.4）。
+        # 判定失败时由下面的代码把这个文件的前若干行打出来。
+        ce = '/tmp/zqchecks/' + tag + '.child.err'
         if args.ubsan:
             lines.append(
-                "if [ -x ./%s ]; then UBSAN_OPTIONS=print_stacktrace=1:halt_on_error=1 ./%s > %s.out 2>&1; "
+                "if [ -x ./%s ]; then ZQ_CHILD_ERR=%s "
+                "UBSAN_OPTIONS=print_stacktrace=1:halt_on_error=1 ./%s > %s.out 2>&1; "
                 "echo \"R|%s|$?|$(grep -c 'runtime error:' %s.out)|"
                 "$(grep -cE 'FAIL' %s.out)\"; fi"
-                % (tag, tag, tag, tag, tag, tag))
+                % (tag, ce, tag, tag, tag, tag, tag))
         else:
             lines.append(
-                "if [ -x ./%s ]; then ASAN_OPTIONS=detect_leaks=1 ./%s > %s.out 2>&1; "
+                "if [ -x ./%s ]; then ZQ_CHILD_ERR=%s ASAN_OPTIONS=detect_leaks=1 "
+                "./%s > %s.out 2>&1; "
                 "echo \"R|%s|$?|$(grep -cE 'FAIL' %s.out)|0\"; fi"
-                % (tag, tag, tag, tag, tag))
+                % (tag, ce, tag, tag, tag, tag))
     lines.append('echo R|__END__|0|0')
     out = run_wsl('\n'.join(lines))
 
@@ -637,6 +645,37 @@ def main():
             parts = line.split('|')
             if len(parts) >= 5:
                 results.append((parts[1], parts[2], parts[3], parts[4]))
+
+    # 把各门禁的子进程 stderr 拉回本地（附录 CZ）。
+    # WSL 里的 /tmp 与本地 TEMP 是两个文件系统，不拿回来就打不开。
+    # **必须放在下面"打印失败详情"的循环之前** —— 第一版把它放在循环后面，
+    # 于是第一轮跑完时文件还没到本地、什么都不打，第二轮才看得到；
+    # 而回归通常是"跑一次就去看"，看到的正好是空的那一轮。
+    #
+    # **必须走 run_wsl（脚本经 stdin 送进 bash）**，不能用
+    # subprocess.run('wsl ... bash -lc "..."', shell=True)：后者要过 cmd.exe，
+    # 里面的 `;` `*` `2>/dev/null` 全会被 cmd 先解释一遍，第一版就是这么写的，
+    # 结果本地目录空着、报告一个也没拉回来（而 WSL 侧其实已经写好了）。
+    # 本地路径要先转成 /mnt/<盘符>/... 的形式 WSL 才认得。
+    tmp = os.environ.get('TEMP', '.')
+    cdir = os.path.join(tmp, 'zqchild')
+    try:
+        if not os.path.isdir(cdir):
+            os.makedirs(cdir)
+        m2 = re.match(r'([A-Za-z]):[\\/]+(.*)', tmp)
+        if m2:
+            wsl_tmp = '/mnt/%s/%s' % (m2.group(1).lower(), m2.group(2).replace('\\', '/'))
+        else:
+            wsl_tmp = tmp.replace('\\', '/')
+        run_wsl('cp -n /tmp/zqchecks/*.child.err %s/zqchild/ 2>/dev/null; true'
+                % wsl_tmp.rstrip('/'))
+        for fn in os.listdir(cdir):
+            if fn.endswith('.child.err'):
+                dst = os.path.join(tmp, 'zqchild_' + fn[:-len('.child.err')])
+                with open(os.path.join(cdir, fn), 'rb') as a, open(dst, 'wb') as b:
+                    b.write(a.read())
+    except (OSError, IOError):
+        pass
 
     print()
     nfail = 0
@@ -652,6 +691,23 @@ def main():
         if nassert != '0':
             why.append('%s 条断言失败' % nassert)
         print('%-34s %s' % (name, 'PASS' if ok else 'FAIL (%s)' % ', '.join(why)))
+        if not ok:
+            # 把子进程的 sanitizer 报告打出来（附录 CZ）。
+            # 不打的话，一个 fork 型门禁因为 ASan/UBSan 报错而红时，
+            # 操作员只看到"没跑完"，还得单独把二进制手工跑一遍才看得到原因。
+            cpath = os.path.join(tmp, 'zqchild_' + name)
+            try:
+                if os.path.isfile(cpath) and os.path.getsize(cpath):
+                    print('---- %s 子进程 sanitizer 报告（前 24 行）----' % name)
+                    with open(cpath, encoding='utf-8', errors='replace') as f:
+                        for i, line in enumerate(f):
+                            if i >= 24:
+                                print('   ...')
+                                break
+                            print('   ' + line.rstrip())
+                    print('---- 报告结束 ----')
+            except IOError:
+                pass
     for name, msg in build_fail:
         nfail += 1
         print('%-34s BUILD FAIL: %s' % (name, msg))

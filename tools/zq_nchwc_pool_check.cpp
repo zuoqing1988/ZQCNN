@@ -39,6 +39,7 @@
  *
  *   max pooling 不做除法，所以 nodivided / suredivided 的区别**只在边界处理**。
  */
+#include "zq_check_child.h"
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
@@ -174,7 +175,7 @@ static void one(const Case& c, RUNNER r)
     remove(RES_FILE);
     pid_t pid = fork();
     if (pid == 0) {
-        FILE* dn = freopen("/dev/null", "w", stderr); (void)dn;
+        zq_child_silence_stderr();
         r(c);
         _exit(0);
     }

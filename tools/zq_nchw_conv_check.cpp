@@ -22,6 +22,7 @@
  * extern "C" 声明是**照抄 `zq_cnn_convolution_gemm_32f_align_c.h` 连参数名一起抄**的：
  * C 链接不检查 arity，少写一个参数只会让实参整体错位（AGENTS.md 专门有一条）。
  */
+#include "zq_check_child.h"
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
@@ -247,7 +248,7 @@ static void one(Case& c)
     remove(RES_FILE);
     pid_t pid = fork();
     if (pid == 0) {
-        FILE* dn = freopen("/dev/null", "w", stderr); (void)dn;
+        zq_child_silence_stderr();
         int r = run_case(c);
         _exit(r == 2 ? 3 : 0);
     }

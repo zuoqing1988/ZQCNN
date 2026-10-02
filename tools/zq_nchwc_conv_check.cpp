@@ -30,6 +30,7 @@
 // 边框（input.GetFirstPixelPtr() - padH*in_widthStep - padW*4）。带 pad 的那部分
 // 记在附录 BT.5，**不假装验过**。
 
+#include "zq_check_child.h"
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
@@ -292,7 +293,7 @@ int main()
             fflush(stdout);
             pid_t pid = fork();
             if (pid == 0) {
-                FILE* dn = freopen("/dev/null", "w", stderr); (void)dn;
+                zq_child_silence_stderr();
                 remove(CHK_FILE);
                 int r = run_case(s, 1, false);
                 _exit(r == 2 ? 3 : r);

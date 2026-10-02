@@ -24,6 +24,7 @@
  * 沿用 CB/CE/CF/CG 已验证过的做法：名字写全走函数指针表、后向误差 + 逐格统计、
  * 每用例 fork 子进程、用真实的 ZQ_CNN_Tensor4D_NCHWC{1,4,8} 类。
  */
+#include "zq_check_child.h"
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
@@ -186,7 +187,7 @@ static void one(const Case& c, RUNNER r)
     remove(RES_FILE);
     pid_t pid = fork();
     if (pid == 0) {
-        FILE* dn = freopen("/dev/null", "w", stderr); (void)dn;
+        zq_child_silence_stderr();
         r(c);
         _exit(0);
     }

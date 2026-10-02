@@ -64,6 +64,7 @@
 #ifndef _GNU_SOURCE
 #define _GNU_SOURCE
 #endif
+#include "zq_check_child.h"
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
@@ -296,7 +297,7 @@ static void one(const Case& c)
     remove(RES_FILE);
     pid_t pid = fork();
     if (pid == 0) {
-        FILE* dn = freopen("/dev/null", "w", stderr); (void)dn;
+        zq_child_silence_stderr();
         if (c.group == G3) run_notsame(c);
         else                 run_fail_path(c, c.group == G1 ? 0 : 1);
         _exit(0);
