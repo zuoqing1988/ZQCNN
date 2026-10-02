@@ -2429,3 +2429,51 @@ A10 在**出现一条既没有同函数守卫、也不在白名单里的除法**
 
 四次**每一次都有一个很自信的"解释"**。**一个观察对不上时，先怀疑观察工具本身** ——
 这条已经写进 AGENTS.md，但执行上我显然没做到。
+
+
+## 新增/变更：附录 BJ —— 16 个文件共享一条**没有任何文档**的所有权约定
+
+### 起因
+
+附录 BI 里那个 LeakSanitizer 假泄漏（84 KB x 36）其实是个信号：
+测试作者（含我）**不知道 `*buffer` 到底归谁**，只能靠 ASan 报出来的现象反推。
+
+反过来说：这条约定一旦被误解成"内核会替你释放"，改代码的人就会在
+内核里加一句 `_aligned_free(*buffer)` —— **直接变成 double free**。
+
+### 现状：全 0
+
+    $ grep -rl "void\*\* *buffer" --include=*.h ZQCNN/layers_c ZQCNN/layers_nchwc | wc -l
+    16
+    $ 对每个文件 grep "所有权|调用方负责|归调用方"
+    （16 个文件全部是 0）
+
+带这对参数的公开头/源文件共 16 个（convolution / deconvolution / innerproduct /
+lstm 的 NCHW 版 + NCHWC 版 + packed4/prepack4 变体），**没有一处**说明
+`*buffer` 归谁。
+
+### 补的契约说明
+
+在 6 个**公开头**的文件开头各加一段（`layers_c/` 的 convolution / deconvolution /
+innerproduct / lstm，`layers_nchwc/` 的 convolution / innerproduct）：
+
+    buffer == NULL  —— 内核自己 _aligned_malloc / _aligned_free，用完即走。
+    buffer != NULL  —— 读写的是**调用方**持有的两块内存：
+                        *buffer      指向一块 _aligned_malloc 出来的内存
+                                      （或者 NULL，表示"还没分配过"）；
+                        *buffer_len  是它的字节数。
+                      容量不够时内核会 _aligned_free(*buffer) 再重新分配，
+                      并把新指针/新长度写回去。
+                      **返回之后这块内存归调用方，内核不再持有、也不再释放它。**
+
+同时写清了**为什么**要写这一段（BI 里那个假泄漏的例子），
+免得后来人觉得"这是废话注释"给删了。
+
+**零行为变化**（纯注释）。验证：Linux 全量构建无 error，8 个 sample 全 rc=0。
+
+### 顺带一个观察
+
+这 16 个文件是"同一份契约的 16 个副本"，而它们之间的差异（是否 packed、
+是否 prepack、是否 nchwc）**从来不体现在参数上** —— 调用方无法从参数签名
+看出"这个变体会不会把 `*buffer` 换掉"（实际上它们**都会**）。
+这一族将来要重构，第一件事就是把上面那段契约变成**一个**地方，而不是 16 个。
