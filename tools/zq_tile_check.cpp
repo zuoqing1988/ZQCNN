@@ -116,7 +116,9 @@ static const int N_CASE = (int)(sizeof(g_cases) / sizeof(g_cases[0]));
 // 它不能进默认回归（红的门禁会把人引导到“已经修好了”的错误结论），
 // 也不能完全删掉（就等于把缺陷到期后清零）。所以单独起一个表、默认跳过、但每轮都打印。
 static const Case g_known[] = {
-  { K_A0, 2, 5, 2, 3, 2, 1, 1, 2, 1 },
+  // 现在是空的：附录 DD.9 把 N>1 那组定位并修好了。
+  // 机制保留：下次出现“已知但未定位”的缺陷时，放进来即可，
+  // 而不用去动 g_cases[]——那样会让缺陷到期清零。
 };
 static const int N_KNOWN = (int)(sizeof(g_known) / sizeof(g_known[0]));
 static int g_run_known = 0;        // --known-fail 时运行它们（默认关）

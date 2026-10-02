@@ -283,9 +283,15 @@ namespace ZQ
 			int n, h, w;
 
 			// Tile C
+			// **审计修复 2026-10-03（附录 DD.9）**：n 循环的增量原来写成了
+			// `out_slice_ptr += sliceStep`——用的是**输入**张量的 sliceStep，而不是 out.sliceStep。
+			// 只要 tile_c/tile_h/tile_w 中有任何一个 >1，out.sliceStep 就大于 sliceStep，
+			// 第 2 个及以后的 slice 整体前移，最后一部分永远不被写。
+			// 全部 tile=1 时 out 的尺寸与 in 一致、sliceStep 恰好相等，**所以看不出错**。
+			// 触发条件：N>1 且任一 tile 方向 >1。实测 N=2,C=5,H=2,W=3,tile=1x1x1x2 → 90 格错。
 			for (n = 0, in_slice_ptr = firstPixelData, out_slice_ptr = out.firstPixelData;
 				n < N;
-				n++, in_slice_ptr += sliceStep, out_slice_ptr += sliceStep)
+				n++, in_slice_ptr += sliceStep, out_slice_ptr += out.sliceStep)
 			{
 				for (h = 0, in_row_ptr = in_slice_ptr, out_row_ptr = out_slice_ptr;
 					h < H;
