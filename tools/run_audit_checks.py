@@ -79,6 +79,16 @@ GROUPS = [
      ['check_uncked_cv_return.py', '--selfcheck'], False),
     ('A12 "丢弃 OpenCV bool 返回值" 普查 (check_uncked_cv_return)',
      ['check_uncked_cv_return.py'], False),
+    # A13/A14 是附录 CC 的门禁：NCHWC 那一族的 _C3 内核把通道数 3 **硬编码**进
+    # im2col 展开（实测传 C=4 / C=6，输出与 C=3 逐位相同 —— 不报错、不崩溃，
+    # 只是安静地只算前 3 个通道，比崩溃更危险），所以每个调用点都得有 C==3 守卫。
+    # 现状 29 个调用点全部有守卫；这个门禁保证以后新增调用点时不会漏。
+    # **只管 NCHWC 那一族**：NCHW（layers_c）那一族也叫 _C3，但它是通用实现
+    # （memcpy 按实际 filter_C），守的是 in_C <= 4 / <= 8，不要求恰好等于 3。
+    ('A13 "NCHWC _C3 调用点的 C==3 守卫" 自测 (check_c3_guards --selfcheck)',
+     ['check_c3_guards.py', '--selfcheck'], False),
+    ('A14 "NCHWC _C3 调用点的 C==3 守卫" 普查 (check_c3_guards)',
+     ['check_c3_guards.py'], False),
     ('B  ZQlib 独立回归测试 x10 (ASan+LSan)', ['run_zqlib_checks.py'], False),
     # 基线路径给**绝对路径**：子进程以 ROOT 为 cwd 运行，而基线文件在 tools/ 下，
     # 相对路径会解析成 <ROOT>/zqlib_probe_baseline.txt 而找不到（2026-10-02 实测）。
