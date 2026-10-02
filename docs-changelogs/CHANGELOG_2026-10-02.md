@@ -3207,3 +3207,92 @@ D4 组同样只看退出码。实测 6 个 exe 全是真跑：
 
 `run_sample_regression.sh` 已改。Windows 侧（D4）**仍然只看退出码** ——
 本轮查过 6 个都是真跑的所以没改；要改是同一套做法。
+
+## 新增/变更：附录 BS —— NCHWC「no_padding」卷积族（MTCNN 真正走的那一支）
+
+### 变更文件
+- `tools/zq_nchwc_conv_check.cpp`：新加，NCHWC 3x3 的 6 个内核 x 9 组形状 x 2 种 buffer
+- `tools/run_zqlib_checks.py`：登记 `zq_nchwc_conv`（`--with-slow`）
+- `audit_k3_20261001.md`：新增**附录 BS**
+
+### 先纠正我自己的一个判断
+
+上一轮（BR）我说「NCHWC 3x3 卷积在 x86 上是 `return false`，所以 packed 那一族
+在 x86 是死代码」。**这句话只对了一半** —— 那个 `return false` 属于 **packed 族**。
+真正在 x86 上跑 MTCNN 3x3 卷积的是**另一个族**：
+
+    zq_cnn_conv_no_padding_gemm_nchwc4_kernel3x3{,_with_bias,_with_bias_prelu}
+    zq_cnn_conv_no_padding_gemm_nchwc4_kernel3x3_C3{,_with_bias,_with_bias_prelu}
+
+`SampleMTCNN_NCHWC4` 在 Linux 上确实检出 92/88/45/29 张脸（BR.2 记过），
+所以走的一定是这一族。**这一族此前零测试覆盖。**
+
+### 覆盖范围与取舍
+
+先只覆盖 NCHWC4 的 3x3 两支 x 3 个激活动作 = 6 个内核。
+**不全铺开**是因为这一族每种对齐约 19 个入口 x 3 种对齐，参数契约
+（stride/dilation/padding 各自怎么处理）每支都不一样，一次全铺很容易变成
+「照着调用点抄参数、但不知道该填几」—— 那是附录 BI 栽过的坑。宁可少而对。
+1x1 / 2x2 / general 留给下一片。
+
+布局仍然不用自己推：用真实的 ZQ_CNN_Tensor4D_NCHWC4 类算 stride、
+用 ConvertFromCompactNCHW 填普通 [N][C][H][W]。判据用**后向误差**（BO.3 的坑）。
+
+### 我的测试自己写错了一处（ASan 当场抓到）
+
+给输出填哨兵时用了 `n*oIS + oh*oSS + ow*oWS + k` —— 那是 **NCHW** 的算法。
+NCHWC4 是 `[n][c/4][h][w][4]`：
+
+    #define OUT_IDX(nn, ohh, oww, kk) \
+        ((nn) * oIS + ((kk) / 4) * oSS + (ohh) * oWS + (oww) * 4 + ((kk) % 4))
+
+ASan 报 heap-buffer-overflow（写到缓冲区右边 96 字节）。
+
+值得记的是**为什么同一个简化式在 innerproduct 那个测试里是对的**：
+innerproduct 的输出是 [N,1,1,K]，那里 sliceStep 恰好等于 align，
+于是 `(k/4)*4 + k%4 == k`。**同一个错法在两个测试里表现完全不同** ——
+所以不能靠"上次这么写是对的"来判断。
+
+### 【已定位，未修】filter_N % 4 != 0 会在 col2im 里越界
+
+隔离实验（一次只动一个变量）：
+
+| 组 | C | H=W | stride | K | oW | oW%4 | 结果 |
+|---|---|---|---|---|---|---|---|
+| A | 3 | 28 | 1 | 12 | 26 | 2 | 通过 |
+| B | 3 | 28 | 1 | 10 | 26 | 2 | SEGV (col2im.h:124) |
+| C | 3 | 27 | 1 | 10 | 25 | 1 | SEGV (col2im.h:60) |
+
+A 与 B 只差 K；B 与 C 的 K 相同、只把 oW 的余数从 2 换成 1。所以：
+* 与 stride / H / W **无关**
+* 与 out_W%4 是哪一支 **无关**（B 崩在 ==2 那一支，C 崩在**另一支**）
+* 唯一自变量是 **filter_N % 4**
+
+`zq_cnn_convolution_gemm_nchwc_col2im.h` 里每一支都是
+`for (kc = 0; kc < out_C; kc += zq_mm_align_size, ...)`（一次处理 4 个 filter），
+`out_C` 就是 `filter_N`，不是 4 的倍数时最后一组会多处理 2~3 个 —— 越界读 matrix_C、
+越界写输出。与附录 BP.4 第 1 条同族。
+
+**wrapper 从不校验它**：`ZQ_CNN_Forward_SSEUtils_NCHWC::Convolution*` 只查了
+`filter_C == in_C` 和 `filter_N == bias_C`（ZQ_CNN_Forward_SSEUtils_NCHWC.cpp:2777），
+**没有查 filter_N % 4**。所以输出通道数不是 4 的倍数的模型，在 NCHWC 3x3 卷积上
+会**直接段错误**，而不是干净地 return false。
+
+**为什么 MTCNN 现在没事**（实测不是推测）：P-net 的 3x3 卷积输出通道数 10/16/32，
+其中 16、32 是 4 的倍数；conv1（10 通道）的输出宽度落在 out_W%4 != 2 的那一支上；
+唯一 filter_N=2 的那一层（conv4-1）**是 1x1**，走另一个内核。**三件事凑巧都躲开了。**
+
+**本轮不修**：要动的是 packed 微内核的 col2im 收尾（每支都要补尾巴），
+而守卫该加在哪一层、1x1/2x2/general 那几支是不是同样要求 4 的倍数，本轮都**没测**。
+加一个只覆盖 3x3 的半截守卫比不加以更坏（让人以为契约已被守住）。留给下一片。
+
+### 实测结果
+
+    共 54 个用例（跳过 0 个形状不合法），PASSED (g_fail = 0)
+
+**内核本身是对的** —— 6 个内核、9 组形状、两种 buffer 模式，逐位落在后向误差
+1e-5 以内。找到的是**契约**问题（filter_N % 4），不是算错。
+
+本轮只加了测试与文档，没有动库代码。
+  python tools/run_audit_checks.py --quick   ->  ALL CHECKS PASSED
+  python tools/run_zqlib_checks.py --with-slow zq_nchwc_conv
