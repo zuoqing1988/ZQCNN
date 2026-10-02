@@ -85,18 +85,11 @@ def main():
     # 明确不自动跑、但保留在仓库里的测试。
     # 每一个都要写清理由 —— "跑不过所以不跑"和"它是已知的未修项所以不跑"
     # 是两件完全不同的事，混起来就成了"无法验证"那个自我实现的结论（附录 W）。
-    SKIP = {
-        'zq_bns': ('它钉的是 ZQCNN/layers_nchwc/zq_cnn_batchnormscale_nchwc_raw.h。'
-                   '那个文件是**半死**的：9 个包装函数零引用，但主内核 '
-                   'zq_cnn_batchnorm_b_a_nchwc1/4/8 **是活的**'
-                   '（ZQ_CNN_Forward_SSEUtils_NCHWC.cpp:1454/3746/5359 经 '
-                   'ZQ_CNN_Layer_NCHWC_BatchNormScale::Forward 调用）。'
-                   '它的三个内层步长写的是 NCHW 约定，而 NCHWC 里 C 在最内层 —— '
-                   '**已知未决**（附录 AY.5：连张量自己 widthStep/sliceStep 的定义'
-                   '都还没核实，所以本轮明确不碰）。跑这个测试会对拍失败并 abort，'
-                   '这是**预期行为**：把一条未决缺陷变成一条每次都有人说"它在红"的记录。'
-                   '已修的那两处（malloc 判空、读模型参数用 in_C 上界）由它钉住。'),
-    }
+    # 2026-10-02 一度把 zq_bns 放在这里（理由是「主内核索引约定已知未决」）。
+    # 核实之后那个理由不成立：NCHWC 的布局是 [n][c片][h][w][align]，
+    # 三个内层步长（imStep / sliceStep / widthStep / align）**全对**。
+    # 现在 99 个用例逐位精确（相对误差 0.00e+00），它回到正常回归里。
+    SKIP = {}
     ap.add_argument('--no-asan', action='store_true',
                     help='不带 sanitizer 编译（想先确认能不能编过时用）')
     ap.add_argument('--ubsan', action='store_true',
