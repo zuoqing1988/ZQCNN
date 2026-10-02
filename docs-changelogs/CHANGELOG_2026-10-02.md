@@ -3842,3 +3842,94 @@ ZQCNN\ZQ_CNN_Forward_SSEUtils.cpp           0 个 _C3 调用点，0 个没守卫
 ```
 
 `python tools/run_audit_checks.py --quick` → A13/A14 均 OK。
+## 新增/变更：附录 CD —— NCHWC 的 packed4 微内核族在 x86 上是整块死代码（21 个内核 / 6276 行 / 零执行）
+
+### 变更文件
+
+* `audit_k3_20261001.md` —— 新增附录 CD
+* `docs-changelogs/CHANGELOG_2026-10-02.md` —— 本节
+
+**没有改动任何生产代码。** 本轮是纯审计 + 一次环境能力探测。
+
+### 结论
+
+| | 数量 |
+|---|---|
+| `zq_cnn_convolution_gemm_nchwc_packed4.h` 的函数定义 | **7** |
+| 每个 × plain / with_bias / with_bias_prelu | **21 个内核** |
+| 该文件行数 | **6276** |
+| x86 的 `conv.o` 里实际存在的 packed 符号 | **9**（3 个无 ARM 守卫的定义 × 3） |
+| **x86 上会被调用的 packed 内核** | **0** |
+
+即：**9 个编出来但永不执行，另外 12 个（4 个 ARM 守卫定义 × 3）连符号都没有。**
+这 6276 行手写微内核在 Windows 与 Linux 上**一次都没跑过**。
+
+### 三层独立核实（互相印证）
+
+1. **调用点**：维护 `#if` 栈扫 `ZQ_CNN_Forward_SSEUtils_NCHWC.cpp`，
+   12 个 packed4 调用点**全部**在 `#if __ARM_NEON && __ARM_NEON_ARMV8` 里，
+   x86 会编进去的 0 个
+2. **定义**：同样扫 `packed4.h` 自身的 `#if` 栈，7 个定义里 4 个带 ARM 守卫
+   （M4N8 1x1 / M8N8 1x1 / M4N8 3x3_C3 / M8N8 3x3_C3），3 个不带
+3. **符号**：`nm conv_fixed.o | grep -ci packed` = 9，
+   与「3 个无守卫定义 × 3 个激活动作」分毫不差
+
+> 顺带纠正一个容易想当然的地方：`packed4.h` 的 `#include`
+> （`zq_cnn_convolution_gemm_nchwc.c` 的 124 / 162 / 200 / 313 / 339 行）
+> **并不在** ARM 守卫里，所以这 6276 行在 x86 上**确实被编译了**
+> （也因此能吃到 `-Wall` 告警），只是**永不执行**。**「编了」和「跑了」是两回事。**
+
+### 顺带补全了附录 BY 的另一半
+
+BY 当时报的是「x86 上每个 NCHWC 卷积层都在做一次永远不会被读的权重打包，
+实测省掉 724 KB」—— 当时处理的是**分配**。用同一套 `#if` 栈扫 prepack 侧：
+
+```
+ 1699  ..._prepack4_kernel1x1        #if __ARM_NEON || (SSE)     <- x86 会编、也会被调
+ 1714  ..._prepack4_kernel3x3_C3C4   #if __ARM_NEON || (SSE)     <- x86 会编、也会被调
+ 1693  ..._prepack8_other_kernel1x1  #if __ARM_NEON && ARMV8     <- x86 不编
+ 1708  ..._prepack8_other_kernel3x3_C3  #if __ARM_NEON && ARMV8  <- x86 不编
+```
+
+**生产侧（打包）x86 会跑，消费侧（packed 内核）x86 一概不调** ——
+打包出来的 `packedfilters.data` 在 x86 上是纯粹的死数据，**调用本身也不该发生**。
+
+### 对 CB / CC 覆盖结论的修正
+
+* 我这两轮做的两道门禁（`zq_nchwc_conv_check` / `zq_nchwc_conv8_check`）测的全是 **raw** 族
+* 当时以为「packed 族没测 = 覆盖缺口」。核实之后结论**反过来**：
+  **在 x86 上 raw 族就是唯一的卷积路径**，门禁覆盖面是完整的
+  （CB.3 那句「general / kernel2x2 / kernel3x3 三支全绿」是真的全绿）
+* 但这**不等于 packed 族没问题**，而是**等于 packed 族在 x86 上无法被证伪**。
+  CB 的经验是**同一族里相邻两个函数可以差出三处独立缺陷**
+  （`kernel2x2_C3` vs `kernel3x3_C3`），所以「没跑过」和「是对的」之间没有任何逻辑关系
+
+### 想验证它需要什么（本机做不到，如实记录）
+
+最小条件是 ARM 交叉编译 + qemu-user：
+
+```
+$ which aarch64-linux-gnu-gcc qemu-aarch64     ->（空）
+$ apt-cache policy qemu-user-static gcc-aarch64-linux-gnu
+qemu-user-static:      Installed: (none)   Candidate: 1:4.2-3ubuntu6.30
+gcc-aarch64-linux-gnu: Installed: (none)   Candidate: 4:9.3.0-1ubuntu2
+$ sudo -n true
+sudo: a password is required
+```
+
+两个包 apt 源里都有，但**本机 sudo 需要密码**，装不了。
+**本轮不对 packed 族做任何运行时验证，也不做任何「它应该是对的」的断言。**
+要做得装 `gcc-aarch64-linux-gnu` + `qemu-user-static`，用
+`-D__ARM_NEON=1 -D__ARM_NEON_ARMV8` 交叉编译，并在 qemu 下跑与 CB 同一套逐格判据的门禁。
+
+与本仓库已记的另外两条同类限制并列：
+Linux 侧**没有 OpenCV 的 `.so`**（凡 OpenCV 路径只能读代码）、
+Windows 侧 MSVC 与 gcc 的检查覆盖面不同。
+
+### 一条不打算改的观察
+
+`packedM8N8_other_kernel3x3_C3` 开头 `if (*buffer_len < need_buffer_size)`
+**直接解引用、没有 `buffer != 0` 的分支**，而 raw 族把 `buffer == 0` 定义成
+「内部分配、结束时释放」并显式支持。**这不是缺陷** —— 唯一调用方永远传真实 buffer，
+与 CC.5 里 `same_pixstep_kernel1x1` 同一类。记下来是因为将来若要给 packed 族写门禁，
+**别按 raw 族的用法传 `buffer = 0`**。
