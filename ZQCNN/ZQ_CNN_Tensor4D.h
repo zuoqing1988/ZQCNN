@@ -239,12 +239,40 @@ namespace ZQ
 
 		virtual bool Tile(ZQ_CNN_Tensor4D& out, int tile_n, int tile_h, int tile_w, int tile_c) const
 		{
-			int out_N = N*tile_n;
-			int out_H = H*tile_h;
-			int out_W = W*tile_w;
-			int out_C = C*tile_c;
-			if (out_N <= 0 || out_H <= 0 || out_W <= 0 || out_C <= 0)
+			// 审计修复 2026-10-02（附录 BF）：tile_* 来自**模型文件**（不可信输入）。
+			// 原来这里是**未检查的整数乘法**：
+			//     int out_N = N*tile_n;  int out_H = H*tile_h;
+			//     int out_W = W*tile_w;  int out_C = C*tile_c;
+			// 而下面三个循环都是"按 tile_* 的次数、每次前进对应步长"地 memcpy/写：
+			//     for (tc = 0; tc < tile_c; tc++) { memcpy(out_c_ptr, in_c_ptr, 4*C); out_c_ptr += C; }
+			//     for (w = 1; w < tile_w; w++) memcpy(out_pix_ptr + w*elt_num, in_pix_ptr, 4*elt_num);
+			//     for (h = 0; h < tile_h; h++) ...
+			// 只要乘积**回绕**后落在一个小的正数上，ChangeSize 就按这个小值分配，
+			// 循环却按 tile_* 的原始值写 —— **堆缓冲区溢出写**。
+			// 例：N=H=W=1, C=3, tile_c=0x55555556
+			//     3 * 0x55555556 = 0x100000002，截成 int 是 **2**
+			//     -> out_C=2，ChangeSize 成功；循环却 memcpy 0x55555556 次。
+			// 修法：乘积用 __int64 算，并要求落在 [1, 0x7FFFFFFF]。
+			// 顺带把 tile_* <= 0 也拒掉（原来 0 会让 out_* <= 0 提前 return，
+			// 但负数会让 out_sliceStep 之类走到负步长，语义上也没意义）。
+			if (tile_n <= 0 || tile_h <= 0 || tile_w <= 0 || tile_c <= 0)
 				return false;
+			if (N <= 0 || H <= 0 || W <= 0 || C <= 0)
+				return false;
+			__int64 out_N64 = (__int64)N * tile_n;
+			__int64 out_H64 = (__int64)H * tile_h;
+			__int64 out_W64 = (__int64)W * tile_w;
+			__int64 out_C64 = (__int64)C * tile_c;
+			const __int64 kTileMax = 0x7FFFFFFF;
+			if (out_N64 <= 0 || out_N64 > kTileMax
+				|| out_H64 <= 0 || out_H64 > kTileMax
+				|| out_W64 <= 0 || out_W64 > kTileMax
+				|| out_C64 <= 0 || out_C64 > kTileMax)
+				return false;
+			int out_N = (int)out_N64;
+			int out_H = (int)out_H64;
+			int out_W = (int)out_W64;
+			int out_C = (int)out_C64;
 			if (out.N != out_N || out.H != out_H || out.W != out_W || out.C != out_C)
 			{
 				if (!out.ChangeSize(out_N, out_H, out_W, out_C, 0, 0))

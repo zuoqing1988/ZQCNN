@@ -2154,3 +2154,73 @@ BD 是一次"碰巧看见了"，BE 证明了它是**一类**。25 个会 `atoi` 
 
     wsl make -j8                      100% Built，无 error
     run_sample_regression.sh           8 个 sample 全 rc=0
+
+
+## 新增/变更：附录 BF —— `Tile` 的整数回绕导致堆溢出写（已修）
+
+### 变更文件
+- `ZQCNN/ZQ_CNN_Tensor4D.h`：`Tile` 的四个乘积改用 `__int64` 并做上界校验
+- `audit_k3_20261001.md`：新增**附录 BF**
+
+### 接着 BE 的普查往下走
+
+25 个会 `atoi` 参数的 `ReadParam` 里，剩下的逐个走完：
+
+| 层 | 参数 | 结论 |
+|---|---|---|
+| PriorBox | `step_h/step_w` | OK `ZQ_CNN_Forward_SSEUtils.cpp` 的 4365/4556/4675 三处都有 `if (step_w == 0 || step_h == 0)` |
+| InnerProduct | `kernel_*` / `num_output` | OK 输出尺寸从 filter 张量的实际形状推导，并查形状一致性；无除法 |
+| UpSampling | `align_type` | OK 只被当作 `sample_align_type == 1` 做**比较**，全仓没有 `[align_type]` 下标用法 |
+| UpSampling | `dst_h/dst_w` | OK 过 `ChangeSize` 的 `0x7FFFFFFF` 上界 |
+| DetectionOutput | `keep_top_k` / `nms_top_k` | OK `GetMaxScoreIndex` 是 `if (top_k > -1 && top_k < size()) resize(top_k)`，只截断不增长 |
+| LRN | `local_size` | OK `local_size % 2 != 1` 拒掉 0 与负数；`==1` 的越界已在 AX 修掉 |
+| **Tile** | `tile_n/h/w/c` | **两处都没有兜住** |
+
+### 缺陷本体
+
+`ZQ_CNN_Tensor4D::Tile`（`ZQ_CNN_Tensor4D.h:240`）：
+
+    int out_C = C*tile_c;                       // <-- 未检查的整数乘法
+    ...
+    for (int tc = 0; tc < tile_c; tc++) {        // <-- 按 tile_c 的**原始值**循环
+        memcpy(out_c_ptr, in_c_ptr, sizeof(float)*C);
+        out_c_ptr += C;
+    }
+
+`tile_*` 来自模型文件（`ZQ_CNN_Layer_Tile::ReadParam`，也是 `atoi`、无值域校验）。
+
+**关键在"分配按回绕后的值、写入按原始值"**：
+
+    N=H=W=1, C=3, tile_c=0x55555556
+      3 * 0x55555556 = 0x100000002，截成 int 是 **2**
+      -> out_C = 2，ChangeSize(1,1,1,2) 成功
+      -> 循环却按 0x55555556 次 memcpy 12 字节并前进 12 字节
+      -> **堆缓冲区溢出写**（越界约 10 GB）
+
+`out_N/out_H/out_W` 同理。
+
+**这与附录 H3/H4 修的那类不是同一处**：那次是 `ChangeSize` **内部**
+`dst_sliceStep*dst_N*sizeof(float)` 的溢出；这次是**调用方**传给 `ChangeSize`
+的尺寸本身就已经是回绕过的错误值，`ChangeSize` 看不到问题。
+
+### 修法
+
+四个乘积改用 `__int64`，要求落在 `[1, 0x7FFFFFFF]`，并拒掉 `tile_* <= 0`。
+**零行为变化**：合法模型的 `tile_*` 是 1 或 2，乘积远小于上限。
+NCHWC 那条线**没有 Tile**（`ZQ_CNN_Tensor4D_NCHWC.h` 里搜不到），只需改这一处。
+
+### 教训：溢出防护要作用在**乘法发生的那一行**
+
+BE 的结论是"每一层要么自己查、要么下游一定查"，BF 是个反例：
+`ChangeSize` 的上界校验**只检查传进来的值**，
+它无法知道**这个值本身是不是某个乘积回绕的结果**。
+`Tile` 原本把"检查"和"使用"放在同一函数里，中间隔着一次"回绕后的错误尺寸"，
+于是检查全过、使用越界。
+
+附录 H3/H4 加在 `ChangeSize` 里的 `__int64` 中间量之所以有效，
+是因为那次溢出**发生在 `ChangeSize` 内部**；同样的手法搬到调用方就不管用了。
+
+### 验证
+
+    wsl make -j8                      100% Built，无 error
+    run_sample_regression.sh           8 个 sample 全 rc=0
