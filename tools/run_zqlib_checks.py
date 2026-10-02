@@ -66,6 +66,19 @@ EXTRA_SOURCES = {
     # zq_pool：只 include 了内核的 .c，不含 math/zq_*_mathfun.c，所以 EXTRA_SOURCES
     # 是空的 —— 留个空表项是为了"以后要加时知道该加哪儿"。
     'zq_pool': [],
+    # zq_innerproduct 要链上 ZQ_GEMM 的三个 TU，其中 zq_gemm_32f_align_c.c
+    # 单独一个就要编 5 分钟以上。默认不跑（--with-slow 才跑），理由写在这里。
+    'zq_innerproduct': [
+        # 内核自己也要编 —— 只链 ZQ_GEMM 那三个会 undefined reference
+        'gcc -O1 -g -mavx2 -mfma -fopenmp -c -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include '
+        '$R/ZQCNN/layers_c/zq_cnn_innerproduct_gemm_32f_align_c.c -o $WDIR/zq_ipgemm.o',
+        'gcc -O1 -g -mavx2 -mfma -fopenmp -c -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include '
+        '$R/ZQ_GEMM/math/zq_gemm_32f_align_c.c -o $WDIR/zq_gemm_align.o',
+        'gcc -O1 -g -mavx2 -mfma -fopenmp -c -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include '
+        '$R/ZQ_GEMM/math/zq_gemm_32f_align_c_asm.c -o $WDIR/zq_gemm_asm.o',
+        'gcc -O1 -g -mavx2 -mfma -fopenmp -c -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include '
+        '$R/ZQ_GEMM/math/zq_gemm_32f_auto.c -o $WDIR/zq_gemm_auto.o',
+    ],
     # zq_bns 不自动跑（见 SKIP），但点名时要能真的编出来。
     'zq_bns': [
         'gcc -O1 -g -mavx2 -mfma -c -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include '
@@ -74,18 +87,21 @@ EXTRA_SOURCES = {
         '$R/ZQCNN/math/zq_avx_mathfun.c -o $WDIR/zq_bns_avx.o',
     ],
 }
-EXTRA_LINK = {'zq_lrn': ' $WDIR/zq_lrn_sse.o $WDIR/zq_lrn_avx.o',
+EXTRA_LINK = {'zq_innerproduct': ' $WDIR/zq_ipgemm.o $WDIR/zq_gemm_align.o $WDIR/zq_gemm_asm.o $WDIR/zq_gemm_auto.o',
+              'zq_lrn': ' $WDIR/zq_lrn_sse.o $WDIR/zq_lrn_avx.o',
               'zq_pool': '',
               'zq_bns': ' $WDIR/zq_bns_sse.o $WDIR/zq_bns_avx.o',
               'zq_eltwise': ' $WDIR/zq_eltwise_sse.o $WDIR/zq_eltwise_avx.o'}
-EXTRA_INC = {'zq_lrn': ' -I$R/ZQCNN -I$R/ZQ_GEMM',
+EXTRA_INC = {'zq_innerproduct': ' -I$R/ZQCNN -I$R/ZQ_GEMM',
+             'zq_lrn': ' -I$R/ZQCNN -I$R/ZQ_GEMM',
              'zq_pool': ' -I$R/ZQCNN -I$R/ZQ_GEMM',
              'zq_bns': ' -I$R/ZQCNN -I$R/ZQ_GEMM',
              'zq_eltwise': ' -I$R/ZQCNN -I$R/ZQ_GEMM'}
 # 测内核的测试自己也 include 了那个 .c，所以**主 TU 也要带 -mavx2 -mfma**，
 # 否则 _mm256_set1_ps 这些 always_inline 内建会报
 # "target specific option mismatch"（2026-10-02 实测）。
-EXTRA_CXXFLAGS = {'zq_lrn': ' -mavx2 -mfma',
+EXTRA_CXXFLAGS = {'zq_innerproduct': ' -mavx2 -mfma -fopenmp',
+                   'zq_lrn': ' -mavx2 -mfma',
                    'zq_pool': ' -mavx2 -mfma', 'zq_bns': ' -mavx2 -mfma',
                    'zq_eltwise': ' -mavx2 -mfma'}
 
@@ -106,6 +122,9 @@ def main():
     # 三个内层步长（imStep / sliceStep / widthStep / align）**全对**。
     # 现在 99 个用例逐位精确（相对误差 0.00e+00），它回到正常回归里。
     SKIP = {}
+    ap.add_argument('--with-slow', action='store_true',
+                    help='连那些编译特别慢的测试一起跑（zq_innerproduct 要链 ZQ_GEMM 的'
+                         '三个 TU，其中 zq_gemm_32f_align_c.c 单个 >5 分钟）')
     ap.add_argument('--no-asan', action='store_true',
                     help='不带 sanitizer 编译（想先确认能不能编过时用）')
     ap.add_argument('--ubsan', action='store_true',
@@ -124,6 +143,21 @@ def main():
     # 除非显式点名（args.filter 命中），否则跳过 SKIP 里的那几个，并**把理由打出来**。
     skipped = []
     kept = []
+    SLOW = {'zq_innerproduct': '要链 ZQ_GEMM 的三个 TU，编译 >5 分钟；'
+                               '用 --with-slow 才跑'}
+    if not args.with_slow:
+        skipped_slow = []
+        kept2 = []
+        for s in srcs:
+            tag2 = os.path.splitext(os.path.basename(s))[0][:-6]
+            if tag2 in SLOW:
+                skipped_slow.append((tag2, SLOW[tag2]))
+            else:
+                kept2.append(s)
+        for tag2, why in skipped_slow:
+            print('跳过（慢）%s: %s' % (tag2, why))
+        srcs = kept2
+
     for s in srcs:
         tag = os.path.splitext(os.path.basename(s))[0][:-6]
         if tag in SKIP and tag not in args.filter:

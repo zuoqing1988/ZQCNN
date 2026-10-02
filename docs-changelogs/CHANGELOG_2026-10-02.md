@@ -2363,3 +2363,69 @@ A10 在**出现一条既没有同函数守卫、也不在白名单里的除法**
 ### 验证
 
     run_audit_checks.py --quick     A1~A10 + B 全 OK
+
+
+## 新增/变更：附录 BI —— 把 BC 那条未决项做完（内核没 bug，是我的测试用错形状）
+
+### 结论先说
+
+`zq_cnn_innerproduct_gemm_32f_align{128,256}bit_same_pixstep_batch`
+**是正确的**。附录 BC 记的"第一个用例就崩"从头到尾是测试的问题。
+144 个用例（生产形状下）全部通过，相对误差 <= 2.6e-08，无 ASan 报错、无泄漏。
+
+### 生产调用点的三个约定（BC 里我全猜错了）
+
+唯一调用点 `ZQ_CNN_Forward_SSEUtils.cpp:2417`：
+
+| 约定 | 内容 | BC 里我用的 |
+|---|---|---|
+| 形状门槛 | `out_N >= 16 && filter_N >= 16` 才走 GEMM，其余走 `..._noborder` | **N=1、filter_N=1..17**（生产根本不这么调） |
+| `filter_sliceStep` | **K = H*W*C**（逻辑长度），同时当 sgemm 的 `ldb` | **K*Fpad**（大了 8 倍，im2col 只填 1/8 的列） |
+| 三个 out 步长 | 传**同一个** `out_sliceStep`（out 是 [N,1,1,filter_N]） | 各传各的 |
+
+### filter 布局是 **f 优先**（`[filter_N][K]`）
+
+对拍时**两种布局都算**，结果一目了然：
+
+    a128 malloc align=4 N=16 2x3x8 F=16  A(k优先)=3.43e-01 B(f优先)=2.17e-08  ok f优先[F][K]
+    a256 malloc align=8 N=20 1x1x16 F=33  A(k优先)=2.35e-01 B(f优先)=2.39e-08  ok f优先[F][K]
+
+内核把 `filters_data` 当 `Bt`（`ldb = K`）传给 sgemm，而实际张量是 NCHW 的
+`[filter_N][H][W][C]`，即 `filters[f*K + k]`。两个数差 4 个数量级。
+**同时算两种布局**才没把它误报成"内核错"。
+
+> 对拍失败时先怀疑自己的参考实现：一个**恒定**的相对误差（这里恒为 ~0.3，
+> 换形状/对齐/分配方式都不变）说明差异是**结构性的**，不是"某处算错一点点"。
+
+### buffer 路径的所有权
+
+`buffer != 0` 时内核把 `*buffer` 存进调用方的槽位就不再管了。第一版测试里
+`buf` 是局部变量、不 free，LeakSanitizer 报 **84 KB x 36** —— 那是测试的假泄漏。
+**这条约定内核里没有任何注释**，将来有人改成自己 free 就是 double free，
+值得补一行（本轮未改 `layers_c/` 的注释风格，等下次动那个文件时一起）。
+
+### 接入方式：默认不跑
+
+要链 `ZQ_GEMM` 三个 TU，其中 `zq_gemm_32f_align_c.c` **单个编一次 >5 分钟**
+（98 MB 的 .o）。放进去会让日常回归从 30 秒变成 6 分钟以上，所以给了 `--with-slow`：
+
+    python tools/run_zqlib_checks.py --with-slow zq_innerproduct    # 约 7 分钟
+
+不加时跳过，并**把理由整段打出来**（与 SKIP 表同一个规矩）。
+日常回归仍是 14 组 ASan 测试（~30 秒）。
+
+### 顺带修的链接问题
+
+`EXTRA_SOURCES` 一开始只编了 ZQ_GEMM 那三个 TU、**没编内核自己**，
+于是 undefined reference。补上
+`ZQCNN/layers_c/zq_cnn_innerproduct_gemm_32f_align_c.c` 之后通过。
+
+### 我在这一个测试上错了四次
+
+1. 声明的参数个数写错（BC.4）
+2. 形状用错（约定 ①）
+3. `filter_sliceStep` 约定搞错（约定 ②）
+4. filter 布局搞反（BI.3）
+
+四次**每一次都有一个很自信的"解释"**。**一个观察对不上时，先怀疑观察工具本身** ——
+这条已经写进 AGENTS.md，但执行上我显然没做到。
