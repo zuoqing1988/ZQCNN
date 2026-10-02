@@ -3480,3 +3480,41 @@ matrix_B_rows / B 缓冲区大小 / col2im 的 K 步进要一起改），而这�
 本轮不改 —— 收益为零、风险不为零。
 
 本轮改动：零（又一次修改尝试被回退）。只更新文档与 SKIP 理由。
+
+### 补充：附录 BY —— x86 上每个 NCHWC 卷积层都在做一次永远不会被读的权重打包
+
+**事实**：`ZQ_CNN_Layer_NCHWC::ConvolutionWithBias/PReLU/...` 里
+`packedfilters` 一共只被 4 个地方用（301/336/373/406 行），**四处全在
+`#if __ARM_NEON` 里**，每处的 `#else` 都是把 `*filters` 直接传下去。
+也就是说 **x86 上 Forward 一次都不读 packedfilters**。
+
+但 `ZQ_CNN_Layer_NCHWC_Convolution::Prepack()`（789 行）原来是无条件执行的，
+而 `ZQ_CNN_Net_NCHWC::_prepack()` 对每一层都调一次 Prepack()
+（ZQ_CNN_Net_NCHWC.h:1144）。合起来：**x86 上每个卷积层都白白分配并填了一份
+完整的 filter 副本，然后永远不读。**
+
+**修法**：给 `Prepack()` 加 `#if __ARM_NEON` 守卫。
+**只挡卷积这一类** —— `InnerProduct::Prepack`（2535 行）那一处**不能**挡，
+内积的 packed 路径（`packedM4N4_kernel1x1`）在 x86 上是真被用到的
+（没有 ARM 守卫），一起挡掉会让 x86 内积失效。
+
+**实测**（SampleMTCNN_NCHWC4 峰值 RSS，3 遍取中位数，A/B 是去守卫/加守卫各重编一次）：
+
+    after （带守卫）    29000 KB
+    before（无条件）   29724 KB
+    差                  724 KB
+
+**我第一版估的是"≈10 MB × 线程数"，估错了。** 原因在
+`ZQ_CNN_Forward_SSEUtils_NCHWC.cpp:1677-1718`：`ConvolutionPrePack`
+**只打包两种形状** —— 1x1，以及 3x3 且 C<=4；其它形状直接落空返回。
+MTCNN 的 3x3 卷积绝大多数 C>4（conv2 的 C=10、conv3 的 C=16），
+**根本没进这个打包**，所以被浪费的只有 1x1 那一层。
+规模与"被打包的卷积层数 × 线程数"成正比；1x1 卷积占大头的网络会省得多。
+
+> 方法论：**先估再量，量完要按量的写。** 报告里凡是数字都应该是测出来的。
+
+**附带更正附录 BR 的一句判断**：BR 里写"packed 族在 x86 上只有 1x1 的
+packedM4N4 三变体可达"—— **错**。卷积的 packed 族整族是 ARM-only，
+x86 可达的只有**内积**的 packed，不是卷积的。
+
+回归：双平台全量构建 + sample 回归 + 告警扫描 + MSVC ASan -> ALL CHECKS PASSED

@@ -786,7 +786,28 @@ namespace ZQ
 
 		virtual void Prepack()
 		{
+			// 审计修复 2026-10-02（附录 BY）：x86 上**不该**做这个打包。
+			//
+			// 本类里 packedfilters 一共只被 4 个地方用（301 / 336 / 373 / 406 行），
+			// 四处**全部**在 `#if __ARM_NEON` 里，每处的 `#else` 分支都是把
+			//     *filters
+			// 直接传下去（no_padding 那一族）。也就是说在 x86 上 Forward
+			// **一次都不读** packedfilters。
+			//
+			// 而这里原来是无条件执行的，`ZQ_CNN_Net_NCHWC::_prepack()` 又对
+			// 每一层都调一次 Prepack() —— 于是 x86 上每个卷积层都白白
+			// 分配并填了一份**完整的 filter 副本**，然后永远不读。
+			// 卷积权重通常是一个网络里参数的大头（MTCNN 三个网合计约 2.6M
+			// 参数 ≈ 10 MB），而 net 是**按线程各建一份**的
+			// （ZQ_CNN_MTCNN_NCHWC.h:98 `pnet.resize(thread_num)`），
+			// 所以这份浪费还要再乘一遍线程数。
+			//
+			// 只加 x86/ARM 的这一层守卫；**不要**把 InnerProduct 的 Prepack
+			// （2535 行）也一起挡掉 —— 内积那条 packed 路径在 x86 上是真的
+			// 会被用到（`packedM4N4_kernel1x1`，见附录 BR/BS）。
+#if __ARM_NEON
 			ZQ_CNN_Forward_SSEUtils_NCHWC::ConvolutionPrePack(*filters, packedfilters);
+#endif
 		}
 	};
 
