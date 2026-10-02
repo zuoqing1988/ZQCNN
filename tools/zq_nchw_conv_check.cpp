@@ -105,7 +105,43 @@ static float val(int seed, int idx)
 struct Case {
     int entry, N, H, W, C, K, fH, fW, stride, dil, diff_pixstep;
     int in_pixStep, f_pixStep;     // run_case 回填，只为了把用例行打全
+    int buf_mode;                  // 0 = 传空指针（生产恒走这条）/ 1 = 调用方给缓冲
+    long acc_ok, acc_bad;          // 两种模式累计
+    double acc_worst;
 };
+
+// 逐格比对：后向误差 |got - ref| / sqrt(Σ a²f²)，**逐格统计**（附录 CA.5）
+static int check_out(Case& c, const std::vector<float>& in,
+                     const std::vector<float>& flt, const std::vector<float>& out,
+                     int N, int C, int K, int fH, int fW, int S, int D, int oH, int oW,
+                     int in_pixStep, int in_widthStep, int in_sliceStep,
+                     int f_pixStep, int f_widthStep, int f_sliceStep,
+                     int out_pixStep, int out_widthStep, int out_sliceStep)
+{
+    long n_ok = 0, n_bad = 0;
+    double worst = 0.0;
+    for (int n = 0; n < N; n++)
+        for (int oh = 0; oh < oH; oh++)
+            for (int ow = 0; ow < oW; ow++)
+                for (int k = 0; k < K; k++) {
+                    double sum = 0, sc = 0;
+                    for (int cc = 0; cc < C; cc++)
+                        for (int fh = 0; fh < fH; fh++)
+                            for (int fw = 0; fw < fW; fw++) {
+                                double a = in[(size_t)n * in_sliceStep + (oh * S + fh * D) * in_widthStep + (ow * S + fw * D) * in_pixStep + cc];
+                                double f = flt[(size_t)k * f_sliceStep + fh * f_widthStep + fw * f_pixStep + cc];
+                                sum += a * f; sc += a * a * f * f;
+                            }
+                    double got = out[(size_t)n * out_sliceStep + oh * out_widthStep + ow * out_pixStep + k];
+                    double den = sqrt(sc); if (den < 1e-30) den = 1.0;
+                    double be = fabs(got - sum) / den;
+                    if (be > TOL) n_bad++; else n_ok++;
+                    if (be > worst) worst = be;
+                }
+    c.acc_ok += n_ok; c.acc_bad += n_bad;
+    if (worst > c.acc_worst) c.acc_worst = worst;
+    return 0;
+}
 
 static int run_case(Case& c)
 {
@@ -152,44 +188,54 @@ static int run_case(Case& c)
                 for (int fw = 0; fw < fW; fw++)
                     flt[(size_t)k * f_sliceStep + fh * f_widthStep + fw * f_pixStep + cc] = val(2, ((k * C + cc) * fH + fh) * fW + fw);
 
-    void* buffer = 0;
-    __int64 buffer_len = 0;
     c.in_pixStep = in_pixStep; c.f_pixStep = f_pixStep;
-    buffer = _aligned_malloc(32, 32);
-    if (!buffer) return 2;
 
-    e.fn(&in[0], N, H, W, C, in_pixStep, in_widthStep, in_sliceStep,
-         &flt[0], K, fH, fW, C, f_pixStep, f_widthStep, f_sliceStep,
-         S, S, D, D,
-         &out[0], N, oH, oW, K, out_pixStep, out_widthStep, out_sliceStep,
-         &buffer, &buffer_len);
-    if (buffer) _aligned_free(buffer);
+    // **两种 buffer 模式都要跑**（附录 CU.9）。
+    //
+    // 库的判据是 `if (buffer == 0)` —— 判的是**那个 void** 本身是不是空指针，
+    // 不是 `*buffer`。而生产侧 ZQ_CNN_Layer.h:308 是
+    //     void** tmp_buffer = use_buffer ? buffer : 0;
+    // `use_buffer` 构造函数里初始化为 false，全仓没有一处置 true，
+    // 所以**生产恒定传 0**，恒定走"内部 malloc"那条分支。
+    //
+    // 这道门禁原来只传 `&buffer`，也就是"调用方给缓冲"那条 —— **生产从不走的那条**。
+    // 于是"内部 malloc"模式一直没有任何数值门禁，
+    // 而它恰好是附录 CU.6 那 7 处释放非自有内存、CU.7 那 2 处静默无输出
+    // 所在的分支。**绿色覆盖错了地方。**
+    for (int mode = 0; mode < 2; mode++) {
+        for (size_t i = 0; i < out.size(); i++) out[i] = -12345.0f;
+        void* buffer = 0;
+        __int64 buffer_len = 0;
+        void** parg = 0;                  // mode 0：空指针 -> 内部 malloc
+        if (mode == 1) {                  // mode 1：调用方给缓冲
+            buffer = _aligned_malloc(32, 32);
+            if (!buffer) return 2;
+            parg = &buffer;
+        }
+        e.fn(&in[0], N, H, W, C, in_pixStep, in_widthStep, in_sliceStep,
+             &flt[0], K, fH, fW, C, f_pixStep, f_widthStep, f_sliceStep,
+             S, S, D, D,
+             &out[0], N, oH, oW, K, out_pixStep, out_widthStep, out_sliceStep,
+             parg, mode ? &buffer_len : 0);
+        if (mode == 1 && buffer) _aligned_free(buffer);
+        c.buf_mode = mode;
+        // 注意判据方向：check_out **返回 0 表示成功**（不是指针），
+        // 写成 `if (!check_out(...)) return 2;` 会变成"成功就报 SETUP 失败" ——
+        // 第一版就栽在这里，56 个用例里 43 个报 SETUP 失败，看起来像库坏了。
+        if (check_out(c, in, flt, out, N, C, K, fH, fW, S, D, oH, oW,
+                      in_pixStep, in_widthStep, in_sliceStep,
+                      f_pixStep, f_widthStep, f_sliceStep,
+                      out_pixStep, out_widthStep, out_sliceStep) != 0)
+            return 2;
+    }
 
-    // ---- 逐格统计 ----
-    long n_ok = 0, n_bad = 0;
-    double worst = 0.0;
-    for (int n = 0; n < N; n++)
-        for (int oh = 0; oh < oH; oh++)
-            for (int ow = 0; ow < oW; ow++)
-                for (int k = 0; k < K; k++) {
-                    double sum = 0, sc = 0;
-                    for (int cc = 0; cc < C; cc++)
-                        for (int fh = 0; fh < fH; fh++)
-                            for (int fw = 0; fw < fW; fw++) {
-                                double a = in[(size_t)n * in_sliceStep + (oh * S + fh * D) * in_widthStep + (ow * S + fw * D) * in_pixStep + cc];
-                                double f = flt[(size_t)k * f_sliceStep + fh * f_widthStep + fw * f_pixStep + cc];
-                                sum += a * f; sc += a * a * f * f;
-                            }
-                    double got = out[(size_t)n * out_sliceStep + oh * out_widthStep + ow * out_pixStep + k];
-                    double den = sqrt(sc); if (den < 1e-30) den = 1.0;
-                    double be = fabs(got - sum) / den;
-                    if (be > TOL) n_bad++; else n_ok++;
-                    if (be > worst) worst = be;
-                }
-    FILE* f = fopen(RES_FILE, "w");
+    // ---- 结果文件 ----
     // pixStep 也在结果文件里：子进程填的 c.in_pixStep 父进程看不到（fork 之后
-    // 地址空间是分开的），想让用例行可自证"这一格到底喂了什么"就得传回来
-    if (f) { fprintf(f, "%d %d %ld %ld %.6e\n", in_pixStep, f_pixStep, n_ok, n_bad, worst); fclose(f); }
+    // 地址空间是分开的），想让用例行可自证"这一格到底喂了什么"就得传回来。
+    // 两种 buffer 模式的格子数**合并**统计，所以格数是原来的两倍。
+    FILE* f = fopen(RES_FILE, "w");
+    if (f) { fprintf(f, "%d %d %ld %ld %.6e\n", in_pixStep, f_pixStep,
+                     c.acc_ok, c.acc_bad, c.acc_worst); fclose(f); }
     return 0;
 }
 
@@ -226,7 +272,10 @@ int main()
     setvbuf(stdout, NULL, _IONBF, 0);
     printf("NCHW（layers_c）no_padding 卷积：%d 个入口 x 多组形状（附录 CE）\n", N_ENTRY);
     printf("内核名全部写全、走函数指针表；判据：后向误差，逐格统计\n");
-    printf("每个入口只喂**符合它自己契约**的形状（对齐宽度 / C4 / C3 / batch）\n\n");
+    printf("每个入口只喂**符合它自己契约**的形状（对齐宽度 / C4 / C3 / batch）\n");
+    printf("每个用例**跑两遍**：传空指针（内部 malloc）与传 &buffer（调用方给缓冲）\n");
+    printf("  —— 生产恒走前一条（use_buffer 恒 false，见附录 CU.9）；\n");
+    printf("     原来只跑后一条，也就是**生产从不走的那条分支**\n\n");
 
     for (int e = 0; e < N_ENTRY; e++) {
         const Entry& en = g_entries[e];

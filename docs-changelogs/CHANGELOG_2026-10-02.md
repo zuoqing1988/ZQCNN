@@ -5572,3 +5572,69 @@ GEMM 桩掉两个符号，编一次 3.6 秒（原来要 7 分钟），因此能�
 ARM 实现被 `#if` 掏空后整个 `else if` 只剩 `return false`，与兜底 `else` 逐字相同。
 x86 上对「3x3 且 in_C ≤ 4」没有实现，但分派器的结构看上去像支持它 ——
 记可读性，不动代码，四条都进了基线并写明理由。
+
+## 新增/变更：附录 CV —— 让 CE 门禁去测生产真正走的那条分支，56/56，并当场坐实 CU.7
+
+### 变更文件
+
+* `tools/zq_nchw_conv_check.cpp`（改造：每个用例跑两种 buffer 模式）
+* `audit_k3_20261001.md` 新增附录 CV；**同时更正附录 CU.7 的可达性判断**
+* **没有改动任何生产代码**
+
+### 做了什么
+
+CU.9 记了一笔账：CE 那道门禁一直传 `&buffer`，测的是"调用方给缓冲"那条
+**生产从不走**的分支（`use_buffer` 全仓从未置 true，生产恒传 0、恒走内部 malloc）。
+现在每个用例跑两遍：`buffer=0`（生产那条）与 `&buffer`（原来那条），
+逐格比对合并统计，**56/56 全对**。
+
+### 变异测试：只回退 CU.7，数值门禁直接抓到
+
+严格只回退 CU.7 那 2 处"先分配再判空"，CU.6 的释放修保持不动：
+
+```
+  align128bit_same_or_notsame_pixstep       pix=8/12  FAIL 2592/5184  最差 5.672e+03
+  align256bit_same_or_notsame_pixstep       pix=8/8    FAIL 1296/2592  最差 5.672e+03
+  align128bit_same_or_notsame_pixstep_batch pix=8/12  FAIL 5184/10368 最差 5.672e+03
+  align256bit_same_or_notsame_pixstep_batch pix=8/8    FAIL 2592/5184  最差 5.672e+03
+共 56 个用例：全对 52，有错 4
+```
+
+红的**正好是 4 个 `same_or_notsame` 入口**，`same_pixstep` 族全绿。
+最差相对误差 5.672e+03 就是**输出张量原封不动地留在哨兵值 -12345**。
+
+### 顺带更正 CU.7 的严重性（比第一版判断的高得多）
+
+第一版只盯着 `need_allocate_matrix_Bt`（`in_pixStep < filter_pixelStep`，我判断罕见），
+据此写成"潜伏缺陷"。**漏了判空条件里的另一项**：
+`need_allocate_tmp_out && matrix_C == 0`，而 `matrix_C` **只在 `!need_allocate_tmp_out`
+时才被赋值**（`matrix_C = out_tensor4D_data` 在 `else` 里），
+所以 **`need_allocate_tmp_out` 为真时这一项恒真 → 必然提前 return**。
+
+`need_allocate_tmp_out` 的第一项是 `out_pixStep != filter_N`，
+也就是**输出通道数不是张量对齐宽度的倍数**（align128 要 K 是 4 的倍数、
+align256 要 8 的倍数）—— 不罕见。
+变异结果里 `pix=8/8` 那两行是最好的证据：`in_pixStep == filter_pixStep`，
+`need_allocate_matrix_Bt` 必为 0，它们变红**只能**是 `need_allocate_tmp_out` 那一项
+（这两行是 align256 + K=4）。
+
+修正后的定性：**可达性高于第一版的判断，具体组合未见 shipped 模型命中**
+（修复前 sample 回归全绿，说明随仓库发布的模型没落进这个组合）。
+
+### 改造中自己踩的坑
+
+把逐格比对抽成函数后写成 `if (!check_out(...)) return 2;`，
+而 `check_out` 是**返回 0 表示成功**的（照抄 `if (!buffer) return 2;` 的形状写顺了手），
+结果 56 个用例里 43 个报"SETUP 失败"，看起来像库被改坏。
+靠一行临时 `fprintf(stderr, "r=%d mode=%d")` 定位到 `r=2 mode=0`。
+
+**这是 CT.7「首跑红要先怀疑自己」的第三次变体**：
+工具报出来的"失败"有三种可能——被测代码坏了、判据写反了、门禁根本没测到那件事，
+三者的输出长得一模一样。本会话三轮里三种各撞了一次
+（CT.7 是第一种、CV.3 是第二种、CU.8.1 是第三种）。
+
+### 剩下的一条
+
+`use_buffer` 全仓从未置 true，"调用方给缓冲"那条分支在生产里是死代码。
+本轮没去动它（改动面大，且是另一件事），但记在 CV.6：
+**一个从未被启用的开关，撑着半个代码库的错误处理逻辑。**
