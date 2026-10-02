@@ -3518,3 +3518,40 @@ packedM4N4 三变体可达"—— **错**。卷积的 packed 族整族是 ARM-on
 x86 可达的只有**内积**的 packed，不是卷积的。
 
 回归：双平台全量构建 + sample 回归 + 告警扫描 + MSVC ASan -> ALL CHECKS PASSED
+
+### 补充：附录 BZ —— NCHWC8（align=8）的带 bias 卷积把 bias 整条丢了
+
+把 zq_nchwc_conv_check 从只测 align=4 扩到 align=4 + align=8
+（`SampleLnet106` / `SampleSphereFaceNet` 就是走 NCHWC8 的，所以是生产在跑、
+零测试覆盖）。对齐宽度 4->8 意味着布局公式、补齐槽位数、内核名全变，
+align=8 那一整族是独立的。
+
+结果：
+
+  NCHWC8  align=8，K%8==0（门禁那一档）
+    general / kernel1x1 / kernel2x2 / kernel3x3 / kernel3x3_C3
+      plain              全对
+      with_bias          全错
+      with_bias_prelu    全错
+
+错法由实测钉死（测试在每个失败格多打 got / exp / 差 / (got-exp)/bias）：
+
+    [详细] align=8 general    k=4: got=1.31665814 exp=1.80765820 差=-0.49100007
+    [详细] 该 filter 的 bias = +0.49100003   (got-exp)/bias = -1.0000
+    [详细] align=8 kernel1x1  k=4: (got-exp)/bias = -1.0000
+    [详细] align=8 kernel3x3_C3: (got-exp)/bias = -1.0000
+
+**`(got-exp)/bias = -1.0000` 精确成立**，而参考里 exp = dot + bias，
+所以 **got = dot —— bias 根本没被加上**。
+
+**生产影响**：`SampleLnet106` / `SampleSphereFaceNet` 的卷积基本都带 bias，
+也就是说 x86 上这两个 sample 算出来的特征**少了 bias 项**。
+而**它们不在 `run_sample_regression.sh` 的清单里**，所以回归看不见 ——
+与附录 BR 同一个盲区（只跑 rc=0、不比对结果）。
+
+**根因未定位**（附录 BZ.5 给了线索：col2im 的 `out_W%4==0` 那一支每趟只处理
+4 个通道 a0..a3，而 `kc` 的步长是 align=8；但实测是"一个都没加上"，
+所以要么走的不是这一支、要么 bias 向量载入取错了位置，两种都还没排除）。
+
+**本轮不改**：align=4 那一支现在是**对的**，而 align=8 与它共用同一段 col2im；
+根因没定就动，六支一起坏的风险太大。测试保持红、保持 SKIP。
