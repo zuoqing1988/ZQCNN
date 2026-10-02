@@ -4523,3 +4523,112 @@ align=8 下一样撞 16 字节对齐），而 CF.4 把它们全记成了"全对"
 （`w1 = (2*ow + 1)*realW/wrapW - 1`）以及 `with_safeborder` / `without_safeborder`
 的区别，与 AGENTS.md「三个张量变体对越界 rect 的策略互相冲突」那条直接相关，
 不能照着名字写参考。
+## 新增/变更：附录 CL —— NCHWC resize 门禁，当场查出并修掉一处越界读（同仓另一族是正确写法）
+
+### 变更文件
+
+* `ZQCNN/layers_nchwc/zq_cnn_resize_nchwc_raw.h`
+  —— **修掉一处越界读**（本轮唯一的生产代码改动）：
+  `y0`/`y1` 的边界钳位由 `__min(in_H, …)` 改为 `__min(in_H - 1, …)`
+* `tools/zq_nchwc_resize_check.cpp`（新增）—— NCHWC resize 门禁（6 个入口）
+* `tools/run_zqlib_checks.py` —— 登记 `zq_nchwc_resize`（四处；**不进 SLOW**）
+* `audit_k3_20261001.md` —— 新增附录 CL
+* `AGENTS.md` —— 「写检查类工具」那节补两条
+* `docs-changelogs/CHANGELOG_2026-10-02.md` —— 本节
+
+### 缺陷
+
+`ZQCNN/layers_nchwc/zq_cnn_resize_nchwc_raw.h:176-177`：
+
+    x0[w] = __min(in_W - 1, __max(0, x0[w]));    // x：上界 in_W - 1  正确
+    ...
+    y0    = __min(in_H,     __max(0, y0));       // y：上界 in_H      少了 -1
+    y1    = __min(in_H,     __max(0, y1));       //   同一个函数里，x 那边是对的
+
+坐标超出图时 y 被钳到 `in_H`，而合法行号上界是 `in_H - 1`，
+于是 `in_row0_ptr = in_slice_ptr + y0*in_widthStep` **指到图外面一行**。
+
+**同仓 A/B（决定性）**：`ZQCNN/layers_c/zq_cnn_resize_32f_align_c_raw.h`
+里 NCHW 那一族（NCHW 是 x86 上的**主生产路径**）用的是
+`y_nn = __min(in_H - 1, __max(0, y_nn))`，**5 处全是 `in_H - 1`**。
+同一个功能的两份实现，一份对一份错 —— 这不是设计取舍，是笔误。
+
+### ASan 实证
+
+独立复现程序（与门禁无共用代码），`N=1 16x16 C=8`、`off=(0,0)`、
+`rect=20x20`、`out=16x16`：
+
+    第 12 行：未钳 y0=15 y1=16 -> 钳到 y0=15 y1=16   *** 越界（合法上界 15）***
+    第 13 行：未钳 y0=16 y1=17 -> 钳到 y0=16 y1=16   *** 越界 ***
+    第 14 行：未钳 y0=17 y1=18 -> 钳到 y0=16 y1=16   *** 越界 ***
+    第 15 行：未钳 y0=18 y1=19 -> 钳到 y0=16 y1=16   *** 越界 ***
+
+    ==202917==ERROR: AddressSanitizer: heap-buffer-overflow
+    READ of size 32 at 0x625000004940 thread T0
+        #0 _mm256_load_ps
+        #1 zq_cnn_resize_without_safeborder_nchwc8
+             ZQCNN/layers_nchwc/zq_cnn_resize_nchwc_raw.h:191
+    0x625000004940 is located 0 bytes to the right of 8256-byte region
+
+修掉那两行的 `- 1` 之后，**同一个探针不再被 ASan 拦下，函数正常返回**。
+
+### 生产可达性
+
+从 `ZQCNN/ZQ_CNN_Tensor4D_NCHWC.cpp` 的 **6 个调用点**进入
+（line 252 / 339 / 711 / 798 / 1171 / 1258），
+也就是 **NCHWC 张量上做 resize 的那条路**，检测器（SSD / MTCNN 的 NCHWC 变体）走的就是它。
+
+触发条件：**纵向映射把最后几行的 `y0`/`y1` 顶到 `in_H` 或以上**，
+即 `in_off_y + in_rect_height > in_H`，或下采样倍率让 `coord_y` 走到图外。
+这不是"非法输入" —— 按 AGENTS.md「三个张量变体对越界 rect 的策略互相冲突」那条，
+**MTCNN 家族是故意传入越界 rect 的**（检测框不做图像边界裁剪）。
+
+> 与 `with_safeborder` 的对照：那一支**根本不钳**、按坐标直读，
+> 契约是"调用方保证安全边界"。所以 `without_safeborder` 存在的意义**就是**
+> 替调用方兜住越界 —— 它反而漏了一格，方向完全错了。
+
+### 门禁
+
+6 个入口，两种配置：
+
+* **cfgA**：降采样、off 从 0 起、rect 严格落在图内
+  —— `w_step >= 1` 时 `coord_x_ini >= 0`、末尾 `x1` 仍在图内，**两个变体都安全**、期望相同
+* **cfgB**：`rect = 20x20` 比 `16x16` 的图还大、`out = 16x16`
+  —— `w_step = 1.25`（**非整数**，否则 `sx` 恒为 0、钳位就测不出来），
+  `coord_x(15) = 18.875` → `x0 = 18 > 15`，**钳位必然被走到**。
+  `with_safeborder` 在这个配置下会越界读，所以只给 `without` 跑
+
+  共 9 个用例：全对 9，有错 0，崩溃/搭建失败 0
+
+变异测试（把参考的 y 钳位退回 `in_H`，即复现修复前的写法）：
+**3/9 变红** —— 正好是三个 `without_safeborder` 的 cfgB 用例，
+cfgA 与 `with_safeborder` 保持绿。
+
+### 门禁自己也踩了两次"无效用例"
+
+第一版 cfgB 是"上采样到图边"（`rect=16, out=12`），算下来 `x0=14, x1=15`，
+**根本没越界**。
+第二版换成 `out == in`（`w_step = 1`），`x1 = in_W` 确实越界，
+但此时 **`sx` 恒为 0**（坐标全是整数），而被验证的 `x1` 正是**被 `sx` 加权**的
+（`r0 = v00 + (v01-v00)*sx`）—— 钳不钳对结果毫无影响。
+加上"把参考里的钳位去掉"这个变异之后仍然 **0 红**，才把这两层无效性暴露出来。
+
+> **一个用例"跑通了"不等于"它测到了东西"。**
+> 判据是"变异掉你想验证的那一处，看它会不会变红"。
+> 推论：**设计用例时要问「如果被测的那一行被删掉，这个用例会红吗」**
+> —— 让目标代码处在一个"它不影响结果"的位置上，用例就是废的。
+> （与 CK.4「该红的没红 = 我的变异可能等价」同源，只是这次**用例本身**无效。）
+
+### NCHWC 这一族的覆盖到此为止
+
+  NCHWC 卷积（raw 族）      zq_nchwc_conv / zq_nchwc_conv8   CB
+  NCHWC depthwise           zq_nchwc_depthwise                CF
+  NCHWC 激活层              zq_nchwc_act                      CG
+  NCHWC relu / eltwise      zq_nchwc_elt_relu                 CH
+  NCHWC pooling             zq_nchwc_pool                     CI
+  NCHWC batchnormscale      zq_nchwc_bn                       CJ
+  NCHWC softmax             zq_nchwc_softmax                  CK
+  **NCHWC resize**          **zq_nchwc_resize**                **CL**
+  NCHWC packing / prepack   x86 上不可达（CD）
+
+`ZQ_CNN_Forward_SSEUtils_NCHWC.cpp` 里被调用到的 NCHWC 层至此**全部有门禁**。
