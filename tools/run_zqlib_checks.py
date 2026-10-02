@@ -343,6 +343,12 @@ EXTRA_SOURCES = {
         'gcc -O1 -g -mavx2 -mfma -fopenmp -c -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include '
         '$R/ZQCNN/layers_c/zq_cnn_convolution_gemm_32f_align_c.c -o $WDIR/zq_cvf.o',
     ],
+    # zq_nchw_lstm（附录 CW）：NCHW 的 LSTM。3 个 32f 入口
+    # （align0_general 在 .c 里，align128/256 在 _raw.h 里，宏式声明）。
+    'zq_nchw_lstm': [
+        'gcc -O1 -g -mavx2 -mfma -fopenmp -c -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include '
+        '$R/ZQCNN/layers_c/zq_cnn_lstm_32f_align_c.c -o $WDIR/zq_lstm.o',
+    ],
     # zq_nchw_reduction（附录 CT）：NCHW 的 sum/mean 两个 32f 入口，
     # 5 行（keepdims==0 + axis 0..3）。**axis 的约定是 (N,C,H,W)**，
     # 不是循环嵌套顺序 —— 见 ZQ_CNN_Forward_SSEUtils.h 里 out_dims[4]={N,C,H,W}。
@@ -379,6 +385,7 @@ EXTRA_LINK = {'zq_innerproduct': ' $WDIR/zq_ipgemm.o $WDIR/zq_gemm_align.o $WDIR
               'zq_nchw_resize': (' $WDIR/zq_rzn.o $WDIR/zq_rzn_tensor.o'),
               'zq_nchw_sqrtnrm': ' $WDIR/zq_sn_sqrt.o $WDIR/zq_sn_nrm.o',
               'zq_nchw_reduction': ' $WDIR/zq_red.o',
+              'zq_nchw_lstm': ' $WDIR/zq_lstm.o',
               # -ldl 必须**放在源文件之后**：Ubuntu 20.04 默认 --as-needed，
               # 放在前面会被当成"当时没人需要 libdl"而丢掉（门禁里 dlsym(RTLD_NEXT) 用到）。
               'zq_nchw_conv_free': ' $WDIR/zq_cvf.o -ldl',
@@ -415,6 +422,7 @@ EXTRA_INC = {'zq_facedb': ' -I$R -I$R/ZQCNN -I$R/ZQCNN/3rdparty/include/ZQlib',
              'zq_nchw_resize': ' -I$R -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include',
              'zq_nchw_sqrtnrm': ' -I$R -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include',
              'zq_nchw_reduction': ' -I$R -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include',
+             'zq_nchw_lstm': ' -I$R -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include',
              'zq_nchw_conv_free': ' -I$R -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include',
              'zq_nchw_scalop': ' -I$R -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include',
              'zq_nchw_depthwise': ' -I$R -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include',
@@ -444,6 +452,7 @@ EXTRA_CXXFLAGS = {'zq_facedb': ' -mavx2 -mfma -fopenmp',
                   'zq_nchw_resize': ' -mavx2 -mfma -fopenmp',
                   'zq_nchw_sqrtnrm': ' -mavx2 -mfma -fopenmp',
                   'zq_nchw_reduction': ' -mavx2 -mfma -fopenmp',
+                  'zq_nchw_lstm': ' -mavx2 -mfma -fopenmp',
                   # **-fno-sanitize=address 必须排在 harness 加的 -fsanitize=address 之后**
                   # （EXTRA_CXXFLAGS 正是接在 san 后面拼的）。这道门禁要用 free 拦截器
                   # 记录"谁被释放了"，而 ASan 运行时自己也要调 free —— 在它初始化完成前
