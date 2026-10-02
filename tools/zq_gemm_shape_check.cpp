@@ -59,7 +59,6 @@ static float rv(int seed, int i)
 static int run_case(int M, int N, int K)
 {
     zq_child_silence_stderr();
-    (void)dn;
     std::vector<float> A((size_t)M * K), Bt((size_t)N * K), ref((size_t)M * N), got((size_t)M * N);
     for (size_t i = 0; i < A.size(); i++) A[i] = rv(1, (int)i);
     for (size_t i = 0; i < Bt.size(); i++) Bt[i] = rv(2, (int)i);
