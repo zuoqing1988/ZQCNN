@@ -1,4 +1,4 @@
-﻿/*in_pixStep can be different with filter_pixStep,
+/*in_pixStep can be different with filter_pixStep,
 and the aligned channels should be set to zero*/
 void zq_cnn_conv_no_padding_gemm_nchwc_general(
 	const zq_base_type* in_tensor4D_data,
@@ -989,7 +989,6 @@ void zq_cnn_conv_no_padding_gemm_nchwc_kernel2x2_C3(
 )
 {
 	/************** image to col **************/
-	int align_C = (in_C + zq_mm_align_size - 1) / zq_mm_align_size*zq_mm_align_size;
 	int in_widthStep_mul_stride_H = in_widthStep*stride_H;
 	int in_pixelStep_mul_stride_W = zq_mm_align_size*stride_W;
 	int dilate_H_mul_in_widthStep = dilation_H*in_widthStep;
@@ -1009,10 +1008,10 @@ void zq_cnn_conv_no_padding_gemm_nchwc_kernel2x2_C3(
 	int out_sliceStep6 = out_sliceStep * 6;
 	int out_sliceStep7 = out_sliceStep * 7;
 	int out_sliceStep8 = out_sliceStep * 8;
-	int matrix_A_cols = filter_H*filter_W*align_C;
+	int matrix_A_cols = (filter_H*filter_W * 3 + zq_mm_align_size - 1) / zq_mm_align_size*zq_mm_align_size;
 	int matrix_A_rows = out_N*out_H*out_W;
 	int matrix_B_cols = filter_N;
-	int matrix_B_rows = (filter_H*filter_W * 3 + zq_mm_align_size - 1) / zq_mm_align_size*zq_mm_align_size;
+	int matrix_B_rows = matrix_A_cols;
 	int matrix_B_cols2 = matrix_B_cols * 2;
 	int matrix_B_cols3 = matrix_B_cols * 3;
 	int matrix_B_cols4 = matrix_B_cols * 4;
@@ -1070,66 +1069,137 @@ void zq_cnn_conv_no_padding_gemm_nchwc_kernel2x2_C3(
 	}
 
 	cp_dst_ptr = matrix_Bt;
-	for (kn = 0, filter_im_ptr = filters_data; kn < filter_N; kn++, filter_im_ptr += filter_imStep)
+	if (zq_mm_align_size >= 4)
 	{
-		filter_row_ptr = filter_im_ptr;
-		filter_pix_ptr = filter_row_ptr;
-		cp_dst_ptr[0] = filter_pix_ptr[0];
-		cp_dst_ptr[1] = filter_pix_ptr[1];
-		cp_dst_ptr[2] = filter_pix_ptr[2];
-		filter_pix_ptr += zq_mm_align_size;
-		cp_dst_ptr[3] = filter_pix_ptr[0];
-		cp_dst_ptr[4] = filter_pix_ptr[1];
-		cp_dst_ptr[5] = filter_pix_ptr[2];
+		for (kn = 0, filter_im_ptr = filters_data; kn < filter_N; kn++, filter_im_ptr += filter_imStep, cp_dst_ptr += matrix_B_rows)
+		{
+			filter_row_ptr = filter_im_ptr;
+			filter_pix_ptr = filter_row_ptr;
+			cp_dst_ptr[0] = filter_pix_ptr[0];
+			cp_dst_ptr[1] = filter_pix_ptr[1];
+			cp_dst_ptr[2] = filter_pix_ptr[2];
+			filter_pix_ptr += zq_mm_align_size;
+			cp_dst_ptr[3] = filter_pix_ptr[0];
+			cp_dst_ptr[4] = filter_pix_ptr[1];
+			cp_dst_ptr[5] = filter_pix_ptr[2];
 
-		filter_row_ptr += filter_widthStep;
-		filter_pix_ptr = filter_row_ptr;
-		cp_dst_ptr[6] = filter_pix_ptr[0];
-		cp_dst_ptr[7] = filter_pix_ptr[1];
-		cp_dst_ptr[8] = filter_pix_ptr[2];
-		filter_pix_ptr += zq_mm_align_size;
-		cp_dst_ptr[9] = filter_pix_ptr[0];
-		cp_dst_ptr[10] = filter_pix_ptr[1];
-		cp_dst_ptr[11] = filter_pix_ptr[2];
+			filter_row_ptr += filter_widthStep;
+			filter_pix_ptr = filter_row_ptr;
+			cp_dst_ptr[6] = filter_pix_ptr[0];
+			cp_dst_ptr[7] = filter_pix_ptr[1];
+			cp_dst_ptr[8] = filter_pix_ptr[2];
+			filter_pix_ptr += zq_mm_align_size;
+			cp_dst_ptr[9] = filter_pix_ptr[0];
+			cp_dst_ptr[10] = filter_pix_ptr[1];
+			cp_dst_ptr[11] = filter_pix_ptr[2];
 
-		for (kc = 12; kc < matrix_B_rows; kc++)
-			cp_dst_ptr[kc] = 0;
+			for (kc = 12; kc < matrix_B_rows; kc++)
+				cp_dst_ptr[kc] = 0;
+		}
+	}
+	else
+	{
+		int filter_sliceStep2 = filter_sliceStep * 2;
+		for (kn = 0, filter_im_ptr = filters_data; kn < filter_N; kn++, filter_im_ptr += filter_imStep, cp_dst_ptr += matrix_B_rows)
+		{
+			filter_row_ptr = filter_im_ptr;
+			filter_pix_ptr = filter_row_ptr;
+			cp_dst_ptr[0] = filter_pix_ptr[0];
+			cp_dst_ptr[1] = filter_pix_ptr[filter_sliceStep];
+			cp_dst_ptr[2] = filter_pix_ptr[filter_sliceStep2];
+			filter_pix_ptr += zq_mm_align_size;
+			cp_dst_ptr[3] = filter_pix_ptr[0];
+			cp_dst_ptr[4] = filter_pix_ptr[filter_sliceStep];
+			cp_dst_ptr[5] = filter_pix_ptr[filter_sliceStep2];
+
+			filter_row_ptr += filter_widthStep;
+			filter_pix_ptr = filter_row_ptr;
+			cp_dst_ptr[6] = filter_pix_ptr[0];
+			cp_dst_ptr[7] = filter_pix_ptr[filter_sliceStep];
+			cp_dst_ptr[8] = filter_pix_ptr[filter_sliceStep2];
+			filter_pix_ptr += zq_mm_align_size;
+			cp_dst_ptr[9] = filter_pix_ptr[0];
+			cp_dst_ptr[10] = filter_pix_ptr[filter_sliceStep];
+			cp_dst_ptr[11] = filter_pix_ptr[filter_sliceStep2];
+
+			for (kc = 12; kc < matrix_B_rows; kc++)
+				cp_dst_ptr[kc] = 0;
+		}
 	}
 
 	t2 = omp_get_wtime();
 
 
 	matrix_A_row_ptr = matrix_A;
-	for (out_n = 0, in_im_ptr = in_tensor4D_data;
-		out_n < out_N;
-		out_n++, in_im_ptr += in_imStep)
+	if (zq_mm_align_size >= 4)
 	{
-		for (out_h = 0, in_row_ptr = in_im_ptr; out_h < out_H; out_h++, in_row_ptr += in_widthStep_mul_stride_H)
+		for (out_n = 0, in_im_ptr = in_tensor4D_data;
+			out_n < out_N;
+			out_n++, in_im_ptr += in_imStep)
 		{
-			for (out_w = 0, in_pix_ptr = in_row_ptr; out_w < out_W; out_w++, in_pix_ptr += in_pixelStep_mul_stride_W)
+			for (out_h = 0, in_row_ptr = in_im_ptr; out_h < out_H; out_h++, in_row_ptr += in_widthStep_mul_stride_H)
 			{
-				matrix_A_col_ptr = matrix_A_row_ptr;
-				cur_in_row_ptr = in_pix_ptr;
-				cur_in_pix_ptr = cur_in_row_ptr;
-				matrix_A_col_ptr[0] = cur_in_pix_ptr[0];
-				matrix_A_col_ptr[1] = cur_in_pix_ptr[1];
-				matrix_A_col_ptr[2] = cur_in_pix_ptr[2];
-				cur_in_pix_ptr += dilate_W_mul_in_pixStep;
-				matrix_A_col_ptr[3] = cur_in_pix_ptr[0];
-				matrix_A_col_ptr[4] = cur_in_pix_ptr[1];
-				matrix_A_col_ptr[5] = cur_in_pix_ptr[2];
-				cur_in_row_ptr += dilate_H_mul_in_widthStep;
-				cur_in_pix_ptr = cur_in_row_ptr;
-				matrix_A_col_ptr[6] = cur_in_pix_ptr[0];
-				matrix_A_col_ptr[7] = cur_in_pix_ptr[1];
-				matrix_A_col_ptr[8] = cur_in_pix_ptr[2];
-				cur_in_pix_ptr += dilate_W_mul_in_pixStep;
-				matrix_A_col_ptr[9] = cur_in_pix_ptr[0];
-				matrix_A_col_ptr[10] = cur_in_pix_ptr[1];
-				matrix_A_col_ptr[11] = cur_in_pix_ptr[2];
-				for (kc = 12; kc < matrix_B_rows; kc++)
-					matrix_A_col_ptr[kc] = 0;
-				matrix_A_row_ptr += matrix_A_cols;
+				for (out_w = 0, in_pix_ptr = in_row_ptr; out_w < out_W; out_w++, in_pix_ptr += in_pixelStep_mul_stride_W)
+				{
+					matrix_A_col_ptr = matrix_A_row_ptr;
+					cur_in_row_ptr = in_pix_ptr;
+					cur_in_pix_ptr = cur_in_row_ptr;
+					matrix_A_col_ptr[0] = cur_in_pix_ptr[0];
+					matrix_A_col_ptr[1] = cur_in_pix_ptr[1];
+					matrix_A_col_ptr[2] = cur_in_pix_ptr[2];
+					cur_in_pix_ptr += dilate_W_mul_in_pixStep;
+					matrix_A_col_ptr[3] = cur_in_pix_ptr[0];
+					matrix_A_col_ptr[4] = cur_in_pix_ptr[1];
+					matrix_A_col_ptr[5] = cur_in_pix_ptr[2];
+					cur_in_row_ptr += dilate_H_mul_in_widthStep;
+					cur_in_pix_ptr = cur_in_row_ptr;
+					matrix_A_col_ptr[6] = cur_in_pix_ptr[0];
+					matrix_A_col_ptr[7] = cur_in_pix_ptr[1];
+					matrix_A_col_ptr[8] = cur_in_pix_ptr[2];
+					cur_in_pix_ptr += dilate_W_mul_in_pixStep;
+					matrix_A_col_ptr[9] = cur_in_pix_ptr[0];
+					matrix_A_col_ptr[10] = cur_in_pix_ptr[1];
+					matrix_A_col_ptr[11] = cur_in_pix_ptr[2];
+					for (kc = 12; kc < matrix_B_rows; kc++)
+						matrix_A_col_ptr[kc] = 0;
+					matrix_A_row_ptr += matrix_A_cols;
+				}
+			}
+		}
+	}
+	else
+	{
+		for (out_n = 0, in_im_ptr = in_tensor4D_data;
+			out_n < out_N;
+			out_n++, in_im_ptr += in_imStep)
+		{
+			for (out_h = 0, in_row_ptr = in_im_ptr; out_h < out_H; out_h++, in_row_ptr += in_widthStep_mul_stride_H)
+			{
+				for (out_w = 0, in_pix_ptr = in_row_ptr; out_w < out_W; out_w++, in_pix_ptr += in_pixelStep_mul_stride_W)
+				{
+					matrix_A_col_ptr = matrix_A_row_ptr;
+					cur_in_row_ptr = in_pix_ptr;
+					cur_in_pix_ptr = cur_in_row_ptr;
+					matrix_A_col_ptr[0] = cur_in_pix_ptr[0];
+					matrix_A_col_ptr[1] = cur_in_pix_ptr[in_sliceStep];
+					matrix_A_col_ptr[2] = cur_in_pix_ptr[in_sliceStep2];
+					cur_in_pix_ptr += dilate_W_mul_in_pixStep;
+					matrix_A_col_ptr[3] = cur_in_pix_ptr[0];
+					matrix_A_col_ptr[4] = cur_in_pix_ptr[in_sliceStep];
+					matrix_A_col_ptr[5] = cur_in_pix_ptr[in_sliceStep2];
+					cur_in_row_ptr += dilate_H_mul_in_widthStep;
+					cur_in_pix_ptr = cur_in_row_ptr;
+					matrix_A_col_ptr[6] = cur_in_pix_ptr[0];
+					matrix_A_col_ptr[7] = cur_in_pix_ptr[in_sliceStep];
+					matrix_A_col_ptr[8] = cur_in_pix_ptr[in_sliceStep2];
+					cur_in_pix_ptr += dilate_W_mul_in_pixStep;
+					matrix_A_col_ptr[9] = cur_in_pix_ptr[0];
+					matrix_A_col_ptr[10] = cur_in_pix_ptr[in_sliceStep];
+					matrix_A_col_ptr[11] = cur_in_pix_ptr[in_sliceStep2];
+					for (kc = 12; kc < matrix_B_rows; kc++)
+						matrix_A_col_ptr[kc] = 0;
+					matrix_A_row_ptr += matrix_A_cols;
+				}
 			}
 		}
 	}

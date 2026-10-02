@@ -2561,7 +2561,7 @@ OpenCV 路径从 `build_x64/CMakeCache.txt` 取，取不到就整体跳过并说
 ### 顺带记一个编译器提醒
 
 `ZQ_FaceDatabaseCompact.h:287` 的 `fgets(line, 199, in)` 忽略返回值
-（`-Wunused-result`）。判断用的是下一行的 `line[0] == ' '`，**功能上是对的**，
+（`-Wunused-result`）。判断用的是下一行的 `line[0] == '\0'`，**功能上是对的**，
 但 ferror 时会误判成 EOF。本轮未改（改动会引入新分支），记在这里。
 
 ## 新增/变更：附录 BL —— 人脸库**分析路径**查出 4 条真缺陷（含 1 条堆越界写）
@@ -3597,3 +3597,91 @@ BZ.2 说「NCHWC8 的 `with_bias`/`with_bias_prelu` 六支全错、bias 根本�
 根因（BX.2）、以及"这两个 sample 不在 `run_sample_regression.sh` 清单里"
 （那是独立观察到的事实，只是不再附带"它们算错了"这个断言）。
 **align=8 那一族至今没测过。**
+## 新增/变更：附录 CB —— `kernel2x2_C3` 的三处独立缺陷全部修掉，align=1/4/8 逐格全对
+
+### 变更文件
+
+* `ZQCNN/layers_nchwc/zq_cnn_convolution_gemm_nchwc_raw.h`
+  —— 只改 `zq_cnn_conv_no_padding_gemm_nchwc_kernel2x2_C3` 这一个函数，三处：
+  1. `matrix_A_cols` 由 `filter_H*filter_W*align_C` 改成 C3 的补齐式
+     `(filter_H*filter_W*3 + align - 1)/align*align`，并令 `matrix_B_rows = matrix_A_cols`
+     （改之前两者不等：align=1 时 4 vs 12、align=4 时 16 vs 12、align=8 时 32 vs 16）
+  2. filter 的 im2col 循环头补上漏掉的 `cp_dst_ptr += matrix_B_rows`
+     （同文件另外五个函数都有，只有这一支没有）
+  3. B 侧与 A 侧各套一层 `if (zq_mm_align_size >= 4) {交错} else {平面}`，
+     与 `kernel3x3_C3` 逐行对齐；顺带删掉因此不再被引用的 `align_C`
+* `tools/zq_nchwc_conv8_check.cpp`（新增）
+  —— align=8 那一族的独立门禁，与 `zq_nchwc_conv_check.cpp` **没有一行共用代码**：
+  内核名在调用点写全、走函数指针表（签名写错会编译报错，不做宏拼接）；
+  判据是后向误差 + **逐格统计**；每用例 fork 一个子进程。
+  另修一处门禁自身的分类 bug：「只报告」档被照常计成失败（见"注意事项"）
+* `tools/zq_nchwc_conv_check.cpp`
+  —— 修 `ncrash` 重复计数（旧代码先 `ncrash++` 再改成 `info:WRONG`，
+  同一个用例进了两个计数器，汇总行凭空多出 12 次"崩溃"）；更新已过时的尾注
+* `tools/run_zqlib_checks.py`
+  —— `zq_nchwc_conv` **移出 SKIP**；新登记 `zq_nchwc_conv8`
+  （`EXTRA_SOURCES` / `EXTRA_LINK` / `EXTRA_INC` / `EXTRA_CXXFLAGS` / `SLOW` 五处）
+* `audit_k3_20261001.md` —— 新增附录 CB
+* `AGENTS.md` —— 新增三节（见下）
+* `docs-changelogs/CHANGELOG_2026-10-02.md`
+  —— 顺手清掉一个**裸 NUL 字节**（第 2564 行，正文引 C 代码 `line[0] == '\0'`
+  时写成了裸 NUL 而不是反斜杠+0）。它让 `grep` 把整个 changelog 当**二进制**文件，
+  `grep -c "^## "` 直接输出 `Binary file ... matches`。清掉之后 46 个章节可正常检索
+
+### 实测结果
+
+判据：后向误差 `|got-exp| / sqrt(sum(a²f²))`，阈值 1e-5，**逐格统计**（不用最差格）。
+独立复现程序与两道门禁都**没有共用代码**。
+
+| 对齐 | 分支 | 修之前 | 修之后 |
+|---|---|---|---|
+| 1 | `kernel2x2_C3` | 对 0 / 错 **2888**（全错），最差 3.295e+00 | 对 **2888** / 错 0，最差 1.266e-07 |
+| 4 | `kernel2x2_C3` | 对 0 / 错 **2888**（全错），最差 5.539e+00 | 对 **2888** / 错 0，最差 1.266e-07 |
+| 8 | `kernel2x2_C3` | 对 0 / 错 **2888**（全错），最差 4.461e+00 | 对 **2888** / 错 0，最差 2.985e-07 |
+| 1/4/8 | `kernel3x3_C3`（对照组，未改动） | 全对 | 全对 |
+
+2888 = 19×19×8，是 `H=W=20`、2×2、stride 1、`C=3`、`K=8` 的**每一个输出元素**，不是抽样。
+
+两道门禁（各自单独编 `conv.o`）：
+
+* `zq_nchwc_conv`（align=4）：`崩溃 0，应对但仍错 0，只报告 12`，退出码 0 —— **移出 SKIP**
+* `zq_nchwc_conv8`（align=8）：`全对 60，有错 0，崩溃/搭建失败 0`，退出码 0
+
+A/B（同一套编译参数，只换 `conv.o`）确认无回归：
+旧 `全对 50 / 有错 10 / 崩溃 12` → 新 `全对 60 / 有错 0 / 崩溃 12`。
+
+`python tools/run_audit_checks.py --quick` → `ALL CHECKS PASSED`。
+`python tools/check_text_encoding.py` → `OK: 649 text files, all strict UTF-8, no U+FFFD`。
+
+### 注意事项
+
+1. **附录 BX 有三条结论要更正**（详见 CB.6）：
+   * BX.2「第 3、4 组读到的是**下一个 filter** 的数据」**不对** —— 一个 2×2、C=3 的
+     filter 在 NCHWC 里占 2 行，四组读的 `行0像素0 / 行0像素1 / 行1像素0 / 行1像素1`
+     **全都在本 filter 内**，12 个槽位对 2×2 恰好完整。真正读串的是缺陷 2（写指针不步进）
+   * BX.3 第 5 条「gemm 的 K 与 B 的行距不一致 —— 排除」**不是排除，是被挡住**。
+     它确实是缺陷之一，只是当时另外两处独立地让结果全错，改它看不出差别
+   * BX.4「要重定该支的 K 维定义 …… col2im 的 K 步进要一起改」**高估了** ——
+     查 `zq_cnn_convolution_gemm_nchwc_col2im.h`，它只用 `matrix_B_cols` 和
+     `matrix_B_rows % align` 这个判据，**根本不按 K 步进**，一个字都不用改
+2. **「改了没变化」不等于假设被推翻**（已进 AGENTS.md）。BX 连着五次"改了没用"，
+   本该在那时就优先假设"不止一处缺陷"
+3. **「生产不可达所以不改」这条判据打了补丁**（已进 AGENTS.md）。
+   新判据是「**附近有没有可逐行对照的正确实现**」+「**是不是内存安全问题**」。
+   这次两条都满足（`kernel3x3_C3` 就在同一个文件里；缺陷 1 是越界读），
+   所以 BX.4 那个"不修"的理由不成立
+4. **契约之外的调用是段错误，不是垃圾值**（已进 AGENTS.md）。
+   `filter_N % align == 0` 被违反时，`plain` 变体直接 SIGSEGV（实测 exit 139），
+   `with_bias` / `with_bias_prelu` 只是算错。库**不做任何参数校验**。
+   所以门禁里"故意违约"那一档必须标成「只报告、不判失败」，**而且判定代码要真的读那个标记**
+   —— `zq_nchwc_conv8_check` 自己标了"只报告"却在判定处照常 `g_crash++`，
+   凭空多出 12 个"崩溃"；`zq_nchwc_conv_check` 则是先 `ncrash++` 再改成 `info:WRONG`。
+   **两处都是门禁自己的 bug，不是被测代码的**（已用改动前的 `conv.o` 做 A/B 确认）
+5. **NCHWC1 与 NCHWC4/8 的布局不同**（本轮新查清，可能是以后还会踩的坑）：
+   C=3 时 **NCHWC1 是平面布局**（通道相隔 `H*W`，`widthStep=W`、`sliceStep=H*W`），
+   NCHWC4/8 是**交错布局**（通道相邻，`widthStep=align*W*C_pad`）。
+   凡是"读连续三个 float 当作一个像素的 3 个通道"的手写展开，
+   **只对 NCHWC4/8 成立**，NCHWC1 必须读 `[in_sliceStep]` / `[in_sliceStep2]`。
+   证据：把 `ConvertFromCompactNCHW` 之后的内存落点打出来（`in[i]=i`），
+   NCHWC1 的 `p[0],p[1],p[2]` 是 0,1,2（同一通道的三个相邻像素），
+   NCHWC4/8 的 `p[0],p[1],p[2]` 是 0,16,32（同一像素的三个通道）

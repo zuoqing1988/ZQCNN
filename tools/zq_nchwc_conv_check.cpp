@@ -257,11 +257,19 @@ int main()
                     int st = 0; waitpid(pid, &st, 0);
                     ncase++;
                     const char* tag = "ok";
-                    if (WIFSIGNALED(st)) { ncrash++; tag = "CRASH"; }
-                    else if (WEXITSTATUS(st) == 1) { nwrong++; tag = "WRONG"; }
-                    else if (WEXITSTATUS(st) == 3) { ncrash++; tag = "SETUP"; }
-                    if (tag[0] != 'o' && informational) { ninfo++; tag = "info:WRONG"; }
-                    else if (tag[0] != 'o') { nbad++; }
+                    if (WIFSIGNALED(st)) tag = "CRASH";
+                    else if (WEXITSTATUS(st) == 1) tag = "WRONG";
+                    else if (WEXITSTATUS(st) == 3) tag = "SETUP";
+                    // 「只报告」档的问题**只**进 ninfo。以前这里先把 ncrash/nwrong
+                    // 加上去、再改成 info:WRONG，同一个用例被两个计数器各记一次，
+                    // 汇总行会凭空多出 12 次"崩溃"（附录 CB.4）。
+                    if (tag[0] != 'o') {
+                        if (informational) { ninfo++; tag = "info:WRONG"; }
+                        else {
+                            nbad++;
+                            if (tag[0] == 'C') ncrash++; else nwrong++;
+                        }
+                    }
                     { FILE* f = fopen(CHK_FILE, "r");
                       double c = 0, r2 = 0;
                       if (f) { if (fscanf(f, "%lf %lf", &c, &r2) != 2) { c = r2 = 0; } fclose(f); }
@@ -335,7 +343,7 @@ int main()
            ncase, ncrash, nbad, ninfo);
     printf("（BS 已经把 filter_N%%4 这条契约钉死了；这张表是为了确认 1x1 / 2x2 /\n");
     printf("  general 三支同样要求 4 的倍数 —— 守卫该加在哪一层，取决于这个答案。\n");
-    printf("  kernel2x2_C3 在 K%%4==0 下仍然错，根因已定位在附录 BX.2（3 行展开用在 2 行 filter 上），\n");
-    printf("  所以它会让本测试为红 —— 门禁里因此登记在 SKIP。)\n");
+    printf("  kernel2x2_C3 原来在 K%%4==0 下整支全错，附录 CB 定位到三处独立缺陷并修掉，\n");
+    printf("  现在门禁档六支全绿 —— 本测试已从 SKIP 移出。)\n");
     return nbad ? 1 : 0;
 }
