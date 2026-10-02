@@ -546,6 +546,12 @@ namespace ZQ
 			int out_W = output.GetW();
 			int out_C = output.GetC();
 			int bias_C = bias.GetC();
+			// 审计修复 2026-10-02（附录 BE）：strideH/strideW 来自**模型文件**（不可信输入），
+			// 下面这行是**整数除法** —— 除以 0 在 x86 上是 idiv，直接 SIGFPE、进程死。
+			// 附录 BD 修的是 pooling 那两处**浮点**除法（得到 inf，(int)ceil(inf) 是 UB，
+			// 恰好被 need_H <= 0 挡掉）；整数除法没有那层“恰好”。
+			if (strideH <= 0 || strideW <= 0)
+				return false;
 			int need_H = (in_H - (filter_H - 1)*dilation_H - 1 + (padH_top + padH_bottom)) / strideH + 1;
 			int need_W = (in_W - (filter_W - 1)*dilation_W - 1 + (padW_left + padW_right)) / strideW + 1;
 			if (in_N <= 0 || in_H <= 0 || in_W <= 0 || in_C == 0
@@ -643,6 +649,12 @@ namespace ZQ
 			int out_C = output.GetC();
 			int bias_C = bias.GetC();
 			int slope_C = slope.GetC();
+			// 审计修复 2026-10-02（附录 BE）：strideH/strideW 来自**模型文件**（不可信输入），
+			// 下面这行是**整数除法** —— 除以 0 在 x86 上是 idiv，直接 SIGFPE、进程死。
+			// 附录 BD 修的是 pooling 那两处**浮点**除法（得到 inf，(int)ceil(inf) 是 UB，
+			// 恰好被 need_H <= 0 挡掉）；整数除法没有那层“恰好”。
+			if (strideH <= 0 || strideW <= 0)
+				return false;
 			int need_H = (in_H - (filter_H - 1)*dilation_H - 1 + (padH_top+padH_bottom)) / strideH + 1;
 			int need_W = (in_W - (filter_W - 1)*dilation_W - 1 + (padW_left+padW_right)) / strideW + 1;
 			if (in_N <= 0 || in_H <= 0 || in_W <= 0 || in_C == 0
@@ -740,6 +752,12 @@ namespace ZQ
 			int out_W = output.GetW();
 			int out_C = output.GetC();
 			int slope_C = slope.GetC();
+			// 审计修复 2026-10-02（附录 BE）：strideH/strideW 来自**模型文件**（不可信输入），
+			// 下面这行是**整数除法** —— 除以 0 在 x86 上是 idiv，直接 SIGFPE、进程死。
+			// 附录 BD 修的是 pooling 那两处**浮点**除法（得到 inf，(int)ceil(inf) 是 UB，
+			// 恰好被 need_H <= 0 挡掉）；整数除法没有那层“恰好”。
+			if (strideH <= 0 || strideW <= 0)
+				return false;
 			int need_H = (in_H - (filter_H - 1)*dilation_H - 1 + (padH_top+padH_bottom)) / strideH + 1;
 			int need_W = (in_W - (filter_W - 1)*dilation_W - 1 + (padW_left+padW_right)) / strideW + 1;
 			if (in_N <= 0 || in_H <= 0 || in_W <= 0 || in_C == 0
@@ -833,6 +851,12 @@ namespace ZQ
 			int out_H = output.GetH();
 			int out_W = output.GetW();
 			int out_C = output.GetC();
+			// 审计修复 2026-10-02（附录 BE）：strideH/strideW 来自**模型文件**（不可信输入），
+			// 下面这行是**整数除法** —— 除以 0 在 x86 上是 idiv，直接 SIGFPE、进程死。
+			// 附录 BD 修的是 pooling 那两处**浮点**除法（得到 inf，(int)ceil(inf) 是 UB，
+			// 恰好被 need_H <= 0 挡掉）；整数除法没有那层“恰好”。
+			if (strideH <= 0 || strideW <= 0)
+				return false;
 			int need_H = (in_H - (filter_H - 1)*dilation_H - 1 + (padH_top+padH_bottom)) / strideH + 1;
 			int need_W = (in_W - (filter_W - 1)*dilation_W - 1 + (padW_left+padW_right)) / strideW + 1;
 			if (in_N <= 0 || in_H <= 0 || in_W <= 0 || in_C == 0
@@ -933,6 +957,12 @@ namespace ZQ
 				return false;
 
 			int need_N = in_N;
+			// 审计修复 2026-10-02（附录 BE）：strideH/strideW 来自**模型文件**（不可信输入），
+			// 下面这行是**整数除法** —— 除以 0 在 x86 上是 idiv，直接 SIGFPE、进程死。
+			// 附录 BD 修的是 pooling 那两处**浮点**除法（得到 inf，(int)ceil(inf) 是 UB，
+			// 恰好被 need_H <= 0 挡掉）；整数除法没有那层“恰好”。
+			if (strideH <= 0 || strideW <= 0)
+				return false;
 			int need_H = (in_H - dilate_filter_H + (padH_top+padH_bottom)) / strideH + 1;
 			int need_W = (in_W - dilate_filter_W + (padW_left+padW_right)) / strideW + 1;
 			int need_C = in_C;
@@ -1022,6 +1052,12 @@ namespace ZQ
 				return false;
 
 			int need_N = in_N;
+			// 审计修复 2026-10-02（附录 BE）：strideH/strideW 来自**模型文件**（不可信输入），
+			// 下面这行是**整数除法** —— 除以 0 在 x86 上是 idiv，直接 SIGFPE、进程死。
+			// 附录 BD 修的是 pooling 那两处**浮点**除法（得到 inf，(int)ceil(inf) 是 UB，
+			// 恰好被 need_H <= 0 挡掉）；整数除法没有那层“恰好”。
+			if (strideH <= 0 || strideW <= 0)
+				return false;
 			int need_H = (in_H - dilate_filter_H + (padH_top+padH_bottom)) / strideH + 1;
 			int need_W = (in_W - dilate_filter_W + (padW_left+padW_right)) / strideW + 1;
 			int need_C = in_C;
@@ -1113,6 +1149,12 @@ namespace ZQ
 				return false;
 
 			int need_N = in_N;
+			// 审计修复 2026-10-02（附录 BE）：strideH/strideW 来自**模型文件**（不可信输入），
+			// 下面这行是**整数除法** —— 除以 0 在 x86 上是 idiv，直接 SIGFPE、进程死。
+			// 附录 BD 修的是 pooling 那两处**浮点**除法（得到 inf，(int)ceil(inf) 是 UB，
+			// 恰好被 need_H <= 0 挡掉）；整数除法没有那层“恰好”。
+			if (strideH <= 0 || strideW <= 0)
+				return false;
 			int need_H = (in_H - dilate_filter_H + (padH_top+padH_bottom)) / strideH + 1;
 			int need_W = (in_W - dilate_filter_W + (padW_left+padW_right)) / strideW + 1;
 			int need_C = in_C;

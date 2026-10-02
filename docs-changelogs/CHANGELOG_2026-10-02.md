@@ -2085,3 +2085,72 @@ BB 说「内核要求 `out_H = ceil((in_H - kernel_H)/stride_H) + 1`，
 
     wsl make -j8                     100% Built，无 error
     run_sample_regression.sh          8 个 sample 全 rc=0
+
+
+## 新增/变更：附录 BE —— 卷积的 `stride=0` 是 **SIGFPE**（比 BD 更硬）
+
+### 怎么找到的
+
+BD 在 pooling 上查到"模型可控的除零"之后做了一次全量普查：
+`ZQ_CNN_Layer.h` 里有 **25 个** `ReadParam` 会用 `atoi` 取参数，
+其中**只有 2 个**校验了值（Pooling —— 刚修的那个 —— 和 Softmax/Reduction 的 axis）。
+
+先逐个确认了"没校验"的那批是不是真没兜住：Reshape / Permute / Flatten /
+Concat / Reduction 的 `axis` 都有显式校验（Concat 在
+`_concat_NCHW_get_size` 第一行 `if (axis < 0 || axis >= 4) return false;`），
+LSTM 的 `hidden_dim` 靠每次使用都过 `ChangeSize`、而 `ChangeSize` 有附录 H3/H4
+加的 `0x7FFFFFFF` 上界校验兜住。
+
+**只有 Convolution / DepthwiseConvolution / DeConvolution 两层都没有。**
+
+### 缺陷本体：7 处整数除以 stride
+
+`ZQ_CNN_Forward_SSEUtils.h` 里 Convolution / DepthwiseConvolution 的 7 个 wrapper：
+
+    int need_H = (in_H - (filter_H-1)*dilation_H - 1 + (padH_top+padH_bottom)) / strideH + 1;
+    int need_W = (in_W - (filter_W-1)*dilation_W - 1 + (padW_left+padW_right)) / strideW + 1;
+
+`strideH` 来自**模型文件**。**这是整数除法** —— `INT_MIN / 0` 在 x86 上是 `idiv`，
+直接 **SIGFPE**，进程当场死。实测最小复现确认（`caught signal 8`）。
+
+**比 BD 硬得多**：
+
+| | pooling（BD） | 卷积（BE） |
+|---|---|---|
+| 除法类型 | 浮点 | **整数** |
+| 除以 0 的结果 | ±inf | **trap** |
+| 后果 | `(int)ceil(inf)` 是 UB；x86 给 INT_MIN，**恰好**被后面的 `need_H <= 0` 挡掉 | **SIGFPE，确定性崩** |
+| 有没有兜底 | 有（但是巧合） | **没有** |
+
+`DeConvolution` 不中招：它那四处是 `((in_H-1)*strideH + 1 - ...)`，**乘法**不是除法。
+
+### 修法（纵深防御，两层）
+
+**第一层 —— wrapper 里加守卫**（7 处，`ZQ_CNN_Forward_SSEUtils.h`）：
+
+    // 审计修复 2026-10-02（附录 BE）：strideH/strideW 来自**模型文件**（不可信输入），
+    // 下面这行是**整数除法** —— 除以 0 在 x86 上是 idiv，直接 SIGFPE、进程死。
+    if (strideH <= 0 || strideW <= 0)
+        return false;
+
+**第二层 —— `ReadParam` 里拒绝**（3 处，`ZQ_CNN_Layer_Convolution` /
+`_DepthwiseConvolution` / `_DeConvolution`）：kernel/stride/dilate 任一 <= 0 即
+`return false` 并打一行原因。
+
+第一层是关键（wrapper 是 public API，层只是它的一个调用方）；
+第二层让错误在**加载模型时**就以一条可读的消息暴露出来。
+
+**零行为变化**：合法模型的 kernel/stride/dilate 本来就都 > 0。
+
+### 这条普查本身的价值
+
+BD 是一次"碰巧看见了"，BE 证明了它是**一类**。25 个会 `atoi` 参数的 ReadParam
+里只有 3 个现在自己校验值域；其余的要么在 Forward 里有守卫，要么靠 `ChangeSize`
+的 `0x7FFFFFFF` 上界兜住。**这个"分层兜底"的结构本身是健康的** ——
+关键是每一层要么自己查、要么下游一定查。BD/BE 暴露的是**两层都没有**的那一处，
+所以修的时候两层都补上。
+
+### 验证
+
+    wsl make -j8                      100% Built，无 error
+    run_sample_regression.sh           8 个 sample 全 rc=0

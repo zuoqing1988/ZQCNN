@@ -597,6 +597,21 @@ namespace ZQ
 				std::cout << "Layer " << name << " missing " << "name\n";
 				std::cout << line << "\n";
 			}
+			// 审计修复 2026-10-02（附录 BE.2）：上面只校验参数**在不在**，不校验值。
+			// kernel/stride/dilate 都来自**模型文件**（不可信输入），其中 stride==0
+			// 会在 ZQ_CNN_Forward_SSEUtils 的 7 个卷积 wrapper 里造成
+			// **整数除零**（x86 idiv -> SIGFPE，进程直接死）。
+			// 那里也已加了 return false 守卫（纵深防御），这里是更早、更明确的一处。
+			if (kernel_H <= 0 || kernel_W <= 0 || stride_H <= 0 || stride_W <= 0
+				|| dilate_H <= 0 || dilate_W <= 0)
+			{
+				std::cout << "Layer " << name << " invalid conv params: kernel "
+					<< kernel_H << "x" << kernel_W
+					<< " stride " << stride_H << "x" << stride_W
+					<< " dilate " << dilate_H << "x" << dilate_W
+					<< " (must all be > 0)" << std::endl;
+				return false;
+			}
 			return has_num_output && has_kernelH && has_kernelW && has_bottom && has_top && has_name;
 		}
 
@@ -1153,6 +1168,21 @@ namespace ZQ
 			if (!has_name) {
 				std::cout << "Layer " << name << " missing " << "name\n";
 				std::cout << line << "\n";
+			}
+			// 审计修复 2026-10-02（附录 BE.2）：上面只校验参数**在不在**，不校验值。
+			// kernel/stride/dilate 都来自**模型文件**（不可信输入），其中 stride==0
+			// 会在 ZQ_CNN_Forward_SSEUtils 的 7 个卷积 wrapper 里造成
+			// **整数除零**（x86 idiv -> SIGFPE，进程直接死）。
+			// 那里也已加了 return false 守卫（纵深防御），这里是更早、更明确的一处。
+			if (kernel_H <= 0 || kernel_W <= 0 || stride_H <= 0 || stride_W <= 0
+				|| dilate_H <= 0 || dilate_W <= 0)
+			{
+				std::cout << "Layer " << name << " invalid conv params: kernel "
+					<< kernel_H << "x" << kernel_W
+					<< " stride " << stride_H << "x" << stride_W
+					<< " dilate " << dilate_H << "x" << dilate_W
+					<< " (must all be > 0)" << std::endl;
+				return false;
 			}
 			return has_num_output && has_kernelH && has_kernelW && has_bottom && has_top && has_name;
 		}
@@ -1735,6 +1765,21 @@ namespace ZQ
 			if (!has_name) {
 				std::cout << "Layer " << name << " missing " << "name\n";
 				std::cout << line << "\n";
+			}
+			// 审计修复 2026-10-02（附录 BE.2）：上面只校验参数**在不在**，不校验值。
+			// kernel/stride/dilate 都来自**模型文件**（不可信输入），其中 stride==0
+			// 会在 ZQ_CNN_Forward_SSEUtils 的 7 个卷积 wrapper 里造成
+			// **整数除零**（x86 idiv -> SIGFPE，进程直接死）。
+			// 那里也已加了 return false 守卫（纵深防御），这里是更早、更明确的一处。
+			if (kernel_H <= 0 || kernel_W <= 0 || stride_H <= 0 || stride_W <= 0
+				|| dilate_H <= 0 || dilate_W <= 0)
+			{
+				std::cout << "Layer " << name << " invalid conv params: kernel "
+					<< kernel_H << "x" << kernel_W
+					<< " stride " << stride_H << "x" << stride_W
+					<< " dilate " << dilate_H << "x" << dilate_W
+					<< " (must all be > 0)" << std::endl;
+				return false;
 			}
 			return has_num_output && has_kernelH && has_kernelW && has_bottom && has_top && has_name;
 		}
