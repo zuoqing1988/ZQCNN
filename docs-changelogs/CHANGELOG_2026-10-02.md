@@ -4443,3 +4443,83 @@ align=8 下一样撞 16 字节对齐），而 CF.4 把它们全记成了"全对"
   对齐按 32 字节开（CJ）。两个坑在**同一个数组**上
 * **参数名不是语义**：已踩三次（b_a 的 b/a、`weight` 的粒度、`nodivided` 的含义）。
   照抄参数名之前先去看 `fmadd`/`store` 那两行
+## 新增/变更：附录 CK —— NCHWC softmax 门禁（5 入口 / 15 用例全对）+ 一条「该红的没红」的通用结论
+
+### 变更文件
+
+* `tools/zq_nchwc_softmax_check.cpp`（新增）—— NCHWC softmax 门禁
+* `tools/run_zqlib_checks.py` —— 登记 `zq_nchwc_softmax`
+  （`EXTRA_SOURCES` / `EXTRA_LINK` / `EXTRA_INC` / `EXTRA_CXXFLAGS` 四处；**不进 SLOW**）
+* `audit_k3_20261001.md` —— 新增附录 CK
+* `AGENTS.md` —— 「写检查类工具」那节补两条
+* `docs-changelogs/CHANGELOG_2026-10-02.md` —— 本节
+
+`ZQCNN/` 下**没有改动任何生产代码**。
+
+### 覆盖面与结果
+
+5 个入口（`nm` 核实）：`zq_cnn_softmax_nchwc1_C` / `_H` / `_W` /
+`nchwc4_C` / `nchwc8_C`。语义是**就地**沿指定轴做标准 softmax：
+`max = max(该轴)` → `v = exp(v-max)` → `sum = Σv` → `v = v/sum`。
+`_H` / `_W` 只有 NCHWC1 一份，在 `zq_cnn_softmax_nchwc.c:196/245` 手写，
+不是 `_raw.h` 那段的宏重命名。
+
+每个入口 3 组形状：`C = align*2`（整对齐）、`C = align+3`（不是 align 倍数，
+内核的对齐尾循环必须被走到）、`C = 1`（全部落在尾循环里）。
+
+  共 15 个用例：全对 15，有错 0，崩溃/搭建失败 0
+
+### 一处"看着像 bug 其实不是"的写法
+
+对齐尾循环 `for (; c < in_C; c++, slice_ptr++)` 里的 `slice_ptr++` 看着漏了
+`in_sliceStep`，**但它是对的** —— 主循环退出时指针已停在正确位置，
+尾循环**先读后加**、加完就结束，那个 `++` 会被丢弃。
+
+> 推论进 AGENTS.md：**看着可疑的 `++`，先确认"加完还有没有被用到"，别靠"看着像"。**
+
+### 重点：第一个变异是**无效的**，而它无效的原因本身就是一条结论
+
+我把参考实现的 `exp(v - max)` 改成 `exp(v)`，**15 个用例一个都没变红**。
+因为 softmax 是**平移不变**的：
+
+    exp(v_i - m) / Σ_j exp(v_j - m)  =  exp(v_i)·exp(-m) / (exp(-m)·Σ_j exp(v_j))  =  exp(v_i) / Σ_j exp(v_j)
+
+减 max **在数学上冗余**，存在只是为了数值稳定（`v` 很大时 `exp(v)` 会溢出）。
+我的输入在 [-1,1]，两边都不溢出，结果逐位相同。
+
+> **「该红的没红」的第一反应应该是「我的变异是等价的」，而不是「库没执行那段」。**
+> 门禁"测不到某处代码"不等于"那处没被覆盖"，也可能是那处在当前输入下与其他写法
+> **数学等价**。要真正测到它，得喂**大到会溢出**的输入。
+> 这条也适用于别处：查一个恒等式、查一个 clamp、查一个 max ——
+> 先用代数判断"这个变异在数学上会不会改变结果"，别靠"跑一遍没变"就下结论。
+
+顺带：第二处变异（把 `_W` 轴当成 `_H`）让 3 个用例**崩溃**而不是变红 ——
+因为它让参考自己越界读了 `in`（`ih` 最大到 W-1=6，而 H=5）。
+**门禁正确判成"没跑完"**（CJ.4 那道守卫），没把它算成通过。
+
+### 换成有效变异之后：12/15，与预期完全一致
+
+    - double y = v[i] / sum;      /* 归一化 */
+    + double y = v[i] / AL;       /* MUTANT: 改成平均 */
+
+  共 15 个用例：全对 3，有错 12，崩溃/搭建失败 0
+
+**保持绿的正好 3 个** —— 三个 `_C` 变体的 `C = 1` 用例。
+`AL == 1` 时 `v[0]/sum` 与 `v[0]/AL` 都是 `exp(0)/1 = 1`，
+**这个变异对它们本来就无效**；而 `_H`/`_W` 的 `C=1` 用例轴长是 5/7，变异有效。
+
+"该红的全红、该绿的绿"—— 这是第四次做到（CI / CH / CJ / CK）。
+
+### 剩下的空白
+
+  NCHWC 卷积 / depthwise / 激活层 / relu+eltwise / pooling /
+  batchnormscale / **softmax**      CB / CF / CG / CH / CI / CJ / **CK**
+  NCHW 卷积                         CE
+  NCHW pooling / eltwise / lrn      已有门禁
+  **NCHWC resize_with/without_safeborder（6 个入口）**   仍无门禁
+  NCHWC packing 那几支              x86 上不可达（CD）
+
+`resize` 单独留给下一轮：双线性插值的**角点对齐规则**
+（`w1 = (2*ow + 1)*realW/wrapW - 1`）以及 `with_safeborder` / `without_safeborder`
+的区别，与 AGENTS.md「三个张量变体对越界 rect 的策略互相冲突」那条直接相关，
+不能照着名字写参考。
