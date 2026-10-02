@@ -31,7 +31,6 @@
 					for (c = 0, c_ptr = pix_ptr; c < in_C; c+=zq_mm_align_size, c_ptr+=zq_mm_align_size)
 					{
 						zq_mm_store_ps(c_ptr, zq_mm_mul_ps(zq_mm_load_ps(c_ptr), scale_vec));
-						*c_ptr *= scale;
 					}
 				}
 			}

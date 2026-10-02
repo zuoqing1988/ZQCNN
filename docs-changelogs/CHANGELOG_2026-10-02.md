@@ -4807,3 +4807,118 @@ x86 上**所有检测器走的都是它**。remap 用于把检测框/关键点�
 `deconvolution` / `deconvolution_gemm` / `dropout` 仍无门禁。
 其中 deconvolution 只有分派器 `ZQ_CNN_Forward_SSEUtils.cpp` 引用，
 且 **shipped 模型里一次都没用到**（`model/*.zqparams` 里搜不到 Deconv），优先级排在最后。
+## 新增/变更：附录 CO —— NCHW 激活与归一化门禁（39 入口），查出 dropout 的双重缩放
+
+### 变更文件
+
+* `ZQCNN/layers_c/zq_cnn_dropout_32f_align_c_raw.h`
+  —— **修掉一处生产缺陷**：删掉一行多余的 `*c_ptr *= scale;`（生产 diff **1 行删除**）
+* `tools/zq_nchw_act_check.cpp`（新增）—— NCHW 激活与归一化门禁（39 个真实符号）
+* `tools/run_zqlib_checks.py` —— 登记 `zq_nchw_act`（四处）
+* `audit_k3_20261001.md` —— 新增附录 CO
+* `docs-changelogs/CHANGELOG_2026-10-02.md` —— 本节
+
+### 背景
+
+CN 查出 remap 的 SIMD 版横向插值用 sy 而不是 sx 之后，做了一次结构扫描（附录 CP）：
+`layers_c/` 里 **18 个家族同时存在「.c 里手写的标量实现」与「_raw.h 里模板化的 SIMD 实现」**。
+本附录补上其中语义最确定的一批 —— 39 个入口（relu / relu6 / prelu / addbias_prelu /
+addbias / dropout / softmax / batchnorm 四件套）。
+
+### 缺陷
+
+`ZQCNN/layers_c/zq_cnn_dropout_32f_align_c_raw.h`：
+
+    for (c = 0, c_ptr = pix_ptr; c < in_C; c += zq_mm_align_size, c_ptr += zq_mm_align_size)
+    {
+        zq_mm_store_ps(c_ptr, zq_mm_mul_ps(zq_mm_load_ps(c_ptr), scale_vec));
+        *c_ptr *= scale;      // <-- 上面已经乘过了，这一行又乘一次
+    }
+
+`*c_ptr` 只指向**当前对齐组的第一个通道**，于是每个像素的**每个对齐组的首通道**
+得到 x*scale^2 而不是 x*scale。
+
+**对照物（决定性）**：同一个 .c 里手写的 zq_cnn_dropout_32f_align0
+（zq_cnn_dropout_32f_align_c.c:131）是：
+
+    for (c = 0, c_ptr = pix_ptr; c < in_C; c++, c_ptr++)
+        *c_ptr *= scale;        // 每个通道乘一次 —— 对
+
+**手写标量对、SIMD 模板错 —— 与附录 CN 完全同一个形状。**
+那一行显然是标量版遗留下来的：加了向量化写之后没删掉。
+
+**错的比例正好对上**：C=4 / align=4 时 1/4 通道错 -> 门禁实测 70/280（25%）；
+C=8 / align=4 时 2/8 -> 140/560（25%）。一条目击数据就能定性。
+
+修法：删掉那一行。
+
+### 生产可达性
+
+zq_cnn_dropout_32f_align128bit / _align256bit 由
+ZQ_CNN_Forward_SSEUtils.cpp:2723 / 2741 等调用 —— NCHW 主分派器。
+
+触发条件：`dropout_ratio != 0`（`scale == 1.0f` 时内核**提前 return**，
+推理时通常 ratio=0，所以大多数部署碰不到）。一旦 ratio>0，
+误差与 ratio 同阶（ratio=0.25 时首通道是 x*0.75^2 而不是 x*0.75，相对差 25%）。
+
+### 门禁
+
+39 个真实符号（nm 核实；头里声明数更多）：
+
+  relu / relu6                         6 个   slope==0 与 slope!=0 两条分支
+  prelu / prelu_sure_slope_lessthan1   5 个
+  addbias_prelu / addbias_prelu_sure    5 个
+  addbias                              3 个
+  dropout                              3 个   scale==1 提前 return 与正常缩放
+  softmax（_C / _H / _W）               5 个   三条轴
+  batchnorm_b_a / _mean_var / scale /
+  _mean_var_scale_bias                12 个   scale 的 bias==NULL 与非 NULL
+
+形状：C = A 与 C = 2A 各跑一遍（NCHW 的 pixelStep **就是 C**，
+没有 NCHWC 那种"补齐到 align"，所以 C 只能是 A 的倍数）。
+
+修完：**156/156 全对**（39 入口 × {C=A, C=2A} × {变体0, 变体1}）。
+
+### 我自己在这道门上错了三次，三次都是「假红」
+
+156 个用例里一度有 **130 个红**，包括 relu 这种纯拷贝 —— 全红的形状本身就说明是门禁的错。
+三次分别是：
+
+1. **ps = A 而 NCHW 的 pixelStep 应该是 C。** 于是只有 C == A 的用例恰好对上
+2. **喂了非法形状 ps = A 配 C = A + 2。** NCHW 的 pixelStep 必须 >= C，
+   跨像素读写出来的红是假的（与 CE.9 同一个坑）
+3. **主数据缓冲区没做 32 字节对齐。** align=8 用的是 _mm256_load_ps（要 32），
+   而 std::vector<float> 只给 16。**给逐通道数组做了对齐、忘了主缓冲区** ——
+   这条 CJ.4 已经写进 AGENTS.md 了，还是又踩了一次
+
+另外还有一处**下标公式混用**：输入按紧凑 (n,c,h,w) 填、参考值用紧凑式、
+got 用 stride 式。修掉主 x 那一行之后 softmax 仍 100% 错，
+因为 softmax 那段参考里还残留着紧凑公式。
+最终把输入也改成按 stride 布局填，参考值与内核输出共用**同一套下标**。
+
+> 判据用的下标必须和被测方用的下标是**同一个**。NCHW 的 pixelStep == C 让
+> 两种排列在数值上很容易被混为一谈 —— 我在这一点上错了三次。
+> 更省事的做法是**用真实的 ZQ_CNN_Tensor4D 类**去分配，
+> 让"我以为的布局"这个变量根本不存在（CB~CN 的门禁都是这么做的；
+> 这道门我手搓了布局，才踩了这些坑）
+
+### 变异测试
+
+把参考实现的 batchnorm_b_a 权重顺序反过来（复现附录 CJ 记的"b 是乘数、a 是加数"那个坑）：
+**12/156 变红** —— 正好是 batchnorm_b_a 的 3 个入口 × 4 个用例，
+其余 27 个入口的 144 个用例保持绿。**该红的全红、该绿的绿。**
+
+### 这一批的覆盖
+
+  NCHW 激活与归一化（39 个入口）   本附录
+  NCHW resize / remap（15）        CN
+  NCHW 卷积（16）                  CE
+  NCHW pooling / eltwise / lrn     已有门禁
+  NCHWC 全族                       CB / CF / CG / CH / CI / CJ / CK / CL
+
+CP 扫描出的 18 个"手写 + 模板"高风险家族里，本附录 + CE + CN + 已有门禁
+已覆盖语义最确定的一批。剩下的：zq_cnn_scalaroperation（36 个符号）、
+zq_cnn_depthwise_convolution（234 个符号，NCHW 版）、zq_cnn_lstm / zq_cnn_normalize /
+zq_cnn_deconvolution 等若干小家族。
+
+未 push。
