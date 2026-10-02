@@ -3685,3 +3685,29 @@ A/B（同一套编译参数，只换 `conv.o`）确认无回归：
    证据：把 `ConvertFromCompactNCHW` 之后的内存落点打出来（`in[i]=i`），
    NCHWC1 的 `p[0],p[1],p[2]` 是 0,1,2（同一通道的三个相邻像素），
    NCHWC4/8 的 `p[0],p[1],p[2]` 是 0,16,32（同一像素的三个通道）
+实测补记：ASan 实证了缺陷 1 的越界读
+--------------------------------------
+缺陷 2（`matrix_A_cols` 用错公式）不是"算错"，是**越界读**。用全部 TU 都带
+`-fsanitize=address` 重编之后（`buffer=0` 走三次独立 `memalign`，越界才落红区）：
+
+```
+==186679==ERROR: AddressSanitizer: heap-buffer-overflow
+READ of size 32 at 0x616000000280 thread T0
+    #1 zq_gemm_32f_align256bit_AnoTrans_Btrans_M2_caseNdiv4_Keq32  zq_gemm_32f_align_c_raw.h:8617
+    #3 zq_gemm_32f_AnoTrans_Btrans_auto                             zq_gemm_32f_auto.c:565
+    #4 zq_cnn_conv_no_padding_gemm_nchwc8_kernel2x2_C3
+                                    zq_cnn_convolution_gemm_nchwc_raw.h:1147
+0x616000000280 is located 0 bytes to the right of 512-byte region
+allocated by ... zq_cnn_convolution_gemm_nchwc_raw.h:1056
+```
+
+那个 512 字节的块正是 `matrix_Bt`（`matrix_B_rows=16` x `filter_N=8` x 4 字节），
+分配点在 1056 行、越界读在 1147 行的 gemm 调用里，与"align=8 时 gemm 按 ldb=32
+读一块只有 16·K 的缓冲区"的推算完全一致。修掉之后同一个探测程序不再被拦下，
+且 ASan 下复跑 align=1/4/8 逐格全对（最差后向误差 1.266e-07 / 1.266e-07 / 2.985e-07）。
+
+**顺带一条方法论坑**：第一次探测用的是从别处复用来的、**未插桩**的 `.o`，
+ASan 什么都没报，看着像"没有越界"。ASan 是**逐翻译单元编译期生效**的，
+链一个没带 `-fsanitize=address` 编出来的 `.o`，那些访存就完全不被检查。
+**ASan 报不出来的时候，先确认被测的那个 TU 本身插过桩。**
+
