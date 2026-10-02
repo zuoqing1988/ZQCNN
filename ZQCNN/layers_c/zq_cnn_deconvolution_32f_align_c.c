@@ -329,8 +329,15 @@ extern "C" {
 						begin_kw = (stride_W - need_in_w_idx%stride_W) % stride_W;
 					else
 						begin_kw = 0 - need_in_w_idx;
-					end_kh = __min(filter_H, in_H*stride_H - need_in_h_idx + 1);
-					end_kw = __min(filter_W, in_W*stride_W - need_in_w_idx + 1);
+					// 有效输入下标要满足 real_in_h_idx = (need_in_h_idx + kh) / stride_H
+					// 落在 [0, in_H-1]，即 need_in_h_idx + kh <= (in_H-1)*stride_H，
+					// 所以**排他上界是 (in_H-1)*stride_H - need_in_h_idx + 1**。
+					// 原来写成 in_H*stride_H - ... ，**整整多出一个 stride**，
+					// 于是 real_in_h_idx 能取到 in_H -> 越界读（ASan 坐实，附录 CX.2）。
+					// 同仓的 gemm 孪生实现 zq_cnn_deconvolution_gemm_32f_align_c_raw.h:187
+					// 写的是 `if (real_in_h_idx < 0 || real_in_h_idx >= in_H)` —— 有守卫。
+					end_kh = __min(filter_H, (in_H-1)*stride_H - need_in_h_idx + 1);
+					end_kw = __min(filter_W, (in_W-1)*stride_W - need_in_w_idx + 1);
 					
 					for (out_c = 0, out_c_ptr = out_pix_ptr, cur_filter_slice_ptr = filters_data;
 						out_c < out_C;

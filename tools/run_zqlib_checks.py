@@ -343,6 +343,15 @@ EXTRA_SOURCES = {
         'gcc -O1 -g -mavx2 -mfma -fopenmp -c -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include '
         '$R/ZQCNN/layers_c/zq_cnn_convolution_gemm_32f_align_c.c -o $WDIR/zq_cvf.o',
     ],
+    # zq_nchw_deconv（附录 CX）：NCHW 的转置卷积，7 个 32f 入口。
+    # **仓内零调用方**（ZQ_CNN_Layer.h 里一处 deconv 都没有，model/ 下也没有），
+    # 所以它是唯一一块"跑样本永远发现不了"的代码 —— 门禁是它唯一的防线。
+    'zq_nchw_deconv': [
+        # **实现 TU 必须带 $SAN**（见 EXTRA_SOURCES 处的说明）：这道门禁的判据
+        # 就是"ASan 有没有报越界读"，库不插桩的话它永远报不出来。
+        'gcc -O1 -g $SAN -mavx2 -mfma -fopenmp -c -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include '
+        '$R/ZQCNN/layers_c/zq_cnn_deconvolution_32f_align_c.c -o $WDIR/zq_dec.o',
+    ],
     # zq_nchw_lstm（附录 CW）：NCHW 的 LSTM。3 个 32f 入口
     # （align0_general 在 .c 里，align128/256 在 _raw.h 里，宏式声明）。
     'zq_nchw_lstm': [
@@ -386,6 +395,7 @@ EXTRA_LINK = {'zq_innerproduct': ' $WDIR/zq_ipgemm.o $WDIR/zq_gemm_align.o $WDIR
               'zq_nchw_sqrtnrm': ' $WDIR/zq_sn_sqrt.o $WDIR/zq_sn_nrm.o',
               'zq_nchw_reduction': ' $WDIR/zq_red.o',
               'zq_nchw_lstm': ' $WDIR/zq_lstm.o',
+              'zq_nchw_deconv': ' $WDIR/zq_dec.o',
               # -ldl 必须**放在源文件之后**：Ubuntu 20.04 默认 --as-needed，
               # 放在前面会被当成"当时没人需要 libdl"而丢掉（门禁里 dlsym(RTLD_NEXT) 用到）。
               'zq_nchw_conv_free': ' $WDIR/zq_cvf.o -ldl',
@@ -423,6 +433,7 @@ EXTRA_INC = {'zq_facedb': ' -I$R -I$R/ZQCNN -I$R/ZQCNN/3rdparty/include/ZQlib',
              'zq_nchw_sqrtnrm': ' -I$R -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include',
              'zq_nchw_reduction': ' -I$R -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include',
              'zq_nchw_lstm': ' -I$R -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include',
+             'zq_nchw_deconv': ' -I$R -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include',
              'zq_nchw_conv_free': ' -I$R -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include',
              'zq_nchw_scalop': ' -I$R -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include',
              'zq_nchw_depthwise': ' -I$R -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include',
@@ -453,6 +464,7 @@ EXTRA_CXXFLAGS = {'zq_facedb': ' -mavx2 -mfma -fopenmp',
                   'zq_nchw_sqrtnrm': ' -mavx2 -mfma -fopenmp',
                   'zq_nchw_reduction': ' -mavx2 -mfma -fopenmp',
                   'zq_nchw_lstm': ' -mavx2 -mfma -fopenmp',
+                  'zq_nchw_deconv': ' -mavx2 -mfma -fopenmp',
                   # **-fno-sanitize=address 必须排在 harness 加的 -fsanitize=address 之后**
                   # （EXTRA_CXXFLAGS 正是接在 san 后面拼的）。这道门禁要用 free 拦截器
                   # 记录"谁被释放了"，而 ASan 运行时自己也要调 free —— 在它初始化完成前
@@ -571,7 +583,13 @@ def main():
         stem = fname[:-4]                        # zq_xxx_check
         tag = stem[:-6] if stem.endswith('_check') else stem
         for extra in EXTRA_SOURCES.get(tag, []):
-            lines.append(extra)
+            # $SAN = 本轮实际用的 sanitizer 旗标（ASan 时是 -fsanitize=address，
+            # --ubsan 时是 -fsanitize=undefined，--no-asan 时是空串）。
+            # **实现 TU 必须带 sanitizer 编译**，否则里面的普通 load 不插桩，
+            # 越界读一个元素也不会有人报 —— 2026-10-02 在 zq_nchw_deconv 上栽过：
+            # EXTRA_SOURCES 不带 sanitizer 时，那道"专治越界读"的门禁对着
+            # 一份回退了修复的库**依然全绿**。凡是判据依赖 sanitizer 的 tag 都写 $SAN。
+            lines.append(extra.replace('$SAN', san))
         lines.append(
             "if g++ -O1 -g %s%s -I%s%s /mnt/d/ZQCNN/tools/%s%s -o %s "
             "2> %s.build.log; then echo 'B|%s|OK|'; else "

@@ -5717,3 +5717,103 @@ buffer 参数传**空指针**（内部 malloc 分支，依据附录 CU.9：生�
 
 NCHW 侧至此**只剩 `deconvolution`(+`_gemm`) 一个族没有门禁**
 （6 个符号，shipped 模型一次都没用到，优先级最低）。
+
+## 新增/变更：附录 CX —— NCHW `deconvolution` 的越界读（已修），以及为什么**不发数值门禁**
+
+### 变更文件
+
+* `ZQCNN/layers_c/zq_cnn_deconvolution_32f_align_c.c` —— 1 处（`align0_general`）
+* `ZQCNN/layers_c/zq_cnn_deconvolution_32f_align_c_raw.h` —— 1 处（`align128/256 general`）
+* `tools/zq_nchw_deconv_check.cpp`（新增）—— 越界读门禁
+* `tools/run_zqlib_checks.py` 登记 `zq_nchw_deconv`（四处）**并给 `EXTRA_SOURCES`
+  加了 `$SAN` 占位符**
+* `audit_k3_20261001.md` 新增附录 CX
+
+### 缺陷：`end_kh` / `end_kw` 多算一个 stride ⇒ 堆越界读（已修）
+
+```cpp
+end_kh = __min(filter_H, in_H*stride_H - need_in_h_idx + 1);      // 错
+```
+
+内核关系式是 `oh = i*stride_H - pad_top + kh`，`i` 要落在 `[0, in_H-1]`，
+所以排他上界应是 `(in_H-1)*stride_H - need + 1` —— **多出来整整一个 stride**。
+最小复现：`in_H=1, filter_H=4, stride=2, pad_top=1` ⇒ `kh ∈ {1,3}`，
+`kh=3` 给出 `real_in_h_idx = 1`，越界。
+
+ASan 坐实（输入缓冲只给 `N*in_sliceStep` 个 float）：
+
+```
+ERROR: AddressSanitizer: heap-buffer-overflow ... READ of size 4
+    #0 zq_cnn_deconv_with_padding_32f_align0_general
+         ZQCNN/layers_c/zq_cnn_deconvolution_32f_align_c.c:356
+0 bytes to the right of 4-byte region
+```
+
+同仓 A/B：gemm 孪生实现 `zq_cnn_deconvolution_gemm_32f_align_c_raw.h:187`
+写的是 `if (real_in_h_idx < 0 || real_in_h_idx >= in_H)` —— **有守卫**。
+两处已修。
+
+### 为什么**没有发数值门禁**（本附录最重要的判断）
+
+先写了完整的数值门禁（7 入口 / 5 形状 / pad 0,1），首跑 **45/46 全红**。
+查下来不是参考错，是**这几份实现自己互相不吻合**：
+
+1. 内核关系式是 `oh = i*S - pad + kh`（转置卷积），解出 `i = (need + kh)/S`；
+2. 但**读 filter 时用未翻转的 `kh`** —— 转置卷积在 `oh = i*S - p + k` 下要按 `k` 取，
+   展开成 `oh = i*S + (fH-1-p) - k'` 时要按 `fH-1-k'` 取，**不是同一个东西**；
+3. 分派器的输出尺寸公式
+   `need_H = (in_H-1)*S + 1 - (filter_H-1)*d - 1 + (pt+pb) + 1` 又和第 1 条对不上。
+
+而关键事实：`grep -i deconv ZQCNN/ZQ_CNN_Layer.h` **为空**（仓内**零调用方**），
+`model/` 下**没有任何模型**用它 ⇒ **没有任何参考实现**能判定哪种语义才是它想要的。
+
+> 零调用方 + 零参考 + 三份说法互不吻合 ⇒ **判定不了意图**。
+> 这种情况下发数值门禁，红了说明我猜错、绿了说明我刚好猜对，**两种都没有信息量**。
+> 与其发一道会误导后来人的门禁，不如不发，并把"为什么发不了"写清楚。
+> （与 CW.6 的 `cell_clip` 是同一条原则的另一半：那里"能与上游对账、所以不修"，
+> 这里"连对账对象都没有、所以不下结论"。）
+
+### 发出去的那道门禁：只断言与语义无关的那一条
+
+判据只有一条：**无论采用哪种语义，输入下标都必须落在 `[0, in_H-1]`**。
+读到自己缓冲之外，在任何解释下都是越界。
+
+3 个 `general` 入口 × 5 组形状（3 组触发 + 2 组常规）= **15/15 全对**。
+`k2s2` 那一族（4 个入口）不在范围内：它是 2x2/s2 特化，守卫是显式写出来的。
+
+### 这道门禁的**两次假绿**（都是"安静地没测到"）
+
+第一次跑 15/15 全绿，**把修复回退掉重跑还是 15/15 全绿**。两次定位：
+
+1. **`alloc32` 多给了 8 个 float**（原本为对齐留的余量）⇒ 越界读到的那
+   **恰好一格**落在合法内存里。改成 `posix_memalign(32, n * sizeof(float))`
+   精确请求字节数后，对齐照样有（posix_memalign 的保证），ASan 红区回来了；
+2. **实现 TU 没带 ASan 编译**（`EXTRA_SOURCES` 里没写 sanitizer）⇒ 普通 load
+   不插桩，越界读一个元素也没人报。给 `run_zqlib_checks.py` 的 `EXTRA_SOURCES`
+   加了 `$SAN` 占位符（替换成本轮实际 sanitizer 旗标），
+   并注释：**凡是判据依赖 sanitizer 的 tag，实现 TU 都必须写 `$SAN`**。
+
+修好后变异测试立刻见效：
+
+```
+修复回退版：共 15 个用例：全对 0，有错 0，崩溃/搭建失败 15
+修复后：    共 15 个用例：全对 15，有错 0，崩溃/搭建失败 0
+```
+
+### 顺带记下、判定不修的三条
+
+* `dilation_H/W`：7 个入口**全部**收了参数，**函数体一次都没用**
+  （`grep` 在两个 `_raw.h` 里只匹配到参数声明那几行）。
+  **不修** —— 零调用方零参考，改它等于凭空发明语义。记为"参数收了不用"的公开 API 陷阱。
+* `align0_general` 签名注释写着 `filter_H // must be 1`、`dilation // must be 1`，
+  但函数体其实能处理任意 `filter_H/fW`。**不修**（文档比实现更严）。
+* 门禁在 `--no-asan` 下会**显式打印降级警告**（判据退化成"不许崩"，
+  那种模式的绿不代表没有越界读）。
+
+### 元教训
+
+CU.8.1 记过一次"门禁根本没测到那件事"（传 `&buf` 而非 `0`），这里又记一次，形态不同：
+**分配多给了 8 个 float**，越界那一格仍在合法内存里。
+判据是"越界即被抓"时，**分配器请求的字节数就是判据的一部分** ——
+凡是用 ASan 抓越界的门禁都必须精确分配，且实现 TU 必须带 sanitizer 编译。
+这两条已写进 `run_zqlib_checks.py` 的注释。
