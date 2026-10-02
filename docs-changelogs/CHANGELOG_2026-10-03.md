@@ -179,3 +179,83 @@ wrapper 里扔掉。
 **结论：不加成常驻门禁。** 400 条里只有 1 条有信号的轴，天天跑只会训练大家
 忽略它 —— 这正是 `warn_sweep_src.py` 当初关掉它的理由，而那个决定是对的。
 记录实测数字作为"为什么不开这条轴"的依据。
+
+
+## 新增/变更：附录 DB —— 把「某条路径有没有被用到」变成一条可复算的门禁
+
+### 变更文件
+
+* `tools/reachability_probe.py`（新增）—— 层类型可达性探针
+* `tools/reachability_baseline.txt`（新增）—— 36 行基线
+* `tools/run_audit_checks.py` 新增 `--reachability`（C7 组，约 1 秒）
+* `audit_k3_20261001.md` 新增附录 DB
+
+**`ZQCNN/` 下没有改动任何生产代码。**
+
+### 为什么要有这个工具
+
+附录 DA.2 那次错判的代价 ≈ 一整轮，根因是**一次手敲 grep 的静默失败**：
+命令没加 `-i`，类名 `DeConvolution` 的大小写不匹配，**返回空且不报错**，
+我把"空"当成了"不存在"。本工具把那条教训变成机制：跑一次拿到一张
+**可复算**的表，不再靠记忆、不靠手敲 grep。
+
+### 实测结果
+
+    注册表：ZQCNN/ZQ_CNN_Net.h，共 36 种
+    扫描：model/*.zqparams，共 27 个
+    合计 36 种：EXERCISED 20 / COMMENTED 1 / UNUSED 15
+
+**15 个 UNUSED**：`DeConvolution` / `BatchNorm` / `Scale` / `Copy` / `LSTM_TF` /
+`ScalarOperation` / `UnaryOperation` / `Sqrt` / `Tile` / `Reduction` / `LRN` /
+`Squeeze` / `PriorBoxText` / `PriorBox_MXNET` / `DetectionOutput_MXNET`
+
+**1 个 COMMENTED**：`Dropout`（只出现在 `#Dropout` 这样的注掉行里）
+
+### 三态而不是两态，理由
+
+`model/*.zqparams` 里有一堆 `#Convolution`、`#Dropout` 这样**被 `#` 注掉**的行。
+`grep "Dropout" model/*.zqparams` 一定命中 —— 但那行**根本不参与前向**。
+只看"有没有搜到"，会把"看着在用"和"真的在用"混成一谈。
+
+`Dropout` 是活例子：它是全表唯一那个 `COMMENTED`，
+而它恰好是本审计已修过一处**双重缩放**（附录 CO）的层 ——
+那条缺陷所在的路，**从一开始就没有任何随仓库发布的模型能跑到**。
+
+### 这张表能/不能回答什么
+
+**能**：「这条路径会不会被任何随仓库发布的模型跑到」——可复算。
+**不能**：跑起来对不对、跑没跑到那条分支（一个 Convolution 被 27 个模型用到，
+不代表每种 stride/dilation/pad 组合都被覆盖）。
+
+写可达性结论时，**「模型里没搜到」不再是证据**；要拿这张表。
+
+### 门禁化
+
+    python tools/reachability_probe.py                            # 看表
+    python tools/reachability_probe.py --unused                    # 只看没被跑到的
+    python tools/run_audit_checks.py --reachability                # C7 组，约 1 秒
+
+基线 36 行 `<层类型>\t<状态>\t<未注释命中数>\t<被注释命中数>`；
+`--check-baseline` 在**状态**变化时失败，命中数变化只提示不失败。
+
+### 工具自己的一条设计约束
+
+> **「没有搜到」和「不存在」是两件事。**
+> 本工具在"注册表解析出 0 个层类型"时**直接返回 1 并打印「正则失效了」**，
+> 而不是报「ZQCNN 没有层」——这正是 DA.2 里我踩的那个坑的形状：
+> 工具静默地给出一个看起来合理的答案。
+> 同一条纪律在附录 CA.3、CJ.4、CX.5 里各出现过一次，这里是第四次。
+
+### 未完成的部分（如实记下）
+
+**「这 16 种无模型跑到的层各自有没有门禁覆盖」这份交叉表本轮没做对。**
+第一版用正则按层类型名去门禁源码里搜，结果是错的：
+`LSTM_TF` 在门禁里写作 `zq_cnn_lstm_TF_32f`、`Reduction` 写作
+`zq_cnn_reduction_32f`、`Sqrt` 写作 `zq_cnn_sqrt_32f`，按层名搜一个都搜不到；
+反过来 `LRN` 在 `zq_eltwise_check.cpp` 里出现纯属巧合。
+要做得靠**显式的「层类型 → 内核入口前缀」映射表**，而不是正则。
+
+本会话已能确认有门禁覆盖的至少包括：`DeConvolution`（CX）、`LSTM_TF`（CW）、
+`Reduction`（CT）、`Sqrt`（CS）、`ScalarOperation`（CQ）、`Dropout`（CO）、
+`LRN`（既有 `zq_lrn` 门禁）。**其余 9 种未逐条核对** ——
+下一块该做的是把那张映射表补出来，从而得到「既没有模型、又没有门禁」的真正清单。

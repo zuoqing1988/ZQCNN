@@ -172,6 +172,12 @@ def main():
                     help='额外跑 gcc -Wall -Wextra 的 HIGH 桶门禁（较慢，约 2 分钟，见附录 AT）')
     ap.add_argument('--src-sweep', action='store_true',
                     help='额外扫**主工程** ZQCNN/ 的 43 个 TU 的 HIGH 桶（约 1 分钟，见附录 AU）')
+    ap.add_argument('--reachability', action='store_true',
+                    help='跑「层类型可达性」门禁（约 1 秒，见附录 DB）：'
+                         '把 36 种已注册层类型分成 EXERCISED / COMMENTED / UNUSED，'
+                         '并与基线比对。它是附录 DA.2 那次错判的产物 ——'
+                         '「某条路径有没有被用到」从此跑一条命令就能复算，'
+                         '不再靠手敲 grep（那次就是漏了 -i 而静默返回空）。')
     ap.add_argument('--ubsan-sweep', action='store_true',
                     help='把 A 组门禁用 **UBSan** 再跑一遍（约 3 分钟，见附录 CY）。'
                          'ASan 看不见未对齐 SIMD 访问、有符号溢出、移位越界这类 UB；'
@@ -228,6 +234,14 @@ def main():
                           os.path.join(HERE, 'zqcnn_warn_baseline.txt')],
                          cwd=ROOT):
             failed.append('C4 主工程 ZQCNN/ 的 HIGH 桶门禁')
+
+    if args.reachability:
+        if not run_group('C7 层类型可达性门禁（EXERCISED/COMMENTED/UNUSED）',
+                         [sys.executable, os.path.join(HERE, 'reachability_probe.py'),
+                          '--check-baseline',
+                          os.path.join(HERE, 'reachability_baseline.txt')],
+                         cwd=ROOT):
+            failed.append('C7 层类型可达性门禁')
 
     if args.ubsan_sweep:
         if not run_group('C6 ZQCNN 门禁 UBSan 回归',

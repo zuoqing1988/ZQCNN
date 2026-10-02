@@ -1,0 +1,45 @@
+# ZQCNN 层类型可达性基线（tools/reachability_probe.py --save-baseline 生成）
+# 格式: <层类型>	<状态>	<未注释命中数>	<被注释命中数>
+#
+# 状态：EXERCISED（至少一个模型有未注释的层用它）/
+#       COMMENTED（只出现在 # 注掉的行里 —— 看着在用其实禁用）/
+#       UNUSED（一次都没出现）
+#
+# 基线的作用是让「新增/删除一个模型」「某个层从 EXERCISED 变成 UNUSED」
+# 变成一条可见的 diff，而不是又一次靠记忆的判断。
+Convolution	EXERCISED	469	4
+DeConvolution	UNUSED	0	0
+DepthwiseConvolution	EXERCISED	259	1
+BatchNormScale	EXERCISED	588	4
+BatchNorm	UNUSED	0	0
+Scale	UNUSED	0	0
+AddBias	EXERCISED	2	0
+PReLU	EXERCISED	321	2
+ReLU	EXERCISED	96	0
+ReLU6	EXERCISED	222	0
+Softmax	EXERCISED	13	0
+Pooling	EXERCISED	21	0
+Copy	UNUSED	0	0
+Dropout	COMMENTED	0	1
+InnerProduct	EXERCISED	29	0
+LSTM_TF	UNUSED	0	0
+Eltwise	EXERCISED	82	0
+UpSampling	EXERCISED	3	0
+ScalarOperation	UNUSED	0	0
+UnaryOperation	UNUSED	0	0
+Sqrt	UNUSED	0	0
+Tile	UNUSED	0	0
+Reduction	UNUSED	0	0
+LRN	UNUSED	0	0
+Normalize	EXERCISED	4	0
+Permute	EXERCISED	32	0
+Flatten	EXERCISED	22	0
+Reshape	EXERCISED	15	0
+Squeeze	UNUSED	0	0
+PriorBox	EXERCISED	10	0
+PriorBoxText	UNUSED	0	0
+PriorBox_MXNET	UNUSED	0	0
+Concat	EXERCISED	16	0
+DetectionOutput	EXERCISED	2	0
+DetectionOutput_MXNET	UNUSED	0	0
+Input	EXERCISED	27	0
