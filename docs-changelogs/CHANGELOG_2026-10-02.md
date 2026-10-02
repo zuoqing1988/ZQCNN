@@ -2224,3 +2224,75 @@ BE 的结论是"每一层要么自己查、要么下游一定查"，BF 是个反
 
     wsl make -j8                      100% Built，无 error
     run_sample_regression.sh           8 个 sample 全 rc=0
+
+
+## 新增/变更：附录 BG —— 值域普查做成门禁，当场抓出我自己的漏网
+
+### 变更文件
+- `tools/check_param_domain.py`（新增）：扫「ReadParam 只校验参数在不在、不校验值」
+- `tools/param_domain_baseline.txt`（新增）：61 条"已校验"的基线
+- `tools/run_audit_checks.py`：新增 A7/A8 组
+- `ZQCNN/ZQ_CNN_Forward_SSEUtils_NCHWC.cpp`：**25 处**整数除 stride 守卫
+- `ZQCNN/ZQ_CNN_Layer_NCHWC.h`：3 处 ReadParam 值域校验
+- `audit_k3_20261001.md`：新增**附录 BG**
+
+### 为什么要做这个工具
+
+BD / BE / BF 三轮都从同一件事长出来：`kernel_*` / `stride_*` / `tile_*` 全部来自
+**不可信的模型文件**，而 `ReadParam` 只检查"这一行在不在"（`has_strideH` 之类）。
+
+本轮把 25 个会 `atoi` 参数的 `ReadParam` 全过了一遍、逐个确认了每个参数最终
+有没有被兜住（结论记在附录 BF.1），但那份结论**写在报告里** —— 下次有人删掉某个
+守卫、或者新增一个层类，没有任何机制会提醒。
+
+`check_param_domain.py` 把「哪些 (层, 参数) 在 `ReadParam` 里被校验过」变成
+**可回归的基线**。它只做这一件事：对每个 `ReadParam` 抽出 `atoi` 变量，
+在**同一函数体**里找值域校验（`x <= 0` / `x < 1` / `x != 0` / `invalid x`）。
+它**不做**「下游有没有兜住」—— 那是语义判断，正则做不了，结论仍在 BF.1。
+
+### 工具自己踩的三个坑（都由 --selfcheck 逮到）
+
+1. **`find_check` 写成了"正则字符串非空吗"而不是"匹不匹配"**
+   （`if r.pattern % re.escape(var):` 恒为真）。于是工具报告
+   **"全部 211 个 (层, 参数) 都已校验"**，而实际上 BD/BE/BF 三条缺陷就在这一族里。
+   自测里那个**故意不校验**的 `tag` 立刻被抓出来。
+   > 兑现 AGENTS.md 那条「一个"什么都查不出来"的检查工具必须自带自测」。
+   > 不写自测的话，这个工具会**绿着**挡住后续所有同类缺陷。
+2. **匹配模式太松**：原本还有「出现过这个变量、同一句里又有 return false」
+   这种写法，会把 `return has_a && has_b && has_name` 误判成值域校验。已删，
+   并明确不认枚举/集合限制（`x == 0 || x == 1`）与 `x &&` 这类布尔用法。
+3. **`--save-baseline` 不带路径会 IndexError**（手写 argparse 的通病）。已修。
+
+### 工具当场抓出：**BE 的修复只做了一半**
+
+    ZQ_CNN_Layer_NCHWC.h   ZQ_CNN_Layer_NCHWC_Convolution          已校验 0 / 未校验 11
+    ZQ_CNN_Layer_NCHWC.h   ZQ_CNN_Layer_NCHWC_DepthwiseConvolution  已校验 0 / 未校验 11
+    ZQ_CNN_Layer_NCHWC.h   ZQ_CNN_Layer_NCHWC_Pooling               已校验 0 / 未校验 7
+
+**NCHWC 那三个层类一个都没修**。查下去发现不止 `ReadParam` ——
+`ZQ_CNN_Forward_SSEUtils_NCHWC.cpp` 里有 **25 处**和 BE 那 7 处**一字不差**的
+整数除法：
+
+    int need_H = (in_H - (filter_H-1)*dilation_H - 1 + (padH << 1)) / strideH + 1;
+
+NCHWC 的卷积代码是 NCHW 那边**整份复制**过去的，我上一轮只改了原版。
+`stride: 0` 写进一个 NCHWC 模型照样 SIGFPE。
+
+> 这是「收口一类缺陷必须全仓枚举、不能只信上一轮的清单」的重演，
+> 只不过这次清单是我自己刚写的。
+
+**已补**：25 处 wrapper 守卫 + 3 处 ReadParam 值域校验
+（`ZQ_CNN_Layer_NCHWC.h` 里 `name` 要写全 `ZQ_CNN_Layer_NCHWC<Tensor4D>::name`）。
+
+### 现在的状态
+
+基线 61 条（只记已校验的那些）。未校验的 `num_output` / `pad_*` / `with_bias` /
+`type` / `operation` 在 BF.1 里已逐个确认过是被兜住的
+（`ChangeSize` 的上界、`== 0` 布尔、集合限制），**不需要在 ReadParam 里再查一遍**。
+
+### 接入统一入口
+
+    A7  ReadParam 值域校验基线自测 (check_param_domain --selfcheck)
+    A8  ReadParam 值域校验基线比对 (check_param_domain --check-baseline)
+
+A8 在**已校验的参数少了一条**时退出 1。

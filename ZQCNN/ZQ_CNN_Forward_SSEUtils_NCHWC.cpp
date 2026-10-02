@@ -384,6 +384,12 @@ bool ZQ_CNN_Forward_SSEUtils_NCHWC::ConvolutionWithBias(ZQ_CNN_Tensor4D_NCHWC1& 
 	int out_W = output.GetW();
 	int out_C = output.GetC();
 	int bias_C = bias.GetC();
+	// 审计修复 2026-10-02（附录 BE.2 / BH）：strideH/strideW 来自**模型文件**
+	// （不可信输入），下面这行是**整数除法** —— 除以 0 在 x86 上是 idiv，
+	// 直接 SIGFPE、进程死。附录 BE 只修了 NCHW 那 7 处 wrapper，
+	// NCHWC 这边是同一份代码复制过去的，同样要修。
+	if (strideH <= 0 || strideW <= 0)
+		return false;
 	int need_H = (in_H - (filter_H - 1)*dilation_H - 1 + (padH << 1)) / strideH + 1;
 	int need_W = (in_W - (filter_W - 1)*dilation_W - 1 + (padW << 1)) / strideW + 1;
 	if (in_N <= 0 || in_H <= 0 || in_W <= 0 || in_C == 0
@@ -501,6 +507,12 @@ bool ZQ_CNN_Forward_SSEUtils_NCHWC::ConvolutionWithBiasPReLU(ZQ_CNN_Tensor4D_NCH
 	int out_C = output.GetC();
 	int bias_C = bias.GetC();
 	int slope_C = slope.GetC();
+	// 审计修复 2026-10-02（附录 BE.2 / BH）：strideH/strideW 来自**模型文件**
+	// （不可信输入），下面这行是**整数除法** —— 除以 0 在 x86 上是 idiv，
+	// 直接 SIGFPE、进程死。附录 BE 只修了 NCHW 那 7 处 wrapper，
+	// NCHWC 这边是同一份代码复制过去的，同样要修。
+	if (strideH <= 0 || strideW <= 0)
+		return false;
 	int need_H = (in_H - (filter_H - 1)*dilation_H - 1 + (padH << 1)) / strideH + 1;
 	int need_W = (in_W - (filter_W - 1)*dilation_W - 1 + (padW << 1)) / strideW + 1;
 	if (in_N <= 0 || in_H <= 0 || in_W <= 0 || in_C == 0
@@ -617,6 +629,12 @@ bool ZQ_CNN_Forward_SSEUtils_NCHWC::ConvolutionWithPReLU(ZQ_CNN_Tensor4D_NCHWC1&
 	int out_W = output.GetW();
 	int out_C = output.GetC();
 	int slope_C = slope.GetC();
+	// 审计修复 2026-10-02（附录 BE.2 / BH）：strideH/strideW 来自**模型文件**
+	// （不可信输入），下面这行是**整数除法** —— 除以 0 在 x86 上是 idiv，
+	// 直接 SIGFPE、进程死。附录 BE 只修了 NCHW 那 7 处 wrapper，
+	// NCHWC 这边是同一份代码复制过去的，同样要修。
+	if (strideH <= 0 || strideW <= 0)
+		return false;
 	int need_H = (in_H - (filter_H - 1)*dilation_H - 1 + (padH << 1)) / strideH + 1;
 	int need_W = (in_W - (filter_W - 1)*dilation_W - 1 + (padW << 1)) / strideW + 1;
 	if (in_N <= 0 || in_H <= 0 || in_W <= 0 || in_C == 0
@@ -733,6 +751,12 @@ bool ZQ_CNN_Forward_SSEUtils_NCHWC::Convolution(ZQ_CNN_Tensor4D_NCHWC1& input, c
 	int out_H = output.GetH();
 	int out_W = output.GetW();
 	int out_C = output.GetC();
+	// 审计修复 2026-10-02（附录 BE.2 / BH）：strideH/strideW 来自**模型文件**
+	// （不可信输入），下面这行是**整数除法** —— 除以 0 在 x86 上是 idiv，
+	// 直接 SIGFPE、进程死。附录 BE 只修了 NCHW 那 7 处 wrapper，
+	// NCHWC 这边是同一份代码复制过去的，同样要修。
+	if (strideH <= 0 || strideW <= 0)
+		return false;
 	int need_H = (in_H - (filter_H - 1)*dilation_H - 1 + (padH << 1)) / strideH + 1;
 	int need_W = (in_W - (filter_W - 1)*dilation_W - 1 + (padW << 1)) / strideW + 1;
 	if (in_N <= 0 || in_H <= 0 || in_W <= 0 || in_C == 0
@@ -856,6 +880,12 @@ return false;
 		return false;
 
 	int need_N = in_N;
+	// 审计修复 2026-10-02（附录 BE.2 / BH）：strideH/strideW 来自**模型文件**
+	// （不可信输入），下面这行是**整数除法** —— 除以 0 在 x86 上是 idiv，
+	// 直接 SIGFPE、进程死。附录 BE 只修了 NCHW 那 7 处 wrapper，
+	// NCHWC 这边是同一份代码复制过去的，同样要修。
+	if (strideH <= 0 || strideW <= 0)
+		return false;
 	int need_H = (in_H - (filter_H - 1)*dilation_H - 1 + (padH << 1)) / strideH + 1;
 	int need_W = (in_W - (filter_W - 1)*dilation_W - 1 + (padW << 1)) / strideW + 1;
 	int need_C = in_C;
@@ -972,6 +1002,12 @@ return false;
 		return false;
 
 	int need_N = in_N;
+	// 审计修复 2026-10-02（附录 BE.2 / BH）：strideH/strideW 来自**模型文件**
+	// （不可信输入），下面这行是**整数除法** —— 除以 0 在 x86 上是 idiv，
+	// 直接 SIGFPE、进程死。附录 BE 只修了 NCHW 那 7 处 wrapper，
+	// NCHWC 这边是同一份代码复制过去的，同样要修。
+	if (strideH <= 0 || strideW <= 0)
+		return false;
 	int need_H = (in_H - (filter_H - 1)*dilation_H - 1 + (padH << 1)) / strideH + 1;
 	int need_W = (in_W - (filter_W - 1)*dilation_W - 1 + (padW << 1)) / strideW + 1;
 	int need_C = in_C;
@@ -1087,6 +1123,12 @@ return false;
 		return false;
 
 	int need_N = in_N;
+	// 审计修复 2026-10-02（附录 BE.2 / BH）：strideH/strideW 来自**模型文件**
+	// （不可信输入），下面这行是**整数除法** —— 除以 0 在 x86 上是 idiv，
+	// 直接 SIGFPE、进程死。附录 BE 只修了 NCHW 那 7 处 wrapper，
+	// NCHWC 这边是同一份代码复制过去的，同样要修。
+	if (strideH <= 0 || strideW <= 0)
+		return false;
 	int need_H = (in_H - (filter_H - 1)*dilation_H - 1 + (padH << 1)) / strideH + 1;
 	int need_W = (in_W - (filter_W - 1)*dilation_W - 1 + (padW << 1)) / strideW + 1;
 	int need_C = in_C;
@@ -1941,6 +1983,12 @@ bool ZQ_CNN_Forward_SSEUtils_NCHWC::ConvolutionWithBias(ZQ_CNN_Tensor4D_NCHWC4& 
 	int out_W = output.GetW();
 	int out_C = output.GetC();
 	int bias_C = bias.GetC();
+	// 审计修复 2026-10-02（附录 BE.2 / BH）：strideH/strideW 来自**模型文件**
+	// （不可信输入），下面这行是**整数除法** —— 除以 0 在 x86 上是 idiv，
+	// 直接 SIGFPE、进程死。附录 BE 只修了 NCHW 那 7 处 wrapper，
+	// NCHWC 这边是同一份代码复制过去的，同样要修。
+	if (strideH <= 0 || strideW <= 0)
+		return false;
 	int need_H = (in_H - (filter_H - 1)*dilation_H - 1 + (padH << 1)) / strideH + 1;
 	int need_W = (in_W - (filter_W - 1)*dilation_W - 1 + (padW << 1)) / strideW + 1;
 	if (in_N <= 0 || in_H <= 0 || in_W <= 0 || in_C == 0
@@ -2038,6 +2086,12 @@ bool ZQ_CNN_Forward_SSEUtils_NCHWC::ConvolutionWithBiasPReLU(ZQ_CNN_Tensor4D_NCH
 	int out_W = output.GetW();
 	int out_C = output.GetC();
 	int bias_C = bias.GetC();
+	// 审计修复 2026-10-02（附录 BE.2 / BH）：strideH/strideW 来自**模型文件**
+	// （不可信输入），下面这行是**整数除法** —— 除以 0 在 x86 上是 idiv，
+	// 直接 SIGFPE、进程死。附录 BE 只修了 NCHW 那 7 处 wrapper，
+	// NCHWC 这边是同一份代码复制过去的，同样要修。
+	if (strideH <= 0 || strideW <= 0)
+		return false;
 	int need_H = (in_H - (filter_H - 1)*dilation_H - 1 + (padH << 1)) / strideH + 1;
 	int need_W = (in_W - (filter_W - 1)*dilation_W - 1 + (padW << 1)) / strideW + 1;
 	if (in_N <= 0 || in_H <= 0 || in_W <= 0 || in_C == 0
@@ -2133,6 +2187,12 @@ bool ZQ_CNN_Forward_SSEUtils_NCHWC::ConvolutionWithPReLU(ZQ_CNN_Tensor4D_NCHWC4&
 	int out_H = output.GetH();
 	int out_W = output.GetW();
 	int out_C = output.GetC();
+	// 审计修复 2026-10-02（附录 BE.2 / BH）：strideH/strideW 来自**模型文件**
+	// （不可信输入），下面这行是**整数除法** —— 除以 0 在 x86 上是 idiv，
+	// 直接 SIGFPE、进程死。附录 BE 只修了 NCHW 那 7 处 wrapper，
+	// NCHWC 这边是同一份代码复制过去的，同样要修。
+	if (strideH <= 0 || strideW <= 0)
+		return false;
 	int need_H = (in_H - (filter_H - 1)*dilation_H - 1 + (padH << 1)) / strideH + 1;
 	int need_W = (in_W - (filter_W - 1)*dilation_W - 1 + (padW << 1)) / strideW + 1;
 	if (in_N <= 0 || in_H <= 0 || in_W <= 0 || in_C == 0
@@ -2229,6 +2289,12 @@ bool ZQ_CNN_Forward_SSEUtils_NCHWC::Convolution(ZQ_CNN_Tensor4D_NCHWC4& input,
 	int out_H = output.GetH();
 	int out_W = output.GetW();
 	int out_C = output.GetC();
+	// 审计修复 2026-10-02（附录 BE.2 / BH）：strideH/strideW 来自**模型文件**
+	// （不可信输入），下面这行是**整数除法** —— 除以 0 在 x86 上是 idiv，
+	// 直接 SIGFPE、进程死。附录 BE 只修了 NCHW 那 7 处 wrapper，
+	// NCHWC 这边是同一份代码复制过去的，同样要修。
+	if (strideH <= 0 || strideW <= 0)
+		return false;
 	int need_H = (in_H - (filter_H - 1)*dilation_H - 1 + (padH << 1)) / strideH + 1;
 	int need_W = (in_W - (filter_W - 1)*dilation_W - 1 + (padW << 1)) / strideW + 1;
 	if (in_N <= 0 || in_H <= 0 || in_W <= 0 || in_C == 0
@@ -2676,6 +2742,12 @@ bool ZQ_CNN_Forward_SSEUtils_NCHWC::ConvolutionWithBias(ZQ_CNN_Tensor4D_NCHWC4& 
 	int out_W = output.GetW();
 	int out_C = output.GetC();
 	int bias_C = bias.GetC();
+	// 审计修复 2026-10-02（附录 BE.2 / BH）：strideH/strideW 来自**模型文件**
+	// （不可信输入），下面这行是**整数除法** —— 除以 0 在 x86 上是 idiv，
+	// 直接 SIGFPE、进程死。附录 BE 只修了 NCHW 那 7 处 wrapper，
+	// NCHWC 这边是同一份代码复制过去的，同样要修。
+	if (strideH <= 0 || strideW <= 0)
+		return false;
 	int need_H = (in_H - (filter_H - 1)*dilation_H - 1 + (padH << 1)) / strideH + 1;
 	int need_W = (in_W - (filter_W - 1)*dilation_W - 1 + (padW << 1)) / strideW + 1;
 	if (in_N <= 0 || in_H <= 0 || in_W <= 0 || in_C == 0
@@ -2793,6 +2865,12 @@ bool ZQ_CNN_Forward_SSEUtils_NCHWC::ConvolutionWithBiasPReLU(ZQ_CNN_Tensor4D_NCH
 	int out_C = output.GetC();
 	int bias_C = bias.GetC();
 	int slope_C = slope.GetC();
+	// 审计修复 2026-10-02（附录 BE.2 / BH）：strideH/strideW 来自**模型文件**
+	// （不可信输入），下面这行是**整数除法** —— 除以 0 在 x86 上是 idiv，
+	// 直接 SIGFPE、进程死。附录 BE 只修了 NCHW 那 7 处 wrapper，
+	// NCHWC 这边是同一份代码复制过去的，同样要修。
+	if (strideH <= 0 || strideW <= 0)
+		return false;
 	int need_H = (in_H - (filter_H - 1)*dilation_H - 1 + (padH << 1)) / strideH + 1;
 	int need_W = (in_W - (filter_W - 1)*dilation_W - 1 + (padW << 1)) / strideW + 1;
 	if (in_N <= 0 || in_H <= 0 || in_W <= 0 || in_C == 0
@@ -2909,6 +2987,12 @@ bool ZQ_CNN_Forward_SSEUtils_NCHWC::ConvolutionWithPReLU(ZQ_CNN_Tensor4D_NCHWC4&
 	int out_W = output.GetW();
 	int out_C = output.GetC();
 	int slope_C = slope.GetC();
+	// 审计修复 2026-10-02（附录 BE.2 / BH）：strideH/strideW 来自**模型文件**
+	// （不可信输入），下面这行是**整数除法** —— 除以 0 在 x86 上是 idiv，
+	// 直接 SIGFPE、进程死。附录 BE 只修了 NCHW 那 7 处 wrapper，
+	// NCHWC 这边是同一份代码复制过去的，同样要修。
+	if (strideH <= 0 || strideW <= 0)
+		return false;
 	int need_H = (in_H - (filter_H - 1)*dilation_H - 1 + (padH << 1)) / strideH + 1;
 	int need_W = (in_W - (filter_W - 1)*dilation_W - 1 + (padW << 1)) / strideW + 1;
 	if (in_N <= 0 || in_H <= 0 || in_W <= 0 || in_C == 0
@@ -3025,6 +3109,12 @@ bool ZQ_CNN_Forward_SSEUtils_NCHWC::Convolution(ZQ_CNN_Tensor4D_NCHWC4& input, c
 	int out_H = output.GetH();
 	int out_W = output.GetW();
 	int out_C = output.GetC();
+	// 审计修复 2026-10-02（附录 BE.2 / BH）：strideH/strideW 来自**模型文件**
+	// （不可信输入），下面这行是**整数除法** —— 除以 0 在 x86 上是 idiv，
+	// 直接 SIGFPE、进程死。附录 BE 只修了 NCHW 那 7 处 wrapper，
+	// NCHWC 这边是同一份代码复制过去的，同样要修。
+	if (strideH <= 0 || strideW <= 0)
+		return false;
 	int need_H = (in_H - (filter_H - 1)*dilation_H - 1 + (padH << 1)) / strideH + 1;
 	int need_W = (in_W - (filter_W - 1)*dilation_W - 1 + (padW << 1)) / strideW + 1;
 	if (in_N <= 0 || in_H <= 0 || in_W <= 0 || in_C == 0
@@ -3148,6 +3238,12 @@ return false;
 		return false;
 
 	int need_N = in_N;
+	// 审计修复 2026-10-02（附录 BE.2 / BH）：strideH/strideW 来自**模型文件**
+	// （不可信输入），下面这行是**整数除法** —— 除以 0 在 x86 上是 idiv，
+	// 直接 SIGFPE、进程死。附录 BE 只修了 NCHW 那 7 处 wrapper，
+	// NCHWC 这边是同一份代码复制过去的，同样要修。
+	if (strideH <= 0 || strideW <= 0)
+		return false;
 	int need_H = (in_H - (filter_H - 1)*dilation_H - 1 + (padH << 1)) / strideH + 1;
 	int need_W = (in_W - (filter_W - 1)*dilation_W - 1 + (padW << 1)) / strideW + 1;
 	int need_C = in_C;
@@ -3264,6 +3360,12 @@ return false;
 		return false;
 
 	int need_N = in_N;
+	// 审计修复 2026-10-02（附录 BE.2 / BH）：strideH/strideW 来自**模型文件**
+	// （不可信输入），下面这行是**整数除法** —— 除以 0 在 x86 上是 idiv，
+	// 直接 SIGFPE、进程死。附录 BE 只修了 NCHW 那 7 处 wrapper，
+	// NCHWC 这边是同一份代码复制过去的，同样要修。
+	if (strideH <= 0 || strideW <= 0)
+		return false;
 	int need_H = (in_H - (filter_H - 1)*dilation_H - 1 + (padH << 1)) / strideH + 1;
 	int need_W = (in_W - (filter_W - 1)*dilation_W - 1 + (padW << 1)) / strideW + 1;
 	int need_C = in_C;
@@ -3379,6 +3481,12 @@ return false;
 		return false;
 
 	int need_N = in_N;
+	// 审计修复 2026-10-02（附录 BE.2 / BH）：strideH/strideW 来自**模型文件**
+	// （不可信输入），下面这行是**整数除法** —— 除以 0 在 x86 上是 idiv，
+	// 直接 SIGFPE、进程死。附录 BE 只修了 NCHW 那 7 处 wrapper，
+	// NCHWC 这边是同一份代码复制过去的，同样要修。
+	if (strideH <= 0 || strideW <= 0)
+		return false;
 	int need_H = (in_H - (filter_H - 1)*dilation_H - 1 + (padH << 1)) / strideH + 1;
 	int need_W = (in_W - (filter_W - 1)*dilation_W - 1 + (padW << 1)) / strideW + 1;
 	int need_C = in_C;
@@ -4289,6 +4397,12 @@ bool ZQ_CNN_Forward_SSEUtils_NCHWC::ConvolutionWithBias(ZQ_CNN_Tensor4D_NCHWC8& 
 	int out_W = output.GetW();
 	int out_C = output.GetC();
 	int bias_C = bias.GetC();
+	// 审计修复 2026-10-02（附录 BE.2 / BH）：strideH/strideW 来自**模型文件**
+	// （不可信输入），下面这行是**整数除法** —— 除以 0 在 x86 上是 idiv，
+	// 直接 SIGFPE、进程死。附录 BE 只修了 NCHW 那 7 处 wrapper，
+	// NCHWC 这边是同一份代码复制过去的，同样要修。
+	if (strideH <= 0 || strideW <= 0)
+		return false;
 	int need_H = (in_H - (filter_H - 1)*dilation_H - 1 + (padH << 1)) / strideH + 1;
 	int need_W = (in_W - (filter_W - 1)*dilation_W - 1 + (padW << 1)) / strideW + 1;
 	if (in_N <= 0 || in_H <= 0 || in_W <= 0 || in_C == 0
@@ -4406,6 +4520,12 @@ bool ZQ_CNN_Forward_SSEUtils_NCHWC::ConvolutionWithBiasPReLU(ZQ_CNN_Tensor4D_NCH
 	int out_C = output.GetC();
 	int bias_C = bias.GetC();
 	int slope_C = slope.GetC();
+	// 审计修复 2026-10-02（附录 BE.2 / BH）：strideH/strideW 来自**模型文件**
+	// （不可信输入），下面这行是**整数除法** —— 除以 0 在 x86 上是 idiv，
+	// 直接 SIGFPE、进程死。附录 BE 只修了 NCHW 那 7 处 wrapper，
+	// NCHWC 这边是同一份代码复制过去的，同样要修。
+	if (strideH <= 0 || strideW <= 0)
+		return false;
 	int need_H = (in_H - (filter_H - 1)*dilation_H - 1 + (padH << 1)) / strideH + 1;
 	int need_W = (in_W - (filter_W - 1)*dilation_W - 1 + (padW << 1)) / strideW + 1;
 	if (in_N <= 0 || in_H <= 0 || in_W <= 0 || in_C == 0
@@ -4522,6 +4642,12 @@ bool ZQ_CNN_Forward_SSEUtils_NCHWC::ConvolutionWithPReLU(ZQ_CNN_Tensor4D_NCHWC8&
 	int out_W = output.GetW();
 	int out_C = output.GetC();
 	int slope_C = slope.GetC();
+	// 审计修复 2026-10-02（附录 BE.2 / BH）：strideH/strideW 来自**模型文件**
+	// （不可信输入），下面这行是**整数除法** —— 除以 0 在 x86 上是 idiv，
+	// 直接 SIGFPE、进程死。附录 BE 只修了 NCHW 那 7 处 wrapper，
+	// NCHWC 这边是同一份代码复制过去的，同样要修。
+	if (strideH <= 0 || strideW <= 0)
+		return false;
 	int need_H = (in_H - (filter_H - 1)*dilation_H - 1 + (padH << 1)) / strideH + 1;
 	int need_W = (in_W - (filter_W - 1)*dilation_W - 1 + (padW << 1)) / strideW + 1;
 	if (in_N <= 0 || in_H <= 0 || in_W <= 0 || in_C == 0
@@ -4638,6 +4764,12 @@ bool ZQ_CNN_Forward_SSEUtils_NCHWC::Convolution(ZQ_CNN_Tensor4D_NCHWC8& input, c
 	int out_H = output.GetH();
 	int out_W = output.GetW();
 	int out_C = output.GetC();
+	// 审计修复 2026-10-02（附录 BE.2 / BH）：strideH/strideW 来自**模型文件**
+	// （不可信输入），下面这行是**整数除法** —— 除以 0 在 x86 上是 idiv，
+	// 直接 SIGFPE、进程死。附录 BE 只修了 NCHW 那 7 处 wrapper，
+	// NCHWC 这边是同一份代码复制过去的，同样要修。
+	if (strideH <= 0 || strideW <= 0)
+		return false;
 	int need_H = (in_H - (filter_H - 1)*dilation_H - 1 + (padH << 1)) / strideH + 1;
 	int need_W = (in_W - (filter_W - 1)*dilation_W - 1 + (padW << 1)) / strideW + 1;
 	if (in_N <= 0 || in_H <= 0 || in_W <= 0 || in_C == 0
@@ -4761,6 +4893,12 @@ return false;
 		return false;
 
 	int need_N = in_N;
+	// 审计修复 2026-10-02（附录 BE.2 / BH）：strideH/strideW 来自**模型文件**
+	// （不可信输入），下面这行是**整数除法** —— 除以 0 在 x86 上是 idiv，
+	// 直接 SIGFPE、进程死。附录 BE 只修了 NCHW 那 7 处 wrapper，
+	// NCHWC 这边是同一份代码复制过去的，同样要修。
+	if (strideH <= 0 || strideW <= 0)
+		return false;
 	int need_H = (in_H - (filter_H - 1)*dilation_H - 1 + (padH << 1)) / strideH + 1;
 	int need_W = (in_W - (filter_W - 1)*dilation_W - 1 + (padW << 1)) / strideW + 1;
 	int need_C = in_C;
@@ -4877,6 +5015,12 @@ return false;
 		return false;
 
 	int need_N = in_N;
+	// 审计修复 2026-10-02（附录 BE.2 / BH）：strideH/strideW 来自**模型文件**
+	// （不可信输入），下面这行是**整数除法** —— 除以 0 在 x86 上是 idiv，
+	// 直接 SIGFPE、进程死。附录 BE 只修了 NCHW 那 7 处 wrapper，
+	// NCHWC 这边是同一份代码复制过去的，同样要修。
+	if (strideH <= 0 || strideW <= 0)
+		return false;
 	int need_H = (in_H - (filter_H - 1)*dilation_H - 1 + (padH << 1)) / strideH + 1;
 	int need_W = (in_W - (filter_W - 1)*dilation_W - 1 + (padW << 1)) / strideW + 1;
 	int need_C = in_C;
@@ -4992,6 +5136,12 @@ return false;
 		return false;
 
 	int need_N = in_N;
+	// 审计修复 2026-10-02（附录 BE.2 / BH）：strideH/strideW 来自**模型文件**
+	// （不可信输入），下面这行是**整数除法** —— 除以 0 在 x86 上是 idiv，
+	// 直接 SIGFPE、进程死。附录 BE 只修了 NCHW 那 7 处 wrapper，
+	// NCHWC 这边是同一份代码复制过去的，同样要修。
+	if (strideH <= 0 || strideW <= 0)
+		return false;
 	int need_H = (in_H - (filter_H - 1)*dilation_H - 1 + (padH << 1)) / strideH + 1;
 	int need_W = (in_W - (filter_W - 1)*dilation_W - 1 + (padW << 1)) / strideW + 1;
 	int need_C = in_C;

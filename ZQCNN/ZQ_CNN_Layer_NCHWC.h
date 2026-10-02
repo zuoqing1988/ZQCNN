@@ -590,6 +590,18 @@ namespace ZQ
 				std::cout << "Layer " << ZQ_CNN_Layer_NCHWC<Tensor4D>::name << " missing " << "name\n";
 				std::cout << line << "\n";
 			}
+			// 审计修复 2026-10-02（附录 BE.2 / BH）：与 NCHW 版同形，
+			// 而 ZQ_CNN_Forward_SSEUtils_NCHWC.cpp 里有 25 处同样的**整数除以 stride**。
+			if (kernel_H <= 0 || kernel_W <= 0 || stride_H <= 0 || stride_W <= 0
+				|| dilate_H <= 0 || dilate_W <= 0)
+			{
+				std::cout << "Layer " << ZQ_CNN_Layer_NCHWC<Tensor4D>::name << " invalid conv params: kernel "
+					<< kernel_H << "x" << kernel_W
+					<< " stride " << stride_H << "x" << stride_W
+					<< " dilate " << dilate_H << "x" << dilate_W
+					<< " (must all be > 0)" << std::endl;
+				return false;
+			}
 			return has_num_output && has_kernelH && has_kernelW && has_bottom && has_top && has_name;
 		}
 
@@ -1045,6 +1057,18 @@ namespace ZQ
 			if (!has_name) {
 				std::cout << "Layer " << ZQ_CNN_Layer_NCHWC<Tensor4D>::name << " missing " << "name\n";
 				std::cout << line << "\n";
+			}
+			// 审计修复 2026-10-02（附录 BE.2 / BH）：与 NCHW 版同形，
+			// 而 ZQ_CNN_Forward_SSEUtils_NCHWC.cpp 里有 25 处同样的**整数除以 stride**。
+			if (kernel_H <= 0 || kernel_W <= 0 || stride_H <= 0 || stride_W <= 0
+				|| dilate_H <= 0 || dilate_W <= 0)
+			{
+				std::cout << "Layer " << ZQ_CNN_Layer_NCHWC<Tensor4D>::name << " invalid conv params: kernel "
+					<< kernel_H << "x" << kernel_W
+					<< " stride " << stride_H << "x" << stride_W
+					<< " dilate " << dilate_H << "x" << dilate_W
+					<< " (must all be > 0)" << std::endl;
+				return false;
 			}
 			return has_num_output && has_kernelH && has_kernelW && has_bottom && has_top && has_name;
 		}
@@ -2091,6 +2115,16 @@ namespace ZQ
 			if (!has_name) {
 				std::cout << "Layer " << ZQ_CNN_Layer_NCHWC<Tensor4D>::name << " missing " << "name\n";
 				std::cout << line << "\n";
+			}
+			// 审计修复 2026-10-02（附录 BD / BH）：与 NCHW 版同形。
+			if (!global_pool
+				&& (kernel_H <= 0 || kernel_W <= 0 || stride_H <= 0 || stride_W <= 0))
+			{
+				std::cout << "Layer " << ZQ_CNN_Layer_NCHWC<Tensor4D>::name << " invalid pooling params: kernel "
+					<< kernel_H << "x" << kernel_W
+					<< " stride " << stride_H << "x" << stride_W
+					<< " (must all be > 0)" << std::endl;
+				return false;
 			}
 			if (!global_pool)
 				return has_kernelH && has_kernelW && has_strideH && has_strideW && has_bottom && has_top && has_name;

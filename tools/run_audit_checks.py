@@ -59,6 +59,13 @@ GROUPS = [
      ['check_uninit_members.py', '--selftest'], False),
     ('A6 未初始化类成员扫描 (ZQCNN/*.h)',
      ['check_uninit_members.py', '--all'], False),
+    # A7 是 A5 那类"自测"思路的延续：值域校验基线保证
+    # 「已经在 ReadParam 里查过的参数」不会悄悄丢掉守卫。
+    # BD/BE/BF 三条缺陷（pooling 除零、卷积 SIGFPE、Tile 堆溢出）都是这一族漏网的实例。
+    ('A7 ReadParam 值域校验基线 (check_param_domain)',
+     ['check_param_domain.py', '--selfcheck'], False),
+    ('A8 ReadParam 值域校验基线比对 (check_param_domain)',
+     ['check_param_domain.py', '--check-baseline'], False),
     ('B  ZQlib 独立回归测试 x10 (ASan+LSan)', ['run_zqlib_checks.py'], False),
     # 基线路径给**绝对路径**：子进程以 ROOT 为 cwd 运行，而基线文件在 tools/ 下，
     # 相对路径会解析成 <ROOT>/zqlib_probe_baseline.txt 而找不到（2026-10-02 实测）。

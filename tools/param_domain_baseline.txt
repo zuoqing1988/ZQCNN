@@ -1,0 +1,70 @@
+# 层类 ReadParam 的值域校验基线（tools/check_param_domain.py --save-baseline 生成）
+# 格式: <类名>\t<参数名>
+#
+# 只记**在 ReadParam 里被校验过**的那些。删掉其中任何一条，--check-baseline 就会失败。
+#
+# 注意：本工具**不判断**参数在下游有没有被兜住 ——
+# 那是语义判断，结论在 audit_k3_20261001.md 附录 BF.1。
+#
+# BD/BE/BF 三条缺陷（pooling 除零、卷积 SIGFPE、Tile 堆溢出）都是这一族漏网的实例。
+ZQ_CNN_Layer_Convolution	axis
+ZQ_CNN_Layer_Convolution	dilate_H
+ZQ_CNN_Layer_Convolution	dilate_W
+ZQ_CNN_Layer_Convolution	end_axis
+ZQ_CNN_Layer_Convolution	kernel_H
+ZQ_CNN_Layer_Convolution	kernel_W
+ZQ_CNN_Layer_Convolution	num_axes
+ZQ_CNN_Layer_Convolution	stride_H
+ZQ_CNN_Layer_Convolution	stride_W
+ZQ_CNN_Layer_Convolution	type
+ZQ_CNN_Layer_DeConvolution	axis
+ZQ_CNN_Layer_DeConvolution	dilate_H
+ZQ_CNN_Layer_DeConvolution	dilate_W
+ZQ_CNN_Layer_DeConvolution	end_axis
+ZQ_CNN_Layer_DeConvolution	kernel_H
+ZQ_CNN_Layer_DeConvolution	kernel_W
+ZQ_CNN_Layer_DeConvolution	num_axes
+ZQ_CNN_Layer_DeConvolution	stride_H
+ZQ_CNN_Layer_DeConvolution	stride_W
+ZQ_CNN_Layer_DeConvolution	type
+ZQ_CNN_Layer_DepthwiseConvolution	axis
+ZQ_CNN_Layer_DepthwiseConvolution	dilate_H
+ZQ_CNN_Layer_DepthwiseConvolution	dilate_W
+ZQ_CNN_Layer_DepthwiseConvolution	end_axis
+ZQ_CNN_Layer_DepthwiseConvolution	kernel_H
+ZQ_CNN_Layer_DepthwiseConvolution	kernel_W
+ZQ_CNN_Layer_DepthwiseConvolution	num_axes
+ZQ_CNN_Layer_DepthwiseConvolution	stride_H
+ZQ_CNN_Layer_DepthwiseConvolution	stride_W
+ZQ_CNN_Layer_DepthwiseConvolution	type
+ZQ_CNN_Layer_Flatten	axis
+ZQ_CNN_Layer_Flatten	end_axis
+ZQ_CNN_Layer_LSTM_TF	axis
+ZQ_CNN_Layer_LSTM_TF	end_axis
+ZQ_CNN_Layer_LSTM_TF	num_axes
+ZQ_CNN_Layer_LSTM_TF	type
+ZQ_CNN_Layer_NCHWC_Convolution	dilate_H
+ZQ_CNN_Layer_NCHWC_Convolution	dilate_W
+ZQ_CNN_Layer_NCHWC_Convolution	kernel_H
+ZQ_CNN_Layer_NCHWC_Convolution	kernel_W
+ZQ_CNN_Layer_NCHWC_Convolution	stride_H
+ZQ_CNN_Layer_NCHWC_Convolution	stride_W
+ZQ_CNN_Layer_NCHWC_DepthwiseConvolution	dilate_H
+ZQ_CNN_Layer_NCHWC_DepthwiseConvolution	dilate_W
+ZQ_CNN_Layer_NCHWC_DepthwiseConvolution	kernel_H
+ZQ_CNN_Layer_NCHWC_DepthwiseConvolution	kernel_W
+ZQ_CNN_Layer_NCHWC_DepthwiseConvolution	stride_H
+ZQ_CNN_Layer_NCHWC_DepthwiseConvolution	stride_W
+ZQ_CNN_Layer_NCHWC_Pooling	kernel_H
+ZQ_CNN_Layer_NCHWC_Pooling	kernel_W
+ZQ_CNN_Layer_NCHWC_Pooling	stride_H
+ZQ_CNN_Layer_NCHWC_Pooling	stride_W
+ZQ_CNN_Layer_NCHWC_Softmax	axis
+ZQ_CNN_Layer_Pooling	kernel_H
+ZQ_CNN_Layer_Pooling	kernel_W
+ZQ_CNN_Layer_Pooling	stride_H
+ZQ_CNN_Layer_Pooling	stride_W
+ZQ_CNN_Layer_Reduction	axis
+ZQ_CNN_Layer_Reshape	axis
+ZQ_CNN_Layer_Reshape	num_axes
+ZQ_CNN_Layer_Softmax	axis
