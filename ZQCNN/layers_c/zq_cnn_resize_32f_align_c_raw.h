@@ -951,10 +951,10 @@ void zq_cnn_remap_without_safeborder(
 				{
 					v00 = zq_mm_load_ps(in_row0_ptr + cur_x0);
 					dx0 = zq_mm_sub_ps(zq_mm_load_ps(in_row0_ptr + cur_x1), v00);
-					result0 = zq_mm_add_ps(v00, zq_mm_mul_ps(dx0, zq_mm_set1_ps(sy)));
+					result0 = zq_mm_add_ps(v00, zq_mm_mul_ps(dx0, zq_mm_set1_ps(sx)));
 					v10 = zq_mm_load_ps(in_row1_ptr + cur_x0);
 					dx1 = zq_mm_sub_ps(zq_mm_load_ps(in_row1_ptr + cur_x1), v10);
-					result1 = zq_mm_add_ps(v10, zq_mm_mul_ps(dx1, zq_mm_set1_ps(sy)));
+					result1 = zq_mm_add_ps(v10, zq_mm_mul_ps(dx1, zq_mm_set1_ps(sx)));
 					dy = zq_mm_sub_ps(result1, result0);
 					sum = zq_mm_add_ps(result0, zq_mm_mul_ps(dy, zq_mm_set1_ps(sy)));
 					zq_mm_store_ps(out_pix_ptr + c, sum);
@@ -1032,10 +1032,10 @@ void zq_cnn_remap_without_safeborder_fillval(
 					{
 						v00 = zq_mm_load_ps(in_row0_ptr + cur_x0);
 						dx0 = zq_mm_sub_ps(zq_mm_load_ps(in_row0_ptr + cur_x1), v00);
-						result0 = zq_mm_add_ps(v00, zq_mm_mul_ps(dx0, zq_mm_set1_ps(sy)));
+						result0 = zq_mm_add_ps(v00, zq_mm_mul_ps(dx0, zq_mm_set1_ps(sx)));
 						v10 = zq_mm_load_ps(in_row1_ptr + cur_x0);
 						dx1 = zq_mm_sub_ps(zq_mm_load_ps(in_row1_ptr + cur_x1), v10);
-						result1 = zq_mm_add_ps(v10, zq_mm_mul_ps(dx1, zq_mm_set1_ps(sy)));
+						result1 = zq_mm_add_ps(v10, zq_mm_mul_ps(dx1, zq_mm_set1_ps(sx)));
 						dy = zq_mm_sub_ps(result1, result0);
 						sum = zq_mm_add_ps(result0, zq_mm_mul_ps(dy, zq_mm_set1_ps(sy)));
 						zq_mm_store_ps(out_pix_ptr + c, sum);

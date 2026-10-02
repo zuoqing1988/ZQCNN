@@ -4714,3 +4714,96 @@ resize 那一行在**修之前**是不一致的（`in_H` vs `in_H - 1`），
 **本轮没有找到第二处同类缺陷**（54 个文件、0 处不对称）。
 
 `python tools/run_audit_checks.py --quick` → A15/A16 均 OK，ALL CHECKS PASSED。
+## 新增/变更：附录 CN —— NCHW 的 remap，x86 默认路径的插值权重用错了变量（首次跑就红）
+
+### 变更文件
+
+* `ZQCNN/layers_c/zq_cnn_resize_32f_align_c_raw.h`
+  —— **修掉一处生产缺陷**：`remap_without_safeborder` 与
+  `remap_without_safeborder_fillval` 的 **SIMD 版本**里，
+  双线性的**横向**插值用了 `sy` 而不是 `sx`。共 **4 行**
+* `tools/zq_nchw_resize_check.cpp`（新增）—— NCHW resize/remap 门禁（15 个真实符号）
+* `tools/run_zqlib_checks.py` —— 登记 `zq_nchw_resize`（四处）
+* `audit_k3_20261001.md` —— 新增附录 CN
+* `docs-changelogs/CHANGELOG_2026-10-02.md` —— 本节
+
+### 缺陷
+
+    result0 = v00 + (in[y0][x1] - v00) * sy;       // 横向插值，这里应该是 sx
+    result1 = v10 + (in[y1][x1] - v10) * sy;       // 同上
+    sum     = result0 + (result1 - result0) * sy;  // 纵向用 sy，这个是对的
+
+`sx` 在上面算出来了（`sx = coord_x - x0_f`），**一次都没被用到**。
+
+**对照物（决定性）**：同一个 .c 里手写的
+`zq_cnn_remap_without_safeborder_32f_align0`（line 484）写的是**正确**的：
+
+    result0 = v00 + dx0 * sx;     // 对
+    result1 = v10 + dx1 * sx;     // 对
+    sum     = result0 + dy * sy;  // 对
+
+即：**错的是 SIMD 那份，对的是标量那份** —— 而 x86 上 SSE/AVX 才是默认路径，
+标量的 align0 在这台机器上根本不会被选中。
+
+> 与附录 CL 正好相反：CL 是 NCHWC 错、NCHW 对；CN 是同一文件里
+> **手写标量对、raw 头 SIMD 错**。两次都是"同一份数学被抄两遍、抄错的那份没人跑"。
+
+### 门禁首跑结果
+
+15 个真实符号（`nm` 核实；头里是 **34 个声明**，含重复 —— 又是"声明数 ≠ 符号数"）：
+
+  align1/4/8 resize_nn                 各 2 个用例：对 2，错 0      全绿
+  align1/4/8 resize_with_safeborder    各 2 个用例：对 2，错 0      全绿
+  align1/4/8 resize_without_safeborder 各 2 个用例：对 2，错 0      全绿
+  align1       remap / remap_fillval   各 2 个用例：对 2，错 0      标量，对
+  align4       remap / remap_fillval   map 全在图内 FAIL 256/256
+                                        map 一半出图 FAIL 187/256
+  align8       remap / remap_fillval   map 全在图内 FAIL 512/512
+                                        map 一半出图 FAIL 376/512
+
+  共 30 个用例：全对 22，有错 8
+
+**9 个 resize_* 入口全绿、只有 remap 的 SSE/AVX 两档全错** ——
+这个形状本身就是最强的线索：问题不在参数、不在参考实现，而在"哪一份实现"。
+
+修掉 4 行之后：**30/30 全对**。
+
+### 门禁要点
+
+* `sample_align_type`（resize 末尾那个参数）**两种都跑**：
+  `== 1` 时坐标原点直接取 `in_off`（**不做**半像素平移），
+  否则用 `0.5*step - 0.5 + in_off`。**名字里没有任何提示**，不看实现一定会漏
+* `resize_nn` 用的是 `(int)(coord + 0.5f)`（**四舍五入**，不是截断）
+* `remap` 两种配置：map 全在图内 / **一半出图**（验 without 的钳位与 fillval 的判据
+  —— 后者用**未钳位**的坐标判 `0 <= coord <= n-1`，不满足就整像素写 fillval）
+* 沿用 CB~CM：名字写全走函数指针表、逐格统计、fork 子进程并
+  显式判"没读到结果文件" = 失败（CJ.4）
+
+### 变异测试
+
+把参考实现的 remap 横向权重退回 `sy`（复现修复前的写法）：
+**12/30 变红** —— 正好是 6 个 `remap` + 6 个 `remap_fillval`（3 对齐 × 2 配置），
+9 个 `resize_*` 入口的 18 个用例保持绿（变异只碰了 remap 的参考分支）。
+**该红的全红、该绿的绿。**
+
+### 生产可达性与危害
+
+`zq_cnn_remap_*` 由 `ZQ_CNN_Tensor4D.cpp` 调用 —— 那是 **NCHW 张量类**，
+x86 上**所有检测器走的都是它**。remap 用于把检测框/关键点映射回原图坐标。
+
+`sy` 来自 `map_y`、`sx` 来自 `map_x`，**两者没有任何关系**，
+所以横向缩放完全失控 —— 横向尺寸变化越大错得越离谱
+（门禁里 align8 的 `map 全在图内` 是 512/512 全错，最差相对误差 1.32，
+即数量级级别的偏差）。
+
+### 这一族的覆盖
+
+  NCHW resize / remap       zq_nchw_resize        CN（本轮）
+  NCHW 卷积                 zq_nchw_conv          CE
+  NCHW pooling / eltwise / lrn   已有门禁
+  NCHW innerproduct         zq_innerproduct_check / zq_nchwc_ip   BN
+  NCHWC 全族                CB / CF / CG / CH / CI / CJ / CK / CL
+
+`deconvolution` / `deconvolution_gemm` / `dropout` 仍无门禁。
+其中 deconvolution 只有分派器 `ZQ_CNN_Forward_SSEUtils.cpp` 引用，
+且 **shipped 模型里一次都没用到**（`model/*.zqparams` 里搜不到 Deconv），优先级排在最后。
