@@ -4172,3 +4172,73 @@ C++ 下重复声明合法、不会报错，但说明这份头是手工维护的 
 | NCHW pooling / eltwise / lrn | 已有门禁 |
 | NCHWC pooling / relu / softmax / batchnormscale / resize | **仍无门禁** |
 | NCHWC packing 那几支 | x86 上不可达（CD） |
+## 新增/变更：附录 CH —— NCHWC relu + eltwise 门禁（15 个入口，57 个用例全对，变异测试符合预期）
+
+### 变更文件
+
+* `tools/zq_nchwc_elt_relu_check.cpp`（新增）—— NCHWC relu + eltwise 门禁
+* `tools/run_zqlib_checks.py` —— 登记 `zq_nchwc_elt_relu`
+  （`EXTRA_SOURCES` / `EXTRA_LINK` / `EXTRA_INC` / `EXTRA_CXXFLAGS` 四处；**不进 SLOW**）
+* `audit_k3_20261001.md` —— 新增附录 CH
+* `docs-changelogs/CHANGELOG_2026-10-02.md` —— 本节
+
+**没有改动任何生产代码。**
+
+### 覆盖面与语义
+
+15 个入口（`nm` 核实）：`relu`(3) + `eltwise{sum, max, mul, sum_with_weight}`(12)，
+各 × NCHWC1/4/8。语义**逐条从源码读出来**：
+
+| 内核 | 语义 | 出处 |
+|---|---|---|
+| `relu_nchwc(data,…,slope)` | 就地；`slope == 0` 时 `out = max(0,x)`，否则 `out = slope*min(0,x) + max(0,x)` | `zq_cnn_relu_nchwc_raw.h:23` |
+| `eltwise_sum` | `out = Σ in[i]` | 先写 `in[0]+in[1]`，再对 `tensor_id >= 2` 累加 |
+| `eltwise_max` | `out = max_i in[i]` | 两种写法：`max(in_pix, in1_pix)` 或累加式 |
+| `eltwise_mul` | `out = Π in[i]` | 同上 |
+| `eltwise_sum_with_weight` | `out = Σ weight[i]·in[i]` | `weight` 是**每张输入一个标量**（`set1_ps(weight[i])` 广播），**不是逐通道** |
+
+最后一条特别值得记：`weight` 的类型是 `const float*`，第一眼看着像逐通道权重，
+实际是每张张量一个。写错会得到一个"看起来在跑、全错"的门禁。
+
+### 结果
+
+`relu` 特意跑了 `slope == 0` 与 `slope != 0` **两条分支**；
+`eltwise` 特意跑了输入张量数 **2 / 3 / 4**（内核对第 3 个及以后另有一段循环）。
+
+  共 57 个用例：全对 57，有错 0，崩溃/搭建失败 0
+
+### 变异测试：抓到 18/57，与预期完全一致
+
+按 CG 立下的规矩做：把门禁**自己**的参考实现改错两处，重跑。
+
+* MUTANT1：`relu` 参考里 `slope * x` 改成 `slope * (x + 0.001f)` —— 只影响 `slope != 0` 分支
+* MUTANT2：`eltwise_sum` 参考里每一项乘 `1.001f`
+
+  共 57 个用例：全对 39，有错 18，崩溃/搭建失败 0
+
+**18 = 6 + 12**：6 是三个 align 的 relu 中 `slope != 0` 的用例
+（3 个入口 × 3 个形状里只有 2 个走那条分支 → 6），
+12 是 `eltwise_sum` 的 3 个入口 × 4 个形状。
+**MUTANT1 本来就不该影响 `slope == 0` 的 3 个用例，它们保持绿是对的。**
+
+> 这是第三次做变异测试（CF / CG / CH），也是第一次**抓到数量与预期完全对上**。
+> 前两次的价值都在"发现门禁自己有洞"（CF 的 filter 下标、CG 的 slope 数组长度）；
+> 这一次说明那两次修完之后门禁的灵敏度是真的了。
+
+### 剩下的空白
+
+| 层 | 状态 |
+|---|---|
+| NCHWC 卷积（raw 族） | zq_nchwc_conv / zq_nchwc_conv8（CB） |
+| NCHWC depthwise | zq_nchwc_depthwise（CF） |
+| NCHWC 激活层（addbias / prelu） | zq_nchwc_act（CG） |
+| NCHWC relu / eltwise | 本附录 |
+| NCHW 卷积 | zq_nchw_conv（CE） |
+| NCHW pooling / eltwise / lrn | 已有门禁 |
+| **NCHWC pooling（24 个入口）** | **仍无门禁 —— 下一个** |
+| NCHWC batchnormscale（12）/ softmax（5）/ resize（6） | 仍无门禁 |
+| NCHWC packing 那几支 | x86 上不可达（CD） |
+
+`pooling` 是剩下最大的一块（24 个入口），而且头里有**重复声明**
+（`zq_cnn_avgpooling_nopadding_nodivided_nchwc4_general` 出现两次），
+写门禁时要用 `nm` 取真实符号表，别用声明条数（CG.5 已经吃过一次亏）。
