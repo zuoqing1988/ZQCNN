@@ -2663,3 +2663,92 @@ PASSED
 
 编译告警只有一条**既有**的：`ZQ_FaceDatabase.h:447` / `ZQ_FaceDatabaseCompact.h:293`
 的 `fgets` 忽略返回值（`-Wunused-result`，附录 BK.8 已记，本轮未改）。
+
+## 新增/变更：附录 BM —— 两处丢弃返回值的 `cv::invert`（退化输入下空指针解引用）
+
+### 变更文件
+- `ZQlibFaceID/ZQ_FaceRecognizerUtils.h`
+  - `_findNonreflectiveSimilarity`：`void` -> `bool`（原来 `cv::solve` 失败后
+    只 printf 一句就 return，transform 留在**空 cv::Mat**，调用方无从检查）
+  - `_findSimilarity`：`void` -> `bool`，检查两次 `_findNonreflectiveSimilarity`
+    和 `cv::invert` 的返回值
+  - `CropImage_112x96 / _112x112 / _160x160 / _256x256_dot85`：
+    失败往上抛，而不是无条件 `return true`
+- `tools/check_uncked_cv_return.py`：新门禁
+- `tools/run_audit_checks.py`：接进 A11 / A12 两组
+- `audit_k3_20261001.md`：新增**附录 BM**
+
+### 缺陷
+
+```cpp
+// 修之前 ZQlibFaceID/ZQ_FaceRecognizerUtils.h:423-426
+cv::Mat tmp;
+if (norm1 < norm2)
+    cv::invert(transform1, tmp, cv::DECOMP_SVD);   // 返回值丢掉
+else
+    cv::invert(transform2, tmp, cv::DECOMP_SVD);
+...
+trans.ptr<TmpType>(i)[j] = tmp.ptr<TmpType>(j)[i];  // 空 Mat -> 空指针
+```
+
+`cv::invert` 对**奇异**矩阵返回 `false` 并把 dst 留成**空 `cv::Mat`**。
+`Tinv = [sc -ss 0; ss sc 0; tx ty 1]` 恰好奇异的条件是 `sc*sc+ss*ss == 0`,
+也就是相似变换退化成零尺度 —— 5 个输入点退化（全 0 / 共线 / 有重复）时正是这样。
+
+第二层：四个 `CropImage_*` 原来**无条件** `return true`，所以调用方
+`ZQ_FaceRecognizerSphereFace::AlignAndCropFeature` 里那个
+`if (!CropImage_xxx(...)) return false;` **永远不成立** ——
+"点退化"这件事在整个调用链上没有任何一层能知道。
+
+### 可达性（如实说，没那么严重）
+
+两个自带检测器都填 `ppoint`（`ZQ_CNN_MTCNN.h:1302`、
+`ZQ_FaceDetectorLibFaceDetect.h:196`），所以正常图像上不会退化。
+`ZQ_CNN_BBox` 构造函数是 `memset(this, 0, ...)`，**没填就是全 0**，
+而 `ZQ_FaceDatabaseMaker.h:557` 直接从 BBox 取 5 点
+—— 接一个不填 `ppoint` 的第三方检测器就退化。
+另外 `AlignAndCropFeature` 的 `face5point_x/y` 是**调用方给的裸指针**，
+API 上没有任何前置条件。所以定 **MED**（API 契约缺陷），不是 HIGH。
+
+### 没有 ASan 运行时证据 —— 如实记下来
+
+本机 `3rdparty/opencv` 只有 Windows 的 `opencv_world342.lib`，**没有 Linux 的 `.so`**，
+所以这一条做不了运行时验证。它是**读代码 + 与同仓库那份已经加固的拷贝对照**定位的：
+`ZQCNN/ZQ_CNN_FaceCropUtils.h:88` 是同一段算法的另一份拷贝，
+**本来就返回 bool 且调用方检查了** —— 同一段算法两份拷贝，OpenCV 这份把加固丢了。
+不假装有运行时证据。
+
+### 门禁 `check_uncked_cv_return.py`
+
+只收"返回值是 bool 且失败时会把 OutputArray 留成空"的
+`cv::solve` / `cv::invert` / `cv::gemm`，
+判定"这一行以 `cv::xxx(` 开头"（把返回值整个丢掉当独立语句用）。
+
+**这个门禁自己怎么被验证的**（一个从不匹配的正则 + 零命中 = 永远绿的门禁，
+比没有门禁更坏）：
+
+* 正则层 11 条构造样例
+* **遍历层**：真的往被扫的目录写一个临时 `.cpp`，跑完整 `find_hits`，
+  确认 2 处 -> 2 处，且临时文件已清掉
+* 再拿修前状态（`git stash`）验过：报 2 条、exit=1；`git stash pop` 后
+  报 0 条、exit=0
+
+KNOWN_GAPS 写进了工具 docstring：只认"本行以 cv::xxx( 开头"这一种形状；
+不判断检查得对不对；只覆盖 `cv::` 限定写法；没有运行时证据。
+
+### 实测结果
+
+```
+A11 check_uncked_cv_return --selfcheck: OK
+    selfcheck: 11 条判定全部符合预期
+    selfcheck: 遍历层也通过（临时文件 2 处 -> find_hits 2 处，跑完已清理）
+A12 check_uncked_cv_return: OK
+    OK: 全部 cv::solve/invert/gemm 调用的返回值都被用上了（扫了 0 处）
+--quick 全量: ALL CHECKS PASSED
+```
+
+### 全树只有这 2 处
+
+一句 grep 就能确认：
+`^\s*cv::(invert|solve|gemm)\s*\(` 整个仓库只命中 `ZQ_FaceRecognizerUtils.h`
+的 407 / 409 两行。所以这一条是"形状很典型、量很少"，修完顺手做成门禁就够。

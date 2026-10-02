@@ -72,6 +72,13 @@ GROUPS = [
      ['check_div_guard.py', '--selfcheck'], False),
     ('A10 "除以模型参数" 守卫普查 (check_div_guard)',
      ['check_div_guard.py'], False),
+    # A11/A12 是 BM 的门禁：BM 修了 ZQlibFaceID/ZQ_FaceRecognizerUtils.h 里
+    # 两处没检查返回值的 cv::invert（失败时输出 Mat 是空的 -> 后面空指针解引用）。
+    # 同一个动机：修了一处不等于只有这一处，靠人记得普查是靠不住的。
+    ('A11 "丢弃 OpenCV bool 返回值" 自测 (check_uncked_cv_return --selfcheck)',
+     ['check_uncked_cv_return.py', '--selfcheck'], False),
+    ('A12 "丢弃 OpenCV bool 返回值" 普查 (check_uncked_cv_return)',
+     ['check_uncked_cv_return.py'], False),
     ('B  ZQlib 独立回归测试 x10 (ASan+LSan)', ['run_zqlib_checks.py'], False),
     # 基线路径给**绝对路径**：子进程以 ROOT 为 cwd 运行，而基线文件在 tools/ 下，
     # 相对路径会解析成 <ROOT>/zqlib_probe_baseline.txt 而找不到（2026-10-02 实测）。

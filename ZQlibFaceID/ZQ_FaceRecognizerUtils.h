@@ -37,7 +37,13 @@ namespace ZQ
 
 			cv::Mat transform;
 			clock_t t1 = clock();
-			_findSimilarity(5, facial5point, coord5point, transform);
+			// 审计修复 2026-10-02（附录 BM.1）：原来无条件 return true ——
+			// 也就是说这个 bool 返回值是装饰，调用方
+			// (ZQ_FaceRecognizerSphereFace::AlignAndCropFeature) 里的
+			//   if (!CropImage_xxx(...)) return false;
+			// 永远不成立，于是下游永远看不到"这 5 个点退化"这件事。
+			if (!_findSimilarity(5, facial5point, coord5point, transform))
+				return false;
 			clock_t t2 = clock();
 			cv::warpAffine(img, crop, transform, designed_size);
 			clock_t t3 = clock();
@@ -60,7 +66,13 @@ namespace ZQ
 
 			cv::Mat transform;
 			clock_t t1 = clock();
-			_findSimilarity(5, facial5point, coord5point, transform);
+			// 审计修复 2026-10-02（附录 BM.1）：原来无条件 return true ——
+			// 也就是说这个 bool 返回值是装饰，调用方
+			// (ZQ_FaceRecognizerSphereFace::AlignAndCropFeature) 里的
+			//   if (!CropImage_xxx(...)) return false;
+			// 永远不成立，于是下游永远看不到"这 5 个点退化"这件事。
+			if (!_findSimilarity(5, facial5point, coord5point, transform))
+				return false;
 			clock_t t2 = clock();
 			cv::warpAffine(img, crop, transform, designed_size);
 			clock_t t3 = clock();
@@ -90,7 +102,13 @@ namespace ZQ
 
 			cv::Mat transform;
 			clock_t t1 = clock();
-			_findSimilarity(5, facial5point, coord5point, transform);
+			// 审计修复 2026-10-02（附录 BM.1）：原来无条件 return true ——
+			// 也就是说这个 bool 返回值是装饰，调用方
+			// (ZQ_FaceRecognizerSphereFace::AlignAndCropFeature) 里的
+			//   if (!CropImage_xxx(...)) return false;
+			// 永远不成立，于是下游永远看不到"这 5 个点退化"这件事。
+			if (!_findSimilarity(5, facial5point, coord5point, transform))
+				return false;
 			clock_t t2 = clock();
 			cv::warpAffine(img, crop, transform, designed_size);
 			clock_t t3 = clock();
@@ -113,7 +131,13 @@ namespace ZQ
 
 			cv::Mat transform;
 			clock_t t1 = clock();
-			_findSimilarity(5, facial5point, coord5point, transform);
+			// 审计修复 2026-10-02（附录 BM.1）：原来无条件 return true ——
+			// 也就是说这个 bool 返回值是装饰，调用方
+			// (ZQ_FaceRecognizerSphereFace::AlignAndCropFeature) 里的
+			//   if (!CropImage_xxx(...)) return false;
+			// 永远不成立，于是下游永远看不到"这 5 个点退化"这件事。
+			if (!_findSimilarity(5, facial5point, coord5point, transform))
+				return false;
 			clock_t t2 = clock();
 			cv::warpAffine(img, crop, transform, designed_size);
 			clock_t t3 = clock();
@@ -122,8 +146,13 @@ namespace ZQ
 		}
 
 	private:
+		// 审计修复 2026-10-02（附录 BM.1）：原来返回 void。
+		// cv::solve 失败时只 print 一句就 return，transform 留在**空 cv::Mat** 状态，
+		// 而调用方（_findSimilarity）紧接着就 ptr<>() 上它 -> 空指针解引用。
+		// 同仓库的 ZQCNN/ZQ_CNN_FaceCropUtils.h 里那个同名函数**本来就是返回 bool
+		// 并且调用方检查了** —— 同一段算法两份拷贝，OpenCV 这份把加固丢了。
 		template<class BaseType>
-		static void _findNonreflectiveSimilarity(int nPts, const BaseType* uv, const BaseType* xy, cv::Mat& transform)
+		static bool _findNonreflectiveSimilarity(int nPts, const BaseType* uv, const BaseType* xy, cv::Mat& transform)
 		{
 			/*
 			%
@@ -225,7 +254,7 @@ namespace ZQ
 			if (!cv::solve(X, U, r, cv::DECOMP_SVD))
 			{
 				std::cout << "failed to solve\n";
-				return;
+				return false;
 			}
 			double t2 = omp_get_wtime();
 			//printf("solve:%.3f\n", t2 - t1);
@@ -256,11 +285,18 @@ namespace ZQ
 					Tinv_mat.ptr<TmpType>(i)[j] = Tinv[i * 3 + j];
 			}
 			transform = Tinv_mat;
-
+			return true;
 		}
 
+		// 审计修复 2026-10-02（附录 BM.1）：原来返回 void，且下面两处
+		//   * _findNonreflectiveSimilarity 的返回值（原来是 void，压根没法检查）
+		//   * cv::invert 的返回值
+		// 都没检查。invert 对**奇异**矩阵返回 false 并把 dst 留成空 Mat，接着
+		// trans.ptr<TmpType>(j)[i] 就是空指针解引用。5 个点退化（全 0 / 共线 /
+		// 重复）时 Tinv 恰好奇异 —— 而 ZQ_FaceRecognizer::AlignAndCropFeature
+		// 的 face5point_x/y 是**调用方给的裸指针**，API 上没有任何前置条件。
 		template<class BaseType>
-		static void _findSimilarity(int nPts, const BaseType* uv, const BaseType* xy, cv::Mat& transform)
+		static bool _findSimilarity(int nPts, const BaseType* uv, const BaseType* xy, cv::Mat& transform)
 		{
 			/*
 			function [trans, output] = findSimilarity(uv,xy,options)
@@ -336,7 +372,8 @@ namespace ZQ
 			using TmpType = BaseType;
 			cv::Mat transform1, transform2R, transform2;
 			clock_t t1 = clock();
-			_findNonreflectiveSimilarity(nPts, uv, xy, transform1);
+			if (!_findNonreflectiveSimilarity(nPts, uv, xy, transform1))
+				return false;
 			clock_t t2 = clock();
 			/*for (int i = 0; i < 3; i++)
 			{
@@ -353,7 +390,11 @@ namespace ZQ
 				xyR[i * 2 + 1] = xy[i * 2 + 1];
 			}
 			clock_t t3 = clock();
-			_findNonreflectiveSimilarity(nPts, uv, xyR, transform2R);
+			if (!_findNonreflectiveSimilarity(nPts, uv, xyR, transform2R))
+			{
+				delete[] xyR;
+				return false;
+			}
 			delete[] xyR;
 			clock_t t4 = clock();
 			/*for (int i = 0; i < 3; i++)
@@ -403,11 +444,20 @@ namespace ZQ
 
 			clock_t t5 = clock();
 			cv::Mat tmp;
+			// 审计修复 2026-10-02（附录 BM.1）：这两个 cv::invert 的返回值原来
+			// **完全没检查**。invert 对奇异矩阵返回 false 并把 dst 留成空 Mat，
+			// 紧接着下面 trans.ptr<TmpType>(j)[i] 就是空指针解引用。
+			bool invert_ok;
 			if (norm1 < norm2)
-				cv::invert(transform1, tmp, cv::DECOMP_SVD);
+				invert_ok = cv::invert(transform1, tmp, cv::DECOMP_SVD);
 			else
-				cv::invert(transform2, tmp, cv::DECOMP_SVD);
+				invert_ok = cv::invert(transform2, tmp, cv::DECOMP_SVD);
 			clock_t t6 = clock();
+			if (!invert_ok)
+			{
+				printf("failed to invert the similarity transform (5 points are degenerate)\n");
+				return false;
+			}
 
 			cv::Mat trans(2, 3, type);
 			for (int i = 0; i < 2; i++)
@@ -422,6 +472,7 @@ namespace ZQ
 
 			transform = trans;
 			//printf("%f,%f,%f\n", 0.001*(t2 - t1), 0.001*(t4 - t3), 0.001*(t6 - t5));
+			return true;
 		}
 	};
 }
