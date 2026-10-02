@@ -384,6 +384,13 @@ ASan 更久。2026-10-02 给 `innerproduct_gemm` 写测试时（附录 BC），
    所以改源码和写 python 脚本一律用 Write/Edit 工具落盘，不要 `python - <<'PY'`。
 7. **不要凭"以前的修复报告写了什么"来判断覆盖面**。第四/五轮声称边框清零已覆盖 `ROI`，实际只改了 `Resize*`；`NCHWC1/4/8` 整个系列一处没改。收口一类缺陷时要**全仓枚举同类站点**（`grep` 出所有出现位置逐个核对），而不是只信上一轮的清单。
 8. **改中文注释/文档时不要走有损解码，改完必须跑 `python tools/check_text_encoding.py`**。`core.autocrlf=true` 下用脚本批量改写时，只要有一环用了 `errors='replace'` 再写回，原字节就被永久换成 `EF BF BD`，而且**不报错** —— 只有读那一行时才看到几个黑方块。2026-10-01 在 `reports/ZQ_GEMM_多内核自动选路_设计提案.md`、`docs-changelogs/CHANGELOG_2026-10-01.md` 和 `zq_gemm_32f_align_c_asm_msvc.asm` 各抓到一处（提交前就在仓库里）。该工具还会报严格 UTF-8 解不开的文件，其中 4 个是上游带来的 **GBK 文件**（`ZQ_MFC_Utils.h`、`ZQ_PutTextCN.h`、`ZQ_CNN_FaceCropUtils.h`、`mxnet2caffe.bat`），已在白名单里，不要去"修"它们。
+9. **Edit 工具会抹掉文件头的 UTF-8 BOM。** 用 Edit 改一个带 BOM 的文件时，
+   第一行的 `EF BB BF` 会被悄悄去掉 —— `git diff` 里表现为第一行被改了一行内容
+   （`-﻿#include ...` / `+#include ...`），**混在真正的改动里很容易看漏**
+   （2026-10-02 改 `zq_cnn_convolution_gemm_32f_align_c.c` 时就是这样，
+   两处目标改动之外还多了一条第一行的改动）。改完先 `git diff` 逐条核对，
+   发现自己没打算改第一行就是它；还原用
+   `python -c "import io;p=r'...';b=io.open(p,'rb').read();io.open(p,'wb').write(b'\xef\xbb\xbf'+b)"`。
 
 ## 配置宏的唯一真相
 

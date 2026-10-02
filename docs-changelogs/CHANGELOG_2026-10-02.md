@@ -3933,3 +3933,84 @@ Windows 侧 MSVC 与 gcc 的检查覆盖面不同。
 「内部分配、结束时释放」并显式支持。**这不是缺陷** —— 唯一调用方永远传真实 buffer，
 与 CC.5 里 `same_pixstep_kernel1x1` 同一类。记下来是因为将来若要给 packed 族写门禁，
 **别按 raw 族的用法传 `buffer = 0`**。
+## 新增/变更：附录 CE —— NCHW 卷积（x86 主生产路径）第一次有数值门禁，当场查出一条生产可达的静默数据损坏
+
+### 变更文件
+
+* `ZQCNN/layers_c/zq_cnn_convolution_gemm_32f_align_c.c`
+  —— `zq_cnn_conv_no_padding_gemm_32f_align0_same_or_notsame_pixstep_batch`
+  的 `matrix_A_cols` 由 `in_C` 改成 `filter_H*filter_W*in_C`。
+  **两处拷贝都改了**：531 行（x86 那份）与 896 行（`#if __ARM_NEON && __ARM_NEON_FP16` 那份）
+* `tools/zq_nchw_conv_check.cpp`（新增）—— 16 个 NCHW 卷积入口的数值门禁
+* `tools/run_zqlib_checks.py` —— 登记 `zq_nchw_conv`（`EXTRA_SOURCES` / `EXTRA_LINK` /
+  `EXTRA_INC` / `EXTRA_CXXFLAGS` / `SLOW` 五处）
+* `audit_k3_20261001.md` —— 新增附录 CE
+* `AGENTS.md` —— 行尾/编码那节补一条「Edit 工具会抹掉 UTF-8 BOM」
+* `docs-changelogs/CHANGELOG_2026-10-02.md` —— 本节
+
+### 这条缺陷
+
+`zq_cnn_conv_no_padding_gemm_32f_align0_same_or_notsame_pixstep_batch`
+的 im2col 循环走满 `filter_H*filter_W` 个位置、每位置写 `in_C` 个 float
+（3×3、C=8 时每输出像素 72 个），但 `matrix_A_row_ptr += matrix_A_cols`
+用的 `matrix_A_cols = in_C`（8）—— **少了 `filter_H*filter_W*` 因子**，
+`matrix_A` 的相邻行互相覆盖。1×1 时 `filter_H*filter_W*in_C == in_C` 恰好相等，
+所以这个错误在 1×1 上完全看不出来。
+
+**修法不是猜的**：同一文件同一段里紧挨着的**非 batch 兄弟**（350 行 / 717 行）
+写的就是 `filter_H*filter_W*in_C`，两处只差这一个表达式。
+
+### 实测
+
+独立复现（与门禁**没有一行共用代码**），判据：后向误差，阈值 1e-5，逐格统计：
+
+| 用例 | 修之前 | 修之后 |
+|---|---|---|
+| N=16, 3×3, C=8, K=8 | 正确 1 / 错 **12799**，最差 3.783e+00 | 正确 **12800** / 错 0，最差 1.231e-06 |
+| N=16, 1×1, C=8, K=8 | 正确 18432 / 错 0 | 正确 18432 / 错 0（未受影响） |
+| N=2, 3×3, C=8, K=8 | 正确 0 / 错 **5184**，最差 3.811e+00 | 正确 **5184** / 错 0，最差 1.188e-06 |
+| N=2, 1×1, C=8, K=8 | 正确 6400 / 错 0 | 正确 6400 / 错 0（未受影响） |
+
+门禁 `zq_nchw_conv`：**修之前 56 个用例里 4 个全错（EXIT=1）→ 修之后 56/56 全对（EXIT=0）**。
+16 个入口覆盖 `align0` / `align128bit` / `align256bit` × `same_pixstep` /
+`same_pixstep_kernel1x1` / `same_pixstep_C4` / `same_pixstep_batch` /
+`same_or_notsame_pixstep` / `same_or_notsame_pixstep_C3` / `same_or_notsame_pixstep_batch`。
+
+### 生产可达性
+
+`ZQ_CNN_Forward_SSEUtils.cpp` 的 727 与 926 两处调它，触发条件：
+
+* `align_mode` **既不是** ALIGN_128bit **也不是** ALIGN_256bit
+  —— 即张量用**不做通道对齐**的 `Align0` 变体分配
+* 且 `out_N >= 16`（大 batch）、`out_NHW >= 8`
+* 且卷积核**不是 1×1**
+
+**shipped 的 sample 全部走 ALIGN_128bit / ALIGN_256bit，所以 sample 回归抓不到它** ——
+这正是"没有数值门禁"的代价。
+
+### 注意事项
+
+1. **这是静默数据损坏，不是内存安全问题。** 我第一反应是"缓冲区少分配 9 倍 → 堆溢出"，
+   用 ASan 去验，**ASan 什么都没报**。手算给出了原因：
+   ```
+   need_A = 648*8*4 = 20,736 字节（按错的 matrix_A_cols 算）
+   need_B = 72 *8*4 =  2,304 字节（matrix_Bt 紧跟在 A 后面）
+   total  = 23,040 字节
+   实际最大写入偏移 = 647*8*4 + 72*4 = 20,992 < 23,040
+   ```
+   **溢出部分全部落在 B 缓冲区里，没有跑出整块分配。**
+   教训：看到"少分配"先算一遍**最大写入偏移 vs 分配总长**，再决定要不要报成内存安全问题。
+   **"少分配了 9 倍"和"越界"是两件事。**
+2. **ARM FP16 那份拷贝（896 行）本机无法运行**（没有 ARM 工具链，见附录 CD.6）。
+   它与同段非 batch 兄弟（717 行）**只差这一个表达式**，修法逐字相同 ——
+   这一点如实标注，**不宣称它被验证过**
+3. **门禁自己也有一个缺陷（已修）**：第一版"让 `in_pixStep != filter_pixStep`"
+   写的是"把 f_pixStep 也补到 4 的倍数"，对 C=8 算出来还是 8，等于**根本没测到**。
+   现在改成 `f_pixStep = in_pixStep + 4`，并把两边的 pixelStep 写进结果文件、
+   在用例行里直接打出来 —— 免得又出现"以为测了、其实没测"
+4. **`align0` 在 NCHW 这一族里不等于"标量模板实例"** —— 它是**手写的通用实现**
+   （`zq_gemm_32f_align0_AnoTrans_Btrans` + memcpy），与 `_raw.h` 那套
+   `zq_mm_*` 模板完全是两套代码。所以 NCHW 与 NCHWC 的同名函数**不能互为参照**
+5. **顺带记一个工具坑**：`Edit` 工具会抹掉文件头的 UTF-8 BOM。
+   改 `zq_cnn_convolution_gemm_32f_align_c.c` 时它在 `git diff` 里表现为
+   "第一行被改了一行内容"，混在两处真正的改动里。已还原并记进 AGENTS.md

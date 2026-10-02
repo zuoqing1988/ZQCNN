@@ -528,7 +528,7 @@ extern "C" {
 		int dilate_H_mul_in_widthStep = dilation_H*in_widthStep;
 		int dilate_W_mul_in_pixStep = dilation_W*in_pixelStep;
 		int filter_pixStep_mul_filter_W = filter_pixelStep*filter_W;
-		int matrix_A_cols = in_C;
+		int matrix_A_cols = filter_H*filter_W*in_C;
 		int matrix_A_rows = out_N*out_H*out_W;
 		int matrix_B_cols = filter_N;
 		int matrix_B_rows = filter_H*filter_W*filter_C;
@@ -893,7 +893,7 @@ extern "C" {
 		int dilate_H_mul_in_widthStep = dilation_H*in_widthStep;
 		int dilate_W_mul_in_pixStep = dilation_W*in_pixelStep;
 		int filter_pixStep_mul_filter_W = filter_pixelStep*filter_W;
-		int matrix_A_cols = in_C;
+		int matrix_A_cols = filter_H*filter_W*in_C;
 		int matrix_A_rows = out_N*out_H*out_W;
 		int matrix_B_cols = filter_N;
 		int matrix_B_rows = filter_H*filter_W*filter_C;
