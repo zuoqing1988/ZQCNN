@@ -1,0 +1,31 @@
+# ZQCNN 主工程 gcc -O2 -c 优化期告警 HIGH 桶基线
+# （tools/warn_sweep_bounds.py --save-baseline 生成，随后人工补了理由）
+# 格式: <文件名>\t<-W标志>\t<文件:行:列>
+#
+# 与 tools/zqcnn_warn_baseline.txt（-fsyntax-only 那条轴）的区别：
+# 那一轴只看得到语义级告警；本轴多出的是**优化器才证明得了**的那一类。
+# 附录 CT.4 的 `axis > 4`、附录 CU.6 的「释放非自有内存」，都只在本轴上出现过。
+#
+# 基线的作用是拦**新增**，不是要求桶为空。
+#
+# ---------------------------------------------------------------------------
+# 逐条理由
+# ---------------------------------------------------------------------------
+# ZQ_CNN_Forward_SSEUtils_NCHWC.cpp 的 4 条 -Wduplicated-branches
+# （2056 / 2160 / 2260 / 2361，四处形如
+#     else if (filter_H == 3 && filter_W == 3 && in_C <= 4)
+#   的分支体在 x86 上被 #if __ARM_NEON && __ARM_NEON_ARMV8 掏空，只剩一句
+#   `return false;`，与紧随其后的兜底 `else return false;` 逐字相同）
+#
+# **判定：不是缺陷，不修。** gcc 说得完全正确 —— 那四个分支在 x86 上确实是死代码。
+# 留着的理由是可读性：这四处（ConvolutionWithBiasPReLU / ConvolutionWithPReLU /
+# Convolution / InnerProductWithBias）在 x86 上对「3x3 且 in_C <= 4」**没有实现**，
+# 而分派器的结构看上去像是支持它；读代码的人会以为 x86 也能跑这一档。
+# 记在附录 CU.5，不动代码。
+#
+# 如果哪天 ARM 那份实现被删掉，这四条应当一起消失 —— 到那时它们会变成
+# 「新增」之外的东西，需要人工确认后再处理。
+ZQ_CNN_Forward_SSEUtils_NCHWC.cpp	Wduplicated-branches	ZQ_CNN_Forward_SSEUtils_NCHWC.cpp:2056:7
+ZQ_CNN_Forward_SSEUtils_NCHWC.cpp	Wduplicated-branches	ZQ_CNN_Forward_SSEUtils_NCHWC.cpp:2160:7
+ZQ_CNN_Forward_SSEUtils_NCHWC.cpp	Wduplicated-branches	ZQ_CNN_Forward_SSEUtils_NCHWC.cpp:2260:7
+ZQ_CNN_Forward_SSEUtils_NCHWC.cpp	Wduplicated-branches	ZQ_CNN_Forward_SSEUtils_NCHWC.cpp:2361:7

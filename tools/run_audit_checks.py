@@ -172,6 +172,11 @@ def main():
                     help='额外跑 gcc -Wall -Wextra 的 HIGH 桶门禁（较慢，约 2 分钟，见附录 AT）')
     ap.add_argument('--src-sweep', action='store_true',
                     help='额外扫**主工程** ZQCNN/ 的 43 个 TU 的 HIGH 桶（约 1 分钟，见附录 AU）')
+    ap.add_argument('--bounds-sweep', action='store_true',
+                    help='额外跑 **-O2 -c** 的优化期告警 HIGH 桶门禁（约 2.5 分钟，见附录 CU）。'
+                         '与 --src-sweep 的差别只有一处但是决定性的：--src-sweep 用 '
+                         '-fsyntax-only，不出代码不做优化，所以 -Warray-bounds 这类'
+                         '**依赖优化器值域传播**的告警在它那条轴上永远不响。')
     args = ap.parse_args()
 
     failed = []
@@ -217,6 +222,14 @@ def main():
                           os.path.join(HERE, 'zqcnn_warn_baseline.txt')],
                          cwd=ROOT):
             failed.append('C4 主工程 ZQCNN/ 的 HIGH 桶门禁')
+
+    if args.bounds_sweep:
+        if not run_group('C5 主工程 -O2 -c 优化期告警 HIGH 桶门禁',
+                         [sys.executable, os.path.join(HERE, 'warn_sweep_bounds.py'),
+                          '--check-baseline',
+                          os.path.join(HERE, 'zqcnn_bounds_baseline.txt')],
+                         cwd=ROOT):
+            failed.append('C5 主工程 -O2 -c 优化期告警 HIGH 桶门禁')
 
     if args.msvc_asan:
         if not run_group('B2 ZQlib 独立回归测试 x10 (MSVC /fsanitize=address)',

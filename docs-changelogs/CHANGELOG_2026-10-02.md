@@ -5465,3 +5465,110 @@ ZQCNN/ZQ_CNN_Forward_SSEUtils.h:2478/2530               axis < 0 || axis > 4   �
 
 **下一块先不开 lstm**，先补 CT.5 说的那条 `-O2` 扫描轴：它刚用一个字符的
 差异产出了一条真缺陷，而且这类缺陷不靠人读代码、只靠编译器就能继续挖。
+
+## 新增/变更：附录 CU —— 开一条 `-O2` 扫描轴，挖出 7 处释放非自有内存 + 1 条静默无输出
+
+### 变更文件
+
+* `tools/warn_sweep_bounds.py`（新增）—— `-O2 -c` 的优化期告警扫描轴
+* `tools/zqcnn_bounds_baseline.txt`（新增）—— 该轴的 HIGH 桶基线（4 条，逐条写了理由）
+* `tools/zq_nchw_conv_free_check.cpp`（新增）—— NCHW no_padding gemm 的内存归属门禁
+* `tools/run_zqlib_checks.py` 登记 `zq_nchw_conv_free`（四处）+ 新增 `--bounds-sweep` 开关
+* `tools/run_audit_checks.py` 新增 `--bounds-sweep`（C5 组）
+* `ZQCNN/layers_c/zq_cnn_convolution_gemm_32f_align_c_raw.h` —— 7 处错误路径
+* `audit_k3_20261001.md` 新增附录 CU
+
+### 新扫描轴
+
+`warn_sweep_src.py` 用的是 `-fsyntax-only`（不出代码、不做优化），
+而 `-Warray-bounds` 依赖的恰恰是优化器的值域传播 —— **这类告警在旧轴上
+结构性不可见**。新工具与旧轴的差别只有 `-O2 -c` 这一处，TU 集合 / 宏 /
+include / `-m` 开关全部复用，两边结果可直接对比。
+
+新增 13 条优化期告警全部进 HIGH 桶。43 个 TU 整轮约 150 秒。
+
+**实测推翻了我起草时的预设**：我照旧笔记写了三个"几分钟起步"的慢 TU 名字进
+跳过名单，实测最慢的只有 15.81 秒，而且 `zq_gemm_32f_align_c` 根本不在这个工具
+的扫描集合内。那份名单是照着旧笔记抄的、没量过的，已删掉。
+
+### 缺陷 1：7 处错误路径释放非自有内存（已修）
+
+`zq_cnn_convolution_gemm_32f_align_c_raw.h` 里 7 个 no_padding gemm 的错误处理：
+
+```cpp
+const zq_base_type* matrix_Bt = filters_data;   // 调用方的滤波器数据
+...
+if (matrix_A == 0 || matrix_Bt == 0 || ...) {
+    if (matrix_A) _aligned_free(matrix_A);
+    if (matrix_Bt) _aligned_free(matrix_Bt);   // ← 释放调用方的内存
+    if (matrix_C) _aligned_free(matrix_C);     // ← !need_allocate_tmp_out 时是 out_tensor4D_data
+    return;
+}
+```
+
+同仓 A/B 三处独立对照（同文件 `_C3` 孪生函数是"先分配再判空"、
+同函数自己的正常收尾、编译器只报 4 处而实际有 7 处）。
+**编译器只报了 4 处** —— 另外 3 处 `matrix_Bt` 声明成非 const，不丢限定符，看不见。
+
+### 缺陷 2：2 处判空写在分配之前 → 必然提前 return（已修）
+
+`..._same_or_notsame_pixstep{,_batch}` 把"先分配再判空"改成了"先判空再分配"，
+于是 `need_allocate_matrix_Bt`（= `in_pixelStep < filter_pixelStep`）为真时
+`matrix_Bt` 必为 0、判空恒真、**函数必然直接 return，输出张量原封不动**。
+分派器 `if (in_pixStep == filter_pixStep)` 那一行说明这个函数族本来就是为
+"两边不相等"准备的。定性为潜伏缺陷：`<` 那一侧未见 shipped 模型命中。
+
+### 可达性（本轮更正过一次，如实记录）
+
+第一版我按"上游有守卫"判成潜伏。查下来**判错了**：
+
+* `ZQ_CNN_Layer.h:308` 是 `void** tmp_buffer = use_buffer ? buffer : 0;`
+* `use_buffer` 构造函数里初始化为 `false`，**全仓没有任何一处置 true**
+* ⇒ **生产永远传 `0`，永远走的就是那个有缺陷的内部 malloc 分支**
+
+剩下的唯一前提是 `_aligned_malloc` 失败（OOM）。
+
+### 顺带查出：附录 CE 那道门禁一直在测一条死分支
+
+`tools/zq_nchw_conv_check.cpp:165` 传 `&buffer`，走的是"调用方给缓冲"那条分支 ——
+**生产从不走的那条**。它没测的分支生产天天在走。本轮没有去改 CE
+（它当前是绿的），但这件事记在附录 CU.9，下一块应当改成两种都跑。
+
+### 门禁：17 个用例，回退修复后 14 FAIL + 2 CRASH
+
+`tools/zq_nchw_conv_free_check.cpp`，两个链接期拦截器：
+`memalign` 模拟 OOM、`free` 记录"谁被释放了"。
+**必须显式关掉 ASan**（ASan 运行时自己也要调 `free`，抢在它初始化前会段错误）。
+GEMM 桩掉两个符号，编一次 3.6 秒（原来要 7 分钟），因此能进**每次**回归。
+
+变异测试（直接取 `git HEAD` 的修复前版本）：
+
+```
+修复回退版：共 17 个用例：全对 1，有错 14，崩溃/搭建失败 2
+修复后　　：共 17 个用例：全对 17，有错 0，崩溃/搭建失败 0
+```
+
+两个 CRASH 正是缺陷 2 的生产后果：提前 return 之前先 `free(out_tensor4D_data)`，
+而那指向一个 `std::vector` 堆块的 32 字节对齐偏移 → glibc `free(): invalid pointer` → abort。
+
+**第一版门禁是假绿的**（回退修复后仍 17/17 全绿），排查了整整一轮才定位：
+库的判据是 `if (buffer == 0)`，判的是**那个 `void**` 本身**，
+我传 `&buf` 就走了另一条分支。错两个字符不是"测试失败"，
+是"测试根本没测到那件事"，而输出和全绿一模一样。
+
+### 工具自己踩的四个坑（都写进源码注释）
+
+1. `T0=$(date +%%s)` 那行**不走** `%` 格式化，`%%s` 写死，报错行号指向十行之后的编译行
+2. `$std` 忘了传值，`-std=` 整个丢失
+3. `-Wstringop-overread` / `-Wcalloc-transposed-args` 是 Clang 专有，
+   gcc 报 `unrecognized` → **43 个 TU 全编不过** → 输出 `HIGH=0 MED=0` 的假绿。
+   现在脚本开头有旗标探针，不认的**打出来并剔除**
+4. 门禁参数表与被测函数参数表几乎一样（`void** buffer` 在第 28 位），
+   传 `&buf` 和传 `0` 只差两个字符
+
+### HIGH 桶那 4 条：不是缺陷
+
+`ZQ_CNN_Forward_SSEUtils_NCHWC.cpp` 的 `-Wduplicated-branches` ×4：
+ARM 实现被 `#if` 掏空后整个 `else if` 只剩 `return false`，与兜底 `else` 逐字相同。
+x86 上对「3x3 且 in_C ≤ 4」没有实现，但分派器的结构看上去像支持它 ——
+记可读性，不动代码，四条都进了基线并写明理由。
