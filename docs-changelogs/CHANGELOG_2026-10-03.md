@@ -3067,3 +3067,73 @@ x86 `idiv` 直接陷阱，**进程 SIGFPE 当场死掉**。
 ### 变更文件
 
 - `tools/zq_convparam_check.cpp`（15 -> 31 例；`param_line` 改为"非默认值才写"）
+
+---
+
+## 变更：附录 EZ —— 把 EY 那个模式系统化：三个 `ReadParam` 守卫正确但零用例
+
+### 把"同一道守卫只测了一半"变成一次扫描
+
+`tools/probe_readparam_coverage.py` 对每个层类列出 `ReadParam` 里的数值守卫，
+报出哪些分支在任何门禁源码里都没出现过。
+
+> **探针自己错了一次**：它把 `Reduction` 的 `axis` 报成"未覆盖"，
+> 而 `zq_layerwire_check.cpp:583-584` 明明有 `axis=4`/`axis=-1` 两条期望拒绝的用例。
+> 原因是我用"**标识符在门禁源码里出现过没有**"当判据 ——
+> 门禁的用例表把 axis 存在 `c.a` 里，根本不出现 `axis` 这个词。
+> **这个判据"未覆盖"不可信、"覆盖"才可能**，所以输出改成"候选"，逐条手工核实。
+> 这是同一个坑（EP.2 / EQ）的第三次。
+
+### 逐条手工核实
+
+| 类 | 守卫 | 结论 |
+|---|---|---|
+| `Reduction` | `axis < 0 \|\| axis > 3` | **已有门禁**，探针误报 |
+| `Pooling` | `!global_pool && (kernel_H<=0 \|\| … \|\| stride_W<=0)`（`:3945`） | 守卫正确、**零用例** |
+| `Softmax` | `return axis >= 0 && axis <= 3 && …`（`:8500`） | 守卫正确、**零用例** |
+| `Reshape` | `valid_num_axes=false`（`:8495`）→ `return valid_axis && valid_num_axes && …`（`:8506`） | 守卫正确、**零用例** |
+
+三个都**不是缺陷**，都是**覆盖缺口**。
+
+### 补进 zq_convparam（31 -> 49 例，零额外构建成本）
+
+这三个类的 `Forward` 走的是 `ZQ_CNN_Forward_SSEUtils` 的**私有**辅助函数（那 44 个**绊线**），
+所以只测 `ReadParam` —— 门禁只需要"参数能不能被拒"，碰不到 `Forward`，
+也就不需要把绊线换成记录桩。复用的就是 `zq_convparam` 已编好的那批对象。
+
+最有价值的是 `Pooling` 的**正例**：
+
+    { C_POOLING, 0, 1, 1, 1, 0, 1 },   // global_pool=1 + kernel=0：必须放行
+    { C_POOLING, 0, 1, 0, 1, 0, 1 },   // global_pool=1 + stride=0：必须放行
+
+全局池化时 kernel/stride 本来就没有意义，守卫的 `!global_pool` 那一半是**豁免**。
+若被"顺手简化"成无条件拒绝，**合法的 global_pool 模型会被全拒掉**，
+而这条改写**不会有任何现有门禁报错**（根本没测过它）。
+
+### 我自己错了两次，都是"把直觉当规格"
+
+| 我写的期望 | 实际 | 真相 |
+|---|---|---|
+| `num_axes=4` 是合法上界 | 被拒 | 守卫是 `num_axes >= shape.size()`，`dim` 有 4 项 ⇒ 合法上界是 **3** |
+| 参数名写 `dims=4,1,8,8` | 解析器不认 | 参数名是**重复的 `dim=`**（见 `model/*.zqparams`） |
+
+第二条尤其值得记：`dims` 这个名字**是我按 "dimensions" 想出来的**，
+看见"实际拒绝"还一度以为是代码有 bug，查真实模型才发现名字就不对 ——
+**参数名不能按含义编，要从真实数据里抄**。
+
+### 三个类的变异验证
+
+| 变异 | 结果 |
+|---|---|
+| `Pooling` 的 `!global_pool` 改成 `true` | **RC=1**，**恰好 2 条** global_pool 正例红 |
+| `Softmax` 的 `axis <= 3` 改成 `<= 9` | **RC=1**，**恰好 1 条**（axis=4）红 |
+| `Reshape` 的 `num_axes < -1` 改成 `< -99` | **RC=1**，**恰好 1 条**（num_axes=-2）红 |
+| 全部还原 | **RC=0**，49/49 |
+
+第一条的"恰好 2 条"证明**豁免路径**也被钉住了，而不只是拒绝路径 ——
+这正是"简化守卫"最容易踩的那一侧。
+
+### 变更文件
+
+- `tools/probe_readparam_coverage.py`（新，只读诊断；输出措辞改为"候选"）
+- `tools/zq_convparam_check.cpp`（31 -> 49 例）
