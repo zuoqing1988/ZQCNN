@@ -180,6 +180,15 @@ GROUPS = [
     # 放在慢组：四档各编 3 个 TU + 跑探针，实测约 2.5 分钟。
     ('C10 SSETYPE 四档逐档编译 + 行为（附录 GM）',
      ['check_ssetype_matrix.py', '--selftest'], True),
+    # C11（附录 GN.3）：MSVC /analyze 门禁。
+    # 这个工具**一直存在**（附录 AW），但：
+    #   * AW 那一轮只跑了 7 个 TU，现在是 46 个 —— 多出来的部分里有
+    #     4 条 C6011（malloc 未判空）这类真发现；
+    #   * 它**从来没接进过回归**，所以"跑过一次"和"一直在跑"差着十万八千里。
+    # 放在慢组：46 个 TU 的 /analyze 实测约 2~4 分钟，且只依赖 MSVC。
+    ('C11 MSVC /analyze 基线（附录 AW / GN.3）',
+     ['run_msvc_analyze.py', '--check-baseline',
+      os.path.join(HERE, 'msvc_analyze_baseline.txt')], True),
 ]
 
 

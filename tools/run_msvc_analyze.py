@@ -72,6 +72,22 @@ def main():
     argv = [a for a in sys.argv[1:]]
     as_json = '--json' in argv
     list_only = '--list' in argv
+    # 基线标志要先摘掉，否则 'tools/x.baseline' 会被当成要扫的 TU 过滤串
+    # （和 check_filecount_bounds.py 踩过的同一个坑）。
+    save_to = None
+    check_against = None
+    for flag, var in (('--save-baseline', 'save_to'),
+                      ('--check-baseline', 'check_against')):
+        if flag in argv:
+            i = argv.index(flag)
+            if i + 1 >= len(argv):
+                print('%s needs a file' % flag)
+                return 2
+            if var == 'save_to':
+                save_to = argv[i + 1]
+            else:
+                check_against = argv[i + 1]
+            del argv[i:i + 2]
     argv = [a for a in argv if not a.startswith('--')]
 
     tus = collect_tus(argv[0] if argv else '')
@@ -140,6 +156,69 @@ def main():
             print('     %-8s %-40s %s' % (r['flag'], r['loc'], r['text'][:70]))
     if build_fail:
         print('\n没有日志文件（编译可能失败）: %s' % ', '.join(build_fail))
+
+    # ---- 基线 ----
+    # 键是 **(TU, 告警号, 文件名)**，**不含行号**。
+    # 行号会因任何无关编辑整体平移 —— 放进键里就成了"每次改代码基线都炸"
+    # 的门禁（tools/check_filecount_bounds.py 试过，行号那版就是这个下场）。
+    # 同一 (TU, 告警号, 文件) 出现多次时存**计数**：这样"同一文件里多了一处
+    # 同类发现"也能被抓到，而不需要精确到行。
+    def key_of(r):
+        # loc 形如 zq_cnn_resize_nchwc_raw.h(47)，去掉 (行) 这一段
+        base = re.sub(r'\(\d+\)\s*$', '', r['loc'])
+        return (r['tu'], r['flag'], base)
+
+    cur = collections.Counter()
+    for r in rows:
+        cur[key_of(r)] += 1
+
+    if save_to:
+        lines = ['# MSVC /analyze 基线'
+                 '（tools/run_msvc_analyze.py --save-baseline 生成）',
+                 '# 格式: <TU>\\t<告警号>\\t<文件>\\t<该组合的条数>',
+                 '# 键**不含行号**，理由见 run_msvc_analyze.py 里的注释。',
+                 '# 基线的作用是拦**新增**：`--check-baseline` 在任何一条计数上升时退出 1。']
+        for k in sorted(cur):
+            lines.append('%s\t%s\t%s\t%d' % (k[0], k[1], k[2], cur[k]))
+        with io.open(save_to, 'w', encoding='utf-8', newline='\n') as f:
+            f.write('\n'.join(lines) + '\n')
+        print('\nbaseline written to %s (%d keys, %d findings)'
+              % (save_to, len(cur), sum(cur.values())))
+
+    if check_against:
+        base = {}
+        try:
+            for line in io.open(check_against, encoding='utf-8'):
+                if line.startswith('#') or not line.strip():
+                    continue
+                parts = line.rstrip('\n').split('\t')
+                if len(parts) >= 4:
+                    base[(parts[0], parts[1], parts[2])] = int(parts[3])
+        except IOError as e:
+            print('\nERROR: 读不到基线 %s: %s' % (check_against, e))
+            return 1
+        print('\n=== 与基线 %s 比对 ===' % check_against)
+        print('(TU, 告警号, 文件) 组合: 基线 %d -> 现在 %d；条数 %d -> %d'
+              % (len(base), len(cur), sum(base.values()), sum(cur.values())))
+        worse = []
+        for k in sorted(base):
+            if cur.get(k, 0) > base[k]:
+                worse.append((k, base[k], cur[k]))
+        for k in sorted(cur):
+            if k not in base:
+                worse.append((k, 0, cur[k]))
+        gone = [(k, base[k], cur.get(k, 0)) for k in sorted(base)
+                if cur.get(k, 0) < base[k]]
+        for k, was, now in worse:
+            print('  MORE     %-28s %-8s %-38s %d -> %d'
+                  % (k[0], k[1], k[2], was, now))
+        for k, was, now in gone:
+            print('  FEWER    %-28s %-8s %-38s %d -> %d'
+                  % (k[0], k[1], k[2], was, now))
+        if not worse and not gone:
+            print('无新增、无减少。')
+        return 1 if worse else 0
+
     return 0
 
 

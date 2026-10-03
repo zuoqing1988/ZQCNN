@@ -55,25 +55,33 @@ CONFIG_H = os.path.join(ROOT, 'ZQCNN', 'ZQ_CNN_CompileConfig.h')
 # (名字, -D 列表, 期望的六个值)
 # SSETYPE: 0=NONE 1=SSE 2=AVX 3=AVX2（ZQ_CNN_SSETYPE_* 的定义值）
 # FMADD 由 SSETYPE>=AVX2 推导，所以 SSETYPE=3 时它们才是 1。
+#
+# **默认值那一行是 2026-10-03（附录 GN）改过的**：Linux 侧从 AVX 改成 AVX2，
+# 与 Windows 侧对齐 —— 因为两个平台本来就都无条件发 AVX2 指令
+# （CMakeLists.txt:113 / :118 都不看 SSETYPE），AVX 挡不住任何老机器，
+# 却让同一个模型在两个平台上算出不同的浮点数（实测 6/6 形状位模式不同）。
+# 改动当天这个门禁**如实把它拦了下来**（6 组期望全红），
+# 然后才改的期望表 —— 一条"拦住了默认行为变更"的门禁，
+# 比一条"永远绿"的门禁有用得多。
 CASES = [
-    ('默认（x86 Linux）',
+    ('默认（x86 Linux，2026-10-03 起是 AVX2）',
      [],
-     'BLAS=0 MKL=0 ZQ_GEMM=1 SSETYPE=2 FMADD128=0 FMADD256=0'),
+     'BLAS=0 MKL=0 ZQ_GEMM=1 SSETYPE=3 FMADD128=1 FMADD256=1'),
     ('CMake 的 BLAS_TYPE=openblas',
      ['-DZQ_CNN_USE_BLAS_GEMM=1'],
-     'BLAS=1 MKL=0 ZQ_GEMM=0 SSETYPE=2 FMADD128=0 FMADD256=0'),
+     'BLAS=1 MKL=0 ZQ_GEMM=0 SSETYPE=3 FMADD128=1 FMADD256=1'),
     ('CMake 的 BLAS_TYPE=openblas_zq_gemm（x86 上没人读这个宏）',
      ['-DZQ_CNN_USE_BOTH_BLAS_ZQ_GEMM=1'],
-     'BLAS=0 MKL=0 ZQ_GEMM=1 SSETYPE=2 FMADD128=0 FMADD256=0'),
+     'BLAS=0 MKL=0 ZQ_GEMM=1 SSETYPE=3 FMADD128=1 FMADD256=1'),
     ('显式 -DZQ_CNN_USE_MKL_GEMM=1',
      ['-DZQ_CNN_USE_MKL_GEMM=1'],
-     'BLAS=0 MKL=1 ZQ_GEMM=0 SSETYPE=2 FMADD128=0 FMADD256=0'),
+     'BLAS=0 MKL=1 ZQ_GEMM=0 SSETYPE=3 FMADD128=1 FMADD256=1'),
     ('CMake 的 BLAS_TYPE=zq_gemm',
      ['-DZQ_CNN_USE_ZQ_GEMM=1'],
-     'BLAS=0 MKL=0 ZQ_GEMM=1 SSETYPE=2 FMADD128=0 FMADD256=0'),
-    ('-DZQ_CNN_USE_SSETYPE=3（AVX2，FMADD 应当跟着开）',
-     ['-DZQ_CNN_USE_SSETYPE=3'],
      'BLAS=0 MKL=0 ZQ_GEMM=1 SSETYPE=3 FMADD128=1 FMADD256=1'),
+    ('-DZQ_CNN_USE_SSETYPE=1（SSE，FMADD 应当跟着关）',
+     ['-DZQ_CNN_USE_SSETYPE=1'],
+     'BLAS=0 MKL=0 ZQ_GEMM=1 SSETYPE=1 FMADD128=0 FMADD256=0'),
     ('CMake 的 SIMD_ARCH_TYPE=arm（三个后端开关曾经全部未定义）',
      ['-DZQ_CNN_USE_ARM_NEON'],
      'BLAS=0 MKL=0 ZQ_GEMM=0 SSETYPE=0 FMADD128=0 FMADD256=0'),

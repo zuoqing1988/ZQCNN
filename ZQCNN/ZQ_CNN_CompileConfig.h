@@ -94,8 +94,32 @@
 #endif
 #else
 // your settings
+//
+// 2026-10-03（附录 GN）：Linux 侧从 AVX 改成 **AVX2**，与 Windows 侧对齐。
+// 两条论据都是实测的，指向同一个动作：
+//
+//  1. **原来的档位差异没有换来任何兼容性收益。**
+//     根 CMakeLists.txt:113 给**所有** gcc x86 构建加 `-mavx2 -mfma`，
+//     :118 给 MSVC 加 `/arch:AVX2` —— **都不看 ZQ_CNN_USE_SSETYPE**。
+//     所以两个平台**本来就都要求 AVX2+FMA 的 CPU**，
+//     把 Linux 设在 AVX 挡不住任何老机器，只影响"哪些内核被编进来"。
+//     （副作用：SSETYPE 也决定 FMADD 开关，见下面那段 `>= AVX2`，
+//       于是同一个模型在两个平台上算出**不同的浮点数** ——
+//       实测 6/6 形状的位模式都不同，而 max|C| 到 6 位有效数字相同。
+//       见附录 GN.2。）
+//
+//  2. **性能上是赚的。** 25 个形状、三轮交错、空载机器，
+//     SSETYPE=3 相对 SSETYPE=2 的 GF/s：
+//        中位数 122% / 平均 134% / 最好 265%（512x512x512）
+//        比值 < 100% 的只有 4 个形状（3x3x3 90%、192x192x192 91%、
+//        384x128x384 80%、512x512x1 81%）
+//     即：不是全面更快，但中位数与均值都明显为正，
+//     而那几个回退的形状在真实推理里权重很低。
+//
+// 想回到 AVX：cmake -DZQ_CNN_USE_SSETYPE=1/2，或直接改这一行
+// （现在有 #ifndef 包裹，命令行 -D 优先，见上面 GL.1）。
 #ifndef ZQ_CNN_USE_SSETYPE
-#define ZQ_CNN_USE_SSETYPE ZQ_CNN_SSETYPE_AVX
+#define ZQ_CNN_USE_SSETYPE ZQ_CNN_SSETYPE_AVX2
 #endif
 #ifndef ZQ_CNN_USE_BLAS_GEMM
 #define ZQ_CNN_USE_BLAS_GEMM 0 // if you want to use openblas, set to 1
