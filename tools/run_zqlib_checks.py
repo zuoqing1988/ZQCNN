@@ -29,8 +29,10 @@ import argparse
 import glob
 import os
 import re
+import shutil
 import subprocess
 import sys
+import time
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(HERE)
@@ -653,10 +655,26 @@ def main():
     if args.list:
         return 0
 
+    # **工作目录必须每次运行唯一**（附录 EB.1）。原来是固定的 `/tmp/zqchecks`
+    # 且开头 `rm -rf *` —— 任何两次并发运行都会互相摧毁：
+    # 一次正在链接，另一次把 `.o` 全删了，于是报出一个
+    # `BUILD FAIL: g++: error: .../zq_dwnchw.o: No such file`，
+    # **看起来像被测代码坏了，其实是两个进程在抢同一个目录**。
+    # 2026-10-03 亲历：审计 harness 的 B 阶段把本脚本作为子进程调起，
+    # 我同时手工跑了几次单门禁 —— 审计那边 `zq_bns` 就这样红了，
+    # 而它单跑 PASS。
+    # 用 pid + 时间戳做唯一名，并保证**本轮结束时不删别人的目录**。
+    run_id = '%d_%d' % (os.getpid(), int(time.time()))
+    wdir = '/tmp/zqchecks_%s' % run_id
     lines = ['set +e',
              'R=/mnt/d/ZQCNN',
-             'WDIR=/tmp/zqchecks',
-             'cd $WDIR && rm -rf * && mkdir -p $WDIR']
+             'WDIR=%s' % wdir,
+             # **必须先 mkdir 再 cd**：唯一目录名每轮都是新的、初始并不存在。
+             # 原来写的是 `cd $WDIR && rm -rf * && mkdir -p $WDIR`，
+             # 靠的是 `/tmp/zqchecks` 早已存在才没出事 ——
+             # 换成唯一名之后 `cd` 直接失败、`&&` 把 mkdir 短路掉，
+             # 于是所有编译都写到不存在的路径上，**每一道门禁都 BUILD FAIL 且消息为空**。
+             'mkdir -p $WDIR && cd $WDIR && rm -rf ./*']
     for s in srcs:
         fname = os.path.basename(s)              # zq_xxx_check.cpp
         stem = fname[:-4]                        # zq_xxx_check
@@ -736,6 +754,9 @@ def main():
                 "echo \"R|%s|$?|$(grep -cE 'FAIL' %s.out)|0\"; fi"
                 % (tag, ce, tag, tag, tag, tag))
     lines.append('echo R|__END__|0|0')
+    # 跑完把自己那个 WDIR 删掉 —— 它现在每轮唯一，不删会在 WSL 的 /tmp 里攒一堆。
+    # **只删本轮的 $WDIR**，绝不能 `rm -rf /tmp/zqchecks*`（那会删掉正在跑的别的运行）。
+    lines.append('cd / && rm -rf "$WDIR" 2>/dev/null; true')
     out = run_wsl('\n'.join(lines))
 
     build_fail, results = [], []
@@ -761,31 +782,32 @@ def main():
     # 结果本地目录空着、报告一个也没拉回来（而 WSL 侧其实已经写好了）。
     # 本地路径要先转成 /mnt/<盘符>/... 的形式 WSL 才认得。
     tmp = os.environ.get('TEMP', '.')
-    cdir = os.path.join(tmp, 'zqchild')
+    cdir = os.path.join(tmp, 'zqchild_%s' % run_id)   # 本轮专属镜像目录
+    dst_prefix = os.path.join(tmp, 'zqchild_')        # 报告的稳定落点
     try:
-        if not os.path.isdir(cdir):
-            os.makedirs(cdir)
         m2 = re.match(r'([A-Za-z]):[\\/]+(.*)', tmp)
         if m2:
             wsl_tmp = '/mnt/%s/%s' % (m2.group(1).lower(), m2.group(2).replace('\\', '/'))
         else:
             wsl_tmp = tmp.replace('\\', '/')
-        # **必须先删本地旧文件再 cp，且不能用 `cp -n`** —— 附录 DY.4。
-        # 原来写的是 `cp -n`（--no-clobber），而本地这个目录建了之后从不清空，
-        # 于是**第一轮拉回来的空报告会一直挡在后面**：后面每一轮即使拉到了
-        # 真正的 sanitizer 报告也覆盖不掉它，打印出来永远是空的那一份。
-        # 症状是"门禁红着、报告栏永远空白"，看上去像没有 sanitizer 报告。
-        # （WSL 侧 $WDIR 每轮开头是 `rm -rf *`，所以 WSL 里的文件是新的 ——
-        #   旧的只存在于本地这个镜像目录里。）
-        # 只删 *.child.err，不动目录里的其它东西。
-        run_wsl('rm -f %s/zqchild/*.child.err 2>/dev/null; '
-                'cp /tmp/zqchecks/*.child.err %s/zqchild/ 2>/dev/null; true'
-                % (wsl_tmp.rstrip('/'), wsl_tmp.rstrip('/')))
+        cdir_wsl = wsl_tmp.rstrip('/') + '/zqchild_%s' % run_id
+        if not os.path.isdir(cdir):
+            os.makedirs(cdir)
+        # **源目录用本轮的 $WDIR**，不能再写死 /tmp/zqchecks ——
+        # 那样会把**别的运行**的报告也一起拷过来。
+        run_wsl('rm -f %s/*.child.err 2>/dev/null; '
+                'cp %s/*.child.err %s/ 2>/dev/null; true'
+                % (cdir_wsl, wdir, cdir_wsl))
         for fn in os.listdir(cdir):
             if fn.endswith('.child.err'):
-                dst = os.path.join(tmp, 'zqchild_' + fn[:-len('.child.err')])
+                dst = dst_prefix + fn[:-len('.child.err')]
                 with open(os.path.join(cdir, fn), 'rb') as a, open(dst, 'wb') as b:
                     b.write(a.read())
+        # 报告已落到稳定路径，本轮镜像目录可以删了
+        try:
+            shutil.rmtree(cdir, ignore_errors=True)
+        except (OSError, IOError):
+            pass
     except (OSError, IOError):
         pass
 
