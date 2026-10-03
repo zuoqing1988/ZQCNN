@@ -60,6 +60,20 @@ INCS = [
     '/mnt/d/ZQCNN/3rdparty/include',
     '/mnt/d/ZQCNN/3rdparty/include/ZQlib',
     '/mnt/d/ZQCNN/3rdparty/opencv/build/include',
+    # 下面三行是 2026-10-03 补的（附录 GJ）：这三个 SDK 的头**就在仓库里**
+    #   3rdparty/include/libfacedetection/facedetect-dll.h
+    #   3rdparty/include/mini-caffe/caffe/caffe.hpp
+    #   3rdparty/include/SeetaFaceEngine/FaceIdentification/include/face_identification.h
+    # 而 ZQlibFaceID 那三个头是**按裸名** include 的（"facedetect-dll.h" 等），
+    # 所以探针必须把对应目录**自己**放进包含路径。
+    # 缺了它们的后果不是"报 BROKEN"这么温和 —— 而是那 3 个头被归成
+    # **NEEDS_LIB（"环境缺库，不是缺陷"）**，于是**真缺陷被当成环境问题放过了**。
+    # 与 ES.1（INCLUDE 列表里有不存在的目录 -> g++ 报错 -> 静默全绿）
+    # 是同一族：**包含路径的问题会伪装成分类问题**。
+    '/mnt/d/ZQCNN/3rdparty/include/libfacedetection',
+    '/mnt/d/ZQCNN/3rdparty/include/mini-caffe',
+    '/mnt/d/ZQCNN/3rdparty/include/mini-caffe/caffe',
+    '/mnt/d/ZQCNN/3rdparty/include/SeetaFaceEngine/FaceIdentification/include',
 ]
 
 # 缺这些就是"环境缺东西"，不是本仓库的缺陷
@@ -129,8 +143,6 @@ def classify(msg):
     # MSVC_ONLY 与 BROKEN 两个桶**从来没有被填过**。
     # 'nn/' 也不行：路径里的 "cnn/" 同样含 "nn/"。
     #
-    # "是不是缺外部库"这个问题，正确的信息源只有 `fatal error: X: No such file`
-    # 里的那个 X —— 它才是编译器**真正找不到**的东西。
     # "是不是缺外部库"这个问题，正确的信息源只有 `fatal error: X: No such file`
     # 里的那个 X —— 它才是编译器**真正找不到**的东西。
     #

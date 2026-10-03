@@ -8,7 +8,7 @@ ZQ_FaceDatabase.h	OK
 ZQ_FaceDatabaseCompact.h	OK
 ZQ_FaceDatabaseMaker.h	OK
 ZQ_FaceDetector.h	OK
-ZQ_FaceDetectorLibFaceDetect.h	NEEDS_LIB
+ZQ_FaceDetectorLibFaceDetect.h	OK
 ZQ_FaceDetectorMTCNN.h	OK
 ZQ_FaceExtractor.h	OK
 ZQ_FaceFeature.h	OK
@@ -16,14 +16,14 @@ ZQ_FaceGroup.h	OK
 ZQ_FaceIDPrecisionEvaluation.h	OK
 ZQ_FaceRecognizer.h	OK
 ZQ_FaceRecognizerArcFaceGrayNCNN.h	OK
-ZQ_FaceRecognizerArcFaceMiniCaffe.h	NEEDS_LIB
+ZQ_FaceRecognizerArcFaceMiniCaffe.h	OK
 ZQ_FaceRecognizerArcFaceNCNN.h	OK
 ZQ_FaceRecognizerArcFaceOpenCV.h	OK
 ZQ_FaceRecognizerArcFaceZQCNN.h	OK
-ZQ_FaceRecognizerSeetaFace.h	NEEDS_LIB
+ZQ_FaceRecognizerSeetaFace.h	OK
 ZQ_FaceRecognizerSphereFace.h	OK
 ZQ_FaceRecognizerSphereFaceGrayNCNN.h	OK
-ZQ_FaceRecognizerSphereFaceMiniCaffe.h	NEEDS_LIB
+ZQ_FaceRecognizerSphereFaceMiniCaffe.h	OK
 ZQ_FaceRecognizerSphereFaceNCNN.h	OK
 ZQ_FaceRecognizerSphereFaceOpenCV.h	OK
 ZQ_FaceRecognizerSphereFaceZQCNN.h	OK
