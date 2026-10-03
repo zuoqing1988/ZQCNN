@@ -29,6 +29,35 @@ cd "$OUT_DIR" || exit 1
 # 自己声明"本平台不支持"的那些措辞
 STUB_RE='only support|not support|not supported|only supports'
 
+# 检出数下界（2026-10-04 加，附录 GS）。
+#
+# 为什么需要：原来只看 rc==0 且输出非空。而"模型被悄悄弄坏"的典型症状
+# **不是崩溃，是检出 0 张脸** —— 层接线错、权重数组顺序错、
+# 某个 num_output 读偏，都会安静地给出 0。那样回归照样绿。
+#
+# 下界取"实测值的一半（向下取整，至少 1）"而不是精确值：
+#   * 精确值太脆 —— 修好一个真实的漏检 bug，检出数会**上升**，精确匹配会误报；
+#   * ">= 1" 太弱 —— 只检出 1 张脸（实测是 10 张）也能过。
+# 下界能抓住"丢了一半以上"这一档，而这正是静默损坏的形态。
+#
+# 实测（2026-10-04，WSL gcc 9.4，仓库自带权重）：
+#   SampleMTCNN=10   SampleMTCNN_NCHWC4=4   SampleMTCNNLoadFromCode=84
+# 换模型或换测试图之后要**重新量一遍**这三个数并更新本表 ——
+# 忘了更新的症状是"门禁突然红了"，而不是"门禁一直没在管这件事"。
+#
+# 注意 SampleMTCNN 与 SampleMTCNN_NCHWC4 **用的不是同一张图**
+# （data/11.jpg vs data/4_320x240.jpg），所以 10 与 4 **不可直接比较**。
+# 2026-10-04 我一度把这两个数当成"NCHWC4 少检出 60%"的缺陷，
+# 核了输入路径才发现是两张图 —— 记在这里以免下次再犯。
+detect_floor_case() {   # $1=sample 名 -> 期望下界；空 = 该 sample 不适用
+  case "$1" in
+    SampleMTCNN)             echo 5 ;;
+    SampleMTCNN_NCHWC4)       echo 2 ;;
+    SampleMTCNNLoadFromCode)  echo 42 ;;
+    *)                        echo "" ;;
+  esac
+}
+
 n_ok=0; n_stub=0; n_bad=0
 for e in SampleMTCNN SampleMTCNN_NCHWC4 SampleSSD SampleFaceDetectorMTCNN \
          SampleCascadeOnet SampleCascadeOnet_Interface SampleMTCNNLoadFromCode \
@@ -49,8 +78,25 @@ for e in SampleMTCNN SampleMTCNN_NCHWC4 SampleSSD SampleFaceDetectorMTCNN \
       echo "$e $st rc=$rc ${t}ms"
       printf '%s\n' "$out" | tail -5 | sed 's/^/      /'
     else
-      st=OK; n_ok=$((n_ok+1))
-      echo "$e $st rc=$rc ${t}ms  $(printf '%s' "$out" | wc -l) 行输出"
+      # 检出数下界（见上面 detect_floor_case 的注释）
+      floor=$(detect_floor_case "$e")
+      found=""
+      if [ -n "$floor" ]; then
+        found=$(printf '%s' "$out" | sed -n 's/.*final found num: *\([0-9][0-9]*\).*/\1/p' | tail -1)
+        if [ -z "$found" ]; then
+          st=NOCOUNT; n_bad=$((n_bad+1))
+          echo "$e $st rc=$rc ${t}ms  <-- 这个 sample 应当打印 'final found num:'，实际没有"
+        elif [ "$found" -lt "$floor" ]; then
+          st=FEWFACES; n_bad=$((n_bad+1))
+          echo "$e $st rc=$rc ${t}ms  检出 $found 张 < 下界 $floor  <== 模型多半是静默坏了"
+        else
+          st=OK; n_ok=$((n_ok+1))
+          echo "$e $st rc=$rc ${t}ms  检出 $found 张（下界 $floor）"
+        fi
+      else
+        st=OK; n_ok=$((n_ok+1))
+        echo "$e $st rc=$rc ${t}ms  $(printf '%s' "$out" | wc -l) 行输出"
+      fi
     fi
   else
     st=MISSING; n_bad=$((n_bad+1))
