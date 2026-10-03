@@ -1206,3 +1206,72 @@ DY.8（额外源失败报成链接错误）、**EB.1（并发运行互删工作�
 | `1995771` | 附录 EA 补：NCHWC border 路径逐点门禁（156 例）+ 逐子类变异测试 |
 | `2fd22b3` | 附录 EB：harness 并发互删工作目录已修 + 机制坐实 |
 | `98660c8` | 审计报告：加"结论更正索引"章节 |
+
+
+---
+
+## 变更：附录 EC —— UNUSED 层类型的接线门禁（75 例）
+
+### 切片来源
+
+威胁模型写明**模型文件是不可信输入**，而可达性门禁说 36 种层类型里 **15 种 UNUSED**
+（不会被随仓库发布的模型跑到）。两者放在一起：**UNUSED 不等于不可达** ——
+攻击者构造的 `.zqparams` 可以引用它们。这 15 种此前既没有门禁、也没有 sample 跑过；
+而已有的 43 道门禁测的是**内核**，测不到"层有没有把参数接对"。
+
+### 先逐个读了 6 个 UNUSED 层：都已被加固，或是自洽的桩
+
+- `LRN`：`local_size % 2 != 1` 已守住 0 / 偶数 / 负数
+- `Reduction`：`axis < 0 || axis >= 4` 已守住（我早前修的 CT 那条）
+- `PriorBox` / `PriorBox_MXNET`：`step_w <= 0` 退回 `1.0f/layer_width`，
+  除零那族（BD/BE/BF）已收口
+- `Squeeze` / `Copy`：**自洽的桩**（只 `CopyData`，`dim` 读了不用，
+  但 `GetTopDim` 也原样返回，声明与行为一致）—— 这正解释了它们为什么 UNUSED
+- `ScalarOperation`：`DIV` 走 `Mul(1.0f/scalar)`，`scalar == 0` 得 inf；
+  浮点除零不崩，数值可疑但不是内存问题
+
+"低垂果实已经摘干净"本身值得记：前几轮的加固覆盖面比报告统计表看起来更广。
+
+### 新门禁 `zq_layerwire`（75 例，全绿 + 变异通过）
+
+第一版想编 `ZQ_CNN_Forward_SSEUtils.cpp` 让层调真内核，**结果链接期缺半个库**
+（addbias / prelu / avgpooling / batchnorm / conv / conv_gemm …），
+最后拖进 `zq_cnn_convolution_gemm_32f_align_c.c`（单编 5 分钟以上），只能挂进 SLOW。
+
+**改成把桩下在更下面一层**：`ZQ_CNN_Forward_SSEUtils` 的公开包装方法
+（`ScalarOperation_*` / `Reduction*` / `LRN_across_channels`）全部是**头文件 inline**，
+定义在 .cpp 里的是**小写内部辅助函数** `_scalaroperation_*` / `_reduction_*` / `_lrn_*`。
+于是：层 →（inline 包装，真实）→ **我的桩（只记录不计算）**。
+
+两个好处：① 不用拖半个库；② 门禁**不可能与实现同源**（桩里没有一行计算），
+而"跑一遍真内核再对拍"会被"层和内核一起算错"掩盖过去 —— 那正是要防的错。
+
+判据五条：输入指针必须在 `bottoms[0]` 缓冲里；输出必须在 `tops[0]` 里（就地做除外）；
+**落到哪个 helper** 与**变换后的标量**要对；非法参数必须在**到达内核之前**被层拒掉；
+bottom 一个字节都不许被改。
+
+**变异测试**：把 `SCALAR_DIV` 的两处 `1.0f/scalar` 改回 `scalar`（DIV 退化成 MUL）→ 红；
+恢复后全绿且 `git diff --numstat ZQCNN/ZQ_CNN_Layer.h` 为空。门禁有鉴别力。
+
+### 门禁自己踩的三个坑（每一个都长得像"被测代码坏了"）
+
+1. **判据"标量必须原样传下去"是错的** —— 层对 `DIV` 故意改写成 `Mul(1.0f/scalar)`、
+   对 `MINUS` 改写成 `Add(-scalar)`，那是**等价变换，改对了才对**。6 例红，真因在判据。
+   改成"落到哪个 helper + 变换后的标量"后全绿，而且判据**更强** ——
+   它把操作映射本身也钉住了。
+2. **桩下错了层**：`ZQ_CNN_Forward_SSEUtils` 是**类**不是命名空间；
+   改对之后又给公开包装写类外定义（它们已是头文件 inline）→ `redefinition`。
+   两次都是看编译器第一行报错定位的。
+3. **我自己引入的 harness 改动毁掉了诊断证据** —— EB 里加的"跑完删掉本轮工作目录"
+   在门禁编译失败时连 `*.build.log` 一起删了。已改成**只在没有构建失败时清理**。
+   **清理本身会毁掉证据**，与 DY.5 同一类。
+
+### 覆盖边界（如实记下）
+
+在范围内：`ScalarOperation`（9 op + 未知）、`Reduction`（4 合法 + 2 非法 axis）、
+`LRN`（2 合法 + 3 非法 `local_size`）、`Squeeze`、`Copy`。
+
+不在范围内：`Sqrt`/`Scale`/`ScaleWithBias`（纯头文件 inline，没有可下的桩点）；
+另外 9 个 UNUSED 层（大多需要 net 提供权重 blob，直接驱动要额外搭架子）；
+12 个 EXERCISED 层的接线 —— sample 能发现"结果不对"，但发现不了
+"用了错误的张量而结果恰好一样"（就地做 vs 拷贝到 top 在 bottom==top 时完全等价）。

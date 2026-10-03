@@ -377,6 +377,18 @@ EXTRA_SOURCES = {
         'gcc -O1 -g $SAN -mavx2 -mfma -fopenmp -c -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include '
         '$R/ZQCNN/layers_c/zq_cnn_resize_32f_align_c.c -o $WDIR/zq_roi_rz.o',
     ],
+    # zq_layerwire（附录 EC）：UNUSED 层类型的**接线**。
+    # 要编 ZQ_CNN_Layer.h（10455 行）+ ZQ_CNN_Tensor4D.cpp + resize 内核。
+    'zq_layerwire': [
+        'gcc -O1 -g $SAN -mavx2 -mfma -fopenmp -c -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include '
+        '$R/ZQCNN/ZQ_CNN_Tensor4D.cpp -o $WDIR/zq_layerwire_t4d.o',
+        'gcc -O1 -g $SAN -mavx2 -mfma -fopenmp -c -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include '
+        '$R/ZQCNN/layers_c/zq_cnn_resize_32f_align_c.c -o $WDIR/zq_layerwire_rz.o',
+        # **不编 ZQ_CNN_Forward_SSEUtils.cpp**（附录 EC.1）：它一个 TU 引用半个库
+        # （addbias / prelu / avgpooling / batchnorm / conv / conv_gemm …），
+        # 最后会拖进 zq_cnn_convolution_gemm_32f_align_c.c（单编 5 分钟以上），
+        # 只能挂进 SLOW 集合。门禁里自己定义那十几个 static 方法当**记录桩**。
+    ],
     # zq_nchwc_tensor（附录 EA）：ZQ_CNN_Tensor4D_NCHWC **自己那批方法**
     # （Convert 族 / Permute / Flatten / Reshape）。该类被 9 道门禁当数据容器用，
     # 但自己的方法一个门禁都没有 —— 与 DX.6 在基类上发现的缺口同一个形状。
@@ -455,6 +467,7 @@ EXTRA_LINK = {'zq_innerproduct': ' $WDIR/zq_ipgemm.o $WDIR/zq_gemm_align.o $WDIR
               'zq_reshape': ' $WDIR/zq_reshape_t4d.o $WDIR/zq_reshape_rz.o',
               'zq_convert': ' $WDIR/zq_convert_t4d.o $WDIR/zq_convert_rz.o',
               'zq_nchwc_tensor': ' $WDIR/zq_nchwctensor.o $WDIR/zq_nchwctensor_rz.o',
+              'zq_layerwire': ' $WDIR/zq_layerwire_t4d.o $WDIR/zq_layerwire_rz.o',
               'zq_tile': ' $WDIR/zq_t4d.o $WDIR/zq_tile_rz.o',
               'zq_nchw_deconv': ' $WDIR/zq_dec.o',
               # -ldl 必须**放在源文件之后**：Ubuntu 20.04 默认 --as-needed，
@@ -498,6 +511,7 @@ EXTRA_INC = {'zq_facedb': ' -I$R -I$R/ZQCNN -I$R/ZQCNN/3rdparty/include/ZQlib',
              'zq_reshape': ' -I$R -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include',
              'zq_convert': ' -I$R -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include',
              'zq_nchwc_tensor': ' -I$R -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include',
+             'zq_layerwire': ' -I$R -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include',
              'zq_tile': ' -I$R -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include',
              'zq_nchw_deconv': ' -I$R -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include',
              'zq_nchw_conv_free': ' -I$R -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include',
@@ -534,6 +548,7 @@ EXTRA_CXXFLAGS = {'zq_facedb': ' -mavx2 -mfma -fopenmp',
                   'zq_reshape': ' -mavx2 -mfma -fopenmp',
                   'zq_convert': ' -mavx2 -mfma -fopenmp',
                   'zq_nchwc_tensor': ' -mavx2 -mfma -fopenmp',
+                  'zq_layerwire': ' -mavx2 -mfma -fopenmp',
                   'zq_tile': ' -mavx2 -mfma -fopenmp',
                   'zq_nchw_deconv': ' -mavx2 -mfma -fopenmp',
                   # **-fno-sanitize=address 必须排在 harness 加的 -fsanitize=address 之后**
@@ -754,9 +769,12 @@ def main():
                 "echo \"R|%s|$?|$(grep -cE 'FAIL' %s.out)|0\"; fi"
                 % (tag, ce, tag, tag, tag, tag))
     lines.append('echo R|__END__|0|0')
-    # 跑完把自己那个 WDIR 删掉 —— 它现在每轮唯一，不删会在 WSL 的 /tmp 里攒一堆。
-    # **只删本轮的 $WDIR**，绝不能 `rm -rf /tmp/zqchecks*`（那会删掉正在跑的别的运行）。
-    lines.append('cd / && rm -rf "$WDIR" 2>/dev/null; true')
+    # 注意：**不要在这里 `rm -rf $WDIR`**（附录 EC.1）。
+    # 清理放进 Python 侧、且**只在没有构建失败时**做 ——
+    # 2026-10-03 我把清理写成脚本最后一行，于是"有门禁编译失败"时
+    # 连 `*.build.log` 一起删了，**诊断证据当场消失**，
+    # 查"为什么链接不过"只能从头再跑一遍。
+    # 清理本身会毁掉证据 —— 与"报告被后一个用例擦掉"（DY.5）同一类。
     out = run_wsl('\n'.join(lines))
 
     build_fail, results = [], []
@@ -810,6 +828,12 @@ def main():
             pass
     except (OSError, IOError):
         pass
+
+    # 清理本轮的 WDIR —— **只在没有构建失败时**（附录 EC.1）。
+    # 有构建失败时留着 `*.build.log`，否则"为什么编不过"的证据当场消失。
+    # 只删本轮的 $WDIR，绝不能 `rm -rf /tmp/zqchecks*`（会删掉正在跑的别的运行）。
+    if not build_fail:
+        run_wsl('rm -rf %s 2>/dev/null; true' % wdir)
 
     print()
     nfail = 0
