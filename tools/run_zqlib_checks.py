@@ -439,6 +439,16 @@ EXTRA_SOURCES = {
     # LoadFrom 验，**NCHWC 这份只有编译覆盖**（被主工程 CMake 编过），
     # 行为上零门禁 —— 也就是说那处镜像改动从来没有被任何东西验证过。
     # 与 ES.2 同一个形状，只是更隐蔽：它**编得过**，所以"能编过"这道轴也照不到。
+    # zq_unusedlayers（附录 GE）：剩下三个 UNUSED 层的 ReadParam。
+    # DeConvolution 已在 zq_convparam 里；这三个的守卫**全在 ReadParam**，
+    # 而 ReadParam 不碰 Forward —— 所以不需要把绊线换成记录桩，
+    # 附录 EY.4 记的「需要双模式桩」那个理由只对 Forward 成立。
+    'zq_unusedlayers': [
+        'gcc -O1 -g $SAN -mavx2 -mfma -fopenmp -c -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include '
+        '$R/ZQCNN/ZQ_CNN_Tensor4D.cpp -o $WDIR/zq_unusedlayers_t4d.o',
+        'gcc -O1 -g $SAN -mavx2 -mfma -fopenmp -c -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include '
+        '$R/ZQCNN/layers_c/zq_cnn_resize_32f_align_c.c -o $WDIR/zq_unusedlayers_rz.o',
+    ],
     'zq_nchwc_net': [
         'gcc -O1 -g $SAN -mavx2 -mfma -fopenmp -c -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include '
         '$R/ZQCNN/ZQ_CNN_Tensor4D.cpp -o $WDIR/zq_nchwcnet_t4d.o',
@@ -545,6 +555,7 @@ EXTRA_LINK = {'zq_innerproduct': ' $WDIR/zq_ipgemm.o $WDIR/zq_gemm_align.o $WDIR
                                 '$WDIR/zq_nchwcnet_net.o $WDIR/zq_nchwcnet_tensor.o '
                                 '$WDIR/zq_nchwcnet_rzn.o'),
               'zq_model_params': ' $WDIR/zq_modelparams_t4d.o $WDIR/zq_modelparams_rz.o',
+              'zq_unusedlayers': ' $WDIR/zq_unusedlayers_t4d.o $WDIR/zq_unusedlayers_rz.o',
               'zq_tensorop': ' $WDIR/zq_tensorop_t4d.o $WDIR/zq_tensorop_rz.o',
               'zq_facegroup': '',
               'zq_tile': ' $WDIR/zq_t4d.o $WDIR/zq_tile_rz.o',
@@ -595,6 +606,7 @@ EXTRA_INC = {'zq_facedb': ' -I$R -I$R/ZQCNN -I$R/ZQCNN/3rdparty/include/ZQlib',
              'zq_convparam': ' -I$R -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include',
              'zq_nchwc_net': ' -I$R -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include',
              'zq_tensorop': ' -I$R -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include -I$R/tools',
+             'zq_unusedlayers': ' -I$R -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include -I$R/tools',
              'zq_model_params': ' -I$R -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include -I$R/tools',
              'zq_facegroup': ' -I$R -I$R/ZQCNN -I$R/ZQlibFaceID -I$R/ZQ_GEMM -I$R/3rdparty/include',
              'zq_tile': ' -I$R -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include',
@@ -638,6 +650,7 @@ EXTRA_CXXFLAGS = {'zq_facedb': ' -mavx2 -mfma -fopenmp',
                   'zq_convparam': ' -mavx2 -mfma -fopenmp',
                   'zq_nchwc_net': ' -mavx2 -mfma -fopenmp',
                   'zq_tensorop': ' -mavx2 -mfma -fopenmp',
+                  'zq_unusedlayers': ' -mavx2 -mfma -fopenmp',
                   'zq_model_params': ' -mavx2 -mfma -fopenmp',
                   'zq_facegroup': ' -mavx2 -mfma -fopenmp',
                   'zq_tile': ' -mavx2 -mfma -fopenmp',

@@ -3393,3 +3393,67 @@ EN 改的正是**模型加载路径**。改完只做了两件**一次性**的事
 ASan 撞致命错误走 `Die()` → `_exit(1)`，**不发信号** ⇒ `WIFSIGNALED` 为假。
 只判 `WIFSIGNALED` 的话，一次 sanitizer 崩溃会被记成"通过"。
 加上 `WIFEXITED(st) && WEXITSTATUS(st) != 0` 才兜得住。
+
+---
+
+## 变更：附录 GE —— 剩下 3 个 UNUSED 层补上线（之前记的"做不了"只对 Forward 成立）
+
+### 复核 EY.4 的"未做"理由
+
+EY.4 记「这 3 个 UNUSED 层记为未做，理由是需要绊线 + 记录桩的双模式桩」。
+复看之后，那条理由**只对 `Forward` 成立**：
+
+- 这三处的守卫**全部在 `ReadParam` 里**；
+- `ReadParam` 不碰 `Forward`，所以完全用不到记录桩 ——
+  和 EY/EZ 一样，"构造层对象 + 喂一行参数"就够了。
+
+那条"未做"的理由**把范围放大了**：它成立的那部分（Forward 接线）
+本来就不在"守卫有没有被测"这个问题里。
+
+顺带更正：EY.4 说"4 个 UNUSED 层"含 `DeConvolution`，但它早已被
+`zq_convparam` 覆盖（EO.7 扩到 49 例时含 `C_DECONV`）。真正剩下的就是这三个。
+
+### 门禁 zq_unusedlayers（18 例）
+
+| 类 | 守卫 | 用例 |
+|---|---|---|
+| `LSTM_TF` | `has_hidden_dim && has_type && has_bottom && has_top && has_name` | 完整合法 + 逐项缺 5 个 |
+| `PriorBoxText` | `!has_bottom \|\| bottom_names.size() != 2 \|\| !has_top \|\| !has_name`（**完全继承** `PriorBox::ReadParam`） | 完整合法 + 1/3 个 bottom + 缺 top/name/min_size |
+| `DetectionOutput_MXNET` | `!has_bottom \|\| bottom_names.size() != 3 \|\| !has_top \|\| !has_name` | 完整合法 + 2 个 bottom + 1 个 variance + 缺 top/name |
+
+最有价值的是**个数**那几条：`bottom_names` 的大小直接来自 .zqparams 里有几个
+`bottom=`，而下游 `LayerSetup` 硬取 `(*bottoms)[0..2]` —— **少一个就是越界读**。
+
+### 三个方向的变异验证
+
+| 变异 | 结果 |
+|---|---|
+| `LSTM_TF` 去掉 `has_hidden_dim &&` | **RC=1**，**恰好 1 条**红 |
+| `DetectionOutput_MXNET` 去掉 `bottom_names.size() != 3` | **RC=1**，**恰好 2 条**红 |
+| `PriorBox` 去掉 `bottom_names.size() != 2` | **RC=1**，**恰好 2 条**红 |
+| 全部还原 | **RC=0**，18/18 |
+
+### 门禁自己踩的坑：期望值写错，靠"打印子进程消息"一眼定位
+
+第一版 18 例错 1：`PriorBoxText` 的"完整合法"被**静默拒绝**。
+给子进程 stdout 加**按用例分文件**的收集后，一行看到：
+
+    输入: PriorBox ... variance=0.1 variance=0.2
+    | Layer p must provide 4 variance
+
+**我写了 2 个 `variance`，而 `_setup()` 要求恰好 4 个**（真实模型也是 4 个）。
+是我的数据错了，代码是对的。
+
+两件事值得分开记：
+
+1. **"子进程的消息串到下一个用例"**：父进程在自己打印**之后**才 `waitpid`，
+   子进程的消息出现在**下一行**。第一版我据此以为那例也报了
+   `must have 2 bottoms`，差点去查一个不存在的解析问题 —— FD.4 踩过同一种错位。
+2. **"把子进程的消息原样打出来"是把 20 分钟的猜变成一眼看到的关键**。
+   与附录 CA「失败信息只说观察到的事实」是同一道理的正面用法：
+   **让门禁自己把证据摆出来**，比让读报告的人推断便宜得多。
+
+### 变更文件
+
+- `tools/zq_unusedlayers_check.cpp`（新门禁，18 例）
+- `tools/run_zqlib_checks.py`（接进 4 张表）
