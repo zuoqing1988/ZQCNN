@@ -56,30 +56,52 @@ struct Case {
     int cls;
     int kernel;
     int dilate;     // 0 = 不写 dilate 参数（走默认值 1）
+    int stride;     // 0 = 不写 stride 参数（走默认值 1）；负数 = 写出这个值
     int expect;     // 1 = ReadParam 应当放行，0 = 应当拒绝
 };
 
 static const Case g_cases[] = {
     // ---- 常规形状：三个类各来一发，必须照旧放行 ----
-    { C_CONV,    3, 0, 1 },
-    { C_CONV,    1, 0, 1 },
-    { C_CONV,    2, 0, 1 },
-    { C_DWCONV,  3, 0, 1 },
-    { C_DECONV,  3, 0, 1 },
+    { C_CONV,    3, 1, 1, 1 },
+    { C_CONV,    1, 1, 1, 1 },
+    { C_CONV,    2, 1, 1, 1 },
+    { C_DWCONV,  3, 1, 1, 1 },
+    { C_DECONV,  3, 1, 1, 1 },
     // ---- 边界：乘积刚好放得进 int ----
     // 2e9 * (2e9-1) 会溢出；2e9 * 1 = 2e9 < INT_MAX，必须**放行**
-    { C_CONV,    2000000000, 1, 1 },
-    { C_DWCONV,  2000000000, 1, 1 },
-    { C_DECONV,  2000000000, 1, 1 },
+    { C_CONV,    2000000000, 1, 1, 1 },
+    { C_DWCONV,  2000000000, 1, 1, 1 },
+    { C_DECONV,  2000000000, 1, 1, 1 },
     // ---- 边界：乘积越界，三个类都必须拒绝 ----
-    { C_CONV,    2000000000, 2, 0 },   // 4e9
-    { C_DWCONV,  2000000000, 2, 0 },
-    { C_DECONV,  2000000000, 2, 0 },
-    { C_CONV,    1000000000, 3, 0 },   // 3e9
-    // ---- 常规 dilate：不能被守卫误杀 ----
-    { C_CONV,    3, 2, 1 },
-    { C_CONV,    3, 4, 1 },
-    { C_DWCONV,  3, 2, 1 },
+    { C_CONV,    2000000000, 2, 1, 0 },   // 4e9
+    { C_DWCONV,  2000000000, 2, 1, 0 },
+    { C_DECONV,  2000000000, 2, 1, 0 },
+    { C_CONV,    1000000000, 3, 1, 0 },   // 3e9
+    // ---- 常规 dilate / stride：不能被守卫误杀 ----
+    { C_CONV,    3, 2, 1, 1 },
+    { C_CONV,    3, 4, 1, 1 },
+    { C_DWCONV,  3, 2, 1, 1 },
+    { C_CONV,    3, 1, 2, 1 },
+    { C_DWCONV,  3, 1, 2, 1 },
+    { C_DECONV,  3, 1, 2, 1 },
+    // ---- stride == 0 / 负数：**整数除零 -> SIGFPE，进程直接死**（附录 EY.1）----
+    // 这一族比上面的溢出更狠：溢出的后果是数据错，除零的后果是整个进程没了。
+    // 守卫是 `kernel_H <= 0 || ... || stride_H <= 0 || stride_W <= 0`。
+    { C_CONV,    3, 1, 0, 0 },
+    { C_DWCONV,  3, 1, 0, 0 },
+    { C_DECONV,  3, 1, 0, 0 },
+    { C_CONV,    3, 1, -1, 0 },
+    { C_DWCONV,  3, 1, -1, 0 },
+    { C_DECONV,  3, 1, -1, 0 },
+    // ---- kernel == 0 / 负数：同一道守卫的另一半 ----
+    { C_CONV,    0, 1, 1, 0 },
+    { C_DWCONV,  0, 1, 1, 0 },
+    { C_DECONV,  0, 1, 1, 0 },
+    { C_CONV,   -1, 1, 1, 0 },
+    { C_DECONV, -1, 1, 1, 0 },
+    // ---- dilate == 0：`(kernel-1)*0+1 = 1` 不溢出，但退化到 1 像素核 ----
+    { C_CONV,    3, 0, 1, 0 },
+    { C_DECONV,  3, 0, 1, 0 },
 };
 static const int N_CASE = (int)(sizeof(g_cases) / sizeof(g_cases[0]));
 
@@ -92,12 +114,15 @@ static ZQ_CNN_Layer* make_layer(int cls)
 
 static std::string param_line(const Case& c)
 {
+    // stride / dilate 的默认值都是 1，所以**只有不等于 1 时才写进参数行** ——
+    // 写成"非 0 才写"的话 dilate=0 和 stride=0 这两个最要紧的用例根本表达不出来
+    // （第一版就是这么写的，于是 `stride=0` 那几条永远走的是默认值 1）。
     char buf[256];
     snprintf(buf, sizeof(buf),
              "Convolution name=c bottom=data top=out num_output=8 "
-             "kernel_size=%d stride=1 pad=1", c.kernel);
+             "kernel_size=%d stride=%d pad=1", c.kernel, c.stride);
     std::string s(buf);
-    if (c.dilate) {
+    if (c.dilate != 1) {
         char d[32];
         snprintf(d, sizeof(d), " dilate=%d", c.dilate);
         s += d;
@@ -144,8 +169,8 @@ int main(int argc, char** argv)
         int tripped = (WIFEXITED(st) && WEXITSTATUS(st) == 3);
 
         char tag[160];
-        snprintf(tag, sizeof(tag), "%-22s kernel=%-11d dilate=%d",
-                 g_cls[c.cls], c.kernel, c.dilate ? c.dilate : 1);
+        snprintf(tag, sizeof(tag), "%-22s kernel=%-11d dilate=%-3d stride=%d",
+                 g_cls[c.cls], c.kernel, c.dilate, c.stride);
 
         if (!have || WIFSIGNALED(st) || tripped) {
             crash++;
