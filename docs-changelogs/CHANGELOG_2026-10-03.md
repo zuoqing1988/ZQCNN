@@ -1506,3 +1506,73 @@ width/height、**不写 net 的 Input 层**；真正的图像是通过 `ConvertF
 实际用的是单独读入且有 `0..10000000` 边界的 `fr_num`。
 另一次我 grep 到 `ZQ_FaceContainerForVideo.h:78` 的 `key_num < 0` 就判"只挡负数"，
 而守卫在 10 行之后、被一段注释隔开 —— **差点把一处已经修好的地方报成缺陷。**
+
+
+---
+
+## 变更：附录 EG —— ZQlibFaceID 里两个头在 Linux 上根本编不过（已修）
+
+### 直接命中目标的一条：跨平台可编译性
+
+报告开头的目标是"确保 windows 和 linux 都能完全跑通"。
+`ZQlibFaceID` 里有两个头的 include 让它们**在 Linux 上永远编不过**：
+
+    #include <opencv2\opencv.hpp>        // ← 反斜杠
+
+gcc/clang 不会把 `opencv2\opencv.hpp` 当目录分隔（只有 MSVC 会）。
+
+**全仓扫描反斜杠 include** 结果分两类：
+
+| 位置 | 数量 | 有没有平台守卫 |
+|---|---|---|
+| `SamplesZQlibFaceID/*/*.cpp` 的 `<openblas\cblas.h>` / `<mkl\mkl.h>` | 数十处 | **有** —— 全在 `#if defined(_WIN32)` 块里，Linux 构建看不到，**无害** |
+| `ZQlibFaceID/ZQ_FaceClusterImagesForVideo.h:8` | 1 | **没有** |
+| `ZQlibFaceID/ZQ_FaceIDPrecisionEvaluation.h:8` | 1 | **没有** |
+
+**只有头文件里那两处是真问题。** 也顺带解释了 EF.0 的覆盖缺口：
+`ZQlibFaceID` 26/29 个头没有门禁，**其中一部分不是"没人写门禁"，
+而是"根本编不过、写不了"**。
+
+> 顺便记一次**扫描工具自己报错**（今天第 N 次）：我用 Python 写的那版扫描报 **0 处**，
+> 而直接 grep 找到几十处 —— 正则里的反斜杠在 `python -c "..."`（shell 双引号）里被转义吃掉了。
+> **同一件事 grep 对、Python 错**，而 Python 那版还带着表格和计数，看着更权威。
+> 凡是"正则很复杂"的扫描，**必须用 grep 交叉验一次**。
+
+### 修法（已修，两处各 8 行）
+
+除反斜杠外，这两个头还有第二道障碍：用了 `__min` / `__max` / `__int64`
+（自身 10 处，且它 include 的第三方头 `ZQ_MathBase.h` 内部也在用）。
+
+**`ZQCNN/ZQ_CNN_CompileConfig.h:97/101/105` 已经为非 MSVC 提供了这三个的可移植定义**
+（`#ifndef` 包着，MSVC 上不覆盖原生版本）。所以修法是**在两个头的最前面**补上
+`#include "ZQ_CNN_CompileConfig.h"`，再把反斜杠换成正斜杠。
+
+### 验证
+
+| | |
+|---|---|
+| **Linux/gcc 编译两个头** | **通过**（改动前报 `__min` / `__int64` 未声明） |
+| **反向对照** | 去掉新增那行 include → 重新出现 error，证明这一步必要 |
+| **Windows/MSVC 编译** | **本机测不了** —— `jpeglib.h` 在整台机器上都不存在，而这两个头 include 了 `ZQ_JpegEncoder.h`（无条件 `#include "jpeglib.h"`）。Linux 侧是靠系统的 libjpeg-dev 才通过的 |
+| **会不会破坏 Windows 构建** | **不会** —— **全仓没有任何 .cpp include 这两个头**（连 sample 都没有），它们根本不在 Windows 的编译图里 |
+
+**所以这一条是"Linux 侧修好并验证 + Windows 侧论证不受影响"，不是"双平台都实测过"。**
+
+### 顺带确认：改动过程中又踩了 AGENTS.md 已有的两个坑
+
+1. **Python 批量改写源码忘了补行尾**（AGENTS.md 行尾规则第 6 条）：插入的 7 行是 LF，
+   混进 CRLF 文件，`check_line_endings.py` 报 `mixed-EOL(260 CRLF/7 LF)`。
+   已 `--fix` 并复验（267 CRLF / 0 LF）。
+   这条规则**当天已经踩过一次**，说明光"记得"不够 ——
+   改完必须**立刻跑 `check_line_endings.py`**，而不是等到提交前。
+2. **bat 文件用 heredoc 写成 LF**，`cmd` 直接不认
+   （`系统找不到指定的路径` / `'cl' 不是内部或外部命令`）。
+   改成用 Python 显式写 CRLF 才跑通。
+
+### 这一条对覆盖缺口的意义
+
+修完之后这两个头**可以进 Linux 编译图了** —— 也就有了给它们写门禁的前提。
+EF 里那条"编译验证 + 机制验证、但没有行为验证"的状态，现在可以往"有门禁"推进：
+`ZQ_FaceClusterImagesForVideo::LoadFromFile` 的 `num` 上界修复**从此可以被门禁覆盖**。
+还差两步：① 链接需要 OpenCV/jpeg 的 .so（本机只有 Windows 的 .lib）；
+② 该头没有被任何 .cpp include，要写门禁得由门禁自己 include（可行）。

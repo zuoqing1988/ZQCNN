@@ -1,11 +1,18 @@
 #ifndef _ZQ_FACEID_PRECISION_EVALUATION_H_
 #define _ZQ_FACEID_PRECISION_EVALUATION_H_
 #pragma once
+// 审计修复 2026-10-03（附录 EG）：这一行必须放在**最前面**。
+// 本文件（以及下面 include 的 ZQ_MathBase.h）用了 __min / __max / __int64，
+// 这三个在 ZQ_CNN_CompileConfig.h 里为非 MSVC 提供了可移植定义。
+// 之前这里 include 的是 <opencv2\opencv.hpp>（**反斜杠**），加上 MSVC 专有写法，
+// 整份头在 Linux/gcc 上**根本编不过** —— 而全仓没有任何 .cpp include 它，
+// 所以这个缺陷在两边构建里都不会暴露。
+#include "ZQ_CNN_CompileConfig.h"
 #include "ZQ_FaceRecognizer.h"
 #include "ZQ_FaceFeature.h"
 #include "ZQ_MathBase.h"
 #include "ZQ_MergeSort.h"
-#include <opencv2\opencv.hpp>
+#include <opencv2/opencv.hpp>
 #include <vector>
 #include <stdlib.h>
 #include <string>
