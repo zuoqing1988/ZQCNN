@@ -1000,6 +1000,31 @@ static int zqa_stricmp(const char* a, const char* b)
 	return (unsigned char)*a - (unsigned char)*b;
 }
 
+/* 从这里开始的三个符号（isa_state / cpu_has_avx2_fma / isa_usable）与
+   下面的 zq_gemm_32f_asm_ndir **只在 ZQA_IMPL == 1 时才有意义** ——
+   ZQA_IMPL 判的是 `ZQ_CNN_USE_SSETYPE >= AVX`（本文件 130 行），
+   而它们的定义与两个调用点（zq_gemm_32f_AnoTrans_Btrans_auto_asm 里，
+   1254 行的 #if ZQA_IMPL 之内）都在**无守卫的共享区**。
+   于是 SSETYPE=0/1 两档：调用点被编掉了、定义还留着，于是
+     warning: 'zq_gemm_32f_asm_ndir' defined but not used
+   而 ndir 内部那个对 `zq_gemm_32f_asm_core_m6n8` 的调用指向的是
+   **已经被 #if ZQA_IMPL 排除掉的**定义（687 行在 162 行的 #if 里），
+   于是又来一条
+     warning: implicit declaration of function 'zq_gemm_32f_asm_core_m6n8'
+   —— 隐式声明还把一个**内部链接**的函数当成外部链接看。
+   2026-10-03 实测（见 audit_k3_20261001.md 附录 GM.4）。
+
+   **修法是补齐守卫，不是补前置声明。** 第一版加了个
+   `static void zq_gemm_32f_asm_core_m6n8(...);` 声明 ——
+   Linux 侧确实不报了，但同一个符号在 MSVC 侧是**外部链接**
+   （由 zq_gemm_32f_align_c_asm_msvc.asm 提供，246 行已用非 static 声明过），
+   两条声明链接属性冲突，MSVC 直接报
+     error C2129: static 函数 'zq_gemm_32f_asm_core_m6n8' 已声明但未定义
+   而 v9 的 Windows 全量构建抓到的**正是这一条**。
+   一个符号在两条编译路径上链接属性不同，共享区里就不能有一种固定写法；
+   把两个函数纳入各自路径的守卫，才是两边都对的做法。 */
+#if ZQA_IMPL
+
 static int zq_gemm_32f_asm_isa_state = -1;   /* -1 未查, 0 不可用, 1 可用 */
 
 static int zq_gemm_32f_asm_cpu_has_avx2_fma(void)
@@ -1040,6 +1065,8 @@ static int zq_gemm_32f_asm_isa_usable(void)
 	zq_gemm_32f_asm_isa_state = ok;
 	return ok;
 }
+
+#endif /* ZQA_IMPL —— isa_state / cpu_has_avx2_fma / isa_usable */
 
 /* M 方向的分块调度 (N 方向的分块由调用方切好, 这里只管 M)。
    每次只让子内核处理它自己那一块 (MB 行), 指针相应下移;
@@ -1124,26 +1151,10 @@ static inline void zq_gemm_32f_asm_mblocks(int M, int N, int K, const float* A, 
 #define ZQA_NDIR_MAX_K 32
 #endif
 
-/* m6n8 是上面 687 行那个 `static` 定义（GNU 路径是函数体内联 __asm__，
-   所以不是汇编文件里的符号，见 ZQA_GNU_X64 那个 #else）。
-   **它必须有前置声明**：C99 已经不认隐式声明，C23 更是直接删掉了这个特性，
-   而隐式声明还把一个**内部链接**的函数当成外部链接来看。
-   2026-10-03 实测：SSETYPE=0/1 两档 gcc 报
-     implicit declaration of function 'zq_gemm_32f_asm_core_m6n8'
-   —— 只在**默认那两档看不到**，因为 AVX/AVX2 下 ndir 有调用点，
-   编译器在定义处就已经见过它了。
-   （同文件里 m4n1 / m1n1 在 MSVC 路径 240-243 行都有声明，只有 m6n8 漏了。）
-
-   **这里不能写 `static ZQA_NOINLINE`**：`ZQA_NOINLINE` 的两个定义
-   （232 行的 __declspec、254 行的 __attribute__）都在
-   `#if ZQA_MSVC_X64 / #else / #endif` 里面，而那个 #endif 在 **744 行**就闭合了。
-   本行在 744 行**之外**的共享区里，`ZQA_NOINLINE` 在这里**未定义** ——
-   第一版顺手把定义处那个属性也抄过来，gcc 直接报
-     error: expected ';' before 'void'
-   （把未定义宏当标识符，位置正好落在 `void` 前面的那个词。）
-   属性跟着定义走，声明里不需要重复。 */
-static void zq_gemm_32f_asm_core_m6n8(const float* ap, const float* bp,
-	int K, float* c, int ldc);
+/* ndir 整个函数只被 zq_gemm_32f_AnoTrans_Btrans_auto_asm 调用，
+   而那个调用点在 #if ZQA_IMPL 里；它内部又只用 #if ZQA_IMPL 块里的
+   m6n8 / mblocks。定义与调用必须**同生共死**，所以整段纳入同一个守卫。 */
+#if ZQA_IMPL
 
 static int zq_gemm_32f_asm_ndir(int M, int N, int K, const float* A, int lda,
 	const float* Bt, int ldb, float* C, int ldc)
@@ -1248,6 +1259,8 @@ static int zq_gemm_32f_asm_ndir(int M, int N, int K, const float* A, int lda,
 			Bt, ldb, C + (size_t)mr * ldc, ldc);
 	return 1;
 }
+
+#endif /* ZQA_IMPL —— zq_gemm_32f_asm_ndir */
 
 void zq_gemm_32f_AnoTrans_Btrans_auto_asm(int M, int N, int K, const float* A, int lda, const float* Bt, int ldb, float* C, int ldc)
 {
