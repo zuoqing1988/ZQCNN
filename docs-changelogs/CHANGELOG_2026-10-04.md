@@ -139,3 +139,110 @@ C6385/C6386/C6246 集中在 `*_raw.h` 生成代码里，绝大多数是 SIMD 对
   也没有 clang），ARM 侧只做到"宏取值"（C9）与"四档 x86"（C10）层面，
   **NEON 分支的代码一行都没编过**。而仓库根的 `build.sh` 正是构建
   armeabi-v7a 的。
+
+
+## 变更：附录 GO —— 手写汇编内核不在推理路径上（两个平台的构建产物里都量过）
+
+### 起因
+
+GN 那个"汇编对 MKL 98%"的数字。既然汇编这么接近 MKL，
+那它**在哪儿被调用**就该问一句 —— 而这个问题读代码看不出来。
+
+### 全仓只有三个地方调用汇编入口
+
+```
+SamplesZQBLAS/SampleGEMMCompare.cpp:296, 300
+SamplesZQGEMM/SampleGEMMAsmCompare.cpp:44, 141
+tools/zq_gemm_oob_check.c:43
+```
+
+两个是**对比用 sample**，一个是**审计探针**。**ZQCNN 库自己一次都没调。**
+
+### 在实际构建产物上确证（不靠"读代码应该不会"）
+
+Linux（v11 的 D2 构建目录）：
+
+```
+$ nm -u /tmp/zqb2/ZQCNN/libZQCNN.a | grep -c auto_asm
+0
+$ nm -u /tmp/zqb2/ZQCNN/libZQCNN.a | grep zq_gemm
+U zq_gemm_32f_AnoTrans_Btrans_auto     <-- 全部指向 intrinsic 派发器
+U zq_gemm_32f_align0_AnoTrans_Btrans
+$ nm --defined-only /tmp/zqb2/ZQ_GEMM/libZQ_GEMM.a | grep auto
+T zq_gemm_32f_AnoTrans_Btrans_auto_asm  <-- 定义了
+T zq_gemm_32f_AnoTrans_Btrans_auto     <-- 也定义了
+（逐个 .o 扫：libZQ_GEMM.a 里 0 个对象引用 _auto_asm）
+```
+
+Windows：
+
+```
+$ dumpbin /symbols build_x64/ZQCNN/Release/ZQCNN.lib | grep -c auto_asm
+0
+```
+
+**两个平台都是 0**，而且连 `libZQ_GEMM.a` 内部都没有调用者 ——
+汇编入口是被 sample 从外面拉进去用的。
+
+### 这意味着什么
+
+* ZQCNN 卷积/内积的 GEMM 走 `zq_cblas_sgemm`
+  → `zq_gemm_32f_AnoTrans_Btrans_auto`（**intrinsic 派发器**）
+* 手写汇编内核只能被两个对比 sample 和一个审计探针调到
+* **没有运行时开关**：`ZQ_GEMM_ISA` / `zq_gemm_32f_asm_isa_usable`
+  管的是"汇编路径内部要不要回落 intrinsic"，不是"要不要走汇编"
+
+所以"汇编达到 MKL 的 98%"这件事，**与 ZQCNN 的推理速度无关**。
+
+这不是缺陷，是**一个需要所有者决定的事实**：汇编路径可能是**刻意**不进主路径
+（README 把 `SamplesZQGEMM` 描述成"对比程序"），但"刻意的"与"忘了接上"
+在仓库里长得一模一样 —— **代码里没有任何一处注释说明"汇编暂不进主路径"**，
+而 `ZQ_GEMM/CMakeLists.txt:8` 读起来像是**在用**。
+
+按 AGENTS.md「推不动就把排除了什么记下来」，**本轮不做代码改动**。
+真要接，最小改动是在 `zq_gemm_32f_auto.c` 的派发器里加一层
+"先试 `_auto_asm`、失败回落 intrinsic"（汇编文件里已有
+`zq_gemm_32f_asm_isa_usable` 这套探测，落地点是现成的），
+但那是**新增功能**，且会改变默认推理路径的性能与数值结果 ——
+得先逐形状验证并由所有者拍板。
+
+### 顺带把 Linux 侧 asm/MKL 在新默认档下重测
+
+`3rdparty/mkl_runtime/linux/libmkl_rt.so.2` 在，所以能测。
+`SampleGEMMCompare`（v11 D2 用新默认档 AVX2 编的）64 形状：
+
+| | 之前记录（AVX） | 现在（AVX2） |
+|---|---|---|
+| asm/MKL 中位 | 99% | **98%** |
+| asm/MKL 平均 | — | 143% |
+| 最好 / 最差 | — | 1347%（1x1x1）/ 47%（1024x1x1） |
+| < 90% / < 60% 的形状 | — | 22 个 / 2 个 |
+| asm/intrinsic 中位 | — | 1.38×（最大 25.94×） |
+| 最大 err(asm) | — | 1.5e-05 |
+
+**比例基本没变（99% -> 98%，噪声内）**，这与 GN 不矛盾 ——
+两者量的**不是同一个函数**：
+
+| | 量的是 | SSETYPE 改动的结果 |
+|---|---|---|
+| GN 的 25 形状微基准 | `zq_gemm_32f_AnoTrans_Btrans_auto`（**intrinsic 派发器**，库真正在跑的那条） | **中位 +122%** |
+| 这张 64 形状表 | `..._auto_asm`（汇编入口，**库不用**） | 不变 |
+
+原因对得上：汇编内核选不选、要不要 FMA 判的是 `ZQA_IMPL`（`SSETYPE >= AVX`）
+与 `ZQA_HAVE_FMA`（`defined(__FMA__)`），**两者在 AVX 与 AVX2 下都是真** ——
+那一档的改动对汇编路径没有任何影响。
+
+这同时把 GN 那句话说准了：**默认值改动的收益落在库真正在跑的那条 intrinsic
+派发器上（+22% 中位），不是落在汇编内核上。**
+
+### 变更文件
+
+- `audit_k3_20261001.md`（追加附录 GO）
+- `docs-changelogs/CHANGELOG_2026-10-04.md`（本节）
+
+### 注意事项
+
+- 汇编 vs MKL 的 98% 是**单线程**口径（sample 默认强制 MKL 单线程，
+  `SampleGEMMCompare --mt` 可以不强制）。多线程口径未测。
+- Linux 侧 64 形状表是**单次读数**（每个形状内已取多轮最好的一轮），
+  跨机器不可直接比。
