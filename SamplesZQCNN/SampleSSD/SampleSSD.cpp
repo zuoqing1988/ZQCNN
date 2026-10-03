@@ -90,7 +90,13 @@ int main()
 	
 	
 	// draw
-	for (auto& bbox : output) 
+	// 检出数打出来（2026-10-04 加，附录 GS.2）：`output` 本来就是
+	// std::vector<BBox>，框数一直在手上，只是原来只把它画进图片里 ——
+	// 而 `imshow` 按用户要求注释掉了，于是无头环境下**结果没有任何出口**。
+	// 没有这一行，"SSD 路径坏掉了"与"它跑得好好的"在回归里都是
+	// rc=0 + 一堆计时，**分不出来**。
+	printf("final found num: %d\n", (int)output.size());
+	for (auto& bbox : output)
 	{
 		cv::Rect rect(bbox.col1, bbox.row1, bbox.col2 - bbox.col1 + 1, bbox.row2 - bbox.row1 + 1);
 		cv::rectangle(img1, rect, cv::Scalar(0, 0, 255), 2);

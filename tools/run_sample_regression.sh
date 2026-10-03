@@ -41,9 +41,14 @@ STUB_RE='only support|not support|not supported|only supports'
 # 下界能抓住"丢了一半以上"这一档，而这正是静默损坏的形态。
 #
 # 实测（2026-10-04，WSL gcc 9.4，仓库自带权重）：
-#   SampleMTCNN=10   SampleMTCNN_NCHWC4=4   SampleMTCNNLoadFromCode=84
-# 换模型或换测试图之后要**重新量一遍**这三个数并更新本表 ——
+#   SampleMTCNN=10   SampleMTCNN_NCHWC4=4   SampleCascadeOnet=3
+#   SampleSSD=4      SampleMTCNNLoadFromCode=84
+# 换模型或换测试图之后要**重新量一遍**这几个数并更新本表 ——
 # 忘了更新的症状是"门禁突然红了"，而不是"门禁一直没在管这件事"。
+#
+# 两个计数很小的 sample（SampleCascadeOnet=3、SampleMTCNN_NCHWC4=4），
+# "取一半"算出来只有 1 —— **那一档的下界很弱，只能抓住"全灭"**。
+# 这是计数量小时固有的粗糙，不是公式错了；写在这里以免被误当成强判据。
 #
 # 注意 SampleMTCNN 与 SampleMTCNN_NCHWC4 **用的不是同一张图**
 # （data/11.jpg vs data/4_320x240.jpg），所以 10 与 4 **不可直接比较**。
@@ -53,6 +58,8 @@ detect_floor_case() {   # $1=sample 名 -> 期望下界；空 = 该 sample 不�
   case "$1" in
     SampleMTCNN)             echo 5 ;;
     SampleMTCNN_NCHWC4)       echo 2 ;;
+    SampleCascadeOnet)        echo 1 ;;
+    SampleSSD)                echo 2 ;;
     SampleMTCNNLoadFromCode)  echo 42 ;;
     *)                        echo "" ;;
   esac

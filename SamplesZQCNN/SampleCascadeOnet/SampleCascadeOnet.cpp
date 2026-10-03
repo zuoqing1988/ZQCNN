@@ -76,7 +76,17 @@ int main()
 		Rect rect = Rect(cv::Point(results[i].col1, results[i].row1), cv::Point(results[i].col2, results[i].row2));
 		rectangle(draw_img, rect, cv::Scalar(0, results[i].score*255, 0), i+1);
 	}
-	
+
+	// 检出数必须打出来（2026-10-04 加，附录 GS.2）。
+	//
+	// 下面 `namedWindow` / `imshow` 按用户要求全部注释掉了（无头环境会阻塞），
+	// 于是画到 draw_img 上的框**没有任何地方能看见**，而这个 sample
+	// 原来只打印三级耗时 —— **从输出完全看不出它到底检出了什么**。
+	// 于是"CascadeOnet 路径坏掉了"和"它跑得好好的"在回归里长得一模一样：
+	// 都是 rc=0 + 两行耗时。
+	// `tools/run_sample_regression.sh` 的检出数下界要靠这一行才能判。
+	printf("final found num: %d\n", (int)results.size());
+
 	// namedWindow("box");
 
 	// imshow("box", draw_img);
