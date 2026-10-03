@@ -36,13 +36,34 @@ mkdir -p build && cd build && cmake .. && make -j8
 
   如果按照[build-with-cmake.md](https://github.com/zuoqing1988/ZQCNN/blob/master/build-with-cmake.md)不能完全编译，可以只编译ZQ_GEMM，ZQCNN，和其他你想测试的程序
   
-**BUG:** cmake .. -DSIMD_ARCH_TYPE=arm64 -DBLAS_TYPE=openblas_zq_gemm 
+**BUG（2026-10-03 已定位并修好，见 audit_k3_20261001.md 附录 GL）:**
+`cmake .. -DSIMD_ARCH_TYPE=arm64 -DBLAS_TYPE=openblas_zq_gemm`
 
-理想情况下会使用openblas和ZQ_GEMM较快的一方来计算卷积（我通过在cortex-A72上测试时间来选择分支）。然而目前这个选项并不能达到预期效果，
-  需要手工注在ZQ_CNN_CompileConfig.h里定义
-  
+理想情况下会使用openblas和ZQ_GEMM较快的一方来计算卷积（我通过在cortex-A72上测试时间来选择分支）。
+这个选项达不到预期效果的原因不是"选路算法不好"，而是**它从头到尾没有真的被传进去**：
+
+  * `ZQ_CNN_CompileConfig.h` 无条件 `#define ZQ_CNN_USE_BLAS_GEMM 0`，
+    把 CMake 传来的 `-D` 静默按了回去；
+  * `SamplesZQCNN/CMakeLists.txt` 的链接阶梯里，`openblas_zq_gemm` 会被
+    第一个 `MATCHES "openblas"` 分支抢走（子串匹配），
+    于是**链不到 ZQ_GEMM** —— 自动选路要的那个符号在链接期就是未定义的。
+
+所以当年才需要手工在 `ZQ_CNN_CompileConfig.h` 里定义
+
 	#define ZQ_CNN_USE_ZQ_GEMM 1
 	#define ZQ_CNN_USE_BLAS_GEMM 1
+
+现在这两处都改好了：头文件的宏改成 `#ifndef` 包裹（命令行 `-D` 优先），
+CMake 改成读一个算好的 `ZQCNN_BLAS_BACKEND` 变量而不再自己匹配字符串。
+**并且加了门禁**（回归里的 C9 组，`tools/check_blas_config.py`）：
+8 组配置排列逐个断言宏的**取值**。
+
+> 另外两个连带结论：
+> 1. `openblas_zq_gemm` **只在 ARM 上有意义**（派发点只存在于 `__ARM_NEON` 分支），
+>    x86 上给这个值现在会在 configure 阶段直接报错，而不是被静默忽略。
+> 2. 仓库随附的 `3rdparty/lib/libopenblas.{so,a}` 是 **ARM(32 位)** 的。
+>    x86 上 `-DBLAS_TYPE=openblas` 需要自己放一份对应架构的 OpenBLAS；
+>    否则 configure 会明确告诉你"这个库是 ARM(32 位) 的，而当前构建要的是 x86-64"。
 	
 可以注释掉
   

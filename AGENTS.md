@@ -1053,3 +1053,14 @@ general plain, C=8, K=6 -> Segmentation fault (exit 139)
    我这次是写完才回头看的。
    改完顺手扫一遍控制字符：`ord(c) < 32 and c not in '\n\r\t'`。
 
+6. **给 WSL 脚本的路径必须是 WSL 路径，且目录要先 `mkdir -p`。**
+   附录 GL.5：`check_blas_config.py` 把 Python `tempfile.mkdtemp()` 得到的
+   **Windows 路径**塞进 bash 的 `cd`，`cd` 失败、而 `set +e` 让它继续跑，
+   于是 8 个二进制和 16 个临时 `.txt` **全落在仓库根**。
+   症状是"`git status` 里多出一堆 `e0.txt/o0.txt/p0`"，
+   离真正的原因（路径分隔 + 目录不存在）隔了两层。
+   同理，**临时文件要读回来也得用 WSL 侧的 `cat`** ——
+   Windows Python 看不见 `/tmp/...`。
+   > 这与本文件已有的「读文件清单用 `git ls-files -z` + 手工 utf-8 解码」
+   > 是同一条原则：**跨进程边界时不要依赖默认的路径与编码转换。**
+

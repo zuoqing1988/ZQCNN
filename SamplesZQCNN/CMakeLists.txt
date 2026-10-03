@@ -52,24 +52,34 @@ foreach(SAMPLE_SUBDIR ${SAMPLE_SUBDIRS})
     file(GLOB sample_src ${CMAKE_CURRENT_LIST_DIR}/${SAMPLE_SUBDIR}/*.cpp
                         ${CMAKE_CURRENT_LIST_DIR}/${SAMPLE_SUBDIR}/*.c)
     add_executable(${SAMPLE_SUBDIR} ${sample_src})
-    if(SIMD_ARCH_TYPE MATCHES "arm")
-        if(BLAS_TYPE MATCHES "(Openblas|OPENBLAS|openblas|OpenBLAS)")
-            target_link_libraries(${SAMPLE_SUBDIR} ZQCNN openblas ${OpenCV_LIBS})
-        elseif(BLAS_TYPE MATCHES "openblas_zq_gemm")
-            target_link_libraries(${SAMPLE_SUBDIR} ZQCNN openblas ZQ_GEMM ${OpenCV_LIBS})
-        else()
-            target_link_libraries(${SAMPLE_SUBDIR} ZQCNN ZQ_GEMM ${OpenCV_LIBS})
-        endif()
-    elseif(SIMD_ARCH_TYPE MATCHES "arm64")
-        if(BLAS_TYPE MATCHES "(Openblas|OPENBLAS|openblas|OpenBLAS)")
-            target_link_libraries(${SAMPLE_SUBDIR} ZQCNN openblas ${OpenCV_LIBS})
-        elseif(BLAS_TYPE MATCHES "openblas_zq_gemm")
-            target_link_libraries(${SAMPLE_SUBDIR} ZQCNN openblas ZQ_GEMM ${OpenCV_LIBS})
-        else()
-            target_link_libraries(${SAMPLE_SUBDIR} ZQCNN ZQ_GEMM ${OpenCV_LIBS})
-        endif()
-    else()
-        target_link_libraries(${SAMPLE_SUBDIR} ZQCNN ZQ_GEMM ${OpenCV_LIBS})
+    # 2026-10-03（附录 GL.4）：这里原来是一段 12 行的 MATCHES 阶梯
+    # （arm / arm64 / 其它 三个分支，每个分支里又是三层 MATCHES），
+    # 三处问题叠在一起：
+    #   1. `MATCHES "(Openblas|OPENBLAS|openblas|OpenBLAS)"` 是**子串**匹配，
+    #      而 `openblas_zq_gemm` **含** "openblas" —— 于是
+    #      `elseif(BLAS_TYPE MATCHES "openblas_zq_gemm")` 那一支是**死代码**，
+    #      自动选路根本链不到 ZQ_GEMM，`zq_gemm_32f_..._special` 会在链接期
+    #      变成未定义符号。根 CMakeLists.txt:122 的注释早就写明这个坑
+    #      并在它自己那处修了，唯独这里没跟上。
+    #   2. x86 那个 `else()` 分支**永远只链 ZQ_GEMM**，所以 x86 上
+    #      `-DBLAS_TYPE=openblas` 链不到 OpenBLAS。
+    #   3. `target_link_libraries(... openblas ...)` 引用的 `openblas`
+    #      **不是任何地方定义过的 target**（全仓只有 add_library(ZQCNN)、
+    #      (ZQ_GEMM)、(OpenMP::OpenMP_CXX) 三个），CMake 会把它当成
+    #      一个原始库名去链接。
+    # 现在一律读根 CMakeLists 算好的 ZQCNN_BLAS_BACKEND。
+    #
+    # 顺序有讲究：GNU ld 对静态库要求"被依赖者在前"，
+    # 所以 ZQCNN 在前，OpenBLAS / ZQ_GEMM 在后。
+    target_link_libraries(${SAMPLE_SUBDIR} ZQCNN ${OpenCV_LIBS})
+    if(ZQCNN_BLAS_BACKEND STREQUAL "zq_gemm")
+        target_link_libraries(${SAMPLE_SUBDIR} ZQ_GEMM)
+    elseif(ZQCNN_BLAS_BACKEND STREQUAL "openblas")
+        target_link_libraries(${SAMPLE_SUBDIR} ${ZQCNN_OPENBLAS_LIB})
+    elseif(ZQCNN_BLAS_BACKEND STREQUAL "openblas_zq_gemm")
+        target_link_libraries(${SAMPLE_SUBDIR} ${ZQCNN_OPENBLAS_LIB} ZQ_GEMM)
+    elseif(ZQCNN_BLAS_BACKEND STREQUAL "mkl")
+        target_link_libraries(${SAMPLE_SUBDIR} ${ZQCNN_MKL_LIB})
     endif()
 endforeach()
 

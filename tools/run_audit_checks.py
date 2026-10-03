@@ -161,6 +161,14 @@ GROUPS = [
     ('C8b「读入 int -> 分配」站点基线（附录 EL）',
      ['check_filecount_bounds.py', '--check-baseline',
       os.path.join(HERE, 'filecount_baseline.txt')], False),
+    # C9（附录 GL）：`-DBLAS_TYPE=...` 到底有没有真的生效。
+    # 这个缺陷的性质是「**编得过、值不对**」，所以判据必须是**取值**而不是
+    # 能不能编：头文件原来无条件 `#define ZQ_CNN_USE_BLAS_GEMM 0`，
+    # 把 CMake 传来的 -D 静默按回去，编译一路绿灯而 `-DBLAS_TYPE=openblas`
+    # 实际是个空操作（`build-with-cmake.md:50` 就是这么教的）。
+    # 8 组配置排列 + Windows 分支写法，一次 wsl 调用跑完，约 7 秒。
+    ('C9 配置宏取值（-DBLAS_TYPE 到底有没有生效）',
+     ['check_blas_config.py', '--selftest'], False),
 ]
 
 

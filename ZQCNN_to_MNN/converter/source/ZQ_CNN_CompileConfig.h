@@ -131,4 +131,38 @@
 #endif// defined(WIN32) || defined(_WINDOWS_)
 
 
+// 与主仓 ZQCNN/ZQ_CNN_CompileConfig.h 同步过来的**兜底**（附录 GL.7）。
+//
+// 为什么只同步这一段、没同步主仓的 #ifndef 改造：
+//   * 这一段是**纯附加**的 —— 上面的分支该定义的都定义了，一个宏都不覆盖，
+//     所以它在任何已通过的编译上都是 no-op，不可能引入回归；
+//   * 主仓那几条 #ifndef 的价值在于"命令行 -D 能覆盖头文件默认值"，
+//     而**这个分叉不进任何构建**（EX：顶层没有 add_subdirectory，
+//     转换器本体要 MNN 的 MNN_generated.h），没有 CMake 会给它传 -D。
+//     为了一个用不到的路径重排默认值，风险大于收益。
+//
+// 真正需要同步的是**兜底本身**：ARM 分支里三个后端开关同样只在
+// `#if defined(ZQ_CNN_USE_BOTH_BLAS_ZQ_GEMM)` 里定义，默认的
+// `-DZQ_CNN_USE_ARM_NEON` 下三个宏全部未定义 —— 而这个头是被
+// C5b 门禁逐头单独编过的，那条路径迟早会被走到。
+#ifndef ZQ_CNN_USE_BLAS_GEMM
+#define ZQ_CNN_USE_BLAS_GEMM 0
+#endif
+#ifndef ZQ_CNN_USE_MKL_GEMM
+#define ZQ_CNN_USE_MKL_GEMM 0
+#endif
+#ifndef ZQ_CNN_USE_ZQ_GEMM
+#define ZQ_CNN_USE_ZQ_GEMM 0
+#endif
+#ifndef ZQ_CNN_USE_SSETYPE
+#define ZQ_CNN_USE_SSETYPE ZQ_CNN_SSETYPE_NONE
+#endif
+#ifndef ZQ_CNN_USE_FMADD128
+#define ZQ_CNN_USE_FMADD128 0
+#endif
+#ifndef ZQ_CNN_USE_FMADD256
+#define ZQ_CNN_USE_FMADD256 0
+#endif
+
+
 #endif// _ZQ_CNN_MNN_CONVERTER_COMPILE_CONFIG_H_

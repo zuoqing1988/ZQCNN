@@ -3759,3 +3759,118 @@ v2 值得单说：**抓是抓住了，但诊断是错的**，而报错的诊断�
   我没看那行警告）。已修，并把"其它控制字符"一并扫过（结果为空）。
 - `resultdet.jpg` 每次从仓库根跑 MTCNN 系 sample 都会重新生成；
   以后 `git status` 干净是 `.gitignore` 生效，不是文件没被写出来。
+
+
+## 变更：附录 GL —— `-DBLAS_TYPE=...` 在两个平台都不可能生效（两层各自废掉 + 第三层是 ARM 库）
+
+### 起因：一条记了很多年的 BUG
+
+`README.md:39` 记着 "cmake .. -DSIMD_ARCH_TYPE=arm64 -DBLAS_TYPE=openblas_zq_gemm
+达不到预期效果，需要手工改头文件"。作者归因为"选路算法不好"。
+
+实际是它**从头到尾没被传进去**。
+
+### 两层各自独立地把开关废掉
+
+| 层 | 问题 |
+|---|---|
+| 头文件 | `ZQCNN/ZQ_CNN_CompileConfig.h:77` 无条件 `#define ZQ_CNN_USE_BLAS_GEMM 0`，把 CMake 的 `-D` 静默按回（gcc 报 redefined 警告、MSVC 报 C4005，**两边都以头文件为准**） |
+| CMake | `if(BLAS_TYPE MATCHES "openblas")` 去链的是 **mklml**；`elseif(UNIX)` 分支**根本不链任何 BLAS** |
+| Samples | 12 行 `MATCHES` 阶梯里，`openblas_zq_gemm` 会被第一支抢走（子串匹配），`elseif` 是**死代码**；x86 的 `else()` 永远只链 ZQ_GEMM；引用的 `openblas` **不是任何地方定义过的 target** |
+
+**根 `CMakeLists.txt:122` 的注释早就把这个子串匹配的坑写明白了、并在它自己那处修好了** ——
+唯独这三个下游没跟上。
+
+### 头文件还有一个更硬的洞
+
+`-DZQ_CNN_USE_ARM_NEON`（`SIMD_ARCH_TYPE=arm` 加的就是它）**编不过**：
+ARM 段落只在 `#if defined(ZQ_CNN_USE_BOTH_BLAS_ZQ_GEMM)` 里定义三个后端开关，
+`FMADD128/256` 在这条路径上一个都没定义。而**仓库根的 `build.sh` 正是构建
+armeabi-v7a 这条路径**。
+
+修法是**一处兜底**：在整块平台分支**之后**统一 `#ifndef` 补 0。
+
+> 两次返工都记在报告里：兜底散着写进各分支时 FMADD 落进了 `#else`；
+> 移动代码块时 `.strip('\r\n')` 吃掉块尾换行，把最后两行粘成一行
+> —— 而这个文件是 CRLF，Edit 要求按行给 `\r\n` 转义，第一次直接
+> `old_string not found`。
+
+### 真去构建，才看见第三层：随附的 OpenBLAS **是 ARM 的**
+
+按上面改完之后，链接报 `file in wrong format`。`file` 一看：
+
+```
+libopenblas.so: ELF 32-bit LSB shared object, ARM, EABI5
+libopenblas.a:  成员 e_machine = 0x28（也是 ARM）
+```
+
+**仓库里根本没有 x86 的 OpenBLAS** —— 随附的那份是给 `build.sh` 的
+armeabi-v7a 用的（README:318 也这么写）。所以即使前两层都修好，
+x86 上 `-DBLAS_TYPE=openblas` 仍然用不了随附的库。
+
+加了 `zq_check_lib_arch()`：读库头自己判架构，不匹配就在 **configure 阶段**说清楚
+——"这个库是 ARM(32 位) 的，而当前构建要的是 x86-64"。
+
+这个函数返工四次，错法各不相同：v1 把 e_machine 当大端比（架构名报错）、
+v2 假定 ar 第一个成员是 ELF（其实是符号表）、v3 忘了 `_head` 已是 hex 串
+且 ar 的 size 字段是 **ASCII 文本**（拿到的是数字的 hex）、
+v4 改成直接在整块 hex 里找 ELF magic，并规定**识别不出架构就放行**。
+
+### 顺带的两个结论
+
+1. 拼错的 `BLAS_TYPE` 现在 **configure 直接失败**并列出四个合法值
+   —— 过去是**静默**落空（拼错一个字母就悄悄退回 ZQ_GEMM）。
+2. x86 上给 `openblas_zq_gemm` 现在 **configure 直接失败**并说明
+   派发点只在 `__ARM_NEON` 分支（16 处）—— 过去是**静默忽略**。
+
+### 端到端证明
+
+造一份只实现 3 个符号的 x86-64 替身库（不往仓库塞二进制），
+走完 configure -> 编译 -> 链接 -> 运行：
+
+```
+-- ZQCNN BLAS backend: openblas (openblas=TRUE mkl=FALSE)
+  编译 + 链接成功；ldd 里能看到 libopenblas.so
+  退出码 = 0
+  set openblas thread_num = 1
+  final found num: 10
+```
+
+**`set openblas thread_num = 1` 就是证据** —— 它在 `#if ZQ_CNN_USE_BLAS_GEMM` 里，
+宏不为 1 就永远不会打印。那 50 处 sample 里的 `openblas_set_num_threads`
+**从死代码变成了活的**。
+
+### 新增门禁 C9
+
+`tools/check_blas_config.py`：8 组 `-D` 下编译
+`tools/zq_blas_config_probe.cpp` 并运行，逐个比对六个宏的**取值**。
+这个缺陷的性质是「**编得过、值不对**」，所以判据不能是能不能编。
+探针里 7 个 `#error` 额外把"未定义"挡下来。
+另加一条 Windows 分支的**写法**检查（只查 `#ifndef`，不查取值 ——
+已知局限写在了 docstring 里）。
+
+变异验证把**原样那道无条件 `#define`** 注回去：
+
+```
+CMake 的 BLAS_TYPE=openblas：取值不符：期望 BLAS=1 ... 实际 BLAS=0
+```
+
+**它抓的正是原始缺陷本身。**
+
+### 变更文件
+
+- `ZQCNN/ZQ_CNN_CompileConfig.h`、`ZQCNN_to_MNN/converter/source/ZQ_CNN_CompileConfig.h`
+- `CMakeLists.txt`、`ZQCNN/CMakeLists.txt`、`SamplesZQCNN/CMakeLists.txt`
+- `tools/check_blas_config.py`、`tools/zq_blas_config_probe.cpp`（新增）
+- `tools/run_audit_checks.py`（接进 C9）
+- `README.md`、`build-with-cmake.md`、`AGENTS.md`
+
+### 注意事项
+
+- **Windows 上 `-DBLAS_TYPE=openblas` 仍然用不了**：随附的 OpenBLAS 是 ARM 的，
+  且 `3rdparty/lib` 下**没有** `openblas.lib`。现在会 configure 阶段明确报错。
+- `openblas_zq_gemm` 在 x86 上**仍然没有实现**。这是"没做"不是"没修"：
+  要支持得动 16 个派发点，属新增功能。
+- 写 C9 时我自己犯了三个错，都记在报告 GL.7：把 Windows 路径塞进 bash 的 `cd`
+  （`set +e` 让它继续跑，产物全落仓库根）、bash 变量 `$d` 被 Python 的 `%`
+  吃掉下标、以及判据收紧到过头（FMADD 是由 SSETYPE 推导的，不该要求 `#ifndef`）。
