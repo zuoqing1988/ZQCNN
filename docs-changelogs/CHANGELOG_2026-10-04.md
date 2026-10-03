@@ -407,3 +407,92 @@ v2 绿得毫无破绽，而它**什么都没验**：对照 B 注入
 - `tools/neon_branch_baseline.txt`（新增，空基线）
 - `tools/run_audit_checks.py`（接进 C12，慢组）
 - `audit_k3_20261001.md`（追加附录 GP）
+
+
+## 变更：附录 GQ —— `SIMD_ARCH_TYPE=arm64-fp16` 是一个「存在但不工作」的 CMake 选项
+
+GP 把 ARM/NEON 的 f32 档编过了，并明确留下 FP16 档没覆盖。补上之后证明：
+那一档从来不能工作，且有**三个互相独立**的缺陷。
+
+### 缺陷一：`float16_t` 全仓从未被定义
+
+被 **45 个文件**用到，而 `grep -rn "float16_t" | grep -E "typedef|define"`
+命中的全是 `#define zq_base_type float16_t` 这种**使用**。
+实测 FP16 宏组合下 36 个 TU 里 **23 个编不过**，全部同一个错：
+`error: unknown type name 'float16_t'`。
+
+修：在 `ZQCNN/ZQ_CNN_CompileConfig.h` 加受控 typedef。
+为什么是 `__fp16`：ACLE 只保证 `__fp16` / `_Float16`，
+`float16_t` 是 GCC 12+ / Clang 14+ 才有的**内建类型名**，
+在那些编译器上再 typedef 会与关键字冲突，所以默认只给老编译器补，
+可用 `ZQ_CNN_FLOAT16_T_BUILTIN` 覆盖。
+**本机没有 ARM 工具链，"补完数值正确"没有证据**；这里只保证能编过。
+
+### 缺陷二：15 处「通用实现与 FP16 实现同时被编进来」
+
+7 个文件里 15 个函数/类型被定义两次：通用实现**无守卫**，
+FP16 实现包在 `#if __ARM_NEON_FP16` 里。
+
+修了 6 个文件、11 处。定位不靠猜：
+- 第二个定义 = gcc 报的 `error: redefinition of` 行号；
+- 第一个定义 = gcc 紧跟着的 `note: previous definition ... was here` 行号；
+- 函数结尾用花括号配对（跳过注释与字面量）。
+
+改完**双向验**（FP16 档与 f32 档都 0 失败）。这一步当场抓到我自己的错：
+第一个自动区间把 `zq_gemm_32f_align_c.c` 的 128..537 行整块包进去，
+而那里面有 f32 需要的 `zq_base_type` / `zq_mm_*`，**f32 档立刻红 462 个 error**。
+双向验不是形式主义。
+
+### 缺陷三：2 处 `padK` 未声明（同 H9 那一族）—— 故意没修
+
+```c
+#if __ARM_NEON
+#if !__ARM_NEON_FP16
+    int padK = (K + 3) / 4 * 4;
+#endif                       <-- 没有 #else
+#else
+   /* x86 分支是三档齐全的 #if/#elif/#else */
+#endif
+...
+int matrix_A_cols = padK;   <-- 无条件使用
+```
+
+同一个变量、同一个文件，两侧写法不一致。
+
+**故意不补那个 `#else`**：补了能编过，但 padK 的取值只能猜
+（与上面 f32 那行一致是唯一自洽选择），而我无法在 ARM 硬件上验证。
+把一个响亮的编译失败换成可能静默算错的数值，是更坏的结果。
+
+### 修完之后 FP16 档还剩 6/36 编不过，全部进基线并逐条写明理由
+
+`tools/neon_fp16_baseline.txt`（回归 C12b 组盯着）：
+`zq_gemm_32f_align_c.c`（重复定义在 #define 宏块内部，自动区间会伤到 f32，
+要正确修必须人读那个宏块）、两个 `padK`、`zq_base_type` 落空、
+一个语法错误、一个**桩的限制**（`ZQA_NEON_STUB_ANY` 展开成
+`((void)sizeof(...), 0)`，代码把内在函数结果当可调用对象用时报的）。
+
+所以现状是：从「23/36 编不过」变成「6/36 编不过，且每条写清为什么现在不修」。
+**不是修好了，是从"没人知道"变成"有据可查且被盯着"。**
+
+### 文档
+
+`build-with-cmake.md` 的 arm 段加警告：**这个选项存在，但它不工作，
+在它修好之前不要用。** 根 CMakeLists.txt:95 确实实现了它，
+而那段文档之前只写了 arm 与 arm64。
+
+### 变更文件
+
+- `ZQCNN/ZQ_CNN_CompileConfig.h`（float16_t 的受控 typedef）
+- `ZQCNN/layers_c/` 6 个 .c（FP16 与通用实现互斥的守卫，11 处）
+- `tools/check_neon_branch.py`（--fp16 档；错误原因抓取从 head -3 改成扫整个日志）
+- `tools/arm_neon.h`（__fp16 桩）
+- `tools/neon_fp16_baseline.txt`（新增，6 条，逐条带理由）
+- `tools/run_audit_checks.py`（接进 C12b，慢组）
+- `audit_k3_20261001.md`（追加附录 GQ）、`build-with-cmake.md`
+
+### 注意事项
+
+- 6 个被改的 .c 文件原本是 CRLF，我的脚本用 `\n` 写入造成 mixed-EOL，
+  已由 `check_line_endings.py --fix` 修回（`line endings OK`）。
+- 本附录所有结论都来自**解析**层面（桩 + gcc -fsyntax-only），
+  **没有一条来自真实 ARM 硬件上的运行**。

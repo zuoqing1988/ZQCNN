@@ -65,6 +65,18 @@ make SampleMTCNN
 make SampleSphereFaceNet
 ```
 
+> ⚠️ **`SIMD_ARCH_TYPE=arm64-fp16` 目前编不过**（2026-10-04 实测，
+> 见 `audit_k3_20261001.md` 附录 GQ）。
+> 根 `CMakeLists.txt:95` 确实实现了这个选项（加
+> `-DZQ_CNN_USE_ARM_NEON_FP16` 与 `-mfpu=neon-fp-armv8`），但那一整条路径
+> **从来没有被任何编译器看过**，实测有：15 处「通用实现与 FP16 实现同时被
+> 编进来」的重复定义、2 处 `padK` 未声明（NEON 分支少了 `#else`，
+> 而 x86 分支是三档齐全的）、以及 `zq_base_type` 在若干处落空。
+> 已修掉其中**能证明正确**的那部分（6 个文件的重复定义 + `float16_t`），
+> 剩下的**故意没修**并把理由写进了门禁基线
+> （`tools/neon_fp16_baseline.txt`，回归里的 C12b 组盯着它）。
+> 换句话说：**这个选项存在，但它不工作。** 在它修好之前不要用。
+
 **use OpenBLAS**
 
 add cmake flag: -DBLAS_TYPE=openblas

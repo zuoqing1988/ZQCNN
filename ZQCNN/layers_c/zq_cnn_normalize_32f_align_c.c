@@ -254,6 +254,7 @@ extern "C" {
 #endif
 #endif //__ARM_NEON
 
+#if !(__ARM_NEON && __ARM_NEON_FP16)
 	void zq_cnn_normalize_32f_align0(
 		int across_spatial,
 		int channel_shared,
@@ -336,6 +337,7 @@ extern "C" {
 			}
 		}
 	}
+#endif /* !(__ARM_NEON && __ARM_NEON_FP16) —— 与 FP16 版互斥 */
 
 #if __ARM_NEON
 #if __ARM_NEON_FP16

@@ -81,6 +81,44 @@
 #define __ARM_NEON_FP16 0
 #endif
 
+/* `float16_t` —— 2026-10-04 补（附录 GQ.2）。
+ *
+ * **这个类型被 45 个文件用到，而本仓库从来没有定义过它。**
+ * 2026-10-04 实测：在 `-DSIMD_ARCH_TYPE=arm64-fp16` 对应的宏组合下
+ * （`-DZQ_CNN_USE_ARM_NEON -DZQ_CNN_USE_ARM_NEON_ARMV8
+ *   -DZQ_CNN_USE_ARM_NEON_FP16`），36 个带 NEON 分支的 TU 里有 **23 个编不过**，
+ * 全部是同一个错：
+ *     error: unknown type name 'float16_t'
+ *     78 | #define zq_base_type float16_t
+ *
+ * 也就是说：**`SIMD_ARCH_TYPE=arm64-fp16` 这个 CMake 选项
+ * （根 CMakeLists.txt:95 真实实现了、给 build-with-cmake.md 里却没写）
+ * 一直是必然失败的**，只是因为本机没有 ARM 工具链、也没有任何门禁去编那一档，
+ * 于是没人知道。
+ *
+ * 为什么是 `__fp16`：ACLE 只保证 `__fp16` 与 `_Float16` 两个名字。
+ * `float16_t` 是 **GCC 12+ / Clang 14+ 才有的内建类型名** ——
+ * 在那些编译器上再写一个 `typedef __fp16 float16_t;` 会与内建名冲突
+ * （它是关键字，不是普通 typedef）。
+ * 所以默认**只给老编译器补**，新的那批不补。
+ *
+ * 需要覆盖时直接定义 `ZQ_CNN_FLOAT16_T_BUILTIN` 即可
+ * （比如某个工具链的行为与上面假设的不同）。
+ *
+ * **本机无法验证**：没有 ARM 交叉工具链（2026-10-04 实测），
+ * 所以"补完之后数值正确"这件事没有证据；这里保证的只是
+ * **能编过**，而那由门禁 C12 的 FP16 档逐文件验（附录 GQ.3）。 */
+#if __ARM_NEON_FP16
+#ifndef ZQ_CNN_FLOAT16_T_BUILTIN
+#if defined(__clang__) || (defined(__GNUC__) && __GNUC__ >= 12)
+#define ZQ_CNN_FLOAT16_T_BUILTIN 1
+#endif
+#endif
+#if !ZQ_CNN_FLOAT16_T_BUILTIN
+typedef __fp16 float16_t;
+#endif
+#endif
+
 #if __ARM_NEON
 //#define ZQ_CNN_USE_FMADD128 1
 #ifndef ZQ_CNN_USE_SSETYPE

@@ -35,6 +35,7 @@ extern "C" {
 #endif
 
 #if __ARM_NEON
+#if !(__ARM_NEON && __ARM_NEON_FP16)
 #define zq_cnn_lstm_TF_32f_align zq_cnn_lstm_TF_32f_align128bit
 #define zq_mm_load_ps vld1q_f32
 #define zq_mm_store_ps vst1q_f32
@@ -413,6 +414,7 @@ extern "C" {
 		free(co);
 		free(o);
 	}
+#endif /* !(__ARM_NEON && __ARM_NEON_FP16) —— 与 FP16 版互斥 */
 
 
 #if defined(__cplusplus) || defined(c_plusplus) 

@@ -49,6 +49,14 @@
 /* 刻意**不是**结构体：`typedef float` 让向量之间的 + - * / 与标量全部合法，
    于是"桩不支持某个写法"不会伪装成"代码有 bug"。
    代价就是上面写的"不验类型" —— 这是一个明确的取舍，不是疏忽。 */
+/* `__fp16` 在真实 ARM 工具链上是**编译器内建的关键字**（ACLE 保证），
+   x86 上没有，所以这里补一个。
+   它必须**排在 ZQ_CNN_CompileConfig.h 之前**可用 ——
+   头文件里那句 `typedef __fp16 float16_t;` 就在配置头里。
+   所以门禁用 gcc 的 `-include tools/arm_neon.h` 把桩提前，
+   而不是靠 `#include <arm_neon.h>` 的自然顺序（那在 .c 里，晚于配置头）。 */
+typedef float __fp16;
+
 typedef float float32x4_t;
 typedef float float16x8_t;
 typedef float int32x4_t;

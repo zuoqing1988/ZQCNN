@@ -281,6 +281,7 @@ extern "C" {
 	b = 1 / sqrt(var+eps)
 	value = b * value + a
 	*/
+#if !(__ARM_NEON && __ARM_NEON_FP16)
 	void zq_cnn_batchnorm_32f_mean_var_align0(
 		float* in_data,
 		int in_N,
@@ -309,8 +310,10 @@ extern "C" {
 		free(a);
 		free(b);
 	}
+#endif /* !(__ARM_NEON && __ARM_NEON_FP16) —— 与 FP16 版互斥 */
 
 	
+#if !(__ARM_NEON && __ARM_NEON_FP16)
 	void zq_cnn_scale_32f_align0(
 		float* in_data,
 		int in_N,
@@ -360,6 +363,7 @@ extern "C" {
 			}
 		}
 	}
+#endif /* !(__ARM_NEON && __ARM_NEON_FP16) —— 与 FP16 版互斥 */
 
 	/*
 	a = bias - scale * mean / sqrt(var+eps)
@@ -370,6 +374,7 @@ extern "C" {
 	b = 1 / sqrt(var+eps)
 	value = b * value + a
 	*/
+#if !(__ARM_NEON && __ARM_NEON_FP16)
 	void zq_cnn_batchnorm_32f_b_a_align0(
 		float* in_data,
 		int in_N,
@@ -401,6 +406,7 @@ extern "C" {
 			}
 		}
 	}
+#endif /* !(__ARM_NEON && __ARM_NEON_FP16) —— 与 FP16 版互斥 */
 
 #if __ARM_NEON_FP16
 #define zq_base_type float16_t

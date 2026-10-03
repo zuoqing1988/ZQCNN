@@ -1,0 +1,26 @@
+# ARM/NEON **FP16** 档解析基线（tools/check_neon_branch.py --fp16 --save-baseline 生成）
+# 格式: <文件>	<第一条 error>
+#
+# 这一档对应 `SIMD_ARCH_TYPE=arm64-fp16`（根 CMakeLists.txt:95 真实实现，
+# build-with-cmake.md 里没有文档）。2026-10-04 之前它**从未被任何编译器看过**。
+#
+# 逐条理由（附录 GQ.4）：
+#  1. zq_gemm_32f_align_c.c        —— 重复定义在一个 #define 宏块内部
+#     （145/158/171 行是宏不是函数），自动区间会连带排掉 f32 需要的
+#     zq_base_type / zq_mm_*，**故意没自动修**
+#  2. zq_cnn_convolution_gemm_*    —— padK 在 NEON 分支里只有
+#     `#if !__ARM_NEON_FP16 ... #endif`、**没有 #else**（x86 那侧是三档齐全的
+#     #if/#elif/#else）。补 #else 能编过但 padK 的取值只能猜 ——
+#     宁可保留一个响亮的编译失败，也不换成可能静默算错。**故意没修**
+#  3. zq_cnn_deconvolution_gemm_*  —— 同上的 padK（附录 H9 那一族）
+#  4. zq_cnn_depthwise_convolution  —— unknown type，见基线里的 error 原文
+#  5. zq_cnn_scalaroperation        —— 语法错误，见基线里的 error 原文
+#  6. zq_cnn_convolution            —— **桩的限制**，不是代码缺陷：
+#     arm_neon.h 里 `ZQA_NEON_STUB_ANY` 展开成 `((void)sizeof(...), 0)`，
+#     当代码把内在函数的结果当可调用对象用时报这一条
+ZQ_GEMM/math/zq_gemm_32f_align_c.c	/mnt/d/ZQCNN/ZQ_GEMM/math/zq_gemm_32f_align_c.c:534:7: error: redefinition of ‘union union_type_s_mm128’ / /mnt/d/ZQCNN/ZQ_GEMM/math/zq_gemm_32f_align_c.c:629:67: error: redefinition of ‘zq_gemm_32f_align128it_AnoTrans_Btrans_M2_caseNdiv1_Kdiv64’ / /mnt/d/ZQCNN/ZQ_GEMM/math/zq_gemm_32f_align_c.c:642
+ZQCNN/layers_c/zq_cnn_convolution_32f_align_c.c	/mnt/d/ZQCNN/tools/arm_neon.h:86:63: error: called object is not a function or function pointer / /mnt/d/ZQCNN/tools/arm_neon.h:86:63: error: called object is not a function or function pointer / /mnt/d/ZQCNN/tools/arm_neon.h:86:63: error: called object is not a function or function pointer
+ZQCNN/layers_c/zq_cnn_convolution_gemm_32f_align_c.c	/mnt/d/ZQCNN/ZQCNN/layers_c/zq_cnn_convolution_gemm_32f_align_c_raw.h:1096:22: error: ‘padK’ undeclared (first use in this function) / /mnt/d/ZQCNN/ZQCNN/layers_c/zq_cnn_convolution_gemm_32f_align_c_raw.h:1096:22: error: ‘padK’ undeclared (first use in this function)
+ZQCNN/layers_c/zq_cnn_deconvolution_gemm_32f_align_c.c	/mnt/d/ZQCNN/ZQCNN/layers_c/zq_cnn_deconvolution_gemm_32f_align_c_raw.h:74:46: error: ‘padK’ undeclared (first use in this function) / /mnt/d/ZQCNN/ZQCNN/layers_c/zq_cnn_deconvolution_gemm_32f_align_c_raw.h:74:46: error: ‘padK’ undeclared (first use in this function)
+ZQCNN/layers_c/zq_cnn_depthwise_convolution_32f_align_c.c	/mnt/d/ZQCNN/ZQCNN/layers_c/zq_cnn_depthwise_convolution_32f_align_c.c:1244:9: error: unknown type name ‘zq_base_type’ / /mnt/d/ZQCNN/ZQCNN/layers_c/zq_cnn_depthwise_convolution_32f_align_c.c:1252:9: error: unknown type name ‘zq_base_type’ / /mnt/d/ZQCNN/ZQCNN/layers_c/zq_cnn_depthwise_convolution_3
+ZQCNN/layers_c/zq_cnn_scalaroperation_32f_align_c.c	/mnt/d/ZQCNN/ZQCNN/layers_c/zq_cnn_scalaroperation_32f_align_c.c:842:23: error: expected ‘)’ before ‘const’ / /mnt/d/ZQCNN/ZQCNN/layers_c/zq_cnn_scalaroperation_32f_align_c.c:880:23: error: expected ‘)’ before ‘*’ token / /mnt/d/ZQCNN/ZQCNN/layers_c/zq_cnn_scalaroperation_32f_align_c.c:908:23: error

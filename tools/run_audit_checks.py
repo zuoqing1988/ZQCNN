@@ -199,6 +199,15 @@ GROUPS = [
     ('C12 ARM/NEON 分支解析（附录 GP）',
      ['check_neon_branch.py', '--check-baseline',
       os.path.join(HERE, 'neon_branch_baseline.txt')], True),
+    # C12b（附录 GQ）：同一批 TU 的 **FP16** 档
+    # （`SIMD_ARCH_TYPE=arm64-fp16`，根 CMakeLists.txt:95 真实实现了、
+    #  build-with-cmake.md 里却没写）。这一档 2026-10-04 之前**从未被编译过**：
+    #  实测有 15 处「通用实现与 FP16 实现同时被编进来」的重复定义、
+    #  2 处 `padK` 未声明，以及 `float16_t` 这个**全仓从未定义**的类型。
+    #  已修的部分与**故意没修**的部分都记在基线里，每条带理由。
+    ('C12b ARM/NEON FP16 档（附录 GQ）',
+     ['check_neon_branch.py', '--fp16', '--check-baseline',
+      os.path.join(HERE, 'neon_fp16_baseline.txt')], True),
 ]
 
 

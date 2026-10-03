@@ -58,12 +58,29 @@ STUB = os.path.join(HERE, 'arm_neon.h')
 DIRS = ['ZQ_GEMM/math', 'ZQCNN/layers_c', 'ZQCNN/layers_nchwc', 'ZQCNN/math',
         '3rdparty/include/ZQlib']
 # 与真实构建一致的旗标（除掉 x86 专属的那些，见 check_gates_runnable 的教训）
-COMMON = '-O1 -fsyntax-only -std=gnu11 -Wall -Wextra ' \
-         '-Wno-unused-parameter -Wno-unused-variable -Wno-unused-function ' \
-         '-Wno-unused-but-set-variable -Wno-write-strings -Wno-unused-label'
+# **-include 把桩提前**：ZQ_CNN_CompileConfig.h 里那句
+# `typedef __fp16 float16_t;` 位于配置头中，而 `#include <arm_neon.h>`
+# 在 .c 里出现在它**之后** —— 只靠自然顺序的话，桩里的 __fp16 来不及。
+COMMON = ('-O1 -fsyntax-only -std=gnu11 -Wall -Wextra '
+          '-include $R/tools/arm_neon.h '
+          '-Wno-unused-parameter -Wno-unused-variable -Wno-unused-function '
+          '-Wno-unused-but-set-variable -Wno-write-strings '
+          '-Wno-unused-label')
 INC = '-I$R/tools -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include ' \
       '-I$R/3rdparty/include/openblas'
 NEON_RE = re.compile(r'\b(v[a-z0-9_]*q_[a-z0-9_]+)\b')
+
+# 第二档：FP16。`arm64-fp16` 是根 `CMakeLists.txt:95 **真实实现**的选项
+# （加 -DZQ_CNN_USE_ARM_NEON_FP16 与 -mfpu=neon-fp-armv8），
+# 但 build-with-cmake.md 里**没有文档**，而本机没有 ARM 工具链 ——
+# 它是全仓覆盖最薄的一档，所以也进 C12。
+#
+# **桩里故意不提供 float16_t**：它本来就该由真实 arm_neon.h 提供
+# （ACLE 只保证 __fp16 / _Float16，float16_t 是 GCC 12+ 才有的内建类型名）。
+# 替它遮掉，这条路径上"引用了一个不存在的类型"就永远抓不到了 ——
+# 而那正是 2026-10-04 在这一档上实测到的第一个真缺陷。
+FP16_DEFS = ['-DZQ_CNN_USE_ARM_NEON', '-DZQ_CNN_USE_ARM_NEON_ARMV8',
+             '-DZQ_CNN_USE_ARM_NEON_FP16']
 
 
 def wsl(script):
@@ -137,17 +154,18 @@ def stub_names():
     return set(re.findall(r'^#define\s+(v[a-z0-9_]+)\b', txt, re.M))
 
 
-def compile_all(wdir):
+def compile_all(wdir, extra_defs=()):
     files, used, asm_files = collect()
     lines = ['set +e', 'R=%s' % WSL_ROOT, 'mkdir -p %s' % wdir,
              'cd %s || { echo "@@CDFAIL"; exit 1; }' % wdir]
+    defs = ' '.join(extra_defs) if extra_defs else '-DZQ_CNN_USE_ARM_NEON'
     for i, p in enumerate(files):
         rel = os.path.relpath(p, ROOT).replace('\\', '/')
         cc = 'g++' if p.endswith('.cpp') else 'gcc'
         std = '-std=c++11' if p.endswith('.cpp') else '-std=gnu11'
-        lines.append('%s %s %s -DZQ_CNN_USE_ARM_NEON %s "$R/%s" '
+        lines.append('%s %s %s %s %s "$R/%s" '
                      '2> e%d.txt; echo "@@RC%d=$?"'
-                     % (cc, std, COMMON, INC, rel, i, i))
+                     % (cc, std, COMMON, defs, INC, rel, i, i))
     script = '\n'.join(lines) + '\n'
     out = wsl(script)
     res = []
@@ -157,9 +175,15 @@ def compile_all(wdir):
         rc = int(m.group(1)) if m else -1
         first = ''
         if rc != 0:
-            e = wsl('head -3 %s/e%d.txt' % (wdir, i))
+            # **扫整个日志，不要只看前 3 行**：第一版用 `head -3`，
+            # 于是 6 个失败文件里有 5 个抓到的是空字符串 ——
+            # 错误在第几十行（gcc 先打一堆 `note:` 与源码引用）。
+            # **没有理由的基线条目是废的**：半年后没人知道它为什么在那儿。
+            e = wsl("grep -m 3 'error' %s/e%d.txt" % (wdir, i))
             first = ' / '.join(x.strip() for x in e.splitlines()
-                               if 'error' in x)[:220]
+                               if 'error' in x)[:300]
+            if not first:
+                first = '(编译失败但日志里没有 error 行，见 e%d.txt)' % i
         res.append((rel, rc, first))
     wsl('rm -rf %s' % wdir)
     return res, used, asm_files, len(files)
@@ -178,6 +202,9 @@ def main():
                 check_against = v
             del argv[i:i + 2]
     list_only = '--list' in argv
+    fp16 = '--fp16' in argv
+    if fp16:
+        argv = [a for a in argv if a != '--fp16']
 
     files, used, asm_files = collect()
     if list_only:
@@ -204,7 +231,8 @@ def main():
 
     wdir = '/tmp/zqneon_%d_%d' % (os.getpid(), int(time.time()))
     try:
-        res, used2, asm2, n = compile_all(wdir)
+        res, used2, asm2, n = compile_all(
+            wdir, FP16_DEFS if fp16 else ())
     finally:
         wsl('rm -rf %s' % wdir)
 
@@ -262,7 +290,14 @@ def main():
         print('  ' + p)
     if problems:
         return 1
-    print('NEON 分支全部能解析（在本门禁能证明的范围内）。')
+    # 总结行**必须把基线里的条数说出来**。第一版无条件打
+    # "NEON 分支全部能解析" —— 而 FP16 那一档基线里明明有 6 个文件编不过。
+    # 门禁绿 ≠ 代码干净，绿的含义是"没有比基线更差"。
+    if check_against and bad:
+        print('%d 个文件的 NEON 分支编不过，**与基线一致**（基线里每条都带理由）。'
+              '绿的意思是"没有比基线更差"，不是"全部干净"。' % len(bad))
+    else:
+        print('NEON 分支全部能解析（在本门禁能证明的范围内）。')
     return 0
 
 
