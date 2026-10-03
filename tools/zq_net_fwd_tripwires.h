@@ -38,6 +38,7 @@
 #include "ZQCNN/ZQ_CNN_Tensor4D.h"
 #include "ZQCNN/ZQ_CNN_BBox.h"
 #include "ZQCNN/ZQ_CNN_Forward_SSEUtils.h"
+#include "ZQCNN/ZQ_CNN_Forward_SSEUtils_NCHWC.h"
 
 // 消息里**不嵌 C 字符串的换行转义**：这个文件是由 Python 生成的，
 // 头一次把那段说明写成 Python 三引号里的字面转义序列（两个字符：反斜杠 + n），
@@ -61,140 +62,374 @@ namespace ZQ
 {
 void ZQ_CNN_Forward_SSEUtils::_addbias(int, float*, int, int, int, int, int, int, int, float const*)
 {
-    zq_net_tripwire("_addbias");}
+    zq_net_tripwire("ZQ_CNN_Forward_SSEUtils::_addbias");}
 void ZQ_CNN_Forward_SSEUtils::_addbias_prelu(int, float*, int, int, int, int, int, int, int, float const*, float const*)
 {
-    zq_net_tripwire("_addbias_prelu");}
+    zq_net_tripwire("ZQ_CNN_Forward_SSEUtils::_addbias_prelu");}
 void ZQ_CNN_Forward_SSEUtils::_avgpooling(int, float const*, int, int, int, int, int, int, int, int, int, int, int, float*, int, int, int, int, int)
 {
-    zq_net_tripwire("_avgpooling");}
+    zq_net_tripwire("ZQ_CNN_Forward_SSEUtils::_avgpooling");}
 void ZQ_CNN_Forward_SSEUtils::_batchnorm_b_a(int, float*, int, int, int, int, int, int, int, float const*, float const*)
 {
-    zq_net_tripwire("_batchnorm_b_a");}
+    zq_net_tripwire("ZQ_CNN_Forward_SSEUtils::_batchnorm_b_a");}
 bool ZQ_CNN_Forward_SSEUtils::_concat_NCHW(std::vector<ZQ::ZQ_CNN_Tensor4D*, std::allocator<ZQ::ZQ_CNN_Tensor4D*> > const&, int, ZQ::ZQ_CNN_Tensor4D&)
 {
-    zq_net_tripwire("_concat_NCHW"); return 0;}
+    zq_net_tripwire("ZQ_CNN_Forward_SSEUtils::_concat_NCHW"); return 0;}
 
 void ZQ_CNN_Forward_SSEUtils::_convolution_nopadding(int, float const*, int, int, int, int, int, int, int, float const*, int, int, int, int, int, int, int, int, int, int, int, float*, int, int, int, int, int, int, int, void**, long long*)
 {
-    zq_net_tripwire("_convolution_nopadding");}
+    zq_net_tripwire("ZQ_CNN_Forward_SSEUtils::_convolution_nopadding");}
 void ZQ_CNN_Forward_SSEUtils::_deconvolution_with_padding(int, float const*, int, int, int, int, int, int, int, float const*, int, int, int, int, int, int, int, int, int, int, int, float*, int, int, int, int, int, int, int, int, int, int, int, void**, long long*)
 {
-    zq_net_tripwire("_deconvolution_with_padding");}
+    zq_net_tripwire("ZQ_CNN_Forward_SSEUtils::_deconvolution_with_padding");}
 void ZQ_CNN_Forward_SSEUtils::_depthwise_convolution_nopadding(int, float const*, int, int, int, int, int, int, int, float const*, int, int, int, int, int, int, int, int, int, int, int, float*, int, int, int, int, int, int, int, float const*, float const*)
 {
-    zq_net_tripwire("_depthwise_convolution_nopadding");}
+    zq_net_tripwire("ZQ_CNN_Forward_SSEUtils::_depthwise_convolution_nopadding");}
 bool ZQ_CNN_Forward_SSEUtils::_detection_output(ZQ::ZQ_CNN_Tensor4D const&, ZQ::ZQ_CNN_Tensor4D const&, ZQ::ZQ_CNN_Tensor4D const&, int, int, int, bool, int, ZQ::ZQ_CNN_BBoxUtils::PriorBoxCodeType, bool, float, float, int, float, int, ZQ::ZQ_CNN_Tensor4D&)
 {
-    zq_net_tripwire("_detection_output"); return 0;}
+    zq_net_tripwire("ZQ_CNN_Forward_SSEUtils::_detection_output"); return 0;}
 
 bool ZQ_CNN_Forward_SSEUtils::_detection_output_MXNET(ZQ::ZQ_CNN_Tensor4D const&, ZQ::ZQ_CNN_Tensor4D const&, ZQ::ZQ_CNN_Tensor4D const&, std::vector<float, std::allocator<float> > const&, bool, float, int, float, int, ZQ::ZQ_CNN_Tensor4D&)
 {
-    zq_net_tripwire("_detection_output_MXNET"); return 0;}
+    zq_net_tripwire("ZQ_CNN_Forward_SSEUtils::_detection_output_MXNET"); return 0;}
 
 void ZQ_CNN_Forward_SSEUtils::_eltwise_max(int, int, float const**, int, int, int, int, int const*, int const*, int const*, float*, int, int, int)
 {
-    zq_net_tripwire("_eltwise_max");}
+    zq_net_tripwire("ZQ_CNN_Forward_SSEUtils::_eltwise_max");}
 void ZQ_CNN_Forward_SSEUtils::_eltwise_mul(int, int, float const**, int, int, int, int, int const*, int const*, int const*, float*, int, int, int)
 {
-    zq_net_tripwire("_eltwise_mul");}
+    zq_net_tripwire("ZQ_CNN_Forward_SSEUtils::_eltwise_mul");}
 void ZQ_CNN_Forward_SSEUtils::_eltwise_sum(int, int, float const**, int, int, int, int, int const*, int const*, int const*, float*, int, int, int)
 {
-    zq_net_tripwire("_eltwise_sum");}
+    zq_net_tripwire("ZQ_CNN_Forward_SSEUtils::_eltwise_sum");}
 void ZQ_CNN_Forward_SSEUtils::_eltwise_sum_with_weight(int, int, float const**, float const*, int, int, int, int, int const*, int const*, int const*, float*, int, int, int)
 {
-    zq_net_tripwire("_eltwise_sum_with_weight");}
+    zq_net_tripwire("ZQ_CNN_Forward_SSEUtils::_eltwise_sum_with_weight");}
 void ZQ_CNN_Forward_SSEUtils::_inner_product(int, float const*, int, int, int, int, int, int, int, float const*, int, int, int, int, float*, int, int, void**, long long*)
 {
-    zq_net_tripwire("_inner_product");}
+    zq_net_tripwire("ZQ_CNN_Forward_SSEUtils::_inner_product");}
 void ZQ_CNN_Forward_SSEUtils::_lrn_across_channels(int, int, float, float, float, float const*, int, int, int, int, int, int, int, float*, int, int, int)
 {
-    zq_net_tripwire("_lrn_across_channels");}
+    zq_net_tripwire("ZQ_CNN_Forward_SSEUtils::_lrn_across_channels");}
 void ZQ_CNN_Forward_SSEUtils::_lstm_TF(int, float const*, int, int, int, int, int, float const*, int, int, float const*, int, int, float const*, int, int, float const*, int, int, float const*, int, int, float const*, int, int, float const*, int, int, float const*, int, int, float const*, float const*, float const*, float const*, float*, int, int, int, bool, float, float, void**, long long*)
 {
-    zq_net_tripwire("_lstm_TF");}
+    zq_net_tripwire("ZQ_CNN_Forward_SSEUtils::_lstm_TF");}
 void ZQ_CNN_Forward_SSEUtils::_maxpooling(int, float const*, int, int, int, int, int, int, int, int, int, int, int, float*, int, int, int, int, int)
 {
-    zq_net_tripwire("_maxpooling");}
+    zq_net_tripwire("ZQ_CNN_Forward_SSEUtils::_maxpooling");}
 void ZQ_CNN_Forward_SSEUtils::_normalize(int, bool, bool, float*, float const*, int, int, int, int, int, int, int, float)
 {
-    zq_net_tripwire("_normalize");}
+    zq_net_tripwire("ZQ_CNN_Forward_SSEUtils::_normalize");}
 void ZQ_CNN_Forward_SSEUtils::_prelu(int, float*, int, int, int, int, int, int, int, float const*)
 {
-    zq_net_tripwire("_prelu");}
+    zq_net_tripwire("ZQ_CNN_Forward_SSEUtils::_prelu");}
 bool ZQ_CNN_Forward_SSEUtils::_prior_box(ZQ::ZQ_CNN_Tensor4D const&, ZQ::ZQ_CNN_Tensor4D const&, std::vector<float, std::allocator<float> > const&, std::vector<float, std::allocator<float> > const&, std::vector<float, std::allocator<float> > const&, std::vector<float, std::allocator<float> > const&, bool, int, bool, int, int, float, float, float, ZQ::ZQ_CNN_Tensor4D&)
 {
-    zq_net_tripwire("_prior_box"); return 0;}
+    zq_net_tripwire("ZQ_CNN_Forward_SSEUtils::_prior_box"); return 0;}
 
 bool ZQ_CNN_Forward_SSEUtils::_prior_box_MXNET(ZQ::ZQ_CNN_Tensor4D const&, std::vector<float, std::allocator<float> > const&, std::vector<float, std::allocator<float> > const&, std::vector<float, std::allocator<float> > const&, int, bool, float, float, float, ZQ::ZQ_CNN_Tensor4D&)
 {
-    zq_net_tripwire("_prior_box_MXNET"); return 0;}
+    zq_net_tripwire("ZQ_CNN_Forward_SSEUtils::_prior_box_MXNET"); return 0;}
 
 bool ZQ_CNN_Forward_SSEUtils::_prior_box_text(ZQ::ZQ_CNN_Tensor4D const&, ZQ::ZQ_CNN_Tensor4D const&, std::vector<float, std::allocator<float> > const&, std::vector<float, std::allocator<float> > const&, std::vector<float, std::allocator<float> > const&, std::vector<float, std::allocator<float> > const&, bool, int, bool, int, int, float, float, float, ZQ::ZQ_CNN_Tensor4D&)
 {
-    zq_net_tripwire("_prior_box_text"); return 0;}
+    zq_net_tripwire("ZQ_CNN_Forward_SSEUtils::_prior_box_text"); return 0;}
 
 void ZQ_CNN_Forward_SSEUtils::_reduction_mean(int, float const*, int, int, int, int, int, bool, int, int, int, float*, int, int, int)
 {
-    zq_net_tripwire("_reduction_mean");}
+    zq_net_tripwire("ZQ_CNN_Forward_SSEUtils::_reduction_mean");}
 void ZQ_CNN_Forward_SSEUtils::_reduction_sum(int, float const*, int, int, int, int, int, bool, int, int, int, float*, int, int, int)
 {
-    zq_net_tripwire("_reduction_sum");}
+    zq_net_tripwire("ZQ_CNN_Forward_SSEUtils::_reduction_sum");}
 void ZQ_CNN_Forward_SSEUtils::_relu(int, float*, int, int, int, int, int, int, int, float)
 {
-    zq_net_tripwire("_relu");}
+    zq_net_tripwire("ZQ_CNN_Forward_SSEUtils::_relu");}
 void ZQ_CNN_Forward_SSEUtils::_relu6(int, float*, int, int, int, int, int, int, int)
 {
-    zq_net_tripwire("_relu6");}
+    zq_net_tripwire("ZQ_CNN_Forward_SSEUtils::_relu6");}
 void ZQ_CNN_Forward_SSEUtils::_scalaroperation_add(int, float, float const*, int, int, int, int, int, int, int, float*, int, int, int)
 {
-    zq_net_tripwire("_scalaroperation_add");}
+    zq_net_tripwire("ZQ_CNN_Forward_SSEUtils::_scalaroperation_add");}
 void ZQ_CNN_Forward_SSEUtils::_scalaroperation_add(int, float, float*, int, int, int, int, int, int, int)
 {
-    zq_net_tripwire("_scalaroperation_add");}
+    zq_net_tripwire("ZQ_CNN_Forward_SSEUtils::_scalaroperation_add");}
 void ZQ_CNN_Forward_SSEUtils::_scalaroperation_max(int, float, float const*, int, int, int, int, int, int, int, float*, int, int, int)
 {
-    zq_net_tripwire("_scalaroperation_max");}
+    zq_net_tripwire("ZQ_CNN_Forward_SSEUtils::_scalaroperation_max");}
 void ZQ_CNN_Forward_SSEUtils::_scalaroperation_max(int, float, float*, int, int, int, int, int, int, int)
 {
-    zq_net_tripwire("_scalaroperation_max");}
+    zq_net_tripwire("ZQ_CNN_Forward_SSEUtils::_scalaroperation_max");}
 void ZQ_CNN_Forward_SSEUtils::_scalaroperation_min(int, float, float const*, int, int, int, int, int, int, int, float*, int, int, int)
 {
-    zq_net_tripwire("_scalaroperation_min");}
+    zq_net_tripwire("ZQ_CNN_Forward_SSEUtils::_scalaroperation_min");}
 void ZQ_CNN_Forward_SSEUtils::_scalaroperation_min(int, float, float*, int, int, int, int, int, int, int)
 {
-    zq_net_tripwire("_scalaroperation_min");}
+    zq_net_tripwire("ZQ_CNN_Forward_SSEUtils::_scalaroperation_min");}
 void ZQ_CNN_Forward_SSEUtils::_scalaroperation_mul(int, float, float const*, int, int, int, int, int, int, int, float*, int, int, int)
 {
-    zq_net_tripwire("_scalaroperation_mul");}
+    zq_net_tripwire("ZQ_CNN_Forward_SSEUtils::_scalaroperation_mul");}
 void ZQ_CNN_Forward_SSEUtils::_scalaroperation_mul(int, float, float*, int, int, int, int, int, int, int)
 {
-    zq_net_tripwire("_scalaroperation_mul");}
+    zq_net_tripwire("ZQ_CNN_Forward_SSEUtils::_scalaroperation_mul");}
 void ZQ_CNN_Forward_SSEUtils::_scalaroperation_pow(int, float, float const*, int, int, int, int, int, int, int, float*, int, int, int)
 {
-    zq_net_tripwire("_scalaroperation_pow");}
+    zq_net_tripwire("ZQ_CNN_Forward_SSEUtils::_scalaroperation_pow");}
 void ZQ_CNN_Forward_SSEUtils::_scalaroperation_pow(int, float, float*, int, int, int, int, int, int, int)
 {
-    zq_net_tripwire("_scalaroperation_pow");}
+    zq_net_tripwire("ZQ_CNN_Forward_SSEUtils::_scalaroperation_pow");}
 void ZQ_CNN_Forward_SSEUtils::_scalaroperation_rdiv(int, float, float const*, int, int, int, int, int, int, int, float*, int, int, int)
 {
-    zq_net_tripwire("_scalaroperation_rdiv");}
+    zq_net_tripwire("ZQ_CNN_Forward_SSEUtils::_scalaroperation_rdiv");}
 void ZQ_CNN_Forward_SSEUtils::_scalaroperation_rdiv(int, float, float*, int, int, int, int, int, int, int)
 {
-    zq_net_tripwire("_scalaroperation_rdiv");}
+    zq_net_tripwire("ZQ_CNN_Forward_SSEUtils::_scalaroperation_rdiv");}
 void ZQ_CNN_Forward_SSEUtils::_scalaroperation_rminus(int, float, float const*, int, int, int, int, int, int, int, float*, int, int, int)
 {
-    zq_net_tripwire("_scalaroperation_rminus");}
+    zq_net_tripwire("ZQ_CNN_Forward_SSEUtils::_scalaroperation_rminus");}
 void ZQ_CNN_Forward_SSEUtils::_scalaroperation_rminus(int, float, float*, int, int, int, int, int, int, int)
 {
-    zq_net_tripwire("_scalaroperation_rminus");}
+    zq_net_tripwire("ZQ_CNN_Forward_SSEUtils::_scalaroperation_rminus");}
 void ZQ_CNN_Forward_SSEUtils::_scalebias(int, float*, int, int, int, int, int, int, int, float const*, float const*)
 {
-    zq_net_tripwire("_scalebias");}
+    zq_net_tripwire("ZQ_CNN_Forward_SSEUtils::_scalebias");}
 void ZQ_CNN_Forward_SSEUtils::_softmax(int, int, float*, int, int, int, int, int, int, int)
 {
-    zq_net_tripwire("_softmax");}
+    zq_net_tripwire("ZQ_CNN_Forward_SSEUtils::_softmax");}
 void ZQ_CNN_Forward_SSEUtils::_sqrt(int, float*, int, int, int, int, int, int, int)
 {
-    zq_net_tripwire("_sqrt");}
+    zq_net_tripwire("ZQ_CNN_Forward_SSEUtils::_sqrt");}
+void ZQ_CNN_Forward_SSEUtils_NCHWC::AVGPooling(ZQ::ZQ_CNN_Tensor4D_NCHWC1 const&, ZQ::ZQ_CNN_Tensor4D_NCHWC1&, int, int, int, int, bool)
+{
+    zq_net_tripwire("ZQ_CNN_Forward_SSEUtils_NCHWC::AVGPooling");}
+void ZQ_CNN_Forward_SSEUtils_NCHWC::AVGPooling(ZQ::ZQ_CNN_Tensor4D_NCHWC4 const&, ZQ::ZQ_CNN_Tensor4D_NCHWC4&, int, int, int, int, bool)
+{
+    zq_net_tripwire("ZQ_CNN_Forward_SSEUtils_NCHWC::AVGPooling");}
+void ZQ_CNN_Forward_SSEUtils_NCHWC::AVGPooling(ZQ::ZQ_CNN_Tensor4D_NCHWC8 const&, ZQ::ZQ_CNN_Tensor4D_NCHWC8&, int, int, int, int, bool)
+{
+    zq_net_tripwire("ZQ_CNN_Forward_SSEUtils_NCHWC::AVGPooling");}
+bool ZQ_CNN_Forward_SSEUtils_NCHWC::BatchNorm_b_a(ZQ::ZQ_CNN_Tensor4D_NCHWC1&, ZQ::ZQ_CNN_Tensor4D_NCHWC1 const&, ZQ::ZQ_CNN_Tensor4D_NCHWC1 const&)
+{
+    zq_net_tripwire("ZQ_CNN_Forward_SSEUtils_NCHWC::BatchNorm_b_a"); return 0;}
+
+bool ZQ_CNN_Forward_SSEUtils_NCHWC::BatchNorm_b_a(ZQ::ZQ_CNN_Tensor4D_NCHWC4&, ZQ::ZQ_CNN_Tensor4D_NCHWC4 const&, ZQ::ZQ_CNN_Tensor4D_NCHWC4 const&)
+{
+    zq_net_tripwire("ZQ_CNN_Forward_SSEUtils_NCHWC::BatchNorm_b_a"); return 0;}
+
+bool ZQ_CNN_Forward_SSEUtils_NCHWC::BatchNorm_b_a(ZQ::ZQ_CNN_Tensor4D_NCHWC8&, ZQ::ZQ_CNN_Tensor4D_NCHWC8 const&, ZQ::ZQ_CNN_Tensor4D_NCHWC8 const&)
+{
+    zq_net_tripwire("ZQ_CNN_Forward_SSEUtils_NCHWC::BatchNorm_b_a"); return 0;}
+
+bool ZQ_CNN_Forward_SSEUtils_NCHWC::Convolution(ZQ::ZQ_CNN_Tensor4D_NCHWC1&, ZQ::ZQ_CNN_Tensor4D_NCHWC1 const&, int, int, int, int, int, int, ZQ::ZQ_CNN_Tensor4D_NCHWC1&, void**, long long*)
+{
+    zq_net_tripwire("ZQ_CNN_Forward_SSEUtils_NCHWC::Convolution"); return 0;}
+
+bool ZQ_CNN_Forward_SSEUtils_NCHWC::Convolution(ZQ::ZQ_CNN_Tensor4D_NCHWC4&, ZQ::ZQ_CNN_Tensor4D_NCHWC4 const&, int, int, int, int, int, int, ZQ::ZQ_CNN_Tensor4D_NCHWC4&, void**, long long*)
+{
+    zq_net_tripwire("ZQ_CNN_Forward_SSEUtils_NCHWC::Convolution"); return 0;}
+
+bool ZQ_CNN_Forward_SSEUtils_NCHWC::Convolution(ZQ::ZQ_CNN_Tensor4D_NCHWC8&, ZQ::ZQ_CNN_Tensor4D_NCHWC8 const&, int, int, int, int, int, int, ZQ::ZQ_CNN_Tensor4D_NCHWC8&, void**, long long*)
+{
+    zq_net_tripwire("ZQ_CNN_Forward_SSEUtils_NCHWC::Convolution"); return 0;}
+
+bool ZQ_CNN_Forward_SSEUtils_NCHWC::ConvolutionWithBias(ZQ::ZQ_CNN_Tensor4D_NCHWC1&, ZQ::ZQ_CNN_Tensor4D_NCHWC1 const&, ZQ::ZQ_CNN_Tensor4D_NCHWC1 const&, int, int, int, int, int, int, ZQ::ZQ_CNN_Tensor4D_NCHWC1&, void**, long long*)
+{
+    zq_net_tripwire("ZQ_CNN_Forward_SSEUtils_NCHWC::ConvolutionWithBias"); return 0;}
+
+bool ZQ_CNN_Forward_SSEUtils_NCHWC::ConvolutionWithBias(ZQ::ZQ_CNN_Tensor4D_NCHWC4&, ZQ::ZQ_CNN_Tensor4D_NCHWC4 const&, ZQ::ZQ_CNN_Tensor4D_NCHWC4 const&, int, int, int, int, int, int, ZQ::ZQ_CNN_Tensor4D_NCHWC4&, void**, long long*)
+{
+    zq_net_tripwire("ZQ_CNN_Forward_SSEUtils_NCHWC::ConvolutionWithBias"); return 0;}
+
+bool ZQ_CNN_Forward_SSEUtils_NCHWC::ConvolutionWithBias(ZQ::ZQ_CNN_Tensor4D_NCHWC8&, ZQ::ZQ_CNN_Tensor4D_NCHWC8 const&, ZQ::ZQ_CNN_Tensor4D_NCHWC8 const&, int, int, int, int, int, int, ZQ::ZQ_CNN_Tensor4D_NCHWC8&, void**, long long*)
+{
+    zq_net_tripwire("ZQ_CNN_Forward_SSEUtils_NCHWC::ConvolutionWithBias"); return 0;}
+
+bool ZQ_CNN_Forward_SSEUtils_NCHWC::ConvolutionWithBiasPReLU(ZQ::ZQ_CNN_Tensor4D_NCHWC1&, ZQ::ZQ_CNN_Tensor4D_NCHWC1 const&, ZQ::ZQ_CNN_Tensor4D_NCHWC1 const&, ZQ::ZQ_CNN_Tensor4D_NCHWC1 const&, int, int, int, int, int, int, ZQ::ZQ_CNN_Tensor4D_NCHWC1&, void**, long long*)
+{
+    zq_net_tripwire("ZQ_CNN_Forward_SSEUtils_NCHWC::ConvolutionWithBiasPReLU"); return 0;}
+
+bool ZQ_CNN_Forward_SSEUtils_NCHWC::ConvolutionWithBiasPReLU(ZQ::ZQ_CNN_Tensor4D_NCHWC4&, ZQ::ZQ_CNN_Tensor4D_NCHWC4 const&, ZQ::ZQ_CNN_Tensor4D_NCHWC4 const&, ZQ::ZQ_CNN_Tensor4D_NCHWC4 const&, int, int, int, int, int, int, ZQ::ZQ_CNN_Tensor4D_NCHWC4&, void**, long long*)
+{
+    zq_net_tripwire("ZQ_CNN_Forward_SSEUtils_NCHWC::ConvolutionWithBiasPReLU"); return 0;}
+
+bool ZQ_CNN_Forward_SSEUtils_NCHWC::ConvolutionWithBiasPReLU(ZQ::ZQ_CNN_Tensor4D_NCHWC8&, ZQ::ZQ_CNN_Tensor4D_NCHWC8 const&, ZQ::ZQ_CNN_Tensor4D_NCHWC8 const&, ZQ::ZQ_CNN_Tensor4D_NCHWC8 const&, int, int, int, int, int, int, ZQ::ZQ_CNN_Tensor4D_NCHWC8&, void**, long long*)
+{
+    zq_net_tripwire("ZQ_CNN_Forward_SSEUtils_NCHWC::ConvolutionWithBiasPReLU"); return 0;}
+
+bool ZQ_CNN_Forward_SSEUtils_NCHWC::ConvolutionWithPReLU(ZQ::ZQ_CNN_Tensor4D_NCHWC1&, ZQ::ZQ_CNN_Tensor4D_NCHWC1 const&, ZQ::ZQ_CNN_Tensor4D_NCHWC1 const&, int, int, int, int, int, int, ZQ::ZQ_CNN_Tensor4D_NCHWC1&, void**, long long*)
+{
+    zq_net_tripwire("ZQ_CNN_Forward_SSEUtils_NCHWC::ConvolutionWithPReLU"); return 0;}
+
+bool ZQ_CNN_Forward_SSEUtils_NCHWC::ConvolutionWithPReLU(ZQ::ZQ_CNN_Tensor4D_NCHWC4&, ZQ::ZQ_CNN_Tensor4D_NCHWC4 const&, ZQ::ZQ_CNN_Tensor4D_NCHWC4 const&, int, int, int, int, int, int, ZQ::ZQ_CNN_Tensor4D_NCHWC4&, void**, long long*)
+{
+    zq_net_tripwire("ZQ_CNN_Forward_SSEUtils_NCHWC::ConvolutionWithPReLU"); return 0;}
+
+bool ZQ_CNN_Forward_SSEUtils_NCHWC::ConvolutionWithPReLU(ZQ::ZQ_CNN_Tensor4D_NCHWC8&, ZQ::ZQ_CNN_Tensor4D_NCHWC8 const&, ZQ::ZQ_CNN_Tensor4D_NCHWC8 const&, int, int, int, int, int, int, ZQ::ZQ_CNN_Tensor4D_NCHWC8&, void**, long long*)
+{
+    zq_net_tripwire("ZQ_CNN_Forward_SSEUtils_NCHWC::ConvolutionWithPReLU"); return 0;}
+
+bool ZQ_CNN_Forward_SSEUtils_NCHWC::DepthwiseConvolution(ZQ::ZQ_CNN_Tensor4D_NCHWC1&, ZQ::ZQ_CNN_Tensor4D_NCHWC1 const&, int, int, int, int, int, int, ZQ::ZQ_CNN_Tensor4D_NCHWC1&)
+{
+    zq_net_tripwire("ZQ_CNN_Forward_SSEUtils_NCHWC::DepthwiseConvolution"); return 0;}
+
+bool ZQ_CNN_Forward_SSEUtils_NCHWC::DepthwiseConvolution(ZQ::ZQ_CNN_Tensor4D_NCHWC4&, ZQ::ZQ_CNN_Tensor4D_NCHWC4 const&, int, int, int, int, int, int, ZQ::ZQ_CNN_Tensor4D_NCHWC4&)
+{
+    zq_net_tripwire("ZQ_CNN_Forward_SSEUtils_NCHWC::DepthwiseConvolution"); return 0;}
+
+bool ZQ_CNN_Forward_SSEUtils_NCHWC::DepthwiseConvolution(ZQ::ZQ_CNN_Tensor4D_NCHWC8&, ZQ::ZQ_CNN_Tensor4D_NCHWC8 const&, int, int, int, int, int, int, ZQ::ZQ_CNN_Tensor4D_NCHWC8&)
+{
+    zq_net_tripwire("ZQ_CNN_Forward_SSEUtils_NCHWC::DepthwiseConvolution"); return 0;}
+
+bool ZQ_CNN_Forward_SSEUtils_NCHWC::DepthwiseConvolutionWithBias(ZQ::ZQ_CNN_Tensor4D_NCHWC1&, ZQ::ZQ_CNN_Tensor4D_NCHWC1 const&, ZQ::ZQ_CNN_Tensor4D_NCHWC1 const&, int, int, int, int, int, int, ZQ::ZQ_CNN_Tensor4D_NCHWC1&)
+{
+    zq_net_tripwire("ZQ_CNN_Forward_SSEUtils_NCHWC::DepthwiseConvolutionWithBias"); return 0;}
+
+bool ZQ_CNN_Forward_SSEUtils_NCHWC::DepthwiseConvolutionWithBias(ZQ::ZQ_CNN_Tensor4D_NCHWC4&, ZQ::ZQ_CNN_Tensor4D_NCHWC4 const&, ZQ::ZQ_CNN_Tensor4D_NCHWC4 const&, int, int, int, int, int, int, ZQ::ZQ_CNN_Tensor4D_NCHWC4&)
+{
+    zq_net_tripwire("ZQ_CNN_Forward_SSEUtils_NCHWC::DepthwiseConvolutionWithBias"); return 0;}
+
+bool ZQ_CNN_Forward_SSEUtils_NCHWC::DepthwiseConvolutionWithBias(ZQ::ZQ_CNN_Tensor4D_NCHWC8&, ZQ::ZQ_CNN_Tensor4D_NCHWC8 const&, ZQ::ZQ_CNN_Tensor4D_NCHWC8 const&, int, int, int, int, int, int, ZQ::ZQ_CNN_Tensor4D_NCHWC8&)
+{
+    zq_net_tripwire("ZQ_CNN_Forward_SSEUtils_NCHWC::DepthwiseConvolutionWithBias"); return 0;}
+
+bool ZQ_CNN_Forward_SSEUtils_NCHWC::DepthwiseConvolutionWithBiasPReLU(ZQ::ZQ_CNN_Tensor4D_NCHWC1&, ZQ::ZQ_CNN_Tensor4D_NCHWC1 const&, ZQ::ZQ_CNN_Tensor4D_NCHWC1 const&, ZQ::ZQ_CNN_Tensor4D_NCHWC1 const&, int, int, int, int, int, int, ZQ::ZQ_CNN_Tensor4D_NCHWC1&)
+{
+    zq_net_tripwire("ZQ_CNN_Forward_SSEUtils_NCHWC::DepthwiseConvolutionWithBiasPReLU"); return 0;}
+
+bool ZQ_CNN_Forward_SSEUtils_NCHWC::DepthwiseConvolutionWithBiasPReLU(ZQ::ZQ_CNN_Tensor4D_NCHWC4&, ZQ::ZQ_CNN_Tensor4D_NCHWC4 const&, ZQ::ZQ_CNN_Tensor4D_NCHWC4 const&, ZQ::ZQ_CNN_Tensor4D_NCHWC4 const&, int, int, int, int, int, int, ZQ::ZQ_CNN_Tensor4D_NCHWC4&)
+{
+    zq_net_tripwire("ZQ_CNN_Forward_SSEUtils_NCHWC::DepthwiseConvolutionWithBiasPReLU"); return 0;}
+
+bool ZQ_CNN_Forward_SSEUtils_NCHWC::DepthwiseConvolutionWithBiasPReLU(ZQ::ZQ_CNN_Tensor4D_NCHWC8&, ZQ::ZQ_CNN_Tensor4D_NCHWC8 const&, ZQ::ZQ_CNN_Tensor4D_NCHWC8 const&, ZQ::ZQ_CNN_Tensor4D_NCHWC8 const&, int, int, int, int, int, int, ZQ::ZQ_CNN_Tensor4D_NCHWC8&)
+{
+    zq_net_tripwire("ZQ_CNN_Forward_SSEUtils_NCHWC::DepthwiseConvolutionWithBiasPReLU"); return 0;}
+
+bool ZQ_CNN_Forward_SSEUtils_NCHWC::Eltwise_Max(std::vector<ZQ::ZQ_CNN_Tensor4D_NCHWC1 const*, std::allocator<ZQ::ZQ_CNN_Tensor4D_NCHWC1 const*> > const&, ZQ::ZQ_CNN_Tensor4D_NCHWC1&)
+{
+    zq_net_tripwire("ZQ_CNN_Forward_SSEUtils_NCHWC::Eltwise_Max"); return 0;}
+
+bool ZQ_CNN_Forward_SSEUtils_NCHWC::Eltwise_Max(std::vector<ZQ::ZQ_CNN_Tensor4D_NCHWC4 const*, std::allocator<ZQ::ZQ_CNN_Tensor4D_NCHWC4 const*> > const&, ZQ::ZQ_CNN_Tensor4D_NCHWC4&)
+{
+    zq_net_tripwire("ZQ_CNN_Forward_SSEUtils_NCHWC::Eltwise_Max"); return 0;}
+
+bool ZQ_CNN_Forward_SSEUtils_NCHWC::Eltwise_Max(std::vector<ZQ::ZQ_CNN_Tensor4D_NCHWC8 const*, std::allocator<ZQ::ZQ_CNN_Tensor4D_NCHWC8 const*> > const&, ZQ::ZQ_CNN_Tensor4D_NCHWC8&)
+{
+    zq_net_tripwire("ZQ_CNN_Forward_SSEUtils_NCHWC::Eltwise_Max"); return 0;}
+
+bool ZQ_CNN_Forward_SSEUtils_NCHWC::Eltwise_Mul(std::vector<ZQ::ZQ_CNN_Tensor4D_NCHWC1 const*, std::allocator<ZQ::ZQ_CNN_Tensor4D_NCHWC1 const*> > const&, ZQ::ZQ_CNN_Tensor4D_NCHWC1&)
+{
+    zq_net_tripwire("ZQ_CNN_Forward_SSEUtils_NCHWC::Eltwise_Mul"); return 0;}
+
+bool ZQ_CNN_Forward_SSEUtils_NCHWC::Eltwise_Mul(std::vector<ZQ::ZQ_CNN_Tensor4D_NCHWC4 const*, std::allocator<ZQ::ZQ_CNN_Tensor4D_NCHWC4 const*> > const&, ZQ::ZQ_CNN_Tensor4D_NCHWC4&)
+{
+    zq_net_tripwire("ZQ_CNN_Forward_SSEUtils_NCHWC::Eltwise_Mul"); return 0;}
+
+bool ZQ_CNN_Forward_SSEUtils_NCHWC::Eltwise_Mul(std::vector<ZQ::ZQ_CNN_Tensor4D_NCHWC8 const*, std::allocator<ZQ::ZQ_CNN_Tensor4D_NCHWC8 const*> > const&, ZQ::ZQ_CNN_Tensor4D_NCHWC8&)
+{
+    zq_net_tripwire("ZQ_CNN_Forward_SSEUtils_NCHWC::Eltwise_Mul"); return 0;}
+
+bool ZQ_CNN_Forward_SSEUtils_NCHWC::Eltwise_Sum(std::vector<ZQ::ZQ_CNN_Tensor4D_NCHWC1 const*, std::allocator<ZQ::ZQ_CNN_Tensor4D_NCHWC1 const*> > const&, ZQ::ZQ_CNN_Tensor4D_NCHWC1&)
+{
+    zq_net_tripwire("ZQ_CNN_Forward_SSEUtils_NCHWC::Eltwise_Sum"); return 0;}
+
+bool ZQ_CNN_Forward_SSEUtils_NCHWC::Eltwise_Sum(std::vector<ZQ::ZQ_CNN_Tensor4D_NCHWC4 const*, std::allocator<ZQ::ZQ_CNN_Tensor4D_NCHWC4 const*> > const&, ZQ::ZQ_CNN_Tensor4D_NCHWC4&)
+{
+    zq_net_tripwire("ZQ_CNN_Forward_SSEUtils_NCHWC::Eltwise_Sum"); return 0;}
+
+bool ZQ_CNN_Forward_SSEUtils_NCHWC::Eltwise_Sum(std::vector<ZQ::ZQ_CNN_Tensor4D_NCHWC8 const*, std::allocator<ZQ::ZQ_CNN_Tensor4D_NCHWC8 const*> > const&, ZQ::ZQ_CNN_Tensor4D_NCHWC8&)
+{
+    zq_net_tripwire("ZQ_CNN_Forward_SSEUtils_NCHWC::Eltwise_Sum"); return 0;}
+
+bool ZQ_CNN_Forward_SSEUtils_NCHWC::Eltwise_SumWithWeight(std::vector<ZQ::ZQ_CNN_Tensor4D_NCHWC1 const*, std::allocator<ZQ::ZQ_CNN_Tensor4D_NCHWC1 const*> > const&, std::vector<float, std::allocator<float> > const&, ZQ::ZQ_CNN_Tensor4D_NCHWC1&)
+{
+    zq_net_tripwire("ZQ_CNN_Forward_SSEUtils_NCHWC::Eltwise_SumWithWeight"); return 0;}
+
+bool ZQ_CNN_Forward_SSEUtils_NCHWC::Eltwise_SumWithWeight(std::vector<ZQ::ZQ_CNN_Tensor4D_NCHWC4 const*, std::allocator<ZQ::ZQ_CNN_Tensor4D_NCHWC4 const*> > const&, std::vector<float, std::allocator<float> > const&, ZQ::ZQ_CNN_Tensor4D_NCHWC4&)
+{
+    zq_net_tripwire("ZQ_CNN_Forward_SSEUtils_NCHWC::Eltwise_SumWithWeight"); return 0;}
+
+bool ZQ_CNN_Forward_SSEUtils_NCHWC::Eltwise_SumWithWeight(std::vector<ZQ::ZQ_CNN_Tensor4D_NCHWC8 const*, std::allocator<ZQ::ZQ_CNN_Tensor4D_NCHWC8 const*> > const&, std::vector<float, std::allocator<float> > const&, ZQ::ZQ_CNN_Tensor4D_NCHWC8&)
+{
+    zq_net_tripwire("ZQ_CNN_Forward_SSEUtils_NCHWC::Eltwise_SumWithWeight"); return 0;}
+
+bool ZQ_CNN_Forward_SSEUtils_NCHWC::InnerProduct(ZQ::ZQ_CNN_Tensor4D_NCHWC1&, ZQ::ZQ_CNN_Tensor4D_NCHWC1 const&, ZQ::ZQ_CNN_Tensor4D_NCHWC1&, void**, long long*)
+{
+    zq_net_tripwire("ZQ_CNN_Forward_SSEUtils_NCHWC::InnerProduct"); return 0;}
+
+bool ZQ_CNN_Forward_SSEUtils_NCHWC::InnerProduct(ZQ::ZQ_CNN_Tensor4D_NCHWC4&, ZQ::ZQ_CNN_Tensor4D_NCHWC4 const&, ZQ::ZQ_CNN_Tensor4D_NCHWC4&, void**, long long*)
+{
+    zq_net_tripwire("ZQ_CNN_Forward_SSEUtils_NCHWC::InnerProduct"); return 0;}
+
+bool ZQ_CNN_Forward_SSEUtils_NCHWC::InnerProduct(ZQ::ZQ_CNN_Tensor4D_NCHWC4&, ZQ::ZQ_CNN_Tensor4D_NCHWC::Buffer const&, int, ZQ::ZQ_CNN_Tensor4D_NCHWC4&, void**, long long*)
+{
+    zq_net_tripwire("ZQ_CNN_Forward_SSEUtils_NCHWC::InnerProduct"); return 0;}
+
+bool ZQ_CNN_Forward_SSEUtils_NCHWC::InnerProduct(ZQ::ZQ_CNN_Tensor4D_NCHWC8&, ZQ::ZQ_CNN_Tensor4D_NCHWC8 const&, ZQ::ZQ_CNN_Tensor4D_NCHWC8&, void**, long long*)
+{
+    zq_net_tripwire("ZQ_CNN_Forward_SSEUtils_NCHWC::InnerProduct"); return 0;}
+
+bool ZQ_CNN_Forward_SSEUtils_NCHWC::InnerProductPrePack(ZQ::ZQ_CNN_Tensor4D_NCHWC4 const&, ZQ::ZQ_CNN_Tensor4D_NCHWC::Buffer&)
+{
+    zq_net_tripwire("ZQ_CNN_Forward_SSEUtils_NCHWC::InnerProductPrePack"); return 0;}
+
+bool ZQ_CNN_Forward_SSEUtils_NCHWC::InnerProductWithBias(ZQ::ZQ_CNN_Tensor4D_NCHWC1&, ZQ::ZQ_CNN_Tensor4D_NCHWC1 const&, ZQ::ZQ_CNN_Tensor4D_NCHWC1 const&, ZQ::ZQ_CNN_Tensor4D_NCHWC1&, void**, long long*)
+{
+    zq_net_tripwire("ZQ_CNN_Forward_SSEUtils_NCHWC::InnerProductWithBias"); return 0;}
+
+bool ZQ_CNN_Forward_SSEUtils_NCHWC::InnerProductWithBias(ZQ::ZQ_CNN_Tensor4D_NCHWC4&, ZQ::ZQ_CNN_Tensor4D_NCHWC4 const&, ZQ::ZQ_CNN_Tensor4D_NCHWC4 const&, ZQ::ZQ_CNN_Tensor4D_NCHWC4&, void**, long long*)
+{
+    zq_net_tripwire("ZQ_CNN_Forward_SSEUtils_NCHWC::InnerProductWithBias"); return 0;}
+
+bool ZQ_CNN_Forward_SSEUtils_NCHWC::InnerProductWithBias(ZQ::ZQ_CNN_Tensor4D_NCHWC4&, ZQ::ZQ_CNN_Tensor4D_NCHWC::Buffer const&, int, ZQ::ZQ_CNN_Tensor4D_NCHWC4 const&, ZQ::ZQ_CNN_Tensor4D_NCHWC4&, void**, long long*)
+{
+    zq_net_tripwire("ZQ_CNN_Forward_SSEUtils_NCHWC::InnerProductWithBias"); return 0;}
+
+bool ZQ_CNN_Forward_SSEUtils_NCHWC::InnerProductWithBias(ZQ::ZQ_CNN_Tensor4D_NCHWC8&, ZQ::ZQ_CNN_Tensor4D_NCHWC8 const&, ZQ::ZQ_CNN_Tensor4D_NCHWC8 const&, ZQ::ZQ_CNN_Tensor4D_NCHWC8&, void**, long long*)
+{
+    zq_net_tripwire("ZQ_CNN_Forward_SSEUtils_NCHWC::InnerProductWithBias"); return 0;}
+
+void ZQ_CNN_Forward_SSEUtils_NCHWC::MaxPooling(ZQ::ZQ_CNN_Tensor4D_NCHWC1 const&, ZQ::ZQ_CNN_Tensor4D_NCHWC1&, int, int, int, int, bool)
+{
+    zq_net_tripwire("ZQ_CNN_Forward_SSEUtils_NCHWC::MaxPooling");}
+void ZQ_CNN_Forward_SSEUtils_NCHWC::MaxPooling(ZQ::ZQ_CNN_Tensor4D_NCHWC4 const&, ZQ::ZQ_CNN_Tensor4D_NCHWC4&, int, int, int, int, bool)
+{
+    zq_net_tripwire("ZQ_CNN_Forward_SSEUtils_NCHWC::MaxPooling");}
+void ZQ_CNN_Forward_SSEUtils_NCHWC::MaxPooling(ZQ::ZQ_CNN_Tensor4D_NCHWC8 const&, ZQ::ZQ_CNN_Tensor4D_NCHWC8&, int, int, int, int, bool)
+{
+    zq_net_tripwire("ZQ_CNN_Forward_SSEUtils_NCHWC::MaxPooling");}
+bool ZQ_CNN_Forward_SSEUtils_NCHWC::PReLU(ZQ::ZQ_CNN_Tensor4D_NCHWC1&, ZQ::ZQ_CNN_Tensor4D_NCHWC1 const&)
+{
+    zq_net_tripwire("ZQ_CNN_Forward_SSEUtils_NCHWC::PReLU"); return 0;}
+
+bool ZQ_CNN_Forward_SSEUtils_NCHWC::PReLU(ZQ::ZQ_CNN_Tensor4D_NCHWC4&, ZQ::ZQ_CNN_Tensor4D_NCHWC4 const&)
+{
+    zq_net_tripwire("ZQ_CNN_Forward_SSEUtils_NCHWC::PReLU"); return 0;}
+
+bool ZQ_CNN_Forward_SSEUtils_NCHWC::PReLU(ZQ::ZQ_CNN_Tensor4D_NCHWC8&, ZQ::ZQ_CNN_Tensor4D_NCHWC8 const&)
+{
+    zq_net_tripwire("ZQ_CNN_Forward_SSEUtils_NCHWC::PReLU"); return 0;}
+
+bool ZQ_CNN_Forward_SSEUtils_NCHWC::ReLU(ZQ::ZQ_CNN_Tensor4D_NCHWC1&, float)
+{
+    zq_net_tripwire("ZQ_CNN_Forward_SSEUtils_NCHWC::ReLU"); return 0;}
+
+bool ZQ_CNN_Forward_SSEUtils_NCHWC::ReLU(ZQ::ZQ_CNN_Tensor4D_NCHWC4&, float)
+{
+    zq_net_tripwire("ZQ_CNN_Forward_SSEUtils_NCHWC::ReLU"); return 0;}
+
+bool ZQ_CNN_Forward_SSEUtils_NCHWC::ReLU(ZQ::ZQ_CNN_Tensor4D_NCHWC8&, float)
+{
+    zq_net_tripwire("ZQ_CNN_Forward_SSEUtils_NCHWC::ReLU"); return 0;}
+
+bool ZQ_CNN_Forward_SSEUtils_NCHWC::Softmax(ZQ::ZQ_CNN_Tensor4D_NCHWC1&, int)
+{
+    zq_net_tripwire("ZQ_CNN_Forward_SSEUtils_NCHWC::Softmax"); return 0;}
+
+bool ZQ_CNN_Forward_SSEUtils_NCHWC::Softmax(ZQ::ZQ_CNN_Tensor4D_NCHWC4&, int)
+{
+    zq_net_tripwire("ZQ_CNN_Forward_SSEUtils_NCHWC::Softmax"); return 0;}
+
+bool ZQ_CNN_Forward_SSEUtils_NCHWC::Softmax(ZQ::ZQ_CNN_Tensor4D_NCHWC8&, int)
+{
+    zq_net_tripwire("ZQ_CNN_Forward_SSEUtils_NCHWC::Softmax"); return 0;}
+
 }  // namespace ZQ

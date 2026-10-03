@@ -420,6 +420,28 @@ EXTRA_SOURCES = {
         'gcc -O1 -g $SAN -mavx2 -mfma -fopenmp -c -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include '
         '$R/ZQCNN/layers_c/zq_cnn_resize_32f_align_c.c -o $WDIR/zq_convparam_rz.o',
     ],
+    # zq_nchwc_net（附录 FB）：`ZQ_CNN_Net_NCHWC` 的 net 级就地守卫。
+    # EN 修就地守卫时**同时改了两份** Net（ZQ_CNN_Net.h 与 ZQ_CNN_Net_NCHWC.h，
+    # 各自独立的拷贝），但两边覆盖极不对等：NCHW 那份有 zq_concat_alias 走真的
+    # LoadFrom 验，**NCHWC 这份只有编译覆盖**（被主工程 CMake 编过），
+    # 行为上零门禁 —— 也就是说那处镜像改动从来没有被任何东西验证过。
+    # 与 ES.2 同一个形状，只是更隐蔽：它**编得过**，所以"能编过"这道轴也照不到。
+    'zq_nchwc_net': [
+        'gcc -O1 -g $SAN -mavx2 -mfma -fopenmp -c -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include '
+        '$R/ZQCNN/ZQ_CNN_Tensor4D.cpp -o $WDIR/zq_nchwcnet_t4d.o',
+        'gcc -O1 -g $SAN -mavx2 -mfma -fopenmp -c -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include '
+        '$R/ZQCNN/layers_c/zq_cnn_resize_32f_align_c.c -o $WDIR/zq_nchwcnet_rz.o',
+        # **没有** ZQ_CNN_Layer.cpp —— 层是纯头文件（类体内定义），
+        # 所以只需要编 Net_NCHWC 这一个 .cpp。
+        'g++ -O1 -g $SAN -mavx2 -mfma -fopenmp -c -I$R -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include '
+        '$R/ZQCNN/ZQ_CNN_Net_NCHWC.cpp -o $WDIR/zq_nchwcnet_net.o',
+        'g++ -O1 -g $SAN -mavx2 -mfma -fopenmp -c -I$R -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include '
+        '$R/ZQCNN/ZQ_CNN_Tensor4D_NCHWC.cpp -o $WDIR/zq_nchwcnet_tensor.o',
+        # NCHWC 张量类的 Resize* 要调 zq_cnn_resize_*_nchwc{1,4,8}，链接期必须带上。
+        # 注意那个 .c 要用 **gcc** 编（g++ 会把它判成 narrowing，附录 AU.2）。
+        'gcc -O1 -g $SAN -mavx2 -mfma -fopenmp -c -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include '
+        '$R/ZQCNN/layers_nchwc/zq_cnn_resize_nchwc.c -o $WDIR/zq_nchwcnet_rzn.o',
+    ],
     # zq_facegroup（附录 EI）：ZQlibFaceID 的文件读入行为。
     # 这是 ZQlibFaceID 里**唯一不需要外部库**的一组（其余头都 include 了
     # OpenCV / ncnn / SeetaFace，本机没有 Linux 库，链不过），所以也是
@@ -506,6 +528,9 @@ EXTRA_LINK = {'zq_innerproduct': ' $WDIR/zq_ipgemm.o $WDIR/zq_gemm_align.o $WDIR
               'zq_layerwire': ' $WDIR/zq_layerwire_t4d.o $WDIR/zq_layerwire_rz.o',
               'zq_concat_alias': ' $WDIR/zq_concalias_t4d.o $WDIR/zq_concalias_rz.o',
               'zq_convparam': ' $WDIR/zq_convparam_t4d.o $WDIR/zq_convparam_rz.o',
+              'zq_nchwc_net': (' $WDIR/zq_nchwcnet_t4d.o $WDIR/zq_nchwcnet_rz.o '
+                                '$WDIR/zq_nchwcnet_net.o $WDIR/zq_nchwcnet_tensor.o '
+                                '$WDIR/zq_nchwcnet_rzn.o'),
               'zq_tensorop': ' $WDIR/zq_tensorop_t4d.o $WDIR/zq_tensorop_rz.o',
               'zq_facegroup': '',
               'zq_tile': ' $WDIR/zq_t4d.o $WDIR/zq_tile_rz.o',
@@ -554,6 +579,7 @@ EXTRA_INC = {'zq_facedb': ' -I$R -I$R/ZQCNN -I$R/ZQCNN/3rdparty/include/ZQlib',
              'zq_layerwire': ' -I$R -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include',
              'zq_concat_alias': ' -I$R -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include',
              'zq_convparam': ' -I$R -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include',
+             'zq_nchwc_net': ' -I$R -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include',
              'zq_tensorop': ' -I$R -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include',
              'zq_facegroup': ' -I$R -I$R/ZQCNN -I$R/ZQlibFaceID -I$R/ZQ_GEMM -I$R/3rdparty/include',
              'zq_tile': ' -I$R -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include',
@@ -595,6 +621,7 @@ EXTRA_CXXFLAGS = {'zq_facedb': ' -mavx2 -mfma -fopenmp',
                   'zq_layerwire': ' -mavx2 -mfma -fopenmp',
                   'zq_concat_alias': ' -mavx2 -mfma -fopenmp',
                   'zq_convparam': ' -mavx2 -mfma -fopenmp',
+                  'zq_nchwc_net': ' -mavx2 -mfma -fopenmp',
                   'zq_tensorop': ' -mavx2 -mfma -fopenmp',
                   'zq_facegroup': ' -mavx2 -mfma -fopenmp',
                   'zq_tile': ' -mavx2 -mfma -fopenmp',

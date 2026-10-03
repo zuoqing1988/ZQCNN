@@ -21,10 +21,29 @@
  * 探针只**引用**不执行，所以这里的路径是假的。
  */
 #include "ZQCNN/ZQ_CNN_Net.h"
+#include "ZQCNN/ZQ_CNN_Net_NCHWC.h"
+#include "ZQCNN/ZQ_CNN_Tensor4D_NCHWC.h"
 
 int zq_net_symprobe(ZQ::ZQ_CNN_Net* n)
 {
     return n->LoadFrom("/nonexistent.zqparams", "/nonexistent.nchwbin") ? 1 : 0;
+}
+
+// NCHWC 那条 Net 走的是**另一个类** `ZQ_CNN_Forward_SSEUtils_NCHWC`，
+// 不实例化它就采不到那 72 个符号（附录 FB）。三种对齐变体与
+// `SampleLnet106.cpp:41-48` 的用法一致。
+template <class T>
+static int zq_net_symprobe_nchwc(ZQ::ZQ_CNN_Net_NCHWC<T>* n)
+{
+    return n->LoadFrom("/nonexistent.zqparams", "/nonexistent.nchwbin") ? 1 : 0;
+}
+
+int zq_net_symprobe_all()
+{
+    ZQ::ZQ_CNN_Net_NCHWC<ZQ::ZQ_CNN_Tensor4D_NCHWC1>* a = 0;
+    ZQ::ZQ_CNN_Net_NCHWC<ZQ::ZQ_CNN_Tensor4D_NCHWC4>* b = 0;
+    ZQ::ZQ_CNN_Net_NCHWC<ZQ::ZQ_CNN_Tensor4D_NCHWC8>* c = 0;
+    return zq_net_symprobe_nchwc(a) + zq_net_symprobe_nchwc(b) + zq_net_symprobe_nchwc(c);
 }
 
 int main() { return 0; }

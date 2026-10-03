@@ -3179,3 +3179,78 @@ EZ 在 `Pooling::ReadParam` 发现的形状：
 ### 变更文件
 
 - `tools/probe_exempt_guards.py`（新，只读诊断）
+
+---
+
+## 变更：附录 FB —— 补上 `ZQ_CNN_Net_NCHWC` 的行为门禁（EN 那处镜像改动一直是零覆盖）
+
+### 缺口
+
+EN 修就地守卫时在**两份** Net 上各改一份（`ZQ_CNN_Net.h` 与
+`ZQ_CNN_Net_NCHWC.h`，各自独立的拷贝），但覆盖极不对等：
+
+| 文件 | 覆盖 |
+|---|---|
+| `ZQCNN/ZQ_CNN_Net.h` | `zq_concat_alias` 走真的 `LoadFrom` 验，6 例 |
+| `ZQCNN/ZQ_CNN_Net_NCHWC.h` | **只有编译覆盖**，行为上零门禁 |
+
+**EN 那处镜像改动从来没有被任何东西验证过。** 与 ES.2 同形但更隐蔽 ——
+它**编得过**，所以"能编过"这道轴也照不到。
+
+### 门禁 zq_nchwc_net（5 例）
+
+走真的 `ZQ_CNN_Net_NCHWC<T>::LoadFrom`，`T` 取 NCHWC1/4/8 **三种对齐变体**
+（与 `SampleLnet106.cpp:41-48` 一致；守卫写在模板里，三种都得跑）。
+
+| 用例 | 模型 | 期望 |
+|---|---|---|
+| 0 | Convolution → ReLU → Pooling，独立 blob | 放行 |
+| 1 | `ReLU bottom=A top=A`（**就地安全层的豁免**） | **放行** |
+| 2 | `Convolution bottom=data top=data`（同下标别名） | 拒 |
+| 3 | `Eltwise bottom=A bottom=B top=B`（跨下标别名） | 拒 |
+| 4 | 四段链，各 blob 独立 | 放行 |
+
+用例 1 是 FA 那条"单边风险"的对应物：守卫若被"顺手"收紧成"一律不许 top==bottom"，
+它会红 —— 而收紧的人不会想到自己拒掉了所有真实的就地 ReLU。
+
+### 两个方向的变异验证
+
+| 变异 | 结果 |
+|---|---|
+| 守卫退回"只比同一下标" | **RC=1**，**恰好用例 3** 红 |
+| 去掉 `_is_inplace_safe` 豁免 | **RC=1**，**恰好用例 1** 红 |
+| 全部还原 | **RC=0**，5/5 |
+
+各只红 1 条 ⇒ 两个方向都被独立钉住（只测拒绝侧的抓不住"被收紧"）。
+
+### 顺带把绊线桩 44 -> 104
+
+NCHWC 那条 Net 走的是**另一个类** `ZQ_CNN_Forward_SSEUtils_NCHWC`，多 60 个符号。
+生成器原来把类名**写死**，泛化成"按符号自己带的类名分组"，踩了三处：
+
+1. 返回类型表按**名字**索引 ⇒ `ReLU` 在两个类里返回类型不同（`void` vs `bool`）
+   ⇒ `SystemExit("return type mismatch for ReLU")`。改成按 `(类名, 函数名)`。
+2. 只解析 NCHW 那个头 ⇒ `InnerProductPrePack` 这种只在 NCHWC 头里的重载找不到返回类型。
+3. 前导没 include NCHWC 那个头 ⇒ 生成的头自己编不过，症状是**三道门禁一起 `0/1`**
+   而不是某一个报错 —— 又一次"坏掉的不是被测对象，是用来测它的东西"。
+
+探针 TU 同步扩了（实例化三种对齐变体），符号集仍**自动发现**；`--check` 与探针一致。
+
+### 门禁自己踩的坑：两处类/参数名搞错，症状都是"应放行、实际拒绝"
+
+1. **Pooling 用错类**：NCHWC 的 `ZQ_CNN_Layer_NCHWC_Pooling`
+   （`ZQ_CNN_Layer_NCHWC.h:1979`）认 `kernel_size`/`stride`/`pad`，
+   而**主库**的 `ZQ_CNN_Layer_Pooling` 认 `pool=`/`kernel_H=`/`pad_type=`。
+   我按主库那份写，每个 key 都被报 `unknown para`。
+2. **权重文件必须够长**：`dst_len = 4*3*3*3 = 108` 个 float；
+   写空文件 ⇒ `Failed to load Binary` ⇒ `LoadFrom` false ⇒ **合法对照显示成"被拒"**。
+
+> 三个症状共同点：**都在"守卫坏了"这个方向上伪装**。与 EZ.4 的 `dim=`/`dims=` 同一类。
+
+### 变更文件
+
+- `tools/zq_nchwc_net_check.cpp`（新门禁，5 例 × 3 种对齐变体）
+- `tools/zq_net_fwd_tripwires.h`（44 -> 104 桩，重新生成）
+- `tools/gen_net_fwd_tripwires.py`（按类名分组生成）
+- `tools/zq_net_symprobe.cpp`（实例化 NCHWC 三变体）
+- `tools/run_zqlib_checks.py`（`zq_nchwc_net` 接进 4 张表）
