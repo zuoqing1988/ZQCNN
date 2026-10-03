@@ -3310,3 +3310,86 @@ NCHWC 那条 Net 走的是**另一个类** `ZQ_CNN_Forward_SSEUtils_NCHWC`，多
 
 - `tools/check_no_gui_calls.py`（新，带 `--selftest`）
 - `tools/run_audit_checks.py`（新增 C7 组）
+
+---
+
+## 变更：附录 FD —— 把「每个随仓库模型都还能加载」变成门禁
+
+### 缺口
+
+EN 改的正是**模型加载路径**。改完只做了两件**一次性**的事：
+`probe_inplace_topbottom.py`（静态扫 28 个 .zqparams / 8880 层，命中 0）
+与一次性的 `zq_model_load_probe.cpp`（27 个模型跑一遍）。
+**两个都不是门禁** —— 以后谁再动守卫，没有东西会告诉他某个随仓库模型被拒了。
+
+而"误杀一个真实模型"正是这个改动最坏的后果（EN.5 就是为此才做了那次静态统计）。
+
+### 不查权重的做法
+
+权重 66 MB / 27 个 `.nchwbin`，进不了快速通道。要守的只是 EN 改的那一段：
+
+    LoadFrom -> _load_param_file（各层 ReadParam）
+             -> _check_connect（连通性 + 就地守卫）
+             -> _load_model_file   <-- 66 MB，不查
+
+给一个**故意不存在**的权重路径，LoadFrom 会把前两步跑完、只在第三步失败并打印
+`failed to open`。于是判据是**失败消息**而不是返回值（两种失败都返回 false）：
+
+| 输出里有 | 含义 |
+|---|---|
+| `failed to open` | 参数与连通性全过，只差权重 -> 通过 |
+| `unknown blob` / `changes shape but declares top == bottom` / `missing ` / `invalid conv params` / `conv kernel/dilate overflow` … | **被守卫拒了** -> 失败 |
+| 都没有 | 卡在别的阶段 = **没验到**，同样算失败 |
+
+一个子进程一个模型，某个模型崩了不连累其余 26 个。
+
+### 结果与变异
+
+| | 结果 |
+|---|---|
+| 27 个随仓库模型 | **27 OK / 0 FAIL / 0 崩** |
+| 放一个 `Concat bottom=A bottom=B top=B` 的模型 | **RC=1**，精确报 `被守卫拒绝: changes shape but declares top == bottom`，`共 28 个：OK 27，FAIL 1` |
+| 删掉 | 回到 27/27 |
+
+即 EN 那个守卫**没有拒掉任何随仓库模型**，而**确实**能拒掉真的别名模型。
+
+### 门禁自己踩的坑：`_exit()` 不刷缓冲
+
+第一版是 **27 个全 FAIL、且无任何拒绝标记**。逐层看：每条其实都打印了
+`failed to open`，但父进程读到空串。
+
+原因：父进程用 `_exit(child(...))` 收子进程，`_exit` **不跑 atexit、不刷缓冲**；
+子进程 stdout 被 `freopen` 重定向到**文件** ⇒ 全缓冲 ⇒ 那行卡在缓冲里随进程消失。
+补 `fflush(NULL); std::cout.flush();` 后 27/27 全过。
+
+> 与 FC.3「零输出守卫挡不住真实情况」同族：缓冲/退出路径只有真跑一遍才暴露。
+
+### 变更文件
+
+- `tools/zq_model_params_check.cpp`（新门禁）
+- `tools/run_zqlib_checks.py`（`zq_model_params` 接进 4 张表）
+
+### FD.5 门禁被 harness 判成"1 条断言失败"，而它其实 27/0/0 全过
+
+第一次进全量回归，`zq_model_params` 报 `FAIL (1 条 sanitizer 报错)`，
+而它**一个模型都没拒绝**。
+
+根因在 harness 的 ASan 判据（`run_zqlib_checks.py:866`）：
+
+    echo "R|tag|$?|$(grep -cE 'FAIL' tag.out)|0"
+
+它把输出里**含字面 `FAIL` 的行数**当作"断言失败数"，而我的汇总行**总是**打印
+`共 27 个模型：OK 27，FAIL 0，崩 0` ⇒ 27 通过 / 0 拒绝也被算成"1 条断言失败"。
+
+**不是我的门禁有 bug，是我没遵守那个约定**：其它门禁只在**真失败**时打 `FAIL`，
+汇总行一律是"共 N 个：对 X，错 Y"。改掉措辞即通过。
+
+> 与 DY.5（"消息为空"把排查方向带偏）同族：**门禁的输出格式本身就参与判定**。
+> `run_zqlib_checks.py` 与各门禁之间有一份**不成文的输出格式约定**，
+> 既没写进 AGENTS.md 也没有任何检查。
+
+### FD.6 顺带补上"子进程非 0 退出"的判断
+
+ASan 撞致命错误走 `Die()` → `_exit(1)`，**不发信号** ⇒ `WIFSIGNALED` 为假。
+只判 `WIFSIGNALED` 的话，一次 sanitizer 崩溃会被记成"通过"。
+加上 `WIFEXITED(st) && WEXITSTATUS(st) != 0` 才兜得住。
