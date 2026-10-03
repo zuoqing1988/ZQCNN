@@ -2678,3 +2678,102 @@ ES.2 那个 bug（`ZQ_OpticalFlow.h` 同作用域重复声明，**任何编译�
 - `tools/probe_file_reachability.py`（新，带 `--selftest` / `--save-baseline` / `--check-baseline`）
 - `tools/file_reach_baseline.txt`（新，7 条）
 - `tools/run_audit_checks.py`（挂进回归，组名 **C5**；`C4` 已被主工程 HIGH 桶门禁占用）
+
+---
+
+## 变更：附录 EU —— C1 门禁把 3 个头**分错类**了（它们不缺库，缺的是 MSVC 内建）
+
+### 起点
+
+ET 的文件级可达性门禁报出 `ZQlibFaceID` 的 4 个头不在任何构建里，
+其中 `ZQ_FaceExtractor.h` 正是那 4 个 UNUSED 层的调用方。
+去 C1 基线里查，3 个被归成 `NEEDS_LIB`（"缺外部库"）—— **归类不对**。
+
+### 三个真实问题
+
+| 头 | 真实原因 | 症状 |
+|---|---|---|
+| `ZQ_FaceContainerForVideo.h:87` | 用了 `__int64`，include 链上没有 `ZQ_CNN_CompileConfig.h` | `'__int64' was not declared` |
+| `ZQ_FaceExtractor.h:55` | 用了 `__min` | `'__min' was not declared` |
+| `ZQ_FaceClustersForVideo.h:185` | 形参是 `ZQ_FaceRecognizer&`，**但没 include 它** | `'ZQ_FaceRecognizer' has not been declared` |
+| `ZQ_FaceClustersForVideo.h:315` | 用了 `FLT_MAX`，**没 include `<cfloat>`** | `'FLT_MAX' was not declared` |
+
+前两个与附录 ES.1 同一族；后两个是"靠调用方碰巧先 include 过才编得过"。
+
+### 修法
+
+- `ZQCNN/ZQ_CNN_BBox.h` 加 `#include "ZQ_CNN_CompileConfig.h"` ——
+  它是 ZQlibFaceID 那一侧的**公共祖先**（`ZQ_FaceGroup.h` / `ZQ_FaceDetector.h` 都 include 它），
+  挂一次覆盖整条链。配置头自带 guard、三个宏都是 `#ifndef` 保护，
+  MSVC 下本就是内建 ⇒ **对 Windows 侧零影响**。
+- `ZQ_FaceClustersForVideo.h` 补 `#include "ZQ_FaceRecognizer.h"` 与 `#include <cfloat>`。
+
+### 实测结果
+
+    ZQ_FaceClusterImagesForVideo : 0 error
+    ZQ_FaceClustersForVideo      : 0 error   (修前 201 -> 4 -> 1 -> 0)
+    ZQ_FaceContainerForVideo     : 0 error   (修前 4)
+    ZQ_FaceExtractor             : 0 error   (修前 1)
+
+### 这一节真正学到的
+
+**"NEEDS_LIB" 是个会骗人的桶。** 它的本意是"缺 jpeglib/OpenCV，装上就能编"，
+但它也**接住了**"缺 `__int64` / `__min` / `FLT_MAX` / 漏 include"这几类
+**根本不需要装任何东西**的问题。后果不是多报几条，而是**"装个库就好了"这个
+判断被顺手接受了**。
+
+便宜的强化判据：**一个头如果只 include 了本仓的头和标准头，却被归成 NEEDS_LIB，
+那它一定不是真的缺库。** 本节 3 个头全部符合（依赖的 ZQ_FaceFeature.h /
+ZQ_Kmeans.h / ZQ_MathBase.h 都是仓内 ZQlib 头）。
+
+### 变更文件
+
+- `ZQCNN/ZQ_CNN_BBox.h`（引入编译配置）
+- `ZQlibFaceID/ZQ_FaceClustersForVideo.h`（补两个 include）
+
+### EU.6 更严重的：C1 分类器让**两个桶从来没被填过**
+
+查"为什么分错类"时发现了更要紧的东西。`classify()` 是**拿错误消息整行做子串匹配**，
+而 `NEEDS_LIB` 列表里有一项 `'nn'`；错误消息开头就是文件路径：
+
+    /mnt/d/ZQCNN/ZQlibFaceID/ZQ_FaceExtractor.h:55: error: '__min' was ...
+                                       ^^^^^^ 小写后含 "cnn"，含 "nn"
+
+**每一条错误消息都命中 `'nn'`。** 直调分类器实测：
+
+| 输入 | 旧结果 | 应该是 |
+|---|---|---|
+| `/mnt/d/ZQCNN/.../Z.h:55: error: '__min' ...` | `NEEDS_LIB nn` | `MSVC_ONLY` |
+| `/home/u/Z.h:55: error: '__min' ...` | `MSVC_ONLY __min` | `MSVC_ONLY` |
+
+同一个错误，只因路径里有没有 `ZQCNN` 就分成两类。
+
+**后果**：四个分类桶里 `MSVC_ONLY` 与 `BROKEN` 自门禁建立（6f91624，附录 EH）
+以来**从来没被填过** —— 基线里 7 个非 OK **全部**是 `NEEDS_LIB`、零 MSVC_ONLY、
+零 BROKEN，就是它失效的证据。
+`ZQ_ObjLoader.h` 用 `strncpy_s`（在 MSVC_ONLY 名单里）却被报成 NEEDS_LIB，
+我一开始就觉得奇怪 —— 原来只是被 `'nn'` 先截胡了。
+
+> **一个从不变化的分类结果本身就该被怀疑。**
+
+#### 修法（三步，缺一不可）
+
+1. `NEEDS_LIB` 里 `'nn'` 换成 `'nn/'`、`'nnapi'`；
+2. **不再拿整行匹配**：只对 `fatal error: <头名>: No such file` 里的那个头名匹配
+   —— 它才是编译器真正找不到的东西；
+3. **没有这个形状就完全不进 NEEDS_LIB 分支**。编译能走到"用了 `__int64`"
+   这种错误，说明所有头都找到了，再谈"缺库"没有意义。
+
+> 第 3 条是必要的：只做第 2 条并保留"没匹配到就用整行"的回退时，
+> 六个测试错了三个 —— 路径里的 `cnn/` 仍然含 `nn/`。
+
+#### 分类器现在有自己的单元测试
+
+`--selftest`，9 个用例，固化每一类（MSVC_ONLY×2 / BROKEN×2 / NEEDS_LIB×5）。
+**分类器自己不会失败，只会安静地把所有东西归进同一个桶**，
+所以它和被它分类的对象一样需要门禁。已挂进回归（组名 C1b）。
+
+### 变更文件（EU.6）
+
+- `tools/probe_faceid_headers.py`（分类器三步修 + `--selftest` 9 例）
+- `tools/run_audit_checks.py`（新增 C1b 组）

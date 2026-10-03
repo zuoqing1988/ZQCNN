@@ -1,6 +1,23 @@
 #ifndef _ZQ_CNN_BBOX_H_
 #define _ZQ_CNN_BBOX_H_
 #pragma once
+
+// 审计修复 2026-10-03（附录 EU）：本头以前**不**引入编译配置，于是
+// `__int64` / `__min` / `__max` 这三个 MSVC 内建在 gcc 上无处可寻。
+// 受害的是把本头拉进来的 ZQlibFaceID：
+//     ZQ_FaceGroup.h -> ZQ_CNN_BBox.h        （ZQ_FaceContainerForVideo.h 用了 __int64）
+//     ZQ_FaceDetector.h -> ZQ_CNN_BBox.h     （ZQ_FaceExtractor.h 用了 __min）
+// 两个头此前被 C1 门禁归成 NEEDS_LIB（"缺外部库"）—— **分错类了**，
+// 它们不缺库，只是缺这三个宏。
+//
+// 为什么放在这里：ZQ_CNN_BBox.h 是 ZQlibFaceID 那一侧的**公共祖先**
+// （ZQ_FaceGroup.h / ZQ_FaceDetector.h 都 include 它），
+// 挂在这里一次就把整条链覆盖了。
+//
+// ZQ_CNN_CompileConfig.h 自带 include guard，且这三个宏都是 `#ifndef` 保护的，
+// MSVC 下它们本来就是编译器内建，所以对 Windows 侧零影响。
+#include "ZQ_CNN_CompileConfig.h"
+
 #include <string.h>
 #include <stdio.h>
 #include <vector>

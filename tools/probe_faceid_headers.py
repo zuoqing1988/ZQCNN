@@ -63,9 +63,28 @@ INCS = [
 ]
 
 # 缺这些就是"环境缺东西"，不是本仓库的缺陷
+#
+# **'nn' 这一条曾经把整个门禁废掉**（附录 EU.6）
+# ----------------------------------------------------------
+# 它本意是认出 ncnn 这类 SDK 的头路径（".../nn/..."），但 `classify()` 是拿
+# 错误消息**整行**去子串匹配的，而错误消息开头就是文件路径：
+#
+#     /mnt/d/ZQCNN/ZQlibFaceID/ZQ_FaceExtractor.h:55: error: '__min' was ...
+#                                        ^^^^^^ 小写后含 "cnn"，含 "nn"
+#
+# 于是**每一条**错误消息都命中 'nn'，被归成 NEEDS_LIB ——
+# MSVC_ONLY 与 BROKEN 这两个桶**从来没有被填过**（基线里 7 个非 OK 全是
+# NEEDS_LIB 就是证据）。举例：'a very long sentence' 会匹配 'long'。
+#
+# 实测（分类器直调）：
+#     "/mnt/d/ZQCNN/.../Z.h:55: error: '__min' ..."   -> NEEDS_LIB nn   <- 错
+#     "/home/u/Z.h:55: error: '__min' ..."           -> MSVC_ONLY __min <- 对
+# 同一个错误，只因为路径里有没有 ZQCNN 就分成两类。
+#
+# 修法：改成能真正命中 SDK 头路径的形式，并且**排除仓库自己的路径**。
 NEEDS_LIB = ('jpeglib.h', 'jerror.h', 'jconfig.h', 'png.h', 'zlib.h',
              'opencv2/', 'opencv2\\', 'cuda_runtime.h', 'tbb/', 'omp.h',
-             'windows.h', 'tchar.h', 'afx', 'ncnn', 'seeta', 'nn')
+             'windows.h', 'tchar.h', 'afx', 'ncnn', 'nn/', 'nnapi', 'seeta')
 
 # MSVC 专有写法 —— 出现即意味着"这份头在 Linux 上编不过"
 MSVC_ONLY = ('__int64', '__uint64', '_fseeki64', '_ftelli64', 'strcpy_s',
@@ -84,15 +103,39 @@ def run_wsl(script):
             + (p.stderr or b'').decode('utf-8', 'replace'))
 
 
+MISSING_RE = re.compile(r'fatal error:\s*([^\s:]+):\s*(?:No such file|file not found)',
+                        re.I)
+
+
 def classify(msg):
-    low = msg.lower()
-    # NEEDS_LIB 优先于 MSVC_ONLY：一个头可能两样都有，
-    # 但"缺 jpeglib.h"是环境问题，"用了 __int64"才是本仓库的缺陷 ——
-    # 所以先看是不是**被外部依赖挡住了**，挡住了就只报 NEEDS_LIB，
-    # 否则会把一堆"其实还轮不到评"的错误误判成缺陷。
-    for lib in NEEDS_LIB:
-        if lib.lower() in low:
-            return 'NEEDS_LIB', lib
+    # **只拿"缺失的那个头名"去匹配 NEEDS_LIB**，不要拿整行。
+    #
+    # 拿整行做子串匹配是这个门禁最大的一个坑（附录 EU.6）：错误消息开头就是
+    # 文件路径，而路径里带着仓库自己的名字：
+    #     /mnt/d/ZQCNN/ZQlibFaceID/ZQ_FaceExtractor.h:55: error: '__min' ...
+    #                                        ^^^^^^ 小写后含 "cnn"，含 "nn"
+    # 于是**每一条**错误都命中 NEEDS_LIB 里那个 'nn' / 'nn/'，
+    # MSVC_ONLY 与 BROKEN 两个桶**从来没有被填过**。
+    # 'nn/' 也不行：路径里的 "cnn/" 同样含 "nn/"。
+    #
+    # "是不是缺外部库"这个问题，正确的信息源只有 `fatal error: X: No such file`
+    # 里的那个 X —— 它才是编译器**真正找不到**的东西。
+    # "是不是缺外部库"这个问题，正确的信息源只有 `fatal error: X: No such file`
+    # 里的那个 X —— 它才是编译器**真正找不到**的东西。
+    #
+    # **没有这个形状就直接别看 NEEDS_LIB**：编译走到"用了 __int64"这种错误时，
+    # 说明所有头都找到了；此时再拿整行去匹配 NEEDS_LIB，只会把路径里的
+    # "cnn/" 当成"缺 ncnn"。回退成整行匹配是这一版最初的写法，六个测试里错了三个。
+    m = MISSING_RE.search(msg)
+    if m:
+        needle = m.group(1).lower()
+        # NEEDS_LIB 优先于 MSVC_ONLY：一个头可能两样都有，
+        # 但"缺 jpeglib.h"是环境问题，"用了 __int64"才是本仓库的缺陷 ——
+        # 所以先看是不是**被外部依赖挡住了**，挡住了就只报 NEEDS_LIB，
+        # 否则会把一堆"其实还轮不到评"的错误误判成缺陷。
+        for lib in NEEDS_LIB:
+            if lib.lower() in needle:
+                return 'NEEDS_LIB', lib
     for kw in MSVC_ONLY:
         if kw in msg:
             return 'MSVC_ONLY', kw
@@ -142,7 +185,54 @@ def probe_all(headers):
     return res
 
 
+def selftest():
+    """classify() 的单元测试 —— 附录 EU.6。
+
+    为什么分类器必须有自己的测试：它决定"这个头坏了没有、坏在谁头上"，
+    而它自己**不会失败**，只会安静地把所有东西归进同一个桶。
+    `'nn'` 那一条就是这样让 MSVC_ONLY 与 BROKEN 两个桶**从来没被填过**，
+    而基线里"7 个非 OK 全是 NEEDS_LIB"正是它失效的证据 ——
+    **一个从不变化的分类结果，本身就该被怀疑**。
+
+    跑法：python tools/probe_faceid_headers.py --selftest
+    """
+    D = '/mnt/d/ZQCNN/ZQlibFaceID/'
+    cases = [
+        # (错误消息, 期望分类, 为什么这条重要)
+        (D + "ZQ_FaceExtractor.h:55:11: error: '__min' was not declared in this scope",
+         'MSVC_ONLY', '路径含 ZQCNN/cnn/ —— 正是把 NEEDS_LIB 误触发的那个串'),
+        (D + "ZQ_FaceContainerForVideo.h:87:4: error: '__int64' was not declared in this scope",
+         'MSVC_ONLY', '同上，且 __int64 在 MSVC_ONLY 名单里'),
+        (D + "ZQ_Foo.h:9:1: error: 'x' was not declared in this scope",
+         'BROKEN', '仓内头找不到也是 BROKEN，不是"缺外部库"'),
+        (D + "ZQ_Foo.h:1:10: fatal error: ncnn/nn.h: No such file or directory",
+         'NEEDS_LIB', '真的缺 ncnn'),
+        (D + "ZQ_Foo.h:1:10: fatal error: seeta/face_recognizer.h: No such file or directory",
+         'NEEDS_LIB', '真的缺 seeta'),
+        (D + "ZQ_Foo.h:1:10: fatal error: jpeglib.h: No such file or directory",
+         'NEEDS_LIB', '真的缺 jpeglib'),
+        (D + "ZQ_Foo.h:1:10: fatal error: opencv2/core.hpp: No such file or directory",
+         'NEEDS_LIB', '真的缺 opencv'),
+        (D + "ZQ_Foo.h:1:10: fatal error: windows.h: No such file or directory",
+         'NEEDS_LIB', '真的缺 windows.h'),
+        (D + "ZQ_Foo.h:1:10: fatal error: ZQ_CNN_BBox.h: No such file or directory",
+         'BROKEN', '**仓内**头找不到：缺 -I 路径，是配置问题不是缺库'),
+    ]
+    bad = 0
+    for msg, want, why in cases:
+        got = classify(msg)[0]
+        if got == want:
+            print("  %-10s %s" % (got, why))
+        else:
+            bad += 1
+            print("  %-10s ** WRONG, expected %s **  %s" % (got, want, why))
+    print("\nclassify() selftest: %d case(s), %d wrong" % (len(cases), bad))
+    return 1 if bad else 0
+
+
 def main():
+    if '--selftest' in sys.argv:
+        return selftest()
     try:
         sys.stdout.reconfigure(encoding='utf-8', errors='replace')
     except AttributeError:

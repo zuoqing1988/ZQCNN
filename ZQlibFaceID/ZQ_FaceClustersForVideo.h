@@ -4,12 +4,21 @@
 
 #include "ZQ_FaceFeature.h"
 #include "ZQ_FaceContainerForVideo.h"
+// 审计修复 2026-10-03（附录 EU）：`ConvertFromContainer` 的形参是
+// `ZQ_FaceRecognizer&`，而本头以前**没有** include 它 ——
+// 单独编译报 "'ZQ_FaceRecognizer' has not been declared"，
+// 只有在调用方碰巧先 include 过 ZQ_FaceRecognizer.h 时才编得过。
+// 本头此前被 C1 门禁归成 NEEDS_LIB（"缺外部库"），**分错类**了。
+#include "ZQ_FaceRecognizer.h"
 #include "ZQ_Kmeans.h"
 #include "ZQ_MathBase.h"
 #include "ZQ_MergeSort.h"
 #include <vector>
 #include <map>
 #include <omp.h>
+// 审计修复 2026-10-03（附录 EU）：第 315 行用了 `FLT_MAX`，
+// 而本头没有 include <cfloat>（MSVC 上靠别的头间接带进来才碰巧能用）。
+#include <cfloat>
 
 namespace ZQ
 {
