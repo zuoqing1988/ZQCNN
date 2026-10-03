@@ -60,74 +60,19 @@ using namespace ZQ;
 // ---------------------------------------------------------------------
 // 唯一一个**不**做成绊线的：_concat_NCHW_get_size
 // ---------------------------------------------------------------------
-// `ZQ_CNN_Layer_Concat::LayerSetup` 在**加载期**就要算输出形状，走的正是它。
+// `ZQ_CNN_Layer_Concat::LayerSetup` 在**加载期**就要算输出形状，走的正是它，
 // 所以它是被合法调到的 —— 做成绊线的话，两个良性对照用例会直接 rc=3。
 // 第一版就是这么写的，红了还一度以为是守卫没修好。
 //
-// 所以这里**逐字照抄** ZQCNN/ZQ_CNN_Forward_SSEUtils.cpp:4894 的实现：
-// 照抄保真，而且它只读形状、不碰数据，与本门禁要验的东西无关。
+// 逐字照抄的真实现在 tools/zq_concat_getsize_real.h（门禁与模型加载探针共用一份），
+// 为什么它必须给真实现、以及它带来的同步义务，都写在那份文件的头注释里。
 //
 // 特别值得注意：**含越界写的那个拷贝循环 _concat_NCHW 本身仍然是绊线**。
 // 也就是说，万一哪天守卫被绕过去、别名模型真的被加载成功，
 // 门禁会立刻在 _concat_NCHW 上炸掉，而不是"算出一堆垃圾还报全绿"。
 // 这比"只看 LoadFrom 的返回值"多一道保险。
-bool ZQ_CNN_Forward_SSEUtils::_concat_NCHW_get_size(const std::vector<ZQ_CNN_Tensor4D*>& inputs, int axis,
-	int& out_N, int& out_C, int& out_H, int& out_W)
-{
-	if (axis < 0 || axis >= 4)
-		return false;
-	int in_num = (int)inputs.size();
-	std::vector<ZQ_CNN_Tensor4D*> valid_inputs;
-	for (int i = 0; i < inputs.size(); i++)
-	{
-		if (inputs[i] == 0)
-			continue;
-		inputs[i]->GetShape(out_N, out_C, out_H, out_W);
-		if (out_N > 0 && out_C > 0 && out_H > 0 && out_W > 0)
-			valid_inputs.push_back(inputs[i]);
-	}
+#include "zq_concat_getsize_real.h"
 
-	if (valid_inputs.size() == 0)
-	{
-		out_N = out_H = out_W = out_C = 0;
-		return true;
-	}
-	else if (valid_inputs.size() == 1)
-	{
-		valid_inputs[0]->GetShape(out_N, out_C, out_H, out_W);
-		return true;
-	}
-	else
-	{
-		int standard_dim[4];
-		valid_inputs[0]->GetShape(standard_dim[0], standard_dim[1], standard_dim[2], standard_dim[3]);
-		int sum_out = standard_dim[axis];
-		for (int i = 1; i < valid_inputs.size(); i++)
-		{
-			if (valid_inputs[i] == 0)
-				return false;
-			int cur_dim[4];
-			valid_inputs[i]->GetShape(cur_dim[0], cur_dim[1], cur_dim[2], cur_dim[3]);
-			for (int j = 0; j < 4; j++)
-			{
-				if (axis == j)
-				{
-					sum_out += cur_dim[j];
-				}
-				else if (cur_dim[j] != standard_dim[j])
-				{
-					return false;
-				}
-			}
-		}
-		standard_dim[axis] = sum_out;
-		out_N = standard_dim[0];
-		out_C = standard_dim[1];
-		out_H = standard_dim[2];
-		out_W = standard_dim[3];
-		return true;
-	}
-}
 
 #define RES_FILE "/tmp/zq_concat_alias_res.txt"
 #define PARAM_FILE "/tmp/zq_concat_alias_net.zqparams"

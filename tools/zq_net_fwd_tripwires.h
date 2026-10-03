@@ -34,6 +34,7 @@
 #include <cstdlib>
 #include <vector>
 #include <string>
+#include <unistd.h>
 #include "ZQCNN/ZQ_CNN_Tensor4D.h"
 #include "ZQCNN/ZQ_CNN_BBox.h"
 #include "ZQCNN/ZQ_CNN_Forward_SSEUtils.h"
