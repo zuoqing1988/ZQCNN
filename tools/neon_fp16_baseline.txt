@@ -4,23 +4,36 @@
 # 这一档对应 `SIMD_ARCH_TYPE=arm64-fp16`（根 CMakeLists.txt:95 真实实现，
 # build-with-cmake.md 里没有文档）。2026-10-04 之前它**从未被任何编译器看过**。
 #
-# 逐条理由（附录 GQ.4）：
-#  1. zq_gemm_32f_align_c.c        —— 重复定义在一个 #define 宏块内部
-#     （145/158/171 行是宏不是函数），自动区间会连带排掉 f32 需要的
-#     zq_base_type / zq_mm_*，**故意没自动修**
-#  2. zq_cnn_convolution_gemm_*    —— padK 在 NEON 分支里只有
-#     `#if !__ARM_NEON_FP16 ... #endif`、**没有 #else**（x86 那侧是三档齐全的
-#     #if/#elif/#else）。补 #else 能编过但 padK 的取值只能猜 ——
-#     宁可保留一个响亮的编译失败，也不换成可能静默算错。**故意没修**
-#  3. zq_cnn_deconvolution_gemm_*  —— 同上的 padK（附录 H9 那一族）
-#  4. zq_cnn_depthwise_convolution  —— unknown type，见基线里的 error 原文
-#  5. zq_cnn_scalaroperation        —— 语法错误，见基线里的 error 原文
-#  6. zq_cnn_convolution            —— **桩的限制**，不是代码缺陷：
-#     arm_neon.h 里 `ZQA_NEON_STUB_ANY` 展开成 `((void)sizeof(...), 0)`，
-#     当代码把内在函数的结果当可调用对象用时报这一条
+# 起点 23/36 编不过。其中 `float16_t`（45 个文件用到、全仓从未定义）
+# 已修（ZQ_CNN_CompileConfig.h 里加了受控 typedef），降到 11。
+#
+# 剩下的 11 条分三类，**都不是自动修的**，理由如下。
+#
+# 1) 10 条 `redefinition of` —— 通用实现与 FP16 实现同时被编进来。
+#    试过自动加 `#if !(__ARM_NEON && __ARM_NEON_FP16)` 守卫：**把 Windows
+#    构建弄坏了**（LNK2019，zq_cnn_lstm_TF_32f_align0_general 等 3 个符号消失）。
+#    根因：要包住的那几个区间里**有一个 #else** ——
+#    `zq_cnn_lstm_32f_align_c.c:143` 的 #else 是第 37 行 `#if __ARM_NEON` 的
+#    **非 NEON 分支**，x86 要用的代码就在里面，
+#    而我插入的 #if/#endif 把整个非 NEON 分支吞掉了。
+#    正确做法要逐个人读那段区间、按它的真实结构放守卫，
+#    那是脚本替不了的判断。详见 audit_k3_20261001.md 附录 GQ.4。
+#
+# 2) 2 条 `padK undeclared` —— NEON 分支的内层 `#if !__ARM_NEON_FP16`
+#    **没有 #else**（x86 那侧是三档齐全的 #if/#elif/#else）。
+#    补 #else 能编过，但 padK 的取值只能猜，而本机无法在 ARM 上验证：
+#    宁可保留响亮的编译失败，也不换成可能静默算错。
+#
+# 3) 个别文件是**桩的限制**（ZQA_NEON_STUB_ANY 展开成
+#    `((void)sizeof(...), 0)`，代码把内在函数结果当可调用对象用时报的）。
 ZQ_GEMM/math/zq_gemm_32f_align_c.c	/mnt/d/ZQCNN/ZQ_GEMM/math/zq_gemm_32f_align_c.c:534:7: error: redefinition of ‘union union_type_s_mm128’ / /mnt/d/ZQCNN/ZQ_GEMM/math/zq_gemm_32f_align_c.c:629:67: error: redefinition of ‘zq_gemm_32f_align128it_AnoTrans_Btrans_M2_caseNdiv1_Kdiv64’ / /mnt/d/ZQCNN/ZQ_GEMM/math/zq_gemm_32f_align_c.c:642
+ZQCNN/layers_c/zq_cnn_batchnormscale_32f_align_c.c	/mnt/d/ZQCNN/ZQCNN/layers_c/zq_cnn_batchnormscale_32f_align_c.c:448:7: error: redefinition of ‘zq_cnn_batchnorm_32f_mean_var_align0’ / /mnt/d/ZQCNN/ZQCNN/layers_c/zq_cnn_batchnormscale_32f_align_c.c:478:7: error: redefinition of ‘zq_cnn_scale_32f_align0’ / /mnt/d/ZQCNN/ZQCNN/layers_c/zq_cnn_batchnor
 ZQCNN/layers_c/zq_cnn_convolution_32f_align_c.c	/mnt/d/ZQCNN/tools/arm_neon.h:86:63: error: called object is not a function or function pointer / /mnt/d/ZQCNN/tools/arm_neon.h:86:63: error: called object is not a function or function pointer / /mnt/d/ZQCNN/tools/arm_neon.h:86:63: error: called object is not a function or function pointer
-ZQCNN/layers_c/zq_cnn_convolution_gemm_32f_align_c.c	/mnt/d/ZQCNN/ZQCNN/layers_c/zq_cnn_convolution_gemm_32f_align_c_raw.h:1096:22: error: ‘padK’ undeclared (first use in this function) / /mnt/d/ZQCNN/ZQCNN/layers_c/zq_cnn_convolution_gemm_32f_align_c_raw.h:1096:22: error: ‘padK’ undeclared (first use in this function)
+ZQCNN/layers_c/zq_cnn_convolution_gemm_32f_align_c.c	/mnt/d/ZQCNN/ZQCNN/layers_c/zq_cnn_convolution_gemm_32f_align_c_raw.h:1096:22: error: ‘padK’ undeclared (first use in this function) / /mnt/d/ZQCNN/ZQCNN/layers_c/zq_cnn_convolution_gemm_32f_align_c_raw.h:1096:22: error: ‘padK’ undeclared (first use in this function) / /mnt/d/ZQCNN/ZQCNN/layers_c/zq
 ZQCNN/layers_c/zq_cnn_deconvolution_gemm_32f_align_c.c	/mnt/d/ZQCNN/ZQCNN/layers_c/zq_cnn_deconvolution_gemm_32f_align_c_raw.h:74:46: error: ‘padK’ undeclared (first use in this function) / /mnt/d/ZQCNN/ZQCNN/layers_c/zq_cnn_deconvolution_gemm_32f_align_c_raw.h:74:46: error: ‘padK’ undeclared (first use in this function)
 ZQCNN/layers_c/zq_cnn_depthwise_convolution_32f_align_c.c	/mnt/d/ZQCNN/ZQCNN/layers_c/zq_cnn_depthwise_convolution_32f_align_c.c:1244:9: error: unknown type name ‘zq_base_type’ / /mnt/d/ZQCNN/ZQCNN/layers_c/zq_cnn_depthwise_convolution_32f_align_c.c:1252:9: error: unknown type name ‘zq_base_type’ / /mnt/d/ZQCNN/ZQCNN/layers_c/zq_cnn_depthwise_convolution_3
+ZQCNN/layers_c/zq_cnn_lrn_32f_align_c.c	/mnt/d/ZQCNN/ZQCNN/layers_c/zq_cnn_lrn_32f_align_c.c:237:7: error: redefinition of ‘zq_cnn_lrn_across_channels_32f_align0’
+ZQCNN/layers_c/zq_cnn_lstm_32f_align_c.c	/mnt/d/ZQCNN/ZQCNN/layers_c/zq_cnn_lstm_32f_align_c.c:90:34: error: redefinition of ‘zq_cnn_lstm_TF_32f_align128bit’
+ZQCNN/layers_c/zq_cnn_normalize_32f_align_c.c	/mnt/d/ZQCNN/ZQCNN/layers_c/zq_cnn_normalize_32f_align_c.c:343:7: error: redefinition of ‘zq_cnn_normalize_32f_align0’
+ZQCNN/layers_c/zq_cnn_reduction_32f_align_c.c	/mnt/d/ZQCNN/ZQCNN/layers_c/zq_cnn_reduction_32f_align_c.c:308:7: error: redefinition of ‘zq_cnn_reduction_sum_32f_align0’ / /mnt/d/ZQCNN/ZQCNN/layers_c/zq_cnn_reduction_32f_align_c.c:451:7: error: redefinition of ‘zq_cnn_reduction_mean_32f_align0’
 ZQCNN/layers_c/zq_cnn_scalaroperation_32f_align_c.c	/mnt/d/ZQCNN/ZQCNN/layers_c/zq_cnn_scalaroperation_32f_align_c.c:842:23: error: expected ‘)’ before ‘const’ / /mnt/d/ZQCNN/ZQCNN/layers_c/zq_cnn_scalaroperation_32f_align_c.c:880:23: error: expected ‘)’ before ‘*’ token / /mnt/d/ZQCNN/ZQCNN/layers_c/zq_cnn_scalaroperation_32f_align_c.c:908:23: error

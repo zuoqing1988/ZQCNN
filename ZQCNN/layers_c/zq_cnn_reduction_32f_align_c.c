@@ -6,7 +6,6 @@ extern "C" {
 #endif
 
 
-#if !(__ARM_NEON && __ARM_NEON_FP16)
 	void zq_cnn_reduction_sum_32f_align0(
 		const float* in_data,
 		int N,
@@ -149,9 +148,7 @@ extern "C" {
 			}
 		}
 	}
-#endif /* !(__ARM_NEON && __ARM_NEON_FP16) —— 与 FP16 版互斥 */
 
-#if !(__ARM_NEON && __ARM_NEON_FP16)
 	void zq_cnn_reduction_mean_32f_align0(
 		const float* in_data,
 		int N,
@@ -304,7 +301,6 @@ extern "C" {
 			}
 		}
 	}
-#endif /* !(__ARM_NEON && __ARM_NEON_FP16) —— 与 FP16 版互斥 */
 
 #if __ARM_NEON
 #if __ARM_NEON_FP16

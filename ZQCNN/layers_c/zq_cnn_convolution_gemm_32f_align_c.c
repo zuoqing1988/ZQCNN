@@ -308,7 +308,6 @@ extern "C" {
 #endif
 	/*in_pixStep can be different with filter_pixStep,
 	and the aligned channels should be set to zero*/
-#if !(__ARM_NEON && __ARM_NEON_FP16)
 	void zq_cnn_conv_no_padding_gemm_32f_align0_same_or_notsame_pixstep(
 		const float* in_tensor4D_data,
 		int in_N,
@@ -487,11 +486,9 @@ extern "C" {
 				1000 * (t3 - t2), 1000 * (t4 - t3), 1000 * (t5 - t4));
 		}*/
 	}
-#endif /* !(__ARM_NEON && __ARM_NEON_FP16) —— 与 FP16 版互斥 */
 
 	/*in_pixStep can be different with filter_pixStep,
 	and the aligned channels should be set to zero*/
-#if !(__ARM_NEON && __ARM_NEON_FP16)
 	void zq_cnn_conv_no_padding_gemm_32f_align0_same_or_notsame_pixstep_batch(
 		const float* in_tensor4D_data,
 		int in_N,
@@ -672,7 +669,6 @@ extern "C" {
 				1000 * (t3 - t2), 1000 * (t4 - t3), 1000 * (t5 - t4));
 		}*/
 	}
-#endif /* !(__ARM_NEON && __ARM_NEON_FP16) —— 与 FP16 版互斥 */
 
 #if __ARM_NEON
 #if __ARM_NEON_FP16

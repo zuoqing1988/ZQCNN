@@ -151,7 +151,6 @@ extern "C" {
 #endif //__ARM_NEON
 
 	/* it is safe to use out_tensor4D_data = in_tensor4D_data */
-#if !(__ARM_NEON && __ARM_NEON_FP16)
 	void zq_cnn_lrn_across_channels_32f_align0(
 		int local_size,		// must be odd number
 		float alpha,
@@ -230,7 +229,6 @@ extern "C" {
 		free(square_buf);
 		free(accumulate_buf);
 	}
-#endif /* !(__ARM_NEON && __ARM_NEON_FP16) —— 与 FP16 版互斥 */
 
 #if __ARM_NEON
 #if __ARM_NEON_FP16
