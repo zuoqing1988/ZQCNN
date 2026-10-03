@@ -2048,3 +2048,127 @@ EM 里我把 `ZQ_CNN_Layer.h:1287` 写成 `ZQ_CNN_Layer_Convolution::GetTopDim` 
 **记为"已修 + 已端到端验证 + 无门禁"**；要建就放进慢速通道（与 zq_nchw_conv 同批）。
 
 验证：全量非慢门禁 **38/38 通过**；`zq_layerwire` 132 例全绿。
+
+---
+
+## 变更：附录 EN —— Concat 的 top/bottom **跨下标别名** = 堆越界写（修 + 门禁）
+
+### 这个开放问题挂了好几轮，结论是"真缺陷"而不是"已知边界"
+
+前面几轮把 `CopyData` 的自拷贝记成"语义上是抹掉数据、内存安全，所以不算缺陷"。
+查完调用链之后发现**另一半**是真越界：
+
+`ZQ_CNN_Forward_SSEUtils::_concat_NCHW`（`ZQCNN/ZQ_CNN_Forward_SSEUtils.cpp:4951`）
+把 inputs 收成**指针**，随后才 `output.ChangeSize(...)`：
+
+1. `output` 恰好就是某个 `valid_inputs[i]` 时，那个输入被**就地扩容**成 `C = out_C`，
+   内容被 `Reset()` 清零；
+2. 拷贝循环用 `in_C = valid_inputs[i]->GetC()` 取**扩容后**的 C；
+3. 每个像素写 `out_C` 个 float，最后一个像素**越出整块分配**，越界量 =
+   排在它前面那个输入的 C 个 float。
+
+### 为什么没被挡住：守卫只比了**同一下标**
+
+`ZQ_CNN_Net::_check_connect` 有一道就地守卫（附录 DY 那一轮加的），但它写的是
+
+    for (int j = 0; j < top_names.size() && j < bottoms[i].size(); j++)
+        if (tops[i][j] == bottoms[i][j]) ...
+
+于是 `bottom=A bottom=B top=B` 被放行 —— j=0 比的是 B 与 A。
+**别名的两个方向都会越界**，`top=A` 同样中招（只是越界量变成后面那个输入的 C）。
+
+### ASan 实证（`tools/zq_concat_alias_probe.cpp`）
+
+逐字照抄那个拷贝循环 + 真实 `ZQ_CNN_Tensor4D`，3 种对齐 x 8 组形状：
+
+| 配置 | 崩溃数 |
+|---|---|
+| top 别名第 0 / 第 1 个输入 | **46 / 48** |
+| top 是独立张量（对照） | **0 / 24** |
+
+报告原文：`memcpy-param-overlap` + `0 bytes to the right of 32-byte region`。
+没崩的那 2 例是溢出量正好落在对齐填充里 —— **不是"那两种配置是安全的"**。
+
+### 修法（两处，缺一不可）
+
+| 位置 | 作用 |
+|---|---|
+| `ZQCNN/ZQ_CNN_Forward_SSEUtils.cpp:4970` | `_concat_NCHW` 里加 `output` 与 `valid_inputs` 的逐个比对，撞上就 `return false`。这是**兜底**，护住直接调库 API 的人。 |
+| `ZQCNN/ZQ_CNN_Net.h:1381` / `ZQCNN/ZQ_CNN_Net_NCHWC.h:806` | 守卫从"同一下标"改成"**比全部组合**"。这是**主修**，护住模型文件这条攻击面。 |
+
+`ZQ_CNN_Net_NCHWC.h` 里那份同源守卫**必须同步改** —— 两份 Net 是各自独立的拷贝，
+只改一份必然漂移（`tools/probe_inplace_topbottom.py` 的注释里已经写了这条"改一处必须改两处"）。
+
+### 动手前的影响面统计（ED.2 的规矩）
+
+    扫 28 个 .zqparams（build 目录里的副本已排除）、8880 个非 Input 层
+    现有守卫（同一下标）命中：0
+    加强后的守卫（任意 top 命中本层任意 bottom）命中：**0**
+
+所以加强守卫**不拒任何真实模型**。据此才敢改。
+
+### 门禁：新的 `zq_concat_alias`（6 例，含变异验证）
+
+走**真**的 `ZQ_CNN_Net::LoadFrom`，不是照抄的循环 —— 照抄只能证明"那段代码会越界"，
+证明不了"仓库里那段代码会越界"。
+
+| 用例 | 内容 | 期望 |
+|---|---|---|
+| 0 | `top=C` 独立 | 放行 |
+| 1 | `top=A`（= bottoms[0]） | 拒 |
+| 2 | `top=B`（= **bottoms[1]，跨下标**） | **拒 —— 原来放行的那一种** |
+| 3 | `top=C top=D` 都独立 | 放行 |
+| 4 | `top=A top=C` | 拒 |
+| 5 | `top=C top=B` | 拒 |
+
+**对照用例 0/3 是必须的**：只测"别名被拒"的话，在 `LoadFrom` 开头无脑
+`return false` 也能全绿。
+
+**变异验证**（把内层循环改回只比 `k == j`，大括号平衡的改法）：
+
+    变异体：harness RC=1，输出 "用例 2 ... 实际放行，**必须拒绝**"
+    修复后：harness RC=0，6/6
+
+### 附带产出：`tools/zq_net_fwd_tripwires.h`（44 个绊线桩，由脚本生成）
+
+`ZQ_CNN_Net` 是**普通类**、`Forward()` 定义在头里，所以门禁 include 它就把
+**45 个** `ZQ_CNN_Forward_SSEUtils` 辅助函数拖成未定义符号。不编那个
+Forward_SSEUtils.cpp（会拖进单编 5 分钟以上的 conv GEMM，附录 EC.1）就得自己定义。
+
+**做成绊线而不是空函数**：空桩是静默 no-op。哪天守卫被挪晚、某个 Forward 真被调到，
+空桩会把数据丢掉然后**照样返回 true**，门禁报"全绿"而其实什么都没验。
+绊线桩打名字 + `_exit(3)`，跑到就一定红。
+
+`tools/gen_net_fwd_tripwires.py` 从**链接器的未定义符号表**生成（`--check` 可查过期），
+踩了四个坑，每个都记在脚本注释里：
+
+1. 符号集要用**独立探针 TU**（`zq_net_symprobe.cpp`）采集 —— 门禁自己已 include 生成物，
+   链接是通的，采不到符号（鸡生蛋）；
+2. 探针必须**引用 `LoadFrom`**：只引用 `Forward` 不够，层是虚函数、走虚表不需要定义，
+   虚表也不发射，探针会**直接链接成功**、一个符号都没有。真正发射 36 个虚表的是
+   `_load_param_file` 里那条 `if (名字=="X") new ZQ_CNN_Layer_X(); else if ...` 长链；
+3. `c++filt` **不打印非模板函数的返回类型**，补 `void` 会把 `_concat_NCHW`（真返回 `bool`）
+   写成另一个函数，链接报 "no declaration matches"。改成从
+   `ZQ_CNN_Forward_SSEUtils.h` 的声明里解析真实返回类型；
+4. 过滤排除项时不能用 `sig.split("::")[-1]` —— 参数里的 `std::vector<ZQ::ZQ_CNN_Tensor4D*>`
+   自带 `::`，会把函数名切碎。
+
+**排除项 1 个**：`_concat_NCHW_get_size` 不做绊线，因为
+`ZQ_CNN_Layer_Concat::LayerSetup` 在**加载期**就要调它算输出形状 ——
+做成绊线的话两个良性对照直接 rc=3。第一版就是这么写的，红了还一度以为是守卫没修好。
+门禁里逐字照抄了真实现。**含越界写的 `_concat_NCHW` 本身仍然是绊线**：
+守卫哪天被绕过去，别名模型会被当场炸掉，而不是"算出一堆垃圾还报全绿"。
+
+### 一个负结果：MNN 转换器那份不用改
+
+`ZQCNN_to_MNN/converter/source/ZQ_CNN_Net.h` 里的 `_check_connect` **连就地守卫都没有**
+（比另外两份旧）。查了它的 `ZQ_CNN_Layer.h`：`Forward` 出现 0 次 —— 那是个
+**只做图翻译、不跑前向**的快照，`_check_connect` 走不到那个拷贝循环。
+所以这是**一致性漂移，不是安全缺陷**，不改（改了也只是让三份拷贝看起来一致，
+而它们本来就不该一致 —— 那一份是另一个工具的私有快照）。
+
+### 验证
+
+- `zq_concat_alias` 6/6，harness RC=0；变异体 RC=1
+- 全量非慢门禁 **39/39 通过**（新增 1 道）
+- `check_text_encoding.py` / `check_line_endings.py` 均 OK

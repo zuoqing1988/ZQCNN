@@ -1373,16 +1373,24 @@ namespace ZQ
 				// 会改形状的层不能把 top 声明成自己的 bottom: LayerSetup 里
 				// (*tops)[0]->SetShape(...) 会在 bottoms[0] 上就地重排, Forward
 				// 再拿这个对象当输入读, 读到的是按输出步长解释的旧数据。
+				// **必须比全部组合, 不能只比同一下标** —— 原来写的是
+				// tops[i][j] == bottoms[i][j], 于是 bottoms=[A,B] top=B 被放行。
+				// 而 Concat 的 Forward 把 inputs 收集成**指针**再改 output 的形状,
+				// 那个别名会让某一路输入被就地扩容成 out_C, 拷贝循环再用扩容后的
+				// in_C 去写, 最后一个像素越出整块分配 (附录 EN, ASan 实证)。
 				if (!_is_inplace_safe(i))
 				{
-					for (int j = 0; j < top_names.size() && j < bottoms[i].size(); j++)
+					for (int j = 0; j < top_names.size(); j++)
 					{
-						if (tops[i][j] == bottoms[i][j])
+						for (int k = 0; k < bottoms[i].size(); k++)
 						{
-							std::cout << "Layer " << layers[i]->name << " (" << layer_type_names[i]
-								<< ") changes shape but declares top == bottom ("
-								<< top_names[j] << "); that destroys its own input\n";
-							return false;
+							if (tops[i][j] == bottoms[i][k])
+							{
+								std::cout << "Layer " << layers[i]->name << " (" << layer_type_names[i]
+									<< ") changes shape but declares top == bottom ("
+									<< top_names[j] << "); that destroys its own input\n";
+								return false;
+							}
 						}
 					}
 				}

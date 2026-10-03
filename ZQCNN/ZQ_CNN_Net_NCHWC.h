@@ -798,17 +798,21 @@ namespace ZQ
 				}
 				std::vector<std::string>& top_names = layers[i]->top_names;
 				// 会改形状的层不能把 top 声明成自己的 bottom，理由同
-				// ZQ_CNN_Net.h 里同名检查的注释。
+				// ZQ_CNN_Net.h 里同名检查的注释。同样地**必须比全部组合**：
+				// 只比同一下标会放行 bottoms=[A,B] top=B（附录 EN）。
 				if (!_is_inplace_safe(i))
 				{
-					for (int j = 0; j < top_names.size() && j < bottoms[i].size(); j++)
+					for (int j = 0; j < top_names.size(); j++)
 					{
-						if (tops[i][j] == bottoms[i][j])
+						for (int k = 0; k < bottoms[i].size(); k++)
 						{
-							std::cout << "Layer " << layers[i]->name << " (" << layer_type_names[i]
-								<< ") changes shape but declares top == bottom ("
-								<< top_names[j] << "); that destroys its own input\n";
-							return false;
+							if (tops[i][j] == bottoms[i][k])
+							{
+								std::cout << "Layer " << layers[i]->name << " (" << layer_type_names[i]
+									<< ") changes shape but declares top == bottom ("
+									<< top_names[j] << "); that destroys its own input\n";
+								return false;
+							}
 						}
 					}
 				}

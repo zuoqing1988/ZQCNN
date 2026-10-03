@@ -4967,6 +4967,18 @@ bool ZQ_CNN_Forward_SSEUtils::_concat_NCHW(const std::vector<ZQ_CNN_Tensor4D*>& 
 
 	if (axis < 0 || axis >= 4)
 		return false;
+	// output 不能就是某个输入。valid_inputs 里存的是**指针**，而 output 的形状
+	// 是在下面 ChangeSize 时**就地**改的：一旦 output 落在 valid_inputs 里，
+	// 那个输入会被扩容成 out_C（并被 Reset 清零），随后的拷贝循环再用扩容后的
+	// in_C 去写，最后一个像素必然越出整块分配。
+	for (int i = 0; i < (int)valid_inputs.size(); i++)
+	{
+		if (valid_inputs[i] == &output)
+		{
+			printf("Concat: output is also input #%d; that destroys its own input\n", i);
+			return false;
+		}
+	}
 	int in_num = (int)valid_inputs.size();
 	if (valid_inputs.size() == 0)
 	{
