@@ -2777,3 +2777,44 @@ ZQ_Kmeans.h / ZQ_MathBase.h 都是仓内 ZQlib 头）。
 
 - `tools/probe_faceid_headers.py`（分类器三步修 + `--selftest` 9 例）
 - `tools/run_audit_checks.py`（新增 C1b 组）
+
+### EU.7 修好分类器后**浮出 4 个此前不可见的头**
+
+| | 修前 | 修后 |
+|---|---|---|
+| OK | 22 | **25** |
+| NEEDS_LIB | 7 | 0 |
+| MSVC_ONLY | 0 | 0 |
+| BROKEN | 0 | **4** |
+
+3 个是 EU.1~EU.4 修好的（升到 OK）。但有 4 个从 NEEDS_LIB **掉到 BROKEN** ——
+逐个看第一条错误后发现它们同样是缺外部库，只是名单没收录：
+
+| 头 | 第一条错误 |
+|---|---|
+| `ZQ_FaceDetectorLibFaceDetect.h` | `facedetect-dll.h` |
+| `ZQ_FaceRecognizerArcFaceMiniCaffe.h` | `caffe/caffe.hpp` |
+| `ZQ_FaceRecognizerSphereFaceMiniCaffe.h` | `caffe/caffe.hpp` |
+| `ZQ_FaceRecognizerSeetaFace.h` | `face_identification.h` |
+
+已补进 `NEEDS_LIB`：**修好一个检测器，才看得见另一个检测器的缺口** ——
+名单不全本身是 bug，但在 `NEEDS_LIB` 永远命中的前提下它毫无表现。
+
+### EU.8 自测数据里的隐藏字符
+
+自测那条 seata 用例一直报 BROKEN，而把**同样的文本**手工构造传给 `classify()`
+却得到 NEEDS_LIB，逐项对比到 `msg_a == msg_b -> False`
+（两者 print 完全一样、needle 一样、命中列表一样）。
+
+分类器两边都对，**是测试数据里有一个隐藏字符**。换成更短的 `seata/face.h`，
+自测现在 **9/9 全过**。
+
+> 今天"形近字替换"（EO）、"heredoc 吃转义"、"Edit 剥掉前导空白"已经是第三类
+> **文本在传输途中被悄悄改掉**的问题。共同特征：**输出看着对，
+> 只有做等值比较才暴露**。
+
+### 完整回归
+
+`python tools/run_audit_checks.py --with-build --warn-sweep --src-sweep
+--bounds-sweep --ubsan-sweep --reachability --msvc-asan`
+→ **ALL CHECKS PASSED（AUDIT_EXIT=0，34 段全过）**。

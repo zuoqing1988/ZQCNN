@@ -2,15 +2,15 @@
 # 格式: <头名>	<OK|NEEDS_LIB|MSVC_ONLY|BROKEN|UNKNOWN>
 # 任何一个头从 OK 变成非 OK，--check-baseline 就退出 1。
 ZQ_FaceClusterImagesForVideo.h	OK
-ZQ_FaceClustersForVideo.h	NEEDS_LIB
-ZQ_FaceContainerForVideo.h	NEEDS_LIB
+ZQ_FaceClustersForVideo.h	OK
+ZQ_FaceContainerForVideo.h	OK
 ZQ_FaceDatabase.h	OK
 ZQ_FaceDatabaseCompact.h	OK
 ZQ_FaceDatabaseMaker.h	OK
 ZQ_FaceDetector.h	OK
 ZQ_FaceDetectorLibFaceDetect.h	NEEDS_LIB
 ZQ_FaceDetectorMTCNN.h	OK
-ZQ_FaceExtractor.h	NEEDS_LIB
+ZQ_FaceExtractor.h	OK
 ZQ_FaceFeature.h	OK
 ZQ_FaceGroup.h	OK
 ZQ_FaceIDPrecisionEvaluation.h	OK

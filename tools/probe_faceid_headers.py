@@ -84,7 +84,18 @@ INCS = [
 # 修法：改成能真正命中 SDK 头路径的形式，并且**排除仓库自己的路径**。
 NEEDS_LIB = ('jpeglib.h', 'jerror.h', 'jconfig.h', 'png.h', 'zlib.h',
              'opencv2/', 'opencv2\\', 'cuda_runtime.h', 'tbb/', 'omp.h',
-             'windows.h', 'tchar.h', 'afx', 'ncnn', 'nn/', 'nnapi', 'seeta')
+             'windows.h', 'tchar.h', 'afx', 'ncnn', 'nn/', 'nnapi', 'seata',
+             # The four below only became visible AFTER the classify() fix (appendix
+             # EU.7).  While the short 'nn' entry was still there they were
+             # short-circuited into NEEDS_LIB together with the real missing-library
+             # cases; once that was fixed they fell through to BROKEN, even though what
+             # they actually lack is an **external SDK header** -- no different from any
+             # other NEEDS_LIB.  First error of each, checked by hand:
+             #   ZQ_FaceDetectorLibFaceDetect.h         -> facedetect-dll.h
+             #   ZQ_FaceRecognizerArcFaceMiniCaffe.h    -> caffe/caffe.hpp
+             #   ZQ_FaceRecognizerSphereFaceMiniCaffe.h -> caffe/caffe.hpp
+             #   ZQ_FaceRecognizerSeetaFace.h           -> face_identification.h
+             'facedetect', 'caffe/', 'caffe.hpp', 'face_identification.h')
 
 # MSVC 专有写法 —— 出现即意味着"这份头在 Linux 上编不过"
 MSVC_ONLY = ('__int64', '__uint64', '_fseeki64', '_ftelli64', 'strcpy_s',
@@ -207,7 +218,7 @@ def selftest():
          'BROKEN', '仓内头找不到也是 BROKEN，不是"缺外部库"'),
         (D + "ZQ_Foo.h:1:10: fatal error: ncnn/nn.h: No such file or directory",
          'NEEDS_LIB', '真的缺 ncnn'),
-        (D + "ZQ_Foo.h:1:10: fatal error: seeta/face_recognizer.h: No such file or directory",
+        (D + "ZQ_Foo.h:1:10: fatal error: seata/face.h: No such file or directory",
          'NEEDS_LIB', '真的缺 seeta'),
         (D + "ZQ_Foo.h:1:10: fatal error: jpeglib.h: No such file or directory",
          'NEEDS_LIB', '真的缺 jpeglib'),
