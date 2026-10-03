@@ -53,6 +53,16 @@ TU_GLOBS = [
     os.path.join(ROOT, 'ZQCNN', 'math', '*.c'),
     os.path.join(ROOT, 'ZQCNN', 'layers_c', '*.c'),
     os.path.join(ROOT, 'ZQCNN', 'layers_nchwc', '*.c'),
+    # ZQ_GEMM/math/*.c（2026-10-03 补，附录 GM.4）。
+    # **这里原本整个目录是零覆盖**：三道 sweep（C3 ZQlib / C4 ZQCNN /
+    # C5 ZQCNN -O2）都只列了各自的 glob，`grep -c ZQ_GEMM` 在两份基线里
+    # 都是 0。而 ZQ_GEMM 恰恰是**手写汇编 GEMM 内核**所在的地方。
+    # 零覆盖的代价当场就付了：`zq_gemm_32f_align_c_asm.c` 里
+    # `zq_gemm_32f_asm_core_m6n8` 这个 **static 函数缺前置声明**
+    # （C99 已不认隐式声明，C23 更是删掉了这个特性），一直没人看见。
+    # 与 ZQCNN/CMakeLists.txt 之外的 ZQ_GEMM/CMakeLists.txt:3 的
+    # `file(GLOB ${CMAKE_CURRENT_LIST_DIR}/math/*.c)` 保持一致。
+    os.path.join(ROOT, 'ZQ_GEMM', 'math', '*.c'),
 ]
 INCLUDE_SUBDIRS = ['ZQ_GEMM', 'ZQCNN', os.path.join('3rdparty', 'include')]
 

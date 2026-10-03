@@ -1124,6 +1124,27 @@ static inline void zq_gemm_32f_asm_mblocks(int M, int N, int K, const float* A, 
 #define ZQA_NDIR_MAX_K 32
 #endif
 
+/* m6n8 是上面 687 行那个 `static` 定义（GNU 路径是函数体内联 __asm__，
+   所以不是汇编文件里的符号，见 ZQA_GNU_X64 那个 #else）。
+   **它必须有前置声明**：C99 已经不认隐式声明，C23 更是直接删掉了这个特性，
+   而隐式声明还把一个**内部链接**的函数当成外部链接来看。
+   2026-10-03 实测：SSETYPE=0/1 两档 gcc 报
+     implicit declaration of function 'zq_gemm_32f_asm_core_m6n8'
+   —— 只在**默认那两档看不到**，因为 AVX/AVX2 下 ndir 有调用点，
+   编译器在定义处就已经见过它了。
+   （同文件里 m4n1 / m1n1 在 MSVC 路径 240-243 行都有声明，只有 m6n8 漏了。）
+
+   **这里不能写 `static ZQA_NOINLINE`**：`ZQA_NOINLINE` 的两个定义
+   （232 行的 __declspec、254 行的 __attribute__）都在
+   `#if ZQA_MSVC_X64 / #else / #endif` 里面，而那个 #endif 在 **744 行**就闭合了。
+   本行在 744 行**之外**的共享区里，`ZQA_NOINLINE` 在这里**未定义** ——
+   第一版顺手把定义处那个属性也抄过来，gcc 直接报
+     error: expected ';' before 'void'
+   （把未定义宏当标识符，位置正好落在 `void` 前面的那个词。）
+   属性跟着定义走，声明里不需要重复。 */
+static void zq_gemm_32f_asm_core_m6n8(const float* ap, const float* bp,
+	int K, float* c, int ldc);
+
 static int zq_gemm_32f_asm_ndir(int M, int N, int K, const float* A, int lda,
 	const float* Bt, int ldb, float* C, int ldc)
 {

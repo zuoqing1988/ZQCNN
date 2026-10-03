@@ -3874,3 +3874,104 @@ CMake 的 BLAS_TYPE=openblas：取值不符：期望 BLAS=1 ... 实际 BLAS=0
 - 写 C9 时我自己犯了三个错，都记在报告 GL.7：把 Windows 路径塞进 bash 的 `cd`
   （`set +e` 让它继续跑，产物全落仓库根）、bash 变量 `$d` 被 Python 的 `%`
   吃掉下标、以及判据收紧到过头（FMADD 是由 SSETYPE 推导的，不该要求 `#ifndef`）。
+
+
+## 变更：附录 GM —— 配置空间里没人构建过的那几档，藏着一个只在低档位出现的真缺陷
+
+### 起因
+
+GL 修完 `-DBLAS_TYPE` 之后接着问：**还有哪些配置开关，全仓库只构建过其中一档？**
+`ZQ_CNN_USE_SSETYPE` 就是下一个 —— 四档（NONE/SSE/AVX/AVX2），
+而 Windows 默认 AVX2、Linux 默认 AVX，另外两档**从来没有任何东西编过**。
+
+### 先量：四档全部正常，报告里的 H4 是错的
+
+| 档位 | 编译失败 | 链接 | `zq_gemm_32f_AnoTrans_Btrans_auto` 后向误差 |
+|---|---|---|---|
+| NONE (0) | 0 / 46 | 成功 | 1.3e-8 ~ 2.3e-8 |
+| SSE (1) | 0 / 46 | 成功 | 7.6e-9 ~ 1.4e-8 |
+| AVX (2) | 0 / 46 | 成功 | 7.6e-9 ~ 1.1e-8 |
+| AVX2 (3) | 0 / 46 | 成功 | 7.6e-9 ~ 1.1e-8 |
+
+`audit_k3_20261001.md` 的 H4「`ZQ_CNN_SSETYPE_NONE` 编不过」是**错的记录**，
+已就地改写。**一个记错的遗留项比一个没记的更贵** —— 它会让人以为有活要干。
+
+### 但"NONE 是好的"这个结论我差点下错
+
+读完派发链我的判断是"NONE 时整条链被编掉，函数变成静默空操作"，
+写完探针一测 —— **是错的**：`auto.c:767` 的 `#else` 就是
+`zq_gemm_32f_align0_AnoTrans_Btrans`（标量路径），NONE 完整可用。
+今天第三次"读出来的结论被测量推翻"。
+
+### 真缺陷：只有低档位才有一条隐式声明
+
+逐档数告警才看见：
+
+| 档位 | `zq_gemm_32f_align_c_asm.c` | `zq_gemm_32f_auto.c` |
+|---|---|---|
+| NONE / SSE | 3（其中 1 条隐式声明） | 1 / 0 |
+| AVX / AVX2 | 0 | 0 |
+
+`zq_gemm_32f_asm_core_m6n8` 是个 **`static` 函数**，被调用却没有前置声明。
+C99 已不认隐式声明、**C23 把它删掉了**，所以这是**会过期成硬错误**的；
+而且隐式声明把内部链接的函数当外部链接看。
+同文件的 `m4n1` / `m1n1` 都有声明，只有 `m6n8` 漏了。已补。
+
+**它能在默认档藏这么久，是因为默认那两档根本没有这条调用点** ——
+AVX/AVX2 下 `zq_gemm_32f_asm_ndir` 有调用者，编译器在定义处就见过它了。
+"默认配置干净"对宏控制的配置空间**完全没有说服力**。
+
+> 补声明时我把定义处的 `ZQA_NOINLINE` 也抄了过去，gcc 报
+> `expected ';' before 'void'` —— 那个宏的两个 `#define` 都在
+> `#if ZQA_MSVC_X64 / #else / #endif` 里，而 `#endif` 在 744 行闭合，
+> 我插入的那行在 744 行**之外**。报错指着 `void` **前面那个词**，
+> 离真正原因差了一个词。
+
+### 更大的那条：ZQ_GEMM 整个目录不在任何告警扫描里
+
+三道 sweep 的 TU 列表里 `grep -c ZQ_GEMM` 在两份基线里**都是 0**。
+而 `ZQ_GEMM/` 正是手写汇编 GEMM 内核所在的地方 —— 本次会话用户投入最多的
+那部分，**零告警覆盖**。零覆盖的代价当场就付了：上面那条隐式声明一直躺在里面。
+
+已把 `ZQ_GEMM/math/*.c` 加进 `warn_sweep_src.py`（与
+`ZQ_GEMM/CMakeLists.txt:3` 的 GLOB 一致）。实测 `total_TU` 43 → 46，
+`total_warnings` 201 → 201（默认档贡献 0），**基线不需要重存**。
+
+### 新增门禁 C10
+
+`tools/check_ssetype_matrix.py` + `tools/zq_ssetype_probe.cpp`：
+四档各编 3 个 TU、链接、跑 6 组形状，断言**后向误差**在容差内且无 NaN 残留。
+编译旗标带 **`-Werror=implicit-function-declaration`**。
+
+变异验证（删掉刚补的声明）：
+
+```
+删掉前置声明后 —— 退出码 = 1
+      NONE：编译失败（1）
+      SSE：编译失败（1）
+变异被抓住 = True
+还原后 —— 退出码 = 0
+```
+
+**只有低两档红、默认两档仍绿** —— 判别力的形状完全符合预测。
+四档都红说明抓的不是这条，四档都绿说明根本抓不到，**第三种最需要排除**。
+
+### 变更文件
+
+- `ZQ_GEMM/math/zq_gemm_32f_align_c_asm.c`（补 `m6n8` 前置声明）
+- `tools/warn_sweep_src.py`（TU 列表加上 `ZQ_GEMM/math/*.c`）
+- `tools/check_ssetype_matrix.py`、`tools/zq_ssetype_probe.cpp`（新增）
+- `tools/run_audit_checks.py`（接进 C10，慢组）
+- `audit_k3_20261001.md`（改写 H4 那行 + 追加附录 GM）
+
+### 注意事项
+
+- 探针踩了两个坑，都记在报告 GM.3：`malloc` 只给 16 字节对齐而
+  `align256bit` 内核用对齐加载（AVX/AVX2 两档直接段错误）；
+  按档位配 `-mavx` / `-msse4.2`（真实构建一律 `-mavx2 -mfma`，
+  与 SSETYPE 无关）。**这两条都是"默认那两档反而红"**，
+  而默认档是回归里跑得最好的配置 —— 这就是"荒谬的结果先怀疑测量"。
+- **已知缺口，本轮只记录未修**：`ZQ_CNN_USE_SSETYPE` 只决定哪些代码路径
+  被编进来，**不管制编译器能发什么指令**。所以"`SSETYPE=SSE 的用户拿到的是
+  SSE 安全的二进制"这个推论不成立 —— 要成立得另外改 CMake 的旗标。
+- C10 只在 Linux/gcc 上验；MSVC 侧的低两档没测。

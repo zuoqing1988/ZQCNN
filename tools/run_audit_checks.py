@@ -169,6 +169,17 @@ GROUPS = [
     # 8 组配置排列 + Windows 分支写法，一次 wsl 调用跑完，约 7 秒。
     ('C9 配置宏取值（-DBLAS_TYPE 到底有没有生效）',
      ['check_blas_config.py', '--selftest'], False),
+    # C10（附录 GM）：SSETYPE 四档（NONE / SSE / AVX / AVX2）**逐档**编译 + 行为。
+    # 这道门禁的由来是两条反直觉的事实：
+    #   1. 报告里记的 H4「`ZQ_CNN_SSETYPE_NONE` 编不过」是**错的** ——
+    #      四档实测全部编译、链接、后向误差 1e-8。负结果也要钉住，
+    #      否则会有人照着去"修"一个不存在的问题。
+    #   2. `zq_gemm_32f_asm_core_m6n8` 缺前置声明这个**真缺陷**，
+    #      **只在 SSETYPE=0/1 两档存在**；默认那两档（AVX/AVX2）
+    #      连 warning 都没有。所以"默认档 sweep 干净"完全不能说明问题。
+    # 放在慢组：四档各编 3 个 TU + 跑探针，实测约 2.5 分钟。
+    ('C10 SSETYPE 四档逐档编译 + 行为（附录 GM）',
+     ['check_ssetype_matrix.py', '--selftest'], True),
 ]
 
 
