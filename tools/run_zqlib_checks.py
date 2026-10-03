@@ -397,6 +397,11 @@ EXTRA_SOURCES = {
         # 最后会拖进 zq_cnn_convolution_gemm_32f_align_c.c（单编 5 分钟以上），
         # 只能挂进 SLOW 集合。门禁里自己定义那十几个 static 方法当**记录桩**。
     ],
+    # zq_facegroup（附录 EI）：ZQlibFaceID 的文件读入行为。
+    # 这是 ZQlibFaceID 里**唯一不需要外部库**的一组（其余头都 include 了
+    # OpenCV / ncnn / SeetaFace，本机没有 Linux 库，链不过），所以也是
+    # 唯一能真正在 Linux 上跑行为门禁的地方。头文件本身，无需 EXTRA_SOURCES。
+    'zq_facegroup': [],
     # zq_nchwc_tensor（附录 EA）：ZQ_CNN_Tensor4D_NCHWC **自己那批方法**
     # （Convert 族 / Permute / Flatten / Reshape）。该类被 9 道门禁当数据容器用，
     # 但自己的方法一个门禁都没有 —— 与 DX.6 在基类上发现的缺口同一个形状。
@@ -477,6 +482,7 @@ EXTRA_LINK = {'zq_innerproduct': ' $WDIR/zq_ipgemm.o $WDIR/zq_gemm_align.o $WDIR
               'zq_nchwc_tensor': ' $WDIR/zq_nchwctensor.o $WDIR/zq_nchwctensor_rz.o',
               'zq_layerwire': ' $WDIR/zq_layerwire_t4d.o $WDIR/zq_layerwire_rz.o',
               'zq_tensorop': ' $WDIR/zq_tensorop_t4d.o $WDIR/zq_tensorop_rz.o',
+              'zq_facegroup': '',
               'zq_tile': ' $WDIR/zq_t4d.o $WDIR/zq_tile_rz.o',
               'zq_nchw_deconv': ' $WDIR/zq_dec.o',
               # -ldl 必须**放在源文件之后**：Ubuntu 20.04 默认 --as-needed，
@@ -522,6 +528,7 @@ EXTRA_INC = {'zq_facedb': ' -I$R -I$R/ZQCNN -I$R/ZQCNN/3rdparty/include/ZQlib',
              'zq_nchwc_tensor': ' -I$R -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include',
              'zq_layerwire': ' -I$R -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include',
              'zq_tensorop': ' -I$R -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include',
+             'zq_facegroup': ' -I$R -I$R/ZQCNN -I$R/ZQlibFaceID -I$R/ZQ_GEMM -I$R/3rdparty/include',
              'zq_tile': ' -I$R -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include',
              'zq_nchw_deconv': ' -I$R -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include',
              'zq_nchw_conv_free': ' -I$R -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include',
@@ -560,6 +567,7 @@ EXTRA_CXXFLAGS = {'zq_facedb': ' -mavx2 -mfma -fopenmp',
                   'zq_nchwc_tensor': ' -mavx2 -mfma -fopenmp',
                   'zq_layerwire': ' -mavx2 -mfma -fopenmp',
                   'zq_tensorop': ' -mavx2 -mfma -fopenmp',
+                  'zq_facegroup': ' -mavx2 -mfma -fopenmp',
                   'zq_tile': ' -mavx2 -mfma -fopenmp',
                   'zq_nchw_deconv': ' -mavx2 -mfma -fopenmp',
                   # **-fno-sanitize=address 必须排在 harness 加的 -fsanitize=address 之后**
@@ -765,7 +773,14 @@ def main():
         # 这个文件，而不是 /dev/null —— 否则 sanitizer 的报告会被**一起吞掉**，
         # 现象是"知道门禁失败了、不知道它为什么失败"（附录 CY.4）。
         # 判定失败时由下面的代码把这个文件的前若干行打出来。
-        ce = '/tmp/zqchecks/' + tag + '.child.err'
+        # **必须用本轮的 $WDIR**（附录 EB.2）。附录 EB 把 WDIR 改成每轮唯一之后，
+        # 这一行曾**漏改**，仍写死 '/tmp/zqchecks/' ——
+        # 于是 (a) 子进程 stderr 落到一个没人读的目录，
+        #     (b) 失败明细 `cat /tmp/zqchecks/<tag>.out` 永远读不到东西，
+        # 输出只剩一行 "===== zq_facegroup =====" 后面空白。
+        # **我当时只验了 BUILD FAIL 那条路径（做过变异测试），没验明细这条** ——
+        # 正是本会话自己写进 AGENTS.md 的「修复本身要单独验一次」。
+        ce = wdir + '/' + tag + '.child.err'
         if args.ubsan:
             lines.append(
                 "if [ -x ./%s ]; then ZQ_CHILD_ERR=%s "
@@ -840,12 +855,6 @@ def main():
     except (OSError, IOError):
         pass
 
-    # 清理本轮的 WDIR —— **只在没有构建失败时**（附录 EC.1）。
-    # 有构建失败时留着 `*.build.log`，否则"为什么编不过"的证据当场消失。
-    # 只删本轮的 $WDIR，绝不能 `rm -rf /tmp/zqchecks*`（会删掉正在跑的别的运行）。
-    if not build_fail:
-        run_wsl('rm -rf %s 2>/dev/null; true' % wdir)
-
     print()
     nfail = 0
     for name, rc, nsan, nassert in results:
@@ -888,8 +897,18 @@ def main():
         # UBSan 的栈可能落在最后 30 行之外（前面一堆正常运行日志），所以给到 80 行。
         for name, rc, nsan, nassert in results:
             if rc != '0' or nsan != '0' or nassert != '0':
-                detail = run_wsl("cat /tmp/zqchecks/%s.out 2>/dev/null | tail -80" % name)
+                detail = run_wsl("cat %s/%s.out 2>/dev/null | tail -80" % (wdir, name))
                 print('\n===== %s =====\n%s' % (name, detail))
+
+    # 清理本轮的 WDIR —— 放在**最后**，且**只在全部通过时**做（附录 EC.1 / EB.3）。
+    # 两次踩坑：
+    #   ① 只判 `not build_fail` 不够 —— 门禁**运行**失败（不是构建失败）时
+    #      `build_fail` 仍为空，于是目录被删掉，而上面那段失败明细
+    #      `cat $WDIR/<tag>.out` 紧接着就读，读到的是空 ——
+    #      输出只剩一行 `===== zq_facegroup =====` 后面什么都没有。
+    #   ② 清理绝不能写成 `rm -rf /tmp/zqchecks*`：会删掉正在跑的别的运行。
+    if not nfail and not build_fail:
+        run_wsl('rm -rf %s 2>/dev/null; true' % wdir)
     return 1 if nfail else 0
 
 
