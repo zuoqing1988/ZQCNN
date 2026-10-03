@@ -91,14 +91,20 @@ def build_and_run(wdir, target=None):
 def selftest():
     """阳性对照：造一个「扩展名骗人」的图，门禁必须报出来。
 
-    造法是**复制仓库里真实存在的那张**（内容与扩展名不符的那两张之一），
-    改名成 .jpg 之外的名字再改回去 —— 不手编字节，
-    免得造出一个"连内容都不对"的样本，测的就不是扩展名那一维了。
+    造法是**拿仓库里真实存在的 PNG 内容、给它一个 .jpg 名字**。
+
+    **不能去复制 `data/mouth0.jpg`** —— 那正是门禁报出来的那个文件，
+    而本轮已经把它改名成 `mouth0.png` 了，于是对照的 `cp` 失败、
+    对照目录里只剩一张好图、门禁自然报不出问题。
+    对照依赖了"被测对象"本身，改完缺陷对照就自己失效了 ——
+    这比对照失效更糟：它会安静地变成一个永远为真的断言。
+    现在复制 `data/mouth0.png`（PNG 内容）到 `bad/x.jpg`，
+    改名前后都成立。
     """
     wdir = '/tmp/zqimg_%d_%d' % (os.getpid(), int(time.time()))
     out = wsl('set +e\nR=%s\nD=%s\nmkdir -p $D/bad\n'
-              # 先确认那两张 PNG 内容确实在（门禁自己会报它们）
-              'cp $R/data/mouth0.jpg $D/bad/x.jpg 2>/dev/null\n'
+              # 拿一张**PNG 内容**的图，给它 .jpg 名字
+              'cp $R/data/mouth0.png $D/bad/x.jpg 2>/dev/null\n'
               'cp $R/data/11.jpg $D/bad/good.jpg 2>/dev/null\n'
               'ls $D/bad\ncd $D\n'
               'g++ -O1 -std=c++11 %s $R/%s -o chk '
