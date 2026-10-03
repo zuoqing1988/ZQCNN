@@ -1932,3 +1932,56 @@ Sqrt / Tile / Scale / BatchNorm），未覆盖 4 个
 
 **工具定位：分诊辅助，不进回归门禁**（有已知局限：只看一种形状，窗口是启发式的）。
 真正的门禁仍然是行为门禁（`zq_facegroup` 那一类）。
+
+---
+
+## 变更：附录 EM —— 卷积 `dilate * (kernel - 1)` 整数溢出（模型文件可控，已定位未修）
+
+### 缺陷
+
+`ZQ_CNN_Layer.h:1287-1288`（`ZQ_CNN_Layer_Convolution::GetTopDim`）：
+
+    int dilate_filter_H = dilate_H * (kernel_H - 1) + 1;
+
+`kernel_H/W` 与 `dilate_H/W` 都由 `ReadParam` 从**模型文件**直接 `atoi` 读入
+（`kernel_size=N` 同时设 kernel_H/W，`dilate=N` 同时设 dilate_H/W）。
+唯一值域校验是上一轮加的 BE.2 那条，**只挡 `<= 0`、没有上界**，
+于是 `kernel_size=2000000000 dilate=2000000000` 会被放行。
+
+### 实测：表达式确实溢出，且回绕成**正数**
+
+同式同类型（`int`）单独跑，编译器直接给了 `[-Woverflow]`：
+
+    warning: integer overflow in expression of type 'int' results in '643460096' [-Woverflow]
+    filt = 643460097        （原始 int 溢出）
+
+**回绕成正数**这一点很要紧：它绕过了下游的负值检查 ——
+`top_H = max(0, floor((8 - 643460097)/1) + 1) = 0`。
+
+### 可能的连锁（只到"自洽"，没有端到端跑通）
+
+`top_H = 0` ⇒ 零尺寸张量 ⇒ 附录 **ED.1 实测过**：`ChangeSize` 对零尺寸**返回成功**
+并把 `firstPixelData` 置 **0** ⇒ 任何解引用它的层（如 `ZQ_CNN_Layer_UnaryOperation`
+的 `GetFirstPixelPtr()[0]`）就是**空指针解引用**。
+
+**诚实标注**：① 溢出**已实测**；② `top_H = 0` 是**算出来的**；
+③ 从"零尺寸张量"到"空指针解引用"依赖 ED.1 的实测事实，
+**我没有把这条链端到端跑通**（要构造完整 .zqparams + .nchwbin 且真的走到解引用那层）。
+
+### 为什么这一轮没有修、也没有建门禁
+
+1. **加值域上界**会改变 `ReadParam` 对现有模型的行为。按 ED.2 的规矩，
+   动手前必须先数影响面 —— 这一轮没来得及数，**所以不擅自改**
+   （ED.2 那次就是因为没先数，差点改坏 `det1.zqparams`）。
+2. **建门禁**：`new ZQ_CNN_Layer_Convolution()` 会发射**整个虚表**，
+   于是 `Forward` 引用的 `_convolution_nopadding` / `_addbias` / `_addbias_prelu` / `_prelu`
+   全变成未定义符号；它们都住在 `ZQ_CNN_Forward_SSEUtils.cpp`（**单编 5 分钟以上**），
+   拖进来会让 `zq_layerwire` 从快速门禁变成慢速门禁。
+   试过在门禁里给这 4 个写空实现，签名对不上、反复两轮没成 ——
+   **及时收手**，`git checkout` 复原到已验证的 132 例，**不留半成品**。
+
+**记为"已定位、未修"，并写明为什么不在这一轮修。**
+下一轮正确做法：① 先数现有模型里 kernel/dilate 的取值分布；
+② 门禁单独开一个慢速通道（与 zq_nchw_conv 同批）建这个用例。
+
+验证：`zq_layerwire` 132 例仍全绿，工作树干净（本轮最终只改了报告与 changelog）。
