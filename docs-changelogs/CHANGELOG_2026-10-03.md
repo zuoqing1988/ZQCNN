@@ -1826,3 +1826,45 @@ EC 覆盖了 7 个 UNUSED 层；这一轮补上**依赖是 public 成员、可�
 仍只有编译验证（需要 net 权重 blob 或更多初始化）。
 
 验证：全量非慢门禁 **38/38 通过**。
+
+---
+
+## 变更：附录 EK —— zq_layerwire 再扩：BatchNorm（132 例）
+
+`ZQ_CNN_Layer_BatchNorm` 的 `b` / `a` 是 public 张量，helper 是 `_batchnorm_b_a`
+（语义 `value = b*value + a`，逐通道），可以直接驱动。
+判据：逐格对拍（b=2, a=0.5 => 期望 x*2+0.5）+ bottom 未被改 + **b==0 时层必须自己拒**。
+
+**变异测试：把 `BatchNorm_b_a` 的 `b` 与 `a` 对调** -> 每种张量变体 2 条用例变红。
+
+> **消歧**：这段字面量在 `ZQ_CNN_Layer.h` 里有**两处** ——
+> `ZQ_CNN_Layer_BatchNormScale`（2077）和 `ZQ_CNN_Layer_BatchNorm`（2431）。
+> `assert count == 1` 抛错是对的；用脚本把每处映射到它**最近的 class**，
+> 确认第二处才是 BatchNorm 之后才动手。
+> **"同字面量多处"必须先消歧再替换**，否则很容易改到**另一个类**去。
+
+**又一次"判据错"，以及一次"消息文案误导"**
+
+1. `BN_NOB`（b==0 应被拒）红了报"返回值与期望相反" —— **层的行为是对的**：
+   它 `if (b == 0 || a == 0) return false;`（2426 行）确实拒了。
+   真因是**我新增的这组分支根本没看 `expect_kernel` 字段**。
+2. 这一组分支复用旧分支的 note 文案，数据对拍不过时显示成
+   **"输入指针不在 bottoms[0] 里"** —— 驴唇不对马嘴。已新增 note=9
+   `**数据错（逐格对拍不过）**`，并把形状不符改成 note=6（参数被层改传），
+   因为**参数顺序传错**才是这一组真正要抓的东西。
+
+**这两条合起来是同一个病**：新增判据时只顾着"会不会红"，没顾着
+"红了之后那句话说的是不是真的"。**判据的文案也是判据的一部分** ——
+它会直接决定下一个读日志的人往哪个方向查。
+
+**为什么 DeConvolution 不做**：它的 Forward 要 filters / bias / prelu_slope 三个张量
+加十几个 int 参数，而要钉住"参数有没有传错顺序"就得**把整个反卷积内核重新实现一遍**
+（或链接单编 5 分钟以上的 conv GEMM TU）。**为一个接线测试付这个代价不划算**，
+且报告里已记了它的几条已知问题，记为**明确不做**并说明理由。
+
+**UNUSED 层覆盖现状**（15 个）：已覆盖 11 个
+（ScalarOperation / Reduction / LRN / Squeeze / Copy / UnaryOperation / Input /
+Sqrt / Tile / Scale / BatchNorm），未覆盖 4 个
+（DeConvolution / LSTM_TF / PriorBoxText / DetectionOutput_MXNET）。
+
+验证：全量非慢门禁 **38/38 通过**。

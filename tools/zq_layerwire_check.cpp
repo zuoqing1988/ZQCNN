@@ -124,6 +124,23 @@ ZQ_STUB_RED(_reduction_mean, H_REDMEAN)
 // 这两个与前面那批"记录桩"不同：**它们要真算** —— 数值对拍才有意义。
 // Sqrt / Scale 走的是头文件 inline 包装，包装调的是这两个 .cpp 里的辅助函数。
 // 广播按**逐通道**实现；用例里的 scale/bias 张量开成 C 通道，所以 scale[c] 合法。
+// BatchNorm：value = b*value + a（逐通道，ZQQ_CNN_Layer_BatchNorm 的注释里就是这么写的）
+void ZQ_CNN_Forward_SSEUtils::_batchnorm_b_a(int align_mode, float* data, int N, int H, int W, int C,
+                                             int pixStep, int widthStep, int sliceStep,
+                                             const float* b, const float* a)
+{
+    (void)align_mode;
+    for (int n = 0; n < N; n++)
+        for (int c = 0; c < C; c++)
+            for (int h = 0; h < H; h++)
+                for (int w = 0; w < W; w++)
+                {
+                    float* p = data + (size_t)n * sliceStep + (size_t)c
+                             + (size_t)h * widthStep + (size_t)w * pixStep;
+                    *p = b[c] * (*p) + a[c];
+                }
+}
+
 void ZQ_CNN_Forward_SSEUtils::_sqrt(int align_mode, float* data, int N, int H, int W, int C,
                                     int pixStep, int widthStep, int sliceStep)
 {
@@ -181,16 +198,21 @@ enum { OP_SCALAR = 0, OP_REDUCTION, OP_LRN, OP_SQUEEZE, OP_COPY, OP_UNARY, OP_IN
        // 附录 EJ：三个**直接可驱动**的 UNUSED 层。它们的依赖都是 public 成员
        //（Sqrt 无依赖；Tile 的 tile_* 是成员；Scale 的 scale/bias 是 public 张量），
        // 接线风险最高的恰是**参数顺序传错**，所以用独立公式逐格对拍。
-       OP_SQRT_LAYER, OP_TILE_LAYER, OP_SCALE_LAYER, OP_SCALEBIAS_LAYER };
+       OP_SQRT_LAYER, OP_TILE_LAYER, OP_SCALE_LAYER, OP_SCALEBIAS_LAYER, OP_BN_LAYER,
+       OP_BN_NOB };
 static const char* g_opname[] = { "ScalarOp", "Reduction", "LRN", "Squeeze", "Copy", "UnaryOp", "Input参数",
-                                 "Sqrt(层)", "Tile(层)", "Scale(层)", "Scale+bias(层)" };
+                                 "Sqrt(层)", "Tile(层)", "Scale(层)", "Scale+bias(层)", "BatchNorm(层)", "BatchNorm缺b/a" };
 // note: 0 无事 / 1 搭建失败 / 2 返回值与期望相反 / 3 该调内核却一次都没调
 //       / 4 输入指针不在 bottom 里 / 5 输出指针不在 top 里 / 6 参数被层改了
 //       / 7 非法参数却仍然放行 / 8 bottom 的内容被改了
 static const char* g_note[] = {
     "", "搭建失败", "**返回值与期望相反**", "**该调内核却一次都没调**",
     "**输入指针不在 bottoms[0] 里**", "**输出指针不在 tops[0] 里**", "**参数被层改了**",
-    "**非法参数却仍然放行**", "**bottom 的内容被改了**"
+    "**非法参数却仍然放行**", "**bottom 的内容被改了**",
+    // 9：给"直接可驱动的层"（Sqrt/Tile/Scale/BatchNorm）那一组分支用 ——
+    // 那一组**不经过小写辅助函数的记录桩**，判据是逐格对拍，
+    // 复用 4/6 的文案会显示成"输入指针不在 bottoms[0] 里"这种驴唇不对马嘴的话。
+    "**数据错（逐格对拍不过）**"
 };
 
 struct Case {
@@ -272,7 +294,24 @@ static void run_case(const Case& c, int kind)
         vb.push_back(bottom); vt.push_back(top);
         bool r = false;
         ZQ_CNN_Tensor4D* sc = 0; ZQ_CNN_Tensor4D* bi = 0;
-        if (c.op == OP_SQRT_LAYER)
+        if (c.op == OP_BN_LAYER || c.op == OP_BN_NOB)
+        {
+            ZQ_CNN_Layer_BatchNorm* L = new ZQ_CNN_Layer_BatchNorm();
+            ZQ_CNN_Tensor4D* bb = make_t(kind);
+            ZQ_CNN_Tensor4D* aa = make_t(kind);
+            if (!bb->ChangeSize(1, 1, 1, c.C, 0, 0) || !aa->ChangeSize(1, 1, 1, c.C, 0, 0))
+            { note = 1; bad++; }
+            else
+            {
+                for (int i = 0; i < bb->GetSliceStep(); i++) bb->GetFirstPixelPtr()[i] = 2.0f;
+                for (int i = 0; i < aa->GetSliceStep(); i++) aa->GetFirstPixelPtr()[i] = 0.5f;
+                L->b = bb; L->a = aa;
+                if (c.op == OP_BN_NOB) L->b = 0;      // b==0 -> 层必须自己拒
+                r = L->Forward(&vb, &vt);
+            }
+            delete L;   // **层接管 b/a**（析构里 if(b) delete b），不要再手动 delete
+        }
+        else if (c.op == OP_SQRT_LAYER)
         {
             ZQ_CNN_Layer_Sqrt* L = new ZQ_CNN_Layer_Sqrt();
             r = L->Forward(&vb, &vt);
@@ -312,10 +351,13 @@ static void run_case(const Case& c, int kind)
             // ASan 报 heap-use-after-free，读点落在我自己的判断代码上。
             // （与 zq_facegroup 那次"手动 free 撞上 ZQ_FaceFeature 析构"同一类。）
         }
-        if (!r) { note = 2; bad++; }
+        // **先看 expect_kernel**：这一组分支第一版没看它，
+        // 于是"应当被拒"的用例（b==0）里层正确返回 false，却被判成"返回值与期望相反"。
+        if (!c.expect_kernel) { if (r) { note = 3; bad++; } }
+        else if (!r) { note = 2; bad++; }
         else
         {
-            // ① bottom 未被改
+            // ① bottom 未被被改
             for (int i = 0; i < c.N * bss && bad < 4; i++)
                 if (bp[i] == 12345.0f) { note = 8; bad++; break; }
             // ② 逐格对拍
@@ -347,9 +389,10 @@ static void run_case(const Case& c, int kind)
                                     if (c.op == OP_SQRT_LAYER) want = sqrt(x);
                                     else if (c.op == OP_SCALE_LAYER) want = x * c.f;
                                     else if (c.op == OP_SCALEBIAS_LAYER) want = x * c.f + 0.5;
+                                    else if (c.op == OP_BN_LAYER) want = x * 2.0 + 0.5;
                                     else want = x;
                                     const double got = (double)tp[(size_t)n * oss + (size_t)h * ows + (size_t)w * ops + cc];
-                                    if (fabs(got - want) > 1e-4 * (1.0 + fabs(want))) { if (!note) note = 4; bad++; }
+                                    if (fabs(got - want) > 1e-4 * (1.0 + fabs(want))) { if (!note) note = 9; bad++; }
                                 }
             }
         }
@@ -517,6 +560,9 @@ static const Case g_cases[] = {
   { OP_SCALE_LAYER,    2, 8, 2, 3, 0, 0.25f, 1 },
   { OP_SCALEBIAS_LAYER, 1, 4, 2, 2, 0, 3.0f, 1 },
   { OP_SCALEBIAS_LAYER, 2, 8, 2, 3, 0, 0.25f, 1 },
+  { OP_BN_LAYER, 1, 4, 2, 2, 0, 0.f, 1 },
+  { OP_BN_LAYER, 2, 8, 2, 3, 0, 0.f, 1 },
+  { OP_BN_NOB,   1, 4, 2, 2, 0, 0.f, 0 },   // b==0 层必须自己拒
   // ScalarOperation：9 个操作。判据 3 是"标量原样传下去"
   { OP_SCALAR, 1, 3, 2, 2, 0, 2.0f, 1 },    // MUL
   { OP_SCALAR, 1, 3, 2, 2, 1, 2.0f, 1 },    // DIV
