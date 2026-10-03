@@ -1149,3 +1149,60 @@ DY.8（额外源失败报成链接错误）、**EB.1（并发运行互删工作�
 |---|---|
 | `tools/run_zqlib_checks.py` | WDIR/镜像目录按运行唯一 + 先 mkdir 再 cd + 只删自己的目录 |
 | `audit_k3_20261001.md` | 追加附录 EB |
+
+
+---
+
+## 最终回归结果（2026-10-03，附录 DY / DZ / EA / EB 全部落地后）
+
+一次**干净**的完整回归（全程未并行跑任何 harness —— 附录 EB.1 的教训）：
+
+    python tools/run_audit_checks.py --with-build --warn-sweep --src-sweep \
+        --bounds-sweep --ubsan-sweep --reachability --msvc-asan
+    python tools/run_zqlib_checks.py --with-slow
+
+| | 结果 |
+|---|---|
+| 审计阶段（16 个 A* 门禁 + 6 条扫描轴 + 双平台构建 + sample 回归 + MSVC ASan） | **AUDIT_EXIT=0**，全阶段 OK |
+| 慢门禁 | **43/43 通过，SLOW_EXIT=0**，0 个 FAIL |
+
+含本轮新建/扩充的五道门禁，全部 PASS：
+
+| 门禁 | 用例数 | 覆盖 |
+|---|---|---|
+| `zq_reshape` | 150 | `Reshape_NCHW` / `Flatten_NCHW` + NCHWC 同源拷贝的静态 `get_size` |
+| `zq_roi` | 29 | `ROI` 的边界检查 + **非对称 border 几何**（含 3 个子类的 `ResizeBilinearRect` / `ConvertColor_BGR2GRAY`） |
+| `zq_convert` | 54 | Convert 族（精确往返判据）+ `C<3` 必须被拒 |
+| `zq_nchwc_tensor` | 156 | NCHWC 张量类自有方法（Convert 族 / Permute / Flatten / Reshape）+ **子类 border 路径逐点覆盖** |
+| `zq_tile` | 45 | `Tile`（附录 DD，本轮未改动，作为回归基线保留） |
+
+### 一次"不算数"的回归，以及它换来的东西
+
+第一次跑最终回归时审计阶段报了 `zq_bns  BUILD FAIL`（消息为空），而 `zq_bns` 单跑 PASS。
+追下去发现是**我自己**造成的：审计 harness 的 B 阶段就是把 `run_zqlib_checks.py`
+当子进程调起，而我在它跑到 B 阶段时自己也跑了好几次单门禁 ——
+两者共用固定的 `/tmp/zqchecks` 且开头 `rm -rf *`，**互相删对方的 `.o` 和日志**。
+
+这条查成了附录 **EB**，并且**先复现、再修、再对照**：
+
+| | 结果 |
+|---|---|
+| 共享目录（修复前） | `zq_nchw_act BUILD FAIL`，**34/35 通过，EXIT=1** |
+| 唯一目录（修复后） | **35/35 通过，EXIT=0** |
+
+**这就是"不算数"的那次回归的价值** —— 如果当时把 `zq_bns` 当成真缺陷去查，
+会浪费大量时间在一条根本不存在的问题上；而如果当时**随手当噪声放过**，
+这个 harness 缺陷会一直留着，下次再坑一次。
+
+### 本轮提交
+
+| commit | 内容 |
+|---|---|
+| `cb71d35` | 附录 DY：Reshape 误判推翻 + 越界读已修 + `zq_reshape` 门禁 + harness 两处修好 |
+| `67200a7` | 附录 DY.9：非对称 border 堆越界写已修 51 处 + `zq_roi` 扩到 29 例 + 四处变异测试 |
+| `ff0044f` | AGENTS.md：补 2026-10-03 的四条硬规矩 |
+| `d0b4644` | 附录 DZ：`ConvertToBGR` 的 `C<3` 越界读已修 + `zq_convert` 门禁 + harness 修复自带 bug |
+| `c51a2a6` | 附录 EA：NCHWC 张量类自有方法门禁（123 例） |
+| `1995771` | 附录 EA 补：NCHWC border 路径逐点门禁（156 例）+ 逐子类变异测试 |
+| `2fd22b3` | 附录 EB：harness 并发互删工作目录已修 + 机制坐实 |
+| `98660c8` | 审计报告：加"结论更正索引"章节 |
