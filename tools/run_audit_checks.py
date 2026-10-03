@@ -125,6 +125,14 @@ GROUPS = [
     ('C5 文件级可达性门禁（没有任何构建编过的文件）',
      ['probe_file_reachability.py', '--selftest', '--check-baseline',
       os.path.join(HERE, 'file_reach_baseline.txt')], True),
+    # C5b（附录 EX）：MNN 转换器**分叉**出去的那份 ZQCNN 头。
+    # 顶层 CMake 没有 add_subdirectory(ZQCNN_to_MNN)，转换器本体又要 MNN 的
+    # MNN_generated.h，所以那 7 个头**从来没被任何编译器看过** —— 而它们落后主树
+    # 三处已修的守卫（__min/__max 无定义、就地守卫整个缺失、卷积 stride/dilate
+    # 无守卫）。本门禁逐头编一遍并断言那三处守卫还在，
+    # 免得将来从主树同步时又悄悄丢掉。
+    ('C5b MNN 转换器分叉头门禁',
+     ['probe_mnn_fork.py', '--selftest'], False),
 ]
 
 

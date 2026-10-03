@@ -1,6 +1,15 @@
 #ifndef _ZQ_CNN_BBOX_H_
 #define _ZQ_CNN_BBOX_H_
 #pragma once
+
+// 审计修复 2026-10-03（附录 EX）：本头以前**不**引入编译配置，于是
+// `__int64` / `__min` / `__max` 这三个 MSVC 内建在 gcc 上无处可寻，
+// 连带把本目录的 `ZQ_CNN_BBoxUtils.h` 拖成 **10 个编译错误**
+// （`__max was not declared in this scope` 等）。
+// 这与主仓 `ZQCNN/ZQ_CNN_BBox.h` 的同一处缺陷是同一个（附录 EU.2）——
+// **分叉出去的那份把它一起带走了，而它同样不在任何构建里**（见 EX.2）。
+#include "ZQ_CNN_CompileConfig.h"
+
 #include <string.h>
 #include <stdio.h>
 #include <vector>

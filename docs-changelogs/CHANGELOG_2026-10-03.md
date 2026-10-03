@@ -2930,3 +2930,85 @@ WSL 里没有这个文件，于是每个文件都返回 "No such file or directo
 
 - `ZQCNN/ZQ_CNN_MTCNN_ncnn.h`（6 处 resize -> 带尺寸赋值）
 - `tools/probe_file_reachability.py`（`--syntax-only` + `NOT_A_HEADER` 片段白名单 + ncnn 等 include 根）
+
+---
+
+## 变更：附录 EX —— MNN 转换器**分叉**出去的那份 ZQCNN 头，落后三处已修的守卫
+
+### 怎么找到的
+
+给 EV 修完 `ZQCNN_to_MNN` 那份配置头的 include guard 后，顺手查这个目录在不在构建里：
+
+    顶层 CMakeLists.txt 的 add_subdirectory 没有 ZQCNN_to_MNN
+    ZQCNN_to_MNN/converter/CMakelists.txt 从来没被 configure 过
+    原因：转换器本体第一行 #include "MNN_generated.h"，而 MNN 框架不在仓库里
+
+于是 `converter/source/` 的**七个头、10304 行从来没有被任何编译器看过** ——
+与 ES.2、EW 同源，规模更大。
+
+### 漂移量化（tools/probe_mnn_fork_drift.py）
+
+| 头 | 主树 | 分叉 |
+|---|---|---|
+| `ZQ_CNN_BBox.h` | 178 | 132 |
+| `ZQ_CNN_BBoxUtils.h` | 760 | 728 |
+| `ZQ_CNN_Forward_SSEUtils.h` | 3386 | **172**（纯声明的桩） |
+| `ZQ_CNN_Layer.h` | 10542 | 6346 |
+| `ZQ_CNN_Net.h` | 1934 | 1692 |
+| `ZQ_CNN_Tensor4D.h` | 1044 | 839 |
+
+分叉**落后 4 处**已诊断并修好的改动：
+
+| # | 缺什么 | 后果 |
+|---|---|---|
+| 1 | `ZQ_CNN_BBox.h` 没 include 编译配置 | `__min`/`__max`/`__int64` 是 MSVC 内建，gcc 下无定义 → `ZQ_CNN_BBoxUtils.h` **10 个编译错误** |
+| 2 | `ZQ_CNN_Net.h` **完全没有就地守卫** | `Concat bottom=A bottom=B top=B` 一路走到底 → **堆越界写**（附录 EN 那一族） |
+| 3 | 卷积 `ReadParam` 没有 `stride==0` 守卫 | `GetTopDim:492` 整数除零 → **SIGFPE** |
+| 4 | 同一处没有 kernel/dilate 溢出守卫 | `(kernel_H-1)*dilate_H` 溢出 → top_H=0 → 空指针解引用（附录 EM 那一族） |
+
+> 第 3、4 条是把分叉的 `GetTopDim` 逐行看过才发现的 ——
+> 探针只能告诉你"少了某个修复的文本"，**"分叉自己有哪些缺陷"要另外查**。
+> 分叉的 `ReadParam` 结尾只有 `return has_num_output && has_kernelH && …`，
+> **连 `kernel_H <= 0` 都没有**，比主树 EM 修复前还老一代。
+
+### 全部镜像过去
+
+- `ZQ_CNN_BBox.h` 加 `#include "ZQ_CNN_CompileConfig.h"`（与主树 EU.2 同一处）
+- `ZQ_CNN_Net.h` 的 `_check_connect` 补就地守卫，**含"比全部组合"**，
+  名单与该文件 `_simplify_inplace` 那段一致
+- `ZQ_CNN_Layer.h` 的**两个**卷积类（`Convolution` / `DepthwiseConvolution`，
+  它们的 `ReadParam` 收尾**逐字节相同**）各补 `stride==0` 与 kernel/dilate 溢出守卫
+
+修后：分叉 7 个头 `gcc -fsyntax-only` **全部 0 error**，漂移项 **3 → 0**。
+
+### 门禁 probe_mnn_fork.py（挂进回归，组名 C5b）
+
+两件事：① 逐头 `-fsyntax-only` 编一遍；② 断言那几处守卫**还在** ——
+后者防"将来从主树同步时又悄悄丢掉"。
+
+阳性对照每次都跑，**三条都验**：主树 BBox 有配置 include / 好的头编得过 /
+不存在的头编不过（第三条验"探针能不能看出失败"，只有全过的对照不够）。
+
+| 变异 | 结果 |
+|---|---|
+| 就地守卫退回"只比同一下标" | **RC=1**，精确报 GUARD MISSING |
+| 两处溢出守卫改成 `if (false && …)` | **RC=1** |
+| 去掉 `ZQ_CNN_BBox.h` 的配置头 include | **RC=1**，报 COMPILE FAIL |
+| 全部还原 | **RC=0** |
+
+### 为什么不顺手做版本同步
+
+分叉与主树还有大量**正常的**版本差（`Forward_SSEUtils.h` 3386 vs 172 行的
+纯声明桩、`Layer.h` 差 4000 行）。那是分叉该有的样子 ——
+它服务于一个只需要图结构、不需要内核实现的转换器。
+**只镜像"已诊断为缺陷、且本仓库另一处已经修好"的那几条** ——
+和 AGENTS.md 里「两份同名头内容不同是正常的，但互相静默遮蔽不是」同一条原则。
+
+### 变更文件
+
+- `ZQCNN_to_MNN/converter/source/ZQ_CNN_BBox.h`（引入编译配置）
+- `ZQCNN_to_MNN/converter/source/ZQ_CNN_Net.h`（就地守卫，比全部组合）
+- `ZQCNN_to_MNN/converter/source/ZQ_CNN_Layer.h`（两处卷积守卫）
+- `tools/probe_mnn_fork.py`（新门禁，含阳性对照）
+- `tools/probe_mnn_fork_drift.py`（新，漂移量化）
+- `tools/run_audit_checks.py`（新增 C5b 组）

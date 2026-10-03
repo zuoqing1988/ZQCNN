@@ -1122,6 +1122,42 @@ namespace ZQ
 					}*/
 				}
 				std::vector<std::string>& top_names = layers[i]->top_names;
+				// 审计修复 2026-10-03（附录 EX.2）：本分叉**完全没有**这道就地守卫。
+				// 它缺失的后果不是"少一道检查"这么轻：
+				// `Concat bottom=A bottom=B top=B` 这种模型在主树会被这里拒掉，
+				// 而在分叉里会一路走到底，由 `_concat_NCHW` 把某一路输入就地扩容成
+				// out_C、拷贝循环再用扩容后的 in_C 去写，**堆越界写**
+				// （ASan 实证 46/48 越界，见主树附录 EN.1~EN.3）。
+				//
+				// 守卫的内容与主树 ZQ_CNN_Net.h 一致，包括"**比全部组合**"：
+				// 只比同一下标会放行 bottoms=[A,B] top=B。
+				// 名单与下面 `_simplify_inplace` 那段保持一致 —— 改一处必须改两处。
+				{
+					bool inplace_safe =
+						ZQ_CNN_Layer::_my_strcmpi(layer_type_names[i].c_str(), "ReLU") == 0
+						|| ZQ_CNN_Layer::_my_strcmpi(layer_type_names[i].c_str(), "ReLU6") == 0
+						|| ZQ_CNN_Layer::_my_strcmpi(layer_type_names[i].c_str(), "PReLU") == 0
+						|| ZQ_CNN_Layer::_my_strcmpi(layer_type_names[i].c_str(), "BatchNormScale") == 0
+						|| ZQ_CNN_Layer::_my_strcmpi(layer_type_names[i].c_str(), "BatchNorm") == 0
+						|| ZQ_CNN_Layer::_my_strcmpi(layer_type_names[i].c_str(), "Scale") == 0
+						|| ZQ_CNN_Layer::_my_strcmpi(layer_type_names[i].c_str(), "AddBias") == 0;
+					if (!inplace_safe)
+					{
+						for (int j = 0; j < top_names.size(); j++)
+						{
+							for (int k = 0; k < bottoms[i].size(); k++)
+							{
+								if (tops[i][j] == bottoms[i][k])
+								{
+									std::cout << "Layer " << layers[i]->name << " (" << layer_type_names[i]
+										<< ") changes shape but declares top == bottom ("
+										<< top_names[j] << "); that destroys its own input" << std::endl;
+									return false;
+								}
+							}
+						}
+					}
+				}
 				for (int j = 0; j < top_names.size(); j++)
 				{
 					std::map<std::string, int>::iterator name_it = map_name_to_blob_idx.find(top_names[j]);

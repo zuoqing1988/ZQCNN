@@ -433,6 +433,32 @@ namespace ZQ
 				std::cout << "Layer " << name << " missing " << "name\n";
 				std::cout << line << "\n";
 			}
+			if (kernel_H <= 0 || kernel_W <= 0 || stride_H <= 0 || stride_W <= 0
+				|| dilate_H <= 0 || dilate_W <= 0)
+			{
+				std::cout << "Layer " << name << " invalid conv params: kernel "
+					<< kernel_H << "x" << kernel_W << " stride " << stride_H << "x" << stride_W
+					<< " dilate " << dilate_H << "x" << dilate_W
+					<< " (all must be positive; stride==0 is an integer division by zero)" << std::endl;
+				return false;
+			}
+			// 审计修复 2026-10-03（附录 EX.2）：本分叉**完全没有**这道守卫。
+			// 下面 `GetTopDim` 里要算 `(kernel_H - 1)*dilate_H`，
+			// 而 kernel/dilate 都来自**模型文件**（不可信输入），两者都取 2e9 时
+			// 这个 int 乘法**溢出**、回绕成正数，于是绕过 `__max(0, ...)` 的非负判断，
+			// top_H 被算成 0 -> 零尺寸张量 -> firstPixelData = 0 -> 空指针解引用。
+			// 主仓同一处的守卫见 ZQCNN/ZQ_CNN_Layer.h（附录 EM.3）。
+			//
+			// 按“乘积必须放得进 int”来卡，不拍任意的系数上限 ——
+			// 乘积检查本身就是溢出条件：`k=2e9, d=1` 的乘积是 2e9，放得进 int，就**不该拒**。
+			if ((__int64)dilate_H * (kernel_H - 1) + 1 > 0x7FFFFFFF
+				|| (__int64)dilate_W * (kernel_W - 1) + 1 > 0x7FFFFFFF)
+			{
+				std::cout << "Layer " << name << " conv kernel/dilate overflow: kernel "
+					<< kernel_H << "x" << kernel_W << " dilate " << dilate_H << "x" << dilate_W
+					<< " ((kernel-1)*dilate+1 must fit in int)" << std::endl;
+				return false;
+			}
 			return has_num_output && has_kernelH && has_kernelW && has_bottom && has_top && has_name;
 		}
 
@@ -842,6 +868,32 @@ namespace ZQ
 			if (!has_name) {
 				std::cout << "Layer " << name << " missing " << "name\n";
 				std::cout << line << "\n";
+			}
+			if (kernel_H <= 0 || kernel_W <= 0 || stride_H <= 0 || stride_W <= 0
+				|| dilate_H <= 0 || dilate_W <= 0)
+			{
+				std::cout << "Layer " << name << " invalid conv params: kernel "
+					<< kernel_H << "x" << kernel_W << " stride " << stride_H << "x" << stride_W
+					<< " dilate " << dilate_H << "x" << dilate_W
+					<< " (all must be positive; stride==0 is an integer division by zero)" << std::endl;
+				return false;
+			}
+			// 审计修复 2026-10-03（附录 EX.2）：本分叉**完全没有**这道守卫。
+			// 下面 `GetTopDim` 里要算 `(kernel_H - 1)*dilate_H`，
+			// 而 kernel/dilate 都来自**模型文件**（不可信输入），两者都取 2e9 时
+			// 这个 int 乘法**溢出**、回绕成正数，于是绕过 `__max(0, ...)` 的非负判断，
+			// top_H 被算成 0 -> 零尺寸张量 -> firstPixelData = 0 -> 空指针解引用。
+			// 主仓同一处的守卫见 ZQCNN/ZQ_CNN_Layer.h（附录 EM.3）。
+			//
+			// 按“乘积必须放得进 int”来卡，不拍任意的系数上限 ——
+			// 乘积检查本身就是溢出条件：`k=2e9, d=1` 的乘积是 2e9，放得进 int，就**不该拒**。
+			if ((__int64)dilate_H * (kernel_H - 1) + 1 > 0x7FFFFFFF
+				|| (__int64)dilate_W * (kernel_W - 1) + 1 > 0x7FFFFFFF)
+			{
+				std::cout << "Layer " << name << " conv kernel/dilate overflow: kernel "
+					<< kernel_H << "x" << kernel_W << " dilate " << dilate_H << "x" << dilate_W
+					<< " ((kernel-1)*dilate+1 must fit in int)" << std::endl;
+				return false;
 			}
 			return has_num_output && has_kernelH && has_kernelW && has_bottom && has_top && has_name;
 		}
