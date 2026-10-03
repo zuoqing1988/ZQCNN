@@ -3510,3 +3510,57 @@ FD 增加一条：**解析阶段的 warning 必须为零**。
 
 - `tools/zq_model_params_check.cpp`（新增"解析阶段 warning 必须为零"判据）
 - `tools/zq_concat_getsize_real.h`（补 include，变自包含）
+---
+
+## 变更：附录 GG —— sample 回归只覆盖 44 个里的 8 个（含一个 rc=0 但实际失败的实例）
+
+### 覆盖率
+
+| | 数量 |
+|---|---|
+| `SamplesZQCNN/` 下的 sample 目录 | **44** |
+| Linux 回归跑的 / Windows 回归跑的 | **8** / **6** |
+| 产物目录里实际存在的 Linux 可执行文件 | 54 |
+
+"windows 和 linux 都能完全跑通"目前由 **8 / 44** 个 sample 支撑。
+
+### 抽 12 个"看起来不需要外部资源"的实测
+
+| sample | 输出 | 真的在跑吗 |
+|---|---|---|
+| `CompareWithOpenBLAS` / `SampleMatMulNEON` / `SampleMatMulNEON_FP16` | `not supported in linux` / `only supports arm neon` | 平台桩 |
+| **`SampleFacialNet`** | **`failed to open file model/FacialNet.zqparam` / `failed to load net`** | **失败了，但 rc=0** |
+| `SampleGEPB` / `SampleMatMul` / `example_for_very_high_gflops` | 基准输出 | 真跑 |
+| `SampleSSDDetectorPytorch` / `model2code` / `swapRGBandBGR` / `testImageProcessing` | 打印用法 | 需参数 |
+| `testWinoF2233` | **无输出** | 真跑，但会被 `NOOUT` 判失败 |
+
+**12 个全部 rc=0** —— 原样塞进"只看退出码"的回归会**全部通过**，
+包括那个模型文件都找不到、实际什么都没做的 `SampleFacialNet`。
+
+### 这条印证了 AGENTS.md 里已有的一条，但它一直没在真实 sample 上生效
+
+AGENTS.md「回归脚本只看退出码会把平台桩记成通过」写明
+"**退出码为 0 只证明'没崩'，不证明'做了事'**"，harness 也据此加了 STUB/NOOUT 分类。
+
+`SampleFacialNet` 是这条规则**第一次在真实 sample 上被证伪**：
+它既不是桩（不匹配 `only support|not support`），也**有输出**（不进 `NOOUT`），
+但它输出的是**失败**。harness 现有的三分类**抓不到它**。
+
+> "有门禁"和"门禁覆盖到了你担心的那个东西"是两件事。
+> 它从来没进过回归，所以那套分类一直没机会在它身上生效。
+
+**处置**：本轮**不**扩回归列表（三个能跑的都是 GEMM/MatMul 基准，每次回归要多花时间；
+`testWinoF2233` 无输出会被 `NOOUT` 判失败），而是把**覆盖缺口的量化事实**记下来。
+拉某个 sample 进回归前，先按 GG.2 的实测定它属于哪一类。
+
+### 顺带更正我自己一个下得太快的读法
+
+查"有 4 个 `.zqparams` 没有配套权重"时，我看到 `det1`/`det2`/`det3`
+没有同名 `.nchwbin` 就下了"模型配对不全"的结论。**错了** ——
+`det1_bgr.nchwbin` / `det2_bgr.nchwbin` / `det3_bgr.nchwbin` **都在**，
+`SampleDetectMouth` 配的正是 `det1.zqparams` + `det1_bgr.nchwbin`。
+
+把 `_bgr` 变体算进去逐个核实之后，27 个 `.zqparams` 里**只有 1 个**
+（`mobilefacenet-res2-6-10-2-dim128`）没有配套权重，
+而 README:24 已写明 SphereFace/ArcFace 等示例需要从 Model Zoo 另下权重。
+**结论：不是缺陷。**
