@@ -1,4 +1,4 @@
-﻿#ifndef _ZQ_CNN_MTCNN_H_
+#ifndef _ZQ_CNN_MTCNN_H_
 #define _ZQ_CNN_MTCNN_H_
 #pragma once
 #include "net.h"
@@ -368,17 +368,30 @@ namespace ZQ
 			else
 				force_run_pnet_multithread = false;
 			thread_num = __max(1, thread_num);
-			pnet.resize(thread_num);
-			rnet.resize(thread_num);
-			onet.resize(thread_num);
+			// 审计修复 2026-10-03（附录 EW）：原来这里是 `pnet.resize(thread_num)` 等 6 处。
+			// `std::vector::resize` 扩容时要把已有元素**移动或拷贝**过去，
+			// 而 `ncnn::Net` 的拷贝构造是 **private**（3rdparty/include/ncnn/net.h:156）、
+			// 也没有移动构造，于是 libstdc++ 直接 static_assert 失败：
+			//     static assertion failed: result type must be constructible from
+			//     value type of input range
+			// 也就是说**这个头在 gcc 上编不过**。
+			// 它一直没被发现，是因为全仓**没有任何 TU include 它**
+			// （tools/probe_file_reachability.py 的基线里它就躺在"从未被编译"那一档）。
+			//
+			// 改成"用一个带尺寸的临时对象赋值"：vector 的**移动赋值在分配器相同
+			// 时只交换内部指针**，不需要元素可移动；而带尺寸的构造只需要可默认构造
+			// （`ncnn::Net` 有 public 的 `Net();`）。两者都成立，语义与 resize 相同。
+			pnet = std::vector<ncnn::Net>(thread_num);
+			rnet = std::vector<ncnn::Net>(thread_num);
+			onet = std::vector<ncnn::Net>(thread_num);
 			this->has_lnet = has_lnet;
 			if (has_lnet)
 			{
-				lnet.resize(thread_num);
+				lnet = std::vector<ncnn::Net>(thread_num);
 			}
-			
-			g_blob_pool_allocator.resize(thread_num);
-			g_workspace_pool_allocator.resize(thread_num);
+
+			g_blob_pool_allocator = std::vector<ncnn::UnlockedPoolAllocator>(thread_num);
+			g_workspace_pool_allocator = std::vector<ncnn::UnlockedPoolAllocator>(thread_num);
 			
 			bool ret = true;
 			for (int i = 0; i < thread_num; i++)

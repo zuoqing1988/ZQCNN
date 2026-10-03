@@ -30,6 +30,7 @@ import glob
 import io
 import os
 import re
+import subprocess
 import sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -53,6 +54,13 @@ INC_ROOTS = [
     "3rdparty/include/ZQlibFaceID",
     "3rdparty/include/opencv4",
     "3rdparty/include/opencv",
+    # ncnn 头在 3rdparty/include/ncnn/ 下，而 ZQCNN/ZQ_CNN_MTCNN_ncnn.h 写的是
+    # `#include "net.h"`（裸名），所以要指到**那一层**而不是 `3rdparty/include`
+    # （附录 EW）。
+    "3rdparty/include/ncnn",
+    "3rdparty/include/mini-caffe",
+    "3rdparty/include/libfacedetection",
+    "3rdparty/include/SeetaFaceEngine",
 ]
 
 
@@ -202,6 +210,59 @@ def closure(eps):
     return seen, unresolved
 
 
+def _wsl_path(p):
+    """D:/ZQCNN/x -> /mnt/d/ZQCNN/x ; already-a-WSL-path stays as is."""
+    p = p.replace("\\", "/")
+    if p.startswith("D:/"):
+        return "/mnt/d/" + p[3:]
+    if p.startswith("C:/"):
+        return "/mnt/c/" + p[3:]
+    return p
+
+
+def syntax_ok(rel):
+    """Compile one unreachable file on its own with gcc -fsyntax-only.
+
+    Returns (ok, first_error_line).  This separates the two very different
+    reasons a file is in the "never compiled" list:
+
+      * nothing builds it            -> dead code, a maintenance question;
+      * it does not even compile     -> **a real defect** (appendix EW:
+        ZQ_CNN_MTCNN_ncnn.h had no consumer *and* did not compile; only the
+        second fact was worth fixing).
+
+    The translation unit goes in on **stdin** (`g++ -x c++ -`).  Writing a
+    temp .cpp on the Windows side and passing the path does not work: `/tmp/x.cpp`
+    from Git Bash is `D:\\tmp\\x.cpp` on Windows and simply does not exist inside
+    WSL, so every file came back "No such file or directory" and the whole
+    column read FAIL.
+
+    Run with --syntax-only; it is not part of the default run because it shells
+    out to WSL once per file.
+    """
+    src = '#include "%s"\nint main(){return 0;}\n' % os.path.basename(rel)
+    cmd = ["wsl", "-d", os.environ.get("WSL_DIST", "Ubuntu-20.04"), "--",
+           "g++", "-fsyntax-only", "-std=c++11", "-fPIC", "-x", "c++", "-"]
+    for r in INC_ROOTS:
+        cmd += ["-I", _wsl_path(os.path.join(ROOT, r))]
+    p = subprocess.run(cmd, input=src, capture_output=True, text=True)
+    for l in (p.stdout + p.stderr).splitlines():
+        if "error:" in l:
+            return False, l.strip()[:110]
+    return True, ""
+
+
+# 已知**不是独立头**的片段：编译器连 `#include` 都做不到，因为它们没有 include guard、
+# 也没有自己的函数签名 —— 是本该贴在别人函数体里的一段代码。
+# 每一行都必须带理由（AGENTS.md「白名单的每一行必须带理由」）。
+NOT_A_HEADER = {
+    "ZQCNN/layers_nchwc/zq_cnn_convolution_gemm_nchwc_packed4_handle_bias_prelu_8x4.h":
+        "81 行片段：以 BOM 开头、第一行就是 `#if WITH_BIAS`，没有函数签名",
+    "ZQCNN/layers_nchwc/zq_cnn_convolution_gemm_nchwc_kernel1x1_neon_raw.h":
+        "ARM NEON 片段：完整 static 函数但引用外部 `Mat` 类，本文件里没有声明",
+}
+
+
 def main():
     eps = entry_points()
     srcs = all_sources()
@@ -252,6 +313,32 @@ def main():
     print("NEVER compiled by anything, and NOT covered elsewhere (%d):" % len(others))
     for s in others:
         print("   %s" % s)
+
+    # 不可达 != 编不过。ET 只回答"有没有构建会编它"，而**依赖其实在仓库里**
+    # 的那些（附录 EW 的 ZQ_CNN_MTCNN_ncnn.h 要的 ncnn 头就在
+    # 3rdparty/include/ncnn）完全可以单独编一遍 ——
+    # 编过了就能从"三不管地带"升级成"已验证"，编不过才是真缺陷。
+    if "--syntax-only" in sys.argv:
+        print()
+        print("单独编一遍不可达文件（gcc -fsyntax-only）：")
+        bad, frag = [], []
+        for s in others:
+            if s in NOT_A_HEADER:
+                frag.append(s)
+                print("   %-6s %s" % ("FRAG", s))
+                print("          ^ %s" % NOT_A_HEADER[s])
+                continue
+            ok, why = syntax_ok(s)
+            print("   %-6s %s%s" % ("OK" if ok else "FAIL", s,
+                                   ("" if ok else "   " + why)))
+            if not ok:
+                bad.append(s)
+        checked = len(others) - len(frag)
+        print("   -> %d/%d 编得过；%d 个是已知片段（不是独立头）"
+              % (checked - len(bad), checked, len(frag)))
+        unknown = [s for s in frag if s not in NOT_A_HEADER]
+        if unknown:
+            print("   -> 片段白名单里有不认识的名字：%s" % unknown)
 
     if "--save-baseline" in sys.argv:
         base = sys.argv[sys.argv.index("--save-baseline") + 1]

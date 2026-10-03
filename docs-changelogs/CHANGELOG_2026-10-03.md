@@ -2862,3 +2862,71 @@ include 两份：**先到的赢，后到的被整个静默跳过**，
 ### 变更文件
 
 - `ZQCNN_to_MNN/converter/source/ZQ_CNN_CompileConfig.h`（guard 改名 + 说明）
+
+---
+
+## 变更：附录 EW —— ET 报出的"从未被编译"里藏着一个**真的编不过**的头
+
+### 不可达 ≠ 编不过
+
+ET 的基线里 7 个文件"任何构建都不编、也没有别的探针单独编过"。
+ET 只回答"**有没有构建会编它**"，所以对"依赖其实在仓库里、只是没人 include"的那些无能为力。
+
+手工核依赖：`ZQCNN/ZQ_CNN_MTCNN_ncnn.h` 要 `net.h`，
+而 `3rdparty/include/ncnn/net.h` **就在仓库里**（`libncnn.a` 也在）——"编不过"不成立。
+
+### 编出来的结果：真缺陷
+
+    stl_uninitialized.h:127:72: error: static assertion failed:
+        result type must be constructible from value type of input range
+      required from 'std::vector<ncnn::Net>::resize(...)'
+      ZQCNN/ZQ_CNN_MTCNN_ncnn.h:371:26:   required from here
+
+根因：`ncnn::Net` 的**拷贝构造是 private**（`ncnn/net.h:156`）且无移动构造，
+而 `vector::resize(n)` 扩容要移动/拷贝已有元素。单独验证过这个区分：
+
+    std::vector<ncnn::Net> a(n);          // 编得过：只要可默认构造
+    std::vector<ncnn::Net> b; b.resize(n); // 编不过：扩容要可移动/可拷贝
+
+**这个头在 gcc 上编不过，而全仓没有任何 TU include 它** —— 两个事实叠加，
+所以它从建库至今没被任何编译器看过。
+
+### 修法
+
+6 处 `resize(thread_num)` 换成"用带尺寸的临时对象赋值"：
+vector 的**移动赋值在分配器相同时只交换内部指针**，不需要元素可移动；
+带尺寸的构造只需要可默认构造（`ncnn::Net` 有 public 的 `Net();`）。语义与 resize 相同。
+
+变异验证：退回 `resize` → error 1；改回 → 0。修后该头 `-fsyntax-only` **0 error**。
+
+### 给 ET 加 `--syntax-only`：把"不可达"再拆一层
+
+不可达的文件逐个单独编一遍，结果：
+
+    OK    ZQCNN/ZQ_CNN_MTCNN_ncnn.h
+    OK    ZQlibFaceID/ZQ_Face{ClusterImagesForVideo,ClustersForVideo,ContainerForVideo,Extractor}.h
+    FRAG  .../zq_cnn_convolution_gemm_nchwc_kernel1x1_neon_raw.h
+          ^ ARM NEON 片段：完整 static 函数但引用外部 Mat 类
+    FRAG  .../zq_cnn_convolution_gemm_nchwc_packed4_handle_bias_prelu_8x4.h
+          ^ 81 行片段：BOM 开头、第一行 #if WITH_BIAS，没有函数签名
+    -> 5/5 编得过；2 个是已知片段（不是独立头）
+
+两个片段单列 `FRAG` 并各带理由，不报成 FAIL ——
+否则门禁天天红在那两个**已知**项上，真正的回归就被埋掉。
+
+顺带修掉实现里的一个坑：翻译单元走 **`g++ -x c++ -` 从 stdin 喂**。
+第一版在 Windows 侧写 `/tmp/x.cpp` 再传路径 —— Git Bash 的 `/tmp` 是 `D:\tmp`，
+WSL 里没有这个文件，于是每个文件都返回 "No such file or directory"、整列 FAIL。
+
+### ET 的 7 条现在全部有交代
+
+| 文件 | 交代 |
+|---|---|
+| `ZQCNN/ZQ_CNN_MTCNN_ncnn.h` | **真缺陷，已修**，现 0 error |
+| `ZQlibFaceID/ZQ_Face{...}4 个` | 附录 EU 已修，现在都编得过 |
+| 两个 NCHWC 内核片段（1792 行） | 死代码，标 FRAG，不复活 |
+
+### 变更文件
+
+- `ZQCNN/ZQ_CNN_MTCNN_ncnn.h`（6 处 resize -> 带尺寸赋值）
+- `tools/probe_file_reachability.py`（`--syntax-only` + `NOT_A_HEADER` 片段白名单 + ncnn 等 include 根）
