@@ -103,6 +103,14 @@ GROUPS = [
     ('C  ZQlib 可编译性门禁',
      ['probe_zqlib_headers.py', '--check-baseline',
       os.path.join(HERE, 'zqlib_probe_baseline.txt')], True),
+    # ZQlibFaceID 的姊妹篇（附录 EH）。ZQlibFaceID 整个目录**既不在两个构建里、
+    # 也没有任何门禁提到** —— 那 29 个头"从来没被编译过"。
+    # 本门禁把"能被外部 SDK 满足的那些"逐个在 Linux 上编一遍，
+    # 任何一个头从 OK 变成非 OK 就退出 1。
+    # 变异测试确认它有鉴别力：回退附录 EG 的修复 -> OK 22 变 20。
+    ('C1 ZQlibFaceID 可编译性门禁',
+     ['probe_faceid_headers.py', '--check-baseline',
+      os.path.join(HERE, 'faceid_probe_baseline.txt')], True),
 ]
 
 

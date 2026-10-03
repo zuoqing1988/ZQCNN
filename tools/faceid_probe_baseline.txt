@@ -1,0 +1,32 @@
+# ZQlibFaceID 头可编译性基线（tools/probe_faceid_headers.py 生成）
+# 格式: <头名>	<OK|NEEDS_LIB|MSVC_ONLY|BROKEN|UNKNOWN>
+# 任何一个头从 OK 变成非 OK，--check-baseline 就退出 1。
+ZQ_FaceClusterImagesForVideo.h	OK
+ZQ_FaceClustersForVideo.h	NEEDS_LIB
+ZQ_FaceContainerForVideo.h	NEEDS_LIB
+ZQ_FaceDatabase.h	OK
+ZQ_FaceDatabaseCompact.h	OK
+ZQ_FaceDatabaseMaker.h	OK
+ZQ_FaceDetector.h	OK
+ZQ_FaceDetectorLibFaceDetect.h	NEEDS_LIB
+ZQ_FaceDetectorMTCNN.h	OK
+ZQ_FaceExtractor.h	NEEDS_LIB
+ZQ_FaceFeature.h	OK
+ZQ_FaceGroup.h	OK
+ZQ_FaceIDPrecisionEvaluation.h	OK
+ZQ_FaceRecognizer.h	OK
+ZQ_FaceRecognizerArcFaceGrayNCNN.h	OK
+ZQ_FaceRecognizerArcFaceMiniCaffe.h	NEEDS_LIB
+ZQ_FaceRecognizerArcFaceNCNN.h	OK
+ZQ_FaceRecognizerArcFaceOpenCV.h	OK
+ZQ_FaceRecognizerArcFaceZQCNN.h	OK
+ZQ_FaceRecognizerSeetaFace.h	NEEDS_LIB
+ZQ_FaceRecognizerSphereFace.h	OK
+ZQ_FaceRecognizerSphereFaceGrayNCNN.h	OK
+ZQ_FaceRecognizerSphereFaceMiniCaffe.h	NEEDS_LIB
+ZQ_FaceRecognizerSphereFaceNCNN.h	OK
+ZQ_FaceRecognizerSphereFaceOpenCV.h	OK
+ZQ_FaceRecognizerSphereFaceZQCNN.h	OK
+ZQ_FaceRecognizerUtils.h	OK
+ZQ_FaceSearchTarget.h	OK
+ZQ_PixelFormat.h	OK
