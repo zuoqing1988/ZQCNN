@@ -1407,3 +1407,15 @@ width/height、**不写 net 的 Input 层**；真正的图像是通过 `ConvertF
 探针统计的是"**这个方法名在哪些门禁里出现过**"。
 `ConvertFromCompactNCHW` 显示被 12 道门禁碰过 —— 但那些门禁只是**调用它**，
 没有一条断言它的数值正确。**"被调用"与"被验证"是两件事。**
+
+
+---
+
+## 记录：EE 之后的全量非慢门禁结果
+
+新增 `zq_tensorop`（48 例）后，全量非慢门禁由 36 增至 **37 道，全部通过**。
+
+慢门禁（`zq_gemm_shape` / `zq_nchwc_conv` / `zq_nchw_conv` / `zq_innerproduct` /
+`zq_facedb*` 那几个重头）当时仍在后台跑，其结果只覆盖到 **EC** 状态；
+**ED 对 `ZQ_CNN_Layer.h` 的生产改动需要另跑一次 `--with-build` 的双平台构建
++ sample 回归**来验证 —— 未跑之前不算验过。
