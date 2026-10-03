@@ -58,7 +58,10 @@ enum {
     OP_BAD_FEATDIM_LO, OP_BAD_FEATDIM_HI, OP_BAD_FEATDIM_FAR,
     OP_BAD_NUM_LO, OP_BAD_NUM_HI, OP_BAD_NUM_FAR,
     OP_TRUNC_FEAT, OP_TRUNC_NUM,
-    OP_POS_RESTORE
+    OP_POS_RESTORE,
+    // ---- ZQ_FaceSearchTarget 那一层（附录 EI.6 点名的缺口）----
+    OP_ST_RT, OP_ST_EMPTY, OP_ST_BADNUM_LO, OP_ST_BADNUM_HI, OP_ST_BADNUM_FAR,
+    OP_ST_TRUNC, OP_ST_NOFILE
 };
 
 static void wr_int(FILE* f, int v) { fwrite(&v, sizeof(int), 1, f); }
@@ -198,6 +201,95 @@ static void run_case(int op)
                 fclose(f);
             }
         }
+        else if (op >= OP_ST_RT)
+        {
+            // ---- ZQ_FaceSearchTarget 那一层（附录 EI.6 点名的缺口）----
+            // 它的守卫是 `num < 0 || num > 1000000`（**与 ZQ_FaceGroup 的
+            // `num < 1000000` 差一**：这里是 `<=`，所以 1000000 在界内）。
+            // 这条差异第一版我按 FaceGroup 的口径写期望，又是一次"把实现当规格"，
+            // 这次是**反过来把其中一份的边界套到另一份上** ——
+            // 两份实现的边界必须分别读。
+            // **不要在这里 fclose(f)**：下面 OP_ST_BADNUM_* 还要往 f 里写 num。
+            // 第一版在分支开头就 fclose(f)，于是 wr_int(f, num) 往**已关闭的 FILE***
+            // 写 -> 子进程崩 -> 父进程只看到"结果文件读不出来"（又一次门禁自己的错）。
+            ZQ_FaceSearchTarget st;
+            if (op == OP_ST_NOFILE)
+            {
+                fclose(f);
+                if (st.LoadFromFile("/tmp/zq_definitely_no_such_file.bin")) { note = 3; bad++; }
+            }
+            else if (op == OP_ST_RT || op == OP_ST_EMPTY)
+            {
+                fclose(f);
+                const int n = (op == OP_ST_EMPTY) ? 0 : 3;
+                for (int i = 0; i < n; i++)
+                {
+                    ZQ_FaceGroupWithoutBox g;
+                    fill_group((ZQ_FaceGroup&)g, 2, 4, false, i + 1);
+                    st.targets.push_back(g);
+                }
+                if (!st.SaveToFile(TMP_PATH)) { note = 1; bad++; }
+                else
+                {
+                    ZQ_FaceSearchTarget st2;
+                    if (!st2.LoadFromFile(TMP_PATH)) { note = 4; bad++; }
+                    else if (st2.targets.size() != st.targets.size()) { note = 2; bad++; }
+                    else
+                        for (size_t i = 0; i < st.targets.size(); i++)
+                            if (!same_group((ZQ_FaceGroup&)st.targets[i],
+                                            (ZQ_FaceGroup&)st2.targets[i])) { note = 2; bad++; break; }
+                    for (size_t i = 0; i < st2.targets.size(); i++)
+                        free_group((ZQ_FaceGroup&)st2.targets[i]);
+                }
+                for (size_t i = 0; i < st.targets.size(); i++)
+                    free_group((ZQ_FaceGroup&)st.targets[i]);
+            }
+            else
+            {
+                // 手写 num（后接内容或不接），验证 num 守卫
+                int num = 2;
+                if (op == OP_ST_BADNUM_LO)  num = -1;
+                else if (op == OP_ST_BADNUM_HI) num = 1000001;    // 守卫是 > 1000000 才拒
+                else if (op == OP_ST_BADNUM_FAR) num = 0x7FFFFFFF;
+                wr_int(f, num);
+                if (op == OP_ST_TRUNC)
+                {
+                    // 先用真实的 SaveToFile 写出一个 num=1 的文件，
+                    // 再把开头的 num 改成 2 —— 模拟"头说 2、实际只有 1 个"。
+                    // （ZQ_FaceSearchTarget::SaveToFile 收的是**路径**不是 FILE*，
+                    //   第一版传了 FILE*，编译直接报错。）
+                    fclose(f);
+                    ZQ_FaceGroupWithoutBox g;
+                    fill_group((ZQ_FaceGroup&)g, 1, 3, false, 1);
+                    ZQ_FaceSearchTarget w;
+                    w.targets.push_back(g);
+                    if (!w.SaveToFile(TMP_PATH)) { note = 1; bad++; }
+                    else
+                    {
+                        FILE* rp = fopen(TMP_PATH, "r+b");
+                        if (rp) { fseek(rp, 0, SEEK_SET); wr_int(rp, 2); fclose(rp); }
+                        ZQ_FaceSearchTarget rd;
+                        if (rd.LoadFromFile(TMP_PATH)) { note = 3; bad++; }
+                        else if (!rd.targets.empty()) { note = 6; bad++; }   // 失败后必须清空
+                        for (size_t i = 0; i < rd.targets.size(); i++)
+                            free_group((ZQ_FaceGroup&)rd.targets[i]);
+                    }
+                    for (size_t i = 0; i < w.targets.size(); i++)
+                        free_group((ZQ_FaceGroup&)w.targets[i]);
+                    free_group((ZQ_FaceGroup&)g);
+                    remove(TMP_PATH);
+                }
+                else
+                {
+                    fclose(f);
+                    ZQ_FaceSearchTarget rd;
+                    if (rd.LoadFromFile(TMP_PATH)) { note = 3; bad++; }
+                    for (size_t i = 0; i < rd.targets.size(); i++)
+                        free_group((ZQ_FaceGroup&)rd.targets[i]);
+                    remove(TMP_PATH);
+                }
+            }
+        }
         else
         {
             // 恶意参数 / 截断：直接手写文件内容
@@ -294,8 +386,12 @@ static void one(int op)
     static const char* nm[] = {
         "往返(WithBox)", "往返(WithoutBox)", "往返(num=0 空组)",
         "feat_dim=-1", "feat_dim=65535(界外)", "feat_dim=100000",
-        "num=-1", "num=1000000(界内!)", "num=0x7FFFFFFF",
-        "截断: 特征齐但缺 num", "截断: 少一个特征"
+        "num=-1", "num=1000000(界外)", "num=0x7FFFFFFF",
+        "截断: 特征齐但缺 num", "截断: 少一个特征",
+        "失败后位置回退",                                   // OP_POS_RESTORE
+        "ST往返(3 个 target)", "ST往返(num=0 空表)",        // SearchTarget
+        "ST num=-1", "ST num=1000001(界外)", "ST num=0x7FFFFFFF",
+        "ST 截断: 头说2实际1", "ST 文件不存在"
     };
     const char* tag = (op >= 0 && op < (int)(sizeof(nm)/sizeof(nm[0]))) ? nm[op] : "?";
     if (!have || WIFSIGNALED(st)) {
@@ -318,7 +414,7 @@ int main()
     printf("  而它们正是\"人脸库文件不可信\"威胁模型下的解析入口。\n");
     printf("判据：① 往返一致 ② 恶意 feat_dim/num 被拒（边界内外都打）③ 截断被拒\n");
     printf("      ④ **失败时文件流位置必须回退**（只有测试钉得住这一条）⑤ num=0 空组必须成功\n\n");
-    for (int op = 0; op <= OP_POS_RESTORE; op++) one(op);
+    for (int op = 0; op <= OP_ST_NOFILE; op++) one(op);
     printf("\n共 %d 个用例：全对 %d，有错 %d，崩溃/搭建失败 %d\n", g_case, g_ok, g_bad, g_crash);
     if (g_bad || g_crash)
         printf("**每一项在下结论之前都要先用独立复现对一遍**（附录 CA.3）。\n");
