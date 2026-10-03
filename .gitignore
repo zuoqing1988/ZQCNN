@@ -31,3 +31,9 @@ __pycache__/
 # 它是**产物**不是素材，2026-10-03 之前被误提交过一次。
 /resultdet.jpg
 /box.jpg
+
+# 编译残留。2026-10-04 写 tools/check_data_images.py 的阳性对照时，
+# 一次 `g++ ... 2>cc.txt` 在仓库根跑（cwd 没切过去），把 cc.txt 落在了根上
+# 并被 `git add -A` 带走 —— 与 GK.4 那次 resultdet.jpg 同一类。
+cc.txt
+chk

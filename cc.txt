@@ -1,1 +1,0 @@
-g++: error: //tmp/zqimg_38956_1791069423: No such file or directory
