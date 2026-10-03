@@ -2612,3 +2612,69 @@ EQ 只是把"下游确实只有这 16 处、且都在守卫之后"**从推断变
   现在挂在 `ZQ_MathBase.h` 上，它是那 4 个头传递闭包里最底层的一个。
   将来若新增 ZQlib 头并绕过 `ZQ_MathBase.h`，**需要再挂一次**。
 - `#ifndef` 保护是必需的：MSVC 下 `__min`/`__max` 是编译器内建，重复定义会报错。
+
+---
+
+## 变更：附录 ET —— 文件级可达性门禁（"没有任何编译器看过这个文件"变成一条 diff）
+
+### 动机
+
+ES.2 那个 bug（`ZQ_OpticalFlow.h` 同作用域重复声明，**任何编译器都编不过**）
+之所以活下来：全仓只有 `ZQ_StereoRectify.h` include 它，而后者不在任何构建里 ——
+**离任何构建两跳**。`reachability_probe.py` 已有，但它答的是"层类型有没有被模型跑到"，
+不是"文件有没有被任何编译器编过"。
+
+### 探针三次判错
+
+| 版本 | 报出"从未编译" | 错在哪 |
+|---|---|---|
+| v1 | **410**（全部） | 源文件绝对路径 vs 入口点相对路径，两个集合**永不相交** |
+| v2 | 338 | `file(GLOB .../*.c)` 没展开 —— ZQCNN/CMakeLists.txt:5-7 **正是用 GLOB 列内核 TU** |
+| v3 | 338 | GLOB 模式**没加引号**（`${CMAKE_CURRENT_LIST_DIR}/*.cpp`），只认引号内的 |
+| v4 | 140 | samples 用自定义宏 `SUBDIRLIST` + foreach 嵌套 GLOB ⇒ 改用**标注过的近似** |
+| v5 | **7** | — |
+
+第一次那个错最值得记：**它报"410 个文件全部从未被编译"**，一个荒谬的数字，
+我却又往下走了两版才反应过来。**荒谬的结果本身就是信号** ——
+与 ES.4 里"空错误消息"同类。
+
+### 结构性假阳性单列
+
+`3rdparty/include/ZQlib/` 下 **120 个头**永远不在闭包里（头文件库，没有自己的 TU），
+但 `probe_zqlib_headers.py` **逐个给它们生成最小 TU 编过**。
+所以探针把它们单列成 `[zqlib]`，不计入基线 —— 混进去就是 120 条噪声。
+
+### 剩下的 7 个
+
+| 文件 | 判定 |
+|---|---|
+| `ZQCNN/ZQ_CNN_MTCNN_ncnn.h` | 需要 ncnn |
+| `.../zq_cnn_convolution_gemm_nchwc_packed4_handle_bias_prelu_8x4.h`（81 行） | **死代码片段**：BOM 开头，第一行 `#if WITH_BIAS`，没有函数签名 |
+| `.../zq_cnn_convolution_gemm_nchwc_kernel1x1_neon_raw.h`（1711 行） | **死代码片段**：完整 static 函数但引用外部 `Mat`；ARM NEON 路径 |
+| `ZQlibFaceID/ZQ_Face{ClusterImagesForVideo,ClustersForVideo,ContainerForVideo,Extractor}.h` | **主库**的 4 个头，从未被任何编译器类型检查过 |
+
+最后 4 个最值得记：它们是**主库**的头。
+`ZQ_FaceExtractor.h` 正是那 4 个 UNUSED 层的调用方 ——
+**它们能接线的前提，恰好是一个从未被编译过的头**。
+
+两个 NCHWC 内核头合计 **1792 行**从未被编过；内部大概率也有问题（ES.2 先例），
+但**不修** —— 复活死代码等于新增功能，不在审计范围内。
+
+### 变异验证
+
+| | 结果 |
+|---|---|
+| 造一个没人 include 的文件 | `+ ZQCNN/zq_orphan_control.h`，`1 new`，**RC=1** |
+| 删掉 | `baseline OK: 7 entries unchanged`，**RC=0** |
+
+（第一次变异选错（注释掉 `add_subdirectory(ZQCNN)`）—— 探针**正确地**报无变化，
+因为 samples 仍 include ZQCNN 头。**选错变异目标不是探针的错**。）
+
+内置阳性对照 `--selftest`：`ZQ_OpticalFlow.h` / `ZQ_StereoRectify.h` 必须判**不可达**，
+`ZQ_CNN_Tensor4D.h` 必须判**可达**。
+
+### 变更文件
+
+- `tools/probe_file_reachability.py`（新，带 `--selftest` / `--save-baseline` / `--check-baseline`）
+- `tools/file_reach_baseline.txt`（新，7 条）
+- `tools/run_audit_checks.py`（挂进回归，组名 **C5**；`C4` 已被主工程 HIGH 桶门禁占用）

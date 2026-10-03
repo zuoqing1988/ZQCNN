@@ -1,0 +1,16 @@
+# 文件级可达性基线（tools/probe_file_reachability.py --save-baseline 生成）
+# 格式: <相对路径>
+#
+# 收录的是「**任何构建都不会编译**、且**也没有别的探针单独编过**的文件。
+# ZQlib 的头不在此列：它们由 tools/probe_zqlib_headers.py 逐个生成最小 TU 编译。
+#
+# 基线的作用：新增/删除一个 sample、或改动 include 结构，让某个文件从「有构建」变成
+# 「无构建」变成一条可见的 diff —— 附录 ES.2 那个重复声明之所以活那么久，
+# 就是因为 ZQ_OpticalFlow.h 离任何构建都有两跳。
+ZQCNN/ZQ_CNN_MTCNN_ncnn.h
+ZQCNN/layers_nchwc/zq_cnn_convolution_gemm_nchwc_kernel1x1_neon_raw.h
+ZQCNN/layers_nchwc/zq_cnn_convolution_gemm_nchwc_packed4_handle_bias_prelu_8x4.h
+ZQlibFaceID/ZQ_FaceClusterImagesForVideo.h
+ZQlibFaceID/ZQ_FaceClustersForVideo.h
+ZQlibFaceID/ZQ_FaceContainerForVideo.h
+ZQlibFaceID/ZQ_FaceExtractor.h

@@ -111,6 +111,15 @@ GROUPS = [
     ('C1 ZQlibFaceID 可编译性门禁',
      ['probe_faceid_headers.py', '--check-baseline',
       os.path.join(HERE, 'faceid_probe_baseline.txt')], True),
+    # 文件级可达性（附录 ET）。C/C1 问的是"这个**头**能不能单独编"，
+    # 本门禁问的是另一个问题："这个**文件**有没有被任何构建编过"。
+    # 两者互补 —— 附录 ES.2 那个同作用域重复声明，任何编译器都编不过，
+    # 而它活下来正是因为 ZQ_OpticalFlow.h 离任何构建都有两跳：
+    # **C/C1 会发现它编不过（因为它逐个单独编），
+    #   但如果没人去编它，就永远不会有"编不过"这个事件发生。**
+    ('C5 文件级可达性门禁（没有任何构建编过的文件）',
+     ['probe_file_reachability.py', '--selftest', '--check-baseline',
+      os.path.join(HERE, 'file_reach_baseline.txt')], True),
 ]
 
 
