@@ -3457,3 +3457,56 @@ EY.4 记「这 3 个 UNUSED 层记为未做，理由是需要绊线 + 记录桩�
 
 - `tools/zq_unusedlayers_check.cpp`（新门禁，18 例）
 - `tools/run_zqlib_checks.py`（接进 4 张表）
+---
+
+## 变更：附录 GF —— 27 个模型解析阶段零警告，并把它变成判据
+
+### 先量现状
+
+FD 那道门禁只判"模型有没有被守卫拒掉"，于是有一个它**看不到**的情况：
+`.zqparams` 里参数名**打错**，解析器不认、打一行 `warning: unknown para`、
+然后**静默走默认值** —— 模型照样"加载成功"，但那个参数根本没生效。
+后果在推理上表现为"精度略差"，在日志里只是一行 warning。
+
+把 27 个模型的解析输出全抓出来：**零** warning / missing / invalid / unknown para。
+说明这批模型文件本身是干净的。
+
+### 但"干净"只是今天干净 —— 变成判据
+
+FD 增加一条：**解析阶段的 warning 必须为零**。
+
+| 情况 | 旧判据 | 新判据 |
+|---|---|---|
+| 必需参数打错（`kernel_size`->`kenerl_size`） | 抓到（`missing`） | 同样抓到 |
+| **可选**参数打错（`bias`->`bais`） | **抓不到**（模型正常加载） | **抓到** |
+
+变异验证（都在 `model/det1.zqparams` 上，改完即还原）：
+
+| 变异 | 结果 |
+|---|---|
+| `kernel_size=` -> `kenerl_size=` | **RC=1**，`被守卫拒绝: missing` |
+| ` bias` -> ` bais`（**可选**） | **RC=1**，`解析阶段有警告（仍会加载成功，但参数可能没生效）` |
+| 全部还原 | **RC=0**，27/27 |
+
+第二条正是这条判据存在的理由：**旧判据对它完全无感**。
+
+### 顺带修掉一个真问题：zq_concat_getsize_real.h 不是自包含的
+
+用**另一个**编译顺序（只 include 它、不先 include `ZQ_CNN_Net.h`）编译时报：
+
+    zq_concat_getsize_real.h:39:48: error: invalid use of incomplete type
+      'class ZQ::ZQ_CNN_Forward_SSEUtils'
+
+那个头只**前置声明**了 `ZQ_CNN_Forward_SSEUtils` 就去**定义它的成员函数** ——
+定义成员需要完整类型。先前两个消费者都碰巧先 include 了 `ZQ_CNN_Net.h`，
+把它间接带进来了。已补 `#include "ZQ_CNN_Forward_SSEUtils.h"`。
+
+> 与 FA 那条"探针的正向对照必须取自**它专为之写的那个形态**"同族：
+> **一个头在"恰好没踩到"的调用顺序下能用，不等于它是自包含的。**
+> 我写这份头时是照 `zq_concat_alias_check.cpp` 的顺序写的，那个顺序下能编 ——
+> 于是"能用"被当成了"对"。
+
+### 变更文件
+
+- `tools/zq_model_params_check.cpp`（新增"解析阶段 warning 必须为零"判据）
+- `tools/zq_concat_getsize_real.h`（补 include，变自包含）

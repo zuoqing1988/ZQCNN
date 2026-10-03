@@ -29,6 +29,13 @@
 
 #include <vector>
 #include "ZQCNN/ZQ_CNN_Tensor4D.h"
+// 必须显式 include：**这个类只在这里被"定义成员函数"**，
+// 而 forward declaration 不足以定义成员。
+// 少了这一行时，单独编译本头的调用方会报
+//   invalid use of incomplete type 'class ZQ::ZQ_CNN_Forward_SSEUtils'
+// （2026-10-03 在 `zq_model_params_check.cpp` 上撞到；此前两个消费者
+//  都碰巧先 include 了 `ZQ_CNN_Net.h`，把它间接带进来了。）
+#include "ZQCNN/ZQ_CNN_Forward_SSEUtils.h"
 
 namespace ZQ
 {

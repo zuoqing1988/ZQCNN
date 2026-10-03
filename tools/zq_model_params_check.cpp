@@ -56,6 +56,16 @@ using namespace ZQ;
 
 // 走到这一步说明**参数解析 + 连通性都过了**，只是权重找不到
 static const char* EXPECT_OK_MARK = "failed to open";
+// 解析阶段的**警告**：不是拒绝，但意味着某个参数名没被识别 ——
+// .zqparams 里把 `kernel_size` 拼成 `kenerl_size` 就会静默走默认值，
+// 而模型照样"加载成功"。所以这里把它们单列成"必须为零"。
+// 2026-10-03 实测：27 个随仓库模型的解析阶段**零警告**，所以这条判据
+// 现在就能立住，将来任何一个模型打错参数名都会被抓住。
+static const char* WARN_MARKS[] = {
+    "warning: unknown para",
+    "warning:",                       // 兜底：任何 warning 行
+};
+
 // 这些消息一旦出现，就是模型**被守卫拒了**
 static const char* REJECT_MARKS[] = {
     "unknown blob",
@@ -144,6 +154,25 @@ int main()
             continue;
         }
         if (out.find(EXPECT_OK_MARK) != std::string::npos) {
+            // 解析阶段的**警告**也要判：模型照样"加载成功"，但某个参数名
+            // 没被识别、静默走了默认值（`kernel_size` 拼成 `kenerl_size` 就是
+            // 这个后果）。这是"能加载"这道判据**看不到**的一类问题。
+            const char* warn = NULL;
+            for (size_t k = 0; k < sizeof(WARN_MARKS) / sizeof(WARN_MARKS[0]); k++) {
+                if (out.find(WARN_MARKS[k]) != std::string::npos) { warn = WARN_MARKS[k]; break; }
+            }
+            if (warn) {
+                bad++;
+                printf("  %-34s 解析阶段有警告（仍会加载成功，但参数可能没生效）\n", base);
+                size_t pos = 0;
+                for (int line = 0; line < 3 && pos < out.size(); line++) {
+                    size_t nl = out.find('\n', pos);
+                    if (nl == std::string::npos) nl = out.size();
+                    printf("        %s\n", out.substr(pos, nl - pos).c_str());
+                    pos = nl + 1;
+                }
+                continue;
+            }
             ok++;
             printf("  %-34s OK（参数与连通性全过，只差权重文件）\n", base);
             continue;
