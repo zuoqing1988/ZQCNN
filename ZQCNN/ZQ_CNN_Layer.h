@@ -218,7 +218,18 @@ namespace ZQ
 				std::cout << "Layer " << name << " missing " << "name\n";
 				std::cout << line << "\n";
 			}
-			return has_C && has_name;
+			// **这里刻意不要求 H / W**（2026-10-03 差点改错，撤回过一次）。
+			// 构造函数是 `H(0), W(0), C(3)`，看起来"漏掉 H/W 就会造出零尺寸张量"，
+			// 但那是**有意支持的流程**：
+			//   · `ZQ_CNN_Net.h:1323` 明确只在**存在 InnerProduct 层**时才强制
+			//     `has_H_val && has_W_val`；
+			//   · `model/det1.zqparams` 就是 `Input name=data C=3`（**漏掉 H/W**），
+			//     尺寸由运行时的图像（MTCNN 的 `SetPara` + `ConvertFromBGR` 重新
+			//     `ChangeSize`）填上。零尺寸状态是**瞬态**的，中间没人解引用它。
+			// 在这里强制 H/W 会**改坏一个随仓库模型**，
+			// 而且与 net 的既有设计相矛盾 ——
+			// 教训见审计报告附录 ED.2。
+			return has_C && C > 0 && has_name;
 		}
 
 		virtual bool LayerSetup(std::vector<ZQ_CNN_Tensor4D*>* bottoms, std::vector<ZQ_CNN_Tensor4D*>* tops)
@@ -7356,8 +7367,20 @@ namespace ZQ
 
 		virtual bool Forward(std::vector<ZQ_CNN_Tensor4D*>* bottoms, std::vector<ZQ_CNN_Tensor4D*>* tops)
 		{
-			if (bottoms == 0 || tops == 0 || bottoms->size() != 2 || tops->size() == 0 
+			if (bottoms == 0 || tops == 0 || bottoms->size() != 2 || tops->size() == 0
 				|| (*bottoms)[0] == 0 || (*bottoms)[1] == 0 || (*tops)[0] == 0)
+				return false;
+			// **审计修复 2026-10-03（附录 ED.1）**：下面把
+			//     (*bottoms)[0]->GetFirstPixelPtr()[0]
+			// 当标量用。而**零尺寸张量的首指针是 0**（`ChangeSize` 对零尺寸返回成功、
+			// 并把 firstPixelData 置 0，实测），上面只查了**指针非空**、没查**尺寸**，
+			// 于是空的第一个 bottom 就是**空指针解引用**。
+			// 这个层是 UNUSED（没有随仓库模型会跑到），但模型文件是不可信输入，
+			// 而**零尺寸的 bottom 是能造出来的** —— 上游任何一层输出零尺寸即可，
+			// 最直接的就是 `Input C=3` 漏掉 H/W（构造函数默认 H=W=0，附录 ED.2）。
+			// `ReadParam` / `LayerSetup` 也都只查指针、不查尺寸。
+			if ((*bottoms)[0]->GetN() <= 0 || (*bottoms)[0]->GetC() <= 0
+				|| (*bottoms)[0]->GetH() <= 0 || (*bottoms)[0]->GetW() <= 0)
 				return false;
 
 			double t1 = omp_get_wtime();

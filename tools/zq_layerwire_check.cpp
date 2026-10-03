@@ -140,8 +140,8 @@ static ZQ_CNN_Tensor4D* make_t(int kind)
     return new ZQ_CNN_Tensor4D_NHW_C_Align256bit();
 }
 
-enum { OP_SCALAR = 0, OP_REDUCTION, OP_LRN, OP_SQUEEZE, OP_COPY };
-static const char* g_opname[] = { "ScalarOp", "Reduction", "LRN", "Squeeze", "Copy" };
+enum { OP_SCALAR = 0, OP_REDUCTION, OP_LRN, OP_SQUEEZE, OP_COPY, OP_UNARY, OP_INPUT };
+static const char* g_opname[] = { "ScalarOp", "Reduction", "LRN", "Squeeze", "Copy", "UnaryOp", "Input参数" };
 // note: 0 无事 / 1 搭建失败 / 2 返回值与期望相反 / 3 该调内核却一次都没调
 //       / 4 输入指针不在 bottom 里 / 5 输出指针不在 top 里 / 6 参数被层改了
 //       / 7 非法参数却仍然放行 / 8 bottom 的内容被改了
@@ -154,9 +154,10 @@ static const char* g_note[] = {
 struct Case {
     int op;
     int N, C, H, W;
-    int a;              // ScalarOp 的 operation / LRN 的 local_size / Reduction 的 axis
+    int a;              // ScalarOp/UnaryOp 的 operation / LRN 的 local_size /
+                        // Reduction 的 axis / Input 的变体
     float f;            // 标量
-    int expect_kernel;  // 1 = 应当调到内核；0 = 应当被层在到达内核之前拒掉
+    int expect_kernel;  // 1 = 应当调到内核（或被接受）；0 = 应当被层拒掉
 };
 
 static float val(int n, int c, int h, int w)
@@ -177,6 +178,36 @@ static void run_case(const Case& c, int kind)
     ZQ_CNN_Tensor4D* bottom = make_t(kind);
     ZQ_CNN_Tensor4D* top = make_t(kind);
     long bad = 0, first = -1; int note = 0;
+
+    if (c.op == OP_INPUT) {
+        // **Input 层的 ReadParam 契约** —— 钉住**真实**的那份，不是"看起来该有的"那份。
+        //
+        // 审计过程中我在这里**差点改错**：构造函数是 `H(0), W(0), C(3)`，
+        // 看起来"漏掉 H/W 就会造出零尺寸张量"，于是想在 ReadParam 里强制 H/W。
+        // 查下去发现那是**有意支持的流程**：
+        //   · `ZQ_CNN_Net.h:1323` 明确只在**存在 InnerProduct 层**时才强制
+        //     `has_H_val && has_W_val`；
+        //   · `model/det1.zqparams` 就是 `Input name=data C=3`（**漏掉 H/W**），
+        //     尺寸由运行时的图像重新 ChangeSize 填上，零尺寸状态是**瞬态**的。
+        // 强制 H/W 会**改坏一个随仓库模型**（详见审计报告附录 ED.2）。
+        //
+        // 所以这里钉的是：**H/W 可以省略（必须仍被接受）**、**C 必须是正数**。
+        // 将来谁把 H/W 变必填，这道门禁会红 —— 挡住对 det1 的回归。
+        ZQ_CNN_Layer_Input* L = new ZQ_CNN_Layer_Input();
+        const char* line = 0;
+        if (c.a == 0)      line = "Input C=3 name=n";              // **省略 H/W，必须仍被接受**
+        else if (c.a == 1) line = "Input C=3 H=4 W=4 name=n";      // 正常
+        else if (c.a == 2) line = "Input C=0 H=4 W=4 name=n";      // C=0 必须被拒
+        else               line = "Input C=-1 H=4 W=4 name=n";     // C<0 必须被拒
+        const bool ok = L->ReadParam(line);
+        if (ok != (c.expect_kernel != 0)) { note = 2; bad++; }
+        else if (ok && !(L->C > 0)) { note = 7; bad++; }
+        delete L;
+        delete bottom; delete top;
+        FILE* fp = fopen(RES_FILE, "w");
+        if (fp) { fprintf(fp, "%ld %ld %d %ld\n", 1L - bad, bad, note, first); fclose(fp); }
+        return;
+    }
 
     if (!bottom->ChangeSize(c.N, c.H, c.W, c.C, 0, 0)) { note = 1; bad++; }
     else if (!top->ChangeSize(1, 1, 1, 1, 0, 0)) { note = 1; bad++; }
@@ -200,6 +231,26 @@ static void run_case(const Case& c, int kind)
             L->operation = c.a; L->scalar = c.f;
             r = L->Forward(&vb, &vt);
             delete L;
+        } else if (c.op == OP_UNARY) {
+            // **UnaryOperation 名不副实**：它要**两个 bottom**，第二个是逐元素张量，
+            // 第一个只被读成**一个标量**：`float scalar = bottoms[0]->GetFirstPixelPtr()[0];`
+            // 而 `ReadParam` / `LayerSetup` **只查指针非空、不查尺寸** ——
+            // 零尺寸张量的首指针是 0（实测，附录 ED.1），于是这里就是**空指针解引用**。
+            //   a == 1：第一个 bottom 是零尺寸（C=0）-> 必须被拒，不能崩
+            //   a == 0：正常（1x1x1x1）
+            ZQ_CNN_Tensor4D* ssrc = make_t(kind);
+            const int sC = (c.a == 1) ? 0 : 1;
+            if (!ssrc->ChangeSize(1, 1, 1, sC, 0, 0)) { note = 1; bad++; }
+            else {
+                for (int i = 0; i < ssrc->GetSliceStep(); i++) ssrc->GetFirstPixelPtr()[i] = c.f;
+                std::vector<ZQ_CNN_Tensor4D*> vb2;
+                vb2.push_back(ssrc); vb2.push_back(bottom);
+                ZQ_CNN_Layer_UnaryOperation* L = new ZQ_CNN_Layer_UnaryOperation();
+                L->operation = c.a;      // 0 = UNARY_MUL
+                r = L->Forward(&vb2, &vt);
+                delete L;
+            }
+            delete ssrc;
         } else if (c.op == OP_REDUCTION) {
             ZQ_CNN_Layer_Reduction* L = new ZQ_CNN_Layer_Reduction();
             L->axis = c.a; L->keepdims = true;
@@ -342,6 +393,15 @@ static const Case g_cases[] = {
   { OP_SQUEEZE, 1, 3, 2, 2, 0, 0.f, 1 },
   { OP_COPY,    1, 3, 2, 2, 0, 0.f, 1 },
   { OP_COPY,    2, 5, 2, 3, 0, 0.f, 1 },
+  // UnaryOperation：正常 + **标量源为零尺寸张量**（附录 ED.1 的空指针解引用）
+  { OP_UNARY, 1, 3, 2, 2, 0, 2.0f, 1 },
+  { OP_UNARY, 1, 3, 2, 2, 1, 2.0f, 0 },
+  { OP_UNARY, 2, 5, 2, 3, 1, 2.0f, 0 },
+  // Input：形状参数**直接来自模型文件**
+  { OP_INPUT, 1, 3, 4, 4, 0, 0.f, 1 },   // **省略 H/W：必须仍被接受**（det1 依赖它）
+  { OP_INPUT, 1, 3, 4, 4, 1, 0.f, 1 },   // 正常，必须放行
+  { OP_INPUT, 1, 3, 4, 4, 2, 0.f, 0 },   // C=0 必须被拒
+  { OP_INPUT, 1, 3, 4, 4, 3, 0.f, 0 },   // C<0 必须被拒
 };
 static const int N_CASE = (int)(sizeof(g_cases) / sizeof(g_cases[0]));
 
