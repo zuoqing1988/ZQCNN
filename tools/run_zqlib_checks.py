@@ -634,22 +634,46 @@ def main():
         fname = os.path.basename(s)              # zq_xxx_check.cpp
         stem = fname[:-4]                        # zq_xxx_check
         tag = stem[:-6] if stem.endswith('_check') else stem
-        for extra in EXTRA_SOURCES.get(tag, []):
+        extras = EXTRA_SOURCES.get(tag, [])
+        extra_ok = 'EXTRA_OK=1;'
+        first_log = []
+        for ei, extra in enumerate(extras):
             # $SAN = 本轮实际用的 sanitizer 旗标（ASan 时是 -fsanitize=address，
             # --ubsan 时是 -fsanitize=undefined，--no-asan 时是空串）。
             # **实现 TU 必须带 sanitizer 编译**，否则里面的普通 load 不插桩，
             # 越界读一个元素也不会有人报 —— 2026-10-02 在 zq_nchw_deconv 上栽过：
             # EXTRA_SOURCES 不带 sanitizer 时，那道"专治越界读"的门禁对着
             # 一份回退了修复的库**依然全绿**。凡是判据依赖 sanitizer 的 tag 都写 $SAN。
-            lines.append(extra.replace('$SAN', san))
+            #
+            # **必须把这一步的失败并进同一条判定**（附录 DY.8）。原来这里是一条裸命令：
+            # gcc 失败时 stderr 进总输出、`.o` 不生成，**后面链接时才报**
+            #     g++: error: /tmp/zqchecks/zq_dwnchw.o: No such file or directory
+            # 而"这个 .o 是谁编的、为什么没编出来"被埋在几百行滚动输出里 ——
+            # 2026-10-03 全量跑就出现过一次这样的 BUILD FAIL（`zq_nchw_depthwise`），
+            # 报错指向**链接器**，完全看不出是**被测库的编译**挂了。
+            # 与 DY.5 同一个毛病：**错误出现在错误的地方**。
+            elog = '$WDIR/%s_extra%d.log' % (tag, ei)
+            first_log.append(elog)
+            extra_ok += ' %s > %s 2>&1 || EXTRA_OK=0;' % (extra.replace('$SAN', san), elog)
+        # 失败时把**所有**相关日志里的第一条 `error`/`fatal` 拼进消息 ——
+        # 只报链接错误等于没报，只报 extra 错误又会漏掉门禁自身的编译错误。
+        # **grep 一条都没命中时退回日志第一行**：gcc/g++ 报的未必含 error/fatal 两个词
+        # （例：'want' was not declared in this scope 是 error，但
+        #   "no matching function for call to ..." 这类未必），
+        # 消息为空的话操作员只知道"BUILD FAIL"，等于没报（DY.8 的同一个毛病）。
+        msg_logs = ' '.join(first_log + ['$WDIR/%s.build.log' % tag])
+        firstline = ' '.join('head -1 %s' % x for x in (first_log + ['$WDIR/%s.build.log' % tag]))
         lines.append(
-            "if g++ -O1 -g %s%s -I%s%s /mnt/d/ZQCNN/tools/%s%s -o %s "
+            "if %s g++ -O1 -g %s%s -I%s%s /mnt/d/ZQCNN/tools/%s%s -o %s "
             "2> %s.build.log; then echo 'B|%s|OK|'; else "
-            "echo \"B|%s|BUILD_FAIL|$(grep -m1 -i error: %s.build.log | tr -d '\\r')\"; fi"
-            % ('' if args.no_asan else san,
+            "echo \"B|%s|BUILD_FAIL|$(cat %s 2>/dev/null | grep -m1 -iE 'error|fatal' | tr -d '\\r' "
+            "|| head -1 %s 2>/dev/null | tr -d '\\r')\"; fi"
+            % (extra_ok,
+               '' if args.no_asan else san,
                EXTRA_CXXFLAGS.get(tag, ''),
                INC, EXTRA_INC.get(tag, ''), fname, EXTRA_LINK.get(tag, ''), tag,
-               tag, tag, tag, tag))
+               '$WDIR/%s.build.log' % tag,
+               tag, tag, msg_logs, firstline))
         # 两套 sanitizer 的失败口径不同，分开写：
         #   ASan  -> 断言自己打的 "FAIL" 行数 + 进程非 0（越界/释放后使用会直接 abort）
         #   UBSan -> "runtime error:" 行数。**不要指望 rc**：不加

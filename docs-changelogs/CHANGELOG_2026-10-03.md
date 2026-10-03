@@ -784,3 +784,113 @@ compact NCHW 里通道在最外层才要乘步长）。用恒等 reshape 实测�
   同一套 API 里两套相反约定，且 `ROI` / `ResizeBilinearRect` / `ConvertColor_BGR2GRAY`
   内部调 `ChangeSize` 时都按 `(H, W)` 传。已实测确认 `ChangeSize(1,4,5,3,2,3)` 的
   `widthStep == ps*(W+2*2)`（第 5 形参确实是 borderW）。**待补门禁再下结论。**
+
+
+---
+
+## 变更：附录 DY.7 / DY.8 / DY.9 —— 非对称 border 越界写（51 处）+ 两个 harness 缺陷
+
+> **本条更正上一条 changelog 与报告 DY.7 的结论。**
+> DY.7 写的是"borderW/borderH 顺序不一致是埋雷不是活雷、不改代码" —— **那是错的**，
+> 错在只看了语义、没核对 memset 的边界。实际情况是**堆越界写**。
+
+### 缺陷 3（已修，生产代码，51 处）：非对称 border ⇒ 堆越界写
+
+`ChangeSize` 的第 5/6 形参是 `(borderW, borderH)`，而 `ROI` / `ResizeBilinearRect` /
+`ConvertColor_BGR2GRAY` 内部都这么调：
+
+    dst.ChangeSize(N, H, W, C, dst_borderH, dst_borderW)   // ← W/H 传反
+
+于是张量**按转置后的 border 分配**，紧接着的 border 清零却**按未转置的形参名**
+（`dstPixelStep*dst_borderW` 表水平、`dstWidthStep*dst_borderH` 表垂直）——
+两边对不上，越界写。
+
+ASan 坐实（三处，规律一致）：
+
+    ==367469==ERROR: AddressSanitizer: heap-buffer-overflow ... WRITE of size 360
+        #2 ZQ::ZQ_CNN_Tensor4D::ROI(...) ZQCNN/ZQ_CNN_Tensor4D.h:129
+    0x617000000a80 is located 0 bytes to the right of 768-byte region
+
+| 入口 | 对称 (1,1) | **borderH > borderW** | borderW > borderH |
+|---|---|---|---|
+| `ROI` | 正常 | **OVERFLOW** `Tensor4D.h:129` | 正常 |
+| `ConvertColor_BGR2GRAY` | 正常 | **OVERFLOW** `Tensor4D.h:514` | 正常 |
+| `ResizeBilinearRect` | 正常 | **OVERFLOW** `Tensor4D.cpp:447` | 正常 |
+
+**溢出条件统一是 `dst_borderH > dst_borderW`。**
+
+**修法**：改成 `ChangeSize(..., dst_borderW, dst_borderH)`，共 **51 处**：
+
+| 文件 | 处数 |
+|---|---|
+| `ZQCNN/ZQ_CNN_Tensor4D.cpp` | 32 |
+| `ZQCNN/ZQ_CNN_Tensor4D.h` | 3 |
+| `ZQCNN/ZQ_CNN_Tensor4D_NCHWC.cpp` | 15 |
+| `ZQCNN_to_MNN/converter/source/ZQ_CNN_Tensor4D.h` | 1 |
+
+覆盖 `ROI` / `ResizeBilinear` / `ResizeBilinearRect`（标量与 vector 两个重载）/
+`ResizeNearest` / `Remap` / `ConvertColor_BGR2GRAY`，跨 align0/128/256 三个子类。
+
+**改这个方向的理由**：三处的 memset 写法完全一致（`dstPixelStep*dst_borderW` 表水平、
+`dstWidthStep*dst_borderH` 表垂直），**与 `ChangeSize` 的 `(borderW, borderH)` 一致**，
+所以"按形参名分配"才是自洽的那一边；改完之后 `GetBorderW()` 也终于与形参名对上了。
+
+**零行为变更（实测）**：全仓 25 处 `ROI` 全传 `(0,0)`、`ResizeBilinear*` 全传 `(0,0)`/`(-1,-1)`、
+`ConvertColor_BGR2GRAY` 全传 `(1,1)` —— 全部对称。
+对称用例结果与修复前**逐字节一致**（`(1,1)` 修复前后都是 `widthStep=18, sliceStep=108`）。
+
+**自动化改代码的两个坑（都在 dry-run 阶段抓住，没进版本库）**：
+1. 第一版脚本**把函数声明也匹配上了**，真应用下去就是改签名 —— 加"实参里不许有类型关键字"的护栏。
+2. 第二版**判断条件写反了**，把本来正确的调用点当成要改的。
+   应用后又机器核对：diff 是 **51 删 / 51 增，0 行不是纯 `borderW`/`borderH` 互换**。
+
+### 门禁：`zq_roi` 扩成两段（19 → 29 例）
+
+判据从 1 条加到 3 条：① 该拒的必须被拒（DX 原有）② `GetBorderW()/GetBorderH()`
+必须等于**同名形参**（钉死 DY.9；没有它，"把两个参数交换回去"照样能过）
+③ **整块 dst 逐格核对**：数据区 = 源 ROI，**border 一圈必须是 0**。
+
+**四处变异测试全部被抓住**：ROI / ConvertColor / ResizeBilinearRect 的 vector 重载 /
+标量重载。回退后分别出现"ASan 崩"（H>W 方向）与"GetBorderW/H 对不上"（W>H 方向）两类红。
+
+**"没红"的第二种原因又撞上一次**：第一次变异打在标量重载（`.cpp:262`）时门禁**没红** ——
+不是"与它无关"，是**门禁调的是 vector 重载、那个点没被覆盖**。补了标量重载用例后同一变异就红。
+（附录 DA.2 立的规矩：没红必须区分**没测到 / 变异无效 / 真无关**，默认怀疑自己没测到。）
+
+**覆盖边界（如实说）**：51 处里门禁直接打到的是 `ROI` / `ConvertColor_BGR2GRAY` /
+`ResizeBilinearRect`（两个重载）在 align0 上的行为；其余变体（`ResizeNearest` / `Remap` /
+align128 / align256 / NCHWC 那份 / MNN converter 那份）**靠"51 处是同一个机械替换 +
+机器核对 diff 全是纯互换"来保证一致，没有逐点门禁**。
+
+### 缺陷 4（已修，harness）：EXTRA_SOURCES 编译失败被报成链接错误
+
+全量 33 道门禁跑出过一次 `zq_nchw_depthwise` 的
+`BUILD FAIL: g++: error: /tmp/zqchecks/zq_dwnchw.o: No such file or directory`。
+排查：单独编该源**成功**、单跑该门禁**PASS**、完整重跑 **33/33 通过** —— 没复现。
+但**"失败时报不出真因"这件事本身是确定的缺陷**：`EXTRA_SOURCES` 的 gcc 原来是裸命令，
+stderr 进总输出、`.o` 不生成、链接时才炸，报表只给链接器的话。
+
+已改成把额外编译并进同一条判定，失败时把**所有**相关日志里的第一条 `error`/`fatal` 拼进消息；
+**一条都没命中时退回日志第一行**（编译器报的未必含这两个词，否则消息为空 = 什么都没报）。
+变异测试：把 `zq_reshape` 的一条额外源改成不存在的文件 ——
+改前报 `g++: error: .../zq_reshape_bogus.o: No such file`（指向链接器），
+改后报 `gcc: error: .../NO_SUCH_FILE_bogus.c: No such file`（**真因**）。
+
+### 我自己在这道门禁上踩的三个坑（都是"门禁坏了长得像代码坏了"）
+
+1. `(size_t)h * ws` 对负 `h` 回绕成 ~1.8e19 → 19 个用例**全部**报 ASan 越界，而被测代码没动。
+2. `fscanf` 的 `%95[^\n]` 遇空串返回 3 而不是 4 → 每个用例被判"没跑完"，
+   还被打上 **"sanitizer 报错"** 的标签，而 stderr 文件是 **0 字节**。
+   **没有证据就断言原因，会把排查方向带偏。**
+3. heredoc 里的 `\uXXXX` 改含中文的文件 → 截断汉字、写出非法 UTF-8，整个文件读不出来。
+
+### 变更文件
+
+| 文件 | 性质 |
+|---|---|
+| `ZQCNN/ZQ_CNN_Tensor4D.{h,cpp}` | **修生产缺陷**（51 处中的一部分） |
+| `ZQCNN/ZQ_CNN_Tensor4D_NCHWC.cpp` | 同上（15 处） |
+| `ZQCNN_to_MNN/converter/source/ZQ_CNN_Tensor4D.h` | 同上（1 处） |
+| `tools/zq_roi_check.cpp` | 门禁扩成两段（19→29 例）+ 改用共享 `zq_child_silence_stderr()` |
+| `tools/run_zqlib_checks.py` | EXTRA_SOURCES 失败可见化 + 空消息退回第一行 |
+| `audit_k3_20261001.md` | 追加 DY.7 / DY.8 / DY.9 |

@@ -45,7 +45,7 @@ namespace ZQ
 			if (off_x < 0 || off_y < 0 || off_x + width > W || off_y + height > H)
 				return false;
 
-			if (!dst.ChangeSize(N, height, width, C, dst_borderH, dst_borderW))
+			if (!dst.ChangeSize(N, height, width, C, dst_borderW, dst_borderH))
 				return false;
 			int dstWidthStep = dst.GetWidthStep();
 			int dstPixelStep = dst.GetPixelStep();

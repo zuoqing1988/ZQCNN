@@ -91,7 +91,7 @@ namespace ZQ
 			if (width > W - off_x || height > H - off_y)
 				return false;
 
-			if (!dst.ChangeSize(N, height, width, C, dst_borderH, dst_borderW))
+			if (!dst.ChangeSize(N, height, width, C, dst_borderW, dst_borderH))
 				return false;
 			int dstWidthStep = dst.GetWidthStep();
 			int dstPixelStep = dst.GetPixelStep();
@@ -473,14 +473,14 @@ namespace ZQ
 				return false;
 			if (dst.GetN() != N || dst.GetH() != H || dst.GetW() != W || dst.GetC() != 1)
 			{
-				if (!dst.ChangeSize(N, H, W, 1, __max(0, dst_borderH), __max(0, dst_borderW)))
+				if (!dst.ChangeSize(N, H, W, 1, __max(0, dst_borderW), __max(0, dst_borderH)))
 					return false;
 			}
 			else
 			{
 				if (dst_borderH >= 0 || dst_borderW >= 0)
 				{
-					if (!dst.ChangeSize(N, H, W, 1, dst_borderH, dst_borderW))
+					if (!dst.ChangeSize(N, H, W, 1, dst_borderW, dst_borderH))
 						return false;
 				}
 			}

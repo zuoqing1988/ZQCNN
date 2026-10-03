@@ -219,14 +219,14 @@ bool ZQ_CNN_Tensor4D_NCHWC1::ResizeBilinearRect(ZQ_CNN_Tensor4D_NCHWC1& dst, int
 	{
 		if (dst.GetN() != N || dst.GetH() != dst_H || dst.GetW() != dst_W || dst.GetC() != C)
 		{
-			if (!dst.ChangeSize(N, dst_H, dst_W, C, __max(0,dst_borderH), __max(0,dst_borderW)))
+			if (!dst.ChangeSize(N, dst_H, dst_W, C, __max(0,dst_borderW), __max(0,dst_borderH)))
 				return false;
 		}
 		else
 		{
 			if (dst_borderH >= 0 || dst_borderW >= 0)
 			{
-				if (!dst.ChangeSize(N, dst_H, dst_W, C, dst_borderH, dst_borderW))
+				if (!dst.ChangeSize(N, dst_H, dst_W, C, dst_borderW, dst_borderH))
 					return false;
 			}
 		}
@@ -303,14 +303,14 @@ bool ZQ_CNN_Tensor4D_NCHWC1::ResizeBilinearRect(ZQ_CNN_Tensor4D_NCHWC1& dst, int
 
 	if (dst.GetN() != rect_num || dst.GetH() != dst_H || dst.GetW() != dst_W || dst.GetC() != C)
 	{
-		if (!dst.ChangeSize(rect_num, dst_H, dst_W, C, __max(0, dst_borderH), __max(0, dst_borderW)))
+		if (!dst.ChangeSize(rect_num, dst_H, dst_W, C, __max(0, dst_borderW), __max(0, dst_borderH)))
 			return false;
 	}
 	else
 	{
 		if (dst_borderH >= 0 || dst_borderW >= 0)
 		{
-			if (!dst.ChangeSize(rect_num, dst_H, dst_W, C, dst_borderH, dst_borderW))
+			if (!dst.ChangeSize(rect_num, dst_H, dst_W, C, dst_borderW, dst_borderH))
 				return false;
 		}
 	}
@@ -372,7 +372,7 @@ bool ZQ_CNN_Tensor4D_NCHWC1::ROI(ZQ_CNN_Tensor4D_NCHWC1& dst, int off_x, int off
 	if (off_x < 0 || off_y < 0 || off_x + width > W || off_y + height > H)
 		return false;
 
-	if (!dst.ChangeSize(N, height, width, C, dst_borderH, dst_borderW))
+	if (!dst.ChangeSize(N, height, width, C, dst_borderW, dst_borderH))
 		return false;
 	int dstWidthStep = dst.GetWidthStep();
 	int dstSliceStep = dst.GetSliceStep();
@@ -678,14 +678,14 @@ bool ZQ_CNN_Tensor4D_NCHWC4::ResizeBilinearRect(ZQ_CNN_Tensor4D_NCHWC4& dst, int
 	{
 		if (dst.GetN() != N || dst.GetH() != dst_H || dst.GetW() != dst_W || dst.GetC() != C)
 		{
-			if (!dst.ChangeSize(N, dst_H, dst_W, C, __max(0, dst_borderH), __max(0, dst_borderW)))
+			if (!dst.ChangeSize(N, dst_H, dst_W, C, __max(0, dst_borderW), __max(0, dst_borderH)))
 				return false;
 		}
 		else
 		{
 			if (dst_borderH >= 0 || dst_borderW >= 0)
 			{
-				if (!dst.ChangeSize(N, dst_H, dst_W, C, dst_borderH, dst_borderW))
+				if (!dst.ChangeSize(N, dst_H, dst_W, C, dst_borderW, dst_borderH))
 					return false;
 			}
 		}
@@ -762,14 +762,14 @@ bool ZQ_CNN_Tensor4D_NCHWC4::ResizeBilinearRect(ZQ_CNN_Tensor4D_NCHWC4& dst, int
 
 	if (dst.GetN() != rect_num || dst.GetH() != dst_H || dst.GetW() != dst_W || dst.GetC() != C)
 	{
-		if (!dst.ChangeSize(rect_num, dst_H, dst_W, C, __max(0, dst_borderH), __max(0, dst_borderW)))
+		if (!dst.ChangeSize(rect_num, dst_H, dst_W, C, __max(0, dst_borderW), __max(0, dst_borderH)))
 			return false;
 	}
 	else
 	{
 		if (dst_borderH >= 0 || dst_borderW >= 0)
 		{
-			if (!dst.ChangeSize(rect_num, dst_H, dst_W, C, dst_borderH, dst_borderW))
+			if (!dst.ChangeSize(rect_num, dst_H, dst_W, C, dst_borderW, dst_borderH))
 				return false;
 		}
 	}
@@ -831,7 +831,7 @@ bool ZQ_CNN_Tensor4D_NCHWC4::ROI(ZQ_CNN_Tensor4D_NCHWC4& dst, int off_x, int off
 	if (off_x < 0 || off_y < 0 || off_x + width > W || off_y + height > H)
 		return false;
 
-	if (!dst.ChangeSize(N, height, width, C, dst_borderH, dst_borderW))
+	if (!dst.ChangeSize(N, height, width, C, dst_borderW, dst_borderH))
 		return false;
 	int dstWidthStep = dst.GetWidthStep();
 	int dstSliceStep = dst.GetSliceStep();
@@ -1139,14 +1139,14 @@ bool ZQ_CNN_Tensor4D_NCHWC8::ResizeBilinearRect(ZQ_CNN_Tensor4D_NCHWC8& dst, int
 	{
 		if (dst.GetN() != N || dst.GetH() != dst_H || dst.GetW() != dst_W || dst.GetC() != C)
 		{
-			if (!dst.ChangeSize(N, dst_H, dst_W, C, __max(0, dst_borderH), __max(0, dst_borderW)))
+			if (!dst.ChangeSize(N, dst_H, dst_W, C, __max(0, dst_borderW), __max(0, dst_borderH)))
 				return false;
 		}
 		else
 		{
 			if (dst_borderH >= 0 || dst_borderW >= 0)
 			{
-				if (!dst.ChangeSize(N, dst_H, dst_W, C, dst_borderH, dst_borderW))
+				if (!dst.ChangeSize(N, dst_H, dst_W, C, dst_borderW, dst_borderH))
 					return false;
 			}
 		}
@@ -1222,14 +1222,14 @@ bool ZQ_CNN_Tensor4D_NCHWC8::ResizeBilinearRect(ZQ_CNN_Tensor4D_NCHWC8& dst, int
 
 	if (dst.GetN() != rect_num || dst.GetH() != dst_H || dst.GetW() != dst_W || dst.GetC() != C)
 	{
-		if (!dst.ChangeSize(rect_num, dst_H, dst_W, C, __max(0, dst_borderH), __max(0, dst_borderW)))
+		if (!dst.ChangeSize(rect_num, dst_H, dst_W, C, __max(0, dst_borderW), __max(0, dst_borderH)))
 			return false;
 	}
 	else
 	{
 		if (dst_borderH >= 0 || dst_borderW >= 0)
 		{
-			if (!dst.ChangeSize(rect_num, dst_H, dst_W, C, dst_borderH, dst_borderW))
+			if (!dst.ChangeSize(rect_num, dst_H, dst_W, C, dst_borderW, dst_borderH))
 				return false;
 		}
 	}
@@ -1291,7 +1291,7 @@ bool ZQ_CNN_Tensor4D_NCHWC8::ROI(ZQ_CNN_Tensor4D_NCHWC8& dst, int off_x, int off
 	if (off_x < 0 || off_y < 0 || off_x + width > W || off_y + height > H)
 		return false;
 
-	if (!dst.ChangeSize(N, height, width, C, dst_borderH, dst_borderW))
+	if (!dst.ChangeSize(N, height, width, C, dst_borderW, dst_borderH))
 		return false;
 	int dstWidthStep = dst.GetWidthStep();
 	int dstSliceStep = dst.GetSliceStep();
