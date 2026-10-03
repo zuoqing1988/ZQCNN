@@ -3512,7 +3512,7 @@ FD 增加一条：**解析阶段的 warning 必须为零**。
 - `tools/zq_concat_getsize_real.h`（补 include，变自包含）
 ---
 
-## 变更：附录 GG —— sample 回归只覆盖 44 个里的 8 个（含一个 rc=0 但实际失败的实例）
+## 变更：附录 GG —— sample 回归只覆盖 44 个里的 8 个；外加我自己一次测错的退出码
 
 ### 覆盖率
 
@@ -3522,45 +3522,59 @@ FD 增加一条：**解析阶段的 warning 必须为零**。
 | Linux 回归跑的 / Windows 回归跑的 | **8** / **6** |
 | 产物目录里实际存在的 Linux 可执行文件 | 54 |
 
-"windows 和 linux 都能完全跑通"目前由 **8 / 44** 个 sample 支撑。
+「windows 和 linux 都能完全跑通」目前由 **8 / 44** 个 sample 支撑。
 
-### 抽 12 个"看起来不需要外部资源"的实测
+### 抽 12 个「看起来不需要外部资源」的实测
 
-| sample | 输出 | 真的在跑吗 |
+| sample | 输出 | 类别 |
 |---|---|---|
-| `CompareWithOpenBLAS` / `SampleMatMulNEON` / `SampleMatMulNEON_FP16` | `not supported in linux` / `only supports arm neon` | 平台桩 |
-| **`SampleFacialNet`** | **`failed to open file model/FacialNet.zqparam` / `failed to load net`** | **失败了，但 rc=0** |
+| `CompareWithOpenBLAS` / `SampleMatMulNEON` / `SampleMatMulNEON_FP16` | 平台桩 | 桩 |
+| `SampleFacialNet` | `failed to open file model/FacialNet.zqparam` / `failed to load net` | 要 Model Zoo 权重；**退出码 1，正确** |
 | `SampleGEPB` / `SampleMatMul` / `example_for_very_high_gflops` | 基准输出 | 真跑 |
 | `SampleSSDDetectorPytorch` / `model2code` / `swapRGBandBGR` / `testImageProcessing` | 打印用法 | 需参数 |
 | `testWinoF2233` | **无输出** | 真跑，但会被 `NOOUT` 判失败 |
 
-**12 个全部 rc=0** —— 原样塞进"只看退出码"的回归会**全部通过**，
-包括那个模型文件都找不到、实际什么都没做的 `SampleFacialNet`。
+真正「能无条件跑」的只有三个基准 + 一个无输出的 `testWinoF2233`。
+**处置**：本轮不扩回归列表（三个是基准会拖慢回归；`testWinoF2233` 无输出会被 `NOOUT` 判失败），
+而是把覆盖缺口的量化事实记下来。
 
-### 这条印证了 AGENTS.md 里已有的一条，但它一直没在真实 sample 上生效
+### 我自己测错了一次退出码，而且写进了报告
 
-AGENTS.md「回归脚本只看退出码会把平台桩记成通过」写明
-"**退出码为 0 只证明'没崩'，不证明'做了事'**"，harness 也据此加了 STUB/NOOUT 分类。
+这一节原来的标题是「含一个 rc=0 但实际失败的实例」，
+结论是 `SampleFacialNet` 打印失败却退出 0，并据此说
+AGENTS.md 那条「退出码 0 只证明没崩」在真实 sample 上被证伪。
 
-`SampleFacialNet` 是这条规则**第一次在真实 sample 上被证伪**：
-它既不是桩（不匹配 `only support|not support`），也**有输出**（不进 `NOOUT`），
-但它输出的是**失败**。harness 现有的三分类**抓不到它**。
+**那个结论是错的。** 根因是**我的测量**：
 
-> "有门禁"和"门禁覆盖到了你担心的那个东西"是两件事。
-> 它从来没进过回归，所以那套分类一直没机会在它身上生效。
+    out=$(timeout 90 ./$e 2>&1 | head -2 | tr '
+' ' '); rc=$?
 
-**处置**：本轮**不**扩回归列表（三个能跑的都是 GEMM/MatMul 基准，每次回归要多花时间；
-`testWinoF2233` 无输出会被 `NOOUT` 判失败），而是把**覆盖缺口的量化事实**记下来。
-拉某个 sample 进回归前，先按 GG.2 的实测定它属于哪一类。
+`$?` 取的是**管道最后一个命令（`tr`）的退出码**，恒为 0，
+和被测程序毫无关系。
 
-### 顺带更正我自己一个下得太快的读法
+发现它是因为去查「为什么源码写着 `return EXIT_FAILURE;` 却退出 0」，
+查到 `EXIT_FAILURE` 没被重定义、二进制比源码新、二进制里确实有那个路径 ——
+一切正常，于是回头裸跑，三种写法三次都是 **1**。
 
-查"有 4 个 `.zqparams` 没有配套权重"时，我看到 `det1`/`det2`/`det3`
-没有同名 `.nchwbin` 就下了"模型配对不全"的结论。**错了** ——
-`det1_bgr.nchwbin` / `det2_bgr.nchwbin` / `det3_bgr.nchwbin` **都在**，
-`SampleDetectMouth` 配的正是 `det1.zqparams` + `det1_bgr.nchwbin`。
+> 这一条比原结论更有价值：**测量与源码矛盾时，先怀疑测量。**
+> 我看到 `rc=0`、又看到源码里明明白白的 `return EXIT_FAILURE;`，
+> 却把矛盾解释成「库有 bug」并写进报告 ——
+> 而 AGENTS.md 恰好有一条现成规则：
+> 「**没有证据就不要在失败信息里断言原因**」。
+> 这次不是"没有证据"，是**证据本身错的**，而我拿它当证据用了。
+>
+> 推论：**凡"测出来的"和"读得出来的代码"冲突，先把测量重做一遍** ——
+> 尤其当那个结果刚好支持一个我已经想好的结论时。
 
-把 `_bgr` 变体算进去逐个核实之后，27 个 `.zqparams` 里**只有 1 个**
-（`mobilefacenet-res2-6-10-2-dim128`）没有配套权重，
-而 README:24 已写明 SphereFace/ArcFace 等示例需要从 Model Zoo 另下权重。
-**结论：不是缺陷。**
+### 顺带查出的一个真缺陷：SampleFacialNet 的模型名拼错了
+
+`SamplesZQCNN/SampleFacialNet/SampleFacialNet.cpp:42` 写的是
+`"model/FacialNet.zqparam"` —— 扩展名**少一个 `s`**。
+仓库里 27 个模型全是 `.zqparams`（289 处引用无一例外），
+而 `model/FacialNet.*` 属 Model Zoo、不在仓库里，所以本地两种写法都失败，
+**这个错字一直没被暴露**；下 Model Zoo 的人拿到手也会直接失败。已改正。
+
+### 变更文件
+
+- `SamplesZQCNN/SampleFacialNet/SampleFacialNet.cpp`（`.zqparam` -> `.zqparams`）
+- `audit_k3_20261001.md` / `docs-changelogs/CHANGELOG_2026-10-03.md`（附录 GG 更正）

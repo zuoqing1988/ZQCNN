@@ -39,7 +39,13 @@ int main()
 
 
 		ZQ_CNN_Net net;
-		if (!net.LoadFrom("model/FacialNet.zqparam", "model/FacialNet.nchwbin"))
+		// 审计修复 2026-10-03（附录 GG.4）：这里原来写的是
+		//     "model/FacialNet.zqparam"
+		// 扩展名**少了一个 `s`**。仓库里 27 个模型全部是 `.zqparams`
+		// （全仓 289 处引用无一例外），而 `model/FacialNet.*` 属于 Model Zoo、
+		// 不在仓库里 —— 于是本地两种写法都失败，这个错字一直**没有**被暴露；
+		// 真去 Model Zoo 下模型的人拿到手也会直接失败。
+		if (!net.LoadFrom("model/FacialNet.zqparams", "model/FacialNet.nchwbin"))
 		{
 			cout << "failed to load net\n";
 			return EXIT_FAILURE;
