@@ -1,0 +1,12 @@
+# 「读入 int -> 分配」站点基线（tools/check_filecount_bounds.py --save-baseline 生成）
+# 格式: <文件>\t<变量>\t<判定>
+# 判定 BOUNDED = 有上界；NEG_ONLY / NO_CHECK 才是要报的东西。
+# 键是 (文件, 变量)，**不含行号也不含分配调用名** ——
+# 两者都会因为一次无关的编辑而整体平移/换目标，
+# 放进键里就成了「每次改代码基线都炸」的门禁。
+ZQlibFaceID/ZQ_FaceClusterImagesForVideo.h	num	BOUNDED
+ZQlibFaceID/ZQ_FaceClustersForVideo.h	cluster_num	BOUNDED
+ZQlibFaceID/ZQ_FaceContainerForVideo.h	key_num	BOUNDED
+ZQlibFaceID/ZQ_FaceDatabase.h	feat_num	BOUNDED
+ZQlibFaceID/ZQ_FaceDatabase.h	len	BOUNDED
+ZQlibFaceID/ZQ_FaceSearchTarget.h	num	BOUNDED

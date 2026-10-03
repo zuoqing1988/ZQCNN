@@ -47,23 +47,38 @@ ALLOC_MAL = re.compile(r'\b(?:malloc|calloc)\s*\(\s*[^,)]*?(?:\(\s*(?:__)?int64\
 # **模板里的 %s 必须在 classify() 里用变量填上** ——
 # 第一版把 `%s` 原样留着，编译成正则去匹配字面量 "%s"，
 # 于是**任何"用比较表达的上界"都识别不出来**，
-      **用比较表达的上界**都识别不出来**，
 UB_TEMPLATES = [
     r'\b%s\s*>\s*(\d+)',
     r'\b%s\s*<\s*(\d+)',
     r'\b%s\s*>=?\s*\d+\s*&&\s*\w+\s*[<>]=?\s*\d+',
     r'\b%s\s*[<>]=?\s*\d+\s*&&\s*\w+\s*[<>]=?\s*\d+',
     r'\b%s\s*<=?\s*(\w+)',
-    r'\b%s\s*[<>]\s*\w+\s*\|\|',
-    # 形如 `|| num > 1000000`（**必须带 %s**；
-    # 漏掉占位符会让 `tmpl % var` 抛 'not all arguments converted'）
-    r'\|\|\s*%s\s*[<>]\s*(\d+)',
+    # 原来这里还有两条 `||` 形状的模板，**两条都删了**。
+    #
+    # 第一条 `r'\b%s\s*[<>]\s*\w+\s*\|\|'` 是**假阴性的来源**：
+    # 它没有捕获组，而 classify() 靠 `m.lastindex` 决定
+    # 「捕获到的数字算不算一个有意义的上界」—— 没有捕获组就等于
+    # **整条跳过 min_bound 过滤**，于是
+    #     if (... || cluster_num < 0 || ...)          // 只挡负数
+    # 被判成 BOUNDED。2026-10-03 变异实测：把真上界
+    # `|| cluster_num > 1000000` 删掉，工具**一声不吭**（rc=0）。
+    # 这正是附录 EF 最初报的那一类缺陷，工具自己却判它没问题。
+    #
+    # 第二条 `r'\|\|\s*%s\s*[<>]\s*(\d+)'` 没有判别力：
+    # 凡它能匹配的，前面第 1/2 条 `\b%s\s*[<>]\s*(\d+)` 早就匹配过了
+    # （它们先执行），到不了这里。它当年是为「漏掉 %s 占位符会让
+    # `tmpl % var` 抛 'not all arguments converted'」加的 ——
+    # 那个坑的教训是**模板必须带 %s**，与要不要这条模板无关。
     r'%s\s*>\s*0\s*&&\s*\w+\s*<\s*(\d+)',
 ]
 NEG_ONLY = re.compile(r'\b%s\s*<\s*0|\b%s\s*>=\s*0\s*&&(?![^;]*\b%s\s*[<>])')
 
 
 MIN_BOUND = 16   # 小于这个数的"上界"不算数（`num < 0` 是负数检查，不是上界）
+
+# 判定从好到坏。同一变量有多个分配点时基线里只存最差的那个，
+# 顺序写错会让"取最差"变成"取最好"—— 所以这里也当判据用。
+WORSE = ['BOUNDED', 'NEG_ONLY', 'NO_CHECK']
 
 
 def classify(var, ctx, min_bound=MIN_BOUND):
@@ -159,7 +174,24 @@ def main():
         sys.stdout.reconfigure(encoding='utf-8', errors='replace')
     except AttributeError:
         pass
-    roots = sys.argv[1:] or ['ZQCNN']
+    argv = sys.argv[1:]
+    save_to = None
+    check_against = None
+    # 标志先摘掉再当根目录 —— 否则 '--check-baseline' 会被当成要扫的目录名
+    if '--save-baseline' in argv:
+        i = argv.index('--save-baseline')
+        save_to = argv[i + 1]
+        del argv[i:i + 2]
+    if '--check-baseline' in argv:
+        i = argv.index('--check-baseline')
+        check_against = argv[i + 1]
+        del argv[i:i + 2]
+    argv = [a for a in argv if not a.startswith('--')]
+
+    roots = argv or ['ZQlibFaceID', 'ZQCNN']
+    # 基线必须**跨平台一致**：Windows 上 os.path.join 出来的是反斜杠，
+    # 直接写进基线会让 Linux 那边全部对不上。
+    findings = {}
     for r in roots:
         for dp, dn, fn in os.walk(r):
             dn[:] = [d for d in dn if d not in ('.git', 'build')]
@@ -170,13 +202,74 @@ def main():
                 res = scan(p)
                 if not res:
                     continue
+                rel = p.replace('\\', '/')
                 bad = [x for x in res if x[3] != 'BOUNDED']
                 print('=== %s：%d 个"读入 int -> 分配"站点，其中 **%d 个缺上界** ==='
-                      % (p, len(res), len(bad)))
+                      % (rel, len(res), len(bad)))
                 for (line, owner, var, st, why, alloc) in res:
                     mark = 'OK ' if st == 'BOUNDED' else st
                     print('  %-9s %-28s :%-4d %-14s %-22s %s'
                           % (mark, owner[:28], line, var, why[:22], alloc[:40]))
+                    # 键是 **(文件, 变量)**，不含行号、也**不含分配调用名**。
+                    # 后者是被实测逼出来的：把守卫里的一行删掉，行窗口会移一位，
+                    # 于是同一个变量匹配到**另一个** resize，键跟着变，
+                    # 门禁把「判定变差」报成 NEW + GONE —— 抓是抓住了，
+                    # 但诊断是错的，而**报错的诊断比没有诊断更费时间**。
+                    # 同一个变量有多个分配点时取**最差**的那个判定：
+                    # 这个门禁问的是「这个变量有没有上界」，不是「每个
+                    # resize 各自的上界是什么」。
+                    k = '%s\t%s' % (rel, var)
+                    if k not in findings or WORSE.index(st) > WORSE.index(findings[k]):
+                        findings[k] = st
+
+    if save_to:
+        lines = ['# 「读入 int -> 分配」站点基线'
+                 '（tools/check_filecount_bounds.py --save-baseline 生成）',
+                 '# 格式: <文件>\\t<变量>\\t<判定>',
+                 '# 判定 BOUNDED = 有上界；NEG_ONLY / NO_CHECK 才是要报的东西。',
+                 '# 键是 (文件, 变量)，**不含行号也不含分配调用名** ——',
+                 '# 两者都会因为一次无关的编辑而整体平移/换目标，',
+                 '# 放进键里就成了「每次改代码基线都炸」的门禁。']
+        for k in sorted(findings):
+            lines.append('%s\t%s' % (k, findings[k]))
+        with open(save_to, 'w', encoding='utf-8', newline='\n') as fh:
+            fh.write('\n'.join(lines) + '\n')
+        print('\nbaseline written to %s (%d sites)' % (save_to, len(findings)))
+
+    if check_against:
+        base = {}
+        try:
+            with open(check_against, encoding='utf-8') as fh:
+                for line in fh:
+                    if line.startswith('#') or not line.strip():
+                        continue
+                    parts = line.rstrip('\n').split('\t')
+                    if len(parts) >= 3:
+                        base['\t'.join(parts[:2])] = parts[2]
+        except IOError as e:
+            print('\nERROR: 读不到基线 %s: %s' % (check_against, e))
+            return 1
+        cur = findings
+        print('\n=== 与基线 %s 比对 ===' % check_against)
+        print('站点: 基线 %d 个 -> 现在 %d 个' % (len(base), len(cur)))
+        regressed = []
+        for k in sorted(base):
+            if k in cur and cur[k] != base[k]:
+                regressed.append((k, base[k], cur[k]))
+        gone = sorted(k for k in base if k not in cur)
+        new = sorted(k for k in cur if k not in base)
+        for k, was, now in regressed:
+            print('  REGRESSED %-70s %s -> %s' % (k, was, now))
+        for k in new:
+            print('  NEW       %-70s %s' % (k, cur[k]))
+        for k in gone:
+            print('  GONE      %-70s（基线里 %s）' % (k, base[k]))
+        if not regressed and not new and not gone:
+            print('无新增、无消失、无判定变化。')
+        # 判定**变差**（BOUNDED -> 别的）才算回退；站点消失也要看一眼，
+        # 因为「把整个函数删掉」和「修好了」在 diff 上长得一样。
+        return 1 if (regressed or new or gone) else 0
+
     return 0
 
 

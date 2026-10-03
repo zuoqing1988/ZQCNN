@@ -25,3 +25,9 @@ zqgemmab-*/
 # 把 tools/__pycache__/*.pyc 提交进仓库了 —— .gitignore 之前没有这一条。
 __pycache__/
 *.py[cod]
+
+# sample 往**仓库根**写出的结果图。7 个 MTCNN 系 sample 默认
+# result_name = "resultdet.jpg"，路径是相对的，所以从仓库根跑就落在根上。
+# 它是**产物**不是素材，2026-10-03 之前被误提交过一次。
+/resultdet.jpg
+/box.jpg

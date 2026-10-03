@@ -3637,3 +3637,125 @@ FD 那个门禁给的是**故意不存在**的权重路径，所以只验
 
 - `tools/zq_model_params_check.cpp`（`ZQ_MODEL_FULL_LOAD` 模式 + skip 状态 + nullptr 修复）
 - `tools/run_zqlib_checks.py`（该门禁默认走全量加载）
+
+
+## 变更：附录 GK —— 一条门禁自己从来没被执行过；为此加元门禁
+
+### 起因是一个问句，不是扫描
+
+这一轮开头没去找新漏洞，而是问：**这 40 多道门禁里，哪一道在看着另一道？**
+答案是**一道都没有**。当场就抓到了一个。
+
+### GK.1 `tools/check_filecount_bounds.py` 第 50 行是残句，文件一次都没跑过
+
+```cpp
+# 于是**任何"用比较表达的上界"都识别不出来**，
+      **用比较表达的上界"都识别不出来**，      <-- 第 50 行，6 空格缩进、没有 #
+UB_TEMPLATES = [
+```
+
+Python 解析期就抛 `SyntaxError: line 50: unexpected indent`。
+
+**它不是小工具**：它是附录 EL 的全部依据，
+`audit_k3_20261001.md:13287` 那句就是整个"读入 int 驱动分配"这一族缺陷的扫描器。
+**一份审计报告把结论建立在一个跑不起来的工具上，而回归全绿。**
+
+- 两道编码门禁（U+FFFD / 罕见字 / 形近字、multi-CR / lone-CR）**都不看"能不能解析"**；
+- 它**没接进** `run_audit_checks.py`（`grep` 只在报告里命中三处**引用**）；
+- 就算接进去也抓得到 —— `python 编不过的脚本` 退出码就是 1。
+  **真正的原因是"没人跑它"。**
+
+### GK.2 新增元门禁 `tools/check_gates_runnable.py`
+
+全仓每个 `.py` 必须严格 UTF-8 且能过 `compile()`；每个 `tools/*.sh` 过 `bash -n`
+（一次 wsl 批检）。用 `compile()` 不真执行 —— 真执行会把 `import mxnet/caffe` 拖进来。
+
+- **阳性对照**：造一个确实编不过的 `.py`，必须报出（否则"0 个有问题"和"一个都没扫到"长得一样）。
+- **变异验证**：把 GK.1 里**一模一样**的那一行注入回去 ->
+  退出码 1，报 `line 50: unexpected indent`（行号与错误与原始损伤逐字一致）。
+
+顺带一条 harness 观察：同一处损伤，**整文件 `Read` 的渲染把第 49 行的
+`#` 和前半句一起吞了**，看起来像有两行残句；`cat -A` 看字节只有一行。
+与 AGENTS.md「测量和读出来的代码冲突时先怀疑测量」是同一条原则的另一半 ——
+**冲突时也要怀疑渲染**。
+
+### GK.3 同一批事故的另一半：三个 Python 2 文件在 Python 3 下也跑不起来
+
+| 文件 | 问题 |
+|---|---|
+| `check_results.py` | 4 处 `print X` |
+| `mxnet2caffe.py` | 3 处 `print X` |
+| `prototxt_basic.py` | 1 处 `print` + **9 处 `dict.has_key()`** |
+
+**只改 `print` 是假的** —— 所以按 py2 痕迹（`iteritems/xrange/raw_input/has_key`）
+重扫全仓，确认只有这一个文件用 `has_key`。机械转换 **17 处**，
+逐字符等价，不做 import 整理不做格式化。
+
+顺带查出 `mxnet2caffe.py` 的 `if 'data' is key_i:` —— `is` 比对象身份不比值，
+而它是 `if/elif` 链的第一支、链尾没有 `else`，**一个正好叫 `data` 的参数会被静默跳过**。
+已改成 `==`。全仓再扫，没有第二处字符串 `is` 比较。
+
+### GK.4 `check_filecount_bounds.py` 自己的假阴性，是变异测出来的
+
+删掉 `|| cluster_num > 1000000`（只留负数检查）——
+**改动前 rc=0 没抓到，改动后 rc=1 `REGRESSED ... BOUNDED -> NEG_ONLY`**。
+
+根因是一条**没有捕获组**的上界模板：它让 `classify()` 里
+「捕获到的数字算不算有意义的上界」这个 min_bound 过滤**整条失效**，
+于是 `|| cluster_num < 0 ||` 被判成 BOUNDED。
+已删掉它和旁边一条没有判别力的模板，来历写进注释。
+
+> 这是今天第二次"工具的验证被自己骗过去"（另一次是 EP 的 `rest_len`）。
+> 形状一样：**一条不完整但看起来很严格的规则，比没有规则更危险。**
+
+### GK.5 基线的键改了两次，两次都是被实测逼出来的
+
+| 版本 | 键 | 删掉一行上界后 |
+|---|---|---|
+| v1 | `(文件, 行号, 变量, 判定)` | 行号平移 -> 每次无关编辑都炸 |
+| v2 | `(文件, 变量, 分配调用名, 判定)` | 抓到了，但报成 `NEW` + `GONE` |
+| **v3** | **`(文件, 变量)`，多分配点取最差** | `REGRESSED ... BOUNDED -> NEG_ONLY` |
+
+v2 值得单说：**抓是抓住了，但诊断是错的**，而报错的诊断比没有诊断更费时间 ——
+门禁说"新增一个站点少一个站点"，真正变差的那行在输出里根本没出现。
+原因：分配调用名取自 `lines[i-3:i+20]` 这个**行窗口**，删一行守卫就让窗口移一位、
+匹配到另一个 `resize`。
+
+### GK.6 仓库根的四个诊断残渣
+
+| 文件 | 处置理由 |
+|---|---|
+| `probe2.txt` / `probe3.txt` | 早期探针输出，**报的头数 143 与现在的 144 本身就矛盾** —— 会误导 |
+| `broken_list.txt` | 同一轮探针的 BROKEN 列表，已被基线取代 |
+| `tmp_table.md` | 汇编内核 64 尺寸原始表，`reports/ZQ_GEMM_汇编内核性能对比.md:376-438` 是**同一张表的完整版** |
+| `resultdet.jpg` | **7 个 MTCNN 系 sample 的输出图**（相对路径，从仓库根跑就落在根上）。是产物不是素材 -> 移出版本控制并进 `.gitignore`（连同 `box.jpg`） |
+
+### 变更文件
+
+- `tools/check_gates_runnable.py`（新增，元门禁）
+- `tools/filecount_baseline.txt`（新增，6 个站点基线）
+- `tools/check_filecount_bounds.py`（删残句 + 删两条 UB 模板 + 加 `--save/--check-baseline` + 键改 v3）
+- `tools/run_audit_checks.py`（接进 C8 / C8b 两道门禁）
+- `mobilefacenet-mxnet2caffe-ZQ/{check_results,mxnet2caffe,prototxt_basic}.py`（转 Python 3，17 处）
+- `mobilefacenet-mxnet2caffe-ZQ/mxnet2caffe.py`（`'data' is key_i` -> `==`）
+- `probe2.txt` / `probe3.txt` / `broken_list.txt` / `tmp_table.md`（删除）
+- `resultdet.jpg`（移出版本控制）、`.gitignore`（加 `/resultdet.jpg` `/box.jpg`）
+- `audit_k3_20261001.md`（追加附录 GK）
+
+### 实测结果
+
+- `python tools/check_gates_runnable.py --selftest` -> 扫 50 个 `.py` + 8 个 `.sh`，全过
+- 注入原样残句 -> 退出码 1，`line 50: unexpected indent`；还原 -> 0
+- `python tools/check_filecount_bounds.py --check-baseline ...` -> 6 站点无变化（rc=0）
+- 删掉 `|| cluster_num > 1000000` -> rc=1，`REGRESSED cluster_num BOUNDED -> NEG_ONLY`
+- `python tools/run_audit_checks.py --quick` -> **ALL CHECKS PASSED**，C8 / C8b 段均 OK，B 组 43/43
+- `check_text_encoding.py` -> `OK: 711 text files, all strict UTF-8, no U+FFFD`
+- `check_line_endings.py` -> `line endings OK`
+
+### 注意事项
+
+- 追加脚本用**非** raw 字符串写正文时，`\b` 会被 Python 解成 U+0008 退格符 ——
+  本轮真的写进去过一个（脚本当时就报了 `SyntaxWarning: invalid escape sequence`，
+  我没看那行警告）。已修，并把"其它控制字符"一并扫过（结果为空）。
+- `resultdet.jpg` 每次从仓库根跑 MTCNN 系 sample 都会重新生成；
+  以后 `git status` 干净是 `.gitignore` 生效，不是文件没被写出来。

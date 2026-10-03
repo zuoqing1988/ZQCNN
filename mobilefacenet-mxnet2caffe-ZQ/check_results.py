@@ -20,15 +20,15 @@ def compare_models(prefix_mxnet, prefix_caffe, size):
     netcaffe = PredictorCaffe(model_file, pretrained_file, size)
     tensor = np.ones(size, dtype=np.float32)
     out_mx = netmx.forward(tensor)
-    print out_mx
+    print(out_mx)
     netcaffe.forward(tensor)
     out_caffe = netcaffe.blob_by_name("fc1")
-    print out_caffe.data
+    print(out_caffe.data)
     #print softmax(out_caffe.data)
     out_caffe = netcaffe.blob_by_name("fc2")
-    print out_caffe.data
+    print(out_caffe.data)
     #print softmax(out_caffe.data)     
-    print "done"
+    print("done")
     
 if __name__ == "__main__":
     prefix_mxnet = "model_mxnet/face/facega2"

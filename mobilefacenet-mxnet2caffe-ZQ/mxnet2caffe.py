@@ -31,14 +31,14 @@ for i_key,key_i in enumerate(all_keys):
 
   try:    
     
-    if 'data' is key_i:
+    if 'data' == key_i:
       pass
     elif '_weight' in key_i:
       key_caffe = key_i.replace('_weight','')
       if 'fc' in key_i:
-        print key_i
-        print arg_params[key_i].shape
-        print net.params[key_caffe][0].data.shape
+        print(key_i)
+        print(arg_params[key_i].shape)
+        print(net.params[key_caffe][0].data.shape)
       net.params[key_caffe][0].data.flat = arg_params[key_i].asnumpy().flat      
     elif '_bias' in key_i:
       key_caffe = key_i.replace('_bias','')

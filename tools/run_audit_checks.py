@@ -146,6 +146,21 @@ GROUPS = [
     # （C4 那次撞名是我自己犯的，注释里已记；这里直接避开。）
     ('C7 sample 不得含未注释的 GUI 调用（用户指令门禁）',
      ['check_no_gui_calls.py'], True),
+    # C8（附录 GK）：**门禁自己必须能跑起来**。
+    # `check_filecount_bounds.py` 的第 50 行是一句 6 空格缩进、没有 `#` 的
+    # 残句（从一行被截断的注释尾巴里掉下来的），Python 在解析期就抛
+    # SyntaxError —— 那个文件**一次都没被执行过**，而它正是附录 EL 的
+    # 全部依据（audit_k3_20261001.md:13287 直接把结论建立在它身上）。
+    # 回归之所以发现不了，是因为 40 多道门禁**互相不看对方**。
+    # 放在快组：只做 compile()，不执行，50 个 .py 一秒内跑完。
+    ('C8 门禁自身可解析（每个 .py / .sh）',
+     ['check_gates_runnable.py', '--selftest'], False),
+    # C8 顺带把 `check_filecount_bounds.py` 接进回归。基线的键是
+    # **(文件, 变量)**：不含行号也不含分配调用名 —— 后者会被实测逼出来，
+    # 见 UB_TEMPLATES 上面那段注释。
+    ('C8b「读入 int -> 分配」站点基线（附录 EL）',
+     ['check_filecount_bounds.py', '--check-baseline',
+      os.path.join(HERE, 'filecount_baseline.txt')], False),
 ]
 
 
