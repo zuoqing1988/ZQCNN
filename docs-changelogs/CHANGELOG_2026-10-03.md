@@ -3137,3 +3137,45 @@ x86 `idiv` 直接陷阱，**进程 SIGFPE 当场死掉**。
 
 - `tools/probe_readparam_coverage.py`（新，只读诊断；输出措辞改为"候选"）
 - `tools/zq_convparam_check.cpp`（31 -> 49 例）
+
+---
+
+## 变更：附录 FA —— 把"条件化校验守卫"扫一遍（全仓只有 1 处）
+
+### 为什么这类守卫要单独立一节
+
+EZ 在 `Pooling::ReadParam` 发现的形状：
+
+    if (!global_pool
+        && (kernel_H <= 0 || kernel_W <= 0 || stride_H <= 0 || stride_W <= 0))
+    { ...; return false; }
+
+`!global_pool` 是**豁免**。关键在它是**单边风险**：
+无条件守卫写错 ⇒ 合法模型被拒（sample 回归立刻发现）；
+**条件化守卫被"顺手简化"掉 ⇒ 同样误拒合法模型，而没有任何现有门禁会报错**，
+因为从来没人驱动过豁免路径。
+
+### 结论：全仓只有 1 处
+
+    ZQCNN/ZQ_CNN_Layer.h:3945  ZQ_CNN_Layer_Pooling  豁免条件 !global_pool
+
+`ZQ_CNN_Net.h` / `ZQ_CNN_Net_NCHWC.h` / `ZQlibFaceID/*.h` 全扫过，**零处**。
+这类风险已被 EZ 完全覆盖。
+
+### 探针自己也错了两次（第四次同一个坑）
+
+| 版本 | 问题 |
+|---|---|
+| v1 | 正则要求 `!cond` 后同一行必须有 `)` 或 `&&`，而 Pooling 那处**换行了** ⇒ 整条不匹配，**报 0 处** —— 正是它专为之写的形态 |
+| v2 | 修好匹配后报 1 处 Pooling + **5 处 `ZQ_FaceDatabaseMaker` 误报**（它们的"比较"来自 `FindFace(..., 60, 0.709, ...)` 的实参） |
+| v3 | 收紧成"整条条件只由比较/标识符/算术构成" ⇒ **恰好 1 处** |
+
+今天这是第四次为"扫出来 0 命中"交学费（EP.2 两次、EQ 一次、FA 一次）。
+写进 AGENTS.md 的规则仍然对，但**光写规则不够 —— 写完工具立刻做变异**。
+
+**变异验证**：`!global_pool` 改成 `true` ⇒ 探针报 0 处；还原 ⇒ 报 1 处。
+同一变异下 `zq_convparam` RC=1（EZ.5 已验）。
+
+### 变更文件
+
+- `tools/probe_exempt_guards.py`（新，只读诊断）
