@@ -1868,3 +1868,67 @@ Sqrt / Tile / Scale / BatchNorm），未覆盖 4 个
 （DeConvolution / LSTM_TF / PriorBoxText / DetectionOutput_MXNET）。
 
 验证：全量非慢门禁 **38/38 通过**。
+
+---
+
+## 变更：附录 EL —— 模型权重加载面（72 个 LoadBinary_NCHW）的扫描与一个负结果
+
+### 为什么查这里
+
+威胁模型把**模型文件（.nchwbin）**列为不可信输入，而它的解析入口
+`ZQ_CNN_Layer::LoadBinary_NCHW` 在 `ZQ_CNN_Layer.h` 里有 **72 个实现**、**40 处 fread**，
+而**门禁对它们零覆盖**。把 EF 那次的一次性脚本做成工具
+`tools/check_filecount_bounds.py`（扫"文件读入的 int 驱动内存分配、有没有上界"这一族）。
+
+### 结论：`ZQ_CNN_Layer.h` 里这一族缺陷**不存在**（负结果，但有用）
+
+`LoadBinary_NCHW` 的形状是：
+
+    int dst_len = filters->GetN() * filters->GetH() * filters->GetW() * filters->GetC();
+    if (dst_len <= 0) return false;
+    std::vector<float> nchw_raw(dst_len);
+    if (dst_len != fread_s(&nchw_raw[0], dst_len*sizeof(float), sizeof(float), dst_len, in))
+
+**它不从文件里读长度** —— 长度来自**已分配好的张量的维度**。
+全文件统计：`fread(&X, sizeof(int), ...)` **0 处**；`int dst_len =` 63 处；
+`if (dst_len <= 0)` 117 处。
+所以**模型文件无法直接控制分配大小**（只能通过控制维度间接影响）。
+
+### 但查出两件值得记的事
+
+1. **`dst_len` 没有任何显式上界**（`grep -cE "dst_len > [0-9]"` = 0），只有 `<= 0`。
+   间接上界来自 `ZQ_CNN_Tensor4D::ChangeSize`：`dst_tensor_raw_size > 0x7FFFFFFF`
+   时 `return false`（`ZQ_CNN_Tensor4D.cpp:186-188`），于是单层权重被限在 ~2 GB。
+   **"没有显式上界、只有别处兜着"比"没有上界"更难查** ——
+   读 `LoadBinary_NCHW` 本身完全看不出这个约束在哪。
+2. **`ZQ_CNN_Net.h` 里 `catch(` 出现 0 次**，而层加载点
+   （`ZQ_CNN_Net.h:1136` / `1185`）直接调 `LoadBinary_NCHW`。
+   真撞上 `bad_alloc` 时异常一路冒到 `std::terminate()`，与 EF 那条同一种失效模式。
+
+**这两条都不作为缺陷修**（理由写进报告）：
+第 1 条的兜底是 `ChangeSize` 的既有契约，改它会影响所有张量分配；
+第 2 条要真正防住得引入"全局内存预算"，那是**设计变更**而不是补一个守卫。
+记为"模型文件很大 ⇒ 进程可能 abort"这一**已知边界**。
+
+### 工具本身：写了六版才对，每一次都是"看起来很权威的错误输出"
+
+| # | 症状 | 真因 |
+|---|---|---|
+| 1 | 跑 ZQCNN 报"0 处" | `re.search` 少了 `ctx` 参数；拿已知阳性样本一验就暴露 |
+| 2 | 把 `num < 0 \|\| num > 1000000` 判成"没上界" | 模板里的 `\b%s` **从未被 `% var` 替换**，匹配的是字面量 `%s` |
+| 3 | 把 `num < 0` 判成"上界 0 = 有界" | `< 0` 是**负数检查**不是上界 —— **恰好把 EF 修掉的那处报成 OK** |
+| 4 | 漏判"守卫写在十几行注释之后" | 上下文用了固定 20 行窗口 |
+| 5 | 匹配到**隔壁函数**的 resize | 找分配也用了整个函数 |
+| 6 | 删掉守卫后**仍然报 OK** | 匹配的是"提到了 rest_len 这个词"，而不是"rest_len 真的参与了判断" |
+
+第 3、6 条最危险：它们让工具对它**被造出来抓的那类缺陷完全失明**，
+而输出还带着表格和计数，看着比真相更像真相。
+
+> **固化**：一个"分类/统计"型工具，**在被信任之前必须先证明它能把一个已知样本分对类** ——
+> 而且**必须用"变异"去证**，不是跑一遍看输出顺眼。
+> 第 6 条就是"跑一遍看着对、其实没验"：我第一次变异只删了 `if`、留下了计算 rest_len
+> 的那段代码，工具照样报 OK；**是那次不完整的变异把工具的漏洞又藏了一轮**，
+> 直到把**整块**删掉才暴露。**验证工具的变异，也必须先确认它自己变异到位了。**
+
+**工具定位：分诊辅助，不进回归门禁**（有已知局限：只看一种形状，窗口是启发式的）。
+真正的门禁仍然是行为门禁（`zq_facegroup` 那一类）。
