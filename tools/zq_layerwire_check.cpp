@@ -121,6 +121,43 @@ ZQ_STUB_RED(_reduction_sum, H_REDSUM)
 ZQ_STUB_RED(_reduction_mean, H_REDMEAN)
 #undef ZQ_STUB_RED
 
+// 这两个与前面那批"记录桩"不同：**它们要真算** —— 数值对拍才有意义。
+// Sqrt / Scale 走的是头文件 inline 包装，包装调的是这两个 .cpp 里的辅助函数。
+// 广播按**逐通道**实现；用例里的 scale/bias 张量开成 C 通道，所以 scale[c] 合法。
+void ZQ_CNN_Forward_SSEUtils::_sqrt(int align_mode, float* data, int N, int H, int W, int C,
+                                    int pixStep, int widthStep, int sliceStep)
+{
+    (void)align_mode;
+    for (int n = 0; n < N; n++)
+        for (int c = 0; c < C; c++)
+            for (int h = 0; h < H; h++)
+                for (int w = 0; w < W; w++)
+                {
+                    float* p = data + (size_t)n * sliceStep + (size_t)c * 1
+                             + (size_t)h * widthStep + (size_t)w * pixStep;
+                    *p = sqrtf(*p);
+                }
+}
+
+void ZQ_CNN_Forward_SSEUtils::_scalebias(int align_mode, float* data, int N, int H, int W, int C,
+                                         int pixStep, int widthStep, int sliceStep,
+                                         float const* scale, float const* bias)
+{
+    (void)align_mode;
+    for (int n = 0; n < N; n++)
+        for (int c = 0; c < C; c++)
+            for (int h = 0; h < H; h++)
+                for (int w = 0; w < W; w++)
+                {
+                    float* p = data + (size_t)n * sliceStep + (size_t)c * 1
+                             + (size_t)h * widthStep + (size_t)w * pixStep;
+                    // Scale（不带 bias）调的是同一个辅助函数、bias 传 **NULL**
+                    // （ZQ_CNN_Forward_SSEUtils.h:2221 `_scalebias(..., scale_data, NULL)`）。
+                    // 我第一版无条件解引用 bias[c] -> 不带 bias 的那条直接崩。
+                    *p = (bias == 0) ? (*p * scale[c]) : (*p * scale[c] + bias[c]);
+                }
+}
+
 void ZQ_CNN_Forward_SSEUtils::_lrn_across_channels(int align_mode, int local_size, float alpha, float beta, float k,
     const float* in_data, int N, int H, int W, int C, int pixStep, int widthStep, int sliceStep,
     float* out_data, int out_pixStep, int out_widthStep, int out_sliceStep)
@@ -140,8 +177,13 @@ static ZQ_CNN_Tensor4D* make_t(int kind)
     return new ZQ_CNN_Tensor4D_NHW_C_Align256bit();
 }
 
-enum { OP_SCALAR = 0, OP_REDUCTION, OP_LRN, OP_SQUEEZE, OP_COPY, OP_UNARY, OP_INPUT };
-static const char* g_opname[] = { "ScalarOp", "Reduction", "LRN", "Squeeze", "Copy", "UnaryOp", "Input参数" };
+enum { OP_SCALAR = 0, OP_REDUCTION, OP_LRN, OP_SQUEEZE, OP_COPY, OP_UNARY, OP_INPUT,
+       // 附录 EJ：三个**直接可驱动**的 UNUSED 层。它们的依赖都是 public 成员
+       //（Sqrt 无依赖；Tile 的 tile_* 是成员；Scale 的 scale/bias 是 public 张量），
+       // 接线风险最高的恰是**参数顺序传错**，所以用独立公式逐格对拍。
+       OP_SQRT_LAYER, OP_TILE_LAYER, OP_SCALE_LAYER, OP_SCALEBIAS_LAYER };
+static const char* g_opname[] = { "ScalarOp", "Reduction", "LRN", "Squeeze", "Copy", "UnaryOp", "Input参数",
+                                 "Sqrt(层)", "Tile(层)", "Scale(层)", "Scale+bias(层)" };
 // note: 0 无事 / 1 搭建失败 / 2 返回值与期望相反 / 3 该调内核却一次都没调
 //       / 4 输入指针不在 bottom 里 / 5 输出指针不在 top 里 / 6 参数被层改了
 //       / 7 非法参数却仍然放行 / 8 bottom 的内容被改了
@@ -211,6 +253,107 @@ static void run_case(const Case& c, int kind)
 
     if (!bottom->ChangeSize(c.N, c.H, c.W, c.C, 0, 0)) { note = 1; bad++; }
     else if (!top->ChangeSize(1, 1, 1, 1, 0, 0)) { note = 1; bad++; }
+    else if (c.op >= OP_SQRT_LAYER)
+    {
+        // ---- 附录 EJ：Sqrt / Tile / Scale 三个 UNUSED 层 ----
+        // 判据：① 逐格对拍（**独立公式**）② bottom 一个字节都不许被改
+        //      ③ 输出形状必须符合层自己的声明
+        // 这三个层的接线风险最高的就是**参数顺序传错**
+        //（Tile 的 tile_n/tile_h/tile_w/tile_c 四个参数挨着，传错一个就整体错位）。
+        const int bss = bottom->GetSliceStep(), bps = bottom->GetPixelStep(), bws = bottom->GetWidthStep();
+        float* bp = bottom->GetFirstPixelPtr();
+        for (int i = 0; i < c.N * bss; i++) bp[i] = -31337.0f;
+        for (int n = 0; n < c.N; n++)
+            for (int cc = 0; cc < c.C; cc++)
+                for (int h = 0; h < c.H; h++)
+                    for (int w = 0; w < c.W; w++)
+                        bp[(size_t)n * bss + (size_t)h * bws + (size_t)w * bps + cc] = val(n, cc, h, w);
+        std::vector<ZQ_CNN_Tensor4D*> vb, vt;
+        vb.push_back(bottom); vt.push_back(top);
+        bool r = false;
+        ZQ_CNN_Tensor4D* sc = 0; ZQ_CNN_Tensor4D* bi = 0;
+        if (c.op == OP_SQRT_LAYER)
+        {
+            ZQ_CNN_Layer_Sqrt* L = new ZQ_CNN_Layer_Sqrt();
+            r = L->Forward(&vb, &vt);
+            delete L;
+        } else if (c.op == OP_TILE_LAYER)
+        {
+            ZQ_CNN_Layer_Tile* L = new ZQ_CNN_Layer_Tile();
+            // **三个倍数必须互不相同**，否则门禁对"传错顺序"完全瞎 ——
+            // 我第一版 tile_n = tile_h = tile_w = a，把 n/h 换掉结果一模一样，
+            // 变异测试于是**没红**（这是"用例无效"，不是"代码没问题"）。
+            // 现在取 n = a、h = a+1、w = 1。
+            L->tile_n = c.a; L->tile_h = c.a + 1; L->tile_w = 1; L->tile_c = 1;
+            r = L->Forward(&vb, &vt);
+            delete L;
+        } else
+        {
+            ZQ_CNN_Layer_Scale* L = new ZQ_CNN_Layer_Scale();
+            sc = make_t(kind); bi = make_t(kind);
+            if (!sc->ChangeSize(1, 1, 1, c.C, 0, 0)) { note = 1; bad++; }  // 逐通道，所以开 C 个
+            else {
+                for (int i = 0; i < sc->GetSliceStep(); i++) sc->GetFirstPixelPtr()[i] = c.f;
+                L->scale = sc;
+                if (c.op == OP_SCALEBIAS_LAYER)
+                {
+                    if (!bi->ChangeSize(1, 1, 1, c.C, 0, 0)) { note = 1; bad++; }
+                    else {
+                        for (int i = 0; i < bi->GetSliceStep(); i++) bi->GetFirstPixelPtr()[i] = 0.5f;
+                        L->bias = bi; L->with_bias = true;
+                    }
+                }
+                if (!bad) r = L->Forward(&vb, &vt);
+            }
+            delete L;
+            // **不要再 delete sc / bi**：`ZQ_CNN_Layer_Scale` 的析构函数
+            // 里有 `if (scale) delete scale; if (bias) delete bias;` ——
+            // 层**接管**了这两个张量。我这里再 delete 一次就是**双 free**，
+            // ASan 报 heap-use-after-free，读点落在我自己的判断代码上。
+            // （与 zq_facegroup 那次"手动 free 撞上 ZQ_FaceFeature 析构"同一类。）
+        }
+        if (!r) { note = 2; bad++; }
+        else
+        {
+            // ① bottom 未被改
+            for (int i = 0; i < c.N * bss && bad < 4; i++)
+                if (bp[i] == 12345.0f) { note = 8; bad++; break; }
+            // ② 逐格对拍
+            if (!bad)
+            {
+                const int oN = top->GetN(), oC = top->GetC(), oH = top->GetH(), oW = top->GetW();
+                const int ops = top->GetPixelStep(), ows = top->GetWidthStep(), oss = top->GetSliceStep();
+                const float* tp = top->GetFirstPixelPtr();
+                // **非 Tile 的三个层输出形状与输入相同**（tn/th/tw 恒为 1）。
+                // 我第一版写成 `? c.a : c.N`（拿输入的 N 当倍数），
+                // 于是 Sqrt/Scale 的形状判据恒假、报成"该调内核却一次都没调"。
+                const int tn = (c.op == OP_TILE_LAYER) ? c.a : 1;
+                const int th = (c.op == OP_TILE_LAYER) ? c.a + 1 : 1;
+                const int tw = 1;
+                if (oN != c.N * tn || oH != c.H * th || oW != c.W * tw
+                    || oC != c.C * ((c.op == OP_TILE_LAYER) ? 1 : 1))
+                { note = 6; bad++; }   // 形状不符 == 参数被层改传了；复用 note=3
+                                        // 会显示成"该调内核却一次都没调"，误导
+                else
+                    for (int n = 0; n < oN && bad < 4; n++)
+                        for (int cc = 0; cc < oC && bad < 4; cc++)
+                            for (int h = 0; h < oH && bad < 4; h++)
+                                for (int w = 0; w < oW && bad < 4; w++) {
+                                    // 独立公式：Tile 沿每个轴取模，其余是恒等
+                                    const int sn = n % c.N, sh = h % c.H, sw = w % c.W;   // 沿各轴取模
+                                    const double x = (double)bp[(size_t)sn * bss + (size_t)sh * bws
+                                                            + (size_t)sw * bps + (cc % c.C)];
+                                    double want;
+                                    if (c.op == OP_SQRT_LAYER) want = sqrt(x);
+                                    else if (c.op == OP_SCALE_LAYER) want = x * c.f;
+                                    else if (c.op == OP_SCALEBIAS_LAYER) want = x * c.f + 0.5;
+                                    else want = x;
+                                    const double got = (double)tp[(size_t)n * oss + (size_t)h * ows + (size_t)w * ops + cc];
+                                    if (fabs(got - want) > 1e-4 * (1.0 + fabs(want))) { if (!note) note = 4; bad++; }
+                                }
+            }
+        }
+    }
     else {
         const int bss = bottom->GetSliceStep(), bps = bottom->GetPixelStep(), bws = bottom->GetWidthStep();
         float* bp = bottom->GetFirstPixelPtr();
@@ -364,6 +507,16 @@ static void run_case(const Case& c, int kind)
 }
 
 static const Case g_cases[] = {
+  // ---- 附录 EJ：Sqrt / Tile / Scale 三个 UNUSED 层 ----
+  { OP_SQRT_LAYER,     1, 3, 2, 2, 0, 0.f, 1 },
+  { OP_SQRT_LAYER,     2, 5, 2, 3, 0, 0.f, 1 },
+  { OP_TILE_LAYER,     1, 3, 2, 2, 1, 0.f, 1 },   // (n,h,w) = (1,2,1)
+  { OP_TILE_LAYER,     1, 3, 2, 3, 2, 0.f, 1 },   // (2,3,1)
+  { OP_TILE_LAYER,     2, 4, 1, 1, 2, 0.f, 1 },   // (2,3,1) 且 N=2
+  { OP_SCALE_LAYER,    1, 4, 2, 2, 0, 3.0f, 1 },
+  { OP_SCALE_LAYER,    2, 8, 2, 3, 0, 0.25f, 1 },
+  { OP_SCALEBIAS_LAYER, 1, 4, 2, 2, 0, 3.0f, 1 },
+  { OP_SCALEBIAS_LAYER, 2, 8, 2, 3, 0, 0.25f, 1 },
   // ScalarOperation：9 个操作。判据 3 是"标量原样传下去"
   { OP_SCALAR, 1, 3, 2, 2, 0, 2.0f, 1 },    // MUL
   { OP_SCALAR, 1, 3, 2, 2, 1, 2.0f, 1 },    // DIV

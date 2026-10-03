@@ -1785,3 +1785,44 @@ EI.6 自己点名的缺口，这一轮补上：`ZQ_FaceSearchTarget::SaveToFile`
 **每一个的症状都长得像"被测代码坏了"**。
 
 验证：全量非慢门禁 **38/38 通过**。
+
+---
+
+## 变更：附录 EJ —— zq_layerwire 扩到 123 例（Sqrt / Tile / Scale 三个 UNUSED 层）
+
+EC 覆盖了 7 个 UNUSED 层；这一轮补上**依赖是 public 成员、可直接驱动**的三个：
+
+| 层 | 接线风险点 |
+|---|---|
+| `Sqrt` | 应当**先 CopyData(bottom→top) 再就地开方 top**，不是就地开方 bottom |
+| `Tile` | `tile_n`/`tile_h`/`tile_w`/`tile_c` **四个参数挨着**，传错一个整体错位 |
+| `Scale` / `ScaleWithBias` | 应当作用在 **top**（copy 之后）而不是 bottom；scale/bias 是**逐通道**张量 |
+
+判据仍是"逐格对拍 + **独立公式** + bottom 一个字节都不许被改 + 输出形状符合声明"。
+
+**变异测试：把 Tile 转发里的 `tile_n` 与 `tile_h` 对调** → 恰好 3 条 Tile 用例变红。
+
+> **第一次做这个变异时它没红**，原因值得记：我的 Tile 用例是
+> `tile_n = tile_h = tile_w = a` —— **三个倍数相等**，把 n 和 h 换掉结果一模一样。
+> **"变异没红"的第一种原因又出现了：用例取值让这处变异不可观测。**
+> 改成 `n = a, h = a+1, w = 1`（互不相同）之后，同一个变异立刻被抓住。
+
+**本轮我自己又犯了两个"门禁坏了"的错**（症状依旧是"被测代码坏了"）：
+
+1. **双 free（第三次撞上这一类）**：`ZQ_CNN_Layer_Scale` 析构里
+   `if (scale) delete scale; if (bias) delete bias;` —— **层接管了这两个张量**，
+   我又手动 delete 一遍。ASan 报 heap-use-after-free，读点落在我自己的判断代码上。
+2. **桩的语义没对齐**：`Scale`（不带 bias）调的也是 `_scalebias`，
+   但 **bias 传的是 NULL**（`ZQ_CNN_Forward_SSEUtils.h:2221`），
+   我的桩无条件解引用 `bias[c]` => 不带 bias 的那两条直接崩。
+   另外我第一版把非 Tile 三个层的输出倍数写成 `? c.a : c.N`，形状判据恒假。
+
+**一个顺带的收获**：`Scale` 这条崩了之后，是 **EI 里刚修好的"失败明细路径"**
+把子进程的 ASan 报告完整打了出来（栈顶直接指向我自己的第 306 行）——
+那两处路径在修好之前，这条只会显示成"没跑完"。**同一个修复的第二次兑现**。
+
+**覆盖边界**：`Scale`/`Sqrt`/`Tile` 现在有门禁；
+`DeConvolution` / `BatchNorm` / `LSTM_TF` / `PriorBoxText` / `DetectionOutput_MXNET`
+仍只有编译验证（需要 net 权重 blob 或更多初始化）。
+
+验证：全量非慢门禁 **38/38 通过**。
