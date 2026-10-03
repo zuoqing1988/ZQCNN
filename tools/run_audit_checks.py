@@ -209,6 +209,14 @@ GROUPS = [
     ('C12b ARM/NEON FP16 档（附录 GQ）',
      ['check_neon_branch.py', '--fp16', '--check-baseline',
       os.path.join(HERE, 'neon_fp16_baseline.txt')], True),
+    # C13（附录 GT）：data/ 里的图必须**扩展名与内容一致**且能解码。
+    # 实测发现 data/mouth0.jpg、data/mouth1.jpg 是 **PNG 内容、.jpg 扩展名** ——
+    # OpenCV 按内容嗅探所以当时还能读，但任何按扩展名分派的调用方
+    # （IMREAD_JPEG、libjpeg 直连、第三方脚本）都会拿到错的东西。
+    # 附录 B-3 记着 libjpeg 没装 setjmp 时畸形图片会让它直接 exit()，
+    # 所以"图能不能解"不只是 sample 的事。
+    ('C13 data/ 图像扩展名与可解码性（附录 GT）',
+     ['check_data_images.py', '--selftest'], True),
 ]
 
 
