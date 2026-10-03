@@ -39,6 +39,7 @@ from __future__ import print_function
 
 import argparse
 import os
+import re
 import subprocess
 import sys
 
@@ -221,6 +222,27 @@ WIN_SAMPLES = ['SampleGEMMAsmCompare.exe', 'SampleMTCNN.exe', 'SampleMTCNN_NCHWC
                'SampleSSD.exe', 'SampleCascadeOnet.exe', 'SampleFaceDetectorMTCNN.exe']
 WIN_BIN = os.path.join(ROOT, 'cmake-out-win32-x64', 'release', 'Release')
 
+# Windows 侧的检出数下界（附录 GS.3，2026-10-04）。
+#
+# 为什么要和 Linux 侧一样：GS 那条下界原本**只加在 run_sample_regression.sh 里**，
+# 也就是只管 Linux。而 Windows 侧恰恰是 MSVC/AVX2 特有的问题最容易出现的地方 ——
+# 只在 Linux 断言检出数，等于把"换个编译器会不会坏"这个问题留在外面。
+#
+# 实测（2026-10-04，VS2022，仓库自带权重）：Windows 的四个数与 Linux
+# **完全一致** —— 10 / 4 / 4 / 3。跨平台可复现性这一条因此也有了实测支撑。
+#
+# 下界同样取"实测值的一半（至少 1）"；`SampleGEMMAsmCompare.exe` 是纯 GEMM
+# 基准，不适用；`SampleFaceDetectorMTCNN.exe` 还没有计数行，记 None = 暂不适用
+# （它的**内容**由 SampleMTCNN 覆盖，见 SampleMTCNN 那一条）。
+WIN_DETECT_FLOOR = {
+    'SampleMTCNN.exe': 5,
+    'SampleMTCNN_NCHWC4.exe': 2,
+    'SampleSSD.exe': 2,
+    'SampleCascadeOnet.exe': 1,
+    'SampleFaceDetectorMTCNN.exe': None,
+    'SampleGEMMAsmCompare.exe': None,
+}
+
 
 def run_group(name, cmd, cwd=None, shell=False):
     print('=' * 74)
@@ -251,7 +273,34 @@ def run_build_group():
             continue
         # 注意: sample 必须在**产物目录**里跑（CMake 把 model/ 和 data/ 联接到了那里），
         # 从仓库根跑只会打一行 empty image，看着像跑过了其实什么都没验。
-        ok &= run_group('D4 Windows sample %s' % exe, [path], cwd=WIN_BIN)
+        #
+        # 这里**不用 run_group**：它只看退出码、不接 stdout，
+        # 而这里要读 `final found num:` —— 见 WIN_DETECT_FLOOR 的注释（附录 GS.3）。
+        floor = WIN_DETECT_FLOOR.get(exe)
+        print('=' * 74)
+        print('### D4 Windows sample %s' % exe)
+        sys.stdout.flush()
+        p = subprocess.run([path], cwd=WIN_BIN, capture_output=True)
+        out = (p.stdout or b'').decode('utf-8', 'replace') + \
+              (p.stderr or b'').decode('utf-8', 'replace')
+        sys.stdout.write(out)
+        sys.stdout.flush()
+        good = (p.returncode == 0)
+        why = ''
+        if good and floor:
+            m = re.search(r'final found num:\s*(\d+)', out)
+            if not m:
+                good = False
+                why = '应当打印 "final found num:"，实际没有（断言被绕过了？）'
+            elif int(m.group(1)) < floor:
+                good = False
+                why = '检出 %s 张 < 下界 %d' % (m.group(1), floor)
+            else:
+                why = '检出 %s 张（下界 %d）' % (m.group(1), floor)
+        print('--- D4 Windows sample %s: %s%s'
+              % (exe, 'OK' if good else 'FAILED',
+                 ('  ' + why) if why else ''))
+        ok &= good
     return ok
 
 
