@@ -613,6 +613,27 @@ namespace ZQ
 			// 会在 ZQ_CNN_Forward_SSEUtils 的 7 个卷积 wrapper 里造成
 			// **整数除零**（x86 idiv -> SIGFPE，进程直接死）。
 			// 那里也已加了 return false 守卫（纵深防御），这里是更早、更明确的一处。
+			// **审计修复 2026-10-03（附录 EM.3）：上面只拦了 <= 0，
+			// 而 GetTopDim / SetBottomDim 里要算 `(kernel_H - 1) * dilate_H + 1`
+			// （本类 682/683/695/696/713/714， DepthwiseConvolution 1256/1257/1269/1270/1287/1288，
+			//  DeConvolution 1857/1858/1875/1876 —— 共 16 处）。
+			// kernel/dilate 部来自**模型文件**（不可信输入），两者都取 2e9 时这个 int 乘法
+			// **溂出**（gcc 实测 -Woverflow，回绵成 643460097 这个**正数**，
+			// 于是绕过下游的贤值检查，top_H 被算成 0 -> 零尺寸张量 ->
+			// firstPixelData = 0 -> 空指针解参看，见附录 ED.1。）。
+			// 这里**按“乘量必须放得进 int”来卡，而不拍一个任意的系数上限——
+			// 乘积检查本身就是溂出条件，不需要另设闲值。
+			// 影响面（动手前数的，附录 EM.2）：现有 469 条 Convolution/DeConvolution 行里
+			// kernel_size 只有 1/2/3、dilate **从未出现**（全默认 1），
+			// 离溂出差 7.16 亿倍 —— 所以这个守卫对 36 个随仓库模型**零影响**。
+			if ((__int64)dilate_H * (kernel_H - 1) + 1 > 0x7FFFFFFF
+				|| (__int64)dilate_W * (kernel_W - 1) + 1 > 0x7FFFFFFF)
+			{
+				std::cout << "Layer " << name << " conv kernel/dilate overflow: kernel "
+					<< kernel_H << "x" << kernel_W << " dilate " << dilate_H << "x" << dilate_W
+					<< " ((kernel-1)*dilate+1 must fit in int)" << std::endl;
+				return false;
+			}
 			if (kernel_H <= 0 || kernel_W <= 0 || stride_H <= 0 || stride_W <= 0
 				|| dilate_H <= 0 || dilate_W <= 0)
 			{
@@ -1185,6 +1206,27 @@ namespace ZQ
 			// 会在 ZQ_CNN_Forward_SSEUtils 的 7 个卷积 wrapper 里造成
 			// **整数除零**（x86 idiv -> SIGFPE，进程直接死）。
 			// 那里也已加了 return false 守卫（纵深防御），这里是更早、更明确的一处。
+			// **审计修复 2026-10-03（附录 EM.3）：上面只拦了 <= 0，
+			// 而 GetTopDim / SetBottomDim 里要算 `(kernel_H - 1) * dilate_H + 1`
+			// （本类 682/683/695/696/713/714， DepthwiseConvolution 1256/1257/1269/1270/1287/1288，
+			//  DeConvolution 1857/1858/1875/1876 —— 共 16 处）。
+			// kernel/dilate 部来自**模型文件**（不可信输入），两者都取 2e9 时这个 int 乘法
+			// **溂出**（gcc 实测 -Woverflow，回绵成 643460097 这个**正数**，
+			// 于是绕过下游的贤值检查，top_H 被算成 0 -> 零尺寸张量 ->
+			// firstPixelData = 0 -> 空指针解参看，见附录 ED.1。）。
+			// 这里**按“乘量必须放得进 int”来卡，而不拍一个任意的系数上限——
+			// 乘积检查本身就是溂出条件，不需要另设闲值。
+			// 影响面（动手前数的，附录 EM.2）：现有 469 条 Convolution/DeConvolution 行里
+			// kernel_size 只有 1/2/3、dilate **从未出现**（全默认 1），
+			// 离溂出差 7.16 亿倍 —— 所以这个守卫对 36 个随仓库模型**零影响**。
+			if ((__int64)dilate_H * (kernel_H - 1) + 1 > 0x7FFFFFFF
+				|| (__int64)dilate_W * (kernel_W - 1) + 1 > 0x7FFFFFFF)
+			{
+				std::cout << "Layer " << name << " conv kernel/dilate overflow: kernel "
+					<< kernel_H << "x" << kernel_W << " dilate " << dilate_H << "x" << dilate_W
+					<< " ((kernel-1)*dilate+1 must fit in int)" << std::endl;
+				return false;
+			}
 			if (kernel_H <= 0 || kernel_W <= 0 || stride_H <= 0 || stride_W <= 0
 				|| dilate_H <= 0 || dilate_W <= 0)
 			{
@@ -1782,6 +1824,27 @@ namespace ZQ
 			// 会在 ZQ_CNN_Forward_SSEUtils 的 7 个卷积 wrapper 里造成
 			// **整数除零**（x86 idiv -> SIGFPE，进程直接死）。
 			// 那里也已加了 return false 守卫（纵深防御），这里是更早、更明确的一处。
+			// **审计修复 2026-10-03（附录 EM.3）：上面只拦了 <= 0，
+			// 而 GetTopDim / SetBottomDim 里要算 `(kernel_H - 1) * dilate_H + 1`
+			// （本类 682/683/695/696/713/714， DepthwiseConvolution 1256/1257/1269/1270/1287/1288，
+			//  DeConvolution 1857/1858/1875/1876 —— 共 16 处）。
+			// kernel/dilate 部来自**模型文件**（不可信输入），两者都取 2e9 时这个 int 乘法
+			// **溂出**（gcc 实测 -Woverflow，回绵成 643460097 这个**正数**，
+			// 于是绕过下游的贤值检查，top_H 被算成 0 -> 零尺寸张量 ->
+			// firstPixelData = 0 -> 空指针解参看，见附录 ED.1。）。
+			// 这里**按“乘量必须放得进 int”来卡，而不拍一个任意的系数上限——
+			// 乘积检查本身就是溂出条件，不需要另设闲值。
+			// 影响面（动手前数的，附录 EM.2）：现有 469 条 Convolution/DeConvolution 行里
+			// kernel_size 只有 1/2/3、dilate **从未出现**（全默认 1），
+			// 离溂出差 7.16 亿倍 —— 所以这个守卫对 36 个随仓库模型**零影响**。
+			if ((__int64)dilate_H * (kernel_H - 1) + 1 > 0x7FFFFFFF
+				|| (__int64)dilate_W * (kernel_W - 1) + 1 > 0x7FFFFFFF)
+			{
+				std::cout << "Layer " << name << " conv kernel/dilate overflow: kernel "
+					<< kernel_H << "x" << kernel_W << " dilate " << dilate_H << "x" << dilate_W
+					<< " ((kernel-1)*dilate+1 must fit in int)" << std::endl;
+				return false;
+			}
 			if (kernel_H <= 0 || kernel_W <= 0 || stride_H <= 0 || stride_W <= 0
 				|| dilate_H <= 0 || dilate_W <= 0)
 			{
