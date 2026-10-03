@@ -2,6 +2,13 @@
 #define _ZQ_MATH_BASE_H_
 #pragma once
 
+// **ZQlib 全域都需要这个**：56 个头、381 处用 __min / __max，
+// 而它们是 MSVC 内建，gcc 没有。ZQlib 侧此前没有任何地方定义它们，
+// 于是 4 个在**模板里**用到它们的头在 Linux 上根本编不过
+// （非模板上下文里 gcc 只当"隐式函数声明"，所以另外 49 个侥幸能过）。
+// 详见 ZQ_CompileConfig.h 的头注释。
+#include "ZQ_CompileConfig.h"
+
 #include <math.h>
 #include <stdlib.h>
 #include <string.h>

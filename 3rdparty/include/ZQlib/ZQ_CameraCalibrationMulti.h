@@ -425,7 +425,13 @@ namespace ZQ
 	}
 
 	template<class T>
-	static bool ZQ_CameraCalibrationMulti::_calib_multi_with_known_intrinsic(int nCheckboards, int nPts, int nCams, const T* X3, const T* X2, const int* visible_num, const int* visible_offset, const int* visible_idx,
+	// 审计修复 2026-10-03（附录 ES.3）：这里原来还写着一个 `static`。
+	// 类外定义成员函数时**不得**再用存储类说明符（[class.mfct]），
+	// gcc 报 "cannot declare member function ... to have static linkage"，
+	// MSVC 当扩展放行 —— 于是这个头在 Linux 上编不过。
+	// 注意类**内**的 `template<class T> static bool f();` 声明是合法的，
+	// 要删的只有类外定义这一处。
+	bool ZQ_CameraCalibrationMulti::_calib_multi_with_known_intrinsic(int nCheckboards, int nPts, int nCams, const T* X3, const T* X2, const int* visible_num, const int* visible_offset, const int* visible_idx,
 		const T* fc_cc_alpha_kc, bool zAxis_in, int max_iter_levmar, T* checkboard_rT_to_cam0, T* cam0_to_othercam_rT, double& avg_err_square, bool sparse_solver)
 	{
 

@@ -429,7 +429,9 @@ namespace ZQ
 	}
 
 	template<class T>
-	static bool ZQ_MultiCamCalibration::_calib_multi_with_known_intrinsic(int nCheckboards, int nPts, int nCams, const T* X3, const T* X2, const int* visible_num, const int* visible_offset, const int* visible_idx,
+	// 同 ZQ_CameraCalibrationMulti.h:427 那处：类外定义里不该再写 `static`
+	// （[class.mfct]）。详见附录 ES.3。
+	bool ZQ_MultiCamCalibration::_calib_multi_with_known_intrinsic(int nCheckboards, int nPts, int nCams, const T* X3, const T* X2, const int* visible_num, const int* visible_offset, const int* visible_idx,
 		const T* fc_cc_alpha_kc, bool zAxis_in, int max_iter_levmar, T* checkboard_rT_to_cam0, T* cam0_to_othercam_rT, double& avg_err_square, bool sparse_solver)
 	{
 

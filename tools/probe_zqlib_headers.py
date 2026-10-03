@@ -31,6 +31,7 @@ from __future__ import print_function
 import os
 import subprocess
 import sys
+import time
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(HERE)
@@ -102,7 +103,19 @@ def main():
         print('no header matches %r' % flt)
         return 1
 
-    lines = ['set +e', 'cd /tmp && rm -rf zqprobe && mkdir zqprobe && cd zqprobe']
+    # **工作目录必须每轮唯一**（附录 ES.4，与 run_zqlib_checks.py 的 EB.1 同一个毛病）。
+    # 原来是固定的 `/tmp/zqprobe` 且开头 `rm -rf`：任何两次并发运行都会互相摧毁 ——
+    # 一次正在编译，一次把它的 .cpp / .err 全删了，于是几十个头凭空报 ERR，
+    # 而且**错误信息是空的**（`grep error:` 在已被删掉的 .err 上当然找不到），
+    # 看起来像"这些头突然全坏了"。
+    # 2026-10-03 实测：完整审计回归内部会调本脚本，我同时手工跑了一次，
+    # BROKEN 从 12 变成 103，其中 91 个是假的 —— 单独重编每一个都通过。
+    #
+    # 与 EB.1 一样：**不要在本轮结束时删别人的目录**，所以这里只建不删。
+    run_id = '%d_%d' % (os.getpid(), int(time.time()))
+    wdir = '/tmp/zqprobe_%s' % run_id
+    lines = ['set +e',
+             'mkdir -p %s && cd %s && rm -rf ./*' % (wdir, wdir)]
     for h in headers:
         stem = h[:-2]
         lines.append("cat > %s.cpp <<'PROBE_EOF'\n%s\n#include \"%s\"\n"

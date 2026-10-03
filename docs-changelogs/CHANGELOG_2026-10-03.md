@@ -2497,3 +2497,118 @@ EQ 只是把"下游确实只有这 16 处、且都在守卫之后"**从推断变
 
 - `tools/probe_div_shift.py`（新，只读诊断，不进回归；带 `--selftest` 阳性对照）
 - `audit_k3_20261001.md`（附录 ER）
+
+---
+
+## 变更：附录 ES —— ZQlib 的 Linux 可编译性（修 3 类真缺陷 + 挖出 1 个 harness 缺陷）
+
+基线：**121 OK / 13 BROKEN / 8 NEEDS_LIB / 1 MSVC_ONLY**（143 个头）。
+用户目标是"windows 和 linux 都能完全跑通"，这 22 个非 OK 的头是硬指标。
+
+### ES.1 `__min` / `__max`：56 个头、381 处，ZQlib 侧一个定义都没有
+
+这两个是 **MSVC 内建**，gcc 没有。`ZQCNN/ZQ_CNN_CompileConfig.h:100-106`
+**早就有**可移植定义 —— 同一作者、同一写法，**只是 ZQlib 侧从来没有**。
+
+**为什么 49 个用了它的头还能编过**：
+
+| 上下文 | gcc 的反应 |
+|---|---|
+| 非模板函数里用 | 只当"隐式函数声明"，**能编过** |
+| **模板**函数里用 | 两阶段查找 → **硬错误** |
+
+所以正确说法是"**在模板里用了才编不过**"。真正卡住 4 个头：
+`ZQ_CameraCalibrationMulti` / `ZQ_MultiCamCalibration` / `ZQ_OpticalFlow` /
+`ZQ_StereoRectify`。
+
+新增 `3rdparty/include/ZQlib/ZQ_CompileConfig.h`（与 ZQCNN 那份逐字一致），
+挂在 `ZQ_MathBase.h` —— 它是这 4 个头**传递包含闭包的公共祖先**里最底层的一个。
+
+### ES.2 `ZQ_OpticalFlow.h` 同一变量声明两次 —— 哪个编译器都编不过
+
+    3017:  int nPixels = width*height;
+    3024:  int nPixels = occ.npixels();      <-- 同作用域重复声明
+    3032:  for (int i = 0; i < nPixels; i++)
+
+同一作用域重声明在任何标准 C++ 下都是硬错误，**MSVC 也编不过**。
+没被发现是因为全仓只有 `ZQ_StereoRectify.h` include 它，而它又不在任何构建里 ——
+**一个孤立头从来没有被任何编译器看过**。删掉第二句（两值本来就相等）。
+
+### ES.3 模板成员函数的**类外定义**里写了 `static`（`[class.mfct]` 违反）
+
+`ZQ_CameraCalibrationMulti.h:428` 与 `ZQ_MultiCamCalibration.h:432`。
+**注意别改错地方**：类**内**的 `template<class T> static bool f();` 是**合法**的，
+要删的只有类外定义那 2 处（全仓符合此形状的 8 处里，6 处合法）。
+
+### ES.4 harness 缺陷：探针用**固定**工作目录 `/tmp/zqprobe` 且开头 `rm -rf`
+
+修完上面三处重跑，**BROKEN 从 12 变成 103**。第一反应是"我改坏了" ——
+单独重编"新坏"的头，**通过**。91 个全是假的，且**错误信息是空的**
+（`grep error:` 在已被删掉的 `.err` 上找不到东西）。
+
+原因：完整审计回归**内部会调这个脚本**，我同时手工跑了一次，两边互删文件。
+与附录 EB.1 同一个毛病，**当时只修了 `run_zqlib_checks.py`，漏了这个探针**。
+已改成 `pid + 时间戳` 的唯一目录，且不删别人的目录。
+
+> 空错误消息本身就是最强的信号：真的编译错误不会没有消息。
+
+### ES.5 `ZQ_ObjLoader.h`：格式串丢失 + `strncpy_s` 参数顺序错
+
+    printf(buf, "something wrong:%s:%d\n", __FILE__, __LINE__);   // buf 成了格式串
+    assert(buf);                                                    // 断言恒真的东西
+    strncpy_s(buf, argv + i, len);                                  // 第 2 个参数应是缓冲区大小
+
+`buf` 是全零数组 ⇒ 实际什么也不打印；`strncpy_s` 传错位置 ⇒ **MSVC 上同样编不过**。
+两处（740 / 791）都改了。
+
+### ES.6 一个**不修**的：`ZQ_Calibration.h` 引用了已被删除的 API
+
+24 处调用 `ZQ_Rodrigues_r2R_fun` / `_jac`，而现存的只有 `ZQ_Rodrigues_r2R`，
+且**返回 `void`**（调用方按 `bool` 用）。不是改名能了事，语义也变了。
+而这个头**全仓没有任何人 include**。判定为陈旧死代码，不修。
+
+### ES.7 负面结论：不需要给 `*_s` 做 shim
+
+28 处 `*_s` 里 **21 处已在 `#if defined(_WIN32)` 里**（全是 `fopen_s`），
+真正没守卫的只有 7 处，集中在 3 个**本来就因别的原因**非 OK 的头
+（log4cplus / MSVC-only / GBK）。**写 shim 不会让任何一个头变成 OK** —— 不做。
+
+### 变更文件
+
+- `3rdparty/include/ZQlib/ZQ_CompileConfig.h`（新）
+- `3rdparty/include/ZQlib/ZQ_MathBase.h`（挂上配置头）
+- `3rdparty/include/ZQlib/ZQ_OpticalFlow.h`（删重复声明）
+- `3rdparty/include/ZQlib/ZQ_CameraCalibrationMulti.h`（删类外 static）
+- `3rdparty/include/ZQlib/ZQ_MultiCamCalibration.h`（同上）
+- `3rdparty/include/ZQlib/ZQ_ObjLoader.h`（格式串 + strncpy_s 两处 × 2）
+- `tools/probe_zqlib_headers.py`（工作目录唯一化）
+
+### 实测结果
+
+    探针（tools/probe_zqlib_headers.py，143 个头）
+                    修前      修后
+      OK             121   ->  126   (+5)
+      BROKEN          13   ->    9   (-4)
+      NEEDS_LIB        8   ->    8
+      MSVC_ONLY        1   ->    1
+
+修好的 4 个：`ZQ_CameraCalibrationMulti` / `ZQ_MultiCamCalibration` /
+`ZQ_OpticalFlow` / `ZQ_StereoRectify`（第 5 个 OK 增量是 `ZQ_ImageProcessing.h`，
+它经由 `__min` 修复被动受益）。
+
+**剩下 9 个 BROKEN 全部有交代**：
+
+| 头 | 原因 | 处置 |
+|---|---|---|
+| `ZQ_WinSock*`（7 个） | 依赖 `winsock2.h` —— **设计上就是 Windows-only** | 不修 |
+| `ZQ_GLSLShader.h` | 缺 `<GL/glew.h>`（环境依赖未装） | 不修 |
+| `ZQ_Calibration.h` | 引用已被删除的 `ZQ_Rodrigues_r2R_fun`（死代码，见 ES.6） | 不修 |
+
+所以 ZQlib 侧**真正需要在 Linux 上修的编译问题已经清零**。
+
+### 注意事项
+
+- 新增的 `ZQ_CompileConfig.h` 必须先于任何用到 `__min`/`__max` 的头被包含；
+  现在挂在 `ZQ_MathBase.h` 上，它是那 4 个头传递闭包里最底层的一个。
+  将来若新增 ZQlib 头并绕过 `ZQ_MathBase.h`，**需要再挂一次**。
+- `#ifndef` 保护是必需的：MSVC 下 `__min`/`__max` 是编译器内建，重复定义会报错。

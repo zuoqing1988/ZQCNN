@@ -3021,7 +3021,15 @@ namespace ZQ
 		imdt.Subtract(warpIm2, im1);
 		if (imdt > 1)
 			imdt.collapse();
-		int nPixels = occ.npixels();
+		// 审计修复 2026-10-03（附录 ES.2）：这里原来还有一句
+		//     int nPixels = occ.npixels();
+		// 与上面第 3017 行的 `int nPixels = width*height;` **在同一作用域重复声明** ——
+		// 同一作用域里重声明一个变量在任何标准 C++ 下都是硬错误，
+		// 所以这个头**哪个编译器都编不过**（不是 gcc 独有的问题）。
+		// 它一直没被发现，是因为全仓只有 ZQ_StereoRectify.h include 它，
+		// 而 ZQ_StereoRectify.h 又不在任何构建里。
+		// 两个值本来就相等：occ 在上面刚 `allocate(u)` 过，u 与 im1 同尺寸，
+		// 而循环真正索引的是 div / imdt（都由 im1 派生），所以保留上面那句即可。
 		T*& occ_data = occ.data();
 		T*& div_data = div.data();
 		T*& imdt_data = imdt.data();

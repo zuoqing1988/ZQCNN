@@ -27,11 +27,12 @@ ZQ_Calibration.h	BROKEN	/mnt/d/ZQCNN/3rdparty/include/ZQlib/ZQ_Calibration.h:185
 ZQ_CameraCalibration.h	OK	
 ZQ_CameraCalibrationBino.h	OK	
 ZQ_CameraCalibrationMono.h	OK	
-ZQ_CameraCalibrationMulti.h	BROKEN	/mnt/d/ZQCNN/3rdparty/include/ZQlib/ZQ_CameraCalibrationMulti.h:429:15
+ZQ_CameraCalibrationMulti.h	OK	
 ZQ_CameraPoseEstimation.h	OK	
 ZQ_CameraProjection.h	OK	
 ZQ_ClosedFormImageMatting.h	OK	
 ZQ_ClosedFormImageMattingOptions.h	OK	
+ZQ_CompileConfig.h	OK	
 ZQ_CompressedImage.h	OK	
 ZQ_CompressedImageRaw.h	OK	
 ZQ_ConstrainedDelaunayTriangulation.h	OK	
@@ -85,10 +86,10 @@ ZQ_MergeImage.h	OK
 ZQ_MergeImageOptions.h	OK	
 ZQ_MergeSort.h	OK	
 ZQ_MinIndependentSets.h	OK	
-ZQ_MultiCamCalibration.h	BROKEN	/mnt/d/ZQCNN/3rdparty/include/ZQlib/ZQ_MultiCamCalibration.h:433:156: 
+ZQ_MultiCamCalibration.h	OK	
 ZQ_NVMLoader.h	OK	
 ZQ_ObjLoader.h	MSVC_ONLY	strcpy_s
-ZQ_OpticalFlow.h	BROKEN	/mnt/d/ZQCNN/3rdparty/include/ZQlib/ZQ_OpticalFlow.h:3024:7: error: re
+ZQ_OpticalFlow.h	OK	
 ZQ_OpticalFlow3D.h	OK	
 ZQ_OpticalFlowOptions.h	OK	
 ZQ_PCGSolver.h	OK	
@@ -127,7 +128,7 @@ ZQ_SplinePCHIP.h	OK
 ZQ_StereoCalibration.h	OK	
 ZQ_StereoDisparity_CV2.h	NEEDS_LIB	opencv2/
 ZQ_StereoMatching.h	OK	
-ZQ_StereoRectify.h	BROKEN	/mnt/d/ZQCNN/3rdparty/include/ZQlib/ZQ_OpticalFlow.h:3024:7: error: re
+ZQ_StereoRectify.h	OK	
 ZQ_StructureFromTexture.h	OK	
 ZQ_StructureFromTextureOptions.h	OK	
 ZQ_TaucsBase.h	OK	

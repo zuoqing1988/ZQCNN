@@ -734,10 +734,23 @@ namespace ZQ
 			int len = j - i;
 			if (len == 0)
 			{
-				printf(buf, "something wrong:%s:%d\n", __FILE__, __LINE__);
-				assert(buf);
+				// 审计修复 2026-10-03（附录 ES.5）：这里原来写的是
+				//     printf(buf, "something wrong:%s:%d\n", __FILE__, __LINE__);
+				// 把**零初始化的 buf 当成格式串**了 —— 字面量被 `buf` 顶掉了。
+				// buf 是 `{ 0 }`，所以实际什么也不打印，诊断信息全丢；
+				// 而 `assert(buf)` 断言的是一个永远非空的数组，
+				// 真正想断言的显然是 `len > 0` 那个条件本身。
+				printf("something wrong:%s:%d\n", __FILE__, __LINE__);
+				assert(len > 0);
 			}
-			strncpy_s(buf, argv + i, len);
+			// 审计修复 2026-10-03（附录 ES.5）：原来是 `strncpy_s(buf, argv + i, len)`，
+			// **参数顺序不对** —— MSVC 的签名是
+			//     strncpy_s(char *dest, rsize_t destsz, const char *src, rsize_t count)
+			// 第二个参数要的是**目标缓冲区大小**，这里却传了源指针 `argv + i`。
+			// 也就是说这行**在 MSVC 上同样编不过**，不是 Linux 独有的问题。
+			// 第四个参数是"最多拷贝多少个字符"（不含结尾的 '\0'），
+			// 下面紧跟着的 `buf[len] = '\0'` 正好补上，所以 count 传 len 是对的。
+			strncpy_s(buf, sizeof(buf), argv + i, len);
 			buf[len] = '\0';
 			sscanf(buf, "%d", v_id);
 
@@ -775,7 +788,8 @@ namespace ZQ
 			}
 			else
 			{
-				strncpy_s(buf, argv + i, len);
+				// 同上（附录 ES.5）：第二个参数是目标缓冲区大小，不是源指针。
+				strncpy_s(buf, sizeof(buf), argv + i, len);
 				buf[len] = 0;
 				sscanf(buf, "%d", vt_id);
 				has_vt_id = true;
