@@ -2818,3 +2818,47 @@ ZQ_Kmeans.h / ZQ_MathBase.h 都是仓内 ZQlib 头）。
 `python tools/run_audit_checks.py --with-build --warn-sweep --src-sweep
 --bounds-sweep --ubsan-sweep --reachability --msvc-asan`
 → **ALL CHECKS PASSED（AUDIT_EXIT=0，34 段全过）**。
+
+---
+
+## 变更：附录 EV —— 两份 `ZQ_CNN_CompileConfig.h` 共用同一个 include guard，而取值不同
+
+### 怎么发现的
+
+给 EU 的 `ZQ_CNN_BBox.h` 加 `#include "ZQ_CNN_CompileConfig.h"` 之后，
+顺手查这个核心头会不会和别处冲突 —— 结果有 5 个宏在**两份同名头**里都被定义：
+
+| 文件 | `ZQ_CNN_USE_MKL_GEMM` |
+|---|---|
+| `ZQCNN/ZQ_CNN_CompileConfig.h:27` | **0** |
+| `ZQCNN_to_MNN/converter/source/ZQ_CNN_CompileConfig.h:38` | **1** |
+
+主仓那份的注释写明 0 是必须的：
+
+> 默认 0：ZQCNN 内部并不调用 cblas_*，开着它只会让示例程序链上 mklml.lib，
+> 于是没装 MKL 运行库的机器上所有 exe 都起不来。
+
+### 为什么是隐患
+
+include guard **按 TU 生效**，两份用同一个 guard 名，于是某个 TU 若同时
+include 两份：**先到的赢，后到的被整个静默跳过**，
+`ZQ_CNN_USE_MKL_GEMM` 取 0 还是 1 **取决于 include 顺序**，且没有任何提示。
+
+**实测全仓没有任何 TU 同时 include 两份**（逐文件收集出现过的配置头路径，
+跨路径交集为空）—— 所以是**潜在隐患**而非现网缺陷。
+
+### 修法
+
+只把 MNN 那份的 guard 改名为 `_ZQ_CNN_MNN_CONVERTER_COMPILE_CONFIG_H_`。
+改 guard 名是**行为等价**的，只是让两份不再互相遮蔽。
+
+**两份的 MKL 取值都保持原样** —— 转换器是另一个工具、另一套依赖，
+它要 1 可能是对的；把它的值改成 0 去"和主仓一致"是**用一致性换正确性**。
+要消除的是"静默互相遮蔽"，不是"两份内容不同"。
+
+> 纪律：**"两份同名头"本身就该是个问题**，哪怕当前内容一致 ——
+> 一致只是巧合，不是约束。
+
+### 变更文件
+
+- `ZQCNN_to_MNN/converter/source/ZQ_CNN_CompileConfig.h`（guard 改名 + 说明）

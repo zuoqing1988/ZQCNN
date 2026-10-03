@@ -1,5 +1,19 @@
-#ifndef _ZQ_CNN_COMPILE_CONFIG_H_
-#define _ZQ_CNN_COMPILE_CONFIG_H_
+// 审计修复 2026-10-03（附录 EV）：这个 guard 原来与主仓
+// `ZQCNN/ZQ_CNN_CompileConfig.h` **完全同名**，而两份内容并不相同 ——
+// 最关键的一处是 `ZQ_CNN_USE_MKL_GEMM`：主仓是 0，注释写明
+// 「开着它只会让示例程序链上 mklml.dll，于是没装 MKL 运行库的机器上
+// 所有 exe 都起不来」，而这里是 1。
+//
+// guard 是**按 TU 生效**的，所以一旦某个 TU 同时 include 两份，
+// **先到的那份赢、后到的那份被静默跳过** —— 也就是说这个值会取决于
+// include 顺序，而且没有任何提示。2026-10-03 实测：全仓**没有**任何 TU
+// 同时 include 两份（所以不是现网缺陷，是潜在隐患），但只要哪天有人在
+// 转换器里 include 主仓的头，MKL 就会被无声地打开/关掉。
+//
+// 改 guard 名是**行为等价**的（guard 名只在 TU 内有意义），
+// 只是让两份配置头不再互相遮蔽。
+#ifndef _ZQ_CNN_MNN_CONVERTER_COMPILE_CONFIG_H_
+#define _ZQ_CNN_MNN_CONVERTER_COMPILE_CONFIG_H_
 #include <stdlib.h>
 #include <stdio.h>
 #include <malloc.h>
@@ -117,4 +131,4 @@
 #endif// defined(WIN32) || defined(_WINDOWS_)
 
 
-#endif// _ZQ_CNN_COMPILE_CONFIG_H_
+#endif// _ZQ_CNN_MNN_CONVERTER_COMPILE_CONFIG_H_
