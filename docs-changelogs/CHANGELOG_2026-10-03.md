@@ -659,3 +659,128 @@ DD.9.4（我读错符号名）同源：**"看起来正常的输出"是最危险�
 按探针优先级，下一个是 `Reshape_NCHW`（51 行）与 `Permute_NCHW`（32 行）——
 两者都是**改形状**的，与 `Tile` / `ROI` 同属"指针算术 + 形状变换"这一族，
 而这一族已经连续出了三条缺陷。
+
+
+---
+
+## 变更：附录 DY —— Reshape / Flatten 族（一次误判、一处真缺陷、两个自造的 harness 缺陷）
+
+### 变更文件
+
+| 文件 | 性质 |
+|---|---|
+| `ZQCNN/ZQ_CNN_Tensor4D.h` | **修生产缺陷**（越界读） |
+| `ZQCNN/ZQ_CNN_Tensor4D_NCHWC.h` | 同源拷贝，同样修 |
+| `ZQCNN_to_MNN/converter/source/ZQ_CNN_Tensor4D.h` | 同源拷贝，同样修 |
+| `tools/zq_reshape_check.cpp` | **新建门禁**（150 例） |
+| `tools/run_zqlib_checks.py` | 登记门禁（四处）+ 修 `cp -n` 缺陷 |
+| `tools/zq_check_child.h` | `"w"` → `"a"`，修报告被后一个用例擦掉 |
+| `audit_k3_20261001.md` | 追加附录 DY |
+
+### 缺陷 1（已修，生产代码）：`Reshape_NCHW_get_size` 越界读 `shape[i]`
+
+循环上界写的是常量 `4`，而 `shape` 是调用方给的 `std::vector<int>`、**允许短于 4**：
+`shape.size()==2` 时读 `shape[2]` / `shape[3]` 落在分配块之外。
+
+ASan 坐实（`heap-buffer-overflow`，READ of size 4，修复前 `ZQ_CNN_Tensor4D.h:799`）：
+
+    ==359977==ERROR: AddressSanitizer: heap-buffer-overflow ... READ of size 4
+        #0 ZQ::ZQ_CNN_Tensor4D::Reshape_NCHW_get_size(...) ZQCNN/ZQ_CNN_Tensor4D.h:799
+        #1 ZQ::ZQ_CNN_Tensor4D::Reshape_NCHW(...)            ZQCNN/ZQ_CNN_Tensor4D.h:822
+    0x602000000058 is located 0 bytes to the right of 8-byte region
+
+**修法**：`i < 4` → `i < shape_dim`。循环前已把 `i >= shape_dim` 的 `new_dim[i]` 全设成 1，
+而 `total % 1` 恒真、`total /= 1` 是空操作 —— **那一段本来就是纯空操作，改上界不改变任何结果**。
+三份同源拷贝一并修（主库 803 / NCHWC 490 / MNN converter 511，现行号）。
+
+**可达性（不夸大）**：`Reshape` 层（`ZQ_CNN_Layer.h:8472`）与 `Flatten_NCHW` 都打不到
+—— 前者总把 shape 补到 4 且全为正数，后者构造的 shape 也全为正数，都走 `unknown_num==0` 分支。
+**可达的是公开 API** `ZQ_CNN_Forward_SSEUtils.h::Reshape`（调用方的 vector 原样透传）
+与直接调 `ZQ_CNN_Tensor4D::Reshape_NCHW`。
+所以这是**公开 API 上的越界读**，不是能让 shipped 模型跑错的那一类。
+后果轻微（读到的字节只参与空操作）但确属 UB，修它一个 token。
+
+### 缺陷 2（已修，我自己的 harness）：子进程 sanitizer 报告被擦掉
+
+两个叠在一起的缺陷，都在 `tools/`（附录 CZ 那套机制）里：
+
+1. **`tools/zq_check_child.h` 用 `"w"` 截断**。一道 fork 型门禁会 fork 几十个子进程
+   （`zq_reshape` 50 个），它们**共用同一个 `ZQ_CHILD_ERR` 路径**，
+   每个子进程一启动就截断，**排在崩溃用例后面的用例把崩溃用例的报告擦掉**。
+   只在崩在中途时发作，崩在最后一个用例时报告恰好还在 —— 所以之前每次跑出来都"正常"。
+2. **`tools/run_zqlib_checks.py` 用 `cp -n` 且本地 `%TEMP%/zqchild/` 从不清空**。
+   第一轮拉回来的空报告一直挡在后面，后面每轮即使拉到真报告也覆盖不掉。
+   WSL 侧 `$WDIR` 每轮开头 `rm -rf *`，所以旧的只存在于本地镜像目录里。
+
+**症状极具欺骗性**：门禁确实红了（崩溃用例结果文件读不出来 → rc=1，判据 CJ.4 生效），
+但报告栏永远空白，看上去像"根本没有 sanitizer 报告"。
+
+**不改变任何门禁的判定** —— 子进程崩了 rc 就是 1，与 stderr 去哪无关。
+只影响可诊断性。修好后整条链端到端可用：门禁红 → ASan 报告自动浮出 →
+精确指到 `ZQ_CNN_Tensor4D.h:803` 并带完整栈。
+
+### 新增门禁
+
+`tools/zq_reshape_check.cpp` —— `Reshape_NCHW` / `Flatten_NCHW` 的形状 + 数值门禁，
+**150 例全绿**（50 用例 × 3 个张量子类 + 42 个 NCHWC 用例）。
+形态同 `zq_tile` / `zq_roi`（这两个函数写在成员函数里，绕不开真实张量对象）。
+
+判据：恒等 reshape 逐格不变 / 跨形状对拍 / 输出尺寸对表 / `0`=沿用输入维 /
+短 shape 合法 / 5 维·双 `-1`·乘积错必须被拒且输出缓冲不许被写 / 三种子类 /
+另跑 NCHWC 那份同源拷贝的**静态** `get_size`。
+
+门禁自己在脸上一条警告：**缺陷 1 只有 ASan 能抓到**（越界字节落在空操作上，
+非 sanitizer 下结果完全正确），所以本门禁在 ASan 轴下才是完整判据。
+
+**变异测试**：把 `i < shape_dim` 回退成 `i < 4`，门禁如期变红 ——
+9 崩 = 3 个"短 shape + `-1`"用例 × 3 个子类，**其余 141 例仍全对**，
+说明变异精准命中触发条件而非无差别破坏。
+
+### 一条被实测否掉的"缺陷"（重要，不要再犯）
+
+我曾把 `Reshape_NCHW` 里的 `i_c + i_w*in_PixelStep` 判成"漏乘 `i_c*in_PixelStep`"，
+拿同仓 `ConvertFromCompactNCHW` 当对照物。**对照物选错了** ——
+两者内存布局不同（NHWC 里通道是最内层，`w*ps + c` 本来就对；
+compact NCHW 里通道在最外层才要乘步长）。用恒等 reshape 实测：四组 C=1/3/4/8 全部逐格不变，
+**代码是对的，不改**。已转"已核对无缺陷"清单。
+
+新记的经验：**拿同仓另一个函数当对照物之前，必须先确认它们的输入布局一致** ——
+名字像、语义像，不代表内存布局像。
+
+### 门禁表第一版有 5 个用例是红的，逐个复核后全部是**我的表算错了**
+
+| 红项 | 我写的期望 | 真相 |
+|---|---|---|
+| `{0,1,0,1}` | 应当成立 | `2*1*4*1=8`，count 是 120 |
+| `{2,3}/2` | 应当成立 | `2*3=6` |
+| `Flatten(2,2)` | 1×2×12×1 | 把 H 乘成 H 自己，是**恒等** |
+| `{1,2,3,0}` | 应当被拒 | `1*2*3*in_W(=4)=24=count`，**本来就成立** |
+| `{0,0,0,3}` | 应当成立 | `1*2*3*3=18≠24` |
+
+第 4 条最说明问题：**注释里都写了"→ 96"，却没发现 `in_W` 本身就是 4** ——
+注释和用例算的是两套数。**不逐条复核就会把"我算错了"当成"产品有 5 个 bug"写进报告。**
+该用例已留在成立组，并在注释里记下误判。
+
+### 附带核对无缺陷（本轮）
+
+`ConvertFromBGR` / `ConvertFromBGR2GRAY` / `ConvertColor_BGR2GRAY` 三处的 border 清零。
+右侧 memset 起点写成 `firstPixelData - pixelStep*(borderW<<1) + widthStep*(h+1)`，
+乍看像差了一个 borderW，但恒等式 `widthStep = pixelStep*(W + 2*borderW)` 使它
+**恰好等于** `firstPixelData + widthStep*h + pixelStep*W`，正是右边界起点。
+该恒等式对三个子类都成立（`widthStep = pixelStep*realW`，只是 `pixelStep`
+分别是 `C` / `ceil(C/4)*4` / `ceil(C/8)*8`）。
+**第一遍我把这个恒等式算错了、得出"错位一个 borderW"，重推才对。**
+
+### 注意事项 / 未完成
+
+- **MNN converter 那份拷贝覆盖不到**：它的头文件保护符（`_ZQ_CNN_TENSOR_4D_H_`）
+  与类名都与主库完全相同，同一个 TU 里会静默地用第一份；实测它**在 Linux 上能编能调**，
+  补覆盖需要给 harness 加"一门禁多源文件"的能力。本次**记为未完成，不假装覆盖了**。
+- **NCHWC 头文件我原先判"Linux 上编不了"（`__int64` / `_aligned_free`）是错的**，
+  实测 `-fsyntax-only` 干净通过。已加静态调用覆盖。
+- **下一条线索尚未定性**：`ChangeSize` 的第 5/6 形参是 `(borderW, borderH)`，
+  而 `ROI` 的形参是 `(dst_borderH, dst_borderW)`（**H 在前**）、
+  `ResizeBilinearRect` 是 `(dst_borderW, dst_borderH)`（**W 在前**）——
+  同一套 API 里两套相反约定，且 `ROI` / `ResizeBilinearRect` / `ConvertColor_BGR2GRAY`
+  内部调 `ChangeSize` 时都按 `(H, W)` 传。已实测确认 `ChangeSize(1,4,5,3,2,3)` 的
+  `widthStep == ps*(W+2*2)`（第 5 形参确实是 borderW）。**待补门禁再下结论。**

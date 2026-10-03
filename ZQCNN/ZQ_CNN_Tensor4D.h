@@ -794,7 +794,11 @@ namespace ZQ
 			else if(unknown_num == 1)
 			{
 				int total = count;
-				for (int i = 0; i < 4; i++)
+				// 上界必须是 shape_dim 而不是 4。shape 由调用方给，允许短于 4
+				// （上层 ZQ_CNN_Forward_SSEUtils.h::Reshape 原样透传），
+				// 读 shape[shape_dim..3] 是越界读 —— ASan heap-buffer-overflow，
+				// 见附录 DY。i >= shape_dim 时 new_dim[i] 恒为 1，除以 1 是空操作。
+				for (int i = 0; i < shape_dim; i++)
 				{
 					if (shape[i] >= 0)
 					{

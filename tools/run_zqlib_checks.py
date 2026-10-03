@@ -375,6 +375,16 @@ EXTRA_SOURCES = {
         'gcc -O1 -g $SAN -mavx2 -mfma -fopenmp -c -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include '
         '$R/ZQCNN/layers_c/zq_cnn_resize_32f_align_c.c -o $WDIR/zq_roi_rz.o',
     ],
+    # zq_reshape（附录 DY）：ZQ_CNN_Tensor4D::Reshape_NCHW / Flatten_NCHW。
+    # 与 zq_tile / zq_roi 同理，必须用真实张量对象 → 编 Tensor4D.cpp + resize 内核。
+    # 独立对象文件（不与 zq_tile 共用）：这道门禁的判据是**形状算错**，
+    # 共用 .o 会让"某个 .o 没编出来"和"某个用例红"混在同一条日志里。
+    'zq_reshape': [
+        'gcc -O1 -g $SAN -mavx2 -mfma -fopenmp -c -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include '
+        '$R/ZQCNN/ZQ_CNN_Tensor4D.cpp -o $WDIR/zq_reshape_t4d.o',
+        'gcc -O1 -g $SAN -mavx2 -mfma -fopenmp -c -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include '
+        '$R/ZQCNN/layers_c/zq_cnn_resize_32f_align_c.c -o $WDIR/zq_reshape_rz.o',
+    ],
     # zq_nchw_lstm（附录 CW）：NCHW 的 LSTM。3 个 32f 入口
     # （align0_general 在 .c 里，align128/256 在 _raw.h 里，宏式声明）。
     'zq_nchw_lstm': [
@@ -419,6 +429,7 @@ EXTRA_LINK = {'zq_innerproduct': ' $WDIR/zq_ipgemm.o $WDIR/zq_gemm_align.o $WDIR
               'zq_nchw_reduction': ' $WDIR/zq_red.o',
               'zq_nchw_lstm': ' $WDIR/zq_lstm.o',
               'zq_roi': ' $WDIR/zq_roi_t4d.o $WDIR/zq_roi_rz.o',
+              'zq_reshape': ' $WDIR/zq_reshape_t4d.o $WDIR/zq_reshape_rz.o',
               'zq_tile': ' $WDIR/zq_t4d.o $WDIR/zq_tile_rz.o',
               'zq_nchw_deconv': ' $WDIR/zq_dec.o',
               # -ldl 必须**放在源文件之后**：Ubuntu 20.04 默认 --as-needed，
@@ -459,6 +470,7 @@ EXTRA_INC = {'zq_facedb': ' -I$R -I$R/ZQCNN -I$R/ZQCNN/3rdparty/include/ZQlib',
              'zq_nchw_reduction': ' -I$R -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include',
              'zq_nchw_lstm': ' -I$R -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include',
              'zq_roi': ' -I$R -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include',
+             'zq_reshape': ' -I$R -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include',
              'zq_tile': ' -I$R -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include',
              'zq_nchw_deconv': ' -I$R -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include',
              'zq_nchw_conv_free': ' -I$R -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include',
@@ -492,6 +504,7 @@ EXTRA_CXXFLAGS = {'zq_facedb': ' -mavx2 -mfma -fopenmp',
                   'zq_nchw_reduction': ' -mavx2 -mfma -fopenmp',
                   'zq_nchw_lstm': ' -mavx2 -mfma -fopenmp',
                   'zq_roi': ' -mavx2 -mfma -fopenmp',
+                  'zq_reshape': ' -mavx2 -mfma -fopenmp',
                   'zq_tile': ' -mavx2 -mfma -fopenmp',
                   'zq_nchw_deconv': ' -mavx2 -mfma -fopenmp',
                   # **-fno-sanitize=address 必须排在 harness 加的 -fsanitize=address 之后**
@@ -695,8 +708,17 @@ def main():
             wsl_tmp = '/mnt/%s/%s' % (m2.group(1).lower(), m2.group(2).replace('\\', '/'))
         else:
             wsl_tmp = tmp.replace('\\', '/')
-        run_wsl('cp -n /tmp/zqchecks/*.child.err %s/zqchild/ 2>/dev/null; true'
-                % wsl_tmp.rstrip('/'))
+        # **必须先删本地旧文件再 cp，且不能用 `cp -n`** —— 附录 DY.4。
+        # 原来写的是 `cp -n`（--no-clobber），而本地这个目录建了之后从不清空，
+        # 于是**第一轮拉回来的空报告会一直挡在后面**：后面每一轮即使拉到了
+        # 真正的 sanitizer 报告也覆盖不掉它，打印出来永远是空的那一份。
+        # 症状是"门禁红着、报告栏永远空白"，看上去像没有 sanitizer 报告。
+        # （WSL 侧 $WDIR 每轮开头是 `rm -rf *`，所以 WSL 里的文件是新的 ——
+        #   旧的只存在于本地这个镜像目录里。）
+        # 只删 *.child.err，不动目录里的其它东西。
+        run_wsl('rm -f %s/zqchild/*.child.err 2>/dev/null; '
+                'cp /tmp/zqchecks/*.child.err %s/zqchild/ 2>/dev/null; true'
+                % (wsl_tmp.rstrip('/'), wsl_tmp.rstrip('/')))
         for fn in os.listdir(cdir):
             if fn.endswith('.child.err'):
                 dst = os.path.join(tmp, 'zqchild_' + fn[:-len('.child.err')])
