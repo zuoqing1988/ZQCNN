@@ -20,9 +20,20 @@
 ### 1. Linux 构建补 `-mfma`（**中位 1.11×**，最大 1.78×）
 
 `ZQA_HAVE_FMA` 的判定是 `(ZQ_CNN_USE_FMADD256 && …) || defined(__FMA__)`。
-Linux 上 `ZQ_CNN_USE_SSETYPE` 写死成 AVX(=2) → `ZQ_CNN_USE_FMADD256 == 0`；
+Linux 上 `ZQ_CNN_USE_SSETYPE` **当时**写死成 AVX(=2) → `ZQ_CNN_USE_FMADD256 == 0`；
 而 `__FMA__` **只有** `-mfma` / `-march=haswell` 及以上才定义，gcc 的 `-mavx2`
 **不隐含** FMA3。而 CMake 的 x86 GNU/Clang 分支当时只给了 `-mavx2`。
+
+> **2026-10-04 更正**：Linux 的默认档已从 AVX 改成 **AVX2**
+> （`ZQCNN/ZQ_CNN_CompileConfig.h`，理由与实测见 `audit_k3_20261001.md` 附录 GN：
+> 两个平台本来就都无条件发 `-mavx2 -mfma` / `/arch:AVX2`，所以 AVX 挡不住
+> 任何老机器；而它让同一模型在两个平台上产出不同的浮点数，
+> 实测 6/6 形状的位模式都不同）。
+> 于是 `ZQ_CNN_USE_FMADD256` 现在是 1，与 `__FMA__` 一致 ——
+> **本节描述的"补 `-mfma`"这一项仍然成立**（它本来就是真正起作用的那一半：
+> `defined(__FMA__)`），只是当时那个 `FMADD256 == 0` 的前提已经不存在。
+> **下面这张表的数字是在 SSETYPE=AVX 下测的**，默认档改成 AVX2 之后
+> Linux 侧应重新测一遍（AVX2 相对 AVX 的中位 122%，25 形状）。
 
 于是 **Linux 上每一处 `vfmadd231ps` 走的都是 `vmulps` + `vaddps` 两条指令**，
 内层循环发射量翻倍。补上 `-mfma` 之后（`tools/bench_two_binaries.py` 交替跑
