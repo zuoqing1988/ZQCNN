@@ -35,6 +35,14 @@ extern "C" {
 void zq_gemm_32f_AnoTrans_Btrans_auto(int M, int N, int K, const float *A,
                                       int lda, const float *Bt, int ldb,
                                       float *C, int ldc);
+// 汇编入口（附录 GR）。它此前**只有两个对比 sample 会调**，
+// 而 sample 只在默认档跑 —— 于是这一整条入口、以及它内部的
+// `ZQ_GEMM_ISA=off` 强制回落分支都**从未被门禁验过**。
+// SSETYPE=0/1 时 ZQA_IMPL=0，这个入口就是 ZQA_FALLBACK（转发到上面那个），
+// 所以低两档顺带把回落路径也覆盖了。
+void zq_gemm_32f_AnoTrans_Btrans_auto_asm(int M, int N, int K, const float *A,
+                                          int lda, const float *Bt, int ldb,
+                                          float *C, int ldc);
 }
 
 static void ref_gemm(int M, int N, int K, const float *A, int lda,
@@ -90,25 +98,32 @@ int main()
     const int ns = (int)(sizeof(shapes) / sizeof(shapes[0]));
     const double TOL = 1e-4;          // float32 的后向误差量级是 1e-8~1e-7
     int bad = 0;
-    for (int t = 0; t < ns; t++) {
-        int M = shapes[t][0], N = shapes[t][1], K = shapes[t][2];
-        float *A = aligned_buf((size_t)M * K);
-        float *B = aligned_buf((size_t)N * K);
-        float *C = aligned_buf((size_t)M * N);
-        float *R = (float *)malloc(sizeof(float) * M * N);
-        if (!A || !B || !C || !R) { printf("ALLOC-FAIL\n"); return 2; }
-        for (int i = 0; i < M * K; i++) A[i] = (float)((i * 37 % 17) - 8) / 8.0f;
-        for (int i = 0; i < N * K; i++) B[i] = (float)((i * 53 % 23) - 11) / 11.0f;
-        for (int i = 0; i < M * N; i++) C[i] = (float)NAN;   // 见坑 3
-        ref_gemm(M, N, K, A, K, B, K, R, N);
-        zq_gemm_32f_AnoTrans_Btrans_auto(M, N, K, A, K, B, K, C, N);
-        double e = back_err(M, N, K, A, K, B, K, C, N);
-        int nan = 0;
-        for (int i = 0; i < M * N; i++) if (std::isnan(C[i])) nan = 1;
-        printf("  M=%-3d N=%-3d K=%-3d 后向误差=%-12.4g NaN残留=%s\n",
-               M, N, K, e, nan ? "是" : "否");
-        if (e > TOL || nan) bad++;
-        free(A); free(B); free(C); free(R);
+    // 两条入口都要验：intrinsic 派发器 与 汇编入口（附录 GR）。
+    for (int which = 0; which < 2; which++) {
+        const char *tag = which ? "汇编入口" : "intrinsic ";
+        for (int t = 0; t < ns; t++) {
+            int M = shapes[t][0], N = shapes[t][1], K = shapes[t][2];
+            float *A = aligned_buf((size_t)M * K);
+            float *B = aligned_buf((size_t)N * K);
+            float *C = aligned_buf((size_t)M * N);
+            float *R = (float *)malloc(sizeof(float) * M * N);
+            if (!A || !B || !C || !R) { printf("ALLOC-FAIL\n"); return 2; }
+            for (int i = 0; i < M * K; i++) A[i] = (float)((i * 37 % 17) - 8) / 8.0f;
+            for (int i = 0; i < N * K; i++) B[i] = (float)((i * 53 % 23) - 11) / 11.0f;
+            for (int i = 0; i < M * N; i++) C[i] = (float)NAN;   // 见坑 3
+            ref_gemm(M, N, K, A, K, B, K, R, N);
+            if (which)
+                zq_gemm_32f_AnoTrans_Btrans_auto_asm(M, N, K, A, K, B, K, C, N);
+            else
+                zq_gemm_32f_AnoTrans_Btrans_auto(M, N, K, A, K, B, K, C, N);
+            double e = back_err(M, N, K, A, K, B, K, C, N);
+            int nan = 0;
+            for (int i = 0; i < M * N; i++) if (std::isnan(C[i])) nan = 1;
+            printf("  %s M=%-3d N=%-3d K=%-3d 后向误差=%-12.4g NaN残留=%s\n",
+                   tag, M, N, K, e, nan ? "是" : "否");
+            if (e > TOL || nan) bad++;
+            free(A); free(B); free(C); free(R);
+        }
     }
     printf("%s\n", bad ? "本档有超差或 NaN 残留" : "本档全部在容差内");
     return bad ? 1 : 0;

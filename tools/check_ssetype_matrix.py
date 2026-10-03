@@ -95,8 +95,16 @@ def build_and_run_all(wdir):
         lines.append('g++ -O2 -mavx2 -mfma %s $R/tools/zq_ssetype_probe.cpp '
                      'g%d_*.o -o p%d 2>le%d.txt' % (INC, v, v, v))
         lines.append('echo "@@L%d=$?"' % v)
-        lines.append('./p%d > o%d.txt 2>&1; echo "@@R%d=$?"' % (v, v, v))
-        lines.append('sed "s/^/@@O%d /" o%d.txt 2>/dev/null; true' % (v, v))
+        # **跑两种环境**（附录 GR）：
+        #   默认         -> 走真汇编内核（本机有 AVX2 时）
+        #   ZQ_GEMM_ISA=off -> 强制回落，验 `zq_gemm_32f_asm_isa_usable` 那条分支。
+        # 源码注释写着后者"用来验证这条路径"，而它**一次都没被跑过**。
+        # 两种环境都必须 0 失败。
+        for tag, env in (('auto', ''), ('isaoff', 'ZQ_GEMM_ISA=off ')):
+            lines.append('%s./p%d > o%d_%s.txt 2>&1; echo "@@R%d_%s=$?"'
+                         % (env, v, v, tag, v, tag))
+            lines.append('sed "s/^/@@O%d_%s /" o%d_%s.txt 2>/dev/null; true'
+                         % (v, tag, v, tag))
     script = '\n'.join(lines) + '\n'
     p = subprocess.run('wsl -d %s -- bash -s' % WSL_DIST, shell=True,
                        input=script.encode('utf-8'), capture_output=True)
@@ -106,28 +114,51 @@ def build_and_run_all(wdir):
         def g(pat):
             m = re.search(pat, text)
             return int(m.group(1)) if m else -1
-        # sed 给输出的**每一行**都加了 `@@O<v> ` 前缀，所以要按前缀收集
+        # sed 给输出的**每一行**都加了 `@@O<v>_<tag> ` 前缀，所以要按前缀收集
         # 全部行，而不是拿一条正则去"截到下一个 @@ 为止" ——
         # 那样只会拿到第一行，探针明明过了 6 组形状，门禁却只看见 1 组。
-        pre = '@@O%d ' % v
-        out = [ln[len(pre):] for ln in text.split('\n')
-               if ln.startswith(pre)]
         res[name] = (g(r'@@C%d=(\d+)' % v), g(r'@@L%d=(\d+)' % v),
-                     g(r'@@R%d=(\d+)' % v), out)
+                     g(r'@@R%d_auto=(\d+)' % v),
+                     g(r'@@R%d_isaoff=(\d+)' % v),
+                     [ln.split(' ', 1)[1] for ln in text.split('\n')
+                      if ln.startswith('@@O%d_' % v)])
     return res
 
 
 def selftest():
-    """阳性对照：把某一档的运行退出码伪造成失败，主逻辑必须报出来。"""
-    name, (c, l, r, out) = list(_FAKE.items())[0]
-    probs = evaluate({name: (c, l, r, out)}, {name: -1})
-    return bool(probs), ''
+    """阳性对照：把某一档的运行退出码伪造成失败，主逻辑必须报出来。
+
+    两种环境（默认 / `ZQ_GEMM_ISA=off`）**都要能被抓** ——
+    只测一种的话，"另一种环境的退出码被忽略了"就发现不了。
+    """
+    name, (c, l, r_auto, r_off, out) = list(_FAKE.items())[0]
+    ok = True
+    # 只把 `ZQ_GEMM_ISA=off` 那一路伪造成失败
+    probs = evaluate({name: (c, l, r_auto, 1, out)}, {name: 0})
+    if not probs:
+        ok = False
+    # 只把默认那一路伪造成失败
+    if not evaluate({name: (c, l, 1, r_off, out)}, {name: 0}):
+        ok = False
+    # 编译/链接失败也要能抓
+    if not evaluate({name: (1, l, r_auto, r_off, out)}, {name: 0}):
+        ok = False
+    if not evaluate({name: (c, 1, r_auto, r_off, out)}, {name: 0}):
+        ok = False
+    # 全部正确时不能误报
+    if evaluate({name: (c, l, r_auto, r_off, out)}, {name: 0}):
+        ok = False
+    # 结论行不对也要能抓
+    if not evaluate({name: (c, l, r_auto, r_off, ['本档有超差或 NaN 残留'])},
+                    {name: 0}):
+        ok = False
+    return ok, ''
 
 
 def evaluate(res, expect_rc):
     """把实测结果转成问题列表。`expect_rc` 正常是 0；自测时故意塞非 0。"""
     problems = []
-    for name, (c, l, r, out) in res.items():
+    for name, (c, l, r_auto, r_off, out) in res.items():
         if c != 0:
             problems.append('%s：编译失败（%d）' % (name, c))
             continue
@@ -135,12 +166,18 @@ def evaluate(res, expect_rc):
             problems.append('%s：链接失败（%d）' % (name, l))
             continue
         want = expect_rc.get(name, 0)
-        if r != want:
-            problems.append('%s：运行退出码 %d，期望 %d' % (name, r, want))
-            continue
-        if want == 0 and out and not out[-1].startswith('本档全部在容差内'):
-            problems.append('%s：最后一行是 %r，不是「本档全部在容差内」'
-                            % (name, out[-1]))
+        # **两种环境都要 0**：默认（真汇编）与 ZQ_GEMM_ISA=off（强制回落）。
+        # 漏掉后者的话，`zq_gemm_32f_asm_isa_usable` 那条分支就又没人看了。
+        for tag, r in (('默认', r_auto), ('ZQ_GEMM_ISA=off', r_off)):
+            if r != want:
+                problems.append('%s：%s 环境运行退出码 %d，期望 %d'
+                                % (name, tag, r, want))
+        if want == 0 and out:
+            tails = [ln for ln in out if ln.startswith('本档')]
+            if not tails or not all(t.startswith('本档全部在容差内')
+                                    for t in tails):
+                problems.append('%s：结论行不是「本档全部在容差内」：%r'
+                                % (name, tails[-1] if tails else '(没有)'))
     return problems
 
 
@@ -150,12 +187,13 @@ _FAKE = {}
 def main():
     selftest_mode = '--selftest' in sys.argv
     if selftest_mode:
-        _FAKE['NONE'] = (0, 0, 0, ['  M=8 N=8 K=12 后向误差=1e-08 NaN残留=否',
-                                    '本档全部在容差内'])
+        _FAKE['NONE'] = (0, 0, 0, 0,
+                         ['  M=8 N=8 K=12 后向误差=1e-08 NaN残留=否',
+                          '本档全部在容差内'])
         if not selftest()[0]:
             print('阳性对照没通过 —— 本门禁可能对任何输入都报「一切正常」')
             return 2
-        print('阳性对照：伪造的失败退出码被识别 = True')
+        print('阳性对照：伪造的失败（两种环境/编译/链接/结论行）都被识别 = True')
         _FAKE.clear()
 
     stamp = int(time.time())
@@ -169,7 +207,7 @@ def main():
     problems = evaluate(res, {name: 0 for _v, name in LEVELS})
     print('查了 %d 档 SSETYPE（旗标一律 -mavx2 -mfma，与真实构建一致）'
           % len(LEVELS))
-    for name, (_c, _l, _r, out) in res.items():
+    for name, (_c, _l, _ra, _ro, out) in res.items():
         for ln in out:
             print('  [%s] %s' % (name, ln))
     for p in problems:
