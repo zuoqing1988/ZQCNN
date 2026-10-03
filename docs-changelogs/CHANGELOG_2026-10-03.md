@@ -986,3 +986,63 @@ stderr 进总输出、`.o` 不生成、链接时才炸，报表只给链接器�
 | `tools/zq_convert_check.cpp` | **新建门禁**（54 例） |
 | `tools/run_zqlib_checks.py` | 登记门禁（四处）+ 修 DY.8 遗留的两个 bug |
 | `audit_k3_20261001.md` | 追加附录 DZ |
+
+
+---
+
+## 变更：附录 EA —— NCHWC 张量类自有方法的门禁从零建起来（本轮未在该类查出新缺陷）
+
+### 新门禁 `zq_nchwc_tensor`（123 例，全绿 + 变异测试通过）
+
+`tools/zq_nchwc_tensor_check.cpp`，模板遍历 `NCHWC1/4/8` 三个子类，41 用例 × 3 子类。
+
+**缺口**：`ZQ_CNN_Tensor4D_NCHWC` 被 9 道门禁引用（act / bn / conv / conv8 / depthwise /
+elt_relu / ip / pool / resize），但那些**只把它当数据容器**用（`ChangeSize` + 取首指针）。
+它自己的 Convert 族 / Permute / Flatten / Reshape **一个门禁都没有** ——
+与附录 DX.6 在基类上发现的缺口同一个形状，而基类那批方法两轮里出了两条真缺陷
+（DY.2 越界读、DY.9 border 传反）。
+
+> 覆盖探针的局限：**"有门禁引用这个类"不等于"这个类的方法被测过"**。
+> 只按"文件被引用"统计会把这块报成"已覆盖"。
+
+**判据原则**
+1. 恒等变换必须逐格不变（DY.1 靠这条否掉过一个误判）
+2. **参考不依赖实现的路径** —— Reshape/Permute/Flatten 的实现都走
+   "转 compact NCHW -> 在 compact 上算 -> 转回来"，参考若也走 compact 就是拿实现对照实现。
+   参考改成按布局公式自己取 compact，再在 compact 上用独立下标算术算期望
+3. **短 shape + `-1`**（DY.2 触发条件）必须常驻
+4. **`C < 3` 时 `ConvertToBGR` 必须被拒**（DZ.1）
+
+**变异测试有鉴别力**：把 `ZQ_CNN_Tensor4D_NCHWC.h` 里 DY.2 的修复回退
+（`i < shape_dim` → `i < 4`），门禁变红且 ASan 正确指到
+`ZQ::ZQ_CNN_Tensor4D_NCHWC::Reshape_NCHW` 的 heap-buffer-overflow；恢复后全绿。
+
+### 门禁自己踩的坑：NCHWC 的 `sliceStep` 不是"一个通道"
+
+ASan 第一次就把 `fill_unique` 打穿了，栈顶在测试文件里（AGENTS.md：先怀疑测试）。
+真因：元素偏移我写成 `n*imStep + c*sliceStep + h*widthStep + w*align`，
+但 NCHWC 的 `sliceStep` 步进的是**一个通道组（`align_size` 个通道）**，
+正确的是 `(c/align)*sliceStep + (c%align)`。
+
+这与 AGENTS.md「NCHW 与 NCHWC 的步长语义」一节、附录 BN.2 是**同一条知识的第三个体现**，
+而我刚写完那段文档就又踩了一次。三处层次不同：BN.2 是内核用错、AGENTS.md 记成文档、
+EA 是**门禁自己用错** —— 门禁用错比内核用错更隐蔽，
+因为参照系本身就是错的时，本该抓到的缺陷永远抓不到。
+
+### 本轮在该类未查出新缺陷（如实说边界）
+
+门禁 123 例全绿 + 变异有鉴别力，**但这只等于"这批方法在这些输入下与独立参考一致"**。
+未覆盖：三个子类的 `Padding` / `ROI` / `CopyData` / `Resize*` / `Swap` / `ShrinkToFit`；
+非对称 border 组合（`Reshape_NCHW` 固定传 0,0 调 ChangeSize）；
+`SaveToFile`；`ConvertFromBGR` 的非默认 `mean_val` / `scale`。
+
+其中**非对称 border 最值得下一轮补**：DY.9 修的 51 处里有 15 处在
+`ZQ_CNN_Tensor4D_NCHWC.cpp`，目前只有机器核对 diff 保证一致，**没有逐点门禁**。
+
+### 变更文件
+
+| 文件 | 性质 |
+|---|---|
+| `tools/zq_nchwc_tensor_check.cpp` | **新建门禁**（123 例） |
+| `tools/run_zqlib_checks.py` | 登记门禁（四处），含 NCHWC resize 内核的链接依赖 |
+| `audit_k3_20261001.md` | 追加附录 EA |

@@ -375,6 +375,19 @@ EXTRA_SOURCES = {
         'gcc -O1 -g $SAN -mavx2 -mfma -fopenmp -c -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include '
         '$R/ZQCNN/layers_c/zq_cnn_resize_32f_align_c.c -o $WDIR/zq_roi_rz.o',
     ],
+    # zq_nchwc_tensor（附录 EA）：ZQ_CNN_Tensor4D_NCHWC **自己那批方法**
+    # （Convert 族 / Permute / Flatten / Reshape）。该类被 9 道门禁当数据容器用，
+    # 但自己的方法一个门禁都没有 —— 与 DX.6 在基类上发现的缺口同一个形状。
+    # 只需编 ZQ_CNN_Tensor4D_NCHWC.cpp。
+    'zq_nchwc_tensor': [
+        # ZQ_CNN_Tensor4D_NCHWC.cpp 里的 Resize* 方法要调 NCHWC 的 resize 内核，
+        # 链接期就得带上（哪怕这道门禁一个 resize 都没跑）—— 照 zq_nchwc_resize 的写法。
+        # 注意那个 .c 要用 **gcc** 编（g++ 会把它判成 narrowing，附录 AU.2）。
+        'gcc -O1 -g $SAN -mavx2 -mfma -fopenmp -c -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include '
+        '$R/ZQCNN/layers_nchwc/zq_cnn_resize_nchwc.c -o $WDIR/zq_nchwctensor_rz.o',
+        'g++ -O1 -g $SAN -mavx2 -mfma -fopenmp -c -I$R -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include '
+        '$R/ZQCNN/ZQ_CNN_Tensor4D_NCHWC.cpp -o $WDIR/zq_nchwctensor.o',
+    ],
     # zq_convert（附录 DZ）：ZQ_CNN_Tensor4D 的 Convert 族。
     # 与 zq_tile / zq_roi / zq_reshape 同理，必须用真实张量对象。
     'zq_convert': [
@@ -439,6 +452,7 @@ EXTRA_LINK = {'zq_innerproduct': ' $WDIR/zq_ipgemm.o $WDIR/zq_gemm_align.o $WDIR
               'zq_roi': ' $WDIR/zq_roi_t4d.o $WDIR/zq_roi_rz.o',
               'zq_reshape': ' $WDIR/zq_reshape_t4d.o $WDIR/zq_reshape_rz.o',
               'zq_convert': ' $WDIR/zq_convert_t4d.o $WDIR/zq_convert_rz.o',
+              'zq_nchwc_tensor': ' $WDIR/zq_nchwctensor.o $WDIR/zq_nchwctensor_rz.o',
               'zq_tile': ' $WDIR/zq_t4d.o $WDIR/zq_tile_rz.o',
               'zq_nchw_deconv': ' $WDIR/zq_dec.o',
               # -ldl 必须**放在源文件之后**：Ubuntu 20.04 默认 --as-needed，
@@ -481,6 +495,7 @@ EXTRA_INC = {'zq_facedb': ' -I$R -I$R/ZQCNN -I$R/ZQCNN/3rdparty/include/ZQlib',
              'zq_roi': ' -I$R -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include',
              'zq_reshape': ' -I$R -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include',
              'zq_convert': ' -I$R -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include',
+             'zq_nchwc_tensor': ' -I$R -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include',
              'zq_tile': ' -I$R -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include',
              'zq_nchw_deconv': ' -I$R -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include',
              'zq_nchw_conv_free': ' -I$R -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include',
@@ -516,6 +531,7 @@ EXTRA_CXXFLAGS = {'zq_facedb': ' -mavx2 -mfma -fopenmp',
                   'zq_roi': ' -mavx2 -mfma -fopenmp',
                   'zq_reshape': ' -mavx2 -mfma -fopenmp',
                   'zq_convert': ' -mavx2 -mfma -fopenmp',
+                  'zq_nchwc_tensor': ' -mavx2 -mfma -fopenmp',
                   'zq_tile': ' -mavx2 -mfma -fopenmp',
                   'zq_nchw_deconv': ' -mavx2 -mfma -fopenmp',
                   # **-fno-sanitize=address 必须排在 harness 加的 -fsanitize=address 之后**
