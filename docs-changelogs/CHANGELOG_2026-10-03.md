@@ -894,3 +894,95 @@ stderr 进总输出、`.o` 不生成、链接时才炸，报表只给链接器�
 | `tools/zq_roi_check.cpp` | 门禁扩成两段（19→29 例）+ 改用共享 `zq_child_silence_stderr()` |
 | `tools/run_zqlib_checks.py` | EXTRA_SOURCES 失败可见化 + 空消息退回第一行 |
 | `audit_k3_20261001.md` | 追加 DY.7 / DY.8 / DY.9 |
+
+
+---
+
+## 变更：附录 DZ —— Convert 族：一处越界读 + 新门禁 zq_convert + harness 修复自带 bug
+
+### 缺陷 5（已修，生产代码）：`ConvertToBGR` 未校验 `C >= 3`
+
+函数无条件读 `cur_pix[0]` / `cur_pix[1]` / `cur_pix[2]`，而守卫只校验了 `W` / `H` / `n_id`。
+`C=1` 时读 `cur_pix[2]` 就是越界。ASan 坐实：
+
+    ERROR: AddressSanitizer: heap-buffer-overflow ... READ of size 4
+        #0 ZQ::ZQ_CNN_Tensor4D::ConvertToBGR(...) ZQCNN/ZQ_CNN_Tensor4D.h:630
+    0x606000000060 is located 0 bytes to the right of 64-byte region
+
+**一个必须写下来的细节：只有 align0 会炸。** align128/align256 的 `pixelStep` 被补到 4/8，
+读 `cur_pix[1]/[2]` 仍落在同一个像素内，所以不越界 ——
+**"另外两个变体没报"不等于"没问题"，只代表那处内存恰好还在。**
+
+修法：`if (C < 3) return false;`。三份同源拷贝一并修
+（`ZQCNN/ZQ_CNN_Tensor4D.h:608` / `ZQ_CNN_Tensor4D_NCHWC.h:268` /
+`ZQCNN_to_MNN/converter/source/ZQ_CNN_Tensor4D.h:317`）。
+
+该函数**全仓零调用点**，但按 AGENTS.md 已修订的判据
+（"是不是内存安全问题"优先于"生产可不可达"），越界读必须堵。
+
+### 新门禁 `zq_convert`（54 例，全绿）
+
+判据用**精确往返**，参考值**不依赖任何一条实现公式**。
+第一版想逐格写 `期望值 = (b - 127.5f) * 0.0078125f`，写到一半发现那是在
+**把实现的公式抄一遍**（抄错了门禁和实现一起错，看着全绿其实什么都没验）。
+改用：`ConvertFromBGR` 与 `ConvertToBGR` 互为逆运算且**逐位精确**
+（b=0/100/128/255 四点验算见报告），判据就是"喂进去的字节必须原样回来"；
+反向把张量填成 `b/127.5f - 1.0f`，必须吐回 `b`。
+
+覆盖 `ConvertFromBGR`↔`ConvertToBGR`、`ConvertFromGray`、`ConvertFromBGR2GRAY`、
+`ConvertToCompactNCHW`↔`ConvertFromCompactNCHW`、`ConvertColor_BGR2GRAY`（含 border 一圈为 0）、
+**`C < 3` 必须被拒**；三种张量子类各跑一遍。
+变异测试：去掉守卫 → 红（align0 三例被 ASan 打死 + align128/256 六例"应拒却收下"）。
+
+### 已读并核对无缺陷（本轮）
+
+`ConvertFromBGR` 36 / `ConvertFromBGR2GRAY` 35 / `ConvertFromGray` 34 / `SaveToFile` 34 /
+`CopyData` 18 / `FlipX` 23 / `FlipY` 24 / `Permute_NCHW` 32 / `AddScalar` 19 / `MulScalar` 19。
+`Permute_NCHW` 的步数分解每轮 `idx %= new_steps[j]` 后已天然落在下一维范围，**不需要额外取模**。
+
+### 门禁自己踩的五个坑（全部是"门禁坏了长得像代码坏了"）
+
+第一版 18 例红，逐条独立复核后 **9 例是真缺陷、9 例是我门禁自己的错**：
+
+1. 灰度参考按三通道算，但 `ConvertFromGray` 的指针是 `gray_pix++`（**步长 1**），
+   而 `ConvertFromBGR2GRAY` 是 `bgr_pix += 3`。**名字像、参数像，语义完全不同**
+   —— 附录 DY.1 的同一条教训，在同一个文件里隔 130 行又撞一次。
+2. `ConvertColor_BGR2GRAY` 的数据检查读的是**源**张量而不是目标张量。
+3. compact 往返按整条 slice 比对（含补齐区），而补齐区本该是 0。
+4. **"整张图是不是常数"这个判据方向写反了**：写成"只要有一个像素与首像素不同就 `bad++`"，
+   而那恰恰是正常情况。于是 align128/256 上 4 例全红、align0 恰好全同反而"过了" ——
+   **一个判据错误伪造出"某些变体有问题"的信号**。当时若急着"修被测代码"，
+   就会去改一个没有问题的内核（与附录 AY.5 的"恒定相对误差 1.00"同类）。
+5. `fabs` 忘了 `#include <cmath>`。
+
+### 我给 harness 做的 DY.8 修复，**自己带了两个 bug**
+
+写完 DY.8 紧接着写新门禁，第一次 BUILD FAIL 消息**又是空的** —— DY.8 那次改动自己带的：
+
+1. **日志名后缀重复**：`2> %s.build.log` 格式串已带后缀，我又传了一个以 `.build.log`
+   结尾的名字 → 实际写出 `zq_convert.build.log.build.log`，取内容时读到的是空文件。
+2. **命令替换里 `||` 绑错位置**：`$(cat … | grep -m1 … | tr -d '\r' || head -1 …)`
+   的 `||` 绑在管道最后一条命令上，退出码取自 `tr`（恒 0），`head -1` 永不执行。
+   改成显式赋值 `M=$(…grep…); [ -n "$M" ] || M=$(…head -1…)`。
+
+两个都是**变异测试**抓出来的，不是读代码看出来的 ——
+读代码时这两个 bug 看起来都很合理。变异验证（两条路径都试了）：
+
+    BUILD FAIL: gcc: error: /mnt/d/ZQCNN/ZQCNN/NO_SUCH_bogus2.c: No such file or directory
+    BUILD FAIL: /mnt/d/ZQCNN/tools/zq_convert_check.cpp:54:1: error: expected unqualified-id before 'this'
+
+> **新规矩：修复本身要单独验一次。**
+> DY.5（报告被擦掉）、DY.8（失败报成链接错误）、DZ.4（修复自带 bug）
+> 三个都是"改了之后**以为**好了、其实没有"的连续实例，
+> 全部靠**故意弄坏**发现，不是靠读代码发现。已写进 AGENTS.md。
+
+### 变更文件
+
+| 文件 | 性质 |
+|---|---|
+| `ZQCNN/ZQ_CNN_Tensor4D.h` | **修生产缺陷**（`ConvertToBGR` 加 `C<3` 守卫） |
+| `ZQCNN/ZQ_CNN_Tensor4D_NCHWC.h` | 同源拷贝，同样修 |
+| `ZQCNN_to_MNN/converter/source/ZQ_CNN_Tensor4D.h` | 同源拷贝，同样修 |
+| `tools/zq_convert_check.cpp` | **新建门禁**（54 例） |
+| `tools/run_zqlib_checks.py` | 登记门禁（四处）+ 修 DY.8 遗留的两个 bug |
+| `audit_k3_20261001.md` | 追加附录 DZ |

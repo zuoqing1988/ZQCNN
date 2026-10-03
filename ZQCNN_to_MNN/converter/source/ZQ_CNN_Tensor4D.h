@@ -316,6 +316,11 @@ namespace ZQ
 		/*image size should match*/
 		bool ConvertToBGR(unsigned char* BGR_img, int _width, int _height, int _widthStep, int n_id = 0) const
 		{
+			// **审计修复 2026-10-03（附录 DZ.1）**：下面无条件读 cur_pix[0..2]，
+			// 而这里**只校验 W/H/n_id，没校验 C >= 3** —— C=1 时是越界读。
+			// 同源拷贝见 ZQCNN/ZQ_CNN_Tensor4D.h 的同名函数（ASan 坐实过）。
+			if (C < 3)
+				return false;
 			if (W != _width || H != _height || n_id < 0 || n_id >= N)
 				return false;
 

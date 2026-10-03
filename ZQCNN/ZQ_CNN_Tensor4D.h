@@ -607,6 +607,18 @@ namespace ZQ
 		/*image size should match*/
 		bool ConvertToBGR(unsigned char* BGR_img, int _width, int _height, int _widthStep, int n_id = 0) const
 		{
+			// **审计修复 2026-10-03（附录 DZ.1）**：下面无条件读 `cur_pix[0]` / `cur_pix[1]`
+			// / `cur_pix[2]`，而这里**只校验了 W/H/n_id，没校验 C >= 3**。
+			// 原来唯一的守卫是 align0 变体下 C=1、H=4、W=4 时的那次越界读：
+			//     ERROR: AddressSanitizer: heap-buffer-overflow ... READ of size 4
+			//         #0 ZQ::ZQ_CNN_Tensor4D::ConvertToBGR(...) ZQCNN/ZQ_CNN_Tensor4D.h:630
+			//     0x606000000060 is located 0 bytes to the right of 64-byte region
+			// （align128/align256 因为 pixelStep 被补到 4/8，读 cur_pix[1]/[2] 仍在像素内，
+			//  所以只有 align0 会炸 —— **"没炸"不代表没问题，只代表那处内存恰好还在**。）
+			// 该函数**全仓零调用点**，但按 AGENTS.md 已修订的判据
+			// （"是不是内存安全问题"优先于"生产可不可达"），越界读必须堵。
+			if (C < 3)
+				return false;
 			if (W != _width || H != _height || n_id < 0 || n_id >= N)
 				return false;
 

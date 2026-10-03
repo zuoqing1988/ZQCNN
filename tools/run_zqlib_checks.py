@@ -375,6 +375,14 @@ EXTRA_SOURCES = {
         'gcc -O1 -g $SAN -mavx2 -mfma -fopenmp -c -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include '
         '$R/ZQCNN/layers_c/zq_cnn_resize_32f_align_c.c -o $WDIR/zq_roi_rz.o',
     ],
+    # zq_convert（附录 DZ）：ZQ_CNN_Tensor4D 的 Convert 族。
+    # 与 zq_tile / zq_roi / zq_reshape 同理，必须用真实张量对象。
+    'zq_convert': [
+        'gcc -O1 -g $SAN -mavx2 -mfma -fopenmp -c -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include '
+        '$R/ZQCNN/ZQ_CNN_Tensor4D.cpp -o $WDIR/zq_convert_t4d.o',
+        'gcc -O1 -g $SAN -mavx2 -mfma -fopenmp -c -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include '
+        '$R/ZQCNN/layers_c/zq_cnn_resize_32f_align_c.c -o $WDIR/zq_convert_rz.o',
+    ],
     # zq_reshape（附录 DY）：ZQ_CNN_Tensor4D::Reshape_NCHW / Flatten_NCHW。
     # 与 zq_tile / zq_roi 同理，必须用真实张量对象 → 编 Tensor4D.cpp + resize 内核。
     # 独立对象文件（不与 zq_tile 共用）：这道门禁的判据是**形状算错**，
@@ -430,6 +438,7 @@ EXTRA_LINK = {'zq_innerproduct': ' $WDIR/zq_ipgemm.o $WDIR/zq_gemm_align.o $WDIR
               'zq_nchw_lstm': ' $WDIR/zq_lstm.o',
               'zq_roi': ' $WDIR/zq_roi_t4d.o $WDIR/zq_roi_rz.o',
               'zq_reshape': ' $WDIR/zq_reshape_t4d.o $WDIR/zq_reshape_rz.o',
+              'zq_convert': ' $WDIR/zq_convert_t4d.o $WDIR/zq_convert_rz.o',
               'zq_tile': ' $WDIR/zq_t4d.o $WDIR/zq_tile_rz.o',
               'zq_nchw_deconv': ' $WDIR/zq_dec.o',
               # -ldl 必须**放在源文件之后**：Ubuntu 20.04 默认 --as-needed，
@@ -471,6 +480,7 @@ EXTRA_INC = {'zq_facedb': ' -I$R -I$R/ZQCNN -I$R/ZQCNN/3rdparty/include/ZQlib',
              'zq_nchw_lstm': ' -I$R -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include',
              'zq_roi': ' -I$R -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include',
              'zq_reshape': ' -I$R -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include',
+             'zq_convert': ' -I$R -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include',
              'zq_tile': ' -I$R -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include',
              'zq_nchw_deconv': ' -I$R -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include',
              'zq_nchw_conv_free': ' -I$R -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include',
@@ -505,6 +515,7 @@ EXTRA_CXXFLAGS = {'zq_facedb': ' -mavx2 -mfma -fopenmp',
                   'zq_nchw_lstm': ' -mavx2 -mfma -fopenmp',
                   'zq_roi': ' -mavx2 -mfma -fopenmp',
                   'zq_reshape': ' -mavx2 -mfma -fopenmp',
+                  'zq_convert': ' -mavx2 -mfma -fopenmp',
                   'zq_tile': ' -mavx2 -mfma -fopenmp',
                   'zq_nchw_deconv': ' -mavx2 -mfma -fopenmp',
                   # **-fno-sanitize=address 必须排在 harness 加的 -fsanitize=address 之后**
@@ -661,19 +672,30 @@ def main():
         # （例：'want' was not declared in this scope 是 error，但
         #   "no matching function for call to ..." 这类未必），
         # 消息为空的话操作员只知道"BUILD FAIL"，等于没报（DY.8 的同一个毛病）。
+        # 日志名**只给 tag**，不要再带 `.build.log` 后缀 —— 下面格式串里已经写了
+        # `2> %s.build.log`。2026-10-03 我给这里传了一个已带后缀的名字，
+        # 实际写出来的是 `zq_convert.build.log.build.log`，
+        # 于是"取日志内容"那一步读到的是一个**空文件** ——
+        # 改动本身带了 bug，症状是 BUILD FAIL 消息**永远为空**。
+        # 与 DY.5 / DY.8 同源：**修复本身要单独验一次**。
         msg_logs = ' '.join(first_log + ['$WDIR/%s.build.log' % tag])
         firstline = ' '.join('head -1 %s' % x for x in (first_log + ['$WDIR/%s.build.log' % tag]))
+        # `grep` 未命中时**不能靠 `||` 兜底**：命令替换里 `a | grep | tr || head -1`
+        # 的 `||` 绑在整条管道的**最后一条命令**上，管道退出码取自 `tr`（恒 0），
+        # `head -1` 永远不执行 —— 这正是消息为空的**第二个**原因。
+        # 改成显式赋值：`M=<grep 结果>; [ -n "$M" ] || M=<日志第一行>`。
         lines.append(
             "if %s g++ -O1 -g %s%s -I%s%s /mnt/d/ZQCNN/tools/%s%s -o %s "
             "2> %s.build.log; then echo 'B|%s|OK|'; else "
-            "echo \"B|%s|BUILD_FAIL|$(cat %s 2>/dev/null | grep -m1 -iE 'error|fatal' | tr -d '\\r' "
-            "|| head -1 %s 2>/dev/null | tr -d '\\r')\"; fi"
+            "M=$(cat %s 2>/dev/null | grep -m1 -iE 'error|fatal' | tr -d '\\r'); "
+            "[ -n \"$M\" ] || M=$(%s 2>/dev/null | tr -d '\\r'); "
+            "echo \"B|%s|BUILD_FAIL|$M\"; fi"
             % (extra_ok,
                '' if args.no_asan else san,
                EXTRA_CXXFLAGS.get(tag, ''),
                INC, EXTRA_INC.get(tag, ''), fname, EXTRA_LINK.get(tag, ''), tag,
-               '$WDIR/%s.build.log' % tag,
-               tag, tag, msg_logs, firstline))
+               tag,
+               tag, msg_logs, firstline, tag))
         # 两套 sanitizer 的失败口径不同，分开写：
         #   ASan  -> 断言自己打的 "FAIL" 行数 + 进程非 0（越界/释放后使用会直接 abort）
         #   UBSan -> "runtime error:" 行数。**不要指望 rc**：不加
