@@ -1576,3 +1576,21 @@ EF 里那条"编译验证 + 机制验证、但没有行为验证"的状态，现
 `ZQ_FaceClusterImagesForVideo::LoadFromFile` 的 `num` 上界修复**从此可以被门禁覆盖**。
 还差两步：① 链接需要 OpenCV/jpeg 的 .so（本机只有 Windows 的 .lib）；
 ② 该头没有被任何 .cpp include，要写门禁得由门禁自己 include（可行）。
+
+### EG 补记：实测确认「给 `ZQ_FaceClusterImagesForVideo` 写门禁」在本机不可行
+
+EG.5 说"还差链接 OpenCV/jpeg 的 .so"，这一轮实测确认：
+
+    g++ ... dbg_faceclu.cpp -o fcl -ljpeg
+    /usr/bin/ld: cvstd.hpp:648: undefined reference to `cv::String::deallocate()'
+                         cvstd.hpp:656: undefined reference to `cv::String::deallocate()'
+    collect2: error: ld returned 1 exit status
+
+`libjpeg.so` 在 Linux 上是有的（`/usr/lib/x86_64-linux-gnu/libjpeg.so.8`），
+缺的只有 **OpenCV 的 `.so`** —— 仓库里只有 Windows 的 `3rdparty/opencv/build/*.lib`。
+缺的符号是 `cv::Mat` 成员的内联析构被发射出来的，**绕不过去**（除非自己在门禁里
+伪造一个 `cv::String::deallocate()`，那是拿假实现换绿灯，不做）。
+
+**结论**：EG 的修复解锁了这两个头在 Linux 上的**可编译性**，
+但**不足以**支撑行为门禁。EF.2 那条 `num` 上界修复目前仍是
+「编译验证 + 失效机制隔离验证」，**没有行为门禁**。如实记着，不假装覆盖了。
