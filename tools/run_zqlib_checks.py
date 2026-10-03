@@ -876,7 +876,7 @@ def main():
         else:
             lines.append(
                 "if [ -x ./%s ]; then ZQ_CHILD_ERR=%s ASAN_OPTIONS=detect_leaks=1 "
-                "./%s > %s.out 2>&1; "
+                "ZQ_MODEL_FULL_LOAD=1 ./%s > %s.out 2>&1; "
                 "echo \"R|%s|$?|$(grep -cE 'FAIL' %s.out)|0\"; fi"
                 % (tag, ce, tag, tag, tag, tag))
     lines.append('echo R|__END__|0|0')

@@ -3578,3 +3578,62 @@ AGENTS.md 那条「退出码 0 只证明没崩」在真实 sample 上被证伪�
 
 - `SamplesZQCNN/SampleFacialNet/SampleFacialNet.cpp`（`.zqparam` -> `.zqparams`）
 - `audit_k3_20261001.md` / `docs-changelogs/CHANGELOG_2026-10-03.md`（附录 GG 更正）
+---
+
+## 变更：附录 GH —— 把「模型能不能真加载」也变成门禁（23/27 连权重一起加载通过）
+
+### FD 只验到哪一步
+
+FD 那个门禁给的是**故意不存在**的权重路径，所以只验
+「`ReadParam` + `_check_connect`」（EN 改动所在的那一段），**没验权重**。
+
+而"跑得通"的另一半在权重这一步：`LoadBinary` 按 `.zqparams` 里的
+`num_output`/`kernel`/`C` 算每层要读多少字节，对不上就是
+`Failed to load Binary for layer X` —— **一个截断的权重文件会被这么静默放过**。
+
+### 做法与代价
+
+加 `ZQ_MODEL_FULL_LOAD=1` 模式：改用**真实**的权重路径。
+
+| | 耗时 |
+|---|---|
+| 默认模式（只验参数+连通性） | 150 ms |
+| 全量加载模式（+ 读 66 MB 权重） | **720 ms** |
+
+多 570 ms，于是**直接接进回归当默认**。
+
+### 结果
+
+    全量加载模式
+      23 个：参数 + 连通性 + 权重全部加载通过
+       4 个：跳过（仓库里没有配套 .nchwbin，README:24 写明要从 Model Zoo 另下）
+       0 个被守卫拒绝 / 0 个异常
+
+"跳过"是**明确记录的状态**：`det1`/`det2`/`det3` 配的是 `_bgr` 变体权重，
+`mobilefacenet-res2-6-10-2-dim128` 属 Model Zoo。
+
+### 变异验证
+
+把 `model/det1-dw20-fast.nchwbin` 从 6104 字节**截到 1/3**（改完即还原）：
+
+| | 结果 |
+|---|---|
+| 截断的权重 | **RC=1**，`det1-dw20-fast.zqparams **FAIL**`，`通过 22，被守卫拒绝 1` |
+| 还原 | **RC=0**，`通过 23，被守卫拒绝 0` |
+
+即"权重文件与 `.zqparams` 不匹配"这一类**现在会被抓到**。
+
+### 我在这个功能里自己造了一个 SIGABRT
+
+第一版 `weight_path_for()` 在"权重文件不存在"时 `return 0`，
+而 `LoadFrom(const std::string&, ...)` 会用 `std::string(nullptr)` 构造形参 ——
+**那是 UB，表现为 SIGABRT**。于是那 4 个模型全变成 `子进程被信号 6 杀掉`，
+一度看着像**库在加载缺权重的模型时会崩**。查下来是**我造的**。
+
+> 与 GG.3 同形状的第二次出现：**先看到"崩"就默认崩在被测对象**，
+> 两次都出在**我这边**。
+
+### 变更文件
+
+- `tools/zq_model_params_check.cpp`（`ZQ_MODEL_FULL_LOAD` 模式 + skip 状态 + nullptr 修复）
+- `tools/run_zqlib_checks.py`（该门禁默认走全量加载）
