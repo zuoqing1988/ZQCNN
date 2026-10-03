@@ -1,0 +1,3 @@
+# ARM/NEON 分支解析基线（tools/check_neon_branch.py --save-baseline 生成）
+# 格式: <文件>\t<第一条 error>
+# 本基线只登记「编不过」的文件；每一条都应当是人眼看过的。

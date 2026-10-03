@@ -189,6 +189,16 @@ GROUPS = [
     ('C11 MSVC /analyze 基线（附录 AW / GN.3）',
      ['run_msvc_analyze.py', '--check-baseline',
       os.path.join(HERE, 'msvc_analyze_baseline.txt')], True),
+    # C12（附录 GP）：ARM/NEON 分支的解析门禁。
+    # 36 个 TU 的 `#if __ARM_NEON` 分支在本机**从来没有被任何编译器看过** ——
+    # WSL 里没有 arm-linux-gnueabihf-gcc、也没有 clang，而仓库根的
+    # `build.sh` 正是构建 armeabi-v7a 的。
+    # 用一个 arm_neon.h 桩 + `-DZQ_CNN_USE_ARM_NEON` 让这些分支在 x86 上
+    # 至少过一遍**解析**与**类型检查**（实测约 1 分钟，慢组）。
+    # 它**不验 NEON 的类型与语义** —— 桩里向量全 typedef 成 float。
+    ('C12 ARM/NEON 分支解析（附录 GP）',
+     ['check_neon_branch.py', '--check-baseline',
+      os.path.join(HERE, 'neon_branch_baseline.txt')], True),
 ]
 
 
