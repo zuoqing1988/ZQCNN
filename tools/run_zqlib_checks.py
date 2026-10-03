@@ -409,6 +409,17 @@ EXTRA_SOURCES = {
         'gcc -O1 -g $SAN -mavx2 -mfma -fopenmp -c -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include '
         '$R/ZQCNN/layers_c/zq_cnn_resize_32f_align_c.c -o $WDIR/zq_concalias_rz.o',
     ],
+    # zq_convparam（附录 EO.7）：卷积 kernel/dilate 整数溢出守卫（EM 的门禁）。
+    # **EM.5 当年记的"要拖 2215 个符号、拖不进快速门禁"是错的** ——
+    # `new ZQ_CNN_Layer_Convolution()` 实际只拖出 6 个未定义符号，
+    # 且全是 ZQ_CNN_Forward_SSEUtils 的辅助函数，正是 zq_net_fwd_tripwires.h
+    # （44 个绊线）覆盖的那一族。所以这道门禁在**快速通道**，不进 SLOW。
+    'zq_convparam': [
+        'gcc -O1 -g $SAN -mavx2 -mfma -fopenmp -c -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include '
+        '$R/ZQCNN/ZQ_CNN_Tensor4D.cpp -o $WDIR/zq_convparam_t4d.o',
+        'gcc -O1 -g $SAN -mavx2 -mfma -fopenmp -c -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include '
+        '$R/ZQCNN/layers_c/zq_cnn_resize_32f_align_c.c -o $WDIR/zq_convparam_rz.o',
+    ],
     # zq_facegroup（附录 EI）：ZQlibFaceID 的文件读入行为。
     # 这是 ZQlibFaceID 里**唯一不需要外部库**的一组（其余头都 include 了
     # OpenCV / ncnn / SeetaFace，本机没有 Linux 库，链不过），所以也是
@@ -494,6 +505,7 @@ EXTRA_LINK = {'zq_innerproduct': ' $WDIR/zq_ipgemm.o $WDIR/zq_gemm_align.o $WDIR
               'zq_nchwc_tensor': ' $WDIR/zq_nchwctensor.o $WDIR/zq_nchwctensor_rz.o',
               'zq_layerwire': ' $WDIR/zq_layerwire_t4d.o $WDIR/zq_layerwire_rz.o',
               'zq_concat_alias': ' $WDIR/zq_concalias_t4d.o $WDIR/zq_concalias_rz.o',
+              'zq_convparam': ' $WDIR/zq_convparam_t4d.o $WDIR/zq_convparam_rz.o',
               'zq_tensorop': ' $WDIR/zq_tensorop_t4d.o $WDIR/zq_tensorop_rz.o',
               'zq_facegroup': '',
               'zq_tile': ' $WDIR/zq_t4d.o $WDIR/zq_tile_rz.o',
@@ -541,6 +553,7 @@ EXTRA_INC = {'zq_facedb': ' -I$R -I$R/ZQCNN -I$R/ZQCNN/3rdparty/include/ZQlib',
              'zq_nchwc_tensor': ' -I$R -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include',
              'zq_layerwire': ' -I$R -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include',
              'zq_concat_alias': ' -I$R -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include',
+             'zq_convparam': ' -I$R -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include',
              'zq_tensorop': ' -I$R -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include',
              'zq_facegroup': ' -I$R -I$R/ZQCNN -I$R/ZQlibFaceID -I$R/ZQ_GEMM -I$R/3rdparty/include',
              'zq_tile': ' -I$R -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include',
@@ -581,6 +594,7 @@ EXTRA_CXXFLAGS = {'zq_facedb': ' -mavx2 -mfma -fopenmp',
                   'zq_nchwc_tensor': ' -mavx2 -mfma -fopenmp',
                   'zq_layerwire': ' -mavx2 -mfma -fopenmp',
                   'zq_concat_alias': ' -mavx2 -mfma -fopenmp',
+                  'zq_convparam': ' -mavx2 -mfma -fopenmp',
                   'zq_tensorop': ' -mavx2 -mfma -fopenmp',
                   'zq_facegroup': ' -mavx2 -mfma -fopenmp',
                   'zq_tile': ' -mavx2 -mfma -fopenmp',
