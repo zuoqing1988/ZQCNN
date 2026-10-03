@@ -94,13 +94,9 @@ namespace ZQ
 			}
 			if (rest_len > 0 && (__int64)key_num * 4 > rest_len)
 			{
-				fclose(in);
-				Clear();
-				return false;
-			}
-			if (rest_len > 0 && (__int64)key_num * 4 > rest_len)
-			{
 				// 至少每个 frame 要能装下一个长度字段, 否则数量与文件大小对不上
+				//（这一段原本**重复了两遍** —— 同一个 if 连续出现两次，
+				//  是前一轮修复被应用了两次留下的。已去掉重复，逻辑不变。）
 				fclose(in);
 				Clear();
 				return false;

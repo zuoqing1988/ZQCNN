@@ -173,6 +173,35 @@ namespace ZQ
 				Clear();
 				return false;
 			}
+			// **审计修复 2026-10-03（附录 EF）**：num 来自不可信文件，**只挡负数不够**。
+			// 紧接着的 `offset.resize(num)` / `length.resize(num)` 会按它申请内存：
+			// `num = 0x7FFFFFFF` 时每个 vector 要 8 GB。
+			//   · 开着 overcommit 时 resize 成功，随后 fread 因文件没那么多字节而失败 ——
+			//     只是瞬时占用 8 GB 虚拟地址；
+			//   · **没开 overcommit / 有 cgroup 限额 / 32 位进程时抛 std::bad_alloc**，
+			//     而这条加载路径**没有 catch**，异常一路冒到 std::terminate() -> abort。
+			//     也就是说**一个 4 字节的文件就能让进程崩掉**。
+			// 隔离复现（dbg_resize_oom.cpp）：
+			//   不限内存      -> "resize 成功（虚拟地址空间够）"
+			//   ulimit -v 1GB -> "抛出 std::bad_alloc"
+			// 修法与同仓库 ZQ_FaceContainerForVideo.h:84-100 **完全一致**
+			// （那里的 key_num 面对的是同一个问题，注释就是这么写的）——
+			// 用**剩余文件长度**做上界交叉校验：每个条目至少要装下自己的
+			// offset 与 length 两个 int（共 8 字节）。
+			__int64 rest_len = 0;
+			{
+				long cur = ftell(in);
+				fseek(in, 0, SEEK_END);
+				long end = ftell(in);
+				if (cur >= 0 && end >= cur) rest_len = (__int64)end - cur;
+				fseek(in, cur, SEEK_SET);
+			}
+			if (rest_len > 0 && (__int64)num * 8 > rest_len)
+			{
+				fclose(in);
+				Clear();
+				return false;
+			}
 			if (num == 0)
 			{
 				fclose(in);

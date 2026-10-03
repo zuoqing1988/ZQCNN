@@ -1419,3 +1419,90 @@ width/height、**不写 net 的 Input 层**；真正的图像是通过 `ConvertF
 `zq_facedb*` 那几个重头）当时仍在后台跑，其结果只覆盖到 **EC** 状态；
 **ED 对 `ZQ_CNN_Layer.h` 的生产改动需要另跑一次 `--with-build` 的双平台构建
 + sample 回归**来验证 —— 未跑之前不算验过。
+
+
+---
+
+## 变更：附录 EF —— ZQlibFaceID 文件读入计数缺上界（同仓已有一处正确写法被漏掉）
+
+### 切片来源：整个 ZQlibFaceID 的覆盖缺口
+
+| | 数量 |
+|---|---|
+| `ZQlibFaceID/*.h` | 29 |
+| **其中没有任何门禁提到** | **26** |
+| 仅前 18 个就合计 | ~5585 行 |
+
+有门禁的只有 3 个（都在 `zq_facedb` / `zq_facedb2` 那两道慢门禁里）。
+这个缺口比张量类那次大得多；多数是应用层封装（识别器、视频聚类、人脸库管理），
+需要 net 提供权重 blob 才能驱动，不是一轮能收完的量。
+**本轮只做一件有明确判据的事：把"文件读入的计数驱动分配"这一族系统性过一遍。**
+
+### 一条系统性扫描，以及它**第一次报错了**
+
+威胁模型里"人脸库文件（.imgfeat 等）"是不可信输入，而 `ZQlibFaceID` 里有大量
+`fread(&count, sizeof(int), 1, in)` 之后直接 `resize(count)` 的写法。
+扫描找出所有"由单次 fread 读入的 int 驱动 resize/reserve/new[]"的点并判上界。
+
+**第一次跑出来的结论是错的**：它把 `ZQ_FaceGroup.h:44` 判成"完全没查"，
+而第 45 行就有 `num >= 0 && num < 1000000`。原因是我的正则只认 `var > N`，
+**漏掉了 `var < N` 这种上界写法**。改正后（`<`/`>` 都认）：13 处里**只有 1 处**缺上界。
+
+> 扫描给出的"权威结论"（带表格、带计数、看着可信）**是错的**，
+> 错因是**正则漏了一种写法**。凡是靠正则判"有没有上界"的工具，
+> **两种写法都要认** —— 否则"0 处有问题"和"N 处有问题"都不可信。
+
+### 缺陷（已修）：`num = 0x7FFFFFFF` 时申请 8 GB，无 catch → terminate
+
+`ZQ_FaceClusterImagesForVideo.h:170` 只挡 `num < 0`，紧接着
+`offset.resize(num)` / `length.resize(num)`。
+
+**同仓已有正确写法**：`ZQ_FaceContainerForVideo.h:84-100` 面对**完全同一个问题**
+（`key_num` 驱动 `frames.resize()`），那里的注释把失效模式写得很清楚：
+"key_num 来自不可信文件, 只挡负数不够: 0x7FFFFFFF 会让 frames.resize() 直接 OOM
+(未捕获的 bad_alloc -> terminate)。用剩余文件长度做上界交叉校验"。
+**一份修了一处没修 —— 按 AGENTS.md 第 13 条，这不是设计取舍，是遗漏。**
+
+**失效机制（隔离复现，不复现那个类本身）**：
+- 不限内存（Linux 默认 overcommit）：`resize` 成功（8 GB 虚拟），随后 `fread` 失败 → 返回 false
+- `ulimit -v 1GB`（无 overcommit / cgroup / 32 位进程）：**抛出 `std::bad_alloc`**
+
+而这条加载路径**没有 catch**，异常一路冒到 `std::terminate()` → abort。
+**内存受限的部署上，4 字节的文件就能让进程崩掉。**
+
+**修法与 `ZQ_FaceContainerForVideo.h` 逐字一致**：用剩余文件长度做上界交叉校验
+（每个条目至少要装下自己的 `offset` 与 `length` 两个 int，共 8 字节）。
+
+### 顺带清掉一处重复代码
+
+`ZQ_FaceContainerForVideo.h` 里那个 `if (rest_len > 0 && key_num*4 > rest_len)`
+**连续出现了两遍**，是前一轮修复被应用了两次留下的。已去掉，逻辑不变。
+
+### 验证级别（如实说，不夸大）
+
+`ZQ_FaceClusterImagesForVideo.h:8` 是 `#include <opencv2\opencv.hpp>`（**反斜杠**），
+**在 Linux 上编不过**；而且全仓**没有任何文件 include 这个头**（连 sample 都没有），
+所以 Windows 构建也不会编译它 —— 改动前后都**没有现成门禁覆盖**。
+
+按 AGENTS.md 第 5 条补了最小编译验证：
+- 取巧：Linux 允许文件名含反斜杠，造一个名字就叫 `opencv2\opencv.hpp` 的转发头；
+  再加一个只提供 `__int64` / `__min` / `__max` 的垫片（**不进仓库**）。
+- **改动前后各编一遍**（改动前取 `git show HEAD:` 的版本作对照）：**两边都 rc=0、无输出**。
+- 尝试行为验证：**链接缺 OpenCV 符号，做不了**。
+
+| | |
+|---|---|
+| 编译验证（改动前/后对照） | 通过 |
+| 失效机制隔离复现 | 通过（两种内存条件都实测） |
+| **端到端跑这个类** | **做不到** —— Linux 链接缺 OpenCV；Windows 侧无 sample 编译它 |
+| 回归保护 | **无门禁** |
+
+**所以这一条是"编译验证 + 机制验证"，不是"行为验证"。**
+
+### 方法论：grep 到可疑读入点后要连着读后面 20 行
+
+我一度以为 `ZQ_FaceClustersForVideo.h:106` 的 `video_frames` 也是缺陷
+（`fread` 之后完全没有校验）。读完整个函数才发现它只被**写**、从不当循环上界或下标 ——
+实际用的是单独读入且有 `0..10000000` 边界的 `fr_num`。
+另一次我 grep 到 `ZQ_FaceContainerForVideo.h:78` 的 `key_num < 0` 就判"只挡负数"，
+而守卫在 10 行之后、被一段注释隔开 —— **差点把一处已经修好的地方报成缺陷。**
