@@ -45,9 +45,11 @@ using namespace ZQ;
 
 #define RES_FILE "/tmp/zq_nchwctensor_res.txt"
 
-enum { OP_COMPACT_RT = 0, OP_BGR_RT, OP_TOBGR_REJECT, OP_GRAY, OP_RESHAPE, OP_PERMUTE, OP_FLATTEN };
+enum { OP_COMPACT_RT = 0, OP_BGR_RT, OP_TOBGR_REJECT, OP_GRAY, OP_RESHAPE, OP_PERMUTE, OP_FLATTEN,
+       OP_NB_RESIZE, OP_NB_RESIZE_V, OP_NB_ROI, OP_NB_COPY };
 static const char* g_opname[] = {
-    "compact往返", "BGR往返", "toBGR拒C<3", "灰度", "Reshape", "Permute", "Flatten"
+    "compact往返", "BGR往返", "toBGR拒C<3", "灰度", "Reshape", "Permute", "Flatten",
+    "Resize边框", "ResizeV边框", "ROI边框", "CopyData"
 };
 static const char* g_note[] = {
     "", "搭建失败", "**返回值与期望相反**", "**形状不对**",
@@ -120,6 +122,24 @@ static const Case g_cases[] = {
   { OP_FLATTEN, 1, 3, 2, 4, {0,0,0,0}, 0, 0, 3, {0,1,2,3}, 1 },
   { OP_FLATTEN, 1, 3, 2, 4, {0,0,0,0}, 0, 1, 3, {0,1,2,3}, 1 },
   { OP_FLATTEN, 1, 3, 2, 4, {0,0,0,0}, 0, 2, 3, {0,1,2,3}, 1 },
+  // ---- 第二段：子类的 border 路径（附录 DY.9 的 15 处在 .cpp 里，此前**零门禁**）----
+  // 判据与 zq_roi 的第二段同源：GetBorderW()/GetBorderH() 必须等于**同名形参**，
+  // 且 border 一圈必须是 0；越界写由 ASan 兜底。
+  // 注意 **两套相反的形参约定**：ResizeBilinear* 是 (dst_borderW, dst_borderH)，
+  // 而 ROI 是 (dst_borderH, dst_borderW) —— 与基类一模一样（附录 DY.7）。
+  // 边框值放在 s[0]/s[1]：ResizeBilinear* 是 (s[0]=dst_borderW, s[1]=dst_borderH)，
+  // ROI 是 (s[0]=dst_borderH, s[1]=dst_borderW) —— **两套相反约定**。
+  { OP_NB_RESIZE,   1, 3, 6, 6, { 1,1,0,0 }, 0, 0, 0, {0,1,2,3}, 1 },
+  { OP_NB_RESIZE,   1, 3, 6, 6, { 1,3,0,0 }, 0, 0, 0, {0,1,2,3}, 1 },
+  { OP_NB_RESIZE,   1, 3, 6, 6, { 3,1,0,0 }, 0, 0, 0, {0,1,2,3}, 1 },
+  { OP_NB_RESIZE_V, 1, 3, 6, 6, { 1,1,0,0 }, 0, 0, 0, {0,1,2,3}, 1 },
+  { OP_NB_RESIZE_V, 1, 3, 6, 6, { 1,3,0,0 }, 0, 0, 0, {0,1,2,3}, 1 },
+  { OP_NB_RESIZE_V, 1, 3, 6, 6, { 3,1,0,0 }, 0, 0, 0, {0,1,2,3}, 1 },
+  { OP_NB_ROI,      1, 3, 8, 8, { 1,1,0,0 }, 0, 0, 0, {0,1,2,3}, 1 },
+  { OP_NB_ROI,      1, 3, 8, 8, { 3,1,0,0 }, 0, 0, 0, {0,1,2,3}, 1 },
+  { OP_NB_ROI,      1, 3, 8, 8, { 1,3,0,0 }, 0, 0, 0, {0,1,2,3}, 1 },
+  { OP_NB_COPY,     1, 3, 2, 2, { 0,0,0,0 }, 0, 0, 0, {0,1,2,3}, 1 },
+  { OP_NB_COPY,     2, 5, 2, 3, { 0,0,0,0 }, 0, 0, 0, {0,1,2,3}, 1 },
 };
 static const int N_CASE = (int)(sizeof(g_cases) / sizeof(g_cases[0]));
 
@@ -327,6 +347,62 @@ static void run_one(const Case& c)
                         if (a[i] != b[i]) { if (first < 0) first = (long)i; bad++; }
                     if (bad) note = 4;
                 }
+            }
+        }
+    } else if (c.op == OP_NB_RESIZE || c.op == OP_NB_RESIZE_V || c.op == OP_NB_ROI
+               || c.op == OP_NB_COPY) {
+        // ---- 子类的 border 路径（附录 DY.9 修过、此前零门禁的 15 处）----
+        // 判据：① 返回 true ② GetBorderW/H 必须等于**同名形参** ③ border 一圈必须是 0
+        if (!t.ChangeSize(c.N, c.H, c.W, c.C, 0, 0)) { note = 1; bad++; }
+        else {
+            fill_unique(t);
+            bool r = true;
+            if (c.op == OP_NB_COPY) {
+                // **必须拷进另一个对象**。第一版写的是 `t.CopyData(t)`（自拷贝），
+                // 而 `CopyData` 内部会 ChangeSize —— 自拷贝时"源"和"目的"是同一块，
+                // 结果 6 例全红。真因在门禁，不在被测代码。
+                r = o.CopyData(t);
+            } else if (c.op == OP_NB_ROI) {
+                // ROI 的形参是 (dst_borderH, dst_borderW)
+                r = t.ROI(o, 1, 1, c.W - 3, c.H - 3, c.s[0], c.s[1]);
+            } else if (c.op == OP_NB_RESIZE) {
+                r = t.ResizeBilinearRect(o, 4, 4, c.s[0], c.s[1], 0, 0, c.W, c.H);
+            } else {
+                std::vector<int> ox, oy, rw, rh;
+                ox.push_back(0); oy.push_back(0); rw.push_back(c.W); rh.push_back(c.H);
+                r = t.ResizeBilinearRect(o, 4, 4, c.s[0], c.s[1], ox, oy, rw, rh);
+            }
+            // 名义上的 W/H：Resize* 给的是 (s[0]=W, s[1]=H)，ROI 给的是 (s[0]=H, s[1]=W)
+            const int expW = (c.op == OP_NB_ROI) ? c.s[1] : c.s[0];
+            const int expH = (c.op == OP_NB_ROI) ? c.s[0] : c.s[1];
+            if (!r) { note = 2; bad++; }
+            else if (c.op != OP_NB_COPY
+                     && (o.GetBorderW() != expW || o.GetBorderH() != expH)) {
+                note = 3; bad++;
+            } else if (c.op != OP_NB_COPY) {
+                // border 一圈必须是 0
+                const int bW = o.GetBorderW(), bH = o.GetBorderH();
+                const int oW = o.GetW(), oH = o.GetH(), oC = o.GetC();
+                const int sl = o.GetSliceStep(), ws = o.GetWidthStep();
+                const int al = o.GetAlignSize();
+                const float* p = o.GetFirstPixelPtr();
+                for (int cc = 0; cc < oC && bad < 4; cc++)
+                    for (int h = -bH; h < oH + bH && bad < 4; h++)
+                        for (int w = -bW; w < oW + bW && bad < 4; w++) {
+                            const bool in_data = (h >= 0 && h < oH && w >= 0 && w < oW);
+                            if (!in_data
+                                && p[nchwc_off(0, cc, h, w, o.GetImageStep(), sl, ws, al)] != 0.0f) {
+                                if (!note) note = 4; bad++;
+                            }
+                        }
+            } else {
+                // CopyData 恒等：逐格（含补齐区）必须与源一致
+                std::vector<float> a, b;
+                my_compact(t, a);
+                my_compact(o, b);
+                if (a.size() != b.size()) { note = 3; bad++; }
+                else for (size_t i = 0; i < a.size() && bad < 4; i++)
+                    if (a[i] != b[i]) { if (first < 0) first = (long)i; bad++; note = 4; }
             }
         }
     }

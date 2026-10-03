@@ -1046,3 +1046,39 @@ EA 是**门禁自己用错** —— 门禁用错比内核用错更隐蔽，
 | `tools/zq_nchwc_tensor_check.cpp` | **新建门禁**（123 例） |
 | `tools/run_zqlib_checks.py` | 登记门禁（四处），含 NCHWC resize 内核的链接依赖 |
 | `audit_k3_20261001.md` | 追加附录 EA |
+
+
+### 补：NCHWC border 路径的逐点门禁（EA.5 / EA.6）
+
+`zq_nchwc_tensor` 加第二段，**156 例**（52 × 3 子类）全绿，
+补上 EA.4 点名的最大缺口 —— DY.9 修的 15 处 NCHWC 传参此前只有机器核对 diff 保证一致。
+
+覆盖三个子类的 `ResizeBilinearRect`（**标量与 vector 两个重载**）、`ROI`、`CopyData`，
+边框取 `(1,1)` / `(1,3)` / `(3,1)`，其中两种非对称。
+判据与 `zq_roi` 第二段同源：① 返回 true ② `GetBorderW()/GetBorderH()` 必须等于**同名形参**
+③ border 一圈必须是 0。注意 NCHWC 里**两套相反约定并存**：
+`ResizeBilinear*` 是 `(dst_borderW, dst_borderH)`，`ROI` 是 `(dst_borderH, dst_borderW)`。
+
+**两处变异测试，逐子类验证鉴别力**：
+
+| 回退的点 | 门禁反应 |
+|---|---|
+| `NCHWC1::ResizeBilinearRect` 的 `ChangeSize` 传参 | 红：**只有 NCHWC1** 红（1 崩 + 1 几何不符），NCHWC4/8 仍 52/52 |
+| `NCHWC4::ResizeBilinearRect` 的 `ChangeSize` 传参 | 红：**只有 NCHWC4** 红，NCHWC1/8 不受影响 |
+
+**逐子类验证是必须的**：第一次变异只改"第一处出现的位置"，
+红的是 NCHWC4 而不是 NCHWC1 —— 因为 NCHWC1 那处用的是另一种写法
+（`__max(0,dst_borderW)` 无空格），字面量不同。
+**"打中一个子类"不等于"三个子类都有鉴别力"** —— 与 DY.4「没红的三种原因」同条，
+只是方向反过来：**红了也不等于全面覆盖**。
+
+> 可复用手法：想知道"哪些站点归哪个函数"，用正则按
+> `bool ZQ_CNN_Tensor4D_NCHWC(\d)::(\w+)\(` 的出现位置切段，
+> 再把每个 `ChangeSize(...)` 站点映射到它前面最近的函数头。
+> 我第一次就是靠"猜第一处属于谁"猜错了，改成脚本映射之后一眼看清。
+
+**门禁自己踩的第二个坑**：`CopyData` 恒等用例第一版写成 `t.CopyData(t)` ——
+源和目的是同一个对象，而 `CopyData` 内部会 `ChangeSize`，6 例全红。
+真因在门禁。改成 `o.CopyData(t)` 后全绿。
+自拷贝本身是不是缺陷**没查**（三个子类的 `ChangeSize` 在参数完全相同时会提前返回、
+不重分配，所以大概率安全，但没证据就不下结论），记为未查。
