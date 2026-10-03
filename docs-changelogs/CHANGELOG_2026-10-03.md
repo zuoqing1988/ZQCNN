@@ -3254,3 +3254,59 @@ NCHWC 那条 Net 走的是**另一个类** `ZQ_CNN_Forward_SSEUtils_NCHWC`，多
 - `tools/gen_net_fwd_tripwires.py`（按类名分组生成）
 - `tools/zq_net_symprobe.cpp`（实例化 NCHWC 三变体）
 - `tools/run_zqlib_checks.py`（`zq_nchwc_net` 接进 4 张表）
+
+---
+
+## 变更：附录 FC —— 把用户那条「sample 的 GUI 调用一律注释掉」变成门禁（C7）
+
+### 规则一直成立，但没有任何东西在守
+
+用户 2026-10-01 明确要求（AGENTS.md「示例程序规则」第一条）：
+所有 Sample 里的 `cv::namedWindow` / `cv::imshow` / `cv::waitKey` 一律注释掉。
+
+核现状：**71 个 sample 源文件、98 处 GUI 调用，全部已注释** —— 规则成立。
+但它只是一条**文字规则**：谁加一行 `imshow`，Linux sample 回归就挂住或在无显示器
+机器上直接失败，**症状离原因很远**。
+
+### 判据：问编译器，别手写注释解析器
+
+1. `g++ -E`（保留 linemarker）去掉注释；
+2. 按 `# <line> "<file>"` 把每行归属到来源文件，**只看该 sample 自己的行** ——
+   否则 OpenCV `highgui.hpp` 自己的 `imshow`/`waitKey` 声明会让每个 sample 都中；
+3. 这样的行上出现活的 GUI 调用就是命中。
+
+### 这个检查自己差点又一次静默全绿（当天第五次）
+
+| 版本 | 症状 | 根因 |
+|---|---|---|
+| v1 | 73 个全"通过" | `-I` 含**不存在**的 `opencv4` 目录 ⇒ g++ 报错 |
+| v1 修 | 加"零输出就报错"守卫，仍全绿 | g++ 失败时**也会先吐 6 行** ⇒ 守卫没响 |
+| v2 | 真报错了（`ZQ_CNN_Net.h: No such file`） | `to_wsl(i[2:])` 把 **`-I` 前缀一起剥了**，目录变成裸参数被当成输入文件 |
+| v3 | 4 分钟 | 每个 sample 一次 `wsl` 启动（73 次）⇒ 改成一次 WSL 调用编完全部 |
+| v3 修 | `TypeError: expected str, not int` | `hits` 键写成下标，崩在报出任何结论**之前** |
+
+> 第二行最值得记：**我加的守卫（"零输出就报错"）挡不住真实情况** ——
+> 判据必须是 g++ 自己的**退出码 / stderr**。
+> 第三行是 AGENTS.md「不要把 Windows 路径丢给 WSL 的 bash」的变体，
+> **而我是在写了那条规则的同一个文件里踩的**。
+
+### 变异验证
+
+把 `SampleHeatMap.cpp:141` 的 `// waitKey(0);` 换成活的 `imshow+waitKey`：
+
+| | 结果 |
+|---|---|
+| 变异体 | **RC=1**，报 `FAIL .../SampleHeatMap.cpp (1 处)`，并**逐字引用那一行** |
+| 还原 | **RC=0**，`全部 71 个 sample：无未注释的 GUI 调用，且每一个都成功预处理过` |
+
+内建阳性对照两半都验：注释掉的调用不得被报、活的调用必须被报。
+
+### 放在慢组 + 组名用 C7
+
+要对 71 个 sample 各跑一次 `g++ -E`，**实测约 4 分钟**，不进默认通道。
+组名用 **C7**（`C4`/`C5`/`C6` 已被主流程占用 —— C4 那次撞名是我自己犯的）。
+
+### 变更文件
+
+- `tools/check_no_gui_calls.py`（新，带 `--selftest`）
+- `tools/run_audit_checks.py`（新增 C7 组）
