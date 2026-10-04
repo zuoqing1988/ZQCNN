@@ -127,6 +127,29 @@ static std::string last_writer_of(const std::string& zp, const std::string& blob
     return best;
 }
 
+// 按**键**取整数，而不是按位置。
+//
+// 为什么：`.zqparams` 里的 Input 行字段顺序**不统一** ——
+//     det5-dw112.zqparams      Input name=data C=3 H=112 W=112
+//     MobileNetSSD_deploy      Input name=data H=300 W=300 C=3     <-- C 在最后
+//     libfacedetection         Input name=data H=240 W=320 C=3     <-- 同上
+// 而 `sscanf("Input name=%*s C=%d H=%d W=%d", ...)` 是**按位置**的，
+// 对后两个模型直接返回 0、`C/H/W` 全留在 0 —— 于是它们被报成
+// "取不到 Input 形状"而 SKIP。
+// **而"被跳过"在汇总行里只体现为一个数字**，看不出是"这个模型不适用"
+// 还是"我的解析器没覆盖它的写法"（2026-10-05 补，附录 HZ）。
+static bool tok_int(const std::string& s, const char* key, int& out)
+{
+    size_t p = s.find(key);
+    if (p == std::string::npos) return false;
+    p += strlen(key);
+    if (p >= s.size() || s[p] != '=') return false;
+    p++;
+    if (p >= s.size() || s[p] < '0' || s[p] > '9') return false;
+    out = atoi(s.c_str() + p);
+    return true;
+}
+
 static bool parse_param(const std::string& zp, int& C, int& H, int& W, std::string& top)
 {
     FILE* f = fopen(zp.c_str(), "rb");
@@ -139,7 +162,9 @@ static bool parse_param(const std::string& zp, int& C, int& H, int& W, std::stri
         while (!s.empty() && (s[s.size() - 1] == '\n' || s[s.size() - 1] == '\r')) s.erase(s.size() - 1);
         if (s.empty() || s[0] == '#') continue;
         if (s.compare(0, 5, "Input") == 0) {
-            sscanf(s.c_str(), "Input name=%*s C=%d H=%d W=%d", &C, &H, &W);
+            tok_int(s, "C", C);
+            tok_int(s, "H", H);
+            tok_int(s, "W", W);
         }
         last = s;
     }
@@ -192,6 +217,15 @@ static double backward_err(const std::vector<float>& a, const std::vector<float>
 // **双平台都要编**（AGENTS.md「不要依赖 MSVC 的传递包含」那条的同源问题：
 // 依赖一个只有一侧有的头，症状是"Linux 编得过、Windows 编不过"）。
 // 存在性用 fopen 试，跨平台。
+//
+// **列表 = model/ 下全部 27 个 .zqparams**（2026-10-05 补，附录 HZ）。
+// 之前只列了 17 个，于是这 6 个有配套权重的模型**从来没被验过**：
+//     MobileNetSSD_deploy / Pose-zq / det5-112-gray
+//     headposegaze-112-gray / libfacedetection / model-face
+// 其中 `MobileNetSSD_deploy` / `libfacedetection` 的 Input 行字段顺序与别的
+// 不同（`H=.. W=.. C=..`），被原来的 `sscanf` 按位置解析成全 0 而 SKIP。
+// 另外 3 个（det1 / det2 / det3 / mobilefacenet-res2-6-10-2-dim128）
+// **没有配套 .nchwbin**，留着是为了让"跳过"这件事**在输出里看得见**。
 static const char* MODELS[] = {
     "det1-dw20-fast", "det1-dw20-plus",
     "det2-dw24-fast", "det2-dw24-p0",   "det2-dw24-plus",
@@ -200,6 +234,12 @@ static const char* MODELS[] = {
     "det5-dw64-v3s",  "det5-dw96-v2s",  "det5-dw96-v2t",  "det5-dw96-v3s",
     "det5-dw112",
     "mobilefacenet-v1",
+    // ---- 以下 10 个 2026-10-05 补进列表（附录 HZ）----
+    "MobileNetSSD_deploy", "Pose-zq",
+    "det5-112-gray", "headposegaze-112-gray",
+    "libfacedetection", "model-face",
+    "det1", "det2", "det3",                       // 没有配套 .nchwbin，会被报成 SKIP
+    "mobilefacenet-res2-6-10-2-dim128",           // 同上
 };
 
 static bool file_exists(const std::string& p)

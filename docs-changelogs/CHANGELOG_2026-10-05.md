@@ -300,3 +300,87 @@ NCHWC MERGE COMPARE FAILED        （rc 非 0）
    而 `ZQ_CNN_Net_NCHWC::Forward` 在**有 InnerProduct 层**时会校验输入形状 ——
    所以本 sample 显式从参数文件读 `C/H/W` 再造输入，
    取不到就**报 SKIP 并说明原因**，不静默跳过。
+
+## 新增/变更：HZ —— 两个融合对照 sample 的模型列表补全到**全部 27 个**，并修掉一个"按位置解析字段"的洞
+
+### 起因
+
+HY 证明了"**没被列进判据的模型就是零覆盖**"。
+而两个对照 sample 的模型列表都只列了 17 个 —— `model/` 下实际有 **27** 个
+`.zqparams`，于是下面 6 个**有配套权重、却从来没被验过**：
+
+```
+MobileNetSSD_deploy    Pose-zq    det5-112-gray
+headposegaze-112-gray  libfacedetection    model-face
+```
+
+（另有 4 个没有配套 `.nchwbin`：`det1` / `det2` / `det3` /
+`mobilefacenet-res2-6-10-2-dim128`。）
+
+### 顺带查出一个"测量本身有洞"
+
+把新模型加进列表后，`MobileNetSSD_deploy` 与 `libfacedetection` 仍然被报成
+"取不到 Input 的形状"。原因不是模型，是**判据自己的解析器**：
+
+```
+det5-dw112.zqparams      Input name=data C=3   H=112 W=112
+MobileNetSSD_deploy      Input name=data H=300 W=300 C=3      <-- C 在最后
+libfacedetection         Input name=data H=240 W=320 C=3      <-- 同上
+```
+
+而 `parse_param` 用的是
+
+```cpp
+sscanf(s.c_str(), "Input name=%*s C=%d H=%d W=%d", &C, &H, &W);   // **按位置**
+```
+
+对后两个模型直接返回 0，`C/H/W` 全留在 0。
+**"被跳过"在汇总行里只体现为一个数字**，看不出是"这个模型不适用"
+还是"我的解析器没覆盖它的写法"。
+
+改成**按键**取（`tok_int(s,"C",C)` / `"H"` / `"W"`），两个 sample 都改。
+
+> 这一条与本文件「门禁的列名/标签要说它实际数的是什么」同源：
+> **汇总行里的一个数字，必须能区分开它内部的多种成因**，
+> 否则"跳过 4 个"既可能是模型不适配、也可能是判据没覆盖，
+> 而读的人只能看到前者。
+
+### 实测（两个平台）
+
+| 判据 | 修复前 | 修复后（列表补全 + 解析修好） |
+|---|---|---|
+| `SampleMergeBNCompare`（NCHW） | 共 17 个：跑过 17 | 共 **27** 个：跑过 **23**（通过 23），跳过 4 |
+| `SampleMergeBNCompareNCHWC` | 共 17 个：跑过 17 | 共 **27** 个：跑过 **17**（通过 17），跳过 10 |
+
+两个平台**逐项一致**：
+
+* NCHW 路径新覆盖的 6 个全部通过：
+  `MobileNetSSD_deploy` 0（逐位相同）、`Pose-zq` 1.943e-07、
+  `det5-112-gray` 1.026e-07、`headposegaze-112-gray` 1.186e-06、
+  `libfacedetection` 0、`model-face` 0；
+* NCHWC 路径这 6 个**全部 SKIP**，原因是 `ZQ_CNN_Net_NCHWC` 不支持它们用到的层
+  （`unknown layer type: Permute` / `DetectionOutput` 等）——
+  **这是覆盖范围的陈述，不是缺陷**，输出里逐条写了原因。
+
+新增覆盖的这 6 个模型里没有一条踩到 HX 那条接线错接
+（新门禁 `check_bn_prelu_pairing.py` 扫全仓仍然只有 1 处），
+所以是**如实的"这一族模型没问题"**，不是"没查到"。
+
+### 变更文件
+
+* `SamplesZQCNN/SampleMergeBNCompare/SampleMergeBNCompare.cpp` —
+  模型列表 17 → 27；`parse_param` 改为按键取 `C/H/W`。
+* `SamplesZQCNN/SampleMergeBNCompareNCHWC/SampleMergeBNCompareNCHWC.cpp` — 同上。
+* `audit_k3_20261001.md`（追加 HZ）
+* `AGENTS.md` — 补一条「**跳过要能区分成因**」。
+* **无生产代码改动**；两个平台均已手工重编 + 实跑（rc=0）
+
+### 注意事项
+
+1. **列表补全之后，"跑过 N 个"这个数字才等于"应该验的都验了"。**
+   补之前 17/27，补之后 NCHW 23/27（剩下 4 个真的没有权重文件）。
+   > 判据：一份"模型清单"要**能从磁盘枚举出来**才能核对完整性；
+   > 手写列表与目录不一致时，**差异部分永远是零覆盖**。
+2. NCHWC 路径对那 6 个模型 SKIP 是**如实标注**的，不要改成静默跳过 ——
+   静默跳过的话，`17/27` 与 `23/27` 两个数字就长得一样，
+   读的人会以为 NCHWC 覆盖得少是因为"那些模型不重要"。

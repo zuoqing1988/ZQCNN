@@ -66,6 +66,25 @@ static float rnd(unsigned& s)
     return (float)((s >> 8) & 0xFFFF) / 32768.0f - 1.0f;
 }
 
+// 按**键**取整数，而不是按位置。`.zqparams` 里 Input 行的字段顺序不统一：
+//     det5-dw112.zqparams   Input name=data C=3 H=112 W=112
+//     MobileNetSSD_deploy   Input name=data H=300 W=300 C=3     <-- C 在最后
+//     libfacedetection      Input name=data H=240 W=320 C=3     <-- 同上
+// `sscanf("Input name=%*s C=%d H=%d W=%d", ...)` 是**按位置**的，
+// 对后两个直接返回 0，于是它们被报成"取不到形状"而 SKIP ——
+// 而"被跳过"在汇总行里只是一个数字，看不出是模型不适用还是解析器没覆盖。
+static bool tok_int(const std::string& s, const char* key, int& out)
+{
+    size_t p = s.find(key);
+    if (p == std::string::npos) return false;
+    p += strlen(key);
+    if (p >= s.size() || s[p] != '=') return false;
+    p++;
+    if (p >= s.size() || s[p] < '0' || s[p] > '9') return false;
+    out = atoi(s.c_str() + p);
+    return true;
+}
+
 static bool parse_param(const std::string& zp, int& C, int& H, int& W, std::string& top)
 {
     FILE* f = fopen(zp.c_str(), "rb");
@@ -77,8 +96,11 @@ static bool parse_param(const std::string& zp, int& C, int& H, int& W, std::stri
         std::string s(line);
         while (!s.empty() && (s[s.size() - 1] == '\n' || s[s.size() - 1] == '\r')) s.erase(s.size() - 1);
         if (s.empty() || s[0] == '#') continue;
-        if (s.compare(0, 5, "Input") == 0)
-            sscanf(s.c_str(), "Input name=%*s C=%d H=%d W=%d", &C, &H, &W);
+        if (s.compare(0, 5, "Input") == 0) {
+            tok_int(s, "C", C);
+            tok_int(s, "H", H);
+            tok_int(s, "W", W);
+        }
         last = s;
     }
     fclose(f);
@@ -126,6 +148,9 @@ static double backward_err(const std::vector<float>& got,
 
 // 随仓的模型名硬编码在这里（同 NCHW 那份的理由：扫目录要用 <dirent.h>，
 // 那是 POSIX 的，而这个 sample **双平台都要编**）。
+// **列表 = model/ 下全部 27 个 .zqparams**（2026-10-05 补，附录 HZ）——
+// 没列进来的模型在这个 sample 里就是**零覆盖**，而汇总行看不出来。
+// 没有配套 .nchwbin 的那 4 个留着，是为了让"跳过"在输出里**看得见**。
 static const char* MODELS[] = {
     "det1-dw20-fast", "det1-dw20-plus",
     "det2-dw24-fast", "det2-dw24-p0",   "det2-dw24-plus",
@@ -134,6 +159,12 @@ static const char* MODELS[] = {
     "det5-dw64-v3s",  "det5-dw96-v2s",  "det5-dw96-v2t",  "det5-dw96-v3s",
     "det5-dw112",
     "mobilefacenet-v1",
+    // ---- 以下 10 个 2026-10-05 补进列表（附录 HZ）----
+    "MobileNetSSD_deploy", "Pose-zq",
+    "det5-112-gray", "headposegaze-112-gray",
+    "libfacedetection", "model-face",
+    "det1", "det2", "det3",
+    "mobilefacenet-res2-6-10-2-dim128",
 };
 
 int main()
