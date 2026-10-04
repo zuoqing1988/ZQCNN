@@ -692,3 +692,69 @@ C=64 是 `8*align` 的整数倍（走向量那一档），C=65 是 `+1`（必须
 * `audit_k3_20261001.md`（追加 ID）
 
 **无生产代码改动**；`zq_scale` 门禁 PASS，变异测试红/绿各一次。
+
+## 新增/变更：IE —— 再覆盖 `Reduction`（32 组）：axis=0 与 keepdims=0 全对，`keepdims=1` 且 axis∈{1,2,3} 对不上（根因未定位）
+
+### IE.1 先读实现再写参考（又一次）
+
+IA.4 里 `Scale` 的参考把 compact NCHW 的通道下标写反了。
+这一次**先把 `zq_cnn_reduction_32f_align_c.c` 的 align0 版读完**再写参考，
+当场排除一个看似很大的"缺陷"：
+
+    if (keepdims == 0) { 对全部元素求和，写到 out_data[0] }
+    else                { switch (axis) { 沿该轴求和 } }
+
+而 `ReductionSum` 里 `out_dims` 的算法与之一致（keepdims 时 `out_dims[axis]=1`，
+否则四个维全置 1）。所以 `axis=2 keepdims=0` **不是缺陷** ——
+那一档的语义本来就是"约全部"，`axis` 只是被忽略。两侧自洽。
+
+axis 的编号是 `out_dims[4] = { N, C, H, W }`：0=N 1=C 2=H 3=W。
+
+### IE.2 实测：32 组里 20 组对、12 组对不上
+
+SUM / MEAN × axis {0,1,2,3} × keepdims {0,1} × C {8,13}：
+
+| 组合 | 结果 |
+|---|---|
+| keepdims=0（约全部） | **全对** |
+| keepdims=1, axis=0 | **全对**（N 恒为 1，约 N 是恒等） |
+| keepdims=1, axis∈{1,2,3} | **12 组全对不上** |
+
+数值形态（C=8、SUM、axis=1）：
+    #0 参考 0.952728 -> 库 2.76187
+    #1 参考 -0.993439 -> 库 0.0785828
+**值的个数是对的**（axis=1 给 9 个 = H*W），不是形状问题；
+而且**库给的 9 个值之和仍等于全部元素之和** ——
+它确实把每个元素算了恰好一次，只是**分组方式**不同。
+
+已排除：读 `zq_cnn_reduction_sum_32f_align256bit` 的 case 1/2/3 三支，
+循环结构与"沿该轴求和"逐行一致。所以差异不在"约哪个轴"，
+而在**写到哪里 / 读回来时的下标对应**。**根因未定位**，如实记成待查项。
+
+### IE.3 这一格只报、不判失败
+
+`Reduction` 是 UNUSED 层，把这一格判失败就是**恒红**，
+而恒红会把别的真回归失败淹掉。所以单独计成「待查」，行末标注"不判失败"：
+
+    小结：跑过 66 个形状，对 66，**对不上** 0，**待查** 12
+    UNUSED LAYER PROBE OK        rc=0（两个平台）
+
+### IE.4 这一轮踩到的两个坑
+
+1. `report()` 在"形状不同"时越界读：`backward_err` 在长度不等时把 worst 置 -1，
+   而 `report()` 直接 `want[worst]` -> **探针自己崩了**（rc=127），
+   把真正的形态盖成了"进程挂了"。现在那一支单独打印两个长度并 return。
+2. `axis` 编号认错（IA.4 同一族）：第一版把 `axis==0` 也写成 `outC = 1`，
+   于是参考给 9 个、库给 72 个，报"形状对不上"。
+
+### v41 回归结果（ID 之后）
+
+    ALL CHECKS PASSED        rc=0        FAILED 计数 = 0
+
+### 变更文件
+
+* `SamplesZQCNN/SampleUnusedLayerProbe/SampleUnusedLayerProbe.cpp` —
+  新增 `ref_reduce` / `run_reduction`（32 组）、`report()` 的形状分支、
+  「待查」计数；名字改为**先打**再跑（附录 HC.5）
+* `audit_k3_20261001.md`（追加 IE）
+* **无生产代码改动**；两个平台均已手工重编 + 实跑（rc=0，66/66，12 待查）

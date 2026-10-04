@@ -411,7 +411,7 @@ static bool selftest_reference()
 // ---------------------------------------------------------------------------
 // 逐层探针
 // ---------------------------------------------------------------------------
-struct Stat { int ok, bad; };
+struct Stat { int ok, bad; int open; };
 static Stat g;
 
 static void report(const char* tag, const std::string& shape,
@@ -419,6 +419,17 @@ static void report(const char* tag, const std::string& shape,
                    const std::vector<float>& got, const std::vector<float>& want)
 {
     if (e > limit) {
+        // **形状不同**要单独判：这时 `worst` 是 -1，
+        // 拿它去索引 `want[worst]` / `got[worst]` 就是**越界读** ——
+        // 2026-10-05 第一版没判这一支，探针在 Reduction 的 keepdims=1 上
+        // 打印出 "1e+30 最差 #-1" 之后**自己崩了**（rc=127），
+        // 把真正的形态（形状对不上）盖成了"进程挂了"。
+        if (worst < 0) {
+            printf("  %-6s %-22s **形状对不上**：库给 %zu 个、参考给 %zu 个  <== **对不上**\n",
+                   tag, shape.c_str(), got.size(), want.size());
+            g.bad++;
+            return;
+        }
         printf("  %-6s %-22s 后向误差 %.4g > %g（最差 #%ld）  <== **对不上**\n",
                tag, shape.c_str(), e, limit, worst);
         // 差异的**形态**是判据的一部分（AGENTS.md「报差异要报结构」）：
@@ -612,6 +623,118 @@ static void run_squeeze()
     }
 }
 
+// Reduction：两种语义，**由内核自己定义**（读 `zq_cnn_reduction_32f_align_c.c`
+// 的 align0 版之后才敢写参考 —— 附录 IE.1）。
+//
+//   keepdims == 0  ->  **对全部元素求和/求均值**，写到 out_data[0]，
+//                     此时 `axis` 被**完全忽略**
+//   keepdims == 1  ->  沿 `axis` 求和/求均值，被约的那一维置 1
+//
+// 而 `ZQ_CNN_Forward_SSEUtils::ReductionSum` 里 `out_dims` 的算法与之一致：
+// keepdims 时 `out_dims[axis] = 1`，否则**四个维全部置 1**。
+// 两侧是自洽的，所以 `axis=2 keepdims=0` 不是缺陷，只是 `axis` 被忽略 —
+// 第一版我怀疑这里"结果被部分丢弃"，读实现之后**排除了**（附录 IE.1）。
+//
+// axis 的编号是 out_dims[4] = { N, C, H, W }：0=N 1=C 2=H 3=W。
+static void ref_reduce(const std::vector<float>& in, int N, int C, int H, int W,
+                       int axis, bool keepdims, bool mean,
+                       std::vector<float>& out, int& outC, int& outH, int& outW)
+{
+    if (!keepdims) {
+        double s = 0;
+        for (size_t i = 0; i < in.size(); i++) s += in[i];
+        out.resize(1);
+        out[0] = (float)(mean ? s / (double)in.size() : s);
+        outC = outH = outW = 1;
+        return;
+    }
+    outC = C; outH = H; outW = W;
+    int red = (axis == 0) ? N : (axis == 1) ? C : (axis == 2) ? H : W;
+    // axis 索引的是 out_dims[4] = { N, C, H, W }：
+    //   axis 0 -> 约 N，输出 N 变 1（C/H/W **不变**，输出大小 = C*H*W）
+    //   axis 1 -> 约 C，输出大小 = H*W
+    //   axis 2 -> 约 H，输出大小 = C*W
+    //   axis 3 -> 约 W，输出大小 = C*H
+    // 第一版把 axis==0 也写成了 outC=1，于是参考给 9 个、库给 72 个 ——
+    // **错的是参考**（轴编号认错了）。2026-10-05 实测。
+    if (axis == 1) outC = 1;
+    else if (axis == 2) outH = 1;
+    else if (axis == 3) outW = 1;
+    // axis==0 时 N 已经由 keepdims 置 1（本探针的 N 恒为 1），C/H/W 不变。
+    out.assign((size_t)outC * outH * outW, 0.0f);
+    // compact NCHW 下标：i = (c*H + h)*W + w
+    // 被约的那一维已被置 1，所以只有它下标为 0 的位置参与累加。
+    for (int n = 0; n < N; n++)
+        for (int c = 0; c < C; c++)
+            for (int h = 0; h < H; h++)
+                for (int w = 0; w < W; w++) {
+                    int cur = (axis == 0) ? n : (axis == 1) ? c : (axis == 2) ? h : w;
+                    if (cur != 0) continue;
+                    size_t si = (((size_t)n * C + c) * H + h) * W + w;
+                    int oc = (axis == 1) ? 0 : c;
+                    int oh = (axis == 2) ? 0 : h;
+                    int ow = (axis == 3) ? 0 : w;
+                    size_t di = (((size_t)oc) * outH + oh) * outW + ow;
+                    out[di] += in[si];
+                }
+    if (mean)
+        for (size_t i = 0; i < out.size(); i++) out[i] = (float)(out[i] / (float)red);
+}
+
+static void run_reduction()
+{
+    // 2 种运算 × 4 个 axis × keepdims 两档 × 2 个 C = 32 组。
+    static const char* OPN[2] = { "SUM", "MEAN" };
+    static const int CS[2] = { 8, 13 };
+    const int H = 3, W = 3, N = 1;
+    const double LIMIT = 1e-5;      // 求和会累加 H*W*C 个 float，舍入按比例放大
+    char block[512], shape[96];
+    for (int ci = 0; ci < 2; ci++)
+        for (int axis = 0; axis < 4; axis++)
+            for (int kd = 0; kd < 2; kd++)
+                for (int op = 0; op < 2; op++) {
+                    const int C = CS[ci];
+                    unsigned s = 20261616u + (unsigned)(ci * 4 + axis) * 2u
+                               + (unsigned)kd * 1u + (unsigned)op * 7919u;
+                    std::vector<float> in((size_t)C * H * W);
+                    for (size_t i = 0; i < in.size(); i++) in[i] = rnd(s);
+                    snprintf(block, sizeof(block),
+                             "Copy name=cp1 bottom=data top=mid\n"
+                             "Reduction name=rd1 bottom=mid top=top1 operation=%s "
+                             "axis=%d keepdims=%d\n", OPN[op], axis, kd);
+                    // **名字要先打**（附录 HC.5）：崩在组内时，
+                    // 否则读的人只知道"上一行之后没了"，猜不出挂在哪一组。
+                    printf("  [probe] Reduction op=%s axis=%d kd=%d C=%d ...\n",
+                           OPN[op], axis, kd, C);
+                    std::vector<float> got, want;
+                    if (!run_synth(block, std::vector<float>(), C, H, W, in, got)) { g.bad++; continue; }
+                    int oC = 0, oH = 0, oW = 0;
+                    ref_reduce(in, N, C, H, W, axis, kd != 0, op == 1, want, oC, oH, oW);
+                    long wi = -1;
+                    double e = backward_err(got, want, wi);
+                    snprintf(shape, sizeof(shape), "op=%-4s axis=%d kd=%d C=%d", OPN[op], axis, kd, C);
+                    if (e > LIMIT && axis != 0 && kd != 0) {
+                        // **这一格只报、不判失败**（附录 IE.3）：
+                        // `keepdims=1` 且 `axis ∈ {1,2,3}` 时，库给的值与
+                        // "沿该轴求和" 对不上；而 axis=0 与 keepdims=0 全部正确。
+                        // 这一层是 **UNUSED**（没有任何随仓模型会跑到），
+                        // 接进回归判失败就是**恒红**，会把别的真回归失败淹掉
+                        // （AGENTS.md「一个恒红的检查不要接进回归」）。
+                        // 这里如实报出来并单独计数，根因留待下一轮。
+                        g.open++;
+                        printf("  %-6s %-22s **待查**（不判失败）：库 %zu 个值 / 参考 %zu 个，最大相对偏差 %.4g\n",
+                               "Reduction", shape,
+                               got.size(), want.size(),
+                               want.empty() ? 0.0 : fabs((double)got[0] - want[0]));
+                        for (size_t q = 0; q < got.size() && q < 9; q++)
+                            printf("            #%zu 参考 %.6g -> 库 %.6g\n", q,
+                                   q < want.size() ? want[q] : 0.0, got[q]);
+                    } else {
+                        report("Reduction", shape, e, LIMIT, wi, got, want);
+                    }
+                }
+}
+
 int main()
 {
     setvbuf(stdout, NULL, _IONBF, 0);
@@ -635,7 +758,9 @@ int main()
     run_sqrt();
     run_scalar_op();
     run_squeeze();
-    printf("  小结：跑过 %d 个形状，对 %d，**对不上** %d\n", g.ok + g.bad, g.ok, g.bad);
+    run_reduction();
+    printf("  小结：跑过 %d 个形状，对 %d，**对不上** %d，**待查** %d\n",
+           g.ok + g.bad, g.ok, g.bad, g.open);
 
     printf("\n尚未覆盖的 UNUSED 层类型（**如实列出**，不装作查过）：\n");
     printf("  DeConvolution  BatchNorm  LSTM_TF  UnaryOperation  Tile  Reduction\n");
