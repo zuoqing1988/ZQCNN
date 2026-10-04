@@ -662,14 +662,19 @@ static void ref_reduce(const std::vector<float>& in, int N, int C, int H, int W,
     else if (axis == 3) outW = 1;
     // axis==0 时 N 已经由 keepdims 置 1（本探针的 N 恒为 1），C/H/W 不变。
     out.assign((size_t)outC * outH * outW, 0.0f);
-    // compact NCHW 下标：i = (c*H + h)*W + w
-    // 被约的那一维已被置 1，所以只有它下标为 0 的位置参与累加。
+    // compact NCHW 下标：si = (n*C + c)*H*W + h*W + w
+    // 输出下标 di 里，**被约的那一维恒取 0**；输入下标 si 用**完整**的值。
+    //
+    // 第一版在这里写了 `if (被约轴的下标 != 0) continue;` ——
+    // 那是**把过滤加在了输入侧**，于是 axis=1 时只累加了 c=0，
+    // 参考值变成"第 0 个通道的值"而不是"沿 C 的和"。
+    // 症状极像库算错了：12 组全红、数值差一个数量级、随 C 变化。
+    // 而把「沿 C 求和」的 3x3 网格打出来之后，**库给的 9 个值与网格逐位相同** ——
+    // 库是对的，参考是错的（附录 IF.1）。
     for (int n = 0; n < N; n++)
         for (int c = 0; c < C; c++)
             for (int h = 0; h < H; h++)
                 for (int w = 0; w < W; w++) {
-                    int cur = (axis == 0) ? n : (axis == 1) ? c : (axis == 2) ? h : w;
-                    if (cur != 0) continue;
                     size_t si = (((size_t)n * C + c) * H + h) * W + w;
                     int oc = (axis == 1) ? 0 : c;
                     int oh = (axis == 2) ? 0 : h;
@@ -722,13 +727,27 @@ static void run_reduction()
                         // （AGENTS.md「一个恒红的检查不要接进回归」）。
                         // 这里如实报出来并单独计数，根因留待下一轮。
                         g.open++;
-                        printf("  %-6s %-22s **待查**（不判失败）：库 %zu 个值 / 参考 %zu 个，最大相对偏差 %.4g\n",
-                               "Reduction", shape,
-                               got.size(), want.size(),
-                               want.empty() ? 0.0 : fabs((double)got[0] - want[0]));
-                        for (size_t q = 0; q < got.size() && q < 9; q++)
-                            printf("            #%zu 参考 %.6g -> 库 %.6g\n", q,
-                                   q < want.size() ? want[q] : 0.0, got[q]);
+                        printf("  %-6s %-22s **待查**（不判失败）：库 %zu 个值 / 参考 %zu 个\n",
+                               "Reduction", shape, got.size(), want.size());
+                        if (C == 8 && op == 0) {
+                            // 把「每个 (h,w) 沿 C 求和」的 3x3 网格**按坐标**打出来，
+                            // 与库的 9 个值按同样坐标对照。
+                            // 一旦发现库的值对应的是**另一个坐标**（转置 / 行列互换），
+                            // 根因就是"写入位置与读回下标不对应"，而不是"约错了轴"。
+                            printf("        [诊断] 沿 C 求和的 3x3 网格（行=h，列=w）：\n");
+                            for (int hh = 0; hh < H; hh++) {
+                                printf("          ");
+                                for (int ww = 0; ww < W; ww++) {
+                                    double p = 0;
+                                    for (int cc = 0; cc < C; cc++) p += in[((size_t)cc * H + hh) * W + ww];
+                                    printf(" %9.5f", p);
+                                }
+                                printf("\n");
+                            }
+                            printf("        [诊断] 库给的 %zu 个值（读回顺序）：\n          ", got.size());
+                            for (size_t q = 0; q < got.size() && q < 24; q++) printf(" %9.5f", got[q]);
+                            printf("\n");
+                        }
                     } else {
                         report("Reduction", shape, e, LIMIT, wi, got, want);
                     }
