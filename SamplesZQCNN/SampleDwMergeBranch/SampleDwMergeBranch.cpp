@@ -51,9 +51,9 @@
 
 // 合成网的形状。刻意取**非 2 的幂 / 非 align 倍数**的通道数：
 // C=13 时 Align256bit 的 padding 会被触发，正好覆盖 `pixelStep != C` 那种情形。
-static const int NET_C = 13;
-static const int NET_H = 7;
-static const int NET_W = 7;
+static int NET_C = 13;   // 由 main 按配置改写（附录 HM）
+static int NET_H = 7;   // 由 main 按配置改写（附录 HM）
+static int NET_W = 7;   // 由 main 按配置改写（附录 HM）
 static const int K = 3;                 // 3x3
 static const int PAD = 1;
 static const float EPS = 1e-5f;        // 与 .zqparams 里写的 eps 一致
@@ -497,19 +497,51 @@ static void case_bn_then_prelu()
     remove(wf);
 }
 
-int main()
+int main(int argc, char** argv)
 {
     setvbuf(stdout, NULL, _IONBF, 0);
-    printf("DepthwiseConvolution + BatchNormScale 融合门禁（附录 HK）\n");
-    printf("判据：合成 3 层网，手写参考实现当基准；\n");
-    printf("      A(默认参数) 必须等于参考，B(merge_bn) 必须等于 A。\n\n");
-    one(0);
-    printf("\n");
-    one(1);
-    printf("\n");
-    case_shared_blob();
-    printf("\n");
-    case_bn_then_prelu();
-    printf("\n共 4 个用例：通过 %d，不通过 %d\n", g_ok, g_bad);
-    return g_bad == 0 ? 0 : 1;
+    // 通道数/特征图大小由**配置表**驱动，理由见附录 HM.3：
+    // 这道检查要覆盖的是「**C 是不是 align 的倍数**」这条轴 ——
+    // C 不是倍数时 pixelStep > C（张量有 padding），是倍数时 pixelStep == C（无 padding）。
+    // 第一版只跑 C=13（有 padding）一组，而真实模型是 C=256（无 padding）：
+    // **两条轴各自验过、交叉没验过**。所以这里把四个配置都跑一遍。
+    // 也可以从命令行给一组：SampleDwMergeBranch <C> <H> <W>
+    struct Cfg { int C, H, W; const char* note; };
+    std::vector<Cfg> cfgs;
+    if (argc >= 4) {
+        Cfg c; c.C = atoi(argv[1]); c.H = atoi(argv[2]); c.W = atoi(argv[3]); c.note = "命令行指定";
+        cfgs.push_back(c);
+    } else {
+        static const Cfg all[] = {
+            {  13,  7,  7, "C 不是 align(8) 的倍数 -> pixelStep(16) > C，**有 padding**" },
+            { 256, 14, 14, "C 是 align(8) 的倍数   -> pixelStep == C，**无 padding**（真模型就是这样）" },
+            {   8,  5,  5, "C 正好等于 align(8)   -> pixelStep == C，无 padding，边界值" },
+            {   9,  4,  4, "C = align+1          -> pixelStep(16) > C，有 padding，边界值" },
+        };
+        for (size_t i = 0; i < sizeof(all) / sizeof(all[0]); i++) cfgs.push_back(all[i]);
+    }
+
+    int total_ok = 0, total_bad = 0;
+    for (size_t ci = 0; ci < cfgs.size(); ci++) {
+        NET_C = cfgs[ci].C; NET_H = cfgs[ci].H; NET_W = cfgs[ci].W;
+        printf("================================================================\n");
+        printf("配置 C=%d H=%d W=%d —— %s\n", NET_C, NET_H, NET_W, cfgs[ci].note);
+        printf("----------------------------------------------------------------\n");
+        int b0 = g_bad;
+        one(0);
+        printf("\n");
+        one(1);
+        printf("\n");
+        case_shared_blob();
+        printf("\n");
+        case_bn_then_prelu();
+        int passed = 4 - (g_bad - b0);
+        total_ok += passed;
+        total_bad += (g_bad - b0);
+        g_bad = 0;
+    }
+    printf("\n================================================================\n");
+    printf("共 %zu 组配置 × 4 个用例：通过 %d，不通过 %d\n", cfgs.size(), total_ok, total_bad);
+    printf("%s\n", total_bad == 0 ? "ALL CONFIG OK" : "SOME CONFIG FAILED");
+    return total_bad == 0 ? 0 : 1;
 }

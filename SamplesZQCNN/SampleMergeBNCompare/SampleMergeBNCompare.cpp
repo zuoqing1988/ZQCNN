@@ -55,6 +55,15 @@
 // 若这一行要调，先问"它到底该有多准"（把阈值调到能容下真缺陷，就等于没有判据）。
 static const double BACKWARD_ERR_LIMIT = 1e-4;
 
+// 逐 blob 扫描用的阈值，比判据严 3~4 个数量级。
+// 可用环境变量 ZQ_BLOB_LIMIT 覆盖（设 1e-9 可以看逐位差异的分布）。
+static double blob_scan_limit()
+{
+    const char* e = getenv("ZQ_BLOB_LIMIT");
+    return e ? atof(e) : 1e-7;
+}
+#define BLOB_SCAN_LIMIT blob_scan_limit()
+
 // 生产实参（ZQ_CNN_MTCNN.h:109）：merge_bn=true, ignore_small_value=1e-9, merge_prelu=true
 static const float PROD_IGNORE_SMALL = 1e-9f;
 
@@ -359,10 +368,15 @@ int main()
                             }
                             long wi = -1;
                             double e = backward_err(fa_, fp_, wi);
-                            if (e > 1e-4) {
+                            // 逐 blob 扫描用**比判据严得多**的阈值（附录 HM.4）：
+                            // 判据是 1e-4，而这里用 BLOB_SCAN_LIMIT。
+                            // 理由：1e-4 下的"正确"只说明"差得小"，
+                            // 而后面几十层里一次小的偏差可能被放大 ——
+                            // 所以要问的是"前 70 个 blob 里有没有**已经**不一样的"。
+                            if (e > BLOB_SCAN_LIMIT) {
                                 if (first_bad_blob < 0) { first_bad_blob = (int)q; first_name = names[q]; }
                                 nbad_blob++;
-                                if (nbad_blob <= 4) {
+                                if (nbad_blob <= 60) {
                                     printf("      blob[%2d] %-28s 后向误差 %.4g（%zu 个 float）\n",
                                            (int)q, names[q].c_str(), e, fa_.size());
                                 }
