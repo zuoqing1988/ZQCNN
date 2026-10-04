@@ -622,6 +622,12 @@ EXTRA_SOURCES = {
     ],
 }
 EXTRA_LINK = {'zq_innerproduct': ' $WDIR/zq_ipgemm.o $WDIR/zq_gemm_align.o $WDIR/zq_gemm_asm.o $WDIR/zq_gemm_auto.o',
+              # zq_scale（附录 IB）：直接链**内核那个小 TU**。
+              # `ZQ_CNN_Forward_SSEUtils.cpp` 一个 TU 引用半个库、-O1 编一次 5 分钟以上
+              # （附录 EC.1），所以现成的 sanitizer 门禁都**不编它**（用绊线桩）。
+              # 但 `Scale` 的实现本身就在 layers_c/zq_cnn_batchnormscale_32f_align_c.c 里，
+              # 直接把它链进来就行 —— 越界读发生在**内核里**，不需要整条前向链。
+              'zq_scale': ' $R/ZQCNN/layers_c/zq_cnn_batchnormscale_32f_align_c.c',
               'zq_nchwc_conv': (' $WDIR/zq_nchwcv.o $WDIR/zq_nchwcv_resize.o '
                                 '$WDIR/zq_nchwcv_gemm_align.o $WDIR/zq_nchwcv_gemm_asm.o '
                                 '$WDIR/zq_nchwcv_gemm_auto.o $WDIR/zq_nchwcv_tensor.o'),
@@ -743,7 +749,8 @@ EXTRA_INC = {'zq_facedb': ' -I$R -I$R/ZQCNN -I$R/ZQCNN/3rdparty/include/ZQlib',
 # 测内核的测试自己也 include 了那个 .c，所以**主 TU 也要带 -mavx2 -mfma**，
 # 否则 _mm256_set1_ps 这些 always_inline 内建会报
 # "target specific option mismatch"（2026-10-02 实测）。
-EXTRA_CXXFLAGS = {'zq_facedb': ' -mavx2 -mfma -fopenmp',
+EXTRA_CXXFLAGS = {'zq_scale': ' -mavx2 -mfma',
+                  'zq_facedb': ' -mavx2 -mfma -fopenmp',
                   'zq_facedb2': ' -mavx2 -mfma -fopenmp',
                   'zq_innerproduct': ' -mavx2 -mfma -fopenmp',
                   'zq_gemm_shape': ' -mavx2 -mfma -fopenmp',

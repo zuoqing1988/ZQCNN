@@ -259,7 +259,12 @@ WIN_SAMPLES = ['SampleGEMMAsmCompare.exe', 'SampleMTCNN.exe', 'SampleMTCNN_NCHWC
                # 附录 HY（2026-10-05）：同一段守卫的**第二份拷贝**
                # （`ZQ_CNN_Net_NCHWC`），同样走生产路径
                # （`ZQ_CNN_MTCNN_NCHWC.h:109`），此前**零覆盖**。
-               'SampleMergeBNCompareNCHWC.exe']
+               'SampleMergeBNCompareNCHWC.exe',
+               # 附录 IA（2026-10-05）：15 类**没有任何随仓模型跑得到**的层类型，
+               # 各自造合成网真跑一遍并与独立参考实现对拍。
+               # 它当场抓出了 `zq_cnn_scale_32f_align` 带 bias 分支的堆越界读
+               # （附录 IB）。
+               'SampleUnusedLayerProbe.exe']
 WIN_BIN = os.path.join(ROOT, 'cmake-out-win32-x64', 'release', 'Release')
 
 # Windows 侧的检出数下界（附录 GS.3，2026-10-04）。

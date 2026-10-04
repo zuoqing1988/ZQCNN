@@ -405,3 +405,145 @@ MSVC `/analyze`、ARM/NEON 与 FP16 档解析。
 > 记这一条是为了让下一轮能从"当前树是否已经被完整回归验过"开始，
 > 而不是重新跑一遍才知道（HX 那批的教训：v35 是在修复**之前**跑的，
 > 结果对修后的树没有意义，只能作废重来一次）。
+
+## 新增/变更：IA / IB —— 给 15 类「没有任何随仓模型跑得到」的层类型造合成网，抓出一条**堆越界读**
+
+### 起因
+
+`run_audit_checks.py` 的 C7 可达性门禁给出一张层类型表：
+
+```
+合计 36 种：EXERCISED 20 / COMMENTED 1 / UNUSED 15
+UNUSED   DeConvolution  BatchNorm  Scale  Copy  LSTM_TF  ScalarOperation
+         UnaryOperation  Sqrt  Tile  Reduction  LRN  Squeeze
+         PriorBoxText  PriorBox_MXNET  DetectionOutput_MXNET
+```
+
+UNUSED 的意思是「**没有任何随仓库发布的模型会跑到它**」——
+这些代码路径**从来没有被任何东西执行过**：
+既没有 sample 跑，也没有门禁覆盖。
+HX 那条活缺陷查了十二轮，教训之一是「**没被断言覆盖的路径，坏了也不告诉你**」；
+这些路径比那条还彻底：**连"跑过"都没有过**。
+
+### IA：新增 `SamplesZQCNN/SampleUnusedLayerProbe`
+
+对每一类 UNUSED 层，**自己写一个最小的 `.zqparams` + `.nchwbin`**，
+用真的 `ZQ_CNN_Net::LoadFrom` + `Forward` 跑一遍，
+再与**独立写的参考实现**比后向误差。
+
+**参考实现必须先自证**：每个参考都先过一道**手算**用例
+（数值取成能约成有理数/整数的），过了才有资格去判库错。
+
+本轮覆盖了 4 类（25 个形状）：
+
+| 层 | 形状数 | 阈值 | 结果 |
+|---|---|---|---|
+| `LRN` | 9 | 1e-5 | 全过（最大 6.0e-6 @ C=3） |
+| `Copy` | 4 | 1e-7 | 全过（**逐位 0**） |
+| `Scale`（带 bias / 不带） | 8 | 1e-6 | 全过 |
+| `Sqrt` | 4 | 1e-6 | 全过 |
+
+两个平台逐项一致（差异只在 1e-8 量级的浮点舍入）：
+Windows `UNUSED LAYER PROBE OK` rc=0、Linux 同。
+
+`LRN` 的形状特意一半取 align(8) 的倍数、一半取非倍数
+（`C=1/3/8/13/16/17/32/33/64`，`local_size=1/3/5/7/9`）——
+那 9 组里 `C=1, L=1` 正是附录 AX.2 越界写踩过的形状，现在测下来是对的。
+
+**尚未覆盖的 11 类在输出里逐个列出**，不装作已经查过。
+
+### IA.5 一次"看着像库有 bug、其实是我参考写错了"的记录
+
+第一版 `Scale` 的参考把通道下标写成 `i % C`，于是 C=3/8/13 **全部报"对不上"**
+（后向误差 0.35~0.54），而 C=1 通过。差点把它当成库里的一条缺陷。
+
+真相：输入输出用的是 **compact NCHW**（`ConvertToCompactNCHW` 那种），
+元素 (c,h,w) 的下标是 `(c*H + h)*W + w`，**通道是最外层**，应当是 `i / (H*W)`；
+张量本身才是 NHW_C 布局（`pixelStep` 那一维是通道）。
+而 `_scalebias` 是在张量上做的，两者一致 —— **库是对的**。
+
+> **教训**：我那个"手算自证"用例选的是 `C=2, H=W=1`，
+> 此时 `i/(H*W)` 与 `i%C` **完全等价**，于是自证对**两种约定都通过**，形同虚设。
+> 自证用例必须**能区分你要防的那个错误**。
+> 改成 `C=2, H=W=2`（`H*W=4 != C`）之后，两种约定给出不同答案
+> （`[2,4,6,8,16,19,22,25]` vs `[2,4,7,8,15,18,22,25]`），自证才真的有鉴别力。
+
+### IB：`zq_cnn_scale_32f_align` 带 bias 分支的**堆越界读**（已修）
+
+顺着 `Scale` 往下读实现，发现带 bias 的那一支是**无条件整向量**：
+
+```c
+for (c = 0, c_ptr = pix_ptr; c < in_C; c += zq_mm_align_size, c_ptr += zq_mm_align_size)
+{
+    scale_vec = zq_mm_load_ps(scale_data + c);   // 读 zq_mm_align_size 个 float
+    bias_vec  = zq_mm_load_ps(bias_data + c);    // 同上
+    ...
+}
+```
+
+而 `scale` / `bias` 两个张量都是 `ChangeSize(1,1,1,in_C,0,0)` ——
+**只有 `in_C` 个 float**。于是 `in_C % align != 0` 时最后一下读过 C-1。
+
+**同一个函数里不带 bias 的那一支早就修过**，注释就写在旁边
+（"in_C 不是 4/8 的倍数: 整向量读会越过 scale_data 的分配, 改走标量"）——
+也就是说**只修了一条分支，另一条留着**。
+
+ASan 实测（新增门禁 `tools/zq_scale_check.cpp`）：
+
+```
+ERROR: AddressSanitizer: heap-buffer-overflow ... READ of size 32
+  #1 zq_cnn_scale_32f_align256bit
+     ZQCNN/layers_c/zq_cnn_batchnormscale_32f_align_c_raw.h:127
+0 bytes to the right of 12-byte region        <- scale 的 3 个 float
+```
+
+修复：带 bias 的那一支也按 `in_C % zq_mm_align_size == 0` 选路 ——
+整倍数走向量，否则走标量。**数值结果完全不变**（标量版本来就是同一组乘法加法），
+且整倍数那一档（生产里绝大多数）**仍然走向量，没有性能损失**。
+
+变异测试（把文件退回修复前再跑门禁）：
+
+```
+align4  C=3  bias   FAIL 越界读/崩溃
+align4  C=13 bias   FAIL 越界读/崩溃
+align8  C=3  bias   FAIL 越界读/崩溃
+（其余 7 组仍 ok —— 判据有鉴别力，不是"全红"）
+```
+
+还原后 `zq_scale PASS`。
+
+### 门禁化
+
+* `tools/zq_scale_check.cpp` — **新增**，已挂进 `tools/run_zqlib_checks.py`
+  （`EXTRA_LINK` 直链 `layers_c/zq_cnn_batchnormscale_32f_align_c.c`；
+  不编那个 5 分钟的 `ZQ_CNN_Forward_SSEUtils.cpp`，附录 EC.1）。
+  用 `zq_check_child.h` 的 `zq_child_silence_stderr()`，
+  失败时 harness 会把 `ZQ_CHILD_ERR` 的开头打出来（附录 CZ）。
+* `SamplesZQCNN/SampleUnusedLayerProbe` — 接入 `run_sample_regression.sh`
+  与 `run_audit_checks.py` 的 `WIN_SAMPLES`。
+
+### 变更文件
+
+* `ZQCNN/layers_c/zq_cnn_batchnormscale_32f_align_c_raw.h` — **生产代码**：
+  带 bias 分支加 `in_C % align == 0` 判据 + 标量回退。
+* `tools/zq_scale_check.cpp` — **新增** sanitizer 门禁。
+* `tools/run_zqlib_checks.py` — 加 `zq_scale` 的 `EXTRA_LINK` / `EXTRA_CXXFLAGS`。
+* `SamplesZQCNN/SampleUnusedLayerProbe/SampleUnusedLayerProbe.cpp` — **新增**。
+* `tools/run_sample_regression.sh`、`tools/run_audit_checks.py` — 接入上面那个 sample。
+* `audit_k3_20261001.md`（追加 IA / IB）；`AGENTS.md`（补两条）
+
+### 注意事项
+
+1. **`Scale` 直接当第一层时输出取不到**：`Scale` 在 `_is_inplace_safe` 表里，
+   而 `Copy`/`Sqrt` 不在。`Input -> Scale(top=top1)` 会被 `_simplify_inplace`
+   就地化，结果落在 **blob 0（输入张量）** 上，而 `Forward` 结束时把
+   `blobs[0]` 置 0 —— 于是 `GetBlobByName` **两个名字都取不到**。
+   探针因此垫了一层 `Copy`。这属于**行为记录**，不是本次修的缺陷。
+2. **`_aligned_malloc` 只有 MSVC 有**，门禁里的对齐分配收敛成
+   `alloc_aligned()` 一个函数（Linux 走 `posix_memalign`）。
+3. 第一版门禁用**裸 `malloc`** 分配 `scale`/`bias`，
+   align=8 的组直接 SEGV（`_mm256_load_ps` 要求 32 字节对齐），
+   把"对齐不够"和"越界读"混成了一个信号。改成
+   `posix_memalign(32, C*4)` —— 既对齐又**恰好 C 个 float**，红区紧贴末尾。
+   > 判据：**探针的信号必须只对应一个原因**。两个原因共用一句
+   > 「越界/崩溃」时，报出来的东西没法用（附录 GZ.3 同族）。

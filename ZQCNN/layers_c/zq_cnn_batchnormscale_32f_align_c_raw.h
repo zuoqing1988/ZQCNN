@@ -1,4 +1,4 @@
-﻿/*
+/*
 a = bias - slope * mean / sqrt(var+eps)
 b = slope / sqrt(var+eps)
 value = b * value + a
@@ -122,11 +122,44 @@ void zq_cnn_scale_32f_align(
 			{
 				for (w = 0, pix_ptr = row_ptr; w < in_W; w++, pix_ptr += in_pixStep)
 				{
-					for (c = 0, c_ptr = pix_ptr; c < in_C; c += zq_mm_align_size, c_ptr += zq_mm_align_size)
+					/* 审计修复 2026-10-05（audit_k3_20261001.md 附录 IB）
+					 * -----------------------------------------------------
+					 * `scale` / `bias` 两个张量都是 `ChangeSize(1,1,1,in_C,0,0)`
+					 * —— **只有 in_C 个 float**。下面这一支原来无条件走整向量，
+					 * 于是 in_C 不是 4/8 的倍数时最后一次
+					 * `zq_mm_load_ps(scale_data + c)` / `(bias_data + c)`
+					 * 读过 C-1。
+					 *
+					 * ASan 实测（tools/zq_scale_overread_check.cpp，默认构建 AVX2、align=8）：
+					 *   ERROR: AddressSanitizer: heap-buffer-overflow
+					 *          READ of size 32 ... in _mm256_load_ps
+					 *          #1 zq_cnn_scale_32f_align256bit
+					 *             ZQCNN/layers_c/zq_cnn_batchnormscale_32f_align_c_raw.h:127
+					 *   0 bytes to the right of 12-byte region       <- scale 的 3 个 float
+					 *
+					 * 可达性：`ZQ_CNN_Layer_Scale` 的 `in_C` 来自 bottom blob 的通道数，
+					 * 而 C 完全可以不是 4/8 的倍数。
+					 *
+					 * 下面 `else` 那一支（不带 bias）**早就修过**，
+					 * 注释就写在旁边 —— 也就是说**只修了一条分支，另一条留着**。
+					 * 现在两条用同一个判据：in_C 是整倍数才走向量，否则走标量。
+					 * 数值结果**完全不变**（标量版本来就是同一组乘法加法）。
+					 */
+					if (in_C % zq_mm_align_size == 0)
 					{
-						scale_vec = zq_mm_load_ps(scale_data + c);
-						bias_vec = zq_mm_load_ps(bias_data + c);
-						zq_mm_store_ps(c_ptr, zq_mm_add_ps(zq_mm_mul_ps(zq_mm_load_ps(c_ptr), scale_vec), bias_vec));
+						for (c = 0, c_ptr = pix_ptr; c < in_C; c += zq_mm_align_size, c_ptr += zq_mm_align_size)
+						{
+							scale_vec = zq_mm_load_ps(scale_data + c);
+							bias_vec = zq_mm_load_ps(bias_data + c);
+							zq_mm_store_ps(c_ptr, zq_mm_add_ps(zq_mm_mul_ps(zq_mm_load_ps(c_ptr), scale_vec), bias_vec));
+						}
+					}
+					else
+					{
+						for (c = 0; c < in_C; c++)
+						{
+							pix_ptr[c] = pix_ptr[c] * scale_data[c] + bias_data[c];
+						}
 					}
 				}
 			}

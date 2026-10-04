@@ -75,6 +75,11 @@ STUB_RE='only support|not support|not supported|only supports'
 # 变异测试（把第二份拷贝退回修复前）实测：mobilefacenet-v1 立刻红到 **0.1874**，
 # 其余 16 个模型仍绿 —— 判据有鉴别力，不是"整体恒红"。
 #
+# `SampleUnusedLayerProbe`（附录 IA）：给那 15 类**没有任何随仓模型跑得到**的
+# 层类型各造一个合成网真跑一遍，与独立参考实现比后向误差。
+# 它自己的输入现场写在 cwd（产物目录）里、跑完删掉，不依赖任何随仓模型，
+# 所以两条路径都能直接接。
+#
 # 顺带记一条：`SampleSliceMerge` **故意不在**这张表里 ——
 # 它的输入是 `slice_model_weights.py` 现场切出来的 `.zqslice/`，
 # 而那东西在 `cmake-out-*/Release/` 下、被 .gitignore 排除，
@@ -95,7 +100,8 @@ detect_floor_case() {   # $1=sample 名 -> 期望下界；空 = 该 sample 不�
 n_ok=0; n_stub=0; n_bad=0
 for e in SampleMTCNN SampleMTCNN_NCHWC4 SampleSSD SampleFaceDetectorMTCNN \
          SampleCascadeOnet SampleCascadeOnet_Interface SampleMTCNNLoadFromCode \
-         SampleGEMMAsmCompare SampleMergeBNCompare SampleMergeBNCompareNCHWC; do
+         SampleGEMMAsmCompare SampleMergeBNCompare SampleMergeBNCompareNCHWC \
+         SampleUnusedLayerProbe; do
   if [ -x "./$e" ]; then
     s=$(date +%s%N)
     out=$("./$e" 2>&1); rc=$?
