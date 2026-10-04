@@ -66,6 +66,29 @@ static float rnd(unsigned& s)
     return (float)((s >> 8) & 0xFFFF) / 32768.0f - 1.0f;
 }
 
+// 收集 .zqparams 里所有 top= 的 blob 名，**按文件顺序**（对绝大多数模型就是拓扑序）。
+// 逐 blob 比对靠它 —— 因为 ZQ_CNN_Net 没有公开"列出所有 blob 名"的接口。
+static std::vector<std::string> collect_blob_names(const std::string& zp)
+{
+    std::vector<std::string> out;
+    FILE* f = fopen(zp.c_str(), "rb");
+    if (!f) return out;
+    char line[4096];
+    while (fgets(line, sizeof(line), f)) {
+        std::string s(line);
+        while (!s.empty() && (s[s.size()-1]=='\n' || s[s.size()-1]=='\r')) s.erase(s.size()-1);
+        if (s.empty() || s[0]=='#') continue;
+        size_t p = s.find("top=");
+        if (p == std::string::npos) continue;
+        size_t e = p + 4;
+        while (e < s.size() && s[e] != ' ' && s[e] != '\t') e++;
+        std::string nm = s.substr(p + 4, e - (p + 4));
+        if (!nm.empty()) out.push_back(nm);
+    }
+    fclose(f);
+    return out;
+}
+
 static bool parse_param(const std::string& zp, int& C, int& H, int& W, std::string& top)
 {
     FILE* f = fopen(zp.c_str(), "rb");
@@ -275,6 +298,73 @@ int main()
                 printf("\n      差异大的 = %ld / %zu", ndiff_big, va.size());
                 if (worst_ratio_i >= 0) printf("；比值偏离最大的 #%d 比值 %.6g", worst_ratio_i, worst_ratio);
                 printf("\n");
+            }
+            // ---- 逐 blob 扫描：定位**第一个**分歧的 blob ----
+            //
+            // 为什么必须扫：只比最后一个 blob 的话，误差经过后面几十层传播，
+            // 已经看不出"是哪一层开始错的"。逐个 blob 比就能直接指出
+            // "第一个对不上的 blob 是哪个" —— 那就是出问题的那一层的输出。
+            //
+            // 判据：同一个 blob 名字在两条路上的内容，按后向误差比。
+            // **形状不同**也算分歧（那说明融合改了张量形状，比数值错更严重）。
+            {
+                ZQ::ZQ_CNN_Net nP;
+                if (nP.LoadFrom(zp, mp, true, PROD_IGNORE_SMALL, true)) {
+                    ZQ::ZQ_CNN_Tensor4D_NHW_C_Align256bit inP;
+                    fill_input(inP, C, H, W, 12345u);
+                    if (nP.Forward(inP)) {
+                        std::vector<std::string> names = collect_blob_names(zp);
+                        int nbad_blob = 0, first_bad_blob = -1;
+                        std::string first_name;
+                        for (size_t q = 0; q < names.size(); q++) {
+                            const ZQ::ZQ_CNN_Tensor4D* ba = nA.GetBlobByName(names[q]);
+                            const ZQ::ZQ_CNN_Tensor4D* bp = nP.GetBlobByName(names[q]);
+                            if (ba == 0 || bp == 0) continue;   // 融合后被删掉的 blob，跳过
+                            std::vector<float> fa_, fp_;
+                            read_blob(ba, fa_);
+                            read_blob(bp, fp_);
+                            if (fa_.size() != fp_.size()) {
+                                if (first_bad_blob < 0) { first_bad_blob = (int)q; first_name = names[q]; }
+                                nbad_blob++;
+                                continue;
+                            }
+                            long wi = -1;
+                            double e = backward_err(fa_, fp_, wi);
+                            if (e > 1e-4) {
+                                if (first_bad_blob < 0) { first_bad_blob = (int)q; first_name = names[q]; }
+                                nbad_blob++;
+                                if (nbad_blob <= 4) {
+                                    printf("      blob[%2d] %-28s 后向误差 %.4g（%zu 个 float）\n",
+                                           (int)q, names[q].c_str(), e, fa_.size());
+                                }
+                                // 第一个分歧的 blob：**逐元素**摆出前几个。
+                                // 形态决定根因：整体错 / 只有个别位置错 /
+                                // 第 i 个位置的值等于别处的未融合值（= 错位）。
+                                if (q == (size_t)first_bad_blob && fp_.size() == fa_.size()) {
+                                    double ss = 0.0;
+                                    for (size_t z = 0; z < fa_.size(); z++) ss += (double)fa_[z] * (double)fa_[z];
+                                    double dn = sqrt(ss);
+                                    if (dn == 0.0) dn = 1.0;
+                                    int nbad = 0;
+                                    for (size_t z = 0; z < fa_.size(); z++)
+                                        if (fabs((double)fa_[z] - (double)fp_[z]) / dn > 1e-3) nbad++;
+                                    printf("        形状 N=%d H=%d W=%d C=%d，共 %zu 个 float，差异大的 %d 个\n",
+                                           ba->GetN(), ba->GetH(), ba->GetW(), ba->GetC(), fa_.size(), nbad);
+                                    printf("        前 10 个（未融合 -> 融合）：");
+                                    for (int z = 0; z < 10 && (size_t)z < fa_.size(); z++)
+                                        printf(" [%d %.6g->%.6g]", z, fa_[z], fp_[z]);
+                                    printf("\n");
+                                }
+                            }
+                        }
+                        printf("      逐 blob 扫描：%zu 个 blob 里 %d 个对不上；**第一个**是 #%d \"%s\"\n",
+                               names.size(), nbad_blob, first_bad_blob, first_name.c_str());
+                    } else {
+                        printf("      逐 blob 扫描：生产那一档 Forward 失败\n");
+                    }
+                } else {
+                    printf("      逐 blob 扫描：生产那一档加载失败\n");
+                }
             }
             bad++;
         } else {
