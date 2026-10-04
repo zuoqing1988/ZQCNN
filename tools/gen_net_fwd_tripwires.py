@@ -91,6 +91,38 @@ static void zq_net_tripwire(const char* fn)
     _exit(3);
 }
 
+// 「加载期**合法**被调用」的那一小族：打一行 LOADTIME 到 **stdout**（不是 stderr），
+// 然后**返回 true**，不中止。
+//
+// 为什么不并进上面那个：附录 HC 的 `zq_nchwc_roundtrip` 走的是
+// `ZQ_CNN_Net_NCHWC::LoadFrom`，而那个的最后一步是 `_prepack()` ——
+// `ZQ_CNN_Layer_NCHWC_InnerProduct::Prepack()` 真的会调
+// `ZQ_CNN_Forward_SSEUtils_NCHWC::InnerProductPrePack`。
+// 于是本文件头里「任何桩都不该被调到」那条假设**被证伪了**
+// （2026-10-04 实测，绊线 rc=3）。
+//
+// 为什么不并进 EXCLUDE：EXCLUDE 要求消费方提供**照抄的真实实现**，
+// 而照抄就会与生产代码漂移（生成器自己写明「排除项是有代价的」）。
+//
+// 为什么这里用「记录 + 返回 true」而不是「记录 + 空实现」：
+// 消费方门禁**必须断言** LOADTIME 行出现过（本仓库里是
+// `zq_nchwc_roundtrip_check.cpp`，对含 InnerProduct 层的模型断言），
+// 所以它不可能变成静默 no-op —— 这正是本文件头坚持的那条性质。
+// 计数器 + 读取接口：消费方门禁要**断言**这些桩响过（见
+// `zq_nchwc_roundtrip_check.cpp` 里 has_ip 的那条判据）。
+// 靠数自己的 stdout 是行不通的 —— 桩打的那行和门禁自己的输出混在同一个流里。
+static int zq_net_loadtime_n = 0;
+static int zq_net_loadtime_calls() { return zq_net_loadtime_n; }
+
+static bool zq_net_tripwire_loadtime(const char* fn)
+{
+    zq_net_loadtime_n++;
+    printf("LOADTIME: %s", fn);
+    fputc(10, stdout);
+    fflush(stdout);
+    return true;
+}
+
 // 定义成员函数必须出现在类的**外层命名空间**里。
 // zq_layerwire_check.cpp 靠 `using namespace ZQ` 让编译器接受，那是宽松写法；
 // 这里用显式 namespace，免得依赖编译器的宽松解析。
@@ -111,6 +143,19 @@ SYM_RE = re.compile(r"undefined reference to `([^']+)'")
 # 所以排除项必须少、且每一条都要在下面写清理由。
 EXCLUDE = {
     "_concat_NCHW_get_size",
+}
+
+# 「加载期**合法**被调用」的族：桩不打成会中止的绊线，而打成**记录型**
+# （打一行 `LOADTIME: <名>` 到 stdout 并返回 true），消费方门禁负责断言
+# 它确实被调到 —— 于是它既不会误报，也不会变成静默 no-op。
+# 每一条都要写清"为什么它在加载期合法"，否则不许加进来。
+ALLOW_AT_LOADTIME = {
+    # `ZQ_CNN_Net_NCHWC::LoadFrom` 的最后一步是 `_prepack()`，
+    # 它对每个 InnerProduct 层调 `Prepack()`，后者就调这个函数
+    # （ZQ_CNN_Layer_NCHWC.h:2556）。它只把 filters 打包进一个 Buffer，
+    # 不跑任何 GEMM —— 所以"加载期不该调到任何 Forward 辅助函数"这条
+    # 假设对它是错的，2026-10-04 附录 HC 实测撞到（绊线 rc=3）。
+    "InnerProductPrePack",
 }
 
 
@@ -204,6 +249,17 @@ def to_definition(sig, retmap):
                          "the declaration shape changed; fix header_return_types()"
                          % (key,))
     ret = retmap[key]
+    # 加载期合法的那一族：桩体换成"记录 + 返回 true"，**不能**返回 0 ——
+    # 返回 0 会让 `Prepack()` 把"打包失败"当成功（它压根不检查返回值，
+    # 但一旦哪天有人开始检查，0 就是一条假失败）。
+    if name in ALLOW_AT_LOADTIME:
+        if ret == "void":
+            raise SystemExit(
+                "ALLOW_AT_LOADTIME 里的 %s 返回 void —— 记录型桩没法返回 true。"
+                "请改成用 EXCLUDE + 消费方真实实现。" % name)
+        body = ('{0} {5}::{1}({2}){3}{{{3}    return zq_net_tripwire_loadtime("{5}::{1}");{3}}}'
+                .format(ret, name, params, NL, "", cls))
+        return body + NL
     # 非 void 的桩必须**有返回值**，否则编译器会警告/报错；
     # 但它永远不该被调到，返回 0 只是为了让 TU 能编过。
     body = ('{0} {5}::{1}({2}){3}{{{3}    zq_net_tripwire("{5}::{1}");{4}}}'

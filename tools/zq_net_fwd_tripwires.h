@@ -55,6 +55,38 @@ static void zq_net_tripwire(const char* fn)
     _exit(3);
 }
 
+// 「加载期**合法**被调用」的那一小族：打一行 LOADTIME 到 **stdout**（不是 stderr），
+// 然后**返回 true**，不中止。
+//
+// 为什么不并进上面那个：附录 HC 的 `zq_nchwc_roundtrip` 走的是
+// `ZQ_CNN_Net_NCHWC::LoadFrom`，而那个的最后一步是 `_prepack()` ——
+// `ZQ_CNN_Layer_NCHWC_InnerProduct::Prepack()` 真的会调
+// `ZQ_CNN_Forward_SSEUtils_NCHWC::InnerProductPrePack`。
+// 于是本文件头里「任何桩都不该被调到」那条假设**被证伪了**
+// （2026-10-04 实测，绊线 rc=3）。
+//
+// 为什么不并进 EXCLUDE：EXCLUDE 要求消费方提供**照抄的真实实现**，
+// 而照抄就会与生产代码漂移（生成器自己写明「排除项是有代价的」）。
+//
+// 为什么这里用「记录 + 返回 true」而不是「记录 + 空实现」：
+// 消费方门禁**必须断言** LOADTIME 行出现过（本仓库里是
+// `zq_nchwc_roundtrip_check.cpp`，对含 InnerProduct 层的模型断言），
+// 所以它不可能变成静默 no-op —— 这正是本文件头坚持的那条性质。
+// 计数器 + 读取接口：消费方门禁要**断言**这些桩响过（见
+// `zq_nchwc_roundtrip_check.cpp` 里 has_ip 的那条判据）。
+// 靠数自己的 stdout 是行不通的 —— 桩打的那行和门禁自己的输出混在同一个流里。
+static int zq_net_loadtime_n = 0;
+static int zq_net_loadtime_calls() { return zq_net_loadtime_n; }
+
+static bool zq_net_tripwire_loadtime(const char* fn)
+{
+    zq_net_loadtime_n++;
+    printf("LOADTIME: %s", fn);
+    fputc(10, stdout);
+    fflush(stdout);
+    return true;
+}
+
 // 定义成员函数必须出现在类的**外层命名空间**里。
 // zq_layerwire_check.cpp 靠 `using namespace ZQ` 让编译器接受，那是宽松写法；
 // 这里用显式 namespace，免得依赖编译器的宽松解析。
@@ -369,7 +401,8 @@ bool ZQ_CNN_Forward_SSEUtils_NCHWC::InnerProduct(ZQ::ZQ_CNN_Tensor4D_NCHWC8&, ZQ
 
 bool ZQ_CNN_Forward_SSEUtils_NCHWC::InnerProductPrePack(ZQ::ZQ_CNN_Tensor4D_NCHWC4 const&, ZQ::ZQ_CNN_Tensor4D_NCHWC::Buffer&)
 {
-    zq_net_tripwire("ZQ_CNN_Forward_SSEUtils_NCHWC::InnerProductPrePack"); return 0;}
+    return zq_net_tripwire_loadtime("ZQ_CNN_Forward_SSEUtils_NCHWC::InnerProductPrePack");
+}
 
 bool ZQ_CNN_Forward_SSEUtils_NCHWC::InnerProductWithBias(ZQ::ZQ_CNN_Tensor4D_NCHWC1&, ZQ::ZQ_CNN_Tensor4D_NCHWC1 const&, ZQ::ZQ_CNN_Tensor4D_NCHWC1 const&, ZQ::ZQ_CNN_Tensor4D_NCHWC1&, void**, long long*)
 {
