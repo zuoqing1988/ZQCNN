@@ -255,7 +255,11 @@ WIN_SAMPLES = ['SampleGEMMAsmCompare.exe', 'SampleMTCNN.exe', 'SampleMTCNN_NCHWC
                # 之前**故意不接**：mobilefacenet-v1 上它恒红（后向误差 0.3695），
                # 恒红的检查会把别的真回归失败淹掉。HX 修掉根因后（17 个模型全过）
                # 它才接进来 —— 它守的是一条**生产路径**上的结果不变性。
-               'SampleMergeBNCompare.exe']
+               'SampleMergeBNCompare.exe',
+               # 附录 HY（2026-10-05）：同一段守卫的**第二份拷贝**
+               # （`ZQ_CNN_Net_NCHWC`），同样走生产路径
+               # （`ZQ_CNN_MTCNN_NCHWC.h:109`），此前**零覆盖**。
+               'SampleMergeBNCompareNCHWC.exe']
 WIN_BIN = os.path.join(ROOT, 'cmake-out-win32-x64', 'release', 'Release')
 
 # Windows 侧的检出数下界（附录 GS.3，2026-10-04）。

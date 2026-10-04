@@ -210,3 +210,93 @@ if (tops[i][0] == bottoms[i + 1][0] &&
    那个模型文件不在本仓库的产出链路上（附录 GU 已量过：27 个 `.zqparams`
    一个都不是仓里那几个 Python 转换器产的），所以**没有动它**。
 
+
+## 新增/变更：HY —— NCHWC 那份 `_merge_bn` 的前后对照（**此前零覆盖**，实测真有缺陷）
+
+### 为什么
+
+HX 修 `merge_bn` 时发现同一段守卫在仓库里有**三份**（各 5 处）。
+主文件那份修完立刻有 `SampleMergeBNCompare` 盯着，
+**NCHWC 那份（`ZQCNN/ZQ_CNN_Net_NCHWC.h`）没有任何东西盯着** ——
+而它**确实走生产路径**：
+
+```
+ZQCNN/ZQ_CNN_MTCNN_NCHWC.h:109-113
+    pnet[i].LoadFrom(pnet_param, pnet_model, true, 1e-9, true)
+    && rnet[i].LoadFrom(rnet_param, rnet_model, true, 1e-9, true)
+    && onet[i].LoadFrom(onet_param, onet_model, true, 1e-9, true);
+```
+
+`SampleMTCNN_NCHWC4` 跑的就是它，但那个 sample **只看检出张数** ——
+而"融合算错"的典型症状恰恰是**检出数不变、框变歪**。
+**"它在回归里"不等于"它的融合结果被验证过"。**
+
+### 新增 `SamplesZQCNN/SampleMergeBNCompareNCHWC`
+
+`ZQ_CNN_Net_NCHWC<ZQ_CNN_Tensor4D_NCHWC4>` 上做与 NCHW 那份完全相同的对照：
+同一份确定性输入（LCG，seed 12345）分别用默认参数与生产实参
+（`merge_bn=true, ignore_small_value=1e-9, merge_prelu=true`）加载，
+各跑一次 `Forward`，比最后一个 blob 的**后向误差**，阈值 1e-4。
+三种组合（bn only / prelu only / 生产）分开跑，为了能指出**是哪一个 merge** 坏的。
+
+实测（两个平台）：
+
+| 平台 | 结果 |
+|---|---|
+| Windows VS2022/AVX2 | 17 个模型全过（mobilefacenet-v1 = **2.737e-07**），`NCHWC MERGE COMPARE OK` rc=0 |
+| Linux gcc 9.4/WSL | 17 个模型全过（mobilefacenet-v1 = **2.628e-07**），`NCHWC MERGE COMPARE OK` rc=0 |
+
+### 变异测试：判据有鉴别力，不是"整体恒红"
+
+把 `ZQ_CNN_Net_NCHWC.h` **单独退回 HX 修复前的版本**（`git show HEAD~1:...`），
+只编这一个 sample 再跑：
+
+```
+mobilefacenet-v1   BAD  后向误差 0.1874 > 0.0001（bn only 0.1874 / prelu only 0） -> merge_bn 是元凶
+共 17 个模型：跑过 17（通过 16，超阈值 1），跳过 0
+NCHWC MERGE COMPARE FAILED        （rc 非 0）
+```
+
+其余 16 个模型**仍然绿** —— 也就是说这条判据**恰好**只抓那一个模型，
+不是"所有模型一起红"的空判据。
+（0.1874 与 NCHW 那条路径的 0.3695 同量级但不相等：
+两份拷贝用的张量布局不同，舍入不同，**结论方向与量级一致**。）
+
+改回修复版 → 5 处守卫全部还原、0 编译错误、`NCHWC MERGE COMPARE OK` rc=0。
+
+> 这一步同时证明了一件事：**NCHWC 那条路径上确实存在这条活缺陷**，
+> 只是**没有任何判据在看它** ——
+> 与 AGENTS.md「门禁的 `return 0` 不是"生产里没人用"的挡箭牌」同源：
+> **没被断言覆盖的路径，坏了也不告诉你。**
+
+### 回归接入
+
+* `tools/run_sample_regression.sh`（Linux 列表）加 `SampleMergeBNCompareNCHWC`
+* `tools/run_audit_checks.py` 的 `WIN_SAMPLES` 加 `SampleMergeBNCompareNCHWC.exe`
+
+它的权重全部来自 `model/`（在版本库里），**不需要**任何现场生成步骤，
+所以两条路径都能直接接（与 `SampleSliceMerge` 不同，那条见 HX 的说明）。
+
+### 变更文件
+
+* `SamplesZQCNN/SampleMergeBNCompareNCHWC/SampleMergeBNCompareNCHWC.cpp` — **新增**。
+* `tools/run_sample_regression.sh`、`tools/run_audit_checks.py` — 接入上面那个 sample。
+* `audit_k3_20261001.md`（追加 HY）
+* `AGENTS.md` — 在新加的那一节里补一条"**第二份拷贝要有自己的对照**"。
+* **无生产代码改动**；两个平台均已手工重编 + 实跑（rc=0，17/17）
+
+### 注意事项
+
+1. **新增 sample 之后必须重新 `cmake -S . -B build_x64 ...`**，
+   否则 `file(GLOB)` 不生效（AGENTS.md「构建规则」第 4 条 / HE.8）。
+   本轮 Windows 侧重新 configure 过；Linux 侧 `cmake /mnt/d/ZQCNN -B /tmp/zqb2`。
+2. **`ZQ_CNN_Net_NCHWC<T>::GetBlobByName` 返回的是 `const Tensor4D*`**
+   （也就是 `const ZQ_CNN_Tensor4D_NCHWC4*`），**不是基类指针** ——
+   按 `const ZQ_CNN_Tensor4D*` 接会得到
+   `error C2440: 无法将 "const Tensor4D *" 转换为 ...`。
+   本 sample 的 `read_blob` 因此写成**模板**（只需要 `GetN/C/H/W` +
+   `ConvertToCompactNCHW`，两者都在基类上）。
+3. `mobilefacenet-v1` 的 `Input` 行带 `H=112 W=112`，
+   而 `ZQ_CNN_Net_NCHWC::Forward` 在**有 InnerProduct 层**时会校验输入形状 ——
+   所以本 sample 显式从参数文件读 `C/H/W` 再造输入，
+   取不到就**报 SKIP 并说明原因**，不静默跳过。

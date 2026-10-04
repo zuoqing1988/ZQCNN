@@ -68,6 +68,13 @@ STUB_RE='only support|not support|not supported|only supports'
 # HX 把根因修掉之后（17 个模型全过）它才变成一条**有价值的**回归。
 # 它的权重全部来自 `model/`（在版本库里），所以**不需要**任何额外生成步骤。
 #
+# `SampleMergeBNCompareNCHWC` 是同一天接进来的（附录 HY）：
+# `ZQ_CNN_Net_NCHWC::_merge_bn` 是同一段守卫的**第二份拷贝**，也走生产路径
+# （`ZQ_CNN_MTCNN_NCHWC.h:109` 用 merge_bn=true），但**没有任何东西比对过它的
+# 融合前后输出** —— `SampleMTCNN_NCHWC4` 只看检出张数。
+# 变异测试（把第二份拷贝退回修复前）实测：mobilefacenet-v1 立刻红到 **0.1874**，
+# 其余 16 个模型仍绿 —— 判据有鉴别力，不是"整体恒红"。
+#
 # 顺带记一条：`SampleSliceMerge` **故意不在**这张表里 ——
 # 它的输入是 `slice_model_weights.py` 现场切出来的 `.zqslice/`，
 # 而那东西在 `cmake-out-*/Release/` 下、被 .gitignore 排除，
@@ -88,7 +95,7 @@ detect_floor_case() {   # $1=sample 名 -> 期望下界；空 = 该 sample 不�
 n_ok=0; n_stub=0; n_bad=0
 for e in SampleMTCNN SampleMTCNN_NCHWC4 SampleSSD SampleFaceDetectorMTCNN \
          SampleCascadeOnet SampleCascadeOnet_Interface SampleMTCNNLoadFromCode \
-         SampleGEMMAsmCompare SampleMergeBNCompare; do
+         SampleGEMMAsmCompare SampleMergeBNCompare SampleMergeBNCompareNCHWC; do
   if [ -x "./$e" ]; then
     s=$(date +%s%N)
     out=$("./$e" 2>&1); rc=$?
