@@ -623,3 +623,72 @@ RMINUS scalar=10, in=[2,4,6] -> 10-x = [8,6,4]
 2. 尚未覆盖的 UNUSED 还有 **9 类**，输出里逐个列出：
    `DeConvolution` / `BatchNorm` / `LSTM_TF` / `UnaryOperation` / `Tile` /
    `Reduction` / `PriorBoxText` / `PriorBox_MXNET` / `DetectionOutput_MXNET`。
+
+## 新增/变更：ID —— 把「同一个 raw 头里剩下的三个内核」也纳入 ASan 门禁（22 组）
+
+### 起因
+
+IB 修的是 `zq_cnn_scale_32f_align` **带 bias 分支**漏了守卫，
+而**不带 bias 的分支早就修过** —— 也就是说作者当初就是**只修了一条分支**。
+同一个 raw 头里还有三个做同一件事（`y = b*x + a`）的内核，
+必须逐个核对 —— 这是 AGENTS.md「补齐一处修复时把同仓的另一份拷贝列出来」
+（附录 HA.3）在**同一个 TU 内**的版本。
+
+人工核对结论（`zq_cnn_batchnormscale_32f_align_c_raw.h`）：
+
+| 函数 | 守卫 |
+|---|---|
+| `zq_cnn_batchnorm_32f_b_a_align` | 有级联守卫：`% (8*align)` -> `% (4*align)` -> `% (2*align)` -> 标量 |
+| `zq_cnn_batchnormscale_32f_mean_var_scale_bias_align` | 标量循环写进 `_aligned_malloc(in_C*sizeof(float))` 的**恰好 in_C 个** float，再交给上面那个有守卫的函数 |
+| `zq_cnn_batchnorm_32f_mean_var_align` | 同上 |
+| `zq_cnn_scale_32f_align`（不带 bias） | 早就改成标量 |
+| `zq_cnn_scale_32f_align`（带 bias） | **原来没有守卫** ← IB 修的就是它 |
+
+结论是"另外三个不需要同样的修复" —— 但那是**读代码**得出的。
+ID 把这个结论变成**跑出来的**。
+
+### 门禁扩到 22 组
+
+```
+zq_scale        10 组  scale（带 bias / 不带 bias），align 1/4/8，C=3/13/8/16
+zq_scale(bn)    12 组  b_a 与 mean_var_scale_bias，align 1/4/8，C=3/13/64/65
+```
+
+C=64 是 `8*align` 的整数倍（走向量那一档），C=65 是 `+1`（必须落标量那一档），
+**两档都要在**。结果 **22 组全过**（ASan 越界 + 数值）。
+
+变异测试（退回 IB 修复前）：**恰好 3 组红**（Scale 带 bias、C=3/13），
+其余全绿 —— **包括 bn 部分 12 组仍然全绿**，
+证明两节判据各自独立有鉴别力。
+
+### 这一轮踩到的三个坑（都是判据自己的）
+
+1. **子进程用 `_exit` 不冲刷缓冲** → 子进程打的「值对不上」永远看不到，
+   父进程只拿到"非 0 退出"、拿不到原因。补 `fflush(stdout)`。
+2. **父进程 fork 之前必须 `setvbuf(_IONBF)`**。否则子进程退出前那次 `fflush`
+   会把**父进程缓冲里那一整段**也推出去，于是 `zq_scale：10 组…`
+   被**重复打印 12 次** —— 与"跑了 12 遍"长得一模一样
+   （仓库里既有规矩：附录 BL.8「崩溃类测试每个用例打一行到 stdout」）。
+3. **就地内核必须在调用前把输入快照下来**。`b_a` / `mean_var_scale_bias`
+   都是**就地**改 `data`，而参考值要**原始 x**。第一版在调用之后才读 `data[c]`，
+   于是 `want = b × 已改过的值 + a`，与 `got` 比**必然全错** ——
+   实测相对误差 0.31 / 0.69 / 8.9 / 12.2，形态看着像"内核算错了"。
+   > 这一条的形态最有欺骗性：数字**很大**、**随 C 变**、**每个 align 都报**。
+   > 而它一次都没跑对过内核的正确路径 —— 只是把输出当成了输入。
+
+### 顺带确认：逐元素运算也必须用后向误差
+
+修好第 3 条后仍有一格红：`mean_var_sc_bias align8 C=65`，相对误差 2.737e-05。
+`y = b*x + a` 在 `b*x ≈ -a` 时结果抵消到接近 0，除以 `|结果|` 会把 1e-7 的绝对差
+放大成 1e-2。改成分母取**这一格的计算尺度** `|b*x| + |a|`
+（AGENTS.md「GEMM 的判据必须用后向误差」—— 这条对逐元素运算同样成立），
+同一格降到 ~1e-7。
+
+### 变更文件
+
+* `tools/zq_scale_check.cpp` — 扩到 22 组；加 `setvbuf`、输入快照、后向误差；
+  头注释改成说明覆盖范围。
+* `tools/run_zqlib_checks.py` — `EXTRA_LINK` 注释补充。
+* `audit_k3_20261001.md`（追加 ID）
+
+**无生产代码改动**；`zq_scale` 门禁 PASS，变异测试红/绿各一次。

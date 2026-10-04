@@ -627,6 +627,8 @@ EXTRA_LINK = {'zq_innerproduct': ' $WDIR/zq_ipgemm.o $WDIR/zq_gemm_align.o $WDIR
               # （附录 EC.1），所以现成的 sanitizer 门禁都**不编它**（用绊线桩）。
               # 但 `Scale` 的实现本身就在 layers_c/zq_cnn_batchnormscale_32f_align_c.c 里，
               # 直接把它链进来就行 —— 越界读发生在**内核里**，不需要整条前向链。
+              # 这个 TU 里的四个逐通道内核（scale / batchnorm_b_a /
+              # batchnormscale_mean_var_scale_bias，附录 IB / ID）都在这一个门禁里。
               'zq_scale': ' $R/ZQCNN/layers_c/zq_cnn_batchnormscale_32f_align_c.c',
               'zq_nchwc_conv': (' $WDIR/zq_nchwcv.o $WDIR/zq_nchwcv_resize.o '
                                 '$WDIR/zq_nchwcv_gemm_align.o $WDIR/zq_nchwcv_gemm_asm.o '
