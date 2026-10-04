@@ -89,6 +89,35 @@ static std::vector<std::string> collect_blob_names(const std::string& zp)
     return out;
 }
 
+// 返回**最后一个** top= 该 blob 的层名。
+// 为什么不能取第一个：mobilefacenet-v1 的 res4 段里
+// res4_block1/2/3/4_conv_dw **四层都写同一个 blob**（共享 skip 路径），
+// 所以"这个 blob 的值"取决于**停在哪个写者**。
+// 2026-10-04 实测：我第一版用"停在 block1"的值当分母，
+// 而那是**另一个卷积**的输出 —— 拿它算比值，结论直接作废
+// （详见附录 HJ.3）。
+static std::string last_writer_of(const std::string& zp, const std::string& blob)
+{
+    FILE* f = fopen(zp.c_str(), "rb");
+    if (!f) return "";
+    char line[4096];
+    std::string best;
+    while (fgets(line, sizeof(line), f)) {
+        std::string s(line);
+        while (!s.empty() && (s[s.size()-1]=='\n' || s[s.size()-1]=='\n')) s.erase(s.size()-1);
+        if (s.empty() || s[0]=='#') continue;
+        size_t n = s.find("name=");
+        size_t t = s.find("top=");
+        if (n == std::string::npos || t == std::string::npos) continue;
+        if (n > t) continue;                       // name 必须写在 top 前面
+        size_t ne = n + 5; while (ne < s.size() && s[ne] != ' ' && s[ne] != '	') ne++;
+        size_t te = t + 4; while (te < s.size() && s[te] != ' ' && s[te] != '	') te++;
+        if (s.substr(t + 4, te - (t + 4)) == blob) best = s.substr(n + 5, ne - (n + 5));
+    }
+    fclose(f);
+    return best;
+}
+
 static bool parse_param(const std::string& zp, int& C, int& H, int& W, std::string& top)
 {
     FILE* f = fopen(zp.c_str(), "rb");
@@ -354,6 +383,109 @@ int main()
                                     for (int z = 0; z < 10 && (size_t)z < fa_.size(); z++)
                                         printf(" [%d %.6g->%.6g]", z, fa_[z], fp_[z]);
                                     printf("\n");
+
+                                    // ---- 决定性的那一次测量（附录 HJ.2）----
+                                    //
+                                    // 融合把每个输出通道 c 的权重整体乘上 `b[c]`，
+                                    // 所以**融合后的输出必然等于 "BN 之前的输出 × 逐通道常数"**：
+                                    // 同一个通道 c 内，所有 (h,w) 位置上的
+                                    //     ratio = 融合值 / BN 前的值
+                                    // 应当是**同一个常数**。
+                                    //
+                                    // 于是这一个比值就把两类根因分开：
+                                    //   * 通道内 ratio **恒定** => 这一层的计算是自洽的，
+                                    //     错的是"那个常数取错了"（系数/映射）；
+                                    //   * 通道内 ratio **乱跳** => 融合后的这一层
+                                    //     **不是** "同一批权重 × 同一份输入" 算出来的，
+                                    //     也就是它读到的输入或权重根本不是那一份。
+                                    //
+                                    // "BN 之前的值"用**公开的局部前向**取：
+                                    //   Forward(in, "data", <dwconv 层名>)
+                                    // 起点是 Input 层（名字就是 .zqparams 里的 name=data），
+                                    // 所以它会把 dwconv 跑完并**停在那里**，
+                                    // 而 dwconv 的 BN 层还没跑 ——
+                                    // 这正是 BN 之前的值。
+                                    {
+                                        const int NN = ba->GetN(), HH = ba->GetH(),
+                                                  WW = ba->GetW(), CC = ba->GetC();
+                                        // 找出产出这个 blob 的那一层：从 blob 名反查
+                                        // 用不到内部结构，所以直接用 .zqparams 的层顺序：
+                                        // 第一个 bottom/top 命中该 blob 的 DepthwiseConvolution。
+                                        ZQ::ZQ_CNN_Net nPre;
+                                        if (nPre.LoadFrom(zp, mp)) {
+                                            ZQ::ZQ_CNN_Tensor4D_NHW_C_Align256bit inPre;
+                                            fill_input(inPre, C, H, W, 12345u);
+                                            std::string lastw = last_writer_of(zp, first_name);
+                                            printf("        [该 blob 的最后写者是 %s]\n",
+                                                   lastw.empty() ? "?" : lastw.c_str());
+                                            if (!lastw.empty() && nPre.Forward(inPre, "data", lastw)) {
+                                                const ZQ::ZQ_CNN_Tensor4D* bpre =
+                                                    nPre.GetBlobByName(first_name);
+                                                if (bpre != 0 && bpre->GetC() == CC) {
+                                                    std::vector<float> pre;
+                                                    read_blob(bpre, pre);
+                                                    if (pre.size() == fp_.size()) {
+                                                        // 每个通道内 ratio 的极差
+                                                        double worst_spread = 0.0;
+                                                        int worst_ch = -1;
+                                                        int nconst = 0;
+                                                        for (int c = 0; c < CC; c++) {
+                                                            double lo = 0, hi = 0;
+                                                            int cnt = 0;
+                                                            for (int k = 0; k < NN * HH * WW; k++) {
+                                                                size_t z = (size_t)k * CC + c;
+                                                                if (fabs(pre[z]) < 1e-6f) continue;
+                                                                double r = (double)fp_[z] / (double)pre[z];
+                                                                if (cnt == 0) { lo = hi = r; }
+                                                                else { if (r < lo) lo = r; if (r > hi) hi = r; }
+                                                                cnt++;
+                                                            }
+                                                            if (cnt < 2) continue;
+                                                            double spread = (hi - lo) / (fabs(hi) + 1e-12);
+                                                            if (spread < 1e-3) nconst++;
+                                                            if (spread > worst_spread) { worst_spread = spread; worst_ch = c; }
+                                                        }
+                                                        printf("        通道内 ratio 恒定(<1e-3 极差)的通道: %d / %d\n",
+                                                               nconst, CC);
+                                                        printf("        极差最大的通道 #%d，相对极差 %.4g\n",
+                                                               worst_ch, worst_spread);
+                                                        printf("        => %s\n",
+                                                               nconst > CC / 2
+                                                                ? "这一层的计算是自洽的，错的是那个逐通道系数（系数/映射）"
+                                                                : "融合后的这一层**不是**同一批权重×同一份输入算出来的（读错了输入或权重）");
+                                                        // 第二个决定性测量：这个 blob 被
+                                                        // res4_block1/2/3/4 **四个 dwconv 写**（共享 skip）。
+                                                        // 所以"最终内容"正常应该是**最后一个写者**的。
+                                                        // 若"融合后的最终值"等于"只跑完 block1 就停的值"，
+                                                        // 就说明融合后的网**没有再让 block2/3/4 写它** ——
+                                                        // 即某一层被漏掉了，而不是某一层算错了。
+                                                        {
+                                                            ZQ::ZQ_CNN_Net nB1;
+                                                            if (nB1.LoadFrom(zp, mp)) {
+                                                                ZQ::ZQ_CNN_Tensor4D_NHW_C_Align256bit inB1;
+                                                                fill_input(inB1, C, H, W, 12345u);
+                                                                if (!lastw.empty() && nB1.Forward(inB1, "data", lastw)) {
+                                                                    const ZQ::ZQ_CNN_Tensor4D* b1 =
+                                                                        nB1.GetBlobByName(first_name);
+                                                                    if (b1 != 0) {
+                                                                        std::vector<float> v1;
+                                                                        read_blob(b1, v1);
+                                                                        if (v1.size() == fp_.size()) {
+                                                                            long wi1 = -1;
+                                                                            double e1 = backward_err(v1, fp_, wi1);
+                                                                            printf("        对照：只跑完 %s 的 dw+BN 就停，其值 vs 融合后最终值，后向误差 %.4g%s\n",
+                                                                                   first_name.c_str(), e1,
+                                                                                   e1 < 1e-4 ? "  <== **完全相同** => 融合后的网漏写了后面几个 dwconv" : "");
+                                                                        }
+                                                                    }
+                                                                }
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
                                 }
                             }
                         }
