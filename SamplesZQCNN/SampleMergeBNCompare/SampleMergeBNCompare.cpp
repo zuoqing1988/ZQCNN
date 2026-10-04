@@ -397,6 +397,61 @@ int main()
                                     for (int z = 0; z < 10 && (size_t)z < fa_.size(); z++)
                                         printf(" [%d %.6g->%.6g]", z, fa_[z], fp_[z]);
                                     printf("\n");
+                                    printf("        前 10 个（未融合 -> 融合）：");
+                                    for (int z = 0; z < 10 && (size_t)z < fa_.size(); z++)
+                                        printf(" [%d %.6g->%.6g]", z, fa_[z], fp_[z]);
+                                    printf("\n");
+                                    // ---- 逐**通道**（附录 HP.1）----
+                                    //
+                                    // compact NCHW  (n,c,h,w) 的下标是
+                                    //     (c*H + h)*W + w
+                                    // 所以通道 c 的元素是**等距**的，每隔 H*W。
+                                    //
+                                    // 这一层切分把两种根因分开：
+                                    //   * **只有部分通道**超阈值 => 映射/接线问题
+                                    //     （某几个通道拿到了别人的系数，或某一层没被写）；
+                                    //   * **全部通道**都超阈值 => 这一层**整体**算错
+                                    //     （读错了输入、或权重整体不对）。
+                                    // 两种指向完全不同的修法，一次测量就能分开。
+                                    {
+                                        const int NN2 = ba->GetN(), HH2 = ba->GetH(),
+                                                  WW2 = ba->GetW(), CC2 = ba->GetC();
+                                        const long HW2 = (long)HH2 * WW2;
+                                        int nbad_ch = 0, worst_ch = -1;
+                                        double worst_ch_err = 0;
+                                        int printed = 0;
+                                        for (int c = 0; c < CC2; c++) {
+                                            // 这个通道自己的尺度（分母用未融合那一侧）
+                                            double ss = 0.0;
+                                            for (long k = 0; k < NN2 * HW2; k++) {
+                                                double v = fa_[(size_t)k * CC2 + c];
+                                                ss += v * v;
+                                            }
+                                            double den = sqrt(ss);
+                                            if (den == 0.0) den = 1.0;
+                                            double wc = 0.0;
+                                            for (long k = 0; k < NN2 * HW2; k++) {
+                                                size_t z = (size_t)k * CC2 + c;
+                                                double e = fabs((double)fa_[z] - (double)fp_[z]) / den;
+                                                if (e > wc) wc = e;
+                                            }
+                                            if (wc > 1e-3) {
+                                                nbad_ch++;
+                                                if (wc > worst_ch_err) { worst_ch_err = wc; worst_ch = c; }
+                                                if (printed < 6) {
+                                                    printf("        通道 %4d 后向误差 %.4g\n", c, wc);
+                                                    printed++;
+                                                }
+                                            }
+                                        }
+                                        printf("        逐通道：%d / %d 个通道超 1e-3；最差通道 #%d 误差 %.4g\n",
+                                               nbad_ch, CC2, worst_ch, worst_ch_err);
+                                        printf("        => %s\n",
+                                               nbad_ch == 0 ? "全部通道都在阈值内"
+                                           : (nbad_ch * 2 < CC2
+                                              ? "**只有少数通道**超阈值 => 映射/接线问题"
+                                              : "**多数通道**都超阈值 => 这一层整体算错（读错输入/权重整体不对）"));
+                                    }
 
                                     // ---- 决定性的那一次测量（附录 HJ.2）----
                                     //

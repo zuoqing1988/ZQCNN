@@ -751,6 +751,134 @@ static void case_extreme_bn()
     }
 }
 
+// 第七个用例：**深**的合成网 —— 逼分配器复用被 `delete bns_layer` 释放的内存。
+//
+// 依据（附录 HP.2）：HP 的逐通道测量给出
+//     逐通道：256 / 256 个通道超 1e-3
+//     => **多数通道**都超阈值 => 这一层整体算错（读错输入/权重整体不对）
+// 而此时已经排除掉的
+//   * 输入：blob `res4_block1_conv` 在两条路上都是 1.9e-08（HH.2 / HM.3）
+//   * 权重算术：缩放的下标对每个实际形状可证正确（HG.3）
+//   * 融合本身：24 组合成配置全对（HN.3）
+//
+// "输入对、算术对、输出整体错"最典型的解释只剩一个：
+// **这一层持有的权重张量已经被释放**（use-after-free）。
+// `_merge_bn` 里就有一句 `delete bns_layer; bns_layer = 0;` ——
+// 融合每一对 conv/dwconv+BN 就删掉一个 BN 层，连带释放它那 6 个张量。
+// 若某个 dwconv 的 `filters` 恰好落在那块被回收的内存上，它读到的就是垃圾。
+//
+// **为什么前六个用例都没复现**：它们太小 —— 几十次分配里，
+// 分配器不一定把刚释放的块交回给后面的 dwconv。
+// 而 mobilefacenet-v1 有 70+ 层、几十次融合，**规模**才是触发条件。
+//
+// 于是这一批的装置就是**把规模做成变量**：N 对 conv+BN 之后再放 dwconv+BN，
+// N 从 1 扫到 48。若"深"的那几个 N 变红而浅的不红，预测成立。
+static void case_deep(int n_pairs)
+{
+    const int C = NET_C, HF = NET_H, WF = NET_W;
+    const int NF = K * K * C;
+    char pf[256], wf[256];
+    snprintf(pf, sizeof(pf), "/tmp/zq_dwm_deep%d.zqparams", n_pairs);
+    snprintf(wf, sizeof(wf), "/tmp/zq_dwm_deep%d.nchwbin", n_pairs);
+    {
+        std::string txt;
+        char line[512];
+        snprintf(line, sizeof(line), "Input name=data C=%d H=%d W=%d\n", C, HF, WF);
+        txt += line;
+        // N 对 conv(1x1) + BN，全部会融合、全部会 delete 一个 BN 层
+        for (int i = 0; i < n_pairs; i++) {
+            snprintf(line, sizeof(line),
+                     "Convolution name=c%d bottom=data top=s%d num_output=%d kernel_size=1 stride=1 pad=0\n"
+                     "BatchNormScale name=b%d bottom=s%d top=s%d bias eps=1e-05\n",
+                     i, i, C, i, i, i);
+            txt += line;
+        }
+        // 最后一对：dwconv + BN —— 被检的那一层
+        snprintf(line, sizeof(line),
+                 "DepthwiseConvolution name=dwD bottom=s%d top=dwDout num_output=%d kernel_size=3 stride=1 pad=1\n"
+                 "BatchNormScale name=bnD bottom=dwDout top=dwDout bias eps=1e-05\n"
+                 "Flatten name=flD bottom=dwDout top=flD\n",
+                 n_pairs - 1, C);
+        txt += line;
+        FILE* f = fopen(pf, "wb");
+        fwrite(txt.data(), 1, txt.size(), f);
+        fclose(f);
+    }
+    {
+        unsigned s = 313131u;
+        std::vector<float> w;
+        for (int i = 0; i < n_pairs; i++) {                 // conv: C*C
+            for (int j = 0; j < C * C; j++) w.push_back(rnd(s) * 0.3f);
+            for (int c = 0; c < C; c++) {                     // bn
+                w.push_back(0.02f * (c + 1)); w.push_back(0.5f + 0.01f * c);
+                w.push_back(0.9f + 0.2f * c);  w.push_back(0.01f * (c + 1));
+            }
+        }
+        for (int j = 0; j < NF; j++) w.push_back(rnd(s) * 0.4f);   // dwD
+        for (int c = 0; c < C; c++) {                               // bnD
+            w.push_back(0.03f * (c + 1)); w.push_back(0.45f + 0.012f * c);
+            w.push_back(1.0f + 0.23f * c); w.push_back(0.012f * (c + 1));
+        }
+        FILE* f = fopen(wf, "wb");
+        fwrite(&w[0], 1, w.size() * sizeof(float), f);
+        fclose(f);
+    }
+
+    unsigned s2 = 246813u;
+    std::vector<float> in((size_t)C * HF * WF);
+    for (size_t i = 0; i < in.size(); i++) in[i] = rnd(s2);
+
+    ZQ::ZQ_CNN_Net nA, nB;
+    bool la = nA.LoadFrom(pf, wf);
+    bool lb = nB.LoadFrom(pf, wf, true, 1e-12f, false);
+    if (!la || !lb) {
+        printf("    N=%-3d **FAIL** 加载失败（A=%d B=%d）\n", n_pairs, la ? 1 : 0, lb ? 1 : 0);
+        g_bad++;
+        remove(pf); remove(wf);
+        return;
+    }
+    ZQ::ZQ_CNN_Tensor4D_NHW_C_Align256bit iA, iB;
+    iA.ChangeSize(1, HF, WF, C, 0, 0);
+    iB.ChangeSize(1, HF, WF, C, 0, 0);
+    iA.ConvertFromCompactNCHW(&in[0], 1, C, HF, WF);
+    iB.ConvertFromCompactNCHW(&in[0], 1, C, HF, WF);
+    if (!nA.Forward(iA) || !nB.Forward(iB)) {
+        printf("    N=%-3d **FAIL** Forward 失败\n", n_pairs);
+        g_bad++;
+        remove(pf); remove(wf);
+        return;
+    }
+    const ZQ::ZQ_CNN_Tensor4D* oa = nA.GetBlobByName("dwDout");
+    const ZQ::ZQ_CNN_Tensor4D* ob = nB.GetBlobByName("dwDout");
+    if (oa == 0 || ob == 0) {
+        printf("    N=%-3d **FAIL** 取不到 dwDout\n", n_pairs);
+        g_bad++;
+        remove(pf); remove(wf);
+        return;
+    }
+    std::vector<float> va, vb;
+    read_blob(oa, va);
+    read_blob(ob, vb);
+    if (va.size() != vb.size()) {
+        printf("    N=%-3d **FAIL** 形状对不上\n", n_pairs);
+        g_bad++;
+        remove(pf); remove(wf);
+        return;
+    }
+    long wi = -1;
+    double e2 = backward_err(vb, va, wi);
+    printf("    N=%-3d B（融合）vs A : 后向误差 %.4g", n_pairs, e2);
+    if (e2 > 1e-4) {
+        printf("   <-- **深网下融合改变了结果**（最差 #%ld）\n", wi);
+        g_bad++;
+    } else {
+        printf("\n");
+        g_ok++;
+    }
+    remove(pf);
+    remove(wf);
+}
+
 int main(int argc, char** argv)
 {
     setvbuf(stdout, NULL, _IONBF, 0);
@@ -793,6 +921,11 @@ int main(int argc, char** argv)
         case_multi_writer();
         printf("\n");
         case_extreme_bn();
+        printf("\n");
+        // 深网扫描：规模是"被 delete 的 BN 张量被分配器复用"这个假设的**触发条件**
+        static const int NPAIRS[] = { 1, 2, 4, 8, 16, 32, 48 };
+        for (size_t q = 0; q < sizeof(NPAIRS) / sizeof(NPAIRS[0]); q++)
+            case_deep(NPAIRS[q]);
         int passed = 6 - (g_bad - b0);
         total_ok += passed;
         total_bad += (g_bad - b0);
