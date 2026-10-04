@@ -54,6 +54,12 @@ STUB_RE='only support|not support|not supported|only supports'
 # （data/11.jpg vs data/4_320x240.jpg），所以 10 与 4 **不可直接比较**。
 # 2026-10-04 我一度把这两个数当成"NCHWC4 少检出 60%"的缺陷，
 # 核了输入路径才发现是两张图 —— 记在这里以免下次再犯。
+#
+# `SampleFaceDetectorMTCNN` 刻意**不给**下界：它在 Linux 上是**平台桩**
+# （`#else` 分支只打一行 "only support windows" 然后 return 0），
+# 给下界会让 Linux 侧报 NOCOUNT 而红 —— 那是**误报**，
+# 因为这一档在 Linux 上本来就不适用。它的下界在 Windows 侧
+# （tools/run_audit_checks.py 的 WIN_DETECT_FLOOR，实测 4）。
 detect_floor_case() {   # $1=sample 名 -> 期望下界；空 = 该 sample 不适用
   case "$1" in
     SampleMTCNN)             echo 5 ;;

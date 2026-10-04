@@ -77,7 +77,21 @@ int main()
 	}
 	double t2 = omp_get_wtime();
 	printf("%d iters cost %.3f secs, 1 iter costs %.3f ms\n", iters, t2 - t1, 1000 * (t2 - t1) / iters);
-	
+
+	// 检出数打出来（2026-10-04 加，附录 GS.3 的补齐）。
+	// 口径与上面 Draw() 一致：**只数 exist 为真的框** —— Draw 对 exist 为假的
+	// 走的是另一个分支，直接用 size() 会把没检出的那些也算进去。
+	// 按用户要求 namedWindow/imshow 全被注释掉了，画好的图**没有任何地方
+	// 能看见**，stdout 是结果唯一的出口；没有这一行，这个 sample
+	// 在回归里就只是"rc=0 + 一行耗时"，坏掉了也看不出来。
+	{
+		int n_exist = 0;
+		for (size_t i = 0; i < result_mtcnn.size(); i++)
+			if (result_mtcnn[i].exist)
+				n_exist++;
+		printf("final found num: %d\n", n_exist);
+	}
+
 	Mat draw_mtcnn;
 	img.copyTo(draw_mtcnn);
 	Draw(draw_mtcnn, result_mtcnn);

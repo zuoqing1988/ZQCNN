@@ -248,14 +248,19 @@ WIN_BIN = os.path.join(ROOT, 'cmake-out-win32-x64', 'release', 'Release')
 # **完全一致** —— 10 / 4 / 4 / 3。跨平台可复现性这一条因此也有了实测支撑。
 #
 # 下界同样取"实测值的一半（至少 1）"；`SampleGEMMAsmCompare.exe` 是纯 GEMM
-# 基准，不适用；`SampleFaceDetectorMTCNN.exe` 还没有计数行，记 None = 暂不适用
-# （它的**内容**由 SampleMTCNN 覆盖，见 SampleMTCNN 那一条）。
+# 基准，不适用。
+#
+# `SampleFaceDetectorMTCNN.exe` 2026-10-04 才拿到下界（实测 4 -> 2）：
+# 它在 **Linux 上是平台桩**（只打一行 "only support windows"），
+# 所以 `run_sample_regression.sh` 那边**刻意不给**下界 ——
+# 给了会让 Linux 侧报 NOCOUNT 而红，那是误报。
+# **同一个 sample 在两个平台上的适用性不同**，两张表因此不一样。
 WIN_DETECT_FLOOR = {
     'SampleMTCNN.exe': 5,
     'SampleMTCNN_NCHWC4.exe': 2,
     'SampleSSD.exe': 2,
     'SampleCascadeOnet.exe': 1,
-    'SampleFaceDetectorMTCNN.exe': None,
+    'SampleFaceDetectorMTCNN.exe': 2,
     'SampleGEMMAsmCompare.exe': None,
 }
 
