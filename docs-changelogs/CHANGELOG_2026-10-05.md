@@ -829,3 +829,20 @@ IE 记的「`keepdims=1` 且 `axis ∈ {1,2,3}` 共 12 组对不上，根因未�
   修 `ref_reduce` 的累加；失败时的「按坐标打网格」诊断块保留
 * `audit_k3_20261001.md`（追加 IF；**IE 的结论由本条更正**）
 * **无生产代码改动**；两个平台均已手工重编 + 实跑（rc=0，78/78，待查 0）
+
+## 新增/变更：ID / IE / IF 落地后的完整回归（v43）
+
+```
+ALL CHECKS PASSED        rc=0        FAILED 计数 = 0
+```
+
+覆盖到的组里与本轮相关的是：
+
+* `D4 Windows sample SampleUnusedLayerProbe.exe: OK` —— 探针累计 **78 个形状**
+  （LRN 9 / Copy 4 / Scale 8 / Sqrt 4 / ScalarOp 18 / Squeeze 3 / Reduction 32），
+  **78/78 通过、待查 0**；
+* `B ZQlib 独立回归测试 x10 (ASan+LSan): OK` —— 其中 `zq_scale`（ID 扩到 22 组）
+  由 `tools/run_zqlib_checks.py` 自动发现并执行。
+
+三批（ID / IE / IF）里只有 **ID** 改了生产代码；
+IE 与 IF 都只改了 `SamplesZQCNN/SampleUnusedLayerProbe/` 与文档。
