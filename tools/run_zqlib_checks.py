@@ -466,6 +466,57 @@ EXTRA_SOURCES = {
     # zq_weight_tail / zq_weight_roundtrip / zq_loadbuffer 三道都只跑
     # ZQ_CNN_Net（NCHW）。而 ZQ_CNN_Net_NCHWC 是一份独立的模板实现，
     # 有自己的一套 LoadBinary_NCHW / SaveBinary_NCHW 与 _prepack()，往返零覆盖。
+    # zq_nchwc_variants（附录 HD）：ZQ_CNN_Net_NCHWC 的**三个**张量变体。
+    # 生产里只实例化过 NCHWC4，NCHWC1/NCHWC8 的**前向实现**却存在 ——
+    # 「有人写了运行时代码却没有任何调用方」。这道门禁逐个变体分别编一遍。
+    # zq_nchwc_v1（附录 HD）：ZQ_CNN_Net_NCHWC 的第 1 个张量变体。
+    # 三者共用同一份实现（zq_nchwc_variants_body.h），这里只差一个 -D。
+    # 生产里只实例化过 NCHWC4；另两个的**前向实现**却存在 ——
+    # "有人写了运行时代码却没有任何调用方"。
+    'zq_nchwc_v1': [
+        'gcc -O1 -g $SAN -mavx2 -mfma -fopenmp -c -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include '
+        '$R/ZQCNN/layers_c/zq_cnn_resize_32f_align_c.c -o $WDIR/zq_nchwcv1_rz.o',
+        'gcc -O1 -g $SAN -mavx2 -mfma -fopenmp -c -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include '
+        '$R/ZQCNN/layers_nchwc/zq_cnn_resize_nchwc.c -o $WDIR/zq_nchwcv1_rzn.o',
+        'g++ -O1 -g $SAN -mavx2 -mfma -fopenmp -c -I$R -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include '
+        '$R/ZQCNN/ZQ_CNN_Tensor4D.cpp -o $WDIR/zq_nchwcv1_t4d.o',
+        'g++ -O1 -g $SAN -mavx2 -mfma -fopenmp -c -I$R -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include '
+        '$R/ZQCNN/ZQ_CNN_Tensor4D_NCHWC.cpp -o $WDIR/zq_nchwcv1_tn.o',
+        'g++ -O1 -g $SAN -mavx2 -mfma -fopenmp -c -I$R -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include '
+        '$R/ZQCNN/ZQ_CNN_Net_NCHWC.cpp -o $WDIR/zq_nchwcv1_net.o',
+    ],
+    # zq_nchwc_v4（附录 HD）：ZQ_CNN_Net_NCHWC 的第 4 个张量变体。
+    # 三者共用同一份实现（zq_nchwc_variants_body.h），这里只差一个 -D。
+    # 生产里只实例化过 NCHWC4；另两个的**前向实现**却存在 ——
+    # "有人写了运行时代码却没有任何调用方"。
+    'zq_nchwc_v4': [
+        'gcc -O1 -g $SAN -mavx2 -mfma -fopenmp -c -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include '
+        '$R/ZQCNN/layers_c/zq_cnn_resize_32f_align_c.c -o $WDIR/zq_nchwcv4_rz.o',
+        'gcc -O1 -g $SAN -mavx2 -mfma -fopenmp -c -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include '
+        '$R/ZQCNN/layers_nchwc/zq_cnn_resize_nchwc.c -o $WDIR/zq_nchwcv4_rzn.o',
+        'g++ -O1 -g $SAN -mavx2 -mfma -fopenmp -c -I$R -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include '
+        '$R/ZQCNN/ZQ_CNN_Tensor4D.cpp -o $WDIR/zq_nchwcv4_t4d.o',
+        'g++ -O1 -g $SAN -mavx2 -mfma -fopenmp -c -I$R -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include '
+        '$R/ZQCNN/ZQ_CNN_Tensor4D_NCHWC.cpp -o $WDIR/zq_nchwcv4_tn.o',
+        'g++ -O1 -g $SAN -mavx2 -mfma -fopenmp -c -I$R -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include '
+        '$R/ZQCNN/ZQ_CNN_Net_NCHWC.cpp -o $WDIR/zq_nchwcv4_net.o',
+    ],
+    # zq_nchwc_v8（附录 HD）：ZQ_CNN_Net_NCHWC 的第 8 个张量变体。
+    # 三者共用同一份实现（zq_nchwc_variants_body.h），这里只差一个 -D。
+    # 生产里只实例化过 NCHWC4；另两个的**前向实现**却存在 ——
+    # "有人写了运行时代码却没有任何调用方"。
+    'zq_nchwc_v8': [
+        'gcc -O1 -g $SAN -mavx2 -mfma -fopenmp -c -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include '
+        '$R/ZQCNN/layers_c/zq_cnn_resize_32f_align_c.c -o $WDIR/zq_nchwcv8_rz.o',
+        'gcc -O1 -g $SAN -mavx2 -mfma -fopenmp -c -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include '
+        '$R/ZQCNN/layers_nchwc/zq_cnn_resize_nchwc.c -o $WDIR/zq_nchwcv8_rzn.o',
+        'g++ -O1 -g $SAN -mavx2 -mfma -fopenmp -c -I$R -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include '
+        '$R/ZQCNN/ZQ_CNN_Tensor4D.cpp -o $WDIR/zq_nchwcv8_t4d.o',
+        'g++ -O1 -g $SAN -mavx2 -mfma -fopenmp -c -I$R -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include '
+        '$R/ZQCNN/ZQ_CNN_Tensor4D_NCHWC.cpp -o $WDIR/zq_nchwcv8_tn.o',
+        'g++ -O1 -g $SAN -mavx2 -mfma -fopenmp -c -I$R -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include '
+        '$R/ZQCNN/ZQ_CNN_Net_NCHWC.cpp -o $WDIR/zq_nchwcv8_net.o',
+    ],
     'zq_nchwc_roundtrip': [
         # **两个** resize 内核都要：NCHWC 的 net 也会引用 NCHW 那个张量类，
         # 只编 zq_cnn_resize_nchwc.c 会在链接期报一串
@@ -606,6 +657,15 @@ EXTRA_LINK = {'zq_innerproduct': ' $WDIR/zq_ipgemm.o $WDIR/zq_gemm_align.o $WDIR
               'zq_weight_tail': ' $WDIR/zq_weighttail_t4d.o $WDIR/zq_weighttail_rz.o',
               'zq_loadbuffer': ' $WDIR/zq_loadbuf_t4d.o $WDIR/zq_loadbuf_rz.o',
               'zq_weight_roundtrip': ' $WDIR/zq_wrt_t4d.o $WDIR/zq_wrt_rz.o',
+              'zq_nchwc_v1': (' $WDIR/zq_nchwcv1_t4d.o $WDIR/zq_nchwcv1_tn.o '
+                              '$WDIR/zq_nchwcv1_net.o $WDIR/zq_nchwcv1_rz.o '
+                              '$WDIR/zq_nchwcv1_rzn.o'),
+              'zq_nchwc_v4': (' $WDIR/zq_nchwcv4_t4d.o $WDIR/zq_nchwcv4_tn.o '
+                              '$WDIR/zq_nchwcv4_net.o $WDIR/zq_nchwcv4_rz.o '
+                              '$WDIR/zq_nchwcv4_rzn.o'),
+              'zq_nchwc_v8': (' $WDIR/zq_nchwcv8_t4d.o $WDIR/zq_nchwcv8_tn.o '
+                              '$WDIR/zq_nchwcv8_net.o $WDIR/zq_nchwcv8_rz.o '
+                              '$WDIR/zq_nchwcv8_rzn.o'),
               'zq_nchwc_roundtrip': (' $WDIR/zq_nchwcwz_t4d.o $WDIR/zq_nchwcwz_tn.o '
                                     '$WDIR/zq_nchwcwz_net.o $WDIR/zq_nchwcwz_rz.o '
                                     '$WDIR/zq_nchwcwz_rzn.o'),
@@ -665,6 +725,9 @@ EXTRA_INC = {'zq_facedb': ' -I$R -I$R/ZQCNN -I$R/ZQCNN/3rdparty/include/ZQlib',
              'zq_weight_tail': ' -I$R -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include -I$R/tools',
              'zq_loadbuffer': ' -I$R -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include -I$R/tools',
              'zq_weight_roundtrip': ' -I$R -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include -I$R/tools',
+             'zq_nchwc_v1': ' -I$R -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include -I$R/tools',
+             'zq_nchwc_v4': ' -I$R -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include -I$R/tools',
+             'zq_nchwc_v8': ' -I$R -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include -I$R/tools',
              'zq_nchwc_roundtrip': ' -I$R -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include -I$R/tools',
              'zq_facegroup': ' -I$R -I$R/ZQCNN -I$R/ZQlibFaceID -I$R/ZQ_GEMM -I$R/3rdparty/include',
              'zq_tile': ' -I$R -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include',
@@ -713,6 +776,9 @@ EXTRA_CXXFLAGS = {'zq_facedb': ' -mavx2 -mfma -fopenmp',
                   'zq_weight_tail': ' -mavx2 -mfma -fopenmp',
                   'zq_loadbuffer': ' -mavx2 -mfma -fopenmp',
                   'zq_weight_roundtrip': ' -mavx2 -mfma -fopenmp',
+                  'zq_nchwc_v1': ' -mavx2 -mfma -fopenmp',
+                  'zq_nchwc_v4': ' -mavx2 -mfma -fopenmp',
+                  'zq_nchwc_v8': ' -mavx2 -mfma -fopenmp',
                   'zq_nchwc_roundtrip': ' -mavx2 -mfma -fopenmp',
                   'zq_facegroup': ' -mavx2 -mfma -fopenmp',
                   'zq_tile': ' -mavx2 -mfma -fopenmp',
