@@ -225,6 +225,14 @@ GROUPS = [
     # 那几条要真跑 MATLAB 才谈得上，门禁输出里明写了。
     ('C14 MATLAB 导出脚本结构（附录 GU）',
      ['check_export_scripts.py', '--selftest'], False),
+    # C15（附录 GX）：层类型契约 —— **生产者写的层名，消费者必须认**。
+    # 三个生产者（两个 Python 转换器 + 27 个随仓 .zqparams）与消费者
+    # （ZQ_CNN_Layer*.h 的 ReadParam）**都在这个仓库里**，
+    # 却没有任何东西在核对它们一致。改一边，另一边静默失效，
+    # 症状是运行期一句 "load failed"，离原因隔着一整条转换链。
+    # 已有的 FD/GH 门禁验的是"能不能解析并连通"，**不验层名在不在表里**。
+    ('C15 层类型契约（生产者 vs 消费者）',
+     ['check_layer_type_contract.py', '--selftest'], False),
 ]
 
 
