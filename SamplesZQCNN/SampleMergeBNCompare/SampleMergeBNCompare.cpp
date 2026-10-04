@@ -1,0 +1,271 @@
+// 「融合」与「不融合」两条加载路径的**前向输出对照**（附录 HE）。
+//
+// 为什么要有这个 sample
+// --------------------
+// `_merge_bn`（`ZQ_CNN_Net.h:1538`，132 行）与 `_merge_prelu`（1670，96 行）
+// 是**会删层 + 重连 blob** 的代码。而：
+//
+//   * **每一道门禁**都用 `LoadFrom` 的默认参数（`merge_bn=false`、`merge_prelu=false`），
+//     也就是说这两条路径**零行为覆盖**；
+//   * 而生产恰恰走的是它们（`ZQ_CNN_MTCNN.h:109`）：
+//         pnet[i].LoadFrom(pnet_param, pnet_model, true, 1e-9, true)
+//
+// 融合的**唯一**目的就是「结果不变、快一点」—— 结果变了就是缺陷。
+//
+// 为什么是 sample 而不是门禁
+// -------------------------
+// 这道对照必须**真的跑 Forward**，而 `Forward` 会调遍 `ZQ_CNN_Forward_SSEUtils`
+// 里的每一个卷积辅助函数。门禁那边靠"绊线桩"顶掉那些符号（见
+// `tools/zq_net_fwd_tripwires.h`），那样一跑 Forward 桩就响（rc=3）。
+// 而链真实的 `ZQ_CNN_Forward_SSEUtils.cpp` 会拖进整个 GEMM 内核库
+// （`layers_c/zq_cnn_convolution_gemm_32f_align_c.c` 单个 TU 在 -O1 下编一次
+// 5 分钟以上），放进每轮都跑的回归里不现实。
+// sample 链的是**真库**，CMake 用 `file(GLOB)` 自动编，不需要额外配置。
+//
+// 判据
+// ----
+// 同一份确定性输入，分别用两条路径加载，跑 `Forward`，比较最后一个 blob。
+// 误差用**后向误差**而不是相对误差（AGENTS.md「GEMM 的判据必须用后向误差」）：
+//     err = max_i |got_i - exp_i| / ||exp||_2
+// 相对误差在结果被抵消到很小的地方会报出"完全不对"，
+// 而那只是 float32 的固有性质（见附录 BN 那条）。
+//
+// 退出码：0 = 全部在阈值内；1 = 至少一个超阈值。
+// 输出里**每行自带模型名与判据数值**（AGENTS.md：通用工具的输出要自带它作用于谁）。
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
+#include <cmath>
+#include <string>
+#include <vector>
+#include "ZQ_CNN_Tensor4D.h"
+#include "ZQ_CNN_Net.h"
+
+// Windows 产物的 model/ 是指向仓库根 model/ 的**目录联接**（见 build-with-cmake.md:15），
+// 所以 Windows 侧要用 "model" 而不是 "../../model" —— 与 SampleMTCNN 等一致。
+// 2026-10-04 实测：第一版两边都写 ../../model，Windows 侧一个模型都没找到，
+// 却报 "MERGE COMPARE OK / rc=0"（跑过 0、跳过 17）—— **典型的"没检查"被当成"通过"**。
+#if defined(_WIN32)
+#define MODEL_DIR "model"
+#else
+#define MODEL_DIR "../../model"
+#endif
+
+// 融合只是**重排 + 乘一个常数**，float32 下 1e-4 的后向误差已经很宽松。
+// 若这一行要调，先问"它到底该有多准"（把阈值调到能容下真缺陷，就等于没有判据）。
+static const double BACKWARD_ERR_LIMIT = 1e-4;
+
+// 生产实参（ZQ_CNN_MTCNN.h:109）：merge_bn=true, ignore_small_value=1e-9, merge_prelu=true
+static const float PROD_IGNORE_SMALL = 1e-9f;
+
+// 确定性伪随机：两个 net 必须拿到**逐位相同**的输入，
+// 否则比的就不是"融合改没改结果"而是"输入变了"。
+static float rnd(unsigned& s)
+{
+    s = s * 1664525u + 1013904223u;
+    return (float)((s >> 8) & 0xFFFF) / 32768.0f - 1.0f;
+}
+
+static bool parse_param(const std::string& zp, int& C, int& H, int& W, std::string& top)
+{
+    FILE* f = fopen(zp.c_str(), "rb");
+    if (!f) return false;
+    char line[4096];
+    std::string last;
+    C = H = W = 0;
+    while (fgets(line, sizeof(line), f)) {
+        std::string s(line);
+        while (!s.empty() && (s[s.size() - 1] == '\n' || s[s.size() - 1] == '\r')) s.erase(s.size() - 1);
+        if (s.empty() || s[0] == '#') continue;
+        if (s.compare(0, 5, "Input") == 0) {
+            sscanf(s.c_str(), "Input name=%*s C=%d H=%d W=%d", &C, &H, &W);
+        }
+        last = s;
+    }
+    fclose(f);
+    if (last.empty()) return false;
+    size_t t = last.find("top=");
+    if (t == std::string::npos) return false;
+    size_t e = t + 4;
+    while (e < last.size() && last[e] != ' ' && last[e] != '\t') e++;
+    top = last.substr(t + 4, e - (t + 4));
+    return C > 0 && H > 0 && W > 0 && !top.empty();
+}
+
+static void fill_input(ZQ::ZQ_CNN_Tensor4D_NHW_C_Align256bit& t,
+                       int C, int H, int W, unsigned seed)
+{
+    unsigned s = seed;
+    int n = C * H * W;
+    std::vector<float> v((size_t)n);
+    for (int i = 0; i < n; i++) v[(size_t)i] = rnd(s);
+    t.ChangeSize(1, H, W, C, 0, 0);
+    t.ConvertFromCompactNCHW(&v[0], 1, C, H, W);
+}
+
+static void read_blob(const ZQ::ZQ_CNN_Tensor4D* b, std::vector<float>& out)
+{
+    int N = b->GetN(), C = b->GetC(), H = b->GetH(), W = b->GetW();
+    out.resize((size_t)N * C * H * W);
+    b->ConvertToCompactNCHW(&out[0]);
+}
+
+static double backward_err(const std::vector<float>& a, const std::vector<float>& b, long& worst_i)
+{
+    if (a.size() != b.size() || a.empty()) { worst_i = -1; return 1e30; }
+    double ss = 0.0;
+    for (size_t i = 0; i < a.size(); i++) ss += (double)b[i] * (double)b[i];
+    double den = sqrt(ss);
+    if (den == 0.0) den = 1.0;
+    double worst = 0.0;
+    worst_i = 0;
+    for (size_t i = 0; i < a.size(); i++) {
+        double e = fabs((double)a[i] - (double)b[i]) / den;
+        if (e > worst) { worst = e; worst_i = (long)i; }
+    }
+    return worst;
+}
+
+// 随仓的模型名硬编码在这里，而不是扫目录 ——
+// 扫目录要用 <dirent.h> / access()，那是 POSIX 的，而这个 sample
+// **双平台都要编**（AGENTS.md「不要依赖 MSVC 的传递包含」那条的同源问题：
+// 依赖一个只有一侧有的头，症状是"Linux 编得过、Windows 编不过"）。
+// 存在性用 fopen 试，跨平台。
+static const char* MODELS[] = {
+    "det1-dw20-fast", "det1-dw20-plus",
+    "det2-dw24-fast", "det2-dw24-p0",   "det2-dw24-plus",
+    "det3-dw48-fast", "det3-dw48-p0",   "det3-dw48-plus",
+    "det4-dw48-v2n",  "det4-dw48-v2s",  "det4-dw64-v3s",
+    "det5-dw64-v3s",  "det5-dw96-v2s",  "det5-dw96-v2t",  "det5-dw96-v3s",
+    "det5-dw112",
+    "mobilefacenet-v1",
+};
+
+static bool file_exists(const std::string& p)
+{
+    FILE* f = fopen(p.c_str(), "rb");
+    if (!f) return false;
+    fclose(f);
+    return true;
+}
+
+int main()
+{
+    setvbuf(stdout, NULL, _IONBF, 0);
+    printf("融合 vs 不融合 前向对照（附录 HE）\n");
+    printf("判据：同一输入两条路径加载后跑 Forward，最后一个 blob 的后向误差 <= %g\n",
+           BACKWARD_ERR_LIMIT);
+    printf("      融合实参 = 生产实参 (merge_bn=true, ignore_small_value=%g, merge_prelu=true)\n\n",
+           PROD_IGNORE_SMALL);
+
+
+
+    int ok = 0, bad = 0, skip = 0;
+    const size_t nmodels = sizeof(MODELS) / sizeof(MODELS[0]);
+    for (size_t i = 0; i < nmodels; i++) {
+        const char* base = MODELS[i];
+        std::string zp = std::string(MODEL_DIR) + "/" + base + ".zqparams";
+        std::string mp = std::string(MODEL_DIR) + "/" + base + ".nchwbin";
+        if (!file_exists(zp) || !file_exists(mp)) {
+            printf("%-34s SKIP (仓库里没有配套的 .zqparams/.nchwbin)\n", base);
+            skip++;
+            continue;
+        }
+        int C, H, W;
+        std::string top;
+        if (!parse_param(zp, C, H, W, top)) {
+            printf("%-34s SKIP (取不到 Input 形状或最后一层的 top)\n", base);
+            skip++;
+            continue;
+        }
+        // 基线：默认参数（merge_bn=false, merge_prelu=false）
+        ZQ::ZQ_CNN_Net nA;
+        if (!nA.LoadFrom(zp, mp)) {
+            printf("%-34s BAD  不融合那条加载失败\n", base);
+            bad++;
+            continue;
+        }
+        ZQ::ZQ_CNN_Tensor4D_NHW_C_Align256bit inA;
+        fill_input(inA, C, H, W, 12345u);
+        if (!nA.Forward(inA)) {
+            printf("%-34s BAD  不融合那条 Forward 失败\n", base);
+            bad++;
+            continue;
+        }
+        const ZQ::ZQ_CNN_Tensor4D* oa = nA.GetBlobByName(top);
+        if (oa == 0) {
+            printf("%-34s BAD  基线取不到输出 blob \"%s\"\n", base, top.c_str());
+            bad++;
+            continue;
+        }
+        std::vector<float> va;
+        read_blob(oa, va);
+        // 三种融合组合**分别**跑一遍，判据只看生产那一档。
+        // 分开跑是为了能**定位到具体是哪一个 merge 改坏了结果** ——
+        // 2026-10-04 实测：mobilefacenet-v1 在生产实参下后向误差 0.37，
+        // 而只报"融合 vs 不融合"的话只知道"坏了"，不知道"哪个 merge 坏的"。
+        // 组合表：
+        //   (bn=0, prelu=0) 基线
+        //   (bn=1, prelu=0) 只融 BN
+        //   (bn=0, prelu=1) 只融 PReLU
+        //   (bn=1, prelu=1) 生产实参
+        static const bool CFG[3][2] = { { true, false }, { false, true }, { true, true } };
+        static const char* CFGN[3] = { "bn only", "prelu only", "bn+prelu (prod)" };
+        double errs[3];
+        int ngot = 0;
+        for (int ci = 0; ci < 3; ci++) {
+            ZQ::ZQ_CNN_Net nX;
+            if (!nX.LoadFrom(zp, mp, CFG[ci][0], PROD_IGNORE_SMALL, CFG[ci][1])) {
+                errs[ci] = -1.0;
+                continue;
+            }
+            ZQ::ZQ_CNN_Tensor4D_NHW_C_Align256bit inX;
+            fill_input(inX, C, H, W, 12345u);
+            if (!nX.Forward(inX)) { errs[ci] = -1.0; continue; }
+            const ZQ::ZQ_CNN_Tensor4D* ox = nX.GetBlobByName(top);
+            if (ox == 0) { errs[ci] = -1.0; continue; }
+            std::vector<float> vx;
+            read_blob(ox, vx);
+            long wi = -1;
+            errs[ci] = backward_err(va, vx, wi);
+            ngot++;
+        }
+        if (ngot < 3) {
+            printf("%-34s BAD  三种组合里有 %d 种加载/Forward/取 blob 失败\n", base, 3 - ngot);
+            bad++;
+            continue;
+        }
+        double prod = errs[2];
+        // 定位用的一行：哪一档先坏
+        const char* culprit = "无（单看最后一档）";
+        if (prod > BACKWARD_ERR_LIMIT) {
+            if (errs[0] > BACKWARD_ERR_LIMIT) culprit = "merge_bn";
+            else if (errs[1] > BACKWARD_ERR_LIMIT) culprit = "merge_prelu";
+            else culprit = "两者之一（需再细分）";
+        }
+        if (prod > BACKWARD_ERR_LIMIT) {
+            printf("%-34s BAD  后向误差 %.4g > %g（bn only %.4g / prelu only %.4g）"
+                   " -> %s 是元凶，top=%s\n", base, prod, BACKWARD_ERR_LIMIT,
+                   errs[0], errs[1], culprit, top.c_str());
+            bad++;
+        } else {
+            printf("%-34s OK   后向误差 %.4g（bn only %.4g / prelu only %.4g），"
+                   "输出 %zu 个 float，top=%s\n", base, prod, errs[0], errs[1], va.size(), top.c_str());
+            ok++;
+        }
+    }
+    printf("\n共 %zu 个模型：跑过 %d（通过 %d，超阈值 %d），跳过 %d\n",
+           nmodels, ok + bad, ok, bad, skip);
+    // **一个都没跑过 = 失败**，不是通过。
+    // 2026-10-04 实测踩到：Windows 侧的 MODEL_DIR 写错，一个模型都没找到，
+    // 于是 `bad == 0` 成立、报 "MERGE COMPARE OK"、rc=0 ——
+    // 而"没检查"与"检查通过"在输出上一模一样。
+    // 这与本文件「没有找到 .zqparams —— 同样是"没检查"，不是通过」是同一条，
+    // 而我第一版在门禁里写了、搬成 sample 时**漏掉了**。
+    if (ok + bad == 0) {
+        printf("MERGE COMPARE FAILED（一个模型都没跑过 —— 这不是通过）\n");
+        return 1;
+    }
+    printf("%s\n", bad == 0 ? "MERGE COMPARE OK" : "MERGE COMPARE FAILED");
+    return bad == 0 ? 0 : 1;
+}
