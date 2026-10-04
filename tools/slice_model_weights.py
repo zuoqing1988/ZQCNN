@@ -89,8 +89,13 @@ def main():
     if len(sys.argv) < 3:
         print(__doc__)
         return 2
-    zp = sys.argv[1]
-    target = sys.argv[2]
+    args = sys.argv[1:]
+    multi = False
+    if args and args[0] == '--multi':
+        multi = True
+        args = args[1:]
+    zp = args[0]
+    target = args[1]
     base = zp[:-len('.zqparams')] + '.nchwbin'
     build_probe()
 
@@ -233,10 +238,78 @@ def main():
     if os.path.isdir(os.path.dirname(win)):
         if not os.path.isdir(win):
             os.makedirs(win)
-        for f in ('slice.nchwbin', 'slice.zqparams', 'slice_layers.txt'):
-            _sh.copyfile(os.path.join(tmp, f), os.path.join(win, f))
+        for _fn in ('slice.nchwbin', 'slice.zqparams', 'slice_layers.txt'):
+            _sh.copyfile(os.path.join(tmp, _fn), os.path.join(win, _fn))
         print('  也复制了一份到 %s' % win)
     print('  合成网参数 -> %s' % sp)
+
+    if multi:
+        # --multi：把**若干层**的权重按顺序**拼**起来，配一个共享 blob 的合成网。
+        #
+        # 动机（附录 HW.1）：`res4` 段里 block1..block4 的 dwconv
+        #     **四层的 bottom 全是 res4_block1_conv、top 全是 res4_block1_conv_dw**
+        # —— 而 `res4_blockN_conv` 的 bottom 又都是 `_plusN`（Eltwise 的输出），
+        # 所以**整段共享路径切不出来**（HV.4）。
+        # 但**每一对 dwconv+BN 的权重是能单独切出来的**，
+        # 而那四对层定义的 blob 名本来就一模一样 ——
+        # 于是把四段权重**按顺序拼**起来、层定义**逐字照搬**，
+        # 就得到了"一个 Input + 四个 dwconv+BN 写同一 blob"的网，
+        # 而且**四个用的都是真实训练权重**。
+        #
+        # 这是 HV.3 那张表里**唯一没测过的格子**。
+        parts = []
+        # --multi 时 args[1:] 就是**全部**要拼的层（位置参数 target 也在里面，
+        # 它同时也是单段模式的定位目标）。所以命令行里每一层**只传一次**。
+        for t in args[1:]:
+            ti = None
+            for i, l in enumerate(lines):
+                if ('name=%s' % t) in l:
+                    ti = i
+                    break
+            if ti is None:
+                print('找不到层 %s' % t)
+                return 1
+            # 往后收，直到遇到第一个"无权重"的层为止（BN 是有权重的，要收进去）
+            ei = ti
+            while ei + 1 < len(lines):
+                kn = lines[ei + 1].split()[0]
+                if kn in ('ReLU', 'ReLU6', 'Concat', 'Reshape', 'Permute',
+                          'Squeeze', 'Flatten', 'Dropout', 'Copy', 'Eltwise',
+                          'Input', 'Softmax'):
+                    break
+                ei += 1
+            lo2, hi2 = consumed(ti), consumed(ei + 1)
+            if lo2 is None or hi2 is None:
+                print('%s 那段算不出边界' % t)
+                return 1
+            parts.append((t, ti, ei, lo2, hi2))
+            print('  %-24s 行 [%d..%d] 权重 %d 字节 [%d, %d)'
+                  % (t, ti, ei, hi2 - lo2, lo2, hi2))
+        blob = None
+        wbuf = b''
+        plist = []
+        for t, ti, ei, lo2, hi2 in parts:
+            if blob is None:
+                for tok in lines[ti].split():
+                    if tok.startswith('bottom='):
+                        blob = tok[len('bottom='):]
+            wbuf += data[lo2:hi2]
+            plist.extend(lines[ti:ei + 1])
+        wm = os.path.join(tmp, 'multi.nchwbin')
+        open(wm, 'wb').write(wbuf)
+        wpb = os.path.join(tmp, 'multi.zqparams')
+        with io.open(wpb, 'w', encoding='utf-8', newline=lf) as fh:
+            fh.write('Input name=%s C=256 H=14 W=14' % blob + lf)
+            fh.write(lf.join(plist) + lf)
+        print()
+        print('  拼出来：%d 段共 %d 字节，%d 层' % (len(parts), len(wbuf), len(plist)))
+        print('  共享 blob：bottom=%s，top=%s（四段逐字照搬，所以 blob 名天然一致）'
+              % (blob, blob + '_dw'))
+        print('  权重 -> %s' % wm)
+        print('  参数 -> %s' % wpb)
+        for _fn in ('multi.nchwbin', 'multi.zqparams'):
+            _sh.copyfile(os.path.join(tmp, _fn), os.path.join(win, _fn))
+        return 0
     print('    %s' % synth)
     return 0
 

@@ -233,6 +233,13 @@ GROUPS = [
     # 已有的 FD/GH 门禁验的是"能不能解析并连通"，**不验层名在不在表里**。
     ('C15 层类型契约（生产者 vs 消费者）',
      ['check_layer_type_contract.py', '--selftest'], False),
+    # C16（附录 HX.3）：「后一层读的 blob ≠ 前一层写的 blob」。
+    # `_merge_bn` / `_merge_prelu` 折掉 BN/PReLU 的前提就是"它吃的是这个卷积的输出"。
+    # `model/mobilefacenet-v1.zqparams` 第 108/109 行不满足，于是生产实参下
+    # 它的输出被改了 0.37（后向误差）—— 而这条查了 HE~HX 共十一轮才定位。
+    # 落成门禁的理由：**下一个模型再写出这种接线时，在加载之前就报出来**。
+    ('C16 BN/PReLU 接线（附录 HX）',
+     ['check_bn_prelu_pairing.py', '--selftest'], False),
 ]
 
 
@@ -243,7 +250,12 @@ LINUX_SAMPLES = ('cd /mnt/d/ZQCNN && bash tools/run_sample_regression.sh')
 # SampleGEMMAsmCompare 是汇编 vs intrinsic 的对拍，PASS 才算过；
 # 其余是推理链路（MTCNN / SSD / CascadeOnet）。
 WIN_SAMPLES = ['SampleGEMMAsmCompare.exe', 'SampleMTCNN.exe', 'SampleMTCNN_NCHWC4.exe',
-               'SampleSSD.exe', 'SampleCascadeOnet.exe', 'SampleFaceDetectorMTCNN.exe']
+               'SampleSSD.exe', 'SampleCascadeOnet.exe', 'SampleFaceDetectorMTCNN.exe',
+               # 附录 HX（2026-10-05）：`merge_bn` / `merge_prelu` 的前向对照。
+               # 之前**故意不接**：mobilefacenet-v1 上它恒红（后向误差 0.3695），
+               # 恒红的检查会把别的真回归失败淹掉。HX 修掉根因后（17 个模型全过）
+               # 它才接进来 —— 它守的是一条**生产路径**上的结果不变性。
+               'SampleMergeBNCompare.exe']
 WIN_BIN = os.path.join(ROOT, 'cmake-out-win32-x64', 'release', 'Release')
 
 # Windows 侧的检出数下界（附录 GS.3，2026-10-04）。

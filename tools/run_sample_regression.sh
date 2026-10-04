@@ -60,6 +60,20 @@ STUB_RE='only support|not support|not supported|only supports'
 # 给下界会让 Linux 侧报 NOCOUNT 而红 —— 那是**误报**，
 # 因为这一档在 Linux 上本来就不适用。它的下界在 Windows 侧
 # （tools/run_audit_checks.py 的 WIN_DETECT_FLOOR，实测 4）。
+#
+# `SampleMergeBNCompare` 是 2026-10-05 接进来的（附录 HX）。
+# 它之前**故意不在这张表里**：`merge_bn` 在生产路径上把 mobilefacenet-v1
+# 的输出改了 0.37，而根因未定位 —— 接进来就是每轮恒红，
+# 别的真回归失败会被这摊红淹掉（AGENTS.md「一个恒红的检查不要接进回归」）。
+# HX 把根因修掉之后（17 个模型全过）它才变成一条**有价值的**回归。
+# 它的权重全部来自 `model/`（在版本库里），所以**不需要**任何额外生成步骤。
+#
+# 顺带记一条：`SampleSliceMerge` **故意不在**这张表里 ——
+# 它的输入是 `slice_model_weights.py` 现场切出来的 `.zqslice/`，
+# 而那东西在 `cmake-out-*/Release/` 下、被 .gitignore 排除，
+# 干净克隆上根本不存在 → 它会 NOOUT/FAIL，把回归拖红。
+# 它是**按需复现手段**，由报告/变更日志给出复现命令。
+#
 detect_floor_case() {   # $1=sample 名 -> 期望下界；空 = 该 sample 不适用
   case "$1" in
     SampleMTCNN)             echo 5 ;;
@@ -74,7 +88,7 @@ detect_floor_case() {   # $1=sample 名 -> 期望下界；空 = 该 sample 不�
 n_ok=0; n_stub=0; n_bad=0
 for e in SampleMTCNN SampleMTCNN_NCHWC4 SampleSSD SampleFaceDetectorMTCNN \
          SampleCascadeOnet SampleCascadeOnet_Interface SampleMTCNNLoadFromCode \
-         SampleGEMMAsmCompare; do
+         SampleGEMMAsmCompare SampleMergeBNCompare; do
   if [ -x "./$e" ]; then
     s=$(date +%s%N)
     out=$("./$e" 2>&1); rc=$?

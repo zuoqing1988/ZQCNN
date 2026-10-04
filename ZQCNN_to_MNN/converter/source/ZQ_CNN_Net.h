@@ -1256,6 +1256,18 @@ namespace ZQ
 			}
 		}
 
+		// 本文件是 `ZQCNN/ZQ_CNN_Net.h` 的**一份拷贝**（附录 U 已确认它与主线
+		// 各自演化），所以 `_merge_bn` / `_merge_prelu` 的守卫也必须是同一份：
+		//     tops[i][0] == bottoms[i + 1][0]
+		// 它说的是"这个 BN/PReLU 吃的就是这个卷积的输出"。
+		// 缺了它就会把系数折进一个**根本没喂给它**的卷积里，
+		// 静默改变结果（`model/mobilefacenet-v1.zqparams` 第 108/109 行
+		// 就是这个形状，生产实参下输出被改了 0.37 —— 附录 HX）。
+		//
+		// 判据：改这类"同仓拷贝"时，**先 `grep -c later_refer` 把每一处列出来**，
+		// 改完再 `grep` 一次确认每一处都带上了前提 ——
+		// 只改主文件、漏掉拷贝，症状是"主路径修好了、副路径还是错的"，
+		// 而副路径**可能根本没有回归覆盖**（这一份就没有）。
 		bool _merge_bn()
 		{
 			std::vector<ZQ_CNN_Layer*> tmp_layers;
@@ -1283,7 +1295,7 @@ namespace ZQ
 							if (later_refer)
 								break;
 						}
-						if (tops[i + 1][0] == bottoms[i + 1][0] || !later_refer)
+						if (tops[i][0] == bottoms[i + 1][0] && (tops[i + 1][0] == bottoms[i + 1][0] || !later_refer))	// 前提：后一层吃的就是这个 conv 的输出，理由见函数头注释
 						{
 							ZQ_CNN_Layer_InnerProduct* conv_layer = (ZQ_CNN_Layer_InnerProduct*)layers[i];
 							ZQ_CNN_Layer_BatchNormScale* bns_layer = (ZQ_CNN_Layer_BatchNormScale*)layers[i + 1];
@@ -1318,7 +1330,7 @@ namespace ZQ
 							if (later_refer)
 								break;
 						}
-						if (tops[i + 1][0] == bottoms[i + 1][0] || !later_refer)
+						if (tops[i][0] == bottoms[i + 1][0] && (tops[i + 1][0] == bottoms[i + 1][0] || !later_refer))	// 前提：后一层吃的就是这个 conv 的输出，理由见函数头注释
 						{
 							//do merge
 							ZQ_CNN_Layer_Convolution* conv_layer = (ZQ_CNN_Layer_Convolution*)layers[i];
@@ -1354,7 +1366,7 @@ namespace ZQ
 							if (later_refer)
 								break;
 						}
-						if (tops[i + 1][0] == bottoms[i + 1][0] || !later_refer)
+						if (tops[i][0] == bottoms[i + 1][0] && (tops[i + 1][0] == bottoms[i + 1][0] || !later_refer))	// 前提：后一层吃的就是这个 conv 的输出，理由见函数头注释
 						{
 							//do merge
 							ZQ_CNN_Layer_DepthwiseConvolution* dwconv_layer = (ZQ_CNN_Layer_DepthwiseConvolution*)layers[i];
@@ -1386,6 +1398,8 @@ namespace ZQ
 			return true;
 		}
 
+		// 同 `_merge_bn`：缺了 `tops[i][0] == bottoms[i + 1][0]` 这个前提，
+		// 折叠会在 PReLU 压根没吃这个卷积的输出时照样发生（附录 HX）。
 		bool _merge_prelu()
 		{
 			std::vector<ZQ_CNN_Layer*> tmp_layers;
@@ -1412,7 +1426,7 @@ namespace ZQ
 							if (later_refer)
 								break;
 						}
-						if (tops[i + 1][0] == bottoms[i + 1][0] || !later_refer)
+						if (tops[i][0] == bottoms[i + 1][0] && (tops[i + 1][0] == bottoms[i + 1][0] || !later_refer))	// 前提：后一层吃的就是这个 conv 的输出，理由见函数头注释
 						{
 							//do merge
 							ZQ_CNN_Layer_Convolution* conv_layer = (ZQ_CNN_Layer_Convolution*)layers[i];
@@ -1448,7 +1462,7 @@ namespace ZQ
 							if (later_refer)
 								break;
 						}
-						if (tops[i + 1][0] == bottoms[i + 1][0] || !later_refer)
+						if (tops[i][0] == bottoms[i + 1][0] && (tops[i + 1][0] == bottoms[i + 1][0] || !later_refer))	// 前提：后一层吃的就是这个 conv 的输出，理由见函数头注释
 						{
 							//do merge
 							ZQ_CNN_Layer_DepthwiseConvolution* dwconv_layer = (ZQ_CNN_Layer_DepthwiseConvolution*)layers[i];

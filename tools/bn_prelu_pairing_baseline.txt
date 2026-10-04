@@ -1,0 +1,4 @@
+# 「后一层读的 blob ≠ 前一层写的 blob」基线（附录 HX.3）
+# 一行一条，格式 = key_of()：<模型>\t<conv 层名>\t<act 层名>
+# 用 --rewrite-baseline 重写；改动前请先想清楚这是不是缺陷。
+mobilefacenet-v1.zqparams	res4_block5_conv_dw	res4_block5_conv_dw_bn

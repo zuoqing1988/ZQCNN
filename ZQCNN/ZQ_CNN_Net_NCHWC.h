@@ -970,6 +970,19 @@ namespace ZQ
 			}
 		}
 
+		// 与 NCHW 那份（`ZQ_CNN_Net.h` 的 `_merge_bn`）是同一段代码的拷贝，
+		// 所以**同一个前提**必须一起补（附录 HX.3）：
+		//     tops[i][0] == bottoms[i + 1][0]
+		// 它说的是"这个 BN/PReLU 吃的就是这个卷积的输出"。
+		// 缺了它就会把 BN 的系数折进一个**根本没喂给它**的卷积里 ——
+		// 原图算「另一个 blob 的值 × 逐通道系数」，融合后算
+		// 「这个卷积自己的输出 × 逐通道系数」。`model/mobilefacenet-v1.zqparams`
+		// 第 108/109 行就是这个形状，生产实参下输出被改了 0.37（后向误差）。
+		//
+		// **这是本文件与 NCHW 那份的第三次拷贝同源修改**
+		// （另有 `ZQCNN_to_MNN/converter/source/ZQ_CNN_Net.h`）。
+		// 改这类拷贝的判据：动手前先 `grep -c 'later_refer'` 把名单列出来，
+		// 改完再 `grep` 一次确认**每一处**都带上了前提。
 		bool _merge_bn()
 		{
 			std::vector<My_CNN_Layer*> tmp_layers;
@@ -997,7 +1010,7 @@ namespace ZQ
 							if (later_refer)
 								break;
 						}
-						if (tops[i + 1][0] == bottoms[i + 1][0] || !later_refer)
+						if (tops[i][0] == bottoms[i + 1][0] && (tops[i + 1][0] == bottoms[i + 1][0] || !later_refer))	// 前提：后一层吃的就是这个 conv 的输出，理由见函数头注释
 						{
 							ZQ_CNN_Layer_NCHWC_InnerProduct<Tensor4D>* conv_layer = (ZQ_CNN_Layer_NCHWC_InnerProduct<Tensor4D>*)layers[i];
 							ZQ_CNN_Layer_NCHWC_BatchNormScale<Tensor4D>* bns_layer = (ZQ_CNN_Layer_NCHWC_BatchNormScale<Tensor4D>*)layers[i + 1];
@@ -1032,7 +1045,7 @@ namespace ZQ
 							if (later_refer)
 								break;
 						}
-						if (tops[i + 1][0] == bottoms[i + 1][0] || !later_refer)
+						if (tops[i][0] == bottoms[i + 1][0] && (tops[i + 1][0] == bottoms[i + 1][0] || !later_refer))	// 前提：后一层吃的就是这个 conv 的输出，理由见函数头注释
 						{
 							//do merge
 							ZQ_CNN_Layer_NCHWC_Convolution<Tensor4D>* conv_layer = (ZQ_CNN_Layer_NCHWC_Convolution<Tensor4D>*)layers[i];
@@ -1069,7 +1082,7 @@ namespace ZQ
 							if (later_refer)
 								break;
 						}
-						if (tops[i + 1][0] == bottoms[i + 1][0] || !later_refer)
+						if (tops[i][0] == bottoms[i + 1][0] && (tops[i + 1][0] == bottoms[i + 1][0] || !later_refer))	// 前提：后一层吃的就是这个 conv 的输出，理由见函数头注释
 						{
 							//do merge
 							ZQ_CNN_Layer_NCHWC_DepthwiseConvolution<Tensor4D>* dwconv_layer = (ZQ_CNN_Layer_NCHWC_DepthwiseConvolution<Tensor4D>*)layers[i];
@@ -1102,6 +1115,8 @@ namespace ZQ
 			return true;
 		}
 
+		// 同 `_merge_bn`：缺了 `tops[i][0] == bottoms[i + 1][0]` 这个前提，
+		// 折叠会在 PReLU 压根没吃这个卷积的输出时照样发生（附录 HX.3）。
 		bool _merge_prelu()
 		{
 			std::vector<My_CNN_Layer*> tmp_layers;
@@ -1128,7 +1143,7 @@ namespace ZQ
 							if (later_refer)
 								break;
 						}
-						if (tops[i + 1][0] == bottoms[i + 1][0] || !later_refer)
+						if (tops[i][0] == bottoms[i + 1][0] && (tops[i + 1][0] == bottoms[i + 1][0] || !later_refer))	// 前提：后一层吃的就是这个 conv 的输出，理由见函数头注释
 						{
 							//do merge
 							ZQ_CNN_Layer_NCHWC_Convolution<Tensor4D>* conv_layer = (ZQ_CNN_Layer_NCHWC_Convolution<Tensor4D>*)layers[i];
@@ -1165,7 +1180,7 @@ namespace ZQ
 							if (later_refer)
 								break;
 						}
-						if (tops[i + 1][0] == bottoms[i + 1][0] || !later_refer)
+						if (tops[i][0] == bottoms[i + 1][0] && (tops[i + 1][0] == bottoms[i + 1][0] || !later_refer))	// 前提：后一层吃的就是这个 conv 的输出，理由见函数头注释
 						{
 							//do merge
 							ZQ_CNN_Layer_NCHWC_DepthwiseConvolution<Tensor4D>* dwconv_layer = (ZQ_CNN_Layer_NCHWC_DepthwiseConvolution<Tensor4D>*)layers[i];
