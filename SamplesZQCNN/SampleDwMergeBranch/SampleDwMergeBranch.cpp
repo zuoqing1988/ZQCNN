@@ -75,7 +75,15 @@ static void make_param(std::string& out, int with_conv_bias)
              "Input name=data C=%d H=%d W=%d\n"
              "DepthwiseConvolution name=dw bottom=data top=dw_out num_output=%d "
              "kernel_size=%d stride=1 pad=%d%s\n"
-             "BatchNormScale name=bn bottom=dw_out top=dw_out bias eps=1e-05\n",
+             "BatchNormScale name=bn bottom=dw_out top=dw_out bias eps=1e-05\n"
+             // 第四层：**读 dw_out**。目的是让 `_merge_bn` 守卫里的
+             //     later_refer 变成 **true** ——
+             // 没有它时 BN 是最后一层，later_refer=false，走的是 `|| !later_refer`
+             // 那一支；而真模型里后面还有人读那个 blob，走的是
+             // `tops[i+1][0] == bottoms[i+1][0]` 那一支。
+             // **同一个 if 的两个析取项是两个不同的代码路径**（附录 HK.5）。
+             // Flatten 没有 LoadBinary_NCHW 重载，所以**不需要任何额外权重字节**。
+             "Flatten name=fl bottom=dw_out top=fl\n",
              NET_C, NET_H, NET_W, NET_C, K, PAD, with_conv_bias ? " bias" : "");
     out = buf;
 }
@@ -272,6 +280,223 @@ static void one(int with_conv_bias)
     remove(wf);
 }
 
+// 第三个用例：**两个 dwconv 写同一个 blob**（ResNet 共享 skip 路径的写法）。
+//
+// 为什么必须有它：前两个用例里 dwconv 只有一个，写它的 blob 也只有它写。
+// 而 mobilefacenet-v1 的 res4 段里
+//     res4_block1/2/3/4_conv_dw  四层的 bottom 全是 res4_block1_conv、
+//     top 全是 res4_block1_conv_dw
+// —— 四个 dwconv 轮流**写同一个 blob**。这是合成网与真模型剩下的**唯一**结构差别，
+// 而它恰好是前四轮都没能复现的那一类（HK.4 单层融合是对的；HJ.3 没有层被漏掉；
+// HH.2 输入是对的；HJ.2 通道内 ratio 0/256 恒定）。
+static void case_shared_blob()
+{
+    const int C = NET_C, HF = NET_H, WF = NET_W;
+    const int NF = K * K * C;
+    char pf[256], wf[256];
+    snprintf(pf, sizeof(pf), "/tmp/zq_dwm_shared.zqparams");
+    snprintf(wf, sizeof(wf), "/tmp/zq_dwm_shared.nchwbin");
+    {
+        char buf[1024];
+        snprintf(buf, sizeof(buf),
+                 "Input name=data C=%d H=%d W=%d\n"
+                 "Convolution name=c1 bottom=data top=c1 num_output=%d kernel_size=1 stride=1 pad=0\n"
+                 "DepthwiseConvolution name=dw1 bottom=c1 top=shared num_output=%d kernel_size=3 stride=1 pad=1\n"
+                 "BatchNormScale name=bn1 bottom=shared top=shared bias eps=1e-05\n"
+                 "DepthwiseConvolution name=dw2 bottom=c1 top=shared num_output=%d kernel_size=3 stride=1 pad=1\n"
+                 "BatchNormScale name=bn2 bottom=shared top=shared bias eps=1e-05\n"
+                 "Flatten name=fl bottom=shared top=fl\n",
+                 C, HF, WF, C, C, C);
+        FILE* f = fopen(pf, "wb");
+        fwrite(buf, 1, strlen(buf), f);
+        fclose(f);
+    }
+    {
+        unsigned s = 424242u;
+        std::vector<float> w;
+        // c1 是**普通**卷积，filters 形状是 [num_output][kH][kW][bottom_C]
+        // = C*1*1*C = **C*C**。我第一版只写了 C 个，于是 dw2 读到的位置整体前移，
+        // 报 "Failed to load Binary for layer dw2"（附录 HL.2）。
+        for (int i = 0; i < C * C; i++) w.push_back(rnd(s) * 0.3f);    // c1：C*C
+        // 权重文件的顺序必须与**层在网里的顺序**一致：
+        //     c1, dw1, bn1, dw2, bn2
+        // 我第一版写成 c1, dw1, dw2, bn1, bn2 —— 于是 dw2 读到的是 bn1 的数据，
+        // 报 "Failed to load Binary for layer dw2"（附录 HL.2）。
+        for (int b = 0; b < 2; b++) {                                 // dw1、dw2 交替
+            for (int i = 0; i < NF; i++) w.push_back(rnd(s) * 0.4f);
+            for (int c = 0; c < C; c++) {                              // 紧跟它的 bn
+                w.push_back(0.03f * (c + 1));                        // mean
+                w.push_back(0.4f + 0.02f * c);                        // var
+                w.push_back(0.8f + 0.3f * c);                         // scale
+                w.push_back(0.01f * (c + 1));                         // bias
+            }
+        }
+        FILE* f = fopen(wf, "wb");
+        fwrite(&w[0], 1, w.size() * sizeof(float), f);
+        fclose(f);
+    }
+    printf("  用例：**两个 dwconv 写同一个 blob**（共享 skip 拓扑）\n");
+
+    unsigned s2 = 999u;
+    std::vector<float> in((size_t)C * HF * WF);
+    for (size_t i = 0; i < in.size(); i++) in[i] = rnd(s2);
+
+    ZQ::ZQ_CNN_Net nA, nB;
+    bool la = nA.LoadFrom(pf, wf);
+    bool lb = nB.LoadFrom(pf, wf, true, 1e-12f, false);
+    if (!la || !lb) {
+        printf("    **FAIL** 加载失败（A=%d B=%d）\n", la ? 1 : 0, lb ? 1 : 0);
+        g_bad++;
+        remove(pf); remove(wf);
+        return;
+    }
+    ZQ::ZQ_CNN_Tensor4D_NHW_C_Align256bit iA, iB;
+    iA.ChangeSize(1, HF, WF, C, 0, 0);
+    iB.ChangeSize(1, HF, WF, C, 0, 0);
+    iA.ConvertFromCompactNCHW(&in[0], 1, C, HF, WF);
+    iB.ConvertFromCompactNCHW(&in[0], 1, C, HF, WF);
+    if (!nA.Forward(iA) || !nB.Forward(iB)) {
+        printf("    **FAIL** Forward 失败\n");
+        g_bad++;
+        remove(pf); remove(wf);
+        return;
+    }
+    const ZQ::ZQ_CNN_Tensor4D* oa = nA.GetBlobByName("shared");
+    const ZQ::ZQ_CNN_Tensor4D* ob = nB.GetBlobByName("shared");
+    if (oa == 0 || ob == 0) {
+        printf("    **FAIL** 取不到 shared（A=%s B=%s）\n", oa ? "有" : "无", ob ? "有" : "无");
+        g_bad++;
+        remove(pf); remove(wf);
+        return;
+    }
+    std::vector<float> va, vb;
+    read_blob(oa, va);
+    read_blob(ob, vb);
+    if (va.size() != vb.size()) {
+        printf("    **FAIL** 形状对不上：%zu / %zu\n", va.size(), vb.size());
+        g_bad++;
+        remove(pf); remove(wf);
+        return;
+    }
+    long wi = -1;
+    double e2 = backward_err(vb, va, wi);
+    printf("    B（融合）vs A : 后向误差 %.4g", e2);
+    if (e2 > 1e-4) {
+        printf("   <-- **融合改变了结果**，最差在 #%ld（A %.9g / B %.9g）\n",
+               wi, va[(size_t)wi], vb[(size_t)wi]);
+        g_bad++;
+    } else {
+        printf("\n    OK  融合前后等价\n");
+        g_ok++;
+    }
+    remove(pf);
+    remove(wf);
+}
+
+// 第四个用例：**`dw -> BN -> PReLU`**，用**生产实参** `merge_bn=true, merge_prelu=true`。
+//
+// 为什么必须有它：前三个用例都传了 `merge_prelu=false`。
+// 而生产（`ZQ_CNN_MTCNN.h:109`、`SampleSphereFaceNet.cpp:90`）传的是
+// `(true, 1e-9, true)` —— **`_merge_prelu` 跑在已经被 `_merge_bn` 改写过的图上**。
+// HE 的三路测量（(bn=1,prelu=0)=0.3695 / (bn=0,prelu=1)=0 / (bn=1,prelu=1)=0.3695）
+// 说明"`merge_prelu` 自己是对的"，但**没有回答**"它在 merge_bn 之后的图上还对不对"——
+// 那是一个**不同的图**，而 HE 那一测是整网比对，分不出是哪一步坏的。
+//
+// 这是"组合"与"各自"的差别：两个变换各自正确，串起来仍可能错
+// （第二个看到的是第一个的**输出状态**）。
+static void case_bn_then_prelu()
+{
+    const int C = NET_C, HF = NET_H, WF = NET_W;
+    const int NF = K * K * C;
+    char pf[256], wf[256];
+    snprintf(pf, sizeof(pf), "/tmp/zq_dwm_bnp.zqparams");
+    snprintf(wf, sizeof(wf), "/tmp/zq_dwm_bnp.nchwbin");
+    {
+        char buf[1024];
+        snprintf(buf, sizeof(buf),
+                 "Input name=data C=%d H=%d W=%d\n"
+                 "DepthwiseConvolution name=dw bottom=data top=dw_out num_output=%d kernel_size=3 stride=1 pad=1\n"
+                 "BatchNormScale name=bn bottom=dw_out top=dw_out bias eps=1e-05\n"
+                 "PReLU name=relu bottom=dw_out top=dw_out\n"
+                 "Flatten name=fl bottom=dw_out top=fl\n",
+                 C, HF, WF, C);
+        FILE* f = fopen(pf, "wb");
+        fwrite(buf, 1, strlen(buf), f);
+        fclose(f);
+    }
+    {
+        unsigned s = 13579u;
+        std::vector<float> w;
+        for (int i = 0; i < NF; i++) w.push_back(rnd(s) * 0.4f);         // dw
+        for (int c = 0; c < C; c++) {                                    // bn
+            w.push_back(0.05f * (c + 1));
+            w.push_back(0.5f + 0.01f * c);
+            w.push_back(1.0f + 0.25f * c);
+            w.push_back(0.02f * (c + 1));
+        }
+        for (int c = 0; c < C; c++) w.push_back(0.05f + 0.01f * c);    // relu slope
+        FILE* f = fopen(wf, "wb");
+        fwrite(&w[0], 1, w.size() * sizeof(float), f);
+        fclose(f);
+    }
+    printf("  用例：dw -> BN -> PReLU，用**生产实参** (merge_bn=true, merge_prelu=true)\n");
+
+    unsigned s2 = 2468u;
+    std::vector<float> in((size_t)C * HF * WF);
+    for (size_t i = 0; i < in.size(); i++) in[i] = rnd(s2);
+
+    ZQ::ZQ_CNN_Net nA, nC;
+    bool la = nA.LoadFrom(pf, wf);                                  // 都不融
+    bool lc = nC.LoadFrom(pf, wf, true, 1e-12f, true);            // 生产
+    if (!la || !lc) {
+        printf("    **FAIL** 加载失败（A=%d C=%d）\n", la ? 1 : 0, lc ? 1 : 0);
+        g_bad++;
+        remove(pf); remove(wf);
+        return;
+    }
+    ZQ::ZQ_CNN_Tensor4D_NHW_C_Align256bit iA, iC;
+    iA.ChangeSize(1, HF, WF, C, 0, 0);
+    iC.ChangeSize(1, HF, WF, C, 0, 0);
+    iA.ConvertFromCompactNCHW(&in[0], 1, C, HF, WF);
+    iC.ConvertFromCompactNCHW(&in[0], 1, C, HF, WF);
+    if (!nA.Forward(iA) || !nC.Forward(iC)) {
+        printf("    **FAIL** Forward 失败\n");
+        g_bad++;
+        remove(pf); remove(wf);
+        return;
+    }
+    const ZQ::ZQ_CNN_Tensor4D* oa = nA.GetBlobByName("dw_out");
+    const ZQ::ZQ_CNN_Tensor4D* oc = nC.GetBlobByName("dw_out");
+    if (oa == 0 || oc == 0) {
+        printf("    **FAIL** 取不到 dw_out（A=%s C=%s）\n", oa ? "有" : "无", oc ? "有" : "无");
+        g_bad++;
+        remove(pf); remove(wf);
+        return;
+    }
+    std::vector<float> va, vc;
+    read_blob(oa, va);
+    read_blob(oc, vc);
+    if (va.size() != vc.size()) {
+        printf("    **FAIL** 形状对不上：%zu / %zu\n", va.size(), vc.size());
+        g_bad++;
+        remove(pf); remove(wf);
+        return;
+    }
+    long wi = -1;
+    double ec = backward_err(vc, va, wi);
+    printf("    生产实参 vs 都不融 : 后向误差 %.4g", ec);
+    if (ec > 1e-4) {
+        printf("   <-- **两个变换串起来改变了结果**，最差在 #%ld（A %.9g / 生产 %.9g）\n",
+               wi, va[(size_t)wi], vc[(size_t)wi]);
+        g_bad++;
+    } else {
+        printf("\n    OK  两个变换串起来结果不变\n");
+        g_ok++;
+    }
+    remove(pf);
+    remove(wf);
+}
+
 int main()
 {
     setvbuf(stdout, NULL, _IONBF, 0);
@@ -281,6 +506,10 @@ int main()
     one(0);
     printf("\n");
     one(1);
-    printf("\n共 2 个用例：通过 %d，不通过 %d\n", g_ok, g_bad);
+    printf("\n");
+    case_shared_blob();
+    printf("\n");
+    case_bn_then_prelu();
+    printf("\n共 4 个用例：通过 %d，不通过 %d\n", g_ok, g_bad);
     return g_bad == 0 ? 0 : 1;
 }
