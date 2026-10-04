@@ -547,3 +547,20 @@ align8  C=3  bias   FAIL 越界读/崩溃
    `posix_memalign(32, C*4)` —— 既对齐又**恰好 C 个 float**，红区紧贴末尾。
    > 判据：**探针的信号必须只对应一个原因**。两个原因共用一句
    > 「越界/崩溃」时，报出来的东西没法用（附录 GZ.3 同族）。
+
+## 新增/变更：IA/IB 落地后的完整回归（v40）
+
+```
+python tools/run_audit_checks.py --with-build --warn-sweep --src-sweep \n    --bounds-sweep --ubsan-sweep --reachability --msvc-asan
+ALL CHECKS PASSED        rc=0        FAILED 计数 = 0
+```
+
+这是**自 v39 以来第一次包含生产代码改动**的一轮
+（`zq_cnn_batchnormscale_32f_align_c_raw.h` 的堆越界读修复），
+所以它验证的是「改了内核之后双平台仍然跑得通、且新门禁在回归里真的会被执行到」。
+
+新加的两条覆盖在回归里都被跑到了：
+
+* `D4 Windows sample SampleUnusedLayerProbe.exe: OK`（WIN_SAMPLES 已接入）
+* `B ZQlib 独立回归测试 x10 (ASan+LSan): OK` —— 其中新增的 `zq_scale`
+  由 `tools/run_zqlib_checks.py` 自动发现并执行
