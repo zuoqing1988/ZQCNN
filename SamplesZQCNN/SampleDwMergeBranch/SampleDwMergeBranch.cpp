@@ -879,6 +879,96 @@ static void case_deep(int n_pairs)
     remove(wf);
 }
 
+// **标定**参考实现：不去猜权重布局，而是把它**测出来**。
+//
+// 装置（只在 **C 是 align 倍数**、`pixelStep == C`、张量**无 padding** 的配置下有效）：
+//   * 权重文件第 i 个 float 填 `i+1`（每个位置的值**唯一**）；
+//   * 输入只在角上 (0,0) 处是 1.0，其余 0；
+//   * 于是 `out(h,w,c)` = sum over 窗口内的 f[kh][kw][c]（窗口内其他位置是 0，
+//     但**如果 padding 是 clamp 而不是补 0**，边界位置会被填成角上的 1.0，
+//     于是多个 tap 参与求和 —— 这一点本身就是"padding 语义"的探针）。
+// 从输出反解即可得到每个 (kh,kw,c) 对应的**文件下标**。
+//
+// 2026-10-04 首次标定的结果（附录 HR.1）：
+//   * `c=1` 与 `c=2` 读出**同一个**值，而权重每位置唯一
+//     ⇒ 输出是**多个 tap 的和** ⇒ padding **不是**补 0；
+//   * 但"padding 改成 clamp"之后参考与库的误差几乎没变（0.219 -> 0.196），
+//     所以 clamp 也不是答案 —— 说明还有别的差异。
+//   * 且**在 C=13（带 padding）上做的标定本身不可信**：
+//     `pixelStep=16 != C`，紧凑↔带 padding 的转换把下标打乱了。
+//     下面这段在每个配置下各跑一次，**只有无 padding 的那些配置（C=256 / C=8）
+//     的结果可采信**。
+static void calibrate_filter_layout()
+{
+    const int C = NET_C, HF = NET_H, WF = NET_W;
+    const int NF = K * K * C;
+    char pf[256], wf[256];
+    snprintf(pf, sizeof(pf), "/tmp/zq_dwm_cal.zqparams");
+    snprintf(wf, sizeof(wf), "/tmp/zq_dwm_cal.nchwbin");
+    {
+        char buf[1024];
+        snprintf(buf, sizeof(buf),
+                 "Input name=data C=%d H=%d W=%d\n"
+                 "DepthwiseConvolution name=dw bottom=data top=dw_out num_output=%d kernel_size=3 stride=1 pad=1\n"
+                 "Flatten name=fl bottom=dw_out top=fl\n",
+                 C, HF, WF, C);
+        FILE* f = fopen(pf, "wb");
+        fwrite(buf, 1, strlen(buf), f);
+        fclose(f);
+    }
+    std::vector<float> w((size_t)NF);
+    for (int i = 0; i < NF; i++) w[i] = (float)(i + 1);
+    {
+        FILE* f = fopen(wf, "wb");
+        fwrite(&w[0], 1, w.size() * sizeof(float), f);
+        fclose(f);
+    }
+    std::vector<float> in((size_t)C * HF * WF, 0.f);
+    for (int c = 0; c < C; c++) in[(size_t)c] = 1.0f;
+
+    ZQ::ZQ_CNN_Net n;
+    if (!n.LoadFrom(pf, wf)) { printf("  标定 **FAIL** 加载失败\n"); g_bad++; return; }
+    ZQ::ZQ_CNN_Tensor4D_NHW_C_Align256bit tin;
+    tin.ChangeSize(1, HF, WF, C, 0, 0);
+    tin.ConvertFromCompactNCHW(&in[0], 1, C, HF, WF);
+    if (!n.Forward(tin)) { printf("  标定 **FAIL** Forward 失败\n"); g_bad++; return; }
+    const ZQ::ZQ_CNN_Tensor4D* o = n.GetBlobByName("dw_out");
+    if (o == 0) { printf("  标定 **FAIL** 取不到 dw_out\n"); g_bad++; return; }
+    std::vector<float> got;
+    read_blob(o, got);
+
+    const bool no_pad = (C % 8) == 0;   // C 是 align(8) 的倍数 => pixelStep == C
+    int nfound = 0, m_c = 0, m_hwc = 0;
+    for (int kh = 0; kh < K; kh++) {
+        for (int kw = 0; kw < K; kw++) {
+            int h = kh - PAD, w = kw - PAD;
+            if (h < 0 || h >= HF || w < 0 || w >= WF) continue;
+            for (int c = 0; c < C; c++) {
+                float v = got[((size_t)h * WF + w) * C + c];
+                if (v <= 0.f) continue;                      // 0 = 该位置不参与
+                int idx = (int)(v + 0.5f) - 1;
+                if (idx < 0 || idx >= NF) continue;
+                nfound++;
+                if (idx == (c * K + kh) * K + kw) m_c++;
+                if (idx == (kh * K + kw) * C + c) m_hwc++;
+                if (c < 2)
+                    printf("    tap(kh=%d,kw=%d) c=%d : 文件下标 %5d | (c,kh,kw)=%5d %s | (kh,kw,c)=%5d %s\n",
+                           kh, kw, c, idx,
+                           (c * K + kh) * K + kw, idx == (c * K + kh) * K + kw ? "OK" : "no",
+                           (kh * K + kw) * C + c, idx == (kh * K + kw) * C + c ? "OK" : "no");
+            }
+        }
+    }
+    printf("  标定 C=%d（%s）：命中 %d 个样本，假设 (c,kh,kw) 对 %d 个，假设 (kh,kw,c) 对 %d 个\n",
+           C, no_pad ? "无 padding，结果可信" : "有 padding，结果**不可信**",
+           nfound, m_c, m_hwc);
+    if (no_pad)
+        printf("  => %s\n", m_c > m_hwc ? "**(c,kh,kw)** 对"
+                                        : (m_hwc > m_c ? "**(kh,kw,c)** 对" : "两个都不对，是第三种映射"));
+    remove(pf);
+    remove(wf);
+}
+
 int main(int argc, char** argv)
 {
     setvbuf(stdout, NULL, _IONBF, 0);
@@ -913,6 +1003,8 @@ int main(int argc, char** argv)
         one(0);
         printf("\n");
         one(1);
+        printf("\n");
+        calibrate_filter_layout();
         printf("\n");
         case_shared_blob();
         printf("\n");
