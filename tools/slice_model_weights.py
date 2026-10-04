@@ -200,6 +200,44 @@ def main():
     print('切出 %d 层：%s' % (end_k - tgt_k + 1, ' | '.join(lines[tgt_k:end_k + 1])))
     print('  权重 %d 字节（原文件 [%d, %d)）-> %s' % (hi - lo, lo, hi, out))
     print('  层定义 -> %s' % os.path.join(tmp, 'slice_layers.txt'))
+
+    # 顺带出一个**能直接 LoadFrom 的合成网参数**（附录 HV）：
+    # `Input` 的 **name 必须等于切出来那几层里第一层的 bottom** ——
+    # Input 层的 blob 名就是它的层名（真模型里 `Input name=data C=3 ...`，
+    # 而后面几层的 bottom 写的就是 data）。所以这里取第一层的 bottom 作为 Input 的 name。
+    src_bottom = None
+    cin = None
+    for tok in lines[tgt_k].replace('\t', ' ').split():
+        if tok.startswith('bottom='):
+            src_bottom = tok[len('bottom='):]
+        elif tok.startswith('num_output='):
+            cin = tok[len('num_output='):]
+    if src_bottom is None or cin is None:
+        print('切出的第一层缺 bottom= 或 num_output=，做不成合成网')
+        return 1
+    # 通道数：depthwise 的 num_output 就是它的输入通道（一进一出）
+    # H/W：真模型里这一层是 14x14（附录 HH.3 量到的 blob 形状 [1][14][14][256]）
+    hw = 14
+    synth = 'Input name=%s C=%s H=%d W=%d' % (src_bottom, cin, hw, hw)
+    sp = os.path.join(tmp, 'slice.zqparams')
+    with io.open(sp, 'w', encoding='utf-8', newline=lf) as fh:
+        fh.write(synth + lf)
+        fh.write(lf.join(lines[tgt_k:end_k + 1]) + lf)
+    # **两棵产物树各放一份**：Windows 的 sample 跑在
+    # `cmake-out-win32-x64/release/Release/` 下，Linux 的跑在
+    # `cmake-out-unix-x64/Release/` 下，跨树用相对路径找是找不准的
+    # （2026-10-04 实测：写死相对路径 -> Windows 侧报"找不到"，
+    #  报得对、退出码也对，但那一侧等于没验）。所以**各放一份**。
+    import shutil as _sh
+    win = os.path.join(ROOT, 'cmake-out-win32-x64', 'release', 'Release', '.zqslice')
+    if os.path.isdir(os.path.dirname(win)):
+        if not os.path.isdir(win):
+            os.makedirs(win)
+        for f in ('slice.nchwbin', 'slice.zqparams', 'slice_layers.txt'):
+            _sh.copyfile(os.path.join(tmp, f), os.path.join(win, f))
+        print('  也复制了一份到 %s' % win)
+    print('  合成网参数 -> %s' % sp)
+    print('    %s' % synth)
     return 0
 
 
