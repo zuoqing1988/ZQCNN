@@ -667,6 +667,31 @@ namespace ZQ
 				model_buffer += readed_len_in_bytes;
 				model_buffer_len -= readed_len_in_bytes;
 			}
+
+			// 尾部**多余**的字节（2026-10-04 加，附录 GZ.2）。
+			//
+			// `ZQ_CNN_Net_NCHWC.h` 与 `ZQ_CNN_Net.h` 是**两份独立的实现**
+			// （同一形状的拷贝见附录 EN/FB），上面这个洞两边都有。
+			// **第一版只改了 NCHW 那一份，全量重编之后效果为零** ——
+			// 被编进 libZQCNN.a 的是这一份。
+			// "改了一处、没生效、看起来像生效了" —— 唯一抓住它的办法是
+			// **去产物里查那个字符串在不在**。
+			//
+			// 实测：给 det1-dw20-fast.nchwbin 尾部追加 1 / 4 / 4096 /
+			// **65536** 字节（原文件的 10 倍）的垃圾，LoadFrom **四次全 true**，
+			// 一声不吭。权重被**截断**会报错（离原因近），被**拼接/被追加**
+			// 会照常加载、只是后面几层读到了偏移处 ——
+			// 生产里的表现是"精度慢慢掉了"，不是"跑不起来"。
+			//
+			// 打 `warning:` 而不是直接失败：随仓 23 个模型的"连权重一起加载"
+			// 门禁（附录 GH）把**任何 warning 行都当失败**，
+			// 真有模型尾部多余时它会立刻指出来。
+			if (model_buffer_len != 0)
+			{
+				std::cout << "warning: " << model_buffer_len
+					<< " bytes left in the weight file after loading "
+					<< layer_num << " layers" << std::endl;
+			}
 			return true;
 		}
 

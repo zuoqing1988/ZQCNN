@@ -1140,6 +1140,29 @@ namespace ZQ
 					return false;
 				}
 			}
+			// 尾部**多余**的字节（2026-10-04 加，附录 GZ.2）。
+			//
+			// `LoadFrom(param_file, model_file)` 走的是**这条**路径，而它
+			// **没有任何字节记账** —— `LoadBinary_NCHW(in)` 只给 FILE*，
+			// 不告诉你读了多少。所以这里用 `ftell` 拿当前位置，跟文件大小比。
+			//
+			// 另一条路径 `_load_model_from_buffer`（`LoadFromBuffer` 用的）
+			// 有 `readed_len_in_bytes`，同一个检查已经加在那里。
+			// 两条都要加：2026-10-04 我只改了有记账的那一条，
+			// 结果**编译通过、测试全过、实际一点作用都没有** ——
+			// 走的是这条。见 GZ.3。
+			{
+				long long consumed = ftell(in);
+				long long total = 0;
+				if (fseek(in, 0, SEEK_END) == 0)
+					total = ftell(in);
+				if (consumed >= 0 && total > consumed)
+				{
+					std::cout << "warning: " << (total - consumed)
+						<< " bytes left in the weight file after loading "
+						<< layer_num << " layers" << std::endl;
+				}
+			}
 			fclose(in);
 			return true;
 		}
@@ -1189,6 +1212,30 @@ namespace ZQ
 				}
 				model_buffer += readed_len_in_bytes;
 				model_buffer_len -= readed_len_in_bytes;
+			}
+
+			// 尾部**多余**的字节（2026-10-04 加，附录 GZ.2）。
+			//
+			// 上面只查了"字节**不够**"（`LoadBinary_NCHW` 失败），
+			// **没查"字节太多"** —— 而 `model_buffer_len` 是**按值传**进来的
+			// 局部副本，循环一结束就只能丢掉，所以"到底消费了多少"从未被看见过。
+			// 2026-10-04 实测：给 `det1-dw20-fast.nchwbin` 尾部追加
+			// 1 / 4 / 4096 / **65536** 字节（原文件大小的 10 倍）的垃圾，
+			// `LoadFrom` **四次全部返回 true**，一声不吭。
+			//
+			// 为什么这要紧：权重文件被**截断**会**报错**（离原因近），
+			// 而被**拼接/被追加**会**照常加载**、只是后面几层的权重读到了
+			// 偏移的地方 —— 生产里的表现是"精度慢慢掉了"，不是"跑不起来"。
+			//
+			// 这里打的是 `warning:` 而不是直接失败：随仓 23 个模型的
+			// "连权重一起加载"门禁（附录 GH）把**任何 warning 行都当失败**，
+			// 所以一旦真有模型的权重尾部有多余数据，那道门禁会立刻指出来 ——
+			// 而不必等到生产环境里精度掉了才发现。
+			if (model_buffer_len != 0)
+			{
+				std::cout << "warning: " << model_buffer_len
+					<< " bytes left in the weight file after loading "
+					<< layer_num << " layers" << std::endl;
 			}
 			return true;
 		}

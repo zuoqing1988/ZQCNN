@@ -433,6 +433,17 @@ EXTRA_SOURCES = {
         'gcc -O1 -g $SAN -mavx2 -mfma -fopenmp -c -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include '
         '$R/ZQCNN/layers_c/zq_cnn_resize_32f_align_c.c -o $WDIR/zq_modelparams_rz.o',
     ],
+    # zq_weight_tail（附录 GZ）：`.zqparams` 声明的层尺寸加总 == `.nchwbin` 长度。
+    # 与 zq_model_params 守的是**同一件事**，但走的是另一条路：它在库**外面**，
+    # 用库自己的 SaveModel 回存一遍比长度，**一行 warning 文本都不依赖**。
+    # 留两条的理由见附录 GZ.4 —— 少任何一条，剩下的那条就可能被改措辞、
+    # 改重定向悄悄弄失效，而失效的方式是"变绿"，不会有人发现。
+    'zq_weight_tail': [
+        'gcc -O1 -g $SAN -mavx2 -mfma -fopenmp -c -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include '
+        '$R/ZQCNN/ZQ_CNN_Tensor4D.cpp -o $WDIR/zq_weighttail_t4d.o',
+        'gcc -O1 -g $SAN -mavx2 -mfma -fopenmp -c -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include '
+        '$R/ZQCNN/layers_c/zq_cnn_resize_32f_align_c.c -o $WDIR/zq_weighttail_rz.o',
+    ],
     # zq_nchwc_net（附录 FB）：`ZQ_CNN_Net_NCHWC` 的 net 级就地守卫。
     # EN 修就地守卫时**同时改了两份** Net（ZQ_CNN_Net.h 与 ZQ_CNN_Net_NCHWC.h，
     # 各自独立的拷贝），但两边覆盖极不对等：NCHW 那份有 zq_concat_alias 走真的
@@ -555,6 +566,7 @@ EXTRA_LINK = {'zq_innerproduct': ' $WDIR/zq_ipgemm.o $WDIR/zq_gemm_align.o $WDIR
                                 '$WDIR/zq_nchwcnet_net.o $WDIR/zq_nchwcnet_tensor.o '
                                 '$WDIR/zq_nchwcnet_rzn.o'),
               'zq_model_params': ' $WDIR/zq_modelparams_t4d.o $WDIR/zq_modelparams_rz.o',
+              'zq_weight_tail': ' $WDIR/zq_weighttail_t4d.o $WDIR/zq_weighttail_rz.o',
               'zq_unusedlayers': ' $WDIR/zq_unusedlayers_t4d.o $WDIR/zq_unusedlayers_rz.o',
               'zq_tensorop': ' $WDIR/zq_tensorop_t4d.o $WDIR/zq_tensorop_rz.o',
               'zq_facegroup': '',
@@ -608,6 +620,7 @@ EXTRA_INC = {'zq_facedb': ' -I$R -I$R/ZQCNN -I$R/ZQCNN/3rdparty/include/ZQlib',
              'zq_tensorop': ' -I$R -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include -I$R/tools',
              'zq_unusedlayers': ' -I$R -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include -I$R/tools',
              'zq_model_params': ' -I$R -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include -I$R/tools',
+             'zq_weight_tail': ' -I$R -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include -I$R/tools',
              'zq_facegroup': ' -I$R -I$R/ZQCNN -I$R/ZQlibFaceID -I$R/ZQ_GEMM -I$R/3rdparty/include',
              'zq_tile': ' -I$R -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include',
              'zq_nchw_deconv': ' -I$R -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include',
@@ -652,6 +665,7 @@ EXTRA_CXXFLAGS = {'zq_facedb': ' -mavx2 -mfma -fopenmp',
                   'zq_tensorop': ' -mavx2 -mfma -fopenmp',
                   'zq_unusedlayers': ' -mavx2 -mfma -fopenmp',
                   'zq_model_params': ' -mavx2 -mfma -fopenmp',
+                  'zq_weight_tail': ' -mavx2 -mfma -fopenmp',
                   'zq_facegroup': ' -mavx2 -mfma -fopenmp',
                   'zq_tile': ' -mavx2 -mfma -fopenmp',
                   'zq_nchw_deconv': ' -mavx2 -mfma -fopenmp',
@@ -942,6 +956,13 @@ def main():
 
     print()
     nfail = 0
+    # 2026-10-04：两套 sanitizer 模式下这两个列的**口径是互换的**（见上面生成
+    # `R|tag|rc|...|...` 那两行），而标签一直照着 UBSan 那套写。于是 ASan 轮里
+    # 一个**普通的断言失败**会被报成"2 条 sanitizer 报错" —— 实测（附录 GZ.3）
+    # 就是这么被当成"门禁自己崩了"查了半天的：它只是 `zq_model_params` 报了两行
+    # `**FAIL**`，一条 sanitizer 报告都没有。标签要说它真正数的是什么。
+    lbl_san = '条 sanitizer 报错' if args.ubsan else '条断言失败'
+    lbl_assert = '条断言失败' if args.ubsan else '条 sanitizer 报错'
     for name, rc, nsan, nassert in results:
         ok = (rc == '0' and nsan == '0' and nassert == '0')
         if not ok:
@@ -950,9 +971,9 @@ def main():
         if rc != '0':
             why.append('rc=%s' % rc)
         if nsan != '0':
-            why.append('%s 条 sanitizer 报错' % nsan)
+            why.append('%s %s' % (nsan, lbl_san))
         if nassert != '0':
-            why.append('%s 条断言失败' % nassert)
+            why.append('%s %s' % (nassert, lbl_assert))
         print('%-34s %s' % (name, 'PASS' if ok else 'FAIL (%s)' % ', '.join(why)))
         if not ok:
             # 把子进程的 sanitizer 报告打出来（附录 CZ）。

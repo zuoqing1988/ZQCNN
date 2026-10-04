@@ -52,7 +52,18 @@ using namespace ZQ;
 
 #define RES_FILE "/tmp/zq_modelparams_res.txt"
 #define OUT_FILE "/tmp/zq_modelparams_out.txt"
+#define RT_FILE  "/tmp/zq_modelparams_roundtrip.nchwbin"
 #define MODEL_DIR "/mnt/d/ZQCNN/model"
+
+static long long file_size(const char* p)
+{
+    FILE* f = fopen(p, "rb");
+    if (!f) return -1;
+    fseek(f, 0, SEEK_END);
+    long long n = ftell(f);
+    fclose(f);
+    return n;
+}
 
 // 权重文件与同名 .zqparams 一一对应（附录 FD 量过：27 个里 23 个有配套权重，
 // 缺的 4 个要么属 Model Zoo，要么配的是 `_bgr` 变体）。
@@ -110,7 +121,29 @@ static int child(const char* zqparams)
                         ? weight_path_for(zqparams)
                         : "/tmp/zq_definitely_missing.nchwbin";
     bool loaded = net.LoadFrom(zqparams, wpath);
-    (void)loaded;               // 一定是 false；判据在消息里
+    (void)loaded;               // 非全量模式下一定是 false；判据在消息里
+    // 权重**字节数**契约的独立判据（附录 GZ.4）。
+    //
+    // 加载成功后用**库自己**的 SaveModel 把读进来的权重再存一份，
+    // 比较它与原文件的长度：
+    //     回存长度 == 文件长度  -> ".zqparams 声明的层尺寸加总"就是文件全长，配对
+    //     回存长度 <  文件长度  -> 文件尾部有一截**从未被任何层读到**
+    //
+    // 为什么要有这条：`LoadFrom` 只报"字节不够"，从不报"字节太多"（附录 GZ.1），
+    // 而尾部剩余是靠新加的一行 `warning:` 报出来的 —— **那条 warning 是文本**，
+    // 有人删掉它、改个措辞、或者输出重定向漏掉，字节数契约就整个失守。
+    // 这条判据只依赖**长度**，不依赖任何字符串，所以关不掉。
+    if (loaded) {
+        const char* rt = RT_FILE;
+        remove(rt);
+        if (net.SaveModel(rt)) {
+            long long saved = file_size(rt);
+            long long ondisk = file_size(wpath);
+            printf("ROUNDTRIP saved=%lld ondisk=%lld\n", saved, ondisk);
+        } else {
+            printf("ROUNDTRIP save-failed\n");
+        }
+    }
     // **必须显式刷新**：父进程用 `_exit()` 收子进程，而 `_exit` 不跑 atexit、
     // 不刷缓冲。stdout 重定向到**文件**时是全缓冲的，那句
     // "failed to open ..." 就卡在缓冲里随进程一起消失 ——
@@ -123,9 +156,13 @@ static int child(const char* zqparams)
 int main()
 {
     setvbuf(stdout, NULL, _IONBF, 0);
-    printf("随仓库模型参数门禁（附录 FD）\n");
+    printf("随仓库模型参数门禁（附录 FD / GZ）\n");
     printf("判据：每个 model/*.zqparams 都必须走完 ReadParam 与 _check_connect，\n");
-    printf("      只允许停在 \"failed to open <权重>\" 这一步。\n\n");
+    printf("      只允许停在 \"failed to open <权重>\" 这一步。\n");
+    printf("ZQ_MODEL_FULL_LOAD=1 时再加两条：\n");
+    printf("      1) 权重必须**零警告**（尾部剩余/参数名不认识都算警告）；\n");
+    printf("      2) 字节数契约：用库自己的 SaveModel 回存一遍，\n");
+    printf("         回存长度必须**等于** .nchwbin 的长度（附录 GZ.4）。\n\n");
 
     DIR* d = opendir(MODEL_DIR);
     if (!d) {
@@ -193,9 +230,47 @@ int main()
             printf("  %-34s 跳过（仓库里没有配套 .nchwbin）\n", base);
             continue;
         }
-        bool reached_weights = full ? out.empty()
+        // 全量加载模式下，"成功"的判据是**没有** "failed to open"。
+        //
+        // 第一版写的是 `out.empty()`，理由是"成功时一行都不打印"。错在：
+        // **任何一行输出都会把它踢出成功分支**，而权重尾部剩余偏偏要打一行
+        // `warning:`（附录 GZ.2）。于是 2026-10-04 实测里，
+        // `det1-dw20-fast` / `det1-dw20-plus` 两个真配对失败的文件报出来是
+        // `**FAIL** 没走到权重那步` —— **与事实相反**：权重全部加载成功了，
+        // 失败的是"文件比声明的长"这件别的事。
+        // 更糟的是下面那段"解析阶段有警告"分支在 `reached_weights` **里面**，
+        // 所以全量模式下它**永远够不着**：一条真警告会被报成"没走到权重那步"。
+        bool reached_weights = full ? (out.find(EXPECT_OK_MARK) == std::string::npos)
                                    : (out.find(EXPECT_OK_MARK) != std::string::npos);
         if (reached_weights) {
+            // 字节数契约（附录 GZ.4）：全量模式下必须有 ROUNDTRIP 行，
+            // 且回存长度必须等于文件长度。
+            // **先判它**：这条是"文件与 .zqparams 配不配对"的直接答案，
+            // 比下面那个泛化的 "warning:" 更具体，不能被它盖掉。
+            if (full) {
+                size_t rt = out.find("ROUNDTRIP ");
+                if (rt == std::string::npos) {
+                    bad++;
+                    printf("  %-34s **FAIL** 权重加载成功但没有回存记录 —— 字节数契约没验到\n",
+                           base);
+                    continue;
+                }
+                long long saved = 0, ondisk = 0;
+                if (sscanf(out.c_str() + rt, "ROUNDTRIP saved=%lld ondisk=%lld",
+                           &saved, &ondisk) != 2) {
+                    bad++;
+                    printf("  %-34s **FAIL** 回存记录格式不认识：%s\n", base,
+                           out.substr(rt, out.find('\n', rt) - rt).c_str());
+                    continue;
+                }
+                if (saved != ondisk) {
+                    bad++;
+                    printf("  %-34s **FAIL** .zqparams 与 .nchwbin 不配对："
+                           "回存 %lld 字节 / 文件 %lld 字节（尾部 %lld 字节从未被任何层读到）\n",
+                           base, saved, ondisk, ondisk - saved);
+                    continue;
+                }
+            }
             // 解析阶段的**警告**也要判：模型照样"加载成功"，但某个参数名
             // 没被识别、静默走了默认值（`kernel_size` 拼成 `kenerl_size` 就是
             // 这个后果）。这是"能加载"这道判据**看不到**的一类问题。
