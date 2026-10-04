@@ -384,3 +384,24 @@ sscanf(s.c_str(), "Input name=%*s C=%d H=%d W=%d", &C, &H, &W);   // **按位置
 2. NCHWC 路径对那 6 个模型 SKIP 是**如实标注**的，不要改成静默跳过 ——
    静默跳过的话，`17/27` 与 `23/27` 两个数字就长得一样，
    读的人会以为 NCHWC 覆盖得少是因为"那些模型不重要"。
+
+## 新增/变更：HX+HY+HZ 三批落地后的完整回归（v39）
+
+`python tools/run_audit_checks.py --with-build --warn-sweep --src-sweep
+--bounds-sweep --ubsan-sweep --reachability --msvc-asan`
+（双平台全量构建 + 两平台 sample + 全部 sweep + MSVC ASan）
+
+```
+ALL CHECKS PASSED        rc=0        FAILED 计数 = 0
+```
+
+覆盖到的组：D1/D2 双平台全量构建、D3 Linux sample 回归、
+D4 Windows 七个 sample（含新增的 `SampleMergeBNCompare` 与
+`SampleMergeBNCompareNCHWC`）、A1~A16 文本/扫描类门禁、
+B/B2 ZQlib ASan + MSVC ASan、C/C1/C1b 可编译性、
+C3/C4/C5/C5b/C6/C7/C8/C8b/C9/C10~C16（含新增的 C16 BN/PReLU 接线门禁）、
+MSVC `/analyze`、ARM/NEON 与 FP16 档解析。
+
+> 记这一条是为了让下一轮能从"当前树是否已经被完整回归验过"开始，
+> 而不是重新跑一遍才知道（HX 那批的教训：v35 是在修复**之前**跑的，
+> 结果对修后的树没有意义，只能作废重来一次）。
