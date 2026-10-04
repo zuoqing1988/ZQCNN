@@ -497,6 +497,260 @@ static void case_bn_then_prelu()
     remove(wf);
 }
 
+// 第五个用例：**多个 Convolution 写同一个 blob，DepthwiseConvolution 读它**。
+//
+// 这是 HM.3 定位到的那个结构在真模型里的**准确形状**（我第一版以为是
+// "c1 后面少了 BN/PReLU"，那不是关键；关键是**写者不止一个**）。
+// `mobilefacenet-v1` 的 res4 段：
+//
+//   Convolution       name=res4_block1_conv  bottom=_plus4  top=res4_block1_conv
+//   BatchNormScale    name=res4_block1_conv_bn bottom=res4_block1_conv top=res4_block1_conv
+//   PReLU             name=res4_block1_conv_relu bottom=res4_block1_conv top=res4_block1_conv
+//   DepthwiseConvolution name=res4_block1_conv_dw bottom=res4_block1_conv top=res4_block1_conv_dw
+//   ... sep 读 _dw ...
+//   Convolution       name=res4_block2_conv  bottom=_plus5  top=res4_block1_conv   <== 又写一遍
+//   BatchNormScale    name=res4_block2_conv_bn  bottom=res4_block1_conv top=res4_block1_conv
+//   PReLU             name=res4_block2_conv_relu bottom=res4_block1_conv top=res4_block1_conv
+//   DepthwiseConvolution name=res4_block2_conv_dw bottom=res4_block1_conv top=res4_block1_conv_dw
+//
+// 也就是说 `res4_block1_conv` 这个 blob **被 block1..block5 的 conv+bn+relu
+// 反复覆写**，而 block1..block4 的 dwconv 读的正是它 —— 读到的值取决于
+// "跑到了第几个写者"。
+//
+// 而 `_merge_bn` 的 `later_refer` 判断用的是**静态 blob 下标**
+// （`bottoms[j][0] == tops[i][0]`），它不知道读者在第几个写者之后读。
+// 前四个合成用例里那个被读的 blob（`c1` / `skip` / `dw_out` / `dw_out`）
+// 都**只被一个卷积写**，所以这一整类形状一次都没被覆盖到。
+static void case_multi_writer()
+{
+    const int C = NET_C, HF = NET_H, WF = NET_W;
+    const int NF = K * K * C;
+    char pf[256], wf[256];
+    snprintf(pf, sizeof(pf), "/tmp/zq_dwm_mw.zqparams");
+    snprintf(wf, sizeof(wf), "/tmp/zq_dwm_mw.nchwbin");
+    {
+        char buf[2048];
+        snprintf(buf, sizeof(buf),
+                 "Input name=data C=%d H=%d W=%d\n"
+                 // 第一个写者：conv1 写 shared
+                 "Convolution name=conv1 bottom=data top=shared num_output=%d kernel_size=1 stride=1 pad=0\n"
+                 "DepthwiseConvolution name=dw1 bottom=shared top=dw1out num_output=%d kernel_size=3 stride=1 pad=1\n"
+                 "BatchNormScale name=bn1 bottom=dw1out top=dw1out bias eps=1e-05\n"
+                 "Flatten name=fl1 bottom=dw1out top=fl1\n"
+                 // 第二个写者：conv2 **又**写 shared（同名覆写）
+                 "Convolution name=conv2 bottom=data top=shared num_output=%d kernel_size=1 stride=1 pad=0\n"
+                 "BatchNormScale name=bn_c2 bottom=shared top=shared bias eps=1e-05\n"
+                 "PReLU name=relu_c2 bottom=shared top=shared\n"
+                 "DepthwiseConvolution name=dw2 bottom=shared top=dw2out num_output=%d kernel_size=3 stride=1 pad=1\n"
+                 "BatchNormScale name=bn2 bottom=dw2out top=dw2out bias eps=1e-05\n"
+                 "Flatten name=fl2 bottom=dw2out top=fl2\n",
+                 C, HF, WF, C, C, C, C);
+        FILE* f = fopen(pf, "wb");
+        fwrite(buf, 1, strlen(buf), f);
+        fclose(f);
+    }
+    {
+        // 顺序必须与层顺序一致：conv1, dw1, bn1, fl1, conv2, bn_c2, relu_c2, dw2, bn2
+        unsigned s = 24680u;
+        std::vector<float> w;
+        for (int i = 0; i < C * C; i++) w.push_back(rnd(s) * 0.3f);     // conv1：C*C
+        for (int i = 0; i < NF; i++) w.push_back(rnd(s) * 0.4f);         // dw1
+        for (int c = 0; c < C; c++) {                                     // bn1
+            w.push_back(0.03f * (c + 1)); w.push_back(0.4f + 0.02f * c);
+            w.push_back(0.8f + 0.3f * c);  w.push_back(0.01f * (c + 1));
+        }
+        for (int i = 0; i < C * C; i++) w.push_back(rnd(s) * 0.35f);    // conv2：C*C
+        for (int c = 0; c < C; c++) {                                     // bn_c2
+            w.push_back(0.02f * (c + 1)); w.push_back(0.6f + 0.01f * c);
+            w.push_back(0.9f + 0.2f * c);  w.push_back(0.03f * (c + 1));
+        }
+        for (int c = 0; c < C; c++) w.push_back(0.07f + 0.005f * c);    // relu_c2 slope
+        for (int i = 0; i < NF; i++) w.push_back(rnd(s) * 0.45f);        // dw2
+        for (int c = 0; c < C; c++) {                                     // bn2
+            w.push_back(0.04f * (c + 1)); w.push_back(0.45f + 0.015f * c);
+            w.push_back(1.1f + 0.22f * c);  w.push_back(0.015f * (c + 1));
+        }
+        FILE* f = fopen(wf, "wb");
+        fwrite(&w[0], 1, w.size() * sizeof(float), f);
+        fclose(f);
+    }
+    printf("  用例：**两个 Convolution 写同一个 blob**，dwconv 读它（真模型 res4 的形状）\n");
+
+    unsigned s2 = 13579u;
+    std::vector<float> in((size_t)C * HF * WF);
+    for (size_t i = 0; i < in.size(); i++) in[i] = rnd(s2);
+
+    ZQ::ZQ_CNN_Net nA, nC;
+    bool la = nA.LoadFrom(pf, wf);                               // 都不融
+    bool lc = nC.LoadFrom(pf, wf, true, 1e-12f, true);         // 生产实参
+    if (!la || !lc) {
+        printf("    **FAIL** 加载失败（A=%d C=%d）\n", la ? 1 : 0, lc ? 1 : 0);
+        g_bad++;
+        remove(pf); remove(wf);
+        return;
+    }
+    ZQ::ZQ_CNN_Tensor4D_NHW_C_Align256bit iA, iC;
+    iA.ChangeSize(1, HF, WF, C, 0, 0);
+    iC.ChangeSize(1, HF, WF, C, 0, 0);
+    iA.ConvertFromCompactNCHW(&in[0], 1, C, HF, WF);
+    iC.ConvertFromCompactNCHW(&in[0], 1, C, HF, WF);
+    if (!nA.Forward(iA) || !nC.Forward(iC)) {
+        printf("    **FAIL** Forward 失败\n");
+        g_bad++;
+        remove(pf); remove(wf);
+        return;
+    }
+    // dw2 的输出是**第二个**读者读 `shared` 的结果 —— 那是最接近真模型的一处
+    const ZQ::ZQ_CNN_Tensor4D* oa = nA.GetBlobByName("dw2out");
+    const ZQ::ZQ_CNN_Tensor4D* oc = nC.GetBlobByName("dw2out");
+    if (oa == 0 || oc == 0) {
+        printf("    **FAIL** 取不到 dw2out（A=%s C=%s）\n", oa ? "有" : "无", oc ? "有" : "无");
+        g_bad++;
+        remove(pf); remove(wf);
+        return;
+    }
+    std::vector<float> va, vc;
+    read_blob(oa, va);
+    read_blob(oc, vc);
+    if (va.size() != vc.size()) {
+        printf("    **FAIL** 形状对不上：%zu / %zu\n", va.size(), vc.size());
+        g_bad++;
+        remove(pf); remove(wf);
+        return;
+    }
+    long wi = -1;
+    double ec = backward_err(vc, va, wi);
+    printf("    生产实参 vs 都不融（dw2out）: 后向误差 %.4g", ec);
+    if (ec > 1e-4) {
+        printf("   <-- **多个写者时融合改变了结果**，最差在 #%ld（A %.9g / 生产 %.9g）\n",
+               wi, va[(size_t)wi], vc[(size_t)wi]);
+        g_bad++;
+    } else {
+        printf("\n    OK  多个写者时融合前后等价\n");
+        g_ok++;
+    }
+    remove(pf);
+    remove(wf);
+}
+
+// 第六个用例：**极端的 BN 参数** —— 让 `b = scale/sqrt(var+eps)` 变得很大。
+//
+// 为什么加这个：到第五个用例为止，20 组配置全过，说明缺陷**不是拓扑性的**，
+// 而更像**数据相关**的。而我的合成权重全是良性的
+// （`rnd*0.4`、`var` 落在 0.4~0.6），真实训练出来的 `var` 未必。
+//
+// 而 `_merge_bns_to_dwconv` 干的第一件事是
+//     pix_ptr[0] *= b_v;
+// **在 float32 下把权重乘上 b**。若 `b_v` 很大（`var` 极小时 `sqrt(var)` 极小），
+// 乘出来的权重就可能**溢出成 inf** —— 而未融合那条路算的是 `x*b + a`，
+// 它自己不一定溢出。两边的结果于是天差地别，而且**形态就是"散乱噪声"**
+// （与 HH.3 观察到的一致）。
+//
+// 顺带：`if (fabs(pix_ptr[0]) < this->ignore_small_value) pix_ptr[0] = 0;`
+// 这条清零在 `b_v` **很小**时会误伤（把整层的权重清成 0）。
+// 两种极端都验。
+static void case_extreme_bn()
+{
+    const int C = NET_C, HF = NET_H, WF = NET_W;
+    const int NF = K * K * C;
+    struct { const char* what; float var; float scale; } kinds[2] = {
+        { "var 极小(1e-20) -> b 极大 ~1e10，权重乘上去可能溢出 float32", 1e-20f, 1.0f },
+        { "var 极大(1e+20) -> b 极小 ~1e-10，权重乘上去会被 ignore_small_value 全清零", 1e+20f, 1.0f },
+    };
+    for (int ki = 0; ki < 2; ki++) {
+        char pf[256], wf[256];
+        snprintf(pf, sizeof(pf), "/tmp/zq_dwm_ex%d.zqparams", ki);
+        snprintf(wf, sizeof(wf), "/tmp/zq_dwm_ex%d.nchwbin", ki);
+        {
+            char buf[1024];
+            snprintf(buf, sizeof(buf),
+                     "Input name=data C=%d H=%d W=%d\n"
+                     "DepthwiseConvolution name=dw bottom=data top=dw_out num_output=%d kernel_size=3 stride=1 pad=1\n"
+                     "BatchNormScale name=bn bottom=dw_out top=dw_out bias eps=1e-05\n"
+                     "Flatten name=fl bottom=dw_out top=fl\n",
+                     C, HF, WF, C);
+            FILE* f = fopen(pf, "wb");
+            fwrite(buf, 1, strlen(buf), f);
+            fclose(f);
+        }
+        {
+            unsigned s = 55555u;
+            std::vector<float> w;
+            for (int i = 0; i < NF; i++) w.push_back(rnd(s) * 0.4f);         // dw
+            for (int c = 0; c < C; c++) {                                     // bn
+                w.push_back(0.0f);                                          // mean
+                w.push_back(kinds[ki].var);                                  // var
+                w.push_back(kinds[ki].scale);                                // scale
+                w.push_back(0.1f);                                          // bias
+            }
+            FILE* f = fopen(wf, "wb");
+            fwrite(&w[0], 1, w.size() * sizeof(float), f);
+            fclose(f);
+        }
+        printf("  用例：极端 BN —— %s\n", kinds[ki].what);
+
+        unsigned s2 = 31337u;
+        std::vector<float> in((size_t)C * HF * WF);
+        for (size_t i = 0; i < in.size(); i++) in[i] = rnd(s2);
+
+        ZQ::ZQ_CNN_Net nA, nB;
+        bool la = nA.LoadFrom(pf, wf);
+        bool lb = nB.LoadFrom(pf, wf, true, 1e-12f, false);
+        if (!la || !lb) {
+            printf("    **FAIL** 加载失败（A=%d B=%d）\n", la ? 1 : 0, lb ? 1 : 0);
+            g_bad++;
+            remove(pf); remove(wf);
+            continue;
+        }
+        ZQ::ZQ_CNN_Tensor4D_NHW_C_Align256bit iA, iB;
+        iA.ChangeSize(1, HF, WF, C, 0, 0);
+        iB.ChangeSize(1, HF, WF, C, 0, 0);
+        iA.ConvertFromCompactNCHW(&in[0], 1, C, HF, WF);
+        iB.ConvertFromCompactNCHW(&in[0], 1, C, HF, WF);
+        if (!nA.Forward(iA) || !nB.Forward(iB)) {
+            printf("    **FAIL** Forward 失败\n");
+            g_bad++;
+            remove(pf); remove(wf);
+            continue;
+        }
+        const ZQ::ZQ_CNN_Tensor4D* oa = nA.GetBlobByName("dw_out");
+        const ZQ::ZQ_CNN_Tensor4D* ob = nB.GetBlobByName("dw_out");
+        if (oa == 0 || ob == 0) {
+            printf("    **FAIL** 取不到 dw_out\n");
+            g_bad++;
+            remove(pf); remove(wf);
+            continue;
+        }
+        std::vector<float> va, vb;
+        read_blob(oa, va);
+        read_blob(ob, vb);
+        if (va.size() != vb.size()) {
+            printf("    **FAIL** 形状对不上\n");
+            g_bad++;
+            remove(pf); remove(wf);
+            continue;
+        }
+        // 顺便数一下有没有非有限值 —— 溢出假设的直接证据
+        long ninf = 0;
+        for (size_t i = 0; i < vb.size(); i++)
+            if (!(vb[i] == vb[i]) || vb[i] > 3.0e38f || vb[i] < -3.0e38f) ninf++;
+        long wi = -1;
+        double e2 = backward_err(vb, va, wi);
+        printf("    B（融合）vs A : 后向误差 %.4g", e2);
+        if (ninf) printf("；融合侧有 %ld 个非有限值（溢出/NaN）", ninf);
+        if (e2 > 1e-4) {
+            printf("   <-- **极端 BN 下融合改变了结果**，最差在 #%ld（A %.9g / B %.9g）\n",
+                   wi, va[(size_t)wi], vb[(size_t)wi]);
+            g_bad++;
+        } else {
+            printf("\n    OK  极端 BN 下融合前后等价\n");
+            g_ok++;
+        }
+        remove(pf);
+        remove(wf);
+    }
+}
+
 int main(int argc, char** argv)
 {
     setvbuf(stdout, NULL, _IONBF, 0);
@@ -535,13 +789,17 @@ int main(int argc, char** argv)
         case_shared_blob();
         printf("\n");
         case_bn_then_prelu();
-        int passed = 4 - (g_bad - b0);
+        printf("\n");
+        case_multi_writer();
+        printf("\n");
+        case_extreme_bn();
+        int passed = 6 - (g_bad - b0);
         total_ok += passed;
         total_bad += (g_bad - b0);
         g_bad = 0;
     }
     printf("\n================================================================\n");
-    printf("共 %zu 组配置 × 4 个用例：通过 %d，不通过 %d\n", cfgs.size(), total_ok, total_bad);
+    printf("共 %zu 组配置 × 6 个用例：通过 %d，不通过 %d\n", cfgs.size(), total_ok, total_bad);
     printf("%s\n", total_bad == 0 ? "ALL CONFIG OK" : "SOME CONFIG FAILED");
     return total_bad == 0 ? 0 : 1;
 }
