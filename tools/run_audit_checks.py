@@ -217,6 +217,14 @@ GROUPS = [
     # 所以"图能不能解"不只是 sample 的事。
     ('C13 data/ 图像扩展名与可解码性（附录 GT）',
      ['check_data_images.py', '--selftest'], True),
+    # C14（附录 GU）：`manualExportCaffe/` 的 8 个 MATLAB 导出脚本。
+    # 它们写 `.nchwbin`（ZQCNN 权重格式），但本机**没有 MATLAB 也没有 Octave**，
+    # 产物也一个都不在 `model/` 里 —— 所以这道门禁只能是一个**下限**：
+    # 块配平 / layers 表形状 / 用到的 flag 都被 strcmp 处理过。
+    # 类型码与 C++ 枚举是否对得上、权重字节数与 LoadBinary_NCHW 是否一致，
+    # 那几条要真跑 MATLAB 才谈得上，门禁输出里明写了。
+    ('C14 MATLAB 导出脚本结构（附录 GU）',
+     ['check_export_scripts.py', '--selftest'], False),
 ]
 
 
