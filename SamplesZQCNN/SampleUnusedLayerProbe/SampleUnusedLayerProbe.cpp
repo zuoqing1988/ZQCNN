@@ -240,6 +240,52 @@ static void ref_sqrt(const std::vector<float>& in, std::vector<float>& out)
         out[i] = (float)(in[i] <= 0 ? 0.0 : sqrt((double)in[i]));
 }
 
+// ScalarOperation：9 种运算。语义取自
+// `ZQCNN/layers_c/zq_cnn_scalaroperation_32f_align_c.c` 的 align0 版本
+// （最直白的那一份，没有 SIMD 的花样）：
+//
+//   MUL x*s   DIV x/s   ADD x+s   MINUS x-s
+//   MAX max(x,s)   MIN min(x,s)   POW x^s
+//   RDIV  s/x   <-- **反向除**，参数顺序与 DIV 相反
+//   RMINUS s-x  <-- **反向减**，与 MINUS 相反
+//
+// RDIV / RMINUS 是本探针的重点：它们与 DIV / MINUS 只差一个参数顺序，
+// 而**整个仓库没有任何模型会跑到这一层**（C7 的 UNUSED），
+// 写反了没有任何东西会发现。
+static bool apply_scalar_op(int op, float x, float s, float& y)
+{
+    switch (op) {
+    case 0: y = x * s; return true;                              // MUL
+    case 1: y = x / s; return true;                              // DIV
+    case 2: y = x + s; return true;                              // ADD
+    case 3: y = x - s; return true;                              // MINUS
+    case 4: y = (x > s ? x : s); return true;                    // MAX
+    case 5: y = (x < s ? x : s); return true;                    // MIN
+    case 6: y = (float)pow((double)x, (double)s); return true;   // POW
+    case 7: y = s / x; return true;                              // RDIV  <- 反向
+    case 8: y = s - x; return true;                              // RMINUS <- 反向
+    default: return false;
+    }
+}
+
+static void ref_scalar_op(const std::vector<float>& in, int op, float s,
+                          std::vector<float>& out)
+{
+    out.resize(in.size());
+    for (size_t i = 0; i < in.size(); i++) {
+        float y = 0;
+        apply_scalar_op(op, in[i], s, y);
+        out[i] = y;
+    }
+}
+
+// Squeeze 是个**纯声明层**：`Forward` 只做一次 `CopyData`，不改数。
+// 测它是为了确认"声明层真的一个字节都没动"。
+static void ref_squeeze(const std::vector<float>& in, std::vector<float>& out)
+{
+    out = in;
+}
+
 // 参考实现自证：四个**手算**用例，参数取成能约成有理数/整数的。
 //
 //   A) LRN 窗口的中心与宽度（C=3, L=3, alpha=0.03, beta=1, k=1, in=[1,2,3]）
@@ -325,6 +371,36 @@ static bool selftest_reference()
             if (fabs((double)got[c] - WANT[c]) > 1e-6) {
                 printf("  参考实现自证**没过**（Sqrt 通道 %d）：算得 %.9g，手算是 %.9g\n",
                        c, got[c], WANT[c]);
+                return false;
+            }
+        }
+    }
+    // --- E: ScalarOperation 的两个「反向」运算 ---
+    // 这两个与 RDIV/RMINUS 只差**参数顺序**，是最容易写反的一对；
+    // 而 `ScalarOperation` 是 UNUSED 层，**没有任何东西会跑它**。
+    //   RDIV  scalar=12, in=[2,4,6] -> 12/x = [6,3,2]
+    //   RMINUS scalar=10, in=[2,4,6] -> 10-x = [8,6,4]
+    // （如果实现把 RDIV 写成 x/scalar，这里会给出 [6,3,2] 之外的数；
+    //   如果把 RMINUS 写成 x-s，这里会给出 [8,6,4] 之外的数。）
+    {
+        std::vector<float> in(3);
+        in[0] = 2; in[1] = 4; in[2] = 6;
+        std::vector<float> got;
+        ref_scalar_op(in, 7, 12.0f, got);          // RDIV
+        static const double WANT_RDIV[3] = { 6.0, 3.0, 2.0 };
+        for (int i = 0; i < 3; i++) {
+            if (fabs((double)got[i] - WANT_RDIV[i]) > 1e-6) {
+                printf("  参考实现自证**没过**（RDIV 下标 %d）：算得 %.9g，手算是 %.9g\n",
+                       i, got[i], WANT_RDIV[i]);
+                return false;
+            }
+        }
+        ref_scalar_op(in, 8, 10.0f, got);          // RMINUS
+        static const double WANT_RMINUS[3] = { 8.0, 6.0, 4.0 };
+        for (int i = 0; i < 3; i++) {
+            if (fabs((double)got[i] - WANT_RMINUS[i]) > 1e-6) {
+                printf("  参考实现自证**没过**（RMINUS 下标 %d）：算得 %.9g，手算是 %.9g\n",
+                       i, got[i], WANT_RMINUS[i]);
                 return false;
             }
         }
@@ -483,6 +559,59 @@ static void run_sqrt()
     }
 }
 
+static void run_scalar_op()
+{
+    // 9 种运算各测一遍；C 覆盖 align(8) 的倍数与非倍数。
+    static const int CS[2] = { 8, 13 };
+    static const char* OPN[9] = { "MUL", "DIV", "ADD", "MINUS",
+                                  "MAX", "MIN", "POW", "RDIV", "RMINUS" };
+    const double LIMIT = 1e-6;
+    char block[512], shape[96];
+    for (int ci = 0; ci < 2; ci++)
+        for (int op = 0; op < 9; op++) {
+            const int C = CS[ci];
+            const float s = (op == 7) ? 12.0f : 3.0f;   // RDIV 用一个远离 0 的标量
+            const int H = 3, W = 3;
+            unsigned sd = 20261414u + (unsigned)op * 32452843u + (unsigned)C * 49979687u;
+            std::vector<float> in((size_t)C * H * W);
+            for (size_t i = 0; i < in.size(); i++) in[i] = rnd(sd);
+            // ScalarOperation 不在 `_is_inplace_safe` 表里，所以不会被就地化；
+            // 但仍垫一层 Copy，让 bottom 是一个**真实 blob**（与 Scale 那条同理）。
+            snprintf(block, sizeof(block),
+                     "Copy name=cp1 bottom=data top=mid\n"
+                     "ScalarOperation name=so1 bottom=mid top=top1 operation=%s scalar=%g\n",
+                     OPN[op], s);
+            std::vector<float> got, want;
+            if (!run_synth(block, std::vector<float>(), C, H, W, in, got)) { g.bad++; continue; }
+            ref_scalar_op(in, op, s, want);
+            long wi = -1;
+            double e = backward_err(got, want, wi);
+            snprintf(shape, sizeof(shape), "op=%-6s C=%d scalar=%g", OPN[op], C, s);
+            report("ScalarOp", shape, e, LIMIT, wi, got, want);
+        }
+}
+
+static void run_squeeze()
+{
+    static const int CS[3] = { 1, 8, 17 };
+    const double LIMIT = 1e-7;     // 纯拷贝：应当逐位相同
+    char block[128], shape[64];
+    snprintf(block, sizeof(block), "Squeeze name=sq1 bottom=data top=top1\n");
+    for (int t = 0; t < 3; t++) {
+        int C = CS[t], H = 2, W = 2;
+        unsigned s = 20261515u + (unsigned)t * 86028121u;
+        std::vector<float> in((size_t)C * H * W);
+        for (size_t i = 0; i < in.size(); i++) in[i] = rnd(s);
+        std::vector<float> got, want;
+        if (!run_synth(block, std::vector<float>(), C, H, W, in, got)) { g.bad++; continue; }
+        ref_squeeze(in, want);
+        long wi = -1;
+        double e = backward_err(got, want, wi);
+        snprintf(shape, sizeof(shape), "C=%d", C);
+        report("Squeeze", shape, e, LIMIT, wi, got, want);
+    }
+}
+
 int main()
 {
     setvbuf(stdout, NULL, _IONBF, 0);
@@ -495,7 +624,7 @@ int main()
         cleanup_synth();
         return 1;
     }
-    printf("  四个手算用例都对上了"
+    printf("  五个手算用例组都对上了"
            "（LRN 1/1.05·2/1.14·3/1.13、LRN L=1 1/1.03·2/1.12、\n"
            "           Scale 2·4·6·8·16·19·22·25、Sqrt 0·2·3）\n\n");
 
@@ -504,11 +633,13 @@ int main()
     run_copy();
     run_scale();
     run_sqrt();
+    run_scalar_op();
+    run_squeeze();
     printf("  小结：跑过 %d 个形状，对 %d，**对不上** %d\n", g.ok + g.bad, g.ok, g.bad);
 
     printf("\n尚未覆盖的 UNUSED 层类型（**如实列出**，不装作查过）：\n");
-    printf("  DeConvolution  BatchNorm  LSTM_TF  ScalarOperation  UnaryOperation\n");
-    printf("  Tile  Reduction  Squeeze  PriorBoxText  PriorBox_MXNET  DetectionOutput_MXNET\n");
+    printf("  DeConvolution  BatchNorm  LSTM_TF  UnaryOperation  Tile  Reduction\n");
+    printf("  PriorBoxText  PriorBox_MXNET  DetectionOutput_MXNET\n");
 
     cleanup_synth();
     printf("\n%s\n", g.bad == 0 ? "UNUSED LAYER PROBE OK" : "UNUSED LAYER PROBE FAILED");

@@ -564,3 +564,62 @@ ALL CHECKS PASSED        rc=0        FAILED 计数 = 0
 * `D4 Windows sample SampleUnusedLayerProbe.exe: OK`（WIN_SAMPLES 已接入）
 * `B ZQlib 独立回归测试 x10 (ASan+LSan): OK` —— 其中新增的 `zq_scale`
   由 `tools/run_zqlib_checks.py` 自动发现并执行
+
+## 新增/变更：IC —— 再覆盖 2 类 UNUSED 层（`ScalarOperation` 9 种运算 / `Squeeze`），46 个形状全过
+
+### 起因
+
+IA 把 15 类 UNUSED 里最容易的 4 类覆盖了（LRN / Copy / Scale / Sqrt，25 个形状）。
+本轮继续覆盖 **2 类**，共新增 **21 个形状**（ScalarOperation 18 + Squeeze 3），
+探针累计 **46 个形状**。
+
+### IC.1 `ScalarOperation`：9 种运算逐个测，重点是**两个反向的**
+
+这一层在 C7 可达性表里是 **UNUSED** —— 仓库里**没有任何模型会跑到它**。
+它有 9 种运算，其中两个与"正向"的只差**参数顺序**：
+
+| 运算 | 语义（取自 `zq_cnn_scalaroperation_32f_align_c.c` 的 align0 版） |
+|---|---|
+| `MUL` / `DIV` / `ADD` / `MINUS` | `x*s` / `x/s` / `x+s` / `x-s` |
+| `MAX` / `MIN` / `POW` | `max(x,s)` / `min(x,s)` / `x^s` |
+| **`RDIV`** | **`s/x`**（反向除） |
+| **`RMINUS`** | **`s-x`**（反向减） |
+
+`RDIV` / `RMINUS` 写反了**没有任何东西会发现** —— 唯一能抓到的是这一层自己的单测。
+所以参考实现的自证里专门给它们加了**手算用例**：
+
+```
+RDIV  scalar=12, in=[2,4,6] -> 12/x = [6,3,2]
+RMINUS scalar=10, in=[2,4,6] -> 10-x = [8,6,4]
+```
+
+实测：9 种运算 × 2 个 C（8 = align 的倍数、13 = 非倍数）= **18 个形状全过**
+（只有 `DIV` 有 1.5e-8 量级的舍入，其余**逐位 0**）。
+
+### IC.2 `Squeeze`：纯声明层，一个字节都不该动
+
+`ZQ_CNN_Layer_Squeeze::Forward` 只做一次 `CopyData`，不参与计算。
+测它是确认"声明层真的没偷偷改数"：C = 1 / 8 / 17 三个形状**逐位 0**。
+
+### 变更文件
+
+* `SamplesZQCNN/SampleUnusedLayerProbe/SampleUnusedLayerProbe.cpp` — 增加
+  `ref_scalar_op` / `ref_squeeze`、两组手算自证、`run_scalar_op` / `run_squeeze`。
+* `audit_k3_20261001.md`（追加 IC）
+
+**无生产代码改动**；两个平台均已手工重编 + 实跑（rc=0，46/46）。
+
+### 注意事项
+
+1. **第一版把 `for (int C = 0; C < 2; C++)` 当成了"遍历 C 列表"**，
+   于是 C=0 那一轮造出一个**零尺寸**张量，`ConvertFromCompactNCHW(&in[0], ...)`
+   拿到的是空 vector 的 `&in[0]` —— 9 个用例全部失败，
+   而输出里那 9 行显示的是 **C=1** 那一轮（全部通过）。
+   > 症状极具欺骗性：**失败的那一轮没有形状标签**，
+   > 而通过的那一轮有，于是读的人以为"C=1 全部对、另一个 C 挂了"。
+   > 修法：`for (int ci = 0; ci < 2; ci++) { const int C = CS[ci]; ... }`。
+   > 判据：**循环变量不要与"被遍历出来的值"同名** ——
+   > 两者混用时，失败输出的形状标签会指向另一个值。
+2. 尚未覆盖的 UNUSED 还有 **9 类**，输出里逐个列出：
+   `DeConvolution` / `BatchNorm` / `LSTM_TF` / `UnaryOperation` / `Tile` /
+   `Reduction` / `PriorBoxText` / `PriorBox_MXNET` / `DetectionOutput_MXNET`。
