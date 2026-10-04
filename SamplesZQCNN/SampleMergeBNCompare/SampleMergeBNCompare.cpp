@@ -213,6 +213,8 @@ int main()
         static const char* CFGN[3] = { "bn only", "prelu only", "bn+prelu (prod)" };
         double errs[3];
         int ngot = 0;
+        // 生产那一档（ci == 2）的输出留下来，供下面的"差异结构"用
+        std::vector<float> vp;
         for (int ci = 0; ci < 3; ci++) {
             ZQ::ZQ_CNN_Net nX;
             if (!nX.LoadFrom(zp, mp, CFG[ci][0], PROD_IGNORE_SMALL, CFG[ci][1])) {
@@ -228,6 +230,7 @@ int main()
             read_blob(ox, vx);
             long wi = -1;
             errs[ci] = backward_err(va, vx, wi);
+            if (ci == 2) vp = vx;
             ngot++;
         }
         if (ngot < 3) {
@@ -247,6 +250,32 @@ int main()
             printf("%-34s BAD  后向误差 %.4g > %g（bn only %.4g / prelu only %.4g）"
                    " -> %s 是元凶，top=%s\n", base, prod, BACKWARD_ERR_LIMIT,
                    errs[0], errs[1], culprit, top.c_str());
+            // 差异**结构**：全对 / 只错一部分 / 按同一比例错。
+            // 这三种形态对应完全不同的根因，所以要打出来而不是只报一个最大值
+            // （AGENTS.md「一个最差格不能用来概括整体」）。
+            {
+                double ss = 0.0;
+                for (size_t q = 0; q < va.size(); q++) ss += (double)va[q] * (double)va[q];
+                double den = sqrt(ss);
+                if (den == 0.0) den = 1.0;
+                long ndiff_big = 0, shown = 0;
+                double worst_ratio = 0.0;
+                int worst_ratio_i = -1;
+                printf("      输出 %zu 个，|diff| > 1e-3*||exp|| 的有：", va.size());
+                for (size_t q = 0; q < va.size(); q++) {
+                    double d = fabs((double)va[q] - (double)vp[q]) / den;
+                    if (d <= 1e-3) continue;
+                    ndiff_big++;
+                    if (fabs(va[q]) > 1e-8) {
+                        double rr = (double)vp[q] / (double)va[q];
+                        if (fabs(rr) > fabs(worst_ratio)) { worst_ratio = rr; worst_ratio_i = (int)q; }
+                    }
+                    if (shown < 8) { printf(" [#%d %.6g->%.6g]", (int)q, va[q], vp[q]); shown++; }
+                }
+                printf("\n      差异大的 = %ld / %zu", ndiff_big, va.size());
+                if (worst_ratio_i >= 0) printf("；比值偏离最大的 #%d 比值 %.6g", worst_ratio_i, worst_ratio);
+                printf("\n");
+            }
             bad++;
         } else {
             printf("%-34s OK   后向误差 %.4g（bn only %.4g / prelu only %.4g），"
