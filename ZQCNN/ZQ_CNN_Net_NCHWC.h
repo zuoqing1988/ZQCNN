@@ -586,6 +586,18 @@ namespace ZQ
 					cur_layer->GetTopDim(input_C, input_H, input_W);
 					layer_type_names.push_back("Input");
 				}
+				else
+				{
+					// 链上最后一个分支是 Input, 之前没有 else 兜底: 任何不认识的
+					// 首 token 整行被静默丢弃, 后面只会在 _check_connect 报一句
+					// 误导性的 "unknown blob", 甚至整网少几层也不报错。
+					// `ZQ_CNN_Net.h:1103` 那份**有**这个兜底 —— 同一段分发抄两遍、
+					// 漏了一份（附录 HA.3）。NCHWC 侧还少认 26 种层类型, 所以
+					// 一份别人写好的 .zqparams 拿到这里会**整层消失**而不报错。
+					printf("unknown layer type: %s\n", &buf[0]);
+					printf("  in line: %s\n", line.c_str());
+					return false;
+				}
 				line = "";
 
 			}
@@ -615,6 +627,25 @@ namespace ZQ
 					fclose(in);
 					std::cout << "Failed to load Binary for layer " << layers[i]->name << "\n";
 					return false;
+				}
+			}
+			// 权重文件尾部**多余**的字节（2026-10-04 加，附录 GZ.2 / HA.2）。
+			//
+			// 这一份与 `ZQ_CNN_Net.h:1148` 那份是**同一段代码的两份拷贝**，
+			// 而上一批我只改了 buffer 那一条 —— 结果 `SampleMTCNN_NCHWC4`
+			// 走的正是这条，字节数契约在 NCHWC 侧**根本没生效**。
+			// 教训见 GZ.3 / AGENTS.md「同仓两份实现互为对照」：
+			// 改一份的时候必须把另一份一起列出来。
+			{
+				long long consumed = ftell(in);
+				long long total = 0;
+				if (fseek(in, 0, SEEK_END) == 0)
+					total = ftell(in);
+				if (consumed >= 0 && total > consumed)
+				{
+					std::cout << "warning: " << (total - consumed)
+						<< " bytes left in the weight file after loading "
+						<< layer_num << " layers" << std::endl;
 				}
 			}
 			fclose(in);

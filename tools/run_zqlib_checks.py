@@ -444,6 +444,15 @@ EXTRA_SOURCES = {
         'gcc -O1 -g $SAN -mavx2 -mfma -fopenmp -c -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include '
         '$R/ZQCNN/layers_c/zq_cnn_resize_32f_align_c.c -o $WDIR/zq_weighttail_rz.o',
     ],
+    # zq_loadbuffer（附录 HA）：`LoadFromBuffer` 路径。它原来**零行为覆盖** ——
+    # 36 个 `LoadBinary_NCHW(buffer,…)` 重载全在门禁之外，只有一个 Linux sample
+    # 顺带跑到过，而那条路径的"字节不够"检查与文件路径**不是同一份代码**。
+    'zq_loadbuffer': [
+        'gcc -O1 -g $SAN -mavx2 -mfma -fopenmp -c -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include '
+        '$R/ZQCNN/ZQ_CNN_Tensor4D.cpp -o $WDIR/zq_loadbuf_t4d.o',
+        'gcc -O1 -g $SAN -mavx2 -mfma -fopenmp -c -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include '
+        '$R/ZQCNN/layers_c/zq_cnn_resize_32f_align_c.c -o $WDIR/zq_loadbuf_rz.o',
+    ],
     # zq_nchwc_net（附录 FB）：`ZQ_CNN_Net_NCHWC` 的 net 级就地守卫。
     # EN 修就地守卫时**同时改了两份** Net（ZQ_CNN_Net.h 与 ZQ_CNN_Net_NCHWC.h，
     # 各自独立的拷贝），但两边覆盖极不对等：NCHW 那份有 zq_concat_alias 走真的
@@ -567,6 +576,7 @@ EXTRA_LINK = {'zq_innerproduct': ' $WDIR/zq_ipgemm.o $WDIR/zq_gemm_align.o $WDIR
                                 '$WDIR/zq_nchwcnet_rzn.o'),
               'zq_model_params': ' $WDIR/zq_modelparams_t4d.o $WDIR/zq_modelparams_rz.o',
               'zq_weight_tail': ' $WDIR/zq_weighttail_t4d.o $WDIR/zq_weighttail_rz.o',
+              'zq_loadbuffer': ' $WDIR/zq_loadbuf_t4d.o $WDIR/zq_loadbuf_rz.o',
               'zq_unusedlayers': ' $WDIR/zq_unusedlayers_t4d.o $WDIR/zq_unusedlayers_rz.o',
               'zq_tensorop': ' $WDIR/zq_tensorop_t4d.o $WDIR/zq_tensorop_rz.o',
               'zq_facegroup': '',
@@ -621,6 +631,7 @@ EXTRA_INC = {'zq_facedb': ' -I$R -I$R/ZQCNN -I$R/ZQCNN/3rdparty/include/ZQlib',
              'zq_unusedlayers': ' -I$R -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include -I$R/tools',
              'zq_model_params': ' -I$R -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include -I$R/tools',
              'zq_weight_tail': ' -I$R -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include -I$R/tools',
+             'zq_loadbuffer': ' -I$R -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include -I$R/tools',
              'zq_facegroup': ' -I$R -I$R/ZQCNN -I$R/ZQlibFaceID -I$R/ZQ_GEMM -I$R/3rdparty/include',
              'zq_tile': ' -I$R -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include',
              'zq_nchw_deconv': ' -I$R -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include',
@@ -666,6 +677,7 @@ EXTRA_CXXFLAGS = {'zq_facedb': ' -mavx2 -mfma -fopenmp',
                   'zq_unusedlayers': ' -mavx2 -mfma -fopenmp',
                   'zq_model_params': ' -mavx2 -mfma -fopenmp',
                   'zq_weight_tail': ' -mavx2 -mfma -fopenmp',
+                  'zq_loadbuffer': ' -mavx2 -mfma -fopenmp',
                   'zq_facegroup': ' -mavx2 -mfma -fopenmp',
                   'zq_tile': ' -mavx2 -mfma -fopenmp',
                   'zq_nchw_deconv': ' -mavx2 -mfma -fopenmp',

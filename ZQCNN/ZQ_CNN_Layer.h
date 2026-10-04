@@ -860,6 +860,12 @@ namespace ZQ
 				if (dst_len <= 0)
 					return false;
 				int dst_len_in_bytes = sizeof(float)*dst_len;
+				// filters 那半边（上面）有这道守卫，bias 这半边原来没有 ——
+				// 同一段数学抄两遍、漏了一份（附录 HA.1）。
+				// 实测：MobileNetSSD_deploy 的权重少 1 字节时，
+				// ASan 报 heap-buffer-overflow READ of size 504，栈顶就是这一行。
+				if (dst_len_in_bytes > buffer_len)
+					return false;
 				nchw_raw.resize(dst_len);
 				memcpy(&nchw_raw[0], buffer, dst_len_in_bytes);
 				for (int i = 0; i < dst_len; i++)
@@ -2067,6 +2073,12 @@ namespace ZQ
 				if (dst_len <= 0)
 					return false;
 				int dst_len_in_bytes = sizeof(float)*dst_len;
+				// 与上面 filters 那半边同一段数学，bias 这半边原来漏了这道守卫
+				// （附录 HA.1；与 Convolution 的同一处毛病同源）。
+				// 去掉它之后 `zq_loadbuffer` 的 (C) 报 heap-buffer-overflow，
+				// 栈顶就是下面这一行 memcpy。
+				if (dst_len_in_bytes > buffer_len)
+					return false;
 				nchw_raw.resize(dst_len);
 				memcpy(&nchw_raw[0], buffer, dst_len_in_bytes);
 				for (int i = 0; i < dst_len; i++)
@@ -8049,6 +8061,14 @@ namespace ZQ
 			if (dst_len <= 0)
 				return false;
 			int dst_len_in_bytes = dst_len * sizeof(float);
+			// 与上面 filters/mean/var 那几段同一段数学，最后这一段原来漏了这道
+			// 守卫 —— `dst_len_in_bytes` 算出来只用来推进游标。
+			// 配对的 `LoadBinary_NCHW(FILE*)` 靠 `fread_s` 的短读检测挡着，
+			// 所以只有 `LoadFromBuffer` 这条路会读越界（附录 HA.1）。
+			// 随仓 27 个 .zqparams 一个 Normalize 层都没有，所以**没有 sample
+			// 走得到这里** —— `zq_loadbuffer` 的 (C) 直接打这个类。
+			if (dst_len_in_bytes > buffer_len)
+				return false;
 			scale->ConvertFromCompactNCHW((const float*)buffer, scale->GetN(), scale->GetC(), scale->GetH(), scale->GetW());
 			readed_length_in_bytes += dst_len_in_bytes;
 			return true;
