@@ -754,6 +754,204 @@ static void run_reduction()
                 }
 }
 
+static void run_unary_op()
+{
+    // UnaryOperation：**两个 bottom**。标量取自 `bottoms[0]` 的**首元素**，
+    // 张量是 `bottoms[1]`；九个运算复用 `ScalarOperation_*` 那套内核，
+    // 所以语义与 `run_scalar_op` 完全一致（附录 IG.1）。
+    //
+    // 唯一的差别在 DIV：实现走的是 `ScalarOperation_Mul(x, 1.0f/scalar)`，
+    // 数学上等于 x/scalar，但**最后一位不同**（倒数再乘）。
+    // 所以这一档的判据留 1e-6（而不是 ScalarOp 那一档的"期望逐位 0"）。
+    static const int CS[2] = { 8, 13 };
+    static const char* OPN[9] = { "MUL", "DIV", "ADD", "MINUS",
+                                  "MAX", "MIN", "POW", "RDIV", "RMINUS" };
+    const double LIMIT = 1e-6;
+    char block[512], shape[96];
+    for (int ci = 0; ci < 2; ci++)
+        for (int op = 0; op < 9; op++) {
+            const int C = CS[ci];
+            const int H = 3, W = 3;
+            unsigned sd = 20261717u + (unsigned)op * 32452843u + (unsigned)ci * 49979687u;
+            std::vector<float> in((size_t)C * H * W);
+            for (size_t i = 0; i < in.size(); i++) in[i] = rnd(sd);
+            // bottoms[0] = scl（只用来取首元素当标量），bottoms[1] = mid（真正的张量）。
+            // 两个都垫一层 Copy，bottom 才是**真实 blob**而不是输入 blob 0。
+            snprintf(block, sizeof(block),
+                     "Copy name=cp1 bottom=data top=mid\n"
+                     "Copy name=cp2 bottom=data top=scl\n"
+                     "UnaryOperation name=uo1 bottom=scl bottom=mid top=top1 operation=%s\n",
+                     OPN[op]);
+            std::vector<float> got, want;
+            printf("  [probe] UnaryOp op=%s C=%d ...\n", OPN[op], C);
+            if (!run_synth(block, std::vector<float>(), C, H, W, in, got)) { g.bad++; continue; }
+            // 标量 = bottoms[0] 的首元素。bottoms[0] 是 `scl`，它是输入的一份拷贝，
+            // 而输入的首元素（NHWC 的 (0,0,0,0) = compact NCHW 的 0）在两种布局下同址。
+            const float s = in[0];
+            ref_scalar_op(in, op, s, want);
+            long wi = -1;
+            double e = backward_err(got, want, wi);
+            snprintf(shape, sizeof(shape), "op=%-6s C=%d", OPN[op], C);
+            report("UnaryOp", shape, e, LIMIT, wi, got, want);
+        }
+}
+
+// BatchNorm：权重文件里是 **2C 个 float**，前 C 个是 mean、后 C 个是 var
+// （`ZQ_CNN_Layer_BatchNorm::LoadBinary_NCHW`：两次 `ConvertFromCompactNCHW`
+// 分别喂给 `mean` 与 `var`，随后 `BatchNorm_Compute_b_a` 在**加载期**就把
+// b/a 算出来，Forward 只做 `BatchNorm_b_a(top, b, a)`）。
+//
+//     b[c] = 1 / sqrt(var[c] + eps)
+//     a[c] = -mean[c] * b[c]
+//     y[c] = b[c] * x[c] + a[c]
+//
+// 与 `BatchNormScale` 的差别是它没有 slope/bias 两项，所以是 BN 的
+// "只给 mean/var" 那一档（对应 `zq_cnn_batchnorm_32f_mean_var_align`）。
+//
+// `var` 取 [0.5, 1.5]：加上 eps 之后离 FLOAT_EPS_FOR_DIV 极远，
+// 那个 `__max` 守卫**不会**被触发，参考里也就不需要复制它。
+static void ref_batchnorm(const std::vector<float>& in, int C,
+                          const std::vector<float>& mean,
+                          const std::vector<float>& var, float eps,
+                          std::vector<float>& out)
+{
+    const size_t HW = in.size() / (size_t)C;
+    std::vector<double> b((size_t)C), a((size_t)C);
+    for (int c = 0; c < C; c++) {
+        b[c] = 1.0 / sqrt((double)var[c] + (double)eps);
+        a[c] = -(double)mean[c] * b[c];
+    }
+    out.resize(in.size());
+    for (size_t i = 0; i < in.size(); i++) {
+        int c = (int)(i / HW);              // compact NCHW：通道是最外层
+        double bx = b[c] * (double)in[i];   // 分母取计算尺度，不是 |结果|
+        out[i] = (float)(bx + a[c]);
+    }
+}
+
+static void run_batchnorm()
+{
+    static const int CS[3] = { 1, 8, 17 };   // 含非 align 倍数
+    const double LIMIT = 1e-5;
+    const float eps = 1e-5f;
+    char block[256], shape[64];
+    snprintf(block, sizeof(block),
+             "Copy name=cp1 bottom=data top=mid\n"
+             "BatchNorm name=bn1 bottom=mid top=top1 eps=%g\n", eps);
+    for (int t = 0; t < 3; t++) {
+        const int C = CS[t], H = 3, W = 3;
+        unsigned s = 20261818u + (unsigned)t * 15485863u;
+        std::vector<float> in((size_t)C * H * W), mean(C), var(C);
+        for (size_t i = 0; i < in.size(); i++) in[i] = rnd(s);
+        for (int c = 0; c < C; c++) { mean[c] = rnd(s); var[c] = 0.5f + rnd(s); }
+        std::vector<float> weights(mean);      // 权重顺序：先 mean，后 var
+        weights.insert(weights.end(), var.begin(), var.end());
+        std::vector<float> got, want;
+        printf("  [probe] BatchNorm C=%d ...\n", C);
+        if (!run_synth(block, weights, C, H, W, in, got)) { g.bad++; continue; }
+        ref_batchnorm(in, C, mean, var, eps, want);
+        long wi = -1;
+        double e = backward_err(got, want, wi);
+        snprintf(shape, sizeof(shape), "C=%d", C);
+        report("BatchNorm", shape, e, LIMIT, wi, got, want);
+    }
+}
+
+// Tile：把输入沿四个轴**重复展开**。语义取自
+// `ZQ_CNN_Tensor4D::Tile`（附录 IG.2）：
+//
+//     for (tc = 0; tc < tile_c; tc++) { memcpy(out_c_ptr, in_c_ptr, 4*C); out_c_ptr += C; }
+//     for (w  = 1; w  < tile_w; w++) memcpy(out_pix_ptr + w*elt_num, in_pix_ptr, 4*elt_num);
+//     for (h  = 0; h  < tile_h; h++) ...
+//
+// 也就是**整个输入沿该轴首尾相接 tile_* 份**：
+//
+//     out[n][c][h][w] = in[n % N][c % C][h % H][w % W]
+//
+// **注意这与 TensorFlow 的 `Tile` 不是一回事**（附录 IG.2）：
+// TF 的通道轴是 **repeat-interleave**（`out[c] = in[c / tile_c]`，
+// 即每个输入通道连续出现 tile_c 次），
+// 而这里的循环是 `for (tc…) { memcpy(out_c_ptr, in_c_ptr, 4*C); out_c_ptr += C; }`
+// —— `in_c_ptr` 每轮**不前进**，所以复制的是**整块输入**。
+//
+// 第一版参考按 TF 的约定写（`out[c] = in[c / tile_c]`），于是
+// 6 组里 4 组"对不上"；把按 (c,h,w) 坐标打出来的输入/输出并排看，
+// 库的输出是 `ch0..ch7 = in ch0..ch7`、`ch8..ch15 = in ch0..ch7` ——
+// **首尾相接**，与本注释一致。库是对的，参考是按**别的框架的约定**写的。
+static void ref_tile(const std::vector<float>& in, int N, int C, int H, int W,
+                     int tn, int th, int tw, int tc, std::vector<float>& out)
+{
+    const int oN = N * tn, oC = C * tc, oH = H * th, oW = W * tw;
+    out.assign((size_t)oN * oC * oH * oW, 0.0f);
+    for (int n = 0; n < oN; n++)
+        for (int c = 0; c < oC; c++)
+            for (int h = 0; h < oH; h++)
+                for (int w = 0; w < oW; w++) {
+                    size_t si = (size_t)((n % N) * C + c % C) * H * W
+                              + (size_t)(h % H) * W + (w % W);
+                    size_t di = ((size_t)n * oC + c) * oH * oW
+                              + (size_t)h * oW + w;
+                    out[di] = in[si];
+                }
+}
+
+static void run_tile()
+{
+    struct Case { int C, H, W, tn, th, tw, tc; };
+    static const Case CASES[] = {
+        {  4, 2, 2, 1, 1, 1, 1 },   // 全 1：恒等
+        {  4, 2, 2, 1, 1, 1, 2 },   // 只沿 C 重复
+        {  4, 2, 2, 1, 1, 2, 1 },   // 只沿 W 重复
+        {  4, 2, 2, 1, 2, 1, 1 },   // 只沿 H 重复
+        {  4, 2, 2, 2, 1, 1, 1 },   // 只沿 N 重复
+        {  3, 3, 3, 2, 2, 2, 2 },   // 四轴全重复，C 是非 align 倍数
+        // ---- 下面这几组是**分象限**用的（附录 IG.3）----
+        {  8, 2, 2, 1, 1, 1, 2 },   // C 是 align 的倍数，只沿 C 重复
+        {  8, 2, 2, 1, 1, 2, 1 },   // C 是 align 的倍数，只沿 W 重复
+        {  8, 2, 2, 1, 2, 1, 1 },   // C 是 align 的倍数，只沿 H 重复
+        {  8, 2, 2, 2, 2, 2, 2 },   // 四轴全重复，C 是 align 的倍数
+        { 16, 2, 2, 1, 1, 1, 2 },
+        {  4, 2, 2, 1, 1, 1, 2 },   // C=4：align=8 下 pixelStep(8) != C
+    };
+    const double LIMIT = 1e-7;      // 纯搬运：应当逐位相同
+    char block[256], shape[96];
+    for (size_t t = 0; t < sizeof(CASES) / sizeof(CASES[0]); t++) {
+        const Case& c = CASES[t];
+        snprintf(block, sizeof(block),
+                 "Copy name=cp1 bottom=data top=mid\n"
+                 "Tile name=tl1 bottom=mid top=top1 n=%d h=%d w=%d c=%d\n",
+                 c.tn, c.th, c.tw, c.tc);
+        unsigned s = 20261919u + (unsigned)t * 32452843u;
+        std::vector<float> in((size_t)c.C * c.H * c.W);
+        for (size_t i = 0; i < in.size(); i++) in[i] = rnd(s);
+        std::vector<float> got, want;
+        printf("  [probe] Tile n=%d h=%d w=%d c=%d ...\n", c.tn, c.th, c.tw, c.tc);
+        if (!run_synth(block, std::vector<float>(), c.C, c.H, c.W, in, got)) { g.bad++; continue; }
+        ref_tile(in, 1, c.C, c.H, c.W, c.tn, c.th, c.tw, c.tc, want);
+        long wi = -1;
+        double e = backward_err(got, want, wi);
+        snprintf(shape, sizeof(shape), "n=%d h=%d w=%d c=%d", c.tn, c.th, c.tw, c.tc);
+        report("Tile", shape, e, LIMIT, wi, got, want);
+        if (e > LIMIT && c.C == 8 && c.tc == 2 && c.tn == 1 && c.th == 1 && c.tw == 1) {
+            // 诊断：按 compact NCHW 的 (c,h,w) 坐标把输入与库的输出并排打出来。
+            // 参考的映射是 out[c][h][w] = in[c/tile_c][h][w]（每个输入通道连续重复 2 次）。
+            printf("        [诊断] 输入（每个通道一行，h=0,w=0..%d）：\n", c.W - 1);
+            for (int cc = 0; cc < c.C; cc++) {
+                printf("          in ch%-2d ", cc);
+                for (int ww = 0; ww < c.W; ww++) printf(" %8.4f", in[((size_t)cc * c.H) * c.W + ww]);
+                printf("\n");
+            }
+            const int oC = c.C * c.tc;
+            printf("        [诊断] 库的输出（共 %d 通道）：\n", oC);
+            for (int cc = 0; cc < oC; cc++) {
+                printf("          out ch%-2d", cc);
+                for (int ww = 0; ww < c.W; ww++) printf(" %8.4f", got[((size_t)cc * c.H) * c.W + ww]);
+                printf("\n");
+            }
+        }
+    }
+}
+
 int main()
 {
     setvbuf(stdout, NULL, _IONBF, 0);
@@ -778,6 +976,9 @@ int main()
     run_scalar_op();
     run_squeeze();
     run_reduction();
+    run_unary_op();
+    run_batchnorm();
+    run_tile();
     printf("  小结：跑过 %d 个形状，对 %d，**对不上** %d，**待查** %d\n",
            g.ok + g.bad, g.ok, g.bad, g.open);
 

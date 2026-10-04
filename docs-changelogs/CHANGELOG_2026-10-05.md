@@ -846,3 +846,65 @@ ALL CHECKS PASSED        rc=0        FAILED 计数 = 0
 
 三批（ID / IE / IF）里只有 **ID** 改了生产代码；
 IE 与 IF 都只改了 `SamplesZQCNN/SampleUnusedLayerProbe/` 与文档。
+
+## 新增/变更：IG —— 再覆盖 3 类 UNUSED（UnaryOperation / BatchNorm / Tile），探针累计 111 个形状
+
+### 覆盖的三层
+
+| 层 | 组数 | 契约（读实现得到） |
+|---|---|---|
+| `UnaryOperation` | 18 | **两个 bottom**：标量取 `bottoms[0]` 的**首元素**，张量是 `bottoms[1]`；九个运算复用 `ScalarOperation_*` 内核 |
+| `BatchNorm` | 3 | 权重文件里 **2C 个 float**（前 C 个 mean、后 C 个 var）；加载期算成 b/a，Forward 只做 y = b*x + a |
+| `Tile` | 12 | 沿四个轴**首尾相接** tile_* 份 |
+
+`UnaryOperation` 唯一的细节：DIV 走的是 `ScalarOperation_Mul(x, 1.0f/scalar)`，
+数学上等于 x/scalar 但**最后一位不同**（倒数再乘），所以那一档判据留 1e-6。
+
+探针累计 **111 个形状**，两个平台都 `UNUSED LAYER PROBE OK` rc=0，**待查 0**。
+
+### 一条值得记的结论：这里的 `Tile` **不是 TensorFlow 的 Tile**
+
+按 (c,h,w) 坐标把输入/输出并排看（C=8, H=2, W=2, tile_c=2）：
+
+    输入： in ch0..ch7 = -0.4825 -0.2195 / ... / -0.5048 0.2091
+    输出： out ch0..ch7 = 与输入 ch0..ch7 **完全相同**
+          out ch8..15  = 又是输入 ch0..ch7（**整块复制**）
+
+也就是**整块输入被复制了 tile_c 遍**（首尾相接），而不是 TF 通道轴的
+**repeat-interleave**（每个输入通道连续出现 tile_c 次）。代码上也对得上：
+
+    for (int tc = 0; tc < tile_c; tc++) {
+        memcpy(out_c_ptr, in_c_ptr, sizeof(float)*C);
+        out_c_ptr += C;          // in_c_ptr 每轮**不前进**
+    }
+
+本仓库的契约是：out[n][c][h][w] = in[n % N][c % C][h % H][w % W]
+
+> **第一版参考按 TF 的约定写**，于是 6 组里 4 组"对不上"，又差点写成"库算错了"。
+> 与 IF 同族但更隐蔽：参考不是**写错了**，而是**按另一个框架的约定写的** ——
+> 它在你自己重推一遍的时候完全合理。
+
+顺带记录：层的 `GetTopDim` 只算 C/H/W（`SetShape(bottom_N, ...)`），
+而内核里的 `Tile()` 会按 `N*tile_n` 重新 `ChangeSize` —— 所以 **tile_n 最终生效**，
+只是中间形状对不上、靠内核纠正。
+
+### 形状表特意分成两个象限
+
+第一批 Tile 用例是 C ∈ {4,3}（都不是 align=8 的倍数），4 组失败。
+补了 C ∈ {8,16}（align 的倍数）—— **同样失败**，这就排除了"对齐填充导致错位"
+这个解释，把结论钉在**契约**上。若 C=8 那组是绿的，方向会完全不同。
+
+### 变更文件
+
+* `SamplesZQCNN/SampleUnusedLayerProbe/SampleUnusedLayerProbe.cpp` —
+  新增 `run_unary_op` / `run_batchnorm` / `run_tile` 与参考
+  （`ref_batchnorm` / `ref_tile`）；Tile 的失败诊断按坐标打印输入与输出
+* `audit_k3_20261001.md`（追加 IG）
+* `AGENTS.md`（新增第 10 条「契约要读代码确认，不要按别的框架的层名约定写参考」）
+* **无生产代码改动**；两个平台均已手工重编 + 实跑（rc=0，111/111，待查 0）
+
+### 尚未覆盖的 UNUSED（还剩 5 类）
+
+`DeConvolution` / `LSTM_TF` / `PriorBoxText` / `PriorBox_MXNET` /
+`DetectionOutput_MXNET`（后三个是 SSD 专用输出层；DeConvolution 与 LSTM_TF
+的权重布局比前面这些复杂得多）。
