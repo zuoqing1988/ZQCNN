@@ -69,6 +69,9 @@ DEFAULT_FILES = [
     os.path.join(ROOT, 'ZQCNN', 'ZQ_CNN_MTCNN_AspectRatio.h'),
     os.path.join(ROOT, 'ZQCNN', 'ZQ_CNN_MTCNN_Interface.h'),
     os.path.join(ROOT, 'ZQCNN', 'ZQ_CNN_MTCNN_NCHWC.h'),
+    # 附录 IK：视频人脸检测封装层。它有**自己的一份** `_nms`（BBox106 版），
+    # 不走 ZQ_CNN_BBoxUtils.h，所以 IJ 那套门禁扫不到它。
+    os.path.join(ROOT, 'ZQCNN', 'ZQ_CNN_VideoFaceDetection_Interface.h'),
 ]
 
 # --- BBoxUtils：_nms / area / find-end ---
@@ -128,6 +131,44 @@ A5_PRIOR = re.compile(r'prior_len\s*<\s*needed_anchor\s*\*\s*2LL')
 # 「扫不到」和「没问题」在报告里长得一模一样，这是第三次栽在这上面。
 A6_UNCHECKED = re.compile(r'^\s*ZQ_CNN_BBoxUtils::GetLocPredictions\(', re.M)
 A6_CHECKED = re.compile(r'if\s*\(\s*!\s*ZQ_CNN_BBoxUtils::GetLocPredictions\(')
+
+
+# ---- A7~A12（附录 IK，ZQ_CNN_VideoFaceDetection_Interface.h）----
+VFD_FILE = 'ZQ_CNN_VideoFaceDetection_Interface.h'
+# A7: Stage-1 的跟踪框必须在进 NMS 前赋 area。
+#     本文件自己的 _nms 走 "Min"：`IOU / __min(area1, area2)`，
+#     area=0 时分母 0 -> +inf -> 任何与跟踪框重叠的框被无条件删掉。
+A7_TRACKBOX = re.compile(r'ZQ_CNN_BBox106\s+tmp_box\s*;')
+A7_AREA = re.compile(r'tmp_box\.area\s*=')
+# A8: _filtering 不得无条件读 trace[i][0]。
+#     调用处只填到 good_idx.size()，其余是**空 vector**。
+A8_LOOP = re.compile(r'for\s*\(int i = 0; i < results\.size\(\)')
+A8_BOUNDED = re.compile(r'i\s*<\s*results\.size\(\)\s*&&\s*i\s*<\s*\(int\)trace\.size\(\)')
+A8_EMPTY = re.compile(r'if\s*\(\s*cur_trace\.empty\(\)\s*\)')
+# A9: GetBlobByName 的返回值必须判空
+A9_DECL = re.compile(r'=\s*(?:lnets106|onets|headposegaze_nets)\[0\]\.GetBlobByName\(')
+# **末尾不要 `\)`**：hpg 那一处写的是 `if (hpg == 0 || hpg->GetN()*... < 9)`，
+# 带 `\)` 就只匹配「条件正好在 0 结束」的形式，于是 hpg 被误报成「没判空」。
+A9_GUARD = re.compile(r'if\s*\(\s*(?:keyPoint|prob|hpg)\s*==\s*0')
+# **逐声明点**判，窗口到下一个声明为止。
+# 第一版只判「文件里存在一处 `if (x == 0)`」—— 变异测试把三处 keyPoint 判空
+# 全部改成 `if (false)`，门禁照样全绿，因为本文件的 hpg 那一处判空还在。
+# 这与 A39（「文件里存在一处 bgr 守卫」）是**完全同一个毛病**，
+# 一天之内第二次：「有一处」不等于「每处都有」。
+# A10: thread_num 必须有上界（与 MTCNN 对齐）
+# 要的是守卫的**形状**，不是那个数字 —— 只搜 `thread_num > 128` 的话，
+# `if (false && thread_num > 128)` 照样匹配，等于没判（变异测试实测）。
+A10_CAPPED = re.compile(
+    r'if\s*\(\s*(?:this->)?thread_num\s*>\s*\d+\s*\)|thread_num\s*=\s*__min\s*\(\s*\d+')
+# A11: transform[] 必须有初值，且 CropImage 的返回值必须检查
+A11_INIT = re.compile(r'float\s+transform\[6\]\s*=\s*\{')
+A11_CHECKED = re.compile(r'if\s*\(\s*!\s*ZQ_CNN_FaceCropUtils::CropImage_112x112_translate_scale_roll')
+# A12: results.clear() 必须在 ConvertFromBGR 之前
+# 注意括号数：源码里是 `ConvertFromBGR(...)` 的 `)` 加 `if (...)` 的 `)` 共**两个**；
+# 写成三个时这条判据**恒假** —— 变异测试把 clear 挪回去也抓不到。
+A12_CLEAR_AFTER = re.compile(
+    r'if\s*\(\s*\!\s*input\.ConvertFromBGR\([^)]*\)\)\s*\n'
+    r'[ \t]*return false;[ \t]*\n(?:[ \t]*\n)?[ \t]*results\.clear\(\)\s*;')
 
 
 def _read(path):
@@ -266,8 +307,78 @@ def scan_text(raw, name):
             ok += 1
         return ok, bad
 
-    return ok, bad
+    if name == VFD_FILE:
+        if not A7_TRACKBOX.search(text):
+            ok += 1
+        elif A7_AREA.search(text):
+            ok += 1
+        else:
+            bad.append(('A7', 'Stage-1 的 `ZQ_CNN_BBox106 tmp_box` 在进 NMS 前**没有赋 area** —— '
+                        '构造函数 memset 到 0，而本文件自己的 `_nms` 走 "Min"：'
+                        '`IOU / __min(area1, area2)` 分母 0 -> inter>0 时得 +inf -> '
+                        '**任何与跟踪框有重叠的框都被无条件删掉**'
+                        '（Stage-2 全局检测在有人脸跟踪时形同虚设）'))
 
+        m8 = A8_LOOP.search(text)
+        if m8 is None:
+            ok += 1
+        elif not A8_BOUNDED.search(text[m8.start():m8.start() + 200]):
+            bad.append(('A8', '`_filtering` 的循环只按 `i < results.size()` 走，'
+                        '而调用处 `trace` 只填到 `good_idx.size()` —— '
+                        '其余是**空 vector**，`trace[i][0]` 读 _Myfirst：'
+                        'nullptr 则 SIGSEGV，残留堆指针则 940 字节垃圾进 results[i]'))
+        elif not A8_EMPTY.search(text):
+            bad.append(('A8', '循环上界对了，但分支体里没有 `if (cur_trace.empty()) continue;` —— '
+                        '空 trace 仍会被读 [0]'))
+        else:
+            ok += 1
+
+        a9 = list(A9_DECL.finditer(text))
+        if not a9:
+            ok += 1
+        else:
+            miss9 = []
+            for k, m in enumerate(a9):
+                stop = a9[k + 1].start() if k + 1 < len(a9) else min(len(text), m.end() + 600)
+                if not A9_GUARD.search(text[m.end():stop]):
+                    miss9.append(text[:m.start()].count(chr(10)) + 1)
+            if miss9:
+                bad.append(('A9', '`GetBlobByName` 的返回值没有判空（行 %s）—— 找不到就返回 0，'
+                            '而 Init 对 blob 名零校验、路径全由调用方给。'
+                            '同仓 MTCNN_Interface:2012 与 CascadeOnet_Interface:143-152 都判了'
+                            % ', '.join(str(x) for x in miss9)))
+            else:
+                ok += 1
+
+        if A10_CAPPED.search(text):
+            ok += 1
+        else:
+            bad.append(('A10', 'Init 里 thread_num 只夹了**下界** —— '
+                         '本文件的资源模型比 MTCNN 还重（cascade_Onets 每份 Init 三遍，'
+                         '再加 onets / lnets106，合计 5N 份 det3 常驻）。'
+                         'MTCNN_Interface:129-133 已有 128 的上界（附录 II.13）'))
+
+        if not A11_INIT.search(text):
+            bad.append(('A11', '`float transform[6];` 没有初值，而 CropImage 的返回值被丢弃 —— '
+                         'crop 失败时是栈垃圾，center_and_rot 全脏；'
+                         '随仓 sample 再算 vir_zaxis -> `pt_x = _x/_z`，`_z==0` -> '
+                         'cv::Point(inf,inf) -> OpenCV 内部 UB'))
+        elif not A11_CHECKED.search(text):
+            bad.append(('A11', '`transform` 有初值了，但 CropImage 的返回值仍然没检查'))
+        else:
+            ok += 1
+
+        if A12_CLEAR_AFTER.search(text):
+            bad.append(('A12', '`results.clear()` 在 `ConvertFromBGR` 的 return **之后** —— '
+                         '一帧转换失败时 results 保留**上一帧**内容；'
+                         '随仓 sample `if (!Find(...)) {}` 之后无条件 Draw，'
+                         '于是在新图上画旧框'))
+        else:
+            ok += 1
+
+        return ok, bad
+
+    return ok, bad
 
 # 一份"什么都齐"的骨架，作为后面每条自测样本的公共前缀。
 FULL_NMS = r"""

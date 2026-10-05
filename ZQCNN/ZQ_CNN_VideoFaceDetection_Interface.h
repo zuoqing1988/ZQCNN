@@ -72,6 +72,18 @@ namespace ZQ
 			if (!mtcnn.Init(pnet_param, pnet_model, rnet_param, rnet_model, onet_param, onet_model, thread_num, has_lnet106, lnet106_param, lnet106_model))
 				return false;
 			this->thread_num = __max(1, thread_num);
+			// 审计修复 2026-10-06（附录 IK.4）：原来只有下界。
+			// 本文件的资源模型比 MTCNN 还重：`cascade_Onets` 按 thread_num 份装载
+			// **而且每个都 Init 三遍**（onet_param/model 传了三次，:78），
+			// 再加 onets N 份、lnets106 N 份 —— 合计 5N 份 det3 常驻内存。
+			// thread_num = 10000 就是 5 万份。对照 `ZQ_CNN_MTCNN_Interface.h:129-133`
+			// （附录 II.13 刚加的上界 128）：同一个参数、同样的「按份 LoadFrom」，
+			// 两边给出两个答案。这里对齐。
+			if (this->thread_num > 128)
+			{
+				printf("thread_num = %d is too large, clamp to 128\n", thread_num);
+				this->thread_num = 128;
+			}
 			cascade_Onets.resize(this->thread_num);
 			for (int i = 0; i < cascade_Onets.size(); i++)
 			{
@@ -143,10 +155,14 @@ namespace ZQ
 
 		bool Find(const unsigned char* bgr_img, int _width, int _height, int _widthStep, std::vector<ZQ_CNN_BBox106>& results)
 		{
+			// 审计修复 2026-10-06（附录 IK.6）：`results.clear()` 原来在 ConvertFromBGR 的
+			// return **之后**，所以一帧转换失败时 results 保留**上一帧的内容**。
+			// 随仓 sample 直接踩到：`if (!detector.Find(...)) { printf(...); }` 之后
+			// **无条件** `Draw(ori_im, thirdBbox106)` —— 于是在新图上画旧框。
+			// clear 提到最前面：失败时「没有结果」和「结果是空的」必须一致。
+			results.clear();
 			if (!input.ConvertFromBGR(bgr_img, _width, _height, _widthStep))
 				return false;
-
-			results.clear();
 
 			if (is_first_frame)
 			{
@@ -202,6 +218,11 @@ namespace ZQ
 					ZQ_CNN_BBox106 tmp_box106;
 					//const ZQ_CNN_Tensor4D_Interface_Base* keyPoint = lnets106[0].GetBlobByName("conv6-3");
 					const ZQ_CNN_Tensor4D_Interface_Base* keyPoint = lnets106[0].GetBlobByName("landmark_fc2/BiasAdd");
+					if (keyPoint == 0)
+					{
+						printf("[VFD] blob landmark_fc2/BiasAdd not found in lnets106, skip tracking\n");
+						continue;
+					}
 					const float* keyPoint_ptr = keyPoint->GetFirstPixelPtr();
 					int keypoint_num = __min(106, keyPoint->GetC() / 2);
 					int keyPoint_sliceStep = keyPoint->GetSliceStep();
@@ -229,6 +250,12 @@ namespace ZQ
 					onets[0].Forward(task_images[0]);
 
 					const ZQ_CNN_Tensor4D_Interface_Base* prob = onets[0].GetBlobByName("prob1");
+					// 附录 IK.3：同 keyPoint，GetBlobByName 可能返回 0。
+					if (prob == 0)
+					{
+						printf("[VFD] blob prob1 not found in onets\n");
+						return false;
+					}
 					const float* prob_ptr = prob->GetFirstPixelPtr();
 
 
@@ -246,6 +273,18 @@ namespace ZQ
 					tmp_box.col2 = cx + 0.5*cur_w;
 					tmp_box.row1 = cy - 0.5*cur_h;
 					tmp_box.row2 = cy + 0.5*cur_h;
+					// 审计修复 2026-10-06（附录 IK.1）：`area` 原来**从来没被赋值**。
+					// ZQ_CNN_BBox106 构造函数 memset 到 0，所以进 `boxes` 的每个跟踪框 area 都是 0，
+					// 而本文件自己的 `_nms` 走的是 **"Min"** 模式：
+					//     IOU = IOU / __min(area1, area2);
+					// 分母 0 -> `inter>0` 时得 +inf，`inf > thresh` 恒真 ->
+					// **任何与跟踪框有重叠的框都被无条件删掉**（Stage-2「全局检测」在有人脸跟踪时形同虚设）；
+					// `inter==0` 时是 NaN，`NaN > thresh` 为假，不删。
+					// 对照：同仓 MTCNN 的对应位置一直有
+					// `task_thirdBbox[pp][i].area = task_src_rect_w[pp][i] * task_src_rect_h[pp][i];` ——
+					// 全流水线**只有**本文件 Stage-1 的框在进 NMS 前 area 为 0。
+					tmp_box.area = cur_w * cur_h;
+					tmp_box106.area = tmp_box.area;
 					tmp_box.score = 2.0;
 					tmp_box.exist = true;
 					tmp_box106.col1 = tmp_box.col1;
@@ -560,6 +599,11 @@ namespace ZQ
 				double t32 = omp_get_wtime();
 				//const ZQ_CNN_Tensor4D_Interface_Base* keyPoint = lnets106[0].GetBlobByName("conv6-3");
 				const ZQ_CNN_Tensor4D_Interface_Base* keyPoint = lnets106[0].GetBlobByName("landmark_fc2/BiasAdd");
+				if (keyPoint == 0)
+				{
+					printf("[VFD] blob landmark_fc2/BiasAdd not found in lnets106, skip\n");
+					continue;
+				}
 				const float* keyPoint_ptr = keyPoint->GetFirstPixelPtr();
 				int keypoint_num = __min(106, keyPoint->GetC() / 2);
 				int keyPoint_sliceStep = keyPoint->GetSliceStep();
@@ -643,6 +687,11 @@ namespace ZQ
 				lnets106[0].Forward(task_lnet_images_gray[0]);
 				//const ZQ_CNN_Tensor4D* keyPoint = lnets106[0].GetBlobByName("conv6-3");
 				const ZQ_CNN_Tensor4D_Interface_Base* keyPoint = lnets106[0].GetBlobByName("landmark_fc2/BiasAdd");
+				if (keyPoint == 0)
+				{
+					printf("[VFD] blob landmark_fc2/BiasAdd not found in lnets106, skip\n");
+					continue;
+				}
 				const float* keyPoint_ptr = keyPoint->GetFirstPixelPtr();
 				int keypoint_num = __min(106, keyPoint->GetC() / 2);
 				int keyPoint_sliceStep = keyPoint->GetSliceStep();
@@ -693,9 +742,18 @@ namespace ZQ
 					cur_pts[90 * 2 + 0],	//right mouth corner x (right of image)
 					cur_pts[90 * 2 + 1]		//right mouth corner y (right of image)
 				};
-				float transform[6];
+				// 审计修复 2026-10-06（附录 IK.5）：原来 `float transform[6];` 是**未初始化**的，
+				// 而且 CropImage 的 bool 返回值被丢弃。crop 失败时 transform 是栈垃圾，
+				// task_hpg_images[0] 还留着上一帧的尺寸 -> `center_and_rot` 全脏。
+				// 随仓 sample 拿 center_and_rot 算 vir_zaxis，再做 `pt_x = _x/_z`；
+				// `_z == 0` 就是 inf/NaN -> `cv::Point(inf,inf)` -> OpenCV 内部 UB。
+				float transform[6] = {0, 0, 0, 0, 0, 0};
 				
-				ZQ_CNN_FaceCropUtils::CropImage_112x112_translate_scale_roll(input, face5pts, task_hpg_images[0], transform, -1);
+				if (!ZQ_CNN_FaceCropUtils::CropImage_112x112_translate_scale_roll(input, face5pts, task_hpg_images[0], transform, -1))
+				{
+					printf("[VFD] CropImage_112x112_translate_scale_roll failed, skip headpose\n");
+					continue;
+				}
 
 				float sc = transform[0];
 				float ss = transform[1];
@@ -730,11 +788,26 @@ namespace ZQ
 		void _filtering(const std::vector<std::vector<ZQ_CNN_BBox106> >& trace, std::vector<ZQ_CNN_BBox106>& results)
 		{
 			float reproj_coords[212];
-			for (int i = 0; i < results.size(); i++)
+			for (int i = 0; i < results.size() && i < (int)trace.size(); i++)
 			{
 				const std::vector<ZQ_CNN_BBox106>& cur_trace = trace[i];
+				// 审计修复 2026-10-06（附录 IK.2）：原来无条件 `trace[i][0]`。
+				// 但调用处只填到 `good_idx.size()`：
+				//     trace.resize(cur_box_num);            // cur_box_num == results.size()
+				//     for (i = 0; i < cur_box_num && i < good_idx.size(); i++) trace[i].push_back(...);
+				// 于是 i >= good_idx.size() 的是**空 vector**，`operator[](0)` 读到 _Myfirst
+				//（nullptr 则 SIGSEGV，是残留堆指针则把 940 字节垃圾拷进 results[i]）。
+				// 差值 = 被 NMS 吃掉的跟踪框数，只要有两个跟踪框互相压制就命中。
+				// 修好 IK.1（area 不再为 0）之后这条的触发条件变少，但**没有消失** ——
+				// 正常 NMS 也会吃掉跟踪框。所以两道都要修。
+				// 语义上：没有被跟踪到的框（trace 为空）应当**原样放行**，
+				// 它们是 Stage-2 的全局检测结果，本来就不该参与这里的时序平滑。
+				if (cur_trace.empty())
+				{
+					continue;
+				}
 				results[i] = cur_trace[0];
-				const ZQ_CNN_BBox106& cur_box = trace[i][0];
+				const ZQ_CNN_BBox106& cur_box = cur_trace[0];
 				const float ori_thresh_L1 = 0.01f;
 				const float ori_thresh_L2 = 0.01f;
 				const float ori_thresh_Linf = 0.015f;

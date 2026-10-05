@@ -1005,3 +1005,86 @@ A6 `GetLocPredictions` 返回值必须检查。
   `:384-388` 那个「`maxX` 既是 max-col 又被改写成交集宽」的复用也是主文件早修掉的形状。
   **这两份本轮没有同步** —— 它们各自有独立的调用链，同步要连各自的 sample 一起验，
   放到下一轮单独做，并在那轮补基线。
+
+
+## 追加：附录 IK —— ZQ_CNN_VideoFaceDetection_Interface（六个缺陷，含一个堆越界读）
+
+### 元发现
+
+这个文件（965 行）此前**零门禁覆盖**：`grep -rn VideoFaceDetection tools/` 为空，
+既不在 `run_audit_checks.py` 也不在 `run_sample_regression.sh`；
+唯一的 sample 走 `cv::VideoCapture cap(0)`（摄像头），无头环境永远跑不到。
+也就是说下面每一条都从未被任何自动检查碰过。
+
+### 查到的真缺陷
+
+| 编号 | 位置 | 缺陷 | 修法 |
+| --- | --- | --- | --- |
+| IK.1 | `:241-250` Stage-1 | `ZQ_CNN_BBox106 tmp_box;` 的 **`area` 从未被赋值**（构造函数 memset 到 0），然后 `boxes.push_back(tmp_box)` 把 area=0 的框喂进 `_nms`。而本文件自己的 `_nms` 走 **"Min"**：`IOU / __min(area1, area2)`，分母 0 -> `inter>0` 时得 **+inf**，`inf > thresh` 恒真 -> **任何与跟踪框有重叠的框都被无条件删掉**。也就是 Stage-2「全局检测」在有人脸跟踪时**形同虚设** | `tmp_box.area = cur_w * cur_h;` |
+| IK.2 | `:733-737` `_filtering` | 无条件 `trace[i][0]`，而调用处只填到 `good_idx.size()`（`trace.resize(cur_box_num)` 但循环条件是 `i < cur_box_num && i < good_idx.size()`）。于是 `i >= good_idx.size()` 的是**空 vector**，`operator[](0)` 读 `_Myfirst` —— nullptr 则 SIGSEGV，残留堆指针则把 **940 字节**垃圾拷进 `results[i]`。差值 = 被 NMS 吃掉的跟踪框数 | 循环上界加 `&& i < (int)trace.size()`，分支体加 `if (cur_trace.empty()) continue;`（未被跟踪到的框原样放行，它们是 Stage-2 的结果，本就不该参与时序平滑） |
+| IK.3 | `:204/:231/:574/:657` | 4 处 `GetBlobByName` 未判空。`GetBlobByName` 找不到返回 **0**，而 `Init` 对 blob 名零校验、param/model 路径全由调用方给。对照：`MTCNN_Interface.h:2012` 判了、`CascadeOnet_Interface.h:143-152` 判了、**本文件 `:726` 的 hpg 也判了** —— 只有这四处漏 | 各加 `if (x == 0) { printf(...); continue/return false; }` |
+| IK.4 | `:74` Init | `thread_num` 只夹下界。而本文件的资源模型比 MTCNN 还重：`cascade_Onets` 按 thread_num 份装载**而且每份 Init 三遍**（onet_param/model 传了三次），再加 onets N 份、lnets106 N 份 = **5N 份 det3 常驻内存**。`thread_num = 10000` 就是 5 万份。对照 `MTCNN_Interface.h:129-133`（附录 II.13 刚加的 128） | 对齐加上界 128 |
+| IK.5 | `:696-707` | `float transform[6];` **未初始化**，且 `CropImage_112x112_translate_scale_roll` 的 bool 返回值被丢弃。crop 失败时 transform 是栈垃圾、`task_hpg_images[0]` 留着上一帧尺寸 -> `center_and_rot` 全脏。随仓 sample 拿它算 `vir_zaxis` 再做 `pt_x = _x/_z`，`_z == 0` -> inf/NaN -> `cv::Point(inf,inf)` -> OpenCV 内部 UB | `float transform[6] = {0,...};` + 检查返回值 |
+| IK.6 | `:146-149` `Find` | `results.clear()` 写在 `ConvertFromBGR` 的 **return 之后**，所以一帧转换失败时 `results` 保留**上一帧的内容**。随仓 sample 直接踩到：`if (!detector.Find(...)) { printf(...); }` 之后**无条件** `Draw(ori_im, thirdBbox106)` —— 于是在新图上画旧框 | `clear()` 提到最前面 |
+
+### IK.1 与 IK.2 是咬合的
+
+IK.1 让两个跟踪框互相 `inter/0 = +inf` -> 无条件互吃，于是存活数 K1 < 产出数 N1，
+而 `results.size() - good_idx.size()` 正好等于 `N1 - K1`，IK.2 就触发。
+**修好 IK.1 之后 IK.2 的触发概率下降，但没有消失** —— 正常 NMS 也会吃掉跟踪框。
+所以两道都要修，不能因为修了上游就放过下游。
+
+### 门禁：check_bbox_nms.py 扩到 A7~A12，文件列表加了本文件
+
+A7 Stage-1 跟踪框必须赋 area；A8 `_filtering` 循环上界 + 空 trace 守卫；
+A9 `GetBlobByName` **逐声明点**判空（窗口到下一个声明为止）；
+A10 `thread_num` 上界（要守卫的**形状**，不是那个数字）；
+A11 `transform[6]` 有初值 + CropImage 返回值检查；
+A12 `results.clear()` 必须在 `ConvertFromBGR` 之前。
+
+### 踩到的坑（这一轮五次，同一根因：判据写出来了但**扫不到**或**扫太松**）
+
+1. **A9 第一版只判「文件里存在一处 `if (x == 0)`」** —— 变异测试把三处 keyPoint 判空
+   全部改成 `if (false)`，门禁照样全绿，因为 hpg 那一处判空还在。
+   改成**逐声明点**判、窗口到下一个声明为止。
+   **这与 A39（「文件里存在一处 bgr 守卫」）是完全同一个毛病，一天之内第二次。**
+2. **A10 只搜 `thread_num > 128` 这个数字** —— `if (false && thread_num > 128)` 照样匹配，
+   等于没判。改成要求守卫的**形状**（`if (... thread_num > N)` 或 `__min(N, ...)`）。
+3. **A9 的正则末尾多了 `\)`**：`if (hpg == 0 || hpg->GetN()*... < 9)` 的条件
+   不在 0 处结束，于是 hpg 那一处被**误报成「没判空」**（假阳性）。
+4. **A12 的正则括号数多了三个 `)`**（源码里只有两个），这条判据**恒假** ——
+   变异测试把 `clear()` 挪回 `return` 之后也抓不到。
+5. **门禁的 DEFAULT_FILES 里根本没有这个文件** —— A7~A12 写完之后扫描报「全过」，
+   其实一条都没执行。**加了文件列表才真正开始跑**，然后立刻报出 A9 的假阳性。
+
+1~4 都是「扫不到 / 扫错」，5 是「压根没扫」。同一个教训的五种表现：
+**门禁全绿这件事本身需要证据，不能默认它扫到了它声称要扫的东西。**
+
+### 实测
+
+    python tools/check_bbox_nms.py --selfcheck -> 12 cases, all as expected（RC=0）
+    python tools/check_bbox_nms.py             -> 7 文件全 OK，合计 12 项（RC=0）
+    变异测试：逐条破坏 A7/A8/A9/A10/A11/A12 -> 门禁**六条全部抓到**并点名
+    Linux -fsyntax-only（VideoFaceDetection + 依赖）-> RC=0
+    cmake --build build_x64 --config Release --target SampleVideoFaceDetection_Interface -> RC=0，0 error
+    python tools/check_text_encoding.py -> OK: 764 text files, all strict UTF-8, no U+FFFD
+    python tools/check_line_endings.py  -> line endings OK
+
+### 注意事项
+
+- **这个 sample 没法做 A/B 对拍**：它要 `cv::VideoCapture cap(0)`（摄像头），
+  无头环境跑不到；Linux 侧还缺 OpenCV 的 video 支持。
+  所以 IK.1 的功能影响（Stage-2 被静默吃掉）**只有代码层面的论证，没有实测数字**。
+- **`ZQ_CNN_CascadeOnet_Interface.h` 不是自包含的**：它用 `ZQ_CNN_Net`（`:113`）
+  但只 include 了 `ZQ_CNN_Net_Interface.h`，所以**必须先 include `ZQ_CNN_Net.h`**
+  才能编过。随仓 sample 恰好是那个顺序（`SampleVideoFaceDetection_Interface.cpp:1`），
+  所以一直没人发现。写成 `-fsyntax-only` 时按自然顺序 include 就会炸。
+  本轮**没有**改它（加一行 include 即可，但那是另一个头的卫生问题，单独做更干净）。
+- 报告里还有几条**已验证不可达**的，没有动：`has_lnet106 == false` 时 `lnets106` 是空 vector
+（看着必崩）实际被 `MTCNN_Interface::Find106:497` 的 `if (!has_lnet || !lnet_enabled) return false;`
+先挡住了；`cur_key_cooldown` 的「未初始化」被 `:164` 的首帧分支保证读过至少一次。
+  这两条写下来是为了以后有人改动那两处时不用重新推一遍。
+- 报告提到的 `thread_num` 在本文件**完全不产生加速**（三个 vector 全部只用 `[0]`、
+文件里没有任何 `#pragma omp parallel for`）—— 也就是说 IK.4 的上界 128 其实
+是在给一个「1 份就够」的设计加保险。这是**设计问题不是缺陷**，
+要真并行化是另一件事，本轮没做。
