@@ -88,19 +88,19 @@ namespace ZQ
 				force_run_pnet_multithread = true;
 			else
 				force_run_pnet_multithread = false;
-\1thread_num = __max(1, thread_num);
-\1// 审计修复 2026-10-06（附录 II.13）：原来只夹**下界**。
-\1// 下面按 thread_num 份**逐份 LoadFrom**，每份都是一整套网络 + 权重 —— 
-\1// 传 100000 就是 30 万份模型常驻内存，直接 OOM / 换页失败。
-\1// Init 里除了 ret 之外没有任何资源预算，调用方给个离谱值就能把进程打死。
-\1// 上界取 128：超过 CPU 核数那么多份没有任何意义（每份独占一份 net 就是为了并行），
-\1// 而 128 份已经远超任何真实机器的核数，同时把最坏情况钉在一个可预期的量级。
-\1if (thread_num > 128)
-\1{
-\1\tprintf("thread_num = %d is too large, clamp to 128\n", thread_num);
-\1\tthread_num = 128;
-\1}
-\1pnet.resize(thread_num);
+			thread_num = __max(1, thread_num);
+			// 审计修复 2026-10-06（附录 II.13）：原来只夹**下界**。
+			// 下面按 thread_num 份**逐份 LoadFrom**，每份都是一整套网络 + 权重 —— 
+			// 传 100000 就是 30 万份模型常驻内存，直接 OOM / 换页失败。
+			// Init 里除了 ret 之外没有任何资源预算，调用方给个离谱值就能把进程打死。
+			// 上界取 128：超过 CPU 核数那么多份没有任何意义（每份独占一份 net 就是为了并行），
+			// 而 128 份已经远超任何真实机器的核数，同时把最坏情况钉在一个可预期的量级。
+			if (thread_num > 128)
+			{
+				printf("thread_num = %d is too large, clamp to 128\n", thread_num);
+				thread_num = 128;
+			}
+			pnet.resize(thread_num);
 			rnet.resize(thread_num);
 			onet.resize(thread_num);
 			bool ret = true;
@@ -455,6 +455,19 @@ namespace ZQ
 
 		bool Find(const unsigned char* bgr_img, int _width, int _height, int _widthStep, std::vector<ZQ_CNN_BBox>& results)
 		{
+			// 审计修复 2026-10-06（附录 II.17）：公开入口**自己**校验像素缓冲。
+			// `_Pnet_stage` 里也有一道（同一批加的），但那是**下游**：
+			// 公开 API 的参数契约应该在入口就成立，不能依赖「我恰好调的那个函数会检查」。
+			// 三种笔误的后果：`bgr_img == nullptr` 空指针解引用；
+			// `_widthStep <= 0` 时 `BGR_img + h*_widthStep` 越过缓冲**前端**；
+			// `_widthStep < _width*3` 时本行最后一个像素读到下一行，
+			// 到了**最后一行**就越过整个缓冲末尾 —— 堆越界**读**。
+			if (bgr_img == 0 || _width <= 0 || _height <= 0 || _widthStep < _width * 3)
+			{
+				printf("Find: bad bgr buffer (img=%p, %dx%d, step=%d)\n",
+					(void*)bgr_img, _width, _height, _widthStep);
+				return false;
+			}
 			double t1 = omp_get_wtime();
 			std::vector<ZQ_CNN_BBox> firstBbox, secondBbox, thirdBbox;
 			if (!_Pnet_stage(bgr_img, _width, _height, _widthStep, firstBbox))
@@ -1168,6 +1181,22 @@ namespace ZQ
 			if (thread_num <= 0)
 				return false;
 
+			// 审计修复 2026-10-06（附录 II.17）：bgr 这条入口原来只校验宽高，
+			// **不校验像素缓冲本身**：`ConvertFromBGR` 里是
+			//     bgr_row = BGR_img + h*_widthStep;  然后 bgr_pix = bgr_row; 逐像素 bgr_pix += 3
+			// 于是 ① `bgr_img == nullptr` 立刻空指针解引用；
+			// ② `_widthStep <= 0` 时 bgr_row 原地不动或**往回走**，越过缓冲区**前端**读；
+			// ③ `_widthStep < _width*3` 时本行最后一个像素会读到下一行，
+			//    到了**最后一行**就越过整个缓冲末尾 —— 堆越界**读**。
+			// 三种都是调用方一个笔误就能踩到的（传 nullptr、传 0、忘了算对齐填充），
+			// 而且症状是随机崩溃或花屏，没有任何提示。
+			if (bgr_img == 0 || _width <= 0 || _height <= 0 || _widthStep < _width * 3)
+			{
+				printf("Find: bad bgr buffer (img=%p, %dx%d, step=%d)\n",
+					(void*)bgr_img, _width, _height, _widthStep);
+				return false;
+			}
+
 			double t1 = omp_get_wtime();
 			firstBbox.clear();
 			if (width != _width || height != _height)
@@ -1586,6 +1615,13 @@ namespace ZQ
 					if (!input.ResizeBilinearRect(task_rnet_images[pp], rnet_size, rnet_size, 0, 0,
 						task_src_off_x[pp], task_src_off_y[pp], task_src_rect_w[pp], task_src_rect_h[pp]))
 					{
+					// 审计修复 2026-10-06（附录 II.18）：原来这里是裸的 `continue`，
+					// 于是**这一槽的框一个都没被评过**，却仍然 exist=true、
+					// score 还是 **Pnet 的旧分数**（task_secondBbox[pp] 是从上一层整体拷来的），
+					// 随后的汇总把它们全部并进下一阶段的 NMS。这些框带着**偏高的 Pnet 分数**
+					// 参加该阶段的 NMS，会把真正的框当 hero 抑制掉。
+					// 正确写法是**清空这一槽**：没被评过的框不该带着别人的分数进下一阶段。
+						task_secondBbox[pp].clear();
 						continue;
 					}
 					rnet[0].Forward(task_rnet_images[pp]);
@@ -1649,6 +1685,13 @@ namespace ZQ
 					if (!input.ResizeBilinearRect(task_rnet_images[pp], rnet_size, rnet_size, 0, 0,
 						task_src_off_x[pp], task_src_off_y[pp], task_src_rect_w[pp], task_src_rect_h[pp]))
 					{
+					// 审计修复 2026-10-06（附录 II.18）：原来这里是裸的 `continue`，
+					// 于是**这一槽的框一个都没被评过**，却仍然 exist=true、
+					// score 还是 **Pnet 的旧分数**（task_secondBbox[pp] 是从上一层整体拷来的），
+					// 随后的汇总把它们全部并进下一阶段的 NMS。这些框带着**偏高的 Pnet 分数**
+					// 参加该阶段的 NMS，会把真正的框当 hero 抑制掉。
+					// 正确写法是**清空这一槽**：没被评过的框不该带着别人的分数进下一阶段。
+						task_secondBbox[pp].clear();
 						continue;
 					}
 					rnet[thread_id].Forward(task_rnet_images[pp]);
@@ -1838,6 +1881,13 @@ namespace ZQ
 					if (!input.ResizeBilinearRect(task_onet_images[pp], onet_size, onet_size, 0, 0,
 						task_src_off_x[pp], task_src_off_y[pp], task_src_rect_w[pp], task_src_rect_h[pp]))
 					{
+					// 审计修复 2026-10-06（附录 II.18）：原来这里是裸的 `continue`，
+					// 于是**这一槽的框一个都没被评过**，却仍然 exist=true、
+					// score 还是 **Pnet 的旧分数**（task_thirdBbox[pp] 是从上一层整体拷来的），
+					// 随后的汇总把它们全部并进下一阶段的 NMS。这些框带着**偏高的 Pnet 分数**
+					// 参加该阶段的 NMS，会把真正的框当 hero 抑制掉。
+					// 正确写法是**清空这一槽**：没被评过的框不该带着别人的分数进下一阶段。
+						task_thirdBbox[pp].clear();
 						continue;
 					}
 					double t31 = omp_get_wtime();
@@ -1923,6 +1973,13 @@ namespace ZQ
 					if (!input.ResizeBilinearRect(task_onet_images[pp], onet_size, onet_size, 0, 0,
 						task_src_off_x[pp], task_src_off_y[pp], task_src_rect_w[pp], task_src_rect_h[pp]))
 					{
+					// 审计修复 2026-10-06（附录 II.18）：原来这里是裸的 `continue`，
+					// 于是**这一槽的框一个都没被评过**，却仍然 exist=true、
+					// score 还是 **Pnet 的旧分数**（task_thirdBbox[pp] 是从上一层整体拷来的），
+					// 随后的汇总把它们全部并进下一阶段的 NMS。这些框带着**偏高的 Pnet 分数**
+					// 参加该阶段的 NMS，会把真正的框当 hero 抑制掉。
+					// 正确写法是**清空这一槽**：没被评过的框不该带着别人的分数进下一阶段。
+						task_thirdBbox[pp].clear();
 						continue;
 					}
 					double t31 = omp_get_wtime();

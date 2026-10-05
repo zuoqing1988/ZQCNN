@@ -712,3 +712,74 @@ A38 最后干脆不用正则了 —— `A38_FIND_MARK in text` 纯字符串判�
   所以 A38 对它**不适用**、不报 —— 这是「不适用」不是「不满足」。
   ncnn.h 的 `Init` 形态也与另外四份不同（`pnet = std::vector<ncnn::Net>(thread_num)`，
   因为 `ncnn::Net` 的拷贝构造是 private，见附录 EW），所以补上界时是单独写的。
+
+
+## 追加：附录 II 第四批 —— II.17 / II.18（S13 的像素缓冲契约 + #4 的框泄漏）
+
+### 查到的真缺陷
+
+| 编号 | 范围 | 缺陷 | 修法 |
+| --- | --- | --- | --- |
+| II.17 | **五个变体，全部 bgr 入口** | bgr 入口只校验宽高，**不校验像素缓冲本身**。`ConvertFromBGR` 里是 `bgr_row = BGR_img + h*_widthStep` 然后逐像素 `bgr_pix += 3`，于是 ① `bgr_img == nullptr` 立刻空指针解引用；② `_widthStep <= 0` 时 `bgr_row` 原地不动或**往回走**，越过缓冲区**前端**读；③ `_widthStep < _width*3` 时本行最后一个像素读到下一行，到了**最后一行**就越过整个缓冲末尾 —— 堆越界**读**。三种都是调用方一个笔误（传 nullptr、传 0、忘了算对齐填充），症状是随机崩溃或花屏，**没有任何提示** | 每个公开 bgr 入口（`Find` / `Find106` / `_Pnet_stage`）**各自**加 `if (bgr_img == 0 || _width <= 0 || _height <= 0 || _widthStep < _width*3) return false;` |
+| II.18 | **四个变体，16 处** | Rnet/Onet 的 `ResizeBilinearRect` 失败时是**裸 `continue`** —— 于是**这一槽的框一个都没被评过**，却仍然 `exist=true`、`score` 还是**上一阶段的旧分数**（`task_secondBbox[pp]` 是从上一层整体拷来的），随后的汇总把它们全部并进下一阶段。这些框带着**偏高的旧分数**参加该阶段的 NMS，会把真正的框当 hero 抑制掉 | 失败分支先 `task_secondBbox[pp].clear()` / `task_thirdBbox[pp].clear()` 再 `continue` |
+
+### 门禁扩充：A39 / A40（18 条规则）
+
+A39 每个 bgr 入口都要有自己的像素缓冲守卫；A40 每个 Rnet/Onet resize 失败分支都要先清空该槽。
+
+**A39 一加上就抓出三个我漏补的入口**：`AspectRatio` 的 `Find`、`NCHWC` 的 `Find` **和** `Find106`、
+`ncnn` 的 `Find` —— 我第一版只在 `MTCNN.h` / `_Interface` 的 `Find`+`Find106` 和
+另外三份的 `_Pnet_stage` 里加了，漏掉了「`Find` 委托给 `_Pnet_stage`」这条路上入口自身没有守卫。
+补的时候顺带把守卫**也**放到公开入口（不只下游），理由写在代码注释里：
+公开 API 的参数契约应该在入口就成立，不能依赖「我恰好调的那个函数会检查」。
+
+### A39 的写法也踩了两次（都记在这里）
+
+1. **第一版只判「文件里存在一处守卫」**，变异测试把 `Interface.h` 两个重载里的**一个**改坏，
+   门禁照样全绿。同一函数的两个重载（`Find` / `Find106`）形状完全一样，最容易只改一处。
+   改成**逐入口**判定。
+2. **逐入口之后用固定 2000 字符窗口** —— 窗口跨进了下一个函数体，
+   于是「这个入口没守卫、下一个有」又被判成全过。
+   改成**窗口到下一个入口为止**。
+   —— 这和 A27 那个 400 字符窗口是**完全同一个毛病**，一天之内犯了两次。
+   规律：**任何"往后看 N 个字符"的规则都该改成"往后看到下一个同类为止"**。
+
+### 另一个教训：源码门禁发现不了**编译不过**
+
+给 MTCNN.h / _AspectRatio / _NCHWC 补 II.13 上界时，脚本用了 `re.subn(lambda m: NEW, ...)`，
+`NEW` 里的 ``（缩进反向引用）**不会**在 lambda 形式下展开，
+于是文件里留下了 13 行字面量 `thread_num = ...` 和 2 行 `	printf(...)`。
+**门禁照样全绿** —— 因为 `thread_num = __max(1, thread_num)` 这个**模式**还在。
+是随后的 `g++ -fsyntax-only` 报 `stray '' in program` 才抓到的。
+
+也就是说：源码级门禁只能保证「模式在不在」，**保证不了「文件还能编」**。
+后者只能靠每个平台各编一次。本轮每次改完都是「门禁 -> -fsyntax-only -> 两个平台各构建 -> A/B 对拍」
+四步都过才提交，就是为了不让「门禁绿但编不过」溜过去。
+
+### 实测
+
+    python tools/check_mtcnn_setpara.py --selfcheck -> 22 cases, all as expected（RC=0）
+    python tools/check_mtcnn_setpara.py             -> 5 文件全 OK，合计 82 项（RC=0）
+    变异测试：A39（只改两个重载之一）/ A40（去掉 clear）-> 门禁逐条变红并点名
+    Linux -fsyntax-only（四个 MTCNN 头）              -> RC=0
+    cmake --build build_x64 --config Release --target 四个 MTCNN sample -> RC=0，0 error
+    WSL make -j8 四个 sample                          -> 无 error
+    A/B 对拍（v5 -> v6）：四个 sample **全部 IDENTICAL**
+    python tools/check_text_encoding.py -> OK: 763 text files, all strict UTF-8, no U+FFFD
+    python tools/check_line_endings.py  -> line endings OK
+
+### 注意事项
+
+- **II.17 的守卫放在每个公开 bgr 入口**，而不是只在 `ConvertFromBGR` 里加。
+  `ZQ_CNN_Tensor4D.h` 的 `ConvertFromBGR` / `ConvertFromBGR2GRAY` **本身仍然不校验**参数，
+  其他调用方（不经 MTCNN 的那些）仍然可能传 nullptr。
+  这次没动它是因为 blast radius 太大（`ConvertFromBGR` 有 NCHWC 等多个 override 和大量调用方），
+  单独开一轮处理更稳妥 —— 但这是个**已知的未修缺口**，不是「不存在」。
+- **II.18 在当前仓库里不可达**：`Align128bit::ResizeBilinearRect` 只在
+  `off > W-1+borderW` 或钳位后 `rect_w <= 0` 时返回 false，
+  而 Pnet 侧产出的 `col1` 满足 `col1 >= -20 > -borderW`，所以这条路走不到。
+  它是**防御性代码没写全**：一旦 rect 的来源变了（接 landmark/lnet、或者将来改了 Pnet 的裁剪），
+  就是活 bug。修它不是为了现在，是为了那时候不用再查一遍。
+- `ZQ_CNN_MTCNN_ncnn.h` 仍然**不在任何构建里**（全仓无 include，见附录 EW），
+  本轮对它的改动只经过 `-fsyntax-only`（它需要 ncnn 头，本机 Linux 没有 Linux 版 ncnn 库，
+  完整链接做不了）。这一点在 changelog 里重复记一次，免得以后误以为它被 CI 覆盖了。

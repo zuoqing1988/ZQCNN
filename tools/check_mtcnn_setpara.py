@@ -203,6 +203,26 @@ A38_FIND_MARK = 'Find(ZQ_CNN_Tensor4D_Interface&'
 RE_A38_GUARD = re.compile(r'input\.GetW\(\)\s*!=\s*width\s*\|\|\s*input\.GetH\(\)\s*!=\s*height')
 
 
+# ---- A39/A40（附录 II.17/II.18）----
+# A39: bgr 入口必须校验像素缓冲本身（指针 / 尺寸 / widthStep）。
+#      ConvertFromBGR 是 `bgr_row = BGR_img + h*_widthStep` 再逐像素 `bgr_pix += 3`，
+#      所以 nullptr 直接崩、`_widthStep <= 0` 越过缓冲前端、`_widthStep < _width*3`
+#      在最后一行越过缓冲末尾 —— 三种都是调用方一个笔误。
+#      **不能只判「文件里出现过这个 if」**：有些变体根本没有 bgr 入口。
+A39_ENTRY = re.compile(
+    r'\b(?:bool|void)\s+(?:Find|_Pnet_stage|Find106)\s*\(\s*const unsigned char\*\s*bgr_img')
+A39_GUARD = re.compile(
+    r'bgr_img\s*==\s*0.*?_width\s*<=\s*0.*?_widthStep\s*<\s*_width\s*\*\s*3', re.S)
+# 每个 bgr 入口**各自**都要有守卫。原来只判「文件里存在一处」——
+# 变异测试把 Interface.h 的两处之一改坏，门禁照样全绿。
+# 同一函数的两个重载（Find / Find106）形状完全一样，最容易只改一处。
+
+# A40: Rnet/Onet 的 ResizeBilinearRect 失败分支必须先清空该槽的框。
+#      原来只有裸 `continue`：这一槽的框一个都没被评过，却仍然 exist=true、
+#      score 还是上一阶段的旧分数，随后的汇总把它们带进 NMS 当 hero。
+A40_RESIZE = re.compile(r'if \(!input\.ResizeBilinearRect\(task_(?:rnet|onet)_images\[pp\]')
+A40_CLEAR = re.compile(r'task_(?:second|third)Bbox\[pp\]\.clear\(\)\s*;')
+
 def _read(path):
     with io.open(path, 'r', encoding='utf-8') as f:
         return f.read()
@@ -451,7 +471,42 @@ def scan_text(raw, label='<text>'):
     else:
         ok += 1
 
+    # ---- A39/A40 ----
+    # 窗口到**下一个入口**为止，不用固定字符数。
+    # 固定窗口（试过 2000）会跨进下一个函数体里，于是「这一个入口没守卫、
+    # 下一个有」被判成全过 —— 和 A27 那个 400 字符窗口一个毛病。
+    entries = list(A39_ENTRY.finditer(text))
+    a39 = []
+    for k, m in enumerate(entries):
+        stop = entries[k + 1].start() if k + 1 < len(entries) else len(text)
+        if not A39_GUARD.search(text[m.end():stop]):
+            a39.append(text[:m.start()].count(chr(10)) + 1)
+    if a39:
+        bad.append(('A39', 'bgr 入口（行 %s）没有校验像素缓冲（bgr_img / _width / _height / '
+                    '_widthStep < _width*3）—— ConvertFromBGR 是 '
+                    '`BGR_img + h*_widthStep` 再逐像素 +3，nullptr 直接崩、'
+                    'widthStep<=0 越过前端、widthStep<_width*3 在最后一行越过末尾'
+                    % ', '.join(str(x) for x in a39)))
+    else:
+        ok += 1
+
+    a40 = [m.start() for m in A40_RESIZE.finditer(text)]
+    a40_ok = 0
+    for st in a40:
+        win = text[st:st + 1200]
+        if A40_CLEAR.search(win):
+            a40_ok += 1
+    if a40 and a40_ok < len(a40):
+        bad.append(('A40', 'Rnet/Onet 的 ResizeBilinearRect 失败分支有 %d/%d 处是裸 `continue` —— '
+                    '该槽的框一个都没被评过，却仍然 exist=true、score 还是上一阶段的旧分数，'
+                    '随后的汇总把它们带进 NMS 当 hero 抑制掉真正的框。'
+                    '正确写法是先 `task_secondBbox[pp].clear()` / `task_thirdBbox[pp].clear()`。'
+                    % (len(a40) - a40_ok, len(a40))))
+    else:
+        ok += 1
+
     return ok, bad
+
 
 
 # FULL 是一份"什么都齐"的骨架，后面每条自测样本都在它基础上**只破坏一处**。

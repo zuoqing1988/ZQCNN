@@ -589,6 +589,19 @@ namespace ZQ
 
 		bool Find(const unsigned char* bgr_img, int _width, int _height, int _widthStep, std::vector<ZQ_CNN_BBox>& results)
 		{
+			// 审计修复 2026-10-06（附录 II.17）：公开入口**自己**校验像素缓冲。
+			// `_Pnet_stage` 里也有一道（同一批加的），但那是**下游**：
+			// 公开 API 的参数契约应该在入口就成立，不能依赖「我恰好调的那个函数会检查」。
+			// 三种笔误的后果：`bgr_img == nullptr` 空指针解引用；
+			// `_widthStep <= 0` 时 `BGR_img + h*_widthStep` 越过缓冲**前端**；
+			// `_widthStep < _width*3` 时本行最后一个像素读到下一行，
+			// 到了**最后一行**就越过整个缓冲末尾 —— 堆越界**读**。
+			if (bgr_img == 0 || _width <= 0 || _height <= 0 || _widthStep < _width * 3)
+			{
+				printf("Find: bad bgr buffer (img=%p, %dx%d, step=%d)\n",
+					(void*)bgr_img, _width, _height, _widthStep);
+				return false;
+			}
 			double t1 = omp_get_wtime();
 			std::vector<ZQ_CNN_BBox> firstBbox, secondBbox, thirdBbox;
 			if (!_Pnet_stage(bgr_img, _width, _height, _widthStep, firstBbox))
@@ -918,6 +931,22 @@ namespace ZQ
 		{
 			if (thread_num <= 0)
 				return false;
+
+			// 审计修复 2026-10-06（附录 II.17）：bgr 这条入口原来只校验宽高，
+			// **不校验像素缓冲本身**：`ConvertFromBGR` 里是
+			//     bgr_row = BGR_img + h*_widthStep;  然后 bgr_pix = bgr_row; 逐像素 bgr_pix += 3
+			// 于是 ① `bgr_img == nullptr` 立刻空指针解引用；
+			// ② `_widthStep <= 0` 时 bgr_row 原地不动或**往回走**，越过缓冲区**前端**读；
+			// ③ `_widthStep < _width*3` 时本行最后一个像素会读到下一行，
+			//    到了**最后一行**就越过整个缓冲末尾 —— 堆越界**读**。
+			// 三种都是调用方一个笔误就能踩到的（传 nullptr、传 0、忘了算对齐填充），
+			// 而且症状是随机崩溃或花屏，没有任何提示。
+			if (bgr_img == 0 || _width <= 0 || _height <= 0 || _widthStep < _width * 3)
+			{
+				printf("Find: bad bgr buffer (img=%p, %dx%d, step=%d)\n",
+					(void*)bgr_img, _width, _height, _widthStep);
+				return false;
+			}
 
 			double t1 = omp_get_wtime();
 			firstBbox.clear();
