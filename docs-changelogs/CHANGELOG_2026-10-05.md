@@ -2167,3 +2167,65 @@ ZQ_DECLSPEC_ALIGN」，rc=1。
     Windows 全量重建 RC=0；两平台 SampleUnusedLayerProbe / SampleLSTMTFCalib 均 rc=0
 
 **`LSTM_TF` 本身没有算错**：11 组逐元素后向误差都 <= 5.96e-08（纯 float 舍入）。
+
+---
+
+## 新增/变更：IX（四）—— 把「分配之后没查返回值」扫干净（门禁第 3 条扩到 114 个分配点）
+
+### 变更文件
+
+* `ZQCNN/layers_nchwc/zq_cnn_convolution_gemm_nchwc_raw.h`（6 处）
+* `ZQCNN/layers_c/zq_cnn_deconvolution_gemm_32f_align_c_raw.h`（1 处，九次分配）
+* `ZQCNN/layers_c/zq_cnn_innerproduct_gemm_32f_align_c_raw.h`（2 处）
+* `ZQCNN/layers_nchwc/zq_cnn_innerproduct_gemm_nchwc_raw.h`（1 处）
+* `ZQCNN/layers_c/zq_cnn_lrn_32f_align_c_raw.h`（3 处）
+* `ZQCNN/layers_c/zq_cnn_lstm_32f_align_c_raw.h`（1 处，九次分配）
+* `tools/check_mm_safety.py`（第 3 条判定放宽 + 三处修正）
+
+### 缺陷
+
+IX.5 修的是 `*buffer = _aligned_malloc(...)` 那一支。放宽到「任何
+`名字 = _aligned_malloc(...)`」之后又扫出 **27 处**，分布在两种此前没被盖住的分支：
+
+* `if (buffer == 0) { x = _aligned_malloc(...); y = ...; }` —— 自建自销那一支；
+* LSTM / LRN 那种「无条件 malloc + 函数末尾统一 free」。
+
+全部是同一句：**分配完不查返回值，下一行就往里写**。
+`C` / `hidden_dim` / `need_A_buffer_len_align32` 都来自模型文件或由它算出，
+一个巨大的通道数 / 滤波器就能让分配失败。
+NCHW 的孪生实现 `zq_cnn_convolution_gemm_32f_align_c_raw.h:82` 早就写了这一段，
+**其余全漏** —— 与 IH.9 / BE.2 是同一个形状：**一个副本有守卫，孪生副本没有**。
+
+### 修法上的两个坑（都是第一版写错的）
+
+1. **条件分配必须带上同一个前提**：`if (need_allocate_A) matrix_A = _aligned_malloc(...)`
+   时，判空写成 `matrix_A == 0` 就是在读**未初始化的栈垃圾**。
+   正确写法 `(need_allocate_A && matrix_A == 0)`。
+2. **NCHWC innerproduct 的条件是反的**：
+   `if (compactA) matrix_A = in_tensor4D_data; else { matrix_A = _aligned_malloc(...); }`
+   —— 第一版按 `compactA && matrix_A == 0` 写，等于「当 matrix_A 指向外部张量、
+   根本没分配过时判空」，凭空造出一个假故障。
+
+### 门禁第 3 条的三个修正（都是被自己的误报逼出来的）
+
+* `0` 与 `NULL` 两种写法都算判空（`batchnormscale` 写 `== NULL`，gemm/lrn 写 `== 0`）；
+  只认一种会报出 8 处假阳性。
+* 匹配前先剥掉行注释 —— 门禁自己的说明文字里写着
+  `` `*buffer = _aligned_malloc(...)` ``，不剥掉就被当成一处分配点。
+* 作用域按「函数」划，不按「花括号块」——
+  `if (c) x = p; else { x = _aligned_malloc(...); }` 这种写法里判空写在**外层**块的末行，
+  按内层块划会在 `else` 的 `}` 处就停下，把正确写法报成漏的。
+
+> 这一段本身也是一条教训：**一个自动判据刚写出来时，它自己的误报比它抓到的缺陷更值得先处理** ——
+> 误报会让门禁恒红，而恒红的门禁等于没有门禁。
+
+### 实测结果
+
+    python tools/check_mm_safety.py --selfcheck   -> 10 项自测全过
+    python tools/check_mm_safety.py
+        52 处 zq_final_sum_q（0 处不合格）；10 个 zq_mm_store_ps 目标（0 个没对齐）；
+        114 个 *_aligned_malloc(*buffer)（0 个没查返回值）
+    变异测试：去掉 nchwc innerproduct 的判空 -> 门禁报出该行号，rc=1
+    Windows / Linux 双平台重编 -> 0 error；两平台 SampleUnusedLayerProbe rc=0
+
+（成功路径的行为一个字没改，只是分配失败时早退。）
