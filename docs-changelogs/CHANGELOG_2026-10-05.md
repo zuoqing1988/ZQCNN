@@ -1572,3 +1572,14 @@ ratio 分支改成"`flip=1` 时再发一对长宽互换的框"，
   `ref_prior_box_text` 的 ratio 分支按实测补上翻转框
 * `audit_k3_20261001.md`（追加 IP）
 * **无生产代码改动**；两个平台均已手工重编 + 实跑（rc=0，两平台表一致）
+
+## 新增/变更：IP 落地后的完整回归（v53）
+
+```
+ALL CHECKS PASSED        rc=0        FAILED 计数 = 0
+```
+
+`SampleUnusedLayerProbe` 里的 `scan_prior_box_text()`（两档 flip）与 `run_sample_regression.sh`
+（Linux）都跑过，两平台的 `num_priors` 表逐项一致；
+其余组（D1/D2 双平台全量构建、D3/D4 两平台 sample、A~C16 全部门禁、
+MSVC `/analyze`、ARM/NEON 与 FP16 档解析、MSVC ASan）全部 OK。
