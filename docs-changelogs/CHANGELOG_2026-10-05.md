@@ -984,3 +984,15 @@ C=1 / OC=1 / k=3x3 / H=W=3 / VALID 让输出只剩 1 个数，
 ### 尚未覆盖的 UNUSED（还剩 4 类）
 
 `LSTM_TF` / `PriorBoxText` / `PriorBox_MXNET` / `DetectionOutput_MXNET`
+
+## 新增/变更：IH 落地后的完整回归（v45）
+
+```
+ALL CHECKS PASSED        rc=0        FAILED 计数 = 0
+```
+
+* `D4 Windows sample SampleUnusedLayerProbe.exe: OK` —— 探针累计 **119 个形状**
+  （112 通过 / 0 对不上 / **7 待查**，待查全部来自 `DeConvolution`）。
+* `B ZQlib 独立回归测试 x10 (ASan+LSan): OK`
+
+本轮（ID / IE / IF / IG / IH）里只有 **ID** 改了生产代码。
