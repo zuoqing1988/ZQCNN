@@ -169,6 +169,13 @@ namespace ZQ
 			/* pnet_size/pnet_stride 分别是 while 的终止条件与整数除法的除数，
 			   不校验的话 stride=0 直接整数除零 SIGFPE，size<0 时 minside 衰减到 0
 			   仍满足 while 条件，scales 无限增长直到 OOM。夹到 1。 */
+			// 审计修复 2026-10-06（附录 II.4）：先记下**旧值**。
+			// 下面的失效判断要比较 pnet_size / min_size 有没有变，
+			// 而这两行紧接着就把它们改掉了 —— 不留副本的话只能拿新值比新值，
+			// 判断恒为「没变」。这正是原来漏掉这两个参数的原因。
+			int old_pnet_size = this->pnet_size;
+			int old_min_size = min_size;
+			bool old_special_big = special_handle_very_big_face;
 			this->pnet_size = __max(1, pnet_size);
 			this->pnet_stride = __max(1, pnet_stride);
 			this->special_handle_very_big_face = special_handle_very_big_face;
@@ -177,7 +184,20 @@ namespace ZQ
 				nms_thresh_per_scale = 0.45;
 			else
 				nms_thresh_per_scale = 0.495;
-			if (width != w || height != h || factor != scale_factor)
+			// 审计修复 2026-10-06（附录 II.4）：原来只比 width/height/scale_factor。
+			// 但 `scales` / `pnet_images` 的**生成**还依赖 pnet_size、min_size
+			// 和 special_handle_very_big_face 三个参数（`MIN_DET_SIZE = pnet_size`、
+			// `m = MIN_DET_SIZE / min_size`、那个 `ceil(scales[i]*minside) <= pnet_size`
+			// 的过滤器、以及 `scales.push_back((float)pnet_size / minside)`）。
+			// 同一对象二次 SetPara 只改 pnet_size 的话，缓存下来的 scale 全部按旧值生成：
+			//   · 几何全错位（拿 12 的 stride 配 100 的框）；
+			//   · 更糟的是会让「没有任何 scale 被过滤」这个**没有写下来的不变量**失效，
+			//     于是 `scale_num < scales.size()`，多线程路径的
+			//     `maps[scale_id][...]` 越界**写**（附录 II.3）。
+			// 五个 MTCNN 变体的这一处都是同一个形状，只改一份会让变体行为分叉。
+			if (width != w || height != h || factor != scale_factor
+				|| old_pnet_size != this->pnet_size || old_min_size != min_size
+				|| old_special_big != special_handle_very_big_face)
 			{
 				scales.clear();
 				pnet_images.clear();
@@ -228,6 +248,33 @@ namespace ZQ
 				}
 
 				pnet_images.resize(count);
+				// 审计修复 2026-10-06（附录 II.3）：把「没有任何 scale 会被
+				// `changedH < pnet_size || changedW < pnet_size` 过滤掉」这个**没有写下来的不变量**
+				// 变成显式保证。整条流水线把两个**不同的下标空间**混着用：
+				//   · mapH/mapW/maps 只为「通过过滤的 scale」建 —— 紧凑下标 0..scale_num-1；
+				//   · task_scale_id.push_back(i) 存的是 scales 里的**全局**下标 i；
+				//   · 消费端 `for (i = 0; i < maps.size(); i++)` 用紧凑下标 i 去取 scales[i]。
+				// 只要有一个 scale 被过滤，scale_num < scales.size()，三处**同时**错位，
+				// 其中 maps[scale_id] 那处是越界**写**。与其把三处都改成双下标（五个变体十几处，
+				// 风险大），不如在源头把不变量做实：直接剔掉不满足条件的 scale，
+				// 于是紧凑下标 == 全局下标，两种用法都恒成立。
+				// 注意必须**保持原有顺序**（scales 是升序的，后面的 NMS 依赖它）。
+				{
+					int kept = 0;
+					for (int i = 0; i < (int)scales.size(); i++)
+					{
+						int changedH = (int)ceil(height * scales[i]);
+						int changedW = (int)ceil(width * scales[i]);
+						if (changedH < pnet_size || changedW < pnet_size)
+							continue;
+						scales[kept++] = scales[i];
+					}
+					if (kept != (int)scales.size())
+					{
+						scales.resize(kept);
+						count = kept;
+					}
+				}
 			}
 		}
 
@@ -548,7 +595,20 @@ namespace ZQ
 			{
 				for (int i = 0; i < task_num; i++)
 				{
-					int thread_id = omp_get_thread_num();
+					// 审计修复 2026-10-06（附录 II.5）：这里原来写的是
+					// `omp_get_thread_num()`。这一支**不在任何 parallel 区内**，
+					// 但 OpenMP 规定：串行区嵌在调用方的 parallel 区内时，
+					// `omp_get_thread_num()` 返回的是**外层**线程号。
+					// 于是调用方一多线程（`#pragma omp parallel` 里调 Find），
+					// thread_id 就可以 >= thread_num，而
+					// `task_pnet_images` 和 `pnet` 的大小都**恰好是 thread_num**（此处为 1）：
+					//   · `input.ROI(task_pnet_images[thread_id], ...)` 越界**写**整对象；
+					//   · `pnet[thread_id].Forward(...)` 越界**读**。
+					// 本仓唯一一处同款写法：`:459` 那一支连 thread_id 都没取，安全。
+					// 其余 5 处（:622/1055/1285/1513/1731）都在
+					// `#pragma omp parallel for num_threads(thread_num)` 里，
+					// `thread_id < thread_num` 有保证 —— **只有这一处裸奔**。
+					const int thread_id = 0;
 					int scale_id = task_scale_id[i];
 					float cur_scale = task_scale[i];
 					int i_rect_off_x = task_rect_off_x[i];
@@ -1723,7 +1783,16 @@ namespace ZQ
 					lnet[thread_id].Forward(task_lnet_images_gray[pp]);
 					double t32 = omp_get_wtime();
 					//const ZQ_CNN_Tensor4D_Interface_Base* keyPoint = lnet[thread_id].GetBlobByName("conv6-3");
-					const ZQ_CNN_Tensor4D_Interface_Base* keyPoint = lnet[0].GetBlobByName("landmark_fc2/BiasAdd");
+					// 审计修复 2026-10-06（附录 II.1）：这里原来写的是 `lnet[0]`。
+					// 上一行刚刚用 `lnet[thread_id]` 让**本线程**跑完 Forward，
+					// 下一行却去读 **0 号那份** net 的 blob ——
+					// 0 号线程此刻正在 Forward 里改写它的 blob，
+					// 于是这里是**数据竞争**（读到的是别人 batch 的 landmark），
+					// 而 lnet 只有 thread_num 份，thread_num>1 才是这样。
+					// 判定为笔误的证据：正确的写法就在上一行注释里，
+					// 而且同仓 `ZQ_CNN_MTCNN.h:1782-1783` 用的正是
+					// `lnet[thread_id].Forward` + `lnet[thread_id].GetBlobByName`。
+					const ZQ_CNN_Tensor4D_Interface_Base* keyPoint = lnet[thread_id].GetBlobByName("landmark_fc2/BiasAdd");
 					const float* keyPoint_ptr = 0;
 					int keypoint_num = 0;
 					int keyPoint_sliceStep = 0;
@@ -1737,12 +1806,22 @@ namespace ZQ
 					{
 						for (int num = 0; num < keypoint_num; num++)
 						{
+							// 审计修复 2026-10-06（附录 II.2）：这里原来带一个**活的** `* 0.5`，
+							// 而同文件单线程支路（:1691/:1693）那一对是 `/**0.25*/`（注掉的，= ×1），
+							// 紧邻的 else 分支（其余 77 个点）两个支路也都是 ×1。
+							// 也就是说**同一个 landmark 点在 thread_num=1 和 thread_num>1 下
+							// 会算出差一倍的坐标**，只影响下颌/眼周那 29 个点
+							// （num ∈ [33,43) ∪ [64,72) ∪ [84,104)）。
+							// 判定为笔误的证据：参考实现 `ZQ_CNN_MTCNN.h:1800/1802`
+							// 同样位置写的是 `/**0.5*/` —— **注掉的**。
+							// 五个 MTCNN 变体里也只有本文件这两处有活的 `* 0.5`。
+							// 取 ×1：与 else 分支、单线程支路、参考实现三处一致。
 							if ((num >= 33 && num < 43) || (num >= 64 && num < 72) || (num >= 84 && num < 104))
 							{
 								task_fourthBbox[pp][i].ppoint[num * 2] = task_fourthBbox[pp][i].col1 +
-									(task_fourthBbox[pp][i].col2 - task_fourthBbox[pp][i].col1)*keyPoint_ptr[i*keyPoint_sliceStep + num * 2] * 0.5;
+									(task_fourthBbox[pp][i].col2 - task_fourthBbox[pp][i].col1)*keyPoint_ptr[i*keyPoint_sliceStep + num * 2]/**0.25*0.5*/;
 								task_fourthBbox[pp][i].ppoint[num * 2 + 1] = task_fourthBbox[pp][i].row1 +
-									(task_fourthBbox[pp][i].row2 - task_fourthBbox[pp][i].row1)*keyPoint_ptr[i*keyPoint_sliceStep + num * 2 + 1] * 0.5;
+									(task_fourthBbox[pp][i].row2 - task_fourthBbox[pp][i].row1)*keyPoint_ptr[i*keyPoint_sliceStep + num * 2 + 1]/**0.25*0.5*/;
 							}
 							else
 							{

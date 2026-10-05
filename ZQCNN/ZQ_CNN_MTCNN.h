@@ -223,6 +223,13 @@ namespace ZQ
 			/* pnet_size/pnet_stride 分别是 while 的终止条件与整数除法的除数，
 			   不校验的话 stride=0 直接整数除零 SIGFPE，size<0 时 minside 衰减到 0
 			   仍满足 while 条件，scales 无限增长直到 OOM。夹到 1。 */
+			// 审计修复 2026-10-06（附录 II.4）：先记下**旧值**。
+			// 下面的失效判断要比较 pnet_size / min_size / special_handle_very_big_face
+			// 有没有变，而紧接着的几行就把它们改掉了 —— 不留副本的话只能拿新值比新值，
+			// 判断恒为「没变」。这正是原来漏掉这三个参数的原因。
+			int old_pnet_size = this->pnet_size;
+			int old_min_size = min_size;
+			bool old_special_big = special_handle_very_big_face;
 			this->pnet_size = __max(1, pnet_size);
 			this->pnet_stride = __max(1, pnet_stride);
 			this->special_handle_very_big_face = special_handle_very_big_face;
@@ -232,7 +239,21 @@ namespace ZQ
 				nms_thresh_per_scale = 0.45;
 			else
 				nms_thresh_per_scale = 0.495;
-			if (width != w || height != h || factor != scale_factor)
+			// 审计修复 2026-10-06（附录 II.4）：原来只比 width/height/scale_factor。
+			// 但 scales / pnet_images 的**生成**还依赖 pnet_size、min_size 和
+			// special_handle_very_big_face（`MIN_DET_SIZE = pnet_size`、`m = MIN_DET_SIZE/min_size`、
+			// `ceil(scales[i]*minside) <= pnet_size` 那个过滤器、
+			// `scales.push_back((float)pnet_size / minside)`）。
+			// 同一对象二次 SetPara 只改 pnet_size 的话，缓存下来的 scale 全部按旧值生成：
+			//   · 几何全错位；
+			//   · 更糟的是它会打破「没有任何 scale 被 pnet_size 过滤」这个**没有写下来的不变量**，
+			//     于是 scale_num < scales.size()，多线程路径的 `maps[scale_id][...]` 越界**写**
+			//     （附录 II.3：mapH/mapW/maps 按「通过过滤的个数」建紧凑下标，
+			//     而 task_scale_id 存的是 scales 的全局下标）。
+			// 五个 MTCNN 变体的这一处是同一个形状，一并改，避免变体行为分叉。
+			if (width != w || height != h || factor != scale_factor
+				|| old_pnet_size != this->pnet_size || old_min_size != min_size
+				|| old_special_big != special_handle_very_big_face)
 			{
 				scales.clear();
 				pnet_images.clear();
@@ -283,6 +304,33 @@ namespace ZQ
 				}
 
 				pnet_images.resize(count);
+				// 审计修复 2026-10-06（附录 II.3）：把「没有任何 scale 会被
+				// `changedH < pnet_size || changedW < pnet_size` 过滤掉」这个**没有写下来的不变量**
+				// 变成显式保证。整条流水线把两个**不同的下标空间**混着用：
+				//   · mapH/mapW/maps 只为「通过过滤的 scale」建 —— 紧凑下标 0..scale_num-1；
+				//   · task_scale_id.push_back(i) 存的是 scales 里的**全局**下标 i；
+				//   · 消费端 `for (i = 0; i < maps.size(); i++)` 用紧凑下标 i 去取 scales[i]。
+				// 只要有一个 scale 被过滤，scale_num < scales.size()，三处**同时**错位，
+				// 其中 maps[scale_id] 那处是越界**写**。
+				// 与其把三处都改成双下标（五个变体十几处，风险大），不如在源头把不变量做实：
+				// 直接剔掉不满足条件的 scale，于是紧凑下标 == 全局下标，两种用法都恒成立。
+				// 注意这里必须**保持原有顺序**（scales 是升序的，后面的 NMS 依赖它）。
+			{
+				int kept = 0;
+				for (int i = 0; i < (int)scales.size(); i++)
+			{
+				int changedH = (int)ceil(height * scales[i]);
+				int changedW = (int)ceil(width * scales[i]);
+				if (changedH < pnet_size || changedW < pnet_size)
+					continue;
+				scales[kept++] = scales[i];
+			}
+				if (kept != (int)scales.size())
+			{
+				scales.resize(kept);
+				count = kept;
+			}
+			}
 			}
 		}
 

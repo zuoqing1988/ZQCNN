@@ -130,6 +130,24 @@ GROUPS = [
      ['check_typeid_name.py', '--selfcheck'], False),
     ('A22 "strcmp(typeid(T).name()) 判类型" 普查 (check_typeid_name)',
      ['check_typeid_name.py'], False),
+    # A23/A24 是附录 II 的门禁。`ZQCNN/ZQ_CNN_MTCNN*.h` 有**五份**逐字拷贝的 MTCNN 实现，
+    # 这一轮在它们身上一次挖出**六个**问题，其中三个的共同点是
+    # **「只有源码能看见，跑 sample 看不见」**：
+    #   · `_Interface` 多线程 lnet：Forward 用 `lnet[thread_id]`，读 blob 却用 `lnet[0]`
+    #     —— 仓内 sample 全部 thread_num=0（夹成 1），`lnet[0]==lnet[thread_id]`，
+    #     跑一万次也看不出差别；
+    #   · 同一段下颌/眼周 29 个点带一个**活的** `* 0.5`，单线程支路是注掉的、
+    #     参考实现 `ZQ_CNN_MTCNN.h` 也是注掉的 —— 只有 thread_num>1 才走到；
+    #   · 串行支路用 `omp_get_thread_num()` 索引大小**恰好是 thread_num** 的容器
+    #     —— 仓内没有调用方把 Find 放进自己的 parallel 区，实测恒返回 0。
+    # 另外 `ZQ_CNN_MTCNN_ncnn.h` **漏了**另外四份都有的 `pnet_size/pnet_stride`
+    # `__max(1,...)` 夹取（上一轮修四份时漏的）—— 又一次「孪生副本」。
+    # 证据：修复前后 4 个 MTCNN sample 的输出**逐字节相同**，
+    # 这既说明修得对，也说明 sample 对这六条是瞎的 —— 所以只能源码级判定。
+    ('A23 "MTCNN SetPara / 多线程索引一致性" 自测 (check_mtcnn_setpara --selfcheck)',
+     ['check_mtcnn_setpara.py', '--selfcheck'], False),
+    ('A24 "MTCNN SetPara / 多线程索引一致性" 普查 (check_mtcnn_setpara)',
+     ['check_mtcnn_setpara.py'], False),
     ('B  ZQlib 独立回归测试 x10 (ASan+LSan)', ['run_zqlib_checks.py'], False),
     # 基线路径给**绝对路径**：子进程以 ROOT 为 cwd 运行，而基线文件在 tools/ 下，
     # 相对路径会解析成 <ROOT>/zqlib_probe_baseline.txt 而找不到（2026-10-02 实测）。

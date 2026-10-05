@@ -482,3 +482,87 @@ flag = (feat_dim == fread(face_feats[i].pData, sizeof(float), feat_dim, in));
 - `_compute_far_tar` 在 `image_num < 2` 或 `same_num/notsame_num` 为 0 时会**跳过并打印原因**，
   不再打一串 inf，也不再让 O(N^2) 分数表在超大 list 上把进程拖死。
 - `tools/opencv_stub/` 只在 tools/ 的门禁里通过 -I 生效，主工程两个构建都看不到它。
+
+
+## 新增/变更：附录 II —— MTCNN 五个变体的 SetPara / 多线程索引一致性（六个缺陷）
+
+### 范围
+
+`ZQCNN/ZQ_CNN_MTCNN*.h` 有**五份逐字拷贝**的 MTCNN 实现：
+`ZQ_CNN_MTCNN.h`（主副本）、`_AspectRatio` / `_Interface` / `_NCHWC` / `ncnn`。
+这一轮把五份一起过了一遍，挖出**六个**问题。
+
+### 查到的真缺陷（全部逐条独立复核过，证据见下）
+
+| 编号 | 位置 | 缺陷 | 修法 |
+| --- | --- | --- | --- |
+| II.1 | `ZQ_CNN_MTCNN_Interface.h` 多线程 lnet | `lnet[thread_id].Forward(...)` 之后读 blob 却用 `lnet[0].GetBlobByName(...)` —— 0 号线程此刻正在改写它的 blob，**数据竞争 + 读到别人 batch 的 landmark** | 改成 `lnet[thread_id]` |
+| II.2 | 同上 | 下颌/眼周那 29 个点带一个**活的** `* 0.5`；单线程支路同一处是 `/**0.25*/`（注掉的），参考实现 `ZQ_CNN_MTCNN.h:1800/1802` 是 `/**0.5*/`（也是注掉的）⇒ **同一个 landmark 点在 thread_num=1 和 >1 下差一倍** | 去掉，两支都取 x1 |
+| II.3 | 五个变体 | `mapH/mapW/maps` 按「通过 pnet_size 过滤的个数」建（**紧凑**下标），`task_scale_id.push_back(i)` 存 `scales` 的**全局**下标，消费端又用紧凑下标去取 `scales[i]` —— 三处混用，一个 scale 被过滤就同时错位，`maps[scale_id]` 那处是**越界写** | 在 `SetPara` 里**剔掉**会被过滤的 scale，让紧凑下标 == 全局下标 |
+| II.4 | 五个变体 `SetPara` | 缓存失效条件只比 width/height/scale_factor，漏了 `pnet_size` / `min_size` / `special_handle_very_big_face` —— 而 `scales` 的生成恰恰依赖这三个。二次 SetPara 改 pnet_size 会用旧 scale，既几何错位又**打破 II.3 那个不变量** | 先存旧值再赋值，并把三个参数加进条件 |
+| II.5 | `ZQ_CNN_MTCNN_Interface.h` 串行支路 | `thread_num <= 1` 分支（**不在任何 parallel 区内**）用 `omp_get_thread_num()` 去索引大小**恰好是 thread_num** 的 `pnet` / `task_pnet_images`。OpenMP 规定串行区嵌在调用方 parallel 区内时它返回**外层**线程号 => 越界写整对象 + 越界读 | 硬编码 `const int thread_id = 0;` |
+| II.6 | `ZQ_CNN_MTCNN_ncnn.h` | **漏了**另外四份都有的 `pnet_size/pnet_stride = __max(1,...)` 夹取（上一轮修四份时漏的）。`pnet_size==0` 时整除 SIGFPE，`<0` 时 `while (minside > MIN_DET_SIZE)` 永不终止、scales 涨到 OOM | 补上 |
+
+### 判定为笔误（而非取舍）的证据
+
+- **II.1**：正确的写法就在**上一行注释里**（`//...lnet[thread_id].GetBlobByName("conv6-3")`），
+  而且同仓 `ZQ_CNN_MTCNN.h:1782-1783` 用的正是 `lnet[thread_id].Forward` + `lnet[thread_id].GetBlobByName`。
+- **II.2**：五个变体里**只有**本文件这两处有活的 `* 0.5`；
+  紧邻的 else 分支（其余 77 个点）两支都是 x1，参考实现那一处是**注掉的**。三处指向 x1。
+- **II.6**：另外四份在 2026-10-05 那轮就夹了（commit c1663d2），本文件没有 —— 
+  又一次「一个副本有守卫、孪生副本没有」（IH.9 / BE.2 / IX.14 / conv_overflow 之后第 5 次）。
+
+### 门禁
+
+新增 `tools/check_mtcnn_setpara.py`，A23（自测）+ A24（普查）两条：
+A23 五个变体的 pnet_size/pnet_stride 夹取、A24 `SetPara` 失效条件比较旧值、
+A25 `pnet_images.resize(count)` 之后的不变量兜底、
+A26 `*_Interface` 不得有活的 `* 0.5`、A27 `lnet[X].Forward` 之后最近的读 blob 必须也是 `lnet[X]`、
+A28 `thread_num <= 1` 分支体内不得有 `omp_get_thread_num()`。
+
+**为什么必须是源码级**：修复前后 4 个 MTCNN sample 的输出**逐字节相同**。
+这既说明修得对，也说明 sample 对这六条是**瞎的** ——
+仓内所有 sample 都 `thread_num=0`（被 `__max(1,...)` 夹成 1），
+`lnet[0] == lnet[thread_id]`、`omp_get_thread_num()` 恒返回 0。
+
+### 踩到的坑（都是门禁自己的，写下来免得重犯）
+
+1. **第一版没剥注释**，A28 匹配到了**我自己写的修复说明**里那句
+   「这里原来写的是 `omp_get_thread_num()`」，报出一个根本不存在的缺陷。
+   修法：判定前统一 `strip_comments`（保留换行以免行号漂移）。
+   附带好处是 A26 不再需要「数一下前面有没有 `/*`」这种脆办法 —— 
+   `/**0.5*/` 是注释（对），活的 `* 0.5` 是代码（错），剥完就自然分开了。
+2. **A27 第一版写成「Forward 之后 400 字符内」**。我加的那段解释注释约 500 字，
+   把窗口撑破了，变异测试立刻发现 A27 抓不到。
+   改成「**最近的下一个** `GetBlobByName` 必须同下标」，没有窗口，也就不受注释长度影响。
+3. **A27 的下标字符类写成了 `[A-Za-z_][A-Za-z0-9_]*`**，于是 `lnet[0].GetBlobByName` 
+   根本匹配不上 —— 变异测试把 A27 退回成 `lnet[0]` 之后门禁**照样全绿**。
+   下标既可能是 `thread_id` 也可能是字面量 `0`，写死成标识符等于把最关键那个 case 排除在外。
+4. **自测第一版只比「有没有报错」**。那样一个只缺 A23 的样本因为顺带也缺 A24/A25 
+   会被判成「符合预期」—— 门禁自己糊弄自己。改成比对**触发的规则集合**。
+5. 变异测试本身也踩了一次：我把 `/**0.25*0.5*/` 替换成 ` * 0.5;` 时只替换了
+   `**0.25*0.5*/` 那一段，**留下了一个孤立的 `/`**，于是
+   `keyPoint_ptr[...]/ * 0.5;;` 语法都不一样了，A26 当然不报。
+   —— **变异测试写错 = 门禁看起来通过了**。改对之后 A26 立刻被抓到。
+
+### 实测
+
+    python tools/check_mtcnn_setpara.py --selfcheck   -> 9 cases, all as expected（RC=0）
+    python tools/check_mtcnn_setpara.py               -> 5 个文件全 OK，合计 27 项（RC=0）
+    变异测试：逐条退回 A23 / A26 / A27 / A28 -> 门禁**逐条变红**并点名对应规则
+    Linux  -fsyntax-only（三个 MTCNN 头）              -> RC=0
+    cmake --build build_x64 --config Release --target SampleMTCNN SampleMTCNN_Interface SampleMTCNN_AspectRatio -> RC=0，0 error
+    A/B 对拍（归一化计时后）：SampleMTCNN / _NCHWC4 / _Interface / LoadFromCode **逐字节相同**
+    python tools/check_text_encoding.py -> OK: 763 text files, all strict UTF-8, no U+FFFD
+    python tools/check_line_endings.py  -> line endings OK
+
+### 注意事项
+
+- II.3 的修法（剔掉会被过滤的 scale）**依赖 scales 是升序**（原地压缩保序）。
+  这一点写在了代码注释里；若将来改成降序，NMS 那边的假设也要一起改。
+- II.5 只改了 `_Interface` 这一处。另外 5 处 `omp_get_thread_num()` 都在
+  `#pragma omp parallel for num_threads(thread_num)` 里，`thread_id < thread_num` 有保证，**不用改**。
+- `SampleMTCNN_AspectRatio` 在本机跑不通（`failed to open ../../model/handdet1-dw20-fast.zqparams`），
+  是**既有**问题、与本轮改动无关（改前改后都一样）。
+- II.2 的取值选择（x1 而不是 x0.5）依据是「三处一致」：else 分支、单线程支路、参考实现。
+  如果后续拿到 LFW 级别的人工标注发现 x0.5 才对，那要改的是**三处一起**，不是一处。
