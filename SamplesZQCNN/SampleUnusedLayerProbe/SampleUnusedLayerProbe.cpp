@@ -1475,6 +1475,69 @@ static void ref_prior_box_text(int layer_h, int layer_w, int img_h, int img_w,
     // 这是把"库给的个数正好是参考的两倍"这个现象对上的一步。
 }
 
+// 扫描式装置（附录 IO）：把 `num_priors` 从"待查"变成**实测公式**。
+//
+// 做法：对 (|min|, 有无 max, |ratio| 列表) 的一个小网格各跑一次，
+// 从输出**元素总数**反解出"每格发了多少个 prior"：
+//
+//     total = N * C * H * W = 1 * 2 * dim    （out = [N, 2, dim, 1]）
+//     dim  = layer_h * layer_w * num_priors * 4
+//     => num_priors = total / (2 * layer_h * layer_w * 4)
+//
+// 于是"库到底按几个 prior 算"变成一个**可数的事实**，
+// 而不必再猜公式（附录 IL.6 那一轮就是卡在猜公式上）。
+static void scan_prior_box_text()
+{
+    printf("  扫描（out = [N,2,dim,1]，dim = H*W*num_priors*4）：\n");
+    printf("  %-28s %8s %8s\n", "min / max / ratios", "实测", "按公式");
+    for (int nmin = 1; nmin <= 2; nmin++)
+        for (int has_max = 0; has_max <= 1; has_max++)
+            for (int nratio = 0; nratio <= 3; nratio++) {
+                const int H = 3, W = 3;
+                char mn[128] = "", mx[128] = "", ar[128] = "";
+                for (int i = 0; i < nmin; i++) {
+                    char t[16]; snprintf(t, sizeof(t), "%smin_size=%d", i ? " " : "", 30 + i);
+                    strcat(mn, t);
+                }
+                if (has_max) strcat(mx, has_max && mn[0] ? " " : "max_size=60");
+                if (has_max) strcat(mx, " max_size=90");
+                for (int i = 0; i < nratio; i++) {
+                    char t[24]; snprintf(t, sizeof(t), "%saspect_ratio=%d", i ? " " : "", 2 + i);
+                    strcat(ar, t);
+                }
+                char block[640];
+                snprintf(block, sizeof(block),
+                         "Input name=data C=1 H=%d W=%d\n"
+                         "Copy name=k1 bottom=data top=feat\n"
+                         "Copy name=k2 bottom=data top=imgs\n"
+                         "PriorBoxText name=pb1 bottom=feat bottom=imgs top=pboxes "
+                         "%s %s %s flip=1 clip=1 variance=0.1\n",
+                         H, W, mn, mx, ar);
+                if (!write_file(SYNTH_PARAM, block, strlen(block))) { printf("  写不出参数文件\n"); return; }
+                if (!write_file(SYNTH_MODEL, "", 0)) { printf("  写不出权重文件\n"); return; }
+                ZQ::ZQ_CNN_Net net;
+                if (!net.LoadFrom(SYNTH_PARAM, SYNTH_MODEL)) {
+                    printf("  %-28s %8s\n", "（加载失败）", "-");
+                    continue;
+                }
+                ZQ::ZQ_CNN_Tensor4D_NHW_C_Align256bit ti;
+                std::vector<float> in((size_t)H * W, 0.25f);
+                if (!ti.ConvertFromCompactNCHW(&in[0], 1, 1, H, W)) { printf("  输入张量失败\n"); return; }
+                if (!net.Forward(ti)) { printf("  %-28s %8s\n", "（Forward 失败）", "-"); continue; }
+                const ZQ::ZQ_CNN_Tensor4D* ob = net.GetBlobByName("pboxes");
+                if (ob == 0) { printf("  %-28s %8s\n", "（取不到输出）", "-"); continue; }
+                long long total = (long long)ob->GetN() * ob->GetC() * ob->GetH() * ob->GetW();
+                long long measured = total / (2LL * H * W * 4);
+                int pred = 2 * nmin * (1 + has_max + nratio);
+                char label[96];
+                snprintf(label, sizeof(label), "%d / %d / %d", nmin, has_max, nratio);
+                printf("  %-28s %8lld %8d %s\n", label, measured, pred,
+                       measured == pred ? "" : "  <== 对不上");
+            }
+    printf("  （ratio 列表里给的是 2,3,4…，**没有** 1；实测数与"
+           "「2*|min|*(1+有max+|ratio|)」的关系见上表）\n");
+}
+
 static void run_prior_box_text()
 {
     struct Case { int H, W; const char* mn; const char* mx; const char* ar; };
@@ -1579,6 +1642,7 @@ int main()
     run_prior_box_mxnet();
     run_detection_output_mxnet();
     run_prior_box_text();
+    scan_prior_box_text();
     printf("  小结：跑过 %d 个形状，对 %d，**对不上** %d，**待查** %d\n",
            g.ok + g.bad, g.ok, g.bad, g.open);
 
