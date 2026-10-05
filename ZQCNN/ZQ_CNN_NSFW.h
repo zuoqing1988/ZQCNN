@@ -1,4 +1,4 @@
-﻿#ifndef _ZQ_CNN_SSD_H_
+﻿#ifndef _ZQ_CNN_NSFW_H_
 #define _ZQ_CNN_SSD_H_
 #pragma once
 

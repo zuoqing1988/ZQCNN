@@ -26,7 +26,12 @@ namespace ZQ
 
 	private:
 		ZQ_CNN_Net net;
-		bool mxnet_ssd;
+		// 审计修复 2026-10-06（附录 IQ.2）：原来无初值。
+	// `Init` 里有**两条** `return false` 排在 `this->mxnet_ssd = mxnet_ssd;` **之前**
+	// （网加载失败 / blob 查不到），而 `Detect` 在 :73 读它。调用方忽略 Init 的
+	// 返回值继续 Detect 时读的是**不确定值**（UB），`std::vector<BBox>` 走哪一支随机。
+	// 对照本仓既有正确写法：`ZQ_CNN_VideoFaceDetection_Interface.h:26-34` 把成员全部初始化。
+	bool mxnet_ssd = false;
 		std::string proto_file;
 		std::string model_file;
 		std::string out_blob_name;
@@ -56,12 +61,27 @@ namespace ZQ
 		bool Detect(std::vector<BBox>& output, const unsigned char* bgr_img, int width, int height, int widthStep, float confidence_thresh,
 			bool show_debug_info = false)
 		{
+			// 审计修复 2026-10-06（附录 IQ.5）：`output.clear()` 原来排在**七条** return false
+			// **之后**（:120）—— 任何一次 Detect 失败，调用方仍读 output 就会拿到
+			// **上一次成功调用的框**。提到最前面：失败时「没有结果」和「结果是空的」必须一致。
+			// 可达性：`ZQ_CNN_MouthDetector.h:289` 丢弃了返回值，但它的
+			// `DetectedFace one_face` 是循环内新构造、`result_vec_mouth` 为空，所以**目前不发作**；
+			// `SampleSSD.cpp:74-78` 失败即 EXIT_FAILURE，也不发作。
+			// 但它正是「复用同一个 output 跑很多轮」那种写法下最自然的一颗雷。
+			output.clear();
 			if (bgr_img == 0 || width <= 0 || height <= 0 || widthStep < width * 3)
 				return false;
 			int C, H, W;
+			// 审计修复 2026-10-06（附录 IQ.6）：原来**只开不开**。`show_debug_info` 是
+			// 每次调用的形参，但一旦某次传 true，`ZQ_CNN_Net::show_debug_info` 就永远为真，
+			// 之后所有 Detect 都刷屏；类里也没有 TurnOffShowDebugInfo 出口。
+			// 改成对称：这一轮不打印就把 net 的开关**显式关掉**。
 			if (show_debug_info)
 				net.TurnOnShowDebugInfo();
-			net.GetInputDim(C, H, W);
+			else
+				net.TurnOffShowDebugInfo();
+
+net.GetInputDim(C, H, W);
 			if (C != 3)
 				return false;
 			if (H == 0 || W == 0)
@@ -117,7 +137,8 @@ namespace ZQ
 				printf("the output blob (%s) has slice step (%d) less than 7\n", out_blob_name.c_str(), sliceStep);
 				return false;
 			}
-			output.clear();
+			// 这里原来还有一个 output.clear()：IQ.5 把它提到函数开头之后，
+			// 这个已经走不到（前面所有失败路径都在开头就 return 了），留着是死代码。
 			float scale_X = width;
 			float scale_Y = height;
 			for (int k = 0; k < N; k++)

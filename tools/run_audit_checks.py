@@ -196,6 +196,24 @@ GROUPS = [
      ['check_facedb_maker.py', '--selfcheck'], False),
     ('A32 "人脸库构建 / libfacedetect 封装" 普查 (check_facedb_maker)',
      ['check_facedb_maker.py'], False),
+    # A33/A34 是附录 IQ 的门禁：SSD / CascadeOnet 检测线。
+    # 最值得记的一条是 IQ.1 —— `ZQ_CNN_NSFW.h` 的 include guard 写成了
+    # `_ZQ_CNN_SSD_H_`，与 ZQ_CNN_SSD.h **完全撞名**。任一 TU 同时 include 两者，
+    # 第二个整份被跳过 -> `is not a member of ZQ`。`#pragma once` 救不了：
+    # 它按**文件**生效，阻止 NSFW.h 的是那个撞名的 guard。
+    ('A33 "SSD / CascadeOnet" 自测 (check_ssd_cascade --selfcheck)',
+     ['check_ssd_cascade.py', '--selfcheck'], False),
+    ('A34 "SSD / CascadeOnet" 普查 (check_ssd_cascade)',
+     ['check_ssd_cascade.py'], False),
+    # A35/A36 是附录 IR 的门禁：扫「一条语句后面粘着下一条」这种补丁脚本痕迹。
+    # 本轮用 Python 批量改 C++ 时栽了 4 次（少一个换行就把两行粘成一行）。
+    # 注意它**不改变语义**（`}` 后接声明仍是两条语句，照样编过），
+    # 真正致命的是标识符被截断（编译器能抓）。所以定位是**可读性/一致性**，
+    # 并且把仓库原有的 8 处同类写法列进白名单 —— 永远红的规则等于没有规则。
+    ('A35 "语句粘连" 自测 (check_stmt_joins --selfcheck)',
+     ['check_stmt_joins.py', '--selfcheck'], False),
+    ('A36 "语句粘连" 普查 (check_stmt_joins)',
+     ['check_stmt_joins.py'], False),
     ('B  ZQlib 独立回归测试 x10 (ASan+LSan)', ['run_zqlib_checks.py'], False),
     # 基线路径给**绝对路径**：子进程以 ROOT 为 cwd 运行，而基线文件在 tools/ 下，
     # 相对路径会解析成 <ROOT>/zqlib_probe_baseline.txt 而找不到（2026-10-02 实测）。

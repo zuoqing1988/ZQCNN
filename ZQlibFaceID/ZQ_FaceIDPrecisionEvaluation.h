@@ -35,6 +35,23 @@ namespace ZQ
 			ZQ_FaceFeature featL;
 			ZQ_FaceFeature featR;
 			bool valid;
+
+			// 审计修复 2026-10-06（附录 IH.11）：原来**没有默认构造函数**，
+			// 于是 `EvaluationPair cur_pair;`（`_parse_lfw_list` 里两个分支都有）
+			// 之后 idL/idR/flag/valid 全是**未定值**；
+			// 紧接着 `pairs[i].push_back(cur_pair)` 走**隐式拷贝构造**，
+			// 那一步就把未定值读了一遍 —— UBSan 报得很直白：
+			//     ZQ_FaceIDPrecisionEvaluation.h:25:9: runtime error: load of value 37,
+			//     which is not a valid value for type 'bool'
+			// （值每次都不一样，因为它读的是栈垃圾。）
+			// 影响面：valid/flag 在**所有**使用点之前都会被重新赋值，所以结果碰巧是对的；
+			// 但「拷贝未定值」本身就是 UB，编译器有权基于它做任何假设。
+			// 而且这条是 `zq_lfw_eval` 门禁在 **UBSan** 下第一次跑出来的 ——
+			// ASan 那一轴完全看不见（附录 CA.3 说的「观测手段决定你看得见什么」）。
+			EvaluationPair()
+			{
+				idL = 0; idR = 0; flag = 0; valid = false;
+			}
 		};
 
 		class EvaluationSingle

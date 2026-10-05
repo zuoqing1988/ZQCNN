@@ -73,7 +73,9 @@ namespace ZQ
 							float minX = __min(boundingBox[num].col2, boundingBox[order].col2);
 							float inter_w = __max(minX - maxX, 0);
 							float inter_h = __max(minY - maxY, 0);
-							float IOU = inter_w * inter_h;							float dh1 = (float)boundingBox[num].row2 - (float)boundingBox[num].row1;
+							float IOU = inter_w * inter_h;
+
+ float dh1 = (float)boundingBox[num].row2 - (float)boundingBox[num].row1;
 							float dw1 = (float)boundingBox[num].col2 - (float)boundingBox[num].col1;
 							float dh2 = (float)boundingBox[order].row2 - (float)boundingBox[order].row1;
 							float dw2 = (float)boundingBox[order].col2 - (float)boundingBox[order].col1;
@@ -92,7 +94,9 @@ namespace ZQ
 							{
 								float denom = __min(area1, area2);
 								IOU = (denom > 0) ? (IOU / denom) : 0;
-							}							if (IOU > overlap_threshold)
+							}
+
+if (IOU > overlap_threshold)
 							{
 								cur_overlap++;
 								boundingBox[num].exist = false;
@@ -130,7 +134,9 @@ namespace ZQ
 							float minX = __min(boundingBox[num].col2, boundingBox[order].col2);
 							float inter_w = __max(minX - maxX, 0);
 							float inter_h = __max(minY - maxY, 0);
-							float IOU = inter_w * inter_h;							float dh1 = (float)boundingBox[num].row2 - (float)boundingBox[num].row1;
+							float IOU = inter_w * inter_h;
+
+ float dh1 = (float)boundingBox[num].row2 - (float)boundingBox[num].row1;
 							float dw1 = (float)boundingBox[num].col2 - (float)boundingBox[num].col1;
 							float dh2 = (float)boundingBox[order].row2 - (float)boundingBox[order].row1;
 							float dw2 = (float)boundingBox[order].col2 - (float)boundingBox[order].col1;
@@ -149,7 +155,9 @@ namespace ZQ
 							{
 								float denom = __min(area1, area2);
 								IOU = (denom > 0) ? (IOU / denom) : 0;
-							}							if (IOU > overlap_threshold)
+							}
+
+if (IOU > overlap_threshold)
 							{
 								cur_overlap++;
 								boundingBox.at(num).exist = false;

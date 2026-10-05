@@ -45,3 +45,5 @@ chk
 .fix_*.py
 .patch_*.py
 .append_*.py
+_sj*.txt
+_sq*.txt

@@ -1520,3 +1520,147 @@ IO.1 / IO.2 / IO.4 的防线仍然只有源码门禁 A31/A32（4 条规则 + 7 �
 **这一条本身就是已知缺口，写在这里是为了让下一个人知道缺口在哪、为什么现在不补。**
 补它的正确形态见上面第 1 点：给 sample 加一个 `MakeDatabase(` 调用方（Windows 侧），
 而不是在 Linux 上补一个验不到生产分支的探针。
+
+
+## 追加：附录 IQ / IR —— SSD / CascadeOnet（6 个缺陷）+ 「语句粘连」门禁
+
+### 一个**元结论**先说，因为它决定了本轮的做法
+
+    diff -w -B ZQ_CNN_CascadeOnet.h ZQ_CNN_CascadeOnet_Interface.h
+    两个文件的主体**只有 4 处类型替换，零逻辑差异**。
+
+所以「这两份拷贝之间逐条找差异」的答案是 **0 条** —— 值得做的方向在别处：
+
+| 编号 | 缺陷 | 修法 |
+| --- | --- | --- |
+| IQ.1 | `ZQ_CNN_NSFW.h:1` 的 include guard 写成了 `_ZQ_CNN_SSD_H_` —— 与 `ZQ_CNN_SSD.h` **完全撞名**。任一 TU 同时 include 两者，第二个整份被跳过 -> `'ZQ_CNN_NSFW' is not a member of 'ZQ'`。`#pragma once` 救不了：它按**文件**生效，阻止 NSFW.h 的是那个撞名的 guard | 改成 `_ZQ_CNN_NSFW_H_` |
+| IQ.2 | `ZQ_CNN_SSD.h` 的 `bool mxnet_ssd;` **未初始化**，而 `Init` 有**两条** `return false` 排在赋值之前；调用方忽略 Init 返回值继续 `Detect` 时读的是不确定值（UB） | `= false`，对齐 `ZQ_CNN_VideoFaceDetection_Interface.h:26-34` 的既有写法 |
+| IQ.3 | CascadeOnet 两份副本的 `Find(bgr_img,...)` **缺少 `ZQ_CNN_SSD.h:59` 已经有的入参守卫**。`ConvertFromBGR` 在 `ChangeSize` 之后**无条件**解引用 `bgr_pix[0..2]`：`bgr_img==nullptr` 空指针解引用；`_widthStep<_width*3` 是**读调用方图像缓冲区越界** | 照抄 SSD 那四行，不发明新的 |
+| IQ.4 | 两份副本都**丢弃 `Forward` 的返回值**。`ZQ_CNN_Net::Forward` 失败时只 printf 然后 return false，**blob 内存原样保留**；于是「曾经成功过、后来失败」时读到的是**上一轮的陈旧数据**，而 `Find` 还**返回 true**。`SampleCascadeOnet_Interface.cpp:71` 传 `nIters=10`，同一批 net 连跑 10 轮 —— sample 的 `if (!Find(...)) failed;` 抓不到 | 失败时 `results.clear(); return false;` |
+| IQ.5 | SSD 的 `output.clear()` 排在**七条** `return false` **之后** —— 任何一次 `Detect` 失败，调用方仍读 output 就拿到**上一次成功调用的框** | 提到函数开头，并把后面那个变成死代码的删掉 |
+| IQ.6 | SSD 的 `if (show_debug_info) net.TurnOnShowDebugInfo();` **只开不开** —— 形参是每次调用的，某次传 true 之后所有 Detect 都刷屏，类里也没有 TurnOff 出口 | 改成对称的 `else net.TurnOffShowDebugInfo();` |
+
+**A/B 对拍：SampleSSD / SampleCascadeOnet / SampleCascadeOnet_Interface 三个全部 IDENTICAL** ——
+这批是零行为变化，符合预期（IQ.3/IQ.4/IQ.5/IQ.6 都是「失败路径上原来不做、现在做」，
+而 sample 走的全是成功路径）。
+
+### 门禁：A33/A34（IQ，6 条规则，自测 9 例）
+
+A33 四个头的 include guard 必须**全局唯一**（IQ.1 的判据就是「唯一」，不是「存在」）；
+A34 SSD 的 `mxnet_ssd` 有初值、`output.clear()` 在第一个 `return` 之前、调试开关有 `else`；
+A35/A36 CascadeOnet 两份副本的 bgr 入参守卫与 `Forward` 返回值检查。
+逐条做过变异测试，IQ.1~IQ.6 全部被抓到并点名。
+
+### 附录 IR：「语句粘连」门禁（本轮自己造的问题）
+
+这一轮用 Python 脚本批量改 C++ 源码，**四次**因为替换串里少一个换行把两行粘成一行：
+`return false;` + `int C, H, W;`、`}` + `const ZQ_CNN_Tensor4D* prob = ...` 等。
+
+**先纠正我自己的一个错误判断**：我以为「语句粘连」会改变语义 —— **不会**。
+`}` 后接一条声明、`return false;` 后接一条声明，C++ 都解析成**两条**语句，照样编过。
+本轮 4 次里**唯一真的编不过**的那次，是分割脚本把 `int C, H, W;` 的首字母吃掉变成 `nt C, H, W;` ——
+那是**标识符被截断**，编译器能抓，跟粘连无关。
+
+所以 `tools/check_stmt_joins.py`（A35/A36）的定位是**可读性 / 一致性**，不是正确性：
+粘连的行在 code review 里极容易滑过去（读起来像一行），而下一轮脚本再往这行里插东西时
+更容易连锁出错。
+
+**它还必须带白名单**：仓库**原有** 8 处同类写法（三个 MTCNN 变体的 `}  void SetLimit(`、
+`VideoFaceDetection` 的 `}  if (IOU > ...)`、以及 `ZQ_FaceDatabase*` 里刻意的
+`score_begin[pp] = s;  s += ...` 列对齐）。不排除的话这条规则会**永远红** ——
+而永远红的规则等于没有规则（AGENTS.md 第 20 条）。
+白名单按 **(文件, 片段)** 记配额；第一版只按文件记，同一文件里的两条白名单互相吃掉配额，
+第二条被误报成「新增」—— 又是一次「规则写出来但没验」。
+
+自测 7 例（正常 / return 后接声明 / `}` 后接声明 / 单空格不算 / 注释行不算 /
+预处理指令不算 / 行尾注释不算），变异测试确认能抓到新引入的粘连。
+
+### 实测
+
+    python tools/check_ssd_cascade.py --selfcheck -> 9 cases（RC=0）
+    python tools/check_ssd_cascade.py             -> OK（RC=0）
+    python tools/check_stmt_joins.py --selfcheck -> 7 cases（RC=0）
+    python tools/check_stmt_joins.py             -> 扫了 68 个头，0 个有新引入的粘连（RC=0）
+    A/B：SampleSSD / SampleCascadeOnet / SampleCascadeOnet_Interface 全部 IDENTICAL
+    cmake --build build_x64 --config Release（全量）-> RC=0，0 error
+    WSL make -j8（全量）-> RC=0，0 error
+    python tools/check_text_encoding.py -> OK: 767 text files, all strict UTF-8, no U+FFFD
+
+### 注意事项
+
+- **IQ 的六条在仓内都不可达**（三个 sample 的调用点全都检查了 Init 返回值、都传 BGR、
+  都用 `ori_img.step[0]`），所以它们只有源码门禁、没有运行时覆盖。
+- 子代理还报了几条**结构性问题**，本轮**没有**动：
+  · `ZQ_CNN_CascadeOnet_Interface.h:124` 用了**具体类** `ZQ_CNN_Net*` 而非模板形参 ——
+    附录 IM.1 补 include 治的是症状不是病因，抽象泄漏原封不动；
+  · `ZQ_CNN_CascadeOnet_Interface::Find` **全仓零调用点**，
+    `VideoFaceDetection_Interface` 里那 `3 × thread_num` 份 `cascade_Onets` 加载后从不推理
+    （`thread_num=8` 就是 24 份 det3 白常驻内存）；
+  · `ZQ_CNN_SSD.h` 的 `mxnet_ssd` 开关是**死代码**（两处分支逐字节相同）。
+  这三条都要动公共 API 或跨文件契约，**超出本轮范围**，单独立项更合适。
+
+---
+
+## 追加：IH.11 —— `EvaluationPair` 的未定值拷贝（**门禁自己在 UBSan 下抓出来的**）
+
+### 缺陷
+
+`ZQlibFaceID/ZQ_FaceIDPrecisionEvaluation.h` 的内部类 `EvaluationPair` **没有默认构造函数**，
+于是 `_parse_lfw_list` 里两个分支的 `EvaluationPair cur_pair;` 之后
+`idL` / `idR` / `flag` / `valid` 全是**未定值**；
+紧接着 `pairs[i].push_back(cur_pair)` 走**隐式拷贝构造**，那一步就把未定值读了一遍。
+
+### 是谁抓到的
+
+`zq_lfw_eval` 门禁（附录 IH 我自己加的那道）。**ASan 那一轴完全绿** ——
+拷贝未定值不是越界也不是泄漏，ASan 没有对应的检查。
+**UBSan 那一轴**报得很直白：
+
+```
+ZQ_FaceIDPrecisionEvaluation.h:25:9: runtime error: load of value 37, which is not a valid value for type 'bool'
+    #0 ... EvaluationPair::EvaluationPair(EvaluationPair const&) ZQ_FaceIDPrecisionEvaluation.h:25
+    #4 std::vector<EvaluationPair>::push_back(...)
+    #5 ZQ_FaceIDPrecisionEvaluation::_parse_lfw_list(...) :533
+```
+
+值每次都不一样（37、115……），因为它读的是栈垃圾。
+
+### 影响面
+
+`valid` / `flag` 在**所有**使用点之前都会被重新赋值，所以结果碰巧是对的；
+但「拷贝未定值」本身就是 UB，编译器有权基于它做任何假设。
+
+修法：给 `EvaluationPair` 一个默认构造函数，把四个 POD 成员都初始化。
+
+### 这条记录本身的意义
+
+它是附录 CA.3 那条纪律的**正面例子**：同一道门禁，ASan 轴全绿、UBSan 轴抓到真缺陷。
+「回归全绿」这件事，**取决于你开了哪几条轴** ——
+本会话的 v67 之所以在 C6 组失败，正是因为它跑了 `--ubsan-sweep`，
+而 v65/v66 跑的时候这条门禁**还不存在**。
+
+### 实测
+
+    python tools/run_zqlib_checks.py lfw_eval            -> PASS（ASan）
+    python tools/run_zqlib_checks.py --ubsan lfw_eval  -> PASS（UBSan，修前 FAILED）
+    cmake --build build_x64 --config Release（全量）-> RC=0，0 error
+    WSL make -j8（全量）-> RC=0，0 error
+    python tools/check_text_encoding.py -> OK: 770 text files, all strict UTF-8, no U+FFFD
+    python tools/check_line_endings.py  -> line endings OK
+
+### 本轮新增门禁一览（A 组现 36 条 / 9 个工具）
+
+| 门禁 | 规则 | 附录 |
+| --- | --- | --- |
+| `zq_lfw_eval_check.cpp`（B 组第 58 道） | 9 个用例 | IH |
+| `check_mtcnn_setpara.py` | 21 条（A23~A43） | II |
+| `check_bbox_nms.py` | 15 条（A1~A15） | IJ / IL |
+| `check_pose_mouth.py` | 9 条 | IN |
+| `check_facedb_maker.py` | 4 条（A31/A32） | IO |
+| `check_header_selfcontained.py` | 每个头单独编（A27/A28） | IM |
+| `check_ssd_cascade.py` | 6 条（A33/A34） | IQ |
+| `check_stmt_joins.py` | 语句粘连（A35/A36） | IR |
+
+每一道都配了**自测**（含阴性对照）与**变异测试**；
+IR 那道额外带一份 8 处原有站点的白名单，理由写在文件头 ——
+永远红的规则等于没有规则。

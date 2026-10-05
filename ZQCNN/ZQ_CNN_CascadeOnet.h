@@ -91,9 +91,20 @@ namespace ZQ
 			int xmin, int ymin, int xmax, int ymax,
 			std::vector<ZQ_CNN_BBox>& results, int nIters = 3)
 		{
+			// 审计修复 2026-10-06（附录 IQ.3）：这一行原来没有，而**同仓的
+			// `ZQ_CNN_SSD.h:59` 有**（`if (bgr_img == 0 || width <= 0 || height <= 0
+			// || widthStep < width * 3) return false;`）—— 照抄现成的，不发明新的。
+			// `ConvertFromBGR`（ZQ_CNN_Tensor4D.h:395-412）在 `ChangeSize` 之后
+			// **无条件**解引用 `bgr_pix[0..2]`，读满 `(H-1)*_widthStep + (W-1)*3 + 3` 字节。所以：
+			//   · `bgr_img == nullptr` -> 空指针解引用（ChangeSize 成功后才崩，不提前返回）；
+			//   · `_widthStep < _width*3` -> **读调用方图像缓冲区越界**
+			//     （典型触发：把 `Mat.step[0]` 误传成 `Mat.cols`；或传 roi 子矩阵的 data
+			//     却用父矩阵的 stride）。
+			// `_width<=0` / `_height<=0` 反而无害（`w < W` 循环不进入），但一并挡掉。
+			if (bgr_img == 0 || _width <= 0 || _height <= 0 || _widthStep < _width * 3)
+				return false;
 			if (!input.ConvertFromBGR(bgr_img, _width, _height, _widthStep))
 				return false;
-
 			return Find(input, xmin, ymin, xmax, ymax, results, nIters);
 		}
 
@@ -136,7 +147,20 @@ namespace ZQ
 				if (!input.ResizeBilinearRect(*(onet_images[i]), onet_sizes[i], onet_sizes[i], 0, 0,
 					rect_x, rect_y, rect_w, rect_h))
 					return false;
-				nets[i]->Forward(*(onet_images[i]));
+				// 审计修复 2026-10-06（附录 IQ.4）：返回值原来被丢弃。
+			// `ZQ_CNN_Net::Forward`（ZQ_CNN_Net.h:188-243）失败时只 printf 然后
+			// return false，**blob 的内存原样保留**。于是「曾经成功过、后来失败」时：
+			// blob 尺寸仍在、firstPixelData 非空 -> 读到的是**上一轮的陈旧数据**
+			// -> `box[0]` 被上一轮结果 refine -> results 塞进垃圾框 -> **Find 返回 true**。
+			// `SampleCascadeOnet_Interface.cpp:71` 传 `nIters=10`，同一批 net 连跑 10 轮，
+			// 任一轮失败就产生陈旧框，而 sample 的 `if (!Find(...)) failed;` **抓不到**。
+			// 失败时把 results 清空再返回：失败不该留下前几轮的框。
+			if (!nets[i]->Forward(*(onet_images[i])))
+				{
+					printf("failed to run cascadeonet iter %d\n", i);
+					results.clear();
+					return false;
+				}
 				const ZQ_CNN_Tensor4D* prob = nets[i]->GetBlobByName("prob1");
 				const ZQ_CNN_Tensor4D* location = nets[i]->GetBlobByName("conv6-2");
 				if (prob == 0)
