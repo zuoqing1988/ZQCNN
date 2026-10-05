@@ -1177,3 +1177,78 @@ A15 MNN 拷贝的 `it->area` 不得是 int 减法形态（认两种形态：`(fl
 - 这两份拷贝里**其余**与主文件的差异（`overlap_count_thresh` 参数、
   `_filtering_iou` 的签名等）本轮**没有**逐一对齐 —— 目标是修**安全缺陷**，
   不是把三份文件改成完全一样。行为差异要靠 A/B 才能安全对齐，而这两份都做不了 A/B。
+
+
+## 追加：附录 IM —— 头文件自包含性门禁（顺手修了一处真实的不可自包含）
+
+### 缺陷
+
+`ZQCNN/ZQ_CNN_CascadeOnet_Interface.h:113` 用了 `std::vector<ZQ_CNN_Net*> nets;`
+（**具体**的 `ZQ_CNN_Net`），而它只 include 了 `ZQ_CNN_Net_Interface.h`
+（里面只有抽象基类 `ZQ_CNN_Net_Interface`）—— 于是这个头**不是自包含的**：
+按自然顺序 `#include "ZQ_CNN_CascadeOnet_Interface.h"` 就会报
+`'ZQ_CNN_Net' was not declared in this scope`。
+
+而随仓的 `SampleVideoFaceDetection_Interface.cpp` 恰好第一行是 `#include "ZQ_CNN_Net.h"`、
+第三行才 include 本头 —— **顺序正好把它盖住**，所以一直没人发现。
+写 `-fsyntax-only` 检查「这个头能不能单独编过」时当场就炸出来了。
+
+修法：补一行 `#include "ZQ_CNN_Net.h"`。
+
+### 门禁：`tools/check_header_selfcontained.py`（A27/A28）
+
+对 `ZQCNN/` / `ZQlibFaceID/` / `ZQ_GEMM/` 下每个头生成一个**只 include 它自己**的 .cpp，
+编到语法检查（不链接）。前置只有 `ZQ_CNN_CompileConfig.h` —— 它定义 `__max`/`__min`/`__int64`
+这些**本项目自己的**可移植别名，是「平台前置」不是「依赖」，不算。
+
+自测 4 例（阳性 + 阴性对照都有：自给自足 / 用了没 include 的类型 / include 了就自足 / 缺 `<vector>`）。
+自测里第 4 条原来写的是「用 `__max` 而不定义」，但 `ZQ_CNN_CompileConfig.h` **本来就定义**它，
+所以那条期望 rc=1 是**门禁自己写错了**，实测 rc=0 —— 换成真正缺的标准库前置。
+
+### 首跑结果：20 个头失败，分类之后是 5 个真缺陷 + 2 个环境缺
+
+第一版把两类混在一起报（20 个 FAIL），加上 `-I3rdparty/include/ZQlib` 之后剩 5 个，
+另 2 个是本机 WSL 缺 caffe（已单列为 ENV，不判失败）。
+
+仍然不自包含的 5 个（本轮**只报告、不修** —— 每一处都要看它到底缺什么、
+在主工程里是靠谁补上的，改错会让某个 sample 编不过）：
+
+- `ZQCNN/ZQ_CNN_MouthDetector.h`
+- `ZQCNN/ZQ_CNN_PersonPose.h`
+- `ZQCNN/ZQ_CNN_PersonPose2.h`
+- `ZQlibFaceID/ZQ_FaceDatabaseMaker.h`
+- `ZQlibFaceID/ZQ_FaceDetectorLibFaceDetect.h`
+
+**这五个正是下一轮的审计目标**（`ZQ_CNN_PersonPose.h` / `_PersonPose2.h` / `_MouthDetector.h`
+本来就在「零门禁覆盖」名单上；`_FaceCropUtils.h` 本轮**是**自包含的）。
+
+### v66 抓到我自己引入的一处编译错误（已修）
+
+v66 的 **D1 Windows 全量构建**失败：`ZQ_CNN_MTCNN.h(97,1): error C2017: 非法的表达式`。
+那是 II.13 补 `thread_num` 上界时用 `re.subn(lambda m: NEW, ...)` 造成的 ——
+lambda 形式下 ``（缩进反向引用）**不会展开**，文件里留下了 13 行字面量 `thread_num = ...`。
+
+当时我已经发现并修掉了（`g++ -fsyntax-only` 报的 `stray '' in program`），
+但 v66 是在**修复之前**启动的，它的 D1 跑在最后，正好赶上那个中间状态。
+
+**这一条本身是 v66 起了作用**（它抓到的不是环境问题，是真的编译不过），
+但也说明我之前只编了 MTCNN 相关的几个 target、不编全量 —— 
+改一个被 `SamplesZQlibFaceID` 也 include 的头，就该跑全量而不是抽查。
+现在 `cmake --build build_x64 --config Release`（**全量**）与 WSL `make -j8`（全量）都是 RC=0。
+
+### 实测
+
+    python tools/check_header_selfcontained.py --selfcheck -> selfcheck OK: 4 cases
+    python tools/check_header_selfcontained.py -> 自包含 OK 39 / 失败 5 / 环境缺第三方库 2
+    cmake --build build_x64 --config Release   -> **全量** RC=0，0 error
+    WSL make -j8                                -> **全量** RC=0，0 error
+
+### 注意事项
+
+- 这道门禁**每次要跑 ~3 分钟**（每个头一次 `wsl` 调用），所以没有并进 A 组主流程，
+  而是单独注册；A 组那 58 项还是 2 分钟级。
+- 门禁会**把跳过的文件也报出来**（ENV 行），避免「跳过」变成「藏起来」。
+  ncnn / caffe / opencv / ZQlib 这几类头本机编不过是环境问题，不是代码问题。
+- 本轮**没有**修那 5 个不自包含的头。理由：它们缺的东西在主工程里是被别的头的
+  include 顺序**顺手**补上的，要判断「正确的修法是补哪个 include」得看每个头的依赖链，
+  而且改完必须编全量验（见上面 v66 那条教训）。留给下一轮单独做。

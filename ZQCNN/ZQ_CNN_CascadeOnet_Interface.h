@@ -3,6 +3,17 @@
 #pragma once
 #include "ZQ_CNN_Net_Interface.h"
 #include "ZQ_CNN_BBoxUtils.h"
+// 审计修复 2026-10-06（附录 IM.1）：这一行原来缺。
+// 本模板在 `:113` 用了 `std::vector<ZQ_CNN_Net*> nets;`（**具体**的 `ZQ_CNN_Net`，
+// 不是模板形参 `ZQ_CNN_Net_Interface`），而 `ZQ_CNN_Net_Interface.h` 里只有前者
+// 的**抽象基类** `ZQ_CNN_Net_Interface` —— 于是这个头**不是自包含的**：
+// 谁按自然顺序 `#include "ZQ_CNN_CascadeOnet_Interface.h"` 就会报
+//     'ZQ_CNN_Net' was not declared in this scope
+// 而随仓的 `SampleVideoFaceDetection_Interface.cpp` 恰好第一行就是
+// `#include "ZQ_CNN_Net.h"`、第三行才 include 本头 —— 顺序正好把它盖住了，
+// 所以一直没人发现。
+// 写 -fsyntax-only 做「这个头能不能单独编过」的检查时立刻就炸出来了。
+#include "ZQ_CNN_Net.h"
 #include <omp.h>
 namespace ZQ
 {

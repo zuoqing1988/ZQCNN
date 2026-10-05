@@ -97,7 +97,8 @@ namespace ZQ
 			for (size_t i = 0; i < rnet.size(); i++) rnet[i].TurnOffShowDebugInfo();
 			for (size_t i = 0; i < onet.size(); i++) onet[i].TurnOffShowDebugInfo();
 			for (size_t i = 0; i < lnet.size(); i++) lnet[i].TurnOffShowDebugInfo();
-		}		void SetLimit(int limit_r = 0, int limit_o = 0, int limit_l = 0) 
+		}		
+	void SetLimit(int limit_r = 0, int limit_o = 0, int limit_l = 0) 
 		{
 			limit_r_num = limit_r;
 			limit_o_num = limit_o;
