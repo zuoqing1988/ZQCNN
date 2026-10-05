@@ -923,3 +923,64 @@ ALL CHECKS PASSED        rc=0        FAILED 计数 = 0
 * `B ZQlib 独立回归测试 x10 (ASan+LSan): OK`
 
 本轮（ID / IE / IF / IG）里只有 **ID** 改了生产代码。
+
+## 新增/变更：IH —— 覆盖 `DeConvolution`：输出形状按**前向卷积**算，通用情形根因未定位（只报不判失败）
+
+### 一条确定的事实
+
+`ZQ_CNN_Layer_DeConvolution::GetTopDim` 与
+`ZQ_CNN_Forward_SSEUtils::DeConvolutionWithBiasPReLU` 的 `need_H` **逐字相同**：
+
+    need_H = (in_H - 1)*stride + 1 - (filter_H - 1)*dilate - 1 + (pad_top + pad_bottom) + 1
+
+`(filter_H - 1)*dilate` 前面是**减号** —— 转置卷积应当是加号（输出放大）。
+所以这一层**不会放大空间维**，它按前向卷积的形状走。
+
+### 唯一值标定：k=3、C=1、OC=1 时映射就是「不翻转的卷积」
+
+C=1 / OC=1 / k=3x3 / H=W=3 / VALID 让输出只剩 1 个数，
+权重填 1..9、输入填 100..124（互不相同），那一个数唯一确定映射：
+
+    [标定] 库给的输出       = 5181.000000
+    [标定] 不翻转的卷积和   = 5181.000000     <== 一致
+    [标定] 翻转（真转置卷积）= 4809.000000
+
+所以不是"翻转"的问题。
+
+### 但通用情形对不上，且两种权重布局假设各只能解释一半
+
+| 假设的权重布局 | 通过的用例 |
+|---|---|
+| OC-major `[oc][kh][kw][ic]`（与 `ChangeSize(num_output,kH,kW,C)` 一致） | `k=1x1`（C=4,OC=2）、C=1/OC=1 标定 |
+| C-major `[ic][kh][kw][oc]` | `OC=1`（C=2,k=3x3,VALID） |
+
+两者不能同时成立，所以真实映射**不是**其中任何一个简单布局。
+`k=3、C>=2、OC>=2` 的 5 组全对不上，其中 `stride=2` 一组**形状就不一样**
+（库 128 个值 vs 参考 98 个）。
+
+> 线索：`filters` 是 NHW_C 对齐张量，C=4 时 pixelStep=8（每个 (oc,kh,kw) 之间
+> 夹 4 个填充 float）。若内核某处用 `+= C` 而不是 `+= pixelStep` 就会逐像素错位 ——
+> 与"k=1x1 通过、C>1 失败"相容。**这只是线索，没有证实**。
+
+### 处置：只报、不判失败，也不修
+
+`DeConvolution` 是 UNUSED 层：
+
+* 判失败就是恒红，会淹掉别的真回归失败 ⇒ 单独计成「待查」；
+* **不修**：改形状公式还是改索引映射，取决于"这个层本来该是什么"，
+  而没有任何随仓模型、没有任何转换器产物能判定那个"应该"。
+  **没有参照的修改就是把一个猜测换成另一个猜测。**
+
+探针累计 **119 个形状**（112 通过 / 0 对不上 / **7 待查**），
+两个平台都 `UNUSED LAYER PROBE OK` rc=0。
+
+### 变更文件
+
+* `SamplesZQCNN/SampleUnusedLayerProbe/SampleUnusedLayerProbe.cpp` —
+  新增 `ref_conv_ref` / `run_deconv` / `deconv_calibrate`；不匹配走待查计数
+* `audit_k3_20261001.md`（追加 IH）
+* **无生产代码改动**；两个平台均已手工重编 + 实跑（rc=0）
+
+### 尚未覆盖的 UNUSED（还剩 4 类）
+
+`LSTM_TF` / `PriorBoxText` / `PriorBox_MXNET` / `DetectionOutput_MXNET`

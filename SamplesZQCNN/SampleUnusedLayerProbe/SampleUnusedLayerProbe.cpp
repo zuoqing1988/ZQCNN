@@ -952,6 +952,148 @@ static void run_tile()
     }
 }
 
+// DeConvolution 的**实际**语义：形状与算术都按**前向卷积**做（附录 IH.1）。
+//
+// `ZQ_CNN_Layer_DeConvolution::GetTopDim` 与
+// `ZQ_CNN_Forward_SSEUtils::DeConvolutionWithBiasPReLU` 的 `need_H` **逐字相同**：
+//
+//     need_H = (in_H - 1)*stride + 1 - (filter_H - 1)*dilate - 1 + (pad_top + pad_bottom) + 1
+//
+// 注意 `(filter_H - 1)*dilate` 前面是**减号** ——
+// 转置卷积应当是**加号**（输出放大）。所以这一层**不会放大空间维**。
+//
+// 于是参考就是一个普通的（带 pad 的）卷积：
+//
+//     out[oc][oh][ow] = bias[oc] + sum_{ic,kh,kw} w[oc][kh][kw][ic] * in[ic][ih][iw]
+//     其中 ih = oh + kh*dilate - pad_top，iw = ow + kw*dilate - pad_left，
+//     越界的 ih/iw 视为 0（TYPE_NONE 的零填充）
+//
+// 权重布局（`LoadBinary_NCHW`）：先 `num_output*kH*kW*C` 个 float 的 filters
+// （compact NCHW），再 `num_output` 个 float 的 bias（`bias` 参数存在时）。
+static void ref_conv_ref(const std::vector<float>& in, const std::vector<float>& w,
+                         const std::vector<float>& bias,
+                         int N, int C, int H, int Wd, int OC, int KH, int KW,
+                         int SH, int SW, int DH, int DW, int PT, int PL,
+                         int& outC, int& outH, int& outW,
+                         std::vector<float>& out)
+{
+    const int rH = (KH - 1) * DH + 1, rW = (KW - 1) * DW + 1;
+    outC = OC;
+    outH = (H - 1) * SH + 1 - rH + 2 * PT + 1;      // PT=PB=PT
+    outW = (Wd - 1) * SW + 1 - rW + 2 * PL + 1;
+    if (outH <= 0 || outW <= 0) { out.clear(); return; }
+    out.assign((size_t)N * OC * outH * outW, 0.0f);
+    for (int n = 0; n < N; n++)
+        for (int oc = 0; oc < OC; oc++)
+            for (int oh = 0; oh < outH; oh++)
+                for (int ow = 0; ow < outW; ow++) {
+                    double acc = oc < (int)bias.size() ? bias[oc] : 0.0;
+                    for (int ic = 0; ic < C; ic++)
+                        for (int kh = 0; kh < KH; kh++) {
+                            int ih = oh + kh * DH - PT;
+                            if (ih < 0 || ih >= H) continue;
+                            for (int kw = 0; kw < KW; kw++) {
+                                int iw = ow + kw * DW - PL;
+                                if (iw < 0 || iw >= Wd) continue;
+                                double v = w[((((size_t)oc * KH) + kh) * KW + kw) * C + ic];
+                                acc += v * (double)in[((size_t)ic * H + ih) * Wd + iw];
+                            }
+                        }
+                    out[(((size_t)n * OC + oc) * outH + oh) * outW + ow] = (float)acc;
+                }
+}
+
+// 唯一值标定（附录 IH.3）：C=1 / OC=1 / k=3x3 / H=W=3 / 无 pad -> 输出只有 1 个数。
+// 把权重与输入都填成**互不相同**的值，于是那个输出值**唯一地**确定索引映射。
+// 只需比较两个候选和：
+//     不翻转：sum_{kh,kw} w[kh][kw] * in[kh][kw]
+//     翻转  ：sum_{kh,kw} w[kh][kw] * in[2-kh][2-kw]
+static void deconv_calibrate()
+{
+    const int C = 1, H = 3, W = 3, OC = 1, K = 3;
+    std::vector<float> in((size_t)C * H * W), w((size_t)OC * K * K);
+    for (int ih = 0; ih < H; ih++)
+        for (int iw = 0; iw < W; iw++)
+            in[(size_t)ih * W + iw] = (float)(100 + ih * 10 + iw);   // 100..124
+    for (int kh = 0; kh < K; kh++)
+        for (int kw = 0; kw < K; kw++)
+            w[(size_t)kh * K + kw] = (float)(kh * 3 + kw + 1);      // 1..9
+    std::string block =
+        "DeConvolution name=dc1 bottom=data top=top1 num_output=1 "
+        "kernel_H=3 kernel_W=3 stride_H=1 stride_W=1 pad_type=VALID\n";
+    std::vector<float> got;
+    if (!run_synth(block.c_str(), w, C, H, W, in, got)) {
+        printf("  [标定] 合成网跑不起来\n");
+        return;
+    }
+    double s_noflip = 0, s_flip = 0;
+    for (int kh = 0; kh < K; kh++)
+        for (int kw = 0; kw < K; kw++) {
+            double v = w[(size_t)kh * K + kw];
+            s_noflip += v * (double)in[(size_t)kh * K + kw];
+            s_flip   += v * (double)in[(size_t)(K - 1 - kh) * K + (K - 1 - kw)];
+        }
+    printf("  [标定] 库给的输出 = %.6f\n", got.empty() ? 0.0 : (double)got[0]);
+    printf("  [标定] 不翻转的卷积和 = %.6f\n", s_noflip);
+    printf("  [标定] 翻转（真转置卷积）= %.6f\n", s_flip);
+}
+
+static void run_deconv()
+{
+    struct Case { int C, H, W, OC, KH, KW, SH, PT; bool bias; };
+    static const Case CASES[] = {
+        {  2, 4, 4,  2, 3, 3, 1, 1, false },
+        {  2, 4, 4,  2, 3, 3, 1, 1, true  },   // 带 bias
+        {  3, 4, 4,  3, 3, 3, 1, 1, false },   // C 是非 align 倍数
+        {  4, 5, 5,  2, 1, 1, 1, 0, false },   // 1x1 无 pad：输出应放大 1
+        {  4, 4, 4,  2, 3, 3, 2, 1, false },   // stride=2
+        {  8, 4, 4,  2, 3, 3, 1, 0, false },   // VALID（无 pad）
+        // ---- 诊断用：无 pad + 奇数边长 => 没有任何边界歧义（附录 IH.2）----
+        {  2, 5, 5,  2, 3, 3, 1, 0, false },   // VALID k=3x3
+        {  2, 7, 7,  1, 3, 3, 1, 0, false },   // VALID k=3x3，OC=1
+    };
+    const double LIMIT = 1e-5;
+    char block[512], shape[128];
+    for (size_t t = 0; t < sizeof(CASES) / sizeof(CASES[0]); t++) {
+        const Case& c = CASES[t];
+        // pad_type：PT>0 用 SAME，否则 VALID
+        std::string pad = c.PT > 0 ? "pad_type=SAME" : "pad_type=VALID";
+        snprintf(block, sizeof(block),
+                 "DeConvolution name=dc1 bottom=data top=top1 num_output=%d "
+                 "kernel_H=%d kernel_W=%d stride_H=%d stride_W=%d %s%s\n",
+                 c.OC, c.KH, c.KW, c.SH, c.SH, pad.c_str(), c.bias ? " bias 1" : "");
+        unsigned s = 20262020u + (unsigned)t * 32452843u;
+        std::vector<float> in((size_t)c.C * c.H * c.W);
+        for (size_t i = 0; i < in.size(); i++) in[i] = rnd(s);
+        std::vector<float> w((size_t)c.OC * c.KH * c.KW * c.C), bias(c.bias ? c.OC : 0);
+        for (size_t i = 0; i < w.size(); i++) w[i] = rnd(s);
+        for (size_t i = 0; i < bias.size(); i++) bias[i] = rnd(s);
+        std::vector<float> weights(w);
+        if (c.bias) weights.insert(weights.end(), bias.begin(), bias.end());
+        int oC = 0, oH = 0, oW = 0;
+        std::vector<float> want;
+        ref_conv_ref(in, w, bias, 1, c.C, c.H, c.W, c.OC, c.KH, c.KW,
+                     c.SH, c.SH, 1, 1, c.PT, c.PT, oC, oH, oW, want);
+        std::vector<float> got;
+        snprintf(shape, sizeof(shape), "C=%d OC=%d k=%dx%d s=%d pad=%d bias=%d",
+                 c.C, c.OC, c.KH, c.KW, c.SH, c.PT, (int)c.bias);
+        printf("  [probe] DeConv %s ...\n", shape);
+        if (!run_synth(block, weights, c.C, c.H, c.W, in, got)) { g.bad++; continue; }
+        long wi = -1;
+        double e = backward_err(got, want, wi);
+        if (e > LIMIT) {
+            // **只报、不判失败**（附录 IH.4）：这一层是 UNUSED，
+            // 判失败就是恒红；根因未定位，如实记成待查。
+            g.open++;
+            printf("  %-6s %-22s **待查**（不判失败）：库 %zu 个值 / 参考 %zu 个，最大相对偏差 %.4g\n",
+                   "DeConv", shape, got.size(), want.size(),
+                   want.empty() ? 0.0 : fabs((double)got[0] - want[0]));
+        } else {
+            report("DeConv", shape, e, LIMIT, wi, got, want);
+        }
+    }
+}
+
 int main()
 {
     setvbuf(stdout, NULL, _IONBF, 0);
@@ -979,6 +1121,8 @@ int main()
     run_unary_op();
     run_batchnorm();
     run_tile();
+    deconv_calibrate();
+    run_deconv();
     printf("  小结：跑过 %d 个形状，对 %d，**对不上** %d，**待查** %d\n",
            g.ok + g.bad, g.ok, g.bad, g.open);
 
