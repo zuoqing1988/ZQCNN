@@ -61,6 +61,16 @@ void zq_cnn_innerproduct_gemm_32f_align_same_pixstep(
 		matrix_A = (zq_base_type*)_aligned_malloc(need_A_buffer_len_align32, 32);
 		if (need_allocate_tmp_out)
 			matrix_C = (zq_base_type*)_aligned_malloc(need_C_buffer_len_align32, 32);
+		// 审计修复 2026-10-05（附录 IX.7）：分配**没查返回值**，紧接着的 GEMM
+		// 就是空指针解引用。NCHW 的孪生实现
+		// `zq_cnn_convolution_gemm_32f_align_c_raw.h:82` 早就写了这一段。
+		// `matrix_C` 只在 `need_allocate_tmp_out` 时才分配，判空必须带同一个前提。
+		if (matrix_A == 0 || (need_allocate_tmp_out && matrix_C == 0))
+		{
+			if (matrix_A) _aligned_free(matrix_A);
+			if (need_allocate_tmp_out && matrix_C) _aligned_free(matrix_C);
+			return;
+		}
 	}
 	else
 	{
@@ -191,6 +201,13 @@ void zq_cnn_innerproduct_gemm_32f_align_same_pixstep_batch(
 		matrix_A = (zq_base_type*)_aligned_malloc(need_A_buffer_len_align32,32);
 		if (need_allocate_tmp_out)
 			matrix_C = (zq_base_type*)_aligned_malloc(need_C_buffer_len_align32, 32);
+		// 审计修复 2026-10-05（附录 IX.7）：同上一处，分配没查返回值。
+		if (matrix_A == 0 || (need_allocate_tmp_out && matrix_C == 0))
+		{
+			if (matrix_A) _aligned_free(matrix_A);
+			if (need_allocate_tmp_out && matrix_C) _aligned_free(matrix_C);
+			return;
+		}
 	}
 	else
 	{

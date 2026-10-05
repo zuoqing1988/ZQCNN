@@ -77,20 +77,38 @@ void zq_cnn_lstm_TF_32f_align(
 		ci = _aligned_malloc(need_buffer_size, 32);
 		co = _aligned_malloc(need_buffer_size, 32);
 		o = _aligned_malloc(need_buffer_size, 32);
+		// 审计修复 2026-10-05（附录 IX.6）：九次分配**一次都没查返回值**，
+		// 紧接着的 `memset(h, 0, ...)` 就是空指针解引用。
+		// 这与 `else` 分支的 `*buffer = _aligned_malloc(...)` 是**同一处代码的另一半**
+		// —— 修一半漏一半，与附录 IV.2 / HW.1 同一个形状。
+		if (h == 0 || cell == 0 || cs == 0 || I == 0 || F == 0 ||
+			cs_prev == 0 || ci == 0 || co == 0 || o == 0)
+		{
+			if (h) _aligned_free(h);
+			if (cell) _aligned_free(cell);
+			if (cs) _aligned_free(cs);
+			if (I) _aligned_free(I);
+			if (F) _aligned_free(F);
+			if (cs_prev) _aligned_free(cs_prev);
+			if (ci) _aligned_free(ci);
+			if (co) _aligned_free(co);
+			if (o) _aligned_free(o);
+			return;
+		}
 	}
 	else
 	{
 		if (*buffer_len < total_need_buffer_size)
 		{
-			_aligned_free(*buffer);
-			*buffer = _aligned_malloc(total_need_buffer_size, 32);
 			// 审计修复 2026-10-05（附录 IX.5）：**分配失败必须在这里就返回**。
 			// 原来不管成败都把 `*buffer_len` 更新成新长度，于是
 			// 「`malloc` 返回 0」-> `*buffer_len` 变成一个够大的数 ->
 			// **下一次调用跳过重新分配**，直接拿 `*buffer == 0` 去 memset，
 			// 那才是空指针解引用。同一批里卷积 gemm 孪生实现
-			// `zq_cnn_convolution_gemm_32f_align_c.c:404` 早就写了这一段
+			// `zq_cnn_convolution_gemm_32f_align_c_raw.h:90` 早就写了这一段
 			// （注释里记的正是同一个坑），这里漏了。
+			_aligned_free(*buffer);
+			*buffer = _aligned_malloc(total_need_buffer_size, 32);
 			if (*buffer == 0)
 				return;
 			*buffer_len = total_need_buffer_size;

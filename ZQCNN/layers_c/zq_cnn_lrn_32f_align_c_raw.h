@@ -66,6 +66,18 @@ void zq_cnn_lrn_across_channels_32f_align(
 	// local_sum_buf 的补零值，落在 out 像素的对齐空隙里，与标量结果一致）。
 	local_sum_buf = (float*)_aligned_malloc(sizeof(float)*(C + zq_mm_align_size), zq_mm_align_size * sizeof(float));
 
+	// 审计修复 2026-10-05（附录 IX.6）：三次分配**一次都没查返回值**，
+	// 紧接着的 `accumulate_buf[0] = 0;` 就是空指针解引用。
+	// `C` / `local_size` 都来自模型文件（不可信输入），一个巨大的通道数
+	// 或 local_size 就能让分配失败。
+	if (square_buf == 0 || accumulate_buf == 0 || local_sum_buf == 0)
+	{
+		if (square_buf) _aligned_free(square_buf);
+		if (accumulate_buf) _aligned_free(accumulate_buf);
+		if (local_sum_buf) _aligned_free(local_sum_buf);
+		return;
+	}
+
 	accumulate_buf[0] = 0;
 	for (c = 0; c < pad_size; c++)
 	{

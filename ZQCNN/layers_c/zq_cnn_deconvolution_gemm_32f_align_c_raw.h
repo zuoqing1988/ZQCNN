@@ -85,6 +85,27 @@ void zq_cnn_deconv_with_padding_gemm_32f_k2s2(
 		matrix_C[0][1] = (zq_base_type*)_aligned_malloc(need_C_buffer_len_align32, 32);
 		matrix_C[1][0] = (zq_base_type*)_aligned_malloc(need_C_buffer_len_align32, 32);
 		matrix_C[1][1] = (zq_base_type*)_aligned_malloc(need_C_buffer_len_align32, 32);
+		// 审计修复 2026-10-05（附录 IX.7）：这九次分配**一次都没查返回值**，
+		// 紧接着的 im2col 就是空指针解引用。NCHW 的孪生实现
+		// `zq_cnn_convolution_gemm_32f_align_c_raw.h:82` 早就写了这一段
+		// （注释里记的正是同一个坑），这一族漏了。
+		// 注意 `matrix_A` 只在 `need_allocate_A` 时才分配 ——
+		// 判空必须带上同一个前提，否则会拿**未初始化的指针**去比。
+		if ((need_allocate_A && matrix_A == 0) || matrix_Bt0 == 0 || matrix_Bt1 == 0 ||
+			matrix_Bt2 == 0 || matrix_Bt3 == 0 || matrix_C[0][0] == 0 ||
+			matrix_C[0][1] == 0 || matrix_C[1][0] == 0 || matrix_C[1][1] == 0)
+		{
+			if (need_allocate_A && matrix_A) _aligned_free(matrix_A);
+			if (matrix_Bt0) _aligned_free(matrix_Bt0);
+			if (matrix_Bt1) _aligned_free(matrix_Bt1);
+			if (matrix_Bt2) _aligned_free(matrix_Bt2);
+			if (matrix_Bt3) _aligned_free(matrix_Bt3);
+			if (matrix_C[0][0]) _aligned_free(matrix_C[0][0]);
+			if (matrix_C[0][1]) _aligned_free(matrix_C[0][1]);
+			if (matrix_C[1][0]) _aligned_free(matrix_C[1][0]);
+			if (matrix_C[1][1]) _aligned_free(matrix_C[1][1]);
+			return;
+		}
 	}
 	else
 	{

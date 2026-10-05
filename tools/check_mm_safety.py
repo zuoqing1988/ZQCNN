@@ -78,22 +78,66 @@ RAW_DECL_RE = re.compile(
 STORE_RE = re.compile(r'zq_mm_store_ps\s*\(\s*(?P<name>\w+)\s*,')
 
 
-# ---- 判定 3：`*buffer = _aligned_malloc(...)` 必须查返回值（附录 IX.5）----
-BUF_MALLOC_RE = re.compile(r'\*buffer\s*=\s*_aligned_malloc')
-BUF_NULL_RE = re.compile(r'\*\s*buffer\s*==\s*0|!\s*\(\s*\*\s*buffer\s*\)')
+# ---- 判定 3/4：分配之后必须查返回值（附录 IX.5 / IX.6）----
+# 3a（IX.5）：`*buffer = _aligned_malloc(...)` 之后必须查 `*buffer == 0`。
+#     这一条单独盯：它的危害**不在这一行**，而在**下一次调用** ——
+#     不查就更新 `*buffer_len`，下次进来跳过重新分配，拿着空指针去算。
+# 3b（IX.6）：任何 `名字 = _aligned_malloc(...)` 之后 12 行内必须有该名字的判空。
+BUF_MALLOC_RE = re.compile(r'\*buffer\s*=\s*(?:\(\s*zq_base_type\s*\*\s*\)\s*)?_aligned_malloc')
+ANY_MALLOC_RE = re.compile(
+    r'^\s*(?:[\w:\*]+\s+)?(\w+)\s*=\s*(?:\(\s*[\w:\*\s]+\*\s*\)\s*)?_aligned_malloc')
+NULL_WIN = 400       # 扫到下一个函数为止的上限（不是窗口大小）
+# raw 头里每个函数都从第 0 列开始（`void zq_cnn_xxx(`），用它划函数边界
+FUNC_TOP_RE = re.compile(r'^(?:void|static\s+void|int|float)\s+\w+\s*\(')
+
+
+def _has_null_check(lines, start, var):
+    """从分配点往后找，**直到离开它所在的函数**，看有没有该变量的判空。
+
+    为什么按「函数」而不是按「花括号块」划作用域：
+    `if (buffer == 0) { if (c) x = p; else { x = _aligned_malloc(...); } if (c) y = q; else { y = _aligned_malloc(...); } }`
+    这种写法里，判空写在**外层**那个块的最后一行 —— 按内层块划作用域会在
+    `else` 的 `}` 处就停下，把正确的写法报成漏的（第一版就踩了）。
+    raw 头里每个函数都是从第 0 列开始的 `void zq_cnn_xxx(...)`，
+    所以「下一个第 0 列的定义行」就是函数边界。
+    """
+    # **0 / NULL 两种写法都算判空** —— `batchnormscale` 那一族写的是 `== NULL`，
+    # gemm / lrn 那一族写的是 `== 0`；只认一种就会把另一半报成假的
+    # （AGENTS.md 第 20 条：恒红项要么定性、要么删掉）。
+    pat = re.compile(r'\b%s\s*==\s*(?:0|NULL|nullptr)\b|!\s*\b%s\b'
+                     % (re.escape(var), re.escape(var)))
+    for j in range(start, min(len(lines), start + NULL_WIN)):
+        if j > start and pat.search(lines[j]):
+            return True
+        if FUNC_TOP_RE.match(lines[j]):
+            break
+    return False
+
 
 
 def scan_buffer_nullcheck(text):
     """返回 (分配点总数, [(行号, 说明)])。"""
     lines = text.split('\n')
+    # **先把行注释去掉再匹配**：门禁自己的说明文字里写着
+    # `` `*buffer = _aligned_malloc(...)` ``，不剥掉就会被当成一处分配点报出来
+    # （第一版就踩了：扫描器被自己的注释绊了一跤）。
+    code = [ln.split('//')[0] for ln in lines]
     total, bad = 0, []
-    for i, line in enumerate(lines):
-        if not BUF_MALLOC_RE.search(line):
+    for i, line in enumerate(code):
+        if BUF_MALLOC_RE.search(line):
+            total += 1
+            win = '\n'.join(lines[i:i + 5])
+            if not re.search(r'\*\s*buffer\s*==\s*0|!\s*\(\s*\*\s*buffer\s*\)', win):
+                bad.append((i + 1,
+                            '*buffer = _aligned_malloc(...) 之后 5 行内没有 *buffer == 0 检查'))
             continue
-        total += 1
-        if not BUF_NULL_RE.search('\n'.join(lines[i:i + 5])):
-            bad.append((i + 1,
-                        '*buffer = _aligned_malloc(...) 之后 5 行内没有 *buffer == 0 检查'))
+        m = ANY_MALLOC_RE.match(line)
+        if m:
+            var = m.group(1)
+            total += 1
+            if not _has_null_check(lines, i, var):
+                bad.append((i + 1, '`%s = _aligned_malloc(...)` 之后 %d 行内没有判空'
+                            % (var, NULL_WIN)))
     return total, bad
 
 
@@ -262,9 +306,20 @@ void f(void) {
     bad_buf = """        *buffer = _aligned_malloc(total_need_buffer_len, 32);
         *buffer_len = total_need_buffer_len;
 """
+    good_var = """        h = _aligned_malloc(need_buffer_size, 32);
+        cell = _aligned_malloc(need_buffer_size, 32);
+        if (h == 0 || cell == 0)
+            return;
+"""
+    bad_var = """        h = _aligned_malloc(need_buffer_size, 32);
+        cell = _aligned_malloc(need_buffer_size, 32);
+        memset(h, 0, sizeof(float)*hidden_dim);
+"""
     for name, txt, want_n, want_bad in (
             ('分配后查了返回值（合格）', good_buf, 1, 0),
-            ('**没查返回值**（IX.5）', bad_buf, 1, 1)):
+            ('**没查返回值**（IX.5）', bad_buf, 1, 1),
+            ('裸变量分配后判空（合格）', good_var, 2, 0),
+            ('**裸变量分配不判空**（IX.6）', bad_var, 2, 2)):
         n, bad = scan_buffer_nullcheck(txt)
         got = (n, len(bad))
         mark = 'OK ' if got == (want_n, want_bad) else '**BAD**'

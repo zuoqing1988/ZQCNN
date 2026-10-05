@@ -106,6 +106,17 @@ void zq_cnn_conv_no_padding_gemm_nchwc_general(
 		matrix_A = (zq_base_type*)_aligned_malloc(need_A_buffer_len_align32, 32);
 		matrix_Bt = (zq_base_type*)_aligned_malloc(need_B_buffer_len_align32, 32);
 		matrix_C = (zq_base_type*)_aligned_malloc(need_C_buffer_len_align32, 32);
+		// 审计修复 2026-10-05（附录 IX.7）：这三次分配**一次都没查返回值**，
+		// 紧接着的 im2col 就是空指针解引用。NCHW 的孪生实现
+		// `zq_cnn_convolution_gemm_32f_align_c_raw.h:82` 早就写了这一段
+		// （注释里记的正是同一个坑），**NCHWC 这一族 6 处全漏**。
+		if (matrix_A == 0 || matrix_Bt == 0 || matrix_C == 0)
+		{
+			if (matrix_A) _aligned_free(matrix_A);
+			if (matrix_Bt) _aligned_free(matrix_Bt);
+			if (matrix_C) _aligned_free(matrix_C);
+			return;
+		}
 	}
 	else
 	{
@@ -312,6 +323,13 @@ void zq_cnn_conv_no_padding_gemm_nchwc_kernel1x1(
 	{
 		matrix_A = (zq_base_type*)_aligned_malloc(need_A_buffer_len_align32, 32);
 		matrix_C = (zq_base_type*)_aligned_malloc(need_C_buffer_len_align32, 32);
+		// 审计修复 2026-10-05（附录 IX.7）：同上面 5 处，分配没查返回值。
+		if (matrix_A == 0 || matrix_C == 0)
+		{
+			if (matrix_A) _aligned_free(matrix_A);
+			if (matrix_C) _aligned_free(matrix_C);
+			return;
+		}
 	}
 	else
 	{
@@ -548,6 +566,17 @@ void zq_cnn_conv_no_padding_gemm_nchwc_kernel2x2(
 		matrix_A = (zq_base_type*)_aligned_malloc(need_A_buffer_len_align32, 32);
 		matrix_Bt = (zq_base_type*)_aligned_malloc(need_B_buffer_len_align32, 32);
 		matrix_C = (zq_base_type*)_aligned_malloc(need_C_buffer_len_align32, 32);
+		// 审计修复 2026-10-05（附录 IX.7）：这三次分配**一次都没查返回值**，
+		// 紧接着的 im2col 就是空指针解引用。NCHW 的孪生实现
+		// `zq_cnn_convolution_gemm_32f_align_c_raw.h:82` 早就写了这一段
+		// （注释里记的正是同一个坑），**NCHWC 这一族 6 处全漏**。
+		if (matrix_A == 0 || matrix_Bt == 0 || matrix_C == 0)
+		{
+			if (matrix_A) _aligned_free(matrix_A);
+			if (matrix_Bt) _aligned_free(matrix_Bt);
+			if (matrix_C) _aligned_free(matrix_C);
+			return;
+		}
 	}
 	else
 	{
@@ -784,6 +813,17 @@ void zq_cnn_conv_no_padding_gemm_nchwc_kernel3x3(
 		matrix_A = (zq_base_type*)_aligned_malloc(need_A_buffer_len_align32, 32);
 		matrix_Bt = (zq_base_type*)_aligned_malloc(need_B_buffer_len_align32, 32);
 		matrix_C = (zq_base_type*)_aligned_malloc(need_C_buffer_len_align32, 32);
+		// 审计修复 2026-10-05（附录 IX.7）：这三次分配**一次都没查返回值**，
+		// 紧接着的 im2col 就是空指针解引用。NCHW 的孪生实现
+		// `zq_cnn_convolution_gemm_32f_align_c_raw.h:82` 早就写了这一段
+		// （注释里记的正是同一个坑），**NCHWC 这一族 6 处全漏**。
+		if (matrix_A == 0 || matrix_Bt == 0 || matrix_C == 0)
+		{
+			if (matrix_A) _aligned_free(matrix_A);
+			if (matrix_Bt) _aligned_free(matrix_Bt);
+			if (matrix_C) _aligned_free(matrix_C);
+			return;
+		}
 	}
 	else
 	{
@@ -1086,6 +1126,17 @@ void zq_cnn_conv_no_padding_gemm_nchwc_kernel2x2_C3(
 		matrix_A = (zq_base_type*)_aligned_malloc(need_A_buffer_len_align32, 32);
 		matrix_Bt = (zq_base_type*)_aligned_malloc(need_B_buffer_len_align32, 32);
 		matrix_C = (zq_base_type*)_aligned_malloc(need_C_buffer_len_align32, 32);
+		// 审计修复 2026-10-05（附录 IX.7）：这三次分配**一次都没查返回值**，
+		// 紧接着的 im2col 就是空指针解引用。NCHW 的孪生实现
+		// `zq_cnn_convolution_gemm_32f_align_c_raw.h:82` 早就写了这一段
+		// （注释里记的正是同一个坑），**NCHWC 这一族 6 处全漏**。
+		if (matrix_A == 0 || matrix_Bt == 0 || matrix_C == 0)
+		{
+			if (matrix_A) _aligned_free(matrix_A);
+			if (matrix_Bt) _aligned_free(matrix_Bt);
+			if (matrix_C) _aligned_free(matrix_C);
+			return;
+		}
 	}
 	else
 	{
@@ -1379,6 +1430,17 @@ void zq_cnn_conv_no_padding_gemm_nchwc_kernel3x3_C3(
 		matrix_A = (zq_base_type*)_aligned_malloc(need_A_buffer_len_align32, 32);
 		matrix_Bt = (zq_base_type*)_aligned_malloc(need_B_buffer_len_align32, 32);
 		matrix_C = (zq_base_type*)_aligned_malloc(need_C_buffer_len_align32, 32);
+		// 审计修复 2026-10-05（附录 IX.7）：这三次分配**一次都没查返回值**，
+		// 紧接着的 im2col 就是空指针解引用。NCHW 的孪生实现
+		// `zq_cnn_convolution_gemm_32f_align_c_raw.h:82` 早就写了这一段
+		// （注释里记的正是同一个坑），**NCHWC 这一族 6 处全漏**。
+		if (matrix_A == 0 || matrix_Bt == 0 || matrix_C == 0)
+		{
+			if (matrix_A) _aligned_free(matrix_A);
+			if (matrix_Bt) _aligned_free(matrix_Bt);
+			if (matrix_C) _aligned_free(matrix_C);
+			return;
+		}
 	}
 	else
 	{

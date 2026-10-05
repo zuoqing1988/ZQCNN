@@ -104,6 +104,16 @@ void zq_cnn_innerproduct_gemm_nchwc_general(
 		{
 			matrix_C = (zq_base_type*)_aligned_malloc(need_C_buffer_len_align32, 32);
 		}
+		// 审计修复 2026-10-05（附录 IX.7）：分配没查返回值。
+		// **判空必须带上 `!compactA` / `!compactC`** —— 反过来就成了一句话：
+		// "当 compactA 为真（即 matrix_A 指向**外部张量**、根本没分配）时报错"，
+		// 那不是判空，那是凭空造出来的假故障（第一版脚本就写反过这里）。
+		if ((!compactA && matrix_A == 0) || (!compactC && matrix_C == 0))
+		{
+			if (!compactA && matrix_A) _aligned_free(matrix_A);
+			if (!compactC && matrix_C) _aligned_free(matrix_C);
+			return;
+		}
 	}
 	else
 	{
