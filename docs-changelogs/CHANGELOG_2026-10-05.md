@@ -1772,3 +1772,15 @@ MSVC `/analyze`、ARM/NEON 与 FP16 档解析、MSVC ASan）全部 OK。
   （IS.3 记录了它**不是**原因）
 * `audit_k3_20261001.md`（追加 IS；**更正 IL.2 关于负 min_size 的说法**）
 * **无生产代码改动**；两个平台均已手工重编 + 实跑
+
+## 新增/变更：IS 落地后的完整回归（v56）
+
+```
+ALL CHECKS PASSED        rc=0        FAILED 计数 = 0
+```
+
+`SampleUnusedLayerProbe` 的顺序探针（本轮扩到 3 个配置 + 一个 2x2 格子顺序探针）
+在两个平台上都跑过、输出一致；探针累计 **121 个形状**
+（121 通过 / 0 对不上 / 10 待查）。
+其余组（D1/D2 双平台全量构建、D3/D4 两平台 sample、A~C16 全部门禁、
+MSVC `/analyze`、ARM/NEON 与 FP16 档解析、MSVC ASan）全部 OK。
