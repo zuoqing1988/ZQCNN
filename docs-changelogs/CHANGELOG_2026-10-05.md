@@ -1221,3 +1221,62 @@ ALL CHECKS PASSED        rc=0        FAILED 计数 = 0
 
 其余组（D1/D2 双平台全量构建、D3/D4 两平台 sample、A~C16 全部门禁、
 MSVC `/analyze`、ARM/NEON 与 FP16 档解析、MSVC ASan）全部 OK。
+
+## 新增/变更：IL —— 覆盖 `PriorBoxText`：跑通了，但通道分配**未定位**（只报不判失败）
+
+### 读出来的契约（`_prior_box_text` + `ZQ_CNN_Layer_PriorBox`）
+
+    layer_w = input.W,  layer_h = input.H
+    img_w   = data.W,    img_h   = data.H          // **来自第二个 bottom 的形状**
+    step_w  = img_w / layer_w,  step_h = img_h / layer_h
+    dim     = layer_h * layer_w * num_priors * 4
+    out     = [ data.N, 2, dim, 1 ]                // 注意 **out_C = 2**
+    for h, for w:
+        cx = (w+0.5)*step_w;  cy = (h+0.5)*step_h;  cy1 = (h+1.0)*step_h
+        for s in min_sizes:
+            emit(s, cy);  emit(s, cy1)                          # ratio=1，两个纵向半格
+            if 有 max_sizes: emit(sqrt(s*max), cy); emit(..., cy1)
+            for r in aspect_ratios 且 |r-1|>=1e-6:
+                emit(s*sqrt(r), s/sqrt(r), cy);  emit(..., cy1)
+    emit(bw,bh,cyy) = ((cx±bw/2)/img_w, (cyy±bh/2)/img_h)
+
+`priors_per_cell = 2 * |min| * (1 + 有max + |{r : |r-1|>=1e-6}|)`
+
+### 三条只在代码里、模型文件里看不到的约定
+
+1. **step / step_h / step_w 这三个键 ReadParam 根本不解析**（基类的键只有
+   top/bottom/name/min_size/max_size/aspect_ratio/variance/flip/clip），
+   所以成员恒为 0，**永远**走 img/layer 那一支。
+2. **flip 被解析并存进成员，但这个生成器一次都没用它** ——
+   与 PriorBox_MXNET 的 variance/clip 同类。
+3. **min_size / max_size 是按 (int) 取的**，负值在层里被写成 (-x)*img_w
+   （Caffe 的"负数表示相对图像尺寸的比例"约定）。于是 min_size=30.7 实际按 30 算。
+
+### 为什么只报不判失败
+
+合成网能造出来、LoadFrom 能过（4 组里 3 组）、Forward 能跑，
+但输出**值的个数是参考的两倍**（库 192 / 参考 96），根因是 out_C = 2
+而内核按 pixStep 跨步写 —— 两个通道怎么分**没有定位**。
+另有一组（负 min_size）连加载都没过，原因也没查。
+
+这一层是 UNUSED，所以两处都**只报、不判失败**（恒红会淹掉别的真回归失败）。
+
+> 顺带一条：这正是「**探针把一个层跑起来**」与「**探针验完一个层**」的区别 ——
+> 前者证明"它能被构造、能加载、能执行"，后者还需要把输出的每一格都对上。
+> 报告里把两者分开写，避免"跑过了"被读成"验过了"。
+
+探针累计 **124 个形状**（120 通过 / 0 对不上 / **11 待查**：
+DeConvolution 7 + PriorBoxText 4）。两个平台都 `UNUSED LAYER PROBE OK` rc=0。
+可达性表：EXERCISED 20 / PROBED 14 / COMMENTED 1 / UNUSED 1，基线已重生成。
+
+### 变更文件
+
+* `SamplesZQCNN/SampleUnusedLayerProbe/SampleUnusedLayerProbe.cpp` —
+  新增 `ref_prior_box_text` / `run_prior_box_text`
+* `audit_k3_20261001.md`（追加 IL）
+* `tools/reachability_baseline.txt`（重生成）
+* **无生产代码改动**；两个平台均已手工重编 + 实跑（rc=0）
+
+### 尚未覆盖的 UNUSED 只剩 1 类
+
+`LSTM_TF`

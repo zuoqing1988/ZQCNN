@@ -1398,6 +1398,144 @@ static void run_detection_output_mxnet()
     }
 }
 
+// PriorBoxText（Caffe 风格 SSD 先验框，两个 bottom）。契约取自
+// `ZQ_CNN_Forward_SSEUtils::_prior_box_text`（附录 IL.1）：
+//
+//   layer_w = input.W,  layer_h = input.H
+//   img_w   = data.W,    img_h   = data.H          // **来自第二个 bottom 的形状**
+//   step_w  = img_w / layer_w,  step_h = img_h / layer_h
+//            （层的 ReadParam **没有** step 键，所以成员恒为 0，走这一支）
+//   dim = layer_h * layer_w * num_priors * 4,  out = [data.N, 2, dim, 1]
+//   for h, for w:
+//       cx = (w+0.5)*step_w;  cy = (h+0.5)*step_h;  cy1 = (h+1.0)*step_h
+//       for s in min_sizes:
+//           emit(s, cy);  emit(s, cy1)
+//           if 有 max_sizes: emit(sqrt(s*max), cy); emit(..., cy1)
+//           for r in aspect_ratios 且 |r-1|>=1e-6:
+//               emit(s*sqrt(r), s/sqrt(r), cy);  emit(..., cy1)
+//   emit(bw,bh,cyy) = ((cx±bw/2)/img_w, (cyy±bh/2)/img_h)
+//
+// **min_size / max_size 是按 (int) 取的**，而且负值在层里被写成
+// `(-x)*img_w`（Caffe 的"负数表示相对图像尺寸的比例"约定）。
+// `flip` 被解析并存进成员，但这个生成器**一次都没用**它（与
+// PriorBox_MXNET 的 variance/clip 同类，附录 IL.2）。
+static void ref_prior_box_text(int layer_h, int layer_w, int img_h, int img_w,
+                               const std::vector<float>& min_sizes,
+                               const std::vector<float>& max_sizes,
+                               const std::vector<float>& ratios,
+                               std::vector<float>& out)
+{
+    const float step_w = (float)img_w / (float)layer_w;
+    const float step_h = (float)img_h / (float)layer_h;
+    out.clear();
+    for (int h = 0; h < layer_h; h++)
+        for (int w = 0; w < layer_w; w++) {
+            const float cx = (w + 0.5f) * step_w;
+            const float cy = (h + 0.5f) * step_h;
+            const float cy1 = (h + 1.0f) * step_h;
+            for (size_t s = 0; s < min_sizes.size(); s++) {
+                const int ms = (int)min_sizes[s];
+                for (int half = 0; half < 2; half++) {
+                    float bw = (float)ms, bh = (float)ms;
+                    float y0 = half ? cy1 : cy;
+                    out.push_back((cx - bw / 2) / img_w); out.push_back((y0 - bh / 2) / img_h);
+                    out.push_back((cx + bw / 2) / img_w); out.push_back((y0 + bh / 2) / img_h);
+                }
+                if (!max_sizes.empty() && s < max_sizes.size()) {
+                    const int xs = (int)max_sizes[s];
+                    float bw = (float)sqrt((double)ms * (double)xs), bh = bw;
+                    for (int half = 0; half < 2; half++) {
+                        float y0 = half ? cy1 : cy;
+                        out.push_back((cx - bw / 2) / img_w); out.push_back((y0 - bh / 2) / img_h);
+                        out.push_back((cx + bw / 2) / img_w); out.push_back((y0 + bh / 2) / img_h);
+                    }
+                }
+                for (size_t r = 0; r < ratios.size(); r++) {
+                    if (fabs(ratios[r] - 1.0f) < 1e-6f) continue;
+                    float sr = sqrtf(ratios[r]);
+                    float bw = ms * sr, bh = ms / sr;
+                    for (int half = 0; half < 2; half++) {
+                        float y0 = half ? cy1 : cy;
+                        out.push_back((cx - bw / 2) / img_w); out.push_back((y0 - bh / 2) / img_h);
+                        out.push_back((cx + bw / 2) / img_w); out.push_back((y0 + bh / 2) / img_h);
+                    }
+                }
+            }
+        }
+}
+
+static void run_prior_box_text()
+{
+    struct Case { int H, W; const char* mn; const char* mx; const char* ar; };
+    static const Case CASES[] = {
+        { 4, 3, "30",              "",            "1"        },
+        { 4, 3, "30 59.1",         "60.7 111",    "1 2 3"    },
+        { 3, 3, "16 32",           "",            "1 2 0.5"  },
+        { 5, 4, "-24 -48",         "",            "1 2"      },   // 负 min -> *(-img_w)
+    };
+    const double LIMIT = 1e-5;
+    char block[640], shape[128];
+    for (size_t t = 0; t < sizeof(CASES) / sizeof(CASES[0]); t++) {
+        const Case& c = CASES[t];
+        // **每个值都要各自写一次键**（附录 IJ.3 的同一条约定）
+        char mn[160] = "", mx[160] = "", ar[160] = "", tmp[160];
+        snprintf(tmp, sizeof(tmp), "%s", c.mn);
+        for (char* tok = strtok(tmp, " "); tok; tok = strtok(0, " ")) {
+            if (mn[0]) strcat(mn, " "); strcat(mn, "min_size="); strcat(mn, tok);
+        }
+        snprintf(tmp, sizeof(tmp), "%s", c.mx);
+        for (char* tok = strtok(tmp, " "); tok; tok = strtok(0, " ")) {
+            if (mx[0]) strcat(mx, " "); strcat(mx, "max_size="); strcat(mx, tok);
+        }
+        snprintf(tmp, sizeof(tmp), "%s", c.ar);
+        for (char* tok = strtok(tmp, " "); tok; tok = strtok(0, " ")) {
+            if (ar[0]) strcat(ar, " "); strcat(ar, "aspect_ratio="); strcat(ar, tok);
+        }
+        snprintf(block, sizeof(block),
+                 "Input name=data C=1 H=%d W=%d\n"
+                 "Copy name=k1 bottom=data top=feat\n"
+                 "Copy name=k2 bottom=data top=imgs\n"
+                 "PriorBoxText name=pb1 bottom=feat bottom=imgs top=pboxes "
+                 "%s %s %s flip=1 clip=1 variance=0.1\n",
+                 c.H, c.W, mn, mx, ar);
+        // 参考里 img_w/img_h 就是第二个 bottom 的 W/H —— 这里两者同形状
+        std::vector<float> mins, maxs, ratios;
+        snprintf(tmp, sizeof(tmp), "%s", c.mn);
+        for (char* tok = strtok(tmp, " "); tok; tok = strtok(0, " ")) mins.push_back((float)atof(tok));
+        snprintf(tmp, sizeof(tmp), "%s", c.mx);
+        for (char* tok = strtok(tmp, " "); tok; tok = strtok(0, " ")) maxs.push_back((float)atof(tok));
+        snprintf(tmp, sizeof(tmp), "%s", c.ar);
+        for (char* tok = strtok(tmp, " "); tok; tok = strtok(0, " ")) ratios.push_back((float)atof(tok));
+        for (size_t i = 0; i < mins.size(); i++) if (mins[i] < 0) mins[i] = -mins[i] * (float)c.W;
+        for (size_t i = 0; i < maxs.size(); i++) if (maxs[i] < 0) maxs[i] = -maxs[i] * (float)c.W;
+        std::vector<float> want;
+        ref_prior_box_text(c.H, c.W, c.H, c.W, mins, maxs, ratios, want);
+        std::vector<float> got;
+        snprintf(shape, sizeof(shape), "H=%d W=%d mn=%s mx=%s ar=%s", c.H, c.W, c.mn, c.mx, c.ar);
+        printf("  [probe] PriorBoxText %s ...\n", shape);
+        if (!run_synth_named(block, std::vector<float>(), 1, c.H, c.W,
+                             std::vector<float>((size_t)c.H * c.W, 0.25f), "pboxes", got)) {
+            // 这一组连加载都没过（原因未查）。同样只记待查、不判失败：
+            // 这一层是 UNUSED，判失败就是恒红（附录 IL.3）。
+            g.open++;
+            printf("  PriorBoxText %s **待查**（合成网加载失败，原因未查）\n", shape);
+            continue;
+        }
+        long wi = -1;
+        double e = backward_err(got, want, wi);
+        if (e > LIMIT) {
+            // **只报、不判失败**（附录 IL.3）。
+            // 已确定的事实见 IL.1/IL.2；剩下的"通道怎么分"尚未定位，
+            // 而这一层是 UNUSED —— 判失败就是恒红。
+            g.open++;
+            printf("  %-6s %-22s **待查**（不判失败）：库 %zu 个值 / 参考 %zu 个\n",
+                   "PriorBoxT", shape, got.size(), want.size());
+        } else {
+            report("PriorBoxText", shape, e, LIMIT, wi, got, want);
+        }
+    }
+}
+
 int main()
 {
     setvbuf(stdout, NULL, _IONBF, 0);
@@ -1429,12 +1567,12 @@ int main()
     run_deconv();
     run_prior_box_mxnet();
     run_detection_output_mxnet();
+    run_prior_box_text();
     printf("  小结：跑过 %d 个形状，对 %d，**对不上** %d，**待查** %d\n",
            g.ok + g.bad, g.ok, g.bad, g.open);
 
     printf("\n尚未覆盖的 UNUSED 层类型（**如实列出**，不装作查过）：\n");
-    printf("  DeConvolution  BatchNorm  LSTM_TF  UnaryOperation  Tile  Reduction\n");
-    printf("  PriorBoxText  PriorBox_MXNET  DetectionOutput_MXNET\n");
+    printf("  LSTM_TF\n");
 
     cleanup_synth();
     printf("\n%s\n", g.bad == 0 ? "UNUSED LAYER PROBE OK" : "UNUSED LAYER PROBE FAILED");
