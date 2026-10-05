@@ -1698,3 +1698,14 @@ IR.1 的顺序探针只有**一个** ratio，所以它证明的是
   新增 `order_prior_box_text()`；`run_prior_box_text` 只比写出来的那一半
 * `audit_k3_20261001.md`（追加 IR）
 * **无生产代码改动**；两个平台均已手工重编 + 实跑（121 个形状 / 待查 10）
+
+## 新增/变更：IR 落地后的完整回归（v55）
+
+```
+ALL CHECKS PASSED        rc=0        FAILED 计数 = 0
+```
+
+`SampleUnusedLayerProbe` 新增的 `order_prior_box_text()`（顺序探针）在两个平台上都跑过、
+输出一致；探针累计 **121 个形状**（121 通过 / 0 对不上 / 10 待查）。
+其余组（D1/D2 双平台全量构建、D3/D4 两平台 sample、A~C16 全部门禁、
+MSVC `/analyze`、ARM/NEON 与 FP16 档解析、MSVC ASan）全部 OK。
