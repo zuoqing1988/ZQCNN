@@ -1419,6 +1419,10 @@ static void run_detection_output_mxnet()
 // `(-x)*img_w`（Caffe 的"负数表示相对图像尺寸的比例"约定）。
 // `flip` 被解析并存进成员，但这个生成器**一次都没用**它（与
 // PriorBox_MXNET 的 variance/clip 同类，附录 IL.2）。
+// 装置的旋钮：`flip` 由扫描与对拍**共用**（附录 IP.1）。
+// 必须声明在 `ref_prior_box_text` 之前 —— 它两个函数都要用。
+static int g_flip = 1;
+
 static void ref_prior_box_text(int layer_h, int layer_w, int img_h, int img_w,
                                const std::vector<float>& min_sizes,
                                const std::vector<float>& max_sizes,
@@ -1431,7 +1435,7 @@ static void ref_prior_box_text(int layer_h, int layer_w, int img_h, int img_w,
     for (size_t r = 0; r < ratios.size(); r++)
         if (fabs(ratios[r] - 1.0f) >= 1e-6f) num_valid++;
     const int num_priors = 2 * (int)min_sizes.size()
-        * (1 + (max_sizes.empty() ? 0 : 1) + num_valid);
+        * ((1 + (max_sizes.empty() ? 0 : 1)) + (g_flip ? 2 : 1) * num_valid);
     const int out_count = 2 * layer_h * layer_w * num_priors * 4;   // [N,2,dim,1]
     out.assign(out_count, 0.0f);
     size_t w = 0;
@@ -1466,6 +1470,19 @@ static void ref_prior_box_text(int layer_h, int layer_w, int img_h, int img_w,
                         out[w++] = (cx - bw / 2) / img_w; out[w++] = (y0 - bh / 2) / img_h;
                         out[w++] = (cx + bw / 2) / img_w; out[w++] = (y0 + bh / 2) / img_h;
                     }
+                    // **flip=1 时每个 ratio 再多发一对**：把 w/h 交换后再发一次
+                    // （Caffe SSD 的翻转框就是长宽互换的那一份）。
+                    // 这是**测出来的**，不是读代码读出来的（附录 IP.1）：
+                    //   flip=0 -> num_priors = 2m(1+M) + 2mr
+                    //   flip=1 -> num_priors = 2m(1+M) + 4mr
+                    // 12 行网格两档 flip 全部相符（IO.2 的表是 flip=1 那一档）。
+                    if (g_flip) {
+                        for (int half = 0; half < 2; half++) {
+                            float y0 = half ? cy1 : cy;
+                            out[w++] = (cx - bh / 2) / img_w; out[w++] = (y0 - bw / 2) / img_h;
+                            out[w++] = (cx + bh / 2) / img_w; out[w++] = (y0 + bw / 2) / img_h;
+                        }
+                    }
                 }
             }
         }
@@ -1486,10 +1503,15 @@ static void ref_prior_box_text(int layer_h, int layer_w, int img_h, int img_w,
 //
 // 于是"库到底按几个 prior 算"变成一个**可数的事实**，
 // 而不必再猜公式（附录 IL.6 那一轮就是卡在猜公式上）。
+//
+// `flip` 是**装置的一个旋钮**（附录 IP.1）：`flip=0` 与 `flip=1` 各扫一遍，
+// 于是"翻转框到底发不发、发几个"也变成可数的事实，而不是读代码读出来的。
 static void scan_prior_box_text()
 {
-    printf("  扫描（out = [N,2,dim,1]，dim = H*W*num_priors*4）：\n");
-    printf("  %-28s %8s %8s\n", "min / max / ratios", "实测", "按公式");
+  for (int flip = 0; flip <= 1; flip++) {
+    g_flip = flip;
+    printf("\n  扫描 flip=%d（out = [N,2,dim,1]，dim = H*W*num_priors*4）：\n", flip);
+    printf("  %-20s %8s %10s %10s\n", "min/max/ratios", "实测", "2m(1+M)+4mr", "2m(1+M)+2mr");
     for (int nmin = 1; nmin <= 2; nmin++)
         for (int has_max = 0; has_max <= 1; has_max++)
             for (int nratio = 0; nratio <= 3; nratio++) {
@@ -1511,31 +1533,32 @@ static void scan_prior_box_text()
                          "Copy name=k1 bottom=data top=feat\n"
                          "Copy name=k2 bottom=data top=imgs\n"
                          "PriorBoxText name=pb1 bottom=feat bottom=imgs top=pboxes "
-                         "%s %s %s flip=1 clip=1 variance=0.1\n",
-                         H, W, mn, mx, ar);
+                         "%s %s %s flip=%d clip=1 variance=0.1\n",
+                         H, W, mn, mx, ar, flip);
                 if (!write_file(SYNTH_PARAM, block, strlen(block))) { printf("  写不出参数文件\n"); return; }
                 if (!write_file(SYNTH_MODEL, "", 0)) { printf("  写不出权重文件\n"); return; }
                 ZQ::ZQ_CNN_Net net;
                 if (!net.LoadFrom(SYNTH_PARAM, SYNTH_MODEL)) {
-                    printf("  %-28s %8s\n", "（加载失败）", "-");
+                    printf("  %-20s %8s\n", "（加载失败）", "-");
                     continue;
                 }
                 ZQ::ZQ_CNN_Tensor4D_NHW_C_Align256bit ti;
                 std::vector<float> in((size_t)H * W, 0.25f);
                 if (!ti.ConvertFromCompactNCHW(&in[0], 1, 1, H, W)) { printf("  输入张量失败\n"); return; }
-                if (!net.Forward(ti)) { printf("  %-28s %8s\n", "（Forward 失败）", "-"); continue; }
+                if (!net.Forward(ti)) { printf("  %-20s %8s\n", "（Forward 失败）", "-"); continue; }
                 const ZQ::ZQ_CNN_Tensor4D* ob = net.GetBlobByName("pboxes");
-                if (ob == 0) { printf("  %-28s %8s\n", "（取不到输出）", "-"); continue; }
+                if (ob == 0) { printf("  %-20s %8s\n", "（取不到输出）", "-"); continue; }
                 long long total = (long long)ob->GetN() * ob->GetC() * ob->GetH() * ob->GetW();
                 long long measured = total / (2LL * H * W * 4);
-                int pred = 2 * nmin * (1 + has_max + nratio);
+                int p4 = 2 * nmin * (1 + has_max) + 4 * nmin * nratio;
+                int p2 = 2 * nmin * (1 + has_max) + 2 * nmin * nratio;
                 char label[96];
                 snprintf(label, sizeof(label), "%d / %d / %d", nmin, has_max, nratio);
-                printf("  %-28s %8lld %8d %s\n", label, measured, pred,
-                       measured == pred ? "" : "  <== 对不上");
+                printf("  %-20s %8lld %10d %10d %s\n", label, measured, p4, p2,
+                       measured == p4 ? "<== 4mr" : (measured == p2 ? "<== 2mr" : "<== 两个都不对"));
             }
-    printf("  （ratio 列表里给的是 2,3,4…，**没有** 1；实测数与"
-           "「2*|min|*(1+有max+|ratio|)」的关系见上表）\n");
+  }
+    printf("  （ratio 列表给的是 2,3,4…，**不含 1**；层尺寸 H=W=3）\n");
 }
 
 static void run_prior_box_text()
