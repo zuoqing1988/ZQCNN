@@ -1727,14 +1727,16 @@ static void order_prior_box_text()
            "      ratio2@50=70.7107x35.3553 翻转=35.3553x70.7107；中心 y=0.5 / 1.0）\n");
 
     // 注意：这里**只验了"每格只有 size 框"的格子顺序**（附录 IS.1）。
-    // 「格子循环 x ratio 框」两层的**嵌套顺序**本轮**没有验** ——
-    // 探针里留过 `g_cell_ratio` 这个旋钮，但没能把参数拼进去就停了，
-    // 与其留一个**不生效的旋钮**（读代码的人会以为它能用），不如删掉，
-    // 把它记成待办（附录 IT.3）。
-    // ---- 配置3：2x2 的网格，只用 size 框，读**格子循环的顺序** ----
+    // 「格子循环 x ratio 框」两层的**嵌套顺序**（附录 IU.1）：
+    // `g_cell_ratio` 是这个探针的**旋钮** —— 有 ratio 时每格 6 个框
+    // （size x2、ratio2 x2、翻转 x2），框中心告诉你**是哪个格子**、
+    // 半宽告诉你**是哪一类**，于是"格子在外、框种类在内"还是反过来
+    // 一次就分出来了。
+    //
+    // ---- 格子顺序探针：2x2 的网格 ----
     // 每格 2 个框（cy、cy1），框中心 x = w+0.5、y = h+0.5 / h+1，
     // 于是**中心坐标直接告诉你这是哪个格子、什么次序**。
-    {
+    for (int with_ratio = 0; with_ratio <= 1; with_ratio++) {
         const int H2 = 2, W2 = 2;
         char block2[512];
         snprintf(block2, sizeof(block2),
@@ -1742,28 +1744,34 @@ static void order_prior_box_text()
                  "Copy name=k1 bottom=data top=feat\n"
                  "Copy name=k2 bottom=data top=imgs\n"
                  "PriorBoxText name=pb1 bottom=feat bottom=imgs top=pboxes "
-                 "min_size=30 flip=1 clip=0 variance=0.1\n",
-                 H2, W2);
+                 "min_size=30 flip=1 clip=0 variance=0.1%s\n",
+                 H2, W2, with_ratio ? " aspect_ratio=2" : "");
         if (!write_file(SYNTH_PARAM, block2, strlen(block2))) return;
         if (!write_file(SYNTH_MODEL, "", 0)) return;
         ZQ::ZQ_CNN_Net net2;
-        if (!net2.LoadFrom(SYNTH_PARAM, SYNTH_MODEL)) { printf("  配置3 加载失败\n"); return; }
+        if (!net2.LoadFrom(SYNTH_PARAM, SYNTH_MODEL)) { printf("  格子探针(ratio=%d) 加载失败\n", with_ratio); continue; }
         ZQ::ZQ_CNN_Tensor4D_NHW_C_Align256bit ti2;
         std::vector<float> in2((size_t)H2 * W2, 0.25f);
-        if (!ti2.ConvertFromCompactNCHW(&in2[0], 1, 1, H2, W2)) return;
-        if (!net2.Forward(ti2)) { printf("  配置3 Forward 失败\n"); return; }
+        if (!ti2.ConvertFromCompactNCHW(&in2[0], 1, 1, H2, W2)) continue;
+        if (!net2.Forward(ti2)) { printf("  格子探针(ratio=%d) Forward 失败\n", with_ratio); continue; }
         const ZQ::ZQ_CNN_Tensor4D* ob2 = net2.GetBlobByName("pboxes");
-        if (ob2 == 0) return;
+        if (ob2 == 0) continue;
         std::vector<float> g2((size_t)ob2->GetN() * ob2->GetC() * ob2->GetH() * ob2->GetW());
         ob2->ConvertToCompactNCHW(&g2[0]);
-        printf("\n  格子顺序探针（2x2 网格 / clip=0 / 只有 size 框 / flip=1）：\n");
+        printf("\n  格子顺序探针（2x2 网格 / clip=0 / flip=1 / %s）：\n",
+               with_ratio ? "**带 ratio=2**" : "只有 size 框");
         const size_t half2 = g2.size() / 2;
-        for (size_t i = 0; i < half2; i += 4)
-            printf("      框%2zu: 中心 x=%7.4f 中心 y=%7.4f"
+        for (size_t i = 0; i < half2; i += 4) {
+            const float hx = (g2[i + 2] - g2[i]) / 2, hy = (g2[i + 3] - g2[i + 1]) / 2;
+            const float ccx = (g2[i] + g2[i + 2]) / 2, ccy = (g2[i + 1] + g2[i + 3]) / 2;
+            const char* kind =
+                (fabs(hx - 15.0f) < 0.01f) ? "size" :
+                (fabs(hx - 21.2132f) < 0.01f) ? "ratio2" :
+                (fabs(hx - 10.6066f) < 0.01f) ? "翻转2" : "?";
+            printf("      框%2zu: 半宽 x=%8.4f 半宽 y=%8.4f 中心 x=%6.3f 中心 y=%6.3f"
                    "   -> (w=%.0f, h=%.0f, %s)\n",
-                   i / 4, (g2[i] + g2[i + 2]) / 2, (g2[i + 1] + g2[i + 3]) / 2,
-                   (g2[i] + g2[i + 2]) / 2 - 0.5f, (g2[i + 1] + g2[i + 3]) / 2 - 0.5f,
-                   ((g2[i + 1] + g2[i + 3]) / 2 - (int)((g2[i + 1] + g2[i + 3]) / 2)) == 0 ? "cy" : "cy1");
+                   i / 4, hx, hy, ccx, ccy, ccx - 0.25f, ccy - 0.25f, kind);
+        }
     }
 }
 
