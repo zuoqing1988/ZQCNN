@@ -39,7 +39,7 @@ Reshape	EXERCISED	15	0
 Squeeze	PROBED	0	0
 PriorBox	EXERCISED	10	0
 PriorBoxText	UNUSED	0	0
-PriorBox_MXNET	UNUSED	0	0
+PriorBox_MXNET	PROBED	0	0
 Concat	EXERCISED	16	0
 DetectionOutput	EXERCISED	2	0
 DetectionOutput_MXNET	UNUSED	0	0

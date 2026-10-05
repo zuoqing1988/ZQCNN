@@ -1094,6 +1094,133 @@ static void run_deconv()
     }
 }
 
+// PriorBox_MXNET：MXNet 风格的 SSD 先验框生成器。语义取自
+// `ZQ_CNN_Forward_SSEUtils::_prior_box_MXNET`（附录 IJ.1）：
+//
+//     step_width  = step_w > 0 ? step_w : 1 / layer_width
+//     step_height = step_h > 0 ? step_h : 1 / layer_height
+//     out_C = 1, out_H = layer_height * layer_width * num_priors, out_W = 4
+//     for h, for w:
+//         cx = (w + offset) * step_width
+//         cy = (h + offset) * step_height
+//         for i in sizes:            bw = size*H/W/2,  bh = size/2
+//         for j in 1..R-1:           r = sqrt(ar[j]); bw = sizes[0]*H/W*r/2; bh = sizes[0]/r/2
+//             各自写出一个 (xmin, ymin, xmax, ymax)
+//
+// **输出是 raw box**：`variance` 与 `clip` 虽然被 ReadParam 解析并存进成员，
+// 但这个生成器**一次都没用它们** —— 变方差与裁剪不在这一层（附录 IJ.2）。
+//
+// 输出张量是 [1, H*W*num_priors, 4, 1]，写入按 `pixStep` 跨步
+// （out_C=1 时 pixelStep 被对齐补到 8），读回 compact NCHW 之后
+// 就是**按上面的发射顺序**排好的 4 元组序列。
+static void ref_prior_box_MXNET(int inH, int inW,
+                                const std::vector<float>& sizes,
+                                const std::vector<float>& ratios,   // 已含 1.f 且已去重
+                                float step_w, float step_h, float offset,
+                                std::vector<float>& out)
+{
+    const int num_sizes = (int)sizes.size();
+    const int num_ratios = (int)ratios.size();
+    const int num_priors = num_ratios + num_sizes - 1;
+    // **step 在 .zqparams 里是整数**：`ReadParam` 对 `step` / `step_w` / `step_h`
+    // 都用 `atoi`，所以 `step_w=0.1` 会被读成 **0**，进而走"由层尺寸推"的分支。
+    // 第一版参考直接用了文件里的浮点值，于是 4 组对不上、1 组（本来就写 0）精确通过
+    // —— **症状与"映射错了"很像，实际是"整数/浮点"这一个约定**（附录 IJ.4）。
+    const int istep_w = (int)step_w, istep_h = (int)step_h;
+    const float step_width = (istep_w > 0) ? (float)istep_w : 1.0f / (float)inW;
+    const float step_height = (istep_h > 0) ? (float)istep_h : 1.0f / (float)inH;
+    out.clear();
+    out.reserve((size_t)inH * inW * num_priors * 4);
+    for (int h = 0; h < inH; h++)
+        for (int w = 0; w < inW; w++) {
+            const float cx = (w + offset) * step_width;
+            const float cy = (h + offset) * step_height;
+            for (int i = 0; i < num_sizes; i++) {
+                float bw = sizes[i] * inH / inW / 2;
+                float bh = sizes[i] / 2;
+                out.push_back(cx - bw); out.push_back(cy - bh);
+                out.push_back(cx + bw); out.push_back(cy + bh);
+            }
+            for (int j = 1; j < num_ratios; j++) {
+                float r = sqrtf(ratios[j]);
+                float bw = sizes[0] * inH / inW * r / 2;
+                float bh = sizes[0] / r / 2;
+                out.push_back(cx - bw); out.push_back(cy - bh);
+                out.push_back(cx + bw); out.push_back(cy + bh);
+            }
+        }
+}
+
+static void run_prior_box_mxnet()
+{
+    struct Case { int H, W; const char* sizes; const char* ratios; float sw, sh, off; };
+    static const Case CASES[] = {
+        { 4, 3, "30",        "1",         1.0f,  1.0f,  0.5f },
+        { 4, 3, "30 59.1",   "1 2 3",     1.0f,  1.0f,  0.5f },
+        { 4, 3, "-30 -59.1", "1 2",       1.0f,  1.0f,  0.5f },   // 负 size 会被取绝对值
+        { 5, 4, "20 40",     "1 2 3 0.5", 2.0f,  3.0f,  0.0f },   // offset=0 且 sw != sh
+        { 3, 3, "16",        "1 2 3 4 5", 0.0f,  0.0f,  0.5f },    // step=0 -> 用 1/W、1/H
+    };
+    const double LIMIT = 1e-5;
+    char block[512], shape[128];
+    for (size_t t = 0; t < sizeof(CASES) / sizeof(CASES[0]); t++) {
+        const Case& c = CASES[t];
+        // **每个 size / aspect_ratio 都要各自写一次键** ——
+        // `size=30 59.1` 里 `59.1` 是**裸 token**，ReadParam 会报
+        // "unknown para 59.1" 并**只**收下 30。第一版就是这么写的，
+        // 于是 sizes=[30]、ratios=[1]，num_priors 变成 1，
+        // 5 组里 4 组报"形状对不上"（库给的少得多）。
+        // —— 这是**用法错**，不是库的错（附录 IJ.3）。
+        char sz[160] = "", rt[160] = "", tmp[160];
+        snprintf(tmp, sizeof(tmp), "%s", c.sizes);
+        for (char* tok = strtok(tmp, " "); tok; tok = strtok(0, " ")) {
+            if (sz[0]) strcat(sz, " ");
+            strcat(sz, "size=");
+            strcat(sz, tok);
+        }
+        snprintf(tmp, sizeof(tmp), "%s", c.ratios);
+        for (char* tok = strtok(tmp, " "); tok; tok = strtok(0, " ")) {
+            if (rt[0]) strcat(rt, " ");
+            strcat(rt, "aspect_ratio=");
+            strcat(rt, tok);
+        }
+        snprintf(block, sizeof(block),
+                 "PriorBox_MXNET name=pb1 bottom=data top=top1 %s %s "
+                 "step_w=%g step_h=%g offset=%g clip=1 variance=0.1 0.2 0.3 0.4\n",
+                 sz, rt, c.sw, c.sh, c.off);
+        // 解析 sizes / ratios（与 ReadParam 同样：ratios 前面补 1、并去重）
+        std::vector<float> sizes, ratios(1, 1.0f);
+        {
+            char tmp[128];
+            snprintf(tmp, sizeof(tmp), "%s", c.sizes);
+            for (char* tok = strtok(tmp, " "); tok; tok = strtok(0, " "))
+                sizes.push_back((float)atof(tok));
+            snprintf(tmp, sizeof(tmp), "%s", c.ratios);
+            std::vector<float> raw;
+            for (char* tok = strtok(tmp, " "); tok; tok = strtok(0, " "))
+                raw.push_back((float)atof(tok));
+            for (size_t k = 0; k < raw.size(); k++) {
+                bool dup = false;
+                for (size_t j = 0; j < ratios.size(); j++)
+                    if (fabs(raw[k] - ratios[j]) < 1e-6) { dup = true; break; }
+                if (!dup) ratios.push_back(raw[k]);
+            }
+        }
+        for (size_t i = 0; i < sizes.size(); i++) if (sizes[i] < 0) sizes[i] = -sizes[i];
+        std::vector<float> want;
+        ref_prior_box_MXNET(c.H, c.W, sizes, ratios, c.sw, c.sh, c.off, want);
+        std::vector<float> got;
+        printf("  [probe] PriorBox_MXNET H=%d W=%d sizes=%s ratios=%s ...\n",
+               c.H, c.W, c.sizes, c.ratios);
+        if (!run_synth(block, std::vector<float>(), 1, c.H, c.W,
+                       std::vector<float>((size_t)c.H * c.W, 0.25f), got)) { g.bad++; continue; }
+        long wi = -1;
+        double e = backward_err(got, want, wi);
+        snprintf(shape, sizeof(shape), "H=%d W=%d sizes=%s ratios=%s", c.H, c.W, c.sizes, c.ratios);
+        report("PriorBox", shape, e, LIMIT, wi, got, want);
+    }
+}
+
 int main()
 {
     setvbuf(stdout, NULL, _IONBF, 0);
@@ -1123,6 +1250,7 @@ int main()
     run_tile();
     deconv_calibrate();
     run_deconv();
+    run_prior_box_mxnet();
     printf("  小结：跑过 %d 个形状，对 %d，**对不上** %d，**待查** %d\n",
            g.ok + g.bad, g.ok, g.bad, g.open);
 

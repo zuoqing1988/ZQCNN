@@ -1063,3 +1063,57 @@ C7 组在**新口径**下通过，输出已变成：
 
 其余组（D1/D2 双平台全量构建、D3/D4 两平台 sample、A~C16 全部门禁、
 MSVC `/analyze`、ARM/NEON 与 FP16 档解析、MSVC ASan）全部 OK。
+
+## 新增/变更：IJ —— 覆盖 `PriorBox_MXNET`（5 组全部**逐位相同**），真正零覆盖降到 3 类
+
+### 契约（读 `_prior_box_MXNET` 得到）
+
+    step_width  = step_w > 0 ? step_w : 1 / layer_width
+    step_height = step_h > 0 ? step_h : 1 / layer_height
+    out_C = 1, out_H = layer_height * layer_width * num_priors, out_W = 4
+    for h, for w:
+        cx = (w + offset) * step_width;  cy = (h + offset) * step_height
+        for i in sizes:      bw = size*H/W/2,  bh = size/2
+        for j in 1..R-1:     r = sqrt(ar[j]); bw = sizes[0]*H/W*r/2; bh = sizes[0]/r/2
+            各写出一个 (xmin, ymin, xmax, ymax)
+
+`num_priors = |aspect_ratios| + |sizes| - 1`；`ReadParam` 会在 aspect_ratios
+**前面补一个 1.f 并去重**；`sizes` 为负时 Forward 里取绝对值。
+
+**输出是 raw box**：`variance` 与 `clip` 虽然被解析并存进成员，
+但这个生成器**一次都没用它们** —— 变方差与裁剪不在这一层。
+
+### 两条参数写法上的约定（我各栽了一次，都是**我的**错）
+
+1. **每个 size / aspect_ratio 都要各自写一次键**。`size=30 59.1` 里 `59.1` 是
+   **裸 token**，`ReadParam` 报 `unknown para 59.1` 并**只**收下 `30`；
+   正确写法是 `size=30 size=59.1`。第一版写成前者，于是 num_priors 变成 1，
+   5 组里 4 组报"形状对不上"。
+2. **`step` / `step_w` / `step_h` 是整数**（`ReadParam` 用 `atoi`）。
+   所以 `step_w=0.1` 被读成 **0**，进而走"由层尺寸推"那一支。第一版参考直接用了
+   文件里的浮点值，于是 4 组对不上、只有本来就写 `0` 的那一组精确通过。
+
+> 两条的症状（"形状对不上" / "值差一点"）都很像"映射错了"，
+> 而真实原因只是一个键写法和一个整数/浮点约定。
+> **只有"本来就写了默认值/0"的那一组精确通过**，
+> 是"类型约定错了"的强信号 —— 映射写错不会挑出这种分组。
+
+### 结果
+
+5 组用例（负 size、多档 size、多档 aspect_ratio、offset=0、sw != sh、
+step=0 走推导分支）**全部逐位相同**（后向误差 0）。
+
+探针累计 **122 个形状**（117 通过 / 0 对不上 / **7 待查**，待查仍全部来自
+DeConvolution）。两个平台都 `UNUSED LAYER PROBE OK` rc=0。
+
+### 变更文件
+
+* `SamplesZQCNN/SampleUnusedLayerProbe/SampleUnusedLayerProbe.cpp` —
+  新增 `ref_prior_box_MXNET` / `run_prior_box_mxnet`
+* `audit_k3_20261001.md`（追加 IJ）
+* `AGENTS.md`（新增第 12 条「参数的键写法与类型也是契约」）
+* **无生产代码改动**；两个平台均已手工重编 + 实跑（rc=0）
+
+### 真正零覆盖还剩 3 类
+
+`LSTM_TF` / `PriorBoxText` / `DetectionOutput_MXNET`
