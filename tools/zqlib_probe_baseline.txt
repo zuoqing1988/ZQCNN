@@ -23,7 +23,7 @@ ZQ_BlendTwoImages3D.h	OK
 ZQ_CPURayCasting.h	OK	
 ZQ_CPURenderer2DWorkspace.h	OK	
 ZQ_CPURenderer3DWorkSpace.h	OK	
-ZQ_Calibration.h	BROKEN	/mnt/d/ZQCNN/3rdparty/include/ZQlib/ZQ_Calibration.h:1851:22: error: ‘
+ZQ_Calibration.h	OK	
 ZQ_CameraCalibration.h	OK	
 ZQ_CameraCalibrationBino.h	OK	
 ZQ_CameraCalibrationMono.h	OK	
