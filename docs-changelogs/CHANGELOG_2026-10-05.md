@@ -1337,3 +1337,17 @@ MSVC `/analyze`、ARM/NEON 与 FP16 档解析、MSVC ASan）全部 OK。
 
 所以 `LSTM_TF` **留在未覆盖列表里**，并在这里记下已查明的契约与理由；
 它是 36 种层类型里**最后一个**零覆盖项。
+
+## 新增/变更：IM 落地后的完整回归（v50）
+
+```
+ALL CHECKS PASSED        rc=0        FAILED 计数 = 0
+```
+
+* `D4 Windows sample SampleUnusedLayerProbe.exe: OK` —— 探针 **124 个形状**
+  （120 通过 / 0 对不上 / 11 待查）。
+* `C7 层类型可达性门禁`：`合计 36 种：EXERCISED 20 / PROBED 14 / COMMENTED 1 / UNUSED 1`，
+  基线无状态变化。
+
+其余组（D1/D2 双平台全量构建、D3/D4 两平台 sample、A~C16 全部门禁、
+MSVC `/analyze`、ARM/NEON 与 FP16 档解析、MSVC ASan）全部 OK。
