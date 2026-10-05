@@ -1415,3 +1415,19 @@ G + b_O(=5)     0.231041 0.289086 0.325562 0.345926
 * **无生产代码改动**；两个平台均已手工重编 + 实跑（rc=0，输出逐位一致）
 
 > 装置自写合成权重、跑完删掉，**不依赖任何随仓模型**，所以两条路径都能直接进回归。
+
+## 新增/变更：IN 落地后的完整回归（v51）
+
+```
+ALL CHECKS PASSED        rc=0        FAILED 计数 = 0
+```
+
+* `D4 Windows sample SampleLSTMTFCalib.exe: OK` —— 标定装置已进 Windows 侧回归。
+* `D3 Linux sample 回归`：10 个真跑 / 2 个桩 / **0 个问题**（含该装置）。
+* `D4 Windows sample SampleUnusedLayerProbe.exe: OK` —— 124 个形状。
+* `C7 层类型可达性门禁`：`合计 36 种：EXERCISED 20 / PROBED 14 / COMMENTED 1 / UNUSED 1`，
+  基线无状态变化（装置不写 `model/`，所以 LSTM_TF 仍算 UNUSED ——
+  这是**有意**的：可达性表描述的是"模型会不会跑到它"，装置覆盖另计）。
+
+其余组（D1/D2 双平台全量构建、D3/D4 两平台 sample、A~C16 全部门禁、
+MSVC `/analyze`、ARM/NEON 与 FP16 档解析、MSVC ASan）全部 OK。
