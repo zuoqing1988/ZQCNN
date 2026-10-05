@@ -61,6 +61,7 @@ LAYERS_C = os.path.join(ROOT, 'ZQCNN', 'layers_c')
 # NCHWC 那一族（layers_nchwc）同样在两个构建里，同样有这三条问题 ——
 # 第一次只扫 layers_c 时 14 处漏网全在这一族里（附录 IX.6）。
 LAYERS_NCHWC = os.path.join(ROOT, 'ZQCNN', 'layers_nchwc')
+ZQCNN_DIR = os.path.join(ROOT, 'ZQCNN')
 
 # 一个 .c 里可能出现的横向归约宏（名字现在只有一个，但按前缀扫，
 # 免得以后新增一层又从头踩一遍）
@@ -84,8 +85,13 @@ STORE_RE = re.compile(r'zq_mm_store_ps\s*\(\s*(?P<name>\w+)\s*,')
 #     不查就更新 `*buffer_len`，下次进来跳过重新分配，拿着空指针去算。
 # 3b（IX.6）：任何 `名字 = _aligned_malloc(...)` 之后 12 行内必须有该名字的判空。
 BUF_MALLOC_RE = re.compile(r'\*buffer\s*=\s*(?:\(\s*zq_base_type\s*\*\s*\)\s*)?_aligned_malloc')
+# 左边要吃掉**类型前缀 + 可能的数组下标**：`unsigned char* tmp_data = ...`
+# 与 `matrix_C[0][0] = ...` 两种写法第一版都漏了 —— 前者要求类型名后面有空白，
+# 后者 `\w+` 之后是 `[` 不是 `=`。漏掉的后果不是误报，是**静默少扫**：
+# 扫 `ZQCNN/*.cpp` 时 0 命中，差点被当成「那一族没有分配」（附录 IX.11 / IX.22）。
 ANY_MALLOC_RE = re.compile(
-    r'^\s*(?:[\w:\*]+\s+)?(\w+)\s*=\s*(?:\(\s*[\w:\*\s]+\*\s*\)\s*)?_aligned_malloc')
+    r'^\s*.*?\b(\w+(?:\[[^\]]*\])*)\s*=\s*'
+    r'(?:\(\s*[\w:\*\s]+\*\s*\)\s*)?_aligned_malloc')
 NULL_WIN = 400       # 扫到下一个函数为止的上限（不是窗口大小）
 # raw 头里每个函数都从第 0 列开始（`void zq_cnn_xxx(`），用它划函数边界
 FUNC_TOP_RE = re.compile(r'^(?:void|static\s+void|int|float)\s+\w+\s*\(')
@@ -352,12 +358,21 @@ def main(argv):
                 continue
             files += [os.path.join(d, f) for f in sorted(os.listdir(d))
                       if f.endswith(('.c', '.h'))]
+        # 再加上 ZQCNN/ 根下的 .cpp/.h —— 张量类（`ZQ_CNN_Tensor4D*.cpp`）
+        # 的 `ChangeSize` 里也有 `_aligned_malloc`，只在 raw 头里扫就漏掉了它们
+        # （实测那 4 处当时**都**判了空，所以没出事，但漏扫本身就是风险）。
+        if os.path.isdir(ZQCNN_DIR):
+            files += [os.path.join(ZQCNN_DIR, f) for f in sorted(os.listdir(ZQCNN_DIR))
+                      if f.endswith(('.cpp', '.h'))]
 
     raw_texts, total, bad_all = {}, 0, []
     store_total, store_bad_all = 0, []
     nullcheck_total, nullcheck_bad = 0, []
     for f in files:
-        text = io.open(f, encoding='utf-8').read()
+        # `errors='replace'`：ZQCNN/ 下有个别头不是合法 UTF-8（GBK 残留），
+        # 不给 replace 会让扫描器自己抛 UnicodeDecodeError —— 又一次
+        # 「扫描器被自己的输入绊倒」（附录 IX.11 / IX.22）。
+        text = io.open(f, encoding='utf-8', errors='replace').read()
         if f.endswith('.c'):
             secs, bad = scan_text(text, raw_texts)
             total += len(secs)
