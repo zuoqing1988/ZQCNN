@@ -124,6 +124,54 @@ RE_A27_GET = re.compile(r'lnet\[([A-Za-z0-9_]+)\]\.GetBlobByName\s*\(')
 # A28: `thread_num <= 1` 分支体内不得有 omp_get_thread_num()
 RE_A28_COND = re.compile(r'if\s*\(\s*thread_num\s*<=\s*1\s*\)')
 
+# A29: SetPara 必须把夹取后的 scale_factor 落到**成员** factor
+#     （原来那句改的是形参，成员 factor 从构造函数起就一直是 0.709）
+RE_A29_BAD = re.compile(r'^\s*scale_factor\s*=\s*__max\(', re.M)
+RE_A29_NEW = re.compile(r'const\s+float\s+new_factor\s*=.*?__max\(0\.5f', re.S)
+RE_A29_OLD = re.compile(r'const\s+float\s+old_factor\s*=\s*factor\s*;')
+RE_A29_ASSIGN = re.compile(r'this->factor\s*=\s*new_factor\s*;')
+RE_A29_CMP = re.compile(r'old_factor\s*!=\s*new_factor')
+
+# A30: AspectRatio 的 Pnet **任务循环**里，族判断与派生下标必须用 scale_id。
+#
+#      第一版写成「全文不许出现 `if (i < ori_num)`」—— 结果误报了 5 处：
+#      那些是 `for (int i = 0; i < total_scale_num; i++)` 的**尺度**循环，
+#      那里 `i` **就是**尺度下标，`if (i < ori_num)` / `maps[i]` / `mapH[i]`
+#      全都正确。真正有问题的只有**任务**循环
+#      （`for (int i = 0; i < task_num; i++)` + `int scale_id = task_scale_id[i];`）
+#      里那几个：任务表按 scale 顺序追加，`scale_id <= i`，
+#      一个 scale 产出多个块时两者就分离了。
+#      所以判据必须**锚在 `scale_id = task_scale_id[i]` 上**，不能全文扫。
+#      —— 这也是「扫描器过度敏感」和「扫描器过窄」一样有害的又一例。
+RE_A30_TASK = re.compile(r'int\s+scale_id\s*=\s*task_scale_id\[i\]\s*;')
+RE_A30_BAD = [
+    re.compile(r'if\s*\(\s*i\s*<\s*ori_num\s*\)'),
+    re.compile(r'else\s+if\s*\(\s*i\s*<\s*ori_num\s*\+'),
+    re.compile(r'int\s+j\s*=\s*i\s*-\s*ori_num\s*;'),
+    re.compile(r'int\s+k\s*=\s*i\s*-\s*ori_num\s*-\s*xhalf_num\s*;'),
+]
+A30_WINDOW = 3000   # 任务循环的分派块约 45 行；用窗口而不是配对花括号，够用且不会跨到别的循环
+
+# A31: 空任务守卫必须判**当前槽位**，不能只判外层 vector（外层 size == need_thread_num，恒 >= 1）
+RE_A31_BAD = re.compile(r'^\s*if\s*\(\s*task_src_off_x\.size\(\)\s*==\s*0\s*\)', re.M)
+RE_A31_GOOD = re.compile(r'task_src_off_x\[pp\]\.size\(\)\s*==\s*0')
+
+# A32: block_end 的终止条件必须用**每行/每列的块数**，不是块总数
+RE_A32_BAD = [
+    re.compile(r'block_end_w\[bb\]\s*=\s*\(\s*bw\s*==\s*block_num\s*-\s*1\s*\)'),
+    re.compile(r'block_end_h\[bb\]\s*=\s*\(\s*bh\s*==\s*block_num\s*-\s*1\s*\)'),
+]
+RE_A32_GOOD = [
+    re.compile(r'block_end_w\[bb\]\s*=\s*\(\s*bw\s*==\s*block_W_num\s*-\s*1\s*\)'),
+    re.compile(r'block_end_h\[bb\]\s*=\s*\(\s*bh\s*==\s*block_H_num\s*-\s*1\s*\)'),
+]
+
+# A33: block 循环的 pragma 必须带 reduction 子句
+RE_A33_PRAGMA = re.compile(
+    r'#pragma\s+omp\s+parallel\s+for\s+schedule\(dynamic,\s*chunk_size\)'
+    r'[^\n]*\bnum_threads\(thread_num\)')
+RE_A33_RED = re.compile(r'reduction\(\s*\+\s*:\s*before_count\s*,\s*after_count\s*\)')
+
 
 def _read(path):
     with io.open(path, 'r', encoding='utf-8') as f:
@@ -266,117 +314,189 @@ def scan_text(raw, label='<text>'):
                            % (text[:m.start()].count('\n') + 1)))
             else:
                 ok += 1
+
+    # ---- A29~A33：五个变体都要过（AspectRatio 的 A30 额外单独判）----
+    if RE_A29_BAD.search(text):
+        bad.append(('A29', 'SetPara 里还有 `scale_factor = __max(...)` —— '
+                    '它改的是**形参**，成员 factor 从构造函数起就一直是 0.709，'
+                    '调用方传的 scale_factor 完全无效'))
+    elif not (RE_A29_NEW.search(text) and RE_A29_OLD.search(text)
+              and RE_A29_ASSIGN.search(text) and RE_A29_CMP.search(text)):
+        bad.append(('A29', 'SetPara 没把夹取后的 scale_factor 落到成员 factor'
+                    '（缺 new_factor / old_factor / this->factor= / 比较用 old_factor!=new_factor 之一）'))
+    else:
+        ok += 1
+
+    if 'task_src_off_x' not in text:
+        pass                     # 本文件根本没有这套变量（比如 ncnn.h 换了自己的命名），A31 不适用
+    elif RE_A31_BAD.search(text):
+        bad.append(('A31', '还有裸的 `if (task_src_off_x.size() == 0)` —— 外层 vector 的大小是 '
+                    'need_thread_num，**恒 >= 1**，这个守卫永远不成立；'
+                    '真正会为空的是当前槽位 task_src_off_x[pp]'))
+    elif not RE_A31_GOOD.search(text):
+        bad.append(('A31', '一处都没有 `task_src_off_x[pp].size() == 0`（空任务槽位没守卫）'))
+    else:
+        ok += 1
+
+    bad32 = [r.pattern for r in RE_A32_BAD if r.search(text)]
+    if bad32:
+        bad.append(('A32', 'block_end 仍用 `block_num - 1`（块总数）而不是 '
+                    'block_W_num/block_H_num - 1（每行/每列的块数）—— '
+                    '除最后一个块外都扫不到边缘，贴边的脸会漏'))
+    elif not all(r.search(text) for r in RE_A32_GOOD):
+        bad.append(('A32', 'block_end_w/block_end_h 没有用 block_W_num/block_H_num'))
+    else:
+        ok += 1
+
+    n_pragma = len(RE_A33_PRAGMA.findall(text))
+    n_red = len(RE_A33_RED.findall(text))
+    if n_pragma == 0:
+        bad.append(('A33', '找不到 block 循环的 `#pragma omp parallel for '
+                    'schedule(dynamic, chunk_size) num_threads(thread_num)`'))
+    elif n_red < n_pragma:
+        bad.append(('A33', 'block 循环的 pragma 有 %d 处、带 reduction 子句的只有 %d 处 —— '
+                    'before_count/after_count 无锁 += 是数据竞争' % (n_pragma, n_red)))
+    else:
+        ok += 1
+
+    # A30 只对 AspectRatio 有意义：它是唯一有 xhalf/yhalf 三族分派的
+    is_ar = 'AspectRatio' in label
+    if is_ar:
+        hits = []
+        for m in RE_A30_TASK.finditer(text):
+            win = text[m.end():m.end() + A30_WINDOW]
+            for r in RE_A30_BAD:
+                if r.search(win):
+                    ln = text[:m.end() + r.search(win).start()].count(chr(10)) + 1
+                    hits.append((r.pattern, ln))
+                    break
+        if hits:
+            bad.append(('A30', 'Pnet **任务**循环里仍用任务下标 `i` 判族/算 j、k（应全部用 scale_id）'
+                        '—— k 可为负 => std::vector::operator[](负) 越界 -> 野张量上 .ROI()。'
+                        '（尺度循环 `for (i < total_scale_num)` 里的 `i` 是对的，不归本条管。）'
+                        + '；'.join('行 %d' % ln for _, ln in hits)))
+        else:
+            ok += 1
     return ok, bad
 
 
+# FULL 是一份"什么都齐"的骨架，后面每条自测样本都在它基础上**只破坏一处**。
+# 这样每条自测的期望集合都是可推导的，而不是拍脑袋写的。
+FULL = r"""
+void SetPara(int w, int h, float scale_factor = 0.709) {
+	const float new_factor = (float)__max(0.5f, __min(0.97f, scale_factor));
+	const float old_factor = factor;
+	this->factor = new_factor;
+	this->pnet_size = __max(1, pnet_size);
+	this->pnet_stride = __max(1, pnet_stride);
+	int old_pnet_size = this->pnet_size;
+	int old_min_size = min_size;
+	bool old_special_big = special_handle_very_big_face;
+	if (width != w || height != h || old_factor != new_factor
+		|| old_pnet_size != this->pnet_size || old_min_size != min_size
+		|| old_special_big != special_handle_very_big_face)
+	{
+		pnet_images.resize(count);
+		{
+			int kept = 0;
+			for (int i = 0; i < (int)scales.size(); i++) {
+				int changedH = (int)ceil(height * scales[i]);
+				int changedW = (int)ceil(width * scales[i]);
+				if (changedH < pnet_size || changedW < pnet_size) continue;
+				scales[kept++] = scales[i];
+			}
+			if (kept != (int)scales.size()) { scales.resize(kept); }
+		}
+	}
+	int block_H_num = 1, block_W_num = 1, block_num = 1;
+	int scoreH = 1, scoreW = 1, width_per_block = 1, height_per_block = 1;
+	for (int bh = 0; bh < block_H_num; bh++) for (int bw = 0; bw < block_W_num; bw++) {
+		int bb = bh * block_W_num + bw;
+		block_end_w[bb] = (bw == block_W_num - 1) ? scoreW : ((bw + 1)*width_per_block);
+		block_end_h[bb] = (bh == block_H_num - 1) ? scoreH : ((bh + 1)*height_per_block);
+	}
+	if (task_src_off_x.size() == 0 || task_src_off_x[pp].size() == 0) continue;
+#pragma omp parallel for schedule(dynamic, chunk_size) num_threads(thread_num) reduction(+:before_count, after_count)
+	for (int bb = 0; bb < block_num; bb++) { before_count += tmp_before_count; after_count += tmp_after_count; }
+}
+"""
+
+
+def _drop(s, pat, flags=0):
+    return re.sub(pat, '', s, flags=flags)
+
+
 SELFCHECK = [
-    # (说明, 文本, 期望 bad 条数是否 > 0)
-    ('全合格的最小样本', '''
-void SetPara(int w, int h) {
-    int old_pnet_size = this->pnet_size;
-    int old_min_size = min_size;
-    bool old_special_big = special_handle_very_big_face;
-    this->pnet_size = __max(1, pnet_size);
-    this->pnet_stride = __max(1, pnet_stride);
-    if (width != w || height != h || factor != scale_factor
-        || old_pnet_size != this->pnet_size || old_min_size != min_size
-        || old_special_big != special_handle_very_big_face)
-    {
-        pnet_images.resize(count);
-        {
-            int kept = 0;
-            for (int i = 0; i < (int)scales.size(); i++) {
-                int changedH = (int)ceil(height * scales[i]);
-                int changedW = (int)ceil(width * scales[i]);
-                if (changedH < pnet_size || changedW < pnet_size) continue;
-                scales[kept++] = scales[i];
-            }
-            if (kept != (int)scales.size()) { scales.resize(kept); }
-        }
-    }
-}
-''', []),
-    # A23 不合格
-    ('A23 漏夹取（ncnn.h 修前的样子）', '''
-void SetPara(int w, int h) {
-    int old_pnet_size = this->pnet_size;
-    this->pnet_size = pnet_size;
-    this->pnet_stride = pnet_stride;
-    pnet_images.resize(count);
-    { int kept = 0; for (int i = 0; i < (int)scales.size(); i++) {
-        int changedH = 0; int changedW = 0;
-        if (changedH < pnet_size || changedW < pnet_size) continue;
-        scales[kept++] = scales[i]; } scales.resize(kept); }
-}
-''', ['A23', 'A24']),
-    # A24 不合格
-    ('A24 失效条件没比旧值', '''
-void SetPara(int w, int h) {
-    this->pnet_size = __max(1, pnet_size);
-    this->pnet_stride = __max(1, pnet_stride);
-    if (width != w || height != h || factor != scale_factor) {
-        pnet_images.resize(count);
-        { int kept = 0; for (int i = 0; i < (int)scales.size(); i++) {
-            int changedH = 0; int changedW = 0;
-            if (changedH < pnet_size || changedW < pnet_size) continue;
-            scales[kept++] = scales[i]; } scales.resize(kept); }
-    }
-}
-''', ['A24']),
-    # A25 不合格
-    ('A25 没有不变量兜底', '''
-void SetPara(int w, int h) {
-    int old_pnet_size = this->pnet_size;
-    int old_min_size = min_size;
-    bool old_special_big = special_handle_very_big_face;
-    this->pnet_size = __max(1, pnet_size);
-    this->pnet_stride = __max(1, pnet_stride);
-    if (width != w || height != h || factor != scale_factor
-        || old_pnet_size != this->pnet_size || old_min_size != min_size
-        || old_special_big != special_handle_very_big_face)
-    { pnet_images.resize(count); }
-}
-''', ['A25']),
-    # A26 不合格
-    ('A26 活的 * 0.5', '''
-int thread_num = 1;
-x = col1 + (col2-col1)*keyPoint_ptr[i*step + num * 2] * 0.5;
-''', ['A23', 'A24', 'A25', 'A26']),
-    # A27 不合格
-    ('A27 Forward[thread_id] 后读 lnet[0]', '''
-int thread_num = 1;
-lnet[thread_id].Forward(img);
-const T* keyPoint = lnet[0].GetBlobByName("landmark_fc2/BiasAdd");
-''', ['A23', 'A24', 'A25', 'A27']),
-    # A28 不合格
-    ('A28 串行支路里的 omp_get_thread_num', '''
-if (thread_num <= 1)
-{
-    for (int i = 0; i < n; i++) { int thread_id = omp_get_thread_num(); }
-}
-''', ['A23', 'A24', 'A25', 'A28']),
-    # 阴性对照之二：**注释里**出现这两样都**不该**报。
-    # 这是第一版真踩到的坑：修复说明里那句「这里原来写的是 `omp_get_thread_num()`」
-    # 被 A28 当成了缺陷。加这条是为了让"剥注释"这件事本身也有回归保护。
-    ('阴性对照：只出现在注释里', '''
-int thread_num = 1;
-// 这里原来写的是 `omp_get_thread_num()`，已改成 const int thread_id = 0;
-/* 另一处注释：keyPoint_ptr[...] * 0.5 也是注掉的 */
-''', ['A23', 'A24', 'A25']),
-    # 阴性对照：注释里的 0.5 与不在 thread_num<=1 里的 omp_get_thread_num 都**不该**报
-    ('阴性对照：注掉的 0.5 + 并行区里的 thread_num', '''
-x = (a-b)*keyPoint_ptr[i*step + num * 2]/**0.5*/;
-#pragma omp parallel for num_threads(thread_num)
-for (int i = 0; i < n; i++) { int thread_id = omp_get_thread_num(); }
-''', ['A23', 'A24', 'A25']),
+    # (说明, 文本, **期望触发的规则集合**, 变体类型)
+    #
+    # 集合比对而不是「有没有报错」：只缺 A23 的样本因为顺带也缺 A24/A25，
+    # 在只比红/不红的门禁里会被判成符合预期 —— 门禁自己糊弄自己。
+    # 阴性对照那几条同样重要：它们声明的是「**不该**报」，是防过度敏感的护栏。
+    # 变体类型显式写在每条上，不靠「文本里有没有 lnet/thread_num」去猜 ——
+    # 靠猜的话 A30（只对 AspectRatio 判）永远不会被执行到。
+
+    ('全合格骨架', FULL, [], 'base'),
+
+    ('A23 漏夹取', FULL.replace('this->pnet_size = __max(1, pnet_size);',
+                                'this->pnet_size = pnet_size;'), ['A23'], 'base'),
+    ('A24 失效条件没比旧值',
+     _drop(FULL, r'^\t\t\|\| old_pnet_size.*\n\t\t\|\| old_special_big.*\n', re.M),
+     ['A24'], 'base'),
+    ('A25 没有不变量兜底',
+     _drop(FULL, r'\t\t\{\n\t\t\tint kept = 0;.*?\n\t\t\}\n', re.S), ['A25'], 'base'),
+    ('A29 scale_factor 改形参',
+     FULL.replace('const float new_factor = (float)__max(0.5f, __min(0.97f, scale_factor));',
+                  'scale_factor = __max(0.5, __min(0.97, scale_factor));'), ['A29'], 'base'),
+    ('A29 只算 new_factor 不落成员',
+     _drop(FULL, r'^\tthis->factor = new_factor;\n', re.M), ['A29'], 'base'),
+    ('A31 只判外层 task_src_off_x',
+     FULL.replace('if (task_src_off_x.size() == 0 || task_src_off_x[pp].size() == 0) continue;',
+                  'if (task_src_off_x.size() == 0) continue;'), ['A31'], 'base'),
+    ('A32 block_end 用块总数',
+     FULL.replace('(bw == block_W_num - 1)', '(bw == block_num - 1)'), ['A32'], 'base'),
+    ('A33 pragma 缺 reduction',
+     _drop(FULL, r' reduction\(\+:before_count, after_count\)'), ['A33'], 'base'),
+
+    ('A26 活的 * 0.5',
+     FULL + '\nx = col1 + (col2-col1)*keyPoint_ptr[i*step + num * 2] * 0.5;\n',
+     ['A26'], 'iface'),
+    ('A27 Forward[thread_id] 后读 lnet[0]',
+     FULL + '\nlnet[thread_id].Forward(img);\n'
+            'const T* keyPoint = lnet[0].GetBlobByName("landmark_fc2/BiasAdd");\n',
+     ['A27'], 'iface'),
+    ('A28 串行支路里的 omp_get_thread_num',
+     FULL + '\nif (thread_num <= 1)\n{\n'
+            '    for (int i = 0; i < n; i++) { int thread_id = omp_get_thread_num(); }\n}\n',
+     ['A28'], 'iface'),
+    ('A30 任务循环用 i 判族',
+     FULL + '\nint scale_id = task_scale_id[i];\nif (i < ori_num) { }\n'
+            'else if (i < ori_num + xhalf_num) { int j = i - ori_num; }\n'
+            'else { int k = i - ori_num - xhalf_num; }\n',
+     ['A30'], 'ar'),
+
+    # ---- 阴性对照：以下都**不该**报 ----
+    ('阴性：注掉的 0.5',
+     FULL + '\nx = (a-b)*keyPoint_ptr[i*step + num * 2]/**0.5*/;\n', [], 'iface'),
+    ('阴性：只在注释里出现 omp_get_thread_num 与 * 0.5',
+     FULL + '\n// 这里原来写的是 `omp_get_thread_num()`，已改成 const int thread_id = 0;\n'
+            '/* 另一处注释：keyPoint_ptr[...] * 0.5 也是注掉的 */\n', [], 'iface'),
+    ('阴性：并行区里的 thread_num',
+     FULL + '\n#pragma omp parallel for num_threads(thread_num)\n'
+            'for (int i = 0; i < n; i++) { int thread_id = omp_get_thread_num(); }\n',
+     [], 'iface'),
+    ('阴性：xhalf/yhalf 分派全用 scale_id',
+     FULL + '\nif (scale_id < ori_num) { }\n'
+            'else if (scale_id < ori_num + xhalf_num) { int j = scale_id - ori_num; }\n'
+            'else { int k = scale_id - ori_num - xhalf_num; }\n', [], 'ar'),
 ]
 
 
 def selfcheck():
     bad_cnt = 0
-    for name, text, expect in SELFCHECK:
-        label = 'ZQC_fake_MTCNN_Interface.h' if 'lnet' in text or 'thread_num' in text \
-            else 'ZQC_fake_MTCNN.h'
+    for name, text, expect, kind in SELFCHECK:
+        label = {'base': 'ZQC_fake_MTCNN.h',
+                 'iface': 'ZQC_fake_MTCNN_Interface.h',
+                 'ar': 'ZQC_fake_MTCNN_AspectRatio.h'}[kind]
         _, bad = scan_text(text, label)
         got = set(c for c, _ in bad)
         if got != set(expect):

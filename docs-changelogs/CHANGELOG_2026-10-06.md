@@ -566,3 +566,79 @@ A28 `thread_num <= 1` 分支体内不得有 `omp_get_thread_num()`。
   是**既有**问题、与本轮改动无关（改前改后都一样）。
 - II.2 的取值选择（x1 而不是 x0.5）依据是「三处一致」：else 分支、单线程支路、参考实现。
   如果后续拿到 LFW 级别的人工标注发现 x0.5 才对，那要改的是**三处一起**，不是一处。
+
+
+## 追加：附录 II 第二批 —— II.7 ~ II.11（同一批 MTCNN 变体，五个新缺陷）
+
+### 查到的真缺陷
+
+| 编号 | 范围 | 缺陷 | 修法 |
+| --- | --- | --- | --- |
+| II.7 | **五个变体** | `SetPara` 里 `scale_factor = __max(0.5, __min(0.97, scale_factor));` 改的是**形参**，成员 `factor` 从构造函数 `factor = 0.709` 起**从没被赋过值**。后果两条，都是静默的：① 调用方传的 `scale_factor` **完全无效**（传 0.5 也照样按 0.709 建金字塔）；② `factor != scale_factor` 变成拿 0.709 跟**调用方传的原始值**比，只要没恰好传 0.709 条件**恒真**，于是每次 SetPara 都 `scales.clear()+pnet_images.clear()` 全量重建 | 先算 `new_factor`、留 `old_factor` 副本、在重建块之前 `this->factor = new_factor`，比较用 `old_factor != new_factor` |
+| II.8 | `ZQ_CNN_MTCNN_AspectRatio.h` | Pnet **并行**分支用任务下标 `i` 判族（`if (i < ori_num)` / `else if (i < ori_num + xhalf_num)` / `int j = i - ori_num` / `int k = i - ori_num - xhalf_num`），而下面取张量用 `scale_id`。任务表按 scale 顺序追加，`scale_id <= i`，一个 scale 产出多个块时就分离 => `k` 可为负、`j`/`k` 可越界 => `std::vector::operator[]` 越界 -> 野张量上 `.ROI()` -> 野指针解引用。触发：1920x1080 + `thread_num>=2` + `min_face_size<=pnet_size`（`tasks(scale0)=40 > ori+xhalf=26`，`k=-26` 起） | 三处全改 `scale_id`（同函数单线程分支 `:905` 起就是正确样板） |
+| II.9 | **四个变体** | 空任务守卫只判**外层** `task_src_off_x.size() == 0`，而外层大小是 `need_thread_num`、**恒 >= 1**，守卫永远不成立；真正会为空的是当前槽位 `task_src_off_x[pp]`。主副本的 Rnet 那一族早就是 `size()==0 \|\| task_src_off_x[pp].size()==0`，这几处是没同步的旧拷贝 | 21 处补上 `|| task_src_off_x[pp].size() == 0` |
+| II.10 | **四个变体** | block 循环的 `#pragma omp parallel for schedule(dynamic, chunk_size) num_threads(thread_num)` **缺 `reduction(+:before_count, after_count)`** —— 两个共享 int 在 parallel for 里无锁 `+=` 是数据竞争，打印出来的数字每次都可能不同。主副本 `ZQ_CNN_MTCNN.h:932` 早就是带 reduction 的写法 | 四份补上 |
+| II.11 | **五个变体** | `block_end_w[bb] = (bw == block_num - 1) ? scoreW : ...` 判的是**块总数**减一，应该是**每行的块数** `block_W_num - 1`（h 侧同理）。`bb == block_num-1` 只在「最后一行块的最后一列块」成立 => 只有那一个块延伸到 scoreW/scoreH，每行最后 `scoreW - block_W_num*width_per_block` 列、以及前 `block_H_num-1` 个行块的最后一整行**从来没被扫过**。不越界，是**召回率**缺陷：贴边的脸会漏 | 改用 `block_W_num - 1` / `block_H_num - 1` |
+
+### 「孪生副本」计数
+
+这一轮 II.6 / II.9 / II.10 三条都是「主副本修过、另外几份没同步」，
+加上之前的 II.7（五份同款）—— 这是 IH.9 / BE.2 / IX.14 / conv_overflow 之后的**第 5、6、7 次**。
+根源是这五份 MTCNN 实现是逐字拷贝，任何修改天然要改五遍。
+本轮的应对不是「记得改五遍」，而是**门禁逐变体扫**（见下）。
+
+### 门禁扩充：A29 ~ A33
+
+`tools/check_mtcnn_setpara.py` 从 6 条规则扩到 **11 条**（A23~A33），自测从 8 例扩到 **17 例**：
+A29 五个变体必须把夹取后的 `scale_factor` 落到成员 `factor`（且不得再有裸的 `scale_factor = __max(...)`）；
+A30 AspectRatio 的**任务**循环里族判断/派生下标必须用 `scale_id`；
+A31 有 `task_src_off_x` 的变体必须判当前槽位；
+A32 `block_end_w/h` 必须用 `block_W_num/block_H_num`；
+A33 block 循环 pragma 必须带 reduction 子句。
+
+### 踩到的坑（门禁自己的，两条都是「过度敏感 / 过窄」）
+
+1. **A30 第一版是全文扫 `if (i < ori_num)`，误报了 5 处。**
+   那 5 处是 `for (int i = 0; i < total_scale_num; i++)` 的**尺度**循环 ——
+   那里 `i` **就是**尺度下标，`if (i < ori_num)` / `maps[i]` / `mapH[i]` 全都正确。
+   真正有问题的只有**任务**循环（`i < task_num` + `scale_id = task_scale_id[i]`）。
+   改成**锚在 `scale_id = task_scale_id[i]` 上**往后看一个窗口，只在任务循环里判。
+   —— 扫描器**过度敏感**和**过窄**一样有害：前者会让人养成「这条规则不准」的习惯，
+   后者会让人以为覆盖了其实没有。
+2. **A31 一开始对 `ZQ_CNN_MTCNN_ncnn.h` 报错**，说它一处 `task_src_off_x[pp].size()==0` 都没有。
+   实际是**那个文件根本没有 `task_src_off_x` 这套变量**（换了自己的命名）——
+   规则不适用。改成「文件里出现 `task_src_off_x` 才判」。
+   这也是同一类错：把「不存在」当成「不满足」。
+3. 自测骨架改成 `FULL` 公共前缀 + 每条只破坏一处，期望集合因此**可推导**，不再是拍脑袋写的。
+
+### 实测
+
+    python tools/check_mtcnn_setpara.py --selfcheck -> 17 cases, all as expected（RC=0）
+    python tools/check_mtcnn_setpara.py             -> 5 文件全 OK，合计 47 项（RC=0）
+    变异测试：逐条破坏 A29/A30/A31/A32/A33 -> 门禁**五条全部抓到**并点名
+    Linux -fsyntax-only（MTCNN / AspectRatio / Interface / NCHWC 四个头）-> RC=0
+    cmake --build build_x64 --config Release --target 四个 MTCNN sample -> RC=0，0 error
+    A/B 对拍（归一化计时后）：
+        SampleMTCNN          IDENTICAL
+        SampleMTCNN_NCHWC4   IDENTICAL
+        SampleMTCNN_Interface 候选 144->145 / Rnet 89->90，**最终检测数 15 不变**
+        SampleMTCNNLoadFromCode 候选 1982->2002 / Rnet 977->984，**最终检测数 230 不变**
+    python tools/check_text_encoding.py -> OK: 763 text files, all strict UTF-8, no U+FFFD
+    python tools/check_line_endings.py  -> line endings OK
+
+### 注意事项
+
+- **II.11 会改变检测框数量，这是修复不是回归。** A/B 对拍里
+  `first stage candidate count` 与 `run Rnet [...] times` 都**变大了**（144->145、1982->2002），
+  因为原来根本没扫边缘那一条 cell；**最终 `candidate after nms` 一字未变**（15 / 230），
+  说明多出来的都是边缘的重复候选、被 NMS 正常抑制掉了。
+  `SampleMTCNN` / `SampleMTCNN_NCHWC4` 完全不变，是因为那两张图小到
+`block_H_num == block_W_num == 1`，此时 `block_num-1` 与 `block_W_num-1` 恰好相等。
+- **II.7 是行为变更**：以前 `scale_factor` 传什么都无效，现在会真的生效。
+  仓内所有 sample 用的都是默认 0.709，所以实测输出不变；
+  但如果有外部代码一直依赖「传了没用」这个行为来固定金字塔，行为会变。
+- **II.8 的触发条件需要大图 + 多线程**，仓内 sample 全部 `thread_num=0`（夹成 1），
+所以这条**没有任何运行时覆盖**，只能靠 A30 源码门禁钉住。
+- `ZQ_CNN_MTCNN_old.h` 有同款的 II.9/II.10/II.11 形态，但它**不在任何构建里**
+（全仓无 include），本轮**没有**改它 —— 改一个死文件只会增加 diff 噪音。
+如果哪天它被重新启用，这三条要一起补。

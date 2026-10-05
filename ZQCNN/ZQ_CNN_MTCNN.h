@@ -218,7 +218,18 @@ namespace ZQ
 			min_size = __max(__max(1, pnet_size), min_face_size);
 			thresh[0] = __max(0.1, pthresh); thresh[1] = __max(0.1, rthresh); thresh[2] = __max(0.1, othresh);
 			nms_thresh[0] = __max(0.1, nms_pthresh); nms_thresh[1] = __max(0.1, nms_rthresh); nms_thresh[2] = __max(0.1, nms_othresh);
-			scale_factor = __max(0.5, __min(0.97, scale_factor));
+			// 审计修复 2026-10-06（附录 II.7）：原来这一行改的是**形参** `scale_factor`，
+			// 成员 `factor` 从构造函数（factor = 0.709）起**从没被赋过值**。
+			// 后果有两条，都是静默的：
+			//   1. 调用方传的 `scale_factor` **完全无效** —— 传 0.5 也照样按 0.709 建金字塔；
+			//   2. 下面的 `factor != scale_factor` 变成拿 0.709 跟**调用方传的原始值**比。
+			//      只要调用方没恰好传 0.709（哪怕只是 0.7），条件**恒真**，于是每次 SetPara 
+			//      都 `scales.clear()` + `pnet_images.clear()` 全量重建 —— 
+			//      大图上这是「每次调用都把所有 scale 的图像重新分配一遍」。
+			// 改成先把夹取结果落到局部量，成员在重建块**之前**赋新值（旧值先留副本给比较用）。
+			const float new_factor = (float)__max(0.5f, __min(0.97f, scale_factor));
+			const float old_factor = factor;
+			this->factor = new_factor;
 			this->pnet_overlap_thresh_count = __max(0, pnet_overlap_thresh_count);
 			/* pnet_size/pnet_stride 分别是 while 的终止条件与整数除法的除数，
 			   不校验的话 stride=0 直接整数除零 SIGFPE，size<0 时 minside 衰减到 0
@@ -251,7 +262,7 @@ namespace ZQ
 			//     （附录 II.3：mapH/mapW/maps 按「通过过滤的个数」建紧凑下标，
 			//     而 task_scale_id 存的是 scales 的全局下标）。
 			// 五个 MTCNN 变体的这一处是同一个形状，一并改，避免变体行为分叉。
-			if (width != w || height != h || factor != scale_factor
+			if (width != w || height != h || old_factor != new_factor
 				|| old_pnet_size != this->pnet_size || old_min_size != min_size
 				|| old_special_big != special_handle_very_big_face)
 			{
@@ -856,9 +867,16 @@ namespace ZQ
 						{
 							int bb = bh * block_W_num + bw;
 							block_start_w[bb] = (bw == 0) ? 0 : (bw*width_per_block - border_size);
-							block_end_w[bb] = (bw == block_num - 1) ? scoreW : ((bw + 1)*width_per_block);
+							// 审计修复 2026-10-06（附录 II.11）：原来判的是 `block_num - 1`（**块总数**减一），
+							// 应该是 `block_W_num - 1`（**每行的块数**减一）。
+							// bb = bh*block_W_num + bw，所以 `bb == block_num-1` 只在「最后一行块的最后一列块」
+							// 成立 —— 于是**只有那一个块**延伸到 scoreW/scoreH，
+							// 每一行最后 `scoreW - block_W_num*width_per_block` 列、以及前 block_H_num-1 个行块的
+							// 最后一整行**从来没被扫过**。不越界（block_start/end 都还在 [0,scoreW] 内），
+							// 是**召回率**缺陷：贴边的脸会漏。五个变体同款。
+							block_end_w[bb] = (bw == block_W_num - 1) ? scoreW : ((bw + 1)*width_per_block);
 							block_start_h[bb] = (bh == 0) ? 0 : (bh*height_per_block - border_size);
-							block_end_h[bb] = (bh == block_num - 1) ? scoreH : ((bh + 1)*height_per_block);
+							block_end_h[bb] = (bh == block_H_num - 1) ? scoreH : ((bh + 1)*height_per_block);
 						}
 					}
 					int chunk_size = 1;// ceil((float)block_num / thread_num);
@@ -1103,7 +1121,15 @@ namespace ZQ
 			{
 				for (int pp = 0; pp < need_thread_num; pp++)
 				{
-					if (task_src_off_x.size() == 0)
+					// 审计修复 2026-10-06（附录 II.9）：原来只判**外层** vector 的 size。
+					// 外层 `task_src_off_x` 的大小是 need_thread_num，**恒 >= 1**，
+					// 判它永远不成立；真正会为空的是**当前槽位** `task_src_off_x[pp]`
+					// （r_count == 0 时 per_num = ceil(0/thread_num) = 0，cur_num 也为 0）。
+					// 本文件 Rnet 那一族早就是 `size() == 0 || task_src_off_x[pp].size() == 0`，
+					// Pnet / Onet / lnet 这几处是**没同步过去的旧拷贝**。
+					// 当前不崩只是因为 `ResizeBilinearRect` 在 rect_num == 0 时返回 false
+					// 被下一个 if 接住了 —— 守卫没起作用，靠下游兜着。两种写法一起留着，判据才准。
+					if (task_src_off_x.size() == 0 || task_src_off_x[pp].size() == 0)
 						continue;
 					if (!input.ResizeBilinearRect(task_rnet_images[pp], rnet_size, rnet_size, 0, 0,
 						task_src_off_x[pp], task_src_off_y[pp], task_src_rect_w[pp], task_src_rect_h[pp]))
@@ -1151,7 +1177,15 @@ namespace ZQ
 				for (int pp = 0; pp < need_thread_num; pp++)
 				{
 					int thread_id = omp_get_thread_num();
-					if (task_src_off_x.size() == 0)
+					// 审计修复 2026-10-06（附录 II.9）：原来只判**外层** vector 的 size。
+					// 外层 `task_src_off_x` 的大小是 need_thread_num，**恒 >= 1**，
+					// 判它永远不成立；真正会为空的是**当前槽位** `task_src_off_x[pp]`
+					// （r_count == 0 时 per_num = ceil(0/thread_num) = 0，cur_num 也为 0）。
+					// 本文件 Rnet 那一族早就是 `size() == 0 || task_src_off_x[pp].size() == 0`，
+					// Pnet / Onet / lnet 这几处是**没同步过去的旧拷贝**。
+					// 当前不崩只是因为 `ResizeBilinearRect` 在 rect_num == 0 时返回 false
+					// 被下一个 if 接住了 —— 守卫没起作用，靠下游兜着。两种写法一起留着，判据才准。
+					if (task_src_off_x.size() == 0 || task_src_off_x[pp].size() == 0)
 						continue;
 					if (!input.ResizeBilinearRect(task_rnet_images[pp], rnet_size, rnet_size, 0, 0,
 						task_src_off_x[pp], task_src_off_y[pp], task_src_rect_w[pp], task_src_rect_h[pp]))
@@ -1571,7 +1605,15 @@ namespace ZQ
 			{
 				for (int pp = 0; pp < need_thread_num; pp++)
 				{
-					if (task_src_off_x.size() == 0)
+					// 审计修复 2026-10-06（附录 II.9）：原来只判**外层** vector 的 size。
+					// 外层 `task_src_off_x` 的大小是 need_thread_num，**恒 >= 1**，
+					// 判它永远不成立；真正会为空的是**当前槽位** `task_src_off_x[pp]`
+					// （r_count == 0 时 per_num = ceil(0/thread_num) = 0，cur_num 也为 0）。
+					// 本文件 Rnet 那一族早就是 `size() == 0 || task_src_off_x[pp].size() == 0`，
+					// Pnet / Onet / lnet 这几处是**没同步过去的旧拷贝**。
+					// 当前不崩只是因为 `ResizeBilinearRect` 在 rect_num == 0 时返回 false
+					// 被下一个 if 接住了 —— 守卫没起作用，靠下游兜着。两种写法一起留着，判据才准。
+					if (task_src_off_x.size() == 0 || task_src_off_x[pp].size() == 0)
 						continue;
 					if (!input.ResizeBilinearRect(task_lnet_images[pp], lnet_size, lnet_size, 0, 0,
 						task_src_off_x[pp], task_src_off_y[pp], task_src_rect_w[pp], task_src_rect_h[pp]))
@@ -1609,7 +1651,15 @@ namespace ZQ
 				for (int pp = 0; pp < need_thread_num; pp++)
 				{
 					int thread_id = omp_get_thread_num();
-					if (task_src_off_x.size() == 0)
+					// 审计修复 2026-10-06（附录 II.9）：原来只判**外层** vector 的 size。
+					// 外层 `task_src_off_x` 的大小是 need_thread_num，**恒 >= 1**，
+					// 判它永远不成立；真正会为空的是**当前槽位** `task_src_off_x[pp]`
+					// （r_count == 0 时 per_num = ceil(0/thread_num) = 0，cur_num 也为 0）。
+					// 本文件 Rnet 那一族早就是 `size() == 0 || task_src_off_x[pp].size() == 0`，
+					// Pnet / Onet / lnet 这几处是**没同步过去的旧拷贝**。
+					// 当前不崩只是因为 `ResizeBilinearRect` 在 rect_num == 0 时返回 false
+					// 被下一个 if 接住了 —— 守卫没起作用，靠下游兜着。两种写法一起留着，判据才准。
+					if (task_src_off_x.size() == 0 || task_src_off_x[pp].size() == 0)
 						continue;
 					if (!input.ResizeBilinearRect(task_lnet_images[pp], lnet_size, lnet_size, 0, 0,
 						task_src_off_x[pp], task_src_off_y[pp], task_src_rect_w[pp], task_src_rect_h[pp]))
@@ -1818,7 +1868,15 @@ namespace ZQ
 				for (int pp = 0; pp < need_thread_num; pp++)
 				{
 					int thread_id = omp_get_thread_num();
-					if (task_src_off_x.size() == 0)
+					// 审计修复 2026-10-06（附录 II.9）：原来只判**外层** vector 的 size。
+					// 外层 `task_src_off_x` 的大小是 need_thread_num，**恒 >= 1**，
+					// 判它永远不成立；真正会为空的是**当前槽位** `task_src_off_x[pp]`
+					// （r_count == 0 时 per_num = ceil(0/thread_num) = 0，cur_num 也为 0）。
+					// 本文件 Rnet 那一族早就是 `size() == 0 || task_src_off_x[pp].size() == 0`，
+					// Pnet / Onet / lnet 这几处是**没同步过去的旧拷贝**。
+					// 当前不崩只是因为 `ResizeBilinearRect` 在 rect_num == 0 时返回 false
+					// 被下一个 if 接住了 —— 守卫没起作用，靠下游兜着。两种写法一起留着，判据才准。
+					if (task_src_off_x.size() == 0 || task_src_off_x[pp].size() == 0)
 						continue;
 					if (!input.ResizeBilinearRect(task_lnet_images[pp], lnet_size, lnet_size, 0, 0,
 						task_src_off_x[pp], task_src_off_y[pp], task_src_rect_w[pp], task_src_rect_h[pp]))
