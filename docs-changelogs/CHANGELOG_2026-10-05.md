@@ -1970,3 +1970,121 @@ IQ.4 发现库里对坐标做了 `clip` 到 `[0,1]`，于是把参考实现的 e
   `pbt_emit(..., clip)`**
 * `audit_k3_20261001.md`（追加 IV）
 * **无生产代码改动**；两个平台均已手工重编 + 实跑
+
+## 新增/变更：IX —— ARM NEON FP16 那一节的横向归约多算一项（栈上越界读）
+
+### 变更文件
+
+* `ZQCNN/layers_c/zq_cnn_convolution_32f_align_c.c`（`__ARM_NEON_FP16` 节）
+* `ZQCNN/layers_c/zq_cnn_deconvolution_32f_align_c.c`（同上）
+* `ZQCNN/layers_c/zq_cnn_lstm_32f_align_c.c`（同上；该宏当前无人使用）
+* `tools/check_mm_reduce_terms.py`（**新增**）
+* `tools/run_audit_checks.py`（注册 A17/A18 两组）
+
+### 缺陷
+
+`zq_final_sum_q` 是 SIMD 横向归约宏，各节按本节 lane 数给项数（SSE 4 项、AVX 8 项）。
+**ARM NEON + `__ARM_NEON_FP16`** 那一节写成了 **9 项** `q[0]+...+q[8]`，
+而两个 raw 头里 `q` 一律声明成 `ZQ_DECLSPEC_ALIGN32 zq_base_type q[8]`（只到 q[7]）。
+第 9 项是**越界读**；那一节 `zq_base_type` 就是 `float16_t`，
+于是**每一次卷积 / 转置卷积的每一个输出都被加上 q[8] 处的 2 字节栈残留**。
+
+### 为什么两套构建都盖不住
+
+x86 上 `zq_base_type` 是 `float`，SSE 节 4 项、AVX 节 8 项，**都是对的**；
+`__ARM_NEON_FP16` 是编译期宏，x86 上那一节根本不参与编译。
+ASan / UBSan / sample 回归 / 变异测试**全都碰不到它** —— 只能靠读源码的门禁。
+
+### 新门禁 A17/A18
+
+`tools/check_mm_reduce_terms.py` 对每个 `#define zq_final_sum_q` 核三件事：
+
+1. 项数 == 该节生效的 `zq_mm_align_size`（= lane 数）；
+2. 下标恰好是 `0..项数-1`（不缺项、不重复）；
+3. 项数 <= 该节 `#include` 进去的 raw 头里 `zq_base_type q[N]` 的 N（不许越界）。
+
+自测带**故意不合格**的三种形状（多一项 / 下标重复 / 越 `q[4]`）。
+另对真文件做过变异：把 deconv 那一节改回 9 项，门禁在第 119 行报出
+「项数 9 != lane 数 8」+「项数 9 越过了 raw 头里的 q[8]」，rc=1。
+
+### 实测结果
+
+全仓 **40 处** `zq_final_sum_q`，修后 **0 处不合格**；A17 自测通过。
+
+---
+
+## 新增/变更：IW —— DeConvolution 那 7 组「待查」定性（不是库的缺陷）
+
+### 结论
+
+**DeConvolution 没有缺陷。** 挂在「待查」里的 7 组，根子在**探针自己的参考实现**
+把**权重文件**的布局写成了 `(OC, kH, kW, C)`，而文件里其实是
+**`(num_output, in_channels, kH, kW)`** —— Caffe / MXNet 的权重 blob 形状。
+`LoadBinary_NCHW` 再用 `ConvertFromCompactNCHW(data, OC, IC, KH, KW)`
+把它摆成张量的 `[oc][kh][kw][ic]`。两个下标顺序不同、**总长度一样**，
+所以加载、运行、长度检查全部正常，只有数值对不上。
+
+### 变更文件
+
+* `SamplesZQCNN/SampleUnusedLayerProbe/SampleUnusedLayerProbe.cpp`
+  * `ref_conv_ref`：权重下标改正；stride>1 时按 `(oh - padT + kh)/stride` 且必须整除；
+    pad 改成四边独立入参
+  * 新增 `deconv_same_pads()`：照抄 `SetBottomDim` 里 `pad_type=SAME` 的算法
+    （top = `bottom*stride`，**不是**普通 SAME）
+  * 新增 `deconv_layout_probe()`：权重布局**反解装置**
+    （输入点亮一格 + 权重逐个点亮，读出 p 的四元组，不猜）
+  * 待查那一栏改成打**最差下标**的两边数值（原来打 `got[0]`/`want[0]`）
+  * 用例 8 -> 10（补 OC>1/C>1、2x2+SAME 两个判别形状）
+* `tools/zq_deconv_check.cpp`（**新增**，接进 `run_zqlib_checks.py` 常驻门禁）
+* `tools/zq_deconv_layer_probe.cpp`（**新增**，层级排查装置）
+* `tools/run_zqlib_checks.py`（注册 `zq_deconv` 的 EXTRA_SOURCES/LINK/INC/CXXFLAGS）
+* **无生产代码改动**；两平台均已重编 + 实跑
+
+### 定位过程（附录 IW.6 ~ IW.13）
+
+1. **内核级**：`tools/zq_deconv_check.cpp` 自己摆张量、直接调三条 general 内核
+   （align0 / align128bit / align256bit），11 形状 x 3 路 = **33 组全部逐元素对上**
+   （最大绝对偏差 1.7e-06，纯 float 舍入），ASan+LSan / UBSan 干净 -> 内核没问题。
+2. **层 vs 内核**：用层**实际下发的**那组 step 手工摆一份再直接调内核，
+   与层给的输出**逐位相同** -> 层没传错。
+3. **文件**：临时在 `ZQ_CNN_Forward_SSEUtils::DeConvolution` 打 trace（**已撤**）：
+
+       层内部看到的 filter[0..1]    = -0.0372925 -0.423187   <- 文件第 0、第 9 个 float
+       探针按 [oc][kh][kw][ic] 摆的 = -0.0372925  0.229248   <- 文件第 0、第 1 个
+
+   第 1 格放的是第 9 个：按 `(oc,ic,kh,kw)` 算索引 1 就是 oc=0,ic=0,kh=0,kw=1，
+   内存偏移正好 `kw*pixelStep = 8`，trace 里 offset 8 也确实是第 1 个。
+
+### 为什么前两轮"猜布局"怎么猜都只对一半
+
+当时挑的判别形状恰好落在两个**退化形状**上：
+`C==1` 时 `[oc][1][kh][kw]` 与 `[oc][kh][kw][1]` 同序；
+`kH==kW==1` 时 `[oc][ic][1][1]` 与 `[oc][1][1][ic]` 同序 —— 怎么挑都过。
+"过"的两组正是 C=1 的 3x3 与 C=4 的 1x1。
+
+### 顺带清掉的另外三处（也都是探针自己的锅）
+
+* stride>1 的输入下标少了 `/stride`
+* `pad_type=SAME` 的 pad 按普通 SAME 算（stride=2 时 top 变成 2H、pad 变成 kernel）
+* `PriorBoxText min_size=-24`：`_setup()` 里明确 `min_sizes[i] <= 0` 就拒
+  （`ZQ_CNN_Layer.h:9156`），属**契约如此**。探针以前把"加载失败"与"数值对不上"
+  记成同一条，于是它一直挂在待查里；现在分成两路：契约说要拒的，
+  断言"它确实拒了"算通过。
+
+### 实测结果
+
+    Windows : cmake-out-win32-x64/release/Release/SampleUnusedLayerProbe.exe
+    Linux   : cmake-out-unix-x64/Release/SampleUnusedLayerProbe
+    两边都是：跑过 132 个形状，对 132，**对不上 0，**待查 0**，rc=0。
+    DeConvolution 10 组后向误差 1.5e-08 ~ 7.4e-08。
+    尚未覆盖的 UNUSED 层类型只剩 LSTM_TF（它有独立标定装置 SampleLSTMTFCalib）。
+
+`tools/run_zqlib_checks.py deconv`（ASan+LSan）与 `--ubsan deconv` 两轴均 `2/2 通过`。
+
+### 注意事项
+
+新写的内核门禁自己用 `std::vector<float>` 摆缓冲喂 `_mm256_load_ps` 入口时，
+**ASan 全绿而 UBSan 报 `misaligned address`** —— 门禁里"没有越界读"靠 ASan，
+"没有未对齐 SIMD 访问"**只有 UBSan 看得见**。缓冲已改成 64 字节显式对齐。
+AGENTS.md 已补第 18~22 条（判别形状避开退化形状 / 分层剥作用域 /
+恒红项要么定性要么删掉 / 诊断打最差下标 / UBSan 才看得见未对齐 SIMD）。
