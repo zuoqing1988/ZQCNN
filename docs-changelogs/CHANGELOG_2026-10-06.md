@@ -385,7 +385,7 @@ flag = (feat_dim == fread(face_feats[i].pData, sizeof(float), feat_dim, in));
 ### 修法（第一版改错了，记录一下）
 
 先试的是把守卫改成 `feat_dim > 0`（与同族 `ZQ_FaceDatabaseCompact` 的
-`dim <= 0 就拒` 对齐），**结果打破��有的空组往返用例** ——
+`dim <= 0 就拒` 对齐），**结果打破了既有的空组往返用例** ——
 `OP_RT_EMPTY` 立刻变成「该收却拒了」。
 说明 `feat_dim == 0` **本身合法**（空组），要修的不是守卫而是**传输那一行**。
 
