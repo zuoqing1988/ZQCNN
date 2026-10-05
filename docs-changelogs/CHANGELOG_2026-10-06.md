@@ -192,3 +192,50 @@ C5b 多出 3 条函数级守卫：
 驱动侧在调用前已把 `u`/`v` 缩放过。**实现是对的。**
 
 判据：**改之前先找到被调方的契约**，而不是按函数名 + 直觉推断。
+
+---
+
+## 新增/变更：ID —— H12「越界 rect 分歧」从「记为遗留」变成可判的两条断言
+
+### 变更文件
+
+* `tools/zq_resize_align_check.cpp`（**新增**门禁）
+* `tools/run_zqlib_checks.py`（注册 `zq_resize_align` 的 EXTRA_SOURCES/LINK/INC/CXXFLAGS）
+
+### 背景
+
+H12 一直只有一句话、没有判据：「`Align0`/`Align256bit` 遇越界 rect 直接 `return false`，
+`Align128bit` 却夹取后再算」。不修的理由是「MTCNN 全家依赖后者，改了会动检测结果」。
+
+### 先把分歧的准确形状读出来
+
+* `Align0::ResizeBilinearRect`（`ZQ_CNN_Tensor4D.cpp:253`）与 `Align256bit::` 同名函数：
+  `if (src_off_x < 0 || ... || src_off_x + src_rect_w > W || ...) return false;`
+* `Align128bit::ResizeBilinearRect`（`ZQ_CNN_Tensor4D.cpp:1108`）：
+  把 rect 夹到 `[-border, 尺寸-1+border]` 再算 —— 它自己的注释写明为什么必须夹：
+  MTCNN 的 NMS 检测框**不做边界裁剪**（16 处边界检查被注释掉），
+  不夹就是**堆越界读**（实测纵向超出 34 像素）。
+* 另外两个还硬拒，是因为 **MTCNN 的张量本来就是 Align128bit**
+  （`ConvertFromBGR` 用 `ChangeSize(1,H,W,3,1,1)`）—— 那两条路**在生产里走不到**。
+  所以分歧是**潜在的**，不是活跃的。
+
+### 两条断言（都不是「保持现状」，是「把现状钉死」）
+
+1. **rect 在界内时，三种对齐必须逐位相同** —— 同一个算法不能有三套分歧实现。
+   4 组形状（含同尺寸走 `ROI`、缩小走 safeborder、放大贴边触发
+   `can_call_safeborder = false`）**全部逐位相同**（最大偏差 0）。
+2. **rect 越界时**返回值符合契约（0 / 1 / 0），且**夹取的结果与
+   「显式传入那个被夹过的 rect」逐位相同**。
+
+### 又一次「假阳性来自装置自己」
+
+第一版报「夹取 != 显式传夹过的 rect，偏差 23.16」。原因：`run()` 无论成功与否
+都会把 dst 拷进输出向量，而 Align0 / Align256bit 那两次**失败的调用复用了同一个
+输出向量**，把前一次结果覆盖了。各自一个向量之后偏差 0。
+
+> 与 IX.11 / IX.22 / IY.3 同源：**「实测不一致」要先排除「实测手段本身错了」。**
+
+### 实测
+
+    python tools/run_zqlib_checks.py resize_align          -> 1/1 通过（ASan+LSan）
+    python tools/run_zqlib_checks.py --ubsan resize_align  -> 1/1 通过（UBSan）

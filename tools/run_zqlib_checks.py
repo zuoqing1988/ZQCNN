@@ -293,6 +293,15 @@ EXTRA_SOURCES = {
         'g++ -O1 -g -mavx2 -mfma -fopenmp -c -I$R -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include '
         '$R/ZQCNN/ZQ_CNN_Tensor4D.cpp -o $WDIR/zq_rzn_tensor.o',
     ],
+    # zq_resize_align（附录 ID）：`ResizeBilinearRect` 在 Align0 / Align128bit /
+    # Align256bit 三种对齐上的**一致性**。用的就是 zq_nchw_resize 那两个 TU，
+    # 只是编成另一份 .o（两道门禁不能共用同一个 .o：并行跑会互相覆盖）。
+    'zq_resize_align': [
+        'gcc -O1 -g -mavx2 -mfma $SAN -fopenmp -c -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include '
+        '$R/ZQCNN/layers_c/zq_cnn_resize_32f_align_c.c -o $WDIR/zq_rza.o',
+        'g++ -O1 -g -mavx2 -mfma $SAN -fopenmp -c -I$R -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include '
+        '$R/ZQCNN/ZQ_CNN_Tensor4D.cpp -o $WDIR/zq_rza_tensor.o',
+    ],
     # zq_nchw_act（附录 CO）：NCHW 的激活与归一化层，38 个真实符号。
     # 这一批是「手写标量 + raw 头模板」双实现家族里语义最确定的一批（附录 CP 的扫描结论），
     # 而 CN 证明过：这种结构下「手写那份对、模板那份错」是会发生的。
@@ -642,7 +651,8 @@ EXTRA_SOURCES = {
         '$R/ZQCNN/math/zq_avx_mathfun.c -o $WDIR/zq_bns_avx.o',
     ],
 }
-EXTRA_LINK = {'zq_innerproduct': ' $WDIR/zq_ipgemm.o $WDIR/zq_gemm_align.o $WDIR/zq_gemm_asm.o $WDIR/zq_gemm_auto.o',
+EXTRA_LINK = {'zq_resize_align': ' $WDIR/zq_rza.o $WDIR/zq_rza_tensor.o',
+              'zq_innerproduct': ' $WDIR/zq_ipgemm.o $WDIR/zq_gemm_align.o $WDIR/zq_gemm_asm.o $WDIR/zq_gemm_auto.o',
               # zq_scale（附录 IB）：直接链**内核那个小 TU**。
               # `ZQ_CNN_Forward_SSEUtils.cpp` 一个 TU 引用半个库、-O1 编一次 5 分钟以上
               # （附录 EC.1），所以现成的 sanitizer 门禁都**不编它**（用绊线桩）。
@@ -724,7 +734,8 @@ EXTRA_LINK = {'zq_innerproduct': ' $WDIR/zq_ipgemm.o $WDIR/zq_gemm_align.o $WDIR
               'zq_pool': '',
               'zq_bns': ' $WDIR/zq_bns_sse.o $WDIR/zq_bns_avx.o',
               'zq_eltwise': ' $WDIR/zq_eltwise_sse.o $WDIR/zq_eltwise_avx.o'}
-EXTRA_INC = {'zq_facedb': ' -I$R -I$R/ZQCNN -I$R/ZQCNN/3rdparty/include/ZQlib',
+EXTRA_INC = {'zq_resize_align': ' -I$R -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include',
+             'zq_facedb': ' -I$R -I$R/ZQCNN -I$R/ZQCNN/3rdparty/include/ZQlib',
              'zq_facedb2': ' -I$R -I$R/ZQCNN -I$R/ZQCNN/3rdparty/include/ZQlib',
              'zq_innerproduct': ' -I$R/ZQCNN -I$R/ZQ_GEMM',
              'zq_gemm_shape': ' -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include',
@@ -777,7 +788,8 @@ EXTRA_INC = {'zq_facedb': ' -I$R -I$R/ZQCNN -I$R/ZQCNN/3rdparty/include/ZQlib',
 # 测内核的测试自己也 include 了那个 .c，所以**主 TU 也要带 -mavx2 -mfma**，
 # 否则 _mm256_set1_ps 这些 always_inline 内建会报
 # "target specific option mismatch"（2026-10-02 实测）。
-EXTRA_CXXFLAGS = {'zq_scale': ' -mavx2 -mfma',
+EXTRA_CXXFLAGS = {'zq_resize_align': ' -mavx2 -mfma -fopenmp',
+             'zq_scale': ' -mavx2 -mfma',
                   # zq_deconv：头里那几个 always_inline 内建，缺了会 target mismatch
                   'zq_deconv': ' -mavx2 -mfma',
                   'zq_facedb': ' -mavx2 -mfma -fopenmp',
