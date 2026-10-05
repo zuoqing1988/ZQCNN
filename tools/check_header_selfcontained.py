@@ -68,7 +68,10 @@ PREAMBLE = '#include "ZQ_CNN_CompileConfig.h"\n'
 
 def candidate_files():
     out = []
-    for sub in ('ZQCNN', 'ZQlibFaceID', 'ZQ_GEMM'):
+# MNN 转换器那份拷贝（附录 IL）也在扫：它虽然**不在任何构建里**，
+    # 但同目录的 ZQ_CNN_Layer.h 上一轮同步过溢出守卫，说明这目录是**半维护**的；
+    # 「半维护」最需要的就是这种自动检查。
+    for sub in ('ZQCNN', 'ZQlibFaceID', 'ZQ_GEMM', 'ZQCNN_to_MNN/converter/source'):
         d = os.path.join(ROOT, sub)
         if not os.path.isdir(d):
             continue

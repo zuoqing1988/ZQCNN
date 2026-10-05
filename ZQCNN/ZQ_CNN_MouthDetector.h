@@ -241,8 +241,21 @@ namespace ZQ
 				one_face.box = thirdBbox[i];
 				int border_x = one_face.width*d_arg->enlarge_border;
 				int border_y = one_face.height*d_arg->enlarge_border;
+				// 审计修复 2026-10-06（附录 IN.1）：这两个原来可以是**负数**。
+				// `one_face.off_x = thirdBbox[i].col1` —— 而 MTCNN 的 `_refine_and_square_bbox`
+				// 边界钳位是**注释掉的**（ZQ_CNN_BBoxUtils.h:261-264 那一整段 /*if ... */），
+				// 所以 `col1 < 0`（脸贴着画面边缘，侧脸/出画一半）是常规输入，不是异常。
+				// 负 border 传给 `cv::Rect(Point,Point)` 会被取绝对值变成 `x < 0` 的 ROI，
+				// `cv::Mat(image, rect)` 随即抛未捕获的 cv::Exception —— 	
+				// 本文件里**没有** try/catch，异常直接从 Detect() 抛给调用方。
+				// 同一个负值还污染后面的裁剪：`cur_box.col1 -= real_border_x` 变成**加**，
+				// 把嘴框推到脸 ROI 外；而那个 `cur_box.col1 < real_border_x` 的守卫
+				// 与负数比**恒假**，保护完全失效。
+				// 夹到 0：脸贴边时退化成「不外扩」，语义正确且不会抛。
 				int real_border_x = __min(border_x, __min(one_face.off_x, width - one_face.off_x - one_face.width));
 				int real_border_y = __min(border_y, __min(one_face.off_y, height - one_face.off_y - one_face.height));
+				if (real_border_x < 0) real_border_x = 0;
+				if (real_border_y < 0) real_border_y = 0;
 				cv::Rect rect(cv::Point(thirdBbox[i].col1 - real_border_x, thirdBbox[i].row1 - real_border_y), cv::Point(thirdBbox[i].col2 + real_border_x, thirdBbox[i].row2 + real_border_y));
 				cv::Mat tmp_img(image, rect);
 

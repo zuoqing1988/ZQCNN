@@ -176,6 +176,16 @@ GROUPS = [
      ['check_header_selfcontained.py', '--selfcheck'], False),
     ('A28 "头文件自包含性" 普查 (check_header_selfcontained)',
      ['check_header_selfcontained.py'], False),
+    # A29/A30 是附录 IN 的门禁：PersonPose / PersonPose2 / MouthDetector / FaceCropUtils
+    # 四个头此前**零行为门禁**。本轮挖出 9 条，其中六条是**两个拷贝之间的差异** ——
+    # 「单看一个文件是否合规」这种判据会漏：PersonPose.h 因为**已经有**溢出守卫而
+    # "通过"，正好掩盖 PersonPose2.h 的缺失。所以判据要写成「两份都要有」。
+    # 另注：ZQ_CNN_FaceCropUtils.h 是**已知的 GBK 文件**（上游 MFC 中文界面带来的），
+    # 门禁按 gbk 读它。
+    ('A29 "姿态/嘴部/人脸裁剪" 自测 (check_pose_mouth --selfcheck)',
+     ['check_pose_mouth.py', '--selfcheck'], False),
+    ('A30 "姿态/嘴部/人脸裁剪" 普查 (check_pose_mouth)',
+     ['check_pose_mouth.py'], False),
     ('B  ZQlib 独立回归测试 x10 (ASan+LSan)', ['run_zqlib_checks.py'], False),
     # 基线路径给**绝对路径**：子进程以 ROOT 为 cwd 运行，而基线文件在 tools/ 下，
     # 相对路径会解析成 <ROOT>/zqlib_probe_baseline.txt 而找不到（2026-10-02 实测）。

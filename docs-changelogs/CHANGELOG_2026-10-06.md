@@ -1308,3 +1308,75 @@ lambda 形式下 ``（缩进反向引用）**不会展开**，文件里留下�
   但本机 WSL 没有对应的 SDK 头，**所以门禁没能在那一侧验过它们**。
 - 门禁每次跑 ~3 分钟（每个头一次 `wsl` 调用），已单独注册为 A27/A28，
   没有并进更快的那几组。
+
+
+## 追加：附录 IN —— 姿态 / 嘴部 / 人脸裁剪（9 个缺陷 + 一道新门禁）
+
+范围：`ZQ_CNN_PersonPose.h` / `ZQ_CNN_PersonPose2.h`（**逐字拷贝**）、
+`ZQ_CNN_MouthDetector.h`、`ZQ_CNN_FaceCropUtils.h`（**GBK 编码**）。四个头此前**零行为门禁**。
+
+| 编号 | 缺陷 |
+| --- | --- |
+| IN.1 | `MouthDetector` 的 `real_border_x/y` 可以是**负数** —— `one_face.off_x = col1`，而 MTCNN 的 `_refine_and_square_bbox` 边界钳位是**注释掉的**，脸贴边是常规输入。负值传给 `cv::Rect(Point,Point)` 会变成 `x<0` 的 ROI，`cv::Mat(image, rect)` 抛**未捕获**的 cv::Exception；同一个负值还让 `cur_box.col1 < real_border_x` 这个守卫**恒假** |
+| IN.2 | `FaceCropUtils` 的 `fill_val` 形参被接受后**丢弃**，Remap 的填充值写死成 `0`；同文件 `:61` 的另一个重载传的是 `fill_val` —— 一份对一份错。可达性已核实：`ZQ_CNN_VideoFaceDetection_Interface.h:769` 明确传了 `-1`，被静默吞掉 |
+| IN.3 | `PersonPose.h` 的 `points[54]` 只 `memset` 了 **51** 个 float（差第 17 个关键点）；`PersonPose2.h` 是 42/42 正确。第 17 个点没过阈值时那三个格子是**栈垃圾**，而 `num_points` 仍告诉调用方「有 18 个点」 |
+| IN.4 | 两个头的成员 int 全部**未初始化**，而 `Init` 的 6 个 `return false` 都发生在 `GetInputDim` 赋值之前。调用方忽略 Init 返回值时 `Detect` 上来就除以 `pose_W` |
+| IN.5 | 姿态侧 `pose_ptr = GetBlobByName(...)` 没判空，而**紧邻 100 行内的 SSD 侧判了** —— 同文件内的不对称 |
+| IN.6 | `PersonPose.h` 的 `npts` 取自**调用方可控**的 public 字段 `num_points`；npts==0 时两个守卫与 0 比**恒假** -> 产出 `col1=1e9 > col2=-1e9` 的**反向框**，下一帧负宽负高进 `ConvertFromBGR`。`PersonPose2.h` 的 npts 由 half_mode 推导、永远 >= 1 |
+| IN.7 | `PersonPose2.h` 的 `MapToFull` 跳过 4 个位置，其中 `full[9]` 保留了半模式的 `half[9]` 并被当成全模式的**膝盖** => 紧接着「没检到脚踝就扩框」的分支**永远走不到**，框底被截掉 |
+| IN.8 | 四处 `ConvertFromBGR` + `ResizeBilinear` 返回值被丢弃（失败时 `temp_img` 停在**上一次**的尺寸）；同文件 `:107/:112/:116` 对同样的调用**全都检查了** |
+| IN.9 | `PersonPose2.h` 的 `size_H*size_W*3` 是**纯 int 算术**，缺 `(__int64)` + `> 0x7FFFFFFF` 守卫；`PersonPose.h` 两处都有 |
+
+**两份拷贝的差异汇总**（这六条都是「这份有、那份没有」或反过来）：
+
+| 项 | PersonPose.h | PersonPose2.h |
+| --- | --- | --- |
+| `points[]` / memset | `float[54]` / **51** ❌ | `float[42]` / 42 ✅ |
+| `size_H*size_W*3` 溢出守卫 | 有（2 处）✅ | **无** ❌ |
+| `npts` 来源 | 调用方可控的 public 字段 ❌ | 由 half_mode 推导 ✅ |
+| 关键点缺失时清零 | `Detect` 无 ❌；`DetectVideoSinglePerson` 有 | 两处都有 ✅ |
+| 成员 int 未初始化 | 有 ❌ | 有 ❌（更多数量） |
+
+### 门禁：`tools/check_pose_mouth.py`（A29/A30）
+
+九个缺陷各一条判据。**IN.3 / IN.6 / IN.9 写成「两份都要有」** ——
+否则 `PersonPose.h` 会因为**已经有**守卫而「通过」，正好掩盖 `PersonPose2.h` 的缺失。
+自测 12 例（含阴性对照），逐条做过变异测试。
+
+### 修的过程中自己犯的三个错（都记下来）
+
+1. **`int ssd_C, ssd_H, ssd_W = 0;` 只初始化了 `ssd_W`。**
+   C++ 里逗号声明只有**最后一个**有初值。写完 IN.4 看了一眼输出才发现 ——
+   已经改成 `int ssd_C = 0, ssd_H = 0, ssd_W = 0;`。
+2. **「往后看 N 个字符」的窗口第三次栽了同一种坑。**
+   IN.7 的判据先用「有没有 else」、再用「else 之后 300 字符里有没有写 `other.points`」，
+   结果我加的那段修复说明注释（约 500 字）又把窗口撑破了，**正确**的代码被报成不合格。
+   改成**配对花括号**取块体，没有窗口。
+   —— A27 的 2000、A39 的 2000、IN.7 的 300，**三次同一个错**。
+   这条已经写进 `AGENTS.md` 第 26 条的对策里了：判据要认「结构性标志」。
+3. **`ZQ_CNN_FaceCropUtils.h` 是 GBK 编码的。**
+   用 UTF-8 读写直接 `UnicodeDecodeError`。它是上游 MFC 中文界面带来的文件，
+   `check_text_encoding.py` 的白名单里写着「改成 UTF-8 会破坏 Windows 侧的中文界面，不要动」。
+   门禁按 `gbk` 读它，注释也改成英文（避免再引入编码问题）。
+
+### 实测
+
+    python tools/check_pose_mouth.py --selfcheck -> 12 cases, all as expected（RC=0）
+    python tools/check_pose_mouth.py             -> 4 文件全 OK，合计 14 项（RC=0）
+    变异测试：IN.1 / IN.3 / IN.6 / IN.7 / IN.9 逐条破坏 -> 门禁逐条变红并点名
+    cmake --build build_x64 --config Release（全量）-> RC=0，0 error
+    WSL make -j8（全量）-> RC=0，0 error
+    python tools/check_text_encoding.py -> OK: 765 text files, all strict UTF-8, no U+FFFD
+    python tools/check_line_endings.py  -> line endings OK
+
+### 注意事项
+
+- **这四个头没有一个有 A/B 基线**：`SamplePersonPose` 系列要模型 + 视频源，
+  本轮没做 A/B。IN.1 / IN.7 / IN.8 在**正常输入**下与修前**完全等价**
+  （IN.1 夹到 0 之后 `real_border` 本来就 >= 0；IN.7 补的是 map_id<0 那 4 个**原本不写**的位置；IN.8 加的 `if (!...)` 在返回值 true 时是空操作），
+  所以「修后没变化」是预期而不是「没验」。
+- IN.3 的差异在**随仓 sample 上读不到**（`Draw14` 最大读 `13*3+2 = 41`，
+  落在原来 memset 覆盖的范围内）—— 真缺陷 + 当前零覆盖。
+- 报告里另有 L2~L7 七条 LOW（`ppoint` 有效性、`.names` 读不到时静默降级、
+  `ssd_detector.Detect` 返回值丢弃、块内 `thresh` 遮蔽、`size()-1` 的符号回绕等），
+  本轮**没有**改：它们要么不可达、要么纯可读性，改动收益低而回归成本高。

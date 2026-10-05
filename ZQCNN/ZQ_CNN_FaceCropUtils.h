@@ -107,7 +107,15 @@ namespace ZQ
 					map_y[h*dst_W + w] = y;
 				}
 			}
-			if (!img.Remap(crop, dst_W, dst_H, 1, 1, map_x, map_y, true, 0))
+			// IN.2 (2026-10-06 audit fix): this used to pass a **literal 0**, silently dropping
+			// the `fill_val` parameter. The sibling overload at :61 passes `fill_val` --
+			// one copy right, one copy wrong.
+			// Reachability verified: ZQ_CNN_VideoFaceDetection_Interface.h:769 passes -1 explicitly,
+			// and it was swallowed. Remap(..., use_fill_val=true, ...) dispatches to the
+			// zq_cnn_remap_*_fillval kernels (layers_c/zq_cnn_resize_32f_align_c.c:601-625),
+			// which fill out-of-range samples with `fill_val` -- so the headpose branch was
+			// reading the wrong padding value. Compiles fine, regression green, contract violated.
+			if (!img.Remap(crop, dst_W, dst_H, 1, 1, map_x, map_y, true, fill_val))
 				return false;
 			//clock_t t3 = clock();
 			//printf("findtrans:%.3f, warp:%.3f\n", 0.001*(t2 - t1), 0.001*(t3 - t2));

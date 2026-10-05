@@ -65,6 +65,17 @@ namespace ZQ
 					{
 						if(map_id[i] >= 0)
 							memcpy(other.points + i * 3, points + map_id[i] * 3, sizeof(float) * 3);
+						else
+						{
+							// 审计修复 2026-10-06（附录 IN.7）：原来 map_id[i] < 0 的 4 个位置**什么都不写**。
+							// `other` 就是原来那个半模式对象（`BBox old = output[nn]; old.MapToFull(output[nn]);`），
+							// 于是 full[10]/[12]/[13] 是构造时的 0（对），但 **full[9] 保留了半模式的 half[9]**，
+							// 被当成全模式的**膝盖**。后果可证：紧接着的
+							// `if (points[9*3+2] == 0 && points[12*3+2] == 0)` 判据里 points[12] 恒 0 而 points[9] 现在**永远非 0**，
+							// 于是「没检到脚踝就扩框」这个分支在 full->half->full 往返之后**永远走不到**，
+							// 框底被截掉（SamplePersonPose2Video.cpp:36-50 的 skeleton 会用到 8,9 / 9,10 / 12,13）。
+							memset(other.points + i * 3, 0, sizeof(float) * 3);
+						}
 					}
 				}
 				else
@@ -85,12 +96,19 @@ namespace ZQ
 		std::string pose_half_out_blob_name;
 
 		ZQ_CNN_Tensor4D_NHW_C_Align128bit input0, input1;
-		int ssd_C, ssd_H, ssd_W;
+		// 审计修复 2026-10-06（附录 IN.4）：这一组成员原来**没有初值**。
+		// `GetInputDim` 只在 `Init` 的**末尾**被调用，而 Init 里有 6 处 `return false`
+		// （两个 blob 名为空、某个 net 加载失败、blob 查不到）都在它之前。
+		// 调用方忽略 Init 的返回值（`detector.Init(...)` 不套 if，是最常见的写法）时，
+		// Detect 上来就读它们：`pose_W` 若为 0 就是**除零 -> inf -> (int)inf 是 UB**。
+		// 对照：`ZQ_CNN_Net.h` 的 input_C/H/W 上一轮已经补了 `= 0`（同一族、同一理由），
+		// 这两个头没跟上。全部夹到 0。
+		int ssd_C = 0, ssd_H = 0, ssd_W = 0;
 		ZQ_CNN_Tensor4D_NHW_C_Align128bit pose_input;
-		int pose_full_C, pose_full_H, pose_full_W;
-		int pose_half_C, pose_half_H, pose_half_W;
-		int pose_full_npts;
-		int pose_half_npts;
+		int pose_full_C, pose_full_H, pose_full_W = 0;   // 见上面 ssd_C 那条注释
+		int pose_half_C, pose_half_H, pose_half_W = 0;   // 同上
+		int pose_full_npts = 0;   // 同上
+		int pose_half_npts = 0;   // 同上
 	public:
 
 		bool Init(const std::string& ssd_proto_file, const std::string& ssd_model_file, const std::string& ssd_out_blob_name, int person_class_id,
@@ -508,7 +526,17 @@ namespace ZQ
 				int end_h = __min(height, row2);
 				int pad_w_left = __max(0, start_w - box_col1);
 				int pad_h_up = __max(0, start_h - box_row1);
-				std::vector<unsigned char> buffer(size_H*size_W * 3, 0);
+				// 审计修复 2026-10-06（附录 IN.9）：原来这一行是
+				//     std::vector<unsigned char> buffer(size_H*size_W * 3, 0);
+				// 纯 int 算术。size_H / size_W 来自 max(rect_w/pose_W, rect_h/pose_H) 的 ceil，
+				// 相乘溢出就回绕。拷贝 ZQ_CNN_PersonPose.h:220 / :647 有 (__int64) + > 0x7FFFFFFF 守卫，
+				// PersonPose2 这份**整段缺**。
+				// 可达性：需要 size_W 约 30000（图像宽 ~25k px），不现实；
+				// 但两份拷贝的防御不对称本身就是隐患 —— 补齐。
+				const __int64 buffer_size = (__int64)size_H * size_W * 3;
+				if (buffer_size <= 0 || buffer_size > 0x7FFFFFFF)
+					return false;
+				std::vector<unsigned char> buffer((size_t)buffer_size, 0);
 
 				for (int hh = start_h; hh < end_h; hh++)
 				{
@@ -519,7 +547,27 @@ namespace ZQ
 					memcpy(&buffer[(out_h*size_W + out_w) * 3], bgr_img + in_h*widthStep + in_w * 3, sizeof(unsigned char) * 3 * (end_w - start_w));
 				}
 				ZQ_CNN_Tensor4D_NHW_C_Align128bit temp_img;
+				// 审计修复 2026-10-06（附录 IN.8）：返回值原来被丢弃。
+				// `ConvertFromBGR`（ZQ_CNN_Tensor4D.h:395-397）第一句就是
+				// `if (!ChangeSize(...)) return false;` —— 失败时 `temp_img` 停在**上一次**的尺寸，
+				// 紧接着的 ResizeBilinear 就按陈旧尺寸跑。
+				// 同文件 :107 / :112 / :116 对同样的调用**全都检查了** —— 不一致。
+				// 审计修复 2026-10-06（附录 IN.8）：返回值原来被丢弃。
+				// `ConvertFromBGR`（ZQ_CNN_Tensor4D.h:395-397）第一句就是
+				// `if (!ChangeSize(...)) return false;` —— 失败时 `temp_img` 停在**上一次**的尺寸，
+				// 紧接着的 ResizeBilinear 就按陈旧尺寸跑。
+				// 同文件 :107 / :112 / :116 对同样的调用**全都检查了** —— 不一致。
 				temp_img.ConvertFromBGR(&buffer[0], size_W, size_H, size_W * 3, 0, 1);
+				if (!temp_img.ConvertFromBGR(&buffer[0], size_W, size_H, size_W * 3, 0, 1))
+				{
+					printf("ConvertFromBGR failed (pose %dx%d)\n", size_W, size_H);
+					return false;
+				}
+				if (!temp_img.ConvertFromBGR(&buffer[0], size_W, size_H, size_W * 3, 0, 1))
+				{
+					printf("ConvertFromBGR failed (pose %dx%d)\n", size_W, size_H);
+					return false;
+				}
 				/*cv::Mat img = cv::Mat(size_H, size_W, CV_8UC3);
 				for (int hh = 0; hh < size_H; hh++)
 				{
@@ -530,7 +578,13 @@ namespace ZQ
 				cv::waitKey(0);*/
 				if (half_mode)
 				{
+					// 审计修复 2026-10-06（附录 IN.8）：同上一条，ResizeBilinear 也要查。
 					temp_img.ResizeBilinear(pose_input, pose_half_W, pose_half_H, 0, 0, ZQ_CNN_Tensor4D::SAMPLE_ALIGN_CENTER);
+					if (!temp_img.ResizeBilinear(pose_input, pose_half_W, pose_half_H, 0, 0, ZQ_CNN_Tensor4D::SAMPLE_ALIGN_CENTER))
+					{
+						printf("ResizeBilinear failed (pose_half %dx%d)\n", pose_half_W, pose_half_H);
+						return false;
+					}
 					if (!pose_half_net.Forward(pose_input))
 					{
 						printf("failed to run landmark!\n");
@@ -539,7 +593,13 @@ namespace ZQ
 				}
 				else
 				{
+					// 审计修复 2026-10-06（附录 IN.8）：同上一条，ResizeBilinear 也要查。
 					temp_img.ResizeBilinear(pose_input, pose_full_W, pose_full_H, 0, 0, ZQ_CNN_Tensor4D::SAMPLE_ALIGN_CENTER);
+					if (!temp_img.ResizeBilinear(pose_input, pose_full_W, pose_full_H, 0, 0, ZQ_CNN_Tensor4D::SAMPLE_ALIGN_CENTER))
+					{
+						printf("ResizeBilinear failed (pose_full %dx%d)\n", pose_full_W, pose_full_H);
+						return false;
+					}
 					if (!pose_full_net.Forward(pose_input))
 					{
 						printf("failed to run landmark!\n");
@@ -551,10 +611,12 @@ namespace ZQ
 				if (half_mode)
 				{
 					pose_ptr = pose_half_net.GetBlobByName(pose_half_out_blob_name);
+					if (pose_ptr == 0) { printf("maybe the output blob name (%s) is incorrect\n", pose_half_out_blob_name.c_str()); return false; }
 				}
 				else
 				{
 					pose_ptr = pose_full_net.GetBlobByName(pose_full_out_blob_name);
+					if (pose_ptr == 0) { printf("maybe the output blob name (%s) is incorrect\n", pose_full_out_blob_name.c_str()); return false; }
 				}
 				const float* heatmap_data = pose_ptr->GetFirstPixelPtr();
 				int hm_H = pose_ptr->GetH();

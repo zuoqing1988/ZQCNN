@@ -27,7 +27,16 @@ namespace ZQ
 				score = 0;
 				col1 = row1 = col2 = row2 = 0;
 				num_points = 0;
-				memset(points, 0, sizeof(float) * 51);
+				// 审计修复 2026-10-06（附录 IN.3）：原来写的是 `sizeof(float) * 51` —— 
+				// `points` 是 `float[54]`，差 3 个 float = **第 17 个关键点**的 points[51..53]。
+				// 拷贝来源 `ZQ_CNN_PersonPose2.h:30` 是 `sizeof(float) * 42` 对 `points[42]` —— 
+				// **正确**。这就是两份拷贝的核心差异之一。
+				// 后果：第 17 个关键点没超过阈值时，那三个格子保持构造时的**栈垃圾**，
+				// 而 `num_points` 仍然是 18 —— 调用方被告知有 18 个点。
+				// 随仓 sample 的 `Draw14` 最大读 13*3+2 = 41，落在原来 memset 覆盖的范围内，
+				// 所以是**真缺陷 + 当前零覆盖**，不是活 bug。
+				// 改用 sizeof 以后就和数组长度绑死，再加字段也不会再错。
+				memset(points, 0, sizeof(points));
 			}
 		};
 
@@ -40,10 +49,17 @@ namespace ZQ
 		std::string pose_out_blob_name;
 
 		ZQ_CNN_Tensor4D_NHW_C_Align128bit input0, input1;
-		int ssd_C, ssd_H, ssd_W;
+		// 审计修复 2026-10-06（附录 IN.4）：这一组成员原来**没有初值**。
+		// `GetInputDim` 只在 `Init` 的**末尾**被调用，而 Init 里有 6 处 `return false`
+		// （两个 blob 名为空、某个 net 加载失败、blob 查不到）都在它之前。
+		// 调用方忽略 Init 的返回值（`detector.Init(...)` 不套 if，是最常见的写法）时，
+		// Detect 上来就读它们：`pose_W` 若为 0 就是**除零 -> inf -> (int)inf 是 UB**。
+		// 对照：`ZQ_CNN_Net.h` 的 input_C/H/W 上一轮已经补了 `= 0`（同一族、同一理由），
+		// 这两个头没跟上。全部夹到 0。
+		int ssd_C = 0, ssd_H = 0, ssd_W = 0;
 		ZQ_CNN_Tensor4D_NHW_C_Align128bit pose_input;
-		int pose_C, pose_H, pose_W;
-		int pose_npts;
+		int pose_C, pose_H, pose_W = 0;   // 见上面 ssd_C 那条注释
+		int pose_npts = 0;   // 同上
 	public:
 
 		bool Init(const std::string& ssd_proto_file, const std::string& ssd_model_file, const std::string& ssd_out_blob_name, int person_class_id,
@@ -215,7 +231,16 @@ namespace ZQ
 					memcpy(&buffer[(out_h*size_W+out_w)*3], bgr_img + in_h*widthStep + in_w * 3, sizeof(unsigned char) * 3 * (end_w - start_w));
 				}
 				ZQ_CNN_Tensor4D_NHW_C_Align128bit temp_img;
-				temp_img.ConvertFromBGR(&buffer[0], size_W, size_H, size_W * 3, 0, 1);
+				// 审计修复 2026-10-06（附录 IN.8）：返回值原来被丢弃。
+				// `ConvertFromBGR`（ZQ_CNN_Tensor4D.h:395-397）第一句就是
+				// `if (!ChangeSize(...)) return false;` —— 失败时 `temp_img` 停在**上一次**的尺寸，
+				// 紧接着的 ResizeBilinear 就按陈旧尺寸跑。
+				// 同文件 :107 / :112 / :116 对同样的调用**全都检查了** —— 不一致。
+				if (!temp_img.ConvertFromBGR(&buffer[0], size_W, size_H, size_W * 3, 0, 1))
+				{
+					printf("ConvertFromBGR failed (pose %dx%d)\n", size_W, size_H);
+					return false;
+				}
 				/*cv::Mat img = cv::Mat(size_H, size_W, CV_8UC3);
 				for (int hh = 0; hh < size_H; hh++)
 				{
@@ -224,13 +249,31 @@ namespace ZQ
 				cv::namedWindow("roi");
 				cv::imshow("roi", img);
 				cv::waitKey(0);*/
+				// 审计修复 2026-10-06（附录 IN.8）：同上一条，ResizeBilinear 也要查。
 				temp_img.ResizeBilinear(pose_input, pose_W, pose_H, 0, 0, ZQ_CNN_Tensor4D::SAMPLE_ALIGN_CENTER);
+				if (!temp_img.ResizeBilinear(pose_input, pose_W, pose_H, 0, 0, ZQ_CNN_Tensor4D::SAMPLE_ALIGN_CENTER))
+				{
+					printf("ResizeBilinear failed (pose %dx%d)\n", pose_W, pose_H);
+					return false;
+				}
 				if (!pose_net.Forward(pose_input))
 				{
 					printf("failed to run landmark!\n");
 					return false;
 				}
 				const ZQ_CNN_Tensor4D* pose_ptr = pose_net.GetBlobByName(pose_out_blob_name);
+					// 审计修复 2026-10-06（附录 IN.5）：GetBlobByName 找不到返回 **0**
+					// （ZQ_CNN_Net.h:295-300），原来下一行直接 `pose_ptr->GetFirstPixelPtr()`。
+					// 紧邻 100 行内的 **SSD 侧有**守卫（带 `maybe the output blob name (%s)
+					// is incorrect` 的 printf），姿态侧一个字都没有 —— 同文件内的不对称，
+					// 而 Init 里只查过一次就当成了不变量。
+					// Init 成功即意味着 blob 当时存在，所以当前不可达；
+					// 一旦有人改 blob 名、或加一层 UnloadBlob，就是空指针解引用。
+				if (pose_ptr == 0)
+				{
+					printf("maybe the output blob name (%s) is incorrect\n", pose_out_blob_name.c_str());
+					return false;
+				}
 				const float* heatmap_data = pose_ptr->GetFirstPixelPtr();
 				int hm_H = pose_ptr->GetH();
 				int hm_W = pose_ptr->GetW();
@@ -332,6 +375,14 @@ namespace ZQ
 				for (int nn = output.size() - 1; nn >= 0; nn--)
 				{
 					int npts = output[nn].num_points;
+				// 审计修复 2026-10-06（附录 IN.6）：`num_points` 是 **public 字段**，调用方可以预填
+				// `output`。npts==0 时下面的两个守卫（`valid_num < npts*0.3`、`total_weight < valid_num*0.5`）
+				// 与 0 比**恒假** -> 不 erase -> col1/col2 从未被更新，直接算出 `col1=1e9 > col2=-1e9` 的**反向框**。
+				// 下一帧 `rect_w = -2e9` -> size_W/size_H 为负 -> `buffer_size = size_H*size_W*3` 为**正**，
+				// `buffer_size <= 0` 那个守卫**挡不住** -> ConvertFromBGR(负宽, 负高)。
+				// 拷贝 PersonPose2.h 的 npts 由 half_mode 推导（14 或 10），永远 >= 1，
+				// 这是「这份有、那份没有」的第二条。
+				if (npts <= 0) continue;
 					int col1 = 1e9;
 					int col2 = -1e9;
 					int row1 = 1e9;
@@ -607,7 +658,16 @@ namespace ZQ
 					memcpy(&buffer[(out_h*size_W + out_w) * 3], bgr_img + in_h*widthStep + in_w * 3, sizeof(unsigned char) * 3 * (end_w - start_w));
 				}
 				ZQ_CNN_Tensor4D_NHW_C_Align128bit temp_img;
-				temp_img.ConvertFromBGR(&buffer[0], size_W, size_H, size_W * 3, 0, 1);
+				// 审计修复 2026-10-06（附录 IN.8）：返回值原来被丢弃。
+				// `ConvertFromBGR`（ZQ_CNN_Tensor4D.h:395-397）第一句就是
+				// `if (!ChangeSize(...)) return false;` —— 失败时 `temp_img` 停在**上一次**的尺寸，
+				// 紧接着的 ResizeBilinear 就按陈旧尺寸跑。
+				// 同文件 :107 / :112 / :116 对同样的调用**全都检查了** —— 不一致。
+				if (!temp_img.ConvertFromBGR(&buffer[0], size_W, size_H, size_W * 3, 0, 1))
+				{
+					printf("ConvertFromBGR failed (pose %dx%d)\n", size_W, size_H);
+					return false;
+				}
 				/*cv::Mat img = cv::Mat(size_H, size_W, CV_8UC3);
 				for (int hh = 0; hh < size_H; hh++)
 				{
@@ -616,13 +676,31 @@ namespace ZQ
 				cv::namedWindow("roi");
 				cv::imshow("roi", img);
 				cv::waitKey(0);*/
+				// 审计修复 2026-10-06（附录 IN.8）：同上一条，ResizeBilinear 也要查。
 				temp_img.ResizeBilinear(pose_input, pose_W, pose_H, 0, 0, ZQ_CNN_Tensor4D::SAMPLE_ALIGN_CENTER);
+				if (!temp_img.ResizeBilinear(pose_input, pose_W, pose_H, 0, 0, ZQ_CNN_Tensor4D::SAMPLE_ALIGN_CENTER))
+				{
+					printf("ResizeBilinear failed (pose %dx%d)\n", pose_W, pose_H);
+					return false;
+				}
 				if (!pose_net.Forward(pose_input))
 				{
 					printf("failed to run landmark!\n");
 					return false;
 				}
 				const ZQ_CNN_Tensor4D* pose_ptr = pose_net.GetBlobByName(pose_out_blob_name);
+					// 审计修复 2026-10-06（附录 IN.5）：GetBlobByName 找不到返回 **0**
+					// （ZQ_CNN_Net.h:295-300），原来下一行直接 `pose_ptr->GetFirstPixelPtr()`。
+					// 紧邻 100 行内的 **SSD 侧有**守卫（带 `maybe the output blob name (%s)
+					// is incorrect` 的 printf），姿态侧一个字都没有 —— 同文件内的不对称，
+					// 而 Init 里只查过一次就当成了不变量。
+					// Init 成功即意味着 blob 当时存在，所以当前不可达；
+					// 一旦有人改 blob 名、或加一层 UnloadBlob，就是空指针解引用。
+				if (pose_ptr == 0)
+				{
+					printf("maybe the output blob name (%s) is incorrect\n", pose_out_blob_name.c_str());
+					return false;
+				}
 				const float* heatmap_data = pose_ptr->GetFirstPixelPtr();
 				int hm_H = pose_ptr->GetH();
 				int hm_W = pose_ptr->GetW();
