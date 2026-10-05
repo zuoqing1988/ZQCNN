@@ -173,3 +173,22 @@ C5b 多出 3 条函数级守卫：
 | A17/A18 `check_mm_safety` | 归约项数 / 栈数组对齐 / 分配判空 | ARM FP16 越界读 + 未对齐写 + 42 处不判空 |
 | A19/A20 `check_conv_overflow_guard` | 每个「读 dilate」的卷积类都要溢出守卫 | NCHWC 那一族一处都没有（IX.19） |
 | C5b +3 | MNN 分叉头的 BN 融合通道数守卫 | 那一族三处全漏（IX.14） |
+
+---
+
+## 记录：IC —— `ZQ_LSQRSolver` 的「不测」理由要更正
+
+第十三轮的中危剩余项写着「依赖缺失、本机确实测不了的（`ZQ_LSQRSolver` 需要 taucs）」。
+**这条已过时**：taucs 就 vendored 在同目录（`ZQ_taucs.h`），
+`ZQ_LSQRSolver.h` 现在能独立编译，基线里已经是 `OK`。
+
+真正的原因是**链接期**缺 BLAS：`ZQ_LSQRUtils::lsqr` 内部用 `cblas_dnrm2` / `cblas_dscal`，
+门禁的 harness 里没有 CBLAS。而且它在仓库里只有 `ZQ_ClosedFormImageMatting.h`
+一个 include 者，那个头又没有任何调用点 —— 整条链是死代码。
+
+顺带记一条差点改错的地方：`_aprod` 的两个分支看着都像 bug
+（`y += A*x` 没清零、`x += A'·y` 把 x/y 写反），但 `ZQ_LSQRUtils.h` 里附着的
+契约注释写明 LSQR 就是**累加式**的（`y = y + A*x` / `x = x + A'·y`），
+驱动侧在调用前已把 `u`/`v` 缩放过。**实现是对的。**
+
+判据：**改之前先找到被调方的契约**，而不是按函数名 + 直觉推断。
