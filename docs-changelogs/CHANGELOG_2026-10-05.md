@@ -2229,3 +2229,30 @@ NCHW 的孪生实现 `zq_cnn_convolution_gemm_32f_align_c_raw.h:82` 早就写了
     Windows / Linux 双平台重编 -> 0 error；两平台 SampleUnusedLayerProbe rc=0
 
 （成功路径的行为一个字没改，只是分配失败时早退。）
+
+---
+
+## 记录：v60 全量回归（IX ~ IX.10 这批改动的树）
+
+    python tools/run_audit_checks.py --with-build --warn-sweep --src-sweep \
+        --bounds-sweep --ubsan-sweep --reachability --msvc-asan
+
+    55 个检查组，50 个显式 OK，0 个 FAILED
+    ALL CHECKS PASSED
+    RC=0
+
+要点：
+
+* **B 组 53/53 通过**（较上轮 +2：新增 `zq_deconv`、`zq_lstm` 两道常驻门禁）。
+* **A17/A18 通过**（`check_mm_safety`，此时已是四条判定：归约项数 / 栈数组对齐 /
+  `*buffer` 分配判空 / 任意分配判空）。
+* **C7 层类型可达性**：`基线 36 条 -> 现在 36 条，无状态变化`，
+  即 `LSTM_TF` 从 UNUSED 转 PROBED 之后基线是稳的。
+* **D 组双平台全量构建 + sample 回归**全过；
+  两平台 `SampleUnusedLayerProbe` 都是 `132 个形状 / 对 132 / 待查 0` rc=0。
+* C11 的 MSVC /analyze 基线**条数不变**（新增的 `if (... == 0) return;`
+  早退没有被报成新告警）。
+
+> 注：v60 期间 IX.10 的生产代码改动（27 处 malloc 判空）落地在 B 组之后，
+> 所以 C 组及以后编译的是最终代码、A/B 组编译的是前一版。
+> 为了拿到一个**干净的单点**，紧接着又跑了 v61（最终树）。
