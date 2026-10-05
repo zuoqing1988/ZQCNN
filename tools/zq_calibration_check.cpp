@@ -196,6 +196,52 @@ int main()
                "点数为 0 不崩", ok ? "true" : "false");
     }
 
+    // 5：**其余公开入口的内存安全冒烟**。
+    //    这里**不断言数值**（POSIT / 双目标定的收敛条件要另造一套共面 / 双目标定数据，
+    //    与本文件的主题「带 ground truth」不是一回事），只断言
+    //        跑完不崩 + 输出全是有限值 + LSan 抓不到泄漏。
+    //    价值在附录 IB 那一类：**IB.2 那处成功路径泄漏就是被这种调用抓出来的**，
+    //    它在「只编译不调用」时永远看不见。
+    {
+        std::vector<double> Xc3(X3);
+        for (size_t i = 0; i < Xc3.size(); i += 3) Xc3[i + 2] = 4.0;   // 共面版本
+        std::vector<double> Xc2a;
+        project_all(T, Xc3, Xc2a);
+
+        std::vector<double> rT6(6, 0.0);
+        bool k1 = ZQ::ZQ_Calibration::posit_no_coplanar(
+            N_PTS, &X3[0], &X2[0], 30, T.intr, &rT6[0]);
+        // reproj_err_square 是**每点一个的输出数组**（不是 double&）——
+        // 签名在头注释里没写清楚，从实现 `reproj_err_square[i] = ...` 读出来。
+        std::vector<double> reproj((size_t)N_PTS, 0.0);
+        bool k2 = ZQ::ZQ_Calibration::posit_coplanar(
+            N_PTS, &Xc3[0], &Xc2a[0], 30, 1e9, T.intr, &rT6[0], &reproj[0], 1e-12);
+        double e4 = -1.0;
+        bool k3 = ZQ::ZQ_Calibration::posit_coplanar_robust(
+            N_PTS, &Xc3[0], &Xc2a[0], 30, 30, 1e9, T.intr, &rT6[0], e4, 1e-12);
+        std::vector<double> right_rT(6, 0.0), r2l(6, 0.0);
+        double e5 = -1.0;
+        bool k4 = ZQ::ZQ_Calibration::binocalib_with_known_intrinsic_with_init(
+            1, N_PTS, &Xc3[0], &Xc2a[0], &X2[(size_t)N_PTS * 2],
+            T.intr, T.intr, 30, &right_rT[0], &r2l[0], e5, 1e-12);
+
+        bool finite = true;
+        for (int i = 0; i < 6; i++) {
+            if (!(rT6[i] == rT6[i])) finite = false;
+            if (!(right_rT[i] == right_rT[i])) finite = false;
+            if (!(r2l[i] == r2l[i])) finite = false;
+        }
+        if (!finite) {
+            printf("  **FAIL** POSIT / binocalib output has non-finite values\n");
+            g_fail++;
+        }
+        printf("  %-6s %s (posit_no_coplanar=%s posit_coplanar=%s posit_coplanar_robust=%s "
+               "binocalib=%s, 全部输出有限值: %s)\n",
+               finite ? "ok" : "FAIL", "POSIT / binocalib smoke",
+               k1 ? "true" : "false", k2 ? "true" : "false",
+               k3 ? "true" : "false", k4 ? "true" : "false",
+               finite ? "yes" : "**NO**");
+    }
     if (g_fail) { printf("CALIBRATION CHECK FAILED (%d 处)\n", g_fail); return 1; }
     printf("CALIBRATION CHECK OK\n");
     return 0;
