@@ -3,6 +3,7 @@
 
 #pragma once
 
+#include <type_traits>
 #include "ZQ_PCGSolver.h"
 #include "ZQ_SparseMatrix.h"
 #include "ZQ_RBFKernel.h"
@@ -120,9 +121,9 @@ namespace ZQ
 			return false;
 
 		int taucs_flag;
-		if(strcmp(typeid(T).name(),"float") == 0)
+		if(std::is_same<T, float>::value)
 			taucs_flag = TAUCS_SINGLE;
-		else if(strcmp(typeid(T).name(),"double") == 0)
+		else if(std::is_same<T, double>::value)
 			taucs_flag = TAUCS_DOUBLE;
 		else
 			return false;

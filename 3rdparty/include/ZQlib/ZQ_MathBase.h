@@ -7,6 +7,7 @@
 // 于是 4 个在**模板里**用到它们的头在 Linux 上根本编不过
 // （非模板上下文里 gcc 只当"隐式函数声明"，所以另外 49 个侥幸能过）。
 // 详见 ZQ_CompileConfig.h 的头注释。
+#include <type_traits>
 #include "ZQ_CompileConfig.h"
 
 #include <math.h>
@@ -1126,7 +1127,7 @@ namespace ZQ
 		is_singular = false;
 		succ = false;
 		
-		if (strcmp(typeid(T).name(), "double") == 0)
+		if (std::is_same<T, double>::value)
 		{
 			double* U = (double*)malloc(sizeof(double)*row*row);
 			double* S = (double*)malloc(sizeof(double)*row*col);

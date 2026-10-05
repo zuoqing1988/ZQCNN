@@ -2,6 +2,7 @@
 #define _ZQ_UMFPACK_SOLVER_H_
 
 #if _USE_UMFPACK
+#include <type_traits>
 #include "umfpack.h"
 #ifdef _DEBUG
 #pragma comment(lib,"libumfpackd.lib")
@@ -25,7 +26,7 @@ namespace ZQ
 	bool ZQ_UmfpackSolver::UmfpackSolve(const taucs_ccs_matrix* A, const T* b, T* x, bool display /*= false*/)
 	{
 #if _USE_UMFPACK
-		if (strcmp(typeid(T).name(), "double") == 0)
+		if (std::is_same<T, double>::value)
 		{
 			if (A->flags & TAUCS_DOUBLE == 0)
 			{

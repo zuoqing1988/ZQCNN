@@ -2,6 +2,7 @@
 #define _ZQ_PCG_SOLVER_H_
 #pragma once
 
+#include <type_traits>
 #include "ZQ_taucs.h"
 #include "ZQ_TaucsBase.h"
 #include <typeinfo>
@@ -90,12 +91,12 @@ namespace ZQ
 	bool ZQ_PCGSolver::PCG(const taucs_ccs_matrix* H, const T* f, const T* x0,const int max_iter, const double tol, T* x, int& it, bool display /* = false */ )
 	{
 		double tol1 = (tol == 0) ? 1e-6 : tol;
-		if(strcmp(typeid(T).name(),"float") == 0)
+		if(std::is_same<T, float>::value)
 		{
 			if(((H->flags) & TAUCS_SINGLE) == 0)
 				return false;
 		}
-		else if(strcmp(typeid(T).name(),"double") == 0)
+		else if(std::is_same<T, double>::value)
 		{
 			if(((H->flags) & TAUCS_DOUBLE) == 0)
 				return false;
@@ -201,12 +202,12 @@ namespace ZQ
 	bool ZQ_PCGSolver::PCG_sparse_unsquare(const taucs_ccs_matrix* A, const T * f, const T* x0, const int max_iter, const double tol, T* x, int& it,bool display /* = false */ )
 	{
 		double tol1 = (tol == 0) ? 1e-6 : tol;
-		if(strcmp(typeid(T).name(),"float") == 0)
+		if(std::is_same<T, float>::value)
 		{
 			if(((A->flags) & TAUCS_SINGLE) == 0)
 				return false;
 		}
-		else if(strcmp(typeid(T).name(),"double") == 0)
+		else if(std::is_same<T, double>::value)
 		{
 			if(((A->flags) & TAUCS_DOUBLE) == 0)
 				return false;
@@ -322,12 +323,12 @@ namespace ZQ
 	bool ZQ_PCGSolver::PCG_BQP(const taucs_ccs_matrix* H, const T* f0, const T* x0, const T* l, const T* u,const int max_iter, const double tolx, const double tolf,
 		T* x, double& val,int& it, int& exitcode, bool display /* = false */ )
 	{
-		if(strcmp(typeid(T).name(),"float") == 0)
+		if(std::is_same<T, float>::value)
 		{
 			if(H->flags & TAUCS_SINGLE == 0)
 				return false;
 		}
-		else if(strcmp(typeid(T).name(),"double") == 0)
+		else if(std::is_same<T, double>::value)
 		{
 			if(H->flags & TAUCS_DOUBLE == 0)
 				return false;
@@ -754,9 +755,9 @@ namespace ZQ
 	void ZQ_PCGSolver::_shiftsc(int n, const T* xstart_in, const T* l_in, const T* u_in, T* typx, void (*fn)(const taucs_ccs_matrix* , const T* ,T*), const T* c_in, taucs_ccs_matrix* H,
 		T* xstart_out, T* l_out, T* u_out, T* ds, taucs_ccs_matrix** DS, T* c_out)
 	{
-		if(strcmp(typeid(T).name(),"float") == 0)
+		if(std::is_same<T, float>::value)
 			*DS = ZQ_TaucsBase::ZQ_taucs_ccs_create(n,n,n,TAUCS_SINGLE);
-		else if(strcmp(typeid(T).name(),"double") == 0)
+		else if(std::is_same<T, double>::value)
 			*DS = ZQ_TaucsBase::ZQ_taucs_ccs_create(n,n,n,TAUCS_DOUBLE);
 		else
 		{

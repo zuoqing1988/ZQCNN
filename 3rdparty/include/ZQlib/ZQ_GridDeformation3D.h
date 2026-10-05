@@ -2,6 +2,7 @@
 #define _ZQ_GRID_DEFORMATION_3D_H_
 #pragma once
 
+#include <type_traits>
 #include "ZQ_GridDeformation3DOptions.h"
 #include "ZQ_DoubleImage3D.h"
 			// 下面用了 ZQ_DImage3D<T>，本文件原来没 include 它
@@ -167,9 +168,9 @@ namespace ZQ
 	bool ZQ_GridDeformation3D<T>::BuildMatrix(const int width, const int height, const int depth, const bool* nouseful_flag, const bool* fixed_flag, const ZQ_GridDeformation3DOptions& opt)
 	{
 		int taucs_flag;
-		if(strcmp(typeid(T).name(),"float") == 0)
+		if(std::is_same<T, float>::value)
 			taucs_flag = TAUCS_SINGLE;
-		else if(strcmp(typeid(T).name(),"double") == 0)
+		else if(std::is_same<T, double>::value)
 			taucs_flag = TAUCS_DOUBLE;
 		else
 			return false;
@@ -338,9 +339,9 @@ namespace ZQ
 	bool ZQ_GridDeformation3D<T>::_deformation_laplacian(const T* init_coord, T* out_coord, const int iteration)
 	{
 		int taucs_flag;
-		if(strcmp(typeid(T).name(),"float") == 0)
+		if(std::is_same<T, float>::value)
 			taucs_flag = TAUCS_SINGLE;
-		else if(strcmp(typeid(T).name(),"double") == 0)
+		else if(std::is_same<T, double>::value)
 			taucs_flag = TAUCS_DOUBLE;
 		else
 			return false;
@@ -616,9 +617,9 @@ namespace ZQ
 	bool ZQ_GridDeformation3D<T>::_deformation_laplacian_XLOOP(const T* init_coord, T* out_coord, const int iteration)
 	{
 		int taucs_flag;
-		if(strcmp(typeid(T).name(),"float") == 0)
+		if(std::is_same<T, float>::value)
 			taucs_flag = TAUCS_SINGLE;
-		else if(strcmp(typeid(T).name(),"double") == 0)
+		else if(std::is_same<T, double>::value)
 			taucs_flag = TAUCS_DOUBLE;
 		else
 			return false;

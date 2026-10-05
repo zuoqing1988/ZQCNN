@@ -2,6 +2,7 @@
 #define __ZQ_IMAGE_IO_H_
 #pragma once
 
+#include <type_traits>
 #include <stdio.h>
 #include "ZQ_DoubleImage.h"
 #include <typeinfo>
@@ -202,7 +203,7 @@ namespace ZQ
 			im.allocate(width, height, nChannels);
 
 			T*& im_Data = im.data();
-			if (strcmp(typeid(T).name(), "float") == 0 || strcmp(typeid(T).name(), "double") == 0)
+			if (std::is_same<T, float>::value || std::is_same<T, double>::value)
 			{
 				for (int i = 0; i < height; i++)
 				{

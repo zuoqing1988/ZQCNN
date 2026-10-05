@@ -2,6 +2,7 @@
 #define _ZQ_TAUCS_BASE_H_
 #pragma once
 
+#include <type_traits>
 #include "ZQ_taucs.h"
 #include "ZQ_MathBase.h"
 #include <vector>
@@ -709,7 +710,7 @@ namespace ZQ
 			if(A == 0 || (A->flags) & TAUCS_SYMMETRIC || (((A->flags) & TAUCS_DOUBLE) == 0 && ((A->flags) & TAUCS_SINGLE) == 0))
 				return false;
 
-			if(strcmp(typeid(T).name(),"float") != 0 && strcmp(typeid(T).name(),"double") != 0)
+			if(!std::is_same<T, float>::value && !std::is_same<T, double>::value)
 				return false;
 			
 			int col = A->n;

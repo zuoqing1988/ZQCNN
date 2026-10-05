@@ -2,6 +2,7 @@
 #define _ZQ_SHAPE_DEFORMATION_H_
 #pragma once
 
+#include <type_traits>
 #include "ZQ_ShapeDeformationOptions.h"
 #include "ZQ_PCGSolver.h"
 #include "ZQ_SparseMatrix.h"
@@ -189,9 +190,9 @@ namespace ZQ
 	bool ZQ_ShapeDeformation<T>::_deformationLaplacian(const T* init_coords, T* out_coords, int max_iter)
 	{
 		int taucs_flag;
-		if(strcmp(typeid(T).name(),"float") == 0)
+		if(std::is_same<T, float>::value)
 			taucs_flag = TAUCS_SINGLE;
-		else if(strcmp(typeid(T).name(),"double") == 0)
+		else if(std::is_same<T, double>::value)
 			taucs_flag = TAUCS_DOUBLE;
 		else 
 			return false;
@@ -505,9 +506,9 @@ namespace ZQ
 	bool ZQ_ShapeDeformation<T>::_build_matrix_for_ARAP_VERT()
 	{
 		int taucs_flag;
-		if(strcmp(typeid(T).name(),"float") == 0)
+		if(std::is_same<T, float>::value)
 			taucs_flag = TAUCS_SINGLE;
-		else if(strcmp(typeid(T).name(),"double") == 0)
+		else if(std::is_same<T, double>::value)
 			taucs_flag = TAUCS_DOUBLE;
 		else
 			return false;
@@ -575,9 +576,9 @@ namespace ZQ
 	bool ZQ_ShapeDeformation<T>::_build_matrix_for_ARAP_TRIANGLE()
 	{
 		int taucs_flag;
-		if(strcmp(typeid(T).name(),"float") == 0)
+		if(std::is_same<T, float>::value)
 			taucs_flag = TAUCS_SINGLE;
-		else if(strcmp(typeid(T).name(),"double") == 0)
+		else if(std::is_same<T, double>::value)
 			taucs_flag = TAUCS_DOUBLE;
 		else
 			return false;

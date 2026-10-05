@@ -2,6 +2,7 @@
 #define _ZQ_MULTI_CAM_CALIBRATION_H_
 #pragma once
 
+#include <type_traits>
 #include "ZQ_CameraCalibration.h"
 #include "ZQ_StereoCalibration.h"
 #include "ZQ_SparseLevMar.h"
@@ -351,9 +352,9 @@ namespace ZQ
 			{
 				ZQ_TaucsBase::ZQ_taucs_ccs_free(jx); jx = 0;
 			}
-			if (strcmp(typeid(T).name(), "float") == 0)
+			if (std::is_same<T, float>::value)
 				jx = sp_jx_mat.ExportCCS(TAUCS_SINGLE);
-			else if (strcmp(typeid(T).name(), "double") == 0)
+			else if (std::is_same<T, double>::value)
 				jx = sp_jx_mat.ExportCCS(TAUCS_DOUBLE);
 			else
 				return false;

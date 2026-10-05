@@ -2,6 +2,7 @@
 #define _ZQ_DOUBLE_IMAGE_H_
 #pragma once
 
+#include <type_traits>
 #include "ZQ_ImageProcessing.h"
 #include <stdio.h>
 #include <typeinfo>
@@ -1022,7 +1023,7 @@ namespace ZQ
 
 		if(strcmp(type,typeid(double).name()) == 0)
 		{
-			if(strcmp(typeid(T).name(),"double") == 0)
+			if(std::is_same<T, double>::value)
 			{
 				if(fread(pData,sizeof(double),nElements,in) == nElements)
 				{
@@ -1058,7 +1059,7 @@ namespace ZQ
 		}
 		else if(strcmp(type,typeid(float).name()) == 0)
 		{
-			if(strcmp(typeid(T).name(), "float") == 0)
+			if(std::is_same<T, float>::value)
 			{
 				if(fread(pData,sizeof(float),nElements,in) == nElements)
 				{

@@ -2,6 +2,7 @@
 #define _ZQ_SVD_H_
 #pragma once
 
+#include <type_traits>
 #include "ZQ_Matrix.h"
 #include <typeinfo>
 
@@ -45,7 +46,7 @@ namespace ZQ
 		T* V_ptr = V.GetDataPtr();
 		T* S_ptr = SS.GetDataPtr();
 
-		if (strcmp(typeid(T).name(), "double") == 0)
+		if (std::is_same<T, double>::value)
 		{
 			return ZQ_MathBase::SVD_Decompose(A_ptr, m, n, U_ptr, S_ptr, V_ptr);
 		}

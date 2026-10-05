@@ -2,6 +2,7 @@
 #define _ZQ_GRID_DEFORMATION_H_
 #pragma once
 
+#include <type_traits>
 #include "ZQ_GridDeformationOptions.h"
 #include "ZQ_SparseMatrix.h"
 #include "ZQ_PCGSolver.h"
@@ -190,9 +191,9 @@ namespace ZQ
 	bool ZQ_GridDeformation<T>::BuildMatrix(const int width, const int height, const bool* nouseful_flag, const bool* fixed_flag, const ZQ_GridDeformationOptions& opt)
 	{
 		int taucs_flag;
-		if(strcmp(typeid(T).name(),"float") == 0)
+		if(std::is_same<T, float>::value)
 			taucs_flag = TAUCS_SINGLE;
-		else if(strcmp(typeid(T).name(),"double") == 0)
+		else if(std::is_same<T, double>::value)
 			taucs_flag = TAUCS_DOUBLE;
 		else
 			return false;
@@ -2244,9 +2245,9 @@ namespace ZQ
 	bool ZQ_GridDeformation<T>::_buildMatrix_for_scaling()
 	{
 		int taucs_flag;
-		if(strcmp(typeid(T).name(),"float") == 0)
+		if(std::is_same<T, float>::value)
 			taucs_flag = TAUCS_SINGLE;
-		else if(strcmp(typeid(T).name(),"double") == 0)
+		else if(std::is_same<T, double>::value)
 			taucs_flag = TAUCS_DOUBLE;
 		else
 			return false;

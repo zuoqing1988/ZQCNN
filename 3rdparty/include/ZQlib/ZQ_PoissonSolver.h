@@ -2,6 +2,7 @@
 #define _ZQ_POISSON_SOLVER_H_
 #pragma once
 
+#include <type_traits>
 #include "ZQ_PCGSolver.h"
 #include "ZQ_taucs.h"
 #include "ZQ_SparseMatrix.h"
@@ -306,9 +307,9 @@ namespace ZQ
 		int BuildOpenPoisson(int width, int height, taucs_ccs_matrix** A, bool display)
 		{
 			int flag;
-			if(strcmp(typeid(T).name(),"float") == 0)
+			if(std::is_same<T, float>::value)
 				flag = TAUCS_SINGLE;
-			else if(strcmp(typeid(T).name(),"double") == 0)
+			else if(std::is_same<T, double>::value)
 				flag = TAUCS_DOUBLE;
 			else
 				return 0;
@@ -373,9 +374,9 @@ namespace ZQ
 		int BuildClosedPoisson(int width, int height, taucs_ccs_matrix** A, bool display)
 		{
 			int flag;
-			if(strcmp(typeid(T).name(),"float") == 0)
+			if(std::is_same<T, float>::value)
 				flag = TAUCS_SINGLE;
-			else if(strcmp(typeid(T).name(),"double") == 0)
+			else if(std::is_same<T, double>::value)
 				flag = TAUCS_DOUBLE;
 			else
 				return 0;
@@ -443,9 +444,9 @@ namespace ZQ
 		void ZQ_PoissonSolver::SolveOpenPoisson(T* u, T* v, int width, int height, const taucs_ccs_matrix* A, int maxiter, bool display)
 		{
 			int flag;
-			if(strcmp(typeid(T).name(),"float") == 0)
+			if(std::is_same<T, float>::value)
 				flag = TAUCS_SINGLE;
-			else if(strcmp(typeid(T).name(),"double") == 0)
+			else if(std::is_same<T, double>::value)
 				flag = TAUCS_DOUBLE;
 			else
 				return;    // 这个函数返回 void（见上面的签名），原来的 return 0 任何编译器都过不去
@@ -847,9 +848,9 @@ namespace ZQ
 		int BuildOpenPoisson(int width, int height, const bool* occupy, taucs_ccs_matrix** A, bool display)
 		{	
 			int flag;
-			if(strcmp(typeid(T).name(),"float") == 0)
+			if(std::is_same<T, float>::value)
 				flag = TAUCS_SINGLE;
-			else if(strcmp(typeid(T).name(),"double") == 0)
+			else if(std::is_same<T, double>::value)
 				flag = TAUCS_DOUBLE;
 			else
 				return 0;
@@ -924,9 +925,9 @@ namespace ZQ
 		int BuildClosedPoisson(int width, int height, const bool* occupy, taucs_ccs_matrix** A, bool display)
 		{
 			int flag;
-			if(strcmp(typeid(T).name(),"float") == 0)
+			if(std::is_same<T, float>::value)
 				flag = TAUCS_SINGLE;
-			else if(strcmp(typeid(T).name(),"double") == 0)
+			else if(std::is_same<T, double>::value)
 				flag = TAUCS_DOUBLE;
 			else
 				return 0;

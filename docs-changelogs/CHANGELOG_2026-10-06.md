@@ -265,3 +265,84 @@ H12 一直只有一句话、没有判据：「`Align0`/`Align256bit` 遇越界 r
     D1/D2 双平台全量构建 0 error；D3/D4 双平台 sample 回归全过
 
 这之后没有再改生产代码 —— 本轮（IV / IX / IW / IY / IZ / IA / IB / IC / ID）全部落在一个已验证的树上。
+
+---
+
+## 新增/变更：IE —— `typeid(T).name()` 判类型，21 个头在 GCC/Linux 上整族失效
+
+### 变更文件
+
+* `3rdparty/include/ZQlib/` 下 **21 个头、73 处**（逐处 `strcmp(typeid(T).name(), ...)`
+  -> `std::is_same<T, float/double>::value`，并补 `#include <type_traits>`）
+* `tools/check_typeid_name.py`（**新增**，门禁 A21/A22）
+* `tools/zq_pcg_check.cpp`（**新增**，PCG 的最优性条件门禁）
+* `tools/run_audit_checks.py`（注册 A21/A22）
+
+### 缺陷
+
+`typeid(T).name()` 返回的**字符串是实现定义的**：
+
+| 编译器 | `typeid(float).name()` | `typeid(double).name()` |
+| --- | --- | --- |
+| MSVC | `"float"` | `"double"` |
+| GCC / Clang（Itanium ABI） | `"f"` | `"d"` |
+
+所以
+
+```cpp
+if      (strcmp(typeid(T).name(), "float")  == 0) { ... }
+else if (strcmp(typeid(T).name(), "double") == 0) { ... }
+else return false;                  // <-- GCC 上 T 是 double，恒走这里
+```
+
+在 **GCC 上每个函数都立刻 `return false`，一个数都算不出来，不报错也不崩**。
+
+实测（gcc 9.4，`PCG` 求 SPD 系统最优解）：修前 `ret=false it=-1`、残差 0.9845（一步没走）；
+修后 `ret=true it=n`、残差 **1.4e-16 ~ 3.6e-15**（迭代数恰好等于 n，
+正是共轭梯度法在对称系统上的性质）。
+
+### 影响面
+
+`ZQ_PoissonSolver.h`(10) / `ZQ_PoissonSolver3D.h`(8) / `ZQ_PCGSolver.h`(8) /
+`ZQ_ShapeDeformation.h`(6) / `ZQ_GridDeformation3D.h`(6) /
+`ZQ_CameraCalibrationBino.h`(4) / `ZQ_StereoCalibration.h`(4) / `ZQ_GridDeformation.h`(4) /
+`ZQ_DoubleImage.h`(4) / 其余 12 个 1~3 处。
+
+分两类：
+* **正确性受影响**：「`if / else if / else return false`」那一族 ——
+  `PCG` / `PCG_sparse_unsquare` / `PCG_BQP` / `ZQ_taucs_ccs_matrix_time_vec` …
+  **整个函数不工作**；
+* **只影响性能**：「`if (double) {...} else { /* 同样上转 double 再算 */ }`
+  那一族（`ZQ_SVD::Decompose`、`ZQ_MathBase::SVD_Decompose`）——
+  GCC 上恒走 else，结果仍对，只是多一次上转。
+
+> 这条正对上「windows 和 linux 都能完全跑通」这条硬要求：
+> **同一份代码，Windows 上能算，Linux 上返回 false 且无任何提示。**
+
+### 门禁
+
+* **A21/A22 `check_typeid_name.py`** —— 报出所有
+  `strcmp(typeid(T).name(), "float"/"double") ==/!= 0`，
+  **特意放过只用来打印的那种**（否则会误报 3 处 `sprintf`）。
+  变异测试：把 `ZQ_PCGSolver.h` 第一处改回 `strcmp` -> 门禁在第 94 行报出，rc=1。
+* **`tools/zq_pcg_check.cpp`**（ASan+LSan 与 UBSan 两轴）——
+  判据用**最优性条件**而不是"和另一个求解器比"：
+  `PCG` 最小化 `0.5*x'Hx - f'x`，一阶条件就是 `H*x - f = 0`，
+  所以**不需要任何 ground truth 文件**，而且**另一个实现也错的话不会一起错**。
+
+```
+=== ZQ_PCGSolver 最优性条件回归 ===
+[dense n=4]        ret=true it=4   ||Hx-f||inf = 2.22e-16
+[dense n=8]        ret=true it=8   ||Hx-f||inf = 1.388e-16
+[dense n=12]       ret=true it=12  ||Hx-f||inf = 4.441e-16
+[dense n=8 欠迭代] ret=true it=2   残差 0.9845 -> 0.04824（断言「下降」而不是「收敛」）
+[laplacian m=4]    ret=true it=9   ||Hx-f||inf = 1.11e-15
+[laplacian m=6]    ret=true it=16  ||Hx-f||inf = 3.553e-15
+n=0 空矩阵不崩 / 全零矩阵（奇异）不崩且输出有限值
+```
+
+### 顺带验证：143 个头仍全部可编译
+
+    python tools/probe_zqlib_headers.py --check-baseline tools/zqlib_probe_baseline.txt
+        OK: 128 -> 128 / 无回退、无新增   (rc=0)
+    python tools/run_zqlib_checks.py rodrigues / calibration  -> 各 1/1 通过

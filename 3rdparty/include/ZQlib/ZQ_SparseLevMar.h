@@ -3,6 +3,7 @@
 #pragma once
 
 
+#include <type_traits>
 #include "ZQ_PCGSolver.h"
 #include "ZQ_taucs.h"
 #include "ZQ_TaucsBase.h"
@@ -373,9 +374,9 @@ namespace ZQ
 		if(jx == 0 || jx->m != n || jx->n != m)
 			return false;
 		int flag;
-		if(strcmp(typeid(T).name(),"float") == 0)
+		if(std::is_same<T, float>::value)
 			flag = TAUCS_SINGLE;
-		else if(strcmp(typeid(T).name(),"double") == 0)
+		else if(std::is_same<T, double>::value)
 			flag = TAUCS_DOUBLE;
 		else
 			return false;

@@ -121,6 +121,15 @@ GROUPS = [
      ['check_conv_overflow_guard.py', '--selfcheck'], False),
     ('A20 "卷积 kernel/dilate 溢出守卫" 普查 (check_conv_overflow_guard)',
      ['check_conv_overflow_guard.py'], False),
+    # A21/A22 是附录 IE 的门禁：`strcmp(typeid(T).name(), "double")` 在 GCC 上**恒为假**
+    # （IEEE ABI 返回 "d"），于是 PCG / TaucsBase / PoissonSolver 等 21 个头里的
+    # 分派分支**全部落到 else**（多半是 `return false`）——
+    # 也就是「这些算法在 Linux 上一个数都算不出来，还不报错、不崩」。
+    # 这是**跨平台行为不一致**，正对着「windows 和 linux 都能完全跑通」这条硬要求。
+    ('A21 "strcmp(typeid(T).name()) 判类型" 自测 (check_typeid_name --selfcheck)',
+     ['check_typeid_name.py', '--selfcheck'], False),
+    ('A22 "strcmp(typeid(T).name()) 判类型" 普查 (check_typeid_name)',
+     ['check_typeid_name.py'], False),
     ('B  ZQlib 独立回归测试 x10 (ASan+LSan)', ['run_zqlib_checks.py'], False),
     # 基线路径给**绝对路径**：子进程以 ROOT 为 cwd 运行，而基线文件在 tools/ 下，
     # 相对路径会解析成 <ROOT>/zqlib_probe_baseline.txt 而找不到（2026-10-02 实测）。
