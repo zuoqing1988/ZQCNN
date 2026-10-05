@@ -223,6 +223,20 @@ A39_GUARD = re.compile(
 A40_RESIZE = re.compile(r'if \(!input\.ResizeBilinearRect\(task_(?:rnet|onet)_images\[pp\]')
 A40_CLEAR = re.compile(r'task_(?:second|third)Bbox\[pp\]\.clear\(\)\s*;')
 
+# ---- A41/A42（附录 II.19/II.20）----
+# A41: landmark 的 kp_num 上限必须是 `C - 5`（右半从下标 5 开始），不是 `C / 2`。
+#      下面两半都读：`[i*sliceStep + num]` 和 `[... + num + 5]`，
+#      本行最大读 `kp_num-1+5`，要不越出行必须 `kp_num <= C-5`。
+A41_BAD = re.compile(r'kp_num\s*=\s*__min\(5,\s*keyPoint->GetC\(\)\s*/\s*2\)')
+A41_GOOD = re.compile(r'kp_num\s*=\s*keyPoint->GetC\(\)\s*-\s*5')
+A41_PAIR = re.compile(r'ppoint\[num\s*\+\s*5\]')
+
+# A42: _select 必须按分数选，不能按插入序 resize。
+#      firstBbox 的插入顺序是「先按 scale、再按 scale 内」，scale 从小到大，
+#      所以 resize 留下的是**最小尺度**那批，不是分数最高的。
+A42_BAD = re.compile(r'bbox\.resize\(limit_num\)\s*;')
+A42_GOOD = re.compile(r'stable_sort[\s\S]{0,200}?score\s*>')
+
 def _read(path):
     with io.open(path, 'r', encoding='utf-8') as f:
         return f.read()
@@ -505,7 +519,32 @@ def scan_text(raw, label='<text>'):
     else:
         ok += 1
 
+    # ---- A41/A42 ----
+    if A41_PAIR.search(text):
+        if A41_GOOD.search(text) and not A41_BAD.search(text):
+            ok += 1
+        else:
+            bad.append(('A41', 'landmark 的 kp_num 还是 `__min(5, C/2)` —— 但下面两半都读 '
+                        '(`num` 和 `num+5`)，本行最大读 `kp_num-1+5`，要不越出行必须 '
+                        '`kp_num <= C-5`。C=4 时读下标 6、C=8 时读下标 8，'
+                        '都越到下一行；最后一个样本再读就越过缓冲末尾，'
+                        '而且即使不崩取到的也是**下一个样本的坐标**'))
+    else:
+        ok += 1
+
+    if '_select' in text:
+        if A42_GOOD.search(text) and not A42_BAD.search(text):
+            ok += 1
+        else:
+            bad.append(('A42', '_select 还在 `bbox.resize(limit_num)` —— 按**插入顺序**截断。'
+                        'firstBbox/secondBbox 的插入顺序是「先按 scale、再按 scale 内」，'
+                        'scale 从小到大，所以留下的是**最小尺度**那批而非分数最高的；'
+                        'SetLimit 给 Rnet/Onet 封顶应该留最有希望的框'))
+    else:
+        ok += 1
+
     return ok, bad
+
 
 
 

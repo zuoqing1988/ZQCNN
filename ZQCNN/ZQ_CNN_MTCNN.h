@@ -1499,7 +1499,18 @@ namespace ZQ
 								task_thirdBbox[pp][i].regreCoord[j] = location_ptr[i*location_sliceStep + j];
 							if (keyPoint != 0)
 							{
-								int kp_num = __min(5, keyPoint->GetC() / 2);
+								// 审计修复 2026-10-06（附录 II.19）：原来写的是 `__min(5, C / 2)`，
+								// 但下面**两半**都读：`keyPoint_ptr[i*sliceStep + num]` 和 `[... + num + 5]`。
+								// 本行读到的最大下标是 `kp_num - 1 + 5`，要不越出行必须 `kp_num <= C - 5`：
+								//   C=4  -> kp_num=2，最大读 6 >= 4  => 读到**下一行**；
+								//   C=8  -> kp_num=4，最大读 8 >= 8  => 正好越过本行；
+								//   C=10 -> kp_num=5，最大读 9 <  10 => 才安全。
+								// 越出行本身还在缓冲里（不算越界），但**最后一个样本**再读就越过缓冲末尾，
+								// 而且即使不崩，取到的也是**下一个样本的坐标** —— 结果静默错乱。
+								// 正确上限是 `C - 5`（右半要从下标 5 开始），不是 `C / 2`。
+								int kp_num = keyPoint->GetC() - 5;
+								if (kp_num > 5) kp_num = 5;
+								if (kp_num < 0) kp_num = 0;
 								for (int num = 0; num < kp_num; num++)
 								{
 									task_thirdBbox[pp][i].ppoint[num] = task_thirdBbox[pp][i].col1 +
@@ -1583,7 +1594,18 @@ namespace ZQ
 								task_thirdBbox[pp][i].regreCoord[j] = location_ptr[i*location_sliceStep + j];
 							if (keyPoint != 0)
 							{
-								int kp_num = __min(5, keyPoint->GetC() / 2);
+								// 审计修复 2026-10-06（附录 II.19）：原来写的是 `__min(5, C / 2)`，
+								// 但下面**两半**都读：`keyPoint_ptr[i*sliceStep + num]` 和 `[... + num + 5]`。
+								// 本行读到的最大下标是 `kp_num - 1 + 5`，要不越出行必须 `kp_num <= C - 5`：
+								//   C=4  -> kp_num=2，最大读 6 >= 4  => 读到**下一行**；
+								//   C=8  -> kp_num=4，最大读 8 >= 8  => 正好越过本行；
+								//   C=10 -> kp_num=5，最大读 9 <  10 => 才安全。
+								// 越出行本身还在缓冲里（不算越界），但**最后一个样本**再读就越过缓冲末尾，
+								// 而且即使不崩，取到的也是**下一个样本的坐标** —— 结果静默错乱。
+								// 正确上限是 `C - 5`（右半要从下标 5 开始），不是 `C / 2`。
+								int kp_num = keyPoint->GetC() - 5;
+								if (kp_num > 5) kp_num = 5;
+								if (kp_num < 0) kp_num = 0;
 								for (int num = 0; num < kp_num; num++)
 								{
 									task_thirdBbox[pp][i].ppoint[num] = task_thirdBbox[pp][i].col1 +
@@ -1766,7 +1788,18 @@ namespace ZQ
 					{
 						keyPoint_ptr = keyPoint->GetFirstPixelPtr();
 						keyPoint_sliceStep = keyPoint->GetSliceStep();
-						kp_num = __min(5, keyPoint->GetC() / 2);
+							// 审计修复 2026-10-06（附录 II.19）：原来写的是 `__min(5, C / 2)`，
+							// 但下面**两半**都读：`keyPoint_ptr[i*sliceStep + num]` 和 `[... + num + 5]`。
+							// 本行读到的最大下标是 `kp_num - 1 + 5`，要不越出行必须 `kp_num <= C - 5`：
+							//   C=4  -> kp_num=2，最大读 6 >= 4  => 读到**下一行**；
+							//   C=8  -> kp_num=4，最大读 8 >= 8  => 正好越过本行；
+							//   C=10 -> kp_num=5，最大读 9 <  10 => 才安全。
+							// 越出行本身还在缓冲里（不算越界），但**最后一个样本**再读就越过缓冲末尾，
+							// 而且即使不崩，取到的也是**下一个样本的坐标** —— 结果静默错乱。
+							// 正确上限是 `C - 5`（右半要从下标 5 开始），不是 `C / 2`。
+							int kp_num = keyPoint->GetC() - 5;
+							if (kp_num > 5) kp_num = 5;
+							if (kp_num < 0) kp_num = 0;
 					}
 					for (int i = 0; i < task_fourthBbox[pp].size(); i++)
 					{
@@ -1812,7 +1845,18 @@ namespace ZQ
 					{
 						keyPoint_ptr = keyPoint->GetFirstPixelPtr();
 						keyPoint_sliceStep = keyPoint->GetSliceStep();
-						kp_num = __min(5, keyPoint->GetC() / 2);
+							// 审计修复 2026-10-06（附录 II.19）：原来写的是 `__min(5, C / 2)`，
+							// 但下面**两半**都读：`keyPoint_ptr[i*sliceStep + num]` 和 `[... + num + 5]`。
+							// 本行读到的最大下标是 `kp_num - 1 + 5`，要不越出行必须 `kp_num <= C - 5`：
+							//   C=4  -> kp_num=2，最大读 6 >= 4  => 读到**下一行**；
+							//   C=8  -> kp_num=4，最大读 8 >= 8  => 正好越过本行；
+							//   C=10 -> kp_num=5，最大读 9 <  10 => 才安全。
+							// 越出行本身还在缓冲里（不算越界），但**最后一个样本**再读就越过缓冲末尾，
+							// 而且即使不崩，取到的也是**下一个样本的坐标** —— 结果静默错乱。
+							// 正确上限是 `C - 5`（右半要从下标 5 开始），不是 `C / 2`。
+							int kp_num = keyPoint->GetC() - 5;
+							if (kp_num > 5) kp_num = 5;
+							if (kp_num < 0) kp_num = 0;
 					}
 					for (int i = 0; i < task_fourthBbox[pp].size(); i++)
 					{
@@ -2082,10 +2126,38 @@ namespace ZQ
 
 		void _select(std::vector<ZQ_CNN_BBox>& bbox, int limit_num, int width, int height)
 		{
-			int in_num = bbox.size();
+			// 审计修复 2026-10-06（附录 II.20）：原来这里是 `bbox.resize(limit_num)` ——
+			// 直接按**插入顺序**截断。`firstBbox` / `secondBbox` 的插入顺序是
+			// 「先按 scale、再按 scale 内顺序」，而 scale 是从小到大走的，
+			// 所以保留下来的恰好是**最小尺度**的那一批，而不是分数最高的。
+			// `SetLimit(r, o)` 的用途是给 Rnet/Onet 的计算量封顶，
+			// 封顶当然应该留最有希望的框；现在这样等于**随机丢掉高分框、留下低分框**。
+			//
+			// `width` / `height` 两个形参从头到尾就没被用过（调用点传的是
+			// input.GetW()/GetH()），一并留着以免动签名。
+			int in_num = (int)bbox.size();
+			if (limit_num <= 0)
+			{
+				bbox.clear();
+				return;
+			}
 			if (limit_num >= in_num)
 				return;
-			bbox.resize(limit_num);
+			// 稳定选择：分数相同时保持原插入顺序 —— 否则同分框之间的相对次序
+			// 取决于 std::sort 的实现，输出就不再可复现（附录 CA 那类问题）。
+			std::vector<ZQ_CNN_BBox> keep;
+			keep.resize(limit_num);
+			// 用「插入序」当次级键做一次稳定的部分选择：
+			// 先按分数降序排下标，同分按下标升序 —— 等价于稳定取前 limit_num 个。
+			std::vector<int> idx(in_num);
+			for (int i = 0; i < in_num; i++)
+				idx[i] = i;
+			const std::vector<ZQ_CNN_BBox>& ref = bbox;
+			std::stable_sort(idx.begin(), idx.end(),
+				[&ref](int a, int b) { return ref[a].score > ref[b].score; });
+			for (int i = 0; i < limit_num; i++)
+				keep[i] = bbox[idx[i]];
+			bbox.swap(keep);
 		}
 	};
 }

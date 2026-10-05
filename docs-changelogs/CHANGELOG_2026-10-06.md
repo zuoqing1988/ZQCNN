@@ -783,3 +783,43 @@ A39 每个 bgr 入口都要有自己的像素缓冲守卫；A40 每个 Rnet/Onet
 - `ZQ_CNN_MTCNN_ncnn.h` 仍然**不在任何构建里**（全仓无 include，见附录 EW），
   本轮对它的改动只经过 `-fsyntax-only`（它需要 ncnn 头，本机 Linux 没有 Linux 版 ncnn 库，
   完整链接做不了）。这一点在 changelog 里重复记一次，免得以后误以为它被 CI 覆盖了。
+
+
+## 追加：附录 II 第五批 —— II.19 / II.20（landmark 通道下标 + _select 选错框）
+
+### 查到的真缺陷
+
+| 编号 | 范围 | 缺陷 | 修法 |
+| --- | --- | --- | --- |
+| II.19 | **四个变体，14 处** | `int kp_num = __min(5, keyPoint->GetC() / 2);` 但下面**两半**都读：`keyPoint_ptr[i*sliceStep + num]` 与 `[... + num + 5]`。本行读到的最大下标是 `kp_num-1+5`，要不越出行必须 `kp_num <= C-5`：`C=4` -> kp_num=2、最大读 6 >= 4；`C=8` -> kp_num=4、最大读 8 >= 8；只有 `C=10` 才安全。越出行本身还在缓冲里（不算越界），但**最后一个样本**再读就越过缓冲末尾；而且即使不崩，取到的也是**下一个样本的坐标** —— 结果静默错乱 | 上限改成 `C - 5`，再 `__min` 到 5 并夹到 >= 0 |
+| II.20 | **五个变体** | `_select` 是 `bbox.resize(limit_num)` —— 按**插入顺序**截断。`firstBbox`/`secondBbox` 的插入顺序是「先按 scale、再按 scale 内顺序」，而 scale 是从小到大走的，所以保留下来的恰好是**最小尺度**那批，而不是分数最高的。`SetLimit(r,o)` 的用途是给 Rnet/Onet 计算量封顶，封顶应该留最有希望的框 | 改成按 `score` 降序**稳定**取前 `limit_num` 个（`std::stable_sort` + 下标数组 + `swap`）。同分保持原插入序，否则同分框的相对次序取决于排序实现、输出不再可复现 |
+
+### 门禁扩充：A41 / A42（20 条规则）
+
+A41 有 `ppoint[num + 5]` 的地方，`kp_num` 必须是 `C - 5` 形式；
+A42 有 `_select` 的地方必须按分数选、不得有 `bbox.resize(limit_num)`。
+
+### 实测
+
+    python tools/check_mtcnn_setpara.py --selfcheck -> 22 cases, all as expected（RC=0）
+    python tools/check_mtcnn_setpara.py             -> 5 文件全 OK（RC=0）
+    变异测试：A41（退回 C/2）/ A42（stable_sort -> sort）-> 门禁逐条变红并点名
+    Linux -fsyntax-only（四个 MTCNN 头）              -> RC=0
+    cmake --build build_x64 --config Release --target 四个 MTCNN sample -> RC=0，0 error
+    WSL make -j8 四个 sample                          -> 无 error
+    A/B 对拍（v6 -> v7）：四个 sample **全部 IDENTICAL**
+    python tools/check_text_encoding.py -> OK: 763 text files, all strict UTF-8, no U+FFFD
+    python tools/check_line_endings.py  -> line endings OK
+
+### 注意事项
+
+- **II.19 对现有模型是 no-op**：`conv6-3` 的 C 通常是 10 或 20，
+  旧式 `min(5, C/2)` 与新式 `min(5, C-5)` 在这两种取值上结果**相同**（都是 5）。
+  它只在 C < 10 的模型上才有差别 —— 而随仓模型都不是这种，
+  所以「A/B 逐字节相同」是预期结果。
+- **II.20 在当前仓库里也不生效**：`SetLimit` 的调用点在 sample 里是**注释掉的**
+  （`SampleMTCNN.cpp:137`），所以 `_select` 根本没被调到。
+  它是**未启用的公开 API**（`SetLimit` 本身是 public）—— 一旦有人打开这个开关，
+  现在的行为就是「按插入序截断」。修它是为了那时不用再查一遍。
+- `_select` 的 `width`/`height` 两个形参从头到尾没被用过（调用点传的是
+  `input.GetW()`/`GetH()`），保留签名没动，免得影响外部调用。

@@ -1480,10 +1480,38 @@ namespace ZQ
 
 		void _select(std::vector<ZQ_CNN_BBox>& bbox, int limit_num, int width, int height)
 		{
-			int in_num = bbox.size();
+			// 审计修复 2026-10-06（附录 II.20）：原来这里是 `bbox.resize(limit_num)` ——
+			// 直接按**插入顺序**截断。`firstBbox` / `secondBbox` 的插入顺序是
+			// 「先按 scale、再按 scale 内顺序」，而 scale 是从小到大走的，
+			// 所以保留下来的恰好是**最小尺度**的那一批，而不是分数最高的。
+			// `SetLimit(r, o)` 的用途是给 Rnet/Onet 的计算量封顶，
+			// 封顶当然应该留最有希望的框；现在这样等于**随机丢掉高分框、留下低分框**。
+			//
+			// `width` / `height` 两个形参从头到尾就没被用过（调用点传的是
+			// input.GetW()/GetH()），一并留着以免动签名。
+			int in_num = (int)bbox.size();
+			if (limit_num <= 0)
+			{
+				bbox.clear();
+				return;
+			}
 			if (limit_num >= in_num)
 				return;
-			bbox.resize(limit_num);
+			// 稳定选择：分数相同时保持原插入顺序 —— 否则同分框之间的相对次序
+			// 取决于 std::sort 的实现，输出就不再可复现（附录 CA 那类问题）。
+			std::vector<ZQ_CNN_BBox> keep;
+			keep.resize(limit_num);
+			// 用「插入序」当次级键做一次稳定的部分选择：
+			// 先按分数降序排下标，同分按下标升序 —— 等价于稳定取前 limit_num 个。
+			std::vector<int> idx(in_num);
+			for (int i = 0; i < in_num; i++)
+				idx[i] = i;
+			const std::vector<ZQ_CNN_BBox>& ref = bbox;
+			std::stable_sort(idx.begin(), idx.end(),
+				[&ref](int a, int b) { return ref[a].score > ref[b].score; });
+			for (int i = 0; i < limit_num; i++)
+				keep[i] = bbox[idx[i]];
+			bbox.swap(keep);
 		}
 	};
 }
