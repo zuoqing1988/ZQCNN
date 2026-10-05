@@ -70,7 +70,7 @@ REG_RE = re.compile(r'_my_strcmpi\(\s*&buf\[0\]\s*,\s*"([^"]+)"\s*\)')
 LAYER_RE = re.compile(r'^\s*([A-Za-z_][A-Za-z0-9_]*)\b')
 
 EXERCISED = 'EXERCISED'
-PROBED = 'PROBED'        # 没有任何模型用它，但被 SampleUnusedLayerProbe 造网跑过
+PROBED = 'PROBED'        # 没有任何模型用它，但被某个探针造合成网真跑过
 COMMENTED = 'COMMENTED'
 UNUSED = 'UNUSED'
 
@@ -79,18 +79,36 @@ UNUSED = 'UNUSED'
 #
 # 探针写的合成 `.zqparams` 行一律是 `"<层类型> name=..."` 的形状，
 # 所以一条正则就够了：抓到的是"探针**真的在构造**哪些层"。
-PROBE_SRC = os.path.join(ROOT, 'SamplesZQCNN', 'SampleUnusedLayerProbe',
-                         'SampleUnusedLayerProbe.cpp')
+# **不止 SampleUnusedLayerProbe 一个探针**（附录 II.2）：
+# LSTM_TF 由 `SampleLSTMTFCalib` 造网跑、再由 `tools/zq_lstm_check.cpp`
+# 与独立参考实现对拍 —— 两个都不在原名单里，于是它一直挂在 UNUSED。
+# 名单必须跟着**实际存在的探针**走，而不是跟着最早那一个走；
+# 否则「UNUSED = 1」会一直停在 1，而那一格其实早就不成立了。
+PROBE_SRCS = [
+    os.path.join(ROOT, 'SamplesZQCNN', 'SampleUnusedLayerProbe',
+                 'SampleUnusedLayerProbe.cpp'),
+    os.path.join(ROOT, 'SamplesZQCNN', 'SampleLSTMTFCalib',
+                 'SampleLSTMTFCalib.cpp'),
+]
+PROBE_SRC = PROBE_SRCS[0]        # 保留旧名，报错信息里还用
 PROBE_LAYER_RE = re.compile(r'"([A-Z][A-Za-z0-9_]*)\s+name=')
 
 
-def probe_covered(path=PROBE_SRC):
-    """探针 sample 覆盖的层类型集合（小写）。文件不在就返回 None。"""
-    if not os.path.isfile(path):
+def probe_covered(paths=None):
+    """探针覆盖的层类型集合（小写）。**所有**列出的探针文件都不在就返回 None。"""
+    paths = paths if paths is not None else PROBE_SRCS
+    found = set()
+    any_file = False
+    for path in paths:
+        if not os.path.isfile(path):
+            continue
+        any_file = True
+        with io.open(path, encoding='utf-8', errors='replace') as f:
+            text = f.read()
+        found |= set(m.group(1).lower() for m in PROBE_LAYER_RE.finditer(text))
+    if not any_file:
         return None
-    with io.open(path, encoding='utf-8', errors='replace') as f:
-        text = f.read()
-    return set(m.group(1).lower() for m in PROBE_LAYER_RE.finditer(text))
+    return found
 
 
 def read_net_types(path):
@@ -163,8 +181,9 @@ def main():
     hits, files = scan_models(MODEL_DIR, types)
     probed = probe_covered()
     if probed is None:
-        print('**注意**：找不到 %s —— 本次**没有** PROBED 这一档，'
-              '下面的 UNUSED 里会混入"其实已被探针覆盖"的层。' % PROBE_SRC)
+        print('**注意**：%s 一个都找不到 —— 本次**没有** PROBED 这一档，'
+              '下面的 UNUSED 里会混入"其实已被探针覆盖"的层。'
+              % ' / '.join(os.path.relpath(p, ROOT) for p in PROBE_SRCS))
         probed = set()
 
     print('ZQCNN 层类型可达性（附录 DB）')
@@ -194,7 +213,7 @@ def main():
             models = sorted(set(m for m, _ in h[EXERCISED]))
             where = '%d 个模型（首个 %s:%d）' % (len(models), models[0], h[EXERCISED][0][1])
         elif st == PROBED:
-            where = '**没有任何模型用它**，但 `SampleUnusedLayerProbe` 造合成网真跑过'
+            where = '**没有任何模型用它**，但被探针造合成网真跑过并与独立参考实现对拍'
         elif n_cmt:
             where = '只出现在**被注掉的行**里（首个 %s:%d）' % (
                 h[COMMENTED][0][0], h[COMMENTED][0][1])
@@ -206,8 +225,10 @@ def main():
     print('\n合计 %d 种：EXERCISED %d / PROBED %d / COMMENTED %d / UNUSED %d'
           % (len(types), n_ex, n_pr, n_cm, n_un))
     if n_pr:
-        print('PROBED 这 %d 种**没有任何模型会跑到**，但 `SampleUnusedLayerProbe`'
-              '给它们造了合成网并与独立参考实现对拍（附录 IA~IH）。' % n_pr)
+        print('PROBED 这 %d 种**没有任何模型会跑到**，但探针给它们造了合成网'
+              '并与独立参考实现对拍（附录 IA~IH、IX）。探针清单：\n    %s'
+              % (n_pr, '\n    '.join(os.path.relpath(x, ROOT)
+                                      for x in PROBE_SRCS)))
     if n_un:
         print('UNUSED 与 COMMENTED 这两类的代码路径**不会被任何随仓库发布的模型跑到**，')
         print('  也没有探针覆盖 —— 它们才是真正的零覆盖区。')
@@ -219,7 +240,7 @@ def main():
                  '#',
                  '# 状态：EXERCISED（至少一个模型有未注释的层用它）/',
                  '#       COMMENTED（只出现在 # 注掉的行里 —— 看着在用其实禁用）/',
-                 '#       PROBED（没有模型用它，但 SampleUnusedLayerProbe 造网跑过）/',
+                 '#       PROBED（没有模型用它，但某个探针造网跑过）/',
                  '#       UNUSED（一次都没出现，且探针也没覆盖）',
                  '#',
                  '# 基线的作用是让「新增/删除一个模型」「某个层从 EXERCISED 变成 UNUSED」',

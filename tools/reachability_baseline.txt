@@ -3,7 +3,7 @@
 #
 # 状态：EXERCISED（至少一个模型有未注释的层用它）/
 #       COMMENTED（只出现在 # 注掉的行里 —— 看着在用其实禁用）/
-#       PROBED（没有模型用它，但 SampleUnusedLayerProbe 造网跑过）/
+#       PROBED（没有模型用它，但某个探针造网跑过）/
 #       UNUSED（一次都没出现，且探针也没覆盖）
 #
 # 基线的作用是让「新增/删除一个模型」「某个层从 EXERCISED 变成 UNUSED」
@@ -23,7 +23,7 @@ Pooling	EXERCISED	21	0
 Copy	PROBED	0	0
 Dropout	COMMENTED	0	1
 InnerProduct	EXERCISED	29	0
-LSTM_TF	UNUSED	0	0
+LSTM_TF	PROBED	0	0
 Eltwise	EXERCISED	82	0
 UpSampling	EXERCISED	3	0
 ScalarOperation	PROBED	0	0
