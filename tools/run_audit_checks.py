@@ -98,6 +98,15 @@ GROUPS = [
      ['check_clamp_asymmetry.py', '--selfcheck'], False),
     ('A16 "同函数内各轴钳位上界一致" 普查 (check_clamp_asymmetry)',
      ['check_clamp_asymmetry.py'], False),
+    # A17/A18 是附录 IX.1 的门禁：`zq_final_sum_q` 横向归约宏在
+    # ARM NEON + `__ARM_NEON_FP16` 那一节写成 9 项，而 `q` 只有 `q[8]` —— 越界读。
+    # **它只能用源码门禁盖**：那一节在 x86 上根本不参与编译
+    # （`zq_base_type` 是 float，SSE/AVX 两节分别是 4 项 / 8 项，都对），
+    # 所以 ASan / UBSan / 跑 sample 全部碰不到它。
+    ('A17 "SIMD 横向归约项数 == lane 数" 自测 (check_mm_reduce_terms --selfcheck)',
+     ['check_mm_reduce_terms.py', '--selfcheck'], False),
+    ('A18 "SIMD 横向归约项数 == lane 数" 普查 (check_mm_reduce_terms)',
+     ['check_mm_reduce_terms.py'], False),
     ('B  ZQlib 独立回归测试 x10 (ASan+LSan)', ['run_zqlib_checks.py'], False),
     # 基线路径给**绝对路径**：子进程以 ROOT 为 cwd 运行，而基线文件在 tools/ 下，
     # 相对路径会解析成 <ROOT>/zqlib_probe_baseline.txt 而找不到（2026-10-02 实测）。

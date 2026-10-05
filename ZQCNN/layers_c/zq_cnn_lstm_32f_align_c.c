@@ -111,7 +111,11 @@ extern "C" {
 #define zq_mm_align_size_mul_16 128
 #define zq_mm_align_size_mul_32 256
 #define zq_mm_bitor_longlong 0xFFFFFFFFFFFFFFF0
-#define zq_final_sum_q (q[0]+q[1]+q[2]+q[3]+q[4]+q[5]+q[6]+q[7]+q[8])
+// 审计修复 2026-10-05（附录 IX.1）：与 conv / deconv 同一处笔误 —— 8 lane 的向量只写到
+// q[7]。这里**当前没有任何 raw 代码用这个宏**（`zq_cnn_lstm_32f_align_c_raw.h` 里
+// 一次都没出现 `zq_final_sum_q`），所以它今天不产生越界读；
+// 但留着一个错的下标定义，等于给下一个用它的人埋一个 ARM FP16 上的栈越界读。
+#define zq_final_sum_q (q[0]+q[1]+q[2]+q[3]+q[4]+q[5]+q[6]+q[7])
 
 #include "zq_cnn_lstm_32f_align_c_raw.h"
 

@@ -112,7 +112,11 @@ extern "C" {
 #define zq_mm_align_size16 128
 #define zq_mm_align_size32 256
 #define zq_mm_bitor_longlong 0xFFFFFFFFFFFFFFF0
-#define zq_final_sum_q (q[0]+q[1]+q[2]+q[3]+q[4]+q[5]+q[6]+q[7]+q[8])
+// 审计修复 2026-10-05（附录 IX.1）：同 zq_cnn_convolution_32f_align_c.c 那一处。
+// `zq_cnn_deconvolution_32f_align_c_raw.h` 里两处 `q` 都声明成 `q[8]`，
+// 而这里是 8 lane 向量 —— 多出来的 `+q[8]` 在 ARM NEON + `__ARM_NEON_FP16` 下
+// 是 `float16_t q[8]` 之后的**越界读**，转置卷积的每个输出都被加上一个栈上的垃圾值。
+#define zq_final_sum_q (q[0]+q[1]+q[2]+q[3]+q[4]+q[5]+q[6]+q[7])
 
 #include "zq_cnn_deconvolution_32f_align_c_raw.h"
 

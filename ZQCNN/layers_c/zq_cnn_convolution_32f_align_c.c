@@ -1,4 +1,4 @@
-﻿#include <stdio.h>
+#include <stdio.h>
 #include <omp.h>
 #include "../ZQ_CNN_CompileConfig.h"
 #if __ARM_NEON
@@ -134,7 +134,14 @@ extern "C" {
 #define zq_mm_align_size_mul_16 128
 #define zq_mm_align_size_mul_32 256
 #define zq_mm_bitor_longlong 0xFFFFFFFFFFFFFFF0
-#define zq_final_sum_q (q[0]+q[1]+q[2]+q[3]+q[4]+q[5]+q[6]+q[7]+q[8])
+// 审计修复 2026-10-05（附录 IX.1）：**这里是 8 个 lane 的向量，q 只有 q[0..7]** ——
+// 两个 raw 头里声明的都是 `ZQ_DECLSPEC_ALIGN32 zq_base_type q[8]`，而 FP32-SSE 那份宏
+// 恰好是 4 个 lane、也是 4 项。原来的第 9 项 `+q[8]` 是从别处抄来的**多写一项**：
+// 在 ARM NEON + `__ARM_NEON_FP16` 下 `zq_base_type` 就是 `float16_t`，`q[8]` 是**越界读**
+// （读在 `q[8]` 之后那 2 个字节），于是**每一次卷积的每一个输出**都多算了一个
+// 栈上的垃圾值。x86 上 `zq_base_type` 是 float、SSE/AVX 宏分别是 4/8 项，
+// 所以这条只有 ARM FP16 才踩得到 —— 本仓库两套构建都测不到，属于"零覆盖"。
+#define zq_final_sum_q (q[0]+q[1]+q[2]+q[3]+q[4]+q[5]+q[6]+q[7])
 
 #include "zq_cnn_convolution_32f_align_c_raw.h"
 
