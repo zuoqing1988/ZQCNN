@@ -143,3 +143,18 @@ LSan 实测：4 次调用漏 8 个块、3584 字节。
 ### 结论
 
 除 IB.2 那处泄漏外，`ZQ_Calibration` 的数值是对的。
+
+---
+
+## 记录：v63 全量回归
+
+    python tools/run_audit_checks.py --with-build --warn-sweep --src-sweep \
+        --bounds-sweep --ubsan-sweep --reachability --msvc-asan
+
+    ALL CHECKS PASSED
+    RC=0
+
+    57 个检查组，52 个显式 OK，0 个 FAILED
+    B 组 **54/54 通过**（比 v62 的 53 多了 `zq_rodrigues`）
+
+> 注：v63 启动之后 IY / IZ / IA / IB 才落地，所以紧接着又跑了 v64 拿最终树的单点。
