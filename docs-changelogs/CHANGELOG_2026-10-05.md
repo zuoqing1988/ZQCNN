@@ -1496,3 +1496,13 @@ size 与 max 各发 **2** 个框（两个纵向半格），而**每个 ratio 发
   新增 `scan_prior_box_text()`：对网格实测 `num_priors` 并与两个候选公式对照
 * `audit_k3_20261001.md`（追加 IO）
 * **无生产代码改动**；两个平台均已手工重编 + 实跑（rc=0，两平台表一致）
+
+## 新增/变更：IO 落地后的完整回归（v52）
+
+```
+ALL CHECKS PASSED        rc=0        FAILED 计数 = 0
+```
+
+`SampleUnusedLayerProbe` 多出来的 `scan_prior_box_text()` 在两个平台上都跑过，
+表一致；其余组（D1/D2 双平台全量构建、D3/D4 两平台 sample、
+A~C16 全部门禁、MSVC `/analyze`、ARM/NEON 与 FP16 档解析、MSVC ASan）全部 OK。
