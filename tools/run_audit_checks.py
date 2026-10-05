@@ -224,6 +224,17 @@ GROUPS = [
      ['check_nchwc_guards.py', '--selfcheck'], False),
     ('A38 "NCHWC 守卫一致性" 普查 (check_nchwc_guards)',
      ['check_nchwc_guards.py'], False),
+    # A39 是附录 IT 的**体检**（不判失败，只报告）：哪些 public API 一个调用方都没有。
+    # 这一轮反复出现「改了但从没跑到」，根因都是这个 ——
+    # 某个入口零调用方，于是它所在的整条链路不在任何回归覆盖内。
+    # 已确认三处：MakeDatabase(/Compact( 零调用 ⇒ 整个检测器驱动的路径不被执行；
+    # _auto_detect_database 的 #else(Linux) 分支从不链接；
+    # CascadeOnet_Interface::Find 零调用 ⇒ VideoFaceDetection 里那 3N 份 cascade_Onets
+    # 加载后从不推理。
+    # **不判失败**：零调用点本身不是缺陷（很多 API 就是给外部用的），
+    # 但清单要定期看，而不是躺在那里没人知道。
+    ('A39 "零调用点体检" (check_zero_callers)',
+     ['check_zero_callers.py'], False),
     ('B  ZQlib 独立回归测试 x10 (ASan+LSan)', ['run_zqlib_checks.py'], False),
     # 基线路径给**绝对路径**：子进程以 ROOT 为 cwd 运行，而基线文件在 tools/ 下，
     # 相对路径会解析成 <ROOT>/zqlib_probe_baseline.txt 而找不到（2026-10-02 实测）。
