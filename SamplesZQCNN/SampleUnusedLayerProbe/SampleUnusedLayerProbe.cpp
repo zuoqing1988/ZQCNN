@@ -84,6 +84,46 @@ static bool write_param(int C, int H, int Wd, const char* layer_line)
     return true;
 }
 
+// 与 `run_synth` 相同，但 **`.zqparams` 的内容整段由调用方给**
+// （有些层需要多行、多层、或者自己指定 Input 行），
+// 并且取回**指定名字**的输出 blob。
+static bool run_synth_named(const char* param_text, const std::vector<float>& weights,
+                            int C, int H, int Wd, const std::vector<float>& in,
+                            const char* out_name, std::vector<float>& out)
+{
+    if (!write_file(SYNTH_PARAM, param_text, strlen(param_text))) {
+        printf("  写不出合成网参数文件（cwd 不可写？）\n");
+        return false;
+    }
+    if (!write_file(SYNTH_MODEL, weights.empty() ? (const void*)"" : (const void*)&weights[0],
+                    weights.size() * sizeof(float))) {
+        printf("  写不出合成网权重文件\n");
+        return false;
+    }
+    ZQ::ZQ_CNN_Net net;
+    if (!net.LoadFrom(SYNTH_PARAM, SYNTH_MODEL)) {
+        printf("  合成网加载失败\n");
+        return false;
+    }
+    ZQ::ZQ_CNN_Tensor4D_NHW_C_Align256bit ti;
+    if (!ti.ConvertFromCompactNCHW(&in[0], 1, C, H, Wd)) {
+        printf("  输入张量 ChangeSize 失败\n");
+        return false;
+    }
+    if (!net.Forward(ti)) {
+        printf("  Forward 失败\n");
+        return false;
+    }
+    const ZQ::ZQ_CNN_Tensor4D* ob = net.GetBlobByName(out_name);
+    if (ob == 0) {
+        printf("  取不到输出 blob %s\n", out_name);
+        return false;
+    }
+    out.resize((size_t)ob->GetN() * ob->GetC() * ob->GetH() * ob->GetW());
+    ob->ConvertToCompactNCHW(&out[0]);
+    return true;
+}
+
 // 跑一个合成网：造输入 -> Forward -> 取顶层 blob。
 // `in` 是 compact NCHW（N=1）。失败时把原因打出来并返回 false。
 static bool run_synth(const char* layer_line,
@@ -1221,6 +1261,143 @@ static void run_prior_box_mxnet()
     }
 }
 
+// DetectionOutput_MXNET：把 prior + loc + conf 解码成检测框（附录 IK.1）。
+//
+// 契约（逐行读 `_detection_output_MXNET` + `ZQ_CNN_BBoxUtils` 得到）：
+//
+//   num_anchors = conf.GetH()      num_classes = conf.GetC()
+//   对每个 anchor i：
+//       score,id = max_{j>=1} conf[i*4+j]      // **j 从 1 开始**，类别 0 是背景、
+//                                              // 永远不会被选中
+//       box = TransformLocations_MXNET(prior[i*4..], loc[i*4..], clip, v[0..3])
+//            ox = px*vx*aw + (al+ar)/2 ;  ow = exp(pw*vw)*aw/2
+//            oy = py*vy*ah + (at+ab)/2 ;  oh = exp(ph*vh)*ah/2
+//            clip ? clamp 到 [0,1]
+//       若 id > 0 且 score >= confidence_threshold -> 收进 bboxes[id]
+//   每个类别各跑一次 ApplyNMSFast（**按分数降序**贪心保留，阈值内不抑制）
+//   keep_top_k > -1 时再全局按分数降序截断
+//   输出每行 7 个 float：[batch, label, score, xmin, ymin, xmax, ymax]
+//
+// 本探针把 `nms_threshold` 设成 **1.0** —— `_nms` 一进来就
+// `if (overlap_threshold >= 1.0) return`，于是 NMS **完全不做**，
+// 只剩"按分数降序"。这样参考实现不必复现抑制逻辑，
+// 测的仍然是**解码 + 筛选 + 排序 + 输出列序**这一整条。
+static void ref_detection_output_MXNET(const std::vector<float>& in,
+                                       int A, int num_classes,
+                                       const float* variances, bool clip,
+                                       float conf_thresh,
+                                       std::vector<float>& out)
+{
+    // 收下来的候选，按 (label, score 降序) 排
+    struct Cand { int label; float score; float x1, y1, x2, y2; };
+    std::vector<Cand> cands;
+    // **布局**：数据张量形状是 [1, A, 1, num_classes]（C=num_classes, H=A, W=1）。
+    //   * `loc_data` / `prior_data` 是 `ConvertToCompactNCHW` 出来的 **compact NCHW**，
+    //     代码按 `i*4 + k` 读；compact 下标 (c,h,w) = (k, i, 0) -> k*A + i。
+    //   * `conf` 是**直接按张量布局**读的：`p_cls_prob[i*conf_pixStep + j]`，
+    //     那是 **NHW_C**（通道是最内层、pixelStep 有对齐），对应 compact 下标
+    //     (c,h,w) = (j, i, 0) -> j*A + i。
+    // 两侧**下标规则不同**（一处 compact、一处张量），第一版我两边都写成 i*4+j，
+    // 于是 argmax 选错了类别：分数相同、label 不同（附录 IK.2）。
+    for (int i = 0; i < A; i++) {
+        float score = -1;
+        int id = 0;
+        for (int j = 1; j < num_classes; j++) {
+            float t = in[(size_t)j * A + i];      // conf：按张量(NHW_C)布局
+            if (t > score) { score = t; id = j; }
+        }
+        if (!(id > 0 && score >= conf_thresh)) continue;
+        // loc_data / prior_data：`ConvertToCompactNCHW` 出来的 compact 数组，
+        // 代码按 **线性下标** `i*4+k` 读 —— 也就是 `in[i*4+k]`，
+        // **不是** (c,h,w) 坐标换算出来的 k*A+i（我一度写成后者，又错一次）。
+        float anc[4], loc[4];
+        for (int k = 0; k < 4; k++) { anc[k] = in[(size_t)(i * 4 + k)]; loc[k] = anc[k]; }
+        float al = anc[0], at = anc[1], ar = anc[2], ab = anc[3];
+        float aw = ar - al, ah = ab - at;
+        float ax = (al + ar) / 2.f, ay = (at + ab) / 2.f;
+        float ox = loc[0] * variances[0] * aw + ax;
+        float oy = loc[1] * variances[1] * ah + ay;
+        float ow = expf(loc[2] * variances[2]) * aw / 2.f;
+        float oh = expf(loc[3] * variances[3]) * ah / 2.f;
+        Cand c;
+        c.label = id; c.score = score;
+        c.x1 = clip ? __max(0.0f, __min(1.0f, ox - ow)) : (ox - ow);
+        c.y1 = clip ? __max(0.0f, __min(1.0f, oy - oh)) : (oy - oh);
+        c.x2 = clip ? __max(0.0f, __min(1.0f, ox + ow)) : (ox + ow);
+        c.y2 = clip ? __max(0.0f, __min(1.0f, oy + oh)) : (oy + oh);
+        cands.push_back(c);
+    }
+    // label 升序（std::map 的遍历序），每个 label 内分数降序（GetMaxScoreIndex）
+    std::vector<Cand> sorted = cands;
+    for (size_t a = 0; a + 1 < sorted.size(); a++)
+        for (size_t b = a + 1; b < sorted.size(); b++) {
+            bool swap = false;
+            if (sorted[b].label < sorted[a].label) swap = true;
+            else if (sorted[b].label == sorted[a].label && sorted[b].score > sorted[a].score) swap = true;
+            if (swap) { Cand t = sorted[a]; sorted[a] = sorted[b]; sorted[b] = t; }
+        }
+    out.clear();
+    for (size_t k = 0; k < sorted.size(); k++) {
+        out.push_back(0.0f);                        // batch
+        out.push_back((float)sorted[k].label);
+        out.push_back(sorted[k].score);
+        out.push_back(sorted[k].x1);
+        out.push_back(sorted[k].y1);
+        out.push_back(sorted[k].x2);
+        out.push_back(sorted[k].y2);
+    }
+}
+
+static void run_detection_output_mxnet()
+{
+    // num_classes 必须 >= 2；A 个 anchor；conf/loc/prior 同源（见下面注释）
+    static const int CASES[][2] = { {2, 4}, {4, 4}, {3, 8} };   // {A, num_classes}
+    const double LIMIT = 1e-5;
+    char block[512], shape[96];
+    for (int t = 0; t < 3; t++) {
+        const int A = CASES[t][0], NC = CASES[t][1];
+        // 形状 [1, A, 1, NC]：conf.GetH()=A、conf.GetC()=NC，
+        // 元素总数 A*NC 必须同时够 loc 的 A*4 与 prior 的 A*4
+        if (A * NC < A * 4) continue;
+        snprintf(block, sizeof(block),
+                 "Input name=data C=%d H=%d W=1\n"
+                 "Copy name=c1 bottom=data top=loc\n"
+                 "Copy name=c2 bottom=data top=conf\n"
+                 "Copy name=c3 bottom=data top=prior\n"
+                 "DetectionOutput_MXNET name=do1 bottom=loc bottom=conf bottom=prior top=det "
+                 "nms_threshold=1 nms_top_k=-1 confidence_threshold=0.05 keep_top_k=-1 "
+                 "clip=1 variance=0.1 variance=0.1 variance=0.2 variance=0.2\n",
+                 NC, A);
+        unsigned s = 20262121u + (unsigned)t * 32452843u;
+        std::vector<float> in((size_t)A * NC);
+        for (size_t i = 0; i < in.size(); i++) in[i] = rnd(s) * 0.5f;   // 分数全在 [-0.5,0.5]
+        std::vector<float> got;
+        float variances[4] = { 0.1f, 0.1f, 0.2f, 0.2f };
+        std::vector<float> want;
+        ref_detection_output_MXNET(in, A, NC, variances, true, 0.05f, want);
+        // 上面用同一份 in 同时当 loc/conf/prior：loc_data 与 conf_data 的
+        // 下标规则不同（loc 是 i*4+k，conf 是 i*4+j），所以"同源"只影响数值，
+        // **不影响判据能覆盖到哪一段代码**。
+        printf("  [probe] DetectionOutput_MXNET A=%d num_classes=%d ...\n", A, NC);
+        if (!run_synth_named(block, std::vector<float>(), NC, A, 1, in, "det", got)) { g.bad++; continue; }
+        long wi = -1;
+        double e = backward_err(got, want, wi);
+        if (e > LIMIT) {
+            // 失败时才打：把输入按 compact 顺序列出来，
+            // 便于核对 loc/prior 的**线性**下标 i*4+k 与 conf 的**张量**下标 j*A+i
+            // （这两个规则不同，附录 IK.2）。
+            printf("        [诊断] 输入（compact NCHW，形状 [1,%d,1,%d]）共 %d 个：",
+                   A, NC, (int)in.size());
+            for (size_t q = 0; q < in.size(); q++) printf(" %.6f", in[q]);
+            printf("\n        [诊断] i=0 时 loc/prior 按线性下标 i*4+k 读到：");
+            for (int k = 0; k < 4; k++) printf(" %.6f", in[(size_t)(0 * 4 + k)]);
+            printf("\n");
+        }
+        snprintf(shape, sizeof(shape), "A=%d classes=%d", A, NC);
+        report("DetectOut", shape, e, LIMIT, wi, got, want);
+    }
+}
+
 int main()
 {
     setvbuf(stdout, NULL, _IONBF, 0);
@@ -1251,6 +1428,7 @@ int main()
     deconv_calibrate();
     run_deconv();
     run_prior_box_mxnet();
+    run_detection_output_mxnet();
     printf("  小结：跑过 %d 个形状，对 %d，**对不上** %d，**待查** %d\n",
            g.ok + g.bad, g.ok, g.bad, g.open);
 

@@ -42,5 +42,5 @@ PriorBoxText	UNUSED	0	0
 PriorBox_MXNET	PROBED	0	0
 Concat	EXERCISED	16	0
 DetectionOutput	EXERCISED	2	0
-DetectionOutput_MXNET	UNUSED	0	0
+DetectionOutput_MXNET	PROBED	0	0
 Input	EXERCISED	27	0
