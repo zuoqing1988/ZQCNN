@@ -44,10 +44,21 @@ void zq_cnn_lstm_TF_32f_align(
 	__int64* buffer_len)
 {
 	register zq_mm_type v_x, v_h, v_I, v_F, v_O, v_G;
-	zq_base_type buffer_I[zq_mm_align_size];
-	zq_base_type buffer_F[zq_mm_align_size];
-	zq_base_type buffer_O[zq_mm_align_size];
-	zq_base_type buffer_G[zq_mm_align_size];
+	// 审计修复 2026-10-05（附录 IX.3）：这四个是**裸栈数组**，没有对齐属性，
+	// 却被 `zq_mm_store_ps` 写 —— AVX 那一档它是 `_mm256_store_ps`，**要求 32 字节对齐**，
+	// 不对齐在 x86 上是 `vmovaps` -> #GP，**进程直接死**。
+	// UBSan 实测（本仓库第一份带独立参考实现的 LSTM 门禁，附录 IX）：
+	//     zq_cnn_lstm_32f_align_c_raw.h:147 runtime error:
+	//     store to misaligned address ... for type '__m256', which requires 32 byte alignment
+	// 平时不崩只是因为**栈恰好对上了**：x86-64 ABI 只保证栈 16 字节对齐，
+	// 这四个数组落在哪个偏移取决于调用者的栈帧大小 —— **换个调用点就可能崩**。
+	// 同一批 raw 头里的 `q[8]` 本来就写了 `ZQ_DECLSPEC_ALIGN32`，
+	// 这里漏了。x86 走的是 store，所以 ASan 那一轴**全绿**（ASan 不管对齐），
+	// 只有 UBSan 看得见（与附录 IW.13 同一件事）。
+	ZQ_DECLSPEC_ALIGN32 zq_base_type buffer_I[zq_mm_align_size];
+	ZQ_DECLSPEC_ALIGN32 zq_base_type buffer_F[zq_mm_align_size];
+	ZQ_DECLSPEC_ALIGN32 zq_base_type buffer_O[zq_mm_align_size];
+	ZQ_DECLSPEC_ALIGN32 zq_base_type buffer_G[zq_mm_align_size];
 	int out_n, t, q, i, ti;
 	const zq_base_type* in_slice_ptr, *x, *weight_xc_I, *weight_xc_F, *weight_xc_O, *weight_xc_G;
 	const zq_base_type* weight_hc_I, *weight_hc_F, *weight_hc_O, *weight_hc_G;

@@ -600,6 +600,16 @@ EXTRA_SOURCES = {
         'gcc -O1 -g $SAN -mavx2 -mfma -fopenmp -c -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include '
         '$R/ZQCNN/layers_c/zq_cnn_resize_32f_align_c.c -o $WDIR/zq_reshape_rz.o',
     ],
+    # zq_lstm（附录 IX）：给 **NCHW 的 LSTM_TF 内核**补一份带**独立参考实现**的门禁。
+    # 此前只有 SamplesZQCNN/SampleLSTMTFCalib 那个**标定装置**（附录 IN），
+    # 它回答「哪个张量能改变输出」，**不回答「算得对不对」** —— 没有参考实现，
+    # 就没有任何一个数字可以判成败（IN.5 当时因此留下两条未解释的观察）。
+    # 这里 10 组：(C, hidden, W, N) x 正/反向 x 共用 buffer 的复用分支。
+    'zq_lstm': [
+        'gcc -O1 -g -mavx2 -mfma $SAN -c -I$R/ZQCNN -I$R/ZQCNN/layers_c '
+        '-I$R/ZQ_GEMM -I$R/3rdparty/include '
+        '$R/ZQCNN/layers_c/zq_cnn_lstm_32f_align_c.c -o $WDIR/zq_lstm_ref.o',
+    ],
     # zq_nchw_lstm（附录 CW）：NCHW 的 LSTM。3 个 32f 入口
     # （align0_general 在 .c 里，align128/256 在 _raw.h 里，宏式声明）。
     'zq_nchw_lstm': [
@@ -664,6 +674,7 @@ EXTRA_LINK = {'zq_innerproduct': ' $WDIR/zq_ipgemm.o $WDIR/zq_gemm_align.o $WDIR
               'zq_nchw_sqrtnrm': ' $WDIR/zq_sn_sqrt.o $WDIR/zq_sn_nrm.o',
               'zq_nchw_reduction': ' $WDIR/zq_red.o',
               'zq_nchw_lstm': ' $WDIR/zq_lstm.o',
+              'zq_lstm': ' $WDIR/zq_lstm_ref.o',
               'zq_roi': ' $WDIR/zq_roi_t4d.o $WDIR/zq_roi_rz.o',
               'zq_reshape': ' $WDIR/zq_reshape_t4d.o $WDIR/zq_reshape_rz.o',
               'zq_convert': ' $WDIR/zq_convert_t4d.o $WDIR/zq_convert_rz.o',
@@ -732,6 +743,7 @@ EXTRA_INC = {'zq_facedb': ' -I$R -I$R/ZQCNN -I$R/ZQCNN/3rdparty/include/ZQlib',
              'zq_nchw_sqrtnrm': ' -I$R -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include',
              'zq_nchw_reduction': ' -I$R -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include',
              'zq_nchw_lstm': ' -I$R -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include',
+             'zq_lstm': ' -I$R/ZQCNN -I$R/ZQCNN/layers_c -I$R/ZQ_GEMM',
              'zq_roi': ' -I$R -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include',
              'zq_reshape': ' -I$R -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include',
              'zq_convert': ' -I$R -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include',
@@ -787,6 +799,7 @@ EXTRA_CXXFLAGS = {'zq_scale': ' -mavx2 -mfma',
                   'zq_nchw_sqrtnrm': ' -mavx2 -mfma -fopenmp',
                   'zq_nchw_reduction': ' -mavx2 -mfma -fopenmp',
                   'zq_nchw_lstm': ' -mavx2 -mfma -fopenmp',
+                  'zq_lstm': ' -mavx2 -mfma',
                   'zq_roi': ' -mavx2 -mfma -fopenmp',
                   'zq_reshape': ' -mavx2 -mfma -fopenmp',
                   'zq_convert': ' -mavx2 -mfma -fopenmp',
