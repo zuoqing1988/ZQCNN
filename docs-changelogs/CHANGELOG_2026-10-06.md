@@ -1380,3 +1380,72 @@ lambda 形式下 ``（缩进反向引用）**不会展开**，文件里留下�
 - 报告里另有 L2~L7 七条 LOW（`ppoint` 有效性、`.names` 读不到时静默降级、
   `ssd_detector.Detect` 返回值丢弃、块内 `thresh` 遮蔽、`size()-1` 的符号回绕等），
   本轮**没有**改：它们要么不可达、要么纯可读性，改动收益低而回归成本高。
+
+
+## 追加：附录 IO —— ZQ_FaceDatabaseMaker / ZQ_FaceDetectorLibFaceDetect（3 个已修 + 覆盖盲区）
+
+范围：`ZQ_FaceDatabaseMaker.h`（1351 行）+ `ZQ_FaceDetectorLibFaceDetect.h`（225 行），
+此前**零行为门禁**。
+
+| 编号 | 缺陷 | 修法 |
+| --- | --- | --- |
+| IO.1 | `ErrorCode err_code;`（2 处）**未初始化**，而 `CropImage` 失败的分支会把它 push 进 `ErrorCodes`。触发：`CropImage` 返回 false，即 `_findSimilarity(5, ...)` 失败 = 检测出的 5 点退化（共线/重合）。后果：读未定值（UB），随后被 `%d` 打进 `err_log.txt`，产生**随机错误码**。同一函数里另外 3 条错误路径都设了 err_code，只有这条漏了 —— 是遗漏不是设计 | 加初值 `ERR_WARNING` |
+| IO.2 | `_auto_detect_database` 的 `intptr_t lfDir;` **未初始化**，且那个 `if` 的**语句体是空的**（只剩一行注释掉的 printf）=> `_findfirst` 失败时 `lfDir == -1` 却照样走到 `_findclose(lfDir)`，对**无效句柄**调 API。跨平台对照：`#else` 的 Linux 分支**做了**保护，Windows 侧两处都没有 | 初始化为 `-1l` + `_findclose` 前加 `if (lfDir != -1l)` |
+| IO.4 | `ZQ_FaceDetectorLibFaceDetect` 的 **GRAY 分支少加了 `rect_off_x`**。同一个 switch 里另外 6 个分支全都加了 —— **一份对六份错**。后果：灰度图 + `roi_min_x > 0` 时 ROI 采样整体左移，检出框和 landmark 全部错位（**不是内存越界**，读仍在界内）。仓内不可达（三个调用点全传 BGR），但这是 public API | 补上 |
+
+### 这一轮自己犯的错（都是**补丁脚本**的错，不是被测代码的）
+
+1. 第一版 IO.1 写了 `ErrorCode err_code = ERR_FACE_DATABASE_MAKER_OK;` ——
+   **这个枚举值不存在**（枚举里只有 `ERR_WARNING` / `ERR_FATAL`）。
+   写完没立刻编译，隔了几步才在 `grep` 里看到。全量构建会立刻抓，但没有。
+2. 第一版 IO.2 把 `if (... == -1l)` 改成 `!= -1l` 想「让失败不进 do-while」，
+   但 `else` 结构还在 —— 结果**失败时才进 do-while**，比原来更糟。
+3. 第二版用「3 tab 缩进」去匹配 `_findclose(lfDir);`，
+   而它是 4 tab 那行的**子串** => 两处都被改、又叠了一层守卫。
+   第三次用 `.strip()` 去掉一行 tab 来「修」重复，**去错了那一行**，文件彻底乱掉。
+   最后 `git checkout -- <file>` 恢复重做。
+
+**这三次的共同点**：都在**没有立刻编译**的情况下继续叠加补丁。
+正确做法是每改一处就跑一次全量构建 —— 三次加起来省下的时间远不如一次 90 秒的构建。
+
+### 覆盖盲区（这一轮最该带走的一条）
+
+`MakeDatabase(` / `MakeDatabaseCompact(` **零调用方**（`grep "MakeDatabase("` 全仓无命中）。
+也就是说 `_make_database`、`_extract_feature_from_img`、`_extract_feature_from_box` ——
+**整个检测器驱动的路径** —— 不被任何 sample 执行。
+四个 `SampleFaceDatabase*` 只用 `*AlreadyCropped` 变体，恰好绕开了 `detectors[id]` 那一支。
+
+同理，`_auto_detect_database` 的 `#else`(Linux) 分支**从不链接** ——
+10 个 include 此头的 sample 全部包在 `#if defined(_WIN32)` 里。
+
+**所以：本轮修的 IO.1 / IO.2 / IO.4 都没有运行时覆盖，只能靠源码门禁钉住。**
+这一点必须与缺陷一起落进 changelog，否则下一个人会以为这条路径验过了。
+
+### 报告里已确认干净、值得记下的几处
+
+- `_load_feature_from_file`（`:809-846`）是 `audit_k3_20261001.md:223` 的 H20 缺陷，**已修复**：
+  `fread` 返回值查、`feat_dim` 范围 `1..4096`、`ChangeSize` 后查 `pData == 0`、每条路径都 `fclose`。
+  `.imgfeat` 正是不可信的磁盘文件 —— 这条最该有的守卫都在。
+- `box = bbox[0]`（`:1171`）安全：每个 `FindFace` 要么 `clear()` 要么 `resize(num)`，**不会跨次累积**。
+- 4 个 OpenMP 区域的 `id = omp_get_thread_num()` 索引**全部安全**：
+  进并行区前把 `real_thread_num` 夹到 `min(detectors.size(), recognizers.size())`。
+  副作用（调用方只传 1 个 detector + `max_thread_num=4` 会静默降到串行）**恰好挡住**了
+  `ZQ_FaceDetectorLibFaceDetect::pBuffer` 的跨线程数据竞争。
+- `(*handled)++` **确实**在 `#pragma omp critical` 里 —— 正好是 MTCNN 那边漏 `reduction` 的**正确写法对照**。
+
+### 实测
+
+    cmake --build build_x64 --config Release（全量）-> RC=0，0 error
+    WSL make -j8（全量）-> RC=0，0 error
+    python tools/check_text_encoding.py -> OK: 767 text files, all strict UTF-8, no U+FFFD
+    python tools/check_line_endings.py  -> line endings OK
+
+### 注意事项
+
+- 报告里另有 A3（`-Wnarrowing`）、A5（`malloc` 的 int 乘法）、A6（固定 `0x20000` 结果缓冲区、
+  容量从不校验 —— 但本仓只带了 `.lib`/`.dll` 没有源码，**无法确认 DLL 内部是否自己校验**）、
+  A7（`_mkdir`/`imwrite` 返回值全不检查、失败仍返回 true）、A8（Windows 分支根目录不存在也返回 true）
+  以及 B1~B6 六条 LOW，本轮**没有**改：
+  A6 缺可验证的 DLL 源码，A7/A8 改起来要动多个调用点的契约，B 组要么不可达要么是卫生问题。
+- 上面写的「本轮自己犯的三个错」是**补丁脚本**的错，不是被测代码的缺陷 ——
+  但它们有共同教训，写在这里是因为下一轮还会用脚本改 C++。

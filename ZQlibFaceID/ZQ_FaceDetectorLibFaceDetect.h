@@ -87,7 +87,14 @@ namespace ZQ
 				{
 					for (int w = 0; w < rect_width; w++)
 					{
-						const unsigned char* ori_pix_ptr = img + (h + rect_off_y)*widthStep + w;
+						// 审计修复 2026-10-06（附录 IO.4）：这里**少加了 rect_off_x**。
+					// 同一个 switch 里另外 6 个分支（BGR / RGB / BGRX / RGBX / XBGR / XRGB）
+					// **全都**有 `+ (w + rect_off_x)*N` —— 一份对六份错，不是设计取舍。
+					// 后果：灰度图 + roi_min_x > 0 时，ROI 采样整体左移 rect_off_x 像素，
+					// 检出框和 landmark 全部错位。**不是内存越界**（w < rect_width 且
+					// rect_off_x + rect_width <= width，读仍在界内）。
+					// 仓内当前不可达（三个调用点全传 BGR），但这是 public API。
+					const unsigned char* ori_pix_ptr = img + (h + rect_off_y)*widthStep + (w + rect_off_x);
 						unsigned char* cur_pix_ptr = gray_img + h*rect_width + w;
 						cur_pix_ptr[0] = ori_pix_ptr[0];
 					}

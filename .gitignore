@@ -43,4 +43,5 @@ chk
 
 # 审计时用的一次性补丁脚本（写文件用，提交前必删；git add -A 会把它们收进去）
 .fix_*.py
+.patch_*.py
 .append_*.py

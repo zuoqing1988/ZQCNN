@@ -517,7 +517,15 @@ namespace ZQ
 					int crop_height = recognizers[id]->GetCropHeight();
 					std::ostringstream oss;
 					cv::Mat crop(crop_height, crop_width, CV_MAKETYPE(8, 3));
-					ErrorCode err_code;
+					// 审计修复 2026-10-06（附录 IO.1）：原来这一行**没有初值**，
+					// 而下面 CropImage 失败的分支会把它 push 进 ErrorCodes —— 从未赋值。
+					// 触发：CropImage 返回 false，即 _findSimilarity(5, ...) 失败，也就是
+					// 检测出的 5 点退化（共线/重合）。libfacedetect 的 landmark 是 6 点均值 +
+					// 单点/双点平均，框贴边或严重遮挡时会重合，不是理论情况。
+					// 后果：读未定值（UB），随后被 %d 打进 err_log.txt，产生随机错误码。
+					// 同一函数里另外 3 条错误路径（imread 空、检测失败）**都**设了 err_code，
+					// 只有 CropImage 这条漏了 —— 是遗漏不是设计。
+					ErrorCode err_code = ERR_WARNING;
 					std::string err_msg;
 
 					bool ret = true;
@@ -607,7 +615,15 @@ namespace ZQ
 					int crop_height = recognizers[id]->GetCropHeight();
 					std::ostringstream oss;
 					cv::Mat crop(crop_height, crop_width, CV_MAKETYPE(8, 3));
-					ErrorCode err_code;
+					// 审计修复 2026-10-06（附录 IO.1）：原来这一行**没有初值**，
+					// 而下面 CropImage 失败的分支会把它 push 进 ErrorCodes —— 从未赋值。
+					// 触发：CropImage 返回 false，即 _findSimilarity(5, ...) 失败，也就是
+					// 检测出的 5 点退化（共线/重合）。libfacedetect 的 landmark 是 6 点均值 +
+					// 单点/双点平均，框贴边或严重遮挡时会重合，不是理论情况。
+					// 后果：读未定值（UB），随后被 %d 打进 err_log.txt，产生随机错误码。
+					// 同一函数里另外 3 条错误路径（imread 空、检测失败）**都**设了 err_code，
+					// 只有 CropImage 这条漏了 —— 是遗漏不是设计。
+					ErrorCode err_code = ERR_WARNING;
 					std::string err_msg;
 
 					bool ret = true;
@@ -892,11 +908,19 @@ namespace ZQ
 			std::string dir(root_path);
 			dir.append("\\*.*");
 			_finddata_t fileDir;
-			intptr_t lfDir;
+			// 审计修复 2026-10-06（附录 IO.2）：原来这个 if 的**语句体是空的**
+			// （只剩一行被注释掉的 printf），`_findfirst` 失败时直接落到
+			// `_findclose(lfDir)`，而此时 lfDir == -1 —— 对**无效句柄**调 API。
+			// 触发：database_root 不存在，或任何一个人物目录下没有 `*.*`。
+			// 跨平台契约不一致（本仓反复强调的「找可对照物」）：`#else` 的 Linux 分支
+			// **做了**保护（`if (pDir == NULL) return false;` / `continue;`），
+			// Windows 侧两处都没有 —— 一份对一份错，不是设计取舍。
+			intptr_t lfDir = -1l;
 
 			person_names.clear();
 			filenames.clear();
 
+			// 审计修复 2026-10-06（附录 IO.2）：见上面 lfDir 的声明处。
 			if ((lfDir = _findfirst(dir.c_str(), &fileDir)) == -1l)
 			{
 				//printf("No file is found\n");
@@ -912,7 +936,8 @@ namespace ZQ
 
 				} while (_findnext(lfDir, &fileDir) == 0);
 			}
-			_findclose(lfDir);
+			if (lfDir != -1l)   // 附录 IO.2：原来无守卫，失败时会对 -1 调 _findclose
+				_findclose(lfDir);
 
 			int person_num = person_names.size();
 			filenames.resize(person_num);
@@ -930,7 +955,8 @@ namespace ZQ
 						filenames[i].push_back(root_path + "\\" + person_names[i] + "\\" + str);
 					} while (_findnext(lfDir, &fileDir) == 0);
 				}
-				_findclose(lfDir);
+				if (lfDir != -1l)   // 附录 IO.2：原来无守卫，失败时会对 -1 调 _findclose
+					_findclose(lfDir);
 			}
 			return true;
 		}
