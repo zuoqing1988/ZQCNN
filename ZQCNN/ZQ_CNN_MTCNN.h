@@ -77,9 +77,27 @@ namespace ZQ
 		int limit_o_num;
 		int limit_l_num;
 	public:
-		void TurnOnShowDebugInfo() { show_debug_info = true; }
-		void TurnOffShowDebugInfo() { show_debug_info = false; }
-		void SetLimit(int limit_r = 0, int limit_o = 0, int limit_l = 0) 
+		// 审计修复 2026-10-06（附录 II.21）：顺带把开关**同步给各个 net**。
+		// 原来只改本类自己的 flag，而 net 是独立的（`pnet[i].show_debug_info`），
+		// 于是「TurnOnShowDebugInfo() 之后 pnet 该不该打」这件事在两处各有一份状态、
+		// 且从不互相通知。下面 _Pnet_stage 里那个「临时关掉、跑完恢复」就靠它
+		// 才能知道该恢复成什么样。Init 之后才调 TurnOn 也没问题（net 全部建好）。
+		void TurnOnShowDebugInfo()
+		{
+			show_debug_info = true;
+			for (size_t i = 0; i < pnet.size(); i++) pnet[i].TurnOnShowDebugInfo();
+			for (size_t i = 0; i < rnet.size(); i++) rnet[i].TurnOnShowDebugInfo();
+			for (size_t i = 0; i < onet.size(); i++) onet[i].TurnOnShowDebugInfo();
+			for (size_t i = 0; i < lnet.size(); i++) lnet[i].TurnOnShowDebugInfo();
+		}
+		void TurnOffShowDebugInfo()
+		{
+			show_debug_info = false;
+			for (size_t i = 0; i < pnet.size(); i++) pnet[i].TurnOffShowDebugInfo();
+			for (size_t i = 0; i < rnet.size(); i++) rnet[i].TurnOffShowDebugInfo();
+			for (size_t i = 0; i < onet.size(); i++) onet[i].TurnOffShowDebugInfo();
+			for (size_t i = 0; i < lnet.size(); i++) lnet[i].TurnOffShowDebugInfo();
+		}		void SetLimit(int limit_r = 0, int limit_o = 0, int limit_l = 0) 
 		{
 			limit_r_num = limit_r;
 			limit_o_num = limit_o;
@@ -852,9 +870,17 @@ namespace ZQ
 			std::vector<int> mapW;
 			if (thread_num == 1 && !force_run_pnet_multithread)
 			{
+				// 审计修复 2026-10-06（附录 II.21）：原来是 `TurnOffShowDebugInfo()`
+				// **只关不恢复**（恢复那一行被注释掉了，就挂在下一行）。
+				// 后果：用户 TurnOnShowDebugInfo() 之后，第一次 Find 把 pnet 的调试
+				// 永久关掉，之后再也开不回来；而且**多线程分支根本没关**，
+				// 于是 thread_num=1 和 thread_num>1 的调试输出**完全相反** ——
+				// 这不是取舍，是漏了。改成按本类的 show_debug_info 记下原值再恢复。
+				const bool pnet_debug_was = show_debug_info;
 				pnet[0].TurnOffShowDebugInfo();
-				//pnet[0].TurnOnShowDebugInfo();
 				_compute_Pnet_single_thread(input, maps, mapH, mapW);
+				if (pnet_debug_was)
+					pnet[0].TurnOnShowDebugInfo();   // 恢复调用前的状态（附录 II.21）
 			}
 			else
 			{

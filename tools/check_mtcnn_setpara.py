@@ -237,6 +237,19 @@ A41_PAIR = re.compile(r'ppoint\[num\s*\+\s*5\]')
 A42_BAD = re.compile(r'bbox\.resize\(limit_num\)\s*;')
 A42_GOOD = re.compile(r'stable_sort[\s\S]{0,200}?score\s*>')
 
+# ---- A43（附录 II.21）----
+# A43: `pnet[0].TurnOffShowDebugInfo()` 之后必须**恢复**。
+#      原来恢复那一行是注释掉的（就挂在下一行），于是用户 TurnOnShowDebugInfo()
+#      之后第一次 Find 就把 pnet 调试永久关掉；而**多线程分支根本没关**，
+#      两条路径的调试输出完全相反。
+#      判据：文件里出现 TurnOffShowDebugInfo 的 pnet 调用，就必须同时出现恢复调用。
+A43_OFF = re.compile(r'pnet\[0\]\.TurnOffShowDebugInfo\(\)\s*;')
+A43_ON = re.compile(r'pnet\[0\]\.TurnOnShowDebugInfo\(\)\s*;')
+A43_SAVE = re.compile(r'const\s+bool\s+pnet_debug_was\s*=')
+# 开关必须**传播**给各个 net：否则本类的 show_debug_info 与 net 的那份
+# 是两份从不互相通知的状态，「该恢复成什么样」根本无从判断。
+A43_PROPAGATE = re.compile(r'pnet\[i\]\.TurnOnShowDebugInfo\(\)')
+
 def _read(path):
     with io.open(path, 'r', encoding='utf-8') as f:
         return f.read()
@@ -543,7 +556,26 @@ def scan_text(raw, label='<text>'):
     else:
         ok += 1
 
+    # ---- A43 ----
+    if A43_OFF.search(text):
+        miss = []
+        if not A43_ON.search(text):
+            miss.append('没有 TurnOnShowDebugInfo 恢复')
+        if not A43_SAVE.search(text):
+            miss.append('没有保存原值（pnet_debug_was）')
+        if not A43_PROPAGATE.search(text):
+            miss.append('TurnOnShowDebugInfo 没有传播给 pnet[i]/rnet[i]/onet[i]')
+        if miss:
+            bad.append(('A43', 'pnet 的调试开关只关不恢复：' + '；'.join(miss) +
+                        ' —— 用户 TurnOnShowDebugInfo() 后第一次 Find 就把 pnet 调试永久关掉，'
+                        '而且多线程分支根本没关，两条路径行为相反'))
+        else:
+            ok += 1
+    else:
+        ok += 1
+
     return ok, bad
+
 
 
 

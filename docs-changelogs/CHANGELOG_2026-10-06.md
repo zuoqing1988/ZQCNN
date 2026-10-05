@@ -823,3 +823,68 @@ A42 有 `_select` 的地方必须按分数选、不得有 `bbox.resize(limit_num
   现在的行为就是「按插入序截断」。修它是为了那时不用再查一遍。
 - `_select` 的 `width`/`height` 两个形参从头到尾没被用过（调用点传的是
   `input.GetW()`/`GetH()`），保留签名没动，免得影响外部调用。
+
+
+## 追加：附录 II 第六批 —— II.21（调试开关只关不恢复）
+
+### 缺陷
+
+`ZQ_CNN_MTCNN*.h` 的 `_Pnet_stage` 单线程分支里：
+
+    pnet[0].TurnOffShowDebugInfo();
+    //pnet[0].TurnOnShowDebugInfo();      <- 恢复那一行**被注释掉了**，就挂在下一行
+    _compute_Pnet_single_thread(input, maps, mapH, mapW);
+
+两个问题叠在一起：
+
+1. **只关不恢复**：用户 `TurnOnShowDebugInfo()` 之后，第一次 `Find` 就把 pnet 的调试
+   **永久**关掉，之后再也开不回来。
+2. **两条路径行为相反**：多线程分支（`_compute_Pnet_multi_thread`）**根本没有**
+   `TurnOffShowDebugInfo()`。所以 `thread_num==1` 时 pnet 不打、`thread_num>1` 时照打 ——
+   这不是取舍，是漏了。
+
+根因是本类的 `show_debug_info` 和 `pnet[i].show_debug_info` 是**两份从不互相通知**的状态，
+「该恢复成什么样」根本无从判断。
+
+### 修法
+
+* `TurnOnShowDebugInfo()` / `TurnOffShowDebugInfo()` 现在**同时传播**给 `pnet/rnet/onet/lnet`。
+* `_Pnet_stage` 里按本类的 `show_debug_info` 记下原值，跑完再恢复。
+
+### 门禁：A43（21 条规则）
+
+`pnet[0].TurnOffShowDebugInfo()` 出现时，必须同时有 `pnet[0].TurnOnShowDebugInfo()` 恢复、
+有 `const bool pnet_debug_was = ...` 存原值、且 `TurnOnShowDebugInfo` 里有 `pnet[i].` 的传播。
+三条缺一即报错 —— 变异测试去掉恢复行，立刻被抓到。
+
+### 实测：A/B 对拍**故意**有差异，而且这正是修复生效的证据
+
+    SampleMTCNN          变化 97 行   SampleMTCNN_NCHWC4     变化 28 行
+    SampleMTCNN_Interface 变化 265 行 SampleMTCNNLoadFromCode 变化 1128 行
+
+**所有变化行都是 `<层级调试行>`**（`Conv layer:` / `DwConv layer:` / `BatchNorm layer:` /
+`PReLU layer:` / `Innerproduct layer:` ...），**没有一行 `<` 是删减**，全是新增。
+把层级调试行过滤掉之后，四个 sample 的检测结果与阶段计数**逐字节相同**：
+
+    去掉所有层级调试行后：SampleMTCNN / _NCHWC4 / _Interface / LoadFromCode 全部 IDENTICAL
+
+也就是说：`SampleMTCNNLoadFromCode.cpp:123` 那个 `mtcnn.TurnOnShowDebugInfo()` 
+**以前是白调的** —— 它让 MTCNN 自己开始打阶段计时，但 pnet 那 800 多行层级调试
+在第一次 `Find` 之后被永久吞掉了。现在恢复了。
+
+### 注意事项
+
+- **这是本轮唯一一个「A/B 对拍输出变多」的修复**。不是回归：
+  加的是用户主动要求打开的调试输出，检测结果一个字节都没变（上面已验）。
+- `tools/capture_sample_outputs.sh` 的 `NORM` 正则**不覆盖**层级调试行
+  （它只归一化 `<T>ms` / `<GF>GF/s` 那几个数字），所以 `ab_diff_sample_outputs.sh` 
+  对 `SampleMTCNNLoadFromCode` 的 A/B 会看到这上千行。
+  归一化脚本已经会把耗时数字换成 `<T>ms`，但行数差异还在 —— 
+  **这是预期的**，做 A/B 时要知道这一点，别当成数值回归。
+- 传播是在 `Init` 之后才被调用的（sample 的顺序是 Init -> TurnOn -> 循环 Find），
+  此时 net 全部建好，循环安全。如果有人在 `Init` **之前**调 `TurnOnShowDebugInfo()`，
+  那时 vector 还是空的，循环不执行，`Init` 之后 pnet 的调试仍是关的 —— 
+  这种调用顺序本身不合理，但不会被崩。
+- `ZQ_CNN_MTCNN_AspectRatio.h` **没有 lnet 成员**（它走 xhalf/yhalf 三族分派），
+  所以它的 `TurnOn/TurnOffShowDebugInfo()` 只传播 pnet/rnet/onet。
+  这是 `-fsyntax-only` 抓到的（第一版照抄了四份里的写法，它多写了 lnet 那一行）。
