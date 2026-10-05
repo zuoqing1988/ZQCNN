@@ -602,6 +602,28 @@ namespace ZQ
 					<< " (must all be > 0)" << std::endl;
 				return false;
 			}
+			// 审计修复 2026-10-05（附录 IX.19）：**缺 kernel/dilate 的乘法溢出守卫**。
+			// NCHW 的 `ZQ_CNN_Layer.h` 里 16 处（附录 EM.3）都有这一条，
+			// 这一族两份（Convolution / DepthwiseConvolution）**都没有**。
+			// 后果与 EM.3 完全一样：`GetTopDim` 里算的是
+			//     (kernel_H - 1)*dilate_H
+			// 这是 **int** 乘法。kernel=50000 dilate=50000 时乘积 2,499,950,000
+			// 超过 INT_MAX(2,147,483,647) -> gcc 回绕成 **-1,795,017,296**（负数），
+			// 于是 `bottom_H + pad*2 - 负数 - 1` 变成**巨大正数**，
+			// `top_H` 被算成十几亿，`SetShape` 的 `ChangeSize` 随后因
+			// 「raw size > 0x7FFFFFFF」失败 —— 而 LayerSetup **不检查 SetShape 的返回值**，
+			// 于是留下一个**零尺寸张量**，`firstPixelData == 0` -> 空指针解引用
+			// （与附录 ED.1 同一个终局）。
+			// 这里按**乘积必须放得进 int** 来卡，而不是拍一个任意的系数上限 ——
+			// 乘积检查本身就是溢出条件。
+			if ((__int64)dilate_H * (kernel_H - 1) + 1 > 0x7FFFFFFF
+				|| (__int64)dilate_W * (kernel_W - 1) + 1 > 0x7FFFFFFF)
+			{
+				std::cout << "Layer " << ZQ_CNN_Layer_NCHWC<Tensor4D>::name << " conv kernel/dilate overflow: kernel "
+					<< kernel_H << "x" << kernel_W << " dilate " << dilate_H << "x" << dilate_W
+					<< " ((kernel-1)*dilate+1 must fit in int)" << std::endl;
+				return false;
+			}
 			return has_num_output && has_kernelH && has_kernelW && has_bottom && has_top && has_name;
 		}
 
@@ -1089,6 +1111,28 @@ namespace ZQ
 					<< " stride " << stride_H << "x" << stride_W
 					<< " dilate " << dilate_H << "x" << dilate_W
 					<< " (must all be > 0)" << std::endl;
+				return false;
+			}
+			// 审计修复 2026-10-05（附录 IX.19）：**缺 kernel/dilate 的乘法溢出守卫**。
+			// NCHW 的 `ZQ_CNN_Layer.h` 里 16 处（附录 EM.3）都有这一条，
+			// 这一族两份（Convolution / DepthwiseConvolution）**都没有**。
+			// 后果与 EM.3 完全一样：`GetTopDim` 里算的是
+			//     (kernel_H - 1)*dilate_H
+			// 这是 **int** 乘法。kernel=50000 dilate=50000 时乘积 2,499,950,000
+			// 超过 INT_MAX(2,147,483,647) -> gcc 回绕成 **-1,795,017,296**（负数），
+			// 于是 `bottom_H + pad*2 - 负数 - 1` 变成**巨大正数**，
+			// `top_H` 被算成十几亿，`SetShape` 的 `ChangeSize` 随后因
+			// 「raw size > 0x7FFFFFFF」失败 —— 而 LayerSetup **不检查 SetShape 的返回值**，
+			// 于是留下一个**零尺寸张量**，`firstPixelData == 0` -> 空指针解引用
+			// （与附录 ED.1 同一个终局）。
+			// 这里按**乘积必须放得进 int** 来卡，而不是拍一个任意的系数上限 ——
+			// 乘积检查本身就是溢出条件。
+			if ((__int64)dilate_H * (kernel_H - 1) + 1 > 0x7FFFFFFF
+				|| (__int64)dilate_W * (kernel_W - 1) + 1 > 0x7FFFFFFF)
+			{
+				std::cout << "Layer " << ZQ_CNN_Layer_NCHWC<Tensor4D>::name << " conv kernel/dilate overflow: kernel "
+					<< kernel_H << "x" << kernel_W << " dilate " << dilate_H << "x" << dilate_W
+					<< " ((kernel-1)*dilate+1 must fit in int)" << std::endl;
 				return false;
 			}
 			return has_num_output && has_kernelH && has_kernelW && has_bottom && has_top && has_name;

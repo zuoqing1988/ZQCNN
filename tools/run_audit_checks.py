@@ -111,6 +111,16 @@ GROUPS = [
      ['check_mm_safety.py', '--selfcheck'], False),
     ('A18 "SIMD 归约项数 / 栈数组对齐" 普查 (check_mm_safety)',
      ['check_mm_safety.py'], False),
+    # A19/A20 是附录 IX.19 的门禁：`GetTopDim` 要算 `(kernel_H-1)*dilate_H`，
+    # 这是 **int** 乘法，两个参数都来自模型文件。乘积回绕成负数 -> top_H 巨大 ->
+    # SetShape 的 ChangeSize 失败而 **LayerSetup 不检查它的返回值** ->
+    # 零尺寸张量 -> 空指针解引用。主副本 16 处有守卫（EM.3），
+    # `ZQCNN/ZQ_CNN_Layer_NCHWC.h` 这一族**一处都没有** ——
+    # 「一个副本有守卫、孪生副本没有」的第四次（IH.9 / BE.2 / IX.14 之后）。
+    ('A19 "卷积 kernel/dilate 溢出守卫" 自测 (check_conv_overflow_guard --selfcheck)',
+     ['check_conv_overflow_guard.py', '--selfcheck'], False),
+    ('A20 "卷积 kernel/dilate 溢出守卫" 普查 (check_conv_overflow_guard)',
+     ['check_conv_overflow_guard.py'], False),
     ('B  ZQlib 独立回归测试 x10 (ASan+LSan)', ['run_zqlib_checks.py'], False),
     # 基线路径给**绝对路径**：子进程以 ROOT 为 cwd 运行，而基线文件在 tools/ 下，
     # 相对路径会解析成 <ROOT>/zqlib_probe_baseline.txt 而找不到（2026-10-02 实测）。

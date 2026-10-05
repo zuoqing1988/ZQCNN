@@ -2342,3 +2342,55 @@ C5b 的 GUARDS 加 3 条，并且**按函数体作用域**匹配 ——
       all 7 headers compile, all guards present   (rc=0)
     变异测试后恢复再跑一次 -> 同样全过
     text/行尾卫生：OK: 752 text files, all strict UTF-8, no U+FFFD / line endings OK
+
+---
+
+## 新增/变更：IX（六）—— `ZQ_CNN_Layer_NCHWC.h` 缺 kernel/dilate 的 int 乘法溢出守卫
+
+### 变更文件
+
+* `ZQCNN/ZQ_CNN_Layer_NCHWC.h`（`Convolution` / `DepthwiseConvolution` 各补一处）
+* `tools/check_conv_overflow_guard.py`（**新增**，A19/A20）
+* `tools/run_audit_checks.py`（注册 A19/A20）
+
+### 缺陷
+
+主副本 `ZQCNN/ZQ_CNN_Layer.h` 里 16 处有这条守卫（附录 EM.3）：
+
+```cpp
+if ((__int64)dilate_H * (kernel_H - 1) + 1 > 0x7FFFFFFF
+    || (__int64)dilate_W * (kernel_W - 1) + 1 > 0x7FFFFFFF)
+    return false;
+```
+
+`ZQCNN/ZQ_CNN_Layer_NCHWC.h` **一处都没有**。
+这是「一个副本有守卫、孪生副本没有」的**第四次**（前三次 IH.9 / BE.2 / IX.14）。
+
+后果与 EM.3 一样：`GetTopDim` 里 `(kernel_H - 1) * dilate_H` 是 **int** 乘法，
+两个参数都来自模型文件；都取 50000 时乘积 2,499,950,000 > INT_MAX，
+gcc 实测回绕成 **-1,795,017,296**，`bottom_H + pad*2 - 负数 - 1` 变成巨大正数，
+`top_H` 算成十几亿，`SetShape` 的 `ChangeSize` 随后因「raw size > 0x7FFFFFFF」失败，
+而 **`LayerSetup` 不检查 `SetShape` 的返回值`** ——
+于是留下**零尺寸张量**，`firstPixelData == 0` -> 空指针解引用（附录 ED.1 同一个终局）。
+
+这一族的 **BE 守卫是在的**（`dilate_H <= 0` 那条，2026-10-02 补），
+**只有 EM 那一族漏了** —— 又一次「补了 A 忘了 B」。
+
+### 门禁 A19/A20
+
+判定**不看「文件里有没有出现过守卫」**，而是**逐个类**看：
+**这个类从模型文件读 `dilate`，它自己就必须带这条守卫**。
+
+    ZQCNN/ZQ_CNN_Layer.h                            3 个类从模型文件读 dilate，0 个缺
+    ZQCNN/ZQ_CNN_Layer_NCHWC.h                      2 个类从模型文件读 dilate，0 个缺
+    ZQCNN_to_MNN/converter/source/ZQ_CNN_Layer.h    2 个类从模型文件读 dilate，0 个缺
+    合计 7 个类，0 个缺
+
+变异测试（只删掉 `ZQ_CNN_Layer_NCHWC_Convolution` 里那一条）-> 报出具体类名，rc=1。
+
+### 实测
+
+    python tools/check_conv_overflow_guard.py --selfcheck   -> 自测通过
+    python tools/check_conv_overflow_guard.py               -> rc=0
+    Windows: cmake --build build_x64 --config Release --target ZQCNN -> ZQCNN.lib（0 error）
+    text/行尾卫生：OK: 753 text files, all strict UTF-8, no U+FFFD / line endings OK
