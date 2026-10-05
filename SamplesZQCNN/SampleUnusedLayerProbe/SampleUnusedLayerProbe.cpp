@@ -1482,10 +1482,14 @@ static void ref_prior_box_text(int layer_h, int layer_w, int img_h, int img_w,
                     pbt_emit(out, w, cx, half ? cy1 : cy, bw, bh, img_w, img_h, clip);
                 }
                 if (!max_sizes.empty() && s < max_sizes.size()) {
-                    // max 框：`sqrt(min * max)` 用的是**原始 float**，
-                    // 不是 `(int)` 之后的那一份 —— 这一点是**测出来的**（附录 IS.2）：
-                    // 用 `(int)` 会让含 59.1 / 60.7 的那两组差出 0.06~0.09 的后向误差。
-                    float bw = (float)sqrt((double)min_sizes[s] * (double)max_sizes[s]), bh = bw;
+                    // max 框的 `sqrt(min * max)`：**用 `(int)` 之后的那一份**。
+                    // IS.3 试过"用原始 float"，**没有**让那两组变好（0.06326 -> 0.06323），
+                    // 而 IT.1 的顺序探针把这一点**测死了**：
+                    //   `max_size=60.7` -> (int)60 -> sqrt(30*60)/2 = 21.2132  <== 库里就是这个
+                    //   `min_size=59.1`  -> (int)59 -> sqrt(59*111)/2 = 40.4629  <== 库里就是这个
+                    // 用原始 float 会算成 21.3391 / 40.4970，**两个都不对**。
+                    const int xs = (int)max_sizes[s];
+                    float bw = (float)sqrt((double)ms * (double)xs), bh = bw;
                     for (int half = 0; half < 2; half++) {
                         float y0 = half ? cy1 : cy;
                         out[w++] = (cx - bw / 2) / img_w; out[w++] = (y0 - bh / 2) / img_h;
@@ -1676,13 +1680,18 @@ static void order_prior_box_text()
     //   ratio2(30)=42.4264 x 21.2132      翻转 = 21.2132 x 42.4264
     //   ratio3(30)=51.9615 x 17.3205      翻转 = 17.3205 x 51.9615
     //   ratio2(50)=70.7107 x 35.3553      翻转 = 35.3553 x 70.7107
-    static const char* CONFIGS[3] = {
+    // 配置3 用的是**带小数的** min/max（59.1 / 60.7 / 111）——
+    // 正是那两组对不上的用例里的数值；每一类的半宽都不同，
+    // 于是"这个框来自哪一路"可以直接从半宽读出来（附录 IT.1）。
+    static const char* CONFIGS[4] = {
         "min_size=30 max_size=60 aspect_ratio=2 aspect_ratio=3 flip=1 clip=0 variance=0.1",
         "min_size=30 min_size=50 max_size=60 max_size=80 aspect_ratio=2 flip=1 clip=0 variance=0.1",
         "min_size=30 max_size=60 aspect_ratio=2 flip=0 clip=0 variance=0.1",
+        "min_size=30 min_size=59.1 max_size=60.7 max_size=111 "
+        "aspect_ratio=2 aspect_ratio=3 flip=1 clip=0 variance=0.1",
     };
     const int H = 1, W = 1;
-    for (int ci = 0; ci < 3; ci++) {
+    for (int ci = 0; ci < 4; ci++) {
         char block[768];
         snprintf(block, sizeof(block),
                  "Input name=data C=1 H=%d W=%d\n"
@@ -1717,6 +1726,11 @@ static void order_prior_box_text()
            "      ratio3@30=51.9615x17.3205 翻转=17.3205x51.9615\n"
            "      ratio2@50=70.7107x35.3553 翻转=35.3553x70.7107；中心 y=0.5 / 1.0）\n");
 
+    // 注意：这里**只验了"每格只有 size 框"的格子顺序**（附录 IS.1）。
+    // 「格子循环 x ratio 框」两层的**嵌套顺序**本轮**没有验** ——
+    // 探针里留过 `g_cell_ratio` 这个旋钮，但没能把参数拼进去就停了，
+    // 与其留一个**不生效的旋钮**（读代码的人会以为它能用），不如删掉，
+    // 把它记成待办（附录 IT.3）。
     // ---- 配置3：2x2 的网格，只用 size 框，读**格子循环的顺序** ----
     // 每格 2 个框（cy、cy1），框中心 x = w+0.5、y = h+0.5 / h+1，
     // 于是**中心坐标直接告诉你这是哪个格子、什么次序**。
