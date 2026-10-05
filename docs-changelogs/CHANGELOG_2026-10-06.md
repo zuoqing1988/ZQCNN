@@ -239,3 +239,29 @@ H12 一直只有一句话、没有判据：「`Align0`/`Align256bit` 遇越界 r
 
     python tools/run_zqlib_checks.py resize_align          -> 1/1 通过（ASan+LSan）
     python tools/run_zqlib_checks.py --ubsan resize_align  -> 1/1 通过（UBSan）
+
+---
+
+## 记录：v64 全量回归（**最终树**的单点）
+
+    python tools/run_audit_checks.py --with-build --warn-sweep --src-sweep \
+        --bounds-sweep --ubsan-sweep --reachability --msvc-asan
+
+    57 个检查组，52 个显式 OK，0 个 FAILED
+    ALL CHECKS PASSED
+    RC=0
+
+    **B 组 56/56 通过**（起点是 51 道）：
+        + zq_deconv        三个 general 内核的索引映射（33 组形状）
+        + zq_lstm          LSTM_TF vs 独立参考实现（11 组）
+        + zq_rodrigues     Rodrigues + Jacobian vs 中心差分
+        + zq_calibration   标定 vs 自己构造的 ground truth
+        + zq_resize_align  ResizeBilinearRect 三种对齐的一致性
+    A 组：A17~A20 四道源码级门禁全过
+    C 组：可编译性门禁 OK: 128 -> 128（比上轮 +1：ZQ_GLSLShader.h 变成可验证）
+    C5b：all 7 headers compile, all guards present（9 条守卫）
+    C11：MSVC /analyze 基线条数不变
+    C16：BN/PReLU 接线门禁 OK
+    D1/D2 双平台全量构建 0 error；D3/D4 双平台 sample 回归全过
+
+这之后没有再改生产代码 —— 本轮（IV / IX / IW / IY / IZ / IA / IB / IC / ID）全部落在一个已验证的树上。
