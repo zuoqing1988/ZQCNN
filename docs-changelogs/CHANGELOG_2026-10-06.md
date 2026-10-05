@@ -158,3 +158,18 @@ LSan 实测：4 次调用漏 8 个块、3584 字节。
     B 组 **54/54 通过**（比 v62 的 53 多了 `zq_rodrigues`）
 
 > 注：v63 启动之后 IY / IZ / IA / IB 才落地，所以紧接着又跑了 v64 拿最终树的单点。
+
+### 本轮（B 组门禁）累计
+
+从 v59 到 v63，B 组从 **51 道 -> 54 道**，A 组多出 A17~A20，
+C5b 多出 3 条函数级守卫：
+
+| 门禁 | 守的是 | 抓到过 |
+| --- | --- | --- |
+| `zq_deconv` | 三个 general 内核的索引映射（33 组形状） | —— |
+| `zq_lstm` | LSTM_TF 内核 vs 独立参考实现（11 组） | 未对齐 SIMD 写（IX.3） |
+| `zq_rodrigues` | Rodrigues 换算 + Jacobian vs 差分 | `R2r` 在 θ=π 漏乘角度（IY.2） |
+| `zq_calibration` | 标定入口 vs 构造出来的 ground truth | 成功路径泄漏（IB.2） |
+| A17/A18 `check_mm_safety` | 归约项数 / 栈数组对齐 / 分配判空 | ARM FP16 越界读 + 未对齐写 + 42 处不判空 |
+| A19/A20 `check_conv_overflow_guard` | 每个「读 dilate」的卷积类都要溢出守卫 | NCHWC 那一族一处都没有（IX.19） |
+| C5b +3 | MNN 分叉头的 BN 融合通道数守卫 | 那一族三处全漏（IX.14） |
