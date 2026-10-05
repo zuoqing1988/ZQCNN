@@ -101,7 +101,7 @@ n_ok=0; n_stub=0; n_bad=0
 for e in SampleMTCNN SampleMTCNN_NCHWC4 SampleSSD SampleFaceDetectorMTCNN \
          SampleCascadeOnet SampleCascadeOnet_Interface SampleMTCNNLoadFromCode \
          SampleGEMMAsmCompare SampleMergeBNCompare SampleMergeBNCompareNCHWC \
-         SampleUnusedLayerProbe; do
+         SampleUnusedLayerProbe SampleLSTMTFCalib; do
   if [ -x "./$e" ]; then
     s=$(date +%s%N)
     out=$("./$e" 2>&1); rc=$?

@@ -264,7 +264,10 @@ WIN_SAMPLES = ['SampleGEMMAsmCompare.exe', 'SampleMTCNN.exe', 'SampleMTCNN_NCHWC
                # 各自造合成网真跑一遍并与独立参考实现对拍。
                # 它当场抓出了 `zq_cnn_scale_32f_align` 带 bias 分支的堆越界读
                # （附录 IB）。
-               'SampleUnusedLayerProbe.exe']
+               'SampleUnusedLayerProbe.exe',
+               # 附录 IN（2026-10-05）：`LSTM_TF` 的标定装置 ——
+               # 36 种层类型里最后一个零覆盖项。自己写合成权重，不依赖随仓模型。
+               'SampleLSTMTFCalib.exe']
 WIN_BIN = os.path.join(ROOT, 'cmake-out-win32-x64', 'release', 'Release')
 
 # Windows 侧的检出数下界（附录 GS.3，2026-10-04）。
