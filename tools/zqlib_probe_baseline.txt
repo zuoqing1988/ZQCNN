@@ -44,7 +44,7 @@ ZQ_FindCorners.h	OK
 ZQ_FindLargestRectInHistgram.h	OK	
 ZQ_FindLargestSubMatrix.h	OK	
 ZQ_FindSimilarityLandmark.h	OK	
-ZQ_GLSLShader.h	BROKEN	/mnt/d/ZQCNN/3rdparty/include/ZQlib/ZQ_GLSLShader.h:5:10: fatal error:
+ZQ_GLSLShader.h	OK	
 ZQ_GaussianPyramid.h	OK	
 ZQ_GaussianPyramid3D.h	OK	
 ZQ_GraphCut.h	OK	

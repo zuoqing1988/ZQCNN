@@ -125,7 +125,12 @@ def main():
         # (不带 .h), 于是「本来 OK、现在编不过」的头会被 --check-baseline
         # 判成「新增」而不是「回退」, 门禁就失效了。2026-10-02 实测踩到。
         lines.append(
+            # `tools/gl_stub` 提供一份**只给 -fsyntax-only 用的** GL/glew.h 桩
+            # （附录 IZ.1）：`ZQ_GLSLShader.h` 要的只是 OpenGL，不是平台特有的
+            # windows.h。加进 include 路径之后它能真的编一遍，于是能验证
+            # "这个头自身自足吗"，而不必再接受"本机没装 glew 所以测不了"。
             "if g++ -fsyntax-only -std=c++11 -I/mnt/d/ZQCNN/3rdparty/include/ZQlib "
+            "-I/mnt/d/ZQCNN/tools/gl_stub "
             "%s.cpp 2> %s.err; then echo 'R|%s|OK|'; else "
             "echo \"R|%s|ERR|$(grep -m1 error: %s.err | tr -d '\\r')\"; fi"
             % (stem, stem, h, h, stem))
