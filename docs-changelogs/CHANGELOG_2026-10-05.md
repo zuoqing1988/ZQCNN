@@ -1280,3 +1280,22 @@ DeConvolution 7 + PriorBoxText 4）。两个平台都 `UNUSED LAYER PROBE OK` rc
 ### 尚未覆盖的 UNUSED 只剩 1 类
 
 `LSTM_TF`
+
+## 新增/变更：IL 落地后的完整回归（v49）
+
+```
+ALL CHECKS PASSED        rc=0        FAILED 计数 = 0
+```
+
+* `D4 Windows sample SampleUnusedLayerProbe.exe: OK` —— 探针累计 **124 个形状**
+  （120 通过 / 0 对不上 / 11 待查）。
+* `C7 层类型可达性门禁`：
+
+```
+合计 36 种：EXERCISED 20 / PROBED 14 / COMMENTED 1 / UNUSED 1
+基线 36 条 -> 现在 36 条
+无状态变化。
+```
+
+其余组（D1/D2 双平台全量构建、D3/D4 两平台 sample、A~C16 全部门禁、
+MSVC `/analyze`、ARM/NEON 与 FP16 档解析、MSVC ASan）全部 OK。
