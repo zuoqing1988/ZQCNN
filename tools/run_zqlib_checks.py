@@ -578,6 +578,12 @@ EXTRA_SOURCES = {
     # OpenCV / ncnn / SeetaFace，本机没有 Linux 库，链不过），所以也是
     # 唯一能真正在 Linux 上跑行为门禁的地方。头文件本身，无需 EXTRA_SOURCES。
     'zq_facegroup': [],
+    # zq_lfw_eval（附录 IH）：`ZQ_FaceIDPrecisionEvaluation::EvaluationOnLFW`。
+    # 这是 ZQlibFaceID 里**唯一** include 了 OpenCV、因而"零行为门禁"的头，
+    # 而它的逻辑量恰恰是同目录里最大的（解析 list / 抽特征 / 留一法定阈值 / FAR-TAR）。
+    # 靠 tools/opencv_stub/opencv2/opencv.hpp（只给 Mat / imread / flip 三样）解开。
+    # 头文件本身，无需 EXTRA_SOURCES。
+    'zq_lfw_eval': [],
     # zq_nchwc_tensor（附录 EA）：ZQ_CNN_Tensor4D_NCHWC **自己那批方法**
     # （Convert 族 / Permute / Flatten / Reshape）。该类被 9 道门禁当数据容器用，
     # 但自己的方法一个门禁都没有 —— 与 DX.6 在基类上发现的缺口同一个形状。
@@ -714,6 +720,7 @@ EXTRA_LINK = {'zq_resize_align': ' $WDIR/zq_rza.o $WDIR/zq_rza_tensor.o',
               'zq_unusedlayers': ' $WDIR/zq_unusedlayers_t4d.o $WDIR/zq_unusedlayers_rz.o',
               'zq_tensorop': ' $WDIR/zq_tensorop_t4d.o $WDIR/zq_tensorop_rz.o',
               'zq_facegroup': '',
+              'zq_lfw_eval': '',
               'zq_tile': ' $WDIR/zq_t4d.o $WDIR/zq_tile_rz.o',
               'zq_nchw_deconv': ' $WDIR/zq_dec.o',
               # -ldl 必须**放在源文件之后**：Ubuntu 20.04 默认 --as-needed，
@@ -774,6 +781,11 @@ EXTRA_INC = {'zq_resize_align': ' -I$R -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/inc
              'zq_nchwc_v8': ' -I$R -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include -I$R/tools',
              'zq_nchwc_roundtrip': ' -I$R -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include -I$R/tools',
              'zq_facegroup': ' -I$R -I$R/ZQCNN -I$R/ZQlibFaceID -I$R/ZQ_GEMM -I$R/3rdparty/include',
+             # **opencv_stub 放在最后**：它要抢在系统 OpenCV 前面被 #include <opencv2/opencv.hpp> 命中。
+             # 本机 WSL 没装 OpenCV，所以顺序无所谓，但写成"永远优先桩"是刻意的 ——
+             # 万一哪天装了 OpenCV，这道门禁必须在**同一套语义**下永远可复现。
+             'zq_lfw_eval': (' -I$R -I$R/ZQCNN -I$R/ZQlibFaceID -I$R/ZQ_GEMM -I$R/3rdparty/include '
+                             '-I$R/tools/opencv_stub'),
              'zq_tile': ' -I$R -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include',
              'zq_nchw_deconv': ' -I$R -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include',
              'zq_nchw_conv_free': ' -I$R -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include',
@@ -831,6 +843,7 @@ EXTRA_CXXFLAGS = {'zq_resize_align': ' -mavx2 -mfma -fopenmp',
                   'zq_nchwc_v8': ' -mavx2 -mfma -fopenmp',
                   'zq_nchwc_roundtrip': ' -mavx2 -mfma -fopenmp',
                   'zq_facegroup': ' -mavx2 -mfma -fopenmp',
+                  'zq_lfw_eval': ' -mavx2 -mfma -fopenmp',
                   'zq_tile': ' -mavx2 -mfma -fopenmp',
                   'zq_nchw_deconv': ' -mavx2 -mfma -fopenmp',
                   # **-fno-sanitize=address 必须排在 harness 加的 -fsanitize=address 之后**

@@ -16,6 +16,7 @@
 #include <vector>
 #include <stdlib.h>
 #include <string>
+#include <errno.h>
 #include <omp.h>
 namespace ZQ
 {
@@ -107,6 +108,24 @@ namespace ZQ
 		};
 
 	public:
+		// 审计修复 2026-10-06（附录 IH.3 / IH.4）：list 文件头里的两个数来自
+		// **不可信输入**，必须和同族解析器一样有上界。
+		// `ZQ_FaceClustersForVideo.h:122` 对 cluster_num 的判据是
+		// `> 0 && <= 1000000`，`ZQ_FaceGroup.h` 对 num 是 `< 1000000` ——
+		// 这里原来**只有 `> 0`**，于是：
+		//   * `pairs.resize(part_num)` 会被一个 20 亿的头变成 48 GB 分配，
+		//     分配失败时抛出的 bad_alloc 没有任何人接（函数不是 noexcept，
+		//     异常会一路穿到 main）；
+		//   * `2 * half_pair_num` 在 half_pair_num > 2^30 时**int 回绕成负**，
+		//     `for (j = 0; j < 2*half_pair_num; j++)` 一次都不跑，
+		//     fgets 的 NULL 检查（它在这个循环体**里面**）也就一次都不执行，
+		//     于是"文件里一行数据都没有"被当成解析成功返回 true。
+		// 取 1000000 是为了和 ZQ_FaceClustersForVideo.h 的 cluster_num 对齐；
+		// LFW 官方是 10 折，十万折的 list 文件本来就不存在。
+		static const int MAX_LFW_PART_NUM = 1000000;
+		static const int MAX_LFW_HALF_PAIR_NUM = 1000000;
+
+	public:
 		static bool EvaluationOnLFW(std::vector<ZQ_FaceRecognizer*>& recognizers, const std::string& list_file, const std::string& folder, bool use_flip)
 		{
 			int recognizer_num = recognizers.size();
@@ -114,14 +133,27 @@ namespace ZQ
 				return false;
 			int real_num_threads = __max(1, __min(recognizer_num, omp_get_num_procs() - 1));
 
+			// 审计修复 2026-10-06（附录 IH.4）：原来只有 recognizer_num == 0 一道门。
+			// GetFeatDim() 若是 0 或负，real_dim 就是 0/负，后面
+			// `featL.pData + feat_dim` 与 `ChangeSize(0)` 全部失去意义。
 			int feat_dim = recognizers[0]->GetFeatDim();
+			if (feat_dim <= 0 || feat_dim > (1 << 20))
+			{
+				printf("invalid feat_dim = %d from recognizer\n", feat_dim);
+				return false;
+			}
 			int real_dim = use_flip ? (feat_dim * 2) : feat_dim;
 			printf("feat_dim = %d, real_dim = %d\n", feat_dim, real_dim);
 			std::vector<std::vector<EvaluationPair> > pairs;
 			if (!_parse_lfw_list(list_file, folder, pairs))
 			{
 				printf("failed to parse list file %s\n", list_file.c_str());
-				return EXIT_FAILURE;
+				// 审计修复 2026-10-06（附录 IH.5）：原来写的是 `return EXIT_FAILURE`。
+				// 这个函数返回 **bool**，而 EXIT_FAILURE == 1 —— 于是
+				// "list 文件根本打不开"被报告成 **true**。
+				// 七个 SampleEvaluationOnLFW* 全都是 `return EvaluationOnLFW(...)`
+				// 直接当进程退出码，调用方 `if (!...)` 的失败分支**永远进不去**。
+				return false;
 			}
 
 			printf("parse list file %s done!\n", list_file.c_str());
@@ -334,6 +366,7 @@ namespace ZQ
 			int part_num = pairs.size();
 			std::vector<float> ACCs(part_num);
 			float ACC = 0;
+			int done_num = 0;
 			for (int i = 0; i < part_num; i++)
 			{
 				std::vector<EvaluationPair> val_pairs;
@@ -343,14 +376,31 @@ namespace ZQ
 						val_pairs.insert(val_pairs.end(), pairs[j].begin(), pairs[j].end());
 				}
 
+				// 审计修复 2026-10-06（附录 IH.8）：留一法在 part_num == 1 时
+				// 把**唯一那一折也留掉了**，val_pairs 必然是空的。
+				// 原来不管三七二十一接着算：_compute_mu 提前 return false、
+				// mu 保持 length==0，于是 _compute_scores 的 feat_dim 成了 0，
+				// **所有 test score 恒为 0**，阈值也退化成 0，
+				// 最后打印一行 "0  0.00% (threshold = 0.000000)" ——
+				// 一份看起来正常、实际毫无意义的准确率。
+				// 现在明说跳过，并且不算进平均值。
+				if (val_pairs.empty())
+					continue;
+
 				ZQ_FaceFeature mu;
-				_compute_mu(val_pairs, mu);
+				if (!_compute_mu(val_pairs, mu))
+					continue;
+				if (mu.length <= 0)
+					continue;
 				std::vector<double> val_scores, test_scores;
-				_compute_scores(val_pairs, mu, val_scores);
-				_compute_scores(pairs[i], mu, test_scores);
+				if (!_compute_scores(val_pairs, mu, val_scores))
+					continue;
+				if (!_compute_scores(pairs[i], mu, test_scores))
+					continue;
 				double threshold = _get_threshold(val_pairs, val_scores, 10000);
 				ACCs[i] = _get_accuracy(pairs[i], test_scores, threshold);
 				ACC += ACCs[i];
+				done_num++;
 				printf("%d\t%2.2f%% (threshold = %f)\n", i, ACCs[i] * 100, threshold);
 
 				/*const static int BUF_LEN = 50;
@@ -374,8 +424,27 @@ namespace ZQ
 			}
 
 			printf("----------------\n");
-			printf("AVE\t%2.2f%%\n", ACC / part_num * 100);
+			if (done_num > 0)
+				printf("AVE\t%2.2f%%\n", ACC / done_num * 100);
+			else
+				printf("AVE\tn/a (no fold had a non-empty leave-one-out set)\n");
 			return ACC;
+		}
+
+		// 审计修复 2026-10-06（附录 IH.6）：原来直接 `atoi`。
+		// atoi 对超出 int 范围的串是**未定义行为**（glibc 的实现是 UB，不是饱和），
+		// 而 list 文件是不可信输入。改成 strtol + 显式夹取，
+		// 顺便让 `%04i` 的输出有确定宽度 —— num2str 是 200 字节，
+		// 原先不会溢出，但 out-of-range 时的输出是不可预测的。
+		static int _safe_id(const std::string& s)
+		{
+			errno = 0;
+			char* endp = 0;
+			long v = strtol(s.c_str(), &endp, 10);
+			if (endp == s.c_str()) return 0;          // 一位都没解析出来
+			if (errno == ERANGE || v > 2147483647L) return 2147483647;
+			if (v < -2147483647L - 1) return -2147483647 - 1;
+			return (int)v;
 		}
 
 		static bool _parse_lfw_list(const std::string& list_file, const std::string& folder, std::vector<std::vector<EvaluationPair> >& pairs)
@@ -407,17 +476,27 @@ namespace ZQ
 				fclose(in);
 				return false;
 			}
-			if (part_num <= 0 || half_pair_num <= 0)
+			// 审计修复 2026-10-06（附录 IH.3）：原来只有 `part_num <= 0 || half_pair_num <= 0`。
+			// 上界与 EvaluationOnLFW 里那两个常量对齐（见那里的说明）。
+			if (part_num <= 0 || part_num > MAX_LFW_PART_NUM
+				|| half_pair_num <= 0 || half_pair_num > MAX_LFW_HALF_PAIR_NUM)
 			{
 				fclose(in);
 				return false;
 			}
 			pairs.resize(part_num);
 
+			// 审计修复 2026-10-06（附录 IH.3）：`2 * half_pair_num` 在 int 里会回绕。
+			// 即使有了上面的上界（1e6），乘积本身仍然在 int 范围外时不该依赖
+			// "回绕成负所以循环不跑"这种行为 —— 那是 UB，不是拒绝。
+			// 显式用 __int64 算**每折的行数**（外层那个 i 已经按 part_num 走了）。
+			__int64 row_num_per_part = (__int64)2 * (__int64)half_pair_num;
+			__int64 bad_row_num = 0;
+
 			std::vector<std::string> strings;
 			for (int i = 0; i < part_num; i++)
 			{
-				for (int j = 0; j < 2 * half_pair_num; j++)
+				for (__int64 j = 0; j < row_num_per_part; j++)
 				{
 					if (NULL == fgets(line, 199, in))
 					{
@@ -434,18 +513,20 @@ namespace ZQ
 						EvaluationPair cur_pair;
 						cur_pair.nameL = strings[0];
 						cur_pair.nameR = strings[0];
-						cur_pair.idL = atoi(strings[1].c_str());
-						cur_pair.idR = atoi(strings[2].c_str());
+						int idL = _safe_id(strings[1]);
+						int idR = _safe_id(strings[2]);
+						cur_pair.idL = idL;
+						cur_pair.idR = idR;
 						char num2str[BUF_LEN];
 #if defined(_WIN32)
-						sprintf_s(num2str, BUF_LEN, "_%04i.jpg", atoi(strings[1].c_str()));
+						sprintf_s(num2str, BUF_LEN, "_%04i.jpg", idL);
 						cur_pair.fileL = folder + "\\" + strings[0] + "\\" + strings[0] + std::string(num2str);
-						sprintf_s(num2str, BUF_LEN, "_%04i.jpg", atoi(strings[2].c_str()));
+						sprintf_s(num2str, BUF_LEN, "_%04i.jpg", idR);
 						cur_pair.fileR = folder + "\\" + strings[0] + "\\" + strings[0] + std::string(num2str);
 #else
-						sprintf(num2str, "_%04i.jpg", atoi(strings[1].c_str()));
+						sprintf(num2str, "_%04i.jpg", idL);
 						cur_pair.fileL = folder + "/" + strings[0] + "/" + strings[0] + std::string(num2str);
-						sprintf(num2str, "_%04i.jpg", atoi(strings[2].c_str()));
+						sprintf(num2str, "_%04i.jpg", idR);
 						cur_pair.fileR = folder + "/" + strings[0] + "/" + strings[0] + std::string(num2str);
 #endif
 						cur_pair.flag = 1;
@@ -456,26 +537,47 @@ namespace ZQ
 						EvaluationPair cur_pair;
 						cur_pair.nameL = strings[0];
 						cur_pair.nameR = strings[2];
-						cur_pair.idL = atoi(strings[1].c_str());
-						cur_pair.idR = atoi(strings[3].c_str());
+						int idL = _safe_id(strings[1]);
+						int idR = _safe_id(strings[3]);
+						cur_pair.idL = idL;
+						cur_pair.idR = idR;
 						char num2str[BUF_LEN];
 #if defined(_WIN32)
-						sprintf_s(num2str, BUF_LEN, "_%04i.jpg", atoi(strings[1].c_str()));
+						sprintf_s(num2str, BUF_LEN, "_%04i.jpg", idL);
 						cur_pair.fileL = folder + "\\" + strings[0] + "\\" + strings[0] + std::string(num2str);
-						sprintf_s(num2str, BUF_LEN, "_%04i.jpg", atoi(strings[3].c_str()));
+						sprintf_s(num2str, BUF_LEN, "_%04i.jpg", idR);
 						cur_pair.fileR = folder + "\\" + strings[2] + "\\" + strings[2] + std::string(num2str);
 #else
-						sprintf(num2str, "_%04i.jpg", atoi(strings[1].c_str()));
+						sprintf(num2str, "_%04i.jpg", idL);
 						cur_pair.fileL = folder + "/" + strings[0] + "/" + strings[0] + std::string(num2str);
-						sprintf(num2str, "_%04i.jpg", atoi(strings[3].c_str()));
+						sprintf(num2str, "_%04i.jpg", idR);
 						cur_pair.fileR = folder + "/" + strings[2] + "/" + strings[2] + std::string(num2str);
 #endif
 						cur_pair.flag = -1;
 						pairs[i].push_back(cur_pair);
 					}
+					else
+					{
+						// 审计修复 2026-10-06（附录 IH.7）：原来是**静默丢掉**这一行。
+						// 结果是"头里说 10 折、实际只解析出 3 对"这种情况**不可见** ——
+						// 后面的留一法照跑，出一份看起来正常的准确率。
+						// 现在计数并在结尾报告；一行都没解析出来时**判失败**，
+						// 因为那种情况下 pairs 全空，正是 IH.1 那个空 vector 越界的入口。
+						bad_row_num++;
+					}
 				}
 			}
 			fclose(in);
+			__int64 got = (__int64)part_num * row_num_per_part - bad_row_num;
+			if (bad_row_num > 0)
+				printf("WARNING: %lld of %lld rows in %s are malformed and were skipped\n",
+					(long long)bad_row_num, (long long)((__int64)part_num * row_num_per_part),
+					list_file.c_str());
+			if (got <= 0)
+			{
+				printf("no usable pair parsed from %s\n", list_file.c_str());
+				return false;
+			}
 			return true;
 		}
 
@@ -607,9 +709,27 @@ namespace ZQ
 		static void _compute_far_tar(std::vector<EvaluationSingle>& singles, int real_num_threads)
 		{
 			printf("compute far tar begin\n");
-			ZQ_MergeSort::MergeSort(&singles[0], singles.size(), true);
+			// 审计修复 2026-10-06（附录 IH.1）：这里原来**没有空表守卫**。
+			// EvaluationOnLFW 末尾无条件调它，而 singles 是由
+			// "所有还活着的 pair" 堆出来的 —— list 文件本身合法、
+			// 只是**一张图都读不到**（目录写错、图片被挪走、格式不对）时，
+			// 每一对都被标成 invalid 并 erase 掉，singles 变成**空 vector**。
+			// 紧接着的 `&singles[0]` 之后，`int dim = singles[0].feat.length;`
+			// 是**真的解引用**空 vector 的第 0 号元素 —— 实测 ASan:
+			//   SEGV on unknown address 0x28 ... in _compute_far_tar
+			//   ZQ_FaceIDPrecisionEvaluation.h:648
+			// 也就是说"路径配错了"这种最常见的用户错误会**直接崩掉进程**，
+			// 而不是给出"没读到任何图片"的提示。
+			// image_num < 2 同理：只剩 0/1 张图时下面那个 O(N^2) 的双重循环
+			// 一对都凑不出来，all_num == 0，后面 `&all_scores[0]` 也是空 vector。
+			if (singles.empty())
+			{
+				printf("no valid image left after feature extraction, skip FAR/TAR\n");
+				return;
+			}
+			ZQ_MergeSort::MergeSort(&singles[0], (__int64)singles.size(), true);
 			int removed_num = 0;
-			for (int i = singles.size() - 2; i >= 0; i--)
+			for (int i = (int)singles.size() - 2; i >= 0; i--)
 			{
 				if (singles[i] == singles[i + 1])
 				{
@@ -617,10 +737,32 @@ namespace ZQ
 					removed_num++;
 				}
 			}
-			int image_num = singles.size();
+			int image_num = (int)singles.size();
 			printf("%d removed, remain %d\n", removed_num, image_num);
+			if (image_num < 2)
+			{
+				printf("only %d image left, FAR/TAR needs at least 2, skip\n", image_num);
+				return;
+			}
 
-			int all_num = (int)((long long)image_num*(image_num - 1)/2);
+			// 审计修复 2026-10-06（附录 IH.9）：原来写的是
+			//   int all_num = (int)((long long)image_num*(image_num - 1)/2);
+			// 那个 (long long) 说明作者**意识到**会溢出，但外面那层 (int) 又把它掐回去了：
+			// image_num 到 65536 时乘积就是 2.1e9 > INT_MAX，
+			// `std::vector<float> all_num(负数)` 抛 length_error，
+			// 而这个函数在 main 的调用栈上，异常没人接 -> terminate。
+			// 顺带：O(N^2) 的分数表在 LFW 全量（11480 张）上已经是
+			// 6.6e7 * (4+4+4+1+4) ≈ 1.1 GB，再大就不现实了。
+			// 这里显式判上限并**说明为什么跳过**，而不是让它在分配里炸掉。
+			const __int64 max_pair_num = 200000000LL;   // ~3.2 GB 的分数表
+			__int64 all_num64 = (__int64)image_num * (__int64)(image_num - 1) / 2;
+			if (all_num64 > max_pair_num)
+			{
+				printf("image_num = %d would need %lld pair scores (> %lld), skip FAR/TAR\n",
+					image_num, (long long)all_num64, (long long)max_pair_num);
+				return;
+			}
+			int all_num = (int)all_num64;
 			std::vector<float> all_scores(all_num);
 			std::vector<int> all_idx_i(all_num), all_idx_j(all_num);
 			std::vector<bool> all_flag(all_num);
@@ -643,9 +785,29 @@ namespace ZQ
 			}
 			int notsame_num = all_num - same_num;
 			printf("all_num = %d, same_num = %d, notsame_num = %d\n", all_num, same_num, notsame_num);
+			// 审计修复 2026-10-06（附录 IH.10）：原来只在 printf 里除。
+			// notsame_num == 0（所有图都同名，比如一个 list 里全是同一个人的照片）
+			// 时 `cur_far_num / notsame_num` 是整数除零之外的浮点除零 —— 打印 inf，
+			// 不崩，但输出是垃圾；而 far_num[stage] 全是 0 还会让 cur_stage
+			// 每轮都自增，第一轮就走完。两种情况都该明说，而不是打一串 inf。
+			if (notsame_num <= 0 || same_num <= 0)
+			{
+				printf("same_num = %d, notsame_num = %d: no usable target/far set, skip FAR/TAR curve\n",
+					same_num, notsame_num);
+				return;
+			}
 
 			double t1 = omp_get_wtime();
+			// 审计修复 2026-10-06（附录 IH.1）：这里就是那个 SEGV 点。
+			// 上面 image_num < 2 已经挡掉了空表；再加一道 feat.length 的检查，
+			// 因为 singles 里的特征是 CopyData 过来的，理论上恒为 feat_dim，
+			// 但真为 0 的话 DotProduct(0, 0, 0) 之后 all_scores 全 0，排序也没意义。
 			int dim = singles[0].feat.length;
+			if (dim <= 0 || singles[0].feat.pData == 0)
+			{
+				printf("invalid feature (length = %d), skip FAR/TAR\n", dim);
+				return;
+			}
 			if (real_num_threads == 1)
 			{
 				for (int n = 0; n < all_num; n++)

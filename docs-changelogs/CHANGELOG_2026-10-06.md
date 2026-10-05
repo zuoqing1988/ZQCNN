@@ -397,3 +397,88 @@ flag = (feat_dim == fread(face_feats[i].pData, sizeof(float), feat_dim, in));
     python tools/run_zqlib_checks.py facegroup          -> PASS
     python tools/run_zqlib_checks.py --ubsan facegroup  -> PASS（修前 runtime error）
     用例数 19 -> 20（新增 OP_RT_DIMZERO：num=3 且 feat_dim=0）
+
+
+## 新增/变更：附录 IH —— ZQ_FaceIDPrecisionEvaluation 全套修复 + 新门禁 zq_lfw_eval
+
+### 为什么是这一个头
+
+附录 EG 把它从 `<opencv2\opencv.hpp>`（反斜杠）改成正斜杠，于是它在 Linux 上「能编过」了。
+但附录 EH 之后的结论一直是：ZQlibFaceID 里**没有一个头 include 了 OpenCV**，
+所以它们一道行为门禁都跑不了（本机 WSL 没装 OpenCV）。
+
+这个头是那个结论的**唯一反例**，而且反例本身很说明问题：
+它 include OpenCV 只为了 `cv::imread` / `cv::flip` 两个调用，
+而 `EvaluationOnLFW` 的**全部逻辑**（解析 list 文件、抽特征、留一法定阈值、FAR/TAR 曲线）
+就在这个头里 —— 是同目录里逻辑量最大的一个。
+也就是说附录 EH 那份「零覆盖」名单里，**漏掉的恰恰是覆盖价值最高的那一个**。
+
+做法：新增 `tools/opencv_stub/opencv2/opencv.hpp`（只给 cv::Mat / cv::imread / cv::flip 三样），
+让头本身在 Linux 上编过并跑真行为。桩里的 imread 走**真 fopen** ——
+「list 文件指向的图片全都不存在」正是触发 IH.1 那个空 vector 越界的最短路径，桩必须能造出这个场景。
+
+### 查到的真缺陷（全部在 ZQlibFaceID/ZQ_FaceIDPrecisionEvaluation.h）
+
+| 编号 | 位置 | 缺陷 |
+| --- | --- | --- |
+| IH.1 | `_compute_far_tar` | `singles` 为空时 `int dim = singles[0].feat.length;` **解引用空 vector 的第 0 号元素** -> SEGV |
+| IH.2 | `_parse_lfw_list` | `part_num` / `half_pair_num` 只判 `> 0`，**无上界** |
+| IH.3 | `_parse_lfw_list` | `2 * half_pair_num` 在 half_pair_num > 2^30 时 **int 回绕成负**；循环体一次不跑，连 fgets 的 NULL 检查也不执行，于是「一行数据都没有」被当成解析成功 |
+| IH.4 | `EvaluationOnLFW` | `GetFeatDim()` 无校验，0/负值会让 `real_dim` 失去意义 |
+| IH.5 | `EvaluationOnLFW` | 失败路径写 `return EXIT_FAILURE`，而函数返回 **bool**、EXIT_FAILURE==1 —— 「list 文件根本打不开」被报告成 **true**；七个 SampleEvaluationOnLFW* 直接把它当进程退出码 |
+| IH.6 | `_parse_lfw_list` | 对不可信输入直接 `atoi`（越界是 UB） |
+| IH.7 | `_parse_lfw_list` | 分隔段数既非 3 也非 4 的行被**静默丢掉**，头里说 10 折实际只解析出 3 对这种情况不可见 |
+| IH.8 | `_compute_accuracy` | 留一法在 part_num==1 时把唯一那折也留掉，`mu.length==0` -> **所有 test score 恒为 0**，仍打印一行「0  0.00%」 |
+| IH.9 | `_compute_far_tar` | `int all_num = (int)((long long)image_num*(image_num-1)/2);` —— 那个 (long long) 说明作者意识到会溢出，外面的 (int) 又掐了回去；image_num 到 65536 时 `vector<float>(负数)` 抛 length_error 且无人接 -> terminate |
+| IH.10 | `_compute_far_tar` | `notsame_num == 0` 时打印 `cur_far_num / notsame_num` -> inf；`far_num[stage]` 全 0 让 cur_stage 每轮自增 |
+
+### IH.1 的实测证据（修之前）
+
+    ==1178329==ERROR: AddressSanitizer: SEGV on unknown address 0x000000000028
+      #0 _compute_far_tar ... ZQ_FaceIDPrecisionEvaluation.h:648
+      #1 EvaluationOnLFW  ... ZQ_FaceIDPrecisionEvaluation.h:326
+
+触发条件极其普通：**list 文件本身完全合法，只是 folder 写错 / 图片被挪走**，
+每一对都被标成 invalid 并 erase 掉，`singles` 变空 —— 也就是最常见的用户错误直接崩进程。
+
+### 门禁
+
+新增 `tools/zq_lfw_eval_check.cpp`（tag `zq_lfw_eval`，B 组 57 -> 58），9 个用例：
+图片全不存在 / header 与实际行数不符 / part_num=2000 万 / half_pair_num=2^30 /
+正常 2x2 / 正常 2x2+use_flip / part_num=1 / 只有一对图片在 / list 文件不存在。
+其中「list 文件不存在」是**对照项**（修之前就是 false），用来确认判据没写反。
+
+### 踩到的坑（记录，避免重复）
+
+1. **桩 imread 的造图路径必须和库自己拼的路径一致。** 第一版图省事写成 `img_%03d.jpg`
+   放在 IMG_DIR 根下，结果**一张都读不到**，「正常 2x2」和「只有一对图片在」
+   实际跑的是「全都不存在」，门禁照样报「没跑完」，看上去像库崩了。
+   —— 附录 CA.3 的又一次：**观测手段没走到那条路径，结论就是假的**。
+2. **RLIMIT_AS 与 ASan 不兼容。** 第一版想用「给子进程设 1GB 地址空间上限」
+   来逼 `pairs.resize(2000万)` 分配失败，实测子进程只剩一行 `ERROR: Failed to mmap`。
+   逐档试过 8/16/24/40/64/96/128/200 GB，**全部一样** —— 不是值不够大，是这条路本身不通。
+   改用 **ru_maxrss 增量**：part_num=2000 万 -> resize 要 480MB，
+   修好之后是在 resize **之前**就拒掉，涨 0。
+3. **基类 `Init(const std::string model_name, ...)` 是按值传参上的顶层 const**，
+   签名里被丢掉，桩里写 `const std::string&` 会得到「抽象类」编译错。
+4. 桩 `cv::Mat` 的成员名就是 `data` / `step`（被测头按 `imgL.data`、`imgL.step[0]` 取），
+   内部再叫 `_data` / `_step` 会直接编不过。
+
+### 实测
+
+    python tools/run_zqlib_checks.py zq_lfw_eval         -> 1/1 通过（9 个用例全对）
+    修前同一道门禁：4 有错 + 1 崩溃（SEGV，栈已抓到）
+    变异测试（把 IH.1 的空表守卫和 IH.5 的 return false 退回）-> 门禁重新变红
+    cmake --build build_x64 --config Release --target 三个 SampleEvaluationOnLFW* -> RC=0，0 error
+    python tools/check_text_encoding.py -> OK: 762 text files, all strict UTF-8, no U+FFFD
+    python tools/check_line_endings.py  -> line endings OK
+
+### 注意事项
+
+- `EvaluationOnLFW` 的失败返回值语义变了（`true` -> `false`）。这是**修正**，不是回归：
+  原先「解析失败」返回 `EXIT_FAILURE`==1 即 true，七个 sample 的失败分支永远进不去。
+  但如果有外部代码依赖了「它总是返回 true」这个旧行为，需要一并检查。
+- `_parse_lfw_list` 现在会在**一行都没解析出来**时返回 false（原先返回 true 并让下游崩）。
+- `_compute_far_tar` 在 `image_num < 2` 或 `same_num/notsame_num` 为 0 时会**跳过并打印原因**，
+  不再打一串 inf，也不再让 O(N^2) 分数表在超大 list 上把进程拖死。
+- `tools/opencv_stub/` 只在 tools/ 的门禁里通过 -I 生效，主工程两个构建都看不到它。
