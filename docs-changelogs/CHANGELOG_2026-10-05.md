@@ -1046,3 +1046,20 @@ C7 的可达性表只看 `model/*.zqparams`，所以它的 `UNUSED` 只回答
 * `audit_k3_20261001.md`（追加 II）
 * `AGENTS.md`（新增第 11 条「覆盖集合要从源码推，不要手写名单」）
 * **无生产代码改动**
+
+## 新增/变更：II 落地后的完整回归（v46）
+
+```
+ALL CHECKS PASSED        rc=0        FAILED 计数 = 0
+```
+
+C7 组在**新口径**下通过，输出已变成：
+
+```
+合计 36 种：EXERCISED 20 / PROBED 11 / COMMENTED 1 / UNUSED 4
+基线 36 条 -> 现在 36 条
+无状态变化。
+```
+
+其余组（D1/D2 双平台全量构建、D3/D4 两平台 sample、A~C16 全部门禁、
+MSVC `/analyze`、ARM/NEON 与 FP16 档解析、MSVC ASan）全部 OK。
