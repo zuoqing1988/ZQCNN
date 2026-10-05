@@ -1466,7 +1466,8 @@ static void ref_prior_box_text(int layer_h, int layer_w, int img_h, int img_w,
     }
     const int num_priors = 2 * (int)min_sizes.size()
         * ((1 + (max_sizes.empty() ? 0 : 1)) + (g_flip ? 2 : 1) * (int)eff.size());
-    const int out_count = 2 * layer_h * layer_w * num_priors * 4;   // [N,2,dim,1]
+    // 只写**通道 0** 那 dim 个值 —— 通道 1 是未写的残留，不参与比对（IR.2）
+    const int out_count = layer_h * layer_w * num_priors * 4;
     out.assign(out_count, 0.0f);
     size_t w = 0;
     for (int h = 0; h < layer_h; h++)
@@ -1649,6 +1650,59 @@ static void scan_prior_box_text_ratios()
     }
 }
 
+// 发射**顺序**探针（附录 IR.1）。
+//
+// 前面几轮把"发几个"测平了（IQ.2），但值还对不上（后向误差 0.014~0.093）。
+// 这一轮把几何做成**每一类框都长得不一样**，于是顺序直接从输出里读出来：
+//
+//   H = W = 1      -> 只有一个格，step_w = step_h = 1/img = 1
+//                      cx = 0.5, cy = 0.5, cy1 = 1.0
+//   clip = 0       -> 不做 [0,1] 截断，于是四个数保留原始几何
+//   min=30 max=60 ratio=2, flip=1  -> 每格 8 个框，四类几何各不相同：
+//      size  框: bw=bh=30          -> x = 0.5 ± 15      , y = cy  ± 15
+//      max   框: bw=bh=sqrt(30*60)  -> x = 0.5 ± 21.2132 , y = cy  ± 21.2132
+//      ratio 框: bw=30*sqrt2, bh=30/sqrt2 -> x = 0.5 ± 21.2132 , y = cy ± 10.6066
+//      翻转 ratio: bw=30/sqrt2, bh=30*sqrt2 -> x = 0.5 ± 10.6066 , y = cy ± 21.2132
+//   出参是 [N,2,dim,1]，通道 1 从头到尾没被写过（IL.6），
+//   所以**前 32 个值就是那 8 个框**。
+static void order_prior_box_text()
+{
+    const int H = 1, W = 1;
+    char block[512];
+    snprintf(block, sizeof(block),
+             "Input name=data C=1 H=%d W=%d\n"
+             "Copy name=k1 bottom=data top=feat\n"
+             "Copy name=k2 bottom=data top=imgs\n"
+             "PriorBoxText name=pb1 bottom=feat bottom=imgs top=pboxes "
+             "min_size=30 max_size=60 aspect_ratio=2 flip=1 clip=0 variance=0.1\n",
+             H, W);
+    if (!write_file(SYNTH_PARAM, block, strlen(block))) { printf("  写不出参数文件\n"); return; }
+    if (!write_file(SYNTH_MODEL, "", 0)) { printf("  写不出权重文件\n"); return; }
+    ZQ::ZQ_CNN_Net net;
+    if (!net.LoadFrom(SYNTH_PARAM, SYNTH_MODEL)) { printf("  合成网加载失败\n"); return; }
+    ZQ::ZQ_CNN_Tensor4D_NHW_C_Align256bit ti;
+    std::vector<float> in((size_t)H * W, 0.25f);
+    if (!ti.ConvertFromCompactNCHW(&in[0], 1, 1, H, W)) { printf("  输入张量失败\n"); return; }
+    if (!net.Forward(ti)) { printf("  Forward 失败\n"); return; }
+    const ZQ::ZQ_CNN_Tensor4D* ob = net.GetBlobByName("pboxes");
+    if (ob == 0) { printf("  取不到输出\n"); return; }
+    std::vector<float> got((size_t)ob->GetN() * ob->GetC() * ob->GetH() * ob->GetW());
+    ob->ConvertToCompactNCHW(&got[0]);
+
+    printf("\n  发射顺序探针（单格 / clip=0 / min=30 max=60 ratio=2 flip=1）：\n");
+    printf("    输出共 %zu 个；通道 1 未被写，所以前一半是真框：\n", got.size());
+    const size_t half = got.size() / 2;
+    for (size_t i = 0; i < half; i += 4) {
+        printf("      框%zu: x1=%9.4f y1=%9.4f x2=%9.4f y2=%9.4f"
+               "   (半宽 x=%.4f 半宽 y=%.4f)\n",
+               i / 4, got[i], got[i + 1], got[i + 2], got[i + 3],
+               (got[i + 2] - got[i]) / 2, (got[i + 3] - got[i + 1]) / 2);
+    }
+    printf("    （对照：size 半宽 15.0000 / max 半宽 21.2132 /"
+           " ratio 半宽 x=21.2132 y=10.6066 / 翻转 x=10.6066 y=21.2132；"
+           "cy=0.5 时框中心 y=0.5，cy1=1.0 时中心 y=1.0）\n");
+}
+
 static void run_prior_box_text()
 {
     struct Case { int H, W; const char* mn; const char* mx; const char* ar; };
@@ -1696,6 +1750,11 @@ static void run_prior_box_text()
         std::vector<float> want;
         ref_prior_box_text(c.H, c.W, c.H, c.W, mins, maxs, ratios, true, want);
         std::vector<float> got;
+        // 出参是 [N, 2, dim, 1]，而**通道 1 从头到尾没被写过**（IL.6 / IR.1），
+        // 它装的是缓冲区里的**残留内容**（谁分配、之前写过什么都不确定）。
+        // 拿它跟"参考的 0"比，是在**比较未初始化内存**，不是判库错。
+        // 所以只比前一半 —— 那才是这一层真正写出来的 dim 个框。
+        if (want.size() > 0 && got.size() > want.size() / 2) got.resize(want.size() / 2);
         snprintf(shape, sizeof(shape), "H=%d W=%d mn=%s mx=%s ar=%s", c.H, c.W, c.mn, c.mx, c.ar);
         printf("  [probe] PriorBoxText %s ...\n", shape);
         if (!run_synth_named(block, std::vector<float>(), 1, c.H, c.W,
@@ -1706,6 +1765,10 @@ static void run_prior_box_text()
             printf("  PriorBoxText %s **待查**（合成网加载失败，原因未查）\n", shape);
             continue;
         }
+        // **只截到这一层真正写出来的那一半**：出参是 [N, 2, dim, 1]，
+        // 而通道 1 从头到尾没被写过（IL.6 / IR.1），装的是缓冲区里的**残留内容**。
+        // 拿它跟"参考的 0"比，是在**比较未初始化内存**，不是判库错。
+        if (!want.empty() && got.size() > want.size()) got.resize(want.size());
         long wi = -1;
         double e = backward_err(got, want, wi);
         if (e > LIMIT) {
@@ -1759,6 +1822,7 @@ int main()
     run_prior_box_text();
     scan_prior_box_text();
     scan_prior_box_text_ratios();
+    order_prior_box_text();
     printf("  小结：跑过 %d 个形状，对 %d，**对不上** %d，**待查** %d\n",
            g.ok + g.bad, g.ok, g.bad, g.open);
 
