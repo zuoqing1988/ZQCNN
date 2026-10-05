@@ -68,6 +68,13 @@ void zq_cnn_innerproduct_gemm_32f_align_same_pixstep(
 		{
 			_aligned_free(*buffer);
 			*buffer = _aligned_malloc(total_need_buffer_len, 32);
+			// 审计修复 2026-10-05（附录 IX.5）：分配失败必须在这里就返回。
+			// 原来不管成败都更新 `*buffer_len`，于是「malloc 返回 0」->
+			// `*buffer_len` 变成一个够大的数 -> **下一次调用跳过重新分配**，
+			// 直接拿 `*buffer == 0` 去算。孪生实现
+			// `zq_cnn_convolution_gemm_32f_align_c_raw.h:90` 早就写了这一段。
+			if (*buffer == 0)
+				return;
 			*buffer_len = total_need_buffer_len;
 		}
 		matrix_A = *buffer;
@@ -191,6 +198,13 @@ void zq_cnn_innerproduct_gemm_32f_align_same_pixstep_batch(
 		{
 			_aligned_free(*buffer);
 			*buffer = _aligned_malloc(total_need_buffer_len, 32);
+			// 审计修复 2026-10-05（附录 IX.5）：分配失败必须在这里就返回。
+			// 原来不管成败都更新 `*buffer_len`，于是「malloc 返回 0」->
+			// `*buffer_len` 变成一个够大的数 -> **下一次调用跳过重新分配**，
+			// 直接拿 `*buffer == 0` 去算。孪生实现
+			// `zq_cnn_convolution_gemm_32f_align_c_raw.h:90` 早就写了这一段。
+			if (*buffer == 0)
+				return;
 			*buffer_len = total_need_buffer_len;
 		}
 		matrix_A = *buffer;

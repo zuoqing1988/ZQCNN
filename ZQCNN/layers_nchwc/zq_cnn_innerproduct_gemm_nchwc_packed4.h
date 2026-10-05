@@ -1,4 +1,4 @@
-﻿#define op4x4_1_first \
+#define op4x4_1_first \
 a0 = zq_mm_load_ps(src_ptr0);\
 a1 = zq_mm_load_ps(src_ptr0 + zq_mm_align_size);\
 a2 = zq_mm_load_ps(src_ptr0 + zq_mm_align_size2);\
@@ -279,6 +279,12 @@ void zq_cnn_innerproduct_gemm_nchwc_packed4(
 		if (*buffer != 0)
 			_aligned_free(*buffer);
 		*buffer = _aligned_malloc(need_buffer_size, 32);
+		// 审计修复 2026-10-05（附录 IX.5）：分配失败必须在这里就返回。
+		// 原来不管成败都更新 `*buffer_len`，于是「malloc 返回 0」->
+		// `*buffer_len` 变成一个够大的数 -> **下一次调用跳过重新分配**，
+		// 直接拿 `*buffer == 0` 去算。
+		if (*buffer == 0)
+			return;
 		*buffer_len = need_buffer_size;
 	}
 	A_buffer = (zq_base_type*)(*buffer);
@@ -947,6 +953,12 @@ void zq_cnn_innerproduct_gemm_nchwc_packed8_other(
 		if (*buffer != 0)
 			_aligned_free(*buffer);
 		*buffer = _aligned_malloc(need_buffer_size, 32);
+		// 审计修复 2026-10-05（附录 IX.5）：分配失败必须在这里就返回。
+		// 原来不管成败都更新 `*buffer_len`，于是「malloc 返回 0」->
+		// `*buffer_len` 变成一个够大的数 -> **下一次调用跳过重新分配**，
+		// 直接拿 `*buffer == 0` 去算。
+		if (*buffer == 0)
+			return;
 		*buffer_len = need_buffer_size;
 	}
 	A_buffer = (zq_base_type*)(*buffer);

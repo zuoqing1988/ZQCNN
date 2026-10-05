@@ -3,7 +3,10 @@
 """SIMD 内层的两条源码级判定（附录 IX）：
 
   1. `zq_final_sum_q` 的项数 == 向量 lane 数，且不越 `q[]`；
-  2. **裸栈数组不得被 `zq_mm_store_ps` 写**（store 要对齐，x86-64 ABI 不保证）。
+  2. **裸栈数组不得被 `zq_mm_store_ps` 写**（store 要对齐，x86-64 ABI 不保证）；
+  3. **`*buffer = _aligned_malloc(...)` 之后必须查返回值**，
+     且必须在更新 `*buffer_len` **之前**（否则下次调用会跳过重新分配，
+     拿着 `*buffer == 0` 去算 —— 真正的空指针解引用发生在下一次，不在这一行）。
 
 为什么需要这个门禁
 ------------------
@@ -34,6 +37,8 @@ SSE/AVX 两节分别是 4 项 / 8 项，都对），所以任何运行时门禁�
    * 项数 <= 该节 `#include` 进去的 raw 头里 `zq_base_type q[N]` 的 N（不许越界）
 2. 对每个 `*_raw.h`：凡是**被 `zq_mm_store_ps(...)` 当第一个实参写**的
    `zq_base_type` 数组，声明处必须带对齐属性（`ZQ_DECLSPEC_ALIGN*`）。
+3. 对 `ZQCNN/layers_c/` 与 `ZQCNN/layers_nchwc/` 下每个头：
+   每个 `*buffer = _aligned_malloc(...)` 之后的 5 行内必须出现 `*buffer == 0` 检查。
 
 用法
 ----
@@ -53,6 +58,9 @@ import sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 LAYERS_C = os.path.join(ROOT, 'ZQCNN', 'layers_c')
+# NCHWC 那一族（layers_nchwc）同样在两个构建里，同样有这三条问题 ——
+# 第一次只扫 layers_c 时 14 处漏网全在这一族里（附录 IX.6）。
+LAYERS_NCHWC = os.path.join(ROOT, 'ZQCNN', 'layers_nchwc')
 
 # 一个 .c 里可能出现的横向归约宏（名字现在只有一个，但按前缀扫，
 # 免得以后新增一层又从头踩一遍）
@@ -68,6 +76,25 @@ TERM_RE = re.compile(r'\bq\[(\d+)\]')
 RAW_DECL_RE = re.compile(
     r'^\s*(?P<align>ZQ_DECLSPEC_ALIGN\w+\s+)?zq_base_type\s+(?P<name>\w+)\s*\[')
 STORE_RE = re.compile(r'zq_mm_store_ps\s*\(\s*(?P<name>\w+)\s*,')
+
+
+# ---- 判定 3：`*buffer = _aligned_malloc(...)` 必须查返回值（附录 IX.5）----
+BUF_MALLOC_RE = re.compile(r'\*buffer\s*=\s*_aligned_malloc')
+BUF_NULL_RE = re.compile(r'\*\s*buffer\s*==\s*0|!\s*\(\s*\*\s*buffer\s*\)')
+
+
+def scan_buffer_nullcheck(text):
+    """返回 (分配点总数, [(行号, 说明)])。"""
+    lines = text.split('\n')
+    total, bad = 0, []
+    for i, line in enumerate(lines):
+        if not BUF_MALLOC_RE.search(line):
+            continue
+        total += 1
+        if not BUF_NULL_RE.search('\n'.join(lines[i:i + 5])):
+            bad.append((i + 1,
+                        '*buffer = _aligned_malloc(...) 之后 5 行内没有 *buffer == 0 检查'))
+    return total, bad
 
 
 def scan_stack_align(text, fname=''):
@@ -225,6 +252,26 @@ void f(void) {
             ok = False
         print('  %s %-28s 扫到 %d 个被 store 的数组 / %d 个问题（期望 %d / %d）'
               % (mark, name, got[0], got[1], want_n, want_bad))
+
+    # ---- 判定 3 的自测 ----
+    good_buf = """        *buffer = _aligned_malloc(total_need_buffer_len, 32);
+        if (*buffer == 0)
+            return;
+        *buffer_len = total_need_buffer_len;
+"""
+    bad_buf = """        *buffer = _aligned_malloc(total_need_buffer_len, 32);
+        *buffer_len = total_need_buffer_len;
+"""
+    for name, txt, want_n, want_bad in (
+            ('分配后查了返回值（合格）', good_buf, 1, 0),
+            ('**没查返回值**（IX.5）', bad_buf, 1, 1)):
+        n, bad = scan_buffer_nullcheck(txt)
+        got = (n, len(bad))
+        mark = 'OK ' if got == (want_n, want_bad) else '**BAD**'
+        if got != (want_n, want_bad):
+            ok = False
+        print('  %s %-28s 扫到 %d 个分配点 / %d 个问题（期望 %d / %d）'
+              % (mark, name, got[0], got[1], want_n, want_bad))
     return ok
 
 
@@ -244,11 +291,16 @@ def main(argv):
 
     files = [a for a in argv[1:] if not a.startswith('-')]
     if not files:
-        files = [os.path.join(LAYERS_C, f) for f in sorted(os.listdir(LAYERS_C))
-                 if f.endswith(('.c', '.h'))]
+        files = []
+        for d in (LAYERS_C, LAYERS_NCHWC):
+            if not os.path.isdir(d):
+                continue
+            files += [os.path.join(d, f) for f in sorted(os.listdir(d))
+                      if f.endswith(('.c', '.h'))]
 
     raw_texts, total, bad_all = {}, 0, []
     store_total, store_bad_all = 0, []
+    nullcheck_total, nullcheck_bad = 0, []
     for f in files:
         text = io.open(f, encoding='utf-8').read()
         if f.endswith('.c'):
@@ -260,6 +312,11 @@ def main(argv):
                       % (os.path.relpath(f, ROOT), len(secs), len(bad)))
                 for ln, msg in bad:
                     print('      !! 第 %d 行 %s' % (ln, msg))
+        bn, bbad = scan_buffer_nullcheck(text)
+        if bn:
+            store_total += 0
+            nullcheck_total += bn
+            nullcheck_bad += [(f, ln, msg) for ln, msg in bbad]
         n, sbad = scan_stack_align(text, f)
         if n:
             store_total += n
@@ -270,9 +327,15 @@ def main(argv):
                 print('      !! 第 %d 行 %s：%s' % (ln, nm, msg))
 
     print('合计 %d 处 zq_final_sum_q（%d 处不合格）；'
-          '%d 个 zq_mm_store_ps 目标（%d 个没对齐）'
-          % (total, len(bad_all), store_total, len(store_bad_all)))
-    if not total and not store_total:
+          '%d 个 zq_mm_store_ps 目标（%d 个没对齐）；'
+          '%d 个 *_aligned_malloc(*buffer)（%d 个没查返回值）'
+          % (total, len(bad_all), store_total, len(store_bad_all),
+             nullcheck_total, len(nullcheck_bad)))
+    if nullcheck_bad:
+        for f, ln, msg in nullcheck_bad:
+            print('      !! %s 第 %d 行 %s'
+                  % (os.path.relpath(f, ROOT), ln, msg))
+    if not total and not store_total and not nullcheck_total:
         print('**一处都没扫到 —— 匹配逻辑多半坏了**（AGENTS.md 坑 #2）')
         return 1
     if bad_all:
@@ -281,6 +344,11 @@ def main(argv):
     if store_bad_all:
         print('**被 zq_mm_store_ps 写的栈数组必须声明成 ZQ_DECLSPEC_ALIGN32：'
               '不对齐在 x86 上是 vmovaps -> #GP**')
+        return 1
+    if nullcheck_bad:
+        print('**`*buffer = _aligned_malloc(...)` 必须查返回值：**'
+              '不查就更新 `*buffer_len`，下次调用会跳过重新分配、'
+              '拿着空指针去算 —— 空指针解引用发生在**下一次**，不在这一行**')
         return 1
     return 0
 

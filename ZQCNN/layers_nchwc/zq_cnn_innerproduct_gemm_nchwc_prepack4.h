@@ -1,4 +1,4 @@
-﻿/*zq_mm_align_size must be 4*/
+/*zq_mm_align_size must be 4*/
 void zq_cnn_innerproduct_gemm_nchwc_prepack4(
 	const zq_base_type* filters_data,
 	int N,
@@ -27,6 +27,12 @@ void zq_cnn_innerproduct_gemm_nchwc_prepack4(
 		if (*buffer != 0)
 			_aligned_free(*buffer);
 		*buffer = _aligned_malloc(need_buffer_size, 32);
+		// 审计修复 2026-10-05（附录 IX.5）：分配失败必须在这里就返回。
+		// 原来不管成败都更新 `*buffer_len`，于是「malloc 返回 0」->
+		// `*buffer_len` 变成一个够大的数 -> **下一次调用跳过重新分配**，
+		// 直接拿 `*buffer == 0` 去算。
+		if (*buffer == 0)
+			return;
 		*buffer_len = need_buffer_size;
 	}
 	B_buffer = (zq_base_type*)(*buffer);
@@ -138,6 +144,12 @@ void zq_cnn_innerproduct_gemm_nchwc_prepack8_other(
 		if (*buffer != 0)
 			_aligned_free(*buffer);
 		*buffer = _aligned_malloc(need_buffer_size, 32);
+		// 审计修复 2026-10-05（附录 IX.5）：分配失败必须在这里就返回。
+		// 原来不管成败都更新 `*buffer_len`，于是「malloc 返回 0」->
+		// `*buffer_len` 变成一个够大的数 -> **下一次调用跳过重新分配**，
+		// 直接拿 `*buffer == 0` 去算。
+		if (*buffer == 0)
+			return;
 		*buffer_len = need_buffer_size;
 	}
 	B_buffer = (zq_base_type*)(*buffer);
