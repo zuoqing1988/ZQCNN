@@ -164,6 +164,18 @@ GROUPS = [
      ['check_bbox_nms.py', '--selfcheck'], False),
     ('A26 "BBoxUtils NMS / 解码契约" 普查 (check_bbox_nms)',
      ['check_bbox_nms.py'], False),
+    # A27/A28 是附录 IM 的门禁：每个头都必须能**单独**编过。
+    # C++ 头文件的头号卫生问题是「用了某类型却没 include 它的定义」——
+    # 主工程里每个 TU 都按习惯顺序 include 一堆头，某个头恰好排在提供方**前面**，
+    # 于是看起来一切正常。本项目真实踩到的一例：`ZQ_CNN_CascadeOnet_Interface.h:113`
+    # 用了具体的 `ZQ_CNN_Net`（只 include 了抽象基类 `ZQ_CNN_Net_Interface.h`），
+    # 而 SampleVideoFaceDetection_Interface.cpp 第一行恰好 include 了 ZQ_CNN_Net.h，
+    # **顺序正好把它盖住**，所以一直没人发现。
+    # 注意它要跑 ~3 分钟（每个头一次 wsl 调用），所以只注册普查、不并进更快的那几组。
+    ('A27 "头文件自包含性" 自测 (check_header_selfcontained --selfcheck)',
+     ['check_header_selfcontained.py', '--selfcheck'], False),
+    ('A28 "头文件自包含性" 普查 (check_header_selfcontained)',
+     ['check_header_selfcontained.py'], False),
     ('B  ZQlib 独立回归测试 x10 (ASan+LSan)', ['run_zqlib_checks.py'], False),
     # 基线路径给**绝对路径**：子进程以 ROOT 为 cwd 运行，而基线文件在 tools/ 下，
     # 相对路径会解析成 <ROOT>/zqlib_probe_baseline.txt 而找不到（2026-10-02 实测）。
