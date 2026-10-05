@@ -1,4 +1,4 @@
-﻿void zq_cnn_resize_with_safeborder(
+void zq_cnn_resize_with_safeborder(
 	const zq_base_type* in_tensor4D_data,
 	int in_N,
 	int in_H,
@@ -55,7 +55,14 @@
 
 	for (n = 0, in_im_ptr = in_tensor4D_data, out_im_ptr = out_tensor4D_data;
 		n < in_N;
-		n++, in_im_ptr += in_sliceStep, out_im_ptr += out_sliceStep)
+		// 审计修复 2026-10-06（附录 IU.2）：原来这里是
+		//     n++, in_im_ptr += in_sliceStep, out_im_ptr += out_sliceStep)
+		// —— 拿**通道片**的步长推进**图像**的指针。同一个文件下面
+		// zq_cnn_resize_without_safeborder 用的是 in_imStep / out_imStep，
+		// 只有 with_safeborder 这一份漏了（附录 IU.1 是 pooling 里的同一个错误）。
+		// N=1 时看不出来；N>=2 且 C 不是 align 整数倍时（此时 imageStep != sliceStep）
+		// 第 2 张及以后的图会被读/写到错误的通道片，且**不越界、不崩**，纯静默算错。
+		n++, in_im_ptr += in_imStep, out_im_ptr += out_imStep)
 	{
 		for (c = 0, in_slice_ptr = in_im_ptr, out_slice_ptr = out_im_ptr; 
 			c < in_C; 

@@ -1815,3 +1815,106 @@ Gray 更明显：C=1 时 align=4，**lane 1..3 全是 padding**，不留着就�
     cmake --build build_x64 --config Release（全量）-> RC=0，0 error
     WSL make -j8（全量）-> RC=0，0 error
     A/B：三个 MTCNN sample 全部 IDENTICAL
+
+---
+
+## 变更：附录 IU —— NCHWC 内核用 sliceStep 冒充 imStep（两处静默算错）
+
+### 背景：为什么这类错误能活到现在
+
+NCHWC 的张量布局是 `[n][c][h][w]`：
+
+| step | 走多远 |
+| --- | --- |
+| `widthStep` | 一个像素（w 方向，含对齐） |
+| `sliceStep` | 一个**通道片**（c 方向，步长 = align） |
+| `imageStep` | 走完**一张图的全部通道**（n 方向） |
+
+遍历 batch 的那个循环推进指针时**必须**用 `imStep`。写成 `sliceStep` 会有两层遮蔽：
+
+1. **N = 1 时**，image 循环只跑一圈，推进量乘 0，两种写法等价 —— 看不出差别。
+2. **C 是 align 的整数倍时**，两个 step **数值相同**。
+   `ZQ_CNN_Tensor4D_NCHWC<n>::ChangeSize` 里
+   `dst_slice = ceil(dst_C/align_size)`、`dst_imStep = dst_slice * dst_sliceStep`，
+   于是 `dst_slice == 1`、`imStep == sliceStep`。
+
+项目里几乎所有模型的中间层 C 都是 align 的整数倍，于是**两个遮蔽同时成立**。
+而且因为 `sliceStep <= imageStep`，写错的地址仍在缓冲区里：
+**不越界、不崩、ASan/UBSan/Valgrind 一个都不报**，纯静默算错。
+
+### IU.1 `ZQCNN/layers_nchwc/zq_cnn_pooling_nchwc_raw.h`
+
+`zq_cnn_avgpooling_nopadding_suredivided_kernel2x2` 的 n 循环：
+
+    -   n++, in_im_ptr += in_sliceStep, out_im_ptr += out_sliceStep)
+    +   n++, in_im_ptr += in_imStep,   out_im_ptr += out_imStep)
+
+同一个文件里 max 版本、k3x3 版本、general 版本的同名循环用的都是 `imStep`，
+**只有 avg/k2x2/suredivided 这一份漏了**。
+
+分派路径：`ZQ_CNN_Forward_SSEUtils_NCHWC::AVGPooling`
+→ 条件 `suredivided = (in_H-k_H)%s_H==0 && (in_W-k_W)%s_W==0` 且 `k_H==k_W==2`
+→ `zq_cnn_avgpooling_nopadding_suredivided_nchwc{1,4,8}_kernel2x2`。
+即：**2x2 平均池化、整除、能放下**，NCHWC1/4/8 三个通道宽度**全中**。
+
+### IU.2 `ZQCNN/layers_nchwc/zq_cnn_resize_nchwc_raw.h`
+
+`zq_cnn_resize_with_safeborder` 同一个错误。同文件里的
+`zq_cnn_resize_without_safeborder` 用的是 `imStep`，只有 `with` 这一份漏了。
+
+调用链：`ZQ_CNN_Tensor4D_NCHWC<n>::Resize(...)`
+→ `zq_cnn_resize_with_safeborder_nchwc{n}`，N 直接来自张量，
+所以**任何 N>1 的 Resize 都受影响**。
+
+### 门禁为什么没抓到（两个门禁各有一道独立盲区）
+
+`tools/zq_nchwc_pool_check.cpp`：k2x2 那批用例写死 `c.C = A`（A 就是 align），
+`dst_slice` 恒为 1 → 两个 step 相同 → 遮蔽 2 生效。general 那批虽然用了
+`C = A + 2`，但 `N` 一直写死 1 → 遮蔽 1 生效。
+
+`tools/zq_nchwc_resize_check.cpp`：`c.N = 1; c.C = A;` **两个都写死**，
+而且 `with_safeborder` 在 cfgB 下被 `continue` 跳过，
+于是它**只跑过 N=1、C=A 一种形状**。
+
+修法是给两个门禁都补上「N >= 2 **且** C 不是 align 整数倍」的用例。
+
+### 变异测试（先红后绿，两轮）
+
+    zq_nchwc_pool   修前：150 个用例 / 6 个 FAIL（avg suredivided/k2x2 × nchwc1/4/8）
+                         最差后向误差 4.98e-01
+                    修后：150 / 150 全对
+    zq_nchwc_resize 修前：18 个用例 / 3 个 FAIL（with_safeborder × nchwc1/4/8）
+                         最差后向误差 9.95e-01
+                    修后：18 / 18 全对
+
+没有出现「修了反而多了 FAIL」，也没有别的入口被牵连。
+
+### 新门禁 `tools/check_imstep_guard.py`（A40 自测 + A41 普查）
+
+扫 `ZQCNN/layers_nchwc`、`layers_c`、`math`、`ZQ_GEMM/math` 共 119 个源文件，
+凡是 `<prefix>_im_ptr += <expr>` 且 `<expr>` 里出现任何 `*_sliceStep` 就报错。
+
+**不写死变量名**（只用 `_im_ptr` / `_sliceStep` 这两段命名约定），
+也不写死前缀 —— `in_` / `out_` / `cur_` 都一样能命中，
+`in_im_ptr += out_sliceStep` 这种交叉配对也拦得住。
+反向不误报：推进**通道片**的 `in_slice_ptr += in_sliceStep` 是正确的，不报。
+
+**这条门禁第一版是恒真的。** 结束符我写成 `[^;]+;`，
+而这些语句绝大多数出现在 `for` 的第三个子句里、以 `)` 收尾 —— 一条都没匹配上，
+门禁永远绿。是靠变异测试（把两个真实站点改回 sliceStep）当场打出来的，
+已经补进 `--selfcheck`（3 正例 + 2 反例 + 1 不该报）。
+
+### 变更文件
+
+    ZQCNN/layers_nchwc/zq_cnn_pooling_nchwc_raw.h     IU.1
+    ZQCNN/layers_nchwc/zq_cnn_resize_nchwc_raw.h      IU.2
+    tools/zq_nchwc_pool_check.cpp                     补 N>=2 / C 非 align 整数倍用例
+    tools/zq_nchwc_resize_check.cpp                   同上（cfgA 拆成 N=1/N=2 两组）
+    tools/check_imstep_guard.py                       新门禁
+    tools/run_audit_checks.py                         注册 A40 / A41
+
+### 注意事项
+
+- 这两处都是**静默算错**：不越界、不崩、没有任何 sanitizer 会报。
+  能抓住它们的只有「形状覆盖」和「源码门禁」两件事。
+- 新增门禁已进 `tools/run_audit_checks.py` 的 A 组，随每轮回归一起跑。

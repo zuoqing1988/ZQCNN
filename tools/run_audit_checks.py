@@ -235,6 +235,18 @@ GROUPS = [
     # 但清单要定期看，而不是躺在那里没人知道。
     ('A39 "零调用点体检" (check_zero_callers)',
      ['check_zero_callers.py'], False),
+    # 附录 IU.1 / IU.2（2026-10-06）：batch 维的指针步进不许用 sliceStep 冒充
+    # imStep。NCHWC 布局 [n][c][h][w]，imageStep 走完一整张图的全部通道，
+    # sliceStep 只走一个通道片。写成 sliceStep 时 N=1 完全看不出来；
+    # 而 ChangeSize 里 dst_imStep = ceil(dst_C/align)*dst_sliceStep，
+    # 只要 C 是 align 整数倍（= 项目里所有模型的中间层 C）两个 step 就**数值相同**，
+    # 于是这类错误既不越界、不崩、也没 sanitizer 会报 —— 纯静默算错，
+    # 只能靠源码门禁钉住。实测抓到 pooling 的 avg/k2x2/suredivided 与
+    # resize 的 with_safeborder 两处，都靠「N>=2 且 C 不是 align 整数倍」暴露。
+    ('A40 "batch 维步进" 自测 (check_imstep_guard --selfcheck)',
+     ['check_imstep_guard.py', '--selfcheck'], False),
+    ('A41 "batch 维步进" 普查 (check_imstep_guard)',
+     ['check_imstep_guard.py'], False),
     ('B  ZQlib 独立回归测试 x10 (ASan+LSan)', ['run_zqlib_checks.py'], False),
     # 基线路径给**绝对路径**：子进程以 ROOT 为 cwd 运行，而基线文件在 tools/ 下，
     # 相对路径会解析成 <ROOT>/zqlib_probe_baseline.txt 而找不到（2026-10-02 实测）。

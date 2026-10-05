@@ -228,6 +228,18 @@ int main()
                 c.C = A; c.kH = k; c.kW = k; c.S = k;
                 one(c, r[ai]);
             }
+            // 附录 IU.1（2026-10-06）：上面那批 c.C = A，而 A 就是 align_size，
+            // 于是 ChangeSize 里 `dst_slice = ceil(dst_C/align_size)` **恒等于 1**，
+            // `dst_imStep == dst_sliceStep` —— 两个 step 数值相同，
+            // 「用 sliceStep 冒充 imStep」的错误在这批数据上**根本看不出来**。
+            // 只有把 C 取成**不是 align 整数倍**（dst_slice >= 2），两者才分家，
+            // N>1 的第二张图才会被读/写到错误的位置。
+            for (int m = 0; m < 2; m++) {
+                Case c; memset(&c, 0, sizeof(c));
+                c.entry = e; c.N = 2; c.H = 4 * k + 2; c.W = 4 * k + 2;
+                c.C = (m ? A + 3 : A + 1); c.kH = k; c.kW = k; c.S = k;
+                one(c, r[ai]);
+            }
         } else {
             for (int j = 0; j < 5; j++) {
                 Case c; memset(&c, 0, sizeof(c));
@@ -239,9 +251,14 @@ int main()
                 c.C = A;
                 one(c, r[ai]);
             }
-            Case c2; memset(&c2, 0, sizeof(c2));
-            c2.entry = e; c2.N = 1; c2.H = 11; c2.W = 9; c2.C = A + 2; c2.kH = 3; c2.kW = 3; c2.S = 2;
-            one(c2, r[ai]);
+            // 附录 IU.1（2026-10-06）：C = A+2 已经是「不是 align 整数倍」了，
+            // 但 N 一直是 1 —— NCHWC 核的 image 维指针步进错误（用 sliceStep 冒充
+            // imStep）只有 **N >= 2** 才看得出来。这里两种 N 都跑。
+            for (int q = 0; q < 2; q++) {
+                Case c2; memset(&c2, 0, sizeof(c2));
+                c2.entry = e; c2.N = (q ? 2 : 1); c2.H = 11; c2.W = 9; c2.C = A + 2; c2.kH = 3; c2.kW = 3; c2.S = 2;
+                one(c2, r[ai]);
+            }
             if (!g_entries[e].divided) {
                 // **刻意让 (in-k) % s != 0**，这样最后一个窗口会被裁，
                 // nodivided 的 final_kH / final_kW 那四条分支才真的被执行。

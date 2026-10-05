@@ -189,10 +189,24 @@ int main()
         const int ai = (g_entries[e].align == 1) ? 0 : (g_entries[e].align == 4 ? 1 : 2);
         const int c0 = g_case, k0 = g_ok, b0 = g_bad, x0 = g_crash;
         const int A = g_entries[e].align;
-        for (int j = 0; j < 2; j++) {
+        for (int j = 0; j < 4; j++) {
             Case c; memset(&c, 0, sizeof(c));
-            c.entry = e; c.N = 1; c.inH = 16; c.inW = 16; c.C = A;
-            if (j == 0) {   // cfgA：降采样，rect 严格在图内
+            c.entry = e;
+            // 附录 IU.2（2026-10-06）：原来这里写死 `c.N = 1; c.C = A;`，而且
+            // with_safeborder 在 cfgB 下被跳过 —— 于是它**只跑过 N=1、C=A** 一种形状。
+            // 两个写死**各自都是一道盲区**：
+            //   N=1  -> 图像维的指针步进走错（in_im_ptr += in_sliceStep）看不出来，
+            //           因为 image 循环只跑一圈；
+            //   C=A  -> ZQ_CNN_Tensor4D_NCHWC<n>::ChangeSize 里
+            //           dst_imStep = ceil(dst_C/align) * dst_sliceStep，
+            //           C 是 align 整数倍时 ceil == 1，两个 step 数值相同，
+            //           同样看不出来。
+            // 两边同时成立时，任何「用 sliceStep 冒充 imStep」的错误都是隐形的。
+            // 现在跑 4 组：j&1 选配置，j>>1 决定形状。
+            c.cfg = (j & 1);
+            c.N = (j & 2) ? 2 : 1;
+            c.inH = 16; c.inW = 16; c.C = (j & 2) ? (A + 2) : A;
+            if (c.cfg == 0) {   // cfgA：降采样，rect 严格在图内
                 c.cfg = 0; c.offX = 2; c.offY = 3; c.rectW = 8; c.rectH = 6; c.outH = 6; c.outW = 8;
             } else {
                 // cfgB：让**钳位真正影响结果**。要点有两个：

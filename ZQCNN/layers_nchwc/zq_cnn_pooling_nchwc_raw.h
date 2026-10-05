@@ -1,4 +1,4 @@
-﻿void zq_cnn_maxpooling_nopadding_suredivided_kernel2x2(
+void zq_cnn_maxpooling_nopadding_suredivided_kernel2x2(
 	const zq_base_type* in_tensor4D_data,
 	int in_N,
 	int in_H,
@@ -98,7 +98,21 @@ void zq_cnn_avgpooling_nopadding_suredivided_kernel2x2(
 	int in_pixelStep_mul_strideW = zq_mm_align_size*stride_W;
 	for (n = 0, in_im_ptr = in_tensor4D_data, out_im_ptr = out_tensor4D_data;
 		n < out_N;
-		n++, in_im_ptr += in_sliceStep, out_im_ptr += out_sliceStep)
+		// 审计修复 2026-10-06（附录 IU.1）：原来这里是
+		//     n++, in_im_ptr += in_sliceStep, out_im_ptr += out_sliceStep)
+		// —— 拿**通道片**的步长去推进**图像**的指针。NCHWC 的布局是
+		//     [n][c][h][w]，sliceStep 走一个 c，imageStep 走完一个 n 的全部 c。
+		// N=1 时两条循环都只跑一圈，看不出差别；但 N>= 2 时第 2 张及以后的图
+		// 会去读/写第 (n*sliceStep/imageStep) 个通道片 —— 结果整片错乱，
+		// 而且因为 sliceStep <= imageStep，地址仍在缓冲区里，**不越界、不崩**，
+		// 纯属静默算错。上面 max / k3x3 / general 那几个同名循环用的都是
+		// in_imStep / out_imStep，只有这里漏了。
+		// 为什么之前所有门禁都没抓到：ZQ_CNN_Tensor4D_NCHWC<n>::ChangeSize 里
+		//     dst_imStep = dst_slice * dst_sliceStep,  dst_slice = ceil(dst_C/align)
+		// 只要 C 是 align 的整数倍（本项目所有模型的中间层 C 都是），
+		// dst_slice 恒为 1，两个 step **数值相同**，错误被完全掩盖。
+		// 只有 C 不是 align 整数倍、且 N >= 2 时才暴露。
+		n++, in_im_ptr += in_imStep, out_im_ptr += out_imStep)
 	{
 		for (c = 0, in_slice_ptr = in_im_ptr, out_slice_ptr = out_im_ptr;
 			c < out_C;
