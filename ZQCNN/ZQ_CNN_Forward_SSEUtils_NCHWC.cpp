@@ -1249,7 +1249,18 @@ void ZQ_CNN_Forward_SSEUtils_NCHWC::MaxPooling(const ZQ_CNN_Tensor4D_NCHWC1 &inp
 	if (need_W <= 0 || need_H <= 0)
 	{
 		if (!output.ChangeSize(0, 0, 0, 0, 0, 0))
-		
+			return;
+		// 审计修复 2026-10-06（附录 IR.1）：这一行原来缺，NCHW 版（`ZQ_CNN_Forward_SSEUtils.h:1601`）有。
+		// `ChangeSize(0,0,0,0,0,0)` 是**成功**的（把 output 置空并返回 true），
+		// 所以少了它就会继续往下走到 `(in_H - kernel_H) % stride_H`：
+		// `stride_H == 0` 时那是**整数 idiv 除零 -> SIGFPE**，进程直接死。
+		// 触发：`stride_H <= 0 || stride_W <= 0`。
+		// 经模型文件当前不可达（`ZQ_CNN_Layer_NCHWC.h:2184-2192` 的 ReadParam
+		// 已有 `stride_H <= 0 -> return false`），但这 6 个是 public static，
+		// 外部可直接调 —— 而 NCHW 版专门补的那行 `return ;` 就是这条路径的防线。
+		// 顺带：即便 stride > 0，`need_H == 0`（in_H=3, kernel_H=5, stride_H=2）时
+		// NCHWC 会把 output 置成 0 大小后**继续调内核**（内核的循环条件让它空转，
+		// 实际不写内存），NCHW 则直接返回 —— 也是行为分叉。
 		return;
 	}
 
@@ -1324,7 +1335,18 @@ void ZQ_CNN_Forward_SSEUtils_NCHWC::AVGPooling(const ZQ_CNN_Tensor4D_NCHWC1 &inp
 	if (need_W <= 0 || need_H <= 0)
 	{
 		if (!output.ChangeSize(0, 0, 0, 0, 0, 0))
-		
+			return;
+		// 审计修复 2026-10-06（附录 IR.1）：这一行原来缺，NCHW 版（`ZQ_CNN_Forward_SSEUtils.h:1601`）有。
+		// `ChangeSize(0,0,0,0,0,0)` 是**成功**的（把 output 置空并返回 true），
+		// 所以少了它就会继续往下走到 `(in_H - kernel_H) % stride_H`：
+		// `stride_H == 0` 时那是**整数 idiv 除零 -> SIGFPE**，进程直接死。
+		// 触发：`stride_H <= 0 || stride_W <= 0`。
+		// 经模型文件当前不可达（`ZQ_CNN_Layer_NCHWC.h:2184-2192` 的 ReadParam
+		// 已有 `stride_H <= 0 -> return false`），但这 6 个是 public static，
+		// 外部可直接调 —— 而 NCHW 版专门补的那行 `return ;` 就是这条路径的防线。
+		// 顺带：即便 stride > 0，`need_H == 0`（in_H=3, kernel_H=5, stride_H=2）时
+		// NCHWC 会把 output 置成 0 大小后**继续调内核**（内核的循环条件让它空转，
+		// 实际不写内存），NCHW 则直接返回 —— 也是行为分叉。
 		return;
 	}
 
@@ -1764,6 +1786,21 @@ return false;
 		return true;
 	}
 
+	// 审计修复 2026-10-06（附录 IR.2）：packed 重载原来**没有** `filter_N != bias_C` 校验，
+	// 而**同文件同名的 unpacked 重载有**（`InnerProductWithBias` :2412 等 4 处）—— 一份对四份错。
+	// 内核按 `zq_mm_load_ps(bias + out_c)` 整宽读 bias：bias 只有 `ceil(bias_C/align)*align`
+	// 个 float；`bias_C < filter_N` 且 `bias_C % align == 0` 时，最后一组会**读过 bias 缓冲末尾**。
+	// packed 版同时也没有 `filter_C != in_C`（packed 路径拿不到 filter_C，
+	// 故只补 bias 这一条）。
+	// x86 上 Convolution 的 packed 重载被 `#if __ARM_NEON` 包着不可达，
+	// 但 **InnerProduct 的 packed 重载在 x86 上真的会被调用**
+	// （`ZQ_CNN_Layer_NCHWC.h:2299/2326` 没有 `#if`），所以这是活的洞。
+
+	if (filter_N != bias_C)
+
+		return false;
+
+
 	int need_N = in_N;
 
 	int need_C = filter_N;
@@ -1824,6 +1861,21 @@ return false;
 		return true;
 	}
 
+	// 审计修复 2026-10-06（附录 IR.2）：packed 重载原来**没有** `filter_N != bias_C` 校验，
+	// 而**同文件同名的 unpacked 重载有**（`InnerProductWithBias` :2412 等 4 处）—— 一份对四份错。
+	// 内核按 `zq_mm_load_ps(bias + out_c)` 整宽读 bias：bias 只有 `ceil(bias_C/align)*align`
+	// 个 float；`bias_C < filter_N` 且 `bias_C % align == 0` 时，最后一组会**读过 bias 缓冲末尾**。
+	// packed 版同时也没有 `filter_C != in_C`（packed 路径拿不到 filter_C，
+	// 故只补 bias 这一条）。
+	// x86 上 Convolution 的 packed 重载被 `#if __ARM_NEON` 包着不可达，
+	// 但 **InnerProduct 的 packed 重载在 x86 上真的会被调用**
+	// （`ZQ_CNN_Layer_NCHWC.h:2299/2326` 没有 `#if`），所以这是活的洞。
+
+	if (filter_N != bias_C)
+
+		return false;
+
+
 	int need_N = in_N;
 
 	int need_C = filter_N;
@@ -1883,6 +1935,7 @@ return false;
 		return true;
 	}
 
+
 	int need_N = in_N;
 
 	int need_C = filter_N;
@@ -1940,6 +1993,7 @@ bool ZQ_CNN_Forward_SSEUtils_NCHWC::InnerProduct(ZQ_CNN_Tensor4D_NCHWC4& input,
 return false;
 		return true;
 	}
+
 
 	int need_N = in_N;
 
@@ -2008,6 +2062,21 @@ return false;
 		return true;
 	}
 	
+	// 审计修复 2026-10-06（附录 IR.2）：packed 重载原来**没有** `filter_N != bias_C` 校验，
+	// 而**同文件同名的 unpacked 重载有**（`InnerProductWithBias` :2412 等 4 处）—— 一份对四份错。
+	// 内核按 `zq_mm_load_ps(bias + out_c)` 整宽读 bias：bias 只有 `ceil(bias_C/align)*align`
+	// 个 float；`bias_C < filter_N` 且 `bias_C % align == 0` 时，最后一组会**读过 bias 缓冲末尾**。
+	// packed 版同时也没有 `filter_C != in_C`（packed 路径拿不到 filter_C，
+	// 故只补 bias 这一条）。
+	// x86 上 Convolution 的 packed 重载被 `#if __ARM_NEON` 包着不可达，
+	// 但 **InnerProduct 的 packed 重载在 x86 上真的会被调用**
+	// （`ZQ_CNN_Layer_NCHWC.h:2299/2326` 没有 `#if`），所以这是活的洞。
+
+	if (filter_N != bias_C)
+
+		return false;
+
+
 	int need_N = in_N;
 
 	int need_C = filter_N;
@@ -2111,6 +2180,21 @@ return false;
 		return true;
 	}
 
+	// 审计修复 2026-10-06（附录 IR.2）：packed 重载原来**没有** `filter_N != bias_C` 校验，
+	// 而**同文件同名的 unpacked 重载有**（`InnerProductWithBias` :2412 等 4 处）—— 一份对四份错。
+	// 内核按 `zq_mm_load_ps(bias + out_c)` 整宽读 bias：bias 只有 `ceil(bias_C/align)*align`
+	// 个 float；`bias_C < filter_N` 且 `bias_C % align == 0` 时，最后一组会**读过 bias 缓冲末尾**。
+	// packed 版同时也没有 `filter_C != in_C`（packed 路径拿不到 filter_C，
+	// 故只补 bias 这一条）。
+	// x86 上 Convolution 的 packed 重载被 `#if __ARM_NEON` 包着不可达，
+	// 但 **InnerProduct 的 packed 重载在 x86 上真的会被调用**
+	// （`ZQ_CNN_Layer_NCHWC.h:2299/2326` 没有 `#if`），所以这是活的洞。
+
+	if (filter_N != bias_C)
+
+		return false;
+
+
 	int need_N = in_N;
 
 	int need_C = filter_N;
@@ -2211,6 +2295,7 @@ bool ZQ_CNN_Forward_SSEUtils_NCHWC::ConvolutionWithPReLU(ZQ_CNN_Tensor4D_NCHWC4&
 return false;
 		return true;
 	}
+
 
 	int need_N = in_N;
 
@@ -2313,6 +2398,7 @@ bool ZQ_CNN_Forward_SSEUtils_NCHWC::Convolution(ZQ_CNN_Tensor4D_NCHWC4& input,
 return false;
 		return true;
 	}
+
 
 	int need_N = in_N;
 
@@ -3615,7 +3701,18 @@ void ZQ_CNN_Forward_SSEUtils_NCHWC::MaxPooling(const ZQ_CNN_Tensor4D_NCHWC4 &inp
 	if (need_W <= 0 || need_H <= 0)
 	{
 		if (!output.ChangeSize(0, 0, 0, 0, 0, 0))
-		
+			return;
+		// 审计修复 2026-10-06（附录 IR.1）：这一行原来缺，NCHW 版（`ZQ_CNN_Forward_SSEUtils.h:1601`）有。
+		// `ChangeSize(0,0,0,0,0,0)` 是**成功**的（把 output 置空并返回 true），
+		// 所以少了它就会继续往下走到 `(in_H - kernel_H) % stride_H`：
+		// `stride_H == 0` 时那是**整数 idiv 除零 -> SIGFPE**，进程直接死。
+		// 触发：`stride_H <= 0 || stride_W <= 0`。
+		// 经模型文件当前不可达（`ZQ_CNN_Layer_NCHWC.h:2184-2192` 的 ReadParam
+		// 已有 `stride_H <= 0 -> return false`），但这 6 个是 public static，
+		// 外部可直接调 —— 而 NCHW 版专门补的那行 `return ;` 就是这条路径的防线。
+		// 顺带：即便 stride > 0，`need_H == 0`（in_H=3, kernel_H=5, stride_H=2）时
+		// NCHWC 会把 output 置成 0 大小后**继续调内核**（内核的循环条件让它空转，
+		// 实际不写内存），NCHW 则直接返回 —— 也是行为分叉。
 		return;
 	}
 
@@ -3690,7 +3787,18 @@ void ZQ_CNN_Forward_SSEUtils_NCHWC::AVGPooling(const ZQ_CNN_Tensor4D_NCHWC4 &inp
 	if (need_W <= 0 || need_H <= 0)
 	{
 		if (!output.ChangeSize(0, 0, 0, 0, 0, 0))
-		
+			return;
+		// 审计修复 2026-10-06（附录 IR.1）：这一行原来缺，NCHW 版（`ZQ_CNN_Forward_SSEUtils.h:1601`）有。
+		// `ChangeSize(0,0,0,0,0,0)` 是**成功**的（把 output 置空并返回 true），
+		// 所以少了它就会继续往下走到 `(in_H - kernel_H) % stride_H`：
+		// `stride_H == 0` 时那是**整数 idiv 除零 -> SIGFPE**，进程直接死。
+		// 触发：`stride_H <= 0 || stride_W <= 0`。
+		// 经模型文件当前不可达（`ZQ_CNN_Layer_NCHWC.h:2184-2192` 的 ReadParam
+		// 已有 `stride_H <= 0 -> return false`），但这 6 个是 public static，
+		// 外部可直接调 —— 而 NCHW 版专门补的那行 `return ;` 就是这条路径的防线。
+		// 顺带：即便 stride > 0，`need_H == 0`（in_H=3, kernel_H=5, stride_H=2）时
+		// NCHWC 会把 output 置成 0 大小后**继续调内核**（内核的循环条件让它空转，
+		// 实际不写内存），NCHW 则直接返回 —— 也是行为分叉。
 		return;
 	}
 
@@ -5278,7 +5386,18 @@ void ZQ_CNN_Forward_SSEUtils_NCHWC::MaxPooling(const ZQ_CNN_Tensor4D_NCHWC8 &inp
 	if (need_W <= 0 || need_H <= 0)
 	{
 		if (!output.ChangeSize(0, 0, 0, 0, 0, 0))
-		
+			return;
+		// 审计修复 2026-10-06（附录 IR.1）：这一行原来缺，NCHW 版（`ZQ_CNN_Forward_SSEUtils.h:1601`）有。
+		// `ChangeSize(0,0,0,0,0,0)` 是**成功**的（把 output 置空并返回 true），
+		// 所以少了它就会继续往下走到 `(in_H - kernel_H) % stride_H`：
+		// `stride_H == 0` 时那是**整数 idiv 除零 -> SIGFPE**，进程直接死。
+		// 触发：`stride_H <= 0 || stride_W <= 0`。
+		// 经模型文件当前不可达（`ZQ_CNN_Layer_NCHWC.h:2184-2192` 的 ReadParam
+		// 已有 `stride_H <= 0 -> return false`），但这 6 个是 public static，
+		// 外部可直接调 —— 而 NCHW 版专门补的那行 `return ;` 就是这条路径的防线。
+		// 顺带：即便 stride > 0，`need_H == 0`（in_H=3, kernel_H=5, stride_H=2）时
+		// NCHWC 会把 output 置成 0 大小后**继续调内核**（内核的循环条件让它空转，
+		// 实际不写内存），NCHW 则直接返回 —— 也是行为分叉。
 		return;
 	}
 
@@ -5353,7 +5472,18 @@ void ZQ_CNN_Forward_SSEUtils_NCHWC::AVGPooling(const ZQ_CNN_Tensor4D_NCHWC8 &inp
 	if (need_W <= 0 || need_H <= 0)
 	{
 		if (!output.ChangeSize(0, 0, 0, 0, 0, 0))
-		
+			return;
+		// 审计修复 2026-10-06（附录 IR.1）：这一行原来缺，NCHW 版（`ZQ_CNN_Forward_SSEUtils.h:1601`）有。
+		// `ChangeSize(0,0,0,0,0,0)` 是**成功**的（把 output 置空并返回 true），
+		// 所以少了它就会继续往下走到 `(in_H - kernel_H) % stride_H`：
+		// `stride_H == 0` 时那是**整数 idiv 除零 -> SIGFPE**，进程直接死。
+		// 触发：`stride_H <= 0 || stride_W <= 0`。
+		// 经模型文件当前不可达（`ZQ_CNN_Layer_NCHWC.h:2184-2192` 的 ReadParam
+		// 已有 `stride_H <= 0 -> return false`），但这 6 个是 public static，
+		// 外部可直接调 —— 而 NCHW 版专门补的那行 `return ;` 就是这条路径的防线。
+		// 顺带：即便 stride > 0，`need_H == 0`（in_H=3, kernel_H=5, stride_H=2）时
+		// NCHWC 会把 output 置成 0 大小后**继续调内核**（内核的循环条件让它空转，
+		// 实际不写内存），NCHW 则直接返回 —— 也是行为分叉。
 		return;
 	}
 

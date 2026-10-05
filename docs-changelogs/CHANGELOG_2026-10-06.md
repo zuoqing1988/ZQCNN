@@ -1664,3 +1664,101 @@ ZQ_FaceIDPrecisionEvaluation.h:25:9: runtime error: load of value 37, which is n
 每一道都配了**自测**（含阴性对照）与**变异测试**；
 IR 那道额外带一份 8 处原有站点的白名单，理由写在文件头 ——
 永远红的规则等于没有规则。
+
+
+## 追加：附录 IR.1 / IR.2 —— NCHWC 检测线的两处「一份对 N 份错」
+
+范围：`ZQCNN/ZQ_CNN_Forward_SSEUtils_NCHWC.cpp`（5704 行）+ `ZQ_CNN_Tensor4D_NCHWC.h`（700 行）。
+
+### 先说**最想确认的那件事**：对齐违规
+
+**这一族 NCHWC 没有 MTCNN 那种未对齐 `_mm256_store_ps` 问题。** 对齐契约在张量层自洽：
+
+- `rawData` 由 `_aligned_malloc(needed + 64, 32)` 分配；
+  `firstPixelData = rawData + borderH*widthStep + borderW*align`，其中 `widthStep = realW*align`。
+  **NCHWC8**：`align=8`，所有偏移都是 8 float = 32 字节整数倍 -> `_mm256_load_ps/store_ps` 安全；
+  **NCHWC4**：`align=4`，偏移都是 4 float = 16 字节整数倍 -> `_mm_load_ps` 安全（它只要 16）；
+  **NCHWC1**：走 `malloc` + **标量** `my_mm_*`，完全不碰对齐载入。
+- wrapper 里的 padding 回退 `- padW*4` / `- padW*8` 也是 4/8 float 的整数倍，不破坏对齐。
+- `layers_nchwc/*_raw.h` 里**零个**硬编码的 `_mm256_` / `_mm_load` / `__m256` / `__m128`
+  （grep 确认），全部走 `zq_mm_*` 宏按 align 实例化 ——
+  不存在「nchwc4 代码里混进 256 位对齐载入」。
+- `ChangeSize` 把 C 补齐到 `ceil(C/align)*align`，所以 `for (c=0; c<C; c+=align)` 的
+  **最后一次满宽读写落在 padding lane 上、仍在缓冲内** —— 这正是 NCHWC 相对 NCHW 的结构性优势。
+- 唯一的「投机读过界」（depthwise 3x3 在最后一个输出像素上）由 `ZQ_CNN_NCHWC_ALLOC_SLACK 64` 兜住，
+  且三个 `ChangeSize` 都加了。
+
+### IR.1 —— 6 个 pooling 函数漏了无条件 `return`
+
+`MaxPooling` / `AVGPooling` 的 NCHWC1 / NCHWC4 / NCHWC8 共 6 处：
+
+```cpp
+    if (need_W <= 0 || need_H <= 0)
+    {
+        if (!output.ChangeSize(0, 0, 0, 0, 0, 0))
+    return;              // <- 只在 ChangeSize 失败时才 return
+    }
+    bool suredivided = (in_H - kernel_H) % stride_H == 0 && ...
+```
+
+**NCHW 版有**那个无条件 `return ;`（`ZQ_CNN_Forward_SSEUtils.h:1601`），NCHWC 版漏了 —— 一份对六份错。
+`ChangeSize(0,0,0,0,0,0)` 是**成功**的（把 output 置空并返回 true），
+所以会继续往下走到 `% stride_H`：`stride_H == 0` 时那是**整数 idiv 除零 -> SIGFPE**。
+
+触发：`stride_H <= 0 || stride_W <= 0`。经模型文件**当前不可达**
+（`ZQ_CNN_Layer_NCHWC.h:2184-2192` 的 `ReadParam` 已有守卫），
+但这 6 个是 public static、外部可直接调 —— 而 NCHW 专门补的那行就是这条路径的防线。
+顺带：即便 `stride > 0`，`need_H == 0`（`in_H=3, kernel_H=5, stride_H=2`）时
+NCHWC 会把 output 置成 0 大小后**继续调内核**（空转、不写内存），NCHW 直接返回 —— 也是行为分叉。
+
+### IR.2 —— packed 重载缺 `filter_N != bias_C`
+
+同文件 **unpacked** 重载有（`InnerProductWithBias:2412` 等 4 处：`filter_C != in_C || filter_N != bias_C`），
+**packed** 重载 8 个（`InnerProductWithBias` / `...PReLU` / `ConvolutionWithBias` / `...PReLU` × NCHWC4/8）
+两个校验都没有。
+
+内核按 `zq_mm_load_ps(bias + out_c)` **满宽**读 bias，而 bias 只有
+`ceil(bias_C/align)*align` 个 float —— `bias_C < filter_N` 且 `bias_C % align == 0` 时，
+最后一组会**读过 bias 缓冲末尾**。
+
+**只给 4 个补**（带 bias 形参的那些）：`InnerProductWithPReLU` / `ConvolutionWithBiasPReLU` 的
+packed 重载**根本没有 bias 形参**（只有 slope），补了就是编译不过 ——
+第一版按函数名批量加，MSVC 报 4 个 `error C2065: 'bias': 未声明的标识符`，才发现这一点。
+
+x86 上 Convolution 的 packed 重载被 `#if __ARM_NEON` 包着不可达，
+但 **InnerProduct 的 packed 重载在 x86 上真的会被调用**（`ZQ_CNN_Layer_NCHWC.h:2299/2326` 没有 `#if`），
+所以这是活的洞。
+
+### A/B 对拍：用「只回退 IR」的树重测
+
+第一次对比时 `mtcnn_out_v8` 与新输出有差异，但那是**基线太旧**（v8 是 IJ **之前**抓的），
+不是 IR 造成的。改用「只 `git checkout` 掉 NCHWC 那一个文件、重建、再对比」：
+
+    SampleMTCNN_NCHWC4  IDENTICAL
+    SampleMTCNN         IDENTICAL
+    SampleMTCNN_Interface  IDENTICAL
+
+符合预期：IR.1 / IR.2 只改**失败路径**，而 sample 走的全是成功路径。
+
+对比时踩的一个坑：`NORM` 里原本只有 `GF/s=` 与 `<GF>GF/s`，
+而这批输出用的是 `GFLOPS=7.901` 这种形式，于是**计时噪声**整片刷出来，
+看起来像「163 行全变了」。补上 `GFLOPS=` / `MUL = ... M` 之后才是真对比。
+—— 这和 `tools/capture_sample_outputs.sh` 的注释里写的「不能直接 diff，计时行每次都不同」是同一件事，
+只不过我第一次读那份脚本时没把它套到**自己新写的**对比上。
+
+### 实测
+
+    cmake --build build_x64 --config Release（全量）-> RC=0，0 error
+    WSL make -j8（全量）-> RC=0，0 error
+    A/B（只回退 IR 的树 vs 修复后的树）：三个 MTCNN sample 全部 IDENTICAL
+
+### 子代理还报了几条，本轮**没有**改
+
+| 编号 | 内容 | 为什么不动 |
+| --- | --- | --- |
+| F2 | `Pooling` 的 `pad` 在 NCHWC 整条链路上被丢弃（`ReadParam` 解析了但 `Forward` 的签名里没有 pad），NCHW 完整支持 `pad` + `VALID/SAME` + 非对称 padding | 是**功能分叉**不是内存问题；要改得动 `ReadParam` / `Forward` / `GetTopDim` / 内核四层。当前 NCHWC 的 pooling 模型都不带 pad（带 pad 的写成 `pad_type=` + `kernel_H`，而 NCHWC 的 `ReadParam` 认不出来 -> **加载失败**，响亮失败而不是静默算错） |
+| F4 | `Permute_NCHW` 在零维输入上整数除零 | **全仓零调用点**（NCHWC 没有 Transpose 层），且 NCHW 版本逐字相同 —— 属两族共有 |
+| F5 | `ConvertFromBGR` / `ConvertFromGray` 的 `align_size>=4` 分支不清零 padding lane | 只污染 padding lane，真实通道不受影响；softmax 走 `c < in_C - align` + 标量收尾，不会把 padding 算进去。属「脏但无害」 |
+| F6 | `ConvolutionPrePack` 对不认识的形状「返回 true 却不产出」 | x86 上整段被 `#if __ARM_NEON` 包住；ARM 上不打包的形状恰好在 packed 版里 `return false`，被 layer 的 fallback 兜住。属**契约弱化**不是缺陷 |
+
+这四条都写进报告了 —— 「查出来但没改」和「没查」必须能区分开（AGENTS.md 第 20 条）。
