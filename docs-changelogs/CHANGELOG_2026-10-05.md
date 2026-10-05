@@ -2088,3 +2088,82 @@ ASan / UBSan / sample 回归 / 变异测试**全都碰不到它** —— 只能�
 "没有未对齐 SIMD 访问"**只有 UBSan 看得见**。缓冲已改成 64 字节显式对齐。
 AGENTS.md 已补第 18~22 条（判别形状避开退化形状 / 分层剥作用域 /
 恒红项要么定性要么删掉 / 诊断打最差下标 / UBSan 才看得见未对齐 SIMD）。
+
+---
+
+## 新增/变更：IX（续）—— LSTM_TF 补上带参考实现的门禁，并因此抓到一条未对齐 SIMD 写
+
+### 变更文件
+
+* `ZQCNN/layers_c/zq_cnn_lstm_32f_align_c_raw.h`（四个数组加 `ZQ_DECLSPEC_ALIGN32`）
+* `tools/zq_lstm_check.cpp`（**新增**，接进 `run_zqlib_checks.py` 常驻门禁）
+* `tools/run_zqlib_checks.py`（注册 `zq_lstm` 的 EXTRA_*）
+* `tools/check_mm_safety.py`（由 `check_mm_reduce_terms.py` 改名 + 加第 2 条判定）
+* `tools/run_audit_checks.py`（A17/A18 改名与说明）
+* `tools/reachability_probe.py` / `tools/reachability_baseline.txt`
+
+### 缺陷
+
+`zq_cnn_lstm_32f_align_c_raw.h` 里那四个 `zq_base_type buffer_*[zq_mm_align_size]`
+是**裸栈数组**，却被 `zq_mm_store_ps` 写 —— AVX 那一档它是 `_mm256_store_ps`，
+**要求 32 字节对齐**，不对齐在 x86 上是 `vmovaps` -> #GP，**进程直接死**。
+x86-64 ABI 只保证栈 16 字节对齐，这四个数组落在哪个偏移取决于**调用者的栈帧大小**，
+所以平时不崩只是栈恰好对上了，换个调用点就可能崩。
+同批 raw 头里的 `q[8]` 本来就写了 `ZQ_DECLSPEC_ALIGN32`，这四个漏了。
+
+UBSan 实测（**ASan 那一轴全绿**，ASan 不管对齐）：
+
+    zq_cnn_lstm_32f_align_c_raw.h:147 runtime error: store to misaligned address
+      ... for type '__m256', which requires 32 byte alignment
+
+### 新门禁 tools/zq_lstm_check.cpp
+
+`LSTM_TF` 是 36 种层类型里**最后一个 UNUSED**。此前只有
+`SampleLSTMTFCalib` 那个**标定装置**（附录 IN）：它回答"哪个张量能改变输出"，
+**不回答"算得对不对"** —— 没有参考实现就没有任何数字可以判成败，
+IN.5 因此留下两条未解释的观察。
+
+新门禁按 `zq_cnn_lstm_32f_align_c_raw.h` 与 TF 1.9 伪码**逐字**写出参考实现，
+11 组：`(C, hidden, W, N)` x 正/反向 x「共用 buffer」复用分支 x 很紧的 cell_clip。
+复用分支此前零覆盖（`*buffer_len` 够大时内核不重新分配，直接把一块切成 9 段），
+这里连跑两遍把两条路都走一遍。
+
+### IN.5 那两条未解释的观察，现在有答案了（**都是装置自己的问题**）
+
+* `fw_b_G` 单独点亮输出全 0 —— 装置把 b_G 摆成了**填充里的 0**：
+  内核取的是 `b_G_data[q]`（**步长 1，连续**），对应层里
+  `fw_b_G->ChangeSize(1,1,1,hidden_dim)` 的 `GetFirstPixelPtr()`
+  就是连续的 `hidden_dim` 长数组；第一版却按权重块那套带对齐的 pixelStep=8 摆了。
+* `fw_b_O=5` 让 `t>=1` 变大但 `t=0` 不变 —— **这是正确行为**：
+  `h = tanh(cs)*o`，`t=0` 时 `h_{t-1}=0`，在"只点亮 b_O"这个配置下
+  `ci=0` -> `cs=0` -> `co=tanh(0)=0` -> `h=0`，输出与 o 无关；
+  `t>=1` 时 `cs_prev != 0`，`co != 0`，o 才起作用。
+
+另外踩了一个：`void** buffer` 多包了一层（内核的 `*buffer` 才是数据指针，
+`ZQ_CNN_Net::Forward` 里是 `layers[i]->buffer = &(_buffer.data)`）。
+
+### 门禁 A17/A18 扩到两条判定
+
+`tools/check_mm_reduce_terms.py` 更名 `tools/check_mm_safety.py`，
+加第 2 条：**凡是被 `zq_mm_store_ps(...)` 当第一个实参写的 `zq_base_type` 数组，
+声明处必须带 `ZQ_DECLSPEC_ALIGN*`**。变异测试：去掉 `buffer_I` 的对齐属性后
+门禁报「第 58 行 buffer_I：zq_mm_store_ps 要写它（第 158 行），但声明处没有
+ZQ_DECLSPEC_ALIGN」，rc=1。
+
+### 可达性表：UNUSED 归零
+
+探针名单原来只有 `SampleUnusedLayerProbe` 一个，`LSTM_TF` 因此一直挂在 UNUSED ——
+而它其实有两个探针。名单改成跟着**实际存在的探针**走，基线随之更新：
+
+    合计 36 种：EXERCISED 20 / PROBED 15 / COMMENTED 1 / UNUSED 0
+
+### 实测结果
+
+    python tools/run_zqlib_checks.py lstm          -> 2/2 通过（ASan+LSan）
+    python tools/run_zqlib_checks.py --ubsan lstm  -> 2/2 通过（UBSan）
+    zq_lstm 11 组全 OK，最大绝对偏差 <= 5.96e-08
+    tools/check_mm_safety.py：40 处 zq_final_sum_q（0 处不合格）；
+                              8 个 zq_mm_store_ps 目标（0 个没对齐）
+    Windows 全量重建 RC=0；两平台 SampleUnusedLayerProbe / SampleLSTMTFCalib 均 rc=0
+
+**`LSTM_TF` 本身没有算错**：11 组逐元素后向误差都 <= 5.96e-08（纯 float 舍入）。
