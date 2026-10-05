@@ -2279,3 +2279,66 @@ v60 期间 IX.10 的生产代码改动落地在 B 组之后，所以紧接着在
     D1/D2 双平台全量构建 0 error；D3/D4 双平台 sample 回归全过
 
 这一轮跑完之后本轮（IV / IX / IW）的改动**全部落在一个已验证的树上**。
+
+---
+
+## 新增/变更：IX（五）—— 第三份拷贝（MNN 转换器分叉头）整族漏了 BN 融合的通道数守卫
+
+### 变更文件
+
+* `ZQCNN_to_MNN/converter/source/ZQ_CNN_Net.h`（`_merge_bns_to_conv` / `_innerproduct` / `_dwconv` 各补一处）
+* `tools/probe_mnn_fork.py`（C5b 加 3 条守卫 + 函数体作用域 + `None` 保护）
+
+### 缺陷
+
+把三份 `ZQ_CNN_Net` 逐函数对齐，`_merge_bns_to_*` 的 `return false` 条数：
+
+| 函数 | 主树 | NCHWC | MNN 分叉头 |
+| --- | --- | --- | --- |
+| `_merge_bns_to_conv` | 2 | 2 | **1** |
+| `_merge_bns_to_innerproduct` | 2 | 2 | **1** |
+| `_merge_bns_to_dwconv` | 2 | 2 | **1** |
+
+少掉的是 `if (b->GetC() != N || a->GetC() != N) return false;`（dwconv 里是 `kC`）。
+`b` / `a` 是 BatchNormScale 自己的张量（按 BN 那层的 bottom_C 分配），
+循环上界 `N` 取的是前一层卷积的 `num_output` ——
+两者对不上时 `b->GetFirstPixelPtr()[n]` 是**堆越界读**，垃圾值还会被写回 filters。
+
+这是 HX 那个形状的第三次出现（**一个副本有守卫、孪生副本没有**；前两次 IH.9 / BE.2）。
+分叉头不在任何构建里，只被 C5b 逐头 `-fsyntax-only` 编一遍，
+所以它从来只被查过「能不能编过」与 6 条具体守卫，从没被查过「守卫齐不齐」。
+
+### 门禁
+
+C5b 的 GUARDS 加 3 条，并且**按函数体作用域**匹配 ——
+`_merge_bns_to_conv` 与 `_merge_bns_to_innerproduct` 的守卫文本一模一样，
+全文件搜的话两个断言其实只验了一次：删掉其中一个，另一个照样报「OK」。
+这正是 HX 那个形状在门禁里的翻版。
+
+变异测试（只删掉 `_merge_bns_to_conv` 里的那一行）：
+
+    GUARD MISSING _merge_bns_to_conv 的通道数一致性守卫（附录 IX.14，堆越界读）
+    GUARD OK     _merge_bns_to_innerproduct 的通道数一致性守卫（附录 IX.14）
+    GUARD OK     _merge_bns_to_dwconv 的通道数一致性守卫（附录 IX.14）
+
+### 顺带修掉门禁自己的脆弱点
+
+`compile_header()` 里 `p.stdout + p.stderr` —— 这两个属性**可能是 `None`**，
+碰上时门禁自己抛 `TypeError` 带 traceback **崩掉**，而不是报一行 `COMPILE FAIL`。
+改成 `(p.stdout or '') + (p.stderr or '')`。
+
+### 其余的「落后」是历史漂移
+
+逐层类比对（31 个同名层类）显示分叉头普遍少 1~6 处 `return false`。
+逐个打开看：`Tile` 的 `GetTopDim` / `SetBottomDim` / `ReadParam` 与主树**逐字相同**；
+`Forward_SSEUtils.h` 那边分叉头**根本没有** `Tile` / `Eltwise` / `ScalarOperation`
+三个 wrapper（转换器用不到）。所以差值来自「转换器只需要一部分」+「较早的快照」，
+**不是**又一批漏掉的守卫。处置是继续按具体守卫逐条盯（现共 9 条），
+而不是把整个分叉头同步到主树。
+
+### 实测结果
+
+    python tools/probe_mnn_fork.py --selftest
+      all 7 headers compile, all guards present   (rc=0)
+    变异测试后恢复再跑一次 -> 同样全过
+    text/行尾卫生：OK: 752 text files, all strict UTF-8, no U+FFFD / line endings OK
