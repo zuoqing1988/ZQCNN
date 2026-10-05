@@ -1491,18 +1491,14 @@ static void ref_prior_box_text(int layer_h, int layer_w, int img_h, int img_w,
                     const int xs = (int)max_sizes[s];
                     float bw = (float)sqrt((double)ms * (double)xs), bh = bw;
                     for (int half = 0; half < 2; half++) {
-                        float y0 = half ? cy1 : cy;
-                        out[w++] = (cx - bw / 2) / img_w; out[w++] = (y0 - bh / 2) / img_h;
-                        out[w++] = (cx + bw / 2) / img_w; out[w++] = (y0 + bh / 2) / img_h;
+                        pbt_emit(out, w, cx, half ? cy1 : cy, bw, bh, img_w, img_h, clip);
                     }
                 }
                 for (size_t r = 0; r < eff.size(); r++) {
                     float sr = sqrtf(eff[r]);
                     float bw = ms * sr, bh = ms / sr;
                     for (int half = 0; half < 2; half++) {
-                        float y0 = half ? cy1 : cy;
-                        out[w++] = (cx - bw / 2) / img_w; out[w++] = (y0 - bh / 2) / img_h;
-                        out[w++] = (cx + bw / 2) / img_w; out[w++] = (y0 + bh / 2) / img_h;
+                        pbt_emit(out, w, cx, half ? cy1 : cy, bw, bh, img_w, img_h, clip);
                     }
                     // **flip=1 时每个 ratio 再多发一对**：把 w/h 交换后再发一次
                     // （Caffe SSD 的翻转框就是长宽互换的那一份）。
@@ -1512,9 +1508,7 @@ static void ref_prior_box_text(int layer_h, int layer_w, int img_h, int img_w,
                     // 12 行网格两档 flip 全部相符（IO.2 的表是 flip=1 那一档）。
                     if (g_flip) {
                         for (int half = 0; half < 2; half++) {
-                            float y0 = half ? cy1 : cy;
-                            out[w++] = (cx - bh / 2) / img_w; out[w++] = (y0 - bw / 2) / img_h;
-                            out[w++] = (cx + bh / 2) / img_w; out[w++] = (y0 + bw / 2) / img_h;
+                            pbt_emit(out, w, cx, half ? cy1 : cy, bh, bw, img_w, img_h, clip);
                         }
                     }
                 }
@@ -1671,6 +1665,99 @@ static void scan_prior_box_text_ratios()
 //      翻转 ratio: bw=30/sqrt2, bh=30*sqrt2 -> x = 0.5 ± 10.6066 , y = cy ± 21.2132
 //   出参是 [N,2,dim,1]，通道 1 从头到尾没被写过（IL.6），
 //   所以**前 32 个值就是那 8 个框**。
+// 在**出问题的那个层尺寸**下逐元素比对（附录 IV.1）。
+//
+// 前面几轮的探针都在 1x1 / 2x2 上做，结构面全部对上了（IU.2），
+// 但两组用例（`H=4 W=3` / `H=3 W=3`）仍差 0.063 / 0.093。
+// 这一轮**不换结构，只换尺寸**：同样那两个用例的参数原样搬进探针，
+// 逐元素比，**只打第一个分歧的下标与它周围的值** —— 于是
+// "差在第几个框、那个框是哪一类"直接可读。
+static void diff_prior_box_text(int H, int W,
+                                const char* mn, const char* mx, const char* ar)
+{
+    // **每个值都要各自写一次键**（附录 IJ.3 那条约定）——
+    // `aspect_ratio=1 2 3` 里 `2 3` 是**裸 token**，`ReadParam` 只会
+    // 报 "unknown para" 并**只**收下 1，于是 `num_valid_ratios` 变成 0，
+    // 库发的框数直接少一大截。
+    // 第一版的这个探针就是这么写的，于是报出"参考 1152 / 库 384" ——
+    // **错的是探针自己的参数行**，不是库（附录 IV.2）。
+    char smn[256] = "", smx[256] = "", sar[256] = "", t[128];
+    snprintf(t, sizeof(t), "%s", mn);
+    for (char* q = strtok(t, " "); q; q = strtok(0, " ")) {
+        if (smn[0]) strcat(smn, " "); strcat(smn, "min_size="); strcat(smn, q);
+    }
+    snprintf(t, sizeof(t), "%s", mx);
+    for (char* q = strtok(t, " "); q; q = strtok(0, " ")) {
+        if (smx[0]) strcat(smx, " "); strcat(smx, "max_size="); strcat(smx, q);
+    }
+    snprintf(t, sizeof(t), "%s", ar);
+    for (char* q = strtok(t, " "); q; q = strtok(0, " ")) {
+        if (sar[0]) strcat(sar, " "); strcat(sar, "aspect_ratio="); strcat(sar, q);
+    }
+    char block[768];
+    snprintf(block, sizeof(block),
+             "Input name=data C=1 H=%d W=%d\n"
+             "Copy name=k1 bottom=data top=feat\n"
+             "Copy name=k2 bottom=data top=imgs\n"
+             "PriorBoxText name=pb1 bottom=feat bottom=imgs top=pboxes "
+             "%s %s %s flip=1 clip=1 variance=0.1\n",
+             H, W, smn, smx, sar);
+    if (!write_file(SYNTH_PARAM, block, strlen(block))) { printf("  写不出参数文件\n"); return; }
+    if (!write_file(SYNTH_MODEL, "", 0)) { printf("  写不出权重文件\n"); return; }
+    ZQ::ZQ_CNN_Net net;
+    if (!net.LoadFrom(SYNTH_PARAM, SYNTH_MODEL)) { printf("  加载失败\n"); return; }
+    ZQ::ZQ_CNN_Tensor4D_NHW_C_Align256bit ti;
+    std::vector<float> in((size_t)H * W, 0.25f);
+    if (!ti.ConvertFromCompactNCHW(&in[0], 1, 1, H, W)) { printf("  输入张量失败\n"); return; }
+    if (!net.Forward(ti)) { printf("  Forward 失败\n"); return; }
+    const ZQ::ZQ_CNN_Tensor4D* ob = net.GetBlobByName("pboxes");
+    if (ob == 0) { printf("  取不到输出\n"); return; }
+    std::vector<float> got((size_t)ob->GetN() * ob->GetC() * ob->GetH() * ob->GetW());
+    ob->ConvertToCompactNCHW(&got[0]);
+
+    // 参考（与 run_prior_box_text 用的是同一套）
+    std::vector<float> mins, maxs, ratios;
+    char tmp[128];
+    snprintf(tmp, sizeof(tmp), "%s", mn);
+    for (char* q = strtok(tmp, " "); q; q = strtok(0, " ")) mins.push_back((float)atof(q));
+    snprintf(tmp, sizeof(tmp), "%s", mx);
+    for (char* q = strtok(tmp, " "); q; q = strtok(0, " ")) maxs.push_back((float)atof(q));
+    snprintf(tmp, sizeof(tmp), "%s", ar);
+    for (char* q = strtok(tmp, " "); q; q = strtok(0, " ")) ratios.push_back((float)atof(q));
+    for (size_t i = 0; i < mins.size(); i++) if (mins[i] < 0) mins[i] = -mins[i] * (float)W;
+    for (size_t i = 0; i < maxs.size(); i++) if (maxs[i] < 0) maxs[i] = -maxs[i] * (float)W;
+    std::vector<float> want;
+    ref_prior_box_text(H, W, H, W, mins, maxs, ratios, true, want);
+    if (got.size() > want.size() && !want.empty()) got.resize(want.size());
+
+    printf("\n  逐元素比对（H=%d W=%d / min=%s / max=%s / ratio=%s）：\n", H, W, mn, mx, ar);
+    printf("    库 %zu 个、参考 %zu 个\n", got.size(), want.size());
+    size_t first = want.size();
+    size_t nbad = 0;
+    for (size_t i = 0; i < want.size(); i++)
+        if (i >= got.size() || fabs((double)got[i] - want[i]) > 1e-6) {
+            if (first == want.size()) first = i;
+            nbad++;
+        }
+    if (first == want.size()) { printf("    **逐个相同**（%zu 个元素）\n", want.size()); return; }
+    const size_t box = first / 4, comp = first % 4;
+    printf("    共 %zu / %zu 个元素不同；**第一个**在下标 %zu"
+           "（第 %zu 个框的第 %zu 个分量：0=xmin 1=ymin 2=xmax 3=ymax）\n",
+           nbad, want.size(), first, box, comp);
+    printf("      周围 8 个元素（下标 -> 参考 / 库）：\n");
+    const size_t lo = (first >= 4) ? first - 4 : 0;
+    for (size_t i = lo; i < lo + 8 && i < want.size(); i++)
+        printf("        [%3zu] %7.4f / %7.4f%s\n", i, want[i],
+               i < got.size() ? got[i] : 0.0f, i == first ? "   <== 第一个分歧" : "");
+    // 该框的半宽 —— 用来认出它是哪一类
+    if (box + 1 < want.size()) {
+        const size_t b4 = box * 4;
+        printf("      这个框的半宽 x=%.4f 半宽 y=%.4f\n",
+               ((double)got[b4 + 2] - got[b4]) / 2.0,
+               ((double)got[b4 + 3] - got[b4 + 1]) / 2.0);
+    }
+}
+
 static void order_prior_box_text()
 {
     // 三个配置，覆盖 IR.3 剩下的那个空白：**多个 ratio** 与 **多个 min_size**。
@@ -1895,6 +1982,8 @@ int main()
     scan_prior_box_text();
     scan_prior_box_text_ratios();
     order_prior_box_text();
+    diff_prior_box_text(4, 3, "30 59.1", "60.7 111", "1 2 3");
+    diff_prior_box_text(3, 3, "16 32", "", "1 2 0.5");
     printf("  小结：跑过 %d 个形状，对 %d，**对不上** %d，**待查** %d\n",
            g.ok + g.bad, g.ok, g.bad, g.open);
 
