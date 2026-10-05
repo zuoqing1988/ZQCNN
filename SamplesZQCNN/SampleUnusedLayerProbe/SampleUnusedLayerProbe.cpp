@@ -1008,19 +1008,36 @@ static void run_tile()
 //     其中 ih = oh + kh*dilate - pad_top，iw = ow + kw*dilate - pad_left，
 //     越界的 ih/iw 视为 0（TYPE_NONE 的零填充）
 //
-// 权重布局（`LoadBinary_NCHW`）：先 `num_output*kH*kW*C` 个 float 的 filters
-// （compact NCHW），再 `num_output` 个 float 的 bias（`bias` 参数存在时）。
+// **权重文件的布局**（`LoadBinary_NCHW` + `ConvertFromCompactNCHW`，附录 IW.9）：
+// 先 `num_output*bottom_C*kH*kW` 个 float 的 filters，**形状是
+// (num_output, bottom_C, kH, kW)** —— 也就是 Caffe / MXNet 那个
+// `(num_output, in_channels, kH, kW)` 的权重 blob；再 `num_output` 个 float 的 bias。
+//
+// **这一层曾经写反过一次**，而且反得「很像对」：写成了 `[oc][kh][kw][ic]`。
+// 两个下标的总数一样，所以长度检查、加载、运行全都正常，只有数值对不上。
+// 能骗过它的只有 C==1 或者 kH==kW==1 这两种退化形状：
+//     C==1      -> [oc][1][kh][kw] 与 [oc][kh][kw][1] 同序
+//     kH=kW==1  -> [oc][ic][1][1] 与 [oc][1][1][ic] 同序
+// 于是探针里 C=1 的 3x3 和 C=4 的 1x1 都"过"，其余 7 组全红 ——
+// **两个"只解释一半"的假设，正好就是两个退化形状**。这条线索第一轮就该用上。
+//
+// 真正的证据是探针 `tools/zq_deconv_layer_probe.cpp` 打出来的两行：
+//     层内部看到的 filter[0..1]  = -0.0372925 -0.423187   <- 分别是文件里的第 0、第 9 个 float
+//     探针自己按 [oc][kh][kw][ic] 摆的 = -0.0372925  0.229248 <- 第 0、第 1 个
+// 第 1 格放的是第 9 个 float：按 (oc,ic,kh,kw) 算，索引 1 就是
+// oc=0,ic=0,kh=0,kw=1，正好是内存偏移 kw*pixelStep=8 —— trace 里 offset 8 也确实是第 1 个。
 static void ref_conv_ref(const std::vector<float>& in, const std::vector<float>& w,
                          const std::vector<float>& bias,
                          int N, int C, int H, int Wd, int OC, int KH, int KW,
-                         int SH, int SW, int DH, int DW, int PT, int PL,
+                         int SH, int SW, int DH, int DW,
+                         int padT, int padB, int padL, int padR,
                          int& outC, int& outH, int& outW,
                          std::vector<float>& out)
 {
     const int rH = (KH - 1) * DH + 1, rW = (KW - 1) * DW + 1;
     outC = OC;
-    outH = (H - 1) * SH + 1 - rH + 2 * PT + 1;      // PT=PB=PT
-    outW = (Wd - 1) * SW + 1 - rW + 2 * PL + 1;
+    outH = (H - 1) * SH + 1 - rH + (padT + padB) + 1;
+    outW = (Wd - 1) * SW + 1 - rW + (padL + padR) + 1;
     if (outH <= 0 || outW <= 0) { out.clear(); return; }
     out.assign((size_t)N * OC * outH * outW, 0.0f);
     for (int n = 0; n < N; n++)
@@ -1030,17 +1047,51 @@ static void ref_conv_ref(const std::vector<float>& in, const std::vector<float>&
                     double acc = oc < (int)bias.size() ? bias[oc] : 0.0;
                     for (int ic = 0; ic < C; ic++)
                         for (int kh = 0; kh < KH; kh++) {
-                            int ih = oh + kh * DH - PT;
-                            if (ih < 0 || ih >= H) continue;
+                            // stride>1 时输入下标是 `(need + kh)/stride`，
+                            // **必须整除**（内核里就是整数除法，非整除的 kh 那一档被跳掉）。
+                            // 第一版参考写成 `oh - padT + kh*DH`（没有 /stride），
+                            // 于是 stride=2 的那一组恒红 —— 又一次是参考自己的锅（附录 IW.10）。
+                            int nh = oh - padT + kh * DH;
+                            if (nh < 0 || nh % SH) continue;
+                            int ih = nh / SH;
+                            if (ih >= H) continue;
                             for (int kw = 0; kw < KW; kw++) {
-                                int iw = ow + kw * DW - PL;
-                                if (iw < 0 || iw >= Wd) continue;
-                                double v = w[((((size_t)oc * KH) + kh) * KW + kw) * C + ic];
+                                int nw = ow - padL + kw * DW;
+                                if (nw < 0 || nw % SW) continue;
+                                int iw = nw / SW;
+                                if (iw >= Wd) continue;
+                                double v = w[(((size_t)oc * C + ic) * KH + kh) * KW + kw];
                                 acc += v * (double)in[((size_t)ic * H + ih) * Wd + iw];
                             }
                         }
                     out[(((size_t)n * OC + oc) * outH + oh) * outW + ow] = (float)acc;
                 }
+}
+
+// `ZQ_CNN_Layer_DeConvolution::SetBottomDim` 里 pad_type=SAME 的那套算法（逐字照抄）
+//
+//     top_H = bottom_H * stride_H           <- **按 stride 放大**，不是 (H-1)*s+1
+//     rH    = (kernel_H-1)*dilate_H + 1
+//     pad_H = (top_H - 1 + rH) - (bottom_H-1)*stride_H - 1
+//     pad_H_top = ceil(pad_H/2);  pad_H_bottom = pad_H - pad_H_top
+//
+// stride=1 时它退化成 top_H = H、pad = kernel-1，也就是普通 SAME；
+// **stride=2 时和「普通 SAME」不是一回事**（top 变成 2H，pad 变成 kernel）。
+// 第一版探针一律按 `2*PT` 算 pad、按 `(H-1)*s+1-k+2*PT+1` 算尺寸，
+// stride=2 的那一组于是「库给 8x8、参考给 7x7」，看起来像尺寸算错，
+// 其实是**参考按普通 SAME 写的**（附录 IW.10）。
+static void deconv_same_pads(int H, int Wd, int KH, int KW, int DH, int DW,
+                             int SH, int SW,
+                             int& padT, int& padB, int& padL, int& padR)
+{
+    const int top_H = H * SH, top_W = Wd * SW;
+    const int rH = (KH - 1) * DH + 1, rW = (KW - 1) * DW + 1;
+    const int pH = (top_H - 1 + rH) - (H - 1) * SH - 1;
+    const int pW = (top_W - 1 + rW) - (Wd - 1) * SW - 1;
+    padT = (int)ceil(pH / 2.0);
+    padB = pH - padT;
+    padL = (int)ceil(pW / 2.0);
+    padR = pW - padL;
 }
 
 // 唯一值标定（附录 IH.3）：C=1 / OC=1 / k=3x3 / H=W=3 / 无 pad -> 输出只有 1 个数。
@@ -1078,6 +1129,93 @@ static void deconv_calibrate()
     printf("  [标定] 翻转（真转置卷积）= %.6f\n", s_flip);
 }
 
+// 权重布局**反解**装置（附录 IW.1 / IW.9）
+//
+// 这条装置回答的是：**权重文件里那个 float 到底是哪个 (oc,kh,kw,ic)**。
+// 之前猜过两轮（OC-major `[oc][kh][kw][ic]` 与 C-major `[ic][kh][kw][oc]`），两轮都
+// "各解释一半"，原因是**判别形状没选对** —— 当时挑的用例里恰好有两个**退化形状**：
+// C==1 与 kH==kW==1，这两种情况下两种下标顺序同序，怎么挑都过。
+// 这次挑的是 C=2 / OC=3 / k=3x3：两种顺序在**每一个**格子上都不同。
+//
+// 装置本身不猜：输入只点亮一个格子 `in[ic0][ih0][iw0] = 1`，权重只点亮一个格子
+// `w[p] = 1`，那么输出里**恰好有一个**格子 ≈ 1，位置 (oc, oh, ow) 给出
+//     kh'(p) = ih0 - oh,   kw'(p) = iw0 - ow,   oc' = oc
+// p 的四元组是**读出来的**；把它换算成"文件下标"，两种布局给出两个不同的 p，
+// 哪一条恒等，哪一条就是真的。
+//
+// 全零是安全的：`ConvertFromCompactNCHW` 里有
+// `memset(rawData, 0, sizeof(float)*N*sliceStep)`（ZQ_CNN_Tensor4D.h:148），
+// 对齐填充整片清零，「未点亮」就是**精确的 0**，不会混进脏数据。
+static void deconv_layout_probe()
+{
+    const int C = 2, OC = 3, KH = 3, KW = 3, H = 5, Wd = 5;
+    const int ih0 = 2, iw0 = 2;
+    const int oH = H - KH + 1, oW = Wd - KW + 1;      // VALID / stride 1 / 无 pad
+    const int NP = OC * KH * KW * C;
+    char block[256];
+    snprintf(block, sizeof(block),
+             "DeConvolution name=dc1 bottom=data top=top1 num_output=%d "
+             "kernel_H=%d kernel_W=%d stride_H=1 stride_W=1 pad_type=VALID\n",
+             OC, KH, KW);
+    for (int ic0 = 0; ic0 < C; ic0++) {
+        std::vector<float> in((size_t)C * H * Wd, 0.0f);
+        in[((size_t)ic0 * H + ih0) * Wd + iw0] = 1.0f;
+        printf("  [布局] 输入只点亮 ic0=%d 的 (%d,%d)，共 %d 个权重格子逐个试：\n",
+               ic0, ih0, iw0, NP);
+        std::vector<int> decode(NP, -1);
+        int hit = 0, miss = 0, multi = 0;
+        for (int p = 0; p < NP; p++) {
+            std::vector<float> w((size_t)NP, 0.0f);
+            w[p] = 1.0f;
+            std::vector<float> got;
+            if (!run_synth(block, w, C, H, Wd, in, got)) {
+                printf("    合成网跑不起来\n");
+                return;
+            }
+            if ((int)got.size() != OC * oH * oW) {
+                printf("    输出 %d 个值 != 期望 %d 个\n", (int)got.size(), OC * oH * oW);
+                return;
+            }
+            int cnt = 0, oc = 0, oh = 0, ow = 0;
+            for (int i = 0; i < (int)got.size(); i++) {
+                if (fabs((double)got[i] - 1.0) < 1e-3) {
+                    cnt++;
+                    oc = i / (oH * oW);
+                    oh = (i / oW) % oH;
+                    ow = i % oW;
+                }
+            }
+            if (cnt == 0) { miss++; continue; }
+            if (cnt > 1) {
+                multi++;
+                printf("    p=%3d 点亮 %d 个格子（期望 1）\n", p, cnt);
+                continue;
+            }
+            hit++;
+            // 文件下标按 (OC, C, kH, kW) 反算 —— Caffe / MXNet 的权重 blob 形状
+            decode[p] = ((oc * C + ic0) * KH + (ih0 - oh)) * KW + (iw0 - ow);
+        }
+        printf("    点亮 %d / 全 0 %d / 多重点亮 %d（共 %d）\n", hit, miss, multi, NP);
+        std::vector<int> seen(NP, 0);
+        int same = 0;
+        for (int p = 0; p < NP; p++) {
+            if (decode[p] >= 0) {
+                if (decode[p] == p) same++;
+                seen[decode[p]]++;
+            }
+        }
+        int dup = 0;
+        for (int q = 0; q < NP; q++) if (seen[q] > 1) dup++;
+        printf("    按 (OC,C,kH,kW) 反算后 decode[p] == p 的有 %d / %d；重复占用的有 %d 个\n",
+               same, NP, dup);
+        if (ic0 == 0) {
+            printf("    p -> decode[p] 前 18 个：");
+            for (int p = 0; p < NP && p < 18; p++) printf(" %d", decode[p]);
+            printf("\n");
+        }
+    }
+}
+
 static void run_deconv()
 {
     struct Case { int C, H, W, OC, KH, KW, SH, PT; bool bias; };
@@ -1086,11 +1224,14 @@ static void run_deconv()
         {  2, 4, 4,  2, 3, 3, 1, 1, true  },   // 带 bias
         {  3, 4, 4,  3, 3, 3, 1, 1, false },   // C 是非 align 倍数
         {  4, 5, 5,  2, 1, 1, 1, 0, false },   // 1x1 无 pad：输出应放大 1
-        {  4, 4, 4,  2, 3, 3, 2, 1, false },   // stride=2
+        {  4, 4, 4,  2, 3, 3, 2, 1, false },   // stride=2 SAME
         {  8, 4, 4,  2, 3, 3, 1, 0, false },   // VALID（无 pad）
         // ---- 诊断用：无 pad + 奇数边长 => 没有任何边界歧义（附录 IH.2）----
         {  2, 5, 5,  2, 3, 3, 1, 0, false },   // VALID k=3x3
         {  2, 7, 7,  1, 3, 3, 1, 0, false },   // VALID k=3x3，OC=1
+        // ---- 权重布局的**判别形状**：C>1 且 kH/kW>1，两种下标顺序才分得开（附录 IW.9）----
+        {  2, 5, 5,  3, 3, 3, 1, 0, false },   // OC>1、C>1：文件按 (OC,C,kH,kW) 排
+        {  3, 4, 4,  2, 2, 2, 1, 1, false },   // 2x2 + SAME + 非 align 的 C
     };
     const double LIMIT = 1e-5;
     char block[512], shape[128];
@@ -1101,7 +1242,7 @@ static void run_deconv()
         snprintf(block, sizeof(block),
                  "DeConvolution name=dc1 bottom=data top=top1 num_output=%d "
                  "kernel_H=%d kernel_W=%d stride_H=%d stride_W=%d %s%s\n",
-                 c.OC, c.KH, c.KW, c.SH, c.SH, pad.c_str(), c.bias ? " bias 1" : "");
+                 c.OC, c.KH, c.KW, c.SH, c.SH, pad.c_str(), c.bias ? " bias=1" : "");
         unsigned s = 20262020u + (unsigned)t * 32452843u;
         std::vector<float> in((size_t)c.C * c.H * c.W);
         for (size_t i = 0; i < in.size(); i++) in[i] = rnd(s);
@@ -1110,10 +1251,14 @@ static void run_deconv()
         for (size_t i = 0; i < bias.size(); i++) bias[i] = rnd(s);
         std::vector<float> weights(w);
         if (c.bias) weights.insert(weights.end(), bias.begin(), bias.end());
+        // SAME 的 pad 由 `deconv_same_pads` 照抄 SetBottomDim 算；VALID/none 保持 0
+        int padT = 0, padB = 0, padL = 0, padR = 0;
+        if (c.PT > 0)
+            deconv_same_pads(c.H, c.W, c.KH, c.KW, 1, 1, c.SH, c.SH, padT, padB, padL, padR);
         int oC = 0, oH = 0, oW = 0;
         std::vector<float> want;
         ref_conv_ref(in, w, bias, 1, c.C, c.H, c.W, c.OC, c.KH, c.KW,
-                     c.SH, c.SH, 1, 1, c.PT, c.PT, oC, oH, oW, want);
+                     c.SH, c.SH, 1, 1, padT, padB, padL, padR, oC, oH, oW, want);
         std::vector<float> got;
         snprintf(shape, sizeof(shape), "C=%d OC=%d k=%dx%d s=%d pad=%d bias=%d",
                  c.C, c.OC, c.KH, c.KW, c.SH, c.PT, (int)c.bias);
@@ -1124,10 +1269,15 @@ static void run_deconv()
         if (e > LIMIT) {
             // **只报、不判失败**（附录 IH.4）：这一层是 UNUSED，
             // 判失败就是恒红；根因未定位，如实记成待查。
+            // 打的是**最差那个下标**的两边数值 —— 第一版这里打的是 got[0]/want[0]
+            // （还把它标成"最大相对偏差"），于是真出问题时看到的偏偏是没问题的那一格，
+            // 白查一轮（附录 IW.11）。
             g.open++;
-            printf("  %-6s %-22s **待查**（不判失败）：库 %zu 个值 / 参考 %zu 个，最大相对偏差 %.4g\n",
-                   "DeConv", shape, got.size(), want.size(),
-                   want.empty() ? 0.0 : fabs((double)got[0] - want[0]));
+            printf("  %-6s %-22s **待查**（不判失败）：库 %zu 个值 / 参考 %zu 个，"
+                   "后向误差 %.4g，最差下标 %ld：库 %.6f / 参考 %.6f\n",
+                   "DeConv", shape, got.size(), want.size(), e, wi,
+                   (wi >= 0 && wi < (long)got.size()) ? got[wi] : 0.0,
+                   (wi >= 0 && wi < (long)want.size()) ? want[wi] : 0.0);
         } else {
             report("DeConv", shape, e, LIMIT, wi, got, want);
         }
@@ -1869,8 +2019,16 @@ static void run_prior_box_text()
         { 4, 3, "30",              "",            "1"        },
         { 4, 3, "30 59.1",         "60.7 111",    "1 2 3"    },
         { 3, 3, "16 32",           "",            "1 2 0.5"  },
-        { 5, 4, "-24 -48",         "",            "1 2"      },   // 负 min -> *(-img_w)
+        { 5, 4, "-24 -48",         "",            "1 2"      },   // 负 min -> **必须被拒**（见下）
     };
+    // 负 min_size 不是"算错"，是这一层的**契约**：`_setup()` 里
+    // `if (min_sizes[i] <= 0) { ...must be positive...; return false; }`
+    // （ZQ_CNN_Layer.h:9156）。它以前一直挂在"待查"里，只是因为探针把
+    // **加载失败**和**数值对不上**记成了同一条。两者必须分开：
+    //     加载失败 + 契约如此 -> 断言"它确实拒绝了"，算通过；
+    //     加载失败 + 契约没说 -> 才是待查。
+    // 这一条就是 AGENTS.md 那条"只报不判失败"的反面：恒红的东西要么定性、要么删掉，
+    // 不能一直挂着。
     const double LIMIT = 1e-5;
     char block[640], shape[128];
     for (size_t t = 0; t < sizeof(CASES) / sizeof(CASES[0]); t++) {
@@ -1918,10 +2076,16 @@ static void run_prior_box_text()
         printf("  [probe] PriorBoxText %s ...\n", shape);
         if (!run_synth_named(block, std::vector<float>(), 1, c.H, c.W,
                              std::vector<float>((size_t)c.H * c.W, 0.25f), "pboxes", got)) {
-            // 这一组连加载都没过（原因未查）。同样只记待查、不判失败：
-            // 这一层是 UNUSED，判失败就是恒红（附录 IL.3）。
-            g.open++;
-            printf("  PriorBoxText %s **待查**（合成网加载失败，原因未查）\n", shape);
+            // 加载没过。**先判断这是不是"契约如此"**：契约里写明要拒的，
+            // 就断言它确实拒了、算通过；没写明的才是待查。
+            // 一律挂在"待查"里会让这一栏永远红着，等于没有门禁（附录 IW.12）。
+            bool expect_reject = (atof(c.mn) <= 0);
+            if (expect_reject) {
+                printf("  PriorBoxText %s 预期拒载（min_size<=0，_setup 明确拒绝）-> 已确认\n", shape);
+            } else {
+                g.open++;
+                printf("  PriorBoxText %s **待查**（合成网加载失败，契约没说要拒）\n", shape);
+            }
             continue;
         }
         // **只截到这一层真正写出来的那一半**：出参是 [N, 2, dim, 1]，
@@ -1975,6 +2139,7 @@ int main()
     run_batchnorm();
     run_tile();
     deconv_calibrate();
+    deconv_layout_probe();
     run_deconv();
     run_prior_box_mxnet();
     run_detection_output_mxnet();

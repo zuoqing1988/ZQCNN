@@ -613,6 +613,17 @@ EXTRA_SOURCES = {
         'gcc -O1 -g -mavx2 -mfma -fopenmp -c -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include '
         '$R/ZQCNN/layers_c/zq_cnn_reduction_32f_align_c.c -o $WDIR/zq_red.o',
     ],
+    # zq_deconv（附录 IW）：转置卷积的内核一直**零覆盖** ——
+    # 它是 UNUSED 层（没有任何随仓模型跑得到），而三个 general 内核
+    # （align0 / align128bit / align256bit）加起来 800 多行循环。
+    # 整条 `ZQ_CNN_Forward_SSEUtils.cpp` 一个 TU 编一次 5 分钟以上（附录 EC.1），
+    # 常规门禁都不编它；这里只链**内核那个小 TU**，11 个形状 x 3 条路 = 33 组。
+    # $SAN 必须带上：判据里"没有越界读"这一条只有插桩后才算数。
+    'zq_deconv': [
+        'gcc -O1 -g -mavx2 -mfma $SAN -c -I$R/ZQCNN -I$R/ZQCNN/layers_c '
+        '-I$R/ZQ_GEMM -I$R/3rdparty/include '
+        '$R/ZQCNN/layers_c/zq_cnn_deconvolution_32f_align_c.c -o $WDIR/zq_deconv.o',
+    ],
     # zq_bns 登记在这里是为了让 EXTRA_SOURCES 覆盖到它；它已在正常回归里。
     'zq_bns': [
         'gcc -O1 -g -mavx2 -mfma -c -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include '
@@ -630,6 +641,8 @@ EXTRA_LINK = {'zq_innerproduct': ' $WDIR/zq_ipgemm.o $WDIR/zq_gemm_align.o $WDIR
               # 这个 TU 里的四个逐通道内核（scale / batchnorm_b_a /
               # batchnormscale_mean_var_scale_bias，附录 IB / ID）都在这一个门禁里。
               'zq_scale': ' $R/ZQCNN/layers_c/zq_cnn_batchnormscale_32f_align_c.c',
+              # zq_deconv（附录 IW）：内核那个小 TU，和 zq_scale 同一路理由。
+              'zq_deconv': ' $WDIR/zq_deconv.o',
               'zq_nchwc_conv': (' $WDIR/zq_nchwcv.o $WDIR/zq_nchwcv_resize.o '
                                 '$WDIR/zq_nchwcv_gemm_align.o $WDIR/zq_nchwcv_gemm_asm.o '
                                 '$WDIR/zq_nchwcv_gemm_auto.o $WDIR/zq_nchwcv_tensor.o'),
@@ -747,11 +760,14 @@ EXTRA_INC = {'zq_facedb': ' -I$R -I$R/ZQCNN -I$R/ZQCNN/3rdparty/include/ZQlib',
              'zq_lrn': ' -I$R/ZQCNN -I$R/ZQ_GEMM',
              'zq_pool': ' -I$R/ZQCNN -I$R/ZQ_GEMM',
              'zq_bns': ' -I$R/ZQCNN -I$R/ZQ_GEMM',
+             'zq_deconv': ' -I$R/ZQCNN -I$R/ZQCNN/layers_c -I$R/ZQ_GEMM',
              'zq_eltwise': ' -I$R/ZQCNN -I$R/ZQ_GEMM'}
 # 测内核的测试自己也 include 了那个 .c，所以**主 TU 也要带 -mavx2 -mfma**，
 # 否则 _mm256_set1_ps 这些 always_inline 内建会报
 # "target specific option mismatch"（2026-10-02 实测）。
 EXTRA_CXXFLAGS = {'zq_scale': ' -mavx2 -mfma',
+                  # zq_deconv：头里那几个 always_inline 内建，缺了会 target mismatch
+                  'zq_deconv': ' -mavx2 -mfma',
                   'zq_facedb': ' -mavx2 -mfma -fopenmp',
                   'zq_facedb2': ' -mavx2 -mfma -fopenmp',
                   'zq_innerproduct': ' -mavx2 -mfma -fopenmp',
