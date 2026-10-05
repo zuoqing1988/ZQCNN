@@ -168,7 +168,13 @@ namespace ZQ
 				std::ostringstream oss;
 				ZQ_FaceFeature feat;
 				cv::Mat crop;
-				ErrorCode err_code;
+				// 审计修复 2026-10-06（附录 IO.1）：加初值。
+				// 本来这处**每一条** return false 路径都赋过值（已逐条核实
+				// `_extract_feature_from_img` -> `_get_face5point_from_img` 的每个 false 分支），
+				// 属于「已确认干净」。加初值是**零行为变化**的统一化：
+				// 有了它，门禁就不必去静态证明「每条路径都赋过值」——
+				// 那既难又脆（加一条新分支就破），而一个初值永远安全。
+				ErrorCode err_code = ERR_WARNING;
 				std::string err_msg;
 
 				bool has_feat = false;
@@ -343,7 +349,13 @@ namespace ZQ
 				std::ostringstream oss;
 				ZQ_FaceFeature feat;
 				cv::Mat crop;
-				ErrorCode err_code;
+				// 审计修复 2026-10-06（附录 IO.1）：加初值。
+				// 本来这处**每一条** return false 路径都赋过值（已逐条核实
+				// `_extract_feature_from_img` -> `_get_face5point_from_img` 的每个 false 分支），
+				// 属于「已确认干净」。加初值是**零行为变化**的统一化：
+				// 有了它，门禁就不必去静态证明「每条路径都赋过值」——
+				// 那既难又脆（加一条新分支就破），而一个初值永远安全。
+				ErrorCode err_code = ERR_WARNING;
 				std::string err_msg;
 
 				bool has_feat = false;
@@ -1172,7 +1184,11 @@ namespace ZQ
 				}
 
 				//pick the face closed to the center
-				float center[2] = { image.cols*0.5,image.rows*0.5 };
+				// 审计修复 2026-10-06（附录 IO.4）：原来写的是 0.5（double 字面量）——
+				// `int * double` 得 double，在 braced-init-list 里窄化成 float，
+				// gcc 报 `-Wnarrowing`（HIGH 桶，tools/warn_sweep_src.py 会抓）。
+				// 改成 0.5f：数值等价，窄化消失。
+				float center[2] = { image.cols*0.5f,image.rows*0.5f };
 				std::vector<float> distance(bbox.size());
 				for (int i = 0; i < bbox.size(); i++)
 				{

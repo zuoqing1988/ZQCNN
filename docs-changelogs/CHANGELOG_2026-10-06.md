@@ -1449,3 +1449,46 @@ lambda 形式下 ``（缩进反向引用）**不会展开**，文件里留下�
   A6 缺可验证的 DLL 源码，A7/A8 改起来要动多个调用点的契约，B 组要么不可达要么是卫生问题。
 - 上面写的「本轮自己犯的三个错」是**补丁脚本**的错，不是被测代码的缺陷 ——
   但它们有共同教训，写在这里是因为下一轮还会用脚本改 C++。
+
+
+## 追加：附录 IO 第二批 —— IO.1 统一化 + IO.4 narrowing + 新门禁 A31/A32
+
+### 补上的两条
+
+| 编号 | 缺陷 | 修法 |
+| --- | --- | --- |
+| IO.1（补） | `:171` / `:346` 那两处 `ErrorCode err_code;` 也加了初值。它们本来**每一条** `return false` 路径都赋过值（子代理已逐条核实），属于「已确认干净」；加初值是**零行为变化**的统一化 | 有初值之后门禁就不必去静态证明「每条路径都赋过值」—— 那既难又脆（加一条新分支就破），而一个初值永远安全 |
+| IO.4 | `ZQ_FaceDatabaseMaker.h:1187` 的 `float center[2] = { image.cols*0.5, image.rows*0.5 };` —— `int * double` 得 double，在 braced-init-list 里窄化成 float，gcc 报 `-Wnarrowing`（HIGH 桶，`tools/warn_sweep_src.py` 会抓） | 改成 `0.5f`，数值等价、窄化消失 |
+
+注：IO.4 一开始被我放进了 `ZQ_FaceDetectorLibFaceDetect` 那条判据里，
+而它实际在 `ZQ_FaceDatabaseMaker.h` —— 变异测试立刻抓到（改了 libfacedetect 那个头，门禁不报）。
+「门禁抓到了我自己的错位」正是变异测试存在的意义。
+
+### 门禁：`tools/check_facedb_maker.py`（A31/A32，4 条规则，自测 7 例）
+
+IO.1 所有 `ErrorCode err_code` 都必须有初值；
+IO.2 `intptr_t lfDir` 必须初始化为 `-1l`，且每处 `_findclose(lfDir)` 的**上一行**
+必须是 `lfDir != -1l` 守卫（按行判，不按窗口）；
+IO.3 七个像素格式分支的采样指针**每个都必须带 `rect_off_x`**
+（按「每个分支都带」写，不按「有没有一处带」—— 否则只修一处也会判过）；
+IO.4 `float center[2] = {...}` 的 braced-init 里不得有会触发 `-Wnarrowing` 的 `int * double`。
+
+变异测试：IO.1 / IO.2 / IO.3 / IO.4 逐条破坏 -> 门禁**四条全部抓到**并点名。
+
+### 实测
+
+    python tools/check_facedb_maker.py --selfcheck -> 7 cases, all as expected（RC=0）
+    python tools/check_facedb_maker.py             -> 2 文件全 OK（RC=0）
+    变异测试：IO.1 / IO.2 / IO.3 / IO.4 -> 门禁四条全部抓到
+    cmake --build build_x64 --config Release（全量）-> RC=0，0 error
+    WSL make -j8（全量）-> RC=0，0 error
+    python tools/check_text_encoding.py -> OK: 767 text files, all strict UTF-8, no U+FFFD
+    python tools/check_line_endings.py  -> line endings OK
+
+### 注意事项
+
+- 这两个头**零运行时覆盖**（见上面「覆盖盲区」一节），所以门禁是唯一防线。
+  以后要验这些路径，得先给 `MakeDatabase(` 补一个调用方，或者单写一个探针 ——
+  那是下一轮的事。
+- IO.1 的统一化意味着「已确认干净」的那两处现在也**有**初值了。
+  这不是把好代码改坏，是让「可以静态证明的性质」变多了一条。

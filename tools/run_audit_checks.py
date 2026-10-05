@@ -186,6 +186,16 @@ GROUPS = [
      ['check_pose_mouth.py', '--selfcheck'], False),
     ('A30 "姿态/嘴部/人脸裁剪" 普查 (check_pose_mouth)',
      ['check_pose_mouth.py'], False),
+    # A31/A32 是附录 IO 的门禁：ZQ_FaceDatabaseMaker / ZQ_FaceDetectorLibFaceDetect。
+    # 这一轮的三条缺陷**一条都跑不到**：`MakeDatabase(` / `MakeDatabaseCompact(` 零调用方
+    # （四个 SampleFaceDatabase* 只用 *AlreadyCropped 变体，恰好绕开 detectors[id] 那一支），
+    # `_auto_detect_database` 的 #else(Linux) 分支从不链接（10 个 include 此头的 sample
+    # 全部包在 #if defined(_WIN32) 里），GRAY 分支需要「灰度图 + roi_min_x > 0」
+    # 而三个调用点全传 BGR。**回归全绿不代表这些路径验过了** —— 只能靠源码判据。
+    ('A31 "人脸库构建 / libfacedetect 封装" 自测 (check_facedb_maker --selfcheck)',
+     ['check_facedb_maker.py', '--selfcheck'], False),
+    ('A32 "人脸库构建 / libfacedetect 封装" 普查 (check_facedb_maker)',
+     ['check_facedb_maker.py'], False),
     ('B  ZQlib 独立回归测试 x10 (ASan+LSan)', ['run_zqlib_checks.py'], False),
     # 基线路径给**绝对路径**：子进程以 ROOT 为 cwd 运行，而基线文件在 tools/ 下，
     # 相对路径会解析成 <ROOT>/zqlib_probe_baseline.txt 而找不到（2026-10-02 实测）。
