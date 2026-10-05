@@ -420,16 +420,15 @@ namespace ZQ
 			sort(bboxScore.begin(), bboxScore.end(), _cmp_score);
 
 			int order = 0;
-			float IOU = 0;
-			float maxX = 0;
-			float maxY = 0;
-			float minX = 0;
-			float minY = 0;
 			while (bboxScore.size() > 0)
 			{
 				order = bboxScore.back().oriOrder;
 				bboxScore.pop_back();
-				if (order < 0)continue;
+				// 审计修复 2026-10-06（附录 IL.1）：原来只有 `order < 0`。
+				// `order` 来自外部传入的 orderScore，与 boundingBox 没有任何交叉校验；
+				// 越界时 `boundingBox[order].exist = false` 越界**写**、下面读 col1 越界**读**。
+				// 对齐 `ZQ_CNN_BBoxUtils.h:47`（附录 IJ.3 刚补的那一处）。
+				if (order < 0 || order >= (int)boundingBox.size()) continue;
 				heros.push_back(order);
 				boundingBox[order].exist = false;//delete it
 				int box_num = boundingBox.size();
@@ -438,24 +437,42 @@ namespace ZQ
 					if (boundingBox[num].exist)
 					{
 						//the iou
-						maxY = __max(boundingBox[num].row1, boundingBox[order].row1);
-						maxX = __max(boundingBox[num].col1, boundingBox[order].col1);
-						minY = __min(boundingBox[num].row2, boundingBox[order].row2);
-						minX = __min(boundingBox[num].col2, boundingBox[order].col2);
-						//maxX1 and maxY1 reuse 
-						maxX = __max(minX - maxX + 1, 0);
-						maxY = __max(minY - maxY + 1, 0);
-						//IOU reuse for the area of two bbox
-						IOU = maxX * maxY;
-						float area1 = boundingBox[num].area;
-						float area2 = boundingBox[order].area;
+						float maxY = __max(boundingBox[num].row1, boundingBox[order].row1);
+						float maxX = __max(boundingBox[num].col1, boundingBox[order].col1);
+						float minY = __min(boundingBox[num].row2, boundingBox[order].row2);
+						float minX = __min(boundingBox[num].col2, boundingBox[order].col2);
+						// 审计修复 2026-10-06（附录 IL.2）：这一段原来把交集宽度**写回 maxX**、
+						// 高度写回 maxY（函数级变量被当作临时量复用），紧接着又用 `+ 1` 的
+						//「含端点」口径算交集，而 `area` 字段是不带 +1 的 —— 同一个分母里两套口径。
+						// 后果与 `ZQ_CNN_BBoxUtils.h:65-75` 那处完全一样（附录 IJ.2 已修）：
+						// 12x12 算出 IoU 1.42（>1）、1x1 算出 -2（永不抑制）、3x2 分母 0（除零）。
+						// 「Min」模式下零面积框除零得 +inf -> 抑制掉一切 ——
+						// 而 IK.1 刚刚才把本文件 Stage-1 的 area=0 补上，两处不一起改就白补。
+						// 现在交集与面积统一到「不带 +1」，面积**就地重算**（不直接用 .area 字段，
+						// 那个字段的调用方未必填过），分母再兜一次底。
+						float inter_w = __max(minX - maxX, 0);
+						float inter_h = __max(minY - maxY, 0);
+						float IOU = inter_w * inter_h;
+						float dh1 = (float)boundingBox[num].row2 - (float)boundingBox[num].row1;
+						float dw1 = (float)boundingBox[num].col2 - (float)boundingBox[num].col1;
+						float dh2 = (float)boundingBox[order].row2 - (float)boundingBox[order].row1;
+						float dw2 = (float)boundingBox[order].col2 - (float)boundingBox[order].col1;
+						if (dh1 < 0) dh1 = 0;
+						if (dw1 < 0) dw1 = 0;
+						if (dh2 < 0) dh2 = 0;
+						if (dw2 < 0) dw2 = 0;
+						float area1 = dh1 * dw1;
+						float area2 = dh2 * dw2;
 						if (!modelname.compare("Union"))
-							IOU = IOU / (area1 + area2 - IOU);
+						{
+							float denom = area1 + area2 - IOU;
+							IOU = (denom > 0) ? (IOU / denom) : 0;
+						}
 						else if (!modelname.compare("Min"))
 						{
-							IOU = IOU / __min(area1, area2);
-						}
-						if (IOU > overlap_threshold)
+							float denom = __min(area1, area2);
+							IOU = (denom > 0) ? (IOU / denom) : 0;
+						}						if (IOU > overlap_threshold)
 						{
 							boundingBox[num].exist = false;
 							for (std::vector<ZQ_CNN_OrderScore>::iterator it = bboxScore.begin(); it != bboxScore.end(); it++)

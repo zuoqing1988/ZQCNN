@@ -38,45 +38,61 @@ namespace ZQ
 			sort(bboxScore.begin(), bboxScore.end(), _cmp_score);
 
 			int order = 0;
-			float IOU = 0;
-			float maxX = 0;
-			float maxY = 0;
-			float minX = 0;
-			float minY = 0;
+			// 审计修复 2026-10-06（附录 IL.3）：这五个原来声明在**函数作用域**，
+			// 却被下面的 parallel for 多线程共用 —— IOU 会被撕裂、抑制结果不确定。
+			// 主文件 2026-10-01 那轮就下沉成循环内局部变量了，这份是没同步过去的旧拷贝。
+			// 叠加上面的 `thread_num == 0` 落进并行支路，这段是**真会被执行到**的。
 			while (bboxScore.size() > 0)
 			{
 				order = bboxScore.back().oriOrder;
 				bboxScore.pop_back();
-				if (order < 0)continue;
+				// 审计修复 2026-10-06（附录 IL.3）：原来只有 `order < 0`，不挡上界。
+				if (order < 0 || order >= (int)boundingBox.size()) continue;
 				heros.push_back(order);
 				int cur_overlap = 0;
 				boundingBox[order].exist = false;//delete it
 				int box_num = boundingBox.size();
-				if (thread_num == 1)
+				// 审计修复 2026-10-06（附录 IL.3）：原来判的是 `thread_num == 1`。
+				// `thread_num == 0` 会落进下面的**并行**支路，而那里第一件事就是
+				// `int chunk_size = ceil(box_num / thread_num);` —— **整数除零 SIGFPE**，
+				// 紧接着 `num_threads(thread_num)` 也是非法的（OpenMP 要求 >= 1）。
+				// 主文件早就是 `thread_num <= 1`，这份是没同步过去的旧拷贝。
+				if (thread_num <= 1)
 				{
 					for (int num = 0; num < box_num; num++)
 					{
 						if (boundingBox[num].exist)
 						{
 							//the iou
-							maxY = __max(boundingBox[num].row1, boundingBox[order].row1);
-							maxX = __max(boundingBox[num].col1, boundingBox[order].col1);
-							minY = __min(boundingBox[num].row2, boundingBox[order].row2);
-							minX = __min(boundingBox[num].col2, boundingBox[order].col2);
-							//maxX1 and maxY1 reuse 
-							maxX = __max(minX - maxX + 1, 0);
-							maxY = __max(minY - maxY + 1, 0);
-							//IOU reuse for the area of two bbox
-							IOU = maxX * maxY;
-							float area1 = boundingBox[num].area;
-							float area2 = boundingBox[order].area;
+							// 审计修复 2026-10-06（附录 IL.3）：与 `ZQ_CNN_BBoxUtils.h:65-75` 同一处缺陷
+							// （附录 IJ.2）：交集用「含端点」口径（`+ 1`）而 `area` 字段不带 `+ 1`，
+							// 同一个分母里两套口径 => IoU 可 >1、可为负、分母可为 0。
+							float maxY = __max(boundingBox[num].row1, boundingBox[order].row1);
+							float maxX = __max(boundingBox[num].col1, boundingBox[order].col1);
+							float minY = __min(boundingBox[num].row2, boundingBox[order].row2);
+							float minX = __min(boundingBox[num].col2, boundingBox[order].col2);
+							float inter_w = __max(minX - maxX, 0);
+							float inter_h = __max(minY - maxY, 0);
+							float IOU = inter_w * inter_h;							float dh1 = (float)boundingBox[num].row2 - (float)boundingBox[num].row1;
+							float dw1 = (float)boundingBox[num].col2 - (float)boundingBox[num].col1;
+							float dh2 = (float)boundingBox[order].row2 - (float)boundingBox[order].row1;
+							float dw2 = (float)boundingBox[order].col2 - (float)boundingBox[order].col1;
+							if (dh1 < 0) dh1 = 0;
+							if (dw1 < 0) dw1 = 0;
+							if (dh2 < 0) dh2 = 0;
+							if (dw2 < 0) dw2 = 0;
+							float area1 = dh1 * dw1;
+							float area2 = dh2 * dw2;
 							if (!modelname.compare("Union"))
-								IOU = IOU / (area1 + area2 - IOU);
+							{
+								float denom = area1 + area2 - IOU;
+								IOU = (denom > 0) ? (IOU / denom) : 0;
+							}
 							else if (!modelname.compare("Min"))
 							{
-								IOU = IOU / __min(area1, area2);
-							}
-							if (IOU > overlap_threshold)
+								float denom = __min(area1, area2);
+								IOU = (denom > 0) ? (IOU / denom) : 0;
+							}							if (IOU > overlap_threshold)
 							{
 								cur_overlap++;
 								boundingBox[num].exist = false;
@@ -98,27 +114,42 @@ namespace ZQ
 #pragma omp parallel for schedule(static, chunk_size) num_threads(thread_num)
 					for (int num = 0; num < box_num; num++)
 					{
-						if (boundingBox.at(num).exist)
+						// 审计修复 2026-10-06（附录 IL.3）：原来是 `boundingBox.at(num)`，
+						// 而串行支路用 `boundingBox[num]`。`.at()` 越界抛 std::out_of_range、
+						// `[]` 越界是 UB —— 同一个 num 在两条支路上语义不同，
+						// 很容易在「串行时正常、并行时抛异常」的地方踩到。统一成 `[]`。
+						if (boundingBox[num].exist)
 						{
 							//the iou
-							maxY = __max(boundingBox[num].row1, boundingBox[order].row1);
-							maxX = __max(boundingBox[num].col1, boundingBox[order].col1);
-							minY = __min(boundingBox[num].row2, boundingBox[order].row2);
-							minX = __min(boundingBox[num].col2, boundingBox[order].col2);
-							//maxX1 and maxY1 reuse 
-							maxX = __max(minX - maxX + 1, 0);
-							maxY = __max(minY - maxY + 1, 0);
-							//IOU reuse for the area of two bbox
-							IOU = maxX * maxY;
-							float area1 = boundingBox[num].area;
-							float area2 = boundingBox[order].area;
+							// 审计修复 2026-10-06（附录 IL.3）：与 `ZQ_CNN_BBoxUtils.h:65-75` 同一处缺陷
+							// （附录 IJ.2）：交集用「含端点」口径（`+ 1`）而 `area` 字段不带 `+ 1`，
+							// 同一个分母里两套口径 => IoU 可 >1、可为负、分母可为 0。
+							float maxY = __max(boundingBox[num].row1, boundingBox[order].row1);
+							float maxX = __max(boundingBox[num].col1, boundingBox[order].col1);
+							float minY = __min(boundingBox[num].row2, boundingBox[order].row2);
+							float minX = __min(boundingBox[num].col2, boundingBox[order].col2);
+							float inter_w = __max(minX - maxX, 0);
+							float inter_h = __max(minY - maxY, 0);
+							float IOU = inter_w * inter_h;							float dh1 = (float)boundingBox[num].row2 - (float)boundingBox[num].row1;
+							float dw1 = (float)boundingBox[num].col2 - (float)boundingBox[num].col1;
+							float dh2 = (float)boundingBox[order].row2 - (float)boundingBox[order].row1;
+							float dw2 = (float)boundingBox[order].col2 - (float)boundingBox[order].col1;
+							if (dh1 < 0) dh1 = 0;
+							if (dw1 < 0) dw1 = 0;
+							if (dh2 < 0) dh2 = 0;
+							if (dw2 < 0) dw2 = 0;
+							float area1 = dh1 * dw1;
+							float area2 = dh2 * dw2;
 							if (!modelname.compare("Union"))
-								IOU = IOU / (area1 + area2 - IOU);
+							{
+								float denom = area1 + area2 - IOU;
+								IOU = (denom > 0) ? (IOU / denom) : 0;
+							}
 							else if (!modelname.compare("Min"))
 							{
-								IOU = IOU / __min(area1, area2);
-							}
-							if (IOU > overlap_threshold)
+								float denom = __min(area1, area2);
+								IOU = (denom > 0) ? (IOU / denom) : 0;
+							}							if (IOU > overlap_threshold)
 							{
 								cur_overlap++;
 								boundingBox.at(num).exist = false;
@@ -197,7 +228,9 @@ namespace ZQ
 					if ((*it).row2 > height)(*it).row2 = height - 1;
 					if ((*it).col2 > width)(*it).col2 = width - 1;*/
 
-					it->area = (it->row2 - it->row1)*(it->col2 - it->col1);
+					// 审计修复 2026-10-06（附录 IL.4）：这一份原来比主文件**更糟** —— 连 `(float)` 都没有，是纯 int * int 再赋给 float，
+					// 溢出点比主文件早一步。主文件 IJ.4 已改成先拓宽再相减，这里对齐。
+					it->area = ((float)it->row2 - (float)it->row1) * ((float)it->col2 - (float)it->col1);
 				}
 			}
 		}
@@ -231,7 +264,9 @@ namespace ZQ
 					if ((*it).row2 > height)(*it).row2 = height - 1;
 					if ((*it).col2 > width)(*it).col2 = width - 1;*/
 
-					it->area = (it->row2 - it->row1)*(it->col2 - it->col1);
+					// 审计修复 2026-10-06（附录 IL.4）：这一份原来比主文件**更糟** —— 连 `(float)` 都没有，是纯 int * int 再赋给 float，
+					// 溢出点比主文件早一步。主文件 IJ.4 已改成先拓宽再相减，这里对齐。
+					it->area = ((float)it->row2 - (float)it->row1) * ((float)it->col2 - (float)it->col1);
 				}
 			}
 		}

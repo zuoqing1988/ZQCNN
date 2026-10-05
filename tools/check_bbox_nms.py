@@ -72,12 +72,19 @@ DEFAULT_FILES = [
     # 附录 IK：视频人脸检测封装层。它有**自己的一份** `_nms`（BBox106 版），
     # 不走 ZQ_CNN_BBoxUtils.h，所以 IJ 那套门禁扫不到它。
     os.path.join(ROOT, 'ZQCNN', 'ZQ_CNN_VideoFaceDetection_Interface.h'),
+    # 附录 IL：MNN 转换器的拷贝。它**不在任何构建里**（主 CMakeLists 没有
+    # ZQCNN_to_MNN，而且它的 CMakeLists 文件名拼成了 `CMakelists.txt`），
+    # 但同目录的 ZQ_CNN_Layer.h 上一轮同步过溢出守卫 —— 说明这目录是
+    # **半维护**的：不修等于留一颗地雷；修了就必须钉住，否则下次又漂回去。
+    os.path.join(ROOT, 'ZQCNN_to_MNN', 'converter', 'source', 'ZQ_CNN_BBoxUtils.h'),
 ]
 
 # --- BBoxUtils：_nms / area / find-end ---
 BBOX_FILE = 'ZQ_CNN_BBoxUtils.h'
 # A1: 交集不得用 `+ 1`（那是与 area 不带 +1 混用的那一套）
-A1_INTERSECT_PLUS1 = re.compile(r'float\s+w\s*=\s*__max\(\s*minX\s*-\s*maxX\s*\+\s*1\s*,')
+# **不要把变量名写死**：修好之后交集宽度叫 `inter_w` 而不是 `w`，
+# 写死 `float\s+w\s*=` 的判据在改完那一刻就变成恒假（自测立刻发现）。
+A1_INTERSECT_PLUS1 = re.compile(r'float\s+\w+\s*=\s*__max\(\s*minX\s*-\s*maxX\s*\+\s*1\s*,')
 # A1': 交集与面积必须同口径 —— 面积就地重算（不直接用 .area 字段做除数）
 A1_AREA_INLINE = re.compile(r'float\s+dh1\s*=\s*\(float\)boundingBox\[num\]\.row2')
 A1_DENOM_GUARD = re.compile(r'IOU\s*=\s*\(\s*denom\s*>\s*0\s*\)\s*\?')
@@ -171,6 +178,26 @@ A12_CLEAR_AFTER = re.compile(
     r'[ \t]*return false;[ \t]*\n(?:[ \t]*\n)?[ \t]*results\.clear\(\)\s*;')
 
 
+# ---- A13/A14（附录 IL）：两份「第二/第三份」_nms 拷贝 ----
+# A13: `thread_num == 1` 的判法会让 `thread_num == 0` 落进并行支路，
+#      而那里第一件事是 `ceil(box_num / thread_num)` —— **整数除零 SIGFPE**。
+#      主文件早就是 `<= 1`。
+A13_EQ_ONE = re.compile(r'if\s*\(\s*thread_num\s*==\s*1\s*\)')
+# A14: 函数级 IOU / maxX / maxY / minX / minY 被 parallel for 共用 = 数据竞争。
+#      主文件 2026-10-01 那轮已下沉成循环内局部，这份是旧拷贝。
+#      两种缩进都算：VideoFaceDetection 那一份的声明缩进比 MNN 那份深一级。
+A14_FUNC_SCOPE = re.compile(r'\n[\t ]+int order = 0;\s*\n[\t ]+float IOU = 0;')
+# 同样**不要把变量名写死**：主文件那份交集宽度叫 `w`，MNN 那份叫 `inter_w`。
+# 这里认的是「面积就地重算」这个真正区分修前修后的标志（`float dh1 = (float)...`），
+# 而不是交集变量的名字 —— 写死名字等于给其中一份判据判了死刑。
+A14_LOCAL = re.compile(r'float\s+dh1\s*=\s*\(float\)\s*boundingBox\[num\]\.row2')
+# A15: MNN 拷贝的 area 也必须先拓宽（与主文件 IJ.4 同步）。
+#      它和主文件**同名不同路径**，所以这条按路径尾部判定而不是 basename。
+# MNN 拷贝的形态**更糟**：连 (float) 都没有，是纯 int*int 再赋给 float，
+# 溢出点比主文件早一步。所以这条要认两种形态。
+A15_OLD_AREA = re.compile(r'it->area\s*=\s*(?:\(\s*float\s*\)\s*)?\(\s*\w+\s*->\s*row2\s*-\s*\w+\s*->\s*row1\s*\)\s*\*')
+
+
 def _read(path):
     with io.open(path, 'r', encoding='utf-8') as f:
         return f.read()
@@ -214,12 +241,46 @@ def scan_text(raw, name):
     bad = []
     ok = 0
 
-    if name == BBOX_FILE:
+    # A13/A14：这两份文件各自有**自己的** `_nms`，不走 ZQ_CNN_BBoxUtils.h，
+    # 所以 A1~A3 那套判据扫不到它们。
+    if 'static void _nms' in raw:
+        if A13_EQ_ONE.search(text):
+            bad.append(('A13', '`_nms` 判的是 `thread_num == 1` —— `thread_num == 0` 会落进'
+                        '**并行**支路，而那里第一件事是 `ceil(box_num / thread_num)`：'
+                        '**整数除零 SIGFPE**，紧接着 `num_threads(0)` 也非法。'
+                        '主文件早就是 `<= 1`'))
+        else:
+            ok += 1
+        if A14_FUNC_SCOPE.search(text):
+            bad.append(('A14', '`IOU` / `maxX` / `maxY` / `minX` / `minY` 声明在**函数作用域**，'
+                        '却被下面的 parallel for 多线程共用 —— IOU 会被撕裂、抑制结果不确定。'
+                        '主文件 2026-10-01 那轮已下沉成循环内局部'))
+        elif not A14_LOCAL.search(text):
+            bad.append(('A14', '找不到就地重算面积的那种写法（float dh1 = (float)...）—— '
+                        '要么面积还在用调用方传的字段，要么交集宽度/高度仍是共享量'))
+        else:
+            ok += 1
+    else:
+        ok += 1
+
+    if name.endswith('ZQCNN_to_MNN/converter/source/ZQ_CNN_BBoxUtils.h'):
+        # 这份和主文件**同名不同路径**，所以 A1~A4 / A9 / A12 那些
+        # 只判它自己确实存在的问题。
+        if A15_OLD_AREA.search(text):
+            bad.append(('A15',
+                'MNN 拷贝的 it->area 仍是 int 减法先算完再转 float 的形态（它连 (float) 都没有，'
+                '比主文件更糟、溢出点更早）：与主文件 IJ.4 同款但没同步'))
+            ok += 1
+        return ok, bad
+    if name.endswith('ZQCNN/ZQ_CNN_BBoxUtils.h'):
         # 每条规则都带**前置条件**（该构造在本文件里到底存不存在）。
         # 不加前置的后果：第一版把 A1/A2/A3/A4 都写成无条件判定，
         # 于是「只含 _nms 的自测样本」被判成「也缺 find/end 守卫」——
         # **「不适用」被当成了「不满足」**。与附录 A31 同一个教训。
-        has_nms = bool(re.search(r'float\s+w\s*=\s*__max\(\s*minX', text))
+        # 同样**不要把变量名写死**（见 A1_INTERSECT_PLUS1 那条注释）：
+        # 修好之后交集宽度叫 inter_w，写死 float\s+w\s*= 会让 has_nms 恒假，
+        # A1 整条规则**静默不执行** —— 而自测用的正是修好后的形态。
+        has_nms = bool(re.search(r'float\s+\w+\s*=\s*__max\(\s*minX', text))
         has_area = bool(re.search(r'\w+\s*->\s*area\s*=', text))
         has_order = bool(re.search(r'order\s*=\s*bboxScore\.back\(\)\.oriOrder', text))
         has_find = bool(re.search(r'find\(label\)\s*==\s*all_loc_preds\[i\]\.end\(\)', text))
@@ -277,7 +338,7 @@ def scan_text(raw, name):
                 ok += 1
         return ok, bad
 
-    if name == FWD_FILE:
+    if name.endswith('ZQCNN/ZQ_CNN_Forward_SSEUtils.cpp'):
         # A5 / A6 只在 _detection_output 家族里判
         if '_detection_output' in raw:
             miss = []
@@ -307,7 +368,7 @@ def scan_text(raw, name):
             ok += 1
         return ok, bad
 
-    if name == VFD_FILE:
+    if name.endswith('ZQCNN/ZQ_CNN_VideoFaceDetection_Interface.h'):
         if not A7_TRACKBOX.search(text):
             ok += 1
         elif A7_AREA.search(text):
@@ -380,6 +441,9 @@ def scan_text(raw, name):
 
     return ok, bad
 
+
+
+
 # 一份"什么都齐"的骨架，作为后面每条自测样本的公共前缀。
 FULL_NMS = r"""
 static void _nms(std::vector<ZQ_CNN_BBox>& boundingBox, std::vector<ZQ_CNN_OrderScore>& bboxScore,
@@ -390,32 +454,38 @@ static void _nms(std::vector<ZQ_CNN_BBox>& boundingBox, std::vector<ZQ_CNN_Order
 		int order = bboxScore.back().oriOrder;
 		bboxScore.pop_back();
 		if (order < 0 || order >= (int)boundingBox.size()) continue;
-		for (int num = 0; num < (int)boundingBox.size(); num++)
+		if (thread_num <= 1)
 		{
-			float maxX = (float)__max(boundingBox[num].col1, boundingBox[order].col1);
-			float minX = (float)__min(boundingBox[num].col2, boundingBox[order].col2);
-			float w = __max(minX - maxX, 0);
-			float h = __max(minY - maxY, 0);
-			float IOU = w * h;
-			float dh1 = (float)boundingBox[num].row2 - (float)boundingBox[num].row1;
-			float dw1 = (float)boundingBox[num].col2 - (float)boundingBox[num].col1;
-			float dh2 = (float)boundingBox[order].row2 - (float)boundingBox[order].row1;
-			float dw2 = (float)boundingBox[order].col2 - (float)boundingBox[order].col1;
-			if (dh1 < 0) dh1 = 0;
-			if (dw1 < 0) dw1 = 0;
-			if (dh2 < 0) dh2 = 0;
-			if (dw2 < 0) dw2 = 0;
-			float area1 = dh1 * dw1;
-			float area2 = dh2 * dw2;
-			if (!modelname.compare("Union"))
+			for (int num = 0; num < (int)boundingBox.size(); num++)
 			{
-				float denom = area1 + area2 - IOU;
-				IOU = (denom > 0) ? (IOU / denom) : 0;
-			}
-			else if (!modelname.compare("Min"))
-			{
-				float denom = __min(area1, area2);
-				IOU = (denom > 0) ? (IOU / denom) : 0;
+				if (!boundingBox[num].exist) continue;
+				float maxX = (float)__max(boundingBox[num].col1, boundingBox[order].col1);
+				float maxY = (float)__max(boundingBox[num].row1, boundingBox[order].row1);
+				float minX = (float)__min(boundingBox[num].col2, boundingBox[order].col2);
+				float minY = (float)__min(boundingBox[num].row2, boundingBox[order].row2);
+				float inter_w = __max(minX - maxX, 0);
+				float inter_h = __max(minY - maxY, 0);
+				float IOU = inter_w * inter_h;
+				float dh1 = (float)boundingBox[num].row2 - (float)boundingBox[num].row1;
+				float dw1 = (float)boundingBox[num].col2 - (float)boundingBox[num].col1;
+				float dh2 = (float)boundingBox[order].row2 - (float)boundingBox[order].row1;
+				float dw2 = (float)boundingBox[order].col2 - (float)boundingBox[order].col1;
+				if (dh1 < 0) dh1 = 0;
+				if (dw1 < 0) dw1 = 0;
+				if (dh2 < 0) dh2 = 0;
+				if (dw2 < 0) dw2 = 0;
+				float area1 = dh1 * dw1;
+				float area2 = dh2 * dw2;
+				if (!modelname.compare("Union"))
+				{
+					float denom = area1 + area2 - IOU;
+					IOU = (denom > 0) ? (IOU / denom) : 0;
+				}
+				else if (!modelname.compare("Min"))
+				{
+					float denom = __min(area1, area2);
+					IOU = (denom > 0) ? (IOU / denom) : 0;
+				}
 			}
 		}
 	}
@@ -466,43 +536,45 @@ SELFCHECK = [
     # (说明, 文本, 期望触发的规则集合, 扫哪个文件)
     ('全合格 NMS', FULL_NMS, [], BBOX_FILE),
     ('A1 交集回到 +1 口径',
-     FULL_NMS.replace('float w = __max(minX - maxX, 0);',
-                      'float w = __max(minX - maxX + 1, 0);'), ['A1'], BBOX_FILE),
+     FULL_NMS.replace('float inter_w = __max(minX - maxX, 0);',
+                      'float inter_w = __max(minX - maxX + 1, 0);'),
+     ['A1'], 'ZQCNN/ZQ_CNN_BBoxUtils.h'),
     ('A1 面积不重算 + 分母不兜底',
      FULL_NMS.replace('float dh1 = (float)boundingBox[num].row2 - (float)boundingBox[num].row1;', '')
                .replace('float dw1 = (float)boundingBox[num].col2 - (float)boundingBox[num].col1;', '')
                .replace('float dh2 = (float)boundingBox[order].row2 - (float)boundingBox[order].row1;', '')
                .replace('float dw2 = (float)boundingBox[order].col2 - (float)boundingBox[order].col1;', '')
-               .replace('IOU = (denom > 0) ? (IOU / denom) : 0;', 'IOU = IOU / denom;'),
-     ['A1'], BBOX_FILE),
+               .replace('IOU = (denom > 0) ? (IOU / denom) : 0;', 'IOU = IOU / denom;'),  # 两处都要去
+     # 期望里带 A14 是对的：把 dh1..dw2 删掉**同时**破坏了 A1 和 A14。
+     ['A1', 'A14'], 'ZQCNN/ZQ_CNN_BBoxUtils.h'),
     ('A2 area 又变回 int 减法',
      FULL_NMS.replace('it->area = ((float)it->row2 - (float)it->row1) * ((float)it->col2 - (float)it->col1);',
                       'it->area = (float)(it->row2 - it->row1)*(it->col2 - it->col1);'),
-     ['A2'], BBOX_FILE),
+     ['A2'], 'ZQCNN/ZQ_CNN_BBoxUtils.h'),
     ('A3 order 回到只挡下界',
      FULL_NMS.replace('if (order < 0 || order >= (int)boundingBox.size()) continue;',
-                      'if (order < 0)continue;'), ['A3'], BBOX_FILE),
+                      'if (order < 0)continue;'), ['A3'], 'ZQCNN/ZQ_CNN_BBoxUtils.h'),
     ('全合格 DecodeBBoxesAll', FULL_DECODE, [], BBOX_FILE),
     ('A4 find/end 判了不做',
      FULL_DECODE.replace('\t\tcontinue;\n', '\t\t//LOG(FATAL) << label;\n'),
-     ['A4'], BBOX_FILE),
+     ['A4'], 'ZQCNN/ZQ_CNN_BBoxUtils.h'),
     ('全合格 _detection_output', FULL_FWD, [], FWD_FILE),
     ('A5 prior 只对账一半（漏 *2）',
      FULL_FWD.replace('(long long)prior_len < needed_anchor * 2LL',
-                      '(long long)prior_len < needed_anchor'), ['A5'], FWD_FILE),
+                      '(long long)prior_len < needed_anchor'), ['A5'], 'ZQCNN/ZQ_CNN_Forward_SSEUtils.cpp'),
     ('A5 loc 不对账',
      FULL_FWD.replace('|| (long long)loc_len < (long long)num * needed_anchor * num_loc_classes\n', ''),
-     ['A5'], FWD_FILE),
+     ['A5'], 'ZQCNN/ZQ_CNN_Forward_SSEUtils.cpp'),
     ('A6 GetLocPredictions 返回值不查',
      FULL_FWD.replace('if (!ZQ_CNN_BBoxUtils::GetLocPredictions(',
                       'ZQ_CNN_BBoxUtils::GetLocPredictions(')
               .replace(' share_location, &all_loc_preds))\n\t\treturn false;',
                       ' share_location, &all_loc_preds);'),
-     ['A6'], FWD_FILE),
+     ['A6'], 'ZQCNN/ZQ_CNN_Forward_SSEUtils.cpp'),
     # 阴性：注释里出现这些词**不该**报
     ('阴性：只有注释提到 + 1 / order < 0',
      '// 交集原来是 __max(minX - maxX + 1, 0)，area 用的是不含 +1 的口径\n'
-     '// if (order < 0)continue;\n', [], BBOX_FILE),
+     '// if (order < 0)continue;\n', [], 'ZQCNN/ZQ_CNN_BBoxUtils.h'),
 ]
 
 
@@ -537,8 +609,14 @@ def main(argv):
         if not os.path.exists(p):
             print('SKIP %s (not found)' % p)
             continue
-        name = os.path.basename(p)
-        ok, bad = scan_text(_read(p), name)
+        # 传**规范化后的全路径**，不是 basename ——
+        # `ZQCNN/ZQ_CNN_BBoxUtils.h` 与 `ZQCNN_to_MNN/.../ZQ_CNN_BBoxUtils.h`
+        # **同名**，按 basename 分流会让两份互相串台（MNN 那份的 find/end
+        # 确实没修，于是被主文件的 A4 报出来 —— 结论对，但理由是错的，
+        # 而且主文件真出问题时也会拿 MNN 那份的形态去判）。
+        full = os.path.normpath(p).replace(os.sep, '/')
+        ok, bad = scan_text(_read(p), full)
+        name = os.path.relpath(full, ROOT).replace(os.sep, '/')
         total_ok += ok
         if bad:
             print('FAIL %s' % name)

@@ -1088,3 +1088,92 @@ A12 `results.clear()` 必须在 `ConvertFromBGR` 之前。
 文件里没有任何 `#pragma omp parallel for`）—— 也就是说 IK.4 的上界 128 其实
 是在给一个「1 份就够」的设计加保险。这是**设计问题不是缺陷**，
 要真并行化是另一件事，本轮没做。
+
+
+## 追加：附录 IL —— 把 `_nms` 的另外两份拷贝同步到主文件（6 处）
+
+### 背景：`_nms` 一共三份
+
+| 位置 | 状态（本轮之前） |
+| --- | --- |
+| `ZQCNN/ZQ_CNN_BBoxUtils.h` | 附录 IJ 已修 |
+| `ZQCNN/ZQ_CNN_VideoFaceDetection_Interface.h:369-449`（BBox106 版，自带一份） | **未同步**，且还多两个问题 |
+| `ZQCNN_to_MNN/converter/source/ZQ_CNN_BBoxUtils.h`（727 行，比主文件旧） | **未同步**，且还留着主文件 2026-10-01 就修掉的 OpenMP 数据竞争 |
+
+后两份都**不在 A1~A3 那套门禁的作用范围内**（它们不走 `ZQ_CNN_BBoxUtils.h` 的 `_nms`），
+所以 IJ 改完主文件之后它们并不会跟着变 —— 必须在门禁里**单独判**（A13/A14/A15）。
+
+### 改了什么
+
+**`ZQ_CNN_VideoFaceDetection_Interface.h`（BBox106 版 `_nms`）**
+
+- IL.1 `order` 只挡下界 -> 补上界（同 IJ.3）。
+- IL.2 交集与面积口径统一 + 分母兜底（同 IJ.2）。这一份比主文件还多一处形态问题：
+  它把交集宽度**写回 `maxX`**、高度写回 `maxY`（函数级变量被当临时量复用），
+  主文件 2026-10-01 那轮就是为了这个才把它们下沉成循环内局部量的。
+  现在 `maxX/maxY/minX/minY/IOU` 全部是循环内局部，交集宽度另起 `inter_w/inter_h`。
+  **这一点与 IK.1 是配套的**：IK.1 刚把本文件 Stage-1 的 `area` 从 0 补上，
+  而 `Min` 模式的分母就是 `min(area1, area2)` —— 只修 IK.1 不修这里等于白修。
+
+**`ZQCNN_to_MNN/converter/source/ZQ_CNN_BBoxUtils.h`**
+
+- IL.3 四件事：
+  * `if (thread_num == 1)` -> `<= 1`。`thread_num == 0` 会落进**并行**支路，
+    而那里第一件事是 `ceil(box_num / thread_num)` —— **整数除零 SIGFPE**，
+    紧接着 `num_threads(0)` 也非法（OpenMP 要求 >= 1）。主文件早就是 `<= 1`。
+  * `IOU` / `maxX` / `maxY` / `minX` / `minY` 从**函数作用域**下沉成循环内局部。
+    叠加上面的 `thread_num == 0` 落进并行支路，这段是**真会被执行到**的数据竞争。
+  * 交集/面积口径统一 + 分母兜底。
+  * 并行支路里的 `boundingBox.at(num)` 改成 `boundingBox[num]` —— `.at()` 越界抛异常、
+    `[]` 越界是 UB，同一个 `num` 在两条支路上语义不同。
+- IL.4 `it->area = (it->row2 - it->row1)*(it->col2 - it->col1);` ——
+  这一份比主文件**更糟**：连 `(float)` 都没有，是纯 `int * int` 再赋给 float，
+  溢出点比主文件早一步。已改成先拓宽再相减。
+
+### 门禁：A13 / A14 / A15（15 条规则）
+
+A13 有自己 `_nms` 的文件不得用 `thread_num == 1`；
+A14 不得有函数作用域的 `IOU/maxX/maxY/minX/minY`（认「面积就地重算」这个标志，
+**不认变量名** —— 主文件交集宽叫 `w`、MNN 那份叫 `inter_w`）；
+A15 MNN 拷贝的 `it->area` 不得是 int 减法形态（认两种形态：`(float)(x-y)` 与纯 `x-y`）。
+
+### 这一轮门禁自己踩的坑（又一次「扫不到 / 压根没扫」）
+
+1. **A13/A14 的代码块被插在各文件分派的 `return` 之后** —— 永远执行不到。
+   扫描报「全过」，而变异测试把 `thread_num <= 1` 改成 `== 1` 门禁**照样全绿**。
+2. **A9 / A1 / A14 / has_nms 都把变量名写死了**（`float w =`、`A1_INTERSECT_PLUS1` 里的 `\sw\s=`）。
+   修好之后变量改名了（`w` -> `inter_w`），这些判据当场变成**恒假**。
+   凡是靠变量名识别的判据都要改成认「结构性标志」。
+3. **门禁按 basename 分流，而 MNN 拷贝与主文件同名** —— 两份互相串台。
+   改成传**规范化全路径**、按路径尾部判定。
+   串台当场帮了个忙：它报出「MNN 拷贝的 find/end 没修」——那是真的（IJ.5 没同步过去），
+   但理由是错的，不能靠这种巧合。
+4. **A15 的 bad.append 是个 4 元组**，`for code, msg in bad` 直接抛 ValueError。
+   门禁**确实红了**（RC=1），但崩在格式化消息上，诊断信息反而看不到。
+   ——「红了」不等于「红得有用」。
+
+1~4 都是同一件事的不同侧面：**门禁全绿/门禁变红这两个信号本身都需要证据**。
+判据要能被变异测试证伪，输出要能在失败时被人读懂。
+
+### 实测
+
+    python tools/check_bbox_nms.py --selfcheck -> 12 cases, all as expected（RC=0）
+    python tools/check_bbox_nms.py             -> 8 文件全 OK，合计 24 项（RC=0）
+    变异测试：A13 / A14 / A15 逐条破坏 -> 门禁**三条全部抓到**并点名
+    Linux -fsyntax-only：VideoFaceDetection + MNN BBoxUtils 两个头 -> RC=0
+    python tools/check_text_encoding.py -> OK: 764 text files, all strict UTF-8, no U+FFFD
+    python tools/check_line_endings.py  -> line endings OK
+
+### 注意事项
+
+- **MNN 拷贝仍然不在任何构建里**：主 `CMakeLists.txt` 没有 `ZQCNN_to_MNN`，
+  而且它的 CMakeLists 文件名拼成了 `CMakelists.txt`（CMake 根本不找这个名字）。
+  本轮对它的修改**只经过 `-fsyntax-only`**，没有任何运行时验证。
+  之所以还是改了：同目录的 `ZQ_CNN_Layer.h` 上一轮同步过溢出守卫，说明这目录是
+  **半维护**的；留着 `thread_num == 0` 的整数除零和 OpenMP 数据竞争不修，
+  等于给「将来有人构建它」埋雷。
+- **VideoFaceDetection 的 BBox106 版 `_nms` 同样没法做 A/B**：那个 sample 要摄像头。
+  IL.1 / IL.2 只有代码层面的论证。
+- 这两份拷贝里**其余**与主文件的差异（`overlap_count_thresh` 参数、
+  `_filtering_iou` 的签名等）本轮**没有**逐一对齐 —— 目标是修**安全缺陷**，
+  不是把三份文件改成完全一样。行为差异要靠 A/B 才能安全对齐，而这两份都做不了 A/B。
