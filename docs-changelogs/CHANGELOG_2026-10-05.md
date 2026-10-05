@@ -2256,3 +2256,26 @@ NCHW 的孪生实现 `zq_cnn_convolution_gemm_32f_align_c_raw.h:82` 早就写了
 > 注：v60 期间 IX.10 的生产代码改动（27 处 malloc 判空）落地在 B 组之后，
 > 所以 C 组及以后编译的是最终代码、A/B 组编译的是前一版。
 > 为了拿到一个**干净的单点**，紧接着又跑了 v61（最终树）。
+
+---
+
+## 记录：v61 全量回归（**最终树**的单点）
+
+v60 期间 IX.10 的生产代码改动落地在 B 组之后，所以紧接着在最终树上又跑了一遍：
+
+    python tools/run_audit_checks.py --with-build --warn-sweep --src-sweep \
+        --bounds-sweep --ubsan-sweep --reachability --msvc-asan
+
+    55 个检查组，50 个显式 OK，0 个 FAILED
+    ALL CHECKS PASSED
+    RC=0
+
+    B 组：53/53 通过
+    A17/A18：自测 10 项全过；普查
+        52 处 zq_final_sum_q（0 处不合格）
+        10 个 zq_mm_store_ps 目标（0 个没对齐）
+        114 个 *_aligned_malloc(*buffer)（0 个没查返回值）
+    C7 可达性：基线 36 条 -> 现在 36 条，无状态变化
+    D1/D2 双平台全量构建 0 error；D3/D4 双平台 sample 回归全过
+
+这一轮跑完之后本轮（IV / IX / IW）的改动**全部落在一个已验证的树上**。
