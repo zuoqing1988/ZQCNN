@@ -37,3 +37,6 @@ __pycache__/
 # 并被 `git add -A` 带走 —— 与 GK.4 那次 resultdet.jpg 同一类。
 cc.txt
 chk
+
+# 审计时用来 `git commit -F` 的临时提交信息文件（中文 message 避免 heredoc 吃掉转义）
+.git_commit_msg.txt
