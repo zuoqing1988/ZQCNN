@@ -1482,8 +1482,10 @@ static void ref_prior_box_text(int layer_h, int layer_w, int img_h, int img_w,
                     pbt_emit(out, w, cx, half ? cy1 : cy, bw, bh, img_w, img_h, clip);
                 }
                 if (!max_sizes.empty() && s < max_sizes.size()) {
-                    const int xs = (int)max_sizes[s];
-                    float bw = (float)sqrt((double)ms * (double)xs), bh = bw;
+                    // max 框：`sqrt(min * max)` 用的是**原始 float**，
+                    // 不是 `(int)` 之后的那一份 —— 这一点是**测出来的**（附录 IS.2）：
+                    // 用 `(int)` 会让含 59.1 / 60.7 的那两组差出 0.06~0.09 的后向误差。
+                    float bw = (float)sqrt((double)min_sizes[s] * (double)max_sizes[s]), bh = bw;
                     for (int half = 0; half < 2; half++) {
                         float y0 = half ? cy1 : cy;
                         out[w++] = (cx - bw / 2) / img_w; out[w++] = (y0 - bh / 2) / img_h;
@@ -1667,40 +1669,88 @@ static void scan_prior_box_text_ratios()
 //   所以**前 32 个值就是那 8 个框**。
 static void order_prior_box_text()
 {
+    // 三个配置，覆盖 IR.3 剩下的那个空白：**多个 ratio** 与 **多个 min_size**。
+    // 半宽各不相同，所以顺序直接从输出里读出来：
+    //   size(30)=15            size(50)=25
+    //   max(sqrt(30*60))=42.4264   max(sqrt(50*80))=63.2456
+    //   ratio2(30)=42.4264 x 21.2132      翻转 = 21.2132 x 42.4264
+    //   ratio3(30)=51.9615 x 17.3205      翻转 = 17.3205 x 51.9615
+    //   ratio2(50)=70.7107 x 35.3553      翻转 = 35.3553 x 70.7107
+    static const char* CONFIGS[3] = {
+        "min_size=30 max_size=60 aspect_ratio=2 aspect_ratio=3 flip=1 clip=0 variance=0.1",
+        "min_size=30 min_size=50 max_size=60 max_size=80 aspect_ratio=2 flip=1 clip=0 variance=0.1",
+        "min_size=30 max_size=60 aspect_ratio=2 flip=0 clip=0 variance=0.1",
+    };
     const int H = 1, W = 1;
-    char block[512];
-    snprintf(block, sizeof(block),
-             "Input name=data C=1 H=%d W=%d\n"
-             "Copy name=k1 bottom=data top=feat\n"
-             "Copy name=k2 bottom=data top=imgs\n"
-             "PriorBoxText name=pb1 bottom=feat bottom=imgs top=pboxes "
-             "min_size=30 max_size=60 aspect_ratio=2 flip=1 clip=0 variance=0.1\n",
-             H, W);
-    if (!write_file(SYNTH_PARAM, block, strlen(block))) { printf("  写不出参数文件\n"); return; }
-    if (!write_file(SYNTH_MODEL, "", 0)) { printf("  写不出权重文件\n"); return; }
-    ZQ::ZQ_CNN_Net net;
-    if (!net.LoadFrom(SYNTH_PARAM, SYNTH_MODEL)) { printf("  合成网加载失败\n"); return; }
-    ZQ::ZQ_CNN_Tensor4D_NHW_C_Align256bit ti;
-    std::vector<float> in((size_t)H * W, 0.25f);
-    if (!ti.ConvertFromCompactNCHW(&in[0], 1, 1, H, W)) { printf("  输入张量失败\n"); return; }
-    if (!net.Forward(ti)) { printf("  Forward 失败\n"); return; }
-    const ZQ::ZQ_CNN_Tensor4D* ob = net.GetBlobByName("pboxes");
-    if (ob == 0) { printf("  取不到输出\n"); return; }
-    std::vector<float> got((size_t)ob->GetN() * ob->GetC() * ob->GetH() * ob->GetW());
-    ob->ConvertToCompactNCHW(&got[0]);
+    for (int ci = 0; ci < 3; ci++) {
+        char block[768];
+        snprintf(block, sizeof(block),
+                 "Input name=data C=1 H=%d W=%d\n"
+                 "Copy name=k1 bottom=data top=feat\n"
+                 "Copy name=k2 bottom=data top=imgs\n"
+                 "PriorBoxText name=pb1 bottom=feat bottom=imgs top=pboxes %s\n",
+                 H, W, CONFIGS[ci]);
+        if (!write_file(SYNTH_PARAM, block, strlen(block))) { printf("  写不出参数文件\n"); return; }
+        if (!write_file(SYNTH_MODEL, "", 0)) { printf("  写不出权重文件\n"); return; }
+        ZQ::ZQ_CNN_Net net;
+        if (!net.LoadFrom(SYNTH_PARAM, SYNTH_MODEL)) { printf("  配置%d 加载失败\n", ci); continue; }
+        ZQ::ZQ_CNN_Tensor4D_NHW_C_Align256bit ti;
+        std::vector<float> in((size_t)H * W, 0.25f);
+        if (!ti.ConvertFromCompactNCHW(&in[0], 1, 1, H, W)) { printf("  输入张量失败\n"); return; }
+        if (!net.Forward(ti)) { printf("  配置%d Forward 失败\n", ci); continue; }
+        const ZQ::ZQ_CNN_Tensor4D* ob = net.GetBlobByName("pboxes");
+        if (ob == 0) { printf("  配置%d 取不到输出\n", ci); continue; }
+        std::vector<float> got((size_t)ob->GetN() * ob->GetC() * ob->GetH() * ob->GetW());
+        ob->ConvertToCompactNCHW(&got[0]);
 
-    printf("\n  发射顺序探针（单格 / clip=0 / min=30 max=60 ratio=2 flip=1）：\n");
-    printf("    输出共 %zu 个；通道 1 未被写，所以前一半是真框：\n", got.size());
-    const size_t half = got.size() / 2;
-    for (size_t i = 0; i < half; i += 4) {
-        printf("      框%zu: x1=%9.4f y1=%9.4f x2=%9.4f y2=%9.4f"
-               "   (半宽 x=%.4f 半宽 y=%.4f)\n",
-               i / 4, got[i], got[i + 1], got[i + 2], got[i + 3],
-               (got[i + 2] - got[i]) / 2, (got[i + 3] - got[i + 1]) / 2);
+        printf("\n  发射顺序探针 配置%d（单格 / clip=0）：\n    %s\n", ci, CONFIGS[ci]);
+        printf("    输出共 %zu 个；通道 1 未被写（IR.2），所以前一半是真框：\n", got.size());
+        const size_t half = got.size() / 2;
+        for (size_t i = 0; i < half; i += 4) {
+            printf("      框%2zu: 半宽 x=%9.4f 半宽 y=%9.4f  中心 y=%7.4f\n",
+                   i / 4, (got[i + 2] - got[i]) / 2, (got[i + 3] - got[i + 1]) / 2,
+                   (got[i + 1] + got[i + 3]) / 2);
+        }
     }
-    printf("    （对照：size 半宽 15.0000 / max 半宽 21.2132 /"
-           " ratio 半宽 x=21.2132 y=10.6066 / 翻转 x=10.6066 y=21.2132；"
-           "cy=0.5 时框中心 y=0.5，cy1=1.0 时中心 y=1.0）\n");
+    printf("    （对照：size30=15 size50=25 max30/60=42.4264 max50/80=63.2456\n"
+           "      ratio2@30=42.4264x21.2132 翻转=21.2132x42.4264\n"
+           "      ratio3@30=51.9615x17.3205 翻转=17.3205x51.9615\n"
+           "      ratio2@50=70.7107x35.3553 翻转=35.3553x70.7107；中心 y=0.5 / 1.0）\n");
+
+    // ---- 配置3：2x2 的网格，只用 size 框，读**格子循环的顺序** ----
+    // 每格 2 个框（cy、cy1），框中心 x = w+0.5、y = h+0.5 / h+1，
+    // 于是**中心坐标直接告诉你这是哪个格子、什么次序**。
+    {
+        const int H2 = 2, W2 = 2;
+        char block2[512];
+        snprintf(block2, sizeof(block2),
+                 "Input name=data C=1 H=%d W=%d\n"
+                 "Copy name=k1 bottom=data top=feat\n"
+                 "Copy name=k2 bottom=data top=imgs\n"
+                 "PriorBoxText name=pb1 bottom=feat bottom=imgs top=pboxes "
+                 "min_size=30 flip=1 clip=0 variance=0.1\n",
+                 H2, W2);
+        if (!write_file(SYNTH_PARAM, block2, strlen(block2))) return;
+        if (!write_file(SYNTH_MODEL, "", 0)) return;
+        ZQ::ZQ_CNN_Net net2;
+        if (!net2.LoadFrom(SYNTH_PARAM, SYNTH_MODEL)) { printf("  配置3 加载失败\n"); return; }
+        ZQ::ZQ_CNN_Tensor4D_NHW_C_Align256bit ti2;
+        std::vector<float> in2((size_t)H2 * W2, 0.25f);
+        if (!ti2.ConvertFromCompactNCHW(&in2[0], 1, 1, H2, W2)) return;
+        if (!net2.Forward(ti2)) { printf("  配置3 Forward 失败\n"); return; }
+        const ZQ::ZQ_CNN_Tensor4D* ob2 = net2.GetBlobByName("pboxes");
+        if (ob2 == 0) return;
+        std::vector<float> g2((size_t)ob2->GetN() * ob2->GetC() * ob2->GetH() * ob2->GetW());
+        ob2->ConvertToCompactNCHW(&g2[0]);
+        printf("\n  格子顺序探针（2x2 网格 / clip=0 / 只有 size 框 / flip=1）：\n");
+        const size_t half2 = g2.size() / 2;
+        for (size_t i = 0; i < half2; i += 4)
+            printf("      框%2zu: 中心 x=%7.4f 中心 y=%7.4f"
+                   "   -> (w=%.0f, h=%.0f, %s)\n",
+                   i / 4, (g2[i] + g2[i + 2]) / 2, (g2[i + 1] + g2[i + 3]) / 2,
+                   (g2[i] + g2[i + 2]) / 2 - 0.5f, (g2[i + 1] + g2[i + 3]) / 2 - 0.5f,
+                   ((g2[i + 1] + g2[i + 3]) / 2 - (int)((g2[i + 1] + g2[i + 3]) / 2)) == 0 ? "cy" : "cy1");
+    }
 }
 
 static void run_prior_box_text()
