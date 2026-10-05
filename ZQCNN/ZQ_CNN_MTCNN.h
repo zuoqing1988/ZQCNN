@@ -928,7 +928,7 @@ namespace ZQ
 								bbox.row2 = stride*row + cellsize;
 								bbox.col2 = stride*col + cellsize;
 								bbox.exist = true;
-								bbox.area = (bbox.row2 - bbox.row1)*(bbox.col2 - bbox.col1);
+								bbox.area = ((float)bbox.row2 - (float)bbox.row1) * ((float)bbox.col2 - (float)bbox.col1);   // 附录 IJ.4：先拓宽再减，int 溢出是 UB
 								bbox.need_check_overlap_count = (row >= border_size && row < scoreH - border_size)
 									&& (col >= border_size && col < scoreW - border_size);
 								bounding_boxes[i].push_back(bbox);
@@ -948,7 +948,7 @@ namespace ZQ
 						bbox.col1 = round(bbox.col1 *cur_scale_x);
 						bbox.row2 = round(bbox.row2 *cur_scale_y);
 						bbox.col2 = round(bbox.col2 *cur_scale_x);
-						bbox.area = (bbox.row2 - bbox.row1)*(bbox.col2 - bbox.col1);
+						bbox.area = ((float)bbox.row2 - (float)bbox.row1) * ((float)bbox.col2 - (float)bbox.col1);   // 附录 IJ.4：先拓宽再减，int 溢出是 UB
 					}
 					double t14 = omp_get_wtime();
 					if (show_debug_info)
@@ -1009,7 +1009,7 @@ namespace ZQ
 										bbox.exist = true;
 										bbox.need_check_overlap_count = (row >= border_size && row < scoreH - border_size)
 											&& (col >= border_size && col < scoreW - border_size);
-										bbox.area = (bbox.row2 - bbox.row1)*(bbox.col2 - bbox.col1);
+										bbox.area = ((float)bbox.row2 - (float)bbox.row1) * ((float)bbox.col2 - (float)bbox.col1);   // 附录 IJ.4：先拓宽再减，int 溢出是 UB
 										tmp_bounding_boxes[bb].push_back(bbox);
 										tmp_bounding_scores[bb].push_back(order);
 										count++;
@@ -1064,7 +1064,7 @@ namespace ZQ
 										bbox.exist = true;
 										bbox.need_check_overlap_count = (row >= border_size && row < scoreH - border_size)
 											&& (col >= border_size && col < scoreW - border_size);
-										bbox.area = (bbox.row2 - bbox.row1)*(bbox.col2 - bbox.col1);
+										bbox.area = ((float)bbox.row2 - (float)bbox.row1) * ((float)bbox.col2 - (float)bbox.col1);   // 附录 IJ.4：先拓宽再减，int 溢出是 UB
 										tmp_bounding_boxes[bb].push_back(bbox);
 										tmp_bounding_scores[bb].push_back(order);
 										count++;
@@ -1106,7 +1106,7 @@ namespace ZQ
 						bbox.col1 = round(bbox.col1 *cur_scale_x);
 						bbox.row2 = round(bbox.row2 *cur_scale_y);
 						bbox.col2 = round(bbox.col2 *cur_scale_x);
-						bbox.area = (bbox.row2 - bbox.row1)*(bbox.col2 - bbox.col1);
+						bbox.area = ((float)bbox.row2 - (float)bbox.row1) * ((float)bbox.col2 - (float)bbox.col1);   // 附录 IJ.4：先拓宽再减，int 溢出是 UB
 					}
 					double t14 = omp_get_wtime();
 					if (show_debug_info)

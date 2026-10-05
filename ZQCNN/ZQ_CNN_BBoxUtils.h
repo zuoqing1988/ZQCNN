@@ -44,7 +44,15 @@ namespace ZQ
 			{
 				order = bboxScore.back().oriOrder;
 				bboxScore.pop_back();
-				if (order < 0)continue;
+				// 审计修复 2026-10-06（附录 IJ.3）：原来只有 `order < 0`。
+				// `order` 来自**外部传入**的 bboxScore，与 boundingBox 没有任何交叉校验；
+				// 而 `ZQ_CNN_OrderScore` 的默认构造是 memset 到 0（ZQ_CNN_BBox.h:172-175），
+				// 也就是「漏填」的 OrderScore 会**静默指向 0 号框**而不是报错。
+				// 补上界之后：越界的 oriOrder 被丢弃，而不是 `boundingBox[order].exist = false`
+				// 越界**写** + 后面 `boundingBox[order].col1` 越界**读**。
+				// 当前四个 MTCNN 变体 + VideoFaceDetection 的配对都是恒等的（已逐个核过），
+				// 所以这是纯防御，不改任何现有行为。
+				if (order < 0 || order >= (int)boundingBox.size()) continue;
 				heros.push_back(order);
 				int cur_overlap = 0;
 				boundingBox[order].exist = false;//delete it
@@ -62,16 +70,46 @@ namespace ZQ
 							float maxY = (float)__max(boundingBox[num].row1, boundingBox[order].row1);
 							float minX = (float)__min(boundingBox[num].col2, boundingBox[order].col2);
 							float minY = (float)__min(boundingBox[num].row2, boundingBox[order].row2);
-							float w = __max(minX - maxX + 1, 0);
-							float h = __max(minY - maxY + 1, 0);
+							// 审计修复 2026-10-06（附录 IJ.2）：交集原来用「含端点」口径（`+ 1`），
+							// 而 `area` 的**所有**生产点用的都是不带 +1 的口径（本文件 :198/:232/:266，
+							// 以及 MTCNN 侧 `bbox.area = (row2-row1)*(col2-col1)` 那 6 处）。
+							// 两套口径混在同一个分母里，IoU 本身就不成立：
+							//   12x12 的框（pnet cellsize）：144+144-169 = 119 -> IoU = 1.42
+							//       **大于 1**，超过任何阈值，抑制行为完全失真；
+							//   1x1 退化框：1+1-4 = -2 -> IoU = -2 -> `> threshold` 恒假
+							//       -> **永远不被抑制**；
+							//   3x2：6+6-12 = 0 -> **除零** -> +inf -> 误抑制一切。
+							// 「Min」模式更直接：`IOU / __min(area1, area2)`，零面积框
+							// （R-net / O-net 走的就是 Min）除零得 +inf，`inf > threshold` 恒真
+							// -> **一个零面积框抑制掉所有框**。
+							// 现在交集与面积统一到「不带 +1」，分母再兜一次底。
+							// 面积**就地重算**而不是直接用 `area` 字段：调用方传的 area 可能为 0 或负
+							// （退化框、上一阶段写的值），而这里要拿它做除数；重算还顺带修掉
+							// 「先改坐标后忘改 area」这一类不同步。
+							// 对照物：同文件 `JaccardOverlap`（:710-736）**内部是自洽的** ——
+							// 它的交集和 BBoxSize 用同一个 normalized 开关。只有 `_nms` 跨了两套。
+							float w = __max(minX - maxX, 0);
+							float h = __max(minY - maxY, 0);
 							float IOU = w * h;
-							float area1 = boundingBox[num].area;
-							float area2 = boundingBox[order].area;
+							float dh1 = (float)boundingBox[num].row2 - (float)boundingBox[num].row1;
+							float dw1 = (float)boundingBox[num].col2 - (float)boundingBox[num].col1;
+							float dh2 = (float)boundingBox[order].row2 - (float)boundingBox[order].row1;
+							float dw2 = (float)boundingBox[order].col2 - (float)boundingBox[order].col1;
+							if (dh1 < 0) dh1 = 0;
+							if (dw1 < 0) dw1 = 0;
+							if (dh2 < 0) dh2 = 0;
+							if (dw2 < 0) dw2 = 0;
+							float area1 = dh1 * dw1;
+							float area2 = dh2 * dw2;
 							if (!modelname.compare("Union"))
-								IOU = IOU / (area1 + area2 - IOU);
+							{
+								float denom = area1 + area2 - IOU;   // 并集面积
+								IOU = (denom > 0) ? (IOU / denom) : 0;
+							}
 							else if (!modelname.compare("Min"))
 							{
-								IOU = IOU / __min(area1, area2);
+								float denom = __min(area1, area2);
+								IOU = (denom > 0) ? (IOU / denom) : 0;
 							}
 							if (IOU > overlap_threshold)
 							{
@@ -104,16 +142,46 @@ namespace ZQ
 							float maxY = (float)__max(boundingBox[num].row1, boundingBox[order].row1);
 							float minX = (float)__min(boundingBox[num].col2, boundingBox[order].col2);
 							float minY = (float)__min(boundingBox[num].row2, boundingBox[order].row2);
-							float w = __max(minX - maxX + 1, 0);
-							float h = __max(minY - maxY + 1, 0);
+							// 审计修复 2026-10-06（附录 IJ.2）：交集原来用「含端点」口径（`+ 1`），
+							// 而 `area` 的**所有**生产点用的都是不带 +1 的口径（本文件 :198/:232/:266，
+							// 以及 MTCNN 侧 `bbox.area = (row2-row1)*(col2-col1)` 那 6 处）。
+							// 两套口径混在同一个分母里，IoU 本身就不成立：
+							//   12x12 的框（pnet cellsize）：144+144-169 = 119 -> IoU = 1.42
+							//       **大于 1**，超过任何阈值，抑制行为完全失真；
+							//   1x1 退化框：1+1-4 = -2 -> IoU = -2 -> `> threshold` 恒假
+							//       -> **永远不被抑制**；
+							//   3x2：6+6-12 = 0 -> **除零** -> +inf -> 误抑制一切。
+							// 「Min」模式更直接：`IOU / __min(area1, area2)`，零面积框
+							// （R-net / O-net 走的就是 Min）除零得 +inf，`inf > threshold` 恒真
+							// -> **一个零面积框抑制掉所有框**。
+							// 现在交集与面积统一到「不带 +1」，分母再兜一次底。
+							// 面积**就地重算**而不是直接用 `area` 字段：调用方传的 area 可能为 0 或负
+							// （退化框、上一阶段写的值），而这里要拿它做除数；重算还顺带修掉
+							// 「先改坐标后忘改 area」这一类不同步。
+							// 对照物：同文件 `JaccardOverlap`（:710-736）**内部是自洽的** ——
+							// 它的交集和 BBoxSize 用同一个 normalized 开关。只有 `_nms` 跨了两套。
+							float w = __max(minX - maxX, 0);
+							float h = __max(minY - maxY, 0);
 							float IOU = w * h;
-							float area1 = boundingBox[num].area;
-							float area2 = boundingBox[order].area;
+							float dh1 = (float)boundingBox[num].row2 - (float)boundingBox[num].row1;
+							float dw1 = (float)boundingBox[num].col2 - (float)boundingBox[num].col1;
+							float dh2 = (float)boundingBox[order].row2 - (float)boundingBox[order].row1;
+							float dw2 = (float)boundingBox[order].col2 - (float)boundingBox[order].col1;
+							if (dh1 < 0) dh1 = 0;
+							if (dw1 < 0) dw1 = 0;
+							if (dh2 < 0) dh2 = 0;
+							if (dw2 < 0) dw2 = 0;
+							float area1 = dh1 * dw1;
+							float area2 = dh2 * dw2;
 							if (!modelname.compare("Union"))
-								IOU = IOU / (area1 + area2 - IOU);
+							{
+								float denom = area1 + area2 - IOU;   // 并集面积
+								IOU = (denom > 0) ? (IOU / denom) : 0;
+							}
 							else if (!modelname.compare("Min"))
 							{
-								IOU = IOU / __min(area1, area2);
+								float denom = __min(area1, area2);
+								IOU = (denom > 0) ? (IOU / denom) : 0;
 							}
 							if (IOU > overlap_threshold)
 							{
@@ -195,7 +263,11 @@ namespace ZQ
 					if ((*it).row2 > height)(*it).row2 = height - 1;
 					if ((*it).col2 > width)(*it).col2 = width - 1;*/
 
-					it->area = (float)(it->row2 - it->row1)*(it->col2 - it->col1);
+					// 审计修复 2026-10-06（附录 IJ.4）：原来写的是 `(float)(row2 - row1)` ——
+					// 减法在 **int** 里先算完再转 float，|row2-row1| 超过 2^31 就是
+					// signed overflow UB（编译器可以假设永不溢出从而删掉后面的检查）。
+					// 先拓宽再相减，数值等价。
+					it->area = ((float)it->row2 - (float)it->row1) * ((float)it->col2 - (float)it->col1);
 				}
 			}
 		}
@@ -229,7 +301,11 @@ namespace ZQ
 					if ((*it).row2 > height)(*it).row2 = height - 1;
 					if ((*it).col2 > width)(*it).col2 = width - 1;*/
 
-					it->area = (float)(it->row2 - it->row1)*(it->col2 - it->col1);
+					// 审计修复 2026-10-06（附录 IJ.4）：原来写的是 `(float)(row2 - row1)` ——
+					// 减法在 **int** 里先算完再转 float，|row2-row1| 超过 2^31 就是
+					// signed overflow UB（编译器可以假设永不溢出从而删掉后面的检查）。
+					// 先拓宽再相减，数值等价。
+					it->area = ((float)it->row2 - (float)it->row1) * ((float)it->col2 - (float)it->col1);
 				}
 			}
 		}
@@ -263,7 +339,11 @@ namespace ZQ
 					if ((*it).row2 > height)(*it).row2 = height - 1;
 					if ((*it).col2 > width)(*it).col2 = width - 1;*/
 
-					it->area = (float)(it->row2 - it->row1)*(it->col2 - it->col1);
+					// 审计修复 2026-10-06（附录 IJ.4）：原来写的是 `(float)(row2 - row1)` ——
+					// 减法在 **int** 里先算完再转 float，|row2-row1| 超过 2^31 就是
+					// signed overflow UB（编译器可以假设永不溢出从而删掉后面的检查）。
+					// 先拓宽再相减，数值等价。
+					it->area = ((float)it->row2 - (float)it->row1) * ((float)it->col2 - (float)it->col1);
 				}
 			}
 		}
@@ -290,10 +370,17 @@ namespace ZQ
 						// Ignore background class.
 						continue;
 					}
-					if (all_loc_preds[i].find(label) == all_loc_preds[i].end()) 
+					if (all_loc_preds[i].find(label) == all_loc_preds[i].end())
 					{
-						// Something bad happened if there are no predictions for current label.
-						//LOG(FATAL) << "Could not find location predictions for label " << label;
+						// 审计修复 2026-10-06（附录 IJ.5）：原来这个 if 判了之后**什么也不做**，
+						// 紧接着下一行照样 `find(label)->second` 解引用 `end()` —— std::map 的
+						// end() 解引用是 UB。这层保护是**假的**：它唯一的作用是让读代码的人
+						// 以为这里被守住了。
+						// 当前不可达（GetLocPredictions 用**同一个公式** `label = share_location ? -1 : c`
+						// 取键，键集合必然一致），但一旦有人改了那边的键集合、或加了新的 continue
+						// 分支，就立刻变 UB。改成 `continue`，跳过这一类而不是解引用 end()。
+						// 同仓 `ZQ_CNN_Forward_SSEUtils.cpp:5111` 的对应位置早就是这么写的。
+						continue;
 					}
 					const std::vector<ZQ_CNN_NormalizedBBox>& label_loc_preds =	all_loc_preds[i].find(label)->second;
 					if (!DecodeBBoxes(prior_bboxes, prior_variances,
@@ -757,3 +844,4 @@ namespace ZQ
 	};
 }
 #endif
+

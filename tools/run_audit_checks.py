@@ -148,6 +148,22 @@ GROUPS = [
      ['check_mtcnn_setpara.py', '--selfcheck'], False),
     ('A24 "MTCNN SetPara / 多线程索引一致性" 普查 (check_mtcnn_setpara)',
      ['check_mtcnn_setpara.py'], False),
+    # A25/A26 是附录 IJ 的门禁。`ZQCNN/ZQ_CNN_BBoxUtils.h`（759 行）是
+    # MTCNN / CascadeOnet / SSD / MXNET-SSD **四条检测线共用的**几何底座，
+    # 此前**零行为门禁**，而输入是「网络输出 + 模型文件」，两者都不可信。
+    # 这一轮挖出六条，其中三条**不需要跑就能从公式推出矛盾**：
+    #   · `_detection_output`（SSD 主路径）从不把 `num_priors` 和三个 blob 的长度对账，
+    #     而 num_priors 来自 Layer 从 conf 的 H 推出来的**另一个张量**，
+    #     Layer 只校验了 loc 的 C 和 conf 的 C、**没校验 prior 的 C** ——
+    #     GetPriorBBoxes 要读 8*num_priors 就是堆越界**读**。
+    #     铁证：同一份文件的 `_detection_output_MXNET` 早就有完整守卫。
+    #   · `_nms` 的 IoU 混用两套面积口径（交集 +1、area 不带 +1），
+    #     12x12 的框算出 **1.42**（>1）、1x1 算出 **-2**（永不抑制）、3x2 分母 **0**（除零）。
+    #   · `it->area = (float)(row2 - row1)` 的减法在 int 里先算完再转 float，溢出是 UB。
+    ('A25 "BBoxUtils NMS / 解码契约" 自测 (check_bbox_nms --selfcheck)',
+     ['check_bbox_nms.py', '--selfcheck'], False),
+    ('A26 "BBoxUtils NMS / 解码契约" 普查 (check_bbox_nms)',
+     ['check_bbox_nms.py'], False),
     ('B  ZQlib 独立回归测试 x10 (ASan+LSan)', ['run_zqlib_checks.py'], False),
     # 基线路径给**绝对路径**：子进程以 ROOT 为 cwd 运行，而基线文件在 tools/ 下，
     # 相对路径会解析成 <ROOT>/zqlib_probe_baseline.txt 而找不到（2026-10-02 实测）。

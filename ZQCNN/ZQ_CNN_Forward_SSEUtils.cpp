@@ -5059,6 +5059,43 @@ bool ZQ_CNN_Forward_SSEUtils::_detection_output(const ZQ_CNN_Tensor4D& loc, cons
 	int prior_len = prior.GetN() * prior.GetH() * prior.GetW() * prior.GetC();
 	if (loc_len <= 0 || conf_len <= 0 || prior_len <= 0)
 		return false;
+	// 审计修复 2026-10-06（附录 IJ.1）：原来只有上面那一句 `len <= 0`。
+	// 但 `num_priors` 是**另一个来源**（`ZQ_CNN_Layer.h` 里从 conf 的 H 推出来，
+	// `int num_priors = (*bottoms)[2]->GetH() / 4;`），它和这三个 blob 的实际长度
+	// 之间**从来没有对过账** —— Layer 那边只校验了 loc 的 C 和 conf 的 C，
+	// **没校验 prior 自己的 C**。
+	//
+	// 而下面三个函数全都按 `num_priors` 走，而且**都只拿到一个裸 `const float*`**，
+	// 函数内部无从知道缓冲区有多长：
+	//   GetLocPredictions    读 `num * num_priors * num_loc_classes * 4`
+	//   GetConfidenceScores  读 `num * num_priors * num_classes`
+	//   GetPriorBBoxes       读 **`8 * num_priors`**（前一半 bbox、后一半 variance）
+	//
+	// 触发条件：prior blob 的 `C < 2`。取 `prior=[1,4k,1,1]`、`loc=[1,1,1,4k]`、
+	// `conf=[1,1,1,k]`、`share_location=1`、`num_classes=1`（都是
+	// `ZQ_CNN_Layer_DetectionOutput` 构造函数的默认值）就能穿过 Layer 的全部检查，
+	// 此时 `prior_len = 4*num_priors` 而 `GetPriorBBoxes` 要读 `8*num_priors`
+	// —— **堆越界读**。张量形状来自 `.zqparams` + `.nchwbin`，属不可信模型文件。
+	//
+	// 守卫**直接照抄**同文件 `_detection_output_MXNET`（:5270-5282）里早就写好的那一份：
+	// 同一份文件的两条 DetectionOutput 路径，一条有、一条没有，
+	// 这正是「同仓两份实现互为对照」能一眼认出的笔误。
+	//
+	// 注意这里比 MXNET 那份多两条：MXNET 的 per-anchor 循环只读 `i*4..i*4+3`，
+	// 所以 `needed = num_anchors*4` 就够；本路径的 GetPriorBBoxes 要读**两半**，
+	// 因此 prior 那一项必须是 `num_priors*4*2`。
+	{
+		const long long needed_anchor = (long long)num_priors * 4LL;
+		if (num_priors <= 0 || num_classes <= 0 || num_loc_classes <= 0
+			|| (long long)loc_len < (long long)num * needed_anchor * num_loc_classes
+			|| (long long)conf_len < (long long)num * num_priors * num_classes
+			|| (long long)prior_len < needed_anchor * 2LL)   // bbox + variance 两半
+		{
+			printf("loc/prior/conf blob sizes do not match num_priors=%d, num_classes=%d, num_loc_classes=%d\n",
+				num_priors, num_classes, num_loc_classes);
+			return false;
+		}
+	}
 	std::vector<float> loc_data(loc_len);
 	std::vector<float> conf_data(conf_len);
 	std::vector<float> prior_data(prior_len);
@@ -5067,7 +5104,18 @@ bool ZQ_CNN_Forward_SSEUtils::_detection_output(const ZQ_CNN_Tensor4D& loc, cons
 	prior.ConvertToCompactNCHW(&prior_data[0]);
 	// Retrieve all location predictions.
 	std::vector<ZQ_CNN_LabelBBox> all_loc_preds;
-	ZQ_CNN_BBoxUtils::GetLocPredictions(&loc_data[0], num, num_priors, num_loc_classes, share_location, &all_loc_preds);
+	// 审计修复 2026-10-06（附录 IJ.6）：返回值原来被丢弃。
+	// GetLocPredictions 在 `share_location && num_loc_classes != 1` 时
+	// **先 return false 且不执行 `loc_preds->resize(num)`**（只做了前面的 clear()），
+	// 于是 all_loc_preds 是空的。
+	// 目前不炸，唯一原因是下游 DecodeBBoxesAll 的 `all_loc_preds.size() != num`
+	// 恰好把它挡住了 —— 属于「靠二阶守卫兜住一阶缺陷」。
+	if (!ZQ_CNN_BBoxUtils::GetLocPredictions(&loc_data[0], num, num_priors, num_loc_classes, share_location, &all_loc_preds))
+	{
+		printf("GetLocPredictions failed (share_location=%d, num_loc_classes=%d)\n",
+			share_location ? 1 : 0, num_loc_classes);
+		return false;
+	}
 
 	// Retrieve all confidences.
 	std::vector<std::map<int, std::vector<float> > > all_conf_scores;

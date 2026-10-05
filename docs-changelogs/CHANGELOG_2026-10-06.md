@@ -888,3 +888,120 @@ A42 有 `_select` 的地方必须按分数选、不得有 `bbox.resize(limit_num
 - `ZQ_CNN_MTCNN_AspectRatio.h` **没有 lnet 成员**（它走 xhalf/yhalf 三族分派），
   所以它的 `TurnOn/TurnOffShowDebugInfo()` 只传播 pnet/rnet/onet。
   这是 `-fsyntax-only` 抓到的（第一版照抄了四份里的写法，它多写了 lnet 那一行）。
+
+
+## 追加：附录 IJ —— BBoxUtils NMS / SSD 解码契约（六个缺陷，含一个可达的堆越界读）
+
+### 范围
+
+`ZQCNN/ZQ_CNN_BBoxUtils.h`（759 行）是 **MTCNN / CascadeOnet / SSD / MXNET-SSD
+四条检测线共用的**几何底座：`_nms`、`_refine_and_square_bbox`、`DecodeBBoxes*`、
+`GetPriorBBoxes`、`JaccardOverlap` 都在这里。它此前**零行为门禁**，
+而输入是「网络输出 + 模型文件」，两者都不可信。
+
+### 查到的真缺陷
+
+| 编号 | 位置 | 缺陷 | 修法 |
+| --- | --- | --- | --- |
+| IJ.1 | `ZQ_CNN_Forward_SSEUtils.cpp` `_detection_output`（SSD 主路径） | 只判 `len <= 0`，**从不把 `num_priors` 和三个 blob 的实际长度对账**。`num_priors` 来自**另一个张量**（Layer 里从 conf 的 H 推出来），而 Layer 只校验了 loc 的 C 和 conf 的 C，**没校验 prior 的 C**。`GetPriorBBoxes` 要读 `8*num_priors`，`prior_len` 只有 `4*num_priors` 时就是**堆越界读** | 照抄同文件 `_detection_output_MXNET` 里早就写好的守卫；prior 那项是 `num_priors*4*2`（bbox + variance 两半） |
+| IJ.2 | `ZQ_CNN_BBoxUtils.h` `_nms`（单线程 + 并行两支） | IoU **混用两套面积约定**：交集用「含端点」（`+1`），而 `area` 的**所有**生产点都是「不含 +1」。同一个分母里两套口径 => IoU 本身不成立：12x12 算出 **1.42**（>1）、1x1 退化框算出 **-2**（`> threshold` 恒假 -> **永远不被抑制**）、3x2 分母 **0**（除零 -> +inf -> 误抑制一切）。「Min」模式更直接：`IOU / __min(area1, area2)`，零面积框除零得 +inf，而 **R-net / O-net 走的就是 Min** -> 一个零面积框抑制掉所有框 | 交集与面积统一到「不带 +1」，面积**就地重算**（不再直接用 `area` 字段做除数），分母再兜一次底 |
+| IJ.3 | 同上 | `order`（来自**外部传入**的 `oriOrder`）只挡 `order < 0`，**不挡上界**。越界时 `boundingBox[order].exist = false` 越界**写**、`boundingBox[order].col1` 越界**读**。而 `ZQ_CNN_OrderScore` 的默认构造是 memset 到 0 —— **「漏填」会静默指向 0 号框**而不是报错 | 补 `order >= (int)boundingBox.size()` |
+| IJ.4 | `BBoxUtils.h` 3 处 + MTCNN 25 处 | `it->area = (float)(row2 - row1) * (col2 - col1)` —— 减法在 **int** 里先算完再转 float，`|row2-row1| > 2^31` 就是 signed overflow UB（编译器可以假设永不溢出从而**删掉后面的检查**） | 先拓宽再相减，数值等价 |
+| IJ.5 | `BBoxUtils.h` `DecodeBBoxesAll` | `if (find(label) == end()) { /*LOG(FATAL)*/ }` —— 判了**什么也不做**，下一行照样 `find(label)->second` 解引用 `end()`（UB）。这层保护**是假的**，唯一作用是让读代码的人以为这里被守住了 | 改成 `continue`（同仓 `Forward_SSEUtils.cpp:5111` 早就是这么写的） |
+| IJ.6 | `Forward_SSEUtils.cpp` 调用点 | `GetLocPredictions` 的返回值被丢弃。它在 `share_location && num_loc_classes != 1` 时 return false 且**不 resize**，目前靠下游 `all_loc_preds.size() != num` 这个**二阶守卫**兜住 | 加返回值检查 |
+
+### 判定为笔误（而非取舍）的证据
+
+- **IJ.1**：同一份文件的两条 DetectionOutput 路径，`_detection_output_MXNET`
+  早就有完整的 `num_anchors*4` 对账守卫（`Forward_SSEUtils.cpp:5270-5282`），
+  主路径一条没有。
+- **IJ.2**：同文件的 `JaccardOverlap`（`:710-736`）**内部是自洽的** ——
+  它的交集和 `BBoxSize` 用同一个 `normalized` 开关。只有 `_nms` 跨了两套。
+- **IJ.5**：`Forward_SSEUtils.cpp:5111` 的对应位置早就是 `continue`。
+
+### A/B 对拍：**检测输出确实变了，这是预期的**
+
+改之前先抓了基线（`/tmp/base_before/` + MTCNN 的 v8 输出），改之后：
+
+    SampleSSD                  IDENTICAL
+    SampleCascadeOnet          IDENTICAL
+    SampleCascadeOnet_Interface IDENTICAL
+
+    SampleMTCNN            first stage 45->51,  nms (159-->24) 变 (159-->27)
+    SampleMTCNN_NCHWC4     nms (92-->11) 变 (92-->12),  (45-->5) 变 (45-->6)
+    SampleMTCNN_Interface  final found num: 11 -> 12
+    SampleMTCNNLoadFromCode  first stage 2002->1964,  after nms 230 -> 238
+
+方向是**双向**的，不是单调变化 —— 这符合分析：旧公式在框够大时 IoU **偏大**（过抑制），
+在退化框时 IoU **为负**（永不抑制），两个方向的错都存在。
+
+**必须说清楚的事**：这里**没有 ground truth**，我不能声称「检测更准了」。
+能说的是：① 旧公式可证明是错的（IoU>1、IoU<0、除零三种都能从公式直接推出）；
+② 修完之后与同文件 `JaccardOverlap` 的约定一致；③ SSD / CascadeOnet 两条线**逐字节不变**，
+说明这次改动只作用在 MTCNN 真正踩到退化框的那部分路径上。
+**如果要用真值评估，得另接 LFW/WIDER 之类的标注集**，本仓没有。
+
+### 口径选择是一个显式取舍
+
+canonical MTCNN（`detect_face.py` / `nms.py`）用的是**含端点**口径：
+`area = (x2-x1+1)*(y2-y1+1)`，交集也带 `+1` —— 两边都含端点，也是自洽的。
+本轮选的是**不带端点**（连续坐标）这一套。
+理由：① 改 `_nms` 一个函数的 blast radius 最小；
+② `area` 字段有 28 个生产点、3 个读取点，动它牵连面大得多；
+③ 两种口径**都自洽**，差别只在 1 像素的边界效应。
+**这一点写下来是为了将来有人要切到 canonical 口径时知道该动哪里**：
+要切就得把 28 个 `area` 生产点一起改成 `+1`，不能只改 `_nms` 一处。
+
+### 门禁：新增 `tools/check_bbox_nms.py`（A25/A26，6 条规则，自测 12 例）
+
+A1 `_nms` 的交集不得是 `+1` 口径、面积必须就地重算、分母必须兜底；
+A2 `area` 不得出现 `(float)(row2 - row1)` 形态；
+A3 `order` 必须有上界守卫；
+A4 `find/end` 的分支体里必须有 `continue`；
+A5 `_detection_output` 的三项长度对账（loc / conf / prior*2）必须齐全；
+A6 `GetLocPredictions` 返回值必须检查。
+
+### 踩到的坑（三次，同一根因：判据写出来但**扫不到**）
+
+1. **A5 的 `num_priors` 守卫形态写错**：写成找 `num_priors > 0`，
+   而源码里从来没有这种写法（守卫是 `num_priors <= 0` 就拒）——
+   这条判据**恒假**、等于没判。
+2. **A6 的正则忘了 `re.M`**：`^` 不加 MULTILINE 只匹配整个字符串开头，
+   而调用点在文件中间，于是又一条**恒假**的判据。
+   「扫不到」和「没问题」在报告里长得一模一样 —— 这是本会话第三次栽在这上面。
+3. **A4 用正则匹配分支体失败**：`\{[^{}]*?\}` 分不出「判了 + continue」和
+   「判了但什么都不做」—— **合格**样本里那个体里正好有 `continue;`，
+   `}` 后面照样跟着 `find(label)->second`，于是合格样本被报成不合格。
+   改成把分支体**取出来**（配对花括号）看里面有没有 `continue`。
+
+另外这一轮又犯了**「不适用」当「不满足」**：A1~A4 最初是无条件判定，
+于是「只含 `_nms` 的自测样本」被判成「也缺 find/end 守卫」。
+四条规则都补上了前置条件（该构造在本文件里到底存不存在）。
+这是本会话第二次犯（第一次是 A31）。
+
+### 实测
+
+    python tools/check_bbox_nms.py --selfcheck -> 12 cases, all as expected（RC=0）
+    python tools/check_bbox_nms.py             -> 6 文件全 OK（RC=0）
+    变异测试：逐条破坏 A1/A2/A3/A5/A6 -> 门禁**五条全部抓到**并点名
+    python tools/check_mtcnn_setpara.py --selfcheck -> 22 cases, all as expected（RC=0）
+    Linux -fsyntax-only（BBoxUtils / Forward_SSEUtils / 四个 MTCNN 头）-> RC=0
+    cmake --build build_x64 --config Release -> RC=0，0 error
+    WSL make -j8 七个 sample -> 无 error
+    python tools/check_text_encoding.py -> OK: 764 text files, all strict UTF-8, no U+FFFD
+    python tools/check_line_endings.py  -> line endings OK
+
+### 注意事项
+
+- **这是本会话唯一一个「检测输出会变」的修复。** SSD / CascadeOnet 两条线不变，
+  MTCNN 四条 sample 的框数有小幅双向变化。详见上面「A/B 对拍」一节 ——
+  要评估准确率变化需要标注集，本仓没有，别凭框数下结论。
+- IJ.4 的 MTCNN 侧改动只把 int 减法换成 float 减法，**数值完全等价**，
+  它不是上面检测数变化的原因。
+- `ZQCNN_to_MNN/converter/source/ZQ_CNN_BBoxUtils.h` 是**第二份拷贝**（728 行，比主文件旧）：
+  `_nms` 连 `thread_num` 形参都没有，因此也没有 2026-10-01 那轮的 OpenMP 修复；
+  IJ.2 / IJ.4 / IJ.3 在它上面**逐条都在**。
+  `ZQ_CNN_VideoFaceDetection_Interface.h:369-449` 还有**第三份** `_nms`（BBox106 版），
+  `:384-388` 那个「`maxX` 既是 max-col 又被改写成交集宽」的复用也是主文件早修掉的形状。
+  **这两份本轮没有同步** —— 它们各自有独立的调用链，同步要连各自的 sample 一起验，
+  放到下一轮单独做，并在那轮补基线。
