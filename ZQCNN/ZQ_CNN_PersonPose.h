@@ -5,6 +5,11 @@
 #include "ZQ_CNN_Net.h"
 #include <vector>
 #include <iostream>
+// 审计修复 2026-10-06（附录 IM.2）：下面用了 FLT_MAX 而没有 include <cfloat>。
+// 随仓的 sample 恰好在别处间接 include 了 <float.h>/<cfloat>，所以一直编得过；
+// 单独编这个头就报 'FLT_MAX' was not declared in this scope。
+// （与 IM.1 是同一族：用到的宏/类型必须自己 include 它的定义。）
+#include <cfloat>
 
 namespace ZQ
 {

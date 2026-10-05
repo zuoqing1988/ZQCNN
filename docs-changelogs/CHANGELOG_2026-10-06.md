@@ -1252,3 +1252,59 @@ lambda 形式下 ``（缩进反向引用）**不会展开**，文件里留下�
 - 本轮**没有**修那 5 个不自包含的头。理由：它们缺的东西在主工程里是被别的头的
   include 顺序**顺手**补上的，要判断「正确的修法是补哪个 include」得看每个头的依赖链，
   而且改完必须编全量验（见上面 v66 那条教训）。留给下一轮单独做。
+
+
+## 追加：附录 IM.2 / IM.3 —— 自包含性门禁自己有两个 bug，真实缺陷只剩 2 个
+
+### 门禁的 bug 之一：`gcc | head -N` 让 gcc 收 SIGPIPE
+
+第一版门禁把编译写成 `g++ ... 2>&1 | head -4`，然后取 `${PIPESTATUS[0]}`。
+告警一多，`head` 先退出，**gcc 收到 SIGPIPE 以 141 退出** —— 而 PIPESTATUS[0] 拿到的
+正是这个 141。于是「告警很多的头」被**误判成「不是自包含的」**：
+`ZQ_CNN_MouthDetector.h` 和 `ZQ_FaceDatabaseMaker.h` 这两个**本来就自包含**的头就是这样被报成 FAIL 的。
+
+改成：先把全部输出落盘、取 `$?`、最后才 `head`。
+
+—— 这是本会话第 **7** 次「观测手段本身制造/销毁了信号」（CA.3 那条纪律的延续）。
+前六次是：假路径、假文件名、被跳过的基线、SIGPIPE 型 rc、恒假判据、压根没扫。
+共同点：**门禁红了不等于代码坏了，门禁绿了也不等于门禁扫到了东西**。
+
+### 门禁的 bug 之二：环境缺与「不自包含」混在一起报
+
+`ZQ_FaceDetectorLibFaceDetect.h` 缺的是 `facedetect-dll.h`（Windows-only 的第三方 SDK 头），
+`ZQ_FaceRecognizer*MiniCaffe.h` 缺的是 `caffe/caffe.hpp` —— 都是**本机 WSL 没装**，
+不是「用了某类型却没 include 它」。第一版把它们和真缺陷一起报成 FAIL，
+把「环境缺」和「代码缺」混成一类。现在单列 ENV 行、不判失败，但**照样打印出来**
+（避免「跳过」变成「藏起来」）。
+
+### 真实缺陷：2 个头用了 `FLT_MAX` 却没 include `<cfloat>`
+
+- `ZQCNN/ZQ_CNN_PersonPose.h:242`
+- `ZQCNN/ZQ_CNN_PersonPose2.h:566`
+
+`float max_weight = -FLT_MAX;`。随仓 sample 恰好在别处间接 include 了 `<cfloat>`，
+所以一直编得过；单独编就报 `'FLT_MAX' was not declared in this scope`。
+与 IM.1 同一族：**用到的宏/类型必须自己 include 它的定义**。
+
+### 首跑与修完的对照
+
+    第一版门禁首跑         : FAIL 20（含 2 个假阳性 + 15 个 -I 路径不全）
+    补 -I3rdparty/include/ZQlib : FAIL 5
+    修 SIGPIPE + 环境分类   : FAIL 2   <- 真实的两个
+    补 <cfloat>            : **OK 56 / ENV 3**
+
+### 实测
+
+    python tools/check_header_selfcontained.py --selfcheck -> selfcheck OK: 4 cases
+    python tools/check_header_selfcontained.py -> **自包含 OK 56 / 失败 0 / 环境缺 3**
+    cmake --build build_x64 --config Release（全量）-> RC=0，0 error
+    python tools/check_text_encoding.py -> OK: 765 text files, all strict UTF-8, no U+FFFD
+    python tools/check_line_endings.py  -> line endings OK
+
+### 注意事项
+
+- **现在 56 个头全部自包含**。ENV 的 3 个（facedetect-dll.h / caffe x2）本机编不过是环境问题；
+  它们在 Windows 上是能编的（`SampleFaceDetectorLibFaceDetect` 在主工程里），
+  但本机 WSL 没有对应的 SDK 头，**所以门禁没能在那一侧验过它们**。
+- 门禁每次跑 ~3 分钟（每个头一次 `wsl` 调用），已单独注册为 A27/A28，
+  没有并进更快的那几组。

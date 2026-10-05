@@ -97,6 +97,8 @@ def run_wsl(script):
 THIRD_PARTY_MARKERS = [
     'caffe/', 'ncnn/', 'ncnn.h', 'opencv2/', 'opencv.hpp', 'mkl.h', 'mkl_',
     'SeetaFace', 'seetaface', 'ZQlib/', 'cblas.h', 'lapacke.h',
+    # Windows-only 的第三方 SDK 头，本机 WSL 上不可能有
+    'facedetect-dll.h', 'caffe/', 'opencv2/',
 ]
 
 
@@ -122,10 +124,19 @@ def check_one(rel):
         + src.replace('\\', '\\\\') +
         'ZQEOT\n'
         'g++ -fsyntax-only -std=c++11 -mavx2 -mfma -fopenmp '
-        '-I$MNT -I$MNT/ZQCNN -I$MNT/ZQ_GEMM -I$MNT/ZQlibFaceID -I$MNT/3rdparty/include -I$MNT/3rdparty/include/ZQlib '
-        '/tmp/_zq_selfcontained.cpp 2>&1 | head -4\n'
-        'echo "__RC=${PIPESTATUS[0]}"\n'
+        '-I$MNT -I$MNT/ZQCNN -I$MNT/ZQ_GEMM -I$MNT/ZQlibFaceID '
+        '-I$MNT/3rdparty/include -I$MNT/3rdparty/include/ZQlib '
+        '/tmp/_zq_selfcontained.cpp > /tmp/_zq_sc.log 2>&1\n'
+        'echo "__RC=$?"\n'
+        'head -4 /tmp/_zq_sc.log\n'
     )
+    # 注意：**不能**写成 `gcc ... 2>&1 | head -N`。
+    # 告警一多，head 先退出，gcc 收到 SIGPIPE 以 **141** 退出，
+    # 而 PIPESTATUS[0] 拿到的正是这个 141 ——
+    # 于是「告警很多的头」被误判成「不是自包含的」。
+    # 实测 ZQ_CNN_MouthDetector.h / ZQ_FaceDatabaseMaker.h 两个**本来就自包含**的头
+    # 正是这样被报成 FAIL 的。
+    # 所以：先把全部输出落盘、再取 rc、最后才 head。
     out = run_wsl(script)
     m = re.search(r'__RC=(-?\d+)', out)
     if not m:
@@ -166,8 +177,9 @@ def selfcheck():
             "cat > /tmp/_zq_sc.cpp <<'ZQEOT'\n" + src + 'ZQEOT\n'
             'g++ -fsyntax-only -std=c++11 -I$MNT -I$MNT/ZQCNN -I$MNT/ZQ_GEMM '
             '-I$MNT/3rdparty/include -I$MNT/3rdparty/include/ZQlib '
-            '/tmp/_zq_sc.cpp 2>&1 | head -3\n'
-            'echo "__RC=${PIPESTATUS[0]}"\n'
+            '/tmp/_zq_sc.cpp > /tmp/_zq_sc.log 2>&1\n'
+            'echo "__RC=$?"\n'
+            'head -3 /tmp/_zq_sc.log\n'
         )
         out = run_wsl(script)
         m = re.search(r'__RC=(-?\d+)', out)
