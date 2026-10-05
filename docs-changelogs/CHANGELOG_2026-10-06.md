@@ -1492,3 +1492,31 @@ IO.4 `float center[2] = {...}` 的 braced-init 里不得有会触发 `-Wnarrowin
   那是下一轮的事。
 - IO.1 的统一化意味着「已确认干净」的那两处现在也**有**初值了。
   这不是把好代码改坏，是让「可以静态证明的性质」变多了一条。
+
+### 试过给零覆盖路径做运行时探针，**结论是这一轮不做**（记录理由，免得下一个人重复试）
+
+IO 那三条修复一次都没被跑到过，所以本轮尝试写一个 `MakeDatabase` 的运行时探针
+（替身 detector/recognizer，不加载任何模型，因此能进 ASan+LSan 常驻回归）。
+写完、编过、ASan 下跑起来之后才看清三件事：
+
+1. **Linux 上跑的分支，生产构建根本不链接。**
+   `_auto_detect_database` / `_make_database` 的图像遍历在 `#if defined(_WIN32)` / `#else`
+   两侧各一份，而 **10 个 include 此头的 sample 全部包在 `#if defined(_WIN32)` 里** ——
+   也就是说 Linux 探针验的是**没有生产调用方的那一份**。
+   要真正覆盖，得让 sample 里有一个 `MakeDatabase(` 调用方（在 Windows 侧跑），
+   或者把探针做成 Windows 的 —— 这是**设计取舍**，不是快修能解决的。
+2. **WSL 其实有完整 OpenCV 3.4.13**（`/usr/local/include` + `/usr/local/lib`），
+   所以不需要扩展那个 `tools/opencv_stub`（扩展了反而会让 IH 那道门禁用的桩变形）。
+   这一点纠正了我原先「WSL 没装 OpenCV」的判断 —— 那个判断来自
+   `check_header_selfcontained` 把缺 `caffe` / `facedetect-dll.h` 的头归到 ENV，
+   我顺势以为 OpenCV 也缺。**「A 被归到 ENV」不等于「B 也一样」**，
+   这跟 A39/A41 那些「有一处不等于每处都有」是同一族。
+3. **Linux 分支依赖 `ent->d_type == DT_REG`**（子代理记的 B5），
+   而 `/mnt/d` 这个 9p/DrvFs 挂载上 `d_type` 未必可靠 —— 探针的造数逻辑
+   会在「文件确实存在」与「代码认为它是普通文件」之间分叉。
+
+**所以**：探针文件已删除，`tools/` 下不留半成品。
+IO.1 / IO.2 / IO.4 的防线仍然只有源码门禁 A31/A32（4 条规则 + 7 例自测 + 变异测试全中）。
+**这一条本身就是已知缺口，写在这里是为了让下一个人知道缺口在哪、为什么现在不补。**
+补它的正确形态见上面第 1 点：给 sample 加一个 `MakeDatabase(` 调用方（Windows 侧），
+而不是在 Linux 上补一个验不到生产分支的探针。
