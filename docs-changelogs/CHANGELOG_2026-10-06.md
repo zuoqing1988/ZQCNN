@@ -1762,3 +1762,56 @@ x86 上 Convolution 的 packed 重载被 `#if __ARM_NEON` 包着不可达，
 | F6 | `ConvolutionPrePack` 对不认识的形状「返回 true 却不产出」 | x86 上整段被 `#if __ARM_NEON` 包住；ARM 上不打包的形状恰好在 packed 版里 `return false`，被 layer 的 fallback 兜住。属**契约弱化**不是缺陷 |
 
 这四条都写进报告了 —— 「查出来但没改」和「没查」必须能区分开（AGENTS.md 第 20 条）。
+
+
+## 追加：附录 IT.1 —— NCHWC 的 `ConvertFromBGR` / `ConvertFromGray` 不清 padding lane
+
+### 缺陷
+
+`ZQCNN/ZQ_CNN_Tensor4D_NCHWC.h` 的 `align_size >= 4` 分支（`ConvertFromBGR` :176、
+`ConvertFromGray` :235）**没有**清零，而 `align_size == 1` 分支有
+（`memset(rawData, 0, rawDataLen)`，:157 / :219），`Reset()` 也有。
+
+`ChangeSize`（`ZQ_CNN_Tensor4D_NCHWC.cpp:596-597`）在 N/H/W/C/border **全等**时
+直接 `return true`、**不清零**。于是这条路径会留住旧数据：
+
+    同一个 blob 先是 C=4（align=4，slice=ceil(4/4)=1，imageStep=sliceStep），
+    再被 ConvertFromBGR 改成 C=3（slice=ceil(3/4)=1，**imageStep 相同**）
+    -> rawDataLen == needed_dst_raw_len，既不重新分配也不清零，
+    **lane 3 留着上一个尺寸的旧数据**。
+
+Gray 更明显：C=1 时 align=4，**lane 1..3 全是 padding**，不留着就全是旧数据。
+
+### 影响面：只污染 padding lane，真实通道不受影响
+
+`zq_cnn_softmax_nchwc_raw.h` 用 `c < in_C - align` + 标量收尾，
+不会把 padding 算进 softmax。属「**脏但无害**」。
+
+之所以还是修：它会让 UBSan / 数值对拍出现**难以解释的差异** ——
+「同样的模型同样的输入，两次跑出来 lane 上的数不一样」这种问题最难查，
+而成本只是一次 memset。
+
+### A/B 对拍
+
+    SampleMTCNN_NCHWC4    IDENTICAL
+    SampleMTCNN           IDENTICAL
+    SampleMTCNN_Interface IDENTICAL
+
+符合预期：只清 padding lane，真实通道一个字节都没变。
+
+### 补这条时踩的坑
+
+第一版按 `if (!ChangeSize(1, _height, _width, 3, 1, 1))` 匹配，**匹配到 2 处** ——
+`align_size == 1` 那个分支里也有一模一样的一行（`ConvertFromBGR:155` / `ConvertFromGray:217`），
+而那两处**已经有 memset**。要是没核对就批量插，同一个函数里会出现两次 memset，
+而且我写的注释会指向错误的行号。
+
+改成「匹配到之后看**下一行是不是已经有 memset**，有就跳过」——
+这跟 IR.2 那次「没 bias 形参的两个 packed 重载不该加守卫」是同一类：
+**「该有的」与「不该有的」必须分开判**。
+
+### 实测
+
+    cmake --build build_x64 --config Release（全量）-> RC=0，0 error
+    WSL make -j8（全量）-> RC=0，0 error
+    A/B：三个 MTCNN sample 全部 IDENTICAL

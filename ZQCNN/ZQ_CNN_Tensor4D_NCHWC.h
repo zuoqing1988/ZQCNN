@@ -175,6 +175,19 @@ namespace ZQ
 			{
 				if (!ChangeSize(1, _height, _width, 3, 1, 1))
 					return false;
+				// 审计修复 2026-10-06（附录 IT.1）：这一段原来**没有**清零。
+				// `ChangeSize`（ZQ_CNN_Tensor4D_NCHWC.cpp:596-597）在 N/H/W/C/border **全等**时
+				// 直接 `return true`、**不清零**。于是这条路径会留住旧数据：
+				// 同一个 blob 先是 C=4（align=4，slice=ceil(4/4)=1，imageStep=sliceStep），
+				// 再被 `ConvertFromBGR` 改成 C=3（slice=ceil(3/4)=1，**imageStep 相同**）
+				// -> `rawDataLen == needed_dst_raw_len`，既不重新分配也不清零，
+				// **lane 3 留着上一个尺寸的旧数据**。
+				// 对照：同一个函数的 `align_size == 1` 分支有 memset（:157），`Reset()` 也有。
+				// 影响：只污染 padding lane，真实通道不受影响；
+				// `zq_cnn_softmax_nchwc_raw.h` 用 `c < in_C - align` + 标量收尾，
+				// 不会把 padding 算进 softmax。属「脏但无害」——
+				// 但它会让 UBSan / 数值对拍出现**难以解释的差异**，成本又只是一次 memset。
+				memset(rawData, 0, rawDataLen);
 				const unsigned char* bgr_row = BGR_img;
 				float* row_ptr = firstPixelData;
 				for (int h = 0; h < H; h++, row_ptr += widthStep, bgr_row += _widthStep)
@@ -234,6 +247,9 @@ namespace ZQ
 			{
 				if (!ChangeSize(1, _height, _width, 1, 1, 1))
 					return false;
+				// 审计修复 2026-10-06（附录 IT.1）：同上，Gray 分支也补 memset ——
+				// C=1 时 align=4，**lane 1..3 全是 padding**，不留着就全是旧数据。
+				memset(rawData, 0, rawDataLen);
 				const unsigned char* gray_row = gray_img;
 				float* row_ptr = firstPixelData;
 				for (int h = 0; h < H; h++, row_ptr += widthStep, gray_row += _widthStep)
