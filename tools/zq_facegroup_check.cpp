@@ -55,6 +55,10 @@ static const char* g_note[] = {
 
 enum {
     OP_RT_BOX = 0, OP_RT_NOBOX, OP_RT_EMPTY,
+    // num > 0 而 feat_dim == 0 —— **必须和 OP_RT_EMPTY 分开测**：
+    // OP_RT_EMPTY 是 num=0 且 dim=0，内层 `for (i = 0; i < num; i++)` 一次都不跑，
+    // 于是「dim == 0 但真有特征记录」这条路径**从来没被执行过**（附录 IF.1）。
+    OP_RT_DIMZERO,
     OP_BAD_FEATDIM_LO, OP_BAD_FEATDIM_HI, OP_BAD_FEATDIM_FAR,
     OP_BAD_NUM_LO, OP_BAD_NUM_HI, OP_BAD_NUM_FAR,
     OP_TRUNC_FEAT, OP_TRUNC_NUM,
@@ -142,12 +146,12 @@ static void run_case(int op)
     if (!f) { note = 1; bad++; }
     else
     {
-        if (op == OP_RT_BOX || op == OP_RT_NOBOX || op == OP_RT_EMPTY)
+        if (op == OP_RT_BOX || op == OP_RT_NOBOX || op == OP_RT_EMPTY || op == OP_RT_DIMZERO)
         {
             // 往返：写 -> 读 -> 逐字段比对
             const bool box = (op == OP_RT_BOX);
             const int nf = (op == OP_RT_EMPTY) ? 0 : 3;
-            const int dim = (op == OP_RT_EMPTY) ? 0 : 5;
+            const int dim = (op == OP_RT_EMPTY || op == OP_RT_DIMZERO) ? 0 : 5;
             ZQ_FaceGroup& src = box ? (ZQ_FaceGroup&)gb : (ZQ_FaceGroup&)gn;
             fill_group(src, nf, dim, box, 1);
             fclose(f);

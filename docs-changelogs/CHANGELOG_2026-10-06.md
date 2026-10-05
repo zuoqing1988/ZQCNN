@@ -346,3 +346,54 @@ n=0 空矩阵不崩 / 全零矩阵（奇异）不崩且输出有限值
     python tools/probe_zqlib_headers.py --check-baseline tools/zqlib_probe_baseline.txt
         OK: 128 -> 128 / 无回退、无新增   (rc=0)
     python tools/run_zqlib_checks.py rodrigues / calibration  -> 各 1/1 通过
+
+---
+
+## 新增/变更：IF —— ZQ_FaceGroup 的 feat_dim==0 走成 fread(nullptr,...)，既有门禁从未执行到那条路径
+
+### 变更文件
+
+* `ZQlibFaceID/ZQ_FaceGroup.h`（读、写两侧各加一处 `if (feat_dim > 0)`）
+* `tools/zq_facegroup_check.cpp`（新增 `OP_RT_DIMZERO` 用例，19 -> 20）
+
+### 缺陷
+
+守卫是 `feat_dim >= 0 && feat_dim < 65535`，**`feat_dim == 0` 被收下**；接着
+
+```cpp
+face_feats[i].ChangeSize(feat_dim);          // ChangeSize(0) 把 pData 置 0
+flag = (feat_dim == fread(face_feats[i].pData, sizeof(float), feat_dim, in));
+```
+
+于是 `fread(nullptr, 4, 0, in)`。UBSan 实测：
+
+    ZQlibFaceID/ZQ_FaceGroup.h: runtime error: null pointer passed as argument 1,
+    which is declared to never be null
+
+比 UB 本身更要紧的是**语义**：读回来的是一组**特征指针全为 0** 的记录，
+后面任何 `feat.pData[k]` 都是空指针解引用。`WriteToFile` 那一侧一模一样。
+
+### 为什么既有门禁没抓到
+
+`tools/zq_facegroup_check.cpp` 的 `OP_RT_EMPTY` 取的是 `num = 0` 且 `dim = 0` ——
+而内层 `for (int i = 0; i < num && flag; i++)` **一次都不跑**。
+于是「`dim == 0` 但**真有特征记录**」这条路径**从来没被执行过**。
+
+> 与 IW.2「判别形状落在退化形状上」同源：
+> **一个退化形状会把另一个退化形状整个盖住**，两个都在，就都看不见。
+
+### 修法（第一版改错了，记录一下）
+
+先试的是把守卫改成 `feat_dim > 0`（与同族 `ZQ_FaceDatabaseCompact` 的
+`dim <= 0 就拒` 对齐），**结果打破��有的空组往返用例** ——
+`OP_RT_EMPTY` 立刻变成「该收却拒了」。
+说明 `feat_dim == 0` **本身合法**（空组），要修的不是守卫而是**传输那一行**。
+
+最终：守卫保持 `>= 0`，读、写两侧各加 `if (feat_dim > 0)` 包住传输。
+`ZQ_FaceSearchTarget::LoadFromFile` 走同一个 `ZQ_FaceGroup::LoadFromFile`，一处覆盖两边。
+
+### 实测
+
+    python tools/run_zqlib_checks.py facegroup          -> PASS
+    python tools/run_zqlib_checks.py --ubsan facegroup  -> PASS（修前 runtime error）
+    用例数 19 -> 20（新增 OP_RT_DIMZERO：num=3 且 feat_dim=0）

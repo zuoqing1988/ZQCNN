@@ -26,6 +26,16 @@ namespace ZQ
 			if (flag)
 			{
 				flag = (1 == fread(&feat_dim, sizeof(int), 1, in));
+				// 审计修复 2026-10-06（附录 IF.1）：`feat_dim == 0` **仍然要收**
+				// （num = 0 的空组是合法的，既有门禁的 OP_RT_EMPTY 靠它往返），
+				// 但下面那两行必须显式跳过 0 维的情况：
+				//     fread(face_feats[i].pData, sizeof(float), feat_dim, in)
+				// `feat_dim == 0` 时 `ChangeSize(0)` 把 pData 置 0，
+				// 于是 `fread(nullptr, 4, 0, in)` —— UBSan 实测：
+				//     ZQ_FaceGroup.h: runtime error: null pointer passed as
+				//     argument 1, which is declared to never be null
+				// 更要紧的是：读回来的是一组**特征指针全为 0** 的记录，
+				// 后面任何 `feat.pData[k]` 都是空指针解引用。
 				flag = flag && feat_dim >= 0 && feat_dim < 65535;
 				if(!flag){
 					printf("feat_dim = %d\n", feat_dim);
@@ -53,11 +63,14 @@ namespace ZQ
 				for (int i = 0; i < num && flag; i++)
 				{
 					face_feats[i].ChangeSize(feat_dim);
-					flag = (feat_dim == fread(face_feats[i].pData, sizeof(float), feat_dim, in));
-					if (!flag)
+					if (feat_dim > 0)    // 0 维时 pData 是 0，不能传给 fread（见上）
 					{
-						printf("feat_dim = %d\n", feat_dim);
-						break;
+						flag = (feat_dim == fread(face_feats[i].pData, sizeof(float), feat_dim, in));
+						if (!flag)
+						{
+							printf("feat_dim = %d\n", feat_dim);
+							break;
+						}
 					}
 				}
 				if (flag && with_box)
@@ -112,9 +125,12 @@ namespace ZQ
 				flag = (1 == fwrite(&num, sizeof(int), 1, out));
 				for (int i = 0; i < num; i++)
 				{
-					flag = (feat_dim == fwrite(face_feats[i].pData, sizeof(float), feat_dim, out));
-					if (!flag)
-						break;
+					if (feat_dim > 0)    // 0 维时 pData 是 0，不能传给 fwrite（见上）
+					{
+						flag = (feat_dim == fwrite(face_feats[i].pData, sizeof(float), feat_dim, out));
+						if (!flag)
+							break;
+					}
 				}
 				if (flag && with_box)
 				{
