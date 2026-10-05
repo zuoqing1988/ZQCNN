@@ -214,6 +214,16 @@ GROUPS = [
      ['check_stmt_joins.py', '--selfcheck'], False),
     ('A36 "语句粘连" 普查 (check_stmt_joins)',
      ['check_stmt_joins.py'], False),
+    # A37/A38 是附录 IS 的门禁：NCHWC 检测线的**守卫一致性**。
+    # 这一族的**对齐契约是自洽的**（附录 IR 已推导），所以剩下的风险全在
+    # 「一份对 N 份错的守卫」上：6 个 pooling 的早退块缺无条件 return（stride==0 ->
+    # 整数 idiv 除零 SIGFPE）、packed 重载缺 filter_N != bias_C（内核满宽读 bias，
+    # 最后一组读过缓冲末尾）。注意「没有 bias 形参的那两个 packed 重载**不该**有那条守卫」
+    # —— 判据必须把「该有的」与「不该有的」分开，否则要么漏要么误报。
+    ('A37 "NCHWC 守卫一致性" 自测 (check_nchwc_guards --selfcheck)',
+     ['check_nchwc_guards.py', '--selfcheck'], False),
+    ('A38 "NCHWC 守卫一致性" 普查 (check_nchwc_guards)',
+     ['check_nchwc_guards.py'], False),
     ('B  ZQlib 独立回归测试 x10 (ASan+LSan)', ['run_zqlib_checks.py'], False),
     # 基线路径给**绝对路径**：子进程以 ROOT 为 cwd 运行，而基线文件在 tools/ 下，
     # 相对路径会解析成 <ROOT>/zqlib_probe_baseline.txt 而找不到（2026-10-02 实测）。
