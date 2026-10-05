@@ -1918,3 +1918,96 @@ NCHWC 的张量布局是 `[n][c][h][w]`：
 - 这两处都是**静默算错**：不越界、不崩、没有任何 sanitizer 会报。
   能抓住它们的只有「形状覆盖」和「源码门禁」两件事。
 - 新增门禁已进 `tools/run_audit_checks.py` 的 A 组，随每轮回归一起跑。
+
+---
+
+## 变更：附录 IV —— NCHWC「batch 维不变性」门禁（10 个 op 全绿的阴性结论 + 门禁自身两处洞）
+
+### 判据不是"和手写参考比"，而是一条不变式
+
+    out[n](N=2) 必须**逐位**等于「只把第 n 张图（N=1）单独送进同一个算子」的结果
+
+**不需要任何参考实现**：只要 `N=2` 且 `C` 不是 align 的整数倍，
+任何"batch 维步进写错"的错误都会让两侧不等。
+它测的是「图与图之间有没有互相串」，而这正是 IU.1 / IU.2 那类缺陷的全部内容。
+
+覆盖 10 个 NCHWC 算子 × {NCHWC1, NCHWC4, NCHWC8} × {C = A, C = A+2} × 2 轮
+= 120 个用例。两个 C 都跑，因为"只在有鉴别力的那档红"是这类缺陷的正常形态。
+
+### 实测：120 个用例，114 全对 / 0 有错 / 0 崩 / 6 契约不符跳过
+
+| 算子 | 结果 |
+|---|---|
+| ReLU / PReLU / AddBiasPReLU / BatchNorm_b_a | 12/12 全对 |
+| Softmax | 6/6 全对，**6 组 op 返回 false**（只支持部分 axis）→ 记「契约不符跳过」 |
+| MaxPooling / AVGPooling | 12/12 全对（IU.1 修完之后） |
+| Eltwise_Sum | 12/12 全对 |
+| DepthwiseConvolution | 12/12 全对 |
+| Convolution | 12/12 全对 |
+
+**这是一条阴性结论，但它把"IU.1/IU.2 是仅有的两处"从猜测变成了实测。**
+阴性结论也要落盘（AGENTS.md 第 23 条），否则下一个人会把同样的横扫重做一遍。
+
+### 探针自己栽了两次，两次都是"形状摆错"，不是被测代码的缺陷
+
+1. **filters 的形状摆错**。`DepthwiseConvolution` 的契约是
+   `filter_C == in_C && filter_N == 1`（`ZQ_CNN_Forward_SSEUtils_NCHWC.cpp:1130`），
+   我第一版摆成 `[N=C][H=kH][W=kW][C=1]`，于是 op 直接 `return false`，
+   而探针把「没跑完」报成**崩溃** —— 10/12 个"崩"全是探针的错。
+2. **输出张量按 `in_C` 开**。`Convolution` 的输出通道是 `filter_N` 不是 `in_C`，
+   `ConvertToCompactNCHW` 写出去的是 `filter_N` 个通道，
+   比对时越过实际写入的末尾、拿未初始化内存当结果，
+   于是报出「一张图全错、最大差 1.2e+01」—— **那是我探针的缓冲区开小了**。
+
+  > 两次都符合 AGENTS.md「没有证据就不要断言原因」：
+  > **"崩"和"错"必须分开报**，而"形状摆不下"是第三种成因，
+  > 混进崩溃桶里会把探针的 bug 说成库的缺陷。
+  > 探针现在有 `ST_REJECT` 状态码，父进程单列「契约不符跳过」这一栏。
+
+  顺带记一条**查过但不是缺陷**的：
+  GEMM 版卷积把 `matrix_A_cols = kH*kW*align_C` 当成 GEMM 的 `lda`，
+  我一度以为 `C % align != 0` 时 `align_C > C` 会让它读越界。
+  实际每个 filter 的真实步长是 `imageStep = ceil(C/align)*kH*kW*align`，
+  **与 `matrix_A_cols` 恒等**（`ceil(C/align)*align == align_C`），所以是对的。
+
+### 门禁 `check_imstep_guard.py` 自己也有两处洞，都是这一批抓出来的
+
+1. **裸 `im_ptr` 全漏**。规则写成 `[A-Za-z_][A-Za-z0-9_]*_im_ptr`，
+   而仓库里图像级指针有 **52 处**就叫裸的 `im_ptr`（eltwise / convolution_gemm 两族）。
+   改法：`\b((?:[A-Za-z_][A-Za-z0-9_]*_)?im_ptr)`，覆盖站点从 108 增到 132。
+   > 是靠 `grep -oE '\bim_ptr\b'` 数出 52，跟 `[A-Za-z0-9_]+_im_ptr` 的计数**对不上**
+   > 才发现的 —— **两个计数必须相加等于总量**（AGENTS.md「计数 + 标签」那条）。
+2. **`--root` 少拼一层目录，于是"扫了 0 个文件"却打出一行 OK**。
+   变异测试脚本先暴露了它。修法是 `--root` 明确指**仓库根**，
+   并给门禁加了**零文件即失败**的守卫：
+   真跑一次是 119 个，扫 0 个说明路径错了，而不是"代码干净了"
+   （AGENTS.md「荒谬的数字本身就是信号」）。
+
+### 变异测试改成**在副本上做**（不动工作区）
+
+`tools/_mut_imstep2.py`：把真实内核头复制到临时目录当 `ZQCNN/` 的替身，
+在副本上把 imStep 改回 sliceStep，验证门禁变红**并点名到行**，再恢复验证回绿。
+还原放在 `finally` 里（第一版脚本异常点在 finally 之前，
+**被变异的源文件留在磁盘上没还原**，紧接着那一次跑就在读半改的树）。
+
+    基线（副本）        RC=0   OK: 119 个内核源文件
+    变异 pooling        RC=1   点名 8 处（:33 :115 :183 :264 :345 :407 :473 :576）
+    变异 resize         RC=1   点名 2 处（:65 :168）
+    各自还原后          RC=0
+
+### 变更文件
+
+    tools/check_imstep_guard.py   规则放宽到裸 im_ptr、加 --root、加零文件守卫、
+                                  自测补到 5 正例 + 3 反例 + 1 不该报
+    tools/_batch_probe.cpp        batch 维不变性探针（10 个 op）— **尚未登记进回归**，
+                                  文件名刻意不叫 zq_*_check.cpp（见下）
+    tools/_mut_imstep2.py         副本式变异测试
+
+### 注意事项
+
+- **踩到 AGENTS.md 第 31 条（新写的那条）**：v68 正在跑 `run_zqlib_checks.py`，
+  而那个脚本第 921 行是 `glob('tools/zq_*_check.cpp')` ——
+  我新建的 `zq_nchwc_batch_check.cpp` **当场被当成一道新的检查项**，
+  又因为还没登记 EXTRA_SOURCES 而链接失败。
+  当时立刻把文件改名成 `_batch_probe.cpp`（glob 匹配不到）才没污染那一轮。
+  **探针跑通、验证过之后，再改名 + 登记进回归。**

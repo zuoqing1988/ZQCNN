@@ -48,12 +48,18 @@ SCAN_DIRS = [
     os.path.join(ROOT, "ZQ_GEMM", "math"),
 ]
 
-# `<prefix>_im_ptr += <expr>`  —— 只认 `+=`，因为这才是循环里的推进。
+# `<prefix>_im_ptr += <expr>` / 裸 `im_ptr += <expr>` —— 只认 `+=`，因为这才是循环里的推进。
+# **`_im_ptr` 前面的下划线不能当成必需**：仓库里 52 处图像级指针就叫裸的 `im_ptr`
+# （eltwise / convolution_gemm 两族），第一版写成 `[A-Za-z_][A-Za-z0-9_]*_im_ptr`
+# 就把这 52 处全部漏掉了 —— 而当时它们恰好都是对的，于是看不出缺口。
+# 是靠 `grep -oE '\bim_ptr\b'` 数出 52 处、跟 `[A-Za-z0-9_]+_im_ptr` 的计数对不上
+# 才发现的（**两个计数必须相加等于总量**，本文件「计数 + 标签」那条）。
+#
 # 结束符要同时接受 `;` 和 `)`：这些语句绝大多数出现在 **for 的第三个子句**里，
 # 以 `)` 收尾而不是 `;`。第一版只写了 `;`，于是整条规则**恒真** ——
-# 变异测试（tools/_mut_imstep.py）当场把它打出来，那才叫「门禁绿了 ≠ 门禁扫到了东西」。
+# 变异测试（把两个真实站点改回 sliceStep）当场把它打出来，那才叫「门禁绿了 ≠ 门禁扫到了东西」。
 IM_ADVANCE = re.compile(
-    r"\b([A-Za-z_][A-Za-z0-9_]*_im_ptr)\s*\+=\s*([^;)]+)[;)]")
+    r"\b((?:[A-Za-z_][A-Za-z0-9_]*_)?im_ptr)\s*\+=\s*([^;)]+)[;)]")
 
 # 步长表达式里出现 `<prefix>_sliceStep`（前缀与左边的 im_ptr 对不上也算，
 # 例如 in_im_ptr += out_sliceStep）
@@ -62,8 +68,28 @@ SLICE_STEP = re.compile(r"\b[A-Za-z_][A-Za-z0-9_]*_sliceStep\b")
 SKIP_EXT = (".o", ".obj", ".a", ".lib", ".so", ".dll", ".exe")
 
 
-def iter_files():
-    for d in SCAN_DIRS:
+def build_scan_dirs(root=None):
+    """扫描目录。`--root DIR` 时把 DIR 当成**仓库根**的替身，
+    用来做**变异测试**：把真实文件复制到临时目录、改坏、验证门禁变红，
+    而**不去动工作区里的生产文件**（回归跑着的时候改生产文件是本文件第 8 条）。
+
+    第一版把 `--root` 直接当成 ZQCNN/ 用，于是拼出 `<tmp>/layers_nchwc` ——
+    目录不存在、**扫了 0 个文件**，而输出是一行 "OK: 0 个内核源文件"。
+    看到 0 就该停下（本文件「荒谬的数字本身就是信号」）——
+    真的门禁扫 119 个文件，扫 0 个说明路径拼错了，而不是"代码干净了"。
+    """
+    base = os.path.join(root, "ZQCNN") if root else os.path.join(ROOT, "ZQCNN")
+    repo = os.path.dirname(base)
+    return [
+        os.path.join(base, "layers_nchwc"),
+        os.path.join(base, "layers_c"),
+        os.path.join(base, "math"),
+        os.path.join(repo, "ZQ_GEMM", "math"),
+    ]
+
+
+def iter_files(scan_dirs):
+    for d in scan_dirs:
         if not os.path.isdir(d):
             continue
         for dirpath, _dirnames, filenames in os.walk(d):
@@ -89,10 +115,14 @@ def selfcheck():
         "\t\tn++, in_im_ptr += in_imStep, out_im_ptr += out_imStep)\n",
         "\t\t\tn++, in_im_ptr += in_imStep)\n",
         "\tfor (...) n++, cur_im_ptr += out_imStep;\n",
+        # 裸 im_ptr：仓库里 52 处，第一版规则漏掉了这一族
+        "\t\t\tn++, im_ptr += in_imStep[tensor_id], out_im_ptr += out_imStep)\n",
+        "\t\t\tn++, im_ptr += filter_imStep, cp_dst_ptr += matrix_B_rows)\n",
     ]
     bad = [
         "\t\tn++, in_im_ptr += in_sliceStep, out_im_ptr += out_sliceStep)\n",
         "\t\t\tn++, in_im_ptr += in_sliceStep)\n",
+        "\t\t\tn++, im_ptr += in_sliceStep, out_im_ptr += out_sliceStep)\n",
     ]
     fail = 0
     for g in good:
@@ -114,18 +144,23 @@ def selfcheck():
     if fail:
         print("check_imstep_guard --selfcheck: %d 项不过" % fail)
         return 1
-    print("check_imstep_guard --selfcheck: OK（3 正例 + 2 反例 + 1 不该报）")
+    print("check_imstep_guard --selfcheck: OK（5 正例 + 3 反例 + 1 不该报）")
     return 0
 
 
 def main():
-    if len(sys.argv) > 1 and sys.argv[1] == "--selfcheck":
+    argv = sys.argv[1:]
+    if argv and argv[0] == "--selfcheck":
         return selfcheck()
+    root = None
+    if len(argv) >= 2 and argv[0] == "--root":
+        root = os.path.abspath(argv[1])
     hits = []
     scanned = 0
-    for path in iter_files():
+    base = os.path.join(root, "ZQCNN") if root else ROOT
+    for path in iter_files(build_scan_dirs(root)):
         scanned += 1
-        rel = os.path.relpath(path, ROOT).replace("\\", "/")
+        rel = os.path.relpath(path, base).replace("\\", "/")
         with open(path, "r", encoding="utf-8", errors="replace") as f:
             lines = f.readlines()
         # 先把 /* ... */ 注释整段抹掉，避免注释里的示例代码误报
@@ -158,6 +193,13 @@ def main():
         for rel, ln, var, expr in hits:
             print("  %s:%d  %s += %s" % (rel, ln, var, expr))
         print("  —— NCHWC 布局 [n][c][h][w]，n 方向必须用 *_imStep")
+        return 1
+    # 扫到 0 个文件时**判失败**而不是报 OK：`--root` 写错一层目录就会走到这里
+    # （2026-10-06 实测：拼成 <tmp>/layers_nchwc，于是"扫了 0 个文件"却打出一行 OK）。
+    # 本文件「荒谬的数字本身就是信号」—— 真跑一次是 119 个，0 说明路径错了。
+    if scanned == 0:
+        print("FAIL: 一个文件都没扫到 —— 路径拼错了，不是'代码干净了'")
+        print("  scan dirs: %s" % (build_scan_dirs(root),))
         return 1
     print("OK: %d 个内核源文件，batch 维指针步进无 sliceStep 冒充（附录 IU.1 / IU.2）"
           % scanned)
