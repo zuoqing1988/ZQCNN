@@ -2011,3 +2011,138 @@ NCHWC 的张量布局是 `[n][c][h][w]`：
   又因为还没登记 EXTRA_SOURCES 而链接失败。
   当时立刻把文件改名成 `_batch_probe.cpp`（glob 匹配不到）才没污染那一轮。
   **探针跑通、验证过之后，再改名 + 登记进回归。**
+
+---
+
+## 变更：附录 IV.1 —— NCHW `pad_type=SAME` 用 floor 而不是 ceil（220 个 live 层）
+
+### 缺陷
+
+`ZQCNN/ZQ_CNN_Layer.h` 里 `pad_type == TYPE_SAME` 的分支算 padding 时：
+
+```cpp
+int top_W = bottom_W / stride_W;     // 整数除法 = **向下取整**
+int top_H = bottom_H / stride_H;
+int pad_W = __max((top_W - 1)*stride_W + real_kernel_W - bottom_W, 0);
+```
+
+而 SAME 的定义（TF / Caffe / ONNX 三家一致）是
+
+```
+out     = ceil(in / stride)
+pad_tot = max((out-1)*stride + real_kernel - in, 0)
+```
+
+floor 与 ceil **只在 `in % stride == 0` 时相等**，于是非整除时整层少一格：
+`in=5 stride=2 k=2` 时 `top` 给 2（应 3）、`pad` 给 0（应 1）。
+
+### 三处同形写法里只改了两处 —— 第三处**必须保持 floor**
+
+| 站点 | 层 | 处理 |
+|---|---|---|
+| `:732` | `ZQ_CNN_Layer_Convolution` | **改成 ceil** |
+| `:1347` | `ZQ_CNN_Layer_DepthwiseConvolution` | **改成 ceil** |
+| `:4052` | `ZQ_CNN_Layer_Pooling` | **保持 floor，附理由** |
+
+Pooling 那处不能照抄：它的输出尺寸约定是
+`GetTopDim: out = ceil((in - kernel)/stride) + 1`
+（`ZQ_CNN_Forward_SSEUtils::MaxPooling` 的 `need_H/need_W` 与内核的
+`final_kH/final_kW` 三处一致），而不是 SAME 的 `ceil(in/stride)`。
+把 `in = q*S + r` 逐段推：
+
+| 条件 | floor 给 | ceil 给 | 有差别吗 |
+|---|---|---|---|
+| `r == 0` | q | q | 无 |
+| `r>0 且 kernel <= r` | pad 都是 0 | pad 都是 0 | 无 |
+| `r>0 且 r < kernel <= S+r` | q+1 | q+1 | 无 |
+| `r>0 且 kernel > S+r` | **q** | **q+1** | **有** |
+
+而 `q` 正是本层 VALID 的输出值（`ceil((in-k)/s)+1`）。
+也就是说 **Pooling 的 floor 与它自己的约定一致，ceil 反而会破坏它**
+（实例：`in=5 kernel=4 stride=2` -> floor 给 2（= VALID），ceil 给 3）。
+
+> 这是本会话第 N 次「同一个函数里的同一段写法不保证该抄」。
+> `check_imstep_guard` 那次是"两个族的同名变量含义相反"，
+> 这次是"三个类的同名分支语义不同"。**照抄之前先问那个类的约定是什么。**
+
+### 影响面：220 个 live 层，但**原生尺寸下 0 个受影响**
+
+随仓三个模型带 `pad_type=SAME` 的层：
+
+    Pose-zq.zqparams                 147 个   非整除 0
+    det5-112-gray.zqparams            36 个   非整除 0
+    headposegaze-112-gray.zqparams    37 个   非整除 0
+    合计                              220 个   非整除 0
+
+用 `tools/_padtype_impact.py` 静态传播各模型的原生输入尺寸
+（Pose 192x192、另两个 112x112）得出：**没有任何 SAME 层落在非整除那一档**，
+即 floor 与 ceil 取值完全相同 ⇒ **这次改动对随仓模型零影响**，
+它们的输出逐位不变。换个非整除输入（PersonPose 的奇数边长）才会显形。
+
+### 新门禁 `tools/zq_padtype_check.cpp`（576 个用例）
+
+直接实例化层类、走 `ReadParam -> SetBottomDim -> GetTopDim` 这条**生产路径**，
+把 `top_H/top_W` 与 padding 之和对上。判据分两项，两项都要对。
+
+四类层的语义**各不相同**，期望值逐类写：
+
+    Convolution / Depthwise : SAME out = ceil(in/stride)
+    Pooling                 : 本仓库约定 out = ceil((in-k)/stride)+1（pad 恒 0）
+    DeConvolution           : SAME out = in*stride（TF Conv2DTranspose）
+                              VALID **未实现**，那一档不跑
+
+    修前：576 个用例 / 有错 90（Convolution 45 + DepthwiseConvolution 45，
+          全是 SAME 且 in % stride != 0；DeConvolution 144/144 对、Pooling 144/144 对）
+    修后：576 个用例 / 有错 0（504 个跑、72 个是 DeConvolution VALID 不跑）
+
+探针自己栽了三次，三次都是**期望值算错**、不是库的缺陷：
+
+1. 对四类层用同一个 `real_k = (k-1)*d+1`，而 **Pooling 没有 dilation**
+   —— 95 个"错"全是我把 dilation 用在了没有 dilation 的层上；
+2. DeConvolution 的 SAME 我按 `ceil(in/stride)` 写，而 TF `Conv2DTranspose`
+   的 SAME 是 `out = in*stride` —— 144 个"错"全是我抄错了定义；
+3. 同一次跑法不对：`run_zqlib_checks.py` 是**从 Windows Python 驱动 WSL** 的，
+   我在 WSL 里 `python3 tools/run_zqlib_checks.py`，于是 `wsl: not found`、
+   子进程输出为空、门禁报 **`0/0 通过`** —— 一个字都没说。
+   > **"0/0 通过"是荒谬的数字**：跑不出一个用例就不能叫通过。
+   > 这与本文件「荒谬的数字本身就是信号」是同一条。
+
+### 变异测试的教训（第 30 条的第一次真实触发）
+
+`tools/_mut_padtype.py`（已删）要跑三轮门禁、每轮约 275s，
+而后台任务有 600s 硬上限 —— **第三轮之前进程被杀**。
+第一反应是查源文件有没有还原：`grep -c CEIL-REVERTED-BY-MUTATION` = 0、
+`grep -c '... ceil'` = 2，**树是干净的**（`finally` 跑到了）。
+`git diff` 也确认只有 4 行代码变化（两处 `top_W`/`top_H`），其余都是注释。
+> 与本会话更早那次同一类：**变异脚本必须在 `finally` 里还原**，
+> 而且**还原之后要 `grep -c` 确认**，不能凭"没报错"就认为还原了。
+>
+> 这次的红/绿证据不依赖那个脚本：**修前 90/576 错、修后 0/576 错**，
+> 用的是同一个判据、同一份代码。变异脚本只是重复了一遍这件事，
+> 而它 14 分钟的代价换不来比上面那两行更多的东西。
+
+### 登记进回归
+
+`tools/run_zqlib_checks.py` 加了 `_glob_extra()`：
+按 glob 生成「编一个 TU」的命令，避免手写清单漏文件。
+**"补一个报一屏 undefined reference、补两个还报一屏"就是"依赖是整族的"的信号**
+（`zq_padtype` 为此连补三版：补 Forward、补 layers_c、补 `zq_avx_mathfun.c`，
+第四版才发现 **128 位那份在另一个文件** `zq_sse_mathfun.c` 里）。
+
+`_glob_extra` 第一版把 `.c` 从**源路径**里也去掉了（只该从对象名里去），
+拼出 `gcc ... $R/ZQCNN/ZQCNN_layers_c_zq_cnn_addbias_32f_align_c` ——
+22 条命令全错。现在带两条守卫：源文件必须真的存在；glob 一个都没匹配到就 assert。
+
+### 变更文件
+
+    ZQCNN/ZQ_CNN_Layer.h               IV.1（Convolution + Depthwise 改 ceil；Pooling 附不改的理由）
+    tools/zq_padtype_check.cpp         新门禁
+    tools/run_zqlib_checks.py          登记 zq_padtype / zq_nchwc_batch，加 _glob_extra
+
+### 实测
+
+    python tools/run_zqlib_checks.py zq_padtype        -> 1/1 PASS（ASan 下）
+    python tools/run_zqlib_checks.py zq_nchwc_batch    -> 1/1 PASS（ASan 下）
+    cmake --build build_x64 --config Release（全量）    -> RC=0
+    WSL make -j8（全量）                                -> RC=0
+    check_text_encoding.py -> OK 779 files / check_line_endings.py -> OK / check_stmt_joins -> OK

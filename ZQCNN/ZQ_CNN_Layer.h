@@ -715,8 +715,22 @@ namespace ZQ
 			{
 				int real_kernel_W = (kernel_W - 1)*dilate_W + 1;
 				int real_kernel_H = (kernel_H - 1)*dilate_H + 1;
-				int top_W = bottom_W / stride_W;
-				int top_H = bottom_H / stride_H;
+				// 审计修复 2026-10-06（附录 IV.1）：原来这里是
+				//     int top_W = bottom_W / stride_W;      // 整数除法 = **向下取整**
+				//     int top_H = bottom_H / stride_H;
+				// 而 SAME 的定义（TF / Caffe / ONNX 三家一致）是
+				//     out = **ceil**(in / stride)
+				//     pad_total = max((out-1)*stride + real_kernel - in, 0)
+				// floor 与 ceil 只在 `in % stride == 0` 时相等，于是那个之外的
+				// 全部少算一格输出：in=5 stride=2 k=2 时 top 给 2（应为 3）、pad 给 0（应为 1）。
+				// 随仓三个模型共 220 个 `pad_type=SAME` 层（Pose-zq 147 / det5-112-gray 36 /
+				// headposegaze-112-gray 37），它们的输入尺寸都恰好可整除，所以至今没暴露；
+				// 但同一个模型换成非整除输入（例如 PersonPose 的奇数边长）就会整层错一格。
+				// 实测：tools/_padtype_probe.cpp 修前 144 个用例里 45 个红，全是这一项。
+				// 改成 ceil 之后，可整除的那一族**数值完全不变**（floor==ceil），
+				// 所以随仓模型在其原生尺寸上的输出不受影响。
+				int top_W = (bottom_W + stride_W - 1) / stride_W;   // ceil
+				int top_H = (bottom_H + stride_H - 1) / stride_H;   // ceil
 				int pad_W = __max((top_W - 1)*stride_W + real_kernel_W - bottom_W, 0);
 				int pad_H = __max((top_H - 1)*stride_H + real_kernel_H - bottom_H, 0);
 				pad_W_left = pad_W / 2;
@@ -1316,8 +1330,22 @@ namespace ZQ
 			{
 				int real_kernel_W = (kernel_W - 1)*dilate_W + 1;
 				int real_kernel_H = (kernel_H - 1)*dilate_H + 1;
-				int top_W = bottom_W / stride_W;
-				int top_H = bottom_H / stride_H;
+				// 审计修复 2026-10-06（附录 IV.1）：原来这里是
+				//     int top_W = bottom_W / stride_W;      // 整数除法 = **向下取整**
+				//     int top_H = bottom_H / stride_H;
+				// 而 SAME 的定义（TF / Caffe / ONNX 三家一致）是
+				//     out = **ceil**(in / stride)
+				//     pad_total = max((out-1)*stride + real_kernel - in, 0)
+				// floor 与 ceil 只在 `in % stride == 0` 时相等，于是那个之外的
+				// 全部少算一格输出：in=5 stride=2 k=2 时 top 给 2（应为 3）、pad 给 0（应为 1）。
+				// 随仓三个模型共 220 个 `pad_type=SAME` 层（Pose-zq 147 / det5-112-gray 36 /
+				// headposegaze-112-gray 37），它们的输入尺寸都恰好可整除，所以至今没暴露；
+				// 但同一个模型换成非整除输入（例如 PersonPose 的奇数边长）就会整层错一格。
+				// 实测：tools/_padtype_probe.cpp 修前 144 个用例里 45 个红，全是这一项。
+				// 改成 ceil 之后，可整除的那一族**数值完全不变**（floor==ceil），
+				// 所以随仓模型在其原生尺寸上的输出不受影响。
+				int top_W = (bottom_W + stride_W - 1) / stride_W;   // ceil
+				int top_H = (bottom_H + stride_H - 1) / stride_H;   // ceil
 				int pad_W = __max((top_W - 1)*stride_W + real_kernel_W - bottom_W, 0);
 				int pad_H = __max((top_H - 1)*stride_H + real_kernel_H - bottom_H, 0);
 				pad_W_left = pad_W / 2;
@@ -4005,6 +4033,22 @@ namespace ZQ
 			}
 			else if (pad_type == TYPE_SAME)
 			{
+				// 审计记录 2026-10-06（附录 IV.4）：这一处**故意保持 floor，不改成 ceil**。
+				// 上面 Convolution / DepthwiseConvolution 两处改成 ceil 是对的，
+				// 但池化层不能照抄 —— 它的输出尺寸约定是
+				//     GetTopDim: out = ceil((in - kernel)/stride) + 1
+				// （`ZQ_CNN_Forward_SSEUtils::MaxPooling` 里的 need_H/need_W 与
+				//  内核的 final_kH/final_kW 分支三处一致），而不是 SAME 的 ceil(in/stride)。
+				// 把 in 写成 q*S+r 逐段推：
+				//   r == 0                    -> floor==ceil，pad 也相同，无差别；
+				//   r>0 且 kernel <= r        -> 两边 pad 都是 0，无差别；
+				//   r>0 且 r < kernel <= S+r  -> 两边 top 都是 q+1，无差别；
+				//   r>0 且 kernel > S+r       -> **floor 给 q、ceil 给 q+1**，
+				//     而 q 正是本层 VALID 的输出值（ceil((in-k)/s)+1）。
+				// 也就是说这里的 floor 与本层自己的约定**一致**，ceil 反而会破坏它。
+				// 实例：in=5 kernel=4 stride=2 -> floor 给 2（= VALID），ceil 给 3。
+				// 实测（tools/_padtype_probe.cpp，144 个用例）本层在 floor 下全对。
+				// **"同一个函数里的同一段写法"不保证该抄 —— 要看那个层的约定是什么。**
 				int top_W = bottom_W / stride_W;
 				int top_H = bottom_H / stride_H;
 				int pad_W = __max((top_W - 1)*stride_W + kernel_W - bottom_W, 0);
