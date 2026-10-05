@@ -1503,6 +1503,15 @@ namespace ZQ
 			int kH = filters->GetH();
 			int kW = filters->GetW();
 			int kC = filters->GetC();
+			// 审计修复 2026-10-05（附录 IX.14）：这一份拷贝**漏了**通道数一致性守卫。
+			// 主副本 `ZQCNN/ZQ_CNN_Net.h` 与 `ZQ_CNN_Net_NCHWC.h` 都有这一行，
+			// 这里没有 —— 而 `b` / `a` 是 **BatchNormScale 自己**的张量，
+			// 大小按 BN 那层的 bottom_C 分配。一旦模型文件里 BN 的通道数与
+			// 前一层卷积的 num_output 对不上，下面这个循环就会
+			// `b->GetFirstPixelPtr()[n]` **读到缓冲区之后**（堆越界读），
+			// 并且拿这些垃圾值去改写 filters。
+			if (b->GetC() != N || a->GetC() != N)
+				return false;
 			for (int n = 0; n < N; n++)
 			{
 				float b_v = (b->GetFirstPixelPtr())[n];
@@ -1558,6 +1567,15 @@ namespace ZQ
 			int kH = filters->GetH();
 			int kW = filters->GetW();
 			int kC = filters->GetC();
+			// 审计修复 2026-10-05（附录 IX.14）：这一份拷贝**漏了**通道数一致性守卫。
+			// 主副本 `ZQCNN/ZQ_CNN_Net.h` 与 `ZQ_CNN_Net_NCHWC.h` 都有这一行，
+			// 这里没有 —— 而 `b` / `a` 是 **BatchNormScale 自己**的张量，
+			// 大小按 BN 那层的 bottom_C 分配。一旦模型文件里 BN 的通道数与
+			// 前一层卷积的 num_output 对不上，下面这个循环就会
+			// `b->GetFirstPixelPtr()[n]` **读到缓冲区之后**（堆越界读），
+			// 并且拿这些垃圾值去改写 filters。
+			if (b->GetC() != N || a->GetC() != N)
+				return false;
 			for (int n = 0; n < N; n++)
 			{
 				float b_v = (b->GetFirstPixelPtr())[n];
@@ -1620,6 +1638,15 @@ namespace ZQ
 			int kH = filters->GetH();
 			int kW = filters->GetW();
 			int kC = filters->GetC();
+			// 审计修复 2026-10-05（附录 IX.14）：这一份拷贝**漏了**通道数一致性守卫。
+			// 主副本 `ZQCNN/ZQ_CNN_Net.h` 与 `ZQ_CNN_Net_NCHWC.h` 都有这一行，
+			// 这里没有 —— 而 `b` / `a` 是 **BatchNormScale 自己**的张量，
+			// 大小按 BN 那层的 bottom_C 分配。一旦模型文件里 BN 的通道数与
+			// 前一层卷积的 num_output 对不上，下面这个循环就会
+			// `b->GetFirstPixelPtr()[n]` **读到缓冲区之后**（堆越界读），
+			// 并且拿这些垃圾值去改写 filters。
+			if (b->GetC() != kC || a->GetC() != kC)
+				return false;
 			for (int c = 0; c < kC; c++)
 			{
 				float b_v = (b->GetFirstPixelPtr())[c];
