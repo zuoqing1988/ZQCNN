@@ -908,3 +908,18 @@ IE 与 IF 都只改了 `SamplesZQCNN/SampleUnusedLayerProbe/` 与文档。
 `DeConvolution` / `LSTM_TF` / `PriorBoxText` / `PriorBox_MXNET` /
 `DetectionOutput_MXNET`（后三个是 SSD 专用输出层；DeConvolution 与 LSTM_TF
 的权重布局比前面这些复杂得多）。
+
+## 新增/变更：IG 落地后的完整回归（v44）
+
+```
+ALL CHECKS PASSED        rc=0        FAILED 计数 = 0
+```
+
+与本轮相关的组：
+
+* `D4 Windows sample SampleUnusedLayerProbe.exe: OK` —— 探针累计 **111 个形状**
+  （LRN 9 / Copy 4 / Scale 8 / Sqrt 4 / ScalarOp 18 / Squeeze 3 / Reduction 32 /
+  UnaryOp 18 / BatchNorm 3 / Tile 12），**111/111 通过、待查 0**。
+* `B ZQlib 独立回归测试 x10 (ASan+LSan): OK`
+
+本轮（ID / IE / IF / IG）里只有 **ID** 改了生产代码。
