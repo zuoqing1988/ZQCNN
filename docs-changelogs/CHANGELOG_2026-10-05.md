@@ -1897,3 +1897,15 @@ MSVC `/analyze`、ARM/NEON 与 FP16 档解析、MSVC ASan）全部 OK。
   打印里加上半宽与框种类（分类标签第一版是错的，见上文）
 * `audit_k3_20261001.md`（追加 IU）
 * **无生产代码改动**；两个平台均已手工重编 + 实跑（121 个形状 / 待查 10）
+
+## 新增/变更：IU 落地后的完整回归（v58）
+
+```
+ALL CHECKS PASSED        rc=0        FAILED 计数 = 0
+```
+
+`SampleUnusedLayerProbe` 的格子顺序探针（本轮改成"有/无 ratio"两档循环）
+在两个平台上都跑过、输出一致；探针累计 **121 个形状**
+（121 通过 / 0 对不上 / 10 待查）。
+其余组（D1/D2 双平台全量构建、D3/D4 两平台 sample、A~C16 全部门禁、
+MSVC `/analyze`、ARM/NEON 与 FP16 档解析、MSVC ASan）全部 OK。
