@@ -1423,19 +1423,49 @@ static void run_detection_output_mxnet()
 // 必须声明在 `ref_prior_box_text` 之前 —— 它两个函数都要用。
 static int g_flip = 1;
 
+
+// emit 一个框的 4 个数。**clip=1 时逐个 clamp 到 [0,1]** ——
+// 这一点是**从库里读出来的**（附录 IQ.2）：第一版的参考没有 clamp，
+// 于是算出一堆 -4.8 / 5.1，而库里是 0 / 1。
+static inline void pbt_emit(std::vector<float>& out, size_t& w,
+                            float cx, float cyy, float bw, float bh,
+                            int img_w, int img_h, bool clip)
+{
+    float x1 = (cx - bw / 2) / img_w, y1 = (cyy - bh / 2) / img_h;
+    float x2 = (cx + bw / 2) / img_w, y2 = (cyy + bh / 2) / img_h;
+    if (clip) {
+        x1 = __max(0.0f, __min(1.0f, x1)); y1 = __max(0.0f, __min(1.0f, y1));
+        x2 = __max(0.0f, __min(1.0f, x2)); y2 = __max(0.0f, __min(1.0f, y2));
+    }
+    out[w++] = x1; out[w++] = y1; out[w++] = x2; out[w++] = y2;
+}
+
 static void ref_prior_box_text(int layer_h, int layer_w, int img_h, int img_w,
                                const std::vector<float>& min_sizes,
                                const std::vector<float>& max_sizes,
                                const std::vector<float>& ratios,
-                               std::vector<float>& out)
+                               bool clip, std::vector<float>& out)
 {
     const float step_w = (float)img_w / (float)layer_w;
     const float step_h = (float)img_h / (float)layer_h;
-    int num_valid = 0;
-    for (size_t r = 0; r < ratios.size(); r++)
-        if (fabs(ratios[r] - 1.0f) >= 1e-6f) num_valid++;
+    // ratio 列表的化简（**全部由扫描测出来**，见附录 IQ.1）：
+    //   * r == 1 的项不算（它就是 size 那一档）；
+    //   * **完全相同的 ratio 会合并**（`2 2` 与 `0.5 0.5` 都只算一个）；
+    //   * `flip=1` 时 **r 与 1/r 算同一组**（翻转框本来就是 1/r 那一份），
+    //     所以 `2 0.5` 在 flip=1 下与 `2` 同数、在 flip=0 下却是两组。
+    std::vector<float> eff;
+    for (size_t r = 0; r < ratios.size(); r++) {
+        const float v = ratios[r];
+        if (fabs(v - 1.0f) < 1e-6f) continue;
+        bool dup = false;
+        for (size_t j = 0; j < eff.size(); j++) {
+            if (fabs(eff[j] - v) < 1e-6f) { dup = true; break; }
+            if (g_flip && fabs(eff[j] - 1.0f / v) < 1e-6f) { dup = true; break; }
+        }
+        if (!dup) eff.push_back(v);
+    }
     const int num_priors = 2 * (int)min_sizes.size()
-        * ((1 + (max_sizes.empty() ? 0 : 1)) + (g_flip ? 2 : 1) * num_valid);
+        * ((1 + (max_sizes.empty() ? 0 : 1)) + (g_flip ? 2 : 1) * (int)eff.size());
     const int out_count = 2 * layer_h * layer_w * num_priors * 4;   // [N,2,dim,1]
     out.assign(out_count, 0.0f);
     size_t w = 0;
@@ -1448,9 +1478,7 @@ static void ref_prior_box_text(int layer_h, int layer_w, int img_h, int img_w,
                 const int ms = (int)min_sizes[s];
                 for (int half = 0; half < 2; half++) {
                     float bw = (float)ms, bh = (float)ms;
-                    float y0 = half ? cy1 : cy;
-                    out[w++] = (cx - bw / 2) / img_w; out[w++] = (y0 - bh / 2) / img_h;
-                    out[w++] = (cx + bw / 2) / img_w; out[w++] = (y0 + bh / 2) / img_h;
+                    pbt_emit(out, w, cx, half ? cy1 : cy, bw, bh, img_w, img_h, clip);
                 }
                 if (!max_sizes.empty() && s < max_sizes.size()) {
                     const int xs = (int)max_sizes[s];
@@ -1461,9 +1489,8 @@ static void ref_prior_box_text(int layer_h, int layer_w, int img_h, int img_w,
                         out[w++] = (cx + bw / 2) / img_w; out[w++] = (y0 + bh / 2) / img_h;
                     }
                 }
-                for (size_t r = 0; r < ratios.size(); r++) {
-                    if (fabs(ratios[r] - 1.0f) < 1e-6f) continue;
-                    float sr = sqrtf(ratios[r]);
+                for (size_t r = 0; r < eff.size(); r++) {
+                    float sr = sqrtf(eff[r]);
                     float bw = ms * sr, bh = ms / sr;
                     for (int half = 0; half < 2; half++) {
                         float y0 = half ? cy1 : cy;
@@ -1561,6 +1588,67 @@ static void scan_prior_box_text()
     printf("  （ratio 列表给的是 2,3,4…，**不含 1**；层尺寸 H=W=3）\n");
 }
 
+// `ratios` 也做成旋钮（附录 IQ.1）—— 用来测 IP.4 那个**未验证的猜测**：
+// 「`num_valid_ratios` 只统计 >1 的 ratio」。
+//
+// 判据表（每格两档 flip）：
+//   若猜测成立 -> `0.5` 不计入 valid，于是带 0.5 的行与**去掉 0.5** 的行同数；
+//   若不成立   -> 带 0.5 的行比去掉的多一倍（每个 ratio 都贡献一项）。
+static void scan_prior_box_text_ratios()
+{
+    static const char* SETS[] = {
+        "2", "0.5", "2 0.5", "1", "1 2", "2 2", "0.5 0.5", "2 3", "0.5 2 3",
+    };
+    const int H = 3, W = 3;
+    const int nmin = 1, has_max = 0;
+    for (int flip = 0; flip <= 1; flip++) {
+        g_flip = flip;
+        printf("\n  ratios 扫描 flip=%d（min=%d, 无 max）：\n", flip, nmin);
+        printf("  %-14s %8s %12s %12s\n", "ratios", "实测", "2m(1+M)+4mr", "2m(1+M)+2mr");
+        for (size_t k = 0; k < sizeof(SETS) / sizeof(SETS[0]); k++) {
+            char ar[128] = "";
+            char tmp[64];
+            snprintf(tmp, sizeof(tmp), "%s", SETS[k]);
+            int nratio = 0, n_gt1 = 0;
+            for (char* tok = strtok(tmp, " "); tok; tok = strtok(0, " ")) {
+                if (ar[0]) strcat(ar, " ");
+                strcat(ar, "aspect_ratio=");
+                strcat(ar, tok);
+                double v = atof(tok);
+                nratio++;
+                if (fabs(v - 1.0) >= 1e-6 && v > 1.0) n_gt1++;
+            }
+            char mn[64] = "min_size=30";
+            char block[512];
+            snprintf(block, sizeof(block),
+                     "Input name=data C=1 H=%d W=%d\n"
+                     "Copy name=k1 bottom=data top=feat\n"
+                     "Copy name=k2 bottom=data top=imgs\n"
+                     "PriorBoxText name=pb1 bottom=feat bottom=imgs top=pboxes "
+                     "%s %s flip=%d clip=1 variance=0.1\n",
+                     H, W, mn, ar, flip);
+            if (!write_file(SYNTH_PARAM, block, strlen(block))) { printf("  写不出参数文件\n"); return; }
+            if (!write_file(SYNTH_MODEL, "", 0)) { printf("  写不出权重文件\n"); return; }
+            ZQ::ZQ_CNN_Net net;
+            if (!net.LoadFrom(SYNTH_PARAM, SYNTH_MODEL)) { printf("  %-14s %8s\n", SETS[k], "(加载失败)"); continue; }
+            ZQ::ZQ_CNN_Tensor4D_NHW_C_Align256bit ti;
+            std::vector<float> in((size_t)H * W, 0.25f);
+            if (!ti.ConvertFromCompactNCHW(&in[0], 1, 1, H, W)) { printf("  输入张量失败\n"); return; }
+            if (!net.Forward(ti)) { printf("  %-14s %8s\n", SETS[k], "(Forward 失败)"); continue; }
+            const ZQ::ZQ_CNN_Tensor4D* ob = net.GetBlobByName("pboxes");
+            if (ob == 0) { printf("  %-14s %8s\n", SETS[k], "(取不到输出)"); continue; }
+            long long total = (long long)ob->GetN() * ob->GetC() * ob->GetH() * ob->GetW();
+            long long measured = total / (2LL * H * W * 4);
+            int p_all = 2 * nmin * (1 + has_max) + 4 * nmin * nratio;
+            int p_gt1 = 2 * nmin * (1 + has_max) + 4 * nmin * n_gt1;
+            printf("  %-14s %8lld %12d %12d  (只算>1: %d)%s\n", SETS[k], measured,
+                   p_all, p_gt1, p_gt1,
+                   measured == p_gt1 ? (measured == p_all ? "  <== 两者都成立" : "  <== 与「只算>1」一致")
+                                    : (measured == p_all ? "  <== 与「全部都算」一致" : "  <== 两个都不对"));
+        }
+    }
+}
+
 static void run_prior_box_text()
 {
     struct Case { int H, W; const char* mn; const char* mx; const char* ar; };
@@ -1606,7 +1694,7 @@ static void run_prior_box_text()
         for (size_t i = 0; i < mins.size(); i++) if (mins[i] < 0) mins[i] = -mins[i] * (float)c.W;
         for (size_t i = 0; i < maxs.size(); i++) if (maxs[i] < 0) maxs[i] = -maxs[i] * (float)c.W;
         std::vector<float> want;
-        ref_prior_box_text(c.H, c.W, c.H, c.W, mins, maxs, ratios, want);
+        ref_prior_box_text(c.H, c.W, c.H, c.W, mins, maxs, ratios, true, want);
         std::vector<float> got;
         snprintf(shape, sizeof(shape), "H=%d W=%d mn=%s mx=%s ar=%s", c.H, c.W, c.mn, c.mx, c.ar);
         printf("  [probe] PriorBoxText %s ...\n", shape);
@@ -1621,12 +1709,16 @@ static void run_prior_box_text()
         long wi = -1;
         double e = backward_err(got, want, wi);
         if (e > LIMIT) {
-            // **只报、不判失败**（附录 IL.3）。
-            // 已确定的事实见 IL.1/IL.2；剩下的"通道怎么分"尚未定位，
-            // 而这一层是 UNUSED —— 判失败就是恒红。
+            // **只报、不判失败**（附录 IL.3）。这一层是 UNUSED，
+            // 判失败就是恒红。个数已由扫描测平（IQ.1），这里连**后向误差**一起打出来，
+            // 便于区分"只是排布/读回方式不同"与"算错了"。
             g.open++;
-            printf("  %-6s %-22s **待查**（不判失败）：库 %zu 个值 / 参考 %zu 个\n",
-                   "PriorBoxT", shape, got.size(), want.size());
+            printf("  %-6s %-22s **待查**（不判失败）：库 %zu 个 / 参考 %zu 个，后向误差 %.4g\n",
+                   "PriorBoxT", shape, got.size(), want.size(), e);
+            printf("        前 8 个（参考 -> 库）：");
+            for (int i = 0; i < 8 && i < (int)got.size() && i < (int)want.size(); i++)
+                printf(" [%d %.6g->%.6g]", i, want[i], got[i]);
+            printf("\n");
         } else {
             report("PriorBoxText", shape, e, LIMIT, wi, got, want);
         }
@@ -1666,6 +1758,7 @@ int main()
     run_detection_output_mxnet();
     run_prior_box_text();
     scan_prior_box_text();
+    scan_prior_box_text_ratios();
     printf("  小结：跑过 %d 个形状，对 %d，**对不上** %d，**待查** %d\n",
            g.ok + g.bad, g.ok, g.bad, g.open);
 
