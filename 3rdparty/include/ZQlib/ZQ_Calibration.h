@@ -1805,8 +1805,21 @@ private:
 		avg_err_square = infos.final_e_square / (n_pts*n_cams);
 		memcpy(intrinsic_para,p,sizeof(T)*4);
 		memcpy(rT,p+4,sizeof(T)*6*n_cams);
+		// 审计修复 2026-10-06（附录 IB.1）：`hx` / `p` 原来**只在失败分支**里
+		// `delete[]`，成功路径直接 `return true` —— **每次成功调用漏两个块**。
+		// 同文件里同形状的另外两个入口（`stickCalib_estimate_no_distortion_init`
+		// :1145、`calib_estimate_int_rT_fix_k_with_init` :2499）都在两条路径上释放，
+		// **只有这一处漏了**。
+		// LSan 实测（tools/zq_calibration_check.cpp）：
+		//     Direct leak of 128 byte(s) in 1 object(s)
+		//       #0 operator new[]
+		//       #1 ZQ::ZQ_Calibration::calib_estimate_no_distortion_with_init<double>
+		//          3rdparty/include/ZQlib/ZQ_Calibration.h:1794
+		//     SUMMARY: 3584 byte(s) leaked in 8 allocation(s)   <- 4 次调用 x 2 个块
+		delete []hx;
+		delete []p;
 		return true;
-		
+
 	}
 
 

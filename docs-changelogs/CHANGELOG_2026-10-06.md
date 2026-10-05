@@ -96,3 +96,50 @@ BROKEN 从 9 降到 8，且**剩下的 8 个全部是 `windows.h` / GL 依赖**�
     python tools/probe_zqlib_headers.py --check-baseline tools/zqlib_probe_baseline.txt
         OK: 127 -> 127 / 无回退、无新增   (rc=0)
     text/行尾卫生：OK: 755 text files, all strict UTF-8, no U+FFFD / line endings OK
+
+---
+
+## 新增/变更：IB —— ZQ_Calibration 第一次能被验，抓到成功路径上的内存泄漏
+
+### 变更文件
+
+* `3rdparty/include/ZQlib/ZQ_Calibration.h`（成功路径补 `delete[]`）
+* `tools/zq_calibration_check.cpp`（**新增**门禁）
+
+### IB.1 为什么值得验
+
+4500 多行的头因为引用了四个**从来没存在过**的 `ZQ_Rodrigues` 成员而**整个编不过**（IY.1）。
+补齐后它第一次能编能跑，而它是仓库里唯一一份 **ground truth 可自己构造**的数值算法：
+投影模型 `proj_no_distortion` 公开，标定入口的参数含义由
+`_calib_estimate_no_distortion_func` 完全写死。于是造一套真值（内参 + 两相机外参 + 3D 点），
+用同一个 `proj_no_distortion` 生成 2D 观测喂回去，看它能不能还原。
+
+顺带读出一条约定：`X3` 是**所有相机共用**的那一份（对每个相机传的是同一个 `X3` 指针），
+`X2` 才按相机分段（`X2[N*2*cc+i]`）。
+
+### IB.2 缺陷：成功路径上不释放 `hx` / `p`
+
+    if(!ZQ_LevMar::ZQ_LevMar_Der<T>(...)) { delete []hx; delete []p; return false; }  // 只在失败分支
+    avg_err_square = ...; memcpy(...); return true;                                    // 成功路径直接走
+
+同文件里同形状的另外两个入口（`stickCalib_estimate_no_distortion_init:1145`、
+`calib_estimate_int_rT_fix_k_with_init:2499`）两条路径都释放，**只有这一处漏了**。
+LSan 实测：4 次调用漏 8 个块、3584 字节。
+
+### IB.3 新门禁结果（ASan+LSan 与 UBSan 两轴都过）
+
+    [init=truth]       avg_err_square = 0
+       内参 0 / 外参 0 / 残差 0
+    [init=perturbed]   avg_err_square = 2.34e-27
+       内参 3.41e-13 / 外参 3.83e-15 / 残差 2.34e-27
+    [init=perturbed x2] 内参 7.96e-13 / 外参 7.77e-15
+    [pose]             位姿相对真值 1.35e-09，残差 1.27e-16
+    退化输入：3D 点全在相机后面 -> 不崩、解全为有限值；点数为 0 -> 返回 false 不崩
+
+**「初始化被扰动」那组比「真值当初值」强得多** ——
+它同时验了目标函数**和解析 Jacobian**：能从 2% 的内参偏差与几像素的主点偏差
+自己走回真值到 1e-13。
+
+### 结论
+
+除 IB.2 那处泄漏外，`ZQ_Calibration` 的数值是对的。
