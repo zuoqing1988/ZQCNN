@@ -1633,3 +1633,13 @@ IP.4 猜的是"`num_valid_ratios` 只统计 >1 的 ratio"。扫描显示 `0.5` �
   `1/r` 同组 / `clip`
 * `audit_k3_20261001.md`（追加 IQ）
 * **无生产代码改动**；两个平台均已手工重编 + 实跑
+
+## 新增/变更：IQ 落地后的完整回归（v54）
+
+```
+ALL CHECKS PASSED        rc=0        FAILED 计数 = 0
+```
+
+`SampleUnusedLayerProbe` 新增的 `scan_prior_box_text_ratios()`（`ratios` 旋钮、两档 flip）
+在两个平台上都跑过、18 行的表逐项一致；其余组（D1/D2 双平台全量构建、D3/D4 两平台
+sample、A~C16 全部门禁、MSVC `/analyze`、ARM/NEON 与 FP16 档解析、MSVC ASan）全部 OK。
