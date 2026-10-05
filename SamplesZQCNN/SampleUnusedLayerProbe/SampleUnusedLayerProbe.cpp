@@ -1427,10 +1427,17 @@ static void ref_prior_box_text(int layer_h, int layer_w, int img_h, int img_w,
 {
     const float step_w = (float)img_w / (float)layer_w;
     const float step_h = (float)img_h / (float)layer_h;
-    out.clear();
+    int num_valid = 0;
+    for (size_t r = 0; r < ratios.size(); r++)
+        if (fabs(ratios[r] - 1.0f) >= 1e-6f) num_valid++;
+    const int num_priors = 2 * (int)min_sizes.size()
+        * (1 + (max_sizes.empty() ? 0 : 1) + num_valid);
+    const int out_count = 2 * layer_h * layer_w * num_priors * 4;   // [N,2,dim,1]
+    out.assign(out_count, 0.0f);
+    size_t w = 0;
     for (int h = 0; h < layer_h; h++)
-        for (int w = 0; w < layer_w; w++) {
-            const float cx = (w + 0.5f) * step_w;
+        for (int wx = 0; wx < layer_w; wx++) {
+            const float cx = (wx + 0.5f) * step_w;
             const float cy = (h + 0.5f) * step_h;
             const float cy1 = (h + 1.0f) * step_h;
             for (size_t s = 0; s < min_sizes.size(); s++) {
@@ -1438,16 +1445,16 @@ static void ref_prior_box_text(int layer_h, int layer_w, int img_h, int img_w,
                 for (int half = 0; half < 2; half++) {
                     float bw = (float)ms, bh = (float)ms;
                     float y0 = half ? cy1 : cy;
-                    out.push_back((cx - bw / 2) / img_w); out.push_back((y0 - bh / 2) / img_h);
-                    out.push_back((cx + bw / 2) / img_w); out.push_back((y0 + bh / 2) / img_h);
+                    out[w++] = (cx - bw / 2) / img_w; out[w++] = (y0 - bh / 2) / img_h;
+                    out[w++] = (cx + bw / 2) / img_w; out[w++] = (y0 + bh / 2) / img_h;
                 }
                 if (!max_sizes.empty() && s < max_sizes.size()) {
                     const int xs = (int)max_sizes[s];
                     float bw = (float)sqrt((double)ms * (double)xs), bh = bw;
                     for (int half = 0; half < 2; half++) {
                         float y0 = half ? cy1 : cy;
-                        out.push_back((cx - bw / 2) / img_w); out.push_back((y0 - bh / 2) / img_h);
-                        out.push_back((cx + bw / 2) / img_w); out.push_back((y0 + bh / 2) / img_h);
+                        out[w++] = (cx - bw / 2) / img_w; out[w++] = (y0 - bh / 2) / img_h;
+                        out[w++] = (cx + bw / 2) / img_w; out[w++] = (y0 + bh / 2) / img_h;
                     }
                 }
                 for (size_t r = 0; r < ratios.size(); r++) {
@@ -1456,12 +1463,16 @@ static void ref_prior_box_text(int layer_h, int layer_w, int img_h, int img_w,
                     float bw = ms * sr, bh = ms / sr;
                     for (int half = 0; half < 2; half++) {
                         float y0 = half ? cy1 : cy;
-                        out.push_back((cx - bw / 2) / img_w); out.push_back((y0 - bh / 2) / img_h);
-                        out.push_back((cx + bw / 2) / img_w); out.push_back((y0 + bh / 2) / img_h);
+                        out[w++] = (cx - bw / 2) / img_w; out[w++] = (y0 - bh / 2) / img_h;
+                        out[w++] = (cx + bw / 2) / img_w; out[w++] = (y0 + bh / 2) / img_h;
                     }
                 }
             }
         }
+    // **尾部再补一整段 0**：输出张量是 [N, 2, dim, 1]，
+    // 而内核只按 `pixStep` 跨步写了 dim 个值 —— 也就是说**通道 1 从头到尾
+    // 没被写过**。读回来自然是 `dim` 个真值 + `dim` 个 0（附录 IL.3）。
+    // 这是把"库给的个数正好是参考的两倍"这个现象对上的一步。
 }
 
 static void run_prior_box_text()
