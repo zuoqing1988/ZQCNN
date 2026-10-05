@@ -30,6 +30,7 @@
 #include <cmath>
 #include <vector>
 #include "ZQ_PCGSolver.h"
+#include "ZQ_TaucsBase.h"
 
 static int g_fail = 0;
 
@@ -55,8 +56,15 @@ struct Csc {
     void seal()
     {
         colptr.assign(n + 1, 0);
-        for (size_t k = 0; k < rowind.size(); k++) colptr[rowind[k] + 1]++;
+        // colptr 是按**列**索引的；这里原来写成了 rowind[k]（行），
+        // 只有在方阵（n == m）时才碰巧对 —— 非方阵一进来就越界。
+        for (size_t k = 0; k < rowind.size(); k++) colptr[colof[k] + 1]++;
         for (int i = 0; i < n; i++) colptr[i + 1] += colptr[i];
+        // 空的 rowind / val 上取 `&v[0]` 是 UB（vector 的 data() 可能为 nullptr），
+        // 而 `mat.rowind` / `mat.values.d` 就是这么取的 —— 于是「这个用例崩不崩」
+        // 取决于栈上的垃圾（实测第一次不崩、第二次 SEGV）。补一个**永远不会被读到**
+        // 的哑元；它必须**在 colptr 统计之后**加，否则会被算进 nnz。
+        if (rowind.empty()) { rowind.push_back(0); val.push_back(0.0); colof.push_back(0); }
         mat.n = n;
         mat.m = m;
         mat.flags = TAUCS_DOUBLE;
@@ -201,6 +209,55 @@ static void test_laplacian(int m)
     report("||Hx - f||_inf（稀疏乘）", rmax, 1e-6);
 }
 
+// ZQ_TaucsBase 的两个基本件：所有稀疏求解（PCG / LSQR / SparseLevMar）都建立在它们之上。
+// 判据是**逐位可算的**：B = A·X，手写一遍 CSC 遍历对比即可，不需要任何 ground truth 文件。
+// 这两个函数原来在 GCC 上被 IE 那条 typeid 挡住、**一次都没被真正调用过**。
+static void test_taucs_matvec()
+{
+    const int m = 7, n = 5;
+    Csc A;
+    A.build(n, m);
+    unsigned seed = 991u;
+    for (int col = 0; col < n; col++) {
+        seed = seed * 1664525u + 1013904223u;
+        int cnt = 1 + (int)((seed >> 29) % 3);
+        for (int t = 0; t < cnt; t++) {
+            seed = seed * 1664525u + 1013904223u;
+            int row = (int)((seed >> 8) % (unsigned)m);
+            A.push(row, col, ((double)((seed >> 3) % 1000) - 500.0) * 0.01);
+        }
+    }
+    A.seal();
+    std::vector<double> x(n), y(m, 0.0), want(m, 0.0);
+    for (int i = 0; i < n; i++) {
+        seed = seed * 1664525u + 1013904223u;
+        x[i] = ((double)((seed >> 8) % 1000) - 500.0) * 0.01;
+    }
+    for (int col = 0; col < n; col++)
+        for (int k = A.colptr[col]; k < A.colptr[col + 1]; k++)
+            want[A.rowind[k]] += A.val[k] * x[col];
+
+    ZQ::ZQ_TaucsBase::ZQ_taucs_ccs_matrix_time_vec<double>(&A.mat, &x[0], &y[0]);
+    double e1 = 0;
+    for (int i = 0; i < m; i++) {
+        double d = fabs(y[i] - want[i]);
+        if (d > e1) e1 = d;
+    }
+    report("ZQ_taucs_ccs_matrix_time_vec == A*x", e1, 1e-12);
+
+    std::vector<double> z(n, 0.0), want2(n, 0.0);
+    for (int col = 0; col < n; col++)
+        for (int k = A.colptr[col]; k < A.colptr[col + 1]; k++)
+            want2[col] += A.val[k] * y[A.rowind[k]];
+    ZQ::ZQ_TaucsBase::ZQ_taucs_ccs_vec_time_matrix<double>(&y[0], &A.mat, &z[0]);
+    double e2 = 0;
+    for (int i = 0; i < n; i++) {
+        double d = fabs(z[i] - want2[i]);
+        if (d > e2) e2 = d;
+    }
+    report("ZQ_taucs_ccs_vec_time_matrix == A'*x", e2, 1e-12);
+}
+
 int main()
 {
     printf("=== ZQ_PCGSolver 最优性条件回归 ===\n");
@@ -218,9 +275,18 @@ int main()
     {
         Csc A;
         A.build(0, 0);
-        std::vector<double> x0, x;
+        A.seal();
+        // **传真的缓冲，不传 nullptr**：`PCG` 内部第一件事是
+        // `memcpy(x, x0, sizeof(T)*row)`，而 row==0 时
+        // `memcpy(0, 0, 0)` 按标准仍然是 UB（UBSan 报 "null pointer passed as
+        // argument 1"）。第一版这里直接传 0，UBSan 一跑就报 ——
+        // 而那是**调用方**的锅：`PCG` 全程没有判 `f` / `x0` / `x`，
+        // 传非 0 的 `x` 但 row>0 就是真的空指针写。
+        // （要不要给 `PCG` 补 null 守卫是另一个问题，见附录 IE.3 的备注。）
+        std::vector<double> dummy(1, 0.0), x(1, 0.0);
         int it = -1;
-        bool ok = ZQ::ZQ_PCGSolver::PCG<double>(&A.mat, 0, 0, 5, 1e-9, 0, it, false);
+        bool ok = ZQ::ZQ_PCGSolver::PCG<double>(&A.mat, &dummy[0], &dummy[0], 5, 1e-9,
+                                                &x[0], it, false);
         printf("  %-6s %s（ret=%s it=%d）\n", "ok", "n=0 空矩阵不崩",
                ok ? "true" : "false", it);
     }
@@ -240,6 +306,9 @@ int main()
                "全零矩阵（奇异）不崩", ok ? "true" : "false", it, finite ? "是" : "**否**");
         if (!finite) g_fail++;
     }
+
+    printf("--- ZQ_TaucsBase 的两个基本件 ---\n");
+    test_taucs_matvec();
 
     if (g_fail) { printf("PCG CHECK FAILED (%d 处)\n", g_fail); return 1; }
     printf("PCG CHECK OK\n");
