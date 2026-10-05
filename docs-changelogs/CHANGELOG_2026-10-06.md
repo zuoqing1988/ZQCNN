@@ -642,3 +642,73 @@ A33 block 循环 pragma 必须带 reduction 子句。
 - `ZQ_CNN_MTCNN_old.h` 有同款的 II.9/II.10/II.11 形态，但它**不在任何构建里**
 （全仓无 include），本轮**没有**改它 —— 改一个死文件只会增加 diff 噪音。
 如果哪天它被重新启用，这三条要一起补。
+
+
+## 追加：附录 II 第三批 —— II.12 ~ II.16（把子代理报告里剩下的 S6/S7/S9/S10/S11 收掉）
+
+### 查到的真缺陷
+
+| 编号 | 范围 | 缺陷 | 修法 |
+| --- | --- | --- | --- |
+| II.12 | **四个变体，30 处** | `GetBlobByName` 找不到就返回 **0**（`ZQ_CNN_Net.h:295-300`），而 `Init` 对 blob 名**零校验**、`SetPara`/`Find` 也不校验 —— 传一个概率层不叫 `prob1` 的模型进来，下一行 `score->GetH()` / `score->GetFirstPixelPtr()` 就是**空指针解引用**。同一个函数里 `keyPoint` **有**判空（`if (keyPoint != 0)`）、`score`/`location` 没有 —— 判据不一致本身就是信号 | 每处声明后加 `if (score == 0 || location == 0) { printf(...); continue; }` |
+| II.13 | **五个变体** | `Init` 里 `thread_num` 只夹**下界**就 `pnet.resize(thread_num)` 并**逐份 LoadFrom** —— 每份都是一整套网络+权重。传 100000 就是 30 万份模型常驻内存，直接 OOM / 换页失败。`Init` 里除了 `ret` 之外没有任何资源预算 | 上界 128（超过 CPU 核数那么多份没有意义，每份独占一份 net 就是为了并行），超了打日志并夹到 128 |
+| II.14 | **五个变体** | `SetPara` 公开、没有 `w/h` 的任何校验。`minside = min(w,h)` 为 0 时 `scales.push_back(pnet_size/minside)` 是 **+inf**，消费端 `(int)ceil(height*scales[i])` 是 float->int 的**未定义行为**，返回值再进 `if (changedH < pnet_size) continue;` —— 判据本身随之失效 | 入口加 `if (w <= 0 || h <= 0)` 夹到 1x1 |
+| II.15 | **七个循环** | `special_handle_very_big_face` 的 `for (int tmp_size = last_size - 1; tmp_size >= pnet_size + 1; tmp_size -= 2)` 次数是 ~minside/2，**没有上界**。20000x20000 的图近 1 万个 scale -> `pnet_images.resize(1万)` -> 每个都分配 3x120x120x4 字节，**GB 级内存**。另外 `last_size > INT_MAX` 时 `int tmp_size = last_size - 1` 本身就是 UB | 循环条件加 `&& count < 2000` |
+| II.16 | `ZQ_CNN_MTCNN_Interface.h` | bgr 版 `Find` 第一行就是 `if (width != _width || height != _height) return false;`，**张量版那个重载没有**。而 `scales`/`pnet_images`/`width`/`height` 全是按 SetPara 那对尺寸生成的，后面所有几何又都拿**成员** width/height 算 —— 换个尺寸的图进来不越界，但**所有几何都按过期尺寸算**，结果完全错乱且无任何提示。`ZQ_CNN_VideoFaceDetection_Interface.h` 走的就是这个重载 | 补 `if (input.GetW() != width || input.GetH() != height)` |
+
+### 门禁扩充：A34 ~ A38（16 条规则，自测 22 例）
+
+A34 `score`/`location` 的 GetBlobByName 之后必须判空；
+A35 `Init` 的 `thread_num` 必须有上界；
+A36 `SetPara` 入口必须有 `w <= 0 || h <= 0` 守卫；
+A37 `special_handle_very_big_face` 的循环必须有 `count < N`；
+A38 张量版 `Find` 必须有尺寸守卫。
+
+**A35 一加上就抓到了真缺口**：它先报 `ZQ_CNN_MTCNN.h` / `_AspectRatio` / `_NCHWC` / `ncnn.h` 四份缺上界
+（我第一版只改了 `ZQ_CNN_MTCNN_Interface.h`），补齐后才全绿。
+这正是「门禁逐变体扫」比「记得改五遍」可靠的地方。
+
+### 踩到的坑（这一轮三次，全是**同一个**根因：heredoc 吃转义）
+
+1. `printf("...1x1\n")` 写进文件后 `
+` 变成**真换行**，字符串字面量被劈成两行；
+   修的时候又漏了 `w, h` 两个实参，gcc 报 `-Wformat=` 警告（不是错误，容易被忽略）。
+2. 门禁里 `re.search(r'' + v + ...)` —— 写 `` 时少了一层，
+   Python 把它解成**退格字符**，正则变成「退格 + score + == 0」，
+   于是**所有** A34 点位都被误报成「没判空」，差点让我以为修复没生效。
+3. 修 A38 时连续三轮：先把返回类型写死成 `bool`（换个返回类型就静默不执行），
+   再是 heredoc 吃掉 `\s`，最后改成拼接还是不对。
+
+**根因同一个**：在 `python - <<'PYEOF'` 里写正则和 C 字符串字面量，
+转义要经过「shell 传递 -> Python 字符串字面量 -> 文件」三层。
+AGENTS.md 已有的规矩（改 C/C++ 源码用 Edit/Write、Python 里要写真反斜杠用 `chr(92)` 拼接）
+这次补上正则这一类：**写正则优先用不带转义的判据**。
+A38 最后干脆不用正则了 —— `A38_FIND_MARK in text` 纯字符串判断，没有转义层。
+
+### 实测
+
+    python tools/check_mtcnn_setpara.py --selfcheck -> 22 cases, all as expected（RC=0）
+    python tools/check_mtcnn_setpara.py             -> 5 文件全 OK，合计 72 项（RC=0）
+    变异测试：逐条破坏 A34/A35/A36/A37/A38 -> 门禁**五条全部抓到**并点名
+    Linux -fsyntax-only（四个 MTCNN 头）              -> RC=0
+    cmake --build build_x64 --config Release --target 四个 MTCNN sample -> RC=0，0 error
+    A/B 对拍（II.7~11 版 vs II.12~16 版）：四个 sample **全部 IDENTICAL**
+    v65 全量回归（含 58 道 ZQlib 门禁）-> ALL CHECKS PASSED, RC=0
+    python tools/check_text_encoding.py -> OK: 763 text files, all strict UTF-8, no U+FFFD
+    python tools/check_line_endings.py  -> line endings OK
+
+### 注意事项
+
+- **II.12~II.16 全部是「只在非法输入 / 错误模型 / 错配尺寸时才触发」的守卫**，
+  所以 A/B 对拍四个 sample 逐字节不变 —— 这是预期结果，不是「修复没生效」的证据。
+  真要验它们得故意传错：给一个 blob 名不对的模型、传 `w=0`、给张量版 Find 换尺寸的图。
+- **II.13 的上界 128 是个取舍**：真机器核数超过 128 的极少，
+  而真有人要 256 份时会被夹到 128（会打日志）。
+  如果将来支持超多线程，这个值要跟着 `omp_get_num_procs()` 走而不是写死。
+- **II.15 的上界 2000 同样是取舍**：2000 个 scale 的分数表大约 2000*2000*4 = 16MB，
+  可接受；真要处理超大图应该改用 `special_handle_very_big_face` 的**步进策略**
+（比如按比例抽稀）而不是无脑加 scale。
+- `ZQ_CNN_MTCNN_ncnn.h` **没有**张量版 Find（只有 bgr 那个，本来就有尺寸守卫），
+  所以 A38 对它**不适用**、不报 —— 这是「不适用」不是「不满足」。
+  ncnn.h 的 `Init` 形态也与另外四份不同（`pnet = std::vector<ncnn::Net>(thread_num)`，
+  因为 `ncnn::Net` 的拷贝构造是 private，见附录 EW），所以补上界时是单独写的。

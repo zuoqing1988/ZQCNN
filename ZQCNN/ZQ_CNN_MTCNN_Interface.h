@@ -102,6 +102,17 @@ namespace ZQ
 			else
 				force_run_pnet_multithread = false;
 			thread_num = __max(1, thread_num);
+			// 审计修复 2026-10-06（附录 II.13）：原来只夹**下界**。
+			// 下面按 thread_num 份**逐份 LoadFrom**，每份都是一整套网络 + 权重 —— 
+			// 传 100000 就是 30 万份模型常驻内存，直接 OOM / 换页失败。
+			// Init 里除了 ret 之外没有任何资源预算，调用方给个离谱值就能把进程打死。
+			// 上界取 128：超过 CPU 核数那么多份没有任何意义（每份独占一份 net 就是为了并行），
+			// 而 128 份已经远超任何真实机器的核数，同时把最坏情况钉在一个可预期的量级。
+			if (thread_num > 128)
+			{
+				printf("thread_num = %d is too large, clamp to 128\n", thread_num);
+				thread_num = 128;
+			}
 			pnet.resize(thread_num);
 			rnet.resize(thread_num);
 			onet.resize(thread_num);
@@ -161,6 +172,17 @@ namespace ZQ
 			int pnet_overlap_thresh_count = 4, int pnet_size = 12, int pnet_stride = 2, bool special_handle_very_big_face = false,
 			float early_accept_thresh = 1.00)
 		{
+			// 审计修复 2026-10-06（附录 II.14）：SetPara 公开、没有 w/h 的任何校验。
+			// `float minside = __min(width, height);` 在 w 或 h 为 0 时是 0，
+			// 于是 `scales.push_back((float)pnet_size / minside)` 得到 **+inf**，
+			// 消费端 `(int)ceil(height * scales[i])` 是 float->int 的**未定义行为**，
+			// 返回值（实现定义的垃圾）再进 `if (changedH < pnet_size) continue;` ——
+			// 判据本身随之失效，后面所有几何全错。夹到 1 让金字塔退化成最小规模而不是 UB。
+			if (w <= 0 || h <= 0)
+			{
+				printf("SetPara: invalid size %dx%d, clamp to 1x1\n", w, h);
+				w = __max(1, w); h = __max(1, h);
+			}
 			min_size = __max(__max(1, pnet_size), min_face_size);
 			thresh[0] = __max(0.1, pthresh); thresh[1] = __max(0.1, rthresh); thresh[2] = __max(0.1, othresh);
 			nms_thresh[0] = __max(0.1, nms_pthresh); nms_thresh[1] = __max(0.1, nms_rthresh); nms_thresh[2] = __max(0.1, nms_othresh);
@@ -242,7 +264,13 @@ namespace ZQ
 					if (count > 0)
 					{
 						float last_size = ceil(scales[count - 1] * minside);
-						for (int tmp_size = last_size - 1; tmp_size >= pnet_size + 1; tmp_size -= 2)
+			// 审计修复 2026-10-06（附录 II.15）：这个循环的次数是 ~minside/2，没有上界。
+			// 20000x20000 的图 -> 近 1 万个 scale -> pnet_images.resize(1万)，
+			// 随后每个都被 ResizeBilinear 分配 3x120x120x4 字节，**GB 级内存**。
+			// 另外 last_size > INT_MAX 时 `int tmp_size = last_size - 1` 本身就是 UB。
+			// 上界取 2000：即便 pnet_size 最小（12）也远超实际需要，
+			// 而 2000 个 scale 的分数表仍然在可接受量级内。
+						for (int tmp_size = last_size - 1; tmp_size >= pnet_size + 1 && count < 2000; tmp_size -= 2)
 						{
 							scales.push_back((float)tmp_size / minside);
 							count++;
@@ -320,6 +348,20 @@ namespace ZQ
 		bool Find(ZQ_CNN_Tensor4D_Interface& input, std::vector<ZQ_CNN_BBox>& results)
 		{
 			double t1 = omp_get_wtime();
+			// 审计修复 2026-10-06（附录 II.16）：bgr 那个重载第一行就是
+			// `if (width != _width || height != _height) return false;`，这个**没有**。
+			// 而 SetPara 建出来的 `scales` / `pnet_images` / `width` / `height` 全是按
+			// SetPara 那对尺寸生成的，后面所有几何又都是拿**成员** width/height 去算的
+			// （`ceil(height*scales[i])`、`cur_scale_x = width/changedW` ...）。
+			// 调用方传一张别的尺寸的图进来，不越界（ResizeBilinearRect 接受越界 rect），
+			// 但**所有几何都按过期尺寸算**，检测结果完全错乱且没有任何提示。
+			// `ZQ_CNN_VideoFaceDetection_Interface.h` 走的就是这个重载。
+			if (input.GetW() != width || input.GetH() != height)
+			{
+				printf("Find: input is %dx%d but SetPara was given %dx%d\n",
+					input.GetW(), input.GetH(), width, height);
+				return false;
+			}
 			std::vector<ZQ_CNN_BBox> firstBbox, secondBbox, thirdBbox;
 			if (!_Pnet_stage(input, firstBbox))
 				return false;
@@ -475,6 +517,13 @@ namespace ZQ
 					printf("Pnet [%d]: resolution [%dx%d], resize:%.3f ms, cost:%.3f ms\n",
 						i, changedW, changedH, 1000 * (t11 - t10), 1000 * (t12 - t11));
 				const ZQ_CNN_Tensor4D_Interface_Base* score = pnet[0].GetBlobByName("prob1");
+				// 审计修复 2026-10-06（附录 II.12）：GetBlobByName 找不到就返回 **0**
+				// （ZQ_CNN_Net.h:295-300 / ZQ_CNN_Net_Interface），而 Init 对 blob 名**零校验**、
+				// SetPara / Find 也不校验 —— 传一个概率层不叫 prob1 的模型进来，
+				// 下面 score->GetH() / score->GetFirstPixelPtr() 就是空指针解引用。
+				// 耐人寻味的是同一个函数里 keyPoint **有**判空（`if (keyPoint != 0)`），
+				// score / location 没有 —— 判据不一致本身就是信号。
+				if (score == 0) { printf("[MTCNN] blob not found in pnet\n"); continue; }
 				//score p
 				int scoreH = score->GetH();
 				int scoreW = score->GetW();
@@ -642,6 +691,13 @@ namespace ZQ
 					if (!pnet[thread_id].Forward(task_pnet_images[thread_id]))
 						continue;
 					const ZQ_CNN_Tensor4D_Interface_Base* score = pnet[thread_id].GetBlobByName("prob1");
+					// 审计修复 2026-10-06（附录 II.12）：GetBlobByName 找不到就返回 **0**
+					// （ZQ_CNN_Net.h:295-300 / ZQ_CNN_Net_Interface），而 Init 对 blob 名**零校验**、
+					// SetPara / Find 也不校验 —— 传一个概率层不叫 prob1 的模型进来，
+					// 下面 score->GetH() / score->GetFirstPixelPtr() 就是空指针解引用。
+					// 耐人寻味的是同一个函数里 keyPoint **有**判空（`if (keyPoint != 0)`），
+					// score / location 没有 —— 判据不一致本身就是信号。
+					if (score == 0) { printf("[MTCNN] blob not found in pnet\n"); continue; }
 
 					int task_count = 0;
 					//score p
@@ -693,6 +749,13 @@ namespace ZQ
 					if (!pnet[thread_id].Forward(task_pnet_images[thread_id]))
 						continue;
 					const ZQ_CNN_Tensor4D_Interface_Base* score = pnet[thread_id].GetBlobByName("prob1");
+					// 审计修复 2026-10-06（附录 II.12）：GetBlobByName 找不到就返回 **0**
+					// （ZQ_CNN_Net.h:295-300 / ZQ_CNN_Net_Interface），而 Init 对 blob 名**零校验**、
+					// SetPara / Find 也不校验 —— 传一个概率层不叫 prob1 的模型进来，
+					// 下面 score->GetH() / score->GetFirstPixelPtr() 就是空指针解引用。
+					// 耐人寻味的是同一个函数里 keyPoint **有**判空（`if (keyPoint != 0)`），
+					// score / location 没有 —— 判据不一致本身就是信号。
+					if (score == 0) { printf("[MTCNN] blob not found in pnet\n"); continue; }
 
 					int task_count = 0;
 					//score p
@@ -1086,6 +1149,13 @@ namespace ZQ
 					rnet[0].Forward(task_rnet_images[pp]);
 					const ZQ_CNN_Tensor4D_Interface_Base* score = rnet[0].GetBlobByName("prob1");
 					const ZQ_CNN_Tensor4D_Interface_Base* location = rnet[0].GetBlobByName("conv5-2");
+					// 审计修复 2026-10-06（附录 II.12）：GetBlobByName 找不到就返回 **0**
+					// （ZQ_CNN_Net.h:295-300 / ZQ_CNN_Net_Interface），而 Init 对 blob 名**零校验**、
+					// SetPara / Find 也不校验 —— 传一个概率层不叫 prob1 的模型进来，
+					// 下面 score->GetH() / score->GetFirstPixelPtr() 就是空指针解引用。
+					// 耐人寻味的是同一个函数里 keyPoint **有**判空（`if (keyPoint != 0)`），
+					// score / location 没有 —— 判据不一致本身就是信号。
+					if (score == 0 || location == 0) { printf("[MTCNN] blob not found in rnet\n"); continue; }
 					const float* score_ptr = score->GetFirstPixelPtr();
 					const float* location_ptr = location->GetFirstPixelPtr();
 					int score_sliceStep = score->GetSliceStep();
@@ -1142,6 +1212,13 @@ namespace ZQ
 					rnet[thread_id].Forward(task_rnet_images[pp]);
 					const ZQ_CNN_Tensor4D_Interface_Base* score = rnet[thread_id].GetBlobByName("prob1");
 					const ZQ_CNN_Tensor4D_Interface_Base* location = rnet[thread_id].GetBlobByName("conv5-2");
+					// 审计修复 2026-10-06（附录 II.12）：GetBlobByName 找不到就返回 **0**
+					// （ZQ_CNN_Net.h:295-300 / ZQ_CNN_Net_Interface），而 Init 对 blob 名**零校验**、
+					// SetPara / Find 也不校验 —— 传一个概率层不叫 prob1 的模型进来，
+					// 下面 score->GetH() / score->GetFirstPixelPtr() 就是空指针解引用。
+					// 耐人寻味的是同一个函数里 keyPoint **有**判空（`if (keyPoint != 0)`），
+					// score / location 没有 —— 判据不一致本身就是信号。
+					if (score == 0 || location == 0) { printf("[MTCNN] blob not found in rnet\n"); continue; }
 					const float* score_ptr = score->GetFirstPixelPtr();
 					const float* location_ptr = location->GetFirstPixelPtr();
 					int score_sliceStep = score->GetSliceStep();
@@ -1304,6 +1381,13 @@ namespace ZQ
 					double t32 = omp_get_wtime();
 					const ZQ_CNN_Tensor4D_Interface_Base* score = onet[0].GetBlobByName("prob1");
 					const ZQ_CNN_Tensor4D_Interface_Base* location = onet[0].GetBlobByName("conv6-2");
+					// 审计修复 2026-10-06（附录 II.12）：GetBlobByName 找不到就返回 **0**
+					// （ZQ_CNN_Net.h:295-300 / ZQ_CNN_Net_Interface），而 Init 对 blob 名**零校验**、
+					// SetPara / Find 也不校验 —— 传一个概率层不叫 prob1 的模型进来，
+					// 下面 score->GetH() / score->GetFirstPixelPtr() 就是空指针解引用。
+					// 耐人寻味的是同一个函数里 keyPoint **有**判空（`if (keyPoint != 0)`），
+					// score / location 没有 —— 判据不一致本身就是信号。
+					if (score == 0 || location == 0) { printf("[MTCNN] blob not found in onet\n"); continue; }
 					const ZQ_CNN_Tensor4D_Interface_Base* keyPoint = onet[0].GetBlobByName("conv6-3");
 					const float* score_ptr = score->GetFirstPixelPtr();
 					const float* location_ptr = location->GetFirstPixelPtr();
@@ -1374,6 +1458,13 @@ namespace ZQ
 					double t32 = omp_get_wtime();
 					const ZQ_CNN_Tensor4D_Interface_Base* score = onet[thread_id].GetBlobByName("prob1");
 					const ZQ_CNN_Tensor4D_Interface_Base* location = onet[thread_id].GetBlobByName("conv6-2");
+					// 审计修复 2026-10-06（附录 II.12）：GetBlobByName 找不到就返回 **0**
+					// （ZQ_CNN_Net.h:295-300 / ZQ_CNN_Net_Interface），而 Init 对 blob 名**零校验**、
+					// SetPara / Find 也不校验 —— 传一个概率层不叫 prob1 的模型进来，
+					// 下面 score->GetH() / score->GetFirstPixelPtr() 就是空指针解引用。
+					// 耐人寻味的是同一个函数里 keyPoint **有**判空（`if (keyPoint != 0)`），
+					// score / location 没有 —— 判据不一致本身就是信号。
+					if (score == 0 || location == 0) { printf("[MTCNN] blob not found in onet\n"); continue; }
 					const ZQ_CNN_Tensor4D_Interface_Base* keyPoint = onet[thread_id].GetBlobByName("conv6-3");
 					const float* score_ptr = score->GetFirstPixelPtr();
 					const float* location_ptr = location->GetFirstPixelPtr();

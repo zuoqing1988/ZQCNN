@@ -368,6 +368,16 @@ namespace ZQ
 			else
 				force_run_pnet_multithread = false;
 			thread_num = __max(1, thread_num);
+			// 审计修复 2026-10-06（附录 II.13）：原来只夹**下界**。
+			// 下面按 thread_num 份**逐份 LoadFrom**，每份都是一整套网络 + 权重 —— 
+			// 传 100000 就是 30 万份模型常驻内存，直接 OOM / 换页失败。
+			// Init 里除了 ret 之外没有任何资源预算，调用方给个离谱值就能把进程打死。
+			// 上界取 128：超过 CPU 核数那么多份没有任何意义（每份独占一份 net 就是为了并行）。
+			if (thread_num > 128)
+			{
+				printf("thread_num = %d is too large, clamp to 128\n", thread_num);
+				thread_num = 128;
+			}
 			// 审计修复 2026-10-03（附录 EW）：原来这里是 `pnet.resize(thread_num)` 等 6 处。
 			// `std::vector::resize` 扩容时要把已有元素**移动或拷贝**过去，
 			// 而 `ncnn::Net` 的拷贝构造是 **private**（3rdparty/include/ncnn/net.h:156）、
@@ -428,7 +438,18 @@ namespace ZQ
 			int pnet_overlap_thresh_count = 4, int pnet_size = 12, int pnet_stride = 2, bool special_handle_very_big_face = false,
 			bool do_landmark = true, float early_accept_thresh = 1.00)
 		{
-			min_size = __max(pnet_size, min_face_size);
+			// 审计修复 2026-10-06（附录 II.14）：SetPara 公开、没有 w/h 的任何校验。
+			// `float minside = __min(width, height);` 在 w 或 h 为 0 时是 0，
+			// 于是 `scales.push_back((float)pnet_size / minside)` 得到 **+inf**，
+			// 消费端 `(int)ceil(height * scales[i])` 是 float->int 的**未定义行为**，
+			// 返回值（实现定义的垃圾）再进 `if (changedH < pnet_size) continue;` ——
+			// 判据本身随之失效，后面所有几何全错。夹到 1 让金字塔退化成最小规模而不是 UB。
+			if (w <= 0 || h <= 0)
+			{
+				printf("SetPara: invalid size %dx%d, clamp to 1x1\n", w, h);
+				w = __max(1, w); h = __max(1, h);
+			}
+			min_size = __max(__max(1, pnet_size), min_face_size);
 			thresh[0] = __max(0.1, pthresh); thresh[1] = __max(0.1, rthresh); thresh[2] = __max(0.1, othresh);
 			nms_thresh[0] = __max(0.1, nms_pthresh); nms_thresh[1] = __max(0.1, nms_rthresh); nms_thresh[2] = __max(0.1, nms_othresh);
 			// 审计修复 2026-10-06（附录 II.7）：原来这一行改的是**形参** `scale_factor`，
@@ -513,7 +534,13 @@ namespace ZQ
 					if (count > 0)
 					{
 						float last_size = ceil(scales[count - 1] * minside);
-						for (int tmp_size = last_size - 1; tmp_size >= pnet_size + 1; tmp_size -= 2)
+			// 审计修复 2026-10-06（附录 II.15）：这个循环的次数是 ~minside/2，没有上界。
+			// 20000x20000 的图 -> 近 1 万个 scale -> pnet_images.resize(1万)，
+			// 随后每个都被 ResizeBilinear 分配 3x120x120x4 字节，**GB 级内存**。
+			// 另外 last_size > INT_MAX 时 `int tmp_size = last_size - 1` 本身就是 UB。
+			// 上界取 2000：即便 pnet_size 最小（12）也远超实际需要，
+			// 而 2000 个 scale 的分数表仍然在可接受量级内。
+						for (int tmp_size = last_size - 1; tmp_size >= pnet_size + 1 && count < 2000; tmp_size -= 2)
 						{
 							scales.push_back((float)tmp_size / minside);
 							count++;

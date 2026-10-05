@@ -173,6 +173,36 @@ RE_A33_PRAGMA = re.compile(
 RE_A33_RED = re.compile(r'reduction\(\s*\+\s*:\s*before_count\s*,\s*after_count\s*\)')
 
 
+# ---- A34~A38（附录 II.12~II.16）----
+# A34: `score` / `location` 的 GetBlobByName 之后必须有判空。
+#      GetBlobByName 找不到就返回 0（ZQ_CNN_Net.h:295-300），而 Init 对 blob 名零校验。
+#      `keyPoint` 一直**有**判空、`score`/`location` 没有 —— 判据不一致本身就是信号。
+RE_A34_DECL = re.compile(
+    r'const\s+ZQ_CNN_Tensor4D\w*\*\s*(score|location)\s*=\s*\w+\[\w*\]\.GetBlobByName\(')
+A34_WINDOW = 1200   # 紧跟着的判空 + 注释
+
+# A35: Init 的 thread_num 必须有上界（按份复制整模型）
+RE_A35_BAD = re.compile(r'^\s*thread_num\s*=\s*__max\(1,\s*thread_num\)\s*;\s*$', re.M)
+RE_A35_CAPPED = re.compile(r'if\s*\(\s*thread_num\s*>\s*\d+\s*\)')
+
+# A36: SetPara 入口必须校验 w/h（minside==0 -> scale=+inf -> (int)ceil(inf) 是 UB）
+RE_A36 = re.compile(r'if\s*\(\s*w\s*<=\s*0\s*\|\|\s*h\s*<=\s*0\s*\)')
+
+# A37: special_handle_very_big_face 的 tmp_size 循环必须有 count 上界
+RE_A37_LOOP = re.compile(
+    r'for\s*\(int tmp_size = last_size - 1;[^;]*;\s*tmp_size -= 2\)')
+RE_A37_GOOD = re.compile(r'count\s*<\s*\d+')
+
+# A38: 张量版 Find 必须有尺寸守卫（bgr 版本来就有）
+# 「哪个 Find」用**纯字符串**判，不用正则 —— 这条规则被自己的正则坑过三轮：
+#   1. 返回类型写死成 `bool`，换个返回类型就**静默不执行**（扫不到 != 没问题）；
+#   2. heredoc 吃掉一层转义，反斜杠 s 变成字面量；
+#   3. 为躲 2 改成拼接，还是不对。
+# 字符串判断没有转义层，也就没有这三类问题。
+A38_FIND_MARK = 'Find(ZQ_CNN_Tensor4D_Interface&'
+RE_A38_GUARD = re.compile(r'input\.GetW\(\)\s*!=\s*width\s*\|\|\s*input\.GetH\(\)\s*!=\s*height')
+
+
 def _read(path):
     with io.open(path, 'r', encoding='utf-8') as f:
         return f.read()
@@ -377,6 +407,50 @@ def scan_text(raw, label='<text>'):
                         + '；'.join('行 %d' % ln for _, ln in hits)))
         else:
             ok += 1
+
+    # ---- A34~A38 ----
+    a34 = []
+    for m in RE_A34_DECL.finditer(text):
+        v = m.group(1)
+        if not re.search(v + r'\s*==\s*0', text[m.end():m.end() + A34_WINDOW]):
+            a34.append(text[:m.start()].count(chr(10)) + 1)
+    if a34:
+        bad.append(('A34', '`score` / `location` 的 GetBlobByName 之后没有判空（行 %s）—— '
+                    'GetBlobByName 找不到返回 0，下一行 score->GetH() 就是空指针解引用；'
+                    'Init 对 blob 名零校验，传个名字不对的模型就踩得到'
+                    % ', '.join(str(x) for x in a34)))
+    else:
+        ok += 1
+
+    if RE_A35_BAD.search(text) and not RE_A35_CAPPED.search(text):
+        bad.append(('A35', 'Init 里 thread_num 只夹了**下界**就 pnet.resize(thread_num) 并逐份 '
+                    'LoadFrom —— 传 100000 就是 30 万份模型常驻内存'))
+    else:
+        ok += 1
+
+    if not RE_A36.search(text):
+        bad.append(('A36', 'SetPara 入口没有 `w <= 0 || h <= 0` 守卫 —— minside==0 时 '
+                    '`scales.push_back(pnet_size/minside)` 是 +inf，'
+                    '消费端 `(int)ceil(height*scales[i])` 是 float->int 的 UB'))
+    else:
+        ok += 1
+
+    a37 = [m.group(0) for m in RE_A37_LOOP.finditer(text) if not RE_A37_GOOD.search(m.group(0))]
+    if a37:
+        bad.append(('A37', 'special_handle_very_big_face 的 tmp_size 循环没有 count 上界（%d 处）—— '
+                    '次数 ~minside/2，20000x20000 的图近 1 万个 scale -> GB 级内存；'
+                    'last_size > INT_MAX 时 `int tmp_size = last_size - 1` 本身就是 UB'
+                    % len(a37)))
+    else:
+        ok += 1
+
+    if A38_FIND_MARK in text and not RE_A38_GUARD.search(text):
+        bad.append(('A38', '张量版 Find 没有尺寸守卫（bgr 版第一行就有）—— '
+                    'scales / pnet_images / width / height 全是按 SetPara 那对尺寸生成的，'
+                    '换个尺寸的图进来所有几何全按过期尺寸算'))
+    else:
+        ok += 1
+
     return ok, bad
 
 
@@ -384,6 +458,7 @@ def scan_text(raw, label='<text>'):
 # 这样每条自测的期望集合都是可推导的，而不是拍脑袋写的。
 FULL = r"""
 void SetPara(int w, int h, float scale_factor = 0.709) {
+	if (w <= 0 || h <= 0) { w = 1; h = 1; }
 	const float new_factor = (float)__max(0.5f, __min(0.97f, scale_factor));
 	const float old_factor = factor;
 	this->factor = new_factor;
@@ -418,6 +493,21 @@ void SetPara(int w, int h, float scale_factor = 0.709) {
 	if (task_src_off_x.size() == 0 || task_src_off_x[pp].size() == 0) continue;
 #pragma omp parallel for schedule(dynamic, chunk_size) num_threads(thread_num) reduction(+:before_count, after_count)
 	for (int bb = 0; bb < block_num; bb++) { before_count += tmp_before_count; after_count += tmp_after_count; }
+	if (task_src_off_x.size() == 0 || task_src_off_x[pp].size() == 0) continue;
+	for (int tmp_size = last_size - 1; tmp_size >= pnet_size + 1 && count < 2000; tmp_size -= 2) {}
+}
+
+void Init(int thread_num) {
+	thread_num = __max(1, thread_num);
+	if (thread_num > 128) { thread_num = 128; }
+	pnet.resize(thread_num);
+}
+
+void Find(ZQ_CNN_Tensor4D_Interface& input) {
+	if (input.GetW() != width || input.GetH() != height) return false;
+	const ZQ_CNN_Tensor4D* score = rnet[0].GetBlobByName("prob1");
+	if (score == 0) { continue; }
+	int h = score->GetH();
 }
 """
 
@@ -473,6 +563,18 @@ SELFCHECK = [
             'else if (i < ori_num + xhalf_num) { int j = i - ori_num; }\n'
             'else { int k = i - ori_num - xhalf_num; }\n',
      ['A30'], 'ar'),
+
+    ('A34 score/location 没判空',
+     FULL.replace('if (score == 0) { continue; }', '/*removed*/'), ['A34'], 'base'),
+    ('A35 thread_num 无上界',
+     FULL.replace('if (thread_num > 128) { thread_num = 128; }', ''), ['A35'], 'base'),
+    ('A36 SetPara 没校验 w/h',
+     FULL.replace('if (w <= 0 || h <= 0) { w = 1; h = 1; }', ''), ['A36'], 'base'),
+    ('A37 special_handle 循环无上界',
+     FULL.replace(' && count < 2000', ''), ['A37'], 'base'),
+    ('A38 张量版 Find 无尺寸守卫',
+     FULL.replace('if (input.GetW() != width || input.GetH() != height) return false;', ''),
+     ['A38'], 'base'),
 
     # ---- 阴性对照：以下都**不该**报 ----
     ('阴性：注掉的 0.5',
