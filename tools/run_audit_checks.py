@@ -389,6 +389,26 @@ GROUPS = [
     # 落成门禁的理由：**下一个模型再写出这种接线时，在加载之前就报出来**。
     ('C16 BN/PReLU 接线（附录 HX）',
      ['check_bn_prelu_pairing.py', '--selftest'], False),
+    # C17（附录 IJ）：**平台分支**上的 MSVC 专有拼写。
+    # `fopen_s` / `sprintf_s` / `Sleep` / `_mkdir` 这些在 Linux/gcc 上根本不存在。
+    # 两边构建都过，**不代表没有**：只有被 `#if defined(_WIN32)` 圈住才安全。
+    # 本门禁扫全树一方代码（不含 3rdparty），任何一处**没被 win32 分支圈住**的
+    # MSVC 专有拼写都退出 1。
+    #
+    # 本轮实测：一方代码 **0 处**。全树只有 7 个 `#if _WIN32 ... #else` 区域，
+    # 其中唯一常量不对称的是 model/benchncnn.cpp 的 `Sleep(10 * 1000)` vs
+    # `sleep(10)` —— 毫秒对秒，**是对的**，所以常量那一半只报不判。
+    #
+    # 这道门禁是**先坏后修**的：它的第一版要求"每一层外层 #if 都得是 win32 判定"，
+    # 于是每个有 include guard 的头整份被判成未圈住，报出 109 处**假阳性**；
+    # 改成"存在某一层把代码限制在 win32 就算圈住"之后，又暴露出自测覆盖不到的真实
+    # 漏洞 —— 在只被 include guard 包住的头里植入一个真`fopen_s`，门禁**照样绿**。
+    # 教训就是 AGENTS.md 那条：门禁在变异后仍然绿，先怀疑门禁没鉴别力，
+    # 判据是**在真实文件里做变异并数命中数**。
+    ('C17 平台分支：未圈住的 MSVC 专有拼写（附录 IJ）',
+     ['probe_platform_divergence.py'], False),
+    ('C17b C17 分类器自测（三种外层条件 + 跨行注释）',
+     ['probe_platform_divergence.py', '--selftest'], False),
 ]
 
 

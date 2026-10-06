@@ -3200,3 +3200,46 @@ AGENTS.md 增补第 33~35 条。
     现在这些键在 NCHWC 侧是**响亮拒载**（附录 DH/DK），不会静默算错；
     随仓 220 个 SAME 层只在**可整除**的输入上跑（SAME 等于无 pad），
     所以这条待办对现有 sample 零影响 —— 但它是"换个输入尺寸就会踩"的路径。
+---
+
+## 新增：平台分支上的 MSVC 专有拼写门禁（附录 IJ）
+
+### 变更文件
+
+    新增 tools/probe_platform_divergence.py   两部分探针 + --selftest（15 个用例）
+    改   tools/run_audit_checks.py             接入 C17 / C17b（快组）
+
+### 问题
+
+`fopen_s` / `sprintf_s` / `sscanf_s` / `_mkdir` / `Sleep` 这些在 Linux/gcc 上
+**根本不存在**。两边构建都过**不代表没有** —— 只有被 `#if defined(_WIN32)`
+圈住才安全。
+
+先手工核实过 ZQlibFaceID：那些 `fopen_s` 看着像没圈住，实际
+`ZQ_FaceDatabase.h:1083` 是规规矩矩的 `#if defined(_WIN32) / #else`。Linux 上
+不带任何垫片编 `ZQ_FaceDatabase.h` 也确实通过，所以**没有真缺陷**。
+
+### 实测结果
+
+一方代码（ZQCNN / ZQlibFaceID / ZQ_GEMM / Samples* / model）：
+
+    未圈住的 MSVC 专有拼写     0 处
+    全树 `#if _WIN32 ... #else` 区域      7 个
+    其中常量不对称的             1 个
+
+唯一那一个是 `model/benchncnn.cpp:167` 的 `Sleep(10 * 1000)` vs `sleep(10)` ——
+毫秒对秒，**是对的**。所以常量那一半**只报不判**，只有未圈住那一半判红。
+
+### 注意事项
+
+这道门禁是**先坏后修**的，过程值得记：
+
+1. 第一版要求"每一层外层 `#if` 都得是 win32 判定"，于是每个带 include guard
+   的头整份被判成未圈住，报出 **109 处假阳性**。
+2. 改成"存在某一层把代码限制在 win32 就算圈住"之后，仍有真实漏洞：在只被
+   include guard 包住的头里植入一个真 `fopen_s`，门禁**照样绿**。
+3. 原因是空栈/中性层的语义写反了 —— include guard 本身**不构成**保护。
+
+结论就是 AGENTS.md 那条：**门禁在变异后仍然绿，先怀疑门禁没鉴别力**。
+这次判据是"在真实文件里做变异、并数命中数"，光看自测不够 ——
+自测的 include-guard 用例里同时含 win32 层，正好盖住了这个 bug。
