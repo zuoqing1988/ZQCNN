@@ -27,6 +27,7 @@ tools/check_text_encoding.py。
 
 import argparse
 import glob
+import hashlib
 import os
 import re
 import shutil
@@ -1157,6 +1158,35 @@ def main():
              # 换成唯一名之后 `cd` 直接失败、`&&` 把 mkdir 短路掉，
              # 于是所有编译都写到不存在的路径上，**每一道门禁都 BUILD FAIL 且消息为空**。
              'mkdir -p $WDIR && cd $WDIR && rm -rf ./*']
+    # 附录 IL：一条编译命令的**规范输出名**。
+    #
+    # 起因：`ZQ_GEMM/math/zq_gemm_32f_align_c.c` 及其 asm/auto 两个 TU 被
+    # EXTRA_SOURCES 里的十几条命令**各编一遍**，编译命令、头路径、旗标**全同**，
+    # 只有输出文件名不同（zq_gemm_align.o / zq_shape_gemm_align.o /
+    # zq_nchwcv_gemm_align.o / np_ga.o / nb_gemm_align.o / ...）。
+    # 于是同一个 TU 在一轮里被编十几遍，而"SLOW"的排除理由正是拿这个
+    # 重复编译当依据（附录 IK）。
+    #
+    # **共享的判据不是"同一个源文件"，而是整条命令逐字相同**（把 $SAN 换成
+    # 实际旗标、再把 `-o <名字>` 抹掉之后比较）。这一点是踩过坑才写对的：
+    # `zq_gemm_shape` 那条命令里**没有 `$SAN`**，而 `zq_nchwc_bn` /
+    # `zq_nchwc_padreject` / `zq_nchwc_poolpad` / `zq_padtype` /
+    # `zq_convparam` 的**有**。只按源文件名共享，就会把一份**没插桩**的 .o
+    # cp 给那些 sanitizer 门禁 —— 它们照样全绿，但**越界读一个元素也没人报**，
+    # 正是 2026-10-02 栽过的那一跤（见下面 DY.8 那段注释）。
+    # 所以键里必须含旗标：不同就老老实实各编一遍。
+    def canon_to_name(canon):
+        """把一条编译命令映射成一个稳定、合法的 .o 文件名。"""
+        src = re.search(r'\$\S+?([A-Za-z0-9_]+)\.c(?:pp)?\b', canon)
+        stem = src.group(1) if src else 'obj'
+        # 旗标进哈希：sanitizer 档不同的两份**不能**共用一个名字，
+        # 更不能共用一份 .o。
+        h = hashlib.md5(canon.encode('utf-8')).hexdigest()[:8]
+        return 'shared_%s_%s.o' % (stem, h)
+
+    # 键 = 抹掉输出名之后的整条命令；值 = 该命令本轮编出来的规范 .o 名
+    shared_emitted = {}
+
     for s in srcs:
         fname = os.path.basename(s)              # zq_xxx_check.cpp
         stem = fname[:-4]                        # zq_xxx_check
@@ -1181,7 +1211,43 @@ def main():
             # 与 DY.5 同一个毛病：**错误出现在错误的地方**。
             elog = '$WDIR/%s_extra%d.log' % (tag, ei)
             first_log.append(elog)
-            extra_ok += ' %s > %s 2>&1 || EXTRA_OK=0;' % (extra.replace('$SAN', san), elog)
+            # 附录 IL：把"同一个 TU 编很多遍"收敛成"编一遍、其余 cp"。
+            #
+            # **共享的判据不是"同一个源文件"，而是整条编译命令逐字相同
+            # （去掉 -o 的输出名、把 $SAN 换成实际旗标之后仍然相同）。**
+            #
+            # 这一条是踩过坑才写对的：`zq_gemm_shape` 那条编译命令里**没有
+            # `$SAN`**，而 `zq_nchwc_bn` / `zq_nchwc_padreject` /
+            # `zq_nchwc_poolpad` / `zq_padtype` / `zq_convparam` 等的**有**。
+            # 只按源文件名共享，就会把一份**没插桩**的 .o cp 给那些 sanitizer
+            # 门禁 —— 它们照样全绿，但**越界读一个元素也没人报**，
+            # 正是 2026-10-02 栽过的那一跤（附录 DY 那段注释）。
+            # 所以键必须包含旗标：不相同就老老实实各编一遍。
+            cmd_sub = extra.replace('$SAN', san)
+            canon = re.sub(r'-o \$WDIR/\S+\.o', '-o $WDIR/<OUT>', cmd_sub)
+            out_m = re.search(r'-o \$WDIR/(\S+\.o)', extra)
+            # 重定向**写进 newcmd 本身**，不再由下面统一追加 ——
+            # 第一次那条要 gcc + cp 两步，统一追加的重定向只会盖住 cp 那一半，
+            # gcc 的报错就漏到控制台、elog 变空、BUILD FAIL 消息为空
+            # （DY.8 那个"错误出现在错误的地方"的毛病）。
+            if not out_m:
+                newcmd = '%s > %s 2>&1' % (cmd_sub, elog)
+            elif canon in shared_emitted:
+                newcmd = 'cp $WDIR/%s $WDIR/%s > %s 2>&1' % (
+                    shared_emitted[canon], out_m.group(1), elog)
+            else:
+                # 本轮第一次见到这条命令：**不动它自己的输出名**，
+                # 只额外落一份规范名给后面的人 cp。
+                #
+                # 第一版是反过来做的（把第一次的输出**改名**成规范名）——
+                # 于是第一个用到它的测试链接时找不到自己该有的 .o，
+                # `--with-slow` 整轮 44/71、27 个 BUILD FAIL。
+                # 判据：**这一步绝不能让任何一个门禁失去它自己要的那个文件名。**
+                canon_name = canon_to_name(canon)
+                newcmd = ('%s > %s 2>&1 && cp $WDIR/%s $WDIR/%s' % (
+                    cmd_sub, elog, out_m.group(1), canon_name))
+                shared_emitted[canon] = canon_name
+            extra_ok += ' %s || EXTRA_OK=0;' % newcmd
         # 失败时把**所有**相关日志里的第一条 `error`/`fatal` 拼进消息 ——
         # 只报链接错误等于没报，只报 extra 错误又会漏掉门禁自身的编译错误。
         # **grep 一条都没命中时退回日志第一行**：gcc/g++ 报的未必含 error/fatal 两个词
