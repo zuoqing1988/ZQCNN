@@ -663,7 +663,8 @@ namespace ZQ
 					// （对照 BD.2 对非法池化参数的处理）：响亮的失败严格优于静默的错值。
 					std::cout << "Layer " << ZQ_CNN_Layer_NCHWC<Tensor4D>::name
 						<< " rejected para '" << paras[n][0]
-						<< "' on NCHWC: this net implements symmetric pad / pad_H / pad_W only, "
+						<< "' on NCHWC: this net implements symmetric padding "
+						<< "(pad, pad_H or pad_W) only, "
 						<< "layer rejected\n";
 					return false;
 				}
@@ -1235,7 +1236,8 @@ namespace ZQ
 					// （对照 BD.2 对非法池化参数的处理）：响亮的失败严格优于静默的错值。
 					std::cout << "Layer " << ZQ_CNN_Layer_NCHWC<Tensor4D>::name
 						<< " rejected para '" << paras[n][0]
-						<< "' on NCHWC: this net implements symmetric pad / pad_H / pad_W only, "
+						<< "' on NCHWC: this net implements symmetric padding "
+						<< "(pad, pad_H or pad_W) only, "
 						<< "layer rejected\n";
 					return false;
 				}

@@ -2366,3 +2366,22 @@ BatchNormScale       name=res4_block5_conv_dw_bn bottom=res4_block1_conv_dw top=
     >
     > 顺带：这类桩文件是**跨门禁共享**的，它一坏就同时坏一片 ——
     > 所以它不在任何单道门禁的覆盖范围内，只能靠全量构建抓到。
+34. **错误/说明消息的措辞会撞上门禁的启发式**（2026-10-06 补，一天内两次）
+    * 附录 DJ：`tools/run_sample_regression.sh` 的 `STUB_RE='only support|not support|...'`
+      把 `SampleMergeBNCompareNCHWC` 的一次**真加载失败**判成了平台桩
+      —— 因为我那句拒载消息里写了 `does not support para`。
+      STUB 是**不判失败**的，于是一道真失败被门禁藏了起来。
+    * 附录 DN：`check_div_guard.py` 把任何 `/<标识符>` 当成"除以模型参数"，
+      而我的消息里写了 `symmetric pad / pad_H / pad_W` —— 两处被报成"待查"。
+
+    两次的共同点：**消息字符串被当成了代码**。
+    > 判据：新增/修改任何 `printf` / `std::cout` 的**错误信息**之后，
+    > 问一句「这段文字里有没有会被现有门禁当代码的形状」——
+    > 至少包括 `/xxx`、`not support`、`unknown`、`duplicate` 这几类。
+    > 全仓门禁（`python tools/run_audit_checks.py --quick`）是最省事的验证。
+    >
+    > 两次的修法都是**改措辞**而不是**放宽判据**：
+    > 放宽判据会让门禁变弱，而"措辞撞上"是**低频、需要时立刻能改**的事。
+    > 真要让扫描器跳过字符串字面量是更好的长期做法，
+    > 但那要先给它配**阳性对照**（往字符串里塞一个真除法，看它还报不报），
+    > 不能只为了让它变绿就改。
