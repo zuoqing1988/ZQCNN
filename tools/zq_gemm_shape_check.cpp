@@ -31,6 +31,7 @@
 #include <cstring>
 #include <cmath>
 #include <vector>
+#include <xmmintrin.h>   // _mm_malloc / _mm_free（对齐 SIMD 缓冲，见附录 IS）
 
 #include <unistd.h>
 #include <sys/wait.h>
@@ -55,11 +56,59 @@ static float rv(int seed, int i)
     return (float)((int)(x % 2001) - 1000) * 0.001f;
 }
 
+// 32 字节对齐的缓冲（2026-10-07，附录 IS）
+// ------------------------------------------------------------
+// 被测的 GEMM 内核用 `_mm256_load_ps` / `_mm256_store_ps` 这类**要求 32 字节
+// 对齐**的固有函数读写 A / Bt / C。库的契约是明确的 —— 真实调用方一律用
+// `_aligned_malloc(..., 32)` 备缓冲（`zq_cnn_convolution_gemm_32f_align_c.c:383`
+// 等处，以及 `zq_gemm_32f_auto.c` 自己的 swap 分支）。
+//
+// 而本文件原来用 `std::vector<float>`，而 `operator new` 在 x86-64 上只保证
+// `alignof(max_align_t)` = **16** 字节 —— 于是每一次测试都在做 UB。
+// **ASan 那一轴查不出来**（ASan 查越界/释放后使用，不查对齐），
+// 所以它一直是绿的；直到附录 IK 把这个测试提进默认通道、
+// UBSan 那一轴（C6）第一次跑到它，才报出来：
+//
+//   avxintrin.h:874: runtime error: load of misaligned address ... for type
+//   '__m256', which requires 32 byte alignment
+//     #1 ..._M2_caseNdiv4_Keq32   zq_gemm_32f_align_c_raw.h:8633
+//     #3 zq_gemm_32f_AnoTrans_Btrans_auto   zq_gemm_32f_auto.c:565
+//
+// 用 `_mm_malloc` / `_mm_free`（`<xmmintrin.h>`，MSVC 与 gcc 都有），
+// 它正是 SIMD 代码期待的那一套，语义上也和库的调用方一致。
+class AlignedF32
+{
+public:
+    explicit AlignedF32(size_t n) : n_(n)
+    {
+        // 至少 1 个元素：长度为 0 时 _mm_malloc(0, ...) 的返回值未定义
+        p_ = (float*)_mm_malloc((n ? n : 1) * sizeof(float), 32);
+        if (p_ == 0) { fprintf(stderr, "AlignedF32: alloc failed\n"); abort(); }
+    }
+    ~AlignedF32() { if (p_) _mm_free(p_); }
+    // 禁拷贝：否则会出现 double free
+    AlignedF32(const AlignedF32&) = delete;
+    AlignedF32& operator=(const AlignedF32&) = delete;
+
+    float& operator[](size_t i) { return p_[i]; }
+    const float& operator[](size_t i) const { return p_[i]; }
+    float* data() { return p_; }
+    size_t size() const { return n_; }
+
+private:
+    size_t n_;
+    float* p_;
+};
+
 // 在**子进程**里跑。返回 0=通过 1=结果错。崩溃由父进程从信号判定。
 static int run_case(int M, int N, int K)
 {
     zq_child_silence_stderr();
-    std::vector<float> A((size_t)M * K), Bt((size_t)N * K), ref((size_t)M * N), got((size_t)M * N);
+    // A / Bt / got 是**喂给 GEMM 内核**的，必须 32 字节对齐（见 AlignedF32）。
+    // ref 只被本文件的双精度参考循环读写，不进 SIMD，std::vector 足够 ——
+    // 但为免"为什么只有它不对齐"将来被当成 bug，这里保持原样并注明。
+    AlignedF32 A((size_t)M * K), Bt((size_t)N * K), got((size_t)M * N);
+    std::vector<float> ref((size_t)M * N);
     for (size_t i = 0; i < A.size(); i++) A[i] = rv(1, (int)i);
     for (size_t i = 0; i < Bt.size(); i++) Bt[i] = rv(2, (int)i);
     for (int m = 0; m < M; m++)
@@ -80,8 +129,8 @@ static int run_case(int M, int N, int K)
         for (int k = 0; k < K; k++) { double v = Bt[(size_t)n * K + k]; t += v * v; }
         nb[n] = sqrt(t);
     }
-    memset(&got[0], 0, sizeof(float) * got.size());
-    zq_gemm_32f_AnoTrans_Btrans_auto(M, N, K, &A[0], K, &Bt[0], K, &got[0], N);
+    memset(got.data(), 0, sizeof(float) * got.size());
+    zq_gemm_32f_AnoTrans_Btrans_auto(M, N, K, A.data(), K, Bt.data(), K, got.data(), N);
     // 判据用**后向误差**（backward error），不是相对误差 —— 这一条改错过三次，
     // 理由见文件末尾的「判据为什么不能是相对误差」。
     //     err(m,n) = |got - exp| / (||A_m|| * ||B_n||)

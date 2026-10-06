@@ -3671,3 +3671,50 @@ UBSan 下 2072/崩溃**0**/结果错 **1182** —— 既不崩又错，没有直
 
 修法方向：zq_gemm_shape_check.cpp 的 A/Bt/C 改成 32 字节对齐分配，
 改完重跑 UBSan 轴验证。在此之前 C6 是红的。
+
+---
+
+## 修复：zq_gemm_shape 的对齐违约 —— C6 UBSan 轴由红转绿（附录 IT）
+
+### 变更文件
+
+    改 tools/zq_gemm_shape_check.cpp    A/Bt/got 改 32 字节对齐分配（AlignedF32）
+
+### 实测结果
+
+    run_zqlib_checks.py zq_gemm_shape --ubsan
+        UBSAN RC=0；grep -cE "runtime error|misaligned" -> 0；PASS 1/1
+    run_zqlib_checks.py zq_gemm_shape          （ASan 轴）
+        ASAN RC=0；PASS 1/1
+
+**附录 IS 里那个"还没搞清楚"的谜团自己解开了**：IS 记的是「UBSan 下既没有崩溃、
+又有 1182 个结果错，两件事同时出现没有直接解释」。把对齐修好后 UB 与错值
+**一起消失** —— 那 1182 个错值是这个 UB 的下游症状，不是独立问题。
+UBSan 改动代码生成后，不对齐的 `_mm256_load_ps` 没变成 #GP，而是安静地
+读到了错的数。IS 列的三种可能里第一种成立；第二种（`-fno-sanitize-recover=all`
+没落到 .c 编译行）**不需要成立**，根因就是对齐。
+
+### 同类扫描：阴性结论
+
+zq_gemm_shape_check.cpp 是不是唯一漏网的？扫全仓 tools/*.cpp，**它就是唯一的一个**：
+至少 **24 个测试文件**已显式处理对齐要求且都写了理由，例如
+
+    tools/zq_nchw_lstm_check.cpp:173
+        // 32 字节对齐的堆块（CJ.4 / CP.5：std::vector 只给 16 字节，_mm_load_ps 要 32）
+        static float* alloc32(size_t n) { ... }
+    tools/zq_lstm_check.cpp:49
+        // ...自己造缓冲喂 SIMD 内核时必须显式对齐，且 ASan 与 UBSan 两条轴都要跑
+
+也就是说这是一条**仓库里已成文的约定**，只有 zq_gemm_shape_check.cpp 漏了。
+这也反过来印证 IS 的判断：内核不是缺陷、测试违约 —— 若是契约本身有问题，
+24 个测试里得有 24 处绕过办法，而事实是它们全都按 32 对齐分配。
+
+### 注意事项
+
+没有新增门禁：这一类不适合静态判（「这个容器有没有对齐」不是正则能判的）。
+真正的防线是两条轴都跑，而 zq_lstm_check.cpp:50 早就写下了
+「ASan 与 UBSan 两条轴都要跑」；附录 IQ 的 --all 现在正好两条都跑。
+
+这次能抓出来**直接得益于附录 IK 把这个测试提进默认通道** —— 它原来在 SLOW，
+而 --ubsan-sweep 不带 --with-slow，所以从来没跑过。一次「提覆盖」换来一个
+藏了很久的 UB。
