@@ -715,6 +715,26 @@ EXTRA_SOURCES['zq_nchwc_batch'] = (
         '-I$R/3rdparty/include $R/ZQCNN/ZQ_CNN_Forward_SSEUtils_NCHWC.cpp -o $WDIR/nb_fwd.o',
     ])
 
+# zq_nchw_poolpad（附录 DO）：NCHW 池化**带 padding** 与「零填充后池化」的明文定义对拍。
+# 修之前 pad != 0 的 360/432 个用例全错（pad=0 的 72 个全对）。
+# 根因：`Padding` 会重建张量（widthStep 16 -> 24），而 `in_data` 与传给
+# `_maxpooling` 的行步长用的是**函数开头读到的旧值**，两者不是同一套几何。
+EXTRA_SOURCES['zq_nchw_poolpad'] = (
+    _glob_extra('ZQCNN/layers_c/*.c', 'np', cc='gcc')
+    + _glob_extra('ZQCNN/math/*.c', 'npm', cc='gcc') + [
+        'gcc -O0 -g $SAN -mavx2 -mfma -fopenmp -c -I$R/ZQCNN -I$R/ZQ_GEMM '
+        '-I$R/3rdparty/include $R/ZQ_GEMM/math/zq_gemm_32f_align_c.c -o $WDIR/np_ga.o',
+        'gcc -O0 -g $SAN -mavx2 -mfma -fopenmp -c -I$R/ZQCNN -I$R/ZQ_GEMM '
+        '-I$R/3rdparty/include $R/ZQ_GEMM/math/zq_gemm_32f_align_c_asm.c -o $WDIR/np_gb.o',
+        'gcc -O1 -g $SAN -mavx2 -mfma -fopenmp -c -I$R/ZQCNN -I$R/ZQ_GEMM '
+        '-I$R/3rdparty/include $R/ZQ_GEMM/math/zq_gemm_32f_auto.c -o $WDIR/np_gc.o',
+        # _maxpooling / _avgpooling 定义在这个 TU 里
+        'g++ -O1 -g $SAN -mavx2 -mfma -fopenmp -c -I$R -I$R/ZQCNN -I$R/ZQ_GEMM '
+        '-I$R/3rdparty/include $R/ZQCNN/ZQ_CNN_Forward_SSEUtils.cpp -o $WDIR/np_fw.o',
+        'g++ -O1 -g $SAN -mavx2 -mfma -fopenmp -c -I$R -I$R/ZQCNN -I$R/ZQ_GEMM '
+        '-I$R/3rdparty/include $R/ZQCNN/ZQ_CNN_Tensor4D.cpp -o $WDIR/np_t4d.o',
+    ])
+
 # zq_nchwc_poolpad（附录 F2）：NCHWC 池化在 pad != 0 时是否符合「零填充后池化」。
 # 判据是**独立参考**而不是 NCHW —— 因为实测 NCHW 那一支自己的窗口起点
 # 就没退到 -pad 行（见该文件头的装置），拿它当参考等于把缺陷固化成标准。
@@ -814,6 +834,7 @@ EXTRA_LINK = {'zq_resize_align': ' $WDIR/zq_rza.o $WDIR/zq_rza_tensor.o',
               'zq_nchwc_batch': ' $WDIR/nb_*.o',
               'zq_nchwc_poolpad': ' $WDIR/pp_*.o',
               'zq_nchwc_padreject': ' $WDIR/pr_*.o',
+              'zq_nchw_poolpad': ' $WDIR/np_*.o $WDIR/npm_*.o',
               'zq_padtype': ' $WDIR/pt_*.o',
               'zq_nchw_resize': (' $WDIR/zq_rzn.o $WDIR/zq_rzn_tensor.o'),
               'zq_nchw_sqrtnrm': ' $WDIR/zq_sn_sqrt.o $WDIR/zq_sn_nrm.o',
@@ -889,6 +910,7 @@ EXTRA_INC = {'zq_resize_align': ' -I$R -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/inc
              'zq_nchwc_batch': ' -I$R -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include',
              'zq_nchwc_poolpad': ' -I$R -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include',
              'zq_nchwc_padreject': ' -I$R -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include',
+             'zq_nchw_poolpad': ' -I$R -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include',
              'zq_padtype': ' -I$R -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include',
              'zq_nchw_resize': ' -I$R -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include',
              'zq_nchw_sqrtnrm': ' -I$R -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include',
@@ -955,6 +977,7 @@ EXTRA_CXXFLAGS = {'zq_resize_align': ' -mavx2 -mfma -fopenmp',
                   'zq_nchwc_batch': ' -mavx2 -mfma -fopenmp',
                   'zq_nchwc_poolpad': ' -mavx2 -mfma -fopenmp',
                   'zq_nchwc_padreject': ' -mavx2 -mfma -fopenmp',
+                  'zq_nchw_poolpad': ' -mavx2 -mfma -fopenmp',
                   'zq_padtype': ' -mavx2 -mfma -fopenmp',
                   'zq_nchw_resize': ' -mavx2 -mfma -fopenmp',
                   'zq_nchw_sqrtnrm': ' -mavx2 -mfma -fopenmp',

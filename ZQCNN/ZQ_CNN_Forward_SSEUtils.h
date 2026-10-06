@@ -1648,8 +1648,23 @@ namespace ZQ
 				else
 				{
 					input.Padding(pad_W_left, pad_W_right, pad_H_top, pad_H_bottom, 0);
-					const float* in_data = input.GetFirstPixelPtr() - pad_H_top*in_widthStep - pad_W_left*in_pixStep;
-					_maxpooling(align_mode, in_data, in_N, in_H+pad_H_top+pad_H_bottom, in_W+pad_W_left+pad_W_right, in_C, in_pixStep, in_widthStep, in_sliceStep, kernel_H, kernel_W, stride_H, stride_W,
+					const int pad_pixStep = input.GetPixelStep();
+					const int pad_widthStep = input.GetWidthStep();
+					const int pad_sliceStep = input.GetSliceStep();
+					// 审计 DO（2026-10-06）：`Padding` **会重建张量**（realW 4 -> 6），
+					// 于是 `widthStep` 从 16 变成 24、`sliceStep` 从 64 变成 144
+					// （4x4 / C=4 / pad=1 实测）。这里原来用的是**函数开头读到的旧值**，
+					// 指针偏移与传给 _maxpooling 的行步长因此**不是同一套几何**，
+					// 窗口落在错的位置。
+					//
+					// 证据（tools/zq_nchw_poolpad_check.cpp，432 个用例：
+					// k{2,3} x s{1,2,3} x pad{0 / 对称 / 非对称} x C{4,6}）：
+					//     修之前   72/432 全对，360 个红（全在 pad != 0 上）
+					//     修之后  432/432 全对
+					// 所以**必须在 Padding 之后重读**这三行。
+					const float* in_data = input.GetFirstPixelPtr()
+						- pad_H_top*pad_widthStep - pad_W_left*pad_pixStep;
+					_maxpooling(align_mode, in_data, in_N, in_H+pad_H_top+pad_H_bottom, in_W+pad_W_left+pad_W_right, in_C, pad_pixStep, pad_widthStep, pad_sliceStep, kernel_H, kernel_W, stride_H, stride_W,
 						out_data, need_H, need_W, out_pixStep, out_widthStep, out_sliceStep);
 				}
 			}
@@ -1735,8 +1750,13 @@ namespace ZQ
 				else
 				{
 					input.Padding(pad_W_left, pad_W_right, pad_H_top, pad_H_bottom, 0);
-					const float* in_data = input.GetFirstPixelPtr() - pad_H_top*in_widthStep - pad_W_left*in_pixStep;
-					_avgpooling(align_mode, in_data, in_N, in_H + pad_H_top + pad_H_bottom, in_W + pad_W_left + pad_W_right, in_C, in_pixStep, in_widthStep, in_sliceStep, kernel_H, kernel_W, stride_H, stride_W,
+					const int pad_pixStep = input.GetPixelStep();
+					const int pad_widthStep = input.GetWidthStep();
+					const int pad_sliceStep = input.GetSliceStep();
+					// 审计 DO：同上（Padding 之后必须重读三行步长）
+					const float* in_data = input.GetFirstPixelPtr()
+						- pad_H_top*pad_widthStep - pad_W_left*pad_pixStep;
+					_avgpooling(align_mode, in_data, in_N, in_H + pad_H_top + pad_H_bottom, in_W + pad_W_left + pad_W_right, in_C, pad_pixStep, pad_widthStep, pad_sliceStep, kernel_H, kernel_W, stride_H, stride_W,
 						out_data, need_H, need_W, out_pixStep, out_widthStep, out_sliceStep);
 				}
 			}

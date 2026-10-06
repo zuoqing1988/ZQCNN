@@ -3062,3 +3062,105 @@ DN 是**回归撞出来的**（A10 变红），代价是一整轮 v75。
 
 **这一轮把本会话的十一项（AZ / DE.1 / DE.5 / DF / DG / DH / DI / DJ / DK / DL / DN）
 全部在一次干净的回归里确认。**
+
+---
+
+## 变更：附录 DO —— NCHW 池化带 padding 时**用了 Padding 之前的步长**（360/432 个用例错）
+
+### 缺陷
+
+`ZQ_CNN_Forward_SSEUtils::MaxPooling` / `AVGPooling` 在函数开头读
+
+```cpp
+int in_pixStep  = input.GetPixelStep();
+int in_widthStep = input.GetWidthStep();
+int in_sliceStep = input.GetSliceStep();
+```
+
+之后才进 padding 分支，而 **`Padding` 会重建张量**（`realW` 变了）：
+
+```cpp
+input.Padding(pad_W_left, pad_W_right, pad_H_top, pad_H_bottom, 0);
+const float* in_data = input.GetFirstPixelPtr()
+                     - pad_H_top*in_widthStep - pad_W_left*in_pixStep;   // 旧步长
+_maxpooling(..., in_pixStep, in_widthStep, in_sliceStep, ...);          // 也是旧步长
+```
+
+实测（4x4 / C=4 / pad=1，装置见下）：
+
+    == Padding 之前 ==   pixelStep=4  widthStep=16  sliceStep=64   borderW=0
+    == Padding 之后 ==   pixelStep=4  widthStep=24  sliceStep=144  borderW=1
+
+于是**指针偏移**与**内核用的行步长**不是同一套几何，窗口落到错的位置。
+凡是 `pad != 0` 都受影响（而 `pad == 0` 完全不受影响 —— 这一条正是它躲过所有回归的原因）。
+
+### 新门禁 `tools/zq_nchw_poolpad_check.cpp`（432 个用例）
+
+判据：NCHW 池化在 `pad != 0` 时必须等于「零填充后按 kernel/stride 池化」。
+覆盖 k{2,3} x s{1,2,3} x pad{0 / 对称 / 非对称 / 不对称且不等} x C{4,6}。
+
+    修之前   72/432 全对，**360 个红**（全在 pad != 0 上）
+    修之后  432/432 全对
+
+### 这一段我自己栽了两次，都值得记
+
+**① 门禁的参考写错了，差点去"修"一个不存在的 bug。**
+
+第一版参考把「原图坐标」和「补齐区坐标」混着用：
+
+```cpp
+const int ih = oh * c.s - c.pT + kh;   // 以为这是补齐区下标
+...
+in[((size_t)ch * c.H + (ih - c.pT)) * c.W + (iw - c.pL)]   // 又减了一次 pT
+```
+
+于是参考给出 `0 0 0 / 0 6 8 / 0 14 16` 这种一眼就不对的东西，
+而库给 `1 3 4 / 9 11 12 / 13 15 16` —— **库是对的**。
+并排打印才看明白：零填充语义下窗口起点 `-1` 映射到补齐区下标 `0`，
+**pad 只该减一次**。
+
+这也**更正了附录 DF**：DF 里据"库给 7 8 9、参考给 9 11 12"判定
+"NCHW 带 padding 池化是错的"—— **那条结论是错的**，错在参考。
+（`7 8 9` 是**修之前**的陈旧步长算出来的，那才是真缺陷。）
+
+**② 变异测试无效，导致我把修好的代码撤了。**
+
+撤之前我跑 `tools/_mut_do.py` 想量"修之前错多少"，结果报"修之前也 432/432 全对"。
+查下去：那个变异只把三行里的
+
+    const int pad_pixStep = input.GetPixelStep();   ->   in_pixStep
+
+**另外两行（`pad_widthStep` / `pad_sliceStep`）没换** ——
+于是变成了"像素步长用旧的、行步长用新的"这个**两边都不沾**的状态，
+而它恰好也全对。**不是"没有 bug"，是"变异没生效"。**
+把三行一起退回（真正的修前状态）才是 72/432。
+
+> 本会话第 N 次同一条：**"变异之后门禁还是绿的"有两个成因** ——
+> 门禁没鉴别力，或者变异没生效。**先确认变异生效，再讨论门禁。**
+> 而"确认变异生效"最省事的办法是**看它有没有把该改的都改了**
+> （数一数替换处数），不是看它跑出来什么。
+
+顺带：撤销那一步自己也犯了 DK 那条"多轮改写之间行号失效"——
+替换模式没把 `input.Padding(...)` 那一行包进去，撤回去的时候它被复制成了两份。
+`check_stmt_joins` 抓到之后手工去掉了（`input.Padding(pad_W_left` 现在仍是 2 处）。
+
+### 变更文件
+
+    ZQCNN/ZQ_CNN_Forward_SSEUtils.h   MaxPooling / AVGPooling 各一处：
+                                        Padding 之后重读 pixStep/widthStep/sliceStep
+                                        + 一段"曾经误判它有 bug"的说明
+    tools/zq_nchw_poolpad_check.cpp    新门禁
+    tools/run_zqlib_checks.py         登记 zq_nchw_poolpad（门禁总数 62 -> 63）
+
+### 实测
+
+    python tools/run_zqlib_checks.py zq_nchw_poolpad -> 1/1 PASS
+    cmake --build build_x64 --config Release -> RC=0，0 error
+    WSL make -j8 -> RC=0，0 error
+    check_text_encoding / check_line_endings / check_stmt_joins -> 全过
+
+### 影响面
+
+随仓 27 个模型的池化层 pad **全为 0**（220 个 SAME 层都解析成 0），
+所以这个修复对**随仓 sample 的输出零影响** ——
+它修的是一条"换个输入尺寸 / 换个模型就会踩"的路径。
