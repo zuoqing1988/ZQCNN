@@ -3718,3 +3718,35 @@ zq_gemm_shape_check.cpp 是不是唯一漏网的？扫全仓 tools/*.cpp，**它
 这次能抓出来**直接得益于附录 IK 把这个测试提进默认通道** —— 它原来在 SLOW，
 而 --ubsan-sweep 不带 --with-slow，所以从来没跑过。一次「提覆盖」换来一个
 藏了很久的 UB。
+
+---
+
+## 复验：--all 端到端全绿（88 组 / 0 失败 / 93 分钟）（附录 IU）
+
+    python tools/run_audit_checks.py --all
+        完成的门禁组数 : 88
+        失败           : 0
+        ALL CHECKS PASSED   RC=0   ELAPSED=5598s
+
+关键几组：
+    D1 Windows 全量构建 (VS2022/cmake)                       OK
+    D2 Linux 全量构建 (gcc/wsl)                              OK
+    D3 Linux sample 回归                                      OK
+    B  ZQlib 独立回归测试 x10 (ASan+LSan)                     OK（71 个测试，含 --with-slow）
+    C6 ZQCNN 门禁 UBSan 回归                                   OK（附录 IS 变红的那一组）
+    C18 / C19 / C20                                           OK
+
+验的不是"某个测试绿了"，而是今天这一串改动**叠在一起仍然成立**：
+IJ 的 C17/C17b、IK 的默认通道提升、IL 的去重（239->82 次编译）、
+IM/IN/IO 的全量 $SAN + 豁免、IP/IQ/IR 的三道新门禁、IT 的对齐修复。
+88 组里包含 Windows 与 Linux 两边的全量构建与 sample 回归，
+即「确保 windows 和 linux 都能完全跑通」在今天全部改动之后仍然成立。
+
+也再次确认了附录 IS 的结论：C6 从红变 OK，中间只改了一处
+（zq_gemm_shape_check.cpp 的缓冲对齐）—— 93 分钟完整回归里这一处是唯一变量，
+红/绿翻转可以干净归因到它。
+
+操作教训（同附录 IS 第 1 条）：这次写成
+`... > log 2>&1; rc=$?`（**没接管道**），所以 $? 真的是被测程序的退出码。
+上次写成 `... | tail -60; rc=$?` 拿到的是 tail 的退出码，打出误导性 RC=0。
+要退出码就别接管道。
