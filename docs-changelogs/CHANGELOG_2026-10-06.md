@@ -3516,3 +3516,49 @@ zq_eltwise / zq_lrn 的编译行没有 -fopenmp，前缀不同），断言当场
 
 这个性质本身是 IM/IN/IO 三轮手工补齐的，而少写一个 `$SAN` **不会让任何测试
 变红**，只是覆盖悄悄少一块 —— 所以必须常驻。
+---
+
+## 新增：把「全量回归」固化成 --all，并加 C19/C19b 盯住它（附录 IQ）
+
+### 变更文件
+
+    改 tools/run_audit_checks.py      新增 --all / OPT_IN_FLAGS / NON_OPT_IN_FLAGS
+    新增 tools/check_all_flag_wiring.py
+    改 tools/run_audit_checks.py      接入 C19 / C19b（快组），A/C 组 63 -> 65
+    改 AGENTS.md                      「全量回归」正式写成 --all
+
+### 起因（先做了正事）
+
+    cmake --build build_x64 --config Release    RC=0（40s，增量）
+    run_build_group() 双平台构建 + sample 回归  OK（97s）
+
+即「确保 windows 和 linux 都能完全跑通」这一条当前是绿的。
+
+然后回到附录 IK 的根因：--with-slow 能烂掉好几天没人发现，是因为
+**「全量回归」这条命令在仓库里根本不存在** ——
+`grep -nE "run_audit_checks\.py +--" AGENTS.md` 只有两处提到单个开关，
+没有任何地方把它们组合起来。9 个各自管一整块覆盖的开关靠口口相传维持，
+每加一个就要记得补一次，漏了没人知道。
+
+### 实测结果
+
+    check_all_flag_wiring.py
+        argparse 里 store_true 的开关 : 12
+        --all 会打开 9 个；有意排除 3 个（--all/--quick/--ubsan，均附理由）  RC=0
+    check_all_flag_wiring.py --selftest   6/6 通过                            RC=0
+
+变异测试（真实文件）：插入 add_argument('--brand-new-axis', action='store_true')
+且不写进 OPT_IN_FLAGS -> RC=1 报「新加的开关必须显式决定要不要进 --all」；
+还原后 RC=0，grep -c brand-new-axis = 0。
+
+### 注意事项
+
+--all **不含** --quick（它减少覆盖）与 --ubsan（它是轴开关，把 B 组**换成**
+UBSan 口径而不是再加一遍）。让 --all 偷偷改口径是最坏的一种「方便」，
+要那一轴必须显式 `--all --ubsan`。
+
+本门禁自己第一版栽了一次：用 OPT_IN_FLAGS 里的 dest 名（with_build）去比
+正则扫出的 flag 名（--with-build），12 个开关全部误报 + 8 条反向误报 = 16 条全红。
+是**自测先抓住的**（6 条里错 3 条）。教训：同一门禁里两套命名
+（flag 名 / dest 名）必须先归一再比；第一版全红时若直接去改 OPT_IN_FLAGS
+而不是改判据，就会把一张本来对的表改错。

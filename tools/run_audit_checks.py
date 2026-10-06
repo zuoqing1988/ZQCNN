@@ -46,6 +46,31 @@ import sys
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(HERE)
 
+# `--all` 要打开的那些 opt-in 开关（附录 IQ）。
+#
+# **这张表必须和 argparse 里 `action='store_true'` 的开关保持一致** ——
+# 新加一个开关却忘了写进这里，它就**永远不会**被 `--all` 打开，
+# 而"全量回归"照样跑完、照样全绿、照样什么都没多验。
+# tools/check_all_flag_wiring.py 专门盯这一条。
+OPT_IN_FLAGS = (
+    'with_build',      # 双平台全量构建 + sample 回归
+    'msvc_probe',      # MSVC cl /Zs 逐头语法检查
+    'warn_sweep',      # gcc -Wall -Wextra HIGH 桶
+    'src_sweep',       # gcc -fsyntax-only 轴（与上一条只差一处但是决定性的）
+    'reachability',    # 文件级可达性
+    'ubsan_sweep',     # B 组 UBSan 回归（额外一遍，不是替换）
+    'bounds_sweep',    # -O2 优化期告警
+    'msvc_asan',       # Windows 侧 MSVC ASan
+    'with_slow',       # 8 个编译慢的测试（含 GEMM 调度的全部调用点）
+)
+# 同样是 store_true、但**故意不在** --all 里的：
+NON_OPT_IN_FLAGS = {
+    'all':     '总开关本身',
+    'quick':   '它是**减少**覆盖（跳过慢组），与 --all 语义相反',
+    'ubsan':   '轴开关：把 B 组**换成** UBSan 口径，不是再加一遍；'
+               '要这一轴请显式 --all --ubsan',
+}
+
 GROUPS = [
     ('A1 行尾卫生 (check_line_endings)', ['check_line_endings.py'], False),
     ('A2 编码卫生 (check_text_encoding)', ['check_text_encoding.py'], False),
@@ -424,6 +449,16 @@ GROUPS = [
      ['check_extra_sanitizer.py'], False),
     ('C18b C18 分类器自测',
      ['check_extra_sanitizer.py', '--selftest'], False),
+    # C19（附录 IQ）：`--all` 必须真的覆盖 argparse 里**每一个** store_true 开关。
+    # 不设这道门禁的话，"全量回归"这条命令就又是一次口口相传 ——
+    # 附录 IK 已经为此付过一次代价（--with-slow 从来没人传，
+    # 6 个 GEMM 调度调用点测试从未被自动执行过）。
+    # 新加一个开关却忘了写进 OPT_IN_FLAGS，它就永远不会被 --all 打开，
+    # 而"全量回归"照样跑完、照样全绿、照样什么都没多验。
+    ('C19 --all 覆盖 argparse 每一个开关（附录 IQ）',
+     ['check_all_flag_wiring.py'], False),
+    ('C19b C19 分类器自测',
+     ['check_all_flag_wiring.py', '--selftest'], False),
 ]
 
 
@@ -577,6 +612,14 @@ def main():
                          'zq_innerproduct 是 zq_gemm_32f_AnoTrans_Btrans_auto '
                          '的全部调用点。默认通道**一个都不跑**，而且全仓没有任何'
                          '地方传过 --with-slow —— 也就是说这条覆盖历史上从未自动跑过。')
+    ap.add_argument('--all', action='store_true',
+                    help='把下面这些 opt-in 开关一次全打开：' +
+                         ' '.join('--' + f.replace('_', '-') for f in OPT_IN_FLAGS) +
+                         '。**这是"全量回归"该用的那条命令** —— '
+                         '开关逐条拼出来的口口相传命令早就烂掉过一次'
+                         '（--with-slow 从来没人传，附录 IK）。'
+                         '不含 --quick（它减少覆盖）与 --ubsan（它换口径，'
+                         '要这一轴显式写 --all --ubsan）。')
     ap.add_argument('--ubsan-sweep', action='store_true',
                     help='把 A 组门禁用 **UBSan** 再跑一遍（约 3 分钟，见附录 CY）。'
                          'ASan 看不见未对齐 SIMD 访问、有符号溢出、移位越界这类 UB；'
@@ -589,6 +632,22 @@ def main():
                          '-fsyntax-only，不出代码不做优化，所以 -Warray-bounds 这类'
                          '**依赖优化器值域传播**的告警在它那条轴上永远不响。')
     args = ap.parse_args()
+
+    # `--all`（附录 IQ）：把**所有** opt-in 开关一次打开。
+    #
+    # 为什么需要：这些开关各自管着一整块覆盖，而"全量回归"这条命令
+    # **在仓库里根本不存在** —— AGENTS.md 只逐条列出开关，从没把它们组合过。
+    # 结果就是每加一个开关就要记得往那条口口相传的命令里补一次，
+    # 漏了没人知道。`--with-slow` 就是这么烂掉的：附录 IK 发现它时，
+    # GEMM 调度的 6 个调用点测试**从来没有被任何入口跑过**。
+    #
+    # 不收进来的两个是**轴开关**而不是"额外的覆盖"：
+    #   * `--quick` 是**减少**覆盖（跳过慢组），与 --all 语义相反；
+    #   * `--ubsan` 把 B 组**换成** UBSan 口径（不是再加一遍）。
+    #     想要 UBSan 那一轴请显式 `--all --ubsan`，别让 --all 偷偷改口径。
+    if args.all:
+        for _f in OPT_IN_FLAGS:
+            setattr(args, _f, True)
 
     failed = []
     if args.with_build:
