@@ -2759,3 +2759,30 @@ if printf '%s' "$out" | grep -qiE "$STUB_RE"; then st=STUB; ...
     bash -n tools/run_sample_regression.sh -> 语法 OK
     python tools/probe_mnn_fork.py --selftest -> all 7 headers compile, all guards present
     check_text_encoding / check_line_endings -> 全过
+
+### DJ 的实测（两条证据）
+
+**① 新判据在真实失败上生效**（直接跑 `SampleMergeBNCompareNCHWC.exe`）：
+
+    rc=0   非空行数=40   命中桩字样=4
+    旧判据 -> STUB（不判失败）      <-- 真失败被藏起来
+    新判据 -> FAIL（判失败）        <-- 正确
+
+命中的是第 25/27/29 行：
+`Layer Conv2d_0/Conv2D does not support para 'pad_type' on NCHWC ...`
+
+**② 两个真桩确实只有一行**（`-le 3` 的阈值是量出来的，不是猜的）：
+
+    SampleFaceDetectorMTCNN STUB rc=0 37ms  [./SampleFaceDetectorMTCNN only support windows]
+    SampleCascadeOnet_Interface STUB rc=0 42ms  [not support in linux]
+
+Linux 与 Windows 两侧都是**单行**，所以 `-le 3` 留了三行余量也不会误伤真桩。
+
+**③ 改后的措辞不再命中那个正则**（两道防线）：
+
+    主树  rejected para 'X' on NCHWC: this net implements symmetric pad / pad_H / pad_W only
+    分叉  rejected para 'X' in the MNN converter: it implements no pad_type and no asymmetric pad
+
+两句话里都**没有** `not support` / `only support`。
+即使将来有人又写了含那几个词的错误消息，第 ② 条（非空行数）也会兜住 ——
+**措辞是第一道防线，行数是第二道。**
