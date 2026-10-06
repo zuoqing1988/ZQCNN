@@ -2341,3 +2341,28 @@ BatchNormScale       name=res4_block5_conv_dw_bn bottom=res4_block1_conv_dw top=
     > 与本文件第 8 条同源：**观测手段自己制造出来的失败，会长得极像代码缺陷。**
     > 而这次更隐蔽的地方在于**汇总行**：末尾几行是 `xxx.exe` 成功链接，
     > 看上去"大部分是好的"，实际那 14 个 target 的 `.obj` 是坏的。
+33. **改一个 public static 函数的签名之前，先找出仓库里所有"手抄该签名"的地方**（2026-10-06 补）
+    附录 DF 给 NCHWC 的六份池化加了 4 个 pad 形参、并把 `input` 从 `const&` 改成 `&`，
+    于是 v70 的 C6 组**同时打掉 12 道门禁**：
+
+        tools/zq_net_fwd_tripwires.h:233:6: error: no declaration matches
+        'void ZQ_CNN_Forward_SSEUtils_NCHWC::AVGPooling(const ZQ_CNN_Tensor4D_NCHWC1&,
+         ZQ_CNN_Tensor4D_NCHWC1&, int, int, int, int, bool)'
+
+    原因：`tools/zq_net_fwd_tripwires.h` 里有 6 个**打桩定义**（AVG/Max × NCHWC1/4/8），
+    它们是**逐字抄**真实签名的，连 `const&` 都抄了。
+    一处手抄的签名 = 12 道门禁同时 BUILD FAIL，而报错指向的是那个头文件、
+    **不指向你刚改的那个 .h**。
+    > 与本文件「手写 extern "C" 声明时照抄头文件、带参数名」同源，
+    > 只是这里连**引用/非引用**都抄了。
+    >
+    > 判据：改签名前
+    > ```sh
+    > grep -rl "函数名" --include=*.h --include=*.cpp .
+    > ```
+    > 把每一处**手抄的定义/声明**都找出来一并改。
+    > **报错信息里出现"no declaration matches"且指向一个你没改过的文件时，
+    > 第一反应是"有人抄了我的签名"**，而不是"那个文件坏了"。
+    >
+    > 顺带：这类桩文件是**跨门禁共享**的，它一坏就同时坏一片 ——
+    > 所以它不在任何单道门禁的覆盖范围内，只能靠全量构建抓到。
