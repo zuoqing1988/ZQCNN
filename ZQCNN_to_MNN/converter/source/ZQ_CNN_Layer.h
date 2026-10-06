@@ -449,9 +449,9 @@ namespace ZQ
 					// **按 pad=0 继续** —— 而返回条件里没有任何 pad 标志，
 					// 于是转换出来的 MNN 图静默是错的。
 					std::cout << "Layer " << name
-						<< " does not support para '" << paras[n][0]
-						<< "' in the MNN converter "
-						<< "(it has no pad_type / asymmetric pad), layer rejected\n";
+						<< " rejected para '" << paras[n][0]
+						<< "' in the MNN converter: it implements "
+						<< "no pad_type and no asymmetric pad, layer rejected\n";
 					return false;
 				}
 				else
@@ -897,9 +897,9 @@ namespace ZQ
 					// **按 pad=0 继续** —— 而返回条件里没有任何 pad 标志，
 					// 于是转换出来的 MNN 图静默是错的。
 					std::cout << "Layer " << name
-						<< " does not support para '" << paras[n][0]
-						<< "' in the MNN converter "
-						<< "(it has no pad_type / asymmetric pad), layer rejected\n";
+						<< " rejected para '" << paras[n][0]
+						<< "' in the MNN converter: it implements "
+						<< "no pad_type and no asymmetric pad, layer rejected\n";
 					return false;
 				}
 				else

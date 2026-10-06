@@ -106,10 +106,26 @@ for e in SampleMTCNN SampleMTCNN_NCHWC4 SampleSSD SampleFaceDetectorMTCNN \
     s=$(date +%s%N)
     out=$("./$e" 2>&1); rc=$?
     t=$(( ($(date +%s%N)-s)/1000000 ))
-    if printf '%s' "$out" | grep -qiE "$STUB_RE"; then
+    # 桩的判据必须**同时**满足两件事（2026-10-06 补，附录 DJ）：
+    #   ① 输出里出现了 STUB_RE 里那几句话；
+    #   ② **整个输出就那么一两行**。
+    # 原来只看 ①，于是任何**真输出里混进 "not support" 字样**的情况都会被
+    # 判成 STUB —— 而 STUB 是**不判失败**的，于是真失败被藏起来。
+    # 2026-10-06 实测踩中：附录 DH 的拒载消息里写了 "does not support para"，
+    # `SampleMergeBNCompareNCHWC` 明明加载失败，却被报成
+    #     STUB rc=0 ... [Layer ... does not support para 'pad_type' ...]
+    # 两个真桩（`only support windows` / `not support in linux`）的输出都只有**一行**，
+    # 所以 ② 用"非空行数 <= 3"既放过真桩、又不放过混了别的东西的长日志。
+    nlines=$(printf '%s\n' "$out" | grep -c '[^[:space:]]')
+    if printf '%s' "$out" | grep -qiE "$STUB_RE" && [ "$nlines" -le 3 ]; then
       st=STUB; n_stub=$((n_stub+1))
       # 桩也要把它自己说的那半句打出来，否则"STUB"仍然看不出是哪个平台不支持
       echo "$e $st rc=$rc ${t}ms  [$(printf '%s' "$out" | grep -iE "$STUB_RE" | head -1)]"
+    elif printf '%s' "$out" | grep -qiE "$STUB_RE"; then
+      st=FAIL; n_bad=$((n_bad+1))
+      echo "$e $st rc=$rc ${t}ms  <-- 输出里有桩的字样但**不止一行**，按真失败处理（$nlines 行）"
+      printf '%s\n' "$out" | grep -inE "$STUB_RE" | head -3 | sed 's/^/      /'
+      printf '%s\n' "$out" | tail -5 | sed 's/^/      /'
     elif [ -z "$out" ]; then
       st=NOOUT; n_bad=$((n_bad+1))
       echo "$e $st rc=$rc ${t}ms  <-- 一行输出都没有，多半是权重/路径没就位"

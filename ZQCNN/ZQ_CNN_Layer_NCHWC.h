@@ -605,8 +605,8 @@ namespace ZQ
 					// 标志，于是「静默算错」。改成拒载并说清原因
 					// （对照 BD.2 对非法池化参数的处理）：响亮的失败严格优于静默的错值。
 					std::cout << "Layer " << ZQ_CNN_Layer_NCHWC<Tensor4D>::name
-						<< " does not support para '" << paras[n][0]
-						<< "' on NCHWC (only symmetric pad / pad_H / pad_W are supported), "
+						<< " rejected para '" << paras[n][0]
+						<< "' on NCHWC: this net implements symmetric pad / pad_H / pad_W only, "
 						<< "layer rejected\n";
 					return false;
 				}
@@ -1128,8 +1128,8 @@ namespace ZQ
 					// 标志，于是「静默算错」。改成拒载并说清原因
 					// （对照 BD.2 对非法池化参数的处理）：响亮的失败严格优于静默的错值。
 					std::cout << "Layer " << ZQ_CNN_Layer_NCHWC<Tensor4D>::name
-						<< " does not support para '" << paras[n][0]
-						<< "' on NCHWC (only symmetric pad / pad_H / pad_W are supported), "
+						<< " rejected para '" << paras[n][0]
+						<< "' on NCHWC: this net implements symmetric pad / pad_H / pad_W only, "
 						<< "layer rejected\n";
 					return false;
 				}

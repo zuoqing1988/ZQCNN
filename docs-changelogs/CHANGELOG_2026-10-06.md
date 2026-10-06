@@ -2679,3 +2679,83 @@ C5b 本来就是专门盯这份分叉的（顶层 CMake 没有 `add_subdirectory
     python tools/probe_mnn_fork.py --selftest -> all 7 headers compile, all guards present
     变异测试                -> rc=1，只报卷积那一条缺失
     check_text_encoding / check_line_endings -> 全过
+
+---
+
+## 变更：附录 DJ —— 拒载消息的措辞被 sample 回归的 STUB 判据吃掉了
+
+### 现象（v72 的 D4）
+
+    SampleMergeBNCompareNCHWC STUB rc=0 1603ms
+      [Layer Conv2d_0/Conv2D does not support para 'pad_type' on NCHWC
+       (only symmetric pad / pad_H / pad_W are supported), layer rejected]
+
+**这个 sample 明明加载失败了，却被报成 STUB。**
+而 STUB 是**不判失败**的 —— 于是一道真失败被门禁藏了起来。
+
+### 根因
+
+`tools/run_sample_regression.sh` 的判据是
+
+```sh
+STUB_RE='only support|not support|not supported|only supports'
+if printf '%s' "$out" | grep -qiE "$STUB_RE"; then st=STUB; ...
+```
+
+**只看"输出里有没有那句话"，不看输出有几行、也不看 rc。**
+两个真桩的输出都只有**一行**
+（`./SampleFaceDetectorMTCNN only support windows` / `not support in linux`），
+而我那句拒载消息里恰好有 `does not support` —— 于是被归到"平台桩"那一桶。
+
+这与附录 BR.1 是**同一个形状**：回归脚本把不该算通过的算成了通过。
+只是这次不是"平台桩 rc=0 被当真跑"，而是**真失败被当成了平台桩**。
+
+### 两处修法
+
+1. **改措辞**（主树 + MNN 分叉各 2 处）：
+   `does not support para 'X' on NCHWC (only symmetric ... are supported)`
+   → `rejected para 'X' on NCHWC: this net implements symmetric ... only`
+   （分叉同理）。避开 `not support` / `only support` 这两个词组。
+2. **改判据**（真正的那一处）：STUB 现在要求**两条同时成立** ——
+   ① 输出里有 STUB_RE 的话；② **非空行数 <= 3**。
+   只满足 ① 的**按 FAIL 处理**，并把那半句和末尾几行都打出来。
+
+   > 判据在**判之前要问"它凭什么成立"**。原来它只凭一句话就成立 ——
+   > 而一句话可以出现在任何地方。
+
+### 顺带查清的一件事：`model-face` 并不是被 DH 弄坏的
+
+`model/model-face.zqparams` 满篇都是 `pad_H_top=1 pad_H_bottom=1 ...`
+这种**非对称键的长写法**（其实是**对称**的），而且
+`SampleMergeBNCompareNCHWC` 确实加载它。所以我一度以为是 DH 把它弄挂的。
+
+翻 v71（DH 之前）的日志才发现：它**早就**在 NCHWC 上加载不了，原因是
+**缺整类层**：
+
+    MobileNetSSD_deploy   unknown layer type: Permute
+    Pose-zq               unknown layer type: ReLU6
+    det5-112-gray         unknown layer type: ReLU6
+    headposegaze-112-gray unknown layer type: Normalize
+    model-face            （同样缺层）
+
+`pad_type` / `pad_H_top` 的 warning 是**顺带打出来的**，不是失败原因。
+> 这正是 AGENTS.md 第 13 条的现场教学：
+> **"我读的那几行里没出现"不等于"这不是原因"** ——
+> 判失败原因要看**第一个**让它停下来的东西，而不是最后读到的那几行。
+>
+> 也再次说明 `model-face` 里那些 `pad_H_top=1 pad_H_bottom=1`
+> **其实是对称的**、NCHWC 完全表达得了 ——
+> 将来真要支持时，正确做法是"对称就接受并使用、不对称才拒载"，
+> 而不是一律拒载。这条记在 DH 的待办里。
+
+### 变更文件
+
+    ZQCNN/ZQ_CNN_Layer_NCHWC.h                    2 处消息措辞
+    ZQCNN_to_MNN/converter/source/ZQ_CNN_Layer.h 2 处消息措辞（CRLF 保持）
+    tools/run_sample_regression.sh               STUB 判据加"非空行数 <= 3"
+
+### 实测
+
+    bash -n tools/run_sample_regression.sh -> 语法 OK
+    python tools/probe_mnn_fork.py --selftest -> all 7 headers compile, all guards present
+    check_text_encoding / check_line_endings -> 全过
