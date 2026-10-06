@@ -4323,3 +4323,58 @@ EXTRA_SOURCES 去重（IL）、全量补 $SAN + 豁免（IM/IN/IO）、
     TSan 轴（数据竞态）                        本机缺 libtsan_preinit.o，需 root
     MTCNN 其余并行区（_Pnet_stage 等）         需模型夹具（抽输入契约 + 假网络）
 本轮没有为了「有产出」而塞一个验不了的改动。
+
+---
+
+## 修复：ConvertFromBGR 的返回值被丢弃（附录 JF / C27 / C27b）
+
+### 变更文件
+
+    新增 tools/check_convert_return.py
+    改 ZQlibFaceID/ZQ_FaceRecognizerSphereFaceZQCNN.h   7 处
+    改 SamplesZQCNN/ 11 个文件                          16 处
+    改 tools/run_audit_checks.py                       C27 / C27b，A/C 组 74 -> 76
+
+### 后果
+
+    input.ConvertFromBGR(&bgr_buffer[0], crop_width, crop_height, ...);
+    break;                                   // <- 失败也往下走
+    ...
+    if (!net.Forward(input)) return false;    // 拿旧数据去跑
+
+ConvertFromBGR 返回 bool（尺寸不符/空指针时失败）。失败后没有任何拦截，
+于是**特征是错的却不报** —— 与本会话反复修的那一类同形。
+库里这 7 处比 sample 的更实：crop_width/crop_height 来自
+GetCropWidth()/GetCropHeight()（模型常量），img 来自调用方，**对不上的可能性真实**。
+
+### 横向扫到的另外 16 处 + 为什么全改
+
+第一次跑门禁就报出 16 处，全在 SamplesZQCNN（SampleGenderAge / SampleHeatMap /
+SampleLnet / SampleLnet106 / SampleLnet106_vis / SampleLnetMouth /
+SampleMobileFaceNet / SamplePnet / SampleSphereFaceNet /
+SampleSphereFaceNetLoadFromBuffer / TrainMTCNNprocessor.h）。
+
+**严重性要说清**：这 16 处实参（image.cols/rows/step[0]）直接取自图像本身，
+转换几乎不会失败 —— 属于**防御性缺口**，不像库里那 7 处会真的出错。
+
+但仍然全改了：留一个「库要查、sample 不查」的例外，就是下一个例外的开始
+（附录 IO 的豁免、C25 的一格网都是这么来的）。一条规则、一个判据，比两套简单。
+
+### 实测结果
+
+    check_convert_return.py              OK（0 处丢弃）            RC=0
+    check_convert_return.py --selftest   8/8 通过                  RC=0
+    cmake --build build_x64 --config Release   WINDOWS BUILD RC=0 (116s)
+
+变异测试：把 SamplePnet.cpp 那一处还原成丢弃返回值 -> 门禁报出该行 RC=1；还原后 RC=0。
+（第一次做这个变异时脚本自己 assert 失败、文件根本没改，于是「门禁是绿的」
+毫无意义 —— 第 49 条老教训，本会话又一次复现。）
+
+### 注意事项
+
+自测里专门为**函数头**备了两例：`ZQ_CNN_Tensor4D.h:395` 的
+`virtual bool ConvertFromBGR(...)` 是函数头不是调用点，第一版没排除它，
+直接接进门禁会稳定误报。
+
+另外附录 JB 里我把这里**数成了 4 处**（实际 7 处，switch 有 7 个像素格式分支），
+本附录更正。

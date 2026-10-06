@@ -515,6 +515,15 @@ GROUPS = [
      ['check_recog_init.py'], False),
     ('C26b C26 分类器自测',
      ['check_recog_init.py', '--selftest'], False),
+    # C27（附录 JF）：`ConvertFromBGR` 返回 bool（尺寸不符/空指针时失败），
+    # 而 `ZQ_FaceRecognizerSphereFaceZQCNN::ExtractFeature` 里 7 处调用**全部丢弃**
+    # 返回值：失败后继续往下跑，`net.Forward(input)` 拿的是上一次留在 input 里的
+    # 旧数据 —— **特征是错的却不报**。另有 16 处在 SamplesZQCNN。
+    # 判据：调用点必须出现在 `if (...)` 里或被赋值；函数头不算调用点。
+    ('C27 ConvertFromBGR 的返回值必须被使用（附录 JF）',
+     ['check_convert_return.py'], False),
+    ('C27b C27 分类器自测',
+     ['check_convert_return.py', '--selftest'], False),
 ]
 
 

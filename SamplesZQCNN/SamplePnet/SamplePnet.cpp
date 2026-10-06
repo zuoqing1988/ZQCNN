@@ -66,7 +66,13 @@ int main()
 		if (scale_img.cols < cell_size || scale_img.rows < cell_size)
 			break;
 		ZQ_CNN_Tensor4D_NHW_C_Align128bit input;
-		input.ConvertFromBGR(scale_img.data, scale_img.cols, scale_img.rows, scale_img.step[0]);
+		// 审计修复 2026-10-07（附录 JF）：原来丢弃了返回值。
+		// 转换失败（比如尺寸对不上）时下面会继续跑，用的是上一次留在
+		// input 里的旧数据 —— 结果是错的却不报。
+		if (!input.ConvertFromBGR(scale_img.data, scale_img.cols, scale_img.rows, scale_img.step[0]))
+		{
+			return EXIT_FAILURE;
+		}
 		if (!net.Forward(input))
 		{
 			cout << "failed to forward " << it << "\n";

@@ -99,8 +99,20 @@ int main()
 #endif
 #endif
 
-	input1.ConvertFromBGR(img1.data, img1.cols, img1.rows, img1.step[0]);
-	input2.ConvertFromBGR(img2.data, img2.cols, img2.rows, img2.step[0]);
+	// 审计修复 2026-10-07（附录 JF）：原来丢弃了返回值。
+	// 转换失败（比如尺寸对不上）时下面会继续跑，用的是上一次留在
+	// input 里的旧数据 —— 结果是错的却不报。
+	if (!input1.ConvertFromBGR(img1.data, img1.cols, img1.rows, img1.step[0]))
+	{
+		return EXIT_FAILURE;
+	}
+	// 审计修复 2026-10-07（附录 JF）：原来丢弃了返回值。
+	// 转换失败（比如尺寸对不上）时下面会继续跑，用的是上一次留在
+	// input 里的旧数据 —— 结果是错的却不报。
+	if (!input2.ConvertFromBGR(img2.data, img2.cols, img2.rows, img2.step[0]))
+	{
+		return EXIT_FAILURE;
+	}
 	for (int out_it = 0; out_it < 3; out_it++)
 	{
 		int nIters = 1000;

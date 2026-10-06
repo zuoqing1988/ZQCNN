@@ -148,10 +148,24 @@ namespace ZQ
 						cur_pix_ptr[2] = ori_pix_ptr[0];
 					}
 				}
-				input.ConvertFromBGR(&bgr_buffer[0], crop_width, crop_height, crop_width * 3, mean_val, std_val);
+				// 审计修复 2026-10-07（附录 JF）：原来这一句的**返回值被丢弃**。
+				// ConvertFromBGR 是 bool —— 尺寸不符 / 空指针时它会失败，
+				// 而失败之后代码**继续往下跑**：net.Forward(input) 拿的是上一次
+				// 留在 input 里的旧数据，于是**特征是错的却不报**。
+				if (!input.ConvertFromBGR(&bgr_buffer[0], crop_width, crop_height, crop_width * 3, mean_val, std_val))
+				{
+					return false;
+				}
 				break;
 			case ZQ_PIXEL_FMT_BGR:
-				input.ConvertFromBGR(img, crop_width, crop_height, widthStep, mean_val, std_val);
+				// 审计修复 2026-10-07（附录 JF）：原来这一句的**返回值被丢弃**。
+				// ConvertFromBGR 是 bool —— 尺寸不符 / 空指针时它会失败，
+				// 而失败之后代码**继续往下跑**：net.Forward(input) 拿的是上一次
+				// 留在 input 里的旧数据，于是**特征是错的却不报**。
+				if (!input.ConvertFromBGR(img, crop_width, crop_height, widthStep, mean_val, std_val))
+				{
+					return false;
+				}
 				break;
 			case ZQ_PIXEL_FMT_RGB:
 				for (int h = 0; h < crop_height; h++)
@@ -165,7 +179,14 @@ namespace ZQ
 						cur_pix_ptr[2] = ori_pix_ptr[0];
 					}
 				}
-				input.ConvertFromBGR(&bgr_buffer[0], crop_width, crop_height, crop_width * 3, mean_val, std_val);
+				// 审计修复 2026-10-07（附录 JF）：原来这一句的**返回值被丢弃**。
+				// ConvertFromBGR 是 bool —— 尺寸不符 / 空指针时它会失败，
+				// 而失败之后代码**继续往下跑**：net.Forward(input) 拿的是上一次
+				// 留在 input 里的旧数据，于是**特征是错的却不报**。
+				if (!input.ConvertFromBGR(&bgr_buffer[0], crop_width, crop_height, crop_width * 3, mean_val, std_val))
+				{
+					return false;
+				}
 				break;
 			case ZQ_PIXEL_FMT_BGRX:
 				for (int h = 0; h < crop_height; h++)
@@ -179,7 +200,14 @@ namespace ZQ
 						cur_pix_ptr[2] = ori_pix_ptr[2];
 					}
 				}
-				input.ConvertFromBGR(&bgr_buffer[0], crop_width, crop_height, crop_width * 3, mean_val, std_val);
+				// 审计修复 2026-10-07（附录 JF）：原来这一句的**返回值被丢弃**。
+				// ConvertFromBGR 是 bool —— 尺寸不符 / 空指针时它会失败，
+				// 而失败之后代码**继续往下跑**：net.Forward(input) 拿的是上一次
+				// 留在 input 里的旧数据，于是**特征是错的却不报**。
+				if (!input.ConvertFromBGR(&bgr_buffer[0], crop_width, crop_height, crop_width * 3, mean_val, std_val))
+				{
+					return false;
+				}
 				break;
 			case ZQ_PIXEL_FMT_RGBX:
 				for (int h = 0; h < crop_height; h++)
@@ -193,7 +221,14 @@ namespace ZQ
 						cur_pix_ptr[2] = ori_pix_ptr[0];
 					}
 				}
-				input.ConvertFromBGR(&bgr_buffer[0], crop_width, crop_height, crop_width * 3, mean_val, std_val);
+				// 审计修复 2026-10-07（附录 JF）：原来这一句的**返回值被丢弃**。
+				// ConvertFromBGR 是 bool —— 尺寸不符 / 空指针时它会失败，
+				// 而失败之后代码**继续往下跑**：net.Forward(input) 拿的是上一次
+				// 留在 input 里的旧数据，于是**特征是错的却不报**。
+				if (!input.ConvertFromBGR(&bgr_buffer[0], crop_width, crop_height, crop_width * 3, mean_val, std_val))
+				{
+					return false;
+				}
 				break;
 			case ZQ_PIXEL_FMT_XBGR:
 				for (int h = 0; h < crop_height; h++)
@@ -207,7 +242,14 @@ namespace ZQ
 						cur_pix_ptr[2] = ori_pix_ptr[3];
 					}
 				}
-				input.ConvertFromBGR(&bgr_buffer[0], crop_width, crop_height, crop_width * 3, mean_val, std_val);
+				// 审计修复 2026-10-07（附录 JF）：原来这一句的**返回值被丢弃**。
+				// ConvertFromBGR 是 bool —— 尺寸不符 / 空指针时它会失败，
+				// 而失败之后代码**继续往下跑**：net.Forward(input) 拿的是上一次
+				// 留在 input 里的旧数据，于是**特征是错的却不报**。
+				if (!input.ConvertFromBGR(&bgr_buffer[0], crop_width, crop_height, crop_width * 3, mean_val, std_val))
+				{
+					return false;
+				}
 				break;
 			case ZQ_PIXEL_FMT_XRGB:
 				for (int h = 0; h < crop_height; h++)
@@ -221,7 +263,14 @@ namespace ZQ
 						cur_pix_ptr[2] = ori_pix_ptr[1];
 					}
 				}
-				input.ConvertFromBGR(&bgr_buffer[0], crop_width, crop_height, crop_width * 3, mean_val, std_val);
+				// 审计修复 2026-10-07（附录 JF）：原来这一句的**返回值被丢弃**。
+				// ConvertFromBGR 是 bool —— 尺寸不符 / 空指针时它会失败，
+				// 而失败之后代码**继续往下跑**：net.Forward(input) 拿的是上一次
+				// 留在 input 里的旧数据，于是**特征是错的却不报**。
+				if (!input.ConvertFromBGR(&bgr_buffer[0], crop_width, crop_height, crop_width * 3, mean_val, std_val))
+				{
+					return false;
+				}
 				break;
 			default:
 				return false;

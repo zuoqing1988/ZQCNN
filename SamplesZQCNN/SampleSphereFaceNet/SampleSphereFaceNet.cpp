@@ -229,9 +229,27 @@ int main(int argc, const char** argv)
 		ZQ_CNN_Tensor4D_NCHWC1 input2;
 #endif
 #endif
-		input0.ConvertFromBGR(image0.data, image0.cols, image0.rows, image0.step[0]);
-		input1.ConvertFromBGR(image1.data, image1.cols, image1.rows, image1.step[0]);
-		input2.ConvertFromBGR(image0.data, image0.cols, image0.rows, image0.step[0]);
+		// 审计修复 2026-10-07（附录 JF）：原来丢弃了返回值。
+		// 转换失败（比如尺寸对不上）时下面会继续跑，用的是上一次留在
+		// input 里的旧数据 —— 结果是错的却不报。
+		if (!input0.ConvertFromBGR(image0.data, image0.cols, image0.rows, image0.step[0]))
+		{
+			return EXIT_FAILURE;
+		}
+		// 审计修复 2026-10-07（附录 JF）：原来丢弃了返回值。
+		// 转换失败（比如尺寸对不上）时下面会继续跑，用的是上一次留在
+		// input 里的旧数据 —— 结果是错的却不报。
+		if (!input1.ConvertFromBGR(image1.data, image1.cols, image1.rows, image1.step[0]))
+		{
+			return EXIT_FAILURE;
+		}
+		// 审计修复 2026-10-07（附录 JF）：原来丢弃了返回值。
+		// 转换失败（比如尺寸对不上）时下面会继续跑，用的是上一次留在
+		// input 里的旧数据 —— 结果是错的却不报。
+		if (!input2.ConvertFromBGR(image0.data, image0.cols, image0.rows, image0.step[0]))
+		{
+			return EXIT_FAILURE;
+		}
 
 		printf("num_MulAdd: %.3f M, (conv: %.3f M, dwconv: %.3f M)\n", 
 			net.GetNumOfMulAdd() / (1024.0*1024.0),

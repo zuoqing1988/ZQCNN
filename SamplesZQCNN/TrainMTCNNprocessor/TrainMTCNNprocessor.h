@@ -111,7 +111,13 @@ namespace ZQ
 					}
 					cv::Mat resize_im;
 					cv::resize(crop_im, resize_im, cv::Size(48, 48));
-					input.ConvertFromBGR(resize_im.data, resize_im.cols, resize_im.rows, resize_im.step[0]);
+					// 审计修复 2026-10-07（附录 JF）：原来丢弃了返回值。
+					// 转换失败（比如尺寸对不上）时下面会继续跑，用的是上一次留在
+					// input 里的旧数据 —— 结果是错的却不报。
+					if (!input.ConvertFromBGR(resize_im.data, resize_im.cols, resize_im.rows, resize_im.step[0]))
+					{
+						return EXIT_FAILURE;
+					}
 					if (!Onet.Forward(input))
 					{
 						printf("failed to forward\n");

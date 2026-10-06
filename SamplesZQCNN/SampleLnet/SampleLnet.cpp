@@ -53,7 +53,13 @@ int main()
 	cv::resize(draw_img, draw_img, cv::Size(), 10, 10);
 	
 	ZQ_CNN_Tensor4D_NHW_C_Align128bit input;
-	input.ConvertFromBGR(img.data, img.cols, img.rows, img.step[0]);
+	// 审计修复 2026-10-07（附录 JF）：原来丢弃了返回值。
+	// 转换失败（比如尺寸对不上）时下面会继续跑，用的是上一次留在
+	// input 里的旧数据 —— 结果是错的却不报。
+	if (!input.ConvertFromBGR(img.data, img.cols, img.rows, img.step[0]))
+	{
+		return EXIT_FAILURE;
+	}
 	if (!net1.Forward(input) || !net2.Forward(input))
 	{
 		cout << "failed to forward\n";	
