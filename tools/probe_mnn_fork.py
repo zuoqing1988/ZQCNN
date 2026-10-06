@@ -83,6 +83,21 @@ GUARDS = [
     ("_merge_bns_to_dwconv 的通道数一致性守卫（附录 IX.14）",
      "ZQ_CNN_Net.h", r'if \(b->GetC\(\) != kC \|\| a->GetC\(\) != kC\)\s*\n\s*return false;',
      "_merge_bns_to_dwconv"),
+    # 附录 DI（2026-10-06）：这份分叉头**落后于主树**，`grep -c pad_type` = 0 ——
+    # 它压根没有 pad_type 这个特性。于是模型里写 `pad_type=SAME` / 非对称 pad 时，
+    # 它落进 "unknown para" 只打一行 warning 就按 pad=0 继续，
+    # 而卷积的 ReadParam 返回条件里**没有任何 pad 标志**
+    # （`has_num_output && has_kernelH && has_kernelW && has_bottom && has_top && has_name`）。
+    # 对一个**转换器**来说这尤其糟：它的产物就是那张 MNN 图，没人再对一遍。
+    # 改成拒载（与主树 DH 同一处理）。下面三条盯住它，免得将来从主树同步时又悄悄丢掉。
+    ("padding 键拒载的判定函数存在（附录 DI）",
+     "ZQ_CNN_Layer.h", r'static bool _is_unsupported_pad_key\(const char\* key\)'),
+    ("卷积的 unknown-para 分支会**拒载** padding 键而不是只打 warning（附录 DI）",
+     "ZQ_CNN_Layer.h", r'_is_unsupported_pad_key\(paras\[n\]\[0\]\.c_str\(\)\)\)\s*\n\s*\{\s*\n\s*// 审计 DI',
+     "ZQ_CNN_Layer_Convolution"),
+    ("深度卷积的 unknown-para 分支同样会拒载（附录 DI）",
+     "ZQ_CNN_Layer.h", r'_is_unsupported_pad_key\(paras\[n\]\[0\]\.c_str\(\)\)\)\s*\n\s*\{\s*\n\s*// 审计 DI',
+     "ZQ_CNN_Layer_DepthwiseConvolution"),
 ]
 
 
@@ -147,10 +162,18 @@ def main():
         # 这正是 HX 那个形状（改一处、另一个副本没跟上）在门禁里的翻版。
         scope = cache[f]
         if func:
+            # 作用域既可以是**函数**（`_merge_bns_to_conv`），
+            # 也可以是**类**（`ZQ_CNN_Layer_Convolution` —— 附录 DI 加的那两条
+            # 断言要盯的是类体里那个 ReadParam，没有独立的函数名可给）。
+            # 第一版只认 `bool <name>(`，于是类名一律报「找不到函数」，
+            # 而真实原因是**作用域的种类不止一种**。
             m = re.search(r'\bbool\s+' + re.escape(func) + r'\s*\(', cache[f])
             if not m:
+                m = re.search(r'^\tclass\s+' + re.escape(func) + r'\b',
+                              cache[f], re.M)
+            if not m:
                 missing += 1
-                print("  GUARD MISSING %s\n                (找不到函数 %s)" % (desc, func))
+                print("  GUARD MISSING %s\n                (找不到函数/类 %s)" % (desc, func))
                 continue
             i = cache[f].index('{', m.end())
             depth, j = 0, i

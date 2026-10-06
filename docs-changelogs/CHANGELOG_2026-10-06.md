@@ -2592,3 +2592,90 @@ dry-run 先打印每个类各 1 处，确认唯一才 --apply。
 - 拒载会让"把 Caffe 模型转成 NCHWC"这条路**暂时走不通**（那 220 层转过来会被拒）。
   这是刻意的：转换工具本来也不该静默产出错结果。
   真要支持，需要按上面说的改 21 个前向签名 —— 记在待办里。
+
+---
+
+## 变更：附录 DI —— MNN 转换器那份分叉头也是同一个静默丢弃（补上"第三份拷贝"）
+
+### 先回答一个问题：DF / DH 的修复要不要同步到分叉头？
+
+`ZQCNN_to_MNN/converter/source/` 下有 ZQCNN 的**第三份拷贝**：
+
+    ZQ_CNN_BBox.h / ZQ_CNN_BBoxUtils.h / ZQ_CNN_CompileConfig.h
+    ZQ_CNN_Forward_SSEUtils.h / ZQ_CNN_Layer.h / ZQ_CNN_Net.h / ZQ_CNN_Tensor4D.h
+
+按 AGENTS.md 第 33 条（改一处要把所有**手抄/分叉**的地方一起列出来）逐个核过：
+
+* **NCHWC 那两个文件（DF / DH 改的）没有副本** —— `find` 全仓只有一份，
+  所以 DF / DH 的覆盖是完整的。
+* **DE.1 改的 `ZQ_CNN_Layer.h` 有一份分叉**，但那份**落后于主树**：
+  主树 10605 行、分叉 6345 行，`grep -c pad_type` = **0**，
+  连 `ZQ_CNN_Forward_SSEUtils.h` 都只有 171 行（一个桩）。
+  **也就是说分叉压根没有 pad_type 这个特性** —— 不是"漏同步"，是"那时还没有"。
+
+### 但分叉有**同一个静默缺陷**（不同形态）
+
+分叉的卷积 `ReadParam` 返回条件与主树一模一样：
+
+```cpp
+return has_num_output && has_kernelH && has_kernelW
+     && has_bottom && has_top && has_name;      // 不含任何 pad 标志
+```
+
+而模型里写 `pad_type=SAME` / 非对称 pad 时，它落进 "unknown para"、
+只打一行 warning 就**按 pad=0 继续**。
+
+**对一个转换器来说这尤其糟：它的产物就是那张 MNN 图，没人再对一遍。**
+主树那种"至少还有 sample 会用到"的下游校验，在这里完全没有。
+
+### 改法：与 DH 同一处理（拒载），并把 C5b 的断言补上
+
+`ZQ_CNN_Layer`（分叉）新增 `_is_unsupported_pad_key()`，
+`ZQ_CNN_Layer_Convolution` 与 `_DepthwiseConvolution` 的 unknown-para 分支
+命中它时**打印层名 + 键名 + 原因并 `return false`**。
+
+C5b（`tools/probe_mnn_fork.py`）新增三条断言：
+判定函数存在 + 卷积那处拒载 + 深度卷积那处拒载。
+C5b 本来就是专门盯这份分叉的（顶层 CMake 没有 `add_subdirectory(ZQCNN_to_MNN)`，
+转换器又要 MNN 的 `MNN_generated.h`，**那 7 个头从来没被任何编译器看过**），
+它逐头 `g++ -fsyntax-only` 编一遍并断言这些守卫还在 ——
+所以这次改动**当场被编过**。
+
+### 变异测试：证明两条断言是**各自独立**的
+
+只变异**卷积**那一处（深度卷积那处不动）：
+
+    基线            all 7 headers compile, all guards present
+    只变异卷积      GUARD MISSING 卷积的 unknown-para 分支会**拒载**（附录 DI）
+                    GUARD OK     深度卷积的 unknown-para 分支同样会拒载（附录 DI）
+                    rc=1
+
+**只报一条、另一条仍 OK** —— 两条断言不是盯同一段文本。
+这正是 HX 那次的教训：`_merge_bns_to_conv` 与 `_merge_bns_to_innerproduct`
+的守卫文本一模一样，全文件搜的话**删掉其中一个另一个照样 OK**，实际只验了一次。
+所以 C5b 的作用域机制后来支持了**类**（`^\tclass <name>`）而不仅是函数。
+
+### 改这一份时踩到的两个坑
+
+1. **副本是 CRLF、主树那份是 LF**（实测 6392 CRLF / 0 裸 LF）。
+   第一版按 `'\n'` 拼模式，21 处 "unknown para" **一处都没匹配上**，
+   报「0 命中」—— 而真实原因是行尾，不是目标形态不存在。
+   改成**跟着文件本身的行尾走**、写回时也保持原样，
+   免得一次编辑顺手把 6000 多行的行尾全换掉。
+2. **新加的判定函数落进了 `private` 段** —— 我把它插在 `\tpublic:` **之前**，
+   于是从派生类调用时报
+   `error: 'static bool ZQ_CNN_Layer::_is_unsupported_pad_key(const char*)' is private within this context`
+   （主树那份恰好在 `public:` 之后，所以主树编过了 —— **两份同名文件的访问级别不同**，
+   又是"同仓两份实现"的一个新变体）。
+   补一个 `public:` 之后 C5b 报 `0 compile failure(s)`。
+
+### 变更文件
+
+    ZQCNN_to_MNN/converter/source/ZQ_CNN_Layer.h   DI.1 判定函数 + 两处拒载
+    tools/probe_mnn_fork.py                       C5b 新增三条断言 + 支持类作用域
+
+### 实测
+
+    python tools/probe_mnn_fork.py --selftest -> all 7 headers compile, all guards present
+    变异测试                -> rc=1，只报卷积那一条缺失
+    check_text_encoding / check_line_endings -> 全过

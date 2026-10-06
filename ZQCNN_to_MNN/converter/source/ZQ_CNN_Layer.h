@@ -119,6 +119,29 @@ namespace ZQ
 		}
 
 	public:
+		// 审计修复 2026-10-06（附录 DI）：与主树 `ZQ_CNN_Layer_NCHWC` 的同一处处理
+		// （那边是附录 DH）。本转换器**落后于主树**，压根没有 `pad_type` 这个特性
+		// （`grep -c pad_type` = 0），所以模型里写 `pad_type=SAME` 时
+		// 它落进 "unknown para" 分支、只打一行 warning 就**按 pad=0 继续** ——
+		// 而卷积的 ReadParam 返回条件
+		//     return has_num_output && has_kernelH && has_kernelW
+		//          && has_bottom && has_top && has_name;
+		// **不含任何 pad 标志**，于是转换出来的 MNN 图**静默是错的**。
+		// 对一个**转换器**来说这尤其糟：它的产物就是那张图，没人再对一遍。
+		// 改成拒载并说清原因（与主树 DH、附录 BD.2 同一处理）。
+		static bool _is_unsupported_pad_key(const char* key)
+		{
+			static const char* keys[] = {
+				"pad_type", "pad_h_top", "pad_h_bottom", "pad_w_left", "pad_w_right",
+				"same", "valid", "pad_type_h", "pad_type_w"
+			};
+			for (size_t i = 0; i < sizeof(keys) / sizeof(keys[0]); i++)
+				if (_my_strcmpi(keys[i], key) == 0)
+					return true;
+			return false;
+		}
+
+	public:
 		static int _my_strcmpi(const char* str1, const char* str2)
 		{
 			char c1, c2;
@@ -418,6 +441,18 @@ namespace ZQ
 						has_name = true;
 						name = paras[n][1];
 					}
+				}
+				else if (ZQ_CNN_Layer::_is_unsupported_pad_key(paras[n][0].c_str()))
+				{
+					// 审计 DI：本转换器落后于主树，没有 pad_type 这个特性。
+					// 模型里写 pad_type / 非对称 pad 时，原来只打一行 warning 就
+					// **按 pad=0 继续** —— 而返回条件里没有任何 pad 标志，
+					// 于是转换出来的 MNN 图静默是错的。
+					std::cout << "Layer " << name
+						<< " does not support para '" << paras[n][0]
+						<< "' in the MNN converter "
+						<< "(it has no pad_type / asymmetric pad), layer rejected\n";
+					return false;
 				}
 				else
 				{
@@ -854,6 +889,18 @@ namespace ZQ
 						has_name = true;
 						name = paras[n][1];
 					}
+				}
+				else if (ZQ_CNN_Layer::_is_unsupported_pad_key(paras[n][0].c_str()))
+				{
+					// 审计 DI：本转换器落后于主树，没有 pad_type 这个特性。
+					// 模型里写 pad_type / 非对称 pad 时，原来只打一行 warning 就
+					// **按 pad=0 继续** —— 而返回条件里没有任何 pad 标志，
+					// 于是转换出来的 MNN 图静默是错的。
+					std::cout << "Layer " << name
+						<< " does not support para '" << paras[n][0]
+						<< "' in the MNN converter "
+						<< "(it has no pad_type / asymmetric pad), layer rejected\n";
+					return false;
 				}
 				else
 				{
