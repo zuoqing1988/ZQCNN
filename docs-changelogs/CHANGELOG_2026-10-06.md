@@ -3870,3 +3870,77 @@ tail 的退出码所以打印 RC=0，证据在那几行 FAIL。）
 
 本测试没有 EXTRA_SOURCES 条目（纯头文件），所以 C18「编译行必须带 $SAN」
 不受影响，已实测仍绿。
+
+---
+
+## 修复：孪生副本漏改 —— ZQ_CNN_MTCNN.h 的 tensor 重载缺尺寸校验（附录 IX）
+
+### 变更文件
+
+    改 ZQCNN/ZQ_CNN_MTCNN.h    Find(Tensor4D_NHW_C_Align128bit&) 补尺寸校验
+
+### 怎么找到的
+
+接附录 IV 的动作：先跑了那个**写了却一直没接进门禁**的 find_dup_blocks.py
+（结论见下），转而去量 MTCNN 孪生副本有多像：
+
+    MTCNN.h vs _Interface.h 0.948 / vs NCHWC.h 0.950 / _Interface vs NCHWC 0.935
+    vs AspectRatio.h 0.771 / vs ncnn.h 0.592
+
+三份（MTCNN.h / _Interface.h / NCHWC.h）是 93~95% 逐字相同、各约 1800 有效行，
+ncnn.h 与 AspectRatio.h 才是真变体 —— 风险集中在那三份（附录 II.6 的
+pnet_size/pnet_stride 漏改正出在这里族）。
+
+换了个更有产出的问法：不比对整份，只找「某个守卫只存在于 1~2 份」。
+
+### 命中
+
+守卫 `if (input.GetW() != width || input.GetH() != height)` 的出现次数：
+MTCNN.h 0 / _Interface.h 1 / NCHWC.h 0 / ncnn.h 0 —— **1/4**。
+_Interface.h:407 那条的注释明写着是上一轮审计加的；而 ZQ_CNN_MTCNN.h:453
+**同一个重载**（Find(Tensor4D_NHW_C_Align128bit&)）**没有**：
+    bool Find(ZQ_CNN_Tensor4D_NHW_C_Align128bit& input, ...) {
+        double t1 = omp_get_wtime();   // <- 直接开跑，无任何尺寸校验
+
+NCHWC.h 与 ncnn.h 压根没有 tensor 重载（只有 Find(const unsigned char*, w,h,step,...)），
+不受影响；要补的只有 ZQ_CNN_MTCNN.h 这一处。
+
+### 后果与可达性
+
+后果是**静默算错，不越界**：SetPara 建的 scales/width/height 按 SetPara 那对尺寸，
+后面所有几何又拿成员 width/height 去算；传一张别的尺寸的图进来不越界
+（ResizeBilinearRect 接受越界 rect），但几何全按过期尺寸算且**无任何提示**。
+
+可达性查清了：**当前没有仓内调用方**。8 个 include 它的 sample 走的全是另一个重载，
+把图像自己的宽高显式传进来，与同一行的 SetPara(img.cols, img.rows, ...) 天然自洽。
+所以这是**潜伏的公共 API 缺口**，不是活 bug。要紧的是：① ZQ_CNN_MTCNN.h 是被
+8 个以上 sample include、对外暴露面最大的那一份，而**被修好的反而是只被 2 个引用的
+_Interface.h**；② 它是公共 API，外部调用方拿到的是静默错误结果。
+
+### 实测结果
+
+    g++ -fsyntax-only -fopenmp -mavx2 -mfma ZQ_CNN_MTCNN.h    syntax RC=0
+    cmake --build build_x64 --config Release                  WINDOWS BUILD RC=0 (290s)
+
+把 _Interface.h:407 那条逐字照搬过来。加它不会挡住任何现有调用 ——
+那个重载现在零调用方，走另一个重载的 sample 根本到不了这里。
+
+### 注意事项：find_dup_blocks.py 的阴性结论
+
+该工具扫全仓给 115 个候选块 / 22 处 ≥4 行，第一方只有 1 个文件
+（testImageProcessing.cpp），逐条看**全是误报** —— 8× 展开的逐像素转换循环和
+逐成员 swap，天生就是「相邻且逐字相同」的形态。
+
+**按现状不能当门禁**：判据是「相邻且逐字相同」，而展开的 SIMD 循环与逐字段赋值
+正是这个形态，信噪比太低，硬接只会训练人忽略告警。真要接得先做语义过滤。
+
+顺带一条纪律：它**一次都没被接进门禁**，所以那 115 条**从没被人复核过** ——
+与 check_filecount_bounds.py 那次「文件存在但一次都没被执行过」（附录 GK）
+是同一个病：**写了不等于跑了，没跑的结果等于没有。**
+
+### 下一轮
+
+真正该补的是「三份 MTCNN 孪生副本的同步」检查，需要把
+MTCNN.h vs _Interface.h 的 **60 个不一致块 / 251 行**逐个分类成
+「有意分歧 / 漏改」。这是一次性分类工作，本轮只做了其中最有价值的一条，
+**没有假装已经做完**。

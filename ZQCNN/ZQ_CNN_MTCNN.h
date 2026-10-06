@@ -452,6 +452,29 @@ namespace ZQ
 
 		bool Find(ZQ_CNN_Tensor4D_NHW_C_Align128bit& input, std::vector<ZQ_CNN_BBox>& results)
 		{
+			// 审计修复 2026-10-07（附录 IX）：**孪生副本漏改**。
+			// 同一个重载在 `ZQ_CNN_MTCNN_Interface.h:407` 上有这条尺寸校验，
+			// 这里原来没有 —— 上一轮只改了四份里的一份（与附录 II.6
+			// `pnet_size/pnet_stride` 漏改是同一类）。
+			//
+			// 为什么必须校验：`SetPara` 建出来的 `scales` / `pnet_images` /
+			// `width` / `height` 全是按 SetPara 那对尺寸生成的，而后面所有几何
+			// 又都是拿**成员** width/height 去算（`ceil(height*scales[i])`、
+			// `cur_scale_x = width/changedW` ...）。调用方传一张别的尺寸的图
+			// 进来，**不越界**（ResizeBilinearRect 接受越界 rect），
+			// 但所有几何都按过期尺寸算，检测结果完全错乱且**没有任何提示**。
+			//
+			// 为什么现在加没有风险：仓内 8 个 sample 走的是**另一个重载**
+			// `Find(const unsigned char* bgr_img, int _width, int _height, ...)`，
+			// 它们把图像自己的宽高显式传进来，天然自洽；本重载**当前零调用方**。
+			// 也就是说这次改动把「静默算错」变成「响亮报错」，
+			// 而不会挡住任何现有调用。
+			if (input.GetW() != width || input.GetH() != height)
+			{
+				printf("Find: input is %dx%d but SetPara was given %dx%d\n",
+					input.GetW(), input.GetH(), width, height);
+				return false;
+			}
 			double t1 = omp_get_wtime();
 			std::vector<ZQ_CNN_BBox> firstBbox, secondBbox, thirdBbox;
 			if (!_Pnet_stage(input, firstBbox))
