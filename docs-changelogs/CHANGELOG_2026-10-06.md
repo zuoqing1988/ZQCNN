@@ -3614,3 +3614,60 @@ C20 第一版记的是「来源」（GROUPS / run_group），于是「两个 GRO
 
 审计报告早期章节里的 C5（文件级可达性）与 C7（GUI 门禁）是旧编号，
 现行分别是 C22 与 C21；C5（-O2 优化期告警）现行是 C23。
+
+---
+
+## 新发现：zq_gemm_shape 一直喂给内核不对齐的缓冲 —— UBSan 轴变红（附录 IS）
+
+### 怎么发现的
+
+第一次端到端跑 `--all`（上一轮刚做出来、**此前从没跑过**的那个命令）：
+
+    python tools/run_audit_checks.py --all    6233s
+    1 CHECK GROUP(S) FAILED:
+       C6 ZQCNN 门禁 UBSan 回归
+
+单独跑 zq_gemm_shape --ubsan 拿到确切位置：
+
+    avxintrin.h:874:10: runtime error: load of misaligned address ... for type
+    '__m256', which requires 32 byte alignment
+     #1 ..._M2_caseNdiv4_Keq32   zq_gemm_32f_align_c_raw.h:8633
+     #3 zq_gemm_32f_AnoTrans_Btrans_auto   zq_gemm_32f_auto.c:565
+     #4 run_case                  tools/zq_gemm_shape_check.cpp:84
+
+GEMM 的 AVX 内核用对齐指令 `_mm256_load_ps` 读 A/Bt，而测试给的是
+`std::vector<float>` 的 `&A[0]` —— operator new 只保证 16 字节对齐，
+内核要求 32（实测地址 ...1ed0 正是 16 对齐、32 不对齐）。
+
+### 这是测试的锅，不是库的
+
+    ZQCNN/layers_c/zq_cnn_convolution_gemm_32f_align_c.c:383
+        matrix_A = (float*)_aligned_malloc(need_A_buffer_len_align32, 32);
+
+库里每一处给 GEMM 备缓冲的地方都是 `_aligned_malloc(..., 32)`，
+`zq_gemm_32f_auto.c` 的 swap 分支也是。契约明确：**缓冲必须 32 字节对齐**。
+所以 `zq_gemm_shape_check.cpp` 违反了契约，**一直在做 UB**，
+只是它在 ASan 那一轴上是绿的 —— **ASan 不查对齐**。
+
+### 为什么以前没人发现
+
+1. 这个测试以前挂在 SLOW 上，而 `--ubsan-sweep`（C6）不带 `--with-slow`，
+   所以它**从来没在 UBSan 轴上跑过**；附录 IK 把它提进默认通道才第一次暴露。
+2. ASan 不查对齐，查对齐的是 UBSan 的 -fsanitize=alignment。
+
+**这次变红不是回归，是覆盖第一次真的照到了那里。**
+
+### 注意事项
+
+同一次测量里我自己的命令有错：`... | tail -60; rc=$?` 的 `$?` 是 **tail** 的
+退出码，打出了误导性的 `ALL RC=0`；真判据是 tail 之前那行 FAILED。
+管道后接 `; echo $?` 拿到的不是被测程序的退出码。
+
+**还没搞清楚、不下结论的一点**：同一变异 ASan 下 2171/崩溃0/错0，
+UBSan 下 2072/崩溃**0**/结果错 **1182** —— 既不崩又错，没有直接解释。
+可能与 `-fsanitize=undefined` 改变代码生成有关，也可能
+`-fno-sanitize-recover=all` 没落到这些 .c 的编译行上（目前只在链接/C++ 侧）。
+**查清楚之前不写结论。**
+
+修法方向：zq_gemm_shape_check.cpp 的 A/Bt/C 改成 32 字节对齐分配，
+改完重跑 UBSan 轴验证。在此之前 C6 是红的。
