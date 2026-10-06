@@ -719,6 +719,30 @@ EXTRA_SOURCES['zq_nchwc_batch'] = (
 # 判据是**独立参考**而不是 NCHW —— 因为实测 NCHW 那一支自己的窗口起点
 # 就没退到 -pad 行（见该文件头的装置），拿它当参考等于把缺陷固化成标准。
 # 只需要 NCHWC 那一侧的 TU。
+# zq_nchwc_padreject（附录 DH）：NCHWC 卷积/深度卷积必须**拒载**它表达不了的
+# padding 键（pad_type / 非对称 pad），而不是 warning 一行就按 pad=0 算。
+# 走完整 ZQ_CNN_Net_NCHWC::LoadFrom，所以要带上 Net_NCHWC 那个 TU。
+EXTRA_SOURCES['zq_nchwc_padreject'] = (
+    _glob_extra('ZQCNN/layers_nchwc/*.c', 'pr', cc='gcc') + [
+        'g++ -O1 -g $SAN -mavx2 -mfma -fopenmp -c -I$R -I$R/ZQCNN -I$R/ZQ_GEMM '
+        '-I$R/3rdparty/include $R/ZQCNN/ZQ_CNN_Tensor4D_NCHWC.cpp -o $WDIR/pr_tensor.o',
+        'g++ -O1 -g $SAN -mavx2 -mfma -fopenmp -c -I$R -I$R/ZQCNN -I$R/ZQ_GEMM '
+        '-I$R/3rdparty/include $R/ZQCNN/ZQ_CNN_Net_NCHWC.cpp -o $WDIR/pr_net.o',
+        # 层的 Forward 是**头文件内联**的，Net_NCHWC 引用了
+        # ZQ_CNN_Forward_SSEUtils_NCHWC 的全部实现 —— 不带它就是满屏 undefined reference。
+        'g++ -O1 -g $SAN -mavx2 -mfma -fopenmp -c -I$R -I$R/ZQCNN -I$R/ZQ_GEMM '
+        '-I$R/3rdparty/include $R/ZQCNN/ZQ_CNN_Forward_SSEUtils_NCHWC.cpp -o $WDIR/pr_fwd.o',
+        # GEMM 的三个 TU：Forward_SSEUtils_NCHWC 里的卷积/全连接要符号。
+        # zq_gemm_32f_align_c 在 -O1 下单个 TU 要编 5 分钟以上，所以用 -O0 ——
+        # 这里只求跑通，不测性能。
+        'gcc -O0 -g $SAN -mavx2 -mfma -fopenmp -c -I$R/ZQCNN -I$R/ZQ_GEMM '
+        '-I$R/3rdparty/include $R/ZQ_GEMM/math/zq_gemm_32f_align_c.c -o $WDIR/pr_ga.o',
+        'gcc -O0 -g $SAN -mavx2 -mfma -fopenmp -c -I$R/ZQCNN -I$R/ZQ_GEMM '
+        '-I$R/3rdparty/include $R/ZQ_GEMM/math/zq_gemm_32f_align_c_asm.c -o $WDIR/pr_gb.o',
+        'gcc -O1 -g $SAN -mavx2 -mfma -fopenmp -c -I$R/ZQCNN -I$R/ZQ_GEMM '
+        '-I$R/3rdparty/include $R/ZQ_GEMM/math/zq_gemm_32f_auto.c -o $WDIR/pr_gc.o',
+    ])
+
 EXTRA_SOURCES['zq_nchwc_poolpad'] = (
     _glob_extra('ZQCNN/layers_nchwc/*.c', 'pp', cc='gcc') + [
         'gcc -O0 -g $SAN -mavx2 -mfma -fopenmp -c -I$R/ZQCNN -I$R/ZQ_GEMM '
@@ -789,6 +813,7 @@ EXTRA_LINK = {'zq_resize_align': ' $WDIR/zq_rza.o $WDIR/zq_rza_tensor.o',
               # （见 _glob_extra），手写清单漏一个就是一条 undefined reference。
               'zq_nchwc_batch': ' $WDIR/nb_*.o',
               'zq_nchwc_poolpad': ' $WDIR/pp_*.o',
+              'zq_nchwc_padreject': ' $WDIR/pr_*.o',
               'zq_padtype': ' $WDIR/pt_*.o',
               'zq_nchw_resize': (' $WDIR/zq_rzn.o $WDIR/zq_rzn_tensor.o'),
               'zq_nchw_sqrtnrm': ' $WDIR/zq_sn_sqrt.o $WDIR/zq_sn_nrm.o',
@@ -863,6 +888,7 @@ EXTRA_INC = {'zq_resize_align': ' -I$R -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/inc
              'zq_nchwc_resize': ' -I$R -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include',
              'zq_nchwc_batch': ' -I$R -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include',
              'zq_nchwc_poolpad': ' -I$R -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include',
+             'zq_nchwc_padreject': ' -I$R -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include',
              'zq_padtype': ' -I$R -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include',
              'zq_nchw_resize': ' -I$R -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include',
              'zq_nchw_sqrtnrm': ' -I$R -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include',
@@ -928,6 +954,7 @@ EXTRA_CXXFLAGS = {'zq_resize_align': ' -mavx2 -mfma -fopenmp',
                   'zq_nchwc_resize': ' -mavx2 -mfma -fopenmp',
                   'zq_nchwc_batch': ' -mavx2 -mfma -fopenmp',
                   'zq_nchwc_poolpad': ' -mavx2 -mfma -fopenmp',
+                  'zq_nchwc_padreject': ' -mavx2 -mfma -fopenmp',
                   'zq_padtype': ' -mavx2 -mfma -fopenmp',
                   'zq_nchw_resize': ' -mavx2 -mfma -fopenmp',
                   'zq_nchw_sqrtnrm': ' -mavx2 -mfma -fopenmp',

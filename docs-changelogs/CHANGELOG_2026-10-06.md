@@ -2474,3 +2474,121 @@ v70 只挂了一个组（C6，12 个 BUILD FAIL），根因是
 `tools/zq_net_fwd_tripwires.h` 里 6 个**手抄签名**的打桩定义
 对不上附录 DF 改过的新签名 —— 一处手抄同时打掉 12 道门禁。
 已按 AGENTS.md 第 33 条修好并固化该条规则。
+
+---
+
+## 变更：附录 DH —— NCHWC 卷积 / 深度卷积的 padding 键**静默丢弃**（先改成响亮拒载）
+
+### 缺陷
+
+NCHWC 这一族只支持**对称**的 `pad` / `pad_H` / `pad_W`，
+而 NCHW 那一族还认 `pad_type`（SAME/VALID）与非对称的
+`pad_H_top` / `pad_H_bottom` / `pad_W_left` / `pad_W_right`。
+
+模型文件里写这些键时，NCHWC 的 `ReadParam` 原来只打一行
+`warning: unknown para`，然后**按 pad=0 继续算** ——
+而 `ReadParam` 的返回条件
+
+```cpp
+return has_num_output && has_kernelH && has_kernelW
+     && has_bottom && has_top && has_name;
+```
+
+**不含任何 pad 标志**，所以这是**静默算错**：
+`in % stride != 0` 时整层错一格。
+
+### 为什么不直接实现，而是先让它响亮失败
+
+真正支持要改 **21 个前向函数**的签名（9 个 Depthwise + 12 个 Convolution，
+每个通道宽度 3~4 个变体），外加所有手抄这些签名的地方
+（`tools/zq_net_fwd_tripwires.h` 的 6 个打桩，附录 DF 那次已经吃过一次亏）。
+那是一个独立的、明显更大的工程。
+
+**先让它响亮失败**（与附录 BD.2 对非法池化参数的处理一致）：
+响亮的失败严格优于静默的错值，而且**改动面小、风险低、可回退**。
+真要实现时，这道门禁会自动变红提醒"该撤掉拒载了"。
+
+### 改法
+
+`ZQ_CNN_Layer_NCHWC<Tensor4D>` 新增
+
+```cpp
+static bool _is_unsupported_pad_key(const char* key)
+```
+
+认 `pad_type` / `pad_H_top` / `pad_H_bottom` / `pad_W_left` / `pad_W_right` /
+`same` / `valid` / `pad_type_H` / `pad_type_W` 九个键；
+`ZQ_CNN_Layer_NCHWC_Convolution` 与 `_DepthwiseConvolution` 的
+"unknown para" 分支在它们命中时**打印层名 + 键名 + 原因并 `return false`**。
+
+**只改这两处**（10 个 "unknown para" 分支里各 1 处），其余 8 个保持原样 ——
+它们是别的层，键集合不同（池化已经支持 pad 了，附录 DF），不能一刀切。
+改的时候用"向上找最近的 `\tclass ZQ_CNN_Layer_NCHWC...`"来定位归属，
+dry-run 先打印每个类各 1 处，确认唯一才 --apply。
+> 第一版定位脚本用 5 行滑窗 + 预先算好的 owner 数组，
+> 两处都写错了（滑窗只命中 2/10、owner 全是 None）——
+> **"改错一处"的代价是改坏别的层**，所以定位必须先 dry-run 并逐类报数。
+
+### 新门禁 `tools/zq_nchwc_padreject_check.cpp`（15 个用例）
+
+判据是「**响亮地失败**」，不是「算对」：
+走**完整 `ZQ_CNN_Net_NCHWC::LoadFrom`**（不直接实例化层 ——
+"静默"这个缺陷只有在**没人报错**时才是缺陷），
+要求 `LoadFrom` 返回 false **且**输出里指名了那个键。
+
+对照组 4 个：**受支持的对称写法必须仍然能加载**。
+> 没有对照组的门禁很容易把"全都拒载"也判成通过。
+
+### 变异测试 —— 又踩了一次"变异无效"
+
+第一版变异只加了一句 `(void)keys;`，**函数照样返回 true**，
+门禁当然还是绿的。那不是"门禁没鉴别力"，是**变异根本没生效**。
+
+改成让匹配**永不成立**（把比较结果换成 999）之后：
+
+    基线（未变异）  rc=0  1/1 通过（15 个用例：11 拒 + 4 对照）
+    变异后          rc=1  FAIL (rc=1, 11 条断言失败)
+                          全部是「**加载成功了**（应当拒载）」——
+                          也就是修之前那个"静默"的确切形态
+    还原            assert 无 MUT 标记且 GOOD 计数回到 1
+
+> 推论：**"变异之后门禁还是绿的"有两个完全不同的成因** ——
+> 门禁没鉴别力，或者变异没生效。**先确认变异生效，再讨论门禁。**
+> 本会话已经因此多花了两轮（IU 那次是 `--root` 少拼一层目录、
+> F2 那次是门禁没经过出缺陷的那一层）。
+
+### 门禁自己栽了两次（两次都是**探针的错**、不是库的错）
+
+1. **临时模型写在 `model/` 下** —— 而门禁的 cwd 是它自己那一轮的 WDIR
+   （`/tmp/zqchecks_<pid>_<ts>`），里面没有 `model/`，15 个用例全部"没跑完"，
+   症状看起来像"库把受支持的写法也拒了"。
+   （本文件 HV.5：相对路径必须连 cwd 一起说清。）
+2. **`num_output=4` 用在 Depthwise 上** —— 深度卷积要求
+   `num_output == bottom_C`（=3），于是**因为另一个原因**加载失败，
+   症状同样是"受支持的写法被拒了"。
+3. 判据里拿 `pad_type=SAME` 去 find 输出，而消息里写的是
+   `does not support para 'pad_type'` —— 12 个用例误报成"没说清是哪个键"。
+
+> 三次的症状**全都**指向"我们的拒载逻辑在误伤"。
+> **两个不同的原因、同一种症状** —— 又一次印证"先怀疑自己那一族"。
+
+### 变更文件
+
+    ZQCNN/ZQ_CNN_Layer_NCHWC.h   _is_unsupported_pad_key + Convolution /
+                                DepthwiseConvolution 两处拒载
+    tools/zq_nchwc_padreject_check.cpp   新门禁
+    tools/run_zqlib_checks.py            登记 zq_nchwc_padreject
+
+### 实测
+
+    python tools/run_zqlib_checks.py zq_nchwc_padreject -> 1/1 PASS
+    cmake --build build_x64 --config Release -> RC=0，0 error
+    WSL make -j8 -> RC=0，0 error
+
+### 注意事项
+
+- 随仓那 220 个 `pad_type=SAME` 层全在**可整除**的输入上（SAME ≡ 无 pad），
+  所以这条拒载对**随仓模型零影响**；但那只是巧合 —— 换个输入尺寸就错。
+- 拒载会让"把 Caffe 模型转成 NCHWC"这条路**暂时走不通**（那 220 层转过来会被拒）。
+  这是刻意的：转换工具本来也不该静默产出错结果。
+  真要支持，需要按上面说的改 21 个前向签名 —— 记在待办里。

@@ -124,6 +124,28 @@ namespace ZQ
 		}
 
 	public:
+		// 审计修复 2026-10-06（附录 DH）：**这个键属于"本层认识、但 NCHWC 这一族表达不了"的一族**。
+		// 以前它们落进 "unknown para" 分支，只打一行 warning 就**继续按 pad=0 算** ——
+		// 而 `ReadParam` 的返回条件里**不含任何 pad 相关标志**
+		//（`has_num_output && has_kernelH && has_kernelW && has_bottom && has_top && has_name`），
+		// 所以这是**静默算错**：模型写 `pad_type=SAME`，层假装没看见，
+		// 输出按无 padding 算，`in % stride != 0` 时整层错一格。
+		// 改成**拒载**并说清原因（与附录 BD.2 对非法池化参数的处理一致）：
+		// 响亮的失败严格优于静默的错值。
+		// 随仓那 220 个 `pad_type=SAME` 层全在可整除的输入上（SAME ≡ 无 pad），
+		// 所以本条对随仓模型**零影响**；但那只是巧合 —— 换个输入尺寸就错。
+		static bool _is_unsupported_pad_key(const char* key)
+		{
+			static const char* keys[] = {
+				"pad_type", "pad_h_top", "pad_h_bottom", "pad_w_left", "pad_w_right",
+				"same", "valid", "pad_type_h", "pad_type_w"
+			};
+			for (size_t i = 0; i < sizeof(keys) / sizeof(keys[0]); i++)
+				if (_my_strcmpi(keys[i], key) == 0)
+					return true;
+			return false;
+		}
+
 		static int _my_strcmpi(const char* str1, const char* str2)
 		{
 			char c1, c2;
@@ -575,6 +597,18 @@ namespace ZQ
 						has_name = true;
 						ZQ_CNN_Layer_NCHWC<Tensor4D>::name = paras[n][1];
 					}
+				}
+				else if (ZQ_CNN_Layer_NCHWC<Tensor4D>::_is_unsupported_pad_key(paras[n][0].c_str()))
+				{
+					// 审计 DH：这一族键 NCHWC 表达不了。以前只打一行 warning 就
+					// **按 pad=0 继续算** —— 而 ReadParam 的返回条件不含任何 pad
+					// 标志，于是「静默算错」。改成拒载并说清原因
+					// （对照 BD.2 对非法池化参数的处理）：响亮的失败严格优于静默的错值。
+					std::cout << "Layer " << ZQ_CNN_Layer_NCHWC<Tensor4D>::name
+						<< " does not support para '" << paras[n][0]
+						<< "' on NCHWC (only symmetric pad / pad_H / pad_W are supported), "
+						<< "layer rejected\n";
+					return false;
 				}
 				else
 				{
@@ -1086,6 +1120,18 @@ namespace ZQ
 						has_name = true;
 						ZQ_CNN_Layer_NCHWC<Tensor4D>::name = paras[n][1];
 					}
+				}
+				else if (ZQ_CNN_Layer_NCHWC<Tensor4D>::_is_unsupported_pad_key(paras[n][0].c_str()))
+				{
+					// 审计 DH：这一族键 NCHWC 表达不了。以前只打一行 warning 就
+					// **按 pad=0 继续算** —— 而 ReadParam 的返回条件不含任何 pad
+					// 标志，于是「静默算错」。改成拒载并说清原因
+					// （对照 BD.2 对非法池化参数的处理）：响亮的失败严格优于静默的错值。
+					std::cout << "Layer " << ZQ_CNN_Layer_NCHWC<Tensor4D>::name
+						<< " does not support para '" << paras[n][0]
+						<< "' on NCHWC (only symmetric pad / pad_H / pad_W are supported), "
+						<< "layer rejected\n";
+					return false;
 				}
 				else
 				{
