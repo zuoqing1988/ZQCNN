@@ -504,6 +504,17 @@ GROUPS = [
      ['check_omp_thread_index.py'], False),
     ('C25b C25 分类器自测（并行区内 vs 并行区外）',
      ['check_omp_thread_index.py', '--selftest'], False),
+    # C26（附录 JC）：recognizer 在递进 `ZQ_FaceDatabaseMaker` 之前必须 Init 过。
+    # `ZQ_FaceRecognizer::Init` 是**纯虚**，它就是「把网络加载进来」这一步；
+    # `MakeDatabase` 只查指针非空、不查是否已初始化。
+    # 5 个 SampleCropImagesFor* 里曾有 4 个只初始化了检测器，实测症状是
+    # **返回 RC=0、0 张图、耗时 0.000000s，一个错都不报**（附录 JB/JC）。
+    # ZQlibFaceID 有 29 头 + 23 sample，Windows sample 回归里**一个都没跑**，
+    # 所以样例写错了没有任何自动化能发现 —— 门禁是这里唯一可行的防线。
+    ('C26 recognizer 递进流水线前必须 Init（附录 JC）',
+     ['check_recog_init.py'], False),
+    ('C26b C26 分类器自测',
+     ['check_recog_init.py', '--selftest'], False),
 ]
 
 

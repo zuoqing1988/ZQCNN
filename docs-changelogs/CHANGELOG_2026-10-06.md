@@ -4167,3 +4167,60 @@ Forward）抽出来，用返回固定输出的假网络替换真网络，再按�
   测的（垫片会掩盖 fopen_s/sprintf_s 一类，见附录 IJ），「能编」不等于
   「Linux 上真能用」；而 ZQlibFaceID 的 sample 本来就只走 Windows
   （它们 include `<openblas\cblas.h>` / `<mkl\mkl.h>` 反斜杠路径）。
+
+---
+
+## 修复：4 个 sample 的 recognizer 未初始化（附录 JC / C26 / C26b）
+
+### 变更文件
+
+    新增 tools/check_recog_init.py
+    改 SamplesZQlibFaceID/SampleCropImagesFor{ArcFace,ArcFaceFast,SphereFace,SphereFaceFast}.cpp
+    改 tools/run_audit_checks.py       接入 C26 / C26b（快组），A/C 组门禁 72 -> 74
+
+### 接附录 JB
+
+JB 找到缺陷但没改代码，理由是「改了也验不了」。这一轮把那个理由拆开：
+**改 sample 需要模型资产才能验「算对了」；改门禁不需要。**
+于是先落门禁钉住这一类，再改 sample —— 改完能验的是「它现在会**响亮地失败**」，
+这本身就是修好的一半（原状是静默假装成功）。
+
+### 改动
+
+4 个 sample 的 CropImagesForDatabase 增加 model_name 形参，
+并在把 recognizer 递进流水线**之前**逐个 Init、失败即报错返回。
+命令行同步加**可选**第 6 个参数 [model_name]，默认 "04bn256"
+（SphereFaceZQCNN 的第一个预置名；ArcFaceZQCNN 继承自它，两族通用）。
+**SeetaFace 没动 —— 它本来就是对的。**
+
+### 实测结果：从「静默成功」变成「响亮失败」
+
+改之前（同机同命令）：
+    $ SampleCropImagesForSphereFace.exe data/ <out> 1 0
+    begin / time: 0.000000
+    EXIT CODE=0        <- 0 张图，耗时 0，一个错都没报
+改之后：
+    $ SampleCropImagesForSphereFace.exe data/ <out> 1 0
+    failed to open file model\sphereface04bn256.zqparams
+    failed to load recognizer model: 04bn256
+    EXIT CODE=1        <- 明确说清缺哪个模型
+Windows 全量构建 RC=0（90s），无 error 行。
+
+### 注意事项
+
+C26 这道门禁**第一版把 SeetaFace 也报成缺陷**，连栽两次才修对：
+1. 函数边界靠「向上找像函数签名的行」猜 —— SeetaFace 的 Init 与递进分在
+   **两个独立 for 循环**里、中间隔着 printf，Init 落在窗口外；
+2. 改用花括号配平回溯也不行 —— idx 外面最近的 `{` 是 **for 循环体**的，
+   它由 idx **下方**的 `}` 闭合，往上走根本看不到，于是配平在 for 的 `{` 处
+   就「配平」了，返回的是循环不是函数；
+3. 最后改成**认顶格的 `{`**（这个仓函数体的 `{` 在列 0，for/if 的必带缩进）。
+
+自伤一处：strip_noise 最初用 `re.sub(r'/\*.*?\*/', ' ', flags=re.S)`，
+DOTALL 把跨行块注释压成**一个空格**，**换行被吃掉**，行号与配平同时失真。
+改成逐字符替换、**保留换行**（与附录 IS「按行替换成等长空格」同一条纪律）。
+
+还有一次：补丁脚本用 heredoc 写，`\n` 被吃掉变成真换行 ——
+**正是 AGENTS.md 第 17 条自己记的那条**，改用 Write 工具落盘再执行才对。
+
+附录 JB 里「本轮没有改代码」是那一次的如实记录；改动在本文附录。
