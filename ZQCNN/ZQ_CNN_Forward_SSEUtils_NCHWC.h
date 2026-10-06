@@ -1,4 +1,4 @@
-﻿#ifndef _ZQ_CNN_FORWARD_SSE_UTILS_NCHWC_H_
+#ifndef _ZQ_CNN_FORWARD_SSE_UTILS_NCHWC_H_
 #define _ZQ_CNN_FORWARD_SSE_UTILS_NCHWC_H_
 #pragma once
 #include "ZQ_CNN_Tensor4D_NCHWC.h"
@@ -196,11 +196,23 @@ namespace ZQ
 		static bool DepthwiseConvolution(ZQ_CNN_Tensor4D_NCHWC1& input, const ZQ_CNN_Tensor4D_NCHWC1& filters,
 			int strideH, int strideW, int dilation_H, int dilation_W, int padH, int padW, ZQ_CNN_Tensor4D_NCHWC1& output);
 
-		static void MaxPooling(const ZQ_CNN_Tensor4D_NCHWC1 &input, ZQ_CNN_Tensor4D_NCHWC1 &output, int kernel_H, int kernel_W,
-			int stride_H, int stride_W, bool global_pool);
+		// 审计修复 2026-10-06（附录 F2）：**pad_H_top/pad_H_bottom/pad_W_left/pad_W_right
+		// 是新增的**，之前池化层 ReadParam 解析了 `pad` 却**从不使用** ——
+		// 模型文件写 `pad 1` 会加载成功、然后静默按无 pad 计算。
+		// 实测（tools/zq_nchwc_poolpar_check.cpp）：36 个用例里 24 个的**输出形状**就不同
+		// （NCHW 给 4x5、NCHWC 给 3x4），而 pad==0 的 12 个对照组全对。
+		// 实参带默认值 0，所以既有调用点不用改。
+		// `input` 改成**非 const 引用**：非零 pad 会就地把它 Padding 成带边框的张量
+		// （NCHW 那一份本来就是这么做的，`MaxPooling` 的形参是非 const）。
+		static void MaxPooling(ZQ_CNN_Tensor4D_NCHWC1 &input, ZQ_CNN_Tensor4D_NCHWC1 &output,
+			int kernel_H, int kernel_W, int stride_H, int stride_W,
+			int pad_H_top = 0, int pad_H_bottom = 0, int pad_W_left = 0, int pad_W_right = 0,
+			bool global_pool = false);
 
-		static void AVGPooling(const ZQ_CNN_Tensor4D_NCHWC1 &input, ZQ_CNN_Tensor4D_NCHWC1 &output, int kernel_H, int kernel_W,
-			int stride_H, int stride_W, bool global_pool);
+		static void AVGPooling(ZQ_CNN_Tensor4D_NCHWC1 &input, ZQ_CNN_Tensor4D_NCHWC1 &output,
+			int kernel_H, int kernel_W, int stride_H, int stride_W,
+			int pad_H_top = 0, int pad_H_bottom = 0, int pad_W_left = 0, int pad_W_right = 0,
+			bool global_pool = false);
 
 		static bool AddBiasPReLU(ZQ_CNN_Tensor4D_NCHWC1 &input, const ZQ_CNN_Tensor4D_NCHWC1& bias, const ZQ_CNN_Tensor4D_NCHWC1& slope);
 
@@ -325,11 +337,16 @@ namespace ZQ
 		static bool DepthwiseConvolution(ZQ_CNN_Tensor4D_NCHWC4& input, const ZQ_CNN_Tensor4D_NCHWC4& filters,
 			int strideH, int strideW, int dilation_H, int dilation_W, int padH, int padW, ZQ_CNN_Tensor4D_NCHWC4& output);
 
-		static void MaxPooling(const ZQ_CNN_Tensor4D_NCHWC4 &input, ZQ_CNN_Tensor4D_NCHWC4 &output, int kernel_H, int kernel_W,
-			int stride_H, int stride_W, bool global_pool);
+		// 附录 F2：同上（见 NCHWC1 那一份的说明）
+		static void MaxPooling(ZQ_CNN_Tensor4D_NCHWC4 &input, ZQ_CNN_Tensor4D_NCHWC4 &output,
+			int kernel_H, int kernel_W, int stride_H, int stride_W,
+			int pad_H_top = 0, int pad_H_bottom = 0, int pad_W_left = 0, int pad_W_right = 0,
+			bool global_pool = false);
 
-		static void AVGPooling(const ZQ_CNN_Tensor4D_NCHWC4 &input, ZQ_CNN_Tensor4D_NCHWC4 &output, int kernel_H, int kernel_W,
-			int stride_H, int stride_W, bool global_pool);
+		static void AVGPooling(ZQ_CNN_Tensor4D_NCHWC4 &input, ZQ_CNN_Tensor4D_NCHWC4 &output,
+			int kernel_H, int kernel_W, int stride_H, int stride_W,
+			int pad_H_top = 0, int pad_H_bottom = 0, int pad_W_left = 0, int pad_W_right = 0,
+			bool global_pool = false);
 
 		static bool AddBiasPReLU(ZQ_CNN_Tensor4D_NCHWC4 &input, const ZQ_CNN_Tensor4D_NCHWC4& bias, const ZQ_CNN_Tensor4D_NCHWC4& slope);
 
@@ -473,11 +490,16 @@ namespace ZQ
 		static bool DepthwiseConvolution(ZQ_CNN_Tensor4D_NCHWC8& input, const ZQ_CNN_Tensor4D_NCHWC8& filters,
 			int strideH, int strideW, int dilation_H, int dilation_W, int padH, int padW, ZQ_CNN_Tensor4D_NCHWC8& output);
 
-		static void MaxPooling(const ZQ_CNN_Tensor4D_NCHWC8 &input, ZQ_CNN_Tensor4D_NCHWC8 &output, int kernel_H, int kernel_W,
-			int stride_H, int stride_W, bool global_pool);
-		
-		static void AVGPooling(const ZQ_CNN_Tensor4D_NCHWC8 &input, ZQ_CNN_Tensor4D_NCHWC8 &output, int kernel_H, int kernel_W,
-			int stride_H, int stride_W, bool global_pool);
+		// 附录 F2：同上（见 NCHWC1 那一份的说明）
+		static void MaxPooling(ZQ_CNN_Tensor4D_NCHWC8 &input, ZQ_CNN_Tensor4D_NCHWC8 &output, int kernel_H, int kernel_W,
+			int stride_H, int stride_W,
+			int pad_H_top = 0, int pad_H_bottom = 0, int pad_W_left = 0, int pad_W_right = 0,
+			bool global_pool = false);
+
+		static void AVGPooling(ZQ_CNN_Tensor4D_NCHWC8 &input, ZQ_CNN_Tensor4D_NCHWC8 &output, int kernel_H, int kernel_W,
+			int stride_H, int stride_W,
+			int pad_H_top = 0, int pad_H_bottom = 0, int pad_W_left = 0, int pad_W_right = 0,
+			bool global_pool = false);
 		
 		static bool AddBiasPReLU(ZQ_CNN_Tensor4D_NCHWC8 &input, const ZQ_CNN_Tensor4D_NCHWC8& bias, const ZQ_CNN_Tensor4D_NCHWC8& slope);
 		

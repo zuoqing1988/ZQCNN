@@ -2024,12 +2024,29 @@ namespace ZQ
 	{
 	public:
 		ZQ_CNN_Layer_NCHWC_Pooling() :kernel_H(3), kernel_W(3), stride_H(2), stride_W(2),
+			pad_type(TYPE_NONE), pad_H_top(0), pad_H_bottom(0), pad_W_left(0), pad_W_right(0),
 			pad_H(0), pad_W(0), global_pool(false), type(0) {}
 		~ZQ_CNN_Layer_NCHWC_Pooling() {}
 		int kernel_H;
 		int kernel_W;
 		int stride_H;
 		int stride_W;
+		// 审计修复 2026-10-06（附录 F2）：**pad_type 与非对称 pad 是新增的**。
+		// 原来只有对称的 pad_H/pad_W，而且 `pad` 虽然被解析进这两个成员、
+		// Forward 却**从不使用** —— 模型写 `pad 1` 会加载成功、然后静默按无 pad 算。
+		// 随仓有 220 个 `pad_type=SAME` 层（Pose-zq 147 / det5-112-gray 36 /
+		// headposegaze-112-gray 37），而 NCHWC 侧原来**连 pad_type 这个词都不认**
+		//（落进 "unknown para" 分支只打一行警告）。本层现在与
+		// `ZQ_CNN_Layer_Pooling`（NCHW）逐项对齐，包括 SAME 用 floor 的那个约定 ——
+		// **对齐到同仓的参考实现，而不是对齐到"更合理"的语义**。
+		static const int TYPE_NONE = 0;
+		static const int TYPE_VALID = 1;
+		static const int TYPE_SAME = 2;
+		int pad_type;
+		int pad_H_top;
+		int pad_H_bottom;
+		int pad_W_left;
+		int pad_W_right;
 		int pad_H;
 		int pad_W;
 		bool global_pool;
@@ -2049,7 +2066,9 @@ namespace ZQ
 			if (type == TYPE_MAXPOOLING)
 			{
 				double t1 = omp_get_wtime();
-				ZQ_CNN_Forward_SSEUtils_NCHWC::MaxPooling(*((*bottoms)[0]), *((*tops)[0]), kernel_H, kernel_W, stride_H, stride_W, global_pool);
+				// 审计 F2：pad 四个值一起传下去（形参有默认值，既有调用点不受影响）
+				ZQ_CNN_Forward_SSEUtils_NCHWC::MaxPooling(*((*bottoms)[0]), *((*tops)[0]), kernel_H, kernel_W, stride_H, stride_W,
+					pad_H_top, pad_H_bottom, pad_W_left, pad_W_right, global_pool);
 				double t2 = omp_get_wtime();
 				ZQ_CNN_Layer_NCHWC<Tensor4D>::last_cost_time = t2 - t1;
 				if (ZQ_CNN_Layer_NCHWC<Tensor4D>::show_debug_info)
@@ -2059,7 +2078,9 @@ namespace ZQ
 			else if (type == TYPE_AVGPOOLING)
 			{
 				double t1 = omp_get_wtime();
-				ZQ_CNN_Forward_SSEUtils_NCHWC::AVGPooling(*((*bottoms)[0]), *((*tops)[0]), kernel_H, kernel_W, stride_H, stride_W, global_pool);
+				// 审计 F2：同上
+				ZQ_CNN_Forward_SSEUtils_NCHWC::AVGPooling(*((*bottoms)[0]), *((*tops)[0]), kernel_H, kernel_W, stride_H, stride_W,
+					pad_H_top, pad_H_bottom, pad_W_left, pad_W_right, global_pool);
 				double t2 = omp_get_wtime();
 				ZQ_CNN_Layer_NCHWC<Tensor4D>::last_cost_time = t2 - t1;
 				if (ZQ_CNN_Layer_NCHWC<Tensor4D>::show_debug_info)
@@ -2101,6 +2122,44 @@ namespace ZQ
 						kernel_W = atoi(paras[n][1].c_str());
 					}
 				}
+				// 审计 F2：NCHW 的池化层同时接受 `kernel_H/kernel_W/stride_H/stride_W`，
+				// 而随仓模型正是这么写的（Pose-zq 的两行 Pooling 用的是
+				// `kernel_H=4 kernel_W=4 stride_H=4 stride_W=4`）。
+				// NCHWC 原来只认 `kernel_size`，这两种写法会落到 "unknown para"、
+				// has_kernelH 保持 false、ReadParam 末尾 return false —— **加载失败**。
+				// 那一档至少还算响亮（比静默算错好），但转换出来的模型就是跑不起来。
+				else if (ZQ_CNN_Layer_NCHWC<Tensor4D>::_my_strcmpi("kernel_H", paras[n][0].c_str()) == 0)
+				{
+					if (paras[n].size() >= 2)
+					{
+						has_kernelH = true;
+						kernel_H = atoi(paras[n][1].c_str());
+					}
+				}
+				else if (ZQ_CNN_Layer_NCHWC<Tensor4D>::_my_strcmpi("kernel_W", paras[n][0].c_str()) == 0)
+				{
+					if (paras[n].size() >= 2)
+					{
+						has_kernelW = true;
+						kernel_W = atoi(paras[n][1].c_str());
+					}
+				}
+				else if (ZQ_CNN_Layer_NCHWC<Tensor4D>::_my_strcmpi("stride_H", paras[n][0].c_str()) == 0)
+				{
+					if (paras[n].size() >= 2)
+					{
+						has_strideH = true;
+						stride_H = atoi(paras[n][1].c_str());
+					}
+				}
+				else if (ZQ_CNN_Layer_NCHWC<Tensor4D>::_my_strcmpi("stride_W", paras[n][0].c_str()) == 0)
+				{
+					if (paras[n].size() >= 2)
+					{
+						has_strideW = true;
+						stride_W = atoi(paras[n][1].c_str());
+					}
+				}
 				else if (ZQ_CNN_Layer_NCHWC<Tensor4D>::_my_strcmpi("stride", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
@@ -2117,7 +2176,50 @@ namespace ZQ
 					{
 						pad_H = atoi(paras[n][1].c_str());
 						pad_W = atoi(paras[n][1].c_str());
+						// 审计 F2：原来 pad_H/pad_W 只是**存下来没人用**，
+						// 现在同时填进四个方向的 pad，Forward 才真的把它们传下去。
+						pad_H_top = pad_H_bottom = pad_H;
+						pad_W_left = pad_W_right = pad_W;
 					}
+				}
+				// 审计 F2：pad_type / 非对称 pad。逐项照抄 NCHW 的
+				// `ZQ_CNN_Layer_Pooling::ReadParam`（同仓的另一份实现 = 参考）。
+				else if (ZQ_CNN_Layer_NCHWC<Tensor4D>::_my_strcmpi("pad_type", paras[n][0].c_str()) == 0)
+				{
+					if (paras[n].size() >= 2)
+					{
+						const char* str = paras[n][1].c_str();
+						if (ZQ_CNN_Layer_NCHWC<Tensor4D>::_my_strcmpi(str, "SAME") == 0)
+							pad_type = TYPE_SAME;
+						else if (ZQ_CNN_Layer_NCHWC<Tensor4D>::_my_strcmpi(str, "VALID") == 0)
+							pad_type = TYPE_VALID;
+						else
+						{
+							std::cout << "Layer " << ZQ_CNN_Layer_NCHWC<Tensor4D>::name
+								<< " unsupported pad_type " << str << "\n";
+							return false;
+						}
+					}
+				}
+				else if (ZQ_CNN_Layer_NCHWC<Tensor4D>::_my_strcmpi("pad_H_top", paras[n][0].c_str()) == 0)
+				{
+					if (paras[n].size() >= 2)
+						pad_H_top = atoi(paras[n][1].c_str());
+				}
+				else if (ZQ_CNN_Layer_NCHWC<Tensor4D>::_my_strcmpi("pad_H_bottom", paras[n][0].c_str()) == 0)
+				{
+					if (paras[n].size() >= 2)
+						pad_H_bottom = atoi(paras[n][1].c_str());
+				}
+				else if (ZQ_CNN_Layer_NCHWC<Tensor4D>::_my_strcmpi("pad_W_left", paras[n][0].c_str()) == 0)
+				{
+					if (paras[n].size() >= 2)
+						pad_W_left = atoi(paras[n][1].c_str());
+				}
+				else if (ZQ_CNN_Layer_NCHWC<Tensor4D>::_my_strcmpi("pad_W_right", paras[n][0].c_str()) == 0)
+				{
+					if (paras[n].size() >= 2)
+						pad_W_right = atoi(paras[n][1].c_str());
 				}
 				else if (ZQ_CNN_Layer_NCHWC<Tensor4D>::_my_strcmpi("global_pool", paras[n][0].c_str()) == 0)
 				{
@@ -2219,6 +2321,33 @@ namespace ZQ
 			this->bottom_C = bottom_C;
 			this->bottom_H = bottom_H;
 			this->bottom_W = bottom_W;
+
+			// 审计 F2：pad_type -> 四个方向 pad 的解析。
+			// **逐字照抄 `ZQ_CNN_Layer_Pooling::SetBottomDim`**（同仓的 NCHW 参考实现），
+			// 包括 TYPE_SAME 用 `bottom_W / stride_W`（**floor**）这一点 ——
+			// 那个 floor 是本仓库池化层自己的尺寸约定（附录 IV.4 已分析）：
+			// 它与 `GetTopDim` 的 `ceil((in-k)/s)+1` 自洽，改成 ceil 反而会破坏它。
+			// 这里的目的不是"更正确"，而是**让 NCHWC 与 NCHW 给出同一个数**。
+			if (pad_type == TYPE_VALID || pad_type == TYPE_SAME)
+			{
+				int top_W, top_H;
+				if (pad_type == TYPE_VALID)
+				{
+					top_W = (int)ceil((bottom_W - kernel_W + 1) / stride_W);
+					top_H = (int)ceil((bottom_H - kernel_H + 1) / stride_H);
+				}
+				else
+				{
+					top_W = bottom_W / stride_W;
+					top_H = bottom_H / stride_H;
+				}
+				int pad_W = __max((top_W - 1)*stride_W + kernel_W - bottom_W, 0);
+				int pad_H = __max((top_H - 1)*stride_H + kernel_H - bottom_H, 0);
+				pad_W_left = pad_W / 2;
+				pad_W_right = pad_W - pad_W_left;
+				pad_H_top = pad_H / 2;
+				pad_H_bottom = pad_H - pad_H_top;
+			}
 			return true;
 		}
 
@@ -2233,9 +2362,13 @@ namespace ZQ
 			}
 			else
 			{
+				// 审计 F2：把 pad 计进去，与 Forward 里传给内核的 need_H/need_W
+				// （`ceil((in0 + pt + pb - k)/s) + 1`）同一公式。
+				// 不加 pad 的话，层分配的 top 与内核算出来的 need 对不上，
+				// 表现是**形状错一格**（实测 NCHW 4x5 vs NCHWC 3x4）。
 				top_C = bottom_C;
-				top_H = __max(0, ceil((float)(bottom_H - kernel_H) / stride_H) + 1);
-				top_W = __max(0, ceil((float)(bottom_W - kernel_W) / stride_W) + 1);
+				top_H = __max(0, ceil((float)(bottom_H + pad_H_top + pad_H_bottom - kernel_H) / stride_H) + 1);
+				top_W = __max(0, ceil((float)(bottom_W + pad_W_left + pad_W_right - kernel_W) / stride_W) + 1);
 			}
 		}
 

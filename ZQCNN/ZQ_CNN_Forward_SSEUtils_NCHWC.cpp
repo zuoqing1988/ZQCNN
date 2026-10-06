@@ -15,6 +15,61 @@
 #include "ZQ_CNN_CompileConfig.h"
 using namespace ZQ;
 
+// 审计修复 2026-10-06（附录 F2）：池化前的 padding 准备。
+// 六份 MaxPooling/AVGPooling 共用这一段 —— 同一段索引算术抄六遍，
+// 抄错一份就又是一次**静默算错**，而且只有三行 pad 时才会暴露。
+//
+// NCHWC 的 `Padding(padW, padH, mode)` **只支持对称补**，而
+// SAME/VALID 算出来的 pad 经常不对称（in=7,s=2,k=3 -> pad=(0,1)）。
+// 所以这里补 `P = max(两侧)`，再把窗口起点往上/左挪到 `-pad_top/-pad_left`：
+//
+//   in_data = 数据首行 - pad_H_top*widthStep - pad_W_left*align
+//   in_H    = 补齐区的行数 = in_H0 + pad_H_top + pad_H_bottom
+//   in_W    = 补齐区的列数 = in_W0 + pad_W_left + pad_W_right
+//
+// 注意 in_H/in_W 取的是**意图上的补齐区**，不是物理可用的行数
+// （后者是 in_H0 + P_H + pad_H_top，因为对称补法会在另一侧也多补 P_H 行）。
+// 两者只在 pad_bottom > P_H 时才会不同，而 P_H = max(两侧) >= pad_bottom，
+// 所以 `in_H0 + pt + pb <= in_H0 + P_H + pt` **恒成立**，物理上一定读得到。
+// 取意图值而不是物理值，是为了让 suredivided 的判据
+// （最后一个窗口放得下 = (need_H-1)*s + k <= in_H）说的是**语义**，
+// 而不是"因为多补了几行所以碰巧放得下"。
+// —— 第一版取物理值，pad_top > pad_bottom 的一档（pad=1,0 与 pad=2,1）就判错了，
+// 12 个 AVG 用例变红。
+//
+// 为什么"多补的那几行永远读不到"（这是对称补法安全的关键）：
+// 最后一个窗口要碰到的最大行号是 (need_H-1)*stride_H + kernel_H，
+// 而 need_H 由 ceil((in_H0 + pad_top + pad_bottom - k)/s) + 1 给出，
+// 于是 (need_H-1)*s + k <= in_H0 + pad_top + pad_bottom
+//                      <= in_H0 + pad_top + P_H = in_H。 列方向同理。
+// 多补出来的行在**分配之外**不可达，越界不会发生。
+template <class T>
+static bool zq_nchwc_pool_prepare_pad(T& input,
+                                      int pad_H_top, int pad_H_bottom,
+                                      int pad_W_left, int pad_W_right,
+                                      const float*& in_data, int& in_H, int& in_W)
+{
+    const int in_H0 = input.GetH();
+    const int in_W0 = input.GetW();
+    const int align = input.GetAlignSize();
+    const int P_H = pad_H_top > pad_H_bottom ? pad_H_top : pad_H_bottom;
+    const int P_W = pad_W_left > pad_W_right ? pad_W_left : pad_W_right;
+    if (P_H > 0 || P_W > 0)
+    {
+        // 非零 pad 时**就地**把输入补成带边框的张量 —— NCHW 那一支
+        // （`ZQ_CNN_Forward_SSEUtils::MaxPooling`）就是这么做的。
+        if (!input.Padding(P_W, P_H, 0))
+            return false;
+    }
+    in_H = in_H0 + pad_H_top + pad_H_bottom;
+    in_W = in_W0 + pad_W_left + pad_W_right;
+    // Padding 可能重新分配，widthStep 会变 —— 必须在**之后**再读。
+    in_data = input.GetFirstPixelPtr()
+              - (long long)pad_H_top * input.GetWidthStep()
+              - (long long)pad_W_left * align;
+    return true;
+}
+
 bool ZQ_CNN_Forward_SSEUtils_NCHWC::InnerProductWithBias(ZQ_CNN_Tensor4D_NCHWC1& input, const ZQ_CNN_Tensor4D_NCHWC1& filters,
 	const ZQ_CNN_Tensor4D_NCHWC1& bias, ZQ_CNN_Tensor4D_NCHWC1& output, 
 	void** buffer, __int64* buffer_len)
@@ -1221,12 +1276,13 @@ return false;
 	return true;
 }
 
-void ZQ_CNN_Forward_SSEUtils_NCHWC::MaxPooling(const ZQ_CNN_Tensor4D_NCHWC1 &input, ZQ_CNN_Tensor4D_NCHWC1 &output, int kernel_H, int kernel_W,
-	int stride_H, int stride_W, bool global_pool)
+void ZQ_CNN_Forward_SSEUtils_NCHWC::MaxPooling(ZQ_CNN_Tensor4D_NCHWC1 &input, ZQ_CNN_Tensor4D_NCHWC1 &output, int kernel_H, int kernel_W,
+	int stride_H, int stride_W, int pad_H_top, int pad_H_bottom,
+	int pad_W_left, int pad_W_right, bool global_pool)
 {
 	int in_N = input.GetN();
-	int in_H = input.GetH();
-	int in_W = input.GetW();
+	int in_H0 = input.GetH();
+	int in_W0 = input.GetW();
 	int in_C = input.GetC();
 	int need_W, need_H;
 	int need_N = in_N;
@@ -1235,15 +1291,18 @@ void ZQ_CNN_Forward_SSEUtils_NCHWC::MaxPooling(const ZQ_CNN_Tensor4D_NCHWC1 &inp
 	{
 		need_H = 1;
 		need_W = 1;
-		kernel_H = in_H;
-		kernel_W = in_W;
+		kernel_H = in_H0;
+		kernel_W = in_W0;
 		stride_H = 1;
 		stride_W = 1;
+		// 审计 F2：global_pool 不需要 padding（NCHW 那一支也不加），
+		// 显式清零，免得外层传进来的 pad 让 need/use 尺寸互相打架。
+		pad_H_top = pad_H_bottom = pad_W_left = pad_W_right = 0;
 	}
 	else
 	{
-		need_W = (int)ceil((float)(in_W - kernel_W) / stride_W + 1);
-		need_H = (int)ceil((float)(in_H - kernel_H) / stride_H + 1);
+		need_W = (int)ceil((float)(in_W0 + pad_W_left + pad_W_right - kernel_W) / stride_W + 1);
+		need_H = (int)ceil((float)(in_H0 + pad_H_top + pad_H_bottom - kernel_H) / stride_H + 1);
 	}
 
 	if (need_W <= 0 || need_H <= 0)
@@ -1264,7 +1323,15 @@ void ZQ_CNN_Forward_SSEUtils_NCHWC::MaxPooling(const ZQ_CNN_Tensor4D_NCHWC1 &inp
 		return;
 	}
 
-	bool suredivided = (in_H - kernel_H) % stride_H == 0 && (in_W - kernel_W) % stride_W == 0;
+	// 审计 F2：`% stride == 0` 是**无 pad** 时的等价写法，有 pad 时不成立。
+	// 直接说清它真正要表达的事：最后一个窗口不用裁边。
+	const float* in_data = 0;
+	int in_H = 0, in_W = 0;
+	if (!zq_nchwc_pool_prepare_pad(input, pad_H_top, pad_H_bottom, pad_W_left, pad_W_right,
+		in_data, in_H, in_W))
+		return;
+	bool suredivided = ((need_H - 1)*stride_H + kernel_H <= in_H)
+		&& ((need_W - 1)*stride_W + kernel_W <= in_W);
 	if (output.GetN() != need_N || output.GetH() != need_H || output.GetW() != need_W || output.GetC() != need_C)
 		if (!output.ChangeSize(need_N, need_H, need_W, need_C, 0, 0))
 		
@@ -1275,7 +1342,6 @@ void ZQ_CNN_Forward_SSEUtils_NCHWC::MaxPooling(const ZQ_CNN_Tensor4D_NCHWC1 &inp
 	int out_sliceStep = output.GetSliceStep();
 	int out_widthStep = output.GetWidthStep();
 	int out_imStep = output.GetImageStep();
-	const float* in_data = input.GetFirstPixelPtr();
 	float* out_data = output.GetFirstPixelPtr();
 
 	if (suredivided)
@@ -1307,12 +1373,13 @@ void ZQ_CNN_Forward_SSEUtils_NCHWC::MaxPooling(const ZQ_CNN_Tensor4D_NCHWC1 &inp
 	}
 }
 
-void ZQ_CNN_Forward_SSEUtils_NCHWC::AVGPooling(const ZQ_CNN_Tensor4D_NCHWC1 &input, ZQ_CNN_Tensor4D_NCHWC1 &output, int kernel_H, int kernel_W,
-	int stride_H, int stride_W, bool global_pool)
+void ZQ_CNN_Forward_SSEUtils_NCHWC::AVGPooling(ZQ_CNN_Tensor4D_NCHWC1 &input, ZQ_CNN_Tensor4D_NCHWC1 &output, int kernel_H, int kernel_W,
+	int stride_H, int stride_W, int pad_H_top, int pad_H_bottom,
+	int pad_W_left, int pad_W_right, bool global_pool)
 {
 	int in_N = input.GetN();
-	int in_H = input.GetH();
-	int in_W = input.GetW();
+	int in_H0 = input.GetH();
+	int in_W0 = input.GetW();
 	int in_C = input.GetC();
 	int need_W, need_H;
 	int need_N = in_N;
@@ -1321,15 +1388,18 @@ void ZQ_CNN_Forward_SSEUtils_NCHWC::AVGPooling(const ZQ_CNN_Tensor4D_NCHWC1 &inp
 	{
 		need_H = 1;
 		need_W = 1;
-		kernel_H = in_H;
-		kernel_W = in_W;
+		kernel_H = in_H0;
+		kernel_W = in_W0;
 		stride_H = 1;
 		stride_W = 1;
+		// 审计 F2：global_pool 不需要 padding（NCHW 那一支也不加），
+		// 显式清零，免得外层传进来的 pad 让 need/use 尺寸互相打架。
+		pad_H_top = pad_H_bottom = pad_W_left = pad_W_right = 0;
 	}
 	else
 	{
-		need_W = (int)ceil((float)(in_W - kernel_W) / stride_W + 1);
-		need_H = (int)ceil((float)(in_H - kernel_H) / stride_H + 1);
+		need_W = (int)ceil((float)(in_W0 + pad_W_left + pad_W_right - kernel_W) / stride_W + 1);
+		need_H = (int)ceil((float)(in_H0 + pad_H_top + pad_H_bottom - kernel_H) / stride_H + 1);
 	}
 
 	if (need_W <= 0 || need_H <= 0)
@@ -1350,7 +1420,15 @@ void ZQ_CNN_Forward_SSEUtils_NCHWC::AVGPooling(const ZQ_CNN_Tensor4D_NCHWC1 &inp
 		return;
 	}
 
-	bool suredivided = (in_H - kernel_H) % stride_H == 0 && (in_W - kernel_W) % stride_W == 0;
+	// 审计 F2：`% stride == 0` 是**无 pad** 时的等价写法，有 pad 时不成立。
+	// 直接说清它真正要表达的事：最后一个窗口不用裁边。
+	const float* in_data = 0;
+	int in_H = 0, in_W = 0;
+	if (!zq_nchwc_pool_prepare_pad(input, pad_H_top, pad_H_bottom, pad_W_left, pad_W_right,
+		in_data, in_H, in_W))
+		return;
+	bool suredivided = ((need_H - 1)*stride_H + kernel_H <= in_H)
+		&& ((need_W - 1)*stride_W + kernel_W <= in_W);
 	if (output.GetN() != need_N || output.GetH() != need_H || output.GetW() != need_W || output.GetC() != need_C)
 		if (!output.ChangeSize(need_N, need_H, need_W, need_C, 0, 0))
 		
@@ -1361,7 +1439,6 @@ void ZQ_CNN_Forward_SSEUtils_NCHWC::AVGPooling(const ZQ_CNN_Tensor4D_NCHWC1 &inp
 	int out_sliceStep = output.GetSliceStep();
 	int out_widthStep = output.GetWidthStep();
 	int out_imStep = output.GetImageStep();
-	const float* in_data = input.GetFirstPixelPtr();
 	float* out_data = output.GetFirstPixelPtr();
 
 	if (suredivided)
@@ -3673,12 +3750,13 @@ return false;
 	return true;
 }
 
-void ZQ_CNN_Forward_SSEUtils_NCHWC::MaxPooling(const ZQ_CNN_Tensor4D_NCHWC4 &input, ZQ_CNN_Tensor4D_NCHWC4 &output, int kernel_H, int kernel_W,
-	int stride_H, int stride_W, bool global_pool)
+void ZQ_CNN_Forward_SSEUtils_NCHWC::MaxPooling(ZQ_CNN_Tensor4D_NCHWC4 &input, ZQ_CNN_Tensor4D_NCHWC4 &output, int kernel_H, int kernel_W,
+	int stride_H, int stride_W, int pad_H_top, int pad_H_bottom,
+	int pad_W_left, int pad_W_right, bool global_pool)
 {
 	int in_N = input.GetN();
-	int in_H = input.GetH();
-	int in_W = input.GetW();
+	int in_H0 = input.GetH();
+	int in_W0 = input.GetW();
 	int in_C = input.GetC();
 	int need_W, need_H;
 	int need_N = in_N;
@@ -3687,15 +3765,18 @@ void ZQ_CNN_Forward_SSEUtils_NCHWC::MaxPooling(const ZQ_CNN_Tensor4D_NCHWC4 &inp
 	{
 		need_H = 1;
 		need_W = 1;
-		kernel_H = in_H;
-		kernel_W = in_W;
+		kernel_H = in_H0;
+		kernel_W = in_W0;
 		stride_H = 1;
 		stride_W = 1;
+		// 审计 F2：global_pool 不需要 padding（NCHW 那一支也不加），
+		// 显式清零，免得外层传进来的 pad 让 need/use 尺寸互相打架。
+		pad_H_top = pad_H_bottom = pad_W_left = pad_W_right = 0;
 	}
 	else
 	{
-		need_W = (int)ceil((float)(in_W - kernel_W) / stride_W + 1);
-		need_H = (int)ceil((float)(in_H - kernel_H) / stride_H + 1);
+		need_W = (int)ceil((float)(in_W0 + pad_W_left + pad_W_right - kernel_W) / stride_W + 1);
+		need_H = (int)ceil((float)(in_H0 + pad_H_top + pad_H_bottom - kernel_H) / stride_H + 1);
 	}
 
 	if (need_W <= 0 || need_H <= 0)
@@ -3716,7 +3797,15 @@ void ZQ_CNN_Forward_SSEUtils_NCHWC::MaxPooling(const ZQ_CNN_Tensor4D_NCHWC4 &inp
 		return;
 	}
 
-	bool suredivided = (in_H - kernel_H) % stride_H == 0 && (in_W - kernel_W) % stride_W == 0;
+	// 审计 F2：`% stride == 0` 是**无 pad** 时的等价写法，有 pad 时不成立。
+	// 直接说清它真正要表达的事：最后一个窗口不用裁边。
+	const float* in_data = 0;
+	int in_H = 0, in_W = 0;
+	if (!zq_nchwc_pool_prepare_pad(input, pad_H_top, pad_H_bottom, pad_W_left, pad_W_right,
+		in_data, in_H, in_W))
+		return;
+	bool suredivided = ((need_H - 1)*stride_H + kernel_H <= in_H)
+		&& ((need_W - 1)*stride_W + kernel_W <= in_W);
 	if (output.GetN() != need_N || output.GetH() != need_H || output.GetW() != need_W || output.GetC() != need_C)
 		if (!output.ChangeSize(need_N, need_H, need_W, need_C, 0, 0))
 		
@@ -3727,7 +3816,6 @@ void ZQ_CNN_Forward_SSEUtils_NCHWC::MaxPooling(const ZQ_CNN_Tensor4D_NCHWC4 &inp
 	int out_sliceStep = output.GetSliceStep();
 	int out_widthStep = output.GetWidthStep();
 	int out_imStep = output.GetImageStep();
-	const float* in_data = input.GetFirstPixelPtr();
 	float* out_data = output.GetFirstPixelPtr();
 
 	if (suredivided)
@@ -3759,12 +3847,13 @@ void ZQ_CNN_Forward_SSEUtils_NCHWC::MaxPooling(const ZQ_CNN_Tensor4D_NCHWC4 &inp
 	}
 }
 
-void ZQ_CNN_Forward_SSEUtils_NCHWC::AVGPooling(const ZQ_CNN_Tensor4D_NCHWC4 &input, ZQ_CNN_Tensor4D_NCHWC4 &output, int kernel_H, int kernel_W,
-	int stride_H, int stride_W, bool global_pool)
+void ZQ_CNN_Forward_SSEUtils_NCHWC::AVGPooling(ZQ_CNN_Tensor4D_NCHWC4 &input, ZQ_CNN_Tensor4D_NCHWC4 &output, int kernel_H, int kernel_W,
+	int stride_H, int stride_W, int pad_H_top, int pad_H_bottom,
+	int pad_W_left, int pad_W_right, bool global_pool)
 {
 	int in_N = input.GetN();
-	int in_H = input.GetH();
-	int in_W = input.GetW();
+	int in_H0 = input.GetH();
+	int in_W0 = input.GetW();
 	int in_C = input.GetC();
 	int need_W, need_H;
 	int need_N = in_N;
@@ -3773,15 +3862,18 @@ void ZQ_CNN_Forward_SSEUtils_NCHWC::AVGPooling(const ZQ_CNN_Tensor4D_NCHWC4 &inp
 	{
 		need_H = 1;
 		need_W = 1;
-		kernel_H = in_H;
-		kernel_W = in_W;
+		kernel_H = in_H0;
+		kernel_W = in_W0;
 		stride_H = 1;
 		stride_W = 1;
+		// 审计 F2：global_pool 不需要 padding（NCHW 那一支也不加），
+		// 显式清零，免得外层传进来的 pad 让 need/use 尺寸互相打架。
+		pad_H_top = pad_H_bottom = pad_W_left = pad_W_right = 0;
 	}
 	else
 	{
-		need_W = (int)ceil((float)(in_W - kernel_W) / stride_W + 1);
-		need_H = (int)ceil((float)(in_H - kernel_H) / stride_H + 1);
+		need_W = (int)ceil((float)(in_W0 + pad_W_left + pad_W_right - kernel_W) / stride_W + 1);
+		need_H = (int)ceil((float)(in_H0 + pad_H_top + pad_H_bottom - kernel_H) / stride_H + 1);
 	}
 
 	if (need_W <= 0 || need_H <= 0)
@@ -3802,7 +3894,15 @@ void ZQ_CNN_Forward_SSEUtils_NCHWC::AVGPooling(const ZQ_CNN_Tensor4D_NCHWC4 &inp
 		return;
 	}
 
-	bool suredivided = (in_H - kernel_H) % stride_H == 0 && (in_W - kernel_W) % stride_W == 0;
+	// 审计 F2：`% stride == 0` 是**无 pad** 时的等价写法，有 pad 时不成立。
+	// 直接说清它真正要表达的事：最后一个窗口不用裁边。
+	const float* in_data = 0;
+	int in_H = 0, in_W = 0;
+	if (!zq_nchwc_pool_prepare_pad(input, pad_H_top, pad_H_bottom, pad_W_left, pad_W_right,
+		in_data, in_H, in_W))
+		return;
+	bool suredivided = ((need_H - 1)*stride_H + kernel_H <= in_H)
+		&& ((need_W - 1)*stride_W + kernel_W <= in_W);
 	if (output.GetN() != need_N || output.GetH() != need_H || output.GetW() != need_W || output.GetC() != need_C)
 		if (!output.ChangeSize(need_N, need_H, need_W, need_C, 0, 0))
 		
@@ -3813,7 +3913,6 @@ void ZQ_CNN_Forward_SSEUtils_NCHWC::AVGPooling(const ZQ_CNN_Tensor4D_NCHWC4 &inp
 	int out_sliceStep = output.GetSliceStep();
 	int out_widthStep = output.GetWidthStep();
 	int out_imStep = output.GetImageStep();
-	const float* in_data = input.GetFirstPixelPtr();
 	float* out_data = output.GetFirstPixelPtr();
 
 	if (suredivided)
@@ -5358,12 +5457,13 @@ return false;
 	return true;
 }
 
-void ZQ_CNN_Forward_SSEUtils_NCHWC::MaxPooling(const ZQ_CNN_Tensor4D_NCHWC8 &input, ZQ_CNN_Tensor4D_NCHWC8 &output, int kernel_H, int kernel_W,
-	int stride_H, int stride_W, bool global_pool)
+void ZQ_CNN_Forward_SSEUtils_NCHWC::MaxPooling(ZQ_CNN_Tensor4D_NCHWC8 &input, ZQ_CNN_Tensor4D_NCHWC8 &output, int kernel_H, int kernel_W,
+	int stride_H, int stride_W, int pad_H_top, int pad_H_bottom,
+	int pad_W_left, int pad_W_right, bool global_pool)
 {
 	int in_N = input.GetN();
-	int in_H = input.GetH();
-	int in_W = input.GetW();
+	int in_H0 = input.GetH();
+	int in_W0 = input.GetW();
 	int in_C = input.GetC();
 	int need_W, need_H;
 	int need_N = in_N;
@@ -5372,15 +5472,18 @@ void ZQ_CNN_Forward_SSEUtils_NCHWC::MaxPooling(const ZQ_CNN_Tensor4D_NCHWC8 &inp
 	{
 		need_H = 1;
 		need_W = 1;
-		kernel_H = in_H;
-		kernel_W = in_W;
+		kernel_H = in_H0;
+		kernel_W = in_W0;
 		stride_H = 1;
 		stride_W = 1;
+		// 审计 F2：global_pool 不需要 padding（NCHW 那一支也不加），
+		// 显式清零，免得外层传进来的 pad 让 need/use 尺寸互相打架。
+		pad_H_top = pad_H_bottom = pad_W_left = pad_W_right = 0;
 	}
 	else
 	{
-		need_W = (int)ceil((float)(in_W - kernel_W) / stride_W + 1);
-		need_H = (int)ceil((float)(in_H - kernel_H) / stride_H + 1);
+		need_W = (int)ceil((float)(in_W0 + pad_W_left + pad_W_right - kernel_W) / stride_W + 1);
+		need_H = (int)ceil((float)(in_H0 + pad_H_top + pad_H_bottom - kernel_H) / stride_H + 1);
 	}
 
 	if (need_W <= 0 || need_H <= 0)
@@ -5401,7 +5504,15 @@ void ZQ_CNN_Forward_SSEUtils_NCHWC::MaxPooling(const ZQ_CNN_Tensor4D_NCHWC8 &inp
 		return;
 	}
 
-	bool suredivided = (in_H - kernel_H) % stride_H == 0 && (in_W - kernel_W) % stride_W == 0;
+	// 审计 F2：`% stride == 0` 是**无 pad** 时的等价写法，有 pad 时不成立。
+	// 直接说清它真正要表达的事：最后一个窗口不用裁边。
+	const float* in_data = 0;
+	int in_H = 0, in_W = 0;
+	if (!zq_nchwc_pool_prepare_pad(input, pad_H_top, pad_H_bottom, pad_W_left, pad_W_right,
+		in_data, in_H, in_W))
+		return;
+	bool suredivided = ((need_H - 1)*stride_H + kernel_H <= in_H)
+		&& ((need_W - 1)*stride_W + kernel_W <= in_W);
 	if (output.GetN() != need_N || output.GetH() != need_H || output.GetW() != need_W || output.GetC() != need_C)
 		if (!output.ChangeSize(need_N, need_H, need_W, need_C, 0, 0))
 		
@@ -5412,7 +5523,6 @@ void ZQ_CNN_Forward_SSEUtils_NCHWC::MaxPooling(const ZQ_CNN_Tensor4D_NCHWC8 &inp
 	int out_sliceStep = output.GetSliceStep();
 	int out_widthStep = output.GetWidthStep();
 	int out_imStep = output.GetImageStep();
-	const float* in_data = input.GetFirstPixelPtr();
 	float* out_data = output.GetFirstPixelPtr();
 
 	if (suredivided)
@@ -5444,12 +5554,13 @@ void ZQ_CNN_Forward_SSEUtils_NCHWC::MaxPooling(const ZQ_CNN_Tensor4D_NCHWC8 &inp
 	}
 }
 
-void ZQ_CNN_Forward_SSEUtils_NCHWC::AVGPooling(const ZQ_CNN_Tensor4D_NCHWC8 &input, ZQ_CNN_Tensor4D_NCHWC8 &output, int kernel_H, int kernel_W,
-	int stride_H, int stride_W, bool global_pool)
+void ZQ_CNN_Forward_SSEUtils_NCHWC::AVGPooling(ZQ_CNN_Tensor4D_NCHWC8 &input, ZQ_CNN_Tensor4D_NCHWC8 &output, int kernel_H, int kernel_W,
+	int stride_H, int stride_W, int pad_H_top, int pad_H_bottom,
+	int pad_W_left, int pad_W_right, bool global_pool)
 {
 	int in_N = input.GetN();
-	int in_H = input.GetH();
-	int in_W = input.GetW();
+	int in_H0 = input.GetH();
+	int in_W0 = input.GetW();
 	int in_C = input.GetC();
 	int need_W, need_H;
 	int need_N = in_N;
@@ -5458,15 +5569,18 @@ void ZQ_CNN_Forward_SSEUtils_NCHWC::AVGPooling(const ZQ_CNN_Tensor4D_NCHWC8 &inp
 	{
 		need_H = 1;
 		need_W = 1;
-		kernel_H = in_H;
-		kernel_W = in_W;
+		kernel_H = in_H0;
+		kernel_W = in_W0;
 		stride_H = 1;
 		stride_W = 1;
+		// 审计 F2：global_pool 不需要 padding（NCHW 那一支也不加），
+		// 显式清零，免得外层传进来的 pad 让 need/use 尺寸互相打架。
+		pad_H_top = pad_H_bottom = pad_W_left = pad_W_right = 0;
 	}
 	else
 	{
-		need_W = (int)ceil((float)(in_W - kernel_W) / stride_W + 1);
-		need_H = (int)ceil((float)(in_H - kernel_H) / stride_H + 1);
+		need_W = (int)ceil((float)(in_W0 + pad_W_left + pad_W_right - kernel_W) / stride_W + 1);
+		need_H = (int)ceil((float)(in_H0 + pad_H_top + pad_H_bottom - kernel_H) / stride_H + 1);
 	}
 
 	if (need_W <= 0 || need_H <= 0)
@@ -5487,7 +5601,15 @@ void ZQ_CNN_Forward_SSEUtils_NCHWC::AVGPooling(const ZQ_CNN_Tensor4D_NCHWC8 &inp
 		return;
 	}
 
-	bool suredivided = (in_H - kernel_H) % stride_H == 0 && (in_W - kernel_W) % stride_W == 0;
+	// 审计 F2：`% stride == 0` 是**无 pad** 时的等价写法，有 pad 时不成立。
+	// 直接说清它真正要表达的事：最后一个窗口不用裁边。
+	const float* in_data = 0;
+	int in_H = 0, in_W = 0;
+	if (!zq_nchwc_pool_prepare_pad(input, pad_H_top, pad_H_bottom, pad_W_left, pad_W_right,
+		in_data, in_H, in_W))
+		return;
+	bool suredivided = ((need_H - 1)*stride_H + kernel_H <= in_H)
+		&& ((need_W - 1)*stride_W + kernel_W <= in_W);
 	if (output.GetN() != need_N || output.GetH() != need_H || output.GetW() != need_W || output.GetC() != need_C)
 		if (!output.ChangeSize(need_N, need_H, need_W, need_C, 0, 0))
 		
@@ -5498,7 +5620,6 @@ void ZQ_CNN_Forward_SSEUtils_NCHWC::AVGPooling(const ZQ_CNN_Tensor4D_NCHWC8 &inp
 	int out_sliceStep = output.GetSliceStep();
 	int out_widthStep = output.GetWidthStep();
 	int out_imStep = output.GetImageStep();
-	const float* in_data = input.GetFirstPixelPtr();
 	float* out_data = output.GetFirstPixelPtr();
 
 	if (suredivided)

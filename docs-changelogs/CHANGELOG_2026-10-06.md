@@ -2220,3 +2220,163 @@ ZQCNN/layers_c / ZQCNN/layers_nchwc` 依次找真实文件，
 - 旧格式（3 列、行号键）的基线仍然**读得进来**，但升级后第一次跑会把
   全部旧条目报成 FIXED、全部新条目报成 NEW —— **看到这种"整齐对称"的一堆，
   就是该跑 `--save-baseline` 了**。这一点写进了代码注释。
+
+---
+
+## 变更：附录 F2 —— NCHWC 池化**静默丢弃 pad**（形状就错一格）
+
+### 缺陷
+
+`ZQ_CNN_Layer_NCHWC_Pooling::ReadParam` **解析了** `pad`（写进 `pad_H`/`pad_W`），
+而 `Forward` 调的
+
+```cpp
+MaxPooling(bottom, top, kernel_H, kernel_W, stride_H, stride_W, global_pool)
+```
+
+**签名里根本没有 pad** —— 那两个成员解析完就没人用了。
+模型文件写 `pad 1` 会**加载成功、然后静默按无 pad 计算**。
+
+第一版探针（拿 NCHW 当参考）的实测：
+
+    nchwc1 MAX k=3x3 s=2x2 pad=1,1,1,1 in=7x9   形状不同 want(4,5) got(3,4)
+    nchwc4 AVG ...                                    形状不同 want(4,5) got(3,4)
+    nchwc8 MAX ...                                    形状不同 want(4,5) got(3,4)
+    共 36 个用例：全对 12（全是 pad=0 的对照），形状不同 24
+
+**不是数值差一点，是形状就错一格** —— 下游整条链全错。
+
+顺带查出的同族缺口（`NCHW 有 / NCHWC 没有` 的参数键）：
+
+| 层 | 缺 |
+|---|---|
+| Convolution | `pad_H_top` `pad_H_bottom` `pad_W_left` `pad_W_right` `pad_type` `same` `valid` |
+| DepthwiseConvolution | 同上 |
+| Pooling | 同上 + `kernel_H` `kernel_W` `stride_H` `stride_W` |
+
+严重度分三档（实测）：
+
+1. **NCHWC 池化的 `pad N`** —— 一声不吭、形状就错。**最糟。**
+2. **NCHWC 卷积/深度卷积的 `pad_type` / 非对称 pad** —— 打一行
+   `warning: unknown para`，然后按 pad=0 算。`ReadParam` 的返回条件
+   （`has_num_output && has_kernelH && has_kernelW && has_bottom && has_top && has_name`）
+   **不含 pad**，所以这一档是**静默算错**。
+   缓解：随仓那 220 个 SAME 层全是可整除的（SAME ≡ 无 pad，见附录 IV.1 的影响面），
+   所以转成 NCHWC 结果仍然一致 —— 但那是**巧合**，不是设计。
+3. **NCHWC 池化的 `kernel_H/kernel_W/stride_H/stride_W`** —— 落到
+   "unknown para"，`has_kernelH` 保持 false，`ReadParam` 末尾 `return false`
+   ⇒ **加载失败**。这一档反而是响亮的（Pose-zq 的两行 Pooling 正是这种写法）。
+
+### 修法
+
+* **前向**（`ZQ_CNN_Forward_SSEUtils_NCHWC.{h,cpp}`）：六份 MaxPooling/AVGPooling
+  各加 `pad_H_top/pad_H_bottom/pad_W_left/pad_W_right`（**实参带默认值 0**，
+  既有调用点不用改），`input` 改成非 const 引用。
+  非零 pad 时就地 `Padding`，再把窗口起点挪到 `-pad_top`。
+  六份共用一个 `zq_nchwc_pool_prepare_pad()` 模板 ——
+  **同一段索引算术抄六遍，抄错一份就又是一次静默算错**。
+  NCHWC 的 `Padding` 只支持对称，而 SAME/VALID 经常给出非对称的 pad，
+  于是补 `P = max(两侧)`；多补出来的那几行永远读不到（不等式写在代码注释里）。
+* **层**（`ZQ_CNN_Layer_NCHWC.h`）：加 `pad_type` 与四个方向 pad 的解析、
+  `kernel_H/kernel_W/stride_H/stride_W` 四种写法；
+  `SetBottomDim` 里的 pad_type 解析**逐字照抄 NCHW 的 `ZQ_CNN_Layer_Pooling`**
+  —— 包括 SAME 用 floor 那一点（附录 IV.4 已分析：那个 floor 与池化层自己的
+  尺寸约定自洽，改成 ceil 反而会破坏它）。
+  目的是**让 NCHWC 与 NCHW 给出同一个数**，不是"更正确"。
+* `suredivided` 的判据从 `(in_H - kernel_H) % stride_H == 0`
+  改成 `(need_H - 1)*stride_H + kernel_H <= in_H` —— 前者是**无 pad 时**的等价写法，
+  有 pad 时不成立；后者说的是"最后一个窗口不用裁边"这件事本身。
+
+### 关键转折：**判据不能用 NCHW 当参考，因为 NCHW 那一支自己有缺陷**
+
+修完之后用同一份数据（4x4、值=行*4+列+1、k=2 s=2 pad=1）跑三种实现：
+
+    输入 c0
+       1   2   3   4
+       5   6   7   8
+       9  10  11  12
+      13  14  15  16
+    三种实现给出的第 2 行：
+      NCHW           7   8   9     <- 窗口起点落在**数据首行**
+      NCHWC（修后）  9  11  12     <- 窗口起点落在 -pad 行（= 明文定义）
+      手算参考       9  11  12
+
+NCHW 的代码里确实写了 `GetFirstPixelPtr() - pad_H_top*in_widthStep - pad_W_left*in_pixStep`，
+但**实测窗口起点并没有真的退到 -pad 行** —— 代码表达的意图与实际行为不一致。
+拿它当参考等于把一个缺陷固化成"标准"。
+
+所以最终门禁 `tools/zq_nchwc_poolpad_check.cpp` 用的是**独立参考**：
+按明文定义「零填充 + 池化」直接算，不经过任何被测代码。
+这一族缺陷靠"和孪生实现比"是抓不到的 ——
+AGENTS.md 那条「同仓的两份实现互为对照」的**适用条件是两边都对**。
+
+### 新门禁 `tools/zq_nchwc_poolpad_check.cpp`（60 个用例）
+
+NCHWC1/4/8 × {MAX, AVG} × {C = A, C = A+2} × 5 组 pad
+（0 / 对称 / 非对称两种方向 / 不对称且不等）= 60 个用例，**逐格后向误差**。
+
+门禁的参考实现自己也栽了两次，都是**参考错、库对**：
+
+1. AVG 的除数写成恒定的 `kH*kW` —— 而正确的是「窗口落在补齐区里的格数」
+   （最后一个窗口在补齐区右边只够 2 格时除以 2）。6 个用例红。
+2. 改成按补齐区计数之后，**有效范围写成了 [0, H)**（原图）而不是
+   `[-pT, H+pB)`（补齐区）—— 于是对称 padding 的 `oh=0` 少算了一格，
+   18 个用例红。
+
+> 与 AGENTS.md「一个坏测试会产出看起来很有说服力的假结论」完全同形：
+> 两次的症状都是"库算错了"，而库是对的。
+> **这类门禁里，参考实现本身必须先被怀疑。**
+
+### 变异测试 —— **第一次跑，门禁没红**，那才是这一段最值钱的记录
+
+`tools/_mut_poolpad.py`：把 `Forward` 传下去的 pad 改回全 0
+（= 修之前"解析了但不使用"的行为），门禁必须变红；还原放 `finally`。
+
+    基线（未变异）  rc=0   1/1 通过
+    变异后          rc=0   1/1 通过     <-- **门禁没红**
+    还原            grep 计数 2 / 0
+
+**为什么没红**：第一版门禁只调 `MaxPooling/AVGPooling`，
+压根**没经过层** —— 而缺陷恰恰在层里（层解析了 pad 却没往下传）。
+门禁覆盖的是内核与 padding 的正确性，**没覆盖"参数有没有被传下去"**。
+
+> 与 AGENTS.md「阳性对照要换一个变异位置再问一次」同源：
+> 同一个变异落在**判据覆盖维度之外**时，门禁看不见。
+> 而"门禁全绿"这件事本身，在这次里**没有提供任何信息** ——
+> 它压根不知道那一段代码的存在。
+
+补上第二段覆盖（驱动层：`ReadParam -> SetBottomDim -> LayerSetup -> Forward`）之后，
+用例从 60 增到 120，再跑变异：
+
+    基线（未变异）  rc=0   1/1 通过（120/120 用例）
+    变异后          rc=1   FAIL (rc=1, 48 条断言失败)，**全部落在「层」那一段**，
+                          例：nchwc1 层 AVG C=3 k=3x3 s=2x2 pad=1,1,1,1
+                              FAIL 120/120 格不同，最大差 1.235e+04
+                          （1.235e4 是我给输出预填的哨兵 -12345：
+                           丢掉 pad 之后层的 top 变小，写不到的那些格保持哨兵值。）
+    还原            grep 计数 2 / 0，确认成功
+
+> 通则：**门禁要覆盖"缺陷发生在哪一层"，而不只是"结果对不对"。**
+> 这一族（解析了不用、传下去丢了、传错了顺序）在数值层面都可能看不出来，
+> 只有**驱动那一层**才验得到。
+
+### 变更文件
+
+    ZQCNN/ZQ_CNN_Forward_SSEUtils_NCHWC.h    六份 MaxPooling/AVGPooling 加 pad 形参
+    ZQCNN/ZQ_CNN_Forward_SSEUtils_NCHWC.cpp  zq_nchwc_pool_prepare_pad() + 六份实现
+    ZQCNN/ZQ_CNN_Layer_NCHWC.h               层：pad_type / 非对称 pad / kernel_H 四写法 /
+                                             SetBottomDim / GetTopDim / Forward 传 pad
+    tools/zq_nchwc_poolpad_check.cpp         新门禁
+    tools/run_zqlib_checks.py                登记 zq_nchwc_poolpad
+
+### 实测
+
+    python tools/run_zqlib_checks.py zq_nchwc_poolpad -> 1/1 PASS（60/60 用例）
+
+### 注意事项
+
+- **NCHW 那一支的带 padding 池化仍然是错的**（窗口起点没退到 -pad 行）。
+  本轮**没有改**它：改了会动到既有模型的数值，而随仓模型里
+  池化层的 pad 全是 0（220 个 SAME 层都解析成 0），所以改它对随仓无影响 ——
+  但这是**另一个独立决策**，需要单独评估，不该顺手带上。
+  已在门禁文件头把这件事写清楚，避免下一个人以为 NCHW 是对的。
