@@ -3426,4 +3426,52 @@ zq_nchw_lstm / zq_nchw_reduction / zq_nchw_resize / zq_nchw_scalop /
 zq_nchw_sqrtnrm / zq_nchwc_act / zq_nchwc_bn / zq_nchwc_depthwise /
 zq_nchwc_elt_relu / zq_nchwc_pool / zq_nchwc_resize / zq_nchwc_softmax），
 它们测的 NCHW/NCHWC 各层实现 TU 同样没被插桩。这轮**没动**，表已列好，
-下一轮照着做即可。
+下一轮照着做即可。---
+
+## 变更：EXTRA_SOURCES 全量补 $SAN（18 个 tag / 43 条），含一个必须排除的例外（附录 IO）
+
+### 变更文件
+
+    改 tools/run_zqlib_checks.py
+
+### 改动
+
+附录 IN 列出的 18 个 tag、43 条编译行全部补 $SAN，补完之后 EXTRA_SOURCES 里
+所有 gcc/g++ 编译行都带 $SAN（_glob_extra 生成的本来就带）。
+
+**全量补之后第一轮是 70/71，不是 71/71**：
+
+    zq_nchw_conv_free    BUILD FAIL: collect2: error: ld returned 1 exit status
+
+### 注意事项
+
+这是个真例外，而且例外的位置让「全量补」必然踩到它：
+`zq_nchw_conv_free` 在 **EXTRA_CXXFLAGS**（980 行开外）里带着
+`-fno-sanitize=address` —— 它要**自己接管 free** 记录「谁被释放了」，
+而 ASan 运行时自己也要调 free，初始化完成前抢过来一调用就段错误（附录 CU.9）。
+
+于是错配：编译行有 $SAN（.o 带 __asan_* 引用），链接行 -fno-sanitize
+（不提供符号）-> ld 失败。**问题不在例外存在，而在于例外写在另一个字典里**，
+EXTRA_SOURCES 在前 700 行、EXTRA_CXXFLAGS 在 980 行开外，改前者时看不见。
+
+教训：**「全量改某个属性」之前，要先去另一个地方确认有没有反向声明。**
+
+定位过程：BUILD FAIL 消息只有 `collect2: error: ld returned 1 exit status`，
+真正有用的信息没打出来；手工复现链接反而**成功**了（我照自己理解拼的链接行）；
+最后是**截获 harness 生成的脚本**、把那条 g++ 命令原样抠出来才看见 ——
+附录 IL 第 41 条那条规则的第二次应用。
+
+### 实测结果
+
+规则改成精确形式：EXTRA_SOURCES 每条编译行都带 $SAN，**除非**该 tag 在
+EXTRA_CXXFLAGS 里显式带 -fno-sanitize（有意豁免）。
+
+    python tools/run_zqlib_checks.py --with-slow    71/71 通过，ELAPSED=1551s
+
+**阴性结论**：NCHW/NCHWC 的 act / bn / depthwise / eltwise / pool / resize /
+reduction / lstm / scalop / sqrtnrm 这些层的实现 TU 在 ASan 下**全部干净**，
+没有潜伏缺陷。对照上一轮 1594s 没明显变慢。
+
+改的过程中断言又兜住一次错：预期改 43 行、实际只改 37 行（zq_bns /
+zq_eltwise / zq_lrn 的编译行没有 -fopenmp，前缀不同），断言当场报出来，
+补齐正则后才凑够 43。

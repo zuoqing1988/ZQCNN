@@ -55,16 +55,16 @@ def run_wsl(script):
 # 见附录 AU.2 踩过的坑），链接时再加 -mavx2 -mfma。
 EXTRA_SOURCES = {
     'zq_lrn': [
-        'gcc -O1 -g -mavx2 -mfma -c -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include '
+        'gcc -O1 -g $SAN -mavx2 -mfma -c -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include '
         '$R/ZQCNN/math/zq_sse_mathfun.c -o $WDIR/zq_lrn_sse.o',
-        'gcc -O1 -g -mavx2 -mfma -c -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include '
+        'gcc -O1 -g $SAN -mavx2 -mfma -c -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include '
         '$R/ZQCNN/math/zq_avx_mathfun.c -o $WDIR/zq_lrn_avx.o',
     ],
     # zq_eltwise：同 zq_bns，两个 math .c 只是因为它们定义了 log/exp 等 SIMD 辅助。
     'zq_eltwise': [
-        'gcc -O1 -g -mavx2 -mfma -c -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include '
+        'gcc -O1 -g $SAN -mavx2 -mfma -c -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include '
         '$R/ZQCNN/math/zq_sse_mathfun.c -o $WDIR/zq_eltwise_sse.o',
-        'gcc -O1 -g -mavx2 -mfma -c -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include '
+        'gcc -O1 -g $SAN -mavx2 -mfma -c -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include '
         '$R/ZQCNN/math/zq_avx_mathfun.c -o $WDIR/zq_eltwise_avx.o',
     ],
     # zq_pool：只 include 了内核的 .c，不含 math/zq_*_mathfun.c，所以 EXTRA_SOURCES
@@ -217,13 +217,13 @@ EXTRA_SOURCES = {
     # 「每个通道一个 filter」SIMD 展开），所以 CB/CE 修的那些问题对它一概无效。
     # 好消息：它**不依赖 ZQ_GEMM**，所以三个 TU 全部很快，编一次几秒钟。
     'zq_nchwc_depthwise': [
-        'gcc -O1 -g -mavx2 -mfma -fopenmp -c -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include '
+        'gcc -O1 -g $SAN -mavx2 -mfma -fopenmp -c -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include '
         '$R/ZQCNN/layers_nchwc/zq_cnn_depthwise_convolution_nchwc.c -o $WDIR/zq_dw.o',
         # ZQ_CNN_Tensor4D_NCHWC.cpp 要用 layers_nchwc/zq_cnn_resize_nchwc.h 里的
         # ResizeBilinear 内核，不编它就是 undefined reference（与 zq_nchwc_ip 同理）
-        'gcc -O1 -g -mavx2 -mfma -fopenmp -c -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include '
+        'gcc -O1 -g $SAN -mavx2 -mfma -fopenmp -c -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include '
         '$R/ZQCNN/layers_nchwc/zq_cnn_resize_nchwc.c -o $WDIR/zq_dw_resize.o',
-        'g++ -O1 -g -mavx2 -mfma -fopenmp -c -I$R -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include '
+        'g++ -O1 -g $SAN -mavx2 -mfma -fopenmp -c -I$R -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include '
         '$R/ZQCNN/ZQ_CNN_Tensor4D_NCHWC.cpp -o $WDIR/zq_dw_tensor.o',
     ],
     # zq_nchwc_act（附录 CG）：NCHWC 激活层。**卷积的 with_bias_prelu 三个变体
@@ -232,13 +232,13 @@ EXTRA_SOURCES = {
     # 15 个入口 = addbias / prelu / prelu_sure / addbias_prelu / addbias_prelu_sure
     #             × NCHWC1/4/8（符号表已用 nm 核实）
     'zq_nchwc_act': [
-        'gcc -O1 -g -mavx2 -mfma -fopenmp -c -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include '
+        'gcc -O1 -g $SAN -mavx2 -mfma -fopenmp -c -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include '
         '$R/ZQCNN/layers_nchwc/zq_cnn_prelu_nchwc.c -o $WDIR/zq_act_prelu.o',
-        'gcc -O1 -g -mavx2 -mfma -fopenmp -c -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include '
+        'gcc -O1 -g $SAN -mavx2 -mfma -fopenmp -c -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include '
         '$R/ZQCNN/layers_nchwc/zq_cnn_addbias_nchwc.c -o $WDIR/zq_act_addbias.o',
-        'gcc -O1 -g -mavx2 -mfma -fopenmp -c -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include '
+        'gcc -O1 -g $SAN -mavx2 -mfma -fopenmp -c -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include '
         '$R/ZQCNN/layers_nchwc/zq_cnn_resize_nchwc.c -o $WDIR/zq_act_resize.o',
-        'g++ -O1 -g -mavx2 -mfma -fopenmp -c -I$R -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include '
+        'g++ -O1 -g $SAN -mavx2 -mfma -fopenmp -c -I$R -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include '
         '$R/ZQCNN/ZQ_CNN_Tensor4D_NCHWC.cpp -o $WDIR/zq_act_tensor.o',
     ],
     # zq_nchwc_elt_relu（附录 CH）：NCHWC 的 relu 与 eltwise。
@@ -246,13 +246,13 @@ EXTRA_SOURCES = {
     # 数学），所以参考实现几乎不可能写错 —— 门禁一旦变红，结论可信。
     # 15 个入口 = relu + eltwise{sum,max,mul,sum_with_weight} x NCHWC1/4/8
     'zq_nchwc_elt_relu': [
-        'gcc -O1 -g -mavx2 -mfma -fopenmp -c -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include '
+        'gcc -O1 -g $SAN -mavx2 -mfma -fopenmp -c -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include '
         '$R/ZQCNN/layers_nchwc/zq_cnn_relu_nchwc.c -o $WDIR/zq_er_relu.o',
-        'gcc -O1 -g -mavx2 -mfma -fopenmp -c -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include '
+        'gcc -O1 -g $SAN -mavx2 -mfma -fopenmp -c -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include '
         '$R/ZQCNN/layers_nchwc/zq_cnn_eltwise_nchwc.c -o $WDIR/zq_er_elt.o',
-        'gcc -O1 -g -mavx2 -mfma -fopenmp -c -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include '
+        'gcc -O1 -g $SAN -mavx2 -mfma -fopenmp -c -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include '
         '$R/ZQCNN/layers_nchwc/zq_cnn_resize_nchwc.c -o $WDIR/zq_er_resize.o',
-        'g++ -O1 -g -mavx2 -mfma -fopenmp -c -I$R -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include '
+        'g++ -O1 -g $SAN -mavx2 -mfma -fopenmp -c -I$R -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include '
         '$R/ZQCNN/ZQ_CNN_Tensor4D_NCHWC.cpp -o $WDIR/zq_er_tensor.o',
     ],
     # zq_nchwc_pool（附录 CI）：NCHWC pooling 的 24 个入口。
@@ -261,11 +261,11 @@ EXTRA_SOURCES = {
     # 同一个功能的两个变体，测了的那份全对、没测的那份全错。
     # 符号表用 nm 取（24 个），不是按头里的声明数 —— 头里有重复声明。
     'zq_nchwc_pool': [
-        'gcc -O1 -g -mavx2 -mfma -fopenmp -c -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include '
+        'gcc -O1 -g $SAN -mavx2 -mfma -fopenmp -c -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include '
         '$R/ZQCNN/layers_nchwc/zq_cnn_pooling_nchwc.c -o $WDIR/zq_pool8.o',
-        'gcc -O1 -g -mavx2 -mfma -fopenmp -c -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include '
+        'gcc -O1 -g $SAN -mavx2 -mfma -fopenmp -c -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include '
         '$R/ZQCNN/layers_nchwc/zq_cnn_resize_nchwc.c -o $WDIR/zq_pool8_resize.o',
-        'g++ -O1 -g -mavx2 -mfma -fopenmp -c -I$R -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include '
+        'g++ -O1 -g $SAN -mavx2 -mfma -fopenmp -c -I$R -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include '
         '$R/ZQCNN/ZQ_CNN_Tensor4D_NCHWC.cpp -o $WDIR/zq_pool8_tensor.o',
     ],
     # zq_nchwc_bn（附录 CJ）：NCHWC batchnormscale 的 12 个入口
@@ -273,22 +273,22 @@ EXTRA_SOURCES = {
     # 这一族的**参数名与直觉相反**（batchnorm_b_a 的第一个参数是乘数、第二个是加数），
     # 所以参考实现是逐条从源码抄下来的，不是按名字推的。
     'zq_nchwc_bn': [
-        'gcc -O1 -g -mavx2 -mfma -fopenmp -c -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include '
+        'gcc -O1 -g $SAN -mavx2 -mfma -fopenmp -c -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include '
         '$R/ZQCNN/layers_nchwc/zq_cnn_batchnormscale_nchwc.c -o $WDIR/zq_bn.o',
-        'gcc -O1 -g -mavx2 -mfma -fopenmp -c -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include '
+        'gcc -O1 -g $SAN -mavx2 -mfma -fopenmp -c -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include '
         '$R/ZQCNN/layers_nchwc/zq_cnn_resize_nchwc.c -o $WDIR/zq_bn_resize.o',
-        'g++ -O1 -g -mavx2 -mfma -fopenmp -c -I$R -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include '
+        'g++ -O1 -g $SAN -mavx2 -mfma -fopenmp -c -I$R -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include '
         '$R/ZQCNN/ZQ_CNN_Tensor4D_NCHWC.cpp -o $WDIR/zq_bn_tensor.o',
     ],
     # zq_nchwc_softmax（附录 CK）：NCHWC softmax 的 5 个入口（沿 C/H/W 三个轴）。
     # softmax 的输出是概率，判据用它自己当尺度；C 特意跑「是 align 倍数」与
     # 「不是 align 倍数」两种，让内核自己的对齐尾循环必须被走到。
     'zq_nchwc_softmax': [
-        'gcc -O1 -g -mavx2 -mfma -fopenmp -c -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include '
+        'gcc -O1 -g $SAN -mavx2 -mfma -fopenmp -c -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include '
         '$R/ZQCNN/layers_nchwc/zq_cnn_softmax_nchwc.c -o $WDIR/zq_sm.o',
-        'gcc -O1 -g -mavx2 -mfma -fopenmp -c -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include '
+        'gcc -O1 -g $SAN -mavx2 -mfma -fopenmp -c -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include '
         '$R/ZQCNN/layers_nchwc/zq_cnn_resize_nchwc.c -o $WDIR/zq_sm_resize.o',
-        'g++ -O1 -g -mavx2 -mfma -fopenmp -c -I$R -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include '
+        'g++ -O1 -g $SAN -mavx2 -mfma -fopenmp -c -I$R -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include '
         '$R/ZQCNN/ZQ_CNN_Tensor4D_NCHWC.cpp -o $WDIR/zq_sm_tensor.o',
     ],
     # zq_nchwc_resize（附录 CL）：NCHWC resize 的 6 个入口
@@ -296,9 +296,9 @@ EXTRA_SOURCES = {
     # without 会把 x0/x1、y0/y1 钳到图内，with 不钳（要求调用方保证安全边界）。
     # 门禁用两种配置：cfgA 两个变体都安全（期望相同）、cfgB 只有 without 能跑（验钳位）。
     'zq_nchwc_resize': [
-        'gcc -O1 -g -mavx2 -mfma -fopenmp -c -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include '
+        'gcc -O1 -g $SAN -mavx2 -mfma -fopenmp -c -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include '
         '$R/ZQCNN/layers_nchwc/zq_cnn_resize_nchwc.c -o $WDIR/zq_rz.o',
-        'g++ -O1 -g -mavx2 -mfma -fopenmp -c -I$R -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include '
+        'g++ -O1 -g $SAN -mavx2 -mfma -fopenmp -c -I$R -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include '
         '$R/ZQCNN/ZQ_CNN_Tensor4D_NCHWC.cpp -o $WDIR/zq_rz_tensor.o',
     ],
     # zq_nchw_resize（附录 CN）：**NCHW 的 resize / remap**，x86 上的**主生产路径**
@@ -310,9 +310,9 @@ EXTRA_SOURCES = {
     #   remap_without_safeborder / remap_without_safeborder_fillval   各 x align0/128/256
     # 末尾那个 sample_align_type 决定要不要半像素平移，名字里没有提示，两种都测。
     'zq_nchw_resize': [
-        'gcc -O1 -g -mavx2 -mfma -fopenmp -c -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include '
+        'gcc -O1 -g $SAN -mavx2 -mfma -fopenmp -c -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include '
         '$R/ZQCNN/layers_c/zq_cnn_resize_32f_align_c.c -o $WDIR/zq_rzn.o',
-        'g++ -O1 -g -mavx2 -mfma -fopenmp -c -I$R -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include '
+        'g++ -O1 -g $SAN -mavx2 -mfma -fopenmp -c -I$R -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include '
         '$R/ZQCNN/ZQ_CNN_Tensor4D.cpp -o $WDIR/zq_rzn_tensor.o',
     ],
     # zq_resize_align（附录 ID）：`ResizeBilinearRect` 在 Align0 / Align128bit /
@@ -329,24 +329,24 @@ EXTRA_SOURCES = {
     # 而 CN 证明过：这种结构下「手写那份对、模板那份错」是会发生的。
     # 带分支的都跑两个：relu 的 slope==0、dropout 的 scale==1 提前返回、scale 的 bias==NULL。
     'zq_nchw_act': [
-        'gcc -O1 -g -mavx2 -mfma -fopenmp -c -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include '
+        'gcc -O1 -g $SAN -mavx2 -mfma -fopenmp -c -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include '
         '$R/ZQCNN/layers_c/zq_cnn_relu_32f_align_c.c -o $WDIR/zq_nact_relu.o',
-        'gcc -O1 -g -mavx2 -mfma -fopenmp -c -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include '
+        'gcc -O1 -g $SAN -mavx2 -mfma -fopenmp -c -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include '
         '$R/ZQCNN/layers_c/zq_cnn_prelu_32f_align_c.c -o $WDIR/zq_nact_prelu.o',
-        'gcc -O1 -g -mavx2 -mfma -fopenmp -c -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include '
+        'gcc -O1 -g $SAN -mavx2 -mfma -fopenmp -c -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include '
         '$R/ZQCNN/layers_c/zq_cnn_addbias_32f_align_c.c -o $WDIR/zq_nact_addbias.o',
-        'gcc -O1 -g -mavx2 -mfma -fopenmp -c -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include '
+        'gcc -O1 -g $SAN -mavx2 -mfma -fopenmp -c -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include '
         '$R/ZQCNN/layers_c/zq_cnn_dropout_32f_align_c.c -o $WDIR/zq_nact_dropout.o',
-        'gcc -O1 -g -mavx2 -mfma -fopenmp -c -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include '
+        'gcc -O1 -g $SAN -mavx2 -mfma -fopenmp -c -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include '
         '$R/ZQCNN/layers_c/zq_cnn_softmax_32f_align_c.c -o $WDIR/zq_nact_softmax.o',
-        'gcc -O1 -g -mavx2 -mfma -fopenmp -c -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include '
+        'gcc -O1 -g $SAN -mavx2 -mfma -fopenmp -c -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include '
         '$R/ZQCNN/layers_c/zq_cnn_batchnormscale_32f_align_c.c -o $WDIR/zq_nact_bn.o',
     ],
     # zq_nchw_depthwise（附录 CP）：NCHW depthwise，159 个真实符号 / 33 个基础名，
     # 此前零覆盖。门禁取代表性子集（通用 + 基础 k + 各通道数特化），
     # 核心价值是让**特化版本与通用版本对同一份参考值互相校验**。
     'zq_nchw_depthwise': [
-        'gcc -O1 -g -mavx2 -mfma -fopenmp -c -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include '
+        'gcc -O1 -g $SAN -mavx2 -mfma -fopenmp -c -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include '
         '$R/ZQCNN/layers_c/zq_cnn_depthwise_convolution_32f_align_c.c -o $WDIR/zq_dwnchw.o',
     ],
     # zq_nchw_scalop（附录 CQ）：NCHW scalaroperation，38 个 32f 真实符号
@@ -354,16 +354,16 @@ EXTRA_SOURCES = {
     # **rminus = s - in、rdiv = s / in 是反向运算**（.c 里 vsubq_f32(y,x) / vdivq_f32(y,x)），
     # 按名字推会整个搞反 —— 门禁的标量特意取负数来暴露这一点。
     'zq_nchw_scalop': [
-        'gcc -O1 -g -mavx2 -mfma -fopenmp -c -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include '
+        'gcc -O1 -g $SAN -mavx2 -mfma -fopenmp -c -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include '
         '$R/ZQCNN/layers_c/zq_cnn_scalaroperation_32f_align_c.c -o $WDIR/zq_scalop.o',
     ],
     # zq_nchw_sqrtnrm（附录 CS）：NCHW 的 sqrt(1) + normalize(5) 共 6 个 32f 入口。
     # normalize 是 **L2 归一化、不减均值**；每个入口都跑一次**全零输入** ——
     # 那正是附录 CR 修掉的 eps 缺失会算出 NaN 的场景。
     'zq_nchw_sqrtnrm': [
-        'gcc -O1 -g -mavx2 -mfma -fopenmp -c -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include '
+        'gcc -O1 -g $SAN -mavx2 -mfma -fopenmp -c -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include '
         '$R/ZQCNN/layers_c/zq_cnn_sqrt_32f_align_c.c -o $WDIR/zq_sn_sqrt.o',
-        'gcc -O1 -g -mavx2 -mfma -fopenmp -c -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include '
+        'gcc -O1 -g $SAN -mavx2 -mfma -fopenmp -c -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include '
         '$R/ZQCNN/layers_c/zq_cnn_normalize_32f_align_c.c -o $WDIR/zq_sn_nrm.o',
     ],
     # zq_nchw_conv_free（附录 CU）：NCHW no_padding gemm 的**内存归属**。
@@ -373,6 +373,18 @@ EXTRA_SOURCES = {
     # 数值由 zq_nchw_conv 负责。带上 ZQ_GEMM 那三个 TU 的话，光编译就要 7 分钟
     # （zq_gemm_32f_align_c.c 单个就 >5 分钟），门禁就只能挂 --with-slow；
     # 桩掉之后编一次 3.6 秒，于是它能进**每次**回归。
+    # **这里刻意不加 $SAN**（2026-10-06，附录 IO）：本门禁在 EXTRA_CXXFLAGS 里
+    # 带了 `-fno-sanitize=address`，因为它要**自己接管 free**，记录"谁被释放了"；
+    # 而 ASan 运行时自己也要调 free，在它初始化完成前把 free 抢过来，一调用
+    # 就段错误（附录 CU.9）。
+    #
+    # 于是**这一条编译行插桩、链接行不插桩**，编译出来的 .o 带 __asan_* 引用
+    # 而链接器不提供 -> `collect2: error: ld returned 1 exit status`。
+    # 这正是"把 EXTRA_SOURCES 全量补 $SAN"这个规则**唯一**的例外，
+    # 而这个例外只写在**几百行之外的 EXTRA_CXXFLAGS 里**，改 EXTRA_SOURCES 时
+    # 根本看不见 —— 2026-10-06 全量补 $SAN 时就是这么踩的（70/71，
+    # zq_nchw_conv_free BUILD FAIL）。补完请对照 EXTRA_CXXFLAGS 里
+    # 带 -fno-sanitize 的 tag 复核。
     'zq_nchw_conv_free': [
         'gcc -O1 -g -mavx2 -mfma -fopenmp -c -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include '
         '$R/ZQCNN/layers_c/zq_cnn_convolution_gemm_32f_align_c.c -o $WDIR/zq_cvf.o',
@@ -650,14 +662,14 @@ EXTRA_SOURCES = {
     # zq_nchw_lstm（附录 CW）：NCHW 的 LSTM。3 个 32f 入口
     # （align0_general 在 .c 里，align128/256 在 _raw.h 里，宏式声明）。
     'zq_nchw_lstm': [
-        'gcc -O1 -g -mavx2 -mfma -fopenmp -c -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include '
+        'gcc -O1 -g $SAN -mavx2 -mfma -fopenmp -c -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include '
         '$R/ZQCNN/layers_c/zq_cnn_lstm_32f_align_c.c -o $WDIR/zq_lstm.o',
     ],
     # zq_nchw_reduction（附录 CT）：NCHW 的 sum/mean 两个 32f 入口，
     # 5 行（keepdims==0 + axis 0..3）。**axis 的约定是 (N,C,H,W)**，
     # 不是循环嵌套顺序 —— 见 ZQ_CNN_Forward_SSEUtils.h 里 out_dims[4]={N,C,H,W}。
     'zq_nchw_reduction': [
-        'gcc -O1 -g -mavx2 -mfma -fopenmp -c -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include '
+        'gcc -O1 -g $SAN -mavx2 -mfma -fopenmp -c -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include '
         '$R/ZQCNN/layers_c/zq_cnn_reduction_32f_align_c.c -o $WDIR/zq_red.o',
     ],
     # zq_deconv（附录 IW）：转置卷积的内核一直**零覆盖** ——
@@ -673,9 +685,9 @@ EXTRA_SOURCES = {
     ],
     # zq_bns 登记在这里是为了让 EXTRA_SOURCES 覆盖到它；它已在正常回归里。
     'zq_bns': [
-        'gcc -O1 -g -mavx2 -mfma -c -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include '
+        'gcc -O1 -g $SAN -mavx2 -mfma -c -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include '
         '$R/ZQCNN/math/zq_sse_mathfun.c -o $WDIR/zq_bns_sse.o',
-        'gcc -O1 -g -mavx2 -mfma -c -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include '
+        'gcc -O1 -g $SAN -mavx2 -mfma -c -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include '
         '$R/ZQCNN/math/zq_avx_mathfun.c -o $WDIR/zq_bns_avx.o',
     ],
 }

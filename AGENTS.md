@@ -2540,3 +2540,27 @@ BatchNormScale       name=res4_block5_conv_dw_bn bottom=res4_block1_conv_dw top=
     * 红了 -> 那才是本轮的主要产出，要接着查到底。
 
     别把"回归跑过了"当成流程走完；**跑出来的结果本身才是结论**。
+
+46. **「全量改某个属性」之前，先去**另一个地方**确认有没有反向声明**
+    （2026-10-06 补，附录 IO）
+    把 `EXTRA_SOURCES` 里的编译行全量补上 `$SAN`，规则本身是对的，
+    但它**有例外**，而例外写在**另一个字典**里：
+    `zq_nchw_conv_free` 在 `EXTRA_CXXFLAGS`（980 行开外）带着
+    `-fno-sanitize=address`（它要自己接管 `free`，与 ASan 运行时冲突，附录 CU.9）。
+    于是编译行插桩、链接行不插桩 -> `collect2: error: ld returned 1 exit status`，
+    全量补完第一轮是 **70/71**。
+
+    > 判据：凡是"全量给 X 加/删 Y"，先 `grep` 一遍**仓库里所有声明 Y 的地方**。
+    > 规则的正确形式往往带豁免：
+    > 「每条都带 `$SAN`，**除非**该 tag 在 `EXTRA_CXXFLAGS` 里显式
+    > `-fno-sanitize`」。**例外和规则必须写在同一个地方**，否则下一次全量改还会踩。
+
+47. **BUILD FAIL 的消息为空/无用时，去截获 harness 生成的命令**（2026-10-06 补，附录 IO）
+    这一条里门禁只报了 `collect2: error: ld returned 1 exit status`，
+    真正有用的信息（`-fsanitize=address ... -fno-sanitize=address`）没打出来。
+    **手工复现却"成功"了** —— 因为我照自己理解拼的链接行，
+    而 harness 拼的那条不一样。
+
+    > 判据：手工复现**成功**而门禁**失败**，说明你复现的不是同一个东西 ——
+    > 别再猜，去看**实际发给 shell 的命令**（第 41 条的截获生成物），
+    > 再一字不差地复现。"我手工跑是好的"在这种情况下是**误导性证据**。
