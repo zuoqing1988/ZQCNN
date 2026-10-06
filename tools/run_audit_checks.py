@@ -409,6 +409,21 @@ GROUPS = [
      ['probe_platform_divergence.py'], False),
     ('C17b C17 分类器自测（三种外层条件 + 跨行注释）',
      ['probe_platform_divergence.py', '--selftest'], False),
+    # C18（附录 IO）：`EXTRA_SOURCES` 的每条编译行就是**在编被测库的实现 TU**。
+    # 不带 `$SAN` 时 ASan 只覆盖测试自己的代码 —— 被测代码里的越界读不会被报，
+    # "读超一两个元素"这种在同一页之内的完全静默（附录 BO 那条 padK 就是这种）。
+    # 这个性质是 2026-10-06 分三轮手工补齐的（IM 补 1 个 tag、IN 补 5 个、
+    # IO 补完剩下 18 个），而它随时可能被下一次编辑破坏：少写一个 `$SAN`
+    # **不会让任何测试变红**，只是覆盖悄悄少一块。
+    #
+    # 规则带豁免：`zq_nchw_conv_free` 在 EXTRA_CXXFLAGS 里显式
+    # `-fno-sanitize=address`（它要自己接管 free，与 ASan 运行时冲突，附录 CU.9），
+    # 给它补 `$SAN` 会造成"编译行插桩、链接行不插桩"的链接错配。
+    # 本门禁两个方向都断言，并且要求豁免的 tag 在 EXTRA_SOURCES 里**看得见**。
+    ('C18 EXTRA_SOURCES 编译行必须带 $SAN（豁免除外）（附录 IO）',
+     ['check_extra_sanitizer.py'], False),
+    ('C18b C18 分类器自测',
+     ['check_extra_sanitizer.py', '--selftest'], False),
 ]
 
 

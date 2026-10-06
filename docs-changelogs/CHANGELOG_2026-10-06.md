@@ -3474,4 +3474,45 @@ reduction / lstm / scalop / sqrtnrm 这些层的实现 TU 在 ASan 下**全部�
 
 改的过程中断言又兜住一次错：预期改 43 行、实际只改 37 行（zq_bns /
 zq_eltwise / zq_lrn 的编译行没有 -fopenmp，前缀不同），断言当场报出来，
-补齐正则后才凑够 43。
+补齐正则后才凑够 43。---
+
+## 新增：把 `$SAN` 插桩这条性质落成常驻门禁（附录 IP / C18）
+
+### 变更文件
+
+    新增 tools/check_extra_sanitizer.py     规则 + 豁免 + 自测（8 例）
+    改   tools/run_audit_checks.py           接入 C18 / C18b（快组）
+
+### 规则（带豁免，两个方向都断言）
+
+1. `EXTRA_SOURCES` 每条编译行必须带 `$SAN`；
+2. 在 `EXTRA_CXXFLAGS` 里显式 `-fno-sanitize` 的 tag 例外，而且这类 tag 的
+   编译行**必须不带** `$SAN` —— 否则就是附录 IO 那个「编译行插桩、链接行不插桩」
+   的链接错配；
+3. 豁免的 tag 必须在 `EXTRA_SOURCES` 里**看得见**（附录 IO 那个例外的位置
+   让「全量补」必然踩到它：例外写在另一个字典里）。
+
+### 实测结果
+
+    python tools/check_extra_sanitizer.py
+        57 tag / 239 编译行 / 238 插桩 / 豁免：zq_nchw_conv_free    RC=0
+    python tools/check_extra_sanitizer.py --selftest                 8/8 通过
+    A/C 组门禁总数 61 -> 63（C18 / C18b）
+
+### 注意事项
+
+变异测试在**真实文件**上做了两次，两次都是我真犯过的错：
+- 拿掉 `zq_nchw_resize` 一条编译行的 `$SAN` -> RC=1 报「编译行没有 $SAN」；
+- 给豁免 tag `zq_nchw_conv_free` 补 `$SAN` -> RC=1 报「编译行插桩而链接行不插桩」；
+- 还原后 RC=0，git diff 为空。
+
+第一次变异**没生效过**：拿带 `-fopenmp` 的串去改 `zq_bns`，而它没有
+`-fopenmp`，`str.index` 抛 ValueError，门禁当然还是绿的。换 `zq_nchw_resize`
+并**先断言「无 $SAN 的编译行数 == 1」**才确认变异真的落下。
+
+自测里特意放了「非编译行（拷贝/探测）不受管」这条阴性对照 ——
+`EXTRA_SOURCES` 混着 `if [ -z "$OCV" ] ...` 这类探测命令，判据必须只认
+`gcc/g++` 开头**且含 ` -c `** 的行，否则一接进来就满屏误报。
+
+这个性质本身是 IM/IN/IO 三轮手工补齐的，而少写一个 `$SAN` **不会让任何测试
+变红**，只是覆盖悄悄少一块 —— 所以必须常驻。
