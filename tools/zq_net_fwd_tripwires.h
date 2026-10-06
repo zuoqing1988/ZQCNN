@@ -230,13 +230,13 @@ void ZQ_CNN_Forward_SSEUtils::_softmax(int, int, float*, int, int, int, int, int
 void ZQ_CNN_Forward_SSEUtils::_sqrt(int, float*, int, int, int, int, int, int, int)
 {
     zq_net_tripwire("ZQ_CNN_Forward_SSEUtils::_sqrt");}
-void ZQ_CNN_Forward_SSEUtils_NCHWC::AVGPooling(ZQ::ZQ_CNN_Tensor4D_NCHWC1 const&, ZQ::ZQ_CNN_Tensor4D_NCHWC1&, int, int, int, int, bool)
+void ZQ_CNN_Forward_SSEUtils_NCHWC::AVGPooling(ZQ::ZQ_CNN_Tensor4D_NCHWC1&, ZQ::ZQ_CNN_Tensor4D_NCHWC1&, int, int, int, int, int, int, int, int, bool)
 {
     zq_net_tripwire("ZQ_CNN_Forward_SSEUtils_NCHWC::AVGPooling");}
-void ZQ_CNN_Forward_SSEUtils_NCHWC::AVGPooling(ZQ::ZQ_CNN_Tensor4D_NCHWC4 const&, ZQ::ZQ_CNN_Tensor4D_NCHWC4&, int, int, int, int, bool)
+void ZQ_CNN_Forward_SSEUtils_NCHWC::AVGPooling(ZQ::ZQ_CNN_Tensor4D_NCHWC4&, ZQ::ZQ_CNN_Tensor4D_NCHWC4&, int, int, int, int, int, int, int, int, bool)
 {
     zq_net_tripwire("ZQ_CNN_Forward_SSEUtils_NCHWC::AVGPooling");}
-void ZQ_CNN_Forward_SSEUtils_NCHWC::AVGPooling(ZQ::ZQ_CNN_Tensor4D_NCHWC8 const&, ZQ::ZQ_CNN_Tensor4D_NCHWC8&, int, int, int, int, bool)
+void ZQ_CNN_Forward_SSEUtils_NCHWC::AVGPooling(ZQ::ZQ_CNN_Tensor4D_NCHWC8&, ZQ::ZQ_CNN_Tensor4D_NCHWC8&, int, int, int, int, int, int, int, int, bool)
 {
     zq_net_tripwire("ZQ_CNN_Forward_SSEUtils_NCHWC::AVGPooling");}
 bool ZQ_CNN_Forward_SSEUtils_NCHWC::BatchNorm_b_a(ZQ::ZQ_CNN_Tensor4D_NCHWC1&, ZQ::ZQ_CNN_Tensor4D_NCHWC1 const&, ZQ::ZQ_CNN_Tensor4D_NCHWC1 const&)
@@ -420,13 +420,13 @@ bool ZQ_CNN_Forward_SSEUtils_NCHWC::InnerProductWithBias(ZQ::ZQ_CNN_Tensor4D_NCH
 {
     zq_net_tripwire("ZQ_CNN_Forward_SSEUtils_NCHWC::InnerProductWithBias"); return 0;}
 
-void ZQ_CNN_Forward_SSEUtils_NCHWC::MaxPooling(ZQ::ZQ_CNN_Tensor4D_NCHWC1 const&, ZQ::ZQ_CNN_Tensor4D_NCHWC1&, int, int, int, int, bool)
+void ZQ_CNN_Forward_SSEUtils_NCHWC::MaxPooling(ZQ::ZQ_CNN_Tensor4D_NCHWC1&, ZQ::ZQ_CNN_Tensor4D_NCHWC1&, int, int, int, int, int, int, int, int, bool)
 {
     zq_net_tripwire("ZQ_CNN_Forward_SSEUtils_NCHWC::MaxPooling");}
-void ZQ_CNN_Forward_SSEUtils_NCHWC::MaxPooling(ZQ::ZQ_CNN_Tensor4D_NCHWC4 const&, ZQ::ZQ_CNN_Tensor4D_NCHWC4&, int, int, int, int, bool)
+void ZQ_CNN_Forward_SSEUtils_NCHWC::MaxPooling(ZQ::ZQ_CNN_Tensor4D_NCHWC4&, ZQ::ZQ_CNN_Tensor4D_NCHWC4&, int, int, int, int, int, int, int, int, bool)
 {
     zq_net_tripwire("ZQ_CNN_Forward_SSEUtils_NCHWC::MaxPooling");}
-void ZQ_CNN_Forward_SSEUtils_NCHWC::MaxPooling(ZQ::ZQ_CNN_Tensor4D_NCHWC8 const&, ZQ::ZQ_CNN_Tensor4D_NCHWC8&, int, int, int, int, bool)
+void ZQ_CNN_Forward_SSEUtils_NCHWC::MaxPooling(ZQ::ZQ_CNN_Tensor4D_NCHWC8&, ZQ::ZQ_CNN_Tensor4D_NCHWC8&, int, int, int, int, int, int, int, int, bool)
 {
     zq_net_tripwire("ZQ_CNN_Forward_SSEUtils_NCHWC::MaxPooling");}
 bool ZQ_CNN_Forward_SSEUtils_NCHWC::PReLU(ZQ::ZQ_CNN_Tensor4D_NCHWC1&, ZQ::ZQ_CNN_Tensor4D_NCHWC1 const&)
