@@ -4112,3 +4112,58 @@ pragma 有 reduction」分类。扫出 **15 处候选**，逐条打开：
 真要做的路径是清楚的：先把 `_Pnet_stage` 的输入契约（blob 结构 + 可替换的
 Forward）抽出来，用返回固定输出的假网络替换真网络，再按附录 IW 的方式做
 「单线程 vs 多线程逐位一致」。在那之前，静态判定（A23/A24 + C25）是唯一可行防线。
+
+---
+
+## 新缺陷：5 个 Crop sample 里 4 个从不初始化 recognizer；ZQlibFaceID 零行为覆盖（附录 JB）
+
+### 变更文件
+
+    无代码改动（临时探针已删，工作区干净）
+
+### 覆盖缺口（量化）
+
+    ZQlibFaceID 头文件            29 个
+    SamplesZQlibFaceID sample     23 个
+    进顶层构建                    是（CMakeLists.txt:371）
+    Windows sample 回归实际跑的   10 个，**其中 ZQlibFaceID 的 0 个**
+
+即 29 个头 + 23 个 sample 在 Windows 上被编译，但**一个都没被执行过**。
+
+### 缺陷
+
+    --- SampleCropImagesForSeetaFace ---        （正确）
+        if (!recognizers[i].Init(model_file))   有初始化 + 失败处理
+    --- SampleCropImagesForArcFace / ArcFaceFast / SphereFace / SphereFaceFast ---
+        detectors[i].Init();                    只初始化了检测器
+        ptr_recognizers[i] = &recognizers[i];   recognizer 直接进流水线
+
+`ZQ_FaceRecognizer::Init(model_name, ...)` 是基类 virtual（要加载网络），
+而 `ZQ_FaceDatabaseMaker::MakeDatabase` 只检查指针非空、**不检查是否已初始化**。
+所以这 4 个把一个**从未加载过网络的 recognizer** 递进了特征提取流水线。
+
+形态上像是「Init 增加了模型参数」那次 API 变更时**只有 SeetaFace 跟着改了**
+（它接收 model_file 并逐个 Init；另外 4 个命令行里连模型参数都没有）。
+
+### 注意事项
+
+- **有一处未验证、不下结论**：未 Init 就调 ExtractFeature 是干净返回 false
+  还是崩在别处，写了最小探针但 `ZQ_CNN_Net` 要链整套 layers_c（>5 分钟编译），
+  而 Windows 侧跑它又需要一张真实人脸图（data/ 里那 56 张不是人脸，刚才那次
+  运行压根没走到 ExtractFeature）。**已验证的硬事实只是：这 4 个 sample
+  从不调用 Init**（源码可查）。
+- 顺带发现：`ExtractFeature` 四个分支里的 `input.ConvertFromBGR(...)`
+  （:151/:154/:169/:180）**返回值全部没检查**，对比 MTCNN 那条线上
+  `if (!input.ConvertFromBGR(...)) return false;` 是标准做法。
+- **这批 sample 现在也跑不起来**：`model/` 里有人脸识别权重吗？没有
+  （sphereface04bn256.zqparams 等一个都没有）。即便修好 Init，也只会
+  **响亮地失败**。修复与验证都需要外部模型资产。
+- 本轮**没有改代码**：sample 侧修法需要模型资产才能验证到「算对了」；
+  库侧防御（未 Init 直接返回 false）能测，但要把 ZQ_CNN_Net + layers_c
+  接进 B 组，成本远超本轮预算。两条都写清留待排期，**没有为「有产出」
+  而塞一个验不了的改动**。
+- 顺带更新 C1 实测：probe_faceid_headers.py 现在 **OK 29 / BROKEN 0**，
+  比早前的「22 能编 / 6 需 Windows」好。注意它是在 zqlib_msvc_shim.h 垫片下
+  测的（垫片会掩盖 fopen_s/sprintf_s 一类，见附录 IJ），「能编」不等于
+  「Linux 上真能用」；而 ZQlibFaceID 的 sample 本来就只走 Windows
+  （它们 include `<openblas\cblas.h>` / `<mkl\mkl.h>` 反斜杠路径）。
