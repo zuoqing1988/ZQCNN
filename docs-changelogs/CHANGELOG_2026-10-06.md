@@ -3944,3 +3944,15 @@ _Interface.h**；② 它是公共 API，外部调用方拿到的是静默错误�
 MTCNN.h vs _Interface.h 的 **60 个不一致块 / 251 行**逐个分类成
 「有意分歧 / 漏改」。这是一次性分类工作，本轮只做了其中最有价值的一条，
 **没有假装已经做完**。
+
+### 附：整轮 B 组复验（本次改动落地后）
+
+    python tools/run_zqlib_checks.py --with-slow
+        B RC=0   ELAPSED=1566s
+        72/72 通过
+
+B 组测试数 71 -> 72（多了附录 IW 的 zq_bbox_nms_par），全部通过。
+本轮改动的三方验证齐了：
+    g++ -fsyntax-only ZQ_CNN_MTCNN.h     RC=0
+    cmake --build build_x64 --config Release   WINDOWS BUILD RC=0 (290s)
+    run_zqlib_checks.py --with-slow             72/72 通过
