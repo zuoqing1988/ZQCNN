@@ -17,7 +17,9 @@ UBSan 轴、以及那 8 个编译慢的测试。
 新加一个 store_true 开关却忘了写进 `OPT_IN_FLAGS`，它就永远不会被 `--all`
 打开，而"全量回归"照样跑完、照样全绿、照样什么都没多验。
 """
+import contextlib
 import importlib.util
+import io
 import os
 import re
 import sys
@@ -111,9 +113,86 @@ def selftest():
     return 0
 
 
+def dry_groups(argv):
+    """跑一遍 main() 但把 run_group / run_build_group 换掉，只收集要跑的组。
+
+    返回 [(组名, 命令元组)]。**命令也要比**：有些开关（--with-slow）
+    不新增任何组，只是给已有的 B 组命令**追加一个参数** ——
+    只比组名的话这类开关是**完全看不见的**，而"看不见"正是本门禁要防的那类。
+    """
+    spec = importlib.util.spec_from_file_location('rac_dry', TARGET)
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    seen = []
+    mod.run_group = lambda name, cmd, cwd=None, shell=False: (
+        seen.append((name, tuple(cmd))), True)[1]
+    mod.run_build_group = lambda: (
+        seen.append(('D_dual_platform_build', ())), True)[1]
+    old_argv = sys.argv
+    try:
+        sys.argv = ['run_audit_checks.py'] + list(argv)
+        buf = io.StringIO()
+        with contextlib.redirect_stdout(buf):
+            try:
+                mod.main()
+            except SystemExit:
+                pass
+    finally:
+        sys.argv = old_argv
+    return seen, mod
+
+
+def verify_coverage():
+    """`--all` 必须等价于"每个 opt-in 开关单独打开"的并集。
+
+    比**组名 + 命令**两样。只比组名会漏掉 --with-slow 这类"只改命令不加组"
+    的开关 —— 而漏掉正是这个门禁存在的理由。
+    """
+    allg, allmod = dry_groups(['--all'])
+    base, _ = dry_groups([])
+    base_set = set(base)
+    all_set = set(allg)
+
+    opt_in = ['--' + f.replace('_', '-') for f in allmod.OPT_IN_FLAGS]
+    union = set()
+    for f in opt_in:
+        g, _ = dry_groups([f])
+        union |= set(g) - base_set
+
+    violations = []
+    missing = sorted(union - all_set)
+    extra = sorted(all_set - union - base_set)
+    if missing:
+        violations.append('--all 漏掉了这些组/命令: %s' % missing)
+    if extra:
+        violations.append('--all 多跑了这些组/命令: %s' % extra)
+
+    # 单独验证 --with-slow 的效果真的看得见（否则上面那个比较形同虚设）
+    slow, _ = dry_groups(['--with-slow'])
+    slow_new = set(slow) - base_set
+    all_new = set(allg) - base_set
+    if not slow_new:
+        violations.append(
+            '--with-slow 单独跑**没有任何组/命令变化** —— 它只是给 B 组追加参数，'
+            '按名字比对时会被漏掉；请确认本门禁比的是命令而不是只比名字')
+
+    print('组/命令：无参数 %d 组，--all %d 组，--all 额外 %d 条'
+          % (len(base), len(allg), len(all_new)))
+    print('单独开每个开关的并集额外：%d 条' % len(union))
+    if violations:
+        print('')
+        for v in violations:
+            print('  * %s' % v)
+        return 1
+    print('OK: --all 与逐个开关的并集完全一致（组名与命令都比了）')
+    return 0
+
+
 def main():
     if '--selftest' in sys.argv:
         return selftest()
+    if '--verify-coverage' in sys.argv:
+        return verify_coverage()
     spec = importlib.util.spec_from_file_location('rac_for_allflag', TARGET)
     mod = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(mod)

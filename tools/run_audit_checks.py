@@ -297,7 +297,7 @@ GROUPS = [
     # 而它活下来正是因为 ZQ_OpticalFlow.h 离任何构建都有两跳：
     # **C/C1 会发现它编不过（因为它逐个单独编），
     #   但如果没人去编它，就永远不会有"编不过"这个事件发生。**
-    ('C5 文件级可达性门禁（没有任何构建编过的文件）',
+    ('C22 文件级可达性门禁（没有任何构建编过的文件）',
      ['probe_file_reachability.py', '--selftest', '--check-baseline',
       os.path.join(HERE, 'file_reach_baseline.txt')], True),
     # C5b（附录 EX）：MNN 转换器**分叉**出去的那份 ZQCNN 头。
@@ -319,7 +319,7 @@ GROUPS = [
     # 组名用 **C7**：C4/C5/C6 已经被主流程里的
     # 「C4 主工程 HIGH 桶」「C5 主工程 -O2 优化期告警」「C6 ZQCNN 门禁 UBSan 回归」占用。
     # （C4 那次撞名是我自己犯的，注释里已记；这里直接避开。）
-    ('C7 sample 不得含未注释的 GUI 调用（用户指令门禁）',
+    ('C21 sample 不得含未注释的 GUI 调用（用户指令门禁）',
      ['check_no_gui_calls.py'], True),
     # C8（附录 GK）：**门禁自己必须能跑起来**。
     # `check_filecount_bounds.py` 的第 50 行是一句 6 空格缩进、没有 `#` 的
@@ -459,6 +459,25 @@ GROUPS = [
      ['check_all_flag_wiring.py'], False),
     ('C19b C19 分类器自测',
      ['check_all_flag_wiring.py', '--selftest'], False),
+    # C19c：**实证** `--all` 与"逐个开关的并集"等价。
+    # C19 只保证每个开关都被分类了；它**没有**保证 `--all` 真的把它打开了
+    # —— `setattr(args, f, True)` 写错名字、或者某个 `if args.xxx` 分支
+    # 挪了位置，C19 都会照样绿。这条用「把 run_group 换掉、只收集要跑的组」
+    # 的办法跑一遍，比的是**组名 + 命令**两样。
+    #
+    # **必须比命令**：像 `--with-slow` 这种开关不新增任何组，只是给已有的
+    # B 组命令追加一个参数 —— 只比组名的话它完全隐形（本门禁第一版就这么
+    # 漏掉了它，并集算出 8 而 `--all` 也是 8，看着"一致"其实什么都没验到）。
+    ('C19c --all 与逐个开关并集等价（组名 + 命令，附录 IR）',
+     ['check_all_flag_wiring.py', '--verify-coverage'], False),
+    # C20：门禁编号必须唯一。2026-10-06 查出两处撞名（C5 x2、C7 x2），
+    # 后果不是"跑重了"而是**日志不可读** —— 红一句 `C7 FAILED` 看的人
+    # 无从判断是哪一道。源码注释里本来就写着"C4 那次撞名是我自己犯的"，
+    # 结果又撞了一次，所以把"编号唯一"本身变成门禁。
+    ('C20 门禁编号唯一（附录 IR）',
+     ['check_gate_ids.py'], False),
+    ('C20b C20 分类器自测',
+     ['check_gate_ids.py', '--selftest'], False),
 ]
 
 
@@ -708,12 +727,12 @@ def main():
             failed.append('C6 ZQCNN 门禁 UBSan 回归')
 
     if args.bounds_sweep:
-        if not run_group('C5 主工程 -O2 -c 优化期告警 HIGH 桶门禁',
+        if not run_group('C23 主工程 -O2 -c 优化期告警 HIGH 桶门禁',
                          [sys.executable, os.path.join(HERE, 'warn_sweep_bounds.py'),
                           '--check-baseline',
                           os.path.join(HERE, 'zqcnn_bounds_baseline.txt')],
                          cwd=ROOT):
-            failed.append('C5 主工程 -O2 -c 优化期告警 HIGH 桶门禁')
+            failed.append('C23 主工程 -O2 -c 优化期告警 HIGH 桶门禁')
 
     if args.msvc_asan:
         if not run_group('B2 ZQlib 独立回归测试 x10 (MSVC /fsanitize=address)',
