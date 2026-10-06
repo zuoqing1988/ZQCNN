@@ -62,12 +62,48 @@ LOW   结构性噪声
 from __future__ import print_function
 
 import os
+import re
 import subprocess
 import sys
 import time
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(HERE)
+
+_SRC_CACHE = {}
+
+
+def _srctext(hdr, loc):
+    """取该告警所在那一行的源码文本（空白归一化），作为**与行号无关**的基线键。
+
+    读不到就退回空串 —— 空串仍然是个稳定键，
+    至少不会把「无关编辑导致的整体平移」误报成新增。
+    """
+    m = re.match(r'^(.*):(\d+):(\d+)$', loc)
+    if not m:
+        return ''
+    fn, ln = m.group(1), int(m.group(2))
+    if fn not in _SRC_CACHE:
+        # 告警里的路径是**basename**，而源文件在 ZQCNN/ 或 ZQ_GEMM/ 下面，
+        # 不在仓库根 —— 第一版只试 `ROOT/fn`，读不到、全部返回空串，
+        # 于是基线第 3 列整列为空、4 条警告塌成 1 条（靠"第几次出现"才凑回 4）。
+        # **空键是危险的**：它对任何文件都匹配。必须先确认真的读到了。
+        lines = None
+        for sub in ('', 'ZQCNN', 'ZQ_GEMM', 'ZQCNN/math', 'ZQ_GEMM/math',
+                    'ZQCNN/layers_c', 'ZQCNN/layers_nchwc'):
+            p = os.path.join(ROOT, sub, fn) if sub else os.path.join(ROOT, fn)
+            if os.path.isfile(p):
+                try:
+                    with open(p, encoding='utf-8', errors='replace') as f:
+                        lines = f.readlines()
+                except (IOError, OSError):
+                    lines = None
+                break
+        _SRC_CACHE[fn] = lines
+    lines = _SRC_CACHE[fn]
+    if not lines or ln < 1 or ln > len(lines):
+        return ''
+    return ' '.join(lines[ln - 1].split())
 WSL_DIST = 'Ubuntu-20.04'
 
 # TU 集合与 include 路径**必须**与 warn_sweep_src.py 完全一致，
@@ -308,7 +344,23 @@ def main():
 
     buckets = {'HIGH': [], 'MED': [], 'LOW': []}
     for hdr, flag, loc, msg in findings:
-        buckets[bucket_bounds(flag)].append((hdr, flag, loc, msg))
+        buckets[bucket_bounds(flag)].append((hdr, flag, loc, msg, _srctext(hdr, loc)))
+
+    # 基线键**不能含行号**（AGENTS.md「基线的键里不能放任何会随无关编辑漂移的东西」）。
+    # 2026-10-06 实测踩中：commit 9529090（IR.1/IR.2 的 `return;`）在那 4 条
+    # -Wduplicated-branches **上方**插了 69~86 行，于是同一批警告被报成
+    # 「NEW HIGH 4 条 + FIXED 4 条」，C5 因此变红 ——
+    # 而那 4 条前后**逐字相同**（都是 `else if (filter_H == 3 && filter_W == 3 && in_C <= 4)`，
+    # 两边的分支在 x86 上都被 `#if __ARM_NEON` 掏空，是 SIMD 分派的已知误报）。
+    # 键改成 **(文件, -W标志, 那一行的源码文本)**，行号只留给人看。
+    # 同一文件里出现多次的同一条警告按出现次序编号，避免被去重掉。
+    _occ = {}
+    def key_of(t):
+        hdr, flag, loc, msg, st = t
+        base_key = (hdr, flag, st)
+        n = _occ.get(base_key, 0)
+        _occ[base_key] = n + 1
+        return base_key + (n,)
 
     timed_out = sorted(t for t, (rc, _) in tu_info.items() if rc == '124')
     failed = sorted(t for t, (rc, _) in tu_info.items() if rc not in ('0', '124'))
@@ -344,7 +396,7 @@ def main():
             return
         print('\n%s: %d' % (which, len(items)))
         seen = set()
-        for hdr, flag, loc, msg in items:
+        for hdr, flag, loc, msg, _st in items:
             key = (hdr, flag, loc)
             if key in seen:
                 continue
@@ -359,21 +411,30 @@ def main():
         if run_all:
             show('LOW')
 
-    key_of = lambda t: (t[0], t[1], t[2])
-
     if save_to:
         high = sorted(set(key_of(t) for t in buckets['HIGH']))
         lines = ['# ZQCNN 主工程 gcc -O2 -c 优化期告警 HIGH 桶基线',
                  '# （tools/warn_sweep_bounds.py --save-baseline 生成）',
-                 '# 格式: <文件名>\\t<-W标志>\\t<文件:行:列>',
+                 '# 格式: <文件名>\\t<-W标志>\\t<那一行的源码文本>\\t<第几次出现>\\t<首次见到的位置>',
+                 '#',
+                 '# **第 3 列刻意不是行号**（2026-10-06 改）：行号会被任何一次无关编辑',
+                 '# 整体平移，于是同一批警告被报成「新增 N 条 + 修好 N 条」——',
+                 '# 2026-10-06 那次就是这么把 C5 弄红的：commit 9529090 在 4 条',
+                 '# -Wduplicated-branches 上方插了 69~86 行，而那 4 条前后逐字相同。',
+                 '# 第 5 列的行号只给人看，不参与比对。',
                  '#',
                  '# 与 tools/zqcnn_warn_baseline.txt（-fsyntax-only 那条轴）的区别：',
                  '# 那一轴只看得到语义级告警；本轴多出的是**优化器才证明得了**的',
                  '# 那一类，附录 CT.4 的 `axis > 4` 就只在本轴上出现过。',
                  '# 基线的作用是拦**新增**，不是要求桶为空 ——',
                  '# 每一条都应当是「已判定：不是缺陷」并写明理由。']
-        for hdr, flag, loc in high:
-            lines.append('%s\t%s\t%s' % (hdr, flag, loc))
+        first_loc = {}
+        for hdr, flag, loc, _msg, _st in buckets['HIGH']:
+            k = (hdr, flag, _st)
+            first_loc.setdefault(k, loc)
+        for hdr, flag, st, occ in high:
+            loc = first_loc.get((hdr, flag, st), '?')
+            lines.append('%s\t%s\t%s\t%d\t%s' % (hdr, flag, st, occ, loc))
         with open(save_to, 'w', encoding='utf-8', newline='\n') as f:
             f.write('\n'.join(lines) + '\n')
         print('\nbaseline written to %s (%d HIGH findings)' % (save_to, len(high)))
@@ -386,8 +447,14 @@ def main():
                     if line.startswith('#') or not line.strip():
                         continue
                     parts = line.rstrip('\n').split('\t')
-                    if len(parts) >= 3:
-                        base.add(tuple(parts[:3]))
+                    if len(parts) >= 4:
+                        # 新格式：文件 / 标志 / 源码文本 / 第几次出现（末列行号不参与）
+                        base.add((parts[0], parts[1], parts[2], int(parts[3])))
+                    elif len(parts) == 3:
+                        # 旧格式（行号键）：仍然收进来，于是**升级后第一次跑**
+                        # 会把全部旧条目报成 FIXED + 全部新条目报成 NEW ——
+                        # 看到这种"整齐对称"的一堆，就是该跑 --save-baseline 了。
+                        base.add((parts[0], parts[1], parts[2], 0))
         except IOError as e:
             print('\nERROR: 读不到基线 %s: %s' % (check_against, e))
             return 1
@@ -398,12 +465,18 @@ def main():
         print('HIGH: 基线 %d 条 -> 现在 %d 条' % (len(base), len(cur_set)))
         if new:
             print('\nNEW HIGH — 新出现的高信号警告:')
-            for h, fl, lo in new:
-                print('   %-38s %-26s %s' % (h, fl, lo))
+            for h, fl, st, occ in new:
+                # 行号只用于**定位**，不参与比对（见 save_to 处的说明）。
+                where = ''
+                for hdr2, fl2, loc2, _m2, st2 in buckets['HIGH']:
+                    if (hdr2, fl2, st2) == (h, fl, st):
+                        where = loc2
+                        break
+                print('   %-38s %-26s %-44s %s' % (h, fl, st[:44], where))
         if fixed:
             print('\nFIXED — 比基线少了:')
-            for h, fl, lo in fixed:
-                print('   %-38s %-26s %s' % (h, fl, lo))
+            for h, fl, st, occ in fixed:
+                print('   %-38s %-26s %s' % (h, fl, st[:60]))
         if not new and not fixed:
             print('无新增、无消失。')
         return 1 if new else 0

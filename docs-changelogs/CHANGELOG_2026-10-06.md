@@ -2146,3 +2146,77 @@ Pooling 那处不能照抄：它的输出尺寸约定是
     cmake --build build_x64 --config Release（全量）    -> RC=0
     WSL make -j8（全量）                                -> RC=0
     check_text_encoding.py -> OK 779 files / check_line_endings.py -> OK / check_stmt_joins -> OK
+
+---
+
+## 变更：附录 IV.5 —— v69 的 C5 变红**不是缺陷**，是基线的键含行号
+
+### 现象
+
+    1 CHECK GROUP(S) FAILED:
+       C5 主工程 -O2 -c 优化期告警 HIGH 桶门禁
+
+    HIGH: 基线 4 条 -> 现在 4 条
+    NEW HIGH  ZQ_CNN_Forward_SSEUtils_NCHWC.cpp Wduplicated-branches :2125 :2244 :2345 :2447
+    FIXED     ZQ_CNN_Forward_SSEUtils_NCHWC.cpp Wduplicated-branches :2056 :2160 :2260 :2361
+
+**4 进 4 出、总数不变** —— 这是"整体平移"的签名。
+
+### 核实：前后逐字相同
+
+    基线行 2056 (旧版) vs 现在 2125
+      OLD: 	else if (filter_H == 3 && filter_W == 3 && in_C <= 4)
+      NEW: 	else if (filter_H == 3 && filter_W == 3 && in_C <= 4)
+    （2160/2244、2260/2345、2361/2447 三对同样逐字相同）
+
+行号整体下移 69~86 行，来自 commit `9529090`
+（IR.1/IR.2 的 `return;`）在那 4 条**上方**插了代码。
+而这 4 条本身是**已判定的 SIMD 分派误报**：
+两个分支在 x86 上都被 `#if __ARM_NEON` 掏空
+（同 AGENTS.md「常量比较在本项目基本都是刻意的 SIMD 宽度分派」那条）。
+
+**结论：不是本次改动引入的缺陷，是门禁基线的键设计问题。**
+
+### 修法：键从 `(文件, 标志, 文件:行:列)` 改成 `(文件, 标志, 那一行的源码文本, 第几次出现)`
+
+行号只留给人看，**不参与比对**。
+
+这正是 AGENTS.md「基线的键里不能放任何会随无关编辑漂移的东西」
+那条**第二次**栽在同一个地方（第一次是 `(文件,行号,…)` 被无关编辑平移）。
+
+#### 第一版键的修法本身又栽了一次
+
+`_srctext()` 先按 `ROOT / basename` 找源文件 —— 而告警里的路径是 basename，
+源文件在 `ZQCNN/` 或 `ZQ_GEMM/` 下面，**不在仓库根**。
+于是 4 条警告的"源码文本"全成了空串，基线第 3 列整列为空：
+
+    ZQ_CNN_Forward_SSEUtils_NCHWC.cpp	Wduplicated-branches		0	...:2125:7
+
+**空键是危险的**：它对任何文件都匹配，等于把 4 条塌成"同一条出现 4 次"。
+现在按 `'' / ZQCNN / ZQ_GEMM / ZQCNN/math / ZQ_GEMM/math /
+ZQCNN/layers_c / ZQCNN/layers_nchwc` 依次找真实文件，
+并且单测过取值：
+
+    _srctext('ZQ_CNN_Forward_SSEUtils_NCHWC.cpp', ...:2125:7)
+      -> 'else if (filter_H == 3 && filter_W == 3 && in_C <= 4)'
+    _srctext('ZQ_CNN_BBox.h', ...:146:42)
+      -> 'memset(this, 0, sizeof(ZQ_CNN_BBox240));'
+
+### 实测
+
+    --save-baseline 后基线第 3 列是真源码文本（4 条 occ = 0/1/2/3）
+    --check-baseline -> HIGH: 基线 4 条 -> 现在 4 条
+                        无新增、无消失。        RC=0
+    变异：从基线删掉 occ=3 那一条 -> 报 1 条 NEW、RC=1（见下）
+
+### 变更文件
+
+    tools/warn_sweep_bounds.py          键改为源码文本；_srctext() 按多级目录找源文件；
+                                        基线格式加注释说明「第 3 列刻意不是行号」
+    tools/zqcnn_bounds_baseline.txt     按新格式重新生成（4 条，内容不变）
+
+### 注意事项
+
+- 旧格式（3 列、行号键）的基线仍然**读得进来**，但升级后第一次跑会把
+  全部旧条目报成 FIXED、全部新条目报成 NEW —— **看到这种"整齐对称"的一堆，
+  就是该跑 `--save-baseline` 了**。这一点写进了代码注释。
