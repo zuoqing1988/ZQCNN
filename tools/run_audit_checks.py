@@ -494,6 +494,16 @@ GROUPS = [
       os.path.join(HERE, 'twin_sync_baseline.txt')], False),
     ('C24b C24 分类器自测（行号平移不该误报）',
      ['check_twin_sync.py', '--selftest'], False),
+    # C25（附录 IZ）：`#pragma omp parallel for` 的循环体里，thread_id 不能是字面 0 ——
+    # 那样所有线程共用同一个 scratch 缓冲和同一个网络对象。
+    # 这条不变量原本只写在 `ZQ_CNN_MTCNN_Interface.h:713-719` 的注释里，**没有任何东西在守**；
+    # 它已出过两次真实问题（附录 II.1 `lnet[thread_id]` vs `lnet[0]`、II.5）。
+    # 判定必须**精确到"是否在并行区内"** —— `if (thread_num <= 1)` 分支里的
+    # `thread_id = 0` 是**正确**的（单线程索引必然是 0），本轮差点把它当成漏改。
+    ('C25 并行区里 thread_id 不得为字面 0（附录 IZ）',
+     ['check_omp_thread_index.py'], False),
+    ('C25b C25 分类器自测（并行区内 vs 并行区外）',
+     ['check_omp_thread_index.py', '--selftest'], False),
 ]
 
 

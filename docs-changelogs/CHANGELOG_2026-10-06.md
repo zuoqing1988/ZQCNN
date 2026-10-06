@@ -4008,3 +4008,62 @@ P→R→O→L 分支），difflib 只是把前后文对齐到了不同位置。
 **它不能替代的事**：只说「不一致集合变了」，**不说变的那条是好是坏**。
 附录 IX 那类漏改仍然要人看。真要自动判「有意还是漏改」，得按语义片段而不是
 diff 块来做 —— 本轮没有假装做到。
+
+---
+
+## 新增：并行区里 thread_id 不得为字面 0（附录 IZ / C25 / C25b）
+
+### 变更文件
+
+    新增 tools/check_omp_thread_index.py
+    改 tools/run_audit_checks.py          接入 C25 / C25b（快组）
+
+### 起因
+
+`ZQ_CNN_MTCNN_Interface.h:713-719` 有一段审计注释，手写维护着一条不变量：
+「`int thread_id = 0;` 只有不在并行区里才是对的（单线程索引必然是 0）；
+一旦挪进 `#pragma omp parallel for`，所有线程就共用同一个 scratch 缓冲和同一个
+网络对象 —— 数据竞争 + 结果错乱，而**编译器不会报**。」
+**这条不变量没有任何东西在守。**
+
+### 本轮踩的两次坑（都差点报成缺陷）
+
+初稿以为 `MTCNN.h:772` 与 `_Interface.h:719` 的 `thread_id = 0` 是两处漏改。
+逐个打开才发现两处都在**并行区之外**：_Interface 那段注释自己就写了，
+MTCNN.h:772 落在 `if (thread_num <= 1)`（:768）分支里 ——
+**两处都是正确代码**。差一点点就把正确写法"修"掉了。
+
+教训：**看到可疑的硬编码先确认它所在的作用域**。同一个 `= 0`，
+在并行区内是 bug，在并行区外是正确写法。
+
+### 门禁做什么
+
+扫一方代码的 `#pragma omp parallel`，往后用花括号配平圈出紧跟的 `for` 循环体，
+体内出现 `int/const int thread_id = 0;`（含 0u/0L）即报。
+
+### 实测结果
+
+    check_omp_thread_index.py --selftest   6/6 通过
+    check_omp_thread_index.py              OK（当前 0 处违规）  RC=0
+
+自测 6 例里有**两例阴性对照**（并行区外的 thread_id = 0 必须不报；
+区内取 omp_get_thread_num 必须不报），正好把上面那个坑钉住。
+
+变异测试：在 ZQ_CNN_MTCNN.h:830（**位于并行区内**、原本是 omp_get_thread_num
+的那一处）植入 thread_id = 0 ->
+    发现 1 处「并行区里把 thread_id 写成字面 0」：ZQ_CNN_MTCNN.h:830   RC=1
+还原后 RC=0。
+
+（第一次变异**没生效** —— `int thread_id = omp_get_thread_num();` 在
+MTCNN.h 里出现 5 次，按形态替换时断言失败。改成按行号定位才成功。
+形态唯一 != 只该改一处，要按**作用域**选目标。）
+
+### 注意事项
+
+这一族已出过两次真实问题（附录 II.1 `lnet[thread_id]` vs `lnet[0]`、
+II.5 串行支路索引 thread_num 大小的容器），两次都因为仓内 sample 的
+thread_num 全被夹成 1 而跑不出来（附录 IV）。静态判定是当前唯一可行的防线。
+
+但它是**一格网不是整张网**：并行区内的数据竞争不止这一种形态
+（共享累加器、非原子读改写、共享容器遍历 —— 见附录 IW 那条 bboxScore）。
+A/C 组门禁总数 70 -> 72。
