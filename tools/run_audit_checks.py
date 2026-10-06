@@ -478,6 +478,22 @@ GROUPS = [
      ['check_gate_ids.py'], False),
     ('C20b C20 分类器自测',
      ['check_gate_ids.py', '--selftest'], False),
+    # C24（附录 IY）：MTCNN 三份**逐字孪生**副本（93~95% 相同，各约 1800 行）的
+    # 「不一致集合」不得无声变化。这一族已经栽过两次：
+    #   · 附录 II.6  `pnet_size/pnet_stride` 的 __max(1,...) 四份都加了、ncnn.h 漏了
+    #   · 附录 IX    tensor 重载的尺寸校验只在 _Interface.h 加了，MTCNN.h 漏了
+    # 两次都是「改了一份、忘了另外几份」。
+    #
+    # 基线**按内容键**而不是行号 —— 附录 DE.5 就是按行号建基线的教训：
+    # 一次无关编辑把行号平移，基线整片变红，于是那条门禁被当成噪声忽略。
+    #
+    # 只盯那三份；ncnn.h(0.59) / AspectRatio.h(0.77) 是**不同变体**，
+    # 塞进来只会让基线永远红。
+    ('C24 MTCNN 孪生副本的「不一致集合」（附录 IY）',
+     ['check_twin_sync.py', '--check-baseline',
+      os.path.join(HERE, 'twin_sync_baseline.txt')], False),
+    ('C24b C24 分类器自测（行号平移不该误报）',
+     ['check_twin_sync.py', '--selftest'], False),
 ]
 
 
