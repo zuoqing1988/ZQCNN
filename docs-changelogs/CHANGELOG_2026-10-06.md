@@ -4224,3 +4224,57 @@ DOTALL 把跨行块注释压成**一个空格**，**换行被吃掉**，行号�
 **正是 AGENTS.md 第 17 条自己记的那条**，改用 Write 工具落盘再执行才对。
 
 附录 JB 里「本轮没有改代码」是那一次的如实记录；改动在本文附录。
+
+---
+
+## 扩门禁：C26 补上第二种写法；横向扫过 ZQlibFaceID 全部 23 个 sample（附录 JD）
+
+### 变更文件
+
+    改 tools/check_recog_init.py    增加写法 B；自测 4 例 -> 6 例
+
+### 起因（附录 JC 第 76 条：修好一个要问同族其它入口修了吗）
+
+横向扫 SamplesZQlibFaceID 全部 23 个 sample，结论分两半：
+
+**好的一半**：附录 JB 那 5 个 SampleCropImagesFor* 是**唯一**的 offenders，
+现在 5 个都是 Init=1 / handoff=1。
+
+**坏的一半**：SampleFaceDatabase* 那一族用的是**另一种写法** ——
+把 `std::vector<ZQ_FaceRecognizer*> recognizers` **直接**传给
+`MakeDatabaseAlreadyCropped(recognizers, ...)` /
+`MakeDatabaseCompactAlreadyCropped(recognizers, ...)`，
+而 C26 第一版只盯 `ptr_recognizers[i] = &recognizers[i];` ——
+**这一族的写法在它眼里是隐形的**。今天它是好的（SampleFaceDatabaseZQCNN:169-176
+确实逐个 Init 且失败即报错），但换个写法就等于绕过门禁。
+
+### 改动
+
+增加**写法 B**：凡是 `ZQ_FaceDatabaseMaker::MakeDatabase*(...)` 调用点，
+要求同函数内、该调用之前出现过任意 `X[i].Init(`。
+
+去掉一处过滤：第一版要求实参里出现字面量 `recognizers`，结果自测里用变量名 `v`
+的用例被**直接跳过**——判据对它无效。而 MakeDatabase* 的签名本来就带 recognizer，
+去掉这个过滤只会**更严**、不会误报（真实树仍是 0 命中）。自测 4 -> 6 例。
+
+### 实测结果
+
+    check_recog_init.py --selftest   6/6 通过
+    check_recog_init.py              OK（0 处违规）  RC=0
+
+变异测试（真实文件）：在 SampleFaceDatabaseZQCNN.cpp 里注释掉一次
+`recognizer_112X112[i].Init(...)` ->
+    SampleFaceDatabaseZQCNN.cpp:184  recognizers 交给 MakeDatabase 之前没有任何 Init
+    SampleFaceDatabaseZQCNN.cpp:191  recognizers 交给 MakeDatabase 之前没有任何 Init
+    RC=1
+还原后 RC=0。报 2 处是因为那个分支里有 Compact 与非 Compact 两个调用点，
+两个都缺 Init，与实况一致。
+
+### 本轮没有发现新缺陷（阴性结论）
+
+除已修的 4 个外，SampleFaceDatabase* / SampleEvaluation* / SampleSwapFace 等
+其余 18 个 sample 的 recognizer 初始化都是对的。**但要说清验证等级**：
+那是**源码可查**的（逐个打开看过），不是**跑出来的** —— 它们需要人脸模型权重，
+仓内没有（附录 JB）。
+
+门禁编号不变，仍是 C26 / C26b。

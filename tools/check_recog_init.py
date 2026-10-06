@@ -43,7 +43,11 @@ ROOT = os.path.dirname(HERE)
 SCAN = ('SamplesZQlibFaceID', 'SamplesZQCNN')
 SKIP_DIRS = {'cmake-build-debug', 'cmake-build-release', 'build'}
 
-HANDOFF_RE = re.compile(r'\bptr_recognizers\s*\[\s*\w+\s*\]\s*=')
+HANDOFF_PTR_RE = re.compile(r'\bptr_recognizers\s*\[\s*\w+\s*\]\s*=')
+# 另一种写法：把 **vector<ZQ_FaceRecognizer*> recognizers** 直接传给
+# MakeDatabase*(... recognizers ...) —— `SampleFaceDatabase*` 那一族就是这么写的。
+# 只盯 ptr_recognizers 那一支的话，这一族的写法是**隐形**的。
+HANDOFF_VEC_RE = re.compile(r'ZQ_FaceDatabaseMaker::MakeDatabase\w*\s*\(')
 
 
 def strip_noise(src):
@@ -121,21 +125,37 @@ def scan_text(text, path, rel):
     lines = text.split('\n')
     hits = []
     for idx, ln in enumerate(lines):
-        if not HANDOFF_RE.search(ln):
+        # --- 写法 A：ptr_recognizers[i] = &recognizers[i]; ---
+        if HANDOFF_PTR_RE.search(ln):
+            var = re.search(r'ptr_recognizers\s*\[\s*(\w+)\s*\]', ln).group(1)
+            m = re.search(r'&\s*(\w+)\s*\[', ln)
+            obj = m.group(1) if m else var
+            start = func_start(lines, idx)
+            window = '\n'.join(lines[start:idx + 1])
+            init = re.search(r'\b%s\s*\[\s*%s\s*\]\s*\.\s*Init\s*\('
+                             % (re.escape(obj), re.escape(var)), window)
+            if not init:
+                hits.append((idx + 1,
+                             '%s: %s 在 Init 之前被递进流水线'
+                             % (rel, ln.strip()[:70])))
             continue
-        var = re.search(r'ptr_recognizers\s*\[\s*(\w+)\s*\]', ln).group(1)
-        # 该行里推出被赋对象的变量名：ptr_recognizers[i] = &recognizers[i];
-        m = re.search(r'&\s*(\w+)\s*\[', ln)
-        obj = m.group(1) if m else var
-        start = func_start(lines, idx)
-        window = '\n'.join(lines[start:idx + 1])
-        # Init 必须在**递进之前**，且对象是同一个
-        init = re.search(r'\b%s\s*\[\s*%s\s*\]\s*\.\s*Init\s*\('
-                         % (re.escape(obj), re.escape(var)), window)
-        if not init:
-            hits.append((idx + 1,
-                         '%s: %s 在 Init 之前被递进流水线'
-                         % (rel, ln.strip()[:70])))
+        # --- 写法 B：MakeDatabase*(...) 直接收 vector ---
+        if HANDOFF_VEC_RE.search(ln):
+            m = re.search(r'MakeDatabase\w*\s*\(([^)]*)\)', ln)
+            if not m:
+                continue
+            # 不再要求参数名里出现 "recognizers"：第一版加了那个过滤，
+            # 结果自测里用变量名 `v` 的用例被直接跳过（判据对它无效）。
+            # 而 `ZQ_FaceDatabaseMaker::MakeDatabase*` 的签名里本来就带
+            # recognizer，所以去掉这个过滤只会更严、不会误报。
+            start = func_start(lines, idx)
+            window = '\n'.join(lines[start:idx + 1])
+            # 该 vector 里的元素必须在此之前 Init 过（任一 X[i].Init）
+            init = re.search(r'\b\w+\s*\[\s*\w+\s*\]\s*\.\s*Init\s*\(', window)
+            if not init:
+                hits.append((idx + 1,
+                             '%s: recognizers 交给 MakeDatabase 之前没有任何 Init'
+                             % rel))
     return hits
 
 
@@ -186,6 +206,20 @@ def selftest():
          '    other[i].Init("x");\n'
          '    ptr_recognizers[i] = &recognizers[i];\n'
          '  }\n'
+         '}\n', 1),
+        ('写法B：vector 交给 MakeDatabase 之前 Init 过 -> 合规',
+         'bool F(){\n'
+         '  std::vector<ZQ_FaceRecognizer*> v;\n'
+         '  for (int i=0;i<n;i++){\n'
+         '    if (!recog[i].Init(m)) return false;\n'
+         '    v.push_back(&recog[i]);\n'
+         '  }\n'
+         '  return ZQ_FaceDatabaseMaker::MakeDatabaseAlreadyCropped(v,a,b,c,t,s,n,false);\n'
+         '}\n', 0),
+        ('写法B：没 Init 就交给 MakeDatabase -> 必须报',
+         'bool F(){\n'
+         '  std::vector<ZQ_FaceRecognizer*> v;\n'
+         '  return ZQ_FaceDatabaseMaker::MakeDatabaseAlreadyCropped(v,a,b,c,t,s,n,false);\n'
          '}\n', 1),
     ]
     bad = []
