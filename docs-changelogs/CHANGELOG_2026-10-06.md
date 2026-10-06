@@ -3750,3 +3750,62 @@ IM/IN/IO 的全量 $SAN + 豁免、IP/IQ/IR 的三道新门禁、IT 的对齐修
 `... > log 2>&1; rc=$?`（**没接管道**），所以 $? 真的是被测程序的退出码。
 上次写成 `... | tail -60; rc=$?` 拿到的是 tail 的退出码，打出误导性 RC=0。
 要退出码就别接管道。
+
+---
+
+## 阴性结论 + 真实缺口：唯一的 OpenMP 并行代码没被执行过，TSan 轴在本机无法链接（附录 IV）
+
+### 变更文件
+
+    无代码改动（临时探针已删除，工作区干净）
+
+### 起点
+
+附录 IS 靠 UBSan 抓出一个藏了很久的对齐 UB，于是顺着问：这个仓有哪几条
+sanitizer 轴、从没跑过的那条里藏着什么？现状两条：ASan+LSan（B 组）与
+UBSan（C6）。**TSan / MSan 一条都没有**，全仓搜不到 -fsanitize=thread。
+
+### 并行代码规模与位置
+
+    ZQ_CNN_MTCNN_Interface.h : 9 个 omp parallel
+    ZQ_CNN_MTCNN_NCHWC.h     : 7
+    ZQ_CNN_MTCNN.h           : 7
+    zq_cnn_convolution_gemm_nchwc_kernel1x1_neon_raw.h : 6（ARM NEON only）
+    ZQ_CNN_MTCNN_ncnn.h      : 5
+    ZQ_CNN_MTCNN_AspectRatio.h : 5
+    ZQ_CNN_BBoxUtils.h       : 1
+
+x86 上全部集中在 MTCNN（人脸检测）那几份实现，约 30 个 omp parallel for。
+GEMM/卷积内核本身在 x86 上不是 OpenMP 并行的（并行在层这一级）。
+
+### 关键：这批并行代码从未被任何测试执行过
+
+仓库里已有记录（run_audit_checks.py:158-171，附录 II 注释）：仓内所有 sample 的
+thread_num 都被夹成 1，那 ~30 个 omp parallel for **一次都没跑过**。
+附录 II 那一轮能从这批代码挖出六个问题，正是因为跑 sample 根本看不到它们。
+现有 A23/A24 在源码级断言多线程索引一致性，属部分兜底；**动态**竞态/行为检查没有。
+
+### 实测：想加 TSan 轴，本机链接不过
+
+用一个临时最小 OpenMP 探针（4 线程故意写同一格数组）试链接：
+
+    /usr/bin/ld: cannot find libtsan_preinit.o: No such file or directory
+
+查运行时：libasan_preinit.o 在、liblsan_preinit.o 在、libtsan.a/.so 在，
+**libtsan_preinit.o 缺**。GCC 9 的 spec 无条件链它，而这个镜像的 gcc-9 没带。
+
+### 注意事项
+
+**要补这条轴需要 root**：装回缺失的 libtsan_preinit.o（补齐 gcc-9 的 tsan
+运行时或换镜像）。这不是审计能自己解决的，所以只记结论和路径，不假装做到。
+
+四轴现状：
+    ASan+LSan   B 组默认跑        越界 / 释放后使用 / 泄漏
+    UBSan       C6（--all 会跑）   对齐 / 溢出 / 移位 / 别名
+    TSan        **无法链接**      数据竞态（未覆盖）
+    MSan        未使用（需 clang）  未初始化读（未覆盖）
+
+下一轮可做但本轮没做：把 MTCNN 并行路径真正跑起来（thread_num>1），用
+「单线程 vs 多线程输出逐位比较」做**确定性**竞态检查 —— 不需要 TSan、不需要
+采样概率，能覆盖现在一次都没跑过的那 ~30 个循环。成本是要单独驱动 MTCNN
+并行入口（模型文件 + blob 结构），需单独排期。
