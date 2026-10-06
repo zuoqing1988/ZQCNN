@@ -3037,3 +3037,28 @@ DN 是**回归撞出来的**（A10 变红），代价是一整轮 v75。
 > 真除法、消息里的斜杠、注释里的 `H/W`。
 > **判据对**任何 `/` 都敏感，而 `/` 在中文技术写作里很常见 ——
 > 所以写带路径/比例的注释之前，先知道 A10 会报它。
+
+---
+
+## v76 全量回归：**ALL CHECKS PASSED**（RC=0，确认 DN 修好）
+
+    python tools/run_audit_checks.py --with-build --warn-sweep --src-sweep \
+        --bounds-sweep --ubsan-sweep --reachability --msvc-asan
+    -> ALL CHECKS PASSED   RC=0
+
+    D1/D2 双平台全量构建                OK
+    D3/D4 sample 回归（Linux+Windows）  OK，0 问题
+    C3/C4/C5/C5/C5b/C7/C10~C16        OK
+    C6 ZQCNN 门禁 UBSan 回归   62/62 通过
+    B  ZQlib 独立回归 x10      OK
+    A10 除以模型参数           OK   <- 附录 DN 改措辞之后转绿
+    A40/A41 batch 维步进       OK
+
+顺带确认 sample 的分类也对了：
+
+    SampleMergeBNCompareNCHWC OK rc=0 1580ms  42 行输出   <- 不再被误判成 STUB
+    SampleFaceDetectorMTCNN    STUB rc=0 43ms  [only support windows]   <- 真桩仍然是 STUB
+    SampleCascadeOnet_Interface STUB rc=0 42ms  [not support in linux]  <- 同上
+
+**这一轮把本会话的十一项（AZ / DE.1 / DE.5 / DF / DG / DH / DI / DJ / DK / DL / DN）
+全部在一次干净的回归里确认。**
