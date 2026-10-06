@@ -2440,3 +2440,37 @@ DF 那个池化缺陷是「ReadParam 解析了 pad，`Forward` 却从不使用�
 ### 变更文件
 
     无（阴性结论，只落盘）
+
+---
+
+## v71 全量回归：**ALL CHECKS PASSED**（最终单点）
+
+    python tools/run_audit_checks.py --with-build --warn-sweep --src-sweep \
+        --bounds-sweep --ubsan-sweep --reachability --msvc-asan
+    -> ALL CHECKS PASSED   RC=0
+
+关键组：
+
+    D1 Windows 全量构建 (VS2022/cmake)          OK
+    D2 Linux 全量构建 (gcc/wsl)                 OK
+    D3 Linux sample 回归   真跑 10 / 桩 2 / 问题 0
+    D4 Windows sample 回归  全部 OK（MTCNN / NCHWC4 / SSD / CascadeOnet /
+                                          FaceDetectorMTCNN / MergeBNCompare /
+                                          MergeBNCompareNCHWC / UnusedLayerProbe / LSTM）
+    C5 主工程 -O2 -c 优化期告警 HIGH 桶          OK   <- 基线键改成源码文本之后
+    C6 ZQCNN 门禁 UBSan 回归                     OK   <- 12 个 BUILD FAIL 修复之后
+    A40/A41 "batch 维步进" 自测 + 普查           OK
+    B  ZQlib 独立回归 x10 (ASan+LSan)   61/61 通过
+        其中新登记的三道：
+          zq_padtype          PASS（576 个用例）
+          zq_nchwc_batch      PASS（120 个用例）
+          zq_nchwc_poolpad    PASS（120 个用例）
+
+**门禁数从 58 增到 61**，三道新门禁全部在 ASan 下跑。
+
+### v70 -> v71 之间修掉的东西
+
+v70 只挂了一个组（C6，12 个 BUILD FAIL），根因是
+`tools/zq_net_fwd_tripwires.h` 里 6 个**手抄签名**的打桩定义
+对不上附录 DF 改过的新签名 —— 一处手抄同时打掉 12 道门禁。
+已按 AGENTS.md 第 33 条修好并固化该条规则。
