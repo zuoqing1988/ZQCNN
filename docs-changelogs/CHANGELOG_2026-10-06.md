@@ -3164,3 +3164,39 @@ in[((size_t)ch * c.H + (ih - c.pT)) * c.W + (iw - c.pL)]   // 又减了一次 pT
 随仓 27 个模型的池化层 pad **全为 0**（220 个 SAME 层都解析成 0），
 所以这个修复对**随仓 sample 的输出零影响** ——
 它修的是一条"换个输入尺寸 / 换个模型就会踩"的路径。
+
+---
+
+## v77 全量回归：**ALL CHECKS PASSED**（RC=0，确认 DO）
+
+    python tools/run_audit_checks.py --with-build --warn-sweep --src-sweep \
+        --bounds-sweep --ubsan-sweep --reachability --msvc-asan
+    -> ALL CHECKS PASSED   RC=0
+
+    D1/D2 双平台全量构建                 OK
+    D3/D4 sample 回归（Linux + Windows） OK，0 问题
+    C3/C4/C5/C5/C5b/C7/C10~C16           OK
+    C6 ZQCNN 门禁 UBSan 回归   63/63 通过（含新增的 zq_nchw_poolpad）
+    B  ZQlib 独立回归 x10      OK
+    A10 / A40 / A41               OK
+
+门禁总数 **58 -> 63**，本会话新增五道：
+    zq_nchwc_batch     NCHWC 的 batch 维不变性（10 个算子 x 3 个宽度）
+    zq_padtype         NCHW pad_type 的输出尺寸与 padding 之和（576 个用例）
+    zq_nchwc_poolpad   NCHWC 池化带 padding（120 个用例，两段覆盖）
+    zq_nchwc_padreject NCHWC 表达不了的 padding 键必须拒载（20 个用例）
+    zq_nchw_poolpad    NCHW 池化带 padding（432 个用例）
+
+### 本会话的净结果
+
+修掉 12 项（AZ / DE.1 / DE.5 / DF / DG / DH / DI / DJ / DK / DL / DN / DO），
+更正 1 条自己写错的结论（DF 里"NCHW 带 padding 池化错位"——错在参考把 pad 减了两次），
+补了 3 条阴性结论（DG 的"解析了却从不使用"全仓已清干净 / 两次扫描的误报），
+AGENTS.md 增补第 33~35 条。
+
+**留在待办里、本轮刻意没做的**：
+    NCHWC 真正实现 `pad_type` / `same` / `valid` —— 要改 21 个前向函数的签名
+    （9 个 Depthwise + 12 个 Convolution），外加所有手抄这些签名的地方。
+    现在这些键在 NCHWC 侧是**响亮拒载**（附录 DH/DK），不会静默算错；
+    随仓 220 个 SAME 层只在**可整除**的输入上跑（SAME 等于无 pad），
+    所以这条待办对现有 sample 零影响 —— 但它是"换个输入尺寸就会踩"的路径。
