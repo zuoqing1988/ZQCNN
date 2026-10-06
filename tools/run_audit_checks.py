@@ -554,6 +554,14 @@ def main():
                          '并与基线比对。它是附录 DA.2 那次错判的产物 ——'
                          '「某条路径有没有被用到」从此跑一条命令就能复算，'
                          '不再靠手敲 grep（那次就是漏了 -i 而静默返回空）。')
+    ap.add_argument('--with-slow', action='store_true',
+                    help='把 run_zqlib_checks.py 的 8 个「编译慢」测试也带上。'
+                         '**这一组是 GEMM 调度唯一的正确性覆盖**（附录 IK）：'
+                         'zq_gemm_shape 是 (M,N,K) 安全图，zq_nchw_conv / '
+                         'zq_nchwc_conv / zq_nchwc_conv8 / zq_nchwc_ip / '
+                         'zq_innerproduct 是 zq_gemm_32f_AnoTrans_Btrans_auto '
+                         '的全部调用点。默认通道**一个都不跑**，而且全仓没有任何'
+                         '地方传过 --with-slow —— 也就是说这条覆盖历史上从未自动跑过。')
     ap.add_argument('--ubsan-sweep', action='store_true',
                     help='把 A 组门禁用 **UBSan** 再跑一遍（约 3 分钟，见附录 CY）。'
                          'ASan 看不见未对齐 SIMD 访问、有符号溢出、移位越界这类 UB；'
@@ -647,6 +655,8 @@ def main():
         cmd = [sys.executable, os.path.join(HERE, argv[0])] + argv[1:]
         if name.startswith('B ') and args.ubsan:
             cmd.append('--ubsan')
+        if name.startswith('B ') and args.with_slow:
+            cmd.append('--with-slow')
         ok = run_group(name, cmd, cwd=ROOT)
         if not ok:
             failed.append(name)

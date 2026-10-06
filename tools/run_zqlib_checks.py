@@ -109,7 +109,8 @@ EXTRA_SOURCES = {
     ],
     # zq_gemm_shape（附录 BN.2）只需要 ZQ_GEMM 那三个 TU —— 测试直接调
     # zq_gemm_32f_AnoTrans_Btrans_auto，不经过任何 ZQCNN 的层。
-    # 它编译慢（见 SLOW），默认不自动跑，要 --with-slow。
+    # 2026-10-06：它原来挂在 SLOW 上（理由 ">5 分钟" 经实测是假的，实际 150s），
+    # 现已移出，**进默认通道** —— 详见 SLOW 那段注释。
     'zq_gemm_shape': [
         'gcc -O1 -g -mavx2 -mfma -fopenmp -c -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include '
         '$R/ZQ_GEMM/math/zq_gemm_32f_align_c.c -o $WDIR/zq_shape_gemm_align.o',
@@ -1083,8 +1084,19 @@ def main():
     # 除非显式点名（args.filter 命中），否则跳过 SKIP 里的那几个，并**把理由打出来**。
     skipped = []
     kept = []
-    SLOW = {'zq_gemm_shape': '要链 ZQ_GEMM 的三个 TU（zq_gemm_32f_align_c.c 单个 >5 分钟）',
-            'zq_nchwc_ip': '要链 ZQ_GEMM 的四个 TU（含编 5 分钟以上的 zq_gemm_32f_align_c.c）',
+    # 2026-10-06（附录 IK）：**zq_gemm_shape 原来也在这张表里，理由写的是
+    # "zq_gemm_32f_align_c.c 单个 >5 分钟"。实测是假的** —— 连编带跑
+    # 3240 个用例一共 **150 秒**，连测两次都是 150s。它是 zq_gemm_32f_
+    # AnoTrans_Btrans_auto 那个调度器唯一的 (M,N,K) 安全图，而那个调度器是
+    # NCHW/NCHWC conv + innerproduct 的公共入口，**默认通道里一个 GEMM 调度
+    # 的用例都没有**。150 秒换这条覆盖，值，所以移出 SLOW。
+    #
+    # 剩下这几个仍然昂贵：它们各自**单独重编**同一份 zq_gemm_32f_align_c.c
+    # 到**各自的文件名**（zq_gemm_align.o / zq_shape_gemm_align.o / ...），
+    # 于是这一个 TU 在整轮里被编 6 次以上。真要省，方向是**编一次共享 .o**
+    # （zq_nchwc_conv / zq_nchwc_conv8 已经是这么干的）。在那之前它们继续挂在
+    # SLOW 上，靠 `run_audit_checks.py --with-slow` 才跑得到。
+    SLOW = {'zq_nchwc_ip': '要链 ZQ_GEMM 的四个 TU（含编 5 分钟以上的 zq_gemm_32f_align_c.c）',
             'zq_nchwc_conv': '同上（同一个编 5 分钟的 zq_gemm_32f_align_c.c）',
             'zq_nchwc_conv8': '同上（同一个编 5 分钟的 zq_gemm_32f_align_c.c）',
             'zq_nchw_conv': '要编两个大 TU（zq_cnn_convolution_gemm_32f_align_c.c 与 '

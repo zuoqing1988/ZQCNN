@@ -3242,4 +3242,50 @@ AGENTS.md 增补第 33~35 条。
 
 结论就是 AGENTS.md 那条：**门禁在变异后仍然绿，先怀疑门禁没鉴别力**。
 这次判据是"在真实文件里做变异、并数命中数"，光看自测不够 ——
-自测的 include-guard 用例里同时含 win32 层，正好盖住了这个 bug。
+自测的 include-guard 用例里同时含 win32 层，正好盖住了这个 bug。---
+
+## 新增：GEMM 调度的正确性覆盖从来没跑过（附录 IK）
+
+### 变更文件
+
+    改 tools/run_zqlib_checks.py       zq_gemm_shape 移出 SLOW，进默认通道
+    改 tools/run_audit_checks.py       新增 --with-slow（透传给 run_zqlib_checks.py）
+    改 tools/zq_gemm_shape_check.cpp   改掉两句失效的"现在是坏的 / 在 SKIP 里"
+
+### 问题
+
+扫「声称当前状态已坏的注释」时撞到 `zq_gemm_shape_check.cpp` 尾部两句，
+都不成立：「崩溃/结果错的形状现在就是坏的，所以这个测试当前应当是红的」
+是附录 BO 修 K-align fallback **之前**的状态；「门禁里它是 SKIP」也不对 ——
+附录 BP 已经移出 SKIP，现在 `SKIP = {}` 是空的，它挂的是另一个集合 SLOW。
+
+顺着"它为什么不跑"查下去发现问题更严重：**全仓没有任何地方传过
+`--with-slow`** —— run_audit_checks.py 不带、脚本不带、AGENTS.md 里写的
+"全量回归"命令也不带。于是 SLOW 里 8 个测试**历史上一次都没被自动执行过**。
+
+其中 5 个正好是 GEMM 调度器 `zq_gemm_32f_AnoTrans_Btrans_auto` 的全部调用点
+（zq_nchw_conv / zq_nchwc_conv / zq_nchwc_conv8 / zq_nchwc_ip / zq_innerproduct，
+外加形状安全图 zq_gemm_shape）。也就是说用户这一轮反复要求"和 MKL 对标"的
+那个调度器，其**正确性**在默认通道里一条用例都没有。
+
+### 实测结果
+
+    zq_gemm_shape 实跑三次，全部 PASS，耗时 150s / 150s / 150s
+    第三次已**不带** --with-slow，即验证改动生效
+
+3240 个网格用例 + 14 个 production 形状全部通过，零崩溃零错值 ——
+附录 BO 的 K-align fallback 有效。SLOW 给它写的排除理由
+"zq_gemm_32f_align_c.c 单个 >5 分钟"经实测是**假的**。
+
+### 注意事项
+
+150 秒换 GEMM 调度唯一的形状安全图，划算，已进默认通道。
+剩下 7 个仍昂贵：它们各自把**同一个 TU** 单独编一遍到**不同文件名**
+（编译命令/头路径/sanitizer 档位全同），整轮里 `zq_gemm_32f_align_c.c`
+被编 6 次以上。方向是**编一次共享 .o** —— `zq_nchwc_conv` / `zq_nchwc_conv8`
+已经在这么干了，推广过去能让 `--with-slow` 便宜 5~6 倍。
+
+在那之前 **AGENTS.md 里的"全量回归"命令要加 `--with-slow` 才真正覆盖 GEMM 调度**。
+
+**教训**：一条自称"这里是坏的"的注释长期错，往往不是因为没人写，
+而是因为**验证它的那个测试根本没跑**。测试不跑 = 状态注释必然腐烂。
