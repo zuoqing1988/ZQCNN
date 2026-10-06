@@ -3384,4 +3384,46 @@ abort、3254 个用例确定性全报出；不插桩版读到的地方是不是�
 
 另外 5 个 tag 的 30 条 EXTRA_SOURCES 同样缺 $SAN，这轮**没动**：
 它们在 SLOW 里不是默认通道；补上要重新验一整轮 --with-slow（30 分钟起步）；
-代价模型已量出来，可以先估再决定。
+代价模型已量出来，可以先估再决定。---
+
+## 变更：GEMM 那 5 个 tag 也补 $SAN，并列清剩下 18 个（附录 IN）
+
+### 变更文件
+
+    改 tools/run_zqlib_checks.py    zq_innerproduct / zq_nchw_conv /
+                                     zq_nchwc_conv / zq_nchwc_conv8 / zq_nchwc_ip
+                                     共 27 条 EXTRA_SOURCES 补 $SAN
+
+### 实测结果
+
+    python tools/run_zqlib_checks.py --with-slow    71/71 通过，ELAPSED=1594s
+
+对照上一轮（只插了 zq_gemm_shape）的 1751s，没有变慢。开销主要落在
+zq_gemm_shape 那 3240 个 fork 子进程上，这 5 个 tag 的用例数少得多。
+
+**阴性结论**：插桩后 71/71 全绿，**没有冒出潜伏缺陷** ——
+conv / innerproduct / GEMM 内核在 ASan 下干净。
+
+补完之后，EXTRA_SOURCES 里编译 zq_gemm_32f_align_c.c 的 **11 个 tag 全部带
+$SAN**，即附录 IK 点名的「GEMM 调度的全部调用点」加形状安全图，一个不落。
+
+### 注意事项
+
+改这份文件时脚本连栽两次，都是脚本自己的问题，已写进报告：
+
+1. 按整条字面量替换 —— EXTRA_SOURCES 里一个编译命令在源码上是**两行隐式
+   拼接**，逻辑上一条、源码里不连续，`count` 恒为 0；
+2. 改全局替换更糟 —— 全文件 64 处编译行不带 $SAN，我要改的只有 27 处，
+   全局替换会顺手改掉另外 37 处**不属于这 5 个 tag** 的命令。
+
+**判据：改某一个 tag 的 EXTRA_SOURCES，只能按 tag 块定位后在块内逐行替换，
+绝不能按字面量全局替换**（同一个编译前缀被几十个 tag 共用）。最终做法是按
+`'tag': [` 切块、块内逐行替换，并断言改动行数 == 27。
+
+**更大的范围**：全量列表后发现仍有 **18 个 tag** 的编译行不带 $SAN
+（zq_bns / zq_eltwise / zq_lrn / zq_nchw_act / zq_nchw_depthwise /
+zq_nchw_lstm / zq_nchw_reduction / zq_nchw_resize / zq_nchw_scalop /
+zq_nchw_sqrtnrm / zq_nchwc_act / zq_nchwc_bn / zq_nchwc_depthwise /
+zq_nchwc_elt_relu / zq_nchwc_pool / zq_nchwc_resize / zq_nchwc_softmax），
+它们测的 NCHW/NCHWC 各层实现 TU 同样没被插桩。这轮**没动**，表已列好，
+下一轮照着做即可。
