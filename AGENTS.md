@@ -33,7 +33,11 @@
    > 写新的第三方头测试时先跑一遍这个探测器，别凭印象判断。
 6. **全部检查有一个统一入口**：`python tools/run_audit_checks.py`
    - 默认：文本卫生（A1/A2/A3/A4）+ 第三方头库的 10 组 ASan 测试 + ZQlib 可编译性门禁（约 2.5 分钟）
-   - `--quick`：跳过可编译性门禁（约 40 秒）
+   - `--quick`：跳过可编译性门禁。**注意这一条现在不准了**（2026-10-06 更正）：
+     它只跳过 C（可编译性），**B 组仍然全跑**，而 B 组已从 58 涨到 **63** 道门禁
+     （其中 `zq_padtype` / `zq_nchw_poolpad` / `zq_nchwc_poolpad` / `zq_nchwc_padreject`
+     四道各要编整个内核族），实测 `--quick` 已经**跑不完 600 秒**（会超时，不是失败）。
+     **只想跑 A 组源码门禁时直接逐个调**（`python tools/check_xxx.py`），别用 `--quick`。
    - `--ubsan`：B 组换成 `-fsanitize=undefined` 口径
    - `--msvc-asan`：加上 Windows 侧 MSVC ASan 那 10 组
    - `--msvc-probe`：加上 MSVC `cl /Zs` 逐头语法检查
