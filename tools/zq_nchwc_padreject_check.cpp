@@ -47,20 +47,25 @@ struct Case {
 static const Case g_cases[] = {
     { "conv pad_type=SAME",        " pad_type=SAME",        1 },
     { "conv pad_type=VALID",       " pad_type=VALID",       1 },
-    { "conv pad_H_top",            " pad_H_top=1",          1 },
     { "conv pad_H_bottom",         " pad_H_bottom=1",       1 },
     { "conv pad_W_left",           " pad_W_left=1",         1 },
     { "conv pad_W_right",          " pad_W_right=1",        1 },
     { "conv same=1",               " same=1",               1 },
     { "conv valid=1",              " valid=1",              1 },
     { "dwconv pad_type=SAME",      " pad_type=SAME",        1 },
-    { "dwconv pad_H_top",          " pad_H_top=1",          1 },
     { "dwconv pad_W_right",        " pad_W_right=1",        1 },
-    // ---- 对照组：这些是 NCHWC 支持的写法，必须仍然能加载 ----
+    { "dwconv top/bottom 不等",      " pad_H_top=1 pad_H_bottom=0 pad_W_left=1 pad_W_right=0", 1 },
+    // ---- 对照组：这些是 NCHWC 能表达的写法，必须仍然能加载 ----
     { "conv pad=1 (支持)",         " pad=1",                0 },
     { "conv pad=1 pad_H=1 (支持)", " pad=1 pad_H=1",        0 },
     { "conv pad_W=1 (支持)",       " pad_W=1",              0 },
     { "dwconv pad=1 (支持)",       " pad=1",                0 },
+    // ---- 附录 DK：四键**对称**时必须接受并使用 ----
+    // 这一条就是随仓 `model/model-face.zqparams` 的写法（满篇都是它）。
+    // DH 一律拒载把它挡在门外了，而它明明是**对称**的、NCHWC 完全表达得了。
+    { "conv 四键对称=1 (支持)",    " pad_H_top=1 pad_H_bottom=1 pad_W_left=1 pad_W_right=1", 0 },
+    { "dwconv 四键对称=1 (支持)",  " pad_H_top=1 pad_H_bottom=1 pad_W_left=1 pad_W_right=1", 0 },
+    { "conv 四键对称=0 (支持)",    " pad_H_top=0 pad_H_bottom=0 pad_W_left=0 pad_W_right=0", 0 },
 };
 static const int N_CASE = (int)(sizeof(g_cases) / sizeof(g_cases[0]));
 

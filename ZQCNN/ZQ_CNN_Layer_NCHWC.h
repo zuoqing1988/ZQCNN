@@ -134,15 +134,44 @@ namespace ZQ
 		// 响亮的失败严格优于静默的错值。
 		// 随仓那 220 个 `pad_type=SAME` 层全在可整除的输入上（SAME ≡ 无 pad），
 		// 所以本条对随仓模型**零影响**；但那只是巧合 —— 换个输入尺寸就错。
+		//
+		// 审计修订 2026-10-06（附录 DK）：**非对称的四个键从这份名单里去掉了**。
+		// DH 一律拒载它们，而随仓的 `model/model-face.zqparams` 满篇写的是
+		//     pad_H_top=1 pad_H_bottom=1 pad_W_left=1 pad_W_right=1
+		// —— **这明明是对称的**，NCHWC 的 `pad_H` / `pad_W` 完全表达得了，
+		// 一律拒载把"本来能算的模型"也挡在门外了。
+		// 现在这四个键由 `_resolve_asym_pad` 单独处理（给齐且对称就折成 pad_H / pad_W）。
+		// 剩下的这几个的语义要靠 bottom_H / bottom_W 才算得出来，而那要等 SetBottomDim，
+		// 所以**留在拒载名单里**（真正实现它们要改 21 个前向签名，单独排期）。
 		static bool _is_unsupported_pad_key(const char* key)
 		{
 			static const char* keys[] = {
-				"pad_type", "pad_h_top", "pad_h_bottom", "pad_w_left", "pad_w_right",
-				"same", "valid", "pad_type_h", "pad_type_w"
+				"pad_type", "same", "valid", "pad_type_h", "pad_type_w"
 			};
 			for (size_t i = 0; i < sizeof(keys) / sizeof(keys[0]); i++)
 				if (_my_strcmpi(keys[i], key) == 0)
 					return true;
+			return false;
+		}
+
+		// 非对称四键的**收口**（附录 DK）。在 ReadParam 的键循环**之后**调一次：
+		//   四个都给齐 **且** pad_H_top == pad_H_bottom 且 pad_W_left == pad_W_right
+		//     -> 折成 pad_H / pad_W，返回 true（可以正常往下算）；
+		//   一个都没写                     -> 返回 true（走 pad / pad_H / pad_W 那条路）；
+		//   其余（只给了一部分、或者真的不对称）-> 返回 false，调用方负责把话说清楚。
+		// 只给一部分也算不对称：另一半按 0 处理之后仍然是不对称的，与其猜不如拒。
+		static bool _resolve_asym_pad(int pad_H_top, int pad_H_bottom,
+			int pad_W_left, int pad_W_right,
+			int& out_pad_H, int& out_pad_W)
+		{
+			if (pad_H_top < 0 && pad_H_bottom < 0 && pad_W_left < 0 && pad_W_right < 0)
+				return true;                        // 一个都没写
+			if (pad_H_top == pad_H_bottom && pad_W_left == pad_W_right)
+			{
+				out_pad_H = pad_H_top;
+				out_pad_W = pad_W_left;
+				return true;
+			}
 			return false;
 		}
 
@@ -273,7 +302,7 @@ namespace ZQ
 	{
 	public:
 		ZQ_CNN_Layer_NCHWC_Convolution() :filters(0), bias(0), num_output(0), kernel_H(0), kernel_W(0),
-			stride_H(1), stride_W(1), dilate_H(1), dilate_W(1), pad_H(0), pad_W(),
+			stride_H(1), stride_W(1), dilate_H(1), dilate_W(1), pad_H(0), pad_W(), pad_H_top(-1), pad_H_bottom(-1), pad_W_left(-1), pad_W_right(-1),
 			with_bias(false), with_prelu(false), prelu_slope(0), bottom_C(0) {}
 		~ZQ_CNN_Layer_NCHWC_Convolution() {
 			if (filters)delete filters;
@@ -293,6 +322,11 @@ namespace ZQ
 		int dilate_W;
 		int pad_H;
 		int pad_W;
+		// 审计 DK：ReadParam 期间暂存非对称四键，-1 表示「没写过」。
+		int pad_H_top;
+		int pad_H_bottom;
+		int pad_W_left;
+		int pad_W_right;
 		bool with_bias;
 		bool with_prelu;
 
@@ -545,6 +579,29 @@ namespace ZQ
 						pad_W = atoi(paras[n][1].c_str());
 					}
 				}
+				// 审计 DK：这四个键**不是一律拒载** —— 给齐了且对称就折成
+				// pad_H / pad_W（见循环后的 _resolve_asym_pad 收口）。
+				// 随仓的 model/model-face.zqparams 满篇是这种写法，而它是**对称**的。
+				else if (ZQ_CNN_Layer_NCHWC<Tensor4D>::_my_strcmpi("pad_H_top", paras[n][0].c_str()) == 0)
+				{
+					if (paras[n].size() >= 2)
+						pad_H_top = atoi(paras[n][1].c_str());
+				}
+				else if (ZQ_CNN_Layer_NCHWC<Tensor4D>::_my_strcmpi("pad_H_bottom", paras[n][0].c_str()) == 0)
+				{
+					if (paras[n].size() >= 2)
+						pad_H_bottom = atoi(paras[n][1].c_str());
+				}
+				else if (ZQ_CNN_Layer_NCHWC<Tensor4D>::_my_strcmpi("pad_W_left", paras[n][0].c_str()) == 0)
+				{
+					if (paras[n].size() >= 2)
+						pad_W_left = atoi(paras[n][1].c_str());
+				}
+				else if (ZQ_CNN_Layer_NCHWC<Tensor4D>::_my_strcmpi("pad_W_right", paras[n][0].c_str()) == 0)
+				{
+					if (paras[n].size() >= 2)
+						pad_W_right = atoi(paras[n][1].c_str());
+				}
 				else if (ZQ_CNN_Layer_NCHWC<Tensor4D>::_my_strcmpi("stride", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
@@ -613,6 +670,27 @@ namespace ZQ
 				else
 				{
 					std::cout << "warning: unknown para " << paras[n][0] << " in Layer " << ZQ_CNN_Layer_NCHWC<Tensor4D>::name << "\n";
+				}
+			}
+			// 审计 DK：收口非对称四键（见 _resolve_asym_pad 的说明）。
+			// **必须写全限定名** `ZQ_CNN_Layer_NCHWC<Tensor4D>::` —
+			// 派生类是模板、基类也是**依赖基类**，而这次调用**没有任何参数依赖模板参数**，
+			// 于是按两阶段查找规则必须在**定义点**就找得到 —— 写裸名字直接编不过：
+			//   error: there are no arguments to '_resolve_asym_pad' that depend on a
+			//   template parameter, so a declaration of ... must be available
+			// 上面那个 `_is_unsupported_pad_key` 没这个问题，因为它一直是全限定的。
+			if (!ZQ_CNN_Layer_NCHWC<Tensor4D>::_resolve_asym_pad(pad_H_top, pad_H_bottom, pad_W_left, pad_W_right,
+				pad_H, pad_W))
+			{
+				if (pad_H_top >= 0 || pad_H_bottom >= 0
+					|| pad_W_left >= 0 || pad_W_right >= 0)
+				{
+					std::cout << "Layer " << ZQ_CNN_Layer_NCHWC<Tensor4D>::name
+						<< " got asymmetric pad: pad_H_top=" << pad_H_top
+						<< " pad_H_bottom=" << pad_H_bottom << " pad_W_left=" << pad_W_left
+						<< " pad_W_right=" << pad_W_right << ". "
+						<< "which this NCHWC net cannot express, layer rejected\n";
+					return false;
 				}
 			}
 			if (!has_num_output)std::cout << "Layer " << ZQ_CNN_Layer_NCHWC<Tensor4D>::name << " missing " << "num_output\n";
@@ -872,7 +950,7 @@ namespace ZQ
 	{
 	public:
 		ZQ_CNN_Layer_NCHWC_DepthwiseConvolution() :filters(0), bias(0), num_output(0), kernel_H(0), kernel_W(0),
-			stride_H(1), stride_W(1), dilate_H(1), dilate_W(1), pad_H(0), pad_W(), with_bias(false), bottom_C(0),
+			stride_H(1), stride_W(1), dilate_H(1), dilate_W(1), pad_H(0), pad_W(), pad_H_top(-1), pad_H_bottom(-1), pad_W_left(-1), pad_W_right(-1), with_bias(false), bottom_C(0),
 			with_prelu(false), prelu_slope(0) {}
 		~ZQ_CNN_Layer_NCHWC_DepthwiseConvolution() {
 			if (filters)delete filters;
@@ -891,6 +969,11 @@ namespace ZQ
 		int dilate_W;
 		int pad_H;
 		int pad_W;
+		// 审计 DK：ReadParam 期间暂存非对称四键，-1 表示「没写过」。
+		int pad_H_top;
+		int pad_H_bottom;
+		int pad_W_left;
+		int pad_W_right;
 		bool with_bias;
 		bool with_prelu;
 
@@ -1068,6 +1151,29 @@ namespace ZQ
 						pad_W = atoi(paras[n][1].c_str());
 					}
 				}
+				// 审计 DK：这四个键**不是一律拒载** —— 给齐了且对称就折成
+				// pad_H / pad_W（见循环后的 _resolve_asym_pad 收口）。
+				// 随仓的 model/model-face.zqparams 满篇是这种写法，而它是**对称**的。
+				else if (ZQ_CNN_Layer_NCHWC<Tensor4D>::_my_strcmpi("pad_H_top", paras[n][0].c_str()) == 0)
+				{
+					if (paras[n].size() >= 2)
+						pad_H_top = atoi(paras[n][1].c_str());
+				}
+				else if (ZQ_CNN_Layer_NCHWC<Tensor4D>::_my_strcmpi("pad_H_bottom", paras[n][0].c_str()) == 0)
+				{
+					if (paras[n].size() >= 2)
+						pad_H_bottom = atoi(paras[n][1].c_str());
+				}
+				else if (ZQ_CNN_Layer_NCHWC<Tensor4D>::_my_strcmpi("pad_W_left", paras[n][0].c_str()) == 0)
+				{
+					if (paras[n].size() >= 2)
+						pad_W_left = atoi(paras[n][1].c_str());
+				}
+				else if (ZQ_CNN_Layer_NCHWC<Tensor4D>::_my_strcmpi("pad_W_right", paras[n][0].c_str()) == 0)
+				{
+					if (paras[n].size() >= 2)
+						pad_W_right = atoi(paras[n][1].c_str());
+				}
 				else if (ZQ_CNN_Layer_NCHWC<Tensor4D>::_my_strcmpi("stride", paras[n][0].c_str()) == 0)
 				{
 					if (paras[n].size() >= 2)
@@ -1136,6 +1242,27 @@ namespace ZQ
 				else
 				{
 					std::cout << "warning: unknown para " << paras[n][0] << " in Layer " << ZQ_CNN_Layer_NCHWC<Tensor4D>::name << "\n";
+				}
+			}
+			// 审计 DK：收口非对称四键（见 _resolve_asym_pad 的说明）。
+			// **必须写全限定名** `ZQ_CNN_Layer_NCHWC<Tensor4D>::` —
+			// 派生类是模板、基类也是**依赖基类**，而这次调用**没有任何参数依赖模板参数**，
+			// 于是按两阶段查找规则必须在**定义点**就找得到 —— 写裸名字直接编不过：
+			//   error: there are no arguments to '_resolve_asym_pad' that depend on a
+			//   template parameter, so a declaration of ... must be available
+			// 上面那个 `_is_unsupported_pad_key` 没这个问题，因为它一直是全限定的。
+			if (!ZQ_CNN_Layer_NCHWC<Tensor4D>::_resolve_asym_pad(pad_H_top, pad_H_bottom, pad_W_left, pad_W_right,
+				pad_H, pad_W))
+			{
+				if (pad_H_top >= 0 || pad_H_bottom >= 0
+					|| pad_W_left >= 0 || pad_W_right >= 0)
+				{
+					std::cout << "Layer " << ZQ_CNN_Layer_NCHWC<Tensor4D>::name
+						<< " got asymmetric pad: pad_H_top=" << pad_H_top
+						<< " pad_H_bottom=" << pad_H_bottom << " pad_W_left=" << pad_W_left
+						<< " pad_W_right=" << pad_W_right << ". "
+						<< "which this NCHWC net cannot express, layer rejected\n";
+					return false;
 				}
 			}
 			if (!has_num_output)std::cout << "Layer " << ZQ_CNN_Layer_NCHWC<Tensor4D>::name << " missing " << "num_output\n";

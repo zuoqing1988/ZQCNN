@@ -2786,3 +2786,90 @@ Linux 与 Windows 两侧都是**单行**，所以 `-le 3` 留了三行余量也�
 两句话里都**没有** `not support` / `only support`。
 即使将来有人又写了含那几个词的错误消息，第 ② 条（非空行数）也会兜住 ——
 **措辞是第一道防线，行数是第二道。**
+
+---
+
+## 变更：附录 DK —— DH 的「一律拒载」收得太紧，**对称的非对称写法要接受并使用**
+
+### 起因：DJ 里那条 model-face 线索
+
+`model/model-face.zqparams` 满篇写的是
+
+    Convolution ... pad_H_top=1 pad_H_bottom=1 pad_W_left=1 pad_W_right=1
+
+**这明明是对称的**（top == bottom、left == right），
+而 NCHWC 的 `pad_H` / `pad_W` **完全表达得了**。
+DH 把这四个键一律拒载，等于把"本来能算的模型"也挡在门外了。
+
+### 改法
+
+`ZQ_CNN_Layer_NCHWC<Tensor4D>` 新增 `_resolve_asym_pad()`，在
+Convolution / DepthwiseConvolution 的 `ReadParam` **键循环之后**调一次：
+
+| 四个键的形态 | 处理 |
+|---|---|
+| 一个都没写 | 放行（走 `pad` / `pad_H` / `pad_W` 那条路） |
+| 给齐了 **且** `pad_H_top == pad_H_bottom` 且 `pad_W_left == pad_W_right` | **折成 `pad_H` / `pad_W`，正常往下算** |
+| 只给了一部分 / 真的不对称 | **拒载**，并把四个值都打出来 |
+
+`_is_unsupported_pad_key` 的名单相应缩小成
+`pad_type` / `same` / `valid` / `pad_type_H` / `pad_type_W` ——
+它们的语义要靠 `bottom_H` / `bottom_W` 才算得出来，而那要等 `SetBottomDim`，
+**仍留在拒载名单里**（真正实现要改 21 个前向签名，单独排期）。
+
+拒载消息也改成**点名那四个键**（`got asymmetric pad: pad_H_top=… pad_H_bottom=…`），
+原来的 `top=/bottom=` 不含任何键名，门禁的"指名"判据看不到。
+
+### 门禁 `zq_nchwc_padreject` 扩到 20 个用例
+
+新增的**判别**用例（缺了它们，一个"看到 pad_H_top 就放行"的实现会混过去）：
+
+    must-reject  conv pad_H_top 单独给（另一半按 0，仍不对称）
+    must-reject  conv top/bottom 不等（1/0, 1/0）
+    must-reject  conv top/bottom 相等但左右不等
+    must-reject  dwconv top/bottom 不等
+    must-accept  conv  四键对称=1   <-- model-face 的写法，DH 下会被拒，DK 下必须能加载
+    must-accept  dwconv 四键对称=1
+    must-accept  conv  四键对称=0
+
+### 这一版改代码时自己栽的三次（都是同一个坑的变体）
+
+1. **多轮改写之间行号失效**：第一版按 ctor -> mem -> close -> keys 分四轮改，
+   而 close 那一轮多插了 7 行，于是后面 keys 用的（改之前算好的）行号
+   整体错位 7 行，第二个类被改坏、`pad_W` 分支被复制了一份。
+   > 判据：**一轮改写 = 一次下标失效**。所有替换区间要在**原始行表**上算好，
+   > 再在**同一趟**里按行号从大到小应用。
+   > 症状是"锚点命中了但结果不对"—— 比"没命中"更危险。
+2. **行尾没探测**：`git checkout -- <file>` 在 `core.autocrlf=true` 下把工作区
+   重新物化成 **CRLF**（改之前那个文件是 LF），按 LF 拼的锚点一个都不匹配。
+   这与 MNN 分叉那次**是同一个坑、同一个文件**—— 我在两次里各栽了一次。
+3. **`find_block` 用 `len(text)` 当行数**（那是**字符**数），
+   于是拿 189 行的窗口去比 7 行的模式。
+
+另外两处：
+
+* `git checkout` 把我先前用 Edit 加的两个辅助函数**一起回退**了
+  （只 revert 了"改坏的那次编辑"，没意识到它连带 revert 了别的），
+  于是紧接着一次编译报 `there are no arguments to '_resolve_asym_pad'`。
+* 修好之后仍然编不过，因为调用**没写全限定名**：
+  派生类是模板、基类 `ZQ_CNN_Layer_NCHWC<Tensor4D>` 是**依赖基类**，
+  而这次调用**没有任何参数依赖模板参数**，按两阶段查找必须在定义点就找得到 ——
+  写裸名字直接编不过。上面那个 `_is_unsupported_pad_key` 没这个问题，
+  因为它**一直是全限定的**。
+  > 判据：在模板里调**依赖基类**的成员，若参数里**没有**模板相关的量，
+  > 就必须写 `基类<T>::成员`，不能写裸名字。
+* `check_line_endings` 报 `mixed-EOL(3243 CRLF/4 LF)` —— 4 处 Edit 插进去的行
+  是 LF。用门禁自己的 `--fix` 归一。
+
+### 实测
+
+    python tools/run_zqlib_checks.py zq_nchwc_padreject -> 1/1 PASS（20 个用例）
+    cmake --build build_x64 --config Release -> RC=0，0 error
+    WSL make -j8 -> RC=0，0 error
+    check_text_encoding / check_line_endings / check_stmt_joins -> 全过
+
+### 注意事项
+
+- `pad_type` / `same` / `valid` 仍**拒载**：它们的语义要等 `SetBottomDim`
+  才知道。随仓那 220 个 SAME 层仍然只在 NCHWC 侧被拒 ——
+  这是 DH 已记录的状态，本条没有改变它。
