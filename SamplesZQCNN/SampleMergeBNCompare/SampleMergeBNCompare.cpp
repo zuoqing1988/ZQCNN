@@ -437,10 +437,6 @@ int main()
                                     for (int z = 0; z < 10 && (size_t)z < fa_.size(); z++)
                                         printf(" [%d %.6g->%.6g]", z, fa_[z], fp_[z]);
                                     printf("\n");
-                                    printf("        前 10 个（未融合 -> 融合）：");
-                                    for (int z = 0; z < 10 && (size_t)z < fa_.size(); z++)
-                                        printf(" [%d %.6g->%.6g]", z, fa_[z], fp_[z]);
-                                    printf("\n");
                                     // ---- 逐**通道**（附录 HP.1）----
                                     //
                                     // compact NCHW  (n,c,h,w) 的下标是

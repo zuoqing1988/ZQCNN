@@ -547,22 +547,15 @@ namespace ZQ
 					memcpy(&buffer[(out_h*size_W + out_w) * 3], bgr_img + in_h*widthStep + in_w * 3, sizeof(unsigned char) * 3 * (end_w - start_w));
 				}
 				ZQ_CNN_Tensor4D_NHW_C_Align128bit temp_img;
-				// 审计修复 2026-10-06（附录 IN.8）：返回值原来被丢弃。
+				// 审计修复 2026-10-06（附录 IN.8 / DL）：返回值原来被丢弃。
 				// `ConvertFromBGR`（ZQ_CNN_Tensor4D.h:395-397）第一句就是
 				// `if (!ChangeSize(...)) return false;` —— 失败时 `temp_img` 停在**上一次**的尺寸，
 				// 紧接着的 ResizeBilinear 就按陈旧尺寸跑。
 				// 同文件 :107 / :112 / :116 对同样的调用**全都检查了** —— 不一致。
-				// 审计修复 2026-10-06（附录 IN.8）：返回值原来被丢弃。
-				// `ConvertFromBGR`（ZQ_CNN_Tensor4D.h:395-397）第一句就是
-				// `if (!ChangeSize(...)) return false;` —— 失败时 `temp_img` 停在**上一次**的尺寸，
-				// 紧接着的 ResizeBilinear 就按陈旧尺寸跑。
-				// 同文件 :107 / :112 / :116 对同样的调用**全都检查了** —— 不一致。
-				temp_img.ConvertFromBGR(&buffer[0], size_W, size_H, size_W * 3, 0, 1);
-				if (!temp_img.ConvertFromBGR(&buffer[0], size_W, size_H, size_W * 3, 0, 1))
-				{
-					printf("ConvertFromBGR failed (pose %dx%d)\n", size_W, size_H);
-					return false;
-				}
+				//
+				// 附录 DL：这一段原来**被脚本改了两遍** —— 注释两份一模一样，
+				// 紧跟着还留着一次**返回值被丢弃**的调用，后面又跟着**两份**带检查的调用。
+				// 结果是同一张图被转换三次。已归一成下面这一次带检查的调用。
 				if (!temp_img.ConvertFromBGR(&buffer[0], size_W, size_H, size_W * 3, 0, 1))
 				{
 					printf("ConvertFromBGR failed (pose %dx%d)\n", size_W, size_H);

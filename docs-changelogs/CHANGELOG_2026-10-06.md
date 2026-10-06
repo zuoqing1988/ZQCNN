@@ -2873,3 +2873,82 @@ Convolution / DepthwiseConvolution 的 `ReadParam` **键循环之后**调一次�
 - `pad_type` / `same` / `valid` 仍**拒载**：它们的语义要等 `SetBottomDim`
   才知道。随仓那 220 个 SAME 层仍然只在 NCHWC 侧被拒 ——
   这是 DH 已记录的状态，本条没有改变它。
+
+---
+
+## 变更：附录 DL —— 某次脚本批量改写**在两个文件上各跑了两遍**
+
+### 现象一：`ZQCNN/ZQ_CNN_PersonPose2.h`（749~570 行一带）
+
+    // 审计修复（附录 IN.8）：返回值原来被丢弃。        <- 第 1 遍
+    ... 5 行 ...
+    // 审计修复（附录 IN.8）：返回值原来被丢弃。        <- 第 2 遍，一字不差
+    ... 5 行 ...
+    temp_img.ConvertFromBGR(...);                     <- 返回值**仍被丢弃**（原调用）
+    if (!temp_img.ConvertFromBGR(...)) { ...return false; }
+    if (!temp_img.ConvertFromBGR(...)) { ...return false; }   <- 同一段又来一遍
+
+后果：同一张图被**转换三次**（第 1 次还丢弃返回值）。
+
+**IN.8 要修的那个缺陷其实一直没修掉** —— 只是后面补了两次带检查的调用把它盖住了。
+"后面那两次会重做"是**读代码推出来的**，不是量出来的，所以按原样记在这里。
+
+### 现象二：`SamplesZQCNN/SampleMergeBNCompare/SampleMergeBNCompare.cpp`（436~443 行）
+
+    printf("        前 10 个（未融合 -> 融合）：");
+    for (int z = 0; ...) printf(" [%d %.6g->%.6g]", ...);
+    printf("\n");
+    printf("        前 10 个（未融合 -> 融合）：");      <- 逐字相同，又一遍
+    for (int z = 0; ...) printf(" [%d %.6g->%.6g]", ...);
+    printf("\n");
+
+后果：那行会**打印两遍**。这个 sample 在双平台 sample 回归里跑着。
+
+### 通用探测器 `tools/find_dup_blocks.py`
+
+找「**相邻且逐字相同**的 >= 4 行代码块」—— 上面两处的形状。
+
+    第一版：142 处 / 20 个文件
+    排除「按宏展开成多份」的那一族之后：23 处 / 6 个文件
+
+**排除名单必须写出来并说明理由**（AGENTS.md 那条：白名单不写理由，
+下一个人就不知道它是"查过了"还是"忘了查"）：
+
+    ZQCNN/layers_c/、ZQCNN/layers_nchwc/   同一份 _raw.h 被 include 2~3 次，
+                                            生成的函数体在源文件里就是背靠背的
+    ZQ_GEMM/math/zq_gemm_32f_align_c.c     同上
+    SamplesZQCNN/example_for_very_high_gflops/、SampleMatMul/  内含大段生成代码
+
+剩下的 23 处里，`3rdparty/` 4 处不是我们的代码；
+`testImageProcessing.cpp` 11 处是它**内联了一份张量实现**（同样属于展开型）；
+ZQCNN 自己的只剩上面那 2 处，**都已修**。
+
+### 改这两处时自己栽的一次
+
+第一版按**整段字符串**匹配，报「带检查的块 0 处」——
+而 `if (!temp_img.ConvertFromBGR` 与 `ConvertFromBGR failed` 实测**各 2 处**，
+**重复是真的**，只是模式里 `printf` 那行的 `\n` 转义写错了。
+改成**按行号删**（删之前先核对那几行逐字相同）才做对。
+> 与 DK 那条「锚点没匹配上要先怀疑模式」是同一条：
+> **"模式没匹配上"和"目标不存在"在输出上一模一样。**
+> 所以每次都要另找一条**独立的**证据（这里是把子串分开数）。
+
+### 变更文件
+
+    ZQCNN/ZQ_CNN_PersonPose2.h                        归一成一份注释 + 一次带检查的调用
+    SamplesZQCNN/SampleMergeBNCompare/SampleMergeBNCompare.cpp  删掉重复的 printf 块
+    tools/find_dup_blocks.py                          通用探测器（**尚未进回归**）
+
+### 实测
+
+    改后：if (!temp_img.ConvertFromBGR) 1 处 / 裸调用 0 处 / printf 1 处
+    改后：「前 10 个（未融合」1 处
+    cmake --build build_x64 --config Release -> RC=0，0 error
+    WSL make -j8 -> RC=0，0 error
+    check_text_encoding / check_line_endings / check_stmt_joins -> 全过
+
+### 注意事项
+
+探测器**没有进回归**：它只报"形状可疑"，判断还得人做，
+而排除名单一旦随着代码变动而失效，恒红项会把整栏信号清零
+（同 AGENTS.md 第 20 条）。留在仓库里当排查手段。
