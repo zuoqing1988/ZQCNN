@@ -4278,3 +4278,48 @@ DOTALL 把跨行块注释压成**一个空格**，**换行被吃掉**，行号�
 仓内没有（附录 JB）。
 
 门禁编号不变，仍是 C26 / C26b。
+
+---
+
+## 复验：--all 全量 94 组 / 0 失败 / 96 分钟（附录 JE）
+
+    python tools/run_audit_checks.py --all
+        ALL CHECKS PASSED   RC=0   ELAPSED=5801s（约 96 分钟）
+        完成的门禁组数 : 94
+
+从附录 IU 那次全量（88 组）之后又累积了一批改动与门禁，本轮整体复验。
+多出的 6 组里 4 组是本会话新增的，2 组来自编号重排；**所有既有门禁也都重跑**。
+
+本轮新增的门禁逐条确认都跑了：
+    C17 平台分支：未圈住的 MSVC 专有拼写（附录 IJ）        OK
+    C18 EXTRA_SOURCES 编译行必须带 $SAN（豁免除外）（IO）    OK
+    C19 --all 覆盖 argparse 每一个开关（附录 IQ）            OK
+    C20 门禁编号唯一（附录 IR）                             OK
+    C24 MTCNN 孪生副本的「不一致集合」（附录 IY）           OK
+    C25 并行区里 thread_id 不得为字面 0（附录 IZ）          OK
+    C26 recognizer 递进流水线前必须 Init（附录 JC）         OK
+
+平台与两条 sanitizer 轴：
+    D1 Windows 全量构建 (VS2022/cmake)        OK
+    D2 Linux 全量构建 (gcc/wsl)               OK
+    D3 Linux sample 回归                      OK
+    B  ZQlib 独立回归 x10 (ASan+LSan)          OK（72 个测试，含 --with-slow）
+    C6 ZQCNN 门禁 UBSan 回归                  OK
+
+即用户目标里「确保 windows 和 linux 都能完全跑通」这一条，
+在这一轮全部改动之后**仍然成立**。
+
+累积改动含：ZQ_CNN_MTCNN.h 补尺寸校验（IX）、zq_gemm_shape_check.cpp 改
+32 字节对齐缓冲（IT）、4 个 sample 补 recognizer 初始化（JC）、
+EXTRA_SOURCES 去重（IL）、全量补 $SAN + 豁免（IM/IN/IO）、
+--all 固化与开关分类门禁（IQ/IR）、新增 zq_bbox_nms_par（IW）。
+
+操作记录：这次特意**没有**接管道（`> log 2>&1; rc=$?`），所以 RC=0 是真的 ——
+附录 IS 记过「管道后接 ; echo $? 拿到的是 tail 的退出码」那一次误导。
+
+剩下三条缺口都不在本轮能力范围内（如实列出，各自在前面附录已写清要做什么、
+依赖什么）：
+    ZQlibFaceID 行为覆盖（29 头 / 23 sample）  需人脸模型权重，model/ 里没有
+    TSan 轴（数据竞态）                        本机缺 libtsan_preinit.o，需 root
+    MTCNN 其余并行区（_Pnet_stage 等）         需模型夹具（抽输入契约 + 假网络）
+本轮没有为了「有产出」而塞一个验不了的改动。
