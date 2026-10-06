@@ -978,6 +978,7 @@ EXTRA_INC = {'zq_resize_align': ' -I$R -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/inc
              'zq_tile': ' -I$R -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include',
              'zq_nchw_deconv': ' -I$R -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include',
              'zq_nchw_conv_free': ' -I$R -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include',
+             'zq_bbox_nms_par': ' -I$R -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include',
              'zq_nchw_scalop': ' -I$R -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include',
              'zq_nchw_depthwise': ' -I$R -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include',
              'zq_nchw_act': ' -I$R -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include',
@@ -1045,6 +1046,10 @@ EXTRA_CXXFLAGS = {'zq_resize_align': ' -mavx2 -mfma -fopenmp',
                   # 记录"谁被释放了"，而 ASan 运行时自己也要调 free —— 在它初始化完成前
                   # 把 free 抢过来，一调用就段错误（附录 CU.9）。
                   'zq_nchw_conv_free': ' -mavx2 -mfma -fopenmp -fno-sanitize=address',
+                  # zq_bbox_nms_par（附录 IW）：`_nms` 的单线程/多线程等价性。
+                  # **必须有 -fopenmp**，否则被测的并行区根本不生成多份代码，
+                  # 测的就不是那条路径了 —— 与 $SAN 是同一类问题（见 C18）。
+                  'zq_bbox_nms_par': ' -mavx2 -mfma -fopenmp',
                   'zq_nchw_scalop': ' -mavx2 -mfma -fopenmp',
                   'zq_nchw_depthwise': ' -mavx2 -mfma -fopenmp',
                   'zq_nchw_act': ' -mavx2 -mfma -fopenmp',
