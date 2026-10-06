@@ -112,12 +112,32 @@ EXTRA_SOURCES = {
     # zq_gemm_32f_AnoTrans_Btrans_auto，不经过任何 ZQCNN 的层。
     # 2026-10-06：它原来挂在 SLOW 上（理由 ">5 分钟" 经实测是假的，实际 150s），
     # 现已移出，**进默认通道** —— 详见 SLOW 那段注释。
+    #
+    # 2026-10-06（附录 IM）：这三条原来**没有 $SAN** —— 也就是被测的 GEMM 内核
+    # 根本没插桩。ASan 靠的是编译期给 load/store 插检查，**没插桩的代码里
+    # 越界读不会被报**，只有读到未映射页才会变成 SEGV。
+    #
+    # **实测这个改动买到的是什么（别把它说得比实际大）**：
+    # 在 fallback 里植入"多读一个元素"（`k < K` 改成 `k <= K`）后
+    #     插桩版：ok 2171 / 崩溃 1083 / **结果错 0**  —— 第一个越界就 abort，
+    #              3254 个用例**确定性地**全报出来；
+    #     不插桩版：ok 1330 / 崩溃 997 / 结果错 927 —— 也报，但**靠垃圾值**：
+    #              读到的到底是不是未映射页、读到的数够不够大，取决于那块内存
+    #              当时恰好是什么。**同一处越界，换一次运行就可能不报。**
+    # 所以结论不是"不插桩就看不见"，而是"**不插桩就只是碰运气**" ——
+    # 对一个专门用来抓越界的门禁，确定性比概率重要。
+    #
+    # 代价如实记：整轮 --with-slow 由 1059s 变 1751s（**+692s / +65%**）。
+    # 单跑这一个测试由 150s 变 698s。贵在 ASan 对那 3240 个 fork 子进程的
+    # 开销，不在编译 —— 带插桩的那份 .o 本来就要编
+    # （zq_nchwc_batch / zq_nchwc_padreject / zq_nchwc_poolpad /
+    #  zq_padtype / zq_nchw_poolpad 都要，附录 IL 去重之后这里只是多一次 cp）。
     'zq_gemm_shape': [
-        'gcc -O1 -g -mavx2 -mfma -fopenmp -c -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include '
+        'gcc -O1 -g $SAN -mavx2 -mfma -fopenmp -c -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include '
         '$R/ZQ_GEMM/math/zq_gemm_32f_align_c.c -o $WDIR/zq_shape_gemm_align.o',
-        'gcc -O1 -g -mavx2 -mfma -fopenmp -c -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include '
+        'gcc -O1 -g $SAN -mavx2 -mfma -fopenmp -c -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include '
         '$R/ZQ_GEMM/math/zq_gemm_32f_align_c_asm.c -o $WDIR/zq_shape_gemm_asm.o',
-        'gcc -O1 -g -mavx2 -mfma -fopenmp -c -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include '
+        'gcc -O1 -g $SAN -mavx2 -mfma -fopenmp -c -I$R/ZQCNN -I$R/ZQ_GEMM -I$R/3rdparty/include '
         '$R/ZQ_GEMM/math/zq_gemm_32f_auto.c -o $WDIR/zq_shape_gemm_auto.o',
     ],
     # zq_nchwc_ip（附录 BN）与 zq_innerproduct 共用 ZQ_GEMM 那四个 TU
