@@ -4630,3 +4630,24 @@ ZQ_CNN_Tensor4D 一处声明、返回 bool、**按名字就能确定**的两个�
     check_changesize_guard.py --selftest 3/3 通过                       RC=0
 变异测试：把 ZQ_CNN_Tensor4D.cpp 里 **3 份**实现的守卫整条删掉 ->
 门禁逐条报出 :174 / :878 / :1650，RC=1；还原后 RC=0。
+
+---
+
+## 复验：--all 全量 98 组 / 0 失败 / 95 分钟（C28 纳入）（附录 JM）
+
+    python tools/run_audit_checks.py --all
+        ALL CHECKS PASSED   RC=0   ELAPSED=5726s（约 95 分钟）
+        完成的门禁组数 : 98
+
+    D1 Windows 全量构建 (VS2022/cmake)                    OK
+    D2 Linux 全量构建 (gcc/wsl)                           OK
+    D3 Linux sample 回归                                  OK
+    B  ZQlib 独立回归 x10 (ASan+LSan)                      OK（72 个测试，含 --with-slow）
+    C6 ZQCNN 门禁 UBSan 回归                               OK
+    C27 ConvertFromBGR / ConvertFromCompactNCHW 的返回值   OK
+    C28 ChangeSize 的每一份实现都必须拒掉负尺寸            OK
+
+组数 96 -> 98（C28 / C28b）。至此本会话新增的门禁**全部**纳入过全量复验。
+
+累计五次 `--all` 全量复验（JE / JG / JI / JK / JM），**全部 0 失败**，
+每次都覆盖 Windows 与 Linux 两边的全量构建与 sample 回归。
