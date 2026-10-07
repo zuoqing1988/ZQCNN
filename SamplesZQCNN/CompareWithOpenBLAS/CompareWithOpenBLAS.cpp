@@ -938,7 +938,9 @@ float _test_im2col(int in_H, int in_W, int filter_N, int filter_C, int stride_H,
 		int out_row_idx = 0;
 		for (out_h = 0; out_h < out_H; out_h++)
 		{
-			for (out_w = 0; out_w < out_w; out_w++)
+			// 审计修复 2026-10-07（附录 JT）：原为 out_w < out_w 恒假（输出从不写回），
+			// 且 out_row_idx 从不自增（写回时会整行重复第 0 行）。
+			for (out_w = 0; out_w < out_W; out_w++, out_row_idx++)
 			{
 				memcpy(out_firstPixel + out_h*out_widthStep + out_w*out_pixStep, matrix_C + out_row_idx*matrix_B_cols, sizeof(float)*matrix_B_cols);
 			}

@@ -73,7 +73,7 @@ namespace ZQ
 			if (net == 0 || in_width <= 0 || in_height <= 0)
 				return false;
 		
-			if (pixFmt == ZQ_PixelFormat::ZQ_PIXEL_FMT_RGB || ZQ_PixelFormat::ZQ_PIXEL_FMT_BGR)
+			if (pixFmt == ZQ_PixelFormat::ZQ_PIXEL_FMT_RGB || pixFmt == ZQ_PixelFormat::ZQ_PIXEL_FMT_BGR)
 			{
 				std::vector<unsigned char> buffer;
 				const unsigned char* img_ptr = 0;

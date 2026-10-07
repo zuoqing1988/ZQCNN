@@ -207,3 +207,50 @@ JQ 轮（sample 分配守卫）后，把同族类横向推广到未显式扫过�
 
 裸分配与文件输入两个大门类已无已知缺口。下轮方向应转语义类
 （如 NCHWC pad_type），不再继续扫形态类。
+
+---
+
+## 修复：选录区 7 项旧账清零 —— 4 真 bug + 3 阴性（附录 JT）
+
+### 起因
+
+审计报告「三、低危与正确性问题（选录）」7 个条目无状态标记，逐一代码核实
+（行号已漂移，按内容重定位）。
+
+### 修复（4 项）
+
+* **ZQ_FaceRecognizerSeetaFace.h CropImage 恒真**：`pixFmt == RGB || ZQ_PIXEL_FMT_BGR`
+  非零枚举常量使条件恒真，灰度图直调该公开虚函数会 3 倍宽行 memcpy 越读并
+  返回 true；补 `pixFmt ==`（全仓同型仅此 1 处）。
+* **CompareWithOpenBLAS `_test_im2col` 恒假**：`out_w < out_w` 输出从不写回 +
+  `out_row_idx` 不自增；修条件并补自增（参考实现照抄即错）。
+* **zq_gemm_32f_align_c.c `align128it` 9 行**：错名全仓无定义（潜在链接炸弹）。
+  9 行分三块、各叠第二层错：128bit 块仅拼写；**16f 块前缀也错（32f→16f）**；
+  **256bit 块宽度也错（128→256）**。第一版全局 replace_all 直接撞 C2084
+  （块 2/3 被并到块 1 符号）—— 按**兄弟行**逐块修才对。
+* **convertor.py `scales[0]`**：`scales` 全文件未定义，ResizeBilinear 与
+  ResizeNearestNeighbor 两分支 num_int==1 时必 NameError；改 `dst_size[0]`。
+
+### 核实阴性（3 项）
+
+softmax_nchwc = 附录 CK 门禁 15/15 覆盖；dropout 首元素×2 = 附录 CO 已修；
+bn_nchwc 符号 = 现行 .c/.h 一致且 D4 运行时覆盖。
+
+### 实测
+
+    wsl  make -j8 ZQCNN                          RC=0
+    cmake --build build_x64 --config Release -j8  RC=0
+    ast.parse(convertor.py) / 映射块重复目标静态检查  OK
+
+### 教训（已固化方向）
+
+一行里可能叠多层错误；修完一层必须重编译，下一层只有撞了才现身。
+批量 replace 撞重复定义时，正确响应不是回滚了事，而是**逐块按兄弟行重定目标**。
+
+### 变更文件
+
+    改 ZQlibFaceID/ZQ_FaceRecognizerSeetaFace.h          补 pixFmt ==（1 行）
+    改 SamplesZQCNN/CompareWithOpenBLAS/CompareWithOpenBLAS.cpp  恒假循环 + out_row_idx（2 行）
+    改 ZQ_GEMM/math/zq_gemm_32f_align_c.c               9 行映射宏分块重定目标
+    改 TensorFlow_to_ZQCNN/convertor.py                 scales[0] -> dst_size[0]（2 处）
+    改 audit_k3_20261001.md / 索引 / 本 changelog

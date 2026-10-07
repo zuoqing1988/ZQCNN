@@ -760,8 +760,10 @@ with tf.Session() as sess:
                 if num_int == 2:
                     dst_h,dst_w = dst_size
                 elif num_int == 1:
-                    dst_h = scales[0]
-                    dst_w = scales[0]
+                    # 审计修复 2026-10-07（附录 JT）：scales 全文件未定义，
+                    # 原写法一跑就是 NameError；应为取刚解出的 dst_size[0]。
+                    dst_h = dst_size[0]
+                    dst_w = dst_size[0]
                 line = 'UpSampling sample_type=bilinear name=' + n.name
                 node_input = n.input
                 in_num = len(node_input)
@@ -784,8 +786,10 @@ with tf.Session() as sess:
                 if num_int == 2:
                     dst_h,dst_w = dst_size
                 elif num_int == 1:
-                    dst_h = scales[0]
-                    dst_w = scales[0]
+                    # 审计修复 2026-10-07（附录 JT）：scales 全文件未定义，
+                    # 原写法一跑就是 NameError；应为取刚解出的 dst_size[0]。
+                    dst_h = dst_size[0]
+                    dst_w = dst_size[0]
                 line = 'UpSampling sample_type=nearest name=' + n.name
                 node_input = n.input
                 in_num = len(node_input)
