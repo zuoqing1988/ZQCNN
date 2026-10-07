@@ -55,3 +55,33 @@
     旧报告(21 重号) --check           报出全部重号                  RC=1
     C29 / C29b 接入验证               INTEGRATION OK（总门禁 80）
     check_text_encoding / line_endings / gates_runnable / gate_ids  全绿
+
+---
+
+## 补记：commit↔附录 双向核对（阴性）+ C29 纳入第六次全量复验（附录 JO）
+
+### commit ↔ 附录 双向核对（10/1 至今）
+
+顺着附录 JN 的活继续核对记录完整性：
+
+* 正向：10/1 以来消息以「附录 X」开头的提交共 **139 个**，报告里
+  「## 附录 X」标题缺失数 **0**（JG 是最后一个缺口，JN 已补）。
+* 反向：消息里没有「附录」字样的 274 个提交，逐条看都是
+  AGENTS.md 增补、全量回归验证提交（v71~v77）、旧式命名修复
+  （DN/DL/DJ 等，记录在对应编号下）—— 都有归属，无遗漏修复。
+
+**结论：10/1 至今的改动记录是完整的。**
+
+### C29 纳入第六次全量复验
+
+    python tools/run_audit_checks.py --all
+        ALL CHECKS PASSED   RC=0   ELAPSED=5804s（约 97 分钟）
+        完成的门禁组数 : 100
+
+    D1 / D2 / D3 双平台构建与 sample 回归                OK
+    B  ZQlib 独立回归 x10 (ASan+LSan)                     OK（72 个测试）
+    C6 ZQCNN 门禁 UBSan 回归                              OK
+    C27 / C28 / C29                                        OK
+
+组数 98 -> 100（C29 / C29b）。本会话新增的门禁至此**全部**纳入过全量复验。
+累计六次 --all 全量复验（JE / JG / JI / JK / JM / JO），全部 0 失败。
