@@ -4378,3 +4378,28 @@ SampleSphereFaceNetLoadFromBuffer / TrainMTCNNprocessor.h）。
 
 另外附录 JB 里我把这里**数成了 4 处**（实际 7 处，switch 有 7 个像素格式分支），
 本附录更正。
+
+---
+
+## 复验：--all 全量 96 组 / 0 失败 / 95 分钟（C27 纳入）（附录 JG）
+
+    python tools/run_audit_checks.py --all
+        ALL CHECKS PASSED   RC=0   ELAPSED=5685s（约 95 分钟）
+        完成的门禁组数 : 96
+
+上一轮全量（附录 JE）是 94 组；本轮把附录 JF 新增的 C27 / C27b 也纳入，
+变成 96 组。**所有既有门禁也都重跑了一遍。**
+
+    D1 Windows 全量构建 (VS2022/cmake)        OK
+    D2 Linux 全量构建 (gcc/wsl)               OK
+    D3 Linux sample 回归                      OK
+    B  ZQlib 独立回归 x10 (ASan+LSan)          OK（72 个测试，含 --with-slow）
+    C6 ZQCNN 门禁 UBSan 回归                  OK
+    C26 recognizer 递进流水线前必须 Init        OK
+    C27 ConvertFromBGR 的返回值必须被使用       OK
+
+即：附录 JF 那次改动（12 个源文件：ZQ_FaceRecognizerSphereFaceZQCNN.h 7 处 +
+SamplesZQCNN 11 个文件 16 处）**没有破坏任何既有行为**，Windows 与 Linux
+两边仍然都跑得通。
+
+操作记录：同样**没有**接管道（`> log 2>&1; rc=$?`），RC=0 是真的。
