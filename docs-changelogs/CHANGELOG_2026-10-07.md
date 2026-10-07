@@ -413,3 +413,20 @@ FaceGroup ✅（残余风险已记录不修）。
 
     改 ZQlibFaceID/ZQ_FaceDatabaseCompact.h    _load_feats 五重上界
     改 audit_k3_20261001.md / 索引 / AGENTS_LESSONS.md（第 93 条）/ 本 changelog
+
+---
+
+## 规则变更：停跑全量回归（用户指令）
+
+用户指令 2026-10-07：「不要再全量回归了」。已写入 AGENTS.md
+「全量回归与工具入口」节：
+
+- 不再例行发起 `run_audit_checks.py --all`（约 100 分钟）。
+- 改动验证改用定向检查：涉及的 check_xxx 逐个跑 + 受影响目标双平台构建
+  + 相关 zq_*_check 单测。
+- 历史：--all 共九次（JE~JX），前八次 0 失败，第九次靠它抓出
+  zq_facedb 的 H20 孪生 bug；入口保留可用，只是不再例行跑。
+
+### 变更文件
+
+    改 AGENTS.md    「全量回归与工具入口」节改写

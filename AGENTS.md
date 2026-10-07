@@ -152,8 +152,12 @@
 
 ## 全量回归与工具入口
 
-- **全量回归唯一入口**：`python tools/run_audit_checks.py --all`（约 100 分钟）。
-- **新改动必须纳入全量**；回归跑着期间不要改树。
+- **全量回归已停跑（用户指令 2026-10-07：「不要再全量回归了」）**。
+  不要再发起 `python tools/run_audit_checks.py --all`（约 100 分钟那种）。
+  改动验证改用**定向检查**：改动涉及的 `tools/check_xxx.py` 逐个跑 +
+  受影响目标的 Windows/Linux 构建 + 相关 zq_*_check 单测。
+- 历史记录：--all 共跑过九次（JE~JX），前八次 0 失败，第九次（JX）靠它
+  抓出了 zq_facedb 的 H20 孪生 bug —— 入口保留可用，只是不再例行发起。
 - **ZQlib 独立回归**：`python tools/run_zqlib_checks.py`（必须从 Windows Python 调）。
 - **报告/附录完整性**：`python tools/build_audit_index.py --check`（重号即失败）。
 
