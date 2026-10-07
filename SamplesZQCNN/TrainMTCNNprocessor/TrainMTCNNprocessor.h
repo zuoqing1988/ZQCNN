@@ -459,11 +459,23 @@ namespace ZQ
 				float IOU = maxX * maxY;
 				float area2 = (all_boxes[i * 4 + 2] - all_boxes[i * 4])
 					*(all_boxes[i * 4 + 3] - all_boxes[i * 4 + 1]);
+				// 审计修复 2026-10-07（附录 JP）：分母兜 0。
+				// 与 ZQ_CNN_BBoxUtils.h 的 _nms（附录 IJ.2）同一类：
+				// 标注里 x1==x2 / y1==y2 的退化框让面积为 0，
+				// Union 的 `area1 + area2 - IOU`、Min 的 `__min(area1, area2)`
+				// 都可能为 0 —— 0/0 得 NaN，NaN 经 __max 传播后
+				// `iou > threshold` 恒假。本来只是训练采样器，传进来的是人工标注、
+				// 实际几乎不会触发；但 _nms 已经按这个口径修过，
+				// 同一公式两处写法就该一致 —— 留两种写法就是下一个例外。
 				if (!mode.compare("Union"))
-					IOU = IOU / (area1 + area2 - IOU);
+				{
+					float denom = area1 + area2 - IOU;
+					IOU = denom > 0 ? IOU / denom : 0;
+				}
 				else if (!mode.compare("Min"))
 				{
-					IOU = IOU / __min(area1, area2);
+					float denom = __min(area1, area2);
+					IOU = denom > 0 ? IOU / denom : 0;
 				}
 				max_iou = __max(max_iou, IOU);
 			}

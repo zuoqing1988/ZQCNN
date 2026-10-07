@@ -85,3 +85,36 @@
 
 组数 98 -> 100（C29 / C29b）。本会话新增的门禁至此**全部**纳入过全量复验。
 累计六次 --all 全量复验（JE / JG / JI / JK / JM / JO），全部 0 失败。
+
+---
+
+## 修复：两处 IoU 分母无守护除法（附录 JP）
+
+### 变更文件
+
+    改 SamplesZQCNN/TrainMTCNNprocessor/TrainMTCNNprocessor.h
+    改 ZQCNN/ZQ_CNN_MTCNN_ncnn.h
+
+### 起因
+
+按心跳清单审 TrainMTCNNprocessor.h（1264 行）。整体**阴性**：解析器守卫齐全
+（split_num % 4 == 1、len > 0、缓冲区 len+1、_IOU 下标有界），唯一命中的是
+_IOU 的分母无守护 —— Union 的 `area1 + area2 - IOU` 与 Min 的 `__min(area1,
+area2)` 在退化框（x1==x2）下为 0，0/0 得 NaN。与 ZQ_CNN_BBoxUtils.h 的
+_nms（附录 IJ.2 已修同一公式）同一类。
+
+横向扫描（第 76 条）又命中 ZQ_CNN_MTCNN_ncnn.h:152 —— 检测路径上的 ncnn
+变体，正是附录 II.6 记的那个「五份 MTCNN 里已知会漏改」的变体。
+ZQ_CNN_VideoFaceDetection_Interface.h:279 是注掉的参考代码，不动。
+
+### 修法与实测
+
+两处同型：`float denom = ...; IOU = denom > 0 ? IOU / denom : 0;`
+    wsl make -j8                  0 error
+    cmake --build build_x64       RC=0
+
+### 注意事项
+
+TrainMTCNNprocessor 吃的是人工标注，实际触发概率极低 —— 修它的理由是
+「与 _nms 同公式就该同写法」，不留两种口径。MTCNN_ncnn.h 当前零 sample
+include，但它是公共头且在检测路径上、又是已知漏改体质，顺手补上。

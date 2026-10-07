@@ -148,11 +148,17 @@ namespace ZQ
 						IOU = maxX * maxY;
 						float area1 = boundingBox[num].area;
 						float area2 = boundingBox[order].area;
+						// 审计修复 2026-10-07（附录 JP）：分母兜 0
+
 						if (!modelname.compare("Union"))
-							IOU = IOU / (area1 + area2 - IOU);
+						{
+							float denom = area1 + area2 - IOU;
+							IOU = denom > 0 ? IOU / denom : 0;
+						}
 						else if (!modelname.compare("Min"))
 						{
-							IOU = IOU / __min(area1, area2);
+							float denom = __min(area1, area2);
+							IOU = denom > 0 ? IOU / denom : 0;
 						}
 						if (IOU > overlap_threshold)
 						{
