@@ -317,6 +317,14 @@ namespace ZQ
 				while (len > 0 && (line[len - 1] == '\n' || line[len - 1] == '\r'))
 					line[--len] = '\0';
 				names.push_back(std::string(line));
+				// 附录 JY：行缓冲本身有界（199B），但行数无界 —— 超大畸形
+				// names 文件会先撑爆 vector 再到 LoadFromFile 的人数比对处才拒。
+				// 与 _load_feats 的 person_num 上界（100 万）对齐。
+				if (names.size() > 1000000)
+				{
+					fclose(in);
+					return false;
+				}
 			}
 
 			fclose(in);

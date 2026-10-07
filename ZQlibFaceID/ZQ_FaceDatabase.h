@@ -451,6 +451,14 @@ namespace ZQ
 				while (len > 0 && (line[len - 1] == '\n' || line[len - 1] == '\r'))
 					line[--len] = '\0';
 				names.push_back(std::string(line));
+				// 附录 JY：与 ZQ_FaceDatabaseCompact::_load_names 同型补齐 ——
+				// 行数上界对齐加载器的人数上界（1000 万），超大畸形文件在
+				// vector 撑爆前即被拒。
+				if (names.size() > 10000000)
+				{
+					fclose(in);
+					return false;
+				}
 			}
 			
 			fclose(in);

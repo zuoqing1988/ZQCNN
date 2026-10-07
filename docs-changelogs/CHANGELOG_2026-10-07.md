@@ -449,3 +449,30 @@ FaceGroup ✅（残余风险已记录不修）。
 
 结论：JX（ZQ_FaceDatabaseCompact 五重上界）按新口径完成闭环，
 无需全量回归。
+
+---
+
+## 修复：两份人脸库加载器 names 行数上界（附录 JY）
+
+### 起因
+
+JX 修完 `_load_feats` 后同文件续挖 `_load_names`：行缓冲有界（199B）但
+**行数无界**，超大畸形 names 文件先撑爆 vector 才轮到人数比对拒绝。
+
+### 修法
+
+* `ZQ_FaceDatabaseCompact.h`：行数 > 1,000,000 拒（对齐本文件人数上界）
+* `ZQ_FaceDatabase.h`：行数 > 10,000,000 拒（对齐本文件的 1e7）
+* 两文件上界故意不同 —— 各自对齐本文件 feats 侧上界，不强行拉平。
+
+### 实测
+
+    run_zqlib_checks.py --with-slow zq_facedb   RC=0（gcc+ASan 重编两头并 PASS）
+    check_twin_sync.py                          OK（C24 只盯 MTCNN 副本）
+    cmake --build build_x64 --target SampleFaceDatabaseOpenCV   RC=0
+
+### 变更文件
+
+    改 ZQlibFaceID/ZQ_FaceDatabaseCompact.h    _load_names 行数上界 1e6
+    改 ZQlibFaceID/ZQ_FaceDatabase.h           _load_names 行数上界 1e7
+    改 audit_k3_20261001.md / 索引 / 本 changelog
