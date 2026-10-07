@@ -798,7 +798,13 @@ namespace ZQ
 						nchw_raw[i] = 0;
 				}
 			}
-			filters->ConvertFromCompactNCHW(&nchw_raw[0], filters->GetN(), filters->GetC(), filters->GetH(), filters->GetW());
+			// 审计修复 2026-10-07（附录 JH）：原来丢弃了返回值。
+			// 它在 data==0 或 ChangeSize（**分配**）失败时返回 false，
+			// 失败之后张量尺寸与请求的不一致，而调用方按"成功"继续往下走。
+			if (!filters->ConvertFromCompactNCHW(&nchw_raw[0], filters->GetN(), filters->GetC(), filters->GetH(), filters->GetW()))
+			{
+				return false;
+			}
 			if (with_bias)
 			{
 				int dst_len = bias->GetN() * bias->GetH() * bias->GetW() * bias->GetC();
@@ -815,7 +821,10 @@ namespace ZQ
 							nchw_raw[i] = 0;
 					}
 				}
-				bias->ConvertFromCompactNCHW(&nchw_raw[0], bias->GetN(), bias->GetC(), bias->GetH(), bias->GetW());
+				if (!bias->ConvertFromCompactNCHW(&nchw_raw[0], bias->GetN(), bias->GetC(), bias->GetH(), bias->GetW()))
+				{
+					return false;
+				}
 			}
 			return true;
 		}
@@ -864,7 +873,10 @@ namespace ZQ
 				if (fabs(nchw_raw[i]) < ignore_small_value)
 					nchw_raw[i] = 0;
 			}
-			filters->ConvertFromCompactNCHW(&nchw_raw[0], filters->GetN(), filters->GetC(), filters->GetH(), filters->GetW());
+			if (!filters->ConvertFromCompactNCHW(&nchw_raw[0], filters->GetN(), filters->GetC(), filters->GetH(), filters->GetW()))
+			{
+				return false;
+			}
 			buffer += dst_len_in_bytes;
 			buffer_len -= dst_len_in_bytes;
 			readed_length_in_bytes += dst_len_in_bytes;
@@ -887,7 +899,10 @@ namespace ZQ
 					if (fabs(nchw_raw[i]) < ignore_small_value)
 						nchw_raw[i] = 0;
 				}
-				bias->ConvertFromCompactNCHW(&nchw_raw[0], bias->GetN(), bias->GetC(), bias->GetH(), bias->GetW());
+				if (!bias->ConvertFromCompactNCHW(&nchw_raw[0], bias->GetN(), bias->GetC(), bias->GetH(), bias->GetW()))
+				{
+					return false;
+				}
 				buffer += dst_len_in_bytes;
 				buffer_len -= dst_len_in_bytes;
 				readed_length_in_bytes += dst_len_in_bytes;
@@ -1387,7 +1402,10 @@ namespace ZQ
 						nchw_raw[i] = 0;
 				}
 			}
-			filters->ConvertFromCompactNCHW(&nchw_raw[0], filters->GetN(), filters->GetC(), filters->GetH(), filters->GetW());
+			if (!filters->ConvertFromCompactNCHW(&nchw_raw[0], filters->GetN(), filters->GetC(), filters->GetH(), filters->GetW()))
+			{
+				return false;
+			}
 			if (with_bias)
 			{
 				int dst_len = bias->GetN() * bias->GetH() * bias->GetW() * bias->GetC();
@@ -1404,7 +1422,10 @@ namespace ZQ
 							nchw_raw[i] = 0;
 					}
 				}
-				bias->ConvertFromCompactNCHW(&nchw_raw[0], bias->GetN(), bias->GetC(), bias->GetH(), bias->GetW());
+				if (!bias->ConvertFromCompactNCHW(&nchw_raw[0], bias->GetN(), bias->GetC(), bias->GetH(), bias->GetW()))
+				{
+					return false;
+				}
 			}
 			return true;
 		}
@@ -1452,7 +1473,10 @@ namespace ZQ
 				if (fabs(nchw_raw[i]) < ignore_small_value)
 					nchw_raw[i] = 0;
 			}
-			filters->ConvertFromCompactNCHW(&nchw_raw[0], filters->GetN(), filters->GetC(), filters->GetH(), filters->GetW());
+			if (!filters->ConvertFromCompactNCHW(&nchw_raw[0], filters->GetN(), filters->GetC(), filters->GetH(), filters->GetW()))
+			{
+				return false;
+			}
 			buffer += dst_len_in_bytes;
 			buffer_len -= dst_len_in_bytes;
 			readed_length_in_bytes += dst_len_in_bytes;
@@ -1471,7 +1495,10 @@ namespace ZQ
 					if (fabs(nchw_raw[i]) < ignore_small_value)
 						nchw_raw[i] = 0;
 				}
-				bias->ConvertFromCompactNCHW(&nchw_raw[0], bias->GetN(), bias->GetC(), bias->GetH(), bias->GetW());
+				if (!bias->ConvertFromCompactNCHW(&nchw_raw[0], bias->GetN(), bias->GetC(), bias->GetH(), bias->GetW()))
+				{
+					return false;
+				}
 				buffer += dst_len_in_bytes;
 				buffer_len -= dst_len_in_bytes;
 				readed_length_in_bytes += dst_len_in_bytes;
@@ -2025,7 +2052,10 @@ namespace ZQ
 						nchw_raw[i] = 0;
 				}
 			}
-			filters->ConvertFromCompactNCHW(&nchw_raw[0], filters->GetN(), filters->GetC(), filters->GetH(), filters->GetW());
+			if (!filters->ConvertFromCompactNCHW(&nchw_raw[0], filters->GetN(), filters->GetC(), filters->GetH(), filters->GetW()))
+			{
+				return false;
+			}
 			if (with_bias)
 			{
 				int dst_len = bias->GetN() * bias->GetH() * bias->GetW() * bias->GetC();
@@ -2042,7 +2072,10 @@ namespace ZQ
 							nchw_raw[i] = 0;
 					}
 				}
-				bias->ConvertFromCompactNCHW(&nchw_raw[0], bias->GetN(), bias->GetC(), bias->GetH(), bias->GetW());
+				if (!bias->ConvertFromCompactNCHW(&nchw_raw[0], bias->GetN(), bias->GetC(), bias->GetH(), bias->GetW()))
+				{
+					return false;
+				}
 			}
 			return true;
 		}
@@ -2091,7 +2124,10 @@ namespace ZQ
 				if (fabs(nchw_raw[i]) < ignore_small_value)
 					nchw_raw[i] = 0;
 			}
-			filters->ConvertFromCompactNCHW(&nchw_raw[0], filters->GetN(), filters->GetC(), filters->GetH(), filters->GetW());
+			if (!filters->ConvertFromCompactNCHW(&nchw_raw[0], filters->GetN(), filters->GetC(), filters->GetH(), filters->GetW()))
+			{
+				return false;
+			}
 			buffer += dst_len_in_bytes;
 			buffer_len -= dst_len_in_bytes;
 			readed_length_in_bytes += dst_len_in_bytes;
@@ -2114,7 +2150,10 @@ namespace ZQ
 					if (fabs(nchw_raw[i]) < ignore_small_value)
 						nchw_raw[i] = 0;
 				}
-				bias->ConvertFromCompactNCHW(&nchw_raw[0], bias->GetN(), bias->GetC(), bias->GetH(), bias->GetW());
+				if (!bias->ConvertFromCompactNCHW(&nchw_raw[0], bias->GetN(), bias->GetC(), bias->GetH(), bias->GetW()))
+				{
+					return false;
+				}
 				buffer += dst_len_in_bytes;
 				buffer_len -= dst_len_in_bytes;
 				readed_length_in_bytes += dst_len_in_bytes;
@@ -2381,10 +2420,22 @@ namespace ZQ
 							nchw_raw[i] = 0;
 					}
 				}
-				mean->ConvertFromCompactNCHW(&nchw_raw[0], N, C, H, W);
-				var->ConvertFromCompactNCHW(&nchw_raw[0] + dst_len, N, C, H, W);
-				scale->ConvertFromCompactNCHW(&nchw_raw[0] + dst_len * 2, N, C, H, W);
-				bias->ConvertFromCompactNCHW(&nchw_raw[0] + dst_len * 3, N, C, H, W);
+				if (!mean->ConvertFromCompactNCHW(&nchw_raw[0], N, C, H, W))
+				{
+					return false;
+				}
+				if (!var->ConvertFromCompactNCHW(&nchw_raw[0] + dst_len, N, C, H, W))
+				{
+					return false;
+				}
+				if (!scale->ConvertFromCompactNCHW(&nchw_raw[0] + dst_len * 2, N, C, H, W))
+				{
+					return false;
+				}
+				if (!bias->ConvertFromCompactNCHW(&nchw_raw[0] + dst_len * 3, N, C, H, W))
+				{
+					return false;
+				}
 				return ZQ_CNN_Forward_SSEUtils::BatchNormScaleBias_Compute_b_a(*b, *a, *mean, *var, *scale, *bias, eps);
 			}
 			else
@@ -2400,9 +2451,18 @@ namespace ZQ
 							nchw_raw[i] = 0;
 					}
 				}
-				mean->ConvertFromCompactNCHW(&nchw_raw[0], N, C, H, W);
-				var->ConvertFromCompactNCHW(&nchw_raw[0] + dst_len, N, C, H, W);
-				scale->ConvertFromCompactNCHW(&nchw_raw[0] + dst_len * 2, N, C, H, W);
+				if (!mean->ConvertFromCompactNCHW(&nchw_raw[0], N, C, H, W))
+				{
+					return false;
+				}
+				if (!var->ConvertFromCompactNCHW(&nchw_raw[0] + dst_len, N, C, H, W))
+				{
+					return false;
+				}
+				if (!scale->ConvertFromCompactNCHW(&nchw_raw[0] + dst_len * 2, N, C, H, W))
+				{
+					return false;
+				}
 				return ZQ_CNN_Forward_SSEUtils::BatchNormScale_Compute_b_a(*b, *a, *mean, *var, *scale, eps);
 			}
 			
@@ -2461,10 +2521,22 @@ namespace ZQ
 					if (fabs(nchw_raw[i]) < ignore_small_value)
 						nchw_raw[i] = 0;
 				}
-				mean->ConvertFromCompactNCHW(&nchw_raw[0], N, C, H, W);
-				var->ConvertFromCompactNCHW(&nchw_raw[0] + dst_len, N, C, H, W);
-				scale->ConvertFromCompactNCHW(&nchw_raw[0] + dst_len * 2, N, C, H, W);
-				bias->ConvertFromCompactNCHW(&nchw_raw[0] + dst_len * 3, N, C, H, W);
+				if (!mean->ConvertFromCompactNCHW(&nchw_raw[0], N, C, H, W))
+				{
+					return false;
+				}
+				if (!var->ConvertFromCompactNCHW(&nchw_raw[0] + dst_len, N, C, H, W))
+				{
+					return false;
+				}
+				if (!scale->ConvertFromCompactNCHW(&nchw_raw[0] + dst_len * 2, N, C, H, W))
+				{
+					return false;
+				}
+				if (!bias->ConvertFromCompactNCHW(&nchw_raw[0] + dst_len * 3, N, C, H, W))
+				{
+					return false;
+				}
 				return ZQ_CNN_Forward_SSEUtils::BatchNormScaleBias_Compute_b_a(*b, *a, *mean, *var, *scale, *bias, eps);
 			}
 			else
@@ -2479,9 +2551,18 @@ namespace ZQ
 					if (fabs(nchw_raw[i]) < ignore_small_value)
 						nchw_raw[i] = 0;
 				}
-				mean->ConvertFromCompactNCHW(&nchw_raw[0], N, C, H, W);
-				var->ConvertFromCompactNCHW(&nchw_raw[0] + dst_len, N, C, H, W);
-				scale->ConvertFromCompactNCHW(&nchw_raw[0] + dst_len * 2, N, C, H, W);
+				if (!mean->ConvertFromCompactNCHW(&nchw_raw[0], N, C, H, W))
+				{
+					return false;
+				}
+				if (!var->ConvertFromCompactNCHW(&nchw_raw[0] + dst_len, N, C, H, W))
+				{
+					return false;
+				}
+				if (!scale->ConvertFromCompactNCHW(&nchw_raw[0] + dst_len * 2, N, C, H, W))
+				{
+					return false;
+				}
 				return ZQ_CNN_Forward_SSEUtils::BatchNormScale_Compute_b_a(*b, *a, *mean, *var, *scale, eps);
 			}
 
@@ -2702,8 +2783,14 @@ namespace ZQ
 						nchw_raw[i] = 0;
 				}
 			}
-			mean->ConvertFromCompactNCHW(&nchw_raw[0], N, C, H, W);
-			var->ConvertFromCompactNCHW(&nchw_raw[0] + dst_len, N, C, H, W);
+			if (!mean->ConvertFromCompactNCHW(&nchw_raw[0], N, C, H, W))
+			{
+				return false;
+			}
+			if (!var->ConvertFromCompactNCHW(&nchw_raw[0] + dst_len, N, C, H, W))
+			{
+				return false;
+			}
 			return ZQ_CNN_Forward_SSEUtils::BatchNorm_Compute_b_a(*b, *a, *mean, *var, eps);
 		}
 
@@ -2744,8 +2831,14 @@ namespace ZQ
 				if (fabs(nchw_raw[i]) < ignore_small_value)
 					nchw_raw[i] = 0;
 			}
-			mean->ConvertFromCompactNCHW(&nchw_raw[0], N, C, H, W);
-			var->ConvertFromCompactNCHW(&nchw_raw[0] + dst_len, N, C, H, W);
+			if (!mean->ConvertFromCompactNCHW(&nchw_raw[0], N, C, H, W))
+			{
+				return false;
+			}
+			if (!var->ConvertFromCompactNCHW(&nchw_raw[0] + dst_len, N, C, H, W))
+			{
+				return false;
+			}
 			return ZQ_CNN_Forward_SSEUtils::BatchNorm_Compute_b_a(*b, *a, *mean, *var, eps);
 		}
 
@@ -2946,7 +3039,10 @@ namespace ZQ
 						nchw_raw[i] = 0;
 				}
 			}
-			scale->ConvertFromCompactNCHW(&nchw_raw[0], scale->GetN(), scale->GetC(), scale->GetH(), scale->GetW());
+			if (!scale->ConvertFromCompactNCHW(&nchw_raw[0], scale->GetN(), scale->GetC(), scale->GetH(), scale->GetW()))
+			{
+				return false;
+			}
 			if (with_bias)
 			{
 				int dst_len = bias->GetN() * bias->GetH() * bias->GetW() * bias->GetC();
@@ -2963,7 +3059,10 @@ namespace ZQ
 							nchw_raw[i] = 0;
 					}
 				}
-				bias->ConvertFromCompactNCHW(&nchw_raw[0], bias->GetN(), bias->GetC(), bias->GetH(), bias->GetW());
+				if (!bias->ConvertFromCompactNCHW(&nchw_raw[0], bias->GetN(), bias->GetC(), bias->GetH(), bias->GetW()))
+				{
+					return false;
+				}
 			}
 			return true;
 		}
@@ -3011,7 +3110,10 @@ namespace ZQ
 				if (fabs(nchw_raw[i]) < ignore_small_value)
 					nchw_raw[i] = 0;
 			}
-			scale->ConvertFromCompactNCHW(&nchw_raw[0], scale->GetN(), scale->GetC(), scale->GetH(), scale->GetW());
+			if (!scale->ConvertFromCompactNCHW(&nchw_raw[0], scale->GetN(), scale->GetC(), scale->GetH(), scale->GetW()))
+			{
+				return false;
+			}
 			buffer += dst_len_in_bytes;
 			buffer_len -= dst_len_in_bytes;
 			readed_length_in_bytes += dst_len_in_bytes;
@@ -3030,7 +3132,10 @@ namespace ZQ
 					if (fabs(nchw_raw[i]) < ignore_small_value)
 						nchw_raw[i] = 0;
 				}
-				bias->ConvertFromCompactNCHW(&nchw_raw[0], bias->GetN(), bias->GetC(), bias->GetH(), bias->GetW());
+				if (!bias->ConvertFromCompactNCHW(&nchw_raw[0], bias->GetN(), bias->GetC(), bias->GetH(), bias->GetW()))
+				{
+					return false;
+				}
 				buffer += dst_len_in_bytes;
 				buffer_len -= dst_len_in_bytes;
 				readed_length_in_bytes += dst_len_in_bytes;
@@ -3194,7 +3299,10 @@ namespace ZQ
 						nchw_raw[i] = 0;
 				}
 			}
-			bias->ConvertFromCompactNCHW(&nchw_raw[0], bias->GetN(), bias->GetC(), bias->GetH(), bias->GetW());
+			if (!bias->ConvertFromCompactNCHW(&nchw_raw[0], bias->GetN(), bias->GetC(), bias->GetH(), bias->GetW()))
+			{
+				return false;
+			}
 			return true;
 		}
 
@@ -3228,7 +3336,10 @@ namespace ZQ
 				if (fabs(nchw_raw[i]) < ignore_small_value)
 					nchw_raw[i] = 0;
 			}
-			bias->ConvertFromCompactNCHW(&nchw_raw[0], bias->GetN(), bias->GetC(), bias->GetH(), bias->GetW());
+			if (!bias->ConvertFromCompactNCHW(&nchw_raw[0], bias->GetN(), bias->GetC(), bias->GetH(), bias->GetW()))
+			{
+				return false;
+			}
 			buffer += dst_len_in_bytes;
 			buffer_len -= dst_len_in_bytes;
 			readed_length_in_bytes += dst_len_in_bytes;
@@ -3392,7 +3503,10 @@ namespace ZQ
 						nchw_raw[i] = 0;
 				}
 			}
-			slope->ConvertFromCompactNCHW(&nchw_raw[0], slope->GetN(), slope->GetC(), slope->GetH(), slope->GetW());
+			if (!slope->ConvertFromCompactNCHW(&nchw_raw[0], slope->GetN(), slope->GetC(), slope->GetH(), slope->GetW()))
+			{
+				return false;
+			}
 			return true;
 		}
 
@@ -3429,7 +3543,10 @@ namespace ZQ
 				if (fabs(nchw_raw[i]) < ignore_small_value)
 					nchw_raw[i] = 0;
 			}
-			slope->ConvertFromCompactNCHW(&nchw_raw[0], slope->GetN(), slope->GetC(), slope->GetH(), slope->GetW());
+			if (!slope->ConvertFromCompactNCHW(&nchw_raw[0], slope->GetN(), slope->GetC(), slope->GetH(), slope->GetW()))
+			{
+				return false;
+			}
 			readed_length_in_bytes += dst_len_in_bytes;
 			return true;
 		}
@@ -4368,7 +4485,10 @@ namespace ZQ
 						nchw_raw[i] = 0;
 				}
 			}
-			filters->ConvertFromCompactNCHW(&nchw_raw[0], filters->GetN(), filters->GetC(), filters->GetH(), filters->GetW());
+			if (!filters->ConvertFromCompactNCHW(&nchw_raw[0], filters->GetN(), filters->GetC(), filters->GetH(), filters->GetW()))
+			{
+				return false;
+			}
 			if (with_bias)
 			{
 				int dst_len = bias->GetN() * bias->GetH() * bias->GetW() * bias->GetC();
@@ -4387,7 +4507,10 @@ namespace ZQ
 							nchw_raw[i] = 0;
 					}
 				}
-				bias->ConvertFromCompactNCHW(&nchw_raw[0], bias->GetN(), bias->GetC(), bias->GetH(), bias->GetW());
+				if (!bias->ConvertFromCompactNCHW(&nchw_raw[0], bias->GetN(), bias->GetC(), bias->GetH(), bias->GetW()))
+				{
+					return false;
+				}
 			}
 			return true;
 		}
@@ -4435,7 +4558,10 @@ namespace ZQ
 				if (fabs(nchw_raw[i]) < ignore_small_value)
 					nchw_raw[i] = 0;
 			}
-			filters->ConvertFromCompactNCHW(&nchw_raw[0], filters->GetN(), filters->GetC(), filters->GetH(), filters->GetW());
+			if (!filters->ConvertFromCompactNCHW(&nchw_raw[0], filters->GetN(), filters->GetC(), filters->GetH(), filters->GetW()))
+			{
+				return false;
+			}
 			buffer += dst_len_in_bytes;
 			buffer_len -= dst_len_in_bytes;
 			readed_length_in_bytes += dst_len_in_bytes;
@@ -4454,7 +4580,10 @@ namespace ZQ
 					if (fabs(nchw_raw[i]) < ignore_small_value)
 						nchw_raw[i] = 0;
 				}
-				bias->ConvertFromCompactNCHW((const float*)buffer, bias->GetN(), bias->GetC(), bias->GetH(), bias->GetW());
+				if (!bias->ConvertFromCompactNCHW((const float*)buffer, bias->GetN(), bias->GetC(), bias->GetH(), bias->GetW()))
+				{
+					return false;
+				}
 				buffer += dst_len_in_bytes;
 				buffer_len -= dst_len_in_bytes;
 				readed_length_in_bytes += dst_len_in_bytes;
@@ -5177,7 +5306,10 @@ namespace ZQ
 							nchw_raw[i] = 0;
 					}
 				}
-				fw_xc_I->ConvertFromCompactNCHW(&nchw_raw[0], fw_xc_I->GetN(), fw_xc_I->GetC(), fw_xc_I->GetH(), fw_xc_I->GetW());
+				if (!fw_xc_I->ConvertFromCompactNCHW(&nchw_raw[0], fw_xc_I->GetN(), fw_xc_I->GetC(), fw_xc_I->GetH(), fw_xc_I->GetW()))
+				{
+					return false;
+				}
 				
 				dst_len = fw_xc_F->GetN() * fw_xc_F->GetH() * fw_xc_F->GetW() * fw_xc_F->GetC();
 				if (dst_len <= 0)
@@ -5194,7 +5326,10 @@ namespace ZQ
 							nchw_raw[i] = 0;
 					}
 				}
-				fw_xc_F->ConvertFromCompactNCHW(&nchw_raw[0], fw_xc_F->GetN(), fw_xc_F->GetC(), fw_xc_F->GetH(), fw_xc_F->GetW());
+				if (!fw_xc_F->ConvertFromCompactNCHW(&nchw_raw[0], fw_xc_F->GetN(), fw_xc_F->GetC(), fw_xc_F->GetH(), fw_xc_F->GetW()))
+				{
+					return false;
+				}
 
 				dst_len = fw_xc_O->GetN() * fw_xc_O->GetH() * fw_xc_O->GetW() * fw_xc_O->GetC();
 				if (dst_len <= 0)
@@ -5211,7 +5346,10 @@ namespace ZQ
 							nchw_raw[i] = 0;
 					}
 				}
-				fw_xc_O->ConvertFromCompactNCHW(&nchw_raw[0], fw_xc_O->GetN(), fw_xc_O->GetC(), fw_xc_O->GetH(), fw_xc_O->GetW());
+				if (!fw_xc_O->ConvertFromCompactNCHW(&nchw_raw[0], fw_xc_O->GetN(), fw_xc_O->GetC(), fw_xc_O->GetH(), fw_xc_O->GetW()))
+				{
+					return false;
+				}
 
 				dst_len = fw_xc_G->GetN() * fw_xc_G->GetH() * fw_xc_G->GetW() * fw_xc_G->GetC();
 				if (dst_len <= 0)
@@ -5228,7 +5366,10 @@ namespace ZQ
 							nchw_raw[i] = 0;
 					}
 				}
-				fw_xc_G->ConvertFromCompactNCHW(&nchw_raw[0], fw_xc_G->GetN(), fw_xc_G->GetC(), fw_xc_G->GetH(), fw_xc_G->GetW());
+				if (!fw_xc_G->ConvertFromCompactNCHW(&nchw_raw[0], fw_xc_G->GetN(), fw_xc_G->GetC(), fw_xc_G->GetH(), fw_xc_G->GetW()))
+				{
+					return false;
+				}
 			}
 
 			if (bw_dir)
@@ -5248,7 +5389,10 @@ namespace ZQ
 							nchw_raw[i] = 0;
 					}
 				}
-				bw_xc_I->ConvertFromCompactNCHW(&nchw_raw[0], bw_xc_I->GetN(), bw_xc_I->GetC(), bw_xc_I->GetH(), bw_xc_I->GetW());
+				if (!bw_xc_I->ConvertFromCompactNCHW(&nchw_raw[0], bw_xc_I->GetN(), bw_xc_I->GetC(), bw_xc_I->GetH(), bw_xc_I->GetW()))
+				{
+					return false;
+				}
 
 				dst_len = bw_xc_F->GetN() * bw_xc_F->GetH() * bw_xc_F->GetW() * bw_xc_F->GetC();
 				if (dst_len <= 0)
@@ -5265,7 +5409,10 @@ namespace ZQ
 							nchw_raw[i] = 0;
 					}
 				}
-				bw_xc_F->ConvertFromCompactNCHW(&nchw_raw[0], bw_xc_F->GetN(), bw_xc_F->GetC(), bw_xc_F->GetH(), bw_xc_F->GetW());
+				if (!bw_xc_F->ConvertFromCompactNCHW(&nchw_raw[0], bw_xc_F->GetN(), bw_xc_F->GetC(), bw_xc_F->GetH(), bw_xc_F->GetW()))
+				{
+					return false;
+				}
 
 				dst_len = bw_xc_O->GetN() * bw_xc_O->GetH() * bw_xc_O->GetW() * bw_xc_O->GetC();
 				if (dst_len <= 0)
@@ -5282,7 +5429,10 @@ namespace ZQ
 							nchw_raw[i] = 0;
 					}
 				}
-				bw_xc_O->ConvertFromCompactNCHW(&nchw_raw[0], bw_xc_O->GetN(), bw_xc_O->GetC(), bw_xc_O->GetH(), bw_xc_O->GetW());
+				if (!bw_xc_O->ConvertFromCompactNCHW(&nchw_raw[0], bw_xc_O->GetN(), bw_xc_O->GetC(), bw_xc_O->GetH(), bw_xc_O->GetW()))
+				{
+					return false;
+				}
 
 				dst_len = bw_xc_G->GetN() * bw_xc_G->GetH() * bw_xc_G->GetW() * bw_xc_G->GetC();
 				if (dst_len <= 0)
@@ -5299,7 +5449,10 @@ namespace ZQ
 							nchw_raw[i] = 0;
 					}
 				}
-				bw_xc_G->ConvertFromCompactNCHW(&nchw_raw[0], bw_xc_G->GetN(), bw_xc_G->GetC(), bw_xc_G->GetH(), bw_xc_G->GetW());
+				if (!bw_xc_G->ConvertFromCompactNCHW(&nchw_raw[0], bw_xc_G->GetN(), bw_xc_G->GetC(), bw_xc_G->GetH(), bw_xc_G->GetW()))
+				{
+					return false;
+				}
 			}
 
 			if (fw_dir)
@@ -5319,7 +5472,10 @@ namespace ZQ
 							nchw_raw[i] = 0;
 					}
 				}
-				fw_b_I->ConvertFromCompactNCHW(&nchw_raw[0], fw_b_I->GetN(), fw_b_I->GetC(), fw_b_I->GetH(), fw_b_I->GetW());
+				if (!fw_b_I->ConvertFromCompactNCHW(&nchw_raw[0], fw_b_I->GetN(), fw_b_I->GetC(), fw_b_I->GetH(), fw_b_I->GetW()))
+				{
+					return false;
+				}
 
 				dst_len = fw_b_F->GetN() * fw_b_F->GetH() * fw_b_F->GetW() * fw_b_F->GetC();
 				if (dst_len <= 0)
@@ -5336,7 +5492,10 @@ namespace ZQ
 							nchw_raw[i] = 0;
 					}
 				}
-				fw_b_F->ConvertFromCompactNCHW(&nchw_raw[0], fw_b_F->GetN(), fw_b_F->GetC(), fw_b_F->GetH(), fw_b_F->GetW());
+				if (!fw_b_F->ConvertFromCompactNCHW(&nchw_raw[0], fw_b_F->GetN(), fw_b_F->GetC(), fw_b_F->GetH(), fw_b_F->GetW()))
+				{
+					return false;
+				}
 
 				dst_len = fw_b_O->GetN() * fw_b_O->GetH() * fw_b_O->GetW() * fw_b_O->GetC();
 				if (dst_len <= 0)
@@ -5353,7 +5512,10 @@ namespace ZQ
 							nchw_raw[i] = 0;
 					}
 				}
-				fw_b_O->ConvertFromCompactNCHW(&nchw_raw[0], fw_b_O->GetN(), fw_b_O->GetC(), fw_b_O->GetH(), fw_b_O->GetW());
+				if (!fw_b_O->ConvertFromCompactNCHW(&nchw_raw[0], fw_b_O->GetN(), fw_b_O->GetC(), fw_b_O->GetH(), fw_b_O->GetW()))
+				{
+					return false;
+				}
 
 				dst_len = fw_b_G->GetN() * fw_b_G->GetH() * fw_b_G->GetW() * fw_b_G->GetC();
 				if (dst_len <= 0)
@@ -5370,7 +5532,10 @@ namespace ZQ
 							nchw_raw[i] = 0;
 					}
 				}
-				fw_b_G->ConvertFromCompactNCHW(&nchw_raw[0], fw_b_G->GetN(), fw_b_G->GetC(), fw_b_G->GetH(), fw_b_G->GetW());
+				if (!fw_b_G->ConvertFromCompactNCHW(&nchw_raw[0], fw_b_G->GetN(), fw_b_G->GetC(), fw_b_G->GetH(), fw_b_G->GetW()))
+				{
+					return false;
+				}
 			}
 
 			if (bw_dir)
@@ -5390,7 +5555,10 @@ namespace ZQ
 							nchw_raw[i] = 0;
 					}
 				}
-				bw_b_I->ConvertFromCompactNCHW(&nchw_raw[0], bw_b_I->GetN(), bw_b_I->GetC(), bw_b_I->GetH(), bw_b_I->GetW());
+				if (!bw_b_I->ConvertFromCompactNCHW(&nchw_raw[0], bw_b_I->GetN(), bw_b_I->GetC(), bw_b_I->GetH(), bw_b_I->GetW()))
+				{
+					return false;
+				}
 
 				dst_len = bw_b_F->GetN() * bw_b_F->GetH() * bw_b_F->GetW() * bw_b_F->GetC();
 				if (dst_len <= 0)
@@ -5407,7 +5575,10 @@ namespace ZQ
 							nchw_raw[i] = 0;
 					}
 				}
-				bw_b_F->ConvertFromCompactNCHW(&nchw_raw[0], bw_b_F->GetN(), bw_b_F->GetC(), bw_b_F->GetH(), bw_b_F->GetW());
+				if (!bw_b_F->ConvertFromCompactNCHW(&nchw_raw[0], bw_b_F->GetN(), bw_b_F->GetC(), bw_b_F->GetH(), bw_b_F->GetW()))
+				{
+					return false;
+				}
 
 				dst_len = bw_b_O->GetN() * bw_b_O->GetH() * bw_b_O->GetW() * bw_b_O->GetC();
 				if (dst_len <= 0)
@@ -5424,7 +5595,10 @@ namespace ZQ
 							nchw_raw[i] = 0;
 					}
 				}
-				bw_b_O->ConvertFromCompactNCHW(&nchw_raw[0], bw_b_O->GetN(), bw_b_O->GetC(), bw_b_O->GetH(), bw_b_O->GetW());
+				if (!bw_b_O->ConvertFromCompactNCHW(&nchw_raw[0], bw_b_O->GetN(), bw_b_O->GetC(), bw_b_O->GetH(), bw_b_O->GetW()))
+				{
+					return false;
+				}
 
 				dst_len = bw_b_G->GetN() * bw_b_G->GetH() * bw_b_G->GetW() * bw_b_G->GetC();
 				if (dst_len <= 0)
@@ -5441,7 +5615,10 @@ namespace ZQ
 							nchw_raw[i] = 0;
 					}
 				}
-				bw_b_G->ConvertFromCompactNCHW(&nchw_raw[0], bw_b_G->GetN(), bw_b_G->GetC(), bw_b_G->GetH(), bw_b_G->GetW());
+				if (!bw_b_G->ConvertFromCompactNCHW(&nchw_raw[0], bw_b_G->GetN(), bw_b_G->GetC(), bw_b_G->GetH(), bw_b_G->GetW()))
+				{
+					return false;
+				}
 			}
 
 			if (fw_dir)
@@ -5461,7 +5638,10 @@ namespace ZQ
 							nchw_raw[i] = 0;
 					}
 				}
-				fw_hc_I->ConvertFromCompactNCHW(&nchw_raw[0], fw_hc_I->GetN(), fw_hc_I->GetC(), fw_hc_I->GetH(), fw_hc_I->GetW());
+				if (!fw_hc_I->ConvertFromCompactNCHW(&nchw_raw[0], fw_hc_I->GetN(), fw_hc_I->GetC(), fw_hc_I->GetH(), fw_hc_I->GetW()))
+				{
+					return false;
+				}
 
 				dst_len = fw_hc_F->GetN() * fw_hc_F->GetH() * fw_hc_F->GetW() * fw_hc_F->GetC();
 				if (dst_len <= 0)
@@ -5478,7 +5658,10 @@ namespace ZQ
 							nchw_raw[i] = 0;
 					}
 				}
-				fw_hc_F->ConvertFromCompactNCHW(&nchw_raw[0], fw_hc_F->GetN(), fw_hc_F->GetC(), fw_hc_F->GetH(), fw_hc_F->GetW());
+				if (!fw_hc_F->ConvertFromCompactNCHW(&nchw_raw[0], fw_hc_F->GetN(), fw_hc_F->GetC(), fw_hc_F->GetH(), fw_hc_F->GetW()))
+				{
+					return false;
+				}
 
 				dst_len = fw_hc_O->GetN() * fw_hc_O->GetH() * fw_hc_O->GetW() * fw_hc_O->GetC();
 				if (dst_len <= 0)
@@ -5495,7 +5678,10 @@ namespace ZQ
 							nchw_raw[i] = 0;
 					}
 				}
-				fw_hc_O->ConvertFromCompactNCHW(&nchw_raw[0], fw_hc_O->GetN(), fw_hc_O->GetC(), fw_hc_O->GetH(), fw_hc_O->GetW());
+				if (!fw_hc_O->ConvertFromCompactNCHW(&nchw_raw[0], fw_hc_O->GetN(), fw_hc_O->GetC(), fw_hc_O->GetH(), fw_hc_O->GetW()))
+				{
+					return false;
+				}
 
 				dst_len = fw_hc_G->GetN() * fw_hc_G->GetH() * fw_hc_G->GetW() * fw_hc_G->GetC();
 				if (dst_len <= 0)
@@ -5512,7 +5698,10 @@ namespace ZQ
 							nchw_raw[i] = 0;
 					}
 				}
-				fw_hc_G->ConvertFromCompactNCHW(&nchw_raw[0], fw_hc_G->GetN(), fw_hc_G->GetC(), fw_hc_G->GetH(), fw_hc_G->GetW());
+				if (!fw_hc_G->ConvertFromCompactNCHW(&nchw_raw[0], fw_hc_G->GetN(), fw_hc_G->GetC(), fw_hc_G->GetH(), fw_hc_G->GetW()))
+				{
+					return false;
+				}
 			}
 
 			if (bw_dir)
@@ -5532,7 +5721,10 @@ namespace ZQ
 							nchw_raw[i] = 0;
 					}
 				}
-				bw_hc_I->ConvertFromCompactNCHW(&nchw_raw[0], bw_hc_I->GetN(), bw_hc_I->GetC(), bw_hc_I->GetH(), bw_hc_I->GetW());
+				if (!bw_hc_I->ConvertFromCompactNCHW(&nchw_raw[0], bw_hc_I->GetN(), bw_hc_I->GetC(), bw_hc_I->GetH(), bw_hc_I->GetW()))
+				{
+					return false;
+				}
 
 				dst_len = bw_hc_F->GetN() * bw_hc_F->GetH() * bw_hc_F->GetW() * bw_hc_F->GetC();
 				if (dst_len <= 0)
@@ -5549,7 +5741,10 @@ namespace ZQ
 							nchw_raw[i] = 0;
 					}
 				}
-				bw_hc_F->ConvertFromCompactNCHW(&nchw_raw[0], bw_hc_F->GetN(), bw_hc_F->GetC(), bw_hc_F->GetH(), bw_hc_F->GetW());
+				if (!bw_hc_F->ConvertFromCompactNCHW(&nchw_raw[0], bw_hc_F->GetN(), bw_hc_F->GetC(), bw_hc_F->GetH(), bw_hc_F->GetW()))
+				{
+					return false;
+				}
 
 				dst_len = bw_hc_O->GetN() * bw_hc_O->GetH() * bw_hc_O->GetW() * bw_hc_O->GetC();
 				if (dst_len <= 0)
@@ -5566,7 +5761,10 @@ namespace ZQ
 							nchw_raw[i] = 0;
 					}
 				}
-				bw_hc_O->ConvertFromCompactNCHW(&nchw_raw[0], bw_hc_O->GetN(), bw_hc_O->GetC(), bw_hc_O->GetH(), bw_hc_O->GetW());
+				if (!bw_hc_O->ConvertFromCompactNCHW(&nchw_raw[0], bw_hc_O->GetN(), bw_hc_O->GetC(), bw_hc_O->GetH(), bw_hc_O->GetW()))
+				{
+					return false;
+				}
 
 				dst_len = bw_hc_G->GetN() * bw_hc_G->GetH() * bw_hc_G->GetW() * bw_hc_G->GetC();
 				if (dst_len <= 0)
@@ -5583,7 +5781,10 @@ namespace ZQ
 							nchw_raw[i] = 0;
 					}
 				}
-				bw_hc_G->ConvertFromCompactNCHW(&nchw_raw[0], bw_hc_G->GetN(), bw_hc_G->GetC(), bw_hc_G->GetH(), bw_hc_G->GetW());
+				if (!bw_hc_G->ConvertFromCompactNCHW(&nchw_raw[0], bw_hc_G->GetN(), bw_hc_G->GetC(), bw_hc_G->GetH(), bw_hc_G->GetW()))
+				{
+					return false;
+				}
 			}
 			
 			return true;
@@ -5831,7 +6032,10 @@ namespace ZQ
 					if (fabs(nchw_raw[i]) < ignore_small_value)
 						nchw_raw[i] = 0;
 				}
-				fw_xc_I->ConvertFromCompactNCHW(&nchw_raw[0], fw_xc_I->GetN(), fw_xc_I->GetC(), fw_xc_I->GetH(), fw_xc_I->GetW());
+				if (!fw_xc_I->ConvertFromCompactNCHW(&nchw_raw[0], fw_xc_I->GetN(), fw_xc_I->GetC(), fw_xc_I->GetH(), fw_xc_I->GetW()))
+				{
+					return false;
+				}
 				buffer += dst_len_in_bytes;
 				buffer_len -= dst_len_in_bytes;
 				readed_length_in_bytes += dst_len_in_bytes;
@@ -5849,7 +6053,10 @@ namespace ZQ
 					if (fabs(nchw_raw[i]) < ignore_small_value)
 						nchw_raw[i] = 0;
 				}
-				fw_xc_F->ConvertFromCompactNCHW(&nchw_raw[0], fw_xc_F->GetN(), fw_xc_F->GetC(), fw_xc_F->GetH(), fw_xc_F->GetW());
+				if (!fw_xc_F->ConvertFromCompactNCHW(&nchw_raw[0], fw_xc_F->GetN(), fw_xc_F->GetC(), fw_xc_F->GetH(), fw_xc_F->GetW()))
+				{
+					return false;
+				}
 				buffer += dst_len_in_bytes;
 				buffer_len -= dst_len_in_bytes;
 				readed_length_in_bytes += dst_len_in_bytes;
@@ -5867,7 +6074,10 @@ namespace ZQ
 					if (fabs(nchw_raw[i]) < ignore_small_value)
 						nchw_raw[i] = 0;
 				}
-				fw_xc_O->ConvertFromCompactNCHW(&nchw_raw[0], fw_xc_O->GetN(), fw_xc_O->GetC(), fw_xc_O->GetH(), fw_xc_O->GetW());
+				if (!fw_xc_O->ConvertFromCompactNCHW(&nchw_raw[0], fw_xc_O->GetN(), fw_xc_O->GetC(), fw_xc_O->GetH(), fw_xc_O->GetW()))
+				{
+					return false;
+				}
 				buffer += dst_len_in_bytes;
 				buffer_len -= dst_len_in_bytes;
 				readed_length_in_bytes += dst_len_in_bytes;
@@ -5885,7 +6095,10 @@ namespace ZQ
 					if (fabs(nchw_raw[i]) < ignore_small_value)
 						nchw_raw[i] = 0;
 				}
-				fw_xc_G->ConvertFromCompactNCHW(&nchw_raw[0], fw_xc_G->GetN(), fw_xc_G->GetC(), fw_xc_G->GetH(), fw_xc_G->GetW());
+				if (!fw_xc_G->ConvertFromCompactNCHW(&nchw_raw[0], fw_xc_G->GetN(), fw_xc_G->GetC(), fw_xc_G->GetH(), fw_xc_G->GetW()))
+				{
+					return false;
+				}
 				buffer += dst_len_in_bytes;
 				buffer_len -= dst_len_in_bytes;
 				readed_length_in_bytes += dst_len_in_bytes;
@@ -5907,7 +6120,10 @@ namespace ZQ
 					if (fabs(nchw_raw[i]) < ignore_small_value)
 						nchw_raw[i] = 0;
 				}
-				bw_xc_I->ConvertFromCompactNCHW(&nchw_raw[0], bw_xc_I->GetN(), bw_xc_I->GetC(), bw_xc_I->GetH(), bw_xc_I->GetW());
+				if (!bw_xc_I->ConvertFromCompactNCHW(&nchw_raw[0], bw_xc_I->GetN(), bw_xc_I->GetC(), bw_xc_I->GetH(), bw_xc_I->GetW()))
+				{
+					return false;
+				}
 				buffer += dst_len_in_bytes;
 				buffer_len -= dst_len_in_bytes;
 				readed_length_in_bytes += dst_len_in_bytes;
@@ -5925,7 +6141,10 @@ namespace ZQ
 					if (fabs(nchw_raw[i]) < ignore_small_value)
 						nchw_raw[i] = 0;
 				}
-				bw_xc_F->ConvertFromCompactNCHW(&nchw_raw[0], bw_xc_F->GetN(), bw_xc_F->GetC(), bw_xc_F->GetH(), bw_xc_F->GetW());
+				if (!bw_xc_F->ConvertFromCompactNCHW(&nchw_raw[0], bw_xc_F->GetN(), bw_xc_F->GetC(), bw_xc_F->GetH(), bw_xc_F->GetW()))
+				{
+					return false;
+				}
 				buffer += dst_len_in_bytes;
 				buffer_len -= dst_len_in_bytes;
 				readed_length_in_bytes += dst_len_in_bytes;
@@ -5943,7 +6162,10 @@ namespace ZQ
 					if (fabs(nchw_raw[i]) < ignore_small_value)
 						nchw_raw[i] = 0;
 				}
-				bw_xc_O->ConvertFromCompactNCHW(&nchw_raw[0], bw_xc_O->GetN(), bw_xc_O->GetC(), bw_xc_O->GetH(), bw_xc_O->GetW());
+				if (!bw_xc_O->ConvertFromCompactNCHW(&nchw_raw[0], bw_xc_O->GetN(), bw_xc_O->GetC(), bw_xc_O->GetH(), bw_xc_O->GetW()))
+				{
+					return false;
+				}
 				buffer += dst_len_in_bytes;
 				buffer_len -= dst_len_in_bytes;
 				readed_length_in_bytes += dst_len_in_bytes;
@@ -5961,7 +6183,10 @@ namespace ZQ
 					if (fabs(nchw_raw[i]) < ignore_small_value)
 						nchw_raw[i] = 0;
 				}
-				bw_xc_G->ConvertFromCompactNCHW(&nchw_raw[0], bw_xc_G->GetN(), bw_xc_G->GetC(), bw_xc_G->GetH(), bw_xc_G->GetW());
+				if (!bw_xc_G->ConvertFromCompactNCHW(&nchw_raw[0], bw_xc_G->GetN(), bw_xc_G->GetC(), bw_xc_G->GetH(), bw_xc_G->GetW()))
+				{
+					return false;
+				}
 				buffer += dst_len_in_bytes;
 				buffer_len -= dst_len_in_bytes;
 				readed_length_in_bytes += dst_len_in_bytes;
@@ -5984,7 +6209,10 @@ namespace ZQ
 					if (fabs(nchw_raw[i]) < ignore_small_value)
 						nchw_raw[i] = 0;
 				}
-				fw_b_I->ConvertFromCompactNCHW(&nchw_raw[0], fw_b_I->GetN(), fw_b_I->GetC(), fw_b_I->GetH(), fw_b_I->GetW());
+				if (!fw_b_I->ConvertFromCompactNCHW(&nchw_raw[0], fw_b_I->GetN(), fw_b_I->GetC(), fw_b_I->GetH(), fw_b_I->GetW()))
+				{
+					return false;
+				}
 				buffer += dst_len_in_bytes;
 				buffer_len -= dst_len_in_bytes;
 				readed_length_in_bytes += dst_len_in_bytes;
@@ -6002,7 +6230,10 @@ namespace ZQ
 					if (fabs(nchw_raw[i]) < ignore_small_value)
 						nchw_raw[i] = 0;
 				}
-				fw_b_F->ConvertFromCompactNCHW(&nchw_raw[0], fw_b_F->GetN(), fw_b_F->GetC(), fw_b_F->GetH(), fw_b_F->GetW());
+				if (!fw_b_F->ConvertFromCompactNCHW(&nchw_raw[0], fw_b_F->GetN(), fw_b_F->GetC(), fw_b_F->GetH(), fw_b_F->GetW()))
+				{
+					return false;
+				}
 				buffer += dst_len_in_bytes;
 				buffer_len -= dst_len_in_bytes;
 				readed_length_in_bytes += dst_len_in_bytes;
@@ -6020,7 +6251,10 @@ namespace ZQ
 					if (fabs(nchw_raw[i]) < ignore_small_value)
 						nchw_raw[i] = 0;
 				}
-				fw_b_O->ConvertFromCompactNCHW(&nchw_raw[0], fw_b_O->GetN(), fw_b_O->GetC(), fw_b_O->GetH(), fw_b_O->GetW());
+				if (!fw_b_O->ConvertFromCompactNCHW(&nchw_raw[0], fw_b_O->GetN(), fw_b_O->GetC(), fw_b_O->GetH(), fw_b_O->GetW()))
+				{
+					return false;
+				}
 				buffer += dst_len_in_bytes;
 				buffer_len -= dst_len_in_bytes;
 				readed_length_in_bytes += dst_len_in_bytes;
@@ -6038,7 +6272,10 @@ namespace ZQ
 					if (fabs(nchw_raw[i]) < ignore_small_value)
 						nchw_raw[i] = 0;
 				}
-				fw_b_G->ConvertFromCompactNCHW(&nchw_raw[0], fw_b_G->GetN(), fw_b_G->GetC(), fw_b_G->GetH(), fw_b_G->GetW());
+				if (!fw_b_G->ConvertFromCompactNCHW(&nchw_raw[0], fw_b_G->GetN(), fw_b_G->GetC(), fw_b_G->GetH(), fw_b_G->GetW()))
+				{
+					return false;
+				}
 				buffer += dst_len_in_bytes;
 				buffer_len -= dst_len_in_bytes;
 				readed_length_in_bytes += dst_len_in_bytes;
@@ -6060,7 +6297,10 @@ namespace ZQ
 					if (fabs(nchw_raw[i]) < ignore_small_value)
 						nchw_raw[i] = 0;
 				}
-				bw_b_I->ConvertFromCompactNCHW(&nchw_raw[0], bw_b_I->GetN(), bw_b_I->GetC(), bw_b_I->GetH(), bw_b_I->GetW());
+				if (!bw_b_I->ConvertFromCompactNCHW(&nchw_raw[0], bw_b_I->GetN(), bw_b_I->GetC(), bw_b_I->GetH(), bw_b_I->GetW()))
+				{
+					return false;
+				}
 				buffer += dst_len_in_bytes;
 				buffer_len -= dst_len_in_bytes;
 				readed_length_in_bytes += dst_len_in_bytes;
@@ -6078,7 +6318,10 @@ namespace ZQ
 					if (fabs(nchw_raw[i]) < ignore_small_value)
 						nchw_raw[i] = 0;
 				}
-				bw_b_F->ConvertFromCompactNCHW(&nchw_raw[0], bw_b_F->GetN(), bw_b_F->GetC(), bw_b_F->GetH(), bw_b_F->GetW());
+				if (!bw_b_F->ConvertFromCompactNCHW(&nchw_raw[0], bw_b_F->GetN(), bw_b_F->GetC(), bw_b_F->GetH(), bw_b_F->GetW()))
+				{
+					return false;
+				}
 				buffer += dst_len_in_bytes;
 				buffer_len -= dst_len_in_bytes;
 				readed_length_in_bytes += dst_len_in_bytes;
@@ -6096,7 +6339,10 @@ namespace ZQ
 					if (fabs(nchw_raw[i]) < ignore_small_value)
 						nchw_raw[i] = 0;
 				}
-				bw_b_O->ConvertFromCompactNCHW(&nchw_raw[0], bw_b_O->GetN(), bw_b_O->GetC(), bw_b_O->GetH(), bw_b_O->GetW());
+				if (!bw_b_O->ConvertFromCompactNCHW(&nchw_raw[0], bw_b_O->GetN(), bw_b_O->GetC(), bw_b_O->GetH(), bw_b_O->GetW()))
+				{
+					return false;
+				}
 				buffer += dst_len_in_bytes;
 				buffer_len -= dst_len_in_bytes;
 				readed_length_in_bytes += dst_len_in_bytes;
@@ -6114,7 +6360,10 @@ namespace ZQ
 					if (fabs(nchw_raw[i]) < ignore_small_value)
 						nchw_raw[i] = 0;
 				}
-				bw_b_G->ConvertFromCompactNCHW(&nchw_raw[0], bw_b_G->GetN(), bw_b_G->GetC(), bw_b_G->GetH(), bw_b_G->GetW());
+				if (!bw_b_G->ConvertFromCompactNCHW(&nchw_raw[0], bw_b_G->GetN(), bw_b_G->GetC(), bw_b_G->GetH(), bw_b_G->GetW()))
+				{
+					return false;
+				}
 				buffer += dst_len_in_bytes;
 				buffer_len -= dst_len_in_bytes;
 				readed_length_in_bytes += dst_len_in_bytes;
@@ -6136,7 +6385,10 @@ namespace ZQ
 					if (fabs(nchw_raw[i]) < ignore_small_value)
 						nchw_raw[i] = 0;
 				}
-				fw_hc_I->ConvertFromCompactNCHW(&nchw_raw[0], fw_hc_I->GetN(), fw_hc_I->GetC(), fw_hc_I->GetH(), fw_hc_I->GetW());
+				if (!fw_hc_I->ConvertFromCompactNCHW(&nchw_raw[0], fw_hc_I->GetN(), fw_hc_I->GetC(), fw_hc_I->GetH(), fw_hc_I->GetW()))
+				{
+					return false;
+				}
 				buffer += dst_len_in_bytes;
 				buffer_len -= dst_len_in_bytes;
 				readed_length_in_bytes += dst_len_in_bytes;
@@ -6154,7 +6406,10 @@ namespace ZQ
 					if (fabs(nchw_raw[i]) < ignore_small_value)
 						nchw_raw[i] = 0;
 				}
-				fw_hc_F->ConvertFromCompactNCHW(&nchw_raw[0], fw_hc_F->GetN(), fw_hc_F->GetC(), fw_hc_F->GetH(), fw_hc_F->GetW());
+				if (!fw_hc_F->ConvertFromCompactNCHW(&nchw_raw[0], fw_hc_F->GetN(), fw_hc_F->GetC(), fw_hc_F->GetH(), fw_hc_F->GetW()))
+				{
+					return false;
+				}
 				buffer += dst_len_in_bytes;
 				buffer_len -= dst_len_in_bytes;
 				readed_length_in_bytes += dst_len_in_bytes;
@@ -6172,7 +6427,10 @@ namespace ZQ
 					if (fabs(nchw_raw[i]) < ignore_small_value)
 						nchw_raw[i] = 0;
 				}
-				fw_hc_O->ConvertFromCompactNCHW(&nchw_raw[0], fw_hc_O->GetN(), fw_hc_O->GetC(), fw_hc_O->GetH(), fw_hc_O->GetW());
+				if (!fw_hc_O->ConvertFromCompactNCHW(&nchw_raw[0], fw_hc_O->GetN(), fw_hc_O->GetC(), fw_hc_O->GetH(), fw_hc_O->GetW()))
+				{
+					return false;
+				}
 				buffer += dst_len_in_bytes;
 				buffer_len -= dst_len_in_bytes;
 				readed_length_in_bytes += dst_len_in_bytes;
@@ -6190,7 +6448,10 @@ namespace ZQ
 					if (fabs(nchw_raw[i]) < ignore_small_value)
 						nchw_raw[i] = 0;
 				}
-				fw_hc_G->ConvertFromCompactNCHW(&nchw_raw[0], fw_hc_G->GetN(), fw_hc_G->GetC(), fw_hc_G->GetH(), fw_hc_G->GetW());
+				if (!fw_hc_G->ConvertFromCompactNCHW(&nchw_raw[0], fw_hc_G->GetN(), fw_hc_G->GetC(), fw_hc_G->GetH(), fw_hc_G->GetW()))
+				{
+					return false;
+				}
 				buffer += dst_len_in_bytes;
 				buffer_len -= dst_len_in_bytes;
 				readed_length_in_bytes += dst_len_in_bytes;
@@ -6212,7 +6473,10 @@ namespace ZQ
 					if (fabs(nchw_raw[i]) < ignore_small_value)
 						nchw_raw[i] = 0;
 				}
-				bw_hc_I->ConvertFromCompactNCHW(&nchw_raw[0], bw_hc_I->GetN(), bw_hc_I->GetC(), bw_hc_I->GetH(), bw_hc_I->GetW());
+				if (!bw_hc_I->ConvertFromCompactNCHW(&nchw_raw[0], bw_hc_I->GetN(), bw_hc_I->GetC(), bw_hc_I->GetH(), bw_hc_I->GetW()))
+				{
+					return false;
+				}
 				buffer += dst_len_in_bytes;
 				buffer_len -= dst_len_in_bytes;
 				readed_length_in_bytes += dst_len_in_bytes;
@@ -6230,7 +6494,10 @@ namespace ZQ
 					if (fabs(nchw_raw[i]) < ignore_small_value)
 						nchw_raw[i] = 0;
 				}
-				bw_hc_F->ConvertFromCompactNCHW(&nchw_raw[0], bw_hc_F->GetN(), bw_hc_F->GetC(), bw_hc_F->GetH(), bw_hc_F->GetW());
+				if (!bw_hc_F->ConvertFromCompactNCHW(&nchw_raw[0], bw_hc_F->GetN(), bw_hc_F->GetC(), bw_hc_F->GetH(), bw_hc_F->GetW()))
+				{
+					return false;
+				}
 				buffer += dst_len_in_bytes;
 				buffer_len -= dst_len_in_bytes;
 				readed_length_in_bytes += dst_len_in_bytes;
@@ -6248,7 +6515,10 @@ namespace ZQ
 					if (fabs(nchw_raw[i]) < ignore_small_value)
 						nchw_raw[i] = 0;
 				}
-				bw_hc_O->ConvertFromCompactNCHW(&nchw_raw[0], bw_hc_O->GetN(), bw_hc_O->GetC(), bw_hc_O->GetH(), bw_hc_O->GetW());
+				if (!bw_hc_O->ConvertFromCompactNCHW(&nchw_raw[0], bw_hc_O->GetN(), bw_hc_O->GetC(), bw_hc_O->GetH(), bw_hc_O->GetW()))
+				{
+					return false;
+				}
 				buffer += dst_len_in_bytes;
 				buffer_len -= dst_len_in_bytes;
 				readed_length_in_bytes += dst_len_in_bytes;
@@ -6266,7 +6536,10 @@ namespace ZQ
 					if (fabs(nchw_raw[i]) < ignore_small_value)
 						nchw_raw[i] = 0;
 				}
-				bw_hc_G->ConvertFromCompactNCHW(&nchw_raw[0], bw_hc_G->GetN(), bw_hc_G->GetC(), bw_hc_G->GetH(), bw_hc_G->GetW());
+				if (!bw_hc_G->ConvertFromCompactNCHW(&nchw_raw[0], bw_hc_G->GetN(), bw_hc_G->GetC(), bw_hc_G->GetH(), bw_hc_G->GetW()))
+				{
+					return false;
+				}
 				buffer += dst_len_in_bytes;
 				buffer_len -= dst_len_in_bytes;
 				readed_length_in_bytes += dst_len_in_bytes;
@@ -8078,7 +8351,10 @@ namespace ZQ
 			std::vector<float> nchw_raw(dst_len);
 			if (dst_len != fread_s(&nchw_raw[0], dst_len * sizeof(float), sizeof(float), dst_len, in))
 				return false;
-			scale->ConvertFromCompactNCHW(&nchw_raw[0], scale->GetN(), scale->GetC(), scale->GetH(), scale->GetW());
+			if (!scale->ConvertFromCompactNCHW(&nchw_raw[0], scale->GetN(), scale->GetC(), scale->GetH(), scale->GetW()))
+			{
+				return false;
+			}
 			
 			return true; 
 		}
@@ -8113,7 +8389,10 @@ namespace ZQ
 			// 走得到这里** —— `zq_loadbuffer` 的 (C) 直接打这个类。
 			if (dst_len_in_bytes > buffer_len)
 				return false;
-			scale->ConvertFromCompactNCHW((const float*)buffer, scale->GetN(), scale->GetC(), scale->GetH(), scale->GetW());
+			if (!scale->ConvertFromCompactNCHW((const float*)buffer, scale->GetN(), scale->GetC(), scale->GetH(), scale->GetW()))
+			{
+				return false;
+			}
 			readed_length_in_bytes += dst_len_in_bytes;
 			return true;
 		}

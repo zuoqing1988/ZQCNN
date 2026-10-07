@@ -209,7 +209,10 @@ int main()
             continue;
         }
         ZQ::ZQ_CNN_Tensor4D_NCHWC4 inA;
-        inA.ConvertFromCompactNCHW(&in[0], 1, C, H, W);
+        if (!inA.ConvertFromCompactNCHW(&in[0], 1, C, H, W))
+        {
+        	return EXIT_FAILURE;
+        }
         if (!nA.Forward(inA)) {
             printf("%-22s SKIP (基线 Forward 失败)\n", base);
             skip++;
@@ -234,7 +237,10 @@ int main()
             ZQ::ZQ_CNN_Net_NCHWC<ZQ::ZQ_CNN_Tensor4D_NCHWC4> nX;
             if (!nX.LoadFrom(zp, mp, CFG[ci][0], PROD_IGNORE_SMALL, CFG[ci][1])) continue;
             ZQ::ZQ_CNN_Tensor4D_NCHWC4 inX;
-            inX.ConvertFromCompactNCHW(&in[0], 1, C, H, W);
+            if (!inX.ConvertFromCompactNCHW(&in[0], 1, C, H, W))
+            {
+            	return EXIT_FAILURE;
+            }
             if (!nX.Forward(inX)) continue;
             const ZQ::ZQ_CNN_Tensor4D_NCHWC4* ox = nX.GetBlobByName(top);
             if (ox == 0) continue;

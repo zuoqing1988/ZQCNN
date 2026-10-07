@@ -71,7 +71,13 @@ namespace ZQ
 					buffer[off + HW2] = ptr[w * 3 + 2] - 122.7717f;
 				}
 			}
-			input.ConvertFromCompactNCHW(&buffer[0],1,3,height,width,1,1);
+			// 审计修复 2026-10-07（附录 JH）：原来丢弃了返回值。
+			// 它在 data==0 或 ChangeSize（**分配**）失败时返回 false，
+			// 失败之后张量尺寸与请求的不一致，而调用方按"成功"继续往下走。
+			if (!input.ConvertFromCompactNCHW(&buffer[0],1,3,height,width,1,1))
+			{
+				return false;
+			}
 			
 			if (width != W || height != H)
 			{

@@ -4403,3 +4403,60 @@ SamplesZQCNN 11 个文件 16 处）**没有破坏任何既有行为**，Windows 
 两边仍然都跑得通。
 
 操作记录：同样**没有**接管道（`> log 2>&1; rc=$?`），RC=0 是真的。
+
+---
+
+## 修复：ConvertFromCompactNCHW 的返回值被丢弃 —— 137 处（附录 JH）
+
+### 变更文件
+
+    改 ZQCNN/ZQ_CNN_Layer.h 92 / ZQ_CNN_Layer_NCHWC.h 28 / ZQ_CNN_NSFW.h 1
+    改 ZQCNN/ZQ_CNN_Tensor4D_NCHWC.h 1（手工）
+    改 SamplesZQCNN/ 5 个文件 16（另 SampleHeatMap 一处是**保持注掉**状态）
+    改 tools/check_convert_return.py   判据扩到 ConvertFromCompactNCHW，自测 8 -> 12 例
+    改 tools/run_audit_checks.py      C27 描述更新（编号不变）
+
+### 怎么找到的
+
+附录 JF 修了 ConvertFromBGR，顺手把同一族的其它 bool 方法数了一遍，
+一眼看出最大的不对称：ConvertFromCompactNCHW 已检查 12 / 丢弃 140（差一个数量级）。
+
+后果：它在 data==0 或 ChangeSize（**分配**）失败时返回 false，
+丢弃它之后**张量尺寸与请求的不一致，而函数照样 return true**。
+权重加载路径上尤其难受 —— 分配一失败，模型就带着**错尺寸的权重**跑完全程。
+
+### 触发条件要说清
+
+比 JF 那 7 处弱：data 都是真实的 &raw[0]，所以只可能是 **ChangeSize 分配失败**，
+**不是**尺寸对不上（尺寸取自同一个对象的 GetN/GetC/...）。
+但仍是「静默算错」而不是「响亮失败」。
+
+### 实测结果
+
+    check_convert_return.py              OK（0 处丢弃）            RC=0
+    check_convert_return.py --selftest   12/12 通过                RC=0
+    wsl: cd /tmp/zqb2 && make -j8         无 error
+    cmake --build build_x64 --config Release   WINDOWS BUILD RC=0 (277s)
+变异测试：把 ZQ_CNN_Layer.h 里一处检查还原成丢弃返回值 -> 报出 :804，RC=1；还原后 RC=0。
+
+### 注意事项：批量改写的脚本连栽三次（这一节比改动本身更值得记）
+
+137 处机械改写用脚本做，前三版**都把代码改坏了**，每版都要一次构建才发现：
+
+| 版 | 错在哪 | 症状 |
+|---|---|---|
+| 1 | 把「每文件第一处」当成「只改第一处」（done_in_file 同时门控了注释和包裹） | 92 处只改了 1 处 |
+| 1(sample) | **没剥注释** | 把注掉的 `//input1.ConvertFromCompactNCHW(...)` 包进 if(!...) -> SampleHeatMap 编译不过 |
+| 2(sample) | 用 FUNC 正则**猜**所属函数 | 13 处在 **void** 函数里写了 return EXIT_FAILURE; |
+| 3 | 对象名正则 `t\.` 过宽 + 贪婪 `(.*)` | 匹配到不相干的东西，一片 'C' was not declared |
+
+第四版改成**行号取自门禁**（它已正确剥注释）、**所属函数用花括号配平找**，一次通过。
+
+**判据（附录 IS 的老规矩，这里又中一次）**：批量改写不要用正则去「猜」上下文 ——
+行号取自一个已经正确的工具，作用域用括号配平。前三版每版自检都「看着对」，
+只有编译器会发现。
+
+**判据扩容时三条正则必须一起改**：扩到 ConvertFromCompactNCHW 时我只改了
+DECL_RE，忘了 CALL_RE 和 USED_RE，于是那些站点**根本没被扫**、真实树报「0 处违规」
+而看起来一片绿 —— 是**自测**抓住的（我提前加了针对新方法的用例）。
+现在三条正则共用一个 `_M` 片段，让「漏改一处」在结构上不可能发生。

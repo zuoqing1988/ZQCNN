@@ -542,7 +542,13 @@ namespace ZQ
 			{
 				std::vector<float> buf(count);
 				ConvertToCompactNCHW(&buf[0]);
-				output.ConvertFromCompactNCHW(&buf[0], out_N, out_C, out_H, out_W, 0, 0);
+				// 审计修复 2026-10-07（附录 JH）：原来丢弃了返回值 ——
+				// ChangeSize（分配）失败时 output 的尺寸与请求的不一致，
+				// 而这里仍然 `return true`，调用方会拿一个错尺寸的张量往下走。
+				if (!output.ConvertFromCompactNCHW(&buf[0], out_N, out_C, out_H, out_W, 0, 0))
+				{
+					return false;
+				}
 			}
 			return true;
 		}

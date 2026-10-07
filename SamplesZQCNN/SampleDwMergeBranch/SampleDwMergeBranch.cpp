@@ -231,8 +231,14 @@ static void one(int with_conv_bias)
         printf("    **FAIL** 输入张量 ChangeSize 失败\n"); g_bad++;
         remove(pf); remove(wf); return;
     }
-    iA.ConvertFromCompactNCHW(&in[0], 1, NET_C, NET_H, NET_W);
-    iB.ConvertFromCompactNCHW(&in[0], 1, NET_C, NET_H, NET_W);
+    if (!iA.ConvertFromCompactNCHW(&in[0], 1, NET_C, NET_H, NET_W))
+    {
+    	return;
+    }
+    if (!iB.ConvertFromCompactNCHW(&in[0], 1, NET_C, NET_H, NET_W))
+    {
+    	return;
+    }
     if (!nA.Forward(iA) || !nB.Forward(iB)) {
         printf("    **FAIL** Forward 失败（A=%d B=%d）\n", nA.Forward(iA) ? 1 : 0, nB.Forward(iB) ? 1 : 0);
         g_bad++; remove(pf); remove(wf); return;
@@ -353,8 +359,14 @@ static void case_shared_blob()
     ZQ::ZQ_CNN_Tensor4D_NHW_C_Align256bit iA, iB;
     iA.ChangeSize(1, HF, WF, C, 0, 0);
     iB.ChangeSize(1, HF, WF, C, 0, 0);
-    iA.ConvertFromCompactNCHW(&in[0], 1, C, HF, WF);
-    iB.ConvertFromCompactNCHW(&in[0], 1, C, HF, WF);
+    if (!iA.ConvertFromCompactNCHW(&in[0], 1, C, HF, WF))
+    {
+    	return;
+    }
+    if (!iB.ConvertFromCompactNCHW(&in[0], 1, C, HF, WF))
+    {
+    	return;
+    }
     if (!nA.Forward(iA) || !nB.Forward(iB)) {
         printf("    **FAIL** Forward 失败\n");
         g_bad++;
@@ -457,8 +469,14 @@ static void case_bn_then_prelu()
     ZQ::ZQ_CNN_Tensor4D_NHW_C_Align256bit iA, iC;
     iA.ChangeSize(1, HF, WF, C, 0, 0);
     iC.ChangeSize(1, HF, WF, C, 0, 0);
-    iA.ConvertFromCompactNCHW(&in[0], 1, C, HF, WF);
-    iC.ConvertFromCompactNCHW(&in[0], 1, C, HF, WF);
+    if (!iA.ConvertFromCompactNCHW(&in[0], 1, C, HF, WF))
+    {
+    	return;
+    }
+    if (!iC.ConvertFromCompactNCHW(&in[0], 1, C, HF, WF))
+    {
+    	return;
+    }
     if (!nA.Forward(iA) || !nC.Forward(iC)) {
         printf("    **FAIL** Forward 失败\n");
         g_bad++;
@@ -592,8 +610,14 @@ static void case_multi_writer()
     ZQ::ZQ_CNN_Tensor4D_NHW_C_Align256bit iA, iC;
     iA.ChangeSize(1, HF, WF, C, 0, 0);
     iC.ChangeSize(1, HF, WF, C, 0, 0);
-    iA.ConvertFromCompactNCHW(&in[0], 1, C, HF, WF);
-    iC.ConvertFromCompactNCHW(&in[0], 1, C, HF, WF);
+    if (!iA.ConvertFromCompactNCHW(&in[0], 1, C, HF, WF))
+    {
+    	return;
+    }
+    if (!iC.ConvertFromCompactNCHW(&in[0], 1, C, HF, WF))
+    {
+    	return;
+    }
     if (!nA.Forward(iA) || !nC.Forward(iC)) {
         printf("    **FAIL** Forward 失败\n");
         g_bad++;
@@ -705,8 +729,14 @@ static void case_extreme_bn()
         ZQ::ZQ_CNN_Tensor4D_NHW_C_Align256bit iA, iB;
         iA.ChangeSize(1, HF, WF, C, 0, 0);
         iB.ChangeSize(1, HF, WF, C, 0, 0);
-        iA.ConvertFromCompactNCHW(&in[0], 1, C, HF, WF);
-        iB.ConvertFromCompactNCHW(&in[0], 1, C, HF, WF);
+        if (!iA.ConvertFromCompactNCHW(&in[0], 1, C, HF, WF))
+        {
+        	return;
+        }
+        if (!iB.ConvertFromCompactNCHW(&in[0], 1, C, HF, WF))
+        {
+        	return;
+        }
         if (!nA.Forward(iA) || !nB.Forward(iB)) {
             printf("    **FAIL** Forward 失败\n");
             g_bad++;
@@ -840,8 +870,14 @@ static void case_deep(int n_pairs)
     ZQ::ZQ_CNN_Tensor4D_NHW_C_Align256bit iA, iB;
     iA.ChangeSize(1, HF, WF, C, 0, 0);
     iB.ChangeSize(1, HF, WF, C, 0, 0);
-    iA.ConvertFromCompactNCHW(&in[0], 1, C, HF, WF);
-    iB.ConvertFromCompactNCHW(&in[0], 1, C, HF, WF);
+    if (!iA.ConvertFromCompactNCHW(&in[0], 1, C, HF, WF))
+    {
+    	return;
+    }
+    if (!iB.ConvertFromCompactNCHW(&in[0], 1, C, HF, WF))
+    {
+    	return;
+    }
     if (!nA.Forward(iA) || !nB.Forward(iB)) {
         printf("    N=%-3d **FAIL** Forward 失败\n", n_pairs);
         g_bad++;
@@ -930,7 +966,10 @@ static void calibrate_filter_layout()
     if (!n.LoadFrom(pf, wf)) { printf("  标定 **FAIL** 加载失败\n"); g_bad++; return; }
     ZQ::ZQ_CNN_Tensor4D_NHW_C_Align256bit tin;
     tin.ChangeSize(1, HF, WF, C, 0, 0);
-    tin.ConvertFromCompactNCHW(&in[0], 1, C, HF, WF);
+    if (!tin.ConvertFromCompactNCHW(&in[0], 1, C, HF, WF))
+    {
+    	return;
+    }
     if (!n.Forward(tin)) { printf("  标定 **FAIL** Forward 失败\n"); g_bad++; return; }
     const ZQ::ZQ_CNN_Tensor4D* o = n.GetBlobByName("dw_out");
     if (o == 0) { printf("  标定 **FAIL** 取不到 dw_out\n"); g_bad++; return; }

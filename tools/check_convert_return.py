@@ -4,7 +4,7 @@
 
 起因（2026-10-07，附录 JF）
 ---------------------------
-`ZQ_CNN_Tensor4D::ConvertFromBGR` 返回 `bool`（尺寸不符 / 空指针时失败），
+`ZQ_CNN_Tensor4D::ConvertFromBGR` 与 `ConvertFromCompactNCHW` 返回 `bool`（尺寸不符 / 空指针时失败），
 而 `ZQ_FaceRecognizerSphereFaceZQCNN::ExtractFeature` 里 **7 处调用全部把
 返回值丢掉了**：
 
@@ -36,12 +36,19 @@ SCAN_DIRS = ('ZQCNN', 'ZQ_GEMM', 'ZQlibFaceID', 'SamplesZQCNN',
 SKIP_DIRS = {'3rdparty', 'build_x64', 'cmake-out-win32-x64',
              'cmake-out-linux-x64'}
 
-CALL_RE = re.compile(r'\b(\w+)\s*(?:\.|->)\s*ConvertFromBGR\s*\(')
-# 函数头：`virtual bool ConvertFromBGR(` / `bool ConvertFromBGR(` — 没有「对象.」
-DECL_RE = re.compile(r'^\s*(?:virtual\s+|static\s+)*bool\s+ConvertFromBGR\s*\(')
-USED_RE = re.compile(r'\bif\s*\(|=\s*\w+\s*(?:\.|->)\s*ConvertFromBGR|'
-                     r'!\s*\w+\s*(?:\.|->)\s*ConvertFromBGR|'
-                     r'return\s+\w+\s*(?:\.|->)\s*ConvertFromBGR')
+# 同一族的两个方法：**必须一起改**。
+# 第一次只改了 DECL_RE，CALL_RE / USED_RE 里还只有 ConvertFromBGR ——
+# 于是 ConvertFromCompactNCHW 的 141 个站点**根本没被扫**，
+# 真实树报「0 处违规」而自测里那条「丢弃 -> 必须报」是红的。
+# 三条正则用同一个 _M 拼，别再各写各的。
+_M = r'(?:ConvertFromBGR|ConvertFromCompactNCHW)'
+CALL_RE = re.compile(r'\b(\w+)\s*(?:\.|->)\s*' + _M + r'\s*\(')
+# 函数头：`virtual bool ConvertFromBGR(` / `bool ConvertFromCompactNCHW(`
+# —— 没有「对象.」，不算调用点
+DECL_RE = re.compile(r'^\s*(?:virtual\s+|static\s+)*bool\s*' + _M + r'\s*\(')
+USED_RE = re.compile(r'\bif\s*\(|=\s*\w+\s*(?:\.|->)\s*' + _M + r'|'
+                     r'!\s*\w+\s*(?:\.|->)\s*' + _M + r'|'
+                     r'return\s+\w+\s*(?:\.|->)\s*' + _M)
 
 
 def strip_comments(src):
@@ -116,6 +123,14 @@ def selftest():
          '// input.ConvertFromBGR(p, w, h, s);', 0),
         ('指针调用 x->ConvertFromBGR 丢弃            -> 必须报',
          'input->ConvertFromBGR(p, w, h, s);', 1),
+        ('ConvertFromCompactNCHW 已检查              -> 合规',
+         'if (!o->ConvertFromCompactNCHW(d, N, C, H, W)) { return false; }', 0),
+        ('ConvertFromCompactNCHW 丢弃                -> 必须报',
+         'filters->ConvertFromCompactNCHW(&raw[0], N, C, H, W);\n\t\treturn true;', 1),
+        ('ConvertFromCompactNCHW 用 return 返回      -> 合规',
+         'return output.ConvertFromCompactNCHW(&b[0], N, C, H, W);', 0),
+        ('ConvertFromCompactNCHW 的函数头不算调用点  -> 合规',
+         'bool ConvertFromCompactNCHW(const float* d, int N, int C, int H, int W)', 0),
     ]
     bad = []
     for name, src, expect in cases:

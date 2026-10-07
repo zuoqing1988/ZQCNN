@@ -515,12 +515,15 @@ GROUPS = [
      ['check_recog_init.py'], False),
     ('C26b C26 分类器自测',
      ['check_recog_init.py', '--selftest'], False),
-    # C27（附录 JF）：`ConvertFromBGR` 返回 bool（尺寸不符/空指针时失败），
-    # 而 `ZQ_FaceRecognizerSphereFaceZQCNN::ExtractFeature` 里 7 处调用**全部丢弃**
-    # 返回值：失败后继续往下跑，`net.Forward(input)` 拿的是上一次留在 input 里的
-    # 旧数据 —— **特征是错的却不报**。另有 16 处在 SamplesZQCNN。
-    # 判据：调用点必须出现在 `if (...)` 里或被赋值；函数头不算调用点。
-    ('C27 ConvertFromBGR 的返回值必须被使用（附录 JF）',
+    # C27（附录 JF / JH）：`ConvertFromBGR` 与 `ConvertFromCompactNCHW`
+    # 都返回 bool，**丢弃返回值 = 静默算错**：
+    #   · `ZQ_FaceRecognizerSphereFaceZQCNN::ExtractFeature` 7 处调用全丢 ——
+    #     失败后 `net.Forward(input)` 拿的是上一次留在 input 里的旧数据；
+    #   · `ConvertFromCompactNCHW` 在 data==0 或 ChangeSize（**分配**）失败时
+    #     返回 false，而 `ZQ_CNN_Layer.h` 92 处 / `_NCHWC.h` 28 处
+    #     原本全部丢弃，函数照样 `return true`。
+    # 判据：调用点必须出现在 `if (...)` 里或被赋值；**函数头不算调用点**。
+    ('C27 ConvertFromBGR / ConvertFromCompactNCHW 的返回值必须被使用（JF / JH）',
      ['check_convert_return.py'], False),
     ('C27b C27 分类器自测',
      ['check_convert_return.py', '--selftest'], False),

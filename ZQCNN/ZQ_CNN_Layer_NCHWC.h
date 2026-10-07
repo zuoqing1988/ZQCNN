@@ -816,7 +816,13 @@ namespace ZQ
 						nchw_raw[i] = 0;
 				}
 			}
-			filters->ConvertFromCompactNCHW(&nchw_raw[0], filters->GetN(), filters->GetC(), filters->GetH(), filters->GetW());
+			// 审计修复 2026-10-07（附录 JH）：原来丢弃了返回值。
+			// 它在 data==0 或 ChangeSize（**分配**）失败时返回 false，
+			// 失败之后张量尺寸与请求的不一致，而调用方按"成功"继续往下走。
+			if (!filters->ConvertFromCompactNCHW(&nchw_raw[0], filters->GetN(), filters->GetC(), filters->GetH(), filters->GetW()))
+			{
+				return false;
+			}
 			if (with_bias)
 			{
 				int dst_len = bias->GetN() * bias->GetH() * bias->GetW() * bias->GetC();
@@ -833,7 +839,10 @@ namespace ZQ
 							nchw_raw[i] = 0;
 					}
 				}
-				bias->ConvertFromCompactNCHW(&nchw_raw[0], bias->GetN(), bias->GetC(), bias->GetH(), bias->GetW());
+				if (!bias->ConvertFromCompactNCHW(&nchw_raw[0], bias->GetN(), bias->GetC(), bias->GetH(), bias->GetW()))
+				{
+					return false;
+				}
 			}
 			return true;
 		}
@@ -882,7 +891,10 @@ namespace ZQ
 				if (fabs(nchw_raw[i]) < ZQ_CNN_Layer_NCHWC<Tensor4D>::ignore_small_value)
 					nchw_raw[i] = 0;
 			}
-			filters->ConvertFromCompactNCHW(&nchw_raw[0], filters->GetN(), filters->GetC(), filters->GetH(), filters->GetW());
+			if (!filters->ConvertFromCompactNCHW(&nchw_raw[0], filters->GetN(), filters->GetC(), filters->GetH(), filters->GetW()))
+			{
+				return false;
+			}
 			buffer += dst_len_in_bytes;
 			buffer_len -= dst_len_in_bytes;
 			readed_length_in_bytes += dst_len_in_bytes;
@@ -899,7 +911,10 @@ namespace ZQ
 					if (fabs(nchw_raw[i]) < ZQ_CNN_Layer_NCHWC<Tensor4D>::ignore_small_value)
 						nchw_raw[i] = 0;
 				}
-				bias->ConvertFromCompactNCHW(&nchw_raw[0], bias->GetN(), bias->GetC(), bias->GetH(), bias->GetW());
+				if (!bias->ConvertFromCompactNCHW(&nchw_raw[0], bias->GetN(), bias->GetC(), bias->GetH(), bias->GetW()))
+				{
+					return false;
+				}
 				buffer += dst_len_in_bytes;
 				buffer_len -= dst_len_in_bytes;
 				readed_length_in_bytes += dst_len_in_bytes;
@@ -1395,7 +1410,10 @@ namespace ZQ
 						nchw_raw[i] = 0;
 				}
 			}
-			filters->ConvertFromCompactNCHW(&nchw_raw[0], filters->GetN(), filters->GetC(), filters->GetH(), filters->GetW());
+			if (!filters->ConvertFromCompactNCHW(&nchw_raw[0], filters->GetN(), filters->GetC(), filters->GetH(), filters->GetW()))
+			{
+				return false;
+			}
 			if (with_bias)
 			{
 				int dst_len = bias->GetN() * bias->GetH() * bias->GetW() * bias->GetC();
@@ -1412,7 +1430,10 @@ namespace ZQ
 							nchw_raw[i] = 0;
 					}
 				}
-				bias->ConvertFromCompactNCHW(&nchw_raw[0], bias->GetN(), bias->GetC(), bias->GetH(), bias->GetW());
+				if (!bias->ConvertFromCompactNCHW(&nchw_raw[0], bias->GetN(), bias->GetC(), bias->GetH(), bias->GetW()))
+				{
+					return false;
+				}
 			}
 			return true;
 		}
@@ -1460,7 +1481,10 @@ namespace ZQ
 				if (fabs(nchw_raw[i]) < ZQ_CNN_Layer_NCHWC<Tensor4D>::ignore_small_value)
 					nchw_raw[i] = 0;
 			}
-			filters->ConvertFromCompactNCHW(&nchw_raw[0], filters->GetN(), filters->GetC(), filters->GetH(), filters->GetW());
+			if (!filters->ConvertFromCompactNCHW(&nchw_raw[0], filters->GetN(), filters->GetC(), filters->GetH(), filters->GetW()))
+			{
+				return false;
+			}
 			buffer += dst_len_in_bytes;
 			buffer_len -= dst_len_in_bytes;
 			readed_length_in_bytes += dst_len_in_bytes;
@@ -1479,7 +1503,10 @@ namespace ZQ
 					if (fabs(nchw_raw[i]) < ZQ_CNN_Layer_NCHWC<Tensor4D>::ignore_small_value)
 						nchw_raw[i] = 0;
 				}
-				bias->ConvertFromCompactNCHW(&nchw_raw[0], bias->GetN(), bias->GetC(), bias->GetH(), bias->GetW());
+				if (!bias->ConvertFromCompactNCHW(&nchw_raw[0], bias->GetN(), bias->GetC(), bias->GetH(), bias->GetW()))
+				{
+					return false;
+				}
 				buffer += dst_len_in_bytes;
 				buffer_len -= dst_len_in_bytes;
 				readed_length_in_bytes += dst_len_in_bytes;
@@ -1745,10 +1772,22 @@ namespace ZQ
 							nchw_raw[i] = 0;
 					}
 				}
-				mean->ConvertFromCompactNCHW(&nchw_raw[0], N, C, H, W);
-				var->ConvertFromCompactNCHW(&nchw_raw[0] + dst_len, N, C, H, W);
-				scale->ConvertFromCompactNCHW(&nchw_raw[0] + dst_len * 2, N, C, H, W);
-				bias->ConvertFromCompactNCHW(&nchw_raw[0] + dst_len * 3, N, C, H, W);
+				if (!mean->ConvertFromCompactNCHW(&nchw_raw[0], N, C, H, W))
+				{
+					return false;
+				}
+				if (!var->ConvertFromCompactNCHW(&nchw_raw[0] + dst_len, N, C, H, W))
+				{
+					return false;
+				}
+				if (!scale->ConvertFromCompactNCHW(&nchw_raw[0] + dst_len * 2, N, C, H, W))
+				{
+					return false;
+				}
+				if (!bias->ConvertFromCompactNCHW(&nchw_raw[0] + dst_len * 3, N, C, H, W))
+				{
+					return false;
+				}
 				return ZQ_CNN_Forward_SSEUtils_NCHWC::BatchNormScaleBias_Compute_b_a(*b, *a, *mean, *var, *scale, *bias, eps);
 			}
 			else
@@ -1764,9 +1803,18 @@ namespace ZQ
 							nchw_raw[i] = 0;
 					}
 				}
-				mean->ConvertFromCompactNCHW(&nchw_raw[0], N, C, H, W);
-				var->ConvertFromCompactNCHW(&nchw_raw[0] + dst_len, N, C, H, W);
-				scale->ConvertFromCompactNCHW(&nchw_raw[0] + dst_len * 2, N, C, H, W);
+				if (!mean->ConvertFromCompactNCHW(&nchw_raw[0], N, C, H, W))
+				{
+					return false;
+				}
+				if (!var->ConvertFromCompactNCHW(&nchw_raw[0] + dst_len, N, C, H, W))
+				{
+					return false;
+				}
+				if (!scale->ConvertFromCompactNCHW(&nchw_raw[0] + dst_len * 2, N, C, H, W))
+				{
+					return false;
+				}
 				return ZQ_CNN_Forward_SSEUtils_NCHWC::BatchNormScale_Compute_b_a(*b, *a, *mean, *var, *scale, eps);
 			}
 
@@ -1825,10 +1873,22 @@ namespace ZQ
 					if (fabs(nchw_raw[i]) < ZQ_CNN_Layer_NCHWC<Tensor4D>::ignore_small_value)
 						nchw_raw[i] = 0;
 				}
-				mean->ConvertFromCompactNCHW(&nchw_raw[0], N, C, H, W);
-				var->ConvertFromCompactNCHW(&nchw_raw[0] + dst_len, N, C, H, W);
-				scale->ConvertFromCompactNCHW(&nchw_raw[0] + dst_len * 2, N, C, H, W);
-				bias->ConvertFromCompactNCHW(&nchw_raw[0] + dst_len * 3, N, C, H, W);
+				if (!mean->ConvertFromCompactNCHW(&nchw_raw[0], N, C, H, W))
+				{
+					return false;
+				}
+				if (!var->ConvertFromCompactNCHW(&nchw_raw[0] + dst_len, N, C, H, W))
+				{
+					return false;
+				}
+				if (!scale->ConvertFromCompactNCHW(&nchw_raw[0] + dst_len * 2, N, C, H, W))
+				{
+					return false;
+				}
+				if (!bias->ConvertFromCompactNCHW(&nchw_raw[0] + dst_len * 3, N, C, H, W))
+				{
+					return false;
+				}
 				return ZQ_CNN_Forward_SSEUtils_NCHWC::BatchNormScaleBias_Compute_b_a(*b, *a, *mean, *var, *scale, *bias, eps);
 			}
 			else
@@ -1843,9 +1903,18 @@ namespace ZQ
 					if (fabs(nchw_raw[i]) < ZQ_CNN_Layer_NCHWC<Tensor4D>::ignore_small_value)
 						nchw_raw[i] = 0;
 				}
-				mean->ConvertFromCompactNCHW(&nchw_raw[0], N, C, H, W);
-				var->ConvertFromCompactNCHW(&nchw_raw[0] + dst_len, N, C, H, W);
-				scale->ConvertFromCompactNCHW(&nchw_raw[0] + dst_len * 2, N, C, H, W);
+				if (!mean->ConvertFromCompactNCHW(&nchw_raw[0], N, C, H, W))
+				{
+					return false;
+				}
+				if (!var->ConvertFromCompactNCHW(&nchw_raw[0] + dst_len, N, C, H, W))
+				{
+					return false;
+				}
+				if (!scale->ConvertFromCompactNCHW(&nchw_raw[0] + dst_len * 2, N, C, H, W))
+				{
+					return false;
+				}
 				return ZQ_CNN_Forward_SSEUtils_NCHWC::BatchNormScale_Compute_b_a(*b, *a, *mean, *var, *scale, eps);
 			}
 
@@ -2007,7 +2076,10 @@ namespace ZQ
 						nchw_raw[i] = 0;
 				}
 			}
-			slope->ConvertFromCompactNCHW(&nchw_raw[0], slope->GetN(), slope->GetC(), slope->GetH(), slope->GetW());
+			if (!slope->ConvertFromCompactNCHW(&nchw_raw[0], slope->GetN(), slope->GetC(), slope->GetH(), slope->GetW()))
+			{
+				return false;
+			}
 			return true;
 		}
 
@@ -2044,7 +2116,10 @@ namespace ZQ
 				if (fabs(nchw_raw[i]) < ZQ_CNN_Layer_NCHWC<Tensor4D>::ignore_small_value)
 					nchw_raw[i] = 0;
 			}
-			slope->ConvertFromCompactNCHW(&nchw_raw[0], slope->GetN(), slope->GetC(), slope->GetH(), slope->GetW());
+			if (!slope->ConvertFromCompactNCHW(&nchw_raw[0], slope->GetN(), slope->GetC(), slope->GetH(), slope->GetW()))
+			{
+				return false;
+			}
 			readed_length_in_bytes += dst_len_in_bytes;
 			return true;
 		}
@@ -2802,7 +2877,10 @@ namespace ZQ
 						nchw_raw[i] = 0;
 				}
 			}
-			filters->ConvertFromCompactNCHW(&nchw_raw[0], filters->GetN(), filters->GetC(), filters->GetH(), filters->GetW());
+			if (!filters->ConvertFromCompactNCHW(&nchw_raw[0], filters->GetN(), filters->GetC(), filters->GetH(), filters->GetW()))
+			{
+				return false;
+			}
 			if (with_bias)
 			{
 				int dst_len = bias->GetN() * bias->GetH() * bias->GetW() * bias->GetC();
@@ -2821,7 +2899,10 @@ namespace ZQ
 							nchw_raw[i] = 0;
 					}
 				}
-				bias->ConvertFromCompactNCHW(&nchw_raw[0], bias->GetN(), bias->GetC(), bias->GetH(), bias->GetW());
+				if (!bias->ConvertFromCompactNCHW(&nchw_raw[0], bias->GetN(), bias->GetC(), bias->GetH(), bias->GetW()))
+				{
+					return false;
+				}
 			}
 			return true;
 		}
@@ -2869,7 +2950,10 @@ namespace ZQ
 				if (fabs(nchw_raw[i]) < ZQ_CNN_Layer_NCHWC<Tensor4D>::ignore_small_value)
 					nchw_raw[i] = 0;
 			}
-			filters->ConvertFromCompactNCHW(&nchw_raw[0], filters->GetN(), filters->GetC(), filters->GetH(), filters->GetW());
+			if (!filters->ConvertFromCompactNCHW(&nchw_raw[0], filters->GetN(), filters->GetC(), filters->GetH(), filters->GetW()))
+			{
+				return false;
+			}
 			buffer += dst_len_in_bytes;
 			buffer_len -= dst_len_in_bytes;
 			readed_length_in_bytes += dst_len_in_bytes;
@@ -2888,7 +2972,10 @@ namespace ZQ
 					if (fabs(nchw_raw[i]) < ZQ_CNN_Layer_NCHWC<Tensor4D>::ignore_small_value)
 						nchw_raw[i] = 0;
 				}
-				bias->ConvertFromCompactNCHW((const float*)buffer, bias->GetN(), bias->GetC(), bias->GetH(), bias->GetW());
+				if (!bias->ConvertFromCompactNCHW((const float*)buffer, bias->GetN(), bias->GetC(), bias->GetH(), bias->GetW()))
+				{
+					return false;
+				}
 				buffer += dst_len_in_bytes;
 				buffer_len -= dst_len_in_bytes;
 				readed_length_in_bytes += dst_len_in_bytes;
