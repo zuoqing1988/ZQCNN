@@ -149,3 +149,39 @@ C1/C2 的函数，C2065）。第二版改用簇行号区间+声明提取变量�
 ### 实测结果
 
     cmake --build build_x64 --config Release   RC=0（3 轮，0 error）
+
+---
+
+## 补记：JQ 闭环 —— 第七次 --all 全量复验（附录 JR）
+
+### 起因
+
+附录 JQ 改了 5 个 GEMM sample 的 ~90 处分配守卫，当时只做了 Windows 构建
+验证（3 轮 RC=0）。按「新改动纳入全量」的纪律，本轮跑完整 --all 闭环。
+
+### 实测结果
+
+    python tools/run_audit_checks.py --all
+        ALL CHECKS PASSED   RC=0   ELAPSED≈111 分钟（15:57 → 17:48）
+        完成的门禁组数 : 100（与第六次持平）
+        FAIL 行数 : 0
+
+    D1 / D2 / D3 双平台构建与 sample 回归                OK
+    B  ZQlib 独立回归 x10 (ASan+LSan)                     OK（72 个测试）
+    C6 ZQCNN 门禁 UBSan 回归                              OK
+    C24 / C26 / C27 / C28 / C29                           OK
+
+累计七次 --all 全量复验（JE / JG / JI / JK / JM / JO / JR），全部 0 失败。
+
+### 同日其余产出
+
+* AGENTS.md 第 91 条：锚点不唯一时「从尾部倒搜」也是一种猜（JQ 脚本
+  翻车实录的教训固化；与第 85 条同族不同变体 —— 精确锚点重复）。
+* 审计索引再生成：纳入 JP / JQ 两个新附录（254 附录 + 5 轮次标记 = 259 行）。
+
+### 备注
+
+本轮回归期间核实了一个此前未记录的边界：JQ 改的 5 个 sample 含
+`<openblas\cblas.h>` 反斜杠 include，Linux 侧本就不构建它们，
+所以「双平台完全跑通」对这 5 个文件的验证面 = Windows 构建 + 全量门禁，
+没有 Linux 运行时缺口 —— 这是已知边界，不是遗漏。
