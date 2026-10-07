@@ -185,3 +185,25 @@ C1/C2 的函数，C2065）。第二版改用簇行号区间+声明提取变量�
 `<openblas\cblas.h>` 反斜杠 include，Linux 侧本就不构建它们，
 所以「双平台完全跑通」对这 5 个文件的验证面 = Windows 构建 + 全量门禁，
 没有 Linux 运行时缺口 —— 这是已知边界，不是遗漏。
+
+---
+
+## 新增：横向扫三个分配/输入类 —— 全阴性（附录 JS）
+
+### 起因
+
+JQ 轮（sample 分配守卫）后，把同族类横向推广到未显式扫过的目录/形态。
+
+### 扫描与结论
+
+| 类 | 范围 | 结论 |
+|---|---|---|
+| `malloc`/`_aligned_malloc` | `SamplesZQlibFaceID/` 23 个示例 | 0 命中（该目录不用裸分配） |
+| `realloc` | ZQCNN / ZQ_GEMM / ZQlibFaceID | 0 命中（全仓不用） |
+| `fopen` 未判空 | 库 + sample | 全部带 `if (!fp)`；抽查 mxnet2zqcnn 4 处为「失败即 return false」分支 |
+| `sscanf`/`fscanf` `%s` 进定长缓冲 | 库目录 | 无命中（grep 命中全是 printf 格式串） |
+
+### 判读
+
+裸分配与文件输入两个大门类已无已知缺口。下轮方向应转语义类
+（如 NCHWC pad_type），不再继续扫形态类。
