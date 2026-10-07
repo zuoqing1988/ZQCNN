@@ -430,3 +430,22 @@ FaceGroup ✅（残余风险已记录不修）。
 ### 变更文件
 
     改 AGENTS.md    「全量回归与工具入口」节改写
+
+---
+
+## 轻量验证轮：JX 改动定向闭环 + 两个阴性扫描（心跳）
+
+停跑全量后的第一个验证轮，全部走定向检查：
+
+* **A1~A41 源码/文本门禁 41 组全 OK**（默认入口跑到 B 组开头超时被杀，
+  已完成部分 0 失败；默认入口本机现已超 10 分钟，不算快速了）。
+* **B 组定向**：zq_facedb/zq_facedb2 修复后 PASS；早前全 B 组 72/72 PASS。
+* **Windows 目标构建** SampleFaceDatabaseZQCNN RC=0。
+* **运行验证**：产物目录跑 SampleMTCNN，检出 10 张脸、耗时正常、无阻塞。
+* **阴性扫描 1**：`getenv/system` 面全库仅 3 处——MergeBNCompare 的
+  ZQ_BLOB_LIMIT 测试钩子、ThreadSweep 的 system()（HT.4 已审计，含空格
+  路径显式拒绝 + 未写结果文件守卫），无新面。
+* **阴性扫描 2**：环境变量/命令注入类无其它入口。
+
+结论：JX（ZQ_FaceDatabaseCompact 五重上界）按新口径完成闭环，
+无需全量回归。
