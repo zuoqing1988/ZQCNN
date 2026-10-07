@@ -314,3 +314,32 @@ C 随即被 `C[0] += final_sum(q)` 写入）。已补守卫（free A/B + return�
 
 累计八次全量复验全部 0 失败。边界：JT 补记/补记2（10 处 malloc 守卫）
 在本轮启动后落地，已各自经目标级构建验证（RC=0），随下次全量纳入。
+
+---
+
+## 变更：AGENTS.md 瘦身 —— 核心规则留下，细则迁入 AGENTS_LESSONS.md（用户指令）
+
+### 变更文件
+
+    改 AGENTS.md           3008 行 -> 186 行（只留核心规则）
+    新增 AGENTS_LESSONS.md  2878 行（全部经验细则原样迁移）
+
+### 起因
+
+用户指令：「Agents.md 只保留最核心的规则，把次要内容挪到一个新 md 文件里」。
+
+### 做法
+
+- **AGENTS.md 保留**：变更日志规则（6 条）、构建规则（11 条）、编码与行尾红线
+  （四件套 / heredoc / BOM / Python 改写行尾 / raw.h 纯 LF）、全量回归与工具入口、
+  经验细则索引、提交规则、示例程序规则。
+- **AGENTS_LESSONS.md 接收**：sanitizer 坑、检查工具写法、内核/并行、静态分析、
+  汇编规则、行尾细节、张量 API 约定、ZQ_GEMM 布局、NCHW/NCHWC 步长、
+  2026-10-02~05 全部专题教训、编号教训 1~92 —— 原样复制，未删改。
+- **无损校验**：脚本逐行核对原文件每一非空行都出现在两个产物之一，0 丢失。
+- 四件套（text_encoding / line_endings / stmt_joins / gates_runnable）全绿。
+
+### 注意事项
+
+今后新增经验规则请追加到 **AGENTS_LESSONS.md** 末尾；
+只有每次会话必读的核心流程规则才进 AGENTS.md。
