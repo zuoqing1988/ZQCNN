@@ -527,6 +527,16 @@ GROUPS = [
      ['check_convert_return.py'], False),
     ('C27b C27 分类器自测',
      ['check_convert_return.py', '--selftest'], False),
+    # C28（附录 JL）：`ConvertFromBGR(w, h, ...)` 的第一件事就是
+    # `ChangeSize(1, h, w, 3, 1, 1)`；而 6 份 `ChangeSize` 实现
+    # （NCHW 3 + NCHWC 3）**都**有 `dst_N/H/W/C < 0 -> return false`。
+    # 也就是说「负尺寸不得进入内核」这条防线**全部压在这 6 行上** ——
+    # 删掉任何一份的守卫，负尺寸就会一路走到分配与写入，
+    # 而且**不会有任何测试立刻变红**。本门禁盯住这 6 行 + 实现份数。
+    ('C28 ChangeSize 的每一份实现都必须拒掉负尺寸（附录 JL）',
+     ['check_changesize_guard.py'], False),
+    ('C28b C28 分类器自测（含「守卫写得太晚」）',
+     ['check_changesize_guard.py', '--selftest'], False),
 ]
 
 
