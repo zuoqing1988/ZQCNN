@@ -128,6 +128,9 @@ void resize_nn_c1(const unsigned char* src, int srcw, int srch, int src_widthSte
 	double scale_x = (double)srcw / w;
 	double scale_y = (double)srch / h;
 	int* coord_x = (int*)malloc(w * sizeof(int));
+	// 审计修复 2026-10-07（附录 JT 补记）：与附录 BK.1/JQ 同类，malloc 失败必须返回。
+	if (coord_x == 0)
+		return;
 	const unsigned char* cur_src_ptr;
 	unsigned char* cur_dst_ptr;
 	float fx, fy;
@@ -165,6 +168,9 @@ void resize_nn_c2(const unsigned char* src, int srcw, int srch, int src_widthSte
 	double scale_x = (double)srcw / w;
 	double scale_y = (double)srch / h;
 	int* coord_x = (int*)malloc(w * sizeof(int));
+	// 审计修复 2026-10-07（附录 JT 补记）：与附录 BK.1/JQ 同类，malloc 失败必须返回。
+	if (coord_x == 0)
+		return;
 	const unsigned char* cur_src_ptr;
 	unsigned char* cur_dst_ptr;
 	float fx, fy;
@@ -203,6 +209,9 @@ void resize_nn_c3(const unsigned char* src, int srcw, int srch, int src_widthSte
 	double scale_x = (double)srcw / w;
 	double scale_y = (double)srch / h;
 	int* coord_x = (int*)malloc(w * sizeof(int));
+	// 审计修复 2026-10-07（附录 JT 补记）：与附录 BK.1/JQ 同类，malloc 失败必须返回。
+	if (coord_x == 0)
+		return;
 	const unsigned char* cur_src_ptr;
 	unsigned char* cur_dst_ptr, *cur_pix_ptr;
 	register float fx, fy;
@@ -472,6 +481,9 @@ void resize_nn_bgra2rgb(const unsigned char* src, int srcw, int srch, int src_wi
 	double scale_x = (double)srcw / w;
 	double scale_y = (double)srch / h;
 	int* coord_x = (int*)malloc(w * sizeof(int));
+	// 审计修复 2026-10-07（附录 JT 补记）：与附录 BK.1/JQ 同类，malloc 失败必须返回。
+	if (coord_x == 0)
+		return;
 	const unsigned char* cur_src_ptr;
 	unsigned char* cur_dst_ptr, *cur_pix_ptr;
 	register float fx, fy;
@@ -1276,6 +1288,9 @@ void resize_nn_c3_arm32(const unsigned char* src, int srcw, int srch, int src_wi
 	double scale_x = (double)srcw / w;
 	double scale_y = (double)srch / h;
 	int* coord_x = (int*)malloc(w * sizeof(int));
+	// 审计修复 2026-10-07（附录 JT 补记）：与附录 BK.1/JQ 同类，malloc 失败必须返回。
+	if (coord_x == 0)
+		return;
 	const unsigned char* cur_src_ptr0, *cur_src_ptr1, *cur_src_ptr2, *cur_src_ptr3;
 	unsigned char* cur_dst_ptr0, *cur_dst_ptr1, *cur_dst_ptr2, *cur_dst_ptr3;
 	unsigned char* cur_pix_ptr0, *cur_pix_ptr1, *cur_pix_ptr2, *cur_pix_ptr3;

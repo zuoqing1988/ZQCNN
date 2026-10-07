@@ -254,3 +254,28 @@ bn_nchwc 符号 = 现行 .c/.h 一致且 D4 运行时覆盖。
     改 ZQ_GEMM/math/zq_gemm_32f_align_c.c               9 行映射宏分块重定目标
     改 TensorFlow_to_ZQCNN/convertor.py                 scales[0] -> dst_size[0]（2 处）
     改 audit_k3_20261001.md / 索引 / 本 changelog
+
+---
+
+## 修复：testImageProcessing 5 处 malloc 守卫（附录 JT 补记）
+
+### 起因
+
+心跳清单点名 testImageProcessing「没细审」。该文件此前只被 dup-block 工具
+当误报源数过，从未按缺陷类审过。本轮细审（1480 行）：
+
+* **malloc 判空 5 处全缺**（`resize_nn_c1/c2/c3/bgra2rgb/c3_arm32`）——
+  JQ/BK.1 类在**最后一个目录**的命中；已补守卫（先断言锚点 5 处、
+  已有守卫 0 处，再批量插入）。
+* 其余类全阴性：malloc/free 配对 5/5、除零不可达（调用点全为
+  字面量 640/360）、边界 clamp 齐全、GUI 已注释、imread 判空。
+
+### 实测
+
+    cmake --build build_x64 --target testImageProcessing   RC=0
+        （仅存量 C4244 警告，与本改动无关）
+
+### 备注
+
+本修复在第八次全量回归（附录 JU）启动后落地，JU 验证的是 JT commit；
+本改动随下一次全量纳入。
