@@ -4460,3 +4460,33 @@ SamplesZQCNN 11 个文件 16 处）**没有破坏任何既有行为**，Windows 
 DECL_RE，忘了 CALL_RE 和 USED_RE，于是那些站点**根本没被扫**、真实树报「0 处违规」
 而看起来一片绿 —— 是**自测**抓住的（我提前加了针对新方法的用例）。
 现在三条正则共用一个 `_M` 片段，让「漏改一处」在结构上不可能发生。
+
+---
+
+## 复验：--all 全量 96 组 / 0 失败 / 101 分钟（137 处改动纳入）（附录 JI）
+
+    python tools/run_audit_checks.py --all
+        ALL CHECKS PASSED   RC=0   ELAPSED=6066s（约 101 分钟）
+        完成的门禁组数 : 96
+
+    D1 Windows 全量构建 (VS2022/cmake)        OK
+    D2 Linux 全量构建 (gcc/wsl)               OK
+    D3 Linux sample 回归                      OK
+    B  ZQlib 独立回归 x10 (ASan+LSan)          OK（72 个测试，含 --with-slow）
+    C6 ZQCNN 门禁 UBSan 回归                  OK
+    C27 ConvertFromBGR / ConvertFromCompactNCHW 的返回值   OK
+
+附录 JH 那次改动（`ZQ_CNN_Layer.h` 92 处 + `_NCHWC.h` 28 处 + `ZQ_CNN_NSFW.h` 1 处
++ `Tensor4D_NCHWC.h` 1 处 + SamplesZQCNN 3 个文件 16 处，共 137 处）
+**没有破坏任何既有行为** —— 双平台构建、两条 sanitizer 轴、72 个 B 组测试全绿。
+
+这一轮验的是一件具体的事：那 137 处新加的「失败即 return」**会不会把原本
+能跑通、只是静默算错的路径变成跑不通**。答案是不会，而且这次比附录 JG 那次
+更有说服力 —— 改的是 `ZQ_CNN_Layer.h` 这种**最核心的头**，
+而 B 组 72 个测试 + 双平台 sample 回归都过了。
+
+顺带确认：`SampleLSTMTFCalib.cpp` 与 `SampleUnusedLayerProbe.cpp` 里那几处
+`ConvertFromCompactNCHW` 在 HEAD 上**本来就是正确写法**（`if (!ti.Convert...)`），
+所以门禁对它们报 0 不是漏检。
+
+操作记录：同样**没有**接管道，RC=0 是真的。
