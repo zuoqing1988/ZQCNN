@@ -279,3 +279,27 @@ bn_nchwc 符号 = 现行 .c/.h 一致且 D4 运行时覆盖。
 
 本修复在第八次全量回归（附录 JU）启动后落地，JU 验证的是 JT commit；
 本改动随下一次全量纳入。
+
+---
+
+## 修复：JQ 类全树收口 —— example 5 处 malloc 守卫（附录 JT 补记 2）
+
+### 起因
+
+JT 补记后用「40 行窗口」重扫 SamplesZQCNN 全树裸分配判空。39 个剩余命中
+分两类：NEON/FP16 34 处（已知跳过，维持原判）与
+example_for_very_high_gflops 5 处真漏（JQ 簇式修复未覆盖的单点：
+`test_{4x4x4,4x4x8,4x4x16,8x8x8,8x8x16}_in_cache` 的 `malloc(4*4/8*8*4)`，
+C 随即被 `C[0] += final_sum(q)` 写入）。已补守卫（free A/B + return，
+断言 4*4×3 + 8*8×2 后批量插入）。
+
+### 实测
+
+    cmake --build build_x64 --target example_for_very_high_gflops   RC=0
+
+**JQ 类在 SamplesZQCNN 全树至此收口**（除有意跳过的 NEON 34 处）。
+
+### 方法论教训
+
+窗口类探测器「窗口内未见守卫」≠「无守卫」：6 行窗口报 75 处（簇守卫误报），
+40 窗口剩 39，人工分类出 5 真漏。真值只能来自更大窗口 + 逐簇人工分类。

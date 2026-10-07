@@ -410,6 +410,13 @@ void test_4x4x4_in_cache(int iter)
 	}
 
 	float* C = (float*)malloc(4 * 4 * sizeof(float));
+	// 审计修复 2026-10-07（附录 JT 补记）：与附录 JQ 同类，分配失败必须返回。
+	if (C == 0)
+	{
+		_aligned_free(A);
+		_aligned_free(B);
+		return;
+	}
 	int i, j, k;
 	for (i = 0; i < 4 * 4 * num_per_op; i++)
 	{
@@ -591,6 +598,13 @@ void test_4x4x8_in_cache(int iter)
 	}
 
 	float* C = (float*)malloc(4 * 4 * sizeof(float));
+	// 审计修复 2026-10-07（附录 JT 补记）：与附录 JQ 同类，分配失败必须返回。
+	if (C == 0)
+	{
+		_aligned_free(A);
+		_aligned_free(B);
+		return;
+	}
 	int i, j, k;
 	for (i = 0; i < 4 * 8 * num_per_op; i++)
 	{
@@ -868,6 +882,13 @@ void test_4x4x16_in_cache(int iter)
 	}
 
 	float* C = (float*)malloc(4 * 4 * sizeof(float));
+	// 审计修复 2026-10-07（附录 JT 补记）：与附录 JQ 同类，分配失败必须返回。
+	if (C == 0)
+	{
+		_aligned_free(A);
+		_aligned_free(B);
+		return;
+	}
 	int i, j, k;
 	for (i = 0; i < 4 * 16 * num_per_op; i++)
 	{
@@ -1337,6 +1358,13 @@ void test_8x8x8_in_cache(int iter)
 	}
 
 	float* C = (float*)malloc(8 * 8 * sizeof(float));
+	// 审计修复 2026-10-07（附录 JT 补记）：与附录 JQ 同类，分配失败必须返回。
+	if (C == 0)
+	{
+		_aligned_free(A);
+		_aligned_free(B);
+		return;
+	}
 	int i, j, k;
 	for (i = 0; i < 8 * 8 * num_per_op; i++)
 	{
@@ -2167,6 +2195,13 @@ void test_8x8x16_in_cache(int iter)
 	}
 
 	float* C = (float*)malloc(8 * 8 * sizeof(float));
+	// 审计修复 2026-10-07（附录 JT 补记）：与附录 JQ 同类，分配失败必须返回。
+	if (C == 0)
+	{
+		_aligned_free(A);
+		_aligned_free(B);
+		return;
+	}
 	int i, j, k;
 	for (i = 0; i < 8 * 16 * num_per_op; i++)
 	{
