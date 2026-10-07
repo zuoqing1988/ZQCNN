@@ -109,7 +109,10 @@ namespace ZQ
 				int C, H, W;
 				net.GetInputDim(C, H, W);
 				ZQ_CNN_Tensor4D_NHW_C_Align128bit input;
-				input.ChangeSize(1, H, W, C, 0, 0);
+				if (!input.ChangeSize(1, H, W, C, 0, 0))
+				{
+					return false;
+				}
 				
 				if (!net.Forward(input))
 				{

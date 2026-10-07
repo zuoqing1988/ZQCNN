@@ -36,16 +36,33 @@ SCAN_DIRS = ('ZQCNN', 'ZQ_GEMM', 'ZQlibFaceID', 'SamplesZQCNN',
 SKIP_DIRS = {'3rdparty', 'build_x64', 'cmake-out-win32-x64',
              'cmake-out-linux-x64'}
 
-# 同一族的两个方法：**必须一起改**。
+# 同一族的**全部** bool 返回方法：必须一起加，且三条正则共用 _M。
 # 第一次只改了 DECL_RE，CALL_RE / USED_RE 里还只有 ConvertFromBGR ——
 # 于是 ConvertFromCompactNCHW 的 141 个站点**根本没被扫**，
 # 真实树报「0 处违规」而自测里那条「丢弃 -> 必须报」是红的。
 # 三条正则用同一个 _M 拼，别再各写各的。
+# **只覆盖这两个方法**，因为只有它们是「按名字就能确定返回类型」的：
+#   ConvertFromBGR / ConvertFromCompactNCHW —— 全仓只有 `ZQ_CNN_Tensor4D`
+#   一处声明，返回 bool。
+#
+# **刻意排除** CopyData / ChangeSize / ConvertFromGray / AddScalar /
+# MulScalar：**同名不同返回类型**。实测（2026-10-07）：
+#   ZQ_CNN_Tensor4D::CopyData   -> bool
+#   ZQ_FaceFeature::CopyData    -> **void**   (ZQlibFaceID/ZQ_FaceFeature.h:42)
+#   ZQ_CNN_Tensor4D::ChangeSize -> bool
+#   ZQ_FaceFeature::ChangeSize  -> **void**
+# 按名字匹配就会给 void 的调用包上 `if (!x.ChangeSize(..))`，直接编不过
+# （当时 ZQ_FaceDatabaseMaker.h / ZQ_FaceIDPrecisionEvaluation.h 报了一片
+#  'could not convert void to bool'）。
+#
+# 要覆盖它们必须**按接收者的类**去解析声明的返回类型 —— 那是另一件事。
+# 宁可少覆盖，也不做一个会把代码改坏的门禁。
 _M = r'(?:ConvertFromBGR|ConvertFromCompactNCHW)'
 CALL_RE = re.compile(r'\b(\w+)\s*(?:\.|->)\s*' + _M + r'\s*\(')
-# 函数头：`virtual bool ConvertFromBGR(` / `bool ConvertFromCompactNCHW(`
-# —— 没有「对象.」，不算调用点
-DECL_RE = re.compile(r'^\s*(?:virtual\s+|static\s+)*bool\s*' + _M + r'\s*\(')
+# 函数头：`virtual bool ConvertFromBGR(` / `bool CopyData(` …—
+# 没有「对象.」，不算调用点
+DECL_RE = re.compile(r'^\s*(?:virtual\s+|static\s+|inline\s+)*bool\s*'
+                     + _M + r'\s*\(')
 USED_RE = re.compile(r'\bif\s*\(|=\s*\w+\s*(?:\.|->)\s*' + _M + r'|'
                      r'!\s*\w+\s*(?:\.|->)\s*' + _M + r'|'
                      r'return\s+\w+\s*(?:\.|->)\s*' + _M)
@@ -71,9 +88,31 @@ def strip_comments(src):
     return ''.join(out)
 
 
+INEXPRESSIBLE_RE = re.compile(
+    r'^\s*(?:[\w:]+\s*)?[A-Za-z_]\w*\s*\(\s*\)\s*$'
+    r'|^\s*[\w:]+\s*&?\s*operator\s*=')
+
+
+def enclosing_head(lines, idx):
+    """用花括号配平找出 idx 所在函数的**头那一行**（配平，不是正则猜）。"""
+    depth = 0
+    for k in range(idx, -1, -1):
+        depth += lines[k].count('}') - lines[k].count('{')
+        if depth < 0:
+            for j in range(k, -1, -1):
+                if '{' in lines[j]:
+                    # 函数头通常在左花括号的**上一行**。
+                    if lines[j].strip() == '{' and j > 0:
+                        return lines[j - 1]
+                    return lines[j]
+            return ''
+    return ''
+
+
 def scan_text(text, rel):
     lines = strip_comments(text).split('\n')
     hits = []
+    inexpressible = []
     for idx, ln in enumerate(lines):
         if DECL_RE.match(ln):
             continue                      # 函数头，不是调用点
@@ -81,8 +120,15 @@ def scan_text(text, rel):
             continue
         if USED_RE.search(ln):
             continue
+        if INEXPRESSIBLE_RE.match(enclosing_head(lines, idx)):
+            # **构造函数 / operator= 里没法"返回失败"** —— 它们的返回类型
+            # 分别是类本身和引用，`return false;` 是类型错误。
+            # 这不是"按严重性放宽"，而是**语言层面无法表达**，所以单列一类
+            # **可见但不判失败**，而不是悄悄放过（附录 IO 豁免名单的老教训）。
+            inexpressible.append((idx + 1, ln.strip()[:70]))
+            continue
         hits.append((idx + 1, ln.strip()[:78]))
-    return hits
+    return hits, inexpressible
 
 
 def collect():
@@ -99,8 +145,11 @@ def collect():
                 p = os.path.join(dirpath, fn)
                 rel = os.path.relpath(p, ROOT).replace('\\', '/')
                 with open(p, 'r', encoding='utf-8', errors='replace') as f:
-                    for ln, txt in scan_text(f.read(), rel):
+                    hs, inex = scan_text(f.read(), rel)
+                    for ln, txt in hs:
                         out.append((rel, ln, txt))
+                    for ln, txt in inex:
+                        out.append((rel, ln, 'INEXPRESSIBLE::' + txt))
     return sorted(out)
 
 
@@ -134,7 +183,8 @@ def selftest():
     ]
     bad = []
     for name, src, expect in cases:
-        got = len(scan_text(src, 't.cpp'))
+        hits, _inex = scan_text(src, 't.cpp')
+        got = len(hits)
         ok = (got == expect)
         print('  [%s] %-50s expect=%d got=%d'
               % ('PASS' if ok else 'FAIL', name, expect, got))
@@ -150,7 +200,15 @@ def selftest():
 def main():
     if '--selftest' in sys.argv:
         return selftest()
-    hits = collect()
+    raw = collect()
+    inex = [h for h in raw if h[2].startswith('INEXPRESSIBLE::')]
+    hits = [h for h in raw if not h[2].startswith('INEXPRESSIBLE::')]
+    if inex:
+        print('注意：%d 处「丢弃返回值」在**构造函数 / operator=** 里，'
+              '语言层面无法用返回值表达失败 —— 单列可见，不判失败：' % len(inex))
+        for rel, ln, txt in inex:
+            print('    %s:%d  %s' % (rel, ln, txt.split('::', 1)[1]))
+        print('')
     if hits:
         print('发现 %d 处「ConvertFromBGR 的返回值被丢弃」：' % len(hits))
         for rel, ln, txt in hits:

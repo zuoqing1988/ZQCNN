@@ -47,7 +47,10 @@ int main()
 	int dst_width = (float)ori_width / ori_height*dst_height;
 	cv::resize(image, image, cv::Size(dst_width, dst_height));
 	ZQ_CNN_Tensor4D_NHW_C_Align128bit input;
-	input.ConvertFromGray(image.data, dst_width, dst_height, image.step[0],0,1/255.0);
+	if (!input.ConvertFromGray(image.data, dst_width, dst_height, image.step[0],0,1/255.0))
+	{
+		return EXIT_FAILURE;
+	}
 	if (!net.Forward(input))
 	{
 		printf("failed to run net\n");

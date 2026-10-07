@@ -93,7 +93,10 @@ namespace ZQ
 			}
 			else
 			{
-				data.CopyData(input);
+				if (!data.CopyData(input))
+				{
+					return false;
+				}
 			}
 
 			if (!net.Forward(data))

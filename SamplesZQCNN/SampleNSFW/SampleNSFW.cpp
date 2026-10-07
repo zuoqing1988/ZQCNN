@@ -83,7 +83,10 @@ int main1()
 	cv::resize(image, image, cv::Size(224, 224));
 
 	ZQ_CNN_Tensor4D_NHW_C_Align128bit input;
-	input.ChangeSize(1, image.rows, image.cols, 3, 0, 0);
+	if (!input.ChangeSize(1, image.rows, image.cols, 3, 0, 0))
+	{
+		return EXIT_FAILURE;
+	}
 	float* input_data = input.GetFirstPixelPtr();
 	int widthStep = input.GetWidthStep();
 	int pixStep = input.GetPixelStep();

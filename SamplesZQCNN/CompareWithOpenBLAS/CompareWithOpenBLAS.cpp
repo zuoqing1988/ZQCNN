@@ -850,9 +850,18 @@ float _test_im2col(int in_H, int in_W, int filter_N, int filter_C, int stride_H,
 	int out_W = (in_W - filter_W + pad_W * 2) / stride_W + 1;
 	int out_C = filter_N;
 
-	input.ChangeSize(in_N, in_H, in_W, in_C, pad_H, pad_W);
-	filters.ChangeSize(filter_N, filter_H, filter_W, filter_C, 0, 0);
-	output.ChangeSize(out_N, out_H, out_W, out_C, 0, 0);
+	if (!input.ChangeSize(in_N, in_H, in_W, in_C, pad_H, pad_W))
+	{
+		return EXIT_FAILURE;
+	}
+	if (!filters.ChangeSize(filter_N, filter_H, filter_W, filter_C, 0, 0))
+	{
+		return EXIT_FAILURE;
+	}
+	if (!output.ChangeSize(out_N, out_H, out_W, out_C, 0, 0))
+	{
+		return EXIT_FAILURE;
+	}
 
 
 	double t1 = omp_get_wtime();

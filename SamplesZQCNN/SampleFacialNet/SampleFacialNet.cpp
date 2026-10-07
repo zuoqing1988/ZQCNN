@@ -35,7 +35,10 @@ int main()
 
 		cv::resize(image0, image0, cv::Size(42, 42));
 		ZQ_CNN_Tensor4D_NHW_C_Align128bit input0, input1;
-		input0.ConvertFromGray(image0.data, image0.cols, image0.rows, image0.step[0], 0, 1);
+		if (!input0.ConvertFromGray(image0.data, image0.cols, image0.rows, image0.step[0], 0, 1))
+		{
+			return EXIT_FAILURE;
+		}
 
 
 		ZQ_CNN_Net net;

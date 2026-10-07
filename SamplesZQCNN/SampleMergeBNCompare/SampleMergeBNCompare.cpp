@@ -185,7 +185,10 @@ static void fill_input(ZQ::ZQ_CNN_Tensor4D_NHW_C_Align256bit& t,
     int n = C * H * W;
     std::vector<float> v((size_t)n);
     for (int i = 0; i < n; i++) v[(size_t)i] = rnd(s);
-    t.ChangeSize(1, H, W, C, 0, 0);
+    if (!t.ChangeSize(1, H, W, C, 0, 0))
+    {
+    	return;
+    }
     if (!t.ConvertFromCompactNCHW(&v[0], 1, C, H, W))
     {
     	return;

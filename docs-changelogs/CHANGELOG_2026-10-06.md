@@ -4490,3 +4490,66 @@ DECL_RE，忘了 CALL_RE 和 USED_RE，于是那些站点**根本没被扫**、�
 所以门禁对它们报 0 不是漏检。
 
 操作记录：同样**没有**接管道，RC=0 是真的。
+
+---
+
+## 补完这一族，但门禁**主动收窄**（附录 JJ）
+
+### 变更文件
+
+    改 SamplesZQCNN/ 5 个文件、ZQCNN/ZQ_CNN_NSFW.h、
+       ZQlibFaceID/ZQ_FaceRecognizerSphereFaceZQCNN.h   共 20 处新增检查
+    改 tools/check_convert_return.py   判据收窄 + 新增「语言无法表达」可见豁免
+
+### 做了什么
+
+延续附录 JH，用**已验证过的方法**（行号取自门禁 + 花括号配平找所属函数）
+再补 20 处 `ChangeSize` / `CopyData` / `ConvertFromGray` 的丢弃返回值。
+
+### 但门禁收窄了 —— 这是本附录的重点
+
+中途试过把判据扩到 CopyData / ChangeSize / ConvertFromGray / AddScalar /
+MulScalar（第一次跑报出 32 处），结果**编不过**：
+
+    ZQlibFaceID/ZQ_FaceDatabaseMaker.h:747: error: could not convert
+      '(&feat)->ZQ::ZQ_FaceFeature::ChangeSize(feat_dim)' from 'void' to 'bool'
+
+查证后发现是**同名不同返回类型**：
+    ZQ_CNN_Tensor4D::CopyData    -> bool
+    ZQ_FaceFeature::CopyData     -> void   (ZQlibFaceID/ZQ_FaceFeature.h:42)
+    ZQ_CNN_Tensor4D::ChangeSize  -> bool
+    ZQ_FaceFeature::ChangeSize   -> void
+
+按**名字**匹配就会给 void 的调用包上 if(!...)，直接把代码改坏 ——
+和附录 JH 那三次脚本翻车同一类：**假设了没有验证的东西**。
+
+判据最终只留 ConvertFromBGR / ConvertFromCompactNCHW —— 全仓只有
+ZQ_CNN_Tensor4D 一处声明、返回 bool、**按名字就能确定**的两个方法。
+排除项连同证据写进文件头，不是只留在记忆里。
+
+### 顺带加了一类可见豁免：语言层面无法表达
+
+脚本修不了的两处在 **operator=** 与**构造函数**里（返回类型分别是引用和类本身，
+`return false;` 是类型错误）。门禁把它们单列成 INEXPRESSIBLE 一类：
+**打印出来、可见，但不判失败**，而不是悄悄放过。判所属函数用**花括号配平**，
+不是对调用行做正则匹配（第一版匹配调用行，永远匹配不到）。
+
+### 实测结果
+
+    check_convert_return.py              OK（0 处丢弃）            RC=0
+    check_convert_return.py --selftest   12/12 通过 RC=0
+    wsl: cd /tmp/zqb2 && make -j8         无 error
+    cmake --build build_x64 --config Release   WINDOWS BUILD RC=0 (84s)
+
+### 注意事项：本轮的净结果与它**没有**做到的事
+
+- 代码：多补 20 处检查。
+- 门禁：**没有**覆盖这 20 处 —— 它们所属的 CopyData / ChangeSize 名字有歧义。
+  也就是说这 20 处属于「改好了但没有门禁守着」，是**会腐烂**的一类。
+- 要补上门禁：按接收者的类解析 bool 方法的声明，再逐类维护「哪些类的哪些方法
+  返回 bool」。这是一份显式清单，不难，但本轮没做。
+
+本轮第三次栽在同一个地方（JH 的姊妹版）：**不要按名字假设签名的返回类型**。
+两者都是「用一个便宜但不可靠的代理（文本形态 / 方法名）代替真正的事实
+（作用域 / 声明）」。判据：**代理要选那些"足够真"的** ——
+挑之前先问「它有没有可能不是它看起来的那个东西」。

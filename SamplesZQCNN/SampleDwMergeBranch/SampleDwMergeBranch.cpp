@@ -357,8 +357,14 @@ static void case_shared_blob()
         return;
     }
     ZQ::ZQ_CNN_Tensor4D_NHW_C_Align256bit iA, iB;
-    iA.ChangeSize(1, HF, WF, C, 0, 0);
-    iB.ChangeSize(1, HF, WF, C, 0, 0);
+    if (!iA.ChangeSize(1, HF, WF, C, 0, 0))
+    {
+    	return;
+    }
+    if (!iB.ChangeSize(1, HF, WF, C, 0, 0))
+    {
+    	return;
+    }
     if (!iA.ConvertFromCompactNCHW(&in[0], 1, C, HF, WF))
     {
     	return;
@@ -467,8 +473,14 @@ static void case_bn_then_prelu()
         return;
     }
     ZQ::ZQ_CNN_Tensor4D_NHW_C_Align256bit iA, iC;
-    iA.ChangeSize(1, HF, WF, C, 0, 0);
-    iC.ChangeSize(1, HF, WF, C, 0, 0);
+    if (!iA.ChangeSize(1, HF, WF, C, 0, 0))
+    {
+    	return;
+    }
+    if (!iC.ChangeSize(1, HF, WF, C, 0, 0))
+    {
+    	return;
+    }
     if (!iA.ConvertFromCompactNCHW(&in[0], 1, C, HF, WF))
     {
     	return;
@@ -608,8 +620,14 @@ static void case_multi_writer()
         return;
     }
     ZQ::ZQ_CNN_Tensor4D_NHW_C_Align256bit iA, iC;
-    iA.ChangeSize(1, HF, WF, C, 0, 0);
-    iC.ChangeSize(1, HF, WF, C, 0, 0);
+    if (!iA.ChangeSize(1, HF, WF, C, 0, 0))
+    {
+    	return;
+    }
+    if (!iC.ChangeSize(1, HF, WF, C, 0, 0))
+    {
+    	return;
+    }
     if (!iA.ConvertFromCompactNCHW(&in[0], 1, C, HF, WF))
     {
     	return;
@@ -727,8 +745,14 @@ static void case_extreme_bn()
             continue;
         }
         ZQ::ZQ_CNN_Tensor4D_NHW_C_Align256bit iA, iB;
-        iA.ChangeSize(1, HF, WF, C, 0, 0);
-        iB.ChangeSize(1, HF, WF, C, 0, 0);
+        if (!iA.ChangeSize(1, HF, WF, C, 0, 0))
+        {
+        	return;
+        }
+        if (!iB.ChangeSize(1, HF, WF, C, 0, 0))
+        {
+        	return;
+        }
         if (!iA.ConvertFromCompactNCHW(&in[0], 1, C, HF, WF))
         {
         	return;
@@ -868,8 +892,14 @@ static void case_deep(int n_pairs)
         return;
     }
     ZQ::ZQ_CNN_Tensor4D_NHW_C_Align256bit iA, iB;
-    iA.ChangeSize(1, HF, WF, C, 0, 0);
-    iB.ChangeSize(1, HF, WF, C, 0, 0);
+    if (!iA.ChangeSize(1, HF, WF, C, 0, 0))
+    {
+    	return;
+    }
+    if (!iB.ChangeSize(1, HF, WF, C, 0, 0))
+    {
+    	return;
+    }
     if (!iA.ConvertFromCompactNCHW(&in[0], 1, C, HF, WF))
     {
     	return;
@@ -965,7 +995,10 @@ static void calibrate_filter_layout()
     ZQ::ZQ_CNN_Net n;
     if (!n.LoadFrom(pf, wf)) { printf("  标定 **FAIL** 加载失败\n"); g_bad++; return; }
     ZQ::ZQ_CNN_Tensor4D_NHW_C_Align256bit tin;
-    tin.ChangeSize(1, HF, WF, C, 0, 0);
+    if (!tin.ChangeSize(1, HF, WF, C, 0, 0))
+    {
+    	return;
+    }
     if (!tin.ConvertFromCompactNCHW(&in[0], 1, C, HF, WF))
     {
     	return;
