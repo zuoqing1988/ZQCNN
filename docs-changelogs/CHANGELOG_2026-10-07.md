@@ -476,3 +476,24 @@ JX 修完 `_load_feats` 后同文件续挖 `_load_names`：行缓冲有界（199
     改 ZQlibFaceID/ZQ_FaceDatabaseCompact.h    _load_names 行数上界 1e6
     改 ZQlibFaceID/ZQ_FaceDatabase.h           _load_names 行数上界 1e7
     改 audit_k3_20261001.md / 索引 / 本 changelog
+
+---
+
+## 审计：ZQlibFaceID 不可信文件解析面收口（附录 JZ，阴性为主）
+
+### 起因
+
+JX 教训（H20 修了 Database 漏了 Compact）的行动项：把整个 ZQlibFaceID
+目录所有文件解析入口逐一核实有界。
+
+### 结论
+
+7 份加载器全部有界（H20 / JX / JY / IF.1 / 既有守卫），目录级闭合。
+亮点：`ZQ_FaceContainerForVideo` 用**剩余文件长度交叉校验**反推 key_num
+上限（不拍脑袋数字）；`ZQ_FaceDatabaseMaker` feat_dim 1–4096 + 判空。
+
+同轮阴性：Compact 查询侧（Search/_find_the_best_matches/_detect_repeat_person）
+守卫齐全，无 O-2 伪结果类、无未判空分配。
+
+残余（均「文件要喂得进来」级别，记录不修）：FaceGroup 无联合字节上限；
+ContainerForVideo 依赖文件长度交叉校验。
