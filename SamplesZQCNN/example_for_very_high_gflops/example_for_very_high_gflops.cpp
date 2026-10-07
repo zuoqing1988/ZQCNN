@@ -282,6 +282,14 @@ void test_memcpy(int type, bool in_cache)
 	}
 	float* src = (float*)_aligned_malloc(N*sizeof(float),32);
 	float* dst = (float*)_aligned_malloc(N*sizeof(float),32);
+	// 审计修复 2026-10-07（附录 JQ）：与附录 IX 同类，分配失败必须返回。
+	if (src == 0 || dst == 0)
+	{
+		if (src) _aligned_free(src);
+		if (dst) _aligned_free(dst);
+		return;
+	}
+
 	float* cur_src_ptr, *cur_dst_ptr;
 	for(int i = 0;i < N;i++)
 		src[i] = i;
@@ -393,6 +401,14 @@ void test_4x4x4_in_cache(int iter)
 {
 	float* A = (float*)_aligned_malloc(4 * 4 * num_per_op * sizeof(float), num_per_op * 4);
 	float* B = (float*)_aligned_malloc(4 * 4 * num_per_op * sizeof(float), num_per_op * 4);
+	// 审计修复 2026-10-07（附录 JQ）：与附录 IX 同类，分配失败必须返回。
+	if (A == 0 || B == 0)
+	{
+		if (A) _aligned_free(A);
+		if (B) _aligned_free(B);
+		return;
+	}
+
 	float* C = (float*)malloc(4 * 4 * sizeof(float));
 	int i, j, k;
 	for (i = 0; i < 4 * 4 * num_per_op; i++)
@@ -566,6 +582,14 @@ void test_4x4x8_in_cache(int iter)
 {
 	float* A = (float*)_aligned_malloc(4 * 8 * num_per_op * sizeof(float), num_per_op * 8);
 	float* B = (float*)_aligned_malloc(4 * 8 * num_per_op * sizeof(float), num_per_op * 8);
+	// 审计修复 2026-10-07（附录 JQ）：与附录 IX 同类，分配失败必须返回。
+	if (A == 0 || B == 0)
+	{
+		if (A) _aligned_free(A);
+		if (B) _aligned_free(B);
+		return;
+	}
+
 	float* C = (float*)malloc(4 * 4 * sizeof(float));
 	int i, j, k;
 	for (i = 0; i < 4 * 8 * num_per_op; i++)
@@ -835,6 +859,14 @@ void test_4x4x16_in_cache(int iter)
 {
 	float* A = (float*)_aligned_malloc(4 * 16 * num_per_op * sizeof(float), num_per_op * 16);
 	float* B = (float*)_aligned_malloc(4 * 16 * num_per_op * sizeof(float), num_per_op * 16);
+	// 审计修复 2026-10-07（附录 JQ）：与附录 IX 同类，分配失败必须返回。
+	if (A == 0 || B == 0)
+	{
+		if (A) _aligned_free(A);
+		if (B) _aligned_free(B);
+		return;
+	}
+
 	float* C = (float*)malloc(4 * 4 * sizeof(float));
 	int i, j, k;
 	for (i = 0; i < 4 * 16 * num_per_op; i++)
@@ -1296,6 +1328,14 @@ void test_8x8x8_in_cache(int iter)
 {
 	float* A = (float*)_aligned_malloc(8 * 8 * num_per_op * sizeof(float), num_per_op * 16);
 	float* B = (float*)_aligned_malloc(8 * 8 * num_per_op * sizeof(float), num_per_op * 16);
+	// 审计修复 2026-10-07（附录 JQ）：与附录 IX 同类，分配失败必须返回。
+	if (A == 0 || B == 0)
+	{
+		if (A) _aligned_free(A);
+		if (B) _aligned_free(B);
+		return;
+	}
+
 	float* C = (float*)malloc(8 * 8 * sizeof(float));
 	int i, j, k;
 	for (i = 0; i < 8 * 8 * num_per_op; i++)
@@ -2118,6 +2158,14 @@ void test_8x8x16_in_cache(int iter)
 {
 	float* A = (float*)_aligned_malloc(8 * 16 * num_per_op * sizeof(float), num_per_op * 16);
 	float* B = (float*)_aligned_malloc(8 * 16 * num_per_op * sizeof(float), num_per_op * 16);
+	// 审计修复 2026-10-07（附录 JQ）：与附录 IX 同类，分配失败必须返回。
+	if (A == 0 || B == 0)
+	{
+		if (A) _aligned_free(A);
+		if (B) _aligned_free(B);
+		return;
+	}
+
 	float* C = (float*)malloc(8 * 8 * sizeof(float));
 	int i, j, k;
 	for (i = 0; i < 8 * 16 * num_per_op; i++)

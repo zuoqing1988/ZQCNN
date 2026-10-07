@@ -309,6 +309,43 @@ void test_ABt(int M, int N, int K, int nIters, float thresh, bool show)
 	float* C2_12 = (float*)_aligned_malloc(M*N * sizeof(float), 32);
 	float* C2_13 = (float*)_aligned_malloc(M*N * sizeof(float), 32);
 	float* C2_14 = (float*)_aligned_malloc(M*N * sizeof(float), 32);
+	// 审计修复 2026-10-07（附录 JQ）：与附录 IX 同类，分配失败必须返回。
+	if (A == 0 || Bt == 0 || C0 == 0 || C1_1 == 0 || C1_2 == 0 || C1_3 == 0 || C1_4 == 0 || C1_5 == 0 || C1_6 == 0 || C1_7 == 0 || C1_8 == 0 || C1_9 == 0 || C1_10 == 0 || C1_11 == 0 || C1_12 == 0 || C1_13 == 0 || C1_14 == 0 || C2_1 == 0 || C2_2 == 0 || C2_3 == 0 || C2_4 == 0 || C2_5 == 0 || C2_6 == 0 || C2_7 == 0 || C2_8 == 0 || C2_9 == 0 || C2_10 == 0 || C2_11 == 0 || C2_12 == 0 || C2_13 == 0 || C2_14 == 0)
+	{
+		if (A) _aligned_free(A);
+		if (Bt) _aligned_free(Bt);
+		if (C0) _aligned_free(C0);
+		if (C1_1) _aligned_free(C1_1);
+		if (C1_2) _aligned_free(C1_2);
+		if (C1_3) _aligned_free(C1_3);
+		if (C1_4) _aligned_free(C1_4);
+		if (C1_5) _aligned_free(C1_5);
+		if (C1_6) _aligned_free(C1_6);
+		if (C1_7) _aligned_free(C1_7);
+		if (C1_8) _aligned_free(C1_8);
+		if (C1_9) _aligned_free(C1_9);
+		if (C1_10) _aligned_free(C1_10);
+		if (C1_11) _aligned_free(C1_11);
+		if (C1_12) _aligned_free(C1_12);
+		if (C1_13) _aligned_free(C1_13);
+		if (C1_14) _aligned_free(C1_14);
+		if (C2_1) _aligned_free(C2_1);
+		if (C2_2) _aligned_free(C2_2);
+		if (C2_3) _aligned_free(C2_3);
+		if (C2_4) _aligned_free(C2_4);
+		if (C2_5) _aligned_free(C2_5);
+		if (C2_6) _aligned_free(C2_6);
+		if (C2_7) _aligned_free(C2_7);
+		if (C2_8) _aligned_free(C2_8);
+		if (C2_9) _aligned_free(C2_9);
+		if (C2_10) _aligned_free(C2_10);
+		if (C2_11) _aligned_free(C2_11);
+		if (C2_12) _aligned_free(C2_12);
+		if (C2_13) _aligned_free(C2_13);
+		if (C2_14) _aligned_free(C2_14);
+		return;
+	}
+
 #endif
 	for (int i = 0; i < M*padK; i++)
 		A[i] = rand() % 10001 / 5000.0f - 1.0f;
@@ -606,6 +643,21 @@ void test_AB(int M, int N, int K, int nIters, float thresh, bool show)
 	float* C4 = (float*)_aligned_malloc(M*N * sizeof(float), 32);
 	float* C5 = (float*)_aligned_malloc(M*N * sizeof(float), 32);
 	float* C6 = (float*)_aligned_malloc(M*N * sizeof(float), 32);
+	// 审计修复 2026-10-07（附录 JQ）：与附录 IX 同类，分配失败必须返回。
+	if (A == 0 || B == 0 || C0 == 0 || C1 == 0 || C2 == 0 || C3 == 0 || C4 == 0 || C5 == 0 || C6 == 0)
+	{
+		if (A) _aligned_free(A);
+		if (B) _aligned_free(B);
+		if (C0) _aligned_free(C0);
+		if (C1) _aligned_free(C1);
+		if (C2) _aligned_free(C2);
+		if (C3) _aligned_free(C3);
+		if (C4) _aligned_free(C4);
+		if (C5) _aligned_free(C5);
+		if (C6) _aligned_free(C6);
+		return;
+	}
+
 	for (int i = 0; i < M*padK; i++)
 		A[i] = rand() % 10001 / 5000.0f - 1.0f;
 	for (int i = 0; i < padN*K; i++)

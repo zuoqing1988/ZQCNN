@@ -1581,6 +1581,18 @@ int test(int M, int N, int K, int nIters, float thresh, bool show, int nc = 96, 
 	float* B = (float*)_aligned_malloc(K*N * sizeof(float), 32);
 	float* C0 = (float*)_aligned_malloc(M*N * sizeof(float), 32);
 	float* C1 = (float*)_aligned_malloc(M*N * sizeof(float), 32);
+	// 审计修复 2026-10-07（附录 JQ）：与附录 IX 同类，分配失败必须返回。
+	if (A == 0 || packA == 0 || pack_array == 0 || B == 0 || C0 == 0 || C1 == 0)
+	{
+		if (A) _aligned_free(A);
+		if (packA) _aligned_free(packA);
+		if (pack_array) _aligned_free(pack_array);
+		if (B) _aligned_free(B);
+		if (C0) _aligned_free(C0);
+		if (C1) _aligned_free(C1);
+		return 0;
+	}
+
 	for (int i = 0; i < M*K; i++)
 	{
 		A[i] = rand() % 10001 / 5000.0f - 1.0f;

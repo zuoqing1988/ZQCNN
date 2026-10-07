@@ -161,6 +161,17 @@ void testF2233(int C, int H, int W, int nIters)
 	float* out_data2 = (float*)_aligned_malloc(out_H*out_W*C * sizeof(float), 32);
 	float* filter = (float*)_aligned_malloc(3 * 3 * C * sizeof(float), 32);
 	float* g = (float*)_aligned_malloc(4 * 4 * C * sizeof(float), 32);
+	// 审计修复 2026-10-07（附录 JQ）：与附录 IX 同类，分配失败必须返回。
+	if (in_data == 0 || out_data1 == 0 || out_data2 == 0 || filter == 0 || g == 0)
+	{
+		if (in_data) _aligned_free(in_data);
+		if (out_data1) _aligned_free(out_data1);
+		if (out_data2) _aligned_free(out_data2);
+		if (filter) _aligned_free(filter);
+		if (g) _aligned_free(g);
+		return;
+	}
+
 	for (int i = 0; i < in_H*in_W*C; i++)
 		in_data[i] = rand() % 101 / 50.0 - 1.0;
 	for (int i = 0; i < 9 * C; i++)
@@ -248,6 +259,17 @@ void testF4433(int C, int H, int W, int nIters)
 	float* out_data2 = (float*)_aligned_malloc(out_H*out_W*C * sizeof(float), 32);
 	float* filter = (float*)_aligned_malloc(3 * 3 * C * sizeof(float), 32);
 	float* g = (float*)_aligned_malloc(6 * 6 * C * sizeof(float), 32);
+	// 审计修复 2026-10-07（附录 JQ）：与附录 IX 同类，分配失败必须返回。
+	if (in_data == 0 || out_data1 == 0 || out_data2 == 0 || filter == 0 || g == 0)
+	{
+		if (in_data) _aligned_free(in_data);
+		if (out_data1) _aligned_free(out_data1);
+		if (out_data2) _aligned_free(out_data2);
+		if (filter) _aligned_free(filter);
+		if (g) _aligned_free(g);
+		return;
+	}
+
 	for (int i = 0; i < in_H*in_W*C; i++)
 		in_data[i] = rand() % 101 / 50.0 - 1.0;
 	for (int i = 0; i < 9 * C; i++)

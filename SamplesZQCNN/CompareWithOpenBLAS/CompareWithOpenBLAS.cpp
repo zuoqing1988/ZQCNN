@@ -63,6 +63,18 @@ double _test_gemm2(int M, int N, int K, int iters = 1000)
 	float* q2 = (float*)_aligned_malloc(32, 32);
 	float* q3 = (float*)_aligned_malloc(32, 32);
 	float* q4 = (float*)_aligned_malloc(32, 32);
+	// 审计修复 2026-10-07（附录 JQ）：与附录 IX 同类，分配失败必须返回。
+	if (A == 0 || B == 0 || C == 0 || q1 == 0 || q2 == 0 || q3 == 0 || q4 == 0)
+	{
+		if (A) _aligned_free(A);
+		if (B) _aligned_free(B);
+		if (C) _aligned_free(C);
+		if (q1) _aligned_free(q1);
+		if (q2) _aligned_free(q2);
+		if (q3) _aligned_free(q3);
+		if (q4) _aligned_free(q4);
+		return 0;
+	}
 
 
 	for (int i = 0; i < M*padK; i++)
@@ -803,6 +815,15 @@ double _test_gemv(int M, int N, int K, int iters)
 	float* B = (float*)_aligned_malloc(padK*N * sizeof(float), 32);
 	float* C = (float*)_aligned_malloc(M* N * sizeof(float), 32);
 	float* q = (float*)_aligned_malloc(32, 32);
+	// 审计修复 2026-10-07（附录 JQ）：与附录 IX 同类，分配失败必须返回。
+	if (A == 0 || B == 0 || C == 0 || q == 0)
+	{
+		if (A) _aligned_free(A);
+		if (B) _aligned_free(B);
+		if (C) _aligned_free(C);
+		if (q) _aligned_free(q);
+		return 0;
+	}
 
 
 	for (int i = 0; i < M*padK; i++)
@@ -866,6 +887,11 @@ float _test_im2col(int in_H, int in_W, int filter_N, int filter_C, int stride_H,
 
 	double t1 = omp_get_wtime();
 	float* matrix_C = (float*)malloc(out_H*out_W*filter_N * sizeof(float));
+	// 审计修复 2026-10-07（附录 JQ）：与附录 IX 同类，分配失败必须返回。
+	if (matrix_C == 0)
+	{
+		return 0;
+	}
 	for (int it = 0; it < iters; it++)
 	{
 		int in_widthStep = input.GetWidthStep();
@@ -885,6 +911,12 @@ float _test_im2col(int in_H, int in_W, int filter_N, int filter_C, int stride_H,
 		const float* in_firstPixel = input.GetFirstPixelPtr() - pad_H*in_widthStep - pad_W*in_pixelStep;
 		float* out_firstPixel = output.GetFirstPixelPtr();
 		float* matrix_A = (float*)_aligned_malloc(matrix_A_rows*matrix_A_cols * sizeof(float), 32);
+		// 审计修复 2026-10-07（附录 JQ）：与附录 IX 同类，分配失败必须返回。
+		if (matrix_A == 0)
+		{
+			free(matrix_C);
+			return 0;
+		}
 		const float* in_row_ptr, *in_pix_ptr, *cur_in_row_ptr;
 		int out_h, out_w, kh;
 		float* matrix_A_row_ptr = matrix_A, *matrix_A_col_ptr;
@@ -936,6 +968,16 @@ double _test_gemm(int M, int N, int K, int iters, float thresh, bool show)
 	float* C1 = (float*)_aligned_malloc(M*N * sizeof(float), 32);
 	float* C2 = (float*)_aligned_malloc(M*N * sizeof(float), 32);
 	float* q = (float*)_aligned_malloc(32, 32);
+	// 审计修复 2026-10-07（附录 JQ）：与附录 IX 同类，分配失败必须返回。
+	if (A == 0 || B == 0 || C1 == 0 || C2 == 0 || q == 0)
+	{
+		if (A) _aligned_free(A);
+		if (B) _aligned_free(B);
+		if (C1) _aligned_free(C1);
+		if (C2) _aligned_free(C2);
+		if (q) _aligned_free(q);
+		return 0;
+	}
 
 
 	for (int i = 0; i < M*padK; i++)

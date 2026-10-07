@@ -118,3 +118,34 @@ ZQ_CNN_VideoFaceDetection_Interface.h:279 是注掉的参考代码，不动。
 TrainMTCNNprocessor 吃的是人工标注，实际触发概率极低 —— 修它的理由是
 「与 _nms 同公式就该同写法」，不留两种口径。MTCNN_ncnn.h 当前零 sample
 include，但它是公共头且在检测路径上、又是已知漏改体质，顺手补上。
+
+---
+
+## 修复：_aligned_malloc 不查返回值 —— 5 个 GEMM sample ~90 处（附录 JQ）
+
+### 变更文件
+
+    改 SamplesZQCNN/CompareWithOpenBLAS/CompareWithOpenBLAS.cpp   5 处守卫
+    改 SamplesZQCNN/SampleMatMul/SampleMatMul.cpp                 2 簇 40 分配
+    改 SamplesZQCNN/example_for_very_high_gflops/...              6 簇 12 分配
+    改 SamplesZQCNN/testWinoF2233/testWinoF2233.cpp               2 簇 10 分配
+    改 SamplesZQCNN/SampleGEPB/SampleGEPB.cpp                     1 簇 6 分配
+
+### 起因
+
+附录 IX 修了 layers_c/*.h 的 42 处同类问题，但只扫了库。这轮按心跳清单扫
+sample，发现 CompareWithOpenBLAS(17)、SampleMatMul(40)、
+example_for_very_high_gflops(12)、testWinoF2233(10)、SampleGEPB(6)
+全没查。全是 GEMM 基准，分配完立刻写缓冲，失败即空指针解引用。
+跳过 SampleMatMulNEON/FP16（34 处，#if __ARM_NEON 在两平台都编译成空）。
+
+### 脚本翻车实录
+
+第一版锚点从文件尾倒搜 `q = _aligned_malloc(32, 32);` —— _test_gemv 与
+_test_gemm 同名同形都有这行，倒搜撞进 _test_gemm（把含 C 的守卫塞进只有
+C1/C2 的函数，C2065）。第二版改用簇行号区间+声明提取变量名，40 处一次通过；
+第三版批量 28 处一次通过。
+
+### 实测结果
+
+    cmake --build build_x64 --config Release   RC=0（3 轮，0 error）
