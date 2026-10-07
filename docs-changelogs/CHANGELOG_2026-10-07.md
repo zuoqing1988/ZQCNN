@@ -367,3 +367,49 @@ loc blob 校验（附录 H6 ✅）——**全部已修**。
 
 **固化口径**：早期表的 🔶/❌ 一律不作未闭环依据；判未闭环只看
 后续附录修复记录 + 代码现状。未来心跳轮不必再扫这批历史标记。
+
+---
+
+## 修复：全量回归首红 —— zq_facedb OOM 是 H20 漏改的孪生 bug（附录 JX）
+
+### 现象
+
+第九次 --all（验证 JT 补记/补记2）B 组 zq_facedb FAIL：
+ASan `out of memory trying to allocate 0x1000000000 bytes (64 GiB)`，
+其余 71/72 全过 —— 八次回归以来首次红。
+
+### 定位
+
+单独重跑 PASS 疑似 flake，但报错尺寸 2^36 太整齐。堆栈落在
+`ZQ_FaceDatabaseCompact::_load_feats` 的 `_aligned_malloc(4*total*dim, 32)`。
+用例「人脸数累加 int 回绕」喂 2 人各 0x40000000 脸：单人守卫只挡 `<=0`，
+2^30 正数通过；累加 int 回绕（UB）；乘积无防护 → 64 GiB 请求。
+**内存宽裕时 memalign 返回 NULL 被库当干净拒绝（用例期望 false → 绿）；
+回归时 WSL 吃紧 → ASan abort（红）。压力只是让潜伏 bug 现形。**
+
+### 根因
+
+H20 当年修了 ZQ_FaceDatabase.h 的同款缺陷（feat_dim 1–4096），
+**ZQ_FaceDatabaseCompact 这份拷贝漏改**。
+
+### 修复（_load_feats）
+
+dim ≤4096、person_num ≤1e6、单人 ≤1e7、累加循环内 total >1e8 先挡回绕、
+循环后联合字节上限 total×dim ≤ 2^28。同族横向：FaceDatabase ✅、
+FaceGroup ✅（残余风险已记录不修）。
+
+### 实测
+
+    run_zqlib_checks.py --with-slow zq_facedb   RC=0（含回绕用例干净拒绝）
+    run_zqlib_checks.py --with-slow（全 72 项）  RC=0
+    cmake --build build_x64 --target SampleFaceDatabaseZQCNN   RC=0
+
+### 教训
+
+已固化 AGENTS_LESSONS 第 93 条：压力下的 OOM abort 别急着当 flake——
+报错尺寸是整齐幂次时先对代码里的尺寸表达式，对上了就不是环境，是 bug。
+
+### 变更文件
+
+    改 ZQlibFaceID/ZQ_FaceDatabaseCompact.h    _load_feats 五重上界
+    改 audit_k3_20261001.md / 索引 / AGENTS_LESSONS.md（第 93 条）/ 本 changelog

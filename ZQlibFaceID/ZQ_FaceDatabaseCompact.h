@@ -223,14 +223,18 @@ namespace ZQ
 				return false;
 #endif
 
-			if (1 != fread(&dim, sizeof(int), 1, in) || dim <= 0)
+			if (1 != fread(&dim, sizeof(int), 1, in) || dim <= 0 || dim > 4096)
 			{
+				// 审计修复 2026-10-07（附录 JX）：dim 只查了下界，畸形大正值
+				// （如 0x40000000）会通过校验 → 天量分配（H20 在 ZQ_FaceDatabase
+				// 修过同款，Compact 这份漏改）。上限镜像 H20 的 1–4096。
 				fclose(in);
 				return false;
 			}
 
-			if (1 != fread(&person_num, sizeof(int), 1, in) || person_num <= 0)
+			if (1 != fread(&person_num, sizeof(int), 1, in) || person_num <= 0 || person_num > 1000000)
 			{
+				// 附录 JX：person_num 同样只查了下界，补上界（百万级人库已远超实际）。
 				fclose(in);
 				return false;
 			}
@@ -250,13 +254,29 @@ namespace ZQ
 			total_face_num = 0;
 			for (int i = 0; i < person_num; i++)
 			{
-				if (person_face_num[i] <= 0)
+				// 附录 JX：原只查 <= 0，单人 0x40000000 脸这种畸形正值会一路通过，
+				// 累加还触发 int 回绕（UB），随后按回绕值做天量分配 —— ASan 满负荷
+				// 下 memalign(64GB) 返回 NULL 时侥幸干净失败，内存一紧就 OOM abort
+				// （第九次全量回归 B 组 zq_facedb 实测翻车）。
+				if (person_face_num[i] <= 0 || person_face_num[i] > 10000000)
+				{
+					fclose(in);
+					return false;
+				}
+				if (total_face_num > 100000000) // 运行上限，先挡死 int 回绕
 				{
 					fclose(in);
 					return false;
 				}
 				person_face_offset[i] = total_face_num;
 				total_face_num += person_face_num[i];
+			}
+			// 联合字节上限：total*dim 个 float 不得超过 2^28（=1 GiB 缓冲），
+			// dim<=4096 与单人有界都不足以挡住乘积级别的天量分配。
+			if ((__int64)total_face_num * dim > (1 << 28))
+			{
+				fclose(in);
+				return false;
 			}
 
 			all_face_feats = (float*)_aligned_malloc(sizeof(float)*total_face_num*dim, FEAT_ALIGNED_SIZE);
