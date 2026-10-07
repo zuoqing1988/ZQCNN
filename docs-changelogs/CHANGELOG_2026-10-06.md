@@ -4553,3 +4553,31 @@ ZQ_CNN_Tensor4D 一处声明、返回 bool、**按名字就能确定**的两个�
 两者都是「用一个便宜但不可靠的代理（文本形态 / 方法名）代替真正的事实
 （作用域 / 声明）」。判据：**代理要选那些"足够真"的** ——
 挑之前先问「它有没有可能不是它看起来的那个东西」。
+
+---
+
+## 复验：--all 全量 96 组 / 0 失败 / 94 分钟（附录 JJ 的 20 处纳入）（附录 JK）
+
+    python tools/run_audit_checks.py --all
+        ALL CHECKS PASSED   RC=0   ELAPSED=5622s（约 94 分钟）
+        完成的门禁组数 : 96
+
+    D1 Windows 全量构建 (VS2022/cmake)                    OK
+    D2 Linux 全量构建 (gcc/wsl)                           OK
+    D3 Linux sample 回归                                  OK
+    B  ZQlib 独立回归 x10 (ASan+LSan)                      OK（72 个测试，含 --with-slow）
+    C6 ZQCNN 门禁 UBSan 回归                               OK
+    C27 ConvertFromBGR / ConvertFromCompactNCHW 的返回值   OK
+
+附录 JJ 那 20 处（ChangeSize / CopyData / ConvertFromGray）**没有破坏任何既有行为**。
+
+这一串「丢弃返回值」的清理到此为止，账是清楚的：
+    ConvertFromBGR             23 处（附录 JF，含 ZQ_FaceRecognizerSphereFaceZQCNN.h 7 处）
+    ConvertFromCompactNCHW    137 处（附录 JH）
+    其它同名歧义方法            20 处（附录 JJ，**改好了但没有门禁守着**）
+    合计                      180 处
+
+仍然明确不做的一件事（附录 JJ 已写清理由）：那 20 处要纳入门禁，得**按接收者的
+类去解析声明的返回类型**（`ZQ_CNN_Tensor4D::CopyData` 是 bool，
+`ZQ_FaceFeature::CopyData` 是 void），这是一台类型推断机器，而这一族的触发条件
+只在**分配失败**时 —— 投入产出不划算，所以留作已知缺口而不是硬凑。
