@@ -537,6 +537,14 @@ GROUPS = [
      ['check_changesize_guard.py'], False),
     ('C28b C28 分类器自测（含「守卫写得太晚」）',
      ['check_changesize_guard.py', '--selftest'], False),
+    # C29（附录 JN）：审计报告的附录编号不得撞车。
+    # 2026-10-07 实测：`IB~IY` 各出现过**两次**（23396 起那批复用了旧号），
+    # 与 run_audit_checks.py 的门禁编号撞名是同一类病（附录 IR）——
+    # 「查第 IB 节」变得有歧义。本门禁只读报告、不重写。
+    ('C29 审计报告附录编号唯一（附录 JN）',
+     ['build_audit_index.py', '--check'], False),
+    ('C29b C29 分类器自测（围栏内的 # 不算标题）',
+     ['build_audit_index.py', '--selftest'], False),
 ]
 
 
